@@ -14,8 +14,7 @@ public static class SweptCircleAabb2D
         Bounds2D bounds,
         out SweptCircleHit2D hit)
     {
-        if (!float.IsFinite(radius) || radius < 0f)
-            throw new ArgumentOutOfRangeException(nameof(radius));
+        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
         if (!bounds.IsFinite)
         {
             hit = default;

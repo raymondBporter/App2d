@@ -37,13 +37,11 @@ public sealed class GrappleArm2D
         float maxReach = 430f,
         float rangeGrace = 8f)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(physics);
-        ArgumentNullException.ThrowIfNull(ownerBody);
-        if (!float.IsFinite(maxReach) || maxReach <= MinimumRopeLength)
-            throw new ArgumentOutOfRangeException(nameof(maxReach));
-        if (!float.IsFinite(rangeGrace) || rangeGrace < 0f)
-            throw new ArgumentOutOfRangeException(nameof(rangeGrace));
+        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(ownerBody);
+        ArgGuard.ThrowIfLessThanOrEqual(maxReach, MinimumRopeLength);
+        ArgGuard.ThrowIfNegativeOrNotFinite(rangeGrace);
 
         _ownerBody = ownerBody;
         MaxReach = maxReach;

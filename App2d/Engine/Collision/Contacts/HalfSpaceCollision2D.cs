@@ -10,10 +10,16 @@ public static class HalfSpaceCollision2D
         WorldObject2D halfSpaceObject,
         out HalfSpaceContact2D contact)
     {
-        if (convexObject.Shape is not IConvexShape2D convexShape)
-            throw new ArgumentException("The constrained object must have a finite convex shape.", nameof(convexObject));
-        if (halfSpaceObject.Shape is not HalfSpace2D halfSpace)
-            throw new ArgumentException("The constraint object must contain a HalfSpace2D.", nameof(halfSpaceObject));
+        ArgGuard.ThrowIfNull(convexObject);
+        ArgGuard.ThrowIfNull(halfSpaceObject);
+        var convexShape = ArgGuard.RequireType<IConvexShape2D>(
+            convexObject.Shape,
+            "The constrained object must have a finite convex shape.",
+            nameof(convexObject));
+        var halfSpace = ArgGuard.RequireType<HalfSpace2D>(
+            halfSpaceObject.Shape,
+            "The constraint object must contain a HalfSpace2D.",
+            nameof(halfSpaceObject));
 
         var (worldNormal, worldOffset) = CollisionMath2D.GetWorldPlane(halfSpace, halfSpaceObject.Transform);
         var objectToWorld = convexObject.Transform.LocalToWorldMatrix;

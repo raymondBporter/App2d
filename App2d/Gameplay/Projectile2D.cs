@@ -12,8 +12,7 @@ public sealed class Projectile2D(WorldObject2D worldObject)
 
     public void Launch(Vector2 position, Vector2 velocity, float lifetime)
     {
-        if (!float.IsFinite(lifetime) || lifetime <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(lifetime));
+        ArgGuard.ThrowIfNotPositive(lifetime);
 
         WorldObject.Transform.Position = position;
         WorldObject.IsVisible = true;

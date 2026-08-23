@@ -8,8 +8,8 @@ public sealed class PlayerInputMapper2D
 
     public PlayerCommand2D Capture(InputState input, Camera2D camera)
     {
-        ArgumentNullException.ThrowIfNull(input);
-        ArgumentNullException.ThrowIfNull(camera);
+        ArgGuard.ThrowIfNull(input);
+        ArgGuard.ThrowIfNull(camera);
 
         var moveX = Axis(input, Keys.A, Keys.D) + Axis(input, Keys.Left, Keys.Right);
         moveX = Math.Clamp(moveX, -1f, 1f);

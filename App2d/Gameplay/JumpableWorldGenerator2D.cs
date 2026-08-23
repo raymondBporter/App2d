@@ -14,8 +14,8 @@ public sealed class JumpableWorldGenerator2D
 
     public JumpableWorldGenerator2D(ulong seed, int width, int height)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
+        ArgGuard.ThrowIfNotPositive(width);
+        ArgGuard.ThrowIfNotPositive(height);
         Width = width;
         Height = height;
         _random = new SpatialRandom2D(seed);

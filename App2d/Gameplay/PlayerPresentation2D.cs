@@ -22,8 +22,8 @@ public sealed class PlayerPresentation2D
 
     public PlayerPresentation2D(Scene2D scene, TextureCache2D textures)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(textures);
+        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(textures);
 
         var walkFrames = LoadFrames(textures, "walk", 6);
         _idleAnimation = new AnimationClip2D<Texture2D>([walkFrames[0]], 1f);

@@ -24,10 +24,10 @@ public sealed class SideScrollerCamera2D
         Bounds2D levelBounds,
         Vector2 initialPlayerPosition)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        _camera = camera ?? throw new ArgumentNullException(nameof(camera));
+        ArgGuard.ThrowIfNull(scene);
+        _camera = ArgGuard.RequireNotNull(camera);
         if (!levelBounds.IsFinite)
-            throw new ArgumentOutOfRangeException(nameof(levelBounds));
+            ArgGuard.ThrowOutOfRange(levelBounds, "Value must be finite.");
         _levelBounds = levelBounds;
 
         _camera.Zoom = 1.35f;

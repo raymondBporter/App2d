@@ -6,10 +6,8 @@ public sealed class Circle2D : IConvexShape2D
 {
     public Circle2D(float radius, Vector2 center = default)
     {
-        if (!float.IsFinite(radius) || radius <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(radius), "Radius must be positive and finite.");
-        if (!float.IsFinite(center.X) || !float.IsFinite(center.Y))
-            throw new ArgumentOutOfRangeException(nameof(center), "Center must be finite.");
+        ArgGuard.ThrowIfNotPositive(radius);
+        ArgGuard.ThrowIfNotFinite(center);
 
         Radius = radius;
         Center = center;

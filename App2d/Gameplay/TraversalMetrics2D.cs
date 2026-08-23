@@ -56,7 +56,7 @@ public sealed class TraversalMetrics2D
                 return new JumpProfile2D(apexHeight, timeToApex, elapsed, position.X);
         }
 
-        throw new InvalidOperationException("Jump simulation did not return to its starting height.");
+        throw StateGuard.Create("Jump simulation did not return to its starting height.");
     }
 
     public Vector2[] BuildJumpArc(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
@@ -95,10 +95,7 @@ public sealed class TraversalMetrics2D
     }
 
     private static void ValidateFixedDelta(float fixedDeltaSeconds)
-    {
-        if (!float.IsFinite(fixedDeltaSeconds) || fixedDeltaSeconds <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(fixedDeltaSeconds));
-    }
+        => ArgGuard.ThrowIfNotPositive(fixedDeltaSeconds);
 }
 
 public readonly record struct JumpProfile2D(

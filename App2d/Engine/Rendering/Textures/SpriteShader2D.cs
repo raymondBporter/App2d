@@ -13,7 +13,7 @@ public sealed class SpriteShader2D : IShader2D
 
     public SpriteShader2D(Texture2D texture, SKFilterMode filterMode = SKFilterMode.Linear)
     {
-        ArgumentNullException.ThrowIfNull(texture);
+        ArgGuard.ThrowIfNull(texture);
         _texture = texture;
         _sampling = new SKSamplingOptions(filterMode, SKMipmapMode.None);
     }
@@ -23,7 +23,7 @@ public sealed class SpriteShader2D : IShader2D
         get => _texture;
         set
         {
-            ArgumentNullException.ThrowIfNull(value);
+            ArgGuard.ThrowIfNull(value);
             _texture = value;
         }
     }
@@ -34,8 +34,9 @@ public sealed class SpriteShader2D : IShader2D
 
     public SKShader CreateShader(in ShaderContext context)
     {
-        if (!context.LocalBounds.IsFinite)
-            throw new InvalidOperationException("Sprites require finite local bounds.");
+        StateGuard.ThrowIf(
+            !context.LocalBounds.IsFinite,
+            "Sprites require finite local bounds.");
 
         var bounds = context.LocalBounds;
         var scaleX = bounds.Size.X / Texture.Width;

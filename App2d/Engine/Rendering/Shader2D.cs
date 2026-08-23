@@ -49,8 +49,7 @@ public sealed class RepeatingStripeShader : IShader2D
 
     public RepeatingStripeShader(SKColor tileColor, SKColor seamColor, float stripeWidth)
     {
-        if (!float.IsFinite(stripeWidth) || stripeWidth <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(stripeWidth));
+        ArgGuard.ThrowIfNotPositive(stripeWidth);
 
         _colors = [tileColor, tileColor, seamColor, seamColor];
         _stripeWidth = stripeWidth;

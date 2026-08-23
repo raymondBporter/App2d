@@ -8,7 +8,7 @@ public sealed class TextureCache2D : IDisposable
 
     public TextureCache2D(string contentRoot)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(contentRoot);
+        ArgGuard.ThrowIfNullOrWhiteSpace(contentRoot);
         ContentRoot = Path.GetFullPath(contentRoot);
     }
 
@@ -56,9 +56,11 @@ public sealed class TextureCache2D : IDisposable
 
     private string ResolvePath(string relativePath)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
+        ArgGuard.ThrowIfNullOrWhiteSpace(relativePath);
         if (Path.IsPathRooted(relativePath))
-            throw new ArgumentException("Texture cache paths must be relative to the content root.", nameof(relativePath));
+            ArgGuard.ThrowInvalid(
+                relativePath,
+                "Texture cache paths must be relative to the content root.");
 
         var fullPath = Path.GetFullPath(Path.Combine(ContentRoot, relativePath));
         var relativeToRoot = Path.GetRelativePath(ContentRoot, fullPath);
@@ -66,7 +68,9 @@ public sealed class TextureCache2D : IDisposable
             relativeToRoot.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) ||
             Path.IsPathRooted(relativeToRoot))
         {
-            throw new ArgumentException("Texture path must stay inside the content root.", nameof(relativePath));
+            ArgGuard.ThrowInvalid(
+                relativePath,
+                "Texture path must stay inside the content root.");
         }
 
         return fullPath;
@@ -80,6 +84,5 @@ public sealed class TextureCache2D : IDisposable
         _textures.Clear();
     }
 
-    private void ThrowIfDisposed() =>
-        ObjectDisposedException.ThrowIf(_disposed, this);
+    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 }

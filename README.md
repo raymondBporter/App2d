@@ -11,14 +11,23 @@ The engine is grouped by responsibility:
   `Engine/Collision/Filtering` contains their generic filtering contract.
 - `Engine/Collision/Contacts` contains overlap/contact generation. Shape-pair code is
   split into circle, capsule, polygon/SAT, and utility partials behind one dispatcher.
+- `Engine/Collision/Queries` contains rays, exact shape intersections, and scene/physics
+  raycasts. Query hits retain direct references to the object or body that was hit.
 - `Engine/Physics/Integration`, `Engine/Physics/Filtering`, and `Engine/Physics/Solvers`
   contain physics-specific policies; bodies, contacts, constraints, and the world remain
   at the physics root.
 
-When ray and segment queries arrive, `Engine/Collision/Intersections` can be a sibling
-of `Contacts`. That keeps hit queries (point, distance, normal) separate from solver
-contacts (normal and penetration) while still allowing both to reuse the math and
-closest-point helpers.
+`ArgGuard` centralizes null, null-or-whitespace, and range validation for integers,
+finite scalars, and `Vector2` values. It uses caller expressions for parameter names and
+preserves rejected range values in `ArgumentOutOfRangeException.ActualValue`; successful
+checks do not allocate. Specialized guards cover positive, non-negative, bounded, and
+non-zero vector inputs, plus minimum lengths for span-backed collections. Unbounded ray
+distances deliberately have a separate guard that permits positive infinity while
+rejecting negative values and NaN.
+
+`StateGuard` performs the corresponding checks for invalid engine state while preserving
+`InvalidOperationException` semantics. Physics iteration settings, collapsed transforms,
+and renderer lifecycle checks therefore do not masquerade as caller argument failures.
 
 Geometry lives under `Engine/Geometry`:
 
@@ -53,7 +62,8 @@ Finite convex shapes also implement `IConvexShape2D.GetSupportPoint`. The generi
 `Collision/Contacts/HalfSpaceCollision2D` query uses that support mapping to return a world-space contact
 normal, penetration depth, and minimum translation vector for any convex shape against
 a transformed half-space. `ConstrainOutside` applies the MTV to the object's position.
-Ray and segment casts are intentionally left for the separate intersection API.
+Raycasts remain separate because query hits describe a point, surface normal, and travel
+distance, while solver contacts describe penetration between two shapes.
 
 `ShapeCollision2D` uses nested type switches: one selects the first-shape row and the
 second selects its implemented pair. Unknown pairs return no contact, and reverse-order
@@ -125,6 +135,35 @@ sorting detail rather than coupling consumers to positions in the source list.
 motion-type policy. Its defaults reject static-static, static-kinematic, and
 kinematic-kinematic pairs, so at least one body must currently be dynamic. The six
 pairing switches can opt specific combinations back in without changing the broad phase.
+
+## Ray queries
+
+`Ray2D` stores a normalized world-space direction, so every hit distance is measured in
+world units. `RayIntersection2D` intersects transformed circles/ellipses, rectangles,
+convex polygons, capsules, and half-spaces exactly. Rays that start inside a finite shape
+return its exit surface, and non-uniform scale and rotation preserve the correct world
+normal.
+
+The scene and physics extensions return the nearest hit without allocating:
+
+```csharp
+var ray = Ray2D.FromPoints(origin, mouseWorld);
+
+if (physics.Raycast(ray, 800f, out var hit, layerMask: WorldLayer))
+{
+    PhysicsBody2D body = hit.Item;
+    Vector2 point = hit.Point;
+    Vector2 normal = hit.Normal;
+    float distance = hit.Distance;
+}
+```
+
+`RaycastAll` writes nearest-first hits into a caller-provided span. If the span is too
+small, it retains the nearest hits. Because each generic hit contains a managed object
+reference, back that span with an array or pooled array rather than `stackalloc`.
+Physics queries skip disabled colliders and accept a layer mask, sensor toggle, and an
+optional predicate. Scene queries return `WorldObject2D` references; physics queries
+return `PhysicsBody2D` references.
 
 Bodies support static, kinematic, and dynamic motion; linear/angular velocity; force,
 torque, and impulses; mass and inertia; gravity scaling; restitution; sensors; and

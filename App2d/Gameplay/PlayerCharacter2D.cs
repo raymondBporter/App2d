@@ -20,9 +20,9 @@ public sealed class PlayerCharacter2D
         uint playerLayer,
         uint worldLayer)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(physics);
-        ArgumentNullException.ThrowIfNull(traversal);
+        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(traversal);
 
         WorldObject = new WorldObject2D(
             AxisAlignedRectangle2D.FromSize(new Vector2(46f, 70f)),

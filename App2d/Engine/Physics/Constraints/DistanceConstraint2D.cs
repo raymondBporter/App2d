@@ -12,10 +12,12 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
 
     public DistanceConstraint2D(PhysicsBody2D first, PhysicsBody2D second, float restLength)
     {
-        ArgumentNullException.ThrowIfNull(first);
-        ArgumentNullException.ThrowIfNull(second);
-        if (ReferenceEquals(first, second))
-            throw new ArgumentException("A distance constraint requires two different bodies.");
+        ArgGuard.ThrowIfNull(first);
+        ArgGuard.ThrowIfNull(second);
+        ArgGuard.ThrowIfSameReference(
+            first,
+            second,
+            "A distance constraint requires two different bodies.");
 
         First = first;
         Second = second;
@@ -30,27 +32,43 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
     public float RestLength
     {
         get => _restLength;
-        set => _restLength = ValidateNonNegativeFinite(value, nameof(RestLength));
+        set
+        {
+            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(RestLength));
+            _restLength = value;
+        }
     }
 
     // One means a full local projection. Smaller values make a softer constraint.
     public float PositionStrength
     {
         get => _positionStrength;
-        set => _positionStrength = ValidateUnitInterval(value, nameof(PositionStrength));
+        set
+        {
+            ArgGuard.ThrowIfNotInClosedRange(value, 0f, 1f, nameof(PositionStrength));
+            _positionStrength = value;
+        }
     }
 
     // One removes all relative velocity along the constraint axis.
     public float VelocityStrength
     {
         get => _velocityStrength;
-        set => _velocityStrength = ValidateUnitInterval(value, nameof(VelocityStrength));
+        set
+        {
+            ArgGuard.ThrowIfNotInClosedRange(value, 0f, 1f, nameof(VelocityStrength));
+            _velocityStrength = value;
+        }
     }
 
     public float PositionTolerance
     {
         get => _positionTolerance;
-        set => _positionTolerance = ValidateNonNegativeFinite(value, nameof(PositionTolerance));
+        set
+        {
+            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(PositionTolerance));
+            _positionTolerance = value;
+        }
     }
 
     public void SolveVelocity(float deltaSeconds)
@@ -103,19 +121,5 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         First.WorldObject.Transform.Position += correction * First.InverseMass;
         Second.WorldObject.Transform.Position -= correction * Second.InverseMass;
         return true;
-    }
-
-    private static float ValidateUnitInterval(float value, string propertyName)
-    {
-        if (!float.IsFinite(value) || value < 0f || value > 1f)
-            throw new ArgumentOutOfRangeException(propertyName, "Value must be finite and between zero and one.");
-        return value;
-    }
-
-    private static float ValidateNonNegativeFinite(float value, string propertyName)
-    {
-        if (!float.IsFinite(value) || value < 0f)
-            throw new ArgumentOutOfRangeException(propertyName, "Value must be finite and non-negative.");
-        return value;
     }
 }

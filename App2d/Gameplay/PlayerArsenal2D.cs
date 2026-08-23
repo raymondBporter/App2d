@@ -48,14 +48,14 @@ public sealed class PlayerArsenal2D
         uint playerLayer,
         uint worldLayer)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        _physics = physics ?? throw new ArgumentNullException(nameof(physics));
-        _ownerBody = ownerBody ?? throw new ArgumentNullException(nameof(ownerBody));
-        ArgumentNullException.ThrowIfNull(textures);
-        _traversal = traversal ?? throw new ArgumentNullException(nameof(traversal));
-        _platforms = platforms ?? throw new ArgumentNullException(nameof(platforms));
-        _combat = combat ?? throw new ArgumentNullException(nameof(combat));
-        _presentation = presentation ?? throw new ArgumentNullException(nameof(presentation));
+        ArgGuard.ThrowIfNull(scene);
+        _physics = ArgGuard.RequireNotNull(physics);
+        _ownerBody = ArgGuard.RequireNotNull(ownerBody);
+        ArgGuard.ThrowIfNull(textures);
+        _traversal = ArgGuard.RequireNotNull(traversal);
+        _platforms = ArgGuard.RequireNotNull(platforms);
+        _combat = ArgGuard.RequireNotNull(combat);
+        _presentation = ArgGuard.RequireNotNull(presentation);
 
         var fireballShader = new TextureShader2D(
             textures.Load("ember-energy.png"),
@@ -115,7 +115,9 @@ public sealed class PlayerArsenal2D
         PlayerWeapon2D.Sword => "SWORD",
         PlayerWeapon2D.BionicArm => "BIONIC ARM",
         PlayerWeapon2D.BallAndChain => "BALL & CHAIN",
-        _ => throw new ArgumentOutOfRangeException(nameof(_activeWeapon))
+        _ => throw ArgGuard.CreateOutOfRange(
+            _activeWeapon,
+            "Unknown active weapon.")
     };
 
     public IEnumerable<WorldObject2D> GetActiveAttackHitboxes()
@@ -172,7 +174,9 @@ public sealed class PlayerArsenal2D
                 break;
 
             default:
-                throw new ArgumentOutOfRangeException(nameof(_activeWeapon));
+                throw ArgGuard.CreateOutOfRange(
+                    _activeWeapon,
+                    "Unknown active weapon.");
         }
 
         return facing;

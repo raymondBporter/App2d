@@ -15,18 +15,17 @@ public sealed class ProceduralTileMap2D
         Func<int, int, bool> isSolid,
         Vector2 origin = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chunkSize);
-        if (!float.IsFinite(tileSize) || tileSize <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(tileSize));
+        ArgGuard.ThrowIfNotPositive(width);
+        ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.ThrowIfNotPositive(chunkSize);
+        ArgGuard.ThrowIfNotPositive(tileSize);
 
         Width = width;
         Height = height;
         TileSize = tileSize;
         ChunkSize = chunkSize;
         Origin = origin;
-        _isSolid = isSolid ?? throw new ArgumentNullException(nameof(isSolid));
+        _isSolid = ArgGuard.RequireNotNull(isSolid);
     }
 
     public int Width { get; }
@@ -130,7 +129,7 @@ public sealed class ProceduralTileMap2D
         if (chunk.X < 0 || chunk.X >= ChunkColumns ||
             chunk.Y < 0 || chunk.Y >= ChunkRows)
         {
-            throw new ArgumentOutOfRangeException(nameof(chunk));
+            ArgGuard.ThrowOutOfRange(chunk, "Chunk coordinates must be inside the map.");
         }
     }
 

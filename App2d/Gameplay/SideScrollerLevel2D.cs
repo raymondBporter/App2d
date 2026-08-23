@@ -35,8 +35,7 @@ public sealed class SideScrollerLevel2D
 
     public SideScrollerLevel2D(float tileSize)
     {
-        if (!float.IsFinite(tileSize) || tileSize <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(tileSize));
+        ArgGuard.ThrowIfNotPositive(tileSize);
 
         _tileSize = tileSize;
         _generator = new JumpableWorldGenerator2D(
@@ -80,11 +79,12 @@ public sealed class SideScrollerLevel2D
         uint playerLayer,
         uint enemyLayer)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(physics);
-        ArgumentNullException.ThrowIfNull(platformShader);
-        if (_scene is not null)
-            throw new InvalidOperationException("The level environment has already been created.");
+        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(platformShader);
+        StateGuard.ThrowIf(
+            _scene is not null,
+            "The level environment has already been created.");
 
         _scene = scene;
         _physics = physics;
@@ -100,11 +100,11 @@ public sealed class SideScrollerLevel2D
 
     public void UpdateStreaming(Vector2 focus)
     {
-        if (_scene is null || _physics is null ||
-            _platformShader is null || _grassShader is null)
-        {
-            throw new InvalidOperationException("Create the level environment before streaming it.");
-        }
+        ArgGuard.ThrowIfNotFinite(focus);
+        StateGuard.ThrowIf(
+            _scene is null || _physics is null ||
+            _platformShader is null || _grassShader is null,
+            "Create the level environment before streaming it.");
 
         var center = TileMap.WorldToChunk(focus);
         var minimumX = Math.Max(0, center.X - HorizontalChunkRadius);
@@ -136,10 +136,15 @@ public sealed class SideScrollerLevel2D
 
     public void CreateMechanicsPlaygroundEnemies()
     {
-        if (_scene is null || _physics is null)
-            throw new InvalidOperationException("Create the level environment before its enemies.");
-        if (_mechanicsEnemiesCreated)
-            throw new InvalidOperationException("The mechanics enemies have already been created.");
+        var scene = StateGuard.RequireNotNull(
+            _scene,
+            "Create the level environment before its enemies.");
+        var physics = StateGuard.RequireNotNull(
+            _physics,
+            "Create the level environment before its enemies.");
+        StateGuard.ThrowIf(
+            _mechanicsEnemiesCreated,
+            "The mechanics enemies have already been created.");
 
         _mechanicsEnemiesCreated = true;
         var random = new SpatialRandom2D(MechanicsEnemySeed);
@@ -171,9 +176,9 @@ public sealed class SideScrollerLevel2D
             worldObject.Transform.Position = new Vector2(
                 TileCenterX(placement.TileX),
                 TileMap.Origin.Y + (placement.SurfaceTileY + 1) * _tileSize + 24f);
-            _scene.Add(worldObject);
+            scene.Add(worldObject);
 
-            var body = _physics.AddBody(worldObject, BodyMotionType2D.Dynamic);
+            var body = physics.AddBody(worldObject, BodyMotionType2D.Dynamic);
             body.Restitution = 0f;
             body.Mass = 1.25f;
             body.CollisionLayer = _enemyLayer;

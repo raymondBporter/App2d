@@ -22,7 +22,7 @@ public sealed class Texture2D : IDisposable
 
     public static Texture2D Load(string path)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgGuard.ThrowIfNullOrWhiteSpace(path);
 
         var fullPath = Path.GetFullPath(path);
         if (!File.Exists(fullPath))

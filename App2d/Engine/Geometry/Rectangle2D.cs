@@ -7,8 +7,7 @@ public class Rectangle2D : IConvexShape2D
 {
     public Rectangle2D(Vector2 min, Vector2 max)
     {
-        if (!IsFinite(min) || !IsFinite(max) || min.X >= max.X || min.Y >= max.Y)
-            throw new ArgumentException("Rectangle min must be finite and strictly below max.");
+        ArgGuard.ThrowIfNotComponentWiseLessThan(min, max);
 
         Min = min;
         Max = max;
@@ -29,13 +28,10 @@ public class Rectangle2D : IConvexShape2D
 
     public static Rectangle2D FromSize(Vector2 size, Vector2 center = default)
     {
-        if (!IsFinite(size) || size.X <= 0f || size.Y <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(size), "Size must be positive and finite.");
+        ArgGuard.ThrowIfNotPositive(size);
+        ArgGuard.ThrowIfNotFinite(center);
 
         var halfSize = size / 2f;
         return new Rectangle2D(center - halfSize, center + halfSize);
     }
-
-    private static bool IsFinite(Vector2 value) =>
-        float.IsFinite(value.X) && float.IsFinite(value.Y);
 }

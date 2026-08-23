@@ -43,16 +43,12 @@ public sealed class PhysicsWorld2D
 
     public void Step(float deltaSeconds)
     {
-        if (!float.IsFinite(deltaSeconds) || deltaSeconds < 0f)
-            throw new ArgumentOutOfRangeException(nameof(deltaSeconds));
+        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
         if (deltaSeconds == 0f)
             return;
-        if (!float.IsFinite(MaxSubstepSeconds) || MaxSubstepSeconds <= 0f)
-            throw new InvalidOperationException("MaxSubstepSeconds must be positive and finite.");
-        if (PositionIterations < 1)
-            throw new InvalidOperationException("PositionIterations must be at least one.");
-        if (VelocityIterations < 1)
-            throw new InvalidOperationException("VelocityIterations must be at least one.");
+        StateGuard.ThrowIfNotPositive(MaxSubstepSeconds);
+        StateGuard.ThrowIfLessThan(PositionIterations, 1);
+        StateGuard.ThrowIfLessThan(VelocityIterations, 1);
 
         foreach (var body in _bodies)
         {

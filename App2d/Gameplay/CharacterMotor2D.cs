@@ -20,9 +20,9 @@ public sealed class CharacterMotor2D
         PhysicsBody2D body,
         TraversalMetrics2D metrics)
     {
-        ArgumentNullException.ThrowIfNull(physics);
-        ArgumentNullException.ThrowIfNull(body);
-        ArgumentNullException.ThrowIfNull(metrics);
+        ArgGuard.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(body);
+        ArgGuard.ThrowIfNull(metrics);
 
         _physics = physics;
         _body = body;

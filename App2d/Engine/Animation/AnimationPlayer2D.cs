@@ -19,24 +19,18 @@ public sealed class AnimationPlayer2D<TFrame>
         get => _playbackSpeed;
         set
         {
-            if (!float.IsFinite(value) || value < 0f)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(value),
-                    "Playback speed must be non-negative and finite.");
-            }
-
+            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(PlaybackSpeed));
             _playbackSpeed = value;
         }
     }
 
-    public TFrame CurrentFrame => Clip is null
-        ? throw new InvalidOperationException("Play a clip before reading its current frame.")
-        : Clip[CurrentFrameIndex];
+    public TFrame CurrentFrame => StateGuard.RequireNotNull(
+        Clip,
+        "Play a clip before reading its current frame.")[CurrentFrameIndex];
 
     public void Play(AnimationClip2D<TFrame> clip, bool restart = false)
     {
-        ArgumentNullException.ThrowIfNull(clip);
+        ArgGuard.ThrowIfNull(clip);
 
         if (ReferenceEquals(Clip, clip) && !restart && IsPlaying)
             return;
@@ -69,12 +63,7 @@ public sealed class AnimationPlayer2D<TFrame>
 
     public void Update(float deltaSeconds)
     {
-        if (!float.IsFinite(deltaSeconds) || deltaSeconds < 0f)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(deltaSeconds),
-                "Delta time must be non-negative and finite.");
-        }
+        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
         if (!IsPlaying || Clip is null || deltaSeconds == 0f || PlaybackSpeed == 0f)
             return;
 

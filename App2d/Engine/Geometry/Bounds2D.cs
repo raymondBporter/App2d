@@ -39,8 +39,7 @@ public readonly record struct Bounds2D(Vector2 Min, Vector2 Max)
 
     public static Bounds2D FromPoints(ReadOnlySpan<Vector2> points)
     {
-        if (points.IsEmpty)
-            throw new ArgumentException("Bounds need at least one point.", nameof(points));
+        ArgGuard.ThrowIfTooShort(points, 1);
 
         var min = points[0];
         var max = points[0];

@@ -13,19 +13,12 @@ public sealed class AnimationClip2D<TFrame>
         float framesPerSecond,
         bool isLooping = true)
     {
-        ArgumentNullException.ThrowIfNull(frames);
-        if (!float.IsFinite(framesPerSecond) || framesPerSecond <= 0f)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(framesPerSecond),
-                "Frame rate must be positive and finite.");
-        }
+        ArgGuard.ThrowIfNull(frames);
+        ArgGuard.ThrowIfNotPositive(framesPerSecond);
 
         _frames = [.. frames];
-        if (_frames.Length == 0)
-            throw new ArgumentException("An animation clip needs at least one frame.", nameof(frames));
-        if (_frames.Any(static frame => frame is null))
-            throw new ArgumentException("Animation frames cannot contain null values.", nameof(frames));
+        ArgGuard.ThrowIfTooShort(_frames.AsSpan(), 1, nameof(frames));
+        ArgGuard.ThrowIfContainsNull(_frames.AsSpan(), nameof(frames));
 
         FramesPerSecond = framesPerSecond;
         IsLooping = isLooping;

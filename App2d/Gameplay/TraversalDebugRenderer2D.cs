@@ -14,7 +14,7 @@ public sealed class TraversalDebugRenderer2D
 
     public TraversalDebugRenderer2D(TraversalMetrics2D traversal)
     {
-        _traversal = traversal ?? throw new ArgumentNullException(nameof(traversal));
+        _traversal = ArgGuard.RequireNotNull(traversal);
         _runningJumpArc = traversal.BuildJumpArc(traversal.RunSpeed);
         _standingJumpArc = traversal.BuildJumpArc(0f);
         _runningJumpProfile = traversal.MeasureJump(traversal.RunSpeed);
@@ -23,7 +23,7 @@ public sealed class TraversalDebugRenderer2D
 
     public void Draw(Renderer2D renderer, Vector2 playerPosition, float facing)
     {
-        ArgumentNullException.ThrowIfNull(renderer);
+        ArgGuard.ThrowIfNull(renderer);
         renderer.DrawWorldCircle(
             playerPosition,
             _traversal.GrappleReach,
