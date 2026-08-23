@@ -37,6 +37,7 @@ public sealed class DemoGame : Game2D
 
     public DemoGame()
     {
+        RegisterDebugPhysicsWorld(_physics);
         var largeTriangle = ConvexPolygon2D.CreateTriangle(75f);
         var smallTriangle = ConvexPolygon2D.CreateTriangle(45f);
 

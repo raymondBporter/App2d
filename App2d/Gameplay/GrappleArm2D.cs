@@ -25,23 +25,29 @@ public sealed class GrappleArm2D
     private readonly DistanceConstraint2D _rope;
     private readonly RopeVisual2D _ropeVisual;
     private ArmState _state;
+    private Vector2 _fireOrigin;
     private Vector2 _fireDirection = Vector2.UnitX;
     private float _traveled;
+    private bool _reachedExtensionLimit;
 
     public GrappleArm2D(
         Scene2D scene,
         PhysicsWorld2D physics,
         PhysicsBody2D ownerBody,
-        float maxReach = 430f)
+        float maxReach = 430f,
+        float rangeGrace = 8f)
     {
         ArgumentNullException.ThrowIfNull(scene);
         ArgumentNullException.ThrowIfNull(physics);
         ArgumentNullException.ThrowIfNull(ownerBody);
         if (!float.IsFinite(maxReach) || maxReach <= MinimumRopeLength)
             throw new ArgumentOutOfRangeException(nameof(maxReach));
+        if (!float.IsFinite(rangeGrace) || rangeGrace < 0f)
+            throw new ArgumentOutOfRangeException(nameof(rangeGrace));
 
         _ownerBody = ownerBody;
         MaxReach = maxReach;
+        RangeGrace = rangeGrace;
 
         Head = new WorldObject2D(
             new Circle2D(10f),
@@ -75,6 +81,9 @@ public sealed class GrappleArm2D
     public WorldObject2D Head { get; }
     public float HeadRadius => ((Circle2D)Head.Shape).Radius;
     public float MaxReach { get; }
+    public float RangeGrace { get; }
+    public Vector2 FireOrigin => _fireOrigin;
+    public Vector2 PreviousHeadPosition { get; private set; }
     public int AttackId { get; private set; }
     public bool IsActive => _state != ArmState.Idle;
     public bool IsExtending => _state == ArmState.Extending;
@@ -93,8 +102,11 @@ public sealed class GrappleArm2D
 
         AttackId++;
         _state = ArmState.Extending;
-        _traveled = 0f;
-        Head.Transform.Position = origin + _fireDirection * FireOffset;
+        _fireOrigin = origin;
+        _traveled = Math.Min(FireOffset, MaxReach);
+        _reachedExtensionLimit = _traveled >= MaxReach;
+        Head.Transform.Position = origin + _fireDirection * _traveled;
+        PreviousHeadPosition = Head.Transform.Position;
         Head.IsVisible = true;
         _ropeVisual.Show();
         return true;
@@ -105,11 +117,11 @@ public sealed class GrappleArm2D
         switch (_state)
         {
             case ArmState.Extending:
+                PreviousHeadPosition = Head.Transform.Position;
                 var step = Math.Min(HookSpeed * deltaSeconds, MaxReach - _traveled);
                 Head.Transform.Position += _fireDirection * step;
                 _traveled += step;
-                if (_traveled >= MaxReach)
-                    BeginRetract();
+                _reachedExtensionLimit = _traveled >= MaxReach;
                 break;
 
             case ArmState.Retracting:
@@ -127,14 +139,24 @@ public sealed class GrappleArm2D
         }
     }
 
+    public void FinishExtensionStep()
+    {
+        if (_state == ArmState.Extending && _reachedExtensionLimit)
+            BeginRetract();
+    }
+
     public bool TryLatch(Vector2 point)
     {
         if (_state != ArmState.Extending || !IsFinite(point))
             return false;
 
-        Head.Transform.Position = point;
         var ropeLength = Vector2.Distance(_ownerBody.WorldObject.Transform.Position, point);
-        _rope.RestLength = Math.Clamp(ropeLength, MinimumRopeLength, MaxReach);
+        if (ropeLength > MaxReach + RangeGrace)
+            return false;
+
+        // A grace hit keeps its actual length rather than snapping the player inward.
+        Head.Transform.Position = point;
+        _rope.RestLength = Math.Max(ropeLength, MinimumRopeLength);
         _rope.IsEnabled = true;
         _state = ArmState.Latched;
         return true;
@@ -163,6 +185,7 @@ public sealed class GrappleArm2D
     {
         _rope.IsEnabled = false;
         _state = ArmState.Idle;
+        _reachedExtensionLimit = false;
         Head.IsVisible = false;
         Head.Transform.Position = _ownerBody.WorldObject.Transform.Position;
         _ropeVisual.Hide();

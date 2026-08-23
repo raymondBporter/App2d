@@ -89,6 +89,12 @@ substep integration
     -> contact response + constraint velocity projections
 ```
 
+`GameHost` feeds gameplay exact 1/120-second updates through an accumulator. The
+physics world's matching maximum substep therefore becomes one physics step per
+gameplay update in normal operation, while rendering remains independent. Transient
+input is consumed after the first fixed update so a catch-up frame cannot repeat a
+button press or mouse-wheel action.
+
 The defaults are semi-implicit Euler integration, shape-based contact generation,
 mass-weighted MTV correction, and a linear impulse solver. None of those policies are
 hardwired: replace `Integrator`, `PairFilter`, `BroadPhase`, `ContactProvider`,
@@ -147,33 +153,75 @@ consumes contacts, so it does not care how they were produced.
 dotnet run --project App2d
 ```
 
-Startup currently runs `SideScrollerGame`. It provides merged tilemap collision, a
-rectangle player controller with acceleration, coyote time, jump buffering, variable
-jump height, fall respawning, smooth bounded camera follow, a goal flag, visible-world
-render culling, and two procedural parallax depths. Its gameplay layer adds reusable
-health, patrol enemies with hit-stun, a timed capsule sword hitbox, a seven-segment
-distance-constrained bionic arm, player damage and knockback, plus a fixed pool of 16
-circle fireballs. The rope begins at the real player body. When its descending tip
-contacts a platform's upward-facing top, only the tip is frozen; the existing link
-constraints shorten and transmit tension back to the player for pulling and swinging.
-Thin elevated tile rectangles are one-way, so the player can travel upward through them
-and land while descending. `BionicArm2D.LatchedPullSpeed` and `ReleaseUpwardImpulse` are
-the two main traversal tuning values. Releasing disconnects the physical constraints
-immediately so they do not consume the launch impulse; the visible rope then retracts
-kinematically. Player/enemy interaction is handled as gameplay overlap while both still
-collide with the static world through physics layers. `DemoGame` remains in the project
-as the shape/physics stress scene.
+Startup currently runs `SideScrollerGame`. It is the composition root and explicit
+fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of
+being implemented by the game class. `SideScrollerLevel2D` owns the single authored map,
+platforms, goal, and enemy population. `PlayerCharacter2D`, `PlayerArsenal2D`, and
+`PlayerPresentation2D` own the player's simulation, attacks, and visuals respectively.
+`CombatSystem2D` resolves attacks through generic source/sequence hit registration, so
+new weapons do not add weapon-specific bookkeeping to enemies. Camera/parallax, input
+mapping, and traversal diagnostics have similarly narrow owners.
+
+The level provides merged tilemap collision, one-way platforms, fall respawning, a goal
+flag, smooth bounded camera follow, and procedural parallax depths. Player traversal has
+acceleration, coyote time, jump buffering, variable jump height, a sword, a ceiling
+grapple, a ball and chain, and a fixed pool of 16 fireballs. Player/enemy interaction is
+handled as gameplay overlap while both still collide with the static world through
+physics layers. `DemoGame` remains the shape/physics stress scene.
+
+Player movement is owned by `Gameplay/CharacterMotor2D`. `PlayerIntent2D` describes
+what the player requested; the motor turns that into desired velocity and grace-window
+state; `PhysicsWorld2D` decides what the level and active constraints permit. The motor
+then consumes new landing contacts, allowing a buffered jump to fire on the fixed step
+that establishes ground support. It also provides a two-world-unit ground skin,
+four-unit landing snap, eight-unit upward corner correction, held-jump apex gravity,
+and a terminal fall speed without weakening collision tolerances globally.
+
+`TraversalMetrics2D` is the single source for locomotion tuning and simulates the same
+held-jump arc used at runtime. The F3 overlay draws the full-speed and standstill arcs,
+the truthful grapple radius, and their tile-relative measurements. This keeps authored
+distances tied to the movement implementation instead of duplicated design notes.
+
+The grapple counts its initial head offset as part of its advertised reach. Extension
+uses a swept-circle-versus-AABB query, including a small aim-assist radius, so a slow
+render frame cannot skip a platform. A grace-range latch retains its real rope length
+rather than silently snapping the player inward.
 
 ## Controls
 
 - A / D or Left / Right: run
 - W, Up, or Space: jump
 - Release jump early: shorten the jump
-- Ctrl + mouse wheel: switch between Sword and Bionic Arm
+- Ctrl + mouse wheel: switch between Sword, Bionic Arm, and Ball & Chain
 - J or left click: use the active weapon; the arm aims toward the mouse
-- While latched: the rope pulls inward; J or left click releases with an upward impulse
+- While latched: J or left click releases the grapple while preserving swing momentum
 - K or right click: shoot a fireball
+- F3: toggle traversal arcs, grapple reach, and movement metrics
+- Backtick (`): open or close the developer console
 - Escape: close
+
+## Developer console
+
+Press backtick (`) to open the in-game developer console. Gameplay keeps running, but
+gameplay input is suppressed while the console has focus. Variables can be read by name
+and changed with either whitespace or an equals sign:
+
+```text
+draw_fps
+draw_fps true
+draw_collision_shapes = true
+draw_graphics = false
+```
+
+`list` shows registered variables, `help` shows syntax, `toggle <name>` flips a boolean,
+and `clear` clears the output. Tab completes names and Up/Down navigate command history.
+Games can expose additional runtime values with
+`DeveloperConsole.RegisterVariable(name, getter, setter, description)` and can register
+their `PhysicsWorld2D` for collider visualization with `RegisterDebugPhysicsWorld`.
+Physics collision shapes are drawn as translucent green overlays above the game
+graphics, while active combat hitboxes use a red-orange overlay. Set
+`draw_graphics = false` (or `toggle draw_graphics`) to keep the simulation running and
+play using only collision geometry; the collision overlay and FPS display remain available.
 
 ## Frame and coordinate flow
 
@@ -218,3 +266,33 @@ and world-unit tile size. Ordinary textures require no custom shader compilation
 `SKRuntimeEffect` is only needed for future custom SkSL effects. The side-scroller uses
 `mossy-stone.png` on platforms and `ember-energy.png` on pooled fireballs while retaining
 the existing solid-color and gradient shader examples elsewhere.
+
+## Frame animation
+
+`Engine/Animation` contains a generic, update-driven frame animation layer. A clip can
+hold textures, shaders, numeric values, or any other frame state, so the timing code is
+not tied to the player or even to rendering:
+
+```csharp
+var clip = new AnimationClip2D<Texture2D>(frames, framesPerSecond: 10f);
+var animation = new AnimationPlayer2D<Texture2D>();
+animation.Play(clip);
+
+// Update loop:
+animation.Update(time.DeltaSeconds);
+spriteShader.Texture = animation.CurrentFrame;
+```
+
+Clips may loop or stop on their last frame. Players support pause, resume, stop,
+restart, and playback-speed changes. `SpriteShader2D` maps one complete texture onto
+finite object bounds, corrects image orientation for the engine's Y-up world, and can
+flip sprites horizontally or vertically.
+
+The side-scroller loads `Player/A1/walk-01.png` through `walk-06.png` as a looping walk
+clip and `sword-01.png` through `sword-06.png` as a one-shot clip synchronized to the
+existing sword hitbox. Fireball input plays normalized `shotgun-01.png` through
+`shotgun-08.png` as a 0.40-second one-shot clip, spawning the projectile at 0.20 seconds
+before returning to locomotion. Gameplay timing is expressed in seconds rather than
+frame indices, so changing the clip's frame count does not change firing behavior. The
+knight artwork is rendered by a separate visual object that follows the smaller physics
+collider, keeping transparent frame padding out of collision calculations.

@@ -7,6 +7,8 @@ namespace App2d.Gameplay;
 
 public sealed class PatrolEnemy2D
 {
+    private readonly Dictionary<object, int> _lastAttackIds =
+        new(ReferenceEqualityComparer.Instance);
     private readonly IShader2D _normalShader;
     private readonly IShader2D _hitShader;
     private float _direction = 1f;
@@ -44,10 +46,20 @@ public sealed class PatrolEnemy2D
     public float PatrolMinX { get; }
     public float PatrolMaxX { get; }
     public float Speed { get; }
-    public int LastSwordAttackId { get; set; } = -1;
-    public int LastBionicArmAttackId { get; set; } = -1;
-    public int LastBallAndChainAttackId { get; set; } = -1;
     public bool IsAlive => Health.IsAlive;
+
+    public bool TryRegisterHit(object attackSource, int attackId)
+    {
+        ArgumentNullException.ThrowIfNull(attackSource);
+        if (_lastAttackIds.TryGetValue(attackSource, out var lastAttackId) &&
+            lastAttackId == attackId)
+        {
+            return false;
+        }
+
+        _lastAttackIds[attackSource] = attackId;
+        return true;
+    }
 
     public void Update(float deltaSeconds)
     {
