@@ -1,0 +1,104 @@
+namespace App2d.Engine.Animation;
+
+/// <summary>
+/// Advances a frame animation using update-loop time rather than render frequency.
+/// </summary>
+public sealed class AnimationPlayer2D<TFrame>
+{
+    private float _elapsedSeconds;
+    private float _playbackSpeed = 1f;
+
+    public AnimationClip2D<TFrame>? Clip { get; private set; }
+    public float ElapsedSeconds => _elapsedSeconds;
+    public int CurrentFrameIndex { get; private set; }
+    public bool IsPlaying { get; private set; }
+    public bool IsFinished { get; private set; }
+
+    public float PlaybackSpeed
+    {
+        get => _playbackSpeed;
+        set
+        {
+            if (!float.IsFinite(value) || value < 0f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(value),
+                    "Playback speed must be non-negative and finite.");
+            }
+
+            _playbackSpeed = value;
+        }
+    }
+
+    public TFrame CurrentFrame => Clip is null
+        ? throw new InvalidOperationException("Play a clip before reading its current frame.")
+        : Clip[CurrentFrameIndex];
+
+    public void Play(AnimationClip2D<TFrame> clip, bool restart = false)
+    {
+        ArgumentNullException.ThrowIfNull(clip);
+
+        if (ReferenceEquals(Clip, clip) && !restart && IsPlaying)
+            return;
+
+        Clip = clip;
+        _elapsedSeconds = 0f;
+        CurrentFrameIndex = 0;
+        IsFinished = false;
+        IsPlaying = true;
+    }
+
+    public void Pause() => IsPlaying = false;
+
+    public void Resume()
+    {
+        if (Clip is not null && !IsFinished)
+            IsPlaying = true;
+    }
+
+    public void Stop(bool resetToFirstFrame = true)
+    {
+        IsPlaying = false;
+        IsFinished = false;
+        if (!resetToFirstFrame)
+            return;
+
+        _elapsedSeconds = 0f;
+        CurrentFrameIndex = 0;
+    }
+
+    public void Update(float deltaSeconds)
+    {
+        if (!float.IsFinite(deltaSeconds) || deltaSeconds < 0f)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(deltaSeconds),
+                "Delta time must be non-negative and finite.");
+        }
+        if (!IsPlaying || Clip is null || deltaSeconds == 0f || PlaybackSpeed == 0f)
+            return;
+
+        _elapsedSeconds += deltaSeconds * PlaybackSpeed;
+        if (Clip.IsLooping)
+        {
+            _elapsedSeconds %= Clip.Duration;
+            CurrentFrameIndex = Math.Min(
+                (int)(_elapsedSeconds / Clip.FrameDuration),
+                Clip.FrameCount - 1);
+            return;
+        }
+
+        if (_elapsedSeconds >= Clip.Duration)
+        {
+            _elapsedSeconds = Clip.Duration;
+            CurrentFrameIndex = Clip.FrameCount - 1;
+            IsPlaying = false;
+            IsFinished = true;
+            return;
+        }
+
+        CurrentFrameIndex = Math.Min(
+            (int)(_elapsedSeconds / Clip.FrameDuration),
+            Clip.FrameCount - 1);
+    }
+}

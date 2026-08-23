@@ -12,6 +12,7 @@ public sealed class InputState
     private readonly HashSet<MouseButtons> _mouseButtonsReleased = [];
     private Vector2 _mouseClientPosition;
     private Vector2 _clientToDeviceScale = Vector2.One;
+    private bool _isSuppressed;
 
     public Vector2 MousePositionDevice => _mouseClientPosition * _clientToDeviceScale;
     public float MouseWheelDelta { get; private set; }
@@ -70,8 +71,18 @@ public sealed class InputState
         MouseWheelDelta = 0f;
     }
 
+    internal void SetSuppressed(bool isSuppressed)
+    {
+        _isSuppressed = isSuppressed;
+        ResetButtons();
+        EndFrame();
+    }
+
     private void SetKey(Keys key, bool isDown)
     {
+        if (_isSuppressed)
+            return;
+
         if (isDown)
         {
             if (_keysDown.Add(key))
@@ -85,6 +96,9 @@ public sealed class InputState
 
     private void SetMouseButton(MouseButtons button, bool isDown)
     {
+        if (_isSuppressed)
+            return;
+
         if (isDown)
         {
             if (_mouseButtonsDown.Add(button))

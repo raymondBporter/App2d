@@ -166,6 +166,125 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
             _hudTextPaint);
     }
 
+    public void DrawWorldCircle(
+        Vector2 center,
+        float radius,
+        SKColor color,
+        float strokeWidth = 2f)
+    {
+        if (!float.IsFinite(radius) || radius < 0f)
+            throw new ArgumentOutOfRangeException(nameof(radius));
+
+        var deviceCenter = camera.WorldToDevice(center);
+        using var paint = CreateStrokePaint(color, strokeWidth);
+        Canvas.DrawCircle(deviceCenter.X, deviceCenter.Y, radius * camera.Zoom, paint);
+    }
+
+    public void DrawWorldPolyline(
+        ReadOnlySpan<Vector2> points,
+        SKColor color,
+        float strokeWidth = 2f)
+    {
+        if (points.Length < 2)
+            return;
+
+        using var paint = CreateStrokePaint(color, strokeWidth);
+        using var pathBuilder = new SKPathBuilder();
+        var first = camera.WorldToDevice(points[0]);
+        pathBuilder.MoveTo(first.X, first.Y);
+        foreach (var point in points[1..])
+        {
+            var devicePoint = camera.WorldToDevice(point);
+            pathBuilder.LineTo(devicePoint.X, devicePoint.Y);
+        }
+
+        using var path = pathBuilder.Detach();
+        Canvas.DrawPath(path, paint);
+    }
+
+    public void DrawShapeOutline(WorldObject2D worldObject, SKColor color, float screenStrokeWidth = 2f)
+    {
+        ArgumentNullException.ThrowIfNull(worldObject);
+        if (!float.IsFinite(screenStrokeWidth) || screenStrokeWidth <= 0f)
+            throw new ArgumentOutOfRangeException(nameof(screenStrokeWidth));
+
+        var worldBounds = worldObject.WorldBounds;
+        if (worldBounds.IsFinite && !worldBounds.Intersects(_visibleWorldBounds))
+            return;
+
+        var objectToDevice = worldObject.Transform.LocalToWorldMatrix * camera.WorldToDeviceMatrix;
+        var localStrokeWidth = screenStrokeWidth / camera.Zoom;
+        using var paint = CreateStrokePaint(color, localStrokeWidth);
+        var skiaMatrix = ToSkiaMatrix(objectToDevice);
+        Canvas.Save();
+        Canvas.Concat(in skiaMatrix);
+        try
+        {
+            switch (worldObject.Shape)
+            {
+                case ConvexPolygon2D polygon:
+                    DrawConvexPolygon(polygon, paint);
+                    break;
+                case Circle2D circle:
+                    Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
+                    break;
+                case Capsule2D capsule:
+                    DrawCapsuleOutline(capsule, paint);
+                    break;
+                case Rectangle2D rectangle:
+                    Canvas.DrawRect(
+                        new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y),
+                        paint);
+                    break;
+                case HalfSpace2D halfSpace:
+                    DrawHalfSpaceBoundary(halfSpace, paint, objectToDevice);
+                    break;
+            }
+        }
+        finally
+        {
+            Canvas.Restore();
+        }
+    }
+
+    public void DrawShapeOverlay(
+        WorldObject2D worldObject,
+        SKColor fillColor,
+        SKColor outlineColor,
+        float screenStrokeWidth = 2f)
+    {
+        ArgumentNullException.ThrowIfNull(worldObject);
+        if (!float.IsFinite(screenStrokeWidth) || screenStrokeWidth <= 0f)
+            throw new ArgumentOutOfRangeException(nameof(screenStrokeWidth));
+
+        var worldBounds = worldObject.WorldBounds;
+        if (worldBounds.IsFinite && !worldBounds.Intersects(_visibleWorldBounds))
+            return;
+
+        var objectToDevice = worldObject.Transform.LocalToWorldMatrix * camera.WorldToDeviceMatrix;
+        using var fillPaint = new SKPaint
+        {
+            Color = fillColor,
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+        using var outlinePaint = CreateStrokePaint(
+            outlineColor,
+            screenStrokeWidth / camera.Zoom);
+        var skiaMatrix = ToSkiaMatrix(objectToDevice);
+        Canvas.Save();
+        Canvas.Concat(in skiaMatrix);
+        try
+        {
+            DrawShape(worldObject.Shape, fillPaint, objectToDevice, drawHalfSpaceFill: true);
+            DrawShape(worldObject.Shape, outlinePaint, objectToDevice, drawHalfSpaceFill: false);
+        }
+        finally
+        {
+            Canvas.Restore();
+        }
+    }
+
     public void Dispose()
     {
         _hudFont.Dispose();
@@ -190,12 +309,86 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         Canvas.DrawPath(path, paint);
     }
 
+    private void DrawShape(
+        IShape2D shape,
+        SKPaint paint,
+        Matrix3x2 objectToDevice,
+        bool drawHalfSpaceFill)
+    {
+        switch (shape)
+        {
+            case ConvexPolygon2D polygon:
+                DrawConvexPolygon(polygon, paint);
+                break;
+            case Circle2D circle:
+                Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
+                break;
+            case Capsule2D capsule when paint.Style == SKPaintStyle.Fill:
+                DrawCapsule(capsule, paint);
+                break;
+            case Capsule2D capsule:
+                DrawCapsuleOutline(capsule, paint);
+                break;
+            case Rectangle2D rectangle:
+                Canvas.DrawRect(
+                    new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y),
+                    paint);
+                break;
+            case HalfSpace2D halfSpace when drawHalfSpaceFill:
+                DrawHalfSpace(halfSpace, paint, objectToDevice);
+                break;
+            case HalfSpace2D halfSpace:
+                DrawHalfSpaceBoundary(halfSpace, paint, objectToDevice);
+                break;
+        }
+    }
+
     private void DrawCapsule(Capsule2D capsule, SKPaint paint)
     {
         paint.Style = SKPaintStyle.Stroke;
         paint.StrokeWidth = capsule.Radius * 2f;
         paint.StrokeCap = SKStrokeCap.Round;
         Canvas.DrawLine(capsule.Start.X, capsule.Start.Y, capsule.End.X, capsule.End.Y, paint);
+    }
+
+    private void DrawCapsuleOutline(Capsule2D capsule, SKPaint paint)
+    {
+        var axis = capsule.End - capsule.Start;
+        if (axis.LengthSquared() <= float.Epsilon)
+        {
+            Canvas.DrawCircle(capsule.Start.X, capsule.Start.Y, capsule.Radius, paint);
+            return;
+        }
+
+        var normal = Vector2.Normalize(new Vector2(-axis.Y, axis.X)) * capsule.Radius;
+        Canvas.DrawLine(
+            capsule.Start.X + normal.X,
+            capsule.Start.Y + normal.Y,
+            capsule.End.X + normal.X,
+            capsule.End.Y + normal.Y,
+            paint);
+        Canvas.DrawLine(
+            capsule.Start.X - normal.X,
+            capsule.Start.Y - normal.Y,
+            capsule.End.X - normal.X,
+            capsule.End.Y - normal.Y,
+            paint);
+        Canvas.DrawCircle(capsule.Start.X, capsule.Start.Y, capsule.Radius, paint);
+        Canvas.DrawCircle(capsule.End.X, capsule.End.Y, capsule.Radius, paint);
+    }
+
+    private void DrawHalfSpaceBoundary(
+        HalfSpace2D halfSpace,
+        SKPaint paint,
+        Matrix3x2 objectToDevice)
+    {
+        var visibleBounds = GetVisibleLocalBounds(objectToDevice);
+        var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
+        var extent = visibleBounds.Size.Length();
+        var center = halfSpace.Normal * halfSpace.Offset;
+        var start = center - tangent * extent;
+        var end = center + tangent * extent;
+        Canvas.DrawLine(start.X, start.Y, end.X, end.Y, paint);
     }
 
     private void DrawHalfSpace(

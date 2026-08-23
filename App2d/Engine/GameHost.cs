@@ -1,20 +1,28 @@
 using System.Diagnostics;
+using App2d.Engine.Diagnostics;
 using App2d.Engine.Rendering;
+using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 
 namespace App2d.Engine;
 
 public sealed class GameHost : IDisposable
 {
+    private const double FixedDeltaSeconds = 1d / 120d;
+    private const double MaximumFrameSeconds = 0.1d;
     private readonly Game2D _game;
     private readonly Form _window;
     private readonly SKControl _surface;
     private readonly InputState _input = new();
     private readonly Renderer2D _renderer;
+    private readonly DeveloperConsoleView _consoleView;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
     private readonly Stopwatch _clock = new();
     private FrameTime _frameTime;
+    private FrameTime _renderFrameTime;
+    private double _accumulator;
     private double _previousTime;
+    private double _simulationTime;
     private double _nextTitleUpdateTime;
     private bool _disposed;
 
@@ -31,11 +39,21 @@ public sealed class GameHost : IDisposable
         {
             Text = game.WindowTitle,
             ClientSize = new Size(2000, 1400),
-            StartPosition = FormStartPosition.CenterScreen
+            StartPosition = FormStartPosition.CenterScreen,
+            WindowState = FormWindowState.Maximized
         };
 
         _window.Controls.Add(_surface);
         _input.Attach(_window, _surface);
+        _consoleView = new DeveloperConsoleView(game.DeveloperConsole)
+        {
+            Visible = false
+        };
+        _window.Controls.Add(_consoleView);
+        PositionConsole();
+        _window.Resize += (_, _) => PositionConsole();
+        _window.KeyDown += OnWindowKeyDown;
+        _window.KeyPress += OnWindowKeyPress;
         _surface.PaintSurface += OnPaintSurface;
         _timer.Tick += OnTick;
         _window.FormClosed += (_, _) => _timer.Stop();
@@ -52,10 +70,17 @@ public sealed class GameHost : IDisposable
 
     private void OnTick(object? sender, EventArgs e)
     {
+        if (_consoleView.IsOpen && _surface.Focused)
+            _consoleView.FocusInput();
+
         var totalTime = _clock.Elapsed.TotalSeconds;
-        var deltaTime = (float)Math.Clamp(totalTime - _previousTime, 0d, 0.1d);
+        var elapsedSeconds = Math.Clamp(totalTime - _previousTime, 0d, MaximumFrameSeconds);
         _previousTime = totalTime;
-        _frameTime = new FrameTime(deltaTime, totalTime, _frameTime.FrameNumber + 1);
+        _accumulator = Math.Min(_accumulator + elapsedSeconds, MaximumFrameSeconds);
+        _renderFrameTime = new FrameTime(
+            (float)elapsedSeconds,
+            totalTime,
+            _renderFrameTime.FrameNumber + 1);
 
         var canvasSize = _surface.CanvasSize;
         var deviceWidth = canvasSize.Width > 0
@@ -67,14 +92,24 @@ public sealed class GameHost : IDisposable
         _input.SetDeviceMapping(_surface.ClientSize, deviceWidth, deviceHeight);
         _game.Camera.SetViewport(deviceWidth, deviceHeight);
 
-        if (_input.WasKeyPressed(Keys.Escape))
+        if (!_consoleView.IsOpen && _input.WasKeyPressed(Keys.Escape))
         {
             _input.EndFrame();
             _window.Close();
             return;
         }
 
-        _game.Update(_frameTime, _input);
+        while (_accumulator >= FixedDeltaSeconds)
+        {
+            _simulationTime += FixedDeltaSeconds;
+            _frameTime = new FrameTime(
+                (float)FixedDeltaSeconds,
+                _simulationTime,
+                _frameTime.FrameNumber + 1);
+            _game.Update(_frameTime, _input);
+            _input.EndFrame();
+            _accumulator -= FixedDeltaSeconds;
+        }
 
         if (totalTime >= _nextTitleUpdateTime)
         {
@@ -83,16 +118,81 @@ public sealed class GameHost : IDisposable
                 _window.Text = title;
             _nextTitleUpdateTime = totalTime + 0.25d;
         }
-        _input.EndFrame();
-
-        // Refresh invokes PaintSurface now, so every loop iteration is Update -> Render.
+        // Refresh invokes PaintSurface now. Simulation consumes real time in exact
+        // 1/120-second steps, independently of this timer's render cadence.
         _surface.Refresh();
     }
 
     private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
     {
         _renderer.BeginFrame(e.Surface.Canvas, e.Info.Width, e.Info.Height, _frameTime);
-        _game.Render(_renderer);
+        if (_game.DrawGraphics)
+        {
+            _game.Render(_renderer);
+        }
+        else
+        {
+            _renderer.Clear(new SKColor(24, 27, 36));
+        }
+        _game.RenderDiagnostics(_renderer, _renderFrameTime);
+    }
+
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Oemtilde)
+        {
+            SetConsoleOpen(!_consoleView.IsOpen);
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+        }
+        else if (e.KeyCode == Keys.Escape && _consoleView.IsOpen)
+        {
+            SetConsoleOpen(false);
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+        }
+        else if (_consoleView.IsOpen)
+        {
+            _consoleView.FocusInput();
+            if (_consoleView.HandleCommandKey(e.KeyCode))
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        }
+    }
+
+    private void OnWindowKeyPress(object? sender, KeyPressEventArgs e)
+    {
+        if (_consoleView.IsOpen && _consoleView.InsertCharacter(e.KeyChar))
+            e.Handled = true;
+    }
+
+    private void SetConsoleOpen(bool isOpen)
+    {
+        _input.SetSuppressed(isOpen);
+        if (isOpen)
+        {
+            _consoleView.Open();
+            // The toggle originates from the game surface. Move focus after that
+            // key event has fully unwound so the surface cannot reclaim it.
+            _window.BeginInvoke((Action)_consoleView.FocusInput);
+        }
+        else
+        {
+            _consoleView.CloseAndClearFocus();
+            _surface.Focus();
+        }
+    }
+
+    private void PositionConsole()
+    {
+        var height = Math.Clamp((int)(_window.ClientSize.Height * 0.42f), 240, 520);
+        _consoleView.Bounds = new Rectangle(
+            0,
+            Math.Max(0, _window.ClientSize.Height - height),
+            _window.ClientSize.Width,
+            Math.Min(height, _window.ClientSize.Height));
     }
 
     public void Dispose()
@@ -102,7 +202,10 @@ public sealed class GameHost : IDisposable
 
         _disposed = true;
         _timer.Dispose();
+        _window.KeyDown -= OnWindowKeyDown;
+        _window.KeyPress -= OnWindowKeyPress;
         _renderer.Dispose();
+        _consoleView.Dispose();
         _surface.Dispose();
         _window.Dispose();
         _game.Dispose();
