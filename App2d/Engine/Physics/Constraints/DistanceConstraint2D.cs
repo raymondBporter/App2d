@@ -1,0 +1,121 @@
+using System.Numerics;
+
+namespace App2d.Engine.Physics.Constraints;
+
+public sealed class DistanceConstraint2D : IPhysicsConstraint2D
+{
+    private const float MinimumDirectionLengthSquared = 1e-8f;
+    private float _restLength;
+    private float _positionStrength = 1f;
+    private float _velocityStrength = 1f;
+    private float _positionTolerance = 0.01f;
+
+    public DistanceConstraint2D(PhysicsBody2D first, PhysicsBody2D second, float restLength)
+    {
+        ArgumentNullException.ThrowIfNull(first);
+        ArgumentNullException.ThrowIfNull(second);
+        if (ReferenceEquals(first, second))
+            throw new ArgumentException("A distance constraint requires two different bodies.");
+
+        First = first;
+        Second = second;
+        RestLength = restLength;
+    }
+
+    public PhysicsBody2D First { get; }
+    public PhysicsBody2D Second { get; }
+    public bool IsEnabled { get; set; } = true;
+    public DistanceConstraintMode2D Mode { get; set; } = DistanceConstraintMode2D.Rod;
+
+    public float RestLength
+    {
+        get => _restLength;
+        set => _restLength = ValidateNonNegativeFinite(value, nameof(RestLength));
+    }
+
+    // One means a full local projection. Smaller values make a softer constraint.
+    public float PositionStrength
+    {
+        get => _positionStrength;
+        set => _positionStrength = ValidateUnitInterval(value, nameof(PositionStrength));
+    }
+
+    // One removes all relative velocity along the constraint axis.
+    public float VelocityStrength
+    {
+        get => _velocityStrength;
+        set => _velocityStrength = ValidateUnitInterval(value, nameof(VelocityStrength));
+    }
+
+    public float PositionTolerance
+    {
+        get => _positionTolerance;
+        set => _positionTolerance = ValidateNonNegativeFinite(value, nameof(PositionTolerance));
+    }
+
+    public void SolveVelocity(float deltaSeconds)
+    {
+        if (!IsEnabled)
+            return;
+
+        var delta = Second.WorldObject.Transform.Position - First.WorldObject.Transform.Position;
+        var lengthSquared = delta.LengthSquared();
+        var inverseMassSum = First.InverseMass + Second.InverseMass;
+        if (lengthSquared <= MinimumDirectionLengthSquared || inverseMassSum <= 0f)
+            return;
+
+        var length = MathF.Sqrt(lengthSquared);
+        var direction = delta / length;
+        var relativeSpeed = Vector2.Dot(Second.LinearVelocity - First.LinearVelocity, direction);
+        if (Mode == DistanceConstraintMode2D.Rope &&
+            (length < RestLength || relativeSpeed <= 0f))
+        {
+            return;
+        }
+
+        var correctionImpulse = direction * (relativeSpeed * VelocityStrength / inverseMassSum);
+        First.LinearVelocity += correctionImpulse * First.InverseMass;
+        Second.LinearVelocity -= correctionImpulse * Second.InverseMass;
+    }
+
+    public bool SolvePosition(float deltaSeconds)
+    {
+        if (!IsEnabled)
+            return false;
+
+        var delta = Second.WorldObject.Transform.Position - First.WorldObject.Transform.Position;
+        var lengthSquared = delta.LengthSquared();
+        var inverseMassSum = First.InverseMass + Second.InverseMass;
+        if (lengthSquared <= MinimumDirectionLengthSquared || inverseMassSum <= 0f)
+            return false;
+
+        var length = MathF.Sqrt(lengthSquared);
+        var error = length - RestLength;
+        if (Mode == DistanceConstraintMode2D.Rope
+            ? error <= PositionTolerance
+            : MathF.Abs(error) <= PositionTolerance)
+        {
+            return false;
+        }
+
+        var direction = delta / length;
+        var correction = direction * (error * PositionStrength / inverseMassSum);
+        First.WorldObject.Transform.Position += correction * First.InverseMass;
+        Second.WorldObject.Transform.Position -= correction * Second.InverseMass;
+        return true;
+    }
+
+    private static float ValidateUnitInterval(float value, string propertyName)
+    {
+        if (!float.IsFinite(value) || value < 0f || value > 1f)
+            throw new ArgumentOutOfRangeException(propertyName, "Value must be finite and between zero and one.");
+        return value;
+    }
+
+    private static float ValidateNonNegativeFinite(float value, string propertyName)
+    {
+        if (!float.IsFinite(value) || value < 0f)
+            throw new ArgumentOutOfRangeException(propertyName, "Value must be finite and non-negative.");
+        return value;
+    }
+}

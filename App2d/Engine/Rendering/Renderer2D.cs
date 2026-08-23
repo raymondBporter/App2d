@@ -1,0 +1,277 @@
+using System.Numerics;
+using App2d.Engine.Geometry;
+using SkiaSharp;
+
+namespace App2d.Engine.Rendering;
+
+public sealed class Renderer2D(Camera2D camera) : IDisposable
+{
+    private readonly SKFont _hudFont = new(null, 28f);
+    private readonly SKPaint _hudTextPaint = new()
+    {
+        Color = SKColors.White,
+        IsAntialias = true
+    };
+    private readonly SKPaint _hudBackgroundPaint = new()
+    {
+        Color = new SKColor(20, 28, 43, 220),
+        IsAntialias = true
+    };
+    private SKCanvas? _canvas;
+    private FrameTime _time;
+    private Bounds2D _visibleWorldBounds;
+
+    public void BeginFrame(SKCanvas canvas, int width, int height, FrameTime time)
+    {
+        _canvas = canvas;
+        _time = time;
+        camera.SetViewport(width, height);
+        Span<Vector2> viewportCorners =
+        [
+            camera.DeviceToWorld(Vector2.Zero),
+            camera.DeviceToWorld(new Vector2(width, 0f)),
+            camera.DeviceToWorld(new Vector2(width, height)),
+            camera.DeviceToWorld(new Vector2(0f, height)),
+        ];
+        _visibleWorldBounds = Bounds2D.FromPoints(viewportCorners);
+    }
+
+    public void Clear(SKColor color) => Canvas.Clear(color);
+
+    public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
+    {
+        var topLeft = camera.DeviceToWorld(Vector2.Zero);
+        var bottomRight = camera.DeviceToWorld(camera.ViewportSize);
+        var minX = Math.Min(topLeft.X, bottomRight.X);
+        var maxX = Math.Max(topLeft.X, bottomRight.X);
+        var minY = Math.Min(topLeft.Y, bottomRight.Y);
+        var maxY = Math.Max(topLeft.Y, bottomRight.Y);
+        var firstX = (int)MathF.Floor(minX / spacing);
+        var lastX = (int)MathF.Ceiling(maxX / spacing);
+        var firstY = (int)MathF.Floor(minY / spacing);
+        var lastY = (int)MathF.Ceiling(maxY / spacing);
+
+        using var minorPaint = CreateStrokePaint(new SKColor(255, 255, 255, 18), 1f);
+        using var majorPaint = CreateStrokePaint(new SKColor(255, 255, 255, 35), 1f);
+        using var axisPaint = CreateStrokePaint(new SKColor(255, 255, 255, 85), 2f);
+
+        for (var x = firstX; x <= lastX; x++)
+        {
+            var start = camera.WorldToDevice(new Vector2(x * spacing, minY));
+            var end = camera.WorldToDevice(new Vector2(x * spacing, maxY));
+            var paint = x == 0 ? axisPaint : x % majorLineEvery == 0 ? majorPaint : minorPaint;
+            Canvas.DrawLine(start.X, start.Y, end.X, end.Y, paint);
+        }
+
+        for (var y = firstY; y <= lastY; y++)
+        {
+            var start = camera.WorldToDevice(new Vector2(minX, y * spacing));
+            var end = camera.WorldToDevice(new Vector2(maxX, y * spacing));
+            var paint = y == 0 ? axisPaint : y % majorLineEvery == 0 ? majorPaint : minorPaint;
+            Canvas.DrawLine(start.X, start.Y, end.X, end.Y, paint);
+        }
+    }
+
+    public void Draw(Scene2D scene)
+    {
+        foreach (var worldObject in scene)
+            Draw(worldObject);
+    }
+
+    public void Draw(WorldObject2D worldObject)
+    {
+        if (!worldObject.IsVisible)
+            return;
+        var worldBounds = worldObject.WorldBounds;
+        if (worldBounds.IsFinite && !worldBounds.Intersects(_visibleWorldBounds))
+            return;
+
+        // This is the whole spatial pipeline: object -> world -> Skia device pixels.
+        var objectToDevice =
+            worldObject.Transform.LocalToWorldMatrix * camera.WorldToDeviceMatrix;
+
+        var shaderBounds = worldObject.Shape.LocalBounds.IsFinite
+            ? worldObject.Shape.LocalBounds
+            : GetVisibleLocalBounds(objectToDevice);
+        var shaderContext = new ShaderContext(
+            objectToDevice,
+            shaderBounds,
+            _time);
+        using var shader = worldObject.Shader.CreateShader(shaderContext);
+        using var paint = new SKPaint
+        {
+            Color = worldObject.Shader.BaseColor,
+            Shader = shader,
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
+
+        var skiaMatrix = ToSkiaMatrix(objectToDevice);
+        Canvas.Save();
+        Canvas.Concat(in skiaMatrix);
+        try
+        {
+            switch (worldObject.Shape)
+            {
+                case ConvexPolygon2D polygon:
+                    DrawConvexPolygon(polygon, paint);
+                    break;
+                case Circle2D circle:
+                    Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
+                    break;
+                case Capsule2D capsule:
+                    DrawCapsule(capsule, paint);
+                    break;
+                case Rectangle2D rectangle:
+                    Canvas.DrawRect(
+                        new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y),
+                        paint);
+                    break;
+                case HalfSpace2D halfSpace:
+                    DrawHalfSpace(halfSpace, paint, objectToDevice);
+                    break;
+                default:
+                    throw new NotSupportedException(
+                        $"No renderer is registered for {worldObject.Shape.GetType().Name}.");
+            }
+        }
+        finally
+        {
+            Canvas.Restore();
+        }
+    }
+
+    public void DrawScreenLabel(string text, Vector2 topLeft)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+
+        const float horizontalPadding = 14f;
+        const float verticalPadding = 9f;
+        var metrics = _hudFont.Metrics;
+        var textWidth = _hudFont.MeasureText(text, _hudTextPaint);
+        var textHeight = metrics.Descent - metrics.Ascent;
+        var bounds = new SKRect(
+            topLeft.X,
+            topLeft.Y,
+            topLeft.X + textWidth + horizontalPadding * 2f,
+            topLeft.Y + textHeight + verticalPadding * 2f);
+
+        Canvas.DrawRoundRect(bounds, 9f, 9f, _hudBackgroundPaint);
+        Canvas.DrawText(
+            text,
+            topLeft.X + horizontalPadding,
+            topLeft.Y + verticalPadding - metrics.Ascent,
+            SKTextAlign.Left,
+            _hudFont,
+            _hudTextPaint);
+    }
+
+    public void Dispose()
+    {
+        _hudFont.Dispose();
+        _hudTextPaint.Dispose();
+        _hudBackgroundPaint.Dispose();
+    }
+
+    private SKCanvas Canvas =>
+        _canvas ?? throw new InvalidOperationException("BeginFrame must be called before drawing.");
+
+    private void DrawConvexPolygon(ConvexPolygon2D polygon, SKPaint paint)
+    {
+        var vertices = polygon.Vertices;
+        using var pathBuilder = new SKPathBuilder();
+        pathBuilder.MoveTo(vertices[0].X, vertices[0].Y);
+
+        foreach (var vertex in vertices[1..])
+            pathBuilder.LineTo(vertex.X, vertex.Y);
+
+        pathBuilder.Close();
+        using var path = pathBuilder.Detach();
+        Canvas.DrawPath(path, paint);
+    }
+
+    private void DrawCapsule(Capsule2D capsule, SKPaint paint)
+    {
+        paint.Style = SKPaintStyle.Stroke;
+        paint.StrokeWidth = capsule.Radius * 2f;
+        paint.StrokeCap = SKStrokeCap.Round;
+        Canvas.DrawLine(capsule.Start.X, capsule.Start.Y, capsule.End.X, capsule.End.Y, paint);
+    }
+
+    private void DrawHalfSpace(
+        HalfSpace2D halfSpace,
+        SKPaint paint,
+        Matrix3x2 objectToDevice)
+    {
+        var visibleBounds = GetVisibleLocalBounds(objectToDevice);
+        Span<Vector2> corners =
+        [
+            visibleBounds.Min,
+            new Vector2(visibleBounds.Max.X, visibleBounds.Min.Y),
+            visibleBounds.Max,
+            new Vector2(visibleBounds.Min.X, visibleBounds.Max.Y)
+        ];
+
+        var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
+        var minTangent = float.PositiveInfinity;
+        var maxTangent = float.NegativeInfinity;
+        var minNormal = float.PositiveInfinity;
+        foreach (var corner in corners)
+        {
+            var tangentProjection = Vector2.Dot(corner, tangent);
+            minTangent = Math.Min(minTangent, tangentProjection);
+            maxTangent = Math.Max(maxTangent, tangentProjection);
+            minNormal = Math.Min(minNormal, Vector2.Dot(corner, halfSpace.Normal));
+        }
+
+        var margin = Math.Max(visibleBounds.Size.Length() * 0.1f, 10f);
+        minTangent -= margin;
+        maxTangent += margin;
+        var deepProjection = Math.Min(minNormal, halfSpace.Offset) - margin;
+        var boundaryCenter = halfSpace.Normal * halfSpace.Offset;
+
+        Span<Vector2> vertices =
+        [
+            boundaryCenter + tangent * minTangent,
+            boundaryCenter + tangent * maxTangent,
+            halfSpace.Normal * deepProjection + tangent * maxTangent,
+            halfSpace.Normal * deepProjection + tangent * minTangent
+        ];
+
+        using var pathBuilder = new SKPathBuilder();
+        pathBuilder.MoveTo(vertices[0].X, vertices[0].Y);
+        foreach (var vertex in vertices[1..])
+            pathBuilder.LineTo(vertex.X, vertex.Y);
+        pathBuilder.Close();
+        using var path = pathBuilder.Detach();
+        Canvas.DrawPath(path, paint);
+    }
+
+    private Bounds2D GetVisibleLocalBounds(Matrix3x2 objectToDevice)
+    {
+        if (!Matrix3x2.Invert(objectToDevice, out var deviceToObject))
+            throw new InvalidOperationException("Cannot render a shape with a singular transform.");
+
+        Span<Vector2> corners =
+        [
+            Vector2.Transform(Vector2.Zero, deviceToObject),
+            Vector2.Transform(new Vector2(camera.ViewportSize.X, 0f), deviceToObject),
+            Vector2.Transform(camera.ViewportSize, deviceToObject),
+            Vector2.Transform(new Vector2(0f, camera.ViewportSize.Y), deviceToObject)
+        ];
+        return Bounds2D.FromPoints(corners);
+    }
+
+    private static SKMatrix ToSkiaMatrix(Matrix3x2 matrix) => new(
+        matrix.M11, matrix.M21, matrix.M31,
+        matrix.M12, matrix.M22, matrix.M32,
+        0f, 0f, 1f);
+
+    private static SKPaint CreateStrokePaint(SKColor color, float width) => new()
+    {
+        Color = color,
+        StrokeWidth = width,
+        IsAntialias = true,
+        Style = SKPaintStyle.Stroke
+    };
+}
