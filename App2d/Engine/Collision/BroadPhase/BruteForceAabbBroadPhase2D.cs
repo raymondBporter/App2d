@@ -13,7 +13,7 @@ public sealed class BruteForceAabbBroadPhase2D<T> : IBroadPhase2D<T>
 
     public BruteForceAabbBroadPhase2D(Func<T, Bounds2D> getBounds)
     {
-        ArgumentNullException.ThrowIfNull(getBounds);
+        ArgGuard.ThrowIfNull(getBounds);
         _getBounds = getBounds;
     }
 
@@ -22,9 +22,9 @@ public sealed class BruteForceAabbBroadPhase2D<T> : IBroadPhase2D<T>
         IPairFilter2D<T> pairFilter,
         List<BroadPhasePair2D<T>> pairs)
     {
-        ArgumentNullException.ThrowIfNull(items);
-        ArgumentNullException.ThrowIfNull(pairFilter);
-        ArgumentNullException.ThrowIfNull(pairs);
+        ArgGuard.ThrowIfNull(items);
+        ArgGuard.ThrowIfNull(pairFilter);
+        ArgGuard.ThrowIfNull(pairs);
 
         pairs.Clear();
         _worldBounds.Clear();

@@ -63,10 +63,9 @@ public sealed class ConvexPolygon2D : IConvexShape2D
         float radius,
         float startingAngle = 0f)
     {
-        if (sideCount < 3)
-            throw new ArgumentOutOfRangeException(nameof(sideCount), "A polygon needs at least three sides.");
-        if (!float.IsFinite(radius) || radius <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(radius), "Radius must be positive and finite.");
+        ArgGuard.ThrowIfLessThan(sideCount, 3);
+        ArgGuard.ThrowIfNotPositive(radius);
+        ArgGuard.ThrowIfNotFinite(startingAngle);
 
         var vertices = new Vector2[sideCount];
         var angleStep = MathF.Tau / sideCount;
@@ -81,8 +80,7 @@ public sealed class ConvexPolygon2D : IConvexShape2D
 
     private static void Validate(ReadOnlySpan<Vector2> vertices)
     {
-        if (vertices.Length < 3)
-            throw new ArgumentException("A polygon needs at least three vertices.", nameof(vertices));
+        ArgGuard.ThrowIfTooShort(vertices, 3);
 
         var winding = 0f;
         for (var i = 0; i < vertices.Length; i++)
@@ -91,10 +89,9 @@ public sealed class ConvexPolygon2D : IConvexShape2D
             var next = vertices[(i + 1) % vertices.Length];
             var afterNext = vertices[(i + 2) % vertices.Length];
 
-            if (!float.IsFinite(current.X) || !float.IsFinite(current.Y))
-                throw new ArgumentException("Polygon vertices must be finite.", nameof(vertices));
+            ArgGuard.ThrowIfNotFinite(current, nameof(vertices));
             if (Vector2.DistanceSquared(current, next) <= Epsilon * Epsilon)
-                throw new ArgumentException("Adjacent polygon vertices must be distinct.", nameof(vertices));
+                ArgGuard.ThrowInvalid("Adjacent polygon vertices must be distinct.", nameof(vertices));
 
             var cross = (next - current).Cross(afterNext - next);
             if (MathF.Abs(cross) <= Epsilon)
@@ -104,11 +101,11 @@ public sealed class ConvexPolygon2D : IConvexShape2D
             if (winding == 0f)
                 winding = turn;
             else if (turn != winding)
-                throw new ArgumentException("Vertices must form a convex polygon in perimeter order.", nameof(vertices));
+                ArgGuard.ThrowInvalid("Vertices must form a convex polygon in perimeter order.", nameof(vertices));
         }
 
         if (winding == 0f)
-            throw new ArgumentException("Polygon vertices cannot all be collinear.", nameof(vertices));
+            ArgGuard.ThrowInvalid("Polygon vertices cannot all be collinear.", nameof(vertices));
     }
 
 }

@@ -9,12 +9,8 @@ public sealed class TextureShader2D : IShader2D
 
     public TextureShader2D(Texture2D texture, Vector2 tileSize, SKShaderTileMode tileModeX = SKShaderTileMode.Repeat, SKShaderTileMode tileModeY = SKShaderTileMode.Repeat, SKFilterMode filterMode = SKFilterMode.Linear)
     {
-        ArgumentNullException.ThrowIfNull(texture);
-        if (!float.IsFinite(tileSize.X) || tileSize.X <= 0f ||
-            !float.IsFinite(tileSize.Y) || tileSize.Y <= 0f)
-        {
-            throw new ArgumentOutOfRangeException(nameof(tileSize), "Tile size must be positive and finite.");
-        }
+        ArgGuard.ThrowIfNull(texture);
+        ArgGuard.ThrowIfNotPositive(tileSize);
 
         Texture = texture;
         TileSize = tileSize;

@@ -8,8 +8,8 @@ public sealed class AxisAlignedRectangle2D(Vector2 min, Vector2 max) : Rectangle
 {
     public static new AxisAlignedRectangle2D FromSize(Vector2 size, Vector2 center = default)
     {
-        if (!float.IsFinite(size.X) || !float.IsFinite(size.Y) || size.X <= 0f || size.Y <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(size), "Size must be positive and finite.");
+        ArgGuard.ThrowIfNotPositive(size);
+        ArgGuard.ThrowIfNotFinite(center);
 
         var halfSize = size / 2f;
         return new AxisAlignedRectangle2D(center - halfSize, center + halfSize);

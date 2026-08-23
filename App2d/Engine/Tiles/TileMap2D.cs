@@ -11,10 +11,10 @@ public sealed class TileMap2D
 
     public TileMap2D(int width, int height, float tileSize, Vector2 origin = default)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
-        if (!float.IsFinite(tileSize) || tileSize <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(tileSize));
+        ArgGuard.ThrowIfNotPositive(width);
+        ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.ThrowIfNotPositive(tileSize);
+        ArgGuard.ThrowIfNotFinite(origin);
 
         Width = width;
         Height = height;
@@ -27,9 +27,7 @@ public sealed class TileMap2D
     public int Height { get; }
     public float TileSize { get; }
     public Vector2 Origin { get; }
-    public Bounds2D WorldBounds => new(
-        Origin,
-        Origin + new Vector2(Width * TileSize, Height * TileSize));
+    public Bounds2D WorldBounds => new(Origin, Origin + new Vector2(Width * TileSize, Height * TileSize));
 
     public IReadOnlyList<Bounds2D> CollisionRectangles
     {
@@ -41,8 +39,7 @@ public sealed class TileMap2D
         }
     }
 
-    public bool IsSolid(int x, int y) =>
-        IsInside(x, y) && _solidTiles[y * Width + x];
+    public bool IsSolid(int x, int y) => IsInside(x, y) && _solidTiles[y * Width + x];
 
     public void SetSolid(int x, int y, bool isSolid = true)
     {
@@ -53,11 +50,13 @@ public sealed class TileMap2D
 
     public void Fill(int x, int y, int width, int height, bool isSolid = true)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
+        ArgGuard.ThrowIfNotPositive(width);
+        ArgGuard.ThrowIfNotPositive(height);
 
         if (!IsInside(x, y) || !IsInside(x + width - 1, y + height - 1))
-            throw new ArgumentOutOfRangeException(nameof(width), "Fill rectangle must stay inside the tilemap.");
+            ArgGuard.ThrowOutOfRange(
+                width,
+                "Fill rectangle must stay inside the tilemap.");
 
         for (var row = y; row < y + height; row++)
         {
@@ -117,12 +116,11 @@ public sealed class TileMap2D
         return true;
     }
 
-    private bool IsInside(int x, int y) =>
-        x >= 0 && x < Width && y >= 0 && y < Height;
+    private bool IsInside(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
 
     private void ValidateCoordinates(int x, int y)
     {
         if (!IsInside(x, y))
-            throw new ArgumentOutOfRangeException(nameof(x), $"Tile ({x}, {y}) is outside the map.");
+            ArgGuard.ThrowOutOfRange(x, $"Tile ({x}, {y}) is outside the map.");
     }
 }

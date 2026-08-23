@@ -33,9 +33,9 @@ public sealed class BallAndChain2D
         uint collisionLayer,
         uint collisionMask)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(physics);
-        ArgumentNullException.ThrowIfNull(ownerBody);
+        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(ownerBody);
 
         _ownerBody = ownerBody;
 
@@ -147,7 +147,7 @@ public sealed class BallAndChain2D
 
     public void UpdateAfterPhysics(PhysicsWorld2D physics)
     {
-        ArgumentNullException.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(physics);
         if (!IsActive)
             return;
 

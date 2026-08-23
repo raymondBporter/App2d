@@ -21,12 +21,11 @@ public sealed class RopeVisual2D
         float thickness,
         float linkBaseLength = 30f)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(shader);
-        ArgumentOutOfRangeException.ThrowIfLessThan(linkCount, 1);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(linkBaseLength, 0f);
-        if (!float.IsFinite(linkBaseLength))
-            throw new ArgumentOutOfRangeException(nameof(linkBaseLength));
+        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(shader);
+        ArgGuard.ThrowIfLessThan(linkCount, 1);
+        ArgGuard.ThrowIfNotPositive(thickness);
+        ArgGuard.ThrowIfNotPositive(linkBaseLength);
 
         _linkBaseLength = linkBaseLength;
         _links = new WorldObject2D[linkCount];

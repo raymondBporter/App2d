@@ -25,9 +25,9 @@ public sealed class SideScrollerCamera2D
         TileMap2D tileMap,
         Vector2 initialPlayerPosition)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        _camera = camera ?? throw new ArgumentNullException(nameof(camera));
-        _tileMap = tileMap ?? throw new ArgumentNullException(nameof(tileMap));
+        ArgGuard.ThrowIfNull(scene);
+        _camera = ArgGuard.RequireNotNull(camera);
+        _tileMap = ArgGuard.RequireNotNull(tileMap);
 
         _camera.Zoom = 1.35f;
         Reset(initialPlayerPosition);

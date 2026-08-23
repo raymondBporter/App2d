@@ -25,10 +25,8 @@ public sealed class PatrolEnemy2D
         IShader2D normalShader,
         IShader2D hitShader)
     {
-        if (patrolMinX >= patrolMaxX)
-            throw new ArgumentException("Patrol minimum must be below maximum.");
-        if (!float.IsFinite(speed) || speed <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(speed));
+        ArgGuard.ThrowIfGreaterThanOrEqual(patrolMinX, patrolMaxX);
+        ArgGuard.ThrowIfNotPositive(speed);
 
         WorldObject = worldObject;
         Body = body;
@@ -50,7 +48,7 @@ public sealed class PatrolEnemy2D
 
     public bool TryRegisterHit(object attackSource, int attackId)
     {
-        ArgumentNullException.ThrowIfNull(attackSource);
+        ArgGuard.ThrowIfNull(attackSource);
         if (_lastAttackIds.TryGetValue(attackSource, out var lastAttackId) &&
             lastAttackId == attackId)
         {

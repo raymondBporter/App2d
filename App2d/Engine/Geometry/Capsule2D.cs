@@ -6,10 +6,9 @@ public sealed class Capsule2D : IConvexShape2D
 {
     public Capsule2D(Vector2 start, Vector2 end, float radius)
     {
-        if (!IsFinite(start) || !IsFinite(end))
-            throw new ArgumentOutOfRangeException(nameof(start), "Capsule endpoints must be finite.");
-        if (!float.IsFinite(radius) || radius <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(radius), "Radius must be positive and finite.");
+        ArgGuard.ThrowIfNotFinite(start);
+        ArgGuard.ThrowIfNotFinite(end);
+        ArgGuard.ThrowIfNotPositive(radius);
 
         Start = start;
         End = end;
@@ -46,7 +45,4 @@ public sealed class Capsule2D : IConvexShape2D
 
         return endpoint + Vector2.Normalize(localDirection) * Radius;
     }
-
-    private static bool IsFinite(Vector2 value) =>
-        float.IsFinite(value.X) && float.IsFinite(value.Y);
 }

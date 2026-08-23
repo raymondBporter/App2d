@@ -15,7 +15,7 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
         Func<T, Bounds2D> getBounds,
         SweepAxis2D axis = SweepAxis2D.X)
     {
-        ArgumentNullException.ThrowIfNull(getBounds);
+        ArgGuard.ThrowIfNull(getBounds);
         _getBounds = getBounds;
         Axis = axis;
     }
@@ -27,9 +27,9 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
         IPairFilter2D<T> pairFilter,
         List<BroadPhasePair2D<T>> pairs)
     {
-        ArgumentNullException.ThrowIfNull(items);
-        ArgumentNullException.ThrowIfNull(pairFilter);
-        ArgumentNullException.ThrowIfNull(pairs);
+        ArgGuard.ThrowIfNull(items);
+        ArgGuard.ThrowIfNull(pairFilter);
+        ArgGuard.ThrowIfNull(pairs);
 
         pairs.Clear();
         WriteProxies(items);
@@ -66,7 +66,7 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
             {
                 SweepAxis2D.X => new Proxy(items[itemIndex], itemIndex, bounds.Left, bounds.Right, bounds.Bottom, bounds.Top),
                 SweepAxis2D.Y => new Proxy(items[itemIndex], itemIndex, bounds.Bottom, bounds.Top, bounds.Left, bounds.Right),
-                _ => throw new InvalidOperationException($"Unknown sweep axis: {Axis}.")
+                _ => throw StateGuard.Create($"Unknown sweep axis: {Axis}.")
             });
         }
     }

@@ -7,10 +7,8 @@ public sealed class HalfSpace2D : IShape2D
 {
     public HalfSpace2D(Vector2 outwardNormal, float offset)
     {
-        if (!float.IsFinite(outwardNormal.X) || !float.IsFinite(outwardNormal.Y) || outwardNormal.LengthSquared() <= float.Epsilon)
-            throw new ArgumentOutOfRangeException(nameof(outwardNormal), "Normal must be finite and non-zero.");
-        if (!float.IsFinite(offset))
-            throw new ArgumentOutOfRangeException(nameof(offset), "Offset must be finite.");
+        ArgGuard.ThrowIfNotFiniteOrZero(outwardNormal);
+        ArgGuard.ThrowIfNotFinite(offset);
 
         var normalLength = outwardNormal.Length();
         Normal = outwardNormal / normalLength;

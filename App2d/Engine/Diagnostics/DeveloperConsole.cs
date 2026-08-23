@@ -23,8 +23,8 @@ public sealed class DeveloperConsole
         Action<T> setter,
         string description = "")
     {
-        ArgumentNullException.ThrowIfNull(getter);
-        ArgumentNullException.ThrowIfNull(setter);
+        ArgGuard.ThrowIfNull(getter);
+        ArgGuard.ThrowIfNull(setter);
         name = ValidateName(name);
         EnsureNameAvailable(name);
 
@@ -41,7 +41,7 @@ public sealed class DeveloperConsole
         string description,
         Func<IReadOnlyList<string>, ConsoleCommandResult> execute)
     {
-        ArgumentNullException.ThrowIfNull(execute);
+        ArgGuard.ThrowIfNull(execute);
         name = ValidateName(name);
         EnsureNameAvailable(name);
         _commands.Add(name, new ConsoleCommand(name, description, execute));
@@ -158,16 +158,19 @@ public sealed class DeveloperConsole
 
     private void EnsureNameAvailable(string name)
     {
-        if (_variables.ContainsKey(name) || _commands.ContainsKey(name))
-            throw new InvalidOperationException($"A console variable or command named '{name}' is already registered.");
+        StateGuard.ThrowIf(
+            _variables.ContainsKey(name) || _commands.ContainsKey(name),
+            $"A console variable or command named '{name}' is already registered.");
     }
 
     private static string ValidateName(string name)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgGuard.ThrowIfNullOrWhiteSpace(name);
         name = name.Trim();
         if (!name.All(character => char.IsLetterOrDigit(character) || character is '_' or '.'))
-            throw new ArgumentException("Console names may only contain letters, digits, underscores, and periods.", nameof(name));
+            ArgGuard.ThrowInvalid(
+                name,
+                "Console names may only contain letters, digits, underscores, and periods.");
         return name;
     }
 

@@ -7,7 +7,7 @@ namespace App2d.Gameplay;
 public sealed class CombatSystem2D(IReadOnlyList<PatrolEnemy2D> enemies)
 {
     private readonly IReadOnlyList<PatrolEnemy2D> _enemies =
-        enemies ?? throw new ArgumentNullException(nameof(enemies));
+        ArgGuard.RequireNotNull(enemies);
 
     public int DefeatedEnemies { get; private set; }
 
@@ -19,9 +19,9 @@ public sealed class CombatSystem2D(IReadOnlyList<PatrolEnemy2D> enemies)
         Func<PatrolEnemy2D, Vector2> knockback,
         bool stopAfterFirstHit = false)
     {
-        ArgumentNullException.ThrowIfNull(hitbox);
-        ArgumentNullException.ThrowIfNull(attackSource);
-        ArgumentNullException.ThrowIfNull(knockback);
+        ArgGuard.ThrowIfNull(hitbox);
+        ArgGuard.ThrowIfNull(attackSource);
+        ArgGuard.ThrowIfNull(knockback);
 
         var hitAny = false;
         foreach (var enemy in _enemies)
@@ -47,8 +47,8 @@ public sealed class CombatSystem2D(IReadOnlyList<PatrolEnemy2D> enemies)
         int damage,
         Func<PatrolEnemy2D, Vector2> knockback)
     {
-        ArgumentNullException.ThrowIfNull(hitbox);
-        ArgumentNullException.ThrowIfNull(knockback);
+        ArgGuard.ThrowIfNull(hitbox);
+        ArgGuard.ThrowIfNull(knockback);
 
         foreach (var enemy in _enemies)
         {

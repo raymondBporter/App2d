@@ -16,8 +16,7 @@ public sealed class SideScrollerLevel2D
 
     public SideScrollerLevel2D(float tileSize)
     {
-        if (!float.IsFinite(tileSize) || tileSize <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(tileSize));
+        ArgGuard.ThrowIfNotPositive(tileSize);
 
         _tileSize = tileSize;
         TileMap = CreateTileMap(tileSize);
@@ -39,11 +38,12 @@ public sealed class SideScrollerLevel2D
         uint playerLayer,
         uint enemyLayer)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(physics);
-        ArgumentNullException.ThrowIfNull(platformShader);
-        if (_environmentCreated)
-            throw new InvalidOperationException("The level environment has already been created.");
+        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(platformShader);
+        StateGuard.ThrowIf(
+            _environmentCreated,
+            "The level environment has already been created.");
 
         _environmentCreated = true;
         var grassShader = new SolidColorShader(new SKColor(101, 205, 116));
@@ -85,12 +85,14 @@ public sealed class SideScrollerLevel2D
         uint worldLayer,
         uint enemyLayer)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(physics);
-        if (!_environmentCreated)
-            throw new InvalidOperationException("Create the level environment before its enemies.");
-        if (_enemiesCreated)
-            throw new InvalidOperationException("The level enemies have already been created.");
+        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(physics);
+        StateGuard.ThrowIf(
+            !_environmentCreated,
+            "Create the level environment before its enemies.");
+        StateGuard.ThrowIf(
+            _enemiesCreated,
+            "The level enemies have already been created.");
 
         _enemiesCreated = true;
         var hitShader = new SolidColorShader(new SKColor(255, 245, 245));

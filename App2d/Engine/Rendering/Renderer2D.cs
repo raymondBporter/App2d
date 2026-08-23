@@ -143,7 +143,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
 
     public void DrawScreenLabel(string text, Vector2 topLeft)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+        ArgGuard.ThrowIfNullOrWhiteSpace(text);
 
         const float horizontalPadding = 14f;
         const float verticalPadding = 9f;
@@ -172,8 +172,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         SKColor color,
         float strokeWidth = 2f)
     {
-        if (!float.IsFinite(radius) || radius < 0f)
-            throw new ArgumentOutOfRangeException(nameof(radius));
+        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
 
         var deviceCenter = camera.WorldToDevice(center);
         using var paint = CreateStrokePaint(color, strokeWidth);
@@ -204,9 +203,8 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
 
     public void DrawShapeOutline(WorldObject2D worldObject, SKColor color, float screenStrokeWidth = 2f)
     {
-        ArgumentNullException.ThrowIfNull(worldObject);
-        if (!float.IsFinite(screenStrokeWidth) || screenStrokeWidth <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(screenStrokeWidth));
+        ArgGuard.ThrowIfNull(worldObject);
+        ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
 
         var worldBounds = worldObject.WorldBounds;
         if (worldBounds.IsFinite && !worldBounds.Intersects(_visibleWorldBounds))
@@ -253,9 +251,8 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         SKColor outlineColor,
         float screenStrokeWidth = 2f)
     {
-        ArgumentNullException.ThrowIfNull(worldObject);
-        if (!float.IsFinite(screenStrokeWidth) || screenStrokeWidth <= 0f)
-            throw new ArgumentOutOfRangeException(nameof(screenStrokeWidth));
+        ArgGuard.ThrowIfNull(worldObject);
+        ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
 
         var worldBounds = worldObject.WorldBounds;
         if (worldBounds.IsFinite && !worldBounds.Intersects(_visibleWorldBounds))
@@ -292,8 +289,9 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         _hudBackgroundPaint.Dispose();
     }
 
-    private SKCanvas Canvas =>
-        _canvas ?? throw new InvalidOperationException("BeginFrame must be called before drawing.");
+    private SKCanvas Canvas => StateGuard.RequireNotNull(
+        _canvas,
+        "BeginFrame must be called before drawing.");
 
     private void DrawConvexPolygon(ConvexPolygon2D polygon, SKPaint paint)
     {
@@ -443,7 +441,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
     private Bounds2D GetVisibleLocalBounds(Matrix3x2 objectToDevice)
     {
         if (!Matrix3x2.Invert(objectToDevice, out var deviceToObject))
-            throw new InvalidOperationException("Cannot render a shape with a singular transform.");
+            StateGuard.Throw("Cannot render a shape with a singular transform.");
 
         Span<Vector2> corners =
         [

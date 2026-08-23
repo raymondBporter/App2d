@@ -28,19 +28,31 @@ public sealed class PhysicsBody2D(WorldObject2D worldObject, BodyMotionType2D mo
     public float OneWaySlop
     {
         get => _oneWaySlop;
-        set => _oneWaySlop = ValidateNonNegativeFinite(value, nameof(OneWaySlop));
+        set
+        {
+            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(OneWaySlop));
+            _oneWaySlop = value;
+        }
     }
 
     public float Mass
     {
         get => _mass;
-        set => _mass = ValidatePositiveFinite(value, nameof(Mass));
+        set
+        {
+            ArgGuard.ThrowIfNotPositive(value, nameof(Mass));
+            _mass = value;
+        }
     }
 
     public float MomentOfInertia
     {
         get => _momentOfInertia;
-        set => _momentOfInertia = ValidatePositiveFinite(value, nameof(MomentOfInertia));
+        set
+        {
+            ArgGuard.ThrowIfNotPositive(value, nameof(MomentOfInertia));
+            _momentOfInertia = value;
+        }
     }
 
     public float InverseMass => MotionType == BodyMotionType2D.Dynamic ? 1f / Mass : 0f;
@@ -71,18 +83,4 @@ public sealed class PhysicsBody2D(WorldObject2D worldObject, BodyMotionType2D mo
         IsCollider && other.IsCollider &&
         (CollisionMask & other.CollisionLayer) != 0u &&
         (other.CollisionMask & CollisionLayer) != 0u;
-
-    private static float ValidatePositiveFinite(float value, string propertyName)
-    {
-        if (!float.IsFinite(value) || value <= 0f)
-            throw new ArgumentOutOfRangeException(propertyName, "Value must be positive and finite.");
-        return value;
-    }
-
-    private static float ValidateNonNegativeFinite(float value, string propertyName)
-    {
-        if (!float.IsFinite(value) || value < 0f)
-            throw new ArgumentOutOfRangeException(propertyName, "Value must be finite and non-negative.");
-        return value;
-    }
 }

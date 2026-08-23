@@ -59,14 +59,14 @@ public abstract class Game2D : IDisposable
 
     protected void RegisterDebugPhysicsWorld(PhysicsWorld2D physicsWorld)
     {
-        ArgumentNullException.ThrowIfNull(physicsWorld);
+        ArgGuard.ThrowIfNull(physicsWorld);
         if (!_debugPhysicsWorlds.Contains(physicsWorld))
             _debugPhysicsWorlds.Add(physicsWorld);
     }
 
     protected void RegisterDebugAttackShapes(Func<IEnumerable<WorldObject2D>> provider)
     {
-        ArgumentNullException.ThrowIfNull(provider);
+        ArgGuard.ThrowIfNull(provider);
         if (!_debugAttackShapeProviders.Contains(provider))
             _debugAttackShapeProviders.Add(provider);
     }
