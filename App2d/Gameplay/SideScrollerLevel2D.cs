@@ -10,9 +10,28 @@ namespace App2d.Gameplay;
 
 public sealed class SideScrollerLevel2D
 {
+    // 10,000 tiles is 24.8 minutes at uninterrupted maximum run speed. Normal
+    // traversal should put a complete left-to-right trip in the 30-60 minute band.
+    private const int WorldWidthTiles = 10_000;
+    private const int WorldHeightTiles = 96;
+    private const int ChunkSizeTiles = 32;
+    private const int HorizontalChunkRadius = 2;
+    private const int VerticalChunkRadius = 1;
+    private const ulong WorldSeed = 0xA2D_2026_0823UL;
+    private const ulong MechanicsEnemySeed = WorldSeed ^ 0xE11E_5EEDUL;
+
     private readonly float _tileSize;
-    private bool _environmentCreated;
-    private bool _enemiesCreated;
+    private readonly JumpableWorldGenerator2D _generator;
+    private readonly Dictionary<TileChunk2D, LoadedChunk> _loadedChunks = [];
+    private readonly List<MechanicsEnemy> _mechanicsEnemies = [];
+    private Scene2D? _scene;
+    private PhysicsWorld2D? _physics;
+    private IShader2D? _platformShader;
+    private IShader2D? _grassShader;
+    private uint _worldLayer;
+    private uint _playerLayer;
+    private uint _enemyLayer;
+    private bool _mechanicsEnemiesCreated;
 
     public SideScrollerLevel2D(float tileSize)
     {
@@ -20,16 +39,38 @@ public sealed class SideScrollerLevel2D
             throw new ArgumentOutOfRangeException(nameof(tileSize));
 
         _tileSize = tileSize;
-        TileMap = CreateTileMap(tileSize);
-        SpawnPoint = TileCenter(4f, 2f) + new Vector2(0f, 38f);
-        GoalX = TileCenter(116f, 0f).X;
+        _generator = new JumpableWorldGenerator2D(
+            WorldSeed,
+            WorldWidthTiles,
+            WorldHeightTiles);
+        TileMap = new ProceduralTileMap2D(
+            WorldWidthTiles,
+            WorldHeightTiles,
+            tileSize,
+            ChunkSizeTiles,
+            _generator.IsSolid,
+            new Vector2(-512f, -640f));
+
+        const int spawnTileX = 4;
+        SpawnPoint = new Vector2(
+            TileCenterX(spawnTileX),
+            TileMap.Origin.Y + _generator.TerrainHeight(spawnTileX) * tileSize + 38f);
+
+        var goalTileX = WorldWidthTiles - 5;
+        GoalX = TileCenterX(goalTileX);
+        GoalGroundY = TileMap.Origin.Y + _generator.TerrainHeight(goalTileX) * tileSize;
     }
 
-    public TileMap2D TileMap { get; }
+    public ProceduralTileMap2D TileMap { get; }
     public Vector2 SpawnPoint { get; }
     public float GoalX { get; }
+    public float GoalGroundY { get; }
     public List<WorldObject2D> Platforms { get; } = [];
     public List<PatrolEnemy2D> Enemies { get; } = [];
+    public int ActiveChunkCount => _loadedChunks.Count;
+    public int LoadedColliderCount => Platforms.Count;
+    public static int MaximumActiveChunkCount =>
+        (HorizontalChunkRadius * 2 + 1) * (VerticalChunkRadius * 2 + 1);
 
     public void CreateEnvironment(
         Scene2D scene,
@@ -42,57 +83,66 @@ public sealed class SideScrollerLevel2D
         ArgumentNullException.ThrowIfNull(scene);
         ArgumentNullException.ThrowIfNull(physics);
         ArgumentNullException.ThrowIfNull(platformShader);
-        if (_environmentCreated)
+        if (_scene is not null)
             throw new InvalidOperationException("The level environment has already been created.");
 
-        _environmentCreated = true;
-        var grassShader = new SolidColorShader(new SKColor(101, 205, 116));
-        var groundTop = TileMap.Origin.Y + _tileSize * 2f;
+        _scene = scene;
+        _physics = physics;
+        _platformShader = platformShader;
+        _grassShader = new SolidColorShader(new SKColor(101, 205, 116));
+        _worldLayer = worldLayer;
+        _playerLayer = playerLayer;
+        _enemyLayer = enemyLayer;
 
-        foreach (var bounds in TileMap.CollisionRectangles)
-        {
-            var platform = new WorldObject2D(
-                AxisAlignedRectangle2D.FromSize(bounds.Size),
-                platformShader);
-            platform.Transform.Position = bounds.Center;
-            scene.Add(platform);
-            Platforms.Add(platform);
-
-            var body = physics.AddBody(platform, BodyMotionType2D.Static);
-            body.Restitution = 0f;
-            body.CollisionLayer = worldLayer;
-            body.CollisionMask = playerLayer | enemyLayer;
-            body.IsOneWayPlatform =
-                bounds.Size.Y <= _tileSize + 0.01f &&
-                bounds.Min.Y >= groundTop + 0.01f;
-
-            const float capHeight = 9f;
-            var cap = new WorldObject2D(
-                AxisAlignedRectangle2D.FromSize(new Vector2(bounds.Size.X, capHeight)),
-                grassShader);
-            cap.Transform.Position = new Vector2(
-                bounds.Center.X,
-                bounds.Max.Y - capHeight / 2f);
-            scene.Add(cap);
-        }
-
-        CreateGoal(scene, groundTop);
+        UpdateStreaming(SpawnPoint);
+        CreateGoal(scene);
     }
 
-    public void CreateEnemies(
-        Scene2D scene,
-        PhysicsWorld2D physics,
-        uint worldLayer,
-        uint enemyLayer)
+    public void UpdateStreaming(Vector2 focus)
     {
-        ArgumentNullException.ThrowIfNull(scene);
-        ArgumentNullException.ThrowIfNull(physics);
-        if (!_environmentCreated)
-            throw new InvalidOperationException("Create the level environment before its enemies.");
-        if (_enemiesCreated)
-            throw new InvalidOperationException("The level enemies have already been created.");
+        if (_scene is null || _physics is null ||
+            _platformShader is null || _grassShader is null)
+        {
+            throw new InvalidOperationException("Create the level environment before streaming it.");
+        }
 
-        _enemiesCreated = true;
+        var center = TileMap.WorldToChunk(focus);
+        var minimumX = Math.Max(0, center.X - HorizontalChunkRadius);
+        var maximumX = Math.Min(TileMap.ChunkColumns - 1, center.X + HorizontalChunkRadius);
+        var minimumY = Math.Max(0, center.Y - VerticalChunkRadius);
+        var maximumY = Math.Min(TileMap.ChunkRows - 1, center.Y + VerticalChunkRadius);
+
+        foreach (var chunk in _loadedChunks.Keys.ToArray())
+        {
+            if (chunk.X < minimumX || chunk.X > maximumX ||
+                chunk.Y < minimumY || chunk.Y > maximumY)
+            {
+                UnloadChunk(chunk);
+            }
+        }
+
+        for (var y = minimumY; y <= maximumY; y++)
+        {
+            for (var x = minimumX; x <= maximumX; x++)
+            {
+                var chunk = new TileChunk2D(x, y);
+                if (!_loadedChunks.ContainsKey(chunk))
+                    LoadChunk(chunk);
+            }
+        }
+
+        UpdateMechanicsEnemyStreaming();
+    }
+
+    public void CreateMechanicsPlaygroundEnemies()
+    {
+        if (_scene is null || _physics is null)
+            throw new InvalidOperationException("Create the level environment before its enemies.");
+        if (_mechanicsEnemiesCreated)
+            throw new InvalidOperationException("The mechanics enemies have already been created.");
+
+        _mechanicsEnemiesCreated = true;
+        var random = new SpatialRandom2D(MechanicsEnemySeed);
         var hitShader = new SolidColorShader(new SKColor(255, 245, 245));
         var coralShader = new LinearGradientShader(
             new SKColor(255, 101, 137),
@@ -100,79 +150,197 @@ public sealed class SideScrollerLevel2D
         var violetShader = new LinearGradientShader(
             new SKColor(178, 125, 255),
             new SKColor(91, 61, 178));
-        Span<EnemySpawn> spawns =
-        [
-            new(10f, 7f, 12f, 105f),
-            new(22f, 18f, 31f, 120f),
-            new(42f, 37f, 50f, 112f),
-            new(57f, 52f, 67f, 135f),
-            new(72f, 68f, 77f, 105f),
-            new(87f, 84f, 91f, 125f),
-            new(99f, 93f, 106f, 138f),
-            new(114f, 111f, 118f, 115f)
-        ];
 
-        for (var i = 0; i < spawns.Length; i++)
+        const int enemyCount = 12;
+        for (var index = 0; index < enemyCount; index++)
         {
-            var spawn = spawns[i];
-            IShader2D normalShader = i % 2 == 0 ? coralShader : violetShader;
+            var preferredX = 14 + index * 7 + random.Range(index, 0, -2, 3);
+            var wantsElevation = index % 3 == 2;
+            var foundPlacement = wantsElevation
+                ? TryFindElevatedPlacement(preferredX, 5 + index % 4 * 4, out var placement)
+                : TryFindGroundPlacement(preferredX, out placement);
+            if (!foundPlacement && wantsElevation)
+                foundPlacement = TryFindGroundPlacement(preferredX, out placement);
+            if (!foundPlacement)
+                continue;
+
+            IShader2D normalShader = index % 2 == 0 ? coralShader : violetShader;
             var worldObject = new WorldObject2D(
                 new Capsule2D(new Vector2(-19f, 0f), new Vector2(19f, 0f), 22f),
                 normalShader);
-            worldObject.Transform.Position = TileCenter(spawn.TileX, 2f);
-            scene.Add(worldObject);
+            worldObject.Transform.Position = new Vector2(
+                TileCenterX(placement.TileX),
+                TileMap.Origin.Y + (placement.SurfaceTileY + 1) * _tileSize + 24f);
+            _scene.Add(worldObject);
 
-            var body = physics.AddBody(worldObject, BodyMotionType2D.Dynamic);
+            var body = _physics.AddBody(worldObject, BodyMotionType2D.Dynamic);
             body.Restitution = 0f;
             body.Mass = 1.25f;
-            body.CollisionLayer = enemyLayer;
-            body.CollisionMask = worldLayer;
+            body.CollisionLayer = _enemyLayer;
+            body.CollisionMask = _worldLayer;
 
-            Enemies.Add(new PatrolEnemy2D(
+            var enemy = new PatrolEnemy2D(
                 worldObject,
                 body,
-                TileCenter(spawn.MinTileX, 0f).X,
-                TileCenter(spawn.MaxTileX, 0f).X,
-                spawn.Speed,
-                3,
+                TileCenterX(placement.PatrolMinTileX),
+                TileCenterX(placement.PatrolMaxTileX),
+                random.Range(index, 0, 95, 141, channel: 1),
+                health: 3,
                 normalShader,
-                hitShader));
+                hitShader);
+            Enemies.Add(enemy);
+            var homeChunk = TileMap.WorldToChunk(worldObject.Transform.Position);
+            _mechanicsEnemies.Add(new MechanicsEnemy(enemy, homeChunk));
         }
+
+        UpdateMechanicsEnemyStreaming();
     }
 
-    private static TileMap2D CreateTileMap(float tileSize)
+    private void LoadChunk(TileChunk2D chunk)
     {
-        var map = new TileMap2D(120, 18, tileSize, new Vector2(-512f, -640f));
+        var objects = new List<ChunkObject>();
+        foreach (var bounds in TileMap.BuildCollisionRectangles(chunk))
+        {
+            var platform = new WorldObject2D(
+                AxisAlignedRectangle2D.FromSize(bounds.Size),
+                _platformShader!);
+            platform.Transform.Position = bounds.Center;
+            _scene!.Add(platform);
+            Platforms.Add(platform);
 
-        map.Fill(0, 0, 120, 2);
-        map.Fill(14, 0, 3, 2, false);
-        map.Fill(33, 0, 3, 2, false);
-        map.Fill(79, 0, 4, 2, false);
-        map.Fill(108, 0, 3, 2, false);
+            var body = _physics!.AddBody(platform, BodyMotionType2D.Static);
+            body.Restitution = 0f;
+            body.CollisionLayer = _worldLayer;
+            body.CollisionMask = _playerLayer | _enemyLayer;
+            body.IsOneWayPlatform =
+                bounds.Size.Y <= _tileSize + 0.01f &&
+                TileMap.WorldToTileY(bounds.Min.Y) >= 5;
 
-        map.Fill(0, 2, 1, 12);
-        map.Fill(119, 2, 1, 12);
-        map.Fill(7, 4, 6, 1);
-        map.Fill(18, 6, 5, 1);
-        map.Fill(26, 3, 6, 1);
-        map.Fill(38, 7, 7, 1);
-        map.Fill(49, 4, 6, 1);
-        map.Fill(59, 9, 6, 1);
-        map.Fill(69, 5, 9, 1);
-        map.Fill(84, 3, 5, 1);
-        map.Fill(92, 7, 7, 1);
-        map.Fill(102, 4, 6, 1);
-        map.Fill(112, 3, 4, 1);
+            const float capHeight = 9f;
+            var cap = new WorldObject2D(
+                AxisAlignedRectangle2D.FromSize(new Vector2(bounds.Size.X, capHeight)),
+                _grassShader!);
+            cap.Transform.Position = new Vector2(
+                bounds.Center.X,
+                bounds.Max.Y - capHeight / 2f);
+            _scene.Add(cap);
+            objects.Add(new ChunkObject(platform, cap, body));
+        }
 
-        return map;
+        _loadedChunks.Add(chunk, new LoadedChunk(objects));
     }
 
-    private void CreateGoal(Scene2D scene, float groundTop)
+    private void UnloadChunk(TileChunk2D chunk)
+    {
+        var loaded = _loadedChunks[chunk];
+        foreach (var item in loaded.Objects)
+        {
+            _physics!.RemoveBody(item.Body);
+            _scene!.Remove(item.Platform);
+            _scene.Remove(item.Cap);
+            Platforms.Remove(item.Platform);
+        }
+
+        _loadedChunks.Remove(chunk);
+    }
+
+    private void UpdateMechanicsEnemyStreaming()
+    {
+        foreach (var fixture in _mechanicsEnemies)
+            fixture.Enemy.SetSimulationEnabled(_loadedChunks.ContainsKey(fixture.HomeChunk));
+    }
+
+    private bool TryFindGroundPlacement(int preferredX, out EnemyPlacement placement)
+    {
+        for (var distance = 0; distance <= 18; distance++)
+        {
+            var direction = distance % 2 == 0 ? 1 : -1;
+            var x = preferredX + (distance + 1) / 2 * direction;
+            if (x < 3 || x >= TileMap.Width - 3)
+                continue;
+
+            var surfaceY = _generator.TerrainHeight(x) - 1;
+            if (TryGetSurfaceRun(x, surfaceY, out var minimumX, out var maximumX) &&
+                maximumX - minimumX >= 4)
+            {
+                placement = new EnemyPlacement(
+                    x,
+                    surfaceY,
+                    Math.Max(minimumX + 1, x - 2),
+                    Math.Min(maximumX - 1, x + 2));
+                return placement.PatrolMinTileX < placement.PatrolMaxTileX;
+            }
+        }
+
+        placement = default;
+        return false;
+    }
+
+    private bool TryFindElevatedPlacement(
+        int preferredX,
+        int preferredSurfaceY,
+        out EnemyPlacement placement)
+    {
+        for (var distance = 0; distance <= 30; distance++)
+        {
+            var direction = distance % 2 == 0 ? 1 : -1;
+            var x = preferredX + (distance + 1) / 2 * direction;
+            if (x < 2 || x >= TileMap.Width - 2)
+                continue;
+
+            for (var yOffset = 0; yOffset <= 4; yOffset += 2)
+            {
+                var surfaceY = preferredSurfaceY + yOffset;
+                if (!TryGetSurfaceRun(x, surfaceY, out var minimumX, out var maximumX) ||
+                    maximumX - minimumX < 3)
+                {
+                    continue;
+                }
+
+                placement = new EnemyPlacement(
+                    x,
+                    surfaceY,
+                    Math.Max(minimumX + 1, x - 2),
+                    Math.Min(maximumX - 1, x + 2));
+                if (placement.PatrolMinTileX < placement.PatrolMaxTileX)
+                    return true;
+            }
+        }
+
+        placement = default;
+        return false;
+    }
+
+    private bool TryGetSurfaceRun(int x, int surfaceY, out int minimumX, out int maximumX)
+    {
+        minimumX = x;
+        maximumX = x;
+        if (!_generator.IsSolid(x, surfaceY) || _generator.IsSolid(x, surfaceY + 1))
+            return false;
+
+        while (minimumX > 1 &&
+               _generator.IsSolid(minimumX - 1, surfaceY) &&
+               !_generator.IsSolid(minimumX - 1, surfaceY + 1))
+        {
+            minimumX--;
+        }
+
+        while (maximumX < TileMap.Width - 2 &&
+               _generator.IsSolid(maximumX + 1, surfaceY) &&
+               !_generator.IsSolid(maximumX + 1, surfaceY + 1))
+        {
+            maximumX++;
+        }
+
+        return true;
+    }
+
+    private void CreateGoal(Scene2D scene)
     {
         var pole = new WorldObject2D(
             new Capsule2D(Vector2.Zero, new Vector2(0f, 190f), 5f),
             new SolidColorShader(new SKColor(238, 242, 232)));
-        pole.Transform.Position = new Vector2(GoalX, groundTop);
+        pole.Transform.Position = new Vector2(GoalX, GoalGroundY);
         scene.Add(pole);
 
         var flag = new WorldObject2D(
@@ -183,16 +351,27 @@ public sealed class SideScrollerLevel2D
                 new Vector2(0f, -60f)
             ]),
             new SolidColorShader(new SKColor(255, 79, 120)));
-        flag.Transform.Position = new Vector2(GoalX, groundTop + 185f);
+        flag.Transform.Position = new Vector2(GoalX, GoalGroundY + 185f);
         scene.Add(flag);
     }
 
-    private Vector2 TileCenter(float x, float y) =>
-        TileMap.Origin + new Vector2((x + 0.5f) * _tileSize, (y + 0.5f) * _tileSize);
+    private float TileCenterX(int x) =>
+        TileMap.Origin.X + (x + 0.5f) * _tileSize;
 
-    private readonly record struct EnemySpawn(
-        float TileX,
-        float MinTileX,
-        float MaxTileX,
-        float Speed);
+    private sealed record LoadedChunk(List<ChunkObject> Objects);
+
+    private readonly record struct ChunkObject(
+        WorldObject2D Platform,
+        WorldObject2D Cap,
+        PhysicsBody2D Body);
+
+    private readonly record struct MechanicsEnemy(
+        PatrolEnemy2D Enemy,
+        TileChunk2D HomeChunk);
+
+    private readonly record struct EnemyPlacement(
+        int TileX,
+        int SurfaceTileY,
+        int PatrolMinTileX,
+        int PatrolMaxTileX);
 }

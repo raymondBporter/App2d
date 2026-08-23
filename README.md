@@ -36,11 +36,12 @@ Geometry lives under `Engine/Geometry`:
   the solid region and into permitted space.
 - `Bounds2D` supplies local bounds to rendering and shaders.
 
-`Engine/Tiles/TileMap2D` stores a compact solid-cell map and greedily merges neighboring
-tiles into larger AABB colliders. Gameplay can therefore remain tile-authored while the
-physics broad phase sees only a small set of rectangles. The current side-scroller draws
-those merged rectangles with a repeating procedural stripe shader, so it gets visible
-tile seams without one render object per tile.
+`Engine/Tiles/TileMap2D` stores compact authored maps. `ProceduralTileMap2D` addresses
+larger seeded worlds without allocating their full tile area: it evaluates stateless
+X/Y cells on demand, greedily merges one 32x32 chunk into AABB colliders, and permits
+old chunks to be discarded and regenerated exactly. The side-scroller keeps at most 15
+nearby chunks live, so scene rendering, weapon queries, and the physics broad phase are
+bounded by the local neighborhood rather than total world size.
 
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
@@ -155,19 +156,23 @@ dotnet run --project App2d
 
 Startup currently runs `SideScrollerGame`. It is the composition root and explicit
 fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of
-being implemented by the game class. `SideScrollerLevel2D` owns the single authored map,
-platforms, goal, and enemy population. `PlayerCharacter2D`, `PlayerArsenal2D`, and
+being implemented by the game class. `SideScrollerLevel2D` owns the seeded procedural
+world, streamed platforms, and goal. `PlayerCharacter2D`, `PlayerArsenal2D`, and
 `PlayerPresentation2D` own the player's simulation, attacks, and visuals respectively.
 `CombatSystem2D` resolves attacks through generic source/sequence hit registration, so
 new weapons do not add weapon-specific bookkeeping to enemies. Camera/parallax, input
 mapping, and traversal diagnostics have similarly narrow owners.
 
-The level provides merged tilemap collision, one-way platforms, fall respawning, a goal
-flag, smooth bounded camera follow, and procedural parallax depths. Player traversal has
+The 10,000x96-tile level provides merged tilemap collision, one-way platforms, fall
+respawning, a goal flag, smooth bounded camera follow, and procedural parallax depths.
+Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
+ledges all derive from one coordinate seed. A small separately seeded population near
+spawn exists only as a mechanics playground; it is not the eventual authored encounter
+format.
+Player traversal has
 acceleration, coyote time, jump buffering, variable jump height, a sword, a ceiling
-grapple, a ball and chain, and a fixed pool of 16 fireballs. Player/enemy interaction is
-handled as gameplay overlap while both still collide with the static world through
-physics layers. `DemoGame` remains the shape/physics stress scene.
+grapple, a ball and chain, and a fixed pool of 16 fireballs. `DemoGame` remains the
+shape/physics stress scene.
 
 Player movement is owned by `Gameplay/CharacterMotor2D`. `PlayerIntent2D` describes
 what the player requested; the motor turns that into desired velocity and grace-window

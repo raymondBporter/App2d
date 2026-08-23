@@ -48,7 +48,7 @@ public sealed class SideScrollerGame : Game2D
         _cameraController = new SideScrollerCamera2D(
             Scene,
             Camera,
-            _level.TileMap,
+            _level.TileMap.WorldBounds,
             _level.SpawnPoint);
 
         var platformShader = new TextureShader2D(
@@ -71,7 +71,7 @@ public sealed class SideScrollerGame : Game2D
             WorldLayer);
         _playerPresentation = new PlayerPresentation2D(Scene, Textures);
 
-        _level.CreateEnemies(Scene, _physics, WorldLayer, EnemyLayer);
+        _level.CreateMechanicsPlaygroundEnemies();
         _combat = new CombatSystem2D(_level.Enemies);
         _arsenal = new PlayerArsenal2D(
             Scene,
@@ -98,11 +98,12 @@ public sealed class SideScrollerGame : Game2D
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | weapon: {_arsenal.ActiveWeaponName} | Ctrl+wheel switch | left click attack | right click fire | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.Enemies.Count} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        $"App2d Side Scroller | weapon: {_arsenal.ActiveWeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.Enemies.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     public override void Update(FrameTime time, InputState input)
     {
         var dt = time.DeltaSeconds;
+        _level.UpdateStreaming(_player.Position);
         _player.BeginFrame(dt);
         _arsenal.BeginFrame(dt);
 

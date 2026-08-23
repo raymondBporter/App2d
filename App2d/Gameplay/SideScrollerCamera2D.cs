@@ -2,7 +2,6 @@ using System.Numerics;
 using App2d.Engine;
 using App2d.Engine.Geometry;
 using App2d.Engine.Rendering;
-using App2d.Engine.Tiles;
 using SkiaSharp;
 
 namespace App2d.Gameplay;
@@ -15,19 +14,21 @@ public sealed class SideScrollerCamera2D
     private const float MaximumLookAhead = 210f;
 
     private readonly Camera2D _camera;
-    private readonly TileMap2D _tileMap;
+    private readonly Bounds2D _levelBounds;
     private readonly List<ParallaxItem> _parallaxItems = [];
     private float _lookAhead;
 
     public SideScrollerCamera2D(
         Scene2D scene,
         Camera2D camera,
-        TileMap2D tileMap,
+        Bounds2D levelBounds,
         Vector2 initialPlayerPosition)
     {
         ArgumentNullException.ThrowIfNull(scene);
         _camera = camera ?? throw new ArgumentNullException(nameof(camera));
-        _tileMap = tileMap ?? throw new ArgumentNullException(nameof(tileMap));
+        if (!levelBounds.IsFinite)
+            throw new ArgumentOutOfRangeException(nameof(levelBounds));
+        _levelBounds = levelBounds;
 
         _camera.Zoom = 1.35f;
         Reset(initialPlayerPosition);
@@ -88,17 +89,16 @@ public sealed class SideScrollerCamera2D
 
     private Vector2 ClampToLevel(Vector2 position, Vector2 halfView)
     {
-        var levelBounds = _tileMap.WorldBounds;
         return new Vector2(
             ClampViewCenter(
                 position.X,
-                levelBounds.Min.X,
-                levelBounds.Max.X,
+                _levelBounds.Min.X,
+                _levelBounds.Max.X,
                 halfView.X),
             ClampViewCenter(
                 position.Y,
-                levelBounds.Min.Y,
-                levelBounds.Max.Y,
+                _levelBounds.Min.Y,
+                _levelBounds.Max.Y,
                 halfView.Y));
     }
 
@@ -148,7 +148,8 @@ public sealed class SideScrollerCamera2D
                     38f),
                 cloudShader,
                 new Vector2(-850f + i * 470f, 210f + i % 3 * 95f),
-                0.08f);
+                0.08f,
+                repeatWidth: 3_760f);
         }
 
         for (var i = 0; i < 12; i++)
@@ -166,7 +167,8 @@ public sealed class SideScrollerCamera2D
                 mountain,
                 farMountainShader,
                 new Vector2(-1_100f + i * 500f, -520f),
-                0.18f);
+                0.18f,
+                repeatWidth: 6_000f);
         }
 
         for (var i = 0; i < 13; i++)
@@ -177,7 +179,8 @@ public sealed class SideScrollerCamera2D
                 nearHillShader,
                 new Vector2(-1_000f + i * 510f, -525f),
                 0.42f,
-                new Vector2(1.9f, 1f));
+                new Vector2(1.9f, 1f),
+                repeatWidth: 6_630f);
         }
     }
 
@@ -187,11 +190,16 @@ public sealed class SideScrollerCamera2D
         IShader2D shader,
         Vector2 anchor,
         float scrollFactor,
-        Vector2? scale = null)
+        Vector2? scale = null,
+        float repeatWidth = 4_000f)
     {
         var worldObject = new WorldObject2D(shape, shader);
         worldObject.Transform.Scale = scale ?? Vector2.One;
-        _parallaxItems.Add(new ParallaxItem(worldObject, anchor, scrollFactor));
+        _parallaxItems.Add(new ParallaxItem(
+            worldObject,
+            anchor,
+            scrollFactor,
+            repeatWidth));
         scene.Add(worldObject);
     }
 
@@ -199,11 +207,17 @@ public sealed class SideScrollerCamera2D
     {
         foreach (var item in _parallaxItems)
         {
+            var relativeX = WrapCentered(
+                item.Anchor.X - _camera.Position.X * item.ScrollFactor,
+                item.RepeatWidth);
             item.Object.Transform.Position = new Vector2(
-                item.Anchor.X + _camera.Position.X * (1f - item.ScrollFactor),
+                _camera.Position.X + relativeX,
                 item.Anchor.Y + _camera.Position.Y * (1f - item.ScrollFactor * 0.3f));
         }
     }
+
+    private static float WrapCentered(float value, float period) =>
+        value - MathF.Floor((value + period / 2f) / period) * period;
 
     private static float ClampViewCenter(
         float value,
@@ -219,5 +233,6 @@ public sealed class SideScrollerCamera2D
     private readonly record struct ParallaxItem(
         WorldObject2D Object,
         Vector2 Anchor,
-        float ScrollFactor);
+        float ScrollFactor,
+        float RepeatWidth);
 }

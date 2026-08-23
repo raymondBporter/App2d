@@ -48,6 +48,20 @@ public sealed class PatrolEnemy2D
     public float Speed { get; }
     public bool IsAlive => Health.IsAlive;
 
+    public void SetSimulationEnabled(bool isEnabled)
+    {
+        if (!IsAlive)
+            return;
+
+        WorldObject.IsVisible = isEnabled;
+        Body.IsCollider = isEnabled;
+        Body.MotionType = isEnabled
+            ? BodyMotionType2D.Dynamic
+            : BodyMotionType2D.Static;
+        if (!isEnabled)
+            Body.LinearVelocity = Vector2.Zero;
+    }
+
     public bool TryRegisterHit(object attackSource, int attackId)
     {
         ArgumentNullException.ThrowIfNull(attackSource);
