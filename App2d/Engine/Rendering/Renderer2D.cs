@@ -74,7 +74,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
 
     public void Draw(Scene2D scene)
     {
-        foreach (var worldObject in scene)
+        foreach (var worldObject in scene.GetDrawOrder())
             Draw(worldObject);
     }
 

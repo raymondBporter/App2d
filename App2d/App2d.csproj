@@ -10,11 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NAudio" Version="3.0.1" />
     <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="4.151.1" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="Assets\Textures\**\*.png"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+    <None Update="Assets\Audio\Sfx\*.wav"
           CopyToOutputDirectory="PreserveNewest"
           CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

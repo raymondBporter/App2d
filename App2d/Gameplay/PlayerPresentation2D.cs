@@ -9,25 +9,38 @@ namespace App2d.Gameplay;
 public sealed class PlayerPresentation2D
 {
     private const float ShotDuration = 0.4f;
-    private static readonly Vector2 VisualCanvasSize = new(152f, 114f);
-    private static readonly Vector2 VisualOffset = new(0f, 4f);
 
     private readonly AnimationClip2D<Texture2D> _idleAnimation;
     private readonly AnimationClip2D<Texture2D> _walkAnimation;
+    private readonly AnimationClip2D<Texture2D> _jumpAnimation;
     private readonly AnimationClip2D<Texture2D> _swordAnimation;
     private readonly AnimationClip2D<Texture2D> _shotAnimation;
     private readonly AnimationPlayer2D<Texture2D> _animation = new();
     private readonly SpriteShader2D _spriteShader;
     private readonly WorldObject2D _visual;
+    private readonly Vector2 _visualOffset;
 
-    public PlayerPresentation2D(Scene2D scene, TextureCache2D textures)
+    public PlayerPresentation2D(
+        Scene2D scene,
+        TextureCache2D textures,
+        TraversalMetrics2D traversal)
     {
         ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(textures);
+        ArgGuard.ThrowIfNull(traversal);
 
-        var walkFrames = LoadFrames(textures, "walk", 6);
-        _idleAnimation = new AnimationClip2D<Texture2D>([walkFrames[0]], 1f);
-        _walkAnimation = new AnimationClip2D<Texture2D>(walkFrames, 10f);
+        _visualOffset = traversal.PlayerVisualOffset;
+
+        _idleAnimation = new AnimationClip2D<Texture2D>(
+            LoadFrames(textures, "idle", 6),
+            6f);
+        _walkAnimation = new AnimationClip2D<Texture2D>(
+            LoadFrames(textures, "walk", 6),
+            10f);
+        _jumpAnimation = new AnimationClip2D<Texture2D>(
+            LoadFrames(textures, "jump", 8),
+            8f,
+            isLooping: false);
         _swordAnimation = new AnimationClip2D<Texture2D>(
             LoadFrames(textures, "sword", 6),
             25f,
@@ -39,8 +52,11 @@ public sealed class PlayerPresentation2D
         _animation.Play(_idleAnimation);
         _spriteShader = new SpriteShader2D(_animation.CurrentFrame);
         _visual = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(VisualCanvasSize),
-            _spriteShader);
+            AxisAlignedRectangle2D.FromSize(traversal.PlayerVisualSize),
+            _spriteShader)
+        {
+            ZIndex = 1
+        };
         scene.Add(_visual);
     }
 
@@ -74,8 +90,13 @@ public sealed class PlayerPresentation2D
         if (!isSwordActive && !isPlayingShot)
         {
             var isWalking = isGrounded && MathF.Abs(moveInputX) > 0.01f;
-            var locomotionClip = isWalking ? _walkAnimation : _idleAnimation;
-            _animation.Play(locomotionClip);
+            var locomotionClip = !isGrounded
+                ? _jumpAnimation
+                : isWalking
+                    ? _walkAnimation
+                    : _idleAnimation;
+            if (!ReferenceEquals(_animation.Clip, locomotionClip))
+                _animation.Play(locomotionClip);
             _animation.PlaybackSpeed = isWalking
                 ? Math.Clamp(MathF.Abs(moveInputX), 0.65f, 1.35f)
                 : 1f;
@@ -84,7 +105,7 @@ public sealed class PlayerPresentation2D
         _animation.Update(deltaSeconds);
         _spriteShader.Texture = _animation.CurrentFrame;
         _spriteShader.FlipX = facing < 0f;
-        _visual.Transform.Position = playerPosition + VisualOffset;
+        _visual.Transform.Position = playerPosition + _visualOffset;
         _visual.IsVisible = invulnerabilitySeconds <= 0f || frameNumber % 12 < 6;
     }
 

@@ -3,7 +3,7 @@ using App2d.Engine.Geometry;
 
 namespace App2d.Engine.Tiles;
 
-public sealed class TileMap2D
+public sealed class TileMap2D : ISolidTileMap2D
 {
     private readonly bool[] _solidTiles;
     private readonly List<Bounds2D> _collisionRectangles = [];

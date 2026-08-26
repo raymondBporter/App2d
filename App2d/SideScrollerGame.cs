@@ -4,18 +4,18 @@ using App2d.Engine.Physics;
 using App2d.Engine.Rendering;
 using App2d.Engine.Rendering.Textures;
 using App2d.Gameplay;
+using App2d.Gameplay.Audio;
 using SkiaSharp;
 
 namespace App2d;
 
 public sealed class SideScrollerGame : Game2D
 {
-    private const float TileSize = 64f;
     private const uint WorldLayer = 1u << 0;
     private const uint PlayerLayer = 1u << 1;
     private const uint EnemyLayer = 1u << 2;
 
-    private static readonly TraversalMetrics2D Traversal = new() { TileSize = TileSize };
+    private static readonly TraversalMetrics2D Traversal = new();
 
     private readonly PhysicsWorld2D _physics = new()
     {
@@ -32,32 +32,39 @@ public sealed class SideScrollerGame : Game2D
     private readonly PlayerArsenal2D _arsenal;
     private readonly SideScrollerCamera2D _cameraController;
     private readonly TraversalDebugRenderer2D _traversalDebug = new(Traversal);
+    private readonly SoundEffectBank2D _sounds;
     private bool _reachedGoal;
     private bool _showTraversalDebug;
 
     public SideScrollerGame()
     {
+        Traversal.ValidateScaleContract();
+        _sounds = new SoundEffectBank2D(
+            Path.Combine(AppContext.BaseDirectory, "Assets", "Audio", "Sfx"));
         RegisterDebugPhysicsWorld(_physics);
+        DeveloperConsole.RegisterVariable(
+            "sfx_volume",
+            () => _sounds.Volume,
+            value => _sounds.Volume = value,
+            "Set sound-effect volume from 0 (muted) to 1 (full volume).");
         DeveloperConsole.RegisterVariable(
             "draw_traversal_metrics",
             () => _showTraversalDebug,
             value => _showTraversalDebug = value,
             "Draw jump arcs, grapple reach, and tile-relative movement metrics.");
 
-        _level = new SideScrollerLevel2D(TileSize);
+        _level = new SideScrollerLevel2D(Traversal);
         _cameraController = new SideScrollerCamera2D(
             Scene,
             Camera,
             _level.TileMap.WorldBounds,
-            _level.SpawnPoint);
+            _level.SpawnPoint,
+            _level.GetCameraFloorY);
 
-        var platformShader = new TextureShader2D(
-            Textures.Load("mossy-stone.png"),
-            new Vector2(512f, 512f));
         _level.CreateEnvironment(
             Scene,
             _physics,
-            platformShader,
+            Textures,
             WorldLayer,
             PlayerLayer,
             EnemyLayer);
@@ -68,11 +75,12 @@ public sealed class SideScrollerGame : Game2D
             Traversal,
             _level.SpawnPoint,
             PlayerLayer,
-            WorldLayer);
-        _playerPresentation = new PlayerPresentation2D(Scene, Textures);
+            WorldLayer,
+            _sounds);
+        _playerPresentation = new PlayerPresentation2D(Scene, Textures, Traversal);
 
-        _level.CreateMechanicsPlaygroundEnemies();
-        _combat = new CombatSystem2D(_level.Enemies);
+        _level.CreateMechanicsPlaygroundEnemies(Textures, _sounds);
+        _combat = new CombatSystem2D(_level.EnemySystem.Combatants, _sounds);
         _arsenal = new PlayerArsenal2D(
             Scene,
             _physics,
@@ -83,8 +91,10 @@ public sealed class SideScrollerGame : Game2D
             _combat,
             _playerPresentation,
             PlayerLayer,
-            WorldLayer);
+            WorldLayer,
+            _sounds);
         RegisterDebugAttackShapes(_arsenal.GetActiveAttackHitboxes);
+        RegisterDebugAttackShapes(_level.EnemySystem.GetActiveAttackHitboxes);
 
         _playerPresentation.Update(
             0f,
@@ -98,7 +108,7 @@ public sealed class SideScrollerGame : Game2D
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | weapon: {_arsenal.ActiveWeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.Enemies.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        $"App2d Side Scroller | weapon: {_arsenal.ActiveWeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -112,8 +122,7 @@ public sealed class SideScrollerGame : Game2D
             _showTraversalDebug = !_showTraversalDebug;
         _arsenal.CycleWeapon(command.WeaponCycleDirection);
 
-        foreach (var enemy in _level.Enemies)
-            enemy.Update(dt);
+        _level.EnemySystem.Update(dt, _player.Position);
 
         _player.UpdateBeforePhysics(command.Movement, dt);
         if (command.UseWeapon)
@@ -124,9 +133,13 @@ public sealed class SideScrollerGame : Game2D
         _arsenal.UpdateBeforePhysics(dt);
         _physics.Step(dt);
         _player.UpdateAfterPhysics(dt);
+        _level.EnemySystem.SyncAfterPhysics();
 
         _arsenal.UpdateAfterPhysics(dt, _player.Facing);
-        if (_player.ResolveEnemyTouches(_level.Enemies))
+        var playerDefeated = _level.EnemySystem.TryResolvePlayerHits(_player);
+
+        if (playerDefeated ||
+            _player.ResolveEnemyTouches(_level.EnemySystem.Combatants))
         {
             _player.Health.Reset();
             Respawn();
@@ -134,8 +147,11 @@ public sealed class SideScrollerGame : Game2D
 
         if (_player.Position.Y < _level.TileMap.WorldBounds.Min.Y - 260f)
             Respawn();
-        if (_player.Position.X >= _level.GoalX)
+        if (!_reachedGoal && _player.Position.X >= _level.GoalX)
+        {
             _reachedGoal = true;
+            _sounds.Play(SoundEffect2D.GoalReached);
+        }
 
         _playerPresentation.Update(
             dt,
@@ -169,5 +185,12 @@ public sealed class SideScrollerGame : Game2D
         _playerPresentation.Reset();
         _cameraController.Reset(_level.SpawnPoint);
         _reachedGoal = false;
+        _sounds.Play(SoundEffect2D.PlayerRespawn);
+    }
+
+    public override void Dispose()
+    {
+        _sounds.Dispose();
+        base.Dispose();
     }
 }

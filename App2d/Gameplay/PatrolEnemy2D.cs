@@ -44,6 +44,8 @@ public sealed class PatrolEnemy2D
     public float PatrolMinX { get; }
     public float PatrolMaxX { get; }
     public float Speed { get; }
+    public float Facing => _direction;
+    public bool IsStunned => _stunSeconds > 0f;
     public bool IsAlive => Health.IsAlive;
 
     public void SetSimulationEnabled(bool isEnabled)

@@ -3,7 +3,7 @@ using App2d.Engine.Geometry;
 
 namespace App2d.Engine.Tiles;
 
-public sealed class ProceduralTileMap2D
+public sealed class ProceduralTileMap2D : ISolidTileMap2D
 {
     private readonly Func<int, int, bool> _isSolid;
 

@@ -3,45 +3,56 @@ using App2d.Engine;
 using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering;
+using App2d.Engine.Rendering.Textures;
 using App2d.Engine.Tiles;
+using App2d.Gameplay.Audio;
 using SkiaSharp;
 
 namespace App2d.Gameplay;
 
 public sealed class SideScrollerLevel2D
 {
-    // 10,000 tiles is 24.8 minutes at uninterrupted maximum run speed. Normal
-    // traversal should put a complete left-to-right trip in the 30-60 minute band.
+    // World length remains tile-count driven while the scale contract is settling.
+    // Encounter pacing can choose a final duration independently of cell granularity.
     private const int WorldWidthTiles = 10_000;
     private const int WorldHeightTiles = 96;
     private const int ChunkSizeTiles = 32;
     private const int HorizontalChunkRadius = 2;
     private const int VerticalChunkRadius = 1;
+    private const float SurfaceThickness = 8f;
+    private const float OuterCornerSize = 12f;
+    private const float InnerCornerSize = 10f;
     private const ulong WorldSeed = 0xA2D_2026_0823UL;
     private const ulong MechanicsEnemySeed = WorldSeed ^ 0xE11E_5EEDUL;
 
     private readonly float _tileSize;
     private readonly JumpableWorldGenerator2D _generator;
     private readonly Dictionary<TileChunk2D, LoadedChunk> _loadedChunks = [];
-    private readonly List<MechanicsEnemy> _mechanicsEnemies = [];
     private Scene2D? _scene;
     private PhysicsWorld2D? _physics;
-    private IShader2D? _platformShader;
-    private IShader2D? _grassShader;
+    private IShader2D? _tileFillShader;
+    private IShader2D? _topSurfaceShader;
+    private IShader2D? _sideSurfaceShader;
+    private IShader2D? _bottomSurfaceShader;
+    private IShader2D? _outerCornerShader;
+    private IShader2D? _innerCornerShader;
     private uint _worldLayer;
     private uint _playerLayer;
     private uint _enemyLayer;
     private bool _mechanicsEnemiesCreated;
 
-    public SideScrollerLevel2D(float tileSize)
+    public SideScrollerLevel2D(TraversalMetrics2D traversal)
     {
+        ArgGuard.ThrowIfNull(traversal);
+        var tileSize = traversal.TileSize;
         ArgGuard.ThrowIfNotPositive(tileSize);
 
         _tileSize = tileSize;
         _generator = new JumpableWorldGenerator2D(
             WorldSeed,
             WorldWidthTiles,
-            WorldHeightTiles);
+            WorldHeightTiles,
+            traversal);
         TileMap = new ProceduralTileMap2D(
             WorldWidthTiles,
             WorldHeightTiles,
@@ -53,7 +64,8 @@ public sealed class SideScrollerLevel2D
         const int spawnTileX = 4;
         SpawnPoint = new Vector2(
             TileCenterX(spawnTileX),
-            TileMap.Origin.Y + _generator.TerrainHeight(spawnTileX) * tileSize + 38f);
+            TileMap.Origin.Y + _generator.TerrainHeight(spawnTileX) * tileSize +
+            traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
 
         var goalTileX = WorldWidthTiles - 5;
         GoalX = TileCenterX(goalTileX);
@@ -65,31 +77,62 @@ public sealed class SideScrollerLevel2D
     public float GoalX { get; }
     public float GoalGroundY { get; }
     public List<WorldObject2D> Platforms { get; } = [];
-    public List<PatrolEnemy2D> Enemies { get; } = [];
+    public EnemySystem2D EnemySystem { get; } = new();
     public int ActiveChunkCount => _loadedChunks.Count;
     public int LoadedColliderCount => Platforms.Count;
     public static int MaximumActiveChunkCount =>
         (HorizontalChunkRadius * 2 + 1) * (VerticalChunkRadius * 2 + 1);
 
+    public float GetCameraFloorY(float worldX)
+    {
+        if (!float.IsFinite(worldX))
+            ArgGuard.ThrowOutOfRange(worldX, "Value must be finite.");
+
+        var tileX = (int)MathF.Floor((worldX - TileMap.Origin.X) / _tileSize);
+        tileX = Math.Clamp(tileX, 0, TileMap.Width - 1);
+        return TileMap.Origin.Y + _generator.TerrainHeight(tileX) * _tileSize;
+    }
+
     public void CreateEnvironment(
         Scene2D scene,
         PhysicsWorld2D physics,
-        IShader2D platformShader,
+        TextureCache2D textures,
         uint worldLayer,
         uint playerLayer,
         uint enemyLayer)
     {
         ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNull(platformShader);
+        ArgGuard.ThrowIfNull(textures);
         StateGuard.ThrowIf(
             _scene is not null,
             "The level environment has already been created.");
 
         _scene = scene;
         _physics = physics;
-        _platformShader = platformShader;
-        _grassShader = new SolidColorShader(new SKColor(101, 205, 116));
+        _tileFillShader = new TextureShader2D(
+            textures.Load("Terrain/RustCyberpunk/fill.png"),
+            new Vector2(_tileSize));
+        _topSurfaceShader = CreateTerrainShader(
+            textures,
+            "surface-top.png",
+            new Vector2(_tileSize, SurfaceThickness));
+        _sideSurfaceShader = CreateTerrainShader(
+            textures,
+            "surface-side.png",
+            new Vector2(SurfaceThickness, _tileSize));
+        _bottomSurfaceShader = CreateTerrainShader(
+            textures,
+            "surface-bottom.png",
+            new Vector2(_tileSize, SurfaceThickness));
+        _outerCornerShader = CreateTerrainShader(
+            textures,
+            "corner-outer.png",
+            new Vector2(OuterCornerSize));
+        _innerCornerShader = CreateTerrainShader(
+            textures,
+            "corner-inner.png",
+            new Vector2(InnerCornerSize));
         _worldLayer = worldLayer;
         _playerLayer = playerLayer;
         _enemyLayer = enemyLayer;
@@ -103,7 +146,9 @@ public sealed class SideScrollerLevel2D
         ArgGuard.ThrowIfNotFinite(focus);
         StateGuard.ThrowIf(
             _scene is null || _physics is null ||
-            _platformShader is null || _grassShader is null,
+            _tileFillShader is null || _topSurfaceShader is null ||
+            _sideSurfaceShader is null || _bottomSurfaceShader is null ||
+            _outerCornerShader is null || _innerCornerShader is null,
             "Create the level environment before streaming it.");
 
         var center = TileMap.WorldToChunk(focus);
@@ -131,11 +176,15 @@ public sealed class SideScrollerLevel2D
             }
         }
 
-        UpdateMechanicsEnemyStreaming();
+        EnemySystem.UpdateStreaming(_loadedChunks.ContainsKey);
     }
 
-    public void CreateMechanicsPlaygroundEnemies()
+    public void CreateMechanicsPlaygroundEnemies(
+        TextureCache2D textures,
+        ISoundEffectSink2D sounds)
     {
+        ArgGuard.ThrowIfNull(textures);
+        ArgGuard.ThrowIfNull(sounds);
         var scene = StateGuard.RequireNotNull(
             _scene,
             "Create the level environment before its enemies.");
@@ -148,13 +197,7 @@ public sealed class SideScrollerLevel2D
 
         _mechanicsEnemiesCreated = true;
         var random = new SpatialRandom2D(MechanicsEnemySeed);
-        var hitShader = new SolidColorShader(new SKColor(255, 245, 245));
-        var coralShader = new LinearGradientShader(
-            new SKColor(255, 101, 137),
-            new SKColor(179, 48, 102));
-        var violetShader = new LinearGradientShader(
-            new SKColor(178, 125, 255),
-            new SKColor(91, 61, 178));
+        var transparentShader = new SolidColorShader(SKColors.Transparent);
 
         const int enemyCount = 12;
         for (var index = 0; index < enemyCount; index++)
@@ -169,10 +212,30 @@ public sealed class SideScrollerLevel2D
             if (!foundPlacement)
                 continue;
 
-            IShader2D normalShader = index % 2 == 0 ? coralShader : violetShader;
+            var patrolMinX = TileCenterX(placement.PatrolMinTileX);
+            var patrolMaxX = TileCenterX(placement.PatrolMaxTileX);
+            if (index % 4 == 0)
+            {
+                var brute = new BoilerBrute2D(
+                    scene,
+                    physics,
+                    textures,
+                    new Vector2(
+                        TileCenterX(placement.TileX),
+                        TileMap.Origin.Y +
+                        (placement.SurfaceTileY + 1) * _tileSize + 50f),
+                    patrolMinX,
+                    patrolMaxX,
+                    _worldLayer,
+                    _enemyLayer,
+                    sounds);
+                RegisterEnemy(brute);
+                continue;
+            }
+
             var worldObject = new WorldObject2D(
                 new Capsule2D(new Vector2(-19f, 0f), new Vector2(19f, 0f), 22f),
-                normalShader);
+                transparentShader);
             worldObject.Transform.Position = new Vector2(
                 TileCenterX(placement.TileX),
                 TileMap.Origin.Y + (placement.SurfaceTileY + 1) * _tileSize + 24f);
@@ -187,28 +250,27 @@ public sealed class SideScrollerLevel2D
             var enemy = new PatrolEnemy2D(
                 worldObject,
                 body,
-                TileCenterX(placement.PatrolMinTileX),
-                TileCenterX(placement.PatrolMaxTileX),
+                patrolMinX,
+                patrolMaxX,
                 random.Range(index, 0, 95, 141, channel: 1),
                 health: 3,
-                normalShader,
-                hitShader);
-            Enemies.Add(enemy);
-            var homeChunk = TileMap.WorldToChunk(worldObject.Transform.Position);
-            _mechanicsEnemies.Add(new MechanicsEnemy(enemy, homeChunk));
+                transparentShader,
+                transparentShader);
+            var shieldback = new Shieldback2D(scene, textures, enemy);
+            RegisterEnemy(shieldback);
         }
 
-        UpdateMechanicsEnemyStreaming();
+        EnemySystem.UpdateStreaming(_loadedChunks.ContainsKey);
     }
 
     private void LoadChunk(TileChunk2D chunk)
     {
-        var objects = new List<ChunkObject>();
+        var colliders = new List<ChunkCollider>();
         foreach (var bounds in TileMap.BuildCollisionRectangles(chunk))
         {
             var platform = new WorldObject2D(
                 AxisAlignedRectangle2D.FromSize(bounds.Size),
-                _platformShader!);
+                _tileFillShader!);
             platform.Transform.Position = bounds.Center;
             _scene!.Add(platform);
             Platforms.Add(platform);
@@ -221,38 +283,181 @@ public sealed class SideScrollerLevel2D
                 bounds.Size.Y <= _tileSize + 0.01f &&
                 TileMap.WorldToTileY(bounds.Min.Y) >= 5;
 
-            const float capHeight = 9f;
-            var cap = new WorldObject2D(
-                AxisAlignedRectangle2D.FromSize(new Vector2(bounds.Size.X, capHeight)),
-                _grassShader!);
-            cap.Transform.Position = new Vector2(
-                bounds.Center.X,
-                bounds.Max.Y - capHeight / 2f);
-            _scene.Add(cap);
-            objects.Add(new ChunkObject(platform, cap, body));
+            colliders.Add(new ChunkCollider(platform, body));
         }
 
-        _loadedChunks.Add(chunk, new LoadedChunk(objects));
+        var surfaceVisuals = CreateSurfaceVisuals(chunk);
+        _loadedChunks.Add(chunk, new LoadedChunk(colliders, surfaceVisuals));
+    }
+
+    private List<WorldObject2D> CreateSurfaceVisuals(TileChunk2D chunk)
+    {
+        var visuals = new List<WorldObject2D>();
+        var startX = chunk.X * TileMap.ChunkSize;
+        var startY = chunk.Y * TileMap.ChunkSize;
+        var endX = Math.Min(startX + TileMap.ChunkSize, TileMap.Width);
+        var endY = Math.Min(startY + TileMap.ChunkSize, TileMap.Height);
+
+        for (var y = startY; y < endY; y++)
+        {
+            for (var x = startX; x < endX; x++)
+            {
+                var surfaces = TileMap.GetExposedSurfaces(x, y);
+                if (surfaces == TileSurface2D.None)
+                    continue;
+
+                var min = TileMap.Origin + new Vector2(x, y) * _tileSize;
+                var max = min + new Vector2(_tileSize);
+                if (surfaces.HasFlag(TileSurface2D.Top))
+                {
+                    AddSurfaceVisual(
+                        visuals,
+                        new Vector2(_tileSize, SurfaceThickness),
+                        new Vector2(min.X + _tileSize / 2f, max.Y - SurfaceThickness / 2f),
+                        _topSurfaceShader!);
+                }
+                if (surfaces.HasFlag(TileSurface2D.Right))
+                {
+                    AddSurfaceVisual(
+                        visuals,
+                        new Vector2(SurfaceThickness, _tileSize),
+                        new Vector2(max.X - SurfaceThickness / 2f, min.Y + _tileSize / 2f),
+                        _sideSurfaceShader!);
+                }
+                if (surfaces.HasFlag(TileSurface2D.Bottom))
+                {
+                    AddSurfaceVisual(
+                        visuals,
+                        new Vector2(_tileSize, SurfaceThickness),
+                        new Vector2(min.X + _tileSize / 2f, min.Y + SurfaceThickness / 2f),
+                        _bottomSurfaceShader!);
+                }
+                if (surfaces.HasFlag(TileSurface2D.Left))
+                {
+                    AddSurfaceVisual(
+                        visuals,
+                        new Vector2(SurfaceThickness, _tileSize),
+                        new Vector2(min.X + SurfaceThickness / 2f, min.Y + _tileSize / 2f),
+                        _sideSurfaceShader!);
+                }
+
+            }
+        }
+
+        // Corners are a separate pass because a diagonal inner corner can be
+        // owned by a fully cardinally-surrounded tile. Drawing them last also
+        // keeps the diagnostic join visible above both adjoining edge strips.
+        for (var y = startY; y < endY; y++)
+        {
+            for (var x = startX; x < endX; x++)
+            {
+                var corners = TileMap.GetCorners(x, y);
+                if (corners == TileCorner2D.None)
+                    continue;
+
+                var min = TileMap.Origin + new Vector2(x, y) * _tileSize;
+                var max = min + new Vector2(_tileSize);
+                AddCornerVisuals(visuals, min, max, corners);
+            }
+        }
+
+        return visuals;
+    }
+
+    private void AddCornerVisuals(
+        List<WorldObject2D> visuals,
+        Vector2 min,
+        Vector2 max,
+        TileCorner2D corners)
+    {
+        var halfOuter = new Vector2(OuterCornerSize / 2f);
+
+        if (corners.HasFlag(TileCorner2D.OuterTopRight))
+            AddCornerVisual(visuals, max - halfOuter, OuterCornerSize, _outerCornerShader!);
+        if (corners.HasFlag(TileCorner2D.OuterBottomRight))
+            AddCornerVisual(
+                visuals,
+                new Vector2(max.X - OuterCornerSize / 2f, min.Y + OuterCornerSize / 2f),
+                OuterCornerSize,
+                _outerCornerShader!);
+        if (corners.HasFlag(TileCorner2D.OuterBottomLeft))
+            AddCornerVisual(visuals, min + halfOuter, OuterCornerSize, _outerCornerShader!);
+        if (corners.HasFlag(TileCorner2D.OuterTopLeft))
+            AddCornerVisual(
+                visuals,
+                new Vector2(min.X + OuterCornerSize / 2f, max.Y - OuterCornerSize / 2f),
+                OuterCornerSize,
+                _outerCornerShader!);
+
+        if (corners.HasFlag(TileCorner2D.InnerTopRight))
+            AddCornerVisual(visuals, max, InnerCornerSize, _innerCornerShader!);
+        if (corners.HasFlag(TileCorner2D.InnerBottomRight))
+            AddCornerVisual(
+                visuals,
+                new Vector2(max.X, min.Y),
+                InnerCornerSize,
+                _innerCornerShader!);
+        if (corners.HasFlag(TileCorner2D.InnerBottomLeft))
+            AddCornerVisual(visuals, min, InnerCornerSize, _innerCornerShader!);
+        if (corners.HasFlag(TileCorner2D.InnerTopLeft))
+            AddCornerVisual(
+                visuals,
+                new Vector2(min.X, max.Y),
+                InnerCornerSize,
+                _innerCornerShader!);
+    }
+
+    private static TextureShader2D CreateTerrainShader(
+        TextureCache2D textures,
+        string fileName,
+        Vector2 logicalSize) =>
+        new(
+            textures.Load($"Terrain/RustCyberpunk/{fileName}"),
+            logicalSize,
+            SKShaderTileMode.Clamp,
+            SKShaderTileMode.Clamp);
+
+    private void AddCornerVisual(
+        List<WorldObject2D> visuals,
+        Vector2 position,
+        float size,
+        IShader2D shader) =>
+        AddSurfaceVisual(visuals, new Vector2(size), position, shader);
+
+    private void AddSurfaceVisual(
+        List<WorldObject2D> visuals,
+        Vector2 size,
+        Vector2 position,
+        IShader2D shader)
+    {
+        var visual = new WorldObject2D(
+            AxisAlignedRectangle2D.FromSize(size),
+            shader);
+        visual.Transform.Position = position;
+        _scene!.Add(visual);
+        visuals.Add(visual);
     }
 
     private void UnloadChunk(TileChunk2D chunk)
     {
         var loaded = _loadedChunks[chunk];
-        foreach (var item in loaded.Objects)
+        foreach (var item in loaded.Colliders)
         {
             _physics!.RemoveBody(item.Body);
             _scene!.Remove(item.Platform);
-            _scene.Remove(item.Cap);
             Platforms.Remove(item.Platform);
         }
+        foreach (var visual in loaded.SurfaceVisuals)
+            _scene!.Remove(visual);
 
         _loadedChunks.Remove(chunk);
     }
 
-    private void UpdateMechanicsEnemyStreaming()
+    private void RegisterEnemy(IEnemyActor2D enemy)
     {
-        foreach (var fixture in _mechanicsEnemies)
-            fixture.Enemy.SetSimulationEnabled(_loadedChunks.ContainsKey(fixture.HomeChunk));
+        var homeChunk = TileMap.WorldToChunk(
+            enemy.Enemy.WorldObject.Transform.Position);
+        EnemySystem.Register(enemy, homeChunk);
     }
 
     private bool TryFindGroundPlacement(int preferredX, out EnemyPlacement placement)
@@ -363,16 +568,13 @@ public sealed class SideScrollerLevel2D
     private float TileCenterX(int x) =>
         TileMap.Origin.X + (x + 0.5f) * _tileSize;
 
-    private sealed record LoadedChunk(List<ChunkObject> Objects);
+    private sealed record LoadedChunk(
+        List<ChunkCollider> Colliders,
+        List<WorldObject2D> SurfaceVisuals);
 
-    private readonly record struct ChunkObject(
+    private readonly record struct ChunkCollider(
         WorldObject2D Platform,
-        WorldObject2D Cap,
         PhysicsBody2D Body);
-
-    private readonly record struct MechanicsEnemy(
-        PatrolEnemy2D Enemy,
-        TileChunk2D HomeChunk);
 
     private readonly record struct EnemyPlacement(
         int TileX,

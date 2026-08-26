@@ -137,10 +137,11 @@ public sealed class GrappleArm2D
         }
     }
 
-    public void FinishExtensionStep()
+    public bool FinishExtensionStep()
     {
         if (_state == ArmState.Extending && _reachedExtensionLimit)
-            BeginRetract();
+            return BeginRetract();
+        return false;
     }
 
     public bool TryLatch(Vector2 point)
@@ -166,17 +167,17 @@ public sealed class GrappleArm2D
         if (!IsLatched)
             return false;
 
-        BeginRetract();
-        return true;
+        return BeginRetract();
     }
 
-    public void BeginRetract()
+    public bool BeginRetract()
     {
         if (_state is ArmState.Idle or ArmState.Retracting)
-            return;
+            return false;
 
         _rope.IsEnabled = false;
         _state = ArmState.Retracting;
+        return true;
     }
 
     public void Cancel()

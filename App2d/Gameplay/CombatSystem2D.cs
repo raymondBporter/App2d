@@ -1,13 +1,18 @@
 using System.Numerics;
 using App2d.Engine;
 using App2d.Engine.Collision.Contacts;
+using App2d.Gameplay.Audio;
 
 namespace App2d.Gameplay;
 
-public sealed class CombatSystem2D(IReadOnlyList<PatrolEnemy2D> enemies)
+public sealed class CombatSystem2D(
+    IReadOnlyList<PatrolEnemy2D> enemies,
+    ISoundEffectSink2D sounds)
 {
     private readonly IReadOnlyList<PatrolEnemy2D> _enemies =
         ArgGuard.RequireNotNull(enemies);
+    private readonly ISoundEffectSink2D _sounds =
+        ArgGuard.RequireNotNull(sounds);
 
     public int DefeatedEnemies { get; private set; }
 
@@ -71,6 +76,13 @@ public sealed class CombatSystem2D(IReadOnlyList<PatrolEnemy2D> enemies)
         var wasAlive = enemy.IsAlive;
         enemy.TakeDamage(damage, knockback);
         if (wasAlive && !enemy.IsAlive)
+        {
             DefeatedEnemies++;
+            _sounds.Play(SoundEffect2D.EnemyDeath);
+        }
+        else if (enemy.IsAlive)
+        {
+            _sounds.Play(SoundEffect2D.EnemyHurt);
+        }
     }
 }

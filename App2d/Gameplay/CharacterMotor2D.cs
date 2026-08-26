@@ -30,6 +30,8 @@ public sealed class CharacterMotor2D
     }
 
     public TraversalMetrics2D Metrics { get; }
+    public event Action? JumpStarted;
+    public event Action<float>? Landed;
     public bool IsGrounded { get; private set; }
     public float CoyoteTimeRemaining => _coyoteTime;
     public float JumpBufferTimeRemaining => _jumpBufferTime;
@@ -83,6 +85,9 @@ public sealed class CharacterMotor2D
             TryConsumeBufferedJump();
         }
 
+        if (IsGrounded && _verticalSpeedBeforePhysics < -60f)
+            Landed?.Invoke(-_verticalSpeedBeforePhysics);
+
         UpdateGravityScale();
     }
 
@@ -128,6 +133,7 @@ public sealed class CharacterMotor2D
         _jumpBufferTime = 0f;
         _coyoteTime = 0f;
         IsGrounded = false;
+        JumpStarted?.Invoke();
     }
 
     private void UpdateGravityScale()

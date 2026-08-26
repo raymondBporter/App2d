@@ -5,6 +5,7 @@ using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering;
 using App2d.Engine.Rendering.Textures;
+using App2d.Gameplay.Audio;
 using SkiaSharp;
 
 namespace App2d.Gameplay;
@@ -28,6 +29,7 @@ public sealed class PlayerArsenal2D
     private readonly IReadOnlyList<WorldObject2D> _platforms;
     private readonly CombatSystem2D _combat;
     private readonly PlayerPresentation2D _presentation;
+    private readonly ISoundEffectSink2D _sounds;
     private readonly SwordAttack2D _sword;
     private readonly GrappleArm2D _grappleArm;
     private readonly BallAndChain2D _ballAndChain;
@@ -46,7 +48,8 @@ public sealed class PlayerArsenal2D
         CombatSystem2D combat,
         PlayerPresentation2D presentation,
         uint playerLayer,
-        uint worldLayer)
+        uint worldLayer,
+        ISoundEffectSink2D sounds)
     {
         ArgGuard.ThrowIfNull(scene);
         _physics = ArgGuard.RequireNotNull(physics);
@@ -56,6 +59,7 @@ public sealed class PlayerArsenal2D
         _platforms = ArgGuard.RequireNotNull(platforms);
         _combat = ArgGuard.RequireNotNull(combat);
         _presentation = ArgGuard.RequireNotNull(presentation);
+        _sounds = ArgGuard.RequireNotNull(sounds);
 
         var fireballShader = new TextureShader2D(
             textures.Load("ember-energy.png"),
@@ -148,10 +152,11 @@ public sealed class PlayerArsenal2D
         var nextIndex =
             (currentIndex + Math.Sign(direction) + WeaponOrder.Length) % WeaponOrder.Length;
         _activeWeapon = WeaponOrder[nextIndex];
+        _sounds.Play(SoundEffect2D.WeaponSwitch);
 
         _sword.Cancel();
         if (_activeWeapon != PlayerWeapon2D.BionicArm)
-            _grappleArm.BeginRetract();
+            PlayGrappleRetract();
         if (_activeWeapon != PlayerWeapon2D.BallAndChain)
             _ballAndChain.Cancel();
     }
@@ -162,7 +167,10 @@ public sealed class PlayerArsenal2D
         {
             case PlayerWeapon2D.Sword:
                 if (_sword.TryStart())
+                {
                     _presentation.PlaySwordAttack();
+                    _sounds.Play(SoundEffect2D.SwordSwing);
+                }
                 break;
 
             case PlayerWeapon2D.BionicArm:
@@ -203,7 +211,8 @@ public sealed class PlayerArsenal2D
     {
         _grappleArm.Update(deltaSeconds);
         TryLatchGrappleArm();
-        _grappleArm.FinishExtensionStep();
+        if (_grappleArm.FinishExtensionStep())
+            _sounds.Play(SoundEffect2D.GrappleRetract);
         _ballAndChain.UpdateBeforePhysics(deltaSeconds);
     }
 
@@ -213,7 +222,10 @@ public sealed class PlayerArsenal2D
         ResolveSwordHits(facing);
         _grappleArm.UpdateVisuals();
         ResolveGrappleArmHits(facing);
+        var ballWasFlying = _ballAndChain.IsFlying;
         _ballAndChain.UpdateAfterPhysics(_physics);
+        if (ballWasFlying && _ballAndChain.IsLanded)
+            _sounds.Play(SoundEffect2D.BallLand);
         ResolveBallAndChainHits();
         UpdateFireballs(deltaSeconds);
     }
@@ -235,6 +247,7 @@ public sealed class PlayerArsenal2D
             new Vector2(facing * 920f, 0f),
             lifetime: 2.25f);
         _pendingFireball = null;
+        _sounds.Play(SoundEffect2D.FireballLaunch);
     }
 
     public void Reset()
@@ -251,13 +264,14 @@ public sealed class PlayerArsenal2D
     {
         if (_grappleArm.IsLatched)
         {
-            _grappleArm.Release();
+            if (_grappleArm.Release())
+                _sounds.Play(SoundEffect2D.GrappleRelease);
             return facing;
         }
 
         if (_grappleArm.IsActive)
         {
-            _grappleArm.BeginRetract();
+            PlayGrappleRetract();
             return facing;
         }
 
@@ -266,20 +280,27 @@ public sealed class PlayerArsenal2D
             origin + Vector2.Normalize(new Vector2(facing, 1.25f)) * _grappleArm.MaxReach;
         if (MathF.Abs(target.X - origin.X) > 1f)
             facing = MathF.Sign(target.X - origin.X);
-        _grappleArm.TryFire(target);
+        if (_grappleArm.TryFire(target))
+            _sounds.Play(SoundEffect2D.GrappleFire);
         return facing;
     }
 
     private float UseBallAndChain(Vector2? aimTarget, float facing)
     {
-        if (_ballAndChain.TryYank() || _ballAndChain.IsActive)
+        if (_ballAndChain.TryYank())
+        {
+            _sounds.Play(SoundEffect2D.BallYank);
+            return facing;
+        }
+        if (_ballAndChain.IsActive)
             return facing;
 
         var origin = _ownerBody.WorldObject.Transform.Position;
         var target = aimTarget ?? origin + new Vector2(facing * 300f, 190f);
         if (MathF.Abs(target.X - origin.X) > 1f)
             facing = MathF.Sign(target.X - origin.X);
-        _ballAndChain.TryThrow(target);
+        if (_ballAndChain.TryThrow(target))
+            _sounds.Play(SoundEffect2D.BallThrow);
         return facing;
     }
 
@@ -288,12 +309,15 @@ public sealed class PlayerArsenal2D
         if (!_sword.IsActive)
             return;
 
-        _combat.ResolveAttack(
+        if (_combat.ResolveAttack(
             _sword.WorldObject,
             _sword,
             _sword.AttackId,
             damage: 2,
-            _ => new Vector2(facing * 520f, 285f));
+            _ => new Vector2(facing * 520f, 285f)))
+        {
+            _sounds.Play(SoundEffect2D.SwordHit);
+        }
     }
 
     private void ResolveGrappleArmHits(float facing)
@@ -314,7 +338,7 @@ public sealed class PlayerArsenal2D
                 _ => direction * 540f + new Vector2(0f, 210f),
                 stopAfterFirstHit: true))
         {
-            _grappleArm.BeginRetract();
+            PlayGrappleRetract();
         }
     }
 
@@ -363,11 +387,14 @@ public sealed class PlayerArsenal2D
             var resolvedHeadPosition =
                 earliestHit.SurfacePoint + earliestHit.Normal * _grappleArm.HeadRadius;
             if (_grappleArm.TryLatch(resolvedHeadPosition))
+            {
+                _sounds.Play(SoundEffect2D.GrappleLatch);
                 return;
+            }
         }
 
         if (_grappleArm.IsExtending)
-            _grappleArm.BeginRetract();
+            PlayGrappleRetract();
     }
 
     private void UpdateFireballs(float deltaSeconds)
@@ -398,7 +425,16 @@ public sealed class PlayerArsenal2D
             }
 
             if (hit)
+            {
                 fireball.Deactivate();
+                _sounds.Play(SoundEffect2D.FireballImpact);
+            }
         }
+    }
+
+    private void PlayGrappleRetract()
+    {
+        if (_grappleArm.BeginRetract())
+            _sounds.Play(SoundEffect2D.GrappleRetract);
     }
 }

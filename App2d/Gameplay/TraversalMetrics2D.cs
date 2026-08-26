@@ -4,7 +4,13 @@ namespace App2d.Gameplay;
 
 public sealed class TraversalMetrics2D
 {
-    public float TileSize { get; init; } = 64f;
+    public const float DesignUnit = 8f;
+
+    public float TileSize { get; init; } = DesignUnit * 4f;
+    public Vector2 PlayerColliderSize { get; init; } =
+        new(DesignUnit * 7f, DesignUnit * 11f);
+    public Vector2 PlayerVisualSize { get; init; } = new(184f, 138f);
+    public Vector2 PlayerVisualOffset { get; init; } = new(0f, 3.5f);
     public float RunSpeed { get; init; } = 430f;
     public float GroundAcceleration { get; init; } = 3_600f;
     public float AirAcceleration { get; init; } = 1_450f;
@@ -23,6 +29,38 @@ public sealed class TraversalMetrics2D
     public float GrappleReach { get; init; } = 430f;
     public float GrappleAimAssist { get; init; } = 6f;
     public float GrappleRangeGrace { get; init; } = 8f;
+
+    public int StandingPassageTiles =>
+        (int)MathF.Ceiling(PlayerColliderSize.Y / TileSize);
+    public float StandingClearance =>
+        StandingPassageTiles * TileSize - PlayerColliderSize.Y;
+    public int ReliableJumpRiseTiles { get; init; } = 4;
+
+    public void ValidateScaleContract()
+    {
+        ArgGuard.ThrowIfNotPositive(TileSize);
+        ArgGuard.ThrowIfNotPositive(PlayerColliderSize);
+        ArgGuard.ThrowIfNotPositive(PlayerVisualSize);
+        ArgGuard.ThrowIfNotFinite(PlayerVisualOffset);
+
+        StateGuard.ThrowIf(
+            !IsDesignUnitMultiple(TileSize) ||
+            !IsDesignUnitMultiple(PlayerColliderSize.X) ||
+            !IsDesignUnitMultiple(PlayerColliderSize.Y),
+            $"Tile and player collider dimensions must use the {DesignUnit:0}-unit design grid.");
+        StateGuard.ThrowIf(
+            StandingClearance < DesignUnit,
+            $"The minimum whole-tile standing passage must leave at least " +
+            $"{DesignUnit:0} units of clearance.");
+
+        ArgGuard.ThrowIfNotPositive(ReliableJumpRiseTiles);
+        var requiredJumpHeight = TileSize * ReliableJumpRiseTiles + DesignUnit;
+        var standingJump = MeasureJump(0f);
+        StateGuard.ThrowIf(
+            standingJump.ApexHeight < requiredJumpHeight,
+            $"A held jump must clear {ReliableJumpRiseTiles} tiles plus " +
+            $"{DesignUnit:0} units of margin.");
+    }
 
     public JumpProfile2D MeasureJump(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
     {
@@ -96,6 +134,12 @@ public sealed class TraversalMetrics2D
 
     private static void ValidateFixedDelta(float fixedDeltaSeconds)
         => ArgGuard.ThrowIfNotPositive(fixedDeltaSeconds);
+
+    private static bool IsDesignUnitMultiple(float value)
+    {
+        var increments = value / DesignUnit;
+        return MathF.Abs(increments - MathF.Round(increments)) < 0.001f;
+    }
 }
 
 public readonly record struct JumpProfile2D(

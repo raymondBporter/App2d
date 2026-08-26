@@ -208,10 +208,26 @@ Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, a
 ledges all derive from one coordinate seed. A small separately seeded population near
 spawn exists only as a mechanics playground; it is not the eventual authored encounter
 format.
+
+Solid tilemaps expose a four-bit `TileSurface2D` topology (`Top`, `Right`, `Bottom`,
+and `Left`) plus four outer and four diagonal-aware inner `TileCorner2D` cases. A
+surface bit is present only where a solid cell borders an empty cell. The side-scroller
+currently renders this as a generated collision-line tileset: dark fill, bright cyan
+walkable tops, blue walls, violet undersides, white outer joins, and pink inner joins.
+No texture atlas is required, chunk boundaries do not create false edges, and later
+visual tiles can select art from the same topology without changing authored or
+procedural map data. Seeded solid slabs, notched blocks, hollow frames, and stair-step
+formations exercise these combinations above the guaranteed ground route.
 Player traversal has
 acceleration, coyote time, jump buffering, variable jump height, a sword, a ceiling
 grapple, a ball and chain, and a fixed pool of 16 fireballs. `DemoGame` remains the
 shape/physics stress scene.
+
+Short sound effects are decoded once at startup and played through one polyphonic mixer.
+Gameplay emits semantic cues through `ISoundEffectSink2D`, so movement, combat, and weapon
+code never knows asset paths or audio-device details. `SoundEffectBank2D` owns the cue-to-file
+mapping, per-cue levels, and non-repeating variants. Set `sfx_volume` in the developer
+console to a value from 0 through 1 to adjust the master sound-effect level.
 
 Player movement is owned by `Gameplay/CharacterMotor2D`. `PlayerIntent2D` describes
 what the player requested; the motor turns that into desired velocity and grace-window
@@ -221,10 +237,27 @@ that establishes ground support. It also provides a two-world-unit ground skin,
 four-unit landing snap, eight-unit upward corner correction, held-jump apex gravity,
 and a terminal fall speed without weakening collision tolerances globally.
 
+Side-scroller dimensions use an eight-world-unit design increment. A terrain tile is
+32 units (four increments), while the player collider is 56 by 88 units (seven by
+eleven increments). The character is 2.75 tiles tall: two-tile openings are blocked,
+three-tile passages leave one eight-unit increment of clearance, four-tile rises are
+reliable, and five-tile rises exceed the normal held jump. The padded sprite canvas
+renders at 184 by 138 world units so the artwork follows the larger body scale. Spawn
+height, presentation size, and collision size all come from `TraversalMetrics2D`
+rather than repeating unrelated literals.
+
 `TraversalMetrics2D` is the single source for locomotion tuning and simulates the same
 held-jump arc used at runtime. The F3 overlay draws the full-speed and standstill arcs,
 the truthful grapple radius, and their tile-relative measurements. This keeps authored
 distances tied to the movement implementation instead of duplicated design notes.
+
+`JumpableWorldGenerator2D` consumes that same contract. Tower tiers use the reliable
+four-tile rise, which leaves the three-tile standing passage between full-height ledges;
+their first tier is anchored to nearby terrain instead of an absolute row. Pit width is
+derived from measured running-jump distance with two tiles reserved for takeoff and
+landing error. Floating formations likewise use standing clearance, while grounded
+stairs and staggered balcony sequences add denser local silhouettes without claiming to
+be authored levels.
 
 The grapple counts its initial head offset as part of its advertised reach. Extension
 uses a swept-circle-versus-AABB query, including a small aim-assist radius, so a slow
@@ -290,6 +323,12 @@ matrix. This is why the click marker remains correct after resize and zoom.
 `SKShader`; it can later be joined by image, noise, or `SKRuntimeEffect`/SkSL shaders
 without changing scene objects or the renderer's transform path.
 
+Scene objects also expose a general-purpose `ZIndex`. Lower values render first, and
+objects with equal values keep their scene insertion order. Changing a z-index at
+runtime invalidates the scene's cached draw order. The side-scroller places the player
+at z-index 1 so streamed terrain and one-way platforms at the default 0 stay behind the
+character.
+
 ## Textures
 
 PNG assets under `Assets/Textures` are copied beside the executable. Every `Game2D`
@@ -307,9 +346,10 @@ borrows its texture, so stop using shaders that reference an asset before unload
 
 `TextureShader2D` uses Skia's image shader with configurable X/Y tile modes, filtering,
 and world-unit tile size. Ordinary textures require no custom shader compilation;
-`SKRuntimeEffect` is only needed for future custom SkSL effects. The side-scroller uses
-`mossy-stone.png` on platforms and `ember-energy.png` on pooled fireballs while retaining
-the existing solid-color and gradient shader examples elsewhere.
+`SKRuntimeEffect` is only needed for future custom SkSL effects. The side-scroller's
+terrain currently uses generated topology visuals rather than a texture; pooled
+fireballs use `ember-energy.png` while other scenes retain solid-color and gradient
+shader examples.
 
 ## Frame animation
 
@@ -332,11 +372,12 @@ restart, and playback-speed changes. `SpriteShader2D` maps one complete texture 
 finite object bounds, corrects image orientation for the engine's Y-up world, and can
 flip sprites horizontally or vertically.
 
-The side-scroller loads `Player/A1/walk-01.png` through `walk-06.png` as a looping walk
-clip and `sword-01.png` through `sword-06.png` as a one-shot clip synchronized to the
-existing sword hitbox. Fireball input plays normalized `shotgun-01.png` through
-`shotgun-08.png` as a 0.40-second one-shot clip, spawning the projectile at 0.20 seconds
-before returning to locomotion. Gameplay timing is expressed in seconds rather than
-frame indices, so changing the clip's frame count does not change firing behavior. The
-knight artwork is rendered by a separate visual object that follows the smaller physics
-collider, keeping transparent frame padding out of collision calculations.
+The side-scroller loops `Player/A1/idle-01.png` through `idle-06.png` while standing and
+`walk-01.png` through `walk-06.png` while moving. Leaving the ground plays the eight-frame
+`jump` clip once and holds its final frame until landing. Sword and shotgun one-shots take
+priority over locomotion: the sword clip remains synchronized to its hitbox, while the
+0.40-second shotgun clip spawns its projectile at 0.20 seconds before returning to the
+appropriate idle, walk, or jump state. Gameplay timing is expressed in seconds rather
+than frame indices, so changing the clip's frame count does not change firing behavior.
+The knight artwork is rendered by a separate visual object that follows the smaller
+physics collider, keeping transparent frame padding out of collision calculations.

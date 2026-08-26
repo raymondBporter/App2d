@@ -8,13 +8,15 @@ namespace App2d.Gameplay;
 
 public sealed class SideScrollerCamera2D
 {
-    private const float VerticalOffset = 165f;
+    private const float VerticalOffset = 40f;
+    private const float FloorClearance = 96f;
     private const float HorizontalDeadZoneViewportRatio = 0.22f;
     private const float VerticalDeadZoneViewportRatio = 0.30f;
     private const float MaximumLookAhead = 210f;
 
     private readonly Camera2D _camera;
     private readonly Bounds2D _levelBounds;
+    private readonly Func<float, float> _floorHeightAtX;
     private readonly List<ParallaxItem> _parallaxItems = [];
     private float _lookAhead;
 
@@ -22,13 +24,15 @@ public sealed class SideScrollerCamera2D
         Scene2D scene,
         Camera2D camera,
         Bounds2D levelBounds,
-        Vector2 initialPlayerPosition)
+        Vector2 initialPlayerPosition,
+        Func<float, float> floorHeightAtX)
     {
         ArgGuard.ThrowIfNull(scene);
         _camera = ArgGuard.RequireNotNull(camera);
         if (!levelBounds.IsFinite)
             ArgGuard.ThrowOutOfRange(levelBounds, "Value must be finite.");
         _levelBounds = levelBounds;
+        _floorHeightAtX = ArgGuard.RequireNotNull(floorHeightAtX);
 
         _camera.Zoom = 1.35f;
         Reset(initialPlayerPosition);
@@ -44,7 +48,9 @@ public sealed class SideScrollerCamera2D
         var halfView = _camera.ViewportSize / (2f * _camera.Zoom);
         UpdateLookAhead(playerVelocity.X, halfView.X, deltaSeconds);
 
-        var focus = playerPosition + new Vector2(_lookAhead, VerticalOffset);
+        var focus = new Vector2(
+            playerPosition.X + _lookAhead,
+            GetVerticalFocus(playerPosition));
         var target = _camera.Position;
         target.X = KeepInsideDeadZone(
             target.X,
@@ -71,9 +77,20 @@ public sealed class SideScrollerCamera2D
         _lookAhead = 0f;
         var halfView = _camera.ViewportSize / (2f * _camera.Zoom);
         _camera.Position = ClampToLevel(
-            playerPosition + new Vector2(0f, VerticalOffset),
+            new Vector2(playerPosition.X, GetVerticalFocus(playerPosition)),
             halfView);
         UpdateParallax();
+    }
+
+    private float GetVerticalFocus(Vector2 playerPosition)
+    {
+        var floorY = _floorHeightAtX(playerPosition.X);
+        if (!float.IsFinite(floorY))
+            throw new InvalidOperationException("The camera floor height must be finite.");
+
+        return MathF.Max(
+            playerPosition.Y + VerticalOffset,
+            floorY + FloorClearance);
     }
 
     private void UpdateLookAhead(float horizontalVelocity, float halfViewWidth, float deltaSeconds)

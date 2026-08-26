@@ -4,21 +4,37 @@ namespace App2d.Gameplay;
 
 public sealed class JumpableWorldGenerator2D
 {
-    private const int TerrainSectionWidth = 12;
+    private const int TerrainSectionWidth = 20;
     private const int VerticalRegionWidth = 64;
     private const int SidePlatformSectionWidth = 8;
-    private const int FirstPlatformRow = 3;
-    private const int PlatformRowSpacing = 2;
+    private const int TopologyRegionWidth = 48;
 
     private readonly SpatialRandom2D _random;
+    private readonly int _maximumPitWidth;
+    private readonly int _platformRowSpacing;
+    private readonly int _standingPassageTiles;
 
-    public JumpableWorldGenerator2D(ulong seed, int width, int height)
+    public JumpableWorldGenerator2D(
+        ulong seed,
+        int width,
+        int height,
+        TraversalMetrics2D traversal)
     {
         ArgGuard.ThrowIfNotPositive(width);
         ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.ThrowIfNull(traversal);
         Width = width;
         Height = height;
         _random = new SpatialRandom2D(seed);
+        _platformRowSpacing = traversal.ReliableJumpRiseTiles;
+        _standingPassageTiles = traversal.StandingPassageTiles;
+        var runningJumpTiles = traversal
+            .MeasureJump(traversal.RunSpeed)
+            .HorizontalDistance / traversal.TileSize;
+        _maximumPitWidth = Math.Clamp(
+            (int)MathF.Floor(runningJumpTiles) - 2,
+            3,
+            TerrainSectionWidth - 8);
     }
 
     public int Width { get; }
@@ -37,15 +53,15 @@ public sealed class JumpableWorldGenerator2D
         if (y < TerrainHeight(x) && !IsJumpablePit(x))
             return true;
 
-        return IsVerticalPlatform(x, y);
+        return IsVerticalPlatform(x, y) || IsTopologyFormation(x, y);
     }
 
     public int TerrainHeight(int x)
     {
         x = Math.Clamp(x, 0, Width - 1);
         var section = Math.DivRem(x, TerrainSectionWidth, out var localX);
-        var first = _random.Range(section, 0, 2, 5, channel: 1);
-        var second = _random.Range(section + 1, 0, 2, 5, channel: 1);
+        var first = _random.Range(section, 0, 2, 8, channel: 1);
+        var second = _random.Range(section + 1, 0, 2, 8, channel: 1);
         var blend = localX / (float)TerrainSectionWidth;
         blend = blend * blend * (3f - 2f * blend);
         return (int)MathF.Round(float.Lerp(first, second, blend));
@@ -53,8 +69,8 @@ public sealed class JumpableWorldGenerator2D
 
     private bool IsJumpablePit(int x)
     {
-        // At most three missing columns: comfortably inside the measured running
-        // jump, with the first/last sections kept safe for spawn and goal.
+        // Pit width comes from measured running-jump reach with two tiles held
+        // back for takeoff/landing error. First/last sections stay spawn-safe.
         if (x < TerrainSectionWidth || x >= Width - TerrainSectionWidth)
             return false;
 
@@ -62,7 +78,12 @@ public sealed class JumpableWorldGenerator2D
         if (_random.Unit(section, 0, channel: 2) >= 0.32f)
             return false;
 
-        var pitWidth = _random.Range(section, 0, 1, 4, channel: 3);
+        var pitWidth = _random.Range(
+            section,
+            0,
+            2,
+            _maximumPitWidth + 1,
+            channel: 3);
         var pitStart = _random.Range(
             section,
             0,
@@ -74,12 +95,16 @@ public sealed class JumpableWorldGenerator2D
 
     private bool IsVerticalPlatform(int x, int y)
     {
-        if (y < FirstPlatformRow || (y - FirstPlatformRow) % PlatformRowSpacing != 0)
+        var region = Math.DivRem(x, VerticalRegionWidth, out var localX);
+        var firstPlatformY = GetFirstPlatformY(region);
+        if (y < firstPlatformY || (y - firstPlatformY) % _platformRowSpacing != 0)
             return false;
 
-        var platformRow = (y - FirstPlatformRow) / PlatformRowSpacing;
-        var region = Math.DivRem(x, VerticalRegionWidth, out var localX);
-        var maximumRows = Math.Max(1, (Height - FirstPlatformRow + 1) / PlatformRowSpacing);
+        var platformRow = (y - firstPlatformY) / _platformRowSpacing;
+        var maximumRows = Math.Max(
+            1,
+            (Height - firstPlatformY + _platformRowSpacing - 1) /
+            _platformRowSpacing);
         var towerRows = _random.Range(
             region,
             0,
@@ -116,6 +141,16 @@ public sealed class JumpableWorldGenerator2D
             localX < Math.Min((section + 1) * SidePlatformSectionWidth, start + width);
     }
 
+    private int GetFirstPlatformY(int region)
+    {
+        var spineX = Math.Clamp(
+            region * VerticalRegionWidth + GetSpineCenter(region, 0),
+            1,
+            Width - 2);
+        var groundSurfaceY = TerrainHeight(spineX);
+        return groundSurfaceY + _platformRowSpacing - 1;
+    }
+
     private int GetSpineCenter(int region, int platformRow)
     {
         var center = _random.Range(region, 0, 22, 43, channel: 25);
@@ -131,5 +166,58 @@ public sealed class JumpableWorldGenerator2D
         else
             offset = position - amplitude * 4;
         return center + offset;
+    }
+
+    private bool IsTopologyFormation(int x, int y)
+    {
+        if (x < TerrainSectionWidth || x >= Width - TerrainSectionWidth)
+            return false;
+
+        var region = Math.DivRem(x, TopologyRegionWidth, out var regionX);
+        if (region > 0 && _random.Unit(region, 0, channel: 40) >= 0.72f)
+            return false;
+
+        var startX = _random.Range(region, 0, 10, 19, channel: 41);
+        var localX = regionX - startX;
+        var style = _random.Range(region, 0, 0, 5, channel: 43);
+        var anchorX = Math.Clamp(
+            region * TopologyRegionWidth + startX,
+            1,
+            Width - 2);
+        var groundSurfaceY = TerrainHeight(anchorX);
+        var baseY = style == 3
+            ? groundSurfaceY
+            : groundSurfaceY + _standingPassageTiles;
+        var localY = y - baseY;
+
+        return style switch
+        {
+            // A two-cell-thick slab exercises all four outer corners and gives
+            // the diagnostic tileset a continuous ceiling to draw.
+            0 => localX >= 0 && localX < 9 && localY >= 0 && localY < 2,
+
+            // A block with an open top notch adds two visible inner corners
+            // without enclosing the player in generated terrain.
+            1 => localX >= 0 && localX < 10 && localY >= 0 && localY < 4 &&
+                !(localX >= 3 && localX < 7 && localY >= 2),
+
+            // A hollow frame supplies outer and inner corners, walls, a floor,
+            // and an underside in one compact visual sanity check.
+            2 => localX >= 0 && localX < 10 && localY >= 0 && localY < 6 &&
+                (localX == 0 || localX == 9 || localY == 0 || localY == 5),
+
+            // Grounded two-wide steps produce repeated convex and concave
+            // transitions while remaining useful as traversal geometry.
+            3 => localX >= 0 && localX < 10 && localY >= 0 &&
+                localY < 1 + localX / 2,
+
+            // Three one-way balconies form a small rise-and-fall sequence. The
+            // outer ledges sit at reliable jump height and the center is two
+            // cells higher, creating variety without requiring a maximum jump.
+            4 => localX >= 0 && localX < 12 &&
+                ((localX < 4 || localX >= 8) && localY == 0 ||
+                 localX >= 4 && localX < 8 && localY == 2),
+            _ => false
+        };
     }
 }
