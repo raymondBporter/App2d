@@ -16,7 +16,8 @@ public sealed class PlayerArsenal2D
     [
         PlayerWeapon2D.Sword,
         PlayerWeapon2D.BionicArm,
-        PlayerWeapon2D.BallAndChain
+        PlayerWeapon2D.BallAndChain,
+        PlayerWeapon2D.Fireball
     ];
 
     private const float FireballReleaseTime = 0.2f;
@@ -33,10 +34,15 @@ public sealed class PlayerArsenal2D
     private readonly SwordAttack2D _sword;
     private readonly GrappleArm2D _grappleArm;
     private readonly BallAndChain2D _ballAndChain;
+    private readonly Texture2D _swordHudTexture;
+    private readonly Texture2D _bionicArmHudTexture;
+    private readonly Texture2D _ballAndChainHudTexture;
+    private readonly Texture2D _fireballHudTexture;
     private readonly List<Projectile2D> _fireballs = [];
     private float _fireballCooldown;
     private Projectile2D? _pendingFireball;
-    private PlayerWeapon2D _activeWeapon = PlayerWeapon2D.Sword;
+    private PlayerWeapon2D _leftWeapon = PlayerWeapon2D.Sword;
+    private PlayerWeapon2D _rightWeapon = PlayerWeapon2D.Fireball;
 
     public PlayerArsenal2D(
         Scene2D scene,
@@ -60,6 +66,10 @@ public sealed class PlayerArsenal2D
         _combat = ArgGuard.RequireNotNull(combat);
         _presentation = ArgGuard.RequireNotNull(presentation);
         _sounds = ArgGuard.RequireNotNull(sounds);
+        _swordHudTexture = textures.Load(Path.Combine("Hud", "weapon-sword.png"));
+        _bionicArmHudTexture = textures.Load(Path.Combine("Hud", "weapon-bionic-arm.png"));
+        _ballAndChainHudTexture = textures.Load(Path.Combine("Hud", "weapon-ball-and-chain.png"));
+        _fireballHudTexture = textures.Load(Path.Combine("Hud", "weapon-fireball.png"));
 
         var fireballShader = new TextureShader2D(
             textures.Load("ember-energy.png"),
@@ -100,29 +110,14 @@ public sealed class PlayerArsenal2D
 
     public bool IsSwordActive => _sword.IsActive;
 
-    public string ActiveWeaponStatus
-    {
-        get
-        {
-            if (_grappleArm.IsLatched)
-                return "BIONIC ARM - SWINGING - CLICK TO RELEASE";
-            if (_ballAndChain.IsLanded)
-                return "BALL & CHAIN - CLICK TO YANK";
-            if (_ballAndChain.IsFlying)
-                return "BALL & CHAIN - THROWN (CLICK TO YANK)";
-            return ActiveWeaponName;
-        }
-    }
+    public string WeaponStatus =>
+        $"LMB: {GetWeaponStatus(_leftWeapon)}   RMB: {GetWeaponStatus(_rightWeapon)}";
 
-    public string ActiveWeaponName => _activeWeapon switch
-    {
-        PlayerWeapon2D.Sword => "SWORD",
-        PlayerWeapon2D.BionicArm => "BIONIC ARM",
-        PlayerWeapon2D.BallAndChain => "BALL & CHAIN",
-        _ => throw ArgGuard.CreateOutOfRange(
-            _activeWeapon,
-            "Unknown active weapon.")
-    };
+    public string LeftWeaponName => GetWeaponName(_leftWeapon);
+    public string RightWeaponName => GetWeaponName(_rightWeapon);
+
+    public Texture2D LeftWeaponHudTexture => GetWeaponHudTexture(_leftWeapon);
+    public Texture2D RightWeaponHudTexture => GetWeaponHudTexture(_rightWeapon);
 
     public IEnumerable<WorldObject2D> GetActiveAttackHitboxes()
     {
@@ -143,27 +138,39 @@ public sealed class PlayerArsenal2D
     public void BeginFrame(float deltaSeconds) =>
         _fireballCooldown = Math.Max(0f, _fireballCooldown - deltaSeconds);
 
-    public void CycleWeapon(int direction)
-    {
-        if (direction == 0)
-            return;
+    public void CycleLeftWeapon() => CycleWeapon(ref _leftWeapon, _rightWeapon);
 
-        var currentIndex = Array.IndexOf(WeaponOrder, _activeWeapon);
-        var nextIndex =
-            (currentIndex + Math.Sign(direction) + WeaponOrder.Length) % WeaponOrder.Length;
-        _activeWeapon = WeaponOrder[nextIndex];
+    public void CycleRightWeapon() => CycleWeapon(ref _rightWeapon, _leftWeapon);
+
+    public float UseLeftWeapon(Vector2? aimTarget, float facing) =>
+        UseWeapon(_leftWeapon, aimTarget, facing);
+
+    public float UseRightWeapon(Vector2? aimTarget, float facing) =>
+        UseWeapon(_rightWeapon, aimTarget, facing);
+
+    private void CycleWeapon(ref PlayerWeapon2D weapon, PlayerWeapon2D otherWeapon)
+    {
+        var nextIndex = Array.IndexOf(WeaponOrder, weapon);
+        do
+        {
+            nextIndex = (nextIndex + 1) % WeaponOrder.Length;
+            weapon = WeaponOrder[nextIndex];
+        }
+        while (weapon == otherWeapon);
+
         _sounds.Play(SoundEffect2D.WeaponSwitch);
 
-        _sword.Cancel();
-        if (_activeWeapon != PlayerWeapon2D.BionicArm)
+        if (!IsAssigned(PlayerWeapon2D.Sword))
+            _sword.Cancel();
+        if (!IsAssigned(PlayerWeapon2D.BionicArm))
             PlayGrappleRetract();
-        if (_activeWeapon != PlayerWeapon2D.BallAndChain)
+        if (!IsAssigned(PlayerWeapon2D.BallAndChain))
             _ballAndChain.Cancel();
     }
 
-    public float UseActiveWeapon(Vector2? aimTarget, float facing)
+    private float UseWeapon(PlayerWeapon2D weapon, Vector2? aimTarget, float facing)
     {
-        switch (_activeWeapon)
+        switch (weapon)
         {
             case PlayerWeapon2D.Sword:
                 if (_sword.TryStart())
@@ -181,13 +188,59 @@ public sealed class PlayerArsenal2D
                 facing = UseBallAndChain(aimTarget, facing);
                 break;
 
+            case PlayerWeapon2D.Fireball:
+                facing = FaceAimTarget(aimTarget, facing);
+                TryStartFireballShot();
+                break;
+
             default:
                 throw ArgGuard.CreateOutOfRange(
-                    _activeWeapon,
-                    "Unknown active weapon.");
+                    weapon,
+                    "Unknown weapon.");
         }
 
         return facing;
+    }
+
+    private bool IsAssigned(PlayerWeapon2D weapon) =>
+        _leftWeapon == weapon || _rightWeapon == weapon;
+
+    private string GetWeaponStatus(PlayerWeapon2D weapon)
+    {
+        if (weapon == PlayerWeapon2D.BionicArm && _grappleArm.IsLatched)
+            return "BIONIC ARM (PULLING - CLICK TO RELEASE)";
+        if (weapon == PlayerWeapon2D.BallAndChain && _ballAndChain.IsLanded)
+            return "BALL & CHAIN (CLICK TO YANK)";
+        if (weapon == PlayerWeapon2D.BallAndChain && _ballAndChain.IsFlying)
+            return "BALL & CHAIN (THROWN - CLICK TO YANK)";
+        return GetWeaponName(weapon);
+    }
+
+    private static string GetWeaponName(PlayerWeapon2D weapon) => weapon switch
+    {
+        PlayerWeapon2D.Sword => "SWORD",
+        PlayerWeapon2D.BionicArm => "BIONIC ARM",
+        PlayerWeapon2D.BallAndChain => "BALL & CHAIN",
+        PlayerWeapon2D.Fireball => "FIREBALL",
+        _ => throw ArgGuard.CreateOutOfRange(weapon, "Unknown weapon.")
+    };
+
+    private Texture2D GetWeaponHudTexture(PlayerWeapon2D weapon) => weapon switch
+    {
+        PlayerWeapon2D.Sword => _swordHudTexture,
+        PlayerWeapon2D.BionicArm => _bionicArmHudTexture,
+        PlayerWeapon2D.BallAndChain => _ballAndChainHudTexture,
+        PlayerWeapon2D.Fireball => _fireballHudTexture,
+        _ => throw ArgGuard.CreateOutOfRange(weapon, "Unknown weapon.")
+    };
+
+    private float FaceAimTarget(Vector2? aimTarget, float facing)
+    {
+        if (aimTarget is not { } target)
+            return facing;
+
+        var deltaX = target.X - _ownerBody.WorldObject.Transform.Position.X;
+        return MathF.Abs(deltaX) > 1f ? MathF.Sign(deltaX) : facing;
     }
 
     public void TryStartFireballShot()

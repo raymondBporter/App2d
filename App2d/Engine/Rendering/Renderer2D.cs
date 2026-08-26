@@ -1,12 +1,13 @@
 using System.Numerics;
 using App2d.Engine.Geometry;
+using App2d.Engine.Rendering.Textures;
 using SkiaSharp;
 
 namespace App2d.Engine.Rendering;
 
 public sealed class Renderer2D(Camera2D camera) : IDisposable
 {
-    private readonly SKFont _hudFont = new(null, 28f);
+    private readonly SKFont _hudFont = new(SKTypeface.Default, 28f);
     private readonly SKPaint _hudTextPaint = new()
     {
         Color = SKColors.White,
@@ -164,6 +165,81 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
             SKTextAlign.Left,
             _hudFont,
             _hudTextPaint);
+    }
+
+    public void DrawPlayerHud(
+        int currentHealth,
+        int maximumHealth,
+        Texture2D weaponTexture,
+        Texture2D secondaryWeaponTexture,
+        string weaponStatus)
+    {
+        ArgGuard.ThrowIfNotPositive(maximumHealth);
+        ArgGuard.ThrowIfNull(weaponTexture);
+        ArgGuard.ThrowIfNull(secondaryWeaponTexture);
+        ArgGuard.ThrowIfNullOrWhiteSpace(weaponStatus);
+
+        const float left = 24f;
+        const float top = 24f;
+        const float panelHeight = 52f;
+        const float barLeft = 105f;
+        const float barWidth = 245f;
+        var healthRatio = Math.Clamp(currentHealth / (float)maximumHealth, 0f, 1f);
+        var lifePanel = new SKRect(left, top, left + 350f, top + panelHeight);
+        var barBounds = new SKRect(barLeft, top + 13f, barLeft + barWidth, top + 39f);
+
+        using var barBackPaint = new SKPaint
+        {
+            Color = new SKColor(7, 12, 20, 235),
+            IsAntialias = true
+        };
+        using var lifePaint = new SKPaint
+        {
+            Color = healthRatio > 0.3f
+                ? new SKColor(72, 224, 121)
+                : new SKColor(245, 76, 76),
+            IsAntialias = true
+        };
+        using var accentPaint = CreateStrokePaint(new SKColor(113, 224, 255), 3f);
+
+        Canvas.DrawRoundRect(lifePanel, 9f, 9f, _hudBackgroundPaint);
+        Canvas.DrawText("LIFE", left + 14f, top + 35f, SKTextAlign.Left, _hudFont, _hudTextPaint);
+        Canvas.DrawRoundRect(barBounds, 6f, 6f, barBackPaint);
+        if (healthRatio > 0f)
+        {
+            var fillBounds = new SKRect(
+                barBounds.Left + 3f,
+                barBounds.Top + 3f,
+                barBounds.Left + 3f + (barBounds.Width - 6f) * healthRatio,
+                barBounds.Bottom - 3f);
+            Canvas.DrawRoundRect(fillBounds, 4f, 4f, lifePaint);
+        }
+        Canvas.DrawRoundRect(barBounds, 6f, 6f, accentPaint);
+
+        const float weaponTop = top + panelHeight + 10f;
+        var iconBounds = new SKRect(left, weaponTop, left + 70f, weaponTop + 70f);
+        Canvas.DrawRoundRect(iconBounds, 9f, 9f, _hudBackgroundPaint);
+        Canvas.DrawRoundRect(iconBounds, 9f, 9f, accentPaint);
+        Canvas.DrawBitmap(
+            weaponTexture.Bitmap,
+            SKRect.Inflate(iconBounds, -5f, -5f),
+            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None),
+            _hudTextPaint);
+        var secondaryIconBounds = new SKRect(
+            iconBounds.Right + 10f,
+            weaponTop,
+            iconBounds.Right + 80f,
+            weaponTop + 70f);
+        Canvas.DrawRoundRect(secondaryIconBounds, 9f, 9f, _hudBackgroundPaint);
+        Canvas.DrawRoundRect(secondaryIconBounds, 9f, 9f, accentPaint);
+        Canvas.DrawBitmap(
+            secondaryWeaponTexture.Bitmap,
+            SKRect.Inflate(secondaryIconBounds, -5f, -5f),
+            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None),
+            _hudTextPaint);
+        DrawScreenLabel(
+            weaponStatus,
+            new Vector2(secondaryIconBounds.Right + 10f, weaponTop + 9f));
     }
 
     public void DrawWorldCircle(

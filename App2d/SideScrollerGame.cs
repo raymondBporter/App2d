@@ -108,7 +108,7 @@ public sealed class SideScrollerGame : Game2D
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | weapon: {_arsenal.ActiveWeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        $"App2d Side Scroller | LMB: {_arsenal.LeftWeaponName} | RMB: {_arsenal.RightWeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -120,15 +120,18 @@ public sealed class SideScrollerGame : Game2D
         var command = _inputMapper.Capture(input, Camera);
         if (command.ToggleTraversalDebug)
             _showTraversalDebug = !_showTraversalDebug;
-        _arsenal.CycleWeapon(command.WeaponCycleDirection);
+        if (command.CycleLeftWeapon)
+            _arsenal.CycleLeftWeapon();
+        if (command.CycleRightWeapon)
+            _arsenal.CycleRightWeapon();
 
         _level.EnemySystem.Update(dt, _player.Position);
 
         _player.UpdateBeforePhysics(command.Movement, dt);
-        if (command.UseWeapon)
-            _player.Face(_arsenal.UseActiveWeapon(command.AimTarget, _player.Facing));
-        if (command.FireProjectile)
-            _arsenal.TryStartFireballShot();
+        if (command.UseLeftWeapon)
+            _player.Face(_arsenal.UseLeftWeapon(command.AimTarget, _player.Facing));
+        if (command.UseRightWeapon)
+            _player.Face(_arsenal.UseRightWeapon(command.AimTarget, _player.Facing));
 
         _arsenal.UpdateBeforePhysics(dt);
         _physics.Step(dt);
@@ -170,9 +173,12 @@ public sealed class SideScrollerGame : Game2D
     {
         renderer.Clear(new SKColor(103, 196, 235));
         renderer.Draw(Scene);
-        renderer.DrawScreenLabel(
-            $"WEAPON: {_arsenal.ActiveWeaponStatus}   CTRL + WHEEL   F3: METRICS",
-            new Vector2(24f, 24f));
+        renderer.DrawPlayerHud(
+            _player.Health.Current,
+            _player.Health.Maximum,
+            _arsenal.LeftWeaponHudTexture,
+            _arsenal.RightWeaponHudTexture,
+            _arsenal.WeaponStatus);
 
         if (_showTraversalDebug)
             _traversalDebug.Draw(renderer, _player.Position, _player.Facing);

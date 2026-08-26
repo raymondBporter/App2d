@@ -33,15 +33,16 @@ public sealed class PlayerInputMapper2D
             !jumpHeld && (_jumpActionHeld || anyJumpReleased));
         _jumpActionHeld = jumpHeld;
 
-        var usedMouse = input.WasMousePressed(MouseButtons.Left);
-        var cycleDirection = input.IsControlDown && input.MouseWheelDelta != 0f
-            ? Math.Sign(input.MouseWheelDelta)
-            : 0;
+        var leftMousePressed = input.WasMousePressed(MouseButtons.Left);
+        var rightMousePressed = input.WasMousePressed(MouseButtons.Right);
+        var isChangingLoadout = input.IsControlDown;
+        var usedMouse = leftMousePressed || rightMousePressed;
         return new PlayerCommand2D(
             movement,
-            cycleDirection,
-            input.WasKeyPressed(Keys.J) || usedMouse,
-            input.WasKeyPressed(Keys.K) || input.WasMousePressed(MouseButtons.Right),
+            isChangingLoadout && leftMousePressed,
+            isChangingLoadout && rightMousePressed,
+            input.WasKeyPressed(Keys.J) || leftMousePressed && !isChangingLoadout,
+            input.WasKeyPressed(Keys.K) || rightMousePressed && !isChangingLoadout,
             usedMouse ? camera.DeviceToWorld(input.MousePositionDevice) : null,
             input.WasKeyPressed(Keys.F3));
     }

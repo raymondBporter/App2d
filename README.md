@@ -262,17 +262,20 @@ be authored levels.
 The grapple counts its initial head offset as part of its advertised reach. Extension
 uses a swept-circle-versus-AABB query, including a small aim-assist radius, so a slow
 render frame cannot skip a platform. A grace-range latch retains its real rope length
-rather than silently snapping the player inward.
+rather than silently snapping the player inward. Once latched, the arm reels toward a
+safe minimum length while preserving lateral swing momentum; pressing the grapple again
+releases that momentum.
 
 ## Controls
 
 - A / D or Left / Right: run
 - W, Up, or Space: jump
 - Release jump early: shorten the jump
-- Ctrl + mouse wheel: switch between Sword, Bionic Arm, and Ball & Chain
-- J or left click: use the active weapon; the arm aims toward the mouse
-- While latched: J or left click releases the grapple while preserving swing momentum
-- K or right click: shoot a fireball
+- Ctrl + left click: change the weapon assigned to the left mouse button
+- Ctrl + right click: change the weapon assigned to the right mouse button
+- J or left click: use the left-slot weapon; aimed weapons point toward the mouse
+- K or right click: use the right-slot weapon; aimed weapons point toward the mouse
+- While latched: click the button assigned to the Bionic Arm to release with swing momentum
 - F3: toggle traversal arcs, grapple reach, and movement metrics
 - Backtick (`): open or close the developer console
 - Escape: close

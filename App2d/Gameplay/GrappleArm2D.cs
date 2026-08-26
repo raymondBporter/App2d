@@ -10,14 +10,16 @@ namespace App2d.Gameplay;
 
 // Bionic Commando style grapple. The hook is a plain animated point while it
 // flies (no physics link to the player at all); latching enables a single
-// rope-mode constraint to a static anchor, so the player pendulum-swings and
-// keeps real momentum on release. No hidden impulses anywhere.
+// rope-mode constraint to a static anchor. The arm reels that rope in while
+// latched, pulling the player toward the hook without replacing swing momentum.
 public sealed class GrappleArm2D
 {
     private const float HookSpeed = 1_650f;
     private const float RetractSpeed = 2_400f;
+    private const float ReelSpeed = 360f;
     private const float CatchRadius = 26f;
     private const float MinimumRopeLength = 24f;
+    private const float ReelStopLength = 64f;
     private const float FireOffset = 20f;
 
     private readonly PhysicsBody2D _ownerBody;
@@ -133,6 +135,13 @@ public sealed class GrappleArm2D
                 }
 
                 Head.Transform.Position += toOwner / distance * retractStep;
+                break;
+
+            case ArmState.Latched:
+                var targetLength = Math.Min(ReelStopLength, _rope.RestLength);
+                _rope.RestLength = Math.Max(
+                    targetLength,
+                    _rope.RestLength - ReelSpeed * deltaSeconds);
                 break;
         }
     }

@@ -4,5 +4,6 @@ public enum PlayerWeapon2D
 {
     Sword,
     BionicArm,
-    BallAndChain
+    BallAndChain,
+    Fireball
 }
