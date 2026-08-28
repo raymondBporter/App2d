@@ -108,7 +108,7 @@ public sealed class SideScrollerGame : Game2D
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | LMB: {_arsenal.LeftWeaponName} | RMB: {_arsenal.RightWeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        $"App2d Side Scroller | PAD: {(_inputMapper.IsControllerConnected ? "XBOX" : "OFF")} | LEFT: {_arsenal.LeftWeaponName} | RIGHT: {_arsenal.RightWeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -117,7 +117,7 @@ public sealed class SideScrollerGame : Game2D
         _player.BeginFrame(dt);
         _arsenal.BeginFrame(dt);
 
-        var command = _inputMapper.Capture(input, Camera);
+        var command = _inputMapper.Capture(input, Camera, _player.Position);
         if (command.ToggleTraversalDebug)
             _showTraversalDebug = !_showTraversalDebug;
         if (command.CycleLeftWeapon)

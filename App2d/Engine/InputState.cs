@@ -16,6 +16,7 @@ public sealed class InputState
 
     public Vector2 MousePositionDevice => _mouseClientPosition * _clientToDeviceScale;
     public float MouseWheelDelta { get; private set; }
+    public bool IsSuppressed => _isSuppressed;
     public bool IsControlDown =>
         IsKeyDown(Keys.ControlKey) ||
         IsKeyDown(Keys.LControlKey) ||

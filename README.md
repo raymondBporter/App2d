@@ -268,6 +268,16 @@ releases that momentum.
 
 ## Controls
 
+Xbox controller:
+
+- Left stick or D-pad: run
+- A: jump; release early to shorten the jump
+- Right stick: aim
+- Left / right trigger: use the weapon in that side's HUD slot
+- Left / right bumper: change the weapon in that side's HUD slot
+
+Keyboard and mouse fallback:
+
 - A / D or Left / Right: run
 - W, Up, or Space: jump
 - Release jump early: shorten the jump

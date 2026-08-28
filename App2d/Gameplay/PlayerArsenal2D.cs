@@ -111,7 +111,7 @@ public sealed class PlayerArsenal2D
     public bool IsSwordActive => _sword.IsActive;
 
     public string WeaponStatus =>
-        $"LMB: {GetWeaponStatus(_leftWeapon)}   RMB: {GetWeaponStatus(_rightWeapon)}";
+        $"LEFT: {GetWeaponStatus(_leftWeapon)}   RIGHT: {GetWeaponStatus(_rightWeapon)}";
 
     public string LeftWeaponName => GetWeaponName(_leftWeapon);
     public string RightWeaponName => GetWeaponName(_rightWeapon);
