@@ -10,15 +10,41 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="3.0.1" />
     <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="4.151.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Assets\Textures\**\*.png"
-          CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="PreserveNewest" />
-    <None Update="Assets\Audio\Sfx\*.wav"
+    <Compile Remove="ArgGuard.cs" />
+    <Compile Remove="StateGuard.cs" />
+    <Compile Remove="Gameplay\**\*.cs" />
+    <Compile Remove="Engine\Animation\**\*.cs" />
+    <Compile Remove="Engine\Audio\**\*.cs" />
+    <Compile Remove="Engine\Collision\**\*.cs" />
+    <Compile Remove="Engine\Geometry\**\*.cs" />
+    <Compile Remove="Engine\Mathematics\**\*.cs" />
+    <Compile Remove="Engine\Physics\**\*.cs" />
+    <Compile Remove="Engine\Rendering\**\*.cs" />
+    <Compile Remove="Engine\Tiles\**\*.cs" />
+    <Compile Remove="Engine\Camera2D.cs" />
+    <Compile Remove="Engine\FrameTime.cs" />
+    <Compile Remove="Engine\Scene2D.cs" />
+    <Compile Remove="Engine\SpatialObject2D.cs" />
+    <Compile Remove="Engine\WorldObject2D.cs" />
+    <Compile Include="Gameplay\PlayerInputMapper2D.cs" />
+    <Compile Include="Gameplay\XboxControllerInput2D.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
+    <ProjectReference Include="..\App2d.Physics\App2d.Physics.csproj" />
+    <ProjectReference Include="..\App2d.Rendering\App2d.Rendering.csproj" />
+    <ProjectReference Include="..\App2d.Audio\App2d.Audio.csproj" />
+    <ProjectReference Include="..\App2d.Gameplay\App2d.Gameplay.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Assets\Content\**\*"
+          Link="Assets\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToOutputDirectory="PreserveNewest"
           CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>

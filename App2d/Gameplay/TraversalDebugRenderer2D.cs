@@ -24,12 +24,6 @@ public sealed class TraversalDebugRenderer2D
     public void Draw(Renderer2D renderer, Vector2 playerPosition, float facing)
     {
         ArgGuard.ThrowIfNull(renderer);
-        renderer.DrawWorldCircle(
-            playerPosition,
-            _traversal.GrappleReach,
-            new SKColor(255, 220, 92, 150),
-            2f);
-
         Span<Vector2> runningArc = stackalloc Vector2[_runningJumpArc.Length];
         Span<Vector2> standingArc = stackalloc Vector2[_standingJumpArc.Length];
         for (var i = 0; i < runningArc.Length; i++)
@@ -53,7 +47,7 @@ public sealed class TraversalDebugRenderer2D
             $"RUN JUMP {_runningJumpProfile.HorizontalDistance / _traversal.TileSize:0.00}t x {_runningJumpProfile.ApexHeight / _traversal.TileSize:0.00}t  |  " +
             $"STAND {_standingJumpProfile.HorizontalDistance / _traversal.TileSize:0.00}t  |  " +
             $"AIR {_runningJumpProfile.Airtime:0.000}s  |  COYOTE {_traversal.RunSpeed * _traversal.CoyoteDuration / _traversal.TileSize:0.00}t  |  " +
-            $"HOOK {_traversal.GrappleReach / _traversal.TileSize:0.00}t + {_traversal.GrappleRangeGrace:0}px grace",
+            $"AIR JUMP {_traversal.AirJumpSpeedMultiplier:P0} power",
             new Vector2(24f, 88f));
     }
 }

@@ -40,20 +40,26 @@ public sealed class JumpableWorldGenerator2D
     public int Width { get; }
     public int Height { get; }
 
-    public bool IsSolid(int x, int y)
+    public TileKind2D GetTileKind(int x, int y)
     {
         if (x < 0 || x >= Width || y < 0 || y >= Height)
-            return false;
+            return TileKind2D.Empty;
 
         // Closed world edges are generated just like every other chunk rather
         // than becoming two world-height objects kept alive forever.
         if (x == 0 || x == Width - 1)
-            return true;
+            return TileKind2D.Solid;
 
         if (y < TerrainHeight(x) && !IsJumpablePit(x))
-            return true;
+            return TileKind2D.Solid;
 
-        return IsVerticalPlatform(x, y) || IsTopologyFormation(x, y);
+        var topologyKind = GetTopologyKind(x, y);
+        if (topologyKind != TileKind2D.Empty)
+            return topologyKind;
+
+        return IsOneWayPlatform(x, y)
+            ? TileKind2D.OneWay
+            : TileKind2D.Empty;
     }
 
     public int TerrainHeight(int x)
@@ -93,7 +99,7 @@ public sealed class JumpableWorldGenerator2D
         return localX >= pitStart && localX < pitStart + pitWidth;
     }
 
-    private bool IsVerticalPlatform(int x, int y)
+    private bool IsOneWayPlatform(int x, int y)
     {
         var region = Math.DivRem(x, VerticalRegionWidth, out var localX);
         var firstPlatformY = GetFirstPlatformY(region);
@@ -168,14 +174,14 @@ public sealed class JumpableWorldGenerator2D
         return center + offset;
     }
 
-    private bool IsTopologyFormation(int x, int y)
+    private TileKind2D GetTopologyKind(int x, int y)
     {
         if (x < TerrainSectionWidth || x >= Width - TerrainSectionWidth)
-            return false;
+            return TileKind2D.Empty;
 
         var region = Math.DivRem(x, TopologyRegionWidth, out var regionX);
         if (region > 0 && _random.Unit(region, 0, channel: 40) >= 0.72f)
-            return false;
+            return TileKind2D.Empty;
 
         var startX = _random.Range(region, 0, 10, 19, channel: 41);
         var localX = regionX - startX;
@@ -190,7 +196,7 @@ public sealed class JumpableWorldGenerator2D
             : groundSurfaceY + _standingPassageTiles;
         var localY = y - baseY;
 
-        return style switch
+        var isOccupied = style switch
         {
             // A two-cell-thick slab exercises all four outer corners and gives
             // the diagnostic tileset a continuous ceiling to draw.
@@ -219,5 +225,12 @@ public sealed class JumpableWorldGenerator2D
                  localX >= 4 && localX < 8 && localY == 2),
             _ => false
         };
+
+        if (!isOccupied)
+            return TileKind2D.Empty;
+
+        return style == 4
+            ? TileKind2D.OneWay
+            : TileKind2D.Solid;
     }
 }

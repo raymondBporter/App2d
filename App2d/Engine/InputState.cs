@@ -21,6 +21,10 @@ public sealed class InputState
         IsKeyDown(Keys.ControlKey) ||
         IsKeyDown(Keys.LControlKey) ||
         IsKeyDown(Keys.RControlKey);
+    public bool IsShiftDown =>
+        IsKeyDown(Keys.ShiftKey) ||
+        IsKeyDown(Keys.LShiftKey) ||
+        IsKeyDown(Keys.RShiftKey);
 
     public bool IsKeyDown(Keys key) => _keysDown.Contains(key);
     public bool WasKeyPressed(Keys key) => _keysPressed.Contains(key);

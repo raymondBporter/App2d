@@ -9,7 +9,7 @@ public static class RayIntersection2D
 
     public static bool TryIntersect(
         Ray2D ray,
-        WorldObject2D worldObject,
+        SpatialObject2D worldObject,
         float maxDistance,
         out RayHit2D hit)
     {
@@ -393,7 +393,7 @@ public static class RayIntersection2D
     private static float Cross(Vector2 left, Vector2 right) =>
         left.X * right.Y - left.Y * right.X;
 
-    internal static void ValidateMaxDistance(float maxDistance)
+    public static void ValidateMaxDistance(float maxDistance)
         => ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
 
     private readonly record struct LocalRayHit(Vector2 Normal, float Distance);

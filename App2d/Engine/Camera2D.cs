@@ -37,7 +37,7 @@ public sealed class Camera2D
     public Vector2 DeviceToWorld(Vector2 devicePoint) =>
         Vector2.Transform(devicePoint, DeviceToWorldMatrix);
 
-    internal void SetViewport(int width, int height)
+    public void SetViewport(int width, int height)
     {
         ViewportSize = new Vector2(Math.Max(width, 1), Math.Max(height, 1));
     }

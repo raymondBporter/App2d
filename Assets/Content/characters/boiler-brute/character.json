@@ -1,0 +1,13 @@
+{
+  "id": "boiler-brute",
+  "animations": {
+    "walk": {
+      "framesPerSecond": 8,
+      "loop": true
+    },
+    "hammer-attack": {
+      "framesPerSecond": 10,
+      "loop": false
+    }
+  }
+}

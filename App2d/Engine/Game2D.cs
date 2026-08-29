@@ -10,7 +10,7 @@ namespace App2d.Engine;
 public abstract class Game2D : IDisposable
 {
     private readonly List<PhysicsWorld2D> _debugPhysicsWorlds = [];
-    private readonly List<Func<IEnumerable<WorldObject2D>>> _debugAttackShapeProviders = [];
+    private readonly List<Func<IEnumerable<SpatialObject2D>>> _debugAttackShapeProviders = [];
     private bool _drawGraphics = true;
     private bool _drawFps;
     private bool _drawCollisionShapes;
@@ -37,7 +37,8 @@ public abstract class Game2D : IDisposable
 
     public Camera2D Camera { get; } = new();
     public Scene2D Scene { get; } = [];
-    public TextureCache2D Textures { get; } = new(Path.Combine(AppContext.BaseDirectory, "Assets", "Textures"));
+    public TextureCache2D Textures { get; } = new(
+        Path.Combine(AppContext.BaseDirectory, "Assets"));
     public DeveloperConsole DeveloperConsole { get; } = new();
     public virtual string WindowTitle => "App2d";
     internal bool DrawGraphics => _drawGraphics;
@@ -64,7 +65,7 @@ public abstract class Game2D : IDisposable
             _debugPhysicsWorlds.Add(physicsWorld);
     }
 
-    protected void RegisterDebugAttackShapes(Func<IEnumerable<WorldObject2D>> provider)
+    protected void RegisterDebugAttackShapes(Func<IEnumerable<SpatialObject2D>> provider)
     {
         ArgGuard.ThrowIfNull(provider);
         if (!_debugAttackShapeProviders.Contains(provider))

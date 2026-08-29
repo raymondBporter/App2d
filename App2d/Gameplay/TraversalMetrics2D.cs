@@ -8,14 +8,21 @@ public sealed class TraversalMetrics2D
 
     public float TileSize { get; init; } = DesignUnit * 4f;
     public Vector2 PlayerColliderSize { get; init; } =
-        new(DesignUnit * 7f, DesignUnit * 11f);
+        new(DesignUnit * 4f, DesignUnit * 11f);
+    public Vector2 PlayerDuckingColliderSize { get; init; } =
+        new(DesignUnit * 4f, DesignUnit * 7f);
     public Vector2 PlayerVisualSize { get; init; } = new(184f, 138f);
     public Vector2 PlayerVisualOffset { get; init; } = new(0f, 3.5f);
     public float RunSpeed { get; init; } = 430f;
+    public float DuckingSpeed { get; init; } = 155f;
     public float GroundAcceleration { get; init; } = 3_600f;
     public float AirAcceleration { get; init; } = 1_450f;
     public float Gravity { get; init; } = 1_900f;
     public float JumpSpeed { get; init; } = 760f;
+    public float AirJumpSpeedMultiplier { get; init; } = 0.6f;
+    public float AirJumpSpeed => JumpSpeed * AirJumpSpeedMultiplier;
+    public int MaximumJumpCount { get; init; } = 2;
+    public float OneWayDropSpeed { get; init; } = 140f;
     public float JumpReleaseSpeedMultiplier { get; init; } = 0.45f;
     public float CoyoteDuration { get; init; } = 0.11f;
     public float JumpBufferDuration { get; init; } = 0.12f;
@@ -26,9 +33,6 @@ public sealed class TraversalMetrics2D
     public float LandingSnapDistance { get; init; } = 4f;
     public float HorizontalSupportGrace { get; init; } = 2f;
     public int UpwardCornerCorrection { get; init; } = 8;
-    public float GrappleReach { get; init; } = 430f;
-    public float GrappleAimAssist { get; init; } = 6f;
-    public float GrappleRangeGrace { get; init; } = 8f;
 
     public int StandingPassageTiles =>
         (int)MathF.Ceiling(PlayerColliderSize.Y / TileSize);
@@ -40,14 +44,29 @@ public sealed class TraversalMetrics2D
     {
         ArgGuard.ThrowIfNotPositive(TileSize);
         ArgGuard.ThrowIfNotPositive(PlayerColliderSize);
+        ArgGuard.ThrowIfNotPositive(PlayerDuckingColliderSize);
         ArgGuard.ThrowIfNotPositive(PlayerVisualSize);
         ArgGuard.ThrowIfNotFinite(PlayerVisualOffset);
+        ArgGuard.ThrowIfNotPositive(DuckingSpeed);
+        ArgGuard.ThrowIfNotPositive(AirJumpSpeedMultiplier);
+        ArgGuard.ThrowIfNotPositive(MaximumJumpCount);
+        ArgGuard.ThrowIfNotPositive(OneWayDropSpeed);
+
+        StateGuard.ThrowIf(
+            AirJumpSpeedMultiplier >= 1f,
+            "The air-jump speed multiplier must be less than one.");
 
         StateGuard.ThrowIf(
             !IsDesignUnitMultiple(TileSize) ||
             !IsDesignUnitMultiple(PlayerColliderSize.X) ||
-            !IsDesignUnitMultiple(PlayerColliderSize.Y),
+            !IsDesignUnitMultiple(PlayerColliderSize.Y) ||
+            !IsDesignUnitMultiple(PlayerDuckingColliderSize.X) ||
+            !IsDesignUnitMultiple(PlayerDuckingColliderSize.Y),
             $"Tile and player collider dimensions must use the {DesignUnit:0}-unit design grid.");
+        StateGuard.ThrowIf(
+            PlayerDuckingColliderSize.X != PlayerColliderSize.X ||
+            PlayerDuckingColliderSize.Y >= PlayerColliderSize.Y,
+            "The ducking collider must retain the standing width and reduce its height.");
         StateGuard.ThrowIf(
             StandingClearance < DesignUnit,
             $"The minimum whole-tile standing passage must leave at least " +

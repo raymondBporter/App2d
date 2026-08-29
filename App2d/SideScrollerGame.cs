@@ -40,7 +40,7 @@ public sealed class SideScrollerGame : Game2D
     {
         Traversal.ValidateScaleContract();
         _sounds = new SoundEffectBank2D(
-            Path.Combine(AppContext.BaseDirectory, "Assets", "Audio", "Sfx"));
+            Path.Combine(AppContext.BaseDirectory, "Assets", "audio", "sfx"));
         RegisterDebugPhysicsWorld(_physics);
         DeveloperConsole.RegisterVariable(
             "sfx_volume",
@@ -51,7 +51,7 @@ public sealed class SideScrollerGame : Game2D
             "draw_traversal_metrics",
             () => _showTraversalDebug,
             value => _showTraversalDebug = value,
-            "Draw jump arcs, grapple reach, and tile-relative movement metrics.");
+            "Draw jump arcs and tile-relative movement metrics.");
 
         _level = new SideScrollerLevel2D(Traversal);
         _cameraController = new SideScrollerCamera2D(
@@ -70,7 +70,6 @@ public sealed class SideScrollerGame : Game2D
             EnemyLayer);
 
         _player = new PlayerCharacter2D(
-            Scene,
             _physics,
             Traversal,
             _level.SpawnPoint,
@@ -78,20 +77,17 @@ public sealed class SideScrollerGame : Game2D
             WorldLayer,
             _sounds);
         _playerPresentation = new PlayerPresentation2D(Scene, Textures, Traversal);
+        _player.Damaged += _playerPresentation.PlayHit;
 
         _level.CreateMechanicsPlaygroundEnemies(Textures, _sounds);
         _combat = new CombatSystem2D(_level.EnemySystem.Combatants, _sounds);
         _arsenal = new PlayerArsenal2D(
             Scene,
-            _physics,
             _player.Body,
             Textures,
-            Traversal,
             _level.Platforms,
             _combat,
             _playerPresentation,
-            PlayerLayer,
-            WorldLayer,
             _sounds);
         RegisterDebugAttackShapes(_arsenal.GetActiveAttackHitboxes);
         RegisterDebugAttackShapes(_level.EnemySystem.GetActiveAttackHitboxes);
@@ -103,12 +99,16 @@ public sealed class SideScrollerGame : Game2D
             0f,
             _player.Facing,
             _player.IsGrounded,
-            _arsenal.IsSwordActive,
+            _player.IsDucking,
+            isShieldBlocking: false,
+            _player.Body.LinearVelocity.Y,
+            _player.LandingSpeedThisFrame,
+            _arsenal.IsMeleeAttackActive,
             _player.InvulnerabilitySeconds);
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | PAD: {(_inputMapper.IsControllerConnected ? "XBOX" : "OFF")} | LEFT: {_arsenal.LeftWeaponName} | RIGHT: {_arsenal.RightWeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        $"App2d Side Scroller | PAD: {(_inputMapper.IsControllerConnected ? "XBOX" : "OFF")} | Q/RB: switch weapon | H/J/L = X/Y/B attacks | A: jump | keyboard B: shield block | WEAPON: {_arsenal.WeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -120,18 +120,18 @@ public sealed class SideScrollerGame : Game2D
         var command = _inputMapper.Capture(input, Camera, _player.Position);
         if (command.ToggleTraversalDebug)
             _showTraversalDebug = !_showTraversalDebug;
-        if (command.CycleLeftWeapon)
-            _arsenal.CycleLeftWeapon();
-        if (command.CycleRightWeapon)
-            _arsenal.CycleRightWeapon();
+        if (command.SwitchWeapon)
+            _arsenal.SelectNextWeapon();
+        if (command.PreviewMeleeChop)
+            _playerPresentation.PreviewMeleeChop();
+        if (command.PreviewMeleeStab)
+            _playerPresentation.PreviewMeleeStab();
 
         _level.EnemySystem.Update(dt, _player.Position);
 
         _player.UpdateBeforePhysics(command.Movement, dt);
-        if (command.UseLeftWeapon)
-            _player.Face(_arsenal.UseLeftWeapon(command.AimTarget, _player.Facing));
-        if (command.UseRightWeapon)
-            _player.Face(_arsenal.UseRightWeapon(command.AimTarget, _player.Facing));
+        if (command.UseWeapon)
+            _player.Face(_arsenal.UseWeapon(command.AimTarget, _player.Facing));
 
         _arsenal.UpdateBeforePhysics(dt);
         _physics.Step(dt);
@@ -163,21 +163,29 @@ public sealed class SideScrollerGame : Game2D
             command.Movement.MoveX,
             _player.Facing,
             _player.IsGrounded,
-            _arsenal.IsSwordActive,
+            _player.IsDucking,
+            input.IsKeyDown(Keys.B),
+            _player.Body.LinearVelocity.Y,
+            _player.LandingSpeedThisFrame,
+            _arsenal.IsMeleeAttackActive,
             _player.InvulnerabilitySeconds);
-        _arsenal.ReleasePendingFireball(_player.Facing);
-        _cameraController.Update(_player.Position, _player.Body.LinearVelocity, dt);
+        _arsenal.ReleasePendingWeapons(_player.Facing);
+        _cameraController.Update(
+            _player.Position,
+            _player.Body.LinearVelocity,
+            _player.IsGrounded,
+            dt);
     }
 
     public override void Render(Renderer2D renderer)
     {
         renderer.Clear(new SKColor(103, 196, 235));
         renderer.Draw(Scene);
-        renderer.DrawPlayerHud(
+        PlayerHud2D.Draw(
+            renderer,
             _player.Health.Current,
             _player.Health.Maximum,
-            _arsenal.LeftWeaponHudTexture,
-            _arsenal.RightWeaponHudTexture,
+            _arsenal.WeaponHudTexture,
             _arsenal.WeaponStatus);
 
         if (_showTraversalDebug)
@@ -196,6 +204,7 @@ public sealed class SideScrollerGame : Game2D
 
     public override void Dispose()
     {
+        _playerPresentation.Dispose();
         _sounds.Dispose();
         base.Dispose();
     }

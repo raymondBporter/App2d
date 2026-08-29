@@ -8,10 +8,15 @@ namespace App2d.Gameplay;
 
 public sealed class SideScrollerCamera2D
 {
-    private const float VerticalOffset = 40f;
+    private const float GroundedVerticalOffset = 40f;
+    private const float FallingVerticalOffset = -110f;
     private const float FloorClearance = 96f;
     private const float HorizontalDeadZoneViewportRatio = 0.22f;
     private const float VerticalDeadZoneViewportRatio = 0.30f;
+    private const float FallingVerticalDeadZoneViewportRatio = 0.12f;
+    private const float FallActivationVelocity = -150f;
+    private const float FallResetVelocity = -60f;
+    private const float FallActivationDelay = 0.08f;
     private const float MaximumLookAhead = 210f;
 
     private readonly Camera2D _camera;
@@ -19,6 +24,8 @@ public sealed class SideScrollerCamera2D
     private readonly Func<float, float> _floorHeightAtX;
     private readonly List<ParallaxItem> _parallaxItems = [];
     private float _lookAhead;
+    private float _fallDuration;
+    private float _fallBlend;
 
     public SideScrollerCamera2D(
         Scene2D scene,
@@ -40,13 +47,18 @@ public sealed class SideScrollerCamera2D
         UpdateParallax();
     }
 
-    public void Update(Vector2 playerPosition, Vector2 playerVelocity, float deltaSeconds)
+    public void Update(
+        Vector2 playerPosition,
+        Vector2 playerVelocity,
+        bool isGrounded,
+        float deltaSeconds)
     {
         if (deltaSeconds <= 0f)
             return;
 
         var halfView = _camera.ViewportSize / (2f * _camera.Zoom);
         UpdateLookAhead(playerVelocity.X, halfView.X, deltaSeconds);
+        UpdateVerticalFraming(playerVelocity.Y, isGrounded, deltaSeconds);
 
         var focus = new Vector2(
             playerPosition.X + _lookAhead,
@@ -59,12 +71,22 @@ public sealed class SideScrollerCamera2D
         target.Y = KeepInsideDeadZone(
             target.Y,
             focus.Y,
-            halfView.Y * VerticalDeadZoneViewportRatio);
+            halfView.Y * float.Lerp(
+                VerticalDeadZoneViewportRatio,
+                FallingVerticalDeadZoneViewportRatio,
+                _fallBlend));
         target = ClampToLevel(target, halfView);
 
         var distance = Vector2.Abs(target - _camera.Position);
         var horizontalRate = CatchUpRate(distance.X, halfView.X, 4.5f, 11f);
-        var verticalRate = CatchUpRate(distance.Y, halfView.Y, 3.2f, 8f);
+        var followingDownward = target.Y < _camera.Position.Y;
+        var verticalRate = followingDownward
+            ? CatchUpRate(
+                distance.Y,
+                halfView.Y,
+                float.Lerp(3.2f, 7f, _fallBlend),
+                float.Lerp(8f, 16f, _fallBlend))
+            : CatchUpRate(distance.Y, halfView.Y, 3.2f, 8f);
         _camera.Position = new Vector2(
             Damp(_camera.Position.X, target.X, horizontalRate, deltaSeconds),
             Damp(_camera.Position.Y, target.Y, verticalRate, deltaSeconds));
@@ -75,6 +97,8 @@ public sealed class SideScrollerCamera2D
     public void Reset(Vector2 playerPosition)
     {
         _lookAhead = 0f;
+        _fallDuration = 0f;
+        _fallBlend = 0f;
         var halfView = _camera.ViewportSize / (2f * _camera.Zoom);
         _camera.Position = ClampToLevel(
             new Vector2(playerPosition.X, GetVerticalFocus(playerPosition)),
@@ -88,9 +112,34 @@ public sealed class SideScrollerCamera2D
         if (!float.IsFinite(floorY))
             throw new InvalidOperationException("The camera floor height must be finite.");
 
-        return MathF.Max(
-            playerPosition.Y + VerticalOffset,
+        var playerFocus = playerPosition.Y + float.Lerp(
+            GroundedVerticalOffset,
+            FallingVerticalOffset,
+            _fallBlend);
+        var floorAnchoredFocus = MathF.Max(
+            playerFocus,
             floorY + FloorClearance);
+
+        // Keep ordinary jumps framed against the terrain, but let a sustained
+        // fall reveal the space below instead of pinning the camera above a pit.
+        return float.Lerp(floorAnchoredFocus, playerFocus, _fallBlend);
+    }
+
+    private void UpdateVerticalFraming(
+        float verticalVelocity,
+        bool isGrounded,
+        float deltaSeconds)
+    {
+        if (isGrounded || verticalVelocity >= FallResetVelocity)
+            _fallDuration = 0f;
+        else if (verticalVelocity <= FallActivationVelocity)
+            _fallDuration += deltaSeconds;
+
+        var isSustainedFall =
+            !isGrounded && _fallDuration >= FallActivationDelay;
+        var target = isSustainedFall ? 1f : 0f;
+        var response = isSustainedFall ? 5.5f : isGrounded ? 2.5f : 3.5f;
+        _fallBlend = Damp(_fallBlend, target, response, deltaSeconds);
     }
 
     private void UpdateLookAhead(float horizontalVelocity, float halfViewWidth, float deltaSeconds)

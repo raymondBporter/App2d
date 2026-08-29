@@ -5,7 +5,7 @@ namespace App2d.Engine.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    public static bool TryGetContact(WorldObject2D first, WorldObject2D second, out CollisionContact2D contact)
+    public static bool TryGetContact(SpatialObject2D first, SpatialObject2D second, out CollisionContact2D contact)
     {
         var result = Dispatch(first.Shape, first.Transform, second.Shape, second.Transform);
         if (result.HasContact)

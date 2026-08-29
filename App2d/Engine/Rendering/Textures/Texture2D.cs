@@ -1,4 +1,6 @@
 using SkiaSharp;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace App2d.Engine.Rendering.Textures;
 
@@ -20,6 +22,14 @@ public sealed class Texture2D : IDisposable
     internal SKBitmap Bitmap =>
         _bitmap ?? throw new ObjectDisposedException(nameof(Texture2D));
 
+    internal ReadOnlySpan<SKColor> PixelSpan =>
+        MemoryMarshal.Cast<byte, SKColor>(Bitmap.GetPixelSpan());
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal SKColor GetPixelUnchecked(int index) => PixelSpan[index];
+
+    public SKColor[] CopyPixels() => [.. PixelSpan];
+
     public static Texture2D Load(string path)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(path);
@@ -28,14 +38,61 @@ public sealed class Texture2D : IDisposable
         if (!File.Exists(fullPath))
             throw new FileNotFoundException("Texture file was not found.", fullPath);
 
-        var bitmap = SKBitmap.Decode(fullPath);
-        if (bitmap is null || bitmap.Width <= 0 || bitmap.Height <= 0)
+        using var codec = SKCodec.Create(fullPath);
+        if (codec is null || codec.Info.Width <= 0 || codec.Info.Height <= 0)
         {
-            bitmap?.Dispose();
             throw new InvalidDataException($"Texture could not be decoded: {fullPath}");
         }
 
+        var bitmap = new SKBitmap(new SKImageInfo(
+            codec.Info.Width,
+            codec.Info.Height,
+            SKColorType.Bgra8888,
+            SKAlphaType.Unpremul));
+        var result = codec.GetPixels(bitmap.Info, bitmap.GetPixels());
+        if (result is not SKCodecResult.Success)
+        {
+            bitmap.Dispose();
+            throw new InvalidDataException(
+                $"Texture could not be decoded ({result}): {fullPath}");
+        }
+
         return new Texture2D(fullPath, bitmap);
+    }
+
+    internal static Texture2D CreateGenerated(
+        string sourceName,
+        int width,
+        int height,
+        SKColor[] pixels)
+    {
+        ArgGuard.ThrowIfNullOrWhiteSpace(sourceName);
+        ArgGuard.ThrowIfNotPositive(width);
+        ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.ThrowIfNull(pixels);
+        if (pixels.Length != width * height)
+        {
+            ArgGuard.ThrowInvalid(
+                "Pixel count must match the texture dimensions.",
+                nameof(pixels));
+        }
+
+        var bitmap = new SKBitmap(new SKImageInfo(
+            width,
+            height,
+            SKColorType.Bgra8888,
+            SKAlphaType.Unpremul));
+        try
+        {
+            pixels.AsSpan().CopyTo(
+                MemoryMarshal.Cast<byte, SKColor>(bitmap.GetPixelSpan()));
+            return new Texture2D(sourceName, bitmap);
+        }
+        catch
+        {
+            bitmap.Dispose();
+            throw;
+        }
     }
 
     public void Dispose()

@@ -1,29 +1,24 @@
 using System.Numerics;
 using App2d.Engine;
 using App2d.Engine.Physics;
-using App2d.Engine.Rendering;
 
 namespace App2d.Gameplay;
 
-public sealed class PatrolEnemy2D
+public sealed class PatrolEnemy2D : IEnemyCombatant2D
 {
     private readonly Dictionary<object, int> _lastAttackIds =
         new(ReferenceEqualityComparer.Instance);
-    private readonly IShader2D _normalShader;
-    private readonly IShader2D _hitShader;
     private float _direction = 1f;
     private float _hitFlashSeconds;
     private float _stunSeconds;
 
     public PatrolEnemy2D(
-        WorldObject2D worldObject,
+        SpatialObject2D worldObject,
         PhysicsBody2D body,
         float patrolMinX,
         float patrolMaxX,
         float speed,
-        int health,
-        IShader2D normalShader,
-        IShader2D hitShader)
+        int health)
     {
         ArgGuard.ThrowIfGreaterThanOrEqual(patrolMinX, patrolMaxX);
         ArgGuard.ThrowIfNotPositive(speed);
@@ -34,11 +29,9 @@ public sealed class PatrolEnemy2D
         PatrolMaxX = patrolMaxX;
         Speed = speed;
         Health = new Health2D(health);
-        _normalShader = normalShader;
-        _hitShader = hitShader;
     }
 
-    public WorldObject2D WorldObject { get; }
+    public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }
     public float PatrolMinX { get; }
@@ -53,7 +46,6 @@ public sealed class PatrolEnemy2D
         if (!IsAlive)
             return;
 
-        WorldObject.IsVisible = isEnabled;
         Body.IsCollider = isEnabled;
         Body.MotionType = isEnabled
             ? BodyMotionType2D.Dynamic
@@ -82,7 +74,6 @@ public sealed class PatrolEnemy2D
 
         _hitFlashSeconds = Math.Max(0f, _hitFlashSeconds - deltaSeconds);
         _stunSeconds = Math.Max(0f, _stunSeconds - deltaSeconds);
-        WorldObject.Shader = _hitFlashSeconds > 0f ? _hitShader : _normalShader;
 
         var x = WorldObject.Transform.Position.X;
         if (x <= PatrolMinX)
@@ -108,7 +99,6 @@ public sealed class PatrolEnemy2D
 
         if (!IsAlive)
         {
-            WorldObject.IsVisible = false;
             Body.IsCollider = false;
             Body.MotionType = BodyMotionType2D.Static;
             Body.LinearVelocity = Vector2.Zero;
@@ -118,7 +108,6 @@ public sealed class PatrolEnemy2D
         Body.LinearVelocity = knockback;
         _hitFlashSeconds = 0.11f;
         _stunSeconds = 0.18f;
-        WorldObject.Shader = _hitShader;
         return true;
     }
 }

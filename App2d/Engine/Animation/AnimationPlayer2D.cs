@@ -71,9 +71,7 @@ public sealed class AnimationPlayer2D<TFrame>
         if (Clip.IsLooping)
         {
             _elapsedSeconds %= Clip.Duration;
-            CurrentFrameIndex = Math.Min(
-                (int)(_elapsedSeconds / Clip.FrameDuration),
-                Clip.FrameCount - 1);
+            CurrentFrameIndex = Clip.GetFrameIndexAtTime(_elapsedSeconds);
             return;
         }
 
@@ -86,8 +84,6 @@ public sealed class AnimationPlayer2D<TFrame>
             return;
         }
 
-        CurrentFrameIndex = Math.Min(
-            (int)(_elapsedSeconds / Clip.FrameDuration),
-            Clip.FrameCount - 1);
+        CurrentFrameIndex = Clip.GetFrameIndexAtTime(_elapsedSeconds);
     }
 }

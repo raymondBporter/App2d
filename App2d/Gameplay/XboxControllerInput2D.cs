@@ -14,7 +14,6 @@ internal sealed class XboxControllerInput2D
 
     private int _controllerIndex = -1;
     private XInputButtons _previousButtons;
-    private bool _leftTriggerWasDown;
     private bool _rightTriggerWasDown;
 
     public bool IsConnected => _controllerIndex >= 0;
@@ -34,17 +33,19 @@ internal sealed class XboxControllerInput2D
         var jumpReleased =
             _previousButtons.HasFlag(XInputButtons.A) && !jumpHeld;
 
-        var leftTriggerDown = gamepad.LeftTrigger > TriggerThreshold;
         var rightTriggerDown = gamepad.RightTrigger > TriggerThreshold;
         var aim = ApplyRadialDeadZone(
             gamepad.RightThumbX,
             gamepad.RightThumbY,
             RightStickDeadZone);
 
-        var moveX = ApplyRadialDeadZone(
+        var movement = ApplyRadialDeadZone(
             gamepad.LeftThumbX,
             gamepad.LeftThumbY,
-            LeftStickDeadZone).X;
+            LeftStickDeadZone);
+        var moveX = movement.X;
+        var downHeld = movement.Y < -0.5f ||
+            buttons.HasFlag(XInputButtons.DPadDown);
         if (buttons.HasFlag(XInputButtons.DPadLeft))
             moveX = -1f;
         else if (buttons.HasFlag(XInputButtons.DPadRight))
@@ -53,15 +54,17 @@ internal sealed class XboxControllerInput2D
         _previousButtons = buttons;
         var frame = new XboxControllerFrame2D(
             moveX,
+            downHeld,
             jumpPressed,
             jumpHeld,
             jumpReleased,
-            pressed.HasFlag(XInputButtons.LeftShoulder),
             pressed.HasFlag(XInputButtons.RightShoulder),
-            leftTriggerDown && !_leftTriggerWasDown,
-            rightTriggerDown && !_rightTriggerWasDown,
+            pressed.HasFlag(XInputButtons.Y) ||
+                pressed.HasFlag(XInputButtons.LeftShoulder) ||
+                rightTriggerDown && !_rightTriggerWasDown,
+            pressed.HasFlag(XInputButtons.X),
+            pressed.HasFlag(XInputButtons.B),
             aim == Vector2.Zero ? null : playerPosition + aim * AimDistance);
-        _leftTriggerWasDown = leftTriggerDown;
         _rightTriggerWasDown = rightTriggerDown;
         return frame;
     }
@@ -99,7 +102,6 @@ internal sealed class XboxControllerInput2D
     private void ResetButtonHistory()
     {
         _previousButtons = XInputButtons.None;
-        _leftTriggerWasDown = false;
         _rightTriggerWasDown = false;
     }
 
@@ -146,9 +148,13 @@ internal sealed class XboxControllerInput2D
     private enum XInputButtons : ushort
     {
         None = 0,
+        DPadDown = 0x0002,
         DPadLeft = 0x0004,
         DPadRight = 0x0008,
         A = 0x1000,
+        B = 0x2000,
+        X = 0x4000,
+        Y = 0x8000,
         LeftShoulder = 0x0100,
         RightShoulder = 0x0200
     }
@@ -156,11 +162,12 @@ internal sealed class XboxControllerInput2D
 
 internal readonly record struct XboxControllerFrame2D(
     float MoveX,
+    bool DownHeld,
     bool JumpPressed,
     bool JumpHeld,
     bool JumpReleased,
-    bool CycleLeftWeapon,
-    bool CycleRightWeapon,
-    bool UseLeftWeapon,
-    bool UseRightWeapon,
+    bool SwitchWeapon,
+    bool UseWeapon,
+    bool PreviewMeleeChop,
+    bool PreviewMeleeStab,
     Vector2? AimTarget);

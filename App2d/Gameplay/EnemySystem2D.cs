@@ -7,9 +7,9 @@ namespace App2d.Gameplay;
 public sealed class EnemySystem2D
 {
     private readonly List<RegisteredEnemy> _registeredEnemies = [];
-    private readonly List<PatrolEnemy2D> _combatants = [];
+    private readonly List<IEnemyCombatant2D> _combatants = [];
 
-    public IReadOnlyList<PatrolEnemy2D> Combatants => _combatants;
+    public IReadOnlyList<IEnemyCombatant2D> Combatants => _combatants;
     public int Count => _registeredEnemies.Count;
 
     public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
@@ -19,7 +19,7 @@ public sealed class EnemySystem2D
             _registeredEnemies.Any(item => ReferenceEquals(item.Actor, actor)),
             "The enemy actor is already registered.");
         StateGuard.ThrowIf(
-            _combatants.Any(item => ReferenceEquals(item, actor.Enemy)),
+            _combatants.Any(item => ReferenceEquals(item, actor.Combatant)),
             "The enemy combatant is already registered.");
 
         actor.SetSimulationEnabled(false);
@@ -28,7 +28,7 @@ public sealed class EnemySystem2D
                 actor,
                 actor as IEnemyAttackSource2D,
                 homeChunk));
-        _combatants.Add(actor.Enemy);
+        _combatants.Add(actor.Combatant);
     }
 
     public void UpdateStreaming(Func<TileChunk2D, bool> isChunkActive)
@@ -84,7 +84,7 @@ public sealed class EnemySystem2D
         return playerDefeated;
     }
 
-    public IEnumerable<WorldObject2D> GetActiveAttackHitboxes()
+    public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
         foreach (var registered in _registeredEnemies)
         {

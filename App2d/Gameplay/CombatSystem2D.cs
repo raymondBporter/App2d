@@ -6,10 +6,10 @@ using App2d.Gameplay.Audio;
 namespace App2d.Gameplay;
 
 public sealed class CombatSystem2D(
-    IReadOnlyList<PatrolEnemy2D> enemies,
+    IReadOnlyList<IEnemyCombatant2D> enemies,
     ISoundEffectSink2D sounds)
 {
-    private readonly IReadOnlyList<PatrolEnemy2D> _enemies =
+    private readonly IReadOnlyList<IEnemyCombatant2D> _enemies =
         ArgGuard.RequireNotNull(enemies);
     private readonly ISoundEffectSink2D _sounds =
         ArgGuard.RequireNotNull(sounds);
@@ -17,11 +17,11 @@ public sealed class CombatSystem2D(
     public int DefeatedEnemies { get; private set; }
 
     public bool ResolveAttack(
-        WorldObject2D hitbox,
+        SpatialObject2D hitbox,
         object attackSource,
         int attackId,
         int damage,
-        Func<PatrolEnemy2D, Vector2> knockback,
+        Func<IEnemyCombatant2D, Vector2> knockback,
         bool stopAfterFirstHit = false)
     {
         ArgGuard.ThrowIfNull(hitbox);
@@ -48,9 +48,9 @@ public sealed class CombatSystem2D(
     }
 
     public bool TryDamageFirst(
-        WorldObject2D hitbox,
+        SpatialObject2D hitbox,
         int damage,
-        Func<PatrolEnemy2D, Vector2> knockback)
+        Func<IEnemyCombatant2D, Vector2> knockback)
     {
         ArgGuard.ThrowIfNull(hitbox);
         ArgGuard.ThrowIfNull(knockback);
@@ -67,11 +67,11 @@ public sealed class CombatSystem2D(
         return false;
     }
 
-    public static bool Intersects(WorldObject2D first, WorldObject2D second) =>
+    public static bool Intersects(SpatialObject2D first, SpatialObject2D second) =>
         first.WorldBounds.Intersects(second.WorldBounds) &&
         ShapeCollision2D.TryGetContact(first, second, out _);
 
-    private void Damage(PatrolEnemy2D enemy, int damage, Vector2 knockback)
+    private void Damage(IEnemyCombatant2D enemy, int damage, Vector2 knockback)
     {
         var wasAlive = enemy.IsAlive;
         enemy.TakeDamage(damage, knockback);

@@ -1,6 +1,11 @@
 # App2d
 
-A deliberately small SkiaSharp 2D engine skeleton.
+A deliberately small SkiaSharp 2D engine skeleton with compile-time module boundaries.
+
+The solution is split into `App2d.Core`, `App2d.Physics`, `App2d.Rendering`,
+`App2d.Audio`, and `App2d.Gameplay`, plus the Windows executable composition root.
+Core and physics target plain `net10.0`; platform hosting and audio remain in the
+Windows-targeted projects.
 
 The engine is grouped by responsibility:
 
@@ -11,8 +16,10 @@ The engine is grouped by responsibility:
   `Engine/Collision/Filtering` contains their generic filtering contract.
 - `Engine/Collision/Contacts` contains overlap/contact generation. Shape-pair code is
   split into circle, capsule, polygon/SAT, and utility partials behind one dispatcher.
-- `Engine/Collision/Queries` contains rays, exact shape intersections, and scene/physics
-  raycasts. Query hits retain direct references to the object or body that was hit.
+- `Engine/Collision/Queries` contains rays, exact shape intersections, and scene
+  raycasts. Physics-world extensions live in `Engine/Physics/Queries`, preventing the
+  collision module from depending back on physics. Query hits retain direct references
+  to the object or body that was hit.
 - `Engine/Physics/Integration`, `Engine/Physics/Filtering`, and `Engine/Physics/Solvers`
   contain physics-specific policies; bodies, contacts, constraints, and the world remain
   at the physics root.
@@ -32,8 +39,7 @@ and renderer lifecycle checks therefore do not masquerade as caller argument fai
 Geometry lives under `Engine/Geometry`:
 
 - `IShape2D` is the common local-space shape contract.
-- `ConvexPolygon2D` accepts any ordered convex vertex loop, validates it, and also
-  provides regular-polygon and triangle factories.
+- `ConvexPolygon2D` accepts and validates any ordered convex vertex loop.
 - `Circle2D` is a real circle primitive. Non-uniform object scale can render it as a
   rotated ellipse without polygonizing it.
 - `Capsule2D` is a local line segment swept by a radius.
@@ -55,8 +61,10 @@ bounded by the local neighborhood rather than total world size.
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
 
-Every shape implements local-space point containment. `WorldObject2D.ContainsWorldPoint`
-applies the inverse object transform before running that query.
+Every shape implements local-space point containment. `SpatialObject2D` owns only a
+shape and transform and applies the inverse transform for point queries. Physics bodies
+reference this render-agnostic type. `WorldObject2D` adds shader, visibility, and draw
+order only when the spatial object is renderable.
 
 Finite convex shapes also implement `IConvexShape2D.GetSupportPoint`. The generic
 `Collision/Contacts/HalfSpaceCollision2D` query uses that support mapping to return a world-space contact
@@ -81,12 +89,6 @@ to select a stable MTV. The rectangle row covers circles, capsules, and rectangl
 transformed feature axes, so rotated object transforms also work. Non-uniform capsule
 scale remains intentionally unimplemented because it produces a swept ellipse rather
 than a true capsule.
-
-The preserved collision stress demo (`DemoGame`) uses four half-spaces as an enclosure and simulates 12 deterministic circles,
-12 moving/rotating capsules, and 6 moving axis-aligned rectangles. They resolve against
-the walls, implemented demo obstacles, and each other. True circle-circle contact uses
-exact math; a non-uniformly transformed circle (an ellipse) uses a 40-edge convex
-collision boundary for now.
 
 ## Physics step
 
@@ -147,6 +149,8 @@ normal.
 The scene and physics extensions return the nearest hit without allocating:
 
 ```csharp
+using App2d.Engine.Physics.Queries;
+
 var ray = Ray2D.FromPoints(origin, mouseWorld);
 
 if (physics.Raycast(ray, 800f, out var hit, layerMask: WorldLayer))
@@ -187,6 +191,30 @@ For pixel collision, implement `IPhysicsContactProvider2D` and either replace th
 provider or combine providers with `CompositeContactProvider2D`. The physics world only
 consumes contacts, so it does not care how they were produced.
 
+## First run
+
+The repository keeps source models, render plans, licenses, and small hand-selected
+assets in Git. Character animation frames, equipment layers, previews, and sparse atlas
+packages are generated locally and ignored so ordinary commits stay small.
+
+From a clean clone, install the two Python dependencies and build the runtime art:
+
+```powershell
+python -m pip install -r tools/ArtPipeline/requirements.txt
+python tools/ArtPipeline/build_runtime_assets.py
+```
+
+The full build validates every right-hand weapon and creates the optional sparse runtime
+packages. During pipeline development, `--skip-sparse` produces the complete playable
+full-canvas fallback without the final atlas-packing pass.
+
+Generated files remain below `Assets/Content` because the game ships that tree, but the
+generated subdirectories are excluded by `.gitignore`. See
+`tools/ArtPipeline/README.md` for individual render, validation, and proof commands.
+Tests that inspect sparse production packages are included automatically when their
+ignored proof and runtime fixtures are present; the remaining engine tests run on a
+clean clone without generated art.
+
 ## Run
 
 ```powershell
@@ -195,33 +223,46 @@ dotnet run --project App2d
 
 Startup currently runs `SideScrollerGame`. It is the composition root and explicit
 fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of
-being implemented by the game class. `SideScrollerLevel2D` owns the seeded procedural
-world, streamed platforms, and goal. `PlayerCharacter2D`, `PlayerArsenal2D`, and
-`PlayerPresentation2D` own the player's simulation, attacks, and visuals respectively.
+being implemented by the game class. `SideScrollerLevel2D` owns the seeded world
+definition and composes dedicated chunk streaming, terrain visual, and encounter
+spawning services. `PlayerCharacter2D`, `PlayerArsenal2D`, and `PlayerPresentation2D`
+own the player's simulation, registered weapons, and visuals respectively.
 `CombatSystem2D` resolves attacks through generic source/sequence hit registration, so
 new weapons do not add weapon-specific bookkeeping to enemies. Camera/parallax, input
 mapping, and traversal diagnostics have similarly narrow owners.
 
-The 10,000x96-tile level provides merged tilemap collision, one-way platforms, fall
+The 640x96-tile level provides merged tilemap collision, explicit one-way strips, fall
 respawning, a goal flag, smooth bounded camera follow, and procedural parallax depths.
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
 ledges all derive from one coordinate seed. A small separately seeded population near
 spawn exists only as a mechanics playground; it is not the eventual authored encounter
 format.
 
+Procedural cells are `Empty`, `Solid`, or `OneWay`; collision generation never infers
+behavior from a rectangle's dimensions. Solid cells merge in both axes and use the full
+terrain treatment. One-way cells merge only into horizontal strips, collide only from
+above, and render with dedicated standalone, left-end, middle, and right-end art without
+solid fill, making their behavior visible before the player commits to a jump.
+
 Solid tilemaps expose a four-bit `TileSurface2D` topology (`Top`, `Right`, `Bottom`,
 and `Left`) plus four outer and four diagonal-aware inner `TileCorner2D` cases. A
 surface bit is present only where a solid cell borders an empty cell. The side-scroller
-currently renders this as a generated collision-line tileset: dark fill, bright cyan
-walkable tops, blue walls, violet undersides, white outer joins, and pink inner joins.
-No texture atlas is required, chunk boundaries do not create false edges, and later
-visual tiles can select art from the same topology without changing authored or
-procedural map data. Seeded solid slabs, notched blocks, hollow frames, and stair-step
-formations exercise these combinations above the guaranteed ground route.
+temporarily splits its width into equal contiguous preview regions for an arbitrary
+list of tilesets. Its first half uses the Rust Cyberpunk textures and its second half uses the collision-test
+tileset: dark fill, bright cyan walkable tops, blue walls, violet undersides, white
+outer joins, pink inner joins, and an amber one-way collision line. Merged visual fills
+are split at tileset boundaries while their collision remains merged. Chunk boundaries
+do not create false edges, and additional tilesets can use the same topology without
+changing authored or procedural map data. Tileset resolution is injected by tile
+coordinate and can later read stable, authored tileset IDs from the saved map; the
+equal-width rule is not part of the renderer. The active-window streamer consumes an
+`IChunkedTileMap2D` data view; its current implementation generates data, while a later
+implementation can load saved chunks through filesystem and cache layers. Seeded solid slabs, notched blocks, hollow frames, and stair-step
+formations exercise these combinations above the guaranteed ground route; climb spines,
+side ledges, and balcony formations are the map generator's one-way strips.
 Player traversal has
-acceleration, coyote time, jump buffering, variable jump height, a sword, a ceiling
-grapple, a ball and chain, and a fixed pool of 16 fireballs. `DemoGame` remains the
-shape/physics stress scene.
+acceleration, coyote time, jump buffering, variable jump height, a sword, and a fixed
+pool of 16 fireballs.
 
 Short sound effects are decoded once at startup and played through one polyphonic mixer.
 Gameplay emits semantic cues through `ISoundEffectSink2D`, so movement, combat, and weapon
@@ -247,8 +288,8 @@ height, presentation size, and collision size all come from `TraversalMetrics2D`
 rather than repeating unrelated literals.
 
 `TraversalMetrics2D` is the single source for locomotion tuning and simulates the same
-held-jump arc used at runtime. The F3 overlay draws the full-speed and standstill arcs,
-the truthful grapple radius, and their tile-relative measurements. This keeps authored
+held-jump arc used at runtime. The F3 overlay draws the full-speed and standstill arcs
+with their tile-relative measurements. This keeps authored
 distances tied to the movement implementation instead of duplicated design notes.
 
 `JumpableWorldGenerator2D` consumes that same contract. Tower tiers use the reliable
@@ -259,34 +300,31 @@ landing error. Floating formations likewise use standing clearance, while ground
 stairs and staggered balcony sequences add denser local silhouettes without claiming to
 be authored levels.
 
-The grapple counts its initial head offset as part of its advertised reach. Extension
-uses a swept-circle-versus-AABB query, including a small aim-assist radius, so a slow
-render frame cannot skip a platform. A grace-range latch retains its real rope length
-rather than silently snapping the player inward. Once latched, the arm reels toward a
-safe minimum length while preserving lateral swing momentum; pressing the grapple again
-releases that momentum.
-
 ## Controls
 
 Xbox controller:
 
 - Left stick or D-pad: run
+- Left stick down or D-pad Down: crouch; press A while held to drop through a one-way platform
 - A: jump; release early to shorten the jump
 - Right stick: aim
-- Left / right trigger: use the weapon in that side's HUD slot
-- Left / right bumper: change the weapon in that side's HUD slot
+- X: the same chop action as H
+- Y, left bumper, or right trigger: the same equipped-weapon attack as J
+- B: the same stab action as L
+- Right bumper: switch the equipped weapon
 
 Keyboard and mouse fallback:
 
 - A / D or Left / Right: run
-- W, Up, or Space: jump
+- W, Up, or Space: jump; press again in the air to double jump
+- S or Down: duck; movement is slower while ducking
+- S or Down + jump: drop through the supporting one-way strip
 - Release jump early: shorten the jump
-- Ctrl + left click: change the weapon assigned to the left mouse button
-- Ctrl + right click: change the weapon assigned to the right mouse button
-- J or left click: use the left-slot weapon; aimed weapons point toward the mouse
-- K or right click: use the right-slot weapon; aimed weapons point toward the mouse
-- While latched: click the button assigned to the Bionic Arm to release with swing momentum
-- F3: toggle traversal arcs, grapple reach, and movement metrics
+- Q: cycle the equipped weapon
+- J or left click: use the equipped weapon
+- H: preview the equipped weapon's one-handed chop animation (visual only)
+- L: preview the equipped weapon's one-handed stab animation (visual only)
+- F3: toggle traversal arcs and movement metrics
 - Backtick (`): open or close the developer console
 - Escape: close
 
@@ -342,14 +380,19 @@ runtime invalidates the scene's cached draw order. The side-scroller places the 
 at z-index 1 so streamed terrain and one-way platforms at the default 0 stay behind the
 character.
 
-## Textures
+## Assets and textures
 
-PNG assets under `Assets/Textures` are copied beside the executable. Every `Game2D`
-owns a `TextureCache2D` rooted at that directory, so textures load only when requested:
+Repository assets are separated by lifecycle under the top-level `Assets` directory.
+Only `Assets/Content` ships; the project copies that tree beside the executable as
+`Assets`. `Assets/Library` holds useful alternatives, `Assets/Sources` retains original
+inputs and licenses, and ignored `Assets/Work` holds regenerable pipeline output.
+
+Runtime paths use lowercase semantic IDs. Every `Game2D` owns a `TextureCache2D`
+rooted at the deployed `Assets` directory, so textures load only when requested:
 
 ```csharp
-var stone = Textures.Load("mossy-stone.png");
-var stoneShader = new TextureShader2D(stone, new Vector2(512f, 512f));
+var fireball = Textures.Load("effects/fireball/ember-energy.png");
+var fireballShader = new TextureShader2D(fireball, new Vector2(96f, 96f));
 ```
 
 Repeated loads of the same path return the cached `Texture2D`. `Textures.Unload(path)`
@@ -360,9 +403,8 @@ borrows its texture, so stop using shaders that reference an asset before unload
 `TextureShader2D` uses Skia's image shader with configurable X/Y tile modes, filtering,
 and world-unit tile size. Ordinary textures require no custom shader compilation;
 `SKRuntimeEffect` is only needed for future custom SkSL effects. The side-scroller's
-terrain currently uses generated topology visuals rather than a texture; pooled
-fireballs use `ember-energy.png` while other scenes retain solid-color and gradient
-shader examples.
+terrain maps topology roles to the conventional files in its selected tileset, while
+pooled fireballs use `effects/fireball/ember-energy.png`.
 
 ## Frame animation
 
@@ -380,17 +422,32 @@ animation.Update(time.DeltaSeconds);
 spriteShader.Texture = animation.CurrentFrame;
 ```
 
-Clips may loop or stop on their last frame. Players support pause, resume, stop,
-restart, and playback-speed changes. `SpriteShader2D` maps one complete texture onto
+Clips may use a uniform frame rate or an explicit duration for every sample, and may
+loop or stop on their last frame. The sparse pipeline treats the 30 FPS renders as
+high-fidelity source material and selects nonuniform points by accumulated screen-space
+motion, while stored source times and sample durations preserve the authored pose timing
+and playback length. Players support
+pause, resume, stop, restart, and playback-speed changes. `SpriteShader2D` maps one complete texture onto
 finite object bounds, corrects image orientation for the engine's Y-up world, and can
 flip sprites horizontally or vertically.
 
-The side-scroller loops `Player/A1/idle-01.png` through `idle-06.png` while standing and
-`walk-01.png` through `walk-06.png` while moving. Leaving the ground plays the eight-frame
-`jump` clip once and holds its final frame until landing. Sword and shotgun one-shots take
-priority over locomotion: the sword clip remains synchronized to its hitbox, while the
-0.40-second shotgun clip spawns its projectile at 0.20 seconds before returning to the
-appropriate idle, walk, or jump state. Gameplay timing is expressed in seconds rather
-than frame indices, so changing the clip's frame count does not change firing behavior.
-The knight artwork is rendered by a separate visual object that follows the smaller
-physics collider, keeping transparent frame padding out of collision calculations.
+Equipped rendering prefers validated packages below
+`Assets/Content/sparse-loadouts/<equipment-id>/package.json`. Atlas pages load lazily and are
+shared by path, while composed frames live in an evictable memory-budgeted cache.
+`SparseCanvasSpriteShader2D` maps each cropped result through its stored character root
+and back into the legacy logical canvas, preserving world placement during incremental
+content migration. Every right-hand equipment set ships sparse samples for the full
+declared animation set. Animations absent from a package, and combinations that add
+another equipment layer such as a shield, continue through the compatible full-canvas
+fallback.
+
+Each character owns a `character.json` and semantic folders such as
+`characters/player/animations/walk`. The animation ID and folder name are identical;
+source names such as `Walking_B` remain provenance rather than runtime vocabulary.
+Frames use contiguous four-digit names beginning at `frame-0001.png`. Manifests record
+frame rate or total duration plus looping behavior without repeating asset paths.
+
+Sword and magic-shot one-shots take priority over locomotion and remain synchronized to
+their gameplay timing. The character artwork is rendered by a separate visual object
+that follows the smaller physics collider, keeping transparent frame padding out of
+collision calculations.

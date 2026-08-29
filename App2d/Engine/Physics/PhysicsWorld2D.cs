@@ -32,7 +32,7 @@ public sealed class PhysicsWorld2D
     public int LastCandidatePairCount { get; private set; }
     public IList<IPhysicsConstraint2D> Constraints => _constraints;
 
-    public PhysicsBody2D AddBody(WorldObject2D worldObject, BodyMotionType2D motionType)
+    public PhysicsBody2D AddBody(SpatialObject2D worldObject, BodyMotionType2D motionType)
     {
         var body = new PhysicsBody2D(worldObject, motionType);
         _bodies.Add(body);
@@ -175,6 +175,9 @@ public sealed class PhysicsWorld2D
         Vector2 otherSeparationNormal,
         CollisionContact2D geometry)
     {
+        if (other.IsIgnoringOneWayPlatform(platform))
+            return false;
+
         const float minimumTopNormalY = 0.9f;
         if (otherSeparationNormal.Y < minimumTopNormalY)
             return false;

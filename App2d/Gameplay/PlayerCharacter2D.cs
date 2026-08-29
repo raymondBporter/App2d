@@ -14,13 +14,14 @@ public sealed class PlayerCharacter2D
     private const float HardLandingSpeed = 650f;
     private const float FootstepSpeedThreshold = 65f;
     private const float FootstepIntervalSeconds = 0.29f;
+    private const float DamageKnockbackX = 220f;
+    private const float DamageKnockbackY = 170f;
 
     private readonly CharacterMotor2D _motor;
     private readonly ISoundEffectSink2D _sounds;
     private float _footstepSeconds;
 
     public PlayerCharacter2D(
-        Scene2D scene,
         PhysicsWorld2D physics,
         TraversalMetrics2D traversal,
         Vector2 spawnPoint,
@@ -28,19 +29,13 @@ public sealed class PlayerCharacter2D
         uint worldLayer,
         ISoundEffectSink2D sounds)
     {
-        ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(traversal);
         _sounds = ArgGuard.RequireNotNull(sounds);
 
-        WorldObject = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(traversal.PlayerColliderSize),
-            new SolidColorShader(SKColors.Transparent))
-        {
-            IsVisible = false
-        };
+        WorldObject = new SpatialObject2D(
+            AxisAlignedRectangle2D.FromSize(traversal.PlayerColliderSize));
         WorldObject.Transform.Position = spawnPoint;
-        scene.Add(WorldObject);
 
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
         Body.Restitution = 0f;
@@ -51,6 +46,7 @@ public sealed class PlayerCharacter2D
         _motor.JumpStarted += () => _sounds.Play(SoundEffect2D.PlayerJump);
         _motor.Landed += speed =>
         {
+            LandingSpeedThisFrame = speed;
             _sounds.Play(
                 speed >= HardLandingSpeed
                     ? SoundEffect2D.PlayerLandHard
@@ -59,16 +55,22 @@ public sealed class PlayerCharacter2D
         };
     }
 
-    public WorldObject2D WorldObject { get; }
+    public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; } = new(5);
+    public event Action? Damaged;
     public Vector2 Position => WorldObject.Transform.Position;
     public float Facing { get; private set; } = 1f;
     public float InvulnerabilitySeconds { get; private set; }
+    public float LandingSpeedThisFrame { get; private set; }
     public bool IsGrounded => _motor.IsGrounded;
+    public bool IsDucking => _motor.IsDucking;
 
-    public void BeginFrame(float deltaSeconds) =>
+    public void BeginFrame(float deltaSeconds)
+    {
+        LandingSpeedThisFrame = 0f;
         InvulnerabilitySeconds = Math.Max(0f, InvulnerabilitySeconds - deltaSeconds);
+    }
 
     public void UpdateBeforePhysics(PlayerIntent2D intent, float deltaSeconds)
     {
@@ -89,7 +91,7 @@ public sealed class PlayerCharacter2D
             Facing = MathF.Sign(direction);
     }
 
-    public bool ResolveEnemyTouches(IEnumerable<PatrolEnemy2D> enemies)
+    public bool ResolveEnemyTouches(IEnumerable<IEnemyCombatant2D> enemies)
     {
         foreach (var enemy in enemies)
         {
@@ -111,8 +113,8 @@ public sealed class PlayerCharacter2D
     public bool TryTakeDamage(
         int damage,
         float sourceX,
-        float horizontalKnockback = 470f,
-        float verticalKnockback = 410f)
+        float horizontalKnockback = DamageKnockbackX,
+        float verticalKnockback = DamageKnockbackY)
     {
         ArgGuard.ThrowIfNotPositive(damage);
         ArgGuard.ThrowIfNotFinite(sourceX);
@@ -130,6 +132,7 @@ public sealed class PlayerCharacter2D
             knockbackDirection * horizontalKnockback,
             verticalKnockback);
         _sounds.Play(SoundEffect2D.PlayerHurt);
+        Damaged?.Invoke();
         return true;
     }
 
@@ -140,6 +143,7 @@ public sealed class PlayerCharacter2D
         Body.AngularVelocity = 0f;
         _motor.Reset();
         _footstepSeconds = 0f;
+        LandingSpeedThisFrame = 0f;
         InvulnerabilitySeconds = Math.Max(InvulnerabilitySeconds, 0.35f);
     }
 

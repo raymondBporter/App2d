@@ -6,8 +6,8 @@ namespace App2d.Engine.Collision.Contacts;
 public static class HalfSpaceCollision2D
 {
     public static bool TryGetContact(
-        WorldObject2D convexObject,
-        WorldObject2D halfSpaceObject,
+        SpatialObject2D convexObject,
+        SpatialObject2D halfSpaceObject,
         out HalfSpaceContact2D contact)
     {
         ArgGuard.ThrowIfNull(convexObject);
@@ -44,8 +44,8 @@ public static class HalfSpaceCollision2D
     }
 
     public static bool ConstrainOutside(
-        WorldObject2D convexObject,
-        WorldObject2D halfSpaceObject,
+        SpatialObject2D convexObject,
+        SpatialObject2D halfSpaceObject,
         out HalfSpaceContact2D contact)
     {
         if (!TryGetContact(convexObject, halfSpaceObject, out contact))

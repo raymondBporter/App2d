@@ -2,13 +2,14 @@ using System.Numerics;
 
 namespace App2d.Engine.Physics;
 
-public sealed class PhysicsBody2D(WorldObject2D worldObject, BodyMotionType2D motionType)
+public sealed class PhysicsBody2D(SpatialObject2D worldObject, BodyMotionType2D motionType)
 {
+    private HashSet<PhysicsBody2D>? _ignoredOneWayPlatforms;
     private float _mass = 1f;
     private float _momentOfInertia = 1f;
     private float _oneWaySlop = 2f;
 
-    public WorldObject2D WorldObject { get; } = worldObject;
+    public SpatialObject2D WorldObject { get; } = ArgGuard.RequireNotNull(worldObject);
     public BodyMotionType2D MotionType { get; set; } = motionType;
     public Vector2 LinearVelocity { get; set; }
     public float AngularVelocity { get; set; }
@@ -79,7 +80,32 @@ public sealed class PhysicsBody2D(WorldObject2D worldObject, BodyMotionType2D mo
         AccumulatedTorque = 0f;
     }
 
-    internal bool CanCollideWith(PhysicsBody2D other) =>
+    public void IgnoreOneWayPlatform(PhysicsBody2D platform)
+    {
+        ArgGuard.ThrowIfNull(platform);
+        (_ignoredOneWayPlatforms ??= []).Add(platform);
+    }
+
+    public bool IsIgnoringOneWayPlatform(PhysicsBody2D platform)
+    {
+        ArgGuard.ThrowIfNull(platform);
+        return _ignoredOneWayPlatforms?.Contains(platform) == true;
+    }
+
+    public void ClearIgnoredOneWayPlatforms() =>
+        _ignoredOneWayPlatforms?.Clear();
+
+    public int IgnoredOneWayPlatformCount =>
+        _ignoredOneWayPlatforms?.Count ?? 0;
+
+    public void RemoveIgnoredOneWayPlatformsWhere(
+        Predicate<PhysicsBody2D> match)
+    {
+        ArgGuard.ThrowIfNull(match);
+        _ignoredOneWayPlatforms?.RemoveWhere(match);
+    }
+
+    public bool CanCollideWith(PhysicsBody2D other) =>
         IsCollider && other.IsCollider &&
         (CollisionMask & other.CollisionLayer) != 0u &&
         (other.CollisionMask & CollisionLayer) != 0u;

@@ -34,43 +34,48 @@ public sealed class PlayerInputMapper2D
         var jumpHeld =
             input.IsKeyDown(Keys.Space) ||
             input.IsKeyDown(Keys.W) ||
-            input.IsKeyDown(Keys.Up) ||
+            !input.IsShiftDown && input.IsKeyDown(Keys.Up) ||
             controller.JumpHeld;
         var anyJumpPressed =
             input.WasKeyPressed(Keys.Space) ||
             input.WasKeyPressed(Keys.W) ||
-            input.WasKeyPressed(Keys.Up) ||
+            !input.IsShiftDown && input.WasKeyPressed(Keys.Up) ||
             controller.JumpPressed;
         var anyJumpReleased =
             input.WasKeyReleased(Keys.Space) ||
             input.WasKeyReleased(Keys.W) ||
-            input.WasKeyReleased(Keys.Up) ||
+            !input.IsShiftDown && input.WasKeyReleased(Keys.Up) ||
             controller.JumpReleased;
+        var jumpPressed = anyJumpPressed && !_jumpActionHeld;
+        var downHeld =
+            input.IsKeyDown(Keys.S) ||
+            !input.IsShiftDown && input.IsKeyDown(Keys.Down) ||
+            controller.DownHeld;
         var movement = new PlayerIntent2D(
             moveX,
-            anyJumpPressed && !_jumpActionHeld,
+            jumpPressed,
             jumpHeld,
-            !jumpHeld && (_jumpActionHeld || anyJumpReleased));
+            !jumpHeld && (_jumpActionHeld || anyJumpReleased),
+            downHeld && jumpPressed,
+            downHeld);
         _jumpActionHeld = jumpHeld;
 
-        var leftMousePressed = input.WasMousePressed(MouseButtons.Left);
-        var rightMousePressed = input.WasMousePressed(MouseButtons.Right);
-        var isChangingLoadout = input.IsControlDown;
-        var usedMouse = leftMousePressed || rightMousePressed;
+        var mouseAttackPressed = input.WasMousePressed(MouseButtons.Left);
         return new PlayerCommand2D(
             movement,
-            isChangingLoadout && leftMousePressed || controller.CycleLeftWeapon,
-            isChangingLoadout && rightMousePressed || controller.CycleRightWeapon,
             input.WasKeyPressed(Keys.J) ||
-                leftMousePressed && !isChangingLoadout ||
-                controller.UseLeftWeapon,
-            input.WasKeyPressed(Keys.K) ||
-                rightMousePressed && !isChangingLoadout ||
-                controller.UseRightWeapon,
-            usedMouse
+                mouseAttackPressed ||
+                controller.UseWeapon,
+            mouseAttackPressed
                 ? camera.DeviceToWorld(input.MousePositionDevice)
                 : controller.AimTarget,
-            input.WasKeyPressed(Keys.F3));
+            input.WasKeyPressed(Keys.Q) ||
+                controller.SwitchWeapon,
+            input.WasKeyPressed(Keys.F3),
+            input.WasKeyPressed(Keys.H) ||
+                controller.PreviewMeleeChop,
+            input.WasKeyPressed(Keys.L) ||
+                controller.PreviewMeleeStab);
     }
 
     public void Reset()

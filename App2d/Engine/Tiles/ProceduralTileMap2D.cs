@@ -3,16 +3,16 @@ using App2d.Engine.Geometry;
 
 namespace App2d.Engine.Tiles;
 
-public sealed class ProceduralTileMap2D : ISolidTileMap2D
+public sealed class ProceduralTileMap2D : IChunkedTileMap2D
 {
-    private readonly Func<int, int, bool> _isSolid;
+    private readonly Func<int, int, TileKind2D> _getTileKind;
 
     public ProceduralTileMap2D(
         int width,
         int height,
         float tileSize,
         int chunkSize,
-        Func<int, int, bool> isSolid,
+        Func<int, int, TileKind2D> getTileKind,
         Vector2 origin = default)
     {
         ArgGuard.ThrowIfNotPositive(width);
@@ -25,7 +25,7 @@ public sealed class ProceduralTileMap2D : ISolidTileMap2D
         TileSize = tileSize;
         ChunkSize = chunkSize;
         Origin = origin;
-        _isSolid = ArgGuard.RequireNotNull(isSolid);
+        _getTileKind = ArgGuard.RequireNotNull(getTileKind);
     }
 
     public int Width { get; }
@@ -39,8 +39,12 @@ public sealed class ProceduralTileMap2D : ISolidTileMap2D
         Origin,
         Origin + new Vector2(Width * TileSize, Height * TileSize));
 
-    public bool IsSolid(int x, int y) =>
-        x >= 0 && x < Width && y >= 0 && y < Height && _isSolid(x, y);
+    public TileKind2D GetTileKind(int x, int y) =>
+        x >= 0 && x < Width && y >= 0 && y < Height
+            ? _getTileKind(x, y)
+            : TileKind2D.Empty;
+
+    public bool IsSolid(int x, int y) => GetTileKind(x, y) == TileKind2D.Solid;
 
     public TileChunk2D WorldToChunk(Vector2 worldPosition)
     {
@@ -50,7 +54,8 @@ public sealed class ProceduralTileMap2D : ISolidTileMap2D
             Math.Clamp((int)MathF.Floor(tile.Y / ChunkSize), 0, ChunkRows - 1));
     }
 
-    public IReadOnlyList<Bounds2D> BuildCollisionRectangles(TileChunk2D chunk)
+    public IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(
+        TileChunk2D chunk)
     {
         ValidateChunk(chunk);
 
@@ -58,35 +63,44 @@ public sealed class ProceduralTileMap2D : ISolidTileMap2D
         var startY = chunk.Y * ChunkSize;
         var width = Math.Min(ChunkSize, Width - startX);
         var height = Math.Min(ChunkSize, Height - startY);
-        var solid = new bool[width * height];
-        var consumed = new bool[solid.Length];
+        var tiles = new TileKind2D[width * height];
+        var consumed = new bool[tiles.Length];
 
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
-                solid[y * width + x] = _isSolid(startX + x, startY + y);
+                tiles[y * width + x] = _getTileKind(startX + x, startY + y);
         }
 
-        var rectangles = new List<Bounds2D>();
+        var rectangles = new List<TileCollisionRectangle2D>();
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
             {
                 var index = y * width + x;
-                if (!solid[index] || consumed[index])
+                var kind = tiles[index];
+                if (kind == TileKind2D.Empty || consumed[index])
                     continue;
 
                 var rectangleWidth = 1;
                 while (x + rectangleWidth < width &&
-                       solid[index + rectangleWidth] &&
+                       tiles[index + rectangleWidth] == kind &&
                        !consumed[index + rectangleWidth])
                 {
                     rectangleWidth++;
                 }
 
                 var rectangleHeight = 1;
-                while (y + rectangleHeight < height &&
-                       IsSolidRun(solid, consumed, width, x, y + rectangleHeight, rectangleWidth))
+                while (kind == TileKind2D.Solid &&
+                       y + rectangleHeight < height &&
+                       IsTileRun(
+                           tiles,
+                           consumed,
+                           width,
+                           x,
+                           y + rectangleHeight,
+                           rectangleWidth,
+                           kind))
                 {
                     rectangleHeight++;
                 }
@@ -96,28 +110,28 @@ public sealed class ProceduralTileMap2D : ISolidTileMap2D
 
                 var min = Origin + new Vector2(startX + x, startY + y) * TileSize;
                 var max = min + new Vector2(rectangleWidth, rectangleHeight) * TileSize;
-                rectangles.Add(new Bounds2D(min, max));
+                rectangles.Add(new TileCollisionRectangle2D(
+                    new Bounds2D(min, max),
+                    kind));
             }
         }
 
         return rectangles;
     }
 
-    public int WorldToTileY(float worldY) =>
-        (int)MathF.Floor((worldY - Origin.Y) / TileSize);
-
-    private static bool IsSolidRun(
-        ReadOnlySpan<bool> solid,
+    private static bool IsTileRun(
+        ReadOnlySpan<TileKind2D> tiles,
         ReadOnlySpan<bool> consumed,
         int rowWidth,
         int x,
         int y,
-        int width)
+        int width,
+        TileKind2D kind)
     {
         var start = y * rowWidth + x;
         for (var offset = 0; offset < width; offset++)
         {
-            if (!solid[start + offset] || consumed[start + offset])
+            if (tiles[start + offset] != kind || consumed[start + offset])
                 return false;
         }
 

@@ -12,7 +12,6 @@ namespace App2d.Gameplay;
 
 public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
 {
-    private const float HammerFramesPerSecond = 10f;
     private const int HammerImpactFrame = 5;
     private const float AttackRangeX = 155f;
     private const float AttackRangeY = 90f;
@@ -26,7 +25,7 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     private readonly AnimationPlayer2D<Texture2D> _animation = new();
     private readonly SpriteShader2D _spriteShader;
     private readonly WorldObject2D _visual;
-    private readonly WorldObject2D _hammerHitbox;
+    private readonly SpatialObject2D _hammerHitbox;
     private readonly ISoundEffectSink2D _sounds;
     private float _attackCooldownSeconds = 0.35f;
     private float _facing = 1f;
@@ -52,12 +51,9 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         ArgGuard.ThrowIfNotFinite(position);
         _sounds = ArgGuard.RequireNotNull(sounds);
 
-        var transparentShader = new SolidColorShader(SKColors.Transparent);
-        var collider = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(new Vector2(68f, 98f)),
-            transparentShader);
+        var collider = new SpatialObject2D(
+            AxisAlignedRectangle2D.FromSize(new Vector2(68f, 98f)));
         collider.Transform.Position = position;
-        scene.Add(collider);
 
         var body = physics.AddBody(collider, BodyMotionType2D.Dynamic);
         body.Restitution = 0f;
@@ -71,17 +67,16 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             patrolMinX,
             patrolMaxX,
             speed: 62f,
-            health: 8,
-            transparentShader,
-            transparentShader);
+            health: 8);
 
-        _walkAnimation = new AnimationClip2D<Texture2D>(
-            LoadFrames(textures, "walk"),
-            framesPerSecond: 8f);
-        _hammerAnimation = new AnimationClip2D<Texture2D>(
-            LoadFrames(textures, "hammer"),
-            HammerFramesPerSecond,
-            isLooping: false);
+        _walkAnimation = CharacterAnimationAssets2D.LoadClip(
+            textures,
+            "boiler-brute",
+            "walk");
+        _hammerAnimation = CharacterAnimationAssets2D.LoadClip(
+            textures,
+            "boiler-brute",
+            "hammer-attack");
         _animation.Play(_walkAnimation);
         _spriteShader = new SpriteShader2D(_animation.CurrentFrame);
         _visual = new WorldObject2D(
@@ -89,13 +84,13 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             _spriteShader);
         scene.Add(_visual);
 
-        _hammerHitbox = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(HammerHitboxSize),
-            transparentShader);
+        _hammerHitbox = new SpatialObject2D(
+            AxisAlignedRectangle2D.FromSize(HammerHitboxSize));
         SyncPresentation();
     }
 
     public PatrolEnemy2D Enemy { get; }
+    public IEnemyCombatant2D Combatant => Enemy;
     public bool IsHammerActive =>
         _simulationEnabled &&
         Enemy.IsAlive &&
@@ -173,16 +168,14 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         _hammerConnected = true;
         var dealtDamage = player.TryTakeDamage(
             damage: 2,
-            sourceX: Enemy.WorldObject.Transform.Position.X,
-            horizontalKnockback: 620f,
-            verticalKnockback: 470f);
+            sourceX: Enemy.WorldObject.Transform.Position.X);
         return dealtDamage && !player.Health.IsAlive;
     }
 
     public bool TryResolvePlayerHit(PlayerCharacter2D player) =>
         TryResolveHammerHit(player);
 
-    public IEnumerable<WorldObject2D> GetActiveAttackHitboxes()
+    public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
         if (IsHammerActive)
             yield return _hammerHitbox;
@@ -237,21 +230,4 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             Enemy.WorldObject.Transform.Position + new Vector2(_facing * 62f, -10f);
     }
 
-    private static Texture2D[] LoadFrames(
-        TextureCache2D textures,
-        string animationName)
-    {
-        const int frameCount = 8;
-        var frames = new Texture2D[frameCount];
-        for (var i = 0; i < frames.Length; i++)
-        {
-            frames[i] = textures.Load(
-                Path.Combine(
-                    "Enemies",
-                    "BoilerBrute",
-                    $"{animationName}-{i + 1:00}.png"));
-        }
-
-        return frames;
-    }
 }

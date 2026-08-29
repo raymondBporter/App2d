@@ -1,0 +1,57 @@
+{
+  "id": "right-hand-sword-a-runtime",
+  "outputRoot": "Assets/Content/sparse-loadouts/right-hand-sword-a",
+  "canvas": [512, 384],
+  "rootX": 256,
+  "groundY": 324,
+  "sourceFps": 30,
+  "targetFps": 30,
+  "sampling": {
+    "mode": "screen-space-motion",
+    "analysisPlan": "tools/ArtPipeline/right-hand-weapon-batch-plan.json",
+    "maxPixelsPerSample": 2.0,
+    "minimumFramesPerSecond": 6.0
+  },
+  "cropPadding": 2,
+  "atlasSize": 1024,
+  "atlasGutter": 2,
+  "writeProofArtifacts": false,
+  "characterContentRoot": "Assets/Content/characters/player/animations",
+  "equipment": {
+    "id": "right-hand-sword-a",
+    "contentRoot": "Assets/Content/weapons/right-hand-sword-a/animations"
+  },
+  "facings": [
+    { "id": "right" },
+    { "id": "left" }
+  ],
+  "clips": [
+    { "id": "idle", "loop": true, "targetFramesPerSecond": 30 },
+    { "id": "walk", "loop": true, "targetFramesPerSecond": 30 },
+    { "id": "crouch", "loop": true, "targetFramesPerSecond": 30 },
+    { "id": "jump-start", "loop": false, "targetFramesPerSecond": 30 },
+    { "id": "fall", "loop": true, "targetFramesPerSecond": 30 },
+    { "id": "land", "loop": false, "targetFramesPerSecond": 30 },
+    { "id": "hit-a", "loop": false, "targetFramesPerSecond": 30 },
+    { "id": "melee-chop", "loop": false, "targetFramesPerSecond": 30 },
+    {
+      "id": "sword-attack",
+      "loop": false,
+      "durationSeconds": 0.24,
+      "targetFramesPerSecond": 30
+    },
+    {
+      "id": "melee-stab",
+      "loop": false,
+      "targetFramesPerSecond": 30,
+      "rootXByFacing": { "right": 210, "left": 302 }
+    },
+    {
+      "id": "magic-shot",
+      "loop": false,
+      "durationSeconds": 0.4,
+      "targetFramesPerSecond": 30
+    },
+    { "id": "shield-block", "loop": true, "targetFramesPerSecond": 30 }
+  ]
+}

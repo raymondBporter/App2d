@@ -27,9 +27,10 @@ public sealed class Shieldback2D : IEnemyActor2D
         ArgGuard.ThrowIfNull(enemy);
 
         Enemy = enemy;
-        _walkAnimation = new AnimationClip2D<Texture2D>(
-            LoadFrames(textures),
-            framesPerSecond: 8f);
+        _walkAnimation = CharacterAnimationAssets2D.LoadClip(
+            textures,
+            "shieldback",
+            "walk");
         _animation.Play(_walkAnimation);
         _spriteShader = new SpriteShader2D(_animation.CurrentFrame);
         _visual = new WorldObject2D(
@@ -40,6 +41,7 @@ public sealed class Shieldback2D : IEnemyActor2D
     }
 
     public PatrolEnemy2D Enemy { get; }
+    public IEnemyCombatant2D Combatant => Enemy;
 
     public void SetSimulationEnabled(bool isEnabled)
     {
@@ -88,19 +90,4 @@ public sealed class Shieldback2D : IEnemyActor2D
         _visual.IsVisible = _simulationEnabled && Enemy.IsAlive;
     }
 
-    private static Texture2D[] LoadFrames(TextureCache2D textures)
-    {
-        const int frameCount = 8;
-        var frames = new Texture2D[frameCount];
-        for (var i = 0; i < frames.Length; i++)
-        {
-            frames[i] = textures.Load(
-                Path.Combine(
-                    "Enemies",
-                    "Shieldback",
-                    $"walk-{i + 1:00}.png"));
-        }
-
-        return frames;
-    }
 }

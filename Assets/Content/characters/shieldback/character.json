@@ -1,0 +1,9 @@
+{
+  "id": "shieldback",
+  "animations": {
+    "walk": {
+      "framesPerSecond": 8,
+      "loop": true
+    }
+  }
+}

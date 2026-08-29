@@ -6,5 +6,5 @@ public interface IEnemyAttackSource2D
 {
     bool TryResolvePlayerHit(PlayerCharacter2D player);
 
-    IEnumerable<WorldObject2D> GetActiveAttackHitboxes();
+    IEnumerable<SpatialObject2D> GetActiveAttackHitboxes();
 }

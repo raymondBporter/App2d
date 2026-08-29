@@ -4,9 +4,9 @@ namespace App2d.Gameplay;
 
 public readonly record struct PlayerCommand2D(
     PlayerIntent2D Movement,
-    bool CycleLeftWeapon,
-    bool CycleRightWeapon,
-    bool UseLeftWeapon,
-    bool UseRightWeapon,
+    bool UseWeapon,
     Vector2? AimTarget,
-    bool ToggleTraversalDebug);
+    bool SwitchWeapon,
+    bool ToggleTraversalDebug,
+    bool PreviewMeleeChop,
+    bool PreviewMeleeStab);

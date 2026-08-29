@@ -56,28 +56,6 @@ public sealed class ConvexPolygon2D : IConvexShape2D
         return support;
     }
 
-    public static ConvexPolygon2D CreateTriangle(float radius) => CreateRegular(3, radius, MathF.PI / 2f);
-
-    public static ConvexPolygon2D CreateRegular(
-        int sideCount,
-        float radius,
-        float startingAngle = 0f)
-    {
-        ArgGuard.ThrowIfLessThan(sideCount, 3);
-        ArgGuard.ThrowIfNotPositive(radius);
-        ArgGuard.ThrowIfNotFinite(startingAngle);
-
-        var vertices = new Vector2[sideCount];
-        var angleStep = MathF.Tau / sideCount;
-        for (var i = 0; i < vertices.Length; i++)
-        {
-            var angle = startingAngle + i * angleStep;
-            vertices[i] = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius;
-        }
-
-        return new ConvexPolygon2D(vertices);
-    }
-
     private static void Validate(ReadOnlySpan<Vector2> vertices)
     {
         ArgGuard.ThrowIfTooShort(vertices, 3);

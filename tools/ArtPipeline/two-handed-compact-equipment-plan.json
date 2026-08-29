@@ -1,0 +1,57 @@
+{
+  "loadoutId": "two-handed-compact-native-size-check",
+  "facingPolicy": "directional-all",
+  "previewMode": "none",
+  "fps": 30,
+  "supersample": 2,
+  "canvas": [320, 384],
+  "rootX": 160,
+  "rootXByFacing": { "right": 96, "left": 224 },
+  "groundY": 324,
+  "scale": 104.3697074980194,
+  "characterContentRoot": "Assets/Work/art-pipeline/TwoHandedCompactCheck/character/animations",
+  "previewRoot": "Assets/Work/art-pipeline/TwoHandedCompactCheck",
+  "facings": [
+    { "id": "right", "yawDegrees": 0 },
+    { "id": "left", "yawDegrees": 180 }
+  ],
+  "equipment": [
+    {
+      "id": "two-hand-sword-e-native",
+      "gltf": "Assets/Sources/third-party/KayKit_FantasyWeaponsBits_1.0_FREE/Assets/gltf/sword_E.gltf",
+      "hand": "handslot.l",
+      "contentRoot": "Assets/Work/art-pipeline/TwoHandedCompactCheck/layers/two-hand-sword-e-native/animations"
+    },
+    {
+      "id": "two-hand-spear-a-native",
+      "gltf": "Assets/Sources/third-party/KayKit_FantasyWeaponsBits_1.0_FREE/Assets/gltf/spear_A.gltf",
+      "hand": "handslot.l",
+      "contentRoot": "Assets/Work/art-pipeline/TwoHandedCompactCheck/layers/two-hand-spear-a-native/animations"
+    },
+    {
+      "id": "two-hand-halberd-native",
+      "gltf": "Assets/Sources/third-party/KayKit_FantasyWeaponsBits_1.0_FREE/Assets/gltf/halberd.gltf",
+      "hand": "handslot.l",
+      "contentRoot": "Assets/Work/art-pipeline/TwoHandedCompactCheck/layers/two-hand-halberd-native/animations"
+    },
+    {
+      "id": "two-hand-staff-a-native",
+      "gltf": "Assets/Sources/third-party/KayKit_FantasyWeaponsBits_1.0_FREE/Assets/gltf/staff_A.gltf",
+      "hand": "handslot.l",
+      "contentRoot": "Assets/Work/art-pipeline/TwoHandedCompactCheck/layers/two-hand-staff-a-native/animations"
+    },
+    {
+      "id": "two-hand-staff-b-native",
+      "gltf": "Assets/Sources/third-party/KayKit_FantasyWeaponsBits_1.0_FREE/Assets/gltf/staff_B.gltf",
+      "hand": "handslot.l",
+      "contentRoot": "Assets/Work/art-pipeline/TwoHandedCompactCheck/layers/two-hand-staff-b-native/animations"
+    }
+  ],
+  "clips": [
+    {
+      "id": "two-hand-idle",
+      "glb": "Assets/Sources/third-party/kaykit-character-animations-1.1/Animations/gltf/Rig_Medium/Rig_Medium_CombatMelee.glb",
+      "animation": "Melee_2H_Idle"
+    }
+  ]
+}

@@ -40,28 +40,3 @@ public sealed class LinearGradientShader(SKColor startColor, SKColor endColor) :
             SKShaderTileMode.Clamp);
     }
 }
-
-public sealed class RepeatingStripeShader : IShader2D
-{
-    private readonly SKColor[] _colors;
-    private readonly float[] _positions = [0f, 0.84f, 0.84f, 1f];
-    private readonly float _stripeWidth;
-
-    public RepeatingStripeShader(SKColor tileColor, SKColor seamColor, float stripeWidth)
-    {
-        ArgGuard.ThrowIfNotPositive(stripeWidth);
-
-        _colors = [tileColor, tileColor, seamColor, seamColor];
-        _stripeWidth = stripeWidth;
-    }
-
-    public SKColor BaseColor => SKColors.White;
-
-    public SKShader CreateShader(in ShaderContext context) =>
-        SKShader.CreateLinearGradient(
-            SKPoint.Empty,
-            new SKPoint(_stripeWidth, 0f),
-            _colors,
-            _positions,
-            SKShaderTileMode.Repeat);
-}

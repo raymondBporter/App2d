@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AnalysisModePerformance>All</AnalysisModePerformance>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
+    <PackageReference Include="NAudio" Version="3.0.1" />
+    <Compile Include="..\App2d\Engine\Audio\**\*.cs" Link="Engine\Audio\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

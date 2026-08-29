@@ -1,0 +1,8 @@
+{
+  "id": "rust-cyberpunk",
+  "tileSize": 32,
+  "surfaceThickness": 8,
+  "outerCornerSize": 12,
+  "innerCornerSize": 10,
+  "oneWayVisualHeight": 32
+}
