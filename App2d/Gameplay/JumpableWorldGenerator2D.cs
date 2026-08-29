@@ -31,10 +31,7 @@ public sealed class JumpableWorldGenerator2D
         var runningJumpTiles = traversal
             .MeasureJump(traversal.RunSpeed)
             .HorizontalDistance / traversal.TileSize;
-        _maximumPitWidth = Math.Clamp(
-            (int)MathF.Floor(runningJumpTiles) - 2,
-            3,
-            TerrainSectionWidth - 8);
+        _maximumPitWidth = Math.Clamp((int)MathF.Floor(runningJumpTiles) - 2, 3, TerrainSectionWidth - 8);
     }
 
     public int Width { get; }

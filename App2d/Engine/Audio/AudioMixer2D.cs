@@ -69,21 +69,13 @@ public sealed class AudioMixer2D : IDisposable
     /// Mixes cached clips through a fixed voice pool. Playback only mutates a
     /// preallocated slot, so sound effects do not allocate provider wrappers.
     /// </summary>
-    private sealed class VoiceMixer : ISampleProvider
+    private sealed class VoiceMixer(int maxConcurrentVoices) : ISampleProvider
     {
         private readonly Lock _sync = new();
-        private readonly Voice[] _voices;
+        private readonly Voice[] _voices = new Voice[maxConcurrentVoices];
         private long _sequence;
 
-        public VoiceMixer(int maxConcurrentVoices)
-        {
-            _voices = new Voice[maxConcurrentVoices];
-            WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(
-                SampleRate,
-                ChannelCount);
-        }
-
-        public WaveFormat WaveFormat { get; }
+        public WaveFormat WaveFormat { get; } = WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, ChannelCount);
         public int MaxConcurrentVoices => _voices.Length;
 
         public int ActiveVoiceCount
@@ -108,8 +100,7 @@ public sealed class AudioMixer2D : IDisposable
             var channels = clip.WaveFormat.Channels;
             if (channels is not 1 and not ChannelCount)
             {
-                throw new NotSupportedException(
-                    $"Sound effects must be mono or stereo, not {channels} channels.");
+                throw new NotSupportedException($"Sound effects must be mono or stereo, not {channels} channels.");
             }
             if (volume == 0f || clip.FrameCount == 0)
                 return;

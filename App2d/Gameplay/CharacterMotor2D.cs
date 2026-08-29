@@ -302,16 +302,12 @@ public sealed class CharacterMotor2D
     {
         foreach (var contact in _physics.LastContacts)
         {
-            if (contact.First == _body &&
-                contact.Geometry.Normal.Y >= 0.55f &&
-                CanSupport(contact.Second))
+            if (contact.First == _body && contact.Geometry.Normal.Y >= 0.55f && CanSupport(contact.Second))
             {
                 return true;
             }
 
-            if (contact.Second == _body &&
-                -contact.Geometry.Normal.Y >= 0.55f &&
-                CanSupport(contact.First))
+            if (contact.Second == _body && -contact.Geometry.Normal.Y >= 0.55f && CanSupport(contact.First))
             {
                 return true;
             }
@@ -337,9 +333,7 @@ public sealed class CharacterMotor2D
                 continue;
 
             var gap = bodyBounds.Bottom - otherBounds.Top;
-            if (gap > Metrics.GroundProbeDistance &&
-                gap <= Metrics.LandingSnapDistance &&
-                gap < nearestGap)
+            if (gap > Metrics.GroundProbeDistance && gap <= Metrics.LandingSnapDistance && gap < nearestGap)
             {
                 nearestGap = gap;
             }
@@ -358,8 +352,7 @@ public sealed class CharacterMotor2D
         if (_verticalSpeedBeforePhysics <= 0f || !HasCeilingContact())
             return;
 
-        var integratedVerticalSpeed = _verticalSpeedBeforePhysics +
-            _physics.Gravity.Y * _gravityScaleBeforePhysics * deltaSeconds;
+        var integratedVerticalSpeed = _verticalSpeedBeforePhysics + _physics.Gravity.Y * _gravityScaleBeforePhysics * deltaSeconds;
         if (integratedVerticalSpeed <= 0f)
             return;
 
@@ -372,18 +365,14 @@ public sealed class CharacterMotor2D
 
         for (var distance = 1; distance <= Metrics.UpwardCornerCorrection; distance++)
         {
-            var first = new Vector2(
-                _positionBeforePhysics.X + preferredDirection * distance,
-                desiredY);
+            var first = new Vector2(_positionBeforePhysics.X + preferredDirection * distance, desiredY);
             if (CanOccupy(first))
             {
                 CompleteCornerCorrection(first, integratedVerticalSpeed);
                 return;
             }
 
-            var second = new Vector2(
-                _positionBeforePhysics.X - preferredDirection * distance,
-                desiredY);
+            var second = new Vector2(_positionBeforePhysics.X - preferredDirection * distance, desiredY);
             if (CanOccupy(second))
             {
                 CompleteCornerCorrection(second, integratedVerticalSpeed);
@@ -413,14 +402,8 @@ public sealed class CharacterMotor2D
         {
             foreach (var other in _physics.Bodies)
             {
-                if (ReferenceEquals(other, _body) ||
-                    other.IsOneWayPlatform ||
-                    other.IsSensor ||
-                    !_body.CanCollideWith(other))
-                {
+                if (ReferenceEquals(other, _body) || other.IsOneWayPlatform || other.IsSensor || !_body.CanCollideWith(other))
                     continue;
-                }
-
                 if (!_body.WorldObject.WorldBounds.Intersects(other.WorldObject.WorldBounds))
                     continue;
                 if (_physics.ContactProvider.TryGetContact(_body, other, out _))

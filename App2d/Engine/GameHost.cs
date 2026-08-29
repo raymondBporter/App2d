@@ -233,10 +233,8 @@ public sealed class GameHost : IDisposable
         _timer.Dispose();
         _window.KeyDown -= OnWindowKeyDown;
         _window.KeyPress -= OnWindowKeyPress;
-        if (_gpuSurface is not null)
-            _gpuSurface.PaintSurface -= OnPaintGpuSurface;
-        if (_rasterSurface is not null)
-            _rasterSurface.PaintSurface -= OnPaintRasterSurface;
+        _gpuSurface?.PaintSurface -= OnPaintGpuSurface;
+        _rasterSurface?.PaintSurface -= OnPaintRasterSurface;
         _renderer.Dispose();
         _consoleView.Dispose();
         _surface.Dispose();

@@ -5,7 +5,6 @@ namespace App2d.Engine.Audio;
 /// <summary>A decoded sound effect that can be played repeatedly without disk I/O.</summary>
 public sealed class AudioClip2D
 {
-    private readonly float[] _samples;
 
     internal AudioClip2D(string path, int expectedSampleRate)
     {
@@ -36,10 +35,10 @@ public sealed class AudioClip2D
         }
         if (sampleCount != samples.Length)
             Array.Resize(ref samples, sampleCount);
-        _samples = samples;
+        Samples = samples;
     }
 
     internal WaveFormat WaveFormat { get; }
-    internal float[] Samples => _samples;
-    internal int FrameCount => _samples.Length / WaveFormat.Channels;
+    internal float[] Samples { get; }
+    internal int FrameCount => Samples.Length / WaveFormat.Channels;
 }

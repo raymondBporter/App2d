@@ -17,25 +17,17 @@ public sealed class Shieldback2D : IEnemyActor2D
     private readonly WorldObject2D _visual;
     private bool _simulationEnabled = true;
 
-    public Shieldback2D(
-        Scene2D scene,
-        TextureCache2D textures,
-        PatrolEnemy2D enemy)
+    public Shieldback2D(Scene2D scene, TextureCache2D textures, PatrolEnemy2D enemy)
     {
         ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(textures);
         ArgGuard.ThrowIfNull(enemy);
 
         Enemy = enemy;
-        _walkAnimation = CharacterAnimationAssets2D.LoadClip(
-            textures,
-            "shieldback",
-            "walk");
+        _walkAnimation = CharacterAnimationAssets2D.LoadClip(textures, "shieldback", "walk");
         _animation.Play(_walkAnimation);
         _spriteShader = new SpriteShader2D(_animation.CurrentFrame);
-        _visual = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(VisualCanvasSize),
-            _spriteShader);
+        _visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(VisualCanvasSize), _spriteShader);
         scene.Add(_visual);
         SyncPresentation();
     }
@@ -61,10 +53,7 @@ public sealed class Shieldback2D : IEnemyActor2D
             return;
         }
 
-        _animation.PlaybackSpeed = Math.Clamp(
-            MathF.Abs(Enemy.Body.LinearVelocity.X) / Enemy.Speed,
-            0.65f,
-            1.15f);
+        _animation.PlaybackSpeed = Math.Clamp(MathF.Abs(Enemy.Body.LinearVelocity.X) / Enemy.Speed, 0.65f, 1.15f);
         _animation.Update(deltaSeconds);
         SyncPresentation();
     }
@@ -85,8 +74,7 @@ public sealed class Shieldback2D : IEnemyActor2D
     {
         _spriteShader.Texture = _animation.CurrentFrame;
         _spriteShader.FlipX = Enemy.Facing < 0f;
-        _visual.Transform.Position =
-            Enemy.WorldObject.Transform.Position + VisualOffset;
+        _visual.Transform.Position = Enemy.WorldObject.Transform.Position + VisualOffset;
         _visual.IsVisible = _simulationEnabled && Enemy.IsAlive;
     }
 

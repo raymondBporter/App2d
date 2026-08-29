@@ -19,20 +19,13 @@ public sealed class PlayerCharacter2D
     private readonly ISoundEffectSink2D _sounds;
     private float _footstepSeconds;
 
-    public PlayerCharacter2D(
-        PhysicsWorld2D physics,
-        TraversalMetrics2D traversal,
-        Vector2 spawnPoint,
-        uint playerLayer,
-        uint worldLayer,
-        ISoundEffectSink2D sounds)
+    public PlayerCharacter2D(PhysicsWorld2D physics, TraversalMetrics2D traversal, Vector2 spawnPoint, uint playerLayer, uint worldLayer, ISoundEffectSink2D sounds)
     {
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(traversal);
         _sounds = ArgGuard.RequireNotNull(sounds);
 
-        WorldObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.FromSize(traversal.PlayerColliderSize));
+        WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(traversal.PlayerColliderSize));
         WorldObject.Transform.Position = spawnPoint;
 
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
@@ -45,10 +38,7 @@ public sealed class PlayerCharacter2D
         _motor.Landed += speed =>
         {
             LandingSpeedThisFrame = speed;
-            _sounds.Play(
-                speed >= HardLandingSpeed
-                    ? SoundEffect2D.PlayerLandHard
-                    : SoundEffect2D.PlayerLandSoft);
+            _sounds.Play(speed >= HardLandingSpeed ? SoundEffect2D.PlayerLandHard : SoundEffect2D.PlayerLandSoft);
             _footstepSeconds = FootstepIntervalSeconds * 0.5f;
         };
     }

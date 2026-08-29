@@ -77,7 +77,6 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
 
     private static readonly Lazy<SKRuntimeEffect> RuntimeEffect = new(CreateRuntimeEffect);
     private readonly SKFilterMode _colorFilterMode;
-    private readonly int _cacheEntryLimit;
     private readonly Dictionary<ShaderCacheKey, CachedShader> _shaderCache = [];
     private readonly LinkedList<ShaderCacheKey> _shaderRecency = [];
     private SparseLayeredAnimationFrame2D _frame;
@@ -98,12 +97,12 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
         _sourceCanvasSize = sourceCanvasSize;
         _sourceRoot = sourceRoot;
         _colorFilterMode = colorFilterMode;
-        _cacheEntryLimit = cacheEntryLimit;
+        CacheEntryLimit = cacheEntryLimit;
     }
 
     public SKColor BaseColor => SKColors.White;
     public int CachedShaderCount => _shaderCache.Count;
-    public int CacheEntryLimit => _cacheEntryLimit;
+    public int CacheEntryLimit { get; }
 
     public void SetFrame(
         SparseLayeredAnimationFrame2D frame,
@@ -150,7 +149,7 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
         var shader = BuildShader(context.LocalBounds);
         try
         {
-            while (_shaderCache.Count >= _cacheEntryLimit &&
+            while (_shaderCache.Count >= CacheEntryLimit &&
                    _shaderRecency.First is { } oldest)
             {
                 _shaderRecency.RemoveFirst();
@@ -232,13 +231,7 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
 
     private static SKRuntimeEffect CreateRuntimeEffect()
     {
-        var effect = SKRuntimeEffect.CreateShader(ShaderSource, out var errors);
-        if (effect is null)
-        {
-            throw new InvalidOperationException(
-                $"Sparse depth-composition SkSL failed to compile: {errors}");
-        }
-        return effect;
+        return SKRuntimeEffect.CreateShader(ShaderSource, out var errors) ?? throw new InvalidOperationException($"Sparse depth-composition SkSL failed to compile: {errors}");
     }
 
     private static void ValidateSource(SKSizeI canvas, SKPointI root)

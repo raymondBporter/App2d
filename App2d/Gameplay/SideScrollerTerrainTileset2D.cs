@@ -76,73 +76,37 @@ internal sealed class SideScrollerTerrainTileset2D
         _oneWayVisualHeight = oneWayVisualHeight;
     }
 
-    public static SideScrollerTerrainTileset2D Load(
-        TextureCache2D textures,
-        string tilesetId,
-        float tileSize)
+    public static SideScrollerTerrainTileset2D Load(TextureCache2D textures, string tilesetId, float tileSize)
     {
         ArgGuard.ThrowIfNull(textures);
         AssetId2D.Validate(tilesetId);
         ArgGuard.ThrowIfNotPositive(tileSize);
-        var relativeRoot = Path.Combine(
-            "environments",
-            "tilesets",
-            tilesetId);
-        var manifestPath = Path.Combine(
-            textures.ContentRoot,
-            relativeRoot,
-            "tileset.json");
+        var relativeRoot = Path.Combine("environments", "tilesets", tilesetId);
+        var manifestPath = Path.Combine(textures.ContentRoot, relativeRoot, "tileset.json");
         if (!File.Exists(manifestPath))
             throw new FileNotFoundException("Tileset manifest was not found.", manifestPath);
 
-        var manifest = JsonSerializer.Deserialize<TilesetManifest>(
-                File.ReadAllText(manifestPath),
-                JsonOptions) ??
+        var manifest = JsonSerializer.Deserialize<TilesetManifest>(File.ReadAllText(manifestPath), JsonOptions) ??
             throw new InvalidDataException($"Tileset manifest is empty: {manifestPath}");
         if (!string.Equals(manifest.Id, tilesetId, StringComparison.Ordinal))
         {
-            throw new InvalidDataException(
-                $"Tileset manifest ID '{manifest.Id}' must match its folder " +
-                $"'{tilesetId}': {manifestPath}");
+            throw new InvalidDataException($"Tileset manifest ID '{manifest.Id}' must match its folder '{tilesetId}': {manifestPath}");
         }
         if (MathF.Abs(manifest.TileSize - tileSize) > 0.001f)
         {
-            throw new InvalidDataException(
-                $"Tileset '{tilesetId}' uses tile size {manifest.TileSize}, but the " +
-                $"level uses {tileSize}.");
+            throw new InvalidDataException($"Tileset '{tilesetId}' uses tile size {manifest.TileSize}, but the level uses {tileSize}.");
         }
 
-        var sideShader = CreateTerrainShader(
-            textures,
-            relativeRoot,
-            Path.Combine("surfaces", "side.png"),
-            new Vector2(manifest.SurfaceThickness, tileSize));
+        var sideShader = CreateTerrainShader(textures, relativeRoot, Path.Combine("surfaces", "side.png"), new Vector2(manifest.SurfaceThickness, tileSize));
         return new SideScrollerTerrainTileset2D(
-            new TextureShader2D(
-                textures.Load(Path.Combine(relativeRoot, "fill.png")),
-                new Vector2(tileSize)),
-            CreateTerrainShader(
-                textures,
-                relativeRoot,
-                Path.Combine("surfaces", "top.png"),
-                new Vector2(tileSize, manifest.SurfaceThickness)),
+            new TextureShader2D(textures.Load(Path.Combine(relativeRoot, "fill.png")),
+            new Vector2(tileSize)),
+            CreateTerrainShader(textures, relativeRoot, Path.Combine("surfaces", "top.png"), new Vector2(tileSize, manifest.SurfaceThickness)),
             sideShader,
-            CreateTerrainShader(
-                textures,
-                relativeRoot,
-                Path.Combine("surfaces", "bottom.png"),
-                new Vector2(tileSize, manifest.SurfaceThickness)),
+            CreateTerrainShader(textures, relativeRoot, Path.Combine("surfaces", "bottom.png"), new Vector2(tileSize, manifest.SurfaceThickness)),
             sideShader,
-            CreateTerrainShader(
-                textures,
-                relativeRoot,
-                Path.Combine("corners", "outer.png"),
-                new Vector2(manifest.OuterCornerSize)),
-            CreateTerrainShader(
-                textures,
-                relativeRoot,
-                Path.Combine("corners", "inner.png"),
-                new Vector2(manifest.InnerCornerSize)),
+            CreateTerrainShader(textures, relativeRoot, Path.Combine("corners", "outer.png"), new Vector2(manifest.OuterCornerSize)),
+            CreateTerrainShader(textures, relativeRoot, Path.Combine("corners", "inner.png"), new Vector2(manifest.InnerCornerSize)),
             CreateOneWayShader(textures, relativeRoot, "standalone"),
             CreateOneWayShader(textures, relativeRoot, "left"),
             CreateOneWayShader(textures, relativeRoot, "middle"),
@@ -185,33 +149,11 @@ internal sealed class SideScrollerTerrainTileset2D
     public WorldObject2D CreateSurface(Bounds2D tileBounds, TileSurface2D surface) =>
         surface switch
         {
-            TileSurface2D.Top => CreateVisual(
-                new Vector2(tileBounds.Size.X, _surfaceThickness),
-                new Vector2(
-                    tileBounds.Center.X,
-                    tileBounds.Max.Y - _surfaceThickness / 2f),
-                _topShader),
-            TileSurface2D.Right => CreateVisual(
-                new Vector2(_surfaceThickness, tileBounds.Size.Y),
-                new Vector2(
-                    tileBounds.Max.X - _surfaceThickness / 2f,
-                    tileBounds.Center.Y),
-                _rightShader),
-            TileSurface2D.Bottom => CreateVisual(
-                new Vector2(tileBounds.Size.X, _surfaceThickness),
-                new Vector2(
-                    tileBounds.Center.X,
-                    tileBounds.Min.Y + _surfaceThickness / 2f),
-                _bottomShader),
-            TileSurface2D.Left => CreateVisual(
-                new Vector2(_surfaceThickness, tileBounds.Size.Y),
-                new Vector2(
-                    tileBounds.Min.X + _surfaceThickness / 2f,
-                    tileBounds.Center.Y),
-                _leftShader),
-            _ => throw ArgGuard.CreateInvalid(
-                "Create one surface visual at a time.",
-                nameof(surface))
+            TileSurface2D.Top => CreateVisual(new Vector2(tileBounds.Size.X, _surfaceThickness), new Vector2(tileBounds.Center.X, tileBounds.Max.Y - _surfaceThickness / 2f), _topShader),
+            TileSurface2D.Right => CreateVisual(new Vector2(_surfaceThickness, tileBounds.Size.Y), new Vector2(tileBounds.Max.X - _surfaceThickness / 2f, tileBounds.Center.Y), _rightShader),
+            TileSurface2D.Bottom => CreateVisual(new Vector2(tileBounds.Size.X, _surfaceThickness), new Vector2(tileBounds.Center.X, tileBounds.Min.Y + _surfaceThickness / 2f), _bottomShader),
+            TileSurface2D.Left => CreateVisual(new Vector2(_surfaceThickness, tileBounds.Size.Y), new Vector2(tileBounds.Min.X + _surfaceThickness / 2f, tileBounds.Center.Y), _leftShader),
+            _ => throw ArgGuard.CreateInvalid("Create one surface visual at a time.", nameof(surface))
         };
 
     public WorldObject2D CreateCorner(Bounds2D tileBounds, TileCorner2D corner)
@@ -219,26 +161,17 @@ internal sealed class SideScrollerTerrainTileset2D
         var position = corner switch
         {
             TileCorner2D.OuterTopRight => tileBounds.Max - new Vector2(_outerCornerSize / 2f),
-            TileCorner2D.OuterBottomRight => new Vector2(
-                tileBounds.Max.X - _outerCornerSize / 2f,
-                tileBounds.Min.Y + _outerCornerSize / 2f),
+            TileCorner2D.OuterBottomRight => new Vector2(tileBounds.Max.X - _outerCornerSize / 2f, tileBounds.Min.Y + _outerCornerSize / 2f),
             TileCorner2D.OuterBottomLeft => tileBounds.Min + new Vector2(_outerCornerSize / 2f),
-            TileCorner2D.OuterTopLeft => new Vector2(
-                tileBounds.Min.X + _outerCornerSize / 2f,
-                tileBounds.Max.Y - _outerCornerSize / 2f),
+            TileCorner2D.OuterTopLeft => new Vector2(tileBounds.Min.X + _outerCornerSize / 2f, tileBounds.Max.Y - _outerCornerSize / 2f),
             TileCorner2D.InnerTopRight => tileBounds.Max,
             TileCorner2D.InnerBottomRight => new Vector2(tileBounds.Max.X, tileBounds.Min.Y),
             TileCorner2D.InnerBottomLeft => tileBounds.Min,
             TileCorner2D.InnerTopLeft => new Vector2(tileBounds.Min.X, tileBounds.Max.Y),
-            _ => throw ArgGuard.CreateInvalid(
-                "Create one corner visual at a time.",
-                nameof(corner))
+            _ => throw ArgGuard.CreateInvalid("Create one corner visual at a time.", nameof(corner))
         };
         var isOuter = corner <= TileCorner2D.OuterTopLeft;
-        return CreateVisual(
-            new Vector2(isOuter ? _outerCornerSize : _innerCornerSize),
-            position,
-            isOuter ? _outerCornerShader : _innerCornerShader);
+        return CreateVisual(new Vector2(isOuter ? _outerCornerSize : _innerCornerSize), position, isOuter ? _outerCornerShader : _innerCornerShader);
     }
 
     public WorldObject2D CreateOneWay(Bounds2D tileBounds, OneWayTilePart2D part)
@@ -251,34 +184,18 @@ internal sealed class SideScrollerTerrainTileset2D
             OneWayTilePart2D.Right => _oneWayRightShader,
             _ => throw ArgGuard.CreateInvalid("Unknown one-way tile part.", nameof(part))
         };
-        return CreateVisual(
-            new Vector2(tileBounds.Size.X, _oneWayVisualHeight),
-            new Vector2(
-                tileBounds.Center.X,
-                tileBounds.Max.Y - _oneWayVisualHeight / 2f),
-            shader);
+        return CreateVisual(new Vector2(tileBounds.Size.X, _oneWayVisualHeight), new Vector2(tileBounds.Center.X, tileBounds.Max.Y - _oneWayVisualHeight / 2f), shader);
     }
 
-    private static WorldObject2D CreateVisual(
-        Vector2 size,
-        Vector2 position,
-        IShader2D shader)
+    private static WorldObject2D CreateVisual(Vector2 size, Vector2 position, IShader2D shader)
     {
         var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(size), shader);
         visual.Transform.Position = position;
         return visual;
     }
 
-    private static TextureShader2D CreateTerrainShader(
-        TextureCache2D textures,
-        string relativeRoot,
-        string fileName,
-        Vector2 logicalSize) =>
-        new(
-            textures.Load(Path.Combine(relativeRoot, fileName)),
-            logicalSize,
-            SKShaderTileMode.Clamp,
-            SKShaderTileMode.Clamp);
+    private static TextureShader2D CreateTerrainShader(TextureCache2D textures, string relativeRoot, string fileName, Vector2 logicalSize) =>
+        new(textures.Load(Path.Combine(relativeRoot, fileName)), logicalSize, SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
 
     private static SpriteShader2D CreateOneWayShader(
         TextureCache2D textures,

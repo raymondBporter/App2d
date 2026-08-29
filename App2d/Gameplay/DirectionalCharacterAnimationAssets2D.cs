@@ -20,9 +20,7 @@ internal static class DirectionalCharacterAnimationAssets2D
             .ToArray();
         if (paths.Length != expectedFrameCount)
         {
-            throw new InvalidDataException(
-                $"Expected {expectedFrameCount} directional character frames in " +
-                $"'{relativeDirectory}', found {paths.Length}.");
+            throw new InvalidDataException($"Expected {expectedFrameCount} directional character frames in '{relativeDirectory}', found {paths.Length}.");
         }
 
         return new TextureFrameSet2D(textures, paths.Select(path => Path.GetRelativePath(textures.ContentRoot, path)).ToArray());

@@ -64,15 +64,9 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         return runs;
     }
 
-    private void AddFillVisual(
-        List<WorldObject2D> visuals,
-        FillRun run,
-        int startY,
-        int endY)
+    private void AddFillVisual(List<WorldObject2D> visuals, FillRun run, int startY, int endY)
     {
-        var runBounds = new Bounds2D(
-            new Vector2(TileToWorldX(run.StartX), TileToWorldY(startY)),
-            new Vector2(TileToWorldX(run.EndX), TileToWorldY(endY)));
+        var runBounds = new Bounds2D(new Vector2(TileToWorldX(run.StartX), TileToWorldY(startY)), new Vector2(TileToWorldX(run.EndX), TileToWorldY(endY)));
         AddVisual(visuals, run.Tileset.CreateSolidFill(runBounds));
     }
 
@@ -91,11 +85,7 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
                 if (_tileMap.GetTileKind(x, y) == TileKind2D.OneWay)
                 {
                     var oneWayBounds = GetTileBounds(x, y);
-                    AddVisual(
-                        visuals,
-                        _tilesets.GetTileset(x, y).CreateOneWay(
-                            oneWayBounds,
-                            GetOneWayPart(x, y)));
+                    AddVisual(visuals, _tilesets.GetTileset(x, y).CreateOneWay(oneWayBounds, GetOneWayPart(x, y)));
                     continue;
                 }
 
@@ -131,12 +121,7 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         return visuals;
     }
 
-    private void AddCornerVisuals(
-        List<WorldObject2D> visuals,
-        int tileX,
-        int tileY,
-        Bounds2D tileBounds,
-        TileCorner2D corners)
+    private void AddCornerVisuals(List<WorldObject2D> visuals, int tileX, int tileY, Bounds2D tileBounds, TileCorner2D corners)
     {
         var tileset = _tilesets.GetTileset(tileX, tileY);
         if (corners.HasFlag(TileCorner2D.OuterTopRight))
@@ -187,20 +172,13 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         return new Bounds2D(min, min + new Vector2(_tileSize));
     }
 
-    private int WorldToTileX(float worldX) =>
-        (int)MathF.Round((worldX - _tileMap.Origin.X) / _tileSize);
+    private int WorldToTileX(float worldX) => (int)MathF.Round((worldX - _tileMap.Origin.X) / _tileSize);
 
-    private int WorldToTileY(float worldY) =>
-        (int)MathF.Round((worldY - _tileMap.Origin.Y) / _tileSize);
+    private int WorldToTileY(float worldY) => (int)MathF.Round((worldY - _tileMap.Origin.Y) / _tileSize);
 
-    private float TileToWorldX(int tileX) =>
-        _tileMap.Origin.X + tileX * _tileSize;
+    private float TileToWorldX(int tileX) => _tileMap.Origin.X + tileX * _tileSize;
 
-    private float TileToWorldY(int tileY) =>
-        _tileMap.Origin.Y + tileY * _tileSize;
+    private float TileToWorldY(int tileY) => _tileMap.Origin.Y + tileY * _tileSize;
 
-    private readonly record struct FillRun(
-        int StartX,
-        int EndX,
-        SideScrollerTerrainTileset2D Tileset);
+    private readonly record struct FillRun(int StartX, int EndX, SideScrollerTerrainTileset2D Tileset);
 }

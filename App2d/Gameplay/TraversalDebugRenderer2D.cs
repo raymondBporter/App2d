@@ -19,15 +19,11 @@ public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
         Span<Vector2> standingArc = stackalloc Vector2[_standingJumpArc.Length];
         for (var i = 0; i < runningArc.Length; i++)
         {
-            runningArc[i] = playerPosition + new Vector2(
-                _runningJumpArc[i].X * facing,
-                _runningJumpArc[i].Y);
+            runningArc[i] = playerPosition + new Vector2(_runningJumpArc[i].X * facing, _runningJumpArc[i].Y);
         }
         for (var i = 0; i < standingArc.Length; i++)
         {
-            standingArc[i] = playerPosition + new Vector2(
-                _standingJumpArc[i].X * facing,
-                _standingJumpArc[i].Y);
+            standingArc[i] = playerPosition + new Vector2(_standingJumpArc[i].X * facing, _standingJumpArc[i].Y);
         }
 
         renderer.DrawWorldPolyline(runningArc, new SKColor(255, 92, 137, 220), 3f);

@@ -13,12 +13,7 @@ public sealed class PatrolEnemy2D : IEnemyCombatant2D
     private float _stunSeconds;
 
     public PatrolEnemy2D(
-        SpatialObject2D worldObject,
-        PhysicsBody2D body,
-        float patrolMinX,
-        float patrolMaxX,
-        float speed,
-        int health)
+        SpatialObject2D worldObject, PhysicsBody2D body, float patrolMinX, float patrolMaxX, float speed, int health)
     {
         ArgGuard.ThrowIfGreaterThanOrEqual(patrolMinX, patrolMaxX);
         ArgGuard.ThrowIfNotPositive(speed);
@@ -83,9 +78,7 @@ public sealed class PatrolEnemy2D : IEnemyCombatant2D
 
         if (_stunSeconds <= 0f)
         {
-            Body.LinearVelocity = new Vector2(
-                _direction * Speed,
-                Body.LinearVelocity.Y);
+            Body.LinearVelocity = new Vector2(_direction * Speed, Body.LinearVelocity.Y);
         }
 
         Body.AngularVelocity = 0f;
