@@ -34,6 +34,7 @@ public sealed class PlayerPresentation2D : IDisposable
     private readonly EquippedPlayerLoadout2D _equippedLoadout;
     private readonly SpriteShader2D _spriteShader;
     private SparseCanvasSpriteShader2D? _sparseSpriteShader;
+    private SparseDepthCompositeShader2D? _sparseDepthCompositeShader;
     private readonly WorldObject2D _visual;
     private readonly Vector2 _visualOffset;
     private readonly float _visualWidth;
@@ -225,6 +226,7 @@ public sealed class PlayerPresentation2D : IDisposable
         if (_disposed)
             return;
 
+        _sparseDepthCompositeShader?.Dispose();
         _equippedLoadout.Dispose();
         _disposed = true;
         GC.SuppressFinalize(this);
@@ -284,6 +286,26 @@ public sealed class PlayerPresentation2D : IDisposable
                 facesLeft ? "left" : "right",
                 _animation.CurrentFrameIndex,
                 _animation.ElapsedSeconds);
+            if (frame.LayeredFrame is { } layeredFrame)
+            {
+                if (_sparseDepthCompositeShader is null)
+                {
+                    _sparseDepthCompositeShader = new SparseDepthCompositeShader2D(
+                        layeredFrame,
+                        frame.SourceCanvasSize,
+                        frame.SourceRoot);
+                }
+                else
+                {
+                    _sparseDepthCompositeShader.SetFrame(
+                        layeredFrame,
+                        frame.SourceCanvasSize,
+                        frame.SourceRoot);
+                }
+                _visual.Shader = _sparseDepthCompositeShader;
+                return;
+            }
+
             if (frame.SparseFrame is { } sparseFrame)
             {
                 if (_sparseSpriteShader is null)
@@ -304,7 +326,9 @@ public sealed class PlayerPresentation2D : IDisposable
                 return;
             }
 
-            _spriteShader.Texture = frame.Texture;
+            _spriteShader.Texture = StateGuard.RequireNotNull(
+                frame.Texture,
+                "An equipped legacy frame did not provide a texture.");
             _spriteShader.FlipX = false;
             _visual.Shader = _spriteShader;
             return;

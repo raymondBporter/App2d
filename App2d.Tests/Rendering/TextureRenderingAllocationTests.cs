@@ -9,18 +9,12 @@ namespace App2d.Tests.Rendering;
 
 public sealed class TextureRenderingAllocationTests
 {
-    private static readonly string TexturePath = Path.GetFullPath(Path.Combine(
-        AppContext.BaseDirectory,
-        "..",
-        "..",
-        "..",
-        "..",
-        "Assets",
+    private static readonly string TexturePath = TestAssets.GetPath(
         "Content",
         "ui",
         "hud",
         "weapons",
-        "sword.png"));
+        "sword.png");
 
     [Fact]
     public void WarmTextureDrawDoesNotAllocateManagedMemory()

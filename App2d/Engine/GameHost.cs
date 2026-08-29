@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using App2d.Engine.Diagnostics;
 using App2d.Engine.Rendering;
+using App2d.Engine.Rendering.Textures;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 
@@ -12,7 +13,9 @@ public sealed class GameHost : IDisposable
     private const double MaximumFrameSeconds = 0.1d;
     private readonly Game2D _game;
     private readonly Form _window;
-    private readonly SKControl _surface;
+    private readonly Control _surface;
+    private readonly SKControl? _rasterSurface;
+    private readonly SKGLControl? _gpuSurface;
     private readonly InputState _input = new();
     private readonly Renderer2D _renderer;
     private readonly DeveloperConsoleView _consoleView;
@@ -24,17 +27,30 @@ public sealed class GameHost : IDisposable
     private double _previousTime;
     private double _simulationTime;
     private double _nextTitleUpdateTime;
+    private bool _gpuCacheConfigured;
     private bool _disposed;
 
     public GameHost(Game2D game)
     {
         _game = game;
         _renderer = new Renderer2D(game.Camera);
-        _surface = new SKControl
+        if (string.Equals(
+                Environment.GetEnvironmentVariable("APP2D_RENDER_BACKEND"),
+                "raster",
+                StringComparison.OrdinalIgnoreCase))
         {
-            Dock = DockStyle.Fill,
-            TabStop = true
-        };
+            _rasterSurface = new SKControl();
+            _surface = _rasterSurface;
+            _rasterSurface.PaintSurface += OnPaintRasterSurface;
+        }
+        else
+        {
+            _gpuSurface = new SKGLControl();
+            _surface = _gpuSurface;
+            _gpuSurface.PaintSurface += OnPaintGpuSurface;
+        }
+        _surface.Dock = DockStyle.Fill;
+        _surface.TabStop = true;
         _window = new Form
         {
             Text = game.WindowTitle,
@@ -54,7 +70,6 @@ public sealed class GameHost : IDisposable
         _window.Resize += (_, _) => PositionConsole();
         _window.KeyDown += OnWindowKeyDown;
         _window.KeyPress += OnWindowKeyPress;
-        _surface.PaintSurface += OnPaintSurface;
         _timer.Tick += OnTick;
         _window.FormClosed += (_, _) => _timer.Stop();
         _window.Shown += (_, _) => _surface.Focus();
@@ -82,7 +97,7 @@ public sealed class GameHost : IDisposable
             totalTime,
             _renderFrameTime.FrameNumber + 1);
 
-        var canvasSize = _surface.CanvasSize;
+        var canvasSize = _gpuSurface?.CanvasSize ?? _rasterSurface!.CanvasSize;
         var deviceWidth = canvasSize.Width > 0
             ? (int)MathF.Round(canvasSize.Width)
             : _surface.ClientSize.Width;
@@ -123,9 +138,23 @@ public sealed class GameHost : IDisposable
         _surface.Refresh();
     }
 
-    private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
+    private void OnPaintRasterSurface(object? sender, SKPaintSurfaceEventArgs e) =>
+        RenderSurface(e.Surface, e.Info.Width, e.Info.Height);
+
+    private void OnPaintGpuSurface(object? sender, SKPaintGLSurfaceEventArgs e)
     {
-        _renderer.BeginFrame(e.Surface.Canvas, e.Info.Width, e.Info.Height, _frameTime);
+        if (!_gpuCacheConfigured)
+        {
+            _gpuSurface!.GRContext.SetResourceCacheLimit(
+                TextureMemoryBudget2D.GpuResourceCacheBytes);
+            _gpuCacheConfigured = true;
+        }
+        RenderSurface(e.Surface, e.Info.Width, e.Info.Height);
+    }
+
+    private void RenderSurface(SKSurface surface, int width, int height)
+    {
+        _renderer.BeginFrame(surface.Canvas, width, height, _frameTime);
         if (_game.DrawGraphics)
         {
             _game.Render(_renderer);
@@ -204,6 +233,10 @@ public sealed class GameHost : IDisposable
         _timer.Dispose();
         _window.KeyDown -= OnWindowKeyDown;
         _window.KeyPress -= OnWindowKeyPress;
+        if (_gpuSurface is not null)
+            _gpuSurface.PaintSurface -= OnPaintGpuSurface;
+        if (_rasterSurface is not null)
+            _rasterSurface.PaintSurface -= OnPaintRasterSurface;
         _renderer.Dispose();
         _consoleView.Dispose();
         _surface.Dispose();

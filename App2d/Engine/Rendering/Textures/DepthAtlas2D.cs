@@ -1,5 +1,7 @@
 using System.Buffers.Binary;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
+using SkiaSharp;
 
 namespace App2d.Engine.Rendering.Textures;
 
@@ -12,23 +14,37 @@ public sealed class DepthAtlas2D : IDisposable
     private static ReadOnlySpan<byte> PngSignature =>
         [137, 80, 78, 71, 13, 10, 26, 10];
 
-    private ushort[]? _pixels;
+    private SKBitmap? _bitmap;
+    private SKShader? _imageShader;
 
-    private DepthAtlas2D(string sourcePath, int width, int height, ushort[] pixels)
+    private DepthAtlas2D(string sourcePath, SKBitmap bitmap)
     {
         SourcePath = sourcePath;
-        Width = width;
-        Height = height;
-        _pixels = pixels;
+        _bitmap = bitmap;
     }
 
     public string SourcePath { get; }
-    public int Width { get; }
-    public int Height { get; }
-    public bool IsDisposed => _pixels is null;
+    public int Width => Bitmap.Width;
+    public int Height => Bitmap.Height;
+    public bool IsDisposed => _bitmap is null;
 
     internal ReadOnlySpan<ushort> Pixels =>
-        _pixels ?? throw new ObjectDisposedException(nameof(DepthAtlas2D));
+        MemoryMarshal.Cast<byte, ushort>(Bitmap.GetPixelSpan());
+
+    private SKBitmap Bitmap =>
+        _bitmap ?? throw new ObjectDisposedException(nameof(DepthAtlas2D));
+
+    internal SKShader GetImageShader()
+    {
+        if (_imageShader is not null)
+            return _imageShader;
+
+        _imageShader = Bitmap.ToShader(
+            SKShaderTileMode.Decal,
+            SKShaderTileMode.Decal,
+            new SKSamplingOptions(SKFilterMode.Nearest, SKMipmapMode.None));
+        return _imageShader;
+    }
 
     public ushort GetDepth(int x, int y)
     {
@@ -108,29 +124,44 @@ public sealed class DepthAtlas2D : IDisposable
                 throw new InvalidDataException($"Depth PNG contains excess image data: {fullPath}");
         }
 
-        var pixels = new ushort[checked(width * height)];
+        var bitmap = new SKBitmap(new SKImageInfo(
+            width,
+            height,
+            SKColorType.R16Unorm,
+            SKAlphaType.Opaque));
+        var pixels = MemoryMarshal.Cast<byte, ushort>(bitmap.GetPixelSpan());
         var previous = new byte[rowBytes];
         var current = new byte[rowBytes];
-        for (var y = 0; y < height; y++)
+        try
         {
-            var sourceOffset = y * (rowBytes + 1);
-            var filter = decoded[sourceOffset];
-            decoded.AsSpan(sourceOffset + 1, rowBytes).CopyTo(current);
-            Unfilter(current, previous, filter, sizeof(ushort), fullPath);
-            for (var x = 0; x < width; x++)
+            for (var y = 0; y < height; y++)
             {
-                pixels[y * width + x] =
-                    BinaryPrimitives.ReadUInt16BigEndian(current.AsSpan(x * 2, 2));
+                var sourceOffset = y * (rowBytes + 1);
+                var filter = decoded[sourceOffset];
+                decoded.AsSpan(sourceOffset + 1, rowBytes).CopyTo(current);
+                Unfilter(current, previous, filter, sizeof(ushort), fullPath);
+                for (var x = 0; x < width; x++)
+                {
+                    pixels[y * width + x] =
+                        BinaryPrimitives.ReadUInt16BigEndian(current.AsSpan(x * 2, 2));
+                }
+                (previous, current) = (current, previous);
             }
-            (previous, current) = (current, previous);
+            return new DepthAtlas2D(fullPath, bitmap);
         }
-
-        return new DepthAtlas2D(fullPath, width, height, pixels);
+        catch
+        {
+            bitmap.Dispose();
+            throw;
+        }
     }
 
     public void Dispose()
     {
-        _pixels = null;
+        _imageShader?.Dispose();
+        _imageShader = null;
+        _bitmap?.Dispose();
+        _bitmap = null;
         GC.SuppressFinalize(this);
     }
 

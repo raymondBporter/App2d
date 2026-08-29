@@ -9,16 +9,10 @@ namespace App2d.Tests.Rendering;
 
 public sealed class SparseAnimationPackage2DTests
 {
-    private static readonly string PackageRoot = Path.GetFullPath(Path.Combine(
-        AppContext.BaseDirectory,
-        "..",
-        "..",
-        "..",
-        "..",
-        "Assets",
+    private static readonly string PackageRoot = TestAssets.GetPath(
         "Work",
         "art-pipeline",
-        "SparseLayerSwordAProof"));
+        "SparseLayerSwordAProof");
 
     [Fact]
     public void EverySparseCompositeMatchesValidatedFullCanvasProof()
@@ -257,6 +251,94 @@ public sealed class SparseAnimationPackage2DTests
         var fullShader = new SpriteShader2D(full, SKFilterMode.Nearest);
 
         AssertEquivalentPixels(RenderShader(fullShader), RenderShader(sparseShader));
+    }
+
+    [Fact]
+    public void GpuDepthCompositeShaderMatchesCpuSparseComposite()
+    {
+        var productionManifest = Path.GetFullPath(Path.Combine(
+            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts",
+            "right-hand-sword-a", "package.json"));
+        using var package = SparseAnimationPackage2D.Load(productionManifest);
+        Assert.True(package.TryGetLayeredFrameAtTime(
+            "idle",
+            "right",
+            0f,
+            out var layeredFrame));
+        var cpuFrame = package.GetFrame("idle", "right", 0);
+        var cpuShader = new SparseCanvasSpriteShader2D(
+            cpuFrame,
+            package.CanvasSize,
+            package.GetRoot("idle", "right"),
+            SKFilterMode.Nearest);
+        using var gpuShader = new SparseDepthCompositeShader2D(
+            layeredFrame!,
+            package.CanvasSize,
+            package.GetRoot("idle", "right"),
+            SKFilterMode.Nearest);
+
+        AssertEquivalentPixels(RenderShader(cpuShader), RenderShader(gpuShader));
+    }
+
+    [Fact]
+    public void WarmLayeredFrameLookupDoesNotAllocateManagedMemory()
+    {
+        using var package = SparseAnimationPackage2D.Load(
+            Path.Combine(PackageRoot, "package.json"));
+        Assert.True(package.TryGetLayeredFrameAtTime(
+            "idle",
+            "right",
+            0f,
+            out var expected));
+
+        for (var iteration = 0; iteration < 100; iteration++)
+        {
+            if (!package.TryGetLayeredFrameAtTime(
+                    "idle",
+                    "right",
+                    0f,
+                    out _))
+            {
+                throw new InvalidOperationException("Expected a layered sparse frame.");
+            }
+        }
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        SparseLayeredAnimationFrame2D? actual = null;
+        for (var iteration = 0; iteration < 1_000; iteration++)
+        {
+            if (!package.TryGetLayeredFrameAtTime(
+                    "idle",
+                    "right",
+                    0f,
+                    out actual))
+            {
+                throw new InvalidOperationException("Expected a layered sparse frame.");
+            }
+        }
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.Same(expected, actual);
+        Assert.Equal(0, allocated);
+        Assert.Equal(1, package.CachedLayeredFrameCount);
+        Assert.Equal(0, package.CachedFrameCount);
+    }
+
+    [Fact]
+    public void AtlasResidencyDoesNotConsumeCompositeFrameBudget()
+    {
+        var productionManifest = Path.GetFullPath(Path.Combine(
+            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts",
+            "right-hand-sword-a", "package.json"));
+        using var package = SparseAnimationPackage2D.Load(
+            productionManifest,
+            cacheBudgetBytes: 16L * 1024L * 1024L);
+
+        package.PrecomposeAnimations(["idle"]);
+
+        Assert.True(package.ResidentAtlasByteCount > 16L * 1024L * 1024L);
+        Assert.True(package.CachedFrameCount > 1);
+        Assert.True(package.CachedByteCount <= 16L * 1024L * 1024L);
     }
 
     [Fact]

@@ -20,7 +20,7 @@ public sealed class SparseAnimationPackage2D : IDisposable
         _compositionOptions = compositionOptions;
     }
 
-    public static SparseAnimationPackage2D Load(string manifestPath, long cacheBudgetBytes = 96L * 1024L * 1024L, SparseCompositionOptions2D? compositionOptions = null)
+    public static SparseAnimationPackage2D Load(string manifestPath, long cacheBudgetBytes = TextureMemoryBudget2D.CompositeFrameCacheBytes, SparseCompositionOptions2D? compositionOptions = null)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(manifestPath);
         ArgGuard.ThrowIfNotPositive(cacheBudgetBytes);
@@ -81,6 +81,7 @@ public sealed class SparseAnimationPackage2D : IDisposable
     private readonly SparseAtlasPageLease2D?[] _atlasPages;
     private readonly Dictionary<CompositeKey, CachedFrame> _cache = [];
     private readonly Dictionary<SparseAnimationFrame2D, CachedFrame> _ownedFrames = [];
+    private readonly Dictionary<LayeredFrameKey, SparseLayeredAnimationFrame2D> _layeredFrames = [];
     private readonly LinkedList<CompositeKey> _recency = [];
     private readonly long _cacheBudgetBytes;
     private readonly SparseCompositionOptions2D _compositionOptions;
@@ -96,6 +97,7 @@ public sealed class SparseAnimationPackage2D : IDisposable
     public long CachedByteCount => _cacheBytes;
     public long RetainedEvictedByteCount => _retainedEvictedBytes;
     public int CachedFrameCount => _cache.Count;
+    public int CachedLayeredFrameCount => _layeredFrames.Count;
     public long ResidentAtlasByteCount => _atlasPages
         .Where(page => page is not null)
         .Sum(page => checked((long)page!.Color.Width * page.Color.Height * 6L));
@@ -193,6 +195,33 @@ public sealed class SparseAnimationPackage2D : IDisposable
             participatingLayerIds);
 
     /// <summary>
+    /// Resolves an uncomposed two-layer frame for direct GPU depth composition.
+    /// The returned frame remains valid until this package is disposed or its
+    /// source atlases are explicitly released.
+    /// </summary>
+    public bool TryGetLayeredFrameAtTime(
+        string animationId,
+        string facingId,
+        float elapsedSeconds,
+        out SparseLayeredAnimationFrame2D? frame)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgGuard.ThrowIfNegativeOrNotFinite(elapsedSeconds);
+        frame = null;
+        if (!ContainsAnimationFacing(animationId, facingId))
+            return false;
+
+        var sampleIndex = ResolveSampleIndexAtTime(animationId, facingId, elapsedSeconds);
+        lock (_sync)
+        {
+            if (_sourceAtlasesReleased)
+                return false;
+            frame = GetLayeredFrameCore(animationId, facingId, sampleIndex);
+            return frame is not null;
+        }
+    }
+
+    /// <summary>
     /// Gets and retains a frame so LRU eviction cannot dispose its texture while
     /// a renderer still references it. Every successful call must be paired with
     /// <see cref="ReleaseRetainedFrame"/>.
@@ -243,6 +272,25 @@ public sealed class SparseAnimationPackage2D : IDisposable
         if (!ContainsAnimationFacing(animationId, facingId))
             return false;
 
+        var sampleIndex = ResolveSampleIndexAtTime(animationId, facingId, elapsedSeconds);
+        lock (_sync)
+        {
+            frame = GetFrameCore(
+                animationId,
+                facingId,
+                sampleIndex,
+                participatingLayerIds);
+            if (retain)
+                _ownedFrames[frame].RetentionCount++;
+        }
+        return true;
+    }
+
+    private int ResolveSampleIndexAtTime(
+        string animationId,
+        string facingId,
+        float elapsedSeconds)
+    {
         var animation = GetAnimation(animationId);
         var samples = GetFacing(animationId, facingId).Samples;
         var duration = samples[^1].TimeSeconds + samples[^1].DurationSeconds;
@@ -258,18 +306,7 @@ public sealed class SparseAnimationPackage2D : IDisposable
             else
                 high = middle;
         }
-        var sampleIndex = Math.Max(0, low - 1);
-        lock (_sync)
-        {
-            frame = GetFrameCore(
-                animationId,
-                facingId,
-                sampleIndex,
-                participatingLayerIds);
-            if (retain)
-                _ownedFrames[frame].RetentionCount++;
-        }
-        return true;
+        return Math.Max(0, low - 1);
     }
 
     /// <summary>
@@ -420,6 +457,50 @@ public sealed class SparseAnimationPackage2D : IDisposable
         return frame;
     }
 
+    private SparseLayeredAnimationFrame2D? GetLayeredFrameCore(
+        string animationId,
+        string facingId,
+        int sampleIndex)
+    {
+        var key = new LayeredFrameKey(animationId, facingId, sampleIndex);
+        if (_layeredFrames.TryGetValue(key, out var cached))
+            return cached;
+
+        var facing = GetFacing(animationId, facingId);
+        if ((uint)sampleIndex >= (uint)facing.Samples.Length)
+            throw new ArgumentOutOfRangeException(nameof(sampleIndex));
+        var sample = facing.Samples[sampleIndex];
+        if (sample.CanonicalLayerIds.Length != 2)
+            return null;
+
+        var first = CreateLayer(sample, sample.CanonicalLayerIds[0], sortRank: 0);
+        var second = CreateLayer(sample, sample.CanonicalLayerIds[1], sortRank: 1);
+        var frame = new SparseLayeredAnimationFrame2D(
+            first,
+            second,
+            sample.TimeSeconds,
+            sample.DurationSeconds);
+        _layeredFrames.Add(key, frame);
+        return frame;
+    }
+
+    private SparseAnimationLayer2D CreateLayer(
+        SampleManifest sample,
+        string layerId,
+        int sortRank)
+    {
+        if (!sample.Layers.TryGetValue(layerId, out var layer))
+            StateGuard.Throw($"Sparse sample is missing canonical layer '{layerId}'.");
+        var page = GetAtlasPage(layer.Page);
+        return new SparseAnimationLayer2D(
+            layerId,
+            page.Color,
+            page.Depth,
+            ToRectangle(layer.Rect),
+            new SKPointI(layer.Origin[0], layer.Origin[1]),
+            sortRank);
+    }
+
     /// <summary>
     /// Invalidates only composites that used the specified layer.
     /// </summary>
@@ -429,6 +510,7 @@ public sealed class SparseAnimationPackage2D : IDisposable
         ArgGuard.ThrowIfNullOrWhiteSpace(layerId);
         lock (_sync)
         {
+            _layeredFrames.Clear();
             var keys = _cache
                 .Where(pair => pair.Value.ParticipatingLayers.Contains(layerId))
                 .Select(pair => pair.Key)
@@ -453,6 +535,7 @@ public sealed class SparseAnimationPackage2D : IDisposable
     {
         if (_sourceAtlasesReleased)
             return;
+        _layeredFrames.Clear();
         for (var index = 0; index < _atlasPages.Length; index++)
         {
             _atlasPages[index]?.Dispose();
@@ -525,8 +608,7 @@ public sealed class SparseAnimationPackage2D : IDisposable
         IReadOnlyCollection<string> layerIds)
     {
         var bytes = checked((long)frame.Texture.Width * frame.Texture.Height * sizeof(uint));
-        var compositeBudget = Math.Max(0L, _cacheBudgetBytes - ResidentAtlasByteCount);
-        while (_cacheBytes + bytes > compositeBudget && _recency.First is { } oldest)
+        while (_cacheBytes + bytes > _cacheBudgetBytes && _recency.First is { } oldest)
             RemoveCached(oldest.Value);
         var node = _recency.AddLast(key);
         var participants = layerIds.ToHashSet(StringComparer.Ordinal);
@@ -855,6 +937,11 @@ public sealed class SparseAnimationPackage2D : IDisposable
         int SampleIndex,
         string LayerSet);
 
+    private readonly record struct LayeredFrameKey(
+        string AnimationId,
+        string FacingId,
+        int SampleIndex);
+
     private readonly record struct PackageLocation(
         string AnimationId,
         string FacingId,
@@ -954,6 +1041,30 @@ public sealed class SparseAnimationFrame2D(
     public float SourceTimeSeconds { get; } = sourceTimeSeconds;
     public float DurationSeconds { get; } = durationSeconds;
 }
+
+/// <summary>
+/// An animation sample that remains split into its two source layers so a GPU
+/// shader can perform the per-pixel depth comparison without an output bitmap.
+/// </summary>
+public sealed class SparseLayeredAnimationFrame2D(
+    SparseAnimationLayer2D firstLayer,
+    SparseAnimationLayer2D secondLayer,
+    float sourceTimeSeconds,
+    float durationSeconds)
+{
+    public SparseAnimationLayer2D FirstLayer { get; } = firstLayer;
+    public SparseAnimationLayer2D SecondLayer { get; } = secondLayer;
+    public float SourceTimeSeconds { get; } = sourceTimeSeconds;
+    public float DurationSeconds { get; } = durationSeconds;
+}
+
+public readonly record struct SparseAnimationLayer2D(
+    string LayerId,
+    Texture2D ColorAtlas,
+    DepthAtlas2D DepthAtlas,
+    SKRectI AtlasRectangle,
+    SKPointI Origin,
+    int SortRank);
 
 public readonly record struct SparseAnimationSampleReference2D(
     string AnimationId,

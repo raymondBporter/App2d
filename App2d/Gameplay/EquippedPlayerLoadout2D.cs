@@ -5,7 +5,7 @@ namespace App2d.Gameplay;
 
 internal sealed class EquippedPlayerLoadout2D(
     TextureCache2D textures,
-    long frameCacheBudgetBytes = 96L * 1024L * 1024L) : IDisposable
+    long frameCacheBudgetBytes = TextureMemoryBudget2D.CompositeFrameCacheBytes) : IDisposable
 {
     private static readonly string[] FacingIds = ["right", "left"];
 
@@ -18,8 +18,6 @@ internal sealed class EquippedPlayerLoadout2D(
     private long _frameCacheBytes;
     private string? _equipmentId;
     private SparseAnimationPackage2D? _sparsePackage;
-    private CancellationTokenSource? _precomposeCancellation;
-    private Task? _precomposeTask;
     private SparseAnimationPackage2D? _retainedFramePackage;
     private SparseAnimationFrame2D? _retainedFrame;
     private bool _disposed;
@@ -45,12 +43,10 @@ internal sealed class EquippedPlayerLoadout2D(
                 ValidateEquipmentAnimation(additionalEquipmentId, definition);
         }
 
-        StopPrecomposition();
         ReleaseRetainedSparseFrame();
         ClearFrameCache();
         _sparsePackage?.Dispose();
         _sparsePackage = TryLoadSparsePackage(equipmentId);
-        StartPrecomposition(_sparsePackage);
         _equipmentId = equipmentId;
     }
 
@@ -61,10 +57,26 @@ internal sealed class EquippedPlayerLoadout2D(
         float elapsedSeconds)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        ThrowIfPrecompositionFailed();
         var equipmentId = StateGuard.RequireNotNull(
             _equipmentId,
             "Equip a player loadout before requesting its frames.");
+        if (animation.AdditionalEquipmentIds.Count == 0 &&
+            _sparsePackage is { } layeredPackage &&
+            layeredPackage.TryGetLayeredFrameAtTime(
+                animation.Id,
+                facingId,
+                elapsedSeconds,
+                out var layeredFrame))
+        {
+            ReleaseRetainedSparseFrame();
+            return new EquippedFrame2D(
+                StateGuard.RequireNotNull(
+                    layeredFrame,
+                    "Layered sparse frame lookup succeeded without a frame."),
+                layeredPackage.CanvasSize,
+                layeredPackage.GetRoot(animation.Id, facingId));
+        }
+
         if (animation.AdditionalEquipmentIds.Count == 0 &&
             _sparsePackage is { } sparsePackage &&
             sparsePackage.TryRetainFrameAtTime(
@@ -128,7 +140,6 @@ internal sealed class EquippedPlayerLoadout2D(
         if (_disposed)
             return;
 
-        StopPrecomposition();
         ReleaseRetainedSparseFrame();
         ClearFrameCache();
         _sparsePackage?.Dispose();
@@ -167,43 +178,6 @@ internal sealed class EquippedPlayerLoadout2D(
                 $"equipped item '{equipmentId}': {manifestPath}");
         }
         return package;
-    }
-
-    private void StartPrecomposition(SparseAnimationPackage2D? package)
-    {
-        if (package is null)
-            return;
-        _precomposeCancellation = new CancellationTokenSource();
-        var cancellationToken = _precomposeCancellation.Token;
-        _precomposeTask = Task.Run(
-            () => package.PrecomposeAnimations(
-                ["idle", "walk"],
-                cancellationToken),
-            cancellationToken);
-    }
-
-    private void StopPrecomposition()
-    {
-        _precomposeCancellation?.Cancel();
-        try
-        {
-            _precomposeTask?.GetAwaiter().GetResult();
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        finally
-        {
-            _precomposeCancellation?.Dispose();
-            _precomposeCancellation = null;
-            _precomposeTask = null;
-        }
-    }
-
-    private void ThrowIfPrecompositionFailed()
-    {
-        if (_precomposeTask is { IsFaulted: true } task)
-            task.GetAwaiter().GetResult();
     }
 
     private void RetainSparseFrame(
@@ -264,6 +238,7 @@ internal readonly record struct EquippedFrame2D
     {
         Texture = ArgGuard.RequireNotNull(texture);
         SparseFrame = null;
+        LayeredFrame = null;
         SourceCanvasSize = default;
         SourceRoot = default;
     }
@@ -275,12 +250,26 @@ internal readonly record struct EquippedFrame2D
     {
         SparseFrame = ArgGuard.RequireNotNull(sparseFrame);
         Texture = sparseFrame.Texture;
+        LayeredFrame = null;
         SourceCanvasSize = sourceCanvasSize;
         SourceRoot = sourceRoot;
     }
 
-    public Texture2D Texture { get; }
+    public EquippedFrame2D(
+        SparseLayeredAnimationFrame2D layeredFrame,
+        SKSizeI sourceCanvasSize,
+        SKPointI sourceRoot)
+    {
+        LayeredFrame = ArgGuard.RequireNotNull(layeredFrame);
+        Texture = null;
+        SparseFrame = null;
+        SourceCanvasSize = sourceCanvasSize;
+        SourceRoot = sourceRoot;
+    }
+
+    public Texture2D? Texture { get; }
     public SparseAnimationFrame2D? SparseFrame { get; }
+    public SparseLayeredAnimationFrame2D? LayeredFrame { get; }
     public SKSizeI SourceCanvasSize { get; }
     public SKPointI SourceRoot { get; }
 }
