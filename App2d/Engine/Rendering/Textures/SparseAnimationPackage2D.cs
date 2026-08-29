@@ -98,9 +98,22 @@ public sealed class SparseAnimationPackage2D : IDisposable
     public long RetainedEvictedByteCount => _retainedEvictedBytes;
     public int CachedFrameCount => _cache.Count;
     public int CachedLayeredFrameCount => _layeredFrames.Count;
-    public long ResidentAtlasByteCount => _atlasPages
-        .Where(page => page is not null)
-        .Sum(page => checked((long)page!.Color.Width * page.Color.Height * 6L));
+    public long ResidentAtlasByteCount
+    {
+        get
+        {
+            long bytes = 0;
+            foreach (var page in _atlasPages)
+            {
+                if (page is not null)
+                {
+                    bytes = checked(
+                        bytes + (long)page.Color.Width * page.Color.Height * 6L);
+                }
+            }
+            return bytes;
+        }
+    }
     public long TotalResidentByteCount =>
         CachedByteCount + RetainedEvictedByteCount + ResidentAtlasByteCount;
     public bool SourceAtlasesReleased => _sourceAtlasesReleased;

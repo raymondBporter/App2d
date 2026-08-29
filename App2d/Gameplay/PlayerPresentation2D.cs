@@ -89,6 +89,18 @@ public sealed class PlayerPresentation2D : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         AssetId2D.Validate(equipmentId);
+        if (string.Equals(
+                _equippedLoadout.EquipmentId,
+                equipmentId,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _visual.Shader = _spriteShader;
+        _sparseDepthCompositeShader?.Dispose();
+        _sparseDepthCompositeShader = null;
+        _sparseSpriteShader = null;
         _equippedLoadout.Equip(equipmentId, _equippedAnimations.Values);
     }
 

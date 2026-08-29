@@ -325,6 +325,107 @@ public sealed class SparseAnimationPackage2DTests
     }
 
     [Fact]
+    public void WarmGpuAnimationFrameSwitchDoesNotAllocateManagedMemory()
+    {
+        using var package = SparseAnimationPackage2D.Load(
+            Path.Combine(PackageRoot, "package.json"));
+        var clip = package.CreateClip("walk", "right");
+        Assert.True(clip.FrameCount >= 2);
+        Assert.True(package.TryGetLayeredFrameAtTime(
+            "walk",
+            "right",
+            clip[0].SourceTimeSeconds,
+            out var firstFrame));
+        Assert.True(package.TryGetLayeredFrameAtTime(
+            "walk",
+            "right",
+            clip[1].SourceTimeSeconds,
+            out var secondFrame));
+        using var shader = new SparseDepthCompositeShader2D(
+            firstFrame!,
+            package.CanvasSize,
+            package.GetRoot("walk", "right"),
+            cacheEntryLimit: 2);
+        var context = new ShaderContext(
+            Matrix3x2.Identity,
+            new Bounds2D(new Vector2(-256f, -192f), new Vector2(256f, 192f)),
+            default);
+
+        using (shader.AcquireShader(context))
+        {
+        }
+        shader.SetFrame(
+            secondFrame!,
+            package.CanvasSize,
+            package.GetRoot("walk", "right"));
+        using (shader.AcquireShader(context))
+        {
+        }
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var iteration = 0; iteration < 1_000; iteration++)
+        {
+            shader.SetFrame(
+                iteration % 2 == 0 ? firstFrame! : secondFrame!,
+                package.CanvasSize,
+                package.GetRoot("walk", "right"));
+            using var lease = shader.AcquireShader(context);
+            if (lease.Shader is null)
+                throw new InvalidOperationException("Expected a cached GPU shader.");
+        }
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+        Assert.Equal(0, allocated);
+        Assert.Equal(2, shader.CachedShaderCount);
+    }
+
+    [Fact]
+    public void GpuAnimationShaderCacheEvictsLeastRecentlyUsedEntry()
+    {
+        using var package = SparseAnimationPackage2D.Load(
+            Path.Combine(PackageRoot, "package.json"));
+        var clip = package.CreateClip("walk", "right");
+        Assert.True(clip.FrameCount >= 3);
+        var frames = new SparseLayeredAnimationFrame2D[3];
+        for (var index = 0; index < frames.Length; index++)
+        {
+            Assert.True(package.TryGetLayeredFrameAtTime(
+                "walk",
+                "right",
+                clip[index].SourceTimeSeconds,
+                out var frame));
+            frames[index] = frame!;
+        }
+
+        using var shader = new SparseDepthCompositeShader2D(
+            frames[0],
+            package.CanvasSize,
+            package.GetRoot("walk", "right"),
+            cacheEntryLimit: 2);
+        var context = new ShaderContext(
+            Matrix3x2.Identity,
+            new Bounds2D(new Vector2(-256f, -192f), new Vector2(256f, 192f)),
+            default);
+        SKShader? evictedShader;
+        using (var first = shader.AcquireShader(context))
+            evictedShader = first.Shader;
+        shader.SetFrame(frames[1], package.CanvasSize, package.GetRoot("walk", "right"));
+        using (shader.AcquireShader(context))
+        {
+        }
+        shader.SetFrame(frames[2], package.CanvasSize, package.GetRoot("walk", "right"));
+        using (shader.AcquireShader(context))
+        {
+        }
+        Assert.Equal(2, shader.CachedShaderCount);
+
+        shader.SetFrame(frames[0], package.CanvasSize, package.GetRoot("walk", "right"));
+        using var reloaded = shader.AcquireShader(context);
+        Assert.NotSame(evictedShader, reloaded.Shader);
+        Assert.Equal(2, shader.CachedShaderCount);
+    }
+
+    [Fact]
     public void AtlasResidencyDoesNotConsumeCompositeFrameBudget()
     {
         var productionManifest = Path.GetFullPath(Path.Combine(

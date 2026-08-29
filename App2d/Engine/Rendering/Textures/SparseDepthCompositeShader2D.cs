@@ -77,28 +77,33 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
 
     private static readonly Lazy<SKRuntimeEffect> RuntimeEffect = new(CreateRuntimeEffect);
     private readonly SKFilterMode _colorFilterMode;
+    private readonly int _cacheEntryLimit;
+    private readonly Dictionary<ShaderCacheKey, CachedShader> _shaderCache = [];
+    private readonly LinkedList<ShaderCacheKey> _shaderRecency = [];
     private SparseLayeredAnimationFrame2D _frame;
     private SKSizeI _sourceCanvasSize;
     private SKPointI _sourceRoot;
-    private SKShader? _cachedShader;
-    private Bounds2D _cachedBounds;
-    private bool _hasCachedBounds;
     private bool _disposed;
 
     public SparseDepthCompositeShader2D(
         SparseLayeredAnimationFrame2D frame,
         SKSizeI sourceCanvasSize,
         SKPointI sourceRoot,
-        SKFilterMode colorFilterMode = SKFilterMode.Linear)
+        SKFilterMode colorFilterMode = SKFilterMode.Linear,
+        int cacheEntryLimit = TextureMemoryBudget2D.GpuCompositeShaderCacheEntries)
     {
         _frame = ArgGuard.RequireNotNull(frame);
         ValidateSource(sourceCanvasSize, sourceRoot);
+        ArgGuard.ThrowIfNotPositive(cacheEntryLimit);
         _sourceCanvasSize = sourceCanvasSize;
         _sourceRoot = sourceRoot;
         _colorFilterMode = colorFilterMode;
+        _cacheEntryLimit = cacheEntryLimit;
     }
 
     public SKColor BaseColor => SKColors.White;
+    public int CachedShaderCount => _shaderCache.Count;
+    public int CacheEntryLimit => _cacheEntryLimit;
 
     public void SetFrame(
         SparseLayeredAnimationFrame2D frame,
@@ -118,7 +123,6 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
         _frame = frame;
         _sourceCanvasSize = sourceCanvasSize;
         _sourceRoot = sourceRoot;
-        InvalidateShader();
     }
 
     public ShaderLease2D AcquireShader(in ShaderContext context)
@@ -131,16 +135,38 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
             context.LocalBounds.Size.X <= 0f || context.LocalBounds.Size.Y <= 0f,
             "Sparse depth-composite sprite bounds must have positive size.");
 
-        if (_cachedShader is null ||
-            !_hasCachedBounds ||
-            _cachedBounds != context.LocalBounds)
+        var key = new ShaderCacheKey(
+            _frame,
+            _sourceCanvasSize,
+            _sourceRoot,
+            context.LocalBounds);
+        if (_shaderCache.TryGetValue(key, out var cached))
         {
-            InvalidateShader();
-            _cachedShader = BuildShader(context.LocalBounds);
-            _cachedBounds = context.LocalBounds;
-            _hasCachedBounds = true;
+            _shaderRecency.Remove(cached.RecencyNode);
+            _shaderRecency.AddLast(cached.RecencyNode);
+            return ShaderLease2D.Borrowed(cached.Shader);
         }
-        return ShaderLease2D.Borrowed(_cachedShader);
+
+        var shader = BuildShader(context.LocalBounds);
+        try
+        {
+            while (_shaderCache.Count >= _cacheEntryLimit &&
+                   _shaderRecency.First is { } oldest)
+            {
+                _shaderRecency.RemoveFirst();
+                if (_shaderCache.Remove(oldest.Value, out var evicted))
+                    evicted.Shader.Dispose();
+            }
+
+            var node = _shaderRecency.AddLast(key);
+            _shaderCache.Add(key, new CachedShader(shader, node));
+            return ShaderLease2D.Borrowed(shader);
+        }
+        catch
+        {
+            shader.Dispose();
+            throw;
+        }
     }
 
     public void Dispose()
@@ -148,7 +174,10 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
         if (_disposed)
             return;
         _disposed = true;
-        InvalidateShader();
+        foreach (var cached in _shaderCache.Values)
+            cached.Shader.Dispose();
+        _shaderCache.Clear();
+        _shaderRecency.Clear();
         GC.SuppressFinalize(this);
     }
 
@@ -201,13 +230,6 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
         rectangle.Height
     ];
 
-    private void InvalidateShader()
-    {
-        _cachedShader?.Dispose();
-        _cachedShader = null;
-        _hasCachedBounds = false;
-    }
-
     private static SKRuntimeEffect CreateRuntimeEffect()
     {
         var effect = SKRuntimeEffect.CreateShader(ShaderSource, out var errors);
@@ -225,5 +247,19 @@ public sealed class SparseDepthCompositeShader2D : IShader2D, IDisposable
             throw new ArgumentOutOfRangeException(nameof(canvas));
         if ((uint)root.X > (uint)canvas.Width || (uint)root.Y > (uint)canvas.Height)
             throw new ArgumentOutOfRangeException(nameof(root));
+    }
+
+    private readonly record struct ShaderCacheKey(
+        SparseLayeredAnimationFrame2D Frame,
+        SKSizeI SourceCanvasSize,
+        SKPointI SourceRoot,
+        Bounds2D LocalBounds);
+
+    private sealed class CachedShader(
+        SKShader shader,
+        LinkedListNode<ShaderCacheKey> recencyNode)
+    {
+        public SKShader Shader { get; } = shader;
+        public LinkedListNode<ShaderCacheKey> RecencyNode { get; } = recencyNode;
     }
 }

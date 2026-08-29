@@ -5,16 +5,22 @@ namespace App2d.Gameplay;
 
 internal sealed class EquippedPlayerLoadout2D(
     TextureCache2D textures,
-    long frameCacheBudgetBytes = TextureMemoryBudget2D.CompositeFrameCacheBytes) : IDisposable
+    long frameCacheBudgetBytes = TextureMemoryBudget2D.CompositeFrameCacheBytes,
+    long sparsePackageCacheBudgetBytes = TextureMemoryBudget2D.SparsePackageCacheBytes) : IDisposable
 {
     private static readonly string[] FacingIds = ["right", "left"];
 
     private readonly TextureCache2D _textures = ArgGuard.RequireNotNull(textures);
     private readonly Dictionary<EquippedFrameKey, CachedFrame> _frameCache = [];
     private readonly LinkedList<EquippedFrameKey> _frameRecency = [];
+    private readonly Dictionary<string, CachedSparsePackage> _sparsePackages = new(StringComparer.Ordinal);
+    private readonly LinkedList<string> _sparsePackageRecency = [];
     private readonly long _frameCacheBudgetBytes = frameCacheBudgetBytes > 0
         ? frameCacheBudgetBytes
         : throw new ArgumentOutOfRangeException(nameof(frameCacheBudgetBytes));
+    private readonly long _sparsePackageCacheBudgetBytes = sparsePackageCacheBudgetBytes > 0
+        ? sparsePackageCacheBudgetBytes
+        : throw new ArgumentOutOfRangeException(nameof(sparsePackageCacheBudgetBytes));
     private long _frameCacheBytes;
     private string? _equipmentId;
     private SparseAnimationPackage2D? _sparsePackage;
@@ -23,6 +29,7 @@ internal sealed class EquippedPlayerLoadout2D(
     private bool _disposed;
 
     public bool IsEquipped => _equipmentId is not null;
+    public string? EquipmentId => _equipmentId;
 
     public void Equip(
         string equipmentId,
@@ -45,9 +52,9 @@ internal sealed class EquippedPlayerLoadout2D(
 
         ReleaseRetainedSparseFrame();
         ClearFrameCache();
-        _sparsePackage?.Dispose();
-        _sparsePackage = TryLoadSparsePackage(equipmentId);
+        _sparsePackage = GetOrLoadSparsePackage(equipmentId);
         _equipmentId = equipmentId;
+        TrimSparsePackageCache();
     }
 
     public EquippedFrame2D GetFrame(EquippedAnimationDefinition2D animation, string facingId, int frameIndex, float elapsedSeconds)
@@ -65,12 +72,14 @@ internal sealed class EquippedPlayerLoadout2D(
                 out var layeredFrame))
         {
             ReleaseRetainedSparseFrame();
-            return new EquippedFrame2D(
+            var equippedFrame = new EquippedFrame2D(
                 StateGuard.RequireNotNull(
                     layeredFrame,
                     "Layered sparse frame lookup succeeded without a frame."),
                 layeredPackage.CanvasSize,
                 layeredPackage.GetRoot(animation.Id, facingId));
+            TrimSparsePackageCache();
+            return equippedFrame;
         }
 
         if (animation.AdditionalEquipmentIds.Count == 0 &&
@@ -83,7 +92,9 @@ internal sealed class EquippedPlayerLoadout2D(
         {
             var retained = StateGuard.RequireNotNull(sparseFrame, "Sparse frame lookup succeeded without a frame.");
             RetainSparseFrame(sparsePackage, retained);
-            return new EquippedFrame2D(retained, sparsePackage.CanvasSize, sparsePackage.GetRoot(animation.Id, facingId));
+            var equippedFrame = new EquippedFrame2D(retained, sparsePackage.CanvasSize, sparsePackage.GetRoot(animation.Id, facingId));
+            TrimSparsePackageCache();
+            return equippedFrame;
         }
 
         ReleaseRetainedSparseFrame();
@@ -91,8 +102,8 @@ internal sealed class EquippedPlayerLoadout2D(
         var key = new EquippedFrameKey(animation.Id, facingId, frameIndex);
         if (_frameCache.TryGetValue(key, out var cached))
         {
-         //   _frameRecency.Remove(cached.RecencyNode);
-         //   _frameRecency.AddLast(cached.RecencyNode);
+            _frameRecency.Remove(cached.RecencyNode);
+            _frameRecency.AddLast(cached.RecencyNode);
             return new EquippedFrame2D(cached.Texture);
         }
 
@@ -125,7 +136,10 @@ internal sealed class EquippedPlayerLoadout2D(
 
         ReleaseRetainedSparseFrame();
         ClearFrameCache();
-        _sparsePackage?.Dispose();
+        foreach (var cached in _sparsePackages.Values)
+            cached.Package.Dispose();
+        _sparsePackages.Clear();
+        _sparsePackageRecency.Clear();
         _sparsePackage = null;
         _disposed = true;
         GC.SuppressFinalize(this);
@@ -153,6 +167,46 @@ internal sealed class EquippedPlayerLoadout2D(
             throw new InvalidDataException($"Sparse package equipment '{package.EquipmentId}' does not match equipped item '{equipmentId}': {manifestPath}");
         }
         return package;
+    }
+
+    private SparseAnimationPackage2D? GetOrLoadSparsePackage(string equipmentId)
+    {
+        if (_sparsePackages.TryGetValue(equipmentId, out var cached))
+        {
+            _sparsePackageRecency.Remove(cached.RecencyNode);
+            _sparsePackageRecency.AddLast(cached.RecencyNode);
+            return cached.Package;
+        }
+
+        var package = TryLoadSparsePackage(equipmentId);
+        if (package is null)
+            return null;
+
+        var node = _sparsePackageRecency.AddLast(equipmentId);
+        _sparsePackages.Add(equipmentId, new CachedSparsePackage(package, node));
+        return package;
+    }
+
+    private void TrimSparsePackageCache()
+    {
+        long residentBytes = 0;
+        foreach (var cached in _sparsePackages.Values)
+            residentBytes = checked(residentBytes + cached.Package.TotalResidentByteCount);
+
+        var candidate = _sparsePackageRecency.First;
+        while (residentBytes > _sparsePackageCacheBudgetBytes && candidate is not null)
+        {
+            var next = candidate.Next;
+            if (_sparsePackages.TryGetValue(candidate.Value, out var cached) &&
+                !ReferenceEquals(cached.Package, _sparsePackage))
+            {
+                _sparsePackageRecency.Remove(candidate);
+                _sparsePackages.Remove(candidate.Value);
+                residentBytes -= cached.Package.TotalResidentByteCount;
+                cached.Package.Dispose();
+            }
+            candidate = next;
+        }
     }
 
     private void RetainSparseFrame(
@@ -195,6 +249,10 @@ internal sealed class EquippedPlayerLoadout2D(
         Texture2D Texture,
         long ByteCount,
         LinkedListNode<EquippedFrameKey> RecencyNode);
+
+    private sealed record CachedSparsePackage(
+        SparseAnimationPackage2D Package,
+        LinkedListNode<string> RecencyNode);
 
     private readonly record struct EquippedFrameKey(
         string AnimationId,
