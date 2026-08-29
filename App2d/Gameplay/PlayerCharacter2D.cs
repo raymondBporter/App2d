@@ -1,6 +1,6 @@
 using System.Numerics;
 using App2d.Engine;
-using App2d.Engine.Collision.Contacts;
+using App2d.Engine.Collision;
 using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
 using App2d.Gameplay.Audio;
@@ -16,14 +16,27 @@ public sealed class PlayerCharacter2D
     private const float DamageKnockbackY = 170f;
 
     private readonly CharacterMotor2D _motor;
+    private readonly CollisionSystem2D _collision;
+    private readonly uint _enemyLayer;
+    private readonly List<CollisionOverlap2D> _overlaps = [];
     private readonly ISoundEffectSink2D _sounds;
     private float _footstepSeconds;
 
-    public PlayerCharacter2D(PhysicsWorld2D physics, TraversalMetrics2D traversal, Vector2 spawnPoint, uint playerLayer, uint worldLayer, ISoundEffectSink2D sounds)
+    public PlayerCharacter2D(
+        CollisionSystem2D collision,
+        PhysicsWorld2D physics,
+        TraversalMetrics2D traversal,
+        Vector2 spawnPoint,
+        uint playerLayer,
+        uint worldLayer,
+        uint enemyLayer,
+        ISoundEffectSink2D sounds)
     {
+        _collision = ArgGuard.RequireNotNull(collision);
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(traversal);
         _sounds = ArgGuard.RequireNotNull(sounds);
+        _enemyLayer = enemyLayer;
 
         WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(traversal.PlayerColliderSize));
         WorldObject.Transform.Position = spawnPoint;
@@ -33,7 +46,7 @@ public sealed class PlayerCharacter2D
         Body.Mass = 1f;
         Body.CollisionLayer = playerLayer;
         Body.CollisionMask = worldLayer;
-        _motor = new CharacterMotor2D(physics, Body, traversal);
+        _motor = new CharacterMotor2D(collision, physics, Body, traversal);
         _motor.JumpStarted += () => _sounds.Play(SoundEffect2D.PlayerJump);
         _motor.Landed += speed =>
         {
@@ -79,18 +92,25 @@ public sealed class PlayerCharacter2D
             Facing = MathF.Sign(direction);
     }
 
-    public bool ResolveEnemyTouches(IEnumerable<IEnemyCombatant2D> enemies)
+    public bool ResolveEnemyTouches()
     {
-        foreach (var enemy in enemies)
+        _collision.Overlap(
+            WorldObject,
+            _overlaps,
+            _enemyLayer,
+            includeSensors: true,
+            excluded: Body.Collider);
+        foreach (var overlap in _overlaps)
         {
-            if (!enemy.IsAlive ||
-                !WorldObject.WorldBounds.Intersects(enemy.WorldObject.WorldBounds) ||
-                !ShapeCollision2D.TryGetContact(WorldObject, enemy.WorldObject, out var contact))
+            if (overlap.Collider.UserData is not PhysicsBody2D
+                {
+                    UserData: IEnemyCombatant2D { IsAlive: true } enemy
+                })
             {
                 continue;
             }
 
-            WorldObject.Transform.Position += contact.MinimumTranslationVector;
+            WorldObject.Transform.Position += overlap.Contact.MinimumTranslationVector;
             if (TryTakeDamage(1, enemy.WorldObject.Transform.Position.X))
                 return !Health.IsAlive;
         }

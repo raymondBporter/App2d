@@ -16,6 +16,9 @@ The engine is grouped by responsibility:
   collidables under `Shapes`; broad/narrow phase work under the top-level `BroadPhase`,
   `Contacts`, `Filtering`, and `Intersections` folders; and ray primitives and shape
   queries under `Raycasts`.
+- `CollisionSystem2D` owns runtime collider registration, collision layers and masks,
+  cached static/dynamic spatial indexes, candidate discovery, and exact contacts. It has
+  no dependency on physics; physics and gameplay are consumers of collision data.
 - `Engine/Collision/BroadPhase` contains generic AABB candidate-pair searches, while
   `Engine/Collision/Filtering` contains their generic filtering contract.
 - `Engine/Collision/Contacts` contains overlap/contact generation. Shape-pair code is
@@ -59,7 +62,7 @@ Geometry lives under `Engine/Geometry`:
 larger seeded worlds without allocating their full tile area: it evaluates stateless
 X/Y cells on demand, greedily merges one 32x32 chunk into AABB colliders, and permits
 old chunks to be discarded and regenerated exactly. The side-scroller keeps at most 15
-nearby chunks live, so scene rendering, weapon queries, and the physics broad phase are
+nearby chunks live, so scene rendering, weapon queries, and the collision spatial index are
 bounded by the local neighborhood rather than total world size.
 
 Non-convex geometry can become another `IShape2D` implementation later, with its own
@@ -96,12 +99,12 @@ than a true capsule.
 
 ## Physics step
 
-`PhysicsWorld2D.Step(dt)` owns the simulation sequence:
+`PhysicsWorld2D.Step(dt)` owns integration and physical response while consuming contacts
+from its injected `CollisionSystem2D`:
 
 ```text
 substep integration
-    -> broad-phase candidates + pair filtering
-    -> narrow-phase contact generation
+    -> collision-system candidate + contact query
     -> iterative contact + constraint position projections
     -> contact response + constraint velocity projections
 ```
@@ -112,11 +115,10 @@ gameplay update in normal operation, while rendering remains independent. Transi
 input is consumed after the first fixed update so a catch-up frame cannot repeat a
 button press or mouse-wheel action.
 
-The defaults are semi-implicit Euler integration, shape-based contact generation,
-mass-weighted MTV correction, and a linear impulse solver. None of those policies are
-hardwired: replace `Integrator`, `PairFilter`, `BroadPhase`, `ContactProvider`,
-`PositionSolver`, or `VelocitySolver` to use controller physics, position-derived
-velocity, springs, pixel masks, or a wholly non-Newtonian model. `Constraints` run their
+The defaults are semi-implicit Euler integration, mass-weighted MTV correction, and a
+linear impulse solver. Physics policies remain replaceable through `Integrator`,
+`PairFilter`, `PositionSolver`, and `VelocitySolver`. Collision shape/contact policy is
+configured independently through `CollisionSystem2D.ContactProvider`. `Constraints` run their
 position projection during each `PositionIterations` pass, followed by their velocity
 projection for `VelocityIterations` passes.
 
@@ -127,18 +129,15 @@ can soften either projection; the default value of one performs the full project
 The world alternates forward and reverse constraint sweeps so tension can travel through
 a chain in a few Gauss-Seidel passes rather than dozens.
 
-The default `SweepAndPruneBroadPhase2D<T>` computes each body's transformed bounds,
-sorts their X intervals by `Left`, stops scanning when the next `Left` exceeds the
-current `Right`, and prunes candidates whose `Bottom`/`Top` intervals do not overlap.
-It can sweep Y instead through its `Axis` property. Half-spaces retain unbounded bounds,
-so they remain candidates for finite bodies. The generic broad-phase API only needs an
-item-to-bounds function and an `IPairFilter2D<T>`; it has no dependency on physics.
-Candidate pairs hold direct object references, while sweep ordinals remain a private
-sorting detail rather than coupling consumers to positions in the source list.
-`BruteForceAabbBroadPhase2D<T>` remains available as a simple reference/fallback.
+`CollisionSystem2D` keeps separate static and dynamic spatial hashes. Chunk terrain only
+rebuilds the static index when colliders load, unload, or move; dynamic transforms dirty
+only the dynamic index. Queries visit intersecting cells and use per-collider stamps to
+deduplicate shapes spanning multiple cells without allocating. Half-spaces and unusually
+large colliders use an overflow list. The generic sweep-and-prune and brute-force broad
+phases remain available as reusable references for other workloads.
 
-`DefaultPhysicsPairFilter2D` applies collider enablement, collision layers/masks, and
-motion-type policy. Its defaults reject static-static, static-kinematic, and
+`DefaultColliderPairFilter2D` applies collider enablement and collision layers/masks.
+Physics adds `DefaultPhysicsPairFilter2D` for motion-type policy. Its defaults reject static-static, static-kinematic, and
 kinematic-kinematic pairs, so at least one body must currently be dynamic. The six
 pairing switches can opt specific combinations back in without changing the broad phase.
 
@@ -191,9 +190,9 @@ if (jumpPressed && physics.IsTouching(player, Vector2.UnitY))
 physics.Step(dt);
 ```
 
-For pixel collision, implement `IPhysicsContactProvider2D` and either replace the shape
-provider or combine providers with `CompositeContactProvider2D`. The physics world only
-consumes contacts, so it does not care how they were produced.
+For pixel collision, implement `ICollisionContactProvider2D` and either replace the shape
+provider or combine providers with `CompositeCollisionContactProvider2D`. Physics only
+consumes the resulting collision contacts.
 
 ## First run
 

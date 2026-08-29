@@ -1,4 +1,5 @@
 using App2d.Engine;
+using App2d.Engine.Collision;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering.Textures;
 using App2d.Gameplay.Audio;
@@ -10,7 +11,8 @@ internal sealed class WandPlayerWeapon2D(
     PhysicsBody2D ownerBody,
     TextureCache2D textures,
     Texture2D hudTexture,
-    IReadOnlyList<SpatialObject2D> platforms,
+    CollisionSystem2D collision,
+    uint worldLayer,
     CombatSystem2D combat,
     PlayerPresentation2D presentation,
     ISoundEffectSink2D sounds) : FireballPlayerWeapon2D(
@@ -20,7 +22,8 @@ internal sealed class WandPlayerWeapon2D(
         ownerBody,
         textures,
         hudTexture,
-        platforms,
+        collision,
+        worldLayer,
         combat,
         presentation,
         sounds);

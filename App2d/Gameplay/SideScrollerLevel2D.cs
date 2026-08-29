@@ -1,5 +1,6 @@
 using System.Numerics;
 using App2d.Engine;
+using App2d.Engine.Collision;
 using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering;
@@ -75,6 +76,7 @@ public sealed class SideScrollerLevel2D
 
     public void CreateEnvironment(
         Scene2D scene,
+        CollisionSystem2D collision,
         PhysicsWorld2D physics,
         TextureCache2D textures,
         uint worldLayer,
@@ -82,6 +84,7 @@ public sealed class SideScrollerLevel2D
         uint enemyLayer)
     {
         ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(textures);
         StateGuard.ThrowIf(
@@ -114,6 +117,7 @@ public sealed class SideScrollerLevel2D
             playerLayer | enemyLayer);
         _environment = new LevelEnvironment(
             scene,
+            collision,
             physics,
             streamer,
             worldLayer,
@@ -141,6 +145,7 @@ public sealed class SideScrollerLevel2D
         var environment = RequireEnvironment();
         new SideScrollerEncounterSpawner2D(
             environment.Scene,
+            environment.Collision,
             environment.Physics,
             TileMap,
             _generator,
@@ -191,6 +196,7 @@ public sealed class SideScrollerLevel2D
 
     private sealed record LevelEnvironment(
         Scene2D Scene,
+        CollisionSystem2D Collision,
         PhysicsWorld2D Physics,
         SideScrollerChunkStreamer2D Streamer,
         uint WorldLayer,

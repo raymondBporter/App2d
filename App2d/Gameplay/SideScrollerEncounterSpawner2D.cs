@@ -1,5 +1,6 @@
 using System.Numerics;
 using App2d.Engine;
+using App2d.Engine.Collision;
 using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering.Textures;
@@ -10,6 +11,7 @@ namespace App2d.Gameplay;
 
 internal sealed class SideScrollerEncounterSpawner2D(
     Scene2D scene,
+    CollisionSystem2D collision,
     PhysicsWorld2D physics,
     IChunkedTileMap2D tileMap,
     JumpableWorldGenerator2D generator,
@@ -56,6 +58,7 @@ internal sealed class SideScrollerEncounterSpawner2D(
             {
                 Register(new BoilerBrute2D(
                     scene,
+                    collision,
                     physics,
                     textures,
                     new Vector2(

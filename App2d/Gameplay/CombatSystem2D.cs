@@ -1,18 +1,22 @@
 using System.Numerics;
 using App2d.Engine;
-using App2d.Engine.Collision.Contacts;
+using App2d.Engine.Collision;
+using App2d.Engine.Physics;
 using App2d.Gameplay.Audio;
 
 namespace App2d.Gameplay;
 
 public sealed class CombatSystem2D(
-    IReadOnlyList<IEnemyCombatant2D> enemies,
+    CollisionSystem2D collision,
+    uint enemyLayer,
     ISoundEffectSink2D sounds)
 {
-    private readonly IReadOnlyList<IEnemyCombatant2D> _enemies =
-        ArgGuard.RequireNotNull(enemies);
+    private readonly CollisionSystem2D _collision =
+        ArgGuard.RequireNotNull(collision);
+    private readonly uint _enemyLayer = enemyLayer;
     private readonly ISoundEffectSink2D _sounds =
         ArgGuard.RequireNotNull(sounds);
+    private readonly List<CollisionOverlap2D> _overlaps = [];
 
     public int DefeatedEnemies { get; private set; }
 
@@ -29,10 +33,10 @@ public sealed class CombatSystem2D(
         ArgGuard.ThrowIfNull(knockback);
 
         var hitAny = false;
-        foreach (var enemy in _enemies)
+        _collision.Overlap(hitbox, _overlaps, _enemyLayer, includeSensors: true);
+        foreach (var overlap in _overlaps)
         {
-            if (!enemy.IsAlive ||
-                !Intersects(hitbox, enemy.WorldObject) ||
+            if (GetEnemy(overlap.Collider) is not { IsAlive: true } enemy ||
                 !enemy.TryRegisterHit(attackSource, attackId))
             {
                 continue;
@@ -55,9 +59,10 @@ public sealed class CombatSystem2D(
         ArgGuard.ThrowIfNull(hitbox);
         ArgGuard.ThrowIfNull(knockback);
 
-        foreach (var enemy in _enemies)
+        _collision.Overlap(hitbox, _overlaps, _enemyLayer, includeSensors: true);
+        foreach (var overlap in _overlaps)
         {
-            if (!enemy.IsAlive || !Intersects(hitbox, enemy.WorldObject))
+            if (GetEnemy(overlap.Collider) is not { IsAlive: true } enemy)
                 continue;
 
             Damage(enemy, damage, knockback(enemy));
@@ -67,9 +72,10 @@ public sealed class CombatSystem2D(
         return false;
     }
 
-    public static bool Intersects(SpatialObject2D first, SpatialObject2D second) =>
-        first.WorldBounds.Intersects(second.WorldBounds) &&
-        ShapeCollision2D.TryGetContact(first, second, out _);
+    private static IEnemyCombatant2D? GetEnemy(Collider2D collider) =>
+        collider.UserData is PhysicsBody2D { UserData: IEnemyCombatant2D enemy }
+            ? enemy
+            : null;
 
     private void Damage(IEnemyCombatant2D enemy, int damage, Vector2 knockback)
     {

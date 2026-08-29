@@ -1,5 +1,6 @@
 using System.Numerics;
 using App2d.Engine;
+using App2d.Engine.Collision;
 using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering.Textures;
@@ -14,11 +15,13 @@ internal class FireballPlayerWeapon2D : PlayerWeapon2DBase
     private const float ReleaseTime = 0.2f;
 
     private readonly PhysicsBody2D _ownerBody;
-    private readonly IReadOnlyList<SpatialObject2D> _platforms;
+    private readonly CollisionSystem2D _collision;
+    private readonly uint _worldLayer;
     private readonly CombatSystem2D _combat;
     private readonly PlayerPresentation2D _presentation;
     private readonly ISoundEffectSink2D _sounds;
     private readonly List<Projectile2D> _fireballs = [];
+    private readonly List<CollisionOverlap2D> _overlaps = [];
     private float _cooldown;
     private Projectile2D? _pending;
 
@@ -29,14 +32,16 @@ internal class FireballPlayerWeapon2D : PlayerWeapon2DBase
         PhysicsBody2D ownerBody,
         TextureCache2D textures,
         Texture2D hudTexture,
-        IReadOnlyList<SpatialObject2D> platforms,
+        CollisionSystem2D collision,
+        uint worldLayer,
         CombatSystem2D combat,
         PlayerPresentation2D presentation,
         ISoundEffectSink2D sounds)
         : base(name, equipmentId, hudTexture)
     {
         _ownerBody = ArgGuard.RequireNotNull(ownerBody);
-        _platforms = ArgGuard.RequireNotNull(platforms);
+        _collision = ArgGuard.RequireNotNull(collision);
+        _worldLayer = worldLayer;
         _combat = ArgGuard.RequireNotNull(combat);
         _presentation = ArgGuard.RequireNotNull(presentation);
         _sounds = ArgGuard.RequireNotNull(sounds);
@@ -112,13 +117,11 @@ internal class FireballPlayerWeapon2D : PlayerWeapon2DBase
                 _ => new Vector2(direction * 390f, 190f));
             if (!hit)
             {
-                foreach (var platform in _platforms)
-                {
-                    if (!CombatSystem2D.Intersects(fireball.WorldObject, platform))
-                        continue;
-                    hit = true;
-                    break;
-                }
+                hit = _collision.Overlap(
+                    fireball.WorldObject,
+                    _overlaps,
+                    _worldLayer,
+                    includeSensors: false) > 0;
             }
 
             if (hit)

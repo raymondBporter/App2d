@@ -1,29 +1,70 @@
 using System.Numerics;
+using App2d.Engine.Collision;
 
 namespace App2d.Engine.Physics;
 
-public sealed class PhysicsBody2D(SpatialObject2D worldObject, BodyMotionType2D motionType)
+public sealed class PhysicsBody2D
 {
     private HashSet<PhysicsBody2D>? _ignoredOneWayPlatforms;
     private float _mass = 1f;
     private float _momentOfInertia = 1f;
     private float _oneWaySlop = 2f;
 
-    public SpatialObject2D WorldObject { get; } = ArgGuard.RequireNotNull(worldObject);
-    public BodyMotionType2D MotionType { get; set; } = motionType;
+    private BodyMotionType2D _motionType;
+
+    internal PhysicsBody2D(
+        SpatialObject2D worldObject,
+        BodyMotionType2D motionType,
+        Collider2D collider)
+    {
+        WorldObject = ArgGuard.RequireNotNull(worldObject);
+        Collider = ArgGuard.RequireNotNull(collider);
+        _motionType = motionType;
+        Collider.Mobility = ToColliderMobility(motionType);
+        PreviousPosition = worldObject.Transform.Position;
+        PreviousRotation = worldObject.Transform.Rotation;
+    }
+
+    public SpatialObject2D WorldObject { get; }
+    public Collider2D Collider { get; }
+    public BodyMotionType2D MotionType
+    {
+        get => _motionType;
+        set
+        {
+            _motionType = value;
+            Collider.Mobility = ToColliderMobility(value);
+        }
+    }
     public Vector2 LinearVelocity { get; set; }
     public float AngularVelocity { get; set; }
     public Vector2 AccumulatedForce { get; private set; }
     public float AccumulatedTorque { get; private set; }
-    public Vector2 PreviousPosition { get; internal set; } = worldObject.Transform.Position;
-    public float PreviousRotation { get; internal set; } = worldObject.Transform.Rotation;
+    public Vector2 PreviousPosition { get; internal set; }
+    public float PreviousRotation { get; internal set; }
     public float GravityScale { get; set; } = 1f;
     public float Restitution { get; set; } = 0.5f;
-    public bool IsCollider { get; set; } = true;
-    public bool IsSensor { get; set; }
+    public bool IsCollider
+    {
+        get => Collider.IsEnabled;
+        set => Collider.IsEnabled = value;
+    }
+    public bool IsSensor
+    {
+        get => Collider.IsSensor;
+        set => Collider.IsSensor = value;
+    }
     public bool IsOneWayPlatform { get; set; }
-    public uint CollisionLayer { get; set; } = 1u;
-    public uint CollisionMask { get; set; } = uint.MaxValue;
+    public uint CollisionLayer
+    {
+        get => Collider.CollisionLayer;
+        set => Collider.CollisionLayer = value;
+    }
+    public uint CollisionMask
+    {
+        get => Collider.CollisionMask;
+        set => Collider.CollisionMask = value;
+    }
     public object? UserData { get; set; }
 
     public float OneWaySlop
@@ -106,7 +147,10 @@ public sealed class PhysicsBody2D(SpatialObject2D worldObject, BodyMotionType2D 
     }
 
     public bool CanCollideWith(PhysicsBody2D other) =>
-        IsCollider && other.IsCollider &&
-        (CollisionMask & other.CollisionLayer) != 0u &&
-        (other.CollisionMask & CollisionLayer) != 0u;
+        Collider.CanCollideWith(other.Collider);
+
+    private static ColliderMobility2D ToColliderMobility(BodyMotionType2D motionType) =>
+        motionType == BodyMotionType2D.Static
+            ? ColliderMobility2D.Static
+            : ColliderMobility2D.Dynamic;
 }

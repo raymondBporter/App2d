@@ -1,5 +1,5 @@
 using System.Numerics;
-using App2d.Engine.Collision.BroadPhase;
+using App2d.Engine.Collision;
 using App2d.Engine.Collision.Contacts;
 using App2d.Engine.Collision.Filtering;
 using App2d.Engine.Physics.Filtering;
@@ -15,7 +15,19 @@ public sealed class PhysicsWorld2D
     private readonly List<IPhysicsConstraint2D> _constraints = [];
     private readonly Dictionary<(PhysicsBody2D First, PhysicsBody2D Second), PhysicsContact2D> _frameContacts = [];
     private readonly Dictionary<(PhysicsBody2D First, PhysicsBody2D Second), PhysicsContact2D> _substepContacts = [];
-    private readonly List<BroadPhasePair2D<PhysicsBody2D>> _candidatePairs = [];
+    private readonly List<CollisionPair2D> _collisionContacts = [];
+    private readonly PhysicsColliderPairFilter _physicsColliderPairFilter;
+
+    public PhysicsWorld2D()
+        : this(new CollisionSystem2D())
+    {
+    }
+
+    public PhysicsWorld2D(CollisionSystem2D collisionSystem)
+    {
+        CollisionSystem = ArgGuard.RequireNotNull(collisionSystem);
+        _physicsColliderPairFilter = new PhysicsColliderPairFilter(this);
+    }
 
     public Vector2 Gravity { get; set; }
     public int PositionIterations { get; set; } = 4;
@@ -23,23 +35,35 @@ public sealed class PhysicsWorld2D
     public float MaxSubstepSeconds { get; set; } = 1f / 60f;
     public IPhysicsIntegrator2D Integrator { get; set; } = new SemiImplicitEulerIntegrator2D();
     public IPairFilter2D<PhysicsBody2D> PairFilter { get; set; } = new DefaultPhysicsPairFilter2D();
-    public IBroadPhase2D<PhysicsBody2D> BroadPhase { get; set; } = new SweepAndPruneBroadPhase2D<PhysicsBody2D>(static body => body.WorldObject.WorldBounds);
-    public IPhysicsContactProvider2D ContactProvider { get; set; } = new ShapeContactProvider2D();
     public IPhysicsPositionSolver2D PositionSolver { get; set; } = new MassWeightedPositionSolver2D();
     public IPhysicsVelocitySolver2D VelocitySolver { get; set; } = new ImpulseVelocitySolver2D();
+    public CollisionSystem2D CollisionSystem { get; }
     public IReadOnlyList<PhysicsBody2D> Bodies => _bodies;
     public IReadOnlyList<PhysicsContact2D> LastContacts => _lastContacts;
-    public int LastCandidatePairCount { get; private set; }
+    public int LastCandidatePairCount => CollisionSystem.LastCandidatePairCount;
     public IList<IPhysicsConstraint2D> Constraints => _constraints;
 
     public PhysicsBody2D AddBody(SpatialObject2D worldObject, BodyMotionType2D motionType)
     {
-        var body = new PhysicsBody2D(worldObject, motionType);
+        var collider = CollisionSystem.AddCollider(
+            worldObject,
+            motionType == BodyMotionType2D.Static
+                ? ColliderMobility2D.Static
+                : ColliderMobility2D.Dynamic);
+        var body = new PhysicsBody2D(worldObject, motionType, collider);
+        collider.UserData = body;
         _bodies.Add(body);
         return body;
     }
 
-    public bool RemoveBody(PhysicsBody2D body) => _bodies.Remove(body);
+    public bool RemoveBody(PhysicsBody2D body)
+    {
+        ArgGuard.ThrowIfNull(body);
+        if (!_bodies.Remove(body))
+            return false;
+        CollisionSystem.RemoveCollider(body.Collider);
+        return true;
+    }
 
     public void Step(float deltaSeconds)
     {
@@ -97,17 +121,18 @@ public sealed class PhysicsWorld2D
         for (var iteration = 0; iteration < PositionIterations; iteration++)
         {
             var foundContact = false;
-            _candidatePairs.Clear();
-            BroadPhase.CollectPairs(_bodies, PairFilter, _candidatePairs);
-            LastCandidatePairCount = _candidatePairs.Count;
-            foreach (var pair in _candidatePairs)
+            CollisionSystem.CollectContacts(
+                _collisionContacts,
+                _physicsColliderPairFilter);
+            foreach (var pair in _collisionContacts)
             {
-                var firstBody = pair.First;
-                var secondBody = pair.Second;
-                if (!ContactProvider.TryGetContact(firstBody, secondBody, out var geometry))
+                if (pair.First.UserData is not PhysicsBody2D firstBody ||
+                    pair.Second.UserData is not PhysicsBody2D secondBody)
+                {
                     continue;
+                }
 
-                var contact = new PhysicsContact2D(firstBody, secondBody, geometry);
+                var contact = new PhysicsContact2D(firstBody, secondBody, pair.Contact);
                 if (!AllowsOneWayContact(contact))
                     continue;
 
@@ -204,6 +229,15 @@ public sealed class PhysicsWorld2D
 
         var relativeVerticalSpeed = other.LinearVelocity.Y - platform.LinearVelocity.Y;
         return relativeVerticalSpeed <= 0f;
+    }
+
+    private sealed class PhysicsColliderPairFilter(PhysicsWorld2D world) :
+        IPairFilter2D<Collider2D>
+    {
+        public bool ShouldTest(Collider2D first, Collider2D second) =>
+            first.UserData is PhysicsBody2D firstBody &&
+            second.UserData is PhysicsBody2D secondBody &&
+            world.PairFilter.ShouldTest(firstBody, secondBody);
     }
 
 }

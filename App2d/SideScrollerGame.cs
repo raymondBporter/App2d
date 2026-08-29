@@ -1,5 +1,6 @@
 using System.Numerics;
 using App2d.Engine;
+using App2d.Engine.Collision;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering;
 using App2d.Gameplay;
@@ -16,13 +17,8 @@ public sealed class SideScrollerGame : Game2D
 
     private static readonly TraversalMetrics2D Traversal = new();
 
-    private readonly PhysicsWorld2D _physics = new()
-    {
-        Gravity = new Vector2(0f, -Traversal.Gravity),
-        MaxSubstepSeconds = 1f / 120f,
-        PositionIterations = 3,
-        VelocityIterations = 2
-    };
+    private readonly CollisionSystem2D _collision = new();
+    private readonly PhysicsWorld2D _physics;
     private readonly SideScrollerLevel2D _level;
     private readonly PlayerInputMapper2D _inputMapper = new();
     private readonly PlayerCharacter2D _player;
@@ -37,6 +33,13 @@ public sealed class SideScrollerGame : Game2D
 
     public SideScrollerGame()
     {
+        _physics = new PhysicsWorld2D(_collision)
+        {
+            Gravity = new Vector2(0f, -Traversal.Gravity),
+            MaxSubstepSeconds = 1f / 120f,
+            PositionIterations = 3,
+            VelocityIterations = 2
+        };
         Traversal.ValidateScaleContract();
         _sounds = new SoundEffectBank2D(Path.Combine(AppContext.BaseDirectory, "Assets", "audio", "sfx"));
         RegisterDebugPhysicsWorld(_physics);
@@ -46,15 +49,15 @@ public sealed class SideScrollerGame : Game2D
         _level = new SideScrollerLevel2D(Traversal);
         _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _level.SpawnPoint, _level.GetCameraFloorY);
 
-        _level.CreateEnvironment(Scene, _physics, Textures, WorldLayer, PlayerLayer, EnemyLayer);
+        _level.CreateEnvironment(Scene, _collision, _physics, Textures, WorldLayer, PlayerLayer, EnemyLayer);
 
-        _player = new PlayerCharacter2D(_physics, Traversal, _level.SpawnPoint, PlayerLayer, WorldLayer, _sounds);
+        _player = new PlayerCharacter2D(_collision, _physics, Traversal, _level.SpawnPoint, PlayerLayer, WorldLayer, EnemyLayer, _sounds);
         _playerPresentation = new PlayerPresentation2D(Scene, Textures, Traversal);
         _player.Damaged += _playerPresentation.PlayHit;
 
         _level.CreateMechanicsPlaygroundEnemies(Textures, _sounds);
-        _combat = new CombatSystem2D(_level.EnemySystem.Combatants, _sounds);
-        _arsenal = new PlayerArsenal2D(Scene, _player.Body, Textures, _level.Platforms, _combat, _playerPresentation, _sounds);
+        _combat = new CombatSystem2D(_collision, EnemyLayer, _sounds);
+        _arsenal = new PlayerArsenal2D(Scene, _player.Body, Textures, _collision, WorldLayer, _combat, _playerPresentation, _sounds);
         RegisterDebugAttackShapes(_arsenal.GetActiveAttackHitboxes);
         RegisterDebugAttackShapes(_level.EnemySystem.GetActiveAttackHitboxes);
 
@@ -96,7 +99,7 @@ public sealed class SideScrollerGame : Game2D
         var playerDefeated = _level.EnemySystem.TryResolvePlayerHits(_player);
 
         if (playerDefeated ||
-            _player.ResolveEnemyTouches(_level.EnemySystem.Combatants))
+            _player.ResolveEnemyTouches())
         {
             _player.Health.Reset();
             Respawn();

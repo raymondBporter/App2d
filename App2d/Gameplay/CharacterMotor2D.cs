@@ -1,4 +1,6 @@
 using System.Numerics;
+using App2d.Engine.Collision;
+using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
 
 namespace App2d.Gameplay;
@@ -6,7 +8,9 @@ namespace App2d.Gameplay;
 public sealed class CharacterMotor2D
 {
     private readonly PhysicsWorld2D _physics;
+    private readonly CollisionSystem2D _collision;
     private readonly PhysicsBody2D _body;
+    private readonly List<Collider2D> _queryResults = [];
     private PlayerIntent2D _intent;
     private Vector2 _positionBeforePhysics;
     private float _verticalSpeedBeforePhysics;
@@ -15,12 +19,18 @@ public sealed class CharacterMotor2D
     private float _jumpBufferTime;
     private int _airJumpsRemaining;
 
-    public CharacterMotor2D(PhysicsWorld2D physics, PhysicsBody2D body, TraversalMetrics2D metrics)
+    public CharacterMotor2D(
+        CollisionSystem2D collision,
+        PhysicsWorld2D physics,
+        PhysicsBody2D body,
+        TraversalMetrics2D metrics)
     {
+        ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(body);
         ArgGuard.ThrowIfNull(metrics);
 
+        _collision = collision;
         _physics = physics;
         _body = body;
         Metrics = metrics;
@@ -178,16 +188,17 @@ public sealed class CharacterMotor2D
         SetDucking(false);
         try
         {
-            foreach (var other in _physics.Bodies)
+            QueryBodyBounds(_body.WorldObject.WorldBounds);
+            foreach (var collider in _queryResults)
             {
+                if (collider.UserData is not PhysicsBody2D other)
+                    continue;
                 if (ReferenceEquals(other, _body) || other.IsOneWayPlatform || other.IsSensor || !_body.CanCollideWith(other))
                 {
                     continue;
                 }
 
-                if (!_body.WorldObject.WorldBounds.Intersects(other.WorldObject.WorldBounds))
-                    continue;
-                if (_physics.ContactProvider.TryGetContact(_body, other, out _))
+                if (_collision.TryGetContact(_body.Collider, other.Collider, out _))
                     return false;
             }
 
@@ -235,8 +246,11 @@ public sealed class CharacterMotor2D
             return true;
 
         var bodyBounds = _body.WorldObject.WorldBounds;
-        foreach (var other in _physics.Bodies)
+        QueryBodyBounds(ExpandedDown(bodyBounds, maximumGap));
+        foreach (var collider in _queryResults)
         {
+            if (collider.UserData is not PhysicsBody2D other)
+                continue;
             if (!CanSupport(other))
                 continue;
 
@@ -256,8 +270,11 @@ public sealed class CharacterMotor2D
     {
         List<PhysicsBody2D>? oneWaySupports = null;
         var bodyBounds = _body.WorldObject.WorldBounds;
-        foreach (var other in _physics.Bodies)
+        QueryBodyBounds(ExpandedDown(bodyBounds, Metrics.GroundProbeDistance));
+        foreach (var collider in _queryResults)
         {
+            if (collider.UserData is not PhysicsBody2D other)
+                continue;
             if (!CanSupport(other))
                 continue;
 
@@ -323,8 +340,11 @@ public sealed class CharacterMotor2D
 
         var bodyBounds = _body.WorldObject.WorldBounds;
         var nearestGap = float.PositiveInfinity;
-        foreach (var other in _physics.Bodies)
+        QueryBodyBounds(ExpandedDown(bodyBounds, Metrics.LandingSnapDistance));
+        foreach (var collider in _queryResults)
         {
+            if (collider.UserData is not PhysicsBody2D other)
+                continue;
             if (!CanSupport(other))
                 continue;
 
@@ -400,13 +420,20 @@ public sealed class CharacterMotor2D
         _body.WorldObject.Transform.Position = position;
         try
         {
-            foreach (var other in _physics.Bodies)
+            QueryBodyBounds(_body.WorldObject.WorldBounds);
+            foreach (var collider in _queryResults)
             {
-                if (ReferenceEquals(other, _body) || other.IsOneWayPlatform || other.IsSensor || !_body.CanCollideWith(other))
+                if (collider.UserData is not PhysicsBody2D other)
                     continue;
-                if (!_body.WorldObject.WorldBounds.Intersects(other.WorldObject.WorldBounds))
+                if (ReferenceEquals(other, _body) ||
+                    other.IsOneWayPlatform ||
+                    other.IsSensor ||
+                    !_body.CanCollideWith(other))
+                {
                     continue;
-                if (_physics.ContactProvider.TryGetContact(_body, other, out _))
+                }
+
+                if (_collision.TryGetContact(_body.Collider, other.Collider, out _))
                     return false;
             }
 
@@ -430,6 +457,17 @@ public sealed class CharacterMotor2D
         other.MotionType != BodyMotionType2D.Dynamic &&
         !other.IsSensor &&
         _body.CanCollideWith(other);
+
+    private void QueryBodyBounds(Bounds2D bounds) =>
+        _collision.QueryBounds(
+            bounds,
+            _queryResults,
+            _body.CollisionMask,
+            includeSensors: false,
+            excluded: _body.Collider);
+
+    private static Bounds2D ExpandedDown(Bounds2D bounds, float distance) =>
+        new(bounds.Min - new Vector2(0f, distance), bounds.Max);
 
     private bool HasHorizontalSupport(Engine.Geometry.Bounds2D bodyBounds, Engine.Geometry.Bounds2D supportBounds) =>
         bodyBounds.Right + Metrics.HorizontalSupportGrace >= supportBounds.Left &&

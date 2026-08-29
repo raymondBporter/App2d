@@ -1,6 +1,7 @@
 using System.Numerics;
 using App2d.Engine;
 using App2d.Engine.Animation;
+using App2d.Engine.Collision;
 using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering.Textures;
@@ -24,6 +25,7 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     private readonly SpriteShader2D _spriteShader;
     private readonly WorldObject2D _visual;
     private readonly SpatialObject2D _hammerHitbox;
+    private readonly CollisionSystem2D _collision;
     private readonly ISoundEffectSink2D _sounds;
     private float _attackCooldownSeconds = 0.35f;
     private float _facing = 1f;
@@ -34,6 +36,7 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
 
     public BoilerBrute2D(
         Scene2D scene,
+        CollisionSystem2D collision,
         PhysicsWorld2D physics,
         TextureCache2D textures,
         Vector2 position,
@@ -44,6 +47,7 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         ISoundEffectSink2D sounds)
     {
         ArgGuard.ThrowIfNull(scene);
+        _collision = ArgGuard.RequireNotNull(collision);
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(textures);
         ArgGuard.ThrowIfNotFinite(position);
@@ -158,7 +162,10 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     {
         ArgGuard.ThrowIfNull(player);
         if (!IsHammerActive || _hammerConnected ||
-            !CombatSystem2D.Intersects(_hammerHitbox, player.WorldObject))
+            !_collision.TryGetContact(
+                _hammerHitbox,
+                player.Body.Collider,
+                out _))
         {
             return false;
         }

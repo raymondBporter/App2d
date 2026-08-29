@@ -1,5 +1,6 @@
 using System.Numerics;
 using App2d.Engine;
+using App2d.Engine.Collision;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering.Textures;
 using App2d.Gameplay.Audio;
@@ -17,7 +18,8 @@ public sealed class PlayerArsenal2D
         Scene2D scene,
         PhysicsBody2D ownerBody,
         TextureCache2D textures,
-        IReadOnlyList<SpatialObject2D> platforms,
+        CollisionSystem2D collision,
+        uint worldLayer,
         CombatSystem2D combat,
         PlayerPresentation2D presentation,
         ISoundEffectSink2D sounds)
@@ -25,7 +27,7 @@ public sealed class PlayerArsenal2D
         ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(ownerBody);
         ArgGuard.ThrowIfNull(textures);
-        ArgGuard.ThrowIfNull(platforms);
+        ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(combat);
         ArgGuard.ThrowIfNull(presentation);
         ArgGuard.ThrowIfNull(sounds);
@@ -53,7 +55,8 @@ public sealed class PlayerArsenal2D
                 ownerBody,
                 textures,
                 magicHud,
-                platforms,
+                collision,
+                worldLayer,
                 combat,
                 presentation,
                 sounds)

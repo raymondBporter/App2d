@@ -20,6 +20,7 @@ public sealed class PatrolEnemy2D : IEnemyCombatant2D
 
         WorldObject = worldObject;
         Body = body;
+        Body.UserData = this;
         PatrolMinX = patrolMinX;
         PatrolMaxX = patrolMaxX;
         Speed = speed;
