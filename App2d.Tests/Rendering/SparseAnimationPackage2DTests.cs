@@ -274,7 +274,7 @@ public sealed class SparseAnimationPackage2DTests
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
 
         Assert.True(
-            allocated < 2L * 1024L * 1024L,
+            allocated < 8L * 1024L,
             $"Warm sparse composition allocated {allocated:N0} managed bytes.");
     }
 
@@ -333,6 +333,79 @@ public sealed class SparseAnimationPackage2DTests
     }
 
     [Fact]
+    public void RetainedFrameSurvivesBackgroundStyleEvictionUntilReleased()
+    {
+        using var package = SparseAnimationPackage2D.Load(
+            Path.Combine(PackageRoot, "package.json"),
+            cacheBudgetBytes: 1);
+
+        Assert.True(package.TryRetainFrameAtTime(
+            "idle",
+            "right",
+            0f,
+            out var retained));
+        _ = package.GetFrame("walk", "left", 0);
+
+        Assert.NotNull(retained);
+        Assert.False(retained!.Texture.IsDisposed);
+        Assert.True(package.RetainedEvictedByteCount > 0);
+
+        package.ReleaseRetainedFrame(retained);
+
+        Assert.True(retained.Texture.IsDisposed);
+        Assert.Equal(0, package.RetainedEvictedByteCount);
+    }
+
+    [Fact]
+    public void WarmRetainedFrameLookupDoesNotAllocateManagedMemory()
+    {
+        using var package = SparseAnimationPackage2D.Load(
+            Path.Combine(PackageRoot, "package.json"));
+        Assert.True(package.TryRetainFrameAtTime(
+            "idle",
+            "right",
+            0f,
+            out var displayed));
+
+        try
+        {
+            for (var iteration = 0; iteration < 100; iteration++)
+            {
+                if (!package.TryRetainFrameAtTime(
+                        "idle",
+                        "right",
+                        0f,
+                        out var frame))
+                {
+                    throw new InvalidOperationException("Expected a retained sparse frame.");
+                }
+                package.ReleaseRetainedFrame(frame!);
+            }
+
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var iteration = 0; iteration < 1_000; iteration++)
+            {
+                if (!package.TryRetainFrameAtTime(
+                        "idle",
+                        "right",
+                        0f,
+                        out var frame))
+                {
+                    throw new InvalidOperationException("Expected a retained sparse frame.");
+                }
+                package.ReleaseRetainedFrame(frame!);
+            }
+            var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+            Assert.Equal(0, allocated);
+        }
+        finally
+        {
+            package.ReleaseRetainedFrame(displayed!);
+        }
+    }
+
+    [Fact]
     public void EveryProductionLoadoutMatchesLibrarySamplingContract()
     {
         var productionRoot = Path.GetFullPath(Path.Combine(
@@ -382,11 +455,11 @@ public sealed class SparseAnimationPackage2DTests
             512, 384, SKColorType.Bgra8888, SKAlphaType.Unpremul));
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(new SKColor(0, 0, 0, 0));
-        using var imageShader = shader.CreateShader(new ShaderContext(
+        using var imageShader = shader.AcquireShader(new ShaderContext(
             Matrix3x2.Identity,
             bounds,
             default));
-        using var paint = new SKPaint { Shader = imageShader, Color = SKColors.White };
+        using var paint = new SKPaint { Shader = imageShader.Shader, Color = SKColors.White };
         canvas.Translate(256f, 192f);
         canvas.Scale(1f, -1f);
         canvas.DrawRect(-256f, -192f, 256f, 192f, paint);

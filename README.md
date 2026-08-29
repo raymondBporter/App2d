@@ -201,12 +201,18 @@ The repository keeps source models, render plans, licenses, and small hand-selec
 assets in Git. Character animation frames, equipment layers, previews, and sparse atlas
 packages are generated locally and ignored so ordinary commits stay small.
 
-From a clean clone, install the two Python dependencies and build the runtime art:
+From a clean clone, create a local virtual environment, install the two Python
+dependencies, and build the runtime art:
 
 ```powershell
-python -m pip install -r tools/ArtPipeline/requirements.txt
-python tools/ArtPipeline/build_runtime_assets.py
+python -m venv .codex-art-venv
+.\.codex-art-venv\Scripts\python -m pip install -r tools/ArtPipeline/requirements.txt
+.\.codex-art-venv\Scripts\python tools/ArtPipeline/build_runtime_assets.py
 ```
+
+The virtual environment is ignored by Git. Reinstall its packages at any time with
+the same `python -m pip install -r tools/ArtPipeline/requirements.txt` command, using
+the virtual environment's Python executable as shown above.
 
 The full build validates every right-hand weapon and creates the optional sparse runtime
 packages. During pipeline development, `--skip-sparse` produces the complete playable

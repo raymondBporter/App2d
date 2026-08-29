@@ -7,6 +7,7 @@ namespace App2d.Engine.Rendering.Textures;
 public sealed class Texture2D : IDisposable
 {
     private SKBitmap? _bitmap;
+    private Dictionary<ImageShaderKey, SKShader>? _imageShaders;
 
     private Texture2D(string sourcePath, SKBitmap bitmap)
     {
@@ -25,8 +26,47 @@ public sealed class Texture2D : IDisposable
     internal ReadOnlySpan<SKColor> PixelSpan =>
         MemoryMarshal.Cast<byte, SKColor>(Bitmap.GetPixelSpan());
 
+    internal Span<SKColor> WritablePixelSpan =>
+        MemoryMarshal.Cast<byte, SKColor>(Bitmap.GetPixelSpan());
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal SKColor GetPixelUnchecked(int index) => PixelSpan[index];
+
+    internal SKShader GetImageShader(
+        SKShaderTileMode tileModeX,
+        SKShaderTileMode tileModeY,
+        SKFilterMode filterMode,
+        float scaleX,
+        float scaleY,
+        float translateX = 0f,
+        float translateY = 0f)
+    {
+        var key = new ImageShaderKey(
+            tileModeX,
+            tileModeY,
+            filterMode,
+            scaleX,
+            scaleY,
+            translateX,
+            translateY);
+        if (_imageShaders is not null &&
+            _imageShaders.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var shader = Bitmap.ToShader(
+            tileModeX,
+            tileModeY,
+            new SKSamplingOptions(filterMode, SKMipmapMode.None),
+            SKMatrix.CreateScaleTranslation(
+                scaleX,
+                scaleY,
+                translateX,
+                translateY));
+        (_imageShaders ??= []).Add(key, shader);
+        return shader;
+    }
 
     public SKColor[] CopyPixels() => [.. PixelSpan];
 
@@ -95,10 +135,43 @@ public sealed class Texture2D : IDisposable
         }
     }
 
+    internal static Texture2D CreateUninitializedGenerated(
+        string sourceName,
+        int width,
+        int height)
+    {
+        ArgGuard.ThrowIfNullOrWhiteSpace(sourceName);
+        ArgGuard.ThrowIfNotPositive(width);
+        ArgGuard.ThrowIfNotPositive(height);
+        return new Texture2D(
+            sourceName,
+            new SKBitmap(new SKImageInfo(
+                width,
+                height,
+                SKColorType.Bgra8888,
+                SKAlphaType.Unpremul)));
+    }
+
     public void Dispose()
     {
+        if (_imageShaders is not null)
+        {
+            foreach (var shader in _imageShaders.Values)
+                shader.Dispose();
+            _imageShaders.Clear();
+            _imageShaders = null;
+        }
         _bitmap?.Dispose();
         _bitmap = null;
         GC.SuppressFinalize(this);
     }
+
+    private readonly record struct ImageShaderKey(
+        SKShaderTileMode TileModeX,
+        SKShaderTileMode TileModeY,
+        SKFilterMode FilterMode,
+        float ScaleX,
+        float ScaleY,
+        float TranslateX,
+        float TranslateY);
 }

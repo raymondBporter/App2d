@@ -10,7 +10,7 @@ namespace App2d.Engine.Rendering.Textures;
 /// </summary>
 public sealed class RootedSpriteShader2D : IShader2D
 {
-    private readonly SKSamplingOptions _sampling;
+    private readonly SKFilterMode _filterMode;
     private SparseAnimationFrame2D _frame;
 
     public RootedSpriteShader2D(
@@ -22,7 +22,7 @@ public sealed class RootedSpriteShader2D : IShader2D
         ArgGuard.ThrowIfNotPositive(pixelsPerUnit);
         _frame = frame;
         PixelsPerUnit = pixelsPerUnit;
-        _sampling = new SKSamplingOptions(filterMode, SKMipmapMode.None);
+        _filterMode = filterMode;
     }
 
     public SparseAnimationFrame2D Frame
@@ -57,22 +57,20 @@ public sealed class RootedSpriteShader2D : IShader2D
         }
     }
 
-    public SKShader CreateShader(in ShaderContext context)
+    public ShaderLease2D AcquireShader(in ShaderContext context)
     {
         StateGuard.ThrowIf(
             !context.LocalBounds.IsFinite,
             "Rooted sprites require finite local bounds.");
 
         var inverseScale = 1f / PixelsPerUnit;
-        var textureToLocal = SKMatrix.CreateScaleTranslation(
+        return ShaderLease2D.Borrowed(Frame.Texture.GetImageShader(
+            SKShaderTileMode.Decal,
+            SKShaderTileMode.Decal,
+            _filterMode,
             inverseScale,
             -inverseScale,
             Frame.Origin.X * inverseScale,
-            -Frame.Origin.Y * inverseScale);
-        return Frame.Texture.Bitmap.ToShader(
-            SKShaderTileMode.Decal,
-            SKShaderTileMode.Decal,
-            _sampling,
-            textureToLocal);
+            -Frame.Origin.Y * inverseScale));
     }
 }

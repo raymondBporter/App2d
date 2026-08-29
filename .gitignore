@@ -4,6 +4,9 @@
 TestResults/
 __pycache__/
 *.py[cod]
+.codex-art-venv/
+.venv/
+venv/
 
 *.suo
 *.user

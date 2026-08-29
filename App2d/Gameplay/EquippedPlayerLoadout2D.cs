@@ -20,6 +20,8 @@ internal sealed class EquippedPlayerLoadout2D(
     private SparseAnimationPackage2D? _sparsePackage;
     private CancellationTokenSource? _precomposeCancellation;
     private Task? _precomposeTask;
+    private SparseAnimationPackage2D? _retainedFramePackage;
+    private SparseAnimationFrame2D? _retainedFrame;
     private bool _disposed;
 
     public bool IsEquipped => _equipmentId is not null;
@@ -44,6 +46,7 @@ internal sealed class EquippedPlayerLoadout2D(
         }
 
         StopPrecomposition();
+        ReleaseRetainedSparseFrame();
         ClearFrameCache();
         _sparsePackage?.Dispose();
         _sparsePackage = TryLoadSparsePackage(equipmentId);
@@ -64,17 +67,23 @@ internal sealed class EquippedPlayerLoadout2D(
             "Equip a player loadout before requesting its frames.");
         if (animation.AdditionalEquipmentIds.Count == 0 &&
             _sparsePackage is { } sparsePackage &&
-            sparsePackage.TryGetFrameAtTime(
+            sparsePackage.TryRetainFrameAtTime(
                 animation.Id,
                 facingId,
                 elapsedSeconds,
                 out var sparseFrame))
         {
+            var retained = StateGuard.RequireNotNull(
+                sparseFrame,
+                "Sparse frame lookup succeeded without a frame.");
+            RetainSparseFrame(sparsePackage, retained);
             return new EquippedFrame2D(
-                StateGuard.RequireNotNull(sparseFrame, "Sparse frame lookup succeeded without a frame."),
+                retained,
                 sparsePackage.CanvasSize,
                 sparsePackage.GetRoot(animation.Id, facingId));
         }
+
+        ReleaseRetainedSparseFrame();
 
         var key = new EquippedFrameKey(animation.Id, facingId, frameIndex);
         if (_frameCache.TryGetValue(key, out var cached))
@@ -120,6 +129,7 @@ internal sealed class EquippedPlayerLoadout2D(
             return;
 
         StopPrecomposition();
+        ReleaseRetainedSparseFrame();
         ClearFrameCache();
         _sparsePackage?.Dispose();
         _sparsePackage = null;
@@ -194,6 +204,33 @@ internal sealed class EquippedPlayerLoadout2D(
     {
         if (_precomposeTask is { IsFaulted: true } task)
             task.GetAwaiter().GetResult();
+    }
+
+    private void RetainSparseFrame(
+        SparseAnimationPackage2D package,
+        SparseAnimationFrame2D frame)
+    {
+        if (ReferenceEquals(_retainedFramePackage, package) &&
+            ReferenceEquals(_retainedFrame, frame))
+        {
+            package.ReleaseRetainedFrame(frame);
+            return;
+        }
+
+        ReleaseRetainedSparseFrame();
+        _retainedFramePackage = package;
+        _retainedFrame = frame;
+    }
+
+    private void ReleaseRetainedSparseFrame()
+    {
+        if (_retainedFramePackage is { } package &&
+            _retainedFrame is { } frame)
+        {
+            package.ReleaseRetainedFrame(frame);
+        }
+        _retainedFramePackage = null;
+        _retainedFrame = null;
     }
 
     private void ClearFrameCache()
