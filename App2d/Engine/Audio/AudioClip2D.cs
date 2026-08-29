@@ -31,8 +31,7 @@ public sealed class AudioClip2D
 
     internal WaveFormat WaveFormat { get; }
 
-    internal ISampleProvider CreateSampleProvider() =>
-        new CachedSampleProvider(_samples, WaveFormat);
+    internal ISampleProvider CreateSampleProvider() => new CachedSampleProvider(_samples, WaveFormat);
 
     private sealed class CachedSampleProvider(float[] samples, WaveFormat waveFormat)
         : ISampleProvider

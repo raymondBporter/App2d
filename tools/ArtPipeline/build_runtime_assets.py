@@ -77,12 +77,10 @@ def main() -> None:
     )
     run(
         repository,
-        "Rendering the shield fallback layer",
+        "Rendering the sword-and-shield fallback loadout",
         str(pipeline / "render_loadout_equipment_layers.py"),
         "--plan",
         str(pipeline / "loadout-render-plan.json"),
-        "--only-equipment",
-        "shield-a",
     )
 
     if not args.skip_sparse:

@@ -2,24 +2,28 @@
 
 A deliberately small SkiaSharp 2D engine skeleton with compile-time module boundaries.
 
-The solution is split into `App2d.Core`, `App2d.Physics`, `App2d.Rendering`,
-`App2d.Audio`, and `App2d.Gameplay`, plus the Windows executable composition root.
-Core and physics target plain `net10.0`; platform hosting and audio remain in the
-Windows-targeted projects.
+The solution is split into `App2d.Core`, `App2d.Collision`, `App2d.Physics`,
+`App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`, plus the Windows executable
+composition root. Core, collision, physics, and rendering target plain `net10.0`;
+platform hosting, gameplay input, and audio remain in the Windows-targeted projects.
 
 The engine is grouped by responsibility:
 
 - `Engine/Mathematics` contains transforms and reusable numeric helpers. The namespace
   uses `Mathematics` rather than `Math` so it never shadows `System.Math`.
 - `Engine/Rendering` contains the renderer and shader abstractions.
+- `App2d.Collision` presents geometry, tile collision maps, and render-agnostic
+  collidables under `Shapes`; broad/narrow phase work under the top-level `BroadPhase`,
+  `Contacts`, `Filtering`, and `Intersections` folders; and ray primitives and shape
+  queries under `Raycasts`.
 - `Engine/Collision/BroadPhase` contains generic AABB candidate-pair searches, while
   `Engine/Collision/Filtering` contains their generic filtering contract.
 - `Engine/Collision/Contacts` contains overlap/contact generation. Shape-pair code is
   split into circle, capsule, polygon/SAT, and utility partials behind one dispatcher.
-- `Engine/Collision/Queries` contains rays, exact shape intersections, and scene
-  raycasts. Physics-world extensions live in `Engine/Physics/Queries`, preventing the
-  collision module from depending back on physics. Query hits retain direct references
-  to the object or body that was hit.
+- `Engine/Collision/Queries` contains rays, exact shape intersections, and generic
+  spatial-object raycasts. Physics-world extensions live in `Engine/Physics/Queries`,
+  preventing the collision module from depending back on physics. Query hits retain
+  direct references to the object or body that was hit.
 - `Engine/Physics/Integration`, `Engine/Physics/Filtering`, and `Engine/Physics/Solvers`
   contain physics-specific policies; bodies, contacts, constraints, and the world remain
   at the physics root.

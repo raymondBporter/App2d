@@ -18,8 +18,7 @@ public sealed class AudioMixer2D : IDisposable
 
     public AudioMixer2D()
     {
-        _mixer = new MixingSampleProvider(
-            WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, ChannelCount))
+        _mixer = new MixingSampleProvider(WaveFormat.CreateIeeeFloatWaveFormat(SampleRate, ChannelCount))
         {
             ReadFully = true
         };
@@ -57,8 +56,7 @@ public sealed class AudioMixer2D : IDisposable
         {
             ChannelCount => provider,
             1 => new MonoToStereoSampleProvider(provider),
-            _ => throw new NotSupportedException(
-                $"Sound effects must be mono or stereo, not {provider.WaveFormat.Channels} channels.")
+            _ => throw new NotSupportedException($"Sound effects must be mono or stereo, not {provider.WaveFormat.Channels} channels.")
         };
 
         _mixer.AddMixerInput(new VolumeSampleProvider(stereoProvider)

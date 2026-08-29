@@ -54,9 +54,7 @@ public sealed class TileMap2D : ISolidTileMap2D
         ArgGuard.ThrowIfNotPositive(height);
 
         if (!IsInside(x, y) || !IsInside(x + width - 1, y + height - 1))
-            ArgGuard.ThrowOutOfRange(
-                width,
-                "Fill rectangle must stay inside the tilemap.");
+            ArgGuard.ThrowOutOfRange(width, "Fill rectangle must stay inside the tilemap.");
 
         for (var row = y; row < y + height; row++)
         {

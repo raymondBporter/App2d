@@ -79,11 +79,9 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
             if (clips.Length == 1)
                 return clips[0];
 
-            var index = _lastIndex < 0
-                ? Random.Shared.Next(clips.Length)
-                : Random.Shared.Next(clips.Length - 1);
+            var index = Random.Shared.Next(_lastIndex < 0 ? clips.Length : clips.Length - 1);
             if (_lastIndex >= 0 && index >= _lastIndex)
-                index += 1;
+                index++;
             _lastIndex = index;
             return clips[index];
         }

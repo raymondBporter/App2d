@@ -2,20 +2,21 @@ namespace App2d.Engine.Collision.Queries;
 
 public static class RaycastQueries2D
 {
-    public static bool Raycast(
-        this Scene2D scene,
+    public static bool Raycast<T>(
+        this IEnumerable<T> worldObjects,
         Ray2D ray,
         float maxDistance,
-        out RaycastHit2D<WorldObject2D> hit,
-        RayQueryFilter2D<WorldObject2D>? filter = null)
+        out RaycastHit2D<T> hit,
+        RayQueryFilter2D<T>? filter = null)
+        where T : SpatialObject2D
     {
-        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(worldObjects);
         RayIntersection2D.ValidateMaxDistance(maxDistance);
 
         var found = false;
         var nearestDistance = maxDistance;
         hit = default;
-        foreach (var worldObject in scene)
+        foreach (var worldObject in worldObjects)
         {
             if (filter is not null && !filter(worldObject) ||
                 !RayIntersection2D.TryIntersect(
@@ -35,20 +36,21 @@ public static class RaycastQueries2D
         return found;
     }
 
-    public static int RaycastAll(
-        this Scene2D scene,
+    public static int RaycastAll<T>(
+        this IEnumerable<T> worldObjects,
         Ray2D ray,
         float maxDistance,
-        Span<RaycastHit2D<WorldObject2D>> hits,
-        RayQueryFilter2D<WorldObject2D>? filter = null)
+        Span<RaycastHit2D<T>> hits,
+        RayQueryFilter2D<T>? filter = null)
+        where T : SpatialObject2D
     {
-        ArgGuard.ThrowIfNull(scene);
+        ArgGuard.ThrowIfNull(worldObjects);
         RayIntersection2D.ValidateMaxDistance(maxDistance);
         if (hits.IsEmpty)
             return 0;
 
         var hitCount = 0;
-        foreach (var worldObject in scene)
+        foreach (var worldObject in worldObjects)
         {
             if (filter is not null && !filter(worldObject) ||
                 !RayIntersection2D.TryIntersect(

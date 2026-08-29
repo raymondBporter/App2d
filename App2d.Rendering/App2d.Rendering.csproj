@@ -9,11 +9,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
+    <ProjectReference Include="..\App2d.Collision\App2d.Collision.csproj" />
     <PackageReference Include="SkiaSharp" Version="4.151.1" />
     <Compile Include="..\App2d\Engine\Camera2D.cs" Link="Engine\Camera2D.cs" />
     <Compile Include="..\App2d\Engine\Scene2D.cs" Link="Engine\Scene2D.cs" />
     <Compile Include="..\App2d\Engine\WorldObject2D.cs" Link="Engine\WorldObject2D.cs" />
     <Compile Include="..\App2d\Engine\Rendering\**\*.cs" Link="Engine\Rendering\%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="..\App2d\Engine\Collision\Queries\RaycastQueries2D.cs" Link="Engine\Rendering\Queries\RaycastQueries2D.cs" />
   </ItemGroup>
 </Project>

@@ -52,9 +52,7 @@ public sealed class TraversalMetrics2D
         ArgGuard.ThrowIfNotPositive(MaximumJumpCount);
         ArgGuard.ThrowIfNotPositive(OneWayDropSpeed);
 
-        StateGuard.ThrowIf(
-            AirJumpSpeedMultiplier >= 1f,
-            "The air-jump speed multiplier must be less than one.");
+        StateGuard.ThrowIf(AirJumpSpeedMultiplier >= 1f, "The air-jump speed multiplier must be less than one.");
 
         StateGuard.ThrowIf(
             !IsDesignUnitMultiple(TileSize) ||
@@ -63,14 +61,9 @@ public sealed class TraversalMetrics2D
             !IsDesignUnitMultiple(PlayerDuckingColliderSize.X) ||
             !IsDesignUnitMultiple(PlayerDuckingColliderSize.Y),
             $"Tile and player collider dimensions must use the {DesignUnit:0}-unit design grid.");
-        StateGuard.ThrowIf(
-            PlayerDuckingColliderSize.X != PlayerColliderSize.X ||
-            PlayerDuckingColliderSize.Y >= PlayerColliderSize.Y,
+        StateGuard.ThrowIf(PlayerDuckingColliderSize.X != PlayerColliderSize.X || PlayerDuckingColliderSize.Y >= PlayerColliderSize.Y,
             "The ducking collider must retain the standing width and reduce its height.");
-        StateGuard.ThrowIf(
-            StandingClearance < DesignUnit,
-            $"The minimum whole-tile standing passage must leave at least " +
-            $"{DesignUnit:0} units of clearance.");
+        StateGuard.ThrowIf(StandingClearance < DesignUnit, $"The minimum whole-tile standing passage must leave at least {DesignUnit:0} units of clearance.");
 
         ArgGuard.ThrowIfNotPositive(ReliableJumpRiseTiles);
         var requiredJumpHeight = TileSize * ReliableJumpRiseTiles + DesignUnit;

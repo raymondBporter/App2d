@@ -14,9 +14,7 @@ public sealed class Capsule2D : IConvexShape2D
         End = end;
         Radius = radius;
         var extent = new Vector2(radius);
-        LocalBounds = new Bounds2D(
-            Vector2.Min(start, end) - extent,
-            Vector2.Max(start, end) + extent);
+        LocalBounds = new Bounds2D(Vector2.Min(start, end) - extent, Vector2.Max(start, end) + extent);
     }
 
     public Vector2 Start { get; }

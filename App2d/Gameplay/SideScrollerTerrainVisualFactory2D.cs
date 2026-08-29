@@ -6,23 +6,12 @@ using App2d.Engine.Tiles;
 
 namespace App2d.Gameplay;
 
-internal sealed class SideScrollerTerrainVisualFactory2D
+internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunkedTileMap2D tileMap, SideScrollerTerrainTilesetResolver2D tilesets)
 {
-    private readonly Scene2D _scene;
-    private readonly IChunkedTileMap2D _tileMap;
-    private readonly SideScrollerTerrainTilesetResolver2D _tilesets;
-    private readonly float _tileSize;
-
-    public SideScrollerTerrainVisualFactory2D(
-        Scene2D scene,
-        IChunkedTileMap2D tileMap,
-        SideScrollerTerrainTilesetResolver2D tilesets)
-    {
-        _scene = ArgGuard.RequireNotNull(scene);
-        _tileMap = ArgGuard.RequireNotNull(tileMap);
-        _tilesets = ArgGuard.RequireNotNull(tilesets);
-        _tileSize = tileMap.TileSize;
-    }
+    private readonly Scene2D _scene = ArgGuard.RequireNotNull(scene);
+    private readonly IChunkedTileMap2D _tileMap = ArgGuard.RequireNotNull(tileMap);
+    private readonly SideScrollerTerrainTilesetResolver2D _tilesets = ArgGuard.RequireNotNull(tilesets);
+    private readonly float _tileSize = tileMap.TileSize;
 
     public List<WorldObject2D> CreateSolidFill(Bounds2D bounds)
     {

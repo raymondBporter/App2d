@@ -205,8 +205,8 @@ public sealed class PlayerPresentation2D : IDisposable
         var activeClip = StateGuard.RequireNotNull(
             _animation.Clip,
             "The player presentation requires an active animation clip.");
-        var rootOffsets = _horizontalRootOffsetFractions[activeClip];
-        var horizontalRootOffset = (facing < 0f ? rootOffsets.Left : rootOffsets.Right) *
+        var (Right, Left) = _horizontalRootOffsetFractions[activeClip];
+        var horizontalRootOffset = (facing < 0f ? Left : Right) *
             _visualWidth;
         _visual.Transform.Position = playerPosition + _visualOffset +
             new Vector2(horizontalRootOffset, 0f) +

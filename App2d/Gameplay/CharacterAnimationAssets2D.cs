@@ -6,16 +6,11 @@ namespace App2d.Gameplay;
 
 internal static class CharacterAnimationAssets2D
 {
-    private static readonly object ManifestLock = new();
-    private static readonly Dictionary<string, CharacterManifest> Manifests =
-        new(StringComparer.OrdinalIgnoreCase);
-    private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.Web);
+    private static readonly Lock ManifestLock = new();
+    private static readonly Dictionary<string, CharacterManifest> Manifests = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public static AnimationClip2D<Texture2D> LoadClip(
-        TextureCache2D textures,
-        string characterId,
-        string animationId)
+    public static AnimationClip2D<Texture2D> LoadClip(TextureCache2D textures, string characterId, string animationId)
     {
         ArgGuard.ThrowIfNull(textures);
         AssetId2D.Validate(characterId);
@@ -24,56 +19,34 @@ internal static class CharacterAnimationAssets2D
         var manifest = LoadManifest(textures.ContentRoot, characterId);
         if (!manifest.Animations.TryGetValue(animationId, out var animation))
         {
-            throw new InvalidDataException(
-                $"Character '{characterId}' does not define animation '{animationId}'.");
+            throw new InvalidDataException($"Character '{characterId}' does not define animation '{animationId}'.");
         }
 
-        var relativeDirectory = Path.Combine(
-            "characters",
-            characterId,
-            "animations",
-            animationId);
+        var relativeDirectory = Path.Combine("characters", characterId, "animations", animationId);
         var fullDirectory = Path.Combine(textures.ContentRoot, relativeDirectory);
-        var framePaths = Directory
-            .EnumerateFiles(fullDirectory, "frame-*.png")
-            .Order(StringComparer.Ordinal)
-            .ToArray();
+        var framePaths = Directory.EnumerateFiles(fullDirectory, "frame-*.png").Order(StringComparer.Ordinal).ToArray();
         if (framePaths.Length == 0)
         {
-            throw new InvalidDataException(
-                $"Animation '{characterId}/{animationId}' has no frames.");
+            throw new InvalidDataException($"Animation '{characterId}/{animationId}' has no frames.");
         }
 
         for (var i = 0; i < framePaths.Length; i++)
         {
             var expectedName = $"frame-{i + 1:0000}.png";
-            if (!string.Equals(
-                    Path.GetFileName(framePaths[i]),
-                    expectedName,
-                    StringComparison.Ordinal))
+            if (!string.Equals(Path.GetFileName(framePaths[i]), expectedName, StringComparison.Ordinal))
             {
                 throw new InvalidDataException(
-                    $"Animation '{characterId}/{animationId}' must contain contiguous " +
-                    $"four-digit frames beginning at frame-0001.png; expected " +
-                    $"'{expectedName}'.");
+                    $"Animation '{characterId}/{animationId}' must contain contiguous four-digit frames beginning at frame-0001.png; expected '{expectedName}'.");
             }
         }
 
         var framesPerSecond = animation.DurationSeconds is { } duration
             ? framePaths.Length / duration
             : animation.FramesPerSecond!.Value;
-        return new AnimationClip2D<Texture2D>(
-            framePaths.Select(path =>
-                textures.Load(Path.GetRelativePath(textures.ContentRoot, path))),
-            framesPerSecond,
-            animation.Loop);
+        return new AnimationClip2D<Texture2D>(framePaths.Select(path => textures.Load(Path.GetRelativePath(textures.ContentRoot, path))), framesPerSecond, animation.Loop);
     }
 
-    public static float LoadHorizontalRootOffsetFraction(
-        TextureCache2D textures,
-        string characterId,
-        string animationId,
-        string facingId)
+    public static float LoadHorizontalRootOffsetFraction(TextureCache2D textures, string characterId, string animationId, string facingId)
     {
         ArgGuard.ThrowIfNull(textures);
         AssetId2D.Validate(characterId);
@@ -83,27 +56,21 @@ internal static class CharacterAnimationAssets2D
         var manifest = LoadManifest(textures.ContentRoot, characterId);
         if (!manifest.Animations.TryGetValue(animationId, out var animation))
         {
-            throw new InvalidDataException(
-                $"Character '{characterId}' does not define animation '{animationId}'.");
+            throw new InvalidDataException($"Character '{characterId}' does not define animation '{animationId}'.");
         }
-        if (animation.CanvasWidth is not { } canvasWidth ||
-            animation.RootXByFacing is null)
+        if (animation.CanvasWidth is not { } canvasWidth || animation.RootXByFacing is null)
         {
             return 0f;
         }
         if (!animation.RootXByFacing.TryGetValue(facingId, out var rootX))
         {
-            throw new InvalidDataException(
-                $"Animation '{characterId}/{animationId}' does not define root X for " +
-                $"facing '{facingId}'.");
+            throw new InvalidDataException($"Animation '{characterId}/{animationId}' does not define root X for facing '{facingId}'.");
         }
 
         return (canvasWidth * 0.5f - rootX) / canvasWidth;
     }
 
-    private static CharacterManifest LoadManifest(
-        string contentRoot,
-        string characterId)
+    private static CharacterManifest LoadManifest(string contentRoot, string characterId)
     {
         var characterRoot = Path.Combine(contentRoot, "characters", characterId);
         var manifestPath = Path.Combine(characterRoot, "character.json");
@@ -115,9 +82,7 @@ internal static class CharacterAnimationAssets2D
             if (!File.Exists(manifestPath))
                 throw new FileNotFoundException("Character manifest was not found.", manifestPath);
 
-            var manifest = JsonSerializer.Deserialize<CharacterManifest>(
-                    File.ReadAllText(manifestPath),
-                    JsonOptions) ??
+            var manifest = JsonSerializer.Deserialize<CharacterManifest>(File.ReadAllText(manifestPath), JsonOptions) ??
                 throw new InvalidDataException($"Character manifest is empty: {manifestPath}");
             ValidateManifest(manifest, characterId, characterRoot, manifestPath);
             Manifests.Add(manifestPath, manifest);
@@ -125,17 +90,12 @@ internal static class CharacterAnimationAssets2D
         }
     }
 
-    private static void ValidateManifest(
-        CharacterManifest manifest,
-        string characterId,
-        string characterRoot,
-        string manifestPath)
+    private static void ValidateManifest(CharacterManifest manifest, string characterId, string characterRoot, string manifestPath)
     {
         if (!string.Equals(manifest.Id, characterId, StringComparison.Ordinal))
         {
             throw new InvalidDataException(
-                $"Manifest ID '{manifest.Id}' must match its folder '{characterId}': " +
-                manifestPath);
+                $"Manifest ID '{manifest.Id}' must match its folder '{characterId}': {manifestPath}");
         }
         if (manifest.Animations.Count == 0)
             throw new InvalidDataException($"Character has no animations: {manifestPath}");
@@ -143,15 +103,11 @@ internal static class CharacterAnimationAssets2D
         foreach (var (animationId, animation) in manifest.Animations)
         {
             AssetId2D.Validate(animationId, $"{manifestPath}:animations");
-            var hasFramesPerSecond = animation.FramesPerSecond is { } framesPerSecond &&
-                float.IsFinite(framesPerSecond) && framesPerSecond > 0f;
-            var hasDuration = animation.DurationSeconds is { } duration &&
-                float.IsFinite(duration) && duration > 0f;
+            var hasFramesPerSecond = animation.FramesPerSecond is { } framesPerSecond && float.IsFinite(framesPerSecond) && framesPerSecond > 0f;
+            var hasDuration = animation.DurationSeconds is { } duration && float.IsFinite(duration) && duration > 0f;
             if (hasFramesPerSecond == hasDuration)
             {
-                throw new InvalidDataException(
-                    $"Animation '{characterId}/{animationId}' must define exactly one of " +
-                    "framesPerSecond or durationSeconds.");
+                throw new InvalidDataException($"Animation '{characterId}/{animationId}' must define exactly one of framesPerSecond or durationSeconds.");
             }
 
             var canvasWidth = animation.CanvasWidth ?? 0f;
@@ -160,32 +116,23 @@ internal static class CharacterAnimationAssets2D
             var hasDirectionalRoots = animation.RootXByFacing is { Count: > 0 };
             if (hasCanvasWidth != hasDirectionalRoots)
             {
-                throw new InvalidDataException(
-                    $"Animation '{characterId}/{animationId}' must define canvasWidth and " +
-                    "rootXByFacing together.");
+                throw new InvalidDataException($"Animation '{characterId}/{animationId}' must define canvasWidth and rootXByFacing together.");
             }
             if (hasDirectionalRoots)
             {
                 foreach (var facingId in new[] { "right", "left" })
                 {
-                    if (!animation.RootXByFacing!.TryGetValue(facingId, out var rootX) ||
-                        !float.IsFinite(rootX) || rootX < 0f || rootX > canvasWidth)
+                    if (!animation.RootXByFacing!.TryGetValue(facingId, out var rootX) || !float.IsFinite(rootX) || rootX < 0f || rootX > canvasWidth)
                     {
-                        throw new InvalidDataException(
-                            $"Animation '{characterId}/{animationId}' has invalid root X " +
-                            $"for facing '{facingId}'.");
+                        throw new InvalidDataException($"Animation '{characterId}/{animationId}' has invalid root X for facing '{facingId}'.");
                     }
                 }
             }
 
-            var animationDirectory = Path.Combine(
-                characterRoot,
-                "animations",
-                animationId);
+            var animationDirectory = Path.Combine(characterRoot, "animations", animationId);
             if (!Directory.Exists(animationDirectory))
             {
-                throw new DirectoryNotFoundException(
-                    $"Animation folder was not found: {animationDirectory}");
+                throw new DirectoryNotFoundException($"Animation folder was not found: {animationDirectory}");
             }
         }
 
@@ -197,9 +144,7 @@ internal static class CharacterAnimationAssets2D
             .FirstOrDefault(id => id is not null && !manifestIds.Contains(id));
         if (unlistedDirectory is not null)
         {
-            throw new InvalidDataException(
-                $"Animation folder '{characterId}/{unlistedDirectory}' is not listed in " +
-                manifestPath);
+            throw new InvalidDataException($"Animation folder '{characterId}/{unlistedDirectory}' is not listed in {manifestPath}");
         }
     }
 
@@ -210,8 +155,7 @@ internal static class CharacterAnimationAssets2D
     private sealed class CharacterManifest
     {
         public string Id { get; init; } = string.Empty;
-        public Dictionary<string, AnimationManifest> Animations { get; init; } =
-            new(StringComparer.Ordinal);
+        public Dictionary<string, AnimationManifest> Animations { get; init; } = new(StringComparer.Ordinal);
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(

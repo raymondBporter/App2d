@@ -44,7 +44,7 @@ public static partial class ShapeCollision2D
             _ => CollisionResult.None
         };
 
-    private static CollisionResult CircleAgainst(        Circle2D circle,        Transform2D circleTransform,        IShape2D other,        Transform2D otherTransform) =>
+    private static CollisionResult CircleAgainst(Circle2D circle, Transform2D circleTransform, IShape2D other, Transform2D otherTransform) =>
         other switch
         {
             Circle2D otherCircle => CircleVsCircle(circle, circleTransform, otherCircle, otherTransform),

@@ -47,7 +47,7 @@ public sealed class SideScrollerLevel2D
             TileMap.Origin.Y + _generator.TerrainHeight(spawnTileX) * _tileSize +
             traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
 
-        var goalTileX = WorldWidthTiles - 5;
+        const int goalTileX = WorldWidthTiles - 5;
         GoalX = TileCenterX(goalTileX);
         GoalGroundY = TileMap.Origin.Y + _generator.TerrainHeight(goalTileX) * _tileSize;
     }

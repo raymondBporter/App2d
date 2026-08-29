@@ -151,12 +151,12 @@ internal sealed class XboxControllerInput2D
         DPadDown = 0x0002,
         DPadLeft = 0x0004,
         DPadRight = 0x0008,
+        LeftShoulder = 0x0100,
+        RightShoulder = 0x0200,
         A = 0x1000,
         B = 0x2000,
         X = 0x4000,
-        Y = 0x8000,
-        LeftShoulder = 0x0100,
-        RightShoulder = 0x0200
+        Y = 0x8000
     }
 }
 

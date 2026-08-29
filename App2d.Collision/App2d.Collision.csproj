@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AnalysisModePerformance>All</AnalysisModePerformance>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
+
+    <Compile Include="..\App2d\Engine\SpatialObject2D.cs"
+             Link="Shapes\SpatialObject2D.cs" />
+    <Compile Include="..\App2d\Engine\Geometry\**\*.cs"
+             Link="Shapes\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\App2d\Engine\Tiles\**\*.cs"
+             Link="Shapes\Tiles\%(RecursiveDir)%(Filename)%(Extension)" />
+
+    <Compile Include="..\App2d\Engine\Collision\*.cs"
+             Link="%(Filename)%(Extension)" />
+    <Compile Include="..\App2d\Engine\Collision\BroadPhase\**\*.cs"
+             Link="BroadPhase\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\App2d\Engine\Collision\Contacts\**\*.cs"
+             Link="Contacts\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\App2d\Engine\Collision\Filtering\**\*.cs"
+             Link="Filtering\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\App2d\Engine\Collision\Intersections\**\*.cs"
+             Link="Intersections\%(RecursiveDir)%(Filename)%(Extension)" />
+
+    <Compile Include="..\App2d\Engine\Collision\Queries\**\*.cs"
+             Link="Raycasts\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

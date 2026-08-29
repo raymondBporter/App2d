@@ -60,10 +60,7 @@ internal static class CollisionMath2D
         var worldTangent = Vector2.Transform(localBoundary + localTangent, localToWorld) - worldBoundary;
         var worldOutward = Vector2.Transform(localBoundary + halfSpace.Normal, localToWorld) - worldBoundary;
 
-        StateGuard.ThrowIf(
-            worldTangent.LengthSquared() <= float.Epsilon ||
-            worldOutward.LengthSquared() <= float.Epsilon,
-            "A half-space transform cannot collapse an axis.");
+        StateGuard.ThrowIf(worldTangent.LengthSquared() <= float.Epsilon || worldOutward.LengthSquared() <= float.Epsilon, "A half-space transform cannot collapse an axis.");
 
         var worldNormal = Vector2.Normalize(new Vector2(-worldTangent.Y, worldTangent.X));
         if (Vector2.Dot(worldNormal, worldOutward) < 0f)

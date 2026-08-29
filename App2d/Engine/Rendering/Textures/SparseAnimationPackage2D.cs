@@ -10,84 +10,36 @@ namespace App2d.Engine.Rendering.Textures;
 /// </summary>
 public sealed class SparseAnimationPackage2D : IDisposable
 {
-    private const string SupportedFormat = "sparse-rooted-layers-v1";
-    private static readonly JsonSerializerOptions JsonOptions =
-        new(JsonSerializerDefaults.Web);
-
-    private readonly string _packageRoot;
-    private readonly object _sync = new();
-    private readonly PackageManifest _manifest;
-    private readonly SparseAtlasPageLease2D?[] _atlasPages;
-    private readonly Dictionary<CompositeKey, CachedFrame> _cache = [];
-    private readonly LinkedList<CompositeKey> _recency = [];
-    private readonly long _cacheBudgetBytes;
-    private readonly SparseCompositionOptions2D _compositionOptions;
-    private long _cacheBytes;
-    private bool _sourceAtlasesReleased;
-    private bool _disposed;
-
-    private SparseAnimationPackage2D(
-        string manifestPath,
-        PackageManifest manifest,
-        long cacheBudgetBytes,
-        SparseCompositionOptions2D compositionOptions)
+    private SparseAnimationPackage2D(string manifestPath, PackageManifest manifest, long cacheBudgetBytes, SparseCompositionOptions2D compositionOptions)
     {
         ManifestPath = manifestPath;
-        _packageRoot = StateGuard.RequireNotNull(
-            Path.GetDirectoryName(manifestPath),
-            "A sparse package manifest must have a parent directory.");
+        _packageRoot = StateGuard.RequireNotNull(Path.GetDirectoryName(manifestPath), "A sparse package manifest must have a parent directory.");
         _manifest = manifest;
         _atlasPages = new SparseAtlasPageLease2D?[manifest.Atlases.Length];
         _cacheBudgetBytes = cacheBudgetBytes;
         _compositionOptions = compositionOptions;
     }
 
-    public string ManifestPath { get; }
-    public string Id => _manifest.Id;
-    public string EquipmentId => _manifest.Equipment;
-    public IReadOnlyCollection<string> AnimationIds => _manifest.Animations.Keys;
-    public SKSizeI CanvasSize => new(_manifest.Canvas[0], _manifest.Canvas[1]);
-    public long CachedByteCount => _cacheBytes;
-    public int CachedFrameCount => _cache.Count;
-    public long ResidentAtlasByteCount => _atlasPages
-        .Where(page => page is not null)
-        .Sum(page => checked((long)page!.Color.Width * page.Color.Height * 6L));
-    public long TotalResidentByteCount => CachedByteCount + ResidentAtlasByteCount;
-    public bool SourceAtlasesReleased => _sourceAtlasesReleased;
-
-    public static SparseAnimationPackage2D Load(
-        string manifestPath,
-        long cacheBudgetBytes = 96L * 1024L * 1024L,
-        SparseCompositionOptions2D? compositionOptions = null)
+    public static SparseAnimationPackage2D Load(string manifestPath, long cacheBudgetBytes = 96L * 1024L * 1024L, SparseCompositionOptions2D? compositionOptions = null)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(manifestPath);
-        if (cacheBudgetBytes <= 0)
-            throw new ArgumentOutOfRangeException(nameof(cacheBudgetBytes));
+        ArgGuard.ThrowIfNotPositive(cacheBudgetBytes);
 
         var fullManifestPath = Path.GetFullPath(manifestPath);
         if (!File.Exists(fullManifestPath))
         {
-            throw new FileNotFoundException(
-                "Sparse animation package manifest was not found.",
-                fullManifestPath);
+            throw new FileNotFoundException("Sparse animation package manifest was not found.", fullManifestPath);
         }
-        var packageRoot = StateGuard.RequireNotNull(
-            Path.GetDirectoryName(fullManifestPath),
-            "A sparse package manifest must have a parent directory.");
+        var packageRoot = StateGuard.RequireNotNull(Path.GetDirectoryName(fullManifestPath), "A sparse package manifest must have a parent directory.");
         PackageManifest manifest;
         try
         {
-            manifest = JsonSerializer.Deserialize<PackageManifest>(
-                    File.ReadAllText(fullManifestPath),
-                    JsonOptions) ??
-                throw new InvalidDataException(
-                    $"Sparse animation package is empty: {fullManifestPath}");
+            manifest = JsonSerializer.Deserialize<PackageManifest>(File.ReadAllText(fullManifestPath), JsonOptions) ??
+                throw new InvalidDataException($"Sparse animation package is empty: {fullManifestPath}");
         }
         catch (JsonException exception)
         {
-            throw new InvalidDataException(
-                $"Sparse animation package contains invalid JSON: {fullManifestPath}",
-                exception);
+            throw new InvalidDataException($"Sparse animation package contains invalid JSON: {fullManifestPath}", exception);
         }
 
         ValidateManifest(manifest, fullManifestPath);
@@ -120,6 +72,32 @@ public sealed class SparseAnimationPackage2D : IDisposable
                 AlphaTrimPadding = manifest.CropPadding
             });
     }
+
+    private const string SupportedFormat = "sparse-rooted-layers-v1";
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly string _packageRoot;
+    private readonly Lock _sync = new();
+    private readonly PackageManifest _manifest;
+    private readonly SparseAtlasPageLease2D?[] _atlasPages;
+    private readonly Dictionary<CompositeKey, CachedFrame> _cache = [];
+    private readonly LinkedList<CompositeKey> _recency = [];
+    private readonly long _cacheBudgetBytes;
+    private readonly SparseCompositionOptions2D _compositionOptions;
+    private long _cacheBytes;
+    private bool _sourceAtlasesReleased;
+    private bool _disposed;
+    public string ManifestPath { get; }
+    public string Id => _manifest.Id;
+    public string EquipmentId => _manifest.Equipment;
+    public IReadOnlyCollection<string> AnimationIds => _manifest.Animations.Keys;
+    public SKSizeI CanvasSize => new(_manifest.Canvas[0], _manifest.Canvas[1]);
+    public long CachedByteCount => _cacheBytes;
+    public int CachedFrameCount => _cache.Count;
+    public long ResidentAtlasByteCount => _atlasPages
+        .Where(page => page is not null)
+        .Sum(page => checked((long)page!.Color.Width * page.Color.Height * 6L));
+    public long TotalResidentByteCount => CachedByteCount + ResidentAtlasByteCount;
+    public bool SourceAtlasesReleased => _sourceAtlasesReleased;
 
     public int GetSampleCount(string animationId, string facingId) =>
         GetFacing(animationId, facingId).Samples.Length;
@@ -272,16 +250,18 @@ public sealed class SparseAnimationPackage2D : IDisposable
         CancellationToken cancellationToken)
     {
         foreach (var (facingId, facing) in animation.Facings)
-        for (var sampleIndex = 0; sampleIndex < facing.Samples.Length; sampleIndex++)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var sample = facing.Samples[sampleIndex];
-            _ = GetFrame(animationId, facingId, sampleIndex);
-            expectedKeys?.Add(new CompositeKey(
-                animationId,
-                facingId,
-                sampleIndex,
-                sample.CanonicalLayerSet));
+            for (var sampleIndex = 0; sampleIndex < facing.Samples.Length; sampleIndex++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var sample = facing.Samples[sampleIndex];
+                _ = GetFrame(animationId, facingId, sampleIndex);
+                expectedKeys?.Add(new CompositeKey(
+                    animationId,
+                    facingId,
+                    sampleIndex,
+                    sample.CanonicalLayerSet));
+            }
         }
     }
 
@@ -678,13 +658,20 @@ public sealed class SparseAnimationPackage2D : IDisposable
     private static PackageLocation FindFirstPageUse(PackageManifest manifest, int page)
     {
         foreach (var (animationId, animation) in manifest.Animations)
-        foreach (var (facingId, facing) in animation.Facings)
-        for (var sampleIndex = 0; sampleIndex < facing.Samples.Length; sampleIndex++)
-        foreach (var (layerId, layer) in facing.Samples[sampleIndex].Layers)
         {
-            if (layer.Page == page)
-                return new PackageLocation(animationId, facingId, sampleIndex, layerId);
+            foreach (var (facingId, facing) in animation.Facings)
+            {
+                for (var sampleIndex = 0; sampleIndex < facing.Samples.Length; sampleIndex++)
+                {
+                    foreach (var (layerId, layer) in facing.Samples[sampleIndex].Layers)
+                    {
+                        if (layer.Page == page)
+                            return new PackageLocation(animationId, facingId, sampleIndex, layerId);
+                    }
+                }
+            }
         }
+
         return new PackageLocation("<unknown>", "<unknown>", 0, $"page-{page}");
     }
 

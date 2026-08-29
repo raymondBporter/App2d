@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="App2d.Core/App2d.Core.csproj" />
+  <Project Path="App2d.Collision/App2d.Collision.csproj" />
   <Project Path="App2d.Physics/App2d.Physics.csproj" />
   <Project Path="App2d.Rendering/App2d.Rendering.csproj" />
   <Project Path="App2d.Tests/App2d.Tests.csproj" />

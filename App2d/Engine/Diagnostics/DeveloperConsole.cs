@@ -168,9 +168,7 @@ public sealed class DeveloperConsole
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
         name = name.Trim();
         if (!name.All(character => char.IsLetterOrDigit(character) || character is '_' or '.'))
-            ArgGuard.ThrowInvalid(
-                name,
-                "Console names may only contain letters, digits, underscores, and periods.");
+            ArgGuard.ThrowInvalid(name, "Console names may only contain letters, digits, underscores, and periods.");
         return name;
     }
 

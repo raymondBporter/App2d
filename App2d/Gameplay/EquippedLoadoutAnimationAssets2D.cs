@@ -5,40 +5,19 @@ namespace App2d.Gameplay;
 
 internal static class EquippedLoadoutAnimationAssets2D
 {
-    private static readonly ConcurrentDictionary<string, string[]> FrameCatalogs = new(
-        OperatingSystem.IsWindows()
-            ? StringComparer.OrdinalIgnoreCase
-            : StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, string[]> FrameCatalogs = new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
 
-    public static void ValidateEquipmentAnimation(
-        TextureCache2D textures,
-        string equipmentId,
-        string animationId,
-        int expectedFrameCount,
-        string facingId)
+    public static void ValidateEquipmentAnimation(TextureCache2D textures, string equipmentId, string animationId, int expectedFrameCount, string facingId)
     {
         ArgGuard.ThrowIfNull(textures);
         AssetId2D.Validate(equipmentId);
         AssetId2D.Validate(animationId);
         AssetId2D.Validate(facingId);
         ArgGuard.ThrowIfNotPositive(expectedFrameCount);
-
-        _ = FindEquipmentFrames(
-            textures.ContentRoot,
-            equipmentId,
-            animationId,
-            facingId,
-            expectedFrameCount);
+        _ = FindEquipmentFrames(textures.ContentRoot, equipmentId, animationId, facingId, expectedFrameCount);
     }
 
-    public static Texture2D LoadFrame(
-        TextureCache2D textures,
-        string characterId,
-        string animationId,
-        int expectedFrameCount,
-        string facingId,
-        int frameIndex,
-        params string[] equipmentIds)
+    public static Texture2D LoadFrame(TextureCache2D textures, string characterId, string animationId, int expectedFrameCount, string facingId, int frameIndex, params string[] equipmentIds)
     {
         ArgGuard.ThrowIfNull(textures);
         ArgGuard.ThrowIfNull(equipmentIds);
@@ -47,37 +26,17 @@ internal static class EquippedLoadoutAnimationAssets2D
         AssetId2D.Validate(facingId);
         ArgGuard.ThrowIfNotPositive(expectedFrameCount);
         ArgGuard.ThrowIfTooShort(equipmentIds.AsSpan(), 1);
-        if ((uint)frameIndex >= (uint)expectedFrameCount)
-            throw new ArgumentOutOfRangeException(nameof(frameIndex));
+        ArgGuard.ThrowIfGreaterThanOrEqual(frameIndex, expectedFrameCount);
         foreach (var equipmentId in equipmentIds)
             AssetId2D.Validate(equipmentId);
 
-        var characterRoot = Path.Combine(
-            "characters",
-            characterId,
-            "animations",
-            animationId);
-        var characterColor = FindFrames(
-            textures.ContentRoot,
-            Path.Combine(characterRoot, "color", facingId),
-            expectedFrameCount);
-        var characterDepth = FindFrames(
-            textures.ContentRoot,
-            Path.Combine(characterRoot, "depth", facingId),
-            expectedFrameCount);
+        var characterRoot = Path.Combine("characters", characterId, "animations", animationId);
+        var characterColor = FindFrames(textures.ContentRoot, Path.Combine(characterRoot, "color", facingId), expectedFrameCount);
+        var characterDepth = FindFrames(textures.ContentRoot, Path.Combine(characterRoot, "depth", facingId), expectedFrameCount);
         var equipment = equipmentIds
-            .Select(id => FindEquipmentFrames(
-                textures.ContentRoot,
-                id,
-                animationId,
-                facingId,
-                expectedFrameCount))
+            .Select(id => FindEquipmentFrames(textures.ContentRoot, id, animationId, facingId, expectedFrameCount))
             .ToArray();
-        return ComposeFrame(
-            characterColor[frameIndex],
-            characterDepth[frameIndex],
-            equipment,
-            frameIndex);
+        return ComposeFrame(characterColor[frameIndex], characterDepth[frameIndex], equipment, frameIndex);
     }
 
     public static TextureFrameSet2D LoadCached(
@@ -203,47 +162,23 @@ internal static class EquippedLoadoutAnimationAssets2D
         }
     }
 
-    private static EquipmentFramePaths FindEquipmentFrames(
-        string contentRoot,
-        string equipmentId,
-        string animationId,
-        string facingId,
-        int expectedFrameCount)
+    private static EquipmentFramePaths FindEquipmentFrames(string contentRoot, string equipmentId, string animationId, string facingId, int expectedFrameCount)
     {
-        var root = Path.Combine(
-            "weapons",
-            equipmentId,
-            "animations",
-            animationId,
-            facingId);
+        var root = Path.Combine("weapons", equipmentId, "animations", animationId, facingId);
         return new EquipmentFramePaths(
-            FindFrames(
-                contentRoot,
-                Path.Combine(root, "color"),
-                expectedFrameCount),
-            FindFrames(
-                contentRoot,
-                Path.Combine(root, "depth"),
-                expectedFrameCount));
+            FindFrames(contentRoot, Path.Combine(root, "color"), expectedFrameCount),
+            FindFrames(contentRoot, Path.Combine(root, "depth"), expectedFrameCount));
     }
 
-    private static string[] FindFrames(
-        string contentRoot,
-        string relativeDirectory,
-        int expectedFrameCount)
+    private static string[] FindFrames(string contentRoot, string relativeDirectory, int expectedFrameCount)
     {
         var fullDirectory = Path.GetFullPath(Path.Combine(contentRoot, relativeDirectory));
-        var paths = FrameCatalogs.GetOrAdd(
-            fullDirectory,
-            static directory => Directory
-                .EnumerateFiles(directory, "frame-*.png")
-                .Order(StringComparer.Ordinal)
-                .ToArray());
+        var paths = FrameCatalogs
+            .GetOrAdd(fullDirectory, static directory => Directory.EnumerateFiles(directory, "frame-*.png").Order(StringComparer.Ordinal)
+            .ToArray());
         if (paths.Length != expectedFrameCount)
         {
-            throw new InvalidDataException(
-                $"Expected {expectedFrameCount} frames in " +
-                $"'{relativeDirectory}', found {paths.Length}.");
+            throw new InvalidDataException($"Expected {expectedFrameCount} frames in '{relativeDirectory}', found {paths.Length}.");
         }
         return paths;
     }

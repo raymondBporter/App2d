@@ -30,9 +30,7 @@ public sealed class AnimationPlayer2DTests
     [Fact]
     public void RejectsNonpositiveSampleDurationWithItsIndex()
     {
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() =>
-            new AnimationClip2D<int>([1, 2], [0.1f, 0f]));
-
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new AnimationClip2D<int>([1, 2], [0.1f, 0f]));
         Assert.Contains("index 1", exception.Message, StringComparison.Ordinal);
     }
 }

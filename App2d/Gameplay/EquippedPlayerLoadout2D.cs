@@ -133,12 +133,7 @@ internal sealed class EquippedPlayerLoadout2D(
     {
         foreach (var facingId in FacingIds)
         {
-            EquippedLoadoutAnimationAssets2D.ValidateEquipmentAnimation(
-                _textures,
-                equipmentId,
-                animation.Id,
-                animation.FrameCount,
-                facingId);
+            EquippedLoadoutAnimationAssets2D.ValidateEquipmentAnimation(_textures, equipmentId, animation.Id, animation.FrameCount, facingId);
         }
     }
 

@@ -233,10 +233,7 @@ public static class ArgGuard
         ThrowArgumentCore(paramName, message);
 
     [DoesNotReturn]
-    public static void ThrowInvalid<T>(
-        T value,
-        string message,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static void ThrowInvalid<T>(T value, string message, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         ThrowArgumentCore(paramName, message);
 
     public static ArgumentException CreateInvalid(string message, string? paramName = null) =>

@@ -2,7 +2,7 @@ namespace App2d.Engine.Rendering.Textures;
 
 internal static class SparseAtlasPagePool2D
 {
-    private static readonly object Sync = new();
+    private static readonly Lock Sync = new();
     private static readonly Dictionary<string, SharedPage> Pages = new(
         OperatingSystem.IsWindows()
             ? StringComparer.OrdinalIgnoreCase

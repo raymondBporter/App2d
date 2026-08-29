@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
+    <ProjectReference Include="..\App2d.Collision\App2d.Collision.csproj" />
     <ProjectReference Include="..\App2d.Physics\App2d.Physics.csproj" />
     <ProjectReference Include="..\App2d.Rendering\App2d.Rendering.csproj" />
     <ProjectReference Include="..\App2d.Audio\App2d.Audio.csproj" />

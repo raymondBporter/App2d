@@ -4,22 +4,13 @@ using SkiaSharp;
 
 namespace App2d.Gameplay;
 
-public sealed class TraversalDebugRenderer2D
+public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 {
-    private readonly TraversalMetrics2D _traversal;
-    private readonly Vector2[] _runningJumpArc;
-    private readonly Vector2[] _standingJumpArc;
-    private readonly JumpProfile2D _runningJumpProfile;
-    private readonly JumpProfile2D _standingJumpProfile;
-
-    public TraversalDebugRenderer2D(TraversalMetrics2D traversal)
-    {
-        _traversal = ArgGuard.RequireNotNull(traversal);
-        _runningJumpArc = traversal.BuildJumpArc(traversal.RunSpeed);
-        _standingJumpArc = traversal.BuildJumpArc(0f);
-        _runningJumpProfile = traversal.MeasureJump(traversal.RunSpeed);
-        _standingJumpProfile = traversal.MeasureJump(0f);
-    }
+    private readonly TraversalMetrics2D _traversal = ArgGuard.RequireNotNull(traversal);
+    private readonly Vector2[] _runningJumpArc = traversal.BuildJumpArc(traversal.RunSpeed);
+    private readonly Vector2[] _standingJumpArc = traversal.BuildJumpArc(0f);
+    private readonly JumpProfile2D _runningJumpProfile = traversal.MeasureJump(traversal.RunSpeed);
+    private readonly JumpProfile2D _standingJumpProfile = traversal.MeasureJump(0f);
 
     public void Draw(Renderer2D renderer, Vector2 playerPosition, float facing)
     {
