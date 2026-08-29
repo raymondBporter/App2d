@@ -2,7 +2,6 @@ using System.Numerics;
 using App2d.Engine;
 using App2d.Engine.Physics;
 using App2d.Engine.Rendering;
-using App2d.Engine.Rendering.Textures;
 using App2d.Gameplay;
 using App2d.Gameplay.Audio;
 using SkiaSharp;
@@ -42,69 +41,25 @@ public sealed class SideScrollerGame : Game2D
         _sounds = new SoundEffectBank2D(
             Path.Combine(AppContext.BaseDirectory, "Assets", "audio", "sfx"));
         RegisterDebugPhysicsWorld(_physics);
-        DeveloperConsole.RegisterVariable(
-            "sfx_volume",
-            () => _sounds.Volume,
-            value => _sounds.Volume = value,
-            "Set sound-effect volume from 0 (muted) to 1 (full volume).");
-        DeveloperConsole.RegisterVariable(
-            "draw_traversal_metrics",
-            () => _showTraversalDebug,
-            value => _showTraversalDebug = value,
-            "Draw jump arcs and tile-relative movement metrics.");
+        DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value, "Set sound-effect volume from 0 (muted) to 1 (full volume).");
+        DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _showTraversalDebug, value => _showTraversalDebug = value, "Draw jump arcs and tile-relative movement metrics.");
 
         _level = new SideScrollerLevel2D(Traversal);
-        _cameraController = new SideScrollerCamera2D(
-            Scene,
-            Camera,
-            _level.TileMap.WorldBounds,
-            _level.SpawnPoint,
-            _level.GetCameraFloorY);
+        _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _level.SpawnPoint, _level.GetCameraFloorY);
 
-        _level.CreateEnvironment(
-            Scene,
-            _physics,
-            Textures,
-            WorldLayer,
-            PlayerLayer,
-            EnemyLayer);
+        _level.CreateEnvironment(Scene, _physics, Textures, WorldLayer, PlayerLayer, EnemyLayer);
 
-        _player = new PlayerCharacter2D(
-            _physics,
-            Traversal,
-            _level.SpawnPoint,
-            PlayerLayer,
-            WorldLayer,
-            _sounds);
+        _player = new PlayerCharacter2D(_physics, Traversal, _level.SpawnPoint, PlayerLayer, WorldLayer, _sounds);
         _playerPresentation = new PlayerPresentation2D(Scene, Textures, Traversal);
         _player.Damaged += _playerPresentation.PlayHit;
 
         _level.CreateMechanicsPlaygroundEnemies(Textures, _sounds);
         _combat = new CombatSystem2D(_level.EnemySystem.Combatants, _sounds);
-        _arsenal = new PlayerArsenal2D(
-            Scene,
-            _player.Body,
-            Textures,
-            _level.Platforms,
-            _combat,
-            _playerPresentation,
-            _sounds);
+        _arsenal = new PlayerArsenal2D(Scene, _player.Body, Textures, _level.Platforms, _combat, _playerPresentation, _sounds);
         RegisterDebugAttackShapes(_arsenal.GetActiveAttackHitboxes);
         RegisterDebugAttackShapes(_level.EnemySystem.GetActiveAttackHitboxes);
 
-        _playerPresentation.Update(
-            0f,
-            0,
-            _player.Position,
-            0f,
-            _player.Facing,
-            _player.IsGrounded,
-            _player.IsDucking,
-            isShieldBlocking: false,
-            _player.Body.LinearVelocity.Y,
-            _player.LandingSpeedThisFrame,
-            _arsenal.IsMeleeAttackActive,
-            _player.InvulnerabilitySeconds);
+        _playerPresentation.Update(0f, 0, _player.Position, 0f, _player.Facing, _player.IsGrounded, _player.IsDucking, isShieldBlocking: false, _player.Body.LinearVelocity.Y, _player.LandingSpeedThisFrame, _arsenal.IsMeleeAttackActive, _player.InvulnerabilitySeconds);
     }
 
     public override string WindowTitle =>
@@ -170,23 +125,14 @@ public sealed class SideScrollerGame : Game2D
             _arsenal.IsMeleeAttackActive,
             _player.InvulnerabilitySeconds);
         _arsenal.ReleasePendingWeapons(_player.Facing);
-        _cameraController.Update(
-            _player.Position,
-            _player.Body.LinearVelocity,
-            _player.IsGrounded,
-            dt);
+        _cameraController.Update(_player.Position, _player.Body.LinearVelocity, _player.IsGrounded, dt);
     }
 
     public override void Render(Renderer2D renderer)
     {
         renderer.Clear(new SKColor(103, 196, 235));
         renderer.Draw(Scene);
-        PlayerHud2D.Draw(
-            renderer,
-            _player.Health.Current,
-            _player.Health.Maximum,
-            _arsenal.WeaponHudTexture,
-            _arsenal.WeaponStatus);
+        PlayerHud2D.Draw(renderer, _player.Health.Current, _player.Health.Maximum, _arsenal.WeaponHudTexture, _arsenal.WeaponStatus);
 
         if (_showTraversalDebug)
             _traversalDebug.Draw(renderer, _player.Position, _player.Facing);

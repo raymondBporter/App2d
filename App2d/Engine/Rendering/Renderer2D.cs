@@ -99,10 +99,8 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         var shaderBounds = worldObject.Shape.LocalBounds.IsFinite
             ? worldObject.Shape.LocalBounds
             : GetVisibleLocalBounds(objectToDevice);
-        var shaderContext = new ShaderContext(
-            objectToDevice,
-            shaderBounds,
-            _time);
+
+        var shaderContext = new ShaderContext(objectToDevice, shaderBounds, _time);
         using var shaderLease = worldObject.Shader.AcquireShader(shaderContext);
         var paint = _worldPaint;
         paint.Color = worldObject.Shader.BaseColor;
@@ -128,16 +126,13 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
                     DrawCapsule(capsule, paint);
                     break;
                 case Rectangle2D rectangle:
-                    Canvas.DrawRect(
-                        new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y),
-                        paint);
+                    Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
                     break;
                 case HalfSpace2D halfSpace:
                     DrawHalfSpace(halfSpace, paint, objectToDevice);
                     break;
                 default:
-                    throw new NotSupportedException(
-                        $"No renderer is registered for {worldObject.Shape.GetType().Name}.");
+                    throw new NotSupportedException($"No renderer is registered for {worldObject.Shape.GetType().Name}.");
             }
         }
         finally
@@ -156,27 +151,13 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         var metrics = _hudFont.Metrics;
         var textWidth = _hudFont.MeasureText(text, _hudTextPaint);
         var textHeight = metrics.Descent - metrics.Ascent;
-        var bounds = new SKRect(
-            topLeft.X,
-            topLeft.Y,
-            topLeft.X + textWidth + horizontalPadding * 2f,
-            topLeft.Y + textHeight + verticalPadding * 2f);
+        var bounds = new SKRect(topLeft.X, topLeft.Y, topLeft.X + textWidth + horizontalPadding * 2f, topLeft.Y + textHeight + verticalPadding * 2f);
 
         Canvas.DrawRoundRect(bounds, 9f, 9f, _hudBackgroundPaint);
-        Canvas.DrawText(
-            text,
-            topLeft.X + horizontalPadding,
-            topLeft.Y + verticalPadding - metrics.Ascent,
-            SKTextAlign.Left,
-            _hudFont,
-            _hudTextPaint);
+        Canvas.DrawText(text, topLeft.X + horizontalPadding, topLeft.Y + verticalPadding - metrics.Ascent, SKTextAlign.Left, _hudFont, _hudTextPaint);
     }
 
-    public void DrawScreenRoundedRectangle(
-        SKRect bounds,
-        float radius,
-        SKColor color,
-        float strokeWidth = 0f)
+    public void DrawScreenRoundedRectangle(SKRect bounds, float radius, SKColor color, float strokeWidth = 0f)
     {
         ArgGuard.ThrowIfNegativeOrNotFinite(radius);
         ArgGuard.ThrowIfNegativeOrNotFinite(strokeWidth);
@@ -194,13 +175,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(text);
         using var paint = new SKPaint { Color = color, IsAntialias = true };
-        Canvas.DrawText(
-            text,
-            baseline.X,
-            baseline.Y,
-            SKTextAlign.Left,
-            _hudFont,
-            paint);
+        Canvas.DrawText(text, baseline.X, baseline.Y, SKTextAlign.Left, _hudFont, paint);
     }
 
     public void DrawScreenTexture(Texture2D texture, SKRect bounds)
@@ -213,11 +188,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
             _hudTextPaint);
     }
 
-    public void DrawWorldCircle(
-        Vector2 center,
-        float radius,
-        SKColor color,
-        float strokeWidth = 2f)
+    public void DrawWorldCircle(Vector2 center, float radius, SKColor color, float strokeWidth = 2f)
     {
         ArgGuard.ThrowIfNegativeOrNotFinite(radius);
 
@@ -226,10 +197,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         Canvas.DrawCircle(deviceCenter.X, deviceCenter.Y, radius * camera.Zoom, paint);
     }
 
-    public void DrawWorldPolyline(
-        ReadOnlySpan<Vector2> points,
-        SKColor color,
-        float strokeWidth = 2f)
+    public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, SKColor color, float strokeWidth = 2f)
     {
         if (points.Length < 2)
             return;
@@ -277,9 +245,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
                     DrawCapsuleOutline(capsule, paint);
                     break;
                 case Rectangle2D rectangle:
-                    Canvas.DrawRect(
-                        new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y),
-                        paint);
+                    Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
                     break;
                 case HalfSpace2D halfSpace:
                     DrawHalfSpaceBoundary(halfSpace, paint, objectToDevice);
@@ -292,11 +258,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         }
     }
 
-    public void DrawShapeOverlay(
-        SpatialObject2D worldObject,
-        SKColor fillColor,
-        SKColor outlineColor,
-        float screenStrokeWidth = 2f)
+    public void DrawShapeOverlay(SpatialObject2D worldObject, SKColor fillColor, SKColor outlineColor, float screenStrokeWidth = 2f)
     {
         ArgGuard.ThrowIfNull(worldObject);
         ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
@@ -312,9 +274,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
             IsAntialias = true,
             Style = SKPaintStyle.Fill
         };
-        using var outlinePaint = CreateStrokePaint(
-            outlineColor,
-            screenStrokeWidth / camera.Zoom);
+        using var outlinePaint = CreateStrokePaint(outlineColor, screenStrokeWidth / camera.Zoom);
         var skiaMatrix = ToSkiaMatrix(objectToDevice);
         Canvas.Save();
         Canvas.Concat(in skiaMatrix);
@@ -355,11 +315,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         Canvas.DrawPath(path, paint);
     }
 
-    private void DrawShape(
-        IShape2D shape,
-        SKPaint paint,
-        Matrix3x2 objectToDevice,
-        bool drawHalfSpaceFill)
+    private void DrawShape(IShape2D shape, SKPaint paint, Matrix3x2 objectToDevice, bool drawHalfSpaceFill)
     {
         switch (shape)
         {
@@ -376,9 +332,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
                 DrawCapsuleOutline(capsule, paint);
                 break;
             case Rectangle2D rectangle:
-                Canvas.DrawRect(
-                    new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y),
-                    paint);
+                Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
                 break;
             case HalfSpace2D halfSpace when drawHalfSpaceFill:
                 DrawHalfSpace(halfSpace, paint, objectToDevice);
@@ -407,26 +361,13 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         }
 
         var normal = Vector2.Normalize(new Vector2(-axis.Y, axis.X)) * capsule.Radius;
-        Canvas.DrawLine(
-            capsule.Start.X + normal.X,
-            capsule.Start.Y + normal.Y,
-            capsule.End.X + normal.X,
-            capsule.End.Y + normal.Y,
-            paint);
-        Canvas.DrawLine(
-            capsule.Start.X - normal.X,
-            capsule.Start.Y - normal.Y,
-            capsule.End.X - normal.X,
-            capsule.End.Y - normal.Y,
-            paint);
+        Canvas.DrawLine(capsule.Start.X + normal.X, capsule.Start.Y + normal.Y, capsule.End.X + normal.X, capsule.End.Y + normal.Y, paint);
+        Canvas.DrawLine(capsule.Start.X - normal.X, capsule.Start.Y - normal.Y, capsule.End.X - normal.X, capsule.End.Y - normal.Y, paint);
         Canvas.DrawCircle(capsule.Start.X, capsule.Start.Y, capsule.Radius, paint);
         Canvas.DrawCircle(capsule.End.X, capsule.End.Y, capsule.Radius, paint);
     }
 
-    private void DrawHalfSpaceBoundary(
-        HalfSpace2D halfSpace,
-        SKPaint paint,
-        Matrix3x2 objectToDevice)
+    private void DrawHalfSpaceBoundary(HalfSpace2D halfSpace, SKPaint paint, Matrix3x2 objectToDevice)
     {
         var visibleBounds = GetVisibleLocalBounds(objectToDevice);
         var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
@@ -437,10 +378,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         Canvas.DrawLine(start.X, start.Y, end.X, end.Y, paint);
     }
 
-    private void DrawHalfSpace(
-        HalfSpace2D halfSpace,
-        SKPaint paint,
-        Matrix3x2 objectToDevice)
+    private void DrawHalfSpace(HalfSpace2D halfSpace, SKPaint paint, Matrix3x2 objectToDevice)
     {
         var visibleBounds = GetVisibleLocalBounds(objectToDevice);
         Span<Vector2> corners =

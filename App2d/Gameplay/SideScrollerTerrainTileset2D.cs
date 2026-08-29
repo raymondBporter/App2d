@@ -301,27 +301,17 @@ internal sealed class SideScrollerTerrainTileset2D
     }
 }
 
-internal sealed class SideScrollerTerrainTilesetResolver2D
+internal sealed class SideScrollerTerrainTilesetResolver2D(Func<int, int, SideScrollerTerrainTileset2D> resolve)
 {
-    private readonly Func<int, int, SideScrollerTerrainTileset2D> _resolve;
+    private readonly Func<int, int, SideScrollerTerrainTileset2D> _resolve = ArgGuard.RequireNotNull(resolve);
 
-    public SideScrollerTerrainTilesetResolver2D(
-        Func<int, int, SideScrollerTerrainTileset2D> resolve)
+    public SideScrollerTerrainTileset2D GetTileset(int tileX, int tileY)
     {
-        _resolve = ArgGuard.RequireNotNull(resolve);
+        return StateGuard.RequireNotNull(_resolve(tileX, tileY), "The terrain tileset resolver returned no tileset.");
     }
 
-    public SideScrollerTerrainTileset2D GetTileset(int tileX, int tileY) =>
-        StateGuard.RequireNotNull(
-            _resolve(tileX, tileY),
-            "The terrain tileset resolver returned no tileset.");
-
-    public bool UsesSameTileset(
-        int firstTileX,
-        int firstTileY,
-        int secondTileX,
-        int secondTileY) =>
-        ReferenceEquals(
-            GetTileset(firstTileX, firstTileY),
-            GetTileset(secondTileX, secondTileY));
+    public bool UsesSameTileset(int firstTileX, int firstTileY, int secondTileX, int secondTileY)
+    {
+        return ReferenceEquals(GetTileset(firstTileX, firstTileY), GetTileset(secondTileX, secondTileY));
+    }
 }

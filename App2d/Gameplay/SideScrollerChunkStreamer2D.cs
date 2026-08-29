@@ -6,42 +6,23 @@ using App2d.Engine.Tiles;
 
 namespace App2d.Gameplay;
 
-internal sealed class SideScrollerChunkStreamer2D
+internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D physics, IChunkedTileMap2D tileMap, SideScrollerTerrainVisualFactory2D visuals, uint worldLayer, uint actorMask)
 {
     private const int HorizontalChunkRadius = 2;
     private const int VerticalChunkRadius = 1;
     private const float OneWaySurfaceThickness = 8f;
 
-    private readonly Scene2D _scene;
-    private readonly PhysicsWorld2D _physics;
-    private readonly IChunkedTileMap2D _tileMap;
-    private readonly SideScrollerTerrainVisualFactory2D _visuals;
-    private readonly uint _worldLayer;
-    private readonly uint _actorMask;
+    private readonly Scene2D _scene = ArgGuard.RequireNotNull(scene);
+    private readonly PhysicsWorld2D _physics = ArgGuard.RequireNotNull(physics);
+    private readonly IChunkedTileMap2D _tileMap = ArgGuard.RequireNotNull(tileMap);
+    private readonly SideScrollerTerrainVisualFactory2D _visuals = ArgGuard.RequireNotNull(visuals);
     private readonly Dictionary<TileChunk2D, LoadedChunk> _loadedChunks = [];
     private readonly List<SpatialObject2D> _platforms = [];
-
-    public SideScrollerChunkStreamer2D(
-        Scene2D scene,
-        PhysicsWorld2D physics,
-        IChunkedTileMap2D tileMap,
-        SideScrollerTerrainVisualFactory2D visuals,
-        uint worldLayer,
-        uint actorMask)
-    {
-        _scene = ArgGuard.RequireNotNull(scene);
-        _physics = ArgGuard.RequireNotNull(physics);
-        _tileMap = ArgGuard.RequireNotNull(tileMap);
-        _visuals = ArgGuard.RequireNotNull(visuals);
-        _worldLayer = worldLayer;
-        _actorMask = actorMask;
-    }
 
     public IReadOnlyList<SpatialObject2D> Platforms => _platforms;
     public int ActiveChunkCount => _loadedChunks.Count;
     public int LoadedColliderCount => _platforms.Count;
-    public static int MaximumActiveChunkCount =>
-        (HorizontalChunkRadius * 2 + 1) * (VerticalChunkRadius * 2 + 1);
+    public static int MaximumActiveChunkCount => (HorizontalChunkRadius * 2 + 1) * (VerticalChunkRadius * 2 + 1);
 
     public bool IsChunkActive(TileChunk2D chunk) => _loadedChunks.ContainsKey(chunk);
 
@@ -81,14 +62,9 @@ internal sealed class SideScrollerChunkStreamer2D
         foreach (var collision in _tileMap.BuildCollisionRectangles(chunk))
         {
             var bounds = collision.Kind == TileKind2D.OneWay
-                ? new Bounds2D(
-                    new Vector2(
-                        collision.Bounds.Min.X,
-                        collision.Bounds.Max.Y - OneWaySurfaceThickness),
-                    collision.Bounds.Max)
+                ? new Bounds2D(new Vector2(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
                 : collision.Bounds;
-            var platform = new SpatialObject2D(
-                AxisAlignedRectangle2D.FromSize(bounds.Size));
+            var platform = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(bounds.Size));
             platform.Transform.Position = bounds.Center;
             _platforms.Add(platform);
 
@@ -97,8 +73,8 @@ internal sealed class SideScrollerChunkStreamer2D
 
             var body = _physics.AddBody(platform, BodyMotionType2D.Static);
             body.Restitution = 0f;
-            body.CollisionLayer = _worldLayer;
-            body.CollisionMask = _actorMask;
+            body.CollisionLayer = worldLayer;
+            body.CollisionMask = actorMask;
             body.IsOneWayPlatform = collision.Kind == TileKind2D.OneWay;
             colliders.Add(new ChunkCollider(platform, body));
         }

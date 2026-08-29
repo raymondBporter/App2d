@@ -14,10 +14,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
-        ArgGuard.ThrowIfSameReference(
-            first,
-            second,
-            "A distance constraint requires two different bodies.");
+        ArgGuard.ThrowIfSameReference(first, second, "A distance constraint requires two different bodies.");
 
         First = first;
         Second = second;
@@ -104,17 +101,15 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         var delta = Second.WorldObject.Transform.Position - First.WorldObject.Transform.Position;
         var lengthSquared = delta.LengthSquared();
         var inverseMassSum = First.InverseMass + Second.InverseMass;
+
         if (lengthSquared <= MinimumDirectionLengthSquared || inverseMassSum <= 0f)
             return false;
 
         var length = MathF.Sqrt(lengthSquared);
         var error = length - RestLength;
-        if (Mode == DistanceConstraintMode2D.Rope
-            ? error <= PositionTolerance
-            : MathF.Abs(error) <= PositionTolerance)
-        {
+
+        if (Mode == DistanceConstraintMode2D.Rope ? error <= PositionTolerance : MathF.Abs(error) <= PositionTolerance)
             return false;
-        }
 
         var direction = delta / length;
         var correction = direction * (error * PositionStrength / inverseMassSum);

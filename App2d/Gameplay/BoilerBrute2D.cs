@@ -3,10 +3,8 @@ using App2d.Engine;
 using App2d.Engine.Animation;
 using App2d.Engine.Geometry;
 using App2d.Engine.Physics;
-using App2d.Engine.Rendering;
 using App2d.Engine.Rendering.Textures;
 using App2d.Gameplay.Audio;
-using SkiaSharp;
 
 namespace App2d.Gameplay;
 

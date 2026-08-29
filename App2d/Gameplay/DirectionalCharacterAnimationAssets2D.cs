@@ -4,12 +4,7 @@ namespace App2d.Gameplay;
 
 internal static class DirectionalCharacterAnimationAssets2D
 {
-    public static TextureFrameSet2D LoadFacing(
-        TextureCache2D textures,
-        string characterId,
-        string animationId,
-        string facingId,
-        int expectedFrameCount)
+    public static TextureFrameSet2D LoadFacing(TextureCache2D textures, string characterId, string animationId, string facingId, int expectedFrameCount)
     {
         ArgGuard.ThrowIfNull(textures);
         AssetId2D.Validate(characterId);
@@ -17,13 +12,7 @@ internal static class DirectionalCharacterAnimationAssets2D
         AssetId2D.Validate(facingId);
         ArgGuard.ThrowIfNotPositive(expectedFrameCount);
 
-        var relativeDirectory = Path.Combine(
-            "characters",
-            characterId,
-            "animations",
-            animationId,
-            "color",
-            facingId);
+        var relativeDirectory = Path.Combine("characters", characterId, "animations", animationId, "color", facingId);
         var fullDirectory = Path.Combine(textures.ContentRoot, relativeDirectory);
         var paths = Directory
             .EnumerateFiles(fullDirectory, "frame-*.png")
@@ -36,10 +25,6 @@ internal static class DirectionalCharacterAnimationAssets2D
                 $"'{relativeDirectory}', found {paths.Length}.");
         }
 
-        return new TextureFrameSet2D(
-            textures,
-            paths
-                .Select(path => Path.GetRelativePath(textures.ContentRoot, path))
-                .ToArray());
+        return new TextureFrameSet2D(textures, paths.Select(path => Path.GetRelativePath(textures.ContentRoot, path)).ToArray());
     }
 }

@@ -59,11 +59,7 @@ public sealed class LinearGradientShader(SKColor startColor, SKColor endColor) :
     {
         var localStart = new Vector2(context.LocalBounds.Center.X, context.LocalBounds.Max.Y);
         var localEnd = new Vector2(context.LocalBounds.Center.X, context.LocalBounds.Min.Y);
-        return ShaderLease2D.Owned(SKShader.CreateLinearGradient(
-            new SKPoint(localStart.X, localStart.Y),
-            new SKPoint(localEnd.X, localEnd.Y),
-            _colors,
-            _positions,
-            SKShaderTileMode.Clamp));
+        var shader = SKShader.CreateLinearGradient(new SKPoint(localStart.X, localStart.Y), new SKPoint(localEnd.X, localEnd.Y), _colors, _positions, SKShaderTileMode.Clamp);
+        return ShaderLease2D.Owned(shader);
     }
 }
