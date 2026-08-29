@@ -28,8 +28,7 @@ public sealed class Scene2D : IEnumerable<WorldObject2D>
         return true;
     }
 
-    internal IReadOnlyList<WorldObject2D> GetDrawOrder() =>
-        _drawOrder ??= [.. _objects.OrderBy(worldObject => worldObject.ZIndex)];
+    internal IReadOnlyList<WorldObject2D> GetDrawOrder() => _drawOrder ??= [.. _objects.OrderBy(worldObject => worldObject.ZIndex)];
 
     public List<WorldObject2D>.Enumerator GetEnumerator() => _objects.GetEnumerator();
     IEnumerator<WorldObject2D> IEnumerable<WorldObject2D>.GetEnumerator() => GetEnumerator();

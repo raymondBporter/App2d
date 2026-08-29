@@ -6,14 +6,8 @@ using App2d.Gameplay.Audio;
 
 namespace App2d.Gameplay;
 
-internal sealed class AxePlayerWeapon2D(
-    string name,
-    string equipmentId,
-    PhysicsBody2D ownerBody,
-    Texture2D hudTexture,
-    CombatSystem2D combat,
-    PlayerPresentation2D presentation,
-    ISoundEffectSink2D sounds) : MeleePlayerWeapon2D(
+internal sealed class AxePlayerWeapon2D(string name, string equipmentId, PhysicsBody2D ownerBody, Texture2D hudTexture, CombatSystem2D combat, PlayerPresentation2D presentation, ISoundEffectSink2D sounds)
+    : MeleePlayerWeapon2D(
         name,
         equipmentId,
         hudTexture,

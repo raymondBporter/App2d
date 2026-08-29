@@ -1,5 +1,3 @@
-using System.Drawing;
-
 namespace App2d.Engine.Diagnostics;
 
 internal sealed class DeveloperConsoleView : UserControl

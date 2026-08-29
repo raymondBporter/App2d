@@ -1,5 +1,4 @@
 using System.Numerics;
-using App2d.Engine;
 using App2d.Engine.Physics;
 
 namespace App2d.Gameplay;
@@ -16,10 +15,7 @@ public sealed class CharacterMotor2D
     private float _jumpBufferTime;
     private int _airJumpsRemaining;
 
-    public CharacterMotor2D(
-        PhysicsWorld2D physics,
-        PhysicsBody2D body,
-        TraversalMetrics2D metrics)
+    public CharacterMotor2D(PhysicsWorld2D physics, PhysicsBody2D body, TraversalMetrics2D metrics)
     {
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(body);
@@ -55,10 +51,7 @@ public sealed class CharacterMotor2D
         }
         else
         {
-            _coyoteTime = IsGrounded
-                ? Metrics.CoyoteDuration
-                : Math.Max(0f, _coyoteTime - deltaSeconds);
-
+            _coyoteTime = IsGrounded ? Metrics.CoyoteDuration : Math.Max(0f, _coyoteTime - deltaSeconds);
             _jumpBufferTime = intent.JumpPressed && !IsDucking
                 ? Metrics.JumpBufferDuration
                 : Math.Max(0f, _jumpBufferTime - deltaSeconds);
@@ -70,9 +63,7 @@ public sealed class CharacterMotor2D
 
         if (intent.JumpReleased && _body.LinearVelocity.Y > 0f)
         {
-            _body.LinearVelocity = new Vector2(
-                _body.LinearVelocity.X,
-                _body.LinearVelocity.Y * Metrics.JumpReleaseSpeedMultiplier);
+            _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, _body.LinearVelocity.Y * Metrics.JumpReleaseSpeedMultiplier);
         }
 
         UpdateGravityScale();
@@ -132,16 +123,11 @@ public sealed class CharacterMotor2D
             ? Metrics.DuckingSpeed
             : Metrics.RunSpeed;
         var velocityX = _body.LinearVelocity.X;
-        var keepAirMomentum = !IsGrounded &&
-            MathF.Abs(velocityX) > Metrics.RunSpeed &&
-            (_intent.MoveX == 0f || MathF.Sign(_intent.MoveX) == MathF.Sign(velocityX));
+        var keepAirMomentum = !IsGrounded && MathF.Abs(velocityX) > Metrics.RunSpeed && (_intent.MoveX == 0f || MathF.Sign(_intent.MoveX) == MathF.Sign(velocityX));
 
         if (!keepAirMomentum)
         {
-            velocityX = MoveTowards(
-                velocityX,
-                _intent.MoveX * maximumSpeed,
-                acceleration * deltaSeconds);
+            velocityX = MoveTowards(velocityX, _intent.MoveX * maximumSpeed, acceleration * deltaSeconds);
         }
 
         _body.LinearVelocity = new Vector2(velocityX, _body.LinearVelocity.Y);
@@ -194,10 +180,7 @@ public sealed class CharacterMotor2D
         {
             foreach (var other in _physics.Bodies)
             {
-                if (ReferenceEquals(other, _body) ||
-                    other.IsOneWayPlatform ||
-                    other.IsSensor ||
-                    !_body.CanCollideWith(other))
+                if (ReferenceEquals(other, _body) || other.IsOneWayPlatform || other.IsSensor || !_body.CanCollideWith(other))
                 {
                     continue;
                 }
@@ -465,9 +448,7 @@ public sealed class CharacterMotor2D
         !other.IsSensor &&
         _body.CanCollideWith(other);
 
-    private bool HasHorizontalSupport(
-        Engine.Geometry.Bounds2D bodyBounds,
-        Engine.Geometry.Bounds2D supportBounds) =>
+    private bool HasHorizontalSupport(Engine.Geometry.Bounds2D bodyBounds, Engine.Geometry.Bounds2D supportBounds) =>
         bodyBounds.Right + Metrics.HorizontalSupportGrace >= supportBounds.Left &&
         bodyBounds.Left - Metrics.HorizontalSupportGrace <= supportBounds.Right;
 

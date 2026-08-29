@@ -39,12 +39,7 @@ internal static class EquippedLoadoutAnimationAssets2D
         return ComposeFrame(characterColor[frameIndex], characterDepth[frameIndex], equipment, frameIndex);
     }
 
-    public static TextureFrameSet2D LoadCached(
-        TextureCache2D textures,
-        string loadoutId,
-        string animationId,
-        int expectedFrameCount,
-        string facingId)
+    public static TextureFrameSet2D LoadCached(TextureCache2D textures, string loadoutId, string animationId, int expectedFrameCount, string facingId)
     {
         ArgGuard.ThrowIfNull(textures);
         AssetId2D.Validate(loadoutId);
@@ -52,29 +47,11 @@ internal static class EquippedLoadoutAnimationAssets2D
         AssetId2D.Validate(facingId);
         ArgGuard.ThrowIfNotPositive(expectedFrameCount);
 
-        var paths = FindFrames(
-                textures.ContentRoot,
-                Path.Combine(
-                    "loadouts",
-                    loadoutId,
-                    "animations",
-                    animationId,
-                    facingId),
-                expectedFrameCount);
-        return new TextureFrameSet2D(
-            textures,
-            paths
-                .Select(path => Path.GetRelativePath(textures.ContentRoot, path))
-                .ToArray());
+        var paths = FindFrames(textures.ContentRoot, Path.Combine("loadouts", loadoutId, "animations", animationId, facingId), expectedFrameCount);
+        return new TextureFrameSet2D(textures, paths.Select(path => Path.GetRelativePath(textures.ContentRoot, path)).ToArray());
     }
 
-    public static Texture2D[] Load(
-        TextureCache2D textures,
-        string characterId,
-        string animationId,
-        int expectedFrameCount,
-        string facingId,
-        params string[] equipmentIds)
+    public static Texture2D[] Load(TextureCache2D textures, string characterId, string animationId, int expectedFrameCount, string facingId, params string[] equipmentIds)
     {
         ArgGuard.ThrowIfNull(textures);
         ArgGuard.ThrowIfNull(equipmentIds);
@@ -86,26 +63,11 @@ internal static class EquippedLoadoutAnimationAssets2D
         foreach (var equipmentId in equipmentIds)
             AssetId2D.Validate(equipmentId);
 
-        var characterRoot = Path.Combine(
-            "characters",
-            characterId,
-            "animations",
-            animationId);
-        var characterColor = FindFrames(
-            textures.ContentRoot,
-            Path.Combine(characterRoot, "color", facingId),
-            expectedFrameCount);
-        var characterDepth = FindFrames(
-            textures.ContentRoot,
-            Path.Combine(characterRoot, "depth", facingId),
-            expectedFrameCount);
+        var characterRoot = Path.Combine("characters", characterId, "animations", animationId);
+        var characterColor = FindFrames(textures.ContentRoot, Path.Combine(characterRoot, "color", facingId), expectedFrameCount);
+        var characterDepth = FindFrames(textures.ContentRoot, Path.Combine(characterRoot, "depth", facingId), expectedFrameCount);
         var equipment = equipmentIds
-            .Select(id => FindEquipmentFrames(
-                textures.ContentRoot,
-                id,
-                animationId,
-                facingId,
-                expectedFrameCount))
+            .Select(id => FindEquipmentFrames(textures.ContentRoot, id, animationId, facingId, expectedFrameCount))
             .ToArray();
 
         var frames = new Texture2D[expectedFrameCount];
@@ -113,11 +75,7 @@ internal static class EquippedLoadoutAnimationAssets2D
         {
             for (var frameIndex = 0; frameIndex < frames.Length; frameIndex++)
             {
-                frames[frameIndex] = ComposeFrame(
-                    characterColor[frameIndex],
-                    characterDepth[frameIndex],
-                    equipment,
-                    frameIndex);
+                frames[frameIndex] = ComposeFrame(characterColor[frameIndex], characterDepth[frameIndex], equipment, frameIndex);
             }
             return frames;
         }
@@ -129,11 +87,7 @@ internal static class EquippedLoadoutAnimationAssets2D
         }
     }
 
-    private static Texture2D ComposeFrame(
-        string characterColorPath,
-        string characterDepthPath,
-        EquipmentFramePaths[] equipment,
-        int frameIndex)
+    private static Texture2D ComposeFrame(string characterColorPath, string characterDepthPath, EquipmentFramePaths[] equipment, int frameIndex)
     {
         var loaded = new Texture2D[(equipment.Length + 1) * 2];
         try
