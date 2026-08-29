@@ -235,9 +235,9 @@ public static class ArgGuard
     public static void ThrowInvalid<T>(T value, string message, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
         ThrowArgumentCore(paramName, message);
 
-    public static ArgumentException CreateInvalid(string message, string? paramName = null) =>        new(message, paramName);
+    public static ArgumentException CreateInvalid(string message, string? paramName = null) => new(message, paramName);
 
-    public static ArgumentNullException CreateNull(string? paramName = null) =>        new(paramName);
+    public static ArgumentNullException CreateNull(string? paramName = null) => new(paramName);
 
     [DoesNotReturn]
     public static void ThrowOutOfRange<T>(
