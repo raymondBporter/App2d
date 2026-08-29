@@ -106,8 +106,7 @@ public sealed class PlayerPresentation2D : IDisposable
 
     public void PlayMeleeAttack()
     {
-        _animation.Play(_meleeAttackAnimation, restart: true);
-        _animation.PlaybackSpeed = 1f;
+        PlayFastMeleeAnimation(_meleeAttackAnimation);
     }
 
     public void PlayShot()
@@ -118,14 +117,12 @@ public sealed class PlayerPresentation2D : IDisposable
 
     public void PreviewMeleeChop()
     {
-        _animation.Play(_meleeChopAnimation, restart: true);
-        _animation.PlaybackSpeed = 1f;
+        PlayFastMeleeAnimation(_meleeChopAnimation);
     }
 
     public void PreviewMeleeStab()
     {
-        _animation.Play(_meleeStabAnimation, restart: true);
-        _animation.PlaybackSpeed = 1f;
+        PlayFastMeleeAnimation(_meleeStabAnimation);
     }
 
     public void PlayHit()
@@ -256,6 +253,12 @@ public sealed class PlayerPresentation2D : IDisposable
             animation,
             DirectionalCharacterAnimationAssets2D.LoadFacing(textures, "player", animationId, "left", animation.FrameCount));
         return animation;
+    }
+
+    private void PlayFastMeleeAnimation(AnimationClip2D<Texture2D> animation)
+    {
+        _animation.Play(animation, restart: true);
+        _animation.PlaybackSpeed = animation.Duration / MeleeAttack2D.FastDurationSeconds;
     }
 
     private void UpdateVisualShader(float facing)

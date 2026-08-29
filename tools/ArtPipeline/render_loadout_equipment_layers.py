@@ -116,6 +116,53 @@ def composite_depth_layers(layers: list[tuple[Image.Image, Image.Image]]) -> Ima
     return Image.fromarray(np.rint(np.clip(output, 0, 1) * 255).astype(np.uint8), "RGBA")
 
 
+def bake_afterimages(
+    color: Image.Image,
+    depth: Image.Image,
+    history: list[tuple[Image.Image, Image.Image]],
+    definitions: list[dict],
+) -> tuple[Image.Image, Image.Image]:
+    """Bake older equipment poses behind the current pose on the same canvas."""
+    selected = []
+    for definition in definitions:
+        frames_back = int(definition["framesBack"])
+        opacity = float(definition["opacity"])
+        if frames_back <= 0:
+            raise ValueError("afterimage framesBack must be positive")
+        if not 0 < opacity < 1:
+            raise ValueError("afterimage opacity must be between zero and one")
+        if frames_back <= len(history):
+            selected.append((frames_back, opacity, history[-frames_back]))
+
+    output_color = Image.new("RGBA", color.size)
+    output_depth = Image.new("RGB", depth.size)
+    for _, opacity, (ghost_color, ghost_depth) in sorted(
+        selected,
+        key=lambda item: item[0],
+        reverse=True,
+    ):
+        faded = ghost_color.copy()
+        faded.putalpha(
+            faded.getchannel("A").point(
+                lambda value, factor=opacity: round(value * factor)
+            )
+        )
+        output_color.alpha_composite(faded)
+        output_depth.paste(
+            ghost_depth,
+            mask=ghost_color.getchannel("A").point(
+                lambda value: 255 if value else 0
+            ),
+        )
+
+    output_color.alpha_composite(color)
+    output_depth.paste(
+        depth,
+        mask=color.getchannel("A").point(lambda value: 255 if value else 0),
+    )
+    return output_color, output_depth
+
+
 def save_preview(frames: list[Image.Image], path: Path, fps: int) -> None:
     previews = []
     for frame in frames:
@@ -201,6 +248,10 @@ def main() -> None:
         }
         frame_count = max(1, round(sampler.duration * fps))
         previews = {facing["id"]: [] for facing in plan["facings"]}
+        afterimage_history: dict[
+            tuple[str, str],
+            list[tuple[Image.Image, Image.Image]],
+        ] = {}
 
         for entry in equipment:
             for facing in plan["facings"]:
@@ -246,7 +297,11 @@ def main() -> None:
                 ]
                 for entry in equipment:
                     output = entry["output"] / clip["id"] / facing_id
-                    if args.only_equipment and entry["id"] != args.only_equipment:
+                    should_render = (
+                        not args.only_equipment
+                        or entry["id"] == args.only_equipment
+                    )
+                    if not should_render:
                         color = Image.open(output / "color" / frame_name).convert("RGBA")
                         depth = Image.open(output / "depth" / frame_name).convert("RGB")
                     else:
@@ -271,6 +326,28 @@ def main() -> None:
                             ground_y,
                             supersample,
                         )
+                        afterimages = entry.get("afterimagesByClip", {}).get(
+                            clip["id"],
+                            [],
+                        )
+                        if afterimages:
+                            history_key = (entry["id"], facing_id)
+                            history = afterimage_history.setdefault(history_key, [])
+                            rendered_color = color
+                            rendered_depth = depth
+                            color, depth = bake_afterimages(
+                                rendered_color,
+                                rendered_depth,
+                                history,
+                                afterimages,
+                            )
+                            history.append((rendered_color, rendered_depth))
+                            maximum_history = max(
+                                int(definition["framesBack"])
+                                for definition in afterimages
+                            )
+                            if len(history) > maximum_history:
+                                del history[:-maximum_history]
                         color.save(output / "color" / frame_name)
                         depth.save(output / "depth" / frame_name)
                     layers.append((color, depth))

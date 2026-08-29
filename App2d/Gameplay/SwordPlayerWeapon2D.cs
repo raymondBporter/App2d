@@ -19,7 +19,7 @@ internal sealed class SwordPlayerWeapon2D(
         hudTexture,
         ownerBody,
         new Capsule2D(Vector2.Zero, new Vector2(68f, 0f), 8f),
-        new MeleeAttackProfile2D(0.24f, 0.32f, 1.18f, -1.08f),
+        new MeleeAttackProfile2D(MeleeAttack2D.FastDurationSeconds, 0.32f, 1.18f, -1.08f),
         damage: 2,
         knockback: new Vector2(520f, 285f),
         combat,

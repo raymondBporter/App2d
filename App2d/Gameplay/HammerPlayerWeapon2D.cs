@@ -19,7 +19,7 @@ internal sealed class HammerPlayerWeapon2D(
         hudTexture,
         ownerBody,
         new Circle2D(23f),
-        new MeleeAttackProfile2D(0.36f, 0.58f, 1.55f, -1.35f, 6f, 3f, 54f),
+        new MeleeAttackProfile2D(MeleeAttack2D.FastDurationSeconds, 0.58f, 1.55f, -1.35f, 6f, 3f, 54f),
         damage: 4,
         knockback: new Vector2(720f, 390f),
         combat,

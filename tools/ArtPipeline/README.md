@@ -183,6 +183,14 @@ scale so it remains inside the existing fixed canvas. This scales only the 3D
 weapon about its grip before rasterization; it does not resize the character,
 canvas, or final image.
 
+Equipment entries may declare `afterimagesByClip` to bake older transparent
+equipment poses behind the current pose while the high-resolution layer is being
+rendered. Each entry specifies `framesBack` and `opacity`. Color is alpha-composited
+oldest to newest, while the matching source-pose depth follows every visible ghost
+pixel so later character/equipment composition remains depth-aware. The Sword A
+diagonal attack uses this as a focused motion-trail experiment; the character layer
+is not ghosted.
+
 The one-handed attack extension reuses `sword-attack` for the diagonal slice and
 adds `melee-chop` and `melee-stab` for every listed weapon. Its focused plans are
 `one-handed-attack-character-plan.json` and

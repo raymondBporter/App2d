@@ -67,6 +67,16 @@
       "id": "right-hand-sword-a",
       "gltf": "Assets/Sources/third-party/KayKit_FantasyWeaponsBits_1.0_FREE/Assets/gltf/sword_A.gltf",
       "hand": "handslot.l",
+      "afterimagesByClip": {
+        "sword-attack": [
+          { "framesBack": 2, "opacity": 0.28 },
+          { "framesBack": 4, "opacity": 0.23 },
+          { "framesBack": 6, "opacity": 0.18 },
+          { "framesBack": 8, "opacity": 0.13 },
+          { "framesBack": 10, "opacity": 0.09 },
+          { "framesBack": 12, "opacity": 0.05 }
+        ]
+      },
       "contentRoot": "Assets/Content/weapons/right-hand-sword-a/animations"
     },
     {

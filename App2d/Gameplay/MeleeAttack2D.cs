@@ -11,6 +11,8 @@ internal sealed class MeleeAttack2D(
     SpatialObject2D worldObject,
     MeleeAttackProfile2D profile)
 {
+    public const float FastDurationSeconds = 0.12f;
+
     private float _elapsed;
     private float _cooldown;
 

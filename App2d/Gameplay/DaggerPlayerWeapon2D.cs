@@ -13,7 +13,7 @@ internal sealed class DaggerPlayerWeapon2D(string name, string equipmentId, Phys
         hudTexture,
         ownerBody,
         new Capsule2D(Vector2.Zero, new Vector2(44f, 0f), 5f),
-        new MeleeAttackProfile2D(0.16f, 0.21f, 0.7f, -0.45f, 14f, 1f),
+        new MeleeAttackProfile2D(MeleeAttack2D.FastDurationSeconds, 0.21f, 0.7f, -0.45f, 14f, 1f),
         damage: 1,
         knockback: new Vector2(360f, 180f),
         combat,
