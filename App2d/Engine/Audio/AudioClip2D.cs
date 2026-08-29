@@ -18,35 +18,28 @@ public sealed class AudioClip2D
         }
 
         WaveFormat = reader.WaveFormat;
-        var samples = new List<float>();
-        var buffer = new float[16_384];
-        int count;
-        while ((count = reader.Read(buffer)) > 0)
+        if (reader.Length % sizeof(float) != 0)
         {
-            for (var i = 0; i < count; i++)
-                samples.Add(buffer[i]);
+            throw new InvalidDataException(
+                $"Decoded audio length is not float-aligned: '{path}'.");
         }
-        _samples = [.. samples];
+
+        var expectedSampleCount = checked((int)(reader.Length / sizeof(float)));
+        var samples = GC.AllocateUninitializedArray<float>(expectedSampleCount);
+        var sampleCount = 0;
+        while (sampleCount < samples.Length)
+        {
+            var read = reader.Read(samples.AsSpan(sampleCount));
+            if (read == 0)
+                break;
+            sampleCount += read;
+        }
+        if (sampleCount != samples.Length)
+            Array.Resize(ref samples, sampleCount);
+        _samples = samples;
     }
 
     internal WaveFormat WaveFormat { get; }
-
-    internal ISampleProvider CreateSampleProvider() => new CachedSampleProvider(_samples, WaveFormat);
-
-    private sealed class CachedSampleProvider(float[] samples, WaveFormat waveFormat)
-        : ISampleProvider
-    {
-        private int _position;
-
-        public WaveFormat WaveFormat { get; } = waveFormat;
-
-        public int Read(Span<float> buffer)
-        {
-            var available = samples.Length - _position;
-            var count = Math.Min(available, buffer.Length);
-            samples.AsSpan(_position, count).CopyTo(buffer);
-            _position += count;
-            return count;
-        }
-    }
+    internal float[] Samples => _samples;
+    internal int FrameCount => _samples.Length / WaveFormat.Channels;
 }
