@@ -38,8 +38,7 @@ public sealed class SideScrollerGame : Game2D
     public SideScrollerGame()
     {
         Traversal.ValidateScaleContract();
-        _sounds = new SoundEffectBank2D(
-            Path.Combine(AppContext.BaseDirectory, "Assets", "audio", "sfx"));
+        _sounds = new SoundEffectBank2D(Path.Combine(AppContext.BaseDirectory, "Assets", "audio", "sfx"));
         RegisterDebugPhysicsWorld(_physics);
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value, "Set sound-effect volume from 0 (muted) to 1 (full volume).");
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _showTraversalDebug, value => _showTraversalDebug = value, "Draw jump arcs and tile-relative movement metrics.");

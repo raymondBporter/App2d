@@ -54,33 +54,16 @@ internal sealed class EquippedPlayerLoadout2D(
         _equipmentId = equipmentId;
     }
 
-    public EquippedFrame2D GetFrame(
-        EquippedAnimationDefinition2D animation,
-        string facingId,
-        int frameIndex,
-        float elapsedSeconds)
+    public EquippedFrame2D GetFrame(EquippedAnimationDefinition2D animation, string facingId, int frameIndex, float elapsedSeconds)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ThrowIfPrecompositionFailed();
-        var equipmentId = StateGuard.RequireNotNull(
-            _equipmentId,
-            "Equip a player loadout before requesting its frames.");
-        if (animation.AdditionalEquipmentIds.Count == 0 &&
-            _sparsePackage is { } sparsePackage &&
-            sparsePackage.TryRetainFrameAtTime(
-                animation.Id,
-                facingId,
-                elapsedSeconds,
-                out var sparseFrame))
+        var equipmentId = StateGuard.RequireNotNull(_equipmentId, "Equip a player loadout before requesting its frames.");
+        if (animation.AdditionalEquipmentIds.Count == 0 && _sparsePackage is { } sparsePackage && sparsePackage.TryRetainFrameAtTime(animation.Id, facingId, elapsedSeconds, out var sparseFrame))
         {
-            var retained = StateGuard.RequireNotNull(
-                sparseFrame,
-                "Sparse frame lookup succeeded without a frame.");
+            var retained = StateGuard.RequireNotNull(sparseFrame, "Sparse frame lookup succeeded without a frame.");
             RetainSparseFrame(sparsePackage, retained);
-            return new EquippedFrame2D(
-                retained,
-                sparsePackage.CanvasSize,
-                sparsePackage.GetRoot(animation.Id, facingId));
+            return new EquippedFrame2D(retained, sparsePackage.CanvasSize, sparsePackage.GetRoot(animation.Id, facingId));
         }
 
         ReleaseRetainedSparseFrame();
@@ -88,8 +71,8 @@ internal sealed class EquippedPlayerLoadout2D(
         var key = new EquippedFrameKey(animation.Id, facingId, frameIndex);
         if (_frameCache.TryGetValue(key, out var cached))
         {
-            _frameRecency.Remove(cached.RecencyNode);
-            _frameRecency.AddLast(cached.RecencyNode);
+         //   _frameRecency.Remove(cached.RecencyNode);
+         //   _frameRecency.AddLast(cached.RecencyNode);
             return new EquippedFrame2D(cached.Texture);
         }
 
@@ -97,18 +80,10 @@ internal sealed class EquippedPlayerLoadout2D(
         equipmentIds[0] = equipmentId;
         for (var index = 0; index < animation.AdditionalEquipmentIds.Count; index++)
             equipmentIds[index + 1] = animation.AdditionalEquipmentIds[index];
-        var frame = EquippedLoadoutAnimationAssets2D.LoadFrame(
-            _textures,
-            "player",
-            animation.Id,
-            animation.FrameCount,
-            facingId,
-            frameIndex,
-            equipmentIds);
+        var frame = EquippedLoadoutAnimationAssets2D.LoadFrame(_textures, "player", animation.Id, animation.FrameCount, facingId, frameIndex, equipmentIds);
 
         var frameBytes = checked((long)frame.Width * frame.Height * sizeof(uint));
-        while (_frameCacheBytes + frameBytes > _frameCacheBudgetBytes &&
-            _frameRecency.First is { } leastRecent)
+        while (_frameCacheBytes + frameBytes > _frameCacheBudgetBytes && _frameRecency.First is { } leastRecent)
         {
             _frameRecency.RemoveFirst();
             if (_frameCache.Remove(leastRecent.Value, out var evicted))
@@ -149,22 +124,14 @@ internal sealed class EquippedPlayerLoadout2D(
 
     private SparseAnimationPackage2D? TryLoadSparsePackage(string equipmentId)
     {
-        var manifestPath = Path.Combine(
-            _textures.ContentRoot,
-            "sparse-loadouts",
-            equipmentId,
-            "package.json");
+        var manifestPath = Path.Combine(_textures.ContentRoot, "sparse-loadouts", equipmentId, "package.json");
         if (!File.Exists(manifestPath))
             return null;
-        var package = SparseAnimationPackage2D.Load(
-            manifestPath,
-            _frameCacheBudgetBytes);
+        var package = SparseAnimationPackage2D.Load(manifestPath, _frameCacheBudgetBytes);
         if (!string.Equals(package.EquipmentId, equipmentId, StringComparison.Ordinal))
         {
             package.Dispose();
-            throw new InvalidDataException(
-                $"Sparse package equipment '{package.EquipmentId}' does not match " +
-                $"equipped item '{equipmentId}': {manifestPath}");
+            throw new InvalidDataException($"Sparse package equipment '{package.EquipmentId}' does not match equipped item '{equipmentId}': {manifestPath}");
         }
         return package;
     }
@@ -175,11 +142,7 @@ internal sealed class EquippedPlayerLoadout2D(
             return;
         _precomposeCancellation = new CancellationTokenSource();
         var cancellationToken = _precomposeCancellation.Token;
-        _precomposeTask = Task.Run(
-            () => package.PrecomposeAnimations(
-                ["idle", "walk"],
-                cancellationToken),
-            cancellationToken);
+        _precomposeTask = Task.Run(() => package.PrecomposeAnimations(["idle", "walk"], cancellationToken), cancellationToken);
     }
 
     private void StopPrecomposition()
