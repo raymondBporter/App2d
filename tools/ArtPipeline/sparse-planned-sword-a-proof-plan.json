@@ -1,0 +1,26 @@
+{
+  "id": "right-hand-sword-a-planned-proof",
+  "outputRoot": "Assets/Work/art-pipeline/SparsePlannedSwordAProof",
+  "canvas": [512, 384],
+  "rootX": 256,
+  "groundY": 324,
+  "sourceFps": 30,
+  "targetFps": 30,
+  "cropPadding": 2,
+  "atlasSize": 1024,
+  "atlasGutter": 2,
+  "writeProofArtifacts": false,
+  "characterContentRoot": "Assets/Content/characters/player/animations",
+  "equipment": {
+    "id": "right-hand-sword-a",
+    "contentRoot": "Assets/Content/weapons/right-hand-sword-a/animations"
+  },
+  "facings": [
+    { "id": "right" },
+    { "id": "left" }
+  ],
+  "clips": [
+    { "id": "idle", "loop": true },
+    { "id": "walk", "loop": true }
+  ]
+}

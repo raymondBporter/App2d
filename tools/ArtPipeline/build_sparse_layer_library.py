@@ -196,6 +196,7 @@ def build_package(
     source_root: Path,
     layer_kind: str,
     output: Path,
+    timeline_reference: str,
 ) -> BuiltPackage:
     canvas = tuple(timeline["canvas"])
     crop_padding = int(plan["cropPadding"])
@@ -271,7 +272,7 @@ def build_package(
         "format": "sparse-rooted-layer-package-v1",
         "id": package_id,
         "kind": layer_kind,
-        "timeline": "../../timeline.json" if layer_kind == "equipment" else "../timeline.json",
+        "timeline": timeline_reference,
         "depthFormat": "r16-unorm",
         "cropPadding": crop_padding,
         "atlasGutter": atlas_gutter,
@@ -346,7 +347,10 @@ def validate_representative_composites(
     canvas = tuple(timeline["canvas"])
     validated = 0
     for clip_id, animation in timeline["animations"].items():
-        sample_index = len(animation["samples"]) // 2
+        # Independent layer timelines are only guaranteed to share source pose 1.
+        # Validate that common point; each package already validates every layer
+        # sample independently above.
+        sample_index = 0
         for facing_id, facing in animation["facings"].items():
             key = f"{clip_id}/{facing_id}/{sample_index:04d}"
             character_frame = character.frames[key]
@@ -388,6 +392,17 @@ def validate_representative_composites(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", type=Path, required=True)
+    timeline_group = parser.add_mutually_exclusive_group()
+    timeline_group.add_argument(
+        "--timeline",
+        type=Path,
+        help="Materialize an already planned timeline without rerunning motion analysis.",
+    )
+    timeline_group.add_argument(
+        "--timeline-set",
+        type=Path,
+        help="Materialize independently sampled character and equipment timelines.",
+    )
     parser.add_argument("--replace", action="store_true")
     args = parser.parse_args()
 
@@ -395,9 +410,12 @@ def main() -> None:
     plan_path = args.plan.resolve()
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     output = (repository / plan["outputRoot"]).resolve()
-    allowed_root = (repository / "Assets" / "Content" / "sparse").resolve()
-    if output != allowed_root and allowed_root not in output.parents:
-        raise ValueError(f"Output must be at or below {allowed_root}: {output}")
+    allowed_roots = (
+        (repository / "Assets" / "Content" / "sparse").resolve(),
+        (repository / "Assets" / "Work" / "art-pipeline").resolve(),
+    )
+    if not any(output == root or root in output.parents for root in allowed_roots):
+        raise ValueError(f"Output must be at or below one of {allowed_roots}: {output}")
     building = output.with_name(output.name + ".building")
     if output.exists() and not args.replace:
         raise FileExistsError(f"Output exists; pass --replace to rebuild: {output}")
@@ -405,10 +423,57 @@ def main() -> None:
         shutil.rmtree(building)
     building.mkdir(parents=True)
 
-    timeline = build_timeline(repository, plan)
-    (building / "timeline.json").write_text(
-        json.dumps(timeline, indent=2), encoding="utf-8"
-    )
+    equipment_timelines = {}
+    if args.timeline_set is not None:
+        timeline_set_path = args.timeline_set.resolve()
+        timeline_set = json.loads(timeline_set_path.read_text(encoding="utf-8"))
+        if timeline_set.get("format") != "sparse-independent-layer-timeline-set-v1":
+            raise ValueError(
+                f"Unsupported timeline-set format: {timeline_set.get('format')}"
+            )
+        if timeline_set.get("id") != plan["id"] or timeline_set.get("canvas") != plan["canvas"]:
+            raise ValueError("Independent timeline set does not match the sparse library plan")
+        timeline_set_root = timeline_set_path.parent
+        timeline = json.loads(
+            (timeline_set_root / timeline_set["character"]).read_text(encoding="utf-8")
+        )
+        equipment_timelines = {
+            equipment_id: json.loads(
+                (timeline_set_root / relative_path).read_text(encoding="utf-8")
+            )
+            for equipment_id, relative_path in timeline_set["equipment"].items()
+        }
+        expected_equipment = {entry["id"] for entry in plan["equipment"]}
+        if set(equipment_timelines) != expected_equipment:
+            raise ValueError("Independent timeline set equipment does not match the plan")
+    elif args.timeline is None:
+        timeline = build_timeline(repository, plan)
+    else:
+        timeline = json.loads(args.timeline.resolve().read_text(encoding="utf-8"))
+        if timeline.get("format") != "sparse-rooted-timeline-v1":
+            raise ValueError(f"Unsupported timeline format: {timeline.get('format')}")
+        if timeline.get("id") != plan["id"] or timeline.get("canvas") != plan["canvas"]:
+            raise ValueError("Preselected timeline does not match the sparse library plan")
+    if equipment_timelines:
+        character_timeline_path = building / "timelines" / "character.json"
+        character_timeline_path.parent.mkdir(parents=True, exist_ok=True)
+        character_timeline_path.write_text(
+            json.dumps(timeline, indent=2), encoding="utf-8"
+        )
+        for equipment_id, equipment_timeline in equipment_timelines.items():
+            equipment_timeline_path = (
+                building / "timelines" / "equipment" / f"{equipment_id}.json"
+            )
+            equipment_timeline_path.parent.mkdir(parents=True, exist_ok=True)
+            equipment_timeline_path.write_text(
+                json.dumps(equipment_timeline, indent=2), encoding="utf-8"
+            )
+        character_timeline_reference = "../timelines/character.json"
+    else:
+        (building / "timeline.json").write_text(
+            json.dumps(timeline, indent=2), encoding="utf-8"
+        )
+        character_timeline_reference = "../timeline.json"
     character = build_package(
         repository,
         plan,
@@ -417,6 +482,7 @@ def main() -> None:
         repository / plan["character"]["contentRoot"],
         "character",
         building / "character",
+        character_timeline_reference,
     )
     print(
         f"built {character.package_id}: {character.metrics['selectedFrames']} frames, "
@@ -427,14 +493,20 @@ def main() -> None:
     equipment_results = []
     representative_composites = 0
     for entry in plan["equipment"]:
+        equipment_timeline = equipment_timelines.get(entry["id"], timeline)
         result = build_package(
             repository,
             plan,
-            timeline,
+            equipment_timeline,
             entry["id"],
             repository / entry["contentRoot"],
             "equipment",
             building / "equipment" / entry["id"],
+            (
+                f"../../timelines/equipment/{entry['id']}.json"
+                if equipment_timelines
+                else "../../timeline.json"
+            ),
         )
         representative_composites += validate_representative_composites(
             timeline,
@@ -471,6 +543,7 @@ def main() -> None:
         "status": "pass",
         "id": plan["id"],
         "timeline": {
+            "mode": "independent-layers" if equipment_timelines else "shared",
             "animationCount": len(timeline["animations"]),
             "facingCount": len(plan["facings"]),
             "targetFramesPerSecond": plan["targetFramesPerSecond"],
@@ -493,24 +566,51 @@ def main() -> None:
     (building / "build-report.json").write_text(
         json.dumps(report, indent=2), encoding="utf-8"
     )
-    library = {
-        "format": "sparse-rooted-layer-library-v1",
-        "id": plan["id"],
-        "timeline": "timeline.json",
-        "character": "character/package.json",
-        "equipment": {
-            result.package_id: f"equipment/{result.package_id}/package.json"
-            for result in equipment_results
-        },
-        "buildReport": "build-report.json",
-    }
+    if equipment_timelines:
+        library = {
+            "format": "sparse-independent-layer-library-v1",
+            "id": plan["id"],
+            "canvas": list(plan["canvas"]),
+            "character": {
+                "id": character.package_id,
+                "package": "character/package.json",
+                "timeline": "timelines/character.json",
+            },
+            "equipment": {
+                result.package_id: {
+                    "package": f"equipment/{result.package_id}/package.json",
+                    "timeline": f"timelines/equipment/{result.package_id}.json",
+                }
+                for result in equipment_results
+            },
+            "buildReport": "build-report.json",
+        }
+    else:
+        library = {
+            "format": "sparse-rooted-layer-library-v1",
+            "id": plan["id"],
+            "timeline": "timeline.json",
+            "character": "character/package.json",
+            "equipment": {
+                result.package_id: f"equipment/{result.package_id}/package.json"
+                for result in equipment_results
+            },
+            "buildReport": "build-report.json",
+        }
     (building / "library.json").write_text(
         json.dumps(library, indent=2), encoding="utf-8"
     )
 
     if output.exists():
         shutil.rmtree(output)
-    building.rename(output)
+    try:
+        building.rename(output)
+    except PermissionError:
+        # Windows content watchers can deny a directory rename even after all
+        # generated files have closed. Preserve the validated result with a
+        # same-volume copy fallback, then remove only the known staging path.
+        shutil.copytree(building, output)
+        shutil.rmtree(building)
     print(json.dumps(report["totals"], indent=2), flush=True)
     print(json.dumps(report["ratios"], indent=2), flush=True)
 

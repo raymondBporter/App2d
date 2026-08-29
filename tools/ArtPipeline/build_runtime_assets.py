@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -45,7 +46,7 @@ def main() -> None:
         action="store_true",
         help=(
             "Build the full-canvas fallback assets only. The game remains playable, "
-            "but it will not use the smaller lazily loaded sparse packages."
+            "but it will not use the smaller independent sparse layer library."
         ),
     )
     args = parser.parse_args()
@@ -84,10 +85,29 @@ def main() -> None:
     )
 
     if not args.skip_sparse:
+        sparse_plan = pipeline / "sparse-one-handed-production-plan.json"
+        sparse_configuration = json.loads(sparse_plan.read_text(encoding="utf-8"))
+        selected_profile = sparse_configuration["planning"]["selectedProfile"]
+        planning_root = repository / sparse_configuration["planning"]["outputRoot"]
         run(
             repository,
-            "Packing sparse runtime loadouts",
-            str(pipeline / "build_sparse_runtime_loadouts.py"),
+            "Planning independent sparse character and equipment timelines",
+            str(pipeline / "plan_sparse_timelines.py"),
+            "--plan",
+            str(sparse_plan),
+        )
+        run(
+            repository,
+            "Packing the shared sparse character/equipment library",
+            str(pipeline / "build_sparse_layer_library.py"),
+            "--plan",
+            str(sparse_plan),
+            "--timeline-set",
+            str(
+                planning_root
+                / f"profiles/{selected_profile}/independent/timeline-set.json"
+            ),
+            "--replace",
         )
 
     print("\nRuntime assets are ready. Run: dotnet run --project App2d", flush=True)

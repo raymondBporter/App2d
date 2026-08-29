@@ -28,6 +28,8 @@ class MotionMeasurement:
     source_duration_seconds: float
     source_frames_per_second: float
     segment_pixels: tuple[float, ...]
+    character_segment_pixels: tuple[float, ...] = ()
+    equipment_segment_pixels: dict[str, tuple[float, ...]] | None = None
 
     @property
     def frame_count(self) -> int:
@@ -125,11 +127,14 @@ def _project(vertices: np.ndarray, hips: np.ndarray, ground: float, scale: float
 def _maximum_displacement(
     previous: dict[str, np.ndarray],
     current: dict[str, np.ndarray],
+    key_fragment: str | None = None,
 ) -> float:
     if previous.keys() != current.keys():
         raise ValueError("motion point sets changed between animation samples")
     maximum = 0.0
     for key, points in current.items():
+        if key_fragment is not None and key_fragment not in key:
+            continue
         prior = previous[key]
         if points.shape != prior.shape:
             raise ValueError(f"motion point count changed for {key}")
@@ -261,6 +266,31 @@ class ScreenSpaceMotionAnalyzer:
             _maximum_displacement(samples[index], samples[index + 1])
             for index in range(frame_count)
         )
-        measurement = MotionMeasurement(sampler.duration, self.fps, segments)
+        character_segments = tuple(
+            _maximum_displacement(
+                samples[index],
+                samples[index + 1],
+                "/character/",
+            )
+            for index in range(frame_count)
+        )
+        equipment_segments = {
+            entry["id"]: tuple(
+                _maximum_displacement(
+                    samples[index],
+                    samples[index + 1],
+                    f"/equipment/{entry['id']}",
+                )
+                for index in range(frame_count)
+            )
+            for entry in self.equipment
+        }
+        measurement = MotionMeasurement(
+            sampler.duration,
+            self.fps,
+            segments,
+            character_segments,
+            equipment_segments,
+        )
         self._cache[clip_id] = measurement
         return measurement

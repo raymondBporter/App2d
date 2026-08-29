@@ -1,6 +1,6 @@
 {
   "id": "player-one-handed-v1",
-  "outputRoot": "Assets/Work/art-pipeline/SparsePlayerOneHandedV1",
+  "outputRoot": "Assets/Content/sparse/player-one-handed-v1",
   "canvas": [512, 384],
   "rootX": 256,
   "groundY": 324,
@@ -8,8 +8,55 @@
   "sampling": {
     "mode": "screen-space-motion",
     "analysisPlan": "tools/ArtPipeline/right-hand-weapon-batch-plan.json",
-    "maxPixelsPerSample": 2.0,
+    "maxPixelsPerSample": 12.0,
     "minimumFramesPerSecond": 6.0
+  },
+  "planning": {
+    "outputRoot": "Assets/Work/art-pipeline/SparsePlayerOneHandedPlanning",
+    "analysisPlan": "tools/ArtPipeline/right-hand-weapon-batch-plan.json",
+    "selectedProfile": "balanced",
+    "profiles": {
+      "reference": {
+        "maxPixelsPerSample": 2.0,
+        "minimumFramesPerSecond": 6.0,
+        "motionScope": "combined"
+      },
+      "high": {
+        "maxPixelsPerSample": 8.0,
+        "minimumFramesPerSecond": 6.0,
+        "motionScope": "combined"
+      },
+      "balanced": {
+        "maxPixelsPerSample": 12.0,
+        "minimumFramesPerSecond": 6.0,
+        "motionScope": "combined"
+      },
+      "compact": {
+        "maxPixelsPerSample": 16.0,
+        "minimumFramesPerSecond": 6.0,
+        "motionScope": "combined"
+      }
+    },
+    "curvePixels": [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 24, 32],
+    "curveMinimumFramesPerSecond": 6.0,
+    "curveMotionScope": "combined",
+    "budgets": [
+      {
+        "name": "64 MiB active loadout",
+        "metric": "maximumLoadoutCompositeCacheDecodedBytes",
+        "bytes": 67108864
+      },
+      {
+        "name": "80 MiB active loadout",
+        "metric": "maximumLoadoutCompositeCacheDecodedBytes",
+        "bytes": 83886080
+      },
+      {
+        "name": "96 MiB active loadout",
+        "metric": "maximumLoadoutCompositeCacheDecodedBytes",
+        "bytes": 100663296
+      }
+    ]
   },
   "cropPadding": 2,
   "atlasSize": 2048,

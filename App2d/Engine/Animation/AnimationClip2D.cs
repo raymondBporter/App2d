@@ -115,12 +115,11 @@ public sealed class AnimationClip2D<TFrame>
         for (var index = 0; index < durations.Length; index++)
         {
             elapsed += durations[index];
-            if (elapsed > float.MaxValue)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(durations),
-                    "Total animation duration is too large.");
-            }
+            ArgGuard.ThrowIfGreaterThanOrEqual(
+                (float)elapsed,
+                float.MaxValue,
+                nameof(durations),
+                "Total animation duration is too large.");
             endTimes[index] = (float)elapsed;
         }
         totalDuration = (float)elapsed;

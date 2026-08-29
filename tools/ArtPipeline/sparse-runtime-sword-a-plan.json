@@ -6,12 +6,8 @@
   "groundY": 324,
   "sourceFps": 30,
   "targetFps": 30,
-  "sampling": {
-    "mode": "screen-space-motion",
-    "analysisPlan": "tools/ArtPipeline/right-hand-weapon-batch-plan.json",
-    "maxPixelsPerSample": 2.0,
-    "minimumFramesPerSecond": 6.0
-  },
+  "timeline": "Assets/Work/art-pipeline/SparsePlayerOneHandedPlanning/profiles/balanced/timeline.json",
+  "sampling": { "mode": "preselected-timeline" },
   "cropPadding": 2,
   "atlasSize": 1024,
   "atlasGutter": 2,

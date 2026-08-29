@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 
-def build(repository: Path, equipment_id: str) -> tuple[str, str]:
+def build(repository: Path, equipment_id: str, timeline_path: Path) -> tuple[str, str]:
     plan = {
         "id": f"{equipment_id}-runtime",
         "outputRoot": f"Assets/Content/sparse-loadouts/{equipment_id}",
@@ -20,12 +20,7 @@ def build(repository: Path, equipment_id: str) -> tuple[str, str]:
         "groundY": 324,
         "sourceFps": 30,
         "targetFps": 30,
-        "sampling": {
-            "mode": "screen-space-motion",
-            "analysisPlan": "tools/ArtPipeline/right-hand-weapon-batch-plan.json",
-            "maxPixelsPerSample": 2.0,
-            "minimumFramesPerSecond": 6.0,
-        },
+        "sampling": {"mode": "preselected-timeline"},
         "cropPadding": 2,
         "atlasSize": 1024,
         "atlasGutter": 2,
@@ -81,6 +76,8 @@ def build(repository: Path, equipment_id: str) -> tuple[str, str]:
                 str(repository / "tools" / "ArtPipeline" / "build_sparse_layer_package.py"),
                 "--plan",
                 str(plan_path),
+                "--timeline",
+                str(timeline_path),
                 "--replace",
             ],
             cwd=repository,
@@ -95,6 +92,25 @@ def build(repository: Path, equipment_id: str) -> tuple[str, str]:
 
 def main() -> None:
     repository = Path(__file__).resolve().parents[2]
+    pipeline = repository / "tools" / "ArtPipeline"
+    sparse_plan_path = pipeline / "sparse-one-handed-production-plan.json"
+    planning_process = subprocess.run(
+        [
+            sys.executable,
+            str(pipeline / "plan_sparse_timelines.py"),
+            "--plan",
+            str(sparse_plan_path),
+            "--json",
+        ],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    planning_report = json.loads(planning_process.stdout)
+    sparse_plan = json.loads(sparse_plan_path.read_text(encoding="utf-8"))
+    planning_root = repository / sparse_plan["planning"]["outputRoot"]
+    timeline_path = planning_root / planning_report["selectedTimeline"]
     weapons = repository / "Assets" / "Content" / "weapons"
     equipment_ids = sorted(
         path.name for path in weapons.iterdir()
@@ -109,7 +125,7 @@ def main() -> None:
     # image encoders cannot leave a mixed atlas set on Windows.
     with ThreadPoolExecutor(max_workers=1) as executor:
         pending = {
-            executor.submit(build, repository, equipment_id): equipment_id
+            executor.submit(build, repository, equipment_id, timeline_path): equipment_id
             for equipment_id in equipment_ids
         }
         for future in as_completed(pending):
@@ -126,10 +142,10 @@ def main() -> None:
     library = {
         "format": "sparse-loadout-library-v1",
         "sampling": {
-            "mode": "screen-space-motion",
-            "maxPixelsPerSample": 2.0,
-            "minimumFramesPerSecond": 6.0,
-            "measurementFramesPerSecond": 30,
+            **json.loads(timeline_path.read_text(encoding="utf-8"))["sampling"],
+            "planningReport": str(
+                (planning_root / "planning-report.json").relative_to(repository)
+            ).replace("\\", "/"),
         },
         "defaultTargetFramesPerSecond": 30,
         "animationTargetFramesPerSecond": {

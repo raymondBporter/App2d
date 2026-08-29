@@ -214,16 +214,21 @@ The virtual environment is ignored by Git. Reinstall its packages at any time wi
 the same `python -m pip install -r tools/ArtPipeline/requirements.txt` command, using
 the virtual environment's Python executable as shown above.
 
-The full build validates every right-hand weapon and creates the optional sparse runtime
-packages. During pipeline development, `--skip-sparse` produces the complete playable
-full-canvas fallback without the final atlas-packing pass.
+The full build validates every right-hand weapon, plans the configured motion profile,
+and writes the shared sparse library to
+`Assets/Content/sparse/player-one-handed-v1`. That output contains one character atlas
+set plus equipment-only atlas sets; it does not generate per-weapon copies of the
+character. During pipeline development, `--skip-sparse` produces the complete playable
+full-canvas fallback without motion planning or the final atlas-packing pass.
 
 Generated files remain below `Assets/Content` because the game ships that tree, but the
 generated subdirectories are excluded by `.gitignore`. See
 `tools/ArtPipeline/README.md` for individual render, validation, and proof commands.
-Tests that inspect sparse production packages are included automatically when their
+Tests that inspect the sparse production library are included automatically when their
 ignored proof and runtime fixtures are present; the remaining engine tests run on a
-clean clone without generated art.
+clean clone without generated art. To repack only the sparse library from existing
+master renders, follow the staged planning commands in
+`tools/ArtPipeline/README.md`.
 
 ## Run
 
@@ -436,20 +441,21 @@ Clips may use a uniform frame rate or an explicit duration for every sample, and
 loop or stop on their last frame. The sparse pipeline treats the 30 FPS renders as
 high-fidelity source material and selects nonuniform points by accumulated screen-space
 motion, while stored source times and sample durations preserve the authored pose timing
-and playback length. Players support
+and playback length. Motion measurement, quality/memory profile planning, and atlas
+materialization are separate stages, so profile and byte-budget changes reuse immutable
+master renders and cached numerical analysis. Players support
 pause, resume, stop, restart, and playback-speed changes. `SpriteShader2D` maps one complete texture onto
 finite object bounds, corrects image orientation for the engine's Y-up world, and can
 flip sprites horizontally or vertically.
 
-Equipped rendering prefers validated packages below
-`Assets/Content/sparse-loadouts/<equipment-id>/package.json`. Atlas pages load lazily and are
-shared by path, while composed frames live in an evictable memory-budgeted cache.
-`SparseCanvasSpriteShader2D` maps each cropped result through its stored character root
-and back into the legacy logical canvas, preserving world placement during incremental
-content migration. Every right-hand equipment set ships sparse samples for the full
-declared animation set. Animations absent from a package, and combinations that add
-another equipment layer such as a shield, continue through the compatible full-canvas
-fallback.
+Equipped rendering prefers the independent layer library at
+`Assets/Content/sparse/player-one-handed-v1/library.json`. The character atlas is stored
+once; each equipment package contains weapon pixels only. Character and weapon layers
+select their own nonuniform samples against the same clip clock, then the existing GPU
+depth shader combines them without creating a full-canvas intermediate texture. Atlas
+pages load lazily, and changing equipment releases the previous equipment package while
+keeping the shared character pages resident. Combinations that add another equipment
+layer, such as a shield, continue through the compatible full-canvas fallback.
 
 Each character owns a `character.json` and semantic folders such as
 `characters/player/animations/walk`. The animation ID and folder name are identical;

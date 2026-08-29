@@ -27,10 +27,11 @@ python -m venv .codex-art-venv
 ```
 
 The command renders both character facings, renders and validates every equipped weapon,
-renders the shield fallback used by `shield-block`, and packs the sparse runtime
-loadouts. It exits on the first failed render or validation. Pass `--skip-sparse` to
-stop after the playable full-canvas fallback assets when iterating on the source
-renderers.
+renders the shield fallback used by `shield-block`, plans the selected screen-space
+motion profile, and packs `Assets/Content/sparse/player-one-handed-v1`. The result stores
+the character once and every equipment layer once. It exits on the first failed render
+or validation. Pass `--skip-sparse` to stop after the playable full-canvas fallback
+assets when iterating on the source renderers.
 
 The committed GLB and glTF inputs are sufficient for this build. Duplicate FBX, OBJ,
 MTL, and shortcut files from the downloadable source packs are intentionally ignored.
@@ -256,13 +257,81 @@ Selected poses always remain points on the existing source-render grid. Their pl
 times are calculated from the selected source indices, including animations with an
 explicit gameplay `durationSeconds`; they are never redistributed at equal intervals.
 Per-sample durations therefore preserve the original pose timing and exact total clip
-length. Both facings and every compatible equipment package use the same timeline.
+length. Both facings of a given layer use the same timeline. Shipping character and
+equipment layers share the clip clock and duration but may select different source-pose
+points on that clock.
 
 The source render rate remains a hard ceiling. If one adjacent source pair already moves
 farther than `maxPixelsPerSample`, the builder retains both and records
 `maximumSourceStepPixels` in the timeline/package metadata. Meeting a tighter bound in
 that case requires rerendering the source curve at a higher measurement rate rather than
 inventing an interpolated raster frame downstream.
+
+#### Staged motion planning
+
+Production sampling is split into master rendering, reusable analysis, cheap policy
+planning, and final materialization. Ghosting is deliberately outside this pipeline.
+The master color/depth frames remain immutable work inputs; changing a quality profile
+does not rerender or modify them.
+
+After master character and equipment frames exist, create or refresh the numerical
+analysis with:
+
+```powershell
+python tools/ArtPipeline/plan_sparse_timelines.py `
+  --plan tools/ArtPipeline/sparse-one-handed-production-plan.json `
+  --reanalyze
+```
+
+The one-time pass evaluates continuous 3D motion and scans existing alpha bounds. It
+writes `motion-analysis.json` below the plan's `planning.outputRoot`. Each animation
+records combined, character-only, and per-equipment screen-space segment motion, plus
+the decoded byte cost of every possible master pose. The input fingerprint includes the
+plans, manifests, and master frame inventory, so stale analysis fails explicitly.
+
+Subsequent planning omits `--reanalyze`:
+
+```powershell
+python tools/ArtPipeline/plan_sparse_timelines.py `
+  --plan tools/ArtPipeline/sparse-one-handed-production-plan.json
+```
+
+That command reuses the numerical analysis and writes only profile timelines and
+`planning-report.json`. Profiles are late policy: pixel threshold, maximum hold,
+component scope, and optional one-based `requiredSourceFrames` animation anchors. The
+report contains the entire configured threshold curve and named byte-budget
+recommendations. Its byte measures are intentionally separate:
+
+- `sharedLibraryTightDecodedBytes` is character plus all equipment cropped-layer data.
+- `loadoutCompositeCacheDecodedBytes` is the final composed cache for each loadout.
+- `maximumLoadoutCompositeCacheDecodedBytes` is the worst active loadout.
+
+Tight decoded byte estimates are exact for the selected source rectangles and current
+crop padding. Atlas bytes remain an estimate until packing because page fragmentation
+depends on the final selection; the materializer's validation report records the exact
+packed result.
+
+Materialize a selected shared-layer timeline without rerunning analysis:
+
+```powershell
+python tools/ArtPipeline/build_sparse_layer_library.py `
+  --plan tools/ArtPipeline/sparse-one-handed-production-plan.json `
+  --timeline-set Assets/Work/art-pipeline/SparsePlayerOneHandedPlanning/profiles/balanced/independent/timeline-set.json `
+  --replace
+```
+
+The selected profile also emits an independent timeline set: one character timeline
+measured from character motion and one timeline per weapon measured from that weapon's
+motion. Clip duration and looping remain common, but sample points do not. The shared
+library materializer stores the character atlas once and each equipment atlas once;
+runtime activates only the current equipment package and combines both layers directly
+in the GPU depth shader. `build_sparse_layer_package.py` still accepts `--timeline` for
+isolated proofs.
+
+The production plan currently keeps four reversible policies: the previous 2-pixel
+reference, 8-pixel high, 12-pixel balanced, and 16-pixel compact. `selectedProfile`
+chooses what materialization consumes; changing it never changes the master renders or
+the reusable analysis.
 
 ### Native KayKit character parts
 
@@ -309,20 +378,11 @@ the atlas rectangle, root-relative origin, source frame, sample time, and frame
 duration needed to consume the package. `validation-report.json` records file,
 disk, and decoded-size comparisons.
 
-Build the complete shipping Sword A package with:
-
-```powershell
-python tools/ArtPipeline/build_sparse_layer_package.py `
-  --plan tools/ArtPipeline/sparse-runtime-sword-a-plan.json `
-  --replace
-```
-
-The runtime plan writes only the package manifest, packed atlases, and validation
-report below `Assets/Content/sparse-loadouts/right-hand-sword-a`; proof composites and
-preview GIFs remain exclusive to the work-area plan.
-
-To rebuild the complete production package for every right-hand equipment set, run
-`python tools/ArtPipeline/build_sparse_runtime_loadouts.py`.
+The complete shipping library is produced by the `--timeline-set` command above at
+`Assets/Content/sparse/player-one-handed-v1`. Proof composites and preview GIFs remain
+exclusive to the work area. The older per-loadout builder remains available only for
+compatibility experiments; it is not the shipping path because it repeats character
+pixels in every equipment package.
 
 To render the complete unique `Rig_Medium` library with four parallel workers:
 

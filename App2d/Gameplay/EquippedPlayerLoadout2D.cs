@@ -23,6 +23,7 @@ internal sealed class EquippedPlayerLoadout2D(
         : throw new ArgumentOutOfRangeException(nameof(sparsePackageCacheBudgetBytes));
     private long _frameCacheBytes;
     private string? _equipmentId;
+    private SparseIndependentLayerLibrary2D? _independentLibrary;
     private SparseAnimationPackage2D? _sparsePackage;
     private SparseAnimationPackage2D? _retainedFramePackage;
     private SparseAnimationFrame2D? _retainedFrame;
@@ -52,7 +53,10 @@ internal sealed class EquippedPlayerLoadout2D(
 
         ReleaseRetainedSparseFrame();
         ClearFrameCache();
-        _sparsePackage = GetOrLoadSparsePackage(equipmentId);
+        _independentLibrary ??= TryLoadIndependentLibrary();
+        _sparsePackage = _independentLibrary?.ActivateEquipment(equipmentId) == true
+            ? null
+            : GetOrLoadSparsePackage(equipmentId);
         _equipmentId = equipmentId;
         TrimSparsePackageCache();
     }
@@ -63,6 +67,23 @@ internal sealed class EquippedPlayerLoadout2D(
         var equipmentId = StateGuard.RequireNotNull(
             _equipmentId,
             "Equip a player loadout before requesting its frames.");
+        if (animation.AdditionalEquipmentIds.Count == 0 &&
+            _independentLibrary is { } independentLibrary &&
+            independentLibrary.TryGetLayeredFrameAtTime(
+                animation.Id,
+                facingId,
+                elapsedSeconds,
+                out var independentFrame))
+        {
+            ReleaseRetainedSparseFrame();
+            return new EquippedFrame2D(
+                StateGuard.RequireNotNull(
+                    independentFrame,
+                    "Independent sparse frame lookup succeeded without a frame."),
+                independentLibrary.CanvasSize,
+                independentLibrary.GetRoot(animation.Id, facingId));
+        }
+
         if (animation.AdditionalEquipmentIds.Count == 0 &&
             _sparsePackage is { } layeredPackage &&
             layeredPackage.TryGetLayeredFrameAtTime(
@@ -138,6 +159,8 @@ internal sealed class EquippedPlayerLoadout2D(
         ClearFrameCache();
         foreach (var cached in _sparsePackages.Values)
             cached.Package.Dispose();
+        _independentLibrary?.Dispose();
+        _independentLibrary = null;
         _sparsePackages.Clear();
         _sparsePackageRecency.Clear();
         _sparsePackage = null;
@@ -167,6 +190,18 @@ internal sealed class EquippedPlayerLoadout2D(
             throw new InvalidDataException($"Sparse package equipment '{package.EquipmentId}' does not match equipped item '{equipmentId}': {manifestPath}");
         }
         return package;
+    }
+
+    private SparseIndependentLayerLibrary2D? TryLoadIndependentLibrary()
+    {
+        var manifestPath = Path.Combine(
+            _textures.ContentRoot,
+            "sparse",
+            "player-one-handed-v1",
+            "library.json");
+        return File.Exists(manifestPath)
+            ? SparseIndependentLayerLibrary2D.Load(manifestPath)
+            : null;
     }
 
     private SparseAnimationPackage2D? GetOrLoadSparsePackage(string equipmentId)

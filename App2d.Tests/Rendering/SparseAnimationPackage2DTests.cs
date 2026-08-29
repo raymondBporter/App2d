@@ -13,6 +13,10 @@ public sealed class SparseAnimationPackage2DTests
         "Work",
         "art-pipeline",
         "SparseLayerSwordAProof");
+    private static readonly string ContentRoot = Path.GetFullPath(Path.Combine(
+        PackageRoot, "..", "..", "..", "Content"));
+    private static readonly string ProductionLibraryPath = Path.Combine(
+        ContentRoot, "sparse", "player-one-handed-v1", "library.json");
 
     [Fact]
     public void EverySparseCompositeMatchesValidatedFullCanvasProof()
@@ -154,130 +158,80 @@ public sealed class SparseAnimationPackage2DTests
     }
 
     [Fact]
-    public void ProductionPackageLoadsPagesLazilyAndMapsSourceFrames()
+    public void ProductionLibraryLoadsPagesLazilyAndSamplesLayersIndependently()
     {
-        var productionManifest = Path.GetFullPath(Path.Combine(
-            PackageRoot,
-            "..",
-            "..",
-            "..",
-            "Content",
-            "sparse-loadouts",
-            "right-hand-sword-a",
-            "package.json"));
-        using var package = SparseAnimationPackage2D.Load(productionManifest);
-        Assert.Equal(0, package.ResidentAtlasByteCount);
+        using var library = SparseIndependentLayerLibrary2D.Load(ProductionLibraryPath);
+        Assert.Equal(0, library.ResidentAtlasByteCount);
+        Assert.True(library.ActivateEquipment("right-hand-sword-a"));
+        Assert.Equal(0, library.ResidentAtlasByteCount);
 
-        Assert.True(package.TryGetFrameForSourceFrame("idle", "right", 1, out var first));
+        Assert.True(library.TryGetLayeredFrameAtTime(
+            "idle", "right", 0f, out var first));
         Assert.NotNull(first);
-        Assert.True(package.ResidentAtlasByteCount > 0);
-        Assert.True(package.TryGetFrameForSourceFrame("idle", "right", 2, out var repeated));
+        Assert.True(library.ResidentAtlasByteCount > 0);
+        Assert.True(library.TryGetLayeredFrameAtTime(
+            "idle", "right", 0.001f, out var repeated));
         Assert.Same(first, repeated);
-        var clip = package.CreateClip("idle", "right");
-        Assert.True(package.TryGetFrameForSourceFrame(
-            "idle", "right", clip[1].SourceFrame, out var next));
-        Assert.NotSame(first, next);
 
-        using var proof = Texture2D.Load(Path.Combine(
-            PackageRoot, "proof-composites", "idle", "right", "frame-0001.png"));
-        Assert.Equal(proof.CopyPixels(), first!.Texture.CopyPixels());
+        var independent = Enumerable.Range(0, 241)
+            .Select(index => library.GetSourceFramesAtTime(
+                "sword-attack", "right", index / 1000f))
+            .FirstOrDefault(value =>
+                value.CharacterSourceFrame != value.EquipmentSourceFrame);
+        Assert.NotEqual(
+            independent.CharacterSourceFrame,
+            independent.EquipmentSourceFrame);
     }
 
     [Fact]
-    public void ProductionPackageMapsFramesByDeclaredAnimationTime()
+    public void ProductionLibraryUsesOneClockForIndependentLoopingLayers()
     {
-        var productionManifest = Path.GetFullPath(Path.Combine(
-            PackageRoot,
-            "..",
-            "..",
-            "..",
-            "Content",
-            "sparse-loadouts",
-            "right-hand-sword-a",
-            "package.json"));
-        using var package = SparseAnimationPackage2D.Load(productionManifest);
-        var clip = package.CreateClip("idle", "right");
-        var transition = clip[1].SourceTimeSeconds;
-        var followingTransition = clip[2].SourceTimeSeconds;
-        const float epsilon = 0.0001f;
-
-        Assert.True(package.TryGetFrameAtTime(
-            "idle", "right", transition - epsilon, out var first));
-        Assert.True(package.TryGetFrameAtTime("idle", "right", transition, out var second));
-        Assert.True(package.TryGetFrameAtTime(
-            "idle", "right", followingTransition - epsilon, out var held));
-        var loopDuration = clip.Duration;
-        Assert.True(package.TryGetFrameAtTime(
-            "idle",
-            "right",
-            loopDuration + transition - epsilon,
-            out var wrapped));
-
-        Assert.NotNull(first);
-        Assert.NotNull(second);
-        Assert.NotSame(first, second);
-        Assert.Same(second, held);
-        Assert.Same(first, wrapped);
-        Assert.Equal(0f, first!.SourceTimeSeconds, 5);
-        Assert.Equal(transition, second!.SourceTimeSeconds, 5);
+        using var library = SparseIndependentLayerLibrary2D.Load(ProductionLibraryPath);
+        Assert.True(library.ActivateEquipment("right-hand-sword-a"));
+        using var timeline = JsonDocument.Parse(File.ReadAllText(Path.Combine(
+            ContentRoot,
+            "sparse",
+            "player-one-handed-v1",
+            "timelines",
+            "character.json")));
+        var duration = timeline.RootElement
+            .GetProperty("animations")
+            .GetProperty("idle")
+            .GetProperty("durationSeconds")
+            .GetSingle();
+        var first = library.GetSourceFramesAtTime("idle", "right", 0.137f);
+        var wrapped = library.GetSourceFramesAtTime(
+            "idle", "right", duration + 0.137f);
+        Assert.Equal(first, wrapped);
     }
 
     [Fact]
-    public void SparseCanvasShaderPreservesLegacyCanvasPlacement()
+    public void IndependentGpuLayersPreserveLegacyCanvasPlacement()
     {
-        var productionManifest = Path.GetFullPath(Path.Combine(
-            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts",
-            "right-hand-sword-a", "package.json"));
-        using var package = SparseAnimationPackage2D.Load(productionManifest);
-        Assert.True(package.TryGetFrameForSourceFrame("idle", "right", 1, out var sparseFrame));
-        var sparseShader = new SparseCanvasSpriteShader2D(
-            sparseFrame!,
-            package.CanvasSize,
-            package.GetRoot("idle", "right"),
+        using var library = SparseIndependentLayerLibrary2D.Load(ProductionLibraryPath);
+        Assert.True(library.ActivateEquipment("right-hand-sword-a"));
+        Assert.True(library.TryGetLayeredFrameAtTime(
+            "idle", "right", 0f, out var layeredFrame));
+        using var sparseShader = new SparseDepthCompositeShader2D(
+            layeredFrame!,
+            library.CanvasSize,
+            library.GetRoot("idle", "right"),
             SKFilterMode.Nearest);
 
-        var content = Path.GetFullPath(Path.Combine(PackageRoot, "..", "..", "..", "Content"));
         using var characterColor = Texture2D.Load(Path.Combine(
-            content, "characters", "player", "animations", "idle", "color", "right", "frame-0001.png"));
+            ContentRoot, "characters", "player", "animations", "idle", "color", "right", "frame-0001.png"));
         using var characterDepth = Texture2D.Load(Path.Combine(
-            content, "characters", "player", "animations", "idle", "depth", "right", "frame-0001.png"));
+            ContentRoot, "characters", "player", "animations", "idle", "depth", "right", "frame-0001.png"));
         using var weaponColor = Texture2D.Load(Path.Combine(
-            content, "weapons", "right-hand-sword-a", "animations", "idle", "right", "color", "frame-0001.png"));
+            ContentRoot, "weapons", "right-hand-sword-a", "animations", "idle", "right", "color", "frame-0001.png"));
         using var weaponDepth = Texture2D.Load(Path.Combine(
-            content, "weapons", "right-hand-sword-a", "animations", "idle", "right", "depth", "frame-0001.png"));
+            ContentRoot, "weapons", "right-hand-sword-a", "animations", "idle", "right", "depth", "frame-0001.png"));
         using var full = DepthCompositeTexture2D.Create(
             new DepthTextureLayer2D(characterColor, characterDepth, "character"),
             new DepthTextureLayer2D(weaponColor, weaponDepth, "equipment"));
         var fullShader = new SpriteShader2D(full, SKFilterMode.Nearest);
 
         AssertEquivalentPixels(RenderShader(fullShader), RenderShader(sparseShader));
-    }
-
-    [Fact]
-    public void GpuDepthCompositeShaderMatchesCpuSparseComposite()
-    {
-        var productionManifest = Path.GetFullPath(Path.Combine(
-            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts",
-            "right-hand-sword-a", "package.json"));
-        using var package = SparseAnimationPackage2D.Load(productionManifest);
-        Assert.True(package.TryGetLayeredFrameAtTime(
-            "idle",
-            "right",
-            0f,
-            out var layeredFrame));
-        var cpuFrame = package.GetFrame("idle", "right", 0);
-        var cpuShader = new SparseCanvasSpriteShader2D(
-            cpuFrame,
-            package.CanvasSize,
-            package.GetRoot("idle", "right"),
-            SKFilterMode.Nearest);
-        using var gpuShader = new SparseDepthCompositeShader2D(
-            layeredFrame!,
-            package.CanvasSize,
-            package.GetRoot("idle", "right"),
-            SKFilterMode.Nearest);
-
-        AssertEquivalentPixels(RenderShader(cpuShader), RenderShader(gpuShader));
     }
 
     [Fact]
@@ -426,92 +380,40 @@ public sealed class SparseAnimationPackage2DTests
     }
 
     [Fact]
-    public void AtlasResidencyDoesNotConsumeCompositeFrameBudget()
+    public void ProductionLibraryKeepsOnlyCharacterAndActiveEquipmentResident()
     {
-        var productionManifest = Path.GetFullPath(Path.Combine(
-            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts",
-            "right-hand-sword-a", "package.json"));
-        using var package = SparseAnimationPackage2D.Load(
-            productionManifest,
-            cacheBudgetBytes: 16L * 1024L * 1024L);
+        using var library = SparseIndependentLayerLibrary2D.Load(ProductionLibraryPath);
+        Assert.True(library.ActivateEquipment("right-hand-sword-e"));
+        Assert.True(library.TryGetLayeredFrameAtTime(
+            "sword-attack", "right", 0.1f, out _));
+        Assert.True(library.ActivateEquipment("right-hand-wand-a"));
+        Assert.Equal("right-hand-wand-a", library.ActiveEquipmentId);
+        Assert.True(library.TryGetLayeredFrameAtTime(
+            "magic-shot", "right", 0.2f, out _));
 
-        package.PrecomposeAnimations(["idle"]);
-
-        Assert.True(package.ResidentAtlasByteCount > 16L * 1024L * 1024L);
-        Assert.True(package.CachedFrameCount > 1);
-        Assert.True(package.CachedByteCount <= 16L * 1024L * 1024L);
+        Assert.True(library.ResidentAtlasByteCount > 0);
+        Assert.True(library.ActiveEquipmentResidentAtlasByteCount > 0);
+        Assert.True(library.ActiveEquipmentResidentAtlasByteCount <= 2048L * 2048L * 6L);
     }
 
     [Fact]
-    public void WarmAtlasCompositionDoesNotCopyWholeColorPages()
+    public void EveryProductionEquipmentPackageActivatesAndRenders()
     {
-        var productionManifest = Path.GetFullPath(Path.Combine(
-            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts",
-            "right-hand-sword-a", "package.json"));
-        using var package = SparseAnimationPackage2D.Load(productionManifest);
-        package.PrecomposeAnimations(["idle"]);
-        package.InvalidateLayer("equipment");
-
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        _ = package.GetFrame("idle", "right", 1);
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-
-        Assert.True(
-            allocated < 8L * 1024L,
-            $"Warm sparse composition allocated {allocated:N0} managed bytes.");
-    }
-
-    [Fact]
-    public void CompletePrecompositionReleasesAtlasesWhenBudgetFits()
-    {
-        var productionManifest = Path.GetFullPath(Path.Combine(
-            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts",
-            "right-hand-sword-a", "package.json"));
-        using var package = SparseAnimationPackage2D.Load(
-            productionManifest,
-            cacheBudgetBytes: 384L * 1024L * 1024L);
-
-        Assert.True(package.PrecomposeAll());
-        Assert.True(package.SourceAtlasesReleased);
-        Assert.Equal(0, package.ResidentAtlasByteCount);
-        Assert.True(package.TotalResidentByteCount < 192L * 1024L * 1024L);
-        var expectedFrameCount = package.AnimationIds.Sum(animationId =>
-            package.GetSampleCount(animationId, "right") +
-            package.GetSampleCount(animationId, "left"));
-        Assert.Equal(expectedFrameCount, package.CachedFrameCount);
-        Assert.All(package.AnimationIds, animationId =>
-            Assert.True(package.GetTargetFramesPerSecond(animationId) > 0f));
-        Assert.Equal(0.24f, package.CreateClip("sword-attack", "right").Duration, 5);
-        Assert.Equal(0.4f, package.CreateClip("magic-shot", "right").Duration, 5);
-        Assert.NotNull(package.GetFrame(
-            "shield-block",
-            "left",
-            package.GetSampleCount("shield-block", "left") - 1));
-    }
-
-    [Fact]
-    public void EveryProductionLoadoutPrecomposesWithinStagingAndRuntimeBudgets()
-    {
-        var productionRoot = Path.GetFullPath(Path.Combine(
-            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts"));
-        var manifests = Directory
-            .EnumerateFiles(productionRoot, "package.json", SearchOption.AllDirectories)
-            .Order(StringComparer.Ordinal)
+        using var document = JsonDocument.Parse(File.ReadAllText(ProductionLibraryPath));
+        var equipmentIds = document.RootElement
+            .GetProperty("equipment")
+            .EnumerateObject()
+            .Select(entry => entry.Name)
             .ToArray();
-        Assert.Equal(14, manifests.Length);
+        Assert.Equal(14, equipmentIds.Length);
 
-        foreach (var manifest in manifests)
+        using var library = SparseIndependentLayerLibrary2D.Load(ProductionLibraryPath);
+        foreach (var equipmentId in equipmentIds)
         {
-            using var package = SparseAnimationPackage2D.Load(
-                manifest,
-                cacheBudgetBytes: 384L * 1024L * 1024L);
-            Assert.True(package.PrecomposeAll(), package.EquipmentId);
-            var expectedFrameCount = package.AnimationIds.Sum(animationId =>
-                package.GetSampleCount(animationId, "right") +
-                package.GetSampleCount(animationId, "left"));
-            Assert.Equal(expectedFrameCount, package.CachedFrameCount);
-            Assert.True(package.SourceAtlasesReleased);
-            Assert.True(package.TotalResidentByteCount < 192L * 1024L * 1024L);
+            Assert.True(library.ActivateEquipment(equipmentId), equipmentId);
+            Assert.True(library.TryGetLayeredFrameAtTime(
+                "idle", "right", 0f, out var frame), equipmentId);
+            Assert.NotNull(frame);
         }
     }
 
@@ -589,45 +491,23 @@ public sealed class SparseAnimationPackage2DTests
     }
 
     [Fact]
-    public void EveryProductionLoadoutMatchesLibrarySamplingContract()
+    public void ProductionLibraryDeclaresIndependentLayerPackagesWithoutLoadoutCopies()
     {
-        var productionRoot = Path.GetFullPath(Path.Combine(
-            PackageRoot, "..", "..", "..", "Content", "sparse-loadouts"));
-        using var library = JsonDocument.Parse(File.ReadAllText(
-            Path.Combine(productionRoot, "library.json")));
+        using var library = JsonDocument.Parse(File.ReadAllText(ProductionLibraryPath));
         var libraryRoot = library.RootElement;
         Assert.Equal(
-            "sparse-loadout-library-v1",
+            "sparse-independent-layer-library-v1",
             libraryRoot.GetProperty("format").GetString());
-
-        var expectedAnimations = libraryRoot
-            .GetProperty("animationTargetFramesPerSecond")
-            .EnumerateObject()
-            .ToDictionary(
-                property => property.Name,
-                property => property.Value.GetSingle(),
-                StringComparer.Ordinal);
-        Assert.NotEmpty(expectedAnimations);
-
+        Assert.Equal(
+            "character/package.json",
+            libraryRoot.GetProperty("character").GetProperty("package").GetString());
         var equipment = libraryRoot.GetProperty("equipment").EnumerateObject().ToArray();
         Assert.Equal(14, equipment.Length);
         foreach (var entry in equipment)
         {
-            var relativeManifest = Assert.IsType<string>(entry.Value.GetString());
-            using var package = SparseAnimationPackage2D.Load(
-                Path.Combine(productionRoot, relativeManifest));
-
-            Assert.Equal(entry.Name, package.EquipmentId);
-            Assert.Equal(
-                expectedAnimations.Keys.Order(StringComparer.Ordinal),
-                package.AnimationIds.Order(StringComparer.Ordinal));
-            foreach (var (animationId, expectedFramesPerSecond) in expectedAnimations)
-            {
-                Assert.Equal(
-                    expectedFramesPerSecond,
-                    package.GetTargetFramesPerSecond(animationId),
-                    5);
-            }
+            var package = entry.Value.GetProperty("package").GetString();
+            Assert.StartsWith("equipment/", package, StringComparison.Ordinal);
+            Assert.DoesNotContain("character", package, StringComparison.Ordinal);
         }
     }
 

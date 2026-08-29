@@ -273,6 +273,11 @@ def frame_manifest(frame: SparseFrame) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--plan", type=Path, required=True)
+    parser.add_argument(
+        "--timeline",
+        type=Path,
+        help="Materialize an already planned timeline without rerunning motion analysis.",
+    )
     parser.add_argument("--replace", action="store_true")
     args = parser.parse_args()
 
@@ -307,6 +312,33 @@ def main() -> None:
     character_root = repository / plan["characterContentRoot"]
     equipment_root = repository / plan["equipment"]["contentRoot"]
     sampling = plan.get("sampling", {"mode": "uniform"})
+    preselected_timeline = None
+    timeline_argument = (
+        args.timeline.resolve()
+        if args.timeline is not None
+        else (repository / plan["timeline"]).resolve()
+        if "timeline" in plan
+        else None
+    )
+    if timeline_argument is not None:
+        preselected_timeline = json.loads(
+            timeline_argument.read_text(encoding="utf-8")
+        )
+        if preselected_timeline.get("format") != "sparse-rooted-timeline-v1":
+            raise ValueError(
+                f"Unsupported timeline format: {preselected_timeline.get('format')}"
+            )
+        if preselected_timeline.get("canvas") != list(canvas):
+            raise ValueError("Preselected timeline canvas does not match the package plan")
+        try:
+            timeline_reference = str(timeline_argument.relative_to(repository))
+        except ValueError:
+            timeline_reference = timeline_argument.name
+        sampling = {
+            **preselected_timeline.get("sampling", {}),
+            "mode": "preselected-timeline",
+            "timeline": timeline_reference.replace("\\", "/"),
+        }
     sampling_mode = sampling.get("mode", "uniform")
     motion_analyzer = None
     if sampling_mode == "screen-space-motion":
@@ -314,7 +346,7 @@ def main() -> None:
             repository,
             repository / sampling["analysisPlan"],
         )
-    elif sampling_mode != "uniform":
+    elif sampling_mode not in ("uniform", "preselected-timeline"):
         raise ValueError(f"Unknown sampling mode: {sampling_mode}")
 
     sparse_frames: list[SparseFrame] = []
@@ -326,12 +358,23 @@ def main() -> None:
 
     for clip in plan["clips"]:
         clip_id = clip["id"]
+        planned_animation = (
+            preselected_timeline["animations"].get(clip_id)
+            if preselected_timeline is not None
+            else None
+        )
+        if preselected_timeline is not None and planned_animation is None:
+            raise ValueError(f"Preselected timeline does not define {clip_id}")
         clip_target_fps = float(
             clip.get("targetFramesPerSecond", clip.get("targetFps", target_fps))
         )
         if not math.isfinite(clip_target_fps) or clip_target_fps <= 0:
             raise ValueError(f"Invalid target frame rate: {clip_id}")
-        loop = bool(clip.get("loop", True))
+        loop = (
+            bool(planned_animation["loop"])
+            if planned_animation is not None
+            else bool(clip.get("loop", True))
+        )
         clip_manifest = {
             "loop": loop,
             "targetFramesPerSecond": clip_target_fps,
@@ -339,12 +382,19 @@ def main() -> None:
         }
         clip_indices: list[int] | None = None
         clip_durations: list[float] | None = None
+        clip_times: list[float] | None = None
         clip_frame_count: int | None = None
         clip_duration: float | None = None
         for facing in plan["facings"]:
             facing_id = facing["id"]
-            root_x = int(clip.get("rootXByFacing", {}).get(facing_id, default_root[0]))
-            root = (root_x, default_root[1])
+            if planned_animation is not None:
+                planned_root = planned_animation["facings"][facing_id]["root"]
+                root = (int(planned_root[0]), int(planned_root[1]))
+            else:
+                root_x = int(
+                    clip.get("rootXByFacing", {}).get(facing_id, default_root[0])
+                )
+                root = (root_x, default_root[1])
             character_color_paths = sorted(
                 (character_root / clip_id / "color" / facing_id).glob("frame-*.png")
             )
@@ -374,8 +424,10 @@ def main() -> None:
             all_source_paths.update(equipment_color_paths)
             all_source_paths.update(equipment_depth_paths)
             all_source_layer_frame_count += frame_count * 2
-            facing_duration = float(
-                clip.get("durationSeconds", frame_count / source_fps)
+            facing_duration = (
+                float(planned_animation["durationSeconds"])
+                if planned_animation is not None
+                else float(clip.get("durationSeconds", frame_count / source_fps))
             )
             if not math.isfinite(facing_duration) or facing_duration <= 0:
                 raise ValueError(f"Invalid clip duration: {clip_id}/{facing_id}")
@@ -383,7 +435,26 @@ def main() -> None:
                 clip_frame_count = frame_count
                 clip_duration = facing_duration
                 playback_fps = frame_count / facing_duration
-                if motion_analyzer is None:
+                if planned_animation is not None:
+                    if int(planned_animation["sourceFrameCount"]) != frame_count:
+                        raise ValueError(
+                            f"Preselected timeline/source mismatch: {clip_id}"
+                        )
+                    planned_samples = planned_animation["samples"]
+                    clip_indices = [
+                        int(sample["sourceFrame"]) - 1 for sample in planned_samples
+                    ]
+                    clip_times = [
+                        float(sample["timeSeconds"]) for sample in planned_samples
+                    ]
+                    clip_durations = [
+                        float(sample["durationSeconds"]) for sample in planned_samples
+                    ]
+                    clip_manifest["sampling"] = planned_animation.get(
+                        "sampling",
+                        preselected_timeline.get("sampling", {}),
+                    )
+                elif motion_analyzer is None:
                     clip_indices = select_source_indices(
                         frame_count,
                         playback_fps,
@@ -394,6 +465,7 @@ def main() -> None:
                         frame_count,
                         playback_fps,
                     )
+                    clip_times = [index / playback_fps for index in clip_indices]
                     clip_manifest["sampling"] = {
                         "mode": "uniform",
                         "targetFramesPerSecond": clip_target_fps,
@@ -419,6 +491,7 @@ def main() -> None:
                         frame_count,
                         facing_duration,
                     )
+                    clip_times = [index / playback_fps for index in clip_indices]
                     clip_manifest["sampling"] = {
                         "mode": "screen-space-motion",
                         "maxPixelsPerSample": max_pixels,
@@ -441,10 +514,11 @@ def main() -> None:
 
             indices = clip_indices
             durations = clip_durations
+            times = clip_times
             playback_fps = frame_count / facing_duration
             samples = []
-            for output_index, (source_index, duration) in enumerate(
-                zip(indices, durations, strict=True)
+            for output_index, (source_index, time_seconds, duration) in enumerate(
+                zip(indices, times, durations, strict=True)
             ):
                 layers = {}
                 paths_by_layer = {
@@ -473,7 +547,7 @@ def main() -> None:
                 samples.append(
                     {
                         "sourceFrame": source_index + 1,
-                        "timeSeconds": source_index / playback_fps,
+                        "timeSeconds": time_seconds,
                         "durationSeconds": duration,
                         "layers": layers,
                     }
