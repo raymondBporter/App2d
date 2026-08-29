@@ -99,13 +99,9 @@ internal static class EquippedLoadoutAnimationAssets2D
             for (var equipmentIndex = 0; equipmentIndex < equipment.Length; equipmentIndex++)
             {
                 var loadedIndex = (equipmentIndex + 1) * 2;
-                loaded[loadedIndex] = Texture2D.Load(
-                    equipment[equipmentIndex].Color[frameIndex]);
-                loaded[loadedIndex + 1] = Texture2D.Load(
-                    equipment[equipmentIndex].Depth[frameIndex]);
-                layers[equipmentIndex + 1] = new DepthTextureLayer2D(
-                    loaded[loadedIndex],
-                    loaded[loadedIndex + 1]);
+                loaded[loadedIndex] = Texture2D.Load(equipment[equipmentIndex].Color[frameIndex]);
+                loaded[loadedIndex + 1] = Texture2D.Load(equipment[equipmentIndex].Depth[frameIndex]);
+                layers[equipmentIndex + 1] = new DepthTextureLayer2D(loaded[loadedIndex], loaded[loadedIndex + 1]);
             }
             return DepthCompositeTexture2D.Create(layers);
         }

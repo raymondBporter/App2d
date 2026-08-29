@@ -16,12 +16,14 @@ Free 1.1, retrieved 2026-08-26 under CC0. The untouched license is retained at
 ## Clean-clone runtime build
 
 Only the source models, plans, licenses, manifests, and small hand-selected game assets
-are versioned. Generated player frames, equipment layers, and sparse packages are
-ignored. Rebuild everything required by the game from the repository root with:
+are versioned. Generated player frames, equipment layers, sparse packages, and Python
+virtual environments are ignored. Rebuild everything required by the game from the
+repository root with:
 
 ```powershell
-python -m pip install -r tools/ArtPipeline/requirements.txt
-python tools/ArtPipeline/build_runtime_assets.py
+python -m venv .codex-art-venv
+.\.codex-art-venv\Scripts\python -m pip install -r tools/ArtPipeline/requirements.txt
+.\.codex-art-venv\Scripts\python tools/ArtPipeline/build_runtime_assets.py
 ```
 
 The command renders both character facings, renders and validates every equipped weapon,
@@ -35,7 +37,7 @@ MTL, and shortcut files from the downloadable source packs are intentionally ign
 
 ## Current pipeline
 
-Run these commands from the repository root with the bundled Python runtime or
+Run these commands from the repository root with the project virtual environment or
 any Python containing Pillow and NumPy:
 
 ```powershell

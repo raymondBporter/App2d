@@ -8,50 +8,69 @@ namespace App2d.Engine.Rendering.Textures;
 /// </summary>
 public static class DepthCompositeTexture2D
 {
+    private const int MaxStackLayers = 64;
+
     public static Texture2D Create(params DepthTextureLayer2D[] layers)
     {
         ArgGuard.ThrowIfNull(layers);
         ArgGuard.ThrowIfTooShort(layers.AsSpan(), 1);
         ValidateFullCanvasLayers(layers);
 
-        var sortKeys = new string[layers.Length];
+        Span<int> sortRanks = layers.Length <= MaxStackLayers
+            ? stackalloc int[layers.Length]
+            : new int[layers.Length];
         for (var layerIndex = 0; layerIndex < layers.Length; layerIndex++)
         {
-            sortKeys[layerIndex] = layers[layerIndex].LayerId ??
-                layers[layerIndex].Color.SourcePath;
-        }
-        var sortedKeys = sortKeys.Order(StringComparer.Ordinal).ToArray();
-        var sortRanks = new int[layers.Length];
-        for (var layerIndex = 0; layerIndex < layers.Length; layerIndex++)
-            sortRanks[layerIndex] = Array.BinarySearch(sortedKeys, sortKeys[layerIndex], StringComparer.Ordinal);
-
-        var result = new SKColor[checked(layers[0].Color.Width * layers[0].Color.Height)];
-        var ordered = new LayerPixel[layers.Length];
-        for (var pixelIndex = 0; pixelIndex < result.Length; pixelIndex++)
-        {
-            var activeCount = 0;
-            for (var layerIndex = 0; layerIndex < layers.Length; layerIndex++)
+            var layerId = GetLayerId(layers[layerIndex]);
+            var rank = 0;
+            for (var candidateIndex = 0; candidateIndex < layers.Length; candidateIndex++)
             {
-                var color = layers[layerIndex].Color.GetPixelUnchecked(pixelIndex);
-                if (color.Alpha == 0)
-                    continue;
-
-                InsertBackToFront(
-                    ordered,
-                    ref activeCount,
-                    new LayerPixel(
-                        DecodeDepth(layers[layerIndex].Depth.GetPixelUnchecked(pixelIndex)),
-                        sortRanks[layerIndex],
-                        color));
+                if (StringComparer.Ordinal.Compare(
+                        GetLayerId(layers[candidateIndex]),
+                        layerId) < 0)
+                {
+                    rank++;
+                }
             }
-            result[pixelIndex] = Compose(ordered, activeCount);
+            sortRanks[layerIndex] = rank;
         }
 
-        return Texture2D.CreateGenerated(
+        var result = Texture2D.CreateUninitializedGenerated(
             $"depth-composite:{layers.Length}:{layers[0].Color.SourcePath}",
             layers[0].Color.Width,
-            layers[0].Color.Height,
-            result);
+            layers[0].Color.Height);
+        try
+        {
+            Span<LayerPixel> ordered = layers.Length <= MaxStackLayers
+                ? stackalloc LayerPixel[layers.Length]
+                : new LayerPixel[layers.Length];
+            var output = result.WritablePixelSpan;
+            for (var pixelIndex = 0; pixelIndex < output.Length; pixelIndex++)
+            {
+                var activeCount = 0;
+                for (var layerIndex = 0; layerIndex < layers.Length; layerIndex++)
+                {
+                    var color = layers[layerIndex].Color.GetPixelUnchecked(pixelIndex);
+                    if (color.Alpha == 0)
+                        continue;
+
+                    InsertBackToFront(
+                        ordered,
+                        ref activeCount,
+                        new LayerPixel(
+                            DecodeDepth(layers[layerIndex].Depth.GetPixelUnchecked(pixelIndex)),
+                            sortRanks[layerIndex],
+                            color));
+                }
+                output[pixelIndex] = Compose(ordered, activeCount);
+            }
+            return result;
+        }
+        catch
+        {
+            result.Dispose();
+            throw;
+        }
     }
 
     public static RootedTexture2D CreateSparse(
@@ -63,12 +82,19 @@ public static class DepthCompositeTexture2D
         options ??= new SparseCompositionOptions2D();
         ValidateSparseLayers(layers, context, options);
 
-        var left = layers.Min(layer => (long)layer.Origin.X);
-        var top = layers.Min(layer => (long)layer.Origin.Y);
-        var right = layers.Max(layer =>
-            (long)layer.Origin.X + layer.AtlasRectangle.Width);
-        var bottom = layers.Max(layer =>
-            (long)layer.Origin.Y + layer.AtlasRectangle.Height);
+        var firstLayer = layers[0];
+        var left = (long)firstLayer.Origin.X;
+        var top = (long)firstLayer.Origin.Y;
+        var right = left + firstLayer.AtlasRectangle.Width;
+        var bottom = top + firstLayer.AtlasRectangle.Height;
+        for (var layerIndex = 1; layerIndex < layers.Count; layerIndex++)
+        {
+            var layer = layers[layerIndex];
+            left = Math.Min(left, layer.Origin.X);
+            top = Math.Min(top, layer.Origin.Y);
+            right = Math.Max(right, (long)layer.Origin.X + layer.AtlasRectangle.Width);
+            bottom = Math.Max(bottom, (long)layer.Origin.Y + layer.AtlasRectangle.Height);
+        }
         var width64 = right - left;
         var height64 = bottom - top;
         if (width64 <= 0 || height64 <= 0 ||
@@ -85,92 +111,100 @@ public static class DepthCompositeTexture2D
 
         var width = (int)width64;
         var height = (int)height64;
-        var output = new SKColor[checked(width * height)];
-        var ordered = new LayerPixel[layers.Count];
-        var sortedLayerIds = layers
-            .Select(layer => layer.LayerId)
-            .Order(StringComparer.Ordinal)
-            .ToArray();
-        var sortRanks = new int[layers.Count];
+        Span<int> sortRanks = layers.Count <= MaxStackLayers
+            ? stackalloc int[layers.Count]
+            : new int[layers.Count];
         for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
         {
-            sortRanks[layerIndex] = Array.BinarySearch(
-                sortedLayerIds,
-                layers[layerIndex].LayerId,
-                StringComparer.Ordinal);
-        }
-        for (var outputY = 0; outputY < height; outputY++)
-        {
-            var rootY = top + outputY;
-            for (var outputX = 0; outputX < width; outputX++)
+            var rank = 0;
+            for (var candidateIndex = 0; candidateIndex < layers.Count; candidateIndex++)
             {
-                var rootX = left + outputX;
-                var activeCount = 0;
-                for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
+                if (StringComparer.Ordinal.Compare(
+                        layers[candidateIndex].LayerId,
+                        layers[layerIndex].LayerId) < 0)
                 {
-                    var layer = layers[layerIndex];
-                    var localX = rootX - layer.Origin.X;
-                    var localY = rootY - layer.Origin.Y;
-                    if ((ulong)localX >= (ulong)layer.AtlasRectangle.Width ||
-                        (ulong)localY >= (ulong)layer.AtlasRectangle.Height)
+                    rank++;
+                }
+            }
+            sortRanks[layerIndex] = rank;
+        }
+
+        var sourceName =
+            $"sparse-depth-composite:{context.AnimationId}:{context.FacingId}:" +
+            $"{context.SampleIndex}:{layers.Count}";
+        var trim = options.AlphaTrim
+            ? FindSparseAlphaBounds(
+                layers,
+                left,
+                top,
+                width,
+                height,
+                options.AlphaTrimPadding)
+            : new SKRectI(0, 0, width, height);
+        var texture = Texture2D.CreateUninitializedGenerated(
+            sourceName,
+            trim.Width,
+            trim.Height);
+        try
+        {
+            Span<LayerPixel> ordered = layers.Count <= MaxStackLayers
+                ? stackalloc LayerPixel[layers.Count]
+                : new LayerPixel[layers.Count];
+            var output = texture.WritablePixelSpan;
+            for (var outputY = 0; outputY < trim.Height; outputY++)
+            {
+                var rootY = top + trim.Top + outputY;
+                for (var outputX = 0; outputX < trim.Width; outputX++)
+                {
+                    var rootX = left + trim.Left + outputX;
+                    var activeCount = 0;
+                    for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
                     {
-                        continue;
+                        var layer = layers[layerIndex];
+                        var localX = rootX - layer.Origin.X;
+                        var localY = rootY - layer.Origin.Y;
+                        if ((ulong)localX >= (ulong)layer.AtlasRectangle.Width ||
+                            (ulong)localY >= (ulong)layer.AtlasRectangle.Height)
+                        {
+                            continue;
+                        }
+
+                        var atlasX = layer.AtlasRectangle.Left + (int)localX;
+                        var atlasY = layer.AtlasRectangle.Top + (int)localY;
+                        var color = layer.ColorAtlas.GetPixelUnchecked(
+                            atlasY * layer.ColorAtlas.Width + atlasX);
+                        if (color.Alpha == 0)
+                            continue;
+
+                        var depth = layer.DepthAtlas.Pixels[
+                            atlasY * layer.DepthAtlas.Width + atlasX];
+                        InsertBackToFront(
+                            ordered,
+                            ref activeCount,
+                            new LayerPixel(depth, sortRanks[layerIndex], color));
                     }
 
-                    var atlasX = layer.AtlasRectangle.Left + (int)localX;
-                    var atlasY = layer.AtlasRectangle.Top + (int)localY;
-                    var color = layer.ColorAtlas.GetPixelUnchecked(
-                        atlasY * layer.ColorAtlas.Width + atlasX);
-                    if (color.Alpha == 0)
-                        continue;
-
-                    var depth = layer.DepthAtlas.Pixels[
-                        atlasY * layer.DepthAtlas.Width + atlasX];
-                    InsertBackToFront(
-                        ordered,
-                        ref activeCount,
-                        new LayerPixel(depth, sortRanks[layerIndex], color));
+                    output[outputY * trim.Width + outputX] =
+                        Compose(ordered, activeCount);
                 }
-                output[outputY * width + outputX] = Compose(ordered, activeCount);
             }
+
+            var origin = new SKPointI(
+                checked((int)left + trim.Left),
+                checked((int)top + trim.Top));
+            return new RootedTexture2D(texture, origin);
         }
-
-        var trim = options.AlphaTrim
-            ? FindAlphaBounds(output, width, height, options.AlphaTrimPadding)
-            : new SKRectI(0, 0, width, height);
-        var trimmedPixels = trim.Left == 0 && trim.Top == 0 &&
-            trim.Width == width && trim.Height == height
-                ? output
-                : Crop(output, width, trim);
-        var origin = new SKPointI(
-            checked((int)left + trim.Left),
-            checked((int)top + trim.Top));
-        var texture = Texture2D.CreateGenerated(
-            $"sparse-depth-composite:{context.AnimationId}:{context.FacingId}:" +
-            $"{context.SampleIndex}:{layers.Count}",
-            trim.Width,
-            trim.Height,
-            trimmedPixels);
-        return new RootedTexture2D(texture, origin);
-    }
-
-    private static SKColor[] Crop(SKColor[] source, int sourceWidth, SKRectI rectangle)
-    {
-        var result = new SKColor[checked(rectangle.Width * rectangle.Height)];
-        for (var y = 0; y < rectangle.Height; y++)
+        catch
         {
-            Array.Copy(
-                source,
-                (rectangle.Top + y) * sourceWidth + rectangle.Left,
-                result,
-                y * rectangle.Width,
-                rectangle.Width);
+            texture.Dispose();
+            throw;
         }
-        return result;
     }
 
-    private static SKRectI FindAlphaBounds(
-        SKColor[] pixels,
+    private static SKRectI FindSparseAlphaBounds(
+        IReadOnlyList<SparseDepthTextureLayer2D> layers,
+        long compositionLeft,
+        long compositionTop,
         int width,
         int height,
         int padding)
@@ -179,18 +213,31 @@ public static class DepthCompositeTexture2D
         var top = height;
         var right = -1;
         var bottom = -1;
-        for (var y = 0; y < height; y++)
+        for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
         {
-            for (var x = 0; x < width; x++)
+            var layer = layers[layerIndex];
+            var rectangle = layer.AtlasRectangle;
+            for (var localY = 0; localY < rectangle.Height; localY++)
             {
-                if (pixels[y * width + x].Alpha == 0)
-                    continue;
-                left = Math.Min(left, x);
-                top = Math.Min(top, y);
-                right = Math.Max(right, x);
-                bottom = Math.Max(bottom, y);
+                var atlasRow = (rectangle.Top + localY) * layer.ColorAtlas.Width;
+                for (var localX = 0; localX < rectangle.Width; localX++)
+                {
+                    if (layer.ColorAtlas.GetPixelUnchecked(
+                            atlasRow + rectangle.Left + localX).Alpha == 0)
+                    {
+                        continue;
+                    }
+
+                    var outputX = checked((int)(layer.Origin.X - compositionLeft + localX));
+                    var outputY = checked((int)(layer.Origin.Y - compositionTop + localY));
+                    left = Math.Min(left, outputX);
+                    top = Math.Min(top, outputY);
+                    right = Math.Max(right, outputX);
+                    bottom = Math.Max(bottom, outputY);
+                }
             }
         }
+
         if (right < left)
             return new SKRectI(0, 0, 1, 1);
         return new SKRectI(
@@ -201,7 +248,7 @@ public static class DepthCompositeTexture2D
     }
 
     private static void InsertBackToFront(
-        LayerPixel[] ordered,
+        Span<LayerPixel> ordered,
         ref int activeCount,
         LayerPixel value)
     {
@@ -223,7 +270,7 @@ public static class DepthCompositeTexture2D
             : first.SortRank.CompareTo(second.SortRank);
     }
 
-    private static SKColor Compose(LayerPixel[] ordered, int activeCount)
+    private static SKColor Compose(ReadOnlySpan<LayerPixel> ordered, int activeCount)
     {
         if (activeCount == 0)
             return new SKColor(0, 0, 0, 0);
@@ -268,6 +315,9 @@ public static class DepthCompositeTexture2D
     private static int DecodeDepth(SKColor color) =>
         color.Red << 8 | color.Green;
 
+    private static string GetLayerId(DepthTextureLayer2D layer) =>
+        layer.LayerId ?? layer.Color.SourcePath;
+
     private static byte ToByte(double value) =>
         (byte)Math.Round(Math.Clamp(value, 0d, 1d) * 255d, MidpointRounding.ToEven);
 
@@ -303,13 +353,21 @@ public static class DepthCompositeTexture2D
                 "Composition limits must be positive and trim padding cannot be negative.");
         }
 
-        var layerIds = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var layer in layers)
+        for (var layerIndex = 0; layerIndex < layers.Count; layerIndex++)
         {
+            var layer = layers[layerIndex];
             if (string.IsNullOrWhiteSpace(layer.LayerId))
                 throw Failure(context, "<unknown>", "layer ID is missing");
-            if (!layerIds.Add(layer.LayerId))
-                throw Failure(context, layer.LayerId, "layer ID is duplicated");
+            for (var priorIndex = 0; priorIndex < layerIndex; priorIndex++)
+            {
+                if (string.Equals(
+                        layers[priorIndex].LayerId,
+                        layer.LayerId,
+                        StringComparison.Ordinal))
+                {
+                    throw Failure(context, layer.LayerId, "layer ID is duplicated");
+                }
+            }
             if (layer.ColorAtlas is null)
                 throw Failure(context, layer.LayerId, "color atlas data is missing");
             if (layer.DepthAtlas is null)

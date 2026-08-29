@@ -305,8 +305,10 @@ internal sealed class SideScrollerTerrainTilesetResolver2D(Func<int, int, SideSc
 {
     private readonly Func<int, int, SideScrollerTerrainTileset2D> _resolve = ArgGuard.RequireNotNull(resolve);
 
-    public SideScrollerTerrainTileset2D GetTileset(int tileX, int tileY) =>
-        StateGuard.RequireNotNull(_resolve(tileX, tileY), "The terrain tileset resolver returned no tileset.");
+    public SideScrollerTerrainTileset2D GetTileset(int tileX, int tileY)
+    {
+        return StateGuard.RequireNotNull(_resolve(tileX, tileY), "The terrain tileset resolver returned no tileset.");
+    }
 
     public bool UsesSameTileset(int firstTileX, int firstTileY, int secondTileX, int secondTileY)
     {

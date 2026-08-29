@@ -7,44 +7,26 @@ using App2d.Gameplay.Audio;
 
 namespace App2d.Gameplay;
 
-internal abstract class MeleePlayerWeapon2D : PlayerWeapon2DBase
+internal abstract class MeleePlayerWeapon2D(
+    string name,
+    string equipmentId,
+    Texture2D hudTexture,
+    PhysicsBody2D ownerBody,
+    IShape2D hitboxShape,
+    MeleeAttackProfile2D attackProfile,
+    int damage,
+    Vector2 knockback,
+    CombatSystem2D combat,
+    PlayerPresentation2D presentation,
+    ISoundEffectSink2D sounds,
+    SoundEffect2D swingSound = SoundEffect2D.SwordSwing,
+    SoundEffect2D impactSound = SoundEffect2D.SwordHit) : PlayerWeapon2DBase(name, equipmentId, hudTexture)
 {
-    private readonly PhysicsBody2D _ownerBody;
-    private readonly CombatSystem2D _combat;
-    private readonly PlayerPresentation2D _presentation;
-    private readonly ISoundEffectSink2D _sounds;
-    private readonly int _damage;
-    private readonly Vector2 _knockback;
-    private readonly SoundEffect2D _swingSound;
-    private readonly SoundEffect2D _impactSound;
-    private readonly MeleeAttack2D _attack;
-
-    protected MeleePlayerWeapon2D(
-        string name,
-        string equipmentId,
-        Texture2D hudTexture,
-        PhysicsBody2D ownerBody,
-        IShape2D hitboxShape,
-        MeleeAttackProfile2D attackProfile,
-        int damage,
-        Vector2 knockback,
-        CombatSystem2D combat,
-        PlayerPresentation2D presentation,
-        ISoundEffectSink2D sounds,
-        SoundEffect2D swingSound = SoundEffect2D.SwordSwing,
-        SoundEffect2D impactSound = SoundEffect2D.SwordHit)
-        : base(name, equipmentId, hudTexture)
-    {
-        _ownerBody = ArgGuard.RequireNotNull(ownerBody);
-        _combat = ArgGuard.RequireNotNull(combat);
-        _presentation = ArgGuard.RequireNotNull(presentation);
-        _sounds = ArgGuard.RequireNotNull(sounds);
-        _damage = damage;
-        _knockback = knockback;
-        _swingSound = swingSound;
-        _impactSound = impactSound;
-        _attack = new MeleeAttack2D(new SpatialObject2D(hitboxShape), attackProfile);
-    }
+    private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
+    private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
+    private readonly PlayerPresentation2D _presentation = ArgGuard.RequireNotNull(presentation);
+    private readonly ISoundEffectSink2D _sounds = ArgGuard.RequireNotNull(sounds);
+    private readonly MeleeAttack2D _attack = new(new SpatialObject2D(hitboxShape), attackProfile);
 
     public bool IsAttackActive => _attack.IsActive;
 
@@ -62,7 +44,7 @@ internal abstract class MeleePlayerWeapon2D : PlayerWeapon2DBase
         if (_attack.TryStart())
         {
             _presentation.PlayMeleeAttack();
-            _sounds.Play(_swingSound);
+            _sounds.Play(swingSound);
         }
         return facing;
     }
@@ -73,14 +55,9 @@ internal abstract class MeleePlayerWeapon2D : PlayerWeapon2DBase
     public override void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
         _attack.Update(deltaSeconds, _ownerBody.WorldObject.Transform.Position, facing);
-        if (_attack.IsActive && _combat.ResolveAttack(
-                _attack.WorldObject,
-                _attack,
-                _attack.AttackId,
-                _damage,
-                _ => new Vector2(facing * _knockback.X, _knockback.Y)))
+        if (_attack.IsActive && _combat.ResolveAttack(_attack.WorldObject, _attack, _attack.AttackId, damage, _ => new Vector2(facing * knockback.X, knockback.Y)))
         {
-            _sounds.Play(_impactSound);
+            _sounds.Play(impactSound);
         }
     }
 }

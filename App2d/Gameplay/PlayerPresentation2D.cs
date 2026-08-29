@@ -202,15 +202,10 @@ public sealed class PlayerPresentation2D : IDisposable
 
         _animation.Update(deltaSeconds);
         UpdateVisualShader(facing);
-        var activeClip = StateGuard.RequireNotNull(
-            _animation.Clip,
-            "The player presentation requires an active animation clip.");
+        var activeClip = StateGuard.RequireNotNull(_animation.Clip, "The player presentation requires an active animation clip.");
         var (Right, Left) = _horizontalRootOffsetFractions[activeClip];
-        var horizontalRootOffset = (facing < 0f ? Left : Right) *
-            _visualWidth;
-        _visual.Transform.Position = playerPosition + _visualOffset +
-            new Vector2(horizontalRootOffset, 0f) +
-            (isDucking ? new Vector2(0f, _duckVisualOffsetY) : Vector2.Zero);
+        var horizontalRootOffset = (facing < 0f ? Left : Right) * _visualWidth;
+        _visual.Transform.Position = playerPosition + _visualOffset + new Vector2(horizontalRootOffset, 0f) + (isDucking ? new Vector2(0f, _duckVisualOffsetY) : Vector2.Zero);
         _visual.IsVisible = invulnerabilitySeconds <= 0f || frameNumber % 12 < 6;
     }
 
@@ -230,44 +225,22 @@ public sealed class PlayerPresentation2D : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private AnimationClip2D<Texture2D> LoadAnimation(
-        TextureCache2D textures,
-        string animationId)
+    private AnimationClip2D<Texture2D> LoadAnimation(TextureCache2D textures, string animationId)
     {
-        var animation = CharacterAnimationAssets2D.LoadClip(
-            textures,
-            "player",
-            animationId);
+        var animation = CharacterAnimationAssets2D.LoadClip(textures, "player", animationId);
         var additionalEquipmentIds = animationId == "shield-block"
             ? new[] { ShieldEquipmentId }
             : [];
         _equippedAnimations.Add(
             animation,
-            new EquippedAnimationDefinition2D(
-                animationId,
-                animation.FrameCount,
-                additionalEquipmentIds));
+            new EquippedAnimationDefinition2D(animationId, animation.FrameCount, additionalEquipmentIds));
         _horizontalRootOffsetFractions.Add(
             animation,
-            (
-                CharacterAnimationAssets2D.LoadHorizontalRootOffsetFraction(
-                    textures,
-                    "player",
-                    animationId,
-                    "right"),
-                CharacterAnimationAssets2D.LoadHorizontalRootOffsetFraction(
-                    textures,
-                    "player",
-                    animationId,
-                    "left")));
+            (CharacterAnimationAssets2D.LoadHorizontalRootOffsetFraction(textures, "player", animationId, "right"),
+             CharacterAnimationAssets2D.LoadHorizontalRootOffsetFraction(textures, "player", animationId, "left")));
         _leftCharacterFrames.Add(
             animation,
-            DirectionalCharacterAnimationAssets2D.LoadFacing(
-                textures,
-                "player",
-                animationId,
-                "left",
-            animation.FrameCount));
+            DirectionalCharacterAnimationAssets2D.LoadFacing(textures, "player", animationId, "left", animation.FrameCount));
         return animation;
     }
 

@@ -8,14 +8,14 @@ namespace App2d.Engine.Rendering.Textures;
 /// </summary>
 public sealed class SpriteShader2D : IShader2D
 {
-    private readonly SKSamplingOptions _sampling;
+    private readonly SKFilterMode _filterMode;
     private Texture2D _texture;
 
     public SpriteShader2D(Texture2D texture, SKFilterMode filterMode = SKFilterMode.Linear)
     {
         ArgGuard.ThrowIfNull(texture);
         _texture = texture;
-        _sampling = new SKSamplingOptions(filterMode, SKMipmapMode.None);
+        _filterMode = filterMode;
     }
 
     public Texture2D Texture
@@ -32,7 +32,7 @@ public sealed class SpriteShader2D : IShader2D
     public bool FlipY { get; set; }
     public SKColor BaseColor => SKColors.White;
 
-    public SKShader CreateShader(in ShaderContext context)
+    public ShaderLease2D AcquireShader(in ShaderContext context)
     {
         StateGuard.ThrowIf(
             !context.LocalBounds.IsFinite,
@@ -41,16 +41,13 @@ public sealed class SpriteShader2D : IShader2D
         var bounds = context.LocalBounds;
         var scaleX = bounds.Size.X / Texture.Width;
         var scaleY = bounds.Size.Y / Texture.Height;
-        var textureToLocal = SKMatrix.CreateScaleTranslation(
+        return ShaderLease2D.Borrowed(Texture.GetImageShader(
+            SKShaderTileMode.Clamp,
+            SKShaderTileMode.Clamp,
+            _filterMode,
             FlipX ? -scaleX : scaleX,
             FlipY ? scaleY : -scaleY,
             FlipX ? bounds.Max.X : bounds.Min.X,
-            FlipY ? bounds.Min.Y : bounds.Max.Y);
-
-        return Texture.Bitmap.ToShader(
-            SKShaderTileMode.Clamp,
-            SKShaderTileMode.Clamp,
-            _sampling,
-            textureToLocal);
+            FlipY ? bounds.Min.Y : bounds.Max.Y));
     }
 }

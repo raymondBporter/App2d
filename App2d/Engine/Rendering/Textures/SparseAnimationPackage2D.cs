@@ -80,10 +80,12 @@ public sealed class SparseAnimationPackage2D : IDisposable
     private readonly PackageManifest _manifest;
     private readonly SparseAtlasPageLease2D?[] _atlasPages;
     private readonly Dictionary<CompositeKey, CachedFrame> _cache = [];
+    private readonly Dictionary<SparseAnimationFrame2D, CachedFrame> _ownedFrames = [];
     private readonly LinkedList<CompositeKey> _recency = [];
     private readonly long _cacheBudgetBytes;
     private readonly SparseCompositionOptions2D _compositionOptions;
     private long _cacheBytes;
+    private long _retainedEvictedBytes;
     private bool _sourceAtlasesReleased;
     private bool _disposed;
     public string ManifestPath { get; }
@@ -92,11 +94,13 @@ public sealed class SparseAnimationPackage2D : IDisposable
     public IReadOnlyCollection<string> AnimationIds => _manifest.Animations.Keys;
     public SKSizeI CanvasSize => new(_manifest.Canvas[0], _manifest.Canvas[1]);
     public long CachedByteCount => _cacheBytes;
+    public long RetainedEvictedByteCount => _retainedEvictedBytes;
     public int CachedFrameCount => _cache.Count;
     public long ResidentAtlasByteCount => _atlasPages
         .Where(page => page is not null)
         .Sum(page => checked((long)page!.Color.Width * page.Color.Height * 6L));
-    public long TotalResidentByteCount => CachedByteCount + ResidentAtlasByteCount;
+    public long TotalResidentByteCount =>
+        CachedByteCount + RetainedEvictedByteCount + ResidentAtlasByteCount;
     public bool SourceAtlasesReleased => _sourceAtlasesReleased;
 
     public int GetSampleCount(string animationId, string facingId) =>
@@ -180,6 +184,58 @@ public sealed class SparseAnimationPackage2D : IDisposable
         float elapsedSeconds,
         out SparseAnimationFrame2D? frame,
         IReadOnlyCollection<string>? participatingLayerIds = null)
+        => TryResolveFrameAtTime(
+            animationId,
+            facingId,
+            elapsedSeconds,
+            retain: false,
+            out frame,
+            participatingLayerIds);
+
+    /// <summary>
+    /// Gets and retains a frame so LRU eviction cannot dispose its texture while
+    /// a renderer still references it. Every successful call must be paired with
+    /// <see cref="ReleaseRetainedFrame"/>.
+    /// </summary>
+    public bool TryRetainFrameAtTime(
+        string animationId,
+        string facingId,
+        float elapsedSeconds,
+        out SparseAnimationFrame2D? frame,
+        IReadOnlyCollection<string>? participatingLayerIds = null)
+        => TryResolveFrameAtTime(
+            animationId,
+            facingId,
+            elapsedSeconds,
+            retain: true,
+            out frame,
+            participatingLayerIds);
+
+    public void ReleaseRetainedFrame(SparseAnimationFrame2D frame)
+    {
+        ArgGuard.ThrowIfNull(frame);
+        lock (_sync)
+        {
+            if (!_ownedFrames.TryGetValue(frame, out var cached) ||
+                cached.RetentionCount <= 0)
+            {
+                throw new InvalidOperationException(
+                    "The sparse animation frame is not retained by this package.");
+            }
+
+            cached.RetentionCount--;
+            if (cached.RetentionCount == 0 && cached.IsEvicted)
+                DisposeEvictedFrame(cached);
+        }
+    }
+
+    private bool TryResolveFrameAtTime(
+        string animationId,
+        string facingId,
+        float elapsedSeconds,
+        bool retain,
+        out SparseAnimationFrame2D? frame,
+        IReadOnlyCollection<string>? participatingLayerIds)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgGuard.ThrowIfNegativeOrNotFinite(elapsedSeconds);
@@ -203,7 +259,16 @@ public sealed class SparseAnimationPackage2D : IDisposable
                 high = middle;
         }
         var sampleIndex = Math.Max(0, low - 1);
-        frame = GetFrame(animationId, facingId, sampleIndex, participatingLayerIds);
+        lock (_sync)
+        {
+            frame = GetFrameCore(
+                animationId,
+                facingId,
+                sampleIndex,
+                participatingLayerIds);
+            if (retain)
+                _ownedFrames[frame].RetentionCount++;
+        }
         return true;
     }
 
@@ -295,7 +360,7 @@ public sealed class SparseAnimationPackage2D : IDisposable
                 new PackageLocation(animationId, facingId, sampleIndex, null),
                 "no participating layers were requested");
         }
-        if (layerIds.Distinct(StringComparer.Ordinal).Count() != layerIds.Length)
+        if (participatingLayerIds is not null && HasAdjacentDuplicate(layerIds))
         {
             throw PackageFailure(
                 new PackageLocation(animationId, facingId, sampleIndex, null),
@@ -465,7 +530,9 @@ public sealed class SparseAnimationPackage2D : IDisposable
             RemoveCached(oldest.Value);
         var node = _recency.AddLast(key);
         var participants = layerIds.ToHashSet(StringComparer.Ordinal);
-        _cache.Add(key, new CachedFrame(frame, bytes, node, participants));
+        var cached = new CachedFrame(frame, bytes, node, participants);
+        _cache.Add(key, cached);
+        _ownedFrames.Add(frame, cached);
         _cacheBytes += bytes;
     }
 
@@ -475,16 +542,50 @@ public sealed class SparseAnimationPackage2D : IDisposable
             return;
         _recency.Remove(cached.RecencyNode);
         _cacheBytes -= cached.ByteCount;
-        cached.Frame.Texture.Dispose();
+        cached.IsEvicted = true;
+        if (cached.RetentionCount == 0)
+        {
+            DisposeEvictedFrame(cached);
+        }
+        else
+        {
+            cached.IsCountedAsRetainedEvicted = true;
+            _retainedEvictedBytes += cached.ByteCount;
+        }
     }
 
     private void ClearCache()
     {
-        foreach (var frame in _cache.Values)
-            frame.Frame.Texture.Dispose();
+        foreach (var cached in _cache.Values)
+        {
+            cached.IsEvicted = true;
+            if (cached.RetentionCount == 0)
+            {
+                DisposeEvictedFrame(cached);
+            }
+            else
+            {
+                cached.IsCountedAsRetainedEvicted = true;
+                _retainedEvictedBytes += cached.ByteCount;
+            }
+        }
         _cache.Clear();
         _recency.Clear();
         _cacheBytes = 0;
+    }
+
+    private void DisposeEvictedFrame(CachedFrame cached)
+    {
+        if (!_ownedFrames.Remove(cached.Frame))
+            return;
+        if (cached.RetentionCount != 0 || !cached.IsEvicted)
+            StateGuard.Throw("Only unretained evicted sparse frames can be disposed.");
+        if (cached.IsCountedAsRetainedEvicted)
+        {
+            _retainedEvictedBytes -= cached.ByteCount;
+            cached.IsCountedAsRetainedEvicted = false;
+        }
+        cached.Frame.Texture.Dispose();
     }
 
     private static void ValidateManifest(PackageManifest manifest, string manifestPath)
@@ -678,6 +779,21 @@ public sealed class SparseAnimationPackage2D : IDisposable
     private static SKRectI ToRectangle(int[] values) =>
         new(values[0], values[1], checked(values[0] + values[2]), checked(values[1] + values[3]));
 
+    private static bool HasAdjacentDuplicate(ReadOnlySpan<string> sortedValues)
+    {
+        for (var index = 1; index < sortedValues.Length; index++)
+        {
+            if (string.Equals(
+                    sortedValues[index - 1],
+                    sortedValues[index],
+                    StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static string ResolvePackagePath(string packageRoot, string relativePath)
     {
         if (Path.IsPathRooted(relativePath))
@@ -698,8 +814,12 @@ public sealed class SparseAnimationPackage2D : IDisposable
     private static void AssetNameGuard(string value, string parameterName)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(value, parameterName);
-        if (value.IndexOfAny([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar]) >= 0)
+        if (value.Contains(Path.DirectorySeparatorChar) ||
+            (Path.AltDirectorySeparatorChar != Path.DirectorySeparatorChar &&
+             value.Contains(Path.AltDirectorySeparatorChar)))
+        {
             throw new ArgumentException("Asset name cannot contain path separators.", parameterName);
+        }
     }
 
     private static InvalidDataException PackageFailure(
@@ -714,11 +834,20 @@ public sealed class SparseAnimationPackage2D : IDisposable
             innerException);
     }
 
-    private sealed record CachedFrame(
-        SparseAnimationFrame2D Frame,
-        long ByteCount,
-        LinkedListNode<CompositeKey> RecencyNode,
-        HashSet<string> ParticipatingLayers);
+    private sealed class CachedFrame(
+        SparseAnimationFrame2D frame,
+        long byteCount,
+        LinkedListNode<CompositeKey> recencyNode,
+        HashSet<string> participatingLayers)
+    {
+        public SparseAnimationFrame2D Frame { get; } = frame;
+        public long ByteCount { get; } = byteCount;
+        public LinkedListNode<CompositeKey> RecencyNode { get; } = recencyNode;
+        public HashSet<string> ParticipatingLayers { get; } = participatingLayers;
+        public int RetentionCount { get; set; }
+        public bool IsEvicted { get; set; }
+        public bool IsCountedAsRetainedEvicted { get; set; }
+    }
 
     private readonly record struct CompositeKey(
         string AnimationId,

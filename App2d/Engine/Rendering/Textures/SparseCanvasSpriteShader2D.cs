@@ -9,7 +9,7 @@ namespace App2d.Engine.Rendering.Textures;
 /// </summary>
 public sealed class SparseCanvasSpriteShader2D : IShader2D
 {
-    private readonly SKSamplingOptions _sampling;
+    private readonly SKFilterMode _filterMode;
     private SparseAnimationFrame2D _frame;
 
     public SparseCanvasSpriteShader2D(
@@ -23,7 +23,7 @@ public sealed class SparseCanvasSpriteShader2D : IShader2D
         _frame = frame;
         SourceCanvasSize = sourceCanvasSize;
         SourceRoot = sourceRoot;
-        _sampling = new SKSamplingOptions(filterMode, SKMipmapMode.None);
+        _filterMode = filterMode;
     }
 
     public SparseAnimationFrame2D Frame
@@ -52,7 +52,7 @@ public sealed class SparseCanvasSpriteShader2D : IShader2D
         SourceRoot = sourceRoot;
     }
 
-    public SKShader CreateShader(in ShaderContext context)
+    public ShaderLease2D AcquireShader(in ShaderContext context)
     {
         StateGuard.ThrowIf(
             !context.LocalBounds.IsFinite,
@@ -60,16 +60,14 @@ public sealed class SparseCanvasSpriteShader2D : IShader2D
         var bounds = context.LocalBounds;
         var scaleX = bounds.Size.X / SourceCanvasSize.Width;
         var scaleY = bounds.Size.Y / SourceCanvasSize.Height;
-        var textureToLocal = SKMatrix.CreateScaleTranslation(
+        return ShaderLease2D.Borrowed(Frame.Texture.GetImageShader(
+            SKShaderTileMode.Decal,
+            SKShaderTileMode.Decal,
+            _filterMode,
             scaleX,
             -scaleY,
             bounds.Min.X + (SourceRoot.X + Frame.Origin.X) * scaleX,
-            bounds.Max.Y - (SourceRoot.Y + Frame.Origin.Y) * scaleY);
-        return Frame.Texture.Bitmap.ToShader(
-            SKShaderTileMode.Decal,
-            SKShaderTileMode.Decal,
-            _sampling,
-            textureToLocal);
+            bounds.Max.Y - (SourceRoot.Y + Frame.Origin.Y) * scaleY));
     }
 
     private static void ValidateSource(SKSizeI canvas, SKPointI root)

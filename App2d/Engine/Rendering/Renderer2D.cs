@@ -18,6 +18,11 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         Color = new SKColor(20, 28, 43, 220),
         IsAntialias = true
     };
+    private readonly SKPaint _worldPaint = new()
+    {
+        IsAntialias = true,
+        Style = SKPaintStyle.Fill
+    };
     private SKCanvas? _canvas;
     private FrameTime _time;
     private Bounds2D _visibleWorldBounds;
@@ -94,15 +99,15 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         var shaderBounds = worldObject.Shape.LocalBounds.IsFinite
             ? worldObject.Shape.LocalBounds
             : GetVisibleLocalBounds(objectToDevice);
+
         var shaderContext = new ShaderContext(objectToDevice, shaderBounds, _time);
-        using var shader = worldObject.Shader.CreateShader(shaderContext);
-        using var paint = new SKPaint
-        {
-            Color = worldObject.Shader.BaseColor,
-            Shader = shader,
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        };
+        using var shaderLease = worldObject.Shader.AcquireShader(shaderContext);
+        var paint = _worldPaint;
+        paint.Color = worldObject.Shader.BaseColor;
+        paint.Shader = shaderLease.Shader;
+        paint.Style = SKPaintStyle.Fill;
+        paint.StrokeWidth = 0f;
+        paint.StrokeCap = SKStrokeCap.Butt;
 
         var skiaMatrix = ToSkiaMatrix(objectToDevice);
         Canvas.Save();
@@ -133,6 +138,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         finally
         {
             Canvas.Restore();
+            paint.Shader = null;
         }
     }
 
@@ -288,6 +294,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         _hudFont.Dispose();
         _hudTextPaint.Dispose();
         _hudBackgroundPaint.Dispose();
+        _worldPaint.Dispose();
     }
 
     private SKCanvas Canvas => StateGuard.RequireNotNull(
