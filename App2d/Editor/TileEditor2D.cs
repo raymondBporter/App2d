@@ -15,15 +15,6 @@ internal sealed class TileEditor2D : IDisposable
 {
     private const float ZoomStep = 1.1f;
 
-    private static readonly TileKind2D[] SelectableKinds =
-    [
-        TileKind2D.Empty,
-        TileKind2D.Solid,
-        TileKind2D.OneWay,
-        TileKind2D.Solid | TileKind2D.Grippable,
-        TileKind2D.Spikes
-    ];
-
     private readonly EditableTileMap2D _map;
     private readonly Func<LevelDatabase2D> _openDatabase;
     private readonly Camera2D _camera;
@@ -42,6 +33,12 @@ internal sealed class TileEditor2D : IDisposable
     private int _lastPaintedX;
     private int _lastPaintedY;
     private bool _hasLastPainted;
+    private readonly List<MovingPlatformDefinitionRecord2D> _movingPlatformDefinitions = [];
+    private readonly List<MovingPlatformThingRecord2D> _movingPlatformThings = [];
+    private readonly Stack<Action<LevelDatabase2D>> _thingUndo = [];
+    private bool _isPlacingThing;
+    private ThingDragHandle2D _thingDragHandle;
+    private MovingPlatformThingRecord2D? _thingDragOriginal;
 
     /// <summary>
     /// <paramref name="openDatabase"/> opens a fresh read-write handle to the level file.
@@ -64,15 +61,43 @@ internal sealed class TileEditor2D : IDisposable
         _tileSize = tileSize;
         _session = new TileEditSession2D(map);
         SelectedKind = TileKind2D.Solid;
+        InspectorView = new ThingEditorInspector2D(this);
     }
 
     public bool IsActive { get; private set; }
+    public LevelEditorMode2D Mode { get; private set; }
     public TileKind2D SelectedKind { get; private set; }
+    public byte SelectedTilesetIndex { get; private set; }
+    public string SelectedTilesetId => _map.TilesetIds[SelectedTilesetIndex];
+    public IReadOnlyList<string> TilesetIds => _map.TilesetIds;
+    public Vector2 MouseDevicePosition => _lastMouseDevice;
     public Vector2 CameraFocus => _cameraFocus;
     public Bounds2D VisibleWorldBounds => _camera.VisibleWorldBounds;
+    public Vector2 VisibleDeviceSize => _camera.ViewportSize;
+    public float Zoom => _camera.Zoom;
+    public ThingEditorInspector2D InspectorView { get; }
+    public IReadOnlyList<MovingPlatformDefinitionRecord2D> MovingPlatformDefinitions => _movingPlatformDefinitions;
+    public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatformThings => _movingPlatformThings;
+    public long? SelectedDefinitionId { get; private set; }
+    public long? SelectedThingId { get; private set; }
+    public MovingPlatformThingRecord2D? SelectedThing =>
+        SelectedThingId is { } thingId
+            ? _movingPlatformThings.SingleOrDefault(item => item.ThingId == thingId)
+            : null;
+    public bool IsPlacingThing => _isPlacingThing;
+    public bool CanUndoThingEdit => _thingUndo.Count > 0;
+
+    public event Action<IReadOnlyList<MovingPlatformThingRecord2D>>? ThingsChanged;
 
     public bool TryGetHoveredTile(out int x, out int y)
     {
+        if (Mode != LevelEditorMode2D.Tiles || TileEditorMenu2D.Contains(_camera.ViewportSize, _lastMouseDevice))
+        {
+            x = 0;
+            y = 0;
+            return false;
+        }
+
         var world = _camera.DeviceToWorld(_lastMouseDevice);
         x = (int)MathF.Floor((world.X - _origin.X) / _tileSize);
         y = (int)MathF.Floor((world.Y - _origin.Y) / _tileSize);
@@ -94,9 +119,25 @@ internal sealed class TileEditor2D : IDisposable
             return;
 
         _lastMouseDevice = input.MousePositionDevice;
-        UpdateKindSelection(input);
-        UpdateCamera(input);
-        UpdatePainting(input);
+        if (Mode == LevelEditorMode2D.Things)
+        {
+            UpdateCamera(input, isPointerOverMenu: false);
+            UpdateThings(input);
+            if (input.IsControlDown && input.WasKeyPressed(Keys.Z))
+                UndoThingEdit();
+            _camera.Position = _cameraFocus;
+            return;
+        }
+
+        var isPointerOverMenu = TileEditorMenu2D.Contains(_camera.ViewportSize, _lastMouseDevice);
+        if (isPointerOverMenu && input.WasMousePressed(MouseButtons.Left))
+        {
+            EndStrokeIfActive();
+            TileEditorMenu2D.TrySelect(this, _camera.ViewportSize, _lastMouseDevice);
+        }
+
+        UpdateCamera(input, isPointerOverMenu);
+        UpdatePainting(input, isPointerOverMenu);
 
         // A stroke may still be in progress (mouse button held). TileEditSession2D.Undo()
         // throws if called mid-stroke, so ignore the request rather than let it crash the
@@ -107,26 +148,138 @@ internal sealed class TileEditor2D : IDisposable
         _camera.Position = _cameraFocus;
     }
 
-    private void UpdateKindSelection(InputState input)
+    internal void SelectTileset(int index)
     {
-        for (var index = 0; index < SelectableKinds.Length; index++)
+        if (index < 0 || index >= _map.TilesetIds.Count)
+            ArgGuard.ThrowOutOfRange(index, "Tileset selection must exist in the map catalog.");
+        SelectedTilesetIndex = (byte)index;
+    }
+
+    internal void SelectKind(TileKind2D kind) => SelectedKind = kind;
+
+    internal void SelectMode(LevelEditorMode2D mode)
+    {
+        EndStrokeIfActive();
+        CommitThingDrag();
+        Mode = mode;
+        _isPlacingThing = false;
+        InspectorView.Visible = IsActive && mode == LevelEditorMode2D.Things;
+        if (InspectorView.Visible)
         {
-            if (input.WasKeyPressed(Keys.D1 + index))
-                SelectedKind = SelectableKinds[index];
+            InspectorView.BringToFront();
+            InspectorView.RefreshFromEditor();
         }
     }
 
-    private void UpdateCamera(InputState input)
+    internal void SelectDefinition(long definitionId)
     {
+        StateGuard.ThrowIf(
+            _movingPlatformDefinitions.All(item => item.DefinitionId != definitionId),
+            $"Moving-platform definition {definitionId} is not loaded.");
+        SelectedDefinitionId = definitionId;
+        SelectedThingId = null;
+        _isPlacingThing = false;
+    }
+
+    internal void BeginThingPlacement()
+    {
+        StateGuard.ThrowIf(SelectedDefinitionId is null, "Select a moving-platform definition before placing it.");
+        SelectedThingId = null;
+        _isPlacingThing = true;
+        InspectorView.RefreshFromEditor();
+    }
+
+    internal void ApplyDefinition(long? definitionId, MovingPlatformDefinitionProperties2D properties)
+    {
+        ArgGuard.ThrowIfNull(properties);
+        var database = RequireDatabase();
+        var colorArgb = properties.Color.ToArgb();
+        var saved = definitionId is { } existingId
+            ? database.UpdateMovingPlatformDefinition(new MovingPlatformDefinitionRecord2D(
+                existingId,
+                properties.Name,
+                properties.Width,
+                properties.Height,
+                colorArgb))
+            : database.CreateMovingPlatformDefinition(
+                properties.Name,
+                properties.Width,
+                properties.Height,
+                colorArgb);
+        SelectedDefinitionId = saved.DefinitionId;
+        SelectedThingId = null;
+        ReloadThings(notifyRuntime: true);
+    }
+
+    internal void DeleteDefinition(long definitionId)
+    {
+        RequireDatabase().DeleteMovingPlatformDefinition(definitionId);
+        if (SelectedDefinitionId == definitionId)
+            SelectedDefinitionId = null;
+        ReloadThings(notifyRuntime: false);
+    }
+
+    internal void ApplyThing(long thingId, MovingPlatformInstanceProperties2D properties)
+    {
+        ArgGuard.ThrowIfNull(properties);
+        var old = _movingPlatformThings.SingleOrDefault(item => item.ThingId == thingId) ??
+            throw new InvalidOperationException($"Moving-platform thing {thingId} is not loaded.");
+        var updated = old with
+        {
+            Name = properties.Name,
+            Enabled = properties.Enabled,
+            X = properties.PositionX,
+            Y = properties.PositionY,
+            TravelX = properties.TravelX,
+            TravelY = properties.TravelY,
+            Speed = properties.Speed
+        };
+        RequireDatabase().UpdateMovingPlatform(updated);
+        _thingUndo.Push(database => database.UpdateMovingPlatform(old));
+        SelectedThingId = thingId;
+        ReloadThings(notifyRuntime: true);
+    }
+
+    internal void DeleteSelectedThing()
+    {
+        if (SelectedThingId is not { } thingId)
+            return;
+        var deleted = RequireDatabase().DeleteMovingPlatform(thingId);
+        _thingUndo.Push(database => database.RestoreMovingPlatform(deleted));
+        SelectedThingId = null;
+        ReloadThings(notifyRuntime: true);
+    }
+
+    internal bool TryGetPlacementPreview(out MovingPlatformDefinitionRecord2D definition, out Vector2 position)
+    {
+        definition = null!;
+        position = default;
+        if (!IsActive || Mode != LevelEditorMode2D.Things || !_isPlacingThing || SelectedDefinitionId is not { } definitionId)
+            return false;
+        definition = _movingPlatformDefinitions.SingleOrDefault(item => item.DefinitionId == definitionId)!;
+        if (definition is null)
+            return false;
+        position = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
+        return true;
+    }
+
+    private void UpdateCamera(InputState input, bool isPointerOverMenu)
+    {
+        if (input.WasMouseReleased(MouseButtons.Middle))
+            _isPanning = false;
+
+        if (isPointerOverMenu)
+        {
+            _isPanning = false;
+            return;
+        }
+
         if (input.WasMousePressed(MouseButtons.Middle))
         {
             _isPanning = true;
             _panAnchorDevice = input.MousePositionDevice;
             _panAnchorFocus = _cameraFocus;
         }
-
-        if (input.WasMouseReleased(MouseButtons.Middle))
-            _isPanning = false;
 
         if (_isPanning)
         {
@@ -146,8 +299,14 @@ internal sealed class TileEditor2D : IDisposable
         }
     }
 
-    private void UpdatePainting(InputState input)
+    private void UpdatePainting(InputState input, bool isPointerOverMenu)
     {
+        if (isPointerOverMenu)
+        {
+            EndStrokeIfActive();
+            return;
+        }
+
         var isPainting = input.IsMouseDown(MouseButtons.Left);
         var isErasing = input.IsMouseDown(MouseButtons.Right);
 
@@ -163,11 +322,13 @@ internal sealed class TileEditor2D : IDisposable
 
         if ((isPainting || isErasing) && _session.IsStrokeActive && TryGetHoveredTile(out var x, out var y))
         {
-            var kind = isErasing ? TileKind2D.Empty : SelectedKind;
+            var tile = isErasing
+                ? new TileCell2D(TileKind2D.Empty, 0)
+                : new TileCell2D(SelectedKind, SelectedTilesetIndex);
             if (_hasLastPainted)
-                _session.PaintLine(_lastPaintedX, _lastPaintedY, x, y, kind);
+                _session.PaintLine(_lastPaintedX, _lastPaintedY, x, y, tile);
             else
-                _session.Paint(x, y, kind);
+                _session.Paint(x, y, tile);
 
             _lastPaintedX = x;
             _lastPaintedY = y;
@@ -182,6 +343,177 @@ internal sealed class TileEditor2D : IDisposable
         if (_session.IsStrokeActive && !isPainting && !isErasing)
             EndStrokeIfActive();
     }
+
+    private void UpdateThings(InputState input)
+    {
+        if (_isPlacingThing && input.WasMousePressed(MouseButtons.Left))
+        {
+            PlaceThing();
+            return;
+        }
+
+        if (input.WasMousePressed(MouseButtons.Right))
+        {
+            _isPlacingThing = false;
+            InspectorView.RefreshFromEditor();
+            return;
+        }
+
+        if (input.WasMousePressed(MouseButtons.Left))
+            BeginThingSelectionOrDrag();
+
+        if (_thingDragHandle != ThingDragHandle2D.None && input.IsMouseDown(MouseButtons.Left))
+            UpdateThingDrag();
+
+        if (_thingDragHandle != ThingDragHandle2D.None && !input.IsMouseDown(MouseButtons.Left))
+            CommitThingDrag();
+    }
+
+    private void PlaceThing()
+    {
+        if (SelectedDefinitionId is not { } definitionId)
+            return;
+        var position = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
+        var created = RequireDatabase().CreateMovingPlatform(new NewMovingPlatformThing2D(
+            definitionId,
+            Name: null,
+            Enabled: true,
+            position.X,
+            position.Y,
+            Rotation: 0f,
+            TravelX: _tileSize * 3f,
+            TravelY: 0f,
+            Speed: _tileSize * 1.5f));
+        _thingUndo.Push(database => database.DeleteMovingPlatform(created.ThingId));
+        SelectedThingId = created.ThingId;
+        _isPlacingThing = false;
+        ReloadThings(notifyRuntime: true);
+    }
+
+    private void BeginThingSelectionOrDrag()
+    {
+        var world = _camera.DeviceToWorld(_lastMouseDevice);
+        var handleRadius = 12f / _camera.Zoom;
+        var handleRadiusSquared = handleRadius * handleRadius;
+
+        foreach (var thing in _movingPlatformThings.AsEnumerable().Reverse())
+        {
+            var start = new Vector2(thing.X, thing.Y);
+            var end = start + new Vector2(thing.TravelX, thing.TravelY);
+            if (Vector2.DistanceSquared(world, start) <= handleRadiusSquared)
+            {
+                BeginThingDrag(thing, ThingDragHandle2D.Start);
+                return;
+            }
+            if (Vector2.DistanceSquared(world, end) <= handleRadiusSquared)
+            {
+                BeginThingDrag(thing, ThingDragHandle2D.End);
+                return;
+            }
+        }
+
+        foreach (var thing in _movingPlatformThings.AsEnumerable().Reverse())
+        {
+            if (MathF.Abs(world.X - thing.X) <= thing.Width / 2f &&
+                MathF.Abs(world.Y - thing.Y) <= thing.Height / 2f)
+            {
+                SelectedThingId = thing.ThingId;
+                SelectedDefinitionId = thing.DefinitionId;
+                InspectorView.ShowThing(thing);
+                return;
+            }
+        }
+
+        SelectedThingId = null;
+        InspectorView.RefreshFromEditor();
+    }
+
+    private void BeginThingDrag(MovingPlatformThingRecord2D thing, ThingDragHandle2D handle)
+    {
+        SelectedThingId = thing.ThingId;
+        SelectedDefinitionId = thing.DefinitionId;
+        _thingDragOriginal = thing;
+        _thingDragHandle = handle;
+        InspectorView.ShowThing(thing);
+    }
+
+    private void UpdateThingDrag()
+    {
+        if (SelectedThingId is not { } thingId)
+            return;
+        var index = _movingPlatformThings.FindIndex(item => item.ThingId == thingId);
+        if (index < 0)
+            return;
+        var current = _movingPlatformThings[index];
+        var pointer = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
+        var updated = _thingDragHandle switch
+        {
+            ThingDragHandle2D.Start => current with
+            {
+                X = pointer.X,
+                Y = pointer.Y,
+                TravelX = current.X + current.TravelX - pointer.X,
+                TravelY = current.Y + current.TravelY - pointer.Y
+            },
+            ThingDragHandle2D.End => current with
+            {
+                TravelX = pointer.X - current.X,
+                TravelY = pointer.Y - current.Y
+            },
+            _ => current
+        };
+        if (updated.TravelX == 0f && updated.TravelY == 0f)
+            return;
+        _movingPlatformThings[index] = updated;
+    }
+
+    private void CommitThingDrag()
+    {
+        if (_thingDragHandle == ThingDragHandle2D.None || _thingDragOriginal is not { } original)
+            return;
+        _thingDragHandle = ThingDragHandle2D.None;
+        _thingDragOriginal = null;
+        var current = SelectedThing;
+        if (current is null || current == original)
+            return;
+        RequireDatabase().UpdateMovingPlatform(current);
+        _thingUndo.Push(database => database.UpdateMovingPlatform(original));
+        ReloadThings(notifyRuntime: true);
+    }
+
+    internal void UndoThingEdit()
+    {
+        CommitThingDrag();
+        if (_thingUndo.Count == 0)
+            return;
+        _thingUndo.Pop()(RequireDatabase());
+        SelectedThingId = null;
+        ReloadThings(notifyRuntime: true);
+    }
+
+    private Vector2 SnapToGrid(Vector2 world) =>
+        _origin + new Vector2(
+            MathF.Round((world.X - _origin.X) / _tileSize) * _tileSize,
+            MathF.Round((world.Y - _origin.Y) / _tileSize) * _tileSize);
+
+    private void ReloadThings(bool notifyRuntime)
+    {
+        var database = RequireDatabase();
+        _movingPlatformDefinitions.Clear();
+        _movingPlatformDefinitions.AddRange(database.LoadMovingPlatformDefinitions());
+        _movingPlatformThings.Clear();
+        _movingPlatformThings.AddRange(database.LoadMovingPlatforms());
+        if (SelectedDefinitionId is { } definitionId && _movingPlatformDefinitions.All(item => item.DefinitionId != definitionId))
+            SelectedDefinitionId = null;
+        if (SelectedThingId is { } thingId && _movingPlatformThings.All(item => item.ThingId != thingId))
+            SelectedThingId = null;
+        InspectorView.RefreshFromEditor();
+        if (notifyRuntime)
+            ThingsChanged?.Invoke(_movingPlatformThings);
+    }
+
+    private LevelDatabase2D RequireDatabase() =>
+        StateGuard.RequireNotNull(_database, "Thing editing requires an open level database.");
 
     private void EndStrokeIfActive()
     {
@@ -203,6 +535,11 @@ internal sealed class TileEditor2D : IDisposable
         _savedCameraPosition = _camera.Position;
         _savedCameraZoom = _camera.Zoom;
         _database = _openDatabase();
+        // Rebuild authored things at their persisted starts so viewport handles and
+        // runtime visuals coincide even if a platform was midway through its path
+        // when editing began.
+        ReloadThings(notifyRuntime: true);
+        InspectorView.Visible = Mode == LevelEditorMode2D.Things;
     }
 
     /// <summary>
@@ -215,7 +552,10 @@ internal sealed class TileEditor2D : IDisposable
     private void EndEditingSession()
     {
         EndStrokeIfActive();
+        CommitThingDrag();
         _isPanning = false;
+        _isPlacingThing = false;
+        InspectorView.Visible = false;
         _camera.Position = _savedCameraPosition;
         _camera.Zoom = _savedCameraZoom;
         _database?.Dispose();
@@ -239,6 +579,15 @@ internal sealed class TileEditor2D : IDisposable
     public void Dispose()
     {
         EndStrokeIfActive();
+        CommitThingDrag();
         _database?.Dispose();
+        InspectorView.Dispose();
+    }
+
+    private enum ThingDragHandle2D
+    {
+        None,
+        Start,
+        End
     }
 }

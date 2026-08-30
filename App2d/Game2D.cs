@@ -30,6 +30,7 @@ public abstract class Game2D : IDisposable
     public DeveloperConsole DeveloperConsole { get; } = new();
     public virtual string WindowTitle => "App2d";
     internal bool DrawGraphics => _drawGraphics;
+    internal virtual Control? OverlayControl => null;
 
     public virtual void Initialize() { }
     public abstract void Update(FrameTime time, InputState input);

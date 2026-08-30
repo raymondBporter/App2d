@@ -20,6 +20,7 @@ public sealed class GameHost : IDisposable
     private readonly InputState _input = new();
     private readonly Renderer2D _renderer;
     private readonly DeveloperConsoleView _consoleView;
+    private readonly Control? _editorOverlay;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
     private readonly Stopwatch _clock = new();
     private FrameTime _frameTime;
@@ -64,8 +65,18 @@ public sealed class GameHost : IDisposable
             Visible = false
         };
         _window.Controls.Add(_consoleView);
+        _editorOverlay = game.OverlayControl;
+        if (_editorOverlay is not null)
+        {
+            _window.Controls.Add(_editorOverlay);
+            _editorOverlay.Enter += OnEditorOverlayEnter;
+            _editorOverlay.Leave += OnEditorOverlayLeave;
+            _editorOverlay.VisibleChanged += OnEditorOverlayVisibleChanged;
+            _surface.MouseDown += OnSurfaceMouseDown;
+            PositionEditorOverlay();
+        }
         PositionConsole();
-        _window.Resize += (_, _) => PositionConsole();
+        _window.Resize += OnWindowResize;
         _window.KeyDown += OnWindowKeyDown;
         _window.KeyPress += OnWindowKeyPress;
         _timer.Tick += OnTick;
@@ -219,6 +230,48 @@ public sealed class GameHost : IDisposable
             Math.Min(height, _window.ClientSize.Height));
     }
 
+    private void PositionEditorOverlay()
+    {
+        if (_editorOverlay is null)
+            return;
+        const int width = 420;
+        _editorOverlay.Bounds = new Rectangle(
+            Math.Max(0, _window.ClientSize.Width - width),
+            0,
+            Math.Min(width, _window.ClientSize.Width),
+            _window.ClientSize.Height);
+        if (_editorOverlay.Visible)
+            _editorOverlay.BringToFront();
+    }
+
+    private void OnWindowResize(object? sender, EventArgs e)
+    {
+        PositionConsole();
+        PositionEditorOverlay();
+    }
+
+    private void OnEditorOverlayEnter(object? sender, EventArgs e) => _input.SetSuppressed(true);
+
+    private void OnEditorOverlayLeave(object? sender, EventArgs e)
+    {
+        if (_surface.Focused)
+            _input.SetSuppressed(false);
+    }
+
+    private void OnEditorOverlayVisibleChanged(object? sender, EventArgs e)
+    {
+        if (_editorOverlay is { Visible: true })
+        {
+            PositionEditorOverlay();
+            return;
+        }
+        _input.SetSuppressed(false);
+        if (_window.Visible)
+            _surface.Focus();
+    }
+
+    private void OnSurfaceMouseDown(object? sender, MouseEventArgs e) => _input.SetSuppressed(false);
+
     public void Dispose()
     {
         if (_disposed)
@@ -228,6 +281,14 @@ public sealed class GameHost : IDisposable
         _timer.Dispose();
         _window.KeyDown -= OnWindowKeyDown;
         _window.KeyPress -= OnWindowKeyPress;
+        _window.Resize -= OnWindowResize;
+        if (_editorOverlay is not null)
+        {
+            _editorOverlay.Enter -= OnEditorOverlayEnter;
+            _editorOverlay.Leave -= OnEditorOverlayLeave;
+            _editorOverlay.VisibleChanged -= OnEditorOverlayVisibleChanged;
+            _surface.MouseDown -= OnSurfaceMouseDown;
+        }
         _gpuSurface?.PaintSurface -= OnPaintGpuSurface;
         _rasterSurface?.PaintSurface -= OnPaintRasterSurface;
         _renderer.Dispose();

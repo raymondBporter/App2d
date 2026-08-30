@@ -17,6 +17,8 @@ namespace App2d;
 internal static class LevelBootstrap2D
 {
     private const string LevelId = "cavern";
+    public static IReadOnlyList<string> TerrainTilesetIds { get; } =
+        ["dark-cave", "mossy-cavern"];
 
     /// <summary>
     /// Levels are durable authored content, so they live under <c>Assets/Static</c> and are
@@ -25,13 +27,15 @@ internal static class LevelBootstrap2D
     /// </summary>
     public static string CavernLevelPath { get; } = ResolveLevelPath();
 
-    public static EditableTileMap2D LoadOrBake(TraversalMetrics2D traversal)
+    public static LoadedLevel2D LoadOrBake(TraversalMetrics2D traversal)
     {
         if (!File.Exists(CavernLevelPath))
             Bake(traversal);
 
         using var database = LevelDatabase2D.OpenRead(CavernLevelPath);
-        return database.Load();
+        return new LoadedLevel2D(
+            database.Load(TerrainTilesetIds),
+            database.LoadMovingPlatforms());
     }
 
     /// <summary>
@@ -52,7 +56,8 @@ internal static class LevelBootstrap2D
             SideScrollerLevel2D.WorldHeightTiles,
             traversal.TileSize,
             SideScrollerLevel2D.ChunkSizeTiles,
-            SideScrollerLevel2D.WorldOrigin);
+            SideScrollerLevel2D.WorldOrigin,
+            TerrainTilesetIds);
         map.Fill(generator.GetTileKind);
 
         using var database = LevelDatabase2D.Open(CavernLevelPath);
@@ -75,3 +80,7 @@ internal static class LevelBootstrap2D
         return Path.Combine(AssetPaths.Root, "levels", LevelId, "level.db");
     }
 }
+
+internal sealed record LoadedLevel2D(
+    EditableTileMap2D TileMap,
+    IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms);

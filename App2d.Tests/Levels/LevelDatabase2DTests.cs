@@ -311,4 +311,28 @@ public sealed class LevelDatabase2DTests : IDisposable
 
         Assert.Throws<InvalidOperationException>(() => LevelDatabase2D.OpenRead(missing));
     }
+
+    [Fact]
+    public void SavedMapRoundTripsTilesetCatalogAndPackedCells()
+    {
+        var path = NewPath();
+        var map = new EditableTileMap2D(
+            4,
+            4,
+            32f,
+            2,
+            tilesetIds: ["dark-cave", "mossy-cavern"]);
+        map.SetTile(2, 3, new TileCell2D(TileKind2D.Solid | TileKind2D.Grippable, 1));
+
+        using (var database = LevelDatabase2D.Open(path))
+            database.Save(map, sourceSeed: 0UL);
+
+        using var reader = LevelDatabase2D.OpenRead(path);
+        var loaded = reader.Load();
+
+        Assert.Equal(new[] { "dark-cave", "mossy-cavern" }, loaded.TilesetIds);
+        Assert.Equal(
+            new TileCell2D(TileKind2D.Solid | TileKind2D.Grippable, 1),
+            loaded.GetTile(2, 3));
+    }
 }

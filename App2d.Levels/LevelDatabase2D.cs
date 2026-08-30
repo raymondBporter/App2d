@@ -10,9 +10,9 @@ namespace App2d.Levels;
 /// One authored level in one SQLite file. Tiles are run-length encoded per chunk so a
 /// single edit rewrites a single row rather than the whole level.
 /// </summary>
-public sealed class LevelDatabase2D : IDisposable
+public sealed partial class LevelDatabase2D : IDisposable
 {
-    public const int CurrentFormatVersion = 1;
+    public const int CurrentFormatVersion = 2;
 
     private readonly SqliteConnection _connection;
 
@@ -36,44 +36,15 @@ public sealed class LevelDatabase2D : IDisposable
         }.ToString());
         connection.Open();
 
-        using (var command = connection.CreateCommand())
+        try
         {
-            command.CommandText = """
-                CREATE TABLE IF NOT EXISTS meta(
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL) WITHOUT ROWID;
-                CREATE TABLE IF NOT EXISTS chunks(
-                    cx INTEGER NOT NULL,
-                    cy INTEGER NOT NULL,
-                    tiles BLOB NOT NULL,
-                    PRIMARY KEY(cx, cy)) WITHOUT ROWID;
-                """;
-            command.ExecuteNonQuery();
+            EnableForeignKeys(connection);
+            Migrate(connection);
         }
-
-        // Stamp the format version only on a fresh file (user_version 0 is SQLite's
-        // default for a file that never set it). Re-stamping unconditionally would
-        // silently downgrade a future format version's file when opened by older code,
-        // destroying the forward-compatibility hook user_version exists to provide.
-        long existingVersion;
-        using (var command = connection.CreateCommand())
-        {
-            command.CommandText = "PRAGMA user_version;";
-            existingVersion = Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
-        }
-
-        if (existingVersion == 0)
-        {
-            using var command = connection.CreateCommand();
-            command.CommandText = $"PRAGMA user_version = {CurrentFormatVersion};";
-            command.ExecuteNonQuery();
-        }
-        else if (existingVersion > CurrentFormatVersion)
+        catch
         {
             connection.Dispose();
-            StateGuard.Throw(
-                $"The level file's format version ({existingVersion}) is newer than " +
-                $"this build supports ({CurrentFormatVersion}).");
+            throw;
         }
 
         return new LevelDatabase2D(connection);
@@ -96,6 +67,8 @@ public sealed class LevelDatabase2D : IDisposable
         }.ToString());
         connection.Open();
 
+        EnableForeignKeys(connection);
+
         var database = new LevelDatabase2D(connection);
         var version = database.FormatVersion;
         if (version > CurrentFormatVersion)
@@ -103,6 +76,12 @@ public sealed class LevelDatabase2D : IDisposable
             connection.Dispose();
             StateGuard.Throw(
                 $"The level file is format version {version}, newer than this build understands ({CurrentFormatVersion}).");
+        }
+        if (version < CurrentFormatVersion)
+        {
+            connection.Dispose();
+            StateGuard.Throw(
+                $"The level file is format version {version}; open it for editing once to upgrade it to {CurrentFormatVersion}.");
         }
 
         return database;
@@ -121,6 +100,7 @@ public sealed class LevelDatabase2D : IDisposable
         WriteMeta("origin_y", map.Origin.Y);
         WriteMeta("source_seed", sourceSeed.ToString(CultureInfo.InvariantCulture));
         WriteMeta("generated_utc", DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+        WriteTilesetCatalog(map.TilesetIds);
 
         using (var clear = _connection.CreateCommand())
         {
@@ -128,7 +108,7 @@ public sealed class LevelDatabase2D : IDisposable
             clear.ExecuteNonQuery();
         }
 
-        var buffer = new TileKind2D[map.ChunkSize * map.ChunkSize];
+        var buffer = new TileCell2D[map.ChunkSize * map.ChunkSize];
         for (var cy = 0; cy < map.ChunkRows; cy++)
         {
             for (var cx = 0; cx < map.ChunkColumns; cx++)
@@ -152,14 +132,15 @@ public sealed class LevelDatabase2D : IDisposable
     public void SaveChunks(EditableTileMap2D map, ReadOnlySpan<TileChunk2D> chunks)
     {
         ArgGuard.ThrowIfNull(map);
-        var buffer = new TileKind2D[map.ChunkSize * map.ChunkSize];
+        var buffer = new TileCell2D[map.ChunkSize * map.ChunkSize];
         using var transaction = _connection.BeginTransaction();
+        WriteTilesetCatalog(map.TilesetIds);
         foreach (var chunk in chunks)
             WriteChunk(map, chunk, buffer);
         transaction.Commit();
     }
 
-    public EditableTileMap2D Load()
+    public EditableTileMap2D Load(IReadOnlyList<string>? legacyTilesetIds = null)
     {
         var width = (int)RequireMetaLong("width");
         var height = (int)RequireMetaLong("height");
@@ -167,8 +148,9 @@ public sealed class LevelDatabase2D : IDisposable
         var tileSize = RequireMetaFloat("tile_size");
         var origin = new Vector2(RequireMetaFloat("origin_x"), RequireMetaFloat("origin_y"));
 
-        var map = new EditableTileMap2D(width, height, tileSize, chunkSize, origin);
-        var buffer = new TileKind2D[chunkSize * chunkSize];
+        var tilesetIds = ReadTilesetCatalog() ?? legacyTilesetIds ?? ["default"];
+        var map = new EditableTileMap2D(width, height, tileSize, chunkSize, origin, tilesetIds);
+        var buffer = new TileCell2D[chunkSize * chunkSize];
 
         using var command = _connection.CreateCommand();
         command.CommandText = "SELECT cx, cy, tiles FROM chunks;";
@@ -179,8 +161,8 @@ public sealed class LevelDatabase2D : IDisposable
             var encoded = (byte[])reader["tiles"];
             var tileCount = map.ChunkWidth(chunk.X) * map.ChunkHeight(chunk.Y);
             var tiles = buffer.AsSpan(0, tileCount);
-            TileRunCodec2D.Decode(encoded, tiles);
-            map.SetChunkTiles(chunk, tiles);
+            TileCellRunCodec2D.Decode(encoded, tiles);
+            map.SetChunkCells(chunk, tiles);
         }
 
         return map;
@@ -188,15 +170,72 @@ public sealed class LevelDatabase2D : IDisposable
 
     public void Dispose() => _connection.Dispose();
 
-    private void WriteChunk(EditableTileMap2D map, TileChunk2D chunk, TileKind2D[] buffer)
+    private static void EnableForeignKeys(SqliteConnection connection)
     {
-        var tiles = map.GetChunkTiles(chunk, buffer);
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA foreign_keys = ON;";
+        command.ExecuteNonQuery();
+    }
+
+    private static void Migrate(SqliteConnection connection)
+    {
+        long version;
+        using (var versionCommand = connection.CreateCommand())
+        {
+            versionCommand.CommandText = "PRAGMA user_version;";
+            version = Convert.ToInt64(versionCommand.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
+
+        if (version > CurrentFormatVersion)
+        {
+            StateGuard.Throw(
+                $"The level file's format version ({version}) is newer than " +
+                $"this build supports ({CurrentFormatVersion}).");
+        }
+
+        using var transaction = connection.BeginTransaction();
+        if (version == 0)
+        {
+            using var createBase = connection.CreateCommand();
+            createBase.CommandText = """
+                CREATE TABLE IF NOT EXISTS meta(
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL) WITHOUT ROWID;
+                CREATE TABLE IF NOT EXISTS chunks(
+                    cx INTEGER NOT NULL,
+                    cy INTEGER NOT NULL,
+                    tiles BLOB NOT NULL,
+                    PRIMARY KEY(cx, cy)) WITHOUT ROWID;
+                """;
+            createBase.ExecuteNonQuery();
+            version = 1;
+        }
+
+        if (version == 1)
+        {
+            using var createThings = connection.CreateCommand();
+            createThings.CommandText = ThingSchemaSql;
+            createThings.ExecuteNonQuery();
+            version = 2;
+        }
+
+        using (var stamp = connection.CreateCommand())
+        {
+            stamp.CommandText = $"PRAGMA user_version = {CurrentFormatVersion};";
+            stamp.ExecuteNonQuery();
+        }
+        transaction.Commit();
+    }
+
+    private void WriteChunk(EditableTileMap2D map, TileChunk2D chunk, TileCell2D[] buffer)
+    {
+        var tiles = map.GetChunkCells(chunk, buffer);
 
         // A missing row means an entirely empty chunk, so empty sky costs no rows.
         var isEmpty = true;
         foreach (var tile in tiles)
         {
-            if (tile == TileKind2D.Empty)
+            if (tile.Kind == TileKind2D.Empty)
                 continue;
             isEmpty = false;
             break;
@@ -213,7 +252,7 @@ public sealed class LevelDatabase2D : IDisposable
                 INSERT INTO chunks(cx, cy, tiles) VALUES($cx, $cy, $tiles)
                 ON CONFLICT(cx, cy) DO UPDATE SET tiles = excluded.tiles;
                 """;
-            command.Parameters.AddWithValue("$tiles", TileRunCodec2D.Encode(tiles));
+            command.Parameters.AddWithValue("$tiles", TileCellRunCodec2D.Encode(tiles));
         }
 
         command.Parameters.AddWithValue("$cx", chunk.X);
@@ -237,6 +276,30 @@ public sealed class LevelDatabase2D : IDisposable
         command.Parameters.AddWithValue("$key", key);
         command.Parameters.AddWithValue("$value", value);
         command.ExecuteNonQuery();
+    }
+
+    private void WriteTilesetCatalog(IReadOnlyList<string> tilesetIds)
+    {
+        WriteMeta("tileset_count", tilesetIds.Count);
+        for (var index = 0; index < tilesetIds.Count; index++)
+            WriteMeta($"tileset_{index}", tilesetIds[index]);
+    }
+
+    private string[]? ReadTilesetCatalog()
+    {
+        using var countCommand = _connection.CreateCommand();
+        countCommand.CommandText = "SELECT value FROM meta WHERE key = 'tileset_count';";
+        if (countCommand.ExecuteScalar() is not string countText)
+            return null;
+
+        var count = int.Parse(countText, CultureInfo.InvariantCulture);
+        if (count <= 0 || count > TileCell2D.MaximumTilesetCount)
+            throw new InvalidDataException($"Level tileset count {count} is outside the supported range.");
+
+        var ids = new string[count];
+        for (var index = 0; index < count; index++)
+            ids[index] = RequireMeta($"tileset_{index}");
+        return ids;
     }
 
     private string RequireMeta(string key)

@@ -1,6 +1,6 @@
 using App2d.Core.Geometry;
 using App2d.Rendering;
-using App2d.Tiles;
+using App2d.Rendering.Textures;
 using SkiaSharp;
 using System.Numerics;
 
@@ -15,13 +15,24 @@ internal static class TileEditorView2D
     // compete visually with the cursor outline or the painted tiles themselves.
     private static readonly SKColor GridColor = new(255, 255, 255, 28);
 
-    public static void Draw(Renderer2D renderer, TileEditor2D editor, Bounds2D mapBounds, float tileSize)
+    public static void Draw(
+        Renderer2D renderer,
+        TileEditor2D editor,
+        Bounds2D mapBounds,
+        float tileSize,
+        TextureCache2D textures)
     {
         if (!editor.IsActive)
             return;
 
         var origin = mapBounds.Min;
         DrawGrid(renderer, editor.VisibleWorldBounds, mapBounds, tileSize);
+
+        if (editor.Mode == LevelEditorMode2D.Things)
+        {
+            DrawThings(renderer, editor, tileSize);
+            return;
+        }
 
         var hasTile = editor.TryGetHoveredTile(out var tileX, out var tileY);
         if (hasTile)
@@ -39,10 +50,61 @@ internal static class TileEditorView2D
             renderer.DrawWorldPolyline(outline, CursorColor, strokeWidth: 2f);
         }
 
-        var position = hasTile ? $"{tileX}, {tileY}" : "outside";
-        renderer.DrawScreenLabel(
-            $"EDIT  kind: {Describe(editor.SelectedKind)}  tile: {position}  [F1] play  [1-5] kind  [RMB] erase  [Ctrl+Z] undo",
-            new Vector2(16f, 16f));
+        TileEditorMenu2D.Draw(renderer, editor, textures);
+    }
+
+    private static void DrawThings(Renderer2D renderer, TileEditor2D editor, float tileSize)
+    {
+        var pathColor = new SKColor(130, 180, 210, 170);
+        var selectedColor = new SKColor(255, 214, 64);
+        var disabledColor = new SKColor(130, 130, 140, 180);
+        foreach (var thing in editor.MovingPlatformThings)
+        {
+            var start = new Vector2(thing.X, thing.Y);
+            var end = start + new Vector2(thing.TravelX, thing.TravelY);
+            var isSelected = editor.SelectedThingId == thing.ThingId;
+            var color = isSelected ? selectedColor : thing.Enabled ? pathColor : disabledColor;
+            Span<Vector2> path = [start, end];
+            renderer.DrawWorldPolyline(path, color, isSelected ? 3f : 2f);
+            DrawRectangleOutline(renderer, start, new Vector2(thing.Width, thing.Height), color, isSelected ? 3f : 2f);
+            if (isSelected)
+            {
+                var radius = 9f / editor.Zoom;
+                renderer.DrawWorldCircle(start, radius, selectedColor, 3f);
+                renderer.DrawWorldCircle(end, radius, selectedColor, 3f);
+            }
+        }
+
+        if (editor.TryGetPlacementPreview(out var definition, out var position))
+        {
+            DrawRectangleOutline(
+                renderer,
+                position,
+                new Vector2(definition.Width, definition.Height),
+                new SKColor(105, 245, 180, 220),
+                3f);
+            Span<Vector2> previewPath = [position, position + new Vector2(tileSize * 3f, 0f)];
+            renderer.DrawWorldPolyline(previewPath, new SKColor(105, 245, 180, 180), 2f);
+        }
+    }
+
+    private static void DrawRectangleOutline(
+        Renderer2D renderer,
+        Vector2 center,
+        Vector2 size,
+        SKColor color,
+        float strokeWidth)
+    {
+        var half = size / 2f;
+        Span<Vector2> outline =
+        [
+            center + new Vector2(-half.X, -half.Y),
+            center + new Vector2(half.X, -half.Y),
+            center + new Vector2(half.X, half.Y),
+            center + new Vector2(-half.X, half.Y),
+            center + new Vector2(-half.X, -half.Y)
+        ];
+        renderer.DrawWorldPolyline(outline, color, strokeWidth);
     }
 
     /// <summary>
@@ -75,13 +137,4 @@ internal static class TileEditorView2D
         }
     }
 
-    private static string Describe(TileKind2D kind) => kind switch
-    {
-        TileKind2D.Empty => "empty",
-        TileKind2D.Solid => "solid",
-        TileKind2D.OneWay => "one-way",
-        TileKind2D.Spikes => "spikes",
-        _ when kind.IsGrippable() => "grippable",
-        _ => kind.ToString()
-    };
 }

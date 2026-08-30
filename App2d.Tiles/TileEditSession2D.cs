@@ -27,17 +27,23 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     /// </summary>
     public void Paint(int x, int y, TileKind2D kind)
     {
+        Paint(x, y, new TileCell2D(kind, _map.GetTilesetIndex(x, y)));
+    }
+
+    /// <summary>Paints one tile's collision type and visual tileset as one undoable value.</summary>
+    public void Paint(int x, int y, TileCell2D tile)
+    {
         StateGuard.ThrowIf(!IsStrokeActive, "Begin a stroke before painting.");
 
         if (x < 0 || x >= _map.Width || y < 0 || y >= _map.Height)
             return;
 
-        var before = _map.GetTileKind(x, y);
-        if (before == kind)
+        var before = _map.GetTile(x, y);
+        if (before == tile)
             return;
 
-        _map.SetTileKind(x, y, kind);
-        _currentStroke.Add(new TileEdit2D(x, y, before, kind));
+        _map.SetTile(x, y, tile);
+        _currentStroke.Add(new TileEdit2D(x, y, before, tile));
     }
 
     /// <summary>
@@ -45,6 +51,11 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     /// leaves no gaps between sampled positions.
     /// </summary>
     public void PaintLine(int fromX, int fromY, int toX, int toY, TileKind2D kind)
+    {
+        PaintLine(fromX, fromY, toX, toY, new TileCell2D(kind, _map.GetTilesetIndex(toX, toY)));
+    }
+
+    public void PaintLine(int fromX, int fromY, int toX, int toY, TileCell2D tile)
     {
         StateGuard.ThrowIf(!IsStrokeActive, "Begin a stroke before painting.");
 
@@ -58,7 +69,7 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
         var y = fromY;
         while (true)
         {
-            Paint(x, y, kind);
+            Paint(x, y, tile);
             if (x == toX && y == toY)
                 return;
 
@@ -74,6 +85,46 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
                 error += deltaX;
                 y += stepY;
             }
+        }
+    }
+
+    /// <summary>
+    /// Replaces one four-way-connected region. Non-empty regions match both kind and
+    /// tileset; all empty cells match each other because their retained style is invisible.
+    /// </summary>
+    public void FloodFill(int startX, int startY, TileCell2D replacement)
+    {
+        StateGuard.ThrowIf(!IsStrokeActive, "Begin a stroke before filling.");
+        if (startX < 0 || startX >= _map.Width || startY < 0 || startY >= _map.Height)
+            return;
+
+        var target = _map.GetTile(startX, startY);
+        if (FloodCellsMatch(target, replacement))
+            return;
+
+        var visited = new bool[_map.Width * _map.Height];
+        var pending = new Queue<(int X, int Y)>();
+        pending.Enqueue((startX, startY));
+
+        while (pending.Count > 0)
+        {
+            var (x, y) = pending.Dequeue();
+            if (x < 0 || x >= _map.Width || y < 0 || y >= _map.Height)
+                continue;
+
+            var index = y * _map.Width + x;
+            if (visited[index])
+                continue;
+            visited[index] = true;
+
+            if (!FloodCellsMatch(_map.GetTile(x, y), target))
+                continue;
+
+            Paint(x, y, replacement);
+            pending.Enqueue((x - 1, y));
+            pending.Enqueue((x + 1, y));
+            pending.Enqueue((x, y - 1));
+            pending.Enqueue((x, y + 1));
         }
     }
 
@@ -131,5 +182,9 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
         return chunks;
     }
 
-    private readonly record struct TileEdit2D(int X, int Y, TileKind2D Before, TileKind2D After);
+    private static bool FloodCellsMatch(TileCell2D first, TileCell2D second) =>
+        first.Kind == second.Kind &&
+        (first.Kind == TileKind2D.Empty || first.TilesetIndex == second.TilesetIndex);
+
+    private readonly record struct TileEdit2D(int X, int Y, TileCell2D Before, TileCell2D After);
 }

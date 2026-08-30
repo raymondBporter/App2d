@@ -68,21 +68,35 @@ Geometry lives under `App2d.Core/Geometry`:
 
 `App2d.Tiles/TileMap2D` stores compact authored maps as a bool-only grid; it carries
 no `TileKind2D`. `App2d.Tiles/EditableTileMap2D` is the only `IChunkedTileMap2D`
-implementation: a dense, mutable, kind-carrying map loaded from a level file rather
+implementation: a dense, mutable map loaded from a level file rather
 than evaluated from a seed function. It still greedily merges each 32x32 chunk into
 AABB colliders on demand, and raises a `ChunkChanged` event that the in-game tile editor
 uses to drive streamer reloads after an edit. The side-scroller keeps at most 15
 nearby chunks live, so scene rendering, weapon queries, and the collision spatial
 index are bounded by the local neighborhood rather than total world size.
 
-Editor mode is part of the game rather than a separate tool. `F1` freezes the simulation,
-detaches the camera, and paints tiles with the mouse; `1`-`5` pick the tile kind, the right
-button erases, and `Ctrl+Z` undoes a stroke. Painting mutates the loaded `EditableTileMap2D`,
+Each editable cell is one byte: four bits select one of up to 16 tilesets and four bits
+hold the composable tile type. Code exposes those as separate values; the packing is an
+in-memory and level-blob detail. The level metadata stores the ordered, stable tileset IDs.
+
+Editor mode is part of the game rather than a separate tool. `F1` freezes the simulation
+and detaches the camera. A right sidebar provides tileset buttons and a visual tile-type
+grid for filled, grippable, one-way, and spikes. The previews use the selected tileset's
+actual terrain art. The right mouse button erases and `Ctrl+Z` undoes a brush stroke.
+Painting mutates the loaded `EditableTileMap2D`,
 whose `ChunkChanged` event feeds a `DirtyChunkTracker2D`; the editor flushes that tracker once
 per frame so a drag rebuilds each affected chunk at most once instead of once per event. Each
 stroke commits its changed chunks to the level file in a single transaction. `TileEditSession2D`
 holds the strokes and undo history and lives in `App2d.Tiles`, so the editable core is testable
 without input or storage.
+
+The sidebar's **Things** button switches to authored moving platforms. Definitions provide
+reusable rectangle dimensions and solid-color art; placed things provide position, travel,
+speed, name, and enablement. A native WinForms `PropertyGrid` edits temporary typed property
+objects and writes only when **Apply** is pressed. Skia remains limited to placement ghosts,
+selection outlines, paths, and draggable endpoints. This deliberately avoids implementing
+text input, focus, layout, or a general widget library inside the renderer. Thing definitions,
+instances, transforms, and ping-pong motors are relational rows in the same level database.
 
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
@@ -288,16 +302,10 @@ and currently render as bright green temporary tiles so their behavior is obviou
 
 Solid tilemaps expose a four-bit `TileSurface2D` topology (`Top`, `Right`, `Bottom`,
 and `Left`) plus four outer and four diagonal-aware inner `TileCorner2D` cases. A
-surface bit is present only where a solid cell borders an empty cell. The side-scroller
-temporarily splits its width into equal contiguous preview regions for an arbitrary
-list of tilesets. Its first half uses the Rust Cyberpunk textures and its second half uses the collision-test
-tileset: dark fill, bright cyan walkable tops, blue walls, violet undersides, white
-outer joins, pink inner joins, and an amber one-way collision line. Merged visual fills
-are split at tileset boundaries while their collision remains merged. Chunk boundaries
-do not create false edges, and additional tilesets can use the same topology without
-changing authored map data. Tileset resolution is injected by tile coordinate and can
-later read stable, authored tileset IDs from the saved map; the equal-width rule is not
-part of the renderer. The active-window streamer consumes an `IChunkedTileMap2D` data
+surface bit is present only where a solid cell borders an empty cell. Each cell's authored
+tileset selects the art for its fill and exposed topology. Merged visual fills split at
+tileset boundaries while their collision remains merged; chunk boundaries do not create
+false edges. The active-window streamer consumes an `IChunkedTileMap2D` data
 view; `EditableTileMap2D` is its current implementation, loaded from a level file rather
 than generated live. The baked level's solid slabs, notched blocks, hollow frames, and
 stair-step formations exercise these combinations above the guaranteed ground route; its
@@ -374,8 +382,8 @@ Keyboard and mouse fallback:
 - J or left click: use the equipped weapon
 - F3: toggle traversal arcs and movement metrics
 - F1: toggle the tile editor; freezes gameplay, detaches the camera, and switches the
-  mouse to painting (left button paints, right erases, `1`-`5` pick the tile kind,
-  middle-drag pans, wheel zooms, `Ctrl+Z` undoes a stroke)
+  mouse to painting (left button paints or selects from the right sidebar, right erases,
+  middle-drag pans, wheel zooms, and `Ctrl+Z` undoes an edit)
 - Backtick (`): open or close the developer console
 - Escape: close
 

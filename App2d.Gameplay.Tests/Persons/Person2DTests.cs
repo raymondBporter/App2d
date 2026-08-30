@@ -2,6 +2,7 @@ using App2d.Collision;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
+using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
 using App2d.Physics;
 using App2d.Rendering;

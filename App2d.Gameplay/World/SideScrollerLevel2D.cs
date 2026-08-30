@@ -25,6 +25,7 @@ public sealed class SideScrollerLevel2D
     private readonly float _tileSize;
     private readonly TraversalMetrics2D _traversal;
     private readonly Func<int, int> _groundY;
+    private IReadOnlyList<MovingPlatformSpec2D> _movingPlatformSpecs;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
@@ -33,7 +34,8 @@ public sealed class SideScrollerLevel2D
     public SideScrollerLevel2D(
         TraversalMetrics2D traversal,
         IChunkedTileMap2D tileMap,
-        Func<int, int> groundY)
+        Func<int, int> groundY,
+        IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null)
     {
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
@@ -42,6 +44,7 @@ public sealed class SideScrollerLevel2D
         _tileSize = traversal.TileSize;
         ArgGuard.ThrowIfNotPositive(_tileSize);
         _groundY = groundY;
+        _movingPlatformSpecs = movingPlatforms ?? [];
         TileMap = tileMap;
 
         // Only an editable map can change under us. A read-only map never raises the event.
@@ -166,22 +169,11 @@ public sealed class SideScrollerLevel2D
             _environment is not null,
             "The level environment has already been created.");
 
-        SideScrollerTerrainTileset2D[] tilesets =
-        [
-            SideScrollerTerrainTileset2D.Load(
-                textures,
-                "dark-cave",
-                _tileSize),
-            SideScrollerTerrainTileset2D.Load(
-                textures,
-                "mossy-cavern",
-                _tileSize)
-        ];
+        var tilesets = TileMap.TilesetIds
+            .Select(id => SideScrollerTerrainTileset2D.Load(textures, id, _tileSize))
+            .ToArray();
         var tilesetResolver = new SideScrollerTerrainTilesetResolver2D(
-            (x, _) => tilesets[GetPreviewTilesetIndex(
-                x,
-                TileMap.Width,
-                tilesets.Length)]);
+            (x, y) => tilesets[TileMap.GetTilesetIndex(x, y)]);
         var visualFactory = new SideScrollerTerrainVisualFactory2D(
             scene,
             TileMap,
@@ -203,7 +195,7 @@ public sealed class SideScrollerLevel2D
             enemyLayer);
 
         UpdateStreaming(SpawnPoint);
-        CreateMovingPlatforms(scene, physics, worldLayer, playerLayer | enemyLayer);
+        CreateMovingPlatformsFromSpecs();
         CreateGoal(scene);
     }
 
@@ -212,6 +204,16 @@ public sealed class SideScrollerLevel2D
         ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
         foreach (var platform in _movingPlatforms)
             platform.Update(deltaSeconds);
+    }
+
+    public void ReloadMovingPlatforms(IReadOnlyList<MovingPlatformSpec2D> specs)
+    {
+        ArgGuard.ThrowIfNull(specs);
+        foreach (var platform in _movingPlatforms)
+            platform.Dispose();
+        _movingPlatforms.Clear();
+        _movingPlatformSpecs = specs;
+        CreateMovingPlatformsFromSpecs();
     }
 
     public void UpdateStreaming(Vector2 focus)
@@ -285,108 +287,28 @@ public sealed class SideScrollerLevel2D
         scene.Add(flag);
     }
 
-    private void CreateMovingPlatforms(
-        Scene2D scene,
-        PhysicsWorld2D physics,
-        uint worldLayer,
-        uint actorMask)
+    private void CreateMovingPlatformsFromSpecs()
     {
-        var platformSize = new Vector2(_tileSize * 3f, _tileSize * 0.5f);
-        var color = new SKColor(37, 210, 190);
-
-        AddMovingPlatform(
-            scene,
-            physics,
-            startTileX: 12,
-            heightAboveTerrainTiles: 3f,
-            travelTiles: new Vector2(7f, 0f),
-            platformSize,
-            speed: _tileSize * 1.8f,
-            worldLayer,
-            actorMask,
-            color);
-        AddMovingPlatform(
-            scene,
-            physics,
-            startTileX: 48,
-            heightAboveTerrainTiles: 2f,
-            travelTiles: new Vector2(0f, 4f),
-            platformSize,
-            speed: _tileSize * 1.35f,
-            worldLayer,
-            actorMask,
-            color);
-        AddMovingPlatform(
-            scene,
-            physics,
-            startTileX: 88,
-            heightAboveTerrainTiles: 5f,
-            travelTiles: new Vector2(-6f, 0f),
-            platformSize,
-            speed: _tileSize * 2.1f,
-            worldLayer,
-            actorMask,
-            color);
-        AddMovingPlatform(
-            scene,
-            physics,
-            startTileX: 132,
-            heightAboveTerrainTiles: 2.5f,
-            travelTiles: new Vector2(0f, 5f),
-            platformSize,
-            speed: _tileSize * 1.6f,
-            worldLayer,
-            actorMask,
-            color);
-    }
-
-    private void AddMovingPlatform(
-        Scene2D scene,
-        PhysicsWorld2D physics,
-        int startTileX,
-        float heightAboveTerrainTiles,
-        Vector2 travelTiles,
-        Vector2 size,
-        float speed,
-        uint worldLayer,
-        uint actorMask,
-        SKColor color)
-    {
-        var endTileX = startTileX + (int)MathF.Round(travelTiles.X);
-        var minimumTileX = Math.Max(0, Math.Min(startTileX, endTileX) - 2);
-        var maximumTileX = Math.Min(
-            TileMap.Width - 1,
-            Math.Max(startTileX, endTileX) + 2);
-        var terrainTileY = 0;
-        for (var tileX = minimumTileX; tileX <= maximumTileX; tileX++)
-            terrainTileY = Math.Max(terrainTileY, _groundY(tileX));
-
-        var start = new Vector2(
-            TileCenterX(startTileX),
-            TileMap.Origin.Y +
-            (terrainTileY + heightAboveTerrainTiles) * _tileSize);
-        _movingPlatforms.Add(new MovingPlatform2D(
-            scene,
-            physics,
-            start,
-            travelTiles * _tileSize,
-            size,
-            speed,
-            worldLayer,
-            actorMask,
-            color));
+        var environment = RequireEnvironment();
+        foreach (var spec in _movingPlatformSpecs)
+        {
+            if (!spec.Enabled)
+                continue;
+            _movingPlatforms.Add(new MovingPlatform2D(
+                environment.Scene,
+                environment.Physics,
+                spec.Position,
+                spec.Travel,
+                spec.Size,
+                spec.Speed,
+                environment.WorldLayer,
+                environment.PlayerLayer | environment.EnemyLayer,
+                spec.Color));
+        }
     }
 
     private float TileCenterX(int x) =>
         TileMap.Origin.X + (x + 0.5f) * _tileSize;
-
-    // Temporary preview rule. A saved level can replace this resolver with its
-    // authored per-tile or per-region tileset IDs without changing the renderer.
-    private static int GetPreviewTilesetIndex(
-        int tileX,
-        int mapWidth,
-        int tilesetCount) =>
-        Math.Min((int)((long)tileX * tilesetCount / mapWidth), tilesetCount - 1);
 
     private sealed record LevelEnvironment(
         Scene2D Scene,

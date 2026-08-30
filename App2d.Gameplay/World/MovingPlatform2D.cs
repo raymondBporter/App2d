@@ -7,11 +7,12 @@ using SkiaSharp;
 
 namespace App2d.Gameplay.World;
 
-public sealed class MovingPlatform2D
+public sealed class MovingPlatform2D : IDisposable
 {
     private const float MinimumSupportNormalY = 0.55f;
 
     private readonly PhysicsWorld2D _physics;
+    private readonly Scene2D _scene;
     private readonly Vector2 _pathDirection;
     private readonly float _pathLength;
     private readonly float _speed;
@@ -30,6 +31,7 @@ public sealed class MovingPlatform2D
         SKColor color)
     {
         ArgGuard.ThrowIfNull(scene);
+        _scene = scene;
         _physics = ArgGuard.RequireNotNull(physics);
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(travel);
@@ -60,6 +62,12 @@ public sealed class MovingPlatform2D
     public PhysicsBody2D Body { get; }
     public Vector2 Start { get; }
     public Vector2 End => Start + _pathDirection * _pathLength;
+
+    public void Dispose()
+    {
+        _physics.RemoveBody(Body);
+        _scene.Remove(WorldObject);
+    }
 
     public void Update(float deltaSeconds)
     {

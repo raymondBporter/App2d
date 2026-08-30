@@ -1,10 +1,33 @@
 using App2d.Tiles;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace App2d.Tests.Tiles;
 
 public sealed class EditableTileMap2DTests
 {
+    [Fact]
+    public void TileCellPacksTypeAndTilesetIntoOneByte()
+    {
+        var tile = new TileCell2D(TileKind2D.Solid | TileKind2D.Grippable, 2);
+
+        Assert.Equal(1, Marshal.SizeOf<TileCell2D>());
+        Assert.Equal(0x25, tile.Packed);
+        Assert.Equal(TileKind2D.Solid | TileKind2D.Grippable, tile.Kind);
+        Assert.Equal(2, tile.TilesetIndex);
+    }
+
+    [Fact]
+    public void TileCellRoundTripsTilesetIndependentlyFromType()
+    {
+        var map = new EditableTileMap2D(4, 4, 32f, 2, tilesetIds: ["cave", "moss"]);
+
+        map.SetTile(2, 3, new TileCell2D(TileKind2D.OneWay, 1));
+
+        Assert.Equal(TileKind2D.OneWay, map.GetTileKind(2, 3));
+        Assert.Equal(1, map.GetTilesetIndex(2, 3));
+    }
+
     private static EditableTileMap2D Seed(
         int width,
         int height,

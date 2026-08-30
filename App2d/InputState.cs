@@ -78,6 +78,8 @@ public sealed class InputState
 
     internal void SetSuppressed(bool isSuppressed)
     {
+        if (_isSuppressed == isSuppressed)
+            return;
         _isSuppressed = isSuppressed;
         ResetButtons();
         EndFrame();

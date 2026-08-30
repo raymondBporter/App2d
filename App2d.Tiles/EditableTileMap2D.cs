@@ -10,7 +10,8 @@ namespace App2d.Tiles;
 /// </summary>
 public sealed class EditableTileMap2D : IChunkedTileMap2D
 {
-    private readonly TileKind2D[] _tiles;
+    private readonly TileCell2D[] _tiles;
+    private readonly string[] _tilesetIds;
     private readonly List<TileCellRectangle2D> _meshBuffer = [];
 
     public EditableTileMap2D(
@@ -18,7 +19,8 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         int height,
         float tileSize,
         int chunkSize,
-        Vector2 origin = default)
+        Vector2 origin = default,
+        IReadOnlyList<string>? tilesetIds = null)
     {
         ArgGuard.ThrowIfNotPositive(width);
         ArgGuard.ThrowIfNotPositive(height);
@@ -31,7 +33,8 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         TileSize = tileSize;
         ChunkSize = chunkSize;
         Origin = origin;
-        _tiles = new TileKind2D[width * height];
+        _tiles = new TileCell2D[width * height];
+        _tilesetIds = ValidateTilesets(tilesetIds ?? ["default"]);
     }
 
     /// <summary>Raised when a chunk's tiles changed. Phase 2's editor drives streamer reloads from this.</summary>
@@ -46,23 +49,40 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
     public int ChunkRows => DivideRoundUp(Height, ChunkSize);
     public Bounds2D WorldBounds =>
         new(Origin, Origin + new Vector2(Width * TileSize, Height * TileSize));
+    public IReadOnlyList<string> TilesetIds => _tilesetIds;
 
     public TileKind2D GetTileKind(int x, int y) => IsInside(x, y)
-        ? _tiles[y * Width + x]
+        ? _tiles[y * Width + x].Kind
         : TileKind2D.Empty;
+
+    public byte GetTilesetIndex(int x, int y) => IsInside(x, y)
+        ? _tiles[y * Width + x].TilesetIndex
+        : (byte)0;
+
+    public TileCell2D GetTile(int x, int y) => IsInside(x, y)
+        ? _tiles[y * Width + x]
+        : default;
 
     public bool IsSolid(int x, int y) => GetTileKind(x, y).IsSolid();
 
     public void SetTileKind(int x, int y, TileKind2D kind)
     {
+        var tilesetIndex = GetTilesetIndex(x, y);
+        SetTile(x, y, new TileCell2D(kind, tilesetIndex));
+    }
+
+    public void SetTile(int x, int y, TileCell2D tile)
+    {
         if (!IsInside(x, y))
             ArgGuard.ThrowOutOfRange(x, $"Tile ({x}, {y}) is outside the map.");
+        if (tile.TilesetIndex >= _tilesetIds.Length)
+            ArgGuard.ThrowOutOfRange(tile.TilesetIndex, "Tileset index must exist in the map catalog.");
 
         var index = y * Width + x;
-        if (_tiles[index] == kind)
+        if (_tiles[index] == tile)
             return;
 
-        _tiles[index] = kind;
+        _tiles[index] = tile;
 
         if (ChunkChanged is null)
             return;
@@ -96,7 +116,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         for (var y = 0; y < Height; y++)
         {
             for (var x = 0; x < Width; x++)
-                _tiles[y * Width + x] = source(x, y);
+                _tiles[y * Width + x] = new TileCell2D(source(x, y), 0);
         }
     }
 
@@ -118,6 +138,25 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
 
         for (var y = 0; y < height; y++)
         {
+            for (var x = 0; x < width; x++)
+                destination[y * width + x] = _tiles[(startY + y) * Width + startX + x].Kind;
+        }
+
+        return destination[..(width * height)];
+    }
+
+    /// <summary>Copies a chunk's packed one-byte cells in row-major order.</summary>
+    public ReadOnlySpan<TileCell2D> GetChunkCells(TileChunk2D chunk, Span<TileCell2D> destination)
+    {
+        ValidateChunk(chunk);
+        var startX = chunk.X * ChunkSize;
+        var startY = chunk.Y * ChunkSize;
+        var width = ChunkWidth(chunk.X);
+        var height = ChunkHeight(chunk.Y);
+        ArgGuard.ThrowIfTooShort<TileCell2D>(destination, width * height);
+
+        for (var y = 0; y < height; y++)
+        {
             _tiles.AsSpan((startY + y) * Width + startX, width)
                 .CopyTo(destination[(y * width)..]);
         }
@@ -134,6 +173,34 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         var width = ChunkWidth(chunk.X);
         var height = ChunkHeight(chunk.Y);
         ArgGuard.ThrowIfTooShort<TileKind2D>(source, width * height);
+
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var mapIndex = (startY + y) * Width + startX + x;
+                _tiles[mapIndex] = new TileCell2D(source[y * width + x], _tiles[mapIndex].TilesetIndex);
+            }
+        }
+
+        ChunkChanged?.Invoke(chunk);
+    }
+
+    /// <summary>Writes a chunk's packed one-byte cells.</summary>
+    public void SetChunkCells(TileChunk2D chunk, ReadOnlySpan<TileCell2D> source)
+    {
+        ValidateChunk(chunk);
+        var startX = chunk.X * ChunkSize;
+        var startY = chunk.Y * ChunkSize;
+        var width = ChunkWidth(chunk.X);
+        var height = ChunkHeight(chunk.Y);
+        ArgGuard.ThrowIfTooShort<TileCell2D>(source, width * height);
+
+        for (var index = 0; index < width * height; index++)
+        {
+            if (source[index].TilesetIndex >= _tilesetIds.Length)
+                ArgGuard.ThrowOutOfRange(source[index].TilesetIndex, "Tileset index must exist in the map catalog.");
+        }
 
         for (var y = 0; y < height; y++)
         {
@@ -165,7 +232,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         TileRectangleMesher2D.Mesh(
             width,
             height,
-            (x, y) => _tiles[(startY + y) * Width + startX + x],
+            (x, y) => _tiles[(startY + y) * Width + startX + x].Kind,
             _meshBuffer);
 
         var rectangles = new List<TileCollisionRectangle2D>(_meshBuffer.Count);
@@ -188,6 +255,25 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
     }
 
     private static int DivideRoundUp(int value, int divisor) => (value + divisor - 1) / divisor;
+
+    private static string[] ValidateTilesets(IReadOnlyList<string> tilesetIds)
+    {
+        if (tilesetIds.Count == 0 || tilesetIds.Count > TileCell2D.MaximumTilesetCount)
+            ArgGuard.ThrowOutOfRange(tilesetIds.Count, "A map must have between 1 and 16 tilesets.");
+
+        var result = new string[tilesetIds.Count];
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var index = 0; index < tilesetIds.Count; index++)
+        {
+            var id = tilesetIds[index];
+            ArgGuard.ThrowIfNullOrWhiteSpace(id);
+            if (!seen.Add(id))
+                ArgGuard.ThrowInvalid($"Tileset ID '{id}' is duplicated.", nameof(tilesetIds));
+            result[index] = id;
+        }
+
+        return result;
+    }
 }
 
 public readonly record struct TileChunk2D(int X, int Y);

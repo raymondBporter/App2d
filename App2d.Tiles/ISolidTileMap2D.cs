@@ -23,8 +23,10 @@ public interface IChunkedTileMap2D : ISolidTileMap2D
     int ChunkColumns { get; }
     int ChunkRows { get; }
     Bounds2D WorldBounds { get; }
+    IReadOnlyList<string> TilesetIds { get; }
 
     TileKind2D GetTileKind(int x, int y);
+    byte GetTilesetIndex(int x, int y);
     TileChunk2D WorldToChunk(Vector2 worldPosition);
     IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(TileChunk2D chunk);
 }

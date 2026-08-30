@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Gameplay.Persons;
 using App2d.Rendering;
 
 namespace App2d.Gameplay.Player;

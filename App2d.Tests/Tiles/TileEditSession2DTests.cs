@@ -198,4 +198,56 @@ public sealed class TileEditSession2DTests
 
         Assert.Throws<InvalidOperationException>(() => session.Undo());
     }
+
+    [Fact]
+    public void UndoRestoresBothTileTypeAndTileset()
+    {
+        var map = new EditableTileMap2D(8, 8, 32f, 4, tilesetIds: ["cave", "moss"]);
+        map.SetTile(2, 2, new TileCell2D(TileKind2D.OneWay, 0));
+        var session = new TileEditSession2D(map);
+
+        session.BeginStroke();
+        session.Paint(2, 2, new TileCell2D(TileKind2D.Solid, 1));
+        session.EndStroke();
+        session.Undo();
+
+        Assert.Equal(new TileCell2D(TileKind2D.OneWay, 0), map.GetTile(2, 2));
+    }
+
+    [Fact]
+    public void FloodFillUsesFourWayConnectivityAndStopsAtDifferentCells()
+    {
+        var map = new EditableTileMap2D(5, 5, 32f, 5, tilesetIds: ["cave", "moss"]);
+        map.SetTile(1, 1, new TileCell2D(TileKind2D.Solid, 0));
+        map.SetTile(2, 1, new TileCell2D(TileKind2D.Solid, 0));
+        map.SetTile(1, 2, new TileCell2D(TileKind2D.Solid, 0));
+        map.SetTile(3, 3, new TileCell2D(TileKind2D.Solid, 0));
+        map.SetTile(2, 2, new TileCell2D(TileKind2D.Solid, 1));
+        var session = new TileEditSession2D(map);
+
+        session.BeginStroke();
+        session.FloodFill(1, 1, new TileCell2D(TileKind2D.OneWay, 1));
+        session.EndStroke();
+
+        Assert.Equal(new TileCell2D(TileKind2D.OneWay, 1), map.GetTile(1, 1));
+        Assert.Equal(new TileCell2D(TileKind2D.OneWay, 1), map.GetTile(2, 1));
+        Assert.Equal(new TileCell2D(TileKind2D.OneWay, 1), map.GetTile(1, 2));
+        Assert.Equal(new TileCell2D(TileKind2D.Solid, 1), map.GetTile(2, 2));
+        Assert.Equal(new TileCell2D(TileKind2D.Solid, 0), map.GetTile(3, 3));
+    }
+
+    [Fact]
+    public void FloodFillTreatsAllEmptyTilesAsOneRegionRegardlessOfRetainedTileset()
+    {
+        var map = new EditableTileMap2D(3, 1, 32f, 3, tilesetIds: ["cave", "moss"]);
+        map.SetTile(1, 0, new TileCell2D(TileKind2D.Empty, 1));
+        var session = new TileEditSession2D(map);
+
+        session.BeginStroke();
+        session.FloodFill(0, 0, new TileCell2D(TileKind2D.Solid, 0));
+        session.EndStroke();
+
+        for (var x = 0; x < 3; x++)
+            Assert.Equal(TileKind2D.Solid, map.GetTileKind(x, 0));
+    }
 }

@@ -11,6 +11,7 @@ using App2d.Gameplay.World;
 using App2d.Physics;
 using App2d.Rendering;
 using App2d.Tiles;
+using App2d.Things;
 using SkiaSharp;
 using System.Numerics;
 
@@ -67,13 +68,15 @@ public sealed class SideScrollerGame : Game2D
                 return ConsoleCommandResult.From($"baked {LevelBootstrap2D.CavernLevelPath}");
             });
 
-        var tileMap = LevelBootstrap2D.LoadOrBake(Traversal);
+        var loadedLevel = LevelBootstrap2D.LoadOrBake(Traversal);
+        var tileMap = loadedLevel.TileMap;
         var groundHeights = TileGroundHeights2D.Derive(tileMap);
 
         _level = new SideScrollerLevel2D(
             Traversal,
             tileMap,
-            x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)]);
+            x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)],
+            loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime).ToArray());
         _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _level.SpawnPoint, _level.GetCameraFloorY);
         // LevelBootstrap2D.OpenForEditing is passed as a factory, not invoked here: a
         // play-only session must never hold a read-write handle on level.db (it locks the
@@ -87,6 +90,8 @@ public sealed class SideScrollerGame : Game2D
             Traversal.TileSize);
 
         _level.CreateEnvironment(Scene, _collision, _physics, Textures, WorldLayer, PlayerLayer, EnemyLayer);
+        _editor.ThingsChanged += things =>
+            _level.ReloadMovingPlatforms(things.Select(ThingTypeRegistry2D.ToRuntime).ToArray());
 
         _player = new Person2D(
             _collision,
@@ -132,6 +137,8 @@ public sealed class SideScrollerGame : Game2D
 
     public override string WindowTitle =>
         $"App2d Side Scroller | PAD: {(_inputMapper.IsControllerConnected ? "XBOX" : "OFF")} | Q/Y: switch weapon | J/CLICK or X: attack | A: jump | Shift/controller B: dash | keyboard B: shield block | WEAPON: {_arsenal.WeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+
+    internal override Control? OverlayControl => _editor.InspectorView;
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -212,7 +219,12 @@ public sealed class SideScrollerGame : Game2D
         if (_showTraversalDebug)
             _traversalDebug.Draw(renderer, _player.Position, _player.Facing);
 
-        TileEditorView2D.Draw(renderer, _editor, _level.TileMap.WorldBounds, _level.TileMap.TileSize);
+        TileEditorView2D.Draw(
+            renderer,
+            _editor,
+            _level.TileMap.WorldBounds,
+            _level.TileMap.TileSize,
+            Textures);
     }
 
     private void Respawn()
