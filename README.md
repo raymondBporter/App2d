@@ -4,17 +4,18 @@ A deliberately small SkiaSharp 2D engine skeleton with compile-time module bound
 
 The solution is split into `App2d.Core`, `App2d.Collision`, `App2d.Tiles`,
 `App2d.Physics`, `App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`, plus the
-Windows executable composition root. Core, collision, tiles, physics, and rendering
-target plain `net10.0`; platform hosting, gameplay input, and audio remain in the
+Windows executable composition root. Each project physically owns its source files —
+there are no linked-file views. Core, collision, tiles, physics, and rendering target
+plain `net10.0`; platform hosting, gameplay input, and audio remain in the
 Windows-targeted projects.
 
 The engine is grouped by responsibility:
 
-- `Engine/Mathematics` contains transforms and reusable numeric helpers, including
+- `App2d.Core/Mathematics` contains transforms and reusable numeric helpers, including
   `Similarity2D` — the validated rotation + uniform scale + mirror + translation pose
   that collision consumes. The namespace uses `Mathematics` rather than `Math` so it
   never shadows `System.Math`.
-- `Engine/Rendering` contains the renderer and shader abstractions.
+- `App2d.Rendering` contains the renderer and shader abstractions.
 - `App2d.Core` presents guards, mathematics, animation, geometry, and the
   render-agnostic `SpatialObject2D`. `App2d.Tiles` presents the tile maps and mesher.
   `App2d.Collision` contains only collision work: `BroadPhase`, `Contacts`,
@@ -22,15 +23,15 @@ The engine is grouped by responsibility:
 - `CollisionSystem2D` owns runtime collider registration, collision layers and masks,
   cached static/dynamic spatial indexes, candidate discovery, and exact contacts. It has
   no dependency on physics; physics and gameplay are consumers of collision data.
-- `Engine/Collision/BroadPhase` contains generic AABB candidate-pair searches, while
-  `Engine/Collision/Filtering` contains their generic filtering contract.
-- `Engine/Collision/Contacts` contains overlap/contact generation. Shape-pair code is
+- `App2d.Collision/BroadPhase` contains generic AABB candidate-pair searches, while
+  `App2d.Collision/Filtering` contains their generic filtering contract.
+- `App2d.Collision/Contacts` contains overlap/contact generation. Shape-pair code is
   split into circle, capsule, polygon/SAT, and utility partials behind one dispatcher.
-- `Engine/Collision/Queries` contains rays, exact shape intersections, and generic
-  spatial-object raycasts. Physics-world extensions live in `Engine/Physics/Queries`,
+- `App2d.Collision/Queries` contains rays, exact shape intersections, and generic
+  spatial-object raycasts. Physics-world extensions live in `App2d.Physics/Queries`,
   preventing the collision module from depending back on physics. Query hits retain
   direct references to the object or body that was hit.
-- `Engine/Physics/Integration`, `Engine/Physics/Filtering`, and `Engine/Physics/Solvers`
+- `App2d.Physics/Integration`, `App2d.Physics/Filtering`, and `App2d.Physics/Solvers`
   contain physics-specific policies; bodies, contacts, constraints, and the world remain
   at the physics root.
 
@@ -46,7 +47,7 @@ rejecting negative values and NaN.
 `InvalidOperationException` semantics. Physics iteration settings, collapsed transforms,
 and renderer lifecycle checks therefore do not masquerade as caller argument failures.
 
-Geometry lives under `Engine/Geometry`:
+Geometry lives under `App2d.Core/Geometry`:
 
 - `IShape2D` is the common local-space shape contract.
 - `ConvexPolygon2D` accepts and validates any ordered convex vertex loop.
@@ -61,7 +62,7 @@ Geometry lives under `Engine/Geometry`:
   the solid region and into permitted space.
 - `Bounds2D` supplies local bounds to rendering and shaders.
 
-`Engine/Tiles/TileMap2D` stores compact authored maps. `ProceduralTileMap2D` addresses
+`App2d.Tiles/TileMap2D` stores compact authored maps. `ProceduralTileMap2D` addresses
 larger seeded worlds without allocating their full tile area: it evaluates stateless
 X/Y cells on demand, greedily merges one 32x32 chunk into AABB colliders, and permits
 old chunks to be discarded and regenerated exactly. The side-scroller keeps at most 15
@@ -288,7 +289,7 @@ code never knows asset paths or audio-device details. `SoundEffectBank2D` owns t
 mapping, per-cue levels, and non-repeating variants. Set `sfx_volume` in the developer
 console to a value from 0 through 1 to adjust the master sound-effect level.
 
-Player movement is owned by `Gameplay/CharacterMotor2D`. `PlayerIntent2D` describes
+Player movement is owned by `App2d.Gameplay/CharacterMotor2D`. `PlayerIntent2D` describes
 what the player requested; the motor turns that into desired velocity and grace-window
 state; `PhysicsWorld2D` decides what the level and active constraints permit. The motor
 then consumes new landing contacts, allowing a buffered jump to fire on the fixed step
@@ -424,7 +425,7 @@ pooled fireballs use `effects/fireball/ember-energy.png`.
 
 ## Frame animation
 
-`Engine/Animation` contains a generic, update-driven frame animation layer. A clip can
+`App2d.Core/Animation` contains a generic, update-driven frame animation layer. A clip can
 hold textures, shaders, numeric values, or any other frame state, so the timing code is
 not tied to the player or even to rendering:
 
