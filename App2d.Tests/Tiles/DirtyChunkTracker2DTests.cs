@@ -46,20 +46,28 @@ public sealed class DirtyChunkTracker2DTests
     }
 
     [Fact]
-    public void PaintingAcrossAChunkBorderCoalescesIntoTheAffectedChunks()
+    public void PaintingTilesWithOverlappingChunkNeighbourhoodsMarksExactlyTheUnion()
     {
-        // 8x8 tiles at chunk size 4 -> a 2x2 chunk grid. Painting tile (3,3) is a
-        // chunk corner, so EditableTileMap2D raises ChunkChanged for all four chunks.
-        var map = new EditableTileMap2D(8, 8, 32f, 4);
+        // 12x8 tiles at chunk size 4 -> a 3x2 chunk grid (6 chunks total).
+        //
+        // Tile (3,3) is a chunk corner: painted alone it dirties chunks
+        // (0,0), (1,0), (0,1), (1,1) -- 4 chunks.
+        // Tile (7,3) is also a chunk corner, one chunk column over: painted alone it
+        // dirties (1,0), (2,0), (1,1), (2,1) -- 4 chunks.
+        //
+        // The two 4-chunk sets share (1,0) and (1,1), so neither tile alone produces
+        // the map's full chunk count, and a broken (non-deduplicating) Mark would count
+        // 8 raw events instead of the 6 distinct chunks in the union. A test that only
+        // painted one tile, or two tiles with identical neighbourhoods, could pass even
+        // if Mark stopped deduplicating -- this one cannot.
+        var map = new EditableTileMap2D(12, 8, 32f, 4);
         var tracker = new DirtyChunkTracker2D();
         map.ChunkChanged += tracker.Mark;
 
         map.SetTileKind(3, 3, TileKind2D.Solid);
-        map.SetTileKind(4, 3, TileKind2D.Solid);
+        map.SetTileKind(7, 3, TileKind2D.Solid);
 
-        // Both tiles sit on the same chunk seam, so the dirty set stays at four
-        // chunks no matter how many events fired.
-        Assert.Equal(4, tracker.Count);
+        Assert.Equal(6, tracker.Count);
     }
 
     [Fact]
