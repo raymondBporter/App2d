@@ -25,10 +25,8 @@ public sealed class CollisionSystem2D
     private bool _dynamicIndexDirty = true;
 
     public IReadOnlyList<Collider2D> Colliders => _colliders;
-    public IPairFilter2D<Collider2D> PairFilter { get; set; } =
-        new DefaultColliderPairFilter2D();
-    public ICollisionContactProvider2D ContactProvider { get; set; } =
-        new ShapeCollisionContactProvider2D();
+    public IPairFilter2D<Collider2D> PairFilter { get; set; } = new DefaultColliderPairFilter2D();
+    public ICollisionContactProvider2D ContactProvider { get; set; } = new ShapeCollisionContactProvider2D();
     public int LastCandidatePairCount { get; private set; }
     public int LastNarrowPhaseTestCount { get; private set; }
     public int LastBoundsQueryCandidateCount { get; private set; }
@@ -47,16 +45,10 @@ public sealed class CollisionSystem2D
         }
     }
 
-    public Collider2D AddCollider(
-        SpatialObject2D worldObject,
-        ColliderMobility2D mobility = ColliderMobility2D.Static)
+    public Collider2D AddCollider(SpatialObject2D worldObject, ColliderMobility2D mobility = ColliderMobility2D.Static)
     {
         ArgGuard.ThrowIfNull(worldObject);
-        var collider = new Collider2D(
-            this,
-            _nextColliderId++,
-            worldObject,
-            mobility);
+        var collider = new Collider2D(this, _nextColliderId++, worldObject, mobility);
         _colliders.Add(collider);
         MarkIndexDirty(mobility);
         return collider;
@@ -78,9 +70,7 @@ public sealed class CollisionSystem2D
         MarkIndexDirty(collider.Mobility);
     }
 
-    public void CollectContacts(
-        List<CollisionPair2D> contacts,
-        IPairFilter2D<Collider2D>? additionalFilter = null)
+    public void CollectContacts(List<CollisionPair2D> contacts, IPairFilter2D<Collider2D>? additionalFilter = null)
     {
         ArgGuard.ThrowIfNull(contacts);
         contacts.Clear();
@@ -123,10 +113,7 @@ public sealed class CollisionSystem2D
         }
     }
 
-    public bool TryGetContact(
-        Collider2D first,
-        Collider2D second,
-        out Contacts.CollisionContact2D contact)
+    public bool TryGetContact(Collider2D first, Collider2D second, out Contacts.CollisionContact2D contact)
     {
         RequireOwned(first);
         RequireOwned(second);
@@ -143,10 +130,7 @@ public sealed class CollisionSystem2D
             out contact);
     }
 
-    public bool TryGetContact(
-        SpatialObject2D query,
-        Collider2D collider,
-        out Contacts.CollisionContact2D contact)
+    public bool TryGetContact(SpatialObject2D query, Collider2D collider, out Contacts.CollisionContact2D contact)
     {
         ArgGuard.ThrowIfNull(query);
         RequireOwned(collider);
