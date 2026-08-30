@@ -28,7 +28,8 @@ here only enough to keep phase 1 from painting itself into a corner.
   Toggling out resumes play exactly where the player stood.
 - **Phase 2 tools are single-tile paint and erase only.** Brush size, rectangle fill and
   flood fill are deliberately excluded from the first editor version.
-- **Ground height is derived, not baked.** See "Ground height" below.
+- **Ground height is derived, provisional, and deliberately sloppy.** It drives camera
+  tweaks; getting it wrong degrades feel, not correctness. See "Ground height" below.
 - **No compatibility shims.** `ProceduralTileMap2D` is deleted, not deprecated; the generator
   leaves the runtime path in phase 1. Breaking things for a few hours mid-phase is acceptable.
 
@@ -107,29 +108,27 @@ the hook for adding them.
 
 `TerrainHeight(x)` disappears with the generator, but 5 sites need the answer. Ground height
 becomes **derived from tile data**: scan column `x` upward from `y = 0` and take the lowest
-non-solid tile. Computed once at load into an `int[width]`, exposed as `GroundY(x)`.
-
-`GroundY(x)` returns a **tile row index, not a world coordinate** — the same units
-`TerrainHeight` returned, so existing callers keep their `* _tileSize` and origin arithmetic
-unchanged.
+non-solid tile, clamped to a minimum of 1. Computed once at load into an `int[width]` and
+exposed as `GroundY(x)`, which returns a **tile row index, not a world coordinate** — the
+same units `TerrainHeight` returned, so callers keep their `* _tileSize` arithmetic unchanged.
 
 The derived rule was chosen over baking a `columns(x, ground_y)` table because the table
 would preserve a dependency on a component being deleted, and a hand-painted level has no
-generator to ask. The derived rule is the one that survives.
+generator to ask.
 
-**Known divergence.** At a jumpable pit the generator reports the surrounding terrain height
-while a column scan reports 0, because the pit column is empty at `y = 0`. Consequences,
-verified against each call site:
+**This is knowingly provisional and does not need to be good.** Ground height feeds camera
+floor clamping, spawn/goal Y, and enemy placement rows. Getting it wrong degrades feel; it
+does not break the game, and today's generator-derived version is itself approximate. The
+column scan diverges from `TerrainHeight` at jumpable pits — a pit column is empty at
+`y = 0`, so the scan reports the pit floor rather than the surrounding terrain. The clamp to
+1 is what keeps `SideScrollerEncounterSpawner2D:127` (`GroundY(x) - 1`) from placing an enemy
+below the world. That clamp is the entire mitigation; no pit-detection logic.
 
-- `GetCameraFloorY` — the camera's lower clamp drops at a pit. Not binding in practice and
-  arguably desirable when the player falls in. Accepted.
-- Moving platforms — `AddMovingPlatform` takes `Math.Max` over a ±2 tile range, so a 0
-  cannot lower the result. Benign.
-- Spawn and goal — tile columns 4 and `width - 5`, inside the generator's spawn-safe zones,
-  which contain no pits. Benign.
-- `SideScrollerEncounterSpawner2D:127` — `TerrainHeight(x) - 1` would become `-1`, placing an
-  enemy below the world. **This one needs a guard**: skip pit columns when choosing enemy
-  placement rather than clamping to a wrong-but-legal row.
+The real fix is a later redesign, not a better scan. A single ground row per column cannot
+express a **second-storey floor** — an interior level above the terrain that the camera and
+spawns should treat as ground. That needs ground height to become authored, multi-valued
+data (phase 3), at which point the column scan is replaced outright. Building anything
+elaborate here now would be work thrown away twice.
 
 ## Phase 1 — format, editable map, and the swap
 
@@ -145,8 +144,7 @@ verified against each call site:
    once; the resulting `.db` is committed.
 5. **Swap the read path.** `SideScrollerLevel2D` takes an injected `IChunkedTileMap2D` and a
    `GroundY` source instead of constructing a generator. The 5 `TerrainHeight` sites become
-   `GroundY(x)`; the generator handoff at line 215 becomes a `GroundY` handoff, and the
-   encounter spawner gains the pit guard.
+   `GroundY(x)`, and the generator handoff at line 215 becomes a `GroundY` handoff.
 6. **Level path resolution.** The loader resolves `Assets/Static/levels/...` directly in
    Debug — mirroring the `#if DEBUG` walk-up in `AssetPaths` — so authored levels are read
    from their durable home and `Runtime` stays disposable. Release reads the packaged copy.
@@ -170,14 +168,15 @@ borders, a painted tile invalidates every chunk touching its 3×3 tile neighbour
 chunk for an interior tile, up to four at a chunk corner.
 
 Phase 2 does not update ground height: painting changes collision and visuals but not
-`GroundY`, so repainted terrain will not move the camera floor or spawn points until
-phase 3. This is a known, accepted limitation of the phase, not an oversight.
+`GroundY`, so repainted terrain will not move the camera floor or spawn points until phase 3
+replaces the whole notion. Accepted, consistent with ground height being provisional.
 
 ## Phase 3 — beyond tiles (sketch)
 
 `entities` and `tileset_regions` tables; spawn point, goal, moving platforms and enemy
-placements become authored data rather than code in `SideScrollerLevel2D`; ground height
-becomes editable or recomputed on edit; a production bake step in
+placements become authored data rather than code in `SideScrollerLevel2D`; ground height is
+redesigned as authored, multi-valued data supporting second-storey floors, replacing the
+column scan; a production bake step in
 `tools/ArtPipeline/build_runtime_assets.py` compiling `.db` files into a read-optimized
 `Runtime/levels/` artifact; additional tools (brush size, rectangle fill, flood fill).
 
@@ -188,8 +187,9 @@ becomes editable or recomputed on edit; a production bake step in
 - **Bake characterization** — every one of the 61,440 tiles read back from the `.db` equals
   `JumpableWorldGenerator2D.GetTileKind(x, y)`. This is the test that proves the format
   before the format is trusted, and it is deleted along with the generator.
-- **Derived ground height** — `GroundY(x)` agrees with `TerrainHeight(x)` on every non-pit
-  column, and the pit divergence is asserted explicitly rather than left implicit.
+- **Derived ground height** — a sanity test only, matching how provisional it is: `GroundY(x)`
+  is always ≥ 1 and never indexes below the world. No assertion that it agrees with
+  `TerrainHeight`; it is allowed to differ and will be replaced.
 - **`EditableTileMap2D`** — `SetTileKind` round-trips, out-of-bounds reads return `Empty`,
   chunk math matches the retargeted `ProceduralTileMap2D` tests, `ChunkChanged` fires for the
   right chunk.
