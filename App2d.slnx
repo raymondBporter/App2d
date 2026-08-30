@@ -2,6 +2,7 @@
   <Project Path="App2d.Core/App2d.Core.csproj" />
   <Project Path="App2d.Collision/App2d.Collision.csproj" />
   <Project Path="App2d.Tiles/App2d.Tiles.csproj" />
+  <Project Path="App2d.Levels/App2d.Levels.csproj" />
   <Project Path="App2d.Physics/App2d.Physics.csproj" />
   <Project Path="App2d.Rendering/App2d.Rendering.csproj" />
   <Project Path="App2d.Tests/App2d.Tests.csproj" />
