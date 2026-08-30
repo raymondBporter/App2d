@@ -42,4 +42,21 @@ public sealed class CollisionQueries2DTests
         Assert.Equal(new Vector2(3f, 0f), hit.Point);
         Assert.Equal(new Vector2(-1f, 0f), hit.Normal);
     }
+
+    [Fact]
+    public void RaycastHitsARotatedRectangle()
+    {
+        var box = new SpatialObject2D(Rectangle2D.FromSize(new Vector2(4f, 4f)));
+        box.Transform.Position = new Vector2(10f, 0f);
+        box.Transform.Rotation = MathF.PI / 4f;
+
+        var found = new[] { box }.Raycast(
+            new Ray2D(Vector2.Zero, Vector2.UnitX), 20f, out var hit);
+
+        Assert.True(found);
+        // The rotated box's near corner sits at x = 10 - 2√2; the ray meets one
+        // of its two diagonal edges, so the normal's X is -√2/2 either way.
+        Assert.Equal(10f - 2f * MathF.Sqrt(2f), hit.Distance, 3);
+        Assert.Equal(-MathF.Sqrt(2f) / 2f, hit.Normal.X, 3);
+    }
 }

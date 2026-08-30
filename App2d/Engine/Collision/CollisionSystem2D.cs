@@ -163,12 +163,7 @@ public sealed class CollisionSystem2D
             out contact);
     }
 
-    public int QueryBounds(
-        Bounds2D bounds,
-        List<Collider2D> results,
-        uint layerMask = uint.MaxValue,
-        bool includeSensors = true,
-        Collider2D? excluded = null)
+    public int QueryBounds(Bounds2D bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null)
     {
         ArgGuard.ThrowIfNull(results);
         if (excluded is not null)
@@ -191,29 +186,16 @@ public sealed class CollisionSystem2D
         return results.Count;
     }
 
-    public int Overlap(
-        SpatialObject2D query,
-        List<CollisionOverlap2D> overlaps,
-        uint layerMask = uint.MaxValue,
-        bool includeSensors = true,
-        Collider2D? excluded = null)
+    public int Overlap(SpatialObject2D query, List<CollisionOverlap2D> overlaps, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null)
     {
         ArgGuard.ThrowIfNull(query);
         ArgGuard.ThrowIfNull(overlaps);
         overlaps.Clear();
-        QueryBounds(
-            query.WorldBounds,
-            _queryCandidates,
-            layerMask,
-            includeSensors,
-            excluded);
+        QueryBounds(query.WorldBounds, _queryCandidates, layerMask, includeSensors, excluded);
 
         foreach (var collider in _queryCandidates)
         {
-            if (ContactProvider.TryGetContact(
-                query,
-                collider.WorldObject,
-                out var contact))
+            if (ContactProvider.TryGetContact(query, collider.WorldObject, out var contact))
             {
                 overlaps.Add(new CollisionOverlap2D(collider, contact));
             }
@@ -222,16 +204,13 @@ public sealed class CollisionSystem2D
         return overlaps.Count;
     }
 
-    internal void OnMobilityChanged(
-        ColliderMobility2D previous,
-        ColliderMobility2D current)
+    internal void OnMobilityChanged(ColliderMobility2D previous, ColliderMobility2D current)
     {
         MarkIndexDirty(previous);
         MarkIndexDirty(current);
     }
 
-    internal void OnTransformChanged(Collider2D collider) =>
-        MarkIndexDirty(collider.Mobility);
+    internal void OnTransformChanged(Collider2D collider) => MarkIndexDirty(collider.Mobility);
 
     private void SynchronizeIndexes()
     {
@@ -254,10 +233,7 @@ public sealed class CollisionSystem2D
         }
     }
 
-    private void RebuildIndex(
-        ColliderMobility2D mobility,
-        Dictionary<GridCell, List<Collider2D>> cells,
-        List<Collider2D> overflow)
+    private void RebuildIndex(ColliderMobility2D mobility, Dictionary<GridCell, List<Collider2D>> cells, List<Collider2D> overflow)
     {
         foreach (var bucket in cells.Values)
             bucket.Clear();
@@ -283,10 +259,7 @@ public sealed class CollisionSystem2D
             cells.Remove(cell);
     }
 
-    private void AddToIndex(
-        Collider2D collider,
-        Dictionary<GridCell, List<Collider2D>> cells,
-        List<Collider2D> overflow)
+    private void AddToIndex(Collider2D collider, Dictionary<GridCell, List<Collider2D>> cells, List<Collider2D> overflow)
     {
         var bounds = collider.WorldObject.WorldBounds;
         if (!TryGetCellRange(bounds, out var range) ||
@@ -331,30 +304,24 @@ public sealed class CollisionSystem2D
             TryAddQueryCandidate(collider, bounds, stamp, results);
     }
 
-    private static void QueryCells(
-        Dictionary<GridCell, List<Collider2D>> cells,
-        CellRange range,
-        Bounds2D bounds,
-        int stamp,
-        List<Collider2D> results)
+    private static void QueryCells(Dictionary<GridCell, List<Collider2D>> cells, CellRange range, Bounds2D bounds, int stamp, List<Collider2D> results)
     {
         for (var y = range.MinimumY; y <= range.MaximumY; y++)
         {
             for (var x = range.MinimumX; x <= range.MaximumX; x++)
             {
-                if (!cells.TryGetValue(new GridCell(x, y), out var bucket))
-                    continue;
-                foreach (var collider in bucket)
-                    TryAddQueryCandidate(collider, bounds, stamp, results);
+                if (cells.TryGetValue(new GridCell(x, y), out var bucket))
+                {
+                    foreach (var collider in bucket)
+                    {
+                        TryAddQueryCandidate(collider, bounds, stamp, results);
+                    }
+                }
             }
         }
     }
 
-    private static void TryAddQueryCandidate(
-        Collider2D collider,
-        Bounds2D bounds,
-        int stamp,
-        List<Collider2D> results)
+    private static void TryAddQueryCandidate(Collider2D collider, Bounds2D bounds, int stamp, List<Collider2D> results)
     {
         if (collider.QueryStamp == stamp ||
             !bounds.Intersects(collider.WorldObject.WorldBounds))
@@ -403,28 +370,21 @@ public sealed class CollisionSystem2D
     private void RequireOwned(Collider2D collider)
     {
         ArgGuard.ThrowIfNull(collider);
-        StateGuard.ThrowIf(
-            !ReferenceEquals(collider.System, this),
-            "The collider belongs to a different collision system.");
+        StateGuard.ThrowIf(!ReferenceEquals(collider.System, this), "The collider belongs to a different collision system.");
     }
 
     private sealed class CombinedPairFilter : IPairFilter2D<Collider2D>
     {
-        public IPairFilter2D<Collider2D> Primary { get; set; } =
-            new DefaultColliderPairFilter2D();
+        public IPairFilter2D<Collider2D> Primary { get; set; } = new DefaultColliderPairFilter2D();
         public IPairFilter2D<Collider2D>? Additional { get; set; }
 
-        public bool ShouldTest(Collider2D first, Collider2D second) =>
-            Primary.ShouldTest(first, second) &&
-            (Additional?.ShouldTest(first, second) != false);
+        public bool ShouldTest(Collider2D first, Collider2D second) => Primary.ShouldTest(first, second) && (Additional?.ShouldTest(first, second) != false);
     }
 
     private readonly record struct GridCell(int X, int Y);
 
     private readonly record struct CellRange(int MinimumX, int MaximumX, int MinimumY, int MaximumY)
     {
-        public long CellCount =>
-            (long)(MaximumX - MinimumX + 1) *
-            (MaximumY - MinimumY + 1);
+        public long CellCount => (long)(MaximumX - MinimumX + 1) * (MaximumY - MinimumY + 1);
     }
 }

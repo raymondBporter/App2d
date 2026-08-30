@@ -24,14 +24,9 @@ public static class RayIntersection2D
             return false;
         }
 
-        if (!Matrix3x2.Invert(worldObject.Transform.LocalToWorldMatrix, out var worldToLocal))
-        {
-            hit = default;
-            return false;
-        }
-
-        var localOrigin = Vector2.Transform(ray.Origin, worldToLocal);
-        var localDirection = Vector2.TransformNormal(ray.Direction, worldToLocal);
+        var pose = worldObject.CollisionPose;
+        var localOrigin = pose.InverseTransformPoint(ray.Origin);
+        var localDirection = pose.InverseTransformDirection(ray.Direction);
         if (!TryIntersectLocal(
                 localOrigin,
                 localDirection,
@@ -43,7 +38,8 @@ public static class RayIntersection2D
             return false;
         }
 
-        var worldNormal = worldToLocal.TransposeTransformDirection(localHit.Normal);
+        // Normals transform by (A⁻¹)ᵀ = A / Scale² for this family; normalize after.
+        var worldNormal = pose.TransformDirection(localHit.Normal);
         if (worldNormal.LengthSquared() <= Epsilon)
         {
             hit = default;
