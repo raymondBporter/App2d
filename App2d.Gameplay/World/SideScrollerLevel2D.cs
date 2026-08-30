@@ -38,6 +38,23 @@ public sealed class SideScrollerLevel2D
         _groundY = groundY;
         TileMap = tileMap;
 
+        StateGuard.ThrowIf(
+            tileMap.TileSize != _tileSize,
+            $"The loaded map's tile size ({tileMap.TileSize}) does not match " +
+            $"the traversal metrics' tile size ({_tileSize}).");
+        StateGuard.ThrowIf(
+            tileMap.Width != WorldWidthTiles,
+            $"The loaded map's width ({tileMap.Width}) does not match " +
+            $"the expected world width ({WorldWidthTiles}).");
+        StateGuard.ThrowIf(
+            tileMap.Height != WorldHeightTiles,
+            $"The loaded map's height ({tileMap.Height}) does not match " +
+            $"the expected world height ({WorldHeightTiles}).");
+        StateGuard.ThrowIf(
+            tileMap.Origin != WorldOrigin,
+            $"The loaded map's origin ({tileMap.Origin}) does not match " +
+            $"the expected world origin ({WorldOrigin}).");
+
         const int spawnTileX = 4;
         SpawnPoint = new Vector2(
             TileCenterX(spawnTileX),
