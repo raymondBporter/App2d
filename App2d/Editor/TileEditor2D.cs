@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Geometry;
 using App2d.Levels;
 using App2d.Rendering;
 using App2d.Tiles;
@@ -24,13 +25,16 @@ internal sealed class TileEditor2D : IDisposable
     ];
 
     private readonly EditableTileMap2D _map;
-    private readonly LevelDatabase2D _database;
+    private readonly Func<LevelDatabase2D> _openDatabase;
     private readonly Camera2D _camera;
     private readonly TileEditSession2D _session;
     private readonly Vector2 _origin;
     private readonly float _tileSize;
 
+    private LevelDatabase2D? _database;
     private Vector2 _cameraFocus;
+    private Vector2 _savedCameraPosition;
+    private float _savedCameraZoom;
     private Vector2 _panAnchorDevice;
     private Vector2 _panAnchorFocus;
     private bool _isPanning;
@@ -39,15 +43,21 @@ internal sealed class TileEditor2D : IDisposable
     private int _lastPaintedY;
     private bool _hasLastPainted;
 
+    /// <summary>
+    /// <paramref name="openDatabase"/> opens a fresh read-write handle to the level file.
+    /// It is invoked only on entering editor mode and disposed on leaving it, so a
+    /// play-only session never holds a write-through handle open on <c>level.db</c> —
+    /// that handle is what makes <c>git checkout level.db</c> fail while the game runs.
+    /// </summary>
     public TileEditor2D(
         EditableTileMap2D map,
-        LevelDatabase2D database,
+        Func<LevelDatabase2D> openDatabase,
         Camera2D camera,
         Vector2 origin,
         float tileSize)
     {
         _map = ArgGuard.RequireNotNull(map);
-        _database = ArgGuard.RequireNotNull(database);
+        _openDatabase = ArgGuard.RequireNotNull(openDatabase);
         _camera = ArgGuard.RequireNotNull(camera);
         ArgGuard.ThrowIfNotPositive(tileSize);
         _origin = origin;
@@ -59,6 +69,7 @@ internal sealed class TileEditor2D : IDisposable
     public bool IsActive { get; private set; }
     public TileKind2D SelectedKind { get; private set; }
     public Vector2 CameraFocus => _cameraFocus;
+    public Bounds2D VisibleWorldBounds => _camera.VisibleWorldBounds;
 
     public bool TryGetHoveredTile(out int x, out int y)
     {
@@ -74,7 +85,7 @@ internal sealed class TileEditor2D : IDisposable
         {
             IsActive = !IsActive;
             if (IsActive)
-                _cameraFocus = _camera.Position;
+                BeginEditingSession();
             else
                 EndEditingSession();
         }
@@ -142,6 +153,10 @@ internal sealed class TileEditor2D : IDisposable
 
         if (input.WasMousePressed(MouseButtons.Left) || input.WasMousePressed(MouseButtons.Right))
         {
+            // Pressing the other button mid-stroke (e.g. RMB while LMB is still held)
+            // must commit the in-progress stroke rather than discard it: BeginStroke
+            // on TileEditSession2D simply clears the current stroke buffer.
+            EndStrokeIfActive();
             _session.BeginStroke();
             _hasLastPainted = false;
         }
@@ -159,7 +174,12 @@ internal sealed class TileEditor2D : IDisposable
             _hasLastPainted = true;
         }
 
-        if (input.WasMouseReleased(MouseButtons.Left) || input.WasMouseReleased(MouseButtons.Right))
+        // End on button *state* rather than the release edge: losing window focus or
+        // opening the developer console clears held mouse buttons (InputState.ResetButtons)
+        // without ever raising WasMouseReleased, which would otherwise orphan the stroke —
+        // IsStrokeActive stays true forever, painting stops working, and Ctrl+Z is silently
+        // swallowed by the "no undo mid-stroke" guard.
+        if (_session.IsStrokeActive && !isPainting && !isErasing)
             EndStrokeIfActive();
     }
 
@@ -173,14 +193,33 @@ internal sealed class TileEditor2D : IDisposable
     }
 
     /// <summary>
-    /// Called when editor mode is toggled off: ends any in-progress stroke and clears the
-    /// pan state, so a middle-drag started before exiting never resumes with a stale
-    /// anchor (and a stale camera jump) on the next entry into editor mode.
+    /// Called when editor mode is toggled on: opens the write-through database handle and
+    /// captures the camera's current position and zoom so gameplay framing can be restored
+    /// exactly on exit, even after the free camera pans and zooms while editing.
+    /// </summary>
+    private void BeginEditingSession()
+    {
+        _cameraFocus = _camera.Position;
+        _savedCameraPosition = _camera.Position;
+        _savedCameraZoom = _camera.Zoom;
+        _database = _openDatabase();
+    }
+
+    /// <summary>
+    /// Called when editor mode is toggled off: ends any in-progress stroke, clears the
+    /// pan state (so a middle-drag started before exiting never resumes with a stale
+    /// anchor on the next entry), restores the camera's pre-edit position and zoom, and
+    /// releases the write-through database handle so a play-only session never keeps
+    /// <c>level.db</c> locked.
     /// </summary>
     private void EndEditingSession()
     {
         EndStrokeIfActive();
         _isPanning = false;
+        _camera.Position = _savedCameraPosition;
+        _camera.Zoom = _savedCameraZoom;
+        _database?.Dispose();
+        _database = null;
     }
 
     /// <summary>Writes a stroke's changed chunks in one transaction.</summary>
@@ -189,8 +228,17 @@ internal sealed class TileEditor2D : IDisposable
         if (chunks.Count == 0)
             return;
 
-        _database.SaveChunks(_map, chunks.ToArray());
+        StateGuard.RequireNotNull(_database, "A stroke committed with no open editing database.")
+            .SaveChunks(_map, chunks.ToArray());
     }
 
-    public void Dispose() => _database.Dispose();
+    /// <summary>
+    /// Ends any stroke still open when the game shuts down while in editor mode, so the
+    /// database is never disposed out from under an uncommitted stroke.
+    /// </summary>
+    public void Dispose()
+    {
+        EndStrokeIfActive();
+        _database?.Dispose();
+    }
 }
