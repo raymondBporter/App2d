@@ -1,4 +1,5 @@
-using App2d.Gameplay;
+using App2d.Gameplay.Player;
+using App2d.Gameplay.World;
 using App2d.Levels;
 using App2d.Tiles;
 using Microsoft.Data.Sqlite;

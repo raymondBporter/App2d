@@ -2,7 +2,7 @@ using App2d.Core;
 using App2d.Rendering.Textures;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Persons.Actions;
 
 public interface IPersonWeapon2D
 {

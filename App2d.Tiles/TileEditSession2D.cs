@@ -6,13 +6,11 @@ namespace App2d.Tiles;
 /// The editable core of the tile painter: strokes, undo, and which chunks a stroke's data
 /// touched. Knows nothing about input, cameras, rendering or storage.
 /// </summary>
-public sealed class TileEditSession2D
+public sealed class TileEditSession2D(EditableTileMap2D map)
 {
-    private readonly EditableTileMap2D _map;
+    private readonly EditableTileMap2D _map = ArgGuard.RequireNotNull(map);
     private readonly List<TileEdit2D> _currentStroke = [];
     private readonly List<TileEdit2D[]> _undoStack = [];
-
-    public TileEditSession2D(EditableTileMap2D map) => _map = ArgGuard.RequireNotNull(map);
 
     public bool IsStrokeActive { get; private set; }
     public int UndoCount => _undoStack.Count;

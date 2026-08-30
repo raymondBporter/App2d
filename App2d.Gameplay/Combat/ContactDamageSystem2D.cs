@@ -1,7 +1,8 @@
 using App2d.Collision;
 using App2d.Core;
+using App2d.Gameplay.Persons;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Combat;
 
 /// <summary>Resolves opt-in body contact attacks against a person.</summary>
 public sealed class ContactDamageSystem2D(
@@ -26,7 +27,7 @@ public sealed class ContactDamageSystem2D(
             excluded: target.Body.Collider);
         foreach (var overlap in _overlaps)
         {
-            if (overlap.Collider.UserData is not App2d.Physics.PhysicsBody2D
+            if (overlap.Collider.UserData is not Physics.PhysicsBody2D
                 {
                     UserData: ICombatant2D { IsAlive: true } combatant and
                         IContactDamageSource2D source

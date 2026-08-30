@@ -1,7 +1,7 @@
 using App2d.Core;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Persons.Actions;
 
 /// <summary>
 /// A timed melee overlap placed directly in front of its owner.

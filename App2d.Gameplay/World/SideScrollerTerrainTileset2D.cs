@@ -1,5 +1,6 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Gameplay.Assets;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Tiles;
@@ -7,7 +8,7 @@ using SkiaSharp;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.World;
 
 internal enum OneWayTilePart2D
 {

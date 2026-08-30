@@ -1,6 +1,7 @@
 using App2d.Core;
+using App2d.Gameplay.Persons;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Enemies;
 
 public interface IEnemyAttackSource2D
 {

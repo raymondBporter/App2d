@@ -4,7 +4,7 @@ using App2d.Rendering;
 using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.World;
 
 internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunkedTileMap2D tileMap, SideScrollerTerrainTilesetResolver2D tilesets)
 {

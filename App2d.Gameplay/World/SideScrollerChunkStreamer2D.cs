@@ -5,7 +5,7 @@ using App2d.Rendering;
 using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.World;
 
 internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D physics, IChunkedTileMap2D tileMap, SideScrollerTerrainVisualFactory2D visuals, uint worldLayer, uint actorMask)
 {

@@ -4,7 +4,7 @@ using App2d.Rendering;
 using SkiaSharp;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.World;
 
 public sealed class SideScrollerCamera2D
 {

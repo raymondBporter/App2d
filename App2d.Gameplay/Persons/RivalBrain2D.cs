@@ -1,6 +1,7 @@
+using App2d.Gameplay.Persons.Actions;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Persons;
 
 /// <summary>
 /// Small deterministic command producer for the first hostile person. It uses

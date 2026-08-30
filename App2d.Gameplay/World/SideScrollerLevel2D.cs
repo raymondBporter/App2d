@@ -2,6 +2,9 @@ using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Audio;
+using App2d.Gameplay.Combat;
+using App2d.Gameplay.Enemies;
+using App2d.Gameplay.Player;
 using App2d.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
@@ -9,7 +12,7 @@ using App2d.Tiles;
 using SkiaSharp;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.World;
 
 public sealed class SideScrollerLevel2D
 {

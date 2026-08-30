@@ -1,11 +1,12 @@
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Audio;
+using App2d.Gameplay.Combat;
 using App2d.Physics;
 using App2d.Rendering.Textures;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Persons.Actions;
 
 internal abstract class MeleePersonWeapon2D(
     string name,

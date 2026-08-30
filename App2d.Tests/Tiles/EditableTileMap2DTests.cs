@@ -125,13 +125,12 @@ public sealed class EditableTileMap2DTests
 
         Assert.Equal(4, changed.Count);
         Assert.Equal(
-            new[]
-            {
+            [
                 new TileChunk2D(0, 0),
                 new TileChunk2D(0, 1),
                 new TileChunk2D(1, 0),
                 new TileChunk2D(1, 1)
-            },
+            ],
             changed.OrderBy(c => c.X).ThenBy(c => c.Y));
     }
 
@@ -148,7 +147,7 @@ public sealed class EditableTileMap2DTests
 
         Assert.Equal(2, changed.Count);
         Assert.Equal(
-            new[] { new TileChunk2D(0, 1), new TileChunk2D(1, 1) },
+            [new TileChunk2D(0, 1), new TileChunk2D(1, 1)],
             changed.OrderBy(c => c.X).ThenBy(c => c.Y));
     }
 

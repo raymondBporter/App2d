@@ -4,7 +4,7 @@ using App2d.Gameplay.Audio;
 using App2d.Physics;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Combat;
 
 public sealed class CombatSystem2D(
     CollisionSystem2D collision,
@@ -65,8 +65,7 @@ public sealed class CombatSystem2D(
         _collision.Overlap(hitbox, _overlaps, targetLayer, includeSensors: true);
         foreach (var overlap in _overlaps)
         {
-            if (GetCombatant(overlap.Collider) is not { IsAlive: true } combatant ||
-                combatant.Faction == attackerFaction)
+            if (GetCombatant(overlap.Collider) is not { IsAlive: true } combatant || combatant.Faction == attackerFaction)
                 continue;
 
             Damage(combatant, damage, knockback(combatant));

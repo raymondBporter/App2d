@@ -3,7 +3,7 @@ using App2d.Core.Animation;
 using App2d.Rendering.Textures;
 using System.Text.Json;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Assets;
 
 internal static class CharacterAnimationAssets2D
 {

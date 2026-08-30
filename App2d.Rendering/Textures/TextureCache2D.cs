@@ -4,7 +4,7 @@ namespace App2d.Rendering.Textures;
 
 public sealed class TextureCache2D(string contentRoot) : IDisposable
 {
-    private readonly Dictionary<string, Texture2D> _textures =        new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Texture2D> _textures = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
     public string ContentRoot { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhitespace(contentRoot));
@@ -59,8 +59,8 @@ public sealed class TextureCache2D(string contentRoot) : IDisposable
         var fullPath = Path.GetFullPath(Path.Combine(ContentRoot, relativePath));
 
         var relativeToRoot = Path.GetRelativePath(ContentRoot, fullPath);
-        if (relativeToRoot == ".." || 
-            relativeToRoot.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) || 
+        if (relativeToRoot == ".." ||
+            relativeToRoot.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) ||
             Path.IsPathRooted(relativeToRoot))
         {
             ArgGuard.ThrowInvalid(relativePath, "Texture path must stay inside the content root.");

@@ -1,4 +1,4 @@
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Combat;
 
 public enum CombatFaction2D
 {

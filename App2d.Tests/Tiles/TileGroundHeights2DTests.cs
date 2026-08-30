@@ -15,7 +15,7 @@ public sealed class TileGroundHeights2DTests
 
         var heights = TileGroundHeights2D.Derive(map);
 
-        Assert.Equal(new[] { 3, 5, 2 }, heights);
+        Assert.Equal([3, 5, 2], heights);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public sealed class TileGroundHeights2DTests
         var map = new EditableTileMap2D(1, 5, 32f, 4);
         map.Fill((_, _) => TileKind2D.Solid);
 
-        Assert.Equal(new[] { 5 }, TileGroundHeights2D.Derive(map));
+        Assert.Equal([5], TileGroundHeights2D.Derive(map));
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public sealed class TileGroundHeights2DTests
             _ => TileKind2D.Empty
         });
 
-        Assert.Equal(new[] { 1 }, TileGroundHeights2D.Derive(map));
+        Assert.Equal([1], TileGroundHeights2D.Derive(map));
     }
 
     [Fact]

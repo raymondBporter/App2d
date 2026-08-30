@@ -1,4 +1,4 @@
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Persons;
 
 public readonly record struct PersonMovementIntent2D(
     float MoveX,

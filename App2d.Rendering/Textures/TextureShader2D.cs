@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace App2d.Rendering.Textures;
 
-public sealed class TextureShader2D(Texture2D texture, Vector2 tileSize, SKShaderTileMode tileModeX = SKShaderTileMode.Repeat, SKShaderTileMode tileModeY = SKShaderTileMode.Repeat, SKFilterMode filterMode = SKFilterMode.Linear) 
+public sealed class TextureShader2D(Texture2D texture, Vector2 tileSize, SKShaderTileMode tileModeX = SKShaderTileMode.Repeat, SKShaderTileMode tileModeY = SKShaderTileMode.Repeat, SKFilterMode filterMode = SKFilterMode.Linear)
     : IShader2D
 {
     public Texture2D Texture { get; } = ArgGuard.RequireNotNull(texture);

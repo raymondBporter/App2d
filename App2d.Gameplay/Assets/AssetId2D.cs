@@ -1,7 +1,7 @@
 using App2d.Core;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Assets;
 
 internal static class AssetId2D
 {

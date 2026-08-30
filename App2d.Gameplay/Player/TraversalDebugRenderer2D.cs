@@ -3,7 +3,7 @@ using App2d.Rendering;
 using SkiaSharp;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Player;
 
 public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 {

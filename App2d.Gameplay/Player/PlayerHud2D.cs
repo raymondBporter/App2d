@@ -4,7 +4,7 @@ using App2d.Rendering.Textures;
 using SkiaSharp;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Player;
 
 public static class PlayerHud2D
 {

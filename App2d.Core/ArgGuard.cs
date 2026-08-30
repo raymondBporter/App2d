@@ -43,7 +43,6 @@ public static class ArgGuard
         return value;
     }
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNullOrWhiteSpace(
         [NotNull] string? value,

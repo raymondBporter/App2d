@@ -5,14 +5,13 @@ using App2d.Physics;
 using App2d.Rendering;
 using SkiaSharp;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.World;
 
 public sealed class MovingPlatform2D
 {
     private const float MinimumSupportNormalY = 0.55f;
 
     private readonly PhysicsWorld2D _physics;
-    private readonly Vector2 _start;
     private readonly Vector2 _pathDirection;
     private readonly float _pathLength;
     private readonly float _speed;
@@ -39,7 +38,7 @@ public sealed class MovingPlatform2D
         if (travel.LengthSquared() <= float.Epsilon)
             ArgGuard.ThrowOutOfRange(travel, "A moving platform needs a non-zero travel path.");
 
-        _start = start;
+        Start = start;
         _pathLength = travel.Length();
         _pathDirection = travel / _pathLength;
         _speed = speed;
@@ -59,8 +58,8 @@ public sealed class MovingPlatform2D
 
     public WorldObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
-    public Vector2 Start => _start;
-    public Vector2 End => _start + _pathDirection * _pathLength;
+    public Vector2 Start { get; }
+    public Vector2 End => Start + _pathDirection * _pathLength;
 
     public void Update(float deltaSeconds)
     {
@@ -72,7 +71,7 @@ public sealed class MovingPlatform2D
         }
 
         var nextDistance = Advance(deltaSeconds);
-        var target = _start + _pathDirection * nextDistance;
+        var target = Start + _pathDirection * nextDistance;
         var displacement = target - WorldObject.Transform.Position;
         var velocity = displacement / deltaSeconds;
         CarrySupportedBodies(displacement, velocity);

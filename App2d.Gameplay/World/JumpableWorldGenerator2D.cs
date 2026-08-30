@@ -1,7 +1,8 @@
 using App2d.Core;
+using App2d.Gameplay.Player;
 using App2d.Tiles;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.World;
 
 public sealed class JumpableWorldGenerator2D
 {

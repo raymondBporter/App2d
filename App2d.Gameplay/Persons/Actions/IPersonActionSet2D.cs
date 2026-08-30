@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Persons.Actions;
 
 /// <summary>Coarse action seam coordinated by <see cref="Person2D"/>.</summary>
 public interface IPersonActionSet2D

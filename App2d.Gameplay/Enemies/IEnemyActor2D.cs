@@ -1,6 +1,7 @@
+using App2d.Gameplay.Combat;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Enemies;
 
 public interface IEnemyActor2D
 {

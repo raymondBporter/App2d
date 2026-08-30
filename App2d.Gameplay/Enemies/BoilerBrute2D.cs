@@ -2,13 +2,16 @@ using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Geometry;
+using App2d.Gameplay.Assets;
 using App2d.Gameplay.Audio;
+using App2d.Gameplay.Combat;
+using App2d.Gameplay.Persons;
 using App2d.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Enemies;
 
 public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
 {

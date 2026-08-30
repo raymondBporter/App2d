@@ -1,10 +1,11 @@
 using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Gameplay.Player;
 using App2d.Physics;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Persons;
 
 public sealed class PersonLocomotion2D
 {

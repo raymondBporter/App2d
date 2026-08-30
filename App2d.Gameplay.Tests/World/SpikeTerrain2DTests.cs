@@ -1,4 +1,6 @@
 using App2d.Core.Geometry;
+using App2d.Gameplay.Player;
+using App2d.Gameplay.World;
 using App2d.Levels;
 using App2d.Tiles;
 using Microsoft.Data.Sqlite;
@@ -72,12 +74,12 @@ public sealed class SpikeTerrain2DTests : IDisposable
         var spikes = FindSpikes(level);
         Assert.Contains(spikes, spike => spike.X < level.TileMap.Width / 2);
         Assert.Contains(spikes, spike => spike.X >= level.TileMap.Width / 2);
-        var spike = spikes[0];
+        var (X, Y) = spikes[0];
 
-        Assert.True(level.TileMap.GetTileKind(spike.X, spike.Y - 1).IsSolid());
+        Assert.True(level.TileMap.GetTileKind(X, Y - 1).IsSolid());
 
         var tileMin = level.TileMap.Origin +
-            new System.Numerics.Vector2(spike.X, spike.Y) * level.TileMap.TileSize;
+            new System.Numerics.Vector2(X, Y) * level.TileMap.TileSize;
         var inside = new Bounds2D(
             tileMin + new System.Numerics.Vector2(8f, 0f),
             tileMin + new System.Numerics.Vector2(24f, 20f));

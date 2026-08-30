@@ -1,8 +1,10 @@
 using App2d.Core;
+using App2d.Gameplay.Combat;
+using App2d.Gameplay.Persons;
 using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Enemies;
 
 public sealed class EnemySystem2D
 {

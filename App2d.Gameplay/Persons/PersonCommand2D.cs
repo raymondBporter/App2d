@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Persons;
 
 public readonly record struct PersonCommand2D(
     PersonMovementIntent2D Movement,

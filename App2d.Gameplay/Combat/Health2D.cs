@@ -1,6 +1,6 @@
 using App2d.Core;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Combat;
 
 public sealed class Health2D
 {
