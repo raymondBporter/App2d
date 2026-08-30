@@ -59,16 +59,7 @@ public sealed class SideScrollerGame : Game2D
         RegisterDebugPhysicsWorld(_physics);
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value, "Set sound-effect volume from 0 (muted) to 1 (full volume).");
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _showTraversalDebug, value => _showTraversalDebug = value, "Draw jump arcs and tile-relative movement metrics.");
-        DeveloperConsole.RegisterCommand(
-            "level_rebake",
-            "Regenerate the cavern level file from the world generator. Restart to see it.",
-            _ =>
-            {
-                LevelBootstrap2D.Bake(Traversal);
-                return ConsoleCommandResult.From($"baked {LevelBootstrap2D.CavernLevelPath}");
-            });
-
-        var loadedLevel = LevelBootstrap2D.LoadOrBake(Traversal);
+        var loadedLevel = LevelBootstrap2D.Load();
         var tileMap = loadedLevel.TileMap;
         var groundHeights = TileGroundHeights2D.Derive(tileMap);
 
@@ -76,7 +67,11 @@ public sealed class SideScrollerGame : Game2D
             Traversal,
             tileMap,
             x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)],
-            loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime).ToArray());
+            loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime).ToArray(),
+            loadedLevel.PositionThings
+                .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
+                .Select(ThingTypeRegistry2D.ToRuntime)
+                .ToArray());
         _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _level.SpawnPoint, _level.GetCameraFloorY);
         // LevelBootstrap2D.OpenForEditing is passed as a factory, not invoked here: a
         // play-only session must never hold a read-write handle on level.db (it locks the
@@ -116,7 +111,7 @@ public sealed class SideScrollerGame : Game2D
         _contactDamage = new ContactDamageSystem2D(_collision, EnemyLayer);
 
         _combat = new CombatSystem2D(_collision, _sounds);
-        _level.CreateMechanicsPlaygroundEnemies(Textures, _combat, _sounds);
+        _level.CreateAuthoredWorldThings(Textures, _combat, _sounds);
         _arsenal = new PersonArsenal2D(Scene, _player.Body, Textures, _collision, WorldLayer, EnemyLayer, CombatFaction2D.Player, _combat, _sounds);
         _arsenal.EquipmentChanged += _playerPresentation.EquipRightHandWeapon;
         _arsenal.MeleeAttackStarted += _playerPresentation.PlayMeleeAttack;

@@ -16,8 +16,58 @@ public sealed class MovingPlatformThingDatabase2DTests : IDisposable
         using var database = LevelDatabase2D.Open(NewPath());
 
         Assert.Equal(LevelDatabase2D.CurrentFormatVersion, database.FormatVersion);
+        Assert.Empty(database.LoadThingDefinitions());
+        Assert.Empty(database.LoadPositionThings());
         Assert.Empty(database.LoadMovingPlatformDefinitions());
         Assert.Empty(database.LoadMovingPlatforms());
+    }
+
+    [Fact]
+    public void PositionOnlyDefinitionAndThingRoundTripWithoutExtraPieces()
+    {
+        var path = NewPath();
+        using var database = LevelDatabase2D.Open(path);
+        var definition = database.CreateThingDefinition("shieldback", "Basic shieldback");
+        var created = database.CreatePositionThing(new NewPositionThing2D(
+            definition.DefinitionId,
+            "Guard one",
+            true,
+            320f,
+            -96f));
+
+        var loaded = Assert.Single(database.LoadPositionThings());
+        Assert.Equal(created, loaded);
+        Assert.Equal(1, Count(path, "transforms"));
+        Assert.Equal(0, Count(path, "ping_pong_motors"));
+        Assert.Equal(0, Count(path, "rectangle_shapes"));
+        Assert.Equal(0, Count(path, "solid_color_art"));
+    }
+
+    [Fact]
+    public void PositionOnlyThingCanBeEditedDeletedAndRestoredForUndo()
+    {
+        using var database = LevelDatabase2D.Open(NewPath());
+        var definition = database.CreateThingDefinition("goal", "Exit");
+        var created = database.CreatePositionThing(new NewPositionThing2D(
+            definition.DefinitionId,
+            null,
+            true,
+            100f,
+            200f));
+
+        var updated = database.UpdatePositionThing(created with
+        {
+            Name = "Upper exit",
+            Enabled = false,
+            X = 150f,
+            Y = 250f
+        });
+        Assert.Equal(updated, Assert.Single(database.LoadPositionThings()));
+
+        var deleted = database.DeletePositionThing(created.ThingId);
+        Assert.Empty(database.LoadPositionThings());
+        database.RestorePositionThing(deleted);
+        Assert.Equal(updated, Assert.Single(database.LoadPositionThings()));
     }
 
     [Fact]

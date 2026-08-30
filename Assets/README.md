@@ -29,8 +29,8 @@ use lowercase letters, digits, and hyphens. A canonical ID and its folder name a
 the same: the `walk` animation lives at `animations/walk`, and the
 `dark-cave` tileset lives at `tilesets/dark-cave`.
 
-Levels live at `levels/<id>/level.db` — one SQLite file per level, holding the tile grid
-and (later) its entities. They are durable authored content, so they are committed under
+Levels live at `levels/<id>/level.db` — one SQLite file per level, holding the tile grid,
+thing definitions, placed instances, and their typed pieces. They are durable authored content, so they are committed under
 `Static` and read from there directly in Debug builds; the pipeline copies them into
 `Runtime` like any other static asset. The `.db-wal` and `.db-shm` files SQLite leaves
 alongside are transient and are not committed.
