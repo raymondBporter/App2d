@@ -12,7 +12,23 @@ public sealed class SpikeTerrain2DTests
         var traversal = (TraversalMetrics2D)Activator.CreateInstance(
             typeof(TraversalMetrics2D),
             nonPublic: true)!;
-        var level = new SideScrollerLevel2D(traversal);
+        var generator = new JumpableWorldGenerator2D(
+            SideScrollerLevel2D.WorldSeed,
+            SideScrollerLevel2D.WorldWidthTiles,
+            SideScrollerLevel2D.WorldHeightTiles,
+            traversal);
+        var tileMap = new EditableTileMap2D(
+            SideScrollerLevel2D.WorldWidthTiles,
+            SideScrollerLevel2D.WorldHeightTiles,
+            traversal.TileSize,
+            SideScrollerLevel2D.ChunkSizeTiles,
+            SideScrollerLevel2D.WorldOrigin);
+        tileMap.Fill(generator.GetTileKind);
+        var groundHeights = TileGroundHeights2D.Derive(tileMap);
+        var level = new SideScrollerLevel2D(
+            traversal,
+            tileMap,
+            x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)]);
         var spikes = FindSpikes(level);
         Assert.Contains(spikes, spike => spike.X < level.TileMap.Width / 2);
         Assert.Contains(spikes, spike => spike.X >= level.TileMap.Width / 2);

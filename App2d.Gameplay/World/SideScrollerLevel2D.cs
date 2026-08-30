@@ -13,46 +13,40 @@ namespace App2d.Gameplay;
 
 public sealed class SideScrollerLevel2D
 {
-    private const int WorldWidthTiles = 640;
-    private const int WorldHeightTiles = 96;
-    private const int ChunkSizeTiles = 32;
-    private const ulong WorldSeed = 0xA2D_2026_0823UL;
+    public const int WorldWidthTiles = 640;
+    public const int WorldHeightTiles = 96;
+    public const int ChunkSizeTiles = 32;
+    public const ulong WorldSeed = 0xA2D_2026_0823UL;
+    public static Vector2 WorldOrigin { get; } = new(-512f, -640f);
 
     private readonly float _tileSize;
-    private readonly JumpableWorldGenerator2D _generator;
+    private readonly Func<int, int> _groundY;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
     private LevelEnvironment? _environment;
     private bool _mechanicsEnemiesCreated;
 
-    public SideScrollerLevel2D(TraversalMetrics2D traversal)
+    public SideScrollerLevel2D(
+        TraversalMetrics2D traversal,
+        IChunkedTileMap2D tileMap,
+        Func<int, int> groundY)
     {
         ArgGuard.ThrowIfNull(traversal);
+        ArgGuard.ThrowIfNull(tileMap);
+        ArgGuard.ThrowIfNull(groundY);
         _tileSize = traversal.TileSize;
         ArgGuard.ThrowIfNotPositive(_tileSize);
-
-        _generator = new JumpableWorldGenerator2D(
-            WorldSeed,
-            WorldWidthTiles,
-            WorldHeightTiles,
-            traversal);
-        var tileMap = new EditableTileMap2D(
-            WorldWidthTiles,
-            WorldHeightTiles,
-            _tileSize,
-            ChunkSizeTiles,
-            new Vector2(-512f, -640f));
-        tileMap.Fill(_generator.GetTileKind);
+        _groundY = groundY;
         TileMap = tileMap;
 
         const int spawnTileX = 4;
         SpawnPoint = new Vector2(
             TileCenterX(spawnTileX),
-            TileMap.Origin.Y + _generator.TerrainHeight(spawnTileX) * _tileSize +
+            TileMap.Origin.Y + _groundY(spawnTileX) * _tileSize +
             traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
 
         const int goalTileX = WorldWidthTiles - 5;
         GoalX = TileCenterX(goalTileX);
-        GoalGroundY = TileMap.Origin.Y + _generator.TerrainHeight(goalTileX) * _tileSize;
+        GoalGroundY = TileMap.Origin.Y + _groundY(goalTileX) * _tileSize;
     }
 
     public IChunkedTileMap2D TileMap { get; }
@@ -74,7 +68,7 @@ public sealed class SideScrollerLevel2D
 
         var tileX = (int)MathF.Floor((worldX - TileMap.Origin.X) / _tileSize);
         tileX = Math.Clamp(tileX, 0, TileMap.Width - 1);
-        return TileMap.Origin.Y + _generator.TerrainHeight(tileX) * _tileSize;
+        return TileMap.Origin.Y + _groundY(tileX) * _tileSize;
     }
 
     public bool TryGetSpikeSource(Bounds2D actorBounds, out float sourceX)
@@ -213,7 +207,7 @@ public sealed class SideScrollerLevel2D
             environment.Collision,
             environment.Physics,
             TileMap,
-            _generator,
+            _groundY,
             EnemySystem,
             environment.Streamer,
             _tileSize,
@@ -322,7 +316,7 @@ public sealed class SideScrollerLevel2D
             Math.Max(startTileX, endTileX) + 2);
         var terrainTileY = 0;
         for (var tileX = minimumTileX; tileX <= maximumTileX; tileX++)
-            terrainTileY = Math.Max(terrainTileY, _generator.TerrainHeight(tileX));
+            terrainTileY = Math.Max(terrainTileY, _groundY(tileX));
 
         var start = new Vector2(
             TileCenterX(startTileX),

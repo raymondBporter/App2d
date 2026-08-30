@@ -15,7 +15,7 @@ internal sealed class SideScrollerEncounterSpawner2D(
     CollisionSystem2D collision,
     PhysicsWorld2D physics,
     IChunkedTileMap2D tileMap,
-    JumpableWorldGenerator2D generator,
+    Func<int, int> groundY,
     EnemySystem2D enemies,
     SideScrollerChunkStreamer2D streamer,
     float tileSize,
@@ -124,7 +124,7 @@ internal sealed class SideScrollerEncounterSpawner2D(
             if (x < 3 || x >= tileMap.Width - 3)
                 continue;
 
-            var surfaceY = generator.TerrainHeight(x) - 1;
+            var surfaceY = groundY(x) - 1;
             if (TryGetSurfaceRun(x, surfaceY, out var minimumX, out var maximumX) &&
                 maximumX - minimumX >= 4)
             {
@@ -191,8 +191,8 @@ internal sealed class SideScrollerEncounterSpawner2D(
     }
 
     private bool IsStandableSurface(int x, int y) =>
-        generator.GetTileKind(x, y) != TileKind2D.Empty &&
-        generator.GetTileKind(x, y + 1) == TileKind2D.Empty;
+        tileMap.GetTileKind(x, y) != TileKind2D.Empty &&
+        tileMap.GetTileKind(x, y + 1) == TileKind2D.Empty;
 
     private float TileCenterX(int x) =>
         tileMap.Origin.X + (x + 0.5f) * tileSize;

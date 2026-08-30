@@ -5,6 +5,7 @@ using App2d.Gameplay.Audio;
 using App2d.Gameplay.Player;
 using App2d.Physics;
 using App2d.Rendering;
+using App2d.Tiles;
 using SkiaSharp;
 using System.Numerics;
 
@@ -50,7 +51,24 @@ public sealed class SideScrollerGame : Game2D
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value, "Set sound-effect volume from 0 (muted) to 1 (full volume).");
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _showTraversalDebug, value => _showTraversalDebug = value, "Draw jump arcs and tile-relative movement metrics.");
 
-        _level = new SideScrollerLevel2D(Traversal);
+        var generator = new JumpableWorldGenerator2D(
+            SideScrollerLevel2D.WorldSeed,
+            SideScrollerLevel2D.WorldWidthTiles,
+            SideScrollerLevel2D.WorldHeightTiles,
+            Traversal);
+        var tileMap = new EditableTileMap2D(
+            SideScrollerLevel2D.WorldWidthTiles,
+            SideScrollerLevel2D.WorldHeightTiles,
+            Traversal.TileSize,
+            SideScrollerLevel2D.ChunkSizeTiles,
+            SideScrollerLevel2D.WorldOrigin);
+        tileMap.Fill(generator.GetTileKind);
+        var groundHeights = TileGroundHeights2D.Derive(tileMap);
+
+        _level = new SideScrollerLevel2D(
+            Traversal,
+            tileMap,
+            x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)]);
         _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _level.SpawnPoint, _level.GetCameraFloorY);
 
         _level.CreateEnvironment(Scene, _collision, _physics, Textures, WorldLayer, PlayerLayer, EnemyLayer);
