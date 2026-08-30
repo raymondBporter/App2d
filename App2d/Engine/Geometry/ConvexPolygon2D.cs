@@ -18,43 +18,9 @@ public sealed class ConvexPolygon2D : IConvexShape2D
     public ReadOnlySpan<Vector2> Vertices => _vertices;
     public Bounds2D LocalBounds { get; }
 
-    public bool ContainsPoint(Vector2 localPoint)
-    {
-        var winding = 0f;
-        for (var i = 0; i < _vertices.Length; i++)
-        {
-            var start = _vertices[i];
-            var end = _vertices[(i + 1) % _vertices.Length];
-            var cross = (end - start).Cross(localPoint - start);
-            if (MathF.Abs(cross) <= Epsilon)
-                continue;
+    public bool ContainsPoint(Vector2 localPoint) => PolygonGeometry2D.ContainsPoint(_vertices, localPoint, Epsilon);
 
-            float turn = MathF.Sign(cross);
-            if (winding == 0f)
-                winding = turn;
-            else if (turn != winding)
-                return false;
-        }
-
-        return true;
-    }
-
-    public Vector2 GetSupportPoint(Vector2 localDirection)
-    {
-        var support = _vertices[0];
-        var bestProjection = Vector2.Dot(support, localDirection);
-        foreach (var vertex in _vertices.AsSpan(1))
-        {
-            var projection = Vector2.Dot(vertex, localDirection);
-            if (projection > bestProjection)
-            {
-                support = vertex;
-                bestProjection = projection;
-            }
-        }
-
-        return support;
-    }
+    public Vector2 GetSupportPoint(Vector2 localDirection) => PolygonGeometry2D.GetSupportPoint(_vertices, localDirection);
 
     private static void Validate(ReadOnlySpan<Vector2> vertices)
     {

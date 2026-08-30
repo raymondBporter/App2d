@@ -159,9 +159,7 @@ public static class RayIntersection2D
         float maxDistance,
         out LocalRayHit hit)
     {
-        var signedAreaTwice = 0f;
-        for (var i = 0; i < vertices.Length; i++)
-            signedAreaTwice += vertices[i].Cross(vertices[(i + 1) % vertices.Length]);
+        var signedAreaTwice = PolygonGeometry2D.SignedAreaTwice(vertices);
 
         var enteringDistance = float.NegativeInfinity;
         var exitingDistance = float.PositiveInfinity;

@@ -22,16 +22,8 @@ public sealed class Capsule2D : IConvexShape2D
     public float Radius { get; }
     public Bounds2D LocalBounds { get; }
 
-    public bool ContainsPoint(Vector2 localPoint)
-    {
-        var segment = End - Start;
-        var lengthSquared = segment.LengthSquared();
-        var t = lengthSquared > float.Epsilon
-            ? Math.Clamp(Vector2.Dot(localPoint - Start, segment) / lengthSquared, 0f, 1f)
-            : 0f;
-        var closest = Start + segment * t;
-        return Vector2.DistanceSquared(localPoint, closest) <= Radius * Radius;
-    }
+    public bool ContainsPoint(Vector2 localPoint) =>
+        Vector2.DistanceSquared(localPoint, ClosestPoint2D.OnSegment(localPoint, Start, End)) <= Radius * Radius;
 
     public Vector2 GetSupportPoint(Vector2 localDirection)
     {

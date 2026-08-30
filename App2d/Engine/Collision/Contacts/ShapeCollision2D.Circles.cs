@@ -97,10 +97,10 @@ public static partial class ShapeCollision2D
         for (var i = 0; i < vertices.Length; i++)
             vertices[i] = Vector2.Transform(localVertices[i], polygonToWorld);
 
-        var closest = ClosestPointOnPolygon(center, vertices, out var edgeIndex);
+        var closest = PolygonGeometry2D.ClosestPointOnPerimeter(center, vertices, out var edgeIndex);
         var centerFromBoundary = center - closest;
         var distanceSquared = centerFromBoundary.LengthSquared();
-        var centerInside = ContainsPoint(vertices, center);
+        var centerInside = PolygonGeometry2D.ContainsPoint(vertices, center);
         if (!centerInside && distanceSquared >= radius * radius)
             return CollisionResult.None;
 
@@ -114,7 +114,7 @@ public static partial class ShapeCollision2D
         }
         else
         {
-            normal = GetOutwardEdgeNormal(vertices, edgeIndex);
+            normal = PolygonGeometry2D.GetOutwardEdgeNormal(vertices, edgeIndex);
             penetration = radius;
         }
 

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Collision;
+namespace App2d.Engine.Geometry;
 
 public readonly record struct SegmentClosestPoints2D(
     Vector2 First,

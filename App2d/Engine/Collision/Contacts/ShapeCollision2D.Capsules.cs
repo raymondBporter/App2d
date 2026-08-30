@@ -44,30 +44,8 @@ public static partial class ShapeCollision2D
             var axis = Vector2.Normalize(rawAxis);
             ProjectCapsule(firstStart, firstEnd, firstRadius, axis, out var firstMin, out var firstMax);
             ProjectCapsule(secondStart, secondEnd, secondRadius, axis, out var secondMin, out var secondMax);
-
-            var pushPositive = secondMax - firstMin;
-            var pushNegative = firstMax - secondMin;
-            if (pushPositive <= 0f || pushNegative <= 0f)
+            if (!TryUpdateMtv(axis, firstMin, firstMax, secondMin, secondMax, ref bestNormal, ref bestDepth))
                 return CollisionResult.None;
-
-            float depth;
-            Vector2 normal;
-            if (pushPositive < pushNegative)
-            {
-                depth = pushPositive;
-                normal = axis;
-            }
-            else
-            {
-                depth = pushNegative;
-                normal = -axis;
-            }
-
-            if (depth < bestDepth)
-            {
-                bestDepth = depth;
-                bestNormal = normal;
-            }
         }
 
         var contactPoint = closest.Second + bestNormal * secondRadius;
@@ -90,8 +68,8 @@ public static partial class ShapeCollision2D
         foreach (var vertex in rectangleVertices)
             AddAxis(axes, ref axisCount, vertex - ClosestPoint2D.OnSegment(vertex, capsuleStart, capsuleEnd));
 
-        var closestToStart = ClosestPointOnPolygon(capsuleStart, rectangleVertices, out _);
-        var closestToEnd = ClosestPointOnPolygon(capsuleEnd, rectangleVertices, out _);
+        var closestToStart = PolygonGeometry2D.ClosestPointOnPerimeter(capsuleStart, rectangleVertices, out _);
+        var closestToEnd = PolygonGeometry2D.ClosestPointOnPerimeter(capsuleEnd, rectangleVertices, out _);
         AddAxis(axes, ref axisCount, capsuleStart - closestToStart);
         AddAxis(axes, ref axisCount, capsuleEnd - closestToEnd);
 
@@ -100,7 +78,7 @@ public static partial class ShapeCollision2D
             return CollisionResult.None;
         }
 
-        var rectangleSurface = GetPolygonSupportPoint(rectangleVertices, -normal);
+        var rectangleSurface = PolygonGeometry2D.GetSupportPoint(rectangleVertices, -normal);
         var capsuleSurface = GetCapsuleSupportPoint(capsuleStart, capsuleEnd, capsuleRadius, normal);
         return CollisionResult.From(new CollisionContact2D((rectangleSurface + capsuleSurface) / 2f, normal, depth));
     }
