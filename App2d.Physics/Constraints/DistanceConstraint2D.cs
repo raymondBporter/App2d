@@ -82,8 +82,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         var length = MathF.Sqrt(lengthSquared);
         var direction = delta / length;
         var relativeSpeed = Vector2.Dot(Second.LinearVelocity - First.LinearVelocity, direction);
-        if (Mode == DistanceConstraintMode2D.Rope &&
-            (length < RestLength || relativeSpeed <= 0f))
+        if (Mode == DistanceConstraintMode2D.Rope && (length < RestLength || relativeSpeed <= 0f))
         {
             return;
         }
