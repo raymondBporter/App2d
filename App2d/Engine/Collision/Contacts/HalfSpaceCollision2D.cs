@@ -1,6 +1,4 @@
-using System.Numerics;
 using App2d.Engine.Geometry;
-using App2d.Engine.Mathematics;
 
 namespace App2d.Engine.Collision.Contacts;
 
@@ -13,18 +11,7 @@ public static class HalfSpaceCollision2D
         var convexShape = ArgGuard.RequireType<IConvexShape2D>(convexObject.Shape, "The constrained object must have a finite convex shape.", nameof(convexObject));
         var halfSpace = ArgGuard.RequireType<HalfSpace2D>(halfSpaceObject.Shape, "The constraint object must contain a HalfSpace2D.", nameof(halfSpaceObject));
 
-        var (worldNormal, worldOffset) = CollisionMath2D.GetWorldPlane(halfSpace, halfSpaceObject.Transform);
-        var objectToWorld = convexObject.Transform.LocalToWorldMatrix;
-
-        // Convert the world projection direction into the object's local support direction.
-        var localDirection = objectToWorld.TransposeTransformDirection(worldNormal);
-
-        var localMinimum = convexShape.GetSupportPoint(-localDirection);
-        var worldMinimum = Vector2.Transform(localMinimum, objectToWorld);
-        var minimumProjection = Vector2.Dot(worldMinimum, worldNormal);
-        var penetration = worldOffset - minimumProjection;
-
-        if (penetration <= 0f)
+        if (!ShapeCollision2D.TryGetConvexHalfSpacePenetration(convexShape, convexObject.Transform, halfSpace, halfSpaceObject.Transform, out var worldNormal, out var penetration, out _))
         {
             contact = default;
             return false;

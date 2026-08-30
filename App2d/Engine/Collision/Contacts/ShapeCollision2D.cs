@@ -41,6 +41,7 @@ public static partial class ShapeCollision2D
             Circle2D circle => CircleAgainst(circle, firstTransform, second, secondTransform),
             Capsule2D capsule => CapsuleAgainst(capsule, firstTransform, second, secondTransform),
             Rectangle2D rectangle => RectangleAgainst(rectangle, firstTransform, second, secondTransform),
+            HalfSpace2D halfSpace => HalfSpaceAgainst(halfSpace, firstTransform, second, secondTransform),
             _ => CollisionResult.None
         };
 
