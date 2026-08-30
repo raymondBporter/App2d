@@ -24,22 +24,29 @@ public sealed class LevelDatabase2DTests : IDisposable
 
         // Microsoft.Data.Sqlite pools native sqlite3 handles by default: disposing a
         // SqliteConnection returns the handle to the pool rather than closing it, which
-        // on Windows keeps the file (and its -wal/-shm siblings) locked for a moment
-        // after the last `using` block here has already run. Clear the pool for this
-        // exact connection string before deleting, then allow a short bounded retry as
-        // a safety margin -- never a blanket catch that would hide a genuine leak.
-        ClearPoolForDatabaseFile();
+        // on Windows keeps the file (and its -wal/-shm siblings, if any) locked for a
+        // moment after the last `using` block here has already run. Clear the pool for
+        // every connection string used in this directory before deleting, then allow a
+        // short bounded retry as a safety margin -- never a blanket catch that would
+        // hide a genuine leak.
+        ClearPoolsForDatabaseFiles();
         DeleteDirectoryWithRetry(_directory);
     }
 
-    private void ClearPoolForDatabaseFile()
+    private void ClearPoolsForDatabaseFiles()
     {
-        using var probe = new SqliteConnection(new SqliteConnectionStringBuilder
+        // Tests may create more than one .db file in this directory (e.g. a copy used
+        // to verify the committed file is self-contained without its sidecars), so
+        // clear the pool for every one rather than assuming a single fixed name.
+        foreach (var dbFile in Directory.EnumerateFiles(_directory, "*.db"))
         {
-            DataSource = Path.Combine(_directory, "level.db"),
-            Mode = SqliteOpenMode.ReadWriteCreate
-        }.ToString());
-        SqliteConnection.ClearPool(probe);
+            using var probe = new SqliteConnection(new SqliteConnectionStringBuilder
+            {
+                DataSource = dbFile,
+                Mode = SqliteOpenMode.ReadWriteCreate
+            }.ToString());
+            SqliteConnection.ClearPool(probe);
+        }
     }
 
     private static void DeleteDirectoryWithRetry(string directory)
@@ -151,5 +158,39 @@ public sealed class LevelDatabase2DTests : IDisposable
         using var database = LevelDatabase2D.Open(path);
 
         Assert.Throws<InvalidOperationException>(() => database.Load());
+    }
+
+    [Fact]
+    public void SavedFileIsSelfContainedWithoutSidecarFiles()
+    {
+        // Git only ever commits the single .db file -- any -wal/-shm sidecar is
+        // gitignored as transient. If the schema ever re-enables WAL mode, the real
+        // data can be stranded in a sidecar that Dispose() never checkpoints (Microsoft.Data.Sqlite
+        // pools connections, so Dispose does not close the last handle and does not
+        // trigger SQLite's checkpoint-on-close). Copying only the .db file reproduces
+        // exactly what a fresh clone receives.
+        var path = NewPath();
+        var original = BuildMap();
+
+        using (var database = LevelDatabase2D.Open(path))
+            database.Save(original, sourceSeed: 0xA2D_2026_0823UL);
+
+        var copyPath = Path.Combine(_directory, "level-copy.db");
+        File.Copy(path, copyPath);
+
+        using var copy = LevelDatabase2D.Open(copyPath);
+        var loaded = copy.Load();
+
+        Assert.Equal(original.Width, loaded.Width);
+        Assert.Equal(original.Height, loaded.Height);
+        Assert.Equal(original.TileSize, loaded.TileSize);
+        Assert.Equal(original.ChunkSize, loaded.ChunkSize);
+        Assert.Equal(original.Origin, loaded.Origin);
+
+        for (var y = 0; y < original.Height; y++)
+        {
+            for (var x = 0; x < original.Width; x++)
+                Assert.Equal(original.GetTileKind(x, y), loaded.GetTileKind(x, y));
+        }
     }
 }

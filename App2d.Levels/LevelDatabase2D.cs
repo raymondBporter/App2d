@@ -39,7 +39,6 @@ public sealed class LevelDatabase2D : IDisposable
         using (var command = connection.CreateCommand())
         {
             command.CommandText = $"""
-                PRAGMA journal_mode = WAL;
                 CREATE TABLE IF NOT EXISTS meta(
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL) WITHOUT ROWID;
