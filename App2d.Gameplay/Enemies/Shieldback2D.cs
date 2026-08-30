@@ -34,7 +34,7 @@ public sealed class Shieldback2D : IEnemyActor2D
     }
 
     public PatrolEnemy2D Enemy { get; }
-    public IEnemyCombatant2D Combatant => Enemy;
+    public ICombatant2D Combatant => Enemy;
 
     public void SetSimulationEnabled(bool isEnabled)
     {

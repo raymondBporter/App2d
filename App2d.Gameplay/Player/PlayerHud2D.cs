@@ -25,29 +25,37 @@ public static class PlayerHud2D
         const float panelHeight = 52f;
         const float barLeft = 105f;
         const float barWidth = 245f;
-        var healthRatio = Math.Clamp(currentHealth / (float)maximumHealth, 0f, 1f);
+        const float segmentGap = 3f;
         var lifePanel = new SKRect(left, top, left + 350f, top + panelHeight);
         var barBounds = new SKRect(barLeft, top + 13f, barLeft + barWidth, top + 39f);
         var panelColor = new SKColor(20, 28, 43, 220);
         var accentColor = new SKColor(113, 224, 255);
+        var emptyHealthColor = new SKColor(7, 12, 20, 235);
+        var filledHealthColor = currentHealth > maximumHealth * 0.3f
+            ? new SKColor(72, 224, 121)
+            : new SKColor(245, 76, 76);
 
         renderer.DrawScreenRoundedRectangle(lifePanel, 9f, panelColor);
         renderer.DrawScreenText("LIFE", new Vector2(left + 14f, top + 35f), SKColors.White);
-        renderer.DrawScreenRoundedRectangle(barBounds, 6f, new SKColor(7, 12, 20, 235));
-        if (healthRatio > 0f)
+        renderer.DrawScreenRoundedRectangle(barBounds, 6f, emptyHealthColor);
+
+        var filledSegments = Math.Clamp(currentHealth, 0, maximumHealth);
+        var segmentsBounds = SKRect.Inflate(barBounds, -3f, -3f);
+        var segmentWidth = (segmentsBounds.Width - segmentGap * (maximumHealth - 1)) / maximumHealth;
+        for (var segment = 0; segment < maximumHealth; segment++)
         {
-            var fillBounds = new SKRect(
-                barBounds.Left + 3f,
-                barBounds.Top + 3f,
-                barBounds.Left + 3f + (barBounds.Width - 6f) * healthRatio,
-                barBounds.Bottom - 3f);
+            var segmentLeft = segmentsBounds.Left + segment * (segmentWidth + segmentGap);
+            var segmentBounds = new SKRect(
+                segmentLeft,
+                segmentsBounds.Top,
+                segmentLeft + segmentWidth,
+                segmentsBounds.Bottom);
             renderer.DrawScreenRoundedRectangle(
-                fillBounds,
-                4f,
-                healthRatio > 0.3f
-                    ? new SKColor(72, 224, 121)
-                    : new SKColor(245, 76, 76));
+                segmentBounds,
+                3f,
+                segment < filledSegments ? filledHealthColor : emptyHealthColor);
         }
+
         renderer.DrawScreenRoundedRectangle(barBounds, 6f, accentColor, 3f);
 
         const float weaponTop = top + panelHeight + 10f;

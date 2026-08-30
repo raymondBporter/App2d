@@ -11,7 +11,7 @@ namespace App2d.Gameplay;
 /// An indestructible composite dumbbell that tumbles when hit. The visual
 /// object is also the physics collider, so nothing needs syncing.
 /// </summary>
-internal sealed class TumbleProp2D : IEnemyActor2D, IEnemyCombatant2D
+internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
 {
     private const float HitVelocityScale = 0.8f;
     private const float HitAngularKick = 4.5f;
@@ -48,8 +48,9 @@ internal sealed class TumbleProp2D : IEnemyActor2D, IEnemyCombatant2D
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }
+    public CombatFaction2D Faction => CombatFaction2D.Neutral;
     public bool IsAlive => true;
-    public IEnemyCombatant2D Combatant => this;
+    public ICombatant2D Combatant => this;
 
     public void SetSimulationEnabled(bool isEnabled)
     {

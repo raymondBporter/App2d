@@ -7,7 +7,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay;
 
-internal abstract class MeleePlayerWeapon2D(
+internal abstract class MeleePersonWeapon2D(
     string name,
     string equipmentId,
     Texture2D hudTexture,
@@ -16,15 +16,17 @@ internal abstract class MeleePlayerWeapon2D(
     MeleeAttackProfile2D attackProfile,
     int damage,
     Vector2 knockback,
+    CombatFaction2D ownerFaction,
+    uint targetLayer,
     CombatSystem2D combat,
-    PlayerPresentation2D presentation,
+    Action<float> attackStarted,
     ISoundEffectSink2D sounds,
     SoundEffect2D swingSound = SoundEffect2D.SwordSwing,
-    SoundEffect2D impactSound = SoundEffect2D.SwordHit) : PlayerWeapon2DBase(name, equipmentId, hudTexture)
+    SoundEffect2D impactSound = SoundEffect2D.SwordHit) : PersonWeapon2DBase(name, equipmentId, hudTexture)
 {
     private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
     private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
-    private readonly PlayerPresentation2D _presentation = ArgGuard.RequireNotNull(presentation);
+    private readonly Action<float> _attackStarted = ArgGuard.RequireNotNull(attackStarted);
     private readonly ISoundEffectSink2D _sounds = ArgGuard.RequireNotNull(sounds);
     private readonly MeleeAttack2D _attack = new(new SpatialObject2D(hitboxShape), attackProfile);
 
@@ -64,6 +66,8 @@ internal abstract class MeleePlayerWeapon2D(
                 _attack.WorldObject,
                 _attack,
                 _attack.AttackId,
+                ownerFaction,
+                targetLayer,
                 damage,
                 _ => new Vector2(facing * knockback.X, knockback.Y)))
         {
@@ -73,7 +77,7 @@ internal abstract class MeleePlayerWeapon2D(
 
     private void PlayAttackFeedback()
     {
-        _presentation.PlayMeleeAttack(_attack.DurationSeconds);
+        _attackStarted(_attack.DurationSeconds);
         _sounds.Play(swingSound);
     }
 }

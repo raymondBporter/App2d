@@ -12,7 +12,7 @@ namespace App2d.Gameplay;
 /// <summary>
 /// Minimal horizontal pistol used by the baked stick-figure prototype.
 /// </summary>
-internal sealed class GunPlayerWeapon2D : PlayerWeapon2DBase
+internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
 {
     private const int PoolSize = 16;
     private const float ReleaseTime = 0.08f;
@@ -20,23 +20,28 @@ internal sealed class GunPlayerWeapon2D : PlayerWeapon2DBase
     private readonly PhysicsBody2D _ownerBody;
     private readonly CollisionSystem2D _collision;
     private readonly uint _worldLayer;
+    private readonly uint _targetLayer;
+    private readonly CombatFaction2D _ownerFaction;
     private readonly CombatSystem2D _combat;
-    private readonly PlayerPresentation2D _presentation;
+    private readonly Action _shotStarted;
     private readonly ISoundEffectSink2D _sounds;
     private readonly List<BulletState> _bullets = [];
     private readonly List<CollisionOverlap2D> _overlaps = [];
     private float _cooldown;
+    private float _pendingSeconds;
     private BulletState? _pending;
 
-    public GunPlayerWeapon2D(
+    public GunPersonWeapon2D(
         Scene2D scene,
         PhysicsBody2D ownerBody,
         TextureCache2D textures,
         Texture2D hudTexture,
         CollisionSystem2D collision,
         uint worldLayer,
+        uint targetLayer,
+        CombatFaction2D ownerFaction,
         CombatSystem2D combat,
-        PlayerPresentation2D presentation,
+        Action shotStarted,
         ISoundEffectSink2D sounds)
         : base("GUN", "gun", hudTexture)
     {
@@ -45,8 +50,10 @@ internal sealed class GunPlayerWeapon2D : PlayerWeapon2DBase
         ArgGuard.ThrowIfNull(textures);
         _collision = ArgGuard.RequireNotNull(collision);
         _worldLayer = worldLayer;
+        _targetLayer = targetLayer;
+        _ownerFaction = ownerFaction;
         _combat = ArgGuard.RequireNotNull(combat);
-        _presentation = ArgGuard.RequireNotNull(presentation);
+        _shotStarted = ArgGuard.RequireNotNull(shotStarted);
         _sounds = ArgGuard.RequireNotNull(sounds);
 
         var bulletTexture = textures.Load("effects/bullet/orange.png");
@@ -96,8 +103,9 @@ internal sealed class GunPlayerWeapon2D : PlayerWeapon2DBase
                 continue;
 
             _pending = bullet;
+            _pendingSeconds = 0f;
             _cooldown = 0.22f;
-            _presentation.PlayShot();
+            _shotStarted();
             break;
         }
         return facing;
@@ -121,6 +129,8 @@ internal sealed class GunPlayerWeapon2D : PlayerWeapon2DBase
             var direction = MathF.Sign(projectile.Velocity.X);
             var hit = _combat.TryDamageFirst(
                 projectile.WorldObject,
+                _ownerFaction,
+                _targetLayer,
                 damage: 2,
                 _ => new Vector2(direction * 450f, 140f));
             if (!hit)
@@ -138,34 +148,35 @@ internal sealed class GunPlayerWeapon2D : PlayerWeapon2DBase
                 _sounds.Play(SoundEffect2D.FireballImpact);
             }
         }
-    }
 
-    public override void ReleasePending(float facing)
-    {
-        if (_pending is null)
-            return;
-        if (!_presentation.IsPlayingShot)
+        if (_pending is not null)
         {
-            _pending = null;
-            return;
+            _pendingSeconds += deltaSeconds;
+            if (_pendingSeconds >= ReleaseTime)
+            {
+                _pending.Shader.FlipX = facing < 0f;
+                _pending.Projectile.Launch(
+                    _ownerBody.WorldObject.Transform.Position +
+                        new Vector2(facing * 64f, 10f),
+                    new Vector2(facing * 1250f, 0f),
+                    lifetime: 1.5f);
+                _pending = null;
+                _pendingSeconds = 0f;
+                _sounds.Play(SoundEffect2D.FireballLaunch);
+            }
         }
-        if (_presentation.ShotAnimationElapsedSeconds < ReleaseTime)
-            return;
-
-        _pending.Shader.FlipX = facing < 0f;
-        _pending.Projectile.Launch(
-            _ownerBody.WorldObject.Transform.Position + new Vector2(facing * 64f, 10f),
-            new Vector2(facing * 1250f, 0f),
-            lifetime: 1.5f);
-        _pending = null;
-        _sounds.Play(SoundEffect2D.FireballLaunch);
     }
 
-    public override void OnDeselected() => _pending = null;
+    public override void OnDeselected()
+    {
+        _pending = null;
+        _pendingSeconds = 0f;
+    }
 
     public override void Reset()
     {
         _pending = null;
+        _pendingSeconds = 0f;
         foreach (var bullet in _bullets)
             bullet.Projectile.Deactivate();
     }

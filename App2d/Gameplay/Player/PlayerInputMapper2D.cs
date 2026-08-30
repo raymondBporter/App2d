@@ -52,7 +52,7 @@ public sealed class PlayerInputMapper2D
             input.IsKeyDown(Keys.S) ||
             !input.IsShiftDown && input.IsKeyDown(Keys.Down) ||
             controller.DownHeld;
-        var movement = new PlayerIntent2D(
+        var movement = new PersonMovementIntent2D(
             moveX,
             jumpPressed,
             jumpHeld,
@@ -66,15 +66,16 @@ public sealed class PlayerInputMapper2D
 
         var mouseAttackPressed = input.WasMousePressed(MouseButtons.Left);
         return new PlayerCommand2D(
-            movement,
-            input.WasKeyPressed(Keys.J) ||
-                mouseAttackPressed ||
-                controller.UseWeapon,
-            mouseAttackPressed
-                ? camera.DeviceToWorld(input.MousePositionDevice)
-                : controller.AimTarget,
-            input.WasKeyPressed(Keys.Q) ||
-                controller.SwitchWeapon,
+            new PersonCommand2D(
+                movement,
+                input.WasKeyPressed(Keys.J) ||
+                    mouseAttackPressed ||
+                    controller.UseWeapon,
+                mouseAttackPressed
+                    ? camera.DeviceToWorld(input.MousePositionDevice)
+                    : controller.AimTarget,
+                input.WasKeyPressed(Keys.Q) ||
+                    controller.SwitchWeapon),
             input.WasKeyPressed(Keys.F3));
     }
 

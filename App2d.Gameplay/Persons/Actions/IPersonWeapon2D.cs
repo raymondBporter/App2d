@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay;
 
-public interface IPlayerWeapon2D
+public interface IPersonWeapon2D
 {
     string Name { get; }
     string EquipmentId { get; }
@@ -17,6 +17,5 @@ public interface IPlayerWeapon2D
     void BeginFrame(float deltaSeconds);
     void UpdateBeforePhysics(float deltaSeconds);
     void UpdateAfterPhysics(float deltaSeconds, float facing);
-    void ReleasePending(float facing);
     void Reset();
 }

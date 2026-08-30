@@ -4,7 +4,7 @@ namespace App2d.Gameplay;
 
 public interface IEnemyActor2D
 {
-    IEnemyCombatant2D Combatant { get; }
+    ICombatant2D Combatant { get; }
 
     void SetSimulationEnabled(bool isEnabled);
 

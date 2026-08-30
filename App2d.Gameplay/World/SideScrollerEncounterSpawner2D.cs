@@ -18,8 +18,10 @@ internal sealed class SideScrollerEncounterSpawner2D(
     Func<int, int> groundY,
     EnemySystem2D enemies,
     SideScrollerChunkStreamer2D streamer,
+    TraversalMetrics2D traversal,
     float tileSize,
     uint worldLayer,
+    uint playerLayer,
     uint enemyLayer)
 {
     private const ulong EnemySeed = 0xA2D_2026_0823UL ^ 0xE11E_5EEDUL;
@@ -29,9 +31,13 @@ internal sealed class SideScrollerEncounterSpawner2D(
     private const int OpeningEnemySpacingTiles = 12;
     private const int RegularEnemySpacingTiles = 7;
 
-    public void Create(TextureCache2D textures, ISoundEffectSink2D sounds)
+    public void Create(
+        TextureCache2D textures,
+        CombatSystem2D combat,
+        ISoundEffectSink2D sounds)
     {
         ArgGuard.ThrowIfNull(textures);
+        ArgGuard.ThrowIfNull(combat);
         ArgGuard.ThrowIfNull(sounds);
         var random = new SpatialRandom2D(EnemySeed);
 
@@ -93,6 +99,29 @@ internal sealed class SideScrollerEncounterSpawner2D(
                 random.Range(index, 0, 95, 141, channel: 1),
                 health: 3);
             Register(new Shieldback2D(scene, textures, enemy));
+        }
+
+        if (TryFindRivalPlacement(182, out var rivalPlacement))
+        {
+            Register(new RivalEnemy2D(
+                scene,
+                collision,
+                physics,
+                textures,
+                traversal,
+                combat,
+                new Vector2(
+                    TileCenterX(rivalPlacement.TileX),
+                    tileMap.Origin.Y +
+                    (rivalPlacement.SurfaceTileY + 1) * tileSize +
+                    traversal.PlayerColliderSize.Y / 2f +
+                    traversal.GroundProbeDistance),
+                TileCenterX(rivalPlacement.PatrolMinTileX),
+                TileCenterX(rivalPlacement.PatrolMaxTileX),
+                worldLayer,
+                playerLayer,
+                enemyLayer,
+                sounds));
         }
 
         if (TryFindGroundPlacement(30, out var propPlacement))
@@ -170,6 +199,40 @@ internal sealed class SideScrollerEncounterSpawner2D(
                 if (placement.PatrolMinTileX < placement.PatrolMaxTileX)
                     return true;
             }
+        }
+
+        placement = default;
+        return false;
+    }
+
+    private bool TryFindRivalPlacement(
+        int preferredX,
+        out EnemyPlacement placement)
+    {
+        for (var distance = 0; distance <= 48; distance++)
+        {
+            var direction = distance % 2 == 0 ? 1 : -1;
+            var x = preferredX + (distance + 1) / 2 * direction;
+            if (x < 6 || x >= tileMap.Width - 6)
+                continue;
+
+            var surfaceY = groundY(x) - 1;
+            if (!TryGetSurfaceRun(
+                    x,
+                    surfaceY,
+                    out var minimumX,
+                    out var maximumX) ||
+                maximumX - minimumX < 10)
+            {
+                continue;
+            }
+
+            placement = new EnemyPlacement(
+                x,
+                surfaceY,
+                Math.Max(minimumX + 1, x - 6),
+                Math.Min(maximumX - 1, x + 6));
+            return true;
         }
 
         placement = default;

@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay;
 
-public sealed class PatrolEnemy2D : IEnemyCombatant2D
+public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 {
     private readonly Dictionary<object, int> _lastAttackIds =
         new(ReferenceEqualityComparer.Instance);
@@ -30,6 +30,8 @@ public sealed class PatrolEnemy2D : IEnemyCombatant2D
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }
+    public CombatFaction2D Faction => CombatFaction2D.Enemy;
+    public int ContactDamage => 1;
     public float PatrolMinX { get; }
     public float PatrolMaxX { get; }
     public float Speed { get; }

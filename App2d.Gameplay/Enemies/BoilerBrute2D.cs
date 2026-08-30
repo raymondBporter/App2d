@@ -93,7 +93,7 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     }
 
     public PatrolEnemy2D Enemy { get; }
-    public IEnemyCombatant2D Combatant => Enemy;
+    public ICombatant2D Combatant => Enemy;
     public bool IsHammerActive =>
         _simulationEnabled &&
         Enemy.IsAlive &&
@@ -159,7 +159,7 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         SyncPresentation();
     }
 
-    public bool TryResolveHammerHit(PlayerCharacter2D player)
+    public bool TryResolveHammerHit(Person2D player)
     {
         ArgGuard.ThrowIfNull(player);
         if (!IsHammerActive || _hammerConnected ||
@@ -172,13 +172,13 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         }
 
         _hammerConnected = true;
-        var dealtDamage = player.TryTakeDamage(
+        var dealtDamage = player.TryTakeDamageFromX(
             damage: 2,
             sourceX: Enemy.WorldObject.Transform.Position.X);
         return dealtDamage && !player.Health.IsAlive;
     }
 
-    public bool TryResolvePlayerHit(PlayerCharacter2D player) =>
+    public bool TryResolvePlayerHit(Person2D player) =>
         TryResolveHammerHit(player);
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()

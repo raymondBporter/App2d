@@ -8,12 +8,10 @@ namespace App2d.Gameplay;
 
 public sealed class CombatSystem2D(
     CollisionSystem2D collision,
-    uint enemyLayer,
     ISoundEffectSink2D sounds)
 {
     private readonly CollisionSystem2D _collision =
         ArgGuard.RequireNotNull(collision);
-    private readonly uint _enemyLayer = enemyLayer;
     private readonly ISoundEffectSink2D _sounds =
         ArgGuard.RequireNotNull(sounds);
     private readonly List<CollisionOverlap2D> _overlaps = [];
@@ -24,8 +22,10 @@ public sealed class CombatSystem2D(
         SpatialObject2D hitbox,
         object attackSource,
         int attackId,
+        CombatFaction2D attackerFaction,
+        uint targetLayer,
         int damage,
-        Func<IEnemyCombatant2D, Vector2> knockback,
+        Func<ICombatant2D, Vector2> knockback,
         bool stopAfterFirstHit = false)
     {
         ArgGuard.ThrowIfNull(hitbox);
@@ -33,16 +33,17 @@ public sealed class CombatSystem2D(
         ArgGuard.ThrowIfNull(knockback);
 
         var hitAny = false;
-        _collision.Overlap(hitbox, _overlaps, _enemyLayer, includeSensors: true);
+        _collision.Overlap(hitbox, _overlaps, targetLayer, includeSensors: true);
         foreach (var overlap in _overlaps)
         {
-            if (GetEnemy(overlap.Collider) is not { IsAlive: true } enemy ||
-                !enemy.TryRegisterHit(attackSource, attackId))
+            if (GetCombatant(overlap.Collider) is not { IsAlive: true } combatant ||
+                combatant.Faction == attackerFaction ||
+                !combatant.TryRegisterHit(attackSource, attackId))
             {
                 continue;
             }
 
-            Damage(enemy, damage, knockback(enemy));
+            Damage(combatant, damage, knockback(combatant));
             hitAny = true;
             if (stopAfterFirstHit)
                 break;
@@ -53,40 +54,45 @@ public sealed class CombatSystem2D(
 
     public bool TryDamageFirst(
         SpatialObject2D hitbox,
+        CombatFaction2D attackerFaction,
+        uint targetLayer,
         int damage,
-        Func<IEnemyCombatant2D, Vector2> knockback)
+        Func<ICombatant2D, Vector2> knockback)
     {
         ArgGuard.ThrowIfNull(hitbox);
         ArgGuard.ThrowIfNull(knockback);
 
-        _collision.Overlap(hitbox, _overlaps, _enemyLayer, includeSensors: true);
+        _collision.Overlap(hitbox, _overlaps, targetLayer, includeSensors: true);
         foreach (var overlap in _overlaps)
         {
-            if (GetEnemy(overlap.Collider) is not { IsAlive: true } enemy)
+            if (GetCombatant(overlap.Collider) is not { IsAlive: true } combatant ||
+                combatant.Faction == attackerFaction)
                 continue;
 
-            Damage(enemy, damage, knockback(enemy));
+            Damage(combatant, damage, knockback(combatant));
             return true;
         }
 
         return false;
     }
 
-    private static IEnemyCombatant2D? GetEnemy(Collider2D collider) =>
-        collider.UserData is PhysicsBody2D { UserData: IEnemyCombatant2D enemy }
-            ? enemy
+    private static ICombatant2D? GetCombatant(Collider2D collider) =>
+        collider.UserData is PhysicsBody2D { UserData: ICombatant2D combatant }
+            ? combatant
             : null;
 
-    private void Damage(IEnemyCombatant2D enemy, int damage, Vector2 knockback)
+    private void Damage(ICombatant2D combatant, int damage, Vector2 knockback)
     {
-        var wasAlive = enemy.IsAlive;
-        enemy.TakeDamage(damage, knockback);
-        if (wasAlive && !enemy.IsAlive)
+        var wasAlive = combatant.IsAlive;
+        if (!combatant.TakeDamage(damage, knockback))
+            return;
+
+        if (wasAlive && !combatant.IsAlive && combatant.Faction == CombatFaction2D.Enemy)
         {
             DefeatedEnemies++;
             _sounds.Play(SoundEffect2D.EnemyDeath);
         }
-        else if (enemy.IsAlive)
+        else if (combatant.IsAlive && combatant.Faction != CombatFaction2D.Player)
         {
             _sounds.Play(SoundEffect2D.EnemyHurt);
         }

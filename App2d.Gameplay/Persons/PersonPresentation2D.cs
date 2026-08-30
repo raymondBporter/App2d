@@ -8,10 +8,10 @@ using System.Numerics;
 namespace App2d.Gameplay;
 
 /// <summary>
-/// Selects between the baked sword and gun character sheets and keeps visual
-/// animation independent from the player's physics collider.
+/// Selects between person skins and keeps animation playback observational:
+/// gameplay timing remains authoritative in locomotion and actions.
 /// </summary>
-public sealed class PlayerPresentation2D : IDisposable
+public sealed class PersonPresentation2D : IDisposable
 {
     private const float TerminalVelocityEpsilon = 25f;
     private const string SwordCharacterId = "player-sword";
@@ -37,9 +37,10 @@ public sealed class PlayerPresentation2D : IDisposable
     private AnimationClip2D<Texture2D> _shotAnimation = null!;
     private AnimationClip2D<Texture2D> _shieldBlockAnimation = null!;
     private string _characterId = string.Empty;
+    private bool _simulationVisible = true;
     private bool _disposed;
 
-    public PlayerPresentation2D(
+    public PersonPresentation2D(
         Scene2D scene,
         TextureCache2D textures,
         TraversalMetrics2D traversal)
@@ -63,8 +64,6 @@ public sealed class PlayerPresentation2D : IDisposable
         scene.Add(_visual);
     }
 
-    public float ShotAnimationDuration => _shotAnimation.Duration;
-    public float ShotAnimationElapsedSeconds => _animation.ElapsedSeconds;
     public bool IsPlayingShot => ReferenceEquals(_animation.Clip, _shotAnimation);
 
     public void EquipRightHandWeapon(string equipmentId)
@@ -108,21 +107,15 @@ public sealed class PlayerPresentation2D : IDisposable
     public void Update(
         float deltaSeconds,
         long frameNumber,
-        Vector2 playerPosition,
+        Person2D person,
         float moveInputX,
-        float facing,
-        bool isGrounded,
-        bool isWallGripping,
-        bool isDashing,
         bool isShieldBlocking,
-        float verticalVelocity,
-        float landingSpeed,
-        bool isMeleeAttackActive,
-        float invulnerabilitySeconds)
+        bool isMeleeAttackActive)
     {
+        ArgGuard.ThrowIfNull(person);
         if (ReferenceEquals(_animation.Clip, _deathAnimation))
         {
-            UpdateVisual(deltaSeconds, frameNumber, playerPosition, facing, 0f);
+            UpdateVisual(deltaSeconds, frameNumber, person.Position, person.Facing, 0f);
             return;
         }
 
@@ -140,13 +133,13 @@ public sealed class PlayerPresentation2D : IDisposable
             isShieldBlocking &&
             ReferenceEquals(_animation.Clip, _shieldBlockAnimation);
 
-        if (isDashing && !ReferenceEquals(_animation.Clip, _dashAnimation))
+        if (person.IsDashing && !ReferenceEquals(_animation.Clip, _dashAnimation))
         {
             _animation.Play(_dashAnimation, restart: true);
             _animation.PlaybackSpeed = 1f;
         }
 
-        if (!isDashing &&
+        if (!person.IsDashing &&
             isShieldBlocking &&
             !isMeleeAttackActive &&
             !isPlayingMeleeAnimation &&
@@ -160,9 +153,9 @@ public sealed class PlayerPresentation2D : IDisposable
         }
 
         var landedAtTerminalVelocity =
-            isGrounded &&
-            landingSpeed >= _maximumFallSpeed - TerminalVelocityEpsilon;
-        if (!isDashing &&
+            person.IsGrounded &&
+            person.LandingSpeedThisFrame >= _maximumFallSpeed - TerminalVelocityEpsilon;
+        if (!person.IsDashing &&
             !isMeleeAttackActive &&
             !isPlayingMeleeAnimation &&
             !isShieldBlocking &&
@@ -175,7 +168,7 @@ public sealed class PlayerPresentation2D : IDisposable
             isPlayingLanding = true;
         }
 
-        if (!isDashing &&
+        if (!person.IsDashing &&
             !isMeleeAttackActive &&
             !isPlayingMeleeAnimation &&
             !isShieldBlocking &&
@@ -183,14 +176,14 @@ public sealed class PlayerPresentation2D : IDisposable
             !isPlayingHit &&
             !isPlayingLanding)
         {
-            var isWalking = isGrounded && MathF.Abs(moveInputX) > 0.01f;
-            var locomotionClip = isWallGripping
+            var isWalking = person.IsGrounded && MathF.Abs(moveInputX) > 0.01f;
+            var locomotionClip = person.IsWallGripping
                 ? _wallGripAnimation
-                : isGrounded
+                : person.IsGrounded
                 ? isWalking
                     ? _walkAnimation
                     : _idleAnimation
-                : verticalVelocity <= 0f
+                : person.Body.LinearVelocity.Y <= 0f
                     ? _fallAnimation
                     : _jumpAnimation;
             if (!ReferenceEquals(_animation.Clip, locomotionClip))
@@ -200,7 +193,18 @@ public sealed class PlayerPresentation2D : IDisposable
                 : 1f;
         }
 
-        UpdateVisual(deltaSeconds, frameNumber, playerPosition, facing, invulnerabilitySeconds);
+        UpdateVisual(
+            deltaSeconds,
+            frameNumber,
+            person.Position,
+            person.Facing,
+            person.InvulnerabilitySeconds);
+    }
+
+    public void SetVisible(bool visible)
+    {
+        _simulationVisible = visible;
+        _visual.IsVisible = visible;
     }
 
     public void Reset()
@@ -251,7 +255,8 @@ public sealed class PlayerPresentation2D : IDisposable
         _spriteShader.Texture = _animation.CurrentFrame;
         _spriteShader.FlipX = facing < 0f;
         _visual.Transform.Position = playerPosition + _visualOffset;
-        _visual.IsVisible = invulnerabilitySeconds <= 0f || frameNumber % 12 < 6;
+        _visual.IsVisible = _simulationVisible &&
+            (invulnerabilitySeconds <= 0f || frameNumber % 12 < 6);
     }
 
     private void PlayTimedMeleeAnimation(

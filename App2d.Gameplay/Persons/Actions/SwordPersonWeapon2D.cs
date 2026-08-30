@@ -6,14 +6,16 @@ using System.Numerics;
 
 namespace App2d.Gameplay;
 
-internal sealed class SwordPlayerWeapon2D(
+internal sealed class SwordPersonWeapon2D(
     string name,
     string equipmentId,
     PhysicsBody2D ownerBody,
     Texture2D hudTexture,
+    CombatFaction2D ownerFaction,
+    uint targetLayer,
     CombatSystem2D combat,
-    PlayerPresentation2D presentation,
-    ISoundEffectSink2D sounds) : MeleePlayerWeapon2D(
+    Action<float> attackStarted,
+    ISoundEffectSink2D sounds) : MeleePersonWeapon2D(
         name,
         equipmentId,
         hudTexture,
@@ -27,6 +29,8 @@ internal sealed class SwordPlayerWeapon2D(
             forwardOffset: 52f),
         damage: 2,
         knockback: new Vector2(520f, 285f),
+        ownerFaction,
+        targetLayer,
         combat,
-        presentation,
+        attackStarted,
         sounds);

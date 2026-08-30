@@ -1,6 +1,6 @@
 namespace App2d.Gameplay;
 
-public readonly record struct PlayerIntent2D(
+public readonly record struct PersonMovementIntent2D(
     float MoveX,
     bool JumpPressed,
     bool JumpHeld,

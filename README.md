@@ -252,10 +252,11 @@ fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` ins
 being implemented by the game class. `LevelBootstrap2D` loads the cavern level file
 into an `EditableTileMap2D`, and `SideScrollerLevel2D` consumes that loaded tile map,
 composing dedicated chunk streaming, terrain visual, and encounter spawning services.
-`PlayerCharacter2D`, `PlayerArsenal2D`, and `PlayerPresentation2D`
-own the player's simulation, registered weapons, and visuals respectively.
-`CombatSystem2D` resolves attacks through generic source/sequence hit registration, so
-new weapons do not add weapon-specific bookkeeping to enemies. Camera/parallax, input
+`Person2D`, `PersonArsenal2D`, and `PersonPresentation2D` own reusable humanoid
+simulation, registered actions, and visuals respectively. Human input and rival AI both
+produce `PersonCommand2D`; neither is built into the person. `CombatSystem2D` resolves
+attacks against faction-aware `ICombatant2D` targets, so the same sword and gun work in
+both directions without making every enemy a person. Camera/parallax, input
 mapping, and traversal diagnostics have similarly narrow owners.
 
 The 640x96-tile level provides merged tilemap collision, explicit one-way strips, fall
@@ -294,7 +295,9 @@ strips.
 Player traversal has
 acceleration, coyote time, jump buffering, variable jump height, wall grip and wall jump,
 a high-speed enemy-phasing dash with one airborne charge restored on landing, a sword,
-and a fixed pool of 16 fireballs. While airborne and falling, holding toward a
+and a fixed pool of 16 fireballs. A hostile rival uses the same person locomotion, sword,
+gun, projectile, damage, and presentation-state paths under a small AI command producer;
+the patrol enemies and Boiler Brute remain bespoke actors. While airborne and falling, holding toward a
 nearby static solid wall suspends the player; jumping launches away. One-way platforms
 do not allow wall grip.
 
@@ -304,8 +307,8 @@ code never knows asset paths or audio-device details. `SoundEffectBank2D` owns t
 mapping, per-cue levels, and non-repeating variants. Set `sfx_volume` in the developer
 console to a value from 0 through 1 to adjust the master sound-effect level.
 
-Player movement is owned by `App2d.Gameplay/Player/CharacterMotor2D`. `PlayerIntent2D` describes
-what the player requested; the motor turns that into desired velocity and grace-window
+Person movement is owned by `App2d.Gameplay/Persons/PersonLocomotion2D`. `PersonMovementIntent2D` describes
+what a human or AI controller requested; locomotion turns that into desired velocity and grace-window
 state; `PhysicsWorld2D` decides what the level and active constraints permit. The motor
 then consumes new landing contacts, allowing a buffered jump to fire on the fixed step
 that establishes ground support. It also provides a two-world-unit ground skin,

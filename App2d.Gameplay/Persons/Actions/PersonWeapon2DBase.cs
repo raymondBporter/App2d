@@ -4,10 +4,10 @@ using System.Numerics;
 
 namespace App2d.Gameplay;
 
-internal abstract class PlayerWeapon2DBase(
+internal abstract class PersonWeapon2DBase(
     string name,
     string equipmentId,
-    Texture2D hudTexture) : IPlayerWeapon2D
+    Texture2D hudTexture) : IPersonWeapon2D
 {
     public string Name { get; } = ArgGuard.RequireNotNull(name);
     public string EquipmentId { get; } = ArgGuard.RequireNotNull(equipmentId);
@@ -20,6 +20,5 @@ internal abstract class PlayerWeapon2DBase(
     public virtual void BeginFrame(float deltaSeconds) { }
     public virtual void UpdateBeforePhysics(float deltaSeconds) { }
     public virtual void UpdateAfterPhysics(float deltaSeconds, float facing) { }
-    public virtual void ReleasePending(float facing) { }
     public virtual void Reset() { }
 }

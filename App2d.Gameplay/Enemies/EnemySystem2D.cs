@@ -7,10 +7,11 @@ namespace App2d.Gameplay;
 public sealed class EnemySystem2D
 {
     private readonly List<RegisteredEnemy> _registeredEnemies = [];
-    private readonly List<IEnemyCombatant2D> _combatants = [];
+    private readonly List<ICombatant2D> _combatants = [];
 
-    public IReadOnlyList<IEnemyCombatant2D> Combatants => _combatants;
-    public int Count => _registeredEnemies.Count;
+    public IReadOnlyList<ICombatant2D> Combatants => _combatants;
+    public int Count => _combatants.Count(
+        combatant => combatant.Faction == CombatFaction2D.Enemy);
 
     public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
     {
@@ -67,7 +68,7 @@ public sealed class EnemySystem2D
         }
     }
 
-    public bool TryResolvePlayerHits(PlayerCharacter2D player)
+    public bool TryResolvePlayerHits(Person2D player)
     {
         ArgGuard.ThrowIfNull(player);
 

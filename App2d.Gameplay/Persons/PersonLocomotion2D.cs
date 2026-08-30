@@ -6,13 +6,13 @@ using System.Numerics;
 
 namespace App2d.Gameplay;
 
-public sealed class CharacterMotor2D
+public sealed class PersonLocomotion2D
 {
     private readonly PhysicsWorld2D _physics;
     private readonly CollisionSystem2D _collision;
     private readonly PhysicsBody2D _body;
     private readonly List<Collider2D> _queryResults = [];
-    private PlayerIntent2D _intent;
+    private PersonMovementIntent2D _intent;
     private Vector2 _positionBeforePhysics;
     private float _verticalSpeedBeforePhysics;
     private float _gravityScaleBeforePhysics;
@@ -26,7 +26,7 @@ public sealed class CharacterMotor2D
     private bool _airDashAvailable = true;
     private int _airJumpsRemaining;
 
-    public CharacterMotor2D(
+    public PersonLocomotion2D(
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
         PhysicsBody2D body,
@@ -54,7 +54,7 @@ public sealed class CharacterMotor2D
     public float JumpBufferTimeRemaining => _jumpBufferTime;
 
     public void UpdateBeforePhysics(
-        PlayerIntent2D intent,
+        PersonMovementIntent2D intent,
         float facing,
         float deltaSeconds)
     {

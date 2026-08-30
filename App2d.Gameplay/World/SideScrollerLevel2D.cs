@@ -20,6 +20,7 @@ public sealed class SideScrollerLevel2D
     public static Vector2 WorldOrigin { get; } = new(-512f, -640f);
 
     private readonly float _tileSize;
+    private readonly TraversalMetrics2D _traversal;
     private readonly Func<int, int> _groundY;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
     private LevelEnvironment? _environment;
@@ -33,6 +34,7 @@ public sealed class SideScrollerLevel2D
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
         ArgGuard.ThrowIfNull(groundY);
+        _traversal = traversal;
         _tileSize = traversal.TileSize;
         ArgGuard.ThrowIfNotPositive(_tileSize);
         _groundY = groundY;
@@ -189,6 +191,7 @@ public sealed class SideScrollerLevel2D
             physics,
             streamer,
             worldLayer,
+            playerLayer,
             enemyLayer);
 
         UpdateStreaming(SpawnPoint);
@@ -213,6 +216,7 @@ public sealed class SideScrollerLevel2D
 
     public void CreateMechanicsPlaygroundEnemies(
         TextureCache2D textures,
+        CombatSystem2D combat,
         ISoundEffectSink2D sounds)
     {
         StateGuard.ThrowIf(
@@ -227,10 +231,12 @@ public sealed class SideScrollerLevel2D
             _groundY,
             EnemySystem,
             environment.Streamer,
+            _traversal,
             _tileSize,
             environment.WorldLayer,
+            environment.PlayerLayer,
             environment.EnemyLayer)
-            .Create(textures, sounds);
+            .Create(textures, combat, sounds);
         _mechanicsEnemiesCreated = true;
     }
 
@@ -368,5 +374,6 @@ public sealed class SideScrollerLevel2D
         PhysicsWorld2D Physics,
         SideScrollerChunkStreamer2D Streamer,
         uint WorldLayer,
+        uint PlayerLayer,
         uint EnemyLayer);
 }

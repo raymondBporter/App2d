@@ -15,6 +15,7 @@ namespace App2d;
 public sealed class SideScrollerGame : Game2D
 {
     private const float DeathRestartDelaySeconds = 1.1f;
+    private const float HardLandingSpeed = 650f;
     private const uint WorldLayer = 1u << 0;
     private const uint PlayerLayer = 1u << 1;
     private const uint EnemyLayer = 1u << 2;
@@ -26,10 +27,11 @@ public sealed class SideScrollerGame : Game2D
     private readonly PhysicsWorld2D _physics;
     private readonly SideScrollerLevel2D _level;
     private readonly PlayerInputMapper2D _inputMapper = new();
-    private readonly PlayerCharacter2D _player;
-    private readonly PlayerPresentation2D _playerPresentation;
+    private readonly Person2D _player;
+    private readonly PersonPresentation2D _playerPresentation;
     private readonly CombatSystem2D _combat;
-    private readonly PlayerArsenal2D _arsenal;
+    private readonly PersonArsenal2D _arsenal;
+    private readonly ContactDamageSystem2D _contactDamage;
     private readonly SideScrollerCamera2D _cameraController;
     private readonly TraversalDebugRenderer2D _traversalDebug = new(Traversal);
     private readonly SoundEffectBank2D _sounds;
@@ -71,17 +73,46 @@ public sealed class SideScrollerGame : Game2D
 
         _level.CreateEnvironment(Scene, _collision, _physics, Textures, WorldLayer, PlayerLayer, EnemyLayer);
 
-        _player = new PlayerCharacter2D(_collision, _physics, Traversal, _level.SpawnPoint, PlayerLayer, WorldLayer, EnemyLayer, _sounds);
-        _playerPresentation = new PlayerPresentation2D(Scene, Textures, Traversal);
-        _player.Damaged += _playerPresentation.PlayHit;
+        _player = new Person2D(
+            _collision,
+            _physics,
+            Traversal,
+            _level.SpawnPoint,
+            PlayerLayer,
+            WorldLayer,
+            CombatFaction2D.Player);
+        _playerPresentation = new PersonPresentation2D(Scene, Textures, Traversal);
+        _player.JumpStarted += () => _sounds.Play(SoundEffect2D.PlayerJump);
+        _player.Landed += speed => _sounds.Play(
+            speed >= HardLandingSpeed
+                ? SoundEffect2D.PlayerLandHard
+                : SoundEffect2D.PlayerLandSoft);
+        _player.Footstep += () => _sounds.Play(SoundEffect2D.PlayerFootstep);
+        _player.Damaged += () =>
+        {
+            _sounds.Play(SoundEffect2D.PlayerHurt);
+            _playerPresentation.PlayHit();
+        };
+        _contactDamage = new ContactDamageSystem2D(_collision, EnemyLayer);
 
-        _level.CreateMechanicsPlaygroundEnemies(Textures, _sounds);
-        _combat = new CombatSystem2D(_collision, EnemyLayer, _sounds);
-        _arsenal = new PlayerArsenal2D(Scene, _player.Body, Textures, _collision, WorldLayer, _combat, _playerPresentation, _sounds);
+        _combat = new CombatSystem2D(_collision, _sounds);
+        _level.CreateMechanicsPlaygroundEnemies(Textures, _combat, _sounds);
+        _arsenal = new PersonArsenal2D(Scene, _player.Body, Textures, _collision, WorldLayer, EnemyLayer, CombatFaction2D.Player, _combat, _sounds);
+        _arsenal.EquipmentChanged += _playerPresentation.EquipRightHandWeapon;
+        _arsenal.MeleeAttackStarted += _playerPresentation.PlayMeleeAttack;
+        _arsenal.ShotStarted += _playerPresentation.PlayShot;
+        _player.AttachActions(_arsenal);
+        _playerPresentation.EquipRightHandWeapon(_arsenal.EquipmentId);
         RegisterDebugAttackShapes(_arsenal.GetActiveAttackHitboxes);
         RegisterDebugAttackShapes(_level.EnemySystem.GetActiveAttackHitboxes);
 
-        _playerPresentation.Update(0f, 0, _player.Position, 0f, _player.Facing, _player.IsGrounded, _player.IsWallGripping, _player.IsDashing, isShieldBlocking: false, _player.Body.LinearVelocity.Y, _player.LandingSpeedThisFrame, _arsenal.IsMeleeAttackActive, _player.InvulnerabilitySeconds);
+        _playerPresentation.Update(
+            0f,
+            0,
+            _player,
+            0f,
+            isShieldBlocking: false,
+            _arsenal.IsMeleeAttackActive);
     }
 
     public override string WindowTitle =>
@@ -93,7 +124,6 @@ public sealed class SideScrollerGame : Game2D
         _level.UpdateStreaming(_player.Position);
         _level.UpdateMovingPlatforms(dt);
         _player.BeginFrame(dt);
-        _arsenal.BeginFrame(dt);
 
         if (_restartDelaySeconds > 0f)
         {
@@ -104,24 +134,16 @@ public sealed class SideScrollerGame : Game2D
         var command = _inputMapper.Capture(input, Camera, _player.Position);
         if (command.ToggleTraversalDebug)
             _showTraversalDebug = !_showTraversalDebug;
-        if (command.SwitchWeapon)
-            _arsenal.SelectNextWeapon();
-
         _level.EnemySystem.Update(dt, _player.Position);
 
-        _player.UpdateBeforePhysics(command.Movement, dt);
-        if (command.UseWeapon)
-            _player.Face(_arsenal.UseWeapon(command.AimTarget, _player.Facing));
-
-        _arsenal.UpdateBeforePhysics(dt);
+        _player.ApplyCommand(command.Person, dt);
         _physics.Step(dt);
         _player.UpdateAfterPhysics(dt);
         _level.EnemySystem.SyncAfterPhysics();
 
-        _arsenal.UpdateAfterPhysics(dt, _player.Facing);
         var playerDefeated = _level.EnemySystem.TryResolvePlayerHits(_player);
         if (_level.TryGetSpikeSource(_player.WorldObject.WorldBounds, out var spikeSourceX) &&
-            _player.TryTakeDamage(
+            _player.TryTakeDamageFromX(
                 damage: 1,
                 sourceX: spikeSourceX,
                 horizontalKnockback: 180f,
@@ -131,7 +153,7 @@ public sealed class SideScrollerGame : Game2D
         }
 
         if (playerDefeated ||
-            _player.ResolveEnemyTouches())
+            _contactDamage.Resolve(_player))
         {
             BeginDying(time);
             return;
@@ -148,18 +170,10 @@ public sealed class SideScrollerGame : Game2D
         _playerPresentation.Update(
             dt,
             time.FrameNumber,
-            _player.Position,
-            command.Movement.MoveX,
-            _player.Facing,
-            _player.IsGrounded,
-            _player.IsWallGripping,
-            _player.IsDashing,
+            _player,
+            command.Person.Movement.MoveX,
             input.IsKeyDown(Keys.B),
-            _player.Body.LinearVelocity.Y,
-            _player.LandingSpeedThisFrame,
-            _arsenal.IsMeleeAttackActive,
-            _player.InvulnerabilitySeconds);
-        _arsenal.ReleasePendingWeapons(_player.Facing);
+            _arsenal.IsMeleeAttackActive);
         _cameraController.Update(_player.Position, _player.Body.LinearVelocity, _player.IsGrounded, dt);
     }
 
@@ -176,9 +190,7 @@ public sealed class SideScrollerGame : Game2D
     private void Respawn()
     {
         _restartDelaySeconds = 0f;
-        _player.Health.Reset();
         _player.Reset(_level.SpawnPoint);
-        _arsenal.Reset();
         _playerPresentation.Reset();
         _cameraController.Reset(_level.SpawnPoint);
         _reachedGoal = false;
@@ -188,7 +200,6 @@ public sealed class SideScrollerGame : Game2D
     private void BeginDying(FrameTime time)
     {
         _restartDelaySeconds = DeathRestartDelaySeconds;
-        _arsenal.Reset();
         _playerPresentation.PlayDeath();
         UpdateDyingPresentation(time);
     }
@@ -214,17 +225,10 @@ public sealed class SideScrollerGame : Game2D
         _playerPresentation.Update(
             time.DeltaSeconds,
             time.FrameNumber,
-            _player.Position,
+            _player,
             0f,
-            _player.Facing,
-            _player.IsGrounded,
-            _player.IsWallGripping,
-            isDashing: false,
             isShieldBlocking: false,
-            _player.Body.LinearVelocity.Y,
-            _player.LandingSpeedThisFrame,
-            isMeleeAttackActive: false,
-            invulnerabilitySeconds: 0f);
+            isMeleeAttackActive: false);
     }
 
     public override void Dispose()
