@@ -9,7 +9,7 @@ public static partial class ShapeCollision2D
     private static CollisionResult CircleVsRectangle(Circle2D circle, Transform2D circleTransform, Rectangle2D rectangle, Transform2D rectangleTransform)
     {
         Span<Vector2> vertices = stackalloc Vector2[4];
-        WriteLocalRectangleVertices(rectangle, vertices);
+        rectangle.WriteCorners(vertices);
         return CircleVsPolygon(circle, circleTransform, vertices, rectangleTransform);
     }
 

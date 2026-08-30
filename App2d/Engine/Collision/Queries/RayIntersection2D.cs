@@ -43,7 +43,7 @@ public static class RayIntersection2D
             return false;
         }
 
-        var worldNormal = TransformNormalToWorld(localHit.Normal, worldToLocal);
+        var worldNormal = worldToLocal.TransposeTransformDirection(localHit.Normal);
         if (worldNormal.LengthSquared() <= Epsilon)
         {
             hit = default;
@@ -91,13 +91,8 @@ public static class RayIntersection2D
                     out hit);
 
             case Rectangle2D rectangle:
-                Span<Vector2> rectangleVertices =
-                [
-                    rectangle.Min,
-                    new Vector2(rectangle.Max.X, rectangle.Min.Y),
-                    rectangle.Max,
-                    new Vector2(rectangle.Min.X, rectangle.Max.Y)
-                ];
+                Span<Vector2> rectangleVertices = stackalloc Vector2[4];
+                rectangle.WriteCorners(rectangleVertices);
                 return TryConvexPolygon(origin, direction, rectangleVertices, maxDistance, out hit);
 
             case ConvexPolygon2D polygon:
@@ -384,12 +379,6 @@ public static class RayIntersection2D
         maximumDistance = Math.Min(maximumDistance, second);
         return minimumDistance <= maximumDistance;
     }
-
-    private static Vector2 TransformNormalToWorld(
-        Vector2 localNormal,
-        Matrix3x2 worldToLocal) => new(
-        localNormal.X * worldToLocal.M11 + localNormal.Y * worldToLocal.M12,
-        localNormal.X * worldToLocal.M21 + localNormal.Y * worldToLocal.M22);
 
     public static void ValidateMaxDistance(float maxDistance)
         => ArgGuard.ThrowIfNegativeOrNaN(maxDistance);

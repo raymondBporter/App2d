@@ -6,17 +6,9 @@ namespace App2d.Engine.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    private static void WriteLocalRectangleVertices(Rectangle2D rectangle, Span<Vector2> vertices)
-    {
-        vertices[0] = rectangle.Min;
-        vertices[1] = new Vector2(rectangle.Max.X, rectangle.Min.Y);
-        vertices[2] = rectangle.Max;
-        vertices[3] = new Vector2(rectangle.Min.X, rectangle.Max.Y);
-    }
-
     private static void WriteWorldRectangleVertices(Rectangle2D rectangle, Transform2D transform, Span<Vector2> vertices)
     {
-        WriteLocalRectangleVertices(rectangle, vertices);
+        rectangle.WriteCorners(vertices);
         var localToWorld = transform.LocalToWorldMatrix;
         for (var i = 0; i < vertices.Length; i++)
             vertices[i] = Vector2.Transform(vertices[i], localToWorld);

@@ -26,6 +26,15 @@ public class Rectangle2D : IConvexShape2D
         localDirection.X >= 0f ? Max.X : Min.X,
         localDirection.Y >= 0f ? Max.Y : Min.Y);
 
+    /// <summary>Writes the four local-space corners counter-clockwise from Min.</summary>
+    public void WriteCorners(Span<Vector2> corners)
+    {
+        corners[0] = Min;
+        corners[1] = new Vector2(Max.X, Min.Y);
+        corners[2] = Max;
+        corners[3] = new Vector2(Min.X, Max.Y);
+    }
+
     public static Rectangle2D FromSize(Vector2 size, Vector2 center = default)
     {
         ArgGuard.ThrowIfNotPositive(size);

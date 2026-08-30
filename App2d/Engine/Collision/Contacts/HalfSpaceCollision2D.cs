@@ -1,5 +1,6 @@
 using System.Numerics;
 using App2d.Engine.Geometry;
+using App2d.Engine.Mathematics;
 
 namespace App2d.Engine.Collision.Contacts;
 
@@ -16,7 +17,7 @@ public static class HalfSpaceCollision2D
         var objectToWorld = convexObject.Transform.LocalToWorldMatrix;
 
         // Convert the world projection direction into the object's local support direction.
-        var localDirection = new Vector2(objectToWorld.M11 * worldNormal.X + objectToWorld.M12 * worldNormal.Y, objectToWorld.M21 * worldNormal.X + objectToWorld.M22 * worldNormal.Y);
+        var localDirection = objectToWorld.TransposeTransformDirection(worldNormal);
 
         var localMinimum = convexShape.GetSupportPoint(-localDirection);
         var worldMinimum = Vector2.Transform(localMinimum, objectToWorld);
