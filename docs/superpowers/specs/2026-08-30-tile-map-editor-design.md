@@ -1,7 +1,7 @@
 # In-Game Tile Map Editor Design
 
 **Date:** 2026-08-30
-**Status:** Approved in chat (phase 1 scoped for implementation; phases 2–3 sketched)
+**Status:** Approved in chat (phase 1 scoped for implementation; phase 2 built; phase 3 sketched)
 
 ## Goal
 
