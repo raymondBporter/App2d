@@ -49,9 +49,8 @@ public sealed class ProceduralTileMap2D : IChunkedTileMap2D
         var startY = chunk.Y * ChunkSize;
         var width = Math.Min(ChunkSize, Width - startX);
         var height = Math.Min(ChunkSize, Height - startY);
+        // Prefetch so the mesher's repeated reads never re-run generator code.
         var tiles = new TileKind2D[width * height];
-        var consumed = new bool[tiles.Length];
-
         for (var y = 0; y < height; y++)
         {
             for (var x = 0; x < width; x++)
@@ -60,49 +59,18 @@ public sealed class ProceduralTileMap2D : IChunkedTileMap2D
             }
         }
 
-        var rectangles = new List<TileCollisionRectangle2D>();
-        for (var y = 0; y < height; y++)
+        var cells = new List<TileCellRectangle2D>();
+        TileRectangleMesher2D.Mesh(width, height, (x, y) => tiles[y * width + x], cells);
+
+        var rectangles = new List<TileCollisionRectangle2D>(cells.Count);
+        foreach (var cell in cells)
         {
-            for (var x = 0; x < width; x++)
-            {
-                var index = y * width + x; var kind = tiles[index];
-                if (!kind.IsCollidable() || consumed[index])
-                    continue;
-
-                var rectangleWidth = 1;
-                while (x + rectangleWidth < width && tiles[index + rectangleWidth] == kind && !consumed[index + rectangleWidth])
-                {
-                    rectangleWidth++;
-                }
-
-                var rectangleHeight = 1;
-                while (kind.IsSolid() && y + rectangleHeight < height && IsTileRun(tiles, consumed, width, x, y + rectangleHeight, rectangleWidth, kind))
-                {
-                    rectangleHeight++;
-                }
-
-                for (var row = y; row < y + rectangleHeight; row++)
-                    consumed.AsSpan(row * width + x, rectangleWidth).Fill(true);
-
-                var min = Origin + new Vector2(startX + x, startY + y) * TileSize;
-                var max = min + new Vector2(rectangleWidth, rectangleHeight) * TileSize;
-                rectangles.Add(new TileCollisionRectangle2D(new Bounds2D(min, max), kind));
-            }
+            var min = Origin + new Vector2(startX + cell.X, startY + cell.Y) * TileSize;
+            var max = min + new Vector2(cell.Width, cell.Height) * TileSize;
+            rectangles.Add(new TileCollisionRectangle2D(new Bounds2D(min, max), cell.Kind));
         }
 
         return rectangles;
-    }
-
-    private static bool IsTileRun(ReadOnlySpan<TileKind2D> tiles, ReadOnlySpan<bool> consumed, int rowWidth, int x, int y, int width, TileKind2D kind)
-    {
-        var start = y * rowWidth + x;
-        for (var offset = 0; offset < width; offset++)
-        {
-            if (tiles[start + offset] != kind || consumed[start + offset])
-                return false;
-        }
-
-        return true;
     }
 
     private void ValidateChunk(TileChunk2D chunk)

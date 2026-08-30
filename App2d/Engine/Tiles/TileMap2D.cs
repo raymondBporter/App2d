@@ -7,6 +7,8 @@ public sealed class TileMap2D : ISolidTileMap2D
 {
     private readonly bool[] _solidTiles;
     private readonly List<Bounds2D> _collisionRectangles = [];
+    private readonly List<TileCellRectangle2D> _meshBuffer = [];
+    private readonly TileRectangleMesher2D.KindAt _kindAt;
     private bool _collisionRectanglesDirty = true;
 
     public TileMap2D(int width, int height, float tileSize, Vector2 origin = default)
@@ -21,6 +23,7 @@ public sealed class TileMap2D : ISolidTileMap2D
         TileSize = tileSize;
         Origin = origin;
         _solidTiles = new bool[width * height];
+        _kindAt = (x, y) => _solidTiles[y * Width + x] ? TileKind2D.Solid : TileKind2D.Empty;
     }
 
     public int Width { get; }
@@ -68,50 +71,15 @@ public sealed class TileMap2D : ISolidTileMap2D
     private void RebuildCollisionRectangles()
     {
         _collisionRectangles.Clear();
-        var consumed = new bool[_solidTiles.Length];
-
-        for (var y = 0; y < Height; y++)
+        _meshBuffer.Clear();
+        TileRectangleMesher2D.Mesh(Width, Height, _kindAt, _meshBuffer);
+        foreach (var cell in _meshBuffer)
         {
-            for (var x = 0; x < Width; x++)
-            {
-                var index = y * Width + x;
-                if (!_solidTiles[index] || consumed[index])
-                    continue;
-
-                var rectangleWidth = 1;
-                while (x + rectangleWidth < Width)
-                {
-                    var next = index + rectangleWidth;
-                    if (!_solidTiles[next] || consumed[next])
-                        break;
-                    rectangleWidth++;
-                }
-
-                var rectangleHeight = 1;
-                while (y + rectangleHeight < Height && IsUnconsumedSolidRun(x, y + rectangleHeight, rectangleWidth, consumed))
-                    rectangleHeight++;
-
-                for (var row = y; row < y + rectangleHeight; row++)
-                    consumed.AsSpan(row * Width + x, rectangleWidth).Fill(true);
-
-                var min = Origin + new Vector2(x, y) * TileSize;
-                var max = min + new Vector2(rectangleWidth, rectangleHeight) * TileSize;
-                _collisionRectangles.Add(new Bounds2D(min, max));
-            }
+            var min = Origin + new Vector2(cell.X, cell.Y) * TileSize;
+            _collisionRectangles.Add(new Bounds2D(min, min + new Vector2(cell.Width, cell.Height) * TileSize));
         }
 
         _collisionRectanglesDirty = false;
-    }
-
-    private bool IsUnconsumedSolidRun(int x, int y, int width, ReadOnlySpan<bool> consumed)
-    {
-        var start = y * Width + x;
-        for (var offset = 0; offset < width; offset++)
-        {
-            if (!_solidTiles[start + offset] || consumed[start + offset])
-                return false;
-        }
-        return true;
     }
 
     private bool IsInside(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
