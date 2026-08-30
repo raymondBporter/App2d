@@ -84,6 +84,13 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
             for (var x = startX; x < endX; x++)
             {
                 var kind = _tileMap.GetTileKind(x, y);
+                if (kind.IsSpikes())
+                {
+                    var spikeBounds = GetTileBounds(x, y);
+                    AddVisual(visuals, _tilesets.GetTileset(x, y).CreateSpikes(spikeBounds, GetSpikePart(x, y)));
+                    continue;
+                }
+
                 if (kind.IsOneWay())
                 {
                     var oneWayBounds = GetTileBounds(x, y);
@@ -175,6 +182,23 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
             (false, true) => OneWayTilePart2D.Left,
             (true, false) => OneWayTilePart2D.Right,
             _ => OneWayTilePart2D.Middle
+        };
+    }
+
+    private SpikeTilePart2D GetSpikePart(int x, int y)
+    {
+        var hasLeft = x > 0 &&
+            _tilesets.UsesSameTileset(x, y, x - 1, y) &&
+            _tileMap.GetTileKind(x - 1, y).IsSpikes();
+        var hasRight = x < _tileMap.Width - 1 &&
+            _tilesets.UsesSameTileset(x, y, x + 1, y) &&
+            _tileMap.GetTileKind(x + 1, y).IsSpikes();
+        return (hasLeft, hasRight) switch
+        {
+            (false, false) => SpikeTilePart2D.Standalone,
+            (false, true) => SpikeTilePart2D.Left,
+            (true, false) => SpikeTilePart2D.Right,
+            _ => SpikeTilePart2D.Middle
         };
     }
 

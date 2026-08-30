@@ -39,6 +39,7 @@ COMMON_ANIMATIONS = {
     "dash": AnimationSpec("dash", duration_seconds=0.16),
     "land": AnimationSpec("jump", frames_per_second=12, frame_indices=(0,)),
     "hit-a": AnimationSpec("hit", duration_seconds=0.28),
+    "death": AnimationSpec("death", duration_seconds=0.75),
     "shield-block": AnimationSpec("Idle", frames_per_second=1, loop=True, frame_indices=(0,)),
 }
 

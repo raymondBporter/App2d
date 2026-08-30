@@ -23,3 +23,10 @@ Assets/Work/
 /Assets/Content/characters/player-sword/
 /Assets/Content/characters/player-gun/
 /Assets/Sources/third-party/rgs-stick-figure.zip
+
+# Maaot permits the art in games but forbids redistributing the asset packs.
+# Keep the locally downloaded source archives and generated runtime slices out
+# of source control; rebuild them with tools/ArtPipeline/build_runtime_assets.py.
+/Assets/Sources/third-party/maaot/*.zip
+/Assets/Content/environments/tilesets/dark-cave/
+/Assets/Content/environments/tilesets/mossy-cavern/

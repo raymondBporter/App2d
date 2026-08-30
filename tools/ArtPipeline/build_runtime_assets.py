@@ -26,6 +26,11 @@ def main() -> None:
         "Importing baked stick-figure sword and gun sprites",
         str(pipeline / "import_stick_figure.py"),
     )
+    run(
+        repository,
+        "Importing Maaot DarkCave and Mossy Cavern environments",
+        str(pipeline / "import_maaot_caves.py"),
+    )
 
     print("\nRuntime assets are ready. Run: dotnet run --project App2d", flush=True)
 

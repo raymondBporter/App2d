@@ -1,7 +1,7 @@
 using App2d.Core;
 using App2d.Rendering;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Player;
 
 public sealed class PlayerInputMapper2D
 {

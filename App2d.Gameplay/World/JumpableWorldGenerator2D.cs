@@ -55,6 +55,9 @@ public sealed class JumpableWorldGenerator2D
         if (topologyKind != TileKind2D.Empty)
             return topologyKind;
 
+        if (y == TerrainHeight(x) && IsSpikePatch(x))
+            return TileKind2D.Spikes;
+
         return IsOneWayPlatform(x, y)
             ? TileKind2D.OneWay
             : TileKind2D.Empty;
@@ -240,6 +243,31 @@ public sealed class JumpableWorldGenerator2D
         return style is 1 or 2 or 3
             ? TileKind2D.Solid | TileKind2D.Grippable
             : TileKind2D.Solid;
+    }
+
+    private bool IsSpikePatch(int x)
+    {
+        // Keep the opening and goal approaches safe. Elsewhere, short patches
+        // are capped at three tiles so every generated hazard is jumpable.
+        if (x < TerrainSectionWidth + 4 ||
+            x >= Width - TerrainSectionWidth - 4 ||
+            IsJumpablePit(x))
+        {
+            return false;
+        }
+
+        var section = Math.DivRem(x, TerrainSectionWidth, out var localX);
+        if (_random.Unit(section, 0, channel: 60) >= 0.38f)
+            return false;
+
+        var width = _random.Range(section, 0, 1, 4, channel: 61);
+        var start = _random.Range(
+            section,
+            0,
+            4,
+            TerrainSectionWidth - width - 3,
+            channel: 62);
+        return localX >= start && localX < start + width;
     }
 
     private static TileKind2D GetGripCourseKind(int x, int y)

@@ -20,6 +20,7 @@ public sealed class SideScrollerLevel2D
 
     private readonly float _tileSize;
     private readonly JumpableWorldGenerator2D _generator;
+    private readonly List<MovingPlatform2D> _movingPlatforms = [];
     private LevelEnvironment? _environment;
     private bool _mechanicsEnemiesCreated;
 
@@ -58,6 +59,7 @@ public sealed class SideScrollerLevel2D
     public float GoalX { get; }
     public float GoalGroundY { get; }
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
+    public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;
     public EnemySystem2D EnemySystem { get; } = new();
     public int ActiveChunkCount => _environment?.Streamer.ActiveChunkCount ?? 0;
     public int LoadedColliderCount => _environment?.Streamer.LoadedColliderCount ?? 0;
@@ -72,6 +74,57 @@ public sealed class SideScrollerLevel2D
         var tileX = (int)MathF.Floor((worldX - TileMap.Origin.X) / _tileSize);
         tileX = Math.Clamp(tileX, 0, TileMap.Width - 1);
         return TileMap.Origin.Y + _generator.TerrainHeight(tileX) * _tileSize;
+    }
+
+    public bool TryGetSpikeSource(Bounds2D actorBounds, out float sourceX)
+    {
+        if (!actorBounds.IsFinite)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(actorBounds),
+                actorBounds,
+                "Bounds must be finite.");
+        }
+
+        var startX = Math.Clamp(
+            (int)MathF.Floor((actorBounds.Min.X - TileMap.Origin.X) / _tileSize),
+            0,
+            TileMap.Width - 1);
+        var endX = Math.Clamp(
+            (int)MathF.Floor((actorBounds.Max.X - TileMap.Origin.X) / _tileSize),
+            0,
+            TileMap.Width - 1);
+        var startY = Math.Clamp(
+            (int)MathF.Floor((actorBounds.Min.Y - TileMap.Origin.Y) / _tileSize),
+            0,
+            TileMap.Height - 1);
+        var endY = Math.Clamp(
+            (int)MathF.Floor((actorBounds.Max.Y - TileMap.Origin.Y) / _tileSize),
+            0,
+            TileMap.Height - 1);
+
+        var horizontalInset = _tileSize * 0.1f;
+        for (var y = startY; y <= endY; y++)
+        {
+            for (var x = startX; x <= endX; x++)
+            {
+                if (!TileMap.GetTileKind(x, y).IsSpikes())
+                    continue;
+
+                var tileMin = TileMap.Origin + new Vector2(x, y) * _tileSize;
+                var spikeBounds = new Bounds2D(
+                    tileMin + new Vector2(horizontalInset, 0f),
+                    tileMin + new Vector2(_tileSize - horizontalInset, _tileSize * 0.9f));
+                if (!actorBounds.Intersects(spikeBounds))
+                    continue;
+
+                sourceX = tileMin.X + _tileSize / 2f;
+                return true;
+            }
+        }
+
+        sourceX = 0f;
+        return false;
     }
 
     public void CreateEnvironment(
@@ -95,9 +148,12 @@ public sealed class SideScrollerLevel2D
         [
             SideScrollerTerrainTileset2D.Load(
                 textures,
-                "rust-cyberpunk",
+                "dark-cave",
                 _tileSize),
-            SideScrollerTerrainTileset2D.CreateCollisionTest()
+            SideScrollerTerrainTileset2D.Load(
+                textures,
+                "mossy-cavern",
+                _tileSize)
         ];
         var tilesetResolver = new SideScrollerTerrainTilesetResolver2D(
             (x, _) => tilesets[GetPreviewTilesetIndex(
@@ -124,7 +180,15 @@ public sealed class SideScrollerLevel2D
             enemyLayer);
 
         UpdateStreaming(SpawnPoint);
+        CreateMovingPlatforms(scene, physics, worldLayer, playerLayer | enemyLayer);
         CreateGoal(scene);
+    }
+
+    public void UpdateMovingPlatforms(float deltaSeconds)
+    {
+        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        foreach (var platform in _movingPlatforms)
+            platform.Update(deltaSeconds);
     }
 
     public void UpdateStreaming(Vector2 focus)
@@ -181,6 +245,98 @@ public sealed class SideScrollerLevel2D
             new SolidColorShader(new SKColor(255, 79, 120)));
         flag.Transform.Position = new Vector2(GoalX, GoalGroundY + 185f);
         scene.Add(flag);
+    }
+
+    private void CreateMovingPlatforms(
+        Scene2D scene,
+        PhysicsWorld2D physics,
+        uint worldLayer,
+        uint actorMask)
+    {
+        var platformSize = new Vector2(_tileSize * 3f, _tileSize * 0.5f);
+        var color = new SKColor(37, 210, 190);
+
+        AddMovingPlatform(
+            scene,
+            physics,
+            startTileX: 12,
+            heightAboveTerrainTiles: 3f,
+            travelTiles: new Vector2(7f, 0f),
+            platformSize,
+            speed: _tileSize * 1.8f,
+            worldLayer,
+            actorMask,
+            color);
+        AddMovingPlatform(
+            scene,
+            physics,
+            startTileX: 48,
+            heightAboveTerrainTiles: 2f,
+            travelTiles: new Vector2(0f, 4f),
+            platformSize,
+            speed: _tileSize * 1.35f,
+            worldLayer,
+            actorMask,
+            color);
+        AddMovingPlatform(
+            scene,
+            physics,
+            startTileX: 88,
+            heightAboveTerrainTiles: 5f,
+            travelTiles: new Vector2(-6f, 0f),
+            platformSize,
+            speed: _tileSize * 2.1f,
+            worldLayer,
+            actorMask,
+            color);
+        AddMovingPlatform(
+            scene,
+            physics,
+            startTileX: 132,
+            heightAboveTerrainTiles: 2.5f,
+            travelTiles: new Vector2(0f, 5f),
+            platformSize,
+            speed: _tileSize * 1.6f,
+            worldLayer,
+            actorMask,
+            color);
+    }
+
+    private void AddMovingPlatform(
+        Scene2D scene,
+        PhysicsWorld2D physics,
+        int startTileX,
+        float heightAboveTerrainTiles,
+        Vector2 travelTiles,
+        Vector2 size,
+        float speed,
+        uint worldLayer,
+        uint actorMask,
+        SKColor color)
+    {
+        var endTileX = startTileX + (int)MathF.Round(travelTiles.X);
+        var minimumTileX = Math.Max(0, Math.Min(startTileX, endTileX) - 2);
+        var maximumTileX = Math.Min(
+            TileMap.Width - 1,
+            Math.Max(startTileX, endTileX) + 2);
+        var terrainTileY = 0;
+        for (var tileX = minimumTileX; tileX <= maximumTileX; tileX++)
+            terrainTileY = Math.Max(terrainTileY, _generator.TerrainHeight(tileX));
+
+        var start = new Vector2(
+            TileCenterX(startTileX),
+            TileMap.Origin.Y +
+            (terrainTileY + heightAboveTerrainTiles) * _tileSize);
+        _movingPlatforms.Add(new MovingPlatform2D(
+            scene,
+            physics,
+            start,
+            travelTiles * _tileSize,
+            size,
+            speed,
+            worldLayer,
+            actorMask,
+            color));
     }
 
     private float TileCenterX(int x) =>

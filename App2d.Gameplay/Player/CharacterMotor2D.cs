@@ -330,10 +330,10 @@ public sealed class CharacterMotor2D
 
     private bool HasGroundSupport(float maximumGap)
     {
-        if (_body.LinearVelocity.Y > 0f)
-            return false;
         if (HasGroundContact())
             return true;
+        if (_body.LinearVelocity.Y > 0f)
+            return false;
 
         var bodyBounds = _body.WorldObject.WorldBounds;
         QueryBodyBounds(ExpandedDown(bodyBounds, maximumGap));

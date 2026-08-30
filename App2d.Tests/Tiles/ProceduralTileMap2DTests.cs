@@ -38,4 +38,19 @@ public sealed class ProceduralTileMap2DTests
         Assert.False(map.IsSolid(0, 0));
         Assert.Empty(map.BuildCollisionRectangles(new TileChunk2D(0, 0)));
     }
+
+    [Fact]
+    public void SpikeTileIsHazardWithoutBecomingSolidCollision()
+    {
+        var map = new ProceduralTileMap2D(
+            width: 1,
+            height: 1,
+            tileSize: 32f,
+            chunkSize: 1,
+            (_, _) => TileKind2D.Spikes);
+
+        Assert.True(map.GetTileKind(0, 0).IsSpikes());
+        Assert.False(map.IsSolid(0, 0));
+        Assert.Empty(map.BuildCollisionRectangles(new TileChunk2D(0, 0)));
+    }
 }

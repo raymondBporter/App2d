@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.Player;
 
 internal sealed class XboxControllerInput2D
 {

@@ -20,8 +20,11 @@ internal sealed class SwordPlayerWeapon2D(
         ownerBody,
         AxisAlignedRectangle2D.FromSize(new Vector2(56f, 72f)),
         new MeleeAttackProfile2D(
-            CooldownSeconds: 0.32f,
-            ForwardOffset: 52f),
+            durationSeconds: 0.35f,
+            damageStartSeconds: 0.10f,
+            damageEndSeconds: 0.27f,
+            inputBufferSeconds: 0.10f,
+            forwardOffset: 52f),
         damage: 2,
         knockback: new Vector2(520f, 285f),
         combat,

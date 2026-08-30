@@ -28,7 +28,7 @@ internal abstract class MeleePlayerWeapon2D(
     private readonly ISoundEffectSink2D _sounds = ArgGuard.RequireNotNull(sounds);
     private readonly MeleeAttack2D _attack = new(new SpatialObject2D(hitboxShape), attackProfile);
 
-    public bool IsAttackActive => _attack.IsActive;
+    public bool IsAttackActive => _attack.IsInProgress;
 
     public override IEnumerable<SpatialObject2D> ActiveHitboxes
     {
@@ -42,10 +42,7 @@ internal abstract class MeleePlayerWeapon2D(
     public override float Use(Vector2? aimTarget, float facing)
     {
         if (_attack.TryStart())
-        {
-            _presentation.PlayMeleeAttack();
-            _sounds.Play(swingSound);
-        }
+            PlayAttackFeedback();
         return facing;
     }
 
@@ -54,10 +51,29 @@ internal abstract class MeleePlayerWeapon2D(
 
     public override void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
-        _attack.Update(deltaSeconds, _ownerBody.WorldObject.Transform.Position, facing);
-        if (_attack.IsActive && _combat.ResolveAttack(_attack.WorldObject, _attack, _attack.AttackId, damage, _ => new Vector2(facing * knockback.X, knockback.Y)))
+        if (_attack.Update(
+            deltaSeconds,
+            _ownerBody.WorldObject.Transform.Position,
+            facing))
+        {
+            PlayAttackFeedback();
+        }
+
+        if (_attack.IsDamageActive &&
+            _combat.ResolveAttack(
+                _attack.WorldObject,
+                _attack,
+                _attack.AttackId,
+                damage,
+                _ => new Vector2(facing * knockback.X, knockback.Y)))
         {
             _sounds.Play(impactSound);
         }
+    }
+
+    private void PlayAttackFeedback()
+    {
+        _presentation.PlayMeleeAttack(_attack.DurationSeconds);
+        _sounds.Play(swingSound);
     }
 }

@@ -17,6 +17,14 @@ internal enum OneWayTilePart2D
     Right
 }
 
+internal enum SpikeTilePart2D
+{
+    Standalone,
+    Left,
+    Middle,
+    Right
+}
+
 internal sealed class SideScrollerTerrainTileset2D
 {
     private static readonly JsonSerializerOptions JsonOptions =
@@ -33,12 +41,17 @@ internal sealed class SideScrollerTerrainTileset2D
     private readonly IShader2D _oneWayLeftShader;
     private readonly IShader2D _oneWayMiddleShader;
     private readonly IShader2D _oneWayRightShader;
+    private readonly IShader2D _spikeStandaloneShader;
+    private readonly IShader2D _spikeLeftShader;
+    private readonly IShader2D _spikeMiddleShader;
+    private readonly IShader2D _spikeRightShader;
     private readonly IShader2D _grippableShader =
         new SolidColorShader(new SKColor(76, 231, 120));
     private readonly float _surfaceThickness;
     private readonly float _outerCornerSize;
     private readonly float _innerCornerSize;
     private readonly float _oneWayVisualHeight;
+    private readonly float _spikeVisualHeight;
 
     private SideScrollerTerrainTileset2D(
         IShader2D fillShader,
@@ -52,10 +65,15 @@ internal sealed class SideScrollerTerrainTileset2D
         IShader2D oneWayLeftShader,
         IShader2D oneWayMiddleShader,
         IShader2D oneWayRightShader,
+        IShader2D spikeStandaloneShader,
+        IShader2D spikeLeftShader,
+        IShader2D spikeMiddleShader,
+        IShader2D spikeRightShader,
         float surfaceThickness,
         float outerCornerSize,
         float innerCornerSize,
-        float oneWayVisualHeight)
+        float oneWayVisualHeight,
+        float spikeVisualHeight)
     {
         _fillShader = ArgGuard.RequireNotNull(fillShader);
         _topShader = ArgGuard.RequireNotNull(topShader);
@@ -68,14 +86,20 @@ internal sealed class SideScrollerTerrainTileset2D
         _oneWayLeftShader = ArgGuard.RequireNotNull(oneWayLeftShader);
         _oneWayMiddleShader = ArgGuard.RequireNotNull(oneWayMiddleShader);
         _oneWayRightShader = ArgGuard.RequireNotNull(oneWayRightShader);
+        _spikeStandaloneShader = ArgGuard.RequireNotNull(spikeStandaloneShader);
+        _spikeLeftShader = ArgGuard.RequireNotNull(spikeLeftShader);
+        _spikeMiddleShader = ArgGuard.RequireNotNull(spikeMiddleShader);
+        _spikeRightShader = ArgGuard.RequireNotNull(spikeRightShader);
         ArgGuard.ThrowIfNotPositive(surfaceThickness);
         ArgGuard.ThrowIfNotPositive(outerCornerSize);
         ArgGuard.ThrowIfNotPositive(innerCornerSize);
         ArgGuard.ThrowIfNotPositive(oneWayVisualHeight);
+        ArgGuard.ThrowIfNotPositive(spikeVisualHeight);
         _surfaceThickness = surfaceThickness;
         _outerCornerSize = outerCornerSize;
         _innerCornerSize = innerCornerSize;
         _oneWayVisualHeight = oneWayVisualHeight;
+        _spikeVisualHeight = spikeVisualHeight;
     }
 
     public static SideScrollerTerrainTileset2D Load(TextureCache2D textures, string tilesetId, float tileSize)
@@ -99,24 +123,34 @@ internal sealed class SideScrollerTerrainTileset2D
             throw new InvalidDataException($"Tileset '{tilesetId}' uses tile size {manifest.TileSize}, but the level uses {tileSize}.");
         }
 
-        var sideShader = CreateTerrainShader(textures, relativeRoot, Path.Combine("surfaces", "side.png"), new Vector2(manifest.SurfaceThickness, tileSize));
+        var leftSurface = ResolveSurfacePath(textures, relativeRoot, "left.png", "side.png");
+        var rightSurface = ResolveSurfacePath(textures, relativeRoot, "right.png", "side.png");
+        var spikeRoot = ResolveSpikeRoot(textures, relativeRoot);
+        var spikeVisualHeight = manifest.SpikeVisualHeight > 0f
+            ? manifest.SpikeVisualHeight
+            : manifest.OneWayVisualHeight;
         return new SideScrollerTerrainTileset2D(
             new TextureShader2D(textures.Load(Path.Combine(relativeRoot, "fill.png")),
             new Vector2(tileSize)),
             CreateTerrainShader(textures, relativeRoot, Path.Combine("surfaces", "top.png"), new Vector2(tileSize, manifest.SurfaceThickness)),
-            sideShader,
+            CreateTerrainShader(textures, relativeRoot, rightSurface, new Vector2(manifest.SurfaceThickness, tileSize)),
             CreateTerrainShader(textures, relativeRoot, Path.Combine("surfaces", "bottom.png"), new Vector2(tileSize, manifest.SurfaceThickness)),
-            sideShader,
+            CreateTerrainShader(textures, relativeRoot, leftSurface, new Vector2(manifest.SurfaceThickness, tileSize)),
             CreateTerrainShader(textures, relativeRoot, Path.Combine("corners", "outer.png"), new Vector2(manifest.OuterCornerSize)),
             CreateTerrainShader(textures, relativeRoot, Path.Combine("corners", "inner.png"), new Vector2(manifest.InnerCornerSize)),
             CreateOneWayShader(textures, relativeRoot, "standalone"),
             CreateOneWayShader(textures, relativeRoot, "left"),
             CreateOneWayShader(textures, relativeRoot, "middle"),
             CreateOneWayShader(textures, relativeRoot, "right"),
+            CreateStripShader(textures, relativeRoot, spikeRoot, "standalone"),
+            CreateStripShader(textures, relativeRoot, spikeRoot, "left"),
+            CreateStripShader(textures, relativeRoot, spikeRoot, "middle"),
+            CreateStripShader(textures, relativeRoot, spikeRoot, "right"),
             manifest.SurfaceThickness,
             manifest.OuterCornerSize,
             manifest.InnerCornerSize,
-            manifest.OneWayVisualHeight);
+            manifest.OneWayVisualHeight,
+            spikeVisualHeight);
     }
 
     public static SideScrollerTerrainTileset2D CreateCollisionTest()
@@ -139,9 +173,14 @@ internal sealed class SideScrollerTerrainTileset2D
             oneWayShader,
             oneWayShader,
             oneWayShader,
+            oneWayShader,
+            oneWayShader,
+            oneWayShader,
+            oneWayShader,
             surfaceThickness,
             outerCornerSize,
             innerCornerSize,
+            surfaceThickness,
             surfaceThickness);
     }
 
@@ -192,6 +231,22 @@ internal sealed class SideScrollerTerrainTileset2D
         return CreateVisual(new Vector2(tileBounds.Size.X, _oneWayVisualHeight), new Vector2(tileBounds.Center.X, tileBounds.Max.Y - _oneWayVisualHeight / 2f), shader);
     }
 
+    public WorldObject2D CreateSpikes(Bounds2D tileBounds, SpikeTilePart2D part)
+    {
+        var shader = part switch
+        {
+            SpikeTilePart2D.Standalone => _spikeStandaloneShader,
+            SpikeTilePart2D.Left => _spikeLeftShader,
+            SpikeTilePart2D.Middle => _spikeMiddleShader,
+            SpikeTilePart2D.Right => _spikeRightShader,
+            _ => throw ArgGuard.CreateInvalid("Unknown spike tile part.", nameof(part))
+        };
+        return CreateVisual(
+            new Vector2(tileBounds.Size.X, _spikeVisualHeight),
+            new Vector2(tileBounds.Center.X, tileBounds.Min.Y + _spikeVisualHeight / 2f),
+            shader);
+    }
+
     private static WorldObject2D CreateVisual(Vector2 size, Vector2 position, IShader2D shader)
     {
         var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(size), shader);
@@ -202,11 +257,38 @@ internal sealed class SideScrollerTerrainTileset2D
     private static TextureShader2D CreateTerrainShader(TextureCache2D textures, string relativeRoot, string fileName, Vector2 logicalSize) =>
         new(textures.Load(Path.Combine(relativeRoot, fileName)), logicalSize, SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
 
+    private static string ResolveSurfacePath(
+        TextureCache2D textures,
+        string relativeRoot,
+        string directionalFileName,
+        string fallbackFileName)
+    {
+        var directionalPath = Path.Combine("surfaces", directionalFileName);
+        return File.Exists(Path.Combine(textures.ContentRoot, relativeRoot, directionalPath))
+            ? directionalPath
+            : Path.Combine("surfaces", fallbackFileName);
+    }
+
+    private static string ResolveSpikeRoot(TextureCache2D textures, string relativeRoot)
+    {
+        var spikeRoot = Path.Combine("hazards", "spikes");
+        return File.Exists(Path.Combine(textures.ContentRoot, relativeRoot, spikeRoot, "standalone.png"))
+            ? spikeRoot
+            : "one-way";
+    }
+
     private static SpriteShader2D CreateOneWayShader(
         TextureCache2D textures,
         string relativeRoot,
         string part) =>
-        new(textures.Load(Path.Combine(relativeRoot, "one-way", $"{part}.png")));
+        CreateStripShader(textures, relativeRoot, "one-way", part);
+
+    private static SpriteShader2D CreateStripShader(
+        TextureCache2D textures,
+        string relativeRoot,
+        string stripRoot,
+        string part) =>
+        new(textures.Load(Path.Combine(relativeRoot, stripRoot, $"{part}.png")));
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance",
@@ -220,6 +302,7 @@ internal sealed class SideScrollerTerrainTileset2D
         public float OuterCornerSize { get; init; }
         public float InnerCornerSize { get; init; }
         public float OneWayVisualHeight { get; init; }
+        public float SpikeVisualHeight { get; init; }
     }
 }
 

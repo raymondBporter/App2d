@@ -2,6 +2,7 @@ using App2d.Collision;
 using App2d.Core;
 using App2d.Gameplay;
 using App2d.Gameplay.Audio;
+using App2d.Gameplay.Player;
 using App2d.Physics;
 using App2d.Rendering;
 using SkiaSharp;
@@ -11,6 +12,7 @@ namespace App2d;
 
 public sealed class SideScrollerGame : Game2D
 {
+    private const float DeathRestartDelaySeconds = 1.1f;
     private const uint WorldLayer = 1u << 0;
     private const uint PlayerLayer = 1u << 1;
     private const uint EnemyLayer = 1u << 2;
@@ -32,6 +34,7 @@ public sealed class SideScrollerGame : Game2D
     private readonly SoundEffectBank2D _sounds;
     private bool _reachedGoal;
     private bool _showTraversalDebug;
+    private float _restartDelaySeconds;
 
     public SideScrollerGame()
     {
@@ -73,8 +76,15 @@ public sealed class SideScrollerGame : Game2D
     {
         var dt = time.DeltaSeconds;
         _level.UpdateStreaming(_player.Position);
+        _level.UpdateMovingPlatforms(dt);
         _player.BeginFrame(dt);
         _arsenal.BeginFrame(dt);
+
+        if (_restartDelaySeconds > 0f)
+        {
+            UpdateDying(time);
+            return;
+        }
 
         var command = _inputMapper.Capture(input, Camera, _player.Position);
         if (command.ToggleTraversalDebug)
@@ -95,12 +105,21 @@ public sealed class SideScrollerGame : Game2D
 
         _arsenal.UpdateAfterPhysics(dt, _player.Facing);
         var playerDefeated = _level.EnemySystem.TryResolvePlayerHits(_player);
+        if (_level.TryGetSpikeSource(_player.WorldObject.WorldBounds, out var spikeSourceX) &&
+            _player.TryTakeDamage(
+                damage: 1,
+                sourceX: spikeSourceX,
+                horizontalKnockback: 180f,
+                verticalKnockback: 300f))
+        {
+            playerDefeated = !_player.Health.IsAlive;
+        }
 
         if (playerDefeated ||
             _player.ResolveEnemyTouches())
         {
-            _player.Health.Reset();
-            Respawn();
+            BeginDying(time);
+            return;
         }
 
         if (_player.Position.Y < _level.TileMap.WorldBounds.Min.Y - 260f)
@@ -141,12 +160,56 @@ public sealed class SideScrollerGame : Game2D
 
     private void Respawn()
     {
+        _restartDelaySeconds = 0f;
+        _player.Health.Reset();
         _player.Reset(_level.SpawnPoint);
         _arsenal.Reset();
         _playerPresentation.Reset();
         _cameraController.Reset(_level.SpawnPoint);
         _reachedGoal = false;
         _sounds.Play(SoundEffect2D.PlayerRespawn);
+    }
+
+    private void BeginDying(FrameTime time)
+    {
+        _restartDelaySeconds = DeathRestartDelaySeconds;
+        _arsenal.Reset();
+        _playerPresentation.PlayDeath();
+        UpdateDyingPresentation(time);
+    }
+
+    private void UpdateDying(FrameTime time)
+    {
+        var dt = time.DeltaSeconds;
+        _restartDelaySeconds = Math.Max(0f, _restartDelaySeconds - dt);
+
+        _level.EnemySystem.Update(dt, _player.Position);
+        _physics.Step(dt);
+        _player.UpdateAfterPhysics(dt);
+        _level.EnemySystem.SyncAfterPhysics();
+        UpdateDyingPresentation(time);
+        _cameraController.Update(_player.Position, _player.Body.LinearVelocity, _player.IsGrounded, dt);
+
+        if (_restartDelaySeconds <= 0f)
+            Respawn();
+    }
+
+    private void UpdateDyingPresentation(FrameTime time)
+    {
+        _playerPresentation.Update(
+            time.DeltaSeconds,
+            time.FrameNumber,
+            _player.Position,
+            0f,
+            _player.Facing,
+            _player.IsGrounded,
+            _player.IsWallGripping,
+            isDashing: false,
+            isShieldBlocking: false,
+            _player.Body.LinearVelocity.Y,
+            _player.LandingSpeedThisFrame,
+            isMeleeAttackActive: false,
+            invulnerabilitySeconds: 0f);
     }
 
     public override void Dispose()

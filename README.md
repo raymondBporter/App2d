@@ -254,6 +254,9 @@ mapping, and traversal diagnostics have similarly narrow owners.
 
 The 640x96-tile level provides merged tilemap collision, explicit one-way strips, fall
 respawning, a goal flag, smooth bounded camera follow, and procedural parallax depths.
+Four solid-color moving platforms are distributed through the early test map. Their
+kinematic one-way slabs follow horizontal or vertical ping-pong paths and carry dynamic
+bodies supported on top without replacing the rider's own movement velocity.
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
 ledges all derive from one coordinate seed. A small separately seeded population near
 spawn exists only as a mechanics playground; it is not the eventual authored encounter
@@ -294,7 +297,7 @@ code never knows asset paths or audio-device details. `SoundEffectBank2D` owns t
 mapping, per-cue levels, and non-repeating variants. Set `sfx_volume` in the developer
 console to a value from 0 through 1 to adjust the master sound-effect level.
 
-Player movement is owned by `App2d.Gameplay/CharacterMotor2D`. `PlayerIntent2D` describes
+Player movement is owned by `App2d.Gameplay/Player/CharacterMotor2D`. `PlayerIntent2D` describes
 what the player requested; the motor turns that into desired velocity and grace-window
 state; `PhysicsWorld2D` decides what the level and active constraints permit. The motor
 then consumes new landing contacts, allowing a buffered jump to fire on the fixed step

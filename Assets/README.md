@@ -23,7 +23,7 @@ with the included CC0 license.
 Runtime content is organized by game concept rather than file format. Asset IDs
 use lowercase letters, digits, and hyphens. A canonical ID and its folder name are
 the same: the `walk` animation lives at `animations/walk`, and the
-`rust-cyberpunk` tileset lives at `tilesets/rust-cyberpunk`.
+`dark-cave` tileset lives at `tilesets/dark-cave`.
 
 Character animation folders contain contiguous four-digit files beginning with
 `frame-0001.png`. The adjacent `character.json` records timing and looping but

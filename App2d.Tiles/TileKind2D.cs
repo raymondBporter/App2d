@@ -8,7 +8,8 @@ public enum TileKind2D : byte
     Empty = 0,
     Solid = 1 << 0,
     OneWay = 1 << 1,
-    Grippable = 1 << 2
+    Grippable = 1 << 2,
+    Spikes = 1 << 3
 }
 
 public static class TileKind2DExtensions
@@ -18,6 +19,9 @@ public static class TileKind2DExtensions
     public static bool IsOneWay(this TileKind2D kind) => (kind & TileKind2D.OneWay) != 0;
 
     public static bool IsGrippable(this TileKind2D kind) => (kind & TileKind2D.Grippable) != 0;
+
+    public static bool IsSpikes(this TileKind2D kind) =>
+        (kind & TileKind2D.Spikes) != 0;
 
     public static bool IsCollidable(this TileKind2D kind) => kind.IsSolid() || kind.IsOneWay();
 }

@@ -32,6 +32,7 @@ public sealed class PlayerPresentation2D : IDisposable
     private AnimationClip2D<Texture2D> _dashAnimation = null!;
     private AnimationClip2D<Texture2D> _landingAnimation = null!;
     private AnimationClip2D<Texture2D> _hitAnimation = null!;
+    private AnimationClip2D<Texture2D> _deathAnimation = null!;
     private AnimationClip2D<Texture2D> _meleeAttackAnimation = null!;
     private AnimationClip2D<Texture2D> _shotAnimation = null!;
     private AnimationClip2D<Texture2D> _shieldBlockAnimation = null!;
@@ -83,7 +84,8 @@ public sealed class PlayerPresentation2D : IDisposable
         _spriteShader.Texture = _animation.CurrentFrame;
     }
 
-    public void PlayMeleeAttack() => PlayFastMeleeAnimation(_meleeAttackAnimation);
+    public void PlayMeleeAttack(float durationSeconds) =>
+        PlayTimedMeleeAnimation(_meleeAttackAnimation, durationSeconds);
 
     public void PlayShot()
     {
@@ -94,6 +96,12 @@ public sealed class PlayerPresentation2D : IDisposable
     public void PlayHit()
     {
         _animation.Play(_hitAnimation, restart: true);
+        _animation.PlaybackSpeed = 1f;
+    }
+
+    public void PlayDeath()
+    {
+        _animation.Play(_deathAnimation, restart: true);
         _animation.PlaybackSpeed = 1f;
     }
 
@@ -112,6 +120,12 @@ public sealed class PlayerPresentation2D : IDisposable
         bool isMeleeAttackActive,
         float invulnerabilitySeconds)
     {
+        if (ReferenceEquals(_animation.Clip, _deathAnimation))
+        {
+            UpdateVisual(deltaSeconds, frameNumber, playerPosition, facing, 0f);
+            return;
+        }
+
         var isPlayingShot = IsPlayingShot && !_animation.IsFinished;
         var isPlayingHit =
             ReferenceEquals(_animation.Clip, _hitAnimation) &&
@@ -186,11 +200,7 @@ public sealed class PlayerPresentation2D : IDisposable
                 : 1f;
         }
 
-        _animation.Update(deltaSeconds);
-        _spriteShader.Texture = _animation.CurrentFrame;
-        _spriteShader.FlipX = facing < 0f;
-        _visual.Transform.Position = playerPosition + _visualOffset;
-        _visual.IsVisible = invulnerabilitySeconds <= 0f || frameNumber % 12 < 6;
+        UpdateVisual(deltaSeconds, frameNumber, playerPosition, facing, invulnerabilitySeconds);
     }
 
     public void Reset()
@@ -218,6 +228,7 @@ public sealed class PlayerPresentation2D : IDisposable
         _dashAnimation = LoadAnimation(characterId, "dash");
         _landingAnimation = LoadAnimation(characterId, "land");
         _hitAnimation = LoadAnimation(characterId, "hit-a");
+        _deathAnimation = LoadAnimation(characterId, "death");
         _meleeAttackAnimation = LoadAnimation(characterId, "sword-attack");
         _shotAnimation = LoadAnimation(characterId, "magic-shot");
         _shieldBlockAnimation = LoadAnimation(characterId, "shield-block");
@@ -229,9 +240,26 @@ public sealed class PlayerPresentation2D : IDisposable
         string animationId) =>
         CharacterAnimationAssets2D.LoadClip(_textures, characterId, animationId);
 
-    private void PlayFastMeleeAnimation(AnimationClip2D<Texture2D> animation)
+    private void UpdateVisual(
+        float deltaSeconds,
+        long frameNumber,
+        Vector2 playerPosition,
+        float facing,
+        float invulnerabilitySeconds)
     {
+        _animation.Update(deltaSeconds);
+        _spriteShader.Texture = _animation.CurrentFrame;
+        _spriteShader.FlipX = facing < 0f;
+        _visual.Transform.Position = playerPosition + _visualOffset;
+        _visual.IsVisible = invulnerabilitySeconds <= 0f || frameNumber % 12 < 6;
+    }
+
+    private void PlayTimedMeleeAnimation(
+        AnimationClip2D<Texture2D> animation,
+        float durationSeconds)
+    {
+        ArgGuard.ThrowIfNotPositive(durationSeconds);
         _animation.Play(animation, restart: true);
-        _animation.PlaybackSpeed = animation.Duration / MeleeAttack2D.FastDurationSeconds;
+        _animation.PlaybackSpeed = animation.Duration / durationSeconds;
     }
 }
