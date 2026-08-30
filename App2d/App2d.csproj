@@ -21,6 +21,7 @@
     <ProjectReference Include="..\App2d.Rendering\App2d.Rendering.csproj" />
     <ProjectReference Include="..\App2d.Audio\App2d.Audio.csproj" />
     <ProjectReference Include="..\App2d.Gameplay\App2d.Gameplay.csproj" />
+    <ProjectReference Include="..\App2d.Levels\App2d.Levels.csproj" />
   </ItemGroup>
 
   <ItemGroup>

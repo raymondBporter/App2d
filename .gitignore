@@ -25,3 +25,7 @@ Assets/Work/
 # Keep the locally downloaded source archives and generated runtime slices out
 # of source control; rebuild them with tools/ArtPipeline/build_runtime_assets.py.
 /Assets/Sources/third-party/maaot/*.zip
+
+# SQLite leaves transient WAL/SHM files beside a level database; only the .db is durable.
+Assets/Static/levels/**/*.db-wal
+Assets/Static/levels/**/*.db-shm

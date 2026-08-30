@@ -1,5 +1,6 @@
 using App2d.Collision;
 using App2d.Core;
+using App2d.Diagnostics;
 using App2d.Gameplay;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Player;
@@ -50,19 +51,16 @@ public sealed class SideScrollerGame : Game2D
         RegisterDebugPhysicsWorld(_physics);
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value, "Set sound-effect volume from 0 (muted) to 1 (full volume).");
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _showTraversalDebug, value => _showTraversalDebug = value, "Draw jump arcs and tile-relative movement metrics.");
+        DeveloperConsole.RegisterCommand(
+            "level_rebake",
+            "Regenerate the cavern level file from the world generator. Restart to see it.",
+            _ =>
+            {
+                LevelBootstrap2D.Bake(Traversal);
+                return ConsoleCommandResult.From($"baked {LevelBootstrap2D.CavernLevelPath}");
+            });
 
-        var generator = new JumpableWorldGenerator2D(
-            SideScrollerLevel2D.WorldSeed,
-            SideScrollerLevel2D.WorldWidthTiles,
-            SideScrollerLevel2D.WorldHeightTiles,
-            Traversal);
-        var tileMap = new EditableTileMap2D(
-            SideScrollerLevel2D.WorldWidthTiles,
-            SideScrollerLevel2D.WorldHeightTiles,
-            Traversal.TileSize,
-            SideScrollerLevel2D.ChunkSizeTiles,
-            SideScrollerLevel2D.WorldOrigin);
-        tileMap.Fill(generator.GetTileKind);
+        var tileMap = LevelBootstrap2D.LoadOrBake(Traversal);
         var groundHeights = TileGroundHeights2D.Derive(tileMap);
 
         _level = new SideScrollerLevel2D(
