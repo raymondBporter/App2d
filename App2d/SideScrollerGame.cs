@@ -72,9 +72,13 @@ public sealed class SideScrollerGame : Game2D
             tileMap,
             x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)]);
         _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _level.SpawnPoint, _level.GetCameraFloorY);
+        // LevelBootstrap2D.OpenForEditing is passed as a factory, not invoked here: a
+        // play-only session must never hold a read-write handle on level.db (it locks the
+        // file and breaks `git checkout level.db`). TileEditor2D opens it only on entering
+        // editor mode and disposes it on leaving.
         _editor = new TileEditor2D(
             tileMap,
-            LevelBootstrap2D.OpenForEditing(),
+            LevelBootstrap2D.OpenForEditing,
             Camera,
             tileMap.Origin,
             Traversal.TileSize);
@@ -205,7 +209,7 @@ public sealed class SideScrollerGame : Game2D
         if (_showTraversalDebug)
             _traversalDebug.Draw(renderer, _player.Position, _player.Facing);
 
-        TileEditorView2D.Draw(renderer, _editor, _level.TileMap.Origin, _level.TileMap.TileSize);
+        TileEditorView2D.Draw(renderer, _editor, _level.TileMap.WorldBounds, _level.TileMap.TileSize);
     }
 
     private void Respawn()
