@@ -2,19 +2,12 @@ using App2d.Core;
 
 namespace App2d.Rendering.Textures;
 
-public sealed class TextureCache2D : IDisposable
+public sealed class TextureCache2D(string contentRoot) : IDisposable
 {
-    private readonly Dictionary<string, Texture2D> _textures =
-        new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Texture2D> _textures =        new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
-    public TextureCache2D(string contentRoot)
-    {
-        ArgGuard.ThrowIfNullOrWhiteSpace(contentRoot);
-        ContentRoot = Path.GetFullPath(contentRoot);
-    }
-
-    public string ContentRoot { get; }
+    public string ContentRoot { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhitespace(contentRoot));
     public int Count => _textures.Count;
 
     public Texture2D Load(string relativePath)
@@ -59,13 +52,15 @@ public sealed class TextureCache2D : IDisposable
     private string ResolvePath(string relativePath)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(relativePath);
+
         if (Path.IsPathRooted(relativePath))
             ArgGuard.ThrowInvalid(relativePath, "Texture cache paths must be relative to the content root.");
 
         var fullPath = Path.GetFullPath(Path.Combine(ContentRoot, relativePath));
+
         var relativeToRoot = Path.GetRelativePath(ContentRoot, fullPath);
-        if (relativeToRoot == ".." ||
-            relativeToRoot.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) ||
+        if (relativeToRoot == ".." || 
+            relativeToRoot.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) || 
             Path.IsPathRooted(relativeToRoot))
         {
             ArgGuard.ThrowInvalid(relativePath, "Texture path must stay inside the content root.");

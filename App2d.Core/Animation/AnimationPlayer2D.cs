@@ -24,9 +24,7 @@ public sealed class AnimationPlayer2D<TFrame>
         }
     }
 
-    public TFrame CurrentFrame => StateGuard.RequireNotNull(
-        Clip,
-        "Play a clip before reading its current frame.")[CurrentFrameIndex];
+    public TFrame CurrentFrame => StateGuard.RequireNotNull(Clip, "Play a clip before reading its current frame.")[CurrentFrameIndex];
 
     public void Play(AnimationClip2D<TFrame> clip, bool restart = false)
     {

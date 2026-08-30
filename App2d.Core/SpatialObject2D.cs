@@ -42,9 +42,7 @@ public class SpatialObject2D(IShape2D shape)
             if (_collisionPoseVersion == Transform.Version)
                 return _collisionPose;
 
-            StateGuard.ThrowIf(
-                !Similarity2D.TryFromMatrix(Transform.LocalToWorldMatrix, out _collisionPose),
-                "Collision requires a uniform, non-zero scale on the transform.");
+            StateGuard.ThrowIf(!Similarity2D.TryFromMatrix(Transform.LocalToWorldMatrix, out _collisionPose), "Collision requires a uniform, non-zero scale on the transform.");
             _collisionPoseVersion = Transform.Version;
             return _collisionPose;
         }

@@ -11,16 +11,13 @@ public sealed class AudioClip2D
         using var reader = new AudioFileReader(path);
         if (reader.WaveFormat.SampleRate != expectedSampleRate)
         {
-            throw new NotSupportedException(
-                $"'{path}' uses {reader.WaveFormat.SampleRate} Hz; " +
-                $"sound effects must use {expectedSampleRate} Hz.");
+            throw new NotSupportedException($"'{path}' uses {reader.WaveFormat.SampleRate} Hz; sound effects must use {expectedSampleRate} Hz.");
         }
 
         WaveFormat = reader.WaveFormat;
         if (reader.Length % sizeof(float) != 0)
         {
-            throw new InvalidDataException(
-                $"Decoded audio length is not float-aligned: '{path}'.");
+            throw new InvalidDataException($"Decoded audio length is not float-aligned: '{path}'.");
         }
 
         var expectedSampleCount = checked((int)(reader.Length / sizeof(float)));

@@ -28,10 +28,7 @@ public enum TileCorner2D : byte
 
 public static class TileTopology2D
 {
-    public static TileSurface2D GetExposedSurfaces(
-        this ISolidTileMap2D tileMap,
-        int x,
-        int y)
+    public static TileSurface2D GetExposedSurfaces(this ISolidTileMap2D tileMap, int x, int y)
     {
         ArgGuard.ThrowIfNull(tileMap);
 

@@ -85,8 +85,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
             return;
 
         // This is the whole spatial pipeline: object -> world -> Skia device pixels.
-        var objectToDevice =
-            worldObject.Transform.LocalToWorldMatrix * camera.WorldToDeviceMatrix;
+        var objectToDevice = worldObject.Transform.LocalToWorldMatrix * camera.WorldToDeviceMatrix;
 
         var shaderBounds = worldObject.Shape.LocalBounds.IsFinite
             ? worldObject.Shape.LocalBounds
@@ -307,9 +306,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         _worldPaint.Dispose();
     }
 
-    private SKCanvas Canvas => StateGuard.RequireNotNull(
-        _canvas,
-        "BeginFrame must be called before drawing.");
+    private SKCanvas Canvas => StateGuard.RequireNotNull(_canvas, "BeginFrame must be called before drawing.");
 
     private void DrawConvexPolygon(ConvexPolygon2D polygon, SKPaint paint)
     {

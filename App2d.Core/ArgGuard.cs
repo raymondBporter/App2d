@@ -15,11 +15,34 @@ public static class ArgGuard
             ThrowNullCore(paramName);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector2 RequireFinitePositive(
+        Vector2 value,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null)
+    {
+        ThrowIfNotPositiveFiniteValue(value.X, paramName);
+        ThrowIfNotPositiveFiniteValue(value.Y, paramName);
+        return value;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T RequireNotNull<T>(
         [NotNull] T? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
-        where T : class =>
-        value ?? throw CreateNull(paramName);
+        where T : class
+    {
+        return value ?? throw CreateNull(paramName);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string RequireNotNullOrWhitespace(
+    string? value,
+    [CallerArgumentExpression(nameof(value))] string? paramName = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, paramName);
+        return value;
+    }
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNullOrWhiteSpace(
@@ -120,6 +143,15 @@ public static class ArgGuard
     {
         if (!float.IsFinite(value) || value < 0f)
             ThrowCore(paramName, value, "Value must be finite and non-negative.");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNotPositiveFiniteValue(
+        float value,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null)
+    {
+        if (!float.IsFinite(value) || value <= 0f)
+            ThrowCore(paramName, value, "Value must be greater that zero and finite.");
     }
 
     // Useful for unbounded ray lengths: positive infinity is valid, NaN and negatives are not.
@@ -266,4 +298,5 @@ public static class ArgGuard
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static void ThrowArgumentCore(string? paramName, string message) =>
         throw new ArgumentException(message, paramName);
+
 }
