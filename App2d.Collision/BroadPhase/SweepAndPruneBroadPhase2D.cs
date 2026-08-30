@@ -1,7 +1,8 @@
-using App2d.Engine.Collision.Filtering;
-using App2d.Engine.Geometry;
+using App2d.Core;
+using App2d.Core.Geometry;
+using App2d.Collision.Filtering;
 
-namespace App2d.Engine.Collision.BroadPhase;
+namespace App2d.Collision.BroadPhase;
 
 // Sort by the beginning of one AABB interval, then only test later intervals whose
 // beginning is before the current interval's end. The other axis is the prune step.

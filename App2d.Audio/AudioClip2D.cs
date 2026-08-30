@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace App2d.Engine.Audio;
+namespace App2d.Audio;
 
 /// <summary>A decoded sound effect that can be played repeatedly without disk I/O.</summary>
 public sealed class AudioClip2D

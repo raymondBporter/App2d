@@ -1,8 +1,8 @@
 using System.Numerics;
-using App2d.Engine.Geometry;
-using App2d.Engine.Mathematics;
+using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 
-namespace App2d.Engine.Collision;
+namespace App2d.Collision;
 
 internal static class CollisionMath2D
 {

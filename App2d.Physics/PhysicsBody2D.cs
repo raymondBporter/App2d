@@ -1,7 +1,8 @@
 using System.Numerics;
-using App2d.Engine.Collision;
+using App2d.Collision;
+using App2d.Core;
 
-namespace App2d.Engine.Physics;
+namespace App2d.Physics;
 
 public sealed class PhysicsBody2D
 {

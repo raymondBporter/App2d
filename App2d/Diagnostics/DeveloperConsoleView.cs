@@ -1,4 +1,4 @@
-namespace App2d.Engine.Diagnostics;
+namespace App2d.Diagnostics;
 
 internal sealed class DeveloperConsoleView : UserControl
 {

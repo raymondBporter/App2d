@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace App2d;
+namespace App2d.Core;
 
 public static class StateGuard
 {

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Mathematics;
+namespace App2d.Core.Mathematics;
 
 /// <summary>
 /// Rotation + uniform scale + optional mirror + translation — the exact family

@@ -1,8 +1,8 @@
-using System.Numerics;
-using App2d.Engine;
-using App2d.Engine.Collision.Contacts;
-using App2d.Engine.Collision.Queries;
-using App2d.Engine.Geometry;
+﻿using System.Numerics;
+using App2d.Core;
+using App2d.Core.Geometry;
+using App2d.Collision.Contacts;
+using App2d.Collision.Queries;
 
 namespace App2d.Tests.Collision;
 
@@ -54,8 +54,8 @@ public sealed class CollisionQueries2DTests
             new Ray2D(Vector2.Zero, Vector2.UnitX), 20f, out var hit);
 
         Assert.True(found);
-        // The rotated box's near corner sits at x = 10 - 2√2; the ray meets one
-        // of its two diagonal edges, so the normal's X is -√2/2 either way.
+        // The rotated box's near corner sits at x = 10 - 2âˆš2; the ray meets one
+        // of its two diagonal edges, so the normal's X is -âˆš2/2 either way.
         Assert.Equal(10f - 2f * MathF.Sqrt(2f), hit.Distance, 3);
         Assert.Equal(-MathF.Sqrt(2f) / 2f, hit.Normal.X, 3);
     }

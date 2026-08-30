@@ -1,4 +1,4 @@
-namespace App2d.Engine.Physics.Solvers;
+namespace App2d.Physics.Solvers;
 
 public sealed class MassWeightedPositionSolver2D : IPhysicsPositionSolver2D
 {

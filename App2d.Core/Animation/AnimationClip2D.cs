@@ -1,4 +1,4 @@
-namespace App2d.Engine.Animation;
+namespace App2d.Core.Animation;
 
 /// <summary>
 /// An immutable sequence of animation frames with either uniform or per-frame timing.

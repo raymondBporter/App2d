@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Geometry;
+namespace App2d.Core.Geometry;
 
 public readonly record struct Bounds2D(Vector2 Min, Vector2 Max)
 {

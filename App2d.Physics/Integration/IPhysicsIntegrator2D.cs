@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Physics.Integration;
+namespace App2d.Physics.Integration;
 
 public interface IPhysicsIntegrator2D
 {

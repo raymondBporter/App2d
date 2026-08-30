@@ -1,6 +1,6 @@
-using App2d.Engine.Collision.Filtering;
+using App2d.Collision.Filtering;
 
-namespace App2d.Engine.Collision;
+namespace App2d.Collision;
 
 public sealed class DefaultColliderPairFilter2D : IPairFilter2D<Collider2D>
 {

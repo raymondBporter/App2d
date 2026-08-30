@@ -1,13 +1,13 @@
-using App2d.Engine.Geometry;
-using App2d.Engine.Mathematics;
+﻿using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 
-namespace App2d.Engine.Collision.Contacts;
+namespace App2d.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
     // Each convex part resolves independently and the deepest contact wins; the
     // iterative physics loop re-collects contacts, so one contact per pair per
-    // iteration is enough. Never use a union support map here — that would
+    // iteration is enough. Never use a union support map here â€” that would
     // collide against the composite's convex hull and fill its notches.
     private static CollisionResult CompositeAgainst(CompositeShape2D composite, Similarity2D compositePose, IShape2D other, Similarity2D otherPose)
     {

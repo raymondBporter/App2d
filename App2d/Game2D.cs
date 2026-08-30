@@ -1,11 +1,12 @@
 using System.Numerics;
-using App2d.Engine.Diagnostics;
-using App2d.Engine.Physics;
-using App2d.Engine.Rendering;
-using App2d.Engine.Rendering.Textures;
+using App2d.Core;
+using App2d.Diagnostics;
+using App2d.Physics;
+using App2d.Rendering;
+using App2d.Rendering.Textures;
 using SkiaSharp;
 
-namespace App2d.Engine;
+namespace App2d;
 
 public abstract class Game2D : IDisposable
 {
@@ -18,21 +19,9 @@ public abstract class Game2D : IDisposable
 
     protected Game2D()
     {
-        DeveloperConsole.RegisterVariable(
-            "draw_graphics",
-            () => _drawGraphics,
-            value => _drawGraphics = value,
-            "Draw the game's graphics. Disable for a collision-geometry-only view.");
-        DeveloperConsole.RegisterVariable(
-            "draw_fps",
-            () => _drawFps,
-            value => _drawFps = value,
-            "Show a smoothed FPS and frame-time overlay.");
-        DeveloperConsole.RegisterVariable(
-            "draw_collision_shapes",
-            () => _drawCollisionShapes,
-            value => _drawCollisionShapes = value,
-            "Overlay registered physics colliders and active attack hitboxes.");
+        DeveloperConsole.RegisterVariable("draw_graphics", () => _drawGraphics, value => _drawGraphics = value, "Draw the game's graphics. Disable for a collision-geometry-only view.");
+        DeveloperConsole.RegisterVariable("draw_fps", () => _drawFps, value => _drawFps = value, "Show a smoothed FPS and frame-time overlay.");
+        DeveloperConsole.RegisterVariable("draw_collision_shapes", () => _drawCollisionShapes, value => _drawCollisionShapes = value, "Overlay registered physics colliders and active attack hitboxes.");
     }
 
     public Camera2D Camera { get; } = new();

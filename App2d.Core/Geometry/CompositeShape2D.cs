@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Geometry;
+namespace App2d.Core.Geometry;
 
 /// <summary>
 /// A non-convex shape assembled from convex parts positioned in this shape's

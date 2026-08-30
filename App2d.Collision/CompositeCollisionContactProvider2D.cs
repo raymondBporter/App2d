@@ -1,6 +1,7 @@
-using App2d.Engine.Collision.Contacts;
+using App2d.Collision.Contacts;
+using App2d.Core;
 
-namespace App2d.Engine.Collision;
+namespace App2d.Collision;
 
 public sealed class CompositeCollisionContactProvider2D(params IEnumerable<ICollisionContactProvider2D> providers) :
     ICollisionContactProvider2D

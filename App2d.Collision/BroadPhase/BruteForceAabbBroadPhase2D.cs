@@ -1,7 +1,8 @@
-using App2d.Engine.Collision.Filtering;
-using App2d.Engine.Geometry;
+using App2d.Core;
+using App2d.Core.Geometry;
+using App2d.Collision.Filtering;
 
-namespace App2d.Engine.Collision.BroadPhase;
+namespace App2d.Collision.BroadPhase;
 
 // O(n^2), but with cheap policy and world-AABB rejection before narrow phase.
 // This is often faster than maintaining a tree for small, highly dynamic scenes.

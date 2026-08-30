@@ -1,6 +1,6 @@
-using App2d.Engine.Geometry;
+using App2d.Core.Geometry;
 
-namespace App2d.Engine.Tiles;
+namespace App2d.Tiles;
 
 [Flags]
 public enum TileKind2D : byte

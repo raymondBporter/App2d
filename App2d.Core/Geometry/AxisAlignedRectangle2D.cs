@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Geometry;
+namespace App2d.Core.Geometry;
 
 // Intent marker for rectangles kept axis-aligned in world space by their owner.
 // This enables future slab/broad-phase optimizations while sharing Rectangle2D geometry.

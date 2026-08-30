@@ -1,6 +1,6 @@
-using App2d.Engine.Collision.Contacts;
+using App2d.Collision.Contacts;
 
-namespace App2d.Engine.Collision;
+namespace App2d.Collision;
 
 public readonly record struct CollisionOverlap2D(
     Collider2D Collider,

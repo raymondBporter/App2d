@@ -1,7 +1,8 @@
 using System.Numerics;
-using App2d.Engine.Collision;
-using App2d.Engine.Geometry;
-using App2d.Engine.Physics;
+using App2d.Core;
+using App2d.Core.Geometry;
+using App2d.Collision;
+using App2d.Physics;
 
 namespace App2d.Gameplay;
 
@@ -563,7 +564,7 @@ public sealed class CharacterMotor2D
             ? new Bounds2D(bounds.Min, bounds.Max + new Vector2(distance, 0f))
             : new Bounds2D(bounds.Min - new Vector2(distance, 0f), bounds.Max);
 
-    private bool HasHorizontalSupport(Engine.Geometry.Bounds2D bodyBounds, Engine.Geometry.Bounds2D supportBounds) =>
+    private bool HasHorizontalSupport(Bounds2D bodyBounds, Bounds2D supportBounds) =>
         bodyBounds.Right + Metrics.HorizontalSupportGrace >= supportBounds.Left &&
         bodyBounds.Left - Metrics.HorizontalSupportGrace <= supportBounds.Right;
 

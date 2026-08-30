@@ -1,4 +1,4 @@
-namespace App2d.Engine.Physics;
+namespace App2d.Physics;
 
 public interface IPhysicsConstraint2D
 {

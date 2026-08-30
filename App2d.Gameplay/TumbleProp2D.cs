@@ -1,9 +1,9 @@
 using System.Numerics;
-using App2d.Engine;
-using App2d.Engine.Geometry;
-using App2d.Engine.Physics;
-using App2d.Engine.Rendering;
+using App2d.Core;
+using App2d.Core.Geometry;
 using SkiaSharp;
+using App2d.Physics;
+using App2d.Rendering;
 
 namespace App2d.Gameplay;
 

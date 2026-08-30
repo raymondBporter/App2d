@@ -1,7 +1,8 @@
 using System.Numerics;
-using App2d.Engine.Geometry;
+using App2d.Core;
+using App2d.Core.Geometry;
 
-namespace App2d.Engine.Collision.Intersections;
+namespace App2d.Collision.Intersections;
 
 public static class SweptCircleAabb2D
 {

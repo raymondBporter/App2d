@@ -1,6 +1,7 @@
+using App2d.Core;
 using System.Numerics;
 
-namespace App2d.Engine.Physics.Constraints;
+namespace App2d.Physics.Constraints;
 
 public sealed class DistanceConstraint2D : IPhysicsConstraint2D
 {

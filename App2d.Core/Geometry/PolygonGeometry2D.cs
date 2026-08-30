@@ -1,7 +1,7 @@
 using System.Numerics;
-using App2d.Engine.Mathematics;
+using App2d.Core.Mathematics;
 
-namespace App2d.Engine.Geometry;
+namespace App2d.Core.Geometry;
 
 /// <summary>Shared math over convex polygon perimeters given as vertex spans.</summary>
 public static class PolygonGeometry2D

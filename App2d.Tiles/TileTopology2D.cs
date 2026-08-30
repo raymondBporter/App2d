@@ -1,4 +1,6 @@
-namespace App2d.Engine.Tiles;
+using App2d.Core;
+
+namespace App2d.Tiles;
 
 [Flags]
 public enum TileSurface2D : byte

@@ -1,4 +1,6 @@
-namespace App2d.Engine.Tiles;
+using App2d.Core;
+
+namespace App2d.Tiles;
 
 // Stateless coordinate random. A cell always receives the same value, so chunks
 // can be generated, discarded, and regenerated in any order without seams.

@@ -1,7 +1,8 @@
+using App2d.Core;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-namespace App2d.Engine.Audio;
+namespace App2d.Audio;
 
 /// <summary>
 /// A fire-and-forget, polyphonic mixer for short, memory-resident sound effects.

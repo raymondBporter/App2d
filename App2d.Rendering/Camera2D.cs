@@ -1,7 +1,7 @@
 using System.Numerics;
-using App2d.Engine.Geometry;
+using App2d.Core.Geometry;
 
-namespace App2d.Engine;
+namespace App2d.Rendering;
 
 public sealed class Camera2D
 {

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Mathematics;
+namespace App2d.Core.Mathematics;
 
 public static class Vector2Extensions
 {

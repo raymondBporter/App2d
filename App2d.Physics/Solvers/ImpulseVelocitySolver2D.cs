@@ -1,7 +1,7 @@
 using System.Numerics;
-using App2d.Engine.Mathematics;
+using App2d.Core.Mathematics;
 
-namespace App2d.Engine.Physics.Solvers;
+namespace App2d.Physics.Solvers;
 
 public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
 {

@@ -1,5 +1,6 @@
 using System.Numerics;
-using App2d.Engine;
+using App2d.Core;
+using App2d.Rendering;
 
 namespace App2d.Gameplay;
 

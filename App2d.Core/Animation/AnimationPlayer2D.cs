@@ -1,4 +1,4 @@
-namespace App2d.Engine.Animation;
+namespace App2d.Core.Animation;
 
 /// <summary>
 /// Advances a frame animation using update-loop time rather than render frequency.

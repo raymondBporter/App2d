@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace App2d;
+namespace App2d.Core;
 
 public static class ArgGuard
 {
@@ -232,7 +232,7 @@ public static class ArgGuard
     public static void ThrowInvalid(string message, string? paramName = null) => ThrowArgumentCore(paramName, message);
 
     [DoesNotReturn]
-    public static void ThrowInvalid<T>(T value, string message, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
+    public static void ThrowInvalid<T>(T _, string message, [CallerArgumentExpression(nameof(_))] string? paramName = null) =>
         ThrowArgumentCore(paramName, message);
 
     public static ArgumentException CreateInvalid(string message, string? paramName = null) => new(message, paramName);

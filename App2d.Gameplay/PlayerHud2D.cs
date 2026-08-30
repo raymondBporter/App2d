@@ -1,6 +1,7 @@
 using System.Numerics;
-using App2d.Engine.Rendering;
-using App2d.Engine.Rendering.Textures;
+using App2d.Core;
+using App2d.Rendering;
+using App2d.Rendering.Textures;
 using SkiaSharp;
 
 namespace App2d.Gameplay;

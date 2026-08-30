@@ -1,4 +1,6 @@
-namespace App2d.Engine.Collision;
+using App2d.Core;
+
+namespace App2d.Collision;
 
 public sealed class Collider2D
 {

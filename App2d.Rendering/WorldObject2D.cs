@@ -1,7 +1,7 @@
-using App2d.Engine.Geometry;
-using App2d.Engine.Rendering;
+using App2d.Core;
+using App2d.Core.Geometry;
 
-namespace App2d.Engine;
+namespace App2d.Rendering;
 
 /// <summary>
 /// The optional rendering component for a spatial object.

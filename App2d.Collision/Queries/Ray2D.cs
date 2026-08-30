@@ -1,6 +1,7 @@
+using App2d.Core;
 using System.Numerics;
 
-namespace App2d.Engine.Collision.Queries;
+namespace App2d.Collision.Queries;
 
 public readonly record struct Ray2D
 {

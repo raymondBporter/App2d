@@ -1,11 +1,11 @@
 using System.Numerics;
 using System.Text.Json;
-using App2d.Engine;
-using App2d.Engine.Geometry;
-using App2d.Engine.Rendering;
-using App2d.Engine.Rendering.Textures;
-using App2d.Engine.Tiles;
+using App2d.Core;
+using App2d.Core.Geometry;
 using SkiaSharp;
+using App2d.Tiles;
+using App2d.Rendering;
+using App2d.Rendering.Textures;
 
 namespace App2d.Gameplay;
 

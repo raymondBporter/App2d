@@ -1,4 +1,4 @@
-namespace App2d.Engine.Collision.BroadPhase;
+namespace App2d.Collision.BroadPhase;
 
 public enum SweepAxis2D
 {

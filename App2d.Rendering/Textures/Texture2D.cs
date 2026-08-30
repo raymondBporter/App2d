@@ -1,8 +1,9 @@
+using App2d.Core;
 using SkiaSharp;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace App2d.Engine.Rendering.Textures;
+namespace App2d.Rendering.Textures;
 
 public sealed class Texture2D : IDisposable
 {

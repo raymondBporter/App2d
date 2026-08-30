@@ -1,4 +1,4 @@
-namespace App2d.Engine.Rendering.Textures;
+namespace App2d.Rendering.Textures;
 
 /// <summary>Desktop texture residency target for cached GPU resources.</summary>
 public static class TextureMemoryBudget2D

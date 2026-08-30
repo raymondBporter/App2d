@@ -1,4 +1,6 @@
-namespace App2d.Engine.Rendering.Textures;
+using App2d.Core;
+
+namespace App2d.Rendering.Textures;
 
 public sealed class TextureCache2D : IDisposable
 {

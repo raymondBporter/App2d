@@ -1,8 +1,8 @@
-using System.Numerics;
-using App2d.Engine.Geometry;
-using App2d.Engine.Mathematics;
+﻿using System.Numerics;
+using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 
-namespace App2d.Engine.Collision.Contacts;
+namespace App2d.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {

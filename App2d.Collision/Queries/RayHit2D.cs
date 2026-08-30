@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Collision.Queries;
+namespace App2d.Collision.Queries;
 
 public readonly record struct RayHit2D(
     Vector2 Point,

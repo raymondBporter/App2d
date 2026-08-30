@@ -1,6 +1,7 @@
+using App2d.Core;
 using SkiaSharp;
 
-namespace App2d.Engine.Rendering.Textures;
+namespace App2d.Rendering.Textures;
 
 /// <summary>
 /// Draws one complete texture across an object's local bounds without tiling it.
@@ -9,23 +10,16 @@ namespace App2d.Engine.Rendering.Textures;
 public sealed class SpriteShader2D : IShader2D
 {
     private readonly SKFilterMode _filterMode;
-    private Texture2D _texture;
-
     public SpriteShader2D(Texture2D texture, SKFilterMode filterMode = SKFilterMode.Linear)
     {
-        ArgGuard.ThrowIfNull(texture);
-        _texture = texture;
+        Texture = texture;
         _filterMode = filterMode;
     }
 
     public Texture2D Texture
     {
-        get => _texture;
-        set
-        {
-            ArgGuard.ThrowIfNull(value);
-            _texture = value;
-        }
+        get;
+        set => field = ArgGuard.RequireNotNull(value);
     }
 
     public bool FlipX { get; set; }

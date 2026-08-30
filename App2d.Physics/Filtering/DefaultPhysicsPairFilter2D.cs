@@ -1,6 +1,6 @@
-using App2d.Engine.Collision.Filtering;
+using App2d.Collision.Filtering;
 
-namespace App2d.Engine.Physics.Filtering;
+namespace App2d.Physics.Filtering;
 
 public sealed class DefaultPhysicsPairFilter2D : IPairFilter2D<PhysicsBody2D>
 {

@@ -1,7 +1,8 @@
 using System.Numerics;
+using App2d.Core;
 using SkiaSharp;
 
-namespace App2d.Engine.Rendering.Textures;
+namespace App2d.Rendering.Textures;
 
 public sealed class TextureShader2D : IShader2D
 {

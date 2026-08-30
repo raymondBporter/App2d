@@ -1,5 +1,5 @@
 using System.Numerics;
-using App2d.Engine.Geometry;
+using App2d.Core.Geometry;
 
 namespace App2d.Tests.Geometry;
 

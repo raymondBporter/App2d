@@ -1,4 +1,6 @@
-namespace App2d.Engine.Tiles;
+using App2d.Core;
+
+namespace App2d.Tiles;
 
 public readonly record struct TileCellRectangle2D(int X, int Y, int Width, int Height, TileKind2D Kind);
 

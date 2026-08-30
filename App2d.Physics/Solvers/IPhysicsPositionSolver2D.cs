@@ -1,4 +1,4 @@
-namespace App2d.Engine.Physics.Solvers;
+namespace App2d.Physics.Solvers;
 
 public interface IPhysicsPositionSolver2D
 {

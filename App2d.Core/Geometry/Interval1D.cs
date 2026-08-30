@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Geometry;
+namespace App2d.Core.Geometry;
 
 /// <summary>A [Min, Max] projection of a shape onto an axis.</summary>
 public readonly record struct Interval1D(float Min, float Max)

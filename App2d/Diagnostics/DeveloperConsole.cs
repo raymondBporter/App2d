@@ -1,8 +1,9 @@
+using App2d.Core;
 using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 
-namespace App2d.Engine.Diagnostics;
+namespace App2d.Diagnostics;
 
 public sealed class DeveloperConsole
 {
@@ -61,7 +62,7 @@ public sealed class DeveloperConsole
         {
             try
             {
-                return command.Execute(tokens.Skip(1).ToArray());
+                return command.Execute([.. tokens.Skip(1)]);
             }
             catch (Exception exception)
             {

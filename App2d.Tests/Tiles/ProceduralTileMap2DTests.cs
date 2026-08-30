@@ -1,4 +1,4 @@
-using App2d.Engine.Tiles;
+using App2d.Tiles;
 
 namespace App2d.Tests.Tiles;
 
@@ -7,7 +7,7 @@ public sealed class ProceduralTileMap2DTests
     [Fact]
     public void GrippableFlagKeepsTileSolidAndReachesMergedCollision()
     {
-        var grippableSolid = TileKind2D.Solid | TileKind2D.Grippable;
+        const TileKind2D grippableSolid = TileKind2D.Solid | TileKind2D.Grippable;
         var map = new ProceduralTileMap2D(
             width: 3,
             height: 1,

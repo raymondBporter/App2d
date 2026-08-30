@@ -1,6 +1,7 @@
+using App2d.Core;
 using System.Numerics;
 
-namespace App2d.Engine.Physics.Integration;
+namespace App2d.Physics.Integration;
 
 public sealed class SemiImplicitEulerIntegrator2D : IPhysicsIntegrator2D
 {

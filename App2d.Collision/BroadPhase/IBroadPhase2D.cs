@@ -1,6 +1,6 @@
-using App2d.Engine.Collision.Filtering;
+using App2d.Collision.Filtering;
 
-namespace App2d.Engine.Collision.BroadPhase;
+namespace App2d.Collision.BroadPhase;
 
 public interface IBroadPhase2D<T>
     where T : class

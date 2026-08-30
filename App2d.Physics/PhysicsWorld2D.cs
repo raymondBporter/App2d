@@ -1,12 +1,13 @@
 using System.Numerics;
-using App2d.Engine.Collision;
-using App2d.Engine.Collision.Contacts;
-using App2d.Engine.Collision.Filtering;
-using App2d.Engine.Physics.Filtering;
-using App2d.Engine.Physics.Integration;
-using App2d.Engine.Physics.Solvers;
+using App2d.Collision;
+using App2d.Collision.Contacts;
+using App2d.Collision.Filtering;
+using App2d.Core;
+using App2d.Physics.Filtering;
+using App2d.Physics.Integration;
+using App2d.Physics.Solvers;
 
-namespace App2d.Engine.Physics;
+namespace App2d.Physics;
 
 public sealed class PhysicsWorld2D
 {

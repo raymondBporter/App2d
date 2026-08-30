@@ -1,7 +1,7 @@
 using System.Numerics;
-using App2d.Engine;
-using App2d.Engine.Collision;
-using App2d.Engine.Geometry;
+using App2d.Collision;
+using App2d.Core;
+using App2d.Core.Geometry;
 
 namespace App2d.Tests.Collision;
 

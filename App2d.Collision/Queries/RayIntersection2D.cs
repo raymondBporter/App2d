@@ -1,8 +1,9 @@
 using System.Numerics;
-using App2d.Engine.Geometry;
-using App2d.Engine.Mathematics;
+using App2d.Core;
+using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 
-namespace App2d.Engine.Collision.Queries;
+namespace App2d.Collision.Queries;
 
 public static class RayIntersection2D
 {

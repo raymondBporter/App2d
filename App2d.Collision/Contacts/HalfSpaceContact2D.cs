@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Engine.Collision.Contacts;
+namespace App2d.Collision.Contacts;
 
 public readonly record struct HalfSpaceContact2D(Vector2 Normal, float PenetrationDepth)
 {

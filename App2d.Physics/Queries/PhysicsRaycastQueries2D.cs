@@ -1,6 +1,7 @@
-using App2d.Engine.Collision.Queries;
+using App2d.Collision.Queries;
+using App2d.Core;
 
-namespace App2d.Engine.Physics.Queries;
+namespace App2d.Physics.Queries;
 
 public static class PhysicsRaycastQueries2D
 {

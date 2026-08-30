@@ -1,9 +1,10 @@
 using System.Numerics;
-using App2d.Engine.Geometry;
-using App2d.Engine.Rendering.Textures;
+using App2d.Core;
+using App2d.Core.Geometry;
+using App2d.Rendering.Textures;
 using SkiaSharp;
 
-namespace App2d.Engine.Rendering;
+namespace App2d.Rendering;
 
 public sealed class Renderer2D(Camera2D camera) : IDisposable
 {

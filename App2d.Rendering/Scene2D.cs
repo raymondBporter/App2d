@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace App2d.Engine;
+namespace App2d.Rendering;
 
 public sealed class Scene2D : IEnumerable<WorldObject2D>
 {

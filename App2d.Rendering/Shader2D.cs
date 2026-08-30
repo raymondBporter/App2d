@@ -1,8 +1,9 @@
 using System.Numerics;
-using App2d.Engine.Geometry;
+using App2d.Core;
+using App2d.Core.Geometry;
 using SkiaSharp;
 
-namespace App2d.Engine.Rendering;
+namespace App2d.Rendering;
 
 public readonly record struct ShaderContext(
     Matrix3x2 ObjectToDevice,

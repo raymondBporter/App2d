@@ -1,5 +1,5 @@
 using System.Numerics;
-using App2d.Engine.Mathematics;
+using App2d.Core.Mathematics;
 
 namespace App2d.Tests.Mathematics;
 

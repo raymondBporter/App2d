@@ -1,4 +1,4 @@
-using App2d.Engine.Animation;
+using App2d.Core.Animation;
 
 namespace App2d.Tests.Animation;
 

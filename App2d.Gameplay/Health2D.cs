@@ -1,3 +1,5 @@
+using App2d.Core;
+
 namespace App2d.Gameplay;
 
 public sealed class Health2D

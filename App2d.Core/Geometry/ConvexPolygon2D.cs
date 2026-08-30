@@ -1,7 +1,7 @@
 using System.Numerics;
-using App2d.Engine.Mathematics;
+using App2d.Core.Mathematics;
 
-namespace App2d.Engine.Geometry;
+namespace App2d.Core.Geometry;
 
 public sealed class ConvexPolygon2D : IConvexShape2D
 {

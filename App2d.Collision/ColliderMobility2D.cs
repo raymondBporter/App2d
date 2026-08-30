@@ -1,4 +1,4 @@
-namespace App2d.Engine.Collision;
+namespace App2d.Collision;
 
 public enum ColliderMobility2D
 {

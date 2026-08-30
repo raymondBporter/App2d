@@ -1,11 +1,12 @@
 using System.Diagnostics;
-using App2d.Engine.Diagnostics;
-using App2d.Engine.Rendering;
-using App2d.Engine.Rendering.Textures;
+using App2d.Core;
+using App2d.Diagnostics;
+using App2d.Rendering;
+using App2d.Rendering.Textures;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
 
-namespace App2d.Engine;
+namespace App2d;
 
 public sealed class GameHost : IDisposable
 {
