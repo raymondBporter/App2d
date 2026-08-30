@@ -10,7 +10,7 @@ internal static class LevelBootstrap2D
 {
     private const string LevelId = "cavern";
     public static IReadOnlyList<string> TerrainTilesetIds { get; } =
-        ["dark-cave", "mossy-cavern"];
+        ["dark-cave", "mossy-cavern", "kenney-grassland"];
 
     /// <summary>
     /// Levels are durable authored content, so they live under <c>Assets/Static</c> and are

@@ -150,6 +150,30 @@ public sealed class PersonLocomotion2D
         UpdateGravityScale();
     }
 
+    public void EnterPassiveState()
+    {
+        _intent = default;
+        _coyoteTime = 0f;
+        _jumpBufferTime = 0f;
+        _wallRelatchTime = 0f;
+        _wallDirection = 0f;
+        _dashTimeRemaining = 0f;
+        _dashCooldownRemaining = 0f;
+        _dashDirection = 0f;
+        IsGrounded = false;
+        IsWallGripping = false;
+        IsDashing = false;
+        _body.GravityScale = 1f;
+        _body.ClearIgnoredOneWayPlatforms();
+    }
+
+    public void UpdatePassiveAfterPhysics()
+    {
+        IsGrounded = HasGroundSupport(Metrics.GroundProbeDistance);
+        if (!IsGrounded)
+            IsGrounded = TrySnapToGround();
+    }
+
     public void Reset()
     {
         _coyoteTime = 0f;

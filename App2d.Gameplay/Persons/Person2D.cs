@@ -119,14 +119,29 @@ public sealed class Person2D : ICombatant2D
             Face(command.Movement.MoveX);
         _motor.UpdateBeforePhysics(command.Movement, Facing, deltaSeconds);
         if (command.UseWeapon && _actions is not null)
-            Face(_actions.UsePrimary(command.AimTarget, Facing));
+        {
+            var isWallAttack = _motor.IsWallGripping;
+            var attackFacing = isWallAttack
+                ? -_motor.WallDirection
+                : Facing;
+            var aimTarget = isWallAttack
+                ? null
+                : command.AimTarget;
+            Face(_actions.UsePrimary(aimTarget, attackFacing));
+        }
         _actions?.UpdateBeforePhysics(deltaSeconds);
     }
 
     public void UpdateAfterPhysics(float deltaSeconds)
     {
-        if (!_simulationEnabled || !IsAlive)
+        if (!_simulationEnabled)
             return;
+
+        if (!IsAlive)
+        {
+            _motor.UpdatePassiveAfterPhysics();
+            return;
+        }
 
         _motor.UpdateAfterPhysics(deltaSeconds);
         _actions?.UpdateAfterPhysics(deltaSeconds, Facing);
@@ -169,8 +184,8 @@ public sealed class Person2D : ICombatant2D
         Damaged?.Invoke();
         if (!IsAlive)
         {
-            Body.IsCollider = false;
             Body.LinearVelocity = Vector2.Zero;
+            _motor.EnterPassiveState();
             _actions?.Reset();
             Died?.Invoke();
         }
@@ -199,9 +214,6 @@ public sealed class Person2D : ICombatant2D
     public void SetSimulationEnabled(bool enabled)
     {
         _simulationEnabled = enabled;
-        if (!IsAlive)
-            return;
-
         Body.IsCollider = enabled;
         Body.MotionType = enabled
             ? BodyMotionType2D.Dynamic

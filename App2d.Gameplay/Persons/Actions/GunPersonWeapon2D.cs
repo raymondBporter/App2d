@@ -30,6 +30,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
     private readonly List<CollisionOverlap2D> _overlaps = [];
     private float _cooldown;
     private float _pendingSeconds;
+    private float _pendingDirection;
     private BulletState? _pending;
 
     public GunPersonWeapon2D(
@@ -105,6 +106,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
 
             _pending = bullet;
             _pendingSeconds = 0f;
+            _pendingDirection = facing;
             _cooldown = 0.22f;
             _shotStarted();
             break;
@@ -155,14 +157,15 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
             _pendingSeconds += deltaSeconds;
             if (_pendingSeconds >= ReleaseTime)
             {
-                _pending.Shader.FlipX = facing < 0f;
+                _pending.Shader.FlipX = _pendingDirection < 0f;
                 _pending.Projectile.Launch(
                     _ownerBody.WorldObject.Transform.Position +
-                        new Vector2(facing * 64f, 10f),
-                    new Vector2(facing * 1250f, 0f),
+                        new Vector2(_pendingDirection * 64f, 10f),
+                    new Vector2(_pendingDirection * 1250f, 0f),
                     lifetime: 1.5f);
                 _pending = null;
                 _pendingSeconds = 0f;
+                _pendingDirection = 0f;
                 _sounds.Play(SoundEffect2D.FireballLaunch);
             }
         }
@@ -172,12 +175,14 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
     {
         _pending = null;
         _pendingSeconds = 0f;
+        _pendingDirection = 0f;
     }
 
     public override void Reset()
     {
         _pending = null;
         _pendingSeconds = 0f;
+        _pendingDirection = 0f;
         foreach (var bullet in _bullets)
             bullet.Projectile.Deactivate();
     }

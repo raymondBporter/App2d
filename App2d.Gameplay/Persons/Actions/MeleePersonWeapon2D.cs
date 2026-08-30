@@ -30,6 +30,8 @@ internal abstract class MeleePersonWeapon2D(
     private readonly Action<float> _attackStarted = ArgGuard.RequireNotNull(attackStarted);
     private readonly ISoundEffectSink2D _sounds = ArgGuard.RequireNotNull(sounds);
     private readonly MeleeAttack2D _attack = new(new SpatialObject2D(hitboxShape), attackProfile);
+    private float _attackDirection = 1f;
+    private float _bufferedAttackDirection = 1f;
 
     public bool IsAttackActive => _attack.IsInProgress;
 
@@ -44,8 +46,14 @@ internal abstract class MeleePersonWeapon2D(
 
     public override float Use(Vector2? aimTarget, float facing)
     {
+        var direction = MathF.Sign(facing);
+        if (_attack.IsInProgress)
+            _bufferedAttackDirection = direction;
         if (_attack.TryStart())
+        {
+            _attackDirection = direction;
             PlayAttackFeedback();
+        }
         return facing;
     }
 
@@ -57,8 +65,13 @@ internal abstract class MeleePersonWeapon2D(
         if (_attack.Update(
             deltaSeconds,
             _ownerBody.WorldObject.Transform.Position,
-            facing))
+            _attackDirection))
         {
+            _attackDirection = _bufferedAttackDirection;
+            _attack.Update(
+                0f,
+                _ownerBody.WorldObject.Transform.Position,
+                _attackDirection);
             PlayAttackFeedback();
         }
 
@@ -70,7 +83,7 @@ internal abstract class MeleePersonWeapon2D(
                 ownerFaction,
                 targetLayer,
                 damage,
-                _ => new Vector2(facing * knockback.X, knockback.Y)))
+                _ => new Vector2(_attackDirection * knockback.X, knockback.Y)))
         {
             _sounds.Play(impactSound);
         }

@@ -21,6 +21,9 @@ public sealed class SideScrollerGame : Game2D
 {
     private const float DeathRestartDelaySeconds = 1.1f;
     private const float HardLandingSpeed = 650f;
+    private const float DamageShakeStrength = 4f;
+    private const float MinimumLandingShakeStrength = 2f;
+    private const float MaximumLandingShakeStrength = 4.5f;
     private const uint WorldLayer = 1u << 0;
     private const uint PlayerLayer = 1u << 1;
     private const uint EnemyLayer = 1u << 2;
@@ -98,15 +101,33 @@ public sealed class SideScrollerGame : Game2D
             CombatFaction2D.Player);
         _playerPresentation = new PersonPresentation2D(Scene, Textures, Traversal);
         _player.JumpStarted += () => _sounds.Play(SoundEffect2D.PlayerJump);
-        _player.Landed += speed => _sounds.Play(
-            speed >= HardLandingSpeed
-                ? SoundEffect2D.PlayerLandHard
-                : SoundEffect2D.PlayerLandSoft);
+        _player.Landed += speed =>
+        {
+            _sounds.Play(
+                speed >= HardLandingSpeed
+                    ? SoundEffect2D.PlayerLandHard
+                    : SoundEffect2D.PlayerLandSoft);
+
+            if (speed >= HardLandingSpeed)
+            {
+                var impact = Math.Clamp(
+                    (speed - HardLandingSpeed) /
+                    MathF.Max(1f, Traversal.MaximumFallSpeed - HardLandingSpeed),
+                    0f,
+                    1f);
+                _cameraController.Shake(float.Lerp(
+                    MinimumLandingShakeStrength,
+                    MaximumLandingShakeStrength,
+                    impact),
+                    stabilizeVerticalFollow: true);
+            }
+        };
         _player.Footstep += () => _sounds.Play(SoundEffect2D.PlayerFootstep);
         _player.Damaged += () =>
         {
             _sounds.Play(SoundEffect2D.PlayerHurt);
             _playerPresentation.PlayHit();
+            _cameraController.Shake(DamageShakeStrength);
         };
         _contactDamage = new ContactDamageSystem2D(_collision, EnemyLayer);
 

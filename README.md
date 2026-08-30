@@ -327,7 +327,8 @@ do not allow wall grip.
 Short sound effects are decoded once at startup and played through one polyphonic mixer.
 Gameplay emits semantic cues through `ISoundEffectSink2D`, so movement, combat, and weapon
 code never knows asset paths or audio-device details. `SoundEffectBank2D` owns the cue-to-file
-mapping, per-cue levels, and non-repeating variants. Set `sfx_volume` in the developer
+mapping, per-cue levels, non-repeating variants, and subtle per-play volume and pitch variation.
+Set `sfx_volume` in the developer
 console to a value from 0 through 1 to adjust the master sound-effect level.
 
 Person movement is owned by `App2d.Gameplay/Persons/PersonLocomotion2D`. `PersonMovementIntent2D` describes

@@ -6,6 +6,11 @@ namespace App2d.Gameplay.Audio;
 /// <summary>Maps gameplay sound events to cached clips and playback settings.</summary>
 public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
 {
+    private const float MinimumVolumeScale = 0.95f;
+    private const float MaximumVolumeScale = 1.05f;
+    private const float MinimumPlaybackRate = 0.96f;
+    private const float MaximumPlaybackRate = 1.04f;
+
     private readonly AudioMixer2D _mixer;
     private readonly Dictionary<SoundEffect2D, Cue> _cues;
 
@@ -56,10 +61,16 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
     {
         if (!_cues.TryGetValue(effect, out var cue))
             throw ArgGuard.CreateOutOfRange(effect, "Unknown sound effect.");
-        _mixer.Play(cue.NextClip(), cue.Volume);
+        _mixer.Play(
+            cue.NextClip(),
+            cue.Volume * RandomInRange(MinimumVolumeScale, MaximumVolumeScale),
+            RandomInRange(MinimumPlaybackRate, MaximumPlaybackRate));
     }
 
     public void Dispose() => _mixer.Dispose();
+
+    private static float RandomInRange(float minimum, float maximum) =>
+        minimum + (Random.Shared.NextSingle() * (maximum - minimum));
 
     private Cue Load(string rootPath, float volume, params string[] stems)
     {

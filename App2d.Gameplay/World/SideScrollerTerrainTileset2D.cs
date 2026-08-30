@@ -32,6 +32,7 @@ internal sealed class SideScrollerTerrainTileset2D
         new(JsonSerializerDefaults.Web);
 
     private readonly IShader2D _fillShader;
+    private readonly IShader2D _grippableShader;
     private readonly IShader2D _topShader;
     private readonly IShader2D _rightShader;
     private readonly IShader2D _bottomShader;
@@ -46,8 +47,6 @@ internal sealed class SideScrollerTerrainTileset2D
     private readonly IShader2D _spikeLeftShader;
     private readonly IShader2D _spikeMiddleShader;
     private readonly IShader2D _spikeRightShader;
-    private readonly IShader2D _grippableShader =
-        new SolidColorShader(new SKColor(76, 231, 120));
     private readonly float _surfaceThickness;
     private readonly float _outerCornerSize;
     private readonly float _innerCornerSize;
@@ -56,6 +55,7 @@ internal sealed class SideScrollerTerrainTileset2D
 
     private SideScrollerTerrainTileset2D(
         IShader2D fillShader,
+        IShader2D grippableShader,
         IShader2D topShader,
         IShader2D rightShader,
         IShader2D bottomShader,
@@ -77,6 +77,7 @@ internal sealed class SideScrollerTerrainTileset2D
         float spikeVisualHeight)
     {
         _fillShader = ArgGuard.RequireNotNull(fillShader);
+        _grippableShader = ArgGuard.RequireNotNull(grippableShader);
         _topShader = ArgGuard.RequireNotNull(topShader);
         _rightShader = ArgGuard.RequireNotNull(rightShader);
         _bottomShader = ArgGuard.RequireNotNull(bottomShader);
@@ -130,9 +131,13 @@ internal sealed class SideScrollerTerrainTileset2D
         var spikeVisualHeight = manifest.SpikeVisualHeight > 0f
             ? manifest.SpikeVisualHeight
             : manifest.OneWayVisualHeight;
+        var fillPath = Path.Combine(relativeRoot, "fill.png");
+        var grippablePath = Path.Combine(relativeRoot, "grippable.png");
+        if (!File.Exists(Path.Combine(textures.ContentRoot, grippablePath)))
+            grippablePath = fillPath;
         return new SideScrollerTerrainTileset2D(
-            new TextureShader2D(textures.Load(Path.Combine(relativeRoot, "fill.png")),
-            new Vector2(tileSize)),
+            new TextureShader2D(textures.Load(fillPath), new Vector2(tileSize)),
+            new TextureShader2D(textures.Load(grippablePath), new Vector2(tileSize)),
             CreateTerrainShader(textures, relativeRoot, Path.Combine("surfaces", "top.png"), new Vector2(tileSize, manifest.SurfaceThickness)),
             CreateTerrainShader(textures, relativeRoot, rightSurface, new Vector2(manifest.SurfaceThickness, tileSize)),
             CreateTerrainShader(textures, relativeRoot, Path.Combine("surfaces", "bottom.png"), new Vector2(tileSize, manifest.SurfaceThickness)),
@@ -164,6 +169,7 @@ internal sealed class SideScrollerTerrainTileset2D
         var oneWayShader = new SolidColorShader(new SKColor(255, 207, 72));
         return new SideScrollerTerrainTileset2D(
             new SolidColorShader(new SKColor(24, 29, 40)),
+            new SolidColorShader(new SKColor(76, 231, 120)),
             topShader,
             sideShader,
             new SolidColorShader(new SKColor(145, 92, 255)),

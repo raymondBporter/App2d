@@ -167,13 +167,16 @@ internal static class TileEditorMenu2D
         string tilesetId,
         TileKind2D kind)
     {
+        var root = Path.Combine("environments", "tilesets", tilesetId);
         if (kind.IsGrippable())
         {
-            renderer.DrawScreenRoundedRectangle(bounds, 2f, new SKColor(76, 231, 120));
+            var grippablePath = Path.Combine(root, "grippable.png");
+            if (!File.Exists(Path.Combine(textures.ContentRoot, grippablePath)))
+                grippablePath = Path.Combine(root, "fill.png");
+            renderer.DrawScreenTexture(textures.Load(grippablePath), bounds);
             return;
         }
 
-        var root = Path.Combine("environments", "tilesets", tilesetId);
         if (kind.IsOneWay())
         {
             renderer.DrawScreenTexture(

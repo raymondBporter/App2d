@@ -48,13 +48,14 @@ public sealed class AudioMixer2D : IDisposable
         return new AudioClip2D(path, SampleRate);
     }
 
-    public void Play(AudioClip2D clip, float volume = 1f)
+    public void Play(AudioClip2D clip, float volume = 1f, float playbackRate = 1f)
     {
         ArgGuard.ThrowIfNull(clip);
         ArgGuard.ThrowIfNotInClosedRange(volume, 0f, 1f);
+        ArgGuard.ThrowIfNotInClosedRange(playbackRate, 0.5f, 2f);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        _mixer.Play(clip, volume);
+        _mixer.Play(clip, volume, playbackRate);
     }
 
     public void Dispose()
@@ -96,7 +97,7 @@ public sealed class AudioMixer2D : IDisposable
             }
         }
 
-        public void Play(AudioClip2D clip, float volume)
+        public void Play(AudioClip2D clip, float volume, float playbackRate)
         {
             var channels = clip.WaveFormat.Channels;
             if (channels is not 1 and not ChannelCount)
@@ -128,8 +129,9 @@ public sealed class AudioMixer2D : IDisposable
 
                 _voices[selectedIndex] = new Voice(
                     clip,
-                    framePosition: 0,
+                    framePosition: 0f,
                     volume,
+                    playbackRate,
                     sequence: ++_sequence);
             }
         }
@@ -147,16 +149,13 @@ public sealed class AudioMixer2D : IDisposable
                     if (clip is null)
                         continue;
 
-                    var framesToRead = Math.Min(
-                        requestedFrames,
-                        clip.FrameCount - voice.FramePosition);
-                    MixVoice(
+                    voice.FramePosition = MixVoice(
                         clip,
                         voice.FramePosition,
-                        framesToRead,
+                        requestedFrames,
                         voice.Volume,
+                        voice.PlaybackRate,
                         buffer);
-                    voice.FramePosition += framesToRead;
                     if (voice.FramePosition >= clip.FrameCount)
                         voice = default;
                 }
@@ -164,41 +163,60 @@ public sealed class AudioMixer2D : IDisposable
             return buffer.Length;
         }
 
-        private static void MixVoice(
+        private static float MixVoice(
             AudioClip2D clip,
-            int framePosition,
-            int frameCount,
+            float framePosition,
+            int requestedFrames,
             float volume,
+            float playbackRate,
             Span<float> destination)
         {
             var samples = clip.Samples;
-            if (clip.WaveFormat.Channels == 1)
+            var channels = clip.WaveFormat.Channels;
+            for (var frame = 0; frame < requestedFrames && framePosition < clip.FrameCount; frame++)
             {
-                for (var frame = 0; frame < frameCount; frame++)
+                var sourceFrame = (int)framePosition;
+                var nextFrame = Math.Min(sourceFrame + 1, clip.FrameCount - 1);
+                var fraction = framePosition - sourceFrame;
+                var destinationIndex = frame * ChannelCount;
+                if (channels == 1)
                 {
-                    var sample = samples[framePosition + frame] * volume;
-                    var destinationIndex = frame * ChannelCount;
+                    var sample = Lerp(samples[sourceFrame], samples[nextFrame], fraction) * volume;
                     destination[destinationIndex] += sample;
                     destination[destinationIndex + 1] += sample;
                 }
-                return;
+                else
+                {
+                    var sourceIndex = sourceFrame * ChannelCount;
+                    var nextIndex = nextFrame * ChannelCount;
+                    destination[destinationIndex] += Lerp(
+                        samples[sourceIndex],
+                        samples[nextIndex],
+                        fraction) * volume;
+                    destination[destinationIndex + 1] += Lerp(
+                        samples[sourceIndex + 1],
+                        samples[nextIndex + 1],
+                        fraction) * volume;
+                }
+                framePosition += playbackRate;
             }
-
-            var sourceIndex = framePosition * ChannelCount;
-            var sampleCount = frameCount * ChannelCount;
-            for (var index = 0; index < sampleCount; index++)
-                destination[index] += samples[sourceIndex + index] * volume;
+            return framePosition;
         }
+
+        private static float Lerp(float first, float second, float amount) =>
+            first + ((second - first) * amount);
 
         private struct Voice(
             AudioClip2D clip,
-            int framePosition,
+            float framePosition,
             float volume,
+            float playbackRate,
             long sequence)
         {
             public AudioClip2D? Clip { get; set; } = clip;
-            public int FramePosition { get; set; } = framePosition;
+            public float FramePosition { get; set; } = framePosition;
             public float Volume { get; } = volume;
+            public float PlaybackRate { get; } = playbackRate;
             public long Sequence { get; } = sequence;
         }
     }
