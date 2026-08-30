@@ -29,9 +29,15 @@ internal static class LevelBootstrap2D
         if (!File.Exists(CavernLevelPath))
             Bake(traversal);
 
-        using var database = LevelDatabase2D.Open(CavernLevelPath);
+        using var database = LevelDatabase2D.OpenRead(CavernLevelPath);
         return database.Load();
     }
+
+    /// <summary>
+    /// Opens the cavern level read-write for an editing session. The caller owns the
+    /// returned database and must dispose it.
+    /// </summary>
+    public static LevelDatabase2D OpenForEditing() => LevelDatabase2D.Open(CavernLevelPath);
 
     public static void Bake(TraversalMetrics2D traversal)
     {

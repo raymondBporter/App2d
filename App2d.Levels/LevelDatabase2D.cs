@@ -79,6 +79,35 @@ public sealed class LevelDatabase2D : IDisposable
         return new LevelDatabase2D(connection);
     }
 
+    /// <summary>
+    /// Opens an existing level for reading only. Loading must not write: opening
+    /// read-write and running DDL bumps SQLite's file change counter, which dirties
+    /// the committed level asset in git on every game launch.
+    /// </summary>
+    public static LevelDatabase2D OpenRead(string path)
+    {
+        ArgGuard.ThrowIfNullOrWhiteSpace(path);
+        StateGuard.ThrowIf(!File.Exists(path), $"The level file '{path}' does not exist.");
+
+        var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = path,
+            Mode = SqliteOpenMode.ReadOnly
+        }.ToString());
+        connection.Open();
+
+        var database = new LevelDatabase2D(connection);
+        var version = database.FormatVersion;
+        if (version > CurrentFormatVersion)
+        {
+            connection.Dispose();
+            StateGuard.Throw(
+                $"The level file is format version {version}, newer than this build understands ({CurrentFormatVersion}).");
+        }
+
+        return database;
+    }
+
     public void Save(EditableTileMap2D map, ulong sourceSeed)
     {
         ArgGuard.ThrowIfNull(map);

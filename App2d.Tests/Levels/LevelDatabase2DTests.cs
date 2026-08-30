@@ -37,15 +37,21 @@ public sealed class LevelDatabase2DTests : IDisposable
     {
         // Tests may create more than one .db file in this directory (e.g. a copy used
         // to verify the committed file is self-contained without its sidecars), so
-        // clear the pool for every one rather than assuming a single fixed name.
+        // clear the pool for every one rather than assuming a single fixed name. The
+        // pool is keyed by the full connection string, so a read-only connection (as
+        // used by LevelDatabase2D.OpenRead) pools separately from a read-write one --
+        // both must be cleared or a pooled read-only handle keeps the file locked.
         foreach (var dbFile in Directory.EnumerateFiles(_directory, "*.db"))
         {
-            using var probe = new SqliteConnection(new SqliteConnectionStringBuilder
+            foreach (var mode in new[] { SqliteOpenMode.ReadWriteCreate, SqliteOpenMode.ReadOnly })
             {
-                DataSource = dbFile,
-                Mode = SqliteOpenMode.ReadWriteCreate
-            }.ToString());
-            SqliteConnection.ClearPool(probe);
+                using var probe = new SqliteConnection(new SqliteConnectionStringBuilder
+                {
+                    DataSource = dbFile,
+                    Mode = mode
+                }.ToString());
+                SqliteConnection.ClearPool(probe);
+            }
         }
     }
 
@@ -245,5 +251,64 @@ public sealed class LevelDatabase2DTests : IDisposable
             for (var x = 0; x < original.Width; x++)
                 Assert.Equal(original.GetTileKind(x, y), loaded.GetTileKind(x, y));
         }
+    }
+
+    [Fact]
+    public void OpenReadLoadsAnExistingLevel()
+    {
+        var path = NewPath();
+        var original = BuildMap();
+        using (var database = LevelDatabase2D.Open(path))
+            database.Save(original, sourceSeed: 0UL);
+
+        using var reader = LevelDatabase2D.OpenRead(path);
+        var loaded = reader.Load();
+
+        Assert.Equal(original.Width, loaded.Width);
+        for (var y = 0; y < original.Height; y++)
+        {
+            for (var x = 0; x < original.Width; x++)
+                Assert.Equal(original.GetTileKind(x, y), loaded.GetTileKind(x, y));
+        }
+    }
+
+    [Fact]
+    public void OpenReadDoesNotModifyTheFile()
+    {
+        var path = NewPath();
+        using (var database = LevelDatabase2D.Open(path))
+            database.Save(BuildMap(), sourceSeed: 0UL);
+
+        // Microsoft.Data.Sqlite pools native handles (see the class Dispose() comment
+        // above): the read-write connection just disposed keeps the OS file handle open
+        // with write access, which conflicts with File.ReadAllBytes's read-only sharing
+        // request. Clear that pool so this reads the real on-disk bytes, not a
+        // sharing-violation artifact of pooling.
+        SqliteConnection.ClearPool(new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = path,
+            Mode = SqliteOpenMode.ReadWriteCreate
+        }.ToString()));
+
+        var before = File.ReadAllBytes(path);
+
+        using (var reader = LevelDatabase2D.OpenRead(path))
+            reader.Load();
+
+        var after = File.ReadAllBytes(path);
+
+        // Opening read-write and running DDL bumps SQLite's file change counter
+        // (bytes 28 and 96), which dirties the committed level asset in git on
+        // every launch. The read path must leave the bytes untouched.
+        Assert.Equal(before, after);
+    }
+
+    [Fact]
+    public void OpenReadOnAMissingFileThrows()
+    {
+        Directory.CreateDirectory(_directory);
+        var missing = Path.Combine(_directory, "does-not-exist.db");
+
+        Assert.Throws<InvalidOperationException>(() => LevelDatabase2D.OpenRead(missing));
     }
 }
