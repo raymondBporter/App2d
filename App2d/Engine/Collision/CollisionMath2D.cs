@@ -54,7 +54,7 @@ internal static class CollisionMath2D
     public static (Vector2 Normal, float Offset) GetWorldPlane(HalfSpace2D halfSpace, Transform2D transform)
     {
         var localBoundary = halfSpace.Normal * halfSpace.Offset;
-        var localTangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
+        var localTangent = halfSpace.Normal.PerpCcw();
         var localToWorld = transform.LocalToWorldMatrix;
         var worldBoundary = Vector2.Transform(localBoundary, localToWorld);
         var worldTangent = Vector2.Transform(localBoundary + localTangent, localToWorld) - worldBoundary;
@@ -62,7 +62,7 @@ internal static class CollisionMath2D
 
         StateGuard.ThrowIf(worldTangent.LengthSquared() <= float.Epsilon || worldOutward.LengthSquared() <= float.Epsilon, "A half-space transform cannot collapse an axis.");
 
-        var worldNormal = Vector2.Normalize(new Vector2(-worldTangent.Y, worldTangent.X));
+        var worldNormal = Vector2.Normalize(worldTangent.PerpCcw());
         if (Vector2.Dot(worldNormal, worldOutward) < 0f)
             worldNormal = -worldNormal;
 

@@ -401,7 +401,7 @@ public sealed class CollisionSystem2D
 
         public bool ShouldTest(Collider2D first, Collider2D second) =>
             Primary.ShouldTest(first, second) &&
-            (Additional is null || Additional.ShouldTest(first, second));
+            (Additional?.ShouldTest(first, second) != false);
     }
 
     private readonly record struct GridCell(int X, int Y);

@@ -1,5 +1,6 @@
 using System.Numerics;
 using App2d.Engine.Geometry;
+using App2d.Engine.Mathematics;
 
 namespace App2d.Engine.Collision.Queries;
 
@@ -165,7 +166,7 @@ public static class RayIntersection2D
     {
         var signedAreaTwice = 0f;
         for (var i = 0; i < vertices.Length; i++)
-            signedAreaTwice += Cross(vertices[i], vertices[(i + 1) % vertices.Length]);
+            signedAreaTwice += vertices[i].Cross(vertices[(i + 1) % vertices.Length]);
 
         var enteringDistance = float.NegativeInfinity;
         var exitingDistance = float.PositiveInfinity;
@@ -177,8 +178,8 @@ public static class RayIntersection2D
             var start = vertices[i];
             var edge = vertices[(i + 1) % vertices.Length] - start;
             var outward = signedAreaTwice >= 0f
-                ? new Vector2(edge.Y, -edge.X)
-                : new Vector2(-edge.Y, edge.X);
+                ? edge.PerpCw()
+                : edge.PerpCcw();
             var originSide = Vector2.Dot(origin - start, outward);
             var directionProjection = Vector2.Dot(direction, outward);
 
@@ -262,7 +263,7 @@ public static class RayIntersection2D
         }
 
         var tangent = segment / segmentLength;
-        var perpendicular = new Vector2(-tangent.Y, tangent.X);
+        var perpendicular = tangent.PerpCcw();
         var relativeOrigin = origin - capsule.Start;
         var originAlong = Vector2.Dot(relativeOrigin, tangent);
         var originAcross = Vector2.Dot(relativeOrigin, perpendicular);
@@ -389,9 +390,6 @@ public static class RayIntersection2D
         Matrix3x2 worldToLocal) => new(
         localNormal.X * worldToLocal.M11 + localNormal.Y * worldToLocal.M12,
         localNormal.X * worldToLocal.M21 + localNormal.Y * worldToLocal.M22);
-
-    private static float Cross(Vector2 left, Vector2 right) =>
-        left.X * right.Y - left.Y * right.X;
 
     public static void ValidateMaxDistance(float maxDistance)
         => ArgGuard.ThrowIfNegativeOrNaN(maxDistance);

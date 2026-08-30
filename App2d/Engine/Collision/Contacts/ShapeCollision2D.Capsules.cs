@@ -26,8 +26,8 @@ public static partial class ShapeCollision2D
         AddAxis(axes, ref axisCount, closest.First - closest.Second);
         var firstDirection = firstEnd - firstStart;
         var secondDirection = secondEnd - secondStart;
-        AddAxis(axes, ref axisCount, new Vector2(-firstDirection.Y, firstDirection.X));
-        AddAxis(axes, ref axisCount, new Vector2(-secondDirection.Y, secondDirection.X));
+        AddAxis(axes, ref axisCount, firstDirection.PerpCcw());
+        AddAxis(axes, ref axisCount, secondDirection.PerpCcw());
         AddAxis(axes, ref axisCount, firstStart - ClosestPoint2D.OnSegment(firstStart, secondStart, secondEnd));
         AddAxis(axes, ref axisCount, firstEnd - ClosestPoint2D.OnSegment(firstEnd, secondStart, secondEnd));
         AddAxis(axes, ref axisCount, ClosestPoint2D.OnSegment(secondStart, firstStart, firstEnd) - secondStart);
@@ -85,7 +85,7 @@ public static partial class ShapeCollision2D
         var axisCount = 0;
         AddPolygonEdgeAxes(axes, ref axisCount, rectangleVertices);
         var capsuleDirection = capsuleEnd - capsuleStart;
-        AddAxis(axes, ref axisCount, new Vector2(-capsuleDirection.Y, capsuleDirection.X));
+        AddAxis(axes, ref axisCount, capsuleDirection.PerpCcw());
 
         foreach (var vertex in rectangleVertices)
             AddAxis(axes, ref axisCount, vertex - ClosestPoint2D.OnSegment(vertex, capsuleStart, capsuleEnd));

@@ -25,13 +25,7 @@ public sealed class SpatialRandom2D(ulong seed)
 
     public int Range(int x, int y, int minimum, int maximumExclusive, int channel = 0)
     {
-        if (maximumExclusive <= minimum)
-        {
-            ArgGuard.ThrowOutOfRange(
-                maximumExclusive,
-                $"Value must be greater than {minimum}.");
-        }
-
+        ArgGuard.ThrowIfLessThanOrEqual(maximumExclusive, minimum, nameof(maximumExclusive));
         var range = (uint)(maximumExclusive - minimum);
         return minimum + (int)(Sample(x, y, channel) % range);
     }

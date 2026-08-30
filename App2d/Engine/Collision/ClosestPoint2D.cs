@@ -21,11 +21,7 @@ public static class ClosestPoint2D
         return start + segment * t;
     }
 
-    public static SegmentClosestPoints2D BetweenSegments(
-        Vector2 firstStart,
-        Vector2 firstEnd,
-        Vector2 secondStart,
-        Vector2 secondEnd)
+    public static SegmentClosestPoints2D BetweenSegments(Vector2 firstStart, Vector2 firstEnd, Vector2 secondStart, Vector2 secondEnd)
     {
         var firstDirection = firstEnd - firstStart;
         var secondDirection = secondEnd - secondStart;

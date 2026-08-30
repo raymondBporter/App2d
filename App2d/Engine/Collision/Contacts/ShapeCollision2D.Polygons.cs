@@ -78,8 +78,8 @@ public static partial class ShapeCollision2D
             signedAreaTwice += vertices[i].Cross(vertices[(i + 1) % vertices.Length]);
 
         var outward = signedAreaTwice >= 0f
-            ? new Vector2(edge.Y, -edge.X)
-            : new Vector2(-edge.Y, edge.X);
+            ? edge.PerpCw()
+            : edge.PerpCcw();
         return outward.LengthSquared() > float.Epsilon
             ? Vector2.Normalize(outward)
             : Vector2.UnitY;
@@ -90,7 +90,7 @@ public static partial class ShapeCollision2D
         for (var i = 0; i < vertices.Length; i++)
         {
             var edge = vertices[(i + 1) % vertices.Length] - vertices[i];
-            AddAxis(axes, ref axisCount, new Vector2(-edge.Y, edge.X));
+            AddAxis(axes, ref axisCount, edge.PerpCcw());
         }
     }
 

@@ -63,7 +63,7 @@ public static partial class ShapeCollision2D
         {
             var segment = end - start;
             normal = segment.LengthSquared() > float.Epsilon
-                ? Vector2.Normalize(new Vector2(-segment.Y, segment.X))
+                ? Vector2.Normalize(segment.PerpCcw())
                 : Vector2.UnitY;
         }
 

@@ -13,19 +13,13 @@ public enum TileKind2D : byte
 
 public static class TileKind2DExtensions
 {
-    public static bool IsSolid(this TileKind2D kind) =>
-        (kind & TileKind2D.Solid) != 0;
+    public static bool IsSolid(this TileKind2D kind) => (kind & TileKind2D.Solid) != 0;
 
-    public static bool IsOneWay(this TileKind2D kind) =>
-        (kind & TileKind2D.OneWay) != 0;
+    public static bool IsOneWay(this TileKind2D kind) => (kind & TileKind2D.OneWay) != 0;
 
-    public static bool IsGrippable(this TileKind2D kind) =>
-        (kind & TileKind2D.Grippable) != 0;
+    public static bool IsGrippable(this TileKind2D kind) => (kind & TileKind2D.Grippable) != 0;
 
-    public static bool IsCollidable(this TileKind2D kind) =>
-        kind.IsSolid() || kind.IsOneWay();
+    public static bool IsCollidable(this TileKind2D kind) => kind.IsSolid() || kind.IsOneWay();
 }
 
-public readonly record struct TileCollisionRectangle2D(
-    Bounds2D Bounds,
-    TileKind2D Kind);
+public readonly record struct TileCollisionRectangle2D(Bounds2D Bounds, TileKind2D Kind);
