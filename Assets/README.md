@@ -18,8 +18,7 @@ The first folder describes the asset lifecycle:
 From a clean clone, run `python tools/ArtPipeline/build_runtime_assets.py` from the
 repository root before starting the game. Its playable inputs are the committed RGS Dev
 Sword and Pistol PNG sequences under `Sources/third-party/rgs-stick-figure`, together
-with the included CC0 license. Obsolete model-rendering sources are not part of the
-playable pipeline.
+with the included CC0 license.
 
 Runtime content is organized by game concept rather than file format. Asset IDs
 use lowercase letters, digits, and hyphens. A canonical ID and its folder name are

@@ -16,9 +16,10 @@ The build imports and normalizes two baked 512 by 512 character sets:
 - `Assets/Content/characters/player-gun`
 
 It also creates the sword and gun HUD icons and imports the pistol projectile.
-Those generated files are ignored by Git and can be rebuilt from the retained
-source pack at any time. The runtime swaps complete sword and gun sprites; it
-does not use equipment layers, sparse atlases, depth compositing, or Blender.
+The two generated player character folders, including their `character.json`
+manifests, are ignored by Git and can be rebuilt from the retained source pack at
+any time. The generated HUD icons, projectile, and player geometry manifest are
+tracked so changes to those runtime assets remain reviewable.
 
 The source-to-runtime mappings and scale live in `import_stick_figure.py`. The importer
 measures the generated idle pose and writes

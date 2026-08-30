@@ -214,12 +214,16 @@ the same `python -m pip install -r tools/ArtPipeline/requirements.txt` command, 
 the virtual environment's Python executable as shown above.
 
 The build scales and root-aligns the pack's baked Sword and Pistol sequences into
-`player-sword` and `player-gun` character folders. It also imports the bullet and HUD
-icons. No model rendering, equipment layers, depth compositing, or atlas planning is
-required for the playable build.
+`Assets/Content/characters/player-sword` and
+`Assets/Content/characters/player-gun`. It generates each character's `character.json`
+animation manifest alongside its frames, measures the idle poses to regenerate
+`Assets/Content/characters/player-geometry.json`, and imports the bullet and HUD icons.
+Run the build again whenever the source frames or importer settings change.
 
-Generated files remain below `Assets/Content` because the game ships that tree, while
-the reproducible character folders are excluded by `.gitignore`.
+Generated files remain below `Assets/Content` because the game ships that tree. The
+reproducible player character folders, including their generated `character.json`
+manifests, are excluded by `.gitignore`; `player-geometry.json` is committed so geometry
+changes remain reviewable.
 
 ## Run
 
@@ -268,7 +272,8 @@ formations exercise these combinations above the guaranteed ground route; climb 
 side ledges, and balcony formations are the map generator's one-way strips.
 Player traversal has
 acceleration, coyote time, jump buffering, variable jump height, wall grip and wall jump,
-a high-speed enemy-phasing dash, a sword, and a fixed pool of 16 fireballs. While airborne and falling, holding toward a
+a high-speed enemy-phasing dash with one airborne charge restored on landing, a sword,
+and a fixed pool of 16 fireballs. While airborne and falling, holding toward a
 nearby static solid wall suspends the player; jumping launches away. One-way platforms
 do not allow wall grip.
 
@@ -290,9 +295,9 @@ Side-scroller dimensions use an eight-world-unit design increment. A terrain til
 32 units (four increments). The RGS player keeps its square 512-pixel canvas aspect
 ratio and renders at 138 by 138 world units. The art pipeline measures the idle feet,
 head inset and authored foot anchor, then writes the visual and collider
-geometry to `characters/player-geometry.json`. Runtime loads that manifest rather than
-duplicating sprite measurements in gameplay code. The collider offset mirrors with the
-player's facing.
+geometry to `Assets/Content/characters/player-geometry.json`. Runtime loads that manifest
+rather than duplicating sprite measurements in gameplay code. The collider offset
+mirrors with the player's facing.
 
 `TraversalMetrics2D` is the single source for locomotion tuning and simulates the same
 held-jump arc used at runtime. The F3 overlay draws the full-speed and standstill arcs
@@ -434,12 +439,13 @@ playback-speed changes. `SpriteShader2D` maps one complete texture onto finite o
 bounds, corrects image orientation for the engine's Y-up world, and flips the baked
 right-facing sprites when the player faces left.
 
-The sword and gun are complete baked character sets rather than independently composited
-equipment. Switching weapons swaps the active character animation set.
+The sword and gun are complete 2D character sprite sets. Switching weapons swaps the
+active character animation set.
 
-Each character owns a `character.json` and semantic folders such as
-`characters/player-sword/animations/walk`. The animation ID and folder name are
-identical; source names remain provenance rather than runtime vocabulary.
+Each generated player character owns a `character.json` and semantic folders such as
+`Assets/Content/characters/player-sword/animations/walk`. The asset build generates the
+manifest from the importer configuration; the animation ID and folder name are
+identical, while source names remain provenance rather than runtime vocabulary.
 Frames use contiguous four-digit names beginning at `frame-0001.png`. Manifests record
 frame rate or total duration plus looping behavior without repeating asset paths.
 

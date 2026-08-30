@@ -22,6 +22,7 @@ public sealed class CharacterMotor2D
     private float _dashTimeRemaining;
     private float _dashCooldownRemaining;
     private float _dashDirection;
+    private bool _airDashAvailable = true;
     private int _airJumpsRemaining;
 
     public CharacterMotor2D(
@@ -62,12 +63,20 @@ public sealed class CharacterMotor2D
         UpdateIgnoredOneWayPlatforms();
         IsGrounded = HasGroundSupport(Metrics.GroundProbeDistance);
         if (IsGrounded)
+        {
             RestoreAirJumps();
+            _airDashAvailable = true;
+        }
 
         if (IsDashing && _dashTimeRemaining <= 0f)
             EndDash();
-        if (!IsDashing && intent.DashPressed && _dashCooldownRemaining <= 0f)
+        if (!IsDashing &&
+            intent.DashPressed &&
+            _dashCooldownRemaining <= 0f &&
+            (IsGrounded || _airDashAvailable))
+        {
             BeginDash(facing);
+        }
         if (IsDashing)
         {
             _dashTimeRemaining = Math.Max(0f, _dashTimeRemaining - deltaSeconds);
@@ -148,6 +157,7 @@ public sealed class CharacterMotor2D
         _dashTimeRemaining = 0f;
         _dashCooldownRemaining = 0f;
         _dashDirection = 0f;
+        _airDashAvailable = true;
         _airJumpsRemaining = 0;
         _intent = default;
         IsGrounded = false;
@@ -187,6 +197,8 @@ public sealed class CharacterMotor2D
         _wallDirection = 0f;
         _dashTimeRemaining = Metrics.DashDuration;
         _dashCooldownRemaining = Metrics.DashCooldown;
+        if (!IsGrounded)
+            _airDashAvailable = false;
     }
 
     private void EndDash()
