@@ -160,7 +160,10 @@ elaborate here now would be work thrown away twice.
 At the end of phase 1 the generator has no runtime consumer and can be deleted whenever
 convenient.
 
-## Phase 2 — the tile painter (sketch)
+## Phase 2 — the tile painter (implemented)
+
+**Superseded by `docs/superpowers/specs/2026-08-30-tile-painter-phase2-design.md`**, which
+expanded this sketch into the built design. The sketch below is kept for the reasoning.
 
 A modal editor in `App2d/Editor/`, toggled by a key and registered as a `DeveloperConsole`
 variable. Entering freezes the player and enemies and detaches the camera for free pan/zoom;

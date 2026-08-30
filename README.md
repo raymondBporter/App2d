@@ -70,10 +70,19 @@ Geometry lives under `App2d.Core/Geometry`:
 no `TileKind2D`. `App2d.Tiles/EditableTileMap2D` is the only `IChunkedTileMap2D`
 implementation: a dense, mutable, kind-carrying map loaded from a level file rather
 than evaluated from a seed function. It still greedily merges each 32x32 chunk into
-AABB colliders on demand, and raises a `ChunkChanged` event so a future in-game tile
-editor can drive streamer reloads after an edit. The side-scroller keeps at most 15
+AABB colliders on demand, and raises a `ChunkChanged` event that the in-game tile editor
+uses to drive streamer reloads after an edit. The side-scroller keeps at most 15
 nearby chunks live, so scene rendering, weapon queries, and the collision spatial
 index are bounded by the local neighborhood rather than total world size.
+
+Editor mode is part of the game rather than a separate tool. `F1` freezes the simulation,
+detaches the camera, and paints tiles with the mouse; `1`-`5` pick the tile kind, the right
+button erases, and `Ctrl+Z` undoes a stroke. Painting mutates the loaded `EditableTileMap2D`,
+whose `ChunkChanged` event feeds a `DirtyChunkTracker2D`; the editor flushes that tracker once
+per frame so a drag rebuilds each affected chunk at most once instead of once per event. Each
+stroke commits its changed chunks to the level file in a single transaction. `TileEditSession2D`
+holds the strokes and undo history and lives in `App2d.Tiles`, so the editable core is testable
+without input or storage.
 
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
@@ -266,8 +275,10 @@ kinematic one-way slabs follow horizontal or vertical ping-pong paths and carry 
 bodies supported on top without replacing the rider's own movement velocity.
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
 ledges are authored in `Assets/Static/levels/cavern/level.db`, the committed level file
-`LevelBootstrap2D` loads at startup. A small separately seeded population near spawn
-exists only as a mechanics playground; it is not the eventual authored encounter format.
+`LevelBootstrap2D` loads at startup. That load opens the file read-only, so ordinary
+play never dirties the committed level; only a tile-editor stroke opens it read-write to
+persist changes. A small separately seeded population near spawn exists only as a
+mechanics playground; it is not the eventual authored encounter format.
 
 Tile cells use composable `Solid`, `OneWay`, and `Grippable` flags; collision
 generation never infers behavior from a rectangle's dimensions. Solid cells merge in
@@ -362,6 +373,9 @@ Keyboard and mouse fallback:
 - Q: cycle the equipped weapon
 - J or left click: use the equipped weapon
 - F3: toggle traversal arcs and movement metrics
+- F1: toggle the tile editor; freezes gameplay, detaches the camera, and switches the
+  mouse to painting (left button paints, right erases, `1`-`5` pick the tile kind,
+  middle-drag pans, wheel zooms, `Ctrl+Z` undoes a stroke)
 - Backtick (`): open or close the developer console
 - Escape: close
 
