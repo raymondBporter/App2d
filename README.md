@@ -3,11 +3,11 @@
 A deliberately small SkiaSharp 2D engine skeleton with compile-time module boundaries.
 
 The solution is split into `App2d.Core`, `App2d.Collision`, `App2d.Tiles`,
-`App2d.Physics`, `App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`, plus the
-Windows executable composition root. Each project physically owns its source files —
-there are no linked-file views. Core, collision, tiles, physics, and rendering target
-plain `net10.0`; platform hosting, gameplay input, and audio remain in the
-Windows-targeted projects.
+`App2d.Levels`, `App2d.Physics`, `App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`,
+plus the Windows executable composition root. Each project physically owns its source
+files — there are no linked-file views. Core, collision, tiles, levels, physics, and
+rendering target plain `net10.0`; platform hosting, gameplay input, and audio remain in
+the Windows-targeted projects.
 
 The engine is grouped by responsibility:
 
@@ -20,6 +20,10 @@ The engine is grouped by responsibility:
   render-agnostic `SpatialObject2D`. `App2d.Tiles` presents the tile maps and mesher.
   `App2d.Collision` contains only collision work: `BroadPhase`, `Contacts`,
   `Filtering`, `Intersections`, and `Queries`.
+- `App2d.Levels` stores authored levels as SQLite files. Tiles are run-length encoded
+  per chunk so a single edit rewrites a single row; a missing chunk row means an
+  entirely empty chunk. It is the only project that references `Microsoft.Data.Sqlite`,
+  and it never references gameplay — terrain is data, not a generator.
 - `CollisionSystem2D` owns runtime collider registration, collision layers and masks,
   cached static/dynamic spatial indexes, candidate discovery, and exact contacts. It has
   no dependency on physics; physics and gameplay are consumers of collision data.
@@ -62,12 +66,14 @@ Geometry lives under `App2d.Core/Geometry`:
   the solid region and into permitted space.
 - `Bounds2D` supplies local bounds to rendering and shaders.
 
-`App2d.Tiles/TileMap2D` stores compact authored maps. `ProceduralTileMap2D` addresses
-larger seeded worlds without allocating their full tile area: it evaluates stateless
-X/Y cells on demand, greedily merges one 32x32 chunk into AABB colliders, and permits
-old chunks to be discarded and regenerated exactly. The side-scroller keeps at most 15
-nearby chunks live, so scene rendering, weapon queries, and the collision spatial index are
-bounded by the local neighborhood rather than total world size.
+`App2d.Tiles/TileMap2D` stores compact authored maps as a bool-only grid; it carries
+no `TileKind2D`. `App2d.Tiles/EditableTileMap2D` is the only `IChunkedTileMap2D`
+implementation: a dense, mutable, kind-carrying map loaded from a level file rather
+than evaluated from a seed function. It still greedily merges each 32x32 chunk into
+AABB colliders on demand, and raises a `ChunkChanged` event so a future in-game tile
+editor can drive streamer reloads after an edit. The side-scroller keeps at most 15
+nearby chunks live, so scene rendering, weapon queries, and the collision spatial
+index are bounded by the local neighborhood rather than total world size.
 
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
@@ -243,9 +249,10 @@ dotnet run --project App2d
 
 Startup currently runs `SideScrollerGame`. It is the composition root and explicit
 fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of
-being implemented by the game class. `SideScrollerLevel2D` owns the seeded world
-definition and composes dedicated chunk streaming, terrain visual, and encounter
-spawning services. `PlayerCharacter2D`, `PlayerArsenal2D`, and `PlayerPresentation2D`
+being implemented by the game class. `LevelBootstrap2D` loads the cavern level file
+into an `EditableTileMap2D`, and `SideScrollerLevel2D` consumes that loaded tile map,
+composing dedicated chunk streaming, terrain visual, and encounter spawning services.
+`PlayerCharacter2D`, `PlayerArsenal2D`, and `PlayerPresentation2D`
 own the player's simulation, registered weapons, and visuals respectively.
 `CombatSystem2D` resolves attacks through generic source/sequence hit registration, so
 new weapons do not add weapon-specific bookkeeping to enemies. Camera/parallax, input
@@ -257,11 +264,11 @@ Four solid-color moving platforms are distributed through the early test map. Th
 kinematic one-way slabs follow horizontal or vertical ping-pong paths and carry dynamic
 bodies supported on top without replacing the rider's own movement velocity.
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
-ledges all derive from one coordinate seed. A small separately seeded population near
-spawn exists only as a mechanics playground; it is not the eventual authored encounter
-format.
+ledges are authored in `Assets/Static/levels/cavern/level.db`, the committed level file
+`LevelBootstrap2D` loads at startup. A small separately seeded population near spawn
+exists only as a mechanics playground; it is not the eventual authored encounter format.
 
-Procedural cells use composable `Solid`, `OneWay`, and `Grippable` flags; collision
+Tile cells use composable `Solid`, `OneWay`, and `Grippable` flags; collision
 generation never infers behavior from a rectangle's dimensions. Solid cells merge in
 both axes, while one-way cells merge only into horizontal strips and collide only from
 above. Grippable solids remain distinct collision runs, carry their flag into physics,
@@ -276,13 +283,14 @@ tileset: dark fill, bright cyan walkable tops, blue walls, violet undersides, wh
 outer joins, pink inner joins, and an amber one-way collision line. Merged visual fills
 are split at tileset boundaries while their collision remains merged. Chunk boundaries
 do not create false edges, and additional tilesets can use the same topology without
-changing authored or procedural map data. Tileset resolution is injected by tile
-coordinate and can later read stable, authored tileset IDs from the saved map; the
-equal-width rule is not part of the renderer. The active-window streamer consumes an
-`IChunkedTileMap2D` data view; its current implementation generates data, while a later
-implementation can load saved chunks through filesystem and cache layers. Seeded solid slabs, notched blocks, hollow frames, and stair-step
-formations exercise these combinations above the guaranteed ground route; climb spines,
-side ledges, and balcony formations are the map generator's one-way strips.
+changing authored map data. Tileset resolution is injected by tile coordinate and can
+later read stable, authored tileset IDs from the saved map; the equal-width rule is not
+part of the renderer. The active-window streamer consumes an `IChunkedTileMap2D` data
+view; `EditableTileMap2D` is its current implementation, loaded from a level file rather
+than generated live. The baked level's solid slabs, notched blocks, hollow frames, and
+stair-step formations exercise these combinations above the guaranteed ground route; its
+climb spines, side ledges, and balcony formations are the world generator's one-way
+strips.
 Player traversal has
 acceleration, coyote time, jump buffering, variable jump height, wall grip and wall jump,
 a high-speed enemy-phasing dash with one airborne charge restored on landing, a sword,
@@ -317,7 +325,9 @@ held-jump arc used at runtime. The F3 overlay draws the full-speed and standstil
 with their tile-relative measurements. This keeps authored
 distances tied to the movement implementation instead of duplicated design notes.
 
-`JumpableWorldGenerator2D` consumes that same contract. Tower tiers use the reliable
+`JumpableWorldGenerator2D`, now only `LevelBootstrap2D`'s one-time bake step for the
+cavern level file rather than a runtime terrain source, consumes that same contract.
+Tower tiers use the reliable
 four-tile rise, which leaves the three-tile standing passage between full-height ledges;
 their first tier is anchored to nearby terrain instead of an absolute row. Pit width is
 derived from measured running-jump distance with two tiles reserved for takeoff and
