@@ -11,7 +11,7 @@ public static class HalfSpaceCollision2D
         var convexShape = ArgGuard.RequireType<IConvexShape2D>(convexObject.Shape, "The constrained object must have a finite convex shape.", nameof(convexObject));
         var halfSpace = ArgGuard.RequireType<HalfSpace2D>(halfSpaceObject.Shape, "The constraint object must contain a HalfSpace2D.", nameof(halfSpaceObject));
 
-        if (!ShapeCollision2D.TryGetConvexHalfSpacePenetration(convexShape, convexObject.Transform, halfSpace, halfSpaceObject.Transform, out var worldNormal, out var penetration, out _))
+        if (!ShapeCollision2D.TryGetConvexHalfSpacePenetration(convexShape, convexObject.CollisionPose, halfSpace, halfSpaceObject.CollisionPose, out var worldNormal, out var penetration, out _))
         {
             contact = default;
             return false;

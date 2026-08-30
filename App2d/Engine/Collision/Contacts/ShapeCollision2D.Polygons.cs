@@ -6,12 +6,12 @@ namespace App2d.Engine.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    private static CollisionResult RectangleVsRectangle(Rectangle2D first, Transform2D firstTransform, Rectangle2D second, Transform2D secondTransform)
+    private static CollisionResult RectangleVsRectangle(Rectangle2D first, Similarity2D firstPose, Rectangle2D second, Similarity2D secondPose)
     {
         Span<Vector2> firstVertices = stackalloc Vector2[4];
         Span<Vector2> secondVertices = stackalloc Vector2[4];
-        WriteWorldRectangleVertices(first, firstTransform, firstVertices);
-        WriteWorldRectangleVertices(second, secondTransform, secondVertices);
+        WriteWorldRectangleVertices(first, firstPose, firstVertices);
+        WriteWorldRectangleVertices(second, secondPose, secondVertices);
         Span<Vector2> axes = stackalloc Vector2[8];
         var axisCount = 0;
         AddPolygonEdgeAxes(axes, ref axisCount, firstVertices);

@@ -7,7 +7,7 @@ namespace App2d.Engine.Mathematics;
 /// of transforms 2D collision supports. Row-vector convention matching
 /// <see cref="Matrix3x2"/>: XAxis/YAxis are the images of the local axes.
 /// </summary>
-public readonly struct Similarity2D
+public readonly record struct Similarity2D
 {
     private Similarity2D(Vector2 xAxis, Vector2 yAxis, Vector2 translation, float scale)
     {

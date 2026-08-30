@@ -67,6 +67,38 @@ public sealed class ShapeContactCharacterizationTests
     }
 
     [Fact]
+    public void MirroredCapsuleStillCollides()
+    {
+        var capsule = At(new Capsule2D(new Vector2(-1f, -2f), new Vector2(-1f, 2f), 1f), Vector2.Zero);
+        capsule.Transform.Scale = new Vector2(-1f, 1f); // player facing flip
+        var wall = At(Rectangle2D.FromSize(new Vector2(2f, 10f)), new Vector2(2.5f, 0f));
+
+        Assert.True(Provider.TryGetContact(capsule, wall, out var contact));
+        Assert.True(contact.PenetrationDepth > 0.4f);
+    }
+
+    [Fact]
+    public void UniformlyScaledCircleUsesScaledRadius()
+    {
+        var circle = At(new Circle2D(1f), Vector2.Zero);
+        circle.Transform.Scale = new Vector2(3f, 3f);
+        var other = At(new Circle2D(1f), new Vector2(3.5f, 0f));
+
+        Assert.True(Provider.TryGetContact(circle, other, out var contact));
+        Assert.Equal(0.5f, contact.PenetrationDepth, 3);
+    }
+
+    [Fact]
+    public void NonUniformScaleOnACollidableThrows()
+    {
+        var squashed = At(new Circle2D(1f), Vector2.Zero);
+        squashed.Transform.Scale = new Vector2(2f, 1f);
+        var other = At(new Circle2D(1f), new Vector2(1f, 0f));
+
+        Assert.Throws<InvalidOperationException>(() => Provider.TryGetContact(squashed, other, out _));
+    }
+
+    [Fact]
     public void RotatedRectangleVsRectangleFindsMtv()
     {
         var first = At(Rectangle2D.FromSize(new Vector2(4f, 4f)), Vector2.Zero);

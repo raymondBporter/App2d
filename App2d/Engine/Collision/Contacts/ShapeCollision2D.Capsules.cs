@@ -6,13 +6,10 @@ namespace App2d.Engine.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    private static CollisionResult CapsuleVsCapsule(Capsule2D first, Transform2D firstTransform, Capsule2D second, Transform2D secondTransform)
+    private static CollisionResult CapsuleVsCapsule(Capsule2D first, Similarity2D firstPose, Capsule2D second, Similarity2D secondPose)
     {
-        if (!CollisionMath2D.TryGetWorldCapsule(first, firstTransform, out var firstStart, out var firstEnd, out var firstRadius) ||
-            !CollisionMath2D.TryGetWorldCapsule(second, secondTransform, out var secondStart, out var secondEnd, out var secondRadius))
-        {
-            return CollisionResult.None;
-        }
+        var (firstStart, firstEnd, firstRadius) = CollisionMath2D.GetWorldCapsule(first, firstPose);
+        var (secondStart, secondEnd, secondRadius) = CollisionMath2D.GetWorldCapsule(second, secondPose);
 
         var closest = ClosestPoint2D.BetweenSegments(firstStart, firstEnd, secondStart, secondEnd);
         var combinedRadius = firstRadius + secondRadius;
@@ -52,13 +49,12 @@ public static partial class ShapeCollision2D
         return CollisionResult.From(new CollisionContact2D(contactPoint, bestNormal, bestDepth));
     }
 
-    private static CollisionResult RectangleVsCapsule(Rectangle2D rectangle, Transform2D rectangleTransform, Capsule2D capsule, Transform2D capsuleTransform)
+    private static CollisionResult RectangleVsCapsule(Rectangle2D rectangle, Similarity2D rectanglePose, Capsule2D capsule, Similarity2D capsulePose)
     {
-        if (!CollisionMath2D.TryGetWorldCapsule(capsule, capsuleTransform, out var capsuleStart, out var capsuleEnd, out var capsuleRadius))
-            return CollisionResult.None;
+        var (capsuleStart, capsuleEnd, capsuleRadius) = CollisionMath2D.GetWorldCapsule(capsule, capsulePose);
 
         Span<Vector2> rectangleVertices = stackalloc Vector2[4];
-        WriteWorldRectangleVertices(rectangle, rectangleTransform, rectangleVertices);
+        WriteWorldRectangleVertices(rectangle, rectanglePose, rectangleVertices);
         Span<Vector2> axes = stackalloc Vector2[12];
         var axisCount = 0;
         AddPolygonEdgeAxes(axes, ref axisCount, rectangleVertices);

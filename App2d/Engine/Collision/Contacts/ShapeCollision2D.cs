@@ -7,7 +7,9 @@ public static partial class ShapeCollision2D
 {
     public static bool TryGetContact(SpatialObject2D first, SpatialObject2D second, out CollisionContact2D contact)
     {
-        var result = Dispatch(first.Shape, first.Transform, second.Shape, second.Transform);
+        var firstPose = first.CollisionPose;
+        var secondPose = second.CollisionPose;
+        var result = Dispatch(first.Shape, firstPose, second.Shape, secondPose);
         if (result.HasContact)
         {
             contact = result.Contact;
@@ -15,7 +17,7 @@ public static partial class ShapeCollision2D
         }
 
         // This makes every implemented row callable in either argument order.
-        result = Dispatch(second.Shape, second.Transform, first.Shape, first.Transform);
+        result = Dispatch(second.Shape, secondPose, first.Shape, firstPose);
         if (result.HasContact)
         {
             contact = result.Contact.Flipped();
@@ -35,45 +37,45 @@ public static partial class ShapeCollision2D
 
     // One switch chooses the implemented row; the row switch chooses its pair.
     // Rectangle2D intentionally also catches the AxisAlignedRectangle2D subtype.
-    private static CollisionResult Dispatch(IShape2D first, Transform2D firstTransform, IShape2D second, Transform2D secondTransform) =>
+    private static CollisionResult Dispatch(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose) =>
         first switch
         {
-            Circle2D circle => CircleAgainst(circle, firstTransform, second, secondTransform),
-            Capsule2D capsule => CapsuleAgainst(capsule, firstTransform, second, secondTransform),
-            Rectangle2D rectangle => RectangleAgainst(rectangle, firstTransform, second, secondTransform),
-            HalfSpace2D halfSpace => HalfSpaceAgainst(halfSpace, firstTransform, second, secondTransform),
+            Circle2D circle => CircleAgainst(circle, firstPose, second, secondPose),
+            Capsule2D capsule => CapsuleAgainst(capsule, firstPose, second, secondPose),
+            Rectangle2D rectangle => RectangleAgainst(rectangle, firstPose, second, secondPose),
+            HalfSpace2D halfSpace => HalfSpaceAgainst(halfSpace, firstPose, second, secondPose),
             _ => CollisionResult.None
         };
 
-    private static CollisionResult CircleAgainst(Circle2D circle, Transform2D circleTransform, IShape2D other, Transform2D otherTransform) =>
+    private static CollisionResult CircleAgainst(Circle2D circle, Similarity2D circlePose, IShape2D other, Similarity2D otherPose) =>
         other switch
         {
-            Circle2D otherCircle => CircleVsCircle(circle, circleTransform, otherCircle, otherTransform),
-            ConvexPolygon2D polygon => CircleVsPolygon(circle, circleTransform, polygon.Vertices, otherTransform),
-            Rectangle2D rectangle => CircleVsRectangle(circle, circleTransform, rectangle, otherTransform),
-            Capsule2D capsule => CircleVsCapsule(circle, circleTransform, capsule, otherTransform),
-            HalfSpace2D halfSpace => CircleVsHalfSpace(circle, circleTransform, halfSpace, otherTransform),
+            Circle2D otherCircle => CircleVsCircle(circle, circlePose, otherCircle, otherPose),
+            ConvexPolygon2D polygon => CircleVsPolygon(circle, circlePose, polygon.Vertices, otherPose),
+            Rectangle2D rectangle => CircleVsRectangle(circle, circlePose, rectangle, otherPose),
+            Capsule2D capsule => CircleVsCapsule(circle, circlePose, capsule, otherPose),
+            HalfSpace2D halfSpace => CircleVsHalfSpace(circle, circlePose, halfSpace, otherPose),
             _ => CollisionResult.None
         };
 
-    private static CollisionResult CapsuleAgainst(Capsule2D capsule, Transform2D capsuleTransform, IShape2D other, Transform2D otherTransform)
+    private static CollisionResult CapsuleAgainst(Capsule2D capsule, Similarity2D capsulePose, IShape2D other, Similarity2D otherPose)
     {
         return other switch
         {
-            Circle2D circle => CircleVsCapsule(circle, otherTransform, capsule, capsuleTransform).Flipped(),
-            Capsule2D otherCapsule => CapsuleVsCapsule(capsule, capsuleTransform, otherCapsule, otherTransform),
-            Rectangle2D rectangle => RectangleVsCapsule(rectangle, otherTransform, capsule, capsuleTransform).Flipped(),
+            Circle2D circle => CircleVsCapsule(circle, otherPose, capsule, capsulePose).Flipped(),
+            Capsule2D otherCapsule => CapsuleVsCapsule(capsule, capsulePose, otherCapsule, otherPose),
+            Rectangle2D rectangle => RectangleVsCapsule(rectangle, otherPose, capsule, capsulePose).Flipped(),
             _ => CollisionResult.None
         };
     }
 
-    private static CollisionResult RectangleAgainst(Rectangle2D rectangle, Transform2D rectangleTransform, IShape2D other, Transform2D otherTransform)
+    private static CollisionResult RectangleAgainst(Rectangle2D rectangle, Similarity2D rectanglePose, IShape2D other, Similarity2D otherPose)
     {
         return other switch
         {
-            Circle2D circle => CircleVsRectangle(circle, otherTransform, rectangle, rectangleTransform).Flipped(),
-            Capsule2D capsule => RectangleVsCapsule(rectangle, rectangleTransform, capsule, otherTransform),
-            Rectangle2D otherRectangle => RectangleVsRectangle(rectangle, rectangleTransform, otherRectangle, otherTransform),
+            Circle2D circle => CircleVsRectangle(circle, otherPose, rectangle, rectanglePose).Flipped(),
+            Capsule2D capsule => RectangleVsCapsule(rectangle, rectanglePose, capsule, otherPose),
+            Rectangle2D otherRectangle => RectangleVsRectangle(rectangle, rectanglePose, otherRectangle, otherPose),
             _ => CollisionResult.None
         };
     }

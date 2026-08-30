@@ -421,11 +421,7 @@ public sealed class CollisionSystem2D
 
     private readonly record struct GridCell(int X, int Y);
 
-    private readonly record struct CellRange(
-        int MinimumX,
-        int MaximumX,
-        int MinimumY,
-        int MaximumY)
+    private readonly record struct CellRange(int MinimumX, int MaximumX, int MinimumY, int MaximumY)
     {
         public long CellCount =>
             (long)(MaximumX - MinimumX + 1) *

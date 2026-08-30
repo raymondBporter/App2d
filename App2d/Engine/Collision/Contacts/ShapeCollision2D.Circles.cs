@@ -6,25 +6,17 @@ namespace App2d.Engine.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    private static CollisionResult CircleVsRectangle(Circle2D circle, Transform2D circleTransform, Rectangle2D rectangle, Transform2D rectangleTransform)
+    private static CollisionResult CircleVsRectangle(Circle2D circle, Similarity2D circlePose, Rectangle2D rectangle, Similarity2D rectanglePose)
     {
         Span<Vector2> vertices = stackalloc Vector2[4];
         rectangle.WriteCorners(vertices);
-        return CircleVsPolygon(circle, circleTransform, vertices, rectangleTransform);
+        return CircleVsPolygon(circle, circlePose, vertices, rectanglePose);
     }
 
-    private static CollisionResult CircleVsCircle(Circle2D first, Transform2D firstTransform, Circle2D second, Transform2D secondTransform)
+    private static CollisionResult CircleVsCircle(Circle2D first, Similarity2D firstPose, Circle2D second, Similarity2D secondPose)
     {
-        if (!CollisionMath2D.TryGetWorldCircle(first, firstTransform, out var firstCenter, out var firstRadius))
-            return CollisionResult.None;
-        if (!CollisionMath2D.TryGetWorldCircle(second, secondTransform, out var secondCenter, out var secondRadius))
-        {
-            // A non-uniformly scaled circle is an ellipse. Keep exact circle math fast,
-            // and use a convex boundary approximation only for this transformed case.
-            Span<Vector2> ellipseBoundary = stackalloc Vector2[40];
-            WriteCircleBoundary(second, ellipseBoundary);
-            return CircleVsPolygon(first, firstTransform, ellipseBoundary, secondTransform);
-        }
+        var (firstCenter, firstRadius) = CollisionMath2D.GetWorldCircle(first, firstPose);
+        var (secondCenter, secondRadius) = CollisionMath2D.GetWorldCircle(second, secondPose);
 
         var delta = firstCenter - secondCenter;
         var distanceSquared = delta.LengthSquared();
@@ -38,13 +30,10 @@ public static partial class ShapeCollision2D
         return CollisionResult.From(new CollisionContact2D(point, normal, combinedRadius - distance));
     }
 
-    private static CollisionResult CircleVsCapsule(Circle2D circle, Transform2D circleTransform, Capsule2D capsule, Transform2D capsuleTransform)
+    private static CollisionResult CircleVsCapsule(Circle2D circle, Similarity2D circlePose, Capsule2D capsule, Similarity2D capsulePose)
     {
-        if (!CollisionMath2D.TryGetWorldCircle(circle, circleTransform, out var center, out var circleRadius) ||
-            !CollisionMath2D.TryGetWorldCapsule(capsule, capsuleTransform, out var start, out var end, out var capsuleRadius))
-        {
-            return CollisionResult.None;
-        }
+        var (center, circleRadius) = CollisionMath2D.GetWorldCircle(circle, circlePose);
+        var (start, end, capsuleRadius) = CollisionMath2D.GetWorldCapsule(capsule, capsulePose);
 
         var segmentPoint = ClosestPoint2D.OnSegment(center, start, end);
         var delta = center - segmentPoint;
@@ -70,12 +59,10 @@ public static partial class ShapeCollision2D
         return CollisionResult.From(new CollisionContact2D(segmentPoint + normal * capsuleRadius, normal, combinedRadius - distance));
     }
 
-    private static CollisionResult CircleVsHalfSpace(Circle2D circle, Transform2D circleTransform, HalfSpace2D halfSpace, Transform2D halfSpaceTransform)
+    private static CollisionResult CircleVsHalfSpace(Circle2D circle, Similarity2D circlePose, HalfSpace2D halfSpace, Similarity2D halfSpacePose)
     {
-        if (!CollisionMath2D.TryGetWorldCircle(circle, circleTransform, out var center, out var radius))
-            return CollisionResult.None;
-
-        var (normal, offset) = CollisionMath2D.GetWorldPlane(halfSpace, halfSpaceTransform);
+        var (center, radius) = CollisionMath2D.GetWorldCircle(circle, circlePose);
+        var (normal, offset) = CollisionMath2D.GetWorldPlane(halfSpace, halfSpacePose);
         var circleMinimum = Vector2.Dot(center, normal) - radius;
         var penetration = offset - circleMinimum;
         if (penetration <= 0f)
@@ -85,17 +72,15 @@ public static partial class ShapeCollision2D
         return CollisionResult.From(new CollisionContact2D(point, normal, penetration));
     }
 
-    private static CollisionResult CircleVsPolygon(Circle2D circle, Transform2D circleTransform, ReadOnlySpan<Vector2> localVertices, Transform2D polygonTransform)
+    private static CollisionResult CircleVsPolygon(Circle2D circle, Similarity2D circlePose, ReadOnlySpan<Vector2> localVertices, Similarity2D polygonPose)
     {
-        if (!CollisionMath2D.TryGetWorldCircle(circle, circleTransform, out var center, out var radius))
-            return CollisionResult.None;
+        var (center, radius) = CollisionMath2D.GetWorldCircle(circle, circlePose);
 
-        var polygonToWorld = polygonTransform.LocalToWorldMatrix;
         var vertices = localVertices.Length <= 64
             ? stackalloc Vector2[localVertices.Length]
             : new Vector2[localVertices.Length];
         for (var i = 0; i < vertices.Length; i++)
-            vertices[i] = Vector2.Transform(localVertices[i], polygonToWorld);
+            vertices[i] = polygonPose.TransformPoint(localVertices[i]);
 
         var closest = PolygonGeometry2D.ClosestPointOnPerimeter(center, vertices, out var edgeIndex);
         var centerFromBoundary = center - closest;
