@@ -2,32 +2,36 @@
 
 A deliberately small SkiaSharp 2D engine skeleton with compile-time module boundaries.
 
-The solution is split into `App2d.Core`, `App2d.Collision`, `App2d.Physics`,
-`App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`, plus the Windows executable
-composition root. Core, collision, physics, and rendering target plain `net10.0`;
-platform hosting, gameplay input, and audio remain in the Windows-targeted projects.
+The solution is split into `App2d.Core`, `App2d.Collision`, `App2d.Tiles`,
+`App2d.Physics`, `App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`, plus the
+Windows executable composition root. Each project physically owns its source files —
+there are no linked-file views. Core, collision, tiles, physics, and rendering target
+plain `net10.0`; platform hosting, gameplay input, and audio remain in the
+Windows-targeted projects.
 
 The engine is grouped by responsibility:
 
-- `Engine/Mathematics` contains transforms and reusable numeric helpers. The namespace
-  uses `Mathematics` rather than `Math` so it never shadows `System.Math`.
-- `Engine/Rendering` contains the renderer and shader abstractions.
-- `App2d.Collision` presents geometry, tile collision maps, and render-agnostic
-  collidables under `Shapes`; broad/narrow phase work under the top-level `BroadPhase`,
-  `Contacts`, `Filtering`, and `Intersections` folders; and ray primitives and shape
-  queries under `Raycasts`.
+- `App2d.Core/Mathematics` contains transforms and reusable numeric helpers, including
+  `Similarity2D` — the validated rotation + uniform scale + mirror + translation pose
+  that collision consumes. The namespace uses `Mathematics` rather than `Math` so it
+  never shadows `System.Math`.
+- `App2d.Rendering` contains the renderer and shader abstractions.
+- `App2d.Core` presents guards, mathematics, animation, geometry, and the
+  render-agnostic `SpatialObject2D`. `App2d.Tiles` presents the tile maps and mesher.
+  `App2d.Collision` contains only collision work: `BroadPhase`, `Contacts`,
+  `Filtering`, `Intersections`, and `Queries`.
 - `CollisionSystem2D` owns runtime collider registration, collision layers and masks,
   cached static/dynamic spatial indexes, candidate discovery, and exact contacts. It has
   no dependency on physics; physics and gameplay are consumers of collision data.
-- `Engine/Collision/BroadPhase` contains generic AABB candidate-pair searches, while
-  `Engine/Collision/Filtering` contains their generic filtering contract.
-- `Engine/Collision/Contacts` contains overlap/contact generation. Shape-pair code is
+- `App2d.Collision/BroadPhase` contains generic AABB candidate-pair searches, while
+  `App2d.Collision/Filtering` contains their generic filtering contract.
+- `App2d.Collision/Contacts` contains overlap/contact generation. Shape-pair code is
   split into circle, capsule, polygon/SAT, and utility partials behind one dispatcher.
-- `Engine/Collision/Queries` contains rays, exact shape intersections, and generic
-  spatial-object raycasts. Physics-world extensions live in `Engine/Physics/Queries`,
+- `App2d.Collision/Queries` contains rays, exact shape intersections, and generic
+  spatial-object raycasts. Physics-world extensions live in `App2d.Physics/Queries`,
   preventing the collision module from depending back on physics. Query hits retain
   direct references to the object or body that was hit.
-- `Engine/Physics/Integration`, `Engine/Physics/Filtering`, and `Engine/Physics/Solvers`
+- `App2d.Physics/Integration`, `App2d.Physics/Filtering`, and `App2d.Physics/Solvers`
   contain physics-specific policies; bodies, contacts, constraints, and the world remain
   at the physics root.
 
@@ -43,12 +47,12 @@ rejecting negative values and NaN.
 `InvalidOperationException` semantics. Physics iteration settings, collapsed transforms,
 and renderer lifecycle checks therefore do not masquerade as caller argument failures.
 
-Geometry lives under `Engine/Geometry`:
+Geometry lives under `App2d.Core/Geometry`:
 
 - `IShape2D` is the common local-space shape contract.
 - `ConvexPolygon2D` accepts and validates any ordered convex vertex loop.
 - `Circle2D` is a real circle primitive. Non-uniform object scale can render it as a
-  rotated ellipse without polygonizing it.
+  rotated ellipse without polygonizing it, but collision requires uniform scale.
 - `Capsule2D` is a local line segment swept by a radius.
 - `Rectangle2D` is a local rectangle that may be oriented by its world transform.
 - `AxisAlignedRectangle2D` preserves explicit AABB intent for tile, slab, and broad-phase
@@ -58,7 +62,7 @@ Geometry lives under `Engine/Geometry`:
   the solid region and into permitted space.
 - `Bounds2D` supplies local bounds to rendering and shaders.
 
-`Engine/Tiles/TileMap2D` stores compact authored maps. `ProceduralTileMap2D` addresses
+`App2d.Tiles/TileMap2D` stores compact authored maps. `ProceduralTileMap2D` addresses
 larger seeded worlds without allocating their full tile area: it evaluates stateless
 X/Y cells on demand, greedily merges one 32x32 chunk into AABB colliders, and permits
 old chunks to be discarded and regenerated exactly. The side-scroller keeps at most 15
@@ -73,29 +77,36 @@ shape and transform and applies the inverse transform for point queries. Physics
 reference this render-agnostic type. `WorldObject2D` adds shader, visibility, and draw
 order only when the spatial object is renderable.
 
-Finite convex shapes also implement `IConvexShape2D.GetSupportPoint`. The generic
-`Collision/Contacts/HalfSpaceCollision2D` query uses that support mapping to return a world-space contact
-normal, penetration depth, and minimum translation vector for any convex shape against
-a transformed half-space. `ConstrainOutside` applies the MTV to the object's position.
-Raycasts remain separate because query hits describe a point, surface normal, and travel
-distance, while solver contacts describe penetration between two shapes.
+Finite convex shapes also implement `IConvexShape2D.GetSupportPoint`. The half-space
+row of `ShapeCollision2D` uses that support mapping for any convex shape against a
+transformed half-space, reporting the deepest support point projected onto the boundary.
+`Collision/Contacts/HalfSpaceCollision2D` exposes the same math as a standalone query
+returning a normal, penetration depth, and minimum translation vector; `ConstrainOutside`
+applies the MTV to the object's position. Raycasts remain separate because query hits
+describe a point, surface normal, and travel distance, while solver contacts describe
+penetration between two shapes.
 
 `ShapeCollision2D` uses nested type switches: one selects the first-shape row and the
 second selects its implemented pair. Unknown pairs return no contact, and reverse-order
 fallback makes each implemented pair callable in either argument order. Collision-query
 temporaries for current shapes use stack-backed spans, so pair dispatch, rectangle
-vertices, capsule feature axes, and the ellipse approximation do not allocate per query.
-The circle row covers circles, convex polygons, rectangles, capsules, and half-spaces.
-Contacts consistently describe how to push the first object out of the second, so the
-same normal drives positional correction and reflected velocity.
+vertices, and capsule feature axes do not allocate per query. The circle row covers
+circles, convex polygons, rectangles, capsules, and half-spaces; the half-space row
+covers every finite convex shape through support mapping. Contacts consistently
+describe how to push the first object out of the second, so the same normal drives
+positional correction and reflected velocity.
+
+Narrow-phase and ray code consume `SpatialObject2D.CollisionPose`, a cached
+`Similarity2D` extracted from the transform. Rotation, uniform scale, and mirroring
+(the player's facing flip) are exact; a non-uniformly scaled collidable throws instead
+of silently missing or approximating, while render-only objects keep the fully
+flexible `Transform2D`.
 
 The capsule row covers circles, capsules, and rectangles. Segment-to-segment closest
 points handle parallel and zero-length spines without unstable division. Separated spines
 use the exact closest-point normal; crossing or coincident spines use capsule feature axes
 to select a stable MTV. The rectangle row covers circles, capsules, and rectangles using
-transformed feature axes, so rotated object transforms also work. Non-uniform capsule
-scale remains intentionally unimplemented because it produces a swept ellipse rather
-than a true capsule.
+transformed feature axes, so rotated object transforms also work.
 
 ## Physics step
 
@@ -144,10 +155,10 @@ pairing switches can opt specific combinations back in without changing the broa
 ## Ray queries
 
 `Ray2D` stores a normalized world-space direction, so every hit distance is measured in
-world units. `RayIntersection2D` intersects transformed circles/ellipses, rectangles,
-convex polygons, capsules, and half-spaces exactly. Rays that start inside a finite shape
-return its exit surface, and non-uniform scale and rotation preserve the correct world
-normal.
+world units. `RayIntersection2D` intersects transformed circles, rectangles, convex
+polygons, capsules, and half-spaces exactly through the object's `CollisionPose`. Rays
+that start inside a finite shape return its exit surface, and rotation, uniform scale,
+and mirroring preserve the correct world normal.
 
 The scene and physics extensions return the nearest hit without allocating:
 
@@ -283,7 +294,7 @@ code never knows asset paths or audio-device details. `SoundEffectBank2D` owns t
 mapping, per-cue levels, and non-repeating variants. Set `sfx_volume` in the developer
 console to a value from 0 through 1 to adjust the master sound-effect level.
 
-Player movement is owned by `Gameplay/CharacterMotor2D`. `PlayerIntent2D` describes
+Player movement is owned by `App2d.Gameplay/CharacterMotor2D`. `PlayerIntent2D` describes
 what the player requested; the motor turns that into desired velocity and grace-window
 state; `PhysicsWorld2D` decides what the level and active constraints permit. The motor
 then consumes new landing contacts, allowing a buffered jump to fire on the fixed step
@@ -419,7 +430,7 @@ pooled fireballs use `effects/fireball/ember-energy.png`.
 
 ## Frame animation
 
-`Engine/Animation` contains a generic, update-driven frame animation layer. A clip can
+`App2d.Core/Animation` contains a generic, update-driven frame animation layer. A clip can
 hold textures, shaders, numeric values, or any other frame state, so the timing code is
 not tied to the player or even to rendering:
 

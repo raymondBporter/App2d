@@ -4,17 +4,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AnalysisModePerformance>All</AnalysisModePerformance>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
     <ProjectReference Include="..\App2d.Collision\App2d.Collision.csproj" />
+    <ProjectReference Include="..\App2d.Tiles\App2d.Tiles.csproj" />
     <ProjectReference Include="..\App2d.Physics\App2d.Physics.csproj" />
     <ProjectReference Include="..\App2d.Rendering\App2d.Rendering.csproj" />
     <ProjectReference Include="..\App2d.Audio\App2d.Audio.csproj" />
-    <Compile Include="..\App2d\Gameplay\**\*.cs"
-             Exclude="..\App2d\Gameplay\PlayerInputMapper2D.cs;..\App2d\Gameplay\XboxControllerInput2D.cs"
-             Link="Gameplay\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>
