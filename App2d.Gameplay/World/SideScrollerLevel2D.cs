@@ -23,6 +23,7 @@ public sealed class SideScrollerLevel2D
     private readonly TraversalMetrics2D _traversal;
     private readonly Func<int, int> _groundY;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
+    private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
     private bool _mechanicsEnemiesCreated;
 
@@ -39,6 +40,10 @@ public sealed class SideScrollerLevel2D
         ArgGuard.ThrowIfNotPositive(_tileSize);
         _groundY = groundY;
         TileMap = tileMap;
+
+        // Only an editable map can change under us. A read-only map never raises the event.
+        if (tileMap is EditableTileMap2D editable)
+            editable.ChunkChanged += _dirtyChunks.Mark;
 
         StateGuard.ThrowIf(
             tileMap.TileSize != _tileSize,
@@ -212,6 +217,18 @@ public sealed class SideScrollerLevel2D
         var environment = RequireEnvironment();
         environment.Streamer.Update(focus);
         EnemySystem.UpdateStreaming(environment.Streamer.IsChunkActive);
+    }
+
+    /// <summary>
+    /// Rebuilds every chunk marked dirty since the last call. Cheap when nothing changed.
+    /// </summary>
+    public void FlushDirtyChunks()
+    {
+        if (_dirtyChunks.IsEmpty)
+            return;
+
+        var environment = RequireEnvironment();
+        _dirtyChunks.Flush(environment.Streamer.Invalidate);
     }
 
     public void CreateMechanicsPlaygroundEnemies(

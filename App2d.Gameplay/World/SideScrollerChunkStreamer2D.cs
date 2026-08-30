@@ -28,6 +28,19 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
 
     public bool IsChunkActive(TileChunk2D chunk) => _loadedChunks.ContainsKey(chunk);
 
+    /// <summary>
+    /// Rebuilds a chunk whose tiles changed. Does nothing when the chunk is not loaded —
+    /// loading it later reads the current map anyway.
+    /// </summary>
+    public void Invalidate(TileChunk2D chunk)
+    {
+        if (!_loadedChunks.ContainsKey(chunk))
+            return;
+
+        Unload(chunk);
+        Load(chunk);
+    }
+
     public void Update(Vector2 focus)
     {
         ArgGuard.ThrowIfNotFinite(focus);
