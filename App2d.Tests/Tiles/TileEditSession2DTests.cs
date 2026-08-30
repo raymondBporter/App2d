@@ -169,4 +169,33 @@ public sealed class TileEditSession2DTests
 
         Assert.Throws<InvalidOperationException>(() => session.Paint(0, 0, TileKind2D.Solid));
     }
+
+    [Fact]
+    public void UndoRestoresThePreStrokeValueWhenOneStrokePaintsATileTwice()
+    {
+        var map = NewMap();
+        map.SetTileKind(2, 2, TileKind2D.OneWay);
+        var session = new TileEditSession2D(map);
+
+        session.BeginStroke();
+        session.Paint(2, 2, TileKind2D.Solid);
+        session.Paint(2, 2, TileKind2D.Empty);
+        session.EndStroke();
+
+        session.Undo();
+
+        // Not TileKind2D.Solid: reverse replay must reach the value from before the
+        // stroke began, not the intermediate one.
+        Assert.Equal(TileKind2D.OneWay, map.GetTileKind(2, 2));
+    }
+
+    [Fact]
+    public void UndoDuringAStrokeThrows()
+    {
+        var map = NewMap();
+        var session = new TileEditSession2D(map);
+        session.BeginStroke();
+
+        Assert.Throws<InvalidOperationException>(() => session.Undo());
+    }
 }
