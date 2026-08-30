@@ -134,7 +134,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         var startY = chunk.Y * ChunkSize;
         var width = ChunkWidth(chunk.X);
         var height = ChunkHeight(chunk.Y);
-        ArgGuard.ThrowIfTooShort<TileKind2D>(destination, width * height);
+        ArgGuard.ThrowIfTooShort(destination, width * height);
 
         for (var y = 0; y < height; y++)
         {
@@ -153,7 +153,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         var startY = chunk.Y * ChunkSize;
         var width = ChunkWidth(chunk.X);
         var height = ChunkHeight(chunk.Y);
-        ArgGuard.ThrowIfTooShort<TileCell2D>(destination, width * height);
+        ArgGuard.ThrowIfTooShort(destination, width * height);
 
         for (var y = 0; y < height; y++)
         {
@@ -172,7 +172,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         var startY = chunk.Y * ChunkSize;
         var width = ChunkWidth(chunk.X);
         var height = ChunkHeight(chunk.Y);
-        ArgGuard.ThrowIfTooShort<TileKind2D>(source, width * height);
+        ArgGuard.ThrowIfTooShort(source, width * height);
 
         for (var y = 0; y < height; y++)
         {
@@ -194,7 +194,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
         var startY = chunk.Y * ChunkSize;
         var width = ChunkWidth(chunk.X);
         var height = ChunkHeight(chunk.Y);
-        ArgGuard.ThrowIfTooShort<TileCell2D>(source, width * height);
+        ArgGuard.ThrowIfTooShort(source, width * height);
 
         for (var index = 0; index < width * height; index++)
         {

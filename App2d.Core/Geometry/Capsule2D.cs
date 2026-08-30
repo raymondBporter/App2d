@@ -23,8 +23,7 @@ public sealed class Capsule2D : IConvexShape2D
     public Bounds2D LocalBounds { get; }
     public float Area => 2f * Radius * Vector2.Distance(Start, End) + MathF.PI * Radius * Radius;
 
-    public bool ContainsPoint(Vector2 localPoint) =>
-        Vector2.DistanceSquared(localPoint, ClosestPoint2D.OnSegment(localPoint, Start, End)) <= Radius * Radius;
+    public bool ContainsPoint(Vector2 localPoint) => Vector2.DistanceSquared(localPoint, ClosestPoint2D.OnSegment(localPoint, Start, End)) <= Radius * Radius;
 
     public Vector2 GetSupportPoint(Vector2 localDirection)
     {

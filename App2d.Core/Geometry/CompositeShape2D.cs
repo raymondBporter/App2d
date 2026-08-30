@@ -13,7 +13,7 @@ public sealed class CompositeShape2D : IShape2D
     public CompositeShape2D(IEnumerable<IConvexShape2D> parts)
     {
         _parts = [.. ArgGuard.RequireNotNull(parts)];
-        ArgGuard.ThrowIfTooShort<IConvexShape2D>(_parts, 1, nameof(parts));
+        ArgGuard.ThrowIfTooShort(_parts, 1, nameof(parts));
 
         var bounds = _parts[0].LocalBounds;
         var area = _parts[0].Area;

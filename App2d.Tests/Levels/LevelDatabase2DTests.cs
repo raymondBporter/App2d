@@ -330,7 +330,7 @@ public sealed class LevelDatabase2DTests : IDisposable
         using var reader = LevelDatabase2D.OpenRead(path);
         var loaded = reader.Load();
 
-        Assert.Equal(new[] { "dark-cave", "mossy-cavern" }, loaded.TilesetIds);
+        Assert.Equal(["dark-cave", "mossy-cavern"], loaded.TilesetIds);
         Assert.Equal(
             new TileCell2D(TileKind2D.Solid | TileKind2D.Grippable, 1),
             loaded.GetTile(2, 3));

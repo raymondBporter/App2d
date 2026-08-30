@@ -8,7 +8,6 @@ public class Rectangle2D : IConvexShape2D
     public Rectangle2D(Vector2 min, Vector2 max)
     {
         ArgGuard.ThrowIfNotComponentWiseLessThan(min, max);
-
         Min = min;
         Max = max;
         LocalBounds = new Bounds2D(min, max);

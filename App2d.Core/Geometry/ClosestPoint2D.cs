@@ -41,40 +41,37 @@ public static class ClosestPoint2D
             firstParameter = 0f;
             secondParameter = Math.Clamp(Vector2.Dot(secondDirection, startDelta) / secondLengthSquared, 0f, 1f);
         }
+        else if (secondLengthSquared <= float.Epsilon)
+        {
+            secondParameter = 0f;
+            firstParameter = Math.Clamp(-Vector2.Dot(firstDirection, startDelta) / firstLengthSquared, 0f, 1f);
+        }
         else
         {
             var firstDotDelta = Vector2.Dot(firstDirection, startDelta);
-            if (secondLengthSquared <= float.Epsilon)
+            var directionsDot = Vector2.Dot(firstDirection, secondDirection);
+            var secondDotDelta = Vector2.Dot(secondDirection, startDelta);
+            var denominator = firstLengthSquared * secondLengthSquared - directionsDot * directionsDot;
+            var parallelTolerance = 0.000001f * firstLengthSquared * secondLengthSquared;
+
+            firstParameter = MathF.Abs(denominator) > parallelTolerance
+                ? Math.Clamp((directionsDot * secondDotDelta - firstDotDelta * secondLengthSquared) / denominator, 0f, 1f)
+                : 0f;
+
+            var secondNumerator = directionsDot * firstParameter + secondDotDelta;
+            if (secondNumerator < 0f)
             {
                 secondParameter = 0f;
                 firstParameter = Math.Clamp(-firstDotDelta / firstLengthSquared, 0f, 1f);
             }
+            else if (secondNumerator > secondLengthSquared)
+            {
+                secondParameter = 1f;
+                firstParameter = Math.Clamp((directionsDot - firstDotDelta) / firstLengthSquared, 0f, 1f);
+            }
             else
             {
-                var directionsDot = Vector2.Dot(firstDirection, secondDirection);
-                var secondDotDelta = Vector2.Dot(secondDirection, startDelta);
-                var denominator = firstLengthSquared * secondLengthSquared - directionsDot * directionsDot;
-                var parallelTolerance = 0.000001f * firstLengthSquared * secondLengthSquared;
-
-                firstParameter = MathF.Abs(denominator) > parallelTolerance
-                    ? Math.Clamp((directionsDot * secondDotDelta - firstDotDelta * secondLengthSquared) / denominator, 0f, 1f)
-                    : 0f;
-
-                var secondNumerator = directionsDot * firstParameter + secondDotDelta;
-                if (secondNumerator < 0f)
-                {
-                    secondParameter = 0f;
-                    firstParameter = Math.Clamp(-firstDotDelta / firstLengthSquared, 0f, 1f);
-                }
-                else if (secondNumerator > secondLengthSquared)
-                {
-                    secondParameter = 1f;
-                    firstParameter = Math.Clamp((directionsDot - firstDotDelta) / firstLengthSquared, 0f, 1f);
-                }
-                else
-                {
-                    secondParameter = secondNumerator / secondLengthSquared;
-                }
+                secondParameter = secondNumerator / secondLengthSquared;
             }
         }
 
