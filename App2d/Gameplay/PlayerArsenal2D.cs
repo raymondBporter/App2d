@@ -33,33 +33,12 @@ public sealed class PlayerArsenal2D
         ArgGuard.ThrowIfNull(sounds);
 
         _presentation = presentation;
-        var meleeHud = textures.Load("ui/hud/weapons/sword.png");
-        var magicHud = textures.Load("ui/hud/weapons/fireball.png");
+        var swordHud = textures.Load("ui/hud/weapons/sword.png");
+        var gunHud = textures.Load("ui/hud/weapons/gun.png");
         _weapons =
         [
-            new SwordPlayerWeapon2D("SWORD A", "right-hand-sword-a", ownerBody, meleeHud, combat, presentation, sounds),
-            new SwordPlayerWeapon2D("SWORD B", "right-hand-sword-b", ownerBody, meleeHud, combat, presentation, sounds),
-            new SwordPlayerWeapon2D("SWORD C", "right-hand-sword-c", ownerBody, meleeHud, combat, presentation, sounds),
-            new SwordPlayerWeapon2D("SWORD D", "right-hand-sword-d", ownerBody, meleeHud, combat, presentation, sounds),
-            new SwordPlayerWeapon2D("SWORD E", "right-hand-sword-e", ownerBody, meleeHud, combat, presentation, sounds),
-            new AxePlayerWeapon2D("AXE A", "right-hand-axe-a", ownerBody, meleeHud, combat, presentation, sounds),
-            new AxePlayerWeapon2D("AXE B", "right-hand-axe-b", ownerBody, meleeHud, combat, presentation, sounds),
-            new AxePlayerWeapon2D("AXE C", "right-hand-axe-c", ownerBody, meleeHud, combat, presentation, sounds),
-            new DaggerPlayerWeapon2D("DAGGER A", "right-hand-dagger-a", ownerBody, meleeHud, combat, presentation, sounds),
-            new DaggerPlayerWeapon2D("DAGGER B", "right-hand-dagger-b", ownerBody, meleeHud, combat, presentation, sounds),
-            new HammerPlayerWeapon2D("HAMMER A", "right-hand-hammer-a", ownerBody, meleeHud, combat, presentation, sounds),
-            new HammerPlayerWeapon2D("HAMMER B", "right-hand-hammer-b", ownerBody, meleeHud, combat, presentation, sounds),
-            new HammerPlayerWeapon2D("HAMMER C", "right-hand-hammer-c", ownerBody, meleeHud, combat, presentation, sounds),
-            new WandPlayerWeapon2D(
-                scene,
-                ownerBody,
-                textures,
-                magicHud,
-                collision,
-                worldLayer,
-                combat,
-                presentation,
-                sounds)
+            new SwordPlayerWeapon2D("SWORD","sword",ownerBody,swordHud,combat,presentation,sounds),
+            new GunPlayerWeapon2D(scene,ownerBody,textures,gunHud,collision,worldLayer,combat,presentation,sounds)
         ];
         _equippedWeapon = _weapons[0];
         _presentation.EquipRightHandWeapon(_equippedWeapon.EquipmentId);
@@ -68,7 +47,7 @@ public sealed class PlayerArsenal2D
     public bool IsMeleeAttackActive =>
         _equippedWeapon is MeleePlayerWeapon2D { IsAttackActive: true };
     public string WeaponStatus =>
-        $"Q/RB: SWITCH   H/J/L or X/Y/B: {_equippedWeapon.Status}";
+        $"Q/Y: SWITCH   J/CLICK or X: {_equippedWeapon.Status}";
     public string WeaponName => _equippedWeapon.Name;
     public Texture2D WeaponHudTexture => _equippedWeapon.HudTexture;
 

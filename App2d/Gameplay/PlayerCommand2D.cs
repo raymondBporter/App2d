@@ -7,6 +7,4 @@ public readonly record struct PlayerCommand2D(
     bool UseWeapon,
     Vector2? AimTarget,
     bool SwitchWeapon,
-    bool ToggleTraversalDebug,
-    bool PreviewMeleeChop,
-    bool PreviewMeleeStab);
+    bool ToggleTraversalDebug);

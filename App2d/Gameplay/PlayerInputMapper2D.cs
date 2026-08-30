@@ -57,7 +57,10 @@ public sealed class PlayerInputMapper2D
             jumpHeld,
             !jumpHeld && (_jumpActionHeld || anyJumpReleased),
             downHeld && jumpPressed,
-            downHeld);
+            input.WasKeyPressed(Keys.ShiftKey) ||
+                input.WasKeyPressed(Keys.LShiftKey) ||
+                input.WasKeyPressed(Keys.RShiftKey) ||
+                controller.DashPressed);
         _jumpActionHeld = jumpHeld;
 
         var mouseAttackPressed = input.WasMousePressed(MouseButtons.Left);
@@ -71,11 +74,7 @@ public sealed class PlayerInputMapper2D
                 : controller.AimTarget,
             input.WasKeyPressed(Keys.Q) ||
                 controller.SwitchWeapon,
-            input.WasKeyPressed(Keys.F3),
-            input.WasKeyPressed(Keys.H) ||
-                controller.PreviewMeleeChop,
-            input.WasKeyPressed(Keys.L) ||
-                controller.PreviewMeleeStab);
+            input.WasKeyPressed(Keys.F3));
     }
 
     public void Reset()

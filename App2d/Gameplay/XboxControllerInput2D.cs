@@ -9,12 +9,10 @@ internal sealed class XboxControllerInput2D
     private const float AimDistance = 700f;
     private const float LeftStickDeadZone = 7_849f;
     private const float RightStickDeadZone = 8_689f;
-    private const byte TriggerThreshold = 30;
     private const uint Success = 0;
 
     private int _controllerIndex = -1;
     private XInputButtons _previousButtons;
-    private bool _rightTriggerWasDown;
 
     public bool IsConnected => _controllerIndex >= 0;
 
@@ -33,7 +31,6 @@ internal sealed class XboxControllerInput2D
         var jumpReleased =
             _previousButtons.HasFlag(XInputButtons.A) && !jumpHeld;
 
-        var rightTriggerDown = gamepad.RightTrigger > TriggerThreshold;
         var aim = ApplyRadialDeadZone(
             gamepad.RightThumbX,
             gamepad.RightThumbY,
@@ -58,14 +55,10 @@ internal sealed class XboxControllerInput2D
             jumpPressed,
             jumpHeld,
             jumpReleased,
-            pressed.HasFlag(XInputButtons.RightShoulder),
-            pressed.HasFlag(XInputButtons.Y) ||
-                pressed.HasFlag(XInputButtons.LeftShoulder) ||
-                rightTriggerDown && !_rightTriggerWasDown,
-            pressed.HasFlag(XInputButtons.X),
             pressed.HasFlag(XInputButtons.B),
+            pressed.HasFlag(XInputButtons.Y),
+            pressed.HasFlag(XInputButtons.X),
             aim == Vector2.Zero ? null : playerPosition + aim * AimDistance);
-        _rightTriggerWasDown = rightTriggerDown;
         return frame;
     }
 
@@ -102,7 +95,6 @@ internal sealed class XboxControllerInput2D
     private void ResetButtonHistory()
     {
         _previousButtons = XInputButtons.None;
-        _rightTriggerWasDown = false;
     }
 
     private static Vector2 ApplyRadialDeadZone(short rawX, short rawY, float deadZone)
@@ -151,8 +143,6 @@ internal sealed class XboxControllerInput2D
         DPadDown = 0x0002,
         DPadLeft = 0x0004,
         DPadRight = 0x0008,
-        LeftShoulder = 0x0100,
-        RightShoulder = 0x0200,
         A = 0x1000,
         B = 0x2000,
         X = 0x4000,
@@ -166,8 +156,7 @@ internal readonly record struct XboxControllerFrame2D(
     bool JumpPressed,
     bool JumpHeld,
     bool JumpReleased,
+    bool DashPressed,
     bool SwitchWeapon,
     bool UseWeapon,
-    bool PreviewMeleeChop,
-    bool PreviewMeleeStab,
     Vector2? AimTarget);

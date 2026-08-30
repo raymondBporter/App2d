@@ -33,6 +33,8 @@ internal sealed class SideScrollerTerrainTileset2D
     private readonly IShader2D _oneWayLeftShader;
     private readonly IShader2D _oneWayMiddleShader;
     private readonly IShader2D _oneWayRightShader;
+    private readonly IShader2D _grippableShader =
+        new SolidColorShader(new SKColor(76, 231, 120));
     private readonly float _surfaceThickness;
     private readonly float _outerCornerSize;
     private readonly float _innerCornerSize;
@@ -145,6 +147,9 @@ internal sealed class SideScrollerTerrainTileset2D
 
     public WorldObject2D CreateSolidFill(Bounds2D bounds) =>
         CreateVisual(bounds.Size, bounds.Center, _fillShader);
+
+    public WorldObject2D CreateGrippable(Bounds2D tileBounds) =>
+        CreateVisual(tileBounds.Size, tileBounds.Center, _grippableShader);
 
     public WorldObject2D CreateSurface(Bounds2D tileBounds, TileSurface2D surface) =>
         surface switch

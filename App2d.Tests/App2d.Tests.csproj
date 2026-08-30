@@ -22,8 +22,4 @@
     <ProjectReference Include="..\App2d.Physics\App2d.Physics.csproj" />
     <ProjectReference Include="..\App2d.Rendering\App2d.Rendering.csproj" />
   </ItemGroup>
-
-  <ItemGroup Condition="!Exists('..\Assets\Work\art-pipeline\SparseLayerSwordAProof\package.json') Or !Exists('..\Assets\Content\sparse\player-one-handed-v1\library.json')">
-    <Compile Remove="Rendering\SparseAnimationPackage2DTests.cs" />
-  </ItemGroup>
 </Project>

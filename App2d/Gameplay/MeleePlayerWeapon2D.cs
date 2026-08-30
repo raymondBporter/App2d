@@ -34,7 +34,7 @@ internal abstract class MeleePlayerWeapon2D(
     {
         get
         {
-            if (_attack.IsActive)
+            if (_attack.IsVisible)
                 yield return _attack.WorldObject;
         }
     }

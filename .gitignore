@@ -18,18 +18,8 @@ venv/
 artifacts/
 Assets/Work/
 
-# Reproducible art-pipeline outputs. Keep manifests and source inputs in Git;
-# rebuild these directories with tools/ArtPipeline/build_runtime_assets.py.
-/Assets/Library/characters/player/
-/Assets/Content/characters/player/animations/
-/Assets/Content/weapons/
-/Assets/Content/loadouts/
-/Assets/Content/sparse/
-/Assets/Content/sparse-loadouts/
-
-# The pipeline consumes GLB or glTF inputs. Alternate source-pack formats add
-# substantial duplicate data and can be downloaded again from the attributed pack.
-/Assets/Sources/**/*.fbx
-/Assets/Sources/**/*.obj
-/Assets/Sources/**/*.mtl
-/Assets/Sources/**/*.url
+# Reproducible player-art outputs. Rebuild them with
+# tools/ArtPipeline/build_runtime_assets.py.
+/Assets/Content/characters/player-sword/
+/Assets/Content/characters/player-gun/
+/Assets/Sources/third-party/rgs-stick-figure.zip

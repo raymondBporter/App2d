@@ -196,12 +196,12 @@ consumes the resulting collision contacts.
 
 ## First run
 
-The repository keeps source models, render plans, licenses, and small hand-selected
-assets in Git. Character animation frames, equipment layers, previews, and sparse atlas
-packages are generated locally and ignored so ordinary commits stay small.
+The repository keeps the CC0 RGS Dev stick-figure source pack and license in Git.
+Normalized runtime frames are generated locally and ignored so ordinary commits stay
+small.
 
-From a clean clone, create a local virtual environment, install the two Python
-dependencies, and build the runtime art:
+From a clean clone, create a local virtual environment, install Pillow, and build the
+runtime art:
 
 ```powershell
 python -m venv .codex-art-venv
@@ -213,21 +213,13 @@ The virtual environment is ignored by Git. Reinstall its packages at any time wi
 the same `python -m pip install -r tools/ArtPipeline/requirements.txt` command, using
 the virtual environment's Python executable as shown above.
 
-The full build validates every right-hand weapon, plans the configured motion profile,
-and writes the shared sparse library to
-`Assets/Content/sparse/player-one-handed-v1`. That output contains one character atlas
-set plus equipment-only atlas sets; it does not generate per-weapon copies of the
-character. During pipeline development, `--skip-sparse` produces the complete playable
-full-canvas fallback without motion planning or the final atlas-packing pass.
+The build scales and root-aligns the pack's baked Sword and Pistol sequences into
+`player-sword` and `player-gun` character folders. It also imports the bullet and HUD
+icons. No model rendering, equipment layers, depth compositing, or atlas planning is
+required for the playable build.
 
-Generated files remain below `Assets/Content` because the game ships that tree, but the
-generated subdirectories are excluded by `.gitignore`. See
-`tools/ArtPipeline/README.md` for individual render, validation, and proof commands.
-Tests that inspect the sparse production library are included automatically when their
-ignored proof and runtime fixtures are present; the remaining engine tests run on a
-clean clone without generated art. To repack only the sparse library from existing
-master renders, follow the staged planning commands in
-`tools/ArtPipeline/README.md`.
+Generated files remain below `Assets/Content` because the game ships that tree, while
+the reproducible character folders are excluded by `.gitignore`.
 
 ## Run
 
@@ -252,11 +244,11 @@ ledges all derive from one coordinate seed. A small separately seeded population
 spawn exists only as a mechanics playground; it is not the eventual authored encounter
 format.
 
-Procedural cells are `Empty`, `Solid`, or `OneWay`; collision generation never infers
-behavior from a rectangle's dimensions. Solid cells merge in both axes and use the full
-terrain treatment. One-way cells merge only into horizontal strips, collide only from
-above, and render with dedicated standalone, left-end, middle, and right-end art without
-solid fill, making their behavior visible before the player commits to a jump.
+Procedural cells use composable `Solid`, `OneWay`, and `Grippable` flags; collision
+generation never infers behavior from a rectangle's dimensions. Solid cells merge in
+both axes, while one-way cells merge only into horizontal strips and collide only from
+above. Grippable solids remain distinct collision runs, carry their flag into physics,
+and currently render as bright green temporary tiles so their behavior is obvious.
 
 Solid tilemaps expose a four-bit `TileSurface2D` topology (`Top`, `Right`, `Bottom`,
 and `Left`) plus four outer and four diagonal-aware inner `TileCorner2D` cases. A
@@ -275,8 +267,10 @@ implementation can load saved chunks through filesystem and cache layers. Seeded
 formations exercise these combinations above the guaranteed ground route; climb spines,
 side ledges, and balcony formations are the map generator's one-way strips.
 Player traversal has
-acceleration, coyote time, jump buffering, variable jump height, a sword, and a fixed
-pool of 16 fireballs.
+acceleration, coyote time, jump buffering, variable jump height, wall grip and wall jump,
+a high-speed enemy-phasing dash, a sword, and a fixed pool of 16 fireballs. While airborne and falling, holding toward a
+nearby static solid wall suspends the player; jumping launches away. One-way platforms
+do not allow wall grip.
 
 Short sound effects are decoded once at startup and played through one polyphonic mixer.
 Gameplay emits semantic cues through `ISoundEffectSink2D`, so movement, combat, and weapon
@@ -293,13 +287,12 @@ four-unit landing snap, eight-unit upward corner correction, held-jump apex grav
 and a terminal fall speed without weakening collision tolerances globally.
 
 Side-scroller dimensions use an eight-world-unit design increment. A terrain tile is
-32 units (four increments), while the player collider is 56 by 88 units (seven by
-eleven increments). The character is 2.75 tiles tall: two-tile openings are blocked,
-three-tile passages leave one eight-unit increment of clearance, four-tile rises are
-reliable, and five-tile rises exceed the normal held jump. The padded sprite canvas
-renders at 184 by 138 world units so the artwork follows the larger body scale. Spawn
-height, presentation size, and collision size all come from `TraversalMetrics2D`
-rather than repeating unrelated literals.
+32 units (four increments). The RGS player keeps its square 512-pixel canvas aspect
+ratio and renders at 138 by 138 world units. The art pipeline measures the idle feet,
+head inset and authored foot anchor, then writes the visual and collider
+geometry to `characters/player-geometry.json`. Runtime loads that manifest rather than
+duplicating sprite measurements in gameplay code. The collider offset mirrors with the
+player's facing.
 
 `TraversalMetrics2D` is the single source for locomotion tuning and simulates the same
 held-jump arc used at runtime. The F3 overlay draws the full-speed and standstill arcs
@@ -319,25 +312,24 @@ be authored levels.
 Xbox controller:
 
 - Left stick or D-pad: run
-- Left stick down or D-pad Down: crouch; press A while held to drop through a one-way platform
+- Hold toward a solid wall while falling: wall grip; press A to jump away
+- Hold Down on the left stick or D-pad and press A: drop through a one-way platform
 - A: jump; release early to shorten the jump
+- B: dash
 - Right stick: aim
-- X: the same chop action as H
-- Y, left bumper, or right trigger: the same equipped-weapon attack as J
-- B: the same stab action as L
-- Right bumper: switch the equipped weapon
+- X: use the equipped weapon
+- Y: switch between the sword and gun
 
 Keyboard and mouse fallback:
 
 - A / D or Left / Right: run
+- Hold toward a solid wall while falling: wall grip; press jump to jump away
 - W, Up, or Space: jump; press again in the air to double jump
-- S or Down: duck; movement is slower while ducking
-- S or Down + jump: drop through the supporting one-way strip
+- Hold S or Down and press jump: drop through the supporting one-way strip
 - Release jump early: shorten the jump
+- Left or Right Shift: dash
 - Q: cycle the equipped weapon
 - J or left click: use the equipped weapon
-- H: preview the equipped weapon's one-handed chop animation (visual only)
-- L: preview the equipped weapon's one-handed stab animation (visual only)
 - F3: toggle traversal arcs and movement metrics
 - Backtick (`): open or close the developer console
 - Escape: close
@@ -437,32 +429,21 @@ spriteShader.Texture = animation.CurrentFrame;
 ```
 
 Clips may use a uniform frame rate or an explicit duration for every sample, and may
-loop or stop on their last frame. The sparse pipeline treats the 30 FPS renders as
-high-fidelity source material and selects nonuniform points by accumulated screen-space
-motion, while stored source times and sample durations preserve the authored pose timing
-and playback length. Motion measurement, quality/memory profile planning, and atlas
-materialization are separate stages, so profile and byte-budget changes reuse immutable
-master renders and cached numerical analysis. Players support
-pause, resume, stop, restart, and playback-speed changes. `SpriteShader2D` maps one complete texture onto
-finite object bounds, corrects image orientation for the engine's Y-up world, and can
-flip sprites horizontally or vertically.
+loop or stop on their last frame. Players support pause, resume, stop, restart, and
+playback-speed changes. `SpriteShader2D` maps one complete texture onto finite object
+bounds, corrects image orientation for the engine's Y-up world, and flips the baked
+right-facing sprites when the player faces left.
 
-Equipped rendering prefers the independent layer library at
-`Assets/Content/sparse/player-one-handed-v1/library.json`. The character atlas is stored
-once; each equipment package contains weapon pixels only. Character and weapon layers
-select their own nonuniform samples against the same clip clock, then the existing GPU
-depth shader combines them without creating a full-canvas intermediate texture. Atlas
-pages load lazily, and changing equipment releases the previous equipment package while
-keeping the shared character pages resident. Combinations that add another equipment
-layer, such as a shield, continue through the compatible full-canvas fallback.
+The sword and gun are complete baked character sets rather than independently composited
+equipment. Switching weapons swaps the active character animation set.
 
 Each character owns a `character.json` and semantic folders such as
-`characters/player/animations/walk`. The animation ID and folder name are identical;
-source names such as `Walking_B` remain provenance rather than runtime vocabulary.
+`characters/player-sword/animations/walk`. The animation ID and folder name are
+identical; source names remain provenance rather than runtime vocabulary.
 Frames use contiguous four-digit names beginning at `frame-0001.png`. Manifests record
 frame rate or total duration plus looping behavior without repeating asset paths.
 
-Sword and magic-shot one-shots take priority over locomotion and remain synchronized to
+Sword and gun-shot one-shots take priority over locomotion and remain synchronized to
 their gameplay timing. The character artwork is rendered by a separate visual object
 that follows the smaller physics collider, keeping transparent frame padding out of
 collision calculations.

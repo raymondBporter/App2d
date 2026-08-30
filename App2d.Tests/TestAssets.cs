@@ -15,8 +15,7 @@ internal static class TestAssets
             while (directory is not null)
             {
                 var candidate = Path.Combine(directory.FullName, "Assets");
-                if (Directory.Exists(Path.Combine(candidate, "Content")) &&
-                    Directory.Exists(Path.Combine(candidate, "Work")))
+                if (Directory.Exists(Path.Combine(candidate, "Content")))
                 {
                     return candidate;
                 }

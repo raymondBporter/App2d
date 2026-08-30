@@ -38,7 +38,9 @@ public sealed class PlayerCharacter2D
         _sounds = ArgGuard.RequireNotNull(sounds);
         _enemyLayer = enemyLayer;
 
-        WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(traversal.PlayerColliderSize));
+        WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(
+            traversal.PlayerColliderSize,
+            new Vector2(traversal.PlayerColliderCenterOffsetX, 0f)));
         WorldObject.Transform.Position = spawnPoint;
 
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
@@ -65,7 +67,8 @@ public sealed class PlayerCharacter2D
     public float InvulnerabilitySeconds { get; private set; }
     public float LandingSpeedThisFrame { get; private set; }
     public bool IsGrounded => _motor.IsGrounded;
-    public bool IsDucking => _motor.IsDucking;
+    public bool IsWallGripping => _motor.IsWallGripping;
+    public bool IsDashing => _motor.IsDashing;
 
     public void BeginFrame(float deltaSeconds)
     {
@@ -76,8 +79,8 @@ public sealed class PlayerCharacter2D
     public void UpdateBeforePhysics(PlayerIntent2D intent, float deltaSeconds)
     {
         if (MathF.Abs(intent.MoveX) > 0.01f)
-            Facing = MathF.Sign(intent.MoveX);
-        _motor.UpdateBeforePhysics(intent, deltaSeconds);
+            SetFacing(intent.MoveX);
+        _motor.UpdateBeforePhysics(intent, Facing, deltaSeconds);
     }
 
     public void UpdateAfterPhysics(float deltaSeconds)
@@ -88,12 +91,14 @@ public sealed class PlayerCharacter2D
 
     public void Face(float direction)
     {
-        if (MathF.Abs(direction) > 0.01f)
-            Facing = MathF.Sign(direction);
+        SetFacing(direction);
     }
 
     public bool ResolveEnemyTouches()
     {
+        if (IsDashing)
+            return false;
+
         _collision.Overlap(
             WorldObject,
             _overlaps,
@@ -128,7 +133,7 @@ public sealed class PlayerCharacter2D
         ArgGuard.ThrowIfNotFinite(sourceX);
         ArgGuard.ThrowIfNotPositive(horizontalKnockback);
         ArgGuard.ThrowIfNotPositive(verticalKnockback);
-        if (InvulnerabilitySeconds > 0f || !Health.IsAlive)
+        if (IsDashing || InvulnerabilitySeconds > 0f || !Health.IsAlive)
             return false;
 
         Health.Damage(damage);
@@ -150,14 +155,27 @@ public sealed class PlayerCharacter2D
         Body.LinearVelocity = Vector2.Zero;
         Body.AngularVelocity = 0f;
         _motor.Reset();
+        SetFacing(Facing);
         _footstepSeconds = 0f;
         LandingSpeedThisFrame = 0f;
         InvulnerabilitySeconds = Math.Max(InvulnerabilitySeconds, 0.35f);
     }
 
+    private void SetFacing(float direction)
+    {
+        if (MathF.Abs(direction) <= 0.01f)
+            return;
+
+        Facing = MathF.Sign(direction);
+        var scale = WorldObject.Transform.Scale;
+        WorldObject.Transform.Scale = new Vector2(Facing, scale.Y);
+    }
+
     private void UpdateFootsteps(float deltaSeconds)
     {
-        if (!IsGrounded || MathF.Abs(Body.LinearVelocity.X) < FootstepSpeedThreshold)
+        if (IsDashing ||
+            !IsGrounded ||
+            MathF.Abs(Body.LinearVelocity.X) < FootstepSpeedThreshold)
         {
             _footstepSeconds = 0f;
             return;

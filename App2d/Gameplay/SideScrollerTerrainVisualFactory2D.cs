@@ -82,10 +82,18 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         {
             for (var x = startX; x < endX; x++)
             {
-                if (_tileMap.GetTileKind(x, y) == TileKind2D.OneWay)
+                var kind = _tileMap.GetTileKind(x, y);
+                if (kind.IsOneWay())
                 {
                     var oneWayBounds = GetTileBounds(x, y);
                     AddVisual(visuals, _tilesets.GetTileset(x, y).CreateOneWay(oneWayBounds, GetOneWayPart(x, y)));
+                    continue;
+                }
+
+                if (kind.IsSolid() && kind.IsGrippable())
+                {
+                    var grippableBounds = GetTileBounds(x, y);
+                    AddVisual(visuals, _tilesets.GetTileset(x, y).CreateGrippable(grippableBounds));
                     continue;
                 }
 
@@ -110,6 +118,9 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         {
             for (var x = startX; x < endX; x++)
             {
+                if (_tileMap.GetTileKind(x, y).IsGrippable())
+                    continue;
+
                 var corners = _tileMap.GetCorners(x, y);
                 if (corners == TileCorner2D.None)
                     continue;
@@ -153,10 +164,10 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
     {
         var hasLeft = x > 0 &&
             _tilesets.UsesSameTileset(x, y, x - 1, y) &&
-            _tileMap.GetTileKind(x - 1, y) == TileKind2D.OneWay;
+            _tileMap.GetTileKind(x - 1, y).IsOneWay();
         var hasRight = x < _tileMap.Width - 1 &&
             _tilesets.UsesSameTileset(x, y, x + 1, y) &&
-            _tileMap.GetTileKind(x + 1, y) == TileKind2D.OneWay;
+            _tileMap.GetTileKind(x + 1, y).IsOneWay();
         return (hasLeft, hasRight) switch
         {
             (false, false) => OneWayTilePart2D.Standalone,

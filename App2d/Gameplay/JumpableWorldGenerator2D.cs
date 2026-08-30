@@ -104,16 +104,20 @@ public sealed class JumpableWorldGenerator2D
             return false;
 
         var platformRow = (y - firstPlatformY) / _platformRowSpacing;
-        var maximumRows = Math.Max(
+        var availableRows = Math.Max(
             1,
             (Height - firstPlatformY + _platformRowSpacing - 1) /
             _platformRowSpacing);
-        var towerRows = _random.Range(
-            region,
-            0,
-            Math.Min(8, maximumRows),
-            maximumRows + 1,
-            channel: 20);
+        var maximumRows = Math.Min(6, availableRows);
+        var minimumRows = Math.Min(3, maximumRows);
+        var towerRows = minimumRows == maximumRows
+            ? maximumRows
+            : _random.Range(
+                region,
+                0,
+                minimumRows,
+                maximumRows + 1,
+                channel: 20);
         if (platformRow >= towerRows)
             return false;
 
@@ -182,16 +186,19 @@ public sealed class JumpableWorldGenerator2D
 
         var startX = _random.Range(region, 0, 10, 19, channel: 41);
         var localX = regionX - startX;
-        var style = _random.Range(region, 0, 0, 5, channel: 43);
+        var style = _random.Range(region, 0, 0, 6, channel: 43);
         var anchorX = Math.Clamp(
             region * TopologyRegionWidth + startX,
             1,
             Width - 2);
         var groundSurfaceY = TerrainHeight(anchorX);
-        var baseY = style == 3
+        var baseY = style is 3 or 5
             ? groundSurfaceY
             : groundSurfaceY + _standingPassageTiles;
         var localY = y - baseY;
+
+        if (style == 5)
+            return GetGripCourseKind(localX, localY);
 
         var isOccupied = style switch
         {
@@ -226,8 +233,27 @@ public sealed class JumpableWorldGenerator2D
         if (!isOccupied)
             return TileKind2D.Empty;
 
-        return style == 4
-            ? TileKind2D.OneWay
+        if (style == 4)
+            return TileKind2D.OneWay;
+
+        return style is 1 or 2 or 3
+            ? TileKind2D.Solid | TileKind2D.Grippable
             : TileKind2D.Solid;
+    }
+
+    private static TileKind2D GetGripCourseKind(int x, int y)
+    {
+        var isPillar =
+            y >= 0 && y < 9 &&
+            (x >= 0 && x < 2 || x >= 5 && x < 7);
+        if (isPillar)
+            return TileKind2D.Solid | TileKind2D.Grippable;
+
+        var isRestLedge =
+            x >= 2 && x < 5 &&
+            (y == 3 || y == 7);
+        return isRestLedge
+            ? TileKind2D.OneWay
+            : TileKind2D.Empty;
     }
 }

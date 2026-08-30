@@ -6,40 +6,35 @@ using App2d.Engine.Rendering.Textures;
 
 namespace App2d.Gameplay;
 
+/// <summary>
+/// Selects between the baked sword and gun character sheets and keeps visual
+/// animation independent from the player's physics collider.
+/// </summary>
 public sealed class PlayerPresentation2D : IDisposable
 {
     private const float TerminalVelocityEpsilon = 25f;
-    private const string ShieldEquipmentId = "shield-a";
+    private const string SwordCharacterId = "player-sword";
+    private const string GunCharacterId = "player-gun";
 
-    private readonly AnimationClip2D<Texture2D> _idleAnimation;
-    private readonly AnimationClip2D<Texture2D> _walkAnimation;
-    private readonly AnimationClip2D<Texture2D> _duckAnimation;
-    private readonly AnimationClip2D<Texture2D> _jumpAnimation;
-    private readonly AnimationClip2D<Texture2D> _fallAnimation;
-    private readonly AnimationClip2D<Texture2D> _landingAnimation;
-    private readonly AnimationClip2D<Texture2D> _hitAnimation;
-    private readonly AnimationClip2D<Texture2D> _meleeChopAnimation;
-    private readonly AnimationClip2D<Texture2D> _meleeAttackAnimation;
-    private readonly AnimationClip2D<Texture2D> _meleeStabAnimation;
-    private readonly AnimationClip2D<Texture2D> _shotAnimation;
-    private readonly AnimationClip2D<Texture2D> _shieldBlockAnimation;
-    private readonly Dictionary<AnimationClip2D<Texture2D>, TextureFrameSet2D> _leftCharacterFrames = [];
-    private readonly Dictionary<
-        AnimationClip2D<Texture2D>,
-        (float Right, float Left)> _horizontalRootOffsetFractions = [];
-    private readonly Dictionary<
-        AnimationClip2D<Texture2D>,
-        EquippedAnimationDefinition2D> _equippedAnimations = [];
+    private readonly TextureCache2D _textures;
     private readonly AnimationPlayer2D<Texture2D> _animation = new();
-    private readonly EquippedPlayerLoadout2D _equippedLoadout;
     private readonly SpriteShader2D _spriteShader;
-    private SparseCanvasSpriteShader2D? _sparseSpriteShader;
-    private SparseDepthCompositeShader2D? _sparseDepthCompositeShader;
     private readonly WorldObject2D _visual;
     private readonly Vector2 _visualOffset;
-    private readonly float _visualWidth;
-    private readonly float _duckVisualOffsetY;
     private readonly float _maximumFallSpeed;
+
+    private AnimationClip2D<Texture2D> _idleAnimation = null!;
+    private AnimationClip2D<Texture2D> _walkAnimation = null!;
+    private AnimationClip2D<Texture2D> _jumpAnimation = null!;
+    private AnimationClip2D<Texture2D> _fallAnimation = null!;
+    private AnimationClip2D<Texture2D> _wallGripAnimation = null!;
+    private AnimationClip2D<Texture2D> _dashAnimation = null!;
+    private AnimationClip2D<Texture2D> _landingAnimation = null!;
+    private AnimationClip2D<Texture2D> _hitAnimation = null!;
+    private AnimationClip2D<Texture2D> _meleeAttackAnimation = null!;
+    private AnimationClip2D<Texture2D> _shotAnimation = null!;
+    private AnimationClip2D<Texture2D> _shieldBlockAnimation = null!;
+    private string _characterId = string.Empty;
     private bool _disposed;
 
     public PlayerPresentation2D(
@@ -48,28 +43,13 @@ public sealed class PlayerPresentation2D : IDisposable
         TraversalMetrics2D traversal)
     {
         ArgGuard.ThrowIfNull(scene);
-        ArgGuard.ThrowIfNull(textures);
+        _textures = ArgGuard.RequireNotNull(textures);
         ArgGuard.ThrowIfNull(traversal);
 
         _visualOffset = traversal.PlayerVisualOffset;
-        _visualWidth = traversal.PlayerVisualSize.X;
-        _equippedLoadout = new EquippedPlayerLoadout2D(textures);
-        _duckVisualOffsetY =
-            (traversal.PlayerColliderSize.Y - traversal.PlayerDuckingColliderSize.Y) * 0.5f;
         _maximumFallSpeed = traversal.MaximumFallSpeed;
 
-        _idleAnimation = LoadAnimation(textures, "idle");
-        _walkAnimation = LoadAnimation(textures, "walk");
-        _duckAnimation = LoadAnimation(textures, "crouch");
-        _jumpAnimation = LoadAnimation(textures, "jump-start");
-        _fallAnimation = LoadAnimation(textures, "fall");
-        _landingAnimation = LoadAnimation(textures, "land");
-        _hitAnimation = LoadAnimation(textures, "hit-a");
-        _meleeChopAnimation = LoadAnimation(textures, "melee-chop");
-        _meleeAttackAnimation = LoadAnimation(textures, "sword-attack");
-        _meleeStabAnimation = LoadAnimation(textures, "melee-stab");
-        _shotAnimation = LoadAnimation(textures, "magic-shot");
-        _shieldBlockAnimation = LoadAnimation(textures, "shield-block");
+        LoadCharacter(SwordCharacterId);
         _animation.Play(_idleAnimation);
         _spriteShader = new SpriteShader2D(_animation.CurrentFrame);
         _visual = new WorldObject2D(
@@ -89,40 +69,25 @@ public sealed class PlayerPresentation2D : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         AssetId2D.Validate(equipmentId);
-        if (string.Equals(
-                _equippedLoadout.EquipmentId,
-                equipmentId,
-                StringComparison.Ordinal))
-        {
+
+        var replacement = string.Equals(equipmentId, "gun", StringComparison.Ordinal)
+            ? GunCharacterId
+            : SwordCharacterId;
+        if (string.Equals(_characterId, replacement, StringComparison.Ordinal))
             return;
-        }
 
-        _visual.Shader = _spriteShader;
-        _sparseDepthCompositeShader?.Dispose();
-        _sparseDepthCompositeShader = null;
-        _sparseSpriteShader = null;
-        _equippedLoadout.Equip(equipmentId, _equippedAnimations.Values);
+        LoadCharacter(replacement);
+        _animation.Play(_idleAnimation, restart: true);
+        _animation.PlaybackSpeed = 1f;
+        _spriteShader.Texture = _animation.CurrentFrame;
     }
 
-    public void PlayMeleeAttack()
-    {
-        PlayFastMeleeAnimation(_meleeAttackAnimation);
-    }
+    public void PlayMeleeAttack() => PlayFastMeleeAnimation(_meleeAttackAnimation);
 
     public void PlayShot()
     {
         _animation.Play(_shotAnimation, restart: true);
         _animation.PlaybackSpeed = 1f;
-    }
-
-    public void PreviewMeleeChop()
-    {
-        PlayFastMeleeAnimation(_meleeChopAnimation);
-    }
-
-    public void PreviewMeleeStab()
-    {
-        PlayFastMeleeAnimation(_meleeStabAnimation);
     }
 
     public void PlayHit()
@@ -138,7 +103,8 @@ public sealed class PlayerPresentation2D : IDisposable
         float moveInputX,
         float facing,
         bool isGrounded,
-        bool isDucking,
+        bool isWallGripping,
+        bool isDashing,
         bool isShieldBlocking,
         float verticalVelocity,
         float landingSpeed,
@@ -150,9 +116,7 @@ public sealed class PlayerPresentation2D : IDisposable
             ReferenceEquals(_animation.Clip, _hitAnimation) &&
             !_animation.IsFinished;
         var isPlayingMeleeAnimation =
-            (ReferenceEquals(_animation.Clip, _meleeChopAnimation) ||
-             ReferenceEquals(_animation.Clip, _meleeAttackAnimation) ||
-             ReferenceEquals(_animation.Clip, _meleeStabAnimation)) &&
+            ReferenceEquals(_animation.Clip, _meleeAttackAnimation) &&
             !_animation.IsFinished;
         var isPlayingLanding =
             ReferenceEquals(_animation.Clip, _landingAnimation) &&
@@ -160,7 +124,15 @@ public sealed class PlayerPresentation2D : IDisposable
         var isPlayingShieldBlock =
             isShieldBlocking &&
             ReferenceEquals(_animation.Clip, _shieldBlockAnimation);
-        if (isShieldBlocking &&
+
+        if (isDashing && !ReferenceEquals(_animation.Clip, _dashAnimation))
+        {
+            _animation.Play(_dashAnimation, restart: true);
+            _animation.PlaybackSpeed = 1f;
+        }
+
+        if (!isDashing &&
+            isShieldBlocking &&
             !isMeleeAttackActive &&
             !isPlayingMeleeAnimation &&
             !isPlayingShot &&
@@ -171,10 +143,12 @@ public sealed class PlayerPresentation2D : IDisposable
             _animation.PlaybackSpeed = 1f;
             isPlayingShieldBlock = true;
         }
+
         var landedAtTerminalVelocity =
             isGrounded &&
             landingSpeed >= _maximumFallSpeed - TerminalVelocityEpsilon;
-        if (!isMeleeAttackActive &&
+        if (!isDashing &&
+            !isMeleeAttackActive &&
             !isPlayingMeleeAnimation &&
             !isShieldBlocking &&
             !isPlayingShot &&
@@ -186,7 +160,8 @@ public sealed class PlayerPresentation2D : IDisposable
             isPlayingLanding = true;
         }
 
-        if (!isMeleeAttackActive &&
+        if (!isDashing &&
+            !isMeleeAttackActive &&
             !isPlayingMeleeAnimation &&
             !isShieldBlocking &&
             !isPlayingShot &&
@@ -194,8 +169,8 @@ public sealed class PlayerPresentation2D : IDisposable
             !isPlayingLanding)
         {
             var isWalking = isGrounded && MathF.Abs(moveInputX) > 0.01f;
-            var locomotionClip = isDucking
-                ? _duckAnimation
+            var locomotionClip = isWallGripping
+                ? _wallGripAnimation
                 : isGrounded
                 ? isWalking
                     ? _walkAnimation
@@ -205,17 +180,15 @@ public sealed class PlayerPresentation2D : IDisposable
                     : _jumpAnimation;
             if (!ReferenceEquals(_animation.Clip, locomotionClip))
                 _animation.Play(locomotionClip);
-            _animation.PlaybackSpeed = isWalking && !isDucking
+            _animation.PlaybackSpeed = isWalking
                 ? Math.Clamp(MathF.Abs(moveInputX), 0.65f, 1.35f)
                 : 1f;
         }
 
         _animation.Update(deltaSeconds);
-        UpdateVisualShader(facing);
-        var activeClip = StateGuard.RequireNotNull(_animation.Clip, "The player presentation requires an active animation clip.");
-        var (Right, Left) = _horizontalRootOffsetFractions[activeClip];
-        var horizontalRootOffset = (facing < 0f ? Left : Right) * _visualWidth;
-        _visual.Transform.Position = playerPosition + _visualOffset + new Vector2(horizontalRootOffset, 0f) + (isDucking ? new Vector2(0f, _duckVisualOffsetY) : Vector2.Zero);
+        _spriteShader.Texture = _animation.CurrentFrame;
+        _spriteShader.FlipX = facing < 0f;
+        _visual.Transform.Position = playerPosition + _visualOffset;
         _visual.IsVisible = invulnerabilitySeconds <= 0f || frameNumber % 12 < 6;
     }
 
@@ -230,103 +203,34 @@ public sealed class PlayerPresentation2D : IDisposable
         if (_disposed)
             return;
 
-        _sparseDepthCompositeShader?.Dispose();
-        _equippedLoadout.Dispose();
         _disposed = true;
         GC.SuppressFinalize(this);
     }
 
-    private AnimationClip2D<Texture2D> LoadAnimation(TextureCache2D textures, string animationId)
+    private void LoadCharacter(string characterId)
     {
-        var animation = CharacterAnimationAssets2D.LoadClip(textures, "player", animationId);
-        var additionalEquipmentIds = animationId == "shield-block"
-            ? new[] { ShieldEquipmentId }
-            : [];
-        _equippedAnimations.Add(
-            animation,
-            new EquippedAnimationDefinition2D(animationId, animation.FrameCount, additionalEquipmentIds));
-        _horizontalRootOffsetFractions.Add(
-            animation,
-            (CharacterAnimationAssets2D.LoadHorizontalRootOffsetFraction(textures, "player", animationId, "right"),
-             CharacterAnimationAssets2D.LoadHorizontalRootOffsetFraction(textures, "player", animationId, "left")));
-        _leftCharacterFrames.Add(
-            animation,
-            DirectionalCharacterAnimationAssets2D.LoadFacing(textures, "player", animationId, "left", animation.FrameCount));
-        return animation;
+        _idleAnimation = LoadAnimation(characterId, "idle");
+        _walkAnimation = LoadAnimation(characterId, "walk");
+        _jumpAnimation = LoadAnimation(characterId, "jump-start");
+        _fallAnimation = LoadAnimation(characterId, "fall");
+        _wallGripAnimation = LoadAnimation(characterId, "wall-grip");
+        _dashAnimation = LoadAnimation(characterId, "dash");
+        _landingAnimation = LoadAnimation(characterId, "land");
+        _hitAnimation = LoadAnimation(characterId, "hit-a");
+        _meleeAttackAnimation = LoadAnimation(characterId, "sword-attack");
+        _shotAnimation = LoadAnimation(characterId, "magic-shot");
+        _shieldBlockAnimation = LoadAnimation(characterId, "shield-block");
+        _characterId = characterId;
     }
+
+    private AnimationClip2D<Texture2D> LoadAnimation(
+        string characterId,
+        string animationId) =>
+        CharacterAnimationAssets2D.LoadClip(_textures, characterId, animationId);
 
     private void PlayFastMeleeAnimation(AnimationClip2D<Texture2D> animation)
     {
         _animation.Play(animation, restart: true);
         _animation.PlaybackSpeed = animation.Duration / MeleeAttack2D.FastDurationSeconds;
     }
-
-    private void UpdateVisualShader(float facing)
-    {
-        var facesLeft = facing < 0f;
-        var currentClip = StateGuard.RequireNotNull(
-            _animation.Clip,
-            "The player presentation requires an active animation clip.");
-        if (_equippedLoadout.IsEquipped)
-        {
-            var frame = _equippedLoadout.GetFrame(
-                _equippedAnimations[currentClip],
-                facesLeft ? "left" : "right",
-                _animation.CurrentFrameIndex,
-                _animation.ElapsedSeconds);
-            if (frame.LayeredFrame is { } layeredFrame)
-            {
-                if (_sparseDepthCompositeShader is null)
-                {
-                    _sparseDepthCompositeShader = new SparseDepthCompositeShader2D(
-                        layeredFrame,
-                        frame.SourceCanvasSize,
-                        frame.SourceRoot);
-                }
-                else
-                {
-                    _sparseDepthCompositeShader.SetFrame(
-                        layeredFrame,
-                        frame.SourceCanvasSize,
-                        frame.SourceRoot);
-                }
-                _visual.Shader = _sparseDepthCompositeShader;
-                return;
-            }
-
-            if (frame.SparseFrame is { } sparseFrame)
-            {
-                if (_sparseSpriteShader is null)
-                {
-                    _sparseSpriteShader = new SparseCanvasSpriteShader2D(
-                        sparseFrame,
-                        frame.SourceCanvasSize,
-                        frame.SourceRoot);
-                }
-                else
-                {
-                    _sparseSpriteShader.SetFrame(
-                        sparseFrame,
-                        frame.SourceCanvasSize,
-                        frame.SourceRoot);
-                }
-                _visual.Shader = _sparseSpriteShader;
-                return;
-            }
-
-            _spriteShader.Texture = StateGuard.RequireNotNull(
-                frame.Texture,
-                "An equipped legacy frame did not provide a texture.");
-            _spriteShader.FlipX = false;
-            _visual.Shader = _spriteShader;
-            return;
-        }
-
-        _spriteShader.Texture = facesLeft
-            ? _leftCharacterFrames[currentClip][_animation.CurrentFrameIndex]
-            : _animation.CurrentFrame;
-        _spriteShader.FlipX = false;
-        _visual.Shader = _spriteShader;
-    }
-
 }

@@ -55,6 +55,7 @@ public sealed class PhysicsBody2D
         set => Collider.IsSensor = value;
     }
     public bool IsOneWayPlatform { get; set; }
+    public bool IsWallGrippable { get; set; }
     public uint CollisionLayer
     {
         get => Collider.CollisionLayer;

@@ -50,4 +50,10 @@
           CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <Target Name="ResetRuntimeAssetsOutput"
+          AfterTargets="GetCopyToOutputDirectoryItems"
+          Condition="'$(DesignTimeBuild)' != 'true'">
+    <RemoveDir Directories="$(OutDir)Assets" />
+  </Target>
+
 </Project>

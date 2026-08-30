@@ -61,21 +61,23 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
         var chunkVisuals = new List<WorldObject2D>();
         foreach (var collision in _tileMap.BuildCollisionRectangles(chunk))
         {
-            var bounds = collision.Kind == TileKind2D.OneWay
+            var isOneWay = collision.Kind.IsOneWay();
+            var bounds = isOneWay
                 ? new Bounds2D(new Vector2(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
                 : collision.Bounds;
             var platform = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(bounds.Size));
             platform.Transform.Position = bounds.Center;
             _platforms.Add(platform);
 
-            if (collision.Kind != TileKind2D.OneWay)
+            if (collision.Kind.IsSolid() && !collision.Kind.IsGrippable())
                 chunkVisuals.AddRange(_visuals.CreateSolidFill(bounds));
 
             var body = _physics.AddBody(platform, BodyMotionType2D.Static);
             body.Restitution = 0f;
             body.CollisionLayer = worldLayer;
             body.CollisionMask = actorMask;
-            body.IsOneWayPlatform = collision.Kind == TileKind2D.OneWay;
+            body.IsOneWayPlatform = isOneWay;
+            body.IsWallGrippable = collision.Kind.IsGrippable();
             colliders.Add(new ChunkCollider(platform, body));
         }
 

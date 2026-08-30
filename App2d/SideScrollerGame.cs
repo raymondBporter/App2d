@@ -15,7 +15,9 @@ public sealed class SideScrollerGame : Game2D
     private const uint PlayerLayer = 1u << 1;
     private const uint EnemyLayer = 1u << 2;
 
-    private static readonly TraversalMetrics2D Traversal = new();
+    private static readonly TraversalMetrics2D Traversal =
+        TraversalMetrics2D.FromPlayerAsset(
+            Path.Combine(AppContext.BaseDirectory, "Assets"));
 
     private readonly CollisionSystem2D _collision = new();
     private readonly PhysicsWorld2D _physics;
@@ -61,11 +63,11 @@ public sealed class SideScrollerGame : Game2D
         RegisterDebugAttackShapes(_arsenal.GetActiveAttackHitboxes);
         RegisterDebugAttackShapes(_level.EnemySystem.GetActiveAttackHitboxes);
 
-        _playerPresentation.Update(0f, 0, _player.Position, 0f, _player.Facing, _player.IsGrounded, _player.IsDucking, isShieldBlocking: false, _player.Body.LinearVelocity.Y, _player.LandingSpeedThisFrame, _arsenal.IsMeleeAttackActive, _player.InvulnerabilitySeconds);
+        _playerPresentation.Update(0f, 0, _player.Position, 0f, _player.Facing, _player.IsGrounded, _player.IsWallGripping, _player.IsDashing, isShieldBlocking: false, _player.Body.LinearVelocity.Y, _player.LandingSpeedThisFrame, _arsenal.IsMeleeAttackActive, _player.InvulnerabilitySeconds);
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | PAD: {(_inputMapper.IsControllerConnected ? "XBOX" : "OFF")} | Q/RB: switch weapon | H/J/L = X/Y/B attacks | A: jump | keyboard B: shield block | WEAPON: {_arsenal.WeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        $"App2d Side Scroller | PAD: {(_inputMapper.IsControllerConnected ? "XBOX" : "OFF")} | Q/Y: switch weapon | J/CLICK or X: attack | A: jump | Shift/controller B: dash | keyboard B: shield block | WEAPON: {_arsenal.WeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -79,10 +81,6 @@ public sealed class SideScrollerGame : Game2D
             _showTraversalDebug = !_showTraversalDebug;
         if (command.SwitchWeapon)
             _arsenal.SelectNextWeapon();
-        if (command.PreviewMeleeChop)
-            _playerPresentation.PreviewMeleeChop();
-        if (command.PreviewMeleeStab)
-            _playerPresentation.PreviewMeleeStab();
 
         _level.EnemySystem.Update(dt, _player.Position);
 
@@ -120,7 +118,8 @@ public sealed class SideScrollerGame : Game2D
             command.Movement.MoveX,
             _player.Facing,
             _player.IsGrounded,
-            _player.IsDucking,
+            _player.IsWallGripping,
+            _player.IsDashing,
             input.IsKeyDown(Keys.B),
             _player.Body.LinearVelocity.Y,
             _player.LandingSpeedThisFrame,

@@ -17,6 +17,11 @@ public sealed class CharacterMotor2D
     private float _gravityScaleBeforePhysics;
     private float _coyoteTime;
     private float _jumpBufferTime;
+    private float _wallRelatchTime;
+    private float _wallDirection;
+    private float _dashTimeRemaining;
+    private float _dashCooldownRemaining;
+    private float _dashDirection;
     private int _airJumpsRemaining;
 
     public CharacterMotor2D(
@@ -40,18 +45,40 @@ public sealed class CharacterMotor2D
     public event Action? JumpStarted;
     public event Action<float>? Landed;
     public bool IsGrounded { get; private set; }
-    public bool IsDucking { get; private set; }
+    public bool IsWallGripping { get; private set; }
+    public bool IsDashing { get; private set; }
+    public float WallDirection => _wallDirection;
     public float CoyoteTimeRemaining => _coyoteTime;
     public float JumpBufferTimeRemaining => _jumpBufferTime;
 
-    public void UpdateBeforePhysics(PlayerIntent2D intent, float deltaSeconds)
+    public void UpdateBeforePhysics(
+        PlayerIntent2D intent,
+        float facing,
+        float deltaSeconds)
     {
         _intent = intent;
+        _wallRelatchTime = Math.Max(0f, _wallRelatchTime - deltaSeconds);
+        _dashCooldownRemaining = Math.Max(0f, _dashCooldownRemaining - deltaSeconds);
         UpdateIgnoredOneWayPlatforms();
         IsGrounded = HasGroundSupport(Metrics.GroundProbeDistance);
         if (IsGrounded)
             RestoreAirJumps();
-        UpdateDucking(intent.DuckHeld && IsGrounded);
+
+        if (IsDashing && _dashTimeRemaining <= 0f)
+            EndDash();
+        if (!IsDashing && intent.DashPressed && _dashCooldownRemaining <= 0f)
+            BeginDash(facing);
+        if (IsDashing)
+        {
+            _dashTimeRemaining = Math.Max(0f, _dashTimeRemaining - deltaSeconds);
+            _body.LinearVelocity = new Vector2(_dashDirection * Metrics.DashSpeed, 0f);
+            IsWallGripping = false;
+            _wallDirection = 0f;
+            _body.GravityScale = 0f;
+            RecordPrePhysicsState();
+            return;
+        }
+
         var beganDropThrough = intent.DropThroughPressed && TryBeginDropThrough();
         if (beganDropThrough)
         {
@@ -62,11 +89,12 @@ public sealed class CharacterMotor2D
         else
         {
             _coyoteTime = IsGrounded ? Metrics.CoyoteDuration : Math.Max(0f, _coyoteTime - deltaSeconds);
-            _jumpBufferTime = intent.JumpPressed && !IsDucking
+            _jumpBufferTime = intent.JumpPressed
                 ? Metrics.JumpBufferDuration
                 : Math.Max(0f, _jumpBufferTime - deltaSeconds);
         }
 
+        UpdateWallGrip();
         ApplyHorizontalControl(deltaSeconds);
         if (!beganDropThrough)
             TryConsumeBufferedJump();
@@ -77,9 +105,7 @@ public sealed class CharacterMotor2D
         }
 
         UpdateGravityScale();
-        _positionBeforePhysics = _body.WorldObject.Transform.Position;
-        _verticalSpeedBeforePhysics = _body.LinearVelocity.Y;
-        _gravityScaleBeforePhysics = _body.GravityScale;
+        RecordPrePhysicsState();
     }
 
     public void UpdateAfterPhysics(float deltaSeconds)
@@ -98,6 +124,8 @@ public sealed class CharacterMotor2D
         if (!IsGrounded)
             IsGrounded = TrySnapToGround();
 
+        UpdateWallGrip();
+
         if (IsGrounded)
         {
             RestoreAirJumps();
@@ -115,10 +143,16 @@ public sealed class CharacterMotor2D
     {
         _coyoteTime = 0f;
         _jumpBufferTime = 0f;
+        _wallRelatchTime = 0f;
+        _wallDirection = 0f;
+        _dashTimeRemaining = 0f;
+        _dashCooldownRemaining = 0f;
+        _dashDirection = 0f;
         _airJumpsRemaining = 0;
         _intent = default;
         IsGrounded = false;
-        IsDucking = false;
+        IsWallGripping = false;
+        IsDashing = false;
         _body.WorldObject.Transform.Scale = Vector2.One;
         _body.GravityScale = 1f;
         _body.ClearIgnoredOneWayPlatforms();
@@ -129,24 +163,66 @@ public sealed class CharacterMotor2D
         var acceleration = IsGrounded
             ? Metrics.GroundAcceleration
             : Metrics.AirAcceleration;
-        var maximumSpeed = IsDucking
-            ? Metrics.DuckingSpeed
-            : Metrics.RunSpeed;
         var velocityX = _body.LinearVelocity.X;
         var keepAirMomentum = !IsGrounded && MathF.Abs(velocityX) > Metrics.RunSpeed && (_intent.MoveX == 0f || MathF.Sign(_intent.MoveX) == MathF.Sign(velocityX));
 
         if (!keepAirMomentum)
         {
-            velocityX = MoveTowards(velocityX, _intent.MoveX * maximumSpeed, acceleration * deltaSeconds);
+            velocityX = MoveTowards(velocityX, _intent.MoveX * Metrics.RunSpeed, acceleration * deltaSeconds);
         }
 
         _body.LinearVelocity = new Vector2(velocityX, _body.LinearVelocity.Y);
     }
 
+    private void BeginDash(float facing)
+    {
+        _dashDirection = MathF.Abs(_intent.MoveX) > 0.01f
+            ? MathF.Sign(_intent.MoveX)
+            : MathF.Sign(facing);
+        if (_dashDirection == 0f)
+            _dashDirection = 1f;
+
+        IsDashing = true;
+        IsWallGripping = false;
+        _wallDirection = 0f;
+        _dashTimeRemaining = Metrics.DashDuration;
+        _dashCooldownRemaining = Metrics.DashCooldown;
+    }
+
+    private void EndDash()
+    {
+        IsDashing = false;
+        _body.LinearVelocity = new Vector2(
+            _dashDirection * Metrics.RunSpeed,
+            _body.LinearVelocity.Y);
+    }
+
+    private void RecordPrePhysicsState()
+    {
+        _positionBeforePhysics = _body.WorldObject.Transform.Position;
+        _verticalSpeedBeforePhysics = _body.LinearVelocity.Y;
+        _gravityScaleBeforePhysics = _body.GravityScale;
+    }
+
     private void TryConsumeBufferedJump()
     {
-        if (_jumpBufferTime <= 0f || IsDucking)
+        if (_jumpBufferTime <= 0f)
             return;
+
+        if (IsWallGripping)
+        {
+            var wallDirection = _wallDirection;
+            _body.LinearVelocity = new Vector2(
+                -wallDirection * Metrics.WallJumpHorizontalSpeed,
+                Metrics.JumpSpeed);
+            _jumpBufferTime = 0f;
+            _coyoteTime = 0f;
+            _wallRelatchTime = Metrics.WallJumpRelatchDelay;
+            _wallDirection = 0f;
+            IsWallGripping = false;
+            JumpStarted?.Invoke();
+            return;
+        }
 
         var isGroundJump = _coyoteTime > 0f;
         if (!isGroundJump && _airJumpsRemaining <= 0)
@@ -170,72 +246,73 @@ public sealed class CharacterMotor2D
     private void RestoreAirJumps() =>
         _airJumpsRemaining = Metrics.MaximumJumpCount - 1;
 
-    private void UpdateDucking(bool wantsToDuck)
-    {
-        if (wantsToDuck)
-        {
-            if (!IsDucking)
-                SetDucking(true);
-            return;
-        }
-
-        if (IsDucking && CanStand())
-            SetDucking(false);
-    }
-
-    private bool CanStand()
-    {
-        SetDucking(false);
-        try
-        {
-            QueryBodyBounds(_body.WorldObject.WorldBounds);
-            foreach (var collider in _queryResults)
-            {
-                if (collider.UserData is not PhysicsBody2D other)
-                    continue;
-                if (ReferenceEquals(other, _body) || other.IsOneWayPlatform || other.IsSensor || !_body.CanCollideWith(other))
-                {
-                    continue;
-                }
-
-                if (_collision.TryGetContact(_body.Collider, other.Collider, out _))
-                    return false;
-            }
-
-            return true;
-        }
-        finally
-        {
-            SetDucking(true);
-        }
-    }
-
-    private void SetDucking(bool isDucking)
-    {
-        if (IsDucking == isDucking)
-            return;
-
-        var transform = _body.WorldObject.Transform;
-        var oldHeight = IsDucking
-            ? Metrics.PlayerDuckingColliderSize.Y
-            : Metrics.PlayerColliderSize.Y;
-        var newHeight = isDucking
-            ? Metrics.PlayerDuckingColliderSize.Y
-            : Metrics.PlayerColliderSize.Y;
-        transform.Scale = new Vector2(
-            transform.Scale.X,
-            newHeight / Metrics.PlayerColliderSize.Y);
-        transform.Position += new Vector2(0f, (newHeight - oldHeight) * 0.5f);
-        IsDucking = isDucking;
-    }
-
     private void UpdateGravityScale()
     {
-        _body.GravityScale = _intent.JumpHeld &&
+        _body.GravityScale = IsDashing || IsWallGripping
+            ? 0f
+            : _intent.JumpHeld &&
             MathF.Abs(_body.LinearVelocity.Y) < Metrics.ApexVelocityThreshold &&
             !IsGrounded
             ? Metrics.ApexGravityScale
             : 1f;
+    }
+
+    private void UpdateWallGrip()
+    {
+        IsWallGripping = false;
+        _wallDirection = 0f;
+        if (IsDashing ||
+            IsGrounded ||
+            _wallRelatchTime > 0f ||
+            _body.LinearVelocity.Y > 0f ||
+            MathF.Abs(_intent.MoveX) <= 0.01f)
+        {
+            return;
+        }
+
+        var direction = MathF.Sign(_intent.MoveX);
+        if (!HasWallSupport(direction, Metrics.WallGripProbeDistance))
+            return;
+
+        _wallDirection = direction;
+        IsWallGripping = true;
+        _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, 0f);
+    }
+
+    private bool HasWallSupport(float direction, float maximumGap)
+    {
+        var bodyBounds = _body.WorldObject.WorldBounds;
+        QueryBodyBounds(ExpandedSide(bodyBounds, direction, maximumGap));
+        foreach (var collider in _queryResults)
+        {
+            if (collider.UserData is not PhysicsBody2D other ||
+                ReferenceEquals(other, _body) ||
+                other.MotionType == BodyMotionType2D.Dynamic ||
+                other.IsOneWayPlatform ||
+                !other.IsWallGrippable ||
+                other.IsSensor ||
+                !_body.CanCollideWith(other))
+            {
+                continue;
+            }
+
+            var otherBounds = other.WorldObject.WorldBounds;
+            if (!otherBounds.IsFinite)
+                continue;
+
+            var verticalOverlap = Math.Min(bodyBounds.Top, otherBounds.Top) -
+                Math.Max(bodyBounds.Bottom, otherBounds.Bottom);
+            if (verticalOverlap < Metrics.WallGripMinimumOverlap)
+                continue;
+
+            var gap = direction > 0f
+                ? otherBounds.Left - bodyBounds.Right
+                : bodyBounds.Left - otherBounds.Right;
+            if (gap >= -0.01f && gap <= maximumGap)
+                return true;
+        }
+
+        return false;
     }
 
     private bool HasGroundSupport(float maximumGap)
@@ -468,6 +545,11 @@ public sealed class CharacterMotor2D
 
     private static Bounds2D ExpandedDown(Bounds2D bounds, float distance) =>
         new(bounds.Min - new Vector2(0f, distance), bounds.Max);
+
+    private static Bounds2D ExpandedSide(Bounds2D bounds, float direction, float distance) =>
+        direction > 0f
+            ? new Bounds2D(bounds.Min, bounds.Max + new Vector2(distance, 0f))
+            : new Bounds2D(bounds.Min - new Vector2(distance, 0f), bounds.Max);
 
     private bool HasHorizontalSupport(Engine.Geometry.Bounds2D bodyBounds, Engine.Geometry.Bounds2D supportBounds) =>
         bodyBounds.Right + Metrics.HorizontalSupportGrace >= supportBounds.Left &&

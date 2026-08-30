@@ -6,15 +6,32 @@ public sealed class TraversalMetrics2D
 {
     public const float DesignUnit = 8f;
 
+    private TraversalMetrics2D()
+    {
+    }
+
+    public static TraversalMetrics2D FromPlayerAsset(string contentRoot)
+    {
+        var geometry = PlayerGeometryAssets2D.Load(contentRoot);
+        return new TraversalMetrics2D
+        {
+            PlayerColliderSize = geometry.StandingColliderSize,
+            PlayerColliderCenterOffsetX = geometry.ColliderCenterOffsetX,
+            PlayerVisualSize = geometry.VisualSize,
+            PlayerSpriteFootYFraction = geometry.FootAnchorYFraction
+        };
+    }
+
     public float TileSize { get; init; } = DesignUnit * 4f;
-    public Vector2 PlayerColliderSize { get; init; } =
-        new(DesignUnit * 4f, DesignUnit * 11f);
-    public Vector2 PlayerDuckingColliderSize { get; init; } =
-        new(DesignUnit * 4f, DesignUnit * 7f);
-    public Vector2 PlayerVisualSize { get; init; } = new(184f, 138f);
-    public Vector2 PlayerVisualOffset { get; init; } = new(0f, 3.5f);
+    public Vector2 PlayerColliderSize { get; private init; }
+    public float PlayerColliderCenterOffsetX { get; private init; }
+    public Vector2 PlayerVisualSize { get; private init; }
+    public float PlayerSpriteFootYFraction { get; private init; }
+    public Vector2 PlayerVisualOffset => new(
+        0f,
+        PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) -
+        PlayerColliderSize.Y * 0.5f);
     public float RunSpeed { get; init; } = 430f;
-    public float DuckingSpeed { get; init; } = 155f;
     public float GroundAcceleration { get; init; } = 3_600f;
     public float AirAcceleration { get; init; } = 1_450f;
     public float Gravity { get; init; } = 1_900f;
@@ -33,6 +50,13 @@ public sealed class TraversalMetrics2D
     public float LandingSnapDistance { get; init; } = 4f;
     public float HorizontalSupportGrace { get; init; } = 2f;
     public int UpwardCornerCorrection { get; init; } = 8;
+    public float WallGripProbeDistance { get; init; } = 4f;
+    public float WallGripMinimumOverlap { get; init; } = DesignUnit;
+    public float WallJumpHorizontalSpeed { get; init; } = 380f;
+    public float WallJumpRelatchDelay { get; init; } = 0.14f;
+    public float DashSpeed { get; init; } = 1_400f;
+    public float DashDuration { get; init; } = 0.16f;
+    public float DashCooldown { get; init; } = 0.35f;
 
     public int StandingPassageTiles =>
         (int)MathF.Ceiling(PlayerColliderSize.Y / TileSize);
@@ -44,25 +68,31 @@ public sealed class TraversalMetrics2D
     {
         ArgGuard.ThrowIfNotPositive(TileSize);
         ArgGuard.ThrowIfNotPositive(PlayerColliderSize);
-        ArgGuard.ThrowIfNotPositive(PlayerDuckingColliderSize);
+        ArgGuard.ThrowIfNotFinite(PlayerColliderCenterOffsetX);
         ArgGuard.ThrowIfNotPositive(PlayerVisualSize);
         ArgGuard.ThrowIfNotFinite(PlayerVisualOffset);
-        ArgGuard.ThrowIfNotPositive(DuckingSpeed);
         ArgGuard.ThrowIfNotPositive(AirJumpSpeedMultiplier);
         ArgGuard.ThrowIfNotPositive(MaximumJumpCount);
         ArgGuard.ThrowIfNotPositive(OneWayDropSpeed);
+        ArgGuard.ThrowIfNotPositive(WallGripProbeDistance);
+        ArgGuard.ThrowIfNotPositive(WallGripMinimumOverlap);
+        ArgGuard.ThrowIfNotPositive(WallJumpHorizontalSpeed);
+        ArgGuard.ThrowIfNotPositive(WallJumpRelatchDelay);
+        ArgGuard.ThrowIfNotPositive(DashSpeed);
+        ArgGuard.ThrowIfNotPositive(DashDuration);
+        ArgGuard.ThrowIfNotPositive(DashCooldown);
 
         StateGuard.ThrowIf(AirJumpSpeedMultiplier >= 1f, "The air-jump speed multiplier must be less than one.");
+        StateGuard.ThrowIf(
+            !float.IsFinite(PlayerSpriteFootYFraction) ||
+            PlayerSpriteFootYFraction <= 0f ||
+            PlayerSpriteFootYFraction >= 1f,
+            "The player sprite foot anchor must be a fraction between zero and one.");
 
         StateGuard.ThrowIf(
             !IsDesignUnitMultiple(TileSize) ||
-            !IsDesignUnitMultiple(PlayerColliderSize.X) ||
-            !IsDesignUnitMultiple(PlayerColliderSize.Y) ||
-            !IsDesignUnitMultiple(PlayerDuckingColliderSize.X) ||
-            !IsDesignUnitMultiple(PlayerDuckingColliderSize.Y),
-            $"Tile and player collider dimensions must use the {DesignUnit:0}-unit design grid.");
-        StateGuard.ThrowIf(PlayerDuckingColliderSize.X != PlayerColliderSize.X || PlayerDuckingColliderSize.Y >= PlayerColliderSize.Y,
-            "The ducking collider must retain the standing width and reduce its height.");
+            !IsHalfDesignUnitMultiple(PlayerColliderSize.Y),
+            $"Tile and player collider heights must use half increments of the {DesignUnit:0}-unit design grid.");
         StateGuard.ThrowIf(StandingClearance < DesignUnit, $"The minimum whole-tile standing passage must leave at least {DesignUnit:0} units of clearance.");
 
         ArgGuard.ThrowIfNotPositive(ReliableJumpRiseTiles);
@@ -152,6 +182,9 @@ public sealed class TraversalMetrics2D
         var increments = value / DesignUnit;
         return MathF.Abs(increments - MathF.Round(increments)) < 0.001f;
     }
+
+    private static bool IsHalfDesignUnitMultiple(float value) =>
+        IsDesignUnitMultiple(value * 2f);
 }
 
 public readonly record struct JumpProfile2D(

@@ -6,4 +6,4 @@ public readonly record struct PlayerIntent2D(
     bool JumpHeld,
     bool JumpReleased,
     bool DropThroughPressed,
-    bool DuckHeld);
+    bool DashPressed);

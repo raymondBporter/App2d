@@ -44,7 +44,7 @@ public sealed class ProceduralTileMap2D : IChunkedTileMap2D
             ? _getTileKind(x, y)
             : TileKind2D.Empty;
 
-    public bool IsSolid(int x, int y) => GetTileKind(x, y) == TileKind2D.Solid;
+    public bool IsSolid(int x, int y) => GetTileKind(x, y).IsSolid();
 
     public TileChunk2D WorldToChunk(Vector2 worldPosition)
     {
@@ -79,7 +79,7 @@ public sealed class ProceduralTileMap2D : IChunkedTileMap2D
             {
                 var index = y * width + x;
                 var kind = tiles[index];
-                if (kind == TileKind2D.Empty || consumed[index])
+                if (!kind.IsCollidable() || consumed[index])
                     continue;
 
                 var rectangleWidth = 1;
@@ -91,7 +91,7 @@ public sealed class ProceduralTileMap2D : IChunkedTileMap2D
                 }
 
                 var rectangleHeight = 1;
-                while (kind == TileKind2D.Solid &&
+                while (kind.IsSolid() &&
                        y + rectangleHeight < height &&
                        IsTileRun(
                            tiles,
