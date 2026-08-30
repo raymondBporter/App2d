@@ -31,7 +31,9 @@ public sealed class ProceduralTileMap2D : IChunkedTileMap2D
     public int ChunkRows => DivideRoundUp(Height, ChunkSize);
     public Bounds2D WorldBounds => new(Origin, Origin + new Vector2(Width * TileSize, Height * TileSize));
 
-    public TileKind2D GetTileKind(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height ? _getTileKind(x, y) : TileKind2D.Empty;
+    public TileKind2D GetTileKind(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height
+        ? _getTileKind(x, y)
+        : TileKind2D.Empty;
 
     public bool IsSolid(int x, int y) => GetTileKind(x, y).IsSolid();
 

@@ -47,8 +47,7 @@ public readonly record struct Similarity2D
     /// Multiplies by the transpose of the linear part: maps a world support or
     /// normal direction into local space (direction-preserving up to Scale).
     /// </summary>
-    public Vector2 TransposeTransformDirection(Vector2 direction) =>
-        new(Vector2.Dot(XAxis, direction), Vector2.Dot(YAxis, direction));
+    public Vector2 TransposeTransformDirection(Vector2 direction) => new(Vector2.Dot(XAxis, direction), Vector2.Dot(YAxis, direction));
 
     public Vector2 InverseTransformPoint(Vector2 point)
     {
@@ -56,6 +55,5 @@ public readonly record struct Similarity2D
         return new Vector2(Vector2.Dot(XAxis, relative), Vector2.Dot(YAxis, relative)) / (Scale * Scale);
     }
 
-    public Vector2 InverseTransformDirection(Vector2 direction) =>
-        TransposeTransformDirection(direction) / (Scale * Scale);
+    public Vector2 InverseTransformDirection(Vector2 direction) => TransposeTransformDirection(direction) / (Scale * Scale);
 }

@@ -20,9 +20,7 @@ public sealed class ProceduralTileMap2DTests
 
         var rectangles = map.BuildCollisionRectangles(new TileChunk2D(0, 0));
         Assert.Equal(2, rectangles.Count);
-        var grippable = Assert.Single(
-            rectangles,
-            rectangle => rectangle.Kind.IsGrippable());
+        var grippable = Assert.Single(rectangles, rectangle => rectangle.Kind.IsGrippable());
         Assert.Equal(grippableSolid, grippable.Kind);
         Assert.Equal(64f, grippable.Bounds.Size.X);
     }

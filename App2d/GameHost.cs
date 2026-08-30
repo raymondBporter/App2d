@@ -34,10 +34,7 @@ public sealed class GameHost : IDisposable
     {
         _game = game;
         _renderer = new Renderer2D(game.Camera);
-        if (string.Equals(
-                Environment.GetEnvironmentVariable("APP2D_RENDER_BACKEND"),
-                "raster",
-                StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(Environment.GetEnvironmentVariable("APP2D_RENDER_BACKEND"), "raster", StringComparison.OrdinalIgnoreCase))
         {
             _rasterSurface = new SKControl();
             _surface = _rasterSurface;
@@ -92,10 +89,7 @@ public sealed class GameHost : IDisposable
         var elapsedSeconds = Math.Clamp(totalTime - _previousTime, 0d, MaximumFrameSeconds);
         _previousTime = totalTime;
         _accumulator = Math.Min(_accumulator + elapsedSeconds, MaximumFrameSeconds);
-        _renderFrameTime = new FrameTime(
-            (float)elapsedSeconds,
-            totalTime,
-            _renderFrameTime.FrameNumber + 1);
+        _renderFrameTime = new FrameTime((float)elapsedSeconds, totalTime, _renderFrameTime.FrameNumber + 1);
 
         var canvasSize = _gpuSurface?.CanvasSize ?? _rasterSurface!.CanvasSize;
         var deviceWidth = canvasSize.Width > 0

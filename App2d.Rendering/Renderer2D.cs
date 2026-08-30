@@ -32,26 +32,16 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         _canvas = canvas;
         _time = time;
         camera.SetViewport(width, height);
-        Span<Vector2> viewportCorners =
-        [
-            camera.DeviceToWorld(Vector2.Zero),
-            camera.DeviceToWorld(new Vector2(width, 0f)),
-            camera.DeviceToWorld(new Vector2(width, height)),
-            camera.DeviceToWorld(new Vector2(0f, height)),
-        ];
-        _visibleWorldBounds = Bounds2D.FromPoints(viewportCorners);
+        _visibleWorldBounds = camera.VisibleWorldBounds;
     }
 
     public void Clear(SKColor color) => Canvas.Clear(color);
 
     public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
     {
-        var topLeft = camera.DeviceToWorld(Vector2.Zero);
-        var bottomRight = camera.DeviceToWorld(camera.ViewportSize);
-        var minX = Math.Min(topLeft.X, bottomRight.X);
-        var maxX = Math.Max(topLeft.X, bottomRight.X);
-        var minY = Math.Min(topLeft.Y, bottomRight.Y);
-        var maxY = Math.Max(topLeft.Y, bottomRight.Y);
+        var visible = camera.VisibleWorldBounds;
+        var (minX, maxX) = (visible.Left, visible.Right);
+        var (minY, maxY) = (visible.Bottom, visible.Top);
         var firstX = (int)MathF.Floor(minX / spacing);
         var lastX = (int)MathF.Ceiling(maxX / spacing);
         var firstY = (int)MathF.Floor(minY / spacing);
@@ -451,14 +441,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         if (!Matrix3x2.Invert(objectToDevice, out var deviceToObject))
             StateGuard.Throw("Cannot render a shape with a singular transform.");
 
-        Span<Vector2> corners =
-        [
-            Vector2.Transform(Vector2.Zero, deviceToObject),
-            Vector2.Transform(new Vector2(camera.ViewportSize.X, 0f), deviceToObject),
-            Vector2.Transform(camera.ViewportSize, deviceToObject),
-            Vector2.Transform(new Vector2(0f, camera.ViewportSize.Y), deviceToObject)
-        ];
-        return Bounds2D.FromPoints(corners);
+        return new Bounds2D(Vector2.Zero, camera.ViewportSize).TransformedBy(deviceToObject);
     }
 
     private static SKMatrix ToSkiaMatrix(Matrix3x2 matrix) => new(
