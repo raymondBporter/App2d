@@ -1,10 +1,10 @@
-using System.Diagnostics;
 using App2d.Core;
 using App2d.Diagnostics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using SkiaSharp;
 using SkiaSharp.Views.Desktop;
+using System.Diagnostics;
 
 namespace App2d;
 

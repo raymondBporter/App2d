@@ -1,6 +1,6 @@
-﻿using System.Numerics;
-using App2d.Core.Geometry;
+﻿using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
+using System.Numerics;
 
 namespace App2d.Collision.Contacts;
 

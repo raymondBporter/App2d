@@ -1,4 +1,3 @@
-using System.Numerics;
 using App2d.Collision;
 using App2d.Collision.Contacts;
 using App2d.Collision.Filtering;
@@ -6,6 +5,7 @@ using App2d.Core;
 using App2d.Physics.Filtering;
 using App2d.Physics.Integration;
 using App2d.Physics.Solvers;
+using System.Numerics;
 
 namespace App2d.Physics;
 

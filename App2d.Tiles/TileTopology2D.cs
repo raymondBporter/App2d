@@ -50,10 +50,7 @@ public static class TileTopology2D
         return surfaces;
     }
 
-    public static TileCorner2D GetCorners(
-        this ISolidTileMap2D tileMap,
-        int x,
-        int y)
+    public static TileCorner2D GetCorners(this ISolidTileMap2D tileMap, int x, int y)
     {
         ArgGuard.ThrowIfNull(tileMap);
 
