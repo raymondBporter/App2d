@@ -1,6 +1,8 @@
 using App2d.Levels;
 using App2d.Tiles;
+using Microsoft.Data.Sqlite;
 using System.Numerics;
+using System.Threading;
 
 namespace App2d.Tests.Levels;
 
@@ -17,8 +19,44 @@ public sealed class LevelDatabase2DTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_directory))
-            Directory.Delete(_directory, recursive: true);
+        if (!Directory.Exists(_directory))
+            return;
+
+        // Microsoft.Data.Sqlite pools native sqlite3 handles by default: disposing a
+        // SqliteConnection returns the handle to the pool rather than closing it, which
+        // on Windows keeps the file (and its -wal/-shm siblings) locked for a moment
+        // after the last `using` block here has already run. Clear the pool for this
+        // exact connection string before deleting, then allow a short bounded retry as
+        // a safety margin -- never a blanket catch that would hide a genuine leak.
+        ClearPoolForDatabaseFile();
+        DeleteDirectoryWithRetry(_directory);
+    }
+
+    private void ClearPoolForDatabaseFile()
+    {
+        using var probe = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = Path.Combine(_directory, "level.db"),
+            Mode = SqliteOpenMode.ReadWriteCreate
+        }.ToString());
+        SqliteConnection.ClearPool(probe);
+    }
+
+    private static void DeleteDirectoryWithRetry(string directory)
+    {
+        const int maxAttempts = 10;
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+                return;
+            }
+            catch (IOException) when (attempt < maxAttempts)
+            {
+                Thread.Sleep(20);
+            }
+        }
     }
 
     private static EditableTileMap2D BuildMap()

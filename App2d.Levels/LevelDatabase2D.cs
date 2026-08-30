@@ -32,8 +32,7 @@ public sealed class LevelDatabase2D : IDisposable
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
             DataSource = path,
-            Mode = SqliteOpenMode.ReadWriteCreate,
-            Pooling = false
+            Mode = SqliteOpenMode.ReadWriteCreate
         }.ToString());
         connection.Open();
 
