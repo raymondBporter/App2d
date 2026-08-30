@@ -40,6 +40,7 @@ public static partial class ShapeCollision2D
     private static CollisionResult Dispatch(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose) =>
         first switch
         {
+            CompositeShape2D composite => CompositeAgainst(composite, firstPose, second, secondPose),
             Circle2D circle => CircleAgainst(circle, firstPose, second, secondPose),
             Capsule2D capsule => CapsuleAgainst(capsule, firstPose, second, secondPose),
             Rectangle2D rectangle => RectangleAgainst(rectangle, firstPose, second, secondPose),

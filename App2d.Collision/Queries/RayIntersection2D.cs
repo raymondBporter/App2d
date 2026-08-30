@@ -100,6 +100,22 @@ public static class RayIntersection2D
             case HalfSpace2D halfSpace:
                 return TryHalfSpace(origin, direction, halfSpace, maxDistance, out hit);
 
+            case CompositeShape2D composite:
+            {
+                hit = default;
+                var found = false;
+                foreach (var part in composite.Parts)
+                {
+                    if (TryIntersectLocal(origin, direction, part, maxDistance, out var partHit) && (!found || partHit.Distance < hit.Distance))
+                    {
+                        hit = partHit;
+                        found = true;
+                    }
+                }
+
+                return found;
+            }
+
             default:
                 hit = default;
                 return false;
