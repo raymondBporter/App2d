@@ -18,6 +18,7 @@ public sealed class HalfSpace2D : IShape2D
     public Vector2 Normal { get; }
     public float Offset { get; }
     public Bounds2D LocalBounds => Bounds2D.Unbounded;
+    public float Area => float.PositiveInfinity;
 
     public bool ContainsPoint(Vector2 localPoint) => Vector2.Dot(localPoint, Normal) <= Offset;
 

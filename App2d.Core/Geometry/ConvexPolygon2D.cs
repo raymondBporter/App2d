@@ -13,10 +13,12 @@ public sealed class ConvexPolygon2D : IConvexShape2D
         _vertices = [.. vertices];
         Validate(_vertices);
         LocalBounds = Bounds2D.FromPoints(_vertices);
+        Area = PolygonGeometry2D.Area(_vertices);
     }
 
     public ReadOnlySpan<Vector2> Vertices => _vertices;
     public Bounds2D LocalBounds { get; }
+    public float Area { get; }
 
     public bool ContainsPoint(Vector2 localPoint) => PolygonGeometry2D.ContainsPoint(_vertices, localPoint, Epsilon);
 

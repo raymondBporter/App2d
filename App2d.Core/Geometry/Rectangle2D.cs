@@ -17,6 +17,7 @@ public class Rectangle2D : IConvexShape2D
     public Vector2 Min { get; }
     public Vector2 Max { get; }
     public Bounds2D LocalBounds { get; }
+    public float Area => (Max.X - Min.X) * (Max.Y - Min.Y);
 
     public bool ContainsPoint(Vector2 localPoint) =>
         localPoint.X >= Min.X && localPoint.X <= Max.X &&

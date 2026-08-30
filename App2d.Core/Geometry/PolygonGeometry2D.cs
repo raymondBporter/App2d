@@ -14,6 +14,8 @@ public static class PolygonGeometry2D
         return signedAreaTwice;
     }
 
+    public static float Area(ReadOnlySpan<Vector2> vertices) => MathF.Abs(SignedAreaTwice(vertices)) / 2f;
+
     public static bool ContainsPoint(ReadOnlySpan<Vector2> vertices, Vector2 point, float collinearEpsilon = 0.0001f)
     {
         var winding = 0f;

@@ -18,6 +18,7 @@ public sealed class Circle2D : IConvexShape2D
     public float Radius { get; }
     public Vector2 Center { get; }
     public Bounds2D LocalBounds { get; }
+    public float Area => MathF.PI * Radius * Radius;
 
     public bool ContainsPoint(Vector2 localPoint) => Vector2.DistanceSquared(localPoint, Center) <= Radius * Radius;
 

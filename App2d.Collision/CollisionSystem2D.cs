@@ -103,10 +103,7 @@ public sealed class CollisionSystem2D
         foreach (var pair in _candidatePairs)
         {
             LastNarrowPhaseTestCount++;
-            if (ContactProvider.TryGetContact(
-                pair.First.WorldObject,
-                pair.Second.WorldObject,
-                out var contact))
+            if (ContactProvider.TryGetContact(pair.First.WorldObject, pair.Second.WorldObject, out var contact))
             {
                 contacts.Add(new CollisionPair2D(pair.First, pair.Second, contact));
             }
