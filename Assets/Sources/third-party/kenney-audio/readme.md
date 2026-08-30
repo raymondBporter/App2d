@@ -6,7 +6,8 @@ sounds.
 
 ## Format
 
-`Assets/Content/audio/sfx/` contains PCM 16-bit mono WAV files at 44.1 kHz. They need no codec and are ideal
+`Assets/Static/audio/sfx/` contains PCM 16-bit mono WAV files at 44.1 kHz. The asset
+pipeline copies them to `Assets/Runtime/audio/sfx/`. They need no codec and are ideal
 for short, latency-sensitive effects.
 
 For this set, caching every decoded effect is reasonable: the entire WAV directory is

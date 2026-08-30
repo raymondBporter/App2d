@@ -24,16 +24,29 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\Assets\Content\**\*"
+    <None Include="..\Assets\Runtime\**\*"
           Link="Assets\%(RecursiveDir)%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest"
-          CopyToPublishDirectory="PreserveNewest" />
+          CopyToPublishDirectory="PreserveNewest">
+      <CopyToOutputDirectory Condition="'$(Configuration)' == 'Debug'">Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
-  <Target Name="ResetRuntimeAssetsOutput"
+  <Target Name="ValidateRuntimeAssets" BeforeTargets="BeforeBuild">
+    <Error Condition="!Exists('..\Assets\Runtime\content-manifest.json')"
+           Text="Runtime assets are missing. Run: python tools/ArtPipeline/build_runtime_assets.py" />
+  </Target>
+
+  <Target Name="ResetReleaseAssetsOutput"
           AfterTargets="GetCopyToOutputDirectoryItems"
-          Condition="'$(DesignTimeBuild)' != 'true'">
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(Configuration)' != 'Debug'">
     <RemoveDir Directories="$(OutDir)Assets" />
+  </Target>
+
+  <Target Name="ResetPublishedAssetsOutput"
+          BeforeTargets="PrepareForPublish"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(PublishDir)' != ''">
+    <RemoveDir Directories="$(PublishDir)Assets" />
   </Target>
 
 </Project>

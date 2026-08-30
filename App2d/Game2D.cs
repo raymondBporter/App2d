@@ -26,8 +26,7 @@ public abstract class Game2D : IDisposable
 
     public Camera2D Camera { get; } = new();
     public Scene2D Scene { get; } = [];
-    public TextureCache2D Textures { get; } = new(
-        Path.Combine(AppContext.BaseDirectory, "Assets"));
+    public TextureCache2D Textures { get; } = new(AssetPaths.Root);
     public DeveloperConsole DeveloperConsole { get; } = new();
     public virtual string WindowTitle => "App2d";
     internal bool DrawGraphics => _drawGraphics;

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import io
 import json
 import shutil
@@ -143,9 +144,14 @@ def import_dark(archive: Path, output_root: Path) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--content-root", type=Path)
+    arguments = parser.parse_args()
+
     repository = Path(__file__).resolve().parents[2]
     sources = repository / "Assets/Sources/third-party/maaot"
-    output = repository / "Assets/Content/environments/tilesets"
+    content_root = arguments.content_root or repository / "Assets/Runtime"
+    output = content_root / "environments/tilesets"
     import_dark(sources / "dark-cave.zip", output)
     import_mossy(sources / "mossy-cavern.zip", output)
     print("Imported Maaot cave environments.")

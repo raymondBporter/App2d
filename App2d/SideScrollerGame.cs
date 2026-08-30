@@ -18,8 +18,7 @@ public sealed class SideScrollerGame : Game2D
     private const uint EnemyLayer = 1u << 2;
 
     private static readonly TraversalMetrics2D Traversal =
-        TraversalMetrics2D.FromPlayerAsset(
-            Path.Combine(AppContext.BaseDirectory, "Assets"));
+        TraversalMetrics2D.FromPlayerAsset(AssetPaths.Root);
 
     private readonly CollisionSystem2D _collision = new();
     private readonly PhysicsWorld2D _physics;
@@ -46,7 +45,7 @@ public sealed class SideScrollerGame : Game2D
             VelocityIterations = 2
         };
         Traversal.ValidateScaleContract();
-        _sounds = new SoundEffectBank2D(Path.Combine(AppContext.BaseDirectory, "Assets", "audio", "sfx"));
+        _sounds = new SoundEffectBank2D(Path.Combine(AssetPaths.Root, "audio", "sfx"));
         RegisterDebugPhysicsWorld(_physics);
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value, "Set sound-effect volume from 0 (muted) to 1 (full volume).");
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _showTraversalDebug, value => _showTraversalDebug = value, "Draw jump arcs and tile-relative movement metrics.");

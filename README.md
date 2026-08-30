@@ -225,16 +225,15 @@ the same `python -m pip install -r tools/ArtPipeline/requirements.txt` command, 
 the virtual environment's Python executable as shown above.
 
 The build scales and root-aligns the pack's baked Sword and Pistol sequences into
-`Assets/Content/characters/player-sword` and
-`Assets/Content/characters/player-gun`. It generates each character's `character.json`
+`Assets/Runtime/characters/player-sword` and
+`Assets/Runtime/characters/player-gun`. It generates each character's `character.json`
 animation manifest alongside its frames, measures the idle poses to regenerate
-`Assets/Content/characters/player-geometry.json`, and imports the bullet and HUD icons.
+`Assets/Runtime/characters/player-geometry.json`, and imports the bullet and HUD icons.
 Run the build again whenever the source frames or importer settings change.
 
-Generated files remain below `Assets/Content` because the game ships that tree. The
-reproducible player character folders, including their generated `character.json`
-manifests, are excluded by `.gitignore`; `player-geometry.json` is committed so geometry
-changes remain reviewable.
+Generated files remain below ignored `Assets/Runtime`, which is the tree the game reads
+and ships. The pipeline recreates it from committed `Assets/Static` files and original
+inputs under `Assets/Sources`, then writes a file/hash manifest.
 
 ## Run
 
@@ -309,7 +308,7 @@ Side-scroller dimensions use an eight-world-unit design increment. A terrain til
 32 units (four increments). The RGS player keeps its square 512-pixel canvas aspect
 ratio and renders at 138 by 138 world units. The art pipeline measures the idle feet,
 head inset and authored foot anchor, then writes the visual and collider
-geometry to `Assets/Content/characters/player-geometry.json`. Runtime loads that manifest
+geometry to `Assets/Runtime/characters/player-geometry.json`. Runtime loads that manifest
 rather than duplicating sprite measurements in gameplay code. The collider offset
 mirrors with the player's facing.
 
@@ -408,9 +407,10 @@ character.
 ## Assets and textures
 
 Repository assets are separated by lifecycle under the top-level `Assets` directory.
-Only `Assets/Content` ships; the project copies that tree beside the executable as
-`Assets`. `Assets/Library` holds useful alternatives, `Assets/Sources` retains original
-inputs and licenses, and ignored `Assets/Work` holds regenerable pipeline output.
+Only generated `Assets/Runtime` ships; Debug reads it in place and Release packages it
+beside the executable as `Assets`. `Assets/Static` holds curated runtime-ready inputs,
+`Assets/Sources` retains originals and licenses, `Assets/Library` holds alternatives,
+and ignored `Assets/Work` holds intermediate pipeline output.
 
 Runtime paths use lowercase semantic IDs. Every `Game2D` owns a `TextureCache2D`
 rooted at the deployed `Assets` directory, so textures load only when requested:
@@ -457,7 +457,7 @@ The sword and gun are complete 2D character sprite sets. Switching weapons swaps
 active character animation set.
 
 Each generated player character owns a `character.json` and semantic folders such as
-`Assets/Content/characters/player-sword/animations/walk`. The asset build generates the
+`Assets/Runtime/characters/player-sword/animations/walk`. The asset build generates the
 manifest from the importer configuration; the animation ID and folder name are
 identical, while source names remain provenance rather than runtime vocabulary.
 Frames use contiguous four-digit names beginning at `frame-0001.png`. Manifests record

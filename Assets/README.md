@@ -5,20 +5,24 @@ text, fonts, level data, and source files used to produce runtime content.
 
 The first folder describes the asset lifecycle:
 
-- `Content` is the only shipping boundary. The game project packages everything
-  below it into the executable's `Assets` directory. Small selected assets and
-  manifests are committed; reproducible player character frames are ignored and
-  rebuilt locally.
-- `Library` contains useful, reviewed alternatives that are not currently shipped.
+- `Static` contains curated, runtime-ready inputs that the pipeline copies without
+  transforming. This directory is durable and committed.
 - `Sources` contains original and third-party inputs with their licenses and
-  provenance.
+  provenance. Importers transform these into runtime assets.
+- `Library` contains useful, reviewed alternatives that are not currently shipped.
+- `Runtime` is the complete generated game-facing tree. Debug reads it directly;
+  Release builds and publishes package it as `Assets`. It is ignored and disposable.
 - `Work` contains regenerable output, previews, validation reports, rejected
   attempts, and caches. It is ignored by Git.
 
 From a clean clone, run `python tools/ArtPipeline/build_runtime_assets.py` from the
-repository root before starting the game. Its playable inputs are the committed RGS Dev
-Sword and Pistol PNG sequences under `Sources/third-party/rgs-stick-figure`, together
-with the included CC0 license.
+repository root before starting the game. The pipeline stages a fresh tree, copies
+`Static`, runs every importer from `Sources`, validates required assets, writes
+`Runtime/content-manifest.json` with file sizes and SHA-256 hashes, and only then swaps
+the completed tree into place. A failed build leaves the previous `Runtime` untouched.
+
+Delete `Runtime` whenever you want a clean checkout-like state; running the pipeline
+recreates it. Durable or hand-edited files must never live only in `Runtime`.
 
 Runtime content is organized by game concept rather than file format. Asset IDs
 use lowercase letters, digits, and hyphens. A canonical ID and its folder name are
@@ -34,5 +38,5 @@ conventional paths such as `surfaces/top.png` and `corners/outer.png` carry thei
 own meaning.
 
 Source pack names and production history belong in library metadata and
-provenance, never in runtime IDs. Promote one chosen variant into `Content`; keep
-other useful variants under the same semantic ID in `Library`.
+provenance, never in runtime IDs. Promote runtime-ready files into `Static`, add an
+importer for source files that require processing, and keep alternatives in `Library`.

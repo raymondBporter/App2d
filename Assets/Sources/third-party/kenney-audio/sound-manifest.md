@@ -18,4 +18,5 @@
 | Player resets | `player-respawn` | Pit fall or defeat reset |
 | Goal first reached | `goal-reached` | Play once on the false-to-true goal transition |
 
-Every stem exists as a WAV file in `Assets/Content/audio/sfx/`.
+Every stem exists as a WAV input in `Assets/Static/audio/sfx/` and is copied to
+`Assets/Runtime/audio/sfx/` by the asset pipeline.

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -253,13 +254,17 @@ def build_icon(source_path: Path, crop: tuple[int, int, int, int], output_path: 
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--content-root", type=Path)
+    arguments = parser.parse_args()
+
     repository = Path(__file__).resolve().parents[2]
     pack_root = (
         repository
         / "Assets/Sources/third-party/rgs-stick-figure"
         / "Stick Figure Character Sprites 2D"
     )
-    content_root = repository / "Assets/Content"
+    content_root = arguments.content_root or repository / "Assets/Runtime"
 
     sword_source = pack_root / "Sword sprites"
     pistol_source = pack_root / "Pistol sprites"

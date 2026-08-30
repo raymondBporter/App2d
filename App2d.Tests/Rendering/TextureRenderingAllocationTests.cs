@@ -9,7 +9,7 @@ namespace App2d.Tests.Rendering;
 public sealed class TextureRenderingAllocationTests
 {
     private static readonly string TexturePath = TestAssets.GetPath(
-        "Content",
+        "Runtime",
         "ui",
         "hud",
         "weapons",
