@@ -18,6 +18,7 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
     private readonly SideScrollerTerrainVisualFactory2D _visuals = ArgGuard.RequireNotNull(visuals);
     private readonly Dictionary<TileChunk2D, LoadedChunk> _loadedChunks = [];
     private readonly List<SpatialObject2D> _platforms = [];
+    private readonly List<TileChunk2D> _unloadBuffer = [];
 
     public IReadOnlyList<SpatialObject2D> Platforms => _platforms;
     public int ActiveChunkCount => _loadedChunks.Count;
@@ -35,14 +36,18 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
         var minimumY = Math.Max(0, center.Y - VerticalChunkRadius);
         var maximumY = Math.Min(_tileMap.ChunkRows - 1, center.Y + VerticalChunkRadius);
 
-        foreach (var chunk in _loadedChunks.Keys.ToArray())
+        _unloadBuffer.Clear();
+        foreach (var chunk in _loadedChunks.Keys)
         {
             if (chunk.X < minimumX || chunk.X > maximumX ||
                 chunk.Y < minimumY || chunk.Y > maximumY)
             {
-                Unload(chunk);
+                _unloadBuffer.Add(chunk);
             }
         }
+
+        foreach (var chunk in _unloadBuffer)
+            Unload(chunk);
 
         for (var y = minimumY; y <= maximumY; y++)
         {

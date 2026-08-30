@@ -7,6 +7,7 @@ namespace App2d.Engine.Collision;
 public sealed class CollisionSystem2D
 {
     private const int MaximumCellsPerCollider = 4_096;
+    private const int MaximumRetainedCells = 1_024;
 
     private readonly List<Collider2D> _colliders = [];
     private readonly List<BroadPhasePair2D<Collider2D>> _candidatePairs = [];
@@ -15,6 +16,7 @@ public sealed class CollisionSystem2D
     private readonly Dictionary<GridCell, List<Collider2D>> _dynamicCells = [];
     private readonly List<Collider2D> _staticOverflow = [];
     private readonly List<Collider2D> _dynamicOverflow = [];
+    private readonly List<GridCell> _staleCells = [];
     private readonly CombinedPairFilter _combinedFilter = new();
     private int _nextColliderId = 1;
     private int _queryStamp;
@@ -266,6 +268,19 @@ public sealed class CollisionSystem2D
                 continue;
             AddToIndex(collider, cells, overflow);
         }
+
+        // Buckets are kept for reuse, but drop empties once the index grows
+        // large so a wandering world can't retain cells forever.
+        if (cells.Count <= MaximumRetainedCells)
+            return;
+        _staleCells.Clear();
+        foreach (var (cell, bucket) in cells)
+        {
+            if (bucket.Count == 0)
+                _staleCells.Add(cell);
+        }
+        foreach (var cell in _staleCells)
+            cells.Remove(cell);
     }
 
     private void AddToIndex(

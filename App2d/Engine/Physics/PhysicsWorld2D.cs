@@ -93,7 +93,16 @@ public sealed class PhysicsWorld2D
             body.ClearAccumulators();
     }
 
-    public bool IsTouching(PhysicsBody2D body) => _lastContacts.Any(contact => contact.First == body || contact.Second == body);
+    public bool IsTouching(PhysicsBody2D body)
+    {
+        foreach (var contact in _lastContacts)
+        {
+            if (contact.First == body || contact.Second == body)
+                return true;
+        }
+
+        return false;
+    }
 
     public bool IsTouching(PhysicsBody2D body, Vector2 direction, float minimumDot = 0.5f)
     {
