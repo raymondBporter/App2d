@@ -204,6 +204,8 @@ public sealed class SideScrollerGame : Game2D
 
         if (_showTraversalDebug)
             _traversalDebug.Draw(renderer, _player.Position, _player.Facing);
+
+        TileEditorView2D.Draw(renderer, _editor, _level.TileMap.Origin, _level.TileMap.TileSize);
     }
 
     private void Respawn()
