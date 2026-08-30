@@ -63,8 +63,31 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
             return;
 
         _tiles[index] = kind;
-        ChunkChanged?.Invoke(TileToChunk(x, y));
+
+        if (ChunkChanged is null)
+            return;
+
+        // Terrain visuals sample the tile's 3x3 neighbourhood across chunk borders, so a
+        // tile on a chunk edge or corner can change up to four chunks' appearance. Chunk
+        // assignment is monotonic in x and y independently, so the distinct chunks touched
+        // by the (clamped) 3x3 neighbourhood are exactly the outer product of the chunk
+        // columns/rows at its min and max corners -- at most four, deduplicated below.
+        var minChunkX = TileToChunk(Math.Max(0, x - 1), 0).X;
+        var maxChunkX = TileToChunk(Math.Min(Width - 1, x + 1), 0).X;
+        var minChunkY = TileToChunk(0, Math.Max(0, y - 1)).Y;
+        var maxChunkY = TileToChunk(0, Math.Min(Height - 1, y + 1)).Y;
+
+        // DistinctPair already collapses each axis to its unique values, so the cross
+        // product below can never repeat a (chunkX, chunkY) pair.
+        foreach (var chunkX in DistinctPair(minChunkX, maxChunkX))
+        {
+            foreach (var chunkY in DistinctPair(minChunkY, maxChunkY))
+                ChunkChanged.Invoke(new TileChunk2D(chunkX, chunkY));
+        }
     }
+
+    private static int[] DistinctPair(int first, int second) =>
+        first == second ? [first] : [first, second];
 
     /// <summary>Seeds every tile from <paramref name="source"/> without raising per-tile change events.</summary>
     public void Fill(Func<int, int, TileKind2D> source)
