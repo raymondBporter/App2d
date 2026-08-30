@@ -7,12 +7,7 @@ public static class SweptCircleAabb2D
 {
     private const float ParallelEpsilon = 1e-7f;
 
-    public static bool TryIntersect(
-        Vector2 start,
-        Vector2 end,
-        float radius,
-        Bounds2D bounds,
-        out SweptCircleHit2D hit)
+    public static bool TryIntersect(Vector2 start, Vector2 end, float radius, Bounds2D bounds, out SweptCircleHit2D hit)
     {
         ArgGuard.ThrowIfNegativeOrNotFinite(radius);
         if (!bounds.IsFinite)
@@ -37,29 +32,9 @@ public static class SweptCircleAabb2D
         var exitTime = 1f;
         var entryNormal = Vector2.Zero;
 
-        if (!UpdateSlab(
-                start.X,
-                delta.X,
-                expandedMin.X,
-                expandedMax.X,
-                -Vector2.UnitX,
-                Vector2.UnitX,
-                ref entryTime,
-                ref exitTime,
-                ref entryNormal) ||
-            !UpdateSlab(
-                start.Y,
-                delta.Y,
-                expandedMin.Y,
-                expandedMax.Y,
-                -Vector2.UnitY,
-                Vector2.UnitY,
-                ref entryTime,
-                ref exitTime,
-                ref entryNormal) ||
-            entryTime < 0f ||
-            entryTime > 1f ||
-            entryNormal == Vector2.Zero)
+        if (!UpdateSlab(start.X, delta.X, expandedMin.X, expandedMax.X, -Vector2.UnitX, Vector2.UnitX, ref entryTime, ref exitTime, ref entryNormal) ||
+            !UpdateSlab(start.Y, delta.Y, expandedMin.Y, expandedMax.Y, -Vector2.UnitY, Vector2.UnitY, ref entryTime, ref exitTime, ref entryNormal) ||
+            entryTime < 0f || entryTime > 1f || entryNormal == Vector2.Zero)
         {
             hit = default;
             return false;
@@ -72,16 +47,7 @@ public static class SweptCircleAabb2D
         return true;
     }
 
-    private static bool UpdateSlab(
-        float start,
-        float delta,
-        float minimum,
-        float maximum,
-        Vector2 minimumNormal,
-        Vector2 maximumNormal,
-        ref float entryTime,
-        ref float exitTime,
-        ref Vector2 entryNormal)
+    private static bool UpdateSlab(float start, float delta, float minimum, float maximum, Vector2 minimumNormal, Vector2 maximumNormal, ref float entryTime, ref float exitTime, ref Vector2 entryNormal)
     {
         if (MathF.Abs(delta) <= ParallelEpsilon)
             return start >= minimum && start <= maximum;
@@ -105,10 +71,7 @@ public static class SweptCircleAabb2D
         return entryTime <= exitTime;
     }
 
-    private static Vector2 GetNearestBoundaryNormal(
-        Vector2 point,
-        Vector2 minimum,
-        Vector2 maximum)
+    private static Vector2 GetNearestBoundaryNormal(Vector2 point, Vector2 minimum, Vector2 maximum)
     {
         var nearestDistance = point.X - minimum.X;
         var nearestNormal = -Vector2.UnitX;
@@ -128,8 +91,4 @@ public static class SweptCircleAabb2D
     }
 }
 
-public readonly record struct SweptCircleHit2D(
-    float Time,
-    Vector2 Center,
-    Vector2 SurfacePoint,
-    Vector2 Normal);
+public readonly record struct SweptCircleHit2D(float Time, Vector2 Center, Vector2 SurfacePoint, Vector2 Normal);

@@ -17,10 +17,7 @@ public sealed class BruteForceAabbBroadPhase2D<T> : IBroadPhase2D<T>
         _getBounds = getBounds;
     }
 
-    public void CollectPairs(
-        IReadOnlyList<T> items,
-        IPairFilter2D<T> pairFilter,
-        List<BroadPhasePair2D<T>> pairs)
+    public void CollectPairs(IReadOnlyList<T> items, IPairFilter2D<T> pairFilter, List<BroadPhasePair2D<T>> pairs)
     {
         ArgGuard.ThrowIfNull(items);
         ArgGuard.ThrowIfNull(pairFilter);
@@ -30,19 +27,18 @@ public sealed class BruteForceAabbBroadPhase2D<T> : IBroadPhase2D<T>
         _worldBounds.Clear();
         _worldBounds.EnsureCapacity(items.Count);
         for (var i = 0; i < items.Count; i++)
+        {
             _worldBounds.Add(_getBounds(items[i]));
+        }
 
         for (var first = 0; first < items.Count; first++)
         {
             for (var second = first + 1; second < items.Count; second++)
             {
-                if (!pairFilter.ShouldTest(items[first], items[second]) ||
-                    !_worldBounds[first].Intersects(_worldBounds[second]))
+                if (pairFilter.ShouldTest(items[first], items[second]) && _worldBounds[first].Intersects(_worldBounds[second]))
                 {
-                    continue;
+                    pairs.Add(new BroadPhasePair2D<T>(items[first], items[second]));
                 }
-
-                pairs.Add(new BroadPhasePair2D<T>(items[first], items[second]));
             }
         }
     }

@@ -6,22 +6,14 @@ namespace App2d.Engine.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    private static CollisionResult CircleVsRectangle(
-        Circle2D circle,
-        Transform2D circleTransform,
-        Rectangle2D rectangle,
-        Transform2D rectangleTransform)
+    private static CollisionResult CircleVsRectangle(Circle2D circle, Transform2D circleTransform, Rectangle2D rectangle, Transform2D rectangleTransform)
     {
         Span<Vector2> vertices = stackalloc Vector2[4];
         WriteLocalRectangleVertices(rectangle, vertices);
         return CircleVsPolygon(circle, circleTransform, vertices, rectangleTransform);
     }
 
-    private static CollisionResult CircleVsCircle(
-        Circle2D first,
-        Transform2D firstTransform,
-        Circle2D second,
-        Transform2D secondTransform)
+    private static CollisionResult CircleVsCircle(Circle2D first, Transform2D firstTransform, Circle2D second, Transform2D secondTransform)
     {
         if (!CollisionMath2D.TryGetWorldCircle(first, firstTransform, out var firstCenter, out var firstRadius))
             return CollisionResult.None;
@@ -46,11 +38,7 @@ public static partial class ShapeCollision2D
         return CollisionResult.From(new CollisionContact2D(point, normal, combinedRadius - distance));
     }
 
-    private static CollisionResult CircleVsCapsule(
-        Circle2D circle,
-        Transform2D circleTransform,
-        Capsule2D capsule,
-        Transform2D capsuleTransform)
+    private static CollisionResult CircleVsCapsule(Circle2D circle, Transform2D circleTransform, Capsule2D capsule, Transform2D capsuleTransform)
     {
         if (!CollisionMath2D.TryGetWorldCircle(circle, circleTransform, out var center, out var circleRadius) ||
             !CollisionMath2D.TryGetWorldCapsule(capsule, capsuleTransform, out var start, out var end, out var capsuleRadius))
@@ -79,17 +67,10 @@ public static partial class ShapeCollision2D
                 : Vector2.UnitY;
         }
 
-        return CollisionResult.From(new CollisionContact2D(
-            segmentPoint + normal * capsuleRadius,
-            normal,
-            combinedRadius - distance));
+        return CollisionResult.From(new CollisionContact2D(segmentPoint + normal * capsuleRadius, normal, combinedRadius - distance));
     }
 
-    private static CollisionResult CircleVsHalfSpace(
-        Circle2D circle,
-        Transform2D circleTransform,
-        HalfSpace2D halfSpace,
-        Transform2D halfSpaceTransform)
+    private static CollisionResult CircleVsHalfSpace(Circle2D circle, Transform2D circleTransform, HalfSpace2D halfSpace, Transform2D halfSpaceTransform)
     {
         if (!CollisionMath2D.TryGetWorldCircle(circle, circleTransform, out var center, out var radius))
             return CollisionResult.None;
@@ -104,11 +85,7 @@ public static partial class ShapeCollision2D
         return CollisionResult.From(new CollisionContact2D(point, normal, penetration));
     }
 
-    private static CollisionResult CircleVsPolygon(
-        Circle2D circle,
-        Transform2D circleTransform,
-        ReadOnlySpan<Vector2> localVertices,
-        Transform2D polygonTransform)
+    private static CollisionResult CircleVsPolygon(Circle2D circle, Transform2D circleTransform, ReadOnlySpan<Vector2> localVertices, Transform2D polygonTransform)
     {
         if (!CollisionMath2D.TryGetWorldCircle(circle, circleTransform, out var center, out var radius))
             return CollisionResult.None;

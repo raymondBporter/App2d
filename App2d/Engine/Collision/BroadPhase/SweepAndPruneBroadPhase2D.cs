@@ -11,9 +11,7 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
     private readonly Func<T, Bounds2D> _getBounds;
     private readonly List<Proxy> _proxies = [];
 
-    public SweepAndPruneBroadPhase2D(
-        Func<T, Bounds2D> getBounds,
-        SweepAxis2D axis = SweepAxis2D.X)
+    public SweepAndPruneBroadPhase2D(Func<T, Bounds2D> getBounds, SweepAxis2D axis = SweepAxis2D.X)
     {
         ArgGuard.ThrowIfNull(getBounds);
         _getBounds = getBounds;
@@ -22,10 +20,7 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
 
     public SweepAxis2D Axis { get; set; }
 
-    public void CollectPairs(
-        IReadOnlyList<T> items,
-        IPairFilter2D<T> pairFilter,
-        List<BroadPhasePair2D<T>> pairs)
+    public void CollectPairs(IReadOnlyList<T> items, IPairFilter2D<T> pairFilter, List<BroadPhasePair2D<T>> pairs)
     {
         ArgGuard.ThrowIfNull(items);
         ArgGuard.ThrowIfNull(pairFilter);
@@ -87,11 +82,5 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
             : first.Ordinal.CompareTo(second.Ordinal);
     }
 
-    private readonly record struct Proxy(
-        T Item,
-        int Ordinal,
-        float PrimaryMinimum,
-        float PrimaryMaximum,
-        float SecondaryMinimum,
-        float SecondaryMaximum);
+    private readonly record struct Proxy(T Item, int Ordinal, float PrimaryMinimum, float PrimaryMaximum, float SecondaryMinimum, float SecondaryMaximum);
 }

@@ -85,10 +85,7 @@ public static partial class ShapeCollision2D
             : Vector2.UnitY;
     }
 
-    private static void AddPolygonEdgeAxes(
-        Span<Vector2> axes,
-        ref int axisCount,
-        ReadOnlySpan<Vector2> vertices)
+    private static void AddPolygonEdgeAxes(Span<Vector2> axes, ref int axisCount, ReadOnlySpan<Vector2> vertices)
     {
         for (var i = 0; i < vertices.Length; i++)
         {

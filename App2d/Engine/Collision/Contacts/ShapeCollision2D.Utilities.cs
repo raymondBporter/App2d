@@ -42,8 +42,7 @@ public static partial class ShapeCollision2D
         for (var i = 0; i < vertices.Length; i++)
         {
             var angle = i * angleStep;
-            vertices[i] = circle.Center +
-                new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * circle.Radius;
+            vertices[i] = circle.Center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * circle.Radius;
         }
     }
 }

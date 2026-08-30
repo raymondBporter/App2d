@@ -6,11 +6,7 @@ namespace App2d.Engine.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    private static CollisionResult CapsuleVsCapsule(
-        Capsule2D first,
-        Transform2D firstTransform,
-        Capsule2D second,
-        Transform2D secondTransform)
+    private static CollisionResult CapsuleVsCapsule(Capsule2D first, Transform2D firstTransform, Capsule2D second, Transform2D secondTransform)
     {
         if (!CollisionMath2D.TryGetWorldCapsule(first, firstTransform, out var firstStart, out var firstEnd, out var firstRadius) ||
             !CollisionMath2D.TryGetWorldCapsule(second, secondTransform, out var secondStart, out var secondEnd, out var secondRadius))
@@ -75,17 +71,10 @@ public static partial class ShapeCollision2D
         }
 
         var contactPoint = closest.Second + bestNormal * secondRadius;
-        return CollisionResult.From(new CollisionContact2D(
-            contactPoint,
-            bestNormal,
-            bestDepth));
+        return CollisionResult.From(new CollisionContact2D(contactPoint, bestNormal, bestDepth));
     }
 
-    private static CollisionResult RectangleVsCapsule(
-        Rectangle2D rectangle,
-        Transform2D rectangleTransform,
-        Capsule2D capsule,
-        Transform2D capsuleTransform)
+    private static CollisionResult RectangleVsCapsule(Rectangle2D rectangle, Transform2D rectangleTransform, Capsule2D capsule, Transform2D capsuleTransform)
     {
         if (!CollisionMath2D.TryGetWorldCapsule(capsule, capsuleTransform, out var capsuleStart, out var capsuleEnd, out var capsuleRadius))
             return CollisionResult.None;
@@ -106,23 +95,13 @@ public static partial class ShapeCollision2D
         AddAxis(axes, ref axisCount, capsuleStart - closestToStart);
         AddAxis(axes, ref axisCount, capsuleEnd - closestToEnd);
 
-        if (!TryGetPolygonCapsuleMtv(
-                rectangleVertices,
-                capsuleStart,
-                capsuleEnd,
-                capsuleRadius,
-                axes[..axisCount],
-                out var normal,
-                out var depth))
+        if (!TryGetPolygonCapsuleMtv(rectangleVertices, capsuleStart, capsuleEnd, capsuleRadius, axes[..axisCount], out var normal, out var depth))
         {
             return CollisionResult.None;
         }
 
         var rectangleSurface = GetPolygonSupportPoint(rectangleVertices, -normal);
         var capsuleSurface = GetCapsuleSupportPoint(capsuleStart, capsuleEnd, capsuleRadius, normal);
-        return CollisionResult.From(new CollisionContact2D(
-            (rectangleSurface + capsuleSurface) / 2f,
-            normal,
-            depth));
+        return CollisionResult.From(new CollisionContact2D((rectangleSurface + capsuleSurface) / 2f, normal, depth));
     }
 }
