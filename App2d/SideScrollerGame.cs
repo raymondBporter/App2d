@@ -1,6 +1,7 @@
 using App2d.Collision;
 using App2d.Core;
 using App2d.Diagnostics;
+using App2d.Editor;
 using App2d.Gameplay;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Player;
@@ -35,6 +36,7 @@ public sealed class SideScrollerGame : Game2D
     private readonly SideScrollerCamera2D _cameraController;
     private readonly TraversalDebugRenderer2D _traversalDebug = new(Traversal);
     private readonly SoundEffectBank2D _sounds;
+    private readonly TileEditor2D _editor;
     private bool _reachedGoal;
     private bool _showTraversalDebug;
     private float _restartDelaySeconds;
@@ -70,6 +72,12 @@ public sealed class SideScrollerGame : Game2D
             tileMap,
             x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)]);
         _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _level.SpawnPoint, _level.GetCameraFloorY);
+        _editor = new TileEditor2D(
+            tileMap,
+            LevelBootstrap2D.OpenForEditing(),
+            Camera,
+            tileMap.Origin,
+            Traversal.TileSize);
 
         _level.CreateEnvironment(Scene, _collision, _physics, Textures, WorldLayer, PlayerLayer, EnemyLayer);
 
@@ -121,6 +129,17 @@ public sealed class SideScrollerGame : Game2D
     public override void Update(FrameTime time, InputState input)
     {
         var dt = time.DeltaSeconds;
+
+        _editor.Update(input);
+        if (_editor.IsActive)
+        {
+            // Stream around the free camera, not the frozen player, or panning away
+            // would paint into chunks that never load.
+            _level.UpdateStreaming(_editor.CameraFocus);
+            _level.FlushDirtyChunks();
+            return;
+        }
+
         _level.UpdateStreaming(_player.Position);
         _level.UpdateMovingPlatforms(dt);
         _player.BeginFrame(dt);
@@ -233,6 +252,7 @@ public sealed class SideScrollerGame : Game2D
 
     public override void Dispose()
     {
+        _editor.Dispose();
         _playerPresentation.Dispose();
         _sounds.Dispose();
         base.Dispose();
