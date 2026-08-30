@@ -140,15 +140,68 @@ public sealed class LevelDatabase2DTests : IDisposable
     }
 
     [Fact]
+    public void SaveChunksWritesSeveralChunksInOneTransactionAndRoundTrips()
+    {
+        var path = NewPath();
+        var map = BuildMap();
+
+        using var database = LevelDatabase2D.Open(path);
+        database.Save(map, sourceSeed: 0UL);
+
+        map.SetTileKind(0, 0, TileKind2D.Spikes);
+        map.SetTileKind(9, 5, TileKind2D.OneWay);
+        database.SaveChunks(map, [new TileChunk2D(0, 0), new TileChunk2D(2, 1)]);
+
+        var loaded = database.Load();
+        Assert.Equal(TileKind2D.Spikes, loaded.GetTileKind(0, 0));
+        Assert.Equal(TileKind2D.OneWay, loaded.GetTileKind(9, 5));
+    }
+
+    [Fact]
     public void OpeningTwiceReusesTheExistingSchema()
     {
         var path = NewPath();
+        var original = BuildMap();
 
         using (var first = LevelDatabase2D.Open(path))
-            first.Save(BuildMap(), sourceSeed: 0UL);
+            first.Save(original, sourceSeed: 0UL);
 
         using var second = LevelDatabase2D.Open(path);
-        Assert.Equal(1, second.FormatVersion);
+        var loaded = second.Load();
+
+        Assert.Equal(original.Width, loaded.Width);
+        Assert.Equal(original.Height, loaded.Height);
+        Assert.Equal(original.TileSize, loaded.TileSize);
+        Assert.Equal(original.ChunkSize, loaded.ChunkSize);
+        Assert.Equal(original.Origin, loaded.Origin);
+        for (var y = 0; y < original.Height; y++)
+        {
+            for (var x = 0; x < original.Width; x++)
+                Assert.Equal(original.GetTileKind(x, y), loaded.GetTileKind(x, y));
+        }
+    }
+
+    [Fact]
+    public void OpeningAFileStampedToANewerFormatVersionThrowsInsteadOfDowngradingIt()
+    {
+        var path = NewPath();
+        using (var database = LevelDatabase2D.Open(path))
+            database.Save(BuildMap(), sourceSeed: 0UL);
+
+        using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = path,
+            Mode = SqliteOpenMode.ReadWriteCreate
+        }.ToString()))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText =
+                $"PRAGMA user_version = {LevelDatabase2D.CurrentFormatVersion + 1};";
+            command.ExecuteNonQuery();
+        }
+
+        Assert.Throws<InvalidOperationException>(() => LevelDatabase2D.Open(path));
     }
 
     [Fact]

@@ -38,7 +38,7 @@ public sealed class LevelDatabase2D : IDisposable
 
         using (var command = connection.CreateCommand())
         {
-            command.CommandText = $"""
+            command.CommandText = """
                 CREATE TABLE IF NOT EXISTS meta(
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL) WITHOUT ROWID;
@@ -47,9 +47,33 @@ public sealed class LevelDatabase2D : IDisposable
                     cy INTEGER NOT NULL,
                     tiles BLOB NOT NULL,
                     PRIMARY KEY(cx, cy)) WITHOUT ROWID;
-                PRAGMA user_version = {CurrentFormatVersion};
                 """;
             command.ExecuteNonQuery();
+        }
+
+        // Stamp the format version only on a fresh file (user_version 0 is SQLite's
+        // default for a file that never set it). Re-stamping unconditionally would
+        // silently downgrade a future format version's file when opened by older code,
+        // destroying the forward-compatibility hook user_version exists to provide.
+        long existingVersion;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA user_version;";
+            existingVersion = Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
+        }
+
+        if (existingVersion == 0)
+        {
+            using var command = connection.CreateCommand();
+            command.CommandText = $"PRAGMA user_version = {CurrentFormatVersion};";
+            command.ExecuteNonQuery();
+        }
+        else if (existingVersion > CurrentFormatVersion)
+        {
+            connection.Dispose();
+            StateGuard.Throw(
+                $"The level file's format version ({existingVersion}) is newer than " +
+                $"this build supports ({CurrentFormatVersion}).");
         }
 
         return new LevelDatabase2D(connection);
@@ -85,13 +109,24 @@ public sealed class LevelDatabase2D : IDisposable
         transaction.Commit();
     }
 
-    /// <summary>Commits one chunk. Phase 2's per-stroke write-through calls this inside its own transaction.</summary>
-    public void SaveChunk(EditableTileMap2D map, TileChunk2D chunk)
+    /// <summary>Commits one chunk in its own transaction. A convenience wrapper over <see cref="SaveChunks"/>.</summary>
+    public void SaveChunk(EditableTileMap2D map, TileChunk2D chunk) =>
+        SaveChunks(map, [chunk]);
+
+    /// <summary>
+    /// Commits every given chunk in a single transaction. Microsoft.Data.Sqlite has no
+    /// nested transactions, so phase 2's per-stroke write-through -- which can touch several
+    /// chunks per stroke -- must call this once per stroke rather than <see cref="SaveChunk"/>
+    /// per chunk, or a crash mid-stroke could leave part of the stroke durable while the
+    /// in-memory undo stack is gone.
+    /// </summary>
+    public void SaveChunks(EditableTileMap2D map, ReadOnlySpan<TileChunk2D> chunks)
     {
         ArgGuard.ThrowIfNull(map);
         var buffer = new TileKind2D[map.ChunkSize * map.ChunkSize];
         using var transaction = _connection.BeginTransaction();
-        WriteChunk(map, chunk, buffer);
+        foreach (var chunk in chunks)
+            WriteChunk(map, chunk, buffer);
         transaction.Commit();
     }
 
