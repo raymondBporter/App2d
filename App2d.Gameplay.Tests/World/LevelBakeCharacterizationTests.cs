@@ -100,6 +100,55 @@ public sealed class LevelBakeCharacterizationTests : IDisposable
     }
 
     [Fact]
+    public void CommittedCavernLevelMatchesWorldConstantsAndTheGenerator()
+    {
+        // Verifies the file the game actually loads -- Assets/Static/levels/cavern/level.db
+        // -- rather than only a freshly baked temp copy. Guards against the committed
+        // artifact silently drifting from SideScrollerLevel2D's world constants, which is
+        // exactly what SideScrollerLevel2D's constructor guard (finding #1) now catches at
+        // load time but nothing previously proved the committed file itself still satisfies.
+        var committedPath = Path.Combine(
+            TestAssetPath.StaticRoot, "levels", "cavern", "level.db");
+        Assert.True(
+            File.Exists(committedPath),
+            $"Committed level file not found at {committedPath}.");
+
+        // Work on a copy so this test never risks writing back to the checked-in asset.
+        Directory.CreateDirectory(_directory);
+        var copyPath = Path.Combine(_directory, "committed-level-copy.db");
+        File.Copy(committedPath, copyPath);
+
+        using var database = LevelDatabase2D.Open(copyPath);
+        var map = database.Load();
+
+        Assert.Equal(SideScrollerLevel2D.WorldWidthTiles, map.Width);
+        Assert.Equal(SideScrollerLevel2D.WorldHeightTiles, map.Height);
+        Assert.Equal(SideScrollerLevel2D.ChunkSizeTiles, map.ChunkSize);
+        Assert.Equal(SideScrollerLevel2D.WorldOrigin, map.Origin);
+
+        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        Assert.Equal(traversal.TileSize, map.TileSize);
+
+        var generator = new JumpableWorldGenerator2D(
+            SideScrollerLevel2D.WorldSeed,
+            SideScrollerLevel2D.WorldWidthTiles,
+            SideScrollerLevel2D.WorldHeightTiles,
+            traversal);
+
+        var mismatches = 0;
+        for (var y = 0; y < map.Height; y++)
+        {
+            for (var x = 0; x < map.Width; x++)
+            {
+                if (map.GetTileKind(x, y) != generator.GetTileKind(x, y))
+                    mismatches++;
+            }
+        }
+
+        Assert.Equal(0, mismatches);
+    }
+
+    [Fact]
     public void GroundHeightsNeverIndexBelowTheWorld()
     {
         var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);

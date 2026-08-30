@@ -1,29 +1,69 @@
 using App2d.Core.Geometry;
+using App2d.Levels;
 using App2d.Tiles;
+using Microsoft.Data.Sqlite;
 using Xunit;
 
 namespace App2d.Gameplay.Tests.World;
 
-public sealed class SpikeTerrain2DTests
+/// <summary>
+/// Characterizes spike terrain in the committed cavern level, not the (soon to be deleted)
+/// world generator -- the committed <c>.db</c> is what the game actually loads.
+/// </summary>
+public sealed class SpikeTerrain2DTests : IDisposable
 {
+    private readonly string _directory =
+        Path.Combine(Path.GetTempPath(), "app2d-spike-terrain-" + Guid.NewGuid().ToString("N"));
+
+    public void Dispose()
+    {
+        if (!Directory.Exists(_directory))
+            return;
+
+        // Mirrors App2d.Tests/Levels/LevelDatabase2DTests.cs: Microsoft.Data.Sqlite pools
+        // native handles, so clear the pool before deleting the temp copy.
+        foreach (var dbFile in Directory.EnumerateFiles(_directory, "*.db"))
+        {
+            using var probe = new SqliteConnection(new SqliteConnectionStringBuilder
+            {
+                DataSource = dbFile,
+                Mode = SqliteOpenMode.ReadWriteCreate
+            }.ToString());
+            SqliteConnection.ClearPool(probe);
+        }
+
+        const int maxAttempts = 10;
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                Directory.Delete(_directory, recursive: true);
+                return;
+            }
+            catch (IOException) when (attempt < maxAttempts)
+            {
+                Thread.Sleep(20);
+            }
+        }
+    }
+
     [Fact]
     public void GeneratedSpikesSitAboveSolidGroundAndDamageOnlyTheirTile()
     {
         var traversal = (TraversalMetrics2D)Activator.CreateInstance(
             typeof(TraversalMetrics2D),
             nonPublic: true)!;
-        var generator = new JumpableWorldGenerator2D(
-            SideScrollerLevel2D.WorldSeed,
-            SideScrollerLevel2D.WorldWidthTiles,
-            SideScrollerLevel2D.WorldHeightTiles,
-            traversal);
-        var tileMap = new EditableTileMap2D(
-            SideScrollerLevel2D.WorldWidthTiles,
-            SideScrollerLevel2D.WorldHeightTiles,
-            traversal.TileSize,
-            SideScrollerLevel2D.ChunkSizeTiles,
-            SideScrollerLevel2D.WorldOrigin);
-        tileMap.Fill(generator.GetTileKind);
+
+        // Work on a copy so this test never risks writing back to the checked-in asset.
+        var committedPath = Path.Combine(
+            TestAssetPath.StaticRoot, "levels", "cavern", "level.db");
+        Directory.CreateDirectory(_directory);
+        var copyPath = Path.Combine(_directory, "level.db");
+        File.Copy(committedPath, copyPath);
+
+        using var database = LevelDatabase2D.Open(copyPath);
+        var tileMap = database.Load();
+
         var groundHeights = TileGroundHeights2D.Derive(tileMap);
         var level = new SideScrollerLevel2D(
             traversal,
