@@ -94,6 +94,16 @@ internal sealed class SideScrollerEncounterSpawner2D(
             Register(new Shieldback2D(scene, textures, enemy));
         }
 
+        if (TryFindGroundPlacement(30, out var propPlacement))
+        {
+            Register(new TumbleProp2D(
+                scene,
+                physics,
+                new Vector2(TileCenterX(propPlacement.TileX), tileMap.Origin.Y + (propPlacement.SurfaceTileY + 1) * tileSize + 40f),
+                worldLayer,
+                enemyLayer));
+        }
+
         enemies.UpdateStreaming(streamer.IsChunkActive);
     }
 
