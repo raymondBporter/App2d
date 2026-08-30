@@ -117,34 +117,26 @@ public sealed class CollisionSystem2D
     {
         RequireOwned(first);
         RequireOwned(second);
-        if (!PairFilter.ShouldTest(first, second) ||
-            !first.WorldObject.WorldBounds.Intersects(second.WorldObject.WorldBounds))
+        if (!PairFilter.ShouldTest(first, second) || !first.WorldObject.WorldBounds.Intersects(second.WorldObject.WorldBounds))
         {
             contact = default;
             return false;
         }
 
-        return ContactProvider.TryGetContact(
-            first.WorldObject,
-            second.WorldObject,
-            out contact);
+        return ContactProvider.TryGetContact(first.WorldObject, second.WorldObject, out contact);
     }
 
     public bool TryGetContact(SpatialObject2D query, Collider2D collider, out Contacts.CollisionContact2D contact)
     {
         ArgGuard.ThrowIfNull(query);
         RequireOwned(collider);
-        if (!collider.IsEnabled ||
-            !query.WorldBounds.Intersects(collider.WorldObject.WorldBounds))
+        if (!collider.IsEnabled || !query.WorldBounds.Intersects(collider.WorldObject.WorldBounds))
         {
             contact = default;
             return false;
         }
 
-        return ContactProvider.TryGetContact(
-            query,
-            collider.WorldObject,
-            out contact);
+        return ContactProvider.TryGetContact(query, collider.WorldObject, out contact);
     }
 
     public int QueryBounds(Bounds2D bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null)
