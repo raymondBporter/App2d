@@ -13,5 +13,7 @@
     <Compile Include="..\App2d\Engine\FrameTime.cs" Link="Engine\FrameTime.cs" />
     <Compile Include="..\App2d\Engine\Animation\**\*.cs" Link="Engine\Animation\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="..\App2d\Engine\Mathematics\**\*.cs" Link="Engine\Mathematics\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\App2d\Engine\Geometry\**\*.cs" Link="Engine\Geometry\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\App2d\Engine\SpatialObject2D.cs" Link="Engine\SpatialObject2D.cs" />
   </ItemGroup>
 </Project>
