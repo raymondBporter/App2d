@@ -71,8 +71,14 @@ The SQLite dependency is confined to one new project so the engine core stays fr
 | Where | What | New dependency |
 | --- | --- | --- |
 | `App2d.Tiles` (existing) | `EditableTileMap2D` — dense, kind-carrying, mutable `IChunkedTileMap2D`; raises `ChunkChanged` | none |
-| `App2d.Levels` (**new**, `net10.0`) | `LevelDatabase2D`, `TileRunCodec2D`, `LevelBaker2D` | `Microsoft.Data.Sqlite` |
+| `App2d.Levels` (**new**, `net10.0`) | `LevelDatabase2D`, `TileRunCodec2D` | `Microsoft.Data.Sqlite` |
+| `App2d/Levels/` (host) | `LevelBootstrap2D` — bake-if-missing, load, `level_rebake` console command | none |
 | `App2d/Editor/` (host, phase 2) | `TileEditor2D`, `TileEditorView2D` — mirrors `App2d/Diagnostics/` | none |
+
+Baking lives in the **host**, not `App2d.Levels`: it needs `JumpableWorldGenerator2D` from
+`App2d.Gameplay` (`net10.0-windows`) *and* `LevelDatabase2D`, and the host is the only
+project that references both. `App2d.Levels` staying `net10.0` and generator-free is what
+lets the generator be deleted without touching the level format.
 
 `App2d.Levels` references `App2d.Core` and `App2d.Tiles`. `App2d.Gameplay` does **not**
 reference `App2d.Levels`: the host loads the map and injects it into `SideScrollerLevel2D`,
@@ -139,9 +145,11 @@ elaborate here now would be work thrown away twice.
    `TileMeshingCharacterizationTests` onto `EditableTileMap2D` via the `Fill` overload.
 3. **`App2d.Levels` project** with `Microsoft.Data.Sqlite`, `TileRunCodec2D` (encode/decode a
    chunk), and `LevelDatabase2D` (create, open, read chunk, write chunk, read/write meta).
-4. **`LevelBaker2D`** — generator → `EditableTileMap2D.Fill` → `LevelDatabase2D` →
-   `Assets/Static/levels/cavern/level.db`. Invoked from `tools/`, not from game code. Run
-   once; the resulting `.db` is committed.
+4. **`LevelBootstrap2D`** in the host — generator → `EditableTileMap2D.Fill` →
+   `LevelDatabase2D` → `Assets/Static/levels/cavern/level.db`. Bakes automatically when the
+   file is missing, so the one-time generation needs no remembered manual step, and exposes a
+   `level_rebake` `DeveloperConsole` command to force it. The resulting `.db` is committed.
+   Both the auto-bake and the command are deleted along with the generator.
 5. **Swap the read path.** `SideScrollerLevel2D` takes an injected `IChunkedTileMap2D` and a
    `GroundY` source instead of constructing a generator. The 5 `TerrainHeight` sites become
    `GroundY(x)`, and the generator handoff at line 215 becomes a `GroundY` handoff.
