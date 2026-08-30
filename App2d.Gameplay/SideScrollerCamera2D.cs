@@ -137,13 +137,13 @@ public sealed class SideScrollerCamera2D
             return maximumRate;
 
         var urgency = Math.Clamp(distance / (halfViewExtent * 0.7f), 0f, 1f);
-        return normalRate + (maximumRate - normalRate) * urgency;
+        return float.Lerp(normalRate, maximumRate, urgency);
     }
 
     private static float Damp(float current, float target, float rate, float deltaSeconds)
     {
         var blend = 1f - MathF.Exp(-rate * deltaSeconds);
-        return current + (target - current) * blend;
+        return float.Lerp(current, target, blend);
     }
 
     private void CreateParallaxBackground(Scene2D scene)

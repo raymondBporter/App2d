@@ -19,11 +19,4 @@ public static partial class ShapeCollision2D
             axes[axisCount++] = candidate;
     }
 
-    private static void ProjectCapsule(Vector2 start, Vector2 end, float radius, Vector2 axis, out float min, out float max)
-    {
-        var startProjection = Vector2.Dot(start, axis);
-        var endProjection = Vector2.Dot(end, axis);
-        min = Math.Min(startProjection, endProjection) - radius;
-        max = Math.Max(startProjection, endProjection) + radius;
-    }
 }

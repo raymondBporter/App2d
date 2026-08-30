@@ -39,9 +39,9 @@ public static partial class ShapeCollision2D
         foreach (var rawAxis in axes[..axisCount])
         {
             var axis = Vector2.Normalize(rawAxis);
-            ProjectCapsule(firstStart, firstEnd, firstRadius, axis, out var firstMin, out var firstMax);
-            ProjectCapsule(secondStart, secondEnd, secondRadius, axis, out var secondMin, out var secondMax);
-            if (!TryUpdateMtv(axis, firstMin, firstMax, secondMin, secondMax, ref bestNormal, ref bestDepth))
+            var firstInterval = Interval1D.ProjectCapsule(firstStart, firstEnd, firstRadius, axis);
+            var secondInterval = Interval1D.ProjectCapsule(secondStart, secondEnd, secondRadius, axis);
+            if (!TryUpdateMtv(axis, firstInterval, secondInterval, ref bestNormal, ref bestDepth))
                 return CollisionResult.None;
         }
 

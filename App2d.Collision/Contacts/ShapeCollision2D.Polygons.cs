@@ -46,10 +46,10 @@ public static partial class ShapeCollision2D
         foreach (var rawAxis in axes)
         {
             var axis = Vector2.Normalize(rawAxis);
-            ProjectPolygon(firstVertices, axis, out var firstMin, out var firstMax);
-            ProjectPolygon(secondVertices, axis, out var secondMin, out var secondMax);
+            var first = Interval1D.ProjectPolygon(firstVertices, axis);
+            var second = Interval1D.ProjectPolygon(secondVertices, axis);
             testedAxis = true;
-            if (!TryUpdateMtv(axis, firstMin, firstMax, secondMin, secondMax, ref normal, ref depth))
+            if (!TryUpdateMtv(axis, first, second, ref normal, ref depth))
                 return false;
         }
 
@@ -65,20 +65,20 @@ public static partial class ShapeCollision2D
         foreach (var rawAxis in axes)
         {
             var axis = Vector2.Normalize(rawAxis);
-            ProjectPolygon(polygonVertices, axis, out var polygonMin, out var polygonMax);
-            ProjectCapsule(capsuleStart, capsuleEnd, capsuleRadius, axis, out var capsuleMin, out var capsuleMax);
+            var polygon = Interval1D.ProjectPolygon(polygonVertices, axis);
+            var capsule = Interval1D.ProjectCapsule(capsuleStart, capsuleEnd, capsuleRadius, axis);
             testedAxis = true;
-            if (!TryUpdateMtv(axis, polygonMin, polygonMax, capsuleMin, capsuleMax, ref normal, ref depth))
+            if (!TryUpdateMtv(axis, polygon, capsule, ref normal, ref depth))
                 return false;
         }
 
         return testedAxis;
     }
 
-    private static bool TryUpdateMtv(Vector2 axis, float firstMin, float firstMax, float secondMin, float secondMax, ref Vector2 bestNormal, ref float bestDepth)
+    private static bool TryUpdateMtv(Vector2 axis, Interval1D first, Interval1D second, ref Vector2 bestNormal, ref float bestDepth)
     {
-        var pushPositive = secondMax - firstMin;
-        var pushNegative = firstMax - secondMin;
+        var pushPositive = second.Max - first.Min;
+        var pushNegative = first.Max - second.Min;
         if (pushPositive <= 0f || pushNegative <= 0f)
             return false;
 
@@ -102,18 +102,6 @@ public static partial class ShapeCollision2D
         }
 
         return true;
-    }
-
-    private static void ProjectPolygon(ReadOnlySpan<Vector2> vertices, Vector2 axis, out float min, out float max)
-    {
-        min = Vector2.Dot(vertices[0], axis);
-        max = min;
-        foreach (var vertex in vertices[1..])
-        {
-            var projection = Vector2.Dot(vertex, axis);
-            min = Math.Min(min, projection);
-            max = Math.Max(max, projection);
-        }
     }
 
     private static Vector2 GetCapsuleSupportPoint(Vector2 start, Vector2 end, float radius, Vector2 direction)
