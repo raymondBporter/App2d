@@ -35,13 +35,14 @@ public sealed class SideScrollerLevel2D
             WorldWidthTiles,
             WorldHeightTiles,
             traversal);
-        TileMap = new ProceduralTileMap2D(
+        var tileMap = new EditableTileMap2D(
             WorldWidthTiles,
             WorldHeightTiles,
             _tileSize,
             ChunkSizeTiles,
-            _generator.GetTileKind,
             new Vector2(-512f, -640f));
+        tileMap.Fill(_generator.GetTileKind);
+        TileMap = tileMap;
 
         const int spawnTileX = 4;
         SpawnPoint = new Vector2(

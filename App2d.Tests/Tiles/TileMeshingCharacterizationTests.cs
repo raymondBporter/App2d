@@ -23,7 +23,8 @@ public sealed class TileMeshingCharacterizationTests
     public void ProceduralMapKeepsOneWayRowsOneTileTall()
     {
         // 3x3 chunk: bottom row solid, middle row one-way, top empty.
-        var map = new ProceduralTileMap2D(3, 3, 1f, 3, (x, y) => y switch
+        var map = new EditableTileMap2D(3, 3, 1f, 3);
+        map.Fill((x, y) => y switch
         {
             0 => TileKind2D.Solid,
             1 => TileKind2D.OneWay,
