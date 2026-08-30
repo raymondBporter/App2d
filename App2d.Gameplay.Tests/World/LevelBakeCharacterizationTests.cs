@@ -100,13 +100,19 @@ public sealed class LevelBakeCharacterizationTests : IDisposable
     }
 
     [Fact]
-    public void CommittedCavernLevelMatchesWorldConstantsAndTheGenerator()
+    public void CommittedCavernLevelMatchesWorldConstants()
     {
         // Verifies the file the game actually loads -- Assets/Static/levels/cavern/level.db
         // -- rather than only a freshly baked temp copy. Guards against the committed
         // artifact silently drifting from SideScrollerLevel2D's world constants, which is
-        // exactly what SideScrollerLevel2D's constructor guard (finding #1) now catches at
-        // load time but nothing previously proved the committed file itself still satisfies.
+        // exactly what SideScrollerLevel2D's constructor guard catches at load time but
+        // nothing previously proved the committed file itself still satisfies.
+        //
+        // This deliberately does NOT compare tiles against JumpableWorldGenerator2D. The
+        // level is authored now: the in-game editor paints it, so it is EXPECTED to diverge
+        // from the generator, and asserting otherwise would turn every edit into a red
+        // build. EveryBakedTileMatchesTheGenerator above still pins the bake path itself by
+        // baking a fresh copy and comparing that.
         var committedPath = Path.Combine(
             TestAssetPath.StaticRoot, "levels", "cavern", "level.db");
         Assert.True(
@@ -129,23 +135,12 @@ public sealed class LevelBakeCharacterizationTests : IDisposable
         var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
         Assert.Equal(traversal.TileSize, map.TileSize);
 
-        var generator = new JumpableWorldGenerator2D(
-            SideScrollerLevel2D.WorldSeed,
-            SideScrollerLevel2D.WorldWidthTiles,
-            SideScrollerLevel2D.WorldHeightTiles,
-            traversal);
-
-        var mismatches = 0;
-        for (var y = 0; y < map.Height; y++)
-        {
-            for (var x = 0; x < map.Width; x++)
-            {
-                if (map.GetTileKind(x, y) != generator.GetTileKind(x, y))
-                    mismatches++;
-            }
-        }
-
-        Assert.Equal(0, mismatches);
+        // The committed level must actually contain terrain, so this cannot pass against an
+        // empty or truncated file -- the failure mode a stranded write would produce.
+        Assert.True(database.ChunkRowCount > 0, "The committed level contains no chunk rows.");
+        Assert.Contains(
+            Enumerable.Range(0, map.Width),
+            x => map.IsSolid(x, 0));
     }
 
     [Fact]
