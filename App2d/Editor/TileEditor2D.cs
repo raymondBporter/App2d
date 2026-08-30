@@ -3,6 +3,7 @@ using App2d.Core.Geometry;
 using App2d.Levels;
 using App2d.Rendering;
 using App2d.Tiles;
+using App2d.Things;
 using System.Numerics;
 
 namespace App2d.Editor;
@@ -35,6 +36,8 @@ internal sealed class TileEditor2D : IDisposable
     private bool _hasLastPainted;
     private readonly List<MovingPlatformDefinitionRecord2D> _movingPlatformDefinitions = [];
     private readonly List<MovingPlatformThingRecord2D> _movingPlatformThings = [];
+    private readonly List<ThingDefinitionRecord2D> _thingDefinitions = [];
+    private readonly List<PositionThingRecord2D> _positionThings = [];
     private readonly Stack<Action<LevelDatabase2D>> _thingUndo = [];
     private bool _isPlacingThing;
     private ThingDragHandle2D _thingDragHandle;
@@ -78,12 +81,23 @@ internal sealed class TileEditor2D : IDisposable
     public ThingEditorInspector2D InspectorView { get; }
     public IReadOnlyList<MovingPlatformDefinitionRecord2D> MovingPlatformDefinitions => _movingPlatformDefinitions;
     public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatformThings => _movingPlatformThings;
+    public IReadOnlyList<ThingDefinitionRecord2D> ThingDefinitions => _thingDefinitions;
+    public IReadOnlyList<PositionThingRecord2D> PositionThings => _positionThings;
     public long? SelectedDefinitionId { get; private set; }
     public long? SelectedThingId { get; private set; }
     public MovingPlatformThingRecord2D? SelectedThing =>
         SelectedThingId is { } thingId
             ? _movingPlatformThings.SingleOrDefault(item => item.ThingId == thingId)
             : null;
+    public PositionThingRecord2D? SelectedPositionThing =>
+        SelectedThingId is { } thingId
+            ? _positionThings.SingleOrDefault(item => item.ThingId == thingId)
+            : null;
+    public ThingDefinitionRecord2D? SelectedDefinition =>
+        SelectedDefinitionId is { } definitionId
+            ? _thingDefinitions.SingleOrDefault(item => item.DefinitionId == definitionId)
+            : null;
+    public bool HasSelectedThing => SelectedThing is not null || SelectedPositionThing is not null;
     public bool IsPlacingThing => _isPlacingThing;
     public bool CanUndoThingEdit => _thingUndo.Count > 0;
 
@@ -174,8 +188,8 @@ internal sealed class TileEditor2D : IDisposable
     internal void SelectDefinition(long definitionId)
     {
         StateGuard.ThrowIf(
-            _movingPlatformDefinitions.All(item => item.DefinitionId != definitionId),
-            $"Moving-platform definition {definitionId} is not loaded.");
+            _thingDefinitions.All(item => item.DefinitionId != definitionId),
+            $"Thing definition {definitionId} is not loaded.");
         SelectedDefinitionId = definitionId;
         SelectedThingId = null;
         _isPlacingThing = false;
@@ -183,7 +197,7 @@ internal sealed class TileEditor2D : IDisposable
 
     internal void BeginThingPlacement()
     {
-        StateGuard.ThrowIf(SelectedDefinitionId is null, "Select a moving-platform definition before placing it.");
+        StateGuard.ThrowIf(SelectedDefinitionId is null, "Select a thing definition before placing it.");
         SelectedThingId = null;
         _isPlacingThing = true;
         InspectorView.RefreshFromEditor();
@@ -211,9 +225,26 @@ internal sealed class TileEditor2D : IDisposable
         ReloadThings(notifyRuntime: true);
     }
 
+    internal void ApplyPositionDefinition(
+        long? definitionId,
+        string typeKey,
+        PositionThingDefinitionProperties2D properties)
+    {
+        ArgGuard.ThrowIfNull(properties);
+        var descriptor = ThingTypeRegistry2D.Require(typeKey);
+        StateGuard.ThrowIf(descriptor.WorldKind is null, $"Thing type '{typeKey}' is not position-only.");
+        var database = RequireDatabase();
+        var saved = definitionId is { } existingId
+            ? database.UpdateThingDefinition(new ThingDefinitionRecord2D(existingId, typeKey, properties.Name))
+            : database.CreateThingDefinition(typeKey, properties.Name);
+        SelectedDefinitionId = saved.DefinitionId;
+        SelectedThingId = null;
+        ReloadThings(notifyRuntime: false);
+    }
+
     internal void DeleteDefinition(long definitionId)
     {
-        RequireDatabase().DeleteMovingPlatformDefinition(definitionId);
+        RequireDatabase().DeleteThingDefinition(definitionId);
         if (SelectedDefinitionId == definitionId)
             SelectedDefinitionId = null;
         ReloadThings(notifyRuntime: false);
@@ -240,12 +271,38 @@ internal sealed class TileEditor2D : IDisposable
         ReloadThings(notifyRuntime: true);
     }
 
+    internal void ApplyPositionThing(long thingId, PositionThingInstanceProperties2D properties)
+    {
+        ArgGuard.ThrowIfNull(properties);
+        var old = _positionThings.SingleOrDefault(item => item.ThingId == thingId) ??
+            throw new InvalidOperationException($"Position thing {thingId} is not loaded.");
+        var updated = old with
+        {
+            Name = properties.Name,
+            Enabled = properties.Enabled,
+            X = properties.PositionX,
+            Y = properties.PositionY
+        };
+        RequireDatabase().UpdatePositionThing(updated);
+        _thingUndo.Push(database => database.UpdatePositionThing(old));
+        SelectedThingId = thingId;
+        ReloadThings(notifyRuntime: false);
+    }
+
     internal void DeleteSelectedThing()
     {
         if (SelectedThingId is not { } thingId)
             return;
-        var deleted = RequireDatabase().DeleteMovingPlatform(thingId);
-        _thingUndo.Push(database => database.RestoreMovingPlatform(deleted));
+        if (SelectedThing is { } movingPlatform)
+        {
+            var deleted = RequireDatabase().DeleteMovingPlatform(movingPlatform.ThingId);
+            _thingUndo.Push(database => database.RestoreMovingPlatform(deleted));
+        }
+        else if (SelectedPositionThing is { } positionThing)
+        {
+            var deleted = RequireDatabase().DeletePositionThing(positionThing.ThingId);
+            _thingUndo.Push(database => database.RestorePositionThing(deleted));
+        }
         SelectedThingId = null;
         ReloadThings(notifyRuntime: true);
     }
@@ -259,6 +316,19 @@ internal sealed class TileEditor2D : IDisposable
         definition = _movingPlatformDefinitions.SingleOrDefault(item => item.DefinitionId == definitionId)!;
         if (definition is null)
             return false;
+        position = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
+        return true;
+    }
+
+    internal bool TryGetPositionPlacementPreview(out ThingDefinitionRecord2D definition, out Vector2 position)
+    {
+        definition = null!;
+        position = default;
+        if (!IsActive || Mode != LevelEditorMode2D.Things || !_isPlacingThing || SelectedDefinition is not { } selected)
+            return false;
+        if (ThingTypeRegistry2D.Require(selected.TypeKey).WorldKind is null)
+            return false;
+        definition = selected;
         position = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
         return true;
     }
@@ -371,21 +441,36 @@ internal sealed class TileEditor2D : IDisposable
 
     private void PlaceThing()
     {
-        if (SelectedDefinitionId is not { } definitionId)
+        if (SelectedDefinition is not { } definition)
             return;
         var position = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
-        var created = RequireDatabase().CreateMovingPlatform(new NewMovingPlatformThing2D(
-            definitionId,
-            Name: null,
-            Enabled: true,
-            position.X,
-            position.Y,
-            Rotation: 0f,
-            TravelX: _tileSize * 3f,
-            TravelY: 0f,
-            Speed: _tileSize * 1.5f));
-        _thingUndo.Push(database => database.DeleteMovingPlatform(created.ThingId));
-        SelectedThingId = created.ThingId;
+        var descriptor = ThingTypeRegistry2D.Require(definition.TypeKey);
+        if (descriptor.IsMovingPlatform)
+        {
+            var created = RequireDatabase().CreateMovingPlatform(new NewMovingPlatformThing2D(
+                definition.DefinitionId,
+                Name: null,
+                Enabled: true,
+                position.X,
+                position.Y,
+                Rotation: 0f,
+                TravelX: _tileSize * 3f,
+                TravelY: 0f,
+                Speed: _tileSize * 1.5f));
+            _thingUndo.Push(database => database.DeleteMovingPlatform(created.ThingId));
+            SelectedThingId = created.ThingId;
+        }
+        else
+        {
+            var created = RequireDatabase().CreatePositionThing(new NewPositionThing2D(
+                definition.DefinitionId,
+                Name: null,
+                Enabled: true,
+                position.X,
+                position.Y));
+            _thingUndo.Push(database => database.DeletePositionThing(created.ThingId));
+            SelectedThingId = created.ThingId;
+        }
         _isPlacingThing = false;
         ReloadThings(notifyRuntime: true);
     }
@@ -408,6 +493,17 @@ internal sealed class TileEditor2D : IDisposable
             if (Vector2.DistanceSquared(world, end) <= handleRadiusSquared)
             {
                 BeginThingDrag(thing, ThingDragHandle2D.End);
+                return;
+            }
+        }
+
+        foreach (var thing in _positionThings.AsEnumerable().Reverse())
+        {
+            if (Vector2.DistanceSquared(world, new Vector2(thing.X, thing.Y)) <= handleRadiusSquared * 2.25f)
+            {
+                SelectedThingId = thing.ThingId;
+                SelectedDefinitionId = thing.DefinitionId;
+                InspectorView.ShowPositionThing(thing);
                 return;
             }
         }
@@ -499,13 +595,22 @@ internal sealed class TileEditor2D : IDisposable
     private void ReloadThings(bool notifyRuntime)
     {
         var database = RequireDatabase();
+        _thingDefinitions.Clear();
+        _thingDefinitions.AddRange(database.LoadThingDefinitions());
+        foreach (var definition in _thingDefinitions)
+            _ = ThingTypeRegistry2D.Require(definition.TypeKey);
         _movingPlatformDefinitions.Clear();
         _movingPlatformDefinitions.AddRange(database.LoadMovingPlatformDefinitions());
         _movingPlatformThings.Clear();
         _movingPlatformThings.AddRange(database.LoadMovingPlatforms());
-        if (SelectedDefinitionId is { } definitionId && _movingPlatformDefinitions.All(item => item.DefinitionId != definitionId))
+        _positionThings.Clear();
+        _positionThings.AddRange(database.LoadPositionThings().Where(
+            thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null));
+        if (SelectedDefinitionId is { } definitionId && _thingDefinitions.All(item => item.DefinitionId != definitionId))
             SelectedDefinitionId = null;
-        if (SelectedThingId is { } thingId && _movingPlatformThings.All(item => item.ThingId != thingId))
+        if (SelectedThingId is { } thingId &&
+            _movingPlatformThings.All(item => item.ThingId != thingId) &&
+            _positionThings.All(item => item.ThingId != thingId))
             SelectedThingId = null;
         InspectorView.RefreshFromEditor();
         if (notifyRuntime)

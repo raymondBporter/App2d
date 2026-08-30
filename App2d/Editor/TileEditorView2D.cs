@@ -1,6 +1,7 @@
 using App2d.Core.Geometry;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
+using App2d.Things;
 using SkiaSharp;
 using System.Numerics;
 
@@ -58,6 +59,17 @@ internal static class TileEditorView2D
         var pathColor = new SKColor(130, 180, 210, 170);
         var selectedColor = new SKColor(255, 214, 64);
         var disabledColor = new SKColor(130, 130, 140, 180);
+
+        foreach (var thing in editor.PositionThings)
+        {
+            var descriptor = ThingTypeRegistry2D.Require(thing.TypeKey);
+            var markerPosition = new Vector2(thing.X, thing.Y);
+            var isSelected = editor.SelectedThingId == thing.ThingId;
+            var color = isSelected ? selectedColor : thing.Enabled ? descriptor.EditorColor : disabledColor;
+            var radius = (isSelected ? 11f : 8f) / editor.Zoom;
+            renderer.DrawWorldCircle(markerPosition, radius, color, isSelected ? 4f : 3f);
+        }
+
         foreach (var thing in editor.MovingPlatformThings)
         {
             var start = new Vector2(thing.X, thing.Y);
@@ -85,6 +97,16 @@ internal static class TileEditorView2D
                 3f);
             Span<Vector2> previewPath = [position, position + new Vector2(tileSize * 3f, 0f)];
             renderer.DrawWorldPolyline(previewPath, new SKColor(105, 245, 180, 180), 2f);
+        }
+
+        if (editor.TryGetPositionPlacementPreview(out var positionDefinition, out var positionPreview))
+        {
+            var descriptor = ThingTypeRegistry2D.Require(positionDefinition.TypeKey);
+            renderer.DrawWorldCircle(
+                positionPreview,
+                11f / editor.Zoom,
+                descriptor.EditorColor,
+                3f);
         }
     }
 

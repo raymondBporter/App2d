@@ -50,7 +50,7 @@ public sealed class SpikeTerrain2DTests : IDisposable
     }
 
     [Fact]
-    public void GeneratedSpikesSitAboveSolidGroundAndDamageOnlyTheirTile()
+    public void AuthoredSpikesDamageTheirTilesAndNotClearTiles()
     {
         var traversal = (TraversalMetrics2D)Activator.CreateInstance(
             typeof(TraversalMetrics2D),
@@ -72,24 +72,25 @@ public sealed class SpikeTerrain2DTests : IDisposable
             tileMap,
             x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)]);
         var spikes = FindSpikes(level);
-        Assert.Contains(spikes, spike => spike.X < level.TileMap.Width / 2);
-        Assert.Contains(spikes, spike => spike.X >= level.TileMap.Width / 2);
-        var (X, Y) = spikes[0];
+        Assert.NotEmpty(spikes);
+        Assert.All(spikes, spike =>
+        {
+            var spikeTileMin = level.TileMap.Origin +
+                new System.Numerics.Vector2(spike.X, spike.Y) * level.TileMap.TileSize;
+            var insideSpike = new Bounds2D(
+                spikeTileMin + new System.Numerics.Vector2(8f, 0f),
+                spikeTileMin + new System.Numerics.Vector2(24f, 20f));
+            Assert.True(level.TryGetSpikeSource(insideSpike, out var spikeSourceX));
+            Assert.Equal(spikeTileMin.X + level.TileMap.TileSize / 2f, spikeSourceX);
+        });
 
-        Assert.True(level.TileMap.GetTileKind(X, Y - 1).IsSolid());
-
-        var tileMin = level.TileMap.Origin +
-            new System.Numerics.Vector2(X, Y) * level.TileMap.TileSize;
-        var inside = new Bounds2D(
-            tileMin + new System.Numerics.Vector2(8f, 0f),
-            tileMin + new System.Numerics.Vector2(24f, 20f));
-        Assert.True(level.TryGetSpikeSource(inside, out var sourceX));
-        Assert.Equal(tileMin.X + level.TileMap.TileSize / 2f, sourceX);
-
-        var clearTile = new Bounds2D(
-            tileMin + new System.Numerics.Vector2(0f, level.TileMap.TileSize),
-            tileMin + new System.Numerics.Vector2(16f, level.TileMap.TileSize + 16f));
-        Assert.False(level.TryGetSpikeSource(clearTile, out _));
+        var clear = FindClearTile(level);
+        var clearTileMin = level.TileMap.Origin +
+            new System.Numerics.Vector2(clear.X, clear.Y) * level.TileMap.TileSize;
+        var insideClearTile = new Bounds2D(
+            clearTileMin + new System.Numerics.Vector2(8f),
+            clearTileMin + new System.Numerics.Vector2(24f));
+        Assert.False(level.TryGetSpikeSource(insideClearTile, out _));
     }
 
     private static List<(int X, int Y)> FindSpikes(SideScrollerLevel2D level)
@@ -105,5 +106,19 @@ public sealed class SpikeTerrain2DTests : IDisposable
         }
 
         return spikes;
+    }
+
+    private static (int X, int Y) FindClearTile(SideScrollerLevel2D level)
+    {
+        for (var x = 0; x < level.TileMap.Width; x++)
+        {
+            for (var y = 0; y < level.TileMap.Height; y++)
+            {
+                if (!level.TileMap.GetTileKind(x, y).IsSpikes())
+                    return (x, y);
+            }
+        }
+
+        throw new InvalidOperationException("The authored level has no clear tile.");
     }
 }

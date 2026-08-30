@@ -90,13 +90,16 @@ stroke commits its changed chunks to the level file in a single transaction. `Ti
 holds the strokes and undo history and lives in `App2d.Tiles`, so the editable core is testable
 without input or storage.
 
-The sidebar's **Things** button switches to authored moving platforms. Definitions provide
-reusable rectangle dimensions and solid-color art; placed things provide position, travel,
-speed, name, and enablement. A native WinForms `PropertyGrid` edits temporary typed property
-objects and writes only when **Apply** is pressed. Skia remains limited to placement ghosts,
-selection outlines, paths, and draggable endpoints. This deliberately avoids implementing
-text input, focus, layout, or a general widget library inside the renderer. Thing definitions,
-instances, transforms, and ping-pong motors are relational rows in the same level database.
+The sidebar's **Things** button switches to authored map objects. A small code-owned type list
+currently offers the player spawn, goal, three enemy types, tumble props, and moving platforms.
+The position-only types deliberately expose just reusable definition names plus instance name,
+enablement, and position; their health, AI, art, physics, and other tuning remain in gameplay
+code. Moving platforms keep their richer rectangle, art, path, and speed properties. A native
+WinForms `PropertyGrid` writes only when **Apply** is pressed, while Skia draws map markers,
+placement ghosts, selection outlines, paths, and draggable endpoints. This avoids turning the
+renderer into a general UI library. All definitions, instances, transforms, and typed pieces
+remain relational rows in the level database. Moving-platform changes reload live; the other
+map objects are picked up on the next run.
 
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
@@ -283,16 +286,17 @@ both directions without making every enemy a person. Camera/parallax, input
 mapping, and traversal diagnostics have similarly narrow owners.
 
 The 640x96-tile level provides merged tilemap collision, explicit one-way strips, fall
-respawning, a goal flag, smooth bounded camera follow, and procedural parallax depths.
-Four solid-color moving platforms are distributed through the early test map. Their
-kinematic one-way slabs follow horizontal or vertical ping-pong paths and carry dynamic
-bodies supported on top without replacing the rider's own movement velocity.
+respawning, an authorable goal flag, smooth bounded camera follow, and procedural parallax
+depths. Authored moving platforms use kinematic one-way slabs that follow horizontal or
+vertical ping-pong paths and carry dynamic bodies supported on top without replacing the
+rider's own movement velocity.
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
 ledges are authored in `Assets/Static/levels/cavern/level.db`, the committed level file
 `LevelBootstrap2D` loads at startup. That load opens the file read-only, so ordinary
-play never dirties the committed level; only a tile-editor stroke opens it read-write to
-persist changes. A small separately seeded population near spawn exists only as a
-mechanics playground; it is not the eventual authored encounter format.
+play never dirties the committed level; only an editor session opens it read-write to persist
+changes. The committed thing layer may be empty: a temporary code fallback keeps the player
+spawned so the level can still open in the editor, and no implicit goal or encounter population
+is persisted.
 
 Tile cells use composable `Solid`, `OneWay`, and `Grippable` flags; collision
 generation never infers behavior from a rectangle's dimensions. Solid cells merge in
@@ -347,15 +351,9 @@ held-jump arc used at runtime. The F3 overlay draws the full-speed and standstil
 with their tile-relative measurements. This keeps authored
 distances tied to the movement implementation instead of duplicated design notes.
 
-`JumpableWorldGenerator2D`, now only `LevelBootstrap2D`'s one-time bake step for the
-cavern level file rather than a runtime terrain source, consumes that same contract.
-Tower tiers use the reliable
-four-tile rise, which leaves the three-tile standing passage between full-height ledges;
-their first tier is anchored to nearby terrain instead of an absolute row. Pit width is
-derived from measured running-jump distance with two tiles reserved for takeoff and
-landing error. Floating formations likewise use standing clearance, while grounded
-stairs and staggered balcony sequences add denser local silhouettes without claiming to
-be authored levels.
+The cavern is now entirely durable authored content in its level database; startup never
+regenerates missing terrain. Traversal measurements remain useful while editing jumps and
+clearances, but there is no parallel procedural source of truth to drift away from the map.
 
 ## Controls
 

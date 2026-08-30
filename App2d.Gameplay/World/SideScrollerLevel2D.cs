@@ -19,23 +19,24 @@ public sealed class SideScrollerLevel2D
     public const int WorldWidthTiles = 640;
     public const int WorldHeightTiles = 96;
     public const int ChunkSizeTiles = 32;
-    public const ulong WorldSeed = 0xA2D_2026_0823UL;
     public static Vector2 WorldOrigin { get; } = new(-512f, -640f);
 
     private readonly float _tileSize;
     private readonly TraversalMetrics2D _traversal;
     private readonly Func<int, int> _groundY;
     private IReadOnlyList<MovingPlatformSpec2D> _movingPlatformSpecs;
+    private readonly IReadOnlyList<WorldThingSpec2D> _worldThingSpecs;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
-    private bool _mechanicsEnemiesCreated;
+    private bool _authoredWorldThingsCreated;
 
     public SideScrollerLevel2D(
         TraversalMetrics2D traversal,
         IChunkedTileMap2D tileMap,
         Func<int, int> groundY,
-        IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null)
+        IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null,
+        IReadOnlyList<WorldThingSpec2D>? worldThings = null)
     {
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
@@ -45,6 +46,7 @@ public sealed class SideScrollerLevel2D
         ArgGuard.ThrowIfNotPositive(_tileSize);
         _groundY = groundY;
         _movingPlatformSpecs = movingPlatforms ?? [];
+        _worldThingSpecs = worldThings ?? [];
         TileMap = tileMap;
 
         // Only an editable map can change under us. A read-only map never raises the event.
@@ -68,21 +70,34 @@ public sealed class SideScrollerLevel2D
             $"The loaded map's origin ({tileMap.Origin}) does not match " +
             $"the expected world origin ({WorldOrigin}).");
 
-        const int spawnTileX = 4;
-        SpawnPoint = new Vector2(
-            TileCenterX(spawnTileX),
-            TileMap.Origin.Y + _groundY(spawnTileX) * _tileSize +
-            traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
+        var authoredSpawn = _worldThingSpecs.FirstOrDefault(
+            thing => thing.Enabled && thing.Kind == WorldThingKind2D.PlayerSpawn);
+        if (authoredSpawn is not null)
+        {
+            SpawnPoint = authoredSpawn.Position;
+        }
+        else
+        {
+            // An empty authored layer must still boot into the editor. This is a safety
+            // fallback, not persisted example content; placing a player-spawn replaces it.
+            const int fallbackSpawnTileX = 4;
+            SpawnPoint = new Vector2(
+                TileCenterX(fallbackSpawnTileX),
+                TileMap.Origin.Y + _groundY(fallbackSpawnTileX) * _tileSize +
+                traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
+        }
 
-        const int goalTileX = WorldWidthTiles - 5;
-        GoalX = TileCenterX(goalTileX);
-        GoalGroundY = TileMap.Origin.Y + _groundY(goalTileX) * _tileSize;
+        GoalThing = _worldThingSpecs.FirstOrDefault(
+            thing => thing.Enabled && thing.Kind == WorldThingKind2D.Goal);
+        GoalX = GoalThing?.Position.X ?? float.PositiveInfinity;
+        GoalGroundY = GoalThing?.Position.Y ?? TileMap.Origin.Y;
     }
 
     public IChunkedTileMap2D TileMap { get; }
     public Vector2 SpawnPoint { get; }
     public float GoalX { get; }
     public float GoalGroundY { get; }
+    public WorldThingSpec2D? GoalThing { get; }
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
     public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;
     public EnemySystem2D EnemySystem { get; } = new();
@@ -196,7 +211,8 @@ public sealed class SideScrollerLevel2D
 
         UpdateStreaming(SpawnPoint);
         CreateMovingPlatformsFromSpecs();
-        CreateGoal(scene);
+        if (GoalThing is not null)
+            CreateGoal(scene);
     }
 
     public void UpdateMovingPlatforms(float deltaSeconds)
@@ -236,21 +252,20 @@ public sealed class SideScrollerLevel2D
         _dirtyChunks.Flush(environment.Streamer.Invalidate);
     }
 
-    public void CreateMechanicsPlaygroundEnemies(
+    public void CreateAuthoredWorldThings(
         TextureCache2D textures,
         CombatSystem2D combat,
         ISoundEffectSink2D sounds)
     {
         StateGuard.ThrowIf(
-            _mechanicsEnemiesCreated,
-            "The mechanics enemies have already been created.");
+            _authoredWorldThingsCreated,
+            "The authored world things have already been created.");
         var environment = RequireEnvironment();
-        new SideScrollerEncounterSpawner2D(
+        new SideScrollerThingSpawner2D(
             environment.Scene,
             environment.Collision,
             environment.Physics,
             TileMap,
-            _groundY,
             EnemySystem,
             environment.Streamer,
             _traversal,
@@ -258,8 +273,8 @@ public sealed class SideScrollerLevel2D
             environment.WorldLayer,
             environment.PlayerLayer,
             environment.EnemyLayer)
-            .Create(textures, combat, sounds);
-        _mechanicsEnemiesCreated = true;
+            .Create(_worldThingSpecs, textures, combat, sounds);
+        _authoredWorldThingsCreated = true;
     }
 
     private LevelEnvironment RequireEnvironment() =>
@@ -272,7 +287,7 @@ public sealed class SideScrollerLevel2D
         var pole = new WorldObject2D(
             new Capsule2D(Vector2.Zero, new Vector2(0f, 190f), 5f),
             new SolidColorShader(new SKColor(238, 242, 232)));
-        pole.Transform.Position = new Vector2(GoalX, GoalGroundY);
+        pole.Transform.Position = GoalThing!.Position;
         scene.Add(pole);
 
         var flag = new WorldObject2D(
@@ -283,7 +298,7 @@ public sealed class SideScrollerLevel2D
                 new Vector2(0f, -60f)
             ]),
             new SolidColorShader(new SKColor(255, 79, 120)));
-        flag.Transform.Position = new Vector2(GoalX, GoalGroundY + 185f);
+        flag.Transform.Position = GoalThing.Position + new Vector2(0f, 185f);
         scene.Add(flag);
     }
 
