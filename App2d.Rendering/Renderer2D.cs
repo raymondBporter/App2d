@@ -1,6 +1,7 @@
 using System.Numerics;
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Rendering.Textures;
 using SkiaSharp;
 
@@ -373,7 +374,7 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
             return;
         }
 
-        var normal = Vector2.Normalize(new Vector2(-axis.Y, axis.X)) * capsule.Radius;
+        var normal = Vector2.Normalize(axis.PerpCcw()) * capsule.Radius;
         Canvas.DrawLine(capsule.Start.X + normal.X, capsule.Start.Y + normal.Y, capsule.End.X + normal.X, capsule.End.Y + normal.Y, paint);
         Canvas.DrawLine(capsule.Start.X - normal.X, capsule.Start.Y - normal.Y, capsule.End.X - normal.X, capsule.End.Y - normal.Y, paint);
         Canvas.DrawCircle(capsule.Start.X, capsule.Start.Y, capsule.Radius, paint);
