@@ -76,7 +76,7 @@ internal sealed class TileEditor2D : IDisposable
             if (IsActive)
                 _cameraFocus = _camera.Position;
             else
-                EndStrokeIfActive();
+                EndEditingSession();
         }
 
         if (!IsActive)
@@ -87,7 +87,10 @@ internal sealed class TileEditor2D : IDisposable
         UpdateCamera(input);
         UpdatePainting(input);
 
-        if (input.IsControlDown && input.WasKeyPressed(Keys.Z))
+        // A stroke may still be in progress (mouse button held). TileEditSession2D.Undo()
+        // throws if called mid-stroke, so ignore the request rather than let it crash the
+        // editor; the in-progress stroke is left untouched either way.
+        if (input.IsControlDown && input.WasKeyPressed(Keys.Z) && !_session.IsStrokeActive)
             CommitChunks(_session.Undo());
 
         _camera.Position = _cameraFocus;
@@ -167,6 +170,17 @@ internal sealed class TileEditor2D : IDisposable
 
         CommitChunks(_session.EndStroke());
         _hasLastPainted = false;
+    }
+
+    /// <summary>
+    /// Called when editor mode is toggled off: ends any in-progress stroke and clears the
+    /// pan state, so a middle-drag started before exiting never resumes with a stale
+    /// anchor (and a stale camera jump) on the next entry into editor mode.
+    /// </summary>
+    private void EndEditingSession()
+    {
+        EndStrokeIfActive();
+        _isPanning = false;
     }
 
     /// <summary>Writes a stroke's changed chunks in one transaction.</summary>
