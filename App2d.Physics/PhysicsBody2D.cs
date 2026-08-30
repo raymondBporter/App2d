@@ -9,6 +9,7 @@ public sealed class PhysicsBody2D
     private float _mass = 1f;
     private float _momentOfInertia = 1f;
     private float _oneWaySlop = 2f;
+    private float _friction;
 
     private BodyMotionType2D _motionType;
 
@@ -38,12 +39,29 @@ public sealed class PhysicsBody2D
     }
     public Vector2 LinearVelocity { get; set; }
     public float AngularVelocity { get; set; }
+
+    /// <summary>
+    /// When true (the default) contacts never impart spin; the body only
+    /// rotates when gameplay sets AngularVelocity or applies torque directly.
+    /// </summary>
+    public bool FreezeRotation { get; set; } = true;
     public Vector2 AccumulatedForce { get; private set; }
     public float AccumulatedTorque { get; private set; }
     public Vector2 PreviousPosition { get; internal set; }
     public float PreviousRotation { get; internal set; }
     public float GravityScale { get; set; } = 1f;
     public float Restitution { get; set; } = 0.5f;
+
+    /// <summary>Coulomb friction coefficient; 0 (the default) disables friction.</summary>
+    public float Friction
+    {
+        get => _friction;
+        set
+        {
+            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(Friction));
+            _friction = value;
+        }
+    }
     public bool IsCollider
     {
         get => Collider.IsEnabled;
@@ -100,6 +118,7 @@ public sealed class PhysicsBody2D
 
     public float InverseMass => MotionType == BodyMotionType2D.Dynamic ? 1f / Mass : 0f;
     public float InverseInertia => MotionType == BodyMotionType2D.Dynamic ? 1f / MomentOfInertia : 0f;
+    public float EffectiveInverseInertia => FreezeRotation ? 0f : InverseInertia;
 
     public void AddForce(Vector2 force) => AccumulatedForce += force;
     public void AddTorque(float torque) => AccumulatedTorque += torque;
