@@ -114,31 +114,40 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         Canvas.Concat(in skiaMatrix);
         try
         {
-            switch (worldObject.Shape)
-            {
-                case ConvexPolygon2D polygon:
-                    DrawConvexPolygon(polygon, paint);
-                    break;
-                case Circle2D circle:
-                    Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
-                    break;
-                case Capsule2D capsule:
-                    DrawCapsule(capsule, paint);
-                    break;
-                case Rectangle2D rectangle:
-                    Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
-                    break;
-                case HalfSpace2D halfSpace:
-                    DrawHalfSpace(halfSpace, paint, objectToDevice);
-                    break;
-                default:
-                    throw new NotSupportedException($"No renderer is registered for {worldObject.Shape.GetType().Name}.");
-            }
+            DrawFilledShape(worldObject.Shape, paint, objectToDevice);
         }
         finally
         {
             Canvas.Restore();
             paint.Shader = null;
+        }
+    }
+
+    private void DrawFilledShape(IShape2D shape, SKPaint paint, Matrix3x2 objectToDevice)
+    {
+        switch (shape)
+        {
+            case ConvexPolygon2D polygon:
+                DrawConvexPolygon(polygon, paint);
+                break;
+            case Circle2D circle:
+                Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
+                break;
+            case Capsule2D capsule:
+                DrawCapsule(capsule, paint);
+                break;
+            case Rectangle2D rectangle:
+                Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
+                break;
+            case HalfSpace2D halfSpace:
+                DrawHalfSpace(halfSpace, paint, objectToDevice);
+                break;
+            case CompositeShape2D composite:
+                foreach (var part in composite.Parts)
+                    DrawFilledShape(part, paint, objectToDevice);
+                break;
+            default:
+                throw new NotSupportedException($"No renderer is registered for {shape.GetType().Name}.");
         }
     }
 
@@ -233,28 +242,37 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
         Canvas.Concat(in skiaMatrix);
         try
         {
-            switch (worldObject.Shape)
-            {
-                case ConvexPolygon2D polygon:
-                    DrawConvexPolygon(polygon, paint);
-                    break;
-                case Circle2D circle:
-                    Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
-                    break;
-                case Capsule2D capsule:
-                    DrawCapsuleOutline(capsule, paint);
-                    break;
-                case Rectangle2D rectangle:
-                    Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
-                    break;
-                case HalfSpace2D halfSpace:
-                    DrawHalfSpaceBoundary(halfSpace, paint, objectToDevice);
-                    break;
-            }
+            DrawShapeOutlineCore(worldObject.Shape, paint, objectToDevice);
         }
         finally
         {
             Canvas.Restore();
+        }
+    }
+
+    private void DrawShapeOutlineCore(IShape2D shape, SKPaint paint, Matrix3x2 objectToDevice)
+    {
+        switch (shape)
+        {
+            case ConvexPolygon2D polygon:
+                DrawConvexPolygon(polygon, paint);
+                break;
+            case Circle2D circle:
+                Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
+                break;
+            case Capsule2D capsule:
+                DrawCapsuleOutline(capsule, paint);
+                break;
+            case Rectangle2D rectangle:
+                Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
+                break;
+            case HalfSpace2D halfSpace:
+                DrawHalfSpaceBoundary(halfSpace, paint, objectToDevice);
+                break;
+            case CompositeShape2D composite:
+                foreach (var part in composite.Parts)
+                    DrawShapeOutlineCore(part, paint, objectToDevice);
+                break;
         }
     }
 
@@ -339,6 +357,10 @@ public sealed class Renderer2D(Camera2D camera) : IDisposable
                 break;
             case HalfSpace2D halfSpace:
                 DrawHalfSpaceBoundary(halfSpace, paint, objectToDevice);
+                break;
+            case CompositeShape2D composite:
+                foreach (var part in composite.Parts)
+                    DrawShape(part, paint, objectToDevice, drawHalfSpaceFill);
                 break;
         }
     }
