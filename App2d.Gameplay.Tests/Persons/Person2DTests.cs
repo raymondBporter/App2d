@@ -21,6 +21,27 @@ public sealed class Person2DTests
     private const uint EnemyLayer = 1u << 2;
 
     [Fact]
+    public void ResetCanRestoreSavedHealthAtANewPosition()
+    {
+        var collision = new CollisionSystem2D();
+        var physics = CreatePhysics(collision);
+        var person = CreatePerson(
+            collision,
+            physics,
+            TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root),
+            Vector2.Zero,
+            PlayerLayer,
+            CombatFaction2D.Player);
+        person.Health.Damage(4);
+        var respawn = new Vector2(300f, 120f);
+
+        person.Reset(respawn, hitPoints: 3);
+
+        Assert.Equal(respawn, person.Position);
+        Assert.Equal(3, person.Health.Current);
+    }
+
+    [Fact]
     public void IdenticalCommandsProduceIdenticalSimulation()
     {
         var collision = new CollisionSystem2D();

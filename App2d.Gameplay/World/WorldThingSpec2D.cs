@@ -5,6 +5,7 @@ namespace App2d.Gameplay.World;
 public enum WorldThingKind2D
 {
     PlayerSpawn,
+    SavePoint,
     Goal,
     Shieldback,
     BoilerBrute,

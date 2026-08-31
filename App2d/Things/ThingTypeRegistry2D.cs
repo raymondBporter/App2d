@@ -22,6 +22,9 @@ internal static class ThingTypeRegistry2D
     public static ThingTypeDescriptor2D PlayerSpawn { get; } =
         new("player-spawn", "Player spawn", WorldThingKind2D.PlayerSpawn, new SKColor(90, 220, 130));
 
+    public static ThingTypeDescriptor2D SavePoint { get; } =
+        new("save-point", "Save point", WorldThingKind2D.SavePoint, new SKColor(105, 225, 255));
+
     public static ThingTypeDescriptor2D Goal { get; } =
         new("goal", "Goal", WorldThingKind2D.Goal, new SKColor(255, 79, 120));
 
@@ -38,7 +41,7 @@ internal static class ThingTypeRegistry2D
         new("tumble-prop", "Tumble prop", WorldThingKind2D.TumbleProp, new SKColor(255, 154, 59));
 
     public static IReadOnlyList<ThingTypeDescriptor2D> All { get; } =
-        [MovingPlatform, PlayerSpawn, Goal, Shieldback, BoilerBrute, Rival, TumbleProp];
+        [MovingPlatform, PlayerSpawn, SavePoint, Goal, Shieldback, BoilerBrute, Rival, TumbleProp];
 
     public static ThingTypeDescriptor2D Require(string typeKey) =>
         All.SingleOrDefault(type => string.Equals(type.TypeKey, typeKey, StringComparison.Ordinal)) ??

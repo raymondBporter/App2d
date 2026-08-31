@@ -8,7 +8,7 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 
 CANVAS_SIZE = (512, 512)
@@ -29,6 +29,7 @@ class AnimationSpec:
     duration_seconds: float | None = None
     loop: bool = False
     frame_indices: tuple[int, ...] | None = None
+    source_sequence: tuple[tuple[str, int], ...] | None = None
 
 
 COMMON_ANIMATIONS = {
@@ -52,6 +53,17 @@ def animation_specs(kind: str) -> dict[str, AnimationSpec]:
         specs.update(
             {
                 "sword-attack": attack,
+                "wall-sword-attack": AnimationSpec(
+                    "wallslide",
+                    duration_seconds=0.35,
+                    source_sequence=(
+                        ("wallslide", 0),
+                        ("wallslide", 0),
+                        ("combo", 1),
+                        ("combo", 5),
+                        ("wallslide", 0),
+                    ),
+                ),
                 "magic-shot": AnimationSpec(
                     "Idle", duration_seconds=0.18, frame_indices=(0,)
                 ),
@@ -63,6 +75,11 @@ def animation_specs(kind: str) -> dict[str, AnimationSpec]:
             {
                 "sword-attack": placeholder,
                 "magic-shot": AnimationSpec("shot", duration_seconds=0.18),
+                "wall-shot": AnimationSpec(
+                    "wallslide",
+                    duration_seconds=0.18,
+                    frame_indices=(0, 0, 0),
+                ),
             }
         )
     return specs
@@ -83,7 +100,153 @@ def transform_frame(source_path: Path) -> Image.Image:
     return destination
 
 
+def add_wall_shot_recoil(frame: Image.Image) -> Image.Image:
+    """Nudge only the pistol/forearm while preserving the authored grip pose."""
+    weapon_box = (72, 200, 164, 260)
+    recoil_offset = (6, -4)
+    weapon = frame.crop(weapon_box)
+    result = frame.copy()
+    result.paste((0, 0, 0, 0), weapon_box)
+    result.alpha_composite(
+        weapon,
+        (
+            weapon_box[0] + recoil_offset[0],
+            weapon_box[1] + recoil_offset[1],
+        ),
+    )
+    return result
+
+
+def near_white_mask(frame: Image.Image) -> Image.Image:
+    red, green, blue, alpha = frame.split()
+    channels = [
+        channel.point(lambda value: 255 if value >= 220 else 0)
+        for channel in (red, green, blue)
+    ]
+    mask = ImageChops.multiply(channels[0], channels[1])
+    mask = ImageChops.multiply(mask, channels[2])
+    return ImageChops.multiply(mask, alpha)
+
+
+def without_grip_sword_arm(grip_frame: Image.Image) -> Image.Image:
+    """Remove only the held sword and its arm from the wall-grip bitmap."""
+    erase_mask = Image.new("L", grip_frame.size, 0)
+    erase_draw = ImageDraw.Draw(erase_mask)
+    erase_draw.polygon(
+        [(86, 169), (115, 169), (214, 254), (208, 286), (180, 288), (84, 193)],
+        fill=255,
+    )
+    erase_draw.line(
+        [(196, 272), (230, 231)],
+        fill=255,
+        width=17,
+    )
+
+    result = grip_frame.copy()
+    result.paste((0, 0, 0, 0), mask=erase_mask)
+
+    # The wall-grip body wins anywhere the weapon corridor touches it.
+    restore_mask = Image.new("L", grip_frame.size, 0)
+    restore_draw = ImageDraw.Draw(restore_mask)
+    restore_draw.ellipse((151, 94, 297, 238), fill=255)
+    restore_draw.polygon(
+        [(225, 216), (280, 216), (291, 293), (221, 293)],
+        fill=255,
+    )
+    result.paste(grip_frame, mask=restore_mask)
+    return result
+
+
+def swing_weapon_mask(swing_frame: Image.Image, phase: int) -> Image.Image:
+    """Select the existing sword arm/blade/effect without its standing body."""
+    if phase == 3:
+        connected = near_white_mask(swing_frame)
+        ImageDraw.floodfill(connected, (80, 300), 128)
+        effect = connected.point(
+            lambda value: 255 if value == 128 else 0
+        ).filter(ImageFilter.MaxFilter(11))
+        return ImageChops.multiply(effect, swing_frame.getchannel("A"))
+
+    mask = near_white_mask(swing_frame).filter(ImageFilter.MaxFilter(11))
+    allowed = Image.new("L", swing_frame.size, 0)
+    allowed_draw = ImageDraw.Draw(allowed)
+    if phase == 1:
+        allowed_draw.polygon(
+            [(95, 145), (211, 145), (211, 216), (255, 225), (255, 283), (175, 283)],
+            fill=255,
+        )
+        arm_points = [(198, 262), (215, 248), (232, 236)]
+    elif phase == 2:
+        allowed_draw.polygon(
+            [(125, 50), (190, 50), (190, 190), (255, 225), (255, 270), (220, 255)],
+            fill=255,
+        )
+        arm_points = [(160, 191), (174, 215), (204, 231), (231, 235)]
+    else:
+        allowed_draw.rectangle((115, 50, 460, 330), fill=255)
+        arm_points = None
+    mask = ImageChops.multiply(mask, allowed)
+
+    protected_body = Image.new("L", swing_frame.size, 0)
+    protected_draw = ImageDraw.Draw(protected_body)
+    protected_draw.ellipse((180, 103, 365, 253), fill=255)
+    protected_draw.polygon(
+        [(224, 225), (310, 225), (315, 307), (219, 307)],
+        fill=255,
+    )
+    mask = ImageChops.subtract(mask, protected_body)
+
+    if arm_points is None:
+        return mask
+
+    arm_mask = Image.new("L", swing_frame.size, 0)
+    ImageDraw.Draw(arm_mask).line(
+        arm_points,
+        fill=255,
+        width=17,
+        joint="curve",
+    )
+    arm_mask = ImageChops.multiply(arm_mask, swing_frame.getchannel("A"))
+    return ImageChops.lighter(mask, arm_mask)
+
+
+def compose_wall_sword_frame(
+    grip_frame: Image.Image,
+    swing_frame: Image.Image,
+    phase: int,
+) -> Image.Image:
+    if phase in (0, 1, 4):
+        return grip_frame.copy()
+
+    result = without_grip_sword_arm(grip_frame)
+    weapon_mask = swing_weapon_mask(swing_frame, phase)
+    weapon_layer = Image.new("RGBA", swing_frame.size, (0, 0, 0, 0))
+    weapon_layer.paste(swing_frame, mask=weapon_mask)
+    result.alpha_composite(weapon_layer)
+
+    grip_body_mask = Image.new("L", grip_frame.size, 0)
+    grip_body_draw = ImageDraw.Draw(grip_body_mask)
+    grip_body_draw.ellipse((151, 94, 297, 238), fill=255)
+    grip_body_draw.polygon(
+        [(225, 216), (280, 216), (291, 293), (221, 293)],
+        fill=255,
+    )
+    if phase != 3:
+        result.paste(grip_frame, mask=grip_body_mask)
+    return result
+
+
 def source_frames(source_directory: Path, prefix: str, spec: AnimationSpec) -> list[Path]:
+    if spec.source_sequence is not None:
+        return [
+            source_frames(
+                source_directory,
+                prefix,
+                AnimationSpec(source_name),
+            )[frame_index]
+            for source_name, frame_index in spec.source_sequence
+        ]
+
     frames = sorted(source_directory.glob(f"{prefix}_{spec.source_name}_*.png"))
     if not frames:
         # The pack's wall-slide frames omit the separator before their number.
@@ -114,8 +277,26 @@ def build_character(
             stale.unlink()
 
         frames = source_frames(source_directory, prefix, spec)
+        grip_frame = (
+            transform_frame(source_frames(
+                source_directory,
+                prefix,
+                AnimationSpec("wallslide", frame_indices=(0,)),
+            )[0])
+            if animation_id == "wall-sword-attack"
+            else None
+        )
         for frame_number, source_path in enumerate(frames, start=1):
-            transform_frame(source_path).save(
+            frame = transform_frame(source_path)
+            if animation_id == "wall-shot" and frame_number == 2:
+                frame = add_wall_shot_recoil(frame)
+            if grip_frame is not None:
+                frame = compose_wall_sword_frame(
+                    grip_frame,
+                    frame,
+                    frame_number - 1,
+                )
+            frame.save(
                 output_directory / f"frame-{frame_number:04d}.png",
                 optimize=True,
             )

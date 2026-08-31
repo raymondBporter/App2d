@@ -77,8 +77,12 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
         Person.AttachActions(_arsenal);
 
         _arsenal.EquipmentChanged += _presentation.EquipRightHandWeapon;
-        _arsenal.MeleeAttackStarted += _presentation.PlayMeleeAttack;
-        _arsenal.ShotStarted += _presentation.PlayShot;
+        _arsenal.MeleeAttackStarted += duration =>
+            _presentation.PlayMeleeAttack(
+                duration,
+                Person.IsWallGripping);
+        _arsenal.ShotStarted += () =>
+            _presentation.PlayShot(Person.IsWallGripping);
         _presentation.EquipRightHandWeapon(_arsenal.EquipmentId);
         Person.Damaged += _presentation.PlayHit;
         Person.Died += HandleDeath;

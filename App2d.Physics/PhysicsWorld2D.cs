@@ -213,8 +213,13 @@ public sealed class PhysicsWorld2D
         if (other.IsIgnoringOneWayPlatform(platform))
             return false;
 
-        const float minimumTopNormalY = 0.9f;
-        if (otherSeparationNormal.Y < minimumTopNormalY)
+        // A one-way surface has no collidable corner or side. Rounded shapes
+        // report diagonal normals at the platform's top corners, so accepting
+        // merely "mostly upward" normals makes them snag and lose horizontal
+        // motion at an otherwise non-solid edge.
+        const float maximumTopNormalX = 0.001f;
+        if (otherSeparationNormal.Y <= 0f ||
+            MathF.Abs(otherSeparationNormal.X) > maximumTopNormalX)
             return false;
 
         var platformBounds = platform.WorldObject.WorldBounds;

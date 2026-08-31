@@ -36,7 +36,9 @@ public sealed class PersonPresentation2D : IDisposable
     private AnimationClip2D<Texture2D> _hitAnimation = null!;
     private AnimationClip2D<Texture2D> _deathAnimation = null!;
     private AnimationClip2D<Texture2D> _meleeAttackAnimation = null!;
+    private AnimationClip2D<Texture2D> _wallMeleeAttackAnimation = null!;
     private AnimationClip2D<Texture2D> _shotAnimation = null!;
+    private AnimationClip2D<Texture2D> _wallShotAnimation = null!;
     private AnimationClip2D<Texture2D> _shieldBlockAnimation = null!;
     private string _characterId = string.Empty;
     private bool _simulationVisible = true;
@@ -66,7 +68,9 @@ public sealed class PersonPresentation2D : IDisposable
         scene.Add(_visual);
     }
 
-    public bool IsPlayingShot => ReferenceEquals(_animation.Clip, _shotAnimation);
+    public bool IsPlayingShot =>
+        ReferenceEquals(_animation.Clip, _shotAnimation) ||
+        ReferenceEquals(_animation.Clip, _wallShotAnimation);
 
     public void EquipRightHandWeapon(string equipmentId)
     {
@@ -85,12 +89,18 @@ public sealed class PersonPresentation2D : IDisposable
         _spriteShader.Texture = _animation.CurrentFrame;
     }
 
-    public void PlayMeleeAttack(float durationSeconds) =>
-        PlayTimedMeleeAnimation(_meleeAttackAnimation, durationSeconds);
+    public void PlayMeleeAttack(float durationSeconds, bool isWallGripping) =>
+        PlayTimedMeleeAnimation(
+            isWallGripping
+                ? _wallMeleeAttackAnimation
+                : _meleeAttackAnimation,
+            durationSeconds);
 
-    public void PlayShot()
+    public void PlayShot(bool isWallGripping)
     {
-        _animation.Play(_shotAnimation, restart: true);
+        _animation.Play(
+            isWallGripping ? _wallShotAnimation : _shotAnimation,
+            restart: true);
         _animation.PlaybackSpeed = 1f;
     }
 
@@ -126,7 +136,8 @@ public sealed class PersonPresentation2D : IDisposable
             ReferenceEquals(_animation.Clip, _hitAnimation) &&
             !_animation.IsFinished;
         var isPlayingMeleeAnimation =
-            ReferenceEquals(_animation.Clip, _meleeAttackAnimation) &&
+            (ReferenceEquals(_animation.Clip, _meleeAttackAnimation) ||
+             ReferenceEquals(_animation.Clip, _wallMeleeAttackAnimation)) &&
             !_animation.IsFinished;
         var isPlayingLanding =
             ReferenceEquals(_animation.Clip, _landingAnimation) &&
@@ -236,7 +247,19 @@ public sealed class PersonPresentation2D : IDisposable
         _hitAnimation = LoadAnimation(characterId, "hit-a");
         _deathAnimation = LoadAnimation(characterId, "death");
         _meleeAttackAnimation = LoadAnimation(characterId, "sword-attack");
+        _wallMeleeAttackAnimation = string.Equals(
+            characterId,
+            SwordCharacterId,
+            StringComparison.Ordinal)
+            ? LoadAnimation(characterId, "wall-sword-attack")
+            : _meleeAttackAnimation;
         _shotAnimation = LoadAnimation(characterId, "magic-shot");
+        _wallShotAnimation = string.Equals(
+            characterId,
+            GunCharacterId,
+            StringComparison.Ordinal)
+            ? LoadAnimation(characterId, "wall-shot")
+            : _shotAnimation;
         _shieldBlockAnimation = LoadAnimation(characterId, "shield-block");
         _characterId = characterId;
     }

@@ -27,6 +27,7 @@ public sealed class SideScrollerLevel2D
     private IReadOnlyList<MovingPlatformSpec2D> _movingPlatformSpecs;
     private readonly IReadOnlyList<WorldThingSpec2D> _worldThingSpecs;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
+    private readonly List<SavePoint2D> _savePoints = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
     private bool _authoredWorldThingsCreated;
@@ -98,6 +99,9 @@ public sealed class SideScrollerLevel2D
     public float GoalX { get; }
     public float GoalGroundY { get; }
     public WorldThingSpec2D? GoalThing { get; }
+    public IReadOnlyList<WorldThingSpec2D> SavePointThings => _worldThingSpecs
+        .Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)
+        .ToArray();
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
     public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;
     public EnemySystem2D EnemySystem { get; } = new();
@@ -105,6 +109,12 @@ public sealed class SideScrollerLevel2D
     public int LoadedColliderCount => _environment?.Streamer.LoadedColliderCount ?? 0;
     public static int MaximumActiveChunkCount =>
         SideScrollerChunkStreamer2D.MaximumActiveChunkCount;
+
+    public WorldThingSpec2D? FindSavePoint(long thingId) =>
+        _worldThingSpecs.FirstOrDefault(
+            thing => thing.Enabled &&
+                thing.Kind == WorldThingKind2D.SavePoint &&
+                thing.ThingId == thingId);
 
     public float GetCameraFloorY(float worldX)
     {
@@ -211,8 +221,27 @@ public sealed class SideScrollerLevel2D
 
         UpdateStreaming(SpawnPoint);
         CreateMovingPlatformsFromSpecs();
+        CreateSavePoints(scene);
         if (GoalThing is not null)
             CreateGoal(scene);
+    }
+
+    public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Bounds2D playerBounds)
+    {
+        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        foreach (var savePoint in _savePoints)
+        {
+            if (savePoint.Update(deltaSeconds, playerBounds))
+                return savePoint.Spec;
+        }
+
+        return null;
+    }
+
+    public void SetActiveSavePoint(long? thingId)
+    {
+        foreach (var savePoint in _savePoints)
+            savePoint.SetActive(savePoint.Spec.ThingId == thingId);
     }
 
     public void UpdateMovingPlatforms(float deltaSeconds)
@@ -319,6 +348,20 @@ public sealed class SideScrollerLevel2D
                 environment.WorldLayer,
                 environment.PlayerLayer | environment.EnemyLayer,
                 spec.Color));
+        }
+    }
+
+    private void CreateSavePoints(Scene2D scene)
+    {
+        foreach (var spec in _worldThingSpecs)
+        {
+            if (spec.Enabled && spec.Kind == WorldThingKind2D.SavePoint)
+            {
+                _savePoints.Add(new SavePoint2D(
+                    scene,
+                    spec,
+                    _traversal.PlayerColliderSize.Y / 2f + _traversal.GroundProbeDistance));
+            }
         }
     }
 

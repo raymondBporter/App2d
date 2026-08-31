@@ -27,4 +27,17 @@ public sealed class Health2D
     }
 
     public void Reset() => Current = Maximum;
+
+    public void Reset(int current)
+    {
+        if (current <= 0 || current > Maximum)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(current),
+                current,
+                $"Health must be between 1 and {Maximum}.");
+        }
+
+        Current = current;
+    }
 }

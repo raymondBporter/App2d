@@ -4,6 +4,7 @@ using App2d.Diagnostics;
 using App2d.Editor;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
+using App2d.Gameplay.Persistence;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
@@ -24,6 +25,8 @@ public sealed class SideScrollerGame : Game2D
     private const float DamageShakeStrength = 4f;
     private const float MinimumLandingShakeStrength = 2f;
     private const float MaximumLandingShakeStrength = 4.5f;
+    private const float SaveFeedbackDurationSeconds = 1.1f;
+    private const int PlayerMaximumHealth = 5;
     private const uint WorldLayer = 1u << 0;
     private const uint PlayerLayer = 1u << 1;
     private const uint EnemyLayer = 1u << 2;
@@ -44,9 +47,16 @@ public sealed class SideScrollerGame : Game2D
     private readonly TraversalDebugRenderer2D _traversalDebug = new(Traversal);
     private readonly SoundEffectBank2D _sounds;
     private readonly TileEditor2D _editor;
+    private readonly PlayerSaveStore2D _saveStore;
+    private Vector2 _respawnPoint;
+    private Vector2 _saveFeedbackCenter;
+    private long? _activeSavePointId;
+    private int _respawnHitPoints = PlayerMaximumHealth;
     private bool _reachedGoal;
+    private bool _lastSaveSucceeded;
     private bool _showTraversalDebug;
     private float _restartDelaySeconds;
+    private float _saveFeedbackSeconds;
 
     public SideScrollerGame()
     {
@@ -75,7 +85,17 @@ public sealed class SideScrollerGame : Game2D
                 .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
                 .Select(ThingTypeRegistry2D.ToRuntime)
                 .ToArray());
-        _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _level.SpawnPoint, _level.GetCameraFloorY);
+        _saveStore = PlayerSaveStore2D.CreateDefault();
+        var loadedSave = _saveStore.TryLoad();
+        var loadedSavePoint = loadedSave is { HitPoints: <= PlayerMaximumHealth }
+            ? _level.FindSavePoint(loadedSave.SavePointId)
+            : null;
+        _activeSavePointId = loadedSavePoint?.ThingId;
+        _respawnPoint = loadedSavePoint?.Position ?? _level.SpawnPoint;
+        _respawnHitPoints = loadedSavePoint is null
+            ? PlayerMaximumHealth
+            : loadedSave!.HitPoints;
+        _cameraController = new SideScrollerCamera2D(Scene, Camera, _level.TileMap.WorldBounds, _respawnPoint, _level.GetCameraFloorY);
         // LevelBootstrap2D.OpenForEditing is passed as a factory, not invoked here: a
         // play-only session must never hold a read-write handle on level.db (it locks the
         // file and breaks `git checkout level.db`). TileEditor2D opens it only on entering
@@ -88,6 +108,8 @@ public sealed class SideScrollerGame : Game2D
             Traversal.TileSize);
 
         _level.CreateEnvironment(Scene, _collision, _physics, Textures, WorldLayer, PlayerLayer, EnemyLayer);
+        _level.UpdateStreaming(_respawnPoint);
+        _level.SetActiveSavePoint(_activeSavePointId);
         _editor.ThingsChanged += things =>
             _level.ReloadMovingPlatforms(things.Select(ThingTypeRegistry2D.ToRuntime).ToArray());
 
@@ -95,10 +117,13 @@ public sealed class SideScrollerGame : Game2D
             _collision,
             _physics,
             Traversal,
-            _level.SpawnPoint,
+            _respawnPoint,
             PlayerLayer,
             WorldLayer,
-            CombatFaction2D.Player);
+            CombatFaction2D.Player,
+            maximumHealth: PlayerMaximumHealth);
+        if (_respawnHitPoints != PlayerMaximumHealth)
+            _player.Health.Reset(_respawnHitPoints);
         _playerPresentation = new PersonPresentation2D(Scene, Textures, Traversal);
         _player.JumpStarted += () => _sounds.Play(SoundEffect2D.PlayerJump);
         _player.Landed += speed =>
@@ -135,8 +160,12 @@ public sealed class SideScrollerGame : Game2D
         _level.CreateAuthoredWorldThings(Textures, _combat, _sounds);
         _arsenal = new PersonArsenal2D(Scene, _player.Body, Textures, _collision, WorldLayer, EnemyLayer, CombatFaction2D.Player, _combat, _sounds);
         _arsenal.EquipmentChanged += _playerPresentation.EquipRightHandWeapon;
-        _arsenal.MeleeAttackStarted += _playerPresentation.PlayMeleeAttack;
-        _arsenal.ShotStarted += _playerPresentation.PlayShot;
+        _arsenal.MeleeAttackStarted += duration =>
+            _playerPresentation.PlayMeleeAttack(
+                duration,
+                _player.IsWallGripping);
+        _arsenal.ShotStarted += () =>
+            _playerPresentation.PlayShot(_player.IsWallGripping);
         _player.AttachActions(_arsenal);
         _playerPresentation.EquipRightHandWeapon(_arsenal.EquipmentId);
         RegisterDebugAttackShapes(_arsenal.GetActiveAttackHitboxes);
@@ -149,6 +178,7 @@ public sealed class SideScrollerGame : Game2D
             0f,
             isShieldBlocking: false,
             _arsenal.IsMeleeAttackActive);
+        _ = _level.UpdateSavePoints(0f, _player.WorldObject.WorldBounds);
     }
 
     public override string WindowTitle =>
@@ -159,6 +189,7 @@ public sealed class SideScrollerGame : Game2D
     public override void Update(FrameTime time, InputState input)
     {
         var dt = time.DeltaSeconds;
+        _saveFeedbackSeconds = Math.Max(0f, _saveFeedbackSeconds - dt);
 
         _editor.Update(input);
         if (_editor.IsActive)
@@ -190,23 +221,32 @@ public sealed class SideScrollerGame : Game2D
         _player.UpdateAfterPhysics(dt);
         _level.EnemySystem.SyncAfterPhysics();
 
-        var playerDefeated = _level.EnemySystem.TryResolvePlayerHits(_player);
-        if (_level.TryGetSpikeSource(_player.WorldObject.WorldBounds, out var spikeSourceX) &&
-            _player.TryTakeDamageFromX(
+        _ = _level.EnemySystem.TryResolvePlayerHits(_player);
+        if (_level.TryGetSpikeSource(
+            _player.WorldObject.WorldBounds,
+            out var spikeSourceX))
+        {
+            _ = _player.TryTakeDamageFromX(
                 damage: 1,
                 sourceX: spikeSourceX,
                 horizontalKnockback: 180f,
-                verticalKnockback: 300f))
-        {
-            playerDefeated = !_player.Health.IsAlive;
+                verticalKnockback: 300f);
         }
 
-        if (playerDefeated ||
-            _contactDamage.Resolve(_player))
+        _ = _contactDamage.Resolve(_player);
+
+        // Rival weapons resolve their own hits during enemy after-physics sync,
+        // outside TryResolvePlayerHits. Health is the authoritative defeat state,
+        // so every damage path must converge here rather than relying on a caller
+        // to propagate a separate "defeated" return value.
+        if (!_player.IsAlive)
         {
             BeginDying(time);
             return;
         }
+
+        if (_level.UpdateSavePoints(dt, _player.WorldObject.WorldBounds) is { } savePoint)
+            ActivateSavePoint(savePoint);
 
         if (_player.Position.Y < _level.TileMap.WorldBounds.Min.Y - 260f)
             Respawn();
@@ -232,6 +272,23 @@ public sealed class SideScrollerGame : Game2D
         renderer.Draw(Scene);
         PlayerHud2D.Draw(renderer, _player.Health.Current, _player.Health.Maximum, _arsenal.WeaponHudTexture, _arsenal.WeaponStatus);
 
+        if (_saveFeedbackSeconds > 0f)
+        {
+            var progress = 1f - _saveFeedbackSeconds / SaveFeedbackDurationSeconds;
+            var alpha = (byte)Math.Clamp((int)(230f * (1f - progress)), 0, 230);
+            var color = _lastSaveSucceeded
+                ? new SKColor(105, 225, 255, alpha)
+                : new SKColor(255, 95, 95, alpha);
+            renderer.DrawWorldCircle(
+                _saveFeedbackCenter,
+                float.Lerp(28f, 108f, progress),
+                color,
+                strokeWidth: 4f);
+            renderer.DrawScreenLabel(
+                _lastSaveSucceeded ? "SAVED" : "SAVE FAILED",
+                new Vector2(24f, 170f));
+        }
+
         if (_showTraversalDebug)
             _traversalDebug.Draw(renderer, _player.Position, _player.Facing);
 
@@ -246,11 +303,28 @@ public sealed class SideScrollerGame : Game2D
     private void Respawn()
     {
         _restartDelaySeconds = 0f;
-        _player.Reset(_level.SpawnPoint);
+        _player.Reset(_respawnPoint, _respawnHitPoints);
         _playerPresentation.Reset();
-        _cameraController.Reset(_level.SpawnPoint);
+        _cameraController.Reset(_respawnPoint);
+        _level.UpdateStreaming(_respawnPoint);
+        _ = _level.UpdateSavePoints(0f, _player.WorldObject.WorldBounds);
         _reachedGoal = false;
         _sounds.Play(SoundEffect2D.PlayerRespawn);
+    }
+
+    private void ActivateSavePoint(WorldThingSpec2D savePoint)
+    {
+        _player.Health.Reset();
+        _activeSavePointId = savePoint.ThingId;
+        _respawnPoint = savePoint.Position;
+        _respawnHitPoints = _player.Health.Current;
+        _level.SetActiveSavePoint(savePoint.ThingId);
+
+        _lastSaveSucceeded = _saveStore.TrySave(new PlayerSave2D(
+            savePoint.ThingId,
+            _respawnHitPoints));
+        _saveFeedbackCenter = _player.Position;
+        _saveFeedbackSeconds = SaveFeedbackDurationSeconds;
     }
 
     private void BeginDying(FrameTime time)

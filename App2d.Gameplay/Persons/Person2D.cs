@@ -225,10 +225,13 @@ public sealed class Person2D : ICombatant2D
         }
     }
 
-    public void Reset(Vector2 spawnPoint)
+    public void Reset(Vector2 spawnPoint, int? hitPoints = null)
     {
         ArgGuard.ThrowIfNotFinite(spawnPoint);
-        Health.Reset();
+        if (hitPoints is { } savedHitPoints)
+            Health.Reset(savedHitPoints);
+        else
+            Health.Reset();
         WorldObject.Transform.Position = spawnPoint;
         Body.IsCollider = _simulationEnabled;
         Body.MotionType = _simulationEnabled
