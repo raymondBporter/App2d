@@ -29,6 +29,7 @@ def write_manifest(content_root: Path) -> None:
         "characters/player-unarmed/character.json",
         "characters/boiler-brute/character.json",
         "characters/shieldback/character.json",
+        "characters/green-dinosaur/character.json",
         "effects/bullet/orange.png",
         "effects/fireball/ember-energy.png",
         "environments/tilesets/rust-cyberpunk/tileset.json",
@@ -117,6 +118,13 @@ def main() -> None:
             repository,
             "Importing Kenney Pixel Platformer grassland environment",
             str(pipeline / "import_kenney_pixel_platformer.py"),
+            "--content-root",
+            str(staging_root),
+        )
+        run(
+            repository,
+            "Importing the green dinosaur walk cycle",
+            str(pipeline / "import_green_dinosaur.py"),
             "--content-root",
             str(staging_root),
         )

@@ -75,6 +75,9 @@ internal sealed class SideScrollerThingSpawner2D(
                         playerLayer,
                         enemyLayer));
                     break;
+                case WorldThingKind2D.GreenDinosaur:
+                    Register(CreateGreenDinosaur(thing.Position, textures));
+                    break;
                 case WorldThingKind2D.TumbleProp:
                     Register(new TumbleProp2D(
                         scene,
@@ -107,6 +110,28 @@ internal sealed class SideScrollerThingSpawner2D(
             speed: 118f,
             health: 3);
         return new Shieldback2D(scene, textures, enemy);
+    }
+
+    private GreenDinosaur2D CreateGreenDinosaur(
+        Vector2 position,
+        TextureCache2D textures)
+    {
+        var spatialObject = new SpatialObject2D(
+            new Capsule2D(new Vector2(0f, -14f), new Vector2(0f, 14f), 17f));
+        spatialObject.Transform.Position = position;
+        var body = physics.AddBody(spatialObject, BodyMotionType2D.Dynamic);
+        body.Restitution = 0f;
+        body.Mass = 1.4f;
+        body.CollisionLayer = enemyLayer;
+        body.CollisionMask = worldLayer;
+        var enemy = new PatrolEnemy2D(
+            spatialObject,
+            body,
+            position.X - tileSize * 2f,
+            position.X + tileSize * 2f,
+            speed: 82f,
+            health: 4);
+        return new GreenDinosaur2D(scene, textures, enemy);
     }
 
     private void Register(IEnemyActor2D enemy)

@@ -23,6 +23,10 @@ It also imports the Maaot cave tilesets. All generated output, including charact
 manifests, HUD icons, projectile, player geometry, terrain slices, and
 `content-manifest.json`, is ignored by Git and reproducible from durable inputs.
 
+The user-provided green dinosaur sheet is cropped into six square, transparent
+walk frames under `Assets/Runtime/characters/green-dinosaur`. Its durable source
+lives under `Assets/Sources/user/green-dinosaur`.
+
 The pipeline also imports the CC0 Kenney Pixel Platformer archive as the
 `kenney-grassland` tileset. Its original 18 by 18 tiles are normalized to App2d's
 32-unit semantic terrain interface without depending on the source atlas layout.

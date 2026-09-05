@@ -10,6 +10,7 @@ public enum WorldThingKind2D
     Shieldback,
     BoilerBrute,
     Rival,
+    GreenDinosaur,
     TumbleProp
 }
 

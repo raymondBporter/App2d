@@ -37,11 +37,28 @@ internal static class ThingTypeRegistry2D
     public static ThingTypeDescriptor2D Rival { get; } =
         new("rival", "Rival", WorldThingKind2D.Rival, new SKColor(255, 46, 166));
 
+    public static ThingTypeDescriptor2D GreenDinosaur { get; } =
+        new(
+            "green-dinosaur",
+            "Green dinosaur",
+            WorldThingKind2D.GreenDinosaur,
+            new SKColor(142, 205, 92));
+
     public static ThingTypeDescriptor2D TumbleProp { get; } =
         new("tumble-prop", "Tumble prop", WorldThingKind2D.TumbleProp, new SKColor(255, 154, 59));
 
     public static IReadOnlyList<ThingTypeDescriptor2D> All { get; } =
-        [MovingPlatform, PlayerSpawn, SavePoint, Goal, Shieldback, BoilerBrute, Rival, TumbleProp];
+        [
+            MovingPlatform,
+            PlayerSpawn,
+            SavePoint,
+            Goal,
+            Shieldback,
+            BoilerBrute,
+            Rival,
+            GreenDinosaur,
+            TumbleProp
+        ];
 
     public static ThingTypeDescriptor2D Require(string typeKey) =>
         All.SingleOrDefault(type => string.Equals(type.TypeKey, typeKey, StringComparison.Ordinal)) ??
