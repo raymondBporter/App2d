@@ -73,8 +73,7 @@ internal sealed class SideScrollerThingSpawner2D(
                         thing.Position.X + tileSize * 6f,
                         worldLayer,
                         playerLayer,
-                        enemyLayer,
-                        sounds));
+                        enemyLayer));
                     break;
                 case WorldThingKind2D.TumbleProp:
                     Register(new TumbleProp2D(

@@ -17,8 +17,11 @@ public sealed class PersonLocomotion2D
     private Vector2 _positionBeforePhysics;
     private float _verticalSpeedBeforePhysics;
     private float _gravityScaleBeforePhysics;
+    private bool _wasGroundedBeforePhysics;
     private float _coyoteTime;
     private float _jumpBufferTime;
+    private float _jumpInitialSpeed;
+    private float _wallJumpBufferTime;
     private float _wallRelatchTime;
     private float _wallDirection;
     private float _dashTimeRemaining;
@@ -53,12 +56,25 @@ public sealed class PersonLocomotion2D
     public float WallDirection => _wallDirection;
     public float CoyoteTimeRemaining => _coyoteTime;
     public float JumpBufferTimeRemaining => _jumpBufferTime;
+    public bool IsSustainingJump =>
+        _jumpInitialSpeed > 0f &&
+        _intent.JumpHeld &&
+        !IsDashing &&
+        !IsGrounded &&
+        _body.LinearVelocity.Y > 0f;
+    public float JumpPower => IsSustainingJump
+        ? Math.Clamp(
+            1f - (_body.LinearVelocity.Y / _jumpInitialSpeed),
+            0f,
+            1f)
+        : 0f;
 
     public void UpdateBeforePhysics(
         PersonMovementIntent2D intent,
         float facing,
         float deltaSeconds)
     {
+        _wasGroundedBeforePhysics = IsGrounded;
         _intent = intent;
         _wallRelatchTime = Math.Max(0f, _wallRelatchTime - deltaSeconds);
         _dashCooldownRemaining = Math.Max(0f, _dashCooldownRemaining - deltaSeconds);
@@ -66,6 +82,7 @@ public sealed class PersonLocomotion2D
         IsGrounded = HasGroundSupport(Metrics.GroundProbeDistance);
         if (IsGrounded)
         {
+            _jumpInitialSpeed = 0f;
             RestoreAirJumps();
             _airDashAvailable = true;
         }
@@ -96,6 +113,7 @@ public sealed class PersonLocomotion2D
             IsGrounded = false;
             _coyoteTime = 0f;
             _jumpBufferTime = 0f;
+            _wallJumpBufferTime = 0f;
         }
         else
         {
@@ -103,12 +121,18 @@ public sealed class PersonLocomotion2D
             _jumpBufferTime = intent.JumpPressed
                 ? Metrics.JumpBufferDuration
                 : Math.Max(0f, _jumpBufferTime - deltaSeconds);
+            _wallJumpBufferTime = intent.JumpPressed
+                ? Metrics.JumpBufferDuration
+                : Math.Max(0f, _wallJumpBufferTime - deltaSeconds);
         }
 
         UpdateWallGrip();
         ApplyHorizontalControl(deltaSeconds);
         if (!beganDropThrough)
+        {
+            TryConsumeBufferedWallJump();
             TryConsumeBufferedJump();
+        }
 
         if (intent.JumpReleased && _body.LinearVelocity.Y > 0f)
         {
@@ -136,6 +160,7 @@ public sealed class PersonLocomotion2D
             IsGrounded = TrySnapToGround();
 
         UpdateWallGrip();
+        TryConsumeBufferedWallJump();
 
         if (IsGrounded)
         {
@@ -144,8 +169,13 @@ public sealed class PersonLocomotion2D
             TryConsumeBufferedJump();
         }
 
-        if (IsGrounded && _verticalSpeedBeforePhysics < -60f)
-            Landed?.Invoke(-_verticalSpeedBeforePhysics);
+        if (!_wasGroundedBeforePhysics && IsGrounded)
+        {
+            var relativeLandingSpeed =
+                GetGroundSupportVerticalSpeed() - _verticalSpeedBeforePhysics;
+            if (relativeLandingSpeed > 60f)
+                Landed?.Invoke(relativeLandingSpeed);
+        }
 
         UpdateGravityScale();
     }
@@ -155,12 +185,15 @@ public sealed class PersonLocomotion2D
         _intent = default;
         _coyoteTime = 0f;
         _jumpBufferTime = 0f;
+        _jumpInitialSpeed = 0f;
+        _wallJumpBufferTime = 0f;
         _wallRelatchTime = 0f;
         _wallDirection = 0f;
         _dashTimeRemaining = 0f;
         _dashCooldownRemaining = 0f;
         _dashDirection = 0f;
         IsGrounded = false;
+        _wasGroundedBeforePhysics = false;
         IsWallGripping = false;
         IsDashing = false;
         _body.GravityScale = 1f;
@@ -178,6 +211,8 @@ public sealed class PersonLocomotion2D
     {
         _coyoteTime = 0f;
         _jumpBufferTime = 0f;
+        _jumpInitialSpeed = 0f;
+        _wallJumpBufferTime = 0f;
         _wallRelatchTime = 0f;
         _wallDirection = 0f;
         _dashTimeRemaining = 0f;
@@ -187,6 +222,7 @@ public sealed class PersonLocomotion2D
         _airJumpsRemaining = 0;
         _intent = default;
         IsGrounded = false;
+        _wasGroundedBeforePhysics = false;
         IsWallGripping = false;
         IsDashing = false;
         _body.WorldObject.Transform.Scale = Vector2.One;
@@ -212,6 +248,7 @@ public sealed class PersonLocomotion2D
 
     private void BeginDash(float facing)
     {
+        _jumpInitialSpeed = 0f;
         _dashDirection = MathF.Abs(_intent.MoveX) > 0.01f
             ? MathF.Sign(_intent.MoveX)
             : MathF.Sign(facing);
@@ -249,16 +286,7 @@ public sealed class PersonLocomotion2D
 
         if (IsWallGripping)
         {
-            var wallDirection = _wallDirection;
-            _body.LinearVelocity = new Vector2(
-                -wallDirection * Metrics.WallJumpHorizontalSpeed,
-                Metrics.JumpSpeed);
-            _jumpBufferTime = 0f;
-            _coyoteTime = 0f;
-            _wallRelatchTime = Metrics.WallJumpRelatchDelay;
-            _wallDirection = 0f;
-            IsWallGripping = false;
-            JumpStarted?.Invoke();
+            BeginWallJump(_wallDirection);
             return;
         }
 
@@ -273,11 +301,45 @@ public sealed class PersonLocomotion2D
             ? fullJumpSpeed
             : fullJumpSpeed * Metrics.JumpReleaseSpeedMultiplier;
         _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, jumpSpeed);
+        _jumpInitialSpeed = jumpSpeed;
         if (!isGroundJump)
             _airJumpsRemaining--;
         _jumpBufferTime = 0f;
         _coyoteTime = 0f;
         IsGrounded = false;
+        JumpStarted?.Invoke();
+    }
+
+    private void TryConsumeBufferedWallJump()
+    {
+        if (_wallJumpBufferTime <= 0f ||
+            IsDashing ||
+            IsGrounded ||
+            _wallRelatchTime > 0f ||
+            MathF.Abs(_intent.MoveX) <= 0.01f)
+        {
+            return;
+        }
+
+        var wallDirection = MathF.Sign(_intent.MoveX);
+        if (!HasWallSupport(wallDirection, Metrics.WallGripProbeDistance))
+            return;
+
+        BeginWallJump(wallDirection);
+    }
+
+    private void BeginWallJump(float wallDirection)
+    {
+        _body.LinearVelocity = new Vector2(
+            -wallDirection * Metrics.WallJumpHorizontalSpeed,
+            Metrics.JumpSpeed);
+        _jumpInitialSpeed = Metrics.JumpSpeed;
+        _jumpBufferTime = 0f;
+        _wallJumpBufferTime = 0f;
+        _coyoteTime = 0f;
+        _wallRelatchTime = Metrics.WallJumpRelatchDelay;
+        _wallDirection = 0f;
+        IsWallGripping = false;
         JumpStarted?.Invoke();
     }
 
@@ -446,6 +508,48 @@ public sealed class PersonLocomotion2D
         }
 
         return false;
+    }
+
+    private float GetGroundSupportVerticalSpeed()
+    {
+        var supportSpeed = float.NegativeInfinity;
+        foreach (var contact in _physics.LastContacts)
+        {
+            if (contact.First == _body &&
+                contact.Geometry.Normal.Y >= 0.55f &&
+                CanSupport(contact.Second))
+            {
+                supportSpeed = Math.Max(supportSpeed, contact.Second.LinearVelocity.Y);
+            }
+
+            if (contact.Second == _body &&
+                -contact.Geometry.Normal.Y >= 0.55f &&
+                CanSupport(contact.First))
+            {
+                supportSpeed = Math.Max(supportSpeed, contact.First.LinearVelocity.Y);
+            }
+        }
+
+        if (float.IsFinite(supportSpeed))
+            return supportSpeed;
+
+        var bodyBounds = _body.WorldObject.WorldBounds;
+        QueryBodyBounds(ExpandedDown(bodyBounds, Metrics.LandingSnapDistance));
+        foreach (var collider in _queryResults)
+        {
+            if (collider.UserData is not PhysicsBody2D other || !CanSupport(other))
+                continue;
+
+            var otherBounds = other.WorldObject.WorldBounds;
+            if (!otherBounds.IsFinite || !HasHorizontalSupport(bodyBounds, otherBounds))
+                continue;
+
+            var gap = bodyBounds.Bottom - otherBounds.Top;
+            if (gap >= -0.01f && gap <= Metrics.LandingSnapDistance)
+                supportSpeed = Math.Max(supportSpeed, other.LinearVelocity.Y);
+        }
+
+        return float.IsFinite(supportSpeed) ? supportSpeed : 0f;
     }
 
     private bool TrySnapToGround()

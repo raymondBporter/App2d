@@ -1,0 +1,23 @@
+[
+  {
+    "repository": "Comfy-Org/Qwen-Image-Layered_ComfyUI",
+    "revision": "f06012b5c1951a65d5c98ba24bd67103167b60c0",
+    "file": "split_files/diffusion_models/qwen_image_layered_fp8mixed.safetensors",
+    "size": 20533591821,
+    "sha256": "e68c406b1bc08c97382a46dce6ed46699bc18a0f50422d97952ee4e8b63ad50a"
+  },
+  {
+    "repository": "Comfy-Org/HunyuanVideo_1.5_repackaged",
+    "revision": "144e6ea259230936cdc6f140b3fe69c8529b5c47",
+    "file": "split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
+    "size": 9384670680,
+    "sha256": "cb5636d852a0ea6a9075ab1bef496c0db7aef13c02350571e388aea959c5c0b4"
+  },
+  {
+    "repository": "Comfy-Org/Qwen-Image-Layered_ComfyUI",
+    "revision": "f06012b5c1951a65d5c98ba24bd67103167b60c0",
+    "file": "split_files/vae/qwen_image_layered_vae.safetensors",
+    "size": 253816616,
+    "sha256": "c5320595fc61859ccdd0282184208f7b781c983b8ce4c6bc3e7723a807d3d28d"
+  }
+]

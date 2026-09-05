@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gurgle · Crawl study</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#171718;color:#f5f0e8;font:16px system-ui,sans-serif}main{max-width:1040px;margin:48px auto;padding:0 24px}small{color:#f26a61;letter-spacing:.12em;text-transform:uppercase}h1{font-size:44px;letter-spacing:-.04em;margin:10px 0}p{color:#b8b6b3;line-height:1.6;max-width:740px}.stage{margin-top:28px;display:grid;place-items:center;background:#ececec;border-radius:16px;overflow:hidden}canvas{max-width:100%;height:auto;display:block}.controls{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:22px 0}button,select{font:inherit;color:inherit;background:#323234;border:1px solid #535356;padding:10px 16px;border-radius:8px;cursor:pointer}button:hover{background:#464649}label{display:flex;align-items:center;gap:10px}input{accent-color:#e74035}output{font-variant-numeric:tabular-nums}details{border-top:1px solid #434346;margin-top:30px;padding-top:20px}summary{cursor:pointer}details img{width:100%;margin-top:20px;border-radius:8px}a{color:#ff9c91}.note{font-size:14px}
+</style>
+<main>
+<small>Monster animation / First art pass</small>
+<h1>Gurgle gets moving.</h1>
+<p>A tentacle-driven crawl with squashing, stretching, and a wobbling face. Redrawn from your reference in its original red, white, and black palette.</p>
+<div class="stage"><canvas width="640" height="460" aria-label="Animated eight-frame monster crawl"></canvas></div>
+<div class="controls">
+<button id="play">Pause</button><button id="step">Next frame</button>
+<label>Speed <input id="speed" type="range" min="2" max="14" value="8"><output id="rate">8 fps</output></label>
+<label><input id="flip" type="checkbox">Face left</label>
+<output id="frame">Frame 1 / 8</output>
+</div>
+<p class="note">Movement study: the checkerboard is baked into the image. Transparency, frame alignment, and detail consistency need a finishing pass before use in the game.</p>
+<details><summary>View all eight poses</summary><img src="crawl-sheet.png" alt="Eight poses of the red, white and black tentacled monster"></details>
+<p class="note"><a href="crawl-sheet.png" download>Download sprite study</a> · <a href="PROMPTS.md">Art notes and generation prompts</a></p>
+</main>
+<script>
+const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d');
+const play=document.querySelector('#play'),step=document.querySelector('#step'),speed=document.querySelector('#speed'),flip=document.querySelector('#flip'),frameLabel=document.querySelector('#frame');
+// Each rectangle encloses one generated pose; the large reach in pose 2 crosses the nominal grid.
+const frames=[
+ {x:20,y:80,w:420,h:336,cx:250}, {x:456,y:80,w:466,h:336,cx:696},
+ {x:934,y:80,w:376,h:336,cx:1120}, {x:1346,y:80,w:390,h:336,cx:1558},
+ {x:16,y:480,w:420,h:336,cx:250}, {x:440,y:480,w:450,h:336,cx:696},
+ {x:920,y:480,w:386,h:336,cx:1120}, {x:1330,y:480,w:420,h:336,cx:1558}
+];
+let index=0,playing=true,last=0,loaded=false;
+const sheet=new Image();sheet.src='crawl-sheet.png';
+function draw(){if(!loaded)return;ctx.clearRect(0,0,640,460);ctx.fillStyle='#ececec';ctx.fillRect(0,0,640,460);const f=frames[index];ctx.save();ctx.translate(320,58);if(flip.checked)ctx.scale(-1,1);ctx.drawImage(sheet,f.x,f.y,f.w,f.h,f.x-f.cx,0,f.w,f.h);ctx.restore();frameLabel.value=`Frame ${index+1} / 8`;}
+sheet.onload=()=>{loaded=true;draw()};sheet.onerror=()=>{frameLabel.value='Could not load crawl-sheet.png'};
+function tick(t){if(playing&&t-last>=1000/Number(speed.value)){index=(index+1)%frames.length;last=t;draw()}requestAnimationFrame(tick)}requestAnimationFrame(tick);
+play.onclick=()=>{playing=!playing;play.textContent=playing?'Pause':'Play';last=performance.now()};
+step.onclick=()=>{playing=false;play.textContent='Play';index=(index+1)%frames.length;draw()};
+speed.oninput=()=>{document.querySelector('#rate').value=speed.value+' fps'};flip.onchange=draw;
+</script>
+</html>

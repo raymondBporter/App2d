@@ -3,7 +3,7 @@
 | Gameplay event | File stem(s) | Intended use |
 |---|---|---|
 | Player step | `player-footstep-01` through `04` | Random concrete-footstep variant while grounded and moving |
-| Player jump begins | `player-jump` | Mechanical upward impulse |
+| Player jump begins | `player-jump` | Mechanical upward impulse whose level follows normalized held-jump power |
 | Normal landing | `player-land-soft` | Low or medium downward landing speed |
 | Hard landing | `player-land-hard` | High downward landing speed |
 | Sword attack starts | `sword-swing-01`, `02` | Alternate swing variants |

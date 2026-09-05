@@ -71,9 +71,9 @@ public sealed class Person2DTests
                 JumpReleased: false,
                 DropThroughPressed: false,
                 DashPressed: true),
-            UseWeapon: false,
+            UsePrimaryAction: false,
             AimTarget: null,
-            SwitchWeapon: false);
+            SwitchEquipment: false);
 
         first.BeginFrame(0.05f);
         second.BeginFrame(0.05f);
@@ -136,6 +136,82 @@ public sealed class Person2DTests
         Assert.Equal(3, player.Health.Current);
     }
 
+    [Theory]
+    [InlineData(false, 0.08f, 1)]
+    [InlineData(true, 0.15f, 2)]
+    public void UnarmedActionsDamageHostilePersons(
+        bool useKick,
+        float activeTime,
+        int expectedDamage)
+    {
+        var collision = new CollisionSystem2D();
+        var physics = CreatePhysics(collision);
+        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var attacker = CreatePerson(
+            collision,
+            physics,
+            traversal,
+            Vector2.Zero,
+            PlayerLayer,
+            CombatFaction2D.Player);
+        var target = CreatePerson(
+            collision,
+            physics,
+            traversal,
+            new Vector2(58f, 0f),
+            EnemyLayer,
+            CombatFaction2D.Enemy);
+        var actions = new UnarmedPersonActions2D(
+            attacker.Body,
+            CombatFaction2D.Player,
+            EnemyLayer,
+            new CombatSystem2D(collision, new SilentSounds()));
+        attacker.AttachActions(actions);
+
+        attacker.BeginFrame(activeTime);
+        attacker.ApplyCommand(
+            new PersonCommand2D(
+                default,
+                UsePrimaryAction: !useKick,
+                AimTarget: null,
+                SwitchEquipment: false,
+                UseSecondaryAction: useKick),
+            activeTime);
+        attacker.UpdateAfterPhysics(activeTime);
+
+        Assert.Equal(target.Health.Maximum - expectedDamage, target.Health.Current);
+        Assert.Single(actions.GetActiveAttackHitboxes());
+    }
+
+    [Fact]
+    public void UnarmedActionsReportPunchAndKickPresentationCues()
+    {
+        var collision = new CollisionSystem2D();
+        var physics = CreatePhysics(collision);
+        var person = CreatePerson(
+            collision,
+            physics,
+            TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root),
+            Vector2.Zero,
+            PlayerLayer,
+            CombatFaction2D.Player);
+        var actions = new UnarmedPersonActions2D(
+            person.Body,
+            CombatFaction2D.Player,
+            EnemyLayer,
+            new CombatSystem2D(collision, new SilentSounds()));
+        var cues = new List<UnarmedAttackKind2D>();
+        actions.AttackStarted += (kind, _) => cues.Add(kind);
+
+        actions.UsePrimary(null, 1f);
+        actions.Reset();
+        actions.UseSecondary(null, 1f);
+
+        Assert.Equal(
+            [UnarmedAttackKind2D.Punch, UnarmedAttackKind2D.Kick],
+            cues);
+    }
+
     [Fact]
     public void GunReleaseUsesActionTimeWithoutPresentation()
     {
@@ -164,9 +240,9 @@ public sealed class Person2DTests
         person.AttachActions(arsenal);
         var fire = new PersonCommand2D(
             default,
-            UseWeapon: true,
+            UsePrimaryAction: true,
             AimTarget: null,
-            SwitchWeapon: true);
+            SwitchEquipment: true);
 
         person.Face(1f);
         person.BeginFrame(0.07f);
@@ -273,6 +349,46 @@ public sealed class Person2DTests
     }
 
     [Fact]
+    public void BufferedJumpIntentBouncesOffWallWithoutGripping()
+    {
+        var collision = new CollisionSystem2D();
+        var physics = CreatePhysics(collision);
+        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var person = CreatePerson(
+            collision,
+            physics,
+            traversal,
+            Vector2.Zero,
+            PlayerLayer,
+            CombatFaction2D.Player);
+        AddGroundSupport(physics, person);
+
+        person.BeginFrame(0.01f);
+        person.ApplyCommand(default, 0.01f);
+        Assert.True(person.IsGrounded);
+
+        person.WorldObject.Transform.Position += new Vector2(0f, 50f);
+        AddRightGrippableWall(physics, person, gap: 10f);
+
+        person.BeginFrame(0.01f);
+        person.ApplyCommand(
+            MovementCommand(moveX: 1f, jumpPressed: true, jumpHeld: true),
+            0.01f);
+        Assert.False(person.IsWallGripping);
+        Assert.True(person.Body.LinearVelocity.Y > 0f);
+
+        person.WorldObject.Transform.Position += new Vector2(9f, 0f);
+        person.BeginFrame(0.01f);
+        person.ApplyCommand(
+            MovementCommand(moveX: 1f, jumpPressed: false, jumpHeld: true),
+            0.01f);
+
+        Assert.False(person.IsWallGripping);
+        Assert.Equal(-traversal.WallJumpHorizontalSpeed, person.Body.LinearVelocity.X);
+        Assert.Equal(traversal.JumpSpeed, person.Body.LinearVelocity.Y);
+    }
+
+    [Fact]
     public void DeadPersonRemainsSolidAndSettlesOnTheGround()
     {
         var collision = new CollisionSystem2D();
@@ -343,18 +459,49 @@ public sealed class Person2DTests
 
     private static void AddRightGrippableWall(
         PhysicsWorld2D physics,
-        Person2D person)
+        Person2D person,
+        float gap = 1f)
     {
         var wallObject = new SpatialObject2D(
             AxisAlignedRectangle2D.FromSize(new Vector2(20f, 200f)));
         wallObject.Transform.Position = new Vector2(
-            person.WorldObject.WorldBounds.Right + 11f,
+            person.WorldObject.WorldBounds.Right + 10f + gap,
             0f);
         var wall = physics.AddBody(wallObject, BodyMotionType2D.Static);
         wall.CollisionLayer = WorldLayer;
         wall.CollisionMask = PlayerLayer;
         wall.IsWallGrippable = true;
     }
+
+    private static void AddGroundSupport(
+        PhysicsWorld2D physics,
+        Person2D person)
+    {
+        var groundObject = new SpatialObject2D(
+            AxisAlignedRectangle2D.FromSize(new Vector2(200f, 20f)));
+        groundObject.Transform.Position = new Vector2(
+            person.Position.X,
+            person.WorldObject.WorldBounds.Bottom - 10f);
+        var ground = physics.AddBody(groundObject, BodyMotionType2D.Static);
+        ground.CollisionLayer = WorldLayer;
+        ground.CollisionMask = PlayerLayer;
+    }
+
+    private static PersonCommand2D MovementCommand(
+        float moveX,
+        bool jumpPressed,
+        bool jumpHeld) =>
+        new(
+            new PersonMovementIntent2D(
+                MoveX: moveX,
+                JumpPressed: jumpPressed,
+                JumpHeld: jumpHeld,
+                JumpReleased: false,
+                DropThroughPressed: false,
+                DashPressed: false),
+            UsePrimaryAction: false,
+            AimTarget: null,
+            SwitchEquipment: false);
 
     private static PersonCommand2D WallGripCommand(
         bool useWeapon,
@@ -367,9 +514,9 @@ public sealed class Person2DTests
                 JumpReleased: false,
                 DropThroughPressed: false,
                 DashPressed: false),
-            UseWeapon: useWeapon,
+            UsePrimaryAction: useWeapon,
             AimTarget: new Vector2(1_000f, 0f),
-            SwitchWeapon: switchWeapon);
+            SwitchEquipment: switchWeapon);
 
     private static PhysicsWorld2D CreatePhysics(CollisionSystem2D collision) =>
         new(collision)

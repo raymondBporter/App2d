@@ -5,7 +5,8 @@ using NAudio.Wave.SampleProviders;
 namespace App2d.Audio;
 
 /// <summary>
-/// A fire-and-forget, polyphonic mixer for short, memory-resident sound effects.
+/// A polyphonic mixer for short, memory-resident sound effects. Sounds may be
+/// fire-and-forget or adjusted through a lightweight voice handle.
 /// </summary>
 public sealed class AudioMixer2D : IDisposable
 {
@@ -54,8 +55,44 @@ public sealed class AudioMixer2D : IDisposable
         ArgGuard.ThrowIfNotInClosedRange(volume, 0f, 1f);
         ArgGuard.ThrowIfNotInClosedRange(playbackRate, 0.5f, 2f);
         ObjectDisposedException.ThrowIf(_disposed, this);
+        if (volume == 0f)
+            return;
 
-        _mixer.Play(clip, volume, playbackRate);
+        _ = _mixer.Play(clip, volume, playbackRate);
+    }
+
+    public AudioVoice2D Begin(
+        AudioClip2D clip,
+        float volume = 1f,
+        float playbackRate = 1f)
+    {
+        ArgGuard.ThrowIfNull(clip);
+        ArgGuard.ThrowIfNotInClosedRange(volume, 0f, 1f);
+        ArgGuard.ThrowIfNotInClosedRange(playbackRate, 0.5f, 2f);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        var sequence = _mixer.Play(clip, volume, playbackRate);
+        return sequence == 0
+            ? default
+            : new AudioVoice2D(this, sequence);
+    }
+
+    internal bool IsVoicePlaying(long sequence) =>
+        !_disposed && _mixer.IsPlaying(sequence);
+
+    internal void SetVoiceVolume(
+        long sequence,
+        float volume,
+        float rampSeconds)
+    {
+        if (!_disposed)
+            _mixer.SetVolume(sequence, volume, ToFrameCount(rampSeconds));
+    }
+
+    internal void StopVoice(long sequence, float fadeOutSeconds)
+    {
+        if (!_disposed)
+            _mixer.Stop(sequence, ToFrameCount(fadeOutSeconds));
     }
 
     public void Dispose()
@@ -66,6 +103,9 @@ public sealed class AudioMixer2D : IDisposable
         _disposed = true;
         _output.Dispose();
     }
+
+    private static int ToFrameCount(float seconds) =>
+        (int)MathF.Ceiling(seconds * SampleRate);
 
     /// <summary>
     /// Mixes cached clips through a fixed voice pool. Playback only mutates a
@@ -97,15 +137,15 @@ public sealed class AudioMixer2D : IDisposable
             }
         }
 
-        public void Play(AudioClip2D clip, float volume, float playbackRate)
+        public long Play(AudioClip2D clip, float volume, float playbackRate)
         {
             var channels = clip.WaveFormat.Channels;
             if (channels is not 1 and not ChannelCount)
             {
                 throw new NotSupportedException($"Sound effects must be mono or stereo, not {channels} channels.");
             }
-            if (volume == 0f || clip.FrameCount == 0)
-                return;
+            if (clip.FrameCount == 0)
+                return 0;
 
             lock (_sync)
             {
@@ -127,12 +167,65 @@ public sealed class AudioMixer2D : IDisposable
                     }
                 }
 
+                var sequence = ++_sequence;
                 _voices[selectedIndex] = new Voice(
                     clip,
                     framePosition: 0f,
                     volume,
                     playbackRate,
-                    sequence: ++_sequence);
+                    sequence);
+                return sequence;
+            }
+        }
+
+        public bool IsPlaying(long sequence)
+        {
+            if (sequence == 0)
+                return false;
+
+            lock (_sync)
+            {
+                foreach (var voice in _voices)
+                {
+                    if (voice.Sequence == sequence && voice.Clip is not null)
+                        return true;
+                }
+                return false;
+            }
+        }
+
+        public void SetVolume(long sequence, float volume, int rampFrames)
+        {
+            lock (_sync)
+            {
+                for (var index = 0; index < _voices.Length; index++)
+                {
+                    ref var voice = ref _voices[index];
+                    if (voice.Sequence != sequence || voice.Clip is null)
+                        continue;
+
+                    voice.SetVolume(volume, rampFrames);
+                    return;
+                }
+            }
+        }
+
+        public void Stop(long sequence, int fadeFrames)
+        {
+            lock (_sync)
+            {
+                for (var index = 0; index < _voices.Length; index++)
+                {
+                    ref var voice = ref _voices[index];
+                    if (voice.Sequence != sequence || voice.Clip is null)
+                        continue;
+
+                    if (fadeFrames == 0)
+                        voice = default;
+                    else
+                        voice.BeginStop(fadeFrames);
+                    return;
+                }
             }
         }
 
@@ -149,39 +242,36 @@ public sealed class AudioMixer2D : IDisposable
                     if (clip is null)
                         continue;
 
-                    voice.FramePosition = MixVoice(
-                        clip,
-                        voice.FramePosition,
-                        requestedFrames,
-                        voice.Volume,
-                        voice.PlaybackRate,
-                        buffer);
-                    if (voice.FramePosition >= clip.FrameCount)
+                    MixVoice(ref voice, requestedFrames, buffer);
+                    if (voice.Clip is not null &&
+                        voice.FramePosition >= clip.FrameCount)
+                    {
                         voice = default;
+                    }
                 }
             }
             return buffer.Length;
         }
 
-        private static float MixVoice(
-            AudioClip2D clip,
-            float framePosition,
+        private static void MixVoice(
+            ref Voice voice,
             int requestedFrames,
-            float volume,
-            float playbackRate,
             Span<float> destination)
         {
+            var clip = voice.Clip!;
             var samples = clip.Samples;
             var channels = clip.WaveFormat.Channels;
-            for (var frame = 0; frame < requestedFrames && framePosition < clip.FrameCount; frame++)
+            for (var frame = 0;
+                 frame < requestedFrames && voice.FramePosition < clip.FrameCount;
+                 frame++)
             {
-                var sourceFrame = (int)framePosition;
+                var sourceFrame = (int)voice.FramePosition;
                 var nextFrame = Math.Min(sourceFrame + 1, clip.FrameCount - 1);
-                var fraction = framePosition - sourceFrame;
+                var fraction = voice.FramePosition - sourceFrame;
                 var destinationIndex = frame * ChannelCount;
                 if (channels == 1)
                 {
-                    var sample = Lerp(samples[sourceFrame], samples[nextFrame], fraction) * volume;
+                    var sample = Lerp(samples[sourceFrame], samples[nextFrame], fraction) * voice.Volume;
                     destination[destinationIndex] += sample;
                     destination[destinationIndex + 1] += sample;
                 }
@@ -192,32 +282,95 @@ public sealed class AudioMixer2D : IDisposable
                     destination[destinationIndex] += Lerp(
                         samples[sourceIndex],
                         samples[nextIndex],
-                        fraction) * volume;
+                        fraction) * voice.Volume;
                     destination[destinationIndex + 1] += Lerp(
                         samples[sourceIndex + 1],
                         samples[nextIndex + 1],
-                        fraction) * volume;
+                        fraction) * voice.Volume;
                 }
-                framePosition += playbackRate;
+                voice.FramePosition += voice.PlaybackRate;
+                if (voice.AdvanceVolume())
+                {
+                    voice = default;
+                    return;
+                }
             }
-            return framePosition;
         }
 
         private static float Lerp(float first, float second, float amount) =>
             first + ((second - first) * amount);
 
-        private struct Voice(
-            AudioClip2D clip,
-            float framePosition,
-            float volume,
-            float playbackRate,
-            long sequence)
+        private struct Voice
         {
-            public AudioClip2D? Clip { get; set; } = clip;
-            public float FramePosition { get; set; } = framePosition;
-            public float Volume { get; } = volume;
-            public float PlaybackRate { get; } = playbackRate;
-            public long Sequence { get; } = sequence;
+            private float _targetVolume;
+            private float _volumeStep;
+            private int _volumeRampFramesRemaining;
+            private bool _stopWhenSilent;
+
+            public Voice(
+                AudioClip2D clip,
+                float framePosition,
+                float volume,
+                float playbackRate,
+                long sequence)
+            {
+                Clip = clip;
+                FramePosition = framePosition;
+                Volume = volume;
+                PlaybackRate = playbackRate;
+                Sequence = sequence;
+                _targetVolume = volume;
+            }
+
+            public AudioClip2D? Clip { get; set; }
+            public float FramePosition { get; set; }
+            public float Volume { get; private set; }
+            public float PlaybackRate { get; }
+            public long Sequence { get; }
+
+            public void SetVolume(float volume, int rampFrames)
+            {
+                if (_stopWhenSilent)
+                    return;
+
+                SetVolumeCore(volume, rampFrames);
+            }
+
+            public void BeginStop(int fadeFrames)
+            {
+                _stopWhenSilent = true;
+                SetVolumeCore(0f, fadeFrames);
+            }
+
+            public bool AdvanceVolume()
+            {
+                if (_volumeRampFramesRemaining > 0)
+                {
+                    Volume += _volumeStep;
+                    _volumeRampFramesRemaining--;
+                    if (_volumeRampFramesRemaining == 0)
+                        Volume = _targetVolume;
+                }
+
+                return _stopWhenSilent &&
+                    _volumeRampFramesRemaining == 0 &&
+                    Volume == 0f;
+            }
+
+            private void SetVolumeCore(float volume, int rampFrames)
+            {
+                _targetVolume = volume;
+                if (rampFrames == 0)
+                {
+                    Volume = volume;
+                    _volumeStep = 0f;
+                    _volumeRampFramesRemaining = 0;
+                    return;
+                }
+
+                _volumeStep = (volume - Volume) / rampFrames;
+                _volumeRampFramesRemaining = rampFrames;
+            }
         }
     }
 }

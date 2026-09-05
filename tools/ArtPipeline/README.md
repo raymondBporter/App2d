@@ -11,13 +11,14 @@ python -m pip install -r tools/ArtPipeline/requirements.txt
 python tools/ArtPipeline/build_runtime_assets.py
 ```
 
-The build imports and normalizes two baked 512 by 512 character sets from the CC0
+The build imports and normalizes three baked 512 by 512 character sets from the CC0
 RGS Dev stick-figure source pack:
 
 - `Assets/Runtime/characters/player-sword`
 - `Assets/Runtime/characters/player-gun`
+- `Assets/Runtime/characters/player-unarmed`
 
-It also creates the sword and gun HUD icons and imports the pistol projectile.
+It also creates the sword, gun, and unarmed HUD icons and imports the pistol projectile.
 It also imports the Maaot cave tilesets. All generated output, including character
 manifests, HUD icons, projectile, player geometry, terrain slices, and
 `content-manifest.json`, is ignored by Git and reproducible from durable inputs.

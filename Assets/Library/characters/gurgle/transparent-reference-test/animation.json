@@ -1,0 +1,28 @@
+{
+  "name": "crawl",
+  "status": "rough animation study",
+  "frameCount": 8,
+  "frameSize": [
+    512,
+    512
+  ],
+  "fps": 8,
+  "loop": true,
+  "anchorPixels": [
+    256,
+    460
+  ],
+  "sheet": "crawl-transparent.png",
+  "columns": 4,
+  "rows": 2,
+  "frames": [
+    "frames/frame-0001.png",
+    "frames/frame-0002.png",
+    "frames/frame-0003.png",
+    "frames/frame-0004.png",
+    "frames/frame-0005.png",
+    "frames/frame-0006.png",
+    "frames/frame-0007.png",
+    "frames/frame-0008.png"
+  ]
+}

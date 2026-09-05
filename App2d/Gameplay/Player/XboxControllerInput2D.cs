@@ -58,6 +58,7 @@ internal sealed class XboxControllerInput2D
             pressed.HasFlag(XInputButtons.B),
             pressed.HasFlag(XInputButtons.Y),
             pressed.HasFlag(XInputButtons.X),
+            pressed.HasFlag(XInputButtons.RightShoulder),
             aim == Vector2.Zero ? null : playerPosition + aim * AimDistance);
         return frame;
     }
@@ -143,6 +144,7 @@ internal sealed class XboxControllerInput2D
         DPadDown = 0x0002,
         DPadLeft = 0x0004,
         DPadRight = 0x0008,
+        RightShoulder = 0x0200,
         A = 0x1000,
         B = 0x2000,
         X = 0x4000,
@@ -157,6 +159,7 @@ internal readonly record struct XboxControllerFrame2D(
     bool JumpHeld,
     bool JumpReleased,
     bool DashPressed,
-    bool SwitchWeapon,
-    bool UseWeapon,
+    bool SwitchEquipment,
+    bool UsePrimaryAction,
+    bool UseSecondaryAction,
     Vector2? AimTarget);

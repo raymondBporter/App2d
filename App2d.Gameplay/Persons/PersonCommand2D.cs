@@ -4,6 +4,7 @@ namespace App2d.Gameplay.Persons;
 
 public readonly record struct PersonCommand2D(
     PersonMovementIntent2D Movement,
-    bool UseWeapon,
+    bool UsePrimaryAction,
     Vector2? AimTarget,
-    bool SwitchWeapon);
+    bool SwitchEquipment,
+    bool UseSecondaryAction = false);

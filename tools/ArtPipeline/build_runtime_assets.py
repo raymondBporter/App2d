@@ -26,6 +26,7 @@ def write_manifest(content_root: Path) -> None:
         "characters/player-geometry.json",
         "characters/player-sword/character.json",
         "characters/player-gun/character.json",
+        "characters/player-unarmed/character.json",
         "characters/boiler-brute/character.json",
         "characters/shieldback/character.json",
         "effects/bullet/orange.png",
@@ -36,6 +37,7 @@ def write_manifest(content_root: Path) -> None:
         "environments/tilesets/kenney-grassland/tileset.json",
         "ui/hud/weapons/sword.png",
         "ui/hud/weapons/gun.png",
+        "ui/hud/weapons/unarmed.png",
         "ui/hud/weapons/fireball.png",
     )
     missing = [path for path in required if not (content_root / path).is_file()]
@@ -99,7 +101,7 @@ def main() -> None:
         shutil.copytree(static_root, staging_root)
         run(
             repository,
-            "Importing baked stick-figure sword and gun sprites",
+            "Importing baked stick-figure sword, gun, and unarmed sprites",
             str(pipeline / "import_stick_figure.py"),
             "--content-root",
             str(staging_root),

@@ -20,6 +20,14 @@ Assets/Work/
 /Assets/Runtime/
 
 /Assets/Sources/third-party/rgs-stick-figure.zip
+/Assets/Sources/third-party/rgs-stick-figure/*.blend
+
+# Keep downloaded image/video model weights out of source control.
+# Tool scripts and small reference assets can be committed; installations,
+# caches, and generated runs belong under the ignored Assets/Work directory.
+*.safetensors
+*.gguf
+*.ckpt
 
 # Maaot permits the art in games but forbids redistributing the asset packs.
 # Keep the locally downloaded source archives and generated runtime slices out

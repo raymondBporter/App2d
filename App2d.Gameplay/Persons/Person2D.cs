@@ -80,6 +80,8 @@ public sealed class Person2D : ICombatant2D
     public bool IsGrounded => _motor.IsGrounded;
     public bool IsWallGripping => _motor.IsWallGripping;
     public bool IsDashing => _motor.IsDashing;
+    public bool IsSustainingJump => _motor.IsSustainingJump;
+    public float JumpPower => _motor.JumpPower;
     public bool IsAlive => Health.IsAlive;
     public bool IsSimulationEnabled => _simulationEnabled;
     public IPersonActionSet2D? Actions => _actions;
@@ -112,13 +114,14 @@ public sealed class Person2D : ICombatant2D
         if (!_simulationEnabled || !IsAlive)
             return;
 
-        if (command.SwitchWeapon)
+        if (command.SwitchEquipment)
             _actions?.SelectNext();
 
         if (MathF.Abs(command.Movement.MoveX) > 0.01f)
             Face(command.Movement.MoveX);
         _motor.UpdateBeforePhysics(command.Movement, Facing, deltaSeconds);
-        if (command.UseWeapon && _actions is not null)
+        if ((command.UsePrimaryAction || command.UseSecondaryAction) &&
+            _actions is not null)
         {
             var isWallAttack = _motor.IsWallGripping;
             var attackFacing = isWallAttack
@@ -127,7 +130,10 @@ public sealed class Person2D : ICombatant2D
             var aimTarget = isWallAttack
                 ? null
                 : command.AimTarget;
-            Face(_actions.UsePrimary(aimTarget, attackFacing));
+            if (command.UsePrimaryAction)
+                Face(_actions.UsePrimary(aimTarget, attackFacing));
+            if (command.UseSecondaryAction)
+                Face(_actions.UseSecondary(aimTarget, attackFacing));
         }
         _actions?.UpdateBeforePhysics(deltaSeconds);
     }

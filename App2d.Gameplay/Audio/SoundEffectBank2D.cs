@@ -58,13 +58,23 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
     }
 
     public void Play(SoundEffect2D effect)
+        => _ = Begin(effect);
+
+    public SoundEffectVoice2D Begin(
+        SoundEffect2D effect,
+        float initialVolumeScale = 1f)
     {
+        ArgGuard.ThrowIfNotInClosedRange(initialVolumeScale, 0f, 1f);
         if (!_cues.TryGetValue(effect, out var cue))
             throw ArgGuard.CreateOutOfRange(effect, "Unknown sound effect.");
-        _mixer.Play(
+
+        var fullVolume = cue.Volume *
+            RandomInRange(MinimumVolumeScale, MaximumVolumeScale);
+        var voice = _mixer.Begin(
             cue.NextClip(),
-            cue.Volume * RandomInRange(MinimumVolumeScale, MaximumVolumeScale),
+            fullVolume * initialVolumeScale,
             RandomInRange(MinimumPlaybackRate, MaximumPlaybackRate));
+        return new SoundEffectVoice2D(voice, fullVolume);
     }
 
     public void Dispose() => _mixer.Dispose();

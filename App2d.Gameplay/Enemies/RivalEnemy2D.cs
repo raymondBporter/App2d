@@ -1,7 +1,6 @@
 using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
@@ -18,7 +17,7 @@ namespace App2d.Gameplay.Enemies;
 public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
 {
     private readonly PersonPresentation2D _presentation;
-    private readonly PersonArsenal2D _arsenal;
+    private readonly UnarmedPersonActions2D _actions;
     private readonly RivalBrain2D _brain;
     private readonly WorldObject2D _hostileMarker;
     private float _lastDeltaSeconds;
@@ -39,8 +38,7 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
         float maximumX,
         uint worldLayer,
         uint playerLayer,
-        uint enemyLayer,
-        ISoundEffectSink2D sounds)
+        uint enemyLayer)
     {
         ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(collision);
@@ -50,8 +48,6 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
         ArgGuard.ThrowIfNull(combat);
         ArgGuard.ThrowIfNotFinite(position);
         ArgGuard.ThrowIfGreaterThanOrEqual(minimumX, maximumX);
-        ArgGuard.ThrowIfNull(sounds);
-
         Person = new Person2D(
             collision,
             physics,
@@ -63,27 +59,17 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
             maximumHealth: 12,
             mass: 1f);
         _presentation = new PersonPresentation2D(scene, textures, traversal);
-        _arsenal = new PersonArsenal2D(
-            scene,
+        _actions = new UnarmedPersonActions2D(
             Person.Body,
-            textures,
-            collision,
-            worldLayer,
-            playerLayer,
             CombatFaction2D.Enemy,
-            combat,
-            sounds);
+            playerLayer,
+            combat);
         _brain = new RivalBrain2D(minimumX, maximumX);
-        Person.AttachActions(_arsenal);
+        Person.AttachActions(_actions);
 
-        _arsenal.EquipmentChanged += _presentation.EquipRightHandWeapon;
-        _arsenal.MeleeAttackStarted += duration =>
-            _presentation.PlayMeleeAttack(
-                duration,
-                Person.IsWallGripping);
-        _arsenal.ShotStarted += () =>
-            _presentation.PlayShot(Person.IsWallGripping);
-        _presentation.EquipRightHandWeapon(_arsenal.EquipmentId);
+        _actions.AttackStarted += (kind, duration) =>
+            _presentation.PlayUnarmedAttack(kind, duration);
+        _presentation.Equip("unarmed");
         Person.Damaged += _presentation.PlayHit;
         Person.Died += HandleDeath;
 
@@ -120,7 +106,6 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
 
         var command = _brain.Decide(
             Person,
-            _arsenal,
             targetPosition,
             deltaSeconds);
         Person.ApplyCommand(command, deltaSeconds);
@@ -139,7 +124,7 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
             Person,
             _lastMoveX,
             isShieldBlocking: false,
-            _arsenal.IsMeleeAttackActive);
+            _actions.IsAttackActive);
         SyncPresentation();
     }
 

@@ -19,6 +19,7 @@ Reserve compressed formats for music, ambience, dialogue, or much larger SFX lib
 
 - Footstep, sword-swing, sword-hit, and enemy-hurt cues choose variants without an
   immediate repeat.
+- The jump impulse starts quietly, then its own level ramps with held-jump power.
 - Footsteps are intentionally quieter than combat impacts.
 - `player-land-soft` and `player-land-hard` are separate so landing speed can choose the cue.
 - `fireball-impact` is deliberately the longest effect at about 1.25 seconds.

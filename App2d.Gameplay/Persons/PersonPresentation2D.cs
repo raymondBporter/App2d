@@ -2,6 +2,7 @@ using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Assets;
+using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
@@ -18,6 +19,7 @@ public sealed class PersonPresentation2D : IDisposable
     private const float TerminalVelocityEpsilon = 25f;
     private const string SwordCharacterId = "player-sword";
     private const string GunCharacterId = "player-gun";
+    private const string UnarmedCharacterId = "player-unarmed";
 
     private readonly TextureCache2D _textures;
     private readonly AnimationPlayer2D<Texture2D> _animation = new();
@@ -40,6 +42,8 @@ public sealed class PersonPresentation2D : IDisposable
     private AnimationClip2D<Texture2D> _shotAnimation = null!;
     private AnimationClip2D<Texture2D> _wallShotAnimation = null!;
     private AnimationClip2D<Texture2D> _shieldBlockAnimation = null!;
+    private AnimationClip2D<Texture2D> _punchAnimation = null!;
+    private AnimationClip2D<Texture2D> _kickAnimation = null!;
     private string _characterId = string.Empty;
     private bool _simulationVisible = true;
     private bool _disposed;
@@ -72,14 +76,17 @@ public sealed class PersonPresentation2D : IDisposable
         ReferenceEquals(_animation.Clip, _shotAnimation) ||
         ReferenceEquals(_animation.Clip, _wallShotAnimation);
 
-    public void EquipRightHandWeapon(string equipmentId)
+    public void Equip(string equipmentId)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         AssetId2D.Validate(equipmentId);
 
-        var replacement = string.Equals(equipmentId, "gun", StringComparison.Ordinal)
-            ? GunCharacterId
-            : SwordCharacterId;
+        var replacement = equipmentId switch
+        {
+            "gun" => GunCharacterId,
+            "unarmed" => UnarmedCharacterId,
+            _ => SwordCharacterId
+        };
         if (string.Equals(_characterId, replacement, StringComparison.Ordinal))
             return;
 
@@ -102,6 +109,16 @@ public sealed class PersonPresentation2D : IDisposable
             isWallGripping ? _wallShotAnimation : _shotAnimation,
             restart: true);
         _animation.PlaybackSpeed = 1f;
+    }
+
+    public void PlayUnarmedAttack(
+        UnarmedAttackKind2D kind,
+        float durationSeconds)
+    {
+        var animation = kind == UnarmedAttackKind2D.Punch
+            ? _punchAnimation
+            : _kickAnimation;
+        PlayTimedMeleeAnimation(animation, durationSeconds);
     }
 
     public void PlayHit()
@@ -246,20 +263,34 @@ public sealed class PersonPresentation2D : IDisposable
         _landingAnimation = LoadAnimation(characterId, "land");
         _hitAnimation = LoadAnimation(characterId, "hit-a");
         _deathAnimation = LoadAnimation(characterId, "death");
-        _meleeAttackAnimation = LoadAnimation(characterId, "sword-attack");
-        _wallMeleeAttackAnimation = string.Equals(
-            characterId,
-            SwordCharacterId,
-            StringComparison.Ordinal)
-            ? LoadAnimation(characterId, "wall-sword-attack")
-            : _meleeAttackAnimation;
-        _shotAnimation = LoadAnimation(characterId, "magic-shot");
-        _wallShotAnimation = string.Equals(
-            characterId,
-            GunCharacterId,
-            StringComparison.Ordinal)
-            ? LoadAnimation(characterId, "wall-shot")
-            : _shotAnimation;
+        if (string.Equals(characterId, UnarmedCharacterId, StringComparison.Ordinal))
+        {
+            _punchAnimation = LoadAnimation(characterId, "punch");
+            _kickAnimation = LoadAnimation(characterId, "kick");
+            _meleeAttackAnimation = _punchAnimation;
+            _wallMeleeAttackAnimation = _punchAnimation;
+            _shotAnimation = _kickAnimation;
+            _wallShotAnimation = _kickAnimation;
+        }
+        else
+        {
+            _meleeAttackAnimation = LoadAnimation(characterId, "sword-attack");
+            _wallMeleeAttackAnimation = string.Equals(
+                characterId,
+                SwordCharacterId,
+                StringComparison.Ordinal)
+                ? LoadAnimation(characterId, "wall-sword-attack")
+                : _meleeAttackAnimation;
+            _shotAnimation = LoadAnimation(characterId, "magic-shot");
+            _wallShotAnimation = string.Equals(
+                characterId,
+                GunCharacterId,
+                StringComparison.Ordinal)
+                ? LoadAnimation(characterId, "wall-shot")
+                : _shotAnimation;
+            _punchAnimation = _meleeAttackAnimation;
+            _kickAnimation = _meleeAttackAnimation;
+        }
         _shieldBlockAnimation = LoadAnimation(characterId, "shield-block");
         _characterId = characterId;
     }

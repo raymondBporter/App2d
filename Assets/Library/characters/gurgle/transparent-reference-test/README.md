@@ -1,0 +1,18 @@
+# Transparent reference experiment
+
+The original WEBP was converted to RGBA by removing border-connected near-white pixels. Enclosed white body, eyes, and teeth were preserved. The resulting reference has 562,912 fully transparent pixels out of 1,000,000.
+
+The built-in image generation tool received only `reference-transparent.png` as its image input. It returned `redraw-raw.png`: 1774 x 887 RGB, no alpha channel, with a painted checkerboard. A transparent reference did not produce actual output transparency in this trial. This single test does not establish why the tool behaves this way.
+
+For practical use, the same rough border-connected background removal was then applied to the generated poses. `crawl-transparent.png` is a real RGBA sheet with eight 512 x 512 cells, in four columns and two rows. Individual PNGs live in `frames/`. All frames share an anchor of (256, 460), measured from the top left. Playback is 8 fps, looping. `animation.json` is descriptive metadata, not an existing engine integration format. `crawl-preview.gif` shows the cycle on a dark background.
+
+These are rough assets: hard alpha edges are intentional for this experiment. Light edge fringes, enclosed background remnants, and generated anatomy variation may need a later pass. The original input and first study were preserved. No game code was changed.
+
+## Exact redraw prompt
+
+Use case: stylized-concept
+Asset type: 2D game monster animation sprite sheet, a first production art pass.
+Input image 1 is a character design REFERENCE only. Redraw the creature, not the poster. Ignore and omit all lettering.
+Primary request: one coherent 8-frame looping crawl / slither cycle for this white, black and red tentacled cartoon blob monster. Preserve its identity: off-white amorphous body, huge central black open mouth with chunky triangular white teeth and red dangling tongue, small secondary mouth lower left, bulging eye on upper left, two crooked red-tipped horns, small stalk-mounted head/eye on upper right, red tentacles along the base. Simplify small spots and decorative gore for legibility. Playful grotesque ink cartoon, bold uniform black contours, flat white and vivid red fills. No shading, gradients, texture or 3D.
+Composition: exactly 4 columns by 2 rows, eight equal square cells, 2048 x 1024 total canvas, each cell 512 x 512. No grid drawn, no labels, no text. Row-major chronological order. Each sprite fully isolated with actual TRANSPARENT background and ample clear margins; white body stays opaque. Each creature approximately 410 px wide and 390 px tall, identical identity, camera, scale and front three-quarter orientation in all eight frames. Feet/tentacles touch the exact same ground baseline at y=460 within each cell, body center at x=256. No overlap between cells and no cropping.
+Motion: animates crawling in place toward screen right with a fluid tentacle-driven weight shift. Frames 1-8: neutral contact; reach forward and slight stretch; front tentacle planted and body squashed; drag rear tentacle forward with body rising; opposite contact; opposite tentacle reach with stretch; second squash and pull; recover toward first pose. Meaningful but controlled silhouette changes in every frame. Horns, eye stalk and tongue follow through with small delays. Central face remains recognizable and coherently attached, keep anatomy and number of features consistent. Body bob only about 12 px, body squash/stretch at most 8 percent. No walking legs, no additional characters, no background, no ground puddle or scattered detached specks. This is an evenly registered animation sheet, not a collage of monster redesigns.

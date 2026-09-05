@@ -66,17 +66,21 @@ public sealed class PlayerInputMapper2D
         _jumpActionHeld = jumpHeld;
 
         var mouseAttackPressed = input.WasMousePressed(MouseButtons.Left);
+        var mouseKickPressed = input.WasMousePressed(MouseButtons.Right);
         return new PlayerCommand2D(
             new PersonCommand2D(
                 movement,
                 input.WasKeyPressed(Keys.J) ||
                     mouseAttackPressed ||
-                    controller.UseWeapon,
-                mouseAttackPressed
+                    controller.UsePrimaryAction,
+                mouseAttackPressed || mouseKickPressed
                     ? camera.DeviceToWorld(input.MousePositionDevice)
                     : controller.AimTarget,
                 input.WasKeyPressed(Keys.Q) ||
-                    controller.SwitchWeapon),
+                    controller.SwitchEquipment,
+                input.WasKeyPressed(Keys.K) ||
+                    mouseKickPressed ||
+                    controller.UseSecondaryAction),
             input.WasKeyPressed(Keys.F3));
     }
 

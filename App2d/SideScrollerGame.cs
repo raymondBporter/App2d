@@ -23,8 +23,11 @@ public sealed class SideScrollerGame : Game2D
     private const float DeathRestartDelaySeconds = 1.1f;
     private const float HardLandingSpeed = 650f;
     private const float DamageShakeStrength = 4f;
-    private const float MinimumLandingShakeStrength = 2f;
-    private const float MaximumLandingShakeStrength = 4.5f;
+    private const float MinimumLandingShakeStrength = 1f;
+    private const float MaximumLandingShakeStrength = 2.5f;
+    private const float JumpSoundMinimumVolumeScale = 0.3f;
+    private const float JumpSoundVolumeRampSeconds = 0.015f;
+    private const float JumpSoundFadeOutSeconds = 0.04f;
     private const float SaveFeedbackDurationSeconds = 1.1f;
     private const int PlayerMaximumHealth = 5;
     private const uint WorldLayer = 1u << 0;
@@ -57,6 +60,7 @@ public sealed class SideScrollerGame : Game2D
     private bool _showTraversalDebug;
     private float _restartDelaySeconds;
     private float _saveFeedbackSeconds;
+    private SoundEffectVoice2D _jumpSound;
 
     public SideScrollerGame()
     {
@@ -125,9 +129,10 @@ public sealed class SideScrollerGame : Game2D
         if (_respawnHitPoints != PlayerMaximumHealth)
             _player.Health.Reset(_respawnHitPoints);
         _playerPresentation = new PersonPresentation2D(Scene, Textures, Traversal);
-        _player.JumpStarted += () => _sounds.Play(SoundEffect2D.PlayerJump);
+        _player.JumpStarted += BeginPlayerJumpSound;
         _player.Landed += speed =>
         {
+            EndPlayerJumpSound();
             _sounds.Play(
                 speed >= HardLandingSpeed
                     ? SoundEffect2D.PlayerLandHard
@@ -159,15 +164,17 @@ public sealed class SideScrollerGame : Game2D
         _combat = new CombatSystem2D(_collision, _sounds);
         _level.CreateAuthoredWorldThings(Textures, _combat, _sounds);
         _arsenal = new PersonArsenal2D(Scene, _player.Body, Textures, _collision, WorldLayer, EnemyLayer, CombatFaction2D.Player, _combat, _sounds);
-        _arsenal.EquipmentChanged += _playerPresentation.EquipRightHandWeapon;
+        _arsenal.EquipmentChanged += _playerPresentation.Equip;
         _arsenal.MeleeAttackStarted += duration =>
             _playerPresentation.PlayMeleeAttack(
                 duration,
                 _player.IsWallGripping);
         _arsenal.ShotStarted += () =>
             _playerPresentation.PlayShot(_player.IsWallGripping);
+        _arsenal.UnarmedAttackStarted += (kind, duration) =>
+            _playerPresentation.PlayUnarmedAttack(kind, duration);
         _player.AttachActions(_arsenal);
-        _playerPresentation.EquipRightHandWeapon(_arsenal.EquipmentId);
+        _playerPresentation.Equip(_arsenal.EquipmentId);
         RegisterDebugAttackShapes(_arsenal.GetActiveAttackHitboxes);
         RegisterDebugAttackShapes(_level.EnemySystem.GetActiveAttackHitboxes);
 
@@ -182,7 +189,7 @@ public sealed class SideScrollerGame : Game2D
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | PAD: {(_inputMapper.IsControllerConnected ? "XBOX" : "OFF")} | Q/Y: switch weapon | J/CLICK or X: attack | A: jump | Shift/controller B: dash | keyboard B: shield block | WEAPON: {_arsenal.WeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        $"App2d Side Scroller | PAD: {(_inputMapper.IsControllerConnected ? "XBOX" : "OFF")} | Q/Y: switch gear | J/CLICK or X: primary | K/RIGHT CLICK or RB: kick | A: jump | Shift/controller B: dash | keyboard B: shield block | GEAR: {_arsenal.WeaponName} | HP: {_player.Health.Current}/{_player.Health.Maximum} | enemies: {_combat.DefeatedEnemies}/{_level.EnemySystem.Count} | chunks: {_level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_level.LoadedColliderCount} | broad pairs: {_physics.LastCandidatePairCount}{(_reachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     internal override Control? OverlayControl => _editor.InspectorView;
 
@@ -194,6 +201,7 @@ public sealed class SideScrollerGame : Game2D
         _editor.Update(input);
         if (_editor.IsActive)
         {
+            EndPlayerJumpSound();
             // Stream around the free camera, not the frozen player, or panning away
             // would paint into chunks that never load.
             _level.UpdateStreaming(_editor.CameraFocus);
@@ -219,6 +227,7 @@ public sealed class SideScrollerGame : Game2D
         _player.ApplyCommand(command.Person, dt);
         _physics.Step(dt);
         _player.UpdateAfterPhysics(dt);
+        UpdatePlayerJumpSound();
         _level.EnemySystem.SyncAfterPhysics();
 
         _ = _level.EnemySystem.TryResolvePlayerHits(_player);
@@ -302,6 +311,7 @@ public sealed class SideScrollerGame : Game2D
 
     private void Respawn()
     {
+        EndPlayerJumpSound();
         _restartDelaySeconds = 0f;
         _player.Reset(_respawnPoint, _respawnHitPoints);
         _playerPresentation.Reset();
@@ -329,6 +339,7 @@ public sealed class SideScrollerGame : Game2D
 
     private void BeginDying(FrameTime time)
     {
+        EndPlayerJumpSound();
         _restartDelaySeconds = DeathRestartDelaySeconds;
         _playerPresentation.PlayDeath();
         UpdateDyingPresentation(time);
@@ -361,8 +372,40 @@ public sealed class SideScrollerGame : Game2D
             isMeleeAttackActive: false);
     }
 
+    private void BeginPlayerJumpSound()
+    {
+        EndPlayerJumpSound();
+        _jumpSound = _sounds.Begin(
+            SoundEffect2D.PlayerJump,
+            JumpSoundMinimumVolumeScale);
+    }
+
+    private void UpdatePlayerJumpSound()
+    {
+        if (!_jumpSound.IsPlaying)
+            return;
+        if (!_player.IsSustainingJump)
+        {
+            EndPlayerJumpSound();
+            return;
+        }
+
+        var power = _player.JumpPower;
+        var smoothPower = power * power * (3f - 2f * power);
+        _jumpSound.SetVolumeScale(
+            float.Lerp(JumpSoundMinimumVolumeScale, 1f, smoothPower),
+            JumpSoundVolumeRampSeconds);
+    }
+
+    private void EndPlayerJumpSound()
+    {
+        _jumpSound.Stop(JumpSoundFadeOutSeconds);
+        _jumpSound = default;
+    }
+
     public override void Dispose()
     {
+        EndPlayerJumpSound();
         _editor.Dispose();
         _playerPresentation.Dispose();
         _sounds.Dispose();

@@ -318,8 +318,8 @@ strips.
 Player traversal has
 acceleration, coyote time, jump buffering, variable jump height, wall grip and wall jump,
 a high-speed enemy-phasing dash with one airborne charge restored on landing, a sword,
-and a fixed pool of 16 fireballs. A hostile rival uses the same person locomotion, sword,
-gun, projectile, damage, and presentation-state paths under a small AI command producer;
+a fixed pool of 16 fireballs, and an unarmed punch/kick loadout. A hostile unarmed rival
+uses the same person locomotion, punch, kick, damage, and presentation-state paths under a small AI command producer;
 the patrol enemies and Boiler Brute remain bespoke actors. While airborne and falling, holding toward a
 nearby static solid wall suspends the player; jumping launches away. One-way platforms
 do not allow wall grip.
@@ -366,8 +366,9 @@ Xbox controller:
 - A: jump; release early to shorten the jump
 - B: dash
 - Right stick: aim
-- X: use the equipped weapon
-- Y: switch between the sword and gun
+- X: use the selected primary action (sword, gun, or punch)
+- Right bumper: kick while unarmed
+- Y: switch between the sword, gun, and fists
 
 Keyboard and mouse fallback:
 
@@ -377,8 +378,9 @@ Keyboard and mouse fallback:
 - Hold S or Down and press jump: drop through the supporting one-way strip
 - Release jump early: shorten the jump
 - Left or Right Shift: dash
-- Q: cycle the equipped weapon
-- J or left click: use the equipped weapon
+- Q: cycle between the sword, gun, and fists
+- J or left click: use the selected primary action (punch while unarmed)
+- K or right click: kick while unarmed
 - F3: toggle traversal arcs and movement metrics
 - F1: toggle the tile editor; freezes gameplay, detaches the camera, and switches the
   mouse to painting (left button paints or selects from the right sidebar, right erases,
@@ -487,7 +489,7 @@ playback-speed changes. `SpriteShader2D` maps one complete texture onto finite o
 bounds, corrects image orientation for the engine's Y-up world, and flips the baked
 right-facing sprites when the player faces left.
 
-The sword and gun are complete 2D character sprite sets. Switching weapons swaps the
+The sword, gun, and unarmed fighter are complete 2D character sprite sets. Switching gear swaps the
 active character animation set.
 
 Each generated player character owns a `character.json` and semantic folders such as

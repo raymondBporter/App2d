@@ -9,6 +9,7 @@ public interface IPersonActionSet2D
     void UpdateBeforePhysics(float deltaSeconds);
     void UpdateAfterPhysics(float deltaSeconds, float facing);
     float UsePrimary(Vector2? aimTarget, float facing);
+    float UseSecondary(Vector2? aimTarget, float facing);
     void SelectNext();
     void Reset();
 }

@@ -1,4 +1,3 @@
-using App2d.Gameplay.Persons.Actions;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons;
@@ -9,16 +8,16 @@ namespace App2d.Gameplay.Persons;
 /// </summary>
 internal sealed class RivalBrain2D(float minimumX, float maximumX)
 {
-    private const float SwordRange = 105f;
-    private const float GunRange = 520f;
+    private const float PunchRange = 78f;
+    private const float KickRange = 104f;
     private float _attackDelaySeconds = 0.45f;
     private float _dashDelaySeconds = 1.2f;
     private float _jumpDelaySeconds;
     private float _jumpHoldSeconds;
+    private bool _nextAttackIsKick = true;
 
     public PersonCommand2D Decide(
         Person2D person,
-        PersonArsenal2D arsenal,
         Vector2 targetPosition,
         float deltaSeconds)
     {
@@ -29,12 +28,7 @@ internal sealed class RivalBrain2D(float minimumX, float maximumX)
 
         var offset = targetPosition - person.Position;
         var distanceX = MathF.Abs(offset.X);
-        var wantsGun = distanceX > 175f;
-        var switchWeapon = wantsGun
-            ? !string.Equals(arsenal.EquipmentId, "gun", StringComparison.Ordinal)
-            : !string.Equals(arsenal.EquipmentId, "sword", StringComparison.Ordinal);
-
-        var moveX = ChooseMovement(person.Position.X, offset.X, wantsGun);
+        var moveX = ChooseMovement(person.Position.X, offset.X);
         var dashPressed =
             _dashDelaySeconds <= 0f &&
             person.IsGrounded &&
@@ -54,14 +48,22 @@ internal sealed class RivalBrain2D(float minimumX, float maximumX)
             _jumpHoldSeconds = 0.16f;
         }
 
-        var useWeapon = false;
+        var usePrimary = false;
+        var useSecondary = false;
         if (_attackDelaySeconds <= 0f && MathF.Abs(offset.Y) <= 95f)
         {
-            useWeapon = wantsGun
-                ? distanceX <= GunRange
-                : distanceX <= SwordRange;
-            if (useWeapon)
-                _attackDelaySeconds = wantsGun ? 0.72f : 0.48f;
+            if (_nextAttackIsKick && distanceX <= KickRange)
+            {
+                useSecondary = true;
+                _nextAttackIsKick = false;
+                _attackDelaySeconds = 0.66f;
+            }
+            else if (!_nextAttackIsKick && distanceX <= PunchRange)
+            {
+                usePrimary = true;
+                _nextAttackIsKick = true;
+                _attackDelaySeconds = 0.42f;
+            }
         }
 
         return new PersonCommand2D(
@@ -72,12 +74,13 @@ internal sealed class RivalBrain2D(float minimumX, float maximumX)
                 JumpReleased: false,
                 DropThroughPressed: false,
                 dashPressed),
-            useWeapon,
+            usePrimary,
             targetPosition,
-            switchWeapon);
+            SwitchEquipment: false,
+            UseSecondaryAction: useSecondary);
     }
 
-    private float ChooseMovement(float positionX, float targetOffsetX, bool usingGun)
+    private float ChooseMovement(float positionX, float targetOffsetX)
     {
         if (positionX <= minimumX + 24f)
             return 1f;
@@ -86,18 +89,9 @@ internal sealed class RivalBrain2D(float minimumX, float maximumX)
 
         var distance = MathF.Abs(targetOffsetX);
         var direction = MathF.Sign(targetOffsetX);
-        if (usingGun)
-        {
-            if (distance < 155f)
-                return -direction;
-            if (distance > 300f)
-                return direction;
-            return 0f;
-        }
-
-        if (distance > 72f)
+        if (distance > 68f)
             return direction;
-        if (distance < 38f)
+        if (distance < 34f)
             return -direction;
         return 0f;
     }

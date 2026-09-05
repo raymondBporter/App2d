@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the minimal baked sword/gun player art used by the prototype."""
+"""Build the baked sword, gun, and unarmed person art used by the prototype."""
 
 from __future__ import annotations
 
@@ -69,7 +69,7 @@ def animation_specs(kind: str) -> dict[str, AnimationSpec]:
                 ),
             }
         )
-    else:
+    elif kind == "pistol":
         placeholder = AnimationSpec("shot", duration_seconds=0.35)
         specs.update(
             {
@@ -79,6 +79,21 @@ def animation_specs(kind: str) -> dict[str, AnimationSpec]:
                     "wallslide",
                     duration_seconds=0.18,
                     frame_indices=(0, 0, 0),
+                ),
+            }
+        )
+    else:
+        specs.update(
+            {
+                "punch": AnimationSpec(
+                    "combo",
+                    duration_seconds=0.28,
+                    frame_indices=tuple(range(0, 9)),
+                ),
+                "kick": AnimationSpec(
+                    "combo",
+                    duration_seconds=0.42,
+                    frame_indices=tuple(range(9, 19)),
                 ),
             }
         )
@@ -449,7 +464,12 @@ def main() -> None:
 
     sword_source = pack_root / "Sword sprites"
     pistol_source = pack_root / "Pistol sprites"
-    if not sword_source.is_dir() or not pistol_source.is_dir():
+    fighter_source = pack_root / "Fighter sprites"
+    if (
+        not sword_source.is_dir()
+        or not pistol_source.is_dir()
+        or not fighter_source.is_dir()
+    ):
         raise FileNotFoundError(
             "Extract the RGS stick-figure pack below "
             "Assets/Sources/third-party/rgs-stick-figure before building runtime art."
@@ -457,7 +477,11 @@ def main() -> None:
 
     build_character(content_root, sword_source, "player-sword", "sword")
     build_character(content_root, pistol_source, "player-gun", "pistol")
-    write_player_geometry(content_root, ("player-sword", "player-gun"))
+    build_character(content_root, fighter_source, "player-unarmed", "fighter")
+    write_player_geometry(
+        content_root,
+        ("player-sword", "player-gun", "player-unarmed"),
+    )
 
     build_icon(
         sword_source / "sword_Idle_0001.png",
@@ -469,13 +493,18 @@ def main() -> None:
         (300, 260, 390, 330),
         content_root / "ui/hud/weapons/gun.png",
     )
+    build_icon(
+        fighter_source / "fighter_combo_0070.png",
+        (150, 195, 355, 350),
+        content_root / "ui/hud/weapons/unarmed.png",
+    )
 
     bullet_output = content_root / "effects/bullet/orange.png"
     bullet_output.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(pack_root / "Extras/bullet.png") as bullet:
         bullet.convert("RGBA").save(bullet_output, optimize=True)
 
-    print("Built baked player-sword and player-gun runtime art.")
+    print("Built baked sword, gun, and unarmed person runtime art.")
 
 
 if __name__ == "__main__":
