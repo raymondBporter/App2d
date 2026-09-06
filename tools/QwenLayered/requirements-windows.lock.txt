@@ -64,14 +64,14 @@ rich==15.0.0
 safetensors==0.8.0
 scipy==1.18.1
 sentencepiece==0.2.2
-setuptools==78.1.0
+setuptools==83.0.0
 shellingham==1.5.4
 simpleeval==1.0.7
 spandrel==0.4.2
 SQLAlchemy==2.0.52
 sympy==1.14.0
 tokenizers==0.23.2
-torch==2.11.0+cu130
+torch==2.13.0
 torchaudio==2.11.0+cu130
 torchsde==0.2.6
 torchvision==0.26.0+cu130
