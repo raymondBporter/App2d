@@ -1,66 +1,25 @@
-using App2d.Core;
 using App2d.Core.Geometry;
-using SkiaSharp;
 using System.Numerics;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Rendering;
 
-public readonly record struct ShaderContext(
-    Matrix3x2 ObjectToDevice,
-    Bounds2D LocalBounds,
-    FrameTime Time);
-
+/// <summary>Material data evaluated by the MonoGame renderer in object space.</summary>
 public interface IShader2D
 {
-    SKColor BaseColor { get; }
-    ShaderLease2D AcquireShader(in ShaderContext context);
+    XnaColor BaseColor { get; }
+    XnaColor GetVertexColor(Vector2 position, Bounds2D bounds) => BaseColor;
 }
 
-/// <summary>
-/// Describes either a temporary shader owned by the caller or a cached shader
-/// borrowed from another resource, such as a texture.
-/// </summary>
-public readonly record struct ShaderLease2D : IDisposable
+public sealed class SolidColorShader(XnaColor color) : IShader2D
 {
-    private readonly bool _ownsShader;
-
-    private ShaderLease2D(SKShader? shader, bool ownsShader)
-    {
-        Shader = shader;
-        _ownsShader = ownsShader;
-    }
-
-    public SKShader? Shader { get; }
-
-    public static ShaderLease2D Owned(SKShader? shader) => new(shader, ownsShader: true);
-    public static ShaderLease2D Borrowed(SKShader shader) => new(shader, ownsShader: false);
-
-    public void Dispose()
-    {
-        if (_ownsShader)
-            Shader?.Dispose();
-    }
+    public XnaColor BaseColor { get; } = color;
 }
 
-public sealed class SolidColorShader(SKColor color) : IShader2D
+public sealed class LinearGradientShader(XnaColor startColor, XnaColor endColor) : IShader2D
 {
-    public SKColor BaseColor { get; } = color;
-    public ShaderLease2D AcquireShader(in ShaderContext context) =>
-        ShaderLease2D.Owned(null);
-}
-
-public sealed class LinearGradientShader(SKColor startColor, SKColor endColor) : IShader2D
-{
-    private readonly SKColor[] _colors = [startColor, endColor];
-    private readonly float[] _positions = [0f, 1f];
-
-    public SKColor BaseColor => SKColors.White;
-
-    public ShaderLease2D AcquireShader(in ShaderContext context)
-    {
-        var localStart = new Vector2(context.LocalBounds.Center.X, context.LocalBounds.Max.Y);
-        var localEnd = new Vector2(context.LocalBounds.Center.X, context.LocalBounds.Min.Y);
-        var shader = SKShader.CreateLinearGradient(new SKPoint(localStart.X, localStart.Y), new SKPoint(localEnd.X, localEnd.Y), _colors, _positions, SKShaderTileMode.Clamp);
-        return ShaderLease2D.Owned(shader);
-    }
+    public XnaColor BaseColor => XnaColor.White;
+    public XnaColor GetVertexColor(Vector2 position, Bounds2D bounds) =>
+        XnaColor.Lerp(startColor, endColor,
+            bounds.Size.Y > 0f ? Math.Clamp((bounds.Max.Y - position.Y) / bounds.Size.Y, 0f, 1f) : 0f);
 }

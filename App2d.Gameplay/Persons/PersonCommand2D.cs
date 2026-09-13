@@ -7,4 +7,7 @@ public readonly record struct PersonCommand2D(
     bool UsePrimaryAction,
     Vector2? AimTarget,
     bool SwitchEquipment,
-    bool UseSecondaryAction = false);
+    bool UseSecondaryAction = false,
+    bool PrimaryActionHeld = false,
+    bool PrimaryActionReleased = false,
+    bool DownHeld = false);

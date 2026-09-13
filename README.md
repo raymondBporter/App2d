@@ -1,13 +1,13 @@
 # App2d
 
-A deliberately small SkiaSharp 2D engine skeleton with compile-time module boundaries.
+A deliberately small MonoGame/XNA 2D engine skeleton with compile-time module boundaries.
 
 The solution is split into `App2d.Core`, `App2d.Collision`, `App2d.Tiles`,
 `App2d.Levels`, `App2d.Physics`, `App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`,
 plus the Windows executable composition root. Each project physically owns its source
-files — there are no linked-file views. Core, collision, tiles, levels, physics, and
-rendering target plain `net10.0`; platform hosting, gameplay input, and audio remain in
-the Windows-targeted projects.
+files — there are no linked-file views. Core, collision, tiles, levels, and physics target plain `net10.0`.
+Rendering uses MonoGame WindowsDX; rendering, its tests, platform hosting, gameplay,
+and audio target `net10.0-windows10.0.19041.0`.
 
 The engine is grouped by responsibility:
 
@@ -51,6 +51,17 @@ rejecting negative values and NaN.
 `InvalidOperationException` semantics. Physics iteration settings, collapsed transforms,
 and renderer lifecycle checks therefore do not masquerade as caller argument failures.
 
+Gameplay combatants now expose an `EntityId2D`, independent of their object reference.
+Their bodies and colliders carry that owner ID; combat and contact damage resolve it
+through the session-owned `CombatantRegistry2D`. Register actors when adding them to
+the session, and unregister them when removing them permanently. Death, respawn, and
+streaming enablement preserve identity. Melee action sources also have IDs so hit
+deduplication uses source ID plus attack sequence rather than object identity.
+Zero means no entity. Automatically allocated IDs are process-local and never reused;
+they are distinct from authored level IDs and are not yet a network identity protocol.
+This first migration keeps existing object storage, physics body references, and
+rendering ownership intact; it does not introduce packed storage or networking.
+
 Geometry lives under `App2d.Core/Geometry`:
 
 - `IShape2D` is the common local-space shape contract.
@@ -81,7 +92,7 @@ in-memory and level-blob detail. The level metadata stores the ordered, stable t
 
 Editor mode is part of the game rather than a separate tool. `F1` freezes the simulation
 and detaches the camera. A right sidebar provides tileset buttons and a visual tile-type
-grid for filled, grippable, one-way, and spikes. The previews use the selected tileset's
+grid for filled, grippable, one-way, spikes, and ladders. The previews use the selected tileset's
 actual terrain art. The right mouse button erases and `Ctrl+Z` undoes a brush stroke.
 Painting mutates the loaded `EditableTileMap2D`,
 whose `ChunkChanged` event feeds a `DirtyChunkTracker2D`; the editor flushes that tracker once
@@ -90,12 +101,25 @@ stroke commits its changed chunks to the level file in a single transaction. `Ti
 holds the strokes and undo history and lives in `App2d.Tiles`, so the editable core is testable
 without input or storage.
 
+Paint a vertical column of **Ladder** tiles to make a climbable ladder of any height.
+Ladders use Kenney's top and repeating rung art (also as a fallback for other tilesets).
+Hold `W/S` or `Up/Down`, or use the controller's vertical left stick / D-pad, to
+climb. Release to hang, move sideways to let go, or press `Space` / controller `A`
+to jump off. At the top, releasing and pressing `W` or `Up` again also jumps off;
+holding Up simply stops at the last rung. Dash also releases the ladder.
+`W` and `Up` still jump away from ladders.
+The top stops the player's body center at the last rung until they step off or descend; solids
+still block climbing. Sword, pistol, and unarmed characters use their source pack's
+four-frame climbing loop, paused while hanging still.
+Ladders are non-solid grippable cells (`Grippable` without
+`Solid`), so the existing four-bit tile kind and level format remain compatible.
+
 The sidebar's **Things** button switches to authored map objects. A small code-owned type list
 currently offers the player spawn, goal, three enemy types, tumble props, and moving platforms.
 The position-only types deliberately expose just reusable definition names plus instance name,
 enablement, and position; their health, AI, art, physics, and other tuning remain in gameplay
 code. Moving platforms keep their richer rectangle, art, path, and speed properties. A native
-WinForms `PropertyGrid` writes only when **Apply** is pressed, while Skia draws map markers,
+WinForms `PropertyGrid` writes only when **Apply** is pressed, while MonoGame draws map markers,
 placement ghosts, selection outlines, paths, and draggable endpoints. This avoids turning the
 renderer into a general UI library. All definitions, instances, transforms, and typed pieces
 remain relational rows in the level database. Moving-platform changes reload live; the other
@@ -328,6 +352,13 @@ Short sound effects are decoded once at startup and played through one polyphoni
 Gameplay emits semantic cues through `ISoundEffectSink2D`, so movement, combat, and weapon
 code never knows asset paths or audio-device details. `SoundEffectBank2D` owns the cue-to-file
 mapping, per-cue levels, non-repeating variants, and subtle per-play volume and pitch variation.
+`SpatialSoundEffectSink2D` wraps the bank with the player's live position as its listener.
+World effects use `PlayAt(effect, position)`; controllable effects use `BeginAt` and can
+move their source with `SetPosition`. The game updates active voices each frame, multiplying
+their requested volume by smooth distance falloff. `SoundFalloff2D` sets the tuning:
+ordinary effects stay at full volume within 96 world units (3 tiles) and fade to silence
+at 800 (25 tiles); hammer impacts use 128 and 1200 units. Out-of-range one-shots are
+skipped. Player movement/feedback and global cues use `Play`/`Begin` at their normal levels.
 Set `sfx_volume` in the developer
 console to a value from 0 through 1 to adjust the master sound-effect level.
 
@@ -367,6 +398,7 @@ Xbox controller:
 - B: dash
 - Right stick: aim
 - X: use the selected primary action (sword, gun, or punch)
+- Sword: hold Down and press X while airborne for a downward cut
 - Right bumper: kick while unarmed
 - Y: switch between the sword, gun, and fists
 
@@ -380,6 +412,17 @@ Keyboard and mouse fallback:
 - Left or Right Shift: dash
 - Q: cycle between the sword, gun, and fists
 - J or left click: use the selected primary action (punch while unarmed)
+- Sword: hold S or Down and press J or left click while airborne for a downward cut.
+  The 0.25-second stab hits immediately during its first two frames. Connecting
+  with an enemy or spikes bounces you upward once per attack, preserving sideways
+  movement. A successful bounce takes priority over body-contact damage that frame.
+- Gun: hold J, left click, or controller X for 0.6 seconds to automatically fire
+  one blue bolt. Release and press again for another shot. You can run, jump,
+  dash, wall-grip, or climb while charging. Movement and gravity work normally;
+  the shot follows your facing direction (away from a wall while gripping it).
+  The HUD ring fills and the muzzle glow shimmers during charging.
+  Releasing early, taking damage, switching gear, or entering the editor cancels it.
+  Input suppression cancels instead of firing.
 - K or right click: kick while unarmed
 - F3: toggle traversal arcs and movement metrics
 - F1: toggle the tile editor; freezes gameplay, detaches the camera, and switches the
@@ -423,16 +466,25 @@ geometry vertices (object space)
     -> Transform2D.LocalToWorldMatrix
 world space (Y points up)
     -> Camera2D.WorldToDeviceMatrix
-Skia device space (origin top-left, Y points down)
+MonoGame device space (origin top-left, Y points down)
 ```
 
 Mouse events arrive in WinForms client coordinates. `InputState` first accounts for the
-client-to-Skia device scale, then `Camera2D.DeviceToWorld()` applies the inverse camera
+client-to-backbuffer device scale, then `Camera2D.DeviceToWorld()` applies the inverse camera
 matrix. This is why the click marker remains correct after resize and zoom.
 
-`IShader2D` currently means a Skia paint shader. The gradient implementation creates an
-`SKShader`; it can later be joined by image, noise, or `SKRuntimeEffect`/SkSL shaders
-without changing scene objects or the renderer's transform path.
+`IShader2D` describes a solid, gradient, tiled, or sprite material. `Renderer2D`
+transforms geometry into device-space triangles and submits ordered batches through
+MonoGame's `GraphicsDevice` and `BasicEffect`. Color values use
+`Microsoft.Xna.Framework.Color`; floating-point HUD bounds use `ScreenRectangle2D`.
+Gradients interpolate vertex colors, and textures use XNA sampler states. Circles and
+capsules are tessellated according to their on-screen size. The host requests 4x MSAA.
+
+`GraphicsSurface2D` owns a WindowsDX graphics device bound to a WinForms child control.
+It resizes the backbuffer with the control, while the existing 120 Hz simulation,
+keyboard/mouse input, native property inspector, and developer console keep their
+existing host. The former Skia raster/OpenGL backend and `APP2D_RENDER_BACKEND`
+switch have been removed.
 
 Scene objects also expose a general-purpose `ZIndex`. Lower values render first, and
 objects with equal values keep their scene insertion order. Changing a z-index at
@@ -456,16 +508,22 @@ var fireball = Textures.Load("effects/fireball/ember-energy.png");
 var fireballShader = new TextureShader2D(fireball, new Vector2(96f, 96f));
 ```
 
-Repeated loads of the same path return the cached `Texture2D`. `Textures.Unload(path)`
-releases one decoded bitmap, `Textures.Clear()` releases all currently loaded bitmaps,
-and `GameHost.Dispose()` disposes the game's cache automatically. A texture shader
-borrows its texture, so stop using shaders that reference an asset before unloading it.
+Repeated loads of the same path return the cached `Texture2D`. Windows image decoding
+produces straight-alpha RGBA pixels without requiring a graphics device. On first draw,
+the renderer uploads a premultiplied GPU copy and uses `BlendState.AlphaBlend`.
+GPU copies are cached with a 384 MiB LRU budget and trimmed after frame submission.
+`Textures.Unload(path)` and `Textures.Clear()` release decoded pixels and notify
+renderers to release their GPU copies. `GameHost.Dispose()` releases both caches.
 
-`TextureShader2D` uses Skia's image shader with configurable X/Y tile modes, filtering,
-and world-unit tile size. Ordinary textures require no custom shader compilation;
-`SKRuntimeEffect` is only needed for future custom SkSL effects. The side-scroller's
-terrain maps topology roles to the conventional files in its selected tileset, while
-pooled fireballs use `effects/fireball/ember-energy.png`.
+`TextureShader2D` supports independent X/Y `TextureAddressMode` values, a
+`TextureFilter`, and world-unit tile size. Tiling is anchored at the local origin.
+`SpriteShader2D` maps the complete texture to object bounds and corrects orientation
+for the Y-up world. No content-pipeline conversion or custom effect compilation is
+required for existing PNG assets. HUD text uses a font atlas rasterized once by
+Windows and drawn as GPU triangles; the atlas covers Latin text and the HUD symbols.
+
+The side-scroller's terrain maps topology roles to conventional files in the selected
+tileset, while pooled fireballs use `effects/fireball/ember-energy.png`.
 
 ## Frame animation
 
@@ -503,3 +561,19 @@ Sword and gun-shot one-shots take priority over locomotion and remain synchroniz
 their gameplay timing. The character artwork is rendered by a separate visual object
 that follows the smaller physics collider, keeping transparent frame padding out of
 collision calculations.
+
+## Graphics verification
+
+Build and test on Windows with a Direct3D-capable adapter:
+
+```powershell
+dotnet build App2d.slnx
+dotnet test App2d.slnx
+dotnet run --project App2d -- --render-smoke artifacts/monogame-smoke
+```
+
+Rendering tests draw into real GPU render targets and read pixels back to check sprite
+flips, tiling, gradients, alpha blending, ordering, resize, and disposal. The smoke
+command renders the actual game and tile palette at 1280x720 and 960x640, exercises
+backbuffer reset/presentation, saves PNGs, and exits without entering an editing
+session or advancing gameplay. It creates only a hidden window.

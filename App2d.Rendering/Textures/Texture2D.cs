@@ -1,178 +1,76 @@
 using App2d.Core;
-using SkiaSharp;
-using System.Runtime.CompilerServices;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Rendering.Textures;
 
+/// <summary>Decoded straight-alpha RGBA pixels, uploaded lazily by the renderer.</summary>
 public sealed class Texture2D : IDisposable
 {
-    private SKBitmap? _bitmap;
-    private Dictionary<ImageShaderKey, SKShader>? _imageShaders;
+    private XnaColor[]? _pixels;
+    private readonly int _width;
+    private readonly int _height;
 
-    private Texture2D(string sourcePath, SKBitmap bitmap)
+    private Texture2D(string sourcePath, int width, int height, XnaColor[] pixels)
     {
         SourcePath = sourcePath;
-        _bitmap = bitmap;
+        _width = width;
+        _height = height;
+        _pixels = pixels;
     }
 
     public string SourcePath { get; }
-    public int Width => Bitmap.Width;
-    public int Height => Bitmap.Height;
-    public bool IsDisposed => _bitmap is null;
-
-    internal SKBitmap Bitmap =>
-        _bitmap ?? throw new ObjectDisposedException(nameof(Texture2D));
-
-    internal ReadOnlySpan<SKColor> PixelSpan =>
-        MemoryMarshal.Cast<byte, SKColor>(Bitmap.GetPixelSpan());
-
-    internal Span<SKColor> WritablePixelSpan =>
-        MemoryMarshal.Cast<byte, SKColor>(Bitmap.GetPixelSpan());
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal SKColor GetPixelUnchecked(int index) => PixelSpan[index];
-
-    internal SKShader GetImageShader(
-        SKShaderTileMode tileModeX,
-        SKShaderTileMode tileModeY,
-        SKFilterMode filterMode,
-        float scaleX,
-        float scaleY,
-        float translateX = 0f,
-        float translateY = 0f)
-    {
-        var key = new ImageShaderKey(
-            tileModeX,
-            tileModeY,
-            filterMode,
-            scaleX,
-            scaleY,
-            translateX,
-            translateY);
-        if (_imageShaders is not null &&
-            _imageShaders.TryGetValue(key, out var cached))
-        {
-            return cached;
-        }
-
-        var shader = Bitmap.ToShader(
-            tileModeX,
-            tileModeY,
-            new SKSamplingOptions(filterMode, SKMipmapMode.None),
-            SKMatrix.CreateScaleTranslation(
-                scaleX,
-                scaleY,
-                translateX,
-                translateY));
-        (_imageShaders ??= []).Add(key, shader);
-        return shader;
-    }
-
-    public SKColor[] CopyPixels() => [.. PixelSpan];
+    public int Width { get { ThrowIfDisposed(); return _width; } }
+    public int Height { get { ThrowIfDisposed(); return _height; } }
+    public bool IsDisposed => _pixels is null;
+    internal XnaColor[] Pixels => _pixels ?? throw new ObjectDisposedException(nameof(Texture2D));
+    internal event Action<Texture2D>? Disposed;
+    public XnaColor[] CopyPixels() => [.. Pixels];
 
     public static Texture2D Load(string path)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(path);
-
         var fullPath = Path.GetFullPath(path);
         if (!File.Exists(fullPath))
             throw new FileNotFoundException("Texture file was not found.", fullPath);
-
-        using var codec = SKCodec.Create(fullPath);
-        if (codec is null || codec.Info.Width <= 0 || codec.Info.Height <= 0)
-        {
-            throw new InvalidDataException($"Texture could not be decoded: {fullPath}");
-        }
-
-        var bitmap = new SKBitmap(new SKImageInfo(
-            codec.Info.Width,
-            codec.Info.Height,
-            SKColorType.Bgra8888,
-            SKAlphaType.Unpremul));
-        var result = codec.GetPixels(bitmap.Info, bitmap.GetPixels());
-        if (result is not SKCodecResult.Success)
-        {
-            bitmap.Dispose();
-            throw new InvalidDataException(
-                $"Texture could not be decoded ({result}): {fullPath}");
-        }
-
-        return new Texture2D(fullPath, bitmap);
-    }
-
-    internal static Texture2D CreateGenerated(
-        string sourceName,
-        int width,
-        int height,
-        SKColor[] pixels)
-    {
-        ArgGuard.ThrowIfNullOrWhiteSpace(sourceName);
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
-        ArgGuard.ThrowIfNull(pixels);
-        if (pixels.Length != width * height)
-        {
-            ArgGuard.ThrowInvalid(
-                "Pixel count must match the texture dimensions.",
-                nameof(pixels));
-        }
-
-        var bitmap = new SKBitmap(new SKImageInfo(
-            width,
-            height,
-            SKColorType.Bgra8888,
-            SKAlphaType.Unpremul));
         try
         {
-            pixels.AsSpan().CopyTo(
-                MemoryMarshal.Cast<byte, SKColor>(bitmap.GetPixelSpan()));
-            return new Texture2D(sourceName, bitmap);
+            using var source = new Bitmap(fullPath);
+            return FromBitmap(fullPath, source);
         }
-        catch
+        catch (Exception error) when (error is ArgumentException or ExternalException)
         {
-            bitmap.Dispose();
-            throw;
+            throw new InvalidDataException($"Texture could not be decoded: {fullPath}", error);
         }
     }
 
-    internal static Texture2D CreateUninitializedGenerated(
-        string sourceName,
-        int width,
-        int height)
+    internal static Texture2D FromBitmap(string sourceName, Bitmap source)
     {
-        ArgGuard.ThrowIfNullOrWhiteSpace(sourceName);
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
-        return new Texture2D(
-            sourceName,
-            new SKBitmap(new SKImageInfo(
-                width,
-                height,
-                SKColorType.Bgra8888,
-                SKAlphaType.Unpremul)));
+        using var bitmap = source.Clone(new Rectangle(0, 0, source.Width, source.Height), PixelFormat.Format32bppArgb);
+        var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+        try
+        {
+            var pixels = new XnaColor[checked(bitmap.Width * bitmap.Height)];
+            var row = new byte[checked(bitmap.Width * 4)];
+            for (var y = 0; y < bitmap.Height; y++)
+            {
+                Marshal.Copy(data.Scan0 + y * data.Stride, row, 0, row.Length);
+                for (var x = 0; x < bitmap.Width; x++)
+                    pixels[y * bitmap.Width + x] = new XnaColor(row[x * 4 + 2], row[x * 4 + 1], row[x * 4], row[x * 4 + 3]);
+            }
+            return new Texture2D(sourceName, bitmap.Width, bitmap.Height, pixels);
+        }
+        finally { bitmap.UnlockBits(data); }
     }
+
+    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsDisposed, this);
 
     public void Dispose()
     {
-        if (_imageShaders is not null)
-        {
-            foreach (var shader in _imageShaders.Values)
-                shader.Dispose();
-            _imageShaders.Clear();
-            _imageShaders = null;
-        }
-        _bitmap?.Dispose();
-        _bitmap = null;
-        GC.SuppressFinalize(this);
+        if (IsDisposed) return;
+        _pixels = null;
+        Disposed?.Invoke(this);
+        Disposed = null;
     }
-
-    private readonly record struct ImageShaderKey(
-        SKShaderTileMode TileModeX,
-        SKShaderTileMode TileModeY,
-        SKFilterMode FilterMode,
-        float ScaleX,
-        float ScaleY,
-        float TranslateX,
-        float TranslateY);
 }

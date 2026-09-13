@@ -2,7 +2,7 @@ using App2d.Core.Geometry;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Things;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d.Editor;
@@ -10,11 +10,11 @@ namespace App2d.Editor;
 /// <summary>Draws the tile grid, cursor and editor status while editor mode is active.</summary>
 internal static class TileEditorView2D
 {
-    private static readonly SKColor CursorColor = new(255, 214, 64);
+    private static readonly XnaColor CursorColor = new(255, 214, 64);
 
     // Low alpha and a hairline stroke: the grid must read as a faint reference, never
     // compete visually with the cursor outline or the painted tiles themselves.
-    private static readonly SKColor GridColor = new(255, 255, 255, 28);
+    private static readonly XnaColor GridColor = new(255, 255, 255, 28);
 
     public static void Draw(
         Renderer2D renderer,
@@ -56,9 +56,9 @@ internal static class TileEditorView2D
 
     private static void DrawThings(Renderer2D renderer, TileEditor2D editor, float tileSize)
     {
-        var pathColor = new SKColor(130, 180, 210, 170);
-        var selectedColor = new SKColor(255, 214, 64);
-        var disabledColor = new SKColor(130, 130, 140, 180);
+        var pathColor = new XnaColor(130, 180, 210, 170);
+        var selectedColor = new XnaColor(255, 214, 64);
+        var disabledColor = new XnaColor(130, 130, 140, 180);
 
         foreach (var thing in editor.PositionThings)
         {
@@ -93,10 +93,10 @@ internal static class TileEditorView2D
                 renderer,
                 position,
                 new Vector2(definition.Width, definition.Height),
-                new SKColor(105, 245, 180, 220),
+                new XnaColor(105, 245, 180, 220),
                 3f);
             Span<Vector2> previewPath = [position, position + new Vector2(tileSize * 3f, 0f)];
-            renderer.DrawWorldPolyline(previewPath, new SKColor(105, 245, 180, 180), 2f);
+            renderer.DrawWorldPolyline(previewPath, new XnaColor(105, 245, 180, 180), 2f);
         }
 
         if (editor.TryGetPositionPlacementPreview(out var positionDefinition, out var positionPreview))
@@ -114,7 +114,7 @@ internal static class TileEditorView2D
         Renderer2D renderer,
         Vector2 center,
         Vector2 size,
-        SKColor color,
+        XnaColor color,
         float strokeWidth)
     {
         var half = size / 2f;

@@ -1,14 +1,14 @@
 using App2d.Collision;
 using App2d.Core;
 using App2d.Gameplay.Audio;
-using App2d.Physics;
 using System.Numerics;
 
 namespace App2d.Gameplay.Combat;
 
 public sealed class CombatSystem2D(
     CollisionSystem2D collision,
-    ISoundEffectSink2D sounds)
+    ISoundEffectSink2D sounds,
+    CombatantRegistry2D combatants)
 {
     private readonly CollisionSystem2D _collision =
         ArgGuard.RequireNotNull(collision);
@@ -16,11 +16,12 @@ public sealed class CombatSystem2D(
         ArgGuard.RequireNotNull(sounds);
     private readonly List<CollisionOverlap2D> _overlaps = [];
 
+    public CombatantRegistry2D Combatants { get; } = ArgGuard.RequireNotNull(combatants);
     public int DefeatedEnemies { get; private set; }
 
     public bool ResolveAttack(
         SpatialObject2D hitbox,
-        object attackSource,
+        EntityId2D attackSourceId,
         int attackId,
         CombatFaction2D attackerFaction,
         uint targetLayer,
@@ -29,7 +30,8 @@ public sealed class CombatSystem2D(
         bool stopAfterFirstHit = false)
     {
         ArgGuard.ThrowIfNull(hitbox);
-        ArgGuard.ThrowIfNull(attackSource);
+        if (!attackSourceId.IsValid)
+            throw new ArgumentException("An attack source ID is required.", nameof(attackSourceId));
         ArgGuard.ThrowIfNull(knockback);
 
         var hitAny = false;
@@ -38,7 +40,7 @@ public sealed class CombatSystem2D(
         {
             if (GetCombatant(overlap.Collider) is not { IsAlive: true } combatant ||
                 combatant.Faction == attackerFaction ||
-                !combatant.TryRegisterHit(attackSource, attackId))
+                !combatant.TryRegisterHit(attackSourceId, attackId))
             {
                 continue;
             }
@@ -75,10 +77,8 @@ public sealed class CombatSystem2D(
         return false;
     }
 
-    private static ICombatant2D? GetCombatant(Collider2D collider) =>
-        collider.UserData is PhysicsBody2D { UserData: ICombatant2D combatant }
-            ? combatant
-            : null;
+    private ICombatant2D? GetCombatant(Collider2D collider) =>
+        Combatants.Find(collider.EntityId);
 
     private void Damage(ICombatant2D combatant, int damage, Vector2 knockback)
     {
@@ -89,11 +89,11 @@ public sealed class CombatSystem2D(
         if (wasAlive && !combatant.IsAlive && combatant.Faction == CombatFaction2D.Enemy)
         {
             DefeatedEnemies++;
-            _sounds.Play(SoundEffect2D.EnemyDeath);
+            _sounds.PlayAt(SoundEffect2D.EnemyDeath, combatant.WorldObject.Transform.Position);
         }
         else if (combatant.IsAlive && combatant.Faction != CombatFaction2D.Player)
         {
-            _sounds.Play(SoundEffect2D.EnemyHurt);
+            _sounds.PlayAt(SoundEffect2D.EnemyHurt, combatant.WorldObject.Transform.Position);
         }
     }
 }

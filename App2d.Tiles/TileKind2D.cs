@@ -9,11 +9,16 @@ public enum TileKind2D : byte
     Solid = 1 << 0,
     OneWay = 1 << 1,
     Grippable = 1 << 2,
-    Spikes = 1 << 3
+    Spikes = 1 << 3,
+    // A grippable cell without a solid wall is a climb-through ladder.
+    // This uses the existing four-bit format; Solid | Grippable stays a wall.
+    Ladder = Grippable
 }
 
 public static class TileKind2DExtensions
 {
+    public static bool IsLadder(this TileKind2D kind) => kind == TileKind2D.Ladder;
+
     public static bool IsSolid(this TileKind2D kind) => (kind & TileKind2D.Solid) != 0;
 
     public static bool IsOneWay(this TileKind2D kind) => (kind & TileKind2D.OneWay) != 0;

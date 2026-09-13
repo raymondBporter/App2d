@@ -33,7 +33,7 @@ internal abstract class MeleePersonWeapon2D(
     private float _attackDirection = 1f;
     private float _bufferedAttackDirection = 1f;
 
-    public bool IsAttackActive => _attack.IsInProgress;
+    public virtual bool IsAttackActive => _attack.IsInProgress;
 
     public override IEnumerable<SpatialObject2D> ActiveHitboxes
     {
@@ -78,20 +78,23 @@ internal abstract class MeleePersonWeapon2D(
         if (_attack.IsDamageActive &&
             _combat.ResolveAttack(
                 _attack.WorldObject,
-                _attack,
+                _attack.SourceId,
                 _attack.AttackId,
                 ownerFaction,
                 targetLayer,
                 damage,
                 _ => new Vector2(_attackDirection * knockback.X, knockback.Y)))
         {
-            _sounds.Play(impactSound);
+            _sounds.PlayAt(impactSound, _attack.WorldObject.Transform.Position);
+            OnHit();
         }
     }
+
+    protected virtual void OnHit() { }
 
     private void PlayAttackFeedback()
     {
         _attackStarted(_attack.DurationSeconds);
-        _sounds.Play(swingSound);
+        _sounds.PlayAt(swingSound, _ownerBody.WorldObject.Transform.Position);
     }
 }

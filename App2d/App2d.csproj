@@ -10,10 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SkiaSharp.Views.WindowsForms" Version="4.151.1" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
     <ProjectReference Include="..\App2d.Collision\App2d.Collision.csproj" />
     <ProjectReference Include="..\App2d.Tiles\App2d.Tiles.csproj" />

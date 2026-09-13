@@ -39,6 +39,8 @@ public sealed class Collider2D
     public bool IsSensor { get; set; }
     public uint CollisionLayer { get; set; } = 1u;
     public uint CollisionMask { get; set; } = uint.MaxValue;
+    /// <summary>Owning gameplay entity, or None for unowned terrain/geometry.</summary>
+    public EntityId2D EntityId { get; set; }
     public object? UserData { get; set; }
 
     public bool CanCollideWith(Collider2D other) =>

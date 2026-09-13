@@ -1,7 +1,7 @@
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Rendering;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
@@ -28,7 +28,7 @@ internal sealed class SavePoint2D
 
         var baseStone = new WorldObject2D(
             AxisAlignedRectangle2D.FromSize(new Vector2(58f, 14f)),
-            new LinearGradientShader(new SKColor(68, 77, 96), new SKColor(31, 38, 54)))
+            new LinearGradientShader(new XnaColor(68, 77, 96), new XnaColor(31, 38, 54)))
         {
             ZIndex = 1
         };
@@ -43,7 +43,7 @@ internal sealed class SavePoint2D
                 new Vector2(11f, 52f),
                 new Vector2(-11f, 52f)
             ]),
-            new LinearGradientShader(new SKColor(91, 103, 125), new SKColor(37, 45, 62)))
+            new LinearGradientShader(new XnaColor(91, 103, 125), new XnaColor(37, 45, 62)))
         {
             ZIndex = 1
         };
@@ -52,7 +52,7 @@ internal sealed class SavePoint2D
 
         _glow = new WorldObject2D(
             new Circle2D(31f),
-            new SolidColorShader(new SKColor(93, 224, 255, 38)))
+            new SolidColorShader(new XnaColor(93, 224, 255, 38)))
         {
             IsVisible = false,
             ZIndex = 1
@@ -116,8 +116,8 @@ internal sealed class SavePoint2D
         _basePosition + new Vector2(64f, 132f));
 
     private static LinearGradientShader ActiveOrbShader() =>
-        new LinearGradientShader(new SKColor(245, 255, 255), new SKColor(44, 193, 255));
+        new LinearGradientShader(new XnaColor(245, 255, 255), new XnaColor(44, 193, 255));
 
     private static LinearGradientShader InactiveOrbShader() =>
-        new LinearGradientShader(new SKColor(132, 139, 158), new SKColor(53, 60, 78));
+        new LinearGradientShader(new XnaColor(132, 139, 158), new XnaColor(53, 60, 78));
 }

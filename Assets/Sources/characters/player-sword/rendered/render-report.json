@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "blenderVersion": "5.2.1 LTS",
+  "blendSha256": "e00d4e864646c4eba991b163870051698983e25bd7c9d10407e0732bd80f903c",
+  "configSha256": "f0b0b47af593f7861acbfed8f8e5b71f8c10b4348103aa97471393e8df09083c",
+  "clips": {
+    "balance-left-foot": {
+      "frameCount": 8,
+      "supportBoneMaxDrift": 0,
+      "loopPoseMaxError": 0.0,
+      "supportPixel": [
+        239.56922912597656,
+        375.57176208496094
+      ]
+    },
+    "balance-right-foot": {
+      "frameCount": 8,
+      "supportBoneMaxDrift": 0,
+      "loopPoseMaxError": 0.0,
+      "supportPixel": [
+        285.745849609375,
+        376.4282531738281
+      ]
+    }
+  },
+  "references": {
+    "source-idle": {
+      "file": "references/source-idle.png",
+      "packFile": "Sword sprites/sword_Idle_0001.png"
+    },
+    "source-run": {
+      "file": "references/source-run.png",
+      "packFile": "Sword sprites/sword_run_0019.png"
+    },
+    "source-jump": {
+      "file": "references/source-jump.png",
+      "packFile": "Sword sprites/sword_jump_0044.png"
+    }
+  },
+  "files": {
+    "balance-left-foot/frame-0001.png": "70a9ee7cee1b10615dbba763f1c9fbbc68c06bc64eb8ec3039f1031278fe79c6",
+    "balance-left-foot/frame-0002.png": "7486873dd63f9382cfe087882ca4b9363324b0aaf89b1a3c1e9cbaafaca58e50",
+    "balance-left-foot/frame-0003.png": "e76560517d2df1d3484a7a20c1680f710db6b78a7a30871cad7f93eecbc9fb13",
+    "balance-left-foot/frame-0004.png": "d75a601d552b41ededf8b6513f575bf610e1daa027a7be483d89e322c2c57198",
+    "balance-left-foot/frame-0005.png": "401ab90b1719b468fd0b1ba993a186e8c72929c6819413385adee5a74a7a3872",
+    "balance-left-foot/frame-0006.png": "176c5cc13e352e82d1746a17312e3340aba4a11be961bf9f1bfac366cf292955",
+    "balance-left-foot/frame-0007.png": "9605c92d88177ed7369983695aa54ed095b6029921f6a8677e8479e41a799adf",
+    "balance-left-foot/frame-0008.png": "c855daff2af272658d8b804f278aa01ab0886e6926d9fc0824c8a95146253ee8",
+    "balance-right-foot/frame-0001.png": "c378418faf5fa025d8e35f0509b9742d0a2153a200545a6ea251f13e4e78646f",
+    "balance-right-foot/frame-0002.png": "24ea853e92ea229e6575ed44aca8a8223abab1525bc843b13b77b90a2f38f354",
+    "balance-right-foot/frame-0003.png": "cb2233620b565964a79b64ed72c3027a35906cf39ff449b10b6f067da9ae2c47",
+    "balance-right-foot/frame-0004.png": "f76a9d381b7737b9a3d886c524ea6b5c80b96d6def13e66e13b6cb13e23dfb65",
+    "balance-right-foot/frame-0005.png": "87c0b5f302402470152ea4aabd846b68ad974e7336f43e3bc9e09b379c935c9d",
+    "balance-right-foot/frame-0006.png": "b642bff6f610caed409e0a263c17d627f63b85695b26ecf789402dee7c969126",
+    "balance-right-foot/frame-0007.png": "aab2729a2f6527fe840e8649120d9f20be8be752cfefb8cf65c33cdd05e721f8",
+    "balance-right-foot/frame-0008.png": "13906f6dd4bb40f9a95280fc36cc82eb4cb16a4ab6539cdd4aeb3a80ea4daf1c",
+    "references/source-idle.png": "0966a6c7895445f690836bbe3aba96f95a7b527f7cb867b8b476cd8cffbf1ca0",
+    "references/source-run.png": "32c295fac73aaf8a213c0c251d76506fc172ac1d24d7216d9d23119c58a91a98",
+    "references/source-jump.png": "b4c45ee9181f1846121e0fe03119845b28dd32cdeed5c15a6710e61776533a6c"
+  }
+}

@@ -3,11 +3,12 @@ using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Player;
 using App2d.Physics;
+using App2d.Tiles;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons;
 
-public sealed class PersonLocomotion2D
+public sealed partial class PersonLocomotion2D
 {
     private readonly PhysicsWorld2D _physics;
     private readonly CollisionSystem2D _collision;
@@ -34,7 +35,8 @@ public sealed class PersonLocomotion2D
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
         PhysicsBody2D body,
-        TraversalMetrics2D metrics)
+        TraversalMetrics2D metrics,
+        IChunkedTileMap2D? tileMap = null)
     {
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
@@ -45,6 +47,7 @@ public sealed class PersonLocomotion2D
         _physics = physics;
         _body = body;
         Metrics = metrics;
+        _tileMap = tileMap;
     }
 
     public TraversalMetrics2D Metrics { get; }
@@ -53,6 +56,8 @@ public sealed class PersonLocomotion2D
     public bool IsGrounded { get; private set; }
     public bool IsWallGripping { get; private set; }
     public bool IsDashing { get; private set; }
+    /// <summary>The unsupported edge in world space: -1 left, +1 right, or 0.</summary>
+    public int BalanceDirection => GetBalanceDirection();
     public float WallDirection => _wallDirection;
     public float CoyoteTimeRemaining => _coyoteTime;
     public float JumpBufferTimeRemaining => _jumpBufferTime;
@@ -76,6 +81,7 @@ public sealed class PersonLocomotion2D
     {
         _wasGroundedBeforePhysics = IsGrounded;
         _intent = intent;
+        _ladderRelatchTime = Math.Max(0f, _ladderRelatchTime - deltaSeconds);
         _wallRelatchTime = Math.Max(0f, _wallRelatchTime - deltaSeconds);
         _dashCooldownRemaining = Math.Max(0f, _dashCooldownRemaining - deltaSeconds);
         UpdateIgnoredOneWayPlatforms();
@@ -98,11 +104,18 @@ public sealed class PersonLocomotion2D
         }
         if (IsDashing)
         {
+            DetachFromLadder();
             _dashTimeRemaining = Math.Max(0f, _dashTimeRemaining - deltaSeconds);
             _body.LinearVelocity = new Vector2(_dashDirection * Metrics.DashSpeed, 0f);
             IsWallGripping = false;
             _wallDirection = 0f;
             _body.GravityScale = 0f;
+            RecordPrePhysicsState();
+            return;
+        }
+
+        if (TryUpdateLadder(deltaSeconds))
+        {
             RecordPrePhysicsState();
             return;
         }
@@ -145,6 +158,13 @@ public sealed class PersonLocomotion2D
 
     public void UpdateAfterPhysics(float deltaSeconds)
     {
+        if (IsClimbingLadder && TryFindLadder(out _))
+        {
+            IsGrounded = false;
+            return;
+        }
+        if (IsClimbingLadder)
+            DetachFromLadder();
         TryCorrectUpwardCorner(deltaSeconds);
         UpdateIgnoredOneWayPlatforms();
 
@@ -180,8 +200,28 @@ public sealed class PersonLocomotion2D
         UpdateGravityScale();
     }
 
+    public void BounceFromDownAttack()
+    {
+        DetachFromLadder();
+        IsGrounded = false;
+        IsWallGripping = false;
+        IsDashing = false;
+        _wallDirection = 0f;
+        _wallRelatchTime = Metrics.WallJumpRelatchDelay;
+        _dashTimeRemaining = 0f;
+        _coyoteTime = 0f;
+        _jumpBufferTime = 0f;
+        _wallJumpBufferTime = 0f;
+        _jumpInitialSpeed = 0f;
+        _body.LinearVelocity = new Vector2(
+            _body.LinearVelocity.X,
+            Math.Max(_body.LinearVelocity.Y, Metrics.DownAttackBounceSpeed));
+        UpdateGravityScale();
+    }
+
     public void EnterPassiveState()
     {
+        DetachFromLadder();
         _intent = default;
         _coyoteTime = 0f;
         _jumpBufferTime = 0f;
@@ -209,6 +249,8 @@ public sealed class PersonLocomotion2D
 
     public void Reset()
     {
+        DetachFromLadder();
+        _ladderRelatchTime = 0f;
         _coyoteTime = 0f;
         _jumpBufferTime = 0f;
         _jumpInitialSpeed = 0f;
@@ -441,6 +483,46 @@ public sealed class PersonLocomotion2D
         }
 
         return false;
+    }
+
+    private int GetBalanceDirection()
+    {
+        if (!IsGrounded || IsDashing || IsClimbingLadder || IsWallGripping ||
+            MathF.Abs(_intent.MoveX) > 0.01f || MathF.Abs(_body.LinearVelocity.X) > 5f)
+        {
+            return 0;
+        }
+
+        var bounds = _body.WorldObject.WorldBounds;
+        var supportLeft = float.PositiveInfinity;
+        var supportRight = float.NegativeInfinity;
+        QueryBodyBounds(ExpandedDown(bounds, Metrics.GroundProbeDistance));
+        foreach (var collider in _queryResults)
+        {
+            if (collider.UserData is not PhysicsBody2D other || !CanSupport(other))
+                continue;
+
+            var support = other.WorldObject.WorldBounds;
+            var gap = bounds.Bottom - support.Top;
+            if (!support.IsFinite || gap < -0.01f || gap > Metrics.GroundProbeDistance ||
+                support.Right <= bounds.Left || support.Left >= bounds.Right)
+            {
+                continue;
+            }
+
+            // Combine adjoining terrain/platform supports so collider seams
+            // don't look like ledges. Horizontal grounding grace isn't footing.
+            supportLeft = Math.Min(supportLeft, Math.Max(bounds.Left, support.Left));
+            supportRight = Math.Max(supportRight, Math.Min(bounds.Right, support.Right));
+        }
+
+        if (!float.IsFinite(supportLeft))
+            return 0;
+
+        var threshold = bounds.Size.X * Metrics.BalanceOverhangFraction;
+        var leftOverhang = supportLeft - bounds.Left >= threshold;
+        var rightOverhang = bounds.Right - supportRight >= threshold;
+        return leftOverhang == rightOverhang ? 0 : leftOverhang ? -1 : 1;
     }
 
     private bool TryBeginDropThrough()

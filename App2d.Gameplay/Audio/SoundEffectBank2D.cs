@@ -41,7 +41,11 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
                 [SoundEffect2D.HammerWindup] = Load(rootPath, 0.62f, "hammer-windup"),
                 [SoundEffect2D.HammerImpact] = Load(rootPath, 0.86f, "hammer-impact"),
                 [SoundEffect2D.PlayerRespawn] = Load(rootPath, 0.7f, "player-respawn"),
-                [SoundEffect2D.GoalReached] = Load(rootPath, 0.82f, "goal-reached")
+                [SoundEffect2D.GoalReached] = Load(rootPath, 0.82f, "goal-reached"),
+                [SoundEffect2D.GunCharge] = Load(rootPath, 0.45f, "gun-charge"),
+                [SoundEffect2D.GunFire] = Load(rootPath, 0.72f, "gun-fire"),
+                [SoundEffect2D.GunCancel] = Load(rootPath, 0.34f, "gun-cancel"),
+                [SoundEffect2D.GunImpact] = Load(rootPath, 0.5f, "gun-impact")
             };
         }
         catch
@@ -73,7 +77,8 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
         var voice = _mixer.Begin(
             cue.NextClip(),
             fullVolume * initialVolumeScale,
-            RandomInRange(MinimumPlaybackRate, MaximumPlaybackRate));
+            effect == SoundEffect2D.GunCharge ? 1f :
+                RandomInRange(MinimumPlaybackRate, MaximumPlaybackRate));
         return new SoundEffectVoice2D(voice, fullVolume);
     }
 

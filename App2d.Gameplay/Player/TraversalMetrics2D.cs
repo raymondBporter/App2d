@@ -34,10 +34,13 @@ public sealed class TraversalMetrics2D
         PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) -
         PlayerColliderSize.Y * 0.5f);
     public float RunSpeed { get; init; } = 430f;
+    public float LadderClimbSpeed { get; init; } = 180f;
+    public float LadderRelatchDelay { get; init; } = 0.2f;
     public float GroundAcceleration { get; init; } = 3_600f;
     public float AirAcceleration { get; init; } = 1_450f;
     public float Gravity { get; init; } = 1_900f;
     public float JumpSpeed { get; init; } = 760f;
+    public float DownAttackBounceSpeed { get; init; } = 520f;
     public float AirJumpSpeedMultiplier { get; init; } = 0.6f;
     public float AirJumpSpeed => JumpSpeed * AirJumpSpeedMultiplier;
     public int MaximumJumpCount { get; init; } = 2;
@@ -51,6 +54,7 @@ public sealed class TraversalMetrics2D
     public float GroundProbeDistance { get; init; } = 2f;
     public float LandingSnapDistance { get; init; } = 4f;
     public float HorizontalSupportGrace { get; init; } = 2f;
+    public float BalanceOverhangFraction { get; init; } = 0.35f;
     public int UpwardCornerCorrection { get; init; } = 8;
     public float WallGripProbeDistance { get; init; } = 4f;
     public float WallGripMinimumOverlap { get; init; } = DesignUnit;
@@ -69,11 +73,14 @@ public sealed class TraversalMetrics2D
     public void ValidateScaleContract()
     {
         ArgGuard.ThrowIfNotPositive(TileSize);
+        ArgGuard.ThrowIfNotPositive(LadderClimbSpeed);
+        ArgGuard.ThrowIfNotPositive(LadderRelatchDelay);
         ArgGuard.ThrowIfNotPositive(PlayerColliderSize);
         ArgGuard.ThrowIfNotFinite(PlayerColliderCenterOffsetX);
         ArgGuard.ThrowIfNotPositive(PlayerVisualSize);
         ArgGuard.ThrowIfNotFinite(PlayerVisualOffset);
         ArgGuard.ThrowIfNotPositive(AirJumpSpeedMultiplier);
+        ArgGuard.ThrowIfNotPositive(DownAttackBounceSpeed);
         ArgGuard.ThrowIfNotPositive(MaximumJumpCount);
         ArgGuard.ThrowIfNotPositive(OneWayDropSpeed);
         ArgGuard.ThrowIfNotPositive(WallGripProbeDistance);
@@ -83,6 +90,10 @@ public sealed class TraversalMetrics2D
         ArgGuard.ThrowIfNotPositive(DashSpeed);
         ArgGuard.ThrowIfNotPositive(DashDuration);
         ArgGuard.ThrowIfNotPositive(DashCooldown);
+        StateGuard.ThrowIf(
+            !float.IsFinite(BalanceOverhangFraction) ||
+            BalanceOverhangFraction <= 0f || BalanceOverhangFraction >= 0.5f,
+            "The balance overhang must be a fraction between zero and one half.");
 
         StateGuard.ThrowIf(AirJumpSpeedMultiplier >= 1f, "The air-jump speed multiplier must be less than one.");
         StateGuard.ThrowIf(

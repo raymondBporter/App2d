@@ -1,458 +1,484 @@
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Core.Mathematics;
 using App2d.Rendering.Textures;
-using SkiaSharp;
+using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
+using XnaColor = Microsoft.Xna.Framework.Color;
+using XnaMatrix = Microsoft.Xna.Framework.Matrix;
+using XnaVector2 = Microsoft.Xna.Framework.Vector2;
+using XnaVector3 = Microsoft.Xna.Framework.Vector3;
+using Texture2D = App2d.Rendering.Textures.Texture2D;
+using GpuTexture = Microsoft.Xna.Framework.Graphics.Texture2D;
 
 namespace App2d.Rendering;
 
-public sealed class Renderer2D(Camera2D camera) : IDisposable
+/// <summary>Ordered GPU triangle batches using MonoGame's XNA graphics API.</summary>
+public sealed class Renderer2D : IDisposable
 {
-    private readonly SKFont _hudFont = new(SKTypeface.Default, 28f);
-    private readonly SKPaint _hudTextPaint = new()
-    {
-        Color = SKColors.White,
-        IsAntialias = true
-    };
-    private readonly SKPaint _hudBackgroundPaint = new()
-    {
-        Color = new SKColor(20, 28, 43, 220),
-        IsAntialias = true
-    };
-    private readonly SKPaint _worldPaint = new()
-    {
-        IsAntialias = true,
-        Style = SKPaintStyle.Fill
-    };
-    private SKCanvas? _canvas;
-    private FrameTime _time;
+    private readonly Camera2D _camera;
+    private readonly GraphicsDevice _device;
+    private readonly BasicEffect _effect;
+    private readonly FontAtlas2D _font = new();
+    private readonly VertexPositionColorTexture[] _vertices = new VertexPositionColorTexture[8190];
+    private readonly Dictionary<Texture2D, Residency> _textures = [];
+    private readonly LinkedList<Texture2D> _recentTextures = [];
+    private readonly Dictionary<SamplerKey, SamplerState> _samplers = [];
+    private GpuTexture? _batchTexture;
+    private SamplerState? _batchSampler;
+    private int _vertexCount;
+    private long _textureBytes;
+    private bool _frameActive;
+    private bool _disposed;
     private Bounds2D _visibleWorldBounds;
 
-    public void BeginFrame(SKCanvas canvas, int width, int height, FrameTime time)
+    public Renderer2D(Camera2D camera, GraphicsDevice device)
     {
-        _canvas = canvas;
-        _time = time;
-        camera.SetViewport(width, height);
-        _visibleWorldBounds = camera.VisibleWorldBounds;
+        _camera = ArgGuard.RequireNotNull(camera);
+        _device = ArgGuard.RequireNotNull(device);
+        _effect = new BasicEffect(device) { VertexColorEnabled = true, World = XnaMatrix.Identity, View = XnaMatrix.Identity };
     }
 
-    public void Clear(SKColor color) => Canvas.Clear(color);
-
-    public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
+    public void BeginFrame(int width, int height, FrameTime time)
     {
-        var visible = camera.VisibleWorldBounds;
-        var (minX, maxX) = (visible.Left, visible.Right);
-        var (minY, maxY) = (visible.Bottom, visible.Top);
-        var firstX = (int)MathF.Floor(minX / spacing);
-        var lastX = (int)MathF.Ceiling(maxX / spacing);
-        var firstY = (int)MathF.Floor(minY / spacing);
-        var lastY = (int)MathF.Ceiling(maxY / spacing);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        StateGuard.ThrowIf(_frameActive, "EndFrame must be called before beginning another frame.");
+        ArgGuard.ThrowIfNotPositive(width);
+        ArgGuard.ThrowIfNotPositive(height);
+        _camera.SetViewport(width, height);
+        _visibleWorldBounds = _camera.VisibleWorldBounds;
+        _device.Viewport = new Viewport(0, 0, width, height);
+        _effect.Projection = XnaMatrix.CreateOrthographicOffCenter(0, width, height, 0, 0, 1);
+        _frameActive = true;
+    }
 
-        using var minorPaint = CreateStrokePaint(new SKColor(255, 255, 255, 18), 1f);
-        using var majorPaint = CreateStrokePaint(new SKColor(255, 255, 255, 35), 1f);
-        using var axisPaint = CreateStrokePaint(new SKColor(255, 255, 255, 85), 2f);
+    public void EndFrame()
+    {
+        RequireFrame();
+        Flush();
+        _batchTexture = null;
+        _batchSampler = null;
+        // Trim only after submission, so a queued batch never references an evicted texture.
+        while (_textureBytes > TextureMemoryBudget2D.GpuResourceCacheBytes && _recentTextures.First is { } oldest)
+            ReleaseTexture(oldest.Value);
+        _frameActive = false;
+    }
 
-        for (var x = firstX; x <= lastX; x++)
-        {
-            var start = camera.WorldToDevice(new Vector2(x * spacing, minY));
-            var end = camera.WorldToDevice(new Vector2(x * spacing, maxY));
-            var paint = x == 0 ? axisPaint : x % majorLineEvery == 0 ? majorPaint : minorPaint;
-            Canvas.DrawLine(start.X, start.Y, end.X, end.Y, paint);
-        }
-
-        for (var y = firstY; y <= lastY; y++)
-        {
-            var start = camera.WorldToDevice(new Vector2(minX, y * spacing));
-            var end = camera.WorldToDevice(new Vector2(maxX, y * spacing));
-            var paint = y == 0 ? axisPaint : y % majorLineEvery == 0 ? majorPaint : minorPaint;
-            Canvas.DrawLine(start.X, start.Y, end.X, end.Y, paint);
-        }
+    public void Clear(XnaColor color)
+    {
+        RequireFrame();
+        Flush();
+        _device.Clear(color);
     }
 
     public void Draw(Scene2D scene)
     {
-        foreach (var worldObject in scene.GetDrawOrder())
-            Draw(worldObject);
+        foreach (var item in scene.GetDrawOrder()) Draw(item);
     }
 
     public void Draw(WorldObject2D worldObject)
     {
-        if (!worldObject.IsVisible)
-            return;
-        var worldBounds = worldObject.WorldBounds;
-        if (worldBounds.IsFinite && !worldBounds.Intersects(_visibleWorldBounds))
-            return;
+        RequireFrame();
+        if (!worldObject.IsVisible || IsCulled(worldObject)) return;
+        var matrix = worldObject.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
+        var bounds = worldObject.Shape.LocalBounds.IsFinite ? worldObject.Shape.LocalBounds : GetVisibleLocalBounds(matrix);
+        if (worldObject.Shader is SpriteShader2D)
+            StateGuard.ThrowIf(!worldObject.Shape.LocalBounds.IsFinite, "Sprites require finite local bounds.");
+        SelectMaterial(worldObject.Shader);
+        FillShape(worldObject.Shape, matrix, bounds, worldObject.Shader);
+    }
 
-        // This is the whole spatial pipeline: object -> world -> Skia device pixels.
-        var objectToDevice = worldObject.Transform.LocalToWorldMatrix * camera.WorldToDeviceMatrix;
-
-        var shaderBounds = worldObject.Shape.LocalBounds.IsFinite
-            ? worldObject.Shape.LocalBounds
-            : GetVisibleLocalBounds(objectToDevice);
-
-        var shaderContext = new ShaderContext(objectToDevice, shaderBounds, _time);
-        using var shaderLease = worldObject.Shader.AcquireShader(shaderContext);
-        var paint = _worldPaint;
-        paint.Color = worldObject.Shader.BaseColor;
-        paint.Shader = shaderLease.Shader;
-        paint.Style = SKPaintStyle.Fill;
-        paint.StrokeWidth = 0f;
-        paint.StrokeCap = SKStrokeCap.Butt;
-
-        var skiaMatrix = ToSkiaMatrix(objectToDevice);
-        Canvas.Save();
-        Canvas.Concat(in skiaMatrix);
-        try
+    private void SelectMaterial(IShader2D shader)
+    {
+        switch (shader)
         {
-            DrawFilledShape(worldObject.Shape, paint, objectToDevice);
-        }
-        finally
-        {
-            Canvas.Restore();
-            paint.Shader = null;
+            case SpriteShader2D sprite:
+                SelectTexture(sprite.Texture, new SamplerKey(TextureAddressMode.Clamp, TextureAddressMode.Clamp, sprite.FilterMode));
+                break;
+            case TextureShader2D tile:
+                SelectTexture(tile.Texture, new SamplerKey(tile.TileModeX, tile.TileModeY, tile.FilterMode));
+                break;
+            default:
+                SelectBatch(null, null);
+                break;
         }
     }
 
-    private void DrawFilledShape(IShape2D shape, SKPaint paint, Matrix3x2 objectToDevice)
+    private void SelectTexture(Texture2D texture, SamplerKey key)
+    {
+        ObjectDisposedException.ThrowIf(texture.IsDisposed, texture);
+        if (!_textures.TryGetValue(texture, out var resident))
+        {
+            var gpu = new GpuTexture(_device, texture.Width, texture.Height, false, SurfaceFormat.Color);
+            try
+            {
+                var pixels = texture.CopyPixels();
+                for (var i = 0; i < pixels.Length; i++)
+                    pixels[i] = XnaColor.FromNonPremultiplied(pixels[i].R, pixels[i].G, pixels[i].B, pixels[i].A);
+                gpu.SetData(pixels);
+            }
+            catch { gpu.Dispose(); throw; }
+            resident = new Residency(gpu, _recentTextures.AddLast(texture), (long)texture.Width * texture.Height * 4);
+            _textures.Add(texture, resident);
+            texture.Disposed += ReleaseTexture;
+            _textureBytes += resident.Bytes;
+        }
+        else
+        {
+            _recentTextures.Remove(resident.Node);
+            _recentTextures.AddLast(resident.Node);
+        }
+        if (!_samplers.TryGetValue(key, out var sampler))
+        {
+            sampler = new SamplerState { AddressU = key.X, AddressV = key.Y, Filter = key.Filter };
+            _samplers.Add(key, sampler);
+        }
+        SelectBatch(resident.Texture, sampler);
+    }
+
+    private void SelectBatch(GpuTexture? texture, SamplerState? sampler)
+    {
+        if (_batchTexture == texture && _batchSampler == sampler) return;
+        Flush();
+        _batchTexture = texture;
+        _batchSampler = sampler;
+    }
+
+    private void Flush()
+    {
+        if (_vertexCount == 0) return;
+        _device.BlendState = BlendState.AlphaBlend;
+        _device.DepthStencilState = DepthStencilState.None;
+        _device.RasterizerState = RasterizerState.CullNone;
+        _effect.TextureEnabled = _batchTexture is not null;
+        _effect.Texture = _batchTexture;
+        foreach (var pass in _effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            if (_batchSampler is not null) _device.SamplerStates[0] = _batchSampler;
+            _device.DrawUserPrimitives(PrimitiveType.TriangleList, _vertices, 0, _vertexCount / 3);
+        }
+        _vertexCount = 0;
+    }
+
+    private void Triangle(VertexPositionColorTexture a, VertexPositionColorTexture b, VertexPositionColorTexture c)
+    {
+        if (_vertexCount + 3 > _vertices.Length) Flush();
+        _vertices[_vertexCount++] = a;
+        _vertices[_vertexCount++] = b;
+        _vertices[_vertexCount++] = c;
+    }
+
+    private static VertexPositionColorTexture Vertex(Vector2 point, XnaColor color, Vector2 uv = default) =>
+        new(new XnaVector3(point.X, point.Y, 0),
+            XnaColor.FromNonPremultiplied(color.R, color.G, color.B, color.A), new XnaVector2(uv.X, uv.Y));
+
+    private static VertexPositionColorTexture MaterialVertex(Vector2 local, Matrix3x2 matrix, Bounds2D bounds, IShader2D shader)
+    {
+        var uv = Vector2.Zero;
+        switch (shader)
+        {
+            case SpriteShader2D sprite:
+                uv = (local - bounds.Min) / bounds.Size;
+                if (sprite.FlipX) uv.X = 1f - uv.X;
+                if (!sprite.FlipY) uv.Y = 1f - uv.Y;
+                break;
+            case TextureShader2D tile:
+                // Preserve local-origin tiling; unlike sprites, tiled images use positive local Y.
+                uv = local / tile.TileSize;
+                break;
+        }
+        return Vertex(Vector2.Transform(local, matrix), shader.GetVertexColor(local, bounds), uv);
+    }
+
+    private void FillPolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, Bounds2D bounds, IShader2D shader)
+    {
+        var first = MaterialVertex(points[0], matrix, bounds, shader);
+        for (var index = 1; index < points.Length - 1; index++)
+            Triangle(first, MaterialVertex(points[index], matrix, bounds, shader), MaterialVertex(points[index + 1], matrix, bounds, shader));
+    }
+
+    private void FillShape(IShape2D shape, Matrix3x2 matrix, Bounds2D bounds, IShader2D shader)
+    {
+        if (shape is CompositeShape2D composite)
+        {
+            foreach (var part in composite.Parts) FillShape(part, matrix, bounds, shader);
+            return;
+        }
+        if (shape is ConvexPolygon2D polygon) { FillPolygon(polygon.Vertices, matrix, bounds, shader); return; }
+        Span<Vector2> points = stackalloc Vector2[260];
+        var count = GetShapePoints(shape, matrix, points);
+        if (count >= 3) FillPolygon(points[..count], matrix, bounds, shader);
+    }
+
+    private int GetShapePoints(IShape2D shape, Matrix3x2 matrix, Span<Vector2> points)
     {
         switch (shape)
         {
-            case ConvexPolygon2D polygon:
-                DrawConvexPolygon(polygon, paint);
-                break;
-            case Circle2D circle:
-                Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
-                break;
-            case Capsule2D capsule:
-                DrawCapsule(capsule, paint);
-                break;
             case Rectangle2D rectangle:
-                Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
-                break;
+                points[0] = rectangle.Min;
+                points[1] = new(rectangle.Max.X, rectangle.Min.Y);
+                points[2] = rectangle.Max;
+                points[3] = new(rectangle.Min.X, rectangle.Max.Y);
+                return 4;
+            case Circle2D circle:
+                var segments = CurveSegments(circle.Radius, matrix);
+                for (var i = 0; i < segments; i++)
+                {
+                    var angle = i * MathF.Tau / segments;
+                    points[i] = circle.Center + circle.Radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+                }
+                return segments;
+            case Capsule2D capsule:
+                var halfSegments = CurveSegments(capsule.Radius, matrix) / 2;
+                var axis = capsule.End - capsule.Start;
+                var direction = MathF.Atan2(axis.Y, axis.X);
+                for (var i = 0; i <= halfSegments; i++)
+                {
+                    var endAngle = direction - MathF.PI / 2 + i * MathF.PI / halfSegments;
+                    var startAngle = direction + MathF.PI / 2 + i * MathF.PI / halfSegments;
+                    points[i] = capsule.End + capsule.Radius * new Vector2(MathF.Cos(endAngle), MathF.Sin(endAngle));
+                    points[halfSegments + 1 + i] = capsule.Start + capsule.Radius * new Vector2(MathF.Cos(startAngle), MathF.Sin(startAngle));
+                }
+                return 2 * (halfSegments + 1);
             case HalfSpace2D halfSpace:
-                DrawHalfSpace(halfSpace, paint, objectToDevice);
-                break;
-            case CompositeShape2D composite:
-                foreach (var part in composite.Parts)
-                    DrawFilledShape(part, paint, objectToDevice);
-                break;
+                var visible = GetVisibleLocalBounds(matrix);
+                Span<Vector2> corners = [visible.Min, new(visible.Max.X, visible.Min.Y), visible.Max, new(visible.Min.X, visible.Max.Y)];
+                var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
+                var minT = float.PositiveInfinity;
+                var maxT = float.NegativeInfinity;
+                var minN = float.PositiveInfinity;
+                foreach (var corner in corners)
+                {
+                    var t = Vector2.Dot(corner, tangent);
+                    minT = Math.Min(minT, t);
+                    maxT = Math.Max(maxT, t);
+                    minN = Math.Min(minN, Vector2.Dot(corner, halfSpace.Normal));
+                }
+                var margin = Math.Max(visible.Size.Length() * 0.1f, 10f);
+                minT -= margin;
+                maxT += margin;
+                var deep = Math.Min(minN, halfSpace.Offset) - margin;
+                points[0] = halfSpace.Normal * halfSpace.Offset + tangent * minT;
+                points[1] = halfSpace.Normal * halfSpace.Offset + tangent * maxT;
+                points[2] = halfSpace.Normal * deep + tangent * maxT;
+                points[3] = halfSpace.Normal * deep + tangent * minT;
+                return 4;
             default:
                 throw new NotSupportedException($"No renderer is registered for {shape.GetType().Name}.");
+        }
+    }
+
+    private static int CurveSegments(float radius, Matrix3x2 matrix)
+    {
+        var scale = Math.Max(new Vector2(matrix.M11, matrix.M12).Length(), new Vector2(matrix.M21, matrix.M22).Length());
+        return Math.Clamp((int)MathF.Ceiling(MathF.PI * MathF.Sqrt(Math.Max(1f, radius * scale) * 2f)), 16, 128);
+    }
+
+    public void DrawScreenRoundedRectangle(ScreenRectangle2D bounds, float radius, XnaColor color, float strokeWidth = 0f)
+    {
+        RequireFrame();
+        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
+        ArgGuard.ThrowIfNegativeOrNotFinite(strokeWidth);
+        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+        SelectBatch(null, null);
+        radius = Math.Min(radius, Math.Min(bounds.Width, bounds.Height) / 2);
+        Span<Vector2> points = stackalloc Vector2[36];
+        var count = 0;
+        for (var corner = 0; corner < 4; corner++)
+        {
+            var center = new Vector2(corner is 0 or 3 ? bounds.Right - radius : bounds.Left + radius,
+                corner < 2 ? bounds.Bottom - radius : bounds.Top + radius);
+            for (var i = 0; i <= 8; i++)
+            {
+                var angle = (corner + i / 8f) * MathF.PI / 2;
+                points[count++] = center + radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+            }
+        }
+        if (strokeWidth > 0) StrokePolygon(points[..count], Matrix3x2.Identity, color, strokeWidth);
+        else
+        {
+            var center = Vertex(new Vector2(bounds.MidX, bounds.MidY), color);
+            for (var i = 0; i < count; i++)
+                Triangle(center, Vertex(points[i], color), Vertex(points[(i + 1) % count], color));
         }
     }
 
     public void DrawScreenLabel(string text, Vector2 topLeft)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(text);
-
-        const float horizontalPadding = 14f;
-        const float verticalPadding = 9f;
-        var metrics = _hudFont.Metrics;
-        var textWidth = _hudFont.MeasureText(text, _hudTextPaint);
-        var textHeight = metrics.Descent - metrics.Ascent;
-        var bounds = new SKRect(topLeft.X, topLeft.Y, topLeft.X + textWidth + horizontalPadding * 2f, topLeft.Y + textHeight + verticalPadding * 2f);
-
-        Canvas.DrawRoundRect(bounds, 9f, 9f, _hudBackgroundPaint);
-        Canvas.DrawText(text, topLeft.X + horizontalPadding, topLeft.Y + verticalPadding - metrics.Ascent, SKTextAlign.Left, _hudFont, _hudTextPaint);
+        DrawScreenRoundedRectangle(new(topLeft.X, topLeft.Y, topLeft.X + _font.Measure(text) + 28f, topLeft.Y + _font.LineHeight + 18f),
+            9f, new XnaColor(20, 28, 43, 220));
+        DrawScreenText(text, topLeft + new Vector2(14, 9 + _font.Ascent), XnaColor.White);
     }
 
-    public void DrawScreenRoundedRectangle(SKRect bounds, float radius, SKColor color, float strokeWidth = 0f)
+    public void DrawScreenText(string text, Vector2 baseline, XnaColor color)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
-        ArgGuard.ThrowIfNegativeOrNotFinite(strokeWidth);
-        using var paint = new SKPaint
-        {
-            Color = color,
-            IsAntialias = true,
-            StrokeWidth = strokeWidth,
-            Style = strokeWidth > 0f ? SKPaintStyle.Stroke : SKPaintStyle.Fill
-        };
-        Canvas.DrawRoundRect(bounds, radius, radius, paint);
-    }
-
-    public void DrawScreenText(string text, Vector2 baseline, SKColor color)
-    {
+        RequireFrame();
         ArgGuard.ThrowIfNullOrWhiteSpace(text);
-        using var paint = new SKPaint { Color = color, IsAntialias = true };
-        Canvas.DrawText(text, baseline.X, baseline.Y, SKTextAlign.Left, _hudFont, paint);
+        SelectTexture(_font.Texture, new(TextureAddressMode.Clamp, TextureAddressMode.Clamp, TextureFilter.Linear));
+        var cursor = baseline - new Vector2(4, _font.Ascent + 4);
+        foreach (var character in text)
+        {
+            if (character == '\n') { cursor.X = baseline.X - 4; cursor.Y += _font.LineHeight; continue; }
+            var glyph = _font.GetGlyph(character);
+            TexturedQuad(new(cursor.X, cursor.Y, cursor.X + glyph.Bounds.Width, cursor.Y + glyph.Bounds.Height),
+                glyph.Bounds, _font.Texture.Width, _font.Texture.Height, color);
+            cursor.X += glyph.Advance;
+        }
     }
 
-    public void DrawScreenTexture(Texture2D texture, SKRect bounds)
+    public void DrawScreenTexture(Texture2D texture, ScreenRectangle2D bounds)
     {
+        RequireFrame();
         ArgGuard.ThrowIfNull(texture);
-        Canvas.DrawBitmap(
-            texture.Bitmap,
-            bounds,
-            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None),
-            _hudTextPaint);
+        SelectTexture(texture, new(TextureAddressMode.Clamp, TextureAddressMode.Clamp, TextureFilter.Linear));
+        TexturedQuad(bounds, new(0, 0, texture.Width, texture.Height), texture.Width, texture.Height, XnaColor.White);
     }
 
-    public void DrawWorldCircle(Vector2 center, float radius, SKColor color, float strokeWidth = 2f)
+    private void TexturedQuad(ScreenRectangle2D bounds, ScreenRectangle2D source, int width, int height, XnaColor color)
     {
+        var a = Vertex(new(bounds.Left, bounds.Top), color, new(source.Left / width, source.Top / height));
+        var b = Vertex(new(bounds.Right, bounds.Top), color, new(source.Right / width, source.Top / height));
+        var c = Vertex(new(bounds.Right, bounds.Bottom), color, new(source.Right / width, source.Bottom / height));
+        var d = Vertex(new(bounds.Left, bounds.Bottom), color, new(source.Left / width, source.Bottom / height));
+        Triangle(a, b, c);
+        Triangle(a, c, d);
+    }
+
+    public void DrawWorldCircle(Vector2 center, float radius, XnaColor color, float strokeWidth = 2f)
+    {
+        RequireFrame();
         ArgGuard.ThrowIfNegativeOrNotFinite(radius);
-
-        var deviceCenter = camera.WorldToDevice(center);
-        using var paint = CreateStrokePaint(color, strokeWidth);
-        Canvas.DrawCircle(deviceCenter.X, deviceCenter.Y, radius * camera.Zoom, paint);
-    }
-
-    public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, SKColor color, float strokeWidth = 2f)
-    {
-        if (points.Length < 2)
-            return;
-
-        using var paint = CreateStrokePaint(color, strokeWidth);
-        using var pathBuilder = new SKPathBuilder();
-        var first = camera.WorldToDevice(points[0]);
-        pathBuilder.MoveTo(first.X, first.Y);
-        foreach (var point in points[1..])
+        ArgGuard.ThrowIfNotPositive(strokeWidth);
+        SelectBatch(null, null);
+        Span<Vector2> points = stackalloc Vector2[128];
+        var segments = CurveSegments(radius, _camera.WorldToDeviceMatrix);
+        for (var i = 0; i < segments; i++)
         {
-            var devicePoint = camera.WorldToDevice(point);
-            pathBuilder.LineTo(devicePoint.X, devicePoint.Y);
+            var angle = i * MathF.Tau / segments;
+            points[i] = center + radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
         }
-
-        using var path = pathBuilder.Detach();
-        Canvas.DrawPath(path, paint);
+        StrokePolygon(points[..segments], _camera.WorldToDeviceMatrix, color, strokeWidth);
     }
 
-    public void DrawShapeOutline(SpatialObject2D worldObject, SKColor color, float screenStrokeWidth = 2f)
+    public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, XnaColor color, float strokeWidth = 2f)
     {
-        ArgGuard.ThrowIfNull(worldObject);
+        RequireFrame();
+        ArgGuard.ThrowIfNotPositive(strokeWidth);
+        SelectBatch(null, null);
+        for (var i = 1; i < points.Length; i++)
+            Line(_camera.WorldToDevice(points[i - 1]), _camera.WorldToDevice(points[i]), color, strokeWidth);
+    }
+
+    public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
+    {
+        RequireFrame();
+        ArgGuard.ThrowIfNotPositive(spacing);
+        ArgGuard.ThrowIfNotPositive(majorLineEvery);
+        SelectBatch(null, null);
+        var visible = _camera.VisibleWorldBounds;
+        for (var x = (int)MathF.Floor(visible.Left / spacing); x <= (int)MathF.Ceiling(visible.Right / spacing); x++)
+            Line(_camera.WorldToDevice(new(x * spacing, visible.Bottom)), _camera.WorldToDevice(new(x * spacing, visible.Top)),
+                new XnaColor(255, 255, 255, x == 0 ? 85 : x % majorLineEvery == 0 ? 35 : 18), x == 0 ? 2 : 1);
+        for (var y = (int)MathF.Floor(visible.Bottom / spacing); y <= (int)MathF.Ceiling(visible.Top / spacing); y++)
+            Line(_camera.WorldToDevice(new(visible.Left, y * spacing)), _camera.WorldToDevice(new(visible.Right, y * spacing)),
+                new XnaColor(255, 255, 255, y == 0 ? 85 : y % majorLineEvery == 0 ? 35 : 18), y == 0 ? 2 : 1);
+    }
+
+    public void DrawShapeOutline(SpatialObject2D item, XnaColor color, float screenStrokeWidth = 2f)
+    {
+        RequireFrame();
+        ArgGuard.ThrowIfNull(item);
         ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
-
-        var worldBounds = worldObject.WorldBounds;
-        if (worldBounds.IsFinite && !worldBounds.Intersects(_visibleWorldBounds))
-            return;
-
-        var objectToDevice = worldObject.Transform.LocalToWorldMatrix * camera.WorldToDeviceMatrix;
-        var localStrokeWidth = screenStrokeWidth / camera.Zoom;
-        using var paint = CreateStrokePaint(color, localStrokeWidth);
-        var skiaMatrix = ToSkiaMatrix(objectToDevice);
-        Canvas.Save();
-        Canvas.Concat(in skiaMatrix);
-        try
-        {
-            DrawShapeOutlineCore(worldObject.Shape, paint, objectToDevice);
-        }
-        finally
-        {
-            Canvas.Restore();
-        }
+        if (IsCulled(item)) return;
+        SelectBatch(null, null);
+        OutlineShape(item.Shape, item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix, color, screenStrokeWidth);
     }
 
-    private void DrawShapeOutlineCore(IShape2D shape, SKPaint paint, Matrix3x2 objectToDevice)
+    public void DrawShapeOverlay(SpatialObject2D item, XnaColor fillColor, XnaColor outlineColor, float screenStrokeWidth = 2f)
     {
-        switch (shape)
-        {
-            case ConvexPolygon2D polygon:
-                DrawConvexPolygon(polygon, paint);
-                break;
-            case Circle2D circle:
-                Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
-                break;
-            case Capsule2D capsule:
-                DrawCapsuleOutline(capsule, paint);
-                break;
-            case Rectangle2D rectangle:
-                Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
-                break;
-            case HalfSpace2D halfSpace:
-                DrawHalfSpaceBoundary(halfSpace, paint, objectToDevice);
-                break;
-            case CompositeShape2D composite:
-                foreach (var part in composite.Parts)
-                    DrawShapeOutlineCore(part, paint, objectToDevice);
-                break;
-        }
-    }
-
-    public void DrawShapeOverlay(SpatialObject2D worldObject, SKColor fillColor, SKColor outlineColor, float screenStrokeWidth = 2f)
-    {
-        ArgGuard.ThrowIfNull(worldObject);
+        RequireFrame();
+        ArgGuard.ThrowIfNull(item);
         ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
+        if (IsCulled(item)) return;
+        var matrix = item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
+        var bounds = item.Shape.LocalBounds.IsFinite ? item.Shape.LocalBounds : GetVisibleLocalBounds(matrix);
+        SelectBatch(null, null);
+        FillShape(item.Shape, matrix, bounds, new SolidColorShader(fillColor));
+        OutlineShape(item.Shape, matrix, outlineColor, screenStrokeWidth);
+    }
 
-        var worldBounds = worldObject.WorldBounds;
-        if (worldBounds.IsFinite && !worldBounds.Intersects(_visibleWorldBounds))
+    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, XnaColor color, float width)
+    {
+        if (shape is CompositeShape2D composite)
+        {
+            foreach (var part in composite.Parts) OutlineShape(part, matrix, color, width);
             return;
+        }
+        if (shape is ConvexPolygon2D polygon) { StrokePolygon(polygon.Vertices, matrix, color, width); return; }
+        Span<Vector2> points = stackalloc Vector2[260];
+        var count = GetShapePoints(shape, matrix, points);
+        if (shape is HalfSpace2D) Line(Vector2.Transform(points[0], matrix), Vector2.Transform(points[1], matrix), color, width);
+        else StrokePolygon(points[..count], matrix, color, width);
+    }
 
-        var objectToDevice = worldObject.Transform.LocalToWorldMatrix * camera.WorldToDeviceMatrix;
-        using var fillPaint = new SKPaint
+    private void StrokePolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, XnaColor color, float width)
+    {
+        for (var i = 0; i < points.Length; i++)
+            Line(Vector2.Transform(points[i], matrix), Vector2.Transform(points[(i + 1) % points.Length], matrix), color, width);
+    }
+
+    private void Line(Vector2 start, Vector2 end, XnaColor color, float width)
+    {
+        var axis = end - start;
+        if (axis.LengthSquared() <= float.Epsilon) return;
+        var normal = Vector2.Normalize(new Vector2(-axis.Y, axis.X)) * width * 0.5f;
+        var a = Vertex(start + normal, color);
+        var b = Vertex(end + normal, color);
+        var c = Vertex(end - normal, color);
+        var d = Vertex(start - normal, color);
+        Triangle(a, b, c);
+        Triangle(a, c, d);
+    }
+
+    private bool IsCulled(SpatialObject2D item) => item.WorldBounds.IsFinite && !item.WorldBounds.Intersects(_visibleWorldBounds);
+    private Bounds2D GetVisibleLocalBounds(Matrix3x2 matrix)
+    {
+        if (!Matrix3x2.Invert(matrix, out var inverse)) StateGuard.Throw("Cannot render a shape with a singular transform.");
+        return new Bounds2D(Vector2.Zero, _camera.ViewportSize).TransformedBy(inverse);
+    }
+    private void RequireFrame()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        StateGuard.ThrowIf(!_frameActive, "BeginFrame must be called before drawing.");
+    }
+
+    private void ReleaseTexture(Texture2D texture)
+    {
+        if (!_textures.Remove(texture, out var resident)) return;
+        if (_batchTexture == resident.Texture)
         {
-            Color = fillColor,
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        };
-        using var outlinePaint = CreateStrokePaint(outlineColor, screenStrokeWidth / camera.Zoom);
-        var skiaMatrix = ToSkiaMatrix(objectToDevice);
-        Canvas.Save();
-        Canvas.Concat(in skiaMatrix);
-        try
-        {
-            DrawShape(worldObject.Shape, fillPaint, objectToDevice, drawHalfSpaceFill: true);
-            DrawShape(worldObject.Shape, outlinePaint, objectToDevice, drawHalfSpaceFill: false);
+            Flush();
+            _batchTexture = null;
         }
-        finally
-        {
-            Canvas.Restore();
-        }
+        texture.Disposed -= ReleaseTexture;
+        _textureBytes -= resident.Bytes;
+        _recentTextures.Remove(resident.Node);
+        resident.Texture.Dispose();
     }
 
     public void Dispose()
     {
-        _hudFont.Dispose();
-        _hudTextPaint.Dispose();
-        _hudBackgroundPaint.Dispose();
-        _worldPaint.Dispose();
+        if (_disposed) return;
+        _vertexCount = 0;
+        _batchTexture = null;
+        while (_recentTextures.First is { } node) ReleaseTexture(node.Value);
+        foreach (var sampler in _samplers.Values) sampler.Dispose();
+        _font.Dispose();
+        _effect.Dispose();
+        _disposed = true;
     }
 
-    private SKCanvas Canvas => StateGuard.RequireNotNull(_canvas, "BeginFrame must be called before drawing.");
-
-    private void DrawConvexPolygon(ConvexPolygon2D polygon, SKPaint paint)
-    {
-        var vertices = polygon.Vertices;
-        using var pathBuilder = new SKPathBuilder();
-        pathBuilder.MoveTo(vertices[0].X, vertices[0].Y);
-
-        foreach (var vertex in vertices[1..])
-            pathBuilder.LineTo(vertex.X, vertex.Y);
-
-        pathBuilder.Close();
-        using var path = pathBuilder.Detach();
-        Canvas.DrawPath(path, paint);
-    }
-
-    private void DrawShape(IShape2D shape, SKPaint paint, Matrix3x2 objectToDevice, bool drawHalfSpaceFill)
-    {
-        switch (shape)
-        {
-            case ConvexPolygon2D polygon:
-                DrawConvexPolygon(polygon, paint);
-                break;
-            case Circle2D circle:
-                Canvas.DrawCircle(circle.Center.X, circle.Center.Y, circle.Radius, paint);
-                break;
-            case Capsule2D capsule when paint.Style == SKPaintStyle.Fill:
-                DrawCapsule(capsule, paint);
-                break;
-            case Capsule2D capsule:
-                DrawCapsuleOutline(capsule, paint);
-                break;
-            case Rectangle2D rectangle:
-                Canvas.DrawRect(new SKRect(rectangle.Min.X, rectangle.Min.Y, rectangle.Max.X, rectangle.Max.Y), paint);
-                break;
-            case HalfSpace2D halfSpace when drawHalfSpaceFill:
-                DrawHalfSpace(halfSpace, paint, objectToDevice);
-                break;
-            case HalfSpace2D halfSpace:
-                DrawHalfSpaceBoundary(halfSpace, paint, objectToDevice);
-                break;
-            case CompositeShape2D composite:
-                foreach (var part in composite.Parts)
-                    DrawShape(part, paint, objectToDevice, drawHalfSpaceFill);
-                break;
-        }
-    }
-
-    private void DrawCapsule(Capsule2D capsule, SKPaint paint)
-    {
-        paint.Style = SKPaintStyle.Stroke;
-        paint.StrokeWidth = capsule.Radius * 2f;
-        paint.StrokeCap = SKStrokeCap.Round;
-        Canvas.DrawLine(capsule.Start.X, capsule.Start.Y, capsule.End.X, capsule.End.Y, paint);
-    }
-
-    private void DrawCapsuleOutline(Capsule2D capsule, SKPaint paint)
-    {
-        var axis = capsule.End - capsule.Start;
-        if (axis.LengthSquared() <= float.Epsilon)
-        {
-            Canvas.DrawCircle(capsule.Start.X, capsule.Start.Y, capsule.Radius, paint);
-            return;
-        }
-
-        var normal = Vector2.Normalize(axis.PerpCcw()) * capsule.Radius;
-        Canvas.DrawLine(capsule.Start.X + normal.X, capsule.Start.Y + normal.Y, capsule.End.X + normal.X, capsule.End.Y + normal.Y, paint);
-        Canvas.DrawLine(capsule.Start.X - normal.X, capsule.Start.Y - normal.Y, capsule.End.X - normal.X, capsule.End.Y - normal.Y, paint);
-        Canvas.DrawCircle(capsule.Start.X, capsule.Start.Y, capsule.Radius, paint);
-        Canvas.DrawCircle(capsule.End.X, capsule.End.Y, capsule.Radius, paint);
-    }
-
-    private void DrawHalfSpaceBoundary(HalfSpace2D halfSpace, SKPaint paint, Matrix3x2 objectToDevice)
-    {
-        var visibleBounds = GetVisibleLocalBounds(objectToDevice);
-        var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
-        var extent = visibleBounds.Size.Length();
-        var center = halfSpace.Normal * halfSpace.Offset;
-        var start = center - tangent * extent;
-        var end = center + tangent * extent;
-        Canvas.DrawLine(start.X, start.Y, end.X, end.Y, paint);
-    }
-
-    private void DrawHalfSpace(HalfSpace2D halfSpace, SKPaint paint, Matrix3x2 objectToDevice)
-    {
-        var visibleBounds = GetVisibleLocalBounds(objectToDevice);
-        Span<Vector2> corners =
-        [
-            visibleBounds.Min,
-            new Vector2(visibleBounds.Max.X, visibleBounds.Min.Y),
-            visibleBounds.Max,
-            new Vector2(visibleBounds.Min.X, visibleBounds.Max.Y)
-        ];
-
-        var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
-        var minTangent = float.PositiveInfinity;
-        var maxTangent = float.NegativeInfinity;
-        var minNormal = float.PositiveInfinity;
-        foreach (var corner in corners)
-        {
-            var tangentProjection = Vector2.Dot(corner, tangent);
-            minTangent = Math.Min(minTangent, tangentProjection);
-            maxTangent = Math.Max(maxTangent, tangentProjection);
-            minNormal = Math.Min(minNormal, Vector2.Dot(corner, halfSpace.Normal));
-        }
-
-        var margin = Math.Max(visibleBounds.Size.Length() * 0.1f, 10f);
-        minTangent -= margin;
-        maxTangent += margin;
-        var deepProjection = Math.Min(minNormal, halfSpace.Offset) - margin;
-        var boundaryCenter = halfSpace.Normal * halfSpace.Offset;
-
-        Span<Vector2> vertices =
-        [
-            boundaryCenter + tangent * minTangent,
-            boundaryCenter + tangent * maxTangent,
-            halfSpace.Normal * deepProjection + tangent * maxTangent,
-            halfSpace.Normal * deepProjection + tangent * minTangent
-        ];
-
-        using var pathBuilder = new SKPathBuilder();
-        pathBuilder.MoveTo(vertices[0].X, vertices[0].Y);
-        foreach (var vertex in vertices[1..])
-            pathBuilder.LineTo(vertex.X, vertex.Y);
-        pathBuilder.Close();
-        using var path = pathBuilder.Detach();
-        Canvas.DrawPath(path, paint);
-    }
-
-    private Bounds2D GetVisibleLocalBounds(Matrix3x2 objectToDevice)
-    {
-        if (!Matrix3x2.Invert(objectToDevice, out var deviceToObject))
-            StateGuard.Throw("Cannot render a shape with a singular transform.");
-
-        return new Bounds2D(Vector2.Zero, camera.ViewportSize).TransformedBy(deviceToObject);
-    }
-
-    private static SKMatrix ToSkiaMatrix(Matrix3x2 matrix) => new(
-        matrix.M11, matrix.M21, matrix.M31,
-        matrix.M12, matrix.M22, matrix.M32,
-        0f, 0f, 1f);
-
-    private static SKPaint CreateStrokePaint(SKColor color, float width) => new()
-    {
-        Color = color,
-        StrokeWidth = width,
-        IsAntialias = true,
-        Style = SKPaintStyle.Stroke
-    };
+    private readonly record struct SamplerKey(TextureAddressMode X, TextureAddressMode Y, TextureFilter Filter);
+    private sealed record Residency(GpuTexture Texture, LinkedListNode<Texture2D> Node, long Bytes);
 }

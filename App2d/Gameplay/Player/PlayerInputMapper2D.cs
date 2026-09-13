@@ -62,7 +62,12 @@ public sealed class PlayerInputMapper2D
             input.WasKeyPressed(Keys.ShiftKey) ||
                 input.WasKeyPressed(Keys.LShiftKey) ||
                 input.WasKeyPressed(Keys.RShiftKey) ||
-                controller.DashPressed);
+                controller.DashPressed,
+            Math.Clamp(
+                Axis(input, Keys.S, Keys.W) +
+                (!input.IsShiftDown ? Axis(input, Keys.Down, Keys.Up) : 0f) +
+                controller.ClimbY, -1f, 1f),
+            input.WasKeyPressed(Keys.Space) || controller.JumpPressed);
         _jumpActionHeld = jumpHeld;
 
         var mouseAttackPressed = input.WasMousePressed(MouseButtons.Left);
@@ -80,7 +85,12 @@ public sealed class PlayerInputMapper2D
                     controller.SwitchEquipment,
                 input.WasKeyPressed(Keys.K) ||
                     mouseKickPressed ||
-                    controller.UseSecondaryAction),
+                    controller.UseSecondaryAction,
+                input.IsKeyDown(Keys.J) || input.IsMouseDown(MouseButtons.Left) ||
+                    controller.PrimaryActionHeld,
+                input.WasKeyReleased(Keys.J) || input.WasMouseReleased(MouseButtons.Left) ||
+                    controller.PrimaryActionReleased,
+                DownHeld: downHeld),
             input.WasKeyPressed(Keys.F3));
     }
 

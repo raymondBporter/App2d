@@ -1,10 +1,9 @@
 using App2d.Core;
 using App2d.Diagnostics;
 using App2d.Rendering;
-using App2d.Rendering.Textures;
-using SkiaSharp;
-using SkiaSharp.Views.Desktop;
+using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d;
 
@@ -14,11 +13,10 @@ public sealed class GameHost : IDisposable
     private const double MaximumFrameSeconds = 0.1d;
     private readonly Game2D _game;
     private readonly Form _window;
-    private readonly Control _surface;
-    private readonly SKControl? _rasterSurface;
-    private readonly SKGLControl? _gpuSurface;
+    private readonly GraphicsSurface2D _surface;
+
     private readonly InputState _input = new();
-    private readonly Renderer2D _renderer;
+    private Renderer2D? _renderer;
     private readonly DeveloperConsoleView _consoleView;
     private readonly Control? _editorOverlay;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
@@ -29,25 +27,15 @@ public sealed class GameHost : IDisposable
     private double _previousTime;
     private double _simulationTime;
     private double _nextTitleUpdateTime;
-    private bool _gpuCacheConfigured;
+
     private bool _disposed;
 
     public GameHost(Game2D game)
     {
         _game = game;
-        _renderer = new Renderer2D(game.Camera);
-        if (string.Equals(Environment.GetEnvironmentVariable("APP2D_RENDER_BACKEND"), "raster", StringComparison.OrdinalIgnoreCase))
-        {
-            _rasterSurface = new SKControl();
-            _surface = _rasterSurface;
-            _rasterSurface.PaintSurface += OnPaintRasterSurface;
-        }
-        else
-        {
-            _gpuSurface = new SKGLControl();
-            _surface = _gpuSurface;
-            _gpuSurface.PaintSurface += OnPaintGpuSurface;
-        }
+        _surface = new GraphicsSurface2D();
+        _surface.RenderFrame += RenderSurface;
+        _surface.DeviceDisposing += ReleaseRenderer;
         _surface.Dock = DockStyle.Fill;
         _surface.TabStop = true;
         _window = new Form
@@ -103,13 +91,8 @@ public sealed class GameHost : IDisposable
         _accumulator = Math.Min(_accumulator + elapsedSeconds, MaximumFrameSeconds);
         _renderFrameTime = new FrameTime((float)elapsedSeconds, totalTime, _renderFrameTime.FrameNumber + 1);
 
-        var canvasSize = _gpuSurface?.CanvasSize ?? _rasterSurface!.CanvasSize;
-        var deviceWidth = canvasSize.Width > 0
-            ? (int)MathF.Round(canvasSize.Width)
-            : _surface.ClientSize.Width;
-        var deviceHeight = canvasSize.Height > 0
-            ? (int)MathF.Round(canvasSize.Height)
-            : _surface.ClientSize.Height;
+        var deviceWidth = Math.Max(1, _surface.ClientSize.Width);
+        var deviceHeight = Math.Max(1, _surface.ClientSize.Height);
         _input.SetDeviceMapping(_surface.ClientSize, deviceWidth, deviceHeight);
         _game.Camera.SetViewport(deviceWidth, deviceHeight);
 
@@ -139,37 +122,33 @@ public sealed class GameHost : IDisposable
                 _window.Text = title;
             _nextTitleUpdateTime = totalTime + 0.25d;
         }
-        // Refresh invokes PaintSurface now. Simulation consumes real time in exact
+        // Refresh submits and presents the MonoGame frame now. Simulation consumes real time in exact
         // 1/120-second steps, independently of this timer's render cadence.
         _surface.Refresh();
     }
 
-    private void OnPaintRasterSurface(object? sender, SKPaintSurfaceEventArgs e) =>
-        RenderSurface(e.Surface, e.Info.Width, e.Info.Height);
-
-    private void OnPaintGpuSurface(object? sender, SKPaintGLSurfaceEventArgs e)
+    private void RenderSurface(GraphicsDevice device, int width, int height)
     {
-        if (!_gpuCacheConfigured)
+        _renderer ??= new Renderer2D(_game.Camera, device);
+        _renderer.BeginFrame(width, height, _frameTime);
+        try
         {
-            _gpuSurface!.GRContext.SetResourceCacheLimit(
-                TextureMemoryBudget2D.GpuResourceCacheBytes);
-            _gpuCacheConfigured = true;
+            if (_game.DrawGraphics)
+                _game.Render(_renderer);
+            else
+                _renderer.Clear(new XnaColor(24, 27, 36));
+            _game.RenderDiagnostics(_renderer, _renderFrameTime);
         }
-        RenderSurface(e.Surface, e.Info.Width, e.Info.Height);
+        finally
+        {
+            _renderer.EndFrame();
+        }
     }
 
-    private void RenderSurface(SKSurface surface, int width, int height)
+    private void ReleaseRenderer()
     {
-        _renderer.BeginFrame(surface.Canvas, width, height, _frameTime);
-        if (_game.DrawGraphics)
-        {
-            _game.Render(_renderer);
-        }
-        else
-        {
-            _renderer.Clear(new SKColor(24, 27, 36));
-        }
-        _game.RenderDiagnostics(_renderer, _renderFrameTime);
+        _renderer?.Dispose();
+        _renderer = null;
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e)
@@ -289,9 +268,8 @@ public sealed class GameHost : IDisposable
             _editorOverlay.VisibleChanged -= OnEditorOverlayVisibleChanged;
             _surface.MouseDown -= OnSurfaceMouseDown;
         }
-        _gpuSurface?.PaintSurface -= OnPaintGpuSurface;
-        _rasterSurface?.PaintSurface -= OnPaintRasterSurface;
-        _renderer.Dispose();
+
+        ReleaseRenderer();
         _consoleView.Dispose();
         _surface.Dispose();
         _window.Dispose();

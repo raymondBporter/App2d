@@ -84,6 +84,12 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
             for (var x = startX; x < endX; x++)
             {
                 var kind = _tileMap.GetTileKind(x, y);
+                if (kind.IsLadder())
+                {
+                    AddVisual(visuals, _tilesets.GetTileset(x, y).CreateLadder(
+                        GetTileBounds(x, y), !_tileMap.GetTileKind(x, y + 1).IsLadder()));
+                    continue;
+                }
                 if (kind.IsSpikes())
                 {
                     var spikeBounds = GetTileBounds(x, y);

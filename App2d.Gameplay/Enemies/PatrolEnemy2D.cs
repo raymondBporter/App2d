@@ -7,8 +7,7 @@ namespace App2d.Gameplay.Enemies;
 
 public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 {
-    private readonly Dictionary<object, int> _lastAttackIds =
-        new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
     private float _direction = 1f;
     private float _hitFlashSeconds;
     private float _stunSeconds;
@@ -21,13 +20,14 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 
         WorldObject = worldObject;
         Body = body;
-        Body.UserData = this;
+        Body.EntityId = Id;
         PatrolMinX = patrolMinX;
         PatrolMaxX = patrolMaxX;
         Speed = speed;
         Health = new Health2D(health);
     }
 
+    public EntityId2D Id { get; } = EntityId2D.Create();
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }
@@ -53,16 +53,17 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
             Body.LinearVelocity = Vector2.Zero;
     }
 
-    public bool TryRegisterHit(object attackSource, int attackId)
+    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
     {
-        ArgGuard.ThrowIfNull(attackSource);
-        if (_lastAttackIds.TryGetValue(attackSource, out var lastAttackId) &&
+        if (!attackSourceId.IsValid)
+            throw new ArgumentException("An attack source ID is required.", nameof(attackSourceId));
+        if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) &&
             lastAttackId == attackId)
         {
             return false;
         }
 
-        _lastAttackIds[attackSource] = attackId;
+        _lastAttackIds[attackSourceId] = attackId;
         return true;
     }
 

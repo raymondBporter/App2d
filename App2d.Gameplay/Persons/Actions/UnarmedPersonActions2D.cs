@@ -131,7 +131,7 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
         {
             _combat.ResolveAttack(
                 attack.Action.WorldObject,
-                attack.Action,
+                attack.Action.SourceId,
                 attack.Action.AttackId,
                 _ownerFaction,
                 _targetLayer,

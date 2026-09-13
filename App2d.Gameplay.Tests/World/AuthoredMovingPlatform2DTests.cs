@@ -5,7 +5,7 @@ using App2d.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Tiles;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 using Xunit;
 
@@ -34,7 +34,7 @@ public sealed class AuthoredMovingPlatform2DTests
             new Vector2(96f, 0f),
             new Vector2(80f, 14f),
             48f,
-            new SKColor(37, 210, 190));
+            new XnaColor(37, 210, 190));
         var level = new SideScrollerLevel2D(traversal, map, _ => 1, [authored]);
         var scene = new Scene2D();
         var collision = new CollisionSystem2D();

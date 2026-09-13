@@ -14,6 +14,9 @@ internal sealed class MeleeAttack2D(
     private float _inputBufferSeconds;
 
     public SpatialObject2D WorldObject { get; } = worldObject;
+    // Identity belongs to this action source, not its owner: punch and kick
+    // can have the same attack sequence number without suppressing each other.
+    public EntityId2D SourceId { get; } = EntityId2D.Create();
     public int AttackId { get; private set; }
     public float DurationSeconds => profile.DurationSeconds;
     public bool IsInProgress { get; private set; }

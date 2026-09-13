@@ -138,7 +138,8 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             if (IsHammerActive && !_hammerImpactPlayed)
             {
                 _hammerImpactPlayed = true;
-                _sounds.Play(SoundEffect2D.HammerImpact);
+                _sounds.PlayAt(SoundEffect2D.HammerImpact,
+                    Enemy.WorldObject.Transform.Position + new Vector2(_facing * 62f, -10f));
             }
             if (_animation.IsFinished)
                 FinishAttack(AttackCooldownSeconds);
@@ -218,7 +219,7 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         _animation.Play(_hammerAnimation, restart: true);
         _animation.PlaybackSpeed = 1f;
         Enemy.Body.LinearVelocity = new Vector2(0f, Enemy.Body.LinearVelocity.Y);
-        _sounds.Play(SoundEffect2D.HammerWindup);
+        _sounds.PlayAt(SoundEffect2D.HammerWindup, Enemy.WorldObject.Transform.Position);
     }
 
     private void FinishAttack(float cooldownSeconds)

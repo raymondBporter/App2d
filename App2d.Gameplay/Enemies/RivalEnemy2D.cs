@@ -8,7 +8,7 @@ using App2d.Gameplay.Player;
 using App2d.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
@@ -75,7 +75,7 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
 
         _hostileMarker = new WorldObject2D(
             new Circle2D(8f),
-            new SolidColorShader(new SKColor(255, 46, 166)))
+            new SolidColorShader(new XnaColor(255, 46, 166)))
         {
             ZIndex = 3
         };

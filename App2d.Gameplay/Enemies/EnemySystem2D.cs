@@ -19,10 +19,7 @@ public sealed class EnemySystem2D
     {
         ArgGuard.ThrowIfNull(actor);
         StateGuard.ThrowIf(
-            _registeredEnemies.Any(item => ReferenceEquals(item.Actor, actor)),
-            "The enemy actor is already registered.");
-        StateGuard.ThrowIf(
-            _combatants.Any(item => ReferenceEquals(item, actor.Combatant)),
+            _combatants.Any(item => item.Id == actor.Combatant.Id),
             "The enemy combatant is already registered.");
 
         actor.SetSimulationEnabled(false);

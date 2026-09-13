@@ -29,16 +29,20 @@ public sealed class PersonPresentation2D : IDisposable
     private readonly float _maximumFallSpeed;
 
     private AnimationClip2D<Texture2D> _idleAnimation = null!;
+    private AnimationClip2D<Texture2D> _balanceLeftFootAnimation = null!;
+    private AnimationClip2D<Texture2D> _balanceRightFootAnimation = null!;
     private AnimationClip2D<Texture2D> _walkAnimation = null!;
     private AnimationClip2D<Texture2D> _jumpAnimation = null!;
     private AnimationClip2D<Texture2D> _fallAnimation = null!;
     private AnimationClip2D<Texture2D> _wallGripAnimation = null!;
+    private AnimationClip2D<Texture2D> _climbAnimation = null!;
     private AnimationClip2D<Texture2D> _dashAnimation = null!;
     private AnimationClip2D<Texture2D> _landingAnimation = null!;
     private AnimationClip2D<Texture2D> _hitAnimation = null!;
     private AnimationClip2D<Texture2D> _deathAnimation = null!;
     private AnimationClip2D<Texture2D> _meleeAttackAnimation = null!;
     private AnimationClip2D<Texture2D> _wallMeleeAttackAnimation = null!;
+    private AnimationClip2D<Texture2D> _downAttackAnimation = null!;
     private AnimationClip2D<Texture2D> _shotAnimation = null!;
     private AnimationClip2D<Texture2D> _wallShotAnimation = null!;
     private AnimationClip2D<Texture2D> _shieldBlockAnimation = null!;
@@ -111,6 +115,9 @@ public sealed class PersonPresentation2D : IDisposable
         _animation.PlaybackSpeed = 1f;
     }
 
+    public void PlayDownAttack(float durationSeconds) =>
+        PlayTimedMeleeAnimation(_downAttackAnimation, durationSeconds);
+
     public void PlayUnarmedAttack(
         UnarmedAttackKind2D kind,
         float durationSeconds)
@@ -142,6 +149,14 @@ public sealed class PersonPresentation2D : IDisposable
         bool isMeleeAttackActive)
     {
         ArgGuard.ThrowIfNull(person);
+        if (person.Actions?.IsChargingPrimary == true)
+        {
+            // The baked idle's first frame is also the gun's authored muzzle pose.
+            _animation.Play(_idleAnimation, restart: true);
+            _animation.PlaybackSpeed = 0f;
+            UpdateVisual(0f, frameNumber, person.Position, person.Facing, person.InvulnerabilitySeconds);
+            return;
+        }
         if (ReferenceEquals(_animation.Clip, _deathAnimation))
         {
             UpdateVisual(deltaSeconds, frameNumber, person.Position, person.Facing, 0f);
@@ -154,7 +169,8 @@ public sealed class PersonPresentation2D : IDisposable
             !_animation.IsFinished;
         var isPlayingMeleeAnimation =
             (ReferenceEquals(_animation.Clip, _meleeAttackAnimation) ||
-             ReferenceEquals(_animation.Clip, _wallMeleeAttackAnimation)) &&
+             ReferenceEquals(_animation.Clip, _wallMeleeAttackAnimation) ||
+             ReferenceEquals(_animation.Clip, _downAttackAnimation)) &&
             !_animation.IsFinished;
         var isPlayingLanding =
             ReferenceEquals(_animation.Clip, _landingAnimation) &&
@@ -207,18 +223,22 @@ public sealed class PersonPresentation2D : IDisposable
             !isPlayingLanding)
         {
             var isWalking = person.IsGrounded && MathF.Abs(moveInputX) > 0.01f;
-            var locomotionClip = person.IsWallGripping
+            var locomotionClip = person.IsClimbingLadder
+                ? _climbAnimation
+                : person.IsWallGripping
                 ? _wallGripAnimation
                 : person.IsGrounded
                 ? isWalking
                     ? _walkAnimation
-                    : _idleAnimation
+                    : SelectStandingAnimation(person)
                 : person.Body.LinearVelocity.Y <= 0f
                     ? _fallAnimation
                     : _jumpAnimation;
             if (!ReferenceEquals(_animation.Clip, locomotionClip))
                 _animation.Play(locomotionClip);
-            _animation.PlaybackSpeed = isWalking
+            _animation.PlaybackSpeed = person.IsClimbingLadder
+                ? MathF.Abs(person.Body.LinearVelocity.Y) > 0.01f ? 1f : 0f
+                : isWalking
                 ? Math.Clamp(MathF.Abs(moveInputX), 0.65f, 1.35f)
                 : 1f;
         }
@@ -255,10 +275,16 @@ public sealed class PersonPresentation2D : IDisposable
     private void LoadCharacter(string characterId)
     {
         _idleAnimation = LoadAnimation(characterId, "idle");
+        var hasBalanceAnimations = string.Equals(characterId, SwordCharacterId, StringComparison.Ordinal);
+        _balanceLeftFootAnimation = hasBalanceAnimations
+            ? LoadAnimation(characterId, "balance-left-foot") : _idleAnimation;
+        _balanceRightFootAnimation = hasBalanceAnimations
+            ? LoadAnimation(characterId, "balance-right-foot") : _idleAnimation;
         _walkAnimation = LoadAnimation(characterId, "walk");
         _jumpAnimation = LoadAnimation(characterId, "jump-start");
         _fallAnimation = LoadAnimation(characterId, "fall");
         _wallGripAnimation = LoadAnimation(characterId, "wall-grip");
+        _climbAnimation = LoadAnimation(characterId, "climb");
         _dashAnimation = LoadAnimation(characterId, "dash");
         _landingAnimation = LoadAnimation(characterId, "land");
         _hitAnimation = LoadAnimation(characterId, "hit-a");
@@ -282,6 +308,17 @@ public sealed class PersonPresentation2D : IDisposable
                 ? LoadAnimation(characterId, "wall-sword-attack")
                 : _meleeAttackAnimation;
             _shotAnimation = LoadAnimation(characterId, "magic-shot");
+            if (string.Equals(characterId, GunCharacterId, StringComparison.Ordinal))
+            {
+                // Keep the barrel at its socket for the flash, then play baked recoil.
+                var durations = Enumerable.Repeat(
+                    0.12f / _shotAnimation.FrameCount, _shotAnimation.FrameCount + 1).ToArray();
+                durations[0] = 0.06f;
+                _shotAnimation = new AnimationClip2D<Texture2D>(
+                    new[] { _idleAnimation[0] }.Concat(_shotAnimation.Frames),
+                    durations,
+                    isLooping: false);
+            }
             _wallShotAnimation = string.Equals(
                 characterId,
                 GunCharacterId,
@@ -292,7 +329,19 @@ public sealed class PersonPresentation2D : IDisposable
             _kickAnimation = _meleeAttackAnimation;
         }
         _shieldBlockAnimation = LoadAnimation(characterId, "shield-block");
+        _downAttackAnimation = string.Equals(characterId, SwordCharacterId, StringComparison.Ordinal)
+            ? LoadAnimation(characterId, "sword-down-attack") : _meleeAttackAnimation;
         _characterId = characterId;
+    }
+
+    private AnimationClip2D<Texture2D> SelectStandingAnimation(Person2D person)
+    {
+        // Clip names describe the planted foot in the right-facing source image.
+        // Mirroring the sprite swaps which world edge each pose balances over.
+        var localEdgeDirection = person.BalanceDirection * person.Facing;
+        return localEdgeDirection > 0f ? _balanceLeftFootAnimation
+            : localEdgeDirection < 0f ? _balanceRightFootAnimation
+            : _idleAnimation;
     }
 
     private AnimationClip2D<Texture2D> LoadAnimation(

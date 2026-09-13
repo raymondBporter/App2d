@@ -1,0 +1,8 @@
+{
+  "balance-subtle": {
+    "loop_pose_max_matrix_error": 0.0
+  },
+  "balance-windmill": {
+    "loop_pose_max_matrix_error": 0.0
+  }
+}

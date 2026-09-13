@@ -4,7 +4,7 @@ using App2d.Gameplay.Assets;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Tiles;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 using System.Text.Json;
 
@@ -47,6 +47,8 @@ internal sealed class SideScrollerTerrainTileset2D
     private readonly IShader2D _spikeLeftShader;
     private readonly IShader2D _spikeMiddleShader;
     private readonly IShader2D _spikeRightShader;
+    private readonly IShader2D _ladderTopShader;
+    private readonly IShader2D _ladderMiddleShader;
     private readonly float _surfaceThickness;
     private readonly float _outerCornerSize;
     private readonly float _innerCornerSize;
@@ -70,6 +72,8 @@ internal sealed class SideScrollerTerrainTileset2D
         IShader2D spikeLeftShader,
         IShader2D spikeMiddleShader,
         IShader2D spikeRightShader,
+        IShader2D ladderTopShader,
+        IShader2D ladderMiddleShader,
         float surfaceThickness,
         float outerCornerSize,
         float innerCornerSize,
@@ -92,6 +96,8 @@ internal sealed class SideScrollerTerrainTileset2D
         _spikeLeftShader = ArgGuard.RequireNotNull(spikeLeftShader);
         _spikeMiddleShader = ArgGuard.RequireNotNull(spikeMiddleShader);
         _spikeRightShader = ArgGuard.RequireNotNull(spikeRightShader);
+        _ladderTopShader = ArgGuard.RequireNotNull(ladderTopShader);
+        _ladderMiddleShader = ArgGuard.RequireNotNull(ladderMiddleShader);
         ArgGuard.ThrowIfNotPositive(surfaceThickness);
         ArgGuard.ThrowIfNotPositive(outerCornerSize);
         ArgGuard.ThrowIfNotPositive(innerCornerSize);
@@ -152,6 +158,8 @@ internal sealed class SideScrollerTerrainTileset2D
             CreateStripShader(textures, relativeRoot, spikeRoot, "left"),
             CreateStripShader(textures, relativeRoot, spikeRoot, "middle"),
             CreateStripShader(textures, relativeRoot, spikeRoot, "right"),
+            new SpriteShader2D(textures.Load(LadderAssets2D.ResolvePath(textures, tilesetId, isTop: true))),
+            new SpriteShader2D(textures.Load(LadderAssets2D.ResolvePath(textures, tilesetId, isTop: false))),
             manifest.SurfaceThickness,
             manifest.OuterCornerSize,
             manifest.InnerCornerSize,
@@ -164,18 +172,18 @@ internal sealed class SideScrollerTerrainTileset2D
         const float surfaceThickness = 8f;
         const float outerCornerSize = 12f;
         const float innerCornerSize = 10f;
-        var topShader = new SolidColorShader(new SKColor(44, 229, 255));
-        var sideShader = new SolidColorShader(new SKColor(67, 126, 255));
-        var oneWayShader = new SolidColorShader(new SKColor(255, 207, 72));
+        var topShader = new SolidColorShader(new XnaColor(44, 229, 255));
+        var sideShader = new SolidColorShader(new XnaColor(67, 126, 255));
+        var oneWayShader = new SolidColorShader(new XnaColor(255, 207, 72));
         return new SideScrollerTerrainTileset2D(
-            new SolidColorShader(new SKColor(24, 29, 40)),
-            new SolidColorShader(new SKColor(76, 231, 120)),
+            new SolidColorShader(new XnaColor(24, 29, 40)),
+            new SolidColorShader(new XnaColor(76, 231, 120)),
             topShader,
             sideShader,
-            new SolidColorShader(new SKColor(145, 92, 255)),
+            new SolidColorShader(new XnaColor(145, 92, 255)),
             sideShader,
-            new SolidColorShader(new SKColor(242, 246, 255)),
-            new SolidColorShader(new SKColor(255, 91, 176)),
+            new SolidColorShader(new XnaColor(242, 246, 255)),
+            new SolidColorShader(new XnaColor(255, 91, 176)),
             oneWayShader,
             oneWayShader,
             oneWayShader,
@@ -184,6 +192,8 @@ internal sealed class SideScrollerTerrainTileset2D
             oneWayShader,
             oneWayShader,
             oneWayShader,
+            new SolidColorShader(new XnaColor(190, 133, 89)),
+            new SolidColorShader(new XnaColor(190, 133, 89)),
             surfaceThickness,
             outerCornerSize,
             innerCornerSize,
@@ -196,6 +206,9 @@ internal sealed class SideScrollerTerrainTileset2D
 
     public WorldObject2D CreateGrippable(Bounds2D tileBounds) =>
         CreateVisual(tileBounds.Size, tileBounds.Center, _grippableShader);
+
+    public WorldObject2D CreateLadder(Bounds2D tileBounds, bool isTop) =>
+        CreateVisual(tileBounds.Size, tileBounds.Center, isTop ? _ladderTopShader : _ladderMiddleShader);
 
     public WorldObject2D CreateSurface(Bounds2D tileBounds, TileSurface2D surface) =>
         surface switch
@@ -262,7 +275,7 @@ internal sealed class SideScrollerTerrainTileset2D
     }
 
     private static TextureShader2D CreateTerrainShader(TextureCache2D textures, string relativeRoot, string fileName, Vector2 logicalSize) =>
-        new(textures.Load(Path.Combine(relativeRoot, fileName)), logicalSize, SKShaderTileMode.Clamp, SKShaderTileMode.Clamp);
+        new(textures.Load(Path.Combine(relativeRoot, fileName)), logicalSize, Microsoft.Xna.Framework.Graphics.TextureAddressMode.Clamp, Microsoft.Xna.Framework.Graphics.TextureAddressMode.Clamp);
 
     private static string ResolveSurfacePath(
         TextureCache2D textures,

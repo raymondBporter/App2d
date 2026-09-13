@@ -85,7 +85,12 @@ public sealed class PhysicsBody2D
         get => Collider.CollisionMask;
         set => Collider.CollisionMask = value;
     }
-    public object? UserData { get; set; }
+    /// <summary>Owning gameplay entity; collision queries expose the same ID.</summary>
+    public EntityId2D EntityId
+    {
+        get => Collider.EntityId;
+        set => Collider.EntityId = value;
+    }
 
     public float OneWaySlop
     {

@@ -41,6 +41,11 @@ internal sealed class XboxControllerInput2D
             gamepad.LeftThumbY,
             LeftStickDeadZone);
         var moveX = movement.X;
+        var climbY = movement.Y;
+        if (buttons.HasFlag(XInputButtons.DPadUp))
+            climbY = 1f;
+        else if (buttons.HasFlag(XInputButtons.DPadDown))
+            climbY = -1f;
         var downHeld = movement.Y < -0.5f ||
             buttons.HasFlag(XInputButtons.DPadDown);
         if (buttons.HasFlag(XInputButtons.DPadLeft))
@@ -48,6 +53,8 @@ internal sealed class XboxControllerInput2D
         else if (buttons.HasFlag(XInputButtons.DPadRight))
             moveX = 1f;
 
+        var primaryReleased = _previousButtons.HasFlag(XInputButtons.X) &&
+            !buttons.HasFlag(XInputButtons.X);
         _previousButtons = buttons;
         var frame = new XboxControllerFrame2D(
             moveX,
@@ -59,7 +66,10 @@ internal sealed class XboxControllerInput2D
             pressed.HasFlag(XInputButtons.Y),
             pressed.HasFlag(XInputButtons.X),
             pressed.HasFlag(XInputButtons.RightShoulder),
-            aim == Vector2.Zero ? null : playerPosition + aim * AimDistance);
+            aim == Vector2.Zero ? null : playerPosition + aim * AimDistance,
+            climbY,
+            buttons.HasFlag(XInputButtons.X),
+            primaryReleased);
         return frame;
     }
 
@@ -141,6 +151,7 @@ internal sealed class XboxControllerInput2D
     private enum XInputButtons : ushort
     {
         None = 0,
+        DPadUp = 0x0001,
         DPadDown = 0x0002,
         DPadLeft = 0x0004,
         DPadRight = 0x0008,
@@ -162,4 +173,7 @@ internal readonly record struct XboxControllerFrame2D(
     bool SwitchEquipment,
     bool UsePrimaryAction,
     bool UseSecondaryAction,
-    Vector2? AimTarget);
+    Vector2? AimTarget,
+    float ClimbY,
+    bool PrimaryActionHeld,
+    bool PrimaryActionReleased);

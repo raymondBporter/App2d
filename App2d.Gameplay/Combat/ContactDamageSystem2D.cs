@@ -7,16 +7,18 @@ namespace App2d.Gameplay.Combat;
 /// <summary>Resolves opt-in body contact attacks against a person.</summary>
 public sealed class ContactDamageSystem2D(
     CollisionSystem2D collision,
-    uint sourceLayer)
+    uint sourceLayer,
+    CombatantRegistry2D combatants)
 {
     private readonly CollisionSystem2D _collision =
         ArgGuard.RequireNotNull(collision);
     private readonly List<CollisionOverlap2D> _overlaps = [];
+    private readonly CombatantRegistry2D _combatants = ArgGuard.RequireNotNull(combatants);
 
     public bool Resolve(Person2D target)
     {
         ArgGuard.ThrowIfNull(target);
-        if (target.IsDashing || !target.IsAlive)
+        if (target.IsDashing || target.DownAttackBouncedThisFrame || !target.IsAlive)
             return false;
 
         _collision.Overlap(
@@ -27,11 +29,9 @@ public sealed class ContactDamageSystem2D(
             excluded: target.Body.Collider);
         foreach (var overlap in _overlaps)
         {
-            if (overlap.Collider.UserData is not Physics.PhysicsBody2D
-                {
-                    UserData: ICombatant2D { IsAlive: true } combatant and
-                        IContactDamageSource2D source
-                })
+            if (_combatants.Find(overlap.Collider.EntityId) is not
+                ICombatant2D { IsAlive: true } combatant ||
+                combatant is not IContactDamageSource2D source)
             {
                 continue;
             }

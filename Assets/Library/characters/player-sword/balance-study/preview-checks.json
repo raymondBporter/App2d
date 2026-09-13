@@ -1,0 +1,22 @@
+{
+  "balance-subtle": {
+    "frames": 72,
+    "support_contact_x": [
+      228,
+      229,
+      230
+    ],
+    "support_contact_y": 409,
+    "support_pixels_identical_all_frames": true
+  },
+  "balance-windmill": {
+    "frames": 72,
+    "support_contact_x": [
+      228,
+      229,
+      230
+    ],
+    "support_contact_y": 409,
+    "support_pixels_identical_all_frames": true
+  }
+}

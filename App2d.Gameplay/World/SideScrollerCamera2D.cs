@@ -1,7 +1,7 @@
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Rendering;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
@@ -200,9 +200,9 @@ public sealed class SideScrollerCamera2D
 
     private void CreateParallaxBackground(Scene2D scene)
     {
-        var cloudShader = new SolidColorShader(new SKColor(240, 250, 255, 205));
-        var farMountainShader = new SolidColorShader(new SKColor(90, 145, 177));
-        var nearHillShader = new SolidColorShader(new SKColor(70, 128, 125));
+        var cloudShader = new SolidColorShader(new XnaColor(240, 250, 255, 205));
+        var farMountainShader = new SolidColorShader(new XnaColor(90, 145, 177));
+        var nearHillShader = new SolidColorShader(new XnaColor(70, 128, 125));
 
         for (var i = 0; i < 8; i++)
         {

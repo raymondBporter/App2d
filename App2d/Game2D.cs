@@ -3,7 +3,7 @@ using App2d.Diagnostics;
 using App2d.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d;
@@ -37,7 +37,7 @@ public abstract class Game2D : IDisposable
 
     public virtual void Render(Renderer2D renderer)
     {
-        renderer.Clear(new SKColor(24, 27, 36));
+        renderer.Clear(new XnaColor(24, 27, 36));
         renderer.DrawGrid();
         renderer.Draw(Scene);
     }
@@ -65,8 +65,8 @@ public abstract class Game2D : IDisposable
     {
         if (_drawCollisionShapes)
         {
-            var fillColor = new SKColor(70, 245, 190, 55);
-            var outlineColor = new SKColor(70, 245, 190, 235);
+            var fillColor = new XnaColor(70, 245, 190, 55);
+            var outlineColor = new XnaColor(70, 245, 190, 235);
             foreach (var physicsWorld in _debugPhysicsWorlds)
             {
                 foreach (var body in physicsWorld.Bodies)
@@ -76,8 +76,8 @@ public abstract class Game2D : IDisposable
                 }
             }
 
-            var attackFillColor = new SKColor(255, 82, 92, 70);
-            var attackOutlineColor = new SKColor(255, 105, 70, 245);
+            var attackFillColor = new XnaColor(255, 82, 92, 70);
+            var attackOutlineColor = new XnaColor(255, 105, 70, 245);
             foreach (var provider in _debugAttackShapeProviders)
             {
                 foreach (var attackShape in provider())

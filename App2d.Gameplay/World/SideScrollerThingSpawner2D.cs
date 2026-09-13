@@ -87,6 +87,14 @@ internal sealed class SideScrollerThingSpawner2D(
         }
 
         enemies.UpdateStreaming(streamer.IsChunkActive);
+
+        void Register(IEnemyActor2D enemy)
+        {
+            var homeChunk = tileMap.WorldToChunk(
+                enemy.Combatant.WorldObject.Transform.Position);
+            combat.Combatants.Register(enemy.Combatant);
+            enemies.Register(enemy, homeChunk);
+        }
     }
 
     private Shieldback2D CreateShieldback(Vector2 position, TextureCache2D textures)
@@ -107,12 +115,5 @@ internal sealed class SideScrollerThingSpawner2D(
             speed: 118f,
             health: 3);
         return new Shieldback2D(scene, textures, enemy);
-    }
-
-    private void Register(IEnemyActor2D enemy)
-    {
-        var homeChunk = tileMap.WorldToChunk(
-            enemy.Combatant.WorldObject.Transform.Position);
-        enemies.Register(enemy, homeChunk);
     }
 }

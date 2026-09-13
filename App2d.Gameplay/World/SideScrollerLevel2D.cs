@@ -9,7 +9,7 @@ using App2d.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Tiles;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
@@ -315,7 +315,7 @@ public sealed class SideScrollerLevel2D
     {
         var pole = new WorldObject2D(
             new Capsule2D(Vector2.Zero, new Vector2(0f, 190f), 5f),
-            new SolidColorShader(new SKColor(238, 242, 232)));
+            new SolidColorShader(new XnaColor(238, 242, 232)));
         pole.Transform.Position = GoalThing!.Position;
         scene.Add(pole);
 
@@ -326,7 +326,7 @@ public sealed class SideScrollerLevel2D
                 new Vector2(92f, -30f),
                 new Vector2(0f, -60f)
             ]),
-            new SolidColorShader(new SKColor(255, 79, 120)));
+            new SolidColorShader(new XnaColor(255, 79, 120)));
         flag.Transform.Position = GoalThing.Position + new Vector2(0f, 185f);
         scene.Add(flag);
     }

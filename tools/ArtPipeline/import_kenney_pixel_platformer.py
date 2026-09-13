@@ -107,9 +107,11 @@ def import_grassland(archive: Path, output_root: Path) -> None:
     fill = resize_tile(read_tile(archive, 104))
     grass_top = grass_surface(read_tile(archive, 22))
     save(fill, output / "fill.png")
-    grippable = fill.copy()
-    grippable.alpha_composite(resize_tile(read_tile(archive, 71)))
+    # A textured stone block marks a solid, grippable wall.
+    grippable = resize_tile(read_tile(archive, 6))
     save(grippable, output / "grippable.png")
+    save(resize_tile(read_tile(archive, 51)), output / "ladder/top.png")
+    save(resize_tile(read_tile(archive, 71)), output / "ladder/middle.png")
     save(grass_top, output / "surfaces/top.png")
     save(bordered_surface(fill, "bottom"), output / "surfaces/bottom.png")
     save(bordered_surface(fill, "left"), output / "surfaces/left.png")

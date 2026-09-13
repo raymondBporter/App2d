@@ -6,4 +6,6 @@ public readonly record struct PersonMovementIntent2D(
     bool JumpHeld,
     bool JumpReleased,
     bool DropThroughPressed,
-    bool DashPressed);
+    bool DashPressed,
+    float ClimbY = 0f,
+    bool LadderJumpPressed = false);

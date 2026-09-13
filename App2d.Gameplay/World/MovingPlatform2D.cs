@@ -3,7 +3,7 @@ using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Physics;
 using App2d.Rendering;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Gameplay.World;
 
@@ -28,7 +28,7 @@ public sealed class MovingPlatform2D : IDisposable
         float speed,
         uint collisionLayer,
         uint collisionMask,
-        SKColor color)
+        XnaColor color)
     {
         ArgGuard.ThrowIfNull(scene);
         _scene = scene;

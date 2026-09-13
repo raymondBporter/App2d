@@ -1,0 +1,38 @@
+[
+  {
+    "frame": 1,
+    "label": "Immediate stab",
+    "bladeAngleDegrees": -91,
+    "sweepVisible": true
+  },
+  {
+    "frame": 2,
+    "label": "Impact",
+    "bladeAngleDegrees": -90,
+    "sweepVisible": true
+  },
+  {
+    "frame": 3,
+    "label": "Hold down",
+    "bladeAngleDegrees": -90,
+    "sweepVisible": false
+  },
+  {
+    "frame": 4,
+    "label": "Release",
+    "bladeAngleDegrees": -90,
+    "sweepVisible": false
+  },
+  {
+    "frame": 5,
+    "label": "Retract",
+    "bladeAngleDegrees": -89,
+    "sweepVisible": false
+  },
+  {
+    "frame": 6,
+    "label": "Airborne guard",
+    "bladeAngleDegrees": 128,
+    "sweepVisible": false
+  }
+]

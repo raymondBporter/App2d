@@ -119,3 +119,26 @@ References:
   documents the 5B model with native offloading for 8 GB VRAM.
 - [Scenario's sprite-sheet workflow](https://help.scenario.com/articles/9088582240-create-spritesheets-with-scenario)
   also uses generated video as a source of animation frames.
+
+## Locomotion experiments (2026-09-05)
+
+Three further 512x512, 49-frame, 20-step tests were evaluated visually:
+
+| Prompt | Seed | Run | Seconds | Observation |
+| --- | --- | --- | --- | --- |
+| `gurgle-crawl.txt` | 778 | `20260905-115845-441636` | 79.02 | Mostly static body; appendage motion rather than a coordinated crawl. |
+| `gurgle-inchworm.txt` | 779 | `20260905-120049-917043` | 80.14 | Body compresses/extends, but horns deform severely and no cycle completes. |
+| `gurgle-hop.txt` | 780 | `20260905-120248-773059` | 81.08 | Invents leg-like anatomy and shrinks the subject. Rejected. |
+
+Runs are under `Assets/Work/video-sprites/runs`. The latter two use
+`Assets/Work/video-sprites/inputs/gurgle-crawl-room.png`: the original RGBA image
+uniformly reduced to 384x384 and placed at (0,115) on a transparent 512x512
+canvas to provide travel/headroom. No individual parts were altered.
+
+The inchworm run's `crawl-study` selects frames `0,12,24,36,48`, held for 120 ms
+each (600 ms). Its `palette-cleanup` folder contains the same cleanup/export
+variants as the roar experiment. This is a failed locomotion study with a
+visible last-to-first discontinuity, not an approved movement asset. The GIF
+repeats only for viewing. No registration, shape correction, reverse playback,
+or game movement was added to conceal the failed cycle. Raw videos and complete
+frame sheets are retained to assess prompt adherence independently of editing.

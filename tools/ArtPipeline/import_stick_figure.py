@@ -38,6 +38,7 @@ COMMON_ANIMATIONS = {
     "jump-start": AnimationSpec("jump", frames_per_second=14),
     "fall": AnimationSpec("jump", frames_per_second=1, loop=True, frame_indices=(2,)),
     "wall-grip": AnimationSpec("wallslide", frames_per_second=4, loop=True),
+    "climb": AnimationSpec("climb", frames_per_second=8, loop=True),
     "dash": AnimationSpec("dash", duration_seconds=0.16),
     "land": AnimationSpec("jump", frames_per_second=12, frame_indices=(0,)),
     "hit-a": AnimationSpec("hit", duration_seconds=0.28),

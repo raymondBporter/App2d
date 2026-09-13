@@ -19,6 +19,7 @@ public sealed class Person2DTests
     private const uint WorldLayer = 1u << 0;
     private const uint PlayerLayer = 1u << 1;
     private const uint EnemyLayer = 1u << 2;
+    private readonly CombatantRegistry2D _combatants = new();
 
     [Fact]
     public void ResetCanRestoreSavedHealthAtANewPosition()
@@ -112,11 +113,11 @@ public sealed class Person2DTests
             new Vector2(100f, 0f),
             EnemyLayer,
             CombatFaction2D.Enemy);
-        var combat = new CombatSystem2D(collision, new SilentSounds());
+        var combat = new CombatSystem2D(collision, new SilentSounds(), _combatants);
 
         Assert.True(combat.ResolveAttack(
             rival.WorldObject,
-            new object(),
+            EntityId2D.Create(),
             attackId: 1,
             CombatFaction2D.Player,
             EnemyLayer,
@@ -127,7 +128,7 @@ public sealed class Person2DTests
 
         Assert.True(combat.ResolveAttack(
             player.WorldObject,
-            new object(),
+            EntityId2D.Create(),
             attackId: 1,
             CombatFaction2D.Enemy,
             PlayerLayer,
@@ -165,7 +166,7 @@ public sealed class Person2DTests
             attacker.Body,
             CombatFaction2D.Player,
             EnemyLayer,
-            new CombatSystem2D(collision, new SilentSounds()));
+            new CombatSystem2D(collision, new SilentSounds(), _combatants));
         attacker.AttachActions(actions);
 
         attacker.BeginFrame(activeTime);
@@ -199,7 +200,7 @@ public sealed class Person2DTests
             person.Body,
             CombatFaction2D.Player,
             EnemyLayer,
-            new CombatSystem2D(collision, new SilentSounds()));
+            new CombatSystem2D(collision, new SilentSounds(), _combatants));
         var cues = new List<UnarmedAttackKind2D>();
         actions.AttackStarted += (kind, _) => cues.Add(kind);
 
@@ -213,7 +214,7 @@ public sealed class Person2DTests
     }
 
     [Fact]
-    public void GunReleaseUsesActionTimeWithoutPresentation()
+    public void GroundedGunReleaseUsesChargeTimeWithoutPresentation()
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
@@ -235,26 +236,28 @@ public sealed class Person2DTests
             WorldLayer,
             EnemyLayer,
             CombatFaction2D.Player,
-            new CombatSystem2D(collision, new SilentSounds()),
+            new CombatSystem2D(collision, new SilentSounds(), _combatants),
             new SilentSounds());
         person.AttachActions(arsenal);
         var fire = new PersonCommand2D(
             default,
             UsePrimaryAction: true,
             AimTarget: null,
-            SwitchEquipment: true);
+            SwitchEquipment: true,
+            PrimaryActionHeld: true);
 
+        AddGroundSupport(physics, person);
         person.Face(1f);
-        person.BeginFrame(0.07f);
-        person.ApplyCommand(fire, 0.07f);
-        physics.Step(0.07f);
-        person.UpdateAfterPhysics(0.07f);
+        person.BeginFrame(0.59f);
+        person.ApplyCommand(fire, 0.59f);
+        physics.Step(0.59f);
+        person.UpdateAfterPhysics(0.59f);
         Assert.Empty(arsenal.GetActiveAttackHitboxes());
 
-        person.BeginFrame(0.02f);
-        person.ApplyCommand(default, 0.02f);
-        physics.Step(0.02f);
-        person.UpdateAfterPhysics(0.02f);
+        person.BeginFrame(0.01f);
+        person.ApplyCommand(fire with { UsePrimaryAction = false, SwitchEquipment = false }, 0.01f);
+        physics.Step(0.01f);
+        person.UpdateAfterPhysics(0.01f);
         Assert.Single(arsenal.GetActiveAttackHitboxes());
     }
 
@@ -298,7 +301,7 @@ public sealed class Person2DTests
     }
 
     [Fact]
-    public void WallGripGunReleaseKeepsMuzzleAndVelocityAwayFromWall()
+    public void WallGripCanChargeAndFireGunAwayFromWall()
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
@@ -318,34 +321,24 @@ public sealed class Person2DTests
 
         person.BeginFrame(0.04f);
         person.ApplyCommand(
-            WallGripCommand(useWeapon: true, switchWeapon: true),
+            WallGripCommand(useWeapon: true, switchWeapon: true) with { PrimaryActionHeld = true },
             0.04f);
         Assert.True(person.IsWallGripping);
-        Assert.Equal(-1f, person.Facing);
+
         physics.Step(0.04f);
         person.UpdateAfterPhysics(0.04f);
         Assert.Empty(arsenal.GetActiveAttackHitboxes());
 
-        person.BeginFrame(0.05f);
-        person.ApplyCommand(
-            WallGripCommand(useWeapon: false, switchWeapon: false),
-            0.05f);
-        Assert.Equal(1f, person.Facing);
-        physics.Step(0.05f);
-        person.UpdateAfterPhysics(0.05f);
-
+        for (var i = 0; i < 72; i++)
+        {
+            person.BeginFrame(1f / 120f);
+            person.ApplyCommand(WallGripCommand(false, false) with { PrimaryActionHeld = true }, 1f / 120f);
+            physics.Step(1f / 120f);
+            person.UpdateAfterPhysics(1f / 120f);
+        }
+        Assert.False(arsenal.IsChargingPrimary);
         var bullet = Assert.Single(arsenal.GetActiveAttackHitboxes());
         Assert.True(bullet.Transform.Position.X < person.Position.X);
-        var releaseX = bullet.Transform.Position.X;
-
-        person.BeginFrame(0.02f);
-        person.ApplyCommand(
-            WallGripCommand(useWeapon: false, switchWeapon: false),
-            0.02f);
-        physics.Step(0.02f);
-        person.UpdateAfterPhysics(0.02f);
-
-        Assert.True(bullet.Transform.Position.X < releaseX);
     }
 
     [Fact]
@@ -425,14 +418,15 @@ public sealed class Person2DTests
         Assert.InRange(person.Body.LinearVelocity.Y, -0.01f, 0.01f);
     }
 
-    private static Person2D CreatePerson(
+    private Person2D CreatePerson(
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
         TraversalMetrics2D traversal,
         Vector2 position,
         uint layer,
-        CombatFaction2D faction) =>
-        new(
+        CombatFaction2D faction)
+    {
+        var person = new Person2D(
             collision,
             physics,
             traversal,
@@ -440,8 +434,11 @@ public sealed class Person2DTests
             layer,
             WorldLayer,
             faction);
+        _combatants.Register(person);
+        return person;
+    }
 
-    private static PersonArsenal2D CreateArsenal(
+    private PersonArsenal2D CreateArsenal(
         Scene2D scene,
         Person2D person,
         TextureCache2D textures,
@@ -454,7 +451,7 @@ public sealed class Person2DTests
             WorldLayer,
             EnemyLayer,
             CombatFaction2D.Player,
-            new CombatSystem2D(collision, new SilentSounds()),
+            new CombatSystem2D(collision, new SilentSounds(), _combatants),
             new SilentSounds());
 
     private static void AddRightGrippableWall(

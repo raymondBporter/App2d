@@ -30,11 +30,25 @@ def write_manifest(content_root: Path) -> None:
         "characters/boiler-brute/character.json",
         "characters/shieldback/character.json",
         "effects/bullet/orange.png",
+        "effects/gun/bolt.png",
+        "effects/gun/charge.png",
+        "effects/gun/ready/frame-0000.png",
+        "effects/gun/ready/frame-0023.png",
+        "effects/gun/flash.png",
+        "effects/gun/trail-00.png",
+        "effects/gun/trail-07.png",
+        "ui/hud/gun-charge/frame-0060.png",
+        "audio/sfx/gun-charge.wav",
+        "audio/sfx/gun-fire.wav",
+        "audio/sfx/gun-cancel.wav",
+        "audio/sfx/gun-impact.wav",
         "effects/fireball/ember-energy.png",
         "environments/tilesets/rust-cyberpunk/tileset.json",
         "environments/tilesets/dark-cave/tileset.json",
         "environments/tilesets/mossy-cavern/tileset.json",
         "environments/tilesets/kenney-grassland/tileset.json",
+        "environments/tilesets/kenney-grassland/ladder/top.png",
+        "environments/tilesets/kenney-grassland/ladder/middle.png",
         "ui/hud/weapons/sword.png",
         "ui/hud/weapons/gun.png",
         "ui/hud/weapons/unarmed.png",
@@ -108,6 +122,13 @@ def main() -> None:
         )
         run(
             repository,
+            "Importing authored Blender sword animations",
+            str(pipeline / "import_blender_character.py"),
+            "--content-root",
+            str(staging_root),
+        )
+        run(
+            repository,
             "Importing Maaot DarkCave and Mossy Cavern environments",
             str(pipeline / "import_maaot_caves.py"),
             "--content-root",
@@ -120,6 +141,8 @@ def main() -> None:
             "--content-root",
             str(staging_root),
         )
+        run(repository, "Baking blue charged-gun effects and audio",
+            str(pipeline / "build_gun_effects.py"), "--content-root", str(staging_root))
         write_manifest(staging_root)
         replace_runtime_tree(runtime_root, staging_root, work_root)
     finally:

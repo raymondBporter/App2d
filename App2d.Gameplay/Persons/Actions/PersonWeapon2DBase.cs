@@ -12,7 +12,7 @@ internal abstract class PersonWeapon2DBase(
     public string Name { get; } = ArgGuard.RequireNotNull(name);
     public string EquipmentId { get; } = ArgGuard.RequireNotNull(equipmentId);
     public virtual string Status => Name;
-    public Texture2D HudTexture { get; } = ArgGuard.RequireNotNull(hudTexture);
+    public virtual Texture2D HudTexture { get; } = ArgGuard.RequireNotNull(hudTexture);
     public virtual IEnumerable<SpatialObject2D> ActiveHitboxes => [];
 
     public abstract float Use(Vector2? aimTarget, float facing);

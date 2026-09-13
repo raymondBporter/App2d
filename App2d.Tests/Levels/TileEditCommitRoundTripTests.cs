@@ -89,6 +89,7 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
         session.Paint(3, 3, TileKind2D.Solid);   // a chunk corner: touches (0,0) only for data
         session.Paint(4, 3, TileKind2D.OneWay);  // adjacent chunk column: (1,0)
         session.Paint(10, 10, TileKind2D.Spikes); // far chunk: (2,2)
+        session.PaintLine(6, 1, 6, 12, TileKind2D.Ladder);
         var chunks = session.EndStroke();
 
         using (var edit = LevelDatabase2D.Open(path))
@@ -100,6 +101,11 @@ public sealed class TileEditCommitRoundTripTests : IDisposable
         Assert.Equal(TileKind2D.Solid, loaded.GetTileKind(3, 3));
         Assert.Equal(TileKind2D.OneWay, loaded.GetTileKind(4, 3));
         Assert.Equal(TileKind2D.Spikes, loaded.GetTileKind(10, 10));
+        for (var y = 1; y <= 12; y++)
+        {
+            Assert.True(loaded.GetTileKind(6, y).IsLadder());
+            Assert.False(loaded.IsSolid(6, y));
+        }
     }
 
     [Fact]

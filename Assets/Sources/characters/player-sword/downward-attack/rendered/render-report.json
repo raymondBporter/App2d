@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "blenderVersion": "5.2.1 LTS",
+  "blendSha256": "f2ec30458b11e5d00d7b5d311fb03c72b1e70de1675a2a005378c365a0ea847b",
+  "configSha256": "acfe6f35274a00fbeb3f9abd712e5971202a3bac1147cf5afe4f90e0478bec3b",
+  "clips": {
+    "sword-down-attack": {
+      "frameCount": 6,
+      "supportBoneMaxDrift": null,
+      "loopPoseMaxError": null,
+      "supportPixel": null
+    }
+  },
+  "references": {},
+  "files": {
+    "sword-down-attack/frame-0001.png": "f98bf75ae5f62cf865bcfb1d43e46a2fb8c1b48d9b6e24460affea39a3f216e9",
+    "sword-down-attack/frame-0002.png": "1d335ad5395864ec9bc93dfa92a2f2b892ed3b39601bd9c0967e8afc7675f705",
+    "sword-down-attack/frame-0003.png": "3a71237b30e378e41485d4a82fbbe5f29ed6a16a7830b23c90f77142563e6997",
+    "sword-down-attack/frame-0004.png": "4061a8d824333ef8150b194a70fa68dff31f426c28662fa638b984d496c0227c",
+    "sword-down-attack/frame-0005.png": "24a43128d13ed3fa55e5c746b0732bf42090fa9c13a1769299ee93a599860342",
+    "sword-down-attack/frame-0006.png": "2fa2e815404614b393eef6f1fec7a2604bcd1c518379e350476339d33a4b370a"
+  }
+}

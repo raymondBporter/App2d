@@ -13,7 +13,7 @@ using App2d.Physics;
 using App2d.Rendering;
 using App2d.Tiles;
 using App2d.Things;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d;
@@ -38,6 +38,7 @@ public sealed class SideScrollerGame : Game2D
         TraversalMetrics2D.FromPlayerAsset(AssetPaths.Root);
 
     private readonly CollisionSystem2D _collision = new();
+    private readonly CombatantRegistry2D _combatants = new();
     private readonly PhysicsWorld2D _physics;
     private readonly SideScrollerLevel2D _level;
     private readonly PlayerInputMapper2D _inputMapper = new();
@@ -49,6 +50,7 @@ public sealed class SideScrollerGame : Game2D
     private readonly SideScrollerCamera2D _cameraController;
     private readonly TraversalDebugRenderer2D _traversalDebug = new(Traversal);
     private readonly SoundEffectBank2D _sounds;
+    private readonly SpatialSoundEffectSink2D _worldSounds;
     private readonly TileEditor2D _editor;
     private readonly PlayerSaveStore2D _saveStore;
     private Vector2 _respawnPoint;
@@ -125,7 +127,10 @@ public sealed class SideScrollerGame : Game2D
             PlayerLayer,
             WorldLayer,
             CombatFaction2D.Player,
-            maximumHealth: PlayerMaximumHealth);
+            maximumHealth: PlayerMaximumHealth,
+            tileMap: tileMap);
+        _combatants.Register(_player);
+        _worldSounds = new SpatialSoundEffectSink2D(_sounds, () => _player.Position);
         if (_respawnHitPoints != PlayerMaximumHealth)
             _player.Health.Reset(_respawnHitPoints);
         _playerPresentation = new PersonPresentation2D(Scene, Textures, Traversal);
@@ -159,16 +164,18 @@ public sealed class SideScrollerGame : Game2D
             _playerPresentation.PlayHit();
             _cameraController.Shake(DamageShakeStrength);
         };
-        _contactDamage = new ContactDamageSystem2D(_collision, EnemyLayer);
+        _contactDamage = new ContactDamageSystem2D(_collision, EnemyLayer, _combatants);
 
-        _combat = new CombatSystem2D(_collision, _sounds);
-        _level.CreateAuthoredWorldThings(Textures, _combat, _sounds);
-        _arsenal = new PersonArsenal2D(Scene, _player.Body, Textures, _collision, WorldLayer, EnemyLayer, CombatFaction2D.Player, _combat, _sounds);
+        _combat = new CombatSystem2D(_collision, _worldSounds, _combatants);
+        _level.CreateAuthoredWorldThings(Textures, _combat, _worldSounds);
+        _arsenal = new PersonArsenal2D(Scene, _player.Body, Textures, _collision, WorldLayer, EnemyLayer, CombatFaction2D.Player, _combat, _worldSounds,
+            overlapsSpikes: bounds => _level.TryGetSpikeSource(bounds, out _));
         _arsenal.EquipmentChanged += _playerPresentation.Equip;
         _arsenal.MeleeAttackStarted += duration =>
             _playerPresentation.PlayMeleeAttack(
                 duration,
                 _player.IsWallGripping);
+        _arsenal.DownAttackStarted += _playerPresentation.PlayDownAttack;
         _arsenal.ShotStarted += () =>
             _playerPresentation.PlayShot(_player.IsWallGripping);
         _arsenal.UnarmedAttackStarted += (kind, duration) =>
@@ -195,12 +202,20 @@ public sealed class SideScrollerGame : Game2D
 
     public override void Update(FrameTime time, InputState input)
     {
+        UpdateGameplay(time, input);
+        // Includes editor, death and respawn frames; the listener follows the player.
+        _worldSounds.Update();
+    }
+
+    private void UpdateGameplay(FrameTime time, InputState input)
+    {
         var dt = time.DeltaSeconds;
         _saveFeedbackSeconds = Math.Max(0f, _saveFeedbackSeconds - dt);
 
         _editor.Update(input);
         if (_editor.IsActive)
         {
+            _arsenal.InterruptPrimary();
             EndPlayerJumpSound();
             // Stream around the free camera, not the frozen player, or panning away
             // would paint into chunks that never load.
@@ -231,7 +246,7 @@ public sealed class SideScrollerGame : Game2D
         _level.EnemySystem.SyncAfterPhysics();
 
         _ = _level.EnemySystem.TryResolvePlayerHits(_player);
-        if (_level.TryGetSpikeSource(
+        if (!_player.DownAttackBouncedThisFrame && _level.TryGetSpikeSource(
             _player.WorldObject.WorldBounds,
             out var spikeSourceX))
         {
@@ -277,7 +292,7 @@ public sealed class SideScrollerGame : Game2D
 
     public override void Render(Renderer2D renderer)
     {
-        renderer.Clear(new SKColor(103, 196, 235));
+        renderer.Clear(new XnaColor(103, 196, 235));
         renderer.Draw(Scene);
         PlayerHud2D.Draw(renderer, _player.Health.Current, _player.Health.Maximum, _arsenal.WeaponHudTexture, _arsenal.WeaponStatus);
 
@@ -286,8 +301,8 @@ public sealed class SideScrollerGame : Game2D
             var progress = 1f - _saveFeedbackSeconds / SaveFeedbackDurationSeconds;
             var alpha = (byte)Math.Clamp((int)(230f * (1f - progress)), 0, 230);
             var color = _lastSaveSucceeded
-                ? new SKColor(105, 225, 255, alpha)
-                : new SKColor(255, 95, 95, alpha);
+                ? new XnaColor(105, 225, 255, (int)alpha)
+                : new XnaColor(255, 95, 95, (int)alpha);
             renderer.DrawWorldCircle(
                 _saveFeedbackCenter,
                 float.Lerp(28f, 108f, progress),

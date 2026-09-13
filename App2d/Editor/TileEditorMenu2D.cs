@@ -1,7 +1,8 @@
 using App2d.Rendering;
+using App2d.Gameplay.Assets;
 using App2d.Rendering.Textures;
 using App2d.Tiles;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d.Editor;
@@ -21,17 +22,18 @@ internal static class TileEditorMenu2D
         ("Filled", TileKind2D.Solid),
         ("Grippable", TileKind2D.Solid | TileKind2D.Grippable),
         ("One-way", TileKind2D.OneWay),
-        ("Spikes", TileKind2D.Spikes)
+        ("Spikes", TileKind2D.Spikes),
+        ("Ladder", TileKind2D.Ladder)
     ];
 
-    private static readonly SKColor PanelColor = new(17, 24, 37, 242);
-    private static readonly SKColor DividerColor = new(62, 77, 99, 255);
-    private static readonly SKColor ButtonColor = new(35, 47, 66, 255);
-    private static readonly SKColor HoverColor = new(50, 65, 88, 255);
-    private static readonly SKColor SelectedColor = new(255, 214, 64, 255);
-    private static readonly SKColor TextColor = new(244, 247, 252, 255);
-    private static readonly SKColor MutedTextColor = new(160, 174, 196, 255);
-    private static readonly SKColor SelectedTextColor = new(22, 29, 41, 255);
+    private static readonly XnaColor PanelColor = new(17, 24, 37, 242);
+    private static readonly XnaColor DividerColor = new(62, 77, 99, 255);
+    private static readonly XnaColor ButtonColor = new(35, 47, 66, 255);
+    private static readonly XnaColor HoverColor = new(50, 65, 88, 255);
+    private static readonly XnaColor SelectedColor = new(255, 214, 64, 255);
+    private static readonly XnaColor TextColor = new(244, 247, 252, 255);
+    private static readonly XnaColor MutedTextColor = new(160, 174, 196, 255);
+    private static readonly XnaColor SelectedTextColor = new(22, 29, 41, 255);
 
     public static bool Contains(Vector2 viewportSize, Vector2 point) =>
         GetPanelBounds(viewportSize).Contains(point.X, point.Y);
@@ -69,7 +71,7 @@ internal static class TileEditorMenu2D
         var panel = GetPanelBounds(viewport);
         renderer.DrawScreenRoundedRectangle(panel, 0f, PanelColor);
         renderer.DrawScreenRoundedRectangle(
-            new SKRect(panel.Left, panel.Top, panel.Left + 2f, panel.Bottom),
+            new ScreenRectangle2D(panel.Left, panel.Top, panel.Left + 2f, panel.Bottom),
             0f,
             DividerColor);
 
@@ -87,7 +89,7 @@ internal static class TileEditorMenu2D
                 editor.MouseDevicePosition);
         }
 
-        var typeLabelY = GetTileTypeStartY(editor.TilesetIds.Count) - 14f;
+        var typeLabelY = GetTileTypeStartY(viewport, editor.TilesetIds.Count) - 14f;
         renderer.DrawScreenText("TILE TYPE", new Vector2(left, typeLabelY), MutedTextColor);
         for (var index = 0; index < TileTypes.Length; index++)
         {
@@ -118,7 +120,7 @@ internal static class TileEditorMenu2D
 
     private static void DrawButton(
         Renderer2D renderer,
-        SKRect bounds,
+        ScreenRectangle2D bounds,
         string label,
         bool isSelected,
         Vector2 pointer)
@@ -128,14 +130,14 @@ internal static class TileEditorMenu2D
         renderer.DrawScreenRoundedRectangle(bounds, 8f, background);
         renderer.DrawScreenText(
             label,
-            new Vector2(bounds.Left + 12f, bounds.Top + 35f),
+            new Vector2(bounds.Left + 12f, bounds.MidY + 9f),
             isSelected ? SelectedTextColor : TextColor);
     }
 
     private static void DrawTileTypeButton(
         Renderer2D renderer,
         TextureCache2D textures,
-        SKRect bounds,
+        ScreenRectangle2D bounds,
         string label,
         TileKind2D kind,
         string tilesetId,
@@ -146,9 +148,9 @@ internal static class TileEditorMenu2D
         var background = isSelected ? SelectedColor : isHovered ? HoverColor : ButtonColor;
         renderer.DrawScreenRoundedRectangle(bounds, 8f, background);
 
-        const float previewSize = 62f;
+        var previewSize = MathF.Min(62f, bounds.Height - 38f);
         var previewLeft = bounds.MidX - previewSize / 2f;
-        var preview = new SKRect(
+        var preview = new ScreenRectangle2D(
             previewLeft,
             bounds.Top + 8f,
             previewLeft + previewSize,
@@ -163,11 +165,17 @@ internal static class TileEditorMenu2D
     private static void DrawTilePreview(
         Renderer2D renderer,
         TextureCache2D textures,
-        SKRect bounds,
+        ScreenRectangle2D bounds,
         string tilesetId,
         TileKind2D kind)
     {
         var root = Path.Combine("environments", "tilesets", tilesetId);
+        if (kind.IsLadder())
+        {
+            renderer.DrawScreenTexture(
+                textures.Load(LadderAssets2D.ResolvePath(textures, tilesetId, isTop: true)), bounds);
+            return;
+        }
         if (kind.IsGrippable())
         {
             var grippablePath = Path.Combine(root, "grippable.png");
@@ -198,41 +206,48 @@ internal static class TileEditorMenu2D
         var topHeight = MathF.Max(8f, bounds.Height * 0.22f);
         renderer.DrawScreenTexture(
             textures.Load(Path.Combine(root, "surfaces", "top.png")),
-            new SKRect(bounds.Left, bounds.Top, bounds.Right, bounds.Top + topHeight));
+            new ScreenRectangle2D(bounds.Left, bounds.Top, bounds.Right, bounds.Top + topHeight));
     }
 
-    private static SKRect GetPanelBounds(Vector2 viewportSize) =>
+    private static ScreenRectangle2D GetPanelBounds(Vector2 viewportSize) =>
         new(MathF.Max(0f, viewportSize.X - PanelWidth), 0f, viewportSize.X, viewportSize.Y);
 
-    private static SKRect GetTilesetButton(Vector2 viewportSize, int index)
+    private static ScreenRectangle2D GetTilesetButton(Vector2 viewportSize, int index)
     {
         var panel = GetPanelBounds(viewportSize);
-        var top = 94f + index * (ButtonHeight + ButtonGap);
-        return new SKRect(panel.Left + Padding, top, panel.Right - Padding, top + ButtonHeight);
+        var height = GetTilesetButtonHeight(viewportSize);
+        var top = 94f + index * (height + ButtonGap);
+        return new ScreenRectangle2D(panel.Left + Padding, top, panel.Right - Padding, top + height);
     }
 
-    private static float GetTileTypeStartY(int tilesetCount) =>
-        94f + tilesetCount * (ButtonHeight + ButtonGap) + SectionGap;
+    private static float GetTilesetButtonHeight(Vector2 viewportSize) =>
+        viewportSize.Y >= 1000f ? ButtonHeight : 32f;
 
-    private static SKRect GetTileTypeButton(Vector2 viewportSize, int tilesetCount, int index) =>
-        GetGridButton(viewportSize, GetTileTypeStartY(tilesetCount), index);
+    private static float GetTileTypeStartY(Vector2 viewportSize, int tilesetCount) =>
+        94f + tilesetCount * (GetTilesetButtonHeight(viewportSize) + ButtonGap) + SectionGap;
 
-    private static SKRect GetGridButton(Vector2 viewportSize, float startY, int index)
+    private static ScreenRectangle2D GetTileTypeButton(Vector2 viewportSize, int tilesetCount, int index) =>
+        GetGridButton(viewportSize, GetTileTypeStartY(viewportSize, tilesetCount), index);
+
+    private static ScreenRectangle2D GetGridButton(Vector2 viewportSize, float startY, int index)
     {
         var panel = GetPanelBounds(viewportSize);
         var availableWidth = panel.Width - Padding * 2f - ButtonGap;
         var width = availableWidth / 2f;
         var column = index % 2;
         var row = index / 2;
+        var rows = (TileTypes.Length + 1) / 2;
+        var availableHeight = GetThingsButton(viewportSize).Top - ButtonGap - startY;
+        var height = Math.Clamp((availableHeight - (rows - 1) * ButtonGap) / rows, 44f, TileTypeButtonHeight);
         var left = panel.Left + Padding + column * (width + ButtonGap);
-        var top = startY + row * (TileTypeButtonHeight + ButtonGap);
-        return new SKRect(left, top, left + width, top + TileTypeButtonHeight);
+        var top = startY + row * (height + ButtonGap);
+        return new ScreenRectangle2D(left, top, left + width, top + height);
     }
 
-    private static SKRect GetThingsButton(Vector2 viewportSize)
+    private static ScreenRectangle2D GetThingsButton(Vector2 viewportSize)
     {
         var panel = GetPanelBounds(viewportSize);
-        return new SKRect(
+        return new ScreenRectangle2D(
             panel.Left + Padding,
             panel.Bottom - 142f,
             panel.Right - Padding,

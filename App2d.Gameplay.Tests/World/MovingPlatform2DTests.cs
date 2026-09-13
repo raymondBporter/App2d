@@ -8,7 +8,7 @@ using App2d.Gameplay.Player;
 using App2d.Gameplay.World;
 using App2d.Physics;
 using App2d.Rendering;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using Xunit;
 
 namespace App2d.Gameplay.Tests.World;
@@ -232,5 +232,5 @@ public sealed class MovingPlatform2DTests
             speed,
             collisionLayer: WorldLayer,
             collisionMask: uint.MaxValue,
-            new SKColor(37, 210, 190));
+            new XnaColor(37, 210, 190));
 }

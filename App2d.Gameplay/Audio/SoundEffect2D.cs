@@ -16,5 +16,9 @@ public enum SoundEffect2D
     HammerWindup,
     HammerImpact,
     PlayerRespawn,
-    GoalReached
+    GoalReached,
+    GunCharge,
+    GunFire,
+    GunCancel,
+    GunImpact
 }

@@ -4,7 +4,7 @@ using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Physics;
 using App2d.Rendering;
-using SkiaSharp;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d.Gameplay;
@@ -18,7 +18,7 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
     private const float HitVelocityScale = 0.8f;
     private const float HitAngularKick = 4.5f;
 
-    private readonly Dictionary<object, int> _lastAttackIds = new(ReferenceEqualityComparer.Instance);
+    private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
 
     public TumbleProp2D(Scene2D scene, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
@@ -30,13 +30,13 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
             Rectangle2D.FromSize(new Vector2(72f, 18f)),
             new Circle2D(16f, new Vector2(-42f, 0f)),
             new Circle2D(16f, new Vector2(42f, 0f))]);
-        var visual = new WorldObject2D(shape, new SolidColorShader(new SKColor(0xFF, 0x9A, 0x3B))) { ZIndex = 1 };
+        var visual = new WorldObject2D(shape, new SolidColorShader(new XnaColor(0xFF, 0x9A, 0x3B))) { ZIndex = 1 };
         visual.Transform.Position = position;
         scene.Add(visual);
         WorldObject = visual;
 
         Body = physics.AddBody(visual, BodyMotionType2D.Dynamic);
-        Body.UserData = this;
+        Body.EntityId = Id;
         Body.Mass = 2f;
         Body.MomentOfInertia = 1_800f;
         Body.FreezeRotation = false;
@@ -47,6 +47,7 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
         Health = new Health2D(1_000_000);
     }
 
+    public EntityId2D Id { get; } = EntityId2D.Create();
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }
@@ -73,13 +74,14 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
     {
     }
 
-    public bool TryRegisterHit(object attackSource, int attackId)
+    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
     {
-        ArgGuard.ThrowIfNull(attackSource);
-        if (_lastAttackIds.TryGetValue(attackSource, out var lastAttackId) && lastAttackId == attackId)
+        if (!attackSourceId.IsValid)
+            throw new ArgumentException("An attack source ID is required.", nameof(attackSourceId));
+        if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) && lastAttackId == attackId)
             return false;
 
-        _lastAttackIds[attackSource] = attackId;
+        _lastAttackIds[attackSourceId] = attackId;
         return true;
     }
 
