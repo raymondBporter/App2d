@@ -29,6 +29,7 @@ def write_manifest(content_root: Path) -> None:
         "characters/player-unarmed/character.json",
         "characters/boiler-brute/character.json",
         "characters/shieldback/character.json",
+        "characters/green-dinosaur/character.json",
         "effects/bullet/orange.png",
         "effects/gun/bolt.png",
         "effects/gun/charge.png",
@@ -143,6 +144,13 @@ def main() -> None:
         )
         run(repository, "Baking blue charged-gun effects and audio",
             str(pipeline / "build_gun_effects.py"), "--content-root", str(staging_root))
+        run(
+            repository,
+            "Importing the green dinosaur walk cycle",
+            str(pipeline / "import_green_dinosaur.py"),
+            "--content-root",
+            str(staging_root),
+        )
         write_manifest(staging_root)
         replace_runtime_tree(runtime_root, staging_root, work_root)
     finally:
