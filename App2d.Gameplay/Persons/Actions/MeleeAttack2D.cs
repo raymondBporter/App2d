@@ -6,7 +6,7 @@ namespace App2d.Gameplay.Persons.Actions;
 /// <summary>
 /// A timed melee overlap placed directly in front of its owner.
 /// </summary>
-internal sealed class MeleeAttack2D(
+internal sealed partial class MeleeAttack2D(
     SpatialObject2D worldObject,
     MeleeAttackProfile2D profile)
 {
@@ -19,6 +19,7 @@ internal sealed class MeleeAttack2D(
     public EntityId2D SourceId { get; } = EntityId2D.Create();
     public int AttackId { get; private set; }
     public float DurationSeconds => profile.DurationSeconds;
+    public float ElapsedSeconds => _elapsedSeconds;
     public bool IsInProgress { get; private set; }
     public bool IsDamageActive { get; private set; }
     public bool IsVisible => IsDamageActive;

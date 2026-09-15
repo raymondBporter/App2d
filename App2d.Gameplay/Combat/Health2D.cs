@@ -26,6 +26,12 @@ public sealed class Health2D
         return true;
     }
 
+    internal void RestoreSimulation(int current)
+    {
+        if (current < 0 || current > Maximum) throw new ArgumentOutOfRangeException(nameof(current));
+        Current = current;
+    }
+
     public void Reset() => Current = Maximum;
 
     public void Reset(int current)

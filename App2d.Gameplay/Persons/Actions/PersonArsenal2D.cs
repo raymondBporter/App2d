@@ -1,50 +1,41 @@
 using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
+using App2d.Gameplay.Simulation;
 using App2d.Physics;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-public sealed class PersonArsenal2D : IPersonActionSet2D
+public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
 {
+    private readonly SwordPersonWeapon2D _sword;
+    private readonly GunPersonWeapon2D _gun;
     private readonly IPersonWeapon2D[] _weapons;
     private readonly UnarmedPersonActions2D _unarmed;
-    private readonly Texture2D _unarmedHud;
     private int _equipmentIndex;
 
     public PersonArsenal2D(
-        Scene2D scene,
         PhysicsBody2D ownerBody,
-        TextureCache2D textures,
+        Vector2 muzzleOffset,
         CollisionSystem2D collision,
         uint worldLayer,
         uint targetLayer,
         CombatFaction2D ownerFaction,
         CombatSystem2D combat,
-        ISoundEffectSink2D sounds,
         Func<Bounds2D, bool>? overlapsSpikes = null)
     {
-        ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(ownerBody);
-        ArgGuard.ThrowIfNull(textures);
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(combat);
-        ArgGuard.ThrowIfNull(sounds);
 
-        var swordHud = textures.Load("ui/hud/weapons/sword.png");
-        var gunHud = textures.Load("ui/hud/weapons/gun.png");
-        _unarmedHud = textures.Load("ui/hud/weapons/unarmed.png");
-        _weapons =
-        [
-            new SwordPersonWeapon2D("SWORD","sword",ownerBody,swordHud,ownerFaction,targetLayer,combat,duration => MeleeAttackStarted?.Invoke(duration),sounds,
-                duration => DownAttackStarted?.Invoke(duration), overlapsSpikes),
-            new GunPersonWeapon2D(scene,ownerBody,textures,gunHud,collision,worldLayer,targetLayer,ownerFaction,combat,() => ShotStarted?.Invoke(),sounds)
-        ];
+        _sword = new SwordPersonWeapon2D("sword", ownerBody, ownerFaction, targetLayer, combat,
+            duration => MeleeAttackStarted?.Invoke(duration), Publish,
+            duration => DownAttackStarted?.Invoke(duration), overlapsSpikes);
+        _gun = new GunPersonWeapon2D(ownerBody, muzzleOffset, collision, worldLayer, targetLayer,
+            ownerFaction, combat, () => ShotStarted?.Invoke(), Publish);
+        _weapons = [_sword, _gun];
         _unarmed = new UnarmedPersonActions2D(
             ownerBody,
             ownerFaction,
@@ -54,36 +45,32 @@ public sealed class PersonArsenal2D : IPersonActionSet2D
             UnarmedAttackStarted?.Invoke(kind, duration);
     }
 
+    public event Action<WeaponEvent2D>? WeaponOccurred;
+    private void Publish(WeaponEvent2D occurrence) => WeaponOccurred?.Invoke(occurrence);
+    public WeaponState2D CaptureWeaponState() => _gun.CaptureState();
+    public PersonActionState2D CaptureActionState() => IsUnarmed ? _unarmed.CaptureActionState() : EquippedWeapon.CaptureActionState();
+
     public event Action<string>? EquipmentChanged;
     public event Action<float>? MeleeAttackStarted;
     public event Action<float>? DownAttackStarted;
     public event Action? ShotStarted;
     public event Action<UnarmedAttackKind2D, float>? UnarmedAttackStarted;
 
-    private GunPersonWeapon2D Gun => (GunPersonWeapon2D)_weapons[1];
-    public bool ConsumeDownAttackBounce() => ((SwordPersonWeapon2D)_weapons[0]).ConsumeBounce();
-    public bool IsChargingPrimary => !IsUnarmed && EquippedWeapon == Gun && Gun.IsCharging;
-    public float PrimaryChargeProgress => IsChargingPrimary ? Gun.ChargeProgress : 0f;
+    public bool ConsumeDownAttackBounce() => _sword.ConsumeBounce();
+    public bool IsChargingPrimary => !IsUnarmed && EquippedWeapon == _gun && _gun.IsCharging;
     public void SetPrimaryInput(bool held, bool canCharge, bool released = false) =>
-        Gun.SetInput(held, canCharge && !IsUnarmed && EquippedWeapon == Gun);
+        _gun.SetInput(held, canCharge && !IsUnarmed && EquippedWeapon == _gun);
     public void InterruptPrimary()
     {
-        Gun.CancelCharge();
-        _weapons[0].Reset();
+        _gun.CancelCharge();
+        _sword.Reset();
     }
 
     public bool IsMeleeAttackActive =>
         IsUnarmed
             ? _unarmed.IsAttackActive
             : EquippedWeapon is MeleePersonWeapon2D { IsAttackActive: true };
-    public string WeaponStatus => IsUnarmed
-        ? "Q/Y: SWITCH   J/CLICK or X: PUNCH   K/RIGHT CLICK: KICK"
-        : EquipmentId == "gun"
-        ? "Q/Y: SWITCH   HOLD J/CLICK/X: CHARGE & FIRE"
-        : $"Q/Y: SWITCH   J/CLICK or X: {EquippedWeapon.Status}";
-    public string WeaponName => IsUnarmed ? "FISTS" : EquippedWeapon.Name;
     public string EquipmentId => IsUnarmed ? "unarmed" : EquippedWeapon.EquipmentId;
-    public Texture2D WeaponHudTexture => IsUnarmed ? _unarmedHud : EquippedWeapon.HudTexture;
 
     private bool IsUnarmed => _equipmentIndex == _weapons.Length;
     private IPersonWeapon2D EquippedWeapon => _weapons[_equipmentIndex];
@@ -106,13 +93,6 @@ public sealed class PersonArsenal2D : IPersonActionSet2D
         _unarmed.BeginFrame(deltaSeconds);
     }
 
-    public void UpdateBeforePhysics(float deltaSeconds)
-    {
-        foreach (var weapon in _weapons)
-            weapon.UpdateBeforePhysics(deltaSeconds);
-        _unarmed.UpdateBeforePhysics(deltaSeconds);
-    }
-
     public void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
         foreach (var weapon in _weapons)
@@ -127,25 +107,22 @@ public sealed class PersonArsenal2D : IPersonActionSet2D
         _unarmed.Reset();
     }
 
-    public float UseWeapon(Vector2? aimTarget, float facing) =>
+    public float UsePrimary(float facing) =>
         IsUnarmed
-            ? _unarmed.UsePrimary(aimTarget, facing)
-            : EquippedWeapon.Use(aimTarget, facing);
+            ? _unarmed.UsePrimary(facing)
+            : EquippedWeapon.Use(facing);
 
-    public float UsePrimary(Vector2? aimTarget, float facing) =>
-        UseWeapon(aimTarget, facing);
-
-    public float UseDownwardPrimary(Vector2? aimTarget, float facing) =>
+    public float UseDownwardPrimary(float facing) =>
         !IsUnarmed && EquippedWeapon is SwordPersonWeapon2D sword
-            ? sword.UseDownward(aimTarget, facing)
-            : UsePrimary(aimTarget, facing);
+            ? sword.UseDownward(facing)
+            : UsePrimary(facing);
 
-    public float UseSecondary(Vector2? aimTarget, float facing) =>
+    public float UseSecondary(float facing) =>
         IsUnarmed
-            ? _unarmed.UseSecondary(aimTarget, facing)
+            ? _unarmed.UseSecondary(facing)
             : facing;
 
-    public void SelectNextWeapon()
+    public void SelectNext()
     {
         if (IsUnarmed)
             _unarmed.Reset();
@@ -154,6 +131,4 @@ public sealed class PersonArsenal2D : IPersonActionSet2D
         _equipmentIndex = (_equipmentIndex + 1) % (_weapons.Length + 1);
         EquipmentChanged?.Invoke(EquipmentId);
     }
-
-    public void SelectNext() => SelectNextWeapon();
 }

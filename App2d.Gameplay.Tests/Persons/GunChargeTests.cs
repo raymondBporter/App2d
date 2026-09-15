@@ -1,14 +1,12 @@
+using App2d.Levels;
 using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
 using App2d.Physics;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using App2d.Tiles;
 using System.Numerics;
 using Xunit;
@@ -17,8 +15,8 @@ namespace App2d.Gameplay.Tests.Persons;
 
 public sealed class GunChargeTests
 {
-    private static PersonCommand2D Hold => new(default, false, null, false, PrimaryActionHeld: true);
-    private static PersonCommand2D Release => new(default, false, null, false, PrimaryActionReleased: true);
+    private static PersonCommand2D Hold => new(default, false, false, PrimaryActionHeld: true);
+    private static PersonCommand2D Release => new(default, false, false, PrimaryActionReleased: true);
     private static PersonCommand2D Press => Hold with { UsePrimaryAction = true };
 
     [Theory]
@@ -77,7 +75,7 @@ public sealed class GunChargeTests
         for (var i = 0; i < 90; i++) game.Step(Hold);
         Assert.Equal(0, game.Shots);
         Assert.Empty(game.Arsenal.GetActiveAttackHitboxes());
-        Assert.Contains(SoundEffect2D.GunCancel, game.Sounds.Played);
+        Assert.Single(game.Events.OfType<ChargeCancelled2D>());
     }
 
     [Theory]
@@ -150,7 +148,7 @@ public sealed class GunChargeTests
             var intent = i == 0 ? movement : movement with
                 { JumpPressed = false, DashPressed = false, DropThroughPressed = false };
             game.Step(Hold with { Movement = intent, UsePrimaryAction = !chargeFirst && i == 0 });
-            baseline.Step(new PersonCommand2D(intent, false, null, false));
+            baseline.Step(new PersonCommand2D(intent, false, false));
             Assert.Equal((chargeFirst ? 30 : 0) + i + 1 < 72, game.Arsenal.IsChargingPrimary);
             Assert.Equal(baseline.Person.Position, game.Person.Position);
             Assert.Equal(baseline.Person.Body.LinearVelocity, game.Person.Body.LinearVelocity);
@@ -187,11 +185,11 @@ public sealed class GunChargeTests
         game.Step(Release);
         Assert.Equal(1, game.Shots);
         Assert.Empty(game.Arsenal.GetActiveAttackHitboxes());
-        Assert.Contains(SoundEffect2D.GunImpact, game.Sounds.Played);
+        Assert.Single(game.Events.OfType<ProjectileImpact2D>());
     }
 
     [Fact]
-    public void ProjectileImpactSoundUsesTheHitLocation()
+    public void ProjectileImpactFactUsesTheHitLocation()
     {
         using var game = new Fixture();
         var wall = game.Physics.AddBody(new SpatialObject2D(
@@ -201,30 +199,27 @@ public sealed class GunChargeTests
         game.Step(Press);
         for (var i = 1; i < 110; i++) game.Step(Hold);
 
-        var impact = Assert.Single(game.Sounds.Positioned,
-            sound => sound.Effect == SoundEffect2D.GunImpact);
+        var impact = Assert.Single(game.Events.OfType<ProjectileImpact2D>());
         Assert.InRange(impact.Position.X, 280f, 310f);
         Assert.True(impact.Position.X - game.Person.Position.X > 250f);
-        var shot = Assert.Single(game.Sounds.Positioned,
-            sound => sound.Effect == SoundEffect2D.GunFire);
+        var shot = Assert.Single(game.Events.OfType<GunFired2D>());
         Assert.InRange(shot.Position.X - game.Person.Position.X, 40f, 50f);
     }
 
     private sealed class Fixture : IDisposable
     {
-        private readonly TextureCache2D _textures = new(TestAssetPath.Root);
         public PhysicsWorld2D Physics { get; }
         public PhysicsBody2D Ground { get; }
         public Person2D Person { get; }
         public PersonArsenal2D Arsenal { get; }
-        public RecordingSounds Sounds { get; } = new();
+        public List<WeaponEvent2D> Events { get; } = [];
         public int Shots { get; private set; }
 
         public Fixture(bool ladder = false)
         {
             var collision = new CollisionSystem2D();
             Physics = new(collision) { Gravity = Vector2.Zero };
-            var metrics = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+            var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
             var map = new EditableTileMap2D(16, 64, 32f, 8);
             if (ladder)
                 for (var y = 0; y < 20; y++) map.SetTileKind(0, y, TileKind2D.Ladder);
@@ -236,8 +231,9 @@ public sealed class GunChargeTests
             Ground.WorldObject.Transform.Position = new Vector2(0, Person.WorldObject.WorldBounds.Bottom - 10f);
             Ground.CollisionLayer = 1;
             Ground.CollisionMask = 2;
-            Arsenal = new(new Scene2D(), Person.Body, _textures, collision, 1, 4,
-                CombatFaction2D.Player, new CombatSystem2D(collision, Sounds, new CombatantRegistry2D()), Sounds);
+            Arsenal = new(Person.Body, metrics.GunMuzzleOffset, collision, 1, 4,
+                CombatFaction2D.Player, new CombatSystem2D(collision, new CombatantRegistry2D()));
+            Arsenal.WeaponOccurred += Events.Add;
             Person.AttachActions(Arsenal);
             Arsenal.SelectNext();
             Arsenal.ShotStarted += () => Shots++;
@@ -252,18 +248,7 @@ public sealed class GunChargeTests
             Person.UpdateAfterPhysics(dt);
         }
 
-        public void Dispose() => _textures.Dispose();
+        public void Dispose() { }
     }
 
-    private sealed class RecordingSounds : ISoundEffectSink2D
-    {
-        public List<SoundEffect2D> Played { get; } = [];
-        public List<(SoundEffect2D Effect, Vector2 Position)> Positioned { get; } = [];
-        public void Play(SoundEffect2D effect) => Played.Add(effect);
-        public void PlayAt(SoundEffect2D effect, Vector2 position)
-        {
-            Played.Add(effect);
-            Positioned.Add((effect, position));
-        }
-    }
 }

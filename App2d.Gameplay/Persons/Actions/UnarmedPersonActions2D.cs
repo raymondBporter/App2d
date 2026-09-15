@@ -6,14 +6,8 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-public enum UnarmedAttackKind2D
-{
-    Punch,
-    Kick
-}
-
 /// <summary>Weapon-free punch and kick actions shared by human and AI persons.</summary>
-public sealed class UnarmedPersonActions2D : IPersonActionSet2D
+public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
 {
     private readonly CombatSystem2D _combat;
     private readonly PhysicsBody2D _ownerBody;
@@ -61,6 +55,10 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
     public event Action<UnarmedAttackKind2D, float>? AttackStarted;
 
     public bool IsAttackActive => _punch.Action.IsInProgress || _kick.Action.IsInProgress;
+    public PersonActionState2D CaptureActionState() => _punch.Action.IsInProgress
+        ? new(Simulation.PlayerAttackKind2D.Punch, _punch.Action.ElapsedSeconds, _punch.Action.DurationSeconds)
+        : _kick.Action.IsInProgress
+            ? new(Simulation.PlayerAttackKind2D.Kick, _kick.Action.ElapsedSeconds, _kick.Action.DurationSeconds) : default;
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
@@ -74,20 +72,16 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
     {
     }
 
-    public void UpdateBeforePhysics(float deltaSeconds)
-    {
-    }
-
     public void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
         UpdateAttack(_punch, deltaSeconds, facing);
         UpdateAttack(_kick, deltaSeconds, facing);
     }
 
-    public float UsePrimary(Vector2? aimTarget, float facing) =>
+    public float UsePrimary(float facing) =>
         Use(_punch, facing);
 
-    public float UseSecondary(Vector2? aimTarget, float facing) =>
+    public float UseSecondary(float facing) =>
         Use(_kick, facing);
 
     public void SelectNext()

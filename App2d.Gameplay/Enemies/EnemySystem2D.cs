@@ -3,10 +3,11 @@ using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Tiles;
 using System.Numerics;
+using System.Collections.Immutable;
 
 namespace App2d.Gameplay.Enemies;
 
-public sealed class EnemySystem2D
+public sealed partial class EnemySystem2D
 {
     private readonly List<RegisteredEnemy> _registeredEnemies = [];
     private readonly List<ICombatant2D> _combatants = [];
@@ -14,6 +15,12 @@ public sealed class EnemySystem2D
     public IReadOnlyList<ICombatant2D> Combatants => _combatants;
     public int Count => _combatants.Count(
         combatant => combatant.Faction == CombatFaction2D.Enemy);
+
+    public ImmutableArray<EnemyState2D> CaptureStates() =>
+        _registeredEnemies.Select(e => e.Actor.CaptureState()).ToImmutableArray();
+
+    public ImmutableArray<EnemyEvent2D> DrainEvents() =>
+        _registeredEnemies.SelectMany(e => e.Actor.DrainEvents()).ToImmutableArray();
 
     public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
     {

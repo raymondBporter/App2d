@@ -1,25 +1,35 @@
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Physics;
-using App2d.Rendering;
+using System.Collections.Immutable;
 using App2d.Tiles;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
-internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D physics, IChunkedTileMap2D tileMap, SideScrollerTerrainVisualFactory2D visuals, uint worldLayer, uint actorMask)
+internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunkedTileMap2D tileMap, uint worldLayer, uint actorMask) : IDisposable
 {
     private const int HorizontalChunkRadius = 2;
     private const int VerticalChunkRadius = 1;
     private const float OneWaySurfaceThickness = 8f;
 
-    private readonly Scene2D _scene = ArgGuard.RequireNotNull(scene);
     private readonly PhysicsWorld2D _physics = ArgGuard.RequireNotNull(physics);
     private readonly IChunkedTileMap2D _tileMap = ArgGuard.RequireNotNull(tileMap);
-    private readonly SideScrollerTerrainVisualFactory2D _visuals = ArgGuard.RequireNotNull(visuals);
     private readonly Dictionary<TileChunk2D, LoadedChunk> _loadedChunks = [];
     private readonly List<SpatialObject2D> _platforms = [];
     private readonly List<TileChunk2D> _unloadBuffer = [];
+
+    private long _revision;
+    private ImmutableArray<TerrainChunkState2D> _states;
+    public ImmutableArray<TerrainChunkState2D> CaptureState()
+    {
+        if (_states.IsDefault) _states = _loadedChunks.Values.OrderBy(c => c.State.Chunk.Y).ThenBy(c => c.State.Chunk.X).Select(c => c.State).ToImmutableArray();
+        return _states;
+    }
+    public void Dispose()
+    {
+        foreach (var chunk in _loadedChunks.Keys.ToArray()) Unload(chunk);
+    }
 
     public IReadOnlyList<SpatialObject2D> Platforms => _platforms;
     public int ActiveChunkCount => _loadedChunks.Count;
@@ -29,7 +39,7 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
     public bool IsChunkActive(TileChunk2D chunk) => _loadedChunks.ContainsKey(chunk);
 
     /// <summary>
-    /// Rebuilds a chunk whose tiles changed. Does nothing when the chunk is not loaded â€”
+    /// Rebuilds a chunk whose tiles changed. Does nothing when the chunk is not loaded —
     /// loading it later reads the current map anyway.
     /// </summary>
     public void Invalidate(TileChunk2D chunk)
@@ -51,7 +61,7 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
         var maximumY = Math.Min(_tileMap.ChunkRows - 1, center.Y + VerticalChunkRadius);
 
         _unloadBuffer.Clear();
-        foreach (var chunk in _loadedChunks.Keys)
+        foreach (var chunk in _loadedChunks.Keys.OrderBy(c => c.Y).ThenBy(c => c.X))
         {
             if (chunk.X < minimumX || chunk.X > maximumX ||
                 chunk.Y < minimumY || chunk.Y > maximumY)
@@ -76,9 +86,13 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
 
     private void Load(TileChunk2D chunk)
     {
+        Load(TerrainChunkState2D.Capture(_tileMap, chunk, ++_revision), []);
+    }
+
+    private void Load(TerrainChunkState2D state, ImmutableArray<int> restoredIds)
+    {
         var colliders = new List<ChunkCollider>();
-        var chunkVisuals = new List<WorldObject2D>();
-        foreach (var collision in _tileMap.BuildCollisionRectangles(chunk))
+        foreach (var collision in state.Collisions)
         {
             var isOneWay = collision.Kind.IsOneWay();
             var bounds = isOneWay
@@ -88,10 +102,8 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
             platform.Transform.Position = bounds.Center;
             _platforms.Add(platform);
 
-            if (collision.Kind.IsSolid() && !collision.Kind.IsGrippable())
-                chunkVisuals.AddRange(_visuals.CreateSolidFill(bounds));
-
-            var body = _physics.AddBody(platform, BodyMotionType2D.Static);
+            var body = _physics.AddBody(platform, BodyMotionType2D.Static,
+                restoredIds.IsEmpty ? null : restoredIds[colliders.Count]);
             body.Restitution = 0f;
             body.CollisionLayer = worldLayer;
             body.CollisionMask = actorMask;
@@ -100,8 +112,8 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
             colliders.Add(new ChunkCollider(platform, body));
         }
 
-        chunkVisuals.AddRange(_visuals.CreateSurfaceVisuals(chunk));
-        _loadedChunks.Add(chunk, new LoadedChunk(colliders, chunkVisuals));
+        _loadedChunks.Add(state.Chunk, new LoadedChunk(colliders, state));
+        _states = default;
     }
 
     private void Unload(TileChunk2D chunk)
@@ -112,15 +124,13 @@ internal sealed class SideScrollerChunkStreamer2D(Scene2D scene, PhysicsWorld2D 
             _physics.RemoveBody(collider.Body);
             _platforms.Remove(collider.Platform);
         }
-        foreach (var visual in loaded.Visuals)
-            _scene.Remove(visual);
-
         _loadedChunks.Remove(chunk);
+        _states = default;
     }
 
     private sealed record LoadedChunk(
         List<ChunkCollider> Colliders,
-        List<WorldObject2D> Visuals);
+        TerrainChunkState2D State);
 
     private readonly record struct ChunkCollider(
         SpatialObject2D Platform,

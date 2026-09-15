@@ -19,6 +19,13 @@ public readonly record struct EntityId2D
     public bool IsValid => Value > 0;
     public static EntityId2D None => default;
 
+    internal static long ReserveRange(int count)
+    {
+        var end = Interlocked.Add(ref _lastValue, count);
+        StateGuard.ThrowIf(end <= 0 || end < count, "Runtime entity IDs have been exhausted.");
+        return end - count;
+    }
+
     public static EntityId2D Create()
     {
         var value = Interlocked.Increment(ref _lastValue);

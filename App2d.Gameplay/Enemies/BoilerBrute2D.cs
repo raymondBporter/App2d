@@ -1,61 +1,48 @@
 using App2d.Collision;
 using App2d.Core;
-using App2d.Core.Animation;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Assets;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Physics;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using System.Numerics;
+using System.Collections.Immutable;
 
 namespace App2d.Gameplay.Enemies;
 
-public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
+public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
 {
-    private const int HammerImpactFrame = 5;
+    // Gameplay timing is fixed independently of sprite count or playback speed.
+    public const float AttackDurationSeconds = BoilerBruteTiming2D.AttackDurationSeconds;
+    public const float DamageStartSeconds = BoilerBruteTiming2D.DamageStartSeconds;
+    public const float DamageEndSeconds = BoilerBruteTiming2D.DamageEndSeconds;
+    private float _attackElapsedSeconds;
+    private readonly List<EnemyEvent2D> _events = [];
     private const float AttackRangeX = 155f;
     private const float AttackRangeY = 90f;
     private const float AttackCooldownSeconds = 1.1f;
-    private static readonly Vector2 VisualCanvasSize = new(196f, 196f);
-    private static readonly Vector2 VisualOffset = new(0f, 32f);
     private static readonly Vector2 HammerHitboxSize = new(108f, 76f);
 
-    private readonly AnimationClip2D<Texture2D> _walkAnimation;
-    private readonly AnimationClip2D<Texture2D> _hammerAnimation;
-    private readonly AnimationPlayer2D<Texture2D> _animation = new();
-    private readonly SpriteShader2D _spriteShader;
-    private readonly WorldObject2D _visual;
     private readonly SpatialObject2D _hammerHitbox;
     private readonly CollisionSystem2D _collision;
-    private readonly ISoundEffectSink2D _sounds;
     private float _attackCooldownSeconds = 0.35f;
     private float _facing = 1f;
     private bool _isAttacking;
     private bool _hammerConnected;
-    private bool _hammerImpactPlayed;
+    private bool _strikeReported;
     private bool _simulationEnabled = true;
 
     public BoilerBrute2D(
-        Scene2D scene,
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
-        TextureCache2D textures,
         Vector2 position,
         float patrolMinX,
         float patrolMaxX,
         uint worldLayer,
-        uint enemyLayer,
-        ISoundEffectSink2D sounds)
+        uint enemyLayer)
     {
-        ArgGuard.ThrowIfNull(scene);
         _collision = ArgGuard.RequireNotNull(collision);
         ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNull(textures);
         ArgGuard.ThrowIfNotFinite(position);
-        _sounds = ArgGuard.RequireNotNull(sounds);
 
         var collider = new SpatialObject2D(
             AxisAlignedRectangle2D.FromSize(new Vector2(68f, 98f)));
@@ -75,24 +62,9 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             speed: 62f,
             health: 8);
 
-        _walkAnimation = CharacterAnimationAssets2D.LoadClip(
-            textures,
-            "boiler-brute",
-            "walk");
-        _hammerAnimation = CharacterAnimationAssets2D.LoadClip(
-            textures,
-            "boiler-brute",
-            "hammer-attack");
-        _animation.Play(_walkAnimation);
-        _spriteShader = new SpriteShader2D(_animation.CurrentFrame);
-        _visual = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(VisualCanvasSize),
-            _spriteShader);
-        scene.Add(_visual);
-
         _hammerHitbox = new SpatialObject2D(
             AxisAlignedRectangle2D.FromSize(HammerHitboxSize));
-        SyncPresentation();
+        SyncHitbox();
     }
 
     public PatrolEnemy2D Enemy { get; }
@@ -101,13 +73,12 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         _simulationEnabled &&
         Enemy.IsAlive &&
         _isAttacking &&
-        _animation.CurrentFrameIndex == HammerImpactFrame;
+        _attackElapsedSeconds >= DamageStartSeconds && _attackElapsedSeconds < DamageEndSeconds;
 
     public void SetSimulationEnabled(bool isEnabled)
     {
         _simulationEnabled = isEnabled;
         Enemy.SetSimulationEnabled(isEnabled);
-        _visual.IsVisible = isEnabled && Enemy.IsAlive;
     }
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
@@ -115,12 +86,8 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
         ArgGuard.ThrowIfNotFinite(targetPosition);
 
+        if (!_simulationEnabled || !Enemy.IsAlive) return;
         Enemy.Update(deltaSeconds);
-        if (!_simulationEnabled || !Enemy.IsAlive)
-        {
-            _visual.IsVisible = false;
-            return;
-        }
 
         _attackCooldownSeconds = Math.Max(
             0f,
@@ -134,33 +101,16 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             Enemy.Body.LinearVelocity = new Vector2(
                 0f,
                 Enemy.Body.LinearVelocity.Y);
-            _animation.Update(deltaSeconds);
-            if (IsHammerActive && !_hammerImpactPlayed)
-            {
-                _hammerImpactPlayed = true;
-                _sounds.PlayAt(SoundEffect2D.HammerImpact,
-                    Enemy.WorldObject.Transform.Position + new Vector2(_facing * 62f, -10f));
-            }
-            if (_animation.IsFinished)
-                FinishAttack(AttackCooldownSeconds);
+            AdvanceAttack(deltaSeconds);
         }
         else if (CanAttack(targetPosition))
         {
             StartAttack(targetPosition);
-            _animation.Update(deltaSeconds);
+            AdvanceAttack(deltaSeconds);
         }
-        else
-        {
-            _facing = Enemy.Facing;
-            _animation.Play(_walkAnimation);
-            _animation.PlaybackSpeed = Math.Clamp(
-                MathF.Abs(Enemy.Body.LinearVelocity.X) / Enemy.Speed,
-                0.65f,
-                1.15f);
-            _animation.Update(deltaSeconds);
-        }
+        else _facing = Enemy.Facing;
 
-        SyncPresentation();
+        SyncHitbox();
     }
 
     public bool TryResolveHammerHit(Person2D player)
@@ -194,7 +144,7 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     public void SyncAfterPhysics()
     {
         if (_simulationEnabled && Enemy.IsAlive)
-            SyncPresentation();
+            SyncHitbox();
     }
 
     private bool CanAttack(Vector2 targetPosition)
@@ -215,29 +165,46 @@ public sealed class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
 
         _isAttacking = true;
         _hammerConnected = false;
-        _hammerImpactPlayed = false;
-        _animation.Play(_hammerAnimation, restart: true);
-        _animation.PlaybackSpeed = 1f;
+        _strikeReported = false;
+        _attackElapsedSeconds = 0f;
         Enemy.Body.LinearVelocity = new Vector2(0f, Enemy.Body.LinearVelocity.Y);
-        _sounds.PlayAt(SoundEffect2D.HammerWindup, Enemy.WorldObject.Transform.Position);
+        _events.Add(new HammerStarted2D(Enemy.Id, Enemy.WorldObject.Transform.Position));
     }
 
     private void FinishAttack(float cooldownSeconds)
     {
         _isAttacking = false;
         _attackCooldownSeconds = cooldownSeconds;
-        _animation.Play(_walkAnimation, restart: true);
-        _animation.PlaybackSpeed = 1f;
+        _attackElapsedSeconds = 0f;
     }
 
-    private void SyncPresentation()
+    private void AdvanceAttack(float dt)
     {
-        _spriteShader.Texture = _animation.CurrentFrame;
-        _spriteShader.FlipX = _facing < 0f;
-        _visual.Transform.Position = Enemy.WorldObject.Transform.Position + VisualOffset;
-        _visual.IsVisible = _simulationEnabled && Enemy.IsAlive;
-        _hammerHitbox.Transform.Position =
-            Enemy.WorldObject.Transform.Position + new Vector2(_facing * 62f, -10f);
+        _attackElapsedSeconds += dt;
+        if (_attackElapsedSeconds >= DamageStartSeconds && !_strikeReported)
+        {
+            _strikeReported = true;
+            _events.Add(new HammerStruck2D(Enemy.Id,
+                Enemy.WorldObject.Transform.Position + new Vector2(_facing * 62f, -10f)));
+        }
+        if (_attackElapsedSeconds >= AttackDurationSeconds) FinishAttack(AttackCooldownSeconds);
     }
 
+    public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.BoilerBrute,
+        Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, _facing,
+        _simulationEnabled, Enemy.IsAlive)
+    {
+        MoveSpeed = Enemy.Speed, IsAttacking = _isAttacking,
+        AttackElapsedSeconds = _attackElapsedSeconds
+    };
+
+    public ImmutableArray<EnemyEvent2D> DrainEvents()
+    {
+        var result = _events.ToImmutableArray();
+        _events.Clear();
+        return result;
+    }
+
+    private void SyncHitbox() => _hammerHitbox.Transform.Position =
+        Enemy.WorldObject.Transform.Position + new Vector2(_facing * 62f, -10f);
 }

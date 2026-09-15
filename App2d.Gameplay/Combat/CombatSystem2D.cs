@@ -1,23 +1,21 @@
 using App2d.Collision;
 using App2d.Core;
-using App2d.Gameplay.Audio;
 using System.Numerics;
 
 namespace App2d.Gameplay.Combat;
 
 public sealed class CombatSystem2D(
     CollisionSystem2D collision,
-    ISoundEffectSink2D sounds,
     CombatantRegistry2D combatants)
 {
     private readonly CollisionSystem2D _collision =
         ArgGuard.RequireNotNull(collision);
-    private readonly ISoundEffectSink2D _sounds =
-        ArgGuard.RequireNotNull(sounds);
     private readonly List<CollisionOverlap2D> _overlaps = [];
 
     public CombatantRegistry2D Combatants { get; } = ArgGuard.RequireNotNull(combatants);
     public int DefeatedEnemies { get; private set; }
+    public event Action<CombatDamage2D>? DamageResolved;
+    internal void RestoreSimulation(int defeatedEnemies) => DefeatedEnemies = defeatedEnemies;
 
     public bool ResolveAttack(
         SpatialObject2D hitbox,
@@ -86,14 +84,9 @@ public sealed class CombatSystem2D(
         if (!combatant.TakeDamage(damage, knockback))
             return;
 
-        if (wasAlive && !combatant.IsAlive && combatant.Faction == CombatFaction2D.Enemy)
-        {
-            DefeatedEnemies++;
-            _sounds.PlayAt(SoundEffect2D.EnemyDeath, combatant.WorldObject.Transform.Position);
-        }
-        else if (combatant.IsAlive && combatant.Faction != CombatFaction2D.Player)
-        {
-            _sounds.PlayAt(SoundEffect2D.EnemyHurt, combatant.WorldObject.Transform.Position);
-        }
+        var killed = wasAlive && !combatant.IsAlive;
+        if (killed && combatant.Faction == CombatFaction2D.Enemy) DefeatedEnemies++;
+        DamageResolved?.Invoke(new CombatDamage2D(combatant.Id, combatant.Faction,
+            combatant.WorldObject.Transform.Position, killed));
     }
 }

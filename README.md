@@ -2,12 +2,21 @@
 
 A deliberately small MonoGame/XNA 2D engine skeleton with compile-time module boundaries.
 
-The solution is split into `App2d.Core`, `App2d.Collision`, `App2d.Tiles`,
-`App2d.Levels`, `App2d.Physics`, `App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`,
-plus the Windows executable composition root. Each project physically owns its source
-files — there are no linked-file views. Core, collision, tiles, levels, and physics target plain `net10.0`.
-Rendering uses MonoGame WindowsDX; rendering, its tests, platform hosting, gameplay,
-and audio target `net10.0-windows10.0.19041.0`.
+The solution has separate projects for core types, collision, tiles, authored content,
+physics, rendering, audio, and game code, plus the Windows executable composition root.
+Each project physically owns its source files — there are no linked-file views.
+Core, collision, tiles, levels, physics, `App2d.Game.Contracts`, `App2d.Gameplay`, and
+the gameplay tests target plain `net10.0`. Rendering uses MonoGame WindowsDX;
+rendering, audio, `App2d.Game.Presentation`, the host, and their tests target
+`net10.0-windows10.0.19041.0`.
+
+`App2d.Game.Contracts` owns commands, immutable observations/events, and shared
+configuration. `App2d.Gameplay` owns simulation and rollback; it cannot reference
+presentation, rendering, audio, or persistence. `App2d.Game.Presentation` owns views,
+camera, HUD, sound selection, and the local client endpoint; it cannot reference
+simulation. `Directory.Build.targets` rejects forbidden direct or transitive internal
+assembly references. Existing `App2d.Gameplay.*` namespaces are retained across these
+assemblies. See [the project boundaries](docs/session-architecture.md#project-boundaries).
 
 The engine is grouped by responsibility:
 
@@ -23,7 +32,9 @@ The engine is grouped by responsibility:
 - `App2d.Levels` stores authored levels as SQLite files. Tiles are run-length encoded
   per chunk so a single edit rewrites a single row; a missing chunk row means an
   entirely empty chunk. It is the only project that references `Microsoft.Data.Sqlite`,
-  and it never references gameplay — terrain is data, not a generator.
+  and it never references simulation. It also loads authored player geometry into
+  shared traversal configuration through `TraversalMetricsLoader2D`; its game
+  dependency is limited to `App2d.Game.Contracts`.
 - `CollisionSystem2D` owns runtime collider registration, collision layers and masks,
   cached static/dynamic spatial indexes, candidate discovery, and exact contacts. It has
   no dependency on physics; physics and gameplay are consumers of collision data.
@@ -61,6 +72,23 @@ Zero means no entity. Automatically allocated IDs are process-local and never re
 they are distinct from authored level IDs and are not yet a network identity protocol.
 This first migration keeps existing object storage, physics body references, and
 rendering ownership intact; it does not introduce packed storage or networking.
+
+The local game advances through `SideScrollerSession2D`: ID-addressed input
+commands enter a fixed 120 Hz session, and immutable player, enemy, and world
+observations plus gameplay events return to `SideScrollerClient2D`. The production
+level, weapons, enemy actors, moving platforms, checkpoints, and terrain colliders
+run without constructing graphics or playing audio. Client presentation owns
+sprites, terrain, effects, HUD, and sound; the host handles persistence and editing.
+Terrain observations use cached immutable chunk revisions, including neighboring
+tiles for correct edge rendering. Simulation and presentation live in separate
+assemblies. A complete `SessionSnapshot2D` supports attaching at any tick; input
+production and display-time advancement run independently of received frames.
+Persistent character poses and attack phases reconstruct from state, and terrain
+observations can be rebuilt from values without a live map. Local simulation
+capture/restore and bounded input replay are available.
+Networking and client prediction/reconciliation are not yet wired up. See
+[the session architecture](docs/session-architecture.md) for the boundaries and
+next capture/restore work.
 
 Geometry lives under `App2d.Core/Geometry`:
 
@@ -105,9 +133,8 @@ Paint a vertical column of **Ladder** tiles to make a climbable ladder of any he
 Ladders use Kenney's top and repeating rung art (also as a fallback for other tilesets).
 Hold `W/S` or `Up/Down`, or use the controller's vertical left stick / D-pad, to
 climb. Release to hang, move sideways to let go, or press `Space` / controller `A`
-to jump off. At the top, releasing and pressing `W` or `Up` again also jumps off;
-holding Up simply stops at the last rung. Dash also releases the ladder.
-`W` and `Up` still jump away from ladders.
+to jump off. Holding Up stops at the last rung. Dash also releases the ladder.
+`W` and `Up` are climb controls; jumping always uses `Space` / controller `A`.
 The top stops the player's body center at the last rung until they step off or descend; solids
 still block climbing. Sword, pistol, and unarmed characters use their source pack's
 four-frame climbing loop, paused while hanging still.
@@ -263,33 +290,24 @@ consumes the resulting collision contacts.
 
 ## First run
 
-The repository keeps the CC0 RGS Dev stick-figure source pack and license in Git.
-Normalized runtime frames are generated locally and ignored so ordinary commits stay
-small.
+The game reads generated art from ignored `Assets/Runtime`, so a fresh clone must build
+it once. The build needs Python 3.12+ and two Maaot cave packs that their license does
+not allow us to redistribute:
 
-From a clean clone, create a local virtual environment, install Pillow, and build the
-runtime art:
+1. Download [2D DarkCave Assets](https://maaot.itch.io/2d-browncave-assets) and
+   [Mossy Cavern](https://maaot.itch.io/mossy-cavern) from itch.io.
+2. Save them as `Assets/Sources/third-party/maaot/dark-cave.zip` and
+   `Assets/Sources/third-party/maaot/mossy-cavern.zip`.
+3. From the repository root, run:
 
 ```powershell
-python -m venv .codex-art-venv
-.\.codex-art-venv\Scripts\python -m pip install -r tools/ArtPipeline/requirements.txt
-.\.codex-art-venv\Scripts\python tools/ArtPipeline/build_runtime_assets.py
+.\tools\setup.ps1
 ```
 
-The virtual environment is ignored by Git. Reinstall its packages at any time with
-the same `python -m pip install -r tools/ArtPipeline/requirements.txt` command, using
-the virtual environment's Python executable as shown above.
-
-The build scales and root-aligns the pack's baked Sword and Pistol sequences into
-`Assets/Runtime/characters/player-sword` and
-`Assets/Runtime/characters/player-gun`. It generates each character's `character.json`
-animation manifest alongside its frames, measures the idle poses to regenerate
-`Assets/Runtime/characters/player-geometry.json`, and imports the bullet and HUD icons.
-Run the build again whenever the source frames or importer settings change.
-
-Generated files remain below ignored `Assets/Runtime`, which is the tree the game reads
-and ships. The pipeline recreates it from committed `Assets/Static` files and original
-inputs under `Assets/Sources`, then writes a file/hash manifest.
+The script creates an ignored `.venv`, installs the pipeline's only dependency
+(Pillow), checks for the Maaot archives, and runs the asset build. Re-run it whenever
+source art or an importer changes; it is safe to repeat. `tools/ArtPipeline/README.md`
+documents what the build produces and how to author new art.
 
 ## Run
 
@@ -395,41 +413,57 @@ Xbox controller:
 - Hold toward a solid wall while falling: wall grip; press A to jump away
 - Hold Down on the left stick or D-pad and press A: drop through a one-way platform
 - A: jump; release early to shorten the jump
-- B: dash
-- Right stick: aim
+- Right trigger: dash
 - X: use the selected primary action (sword, gun, or punch)
 - Sword: hold Down and press X while airborne for a downward cut
 - Right bumper: kick while unarmed
-- Y: switch between the sword, gun, and fists
+- Y: reserved for future interaction (currently unbound)
 
 Keyboard and mouse fallback:
 
 - A / D or Left / Right: run
 - Hold toward a solid wall while falling: wall grip; press jump to jump away
-- W, Up, or Space: jump; press again in the air to double jump
+- W / S or Up / Down: climb ladders
+- Space: jump; press again in the air to double jump
 - Hold S or Down and press jump: drop through the supporting one-way strip
 - Release jump early: shorten the jump
 - Left or Right Shift: dash
-- Q: cycle between the sword, gun, and fists
-- J or left click: use the selected primary action (punch while unarmed)
-- Sword: hold S or Down and press J or left click while airborne for a downward cut.
+- F or left click: use the selected primary action (punch while unarmed)
+- Sword: hold S or Down and press F or left click while airborne for a downward cut.
   The 0.25-second stab hits immediately during its first two frames. Connecting
   with an enemy or spikes bounces you upward once per attack, preserving sideways
   movement. A successful bounce takes priority over body-contact damage that frame.
-- Gun: hold J, left click, or controller X for 0.6 seconds to automatically fire
+- Gun: hold F, left click, or controller X for 0.6 seconds to automatically fire
   one blue bolt. Release and press again for another shot. You can run, jump,
   dash, wall-grip, or climb while charging. Movement and gravity work normally;
   the shot follows your facing direction (away from a wall while gripping it).
   The HUD ring fills and the muzzle glow shimmers during charging.
   Releasing early, taking damage, switching gear, or entering the editor cancels it.
   Input suppression cancels instead of firing.
-- K or right click: kick while unarmed
+- Q or right click: kick while unarmed
+- E: reserved for future interaction (currently unbound)
+
+Developer / editor controls:
+
+- B: preview the shield pose (no gameplay block)
 - F3: toggle traversal arcs and movement metrics
 - F1: toggle the tile editor; freezes gameplay, detaches the camera, and switches the
   mouse to painting (left button paints or selects from the right sidebar, right erases,
   middle-drag pans, wheel zooms, and `Ctrl+Z` undoes an edit)
 - Backtick (`): open or close the developer console
 - Escape: close
+
+Input ownership stays small: `InputState` reads keyboard/mouse events, and
+`App2d/Input/XboxControllerInput2D` reads controller state. Default gameplay bindings
+live together in `PlayerInputMapper2D`, which produces `PersonCommand2D` without
+camera or pointer coordinates. Attacks use facing direction. `PlayerDebugInput2D`
+owns temporary player inspection keys; the editor and console own their shortcuts.
+Opening the editor/console or losing window focus cancels held gameplay input.
+Held buttons must be released before they can trigger again after cancellation.
+
+Sword/gun loadout changes, interaction behavior, and a pause menu are future gameplay
+work. E/Y remain available for interaction; Escape currently retains its host close
+behavior. There is no remapping UI or configurable binding file yet.
 
 ## Developer console
 
@@ -497,8 +531,8 @@ character.
 Repository assets are separated by lifecycle under the top-level `Assets` directory.
 Only generated `Assets/Runtime` ships; Debug reads it in place and Release packages it
 beside the executable as `Assets`. `Assets/Static` holds curated runtime-ready inputs,
-`Assets/Sources` retains originals and licenses, `Assets/Library` holds alternatives,
-and ignored `Assets/Work` holds intermediate pipeline output.
+`Assets/Sources` retains originals and licenses, and ignored `Assets/Work` holds
+intermediate pipeline output and previews. `Assets/README.md` describes the lifecycle.
 
 Runtime paths use lowercase semantic IDs. Every `Game2D` owns a `TextureCache2D`
 rooted at the deployed `Assets` directory, so textures load only when requested:

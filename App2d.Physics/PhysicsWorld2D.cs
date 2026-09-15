@@ -9,7 +9,7 @@ using System.Numerics;
 
 namespace App2d.Physics;
 
-public sealed class PhysicsWorld2D
+public sealed partial class PhysicsWorld2D
 {
     private readonly List<PhysicsBody2D> _bodies = [];
     private readonly List<PhysicsContact2D> _lastContacts = [];
@@ -44,13 +44,13 @@ public sealed class PhysicsWorld2D
     public int LastCandidatePairCount => CollisionSystem.LastCandidatePairCount;
     public IList<IPhysicsConstraint2D> Constraints => _constraints;
 
-    public PhysicsBody2D AddBody(SpatialObject2D worldObject, BodyMotionType2D motionType)
+    public PhysicsBody2D AddBody(SpatialObject2D worldObject, BodyMotionType2D motionType, int? restoredColliderId = null)
     {
         var collider = CollisionSystem.AddCollider(
             worldObject,
             motionType == BodyMotionType2D.Static
                 ? ColliderMobility2D.Static
-                : ColliderMobility2D.Dynamic);
+                : ColliderMobility2D.Dynamic, restoredColliderId);
         var body = new PhysicsBody2D(worldObject, motionType, collider);
         collider.UserData = body;
         _bodies.Add(body);
@@ -63,6 +63,9 @@ public sealed class PhysicsWorld2D
         if (!_bodies.Remove(body))
             return false;
         CollisionSystem.RemoveCollider(body.Collider);
+        _lastContacts.RemoveAll(c => ReferenceEquals(c.First, body) || ReferenceEquals(c.Second, body));
+        foreach (var remaining in _bodies)
+            remaining.RemoveIgnoredOneWayPlatformsWhere(platform => ReferenceEquals(platform, body));
         return true;
     }
 

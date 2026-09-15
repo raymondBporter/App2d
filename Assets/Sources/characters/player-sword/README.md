@@ -69,9 +69,6 @@ this source. It refuses to replace an existing file without `--replace`.
 **Do not run it for ordinary re-renders:** regenerating initial poses discards
 manual pose changes. Use `render_sword_balance.ps1` instead.
 
-The first, longer animation experiment remains in `Assets/Library`; neither its
-72-frame version nor its windmill animation enters the runtime pipeline.
-
 ## What the original pack provides
 
 The downloaded pack has no rendering README and the `.blend` has no embedded
@@ -108,4 +105,4 @@ export path rather than a byte-for-byte recreation of every original frame.
 The three samples do not establish fidelity for every action in the pack.
 
 Run `python tools/ArtPipeline/preview_sword_balance.py` to regenerate the comparison
-GIF and pixel checks under `Assets/Library/characters/player-sword/balance-compact`.
+GIF and pixel checks under ignored `Assets/Work/previews/player-sword/balance-compact`.

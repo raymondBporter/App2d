@@ -42,7 +42,7 @@ internal static class ThingTypeRegistry2D
             "green-dinosaur",
             "Green dinosaur",
             WorldThingKind2D.GreenDinosaur,
-            new SKColor(142, 205, 92));
+            new XnaColor(142, 205, 92));
 
     public static ThingTypeDescriptor2D TumbleProp { get; } =
         new("tumble-prop", "Tumble prop", WorldThingKind2D.TumbleProp, new XnaColor(255, 154, 59));
@@ -75,7 +75,7 @@ internal static class ThingTypeRegistry2D
             new Vector2(record.TravelX, record.TravelY),
             new Vector2(record.Width, record.Height),
             record.Speed,
-            new XnaColor((byte)(record.ColorArgb >> 16), (byte)(record.ColorArgb >> 8), (byte)record.ColorArgb, (byte)(record.ColorArgb >> 24)));
+            unchecked((uint)record.ColorArgb));
     }
 
     public static WorldThingSpec2D ToRuntime(PositionThingRecord2D record)

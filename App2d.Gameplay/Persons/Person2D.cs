@@ -14,7 +14,7 @@ namespace App2d.Gameplay.Persons;
 /// Shared humanoid simulation. Input, AI, rendering, audio, respawning, and
 /// encounter policy live outside this type.
 /// </summary>
-public sealed class Person2D : ICombatant2D
+public sealed partial class Person2D : ICombatant2D
 {
     private const float FootstepSpeedThreshold = 65f;
     private const float FootstepIntervalSeconds = 0.29f;
@@ -91,6 +91,13 @@ public sealed class Person2D : ICombatant2D
     public bool IsSimulationEnabled => _simulationEnabled;
     public IPersonActionSet2D? Actions => _actions;
 
+    public PersonState2D CaptureState() => new(
+        Id, Position, Body.LinearVelocity, Facing, Health.Current, Health.Maximum,
+        InvulnerabilitySeconds, LandingSpeedThisFrame, BalanceDirection,
+        IsGrounded, IsWallGripping, IsDashing, IsClimbingLadder,
+        IsSustainingJump, JumpPower, _actions?.IsChargingPrimary == true)
+        { Action = _actions?.CaptureActionState() ?? default };
+
     public event Action? JumpStarted;
     public event Action<float>? Landed;
     public event Action? Footstep;
@@ -136,19 +143,16 @@ public sealed class Person2D : ICombatant2D
             var attackFacing = isWallAttack
                 ? -_motor.WallDirection
                 : Facing;
-            var aimTarget = isWallAttack
-                ? null
-                : command.AimTarget;
             if (command.UsePrimaryAction)
             {
                 var isDownAttack = command.DownHeld && !_motor.IsGrounded &&
                     !isWallAttack && !_motor.IsClimbingLadder && !_motor.IsDashing;
                 Face(isDownAttack
-                    ? _actions.UseDownwardPrimary(aimTarget, attackFacing)
-                    : _actions.UsePrimary(aimTarget, attackFacing));
+                    ? _actions.UseDownwardPrimary(attackFacing)
+                    : _actions.UsePrimary(attackFacing));
             }
             if (command.UseSecondaryAction)
-                Face(_actions.UseSecondary(aimTarget, attackFacing));
+                Face(_actions.UseSecondary(attackFacing));
         }
         if (_actions?.IsChargingPrimary == true)
         {
@@ -156,7 +160,6 @@ public sealed class Person2D : ICombatant2D
             if (wallDirection != 0f)
                 Face(-wallDirection);
         }
-        _actions?.UpdateBeforePhysics(deltaSeconds);
     }
 
     public void UpdateAfterPhysics(float deltaSeconds)

@@ -21,6 +21,8 @@ public sealed class CombatantRegistry2D
             "The combatant ID is already registered.");
     }
 
+    internal IEnumerable<EntityId2D> Ids => _combatants.Keys;
+
     public ICombatant2D? Find(EntityId2D id) => _combatants.GetValueOrDefault(id);
 
     public bool Unregister(EntityId2D id) => _combatants.Remove(id);

@@ -5,11 +5,10 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
-public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
+public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 {
     private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
     private float _direction = 1f;
-    private float _hitFlashSeconds;
     private float _stunSeconds;
 
     public PatrolEnemy2D(
@@ -72,7 +71,6 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
         if (!IsAlive)
             return;
 
-        _hitFlashSeconds = Math.Max(0f, _hitFlashSeconds - deltaSeconds);
         _stunSeconds = Math.Max(0f, _stunSeconds - deltaSeconds);
 
         var x = WorldObject.Transform.Position.X;
@@ -104,7 +102,6 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
         }
 
         Body.LinearVelocity = knockback;
-        _hitFlashSeconds = 0.11f;
         _stunSeconds = 0.18f;
         return true;
     }

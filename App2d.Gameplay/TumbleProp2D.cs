@@ -3,26 +3,23 @@ using App2d.Core.Geometry;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Physics;
-using App2d.Rendering;
-using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
 
 namespace App2d.Gameplay;
 
 /// <summary>
-/// An indestructible composite dumbbell that tumbles when hit. The visual
-/// object is also the physics collider, so nothing needs syncing.
+/// An indestructible composite dumbbell that tumbles when hit.
 /// </summary>
-internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
+internal sealed partial class TumbleProp2D : IEnemyActor2D, ICombatant2D
 {
     private const float HitVelocityScale = 0.8f;
     private const float HitAngularKick = 4.5f;
 
+    private bool _simulationEnabled = true;
     private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
 
-    public TumbleProp2D(Scene2D scene, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
+    public TumbleProp2D(PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
-        ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNotFinite(position);
 
@@ -30,9 +27,8 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
             Rectangle2D.FromSize(new Vector2(72f, 18f)),
             new Circle2D(16f, new Vector2(-42f, 0f)),
             new Circle2D(16f, new Vector2(42f, 0f))]);
-        var visual = new WorldObject2D(shape, new SolidColorShader(new XnaColor(0xFF, 0x9A, 0x3B))) { ZIndex = 1 };
+        var visual = new SpatialObject2D(shape);
         visual.Transform.Position = position;
-        scene.Add(visual);
         WorldObject = visual;
 
         Body = physics.AddBody(visual, BodyMotionType2D.Dynamic);
@@ -55,8 +51,12 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
     public bool IsAlive => true;
     public ICombatant2D Combatant => this;
 
+    public EnemyState2D CaptureState() => new(Id, EnemyKind2D.TumbleProp, WorldObject.Transform.Position,
+        Body.LinearVelocity, WorldObject.Transform.Rotation, 1f, _simulationEnabled, true);
+
     public void SetSimulationEnabled(bool isEnabled)
     {
+        _simulationEnabled = isEnabled;
         Body.IsCollider = isEnabled;
         Body.MotionType = isEnabled ? BodyMotionType2D.Dynamic : BodyMotionType2D.Static;
         if (!isEnabled)

@@ -1,3 +1,4 @@
+using App2d.Levels;
 using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
@@ -19,7 +20,7 @@ public sealed class PersonJumpPowerTests
     public void HeldJumpReportsIncreasingPowerUntilReleased()
     {
         var collision = new CollisionSystem2D();
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var physics = new PhysicsWorld2D(collision)
         {
             Gravity = new Vector2(0f, -traversal.Gravity),
@@ -73,7 +74,7 @@ public sealed class PersonJumpPowerTests
                 DropThroughPressed: false,
                 DashPressed: false),
             UsePrimaryAction: false,
-            AimTarget: null,
+
             SwitchEquipment: false);
 
     private static void AddGround(PhysicsWorld2D physics)

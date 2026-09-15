@@ -1,81 +1,94 @@
 # Runtime asset pipeline
 
-`Assets/Runtime` is disposable output. The build copies curated files from
-`Assets/Static`, imports source packs from `Assets/Sources`, validates required files,
-and writes a size/hash manifest before replacing the previous runtime tree.
+`Assets/Runtime` is disposable output that the game reads in Debug and packages in
+Release. This pipeline rebuilds it from the durable inputs described in
+`Assets/README.md`: curated files under `Assets/Static` and original or third-party
+inputs under `Assets/Sources`.
 
-From the repository root, run:
+## Building
 
-```powershell
-python -m pip install -r tools/ArtPipeline/requirements.txt
-python tools/ArtPipeline/build_runtime_assets.py
-```
-
-The build imports and normalizes three baked 512 by 512 character sets from the CC0
-RGS Dev stick-figure source pack:
-
-- `Assets/Runtime/characters/player-sword`
-- `Assets/Runtime/characters/player-gun`
-- `Assets/Runtime/characters/player-unarmed`
-
-It also creates the sword, gun, and unarmed HUD icons and imports the pistol projectile.
-`build_gun_effects.py` then bakes the blue bolt, muzzle charge and flash textures,
-61 continuous radial HUD frames, and four deterministic PCM sound cues. Run that
-script by itself to iterate on these assets.
-The charging muzzle glow uses 24 pre-baked shimmer frames at 30 fps (0.8 seconds),
-with a breathing core, rotating wisps, and small orbiting glints. Playback uses
-simulation time, starts with charging, and stops on automatic fire or cancellation.
-The charge sound lasts 0.6 seconds, matching `GunPersonWeapon2D.ChargeSeconds`;
-playback uses a fixed rate and its voice stops immediately on cancellation or fire.
-The standing pistol muzzle socket is pixel (418, 206) on the normalized 512px canvas.
-The weapon converts it through the player geometry manifest; presentation holds that
-pose while charging and through the flash before playing recoil.
-The bolt's thin ghost trail covers 1/30 second of flight with a 1.35x visual stretch
-(about 56 world units at the current speed). It grows from the muzzle, remains
-separate from collision geometry, and fades in place over 0.05 seconds on impact.
-Eight pre-baked opacity variants avoid generating or modifying textures during play.
-It also imports the Maaot cave tilesets. All generated output, including character
-manifests, HUD icons, projectile, player geometry, terrain slices, and
-`content-manifest.json`, is ignored by Git and reproducible from durable inputs.
-
-The user-provided green dinosaur sheet is cropped into six square, transparent
-walk frames under `Assets/Runtime/characters/green-dinosaur`. Its durable source
-lives under `Assets/Sources/user/green-dinosaur`.
-
-The pipeline also imports the CC0 Kenney Pixel Platformer archive as the
-`kenney-grassland` tileset. Its original 18 by 18 tiles are normalized to App2d's
-32-unit semantic terrain interface without depending on the source atlas layout.
-
-The source-to-runtime mappings and scale live in `import_stick_figure.py`. The importer
-measures the generated idle pose and writes
-`Assets/Runtime/characters/player-geometry.json`. Runtime presentation and collision
-load the aspect-preserving visual size, foot anchor, collider size, and mirrored
-horizontal offset from that manifest.
-
-The pipeline builds in `Assets/Work` and replaces `Assets/Runtime` only after success.
-Deleting `Assets/Runtime` and rerunning the command is the supported clean rebuild.
-
-Authored Blender character clips are imported after the pre-rendered character
-pack. The two eight-frame sword balance clips live in
-`Assets/Sources/characters/player-sword`, with an editable `.blend`, a render
-recipe, and cached transparent PNGs. See that folder's `README.md` for the
-original pack's camera/NLA settings, comparison results, and editing workflow.
-
-After editing and saving that Blender source, run:
+From the repository root:
 
 ```powershell
-& .\tools\ArtPipeline\render_sword_balance.ps1 -BuildRuntime
+.\tools\setup.ps1
 ```
 
-This renders the saved actions and runs the normal asset build. Normal builds
-consume the cache without launching Blender, verify its source/frame hashes,
-and apply the same scale and anchor transform as the pre-rendered art. The
-one-time `create_sword_balance.py` authoring script must not be used for ordinary
-re-renders because it regenerates the initial poses.
+`setup.ps1` creates an ignored `.venv`, installs Pillow (the only dependency), checks
+for the Maaot cave packs, and runs `build_runtime_assets.py`. Once the environment
+exists you can also run the build directly:
 
-The airborne downward sword attack has its own editable source and recipe in
-`Assets/Sources/characters/player-sword/downward-attack`. Re-render saved edits
-with `render_sword_attack.ps1 -BuildRuntime`. The importer includes the parent
-sword recipe and immediate child recipe directories; the attack is six frames,
-0.25 seconds, non-looping, and uses the same canvas normalization as the balances.
-It starts in the downward stab pose without a wind-up; the slash flash spans frames 1–2.
+```powershell
+.\.venv\Scripts\python tools/ArtPipeline/build_runtime_assets.py
+```
+
+The build stages a fresh tree under `Assets/Work`, copies `Assets/Static`, runs each
+importer below, validates required files, writes `Runtime/content-manifest.json` with
+sizes and SHA-256 hashes, and only then swaps the new tree into `Assets/Runtime`. A
+failed build leaves the previous `Runtime` untouched. Deleting `Assets/Runtime` and
+rebuilding is the supported clean rebuild. `App2d.csproj` refuses to build when the
+manifest is missing and prints the command to run.
+
+### Inputs that are not in git
+
+Maaot's license forbids redistributing the cave packs, so every clone must download
+them once and save them as:
+
+- `Assets/Sources/third-party/maaot/dark-cave.zip` from
+  [2D DarkCave Assets](https://maaot.itch.io/2d-browncave-assets)
+- `Assets/Sources/third-party/maaot/mossy-cavern.zip` from
+  [Mossy Cavern](https://maaot.itch.io/mossy-cavern)
+
+The build stops with these instructions before doing any work if either is missing.
+Every other input is committed.
+
+## What the build produces
+
+Each step is a standalone script that takes `--content-root`, so any one can be re-run
+against `Assets/Runtime` while iterating.
+
+| Script | Output under `Assets/Runtime` | Source |
+| --- | --- | --- |
+| `import_stick_figure.py` | `characters/player-sword`, `player-gun`, `player-unarmed`, `characters/player-geometry.json`, `ui/hud/weapons/*.png`, `effects/bullet/orange.png` | CC0 RGS Dev stick-figure pack in `Sources/third-party/rgs-stick-figure` |
+| `import_blender_character.py` | Authored sword clips (balance and downward attack) added to `characters/player-sword` | Cached Blender renders in `Sources/characters/player-sword` |
+| `import_maaot_caves.py` | `environments/tilesets/dark-cave`, `mossy-cavern` | Maaot zips (see above) |
+| `import_kenney_pixel_platformer.py` | `environments/tilesets/kenney-grassland` | CC0 `Sources/third-party/kenney/pixel-platformer.zip` |
+| `build_gun_effects.py` | `effects/gun/*`, `ui/hud/gun-charge/*`, `audio/sfx/gun-*.wav` | Procedural; design notes are in the script's docstring |
+| `import_green_dinosaur.py` | `characters/green-dinosaur` | `Sources/user/green-dinosaur/walk-cycle.png` |
+
+`import_stick_figure.py` owns the shared character normalization: it scales and
+root-aligns the 512 by 512 source frames, then measures the idle pose to write
+`characters/player-geometry.json`. Presentation and collision read the visual size,
+foot anchor, and collider from that manifest. Every character clip that enters the
+runtime, authored or imported, goes through the same transform so anchors line up.
+
+Static audio comes from CC0 Kenney packs; `Sources/third-party/kenney-audio` holds the
+licenses and a manifest mapping each runtime cue to its source file.
+
+## Authoring new sword animations in Blender
+
+The player's sword clips beyond the pre-rendered pack are authored in Blender and
+cached as PNGs so ordinary builds never launch Blender. The editable sources, render
+recipes, and cached renders live in `Assets/Sources/characters/player-sword`; that
+folder's `README.md` covers the original pack's camera and NLA setup and the pose
+editing workflow.
+
+After editing and saving a `.blend`, re-render and rebuild with:
+
+```powershell
+.\tools\ArtPipeline\render_sword_balance.ps1 -BuildRuntime   # sword-balance.blend
+.\tools\ArtPipeline\render_sword_attack.ps1 -BuildRuntime    # downward-attack/sword-downward.blend
+```
+
+Both wrap `render_blender_character.py`. The importer verifies source and frame hashes
+and fails the build if a `.blend` changed without a re-render. `create_sword_balance.py`
+and `create_downward_sword.py` are the one-time scripts that authored the initial
+poses; do not run them for re-renders because they regenerate the poses.
+
+`preview_sword_balance.py` and `preview_downward_sword.py` write review GIFs, contact
+sheets, and pixel checks under ignored `Assets/Work/previews/player-sword`.
+
+## Tests
+
+```powershell
+.\.venv\Scripts\python -m unittest discover -s tools/ArtPipeline/tests
+```

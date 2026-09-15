@@ -1,36 +1,28 @@
 using App2d.Collision;
 using App2d.Core;
-using App2d.Core.Geometry;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
 using App2d.Physics;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
-using XnaColor = Microsoft.Xna.Framework.Color;
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
 /// <summary>A hostile person: shared simulation and actions, AI commands.</summary>
-public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
+public sealed partial class RivalEnemy2D : IEnemyActor2D
 {
-    private readonly PersonPresentation2D _presentation;
+    private readonly List<EnemyEvent2D> _events = [];
     private readonly UnarmedPersonActions2D _actions;
     private readonly RivalBrain2D _brain;
-    private readonly WorldObject2D _hostileMarker;
     private float _lastDeltaSeconds;
     private float _lastMoveX;
-    private long _frameNumber;
     private bool _simulationEnabled = true;
-    private bool _disposed;
 
     public RivalEnemy2D(
-        Scene2D scene,
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
-        TextureCache2D textures,
         TraversalMetrics2D traversal,
         CombatSystem2D combat,
         Vector2 position,
@@ -40,10 +32,8 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
         uint playerLayer,
         uint enemyLayer)
     {
-        ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNull(textures);
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(combat);
         ArgGuard.ThrowIfNotFinite(position);
@@ -58,7 +48,6 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
             CombatFaction2D.Enemy,
             maximumHealth: 12,
             mass: 1f);
-        _presentation = new PersonPresentation2D(scene, textures, traversal);
         _actions = new UnarmedPersonActions2D(
             Person.Body,
             CombatFaction2D.Enemy,
@@ -67,20 +56,10 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
         _brain = new RivalBrain2D(minimumX, maximumX);
         Person.AttachActions(_actions);
 
-        _actions.AttackStarted += (kind, duration) =>
-            _presentation.PlayUnarmedAttack(kind, duration);
-        _presentation.Equip("unarmed");
-        Person.Damaged += _presentation.PlayHit;
-        Person.Died += HandleDeath;
-
-        _hostileMarker = new WorldObject2D(
-            new Circle2D(8f),
-            new SolidColorShader(new XnaColor(255, 46, 166)))
-        {
-            ZIndex = 3
-        };
-        scene.Add(_hostileMarker);
-        SyncPresentation();
+        _actions.AttackStarted += (kind, duration) => _events.Add(
+            new RivalAttackStarted2D(Person.Id, Person.Position, kind, duration));
+        Person.Damaged += () => _events.Add(new RivalDamaged2D(Person.Id, Person.Position));
+        Person.Died += () => _events.Add(new RivalDied2D(Person.Id, Person.Position));
     }
 
     public Person2D Person { get; }
@@ -90,8 +69,6 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
     {
         _simulationEnabled = isEnabled;
         Person.SetSimulationEnabled(isEnabled);
-        _presentation.SetVisible(isEnabled);
-        _hostileMarker.IsVisible = isEnabled && Person.IsAlive;
     }
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
@@ -118,37 +95,16 @@ public sealed class RivalEnemy2D : IEnemyActor2D, IDisposable
             return;
 
         Person.UpdateAfterPhysics(_lastDeltaSeconds);
-        _presentation.Update(
-            _lastDeltaSeconds,
-            ++_frameNumber,
-            Person,
-            _lastMoveX,
-            isShieldBlocking: false,
-            _actions.IsAttackActive);
-        SyncPresentation();
     }
 
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
+    public EnemyState2D CaptureState() => new(Person.Id, EnemyKind2D.Rival,
+        Person.Position, Person.Body.LinearVelocity, 0f, Person.Facing, _simulationEnabled, Person.IsAlive)
+    { Person = Person.CaptureState(), MoveX = _lastMoveX, IsAttacking = _actions.IsAttackActive };
 
-        _disposed = true;
-        _presentation.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
-    private void HandleDeath()
+    public ImmutableArray<EnemyEvent2D> DrainEvents()
     {
-        _presentation.PlayDeath();
-        _hostileMarker.IsVisible = false;
-    }
-
-    private void SyncPresentation()
-    {
-        _hostileMarker.Transform.Position =
-            Person.Position + new Vector2(0f, 34f);
-        _hostileMarker.IsVisible =
-            _simulationEnabled && Person.IsAlive;
+        var result = _events.ToImmutableArray();
+        _events.Clear();
+        return result;
     }
 }

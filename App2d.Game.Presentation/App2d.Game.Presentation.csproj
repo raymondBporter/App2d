@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AnalysisModePerformance>All</AnalysisModePerformance>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\App2d.Game.Contracts\App2d.Game.Contracts.csproj" />
+    <ProjectReference Include="..\App2d.Rendering\App2d.Rendering.csproj" />
+    <ProjectReference Include="..\App2d.Audio\App2d.Audio.csproj" />
+  </ItemGroup>
+</Project>

@@ -2,17 +2,14 @@ using System.Numerics;
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Physics;
-using App2d.Rendering;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Gameplay.World;
 
-public sealed class MovingPlatform2D : IDisposable
+public sealed partial class MovingPlatform2D : IDisposable
 {
     private const float MinimumSupportNormalY = 0.55f;
 
     private readonly PhysicsWorld2D _physics;
-    private readonly Scene2D _scene;
     private readonly Vector2 _pathDirection;
     private readonly float _pathLength;
     private readonly float _speed;
@@ -20,7 +17,6 @@ public sealed class MovingPlatform2D : IDisposable
     private float _travelDirection = 1f;
 
     public MovingPlatform2D(
-        Scene2D scene,
         PhysicsWorld2D physics,
         Vector2 start,
         Vector2 travel,
@@ -28,10 +24,9 @@ public sealed class MovingPlatform2D : IDisposable
         float speed,
         uint collisionLayer,
         uint collisionMask,
-        XnaColor color)
+        long thingId = 0,
+        uint colorArgb = 0xFF25D2BE)
     {
-        ArgGuard.ThrowIfNull(scene);
-        _scene = scene;
         _physics = ArgGuard.RequireNotNull(physics);
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(travel);
@@ -41,24 +36,30 @@ public sealed class MovingPlatform2D : IDisposable
             ArgGuard.ThrowOutOfRange(travel, "A moving platform needs a non-zero travel path.");
 
         Start = start;
+        Size = size;
+        ThingId = thingId;
+        ColorArgb = colorArgb;
         _pathLength = travel.Length();
         _pathDirection = travel / _pathLength;
         _speed = speed;
 
-        WorldObject = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(size),
-            new SolidColorShader(color));
+        WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(size));
         WorldObject.Transform.Position = start;
-        scene.Add(WorldObject);
 
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Kinematic);
+        Body.EntityId = Id;
         Body.Restitution = 0f;
         Body.IsOneWayPlatform = true;
         Body.CollisionLayer = collisionLayer;
         Body.CollisionMask = collisionMask;
     }
 
-    public WorldObject2D WorldObject { get; }
+    public EntityId2D Id { get; } = EntityId2D.Create();
+    public long ThingId { get; }
+    public Vector2 Size { get; }
+    public uint ColorArgb { get; }
+    public MovingPlatformState2D CaptureState() => new(Id, ThingId, WorldObject.Transform.Position, Size, ColorArgb);
+    public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Vector2 Start { get; }
     public Vector2 End => Start + _pathDirection * _pathLength;
@@ -66,7 +67,6 @@ public sealed class MovingPlatform2D : IDisposable
     public void Dispose()
     {
         _physics.RemoveBody(Body);
-        _scene.Remove(WorldObject);
     }
 
     public void Update(float deltaSeconds)

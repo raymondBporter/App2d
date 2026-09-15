@@ -8,6 +8,9 @@
   <Project Path="App2d.Tests/App2d.Tests.csproj" />
   <Project Path="App2d.Audio/App2d.Audio.csproj" />
   <Project Path="App2d.Gameplay/App2d.Gameplay.csproj" />
+  <Project Path="App2d.Game.Contracts/App2d.Game.Contracts.csproj" />
+  <Project Path="App2d.Game.Presentation/App2d.Game.Presentation.csproj" />
+  <Project Path="App2d.Game.Presentation.Tests/App2d.Game.Presentation.Tests.csproj" />
   <Project Path="App2d.Gameplay.Tests/App2d.Gameplay.Tests.csproj" />
   <Project Path="App2d/App2d.csproj" />
 </Solution>

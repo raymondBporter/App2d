@@ -6,7 +6,7 @@ namespace App2d.Gameplay.Persons;
 /// Small deterministic command producer for the first hostile person. It uses
 /// ordinary person commands and intentionally leaves advanced traversal alone.
 /// </summary>
-internal sealed class RivalBrain2D(float minimumX, float maximumX)
+internal sealed partial class RivalBrain2D(float minimumX, float maximumX)
 {
     private const float PunchRange = 78f;
     private const float KickRange = 104f;
@@ -75,7 +75,6 @@ internal sealed class RivalBrain2D(float minimumX, float maximumX)
                 DropThroughPressed: false,
                 dashPressed),
             usePrimary,
-            targetPosition,
             SwitchEquipment: false,
             UseSecondaryAction: useSecondary);
     }
