@@ -34,14 +34,14 @@ internal sealed class RigidCharacterHost : IDisposable
     private PoseClip2D? _customClip;
     private RigidControl2D _selectedControl = RigidControl2D.HandRight;
     private int _partSetIndex;
-    private string _notice = "Replace the solid parts with PNGs later; the animation data will not change.";
+    private string _notice = "SplineMan turns from a three-quarter idle into a clear side profile while moving.";
     private bool _disposed;
 
     public RigidCharacterHost()
     {
         _window = new Form
         {
-            Text = "RigidBRO — One Skeleton, Tiny Art Set",
+            Text = "SplineBRO — Reusable Side-Scroller Rig",
             ClientSize = new Size(1280, 800),
             MinimumSize = new Size(920, 620),
             StartPosition = FormStartPosition.CenterScreen,
@@ -108,7 +108,11 @@ internal sealed class RigidCharacterHost : IDisposable
             var hips = _authoring ? _demo.Hips : _demo.DisplayHips;
             var pose = _authoring ? _author.Pose : _demo.Pose;
             var solved = StandardSkeleton2D.Solve(hips, pose, _demo.Facing);
-            _puppet.Render(_renderer, solved, _frameTime.TotalSeconds);
+            _puppet.Render(
+                _renderer,
+                solved,
+                _frameTime.TotalSeconds,
+                _authoring ? 0.65f : _demo.SideViewAmount);
             if (_showBones)
                 DrawBones(_renderer, solved);
             if (_authoring)
@@ -185,16 +189,16 @@ internal sealed class RigidCharacterHost : IDisposable
     {
         var panelWidth = Math.Min(width - 36f, 790f);
         renderer.DrawScreenRoundedRectangle(new(18f, 18f, panelWidth, _authoring ? 236f : 210f), 12f, PanelColor);
-        renderer.DrawScreenText("RIGIDBRO  /  ONE FIXED SKELETON + RIGID PARTS", new Vector2(36f, 49f), XnaColor.White);
+        renderer.DrawScreenText("SPLINEBRO  /  ONE SKELETON + SWAPPABLE RIGID ART", new Vector2(36f, 49f), XnaColor.White);
         renderer.DrawScreenText($"Set: {_puppet.PartSet.Name}  [V]    Animation: {CurrentAnimationLabel}",
             new Vector2(36f, 79f), ActiveColor);
-        renderer.DrawScreenText("A/D move    Space jump    J attack    H hit    V swap PNG-set stand-in",
+        renderer.DrawScreenText("A/D move    Space jump    J attack    H hit    V swap art treatment",
             new Vector2(36f, 109f), MutedColor);
         renderer.DrawScreenText("Tab pose editor    B bones    R reset    Wheel zoom    Esc close",
             new Vector2(36f, 137f), MutedColor);
         renderer.DrawScreenText(_notice, new Vector2(36f, 169f), new XnaColor(255, 214, 122));
         renderer.DrawScreenText(
-            $"Feet: L {(_demo.LeftFootPlanted ? "PLANTED" : "swing")} / R {(_demo.RightFootPlanted ? "PLANTED" : "swing")}    Curves: breath + head + hat ON",
+            $"Feet: L {(_demo.LeftFootPlanted ? "PLANTED" : "swing")} / R {(_demo.RightFootPlanted ? "PLANTED" : "swing")}    View: 3/4 idle -> profile motion",
             new Vector2(36f, 197f), MutedColor);
 
         if (_authoring)
@@ -407,4 +411,3 @@ internal sealed class RigidCharacterHost : IDisposable
         _window.Dispose();
     }
 }
-

@@ -8,6 +8,7 @@ internal sealed class RigidCharacterDemo2D
     private const float StandingHipsY = GroundY + 190f;
     private const float RunSpeed = 275f;
     private const float Gravity = 1280f;
+    private const float IdleSideViewAmount = 0.58f;
 
     private readonly ProceduralLocomotion2D _locomotion = new();
     private PoseClip2D? _activeClip;
@@ -28,6 +29,7 @@ internal sealed class RigidCharacterDemo2D
     public RigidPose2D Pose { get; private set; }
     public int Facing { get; private set; } = 1;
     public bool IsGrounded { get; private set; } = true;
+    public float SideViewAmount { get; private set; } = IdleSideViewAmount;
     public string AnimationLabel { get; private set; } = "authored idle + joint curves";
     public bool LeftFootPlanted => _locomotion.LeftFootPlanted;
     public bool RightFootPlanted => _locomotion.RightFootPlanted;
@@ -89,6 +91,10 @@ internal sealed class RigidCharacterDemo2D
         }
 
         Pose = ApplyJointCurves(basePose, _animationTime, IsGrounded);
+
+        var shouldFaceSide = MathF.Abs(Velocity.X) > 12f || !IsGrounded || _activeClip is not null;
+        var targetView = shouldFaceSide ? 1f : IdleSideViewAmount;
+        SideViewAmount = MoveTowards(SideViewAmount, targetView, deltaSeconds * 3.2f);
     }
 
     public void Jump()
@@ -113,6 +119,7 @@ internal sealed class RigidCharacterDemo2D
         _clipTime = 0f;
         _animationTime = 0f;
         _hipBob = 0f;
+        SideViewAmount = IdleSideViewAmount;
         _locomotion.Reset(Hips, GroundY);
         Pose = RigidPose2D.Neutral;
     }
@@ -145,4 +152,3 @@ internal sealed class RigidCharacterDemo2D
         return MathF.Abs(delta) <= maximumDelta ? target : current + MathF.Sign(delta) * maximumDelta;
     }
 }
-

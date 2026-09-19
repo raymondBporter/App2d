@@ -116,8 +116,8 @@ internal sealed class SavePoint2D
         _basePosition + new Vector2(64f, 132f));
 
     private static LinearGradientShader ActiveOrbShader() =>
-        new LinearGradientShader(new XnaColor(245, 255, 255), new XnaColor(44, 193, 255));
+        new(new XnaColor(245, 255, 255), new XnaColor(44, 193, 255));
 
     private static LinearGradientShader InactiveOrbShader() =>
-        new LinearGradientShader(new XnaColor(132, 139, 158), new XnaColor(53, 60, 78));
+        new(new XnaColor(132, 139, 158), new XnaColor(53, 60, 78));
 }

@@ -13,15 +13,13 @@ public sealed class PlayerSaveStore2D
         WriteIndented = true
     };
 
-    private readonly string _path;
-
     public PlayerSaveStore2D(string path)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(path);
-        _path = System.IO.Path.GetFullPath(path);
+        Path = System.IO.Path.GetFullPath(path);
     }
 
-    public string Path => _path;
+    public string Path { get; }
 
     public static PlayerSaveStore2D CreateDefault()
     {
@@ -33,10 +31,10 @@ public sealed class PlayerSaveStore2D
     {
         try
         {
-            if (!File.Exists(_path))
+            if (!File.Exists(Path))
                 return null;
 
-            var json = File.ReadAllText(_path);
+            var json = File.ReadAllText(Path);
             return JsonSerializer.Deserialize<PlayerSave2D>(json, JsonOptions);
         }
         catch (Exception exception) when (IsRecoverableFileException(exception) || exception is JsonException or ArgumentException)
@@ -48,16 +46,16 @@ public sealed class PlayerSaveStore2D
     public bool TrySave(PlayerSave2D save)
     {
         ArgGuard.ThrowIfNull(save);
-        var directory = System.IO.Path.GetDirectoryName(_path)!;
+        var directory = System.IO.Path.GetDirectoryName(Path)!;
         var temporaryPath = System.IO.Path.Combine(
             directory,
-            $".{System.IO.Path.GetFileName(_path)}.{Guid.NewGuid():N}.tmp");
+            $".{System.IO.Path.GetFileName(Path)}.{Guid.NewGuid():N}.tmp");
 
         try
         {
             Directory.CreateDirectory(directory);
             File.WriteAllText(temporaryPath, JsonSerializer.Serialize(save, JsonOptions));
-            File.Move(temporaryPath, _path, overwrite: true);
+            File.Move(temporaryPath, Path, overwrite: true);
             return true;
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))

@@ -26,7 +26,6 @@ internal sealed class NoodleArm2D
     private readonly Vector2[] _upperEdge;
     private readonly Vector2[] _lowerEdge;
     private readonly float[] _lowerWeights;
-    private readonly Vector2 _defaultTarget;
     private readonly int _defaultBendDirection;
     private readonly XnaColor _skinColor;
     private readonly WorldObject2D _shoulderCap;
@@ -50,7 +49,7 @@ internal sealed class NoodleArm2D
         LowerLength = lowerLength;
         _radius = radius;
         _sectionCount = sectionCount;
-        _defaultTarget = defaultTarget ?? shoulder + new Vector2(235f, 105f);
+        DefaultTarget = defaultTarget ?? shoulder + new Vector2(235f, 105f);
         _defaultBendDirection = Math.Sign(bendDirection);
         BendDirection = _defaultBendDirection;
         _skinColor = skinColor ?? DefaultSkinColor;
@@ -61,7 +60,7 @@ internal sealed class NoodleArm2D
         _lowerWeights = new float[sectionCount + 1];
         _shoulderCap = new WorldObject2D(new Circle2D(radius), _skinShader);
         _wristCap = new WorldObject2D(new Circle2D(radius * 0.72f), _skinShader);
-        Target = _defaultTarget;
+        Target = DefaultTarget;
         RebuildSkin();
     }
 
@@ -71,7 +70,7 @@ internal sealed class NoodleArm2D
     public Vector2 Target { get; private set; }
     public int BendDirection { get; private set; }
     public TwoBoneIkPose2D Pose { get; private set; }
-    public Vector2 DefaultTarget => _defaultTarget;
+    public Vector2 DefaultTarget { get; }
 
     public void SetTarget(Vector2 target)
     {
@@ -85,7 +84,7 @@ internal sealed class NoodleArm2D
     public void Reset()
     {
         BendDirection = _defaultBendDirection;
-        Target = _defaultTarget;
+        Target = DefaultTarget;
         RebuildSkin();
     }
 

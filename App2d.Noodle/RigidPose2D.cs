@@ -96,7 +96,7 @@ internal sealed class PoseClip2D
         if (_frames.Length == 1 || Duration <= 0f)
             return _frames[0].Pose;
         if (Loops)
-            time = time - MathF.Floor(time / Duration) * Duration;
+            time -= MathF.Floor(time / Duration) * Duration;
         else
             time = Math.Clamp(time, 0f, Duration);
 

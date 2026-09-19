@@ -13,26 +13,15 @@ public enum UnarmedAttackKind2D
 }
 
 /// <summary>Weapon-free punch and kick actions shared by human and AI persons.</summary>
-public sealed class UnarmedPersonActions2D : IPersonActionSet2D
+public sealed class UnarmedPersonActions2D(
+    PhysicsBody2D ownerBody,
+    CombatFaction2D ownerFaction,
+    uint targetLayer,
+    CombatSystem2D combat) : IPersonActionSet2D
 {
-    private readonly CombatSystem2D _combat;
-    private readonly PhysicsBody2D _ownerBody;
-    private readonly CombatFaction2D _ownerFaction;
-    private readonly uint _targetLayer;
-    private readonly Attack _punch;
-    private readonly Attack _kick;
-
-    public UnarmedPersonActions2D(
-        PhysicsBody2D ownerBody,
-        CombatFaction2D ownerFaction,
-        uint targetLayer,
-        CombatSystem2D combat)
-    {
-        _ownerBody = ArgGuard.RequireNotNull(ownerBody);
-        _combat = ArgGuard.RequireNotNull(combat);
-        _ownerFaction = ownerFaction;
-        _targetLayer = targetLayer;
-        _punch = new Attack(
+    private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
+    private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
+    private readonly Attack _punch = new(
             UnarmedAttackKind2D.Punch,
             AxisAlignedRectangle2D.FromSize(new Vector2(48f, 48f)),
             new MeleeAttackProfile2D(
@@ -44,7 +33,7 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
                 verticalOffset: 7f),
             damage: 1,
             knockback: new Vector2(310f, 145f));
-        _kick = new Attack(
+    private readonly Attack _kick = new(
             UnarmedAttackKind2D.Kick,
             AxisAlignedRectangle2D.FromSize(new Vector2(66f, 42f)),
             new MeleeAttackProfile2D(
@@ -56,7 +45,6 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
                 verticalOffset: -9f),
             damage: 2,
             knockback: new Vector2(470f, 205f));
-    }
 
     public event Action<UnarmedAttackKind2D, float>? AttackStarted;
 
@@ -133,8 +121,8 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
                 attack.Action.WorldObject,
                 attack.Action.SourceId,
                 attack.Action.AttackId,
-                _ownerFaction,
-                _targetLayer,
+                ownerFaction,
+                targetLayer,
                 attack.Damage,
                 _ => new Vector2(
                     attack.Direction * attack.Knockback.X,

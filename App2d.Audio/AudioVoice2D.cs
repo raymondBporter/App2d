@@ -14,8 +14,7 @@ public readonly record struct AudioVoice2D
         _sequence = sequence;
     }
 
-    public bool IsPlaying =>
-        _mixer is not null && _mixer.IsVoicePlaying(_sequence);
+    public bool IsPlaying => _mixer?.IsVoicePlaying(_sequence) == true;
 
     public void SetVolume(float volume, float rampSeconds = 0f)
     {

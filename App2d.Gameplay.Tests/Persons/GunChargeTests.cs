@@ -201,10 +201,10 @@ public sealed class GunChargeTests
         game.Step(Press);
         for (var i = 1; i < 110; i++) game.Step(Hold);
 
-        var impact = Assert.Single(game.Sounds.Positioned,
+        var (Effect, Position) = Assert.Single(game.Sounds.Positioned,
             sound => sound.Effect == SoundEffect2D.GunImpact);
-        Assert.InRange(impact.Position.X, 280f, 310f);
-        Assert.True(impact.Position.X - game.Person.Position.X > 250f);
+        Assert.InRange(Position.X, 280f, 310f);
+        Assert.True(Position.X - game.Person.Position.X > 250f);
         var shot = Assert.Single(game.Sounds.Positioned,
             sound => sound.Effect == SoundEffect2D.GunFire);
         Assert.InRange(shot.Position.X - game.Person.Position.X, 40f, 50f);
