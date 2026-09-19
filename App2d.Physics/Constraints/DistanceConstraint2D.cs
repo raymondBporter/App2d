@@ -1,17 +1,25 @@
 using App2d.Core;
+using App2d.Core.Constraints;
 using System.Numerics;
 
 namespace App2d.Physics.Constraints;
 
 public sealed class DistanceConstraint2D : IPhysicsConstraint2D
 {
-    private const float MinimumDirectionLengthSquared = 1e-8f;
-    private float _restLength;
+    private ConstraintLimit1D _limits;
     private float _positionStrength = 1f;
     private float _velocityStrength = 1f;
     private float _positionTolerance = 0.01f;
 
     public DistanceConstraint2D(PhysicsBody2D first, PhysicsBody2D second, float restLength)
+        : this(first, second, ConstraintLimit1D.Locked(restLength))
+    {
+    }
+
+    public DistanceConstraint2D(
+        PhysicsBody2D first,
+        PhysicsBody2D second,
+        ConstraintLimit1D limits)
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
@@ -19,21 +27,20 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
 
         First = first;
         Second = second;
-        RestLength = restLength;
+        Limits = limits;
     }
 
     public PhysicsBody2D First { get; }
     public PhysicsBody2D Second { get; }
     public bool IsEnabled { get; set; } = true;
-    public DistanceConstraintMode2D Mode { get; set; } = DistanceConstraintMode2D.Rod;
-
-    public float RestLength
+    public ConstraintLimit1D Limits
     {
-        get => _restLength;
+        get => _limits;
         set
         {
-            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(RestLength));
-            _restLength = value;
+            if (value.HasMinimum && value.Minimum < 0f || value.HasMaximum && value.Maximum < 0f)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Distance limits cannot be negative.");
+            _limits = value;
         }
     }
 
@@ -74,21 +81,29 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         if (!IsEnabled)
             return;
 
-        var delta = Second.WorldObject.Transform.Position - First.WorldObject.Transform.Position;
-        var lengthSquared = delta.LengthSquared();
         var inverseMassSum = First.InverseMass + Second.InverseMass;
-        if (lengthSquared <= MinimumDirectionLengthSquared || inverseMassSum <= 0f)
+        if (inverseMassSum <= 0f)
             return;
 
-        var length = MathF.Sqrt(lengthSquared);
-        var direction = delta / length;
-        var relativeSpeed = Vector2.Dot(Second.LinearVelocity - First.LinearVelocity, direction);
-        if (Mode == DistanceConstraintMode2D.Rope && (length < RestLength || relativeSpeed <= 0f))
+        var evaluation = ConstraintMath2D.EvaluateDistance(
+            First.WorldObject.Transform.Position,
+            Second.WorldObject.Transform.Position,
+            Limits,
+            PositionTolerance);
+        var relativeSpeed = Vector2.Dot(
+            Second.LinearVelocity - First.LinearVelocity,
+            evaluation.Direction);
+        var shouldCorrect = evaluation.Limit.State switch
         {
+            ConstraintLimitState1D.Locked => true,
+            ConstraintLimitState1D.Lower => relativeSpeed < 0f,
+            ConstraintLimitState1D.Upper => relativeSpeed > 0f,
+            _ => false
+        };
+        if (!shouldCorrect)
             return;
-        }
 
-        var correctionImpulse = direction * (relativeSpeed * VelocityStrength / inverseMassSum);
+        var correctionImpulse = evaluation.Direction * (relativeSpeed * VelocityStrength / inverseMassSum);
         First.LinearVelocity += correctionImpulse * First.InverseMass;
         Second.LinearVelocity -= correctionImpulse * Second.InverseMass;
     }
@@ -98,21 +113,19 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         if (!IsEnabled)
             return false;
 
-        var delta = Second.WorldObject.Transform.Position - First.WorldObject.Transform.Position;
-        var lengthSquared = delta.LengthSquared();
         var inverseMassSum = First.InverseMass + Second.InverseMass;
-
-        if (lengthSquared <= MinimumDirectionLengthSquared || inverseMassSum <= 0f)
+        if (inverseMassSum <= 0f)
             return false;
 
-        var length = MathF.Sqrt(lengthSquared);
-        var error = length - RestLength;
-
-        if (Mode == DistanceConstraintMode2D.Rope ? error <= PositionTolerance : MathF.Abs(error) <= PositionTolerance)
+        var evaluation = ConstraintMath2D.EvaluateDistance(
+            First.WorldObject.Transform.Position,
+            Second.WorldObject.Transform.Position,
+            Limits,
+            PositionTolerance);
+        if (MathF.Abs(evaluation.Limit.Error) <= PositionTolerance)
             return false;
 
-        var direction = delta / length;
-        var correction = direction * (error * PositionStrength / inverseMassSum);
+        var correction = evaluation.Direction * (evaluation.Limit.Error * PositionStrength / inverseMassSum);
         First.WorldObject.Transform.Position += correction * First.InverseMass;
         Second.WorldObject.Transform.Position -= correction * Second.InverseMass;
         return true;

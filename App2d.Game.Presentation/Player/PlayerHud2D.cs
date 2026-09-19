@@ -38,7 +38,7 @@ public static class PlayerHud2D
         renderer.DrawScreenRoundedRectangle(barBounds, 6f, emptyHealthColor);
 
         var filledSegments = Math.Clamp(currentHealth, 0, maximumHealth);
-        var segmentsBounds = ScreenRectangle2D.Inflate(barBounds, -3f, -3f);
+        var segmentsBounds = barBounds.InsetBy(3f, 3f);
         var segmentWidth = (segmentsBounds.Width - segmentGap * (maximumHealth - 1)) / maximumHealth;
         for (var segment = 0; segment < maximumHealth; segment++)
         {
@@ -70,6 +70,6 @@ public static class PlayerHud2D
     {
         renderer.DrawScreenRoundedRectangle(bounds, 9f, panelColor);
         renderer.DrawScreenRoundedRectangle(bounds, 9f, accentColor, 3f);
-        renderer.DrawScreenTexture(texture, ScreenRectangle2D.Inflate(bounds, -5f, -5f));
+        renderer.DrawScreenTexture(texture, bounds.InsetBy(5f, 5f));
     }
 }

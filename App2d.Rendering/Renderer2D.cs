@@ -335,6 +335,24 @@ public sealed class Renderer2D : IDisposable
         TexturedQuad(bounds, new(0, 0, texture.Width, texture.Height), texture.Width, texture.Height, XnaColor.White);
     }
 
+    /// <summary>Draws a transient convex world-space polygon without creating a scene object.</summary>
+    public void DrawWorldConvexPolygon(ReadOnlySpan<Vector2> points, XnaColor color)
+    {
+        RequireFrame();
+        ArgGuard.ThrowIfTooShort(points, 3);
+        foreach (var point in points)
+            ArgGuard.ThrowIfNotFinite(point, nameof(points));
+
+        SelectBatch(null, null);
+        var matrix = _camera.WorldToDeviceMatrix;
+        var first = Vertex(Vector2.Transform(points[0], matrix), color);
+        for (var index = 1; index < points.Length - 1; index++)
+            Triangle(
+                first,
+                Vertex(Vector2.Transform(points[index], matrix), color),
+                Vertex(Vector2.Transform(points[index + 1], matrix), color));
+    }
+
     private void TexturedQuad(ScreenRectangle2D bounds, ScreenRectangle2D source, int width, int height, XnaColor color)
     {
         var a = Vertex(new(bounds.Left, bounds.Top), color, new(source.Left / width, source.Top / height));
