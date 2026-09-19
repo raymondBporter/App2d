@@ -14,8 +14,10 @@ public sealed partial class PhysicsWorld2D
     private readonly List<PhysicsBody2D> _bodies = [];
     private readonly List<PhysicsContact2D> _lastContacts = [];
     private readonly List<IPhysicsConstraint2D> _constraints = [];
-    private readonly Dictionary<(PhysicsBody2D First, PhysicsBody2D Second), PhysicsContact2D> _frameContacts = [];
-    private readonly Dictionary<(PhysicsBody2D First, PhysicsBody2D Second), PhysicsContact2D> _substepContacts = [];
+    // Contacts keep first-seen order explicitly so solver order never depends on
+    // dictionary enumeration; a pair seen again in a later iteration is updated in place.
+    private readonly ContactSet _frameContacts = new();
+    private readonly ContactSet _substepContacts = new();
     private readonly List<CollisionPair2D> _collisionContacts = [];
     private readonly PhysicsColliderPairFilter _physicsColliderPairFilter;
 
@@ -92,7 +94,7 @@ public sealed partial class PhysicsWorld2D
         for (var substep = 0; substep < substepCount; substep++)
             StepOnce(substepSeconds);
 
-        _lastContacts.AddRange(_frameContacts.Values);
+        _lastContacts.AddRange(_frameContacts.Contacts);
         foreach (var body in _bodies)
             body.ClearAccumulators();
     }
@@ -150,8 +152,8 @@ public sealed partial class PhysicsWorld2D
                     continue;
 
                 foundContact = true;
-                _substepContacts[(firstBody, secondBody)] = contact;
-                _frameContacts[(firstBody, secondBody)] = contact;
+                _substepContacts.Upsert(contact);
+                _frameContacts.Upsert(contact);
                 if (!firstBody.IsSensor && !secondBody.IsSensor)
                     PositionSolver.Solve(contact);
             }
@@ -171,7 +173,7 @@ public sealed partial class PhysicsWorld2D
                 break;
         }
 
-        foreach (var contact in _substepContacts.Values)
+        foreach (var contact in _substepContacts.Contacts)
         {
             if (!contact.First.IsSensor && !contact.Second.IsSensor)
                 VelocitySolver.Solve(contact);
@@ -247,6 +249,32 @@ public sealed partial class PhysicsWorld2D
 
         var relativeVerticalSpeed = other.LinearVelocity.Y - platform.LinearVelocity.Y;
         return relativeVerticalSpeed <= 0f;
+    }
+
+    private sealed class ContactSet
+    {
+        private readonly List<PhysicsContact2D> _contacts = [];
+        private readonly Dictionary<(PhysicsBody2D First, PhysicsBody2D Second), int> _index = [];
+
+        public IReadOnlyList<PhysicsContact2D> Contacts => _contacts;
+
+        public void Upsert(PhysicsContact2D contact)
+        {
+            var key = (contact.First, contact.Second);
+            if (_index.TryGetValue(key, out var position))
+                _contacts[position] = contact;
+            else
+            {
+                _index.Add(key, _contacts.Count);
+                _contacts.Add(contact);
+            }
+        }
+
+        public void Clear()
+        {
+            _contacts.Clear();
+            _index.Clear();
+        }
     }
 
     private sealed class PhysicsColliderPairFilter(PhysicsWorld2D world) :

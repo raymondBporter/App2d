@@ -22,7 +22,7 @@ public sealed class PersonBalanceTests
     {
         var collision = new CollisionSystem2D();
         _physics = new PhysicsWorld2D(collision) { Gravity = new Vector2(0f, -_metrics.Gravity) };
-        _person = new Person2D(collision, _physics, _metrics,
+        _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
             new Vector2(0f, _metrics.PlayerColliderSize.Y / 2f), 2u, 1u, CombatFaction2D.Player);
     }
 
@@ -112,8 +112,8 @@ public sealed class PersonBalanceTests
     private void Step(float move = 0f, bool jump = false, bool dash = false, bool drop = false)
     {
         _person.BeginFrame(Dt);
-        _person.ApplyCommand(new PersonCommand2D(
-            new PersonMovementIntent2D(move, jump, jump, false, drop, dash), false, false), Dt);
+        _person.ApplyCommand(new PersonCommand2D
+            { MoveX = move, JumpHeld = jump || drop, DownHeld = drop, DashHeld = dash }, Dt);
         _physics.Step(Dt);
         _person.UpdateAfterPhysics(Dt);
     }

@@ -117,15 +117,14 @@ public sealed class PersonPresentation2D : IDisposable
         ReferenceEquals(_animation.Clip, _shotAnimation) ||
         ReferenceEquals(_animation.Clip, _wallShotAnimation);
 
-    public void Equip(string equipmentId)
+    public void Equip(EquipmentKind2D equipment)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        AssetId2D.Validate(equipmentId);
 
-        var replacement = equipmentId switch
+        var replacement = equipment switch
         {
-            "gun" => GunCharacterId,
-            "unarmed" => UnarmedCharacterId,
+            EquipmentKind2D.Gun => GunCharacterId,
+            EquipmentKind2D.Unarmed => UnarmedCharacterId,
             _ => SwordCharacterId
         };
         if (string.Equals(_characterId, replacement, StringComparison.Ordinal))

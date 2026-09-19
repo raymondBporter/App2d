@@ -187,7 +187,7 @@ public sealed class MovingPlatform2DTests
             platform.WorldObject.WorldBounds.Top +
             traversal.PlayerColliderSize.Y * 0.5f +
             gap);
-        return new Person2D(
+        return new Person2D(EntityId2D.Create(),
             collision,
             physics,
             traversal,
@@ -213,6 +213,7 @@ public sealed class MovingPlatform2DTests
         Vector2 travel,
         float speed) =>
         new(
+            EntityId2D.Create(),
             physics,
             Vector2.Zero,
             travel,

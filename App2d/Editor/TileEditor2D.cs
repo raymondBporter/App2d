@@ -78,6 +78,7 @@ internal sealed class TileEditor2D : IDisposable
     public Bounds2D VisibleWorldBounds => _camera.VisibleWorldBounds;
     public Vector2 VisibleDeviceSize => _camera.ViewportSize;
     public float Zoom => _camera.Zoom;
+    public float PixelsPerWorldUnit => _camera.PixelsPerWorldUnit;
     public ThingEditorInspector2D InspectorView { get; }
     public IReadOnlyList<MovingPlatformDefinitionRecord2D> MovingPlatformDefinitions => _movingPlatformDefinitions;
     public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatformThings => _movingPlatformThings;
@@ -354,10 +355,9 @@ internal sealed class TileEditor2D : IDisposable
         if (_isPanning)
         {
             var deviceDelta = input.MousePositionDevice - _panAnchorDevice;
-            // Device Y points down while world Y points up (Camera2D.WorldToDeviceMatrix
-            // uses CreateScale(Zoom, -Zoom)), so the vertical component must be negated
-            // or a drag would pan the view the wrong way.
-            _cameraFocus = _panAnchorFocus - new Vector2(deviceDelta.X, -deviceDelta.Y) / _camera.Zoom;
+            // Transform a displacement without translation, accounting for viewport scale,
+            // zoom, rotation, and the device-to-world Y flip.
+            _cameraFocus = _panAnchorFocus - Vector2.TransformNormal(deviceDelta, _camera.DeviceToWorldMatrix);
         }
 
         if (input.MouseWheelDelta != 0f)
@@ -478,7 +478,7 @@ internal sealed class TileEditor2D : IDisposable
     private void BeginThingSelectionOrDrag()
     {
         var world = _camera.DeviceToWorld(_lastMouseDevice);
-        var handleRadius = 12f / _camera.Zoom;
+        var handleRadius = 12f / _camera.PixelsPerWorldUnit;
         var handleRadiusSquared = handleRadius * handleRadius;
 
         foreach (var thing in _movingPlatformThings.AsEnumerable().Reverse())

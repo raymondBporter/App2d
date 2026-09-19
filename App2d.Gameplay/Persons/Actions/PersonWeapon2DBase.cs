@@ -2,10 +2,9 @@ using App2d.Core;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-internal abstract class PersonWeapon2DBase(
-    string equipmentId) : IPersonWeapon2D
+internal abstract class PersonWeapon2DBase(EquipmentKind2D kind) : IPersonWeapon2D
 {
-    public string EquipmentId { get; } = ArgGuard.RequireNotNull(equipmentId);
+    public EquipmentKind2D Kind { get; } = kind;
     public virtual IEnumerable<SpatialObject2D> ActiveHitboxes => [];
     public virtual PersonActionState2D CaptureActionState() => default;
 

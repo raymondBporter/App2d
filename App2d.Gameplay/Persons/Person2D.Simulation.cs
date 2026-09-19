@@ -15,12 +15,13 @@ public sealed partial class Person2D
         float InvulnerabilitySeconds,
         float LandingSpeedThisFrame,
         bool DownAttackBouncedThisFrame,
+        PersonCommand2D PreviousCommand,
         PersonLocomotion2D.SimulationState Motor,
         int HitPoints,
         ImmutableDictionary<EntityId2D, int> HitHistory) : SimulationState2D;
 
     internal SimulationState CaptureSimulation() => new SimulationState(
-        _footstepSeconds, _simulationEnabled, Facing, InvulnerabilitySeconds, LandingSpeedThisFrame, DownAttackBouncedThisFrame, _motor.CaptureSimulation(), Health.Current, _lastAttackIds.ToImmutableDictionary());
+        _footstepSeconds, _simulationEnabled, Facing, InvulnerabilitySeconds, LandingSpeedThisFrame, DownAttackBouncedThisFrame, _previousCommand, _motor.CaptureSimulation(), Health.Current, _lastAttackIds.ToImmutableDictionary());
 
     internal void RestoreSimulation(SimulationState snapshot)
     {
@@ -31,6 +32,7 @@ public sealed partial class Person2D
         InvulnerabilitySeconds = state.InvulnerabilitySeconds;
         LandingSpeedThisFrame = state.LandingSpeedThisFrame;
         DownAttackBouncedThisFrame = state.DownAttackBouncedThisFrame;
+        _previousCommand = state.PreviousCommand;
         _motor.RestoreSimulation(state.Motor);
         Health.RestoreSimulation(state.HitPoints);
         _lastAttackIds.Clear();

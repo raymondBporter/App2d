@@ -23,16 +23,16 @@ public sealed class EnemySessionClientTests
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        var player = new Person2D(physics.CollisionSystem, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
+        var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
         var combat = new CombatSystem2D(physics.CollisionSystem, new CombatantRegistry2D());
-        var arsenal = new PersonArsenal2D(player.Body, metrics.GunMuzzleOffset, physics.CollisionSystem,
+        var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), player.Body, metrics.GunMuzzleOffset, physics.CollisionSystem,
             1, 4, CombatFaction2D.Player, combat);
         player.AttachActions(arsenal);
-        var brute = new BoilerBrute2D(physics.CollisionSystem, physics, new Vector2(80f, 0f), -100f, 100f, 1, 4);
+        var brute = new BoilerBrute2D(EntityId2D.Create(), physics.CollisionSystem, physics, new Vector2(80f, 0f), -100f, 100f, 1, 4);
         var world = new EnemyWorld();
         world.Enemies.Register(brute, new TileChunk2D(0, 0));
         using var session = new SideScrollerSession2D(physics, player, arsenal, world, new RespawnState2D(Vector2.Zero, 5), combat);
-        var endpoint = new SessionClient2D(session.CaptureState());
+        var endpoint = new SessionClient2D(session.CaptureSnapshot(), player.Id);
         var events = new List<EnemyOccurred2D>();
         SessionFrame2D? first = null;
         for (var i = 0; i < 120; i++)

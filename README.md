@@ -68,16 +68,22 @@ through the session-owned `CombatantRegistry2D`. Register actors when adding the
 the session, and unregister them when removing them permanently. Death, respawn, and
 streaming enablement preserve identity. Melee action sources also have IDs so hit
 deduplication uses source ID plus attack sequence rather than object identity.
-Zero means no entity. Automatically allocated IDs are process-local and never reused;
-they are distinct from authored level IDs and are not yet a network identity protocol.
-This first migration keeps existing object storage, physics body references, and
-rendering ownership intact; it does not introduce packed storage or networking.
+Zero means no entity. Every simulation object receives its ID from the session's
+`EntityIdAllocator2D`, so two sessions built from the same definition in the same order
+allocate identical IDs; `EntityId2D.Create()` is a process-local convenience for tests
+and diagnostics only. IDs are distinct from authored level IDs. Object storage, physics
+body references, and rendering ownership are unchanged; there is no packed storage.
 
-The local game advances through `SideScrollerSession2D`: ID-addressed input
-commands enter a fixed 120 Hz session, and immutable player, enemy, and world
-observations plus gameplay events return to `SideScrollerClient2D`. The production
-level, weapons, enemy actors, moving platforms, checkpoints, and terrain colliders
-run without constructing graphics or playing audio. Client presentation owns
+`SideScrollerSimulation2D.Create(SideScrollerSessionDefinition2D)` is the one recipe
+that builds a session and everything it owns; the host, a future server, and a
+predicting client all construct through it. The local game advances through
+`SideScrollerSession2D`: ID-addressed held-state input commands enter a fixed 120 Hz
+session (a player with no input this tick repeats its last command), and immutable
+per-player, enemy, level-content, and world observations plus gameplay events return
+to `SideScrollerClient2D`. Presses and releases are derived inside the simulation from
+consecutive commands, so a lost or repeated command cannot drop or double an action.
+The production level, weapons, enemy actors, moving platforms, checkpoints, and
+terrain colliders run without constructing graphics or playing audio. Client presentation owns
 sprites, terrain, effects, HUD, and sound; the host handles persistence and editing.
 Terrain observations use cached immutable chunk revisions, including neighboring
 tiles for correct edge rendering. Simulation and presentation live in separate
@@ -111,8 +117,10 @@ implementation: a dense, mutable map loaded from a level file rather
 than evaluated from a seed function. It still greedily merges each 32x32 chunk into
 AABB colliders on demand, and raises a `ChunkChanged` event that the in-game tile editor
 uses to drive streamer reloads after an edit. The side-scroller keeps at most 15
-nearby chunks live, so scene rendering, weapon queries, and the collision spatial
-index are bounded by the local neighborhood rather than total world size.
+nearby simulation chunks live, bounding weapon queries and the collision spatial
+index. Terrain visuals stream independently from `Camera2D.VisibleWorldBounds`,
+with one tile of padding for overhanging artwork. Zoom, resize, and editor panning
+therefore load all visible terrain without expanding the physics neighborhood.
 
 Each editable cell is one byte: four bits select one of up to 16 tilesets and four bits
 hold the composable tile type. Code exposes those as separate values; the packing is an
@@ -447,6 +455,15 @@ Developer / editor controls:
 
 - B: preview the shield pose (no gameplay block)
 - F3: toggle traversal arcs and movement metrics
+- F4: fire two ballistic reference markers; F6 clears their trails. Both launch from
+  the player's current center in the facing direction at 10 tiles/s, 45 degrees.
+  Yellow uses gravity 10 tiles/s²; pink uses current world gravity (59.375 tiles/s²).
+  These are exact constant-gravity free-flight paths, independent of the character
+  motor, with no drag, speed cap, inherited velocity, or terrain collisions. Each
+  marker stops at launch height and leaves its trail for comparison. Editor mode
+  freezes them. Labels interpret 1 tile as 1 meter for this experiment only; gameplay
+  units and movement are unchanged. In the console, set `ballistics_speed`,
+  `ballistics_angle`, or `ballistics_gravity`, then press F4 to repeat the experiment.
 - F1: toggle the tile editor; freezes gameplay, detaches the camera, and switches the
   mouse to painting (left button paints or selects from the right sidebar, right erases,
   middle-drag pans, wheel zooms, and `Ctrl+Z` undoes an edit)
@@ -476,7 +493,15 @@ draw_fps
 draw_fps true
 draw_collision_shapes = true
 draw_graphics = false
+camera_zoom = 2
 ```
+
+`camera_zoom` controls gameplay framing (default `1.35`, range `0.05`–`20`);
+larger values zoom in. Visible terrain follows the camera automatically.
+Gameplay scales uniformly from a 1080-pixel-high reference view: resizing the
+window preserves the visible world height at the current zoom, while wider
+aspect ratios reveal more world horizontally. Editor picking and panning use
+the same camera transform.
 
 `list` shows registered variables, `help` shows syntax, `toggle <name>` flips a boolean,
 and `clear` clears the output. Tab completes names and Up/Down navigate command history.

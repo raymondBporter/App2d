@@ -18,8 +18,11 @@ internal sealed partial class TumbleProp2D : IEnemyActor2D, ICombatant2D
     private bool _simulationEnabled = true;
     private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
 
-    public TumbleProp2D(PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
+    public TumbleProp2D(EntityId2D id, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
+        if (!id.IsValid)
+            throw new ArgumentException("A prop requires a valid entity ID.", nameof(id));
+        Id = id;
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNotFinite(position);
 
@@ -43,7 +46,7 @@ internal sealed partial class TumbleProp2D : IEnemyActor2D, ICombatant2D
         Health = new Health2D(1_000_000);
     }
 
-    public EntityId2D Id { get; } = EntityId2D.Create();
+    public EntityId2D Id { get; }
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }

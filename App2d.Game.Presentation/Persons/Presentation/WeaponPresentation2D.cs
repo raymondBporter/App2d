@@ -30,7 +30,7 @@ public sealed class WeaponPresentation2D : IDisposable
     private float _cancelSeconds;
     private float _cancelProgress;
     private WeaponState2D _state = WeaponState2D.Empty;
-    private string _equipmentId = "sword";
+    private EquipmentKind2D _equipment = EquipmentKind2D.Sword;
 
     public WeaponPresentation2D(Scene2D scene, TextureCache2D textures, ISoundEffectSink2D sounds)
     {
@@ -50,27 +50,27 @@ public sealed class WeaponPresentation2D : IDisposable
             .Select(i => textures.Load($"effects/gun/trail-{i:00}.png")).ToArray();
     }
 
-    public string WeaponName => _equipmentId switch { "gun" => "GUN", "unarmed" => "FISTS", _ => "SWORD" };
-    public Texture2D HudTexture => _equipmentId switch
+    public string WeaponName => _equipment switch { EquipmentKind2D.Gun => "GUN", EquipmentKind2D.Unarmed => "FISTS", _ => "SWORD" };
+    public Texture2D HudTexture => _equipment switch
     {
-        "unarmed" => _unarmedHud,
-        "gun" => _chargeHud[Math.Clamp((int)MathF.Round(60f * (_state.IsCharging
+        EquipmentKind2D.Unarmed => _unarmedHud,
+        EquipmentKind2D.Gun => _chargeHud[Math.Clamp((int)MathF.Round(60f * (_state.IsCharging
             ? _state.ChargeProgress : _flashSeconds > 0f ? 1f : _cancelProgress * _cancelSeconds / 0.14f)), 0, 60)],
         _ => _swordHud
     };
 
-    public void ApplyState(WeaponState2D state, string equipmentId, IEnumerable<WeaponEvent2D> occurrences) =>
-        Update(state, equipmentId, occurrences, 0f);
+    public void ApplyState(WeaponState2D state, EquipmentKind2D equipment, IEnumerable<WeaponEvent2D> occurrences) =>
+        Update(state, equipment, occurrences, 0f);
 
-    public void Advance(float deltaSeconds) => Update(_state, _equipmentId, [], deltaSeconds);
+    public void Advance(float deltaSeconds) => Update(_state, _equipment, [], deltaSeconds);
 
     // Combined helper for diagnostics. Deliver occurrences only once.
-    public void Update(WeaponState2D state, string equipmentId,
+    public void Update(WeaponState2D state, EquipmentKind2D equipment,
         IEnumerable<WeaponEvent2D> occurrences, float deltaSeconds)
     {
         ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
         _state = state;
-        _equipmentId = equipmentId;
+        _equipment = equipment;
         _flashSeconds = Math.Max(0f, _flashSeconds - deltaSeconds);
         _cancelSeconds = Math.Max(0f, _cancelSeconds - deltaSeconds);
         foreach (var occurrence in occurrences)
@@ -109,7 +109,7 @@ public sealed class WeaponPresentation2D : IDisposable
             ((SpriteShader2D)_glow.Shader).Texture = _chargeAnimation.CurrentFrame;
         }
         else StopCharge();
-        if (equipmentId != "gun") _flashSeconds = _cancelSeconds = 0f;
+        if (equipment != EquipmentKind2D.Gun) _flashSeconds = _cancelSeconds = 0f;
         _glow.IsVisible = state.IsCharging || _cancelSeconds > 0f;
         _glow.Transform.Position = state.MuzzlePosition;
         var scale = state.IsCharging ? 0.2f + 0.8f * state.ChargeProgress

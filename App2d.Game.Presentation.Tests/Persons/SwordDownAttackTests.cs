@@ -20,7 +20,7 @@ namespace App2d.Gameplay.Tests.Persons;
 
 public sealed class SwordDownAttackTests
 {
-    private static PersonCommand2D Attack => new(default, true, false, DownHeld: true);
+    private static PersonCommand2D Attack => new() { PrimaryHeld = true, DownHeld = true };
 
     [Theory]
     [InlineData(-1f)]
@@ -85,6 +85,7 @@ public sealed class SwordDownAttackTests
     {
         using var game = new Fixture();
         game.Step(Attack with { DownHeld = startDown }, 0.05f);
+        game.Step(default, 0f); // Release so the next command is a new press.
         game.Step(Attack with { DownHeld = !startDown }, 0.05f);
         Assert.Equal(startDown ? 1 : 0, game.DownAttacks);
         Assert.Equal(startDown ? 0 : 1, game.NormalAttacks);
@@ -121,11 +122,11 @@ public sealed class SwordDownAttackTests
         using var attacking = new Fixture();
         using var baseline = new Fixture();
         attacking.Physics.Gravity = baseline.Physics.Gravity = new Vector2(0f, -900f);
-        var movement = new PersonMovementIntent2D(1f, false, false, false, false, false);
+        var movement = new PersonCommand2D { MoveX = 1f };
         for (var i = 0; i < 60; i++)
         {
-            attacking.Step(Attack with { Movement = movement, UsePrimaryAction = i == 0 }, 1f / 120f);
-            baseline.Step(new(movement, false, false), 1f / 120f);
+            attacking.Step(movement with { DownHeld = true, PrimaryHeld = i == 0 }, 1f / 120f);
+            baseline.Step(movement, 1f / 120f);
             Assert.Equal(baseline.Person.Position, attacking.Person.Position);
             Assert.Equal(baseline.Person.Body.LinearVelocity, attacking.Person.Body.LinearVelocity);
         }
@@ -234,7 +235,7 @@ public sealed class SwordDownAttackTests
                 32f, SideScrollerLevel2D.ChunkSizeTiles, SideScrollerLevel2D.WorldOrigin);
             Level = new(_metrics, TileMap, _ => 0);
             ContactDamage = new(_collision, 4, _combatants);
-            Person = new(_collision, Physics, _metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
+            Person = new(EntityId2D.Create(), _collision, Physics, _metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
             if (grounded)
             {
                 var floor = Physics.AddBody(new SpatialObject2D(
@@ -247,7 +248,7 @@ public sealed class SwordDownAttackTests
             _presentation = new(scene, _textures, _metrics);
             Shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
             var sounds = new SilentSounds();
-            Arsenal = new(Person.Body, _metrics.GunMuzzleOffset, _collision, 1, 4, CombatFaction2D.Player,
+            Arsenal = new(new EntityIdAllocator2D(), Person.Body, _metrics.GunMuzzleOffset, _collision, 1, 4, CombatFaction2D.Player,
                 new CombatSystem2D(_collision, _combatants),
                 overlapsSpikes: bounds => Level.TryGetSpikeSource(bounds, out _));
             Person.AttachActions(Arsenal);
@@ -266,7 +267,7 @@ public sealed class SwordDownAttackTests
 
         public Person2D AddEnemy(Vector2 position)
         {
-            var enemy = new Person2D(_collision, Physics, _metrics, position, 4, 0, CombatFaction2D.Enemy);
+            var enemy = new Person2D(EntityId2D.Create(), _collision, Physics, _metrics, position, 4, 0, CombatFaction2D.Enemy);
             // Keep overlap targets fixed while still recording damage knockback.
             enemy.Body.MotionType = BodyMotionType2D.Static;
             _combatants.Register(enemy);
@@ -282,7 +283,7 @@ public sealed class SwordDownAttackTests
             var body = Physics.AddBody(spatial, BodyMotionType2D.Static);
             body.CollisionLayer = 4;
             body.CollisionMask = 0;
-            _combatants.Register(new PatrolEnemy2D(spatial, body, -100f, 100f, 1f, 5));
+            _combatants.Register(new PatrolEnemy2D(EntityId2D.Create(), spatial, body, -100f, 100f, 1f, 5));
         }
 
         public void Step(PersonCommand2D command, float dt)
@@ -291,7 +292,7 @@ public sealed class SwordDownAttackTests
             Person.ApplyCommand(command, dt);
             Physics.Step(dt);
             Person.UpdateAfterPhysics(dt);
-            _presentation.Update(dt, 0, Person.CaptureState(), command.Movement.MoveX, false, Arsenal.IsMeleeAttackActive);
+            _presentation.Update(dt, 0, Person.CaptureState(), command.MoveX, false, Arsenal.IsMeleeAttackActive);
         }
 
         public void AssertFrame(string clip, int frame) => Assert.Same(

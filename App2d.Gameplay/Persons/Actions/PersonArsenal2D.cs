@@ -17,6 +17,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
     private int _equipmentIndex;
 
     public PersonArsenal2D(
+        EntityIdAllocator2D ids,
         PhysicsBody2D ownerBody,
         Vector2 muzzleOffset,
         CollisionSystem2D collision,
@@ -26,17 +27,19 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         CombatSystem2D combat,
         Func<Bounds2D, bool>? overlapsSpikes = null)
     {
+        ArgGuard.ThrowIfNull(ids);
         ArgGuard.ThrowIfNull(ownerBody);
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(combat);
 
-        _sword = new SwordPersonWeapon2D("sword", ownerBody, ownerFaction, targetLayer, combat,
+        _sword = new SwordPersonWeapon2D(ids, ownerBody, ownerFaction, targetLayer, combat,
             duration => MeleeAttackStarted?.Invoke(duration), Publish,
             duration => DownAttackStarted?.Invoke(duration), overlapsSpikes);
-        _gun = new GunPersonWeapon2D(ownerBody, muzzleOffset, collision, worldLayer, targetLayer,
+        _gun = new GunPersonWeapon2D(ids, ownerBody, muzzleOffset, collision, worldLayer, targetLayer,
             ownerFaction, combat, () => ShotStarted?.Invoke(), Publish);
         _weapons = [_sword, _gun];
         _unarmed = new UnarmedPersonActions2D(
+            ids,
             ownerBody,
             ownerFaction,
             targetLayer,
@@ -50,7 +53,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
     public WeaponState2D CaptureWeaponState() => _gun.CaptureState();
     public PersonActionState2D CaptureActionState() => IsUnarmed ? _unarmed.CaptureActionState() : EquippedWeapon.CaptureActionState();
 
-    public event Action<string>? EquipmentChanged;
+    public event Action<EquipmentKind2D>? EquipmentChanged;
     public event Action<float>? MeleeAttackStarted;
     public event Action<float>? DownAttackStarted;
     public event Action? ShotStarted;
@@ -70,7 +73,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         IsUnarmed
             ? _unarmed.IsAttackActive
             : EquippedWeapon is MeleePersonWeapon2D { IsAttackActive: true };
-    public string EquipmentId => IsUnarmed ? "unarmed" : EquippedWeapon.EquipmentId;
+    public EquipmentKind2D Equipment => IsUnarmed ? EquipmentKind2D.Unarmed : EquippedWeapon.Kind;
 
     private bool IsUnarmed => _equipmentIndex == _weapons.Length;
     private IPersonWeapon2D EquippedWeapon => _weapons[_equipmentIndex];
@@ -129,6 +132,6 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         else
             EquippedWeapon.OnDeselected();
         _equipmentIndex = (_equipmentIndex + 1) % (_weapons.Length + 1);
-        EquipmentChanged?.Invoke(EquipmentId);
+        EquipmentChanged?.Invoke(Equipment);
     }
 }

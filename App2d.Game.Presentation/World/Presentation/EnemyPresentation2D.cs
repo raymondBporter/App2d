@@ -5,6 +5,7 @@ using App2d.Gameplay.Assets;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
+using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
@@ -167,7 +168,7 @@ public sealed class EnemyPresentation2D(
         {
             _scene = scene;
             _person = new PersonPresentation2D(scene, textures, traversal);
-            _person.Equip("unarmed");
+            _person.Equip(EquipmentKind2D.Unarmed);
             if (!isAlive) _person.PlayDeath();
             _marker = new WorldObject2D(new Circle2D(8f), new SolidColorShader(new XnaColor(255, 46, 166))) { ZIndex = 3 };
             scene.Add(_marker);

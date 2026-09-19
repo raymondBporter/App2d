@@ -17,7 +17,7 @@ using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Gameplay.Player;
 
-/// <summary>Local input and presentation. Reads only session value messages.</summary>
+/// <summary>Local input and presentation for one player. Reads only session value messages.</summary>
 internal sealed class SideScrollerClient2D : IDisposable
 {
     private const float HardLandingSpeed = 650f;
@@ -39,32 +39,35 @@ internal sealed class SideScrollerClient2D : IDisposable
     private bool _lastSaveSucceeded;
     private bool _shieldPose;
 
-    public SideScrollerClient2D(SessionSnapshot2D initial, Scene2D scene,
+    public SideScrollerClient2D(SessionSnapshot2D initial, EntityId2D playerId, Scene2D scene,
         Camera2D camera, SideScrollerCamera2D cameraController,
         TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal)
     {
-        _endpoint = new SessionClient2D(initial);
-        var initialState = initial.Player;
+        _endpoint = new SessionClient2D(initial, playerId);
+        var initialState = _endpoint.State;
         _camera = camera;
         _cameraController = cameraController;
         _sounds = sounds;
         _traversal = traversal;
         _traversalDebug = new TraversalDebugRenderer2D(traversal);
+        Ballistics = new BallisticsDebug2D(traversal);
         _world = new WorldPresentation2D(scene, textures);
-        _world.ApplyState(initial.World);
+        _world.ApplyState(initial.Content, initial.World);
         _presentation = new PersonPresentation2D(scene, textures, traversal);
-        _presentation.Equip(initialState.EquipmentId);
+        _presentation.Equip(initialState.Equipment);
         WorldSounds = new SpatialSoundEffectSink2D(sounds, () => State.Person.Position);
         _weapons = new WeaponPresentation2D(scene, textures, WorldSounds);
-        _weapons.ApplyState(initialState.Weapons, initialState.EquipmentId, []);
+        _weapons.ApplyState(initialState.Weapons, initialState.Equipment, []);
         _enemies = new EnemyPresentation2D(scene, textures, traversal, WorldSounds);
         _enemies.ApplyState(initial.Enemies, [], initial.Tick);
         ApplyPlayerState();
     }
 
     public PlayerState2D State => _endpoint.State;
+    public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain) => _world.SetVisibleTerrain(terrain);
     public bool IsControllerConnected => _input.IsControllerConnected;
     public bool ShowTraversalDebug { get; set; }
+    public BallisticsDebug2D Ballistics { get; }
     public SpatialSoundEffectSink2D WorldSounds { get; }
     public event Action<CheckpointActivated2D>? CheckpointActivated;
 
@@ -72,6 +75,8 @@ internal sealed class SideScrollerClient2D : IDisposable
     {
         var debug = PlayerDebugInput2D.Capture(input);
         if (debug.ToggleTraversal) ShowTraversalDebug = !ShowTraversalDebug;
+        if (debug.FireBallistics) Ballistics.Launch(State.Person.Position, State.Person.Facing);
+        if (debug.ClearBallistics) Ballistics.Clear();
         _shieldPose = debug.ShieldPose;
         var command = _input.Capture(input);
         return _endpoint.CreateInput(command);
@@ -80,13 +85,15 @@ internal sealed class SideScrollerClient2D : IDisposable
     public void Apply(SessionFrame2D frame)
     {
         if (!_endpoint.Apply(frame)) return;
-        _world.ApplyState(frame.World);
+        _world.ApplyState(frame.Content, frame.World);
         _enemies.ApplyState(frame.Enemies, frame.Events.OfType<EnemyOccurred2D>().Select(e => e.Occurrence), frame.Tick);
-        _weapons.ApplyState(State.Weapons, State.EquipmentId,
+        _weapons.ApplyState(State.Weapons, State.Equipment,
             frame.Events.OfType<WeaponOccurred2D>().Select(e => e.Occurrence));
 
         foreach (var occurrence in frame.Events)
         {
+            // Player-scoped facts belong to this client's player; other players' facts are not presented here yet.
+            var isMine = occurrence.Stamp.EntityId == _endpoint.PlayerId;
             switch (occurrence)
             {
                 case CombatDamageOccurred2D combat when combat.Damage.Faction != CombatFaction2D.Player &&
@@ -94,11 +101,11 @@ internal sealed class SideScrollerClient2D : IDisposable
                     WorldSounds.PlayAt(combat.Damage.WasKilled ? SoundEffect2D.EnemyDeath : SoundEffect2D.EnemyHurt,
                         combat.Damage.Position);
                     break;
-                case JumpStarted2D:
+                case JumpStarted2D when isMine:
                     EndJumpSound();
                     _jumpSound = _sounds.Begin(SoundEffect2D.PlayerJump, 0.3f);
                     break;
-                case Landed2D landed:
+                case Landed2D landed when isMine:
                     EndJumpSound();
                     _sounds.Play(landed.ImpactSpeed >= HardLandingSpeed
                         ? SoundEffect2D.PlayerLandHard : SoundEffect2D.PlayerLandSoft);
@@ -109,29 +116,29 @@ internal sealed class SideScrollerClient2D : IDisposable
                         _cameraController.Shake(float.Lerp(1f, 2.5f, impact), stabilizeVerticalFollow: true);
                     }
                     break;
-                case Footstep2D: _sounds.Play(SoundEffect2D.PlayerFootstep); break;
-                case Damaged2D:
+                case Footstep2D when isMine: _sounds.Play(SoundEffect2D.PlayerFootstep); break;
+                case Damaged2D when isMine:
                     _sounds.Play(SoundEffect2D.PlayerHurt);
                     _presentation.PlayHit();
                     _cameraController.Shake(4f);
                     break;
-                case Died2D:
+                case Died2D when isMine:
                     EndJumpSound();
                     _presentation.PlayDeath();
                     break;
-                case Respawned2D respawn:
+                case Respawned2D respawn when isMine:
                     EndJumpSound();
                     _presentation.Reset();
                     _cameraController.Reset(respawn.Position);
                     _sounds.Play(SoundEffect2D.PlayerRespawn);
                     _weapons.Reset();
                     break;
-                case GoalReached2D: _sounds.Play(SoundEffect2D.GoalReached); break;
-                case CheckpointActivated2D checkpoint: CheckpointActivated?.Invoke(checkpoint); break;
-                case EquipmentChanged2D equipment:
-                    _presentation.Equip(equipment.EquipmentId);
+                case GoalReached2D when isMine: _sounds.Play(SoundEffect2D.GoalReached); break;
+                case CheckpointActivated2D checkpoint when isMine: CheckpointActivated?.Invoke(checkpoint); break;
+                case EquipmentChanged2D equipment when isMine:
+                    _presentation.Equip(equipment.Equipment);
                     break;
-                case AttackStarted2D attack: PresentAttack(attack); break;
+                case AttackStarted2D attack when isMine: PresentAttack(attack); break;
             }
         }
 
@@ -147,7 +154,7 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     private void ApplyPlayerState()
     {
-        _presentation.Equip(State.EquipmentId);
+        _presentation.Equip(State.Equipment);
         _presentation.ApplyState(State.Person, _endpoint.Tick, State.MoveX,
             _shieldPose && State.Person.IsAlive, State.IsMeleeAttackActive);
     }
@@ -156,15 +163,16 @@ internal sealed class SideScrollerClient2D : IDisposable
     {
         ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
         _world.Advance(deltaSeconds);
+        Ballistics.Advance(deltaSeconds);
         _enemies.Advance(deltaSeconds);
         _weapons.Advance(deltaSeconds);
         _presentation.Advance(deltaSeconds);
         _cameraController.Update(State.Person.Position, State.Person.LinearVelocity, State.Person.IsGrounded, deltaSeconds);
     }
 
-    public void RefreshEditorWorld(ImmutableArray<EnemyState2D> enemies, WorldState2D world)
+    public void RefreshEditorWorld(ImmutableArray<EnemyState2D> enemies, LevelContent2D content, WorldState2D world)
     {
-        _world.ApplyState(world);
+        _world.ApplyState(content, world);
         _enemies.ApplyState(enemies, [], _endpoint.Tick);
     }
 
@@ -200,6 +208,7 @@ internal sealed class SideScrollerClient2D : IDisposable
             renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 170f));
         }
         if (ShowTraversalDebug) _traversalDebug.Draw(renderer, State.Person.Position, State.Person.Facing);
+        Ballistics.Draw(renderer);
     }
 
     private void UpdateJumpSound()

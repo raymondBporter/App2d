@@ -16,7 +16,8 @@ public sealed class SideScrollerSessionWorld2D(
     public WorldSimulationState2D CaptureSimulation() => level.CaptureSimulation();
     public void ValidateSimulation(WorldSimulationState2D state) => level.ValidateSimulation(state);
     public void RestoreSimulation(WorldSimulationState2D state) => level.RestoreSimulation(state);
-    public WorldState2D CaptureWorld() => level.CaptureState();
+    public LevelContent2D CaptureContent() => level.CaptureContent();
+    public WorldState2D CaptureWorld() => level.CaptureWorld();
     public ImmutableArray<EnemyState2D> CaptureEnemies() => level.EnemySystem.CaptureStates();
     public ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => level.EnemySystem.DrainEvents();
     public Bounds2D Bounds => level.TileMap.WorldBounds;

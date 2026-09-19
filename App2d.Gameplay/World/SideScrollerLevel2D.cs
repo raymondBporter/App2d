@@ -27,6 +27,9 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private readonly List<SavePoint2D> _savePoints = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
+    private LevelContent2D? _content;
+    private (long Streamer, long Definition) _contentKey;
+    private long _contentRevision;
     private bool _authoredWorldThingsCreated;
     private CombatantRegistry2D? _combatants;
     private bool _disposed;
@@ -167,23 +170,40 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public void CreateSimulation(
-        CollisionSystem2D collision, PhysicsWorld2D physics,
+        CollisionSystem2D collision, PhysicsWorld2D physics, EntityIdAllocator2D ids,
         uint worldLayer, uint playerLayer, uint enemyLayer)
     {
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(ids);
         StateGuard.ThrowIf(_environment is not null, "The level simulation has already been created.");
         var streamer = new SideScrollerChunkStreamer2D(physics, TileMap, worldLayer, playerLayer | enemyLayer);
-        _environment = new LevelEnvironment(collision, physics, streamer, worldLayer, playerLayer, enemyLayer);
+        _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
         CreateMovingPlatformsFromSpecs();
         CreateSavePoints();
     }
 
-    public WorldState2D CaptureState() => new(
+    /// <summary>Per-tick dynamic observation.</summary>
+    public WorldState2D CaptureWorld() => new(
         _movingPlatforms.Select(p => p.CaptureState()).ToImmutableArray(),
-        _savePoints.Select(p => p.CaptureState()).ToImmutableArray(),
-        RequireEnvironment().Streamer.CaptureState(), GoalThing?.Position);
+        _savePoints.Select(p => p.CaptureState()).ToImmutableArray());
+
+    /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
+    public LevelContent2D CaptureContent()
+    {
+        var streamer = RequireEnvironment().Streamer;
+        var key = (streamer.Version, _definitionRevision);
+        if (_content is null || _contentKey != key)
+        {
+            _contentKey = key;
+            _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(),
+                _movingPlatforms.Select(p => p.CaptureDefinition()).ToImmutableArray(),
+                _savePoints.Select(p => p.CapturePlacement()).ToImmutableArray(),
+                GoalThing?.Position);
+        }
+        return _content;
+    }
 
     public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Bounds2D playerBounds)
     {
@@ -251,6 +271,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         new SideScrollerThingSpawner2D(
             environment.Collision,
             environment.Physics,
+            environment.Ids,
             TileMap,
             EnemySystem,
             environment.Streamer,
@@ -277,6 +298,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             if (!spec.Enabled)
                 continue;
             _movingPlatforms.Add(new MovingPlatform2D(
+                environment.Ids.Allocate(),
                 environment.Physics,
                 spec.Position,
                 spec.Travel,
@@ -322,6 +344,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private sealed record LevelEnvironment(
         CollisionSystem2D Collision,
         PhysicsWorld2D Physics,
+        EntityIdAllocator2D Ids,
         SideScrollerChunkStreamer2D Streamer,
         uint WorldLayer,
         uint PlayerLayer,

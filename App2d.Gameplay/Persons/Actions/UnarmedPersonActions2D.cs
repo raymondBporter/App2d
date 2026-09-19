@@ -17,16 +17,19 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
     private readonly Attack _kick;
 
     public UnarmedPersonActions2D(
+        EntityIdAllocator2D ids,
         PhysicsBody2D ownerBody,
         CombatFaction2D ownerFaction,
         uint targetLayer,
         CombatSystem2D combat)
     {
+        ArgGuard.ThrowIfNull(ids);
         _ownerBody = ArgGuard.RequireNotNull(ownerBody);
         _combat = ArgGuard.RequireNotNull(combat);
         _ownerFaction = ownerFaction;
         _targetLayer = targetLayer;
         _punch = new Attack(
+            ids.Allocate(),
             UnarmedAttackKind2D.Punch,
             AxisAlignedRectangle2D.FromSize(new Vector2(48f, 48f)),
             new MeleeAttackProfile2D(
@@ -39,6 +42,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
             damage: 1,
             knockback: new Vector2(310f, 145f));
         _kick = new Attack(
+            ids.Allocate(),
             UnarmedAttackKind2D.Kick,
             AxisAlignedRectangle2D.FromSize(new Vector2(66f, 42f)),
             new MeleeAttackProfile2D(
@@ -137,6 +141,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
     }
 
     private sealed class Attack(
+        EntityId2D sourceId,
         UnarmedAttackKind2D kind,
         IShape2D hitboxShape,
         MeleeAttackProfile2D profile,
@@ -145,7 +150,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
     {
         public UnarmedAttackKind2D Kind { get; } = kind;
         public MeleeAttack2D Action { get; } =
-            new(new SpatialObject2D(hitboxShape), profile);
+            new(sourceId, new SpatialObject2D(hitboxShape), profile);
         public int Damage { get; } = damage;
         public Vector2 Knockback { get; } = knockback;
         public float Direction { get; set; } = 1f;

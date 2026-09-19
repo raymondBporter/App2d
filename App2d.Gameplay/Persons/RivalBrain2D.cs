@@ -66,17 +66,16 @@ internal sealed partial class RivalBrain2D(float minimumX, float maximumX)
             }
         }
 
+        // Held state only: the person derives presses from consecutive commands, so each
+        // one-tick pulse below is one press and the jump hold spans several ticks.
         return new PersonCommand2D(
-            new PersonMovementIntent2D(
-                moveX,
-                jumpPressed,
-                jumpPressed || _jumpHoldSeconds > 0f,
-                JumpReleased: false,
-                DropThroughPressed: false,
-                dashPressed),
-            usePrimary,
-            SwitchEquipment: false,
-            UseSecondaryAction: useSecondary);
+            moveX,
+            ClimbY: 0f,
+            JumpHeld: jumpPressed || _jumpHoldSeconds > 0f,
+            DashHeld: dashPressed,
+            DownHeld: false,
+            PrimaryHeld: usePrimary,
+            SecondaryHeld: useSecondary);
     }
 
     private float ChooseMovement(float positionX, float targetOffsetX)

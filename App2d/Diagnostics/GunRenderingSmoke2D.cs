@@ -28,7 +28,8 @@ internal static class GunRenderingSmoke2D
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision) { Gravity = Vector2.Zero };
         var metrics = TraversalMetricsLoader2D.Load(textures.ContentRoot);
-        var person = new Person2D(collision, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
+        var ids = new EntityIdAllocator2D();
+        var person = new Person2D(ids.Allocate(), collision, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
         var floor = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(800f, 20f)),
             new SolidColorShader(new XnaColor(54, 74, 85)));
         floor.Transform.Position = new Vector2(0, person.WorldObject.WorldBounds.Bottom - 10f);
@@ -37,7 +38,7 @@ internal static class GunRenderingSmoke2D
         floorBody.CollisionLayer = 1;
         floorBody.CollisionMask = 2;
         var sounds = new SilentSounds();
-        var arsenal = new PersonArsenal2D(person.Body, metrics.GunMuzzleOffset, collision, 1, 4,
+        var arsenal = new PersonArsenal2D(ids, person.Body, metrics.GunMuzzleOffset, collision, 1, 4,
             CombatFaction2D.Player, new CombatSystem2D(collision, new CombatantRegistry2D()));
         using var weaponPresentation = new WeaponPresentation2D(scene, textures, sounds);
         var weaponEvents = new List<WeaponEvent2D>();
@@ -50,7 +51,7 @@ internal static class GunRenderingSmoke2D
         var camera = new Camera2D { Zoom = 4f };
         using var renderer = new Renderer2D(camera, device);
         using var target = new RenderTarget2D(device, width, height);
-        var hold = new PersonCommand2D(default, false, false, PrimaryActionHeld: true);
+        var hold = new PersonCommand2D(0f, 0f, false, false, false, PrimaryHeld: true, false);
 
         foreach (var facing in new[] { 1f, -1f })
         {
@@ -61,8 +62,7 @@ internal static class GunRenderingSmoke2D
             weaponPresentation.Reset();
             weaponEvents.Clear();
             Step(default);
-            Step(hold with { UsePrimaryAction = true });
-            for (var frame = 1; frame < 36; frame++) Step(hold);
+            for (var frame = 0; frame < 36; frame++) Step(hold);
             Save($"gun-charge-{facing}.png", "CHARGING / 0.30s");
             for (var frame = 36; frame < 72; frame++) Step(hold);
             if (!arsenal.GetActiveAttackHitboxes().Any())
@@ -101,9 +101,9 @@ internal static class GunRenderingSmoke2D
             person.ApplyCommand(command, dt);
             physics.Step(dt);
             person.UpdateAfterPhysics(dt);
-            weaponPresentation.Update(arsenal.CaptureWeaponState(), arsenal.EquipmentId, weaponEvents, dt);
+            weaponPresentation.Update(arsenal.CaptureWeaponState(), arsenal.Equipment, weaponEvents, dt);
             weaponEvents.Clear();
-            presentation.Update(dt, 0, person.CaptureState(), command.Movement.MoveX, false, false);
+            presentation.Update(dt, 0, person.CaptureState(), command.MoveX, false, false);
         }
 
         void Save(string name, string caption)

@@ -1,3 +1,4 @@
+using App2d.Gameplay.Persons.Actions;
 using App2d.Levels;
 using App2d.Collision;
 using App2d.Core;
@@ -34,7 +35,7 @@ public sealed class PersonLadderPresentationTests
         };
         for (var y = 1; y <= 20; y++)
             _map.SetTileKind(4, y, TileKind2D.Ladder);
-        _person = new Person2D(collision, _physics, _metrics,
+        _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
             new Vector2(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
             2u, 1u, CombatFaction2D.Player, tileMap: _map);
         AddSolid(new Vector2(256f, 16f), new Vector2(512f, 32f));
@@ -49,7 +50,7 @@ public sealed class PersonLadderPresentationTests
         var scene = new Scene2D();
         using var textures = new TextureCache2D(TestAssetPath.Root);
         using var presentation = new PersonPresentation2D(scene, textures, _metrics);
-        presentation.Equip(equipment);
+        presentation.Equip(Enum.Parse<EquipmentKind2D>(equipment, ignoreCase: true));
         var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
         var frames = Enumerable.Range(1, 4).Select(index => textures.Load(
             $"characters/{character}/animations/climb/frame-{index:0000}.png")).ToArray();
@@ -85,10 +86,8 @@ public sealed class PersonLadderPresentationTests
         for (var i = 0; i < frames; i++)
         {
             _person.BeginFrame(Dt);
-            _person.ApplyCommand(new PersonCommand2D(
-                new PersonMovementIntent2D(move, jump && i == 0, jump || jumpOff,
-                    false, false, dash && i == 0, climb, jumpOff && i == 0),
-                false, false), Dt);
+            _person.ApplyCommand(new PersonCommand2D
+                { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash }, Dt);
             _physics.Step(Dt);
             _person.UpdateAfterPhysics(Dt);
         }

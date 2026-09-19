@@ -14,6 +14,7 @@ namespace App2d.Gameplay.World;
 internal sealed class SideScrollerThingSpawner2D(
     CollisionSystem2D collision,
     PhysicsWorld2D physics,
+    EntityIdAllocator2D ids,
     IChunkedTileMap2D tileMap,
     EnemySystem2D enemies,
     SideScrollerChunkStreamer2D streamer,
@@ -41,6 +42,7 @@ internal sealed class SideScrollerThingSpawner2D(
                     break;
                 case WorldThingKind2D.BoilerBrute:
                     Register(new BoilerBrute2D(
+                        ids.Allocate(),
                         collision,
                         physics,
                         thing.Position,
@@ -51,6 +53,7 @@ internal sealed class SideScrollerThingSpawner2D(
                     break;
                 case WorldThingKind2D.Rival:
                     Register(new RivalEnemy2D(
+                        ids,
                         collision,
                         physics,
                         traversal,
@@ -67,6 +70,7 @@ internal sealed class SideScrollerThingSpawner2D(
                     break;
                 case WorldThingKind2D.TumbleProp:
                     Register(new TumbleProp2D(
+                        ids.Allocate(),
                         physics,
                         thing.Position,
                         worldLayer,
@@ -97,6 +101,7 @@ internal sealed class SideScrollerThingSpawner2D(
         body.CollisionLayer = enemyLayer;
         body.CollisionMask = worldLayer;
         var enemy = new PatrolEnemy2D(
+            ids.Allocate(),
             spatialObject,
             body,
             position.X - tileSize * 2f,
@@ -118,6 +123,7 @@ internal sealed class SideScrollerThingSpawner2D(
         body.CollisionLayer = enemyLayer;
         body.CollisionMask = worldLayer;
         var enemy = new PatrolEnemy2D(
+            ids.Allocate(),
             spatialObject,
             body,
             position.X - tileSize * 2f,

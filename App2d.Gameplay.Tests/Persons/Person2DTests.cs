@@ -62,17 +62,7 @@ public sealed class Person2DTests
             secondStart,
             EnemyLayer,
             CombatFaction2D.Enemy);
-        var command = new PersonCommand2D(
-            new PersonMovementIntent2D(
-                MoveX: 1f,
-                JumpPressed: false,
-                JumpHeld: false,
-                JumpReleased: false,
-                DropThroughPressed: false,
-                DashPressed: true),
-            UsePrimaryAction: false,
-
-            SwitchEquipment: false);
+        var command = new PersonCommand2D { MoveX = 1f, DashHeld = true };
 
         first.BeginFrame(0.05f);
         second.BeginFrame(0.05f);
@@ -160,7 +150,7 @@ public sealed class Person2DTests
             new Vector2(58f, 0f),
             EnemyLayer,
             CombatFaction2D.Enemy);
-        var actions = new UnarmedPersonActions2D(
+        var actions = new UnarmedPersonActions2D(new EntityIdAllocator2D(),
             attacker.Body,
             CombatFaction2D.Player,
             EnemyLayer,
@@ -169,12 +159,7 @@ public sealed class Person2DTests
 
         attacker.BeginFrame(activeTime);
         attacker.ApplyCommand(
-            new PersonCommand2D(
-                default,
-                UsePrimaryAction: !useKick,
-
-                SwitchEquipment: false,
-                UseSecondaryAction: useKick),
+            new PersonCommand2D { PrimaryHeld = !useKick, SecondaryHeld = useKick },
             activeTime);
         attacker.UpdateAfterPhysics(activeTime);
 
@@ -194,7 +179,7 @@ public sealed class Person2DTests
             Vector2.Zero,
             PlayerLayer,
             CombatFaction2D.Player);
-        var actions = new UnarmedPersonActions2D(
+        var actions = new UnarmedPersonActions2D(new EntityIdAllocator2D(),
             person.Body,
             CombatFaction2D.Player,
             EnemyLayer,
@@ -224,7 +209,7 @@ public sealed class Person2DTests
             Vector2.Zero,
             PlayerLayer,
             CombatFaction2D.Player);
-        var arsenal = new PersonArsenal2D(
+        var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(),
             person.Body,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root).GunMuzzleOffset,
             collision,
@@ -233,12 +218,7 @@ public sealed class Person2DTests
             CombatFaction2D.Player,
             new CombatSystem2D(collision, _combatants));
         person.AttachActions(arsenal);
-        var fire = new PersonCommand2D(
-            default,
-            UsePrimaryAction: true,
-
-            SwitchEquipment: true,
-            PrimaryActionHeld: true);
+        var fire = new PersonCommand2D { PrimaryHeld = true, SwitchHeld = true };
 
         AddGroundSupport(physics, person);
         person.Face(1f);
@@ -249,7 +229,7 @@ public sealed class Person2DTests
         Assert.Empty(arsenal.GetActiveAttackHitboxes());
 
         person.BeginFrame(0.01f);
-        person.ApplyCommand(fire with { UsePrimaryAction = false, SwitchEquipment = false }, 0.01f);
+        person.ApplyCommand(fire with { SwitchHeld = false }, 0.01f);
         physics.Step(0.01f);
         person.UpdateAfterPhysics(0.01f);
         Assert.Single(arsenal.GetActiveAttackHitboxes());
@@ -311,7 +291,7 @@ public sealed class Person2DTests
 
         person.BeginFrame(0.04f);
         person.ApplyCommand(
-            WallGripCommand(useWeapon: true, switchWeapon: true) with { PrimaryActionHeld = true },
+            WallGripCommand(useWeapon: true, switchWeapon: true),
             0.04f);
         Assert.True(person.IsWallGripping);
 
@@ -322,7 +302,7 @@ public sealed class Person2DTests
         for (var i = 0; i < 72; i++)
         {
             person.BeginFrame(1f / 120f);
-            person.ApplyCommand(WallGripCommand(false, false) with { PrimaryActionHeld = true }, 1f / 120f);
+            person.ApplyCommand(WallGripCommand(useWeapon: true, switchWeapon: false), 1f / 120f);
             physics.Step(1f / 120f);
             person.UpdateAfterPhysics(1f / 120f);
         }
@@ -416,7 +396,7 @@ public sealed class Person2DTests
         uint layer,
         CombatFaction2D faction)
     {
-        var person = new Person2D(
+        var person = new Person2D(EntityId2D.Create(),
             collision,
             physics,
             traversal,
@@ -432,6 +412,7 @@ public sealed class Person2DTests
         Person2D person,
         CollisionSystem2D collision) =>
         new(
+            new EntityIdAllocator2D(),
             person.Body,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root).GunMuzzleOffset,
             collision,
@@ -474,32 +455,12 @@ public sealed class Person2DTests
         float moveX,
         bool jumpPressed,
         bool jumpHeld) =>
-        new(
-            new PersonMovementIntent2D(
-                MoveX: moveX,
-                JumpPressed: jumpPressed,
-                JumpHeld: jumpHeld,
-                JumpReleased: false,
-                DropThroughPressed: false,
-                DashPressed: false),
-            UsePrimaryAction: false,
-
-            SwitchEquipment: false);
+        new() { MoveX = moveX, JumpHeld = jumpPressed || jumpHeld };
 
     private static PersonCommand2D WallGripCommand(
         bool useWeapon,
         bool switchWeapon) =>
-        new(
-            new PersonMovementIntent2D(
-                MoveX: 1f,
-                JumpPressed: false,
-                JumpHeld: false,
-                JumpReleased: false,
-                DropThroughPressed: false,
-                DashPressed: false),
-            UsePrimaryAction: useWeapon,
-
-            SwitchEquipment: switchWeapon);
+        new() { MoveX = 1f, PrimaryHeld = useWeapon, SwitchHeld = switchWeapon };
 
     private static PhysicsWorld2D CreatePhysics(CollisionSystem2D collision) =>
         new(collision)

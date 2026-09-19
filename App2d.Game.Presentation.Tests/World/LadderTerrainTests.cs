@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Levels;
 using App2d.Collision;
 using App2d.Gameplay.Assets;
@@ -31,11 +32,11 @@ public sealed class LadderTerrainTests
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision);
         using var textures = new TextureCache2D(TestAssetPath.Root);
-        level.CreateSimulation(collision, physics, 1u, 2u, 4u);
+        level.CreateSimulation(collision, physics, new EntityIdAllocator2D(), 1u, 2u, 4u);
         using var presentation = new WorldPresentation2D(scene, textures);
         level.UpdateStreaming(map.Origin + new Vector2(4f, 31f) * 32f);
 
-        presentation.Update(level.CaptureState(), 0f);
+        presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         var top = textures.Load(LadderAssets2D.ResolvePath(textures, tilesetId, true));
         var middle = textures.Load(LadderAssets2D.ResolvePath(textures, tilesetId, false));
         Assert.Equal(2, scene.Count());
@@ -45,15 +46,15 @@ public sealed class LadderTerrainTests
 
         map.SetTileKind(4, 32, TileKind2D.Empty);
         level.FlushDirtyChunks();
-        presentation.Update(level.CaptureState(), 0f);
+        presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.Single(scene);
         Assert.Same(top, ShaderAt(31).Texture);
 
         level.UpdateStreaming(map.WorldBounds.Max);
-        presentation.Update(level.CaptureState(), 0f);
+        presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.Empty(scene);
         level.UpdateStreaming(map.Origin + new Vector2(4f, 31f) * 32f);
-        presentation.Update(level.CaptureState(), 0f);
+        presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.Single(scene);
         Assert.Same(top, ShaderAt(31).Texture);
         Assert.Empty(physics.Bodies);

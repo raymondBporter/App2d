@@ -21,6 +21,8 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
 
     private long _revision;
     private ImmutableArray<TerrainChunkState2D> _states;
+    /// <summary>Changes whenever the active chunk set or any chunk's data changes.</summary>
+    public long Version { get; private set; }
     public ImmutableArray<TerrainChunkState2D> CaptureState()
     {
         if (_states.IsDefault) _states = _loadedChunks.Values.OrderBy(c => c.State.Chunk.Y).ThenBy(c => c.State.Chunk.X).Select(c => c.State).ToImmutableArray();
@@ -39,7 +41,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
     public bool IsChunkActive(TileChunk2D chunk) => _loadedChunks.ContainsKey(chunk);
 
     /// <summary>
-    /// Rebuilds a chunk whose tiles changed. Does nothing when the chunk is not loaded —
+    /// Rebuilds a chunk whose tiles changed. Does nothing when the chunk is not loaded -
     /// loading it later reads the current map anyway.
     /// </summary>
     public void Invalidate(TileChunk2D chunk)
@@ -114,6 +116,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
 
         _loadedChunks.Add(state.Chunk, new LoadedChunk(colliders, state));
         _states = default;
+        Version++;
     }
 
     private void Unload(TileChunk2D chunk)
@@ -126,6 +129,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
         }
         _loadedChunks.Remove(chunk);
         _states = default;
+        Version++;
     }
 
     private sealed record LoadedChunk(

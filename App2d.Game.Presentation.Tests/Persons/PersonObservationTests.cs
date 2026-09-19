@@ -1,3 +1,4 @@
+using App2d.Gameplay.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Gameplay.Assets;
@@ -42,7 +43,7 @@ public sealed class PersonObservationTests
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
         using var view = new PersonPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root));
-        view.Equip(equipment);
+        view.Equip(Enum.Parse<EquipmentKind2D>(equipment, ignoreCase: true));
         var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
         var clip = CharacterAnimationAssets2D.LoadClip(textures, $"player-{equipment}", clipName);
         var expected = new AnimationPlayer2D<Texture2D>();
@@ -70,7 +71,7 @@ public sealed class PersonObservationTests
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
         using var view = new PersonPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root));
-        view.Equip("gun");
+        view.Equip(EquipmentKind2D.Gun);
         var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
         view.ApplyState(Alive with { Action = new(PlayerAttackKind2D.Shot, 0.10f, 0.06f) }, 500, 0f, false, false);
         Assert.True(view.IsPlayingShot);

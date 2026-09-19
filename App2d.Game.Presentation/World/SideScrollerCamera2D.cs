@@ -57,7 +57,7 @@ public sealed class SideScrollerCamera2D
         if (deltaSeconds <= 0f)
             return;
 
-        var halfView = _camera.ViewportSize / (2f * _camera.Zoom);
+        var halfView = _camera.VisibleWorldBounds.Size / 2f;
         UpdateLookAhead(playerVelocity.X, halfView.X, deltaSeconds);
         UpdateVerticalFraming(playerVelocity.Y, isGrounded, deltaSeconds);
 
@@ -99,7 +99,7 @@ public sealed class SideScrollerCamera2D
         _shakeStrength = 0f;
         _shakeTime = 0f;
         _verticalFollowSuppression = 0f;
-        var halfView = _camera.ViewportSize / (2f * _camera.Zoom);
+        var halfView = _camera.VisibleWorldBounds.Size / 2f;
         _followPosition = ClampToLevel(new Vector2(playerPosition.X, GetVerticalFocus(playerPosition)), halfView);
         _camera.Position = _followPosition;
         UpdateParallax();

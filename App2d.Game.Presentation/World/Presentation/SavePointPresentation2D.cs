@@ -17,11 +17,11 @@ internal sealed class SavePointPresentation2D : IDisposable
     private readonly List<WorldObject2D> _visuals = [];
     private float _animationSeconds;
 
-    public SavePointPresentation2D(Scene2D scene, CheckpointState2D state)
+    public SavePointPresentation2D(Scene2D scene, CheckpointPlacement2D placement)
     {
         ArgGuard.ThrowIfNull(scene);
         _scene = scene;
-        _basePosition = state.BasePosition;
+        _basePosition = placement.BasePosition;
 
         var baseStone = new WorldObject2D(
             AxisAlignedRectangle2D.FromSize(new Vector2(58f, 14f)),
@@ -71,7 +71,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         };
         _orb.Transform.Position = _basePosition + new Vector2(0f, OrbHeight);
         Add(_orb);
-        SetActive(state.IsActive);
+        SetActive(false);
     }
 
     public bool IsActive { get; private set; }

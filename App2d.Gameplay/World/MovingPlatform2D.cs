@@ -17,6 +17,7 @@ public sealed partial class MovingPlatform2D : IDisposable
     private float _travelDirection = 1f;
 
     public MovingPlatform2D(
+        EntityId2D id,
         PhysicsWorld2D physics,
         Vector2 start,
         Vector2 travel,
@@ -27,6 +28,9 @@ public sealed partial class MovingPlatform2D : IDisposable
         long thingId = 0,
         uint colorArgb = 0xFF25D2BE)
     {
+        if (!id.IsValid)
+            throw new ArgumentException("A platform requires a valid entity ID.", nameof(id));
+        Id = id;
         _physics = ArgGuard.RequireNotNull(physics);
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(travel);
@@ -54,11 +58,12 @@ public sealed partial class MovingPlatform2D : IDisposable
         Body.CollisionMask = collisionMask;
     }
 
-    public EntityId2D Id { get; } = EntityId2D.Create();
+    public EntityId2D Id { get; }
     public long ThingId { get; }
     public Vector2 Size { get; }
     public uint ColorArgb { get; }
-    public MovingPlatformState2D CaptureState() => new(Id, ThingId, WorldObject.Transform.Position, Size, ColorArgb);
+    public MovingPlatformDefinition2D CaptureDefinition() => new(Id, ThingId, Size, ColorArgb);
+    public MovingPlatformState2D CaptureState() => new(Id, WorldObject.Transform.Position);
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Vector2 Start { get; }

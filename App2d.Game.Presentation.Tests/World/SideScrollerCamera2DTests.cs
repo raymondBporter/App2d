@@ -9,6 +9,31 @@ namespace App2d.Gameplay.Tests.World;
 public sealed class SideScrollerCamera2DTests
 {
     [Fact]
+    public void FollowAndLevelClampingStayConsistentAcrossWindowSizes()
+    {
+        var bounds = new Bounds2D(new Vector2(-2000f), new Vector2(2000f));
+        var small = new Camera2D { ReferenceViewportHeight = 1080f };
+        var large = new Camera2D { ReferenceViewportHeight = 1080f };
+        small.SetViewport(960, 540);
+        large.SetViewport(1920, 1080);
+        var smallController = new SideScrollerCamera2D(new Scene2D(), small, bounds, Vector2.Zero, _ => -2000f);
+        var largeController = new SideScrollerCamera2D(new Scene2D(), large, bounds, Vector2.Zero, _ => -2000f);
+        for (var frame = 0; frame < 180; frame++)
+        {
+            var position = new Vector2(frame * 10f, -frame * 10f);
+            smallController.Update(position, new Vector2(600f, -600f), false, 1f / 60f);
+            largeController.Update(position, new Vector2(600f, -600f), false, 1f / 60f);
+            Assert.InRange(Vector2.Distance(small.Position, large.Position), 0f, 0.001f);
+            Assert.True(small.VisibleWorldBounds.Min.Y >= bounds.Min.Y - 0.001f);
+            Assert.True(small.VisibleWorldBounds.Max.X <= bounds.Max.X + 0.001f);
+        }
+        small.SetViewport(1920, 1080);
+        smallController.Reset(new Vector2(1950f, -1950f));
+        largeController.Reset(new Vector2(1950f, -1950f));
+        Assert.InRange(Vector2.Distance(small.Position, large.Position), 0f, 0.001f);
+    }
+
+    [Fact]
     public void ShakeTemporarilyOffsetsCameraWithoutMovingFollowPosition()
     {
         var (controller, camera) = CreateCamera();

@@ -14,6 +14,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
     private const float ChargeSeconds = 0.6f;
     private const float RecoverySeconds = 0.06f;
     private const float BoltWidth = 30f;
+    private const int ProjectileIdCapacity = 1 << 20;
     private readonly PhysicsBody2D _ownerBody;
     private readonly CollisionSystem2D _collision;
     private readonly uint _worldLayer;
@@ -26,7 +27,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
     private readonly List<CollisionOverlap2D> _overlaps = [];
     private readonly SpatialObject2D _barrelPath;
     private readonly Vector2 _muzzleOffset;
-    private readonly EntityIdSequence2D _projectileIds = new();
+    private readonly EntityIdSequence2D _projectileIds;
     private float _chargeTime;
     private float _direction = 1f;
     private float _recoverySeconds;
@@ -35,11 +36,13 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
     private bool _needsRelease;
 
     public GunPersonWeapon2D(
+        EntityIdAllocator2D ids,
         PhysicsBody2D ownerBody, Vector2 muzzleOffset, CollisionSystem2D collision,
         uint worldLayer, uint targetLayer, CombatFaction2D ownerFaction,
         CombatSystem2D combat, Action shotStarted, Action<WeaponEvent2D> publish)
-        : base("gun")
+        : base(EquipmentKind2D.Gun)
     {
+        _projectileIds = new EntityIdSequence2D(ids, ProjectileIdCapacity);
         _ownerBody = ArgGuard.RequireNotNull(ownerBody);
         _collision = ArgGuard.RequireNotNull(collision);
         _worldLayer = worldLayer;

@@ -7,7 +7,7 @@ using System.Numerics;
 namespace App2d.Gameplay.Persons.Actions;
 
 internal sealed partial class SwordPersonWeapon2D(
-    string equipmentId,
+    EntityIdAllocator2D ids,
     PhysicsBody2D ownerBody,
     CombatFaction2D ownerFaction,
     uint targetLayer,
@@ -16,7 +16,8 @@ internal sealed partial class SwordPersonWeapon2D(
     Action<WeaponEvent2D> publish,
     Action<float> downAttackStarted,
     Func<Bounds2D, bool>? overlapsSpikes = null) : MeleePersonWeapon2D(
-        equipmentId,
+        EquipmentKind2D.Sword,
+        ids.Allocate(),
         ownerBody,
         AxisAlignedRectangle2D.FromSize(new Vector2(56f, 72f)),
         new MeleeAttackProfile2D(
@@ -34,7 +35,7 @@ internal sealed partial class SwordPersonWeapon2D(
         publish)
 {
     private readonly DownwardSwing _downAttack = new(
-        ownerBody, ownerFaction, targetLayer, combat, downAttackStarted, publish, overlapsSpikes);
+        ids.Allocate(), ownerBody, ownerFaction, targetLayer, combat, downAttackStarted, publish, overlapsSpikes);
 
     public bool ConsumeBounce() => _downAttack.ConsumeBounce();
     public override PersonActionState2D CaptureActionState() => _downAttack.IsAttackActive
@@ -67,6 +68,7 @@ internal sealed partial class SwordPersonWeapon2D(
     }
 
     private sealed class DownwardSwing(
+        EntityId2D sourceId,
         PhysicsBody2D body,
         CombatFaction2D faction,
         uint layer,
@@ -74,7 +76,7 @@ internal sealed partial class SwordPersonWeapon2D(
         Action<float> started,
         Action<WeaponEvent2D> emit,
         Func<Bounds2D, bool>? spikeOverlap) : MeleePersonWeapon2D(
-            "sword", body,
+            EquipmentKind2D.Sword, sourceId, body,
             AxisAlignedRectangle2D.FromSize(new Vector2(64f, 48f)),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.25f,

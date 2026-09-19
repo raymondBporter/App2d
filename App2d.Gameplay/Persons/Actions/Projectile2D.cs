@@ -12,11 +12,13 @@ public sealed partial class Projectile2D(SpatialObject2D worldObject)
     public float RemainingLifetime { get; private set; }
     public bool IsActive => RemainingLifetime > 0f;
 
-    public void Launch(Vector2 position, Vector2 velocity, float lifetime, Vector2 origin, EntityId2D id = default)
+    public void Launch(Vector2 position, Vector2 velocity, float lifetime, Vector2 origin, EntityId2D id)
     {
         ArgGuard.ThrowIfNotPositive(lifetime);
+        if (!id.IsValid)
+            throw new ArgumentException("A projectile requires a valid entity ID.", nameof(id));
 
-        Id = id.IsValid ? id : EntityId2D.Create();
+        Id = id;
         Origin = origin;
         WorldObject.Transform.Position = position;
         Velocity = velocity;

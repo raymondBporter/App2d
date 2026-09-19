@@ -29,7 +29,7 @@ public sealed class PersonJumpPowerTests
             VelocityIterations = 2
         };
         AddGround(physics);
-        var person = new Person2D(
+        var person = new Person2D(EntityId2D.Create(),
             collision,
             physics,
             traversal,
@@ -65,17 +65,7 @@ public sealed class PersonJumpPowerTests
         bool pressed,
         bool held,
         bool released = false) =>
-        new(
-            new PersonMovementIntent2D(
-                MoveX: 0f,
-                JumpPressed: pressed,
-                JumpHeld: held,
-                JumpReleased: released,
-                DropThroughPressed: false,
-                DashPressed: false),
-            UsePrimaryAction: false,
-
-            SwitchEquipment: false);
+        new() { JumpHeld = (pressed || held) && !released };
 
     private static void AddGround(PhysicsWorld2D physics)
     {

@@ -19,7 +19,8 @@ internal sealed partial class SavePoint2D
     }
     public WorldThingSpec2D Spec { get; }
     public bool IsActive { get; private set; }
-    public CheckpointState2D CaptureState() => new(Spec.ThingId, _basePosition, IsActive);
+    public CheckpointPlacement2D CapturePlacement() => new(Spec.ThingId, _basePosition);
+    public CheckpointState2D CaptureState() => new(Spec.ThingId, IsActive);
     public bool Update(float deltaSeconds, Bounds2D playerBounds)
     {
         ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);

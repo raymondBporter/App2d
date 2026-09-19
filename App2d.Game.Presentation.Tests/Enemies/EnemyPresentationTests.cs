@@ -84,7 +84,7 @@ public sealed class EnemyPresentationTests
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
         var physics = new App2d.Physics.PhysicsWorld2D();
-        var prop = new TumbleProp2D(physics, Vector2.Zero, 1, 4);
+        var prop = new TumbleProp2D(EntityId2D.Create(), physics, Vector2.Zero, 1, 4);
         var original = prop.CaptureState();
         view.Update([original], [], 0f, 0);
         var visual = Assert.Single(scene);

@@ -11,7 +11,7 @@ public sealed class SessionReplayBuffer2D
 {
     private readonly SideScrollerSession2D _session;
     private readonly int _capacity;
-    private readonly List<(PlayerInput2D Input, SessionCheckpoint2D After)> _history = [];
+    private readonly List<(ImmutableArray<PlayerInput2D> Inputs, SessionCheckpoint2D After)> _history = [];
     private SessionCheckpoint2D _oldest;
     private long _timelineRevision;
 
@@ -30,12 +30,13 @@ public sealed class SessionReplayBuffer2D
     public int Count => _history.Count;
     private SessionCheckpoint2D Latest => _history.Count == 0 ? _oldest : _history[^1].After;
 
-    public SessionFrame2D Advance(PlayerInput2D input)
+    /// <summary>Advances one tick with the given inputs (none means every player repeats its last command).</summary>
+    public SessionFrame2D Advance(params ReadOnlySpan<PlayerInput2D> inputs)
     {
         RequireAligned();
         _session.ValidateCheckpoint(Latest);
-        var frame = _session.Advance(input);
-        _history.Add((input, _session.CaptureCheckpoint()));
+        var frame = _session.Advance(inputs);
+        _history.Add((inputs.ToImmutableArray(), _session.CaptureCheckpoint()));
         _timelineRevision = _session.TimelineRevision;
         if (_history.Count > _capacity)
         {
@@ -61,9 +62,9 @@ public sealed class SessionReplayBuffer2D
         for (var i = 0; i < _history.Count; i++)
         {
             var entry = _history[i];
-            if (entry.Input.Tick <= tick) continue;
-            frames.Add(_session.Advance(entry.Input));
-            _history[i] = (entry.Input, _session.CaptureCheckpoint());
+            if (entry.After.Tick <= tick) continue;
+            frames.Add(_session.Advance(entry.Inputs.AsSpan()));
+            _history[i] = (entry.Inputs, _session.CaptureCheckpoint());
         }
         _timelineRevision = _session.TimelineRevision;
         return frames.ToImmutable();

@@ -66,7 +66,7 @@ internal static class TileEditorView2D
             var markerPosition = new Vector2(thing.X, thing.Y);
             var isSelected = editor.SelectedThingId == thing.ThingId;
             var color = isSelected ? selectedColor : thing.Enabled ? descriptor.EditorColor : disabledColor;
-            var radius = (isSelected ? 11f : 8f) / editor.Zoom;
+            var radius = (isSelected ? 11f : 8f) / editor.PixelsPerWorldUnit;
             renderer.DrawWorldCircle(markerPosition, radius, color, isSelected ? 4f : 3f);
         }
 
@@ -81,7 +81,7 @@ internal static class TileEditorView2D
             DrawRectangleOutline(renderer, start, new Vector2(thing.Width, thing.Height), color, isSelected ? 3f : 2f);
             if (isSelected)
             {
-                var radius = 9f / editor.Zoom;
+                var radius = 9f / editor.PixelsPerWorldUnit;
                 renderer.DrawWorldCircle(start, radius, selectedColor, 3f);
                 renderer.DrawWorldCircle(end, radius, selectedColor, 3f);
             }
@@ -104,7 +104,7 @@ internal static class TileEditorView2D
             var descriptor = ThingTypeRegistry2D.Require(positionDefinition.TypeKey);
             renderer.DrawWorldCircle(
                 positionPreview,
-                11f / editor.Zoom,
+                11f / editor.PixelsPerWorldUnit,
                 descriptor.EditorColor,
                 3f);
         }

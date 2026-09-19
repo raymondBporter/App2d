@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Collision;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.World;
@@ -41,10 +42,10 @@ public sealed class AuthoredMovingPlatform2DTests
         var physics = new PhysicsWorld2D(collision);
         using var textures = new TextureCache2D(TestAssetPath.Root);
 
-        level.CreateSimulation(collision, physics, 1, 2, 4);
+        level.CreateSimulation(collision, physics, new EntityIdAllocator2D(), 1, 2, 4);
         Assert.Empty(scene);
         using var presentation = new WorldPresentation2D(scene, textures);
-        presentation.Update(level.CaptureState(), 0f);
+        presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         var visual = Assert.Single(scene);
 
         var platform = Assert.Single(level.MovingPlatforms);
@@ -56,7 +57,7 @@ public sealed class AuthoredMovingPlatform2DTests
         level.ReloadMovingPlatforms([]);
         Assert.Empty(level.MovingPlatforms);
         Assert.DoesNotContain(platform.Body, physics.Bodies);
-        presentation.Update(level.CaptureState(), 0f);
+        presentation.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.DoesNotContain(visual, scene);
     }
 }

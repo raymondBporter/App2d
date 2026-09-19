@@ -6,18 +6,34 @@ using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
-public readonly record struct MovingPlatformState2D(
-    EntityId2D Id, long ThingId, Vector2 Position, Vector2 Size, uint ColorArgb);
-public readonly record struct CheckpointState2D(long ThingId, Vector2 BasePosition, bool IsActive);
+/// <summary>Fixed per platform instance; a replaced platform gets a new runtime ID.</summary>
+public readonly record struct MovingPlatformDefinition2D(
+    EntityId2D Id, long ThingId, Vector2 Size, uint ColorArgb);
+public readonly record struct MovingPlatformState2D(EntityId2D Id, Vector2 Position);
+public readonly record struct CheckpointPlacement2D(long ThingId, Vector2 BasePosition);
+public readonly record struct CheckpointState2D(long ThingId, bool IsActive);
 
-/// <summary>Client observations of the world, not a physics restore point.</summary>
-public sealed record WorldState2D(
-    ImmutableArray<MovingPlatformState2D> MovingPlatforms,
-    ImmutableArray<CheckpointState2D> Checkpoints,
+/// <summary>
+/// Level content that changes only when authoring or streaming changes: active terrain,
+/// platform definitions, checkpoint placements, and the goal. Successive ticks share one
+/// instance; <see cref="Revision"/> lets a receiver skip content it already holds.
+/// </summary>
+public sealed record LevelContent2D(
+    long Revision,
     ImmutableArray<TerrainChunkState2D> Terrain,
+    ImmutableArray<MovingPlatformDefinition2D> MovingPlatforms,
+    ImmutableArray<CheckpointPlacement2D> Checkpoints,
     Vector2? GoalPosition)
 {
-    public static WorldState2D Empty { get; } = new([], [], [], null);
+    public static LevelContent2D Empty { get; } = new(0, [], [], [], null);
+}
+
+/// <summary>Per-tick dynamic world observation, not a physics restore point.</summary>
+public sealed record WorldState2D(
+    ImmutableArray<MovingPlatformState2D> MovingPlatforms,
+    ImmutableArray<CheckpointState2D> Checkpoints)
+{
+    public static WorldState2D Empty { get; } = new([], []);
 }
 
 /// <summary>

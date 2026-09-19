@@ -14,11 +14,11 @@ public sealed partial class SideScrollerSession2D
         RequireCheckpointBoundary();
         var combat = _combat ?? throw new InvalidOperationException("Rollback requires the session's combat system.");
         var ids = combat.Combatants.Ids.OrderBy(id => id.Value).ToImmutableArray();
-        var expectedIds = CaptureEnemies().Select(e => e.Id).Append(PlayerId).OrderBy(id => id.Value);
-        StateGuard.ThrowIf(!ids.SequenceEqual(expectedIds), "Every combatant must belong to the captured player/world.");
-        return new(_checkpointOwner, Tick, _lastInputSequence, _eventSequence, IsPaused,
-            _respawn, _restartSeconds, _moveX, _reachedGoal, _player.CaptureSimulation(),
-            _actions.CaptureSimulation(), _world.CaptureSimulation(), _physics.CaptureSimulation(),
+        var expectedIds = CaptureEnemies().Select(e => e.Id).Concat(PlayerIds).OrderBy(id => id.Value);
+        StateGuard.ThrowIf(!ids.SequenceEqual(expectedIds), "Every combatant must belong to the captured players/world.");
+        return new(_checkpointOwner, Tick, _eventSequence, IsPaused,
+            _players.Select(p => p.CaptureSimulation()).ToImmutableArray(),
+            _world.CaptureSimulation(), _physics.CaptureSimulation(),
             combat.DefeatedEnemies, ids, _events.ToImmutableArray());
     }
 
@@ -27,6 +27,7 @@ public sealed partial class SideScrollerSession2D
         RequireCheckpointBoundary();
         ArgGuard.ThrowIfNull(checkpoint);
         StateGuard.ThrowIf(checkpoint.Owner != _checkpointOwner, "The checkpoint belongs to another session.");
+        StateGuard.ThrowIf(checkpoint.Players.Length != _players.Count, "Participant membership changed since capture.");
         _world.ValidateSimulation(checkpoint.World);
         _physics.ValidateSimulation(checkpoint.Physics, _world.TerrainColliderIds, checkpoint.World.TerrainColliderIds);
         StateGuard.ThrowIf(_combat is null || !_combat.Combatants.Ids.OrderBy(id => id.Value).SequenceEqual(checkpoint.Combatants),
@@ -41,17 +42,11 @@ public sealed partial class SideScrollerSession2D
         TimelineRevision++;
         _world.RestoreSimulation(checkpoint.World);
         _physics.RestoreSimulation(checkpoint.Physics);
-        _player.RestoreSimulation(checkpoint.Player);
-        _actions.RestoreSimulation(checkpoint.Actions);
+        for (var i = 0; i < _players.Count; i++) _players[i].RestoreSimulation(checkpoint.Players[i]);
         _combat!.RestoreSimulation(checkpoint.DefeatedEnemies);
         Tick = checkpoint.Tick;
-        _lastInputSequence = checkpoint.LastInputSequence;
         _eventSequence = checkpoint.EventSequence;
         IsPaused = checkpoint.IsPaused;
-        _respawn = checkpoint.Respawn;
-        _restartSeconds = checkpoint.RestartSeconds;
-        _moveX = checkpoint.MoveX;
-        _reachedGoal = checkpoint.ReachedGoal;
         _events.Clear();
         _events.AddRange(checkpoint.Events);
     }

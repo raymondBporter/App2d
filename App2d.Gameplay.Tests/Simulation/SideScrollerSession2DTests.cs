@@ -19,9 +19,9 @@ public sealed class SideScrollerSession2DTests
     public void CommandsAdvanceExactlyOneFixedTickAndReturnIndependentValues()
     {
         using var game = new Fixture();
-        var original = game.Session.CaptureState();
+        var original = game.Session.CapturePlayers()[0];
         var first = game.Step(Command(move: 1f));
-        var position = first.Player.Person.Position;
+        var position = first.Players[0].Person.Position;
         for (var i = 0; i < 20; i++) game.Step(Command(move: 1f));
 
         Assert.Equal(21, game.Session.Tick);
@@ -29,9 +29,9 @@ public sealed class SideScrollerSession2DTests
         Assert.Equal(21, game.World.EnemyUpdates);
         Assert.Equal(21, game.Actions.BeginFrames);
         Assert.Equal(SideScrollerSession2D.FixedDeltaSeconds, game.World.LastDelta);
-        Assert.Equal(position, first.Player.Person.Position);
+        Assert.Equal(position, first.Players[0].Person.Position);
         Assert.Equal(Vector2.Zero, original.Person.Position);
-        Assert.True(game.Session.CaptureState().Person.Position.X > position.X);
+        Assert.True(game.Session.CapturePlayers()[0].Person.Position.X > position.X);
     }
 
     [Fact]
@@ -42,9 +42,13 @@ public sealed class SideScrollerSession2DTests
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { EntityId = EntityId2D.Create() }));
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Tick = 2 }));
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Sequence = 0 }));
-        Assert.Throws<ArgumentOutOfRangeException>(() => game.Session.Advance(valid with { Command = Command(float.NaN) }));
-        Assert.Throws<ArgumentOutOfRangeException>(() => game.Session.Advance(valid with
-        { Command = Command() with { Movement = default(PersonMovementIntent2D) with { ClimbY = float.PositiveInfinity } } }));
+        Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Command = Command(float.NaN) }));
+        Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with
+        { Command = Command() with { ClimbY = float.PositiveInfinity } }));
+        Assert.False(game.Session.TryValidateInput(valid with { Tick = 2 }, out var rejection));
+        Assert.Equal(InputRejection2D.WrongTick, rejection);
+        Assert.True(game.Session.TryValidateInput(valid, out rejection));
+        Assert.Equal(InputRejection2D.None, rejection);
         Assert.Equal(0, game.Session.Tick);
         Assert.Equal(0, game.World.PlatformUpdates);
         Assert.Equal(Vector2.Zero, game.Person.Position);
@@ -65,11 +69,27 @@ public sealed class SideScrollerSession2DTests
                 attack: tick == 50);
             var a = first.Step(command);
             var b = second.Step(command);
-            Assert.Equal(a.Player with { Person = a.Player.Person with { Id = b.Player.Person.Id } }, b.Player);
+            Assert.Equal(a.Players[0] with { Person = a.Players[0].Person with { Id = b.Players[0].Person.Id } }, b.Players[0]);
             Assert.Equal(a.Events.Select(e => e.GetType()), b.Events.Select(e => e.GetType()));
             Assert.Equal(a.Events.Select(e => (e.Stamp.Tick, e.Stamp.Sequence)),
                 b.Events.Select(e => (e.Stamp.Tick, e.Stamp.Sequence)));
         }
+    }
+
+    [Fact]
+    public void MissingInputRepeatsTheLastCommandAndDoesNotAcknowledgeANewSequence()
+    {
+        using var game = new Fixture();
+        var moving = game.Step(Command(move: 1f));
+        Assert.Equal(1f, moving.Players[0].MoveX);
+        var repeated = game.Session.Advance();
+        Assert.Equal(2, repeated.Tick);
+        Assert.Equal(1f, repeated.Players[0].MoveX);
+        Assert.Equal(moving.Players[0].LastInputSequence, repeated.Players[0].LastInputSequence);
+        Assert.True(repeated.Players[0].Person.Position.X > moving.Players[0].Person.Position.X);
+        var duplicate = new PlayerInput2D(game.Person.Id, 3, 3, default);
+        Assert.Throws<ArgumentException>(() => game.Session.Advance(duplicate, duplicate with { Sequence = 4 }));
+        Assert.Equal(2, game.Session.Tick);
     }
 
     [Fact]
@@ -95,13 +115,13 @@ public sealed class SideScrollerSession2DTests
         var checkpointFrame = game.Step();
         var activated = Assert.Single(checkpointFrame.Events.OfType<CheckpointActivated2D>());
         Assert.Equal(7, activated.CheckpointId);
-        Assert.Equal(7, checkpointFrame.Player.CheckpointId);
+        Assert.Equal(7, checkpointFrame.Players[0].CheckpointId);
         Assert.Equal(game.Person.Health.Maximum, activated.HitPoints);
         game.World.DamageNextStep = game.Person.Health.Maximum;
         var deathFrame = game.Step();
         Assert.Single(deathFrame.Events.OfType<Died2D>());
-        Assert.False(deathFrame.Player.Person.IsAlive);
-        Assert.True(deathFrame.Player.RespawnSeconds > 0f);
+        Assert.False(deathFrame.Players[0].Person.IsAlive);
+        Assert.True(deathFrame.Players[0].RespawnSeconds > 0f);
 
         SessionFrame2D? respawnFrame = null;
         var repeatedDeaths = 0;
@@ -113,11 +133,11 @@ public sealed class SideScrollerSession2DTests
         }
         Assert.NotNull(respawnFrame);
         Assert.Equal(0, repeatedDeaths);
-        Assert.Equal(checkpointPosition, respawnFrame.Player.Person.Position);
-        Assert.Equal(game.Person.Id, respawnFrame.Player.Person.Id);
-        Assert.True(respawnFrame.Player.Person.IsAlive);
-        Assert.Equal(0f, respawnFrame.Player.RespawnSeconds);
-        Assert.False(deathFrame.Player.Person.IsAlive);
+        Assert.Equal(checkpointPosition, respawnFrame.Players[0].Person.Position);
+        Assert.Equal(game.Person.Id, respawnFrame.Players[0].Person.Id);
+        Assert.True(respawnFrame.Players[0].Person.IsAlive);
+        Assert.Equal(0f, respawnFrame.Players[0].RespawnSeconds);
+        Assert.False(deathFrame.Players[0].Person.IsAlive);
     }
 
     [Fact]
@@ -136,7 +156,7 @@ public sealed class SideScrollerSession2DTests
     }
 
     private static PersonCommand2D Command(float move = 0f, bool jump = false, bool held = false, bool attack = false) =>
-        new(new PersonMovementIntent2D(move, jump, held, false, false, false), attack, false);
+        new() { MoveX = move, JumpHeld = jump || held, PrimaryHeld = attack };
 
     private sealed class Fixture : IDisposable
     {
@@ -149,7 +169,7 @@ public sealed class SideScrollerSession2DTests
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
             var physics = new PhysicsWorld2D { Gravity = new Vector2(0f, -metrics.Gravity),
                 MaxSubstepSeconds = SideScrollerSession2D.FixedDeltaSeconds };
-            Person = new Person2D(physics.CollisionSystem, physics, metrics, Vector2.Zero,
+            Person = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2.Zero,
                 2, 1, CombatFaction2D.Player);
             var floor = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(10000f, 20f)));
             floor.Transform.Position = new Vector2(0f, Person.WorldObject.WorldBounds.Bottom - 10f);
@@ -195,12 +215,12 @@ public sealed class SideScrollerSession2DTests
     {
         public WeaponState2D CaptureWeaponState() => WeaponState2D.Empty;
         public event Action<WeaponEvent2D>? WeaponOccurred { add { } remove { } }
-        public string EquipmentId => "unarmed";
+        public EquipmentKind2D Equipment => EquipmentKind2D.Unarmed;
         public bool IsMeleeAttackActive => false;
         public int BeginFrames { get; private set; }
         public int Interruptions { get; private set; }
         public event Action<UnarmedAttackKind2D, float>? UnarmedAttackStarted;
-        public event Action<string>? EquipmentChanged { add { } remove { } }
+        public event Action<EquipmentKind2D>? EquipmentChanged { add { } remove { } }
         public event Action<float>? MeleeAttackStarted { add { } remove { } }
         public event Action<float>? DownAttackStarted { add { } remove { } }
         public event Action? ShotStarted { add { } remove { } }

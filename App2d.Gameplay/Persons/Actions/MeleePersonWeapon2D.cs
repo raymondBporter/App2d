@@ -7,7 +7,8 @@ using System.Numerics;
 namespace App2d.Gameplay.Persons.Actions;
 
 internal abstract partial class MeleePersonWeapon2D(
-    string equipmentId,
+    EquipmentKind2D kind,
+    EntityId2D attackSourceId,
     PhysicsBody2D ownerBody,
     IShape2D hitboxShape,
     MeleeAttackProfile2D attackProfile,
@@ -17,13 +18,13 @@ internal abstract partial class MeleePersonWeapon2D(
     uint targetLayer,
     CombatSystem2D combat,
     Action<float> attackStarted,
-    Action<WeaponEvent2D> publish) : PersonWeapon2DBase(equipmentId)
+    Action<WeaponEvent2D> publish) : PersonWeapon2DBase(kind)
 {
     private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
     private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
     private readonly Action<float> _attackStarted = ArgGuard.RequireNotNull(attackStarted);
     private readonly Action<WeaponEvent2D> _publish = ArgGuard.RequireNotNull(publish);
-    private readonly MeleeAttack2D _attack = new(new SpatialObject2D(hitboxShape), attackProfile);
+    private readonly MeleeAttack2D _attack = new(attackSourceId, new SpatialObject2D(hitboxShape), attackProfile);
     private float _attackDirection = 1f;
     private float _bufferedAttackDirection = 1f;
 

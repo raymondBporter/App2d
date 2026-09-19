@@ -9,9 +9,9 @@ public interface ISessionPlayerActions2D : IPersonActionSet2D
     void RestoreSimulation(SimulationState2D state) => throw new NotSupportedException("This participant does not support rollback.");
     WeaponState2D CaptureWeaponState();
     event Action<WeaponEvent2D>? WeaponOccurred;
-    string EquipmentId { get; }
+    EquipmentKind2D Equipment { get; }
     bool IsMeleeAttackActive { get; }
-    event Action<string>? EquipmentChanged;
+    event Action<EquipmentKind2D>? EquipmentChanged;
     event Action<float>? MeleeAttackStarted;
     event Action<float>? DownAttackStarted;
     event Action? ShotStarted;

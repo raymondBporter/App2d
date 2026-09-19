@@ -32,6 +32,7 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     private bool _simulationEnabled = true;
 
     public BoilerBrute2D(
+        EntityId2D id,
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
         Vector2 position,
@@ -55,6 +56,7 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         body.CollisionMask = worldLayer;
 
         Enemy = new PatrolEnemy2D(
+            id,
             collider,
             body,
             patrolMinX,

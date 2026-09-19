@@ -18,9 +18,9 @@ public sealed class WeaponPresentationTests
         var scene = new Scene2D();
         var sounds = new RecordingSink();
         using var view = new WeaponPresentation2D(scene, textures, sounds);
-        view.ApplyState(WeaponState2D.Empty, "gun", [new GunFired2D(Vector2.Zero)]);
+        view.ApplyState(WeaponState2D.Empty, EquipmentKind2D.Gun, [new GunFired2D(Vector2.Zero)]);
         Assert.Contains(scene, item => item.IsVisible);
-        for (var i = 0; i < 10; i++) view.ApplyState(WeaponState2D.Empty, "gun", []);
+        for (var i = 0; i < 10; i++) view.ApplyState(WeaponState2D.Empty, EquipmentKind2D.Gun, []);
         Assert.Contains(scene, item => item.IsVisible);
         view.Advance(0.2f);
         Assert.DoesNotContain(scene, item => item.IsVisible);
@@ -35,17 +35,17 @@ public sealed class WeaponPresentationTests
         var sounds = new RecordingSink();
         using var view = new WeaponPresentation2D(scene, textures, sounds);
         var charging = new WeaponState2D(true, 0.5f, new Vector2(40f, 5f), []);
-        view.Update(charging, "gun", [], 0f);
+        view.Update(charging, EquipmentKind2D.Gun, [], 0f);
         var voice = Assert.Single(sounds.Voices);
         Assert.True(voice.IsPlaying);
         Assert.Equal(charging.MuzzlePosition, voice.Position);
-        view.Update(charging with { MuzzlePosition = new Vector2(80f, 5f) }, "gun", [], 0.01f);
+        view.Update(charging with { MuzzlePosition = new Vector2(80f, 5f) }, EquipmentKind2D.Gun, [], 0.01f);
         Assert.Single(sounds.Voices);
         Assert.Equal(new Vector2(80f, 5f), voice.Position);
         view.Suspend();
         Assert.False(voice.IsPlaying);
         Assert.DoesNotContain(scene, item => item.IsVisible);
-        view.Update(WeaponState2D.Empty, "gun", [], 0.01f);
+        view.Update(WeaponState2D.Empty, EquipmentKind2D.Gun, [], 0.01f);
         Assert.Single(sounds.Voices);
         Assert.DoesNotContain(scene, item => item.IsVisible);
     }
@@ -60,19 +60,19 @@ public sealed class WeaponPresentationTests
         var first = new ProjectileState2D(EntityId2D.Create(), new Vector2(100f, 0f), new Vector2(1250f, 0f), Vector2.Zero);
         var boltTexture = textures.Load("effects/gun/bolt.png");
         var state = new WeaponState2D(false, 0f, Vector2.Zero, [first]);
-        view.Update(state, "gun", [], 0f);
+        view.Update(state, EquipmentKind2D.Gun, [], 0f);
         Assert.Equal(2, scene.Count(item => item.IsVisible)); // Bolt and trail.
         var second = first with { Id = EntityId2D.Create(), Position = new Vector2(20f, 0f) };
-        view.Update(state with { Projectiles = [second] }, "gun", [new ProjectileImpact2D(first.Position, first.Id)], 0.01f);
+        view.Update(state with { Projectiles = [second] }, EquipmentKind2D.Gun, [new ProjectileImpact2D(first.Position, first.Id)], 0.01f);
         Assert.Equal(3, scene.Count(item => item.IsVisible)); // New bolt/trail plus fading old trail.
         Assert.Single(scene, item => item.IsVisible && ((SpriteShader2D)item.Shader).Texture == boltTexture);
-        view.Update(state with { Projectiles = [second] }, "gun", [], 0.06f);
+        view.Update(state with { Projectiles = [second] }, EquipmentKind2D.Gun, [], 0.06f);
         Assert.Equal(2, scene.Count(item => item.IsVisible));
-        view.Update(WeaponState2D.Empty, "gun", [new GunFired2D(Vector2.Zero),
+        view.Update(WeaponState2D.Empty, EquipmentKind2D.Gun, [new GunFired2D(Vector2.Zero),
             new ProjectileImpact2D(new Vector2(40f, 0f), EntityId2D.Create())], 0.01f);
         Assert.Equal(2, sounds.Played.Count(p => p.Effect == SoundEffect2D.GunImpact));
         Assert.Contains((SoundEffect2D.GunFire, Vector2.Zero), sounds.Played);
-        view.Update(WeaponState2D.Empty, "gun", [], 0.1f);
+        view.Update(WeaponState2D.Empty, EquipmentKind2D.Gun, [], 0.1f);
         Assert.DoesNotContain(scene, item => item.IsVisible);
         view.Dispose();
         Assert.Empty(scene);

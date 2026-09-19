@@ -24,7 +24,7 @@ public sealed class EnemySimulationTests
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var brute = CreateBrute(physics);
         var target = new Vector2(62f, -10f);
-        var player = new Person2D(physics.CollisionSystem, physics,
+        var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), target, 2, 1, CombatFaction2D.Player);
         brute.Update(0.35f, new Vector2(1000f)); // Expire initial cooldown out of range.
         brute.Update(0f, target);
@@ -101,10 +101,10 @@ public sealed class EnemySimulationTests
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var combat = new CombatSystem2D(physics.CollisionSystem, new CombatantRegistry2D());
-        var rival = new RivalEnemy2D(physics.CollisionSystem, physics,
+        var rival = new RivalEnemy2D(new EntityIdAllocator2D(), physics.CollisionSystem, physics,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), combat,
             Vector2.Zero, -100f, 100f, 1, 2, 4);
-        rival.Person.ApplyCommand(new PersonCommand2D(default, UsePrimaryAction: true, SwitchEquipment: false), 0f);
+        rival.Person.ApplyCommand(new PersonCommand2D { PrimaryHeld = true }, 0f);
         var attack = Assert.IsType<RivalAttackStarted2D>(Assert.Single(rival.DrainEvents()));
         Assert.Equal(rival.Person.Id, attack.EntityId);
         Assert.True(rival.CaptureState().IsAttacking);
@@ -117,6 +117,6 @@ public sealed class EnemySimulationTests
     }
 
     private static BoilerBrute2D CreateBrute(PhysicsWorld2D physics) => new(
-        physics.CollisionSystem, physics, Vector2.Zero, -100f, 100f, 1, 4);
+        EntityId2D.Create(), physics.CollisionSystem, physics, Vector2.Zero, -100f, 100f, 1, 4);
 
 }

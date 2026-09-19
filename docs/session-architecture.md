@@ -50,27 +50,70 @@ This extraction changes file ownership and dependency direction. Identity alloca
 network transport, multi-player policy, prediction scheduling, and transferable
 corrections remain separate passes.
 
+## Network-readiness pass
+
+These decisions were made so that adding a transport later is a drop-in rather than
+a rewrite:
+
+- **One construction recipe.** `SideScrollerSessionDefinition2D` is a value (traversal
+  metrics, tile map, authored specs, health, saved progress) and
+  `SideScrollerSimulation2D.Create` is the only code that wires collision, physics,
+  level, player, arsenal, combat, and session from it. Layers live in
+  `SideScrollerLayers2D`. The host only adds I/O and presentation on top.
+- **Deterministic identities.** Every actor, platform, melee source, and projectile
+  range takes its ID from the session's `EntityIdAllocator2D`. Identical definitions
+  constructed in the same order produce identical IDs on a server and a predicting
+  client, so identities never need to be negotiated. `EntityId2D.Create()` remains
+  for tests and diagnostics only.
+- **Held-state commands.** `PersonCommand2D` carries axes and held buttons only.
+  `Person2D` derives presses and releases from the previous command it saw (part of
+  its rollback state), so a lost packet cannot drop a jump and a repeated command
+  cannot re-trigger one. A tap that begins and ends inside one tick reaches the
+  simulation as a one-tick hold.
+- **Missing input policy.** `Advance` takes any number of inputs for one tick. A
+  player without an input repeats its last command and its acknowledged sequence
+  does not move.
+- **Rejections, not exceptions, on the transport path.** `TryValidateInput` and
+  `SessionClient2D.TryApply` report `InputRejection2D` / `FrameRejection2D` without
+  changing state. `Advance` and `Apply` still throw for local programming errors.
+- **Per-player shape.** Frames and snapshots carry `Players` with each player's own
+  acknowledged input sequence; events are already stamped with their entity.
+  Enemy targeting and terrain streaming follow the first (living) participant as an
+  explicit policy until multiple participants are actually added.
+- **Static content split from dynamic state.** `LevelContent2D` (active terrain,
+  platform definitions, checkpoint placements, goal) changes only when streaming or
+  authoring changes and carries a revision; `WorldState2D` is the small per-tick
+  part (platform poses, checkpoint activation).
+- **Equipment is an enum** (`EquipmentKind2D`), and physics contact order is kept
+  in explicit lists rather than relying on dictionary enumeration.
+
+Not done in this pass: gameplay timers are still accumulated floats rather than
+tick counts. Local replay is exact; cross-machine float determinism remains a
+known caveat.
+
 ## Running path
 
 ```text
 SideScrollerClient2D captures device input
-    -> PlayerInput2D(entity ID, tick, sequence, PersonCommand2D)
+    -> PlayerInput2D(entity ID, tick, sequence, held-state PersonCommand2D)
 SideScrollerSession2D advances one 1/120-second tick
-    -> SessionFrame2D(player state, enemy states, world state, acknowledged input, events)
+    -> SessionFrame2D(per-player states with acknowledged input, enemy states,
+                      level content, world state, events)
 SideScrollerClient2D accepts the frame and consumes its events once
 GameHost advances presentation once per display update, independently of received frames
 ```
 
-`SideScrollerGame` constructs the objects and schedules these calls. It no longer
-decides when a player dies, respawns, activates a checkpoint, or reaches the goal.
-It remains responsible for the offline editor, diagnostics, and persistence I/O.
+`SideScrollerGame` builds a `SideScrollerSimulation2D` from a definition and
+schedules these calls. It no longer decides when a player dies, respawns, activates
+a checkpoint, or reaches the goal. It remains responsible for the offline editor,
+diagnostics, and persistence I/O.
 
-The session receives the existing physics world, player, actions, and a world
-adapter. It owns their update order and its own tick counter. Input is validated
-before any state changes: wrong entity IDs, wrong ticks, repeated sequences, and
-invalid movement values are rejected. Pausing does not advance the clock or
-consume an input sequence. Each frame takes exactly one fixed simulation step;
-the host continues to own the render cadence and fixed-step accumulator.
+The session owns update order and its own tick counter. Inputs are validated
+before any state changes: unknown players, wrong ticks, stale sequences, invalid
+movement values, and duplicate players in one batch are rejected. Pausing does not
+advance the clock or consume an input sequence. Each frame takes exactly one fixed
+simulation step; the host continues to own the render cadence and fixed-step
+accumulator.
 
 ## Attaching and advancing a client
 
@@ -134,10 +177,10 @@ fade, and trail durations belong to `WeaponPresentation2D`.
 
 Each player observation includes a `WeaponState2D` with charge state and immutable
 active projectile values. Every launch gets a new entity ID, including when a
-simulation slot is reused. IDs remain process-local. Each gun reserves an independent ID range and captures
-its creation sequence, so replay reproduces projectile IDs without rewinding the
-process allocator or affecting another session. Actor and melee-source identities
-remain fixed for the lifetime of the owning session.
+simulation slot is reused. Each gun reserves an ID range from the session allocator
+and captures its creation sequence, so replay reproduces projectile IDs without
+affecting another session. Actor and melee-source identities remain fixed for the
+lifetime of the owning session.
 
 Charge start/cancel, gun firing, projectile impact, and sword impact are gameplay
 facts. `WeaponOccurred2D` stamps them with the owning entity and session tick/sequence.
@@ -199,11 +242,12 @@ checkpoint objects own entry/activation state. `SideScrollerChunkStreamer2D`
 activates and removes only terrain colliders. Level disposal unregisters its
 combatants, removes its physics bodies, and detaches its map-edit listener.
 
-`WorldState2D` contains platform poses with runtime IDs and authored thing IDs,
-checkpoint activation/base positions, goal position, and immutable active terrain
-chunks. Platform color is plain ARGB metadata, so the simulation no longer needs
-a graphics library's color type. Replacing a platform gives it a new runtime ID.
-The persisted checkpoint ID remains the authored thing ID.
+`LevelContent2D` contains platform definitions (runtime ID, authored thing ID, size,
+ARGB color), checkpoint placements, goal position, and immutable active terrain
+chunks; it carries a revision and is shared between ticks until streaming or
+authoring changes it. `WorldState2D` contains only platform poses and checkpoint
+activation. Replacing a platform gives it a new runtime ID. The persisted
+checkpoint ID remains the authored thing ID.
 
 `TerrainChunkState2D.Capture` copies tile kinds, tileset indices, collision rectangles,
 and a one-cell halo from a map. Its public value constructor accepts metadata,

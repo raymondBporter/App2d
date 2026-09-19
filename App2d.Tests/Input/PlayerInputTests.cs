@@ -15,14 +15,12 @@ public sealed class PlayerInputTests
         var mapper = new PlayerInputMapper2D();
         input.SetKey(Keys.Space, true);
         input.SetKey(Keys.Space, false);
+        // A tap inside one tick is reported as a one-tick hold; the simulation derives the press.
         var first = mapper.Capture(input, default);
-        Assert.True(first.Movement.JumpPressed);
-        Assert.True(first.Movement.JumpReleased);
-        Assert.False(first.Movement.JumpHeld);
+        Assert.True(first.JumpHeld);
         input.EndFrame();
         var second = mapper.Capture(input, default);
-        Assert.False(second.Movement.JumpPressed);
-        Assert.False(second.Movement.JumpReleased);
+        Assert.False(second.JumpHeld);
     }
 
     [Fact]
@@ -31,19 +29,16 @@ public sealed class PlayerInputTests
         var input = new InputState();
         var mapper = new PlayerInputMapper2D();
         input.SetKey(Keys.F, true);
-        Assert.True(mapper.Capture(input, default).UsePrimaryAction);
+        Assert.True(mapper.Capture(input, default).PrimaryHeld);
         input.EndFrame();
         input.SetMouseButton(MouseButtons.Left, true);
-        var both = mapper.Capture(input, default);
-        Assert.False(both.UsePrimaryAction);
+        Assert.True(mapper.Capture(input, default).PrimaryHeld);
         input.EndFrame();
         input.SetKey(Keys.F, false);
-        var mouse = mapper.Capture(input, default);
-        Assert.True(mouse.PrimaryActionHeld);
-        Assert.False(mouse.PrimaryActionReleased);
+        Assert.True(mapper.Capture(input, default).PrimaryHeld); // The mouse still holds the logical button.
         input.EndFrame();
         input.SetMouseButton(MouseButtons.Left, false);
-        Assert.True(mapper.Capture(input, default).PrimaryActionReleased);
+        Assert.False(mapper.Capture(input, default).PrimaryHeld);
     }
 
     [Fact]
@@ -52,16 +47,16 @@ public sealed class PlayerInputTests
         var input = new InputState();
         var mapper = new PlayerInputMapper2D();
         input.SetKey(Keys.Space, true);
-        Assert.True(mapper.Capture(input, default).Movement.JumpPressed);
+        Assert.True(mapper.Capture(input, default).JumpHeld);
         input.EndFrame();
         var pad = new XboxControllerState2D(default, XboxButtons.A, XboxButtons.A, default);
-        Assert.False(mapper.Capture(input, pad).Movement.JumpPressed);
+        Assert.True(mapper.Capture(input, pad).JumpHeld);
         input.SetKey(Keys.Space, false);
         pad = pad with { Pressed = default };
-        Assert.False(mapper.Capture(input, pad).Movement.JumpReleased);
+        Assert.True(mapper.Capture(input, pad).JumpHeld); // The pad still holds the logical button.
         input.EndFrame();
         // A disconnected controller contributes no held buttons.
-        Assert.True(mapper.Capture(input, default).Movement.JumpReleased);
+        Assert.False(mapper.Capture(input, default).JumpHeld);
     }
 
     [Fact]
@@ -72,17 +67,17 @@ public sealed class PlayerInputTests
         input.SetKey(Keys.Up, true);
         input.SetKey(Keys.ShiftKey, true);
         var command = mapper.Capture(input, default);
-        Assert.Equal(1f, command.Movement.ClimbY);
-        Assert.True(command.Movement.DashPressed);
-        Assert.False(command.Movement.JumpPressed);
+        Assert.Equal(1f, command.ClimbY);
+        Assert.True(command.DashHeld);
+        Assert.False(command.JumpHeld);
         input.EndFrame();
         input.SetKey(Keys.Up, false);
         input.SetKey(Keys.Down, true);
         input.SetKey(Keys.Space, true);
         command = mapper.Capture(input, default);
-        Assert.Equal(-1f, command.Movement.ClimbY);
-        Assert.True(command.Movement.DropThroughPressed);
-        Assert.True(command.Movement.LadderJumpPressed);
+        Assert.Equal(-1f, command.ClimbY);
+        Assert.True(command.DownHeld);
+        Assert.True(command.JumpHeld);
     }
 
     [Fact]
@@ -102,7 +97,7 @@ public sealed class PlayerInputTests
         var input = new InputState();
         var mapper = new PlayerInputMapper2D();
         input.SetKey(Keys.F, true);
-        Assert.True(mapper.Capture(input, default).PrimaryActionHeld);
+        Assert.True(mapper.Capture(input, default).PrimaryHeld);
         input.SetSuppressed(true);
         Assert.Equal(default(PersonCommand2D), mapper.Capture(input, default));
         input.SetSuppressed(false);
@@ -110,7 +105,7 @@ public sealed class PlayerInputTests
         Assert.Equal(default(PersonCommand2D), mapper.Capture(input, default));
         input.SetKey(Keys.F, false);
         input.SetKey(Keys.F, true);
-        Assert.True(mapper.Capture(input, default).UsePrimaryAction);
+        Assert.True(mapper.Capture(input, default).PrimaryHeld);
     }
 
     [Fact]
@@ -139,21 +134,22 @@ public sealed class PlayerInputTests
         Assert.Equal(default(PersonCommand2D), mapper.Capture(input, default));
         input.SetMouseButton(MouseButtons.Left, false);
         input.SetMouseButton(MouseButtons.Left, true);
-        Assert.True(mapper.Capture(input, default).UsePrimaryAction);
+        Assert.True(mapper.Capture(input, default).PrimaryHeld);
     }
 
     [Fact]
-    public void TriggerDashFiresOnceUntilTriggerCrossesReleaseThreshold()
+    public void TriggerDashStaysHeldUntilTriggerCrossesReleaseThreshold()
     {
+        // The simulation derives one press per hold, so hysteresis on the held state is what matters.
         var device = new XboxControllerInput2D();
         var mapper = new PlayerInputMapper2D();
         var input = new InputState();
         device.Update(0, default, 0);
-        Assert.True(mapper.Capture(input, device.Update(0, default, 40)).Movement.DashPressed);
+        Assert.True(mapper.Capture(input, device.Update(0, default, 40)).DashHeld);
         foreach (byte value in new byte[] { 39, 255, 25 })
-            Assert.False(mapper.Capture(input, device.Update(0, default, value)).Movement.DashPressed);
-        Assert.False(mapper.Capture(input, device.Update(0, default, 24)).Movement.DashPressed);
-        Assert.True(mapper.Capture(input, device.Update(0, default, 40)).Movement.DashPressed);
+            Assert.True(mapper.Capture(input, device.Update(0, default, value)).DashHeld);
+        Assert.False(mapper.Capture(input, device.Update(0, default, 24)).DashHeld);
+        Assert.True(mapper.Capture(input, device.Update(0, default, 40)).DashHeld);
     }
 
     [Fact]

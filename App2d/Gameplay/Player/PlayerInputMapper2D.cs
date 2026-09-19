@@ -4,7 +4,10 @@ using App2d.Input;
 
 namespace App2d.Gameplay.Player;
 
-/// <summary>Default gameplay bindings and conversion to device-independent person commands.</summary>
+/// <summary>
+/// Default gameplay bindings and conversion to device-independent, held-state person
+/// commands. Presses and releases are derived by the simulation from consecutive commands.
+/// </summary>
 public sealed class PlayerInputMapper2D
 {
     private static readonly ButtonBinding Left = new([Keys.A, Keys.Left], XboxButtons.DPadLeft);
@@ -48,21 +51,13 @@ public sealed class PlayerInputMapper2D
         var downHeld = Down.Read(input, pad).Held || pad.LeftStick.Y < -0.5f;
 
         return new PersonCommand2D(
-            new PersonMovementIntent2D(
-                MoveX: moveX,
-                JumpPressed: _jump.Pressed,
-                JumpHeld: _jump.Held,
-                JumpReleased: _jump.Released,
-                DropThroughPressed: downHeld && _jump.Pressed,
-                DashPressed: _dash.Pressed,
-                ClimbY: climbY,
-                LadderJumpPressed: _jump.Pressed),
-            UsePrimaryAction: _primary.Pressed,
-            SwitchEquipment: false,
-            UseSecondaryAction: _secondary.Pressed,
-            PrimaryActionHeld: _primary.Held,
-            PrimaryActionReleased: _primary.Released,
-            DownHeld: downHeld);
+            moveX,
+            climbY,
+            JumpHeld: Pulse(_jump),
+            DashHeld: Pulse(_dash),
+            DownHeld: downHeld,
+            PrimaryHeld: Pulse(_primary),
+            SecondaryHeld: Pulse(_secondary));
     }
 
     public void Reset()
@@ -70,6 +65,9 @@ public sealed class PlayerInputMapper2D
         _jump = _dash = _primary = _secondary = default;
         _controller.Reset();
     }
+
+    /// <summary>A tap that begins and ends inside one tick still reaches the simulation as a one-tick hold.</summary>
+    private static bool Pulse(InputButtonState button) => button.Held || button.Pressed;
 
     private static float Axis(ButtonBinding negative, ButtonBinding positive,
         InputState input, XboxControllerState2D pad, float analog) =>

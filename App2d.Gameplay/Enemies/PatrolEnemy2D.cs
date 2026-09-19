@@ -11,9 +11,12 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
     private float _direction = 1f;
     private float _stunSeconds;
 
-    public PatrolEnemy2D(
+    public PatrolEnemy2D(EntityId2D id,
         SpatialObject2D worldObject, PhysicsBody2D body, float patrolMinX, float patrolMaxX, float speed, int health)
     {
+        if (!id.IsValid)
+            throw new ArgumentException("An enemy requires a valid entity ID.", nameof(id));
+        Id = id;
         ArgGuard.ThrowIfGreaterThanOrEqual(patrolMinX, patrolMaxX);
         ArgGuard.ThrowIfNotPositive(speed);
 
@@ -26,7 +29,7 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
         Health = new Health2D(health);
     }
 
-    public EntityId2D Id { get; } = EntityId2D.Create();
+    public EntityId2D Id { get; }
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }

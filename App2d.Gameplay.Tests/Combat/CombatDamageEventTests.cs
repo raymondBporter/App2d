@@ -20,7 +20,7 @@ public sealed class CombatDamageEventTests
         shape.Transform.Position = new(600f, 200f);
         var body = physics.AddBody(shape, BodyMotionType2D.Dynamic);
         body.CollisionLayer = 2;
-        var enemy = new PatrolEnemy2D(shape, body, 500f, 700f, 10f, 10);
+        var enemy = new PatrolEnemy2D(EntityId2D.Create(), shape, body, 500f, 700f, 10f, 10);
         var registry = new CombatantRegistry2D();
         registry.Register(enemy);
         var events = new List<CombatDamage2D>();

@@ -20,42 +20,42 @@ public sealed class WeaponSessionTests
     {
         using var game = new Fixture();
         var shot = game.Fire();
-        Assert.Equal(PlayerAttackKind2D.Shot, shot.Player.Person.Action.Kind);
-        Assert.True(shot.Player.Person.Action.IsActive);
+        Assert.Equal(PlayerAttackKind2D.Shot, shot.Players[0].Person.Action.Kind);
+        Assert.True(shot.Players[0].Person.Action.IsActive);
         for (var i = 0; i < 12; i++) game.Step();
         var snapshot = game.Session.CaptureSnapshot();
-        Assert.Equal("gun", snapshot.Player.EquipmentId);
-        Assert.False(snapshot.Player.Person.Action.IsActive);
-        Assert.InRange(snapshot.Player.Person.Action.ElapsedSeconds, 0.099f, 0.101f);
+        Assert.Equal(EquipmentKind2D.Gun, snapshot.Players[0].Equipment);
+        Assert.False(snapshot.Players[0].Person.Action.IsActive);
+        Assert.InRange(snapshot.Players[0].Person.Action.ElapsedSeconds, 0.099f, 0.101f);
         var checkpoint = game.Session.CaptureCheckpoint();
         var next = game.Step();
         game.Session.RestoreCheckpoint(checkpoint);
         var replayed = game.Step();
-        Assert.Equal(next.Player.Person.Action, replayed.Player.Person.Action);
+        Assert.Equal(next.Players[0].Person.Action, replayed.Players[0].Person.Action);
         Assert.Equal(snapshot.Tick + 1, replayed.Tick);
         Assert.Empty(replayed.Events.OfType<AttackStarted2D>());
     }
 
-    private static PersonCommand2D Hold => new(default, false, false, PrimaryActionHeld: true);
+    private static PersonCommand2D Hold => new() { PrimaryHeld = true };
 
     [Fact]
     public void RealWeaponsRunWithoutPresentationAndOldFramesSurviveProjectileReuse()
     {
         using var game = new Fixture();
         var shot = game.Fire();
-        var first = Assert.Single(shot.Player.Weapons.Projectiles);
+        var first = Assert.Single(shot.Players[0].Weapons.Projectiles);
         var fired = Assert.Single(shot.Events.OfType<WeaponOccurred2D>());
         Assert.IsType<GunFired2D>(fired.Occurrence);
         Assert.Equal(game.Player.Id, fired.Stamp.EntityId);
         Assert.Equal(shot.Tick, fired.Stamp.Tick);
         var next = game.Step();
-        Assert.Equal(first.Id, Assert.Single(next.Player.Weapons.Projectiles).Id);
-        Assert.NotEqual(first.Position, next.Player.Weapons.Projectiles[0].Position);
+        Assert.Equal(first.Id, Assert.Single(next.Players[0].Weapons.Projectiles).Id);
+        Assert.NotEqual(first.Position, next.Players[0].Weapons.Projectiles[0].Position);
         for (var i = 0; i < 200; i++) game.Step();
-        Assert.Empty(game.Session.CaptureState().Weapons.Projectiles);
-        var second = Assert.Single(game.Fire().Player.Weapons.Projectiles);
+        Assert.Empty(game.Session.CapturePlayers()[0].Weapons.Projectiles);
+        var second = Assert.Single(game.Fire().Players[0].Weapons.Projectiles);
         Assert.NotEqual(first.Id, second.Id);
-        Assert.Equal(first, Assert.Single(shot.Player.Weapons.Projectiles));
+        Assert.Equal(first, Assert.Single(shot.Players[0].Weapons.Projectiles));
         Assert.IsType<GunFired2D>(Assert.Single(shot.Events.OfType<WeaponOccurred2D>()).Occurrence);
     }
 
@@ -63,12 +63,12 @@ public sealed class WeaponSessionTests
     public void SameTickSpawnAndImpactStillDeliverFactsWhenNoProjectileSurvivesTheFrame()
     {
         using var game = new Fixture();
-        var target = new Person2D(game.Physics.CollisionSystem, game.Physics, game.Metrics,
+        var target = new Person2D(EntityId2D.Create(), game.Physics.CollisionSystem, game.Physics, game.Metrics,
             game.Metrics.GunMuzzleOffset + new Vector2(15f, 0f), 4, 0, CombatFaction2D.Enemy, maximumHealth: 2);
         target.Body.MotionType = BodyMotionType2D.Static;
         game.Registry.Register(target);
         var frame = game.Fire();
-        Assert.Empty(frame.Player.Weapons.Projectiles);
+        Assert.Empty(frame.Players[0].Weapons.Projectiles);
         Assert.False(target.IsAlive);
         var facts = frame.Events.OfType<WeaponOccurred2D>().Select(e => e.Occurrence).ToArray();
         Assert.IsType<GunFired2D>(facts[0]);
@@ -87,19 +87,19 @@ public sealed class WeaponSessionTests
     public void ChargeCancellationIsDeliveredOnceAndPauseClearsOngoingState()
     {
         using var game = new Fixture();
-        var start = game.Step(Hold with { UsePrimaryAction = true });
+        var start = game.Step(Hold);
         Assert.IsType<ChargeStarted2D>(Assert.Single(start.Events.OfType<WeaponOccurred2D>()).Occurrence);
         for (var i = 0; i < 30; i++) game.Step(Hold);
         var cancelled = game.Step();
         var fact = Assert.IsType<ChargeCancelled2D>(Assert.Single(cancelled.Events.OfType<WeaponOccurred2D>()).Occurrence);
         Assert.InRange(fact.Progress, 0.4f, 0.5f);
-        Assert.False(cancelled.Player.Weapons.IsCharging);
+        Assert.False(cancelled.Players[0].Weapons.IsCharging);
         Assert.Empty(game.Step().Events.OfType<WeaponOccurred2D>());
-        game.Step(Hold with { UsePrimaryAction = true });
+        game.Step(Hold);
         game.Session.SetPaused(true);
-        Assert.False(game.Session.CaptureState().Weapons.IsCharging);
+        Assert.False(game.Session.CapturePlayers()[0].Weapons.IsCharging);
         game.Session.SetPaused(false);
-        Assert.False(game.Step(Hold).Player.Weapons.IsCharging);
+        Assert.False(game.Step(Hold).Players[0].Weapons.IsCharging);
     }
 
     private sealed class Fixture : IDisposable
@@ -112,10 +112,10 @@ public sealed class WeaponSessionTests
 
         public Fixture()
         {
-            Player = new Person2D(Physics.CollisionSystem, Physics, Metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
+            Player = new Person2D(EntityId2D.Create(), Physics.CollisionSystem, Physics, Metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
             Registry.Register(Player);
             var combat = new CombatSystem2D(Physics.CollisionSystem, Registry);
-            var arsenal = new PersonArsenal2D(Player.Body, Metrics.GunMuzzleOffset,
+            var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), Player.Body, Metrics.GunMuzzleOffset,
                 Physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat);
             Player.AttachActions(arsenal);
             arsenal.SelectNext();
@@ -125,7 +125,7 @@ public sealed class WeaponSessionTests
 
         public SessionFrame2D Fire()
         {
-            Step(Hold with { UsePrimaryAction = true });
+            Step(Hold);
             for (var i = 1; i < 71; i++) Step(Hold);
             return Step(Hold);
         }

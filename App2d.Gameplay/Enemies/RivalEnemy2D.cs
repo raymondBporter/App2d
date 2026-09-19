@@ -21,6 +21,7 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
     private bool _simulationEnabled = true;
 
     public RivalEnemy2D(
+        EntityIdAllocator2D ids,
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
         TraversalMetrics2D traversal,
@@ -32,6 +33,7 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
         uint playerLayer,
         uint enemyLayer)
     {
+        ArgGuard.ThrowIfNull(ids);
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(traversal);
@@ -39,6 +41,7 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
         ArgGuard.ThrowIfNotFinite(position);
         ArgGuard.ThrowIfGreaterThanOrEqual(minimumX, maximumX);
         Person = new Person2D(
+            ids.Allocate(),
             collision,
             physics,
             traversal,
@@ -49,6 +52,7 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
             maximumHealth: 12,
             mass: 1f);
         _actions = new UnarmedPersonActions2D(
+            ids,
             Person.Body,
             CombatFaction2D.Enemy,
             playerLayer,
@@ -86,7 +90,7 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
             targetPosition,
             deltaSeconds);
         Person.ApplyCommand(command, deltaSeconds);
-        _lastMoveX = command.Movement.MoveX;
+        _lastMoveX = command.MoveX;
     }
 
     public void SyncAfterPhysics()

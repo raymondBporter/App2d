@@ -29,19 +29,24 @@ public sealed class ObservationRoundTripTests
         var position = new Vector2(24f, -3f);
         var person = new PersonState2D { Id = playerId, Position = position, Facing = -1f,
             HitPoints = 3, MaximumHitPoints = 5, IsGrounded = true, Action = new(PlayerAttackKind2D.Melee, 0.12f, 0.4f) };
-        var player = new PlayerState2D(person, -1f, "sword", true, 0f, 42, false,
+        var player = new PlayerState2D(person, 620, -1f, EquipmentKind2D.Sword, true, 0f, 42, false,
             new(false, 0f, position, [new(new EntityId2D(102), position, new(1250f, 0f), new(2f, 4f))]));
-        var world = new WorldState2D([new(new EntityId2D(103), 40, position, new(90f, 12f), 0xffaabbcc)],
-            [new(42, position, true)], [terrain], new(300f, 0f));
+        var content = new LevelContent2D(3, [terrain], [new(new EntityId2D(103), 40, new(90f, 12f), 0xffaabbcc)],
+            [new(42, position)], new(300f, 0f));
+        var world = new WorldState2D([new(new EntityId2D(103), position)], [new(42, true)]);
         ImmutableArray<EnemyState2D> enemies = [new(enemyId, EnemyKind2D.Rival, position, new(5f, 1f), 0.2f, -1f, true, true)
             { Person = person with { Id = enemyId }, IsAttacking = true, AttackElapsedSeconds = 0.12f, MoveX = -1f }];
-        var snapshot = new SessionSnapshot2D(500, 620, player, world, enemies);
+        var snapshot = new SessionSnapshot2D(500, [player], content, world, enemies);
         var options = CreateOptions();
         var restored = RoundTrip(snapshot, options);
-        Assert.Equal(player.Person, restored.Player.Person);
-        Assert.Equal(player.Weapons.Projectiles.ToArray(), restored.Player.Weapons.Projectiles.ToArray());
+        Assert.Equal(player.Person, restored.Players[0].Person);
+        Assert.Equal(player with { Weapons = default }, restored.Players[0] with { Weapons = default });
+        Assert.Equal(player.Weapons.Projectiles.ToArray(), restored.Players[0].Weapons.Projectiles.ToArray());
         Assert.Equal(enemies.ToArray(), restored.Enemies.ToArray());
-        var restoredTerrain = Assert.Single(restored.World.Terrain);
+        Assert.Equal(world.MovingPlatforms.ToArray(), restored.World.MovingPlatforms.ToArray());
+        Assert.Equal(content.MovingPlatforms.ToArray(), restored.Content.MovingPlatforms.ToArray());
+        Assert.Equal(content.Checkpoints.ToArray(), restored.Content.Checkpoints.ToArray());
+        var restoredTerrain = Assert.Single(restored.Content.Terrain);
         Assert.NotSame(terrain, restoredTerrain);
         Assert.Equal(terrain.Collisions.ToArray(), restoredTerrain.Collisions.ToArray());
         for (var y = -1; y <= 4; y++)
@@ -59,7 +64,7 @@ public sealed class ObservationRoundTripTests
             new JumpStarted2D(stamp), new Landed2D(stamp, 700f), new Footstep2D(stamp),
             new Damaged2D(stamp), new Died2D(stamp), new Respawned2D(stamp, position),
             new GoalReached2D(stamp), new CheckpointActivated2D(stamp, 42, 3, position),
-            new EquipmentChanged2D(stamp, "gun"), new AttackStarted2D(stamp, PlayerAttackKind2D.Downward, 0.4f, true),
+            new EquipmentChanged2D(stamp, EquipmentKind2D.Gun), new AttackStarted2D(stamp, PlayerAttackKind2D.Downward, 0.4f, true),
             new CombatDamageOccurred2D(stamp, new(enemyId, CombatFaction2D.Enemy, position, true))
         };
         EnemyEvent2D[] enemyEvents = [new HammerStarted2D(enemyId, position), new HammerStruck2D(enemyId, position),
@@ -69,7 +74,7 @@ public sealed class ObservationRoundTripTests
             new GunFired2D(position), new ProjectileImpact2D(position, EntityId2D.None), new SwordImpact2D(position)];
         events.AddRange(enemyEvents.Select(e => new EnemyOccurred2D(stamp, e)));
         events.AddRange(weaponEvents.Select(e => new WeaponOccurred2D(stamp, e)));
-        var frame = new SessionFrame2D(501, 621, player, events.ToImmutableArray()) { World = world, Enemies = enemies };
+        var frame = new SessionFrame2D(501, [player], events.ToImmutableArray()) { Content = content, World = world, Enemies = enemies };
         Assert.Equal(events.ToArray(), RoundTrip(frame, options).Events.ToArray());
     }
 

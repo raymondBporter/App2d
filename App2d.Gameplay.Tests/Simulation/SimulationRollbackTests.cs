@@ -19,15 +19,16 @@ namespace App2d.Gameplay.Tests.Simulation;
 
 public sealed class SimulationRollbackTests
 {
-    private static PersonCommand2D Hold => new(default, false, false, PrimaryActionHeld: true);
-    private static PersonCommand2D Press => Hold with { UsePrimaryAction = true };
-    private static PersonCommand2D Move(float x) => new(new(x, false, false, false, false, false), false, false);
+    private static PersonCommand2D Hold => new() { PrimaryHeld = true };
+    private static PersonCommand2D Press => Hold; // A press is a hold after a release.
+    private static PersonCommand2D Switch => new() { SwitchHeld = true };
+    private static PersonCommand2D Move(float x) => new() { MoveX = x };
 
     [Fact]
     public void ChargeProjectileCreationExpiryAndSlotReuseReplayWithIdenticalIds()
     {
         using var game = new Fixture(gravity: false);
-        game.Step(new(default, false, true));
+        game.Step(Switch);
         game.Step(Press);
         game.Steps(30, Hold);
         Assert.True(game.Arsenal.IsChargingPrimary);
@@ -35,14 +36,14 @@ public sealed class SimulationRollbackTests
             i == 99 || i == 199 ? default : Hold).ToArray();
         var frames = AssertReplay(game, commands);
         Assert.Equal(3, frames.SelectMany(f => f.Events).OfType<WeaponOccurred2D>().Count(e => e.Occurrence is GunFired2D));
-        var ids = frames.SelectMany(f => f.Player.Weapons.Projectiles).Select(p => p.Id).Distinct().ToArray();
+        var ids = frames.SelectMany(f => f.Players[0].Weapons.Projectiles).Select(p => p.Id).Distinct().ToArray();
         Assert.Equal(3, ids.Length);
         Assert.All(ids, id => Assert.True(id.IsValid));
         // Checkpoint with a live projectile retains its remaining lifetime and slot state.
         game.Step(default);
         game.Step(Press);
         game.Steps(75, Hold);
-        Assert.NotEmpty(game.Session.CaptureState().Weapons.Projectiles);
+        Assert.NotEmpty(game.Session.CapturePlayers()[0].Weapons.Projectiles);
         AssertReplay(game, Enumerable.Repeat(default(PersonCommand2D), 190));
     }
 
@@ -51,14 +52,15 @@ public sealed class SimulationRollbackTests
     {
         using var game = new Fixture(gravity: false, things:
             [new(11, WorldThingKind2D.GreenDinosaur, null, true, new Vector2(75f, 45f))]);
-        game.Step(new(default, true, false));
+        game.Step(Press);
         var hit = false;
         for (var i = 0; i < 20 && !hit; i++)
             hit = game.Step().Events.OfType<CombatDamageOccurred2D>().Any();
         Assert.True(hit);
         var target = Assert.Single(game.Level.EnemySystem.Combatants);
         Assert.True(target.Health.Current < target.Health.Maximum);
-        game.Step(new(default, true, false)); // Buffered while the first swing is active.
+        game.Step(default);
+        game.Step(Press); // Buffered while the first swing is active.
         var health = target.Health.Current;
         var frames = AssertReplay(game, Enumerable.Repeat(default(PersonCommand2D), 120));
         Assert.True(target.Health.Current <= health);
@@ -96,7 +98,7 @@ public sealed class SimulationRollbackTests
         game.Player.WorldObject.Transform.Position = platform.WorldObject.Transform.Position + new Vector2(0f, 8f + game.Metrics.PlayerColliderSize.Y / 2f);
         game.Player.Body.LinearVelocity = Vector2.Zero;
         game.Steps(4);
-        game.Step(new(new(0, false, false, false, true, false), false, false));
+        game.Step(new PersonCommand2D { DownHeld = true, JumpHeld = true });
         Assert.True(game.Player.Body.IgnoredOneWayPlatformCount > 0);
         AssertReplay(game, Enumerable.Repeat(default(PersonCommand2D), 120));
     }
@@ -105,12 +107,12 @@ public sealed class SimulationRollbackTests
     public void LadderLatchJumpHoldDashAndLandingReplay()
     {
         using var game = new Fixture(ladder: true);
-        var climb = new PersonCommand2D(new(0, false, false, false, false, false, ClimbY: 1), false, false);
+        var climb = new PersonCommand2D { ClimbY = 1 };
         game.Steps(30, climb);
         Assert.True(game.Player.IsClimbingLadder);
         var commands = Enumerable.Range(0, 180).Select(i => i == 10
-            ? climb with { Movement = climb.Movement with { LadderJumpPressed = true, JumpHeld = true, MoveX = 1 } }
-            : i < 10 ? climb : Move(1) with { Movement = Move(1).Movement with { JumpHeld = i < 30, DashPressed = i == 35 } });
+            ? climb with { JumpHeld = true, MoveX = 1 }
+            : i < 10 ? climb : Move(1) with { JumpHeld = i < 30, DashHeld = i == 35 });
         AssertReplay(game, commands);
     }
 
@@ -123,9 +125,9 @@ public sealed class SimulationRollbackTests
         var old = game.Session.CaptureCheckpoint();
         var oldValue = Describe(old);
         var inputs = Enumerable.Range(0, 1000).Select(_ => Move(1)).ToArray();
-        var originalTerrain = game.Session.CaptureWorld().Terrain.Select(c => c.Chunk).ToArray();
+        var originalTerrain = game.Session.CaptureContent().Terrain.Select(c => c.Chunk).ToArray();
         var frames = AssertReplay(game, inputs);
-        Assert.NotEqual(originalTerrain, frames[^1].World.Terrain.Select(c => c.Chunk).ToArray());
+        Assert.NotEqual(originalTerrain, frames[^1].Content.Terrain.Select(c => c.Chunk).ToArray());
         Assert.Equal(oldValue, Describe(old));
         game.Session.RestoreCheckpoint(old);
         Assert.Equal(oldValue, Describe(game.Session.CaptureCheckpoint()));
@@ -174,9 +176,9 @@ public sealed class SimulationRollbackTests
         var checkpoint = first.Session.CaptureCheckpoint();
         Assert.Throws<InvalidOperationException>(() => second.Session.RestoreCheckpoint(checkpoint));
         first.Map.SetTileKind(400, 40, TileKind2D.Solid); // Even an unloaded edit invalidates history.
-        var before = first.Session.CaptureState();
+        var before = first.Session.CapturePlayers()[0];
         Assert.Throws<InvalidOperationException>(() => first.Session.RestoreCheckpoint(checkpoint));
-        Assert.Equal(before, first.Session.CaptureState());
+        Assert.Equal(before, first.Session.CapturePlayers()[0]);
         first.Level.FlushDirtyChunks();
         checkpoint = first.Session.CaptureCheckpoint();
         first.Level.ReloadMovingPlatforms([]);
@@ -193,7 +195,7 @@ public sealed class SimulationRollbackTests
         var history = new SessionReplayBuffer2D(game.Session, capacity: 12);
         var frames = new List<SessionFrame2D>();
         for (var i = 0; i < 30; i++)
-            frames.Add(history.Advance(new(game.Player.Id, game.Session.Tick + 1, (i + 1) * 3, Move(1))));
+            frames.Add(history.Advance(new PlayerInput2D(game.Player.Id, game.Session.Tick + 1, (i + 1) * 3, Move(1))));
         Assert.Equal(12, history.Count);
         Assert.Equal(18, history.OldestTick);
         var before = Describe(game.Session.CaptureCheckpoint());
@@ -206,22 +208,23 @@ public sealed class SimulationRollbackTests
     }
 
     [Fact]
-    public void RewindingOneSessionDoesNotRewindAnotherSessionsCreationSequence()
+    public void IdenticalDefinitionsAllocateIdenticalIdsAndRewindingOneSessionLeavesTheOtherAlone()
     {
         using var first = new Fixture(gravity: false);
         using var second = new Fixture(gravity: false);
-        first.Step(new(default, false, true));
-        second.Step(new(default, false, true));
+        first.Step(Switch);
+        second.Step(Switch);
         var checkpoint = first.Session.CaptureCheckpoint();
         first.Step(Press); first.Steps(71, Hold);
-        var firstId = Assert.Single(first.Session.CaptureState().Weapons.Projectiles).Id;
+        var firstId = Assert.Single(first.Session.CapturePlayers()[0].Weapons.Projectiles).Id;
         second.Step(Press); second.Steps(71, Hold);
-        var secondId = Assert.Single(second.Session.CaptureState().Weapons.Projectiles).Id;
+        var secondId = Assert.Single(second.Session.CapturePlayers()[0].Weapons.Projectiles).Id;
         first.Session.RestoreCheckpoint(checkpoint);
         first.Step(Press); first.Steps(71, Hold);
-        Assert.Equal(firstId, Assert.Single(first.Session.CaptureState().Weapons.Projectiles).Id);
-        Assert.NotEqual(firstId, secondId);
-        Assert.Equal(secondId, Assert.Single(second.Session.CaptureState().Weapons.Projectiles).Id);
+        Assert.Equal(firstId, Assert.Single(first.Session.CapturePlayers()[0].Weapons.Projectiles).Id);
+        // Deterministic allocation: a server and a predicting client built the same way agree on IDs.
+        Assert.Equal(firstId, secondId);
+        Assert.Equal(secondId, Assert.Single(second.Session.CapturePlayers()[0].Weapons.Projectiles).Id);
     }
 
     [Theory]
@@ -231,12 +234,10 @@ public sealed class SimulationRollbackTests
     {
         using var game = new Fixture();
         game.Steps(4);
-        game.Step(Move(1) with { Movement = Move(1).Movement with
-            { JumpPressed = !dash, JumpHeld = !dash, DashPressed = dash } });
-        game.Steps(3, Move(1) with { Movement = Move(1).Movement with { JumpHeld = !dash } });
+        game.Step(Move(1) with { JumpHeld = !dash, DashHeld = dash });
+        game.Steps(3, Move(1) with { JumpHeld = !dash });
         Assert.True(dash ? game.Player.IsDashing : game.Player.IsSustainingJump);
-        AssertReplay(game, Enumerable.Range(0, 180).Select(i => Move(1) with
-            { Movement = Move(1).Movement with { JumpHeld = i < 15, JumpReleased = i == 15 } }));
+        AssertReplay(game, Enumerable.Range(0, 180).Select(i => Move(1) with { JumpHeld = i < 15 }));
     }
 
     [Fact]
@@ -250,8 +251,7 @@ public sealed class SimulationRollbackTests
         game.Player.Body.LinearVelocity = new Vector2(0, -10);
         game.Steps(4, Move(1));
         Assert.True(game.Player.IsWallGripping);
-        AssertReplay(game, Enumerable.Range(0, 100).Select(i => Move(1) with
-            { Movement = Move(1).Movement with { JumpPressed = i == 3, JumpHeld = i >= 3 && i < 20 } }));
+        AssertReplay(game, Enumerable.Range(0, 100).Select(i => Move(1) with { JumpHeld = i >= 3 && i < 20 }));
     }
 
     [Fact]
@@ -260,7 +260,7 @@ public sealed class SimulationRollbackTests
         using var game = new Fixture(gravity: false, things:
             [new(11, WorldThingKind2D.GreenDinosaur, null, true, new Vector2(0, 45))]);
         game.Player.WorldObject.Transform.Position = new Vector2(0, 100);
-        game.Step(new(default, true, false, DownHeld: true));
+        game.Step(new PersonCommand2D { PrimaryHeld = true, DownHeld = true });
         Assert.True(game.Player.DownAttackBouncedThisFrame);
         AssertReplay(game, Enumerable.Repeat(default(PersonCommand2D), 90));
     }
@@ -272,7 +272,7 @@ public sealed class SimulationRollbackTests
             [new(11, WorldThingKind2D.GreenDinosaur, null, true, new Vector2(240, 45))]);
         var enemy = Assert.Single(game.Level.EnemySystem.Combatants);
         enemy.Health.Damage(2);
-        game.Step(new(default, false, true));
+        game.Step(Switch);
         game.Step(Press);
         game.Steps(60, Hold);
         var beforeHit = game.Session.CaptureCheckpoint();
@@ -335,7 +335,7 @@ public sealed class SimulationRollbackTests
             Assert.Throws<InvalidOperationException>(() => game.Session.RestoreCheckpoint(snapshot));
         };
         game.Steps(4);
-        game.Step(new(new(0, true, true, false, false, false), false, false));
+        game.Step(new PersonCommand2D { JumpHeld = true });
         var history = new SessionReplayBuffer2D(game.Session);
         game.Session.SetPaused(true);
         Assert.Throws<InvalidOperationException>(() => history.ReplayFrom(history.OldestTick));
@@ -368,10 +368,15 @@ public sealed class SimulationRollbackTests
     private static void AssertFrame(SessionFrame2D expected, SessionFrame2D actual)
     {
         Assert.Equal(expected.Tick, actual.Tick);
-        Assert.Equal(expected.LastInputSequence, actual.LastInputSequence);
-        Assert.Equal(expected.Player with { Weapons = default }, actual.Player with { Weapons = default });
-        Assert.Equal(expected.Player.Weapons with { Projectiles = [] }, actual.Player.Weapons with { Projectiles = [] });
-        Assert.Equal(expected.Player.Weapons.Projectiles.ToArray(), actual.Player.Weapons.Projectiles.ToArray());
+        Assert.Equal(expected.Players.Length, actual.Players.Length);
+        for (var i = 0; i < expected.Players.Length; i++)
+        {
+            Assert.Equal(expected.Players[i] with { Weapons = default }, actual.Players[i] with { Weapons = default });
+            Assert.Equal(expected.Players[i].Weapons with { Projectiles = [] }, actual.Players[i].Weapons with { Projectiles = [] });
+            Assert.Equal(expected.Players[i].Weapons.Projectiles.ToArray(), actual.Players[i].Weapons.Projectiles.ToArray());
+        }
+        // The content revision is a local cache counter; compare what it describes.
+        Assert.Equal(Describe(expected.Content with { Revision = 0 }), Describe(actual.Content with { Revision = 0 }));
         Assert.Equal(expected.Events.ToArray(), actual.Events.ToArray());
         Assert.Equal(expected.Enemies.ToArray(), actual.Enemies.ToArray());
         Assert.Equal(Describe(expected.World), Describe(actual.World));
@@ -413,19 +418,20 @@ public sealed class SimulationRollbackTests
             var authored = new[] { new WorldThingSpec2D(1, WorldThingKind2D.PlayerSpawn, null, true, spawn) }.Concat(things ?? []).ToArray();
             Level = new(Metrics, Map, _ => 20, platform ?
                 [new(2, "Lift", true, new(0, 96), new(64, 64), new(200, 16), 96, 0xFF25D2BEu)] : [], authored);
-            Level.CreateSimulation(Physics.CollisionSystem, Physics, 1, 2, 4);
+            var ids = new EntityIdAllocator2D();
+            Level.CreateSimulation(Physics.CollisionSystem, Physics, ids, 1, 2, 4);
             var registry = new CombatantRegistry2D();
             var combat = new CombatSystem2D(Physics.CollisionSystem, registry);
             Level.CreateAuthoredWorldThings(combat);
-            Player = new(Physics.CollisionSystem, Physics, Metrics, spawn, 2, 1, CombatFaction2D.Player, tileMap: Map);
+            Player = new(ids.Allocate(), Physics.CollisionSystem, Physics, Metrics, spawn, 2, 1, CombatFaction2D.Player, tileMap: Map);
             registry.Register(Player);
-            Arsenal = new(Player.Body, Metrics.GunMuzzleOffset, Physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat,
+            Arsenal = new(ids, Player.Body, Metrics.GunMuzzleOffset, Physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat,
                 bounds => Level.TryGetSpikeSource(bounds, out _));
             Player.AttachActions(Arsenal);
             Session = new(Physics, Player, Arsenal, new SideScrollerSessionWorld2D(Level,
                 new ContactDamageSystem2D(Physics.CollisionSystem, 4, registry)), new(spawn, 5), combat);
         }
-        public SessionFrame2D Step(PersonCommand2D command = default) => Session.Advance(new(Player.Id, Session.Tick + 1, Session.Tick + 1, command));
+        public SessionFrame2D Step(PersonCommand2D command = default) => Session.Advance(new PlayerInput2D(Player.Id, Session.Tick + 1, Session.Tick + 1, command));
         public void Steps(int count, PersonCommand2D command = default) { for (var i = 0; i < count; i++) Step(command); }
         public void Dispose() { Session.Dispose(); Level.Dispose(); }
     }

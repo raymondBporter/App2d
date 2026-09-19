@@ -1,3 +1,4 @@
+using App2d.Gameplay.Persons.Actions;
 using App2d.Levels;
 using App2d.Collision;
 using App2d.Core;
@@ -24,7 +25,7 @@ public sealed class PersonBalancePresentationTests
     {
         var collision = new CollisionSystem2D();
         _physics = new PhysicsWorld2D(collision) { Gravity = new Vector2(0f, -_metrics.Gravity) };
-        _person = new Person2D(collision, _physics, _metrics,
+        _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
             new Vector2(0f, _metrics.PlayerColliderSize.Y / 2f), 2u, 1u, CombatFaction2D.Player);
     }
 
@@ -98,11 +99,11 @@ public sealed class PersonBalancePresentationTests
         var scene = new Scene2D();
         using var textures = new TextureCache2D(TestAssetPath.Root);
         using var presentation = new PersonPresentation2D(scene, textures, _metrics);
-        presentation.Equip(equipment);
+        presentation.Equip(Enum.Parse<EquipmentKind2D>(equipment, ignoreCase: true));
         presentation.Update(0f, 0, _person.CaptureState(), 0f, false, false);
         var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
         Assert.Same(textures.Load($"characters/player-{equipment}/animations/idle/frame-0001.png"), shader.Texture);
-        presentation.Equip("sword");
+        presentation.Equip(EquipmentKind2D.Sword);
         presentation.Update(0f, 0, _person.CaptureState(), 0f, false, false);
         Assert.Same(textures.Load("characters/player-sword/animations/balance-left-foot/frame-0001.png"), shader.Texture);
     }
@@ -110,8 +111,8 @@ public sealed class PersonBalancePresentationTests
     private void Step(float move = 0f, bool jump = false, bool dash = false, bool drop = false)
     {
         _person.BeginFrame(Dt);
-        _person.ApplyCommand(new PersonCommand2D(
-            new PersonMovementIntent2D(move, jump, jump, false, drop, dash), false, false), Dt);
+        _person.ApplyCommand(new PersonCommand2D
+            { MoveX = move, JumpHeld = jump || drop, DownHeld = drop, DashHeld = dash }, Dt);
         _physics.Step(Dt);
         _person.UpdateAfterPhysics(Dt);
     }
