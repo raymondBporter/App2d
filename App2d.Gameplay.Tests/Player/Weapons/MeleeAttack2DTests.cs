@@ -86,6 +86,7 @@ public sealed class MeleeAttack2DTests
 
     private static MeleeAttack2D CreateAttack() =>
         new(
+            EntityId2D.Create(),
             new SpatialObject2D(
                 AxisAlignedRectangle2D.FromSize(new Vector2(56f, 72f))),
             new MeleeAttackProfile2D(

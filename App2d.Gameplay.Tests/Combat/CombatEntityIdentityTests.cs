@@ -1,7 +1,7 @@
+using App2d.Levels;
 using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
@@ -120,8 +120,8 @@ public sealed class CombatEntityIdentityTests
     public void ContactDamageResolvesEntityAndRespawnKeepsPlayerIdentity()
     {
         var enemy = CreateEnemy();
-        var player = new Person2D(_physics.CollisionSystem, _physics,
-            TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root),
+        var player = new Person2D(EntityId2D.Create(), _physics.CollisionSystem, _physics,
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root),
             Vector2.Zero, 4, 1, CombatFaction2D.Player);
         _registry.Register(player);
         var id = player.Id;
@@ -145,17 +145,13 @@ public sealed class CombatEntityIdentityTests
         var shape = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(30f)));
         var body = _physics.AddBody(shape, BodyMotionType2D.Dynamic);
         body.CollisionLayer = EnemyLayer;
-        return new PatrolEnemy2D(shape, body, -100f, 100f, 10f, 10);
+        return new PatrolEnemy2D(EntityId2D.Create(), shape, body, -100f, 100f, 10f, 10);
     }
 
     private CombatSystem2D CreateCombat() =>
-        new(_physics.CollisionSystem, new SilentSounds(), _registry);
+        new(_physics.CollisionSystem, _registry);
 
     private static bool DamageFirst(CombatSystem2D combat, SpatialObject2D hitbox) =>
         combat.TryDamageFirst(hitbox, CombatFaction2D.Player, EnemyLayer, 1, _ => Vector2.Zero);
 
-    private sealed class SilentSounds : ISoundEffectSink2D
-    {
-        public void Play(SoundEffect2D effect) { }
-    }
 }

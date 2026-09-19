@@ -1,3 +1,4 @@
+using App2d.Levels;
 using System.Numerics;
 using App2d.Collision;
 using App2d.Core;
@@ -7,8 +8,6 @@ using App2d.Gameplay.Persons;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.World;
 using App2d.Physics;
-using App2d.Rendering;
-using XnaColor = Microsoft.Xna.Framework.Color;
 using Xunit;
 
 namespace App2d.Gameplay.Tests.World;
@@ -21,9 +20,8 @@ public sealed class MovingPlatform2DTests
     [Fact]
     public void PlatformReflectsAtPathEndsWithoutOvershooting()
     {
-        var scene = new Scene2D();
         var physics = CreatePhysics();
-        var platform = CreatePlatform(scene, physics, new Vector2(10f, 0f), speed: 4f);
+        var platform = CreatePlatform(physics, new Vector2(10f, 0f), speed: 4f);
 
         platform.Update(2f);
         physics.Step(2f);
@@ -41,10 +39,9 @@ public sealed class MovingPlatform2DTests
     [Fact]
     public void PlatformCarriesSupportedDynamicBodyAlongItsPath()
     {
-        var scene = new Scene2D();
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
-        var platform = CreatePlatform(scene, physics, new Vector2(20f, 0f), speed: 10f);
+        var platform = CreatePlatform(physics, new Vector2(20f, 0f), speed: 10f);
         var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(10f)));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
@@ -65,11 +62,9 @@ public sealed class MovingPlatform2DTests
     [Fact]
     public void RisingPlatformKeepsRiderSupportedWithoutDoubleVerticalCarry()
     {
-        var scene = new Scene2D();
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
         var platform = CreatePlatform(
-            scene,
             physics,
             new Vector2(0f, 20f),
             speed: 10f);
@@ -100,17 +95,15 @@ public sealed class MovingPlatform2DTests
     [Fact]
     public void DescendingPlatformDoesNotRepeatedlyLandRider()
     {
-        var scene = new Scene2D();
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
         physics.Gravity = new Vector2(0f, -1_900f);
         physics.MaxSubstepSeconds = 1f / 120f;
         var platform = CreatePlatform(
-            scene,
             physics,
             new Vector2(0f, -100f),
             speed: 90f);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var rider = CreateRider(collision, physics, platform, traversal);
         const float deltaSeconds = 1f / 120f;
 
@@ -132,15 +125,13 @@ public sealed class MovingPlatform2DTests
     [Fact]
     public void LandingSpeedIsRelativeToDescendingPlatform()
     {
-        var scene = new Scene2D();
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
         var platform = CreatePlatform(
-            scene,
             physics,
             new Vector2(0f, -100f),
             speed: 90f);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var rider = CreateRider(
             collision,
             physics,
@@ -162,10 +153,9 @@ public sealed class MovingPlatform2DTests
     [Fact]
     public void PlatformUsesKinematicOneWayCollision()
     {
-        var scene = new Scene2D();
         var physics = CreatePhysics();
 
-        var platform = CreatePlatform(scene, physics, Vector2.UnitY, speed: 1f);
+        var platform = CreatePlatform(physics, Vector2.UnitY, speed: 1f);
 
         Assert.Equal(BodyMotionType2D.Kinematic, platform.Body.MotionType);
         Assert.True(platform.Body.IsOneWayPlatform);
@@ -197,7 +187,7 @@ public sealed class MovingPlatform2DTests
             platform.WorldObject.WorldBounds.Top +
             traversal.PlayerColliderSize.Y * 0.5f +
             gap);
-        return new Person2D(
+        return new Person2D(EntityId2D.Create(),
             collision,
             physics,
             traversal,
@@ -219,18 +209,16 @@ public sealed class MovingPlatform2DTests
     }
 
     private static MovingPlatform2D CreatePlatform(
-        Scene2D scene,
         PhysicsWorld2D physics,
         Vector2 travel,
         float speed) =>
         new(
-            scene,
+            EntityId2D.Create(),
             physics,
             Vector2.Zero,
             travel,
             new Vector2(40f, 10f),
             speed,
             collisionLayer: WorldLayer,
-            collisionMask: uint.MaxValue,
-            new XnaColor(37, 210, 190));
+            collisionMask: uint.MaxValue);
 }

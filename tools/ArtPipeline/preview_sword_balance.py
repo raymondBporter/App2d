@@ -13,7 +13,7 @@ from import_stick_figure import transform_frame, SCALE, SOURCE_ROOT, TARGET_ROOT
 
 ROOT=Path(__file__).resolve().parents[2]
 SOURCE=ROOT/'Assets/Sources/characters/player-sword'
-OUT=ROOT/'Assets/Library/characters/player-sword/balance-compact'
+OUT=ROOT/'Assets/Work/previews/player-sword/balance-compact'
 OUT.mkdir(parents=True,exist_ok=True)
 render=json.loads((SOURCE/'rendered/render-report.json').read_text())
 config=json.loads((SOURCE/'render.json').read_text())

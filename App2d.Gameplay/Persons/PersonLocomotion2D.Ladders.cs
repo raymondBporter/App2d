@@ -22,13 +22,9 @@ public sealed partial class PersonLocomotion2D
 
     private bool TryUpdateLadder(float deltaSeconds)
     {
-        // W/Up doubles as climb and jump. A fresh press at the final rung
-        // must jump away rather than be consumed by the upward climb clamp.
-        var jumpAtTop = IsClimbingLadder && _intent.JumpPressed &&
-            TryFindLadder(out var currentLadder) &&
-            _body.WorldObject.WorldBounds.Center.Y >= currentLadder.Top - 0.01f;
-        var jumpOff = _intent.LadderJumpPressed ||
-            (_intent.JumpPressed && MathF.Abs(_intent.ClimbY) < 0.01f) || jumpAtTop;
+        // A jump press while climbing always leaves the ladder; a jump press beside a
+        // ladder jumps instead of grabbing it. Climbing itself comes only from ClimbY.
+        var jumpOff = _intent.JumpPressed;
         if (IsClimbingLadder && jumpOff)
         {
             DetachFromLadder();

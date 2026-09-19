@@ -1,28 +1,23 @@
 using App2d.Core.Geometry;
 using App2d.Core;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Physics;
-using App2d.Rendering.Textures;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-internal sealed class SwordPersonWeapon2D(
-    string name,
-    string equipmentId,
+internal sealed partial class SwordPersonWeapon2D(
+    EntityIdAllocator2D ids,
     PhysicsBody2D ownerBody,
-    Texture2D hudTexture,
     CombatFaction2D ownerFaction,
     uint targetLayer,
     CombatSystem2D combat,
     Action<float> attackStarted,
-    ISoundEffectSink2D sounds,
+    Action<WeaponEvent2D> publish,
     Action<float> downAttackStarted,
     Func<Bounds2D, bool>? overlapsSpikes = null) : MeleePersonWeapon2D(
-        name,
-        equipmentId,
-        hudTexture,
+        EquipmentKind2D.Sword,
+        ids.Allocate(),
         ownerBody,
         AxisAlignedRectangle2D.FromSize(new Vector2(56f, 72f)),
         new MeleeAttackProfile2D(
@@ -37,23 +32,26 @@ internal sealed class SwordPersonWeapon2D(
         targetLayer,
         combat,
         attackStarted,
-        sounds)
+        publish)
 {
     private readonly DownwardSwing _downAttack = new(
-        ownerBody, hudTexture, ownerFaction, targetLayer, combat, downAttackStarted, sounds, overlapsSpikes);
+        ids.Allocate(), ownerBody, ownerFaction, targetLayer, combat, downAttackStarted, publish, overlapsSpikes);
 
     public bool ConsumeBounce() => _downAttack.ConsumeBounce();
+    public override PersonActionState2D CaptureActionState() => _downAttack.IsAttackActive
+        ? _downAttack.CaptureActionState() with { Kind = Simulation.PlayerAttackKind2D.Downward }
+        : base.CaptureActionState();
 
     public override bool IsAttackActive => base.IsAttackActive || _downAttack.IsAttackActive;
 
     public override IEnumerable<SpatialObject2D> ActiveHitboxes =>
         base.ActiveHitboxes.Concat(_downAttack.ActiveHitboxes);
 
-    public override float Use(Vector2? aimTarget, float facing) =>
-        _downAttack.IsAttackActive ? facing : base.Use(aimTarget, facing);
+    public override float Use(float facing) =>
+        _downAttack.IsAttackActive ? facing : base.Use(facing);
 
-    public float UseDownward(Vector2? aimTarget, float facing) =>
-        base.IsAttackActive ? facing : _downAttack.Use(aimTarget, facing);
+    public float UseDownward(float facing) =>
+        base.IsAttackActive ? facing : _downAttack.Use(facing);
 
     public override void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
@@ -70,15 +68,15 @@ internal sealed class SwordPersonWeapon2D(
     }
 
     private sealed class DownwardSwing(
+        EntityId2D sourceId,
         PhysicsBody2D body,
-        Texture2D texture,
         CombatFaction2D faction,
         uint layer,
         CombatSystem2D combatSystem,
         Action<float> started,
-        ISoundEffectSink2D soundSink,
+        Action<WeaponEvent2D> emit,
         Func<Bounds2D, bool>? spikeOverlap) : MeleePersonWeapon2D(
-            "SWORD", "sword", texture, body,
+            EquipmentKind2D.Sword, sourceId, body,
             AxisAlignedRectangle2D.FromSize(new Vector2(64f, 48f)),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.25f,
@@ -91,19 +89,26 @@ internal sealed class SwordPersonWeapon2D(
                 verticalOffset: -32f),
             damage: 2,
             knockback: new Vector2(0f, -285f),
-            faction, layer, combatSystem, started, soundSink)
+            faction, layer, combatSystem, started, emit)
     {
+        internal (bool HasBounced, bool BouncePending) CaptureBounce() => (_hasBounced, _bouncePending);
+        internal void RestoreBounce(bool hasBounced, bool bouncePending)
+        {
+            _hasBounced = hasBounced;
+            _bouncePending = bouncePending;
+        }
+
         private bool _hasBounced;
         private bool _bouncePending;
 
-        public override float Use(Vector2? aimTarget, float facing)
+        public override float Use(float facing)
         {
             if (!IsAttackActive)
             {
                 _hasBounced = false;
                 _bouncePending = false;
             }
-            return base.Use(aimTarget, facing);
+            return base.Use(facing);
         }
 
         public override void UpdateAfterPhysics(float deltaSeconds, float facing)
@@ -112,7 +117,7 @@ internal sealed class SwordPersonWeapon2D(
             if (!_hasBounced && spikeOverlap is not null &&
                 ActiveHitboxes.Any(hitbox => spikeOverlap(hitbox.WorldBounds)))
             {
-                soundSink.PlayAt(SoundEffect2D.SwordHit, body.WorldObject.Transform.Position);
+                ReportImpact(OwnerPosition);
                 OnHit();
             }
         }

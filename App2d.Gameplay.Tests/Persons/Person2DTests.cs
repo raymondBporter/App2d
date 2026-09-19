@@ -1,14 +1,12 @@
+using App2d.Levels;
 using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
 using App2d.Physics;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using System.Numerics;
 using Xunit;
 
@@ -29,7 +27,7 @@ public sealed class Person2DTests
         var person = CreatePerson(
             collision,
             physics,
-            TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root),
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root),
             Vector2.Zero,
             PlayerLayer,
             CombatFaction2D.Player);
@@ -47,7 +45,7 @@ public sealed class Person2DTests
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var firstStart = Vector2.Zero;
         var secondStart = new Vector2(300f, 0f);
         var first = CreatePerson(
@@ -64,17 +62,7 @@ public sealed class Person2DTests
             secondStart,
             EnemyLayer,
             CombatFaction2D.Enemy);
-        var command = new PersonCommand2D(
-            new PersonMovementIntent2D(
-                MoveX: 1f,
-                JumpPressed: false,
-                JumpHeld: false,
-                JumpReleased: false,
-                DropThroughPressed: false,
-                DashPressed: true),
-            UsePrimaryAction: false,
-            AimTarget: null,
-            SwitchEquipment: false);
+        var command = new PersonCommand2D { MoveX = 1f, DashHeld = true };
 
         first.BeginFrame(0.05f);
         second.BeginFrame(0.05f);
@@ -98,7 +86,7 @@ public sealed class Person2DTests
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var player = CreatePerson(
             collision,
             physics,
@@ -113,7 +101,7 @@ public sealed class Person2DTests
             new Vector2(100f, 0f),
             EnemyLayer,
             CombatFaction2D.Enemy);
-        var combat = new CombatSystem2D(collision, new SilentSounds(), _combatants);
+        var combat = new CombatSystem2D(collision, _combatants);
 
         Assert.True(combat.ResolveAttack(
             rival.WorldObject,
@@ -147,7 +135,7 @@ public sealed class Person2DTests
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var attacker = CreatePerson(
             collision,
             physics,
@@ -162,21 +150,16 @@ public sealed class Person2DTests
             new Vector2(58f, 0f),
             EnemyLayer,
             CombatFaction2D.Enemy);
-        var actions = new UnarmedPersonActions2D(
+        var actions = new UnarmedPersonActions2D(new EntityIdAllocator2D(),
             attacker.Body,
             CombatFaction2D.Player,
             EnemyLayer,
-            new CombatSystem2D(collision, new SilentSounds(), _combatants));
+            new CombatSystem2D(collision, _combatants));
         attacker.AttachActions(actions);
 
         attacker.BeginFrame(activeTime);
         attacker.ApplyCommand(
-            new PersonCommand2D(
-                default,
-                UsePrimaryAction: !useKick,
-                AimTarget: null,
-                SwitchEquipment: false,
-                UseSecondaryAction: useKick),
+            new PersonCommand2D { PrimaryHeld = !useKick, SecondaryHeld = useKick },
             activeTime);
         attacker.UpdateAfterPhysics(activeTime);
 
@@ -192,21 +175,21 @@ public sealed class Person2DTests
         var person = CreatePerson(
             collision,
             physics,
-            TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root),
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root),
             Vector2.Zero,
             PlayerLayer,
             CombatFaction2D.Player);
-        var actions = new UnarmedPersonActions2D(
+        var actions = new UnarmedPersonActions2D(new EntityIdAllocator2D(),
             person.Body,
             CombatFaction2D.Player,
             EnemyLayer,
-            new CombatSystem2D(collision, new SilentSounds(), _combatants));
+            new CombatSystem2D(collision, _combatants));
         var cues = new List<UnarmedAttackKind2D>();
         actions.AttackStarted += (kind, _) => cues.Add(kind);
 
-        actions.UsePrimary(null, 1f);
+        actions.UsePrimary(1f);
         actions.Reset();
-        actions.UseSecondary(null, 1f);
+        actions.UseSecondary(1f);
 
         Assert.Equal(
             [UnarmedAttackKind2D.Punch, UnarmedAttackKind2D.Kick],
@@ -218,7 +201,7 @@ public sealed class Person2DTests
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var person = CreatePerson(
             collision,
             physics,
@@ -226,25 +209,16 @@ public sealed class Person2DTests
             Vector2.Zero,
             PlayerLayer,
             CombatFaction2D.Player);
-        var scene = new Scene2D();
-        using var textures = new TextureCache2D(TestAssetPath.Root);
-        var arsenal = new PersonArsenal2D(
-            scene,
+        var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(),
             person.Body,
-            textures,
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root).GunMuzzleOffset,
             collision,
             WorldLayer,
             EnemyLayer,
             CombatFaction2D.Player,
-            new CombatSystem2D(collision, new SilentSounds(), _combatants),
-            new SilentSounds());
+            new CombatSystem2D(collision, _combatants));
         person.AttachActions(arsenal);
-        var fire = new PersonCommand2D(
-            default,
-            UsePrimaryAction: true,
-            AimTarget: null,
-            SwitchEquipment: true,
-            PrimaryActionHeld: true);
+        var fire = new PersonCommand2D { PrimaryHeld = true, SwitchHeld = true };
 
         AddGroundSupport(physics, person);
         person.Face(1f);
@@ -255,7 +229,7 @@ public sealed class Person2DTests
         Assert.Empty(arsenal.GetActiveAttackHitboxes());
 
         person.BeginFrame(0.01f);
-        person.ApplyCommand(fire with { UsePrimaryAction = false, SwitchEquipment = false }, 0.01f);
+        person.ApplyCommand(fire with { SwitchHeld = false }, 0.01f);
         physics.Step(0.01f);
         person.UpdateAfterPhysics(0.01f);
         Assert.Single(arsenal.GetActiveAttackHitboxes());
@@ -266,7 +240,7 @@ public sealed class Person2DTests
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var person = CreatePerson(
             collision,
             physics,
@@ -275,9 +249,7 @@ public sealed class Person2DTests
             PlayerLayer,
             CombatFaction2D.Player);
         AddRightGrippableWall(physics, person);
-        var scene = new Scene2D();
-        using var textures = new TextureCache2D(TestAssetPath.Root);
-        var arsenal = CreateArsenal(scene, person, textures, collision);
+        var arsenal = CreateArsenal(person, collision);
         person.AttachActions(arsenal);
 
         person.BeginFrame(0.01f);
@@ -305,7 +277,7 @@ public sealed class Person2DTests
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var person = CreatePerson(
             collision,
             physics,
@@ -314,14 +286,12 @@ public sealed class Person2DTests
             PlayerLayer,
             CombatFaction2D.Player);
         AddRightGrippableWall(physics, person);
-        var scene = new Scene2D();
-        using var textures = new TextureCache2D(TestAssetPath.Root);
-        var arsenal = CreateArsenal(scene, person, textures, collision);
+        var arsenal = CreateArsenal(person, collision);
         person.AttachActions(arsenal);
 
         person.BeginFrame(0.04f);
         person.ApplyCommand(
-            WallGripCommand(useWeapon: true, switchWeapon: true) with { PrimaryActionHeld = true },
+            WallGripCommand(useWeapon: true, switchWeapon: true),
             0.04f);
         Assert.True(person.IsWallGripping);
 
@@ -332,7 +302,7 @@ public sealed class Person2DTests
         for (var i = 0; i < 72; i++)
         {
             person.BeginFrame(1f / 120f);
-            person.ApplyCommand(WallGripCommand(false, false) with { PrimaryActionHeld = true }, 1f / 120f);
+            person.ApplyCommand(WallGripCommand(useWeapon: true, switchWeapon: false), 1f / 120f);
             physics.Step(1f / 120f);
             person.UpdateAfterPhysics(1f / 120f);
         }
@@ -346,7 +316,7 @@ public sealed class Person2DTests
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var person = CreatePerson(
             collision,
             physics,
@@ -387,7 +357,7 @@ public sealed class Person2DTests
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
         physics.Gravity = new Vector2(0f, -1_200f);
-        var traversal = TraversalMetrics2D.FromPlayerAsset(TestAssetPath.Root);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var groundObject = new SpatialObject2D(
             AxisAlignedRectangle2D.FromSize(new Vector2(600f, 20f)));
         groundObject.Transform.Position = new Vector2(0f, -10f);
@@ -426,7 +396,7 @@ public sealed class Person2DTests
         uint layer,
         CombatFaction2D faction)
     {
-        var person = new Person2D(
+        var person = new Person2D(EntityId2D.Create(),
             collision,
             physics,
             traversal,
@@ -439,20 +409,17 @@ public sealed class Person2DTests
     }
 
     private PersonArsenal2D CreateArsenal(
-        Scene2D scene,
         Person2D person,
-        TextureCache2D textures,
         CollisionSystem2D collision) =>
         new(
-            scene,
+            new EntityIdAllocator2D(),
             person.Body,
-            textures,
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root).GunMuzzleOffset,
             collision,
             WorldLayer,
             EnemyLayer,
             CombatFaction2D.Player,
-            new CombatSystem2D(collision, new SilentSounds(), _combatants),
-            new SilentSounds());
+            new CombatSystem2D(collision, _combatants));
 
     private static void AddRightGrippableWall(
         PhysicsWorld2D physics,
@@ -488,32 +455,12 @@ public sealed class Person2DTests
         float moveX,
         bool jumpPressed,
         bool jumpHeld) =>
-        new(
-            new PersonMovementIntent2D(
-                MoveX: moveX,
-                JumpPressed: jumpPressed,
-                JumpHeld: jumpHeld,
-                JumpReleased: false,
-                DropThroughPressed: false,
-                DashPressed: false),
-            UsePrimaryAction: false,
-            AimTarget: null,
-            SwitchEquipment: false);
+        new() { MoveX = moveX, JumpHeld = jumpPressed || jumpHeld };
 
     private static PersonCommand2D WallGripCommand(
         bool useWeapon,
         bool switchWeapon) =>
-        new(
-            new PersonMovementIntent2D(
-                MoveX: 1f,
-                JumpPressed: false,
-                JumpHeld: false,
-                JumpReleased: false,
-                DropThroughPressed: false,
-                DashPressed: false),
-            UsePrimaryAction: useWeapon,
-            AimTarget: new Vector2(1_000f, 0f),
-            SwitchEquipment: switchWeapon);
+        new() { MoveX = 1f, PrimaryHeld = useWeapon, SwitchHeld = switchWeapon };
 
     private static PhysicsWorld2D CreatePhysics(CollisionSystem2D collision) =>
         new(collision)
@@ -524,10 +471,4 @@ public sealed class Person2DTests
             VelocityIterations = 2
         };
 
-    private sealed class SilentSounds : ISoundEffectSink2D
-    {
-        public void Play(SoundEffect2D effect)
-        {
-        }
-    }
 }

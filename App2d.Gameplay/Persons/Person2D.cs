@@ -14,7 +14,7 @@ namespace App2d.Gameplay.Persons;
 /// Shared humanoid simulation. Input, AI, rendering, audio, respawning, and
 /// encounter policy live outside this type.
 /// </summary>
-public sealed class Person2D : ICombatant2D
+public sealed partial class Person2D : ICombatant2D
 {
     private const float FootstepSpeedThreshold = 65f;
     private const float FootstepIntervalSeconds = 0.29f;
@@ -24,10 +24,12 @@ public sealed class Person2D : ICombatant2D
     private readonly PersonLocomotion2D _motor;
     private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
     private IPersonActionSet2D? _actions;
+    private PersonCommand2D _previousCommand;
     private float _footstepSeconds;
     private bool _simulationEnabled = true;
 
     public Person2D(
+        EntityId2D id,
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
         TraversalMetrics2D traversal,
@@ -45,6 +47,9 @@ public sealed class Person2D : ICombatant2D
         ArgGuard.ThrowIfNotFinite(spawnPoint);
         ArgGuard.ThrowIfNotPositive(maximumHealth);
         ArgGuard.ThrowIfNotPositive(mass);
+        if (!id.IsValid)
+            throw new ArgumentException("A person requires a valid entity ID.", nameof(id));
+        Id = id;
 
         WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(
             traversal.PlayerColliderSize,
@@ -70,7 +75,7 @@ public sealed class Person2D : ICombatant2D
         };
     }
 
-    public EntityId2D Id { get; } = EntityId2D.Create();
+    public EntityId2D Id { get; }
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }
@@ -90,6 +95,13 @@ public sealed class Person2D : ICombatant2D
     public bool IsAlive => Health.IsAlive;
     public bool IsSimulationEnabled => _simulationEnabled;
     public IPersonActionSet2D? Actions => _actions;
+
+    public PersonState2D CaptureState() => new(
+        Id, Position, Body.LinearVelocity, Facing, Health.Current, Health.Maximum,
+        InvulnerabilitySeconds, LandingSpeedThisFrame, BalanceDirection,
+        IsGrounded, IsWallGripping, IsDashing, IsClimbingLadder,
+        IsSustainingJump, JumpPower, _actions?.IsChargingPrimary == true)
+        { Action = _actions?.CaptureActionState() ?? default };
 
     public event Action? JumpStarted;
     public event Action<float>? Landed;
@@ -115,40 +127,46 @@ public sealed class Person2D : ICombatant2D
         _actions = actions;
     }
 
+    /// <summary>
+    /// Applies one tick of held-state input. Edges come from the previous command this
+    /// person saw, so the same command repeated (or a command that never arrived) cannot
+    /// double or drop a press. The previous command is tracked even while dead or disabled.
+    /// </summary>
     public void ApplyCommand(PersonCommand2D command, float deltaSeconds)
     {
+        var previous = _previousCommand;
+        _previousCommand = command;
         if (!_simulationEnabled || !IsAlive)
             return;
 
-        if (command.SwitchEquipment)
+        var intent = PersonMovementIntent2D.Derive(command, previous);
+        var primaryPressed = command.PrimaryHeld && !previous.PrimaryHeld;
+        var primaryReleased = !command.PrimaryHeld && previous.PrimaryHeld;
+        var secondaryPressed = command.SecondaryHeld && !previous.SecondaryHeld;
+        if (command.SwitchHeld && !previous.SwitchHeld)
             _actions?.SelectNext();
 
-        if (MathF.Abs(command.Movement.MoveX) > 0.01f)
-            Face(command.Movement.MoveX);
+        if (MathF.Abs(command.MoveX) > 0.01f)
+            Face(command.MoveX);
         var previousWallDirection = _motor.IsWallGripping ? _motor.WallDirection : 0f;
-        _motor.UpdateBeforePhysics(command.Movement, Facing, deltaSeconds);
-        _actions?.SetPrimaryInput(command.PrimaryActionHeld, canCharge: true,
-            released: command.PrimaryActionReleased);
-        if ((command.UsePrimaryAction || command.UseSecondaryAction) &&
-            _actions is not null)
+        _motor.UpdateBeforePhysics(intent, Facing, deltaSeconds);
+        _actions?.SetPrimaryInput(command.PrimaryHeld, canCharge: true, released: primaryReleased);
+        if ((primaryPressed || secondaryPressed) && _actions is not null)
         {
             var isWallAttack = _motor.IsWallGripping;
             var attackFacing = isWallAttack
                 ? -_motor.WallDirection
                 : Facing;
-            var aimTarget = isWallAttack
-                ? null
-                : command.AimTarget;
-            if (command.UsePrimaryAction)
+            if (primaryPressed)
             {
                 var isDownAttack = command.DownHeld && !_motor.IsGrounded &&
                     !isWallAttack && !_motor.IsClimbingLadder && !_motor.IsDashing;
                 Face(isDownAttack
-                    ? _actions.UseDownwardPrimary(aimTarget, attackFacing)
-                    : _actions.UsePrimary(aimTarget, attackFacing));
+                    ? _actions.UseDownwardPrimary(attackFacing)
+                    : _actions.UsePrimary(attackFacing));
             }
-            if (command.UseSecondaryAction)
-                Face(_actions.UseSecondary(aimTarget, attackFacing));
+            if (secondaryPressed)
+                Face(_actions.UseSecondary(attackFacing));
         }
         if (_actions?.IsChargingPrimary == true)
         {
@@ -156,7 +174,6 @@ public sealed class Person2D : ICombatant2D
             if (wallDirection != 0f)
                 Face(-wallDirection);
         }
-        _actions?.UpdateBeforePhysics(deltaSeconds);
     }
 
     public void UpdateAfterPhysics(float deltaSeconds)

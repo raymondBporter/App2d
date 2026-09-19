@@ -20,6 +20,25 @@ def run(repository: Path, description: str, *arguments: str) -> None:
     )
 
 
+MAAOT_PACKS = {
+    "dark-cave.zip": "https://maaot.itch.io/2d-browncave-assets",
+    "mossy-cavern.zip": "https://maaot.itch.io/mossy-cavern",
+}
+
+
+def check_downloaded_sources(assets: Path) -> None:
+    """Fail early, with download instructions, when non-redistributable packs are absent."""
+    maaot = assets / "Sources/third-party/maaot"
+    missing = [name for name in MAAOT_PACKS if not (maaot / name).is_file()]
+    if missing:
+        lines = [f"  {name:<18} {MAAOT_PACKS[name]}" for name in missing]
+        raise SystemExit(
+            "Missing Maaot cave packs. Their license forbids redistribution, so download them once:\n"
+            + "\n".join(lines)
+            + f"\nSave them under {maaot} and run the build again."
+        )
+
+
 def write_manifest(content_root: Path) -> None:
     required = (
         "audio/sfx/player-jump.wav",
@@ -108,6 +127,7 @@ def main() -> None:
     work_root = assets / "Work"
     staging_root = work_root / "runtime-assets-staging"
 
+    check_downloaded_sources(assets)
     if staging_root.exists():
         shutil.rmtree(staging_root)
     staging_root.parent.mkdir(parents=True, exist_ok=True)

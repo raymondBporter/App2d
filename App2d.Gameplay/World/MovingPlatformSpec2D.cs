@@ -1,5 +1,4 @@
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Gameplay.World;
 
@@ -12,4 +11,4 @@ public sealed record MovingPlatformSpec2D(
     Vector2 Travel,
     Vector2 Size,
     float Speed,
-    XnaColor Color);
+    uint ColorArgb);

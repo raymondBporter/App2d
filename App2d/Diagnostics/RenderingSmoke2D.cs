@@ -63,6 +63,7 @@ internal static class RenderingSmoke2D
             Save(target, $"editor-{width}x{height}.png");
         }
         GunRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
+        EnemyRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
         Console.WriteLine($"MonoGame rendering smoke checks completed: {Path.GetFullPath(outputDirectory)}");
 
         void Save(RenderTarget2D target, string name)

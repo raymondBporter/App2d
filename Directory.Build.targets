@@ -1,0 +1,26 @@
+<Project>
+  <!-- Check resolved references as well as direct project edges. This catches a
+       forbidden dependency introduced indirectly through another library. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'App2d.Game.Contracts'">
+    <AllowedGameReferences>;App2d.Core;App2d.Tiles;</AllowedGameReferences>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'App2d.Gameplay'">
+    <AllowedGameReferences>;App2d.Game.Contracts;App2d.Core;App2d.Tiles;App2d.Collision;App2d.Physics;</AllowedGameReferences>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'App2d.Game.Presentation'">
+    <AllowedGameReferences>;App2d.Game.Contracts;App2d.Core;App2d.Tiles;App2d.Rendering;App2d.Audio;</AllowedGameReferences>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'App2d.Gameplay.Tests'">
+    <AllowedGameReferences>;App2d.Gameplay;App2d.Game.Contracts;App2d.Core;App2d.Tiles;App2d.Collision;App2d.Physics;App2d.Levels;</AllowedGameReferences>
+  </PropertyGroup>
+  <Target Name="ValidateGameProjectBoundaries" BeforeTargets="CoreCompile"
+          DependsOnTargets="ResolveReferences" Condition="'$(AllowedGameReferences)' != ''">
+    <ItemGroup>
+      <_ForbiddenGameReference Include="@(ReferencePath)"
+        Condition="('%(ReferencePath.Filename)' == 'App2d' or $([System.String]::Copy('%(ReferencePath.Filename)').StartsWith('App2d.'))) and
+                   !$([System.String]::Copy('$(AllowedGameReferences)').Contains(';%(ReferencePath.Filename);'))" />
+    </ItemGroup>
+    <Error Condition="'@(_ForbiddenGameReference)' != ''"
+           Text="$(MSBuildProjectName) crosses a game project boundary: @(_ForbiddenGameReference->'%(Filename)', ', '). See docs/session-architecture.md." />
+  </Target>
+</Project>

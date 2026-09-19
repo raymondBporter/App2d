@@ -75,7 +75,7 @@ internal static class ThingTypeRegistry2D
             new Vector2(record.TravelX, record.TravelY),
             new Vector2(record.Width, record.Height),
             record.Speed,
-            new XnaColor((byte)(record.ColorArgb >> 16), (byte)(record.ColorArgb >> 8), (byte)record.ColorArgb, (byte)(record.ColorArgb >> 24)));
+            unchecked((uint)record.ColorArgb));
     }
 
     public static WorldThingSpec2D ToRuntime(PositionThingRecord2D record)

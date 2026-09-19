@@ -1,106 +1,76 @@
 using App2d.Core;
 using App2d.Gameplay.Persons;
-using App2d.Rendering;
+using App2d.Input;
 
 namespace App2d.Gameplay.Player;
 
+/// <summary>
+/// Default gameplay bindings and conversion to device-independent, held-state person
+/// commands. Presses and releases are derived by the simulation from consecutive commands.
+/// </summary>
 public sealed class PlayerInputMapper2D
 {
+    private static readonly ButtonBinding Left = new([Keys.A, Keys.Left], XboxButtons.DPadLeft);
+    private static readonly ButtonBinding Right = new([Keys.D, Keys.Right], XboxButtons.DPadRight);
+    private static readonly ButtonBinding Up = new([Keys.W, Keys.Up], XboxButtons.DPadUp);
+    private static readonly ButtonBinding Down = new([Keys.S, Keys.Down], XboxButtons.DPadDown);
+    private static readonly ButtonBinding Jump = new([Keys.Space], XboxButtons.A);
+    private static readonly ButtonBinding Dash = new([Keys.ShiftKey, Keys.LShiftKey, Keys.RShiftKey], XboxButtons.RightTrigger);
+    private static readonly ButtonBinding Primary = new([Keys.F], XboxButtons.X, MouseButtons.Left);
+    private static readonly ButtonBinding Secondary = new([Keys.Q], XboxButtons.RightShoulder, MouseButtons.Right);
+    // E / Y are reserved for Interact once gameplay has an interaction command.
+
     private readonly XboxControllerInput2D _controller = new();
-    private bool _jumpActionHeld;
+    private InputButtonState _jump;
+    private InputButtonState _dash;
+    private InputButtonState _primary;
+    private InputButtonState _secondary;
 
     public bool IsControllerConnected => _controller.IsConnected;
 
-    public PlayerCommand2D Capture(
-        InputState input,
-        Camera2D camera,
-        System.Numerics.Vector2 playerPosition)
+    public PersonCommand2D Capture(InputState input)
     {
         ArgGuard.ThrowIfNull(input);
-        ArgGuard.ThrowIfNull(camera);
+        return Capture(input, input.IsSuppressed ? default : _controller.Capture());
+    }
 
+    internal PersonCommand2D Capture(InputState input, XboxControllerState2D pad)
+    {
         if (input.IsSuppressed)
         {
             Reset();
             return default;
         }
 
-        var controller = _controller.Capture(playerPosition);
+        _jump = Jump.Read(input, pad, _jump);
+        _dash = Dash.Read(input, pad, _dash);
+        _primary = Primary.Read(input, pad, _primary);
+        _secondary = Secondary.Read(input, pad, _secondary);
+        var moveX = Axis(Left, Right, input, pad, pad.LeftStick.X);
+        var climbY = Axis(Down, Up, input, pad, pad.LeftStick.Y);
+        var downHeld = Down.Read(input, pad).Held || pad.LeftStick.Y < -0.5f;
 
-        var moveX =
-            Axis(input, Keys.A, Keys.D) +
-            Axis(input, Keys.Left, Keys.Right) +
-            controller.MoveX;
-        moveX = Math.Clamp(moveX, -1f, 1f);
-
-        var jumpHeld =
-            input.IsKeyDown(Keys.Space) ||
-            input.IsKeyDown(Keys.W) ||
-            !input.IsShiftDown && input.IsKeyDown(Keys.Up) ||
-            controller.JumpHeld;
-        var anyJumpPressed =
-            input.WasKeyPressed(Keys.Space) ||
-            input.WasKeyPressed(Keys.W) ||
-            !input.IsShiftDown && input.WasKeyPressed(Keys.Up) ||
-            controller.JumpPressed;
-        var anyJumpReleased =
-            input.WasKeyReleased(Keys.Space) ||
-            input.WasKeyReleased(Keys.W) ||
-            !input.IsShiftDown && input.WasKeyReleased(Keys.Up) ||
-            controller.JumpReleased;
-        var jumpPressed = anyJumpPressed && !_jumpActionHeld;
-        var downHeld =
-            input.IsKeyDown(Keys.S) ||
-            !input.IsShiftDown && input.IsKeyDown(Keys.Down) ||
-            controller.DownHeld;
-        var movement = new PersonMovementIntent2D(
+        return new PersonCommand2D(
             moveX,
-            jumpPressed,
-            jumpHeld,
-            !jumpHeld && (_jumpActionHeld || anyJumpReleased),
-            downHeld && jumpPressed,
-            input.WasKeyPressed(Keys.ShiftKey) ||
-                input.WasKeyPressed(Keys.LShiftKey) ||
-                input.WasKeyPressed(Keys.RShiftKey) ||
-                controller.DashPressed,
-            Math.Clamp(
-                Axis(input, Keys.S, Keys.W) +
-                (!input.IsShiftDown ? Axis(input, Keys.Down, Keys.Up) : 0f) +
-                controller.ClimbY, -1f, 1f),
-            input.WasKeyPressed(Keys.Space) || controller.JumpPressed);
-        _jumpActionHeld = jumpHeld;
-
-        var mouseAttackPressed = input.WasMousePressed(MouseButtons.Left);
-        var mouseKickPressed = input.WasMousePressed(MouseButtons.Right);
-        return new PlayerCommand2D(
-            new PersonCommand2D(
-                movement,
-                input.WasKeyPressed(Keys.J) ||
-                    mouseAttackPressed ||
-                    controller.UsePrimaryAction,
-                mouseAttackPressed || mouseKickPressed
-                    ? camera.DeviceToWorld(input.MousePositionDevice)
-                    : controller.AimTarget,
-                input.WasKeyPressed(Keys.Q) ||
-                    controller.SwitchEquipment,
-                input.WasKeyPressed(Keys.K) ||
-                    mouseKickPressed ||
-                    controller.UseSecondaryAction,
-                input.IsKeyDown(Keys.J) || input.IsMouseDown(MouseButtons.Left) ||
-                    controller.PrimaryActionHeld,
-                input.WasKeyReleased(Keys.J) || input.WasMouseReleased(MouseButtons.Left) ||
-                    controller.PrimaryActionReleased,
-                DownHeld: downHeld),
-            input.WasKeyPressed(Keys.F3));
+            climbY,
+            JumpHeld: Pulse(_jump),
+            DashHeld: Pulse(_dash),
+            DownHeld: downHeld,
+            PrimaryHeld: Pulse(_primary),
+            SecondaryHeld: Pulse(_secondary));
     }
 
     public void Reset()
     {
-        _jumpActionHeld = false;
+        _jump = _dash = _primary = _secondary = default;
         _controller.Reset();
     }
 
-    private static float Axis(InputState input, Keys negative, Keys positive) =>
-        (input.IsKeyDown(positive) ? 1f : 0f) -
-        (input.IsKeyDown(negative) ? 1f : 0f);
+    /// <summary>A tap that begins and ends inside one tick still reaches the simulation as a one-tick hold.</summary>
+    private static bool Pulse(InputButtonState button) => button.Held || button.Pressed;
+
+    private static float Axis(ButtonBinding negative, ButtonBinding positive,
+        InputState input, XboxControllerState2D pad, float analog) =>
+        Math.Clamp((positive.Read(input, pad).Held ? 1f : 0f) -
+            (negative.Read(input, pad).Held ? 1f : 0f) + analog, -1f, 1f);
 }

@@ -74,7 +74,7 @@ public sealed partial class PersonLocomotion2D
             1f)
         : 0f;
 
-    public void UpdateBeforePhysics(
+    internal void UpdateBeforePhysics(
         PersonMovementIntent2D intent,
         float facing,
         float deltaSeconds)

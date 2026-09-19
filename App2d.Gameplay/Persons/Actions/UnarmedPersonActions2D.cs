@@ -6,22 +6,30 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-public enum UnarmedAttackKind2D
-{
-    Punch,
-    Kick
-}
-
 /// <summary>Weapon-free punch and kick actions shared by human and AI persons.</summary>
-public sealed class UnarmedPersonActions2D(
-    PhysicsBody2D ownerBody,
-    CombatFaction2D ownerFaction,
-    uint targetLayer,
-    CombatSystem2D combat) : IPersonActionSet2D
+public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
 {
-    private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
-    private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
-    private readonly Attack _punch = new(
+    private readonly CombatSystem2D _combat;
+    private readonly PhysicsBody2D _ownerBody;
+    private readonly CombatFaction2D _ownerFaction;
+    private readonly uint _targetLayer;
+    private readonly Attack _punch;
+    private readonly Attack _kick;
+
+    public UnarmedPersonActions2D(
+        EntityIdAllocator2D ids,
+        PhysicsBody2D ownerBody,
+        CombatFaction2D ownerFaction,
+        uint targetLayer,
+        CombatSystem2D combat)
+    {
+        ArgGuard.ThrowIfNull(ids);
+        _ownerBody = ArgGuard.RequireNotNull(ownerBody);
+        _combat = ArgGuard.RequireNotNull(combat);
+        _ownerFaction = ownerFaction;
+        _targetLayer = targetLayer;
+        _punch = new Attack(
+            ids.Allocate(),
             UnarmedAttackKind2D.Punch,
             AxisAlignedRectangle2D.FromSize(new Vector2(48f, 48f)),
             new MeleeAttackProfile2D(
@@ -33,7 +41,8 @@ public sealed class UnarmedPersonActions2D(
                 verticalOffset: 7f),
             damage: 1,
             knockback: new Vector2(310f, 145f));
-    private readonly Attack _kick = new(
+        _kick = new Attack(
+            ids.Allocate(),
             UnarmedAttackKind2D.Kick,
             AxisAlignedRectangle2D.FromSize(new Vector2(66f, 42f)),
             new MeleeAttackProfile2D(
@@ -45,10 +54,15 @@ public sealed class UnarmedPersonActions2D(
                 verticalOffset: -9f),
             damage: 2,
             knockback: new Vector2(470f, 205f));
+    }
 
     public event Action<UnarmedAttackKind2D, float>? AttackStarted;
 
     public bool IsAttackActive => _punch.Action.IsInProgress || _kick.Action.IsInProgress;
+    public PersonActionState2D CaptureActionState() => _punch.Action.IsInProgress
+        ? new(Simulation.PlayerAttackKind2D.Punch, _punch.Action.ElapsedSeconds, _punch.Action.DurationSeconds)
+        : _kick.Action.IsInProgress
+            ? new(Simulation.PlayerAttackKind2D.Kick, _kick.Action.ElapsedSeconds, _kick.Action.DurationSeconds) : default;
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
@@ -62,20 +76,16 @@ public sealed class UnarmedPersonActions2D(
     {
     }
 
-    public void UpdateBeforePhysics(float deltaSeconds)
-    {
-    }
-
     public void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
         UpdateAttack(_punch, deltaSeconds, facing);
         UpdateAttack(_kick, deltaSeconds, facing);
     }
 
-    public float UsePrimary(Vector2? aimTarget, float facing) =>
+    public float UsePrimary(float facing) =>
         Use(_punch, facing);
 
-    public float UseSecondary(Vector2? aimTarget, float facing) =>
+    public float UseSecondary(float facing) =>
         Use(_kick, facing);
 
     public void SelectNext()
@@ -121,8 +131,8 @@ public sealed class UnarmedPersonActions2D(
                 attack.Action.WorldObject,
                 attack.Action.SourceId,
                 attack.Action.AttackId,
-                ownerFaction,
-                targetLayer,
+                _ownerFaction,
+                _targetLayer,
                 attack.Damage,
                 _ => new Vector2(
                     attack.Direction * attack.Knockback.X,
@@ -131,6 +141,7 @@ public sealed class UnarmedPersonActions2D(
     }
 
     private sealed class Attack(
+        EntityId2D sourceId,
         UnarmedAttackKind2D kind,
         IShape2D hitboxShape,
         MeleeAttackProfile2D profile,
@@ -139,7 +150,7 @@ public sealed class UnarmedPersonActions2D(
     {
         public UnarmedAttackKind2D Kind { get; } = kind;
         public MeleeAttack2D Action { get; } =
-            new(new SpatialObject2D(hitboxShape), profile);
+            new(sourceId, new SpatialObject2D(hitboxShape), profile);
         public int Damage { get; } = damage;
         public Vector2 Knockback { get; } = knockback;
         public float Direction { get; set; } = 1f;

@@ -34,6 +34,7 @@ public abstract class Game2D : IDisposable
 
     public virtual void Initialize() { }
     public abstract void Update(FrameTime time, InputState input);
+    public virtual void AdvancePresentation(FrameTime time) { }
 
     public virtual void Render(Renderer2D renderer)
     {

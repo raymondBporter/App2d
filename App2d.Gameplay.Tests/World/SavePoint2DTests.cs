@@ -1,6 +1,5 @@
 using App2d.Core.Geometry;
 using App2d.Gameplay.World;
-using App2d.Rendering;
 using System.Numerics;
 using Xunit;
 
@@ -12,7 +11,6 @@ public sealed class SavePoint2DTests
     public void EnteringFiresOnceUntilPlayerLeavesAndReturns()
     {
         var savePoint = new SavePoint2D(
-            new Scene2D(),
             new WorldThingSpec2D(7, WorldThingKind2D.SavePoint, "Test", true, Vector2.Zero),
             respawnGroundOffset: 32f);
         var outside = BoundsAt(new Vector2(200f, 40f));
@@ -29,7 +27,6 @@ public sealed class SavePoint2DTests
     public void ActiveStateCanMoveBetweenBeacons()
     {
         var savePoint = new SavePoint2D(
-            new Scene2D(),
             new WorldThingSpec2D(7, WorldThingKind2D.SavePoint, "Test", true, Vector2.Zero),
             respawnGroundOffset: 32f);
 

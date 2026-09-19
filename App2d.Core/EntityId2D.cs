@@ -1,13 +1,13 @@
 namespace App2d.Core;
 
 /// <summary>
-/// Runtime identity, independent of object references and storage positions.
-/// Zero means no entity. Locally allocated IDs are never reused within a process;
-/// they are not authored level IDs or identities shared across network peers.
+/// Runtime identity, independent of object references and storage positions. Zero means
+/// no entity. Simulation code receives IDs from a session's <see cref="EntityIdAllocator2D"/>;
+/// <see cref="Create"/> is a process-local convenience for tests and diagnostics only.
 /// </summary>
 public readonly record struct EntityId2D
 {
-    private static long _lastValue;
+    private static long _lastValue = 1L << 40;
 
     public EntityId2D(long value)
     {
@@ -19,6 +19,7 @@ public readonly record struct EntityId2D
     public bool IsValid => Value > 0;
     public static EntityId2D None => default;
 
+    /// <summary>Process-local ID for tests and diagnostics. Never shared across sessions or peers.</summary>
     public static EntityId2D Create()
     {
         var value = Interlocked.Increment(ref _lastValue);

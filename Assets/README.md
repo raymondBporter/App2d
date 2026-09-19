@@ -9,14 +9,13 @@ The first folder describes the asset lifecycle:
   transforming. This directory is durable and committed.
 - `Sources` contains original and third-party inputs with their licenses and
   provenance. Importers transform these into runtime assets.
-- `Library` contains useful, reviewed alternatives that are not currently shipped.
 - `Runtime` is the complete generated game-facing tree. Debug reads it directly;
   Release builds and publishes package it as `Assets`. It is ignored and disposable.
-- `Work` contains regenerable output, previews, validation reports, rejected
-  attempts, and caches. It is ignored by Git.
+- `Work` contains regenerable output: pipeline staging, previews, validation
+  reports, and caches. It is ignored by Git, so nothing durable may live there.
 
-From a clean clone, run `python tools/ArtPipeline/build_runtime_assets.py` from the
-repository root before starting the game. The pipeline stages a fresh tree, copies
+From a clean clone, run `tools/setup.ps1` from the repository root before starting the
+game; see `tools/ArtPipeline/README.md`. The pipeline stages a fresh tree, copies
 `Static`, runs every importer from `Sources`, validates required assets, writes
 `Runtime/content-manifest.json` with file sizes and SHA-256 hashes, and only then swaps
 the completed tree into place. A failed build leaves the previous `Runtime` untouched.
@@ -43,6 +42,7 @@ Similarly, a tileset manifest records dimensions;
 conventional paths such as `surfaces/top.png` and `corners/outer.png` carry their
 own meaning.
 
-Source pack names and production history belong in library metadata and
-provenance, never in runtime IDs. Promote runtime-ready files into `Static`, add an
-importer for source files that require processing, and keep alternatives in `Library`.
+Source pack names and production history belong in provenance notes, never in
+runtime IDs. Promote runtime-ready files into `Static` and add an importer for source
+files that require processing. Experiments that did not ship do not belong in the
+repository; keep them under `Work` or outside the tree.

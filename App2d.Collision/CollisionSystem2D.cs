@@ -5,7 +5,7 @@ using App2d.Core.Geometry;
 
 namespace App2d.Collision;
 
-public sealed class CollisionSystem2D
+public sealed partial class CollisionSystem2D
 {
     private const int MaximumCellsPerCollider = 4_096;
     private const int MaximumRetainedCells = 1_024;
@@ -46,10 +46,13 @@ public sealed class CollisionSystem2D
         }
     }
 
-    public Collider2D AddCollider(SpatialObject2D worldObject, ColliderMobility2D mobility = ColliderMobility2D.Static)
+    public Collider2D AddCollider(SpatialObject2D worldObject, ColliderMobility2D mobility = ColliderMobility2D.Static, int? restoredId = null)
     {
         ArgGuard.ThrowIfNull(worldObject);
-        var collider = new Collider2D(this, _nextColliderId++, worldObject, mobility);
+        var id = restoredId ?? _nextColliderId;
+        StateGuard.ThrowIf(id <= 0 || id == int.MaxValue || (restoredId.HasValue && _colliders.Any(c => c.Id == id)), "Invalid or duplicate collider ID.");
+        _nextColliderId = Math.Max(_nextColliderId, id + 1);
+        var collider = new Collider2D(this, id, worldObject, mobility);
         _colliders.Add(collider);
         MarkIndexDirty(mobility);
         return collider;

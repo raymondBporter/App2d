@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Geometry;
 using System.Numerics;
 
@@ -19,6 +20,24 @@ public sealed class Camera2D
 
     public Vector2 ViewportSize { get; private set; } = new(InitialSizeX, InitialSizeY);
 
+    /// <summary>
+    /// When set, resizing preserves vertical world framing and scales the scene uniformly.
+    /// Null keeps pixel-based sizing for tools and standalone rendering.
+    /// </summary>
+    public float? ReferenceViewportHeight
+    {
+        get;
+        set
+        {
+            if (value is { } height) ArgGuard.ThrowIfNotPositive(height);
+            field = value;
+        }
+    }
+
+    /// <summary>Actual device pixels per world unit, including viewport scaling and zoom.</summary>
+    public float PixelsPerWorldUnit => Zoom *
+        (ReferenceViewportHeight is { } height ? ViewportSize.Y / height : 1f);
+
     public float Zoom
     {
         get;
@@ -28,7 +47,7 @@ public sealed class Camera2D
     public Matrix3x2 WorldToDeviceMatrix =>
         Matrix3x2.CreateTranslation(-Position) *
         Matrix3x2.CreateRotation(-Rotation) *
-        Matrix3x2.CreateScale(Zoom, -Zoom) *
+        Matrix3x2.CreateScale(PixelsPerWorldUnit, -PixelsPerWorldUnit) *
         Matrix3x2.CreateTranslation(ViewportSize / 2f);
 
     public Matrix3x2 DeviceToWorldMatrix

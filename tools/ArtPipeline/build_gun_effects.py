@@ -1,8 +1,28 @@
 #!/usr/bin/env python3
 """Bake deterministic blue gun textures, charge HUD frames, and mono PCM cues.
 
-No synthesis or image generation occurs during play. Charge audio is exactly 0.6s;
-keep this in sync with GunPersonWeapon2D.ChargeSeconds.
+Runs as part of build_runtime_assets.py; run it alone (with --content-root) to iterate
+on these assets. No synthesis or image generation occurs during play.
+
+Outputs and the gameplay facts they encode:
+
+- effects/gun/bolt.png, charge.png, flash.png: bolt, muzzle charge and flash textures.
+- effects/gun/ready/frame-0000..0023.png: 24 muzzle-shimmer frames at 30 fps (0.8 s)
+  with a breathing core, rotating wisps and orbiting glints. Playback uses simulation
+  time, starts with charging, and stops on automatic fire or cancellation.
+- effects/gun/trail-00..07.png: eight opacity variants of the bolt's ghost trail, so
+  play never generates or modifies textures. The trail covers 1/30 s of flight with a
+  1.35x visual stretch, grows from the muzzle, stays separate from collision geometry,
+  and fades in place over 0.05 s on impact.
+- ui/hud/gun-charge/frame-0000..0060.png: 61 continuous radial HUD charge frames.
+- audio/sfx/gun-charge.wav, gun-fire.wav, gun-cancel.wav, gun-impact.wav: deterministic
+  PCM cues. The charge cue is exactly 0.6 s; keep it in sync with
+  GunPersonWeapon2D.ChargeSeconds. It plays at a fixed rate and its voice stops
+  immediately on cancellation or fire.
+
+The standing pistol muzzle socket is pixel (418, 206) on the normalized 512 px canvas.
+The weapon converts it through characters/player-geometry.json; presentation holds that
+pose while charging and through the flash before playing recoil.
 """
 from __future__ import annotations
 

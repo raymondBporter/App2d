@@ -1,20 +1,17 @@
 using App2d.Collision;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Player;
 using App2d.Physics;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using App2d.Tiles;
-using XnaColor = Microsoft.Xna.Framework.Color;
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
-public sealed class SideScrollerLevel2D
+public sealed partial class SideScrollerLevel2D : IDisposable
 {
     public const int WorldWidthTiles = 640;
     public const int WorldHeightTiles = 96;
@@ -30,7 +27,12 @@ public sealed class SideScrollerLevel2D
     private readonly List<SavePoint2D> _savePoints = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
+    private LevelContent2D? _content;
+    private (long Streamer, long Definition) _contentKey;
+    private long _contentRevision;
     private bool _authoredWorldThingsCreated;
+    private CombatantRegistry2D? _combatants;
+    private bool _disposed;
 
     public SideScrollerLevel2D(
         TraversalMetrics2D traversal,
@@ -52,7 +54,7 @@ public sealed class SideScrollerLevel2D
 
         // Only an editable map can change under us. A read-only map never raises the event.
         if (tileMap is EditableTileMap2D editable)
-            editable.ChunkChanged += _dirtyChunks.Mark;
+            editable.ChunkChanged += OnMapChanged;
 
         StateGuard.ThrowIf(
             tileMap.TileSize != _tileSize,
@@ -116,16 +118,6 @@ public sealed class SideScrollerLevel2D
                 thing.Kind == WorldThingKind2D.SavePoint &&
                 thing.ThingId == thingId);
 
-    public float GetCameraFloorY(float worldX)
-    {
-        if (!float.IsFinite(worldX))
-            ArgGuard.ThrowOutOfRange(worldX, "Value must be finite.");
-
-        var tileX = (int)MathF.Floor((worldX - TileMap.Origin.X) / _tileSize);
-        tileX = Math.Clamp(tileX, 0, TileMap.Width - 1);
-        return TileMap.Origin.Y + _groundY(tileX) * _tileSize;
-    }
-
     public bool TryGetSpikeSource(Bounds2D actorBounds, out float sourceX)
     {
         if (!actorBounds.IsFinite)
@@ -177,53 +169,40 @@ public sealed class SideScrollerLevel2D
         return false;
     }
 
-    public void CreateEnvironment(
-        Scene2D scene,
-        CollisionSystem2D collision,
-        PhysicsWorld2D physics,
-        TextureCache2D textures,
-        uint worldLayer,
-        uint playerLayer,
-        uint enemyLayer)
+    public void CreateSimulation(
+        CollisionSystem2D collision, PhysicsWorld2D physics, EntityIdAllocator2D ids,
+        uint worldLayer, uint playerLayer, uint enemyLayer)
     {
-        ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNull(textures);
-        StateGuard.ThrowIf(
-            _environment is not null,
-            "The level environment has already been created.");
-
-        var tilesets = TileMap.TilesetIds
-            .Select(id => SideScrollerTerrainTileset2D.Load(textures, id, _tileSize))
-            .ToArray();
-        var tilesetResolver = new SideScrollerTerrainTilesetResolver2D(
-            (x, y) => tilesets[TileMap.GetTilesetIndex(x, y)]);
-        var visualFactory = new SideScrollerTerrainVisualFactory2D(
-            scene,
-            TileMap,
-            tilesetResolver);
-        var streamer = new SideScrollerChunkStreamer2D(
-            scene,
-            physics,
-            TileMap,
-            visualFactory,
-            worldLayer,
-            playerLayer | enemyLayer);
-        _environment = new LevelEnvironment(
-            scene,
-            collision,
-            physics,
-            streamer,
-            worldLayer,
-            playerLayer,
-            enemyLayer);
-
+        ArgGuard.ThrowIfNull(ids);
+        StateGuard.ThrowIf(_environment is not null, "The level simulation has already been created.");
+        var streamer = new SideScrollerChunkStreamer2D(physics, TileMap, worldLayer, playerLayer | enemyLayer);
+        _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
         CreateMovingPlatformsFromSpecs();
-        CreateSavePoints(scene);
-        if (GoalThing is not null)
-            CreateGoal(scene);
+        CreateSavePoints();
+    }
+
+    /// <summary>Per-tick dynamic observation.</summary>
+    public WorldState2D CaptureWorld() => new(
+        _movingPlatforms.Select(p => p.CaptureState()).ToImmutableArray(),
+        _savePoints.Select(p => p.CaptureState()).ToImmutableArray());
+
+    /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
+    public LevelContent2D CaptureContent()
+    {
+        var streamer = RequireEnvironment().Streamer;
+        var key = (streamer.Version, _definitionRevision);
+        if (_content is null || _contentKey != key)
+        {
+            _contentKey = key;
+            _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(),
+                _movingPlatforms.Select(p => p.CaptureDefinition()).ToImmutableArray(),
+                _savePoints.Select(p => p.CapturePlacement()).ToImmutableArray(),
+                GoalThing?.Position);
+        }
+        return _content;
     }
 
     public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Bounds2D playerBounds)
@@ -254,6 +233,7 @@ public sealed class SideScrollerLevel2D
     public void ReloadMovingPlatforms(IReadOnlyList<MovingPlatformSpec2D> specs)
     {
         ArgGuard.ThrowIfNull(specs);
+        _definitionRevision++;
         foreach (var platform in _movingPlatforms)
             platform.Dispose();
         _movingPlatforms.Clear();
@@ -282,18 +262,16 @@ public sealed class SideScrollerLevel2D
     }
 
     public void CreateAuthoredWorldThings(
-        TextureCache2D textures,
-        CombatSystem2D combat,
-        ISoundEffectSink2D sounds)
+        CombatSystem2D combat)
     {
         StateGuard.ThrowIf(
             _authoredWorldThingsCreated,
             "The authored world things have already been created.");
         var environment = RequireEnvironment();
         new SideScrollerThingSpawner2D(
-            environment.Scene,
             environment.Collision,
             environment.Physics,
+            environment.Ids,
             TileMap,
             EnemySystem,
             environment.Streamer,
@@ -302,34 +280,15 @@ public sealed class SideScrollerLevel2D
             environment.WorldLayer,
             environment.PlayerLayer,
             environment.EnemyLayer)
-            .Create(_worldThingSpecs, textures, combat, sounds);
+            .Create(_worldThingSpecs, combat);
+        _combatants = combat.Combatants;
         _authoredWorldThingsCreated = true;
     }
 
     private LevelEnvironment RequireEnvironment() =>
         StateGuard.RequireNotNull(
             _environment,
-            "Create the level environment before using it.");
-
-    private void CreateGoal(Scene2D scene)
-    {
-        var pole = new WorldObject2D(
-            new Capsule2D(Vector2.Zero, new Vector2(0f, 190f), 5f),
-            new SolidColorShader(new XnaColor(238, 242, 232)));
-        pole.Transform.Position = GoalThing!.Position;
-        scene.Add(pole);
-
-        var flag = new WorldObject2D(
-            new ConvexPolygon2D(
-            [
-                Vector2.Zero,
-                new Vector2(92f, -30f),
-                new Vector2(0f, -60f)
-            ]),
-            new SolidColorShader(new XnaColor(255, 79, 120)));
-        flag.Transform.Position = GoalThing.Position + new Vector2(0f, 185f);
-        scene.Add(flag);
-    }
+            "Create the level simulation before using it.");
 
     private void CreateMovingPlatformsFromSpecs()
     {
@@ -339,7 +298,7 @@ public sealed class SideScrollerLevel2D
             if (!spec.Enabled)
                 continue;
             _movingPlatforms.Add(new MovingPlatform2D(
-                environment.Scene,
+                environment.Ids.Allocate(),
                 environment.Physics,
                 spec.Position,
                 spec.Travel,
@@ -347,21 +306,35 @@ public sealed class SideScrollerLevel2D
                 spec.Speed,
                 environment.WorldLayer,
                 environment.PlayerLayer | environment.EnemyLayer,
-                spec.Color));
+                spec.ThingId, spec.ColorArgb));
         }
     }
 
-    private void CreateSavePoints(Scene2D scene)
+    private void CreateSavePoints()
     {
         foreach (var spec in _worldThingSpecs)
         {
             if (spec.Enabled && spec.Kind == WorldThingKind2D.SavePoint)
             {
                 _savePoints.Add(new SavePoint2D(
-                    scene,
                     spec,
                     _traversal.PlayerColliderSize.Y / 2f + _traversal.GroundProbeDistance));
             }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        if (TileMap is EditableTileMap2D editable) editable.ChunkChanged -= OnMapChanged;
+        foreach (var platform in _movingPlatforms) platform.Dispose();
+        _movingPlatforms.Clear();
+        _environment?.Streamer.Dispose();
+        foreach (var enemy in EnemySystem.Combatants)
+        {
+            _environment?.Physics.RemoveBody(enemy.Body);
+            _combatants?.Unregister(enemy.Id);
         }
     }
 
@@ -369,9 +342,9 @@ public sealed class SideScrollerLevel2D
         TileMap.Origin.X + (x + 0.5f) * _tileSize;
 
     private sealed record LevelEnvironment(
-        Scene2D Scene,
         CollisionSystem2D Collision,
         PhysicsWorld2D Physics,
+        EntityIdAllocator2D Ids,
         SideScrollerChunkStreamer2D Streamer,
         uint WorldLayer,
         uint PlayerLayer,

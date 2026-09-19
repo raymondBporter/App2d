@@ -10,13 +10,16 @@ public sealed class InputState
     private readonly HashSet<MouseButtons> _mouseButtonsDown = [];
     private readonly HashSet<MouseButtons> _mouseButtonsPressed = [];
     private readonly HashSet<MouseButtons> _mouseButtonsReleased = [];
+    private readonly HashSet<Keys> _blockedKeys = [];
+    private readonly HashSet<MouseButtons> _blockedMouseButtons = [];
     private Vector2 _mouseClientPosition;
     private Vector2 _clientToDeviceScale = Vector2.One;
     private bool _isSuppressed;
+    private bool _isWindowActive = true;
 
     public Vector2 MousePositionDevice => _mouseClientPosition * _clientToDeviceScale;
     public float MouseWheelDelta { get; private set; }
-    public bool IsSuppressed => _isSuppressed;
+    public bool IsSuppressed => _isSuppressed || !_isWindowActive;
     public bool IsControlDown =>
         IsKeyDown(Keys.ControlKey) ||
         IsKeyDown(Keys.LControlKey) ||
@@ -38,7 +41,8 @@ public sealed class InputState
         window.KeyPreview = true;
         window.KeyDown += (_, e) => SetKey(e.KeyCode, true);
         window.KeyUp += (_, e) => SetKey(e.KeyCode, false);
-        window.Deactivate += (_, _) => ResetButtons();
+        window.Deactivate += (_, _) => SetWindowActive(false);
+        window.Activated += (_, _) => SetWindowActive(true);
 
         surface.PreviewKeyDown += (_, e) =>
         {
@@ -57,7 +61,7 @@ public sealed class InputState
             _mouseClientPosition = new Vector2(e.X, e.Y);
             SetMouseButton(e.Button, false);
         };
-        surface.MouseWheel += (_, e) => MouseWheelDelta += e.Delta;
+        surface.MouseWheel += (_, e) => { if (!IsSuppressed) MouseWheelDelta += e.Delta; };
     }
 
     internal void SetDeviceMapping(Size clientSize, int deviceWidth, int deviceHeight)
@@ -81,14 +85,30 @@ public sealed class InputState
         if (_isSuppressed == isSuppressed)
             return;
         _isSuppressed = isSuppressed;
+        CancelButtons();
+    }
+
+    internal void SetWindowActive(bool isActive)
+    {
+        _isWindowActive = isActive;
+        CancelButtons();
+    }
+
+    internal void CancelButtons()
+    {
         ResetButtons();
         EndFrame();
     }
 
-    private void SetKey(Keys key, bool isDown)
+    internal void SetKey(Keys key, bool isDown)
     {
-        if (_isSuppressed)
+        if (!isDown) _blockedKeys.Remove(key);
+        if (IsSuppressed)
+        {
+            if (isDown) _blockedKeys.Add(key);
             return;
+        }
+        if (_blockedKeys.Contains(key)) return;
 
         if (isDown)
         {
@@ -101,10 +121,15 @@ public sealed class InputState
         }
     }
 
-    private void SetMouseButton(MouseButtons button, bool isDown)
+    internal void SetMouseButton(MouseButtons button, bool isDown)
     {
-        if (_isSuppressed)
+        if (!isDown) _blockedMouseButtons.Remove(button);
+        if (IsSuppressed)
+        {
+            if (isDown) _blockedMouseButtons.Add(button);
             return;
+        }
+        if (_blockedMouseButtons.Contains(button)) return;
 
         if (isDown)
         {
@@ -119,6 +144,8 @@ public sealed class InputState
 
     private void ResetButtons()
     {
+        _blockedKeys.UnionWith(_keysDown);
+        _blockedMouseButtons.UnionWith(_mouseButtonsDown);
         _keysDown.Clear();
         _mouseButtonsDown.Clear();
     }

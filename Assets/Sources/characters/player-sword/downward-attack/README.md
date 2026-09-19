@@ -31,8 +31,8 @@ ordinary re-renders. It refuses to replace an existing source without
 the source file.
 
 `python tools/ArtPipeline/preview_downward_sword.py` generates normal-speed and
-quarter-speed GIFs, a contact sheet, and canvas checks under
-`Assets/Library/characters/player-sword/downward-attack`. The GIFs add a 0.6-second
+quarter-speed GIFs, a contact sheet, and canvas checks under ignored
+`Assets/Work/previews/player-sword/downward-attack`. The GIFs add a 0.6-second
 review pause after each playback; that pause is not part of the game clip.
 
 Gameplay selects this clip with Down + primary attack while airborne, away from
@@ -41,9 +41,6 @@ duration (24 fps), applying sword damage below the player immediately during fra
 Connecting with an enemy or spikes bounces the player upward once per attack,
 preserving sideways movement. A successful bounce takes priority over contact
 damage on that frame. Taking damage or switching equipment cancels the attack.
-
-The earlier swinging version is archived for comparison under
-`Assets/Library/characters/player-sword/downward-attack/swing-version`.
 
 Source artwork license and provenance: RGS Dev CC0, documented under
 `Assets/Sources/third-party/rgs-stick-figure` and on the

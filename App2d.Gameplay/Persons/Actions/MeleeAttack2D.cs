@@ -6,7 +6,8 @@ namespace App2d.Gameplay.Persons.Actions;
 /// <summary>
 /// A timed melee overlap placed directly in front of its owner.
 /// </summary>
-internal sealed class MeleeAttack2D(
+internal sealed partial class MeleeAttack2D(
+    EntityId2D sourceId,
     SpatialObject2D worldObject,
     MeleeAttackProfile2D profile)
 {
@@ -16,9 +17,11 @@ internal sealed class MeleeAttack2D(
     public SpatialObject2D WorldObject { get; } = worldObject;
     // Identity belongs to this action source, not its owner: punch and kick
     // can have the same attack sequence number without suppressing each other.
-    public EntityId2D SourceId { get; } = EntityId2D.Create();
+    public EntityId2D SourceId { get; } = sourceId.IsValid ? sourceId
+        : throw new ArgumentException("A melee attack requires a valid source ID.", nameof(sourceId));
     public int AttackId { get; private set; }
     public float DurationSeconds => profile.DurationSeconds;
+    public float ElapsedSeconds => _elapsedSeconds;
     public bool IsInProgress { get; private set; }
     public bool IsDamageActive { get; private set; }
     public bool IsVisible => IsDamageActive;

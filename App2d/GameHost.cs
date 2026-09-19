@@ -115,6 +115,8 @@ public sealed class GameHost : IDisposable
             _accumulator -= FixedDeltaSeconds;
         }
 
+        _game.AdvancePresentation(_renderFrameTime);
+
         if (totalTime >= _nextTitleUpdateTime)
         {
             var title = _game.WindowTitle;

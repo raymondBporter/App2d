@@ -6,7 +6,7 @@ from import_stick_figure import transform_frame
 
 ROOT=Path(__file__).resolve().parents[2]
 SOURCE=ROOT/'Assets/Sources/characters/player-sword/downward-attack'
-OUT=ROOT/'Assets/Library/characters/player-sword/downward-attack'
+OUT=ROOT/'Assets/Work/previews/player-sword/downward-attack'
 OUT.mkdir(parents=True,exist_ok=True)
 paths=sorted((SOURCE/'rendered/sword-down-attack').glob('frame-*.png'))
 spec=json.loads((SOURCE/'render.json').read_text())['clips']['sword-down-attack']
