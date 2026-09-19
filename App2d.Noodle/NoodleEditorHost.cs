@@ -95,7 +95,7 @@ internal sealed class NoodleEditorHost : IDisposable
     private void DrawTarget(Renderer2D renderer)
     {
         var targetLimb = _person.TargetLimb;
-        Span<Vector2> reachLine = [targetLimb.Pose.Wrist, targetLimb.Target];
+        Span<Vector2> reachLine = [targetLimb.Pose.End, targetLimb.Target];
         if (!targetLimb.Pose.ReachesTarget)
             renderer.DrawWorldPolyline(reachLine, new XnaColor(255, 118, 118, 150), 2f);
 

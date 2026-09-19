@@ -1,4 +1,5 @@
 using System.Numerics;
+using App2d.Core.Kinematics;
 
 namespace App2d.Noodle;
 
@@ -144,18 +145,18 @@ internal static class StandardSkeleton2D
         bool foot = false)
     {
         var ik = TwoBoneIk2D.Solve(root, target, upperLength, lowerLength, bendDirection);
-        solved.Bones.Add(upperName, new BoneSegment2D(ik.Shoulder, ik.Elbow));
-        solved.Bones.Add(lowerName, new BoneSegment2D(ik.Elbow, ik.Wrist));
+        solved.Bones.Add(upperName, new BoneSegment2D(ik.Root, ik.Joint));
+        solved.Bones.Add(lowerName, new BoneSegment2D(ik.Joint, ik.End));
         if (foot)
         {
-            var heel = ik.Wrist - new Vector2(9f * facing, 0f);
+            var heel = ik.End - new Vector2(9f * facing, 0f);
             solved.Bones.Add(endName, new BoneSegment2D(heel, heel + new Vector2(handLength * facing, 0f)));
             return;
         }
 
-        var direction = ik.Wrist - ik.Elbow;
+        var direction = ik.End - ik.Joint;
         direction = direction.LengthSquared() > 0.001f ? Vector2.Normalize(direction) : new Vector2(facing, 0f);
-        solved.Bones.Add(endName, new BoneSegment2D(ik.Wrist, ik.Wrist + direction * handLength));
+        solved.Bones.Add(endName, new BoneSegment2D(ik.End, ik.End + direction * handLength));
     }
 
     public static Vector2 ToWorld(Vector2 hips, Vector2 local, int facing) =>

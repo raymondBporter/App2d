@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
 using App2d.Rendering;
 using System.Numerics;
@@ -69,7 +70,7 @@ internal sealed class NoodleArm2D
     public float LowerLength { get; }
     public Vector2 Target { get; private set; }
     public int BendDirection { get; private set; }
-    public TwoBoneIkPose Pose { get; private set; }
+    public TwoBoneIkPose2D Pose { get; private set; }
     public Vector2 DefaultTarget => _defaultTarget;
 
     public void SetTarget(Vector2 target)
@@ -118,13 +119,13 @@ internal sealed class NoodleArm2D
         renderer.DrawWorldPolyline(_upperEdge, OutlineColor, 2f);
         renderer.DrawWorldPolyline(_lowerEdge, OutlineColor, 2f);
 
-        Span<Vector2> upperBone = [Pose.Shoulder, Pose.Elbow];
-        Span<Vector2> lowerBone = [Pose.Elbow, Pose.Wrist];
+        Span<Vector2> upperBone = [Pose.Root, Pose.Joint];
+        Span<Vector2> lowerBone = [Pose.Joint, Pose.End];
         renderer.DrawWorldPolyline(upperBone, BoneColor, 5f);
         renderer.DrawWorldPolyline(lowerBone, BoneColor, 5f);
-        renderer.DrawWorldCircle(Pose.Shoulder, 8f, JointColor, 5f);
-        renderer.DrawWorldCircle(Pose.Elbow, 9f, JointColor, 5f);
-        renderer.DrawWorldCircle(Pose.Wrist, 8f, JointColor, 5f);
+        renderer.DrawWorldCircle(Pose.Root, 8f, JointColor, 5f);
+        renderer.DrawWorldCircle(Pose.Joint, 9f, JointColor, 5f);
+        renderer.DrawWorldCircle(Pose.End, 8f, JointColor, 5f);
     }
 
     private void RebuildSkin()
@@ -135,8 +136,8 @@ internal sealed class NoodleArm2D
         var bindLower = Matrix3x2.CreateTranslation(Shoulder + new Vector2(UpperLength, 0f));
         Matrix3x2.Invert(bindUpper, out var inverseBindUpper);
         Matrix3x2.Invert(bindLower, out var inverseBindLower);
-        var currentUpper = Matrix3x2.CreateRotation(Pose.UpperAngle) * Matrix3x2.CreateTranslation(Shoulder);
-        var currentLower = Matrix3x2.CreateRotation(Pose.LowerAngle) * Matrix3x2.CreateTranslation(Pose.Elbow);
+        var currentUpper = Matrix3x2.CreateRotation(Pose.FirstAngle) * Matrix3x2.CreateTranslation(Shoulder);
+        var currentLower = Matrix3x2.CreateRotation(Pose.SecondAngle) * Matrix3x2.CreateTranslation(Pose.Joint);
         var upperSkin = inverseBindUpper * currentUpper;
         var lowerSkin = inverseBindLower * currentLower;
 

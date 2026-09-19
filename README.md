@@ -326,7 +326,9 @@ The earlier weighted noodle-person and joint-gallery experiment remains availabl
 dotnet run --project App2d.Noodle -- --prototype
 ```
 
-Its `IJoint2D` examples include revolute, prismatic, and general distance constraints.
+Its joint gallery visualizes distance, axis/prismatic, and polar-link projections backed
+by the same pure constraint-coordinate math used by physics. Editor projectors remain
+separate from body-bound physics constraints.
 
 Startup currently runs `SideScrollerGame`. It is the composition root and explicit
 fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of
