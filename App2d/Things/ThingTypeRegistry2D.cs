@@ -42,7 +42,7 @@ internal static class ThingTypeRegistry2D
             "green-dinosaur",
             "Green dinosaur",
             WorldThingKind2D.GreenDinosaur,
-            new SKColor(142, 205, 92));
+            new XnaColor(142, 205, 92));
 
     public static ThingTypeDescriptor2D TumbleProp { get; } =
         new("tumble-prop", "Tumble prop", WorldThingKind2D.TumbleProp, new XnaColor(255, 154, 59));

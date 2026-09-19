@@ -4,7 +4,7 @@ A deliberately small MonoGame/XNA 2D engine skeleton with compile-time module bo
 
 The solution is split into `App2d.Core`, `App2d.Collision`, `App2d.Tiles`,
 `App2d.Levels`, `App2d.Physics`, `App2d.Rendering`, `App2d.Audio`, and `App2d.Gameplay`,
-plus the Windows executable composition root. Each project physically owns its source
+plus the game and NoodleBRO rig-lab Windows executables. Each project physically owns its source
 files — there are no linked-file views. Core, collision, tiles, levels, and physics target plain `net10.0`.
 Rendering uses MonoGame WindowsDX; rendering, its tests, platform hosting, gameplay,
 and audio target `net10.0-windows10.0.19041.0`.
@@ -296,6 +296,37 @@ inputs under `Assets/Sources`, then writes a file/hash manifest.
 ```powershell
 dotnet run --project App2d
 ```
+
+Run the rigid-puppet side-scroller experiment with:
+
+```powershell
+dotnet run --project App2d.Noodle
+```
+
+It uses one fixed humanoid skeleton and rigid per-bone stand-ins for future PNG parts.
+Use `A`/`D` to move, `Space` to jump, `J` to attack, `H` to preview a hit reaction,
+and `V` to swap the entire part set without changing any animation. `Tab` opens the
+pose authoring mode: drag hand/foot IK handles, rotate the torso/head with `Q`/`E`
+and `Z`/`X`, capture keyframes with `K`, preview with `P`, and save the pose list with
+`Ctrl+S`. `B` overlays the standard skeleton.
+
+Run the general entity/bones editor with:
+
+```powershell
+dotnet run --project App2d.Noodle -- --bones
+```
+
+The right sidebar authors a parent/child bone hierarchy and attached rectangle, circle,
+capsule, or convex-polygon shapes. The property grid edits transforms, dimensions, color,
+and visual/collision purpose. Middle-drag pans, the mouse wheel zooms, and `Escape` closes.
+
+The earlier weighted noodle-person and joint-gallery experiment remains available with:
+
+```powershell
+dotnet run --project App2d.Noodle -- --prototype
+```
+
+Its `IJoint2D` examples include revolute, prismatic, and general distance constraints.
 
 Startup currently runs `SideScrollerGame`. It is the composition root and explicit
 fixed-step scheduler; concrete gameplay behavior is grouped under `Gameplay` instead of
