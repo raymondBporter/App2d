@@ -1,3 +1,4 @@
+using App2d.Core.Curves;
 using App2d.Core.Geometry;
 using System.Numerics;
 
@@ -70,21 +71,6 @@ internal static class SplineSilhouette2D
     public static ConvexPolygon2D CreateHead(float radius) =>
         CreateEllipse(radius * 0.88f, radius * 1.08f);
 
-    public static Vector2 EvaluateCubic(
-        Vector2 start,
-        Vector2 control1,
-        Vector2 control2,
-        Vector2 end,
-        float amount)
-    {
-        amount = Math.Clamp(amount, 0f, 1f);
-        var inverse = 1f - amount;
-        return inverse * inverse * inverse * start +
-            3f * inverse * inverse * amount * control1 +
-            3f * inverse * amount * amount * control2 +
-            amount * amount * amount * end;
-    }
-
     private static ConvexPolygon2D CreateEllipse(float radiusX, float radiusY)
     {
         var path = new CubicPathBuilder2D(new Vector2(radiusX, 0f));
@@ -139,10 +125,11 @@ internal static class SplineSilhouette2D
 
         public void CurveTo(Vector2 control1, Vector2 control2, Vector2 end)
         {
+            var curve = new CubicBezier2D(_current, control1, control2, end);
             for (var sample = 1; sample <= SamplesPerCurve; sample++)
             {
                 var amount = sample / (float)SamplesPerCurve;
-                _points.Add(EvaluateCubic(_current, control1, control2, end, amount));
+                _points.Add(curve.Evaluate(amount));
             }
             _current = end;
         }

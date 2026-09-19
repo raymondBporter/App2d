@@ -1,3 +1,4 @@
+using App2d.Core.Curves;
 using System.Numerics;
 
 namespace App2d.Noodle;
@@ -27,8 +28,9 @@ internal static class RigidPrototypeChecks2D
 
         var start = new Vector2(1f, 2f);
         var end = new Vector2(9f, -3f);
-        var atStart = SplineSilhouette2D.EvaluateCubic(start, new(3f, 8f), new(7f, 5f), end, 0f);
-        var atEnd = SplineSilhouette2D.EvaluateCubic(start, new(3f, 8f), new(7f, 5f), end, 1f);
+        var curve = new CubicBezier2D(start, new(3f, 8f), new(7f, 5f), end);
+        var atStart = curve.Evaluate(0f);
+        var atEnd = curve.Evaluate(1f);
         Require(Vector2.DistanceSquared(start, atStart) < 0.0001f, "Cubic evaluation must preserve its start point.");
         Require(Vector2.DistanceSquared(end, atEnd) < 0.0001f, "Cubic evaluation must preserve its end point.");
     }
