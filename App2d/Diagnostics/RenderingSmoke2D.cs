@@ -8,7 +8,7 @@ namespace App2d.Diagnostics;
 /// <summary>Renders real game assets and the tile palette without opening a play/edit session.</summary>
 internal static class RenderingSmoke2D
 {
-    public static void Run(string outputDirectory)
+    public static void Run(string outputDirectory, bool facesOnly = false)
     {
         Directory.CreateDirectory(outputDirectory);
         using var window = new Form { ClientSize = new Size(1280, 720) };
@@ -18,10 +18,11 @@ internal static class RenderingSmoke2D
                 DeviceWindowHandle = window.Handle,
                 BackBufferWidth = 1280,
                 BackBufferHeight = 720,
-                DepthStencilFormat = DepthFormat.None,
+                DepthStencilFormat = DepthFormat.Depth24,
                 IsFullScreen = false,
                 PresentationInterval = PresentInterval.Immediate
             });
+        if (facesOnly) { FaceRenderingSmoke2D.Run(device, outputDirectory); return; }
         using var game = new SideScrollerGame();
         game.Initialize();
         using var renderer = new Renderer2D(game.Camera, device);
@@ -38,7 +39,7 @@ internal static class RenderingSmoke2D
                 DeviceWindowHandle = window.Handle,
                 BackBufferWidth = width,
                 BackBufferHeight = height,
-                DepthStencilFormat = DepthFormat.None,
+                DepthStencilFormat = DepthFormat.Depth24,
                 IsFullScreen = false,
                 MultiSampleCount = 4,
                 PresentationInterval = PresentInterval.Immediate
@@ -48,7 +49,7 @@ internal static class RenderingSmoke2D
             renderer.EndFrame();
             device.Present();
 
-            using var target = new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, DepthFormat.None, 4, RenderTargetUsage.DiscardContents);
+            using var target = new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
             device.SetRenderTarget(target);
             renderer.BeginFrame(width, height, default);
             game.Render(renderer);
@@ -64,6 +65,7 @@ internal static class RenderingSmoke2D
         }
         GunRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
         EnemyRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
+        AuthoredRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
         Console.WriteLine($"MonoGame rendering smoke checks completed: {Path.GetFullPath(outputDirectory)}");
 
         void Save(RenderTarget2D target, string name)

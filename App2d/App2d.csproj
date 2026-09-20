@@ -29,6 +29,12 @@
       <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Assets\Characters\entities\*.json" Link="Assets\PointCharacters\entities\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\Assets\Characters\person\*" Link="Assets\PointCharacters\person\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\Assets\Characters\quadruped\*" Link="Assets\PointCharacters\quadruped\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\Assets\Characters\faces\*.png" Link="Assets\PointCharacters\faces\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <Target Name="ValidateRuntimeAssets" BeforeTargets="BeforeBuild">
     <Error Condition="!Exists('..\Assets\Runtime\content-manifest.json')"

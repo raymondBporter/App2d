@@ -1,0 +1,196 @@
+{
+  "author": "Kevin Iglesias",
+  "license": "Standard Unity Asset Store EULA",
+  "licenseSource": "https://www.keviniglesias.com/",
+  "redistribution": "Not CC0. Preserve original EULA; do not redistribute as a standalone asset library.",
+  "packs": {
+    "basic": {
+      "source": "https://kevdev.itch.io/basic-motions-free",
+      "downloaded": "2026-09-20",
+      "archive": "assets/kevin-iglesias/basic/source.zip",
+      "bytes": 16657270,
+      "sha256": "063d5e1822f85549d14035ef342b1feae45bac37962499a8b478c7eb997200cd",
+      "fbxCount": 120,
+      "files": [
+        {
+          "file": "assets/kevin-iglesias/basic/blender/HumanF_BasicMotionsFREE_2.4.blend",
+          "sha256": "67948cc76084bd7ef08ff361ae977ea5e265c9167de9f85f4baec2528fdbb942"
+        },
+        {
+          "file": "assets/kevin-iglesias/basic/blender/HumanM_BasicMotionsFREE_2.4.blend",
+          "sha256": "7370b69669c3cd5fd8da6056197c65d669ce9d17398d109f842bab42e3cb6832"
+        },
+        {
+          "file": "assets/kevin-iglesias/basic/source/Human Basic Motions 2.4 FREE.pdf",
+          "sha256": "dd8375c2bd35060c01b2a8ba8b8cb3b26631c34fb27e069339dba953ab23b5a9"
+        }
+      ]
+    },
+    "melee": {
+      "source": "https://kevdev.itch.io/human-melee-animatons-free",
+      "downloaded": "2026-09-20",
+      "archive": "assets/kevin-iglesias/melee/source.zip",
+      "bytes": 13524662,
+      "sha256": "bcd47d323e40419d4dda188d51bd5d91021e6ca42d8dc0c30f1e5053401244f5",
+      "fbxCount": 102,
+      "files": [
+        {
+          "file": "assets/kevin-iglesias/melee/blender/HumanF_MeleeAnimationsFREE_2.0.2.blend",
+          "sha256": "4797d2d8a4222842b23e608b833e2bd8538cb022eaadc01b4ab9dff028f306aa"
+        },
+        {
+          "file": "assets/kevin-iglesias/melee/blender/HumanM_MeleeAnimationsFREE_2.0.2.blend",
+          "sha256": "b023b69adcf058e5f0b33869dc2588e897b4434689c091167a9beddb8315e68d"
+        },
+        {
+          "file": "assets/kevin-iglesias/melee/source/Human Melee Animations 2.0 FREE.pdf",
+          "sha256": "7d0c631afad5ca09b597f4d74cba7a9a1e9acac8014191f7244457381ead4634"
+        }
+      ]
+    },
+    "archer": {
+      "source": "https://kevdev.itch.io/human-archer-animations-free",
+      "downloaded": "2026-09-20",
+      "archive": "assets/kevin-iglesias/archer/source.zip",
+      "bytes": 17054887,
+      "sha256": "87565026f3a3b0aa8aeaadbcc155533ee58d927f5c443a6b2a11f396a461c904",
+      "fbxCount": 142,
+      "files": [
+        {
+          "file": "assets/kevin-iglesias/archer/blender/HumanArcherAnimations_BowAndProps.blend",
+          "sha256": "95fcdb76cd6ff781f181d97d39d9b1a5b070701ed7844139412c14a628854362"
+        },
+        {
+          "file": "assets/kevin-iglesias/archer/blender/HumanF_ArcherAnimationsFREE_2.0.blend",
+          "sha256": "22c346069632cb9c5cbc2c04d841b9f6cc514d91681dd4e0752f9fcea674a660"
+        },
+        {
+          "file": "assets/kevin-iglesias/archer/blender/HumanM_ArcherAnimationsFREE_2.0.blend",
+          "sha256": "4245ef2c5efc2d47fa419d3f26b4a7f7a3cf6f9252e7a6591be741e77ad29065"
+        },
+        {
+          "file": "assets/kevin-iglesias/archer/source/Human Archer Animations 2.0 FREE.pdf",
+          "sha256": "d957e6f98ed3dd978db64e8fff3d38e73439698d6e3e759c418026d58aeccd0e"
+        }
+      ]
+    },
+    "crafting": {
+      "source": "https://kevdev.itch.io/human-villager-animations-free",
+      "downloaded": "2026-09-20",
+      "archive": "assets/kevin-iglesias/crafting/source.zip",
+      "bytes": 10787283,
+      "sha256": "5892f529b0fcf5b72354716747c77ce70843baff1b38f5815902f7687dd512cb",
+      "fbxCount": 84,
+      "files": [
+        {
+          "file": "assets/kevin-iglesias/crafting/blender/HumanF_CraftingAnimationsFREE_2.2.1.blend",
+          "sha256": "73fc2a6082f45c4077ca438fd16963bfaa7353c8a5e3fe46ce5c943eb38c8360"
+        },
+        {
+          "file": "assets/kevin-iglesias/crafting/blender/HumanM_CraftingAnimationsFREE_2.2.1.blend",
+          "sha256": "9afb14cc9cf3198c71827832758d8a10f20686e6b9edf2d5e82afa55c11c798f"
+        },
+        {
+          "file": "assets/kevin-iglesias/crafting/source/Human Crafting Animations 2.2 FREE.pdf",
+          "sha256": "2873f576136e288979b7f14734ccf17de0431e1b1114086bee63270ca2458cc3"
+        }
+      ]
+    },
+    "dance": {
+      "source": "https://kevdev.itch.io/human-dance-animations-free",
+      "downloaded": "2026-09-20",
+      "archive": "assets/kevin-iglesias/dance/source.zip",
+      "bytes": 8916618,
+      "sha256": "f298e50719e5b22debe641d60ac7c3afaa2992403ac2305a76c4b753a442b22c",
+      "fbxCount": 38,
+      "files": [
+        {
+          "file": "assets/kevin-iglesias/dance/blender/HumanF_DanceAnimationsFREE_2.1.1.blend",
+          "sha256": "3b8b6d43cdee21d1689ad9ce2a24d9876988dbf02d2e7a598e24ae5dde685289"
+        },
+        {
+          "file": "assets/kevin-iglesias/dance/blender/HumanM_DanceAnimationsFREE_2.1.1.blend",
+          "sha256": "663ed753d9a420e690652f0a50b8c9a94a07ac9022471789158b1c5530bcfbda"
+        },
+        {
+          "file": "assets/kevin-iglesias/dance/source/Human Dance Animations 2.1 FREE.pdf",
+          "sha256": "1dcb494be5973ff93793ce7b021f8513694baf42c1f3fc738304490c935de9ba"
+        }
+      ]
+    },
+    "soldier": {
+      "source": "https://kevdev.itch.io/human-soldier-animations-free",
+      "downloaded": "2026-09-20",
+      "archive": "assets/kevin-iglesias/soldier/source.zip",
+      "bytes": 16862605,
+      "sha256": "edd665bea863c3b30d56358831f68d9dbb5a64bb17a553f4f6f92441bf5ea5b7",
+      "fbxCount": 135,
+      "files": [
+        {
+          "file": "assets/kevin-iglesias/soldier/blender/HumanF_SoldierAnimationsFREE_2.0.blend",
+          "sha256": "b3b85126621c2cb876b55b43cd551ba13982e262984dac83d284c61a6753bc1a"
+        },
+        {
+          "file": "assets/kevin-iglesias/soldier/blender/HumanM_SoldierAnimationsFREE_2.0.blend",
+          "sha256": "b1d45ea5f9281708d5fcac1294bc7c1989e7a3bfbc82fb97c11a7fb7dc01e64a"
+        },
+        {
+          "file": "assets/kevin-iglesias/soldier/blender/HumanSoldierAnimations_GunsAndProps.blend",
+          "sha256": "35e62dca2d8d34e48e90f44e4cf59e5bfbc2795f8861e041d356e70350b9ce7a"
+        },
+        {
+          "file": "assets/kevin-iglesias/soldier/source/Human Soldier Animations 2.0 FREE.pdf",
+          "sha256": "e3ec2ab1b3d9de8f208bc8f23aa8fa67211bd74e4ff6f6f9cbf59f922152733a"
+        }
+      ]
+    },
+    "spellcasting": {
+      "source": "https://kevdev.itch.io/human-spellcasting-animations-free",
+      "downloaded": "2026-09-20",
+      "archive": "assets/kevin-iglesias/spellcasting/source.zip",
+      "bytes": 15922502,
+      "sha256": "974918920b0276f94e0c750fde5aeb8ea2aca2e2051a77f553289f85d8770a95",
+      "fbxCount": 102,
+      "files": [
+        {
+          "file": "assets/kevin-iglesias/spellcasting/blender/HumanF_SpellcastingAnimationsFREE_2.0.blend",
+          "sha256": "3e9bcdf5524817827f97870b89a4f4b1dbb3debafc44c6225d0b9cacf89157d4"
+        },
+        {
+          "file": "assets/kevin-iglesias/spellcasting/blender/HumanM_SpellcastingAnimationsFREE_2.0.blend",
+          "sha256": "8a35800efb2494e83c3dad0bcef5ce51270b18e184d7eeda3781fd3aaf437dab"
+        },
+        {
+          "file": "assets/kevin-iglesias/spellcasting/source/Human Spellcasting Animations FREE/Human Spellcasting Animations 2.0 FREE.pdf",
+          "sha256": "c86c9d96c2b0a6a8ecfa83f93884a91dd88dcf81af442165ae164fbac457a3ab"
+        }
+      ]
+    },
+    "throwing": {
+      "source": "https://kevdev.itch.io/human-throwing-animations-free",
+      "downloaded": "2026-09-20",
+      "archive": "assets/kevin-iglesias/throwing/source.zip",
+      "bytes": 14543364,
+      "sha256": "0d04fca026bd870c0348566e8c3e17208ab0de1593e38c5bf337e2598857f1cf",
+      "fbxCount": 110,
+      "files": [
+        {
+          "file": "assets/kevin-iglesias/throwing/blender/HumanF_ThrowingAnimationsFREE_2.0.blend",
+          "sha256": "1acb47a8a09efe70d3a3db3df7f7831e4c4e4159615b8c72fcc83ae911285092"
+        },
+        {
+          "file": "assets/kevin-iglesias/throwing/blender/HumanM_ThrowingAnimationsFREE_2.0.blend",
+          "sha256": "12016af03e89d510f9499ca8244fe7b5407f0f1bfd5b70d477bbae842e1136b4"
+        },
+        {
+          "file": "assets/kevin-iglesias/throwing/blender/Human_ThrowingAnimations_Props_2.0.blend",
+          "sha256": "0429bfa8ff4344efbcfc22ac0a2ea6cd1fc4759b063880747affe3a654faace3"
+        },
+        {
+          "file": "assets/kevin-iglesias/throwing/source/Human Throwing Animations 2.0 FREE.pdf",
+          "sha256": "4480a4c1aa221fb3a3654b2e3365d0ddebc16f70cb4601dac8b4cc8365e399b6"
+        }
+      ]
+    }
+  }
+}

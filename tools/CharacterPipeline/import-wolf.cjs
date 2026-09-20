@@ -1,0 +1,22 @@
+'use strict';
+const fs = require('node:fs'), path = require('node:path');
+const {merge} = require('./wolf-pack.cjs');
+const root = path.resolve(__dirname, '../..');
+const target = path.join(root, 'Assets/Characters');
+const generated = path.join(root, 'Assets/Work/tomek-wolf');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const libraryPath = path.join(target, 'quadruped/library.json');
+const pointsPath = path.join(target, 'quadruped/points.bin');
+const pack = {library: read(path.join(generated, 'library.json')), bytes: fs.readFileSync(path.join(generated, 'points.bin'))};
+const result = merge(read(libraryPath), fs.readFileSync(pointsPath), pack);
+const catalog = read(path.join(target, 'catalog.json'));
+const entry = catalog.libraries.find(l => l.id === 'quadruped');
+if (!entry) throw Error('Quadruped missing from catalog');
+entry.clipCount = Object.keys(result.library.clips).length; entry.bytes = result.bytes.length;
+fs.writeFileSync(pointsPath, result.bytes);
+fs.writeFileSync(libraryPath, JSON.stringify(result.library));
+fs.writeFileSync(path.join(target, 'catalog.json'), JSON.stringify(catalog, null, 2));
+fs.writeFileSync(path.join(target, 'provenance/tomek-wolf.json'), JSON.stringify({
+  ...pack.library.provenance, clips: pack.library.clips}, null, 2));
+fs.copyFileSync(path.join(__dirname, 'wolf-mapping.json'), path.join(target, 'provenance/tomek-wolf-mapping.json'));
+console.log(`Imported ${Object.keys(pack.library.clips).length} wolf motions; quadruped now has ${entry.clipCount} clips.`);

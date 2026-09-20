@@ -323,6 +323,30 @@ documents what the build produces and how to author new art.
 dotnet run --project App2d
 ```
 
+Run the C# / Dear ImGui character motion studio with:
+
+```powershell
+dotnet run --project App2d.CharacterStudio
+```
+
+The studio includes 759 point-animation clips (662 Person clips, including the Kevin Iglesias free packs) across Person, Quadruped, Blob,
+Flying and 11 creature studies. Search and scrub motions, edit appearances,
+preview sequences, and save JSON looks with semantic animation bindings.
+Its depth-tested character renderer lives in `App2d.Rendering`; sampling and
+playback live in `App2d.Core`, with no ImGui dependency. Imported assets are
+included, so this tool does not require the game's raster asset build or Blender.
+See [Character Studio](docs/character-studio.md) for architecture, import and checks.
+Quadruped includes nine [mapped Tomek wolf motions](docs/wolf-animation-mapping.md),
+available under the **Tomek / Wolf** source filter and in entity action pickers.
+The studio also edits named entity types, action timing and collision regions, and
+includes a playable arena with five starter characters. See [entity authoring](docs/entity-authoring.md).
+The main game now uses those same authored characters: Player, Needle, Maul,
+Cinder and Scrap Hound. Save edits in Studio and restart the game to apply them.
+Existing enemy placements map to the new types; their names also appear in the
+level editor. Enemy combat and the player's normal sword swing use authored
+timing/geometry, while the existing traversal controller remains in charge of
+movement. See [game integration and current limits](docs/entity-authoring.md#main-game-integration).
+
 Run the rigid-puppet side-scroller experiment with:
 
 ```powershell

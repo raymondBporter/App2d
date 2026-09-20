@@ -13,7 +13,7 @@ using GpuTexture = Microsoft.Xna.Framework.Graphics.Texture2D;
 namespace App2d.Rendering;
 
 /// <summary>Ordered GPU triangle batches using MonoGame's XNA graphics API.</summary>
-public sealed class Renderer2D : IDisposable
+public sealed partial class Renderer2D : IDisposable
 {
     private readonly Camera2D _camera;
     private readonly GraphicsDevice _device;
@@ -79,6 +79,12 @@ public sealed class Renderer2D : IDisposable
     {
         RequireFrame();
         if (!worldObject.IsVisible || IsCulled(worldObject)) return;
+        if (worldObject.Shader is Characters.PointCharacterShader character)
+        {
+            Flush();
+            DrawCharacter(worldObject, character);
+            return;
+        }
         var matrix = worldObject.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
         var bounds = worldObject.Shape.LocalBounds.IsFinite ? worldObject.Shape.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)
@@ -488,6 +494,7 @@ public sealed class Renderer2D : IDisposable
     public void Dispose()
     {
         if (_disposed) return;
+        DisposeCharacters();
         _vertexCount = 0;
         _batchTexture = null;
         while (_recentTextures.First is { } node) ReleaseTexture(node.Value);

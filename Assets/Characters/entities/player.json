@@ -1,0 +1,162 @@
+{
+  "format": "app2d-entity-type",
+  "version": 1,
+  "library": "person",
+  "health": 30,
+  "moveSpeed": 3.8,
+  "jumpSpeed": 7,
+  "behavior": "player",
+  "preferredRange": 1.1,
+  "cooldown": 0.6,
+  "appearance": {
+    "face": "relaxed",
+    "weapon": "sword",
+    "bladeLength": 1.1
+  },
+  "movement": {
+    "width": 0.55,
+    "height": 1.9
+  },
+  "regions": {
+    "body": {},
+    "head": {},
+    "legs": {
+      "padding": 0.07
+    },
+    "arms": {
+      "mode": "disabled"
+    }
+  },
+  "actions": {
+    "idle": {
+      "clip": "idle",
+      "duration": 2.5,
+      "loop": true
+    },
+    "walk": {
+      "clip": "walk",
+      "duration": 1.3333333333333333,
+      "loop": true
+    },
+    "jump": {
+      "clip": "jump_start",
+      "duration": 0.35,
+      "loop": false,
+      "weapon": "none"
+    },
+    "fall": {
+      "clip": "kaykit_jump_idle",
+      "duration": 0.5,
+      "loop": true,
+      "clipStart": 0.4,
+      "clipEnd": 0.4,
+      "clipContact": 0.4,
+      "placeholder": true,
+      "notes": "Held airborne pose until a descending pose is authored."
+    },
+    "hit": {
+      "clip": "hit_chest",
+      "duration": 0.3,
+      "loop": false
+    },
+    "death": {
+      "clip": "death01",
+      "duration": 2.4,
+      "loop": false
+    },
+    "attack": {
+      "clip": "sword_attack",
+      "duration": 0.75,
+      "loop": false,
+      "attackKind": "melee",
+      "damage": 2,
+      "cue": "swing",
+      "activeStart": 0.35,
+      "activeEnd": 0.58,
+      "contact": 0.42,
+      "clipContact": 0.36
+    },
+    "shoot": {
+      "clip": "pistol_shoot",
+      "duration": 0.6,
+      "loop": false,
+      "attackKind": "projectile",
+      "weapon": "pistol",
+      "damage": 2,
+      "activeStart": 0.45,
+      "activeEnd": 0.5,
+      "contact": 0.45,
+      "clipContact": 0.3,
+      "cue": "shot",
+      "cueTime": 0.45,
+      "attachment": "muzzle",
+      "hitX": 0,
+      "hitY": 0,
+      "hitWidth": 0.16,
+      "hitHeight": 0.08
+    },
+    "wall_shot": {
+      "clip": "wall_grip",
+      "duration": 0.65,
+      "loop": false,
+      "clipStart": 0.2,
+      "clipContact": 0.2,
+      "clipEnd": 0.2,
+      "attackKind": "projectile",
+      "weapon": "pistol",
+      "damage": 2,
+      "attachment": "muzzle",
+      "hitX": 0,
+      "hitY": 0,
+      "hitWidth": 0.16,
+      "hitHeight": 0.08,
+      "placeholder": true,
+      "notes": "Held wall-grip pose with wrist-mounted placeholder pistol."
+    },
+    "land": {
+      "clip": "jump_land",
+      "duration": 1.2666666666666666,
+      "loop": false,
+      "placeholder": false
+    },
+    "wall_grip": {
+      "clip": "wall_grip",
+      "duration": 1,
+      "loop": true,
+      "placeholder": false
+    },
+    "climb": {
+      "clip": "climb",
+      "duration": 1.2,
+      "loop": true,
+      "placeholder": true
+    },
+    "wall_attack": {
+      "clip": "wall_sword_attack",
+      "duration": 0.35,
+      "loop": false,
+      "placeholder": true
+    },
+    "down_attack": {
+      "clip": "sword_down_attack",
+      "duration": 0.25,
+      "loop": false,
+      "placeholder": true
+    },
+    "balance_forward": {
+      "clip": "balance_forward",
+      "duration": 1,
+      "loop": true,
+      "placeholder": true
+    },
+    "balance_backward": {
+      "clip": "balance_backward",
+      "duration": 1,
+      "loop": true,
+      "placeholder": true
+    }
+  },
+  "id": "player",
+  "name": "Player",
+  "notes": "Neutral stick-figure player. J melee / K pistol. Full traversal mappings are available for later game integration."
+}

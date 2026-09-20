@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "library": "quadruped",
+  "clip": "tomek_wolf_idle",
+  "appearance": {
+    "yaw": 15,
+    "head": 1.1,
+    "headRoundness": 0.35,
+    "body": 0.32,
+    "ink": "#1c262b",
+    "fill": "#fcfaed",
+    "face": "happy"
+  },
+  "bindings": {
+    "Idle": "tomek_wolf_idle",
+    "Walk": "tomek_wolf_walk",
+    "Run": "tomek_wolf_run",
+    "Jump": "tomek_wolf_jump",
+    "Fall": "tomek_wolf_fly",
+    "Land": "tomek_wolf_land",
+    "Cry": "tomek_wolf_cry",
+    "Attack": "tomek_wolf_attack",
+    "Death": "tomek_wolf_die"
+  }
+}

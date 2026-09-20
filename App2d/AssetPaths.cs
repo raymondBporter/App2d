@@ -3,6 +3,8 @@ namespace App2d;
 internal static class AssetPaths
 {
     public static string Root { get; } = FindRoot();
+    public static string Characters => Directory.Exists(Path.Combine(Root, "..", "Characters", "entities"))
+        ? Path.GetFullPath(Path.Combine(Root, "..", "Characters")) : Path.Combine(Root, "PointCharacters");
 
     private static string FindRoot()
     {

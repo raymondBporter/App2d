@@ -18,7 +18,7 @@ internal abstract partial class MeleePersonWeapon2D(
     uint targetLayer,
     CombatSystem2D combat,
     Action<float> attackStarted,
-    Action<WeaponEvent2D> publish) : PersonWeapon2DBase(kind)
+    Action<WeaponEvent2D> publish, AuthoredMelee2D? authored = null) : PersonWeapon2DBase(kind)
 {
     private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
     private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
@@ -72,6 +72,8 @@ internal abstract partial class MeleePersonWeapon2D(
             NotifyAttackStarted();
         }
 
+        if (authored is not null)
+            _attack.WorldObject.Transform.Position = _ownerBody.WorldObject.Transform.Position + authored.Offset(_attack.ElapsedSeconds, _attackDirection);
         if (_attack.IsDamageActive &&
             _combat.ResolveAttack(
                 _attack.WorldObject,

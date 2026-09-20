@@ -17,7 +17,8 @@ namespace App2d.Gameplay.World.Presentation;
 
 /// <summary>Client-owned enemy views indexed by entity ID. Never reads live actors.</summary>
 public sealed class EnemyPresentation2D(
-    Scene2D scene, TextureCache2D textures, TraversalMetrics2D traversal, ISoundEffectSink2D sounds) : IDisposable
+    Scene2D scene, TextureCache2D textures, TraversalMetrics2D traversal, ISoundEffectSink2D sounds,
+    App2d.Core.Characters.EntityCatalog? characters = null) : IDisposable
 {
     private readonly Dictionary<EntityId2D, View> _views = [];
     private readonly HashSet<EntityId2D> _presentIds = [];
@@ -35,6 +36,7 @@ public sealed class EnemyPresentation2D(
         var states = _states.Select(s => !s.IsEnabled ? s : s with
         {
             AttackElapsedSeconds = s.AttackElapsedSeconds + _secondsSinceState,
+            ActionSeconds = s.ActionSeconds + _secondsSinceState,
             Person = s.Person with
             {
                 LandingSpeedThisFrame = 0f,
@@ -62,6 +64,9 @@ public sealed class EnemyPresentation2D(
         {
             if (occurrence is HammerStarted2D) sounds.PlayAt(SoundEffect2D.HammerWindup, occurrence.Position);
             else if (occurrence is HammerStruck2D) sounds.PlayAt(SoundEffect2D.HammerImpact, occurrence.Position);
+            else if (occurrence is EntityCue2D cue) sounds.PlayAt(cue.Cue switch
+            { "shot" => SoundEffect2D.GunFire, "heavy" => SoundEffect2D.HammerImpact,
+              "hit" or "bite" => SoundEffect2D.SwordHit, _ => SoundEffect2D.SwordSwing }, cue.Position);
         }
         _presentIds.Clear();
         if (!states.IsDefault)
@@ -72,7 +77,7 @@ public sealed class EnemyPresentation2D(
                 if (!_views.TryGetValue(state.Id, out var view))
                 {
                     if (!state.IsEnabled) continue;
-                    view = state.Kind switch
+                    view = state.TypeId is { } typeId && characters is not null ? new AuthoredView(scene, characters, typeId) : state.Kind switch
                     {
                         EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
                         EnemyKind2D.TumbleProp => new PropView(scene),
@@ -100,6 +105,42 @@ public sealed class EnemyPresentation2D(
     {
         public abstract void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick);
         public abstract void Dispose();
+    }
+
+    private sealed class AuthoredView : View
+    {
+        private readonly Scene2D _scene;
+        private readonly WorldObject2D _visual;
+        private readonly App2d.Rendering.Characters.PointCharacterShader _shader;
+        private readonly List<WorldObject2D> _bolts = [];
+        public AuthoredView(Scene2D scene, App2d.Core.Characters.EntityCatalog catalog, string typeId)
+        {
+            _scene = scene; _shader = new(catalog, catalog.Types[typeId]);
+            _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
+            _visual.Transform.Scale = new(App2d.Core.Characters.EntityCatalog.WorldUnits);
+            scene.Add(_visual);
+        }
+        public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
+        {
+            const float scale = App2d.Core.Characters.EntityCatalog.WorldUnits;
+            _shader.Action = state.ActionId ?? "idle"; _shader.Seconds = state.ActionSeconds; _shader.FacingLeft = state.Facing < 0;
+            _visual.Transform.Position = state.Position - new Vector2(_shader.Type.Movement.OffsetX * state.Facing, _shader.Type.Movement.Height / 2) * scale;
+            _visual.IsVisible = state.IsEnabled;
+            var count = state.IsEnabled && !state.Bolts.IsDefault ? state.Bolts.Length : 0;
+            while (_bolts.Count < count)
+            {
+                var bolt = new WorldObject2D(AxisAlignedRectangle2D.FromSize(Vector2.One), new SolidColorShader(XnaColor.OrangeRed)) { ZIndex = 2 };
+                _bolts.Add(bolt); _scene.Add(bolt);
+            }
+            for (var i = 0; i < _bolts.Count; i++)
+            {
+                _bolts[i].IsVisible = i < count;
+                if (i >= count) continue;
+                _bolts[i].Transform.Position = state.Bolts[i].Position;
+                _bolts[i].Transform.Scale = state.Bolts[i].Size;
+            }
+        }
+        public override void Dispose() { _scene.Remove(_visual); foreach (var bolt in _bolts) _scene.Remove(bolt); }
     }
 
     private sealed class AnimatedView : View

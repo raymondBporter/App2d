@@ -39,14 +39,15 @@ public static class PlayerHud2D
 
         var filledSegments = Math.Clamp(currentHealth, 0, maximumHealth);
         var segmentsBounds = barBounds.InsetBy(3f, 3f);
-        var segmentWidth = (segmentsBounds.Width - segmentGap * (maximumHealth - 1)) / maximumHealth;
-        for (var segment = 0; segment < maximumHealth; segment++)
+        var segmentCount = maximumHealth > 20 ? 1 : maximumHealth;
+        var segmentWidth = (segmentsBounds.Width - segmentGap * (segmentCount - 1)) / segmentCount;
+        for (var segment = 0; segment < segmentCount; segment++)
         {
             var segmentLeft = segmentsBounds.Left + segment * (segmentWidth + segmentGap);
             var segmentBounds = new ScreenRectangle2D(
                 segmentLeft,
                 segmentsBounds.Top,
-                segmentLeft + segmentWidth,
+                segmentLeft + segmentWidth * (maximumHealth > 20 ? filledSegments / (float)maximumHealth : 1),
                 segmentsBounds.Bottom);
             renderer.DrawScreenRoundedRectangle(
                 segmentBounds,
@@ -55,6 +56,7 @@ public static class PlayerHud2D
         }
 
         renderer.DrawScreenRoundedRectangle(barBounds, 6f, accentColor, 3f);
+        if (maximumHealth > 20) renderer.DrawScreenText($"{currentHealth}/{maximumHealth}", new Vector2(barLeft + 88, top + 33), XnaColor.White);
 
         const float weaponTop = top + panelHeight + 10f;
         var weaponBounds = new ScreenRectangle2D(left, weaponTop, left + 70f, weaponTop + 70f);

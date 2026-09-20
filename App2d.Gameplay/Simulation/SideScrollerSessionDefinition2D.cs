@@ -27,6 +27,7 @@ public sealed record SideScrollerSessionDefinition2D(
     IReadOnlyList<MovingPlatformSpec2D> MovingPlatforms,
     IReadOnlyList<WorldThingSpec2D> WorldThings)
 {
+    public App2d.Core.Characters.EntityCatalog? Characters { get; init; }
     public int PlayerMaximumHealth { get; init; } = 5;
     /// <summary>Resume point; ignored when it names a missing checkpoint or invalid health.</summary>
     public SavedProgress2D? SavedProgress { get; init; }

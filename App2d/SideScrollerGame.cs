@@ -17,8 +17,8 @@ namespace App2d;
 /// <summary>Local composition and scheduling; gameplay decisions live in the session.</summary>
 public sealed class SideScrollerGame : Game2D
 {
-    private const int PlayerMaximumHealth = 5;
-    private static readonly TraversalMetrics2D Traversal = TraversalMetricsLoader2D.Load(AssetPaths.Root);
+    private readonly App2d.Core.Characters.EntityCatalog _characters = new(AssetPaths.Characters);
+    private readonly TraversalMetrics2D Traversal;
 
     private readonly SideScrollerSimulation2D _simulation;
     private readonly SideScrollerSession2D _session;
@@ -30,6 +30,12 @@ public sealed class SideScrollerGame : Game2D
 
     public SideScrollerGame()
     {
+        var playerType = _characters.Types["player"];
+        const float units = App2d.Core.Characters.EntityCatalog.WorldUnits;
+        // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
+        var height = MathF.Round(playerType.Movement.Height * units / 4) * 4;
+        Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
+            new(playerType.Movement.Width * units, height), playerType.Movement.OffsetX * units);
         _sounds = new SoundEffectBank2D(Path.Combine(AssetPaths.Root, "audio", "sfx"));
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
@@ -48,7 +54,8 @@ public sealed class SideScrollerGame : Game2D
                 .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
                 .Select(ThingTypeRegistry2D.ToRuntime).ToArray())
         {
-            PlayerMaximumHealth = PlayerMaximumHealth,
+            PlayerMaximumHealth = playerType.Health,
+            Characters = _characters,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
         });
         _session = _simulation.Session;
@@ -84,7 +91,7 @@ public sealed class SideScrollerGame : Game2D
             _simulation.Level.ReloadMovingPlatforms(things.Select(ThingTypeRegistry2D.ToRuntime).ToArray());
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
-            cameraController, Textures, _sounds, Traversal);
+            cameraController, Textures, _sounds, Traversal, _characters);
         _client.CheckpointActivated += checkpoint =>
             _client.ShowSaveResult(_saveStore.TrySave(new PlayerSave2D(checkpoint.CheckpointId, checkpoint.HitPoints)), checkpoint.Position);
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _client.ShowTraversalDebug,

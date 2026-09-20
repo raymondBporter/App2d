@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "inputs": {
+    "person": "62ae73629d25e045",
+    "quadruped": "3b6df578b40e3d2a4fd84f7e6c339eec1ae70c110f4c215422efc7b3c36bbcb6",
+    "monsters": "0ac7a4405319dfe18968c78f306bf8ce36b756b951c9687c17e3cb92b6d7a888",
+    "inventory": "f005006c5b18b270616ba18f98a00aacfaa31f9b2aab9e08263847d1a1df2b54"
+  }
+}

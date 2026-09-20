@@ -24,7 +24,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private const float SaveFeedbackDurationSeconds = 1.1f;
     private readonly SessionClient2D _endpoint;
     private readonly PlayerInputMapper2D _input = new();
-    private readonly PersonPresentation2D _presentation;
+    private readonly PointPersonPresentation2D _presentation;
     private readonly SideScrollerCamera2D _cameraController;
     private readonly Camera2D _camera;
     private readonly SoundEffectBank2D _sounds;
@@ -41,7 +41,7 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public SideScrollerClient2D(SessionSnapshot2D initial, EntityId2D playerId, Scene2D scene,
         Camera2D camera, SideScrollerCamera2D cameraController,
-        TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal)
+        TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal, App2d.Core.Characters.EntityCatalog characters)
     {
         _endpoint = new SessionClient2D(initial, playerId);
         var initialState = _endpoint.State;
@@ -53,12 +53,12 @@ internal sealed class SideScrollerClient2D : IDisposable
         Ballistics = new BallisticsDebug2D(traversal);
         _world = new WorldPresentation2D(scene, textures);
         _world.ApplyState(initial.Content, initial.World);
-        _presentation = new PersonPresentation2D(scene, textures, traversal);
+        _presentation = new PointPersonPresentation2D(scene, characters, traversal);
         _presentation.Equip(initialState.Equipment);
         WorldSounds = new SpatialSoundEffectSink2D(sounds, () => State.Person.Position);
         _weapons = new WeaponPresentation2D(scene, textures, WorldSounds);
         _weapons.ApplyState(initialState.Weapons, initialState.Equipment, []);
-        _enemies = new EnemyPresentation2D(scene, textures, traversal, WorldSounds);
+        _enemies = new EnemyPresentation2D(scene, textures, traversal, WorldSounds, characters);
         _enemies.ApplyState(initial.Enemies, [], initial.Tick);
         ApplyPlayerState();
     }
@@ -111,6 +111,7 @@ internal sealed class SideScrollerClient2D : IDisposable
                         ? SoundEffect2D.PlayerLandHard : SoundEffect2D.PlayerLandSoft);
                     if (landed.ImpactSpeed >= HardLandingSpeed)
                     {
+                        _presentation.PlayLanding();
                         var impact = Math.Clamp((landed.ImpactSpeed - HardLandingSpeed) /
                             MathF.Max(1f, _traversal.MaximumFallSpeed - HardLandingSpeed), 0f, 1f);
                         _cameraController.Shake(float.Lerp(1f, 2.5f, impact), stabilizeVerticalFollow: true);
@@ -133,7 +134,7 @@ internal sealed class SideScrollerClient2D : IDisposable
                     _sounds.Play(SoundEffect2D.PlayerRespawn);
                     _weapons.Reset();
                     break;
-                case GoalReached2D when isMine: _sounds.Play(SoundEffect2D.GoalReached); break;
+                case GoalReached2D when isMine: _sounds.Play(SoundEffect2D.GoalReached); _presentation.PlayCelebrate(); break;
                 case CheckpointActivated2D checkpoint when isMine: CheckpointActivated?.Invoke(checkpoint); break;
                 case EquipmentChanged2D equipment when isMine:
                     _presentation.Equip(equipment.Equipment);

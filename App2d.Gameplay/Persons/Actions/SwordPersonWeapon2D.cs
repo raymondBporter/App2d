@@ -15,24 +15,24 @@ internal sealed partial class SwordPersonWeapon2D(
     Action<float> attackStarted,
     Action<WeaponEvent2D> publish,
     Action<float> downAttackStarted,
-    Func<Bounds2D, bool>? overlapsSpikes = null) : MeleePersonWeapon2D(
+    Func<Bounds2D, bool>? overlapsSpikes = null, AuthoredMelee2D? authored = null) : MeleePersonWeapon2D(
         EquipmentKind2D.Sword,
         ids.Allocate(),
         ownerBody,
-        AxisAlignedRectangle2D.FromSize(new Vector2(56f, 72f)),
-        new MeleeAttackProfile2D(
+        authored?.Shape ?? AxisAlignedRectangle2D.FromSize(new Vector2(56f, 72f)),
+        authored?.Profile ?? new MeleeAttackProfile2D(
             durationSeconds: 0.35f,
             damageStartSeconds: 0.10f,
             damageEndSeconds: 0.27f,
             inputBufferSeconds: 0.10f,
             forwardOffset: 52f),
-        damage: 2,
+        damage: authored?.Action.Damage ?? 2,
         knockback: new Vector2(520f, 285f),
         ownerFaction,
         targetLayer,
         combat,
         attackStarted,
-        publish)
+        publish, authored)
 {
     private readonly DownwardSwing _downAttack = new(
         ids.Allocate(), ownerBody, ownerFaction, targetLayer, combat, downAttackStarted, publish, overlapsSpikes);

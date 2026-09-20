@@ -74,10 +74,22 @@ public sealed class SideScrollerSimulation2D : IDisposable
         combatants.Register(player);
         var contactDamage = new ContactDamageSystem2D(collision, SideScrollerLayers2D.Enemy, combatants);
         var combat = new CombatSystem2D(collision, combatants);
-        level.CreateAuthoredWorldThings(combat);
+        level.CreateAuthoredWorldThings(combat, definition.Characters);
+        Func<float, Vector2>? muzzle = null;
+        if (definition.Characters is { } characters)
+        {
+            var type = characters.Types["player"];
+            var pose = new App2d.Core.Characters.EntityPose(characters.Libraries[type.Library]);
+            muzzle = facing =>
+            {
+                var action = type.Actions[player.IsWallGripping && type.Actions.ContainsKey("wall_shot") ? "wall_shot" : "shoot"];
+                pose.Evaluate(type, action, action.Contact * action.Duration, facing < 0);
+                return pose.Muzzle * App2d.Core.Characters.EntityCatalog.WorldUnits - new Vector2(0, traversal.PlayerColliderSize.Y / 2);
+            };
+        }
         var arsenal = new PersonArsenal2D(ids, player.Body, traversal.GunMuzzleOffset, collision,
             SideScrollerLayers2D.World, SideScrollerLayers2D.Enemy, CombatFaction2D.Player, combat,
-            overlapsSpikes: bounds => level.TryGetSpikeSource(bounds, out _));
+            overlapsSpikes: bounds => level.TryGetSpikeSource(bounds, out _), characters: definition.Characters, muzzle: muzzle);
         player.AttachActions(arsenal);
 
         var session = new SideScrollerSession2D(physics, player, arsenal,

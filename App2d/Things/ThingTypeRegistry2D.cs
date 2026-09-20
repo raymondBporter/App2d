@@ -29,18 +29,18 @@ internal static class ThingTypeRegistry2D
         new("goal", "Goal", WorldThingKind2D.Goal, new XnaColor(255, 79, 120));
 
     public static ThingTypeDescriptor2D Shieldback { get; } =
-        new("shieldback", "Shieldback", WorldThingKind2D.Shieldback, new XnaColor(235, 190, 75));
+        new("shieldback", "Needle", WorldThingKind2D.Shieldback, new XnaColor(150, 190, 230));
 
     public static ThingTypeDescriptor2D BoilerBrute { get; } =
-        new("boiler-brute", "Boiler brute", WorldThingKind2D.BoilerBrute, new XnaColor(240, 105, 75));
+        new("boiler-brute", "Maul", WorldThingKind2D.BoilerBrute, new XnaColor(240, 160, 100));
 
     public static ThingTypeDescriptor2D Rival { get; } =
-        new("rival", "Rival", WorldThingKind2D.Rival, new XnaColor(255, 46, 166));
+        new("rival", "Cinder", WorldThingKind2D.Rival, new XnaColor(240, 210, 110));
 
     public static ThingTypeDescriptor2D GreenDinosaur { get; } =
         new(
             "green-dinosaur",
-            "Green dinosaur",
+            "Scrap Hound",
             WorldThingKind2D.GreenDinosaur,
             new XnaColor(142, 205, 92));
 

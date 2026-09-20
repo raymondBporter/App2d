@@ -26,7 +26,7 @@ internal sealed class SideScrollerThingSpawner2D(
 {
     public void Create(
         IReadOnlyList<WorldThingSpec2D> things,
-        CombatSystem2D combat)
+        CombatSystem2D combat, App2d.Core.Characters.EntityCatalog? characters = null)
     {
         ArgGuard.ThrowIfNull(things);
         ArgGuard.ThrowIfNull(combat);
@@ -35,6 +35,20 @@ internal sealed class SideScrollerThingSpawner2D(
         {
             if (!thing.Enabled)
                 continue;
+            var typeId = thing.Kind switch
+            {
+                WorldThingKind2D.Shieldback => "needle",
+                WorldThingKind2D.BoilerBrute => "maul",
+                WorldThingKind2D.Rival => "cinder",
+                WorldThingKind2D.GreenDinosaur => "scrap-hound",
+                _ => null
+            };
+            if (characters is not null && typeId is not null)
+            {
+                Register(new AuthoredEnemy2D(ids.Allocate(), characters, typeId, collision, physics,
+                    thing.Position, worldLayer, enemyLayer));
+                continue;
+            }
             switch (thing.Kind)
             {
                 case WorldThingKind2D.Shieldback:

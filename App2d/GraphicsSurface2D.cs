@@ -40,7 +40,7 @@ internal sealed class GraphicsSurface2D : Control
             BackBufferWidth = ClientSize.Width,
             BackBufferHeight = ClientSize.Height,
             BackBufferFormat = SurfaceFormat.Color,
-            DepthStencilFormat = DepthFormat.None,
+            DepthStencilFormat = DepthFormat.Depth24,
             IsFullScreen = false,
             PresentationInterval = PresentInterval.One,
             MultiSampleCount = 4

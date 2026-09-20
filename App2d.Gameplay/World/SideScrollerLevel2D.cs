@@ -262,7 +262,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public void CreateAuthoredWorldThings(
-        CombatSystem2D combat)
+        CombatSystem2D combat, App2d.Core.Characters.EntityCatalog? characters = null)
     {
         StateGuard.ThrowIf(
             _authoredWorldThingsCreated,
@@ -280,7 +280,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             environment.WorldLayer,
             environment.PlayerLayer,
             environment.EnemyLayer)
-            .Create(_worldThingSpecs, combat);
+            .Create(_worldThingSpecs, combat, characters);
         _combatants = combat.Combatants;
         _authoredWorldThingsCreated = true;
     }

@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "libraries": [
+    {
+      "id": "person",
+      "label": "Person",
+      "anatomy": "person",
+      "path": "person/library.json",
+      "clipCount": 662,
+      "bytes": 17189712
+    },
+    {
+      "id": "quadruped",
+      "label": "Quadruped",
+      "anatomy": "hound",
+      "path": "quadruped/library.json",
+      "clipCount": 21,
+      "bytes": 7342512
+    },
+    {
+      "id": "blob",
+      "label": "Blob",
+      "anatomy": "monster",
+      "path": "blob/library.json",
+      "clipCount": 9,
+      "bytes": 633600
+    },
+    {
+      "id": "flying",
+      "label": "Flying",
+      "anatomy": "monster",
+      "path": "flying/library.json",
+      "clipCount": 8,
+      "bytes": 3726912
+    },
+    {
+      "id": "frog",
+      "label": "Frog (study)",
+      "anatomy": "inventory",
+      "path": "frog/library.json",
+      "clipCount": 4,
+      "bytes": 193536
+    },
+    {
+      "id": "rat",
+      "label": "Rat (study)",
+      "anatomy": "inventory",
+      "path": "rat/library.json",
+      "clipCount": 6,
+      "bytes": 231768
+    },
+    {
+      "id": "snake",
+      "label": "Snake (study)",
+      "anatomy": "inventory",
+      "path": "snake/library.json",
+      "clipCount": 5,
+      "bytes": 83742
+    },
+    {
+      "id": "spider",
+      "label": "Spider (study)",
+      "anatomy": "inventory",
+      "path": "spider/library.json",
+      "clipCount": 5,
+      "bytes": 287934
+    },
+    {
+      "id": "wasp",
+      "label": "Wasp (study)",
+      "anatomy": "inventory",
+      "path": "wasp/library.json",
+      "clipCount": 3,
+      "bytes": 306582
+    },
+    {
+      "id": "apatosaurus",
+      "label": "Apatosaurus (study)",
+      "anatomy": "inventory",
+      "path": "apatosaurus/library.json",
+      "clipCount": 6,
+      "bytes": 443088
+    },
+    {
+      "id": "parasaurolophus",
+      "label": "Parasaurolophus (study)",
+      "anatomy": "inventory",
+      "path": "parasaurolophus/library.json",
+      "clipCount": 6,
+      "bytes": 215424
+    },
+    {
+      "id": "stegosaurus",
+      "label": "Stegosaurus (study)",
+      "anatomy": "inventory",
+      "path": "stegosaurus/library.json",
+      "clipCount": 6,
+      "bytes": 350676
+    },
+    {
+      "id": "trex",
+      "label": "Trex (study)",
+      "anatomy": "inventory",
+      "path": "trex/library.json",
+      "clipCount": 6,
+      "bytes": 246336
+    },
+    {
+      "id": "triceratops",
+      "label": "Triceratops (study)",
+      "anatomy": "inventory",
+      "path": "triceratops/library.json",
+      "clipCount": 6,
+      "bytes": 327828
+    },
+    {
+      "id": "velociraptor",
+      "label": "Velociraptor (study)",
+      "anatomy": "inventory",
+      "path": "velociraptor/library.json",
+      "clipCount": 6,
+      "bytes": 239616
+    }
+  ]
+}

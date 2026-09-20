@@ -17,4 +17,5 @@
   <Project Path="App2d.Gameplay.Tests/App2d.Gameplay.Tests.csproj" />
   <Project Path="App2d/App2d.csproj" />
   <Project Path="App2d.Noodle/App2d.Noodle.csproj" />
+  <Project Path="App2d.CharacterStudio/App2d.CharacterStudio.csproj" />
 </Solution>
