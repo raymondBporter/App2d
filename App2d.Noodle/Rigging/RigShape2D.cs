@@ -13,26 +13,19 @@ internal enum RigShapePurpose
     VisualAndCollision
 }
 
-internal abstract class RigShape2D
+internal abstract class RigShape2D(int id, string name, RigBone2D attachedBone)
 {
-    protected RigShape2D(int id, string name, RigBone2D attachedBone)
-    {
-        Id = id;
-        Name = name;
-        AttachedBone = attachedBone;
-    }
-
     [Browsable(false)]
-    public int Id { get; }
+    public int Id { get; } = id;
 
     [Category("Shape"), DisplayName("Name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = name;
 
     [Category("Attachment"), DisplayName("Bone"), ReadOnly(true)]
     public string AttachedBoneName => AttachedBone.Name;
 
     [Browsable(false)]
-    public RigBone2D AttachedBone { get; set; }
+    public RigBone2D AttachedBone { get; set; } = attachedBone;
 
     [Category("Attachment"), DisplayName("Local X")]
     public float LocalX { get; set; }
@@ -124,11 +117,9 @@ internal sealed class RigCapsuleShape2D(int id, string name, RigBone2D bone) : R
         new Capsule2D(new Vector2(-Length / 2f, 0f), new Vector2(Length / 2f, 0f), Radius);
 }
 
-internal sealed class RigPolygonShape2D : RigShape2D
+internal sealed class RigPolygonShape2D(int id, string name, RigBone2D bone) : RigShape2D(id, name, bone)
 {
     private string _vertices = "-45,-30; 45,-30; 55,15; 0,45; -55,15";
-
-    public RigPolygonShape2D(int id, string name, RigBone2D bone) : base(id, name, bone) { }
 
     public override string Kind => "Polygon";
 

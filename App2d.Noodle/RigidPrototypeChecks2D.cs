@@ -1,3 +1,4 @@
+using App2d.Core.Curves;
 using System.Numerics;
 
 namespace App2d.Noodle;
@@ -9,8 +10,39 @@ internal static class RigidPrototypeChecks2D
     {
         CheckPartSetsMatchSkeleton();
         CheckSkeletonMirrorsAndKeepsLengths();
+        CheckSplineSilhouettes();
+        CheckSideViewBlend();
         CheckPoseInterpolation();
         CheckStanceFootStaysInWorldSpace();
+    }
+
+    private static void CheckSplineSilhouettes()
+    {
+        var limb = SplineSilhouette2D.CreateLimb(80f, 16f, 12f, 8f);
+        Require(limb.Area > 2_000f, "Spline limb should produce a substantial closed silhouette.");
+        Require(limb.LocalBounds.Left < 0f && limb.LocalBounds.Right > 80f,
+            "Spline limb joint caps should overlap both ends of its bone.");
+
+        var torso = SplineSilhouette2D.CreateTorso(StandardSkeleton2D.TorsoLength);
+        Require(torso.Area > limb.Area, "Spline torso should be larger than one limb.");
+
+        var start = new Vector2(1f, 2f);
+        var end = new Vector2(9f, -3f);
+        var curve = new CubicBezier2D(start, new(3f, 8f), new(7f, 5f), end);
+        var atStart = curve.Evaluate(0f);
+        var atEnd = curve.Evaluate(1f);
+        Require(Vector2.DistanceSquared(start, atStart) < 0.0001f, "Cubic evaluation must preserve its start point.");
+        Require(Vector2.DistanceSquared(end, atEnd) < 0.0001f, "Cubic evaluation must preserve its end point.");
+    }
+
+    private static void CheckSideViewBlend()
+    {
+        var demo = new RigidCharacterDemo2D();
+        var idleView = demo.SideViewAmount;
+        demo.Update(0.1f, 1);
+        Require(demo.SideViewAmount > idleView, "Movement should turn SplineMan toward a side profile.");
+        demo.Update(0.2f, 0);
+        RequireClose(demo.SideViewAmount, idleView, "idle three-quarter view blend");
     }
 
     private static void CheckPartSetsMatchSkeleton()
@@ -96,4 +128,3 @@ internal static class RigidPrototypeChecks2D
             throw new InvalidOperationException(message);
     }
 }
-

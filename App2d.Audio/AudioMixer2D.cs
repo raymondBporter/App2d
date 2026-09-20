@@ -300,33 +300,23 @@ public sealed class AudioMixer2D : IDisposable
         private static float Lerp(float first, float second, float amount) =>
             first + ((second - first) * amount);
 
-        private struct Voice
+        private struct Voice(
+            AudioClip2D clip,
+            float framePosition,
+            float volume,
+            float playbackRate,
+            long sequence)
         {
-            private float _targetVolume;
+            private float _targetVolume = volume;
             private float _volumeStep;
             private int _volumeRampFramesRemaining;
             private bool _stopWhenSilent;
 
-            public Voice(
-                AudioClip2D clip,
-                float framePosition,
-                float volume,
-                float playbackRate,
-                long sequence)
-            {
-                Clip = clip;
-                FramePosition = framePosition;
-                Volume = volume;
-                PlaybackRate = playbackRate;
-                Sequence = sequence;
-                _targetVolume = volume;
-            }
-
-            public AudioClip2D? Clip { get; set; }
-            public float FramePosition { get; set; }
-            public float Volume { get; private set; }
-            public float PlaybackRate { get; }
-            public long Sequence { get; }
+            public AudioClip2D? Clip { get; set; } = clip;
+            public float FramePosition { get; set; } = framePosition;
+            public float Volume { get; private set; } = volume;
+            public float PlaybackRate { get; } = playbackRate;
+            public long Sequence { get; } = sequence;
 
             public void SetVolume(float volume, int rampFrames)
             {

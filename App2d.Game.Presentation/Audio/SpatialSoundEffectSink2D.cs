@@ -4,17 +4,11 @@ using System.Numerics;
 namespace App2d.Gameplay.Audio;
 
 /// <summary>Adds listener-relative falloff to a sound bank. Update once per game frame.</summary>
-public sealed class SpatialSoundEffectSink2D : ISoundEffectSink2D
+public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vector2> listenerPosition) : ISoundEffectSink2D
 {
-    private readonly ISoundEffectSink2D _sounds;
-    private readonly Func<Vector2> _listenerPosition;
+    private readonly ISoundEffectSink2D _sounds = ArgGuard.RequireNotNull(sounds);
+    private readonly Func<Vector2> _listenerPosition = ArgGuard.RequireNotNull(listenerPosition);
     private readonly List<SpatialVoice> _voices = [];
-
-    public SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vector2> listenerPosition)
-    {
-        _sounds = ArgGuard.RequireNotNull(sounds);
-        _listenerPosition = ArgGuard.RequireNotNull(listenerPosition);
-    }
 
     // Global/UI cues intentionally bypass spatial attenuation.
     public void Play(SoundEffect2D effect) => _sounds.Play(effect);

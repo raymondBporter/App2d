@@ -84,9 +84,8 @@ public sealed class SpikeTerrain2DTests : IDisposable
             Assert.Equal(spikeTileMin.X + level.TileMap.TileSize / 2f, spikeSourceX);
         });
 
-        var clear = FindClearTile(level);
-        var clearTileMin = level.TileMap.Origin +
-            new System.Numerics.Vector2(clear.X, clear.Y) * level.TileMap.TileSize;
+        var (X, Y) = FindClearTile(level);
+        var clearTileMin = level.TileMap.Origin + new System.Numerics.Vector2(X, Y) * level.TileMap.TileSize;
         var insideClearTile = new Bounds2D(
             clearTileMin + new System.Numerics.Vector2(8f),
             clearTileMin + new System.Numerics.Vector2(24f));

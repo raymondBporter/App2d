@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 namespace App2d.Tests.Rendering;
 
 [CollectionDefinition("Graphics", DisableParallelization = true)]
-public sealed class GraphicsCollection { }
+public sealed class GraphicsCollection;
 
 internal sealed class GraphicsTestContext : IDisposable
 {
