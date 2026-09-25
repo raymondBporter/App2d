@@ -8,14 +8,18 @@ public sealed class PuppetDrawing
 {
     public CharacterMesh Mesh { get; } = new();
     public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World);
-    public void Build(ResolvedModel model, EvaluatedPose pose) => Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World);
+    /// <summary>Faces come from the pose's evaluated expressions, never from the parts' stored defaults.</summary>
+    public void Build(ResolvedModel model, EvaluatedPose pose) =>
+        Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World, part => pose.Expressions.GetValueOrDefault(part.Id, "none"));
 
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
-    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world)
+    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null)
     {
         Mesh.Clear(); var ink = CharacterJson.Color(inkColor);
         foreach (var part in parts)
         {
+            if (part.Hidden) continue;
+            var face = expression?.Invoke(part) ?? part.Face;
             var a = world(part.A); var b = part.B is { } end ? world(end) : a + Vector3.UnitY;
             if (part.Kind == "stroke")
             {
@@ -39,7 +43,7 @@ public sealed class PuppetDrawing
                 }
             }
             Mesh.Polygon(contour, CharacterJson.Color(part.Fill), ink, lineWidth);
-            if (part.Face != "none") FaceDrawing.Build(Mesh, FaceExpressions.Get(part.Face),
+            if (face != "none") FaceDrawing.Build(Mesh, FaceExpressions.Get(face),
                 p => At(new(p.X * part.Width + part.FaceX, -p.Y * part.Height)) - new Vector3(0, 0, .002f), lineWidth * .6f, ink);
         }
     }

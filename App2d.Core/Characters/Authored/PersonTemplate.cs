@@ -18,7 +18,7 @@ public static class PersonTemplate
         };
         var model = new CharacterModel
         {
-            Id = Id, Name = "Person", Ink = study.Ink, LineWidth = study.LineWidth,
+            Id = Id, Name = "Person", Ink = study.Ink, LineWidth = study.LineWidth, Build = PersonBuild.RuleId,
             Controls = [.. study.Controls.Select(c => new ModelControl { Id = c.Id, Parent = parents.GetValueOrDefault(c.Id), Rest = c.Rest, Scale = ScaleOf(c.Id) })],
             Chains = [.. study.Chains.Select(c =>
             {

@@ -4,6 +4,7 @@
   "id": "person",
   "name": "Person",
   "structureRevision": 1,
+  "build": "person",
   "controls": [
     {
       "id": "hips",

@@ -6,10 +6,17 @@ namespace App2d.Core.Characters;
 public sealed record ChainResult(string Chain, float Residual, bool Reached);
 public sealed record ContactResult(string Chain, Vector3 Target, float Residual);
 
+/// <summary>Gameplay inputs to evaluation. An expression here wins over the clip's face channel and the model default.</summary>
+public readonly record struct PoseInput(string? Expression = null);
+
 /// <summary>The final pose: world positions for every control and the residuals that produced them. Drawing, sockets and collision all read this.</summary>
 public sealed class EvaluatedPose
 {
     public Dictionary<string, Vector3> Points { get; } = new(StringComparer.Ordinal);
+    /// <summary>Accumulated XY rotation of each control's frame, inherited by its children.</summary>
+    public Dictionary<string, float> Angles { get; } = new(StringComparer.Ordinal);
+    /// <summary>The expression each visible face-bearing part shows: gameplay input, then the clip's face channel, then the model default.</summary>
+    public Dictionary<string, string> Expressions { get; } = new(StringComparer.Ordinal);
     /// <summary>The locomotion frame's origin at this sample.</summary>
     public Vector3 Locomotion { get; set; }
     public List<ChainResult> Chains { get; } = [];
@@ -20,9 +27,15 @@ public sealed class EvaluatedPose
 /// <summary>Samples channels, builds the hierarchy, then solves IK and contacts. No graphics.</summary>
 public static class PoseEvaluator
 {
-    /// <summary>The clip must already have passed <see cref="MotionClip.Validate(ResolvedModel)"/> for this model.</summary>
-    public static EvaluatedPose Sample(ResolvedModel model, MotionClip clip, double seconds, bool repeat = false)
+    private static readonly MotionClip Still = new() { Id = "rest", Name = "Rest", Model = "rest" };
+
+    /// <summary>The rest pose: no channels, no travel, no contacts.</summary>
+    public static EvaluatedPose Rest(ResolvedModel model, PoseInput input = default) => Sample(model, null, 0, false, input);
+
+    /// <summary>The clip must already have passed <see cref="MotionClip.Validate(ResolvedModel, bool)"/> for this model. A null clip samples rest.</summary>
+    public static EvaluatedPose Sample(ResolvedModel model, MotionClip? clip, double seconds, bool repeat = false, PoseInput input = default)
     {
+        clip ??= Still;
         if (!double.IsFinite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
         var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
         var time = (float)(cycles > 0 ? seconds % clip.Duration : Math.Min(seconds, clip.Duration));
@@ -43,7 +56,7 @@ public static class PoseEvaluator
         }
         float Angle(string target) => tracks.TryGetValue((MotionClip.RotateKind, target), out var track) ? Interpolate(track.Keys, time).Angle : 0;
 
-        var angles = new Dictionary<string, float>(StringComparer.Ordinal);
+        var angles = pose.Angles;
         foreach (var control in model.Order)
         {
             var parentPoint = control.Parent is null ? pose.Locomotion : pose.Points[control.Parent];
@@ -71,6 +84,11 @@ public static class PoseEvaluator
             pose.Chains[pose.Chains.FindIndex(c => c.Chain == chain.Id)] = result;
             pose.Contacts.Add(new(chain.Id, target, result.Residual));
         }
+        foreach (var part in model.Parts)
+        {
+            if (part.Hidden || part.Face == "none") continue;
+            pose.Expressions[part.Id] = input.Expression ?? FaceAt(clip, part.Id, time) ?? part.Face;
+        }
         return pose;
     }
 
@@ -95,8 +113,16 @@ public static class PoseEvaluator
         }
     }
 
-    /// <summary>Linear interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>
-    private static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time)
+    /// <summary>The clip's expression for a part at a time: the last key at or before it, else the first key. Null without a track.</summary>
+    public static string? FaceAt(MotionClip clip, string part, float time)
+    {
+        var track = clip.Faces.FirstOrDefault(f => f.Part == part);
+        if (track is null || track.Keys.Count == 0) return null;
+        return (track.Keys.LastOrDefault(k => k.Time <= time) ?? track.Keys[0]).Expression;
+    }
+
+    /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>
+    public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time)
     {
         if (keys.Count == 0) return default;
         static (Vector3, float) Of(ClipKey k) => (new(k.X, k.Y, k.Z), k.Angle);
@@ -104,13 +130,14 @@ public static class PoseEvaluator
         for (var i = 1; i < keys.Count; i++)
         {
             if (time > keys[i].Time) continue;
-            var a = keys[i - 1]; var b = keys[i]; var u = (time - a.Time) / (b.Time - a.Time);
+            if (time == keys[i].Time) return Of(keys[i]);
+            var a = keys[i - 1]; var b = keys[i]; var u = ClipEase.Apply(a.Ease, (time - a.Time) / (b.Time - a.Time));
             return (Vector3.Lerp(new(a.X, a.Y, a.Z), new(b.X, b.Y, b.Z), u), a.Angle + (b.Angle - a.Angle) * u);
         }
         return Of(keys[^1]);
     }
 
-    private static Vector3 RotateXY(Vector3 v, float angle)
+    public static Vector3 RotateXY(Vector3 v, float angle)
     {
         if (angle == 0) return v;
         var (sin, cos) = MathF.SinCos(angle);
