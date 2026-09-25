@@ -12,6 +12,10 @@ public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
     [JsonIgnore] public Vector3 XYZ => new(X, Y, Z);
     public static PuppetPoint From(Vector3 p) => new(p.X, p.Y, p.Z);
     public static PuppetPoint Lerp(PuppetPoint a, PuppetPoint b, float t) => From(Vector3.Lerp(a.XYZ, b.XYZ, t));
+    public void Check(string field)
+    {
+        new Limit(-10000, 10000).Check(X, field + ".x"); new Limit(-10000, 10000).Check(Y, field + ".y"); new Limit(-32, 32).Check(Z, field + ".z");
+    }
 }
 
 public sealed record PuppetControl
@@ -50,6 +54,20 @@ public sealed record PuppetPart
     public string Fill { get; set; } = "#fff8e7";
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
+
+    /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
+    public void Validate(Func<string, bool> isControl)
+    {
+        if (!isControl(A)) throw new InvalidDataException("Unknown control: " + A);
+        if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
+        EntityVocabulary.Require(Kind, ["stroke", "ellipse", "box"], "part.kind");
+        if (Kind == "stroke" && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");
+        new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
+        new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
+        new Limit(-16, 16).Check(Depth, "part.depth"); new Limit(0, 1).Check(Roundness, "part.roundness"); Limit.Color(Fill, "part.fill");
+        if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
+        new Limit(-1, 1).Check(FaceX, "part.faceX");
+    }
 }
 
 public sealed record PuppetKey
@@ -109,8 +127,7 @@ public sealed class PuppetDefinition
     {
         void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
         void Number(float value, float min, float max, string field) => new Limit(min, max).Check(value, field);
-        void Point(PuppetPoint point, string field)
-        { Number(point.X, -10000, 10000, field + ".x"); Number(point.Y, -10000, 10000, field + ".y"); Number(point.Z, -32, 32, field + ".z"); }
+        void Point(PuppetPoint point, string field) => point.Check(field);
         Require(Format == FormatId && Version == 1, "Unsupported puppet format/version.");
         Require(!string.IsNullOrWhiteSpace(Name), "A character name is required.");
         Require(Controls is not null && Bones is not null && Chains is not null && Parts is not null && Motions is not null, "Puppet collections cannot be null.");
@@ -158,14 +175,7 @@ public sealed class PuppetDefinition
         foreach (var part in Parts)
         {
             Require(part is not null && !string.IsNullOrWhiteSpace(part.Id) && partIds.Add(part.Id), "Part IDs must be nonempty and unique.");
-            Reference(part!.A); if (part.B is not null) Reference(part.B);
-            EntityVocabulary.Require(part.Kind, ["stroke", "ellipse", "box"], "part.kind");
-            Require(part.Kind != "stroke" || (part.B is not null && part.A != part.B), "A stroke needs two different controls.");
-            Number(part.Width, .001f, 100, "part.width"); Number(part.Height, .001f, 100, "part.height");
-            Number(part.OffsetX, -100, 100, "part.offsetX"); Number(part.OffsetY, -100, 100, "part.offsetY");
-            Number(part.Depth, -16, 16, "part.depth"); Number(part.Roundness, 0, 1, "part.roundness"); Limit.Color(part.Fill, "part.fill");
-            Require(part.Face == "none" || FaceExpressions.Contains(part.Face), "Unknown part expression: " + part.Face);
-            Number(part.FaceX, -1, 1, "part.faceX");
+            part!.Validate(controls.ContainsKey);
         }
         foreach (var motion in Motions)
         {
