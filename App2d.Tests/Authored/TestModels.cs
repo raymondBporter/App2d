@@ -28,6 +28,13 @@ internal static class TestModels
         Parts = [new() { Id = "torso", Kind = "box", A = "hip", B = "shoulder" }, new() { Id = "upper-arm", Kind = "stroke", A = "shoulder", B = "elbow" }],
     };
 
+    /// <summary>An empty one-second looping clip authored against this model's own measures, so every ratio is 1.</summary>
+    public static MotionClip Clip(ResolvedModel model) => new()
+    {
+        Id = "test-clip", Name = "Test", Model = model.Base.Id, Loop = true,
+        Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
+    };
+
     public static void Near(Vector3 expected, Vector3 actual, float tolerance = 1e-4f, string what = "") =>
         Assert.True(Vector3.Distance(expected, actual) <= tolerance, $"{what}: expected {expected}, found {actual}");
 
