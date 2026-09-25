@@ -443,6 +443,17 @@ have stable reachable contacts and expected segment lengths, and loop seams reta
 continuous travel. Changing one clip updates all three previews without copied keys.
 Review at intended game scale. This is the schema checkpoint.
 
+**Progress (2026-09-25).** Implemented in `App2d.Core/Characters/Authored/`: `CharacterModel`, `ModelVariant`,
+`ResolvedModel`, `MotionClip`, `PoseEvaluator`, `AuthoredCatalog`, plus `PersonTemplate` and `PersonBuild`. Assets
+live in `Assets/Characters/authored/`; regenerate them from the prototype studies with
+`App2d.CharacterStudio --convert-studies Assets/Characters/authored`. Render the comparison with
+`App2d.CharacterStudio --smoke-motion <dir>`. `App2d.Tests.Authored` verifies exact reproduction against the prototype
+(≤1e-4, except at contact-finish instants, where the half-open runtime rule deliberately releases one instant earlier
+than the prototype's closed intervals), preserved limb lengths and joint angles, planted contacts, stride scaled by leg
+length and continuous seams on all three builds. Visual review: pending the reviewer's verdict on the rendered frames.
+Not yet covered: face/appearance channels (the run study's determined face is not carried over), rotation keys in
+authored clips (supported and unit-tested, unused by the converted studies), and build values beyond the Person template.
+
 ### 2. Deliver the Model and Animate editor
 
 Build one document session, browser, viewport and inspector. Implement new base,
