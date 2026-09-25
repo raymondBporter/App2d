@@ -25,8 +25,9 @@ an installed character library.
 5. Drag a hand to pose its two-bone arm. Each chain has an explicit bend direction.
    A solved elbow/knee is a guide; edit the tip or reverse the chain's bend instead.
 
-The shoulder cross-section turns 30 degrees toward the camera from a right-facing
-profile. Its sockets sit slightly behind the anatomical torso center: the left
+The shoulder and hip cross-sections share a 30-degree turn toward the camera from
+a right-facing profile. Foot paths and planted targets follow the hip offsets.
+The shoulder sockets sit slightly behind the anatomical torso center: the left
 projects to the near side, and the right sits behind the torso in depth. The arms
 swing in opposition. This is a contact/authoring study, not a
 finished walk animation or terrain controller.

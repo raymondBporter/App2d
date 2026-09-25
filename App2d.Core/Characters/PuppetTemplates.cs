@@ -34,16 +34,19 @@ public static class PuppetTemplates
     public static PuppetDefinition StepStudy()
     {
         var puppet = StickFigure(); puppet.Name = "Walk loop study";
-        // Begin in right-facing profile: the shoulder axis runs into/out of the
+        // Begin in right-facing profile: the shoulder and hip axes run into/out of the
         // screen. Rotate that cross-section 30 degrees toward the viewer, with
         // both sockets slightly behind the torso's anatomical centerline.
         // +Z is away. The near (left) socket projects leftward; the far (right)
         // socket projects rightward and stays behind the torso's drawing plane.
-        const float yaw = MathF.PI / 6, shoulderHalfSpan = .18f, shoulderSetback = -.025f;
-        foreach (var (side, lateral, hipX, hipDepth) in new[] { ("left", -shoulderHalfSpan, .042f, -.10f), ("right", shoulderHalfSpan, -.042f, .10f) })
+        const float yaw = MathF.PI / 6, shoulderHalfSpan = .18f, hipHalfSpan = .12f, shoulderSetback = -.025f;
+        foreach (var (side, sign) in new[] { ("left", -1f), ("right", 1f) })
         {
+            var lateral = sign * shoulderHalfSpan;
             var shoulderX = shoulderSetback * MathF.Cos(yaw) + lateral * MathF.Sin(yaw);
             var shoulderDepth = -shoulderSetback * MathF.Sin(yaw) + lateral * MathF.Cos(yaw);
+            var hipX = sign * hipHalfSpan * MathF.Sin(yaw);
+            var hipDepth = sign * hipHalfSpan * MathF.Cos(yaw);
             void Rest(string suffix, float px, float py, float depth) => puppet.Controls.Single(c => c.Id == side + suffix).Rest = new(px, py, depth);
             Rest("-shoulder", shoulderX, 1.57f, shoulderDepth);
             Rest("-elbow", shoulderX + .05f, 1.25f, shoulderDepth); Rest("-hand", shoulderX + .03f, .92f, shoulderDepth);
@@ -53,6 +56,8 @@ public static class PuppetTemplates
         var head = puppet.Parts.Single(p => p.Id == "head"); head.Width = .56f; head.FaceX = .065f;
         var motion = puppet.Motions[0]; motion.Name = "Walk right"; motion.Duration = 1.2f; motion.Loop = true;
         const float stride = .5f, ground = .025f;
+        var leftTrack = puppet.Controls.Single(c => c.Id == "left-foot").Rest;
+        var rightTrack = puppet.Controls.Single(c => c.Id == "right-foot").Rest;
         for (var i = 0; i <= 16; i++)
         {
             var phase = i / 16f; var time = phase * motion.Duration; var travel = stride * phase;
@@ -67,8 +72,8 @@ public static class PuppetTemplates
             var rightWorldX = .125f + stride * Smooth(rightSwing);
             var leftLift = .12f * MathF.Pow(MathF.Sin(leftSwing * MathF.PI), 2);
             var rightLift = .12f * MathF.Pow(MathF.Sin(rightSwing * MathF.PI), 2);
-            pose.Points["left-foot"] = new(leftWorldX - travel, ground + leftLift - pose.Position.Y, -.10f);
-            pose.Points["right-foot"] = new(rightWorldX - travel, ground + rightLift - pose.Position.Y, .10f);
+            pose.Points["left-foot"] = new(leftWorldX - travel + leftTrack.X, ground + leftLift - pose.Position.Y, leftTrack.Z);
+            pose.Points["right-foot"] = new(rightWorldX - travel + rightTrack.X, ground + rightLift - pose.Position.Y, rightTrack.Z);
             var swing = MathF.Cos(phase * MathF.Tau);
             foreach (var (side, sign) in new[] { ("left", 1f), ("right", -1f) })
             {
@@ -80,8 +85,8 @@ public static class PuppetTemplates
         // Store an exact repeated local pose, including the hands, at the seam.
         motion.Keys[^1].Points = new(motion.Keys[0].Points);
         motion.Keys[^1].Position = new(stride, motion.Keys[0].Position.Y, 0);
-        motion.Contacts.Add(new() { End = "right-foot", Start = 0, Finish = .6f, Target = new(.125f, ground, .10f) });
-        motion.Contacts.Add(new() { End = "left-foot", Start = .6f, Finish = 1.2f, Target = new(.375f, ground, -.10f) });
+        motion.Contacts.Add(new() { End = "right-foot", Start = 0, Finish = .6f, Target = new(.125f + rightTrack.X, ground, rightTrack.Z) });
+        motion.Contacts.Add(new() { End = "left-foot", Start = .6f, Finish = 1.2f, Target = new(.375f + leftTrack.X, ground, leftTrack.Z) });
         puppet.Validate(); return puppet;
     }
 
@@ -150,7 +155,8 @@ public static class PuppetTemplates
                 // The pelvis turns with the forward leg while the shoulders counter-rotate with the arms.
                 var hip = rest.Points[side + "-hip"];
                 pose.Points[side + "-hip"] = hip with { X = hip.X + .08f * foot.X };
-                pose.Points[side + "-foot"] = new(foot.X, ground + foot.Y - pose.Position.Y, rest.Points[side + "-foot"].Z);
+                var track = rest.Points[side + "-foot"];
+                pose.Points[side + "-foot"] = new(foot.X + track.X, ground + foot.Y - pose.Position.Y, track.Z);
                 var swing = MathF.Cos(armAngle);
                 var shoulder = Lean(rest.Points[side + "-shoulder"], lean) + new Vector3(.03f * swing, chestLag, 0);
                 pose.Points[side + "-shoulder"] = shoulder;
@@ -163,8 +169,8 @@ public static class PuppetTemplates
         }
         motion.Keys[^1].Points = new(motion.Keys[0].Points);
         motion.Keys[^1].Position = new(travel, motion.Keys[0].Position.Y, 0);
-        motion.Contacts.Add(new() { End = "right-foot", Start = 0, Finish = stance * motion.Duration, Target = new(strike, ground, rest.Points["right-foot"].Z) });
-        motion.Contacts.Add(new() { End = "left-foot", Start = .5f * motion.Duration, Finish = (.5f + stance) * motion.Duration, Target = new(strike + travel / 2, ground, rest.Points["left-foot"].Z) });
+        motion.Contacts.Add(new() { End = "right-foot", Start = 0, Finish = stance * motion.Duration, Target = new(strike + rest.Points["right-foot"].X, ground, rest.Points["right-foot"].Z) });
+        motion.Contacts.Add(new() { End = "left-foot", Start = .5f * motion.Duration, Finish = (.5f + stance) * motion.Duration, Target = new(strike + travel / 2 + rest.Points["left-foot"].X, ground, rest.Points["left-foot"].Z) });
         puppet.Validate(); return puppet;
     }
 }
