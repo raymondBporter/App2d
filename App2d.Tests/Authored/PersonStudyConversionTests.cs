@@ -24,6 +24,7 @@ public sealed class PersonStudyConversionTests
         Assert.Contains(clip.Tracks, t => t is { Kind: MotionClip.TargetKind, Target: "left-leg" });
         Assert.Contains(clip.Tracks, t => t is { Kind: MotionClip.TranslateKind, Target: "hips" });
         Assert.DoesNotContain(clip.Tracks, t => t.Keys.All(k => k.X == 0 && k.Y == 0 && k.Z == 0));
+        Assert.DoesNotContain(clip.Tracks, t => t.Target == "head"); // the walk never moves the head; float noise must not become a track
         Assert.Equal(new[] { "left-leg", "right-leg" }, clip.Contacts.Select(c => c.Chain).Order());
         Assert.Equal(.5f, clip.Travel.Keys[^1].X, 5);
     }

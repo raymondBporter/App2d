@@ -1,0 +1,293 @@
+{
+  "format": "app2d-model",
+  "version": 1,
+  "id": "person",
+  "name": "Person",
+  "controls": [
+    {
+      "id": "hips",
+      "rest": {
+        "x": 0,
+        "y": 1,
+        "z": 0
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "chest",
+      "parent": "hips",
+      "rest": {
+        "x": 0,
+        "y": 1.65,
+        "z": 0
+      },
+      "scale": "torso"
+    },
+    {
+      "id": "head",
+      "parent": "chest",
+      "rest": {
+        "x": 0,
+        "y": 2.03,
+        "z": 0
+      },
+      "scale": "torso"
+    },
+    {
+      "id": "left-shoulder",
+      "parent": "chest",
+      "rest": {
+        "x": -0.11165064,
+        "y": 1.57,
+        "z": -0.14338458
+      },
+      "scale": "torso"
+    },
+    {
+      "id": "left-elbow",
+      "parent": "left-shoulder",
+      "rest": {
+        "x": -0.061650638,
+        "y": 1.25,
+        "z": -0.14338458
+      }
+    },
+    {
+      "id": "left-hand",
+      "parent": "left-elbow",
+      "rest": {
+        "x": -0.08165064,
+        "y": 0.92,
+        "z": -0.14338458
+      }
+    },
+    {
+      "id": "left-hip",
+      "parent": "hips",
+      "rest": {
+        "x": 0.042,
+        "y": 1,
+        "z": -0.1
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "left-knee",
+      "parent": "left-hip",
+      "rest": {
+        "x": 0.132,
+        "y": 0.51,
+        "z": -0.1
+      }
+    },
+    {
+      "id": "left-foot",
+      "parent": "left-knee",
+      "rest": {
+        "x": 0.042,
+        "y": 0.025,
+        "z": -0.1
+      }
+    },
+    {
+      "id": "right-shoulder",
+      "parent": "chest",
+      "rest": {
+        "x": 0.06834937,
+        "y": 1.57,
+        "z": 0.16838458
+      },
+      "scale": "torso"
+    },
+    {
+      "id": "right-elbow",
+      "parent": "right-shoulder",
+      "rest": {
+        "x": 0.11834937,
+        "y": 1.25,
+        "z": 0.16838458
+      }
+    },
+    {
+      "id": "right-hand",
+      "parent": "right-elbow",
+      "rest": {
+        "x": 0.09834937,
+        "y": 0.92,
+        "z": 0.16838458
+      }
+    },
+    {
+      "id": "right-hip",
+      "parent": "hips",
+      "rest": {
+        "x": -0.042,
+        "y": 1,
+        "z": 0.1
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "right-knee",
+      "parent": "right-hip",
+      "rest": {
+        "x": 0.048000004,
+        "y": 0.51,
+        "z": 0.1
+      }
+    },
+    {
+      "id": "right-foot",
+      "parent": "right-knee",
+      "rest": {
+        "x": -0.042,
+        "y": 0.025,
+        "z": 0.1
+      }
+    }
+  ],
+  "chains": [
+    {
+      "id": "left-arm",
+      "root": "left-shoulder",
+      "joint": "left-elbow",
+      "end": "left-hand",
+      "bend": -1,
+      "frame": "left-shoulder",
+      "scale": "arm"
+    },
+    {
+      "id": "left-leg",
+      "root": "left-hip",
+      "joint": "left-knee",
+      "end": "left-foot",
+      "scale": "leg"
+    },
+    {
+      "id": "right-arm",
+      "root": "right-shoulder",
+      "joint": "right-elbow",
+      "end": "right-hand",
+      "bend": -1,
+      "frame": "right-shoulder",
+      "scale": "arm"
+    },
+    {
+      "id": "right-leg",
+      "root": "right-hip",
+      "joint": "right-knee",
+      "end": "right-foot",
+      "scale": "leg"
+    }
+  ],
+  "measures": [
+    {
+      "id": "leg",
+      "path": [
+        "right-hip",
+        "right-knee",
+        "right-foot"
+      ]
+    },
+    {
+      "id": "arm",
+      "path": [
+        "right-shoulder",
+        "right-elbow",
+        "right-hand"
+      ]
+    },
+    {
+      "id": "torso",
+      "path": [
+        "hips",
+        "chest"
+      ]
+    }
+  ],
+  "parts": [
+    {
+      "id": "chest-head",
+      "kind": "stroke",
+      "a": "chest",
+      "b": "head",
+      "width": 0.045
+    },
+    {
+      "id": "left-shoulder-left-elbow",
+      "kind": "stroke",
+      "a": "left-shoulder",
+      "b": "left-elbow",
+      "width": 0.045
+    },
+    {
+      "id": "left-elbow-left-hand",
+      "kind": "stroke",
+      "a": "left-elbow",
+      "b": "left-hand",
+      "width": 0.045
+    },
+    {
+      "id": "left-hip-left-knee",
+      "kind": "stroke",
+      "a": "left-hip",
+      "b": "left-knee",
+      "width": 0.045
+    },
+    {
+      "id": "left-knee-left-foot",
+      "kind": "stroke",
+      "a": "left-knee",
+      "b": "left-foot",
+      "width": 0.045
+    },
+    {
+      "id": "right-shoulder-right-elbow",
+      "kind": "stroke",
+      "a": "right-shoulder",
+      "b": "right-elbow",
+      "width": 0.045
+    },
+    {
+      "id": "right-elbow-right-hand",
+      "kind": "stroke",
+      "a": "right-elbow",
+      "b": "right-hand",
+      "width": 0.045
+    },
+    {
+      "id": "right-hip-right-knee",
+      "kind": "stroke",
+      "a": "right-hip",
+      "b": "right-knee",
+      "width": 0.045
+    },
+    {
+      "id": "right-knee-right-foot",
+      "kind": "stroke",
+      "a": "right-knee",
+      "b": "right-foot",
+      "width": 0.045
+    },
+    {
+      "id": "body",
+      "kind": "box",
+      "a": "hips",
+      "b": "chest",
+      "width": 0.36,
+      "height": 0.68,
+      "offsetY": 0.32,
+      "roundness": 0.3,
+      "fill": "#d8e9db"
+    },
+    {
+      "id": "head",
+      "a": "head",
+      "width": 0.56,
+      "height": 0.58,
+      "depth": -0.12,
+      "face": "relaxed",
+      "faceX": 0.065
+    }
+  ]
+}

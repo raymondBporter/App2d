@@ -39,4 +39,20 @@ public static class PersonTemplate
         };
         model.Validate(); return model;
     }
+
+    /// <summary>Writes the Person model, its converted walk and run, and the two reviewed builds as authored assets.</summary>
+    public static void WriteStudies(string authoredRoot)
+    {
+        var model = Model(); var walk = PuppetTemplates.StepStudy(); var run = PuppetTemplates.RunStudy();
+        void Write(string folder, string id, string json)
+        {
+            var directory = Path.Combine(authoredRoot, folder); Directory.CreateDirectory(directory);
+            AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
+        }
+        Write("models", model.Id, model.ToJson());
+        Write("animations", "person-walk", PuppetMotionConverter.Convert(walk, walk.Motions[0], model, "person-walk", "Walk", "leg").ToJson());
+        Write("animations", "person-run", PuppetMotionConverter.Convert(run, run.Motions[0], model, "person-run", "Run", "leg").ToJson());
+        Write("variants", "tall-thin", PersonBuild.TallThin.Apply(model, "tall-thin", "Tall and thin", "#d9e2ef").ToJson());
+        Write("variants", "short-broad", PersonBuild.ShortBroad.Apply(model, "short-broad", "Short and broad", "#efdcc9").ToJson());
+    }
 }

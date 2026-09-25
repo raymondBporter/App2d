@@ -47,7 +47,7 @@ public static class PuppetMotionConverter
                 Add(MotionClip.TargetKind, chain.Id, key.Time, World(chain.End) - frameWorld - (Rest(chain.End) - frameRest));
             }
         }
-        const float epsilon = 1e-7f;
+        const float epsilon = 1e-5f; // below this a track is float noise from subtracting absolute positions
         clip.Tracks = [.. tracks.Values.Where(t => t.Keys.Any(k => MathF.Abs(k.X) > epsilon || MathF.Abs(k.Y) > epsilon || MathF.Abs(k.Z) > epsilon))];
         var start = clip.Travel.Keys.Count > 0 ? clip.Travel.Keys[0].X : 0;
         foreach (var contact in motion.Contacts)
