@@ -7,12 +7,16 @@ namespace App2d.Rendering.Characters;
 public sealed class PuppetDrawing
 {
     public CharacterMesh Mesh { get; } = new();
-    public void Build(PuppetDefinition definition, PuppetPose pose)
+    public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World);
+    public void Build(ResolvedModel model, EvaluatedPose pose) => Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World);
+
+    /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
+    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world)
     {
-        Mesh.Clear(); var ink = CharacterJson.Color(definition.Ink);
-        foreach (var part in definition.Parts)
+        Mesh.Clear(); var ink = CharacterJson.Color(inkColor);
+        foreach (var part in parts)
         {
-            var a = pose.World(part.A); var b = part.B is { } end ? pose.World(end) : a + Vector3.UnitY;
+            var a = world(part.A); var b = part.B is { } end ? world(end) : a + Vector3.UnitY;
             if (part.Kind == "stroke")
             {
                 var depth = new Vector3(0, 0, part.Depth); Mesh.Line(a + depth, b + depth, part.Width, ink); continue;
@@ -34,9 +38,9 @@ public sealed class PuppetDrawing
                     for (var i = 0; i <= 8; i++) contour.Add(At(center + new Vector2(MathF.Cos(angle + i * MathF.PI / 16), MathF.Sin(angle + i * MathF.PI / 16)) * radius));
                 }
             }
-            Mesh.Polygon(contour, CharacterJson.Color(part.Fill), ink, definition.LineWidth);
+            Mesh.Polygon(contour, CharacterJson.Color(part.Fill), ink, lineWidth);
             if (part.Face != "none") FaceDrawing.Build(Mesh, FaceExpressions.Get(part.Face),
-                p => At(new(p.X * part.Width + part.FaceX, -p.Y * part.Height)) - new Vector3(0, 0, .002f), definition.LineWidth * .6f, ink);
+                p => At(new(p.X * part.Width + part.FaceX, -p.Y * part.Height)) - new Vector3(0, 0, .002f), lineWidth * .6f, ink);
         }
     }
 }
