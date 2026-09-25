@@ -60,17 +60,21 @@ public sealed record HeadShape
         }
         return true;
     }
+    public static class Limits
+    {
+        public static readonly Limit Width = new(.45f, 1.8f), Height = new(.45f, 1.8f), Muzzle = new(0, 1.8f), Depth = new(.12f, 1.2f),
+            Drop = new(-.65f, .7f), Brow = new(-.6f, .6f), Jaw = new(0, 1), Roundness = new(0, 1),
+            FaceX = new(-1.2f, 2.6f), FaceY = new(-1.2f, 1.4f), FaceSize = new(.25f, 2), FaceAngle = new(-90, 90), Offset = new(-1, 1);
+    }
     public void Validate()
     {
-        static void Range(float value, float min, float max)
-        { if (!float.IsFinite(value) || value < min || value > max) throw new InvalidDataException("Head setting outside the supported range."); }
-        if (Version != 1) throw new InvalidDataException("Expected a version 1 head configuration.");
-        Range(Width, .45f, 1.8f); Range(Height, .45f, 1.8f); Range(Muzzle, 0, 1.8f); Range(Depth, .12f, 1.2f);
-        Range(Drop, -.65f, .7f); Range(Brow, -.6f, .6f); Range(Jaw, 0, 1); Range(Roundness, 0, 1);
-        Range(FaceX, -1.2f, 2.6f); Range(FaceY, -1.2f, 1.4f); Range(FaceSize, .25f, 2); Range(FaceAngle, -90, 90);
-        for (var i = 0; i < 10; i++) { Range(Offsets[i].X, -1, 1); Range(Offsets[i].Y, -1, 1); }
-        if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown head expression.");
-        if (Color is null || Color.Length != 7 || Color[0] != '#' || !uint.TryParse(Color.AsSpan(1), System.Globalization.NumberStyles.HexNumber, null, out _)) throw new InvalidDataException("Invalid head color.");
+        if (Version != 1) throw new InvalidDataException($"Expected a version 1 head configuration; found version {Version}.");
+        Limits.Width.Check(Width, "head.width"); Limits.Height.Check(Height, "head.height"); Limits.Muzzle.Check(Muzzle, "head.muzzle"); Limits.Depth.Check(Depth, "head.depth");
+        Limits.Drop.Check(Drop, "head.drop"); Limits.Brow.Check(Brow, "head.brow"); Limits.Jaw.Check(Jaw, "head.jaw"); Limits.Roundness.Check(Roundness, "head.roundness");
+        Limits.FaceX.Check(FaceX, "head.faceX"); Limits.FaceY.Check(FaceY, "head.faceY"); Limits.FaceSize.Check(FaceSize, "head.faceSize"); Limits.FaceAngle.Check(FaceAngle, "head.faceAngle");
+        for (var i = 0; i < 10; i++) { Limits.Offset.Check(Offsets[i].X, $"head.offsets[{i}].x"); Limits.Offset.Check(Offsets[i].Y, $"head.offsets[{i}].y"); }
+        if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException($"head.face '{Face}' is not a known expression.");
+        Limit.Color(Color, "head.color");
         if (!IsSimple()) throw new InvalidDataException("That edit folds the head outline across itself.");
     }
 }

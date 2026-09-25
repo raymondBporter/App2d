@@ -12,7 +12,7 @@ internal sealed class PersonAnatomy : ICharacterAnatomy
     private readonly JsonElement _spec;
     private readonly Vector2 _pivot;
     private readonly float _ppu, _radius, _lineWidth, _weaponLength;
-    private readonly Vector3[] _points = new Vector3[24];
+    private readonly Vector3[] _points = new Vector3[PersonRig.Names.Count];
     private readonly Vector3[] _torso = new Vector3[24];
     private readonly WeaponDrawing _weapons;
     private readonly PersonPose _pose;
@@ -23,7 +23,7 @@ internal sealed class PersonAnatomy : ICharacterAnatomy
 
     public PersonAnatomy(PointLibrary library)
     {
-        if (library.PointNames.Count != 24) throw new InvalidDataException("Person requires the 24-control depth rig.");
+        PersonRig.Verify(library);
         _pose = new(library);
         _spec = library.Drawing; var pivot = _spec.GetProperty("pivot").Floats(); _pivot = new(pivot[0], pivot[1]);
         _ppu = _spec.Number("pixelsPerUnit");
@@ -41,10 +41,10 @@ internal sealed class PersonAnatomy : ICharacterAnatomy
     {
         _pose.Transform(raw, look); _pose.CopyTo(_points);
         var flip = look.Flip ? -1f : 1f; var radius = _radius * look.Size * look.Head;
-        var direction = new Vector2(_points[17].X - _points[0].X, _points[17].Y - _points[0].Y); direction /= MathF.Max(direction.Length(), 1e-8f);
+        var direction = new Vector2(_points[PersonRig.HeadUp].X - _points[PersonRig.Head].X, _points[PersonRig.HeadUp].Y - _points[PersonRig.Head].Y); direction /= MathF.Max(direction.Length(), 1e-8f);
         var ink = CharacterJson.Color(look.Ink); var fill = CharacterJson.Color(look.Fill);
-        foreach (var start in new[] { 5, 8, 11, 14 }) for (var i = 0; i < 2; i++) mesh.Line(_points[start + i], _points[start + i + 1], _lineWidth, ink);
-        var corners = new[] { _points[2], _points[1], _points[3], _points[4] };
+        foreach (var start in new[] { PersonRig.LeftHip, PersonRig.RightHip, PersonRig.LeftShoulder, PersonRig.RightShoulder }) for (var i = 0; i < 2; i++) mesh.Line(_points[start + i], _points[start + i + 1], _lineWidth, ink);
+        var corners = new[] { _points[PersonRig.BodyBottomB], _points[PersonRig.BodyBottomA], _points[PersonRig.BodyTopA], _points[PersonRig.BodyTopB] };
         var shortest = Enumerable.Range(0, 4).Min(i => Vector2.Distance(new(corners[i].X, corners[i].Y), new(corners[(i + 1) % 4].X, corners[(i + 1) % 4].Y)));
         for (var i = 0; i < 4; i++)
         {
@@ -58,12 +58,12 @@ internal sealed class PersonAnatomy : ICharacterAnatomy
         if (look.CustomHead is { } customHead)
         {
             var up = new Vector3(direction, 0); var right = new Vector3(up.Y * flip, -up.X * flip, 0);
-            _headDrawing.Build(mesh, face, customHead, _points[0] - new Vector3(0, 0, radius), right * (radius / .6f), -up * (radius / .6f), _lineWidth, ink, options.Face);
+            _headDrawing.Build(mesh, face, customHead, _points[PersonRig.Head] - new Vector3(0, 0, radius), right * (radius / .6f), -up * (radius / .6f), _lineWidth, ink, options.Face);
         }
         else
         {
-        mesh.Disk(_points[0], radius, fill, true);
-        Vector3 Rim(float angle, float r) => _points[0] + new Vector3(MathF.Cos(angle) * r, MathF.Sin(angle) * r, -MathF.Sqrt(MathF.Max(0, radius * radius - r * r)) - .001f);
+        mesh.Disk(_points[PersonRig.Head], radius, fill, true);
+        Vector3 Rim(float angle, float r) => _points[PersonRig.Head] + new Vector3(MathF.Cos(angle) * r, MathF.Sin(angle) * r, -MathF.Sqrt(MathF.Max(0, radius * radius - r * r)) - .001f);
         for (var i = 0; i < 64; i++)
         {
             var a = i / 64f * MathF.Tau; var b = (i + 1) / 64f * MathF.Tau;
@@ -74,7 +74,7 @@ internal sealed class PersonAnatomy : ICharacterAnatomy
         }
         if (look.Weapons && look.Weapon == "pistol")
         {
-            var grip = _points[16]; var aim = grip - _points[15]; aim.Z = 0;
+            var grip = _points[PersonRig.RightHand]; var aim = grip - _points[PersonRig.RightElbow]; aim.Z = 0;
             aim = aim.LengthSquared() < 1e-10f ? new Vector3(flip, 0, 0) : Vector3.Normalize(aim);
             _weapons.Draw(mesh, "pistol", grip, aim * look.BladeLength, new Vector3(aim.Y, -aim.X, 0) * look.BladeLength, look.BladeLength, 1);
             mesh.Disk(grip - new Vector3(0, 0, _lineWidth * .5f), _lineWidth * .55f, ink);
@@ -101,7 +101,7 @@ internal sealed class PersonAnatomy : ICharacterAnatomy
                 {
                     var offset = (right * p.X - up * p.Y) * radius * 1.65f;
                     // Keep flat ink features just in front of the dome to avoid intersections.
-                    return _points[0] + new Vector3(offset, -radius - .012f);
+                    return _points[PersonRig.Head] + new Vector3(offset, -radius - .012f);
                 }
                 FaceDrawing.Build(mesh, facialPose, At, radius * .055f, ink);
             }
@@ -116,12 +116,12 @@ internal sealed class PersonAnatomy : ICharacterAnatomy
     {
         var size = _spec.GetProperty("faces").Number("textureSize");
         var width = _spec.GetProperty("faces").Number("strokeWidth") * _radius * 2.4f / size;
-        var up = _points[17] - _points[0]; var angle = MathF.Atan2(up.Y, up.X) - MathF.PI / 2;
+        var up = _points[PersonRig.HeadUp] - _points[PersonRig.Head]; var angle = MathF.Atan2(up.Y, up.X) - MathF.PI / 2;
         var cos = MathF.Cos(angle); var sin = MathF.Sin(angle);
         Vector3 At(Vector2 p)
         {
             var a = (p.X - size / 2) * radius * 2.4f / size * (flip ? -1 : 1); var b = -(p.Y - size / 2) * radius * 2.4f / size;
-            return _points[0] + new Vector3(a * cos - b * sin, a * sin + b * cos, -MathF.Sqrt(MathF.Max(0, radius * radius - a * a - b * b)) - .006f);
+            return _points[PersonRig.Head] + new Vector3(a * cos - b * sin, a * sin + b * cos, -MathF.Sqrt(MathF.Max(0, radius * radius - a * a - b * b)) - .006f);
         }
         void Ellipses(float[][] ellipses, bool solid)
         {

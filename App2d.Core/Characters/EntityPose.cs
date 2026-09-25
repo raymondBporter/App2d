@@ -43,14 +43,13 @@ public sealed class EntityPose
     public EntityPose(PointLibrary library)
     {
         _library = library; _raw = new Vector3[library.PointNames.Count];
-        if (library.Anatomy == "person") _person = new(library);
-        else if (library.Anatomy == "hound") _hound = new(library);
-        else throw new InvalidDataException("Entity pose requires Person or Quadruped.");
+        EntityVocabulary.Require(library.Anatomy, EntityVocabulary.EntityAnatomies, "entity pose anatomy");
+        if (library.Anatomy == "person") _person = new(library); else _hound = new(library);
     }
     private void Transform(CharacterAppearance look) { if (_person is not null) _person.Transform(_raw, look); else _hound!.Transform(_raw, look); }
     private Vector2 P(int i) { var p = _person!.Point(i); return new(p.X, p.Y); }
     private Vector2 H(string name) { var p = _hound!.Point(name); return new(p.X, p.Y); }
-    private Vector2 Root => _person is not null ? (P(1) + P(2)) / 2 : H("Back:head");
+    private Vector2 Root => _person is not null ? (P(PersonRig.BodyBottomA) + P(PersonRig.BodyBottomB)) / 2 : H("Back:head");
     public void Evaluate(EntityTypeDefinition type, EntityAction action, double seconds, bool facingLeft)
     {
         Look = type.Appearance with { Flip = facingLeft };
@@ -63,11 +62,13 @@ public sealed class EntityPose
         Vector2 head, hand; Vector2[] body, legs, arms, headShape;
         if (_person is not null)
         {
-            head = P(0); hand = P(16); var radius = _person.Radius(Look);
-            var up = SafeDirection(P(17) - head, Vector2.UnitY); var right = new Vector2(up.Y, -up.X) * flip;
+            head = P(PersonRig.Head); hand = P(PersonRig.RightHand); var radius = _person.Radius(Look);
+            var up = SafeDirection(P(PersonRig.HeadUp) - head, Vector2.UnitY); var right = new Vector2(up.Y, -up.X) * flip;
             headShape = Look.CustomHead is { } custom ? custom.Contour().Select(p => head + right * p.X * radius / .6f - up * p.Y * radius / .6f).ToArray() : Circle(head, radius);
-            body = [P(2), P(1), P(3), P(4)]; legs = [P(5), P(6), P(7), P(8), P(9), P(10)]; arms = [P(11), P(12), P(13), P(14), P(15), P(16)];
-            Aim = SafeDirection(hand - P(15), new(flip, 0));
+            body = [P(PersonRig.BodyBottomB), P(PersonRig.BodyBottomA), P(PersonRig.BodyTopA), P(PersonRig.BodyTopB)];
+            legs = [P(PersonRig.LeftHip), P(PersonRig.LeftKnee), P(PersonRig.LeftFoot), P(PersonRig.RightHip), P(PersonRig.RightKnee), P(PersonRig.RightFoot)];
+            arms = [P(PersonRig.LeftShoulder), P(PersonRig.LeftElbow), P(PersonRig.LeftHand), P(PersonRig.RightShoulder), P(PersonRig.RightElbow), P(PersonRig.RightHand)];
+            Aim = SafeDirection(hand - P(PersonRig.RightElbow), new(flip, 0));
             Muzzle = hand + Aim * (.48f * Look.BladeLength) + Offset;
         }
         else

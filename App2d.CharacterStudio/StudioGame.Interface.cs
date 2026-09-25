@@ -10,10 +10,12 @@ internal sealed partial class StudioGame
     private static readonly Vector4 Accent = new(.42f, .84f, .75f, 1);
     private void DrawInterface()
     {
+        if (_workshopActive) { DrawWorkshop(); return; }
         var io = ImGui.GetIO();
         ImGui.SetNextWindowPos(Vector2.Zero); ImGui.SetNextWindowSize(io.DisplaySize);
         ImGui.Begin("Character Studio", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.HorizontalScrollbar);
-        EntityToolbar(); ImGui.TextColored(Accent, _document.Entity?.Name ?? "MOTION STUDIO");
+        if (ImGui.Button("Create / animate")) EnterWorkshop();
+        ImGui.SameLine(); EntityToolbar(); ImGui.TextColored(Accent, _document.Entity?.Name ?? "MOTION STUDIO");
         ImGui.SameLine(Math.Max(400 * Scale, io.DisplaySize.X - 430 * Scale));
         if (ImGui.Button("Open")) OpenLook(); ImGui.SameLine();
         if (ImGui.Button(_document.Dirty ? "Save *" : "Save")) SaveLook(); ImGui.SameLine();
@@ -153,16 +155,18 @@ internal sealed partial class StudioGame
     private void TogglePlay() { if (_arenaOpen) return; if (_document.Entity is not null) { _actionPlaying = !_actionPlaying; return; } if (_document.Playback.Finished) _document.Playback.Select(_document.Playback.ClipId); else _document.Playback.Playing = !_document.Playback.Playing; }
     private static void Slider(string label, float value, float min, float max, Action<float> set)
     { ImGui.TextUnformatted(label); ImGui.SetNextItemWidth(-1); if (ImGui.SliderFloat("##" + label, ref value, min, max, "%.2f", ImGuiSliderFlags.AlwaysClamp)) set(value); }
+    /// <summary>Slider over an authored value's soft range; the hard range still governs validation and drags.</summary>
+    private static void Slider(string label, float value, Limit limit, Action<float> set) => Slider(label, value, limit.SoftMin, limit.SoftMax, set);
     private static void Check(string label, bool value, Action<bool> set) { if (ImGui.Checkbox(label, ref value)) set(value); }
     private void AppearancePanel()
     {
         ImGui.TextColored(Accent, "APPEARANCE"); ImGui.TextWrapped("Shared motion, individual character");
-        var a = _document.Appearance; var before = a with { }; var anatomy = _document.Library.Anatomy;
+        var a = _document.Appearance; var anatomy = _document.Library.Anatomy;
         FacePreviewControls();
-        if (ImGui.Button("Reset look")) { _document.ResetAppearance(); a = _document.Appearance; before = a with { }; }
+        if (ImGui.Button("Reset look")) { _document.ResetAppearance(); a = _document.Appearance; }
         Check("Face left", a.Flip, v => a.Flip = v);
         Slider("Overall size", a.Size, .3f, 2, v => a.Size = v);
-        if (anatomy is "person" or "hound")
+        if (EntityVocabulary.EntityAnatomies.Contains(anatomy))
         {
             if (ImGui.Button("Head editor")) { _headEditorOpen = true; _headFit = true; }
             if (a.CustomHead is not null) { ImGui.SameLine(); if (ImGui.Button("Original head")) a.CustomHead = null; }
@@ -225,7 +229,7 @@ internal sealed partial class StudioGame
             if (ImGui.ColorEdit3(label, ref value, ImGuiColorEditFlags.NoInputs)) setter($"#{(int)(value.X * 255):x2}{(int)(value.Y * 255):x2}{(int)(value.Z * 255):x2}");
         }
         ColorEdit("Ink", a.Ink, v => a.Ink = v); if (anatomy != "monster") ColorEdit("Fill", a.Fill, v => a.Fill = v);
-        _document.RecordEdit(before, ImGui.IsAnyItemActive());
+        _document.RecordEdit(ImGui.IsAnyItemActive());
         ImGui.Separator();
         if (_document.Entity is null && ImGui.CollapsingHeader("Game animation bindings"))
         {
@@ -257,7 +261,7 @@ internal sealed partial class StudioGame
         }
         var preset = StudioDocument.ReadPreset(dialog.FileName);
         var entry = _libraries.FirstOrDefault(l => l.Id == preset.Library) ?? throw new InvalidDataException("Preset's motion library is not installed.");
-        var document = new StudioDocument(Path.Combine(_assetRoot, entry.Path)); document.Apply(preset, dialog.FileName);
+        var document = new StudioDocument(SharedLibrary(entry.Id)); document.Apply(preset, dialog.FileName);
         if (_documents.TryGetValue(entry.Id, out var current) && current.Dirty && MessageBox.Show("Replace unsaved changes for " + entry.Label + "?", "Open look", MessageBoxButtons.OKCancel) != DialogResult.OK) return;
         _documents[entry.Id] = document; ChooseLibrary(entry); _status = "Opened " + dialog.FileName;
     });

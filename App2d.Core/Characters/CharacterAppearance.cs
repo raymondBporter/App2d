@@ -37,20 +37,24 @@ public sealed record CharacterAppearance
     public float Softness { get; set; } = .3f;
     public float LineWidth { get; set; } = .023f;
 
+    // Appearance ranges are deliberately loose: the same value (leg length, head size) spans different
+    // sensible ranges per anatomy, so the editor chooses its slider spans per anatomy and validation
+    // only rejects values no anatomy can draw.
+    private static readonly Limit Scale = new(.01f, 4), Unit = new(0, 1), Proportion = new(0, 4), Angle = new(-180, 180), WeaponHead = new(.1f, 3);
     public void Validate()
     {
-        static void Range(float value, float min, float max)
-        { if (!float.IsFinite(value) || value < min || value > max) throw new InvalidDataException("Appearance value outside supported range."); }
-        foreach (var value in new[] { Size, Width, Height, Head, HeadWidth, HeadHeight, BladeLength }) Range(value, .01f, 4);
-        foreach (var value in new[] { CornerRadius, HeadRoundness, Softness }) Range(value, 0, 1);
-        foreach (var value in new[] { Body, Thickness, Spread, LegLength, ArmLength, HipWidth, NeckLength, TailLength, WingSize, Neck, Tail, LineWidth }) Range(value, 0, 4);
-        Range(Yaw, -180, 180);
-        foreach (var color in new[] { Ink, Fill })
-            if (color is null || color.Length != 7 || color[0] != '#' || !uint.TryParse(color.AsSpan(1), System.Globalization.NumberStyles.HexNumber, null, out _))
-                throw new InvalidDataException("Invalid appearance color.");
-        if (Face is null) throw new InvalidDataException("Missing face selection.");
-        if (Weapon is not ("sword" or "rapier" or "mace" or "hammer" or "pistol")) throw new InvalidDataException("Unknown weapon selection.");
-        Range(WeaponHeadSize, .1f, 3);
+        Scale.Check(Size, "size"); Scale.Check(Width, "width"); Scale.Check(Height, "height"); Scale.Check(Head, "head");
+        Scale.Check(HeadWidth, "headWidth"); Scale.Check(HeadHeight, "headHeight"); Scale.Check(BladeLength, "bladeLength");
+        Unit.Check(CornerRadius, "cornerRadius"); Unit.Check(HeadRoundness, "headRoundness"); Unit.Check(Softness, "softness");
+        Proportion.Check(Body, "body"); Proportion.Check(Thickness, "thickness"); Proportion.Check(Spread, "spread");
+        Proportion.Check(LegLength, "legLength"); Proportion.Check(ArmLength, "armLength"); Proportion.Check(HipWidth, "hipWidth");
+        Proportion.Check(NeckLength, "neckLength"); Proportion.Check(TailLength, "tailLength"); Proportion.Check(WingSize, "wingSize");
+        Proportion.Check(Neck, "neck"); Proportion.Check(Tail, "tail"); Proportion.Check(LineWidth, "lineWidth");
+        Angle.Check(Yaw, "yaw");
+        Limit.Color(Ink, "ink"); Limit.Color(Fill, "fill");
+        if (Face is null) throw new InvalidDataException("face is required; use \"none\" for no face.");
+        EntityVocabulary.Require(Weapon, EntityVocabulary.Weapons, "weapon");
+        WeaponHead.Check(WeaponHeadSize, "weaponHeadSize");
         CustomHead?.Validate();
     }
 }

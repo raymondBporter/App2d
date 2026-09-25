@@ -38,12 +38,12 @@ internal sealed partial class StudioGame
     }
     private void DrawHeadEditor()
     {
-        if (!_headEditorOpen || _document.Library.Anatomy is not ("person" or "hound")) return;
+        if (!_headEditorOpen || !EntityVocabulary.EntityAnatomies.Contains(_document.Library.Anatomy)) return;
         var display = ImGui.GetIO().DisplaySize;
         ImGui.SetNextWindowSize(Vector2.Min(new(930 * Scale, 760 * Scale), display * .92f), ImGuiCond.FirstUseEver);
         ImGui.SetNextWindowPos(display * .5f, ImGuiCond.FirstUseEver, new(.5f));
         if (!ImGui.Begin("Head editor", ref _headEditorOpen)) { ImGui.End(); return; }
-        var a = _document.Appearance; var before = a with { };
+        var a = _document.Appearance;
         var enabled = a.CustomHead is not null;
         if (ImGui.Checkbox("Use edited head", ref enabled)) { if (enabled) SetHead(_headDraft); else a.CustomHead = null; }
         ImGui.SameLine(); ImGui.TextDisabled(_document.Library.Label + " / live animation in the main preview");
@@ -54,14 +54,14 @@ internal sealed partial class StudioGame
             using var data = JsonDocument.Parse(File.ReadAllText(dialog.FileName));
             if (!data.RootElement.TryGetProperty("offsets", out var offsets) || offsets.ValueKind != JsonValueKind.Array || !data.RootElement.TryGetProperty("version", out var version) || version.GetInt32() != 1)
                 throw new InvalidDataException("Import a version 1 head configuration from the head workshop.");
-            var shape = data.RootElement.Deserialize<HeadShape>(StudioDocument.JsonOptions) ?? throw new InvalidDataException("Empty head configuration.");
+            var shape = data.RootElement.Deserialize<HeadShape>(AuthoredJson.Tolerant) ?? throw new InvalidDataException("Empty head configuration.");
             shape.Validate(); SetHead(shape); _headFit = true;
         });
         ImGui.SameLine();
         if (ImGui.Button("Export head")) Attempt(() =>
         {
             using var dialog = new SaveFileDialog { Filter = "Head configuration (*.json)|*.json", FileName = "head.json", DefaultExt = "json", AddExtension = true };
-            if (dialog.ShowDialog() == DialogResult.OK) File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(a.CustomHead ?? _headDraft, StudioDocument.JsonOptions));
+            if (dialog.ShowDialog() == DialogResult.OK) File.WriteAllText(dialog.FileName, JsonSerializer.Serialize(a.CustomHead ?? _headDraft, AuthoredJson.Options));
         });
         ImGui.SameLine(); if (ImGui.Button("Reset head")) { SetHead(new()); _headFit = true; }
         ImGui.Separator();
@@ -88,10 +88,10 @@ internal sealed partial class StudioGame
         if (ImGui.Button("Explore four shapes"))
         {
             _headProposals.Clear(); var source = a.CustomHead ?? _headDraft;
-            float Between(float lo, float hi) => lo + Random.Shared.NextSingle() * (hi - lo);
+            float Between(Limit limit) => limit.Min + Random.Shared.NextSingle() * (limit.Max - limit.Min);
             for (var tries = 0; tries < 80 && _headProposals.Count < 4; tries++)
             {
-                var proposal = source with { Width = Between(.45f, 1.8f), Height = Between(.45f, 1.8f), Muzzle = Between(0, 1.8f), Depth = Between(.12f, 1.2f), Drop = Between(-.65f, .7f), Brow = Between(-.6f, .6f), Jaw = Between(0, 1), Offsets = default };
+                var proposal = source with { Width = Between(HeadShape.Limits.Width), Height = Between(HeadShape.Limits.Height), Muzzle = Between(HeadShape.Limits.Muzzle), Depth = Between(HeadShape.Limits.Depth), Drop = Between(HeadShape.Limits.Drop), Brow = Between(HeadShape.Limits.Brow), Jaw = Between(HeadShape.Limits.Jaw), Offsets = default };
                 if (proposal.IsSimple()) _headProposals.Add(proposal);
             }
         }
@@ -99,37 +99,37 @@ internal sealed partial class StudioGame
         if (_headError.Length > 0) ImGui.TextWrapped(_headError);
         ImGui.EndChild(); ImGui.SameLine();
         ImGui.BeginChild(_headFaceMode ? "Head face fields" : "Head outline fields", new(0, 0), ImGuiChildFlags.Borders);
-        void Field(string name, Func<HeadShape, float> read, float min, float max, Func<HeadShape, float, HeadShape> write)
+        void Field(string name, Func<HeadShape, float> read, Limit limit, Func<HeadShape, float, HeadShape> write)
         {
             var shape = a.CustomHead ?? _headDraft;
-            Slider(name, read(shape), min, max, v => SetHead(write(shape, v)));
+            Slider(name, read(shape), limit, v => SetHead(write(shape, v)));
         }
         if (!_headFaceMode)
         {
-        Field("Skull width", s => s.Width, .45f, 1.8f, (s, v) => s with { Width = v });
-        Field("Skull height", s => s.Height, .45f, 1.8f, (s, v) => s with { Height = v });
-        Field("Muzzle length", s => s.Muzzle, 0, 1.8f, (s, v) => s with { Muzzle = v });
-        Field("Muzzle thickness", s => s.Depth, .12f, 1.2f, (s, v) => s with { Depth = v });
-        Field("Muzzle up / down", s => s.Drop, -.65f, .7f, (s, v) => s with { Drop = v });
-        Field("Forehead slope", s => s.Brow, -.6f, .6f, (s, v) => s with { Brow = v });
-        Field("Jaw fullness", s => s.Jaw, 0, 1, (s, v) => s with { Jaw = v });
-        Field("Corner softness", s => s.Roundness, 0, 1, (s, v) => s with { Roundness = v });
+        Field("Skull width", s => s.Width, HeadShape.Limits.Width, (s, v) => s with { Width = v });
+        Field("Skull height", s => s.Height, HeadShape.Limits.Height, (s, v) => s with { Height = v });
+        Field("Muzzle length", s => s.Muzzle, HeadShape.Limits.Muzzle, (s, v) => s with { Muzzle = v });
+        Field("Muzzle thickness", s => s.Depth, HeadShape.Limits.Depth, (s, v) => s with { Depth = v });
+        Field("Muzzle up / down", s => s.Drop, HeadShape.Limits.Drop, (s, v) => s with { Drop = v });
+        Field("Forehead slope", s => s.Brow, HeadShape.Limits.Brow, (s, v) => s with { Brow = v });
+        Field("Jaw fullness", s => s.Jaw, HeadShape.Limits.Jaw, (s, v) => s with { Jaw = v });
+        Field("Corner softness", s => s.Roundness, HeadShape.Limits.Roundness, (s, v) => s with { Roundness = v });
         ImGui.Separator();
         ImGui.SetNextItemWidth(-1);
         if (ImGui.BeginCombo("##Head point", HeadShape.PointNames[_headPoint]))
         { for (var i = 0; i < 10; i++) if (ImGui.Selectable(HeadShape.PointNames[i], i == _headPoint)) _headPoint = i; ImGui.EndCombo(); }
-        Field("Point horizontal", s => s.Offsets[_headPoint].X, -1, 1, (s, v) => s with { Offsets = s.Offsets.With(_headPoint, s.Offsets[_headPoint] with { X = v }) });
-        Field("Point vertical", s => s.Offsets[_headPoint].Y, -1, 1, (s, v) => s with { Offsets = s.Offsets.With(_headPoint, s.Offsets[_headPoint] with { Y = v }) });
+        Field("Point horizontal", s => s.Offsets[_headPoint].X, HeadShape.Limits.Offset, (s, v) => s with { Offsets = s.Offsets.With(_headPoint, s.Offsets[_headPoint] with { X = v }) });
+        Field("Point vertical", s => s.Offsets[_headPoint].Y, HeadShape.Limits.Offset, (s, v) => s with { Offsets = s.Offsets.With(_headPoint, s.Offsets[_headPoint] with { Y = v }) });
         if (ImGui.Button("Reset point")) { var shape = a.CustomHead ?? _headDraft; SetHead(shape with { Offsets = shape.Offsets.With(_headPoint, default) }); }
         ImGui.SameLine(); if (ImGui.Button("Clear hand edits")) SetHead((a.CustomHead ?? _headDraft) with { Offsets = default });
         }
         ImGui.Separator();
         if (_headFaceMode)
         {
-        Field("Face left / right", s => s.FaceX, -1.2f, 2.6f, (s, v) => s with { FaceX = v });
-        Field("Face up / down", s => s.FaceY, -1.2f, 1.4f, (s, v) => s with { FaceY = v });
-        Field("Face size", s => s.FaceSize, .25f, 2, (s, v) => s with { FaceSize = v });
-        Field("Face tilt", s => s.FaceAngle, -90, 90, (s, v) => s with { FaceAngle = v });
+        Field("Face left / right", s => s.FaceX, HeadShape.Limits.FaceX, (s, v) => s with { FaceX = v });
+        Field("Face up / down", s => s.FaceY, HeadShape.Limits.FaceY, (s, v) => s with { FaceY = v });
+        Field("Face size", s => s.FaceSize, HeadShape.Limits.FaceSize, (s, v) => s with { FaceSize = v });
+        Field("Face tilt", s => s.FaceAngle, HeadShape.Limits.FaceAngle, (s, v) => s with { FaceAngle = v });
         var current = a.CustomHead ?? _headDraft;
         ImGui.SetNextItemWidth(-1);
         if (ImGui.BeginCombo("##Head expression", current.Face)) { foreach (var id in new[] { "none", "grumpy" }.Concat(FaceExpressions.Names)) if (ImGui.Selectable(id, current.Face == id)) SetHead(current with { Face = id }); ImGui.EndCombo(); }
@@ -139,7 +139,7 @@ internal sealed partial class StudioGame
         if (ImGui.ColorEdit3("Head color", ref color, ImGuiColorEditFlags.NoInputs)) SetHead(colored with { Color = $"#{(int)(color.X * 255):x2}{(int)(color.Y * 255):x2}{(int)(color.Z * 255):x2}" });
         ImGui.TextWrapped("Save look keeps the edited head and weapons with this character. Export head makes a reusable head-only file.");
         ImGui.EndChild();
-        _document.RecordEdit(before, ImGui.IsAnyItemActive());
+        _document.RecordEdit(ImGui.IsAnyItemActive());
         ImGui.End();
     }
     private void HeadCanvas(HeadShape shape, Vector2 size)
@@ -203,8 +203,8 @@ internal sealed partial class StudioGame
         }
         void Move(Vector2 delta)
         {
-            if (_headFaceMode) SetHead(shape with { FaceX = Math.Clamp(shape.FaceX + delta.X, -1.2f, 2.6f), FaceY = Math.Clamp(shape.FaceY + delta.Y, -1.2f, 1.4f) });
-            else { var p = shape.Offsets[_headPoint]; SetHead(shape with { Offsets = shape.Offsets.With(_headPoint, new(Math.Clamp(p.X + delta.X, -1, 1), Math.Clamp(p.Y + delta.Y, -1, 1))) }); }
+            if (_headFaceMode) SetHead(shape with { FaceX = HeadShape.Limits.FaceX.Clamp(shape.FaceX + delta.X), FaceY = HeadShape.Limits.FaceY.Clamp(shape.FaceY + delta.Y) });
+            else { var p = shape.Offsets[_headPoint]; SetHead(shape with { Offsets = shape.Offsets.With(_headPoint, new(HeadShape.Limits.Offset.Clamp(p.X + delta.X), HeadShape.Limits.Offset.Clamp(p.Y + delta.Y))) }); }
         }
         if (ImGui.IsItemActive() && _headDrag >= 0 && ImGui.IsMouseDragging(ImGuiMouseButton.Left)) Move(ImGui.GetIO().MouseDelta / ppu);
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) _headDrag = -1;

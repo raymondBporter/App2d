@@ -2,7 +2,6 @@ using App2d.Core.Characters;
 using App2d.Rendering.Characters;
 using ImGuiNET;
 using System.Numerics;
-using System.Text.Json;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterStudio;
@@ -19,24 +18,41 @@ internal sealed partial class StudioGame
     private bool _geometryDrag;
     private readonly CharacterMesh _collisionOverlay = new(4096);
     private EntityAction CurrentAction => _document.Entity!.Actions.GetValueOrDefault(_actionId) ?? _document.Entity.Actions.Values.First();
+    /// <summary>The one in-memory copy of each packed library. Browsing documents and entity documents share it.</summary>
     private PointLibrary SharedLibrary(string id)
     {
         if (!_sharedLibraries.TryGetValue(id, out var library))
         {
-            var entry = _libraries.First(l => l.Id == id);
+            var entry = _libraries.FirstOrDefault(l => l.Id == id) ?? throw new InvalidDataException($"Motion library '{id}' is not installed.");
             _sharedLibraries[id] = library = PointLibrary.Load(Path.Combine(_assetRoot, entry.Path));
         }
         return library;
     }
+    /// <summary>Drops packed libraries that no open document uses any more.</summary>
+    private void ReleaseUnusedLibraries()
+    {
+        var used = _documents.Values.Concat(_entityDocuments.Values).Append(_document).Where(d => d is not null).Select(d => d.Library.Id).ToHashSet();
+        foreach (var id in _sharedLibraries.Keys.Where(id => !used.Contains(id)).ToArray()) _sharedLibraries.Remove(id);
+    }
+    /// <summary>Loads every type in the entities folder. A broken file is reported and skipped so one bad edit never locks the tool.</summary>
     private void LoadEntityTypes()
     {
         var source = Path.Combine(Environment.CurrentDirectory, "Assets", "Characters", "entities");
         var folder = Directory.Exists(source) ? source : Path.Combine(_assetRoot, "entities");
-        foreach (var path in Directory.EnumerateFiles(folder, "*.json"))
+        var failures = new List<string>();
+        foreach (var path in Directory.EnumerateFiles(folder, "*.json").Order(StringComparer.Ordinal))
         {
-            var entity = EntityTypeDefinition.Load(path); var document = new StudioDocument(SharedLibrary(entity.Library)); document.SetEntity(entity, path);
-            _entityDocuments.Add(entity.Id, document);
+            try
+            {
+                var entity = EntityTypeDefinition.Load(path);
+                if (_entityDocuments.ContainsKey(entity.Id)) throw new InvalidDataException($"Duplicate entity ID '{entity.Id}'.");
+                var document = new StudioDocument(SharedLibrary(entity.Library)); document.SetEntity(entity, path);
+                _entityDocuments.Add(entity.Id, document);
+            }
+            catch (Exception ex) when (ex is IOException or InvalidDataException or System.Text.Json.JsonException or InvalidOperationException)
+            { failures.Add(Path.GetFileName(path) + ": " + ex.Message); }
         }
+        if (failures.Count > 0) _error = "Skipped " + failures.Count + " entity file(s). " + string.Join("  |  ", failures);
     }
     private void ActivateEntity(StudioDocument document)
     {
@@ -50,7 +66,8 @@ internal sealed partial class StudioGame
         {
             foreach (var doc in _entityDocuments.Values) if (ImGui.Selectable(doc.Entity!.Name + (doc.Dirty ? " *" : ""), ReferenceEquals(doc, _document))) ActivateEntity(doc);
             ImGui.Separator();
-            ImGui.BeginDisabled(_document.Library.Anatomy is not ("person" or "hound"));
+            var seedable = EntityVocabulary.EntityAnatomies.Contains(_document.Library.Anatomy) && _entityDocuments.Values.Any(d => d.Library.Id == _document.Library.Id);
+            ImGui.BeginDisabled(!seedable);
             if (ImGui.MenuItem("New from current look")) Attempt(() =>
             {
                 var seed = _entityDocuments.Values.First(d => d.Library.Id == _document.Library.Id).Entity!.Copy();
@@ -77,7 +94,7 @@ internal sealed partial class StudioGame
         {
             if (string.IsNullOrWhiteSpace(_newActionId) || _document.Entity.Actions.ContainsKey(_newActionId)) throw new InvalidDataException("Choose a unique action name.");
             _document.Entity.Actions.Add(_newActionId, CurrentAction with { }); _actionId = _newActionId; _actionTime = 0;
-            _document.RecordEdit(_document.Appearance, false);
+            _document.RecordEdit(false);
         });
         ImGui.TextWrapped("* Placeholder art or motion. Select an action, then edit its timing and geometry on the right.");
     }
@@ -102,7 +119,7 @@ internal sealed partial class StudioGame
         if (action.Placeholder) ImGui.TextColored(new(1, .72f, .4f, 1), "Placeholder");
         if (!string.IsNullOrEmpty(action.Notes)) ImGui.TextWrapped(action.Notes);
     }
-    private static void Choice(string label, string current, string[] values, Action<string> set)
+    private static void Choice(string label, string current, IReadOnlyList<string> values, Action<string> set)
     {
         ImGui.TextUnformatted(label); ImGui.SetNextItemWidth(-1);
         if (!ImGui.BeginCombo("##" + label, current)) return;
@@ -126,10 +143,10 @@ internal sealed partial class StudioGame
             var type = _document.Entity!;
             var name = type.Name; ImGui.TextUnformatted("Name"); ImGui.SetNextItemWidth(-1); if (ImGui.InputText("##Entity name", ref name, 80)) type.Name = name;
             var id = type.Id; ImGui.TextUnformatted("Stable ID"); ImGui.SetNextItemWidth(-1); if (ImGui.InputText("##Entity ID", ref id, 64)) type.Id = id;
-            Slider("Health", type.Health, 1, 100, v => type.Health = (int)v); Slider("Move speed", type.MoveSpeed, 0, 8, v => type.MoveSpeed = v); Slider("Jump speed", type.JumpSpeed, 0, 14, v => type.JumpSpeed = v);
-            Choice("Default controller", type.Behavior, ["player", "melee", "ranged", "passive"], v => type.Behavior = v);
-            Slider("Preferred distance", type.PreferredRange, .1f, 8, v => type.PreferredRange = v); Slider("Attack cooldown", type.Cooldown, 0, 3, v => type.Cooldown = v);
-            Slider("Ground alignment", type.GroundOffset, -2, 2, v => type.GroundOffset = v);
+            Slider("Health", type.Health, EntityTypeDefinition.Limits.Health, v => type.Health = (int)v); Slider("Move speed", type.MoveSpeed, EntityTypeDefinition.Limits.MoveSpeed, v => type.MoveSpeed = v); Slider("Jump speed", type.JumpSpeed, EntityTypeDefinition.Limits.JumpSpeed, v => type.JumpSpeed = v);
+            Choice("Default controller", type.Behavior, EntityVocabulary.Behaviors, v => type.Behavior = v);
+            Slider("Preferred distance", type.PreferredRange, EntityTypeDefinition.Limits.PreferredRange, v => type.PreferredRange = v); Slider("Attack cooldown", type.Cooldown, EntityTypeDefinition.Limits.Cooldown, v => type.Cooldown = v);
+            Slider("Ground alignment", type.GroundOffset, EntityTypeDefinition.Limits.GroundOffset, v => type.GroundOffset = v);
             var notes = type.Notes; ImGui.TextUnformatted("Notes"); if (ImGui.InputTextMultiline("##Type notes", ref notes, 1024, new(-1, 90 * Scale))) type.Notes = notes;
             if (ImGui.Button("Save as new type")) SaveEntityAs();
             ImGui.TextWrapped("Types share motions. Save as creates an independent named type you can refine.");
@@ -138,7 +155,7 @@ internal sealed partial class StudioGame
         if (Tab("Look")) { AppearancePanel(); ImGui.EndTabItem(); }
         if (Tab("Action")) { ActionInspector(); ImGui.EndTabItem(); }
         if (Tab("Collision")) { CollisionInspector(); ImGui.EndTabItem(); }
-        ImGui.EndTabBar(); _document.RecordEdit(_document.Appearance, ImGui.IsAnyItemActive());
+        ImGui.EndTabBar(); _document.RecordEdit(ImGui.IsAnyItemActive());
     }
     private void ActionInspector()
     {
@@ -151,47 +168,47 @@ internal sealed partial class StudioGame
                 if (ImGui.Selectable(clip.Label + "##" + clip.Id, a.Clip == clip.Id)) { a.Clip = clip.Id; _actionTime = 0; }
             ImGui.EndCombo();
         }
-        Slider("Duration (seconds)", a.Duration, .05f, 5, v => a.Duration = v);
+        Slider("Duration (seconds)", a.Duration, EntityAction.Limits.Duration, v => a.Duration = v);
         ImGui.BeginDisabled(a.AttackKind != "none"); Check("Loop", a.Loop, v => a.Loop = v); ImGui.EndDisabled(); Check("Remove horizontal travel", a.RemoveTravel, v => a.RemoveTravel = v);
         Slider("Clip start", a.ClipStart, 0, 1, v => { a.ClipStart = v; a.ClipEnd = Math.Max(v, a.ClipEnd); a.ClipContact = Math.Clamp(a.ClipContact, a.ClipStart, a.ClipEnd); });
         Slider("Clip end", a.ClipEnd, a.ClipStart, 1, v => { a.ClipEnd = v; a.ClipContact = Math.Clamp(a.ClipContact, a.ClipStart, a.ClipEnd); });
-        Slider("Contact in action", a.Contact, .01f, .99f, v => a.Contact = v); Slider("Contact in clip", a.ClipContact, a.ClipStart, a.ClipEnd, v => a.ClipContact = v);
-        Choice("Weapon", a.Weapon, ["inherit", "none", "sword", "rapier", "mace", "hammer", "pistol"], v => a.Weapon = v);
-        Choice("Attack", a.AttackKind, ["none", "melee", "projectile"], v => { a.AttackKind = v; if (v != "none") a.Loop = false; });
+        Slider("Contact in action", a.Contact, EntityAction.Limits.Contact, v => a.Contact = v); Slider("Contact in clip", a.ClipContact, a.ClipStart, a.ClipEnd, v => a.ClipContact = v);
+        Choice("Weapon", a.Weapon, EntityVocabulary.ActionWeapons, v => a.Weapon = v);
+        Choice("Attack", a.AttackKind, EntityVocabulary.AttackKinds, v => { a.AttackKind = v; if (v != "none") a.Loop = false; });
         if (a.AttackKind != "none")
         {
-            Slider("Damage", a.Damage, 0, 20, v => a.Damage = (int)v);
-            Slider("Active start", a.ActiveStart, 0, .98f, v => { a.ActiveStart = v; a.ActiveEnd = Math.Max(a.ActiveEnd, v + .01f); }); Slider("Active end", a.ActiveEnd, a.ActiveStart + .001f, 1, v => a.ActiveEnd = v);
-            Choice("Attach attack to", a.Attachment, ["root", "head", "hand", "muzzle"], v => a.Attachment = v);
-            Slider("Attack X", a.HitX, -3, 3, v => a.HitX = v); Slider("Attack Y", a.HitY, -3, 3, v => a.HitY = v);
-            Slider("Attack width", a.HitWidth, .05f, 4, v => a.HitWidth = v); Slider("Attack height", a.HitHeight, .05f, 4, v => a.HitHeight = v);
-            if (a.AttackKind == "projectile") Slider("Projectile speed", a.ProjectileSpeed, 1, 20, v => a.ProjectileSpeed = v);
+            Slider("Damage", a.Damage, EntityAction.Limits.Damage, v => a.Damage = (int)v);
+            Slider("Active start", a.ActiveStart, EntityAction.Limits.ActiveStart, v => { a.ActiveStart = v; a.ActiveEnd = Math.Max(a.ActiveEnd, v + .01f); }); Slider("Active end", a.ActiveEnd, a.ActiveStart + .001f, 1, v => a.ActiveEnd = v);
+            Choice("Attach attack to", a.Attachment, EntityVocabulary.Attachments, v => a.Attachment = v);
+            Slider("Attack X", a.HitX, EntityAction.Limits.HitX, v => a.HitX = v); Slider("Attack Y", a.HitY, EntityAction.Limits.HitY, v => a.HitY = v);
+            Slider("Attack width", a.HitWidth, EntityAction.Limits.HitWidth, v => a.HitWidth = v); Slider("Attack height", a.HitHeight, EntityAction.Limits.HitHeight, v => a.HitHeight = v);
+            if (a.AttackKind == "projectile") Slider("Projectile speed", a.ProjectileSpeed, EntityAction.Limits.ProjectileSpeed, v => a.ProjectileSpeed = v);
         }
-        Choice("Timeline sound", a.Cue, ["none", "swing", "shot", "hit", "heavy", "bite"], v => a.Cue = v); Slider("Sound at phase", a.CueTime, 0, 1, v => a.CueTime = v);
+        Choice("Timeline sound", a.Cue, EntityVocabulary.SoundCues, v => a.Cue = v); Slider("Sound at phase", a.CueTime, EntityAction.Limits.CueTime, v => a.CueTime = v);
         if (ImGui.Button("Audition sound")) PlayCue(a.Cue);
-        Choice("On impact sound", a.ImpactCue, ["none", "swing", "shot", "hit", "heavy", "bite"], v => a.ImpactCue = v);
+        Choice("On impact sound", a.ImpactCue, EntityVocabulary.SoundCues, v => a.ImpactCue = v);
         Check("Placeholder", a.Placeholder, v => a.Placeholder = v);
         var notes = a.Notes; if (ImGui.InputTextMultiline("##Action notes", ref notes, 1024, new(-1, 70 * Scale))) a.Notes = notes;
-        if (_actionId is not ("idle" or "walk" or "attack" or "hit" or "death") && ImGui.Button("Delete action")) { _document.Entity!.Actions.Remove(_actionId); _actionId = "idle"; _actionTime = 0; }
+        if (!EntityVocabulary.RequiredActions.Contains(_actionId) && ImGui.Button("Delete action")) { _document.Entity!.Actions.Remove(_actionId); _actionId = "idle"; _actionTime = 0; }
     }
     private void CollisionInspector()
     {
         var type = _document.Entity!; ImGui.Checkbox("Show collision", ref _showCollision);
         ImGui.TextColored(Accent, "Movement body");
-        Slider("Body width", type.Movement.Width, .1f, 4, v => type.Movement.Width = v); Slider("Body height", type.Movement.Height, .1f, 4, v => type.Movement.Height = v); Slider("Body offset X", type.Movement.OffsetX, -2, 2, v => type.Movement.OffsetX = v);
+        Slider("Body width", type.Movement.Width, MovementShape.Limits.Width, v => type.Movement.Width = v); Slider("Body height", type.Movement.Height, MovementShape.Limits.Height, v => type.Movement.Height = v); Slider("Body offset X", type.Movement.OffsetX, MovementShape.Limits.OffsetX, v => type.Movement.OffsetX = v);
         if (ImGui.Button("Fit standing body"))
         {
             var pose = _document.EntityPose!; pose.Evaluate(type, type.Actions["idle"], 0, false);
             var points = pose.Hurt.SelectMany(r => r.Points).ToArray();
-            if (points.Length > 0) { var min = points.Aggregate(Vector2.Min); var max = points.Aggregate(Vector2.Max); type.Movement.Width = Math.Clamp(max.X - min.X, .1f, 8); type.Movement.Height = Math.Clamp(max.Y, .1f, 8); type.Movement.OffsetX = (max.X + min.X) / 2; }
+            if (points.Length > 0) { var min = points.Aggregate(Vector2.Min); var max = points.Aggregate(Vector2.Max); type.Movement.Width = MovementShape.Limits.Width.Clamp(max.X - min.X); type.Movement.Height = MovementShape.Limits.Height.Clamp(max.Y); type.Movement.OffsetX = (max.X + min.X) / 2; }
         }
         ImGui.TextWrapped("Stable during animation. Floor and wall collision use this body.");
-        ImGui.Separator(); Choice("Hurt region", _regionId, ["body", "head", "legs", "arms"], v => _regionId = v);
+        ImGui.Separator(); Choice("Hurt region", _regionId, EntityVocabulary.Regions, v => _regionId = v);
         if (!type.Regions.TryGetValue(_regionId, out var region)) type.Regions.Add(_regionId, region = new());
-        Choice("Geometry", region.Mode, ["anatomy", "custom", "disabled"], v => region.Mode = v);
-        if (region.Mode == "anatomy") { Slider("Padding", region.Padding, 0, .5f, v => region.Padding = v); Slider("Horizontal scale", region.ScaleX, .1f, 3, v => region.ScaleX = v); Slider("Vertical scale", region.ScaleY, .1f, 3, v => region.ScaleY = v); }
-        if (region.Mode == "custom") { Slider("Region width", region.Width, .05f, 4, v => region.Width = v); Slider("Region height", region.Height, .05f, 4, v => region.Height = v); }
-        if (region.Mode != "disabled") { Slider("Region offset X", region.OffsetX, -2, 2, v => region.OffsetX = v); Slider("Region offset Y", region.OffsetY, -2, 2, v => region.OffsetY = v); }
+        Choice("Geometry", region.Mode, EntityVocabulary.RegionModes, v => region.Mode = v);
+        if (region.Mode == "anatomy") { Slider("Padding", region.Padding, RegionSettings.Limits.Padding, v => region.Padding = v); Slider("Horizontal scale", region.ScaleX, RegionSettings.Limits.ScaleX, v => region.ScaleX = v); Slider("Vertical scale", region.ScaleY, RegionSettings.Limits.ScaleY, v => region.ScaleY = v); }
+        if (region.Mode == "custom") { Slider("Region width", region.Width, RegionSettings.Limits.Width, v => region.Width = v); Slider("Region height", region.Height, RegionSettings.Limits.Height, v => region.Height = v); }
+        if (region.Mode != "disabled") { Slider("Region offset X", region.OffsetX, RegionSettings.Limits.OffsetX, v => region.OffsetX = v); Slider("Region offset Y", region.OffsetY, RegionSettings.Limits.OffsetY, v => region.OffsetY = v); }
         ImGui.TextWrapped("Drag this region in the preview to offset it; Shift-drag resizes it. Anatomy regions follow the pose. Legs use a filled envelope; arms start disabled.");
     }
     private void SaveEntityAs() => Attempt(() =>
@@ -245,24 +262,25 @@ internal sealed partial class StudioGame
         var flip = type.Appearance.Flip ? -1 : 1;
         if (_activeEntityTab == "Action")
         {
-            if (ImGui.GetIO().KeyShift) { action.HitWidth = Math.Clamp(action.HitWidth + delta.X * 2, .02f, 8); action.HitHeight = Math.Clamp(action.HitHeight + delta.Y * 2, .02f, 8); }
-            else { action.HitX = Math.Clamp(action.HitX + delta.X * flip, -5, 5); action.HitY = Math.Clamp(action.HitY + delta.Y, -5, 5); }
+            if (ImGui.GetIO().KeyShift) { action.HitWidth = EntityAction.Limits.HitWidth.Clamp(action.HitWidth + delta.X * 2); action.HitHeight = EntityAction.Limits.HitHeight.Clamp(action.HitHeight + delta.Y * 2); }
+            else { action.HitX = EntityAction.Limits.HitX.Clamp(action.HitX + delta.X * flip); action.HitY = EntityAction.Limits.HitY.Clamp(action.HitY + delta.Y); }
         }
         else
         {
             var settings = type.Regions[_regionId];
             if (ImGui.GetIO().KeyShift)
             {
-                if (settings.Mode == "custom") { settings.Width = Math.Clamp(settings.Width + delta.X * 2, .02f, 8); settings.Height = Math.Clamp(settings.Height + delta.Y * 2, .02f, 8); }
-                else { settings.ScaleX = Math.Clamp(settings.ScaleX + delta.X * 2 / Math.Max(.1f, max.X - min.X), .1f, 3); settings.ScaleY = Math.Clamp(settings.ScaleY + delta.Y * 2 / Math.Max(.1f, max.Y - min.Y), .1f, 3); }
+                if (settings.Mode == "custom") { settings.Width = RegionSettings.Limits.Width.Clamp(settings.Width + delta.X * 2); settings.Height = RegionSettings.Limits.Height.Clamp(settings.Height + delta.Y * 2); }
+                else { settings.ScaleX = RegionSettings.Limits.ScaleX.Clamp(settings.ScaleX + delta.X * 2 / Math.Max(.1f, max.X - min.X)); settings.ScaleY = RegionSettings.Limits.ScaleY.Clamp(settings.ScaleY + delta.Y * 2 / Math.Max(.1f, max.Y - min.Y)); }
             }
-            else { settings.OffsetX = Math.Clamp(settings.OffsetX + delta.X * flip, -4, 4); settings.OffsetY = Math.Clamp(settings.OffsetY + delta.Y, -4, 4); }
+            else { settings.OffsetX = RegionSettings.Limits.OffsetX.Clamp(settings.OffsetX + delta.X * flip); settings.OffsetY = RegionSettings.Limits.OffsetY.Clamp(settings.OffsetY + delta.Y); }
         }
-        _document.RecordEdit(_document.Appearance, true);
+        _document.RecordEdit(true);
     }
     private void ConfirmClose(object? sender, FormClosingEventArgs args)
     {
-        foreach (var doc in _entityDocuments.Values.Concat(_documents.Values).Append(_document).Distinct().Where(d => d.Dirty))
+        if (!ConfirmPuppetReplacement()) { args.Cancel = true; return; }
+        foreach (var doc in _entityDocuments.Values.Concat(_documents.Values).Append(_document).Distinct().Where(d => d is not null && d.Dirty))
         {
             var result = MessageBox.Show("Save changes to " + (doc.Entity?.Name ?? doc.Library.Label) + "?", "Unsaved changes", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
             if (result == DialogResult.Cancel) { args.Cancel = true; return; }

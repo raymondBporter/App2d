@@ -45,6 +45,20 @@ or viewport drag is grouped into one edit. Closing the application offers to sav
 unsaved documents. Unsaved documents survive entity switching. Head-only exports
 remain compatible with the original browser workshop.
 
+Saved files are sparse: a value equal to the type's default is omitted, so files stay
+short and diffs show only what changed. Identity members (`format`, `version`, `id`,
+`name`, `library`, `clip`) are always written. Loading is strict: a misspelled member
+is an error rather than a silently ignored default, and every range or vocabulary
+error names the offending field, such as `actions.attack.activeStart`. A type file
+that fails to load is skipped and reported at the bottom of the window; the rest of
+the folder still opens.
+
+Vocabularies (weapons, sound cues, behaviors, attack kinds, attachments, regions) and
+value ranges live once in `App2d.Core/Characters/AuthoringSchema.cs` and the `Limits`
+class on each record. Validators, studio combos and sliders all read them, so adding a
+cue or widening a range is a single edit. Person controls are addressed through
+`PersonRig`, which is verified against the library on load.
+
 Refreshing motion assets does not regenerate or overwrite entity types. The
 explicit `node tools/CharacterPipeline/create-starter-types.cjs` command resets the
 five examples and should only be used when deliberately replacing them.

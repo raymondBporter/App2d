@@ -329,6 +329,10 @@ Run the C# / Dear ImGui character motion studio with:
 dotnet run --project App2d.CharacterStudio
 ```
 
+Use **Create / animate**, or add `-- --workshop`, to create a character from simple
+shapes and named controls without importing animation. The [character workshop](docs/character-workshop.md)
+includes key poses, two-bone IK, world-space contact intervals and a step/plant study.
+
 The studio includes 759 point-animation clips (662 Person clips, including the Kevin Iglesias free packs) across Person, Quadruped, Blob,
 Flying and 11 creature studies. Search and scrub motions, edit appearances,
 preview sequences, and save JSON looks with semantic animation bindings.

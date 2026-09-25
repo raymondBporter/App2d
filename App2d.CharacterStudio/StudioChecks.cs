@@ -11,7 +11,7 @@ internal static class StudioChecks
     public static void Run(string root)
     {
         using var catalog = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "catalog.json")));
-        var libraries = JsonSerializer.Deserialize<LibraryEntry[]>(catalog.RootElement.GetProperty("libraries"), StudioDocument.JsonOptions)!;
+        var libraries = JsonSerializer.Deserialize<LibraryEntry[]>(catalog.RootElement.GetProperty("libraries"), AuthoredJson.Tolerant)!;
         var clips = 0; var poses = 0; var maximumTriangles = 0;
         foreach (var entry in libraries)
         {
@@ -57,7 +57,7 @@ internal static class StudioChecks
     private static void VerifyWolfLook(string root)
     {
         var path = Path.Combine(root, "looks", "tomek-wolf.json");
-        var document = new StudioDocument(Path.Combine(root, "quadruped", "library.json"));
+        var document = new StudioDocument(PointLibrary.Load(Path.Combine(root, "quadruped", "library.json")));
         document.Apply(StudioDocument.ReadPreset(path), path);
         if (document.Bindings.Count != 9) throw new InvalidDataException("Missing wolf bindings.");
         foreach (var clipId in document.Bindings.Values)
@@ -101,9 +101,9 @@ internal static class StudioChecks
             var pose = new Vector3[library.PointNames.Count]; clip.Sample(time, pose, true);
             var expected = test.GetProperty("pose");
             for (var i = 0; i < pose.Length; i++) Near(pose[i], new(expected[i * 3].GetSingle(), expected[i * 3 + 1].GetSingle(), expected[i * 3 + 2].GetSingle()), clip.Id + " source pose");
-            var appearance = JsonSerializer.SerializeToNode(StudioDocument.Defaults(library), StudioDocument.JsonOptions)!.AsObject();
+            var appearance = JsonSerializer.SerializeToNode(StudioDocument.Defaults(library), AuthoredJson.Tolerant)!.AsObject();
             foreach (var p in test.GetProperty("appearance").EnumerateObject()) appearance[p.Name] = JsonNode.Parse(p.Value.GetRawText());
-            var look = appearance.Deserialize<CharacterAppearance>(StudioDocument.JsonOptions)!;
+            var look = appearance.Deserialize<CharacterAppearance>(AuthoredJson.Tolerant)!;
             // These fixtures verify the imported source artwork, including its original
             // face vertices. New expressive faces are exercised by the render sheets.
             if (library.Anatomy == "person" && look.Face is not ("none" or "cycle")) look = look with { Face = "source:" + look.Face };
@@ -119,16 +119,16 @@ internal static class StudioChecks
     }
     private static void VerifyDocument(string root)
     {
-        var document = new StudioDocument(Path.Combine(root, "person", "library.json"));
+        var document = new StudioDocument(PointLibrary.Load(Path.Combine(root, "person", "library.json")));
         var before = document.Appearance with { };
-        document.Appearance.Head = 1.4f; document.RecordEdit(before, false); document.Undo();
+        document.Appearance.Head = 1.4f; document.RecordEdit(false); document.Undo();
         if (document.Appearance.Head != before.Head) throw new InvalidDataException("Appearance undo failed.");
         document.Redo(); if (document.Appearance.Head != 1.4f) throw new InvalidDataException("Appearance redo failed.");
         before = document.Appearance with { };
         document.Appearance.CustomHead = new HeadShape { Muzzle = 1.3f, FaceAngle = 30, Offsets = new HeadOffsets().With(2, new(.1f, -.15f)) };
         document.Appearance.Weapon = "hammer"; document.Appearance.WeaponHeadSize = 1.5f;
         var edited = document.Appearance with { };
-        document.RecordEdit(before, false); document.Undo();
+        document.RecordEdit(false); document.Undo();
         if (document.Appearance.CustomHead is not null || document.Appearance.Weapon != "sword") throw new InvalidDataException("Head/weapon undo failed.");
         document.Redo(); if (document.Appearance != edited) throw new InvalidDataException("Head/weapon redo failed.");
         document.Bind("Idle", "idle");
@@ -136,7 +136,7 @@ internal static class StudioChecks
         try
         {
             document.Save(file); var preset = StudioDocument.ReadPreset(file);
-            var restored = new StudioDocument(Path.Combine(root, "person", "library.json")); restored.Apply(preset, file);
+            var restored = new StudioDocument(PointLibrary.Load(Path.Combine(root, "person", "library.json"))); restored.Apply(preset, file);
             if (restored.Appearance != document.Appearance || restored.Bindings["Idle"] != "idle" || restored.Dirty) throw new InvalidDataException("Preset roundtrip failed.");
         }
         finally { File.Delete(file); }
@@ -147,7 +147,7 @@ internal static class StudioChecks
         var drawing = new HeadDrawing(); var body = new CharacterMesh(); var face = new CharacterMesh();
         foreach (var test in reference.RootElement.EnumerateArray())
         {
-            var shape = test.GetProperty("shape").Deserialize<HeadShape>(StudioDocument.JsonOptions)!; shape.Validate();
+            var shape = test.GetProperty("shape").Deserialize<HeadShape>(AuthoredJson.Tolerant)!; shape.Validate();
             var points = shape.Points(); var expected = test.GetProperty("points");
             for (var i = 0; i < points.Length; i++) Near(new(points[i], 0), new(expected[i][0].GetSingle(), expected[i][1].GetSingle(), 0), "Source head control point");
             var curves = test.GetProperty("curve"); var contour = shape.Contour(); var index = 0; Vector2? previous = null;
@@ -162,7 +162,7 @@ internal static class StudioChecks
                 }
             }
             if (index != contour.Length) throw new InvalidDataException("Head contour count mismatch.");
-            var roundtrip = JsonSerializer.Deserialize<HeadShape>(JsonSerializer.Serialize(shape, StudioDocument.JsonOptions), StudioDocument.JsonOptions);
+            var roundtrip = JsonSerializer.Deserialize<HeadShape>(JsonSerializer.Serialize(shape, AuthoredJson.Tolerant), AuthoredJson.Tolerant);
             if (shape != roundtrip) throw new InvalidDataException("Portable head roundtrip changed the shape.");
             body.Clear(); face.Clear(); drawing.Build(body, face, shape with { Face = "none" }, Vector3.Zero, Vector3.UnitX, -Vector3.UnitY, .035f, Microsoft.Xna.Framework.Color.Black);
             if (body.Count == 0) throw new InvalidDataException("Head workshop produced an empty mesh.");
@@ -182,7 +182,7 @@ internal static class StudioChecks
         if (crossed.IsSimple()) throw new InvalidDataException("Folded head outline was accepted.");
         foreach (var id in new[] { "person", "quadruped" })
         {
-            var document = new StudioDocument(Path.Combine(root, id, "library.json"));
+            var document = new StudioDocument(PointLibrary.Load(Path.Combine(root, id, "library.json")));
             foreach (var clip in document.Library.Clips.Values) foreach (var flipped in new[] { false, true })
             {
                 var look = document.Appearance with { CustomHead = new HeadShape { FaceAngle = 35, FaceX = .3f }, Flip = flipped, NeckLength = .5f };
@@ -202,7 +202,7 @@ internal static class StudioChecks
             if (!libraries.TryGetValue(entity.Library, out var library)) libraries.Add(entity.Library, library = PointLibrary.Load(Path.Combine(root, entity.Library, "library.json")));
             entity.Validate(library); var document = new StudioDocument(library); document.SetEntity(entity, path);
             var original = System.Text.Json.JsonSerializer.Serialize(entity, EntityTypeDefinition.JsonOptions);
-            entity.Actions["attack"].Damage++; entity.Regions["head"].Padding = .2f; document.RecordEdit(document.Appearance, false); document.Undo();
+            entity.Actions["attack"].Damage++; entity.Regions["head"].Padding = .2f; document.RecordEdit(false); document.Undo();
             if (System.Text.Json.JsonSerializer.Serialize(document.Entity, EntityTypeDefinition.JsonOptions) != original) throw new InvalidDataException("Entity action/collision undo failed.");
             document.Redo();
             if (document.Entity!.Regions["head"].Padding != .2f) throw new InvalidDataException("Entity action/collision redo failed.");

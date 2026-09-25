@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Rendering.Characters;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
@@ -36,11 +37,17 @@ internal sealed partial class StudioGame : Game
     private readonly string _settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "App2d", "CharacterStudio", "settings.json");
     private float Scale => _gui.UiScale;
 
-    public StudioGame(string assetRoot, string? smokePath, bool wolfSmokeOnly = false)
+    public StudioGame(string assetRoot, string? smokePath, bool wolfSmokeOnly = false, bool workshop = false, bool workshopSmoke = false)
     {
         _assetRoot = assetRoot; _smokePath = smokePath;
-        using var catalog = JsonDocument.Parse(File.ReadAllText(Path.Combine(assetRoot, "catalog.json")));
-        _libraries = JsonSerializer.Deserialize<LibraryEntry[]>(catalog.RootElement.GetProperty("libraries"), StudioDocument.JsonOptions)!;
+        var catalogPath = Path.Combine(assetRoot, "catalog.json");
+        _libraries = [];
+        if (File.Exists(catalogPath))
+        {
+            using var catalog = JsonDocument.Parse(File.ReadAllText(catalogPath));
+            _libraries = JsonSerializer.Deserialize<LibraryEntry[]>(catalog.RootElement.GetProperty("libraries"), AuthoredJson.Tolerant)!;
+        }
+        _workshopActive = workshop || workshopSmoke || _libraries.Length == 0; _workshopSmoke = workshopSmoke;
         if (wolfSmokeOnly) _smokeIndex = _libraries.Length + SmokeScenarios.Length;
         _graphics = new(this) { PreferredBackBufferWidth = 1480, PreferredBackBufferHeight = 930, GraphicsProfile = GraphicsProfile.HiDef,
             PreferredDepthStencilFormat = DepthFormat.Depth24, PreferMultiSampling = true, SynchronizeWithVerticalRetrace = true };
@@ -60,10 +67,7 @@ internal sealed partial class StudioGame : Game
             if (settings.RootElement.TryGetProperty("uiScale", out var value) && value.TryGetSingle(out var scale) && float.IsFinite(scale)) userScale = Math.Clamp(scale, .75f, 2);
         });
         _gui = new(this, userScale); _renderer = new(GraphicsDevice);
-        foreach (var id in new[] { "happy", "grumpy" }) { using var stream = File.OpenRead(Path.Combine(_assetRoot, "faces", id + ".png")); _faces[id] = Texture2D.FromStream(GraphicsDevice, stream); }
-        ChooseLibrary(_libraries[0]);
-        LoadEntityTypes();
-        if (_smokePath is null && _entityDocuments.Count > 0) ActivateEntity(_entityDocuments.Values.FirstOrDefault(d => d.Entity!.Behavior == "player") ?? _entityDocuments.Values.First());
+        if (_workshopActive) EnterWorkshop(); else LoadImportedStudio();
         if (_smokePath is null)
         {
             _nativeForm = Control.FromHandle(Window.Handle)?.FindForm();
@@ -71,12 +75,21 @@ internal sealed partial class StudioGame : Game
         }
         if (_smokePath is not null) Directory.CreateDirectory(_smokePath);
     }
+    private void LoadImportedStudio()
+    {
+        if (_document is not null) return;
+        if (_libraries.Length == 0) throw new InvalidOperationException("No imported libraries are installed.");
+        foreach (var id in new[] { "happy", "grumpy" }) { using var stream = File.OpenRead(Path.Combine(_assetRoot, "faces", id + ".png")); _faces[id] = Texture2D.FromStream(GraphicsDevice, stream); }
+        ChooseLibrary(_libraries[0]); LoadEntityTypes();
+        if (_smokePath is null && _entityDocuments.Count > 0) ActivateEntity(_entityDocuments.Values.FirstOrDefault(d => d.Entity!.Behavior == "player") ?? _entityDocuments.Values.First());
+    }
     private void ChooseLibrary(LibraryEntry entry)
     {
         // Keep only unsaved documents. Clean libraries can be reloaded without retaining all packed data.
         foreach (var id in _documents.Where(p => !p.Value.Dirty && p.Key != entry.Id).Select(p => p.Key).ToArray()) _documents.Remove(id);
-        if (!_documents.TryGetValue(entry.Id, out var document)) { document = new(Path.Combine(_assetRoot, entry.Path)); _documents.Add(entry.Id, document); }
+        if (!_documents.TryGetValue(entry.Id, out var document)) { document = new(SharedLibrary(entry.Id)); _documents.Add(entry.Id, document); }
         _document = document; _filter = "All"; _search = ""; _mode = "filled"; _rest = false;
+        ReleaseUnusedLibraries();
         for (var i = 0; i < 3; i++) _sequence[i] = _document.Playback.ClipId;
         FitMotion();
     }
@@ -102,7 +115,14 @@ internal sealed partial class StudioGame : Game
         {
             if (!_pauseFaces) _faceClock += Math.Min(.1, time.ElapsedGameTime.TotalSeconds);
             var seconds = Math.Min(.1, time.ElapsedGameTime.TotalSeconds) * _speed;
-            if (_document.Entity is null) _document.Playback.Advance(seconds);
+            if (_workshopActive)
+            {
+                if (_workshopPlaying && !_workshopRest)
+                {
+                    AdvanceWorkshop((float)Math.Min(.1, time.ElapsedGameTime.TotalSeconds));
+                }
+            }
+            else if (_document.Entity is null) _document.Playback.Advance(seconds);
             else if (_actionPlaying)
             {
                 var action = CurrentAction; var previous = _actionTime; _actionTime += seconds;
@@ -117,7 +137,7 @@ internal sealed partial class StudioGame : Game
         if (GraphicsDevice.PresentationParameters.BackBufferWidth < 100 || GraphicsDevice.PresentationParameters.BackBufferHeight < 100) return;
         if (_smokePath is not null && _smokeFrame++ % 3 == 0)
         {
-            if (!PrepareSmokeFrame()) { Exit(); return; }
+            if (!(_workshopSmoke ? PrepareWorkshopSmoke() : PrepareSmokeFrame())) { Exit(); return; }
         }
         _gui.Begin((float)time.ElapsedGameTime.TotalSeconds);
         DrawInterface();
@@ -136,7 +156,7 @@ internal sealed partial class StudioGame : Game
         if (_smokePath is not null && _smokeFrame % 3 == 0)
         {
             GraphicsDevice.SetRenderTarget(null);
-            CaptureSmokeFrame();
+            if (_workshopSmoke) CaptureWorkshopSmoke(); else CaptureSmokeFrame();
             _smokeIndex++;
         }
         GraphicsDevice.SetRenderTarget(null);
@@ -195,7 +215,7 @@ internal sealed partial class StudioGame : Game
     }
     protected override void Dispose(bool disposing)
     {
-        if (!_disposed && disposing) { _disposed = true; if (_nativeForm is not null) _nativeForm.FormClosing -= ConfirmClose; _preview?.Dispose(); _capture?.Dispose(); _headPreview?.Dispose(); _arenaTarget?.Dispose(); foreach (var sound in _cueSounds.Values) sound.Dispose(); foreach (var t in _faces.Values) t.Dispose(); _renderer?.Dispose(); _gui?.Dispose(); }
+        if (!_disposed && disposing) { _disposed = true; if (_nativeForm is not null) _nativeForm.FormClosing -= ConfirmClose; _preview?.Dispose(); _capture?.Dispose(); _headPreview?.Dispose(); _arenaTarget?.Dispose(); _puppetTarget?.Dispose(); foreach (var sound in _cueSounds.Values) sound.Dispose(); foreach (var t in _faces.Values) t.Dispose(); _renderer?.Dispose(); _gui?.Dispose(); }
         base.Dispose(disposing);
     }
 }

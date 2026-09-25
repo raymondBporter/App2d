@@ -1,5 +1,13 @@
 # Character Studio
 
+The proposed successor is specified in [Character editor replacement](character-editor-replacement.md),
+including shared model variants, motion sets, implementation stages and code reuse.
+The rest of this page documents the current studio.
+
+For characters built from scratch, use **Create / animate** or run with
+`--workshop`. The [character workshop](character-workshop.md) authors controls,
+simple shapes, key poses and IK contacts without a source motion library.
+
 ## Run
 
 ```powershell
