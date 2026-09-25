@@ -38,6 +38,25 @@ internal static class TestModels
     public static void Near(Vector3 expected, Vector3 actual, float tolerance = 1e-4f, string what = "") =>
         Assert.True(Vector3.Distance(expected, actual) <= tolerance, $"{what}: expected {expected}, found {actual}");
 
+    /// <summary>
+    /// Two full cycles at 240 samples each: every control's world position must match the prototype evaluator.
+    /// Instants exactly at a contact's finish are skipped: the prototype holds contacts over a closed interval,
+    /// the authored runtime over a half-open one, so they release the foot one instant apart by design.
+    /// </summary>
+    public static void AssertMatchesPrototype(PuppetDefinition puppet, ResolvedModel model, MotionClip clip)
+    {
+        var motion = puppet.Motions[0];
+        for (var i = 0; i <= 480; i++)
+        {
+            var seconds = i * motion.Duration / 240.0;
+            var cycleTime = seconds % motion.Duration;
+            if (motion.Contacts.Any(c => Math.Abs(cycleTime - c.Finish) < 1e-5)) continue;
+            var expected = PuppetPose.Sample(puppet, motion, seconds, repeat: true);
+            var actual = PoseEvaluator.Sample(model, clip, seconds, repeat: true);
+            foreach (var control in puppet.Controls) Near(expected.World(control.Id), actual.World(control.Id), 1e-4f, $"{control.Id} at {seconds:F4}s");
+        }
+    }
+
     public static string AuthoredRoot
     {
         get
