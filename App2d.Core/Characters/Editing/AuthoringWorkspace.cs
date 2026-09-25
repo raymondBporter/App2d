@@ -23,6 +23,8 @@ public sealed class AuthoringWorkspace
     /// <summary>Files that could not be read at all. Semantic problems are reported per document by <see cref="Problems"/>.</summary>
     public IReadOnlyList<string> LoadErrors { get; private set; } = [];
     public IEnumerable<AssetDocument> Documents => _documents.Values;
+    /// <summary>Changes whenever any document changes or is added: versions only grow, so their sum never repeats.</summary>
+    public int Revision => _documents.Count + _documents.Values.Sum(d => d.Version);
     public IEnumerable<AssetDocument> DirtyDocuments => _documents.Values.Where(d => d.Dirty || d.IsNew);
     public IEnumerable<AssetDocument<CharacterModel>> Models => _documents.Values.OfType<AssetDocument<CharacterModel>>();
     public IEnumerable<AssetDocument<ModelVariant>> Variants => _documents.Values.OfType<AssetDocument<ModelVariant>>();
