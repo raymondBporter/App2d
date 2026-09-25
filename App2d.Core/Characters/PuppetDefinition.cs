@@ -58,7 +58,7 @@ public sealed record PuppetPart
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
     {
-        if (!isControl(A)) throw new InvalidDataException("Unknown control: " + A);
+        if (A is null || !isControl(A)) throw new InvalidDataException("Unknown control: " + A);
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
         EntityVocabulary.Require(Kind, ["stroke", "ellipse", "box"], "part.kind");
         if (Kind == "stroke" && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");

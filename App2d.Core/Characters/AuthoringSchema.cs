@@ -53,7 +53,7 @@ public static class AuthoredJson
     /// <summary>For files written by other tools, such as head workshop exports, where extra members are tolerated.</summary>
     public static JsonSerializerOptions Tolerant { get; } = Create(strict: false);
     // Identity members are always written even when they equal the defaults, so a file states what it is.
-    private static readonly HashSet<string> AlwaysWritten = new(StringComparer.Ordinal) { "format", "version", "id", "name", "library", "clip" };
+    private static readonly HashSet<string> AlwaysWritten = new(StringComparer.Ordinal) { "format", "version", "id", "name", "library", "clip", "structureRevision" };
 
     private static JsonSerializerOptions Create(bool strict)
     {

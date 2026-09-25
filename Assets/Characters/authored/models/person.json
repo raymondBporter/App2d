@@ -3,6 +3,7 @@
   "version": 1,
   "id": "person",
   "name": "Person",
+  "structureRevision": 1,
   "controls": [
     {
       "id": "hips",

@@ -76,12 +76,13 @@ public sealed class MotionClip
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
         new Limit(.05f, 60).Check(Duration, $"{owner} duration");
         Require(Reference is not null && Travel is not null && Travel.Keys is not null && Tracks is not null && Contacts is not null, $"{owner}: collections cannot be null.");
+        Require(Travel.Scale is not null, $"{owner} travel: a scale is required.");
         foreach (var (measure, length) in Reference) { AuthoredAsset.RequireId(measure, $"{owner} reference"); new Limit(.001f, 1000).Check(length, $"{owner} reference.{measure}"); }
         CheckKeys(Travel.Keys, $"{owner} travel", k => k.Z == 0 && k.Angle == 0, "travel keys use x and y only");
         var seen = new HashSet<(string, string)>();
         foreach (var track in Tracks)
         {
-            Require(track is not null && track.Keys is not null, $"{owner}: incomplete track.");
+            Require(track is not null && track.Keys is not null && track.Target is not null, $"{owner}: incomplete track.");
             EntityVocabulary.Require(track.Kind, TrackKinds, $"{owner} track kind");
             Require(seen.Add((track.Kind, track.Target)), $"{owner}: duplicate {track.Kind} track for '{track.Target}'.");
             var rotate = track.Kind == RotateKind;
@@ -90,7 +91,7 @@ public sealed class MotionClip
         }
         foreach (var contact in Contacts)
         {
-            Require(contact is not null, $"{owner}: null contact.");
+            Require(contact is not null && contact.Chain is not null, $"{owner}: incomplete contact.");
             var field = $"{owner} contact on '{contact.Chain}'";
             new Limit(0, Duration).Check(contact.Start, field + " start"); new Limit(0, Duration).Check(contact.Finish, field + " finish");
             Require(contact.Finish > contact.Start, $"{field}: finish must follow start.");

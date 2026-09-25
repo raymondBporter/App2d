@@ -85,13 +85,15 @@ public sealed class CharacterModel
                 Require(seen.Add(current.Id), $"{owner}: parent cycle at '{control.Id}'.");
         }
 
+        // Hand-edited files may hold a null where an ID belongs; treat it as unknown rather than letting a lookup throw.
+        bool Known(string? id) => id is not null && controls.ContainsKey(id);
         var scales = new HashSet<string>(StringComparer.Ordinal) { Unit };
         foreach (var measure in Measures)
         {
             Require(measure is not null && measure.Path is not null, $"{owner}: incomplete measure.");
             AuthoredAsset.RequireId(measure.Id, $"{owner} measure id");
             Require(measure.Id != Unit && scales.Add(measure.Id), $"{owner}: duplicate or reserved measure '{measure.Id}'.");
-            Require(measure.Path.Count >= 2 && measure.Path.All(controls.ContainsKey), $"{owner}: measure '{measure.Id}' needs a path of at least two known controls.");
+            Require(measure.Path.Count >= 2 && measure.Path.All(Known), $"{owner}: measure '{measure.Id}' needs a path of at least two known controls.");
         }
         foreach (var control in Controls) Require(scales.Contains(control.Scale), $"{owner}: control '{control.Id}' uses unknown scale '{control.Scale}'.");
 
@@ -102,11 +104,11 @@ public sealed class CharacterModel
             AuthoredAsset.RequireId(chain.Id, $"{owner} chain id");
             Require(chainIds.Add(chain.Id), $"{owner}: duplicate chain '{chain.Id}'.");
             Require(chain.Bend is -1 or 1, $"{owner}: chain '{chain.Id}' bend must be -1 or 1.");
-            Require(controls.ContainsKey(chain.Root) && controls.ContainsKey(chain.Joint) && controls.ContainsKey(chain.End), $"{owner}: chain '{chain.Id}' references an unknown control.");
+            Require(Known(chain.Root) && Known(chain.Joint) && Known(chain.End), $"{owner}: chain '{chain.Id}' references an unknown control.");
             Require(controls[chain.Joint].Parent == chain.Root && controls[chain.End].Parent == chain.Joint, $"{owner}: chain '{chain.Id}' needs two connected bones (root → joint → end).");
             Require(solved.Add(chain.Joint) && solved.Add(chain.End), $"{owner}: chains cannot share solved controls ('{chain.Id}').");
             Require(scales.Contains(chain.Scale), $"{owner}: chain '{chain.Id}' uses unknown scale '{chain.Scale}'.");
-            Require(chain.Frame == Locomotion || controls.ContainsKey(chain.Frame), $"{owner}: chain '{chain.Id}' frame '{chain.Frame}' is not a control or '{Locomotion}'.");
+            Require(chain.Frame == Locomotion || Known(chain.Frame), $"{owner}: chain '{chain.Id}' frame '{chain.Frame}' is not a control or '{Locomotion}'.");
         }
         IEnumerable<string> SelfAndAncestors(string id) { for (string? current = id; current is not null; current = controls[current].Parent) yield return current; }
         foreach (var chain in Chains)
@@ -121,7 +123,7 @@ public sealed class CharacterModel
             Require(part is not null, $"{owner}: null part.");
             AuthoredAsset.RequireId(part.Id, $"{owner} part id");
             Require(parts.Add(part.Id), $"{owner}: duplicate part '{part.Id}'.");
-            part.Validate(controls.ContainsKey);
+            part.Validate(Known);
         }
         CheckGeometry(this, Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal), owner);
     }

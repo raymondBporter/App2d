@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using App2d.Core.Characters;
 
 namespace App2d.Tests.Authored;
@@ -13,6 +14,38 @@ public sealed class AuthoredCatalogTests
         Assert.Equal(new[] { "short-broad", "tall-thin" }, catalog.Variants.Keys.Order());
         Assert.Equal(new[] { "person-run", "person-walk" }, catalog.Animations.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
+        // The compatibility contract is visible in every file, even at its default value.
+        foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })
+            Assert.Contains("\"structureRevision\": 1", File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, file)));
+    }
+
+    public static TheoryData<string, string, string> NullReferences => new()
+    {
+        { "models/person.json", "\"root\": \"[^\"]*\"", "\"root\": null" },
+        { "models/person.json", "\"frame\": \"[^\"]*\"", "\"frame\": null" },
+        { "models/person.json", "\"path\": \\[\\s*\"[^\"]*\"", "\"path\": [ null" },
+        { "models/person.json", "\"a\": \"[^\"]*\"", "\"a\": null" },
+        { "models/person.json", "\"face\": \"[^\"]*\"", "\"face\": null" },
+        { "animations/person-walk.json", "\"scale\": \"leg\"", "\"scale\": null" },
+        { "animations/person-walk.json", "\"target\": \"[^\"]*\"", "\"target\": null" },
+        { "animations/person-walk.json", "\"chain\": \"[^\"]*\"", "\"chain\": null" },
+    };
+
+    [Theory, MemberData(nameof(NullReferences))]
+    public void ANullReferenceInAHandEditedFileIsReportedAgainstThatFile(string file, string pattern, string replacement)
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"authored-{Guid.NewGuid():N}");
+        try
+        {
+            PersonTemplate.WriteStudies(root);
+            var path = Path.Combine(root, file); var json = File.ReadAllText(path);
+            var edited = new Regex(pattern).Replace(json, replacement, 1);
+            Assert.NotEqual(json, edited);
+            File.WriteAllText(path, edited);
+            var catalog = AuthoredCatalog.Load(root);
+            Assert.Contains(catalog.Errors, e => e.Contains(Path.GetFileName(file)));
+        }
+        finally { Directory.Delete(root, true); }
     }
 
     [Theory, InlineData("person-walk"), InlineData("person-run")]

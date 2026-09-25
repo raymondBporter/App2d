@@ -56,13 +56,17 @@ public sealed class AuthoredCatalog
                 if (_paths.TryGetValue(key, out var other)) { Errors.Add($"{path}: id '{key}' is already used by {other}."); continue; }
                 _paths[key] = path; into[key] = asset;
             }
-            catch (Exception ex) when (ex is InvalidDataException or JsonException or IOException) { Errors.Add($"{path}: {ex.Message}"); }
+            catch (Exception ex) when (IsFileError(ex)) { Errors.Add($"{path}: {ex.Message}"); }
         }
     }
 
     private void Check(string id, Action action)
     {
         try { action(); }
-        catch (InvalidDataException ex) { Errors.Add($"{_paths[id]}: {ex.Message}"); }
+        catch (Exception ex) when (IsFileError(ex)) { Errors.Add($"{_paths[id]}: {ex.Message}"); }
     }
+
+    /// <summary>Anything a malformed or unreadable file can raise. One bad file is reported against its path, never fatal to the scan.</summary>
+    private static bool IsFileError(Exception ex) =>
+        ex is InvalidDataException or JsonException or IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or KeyNotFoundException;
 }
