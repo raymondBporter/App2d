@@ -15,6 +15,8 @@ public sealed class AuthoredCatalog
     public IReadOnlyDictionary<string, ModelVariant> Variants => _variants;
     public IReadOnlyDictionary<string, MotionClip> Animations => _animations;
     public List<string> Errors { get; } = [];
+    /// <summary>The file an asset was loaded from.</summary>
+    public string PathOf(string id) => _paths[id];
 
     public static AuthoredCatalog Load(string root)
     {
