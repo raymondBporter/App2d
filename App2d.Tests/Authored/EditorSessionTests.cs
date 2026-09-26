@@ -210,4 +210,64 @@ public sealed class EditorSessionTests : IDisposable
         session.Save(person);
         Assert.Equal(1, walk.Asset.StructureRevision);
     }
+
+    [Fact]
+    public void ADiscardedAssetsCachedResultsNeverReachANewAssetWithTheSameId()
+    {
+        var session = Session();
+        Ok(session, session.NewModel("trial", "Trial", "person"));
+        Assert.NotNull(session.Assets.Resolve("trial"));
+        var revision = session.Assets.Revision;
+        Ok(session, session.Discard("trial"));
+        Assert.True(session.Assets.Revision > revision, "discarding must never repeat an earlier revision");
+        Ok(session, session.NewModel("trial", "Trial", "empty"));
+        var resolved = session.Assets.Resolve("trial");
+        Assert.True(resolved is null || ReferenceEquals(resolved.Base, session.Assets.Model("trial")!.Asset), "resolved from the discarded model's cache");
+    }
+
+    [Fact]
+    public void ANewAssetNeverOverwritesAFileThatDidNotLoad()
+    {
+        var path = Path.Combine(_root, "models", "broken.json");
+        File.WriteAllText(path, "{ not json");
+        var session = new EditorSession(AuthoringWorkspace.Open(_root));
+        Assert.NotEmpty(session.Assets.LoadErrors);
+        Assert.True(session.Assets.Exists("broken"));
+        Assert.NotEqual("broken", session.Assets.SuggestId("broken"));
+        Assert.False(session.NewModel("broken", "Broken", "empty"));
+        Assert.Equal("{ not json", File.ReadAllText(path));
+    }
+
+    [Fact]
+    public void ShorteningTheOpenClipBringsTheTimeBackInsideIt()
+    {
+        var session = Session();
+        session.Open("person-walk");
+        var clip = session.ClipDocument!; var duration = clip.Asset.Duration;
+        session.Seek(duration * .9f);
+        session.Change(clip, () => ClipAuthoring.Retime(clip.Asset, duration / 2));
+        session.CommitAll();
+        Assert.True(session.Transport.Time <= clip.Asset.Duration);
+        session.DragControl("chest", session.Evaluate("person")!.Pose.World("chest") + new Vector3(0, .05f, 0)); session.EndDrag();
+        Assert.Empty(session.Assets.Problems(clip));
+    }
+
+    [Fact]
+    public void UndoAfterSavingALookRevertsTheBaseThenTheVariant()
+    {
+        var session = Session();
+        session.Open("tall-thin");
+        var variant = session.SubjectVariant!; var basis = session.Assets.Model(variant.Asset.Base)!;
+        Ok(session, session.ApplyLook("sage"));
+        Ok(session, session.SaveLook("mine", "Mine"));
+        Assert.Contains(basis.Asset.Looks, l => l.Id == "mine");
+        session.Undo();
+        Assert.DoesNotContain(basis.Asset.Looks, l => l.Id == "mine");
+        Assert.True(variant.CanUndo, "the variant's look is still applied");
+        session.Undo();
+        Assert.False(variant.Dirty);
+        session.Redo();
+        Assert.True(variant.Dirty);
+        Assert.DoesNotContain(basis.Asset.Looks, l => l.Id == "mine");
+    }
 }

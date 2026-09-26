@@ -96,8 +96,8 @@ internal sealed class EditorShell : IDisposable
         var dirty = Session.Assets.DirtyDocuments.Count();
         if (Ui.Button(dirty > 0 ? $"Save all ({dirty})" : "Save all", dirty > 0)) Session.SaveAll();
         if (dirty > 0 && ImGui.IsItemHovered()) ImGui.SetTooltip("Unsaved: " + string.Join(", ", Session.Assets.DirtyDocuments.Select(d => d.Id)) + "\nEach file is written separately; this is not atomic.");
-        ImGui.SameLine(); if (Ui.Button("Undo", document?.CanUndo == true)) Session.Undo();
-        ImGui.SameLine(); if (Ui.Button("Redo", document?.CanRedo == true)) Session.Redo();
+        ImGui.SameLine(); if (Ui.Button("Undo", Session.CanUndo)) Session.Undo();
+        ImGui.SameLine(); if (Ui.Button("Redo", Session.CanRedo)) Session.Redo();
         ImGui.SameLine();
         ImGui.TextUnformatted(document is null ? "Nothing open" : $"{document.Name}{(document.Dirty || document.IsNew ? " *" : "")}");
         ImGui.SameLine(); ImGui.TextDisabled(document is null ? "" : Describe(document));

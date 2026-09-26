@@ -202,7 +202,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 if (used) session.Report($"'{binding.Prop}' anchors a hit window; re-anchor it first.", true);
                 else session.Edit(document, () => document.Asset.Equipment.RemoveAll(e => e.Prop == binding.Prop));
             }
-            if (Ui.Combo("Socket##" + binding.Prop, binding.Socket, sockets) is { } socket) session.Edit(document, () => document.Asset.Equipment.First(e => e.Prop == binding.Prop).Socket = socket);
+            if (Ui.Combo("Socket", binding.Socket, sockets) is { } socket) session.Edit(document, () => document.Asset.Equipment.First(e => e.Prop == binding.Prop).Socket = socket);
             ImGui.PopID();
         }
         var available = session.Assets.Props.Select(p => p.Id).Where(p => equipment.All(e => e.Prop != p)).Order(StringComparer.Ordinal).ToArray();

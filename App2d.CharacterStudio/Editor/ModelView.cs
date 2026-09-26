@@ -83,7 +83,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         {
             if (ImGui.Button("Add control")) Structural("add a control", () =>
             {
-                var parent = session.Selection.Control; var at = parent is null ? new Vector3(0, 1, 0) : Resolved!.Rest[parent] + new Vector3(.3f, 0, 0);
+                var parent = session.Selection.Control; var at = parent is null ? new Vector3(0, 1, 0) : (Resolved ?? throw new InvalidDataException("The model does not resolve; repair it before adding controls.")).Rest[parent] + new Vector3(.3f, 0, 0);
                 Select(control: ModelAuthoring.AddControl(model.Asset, parent, at).Id);
             });
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Adds a child of the selected control, or a root control when none is selected.");

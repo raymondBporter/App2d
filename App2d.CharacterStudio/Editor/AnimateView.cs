@@ -178,7 +178,7 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
             var index = clip.Contacts.IndexOf(contact);
             var range = new Vector2(contact.Start, contact.Finish);
             if (Ui.Drag2("Planted from / until (seconds)", ref range, .002f, 0, clip.Duration))
-                session.Change(document, () => { var c = document.Asset.Contacts[index]; c.Start = Math.Min(range.X, range.Y - .01f); c.Finish = range.Y; });
+                session.Change(document, () => { var c = document.Asset.Contacts[index]; c.Finish = Math.Max(range.Y, .01f); c.Start = Math.Clamp(range.X, 0, c.Finish - .01f); });
             if (ImGui.SmallButton("Remove contact")) session.Edit(document, () => document.Asset.Contacts.RemoveAt(index));
             if (primary.Pose.Contacts.FirstOrDefault(c => c.Chain == chainId) is { } result)
                 if (result.Residual < .005f) ImGui.TextColored(Ui.Accent, "Planted and reached."); else Ui.Problem($"Cannot reach the planted target by {result.Residual:F3}.");
