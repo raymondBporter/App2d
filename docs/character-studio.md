@@ -1,242 +1,86 @@
 # Character Studio
 
-This page documents the legacy studio, now started with `--legacy`. Running the studio with no arguments opens its
-replacement, the character editor, specified in [Character editor replacement](character-editor-replacement.md).
-The game no longer reads the legacy `entities/*.json` files.
-
-For characters built from scratch, use **Create / animate** or run with
-`--workshop`. The [character workshop](character-workshop.md) authors controls,
-simple shapes, key poses and IK contacts without a source motion library.
+The studio is the character editor: one window, one viewport and one document workflow over the authored assets in
+`Assets/Characters/authored`, which the game plays. Its design and history are in
+[Character editor replacement](character-editor-replacement.md).
 
 ## Run
 
 ```powershell
-dotnet run --project App2d.CharacterStudio -- --legacy
+dotnet run --project App2d.CharacterStudio
 ```
 
-Requires Windows and .NET 10. ImGui.NET 1.91.6.1 is pinned; MonoGame WindowsDX is
-the same version as the game. The checked-in runtime assets make the studio
-independent of Blender and the original checkout. The application has its own
-executable and does not replace App2d.Noodle or the game.
+Requires Windows and .NET 10. ImGui.NET 1.91.6.1 is pinned; MonoGame WindowsDX is the same version as the game. Startup
+exceptions are written to `character-studio-error.log` beside the executable.
 
-The studio now starts with **entity types**: Player, Needle, Maul, Cinder and Scrap
-Hound. See [Entity authoring and playtest](entity-authoring.md) for the action,
-collision, saving and playable-arena workflow. **Entities → Browse source motions**
-opens the original motion/appearance interface described below.
+## Workspaces
 
-The left panel selects an anatomy/library and searches its clips. The center
-provides playback, sample stepping, a scrubber, speed, one-shot repeat, queued
-switches and three-clip sequences. Scrubbing to a loop's endpoint explicitly
-holds its last stored pose. The right panel edits the relevant appearance values,
-faces, weapons and optional game animation bindings. Source review warnings remain
-visible below playback controls.
+- **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
+  model. On a variant: build values, part overrides with **Reset to base**, and looks. **Edit rig** shows control handles.
+- **Animate**: clips compatible with the subject's base. Dragging keys the channel it drives (autokey), contacts,
+  markers, face keys, easing and onion skin. **Compare** pins two more builds at the same phase and world scale.
+- **Entity**: model and motion set with per-role overrides, controller, movement box, hurt regions, equipment and the
+  selected action's clip, mask, blend, hit windows and events.
+- **Test** plays the arena from a snapshot of the current drafts.
 
-Scroll over the viewport to zoom, middle-drag to pan, or double-click/Fit motion
-to fit sampled poses across the action. Ordinary playback never auto-fits. Space
-toggles playback when a text field/widget is not active. Ctrl+S saves a look;
-Ctrl+Z/Ctrl+Y undo/redo appearance edits. Open/Save use standard file dialogs.
-Look files are versioned JSON containing library ID, selected clip, appearance
-and semantic role-to-clip bindings. Closing offers to save unsaved edits. Unsaved documents
-are retained when switching libraries during a session.
+Every asset is a document with its own undo. **Save** writes the open document; **Save all** writes each dirty one in
+turn and is not atomic. The browser's context menus create variants, animations and entities, duplicate them, open
+bases and discard assets that were never saved.
 
-The interface follows Windows per-monitor DPI scaling. The initial window uses
-logical dimensions bounded by the monitor's working area; resizing changes the
-available layout space, never the size of text or controls. The top-right **UI**
-menu adjusts interface size relative to the Windows default and saves that
-preference in `%LOCALAPPDATA%/App2d/CharacterStudio/settings.json`. Moving between
-monitors rebuilds the font atlas at the new DPI. Small windows scroll instead of
-shrinking the controls.
+## Imported motion and puppet files
 
-## Body proportions
+Both conversions are explicit. They create new unsaved drafts, record where they came from in the asset's `source`,
+and never change the source file.
 
-The Person Appearance panel has **Leg length**, **Arm length** and **Hip width**
-sliders. They are per-look values, not baked motion variants: every sampled pose
-is retargeted in export space before the ordinary drawing transform. Limbs scale
-segment by segment from the hip or shoulder, so foreshortening and weapon grips
-follow; hips spread the torso bottom edge and the two leg roots about their
-midpoints, which from the side mostly separates the legs in depth. Longer legs
-raise the whole figure by a constant measured from the library's rest pose, so
-standing feet stay on the pivot and gait bob is preserved. Anatomy-mode hurt
-regions read the retargeted points automatically. Contact clips (wall grips,
-ladders, two-handed props) drift with large changes; keep edits moderate.
+- **New → Import .puppet.json...** converts a prototype puppet into a base model and one animation per motion. Chains
+  whose ends have contacts are keyed from the ground and share one reach measure; the others are keyed from their root.
+- **Sources** lists the imported libraries (`Assets/Characters/catalog.json`). Choosing a clip opens a dialog: the base
+  model to convert onto, a reference clip whose first frame stands for the model's rest (the library's `idle` by
+  default), and the mapping from each control to source points. For the Person template the default mapping pairs limbs
+  by depth: the export's left side is the far side, which the template calls right.
 
-## Head workshop and weapons
+A library clip is transferred as offsets from the reference frame, scaled by each measure, so the model keeps its own
+proportions. IK joints are solved with the model's lengths, and any reach shortfall is shown in the viewport. The
+converted clip is sampled at 30 fps and has no contacts or travel: plant the feet, set travel and check depth in
+Animate. **Show source points** overlays the mapped source at the same time for comparison.
 
-The Person Appearance panel includes **Face animation**: choose **Expression tour**,
-**Hit reaction**, **Long fall**, or **Victory** to preview short performances. **Pause
-face** and **Replay face** work independently of body playback. These previews do not
-change the saved look. Choose **Saved expression** to return to the face picker;
-it now offers 16 vector expressions, also available in the edited-head face picker.
-Most expressions use solid ink eyes, simple mouths, and no brows. Anger, worry,
-and confusion introduce brows; surprise opens white eyes with small pupils,
-and panic adds raised brows and larger eyes. These details blend in and out
-with the reaction. Teeth are omitted throughout.
-The game player blinks and reacts to charging, attacking, damage, sustained falls,
-wall grips, hard landings, low health, death, and reaching the goal. Faces blend on
-their own clock; damage and death take priority. This first pass does not yet add
-enemy personalities or hit/miss detection for facial acting.
+The conversion code is `App2d.Core/Characters/Authored/SourceImport.cs` (`PuppetImport`, `LibraryImport`,
+`SourceLibraries`).
 
-`dotnet run --project App2d -- --face-smoke artifacts/faces` exports expression
-contact sheets using the real character renderer, for original and edited heads.
+## Headless renders
 
-**Head editor** near the top of the Appearance panel opens the workshop for Person
-and Quadruped. Enable **Use edited head**, or make an edit, to attach that shape
-to the current animation. **Original head** restores the original drawing; undo
-can bring the edited head back. Head size still scales the attached shape.
+| Command | Writes |
+| --- | --- |
+| `--smoke-editor <dir>` | The acceptance walk through the editor on a scratch copy of the assets: a frame per step and `editor-smoke.txt`. |
+| `--smoke-motion <dir>` | Shared walk, run and heavy walk on three Person builds, with `motion-proof.txt`. |
+| `--smoke-entities <dir>` | Arena frames with collision overlays, with `entity-proof.txt`. |
+| `--review-moves <dir>` | Player move set frames, manifest and report for `tools/MoveReview`. |
 
-Outline mode provides the source workshop's skull, muzzle, brow, jaw and softness
-controls, ten draggable control points, arrow-key nudges, point reset and clear
-hand edits. Edits that fold the outline are rejected; concave shapes use a
-triangulated fill. Face mode provides independent face dragging, position, size,
-tilt and expression. Scroll over the workshop canvas to zoom; Fit includes the
-face. The same shared renderer attaches the shape to the person's head direction
-or the quadruped's animated head/neck, including shortened necks and flipped looks.
+`--convert-studies <authored-dir>` regenerates the Person model, walk, run and starter content from the prototype
+studies; `--write-player-moves <authored-dir>` regenerates the player move set.
 
-Four starting variations and Explore provide alternate shapes. **Keep variation**
-retains up to eight during this session. **Export head / Import head** use the
-original workshop's version 1 JSON format for portable reuse between anatomies.
-**Save look** includes the current head definition, weapon choice and weapon head
-size. Older looks default to the original head and sword. Named character templates
-and a permanent variant library remain a future workflow decision.
+The game has two more: `dotnet run --project App2d -- --render-smoke <dir>` draws authored entities through the game
+presentation, and `-- --face-smoke <dir>` draws every expression on the Person.
 
-The Person weapon selector includes Sword, Rapier, Great mace and Great hammer.
-Mace and hammer have separate handle-length and head-size controls. Weapons follow
-the authored hand attachments and stay hidden on unarmed clips. Sword slash trails
-are disabled for the other weapons, matching the source preview. Weapon artwork is
-imported from `point-library.js`; it does not add animation data or per-weapon bakes.
+## Code
 
-## Kevin Iglesias motions
+| Where | Holds |
+| --- | --- |
+| `App2d.Core/Characters/Authored` | Schema, resolution, pose evaluation, entity runtime and conversions. No graphics. |
+| `App2d.Core/Characters/Editing` | Documents, workspace, transport and the editor session. No ImGui. |
+| `App2d.Rendering/Characters` | `PuppetDrawing`, faces and depth-tested submission. |
+| `App2d.CharacterStudio/Editor` | The ImGui shell and workspace views. |
+| `App2d.CharacterStudio/Proof.*.cs` | The headless proof renders. |
 
-Person includes 662 clips, with 412 added clips from eight free Kevin Iglesias packs.
-Counts include masculine/feminine and root-motion variants. In **Entities → Browse
-source motions**, choose **Person**, then **Kevin Iglesias / All** or an individual
-pack in the source filter. Existing entity actions can select these clips through
-their **Action → Source motion** picker; search for `Kevin` or a motion name.
-Existing gameplay bindings and saved entity definitions are preserved.
+## Refreshing imported libraries
 
-The importer preserves the creator's source manifest, README/license notice and
-eight manuals under `Assets/Characters/provenance`. These packs use the Standard
-Asset Store EULA, not CC0. Bow, gun and crafting-tool motions currently preview
-body movement; their prop drawings remain separate work.
-
-Refresh just Person without rewriting creature libraries or saved entities:
-
-```powershell
-node tools/CharacterPipeline/import.cjs ../sprite-renderer --person-only
-```
-
-## Tomek wolf motions
-
-Quadruped includes nine mapped wolf clips in addition to its twelve original
-motions. Select **Tomek / Wolf** in the source filter, or search `Wolf` in an
-entity's Source motion picker. Open `Assets/Characters/looks/tomek-wolf.json`
-for a look with suggested role bindings. See [Wolf animation mapping](wolf-animation-mapping.md)
-for the rig mapping, source limitations, provenance and rebuild commands.
-
-## Refresh assets
-
-After exporting changes in sprite-renderer:
+The libraries are read-only sources. After exporting changes in the sibling `sprite-renderer` checkout:
 
 ```powershell
 node tools/CharacterPipeline/import.cjs ../sprite-renderer
-dotnet run --project App2d.CharacterStudio -- --check
+node tools/CharacterPipeline/import.cjs ../sprite-renderer --person-only
 ```
 
-The importer reads the current humanoid pointer and active creature exports,
-checks packed-data hashes, preserves source metadata/licenses, normalizes the
-library schema, and captures reference poses and vertices from the original
-JavaScript renderers. Existing uint16 bytes are copied without recompression.
-Quadruped and monster JSON frame arrays become float32 binary, with maximum
-conversion error recorded in each manifest. The 15 libraries contain 759 clips.
-The catalog records current packed coordinate sizes. The studio loads
-libraries on selection; clean inactive libraries can be reclaimed.
-
-`capture-reference.cjs` may also be run separately to refresh the comparison
-fixtures after deliberately changing the source drawing code. It does not change
-the C# renderer. A mismatch is a reason to review the port, not silently adjust
-tolerances or regenerate expectations from C#.
-
-## Boundaries
-
-The studio ports the active sprite-renderer previews to C# and Dear ImGui. Its
-renderer is a reusable engine component; the studio is a consumer, not the owner
-of character drawing behavior. Existing game presentation remains a separate
-consumer to migrate after visual review.
-
-- `App2d.Core/Characters`: packed motion loading, sampling, playback and appearance
-  values. No graphics, UI or game simulation dependency.
-- `App2d.Rendering/Characters`: depth-tested geometry, anatomy bindings and GPU
-  submission. No ImGui or editor state.
-- `App2d.CharacterStudio`: MonoGame desktop host, ImGui integration, document state,
-  motion browsing, playback controls and appearance editing.
-- `tools/CharacterPipeline`: repeatable import of current exported assets, plus
-  the local Tomek wolf mapping exporter. Other Blender authoring stays in
-  sprite-renderer; the application has no sibling-repo dependency.
-- `Assets/Characters`: imported packed data, drawing definitions and provenance.
-
-Person, Hound, Blob and Flying retain their distinct anatomy builders. Candidate
-creatures retain their rest-space bindings. Shared primitives do not imply that
-unrelated skeletons are interchangeable. Legacy raster experiments and archived
-preview pages are not copied into the runtime.
-
-## Data and fidelity
-
-Import existing uint16 data without recompression. Convert preview-only numeric
-frame arrays to float32 binary without resampling, changing duration or inventing
-loop repairs. Keep explicit times, source warnings, authored geometry and license
-information. Read two samples directly from packed bytes into caller-owned poses;
-do not decode entire animations per actor. Load libraries on demand in the studio.
-Unsaved documents deliberately retain their library until saved or closed.
-
-The shared renderer owns no playback clock, window, camera policy or framebuffer.
-The host renders into a reusable depth/MSAA target and displays that texture in
-ImGui. This permits overlays and resizing without native child-window composition.
-Appearance changes and scrub time are editor values, separate from widgets.
-Reuse one `CharacterGeometry` workspace per library when drawing game actors
-sequentially; actors need their playback/appearance values, not individual large
-mesh buffers. The primitive buffers grow only when needed. Anatomy construction
-still has temporary CPU allocations, especially for curved hounds and ribbons;
-crowd throughput and allocation optimization remain separate from this preview port.
-
-One-shot endpoints, queued changes and sequences retain source playback semantics.
-Root motion stays visible for authoring. Game integration will need an explicit
-root/contact policy and action-time mapping; neither is inferred by the studio.
-
-## Verification
-
-```powershell
-dotnet run --project App2d.CharacterStudio -- --check
-dotnet run --project App2d.CharacterStudio -- --smoke artifacts/character-studio
-dotnet test App2d.slnx
-```
-
-`--check` checks every stored sample/interpolation interval, 4,500 finite geometry
-cases covering all 750 clips, playback boundaries, look-file roundtrips and
-appearance undo/redo. It compares 91 source reference cases, including altered
-proportions, facing, all four weapons, hound contact deformation and flying wings.
-Seven head cases compare the original JS control points and quadratic corners;
-checks also cover concave fill area, portable JSON, head/weapon undo and save/load,
-and custom heads on every person/quadruped clip in both facing directions.
-The reference comparison checks all pose points, vertex counts and a distributed
-subset of generated vertices. It is not a pixel-for-pixel GPU comparison.
-
-`--smoke` runs the actual native MonoGame/ImGui renderer, writes a screenshot for
-each library, then verifies window resizing, user scaling and resetting the font
-atlas. It also captures all new weapons and custom heads, including the head editor
-on both anatomies, plus Kevin melee, dance, archer, soldier, spellcasting and throwing poses. It writes `dpi-checks.json`, then exits.
-Captures use depth testing and an MSAA preview target.
-Results from `--check` are also written beside the executable in
-`character-studio-checks.txt`; startup exceptions go to `character-studio-error.log`.
-
-The ordinary xUnit suite includes synthetic nonuniform-time and corrupt-data
-tests, sequence/endpoint tests, and an allocation check for the packed sampler.
-
-Publish a standalone application folder (requiring the .NET 10 desktop runtime):
-
-```powershell
-dotnet publish App2d.CharacterStudio -c Release -o artifacts/CharacterStudio
-```
-
-The first release is an audition/appearance tool, not a Blender replacement or a
-keyframe editor. Preserve source review warnings as useful information while the
-content continues to evolve.
+The importer checks packed-data hashes and preserves source metadata and licenses. Quadruped includes nine
+[mapped Tomek wolf motions](wolf-animation-mapping.md). Already converted clips keep their keys; convert again to pick up
+a changed source.

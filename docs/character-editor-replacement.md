@@ -1,9 +1,10 @@
 # Character editor replacement
 
-Status: in progress, 2026-09-26. Phases 1 to 4 are done. Phase 5 is mostly done: the game plays only authored assets and
-the editor is the studio's default. Everything is on branch `claude/character-editor-phase-4-b1e2eb`, which contains
-the phase 3 branch; nothing is merged to `main` yet. See
-[Where we are](#where-we-are-2026-09-26) for the summary; each phase below carries its own progress note.
+Status: complete, 2026-09-26. All five phases and the final acceptance are done: the game plays only authored assets, the
+editor is the studio, imported motion and `.puppet.json` files convert explicitly, and the legacy screens and runtime are
+gone. Everything is on branch `claude/character-editor-replacement-93201e`, which contains the phase 3 and 4 branches;
+nothing is merged to `main` yet. See [Where we are](#where-we-are-2026-09-26) for the summary and the open issues that
+remain as separate work; each phase below carries its own progress note.
 
 ## Product goal
 
@@ -418,7 +419,7 @@ mechanisms rather than adding an LLM chat integration to the editor.
 | `FacePose`, `FaceDrawing`, `HeadShape`, `HeadDrawing` | Reuse expression/shape implementations behind generic part attachments. |
 | `WeaponDrawing` | Extract library-independent prop art/frames; retain current visual results. |
 | `PointLibrary`, `PointClip`, import provenance | Keep as read-only source storage and sampling. Convert selected clips through explicit mappings. |
-| `PersonPose`, `HoundPose`, anatomy renderers | Retain for legacy source preview/migration comparison; do not make them the new model API. |
+| `PersonPose`, `HoundPose`, anatomy renderers | Deleted in phase 5. Converted clips are compared against their mapped source points in the editor instead. |
 | `EntityAction` time mapping, `EntityRegion` collision math | Reuse applicable math; replace fixed clip/library/attachment vocabularies. |
 | `EntityPose` | Replace anatomy branches and internal clip sampling with collision/attachment evaluation from a supplied final pose. |
 | `EntityPlaytest` | Reuse arena and simulation behavior; adapt asset/pose inputs and explicit capability checks. |
@@ -437,10 +438,10 @@ arbitrary 3D rigs and the native 2.5D controls.
 | Phase | State |
 | --- | --- |
 | 1. Shared motion proof | Done. Walk and run reproduce the prototype and play on three Person builds. The visual verdict on the rendered frames was never recorded. |
-| 2. Model and Animate editor | Done (`App2d.CharacterStudio`, no arguments since phase 5). One acceptance check in `--smoke-editor` failed once and passed in every run since; the cause is unknown. |
+| 2. Model and Animate editor | Done (`App2d.CharacterStudio`, no arguments). One acceptance check in `--smoke-editor` failed once and passed in every run since; the cause is unknown. |
 | 3. One entity playable end to end | Done. The spear guard, jumping player and stalker work in the arena and through the editor's **Test**. |
 | 4. Repeated-authoring workflow | Done. The Entity workspace, looks, motion-set editing, entity templates and duplication, role overrides, reference navigation, and masked actions that blend in and out. The heavy walk was approved on 2026-09-26. |
-| 5. Cut over | Mostly done. The game's player and all four enemy placements come from authored assets, and the game no longer reads the legacy `entities/*.json`. The editor is the studio's default. The imported-motion and `.puppet.json` conversions and the removal of the legacy screens remain. |
+| 5. Cut over | Done. The game's player and all four enemy placements come from authored assets. The editor converts imported motion and `.puppet.json` files, and the legacy screens, entity types and renderers are deleted. The final acceptance passes as a test. |
 
 **In the game today.** Everything comes from `Assets/Characters/authored`:
 - **Player.** Drawn by `AuthoredPersonPresentation2D` with the player move set. Its gameplay comes from the `hero` entity through `AuthoredHero2D`: movement box, health, sword timing and hit box on the sword tip (draw-slash, or follow-up slash while the blade is out; gameplay decides and the drawing follows), and the gun's muzzle and bolt.
@@ -455,8 +456,8 @@ The player move set's design and gaps are in [the player move set spec](superpow
 - A blended gameplay `FacePose` drawn on authored models.
 - Per-frame props on `AuthoredCharacterShader`.
 
-**Awaiting art review.** The gunner's `person-pistol-shot` and the maul's `person-hammer-slam` and `hammer` prop (see
-`App2d --render-smoke`, `entity-fire-*` and `entity-slam-*`). The heavy walk is approved.
+**Art review.** The heavy walk was approved on 2026-09-26. The gunner's `person-pistol-shot` and the maul's
+`person-hammer-slam` and `hammer` prop were accepted as placeholders the same day.
 
 **Open issues, most important first.**
 1. **Run speed versus stride.** The game's run (430 px/s, about 13 model units/s at the player's drawn size) is roughly six times the run clip's authored pace (2.2 units/s). The player's gait is capped at 2.5 times its authored pace, and the feet slide beyond that. It needs a longer run stride, a sprint clip, or a different drawn scale.
@@ -475,10 +476,9 @@ The player move set's design and gaps are in [the player move set spec](superpow
 8. **Enemy reactions.** Authored enemies hold their pose when hit or killed and only change expression; the `hit` and `death` roles are not played yet.
 
 **Next up.**
-- Review the gunner and maul art.
 - Merge the branch to `main`.
-- Fix the climb keys and settle the run stride question.
-- Finish phase 5: imported-motion and `.puppet.json` conversion in the editor, then delete the legacy studio screens, `EntityCatalog`, `EntityPose` and the legacy entity files.
+- Fix the climb keys and settle the run stride question (open issues 1 and 2).
+- Move the player's remaining code-defined gameplay into the `hero` entity (open issue 6).
 
 ## Implementation sequence and acceptance gates
 
@@ -641,7 +641,7 @@ source preview only where it supports importing and comparison.
 | Player | `AuthoredHero2D`, `entities/hero.json` (written by `--write-player-moves`) | New `traversal` controller kind: Person2D owns movement; the entity owns attack, follow-up, shoot and wall-shot. Sword duration and damage window come from the clips' strike and recover markers. The hit box is the sword tip sampled from the drawn pose at the drawn scale (collider height over `ResolvedModel.DrawnHeight`). `PersonActionState2D.FollowUp` carries gameplay's choice of slash to the director. The muzzle and bolt come from the pistol and the shoot action's projectile. |
 | Projectiles | `ProjectileDef`, `EntityCollision.Muzzle` | An action's `fire` event launches its projectile from the equipped prop's muzzle along the prop's axis. The authored enemy probes the barrel, sweeps bolts in 4 px steps, and snapshots them for rollback. The arena flies them against hurt regions. |
 | Enemies | `maul-brute`, `cinder-gunner` | New `brute` and `cinder` variants, a `hammer` prop, `person-hammer-slam` and `person-pistol-shot`. Entities gain `mass` (divides knockback) and hit windows gain an impact `sound`. |
-| Studio | `App2d.CharacterStudio` | No arguments opens the editor. The legacy studio is `--legacy`. |
+| Studio | `App2d.CharacterStudio` | No arguments opens the editor. (The legacy studio, briefly behind `--legacy`, is now deleted.) |
 
 Verification:
 - `AuthoredEntityGameTests` covers the sword's clip timing, the follow-up choice and the mirrored hit box and muzzle.
@@ -650,9 +650,7 @@ Verification:
 - `App2d --render-smoke` overlays the sword hit box and muzzle on the player and draws the gunner and maul.
 - The game starts and runs on authored assets alone.
 
-Still legacy:
-- The studio's source, entity and workshop screens, with their `--smoke`, `--check` and `--smoke-workshop` modes.
-- `EntityCatalog`, `EntityPose`, `EntityPlaytest` and `Assets/Characters/entities/*.json`, which only those screens read.
+Still in code (open issue 6):
 - The player's down attack and unarmed attacks, which are still code-defined.
 - The player's hurt region, which is still its movement box.
 
@@ -660,6 +658,28 @@ Final acceptance: from a clean checkout, create a model, animate it, make a vari
 make an entity, save, reopen and use it in the game without a 3D import dependency.
 Exercise existing regression suites plus targeted new math/runtime tests and real
 rendered smoke cases. Do not delete old paths just because the new UI can draw a pose.
+
+**Conversions and retirement (2026-09-26).** Done.
+
+| Piece | Where | Holds |
+| --- | --- | --- |
+| Provenance | `AssetSource` on `CharacterModel` and `MotionClip` | Kind (`puppet` or `library`), file, motion, the reference clip and the control → source points mapping. Enough to repeat a conversion; sources are only read. |
+| Puppet files | `PuppetImport` | A `.puppet.json` becomes a base model and one clip per motion through the existing `PuppetMotionConverter`. IDs become asset IDs; chains with contacts are keyed in the locomotion frame and share one reach measure, the others from their root. Every other control scales in model units. |
+| Library clips | `LibraryImport`, `SourceLibraries` | Offsets from a reference frame (the library's `idle` at 0 s by default) scaled by each measure's model-over-source ratio, so the model keeps its proportions; IK solves the joints with the model's lengths. Sampled at 30 fps, with no contacts or travel until authored. The Person default mapping pairs limbs by depth. |
+| Editor | `EditorSession`, `AssetBrowser`, `AnimateView` | **New → Import .puppet.json**, the **Sources** filter with a mapping dialog, a Source section with a source-point overlay, and **Discard** for drafts never saved. |
+| Studio | `Program`, `ProofRenders` | The editor plus the three headless proof renders. The source, entity and workshop screens and their `--smoke`, `--check` and `--smoke-workshop` modes are deleted. |
+| Removed | Core, Rendering, Gameplay, Assets | `EntityCatalog`, `EntityTypeDefinition`, `EntityPose`, `EntityPlaytest`, `PersonPose`, `HoundPose`, `PointPlayback`, `CharacterAppearance`, `HeadShape`, the anatomy renderers and `PointCharacterShader`, `Assets/Characters/entities` with its generator, and the legacy-renderer parity snapshots. `EntityRegion` moved into the authored runtime. `PointLibrary` stays as read-only source storage. |
+
+Verification:
+- `App2d.Tests.Authored.SourceImportTests` covers puppet walk and run reproduction after import, grounded and root-keyed chains, ID conversion and clashes, the reference frame converting to the rest pose, a library walk keeping the model's limb lengths, depth pairing, round trips with the source, and mapping errors by name.
+- `App2d.Gameplay.Tests` `CleanAuthoringTests` is the final acceptance: in an empty folder with no imported libraries it creates a two-legged model from Empty, an idle, a planted walk and a bite with markers, a motion set, a variant and an entity through `EditorSession`, saves, reloads with `AuthoredCatalog` and plays it in the game simulation, where it walks to the player and its bite lands.
+- `--smoke-editor` steps 18 to 21 convert the library walk onto Person and compare it on two builds, import a puppet file, then save and reopen both and check that the library and the puppet file are unchanged.
+- The game starts and runs. `--render-smoke`, `--face-smoke` (now drawn on the authored Person), `--smoke-motion`, `--smoke-entities` and `--review-moves` all run.
+
+Not covered:
+- Contacts are not detected in converted library clips; they are planted by hand.
+- The mapping dialog maps one source point per control; averaged points come only from the default mapping.
+- Imported libraries other than Person have no default mapping onto an authored model.
 
 ## Explicitly deferred
 
