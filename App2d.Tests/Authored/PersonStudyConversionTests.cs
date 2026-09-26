@@ -25,7 +25,7 @@ public sealed class PersonStudyConversionTests
         Assert.Contains(clip.Tracks, t => t is { Kind: MotionClip.TranslateKind, Target: "hips" });
         Assert.DoesNotContain(clip.Tracks, t => t.Keys.All(k => k.X == 0 && k.Y == 0 && k.Z == 0));
         Assert.DoesNotContain(clip.Tracks, t => t.Target == "head"); // the walk never moves the head; float noise must not become a track
-        Assert.Equal(new[] { "left-leg", "right-leg" }, clip.Contacts.Select(c => c.Chain).Order());
+        Assert.Equal(["left-leg", "right-leg"], clip.Contacts.Select(c => c.Chain).Order());
         Assert.Equal(.5f, clip.Travel.Keys[^1].X, 5);
     }
 
@@ -35,7 +35,7 @@ public sealed class PersonStudyConversionTests
         var model = PersonTemplate.Model();
         Assert.Equal("left-shoulder", model.Chains.Single(c => c.Id == "left-arm").Frame);
         Assert.Equal(CharacterModel.Locomotion, model.Chains.Single(c => c.Id == "right-leg").Frame);
-        Assert.Equal(new[] { "arm", "leg", "torso" }, model.Measures.Select(m => m.Id).Order());
+        Assert.Equal(["arm", "leg", "torso"], model.Measures.Select(m => m.Id).Order());
         Assert.Equal("leg", model.Controls.Single(c => c.Id == "hips").Scale);
     }
 }

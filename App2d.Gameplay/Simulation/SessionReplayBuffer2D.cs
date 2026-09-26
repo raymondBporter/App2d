@@ -49,7 +49,7 @@ public sealed class SessionReplayBuffer2D
     public SessionCheckpoint2D GetCheckpoint(long tick)
     {
         if (tick == _oldest.Tick) return _oldest;
-        foreach (var entry in _history) if (entry.After.Tick == tick) return entry.After;
+        foreach (var (_, After) in _history) if (After.Tick == tick) return After;
         throw new ArgumentOutOfRangeException(nameof(tick), "The tick is outside retained history.");
     }
 
@@ -61,10 +61,10 @@ public sealed class SessionReplayBuffer2D
         var frames = ImmutableArray.CreateBuilder<SessionFrame2D>();
         for (var i = 0; i < _history.Count; i++)
         {
-            var entry = _history[i];
-            if (entry.After.Tick <= tick) continue;
-            frames.Add(_session.Advance(entry.Inputs.AsSpan()));
-            _history[i] = (entry.Inputs, _session.CaptureCheckpoint());
+            var (Inputs, After) = _history[i];
+            if (After.Tick <= tick) continue;
+            frames.Add(_session.Advance(Inputs.AsSpan()));
+            _history[i] = (Inputs, _session.CaptureCheckpoint());
         }
         _timelineRevision = _session.TimelineRevision;
         return frames.ToImmutable();

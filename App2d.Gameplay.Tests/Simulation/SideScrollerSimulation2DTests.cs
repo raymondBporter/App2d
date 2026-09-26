@@ -15,7 +15,7 @@ public sealed class SideScrollerSimulation2DTests
     {
         using var server = SideScrollerSimulation2D.Create(Definition());
         using var client = SideScrollerSimulation2D.Create(Definition());
-        Assert.Equal(server.Session.PlayerIds.ToArray(), client.Session.PlayerIds.ToArray());
+        Assert.Equal([.. server.Session.PlayerIds], [.. client.Session.PlayerIds]);
         Assert.Equal(server.Level.EnemySystem.Combatants.Select(c => c.Id),
             client.Level.EnemySystem.Combatants.Select(c => c.Id));
         Assert.Equal(server.Level.MovingPlatforms.Select(p => p.Id), client.Level.MovingPlatforms.Select(p => p.Id));
@@ -36,8 +36,8 @@ public sealed class SideScrollerSimulation2DTests
             Assert.Equal(a.Players.ToArray(), b.Players.ToArray());
             Assert.Equal(a.Events.ToArray(), b.Events.ToArray());
             Assert.Equal(a.Enemies.ToArray(), b.Enemies.ToArray());
-            Assert.Equal(a.World.MovingPlatforms.ToArray(), b.World.MovingPlatforms.ToArray());
-            Assert.Equal(a.World.Checkpoints.ToArray(), b.World.Checkpoints.ToArray());
+            Assert.Equal([.. a.World.MovingPlatforms], [.. b.World.MovingPlatforms]);
+            Assert.Equal([.. a.World.Checkpoints], [.. b.World.Checkpoints]);
         }
         Assert.NotEmpty(server.Session.CaptureContent().Terrain);
     }

@@ -7,7 +7,7 @@ public sealed record CollisionOrderState2D(ImmutableArray<int> ColliderIds, int 
 
 public sealed partial class CollisionSystem2D
 {
-    public CollisionOrderState2D CaptureOrder() => new(_colliders.Select(c => c.Id).ToImmutableArray(), _nextColliderId, CellSize);
+    public CollisionOrderState2D CaptureOrder() => new([.. _colliders.Select(c => c.Id)], _nextColliderId, CellSize);
 
     public void RestoreOrder(CollisionOrderState2D state)
     {

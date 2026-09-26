@@ -32,7 +32,10 @@ public sealed class ClipAuthoringTests
     {
         var longLegs = ResolvedModel.From(TestModels.Creature(), new ModelVariant
         {
-            Id = "long", Name = "Long", Base = "creature", Rest = { ["body"] = new(0, 1.5f), ["hip"] = new(0, 1.5f), ["knee"] = new(.15f, .75f), ["shoulder"] = new(0, 2), ["elbow"] = new(.4f, 1.8f), ["hand"] = new(.8f, 2) },
+            Id = "long",
+            Name = "Long",
+            Base = "creature",
+            Rest = { ["body"] = new(0, 1.5f), ["hip"] = new(0, 1.5f), ["knee"] = new(.15f, .75f), ["shoulder"] = new(0, 2), ["elbow"] = new(.4f, 1.8f), ["hand"] = new(.8f, 2) },
         });
         var clip = TestModels.Clip(Model); var ratio = longLegs.Measure("leg") / Model.Measure("leg");
         ClipAuthoring.Pose(longLegs, clip, PoseEvaluator.Sample(longLegs, clip, 0), 0, "body", longLegs.Rest["body"] + new Vector3(0, .15f, 0));

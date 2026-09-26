@@ -149,7 +149,7 @@ public sealed class GunChargeTests
         {
             // One-tick pulses become presses; only the jump stays held.
             var intent = i == 0 ? movement : movement with
-                { DashHeld = false, DownHeld = false, JumpHeld = kind == "jump" };
+            { DashHeld = false, DownHeld = false, JumpHeld = kind == "jump" };
             game.Step(intent with { PrimaryHeld = true });
             baseline.Step(intent);
             Assert.Equal((chargeFirst ? 30 : 0) + i + 1 < 72, game.Arsenal.IsChargingPrimary);

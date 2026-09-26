@@ -165,7 +165,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
     }
 
-    private static EntityRegion ToWorld(EntityRegion region) => new(region.Id, region.Points.Select(p => p * Scale).ToArray());
+    private static EntityRegion ToWorld(EntityRegion region) => new(region.Id, [.. region.Points.Select(p => p * Scale)]);
 
     public bool TryResolvePlayerHit(Person2D player)
     {
@@ -194,7 +194,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         if (!_enabled || !IsAlive) yield break;
         foreach (var hit in _animator.ActiveHits())
-            yield return new SpatialObject2D(new ConvexPolygon2D(ToWorld(EntityCollision.Attack(Entity, Pose, hit)).Points.ToArray()));
+            yield return new SpatialObject2D(new ConvexPolygon2D([.. ToWorld(EntityCollision.Attack(Entity, Pose, hit)).Points]));
     }
 
     public bool TryRegisterHit(EntityId2D source, int attack)
@@ -213,9 +213,15 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
     public EnemyState2D CaptureState() => new(Id, EnemyKind2D.Authored, WorldObject.Transform.Position, Body.LinearVelocity, 0, _facing, _enabled, IsAlive)
     {
-        TypeId = Entity.Id, ActionId = _animator.Action ?? _animator.Role, ActionSeconds = (float)(_animator.Action is null ? _animator.RoleTime : _animator.ActionTime),
-        IsAttacking = _animator.Action == EntityControllers.Attack, AttackElapsedSeconds = (float)_animator.ActionTime,
-        MoveSpeed = Entity.Asset.Controller.WalkSpeed * Scale, AuthoredEntity = Entity, AuthoredPose = Pose, Bolts = [.. _bolts],
+        TypeId = Entity.Id,
+        ActionId = _animator.Action ?? _animator.Role,
+        ActionSeconds = (float)(_animator.Action is null ? _animator.RoleTime : _animator.ActionTime),
+        IsAttacking = _animator.Action == EntityControllers.Attack,
+        AttackElapsedSeconds = (float)_animator.ActionTime,
+        MoveSpeed = Entity.Asset.Controller.WalkSpeed * Scale,
+        AuthoredEntity = Entity,
+        AuthoredPose = Pose,
+        Bolts = [.. _bolts],
     };
 
     public ImmutableArray<EnemyEvent2D> DrainEvents() { var events = _events.ToImmutableArray(); _events.Clear(); return events; }
@@ -224,7 +230,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         ImmutableArray<(int, string, int)> Ledger, ImmutableDictionary<EntityId2D, int> Hits, ImmutableArray<EnemyEvent2D> Events, ImmutableArray<EntityBoltState2D> Bolts) : SimulationState2D;
 
     public SimulationState2D CaptureSimulation() => new Snapshot(_enabled, _cooldown, _hurt, _reaction.Capture(), _facing, Health.Current, _rootBefore, _animator.Capture(),
-        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), _events.ToImmutableArray(), [.. _bolts]);
+        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), [.. _events], [.. _bolts]);
 
     public void RestoreSimulation(SimulationState2D state)
     {

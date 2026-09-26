@@ -38,7 +38,9 @@ public static class FaceDrawing
                 Line(new(x - .06f, y + .06f), new(x + .06f, y - .06f));
             }
             else if (open < .18f)
+            {
                 Curve(new(x - .08f, y), new(x, y + (pose.Smile > .5f ? -.09f : .045f)), new(x + .08f, y));
+            }
             else
             {
                 // White eyes emerge only for exceptional reactions, then return to dots.

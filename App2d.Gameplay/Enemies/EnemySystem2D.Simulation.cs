@@ -7,8 +7,8 @@ namespace App2d.Gameplay.Enemies;
 public sealed partial class EnemySystem2D
 {
     internal sealed record EntryState(EntityId2D Id, bool Enabled, SimulationState2D Actor);
-    internal ImmutableArray<EntryState> CaptureSimulation() => _registeredEnemies.Select(e =>
-        new EntryState(e.Actor.Combatant.Id, e.IsEnabled, e.Actor.CaptureSimulation())).ToImmutableArray();
+    internal ImmutableArray<EntryState> CaptureSimulation() => [.. _registeredEnemies.Select(e =>
+        new EntryState(e.Actor.Combatant.Id, e.IsEnabled, e.Actor.CaptureSimulation()))];
 
     internal void ValidateSimulation(ImmutableArray<EntryState> state) => StateGuard.ThrowIf(
         !_registeredEnemies.Select(e => e.Actor.Combatant.Id).SequenceEqual(state.Select(e => e.Id)),

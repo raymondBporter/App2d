@@ -34,7 +34,10 @@ public sealed class SideScrollerSessionWorld2D(
         _ = level.EnemySystem.TryResolvePlayerHits(player);
         if (!player.DownAttackBouncedThisFrame &&
             level.TryGetSpikeSource(player.WorldObject.WorldBounds, out var sourceX))
+        {
             _ = player.TryTakeDamageFromX(1, sourceX, 180f, 300f);
+        }
+
         _ = contactDamage.Resolve(player);
     }
 }

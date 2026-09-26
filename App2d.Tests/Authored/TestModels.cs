@@ -8,7 +8,8 @@ internal static class TestModels
     /// <summary>A body with a two-bone arm keyed in the shoulder's frame and a two-bone leg keyed in the locomotion frame. Rest IK reproduces rest exactly.</summary>
     public static CharacterModel Creature() => new()
     {
-        Id = "creature", Name = "Creature",
+        Id = "creature",
+        Name = "Creature",
         Controls =
         [
             new() { Id = "body", Rest = new(0, 1), Scale = "leg" },
@@ -31,7 +32,10 @@ internal static class TestModels
     /// <summary>An empty one-second looping clip authored against this model's own measures, so every ratio is 1.</summary>
     public static MotionClip Clip(ResolvedModel model) => new()
     {
-        Id = "test-clip", Name = "Test", Model = model.Base.Id, Loop = true,
+        Id = "test-clip",
+        Name = "Test",
+        Model = model.Base.Id,
+        Loop = true,
         Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
     };
 

@@ -88,11 +88,10 @@ public sealed class DeveloperConsole
     public IReadOnlyList<string> Complete(string prefix)
     {
         prefix = prefix.Trim();
-        return _variables.Keys
+        return [.. _variables.Keys
             .Concat(_commands.Keys)
             .Where(name => name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            .Order(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+            .Order(StringComparer.OrdinalIgnoreCase)];
     }
 
     private ConsoleCommandResult SetVariable(string name, string value)

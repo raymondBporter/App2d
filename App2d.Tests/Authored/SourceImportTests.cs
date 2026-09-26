@@ -7,6 +7,7 @@ namespace App2d.Tests.Authored;
 public sealed class SourceImportTests
 {
     private static readonly Lazy<PointLibrary> PersonLibrary = new(() => PointLibrary.Load(TestAssets.GetPath("Characters", "person", "library.json")));
+    private static readonly string[] expected = ["knight-pose-study-2", "knight-pose-study-3"];
 
     [Theory, InlineData("walk"), InlineData("run")]
     public void AnImportedPuppetReproducesItsMotion(string which)
@@ -48,7 +49,7 @@ public sealed class SourceImportTests
         var result = PuppetImport.Convert(puppet, "knight", "Knight", "knight.puppet.json", ["knight-pose-study"]);
         Assert.Contains(result.Model.Controls, c => c.Id == "big-head" && c.Parent == "chest");
         Assert.Contains(result.Model.Parts, p => p.A == "big-head");
-        Assert.Equal(new[] { "knight-pose-study-2", "knight-pose-study-3" }, result.Clips.Select(c => c.Id));
+        Assert.Equal(expected, result.Clips.Select(c => c.Id));
         Assert.Throws<InvalidDataException>(() => PuppetImport.Convert(puppet, "knight", "Knight", "knight.puppet.json", ["knight"]));
     }
 

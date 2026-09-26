@@ -104,7 +104,7 @@ internal sealed class EditorSmoke(string output)
                 Record(player.Animator.Action == "attack" && player.Position.X > from + .1f && anchors > 0 && player.Animator.Anchors.Count > 0,
                     $"the skirmisher keeps walking on planted feet while it thrusts (action {player.Animator.Action ?? "none"}, moved {player.Position.X - from:F2}, anchors {anchors} then {player.Animator.Anchors.Count})");
                 var reopened = AuthoringWorkspace.Open(s.Assets.Root);
-                Record(new[] { "brute-heavy", "ranger-guard", "skirmisher" }.All(id => reopened.CompileEntity(id) is not null), "the new entities reopen and compile");
+                Record(reopenAndCompileSourceArray.All(id => reopened.CompileEntity(id) is not null), "the new entities reopen and compile");
             }),
             ("18-imported-walk-on-person", shell => { shell.Test.Stop(); ImportLibraryWalk(shell.Session); }),
             ("19-imported-walk-on-tall", shell => { var s = shell.Session; s.SetSubject("tall-thin"); s.Pin("short-broad"); s.Seek(.9f); }),
@@ -152,7 +152,7 @@ internal sealed class EditorSmoke(string output)
         Record(!model.Asset.Parts.Any(p => p.Face != "none") && model.Asset.Chains.Count == 3, "tripod has three IK legs and no head or face");
     }
 
-    private void AnimateTripod(EditorSession s)
+    private static void AnimateTripod(EditorSession s)
     {
         s.EditRig = false;
         Check(s.NewClip("tripod-walk", "Tripod walk", 1), s);
@@ -184,7 +184,7 @@ internal sealed class EditorSmoke(string output)
         var people = new[] { "bruiser", "ranger", "sage" }.Select(id => s.Assets.Resolve(id)!).ToArray();
         Record(people.Select(p => p.Parts.Single(x => x.Id == "body").Fill).Distinct().Count() == 3 && people.Select(p => p.Rest["head"].Y).Distinct().Count() == 3,
             "three visibly different people: distinct colors and heights");
-        Record(s.Assets.Model("person")!.Dirty == false, "building people never edited the base");
+        Record(!s.Assets.Model("person")!.Dirty, "building people never edited the base");
     }
 
     private void HeavyAndStandard(EditorSession s)
@@ -221,12 +221,15 @@ internal sealed class EditorSmoke(string output)
     {
         var walk = s.Assets.Clip("person-walk")!;
         Check(s.Edit(walk, () => walk.Asset.Markers.Add(new() { Id = "step", Time = .3f })), s);
-        var walkers = new[] { "ranger-guard", "skirmisher", "spear-guard", "player" }.Select(id => s.Assets.CompileEntity(id)!).ToArray();
+        var walkers = walkersSourceArray.Select(id => s.Assets.CompileEntity(id)!).ToArray();
         Record(walkers.All(e => ReferenceEquals(e.Clip("walk"), walk.Asset) && e.Clip("walk")!.Markers.Any(m => m.Id == "step")), "one walk edit reaches every walking entity without copies");
         s.Open("person-walk"); s.Pin("ranger"); s.Pin("bruiser"); s.Seek(.3f);
     }
 
     private string? _libraryHash, _puppetPath, _puppetHash;
+    internal static readonly string[] reopenAndCompileSourceArray = ["brute-heavy", "ranger-guard", "skirmisher"];
+    internal static readonly string[] walkersSourceArray = ["ranger-guard", "skirmisher", "spear-guard", "player"];
+
     private static string Hash(string path) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path)));
 
     private void ImportLibraryWalk(EditorSession s)

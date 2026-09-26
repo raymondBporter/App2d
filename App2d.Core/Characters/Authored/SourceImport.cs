@@ -24,7 +24,7 @@ public sealed record AssetSource
     {
         EntityVocabulary.Require(Kind, [Puppet, Library], owner + " source kind");
         if (string.IsNullOrWhiteSpace(File)) throw new InvalidDataException($"{owner} source: a file is required.");
-        if (Points is not null && Points.Any(p => p.Value is null || p.Value.Count == 0 || p.Value.Any(string.IsNullOrWhiteSpace)))
+        if (Points?.Any(p => p.Value is null || p.Value.Count == 0 || p.Value.Any(string.IsNullOrWhiteSpace)) == true)
             throw new InvalidDataException($"{owner} source: every mapped control needs at least one source point.");
     }
 }
@@ -76,9 +76,13 @@ public static partial class PuppetImport
         var partIds = new HashSet<string>(StringComparer.Ordinal);
         var model = new CharacterModel
         {
-            Id = modelId, Name = modelName, Ink = puppet.Ink, LineWidth = puppet.LineWidth,
+            Id = modelId,
+            Name = modelName,
+            Ink = puppet.Ink,
+            LineWidth = puppet.LineWidth,
             Controls = [.. puppet.Controls.Select(c => new ModelControl { Id = ids[c.Id], Parent = parents.GetValueOrDefault(ids[c.Id]), Rest = c.Rest })],
-            Chains = chains, Measures = measures,
+            Chains = chains,
+            Measures = measures,
             Parts = [.. puppet.Parts.Select(p => p with { Id = Unique(Slug(p.Id, "part"), partIds), A = ids[p.A], B = p.B is null ? null : ids[p.B] })],
             Source = new() { Kind = AssetSource.Puppet, File = sourcePath },
         };
@@ -86,7 +90,9 @@ public static partial class PuppetImport
 
         var converted = new PuppetDefinition
         {
-            Name = puppet.Name, Ink = puppet.Ink, LineWidth = puppet.LineWidth,
+            Name = puppet.Name,
+            Ink = puppet.Ink,
+            LineWidth = puppet.LineWidth,
             Motions = [.. puppet.Motions.Select(m => m with
             {
                 Keys = [.. m.Keys.Select(k => k with { Points = k.Points.ToDictionary(p => ids[p.Key], p => p.Value, StringComparer.Ordinal) })],
@@ -135,7 +141,9 @@ public static class LibraryImport
                 ("right-hip", ["leg_l_0"]), ("right-knee", ["leg_l_1"]), ("right-foot", ["leg_l_2"]),
                 ("left-hip", ["leg_r_0"]), ("left-knee", ["leg_r_1"]), ("left-foot", ["leg_r_2"]),
             })
+            {
                 if (model.Controls.Any(c => c.Id == control) && points.All(names.Contains)) mapping[control] = [.. points];
+            }
         }
         foreach (var control in model.Controls)
             if (!mapping.ContainsKey(control.Id) && names.Contains(control.Id)) mapping[control.Id] = [control.Id];
@@ -157,21 +165,20 @@ public static class LibraryImport
     /// <summary>Mapped source positions for every control the mapping names, at one time.</summary>
     public sealed class Sampler
     {
-        private readonly PointClip _clip;
         private readonly Vector3[] _raw;
         private readonly Func<Vector3, Vector3> _units;
         private readonly Dictionary<string, int[]> _indices;
         public Sampler(PointLibrary library, string clipId, IReadOnlyDictionary<string, List<string>> points)
         {
-            _clip = library.Clips.TryGetValue(clipId, out var clip) ? clip : throw new KeyNotFoundException($"Library '{library.Id}' has no clip '{clipId}'.");
+            Clip = library.Clips.TryGetValue(clipId, out var clip) ? clip : throw new KeyNotFoundException($"Library '{library.Id}' has no clip '{clipId}'.");
             _raw = new Vector3[library.PointNames.Count]; _units = Units(library);
             var index = library.PointNames.Select((n, i) => (n, i)).ToDictionary(p => p.n, p => p.i, StringComparer.Ordinal);
             _indices = points.ToDictionary(p => p.Key, p => p.Value.Select(n => index.TryGetValue(n, out var i) ? i : throw new InvalidDataException($"Library '{library.Id}' has no point '{n}' (mapped to '{p.Key}').")).ToArray(), StringComparer.Ordinal);
         }
-        public PointClip Clip => _clip;
+        public PointClip Clip { get; }
         public IReadOnlyDictionary<string, Vector3> At(double seconds)
         {
-            _clip.Sample(seconds, _raw, holdEnd: true);
+            Clip.Sample(seconds, _raw, holdEnd: true);
             return _indices.ToDictionary(p => p.Key, p => _units(p.Value.Aggregate(Vector3.Zero, (sum, i) => sum + _raw[i]) / p.Value.Length), StringComparer.Ordinal);
         }
     }
@@ -192,7 +199,12 @@ public static class LibraryImport
         var duration = (float)source.Clip.Duration;
         var clip = new MotionClip
         {
-            Id = id, Name = name, Model = model.Id, StructureRevision = model.StructureRevision, Duration = duration, Loop = source.Clip.Loop,
+            Id = id,
+            Name = name,
+            Model = model.Id,
+            StructureRevision = model.StructureRevision,
+            Duration = duration,
+            Loop = source.Clip.Loop,
             Reference = resolved.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
             Source = new() { Kind = AssetSource.Library, File = library.Id, Motion = clipId, Rest = restClip, Points = points.ToDictionary(p => p.Key, p => p.Value.ToList(), StringComparer.Ordinal) },
         };

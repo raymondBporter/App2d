@@ -63,13 +63,15 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         _barrelPath = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(
             new Vector2(_muzzleOffset.X + BoltWidth, 4f)));
         for (var index = 0; index < 16; index++)
+        {
             _bullets.Add(new Projectile2D(new SpatialObject2D(
                 AxisAlignedRectangle2D.FromSize(_shot.Size))));
+        }
     }
 
     public WeaponState2D CaptureState() => new(IsCharging, ChargeProgress, MuzzlePosition,
-        _bullets.Where(b => b.IsActive).Select(b => new ProjectileState2D(
-            b.Id, b.WorldObject.Transform.Position, b.Velocity, b.Origin)).ToImmutableArray());
+        [.. _bullets.Where(b => b.IsActive).Select(b => new ProjectileState2D(
+            b.Id, b.WorldObject.Transform.Position, b.Velocity, b.Origin))]);
 
     public override PersonActionState2D CaptureActionState() => _secondsSinceShot is { } elapsed
         ? new(Simulation.PlayerAttackKind2D.Shot, elapsed, RecoverySeconds) : default;
@@ -81,8 +83,10 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         get
         {
             foreach (var bullet in _bullets)
+            {
                 if (bullet.IsActive)
                     yield return bullet.WorldObject;
+            }
         }
     }
 
@@ -170,8 +174,11 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         var hit = _combat.TryDamageFirst(projectile.WorldObject, _ownerFaction,
             _targetLayer, damage: _shot.Damage, _ => new Vector2(direction * 450f, 140f));
         if (!hit)
+        {
             hit = _collision.Overlap(projectile.WorldObject, _overlaps,
                 _worldLayer, includeSensors: false) > 0;
+        }
+
         if (hit)
         {
             projectile.Deactivate();

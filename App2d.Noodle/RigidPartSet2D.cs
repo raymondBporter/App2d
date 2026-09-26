@@ -33,24 +33,16 @@ internal sealed record RigidPartAsset2D(
     int DrawOrder,
     XnaColor Color);
 
-internal sealed class RigidPartSet2D
+internal sealed class RigidPartSet2D(
+    string name,
+    IEnumerable<RigidPartAsset2D> parts,
+    XnaColor accent,
+    RigidPartStyle2D style = RigidPartStyle2D.SolidPrototype)
 {
-    public RigidPartSet2D(
-        string name,
-        IEnumerable<RigidPartAsset2D> parts,
-        XnaColor accent,
-        RigidPartStyle2D style = RigidPartStyle2D.SolidPrototype)
-    {
-        Name = name;
-        Parts = parts.OrderBy(part => part.DrawOrder).ToArray();
-        Accent = accent;
-        Style = style;
-    }
-
-    public string Name { get; }
-    public IReadOnlyList<RigidPartAsset2D> Parts { get; }
-    public XnaColor Accent { get; }
-    public RigidPartStyle2D Style { get; }
+    public string Name { get; } = name;
+    public IReadOnlyList<RigidPartAsset2D> Parts { get; } = [.. parts.OrderBy(part => part.DrawOrder)];
+    public XnaColor Accent { get; } = accent;
+    public RigidPartStyle2D Style { get; } = style;
 
     public static IReadOnlyList<RigidPartSet2D> PrototypeSets { get; } =
     [

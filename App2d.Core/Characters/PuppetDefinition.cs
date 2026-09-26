@@ -181,12 +181,12 @@ public sealed class PuppetDefinition
         }
         foreach (var motion in Motions)
         {
-            Require(motion is not null && motion.Keys is not null && motion.Contacts is not null, "Incomplete motion.");
+            Require(motion?.Keys is not null && motion.Contacts is not null, "Incomplete motion.");
             Number(motion!.Duration, .05f, 60, "motion.duration"); Require(motion.Keys.Count <= 4096, "Too many keys.");
             var previous = -1f;
             foreach (var key in motion.Keys)
             {
-                Require(key is not null && key.Points is not null, "Incomplete key."); Number(key!.Time, 0, motion.Duration, "key.time");
+                Require(key?.Points is not null, "Incomplete key."); Number(key!.Time, 0, motion.Duration, "key.time");
                 Require(key.Time > previous, "Key times must be strictly increasing."); previous = key.Time; Point(key.Position, "key.position");
                 foreach (var (id, p) in key.Points!) { Reference(id); Point(p, "key." + id); }
             }

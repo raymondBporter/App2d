@@ -12,7 +12,7 @@ public sealed partial class MovingPlatform2D
         float DistanceAlongPath,
         float TravelDirection) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _distanceAlongPath, _travelDirection);
 
     internal void RestoreSimulation(SimulationState snapshot)

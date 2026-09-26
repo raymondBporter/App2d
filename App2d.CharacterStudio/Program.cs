@@ -16,16 +16,16 @@ internal static class Program
                 case ["--write-player-moves", var moves]: PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves)); return 0;
                 case ["--write-weapons", var root]: PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root)); return 0;
                 case [] or ["--editor"] or ["--smoke-editor", _]:
-                {
-                    using var editor = new Editor.EditorApp(Path.Combine(FindAssets(), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
-                    editor.Run(); return 0;
-                }
+                    {
+                        using var editor = new Editor.EditorApp(Path.Combine(FindAssets(), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
+                        editor.Run(); return 0;
+                    }
                 case ["--smoke-motion" or "--smoke-entities" or "--review-moves" or "--smoke-weapons", var output]:
-                {
-                    var mode = args[0] switch { "--smoke-motion" => ProofRenders.Mode.Motion, "--smoke-entities" => ProofRenders.Mode.Entities, "--smoke-weapons" => ProofRenders.Mode.Weapons, _ => ProofRenders.Mode.MoveReview };
-                    using var proofs = new ProofRenders(FindAssets(), Path.GetFullPath(output), mode);
-                    proofs.Run(); return 0;
-                }
+                    {
+                        var mode = args[0] switch { "--smoke-motion" => ProofRenders.Mode.Motion, "--smoke-entities" => ProofRenders.Mode.Entities, "--smoke-weapons" => ProofRenders.Mode.Weapons, _ => ProofRenders.Mode.MoveReview };
+                        using var proofs = new ProofRenders(FindAssets(), Path.GetFullPath(output), mode);
+                        proofs.Run(); return 0;
+                    }
                 default: throw new ArgumentException(Usage);
             }
         }

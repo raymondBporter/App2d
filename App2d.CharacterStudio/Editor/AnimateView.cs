@@ -143,7 +143,10 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
             if (Ui.Drag($"Travel per cycle ({travel.Scale} units)", ref distance, .005f, -20, 20))
                 session.Change(document, () => document.Asset.Travel.Keys = distance == 0 ? [] : [new() { Time = 0 }, new() { Time = document.Asset.Duration, X = distance }]);
         }
-        else ImGui.TextDisabled($"Travel: {travel.Keys.Count} keys, scaled by '{travel.Scale}'.");
+        else
+        {
+            ImGui.TextDisabled($"Travel: {travel.Keys.Count} keys, scaled by '{travel.Scale}'.");
+        }
     }
 
     private void ControlFields(AssetDocument<MotionClip> document, Subject primary, string control)
@@ -174,7 +177,10 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
             if (Ui.Combo("Ease to next key", key.Ease, ClipEase.All) is { } ease) session.Edit(document, () => ClipAuthoring.SetEase(document.Asset, time, ease, channels));
             if (ImGui.SmallButton("Delete this key")) session.Edit(document, () => ClipAuthoring.DeleteKeys(document.Asset, time, channels));
         }
-        else Ui.Help("No key at this time; dragging or editing adds one.");
+        else
+        {
+            Ui.Help("No key at this time; dragging or editing adds one.");
+        }
 
         if (channel.Value.Kind != MotionClip.TargetKind) return;
         var chainId = channel.Value.Target; var spec = model.Chains[chainId];
@@ -195,7 +201,11 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
             if (ImGui.Button("Plant here")) session.Edit(document, () => ClipAuthoring.Plant(model, document.Asset, PoseEvaluator.Sample(model, document.Asset, time), chainId, time));
             Ui.Help("Holds the end where it is now, in the locomotion frame, while travel carries the body on.");
         }
-        else Ui.Help($"Keyed in '{spec.Frame}'; only locomotion-frame chains plant.");
+        else
+        {
+            Ui.Help($"Keyed in '{spec.Frame}'; only locomotion-frame chains plant.");
+        }
+
         if (primary.Pose.Chains.FirstOrDefault(c => c.Chain == chainId) is { Reached: false } reach) Ui.Problem($"Out of reach by {reach.Residual:F3}. Limb lengths are kept.");
     }
 
@@ -213,7 +223,11 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
             var shown = PoseEvaluator.FaceAt(document.Asset, part.Id, time);
             ImGui.PushID(part.Id);
             if (Ui.Combo($"{part.Id}: {(here is not null ? "keyed here" : shown is null ? "model default" : "held from earlier key")}", here?.Expression ?? shown ?? part.Face,
-                FaceExpressions.Names) is { } expression) session.Edit(document, () => ClipAuthoring.SetFace(document.Asset, part.Id, time, expression));
+                FaceExpressions.Names) is { } expression)
+            {
+                session.Edit(document, () => ClipAuthoring.SetFace(document.Asset, part.Id, time, expression));
+            }
+
             if (here is not null && ImGui.SmallButton("Remove face key")) session.Edit(document, () => ClipAuthoring.SetFace(document.Asset, part.Id, time, null));
             ImGui.PopID();
         }
@@ -279,16 +293,16 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
             _dragging = model.Order.Select(c => c.Id).Where(id => ClipAuthoring.ChannelFor(model, id) is not null)
-                .OrderBy(id => Vector2.Distance(frame.Screen(pose.World(id)), frame.Mouse)).FirstOrDefault(id => Vector2.Distance(frame.Screen(pose.World(id)), frame.Mouse) < 12 * Ui.Scale);
+                .OrderBy(id => Vector2.Distance(frame.Screen(pose.World(id)), ViewportFrame.Mouse)).FirstOrDefault(id => Vector2.Distance(frame.Screen(pose.World(id)), ViewportFrame.Mouse) < 12 * Ui.Scale);
             if (_dragging is not null) { session.Selection.Clear(); session.Selection.Control = _dragging; session.BeginDrag(); _grabbed = false; }
         }
         if (frame.Hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && _dragging is null) viewport.Fit(subject);
         if (_dragging is null) return;
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _dragging = null; session.EndDrag(); return; }
         // The first frame after the click has paused playback; measure the grab offset in that paused pose.
-        if (!_grabbed) { _grab = pose.World(_dragging) - frame.World(frame.Mouse); _grabbed = true; return; }
+        if (!_grabbed) { _grab = pose.World(_dragging) - frame.World(ViewportFrame.Mouse); _grabbed = true; return; }
         if (ImGui.GetIO().MouseDelta == Vector2.Zero) return;
-        var target = frame.World(frame.Mouse) + _grab;
+        var target = frame.World(ViewportFrame.Mouse) + _grab;
         session.DragControl(_dragging, target with { Z = pose.World(_dragging).Z });
     }
 
@@ -360,7 +374,10 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         }
         if (_keyDrag is { } active && active.Row == label)
         {
-            if (ImGui.IsMouseDown(ImGuiMouseButton.Left)) _keyDrag = active with { To = Time(ImGui.GetMousePos().X) };
+            if (ImGui.IsMouseDown(ImGuiMouseButton.Left))
+            {
+                _keyDrag = active with { To = Time(ImGui.GetMousePos().X) };
+            }
             else
             {
                 _keyDrag = null;

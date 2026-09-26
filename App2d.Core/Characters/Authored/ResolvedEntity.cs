@@ -149,7 +149,11 @@ public sealed class ResolvedEntity
                 hurt.Add(region with { Pad = change?.Pad ?? region.Pad });
             }
         }
-        else if (asset.Hurt.Regions.Count > 0) throw new InvalidDataException($"{owner} hurt.regions: overrides need a layout.");
+        else if (asset.Hurt.Regions.Count > 0)
+        {
+            throw new InvalidDataException($"{owner} hurt.regions: overrides need a layout.");
+        }
+
         entity.Hurt = hurt;
         return entity;
     }

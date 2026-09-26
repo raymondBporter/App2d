@@ -152,11 +152,14 @@ public sealed class EntityAnimator
         if (!loop) { foreach (var marker in clip.Markers) if (Crosses(marker.Time, from, to, inclusiveStart)) Add(marker.Id); return; }
         var duration = clip.Duration;
         for (var cycle = Math.Floor(from / duration); cycle * duration <= to; cycle++)
+        {
             foreach (var marker in clip.Markers)
             {
                 var time = cycle * duration + marker.Time;
                 if ((time > from || inclusiveStart && time == from) && time <= to) Add(marker.Id);
             }
+        }
+
         void Add(string id) => events.Add(new(AnimationEvent.MarkerKind, id, null, action, ActionSequence));
     }
 

@@ -85,7 +85,6 @@ public static class ArgGuard
         }
     }
 
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrZero<T>(
         T value,
@@ -104,7 +103,6 @@ public static class ArgGuard
             throw new ArgumentOutOfRangeException(paramName, value, "Value must not be zero.");
         }
     }
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotPositive(

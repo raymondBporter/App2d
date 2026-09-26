@@ -13,7 +13,7 @@ internal sealed partial class SwordPersonWeapon2D
         MeleePersonWeapon2D.SimulationState DownSwing,
         (bool HasBounced, bool BouncePending) Bounce) : SimulationState2D;
 
-    internal new SimulationState CaptureSimulation() => new SimulationState(
+    internal new SimulationState CaptureSimulation() => new(
         base.CaptureSimulation(), _downAttack.CaptureSimulation(), _downAttack.CaptureBounce());
 
     internal void RestoreSimulation(SimulationState snapshot)

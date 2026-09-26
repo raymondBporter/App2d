@@ -19,8 +19,8 @@ internal sealed partial class GunPersonWeapon2D
         int CreationSequence,
         ImmutableArray<Projectile2D.SimulationState> Projectiles) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
-        _chargeTime, _direction, _recoverySeconds, _secondsSinceShot, _canCharge, _needsRelease, IsCharging, _projectileIds.Position, _bullets.Select(b => b.CaptureSimulation()).ToImmutableArray());
+    internal SimulationState CaptureSimulation() => new(
+        _chargeTime, _direction, _recoverySeconds, _secondsSinceShot, _canCharge, _needsRelease, IsCharging, _projectileIds.Position, [.. _bullets.Select(b => b.CaptureSimulation())]);
 
     internal void RestoreSimulation(SimulationState snapshot)
     {

@@ -88,7 +88,7 @@ public sealed class PlayerInputTests
         foreach (var key in new[] { Keys.E, Keys.B, Keys.F3 }) input.SetKey(key, true);
         var pad = new XboxControllerState2D(default, XboxButtons.B | XboxButtons.Y,
             XboxButtons.B | XboxButtons.Y, default);
-        Assert.Equal(default(PersonCommand2D), mapper.Capture(input, pad));
+        Assert.Equal(default, mapper.Capture(input, pad));
     }
 
     [Fact]
@@ -99,10 +99,10 @@ public sealed class PlayerInputTests
         input.SetKey(Keys.F, true);
         Assert.True(mapper.Capture(input, default).PrimaryHeld);
         input.SetSuppressed(true);
-        Assert.Equal(default(PersonCommand2D), mapper.Capture(input, default));
+        Assert.Equal(default, mapper.Capture(input, default));
         input.SetSuppressed(false);
         input.SetKey(Keys.F, true); // OS key repeat from the original hold.
-        Assert.Equal(default(PersonCommand2D), mapper.Capture(input, default));
+        Assert.Equal(default, mapper.Capture(input, default));
         input.SetKey(Keys.F, false);
         input.SetKey(Keys.F, true);
         Assert.True(mapper.Capture(input, default).PrimaryHeld);
@@ -118,10 +118,10 @@ public sealed class PlayerInputTests
         var pad = new XboxControllerState2D(default, XboxButtons.X, XboxButtons.X, default);
         Assert.True(input.IsSuppressed);
         Assert.False(input.WasKeyPressed(Keys.Space));
-        Assert.Equal(default(PersonCommand2D), mapper.Capture(input, pad));
+        Assert.Equal(default, mapper.Capture(input, pad));
         input.SetWindowActive(true);
         Assert.False(input.IsSuppressed);
-        Assert.Equal(default(PersonCommand2D), mapper.Capture(input, default));
+        Assert.Equal(default, mapper.Capture(input, default));
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public sealed class PlayerInputTests
         var mapper = new PlayerInputMapper2D();
         input.SetMouseButton(MouseButtons.Left, true);
         input.CancelButtons();
-        Assert.Equal(default(PersonCommand2D), mapper.Capture(input, default));
+        Assert.Equal(default, mapper.Capture(input, default));
         input.SetMouseButton(MouseButtons.Left, false);
         input.SetMouseButton(MouseButtons.Left, true);
         Assert.True(mapper.Capture(input, default).PrimaryHeld);

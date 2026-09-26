@@ -58,8 +58,11 @@ public sealed class PuppetDrawing
             }
             Mesh.Polygon(PartGeometry.Contour(part, world), CharacterJson.Color(part.Fill), ink, lineWidth);
             var frame = PartGeometry.FrameOf(part, world);
-            if (face != "none") FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),
+            if (face != "none")
+            {
+                FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),
                 p => frame.At(new(p.X * part.Width + part.FaceX, -p.Y * part.Height)) - new Vector3(0, 0, .002f), lineWidth * .6f, ink);
+            }
         }
     }
 }

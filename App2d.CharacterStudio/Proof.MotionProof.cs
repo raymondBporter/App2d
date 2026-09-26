@@ -34,7 +34,8 @@ internal sealed partial class ProofRenders
         _proofTarget ??= new(GraphicsDevice, ProofWidth, ProofHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         var clipId = ProofClips[_smokeIndex / ProofFrames]; var frame = _smokeIndex % ProofFrames;
         var clip = catalog.Animations[clipId]; var seconds = frame * clip.Duration / ProofFrames;
-        var panel = ProofWidth / ProofSubjects.Length; var band = ProofHeight - ProofPanelHeight;
+        var panel = ProofWidth / ProofSubjects.Length;
+        const int band = ProofHeight - ProofPanelHeight;
         GraphicsDevice.SetRenderTarget(_proofTarget); GraphicsDevice.Clear(new Color(237, 238, 226));
         for (var i = 0; i < ProofSubjects.Length; i++)
         {
@@ -79,6 +80,7 @@ internal sealed partial class ProofRenders
         var catalog = ProofCatalog();
         var lines = new List<string> { "Panels, left to right: " + string.Join(", ", ProofSubjects) + $". Close-ups at {ProofPpu} px/unit; bottom band at game scale, {GamePpu} px/unit, fixed camera." };
         foreach (var clipId in ProofClips)
+        {
             foreach (var subject in ProofSubjects)
             {
                 var model = catalog.Resolve(subject); var clip = catalog.Animations[clipId];
@@ -88,6 +90,8 @@ internal sealed partial class ProofRenders
                 var reach = poses.SelectMany(p => p.Chains).Max(c => c.Residual);
                 lines.Add($"{clipId} on {subject}: stride {stride:F3}, max contact residual {contact:E1}, max reach residual {reach:E1}");
             }
+        }
+
         File.WriteAllLines(Path.Combine(_smokePath!, "motion-proof.txt"), lines);
     }
 }

@@ -27,8 +27,16 @@ public sealed class ObservationRoundTripTests
         var playerId = new EntityId2D(100);
         var enemyId = new EntityId2D(101);
         var position = new Vector2(24f, -3f);
-        var person = new PersonState2D { Id = playerId, Position = position, Facing = -1f,
-            HitPoints = 3, MaximumHitPoints = 5, IsGrounded = true, Action = new(PlayerAttackKind2D.Melee, 0.12f, 0.4f) };
+        var person = new PersonState2D
+        {
+            Id = playerId,
+            Position = position,
+            Facing = -1f,
+            HitPoints = 3,
+            MaximumHitPoints = 5,
+            IsGrounded = true,
+            Action = new(PlayerAttackKind2D.Melee, 0.12f, 0.4f)
+        };
         var player = new PlayerState2D(person, 620, -1f, EquipmentKind2D.Sword, true, 0f, 42, false,
             new(false, 0f, position, [new(new EntityId2D(102), position, new(1250f, 0f), new(2f, 4f))]));
         var content = new LevelContent2D(3, [terrain], [new(new EntityId2D(103), 40, new(90f, 12f), 0xffaabbcc)],
@@ -41,20 +49,23 @@ public sealed class ObservationRoundTripTests
         var restored = RoundTrip(snapshot, options);
         Assert.Equal(player.Person, restored.Players[0].Person);
         Assert.Equal(player with { Weapons = default }, restored.Players[0] with { Weapons = default });
-        Assert.Equal(player.Weapons.Projectiles.ToArray(), restored.Players[0].Weapons.Projectiles.ToArray());
+        Assert.Equal([.. player.Weapons.Projectiles], [.. restored.Players[0].Weapons.Projectiles]);
         Assert.Equal(enemies.ToArray(), restored.Enemies.ToArray());
-        Assert.Equal(world.MovingPlatforms.ToArray(), restored.World.MovingPlatforms.ToArray());
-        Assert.Equal(content.MovingPlatforms.ToArray(), restored.Content.MovingPlatforms.ToArray());
-        Assert.Equal(content.Checkpoints.ToArray(), restored.Content.Checkpoints.ToArray());
+        Assert.Equal([.. world.MovingPlatforms], [.. restored.World.MovingPlatforms]);
+        Assert.Equal([.. content.MovingPlatforms], [.. restored.Content.MovingPlatforms]);
+        Assert.Equal([.. content.Checkpoints], [.. restored.Content.Checkpoints]);
         var restoredTerrain = Assert.Single(restored.Content.Terrain);
         Assert.NotSame(terrain, restoredTerrain);
-        Assert.Equal(terrain.Collisions.ToArray(), restoredTerrain.Collisions.ToArray());
+        Assert.Equal([.. terrain.Collisions], [.. restoredTerrain.Collisions]);
         for (var y = -1; y <= 4; y++)
+        {
             for (var x = -1; x <= 4; x++)
             {
                 Assert.Equal(terrain.GetTileKind(x, y), restoredTerrain.GetTileKind(x, y));
                 Assert.Equal(terrain.GetTilesetIndex(x, y), restoredTerrain.GetTilesetIndex(x, y));
             }
+        }
+
         map.SetTileKind(4, 1, TileKind2D.Empty);
         Assert.Equal(TileKind2D.Ladder, restoredTerrain.GetTileKind(4, 1));
 
@@ -74,7 +85,7 @@ public sealed class ObservationRoundTripTests
             new GunFired2D(position), new ProjectileImpact2D(position, EntityId2D.None), new SwordImpact2D(position)];
         events.AddRange(enemyEvents.Select(e => new EnemyOccurred2D(stamp, e)));
         events.AddRange(weaponEvents.Select(e => new WeaponOccurred2D(stamp, e)));
-        var frame = new SessionFrame2D(501, [player], events.ToImmutableArray()) { Content = content, World = world, Enemies = enemies };
+        var frame = new SessionFrame2D(501, [player], [.. events]) { Content = content, World = world, Enemies = enemies };
         Assert.Equal(events.ToArray(), RoundTrip(frame, options).Events.ToArray());
     }
 
@@ -84,7 +95,7 @@ public sealed class ObservationRoundTripTests
         Assert.Throws<ArgumentException>(() => new TerrainChunkState2D(new(0, 0), 1, 4, 4, 4, 16f,
             Vector2.Zero, ["stone"], [], [0]));
         Assert.Throws<ArgumentException>(() => new TerrainChunkState2D(new(0, 0), 1, 4, 4, 4, 16f,
-            Vector2.Zero, ["stone"], [], Enumerable.Repeat(new TileCell2D(TileKind2D.Solid, 1).Packed, 36).ToImmutableArray()));
+            Vector2.Zero, ["stone"], [], [.. Enumerable.Repeat(new TileCell2D(TileKind2D.Solid, 1).Packed, 36)]));
     }
 
     private static T RoundTrip<T>(T value, JsonSerializerOptions options)

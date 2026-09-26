@@ -11,7 +11,8 @@ public sealed partial class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
     public ICombatant2D Combatant => Enemy;
     public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.Shieldback,
         Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, Enemy.Facing,
-        _simulationEnabled, Enemy.IsAlive) { MoveSpeed = Enemy.Speed };
+        _simulationEnabled, Enemy.IsAlive)
+    { MoveSpeed = Enemy.Speed };
 
     public void SetSimulationEnabled(bool isEnabled)
     {

@@ -79,6 +79,7 @@ public sealed class AuthoredArena
         {
             if (!attacker.Alive) continue;
             foreach (var (hit, region) in attacker.Attacks)
+            {
                 foreach (var target in Actors)
                 {
                     if (target == attacker || !target.Alive || (target.Index == 0) == (attacker.Index == 0)) continue;
@@ -87,6 +88,7 @@ public sealed class AuthoredArena
                     Hits.Add(new(Tick, attacker.Index, target.Index, hit.Window.Id, hit.Window.Damage));
                     Damage(target, hit.Window.Damage);
                 }
+            }
         }
         StepBolts();
     }
@@ -157,7 +159,7 @@ public sealed class AuthoredArena
         if (!actor.Grounded && animator.Locomoting)
         {
             // Airborne without an action: the fall role when assigned, otherwise the explicit fallback of holding the pose.
-            if (actor.Entity.Clip(EntityControllers.Fall) is not null) role = EntityControllers.Fall; else { role = animator.Role; hold = true; }
+            if (actor.Entity.Clip(EntityControllers.Fall) is not null) { role = EntityControllers.Fall; } else { role = animator.Role; hold = true; }
         }
         if (actor.Reaction.Role(actor.Entity, true) is { } hit) { role = hit; hold = false; }
         var ground = actor.Grounded ? MathF.Abs(position.X - before.X) : 0;

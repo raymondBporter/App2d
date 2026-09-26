@@ -300,7 +300,10 @@ public sealed partial class Renderer2D : IDisposable
                 points[count++] = center + radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
             }
         }
-        if (strokeWidth > 0) StrokePolygon(points[..count], Matrix3x2.Identity, color, strokeWidth);
+        if (strokeWidth > 0)
+        {
+            StrokePolygon(points[..count], Matrix3x2.Identity, color, strokeWidth);
+        }
         else
         {
             var center = Vertex(new Vector2(bounds.MidX, bounds.MidY), color);
@@ -353,10 +356,12 @@ public sealed partial class Renderer2D : IDisposable
         var matrix = _camera.WorldToDeviceMatrix;
         var first = Vertex(Vector2.Transform(points[0], matrix), color);
         for (var index = 1; index < points.Length - 1; index++)
+        {
             Triangle(
                 first,
                 Vertex(Vector2.Transform(points[index], matrix), color),
                 Vertex(Vector2.Transform(points[index + 1], matrix), color));
+        }
     }
 
     private void TexturedQuad(ScreenRectangle2D bounds, ScreenRectangle2D source, int width, int height, XnaColor color)
@@ -402,11 +407,16 @@ public sealed partial class Renderer2D : IDisposable
         SelectBatch(null, null);
         var visible = _camera.VisibleWorldBounds;
         for (var x = (int)MathF.Floor(visible.Left / spacing); x <= (int)MathF.Ceiling(visible.Right / spacing); x++)
+        {
             Line(_camera.WorldToDevice(new(x * spacing, visible.Bottom)), _camera.WorldToDevice(new(x * spacing, visible.Top)),
                 new XnaColor(255, 255, 255, x == 0 ? 85 : x % majorLineEvery == 0 ? 35 : 18), x == 0 ? 2 : 1);
+        }
+
         for (var y = (int)MathF.Floor(visible.Bottom / spacing); y <= (int)MathF.Ceiling(visible.Top / spacing); y++)
+        {
             Line(_camera.WorldToDevice(new(visible.Left, y * spacing)), _camera.WorldToDevice(new(visible.Right, y * spacing)),
                 new XnaColor(255, 255, 255, y == 0 ? 85 : y % majorLineEvery == 0 ? 35 : 18), y == 0 ? 2 : 1);
+        }
     }
 
     public void DrawShapeOutline(SpatialObject2D item, XnaColor color, float screenStrokeWidth = 2f)

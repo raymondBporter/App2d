@@ -101,9 +101,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public float GoalX { get; }
     public float GoalGroundY { get; }
     public WorldThingSpec2D? GoalThing { get; }
-    public IReadOnlyList<WorldThingSpec2D> SavePointThings => _worldThingSpecs
-        .Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)
-        .ToArray();
+    public IReadOnlyList<WorldThingSpec2D> SavePointThings => [.. _worldThingSpecs.Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)];
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
     public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;
     public EnemySystem2D EnemySystem { get; } = new();
@@ -186,8 +184,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     /// <summary>Per-tick dynamic observation.</summary>
     public WorldState2D CaptureWorld() => new(
-        _movingPlatforms.Select(p => p.CaptureState()).ToImmutableArray(),
-        _savePoints.Select(p => p.CaptureState()).ToImmutableArray());
+        [.. _movingPlatforms.Select(p => p.CaptureState())],
+        [.. _savePoints.Select(p => p.CaptureState())]);
 
     /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
     public LevelContent2D CaptureContent()
@@ -198,8 +196,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         {
             _contentKey = key;
             _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(),
-                _movingPlatforms.Select(p => p.CaptureDefinition()).ToImmutableArray(),
-                _savePoints.Select(p => p.CapturePlacement()).ToImmutableArray(),
+                [.. _movingPlatforms.Select(p => p.CaptureDefinition())],
+                [.. _savePoints.Select(p => p.CapturePlacement())],
                 GoalThing?.Position);
         }
         return _content;

@@ -26,7 +26,12 @@ public static class ClipAuthoring
         var scales = preview.Chains.Values.Where(c => c.Frame == CharacterModel.Locomotion).Select(c => c.Scale).Distinct().ToArray();
         return new()
         {
-            Id = id, Name = name, Model = preview.Base.Id, StructureRevision = preview.Base.StructureRevision, Duration = duration, Loop = loop,
+            Id = id,
+            Name = name,
+            Model = preview.Base.Id,
+            StructureRevision = preview.Base.StructureRevision,
+            Duration = duration,
+            Loop = loop,
             Reference = preview.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
             Travel = new() { Scale = scales.Length == 1 ? scales[0] : CharacterModel.Unit },
         };

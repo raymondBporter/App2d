@@ -127,7 +127,7 @@ public sealed class SimulationRollbackTests
         var inputs = Enumerable.Range(0, 1000).Select(_ => Move(1)).ToArray();
         var originalTerrain = game.Session.CaptureContent().Terrain.Select(c => c.Chunk).ToArray();
         var frames = AssertReplay(game, inputs);
-        Assert.NotEqual(originalTerrain, frames[^1].Content.Terrain.Select(c => c.Chunk).ToArray());
+        Assert.NotEqual(originalTerrain, [.. frames[^1].Content.Terrain.Select(c => c.Chunk)]);
         Assert.Equal(oldValue, Describe(old));
         game.Session.RestoreCheckpoint(old);
         Assert.Equal(oldValue, Describe(game.Session.CaptureCheckpoint()));
@@ -373,7 +373,7 @@ public sealed class SimulationRollbackTests
         {
             Assert.Equal(expected.Players[i] with { Weapons = default }, actual.Players[i] with { Weapons = default });
             Assert.Equal(expected.Players[i].Weapons with { Projectiles = [] }, actual.Players[i].Weapons with { Projectiles = [] });
-            Assert.Equal(expected.Players[i].Weapons.Projectiles.ToArray(), actual.Players[i].Weapons.Projectiles.ToArray());
+            Assert.Equal([.. expected.Players[i].Weapons.Projectiles], [.. actual.Players[i].Weapons.Projectiles]);
         }
         // The content revision is a local cache counter; compare what it describes.
         Assert.Equal(Describe(expected.Content with { Revision = 0 }), Describe(actual.Content with { Revision = 0 }));

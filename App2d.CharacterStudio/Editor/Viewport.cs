@@ -22,7 +22,7 @@ internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, Vector2 
     public IReadOnlyList<SubjectView> Subjects { get; } = subjects;
     public SubjectView? Primary => Subjects.Count > 0 ? Subjects[0] : null;
     public bool Hovered { get; } = hovered;
-    public Vector2 Mouse => ImGui.GetMousePos();
+    public static Vector2 Mouse => ImGui.GetMousePos();
 
     public Vector2 Screen(Vector3 world, int subject = 0)
     {

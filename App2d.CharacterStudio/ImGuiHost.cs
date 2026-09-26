@@ -50,7 +50,7 @@ internal sealed class ImGuiHost : IDisposable
         _effect = new(_device) { TextureEnabled = true, VertexColorEnabled = true };
         var io = ImGui.GetIO(); io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
         io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
-        unsafe { io.NativePtr->IniFilename = null; }
+        io.NativePtr->IniFilename = null;
         UserScale = userScale;
         ImGui.StyleColorsDark(); var style = ImGui.GetStyle();
         style.WindowRounding = 4; style.FrameRounding = 4; style.GrabRounding = 4;
@@ -79,7 +79,10 @@ internal sealed class ImGuiHost : IDisposable
         if (_font is not null) { Unregister(_fontId); _font.Dispose(); }
         io.Fonts.Clear(); io.FontGlobalScale = 1;
         var fontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "segoeui.ttf");
-        if (File.Exists(fontPath)) io.Fonts.AddFontFromFileTTF(fontPath, 17 * UiScale);
+        if (File.Exists(fontPath))
+        {
+            io.Fonts.AddFontFromFileTTF(fontPath, 17 * UiScale);
+        }
         else { io.Fonts.AddFontDefault(); io.FontGlobalScale = 17 * UiScale / 13; }
         BuildFont();
     }
@@ -112,15 +115,30 @@ internal sealed class ImGuiHost : IDisposable
     }
     private static ImGuiKey? Map(Keys key) => key switch
     {
-        >= Keys.A and <= Keys.Z => ImGuiKey.A + (key - Keys.A), >= Keys.D0 and <= Keys.D9 => ImGuiKey._0 + (key - Keys.D0),
+        >= Keys.A and <= Keys.Z => ImGuiKey.A + (key - Keys.A),
+        >= Keys.D0 and <= Keys.D9 => ImGuiKey._0 + (key - Keys.D0),
         >= Keys.F1 and <= Keys.F12 => ImGuiKey.F1 + (key - Keys.F1),
-        Keys.Tab => ImGuiKey.Tab, Keys.Enter => ImGuiKey.Enter, Keys.Escape => ImGuiKey.Escape, Keys.Space => ImGuiKey.Space,
-        Keys.Left => ImGuiKey.LeftArrow, Keys.Right => ImGuiKey.RightArrow, Keys.Up => ImGuiKey.UpArrow, Keys.Down => ImGuiKey.DownArrow,
-        Keys.Back => ImGuiKey.Backspace, Keys.Delete => ImGuiKey.Delete, Keys.Home => ImGuiKey.Home, Keys.End => ImGuiKey.End,
-        Keys.PageUp => ImGuiKey.PageUp, Keys.PageDown => ImGuiKey.PageDown, Keys.Insert => ImGuiKey.Insert,
-        Keys.LeftControl => ImGuiKey.LeftCtrl, Keys.RightControl => ImGuiKey.RightCtrl,
-        Keys.LeftShift => ImGuiKey.LeftShift, Keys.RightShift => ImGuiKey.RightShift,
-        Keys.LeftAlt => ImGuiKey.LeftAlt, Keys.RightAlt => ImGuiKey.RightAlt,
+        Keys.Tab => ImGuiKey.Tab,
+        Keys.Enter => ImGuiKey.Enter,
+        Keys.Escape => ImGuiKey.Escape,
+        Keys.Space => ImGuiKey.Space,
+        Keys.Left => ImGuiKey.LeftArrow,
+        Keys.Right => ImGuiKey.RightArrow,
+        Keys.Up => ImGuiKey.UpArrow,
+        Keys.Down => ImGuiKey.DownArrow,
+        Keys.Back => ImGuiKey.Backspace,
+        Keys.Delete => ImGuiKey.Delete,
+        Keys.Home => ImGuiKey.Home,
+        Keys.End => ImGuiKey.End,
+        Keys.PageUp => ImGuiKey.PageUp,
+        Keys.PageDown => ImGuiKey.PageDown,
+        Keys.Insert => ImGuiKey.Insert,
+        Keys.LeftControl => ImGuiKey.LeftCtrl,
+        Keys.RightControl => ImGuiKey.RightCtrl,
+        Keys.LeftShift => ImGuiKey.LeftShift,
+        Keys.RightShift => ImGuiKey.RightShift,
+        Keys.LeftAlt => ImGuiKey.LeftAlt,
+        Keys.RightAlt => ImGuiKey.RightAlt,
         _ => null
     };
     public unsafe void Render()

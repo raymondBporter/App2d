@@ -18,6 +18,7 @@ public sealed class AuthoredEntityEnemyTests
 {
     private static readonly string CharactersRoot = Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters"));
     private static readonly AuthoredCatalog Authored = AuthoredCatalog.Load(Path.Combine(CharactersRoot, "authored"));
+    private static readonly string[] expected = ["spear-guard", "maul-brute", "stalker-pest"];
 
     private static SideScrollerSimulation2D Game()
     {
@@ -36,7 +37,7 @@ public sealed class AuthoredEntityEnemyTests
     {
         using var game = Game();
         var states = game.Session.CaptureEnemies();
-        Assert.Equal(new[] { "spear-guard", "maul-brute", "stalker-pest" }, states.Select(s => s.TypeId));
+        Assert.Equal(expected, states.Select(s => s.TypeId));
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[1]);
         Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[2]);
@@ -51,14 +52,14 @@ public sealed class AuthoredEntityEnemyTests
         using var game = Game();
         for (var i = 0; i < 30; i++) game.Session.Advance();
         var checkpoint = game.Session.CaptureCheckpoint();
-        string[] Run() => Enumerable.Range(0, 480).Select(i =>
+        string[] Run() => [.. Enumerable.Range(0, 480).Select(i =>
         {
             var tick = game.Session.Tick + 1;
             var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D { MoveX = i < 60 ? .3f : 0 }));
             var guard = frame.Enemies[0];
             return JsonSerializer.Serialize(new { frame.Tick, Health = game.Player.Health.Current, guard.Position, guard.ActionId, guard.ActionSeconds, Points = guard.AuthoredPose!.Local.Points.Values.ToArray() },
                 new JsonSerializerOptions { IncludeFields = true });
-        }).ToArray();
+        })];
         var first = Run(); var damaged = game.Player.Health.Current;
         game.Session.RestoreCheckpoint(checkpoint); var second = Run();
         Assert.Equal(first, second);

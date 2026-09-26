@@ -13,14 +13,22 @@ public static class PuppetMotionConverter
         var resolved = ResolvedModel.From(model);
         var solved = model.Chains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
         foreach (var control in model.Controls.Where(c => !solved.Contains(c.Id)))
+        {
             for (var parent = control.Parent; parent is not null; parent = resolved.Controls[parent].Parent)
                 if (solved.Contains(parent)) throw new InvalidDataException($"Control '{control.Id}' hangs from IK-solved '{parent}'; conversion does not support that yet.");
+        }
 
         Vector3 Rest(string control) => resolved.Rest[control];
         var clip = new MotionClip
         {
-            Id = id, Name = name, Model = model.Id, StructureRevision = model.StructureRevision, Duration = motion.Duration, Loop = motion.Loop,
-            Reference = resolved.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal), Travel = new() { Scale = travelScale },
+            Id = id,
+            Name = name,
+            Model = model.Id,
+            StructureRevision = model.StructureRevision,
+            Duration = motion.Duration,
+            Loop = motion.Loop,
+            Reference = resolved.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
+            Travel = new() { Scale = travelScale },
         };
         var tracks = new Dictionary<(string, string), ClipTrack>();
         void Add(string kind, string target, float time, Vector3 delta)

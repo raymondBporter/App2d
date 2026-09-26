@@ -117,8 +117,8 @@ internal sealed partial class AnimateView
         {
             draw.AddCircleFilled(point, 7 * scale, color);
             draw.AddText(point + new Vector2(10, -7) * scale, color, name);
-            if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(frame.Mouse, point) < 12 * scale)
-            { _weaponDrag = name; _weaponPointerAngle = MathF.Atan2(center.Y - frame.Mouse.Y, frame.Mouse.X - center.X); _weaponStart = angles; session.BeginDrag(); }
+            if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(ViewportFrame.Mouse, point) < 12 * scale)
+            { _weaponDrag = name; _weaponPointerAngle = MathF.Atan2(center.Y - ViewportFrame.Mouse.Y, ViewportFrame.Mouse.X - center.X); _weaponStart = angles; session.BeginDrag(); }
         }
         if (_weaponDrag is not null)
         {
@@ -128,7 +128,7 @@ internal sealed partial class AnimateView
                 var speed = ImGui.GetIO().KeyShift ? .2f : 1;
                 if (_weaponDrag == "Turn")
                 {
-                    var pointer = MathF.Atan2(center.Y - frame.Mouse.Y, frame.Mouse.X - center.X);
+                    var pointer = MathF.Atan2(center.Y - ViewportFrame.Mouse.Y, ViewportFrame.Mouse.X - center.X);
                     _weaponStart.Z += MathF.IEEERemainder(pointer - _weaponPointerAngle, MathF.Tau) * speed;
                     _weaponPointerAngle = pointer;
                 }

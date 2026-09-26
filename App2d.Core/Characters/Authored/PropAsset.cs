@@ -46,7 +46,11 @@ public sealed class PropAsset
     /// <summary>A named local point, or null when the prop does not define it.</summary>
     public PuppetPoint? Point(string name) => name switch
     {
-        GripPoint => Grip, TipPoint => Tip, SecondGripPoint => SecondGrip, MuzzlePoint => Muzzle, _ => null,
+        GripPoint => Grip,
+        TipPoint => Tip,
+        SecondGripPoint => SecondGrip,
+        MuzzlePoint => Muzzle,
+        _ => null,
     };
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);

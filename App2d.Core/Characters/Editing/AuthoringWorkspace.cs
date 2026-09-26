@@ -88,8 +88,11 @@ public sealed class AuthoringWorkspace
     {
         AssetDocument document = asset switch
         {
-            CharacterModel model => AssetDocuments.Of(model, null), ModelVariant variant => AssetDocuments.Of(variant, null),
-            MotionClip clip => AssetDocuments.Of(clip, null), PropAsset prop => AssetDocuments.Of(prop, null), EntityAsset entity => AssetDocuments.Of(entity, null),
+            CharacterModel model => AssetDocuments.Of(model, null),
+            ModelVariant variant => AssetDocuments.Of(variant, null),
+            MotionClip clip => AssetDocuments.Of(clip, null),
+            PropAsset prop => AssetDocuments.Of(prop, null),
+            EntityAsset entity => AssetDocuments.Of(entity, null),
             _ => throw new ArgumentException($"Not an authored asset: {typeof(T).Name}."),
         };
         AuthoredAsset.RequireId(document.Id, AssetKinds.Label(document.Kind) + " id");

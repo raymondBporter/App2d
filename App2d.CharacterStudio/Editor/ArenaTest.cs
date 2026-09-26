@@ -57,8 +57,11 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
     {
         if (Arena is null) return;
         foreach (var e in Arena.Events.Skip(_logged))
+        {
             if (e.Event.Sound is not null || e.Event.Kind == AnimationEvent.EventKind)
                 _log.Add($"{e.Tick,6}  {Arena.Actors[e.Actor].Entity.Name}: {e.Event.Id}{(e.Event.Sound is { } s ? $" (sound {s})" : "")}");
+        }
+
         _logged = Arena.Events.Count;
         if (_log.Count > 200) _log.RemoveRange(0, _log.Count - 200);
     }

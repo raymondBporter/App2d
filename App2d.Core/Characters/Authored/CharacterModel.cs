@@ -157,7 +157,7 @@ public sealed class CharacterModel
         var scales = new HashSet<string>(StringComparer.Ordinal) { Unit };
         foreach (var measure in Measures)
         {
-            Require(measure is not null && measure.Path is not null, $"{owner}: incomplete measure.");
+            Require(measure?.Path is not null, $"{owner}: incomplete measure.");
             AuthoredAsset.RequireId(measure.Id, $"{owner} measure id");
             Require(measure.Id != Unit && scales.Add(measure.Id), $"{owner}: duplicate or reserved measure '{measure.Id}'.");
             Require(measure.Path.Count >= 2 && measure.Path.All(Known), $"{owner}: measure '{measure.Id}' needs a path of at least two known controls.");
@@ -206,7 +206,7 @@ public sealed class CharacterModel
         var sets = new HashSet<string>(StringComparer.Ordinal);
         foreach (var set in MotionSets)
         {
-            Require(set is not null && set.Roles is not null, $"{owner}: incomplete motion set.");
+            Require(set?.Roles is not null, $"{owner}: incomplete motion set.");
             AuthoredAsset.RequireId(set.Id, $"{owner} motion set id");
             Require(sets.Add(set.Id), $"{owner}: duplicate motion set '{set.Id}'.");
             Require(!string.IsNullOrWhiteSpace(set.Name), $"{owner} motion set '{set.Id}': a name is required.");
@@ -215,14 +215,14 @@ public sealed class CharacterModel
         var layouts = new HashSet<string>(StringComparer.Ordinal);
         foreach (var layout in HurtLayouts)
         {
-            Require(layout is not null && layout.Regions is not null, $"{owner}: incomplete hurt layout.");
+            Require(layout?.Regions is not null, $"{owner}: incomplete hurt layout.");
             AuthoredAsset.RequireId(layout.Id, $"{owner} hurt layout id");
             Require(layouts.Add(layout.Id), $"{owner}: duplicate hurt layout '{layout.Id}'.");
             var regions = new HashSet<string>(StringComparer.Ordinal);
             foreach (var region in layout.Regions)
             {
                 var field = $"{owner} hurt layout '{layout.Id}' region";
-                Require(region is not null && region.Controls is not null, $"{field}: incomplete region.");
+                Require(region?.Controls is not null, $"{field}: incomplete region.");
                 AuthoredAsset.RequireId(region.Id, field + " id");
                 Require(regions.Add(region.Id), $"{field}: duplicate '{region.Id}'.");
                 Require(region.Controls.Count > 0 && region.Controls.All(Known), $"{field} '{region.Id}': needs at least one known control.");
@@ -232,7 +232,7 @@ public sealed class CharacterModel
         var groups = new HashSet<string>(StringComparer.Ordinal);
         foreach (var group in Groups)
         {
-            Require(group is not null && group.Targets is not null, $"{owner}: incomplete control group.");
+            Require(group?.Targets is not null, $"{owner}: incomplete control group.");
             AuthoredAsset.RequireId(group.Id, $"{owner} group id");
             Require(groups.Add(group.Id), $"{owner}: duplicate group '{group.Id}'.");
             foreach (var target in group.Targets)
@@ -245,7 +245,7 @@ public sealed class CharacterModel
         var looks = new HashSet<string>(StringComparer.Ordinal);
         foreach (var look in Looks)
         {
-            Require(look is not null && look.Parts is not null, $"{owner}: incomplete look.");
+            Require(look?.Parts is not null, $"{owner}: incomplete look.");
             AuthoredAsset.RequireId(look.Id, $"{owner} look id");
             Require(looks.Add(look.Id), $"{owner}: duplicate look '{look.Id}'.");
             Require(!string.IsNullOrWhiteSpace(look.Name), $"{owner} look '{look.Id}': a name is required.");

@@ -43,8 +43,8 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
     public void Launch(Vector2 origin, float facing)
     {
         ArgGuard.ThrowIfNotFinite(origin);
-        ArgGuard.ThrowIfNotFinite(facing);
-        if (facing == 0f) throw new ArgumentOutOfRangeException(nameof(facing));
+        ArgGuard.ThrowIfNotFiniteOrZero(facing);
+
         var angle = _angle * MathF.PI / 180f;
         var velocity = _speed * _traversal.TileSize * new Vector2(
             MathF.Cos(angle) * MathF.Sign(facing), MathF.Sin(angle));

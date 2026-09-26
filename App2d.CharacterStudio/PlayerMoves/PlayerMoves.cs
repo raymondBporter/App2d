@@ -99,9 +99,15 @@ internal static partial class PlayerMoves
     /// <summary>Heavy motion, heavy hits: walks in slowly and slams for 5 when the player is within 1.3 units. Knockback barely moves it.</summary>
     public static EntityAsset MaulBrute(ResolvedModel model) => new()
     {
-        Id = "maul-brute", Name = "Maul brute", Model = model.Id, MotionSet = "heavy",
+        Id = "maul-brute",
+        Name = "Maul brute",
+        Model = model.Id,
+        MotionSet = "heavy",
         Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.1f, Range = 1.3f, Cooldown = 1 },
-        Health = 22, Mass = 3, Movement = EntityAuthoring.FitMovement(model), Hurt = new() { Layout = "standard" },
+        Health = 22,
+        Mass = 3,
+        Movement = EntityAuthoring.FitMovement(model),
+        Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = "hammer", Socket = PersonLoadout.SwordSocket }],
         Actions =
         [
@@ -142,9 +148,14 @@ internal static partial class PlayerMoves
     /// <summary>Keeps its distance and shoots: walks in to 4.5 units, then fires an 8 unit/s bolt from the pistol's muzzle.</summary>
     public static EntityAsset CinderGunner(ResolvedModel model) => new()
     {
-        Id = "cinder-gunner", Name = "Cinder gunner", Model = model.Id, MotionSet = "standard",
+        Id = "cinder-gunner",
+        Name = "Cinder gunner",
+        Model = model.Id,
+        MotionSet = "standard",
         Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.4f, Range = 4.5f, Cooldown = 1 },
-        Health = 7, Movement = EntityAuthoring.FitMovement(model), Hurt = new() { Layout = "standard" },
+        Health = 7,
+        Movement = EntityAuthoring.FitMovement(model),
+        Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = PersonLoadout.Pistol, Socket = PersonLoadout.GunSocket }],
         Actions =
         [
@@ -167,10 +178,15 @@ internal static partial class PlayerMoves
 
     public static EntityAsset Hero() => new()
     {
-        Id = "hero", Name = "Hero", Model = PersonTemplate.Id, MotionSet = "standard",
+        Id = "hero",
+        Name = "Hero",
+        Model = PersonTemplate.Id,
+        MotionSet = "standard",
         Roles = new() { ["idle"] = "player-idle", ["jump"] = "player-jump", ["fall"] = "player-fall", ["hit"] = "player-hit", ["death"] = "player-death" },
         Controller = new() { Kind = EntityControllers.Traversal, WalkSpeed = 1.8f, RunSpeed = 4.2f, Range = 1.2f, Cooldown = 0 },
-        Health = 30, Movement = new() { Width = .55f, Height = 1.9f }, Hurt = new() { Layout = "standard" },
+        Health = 30,
+        Movement = new() { Width = .55f, Height = 1.9f },
+        Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = PersonLoadout.Sword, Socket = MoveBuilder.SwordSocket }, new() { Prop = PersonLoadout.Pistol, Socket = MoveBuilder.GunSocket }],
         Actions =
         [

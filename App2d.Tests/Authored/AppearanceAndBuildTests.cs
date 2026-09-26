@@ -64,7 +64,11 @@ public sealed class AppearanceAndBuildTests
         var model = ResolvedModel.From(Person);
         MotionClip Reach(int? bend) => new()
         {
-            Id = "reach", Name = "Reach", Model = "person", Duration = 1, Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
+            Id = "reach",
+            Name = "Reach",
+            Model = "person",
+            Duration = 1,
+            Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
             Tracks = [new() { Kind = MotionClip.TargetKind, Target = "left-arm", Keys = [new() { X = -.2f, Y = .9f }, new() { Time = .5f, X = -.2f, Y = .9f, Bend = bend }] }],
         };
         float ElbowSide(MotionClip clip, double seconds)

@@ -21,7 +21,7 @@ public sealed partial class BoilerBrute2D
         ImmutableArray<EnemyEvent2D> Events) : SimulationState2D;
 
     public SimulationState2D CaptureSimulation() => new SimulationState(
-        _attackElapsedSeconds, _attackCooldownSeconds, _facing, _isAttacking, _hammerConnected, _strikeReported, _simulationEnabled, Enemy.CaptureSimulation(), TransformState2D.Capture(_hammerHitbox.Transform), _events.ToImmutableArray());
+        _attackElapsedSeconds, _attackCooldownSeconds, _facing, _isAttacking, _hammerConnected, _strikeReported, _simulationEnabled, Enemy.CaptureSimulation(), TransformState2D.Capture(_hammerHitbox.Transform), [.. _events]);
 
     public void RestoreSimulation(SimulationState2D snapshot)
     {

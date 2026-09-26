@@ -17,10 +17,10 @@ public sealed partial class EnemySystem2D
         combatant => combatant.Faction == CombatFaction2D.Enemy);
 
     public ImmutableArray<EnemyState2D> CaptureStates() =>
-        _registeredEnemies.Select(e => e.Actor.CaptureState()).ToImmutableArray();
+        [.. _registeredEnemies.Select(e => e.Actor.CaptureState())];
 
     public ImmutableArray<EnemyEvent2D> DrainEvents() =>
-        _registeredEnemies.SelectMany(e => e.Actor.DrainEvents()).ToImmutableArray();
+        [.. _registeredEnemies.SelectMany(e => e.Actor.DrainEvents())];
 
     public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
     {

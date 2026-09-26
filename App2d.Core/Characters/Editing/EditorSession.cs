@@ -245,7 +245,11 @@ public sealed class EditorSession
             weight = action.Weight(time);
             local = PoseEvaluator.Sample(entity.Model, entity.Clip(PreviewRole), time, repeat: true, new(Expression) { Overlay = new(action.Clip, time, mask, weight) });
         }
-        else local = PoseEvaluator.Sample(entity.Model, action.Clip, time, input: new(Expression));
+        else
+        {
+            local = PoseEvaluator.Sample(entity.Model, action.Clip, time, input: new(Expression));
+        }
+
         var pose = new ActorPose(local, Vector2.Zero, 1);
         var attacks = action is null ? [] : action.Hits.Where(h => time >= h.Start && time < h.Finish).Select(h => (h, EntityCollision.Attack(entity, pose, h))).ToList();
         var movement = EntityCollision.Movement(entity, new(local.Locomotion.X, 0), 1);
@@ -283,7 +287,11 @@ public sealed class EditorSession
                     var resolved = Assets.Resolve(variant.Id) ?? throw new InvalidDataException("The variant does not resolve; repair it first.");
                     variant.Change(() => ModelAuthoring.MoveRest(resolved, variant.Asset, control, world, MoveChildren));
                 }
-                else if (SubjectModel is { } model) model.Change(() => ModelAuthoring.MoveRest(model.Asset, control, world, MoveChildren));
+                else if (SubjectModel is { } model)
+                {
+                    model.Change(() => ModelAuthoring.MoveRest(model.Asset, control, world, MoveChildren));
+                }
+
                 return;
             }
             var clip = ClipDocument ?? throw new InvalidOperationException("Choose an animation to pose.");
@@ -300,7 +308,7 @@ public sealed class EditorSession
                 return;
             }
             if (!PendingValid()) { _pending = MotionClip.FromJson(clip.Serialize()); }
-            ClipAuthoring.Pose(subject, _pending!, PoseEvaluator.Sample(subject, _pending!, time), time, control, world);
+            ClipAuthoring.Pose(subject, _pending!, PoseEvaluator.Sample(subject, _pending, time), time, control, world);
             _pendingFor = (clip.Id, clip.Version, time);
         });
     }

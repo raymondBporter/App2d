@@ -10,7 +10,7 @@ public sealed class ResolvedModel
         Base = model; Variant = variant; Rest = rest; Parts = parts;
         Controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
         Chains = model.Chains.ToDictionary(c => c.Id, StringComparer.Ordinal);
-        Children = model.Controls.ToDictionary(c => c.Id, c => (IReadOnlyList<string>)model.Controls.Where(child => child.Parent == c.Id).Select(child => child.Id).ToList(), StringComparer.Ordinal);
+        Children = model.Controls.ToDictionary(c => c.Id, c => (IReadOnlyList<string>)[.. model.Controls.Where(child => child.Parent == c.Id).Select(child => child.Id)], StringComparer.Ordinal);
         Measures = model.Measures.ToDictionary(m => m.Id, m => m.Path.Zip(m.Path.Skip(1)).Sum(p => Length(p.First, p.Second)), StringComparer.Ordinal);
         var order = new List<ModelControl>(); var placed = new HashSet<string>(StringComparer.Ordinal);
         void Place(ModelControl control)
@@ -74,8 +74,13 @@ public sealed class ResolvedModel
 
     public static PuppetPart Override(PuppetPart part, PartOverride change) => part with
     {
-        Width = change.Width ?? part.Width, Height = change.Height ?? part.Height,
-        OffsetX = change.OffsetX ?? part.OffsetX, OffsetY = change.OffsetY ?? part.OffsetY, Fill = change.Fill ?? part.Fill,
-        Face = change.Face ?? part.Face, FaceX = change.FaceX ?? part.FaceX, Hidden = change.Hidden ?? part.Hidden,
+        Width = change.Width ?? part.Width,
+        Height = change.Height ?? part.Height,
+        OffsetX = change.OffsetX ?? part.OffsetX,
+        OffsetY = change.OffsetY ?? part.OffsetY,
+        Fill = change.Fill ?? part.Fill,
+        Face = change.Face ?? part.Face,
+        FaceX = change.FaceX ?? part.FaceX,
+        Hidden = change.Hidden ?? part.Hidden,
     };
 }

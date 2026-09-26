@@ -54,8 +54,18 @@ internal sealed partial class ProofRenders
                 using var stream = File.Create(Path.Combine(folder, $"{f:D3}.png"));
                 target.SaveAsPng(stream, ReviewWidth, ReviewHeight);
             }
-            manifest.Add(new { id = item.Id, title = item.Title, clip = clip.Id, duration = clip.Duration, loop = clip.Loop, frames = count, fps = ReviewFps, note = item.Note,
-                markers = clip.Markers.Select(k => new { id = k.Id, time = k.Time }) });
+            manifest.Add(new
+            {
+                id = item.Id,
+                title = item.Title,
+                clip = clip.Id,
+                duration = clip.Duration,
+                loop = clip.Loop,
+                frames = count,
+                fps = ReviewFps,
+                note = item.Note,
+                markers = clip.Markers.Select(k => new { id = k.Id, time = k.Time })
+            });
             report.Add(Check(model, item));
         }
         File.WriteAllText(Path.Combine(_smokePath!, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
@@ -96,16 +106,19 @@ internal sealed partial class ProofRenders
     private static MotionClip Layer(MotionClip legs, MotionClip arms, int cycles, float period)
     {
         var duration = legs.Duration * cycles;
-        List<ClipKey> Repeat(List<ClipKey> keys, float every, int count, float limit, Func<ClipKey, int, ClipKey>? shift = null)
+        static List<ClipKey> Repeat(List<ClipKey> keys, float every, int count, float limit, Func<ClipKey, int, ClipKey>? shift = null)
         {
             var result = new List<ClipKey>();
             for (var n = 0; n < count; n++)
+            {
                 foreach (var key in keys)
                 {
                     var time = key.Time + n * every;
                     if (time > limit + 1e-5f || result.Count > 0 && time <= result[^1].Time + 1e-5f) continue;
                     result.Add((shift?.Invoke(key, n) ?? key) with { Time = MathF.Min(time, limit) });
                 }
+            }
+
             return result;
         }
         var stride = legs.Travel.Keys.Count > 0 ? legs.Travel.Keys[^1].X - legs.Travel.Keys[0].X : 0;
@@ -113,7 +126,12 @@ internal sealed partial class ProofRenders
         var fires = (int)MathF.Ceiling(duration / period);
         return new MotionClip
         {
-            Id = legs.Id + "-" + arms.Id, Name = "Layered", Model = legs.Model, StructureRevision = legs.StructureRevision, Duration = duration, Loop = true,
+            Id = legs.Id + "-" + arms.Id,
+            Name = "Layered",
+            Model = legs.Model,
+            StructureRevision = legs.StructureRevision,
+            Duration = duration,
+            Loop = true,
             Reference = legs.Reference,
             Travel = new() { Scale = legs.Travel.Scale, Keys = Repeat(legs.Travel.Keys, legs.Duration, cycles, duration, (k, n) => k with { X = k.X + n * stride }) },
             Tracks =
@@ -125,13 +143,15 @@ internal sealed partial class ProofRenders
             {
                 Start = c.Start + n * legs.Duration, Finish = MathF.Min(duration, c.Finish + n * legs.Duration), Target = c.Target with { X = c.Target.X + n * stride },
             }))],
-            Markers = [], Faces = arms.Faces,
+            Markers = [],
+            Faces = arms.Faces,
         };
     }
 
     private static void BuildScenery(CharacterMesh mesh, string scene, float centerX, float seconds)
     {
-        mesh.Clear(); var ink = new Color(150, 162, 152); var faint = new Color(196, 204, 194); var pixel = 1 / ReviewPpu;
+        mesh.Clear(); var ink = new Color(150, 162, 152); var faint = new Color(196, 204, 194);
+        const float pixel = 1 / ReviewPpu;
         void Line(float x0, float y0, float x1, float y1, float width, Color color) => mesh.Line(new(x0, y0, 7), new(x1, y1, 7), width * pixel, color);
         switch (scene)
         {

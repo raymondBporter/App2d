@@ -36,7 +36,7 @@ public sealed class WorldPresentationTests
         view.ApplyState(LevelContent2D.Empty, WorldState2D.Empty);
         view.ApplyState(LevelContent2D.Empty with { Revision = 2 }, WorldState2D.Empty);
         view.SetVisibleTerrain(visible);
-        Assert.Equal(visuals, scene.ToArray());
+        Assert.Equal(visuals, [.. scene]);
         view.SetVisibleTerrain([]);
         Assert.Empty(scene);
     }
@@ -57,7 +57,7 @@ public sealed class WorldPresentationTests
         view.Update(content, original, 0f);
         var visuals = scene.ToArray();
         view.Update(content, original, 0f);
-        Assert.Equal(visuals, scene.ToArray()); // No rebuilding unchanged chunks.
+        Assert.Equal(visuals, [.. scene]); // No rebuilding unchanged chunks.
         var platformVisual = Assert.Single(scene, v => v.Transform.Position == Platform().Position);
         var platform = Assert.Single(level.MovingPlatforms);
         Assert.NotSame(platform.WorldObject, platformVisual);
