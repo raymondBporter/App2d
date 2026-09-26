@@ -1,12 +1,12 @@
 using App2d.Collision;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Player;
 using App2d.Physics;
 using App2d.Tiles;
-using System.Collections.Immutable;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
@@ -185,7 +185,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     /// <summary>Per-tick dynamic observation.</summary>
     public WorldState2D CaptureWorld() => new(
         [.. _movingPlatforms.Select(p => p.CaptureState())],
-        [.. _savePoints.Select(p => p.CaptureState())]);
+        [.. _savePoints.Select(p => p.CaptureState())]) { CutGrass = _cutGrass };
 
     /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
     public LevelContent2D CaptureContent()
@@ -260,7 +260,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public void CreateAuthoredWorldThings(
-        CombatSystem2D combat, App2d.Core.Characters.AuthoredCatalog? authored = null)
+        CombatSystem2D combat, AuthoredCatalog? authored = null)
     {
         StateGuard.ThrowIf(
             _authoredWorldThingsCreated,

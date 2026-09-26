@@ -3,7 +3,6 @@ using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
-using App2d.Gameplay.Player;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
@@ -11,7 +10,7 @@ using App2d.Physics;
 using System.Numerics;
 using Xunit;
 
-namespace App2d.Gameplay.Tests.Simulation;
+namespace App2d.Game.Presentation.Tests.Simulation;
 
 public sealed class SessionClient2DTests
 {

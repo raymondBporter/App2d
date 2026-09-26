@@ -12,6 +12,55 @@ namespace App2d.Tests.Rendering;
 public sealed class MonoGameRenderingTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HalfSpacesStillRenderWithObjectOwnedBoundsAndRejectSprites(bool overlay)
+    {
+        using var texture = CreateTexture();
+        using var graphics = new GraphicsTestContext();
+        using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
+        var halfSpace = new HalfSpace2D(Vector2.UnitY, 0);
+        var item = new WorldObject2D(halfSpace, new SolidColorShader(XnaColor.Blue));
+        renderer.BeginFrame(128, 128, default);
+        renderer.Clear(XnaColor.Transparent);
+        if (overlay) renderer.DrawShapeOverlay(item, XnaColor.Blue, XnaColor.White);
+        else renderer.Draw(item);
+        Assert.Throws<InvalidOperationException>(() =>
+            renderer.Draw(new WorldObject2D(halfSpace, new SpriteShader2D(texture, TextureFilter.Point))));
+        renderer.EndFrame();
+
+        var pixels = graphics.ReadPixels();
+        Assert.Equal(Bounds2D.Unbounded, item.LocalBounds);
+        Assert.Equal(XnaColor.Blue, pixels[80 * 128 + 64]);
+        Assert.Equal(XnaColor.Transparent, pixels[48 * 128 + 64]);
+    }
+
+    [Fact]
+    public void SharedContoursRenderRoundPrimitivesInWorldAndScreenCoordinates()
+    {
+        using var graphics = new GraphicsTestContext();
+        using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
+        renderer.BeginFrame(128, 128, default);
+        renderer.Clear(XnaColor.Transparent);
+        renderer.Draw(new WorldObject2D(new Circle2D(12, new(-30, 20)), new SolidColorShader(XnaColor.Lime)));
+        renderer.Draw(new WorldObject2D(new Capsule2D(new(10, 20), new(35, 20), 8), new SolidColorShader(XnaColor.Blue)));
+        renderer.DrawScreenRoundedRectangle(new(10, 95, 60, 120), 10, XnaColor.Red);
+        renderer.DrawWorldCircle(new(0, -10), 8, XnaColor.White);
+        renderer.EndFrame();
+
+        var pixels = graphics.ReadPixels();
+        Assert.Equal(XnaColor.Lime, pixels[44 * 128 + 34]);
+        Assert.Equal(XnaColor.Transparent, pixels[44 * 128 + 48]);
+        Assert.Equal(XnaColor.Blue, pixels[44 * 128 + 80]);
+        Assert.Equal(XnaColor.Blue, pixels[44 * 128 + 103]);
+        Assert.Equal(XnaColor.Transparent, pixels[55 * 128 + 80]);
+        Assert.Equal(XnaColor.Red, pixels[107 * 128 + 35]);
+        Assert.Equal(XnaColor.Transparent, pixels[95 * 128 + 10]);
+        Assert.Equal(XnaColor.White, pixels[74 * 128 + 72]);
+        Assert.Equal(XnaColor.Transparent, pixels[74 * 128 + 64]);
+    }
+
+    [Theory]
     [InlineData(false, false)]
     [InlineData(true, false)]
     [InlineData(false, true)]

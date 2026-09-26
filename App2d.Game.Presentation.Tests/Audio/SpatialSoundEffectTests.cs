@@ -2,7 +2,7 @@ using App2d.Gameplay.Audio;
 using System.Numerics;
 using Xunit;
 
-namespace App2d.Gameplay.Tests.Audio;
+namespace App2d.Game.Presentation.Tests.Audio;
 
 public sealed class SpatialSoundEffectTests
 {

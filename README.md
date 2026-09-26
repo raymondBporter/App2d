@@ -119,12 +119,26 @@ AABB colliders on demand, and raises a `ChunkChanged` event that the in-game til
 uses to drive streamer reloads after an edit. The side-scroller keeps at most 15
 nearby simulation chunks live, bounding weapon queries and the collision spatial
 index. Terrain visuals stream independently from `Camera2D.VisibleWorldBounds`,
-with one tile of padding for overhanging artwork. Zoom, resize, and editor panning
+with padding for overhanging artwork and procedural tree canopies. Zoom, resize, and editor panning
 therefore load all visible terrain without expanding the physics neighborhood.
 
 Each editable cell is one byte: four bits select one of up to 16 tilesets and four bits
 hold the composable tile type. Code exposes those as separate values; the packing is an
 in-memory and level-blob detail. The level metadata stores the ordered, stable tileset IDs.
+
+Exposed plain solid tiles grow seeded grass, using the Noodle vegetation prototype's
+anchored wind equation and batched geometry. Active sword strikes (including downward
+attacks) cut a tile's tuft at `VegetationPlacement2D.CutHeightInTiles` (0.35 tiles).
+The actual severed tops, including flowers, launch upward, tumble and flutter with
+the wind, and fall under gravity. They disappear on terrain contact or fade out
+within one second. Cuts survive chunk streaming,
+snapshot attachment, and rollback for the current session; they reset on a new game
+process and are not written to the level or player save. Seeded branching trees occupy
+open stretches behind the terrain and actors; they are decorative and cannot be chopped.
+The shared rendering code lives in `App2d.Rendering/Vegetation`, and the original lab
+is available with `dotnet run --project App2d.Noodle -- --vegetation`.
+Wind deformation currently runs on the CPU and uses the existing GPU triangle batch.
+The camera's terrain coverage includes extra foliage margin for overhanging canopies.
 
 Editor mode is part of the game rather than a separate tool. `F1` freezes the simulation
 and detaches the camera. A right sidebar provides tileset buttons and a visual tile-type

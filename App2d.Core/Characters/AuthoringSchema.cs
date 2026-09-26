@@ -55,7 +55,7 @@ public static class AuthoredJson
     }
     private static void OmitDefaults(JsonTypeInfo info)
     {
-        if (info.Kind != JsonTypeInfoKind.Object || info.Type.Namespace != typeof(AuthoredJson).Namespace || info.Type.GetConstructor(Type.EmptyTypes) is null) return;
+        if (info.Kind != JsonTypeInfoKind.Object || info.Type.Namespace?.StartsWith(typeof(AuthoredJson).Namespace!, StringComparison.Ordinal) != true || info.Type.GetConstructor(Type.EmptyTypes) is null) return;
         var defaults = Activator.CreateInstance(info.Type)!;
         foreach (var property in info.Properties)
         {

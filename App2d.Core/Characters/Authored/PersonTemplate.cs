@@ -1,4 +1,4 @@
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>The Person starting template. Built from the walk study's rest pose so converted studies reproduce at reference proportions. A template, not an engine category.</summary>
 public static class PersonTemplate

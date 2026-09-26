@@ -1,5 +1,4 @@
 using App2d.Noodle.Rigging;
-using System.Drawing;
 
 namespace App2d.Noodle;
 

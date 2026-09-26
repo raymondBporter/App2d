@@ -1,3 +1,5 @@
+using App2d.Core.Characters.Authored;
+
 namespace App2d.CharacterStudio;
 
 internal static class Program
@@ -12,7 +14,7 @@ internal static class Program
         {
             switch (args)
             {
-                case ["--convert-studies", var output]: Core.Characters.PersonTemplate.WriteStudies(Path.GetFullPath(output)); return 0;
+                case ["--convert-studies", var output]: PersonTemplate.WriteStudies(Path.GetFullPath(output)); return 0;
                 case ["--write-player-moves", var moves]: PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves)); return 0;
                 case ["--write-weapons", var root]: PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root)); return 0;
                 case [] or ["--editor"] or ["--smoke-editor", _]:

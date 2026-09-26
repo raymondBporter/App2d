@@ -2,14 +2,14 @@ using App2d.Levels;
 using App2d.Core;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Enemies;
-using App2d.Gameplay.Player;
 using App2d.Gameplay.World.Presentation;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using System.Numerics;
 using Xunit;
+using App2d.Gameplay;
 
-namespace App2d.Gameplay.Tests.Enemies;
+namespace App2d.Game.Presentation.Tests.Enemies;
 
 public sealed class EnemyPresentationTests
 {
@@ -41,7 +41,7 @@ public sealed class EnemyPresentationTests
         var id = EntityId2D.Create();
         var state = new EnemyState2D(id, EnemyKind2D.Rival, Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
         {
-            Person = default(App2d.Gameplay.Persons.PersonState2D) with
+            Person = default(Gameplay.Persons.PersonState2D) with
             { Id = id, Facing = 1f, HitPoints = 12, MaximumHitPoints = 12, IsGrounded = true }
         };
         view.Update([state], [], 0f, 1);
@@ -84,7 +84,7 @@ public sealed class EnemyPresentationTests
         var scene = new Scene2D();
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
-        var physics = new App2d.Physics.PhysicsWorld2D();
+        var physics = new Physics.PhysicsWorld2D();
         var prop = new TumbleProp2D(EntityId2D.Create(), physics, Vector2.Zero, 1, 4);
         var original = prop.CaptureState();
         view.Update([original], [], 0f, 0);

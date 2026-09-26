@@ -5,17 +5,26 @@ using System.Numerics;
 namespace App2d.Core;
 
 /// <summary>
-/// A render-agnostic shape placed in world space.
+/// A render-agnostic immutable shape placed in world space. Owns local and world bounds caches.
 /// </summary>
-public class SpatialObject2D(IShape2D shape)
+public class SpatialObject2D
 {
     private Bounds2D _worldBounds;
     private int _worldBoundsVersion = -1;
     private Similarity2D _collisionPose;
     private int _collisionPoseVersion = -1;
 
+    public SpatialObject2D(IShape2D shape)
+    {
+        Shape = ArgGuard.RequireNotNull(shape);
+        LocalBounds = ShapeBounds2D.Calculate(shape);
+    }
+
     public Transform2D Transform { get; } = new();
-    public IShape2D Shape { get; } = ArgGuard.RequireNotNull(shape);
+    public IShape2D Shape { get; }
+
+    /// <summary>Calculated once when the immutable shape is attached; independent of this object's transform.</summary>
+    public Bounds2D LocalBounds { get; }
 
     public Bounds2D WorldBounds
     {
@@ -24,7 +33,7 @@ public class SpatialObject2D(IShape2D shape)
             if (_worldBoundsVersion == Transform.Version)
                 return _worldBounds;
 
-            _worldBounds = Shape.LocalBounds.TransformedBy(Transform.LocalToWorldMatrix);
+            _worldBounds = BoundsGeometry2D.Transform(LocalBounds, Transform.LocalToWorldMatrix);
             _worldBoundsVersion = Transform.Version;
             return _worldBounds;
         }

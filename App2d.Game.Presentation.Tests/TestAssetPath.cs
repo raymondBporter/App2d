@@ -1,4 +1,4 @@
-namespace App2d.Gameplay.Tests;
+namespace App2d.Game.Presentation.Tests;
 
 internal static class TestAssetPath
 {

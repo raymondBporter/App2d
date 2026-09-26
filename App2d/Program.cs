@@ -20,5 +20,11 @@ if (args is ["--render-smoke", var outputDirectory])
     return;
 }
 
+if (args is ["--vegetation-smoke", var vegetationDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(vegetationDirectory, vegetationOnly: true);
+    return;
+}
+
 using var host = new GameHost(new SideScrollerGame());
 host.Run();

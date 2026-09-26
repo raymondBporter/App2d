@@ -2,7 +2,6 @@ using App2d.Core;
 using App2d.Levels;
 using App2d.Collision;
 using App2d.Gameplay.Assets;
-using App2d.Gameplay.Player;
 using App2d.Gameplay.World;
 using App2d.Gameplay.World.Presentation;
 using App2d.Physics;
@@ -12,7 +11,7 @@ using App2d.Tiles;
 using System.Numerics;
 using Xunit;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Game.Presentation.Tests.World;
 
 public sealed class LadderTerrainTests
 {

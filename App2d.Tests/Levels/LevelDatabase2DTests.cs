@@ -2,7 +2,6 @@ using App2d.Levels;
 using App2d.Tiles;
 using Microsoft.Data.Sqlite;
 using System.Numerics;
-using System.Threading;
 
 namespace App2d.Tests.Levels;
 

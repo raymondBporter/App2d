@@ -2,7 +2,6 @@ using System.Numerics;
 using System.Text.Json;
 using App2d.Core.Characters;
 using App2d.Rendering.Characters;
-using Xunit;
 
 namespace App2d.Tests;
 

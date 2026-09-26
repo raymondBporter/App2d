@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using System.Numerics;
 using System.Text.Json;
 using Microsoft.Xna.Framework.Graphics;
@@ -37,7 +38,8 @@ public sealed class CharacterMesh(int initialCapacity = 32768)
         Vector3 At(int ring, int i)
         {
             var angle = i / (float)n * MathF.Tau; var r = radius * ring / rings;
-            return p + new Vector3(MathF.Cos(angle) * r, MathF.Sin(angle) * r, dome ? -MathF.Sqrt(MathF.Max(0, radius * radius - r * r)) : 0);
+            return p + new Vector3(VertexGenerator2D.PointOnEllipse(Vector2.Zero, new(r), angle),
+                dome ? -MathF.Sqrt(MathF.Max(0, radius * radius - r * r)) : 0);
         }
         for (var ring = 1; ring <= rings; ring++)
         {

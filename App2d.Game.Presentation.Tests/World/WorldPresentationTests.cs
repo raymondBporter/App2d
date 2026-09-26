@@ -1,11 +1,5 @@
 using App2d.Core;
 using App2d.Levels;
-using App2d.Core.Geometry;
-using App2d.Gameplay.Combat;
-using App2d.Gameplay.Persons;
-using App2d.Gameplay.Persons.Actions;
-using App2d.Gameplay.Player;
-using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Gameplay.World.Presentation;
 using App2d.Physics;
@@ -16,7 +10,7 @@ using System.Collections.Immutable;
 using System.Numerics;
 using Xunit;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Game.Presentation.Tests.World;
 
 public sealed class WorldPresentationTests
 {

@@ -26,6 +26,10 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
     private WorldState2D _state = WorldState2D.Empty;
     private long? _appliedContentRevision;
     private ImmutableArray<TerrainChunkState2D>? _visibleTerrain;
+    private readonly VegetationPresentation2D _vegetation = new();
+
+    public void DrawTrees(Renderer2D renderer, Bounds2D visible) => _vegetation.DrawTrees(renderer, visible);
+    public void DrawGrass(Renderer2D renderer, Bounds2D visible) => _vegetation.DrawGrass(renderer, visible);
 
     /// <summary>Use camera-selected terrain instead of the simulation's active terrain set.</summary>
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain)
@@ -48,12 +52,14 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         ArgGuard.ThrowIfNull(content);
         ArgGuard.ThrowIfNull(state);
         _state = state;
+        _vegetation.Advance(dt);
         if (!ReferenceEquals(content, _content) || _appliedContentRevision != content.Revision)
         {
             _content = content;
             _appliedContentRevision = content.Revision;
             ApplyContent(content);
         }
+        _vegetation.ApplyCuts(state.CutGrass);
 
         foreach (var platform in state.MovingPlatforms)
         {
@@ -122,6 +128,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     private void ApplyTerrain(ImmutableArray<TerrainChunkState2D> terrain)
     {
+        _vegetation.SetTerrain(terrain);
         var chunks = terrain.Select(c => c.Chunk).ToHashSet();
         foreach (var chunk in _chunks.Keys.Where(c => !chunks.Contains(c)).ToArray()) RemoveChunk(chunk);
         foreach (var chunk in terrain)

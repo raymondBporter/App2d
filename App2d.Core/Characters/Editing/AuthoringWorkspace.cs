@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using System.Text.Json;
 
 namespace App2d.Core.Characters.Editing;

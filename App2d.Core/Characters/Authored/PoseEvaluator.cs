@@ -1,7 +1,8 @@
 using System.Numerics;
 using App2d.Core.Kinematics;
+using App2d.Core.Mathematics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 public sealed record ChainResult(string Chain, float Residual, bool Reached);
 public sealed record ContactResult(string Chain, Vector3 Target, float Residual);
@@ -204,10 +205,5 @@ public static class PoseEvaluator
         return Of(keys[^1]);
     }
 
-    public static Vector3 RotateXY(Vector3 v, float angle)
-    {
-        if (angle == 0) return v;
-        var (sin, cos) = MathF.SinCos(angle);
-        return new(v.X * cos - v.Y * sin, v.X * sin + v.Y * cos, v.Z);
-    }
+    public static Vector3 RotateXY(Vector3 v, float angle) => Rotation2D.ApplyXY(v, angle);
 }

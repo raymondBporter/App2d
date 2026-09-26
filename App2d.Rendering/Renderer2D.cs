@@ -86,9 +86,9 @@ public sealed partial class Renderer2D : IDisposable
             return;
         }
         var matrix = worldObject.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
-        var bounds = worldObject.Shape.LocalBounds.IsFinite ? worldObject.Shape.LocalBounds : GetVisibleLocalBounds(matrix);
+        var bounds = worldObject.LocalBounds.IsFinite ? worldObject.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)
-            StateGuard.ThrowIf(!worldObject.Shape.LocalBounds.IsFinite, "Sprites require finite local bounds.");
+            StateGuard.ThrowIf(!worldObject.LocalBounds.IsFinite, "Sprites require finite local bounds.");
         SelectMaterial(worldObject.Shader);
         FillShape(worldObject.Shape, matrix, bounds, worldObject.Shader);
     }
@@ -221,31 +221,13 @@ public sealed partial class Renderer2D : IDisposable
         switch (shape)
         {
             case Rectangle2D rectangle:
-                points[0] = rectangle.Min;
-                points[1] = new(rectangle.Max.X, rectangle.Min.Y);
-                points[2] = rectangle.Max;
-                points[3] = new(rectangle.Min.X, rectangle.Max.Y);
-                return 4;
+                return VertexGenerator2D.WriteRectangle(points, rectangle.Min, rectangle.Max);
             case Circle2D circle:
                 var segments = CurveSegments(circle.Radius, matrix);
-                for (var i = 0; i < segments; i++)
-                {
-                    var angle = i * MathF.Tau / segments;
-                    points[i] = circle.Center + circle.Radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-                }
-                return segments;
+                return VertexGenerator2D.WriteCircle(points[..segments], circle.Center, circle.Radius);
             case Capsule2D capsule:
                 var halfSegments = CurveSegments(capsule.Radius, matrix) / 2;
-                var axis = capsule.End - capsule.Start;
-                var direction = MathF.Atan2(axis.Y, axis.X);
-                for (var i = 0; i <= halfSegments; i++)
-                {
-                    var endAngle = direction - MathF.PI / 2 + i * MathF.PI / halfSegments;
-                    var startAngle = direction + MathF.PI / 2 + i * MathF.PI / halfSegments;
-                    points[i] = capsule.End + capsule.Radius * new Vector2(MathF.Cos(endAngle), MathF.Sin(endAngle));
-                    points[halfSegments + 1 + i] = capsule.Start + capsule.Radius * new Vector2(MathF.Cos(startAngle), MathF.Sin(startAngle));
-                }
-                return 2 * (halfSegments + 1);
+                return VertexGenerator2D.WriteCapsule(points, capsule.Start, capsule.End, capsule.Radius, halfSegments);
             case HalfSpace2D halfSpace:
                 var visible = GetVisibleLocalBounds(matrix);
                 Span<Vector2> corners = [visible.Min, new(visible.Max.X, visible.Min.Y), visible.Max, new(visible.Min.X, visible.Max.Y)];
@@ -287,19 +269,9 @@ public sealed partial class Renderer2D : IDisposable
         ArgGuard.ThrowIfNegativeOrNotFinite(strokeWidth);
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
         SelectBatch(null, null);
-        radius = Math.Min(radius, Math.Min(bounds.Width, bounds.Height) / 2);
         Span<Vector2> points = stackalloc Vector2[36];
-        var count = 0;
-        for (var corner = 0; corner < 4; corner++)
-        {
-            var center = new Vector2(corner is 0 or 3 ? bounds.Right - radius : bounds.Left + radius,
-                corner < 2 ? bounds.Bottom - radius : bounds.Top + radius);
-            for (var i = 0; i <= 8; i++)
-            {
-                var angle = (corner + i / 8f) * MathF.PI / 2;
-                points[count++] = center + radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-            }
-        }
+        var count = VertexGenerator2D.WriteRoundedRectangle(points,
+            new(bounds.Left, bounds.Top), new(bounds.Right, bounds.Bottom), radius);
         if (strokeWidth > 0)
         {
             StrokePolygon(points[..count], Matrix3x2.Identity, color, strokeWidth);
@@ -382,11 +354,7 @@ public sealed partial class Renderer2D : IDisposable
         SelectBatch(null, null);
         Span<Vector2> points = stackalloc Vector2[128];
         var segments = CurveSegments(radius, _camera.WorldToDeviceMatrix);
-        for (var i = 0; i < segments; i++)
-        {
-            var angle = i * MathF.Tau / segments;
-            points[i] = center + radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-        }
+        VertexGenerator2D.WriteCircle(points[..segments], center, radius);
         StrokePolygon(points[..segments], _camera.WorldToDeviceMatrix, color, strokeWidth);
     }
 
@@ -436,7 +404,7 @@ public sealed partial class Renderer2D : IDisposable
         ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
         if (IsCulled(item)) return;
         var matrix = item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
-        var bounds = item.Shape.LocalBounds.IsFinite ? item.Shape.LocalBounds : GetVisibleLocalBounds(matrix);
+        var bounds = item.LocalBounds.IsFinite ? item.LocalBounds : GetVisibleLocalBounds(matrix);
         SelectBatch(null, null);
         FillShape(item.Shape, matrix, bounds, new SolidColorShader(fillColor));
         OutlineShape(item.Shape, matrix, outlineColor, screenStrokeWidth);

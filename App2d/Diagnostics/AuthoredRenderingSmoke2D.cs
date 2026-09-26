@@ -1,12 +1,12 @@
 using App2d.Core;
 using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.World.Presentation;
 using App2d.Levels;
 using App2d.Rendering;
-using App2d.Rendering.Characters;
 using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Immutable;

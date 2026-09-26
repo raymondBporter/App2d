@@ -1,4 +1,6 @@
 using App2d.Core.Curves;
+using App2d.Core.Geometry;
+using App2d.Rendering.Vegetation;
 using System.Numerics;
 
 namespace App2d.Noodle;
@@ -11,6 +13,8 @@ internal static class RigidPrototypeChecks2D
         CheckPartSetsMatchSkeleton();
         CheckSkeletonMirrorsAndKeepsLengths();
         CheckSplineSilhouettes();
+        var wind = new VegetationWind2D(1.25d, 18f, 1.1f, 0.03f, 0.5f);
+        RequireClose(wind.Offset(42f, 0f, 0.7f, 1f), 0f, "vegetation root offset");
         CheckSideViewBlend();
         CheckPoseInterpolation();
         CheckStanceFootStaysInWorldSpace();
@@ -20,7 +24,8 @@ internal static class RigidPrototypeChecks2D
     {
         var limb = SplineSilhouette2D.CreateLimb(80f, 16f, 12f, 8f);
         Require(limb.Area > 2_000f, "Spline limb should produce a substantial closed silhouette.");
-        Require(limb.LocalBounds.Left < 0f && limb.LocalBounds.Right > 80f,
+        var bounds = ShapeBounds2D.Calculate(limb);
+        Require(bounds.Left < 0f && bounds.Right > 80f,
             "Spline limb joint caps should overlap both ends of its bone.");
 
         var torso = SplineSilhouette2D.CreateTorso(StandardSkeleton2D.TorsoLength);

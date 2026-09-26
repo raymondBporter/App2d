@@ -1,6 +1,7 @@
 using App2d.Core.Geometry;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
+using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
 using System.Numerics;
 using System.Collections.Immutable;
@@ -31,6 +32,10 @@ public sealed class SideScrollerSessionWorld2D(
 
     public void ResolveDamage(Person2D player)
     {
+        if (player.IsAlive && player.Actions is PersonArsenal2D arsenal)
+            foreach (var hitbox in arsenal.GetActiveSwordHitboxes())
+                level.CutGrass(hitbox.WorldBounds);
+
         _ = level.EnemySystem.TryResolvePlayerHits(player);
         if (!player.DownAttackBouncedThisFrame &&
             level.TryGetSpikeSource(player.WorldObject.WorldBounds, out var sourceX))

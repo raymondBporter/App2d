@@ -1,8 +1,6 @@
 using App2d.Core;
-using App2d.Core.Mathematics;
 using App2d.Gameplay.Simulation;
 using System.Collections.Immutable;
-using System.Numerics;
 
 namespace App2d.Gameplay;
 

@@ -1,4 +1,5 @@
 using App2d.Core.Characters;
+using App2d.Core.Geometry;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
@@ -22,7 +23,7 @@ public static class FaceDrawing
         void Oval(Vector2 center, float rx, float ry, Color? fill = null, float depth = 0)
         {
             var offset = new Vector3(0, 0, depth);
-            Vector3 Point(int i) => at(center + new Vector2(MathF.Cos(i * MathF.Tau / 24) * rx, MathF.Sin(i * MathF.Tau / 24) * ry)) - offset;
+            Vector3 Point(int i) => at(VertexGenerator2D.PointOnEllipse(center, new(rx, ry), i * MathF.Tau / 24)) - offset;
             for (var i = 0; i < 24; i++)
             {
                 mesh.Triangle(at(center) - offset, Point(i), Point(i + 1), fill ?? ink);

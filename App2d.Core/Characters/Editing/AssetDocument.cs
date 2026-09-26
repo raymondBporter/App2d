@@ -1,3 +1,5 @@
+using App2d.Core.Characters.Authored;
+
 namespace App2d.Core.Characters.Editing;
 
 /// <summary>Ordered so saving everything writes what others depend on first.</summary>
@@ -28,21 +30,15 @@ public static class AssetKinds
 /// stays open until <see cref="Commit"/>, so a whole drag is one undo step, and the asset is serialized only at those
 /// boundaries rather than every frame.
 /// </summary>
-public abstract class AssetDocument
+public abstract class AssetDocument(AssetKind kind, string id, string? path, string saved)
 {
     // Each step is stamped from one sequence shared by every document, so a session can undo across documents in order.
     private static long s_sequence;
     private readonly Stack<(string Json, long Sequence)> _undo = [], _redo = [];
-    private string _saved;
     private string? _before;
 
-    protected AssetDocument(AssetKind kind, string id, string? path, string saved) { Kind = kind; Id = id; Path = path; _saved = saved; }
-
-    public AssetKind Kind { get; }
-    /// <summary>Stable for the document's life. Renaming an ID is a new asset.</summary>
-    public string Id { get; }
-    public string? Path { get; private set; }
-    public abstract string Name { get; }
+    public AssetKind Kind { get; } = kind;     /// <summary>Stable for the document's life. Renaming an ID is a new asset.</summary>
+    public string Id { get; } = id; public string? Path { get; private set; } = path; public abstract string Name { get; }
     public bool IsNew => Path is null;
     public bool Dirty { get; private set; }
     /// <summary>Increments on every change, so caches keyed on it rebuild only when the asset changed.</summary>
@@ -78,25 +74,25 @@ public abstract class AssetDocument
         if (_before is null) return;
         var now = Serialize();
         if (now != _before) { _undo.Push((_before, ++s_sequence)); _redo.Clear(); }
-        _before = null; Dirty = now != _saved;
+        _before = null; Dirty = now != saved;
     }
 
     public void Undo()
     {
         Commit();
         if (!_undo.TryPop(out var step)) return;
-        _redo.Push((Serialize(), ++s_sequence)); Restore(step.Json); Touch(); Dirty = step.Json != _saved;
+        _redo.Push((Serialize(), ++s_sequence)); Restore(step.Json); Touch(); Dirty = step.Json != saved;
     }
 
     public void Redo()
     {
         Commit();
         if (!_redo.TryPop(out var step)) return;
-        _undo.Push((Serialize(), ++s_sequence)); Restore(step.Json); Touch(); Dirty = step.Json != _saved;
+        _undo.Push((Serialize(), ++s_sequence)); Restore(step.Json); Touch(); Dirty = step.Json != saved;
     }
 
     /// <summary>Records that the current state was written to <paramref name="path"/>.</summary>
-    public void MarkSaved(string path) { Commit(); Path = path; _saved = Serialize(); Dirty = false; }
+    public void MarkSaved(string path) { Commit(); Path = path; saved = Serialize(); Dirty = false; }
 
     private void Touch() { Version++; Dirty = true; }
 }

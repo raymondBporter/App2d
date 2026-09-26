@@ -10,7 +10,7 @@ using App2d.Tiles;
 using System.Numerics;
 using Xunit;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Game.Presentation.Tests.World;
 
 public sealed class AuthoredMovingPlatform2DTests
 {

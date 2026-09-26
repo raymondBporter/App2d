@@ -3,9 +3,38 @@ using System.Numerics;
 
 namespace App2d.Core.Geometry;
 
-/// <summary>Shared math over convex polygon perimeters given as vertex spans.</summary>
+/// <summary>Shared math over convex polygon perimeters given as vertex spans or lists.</summary>
 public static class PolygonGeometry2D
 {
+    /// <summary>
+    /// Separating-axis overlap of two convex perimeters with at least three vertices, in either winding.
+    /// Offsets place each local perimeter in the same coordinate space. Touching counts as overlap;
+    /// repeated adjacent vertices are allowed and their zero-length edges are ignored.
+    /// </summary>
+    public static bool OverlapsConvex(IReadOnlyList<Vector2> first, IReadOnlyList<Vector2> second,
+        Vector2 firstOffset = default, Vector2 secondOffset = default)
+    {
+        ArgGuard.ThrowIfNull(first);
+        ArgGuard.ThrowIfNull(second);
+        if (first.Count < 3) throw new ArgumentException("A convex perimeter requires at least three vertices.", nameof(first));
+        if (second.Count < 3) throw new ArgumentException("A convex perimeter requires at least three vertices.", nameof(second));
+        return !Separated(first) && !Separated(second);
+
+        bool Separated(IReadOnlyList<Vector2> perimeter)
+        {
+            for (var i = 0; i < perimeter.Count; i++)
+            {
+                var edge = perimeter[(i + 1) % perimeter.Count] - perimeter[i];
+                var axis = edge.PerpCcw();
+                if (axis.LengthSquared() < 1e-12f) continue;
+                var a = Projection2D.Polygon(first, axis, firstOffset);
+                var b = Projection2D.Polygon(second, axis, secondOffset);
+                if (a.Max < b.Min || b.Max < a.Min) return true;
+            }
+            return false;
+        }
+    }
+
     public static float SignedAreaTwice(ReadOnlySpan<Vector2> vertices)
     {
         var signedAreaTwice = 0f;

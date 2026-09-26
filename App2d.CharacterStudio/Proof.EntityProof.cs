@@ -1,8 +1,6 @@
-using App2d.Core.Characters;
 using App2d.Gameplay.Entities;
 using App2d.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterStudio;

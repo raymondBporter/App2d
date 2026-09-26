@@ -1,16 +1,11 @@
-using App2d.Core;
+using System.Numerics;
 using App2d.Core.Characters;
-using App2d.Core.Geometry;
-using App2d.Gameplay.Combat;
-using App2d.Gameplay.Enemies;
+using App2d.Core.Characters.Authored;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Physics;
 using App2d.Tiles;
-using System.Numerics;
-using System.Text.Json;
 using Xunit;
 
 namespace App2d.Gameplay.Tests.Enemies;
@@ -26,7 +21,7 @@ public sealed class AuthoredEntityGameTests
         for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
         { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
-        var hero = new App2d.Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities["hero"], game.Player.Body.WorldObject.Shape.LocalBounds.Size);
+        var hero = new App2d.Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities["hero"], game.Player.Body.WorldObject.LocalBounds.Size);
         var cut = hero.Attack.Clip;
         void Tick(int ticks) { for (var i = 0; i < ticks; i++) { var tick = game.Session.Tick + 1; game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D())); } }
         string? Swing() => game.Arsenal.CaptureActionState().Swing;
@@ -43,7 +38,7 @@ public sealed class AuthoredEntityGameTests
         Assert.True(first.X > 20, $"hit box ahead of the player: {first}");
         Tick(2);
         Assert.True(Box() is { } later && Vector2.Distance(first, later) < .01f, $"the box stays put on the player: {first} then {Box()}");
-        Assert.True(Vector2.Distance(hero.Shape().LocalBounds.Size, game.Arsenal.GetActiveAttackHitboxes().First().WorldBounds.Size) < .01f, "the box is the entity's size");
+        Assert.True(Vector2.Distance(new App2d.Core.SpatialObject2D(hero.Shape()).LocalBounds.Size, game.Arsenal.GetActiveAttackHitboxes().First().WorldBounds.Size) < .01f, "the box is the entity's size");
         // Pressing again during a swing queues the next one in the combo; it starts as the last ends.
         game.Arsenal.UsePrimary(1);
         Tick((int)MathF.Ceiling(cut.Duration * 120));
@@ -56,6 +51,6 @@ public sealed class AuthoredEntityGameTests
         game.Arsenal.UsePrimary(1);
         Assert.Equal(EntityControllers.Attack, Swing()); // after the put-away the sword is drawn again
         var muzzle = hero.Muzzle(1, false);
-        Assert.True(muzzle.X > 10 && MathF.Abs(muzzle.Y) < game.Player.Body.WorldObject.Shape.LocalBounds.Size.Y / 2, $"muzzle in front at chest height: {muzzle}");
+        Assert.True(muzzle.X > 10 && MathF.Abs(muzzle.Y) < game.Player.Body.WorldObject.LocalBounds.Size.Y / 2, $"muzzle in front at chest height: {muzzle}");
     }
 }
