@@ -1,4 +1,4 @@
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>
 /// Hit and death reactions for one actor. Gameplay decides when they happen; the entity's optional <c>hit</c> and

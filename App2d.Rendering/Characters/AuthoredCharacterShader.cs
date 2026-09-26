@@ -1,4 +1,5 @@
 using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Rendering.Characters;

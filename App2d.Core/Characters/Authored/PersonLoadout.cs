@@ -1,4 +1,4 @@
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>What the Person carries: nothing, the sword on its back, or the sword on its back and a pistol in hand.</summary>
 public enum PersonGear { None, Sword, Gun }

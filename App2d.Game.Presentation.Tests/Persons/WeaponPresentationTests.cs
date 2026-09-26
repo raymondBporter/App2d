@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Game.Presentation.Tests;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Persons.Presentation;
@@ -7,7 +8,7 @@ using App2d.Rendering.Textures;
 using System.Numerics;
 using Xunit;
 
-namespace App2d.Gameplay.Tests.Persons;
+namespace App2d.Game.Presentation.Tests.Persons;
 
 public sealed class WeaponPresentationTests
 {

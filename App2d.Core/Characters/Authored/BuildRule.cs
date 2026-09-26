@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>One exposed build value, such as leg length: a multiplier on the template's proportions.</summary>
 public sealed record BuildValue(string Id, string Name, Limit Range, float Default = 1);

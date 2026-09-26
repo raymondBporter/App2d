@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.World;
 using App2d.Tiles;
@@ -28,7 +29,7 @@ public sealed record SideScrollerSessionDefinition2D(
     IReadOnlyList<WorldThingSpec2D> WorldThings)
 {
     /// <summary>Authored entities; placements they cover spawn from these, otherwise the built-in sprite enemies.</summary>
-    public App2d.Core.Characters.AuthoredCatalog? AuthoredCharacters { get; init; }
+    public AuthoredCatalog? AuthoredCharacters { get; init; }
     public int PlayerMaximumHealth { get; init; } = 5;
     /// <summary>Resume point; ignored when it names a missing checkpoint or invalid health.</summary>
     public SavedProgress2D? SavedProgress { get; init; }

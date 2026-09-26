@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>
 /// Person build values: multipliers on the template's proportions. A variant stores them under <c>build</c>; the

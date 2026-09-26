@@ -2,7 +2,7 @@ using App2d.Core;
 using System.Security;
 using System.Text.Json;
 
-namespace App2d.Gameplay.Persistence;
+namespace App2d.Persistence;
 
 public sealed class PlayerSaveStore2D
 {

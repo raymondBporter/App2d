@@ -2,7 +2,6 @@ using App2d.Levels;
 using App2d.Core;
 using App2d.Editor;
 using App2d.Gameplay.Audio;
-using App2d.Gameplay.Persistence;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
@@ -11,13 +10,15 @@ using App2d.Tiles;
 using App2d.Things;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
+using App2d.Core.Characters.Authored;
+using App2d.Persistence;
 
 namespace App2d;
 
 /// <summary>Local composition and scheduling; gameplay decisions live in the session.</summary>
 public sealed class SideScrollerGame : Game2D
 {
-    private readonly App2d.Core.Characters.AuthoredCatalog _authored = LoadAuthored();
+    private readonly AuthoredCatalog _authored = LoadAuthored();
     private readonly TraversalMetrics2D Traversal;
 
     private readonly SideScrollerSimulation2D _simulation;
@@ -153,9 +154,9 @@ public sealed class SideScrollerGame : Game2D
     }
 
     /// <summary>Authored entities that fail to compile are not played; the game refuses to start and names each problem instead.</summary>
-    private static App2d.Core.Characters.AuthoredCatalog LoadAuthored()
+    private static AuthoredCatalog LoadAuthored()
     {
-        var catalog = App2d.Core.Characters.AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var catalog = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
         if (catalog.Errors.Count > 0) throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
         return catalog;
     }

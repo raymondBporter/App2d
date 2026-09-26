@@ -1,6 +1,6 @@
 using App2d.Core;
 
-namespace App2d.Gameplay.Persistence;
+namespace App2d.Persistence;
 
 public sealed record PlayerSave2D
 {

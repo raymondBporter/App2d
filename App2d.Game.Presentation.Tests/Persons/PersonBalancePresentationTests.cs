@@ -11,8 +11,9 @@ using App2d.Rendering;
 using App2d.Rendering.Textures;
 using System.Numerics;
 using Xunit;
+using App2d.Game.Presentation.Tests;
 
-namespace App2d.Gameplay.Tests.Persons;
+namespace App2d.Game.Presentation.Tests.Persons;
 
 public sealed class PersonBalancePresentationTests
 {

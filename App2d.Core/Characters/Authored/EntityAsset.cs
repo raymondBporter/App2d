@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>A moment in an action: a clip marker when named, otherwise a normalized time over the clip's duration.</summary>
 public sealed record ActionTime

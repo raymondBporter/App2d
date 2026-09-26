@@ -13,8 +13,9 @@ using App2d.Physics;
 using App2d.Tiles;
 using System.Numerics;
 using Xunit;
+using App2d.Game.Presentation.Tests;
 
-namespace App2d.Gameplay.Tests.Enemies;
+namespace App2d.Game.Presentation.Tests.Enemies;
 
 public sealed class EnemySessionClientTests
 {

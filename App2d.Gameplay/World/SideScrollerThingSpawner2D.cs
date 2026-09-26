@@ -1,5 +1,6 @@
 using App2d.Collision;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
@@ -26,7 +27,7 @@ internal sealed class SideScrollerThingSpawner2D(
 {
     public void Create(
         IReadOnlyList<WorldThingSpec2D> things,
-        CombatSystem2D combat, App2d.Core.Characters.AuthoredCatalog? authored = null)
+        CombatSystem2D combat, AuthoredCatalog? authored = null)
     {
         ArgGuard.ThrowIfNull(things);
         ArgGuard.ThrowIfNull(combat);

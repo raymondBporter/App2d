@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>A convex collision region in XY: hurt, attack and movement shapes derived from an evaluated pose.</summary>
 public sealed record EntityRegion(string Id, IReadOnlyList<Vector2> Points)

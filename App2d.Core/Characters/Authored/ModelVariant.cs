@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>A part value a variant replaces. Null keeps the base value, which then follows base edits.</summary>
 public sealed record PartOverride

@@ -10,8 +10,9 @@ using App2d.Gameplay.World;
 using App2d.Physics;
 using System.Numerics;
 using Xunit;
+using App2d.Game.Presentation.Tests;
 
-namespace App2d.Gameplay.Tests.Simulation;
+namespace App2d.Game.Presentation.Tests.Simulation;
 
 public sealed class SessionClient2DTests
 {

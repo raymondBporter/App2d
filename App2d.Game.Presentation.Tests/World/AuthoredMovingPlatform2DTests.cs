@@ -9,8 +9,9 @@ using App2d.Rendering.Textures;
 using App2d.Tiles;
 using System.Numerics;
 using Xunit;
+using App2d.Game.Presentation.Tests;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Game.Presentation.Tests.World;
 
 public sealed class AuthoredMovingPlatform2DTests
 {

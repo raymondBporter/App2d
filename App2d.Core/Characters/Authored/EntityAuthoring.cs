@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>A starting point for a new entity: gameplay defaults it copies, never a live parent.</summary>
 public sealed record EntityTemplate(string Id, string Name, string Description);

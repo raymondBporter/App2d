@@ -1,5 +1,6 @@
 using App2d.Collision;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
@@ -260,7 +261,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public void CreateAuthoredWorldThings(
-        CombatSystem2D combat, App2d.Core.Characters.AuthoredCatalog? authored = null)
+        CombatSystem2D combat, AuthoredCatalog? authored = null)
     {
         StateGuard.ThrowIf(
             _authoredWorldThingsCreated,

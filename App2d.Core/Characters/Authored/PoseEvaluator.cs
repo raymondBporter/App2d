@@ -1,7 +1,7 @@
 using System.Numerics;
 using App2d.Core.Kinematics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 public sealed record ChainResult(string Chain, float Residual, bool Reached);
 public sealed record ContactResult(string Chain, Vector3 Target, float Residual);

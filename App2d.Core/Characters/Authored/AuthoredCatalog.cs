@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>Every authored character asset under one root, found by scanning its folders. IDs come from file contents; errors are collected per file, not thrown.</summary>
 public sealed class AuthoredCatalog

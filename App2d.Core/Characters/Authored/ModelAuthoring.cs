@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>
 /// Graphics-free edits to a base model and a variant. Each structural edit validates the whole model before returning; callers

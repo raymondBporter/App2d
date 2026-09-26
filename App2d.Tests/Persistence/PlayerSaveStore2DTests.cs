@@ -1,4 +1,4 @@
-using App2d.Gameplay.Persistence;
+using App2d.Persistence;
 using Xunit;
 
 namespace App2d.Gameplay.Tests.Persistence;

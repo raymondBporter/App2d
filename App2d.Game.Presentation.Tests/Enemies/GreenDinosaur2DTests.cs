@@ -10,8 +10,9 @@ using App2d.Rendering;
 using App2d.Rendering.Textures;
 using System.Numerics;
 using Xunit;
+using App2d.Game.Presentation.Tests;
 
-namespace App2d.Gameplay.Tests.Enemies;
+namespace App2d.Game.Presentation.Tests.Enemies;
 
 public sealed class GreenDinosaur2DTests
 {

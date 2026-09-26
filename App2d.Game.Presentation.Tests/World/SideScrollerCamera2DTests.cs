@@ -4,7 +4,7 @@ using App2d.Rendering;
 using System.Numerics;
 using Xunit;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Game.Presentation.Tests.World;
 
 public sealed class SideScrollerCamera2DTests
 {
