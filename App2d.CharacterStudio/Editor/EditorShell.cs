@@ -28,15 +28,19 @@ internal sealed class EditorShell : IDisposable
     private readonly AssetBrowser _browser;
     private readonly IWorkspaceView[] _views;
 
-    public EditorShell(EditorSession session, Viewport viewport, ImGuiHost gui)
+    public EditorShell(EditorSession session, Viewport viewport, ArenaTest test, ImGuiHost gui)
     {
-        Session = session; Viewport = viewport; _gui = gui;
+        Session = session; Viewport = viewport; Test = test; _gui = gui;
         _browser = new(session);
         _views = [new ModelView(session, viewport), new AnimateView(session, viewport)];
     }
 
     public EditorSession Session { get; }
     public Viewport Viewport { get; }
+    /// <summary>The arena test. Shell state: entering and leaving it never changes the session's documents or selection.</summary>
+    public ArenaTest Test { get; }
+    /// <summary>False while a smoke run drives the arena itself.</summary>
+    public bool LiveTest { get; set; } = true;
     private IWorkspaceView View => _views.First(v => v.Mode == Session.Mode);
 
     public void Draw()
@@ -56,12 +60,13 @@ internal sealed class EditorShell : IDisposable
         var body = available.Y - timeline - status - 2 * ImGui.GetStyle().ItemSpacing.Y;
         ImGui.BeginChild("left", new(left, body));
         ImGui.BeginChild("browser", new(0, body * .5f), ImGuiChildFlags.Borders); _browser.Draw(); ImGui.EndChild();
-        ImGui.BeginChild("outline", Vector2.Zero, ImGuiChildFlags.Borders); view.Outline(); ImGui.EndChild();
+        ImGui.BeginChild("outline", Vector2.Zero, ImGuiChildFlags.Borders); if (Test.Active) Test.RosterPanel(); else view.Outline(); ImGui.EndChild();
         ImGui.EndChild(); ImGui.SameLine();
         ImGui.BeginChild("stage", new(Math.Max(200, available.X - left - right - 2 * ImGui.GetStyle().ItemSpacing.X), body), ImGuiChildFlags.Borders, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        Stage(view); ImGui.EndChild(); ImGui.SameLine();
-        ImGui.BeginChild("inspector", new(right, body), ImGuiChildFlags.Borders); view.Inspector(); ImGui.EndChild();
-        ImGui.BeginChild("timeline", new(0, timeline), ImGuiChildFlags.Borders); view.Timeline(); ImGui.EndChild();
+        if (Test.Active) Test.Stage(ImGui.GetContentRegionAvail(), LiveTest); else Stage(view);
+        ImGui.EndChild(); ImGui.SameLine();
+        ImGui.BeginChild("inspector", new(right, body), ImGuiChildFlags.Borders); if (Test.Active) Test.Inspector(); else view.Inspector(); ImGui.EndChild();
+        ImGui.BeginChild("timeline", new(0, timeline), ImGuiChildFlags.Borders); if (Test.Active) Test.Timeline(); else view.Timeline(); ImGui.EndChild();
         StatusLine();
         _browser.DrawDialogs();
         ImGui.End();
@@ -82,7 +87,12 @@ internal sealed class EditorShell : IDisposable
             ImGui.SameLine();
         }
         ImGui.BeginDisabled(); ImGui.Button("Entity"); ImGui.EndDisabled();
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) ImGui.SetTooltip("Entities, actions and the arena test arrive with the gameplay phase.");
+        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) ImGui.SetTooltip("Entity editing is not built yet; entities are JSON files under authored/entities. Use Test to play them.");
+        ImGui.SameLine();
+        if (Test.Active) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
+        if (ImGui.Button(Test.Active ? "Stop test" : "Test")) { if (Test.Active) Test.Stop(); else { Session.CommitAll(); Test.Start(); } }
+        if (Test.Active) ImGui.PopStyleColor();
+        if (ImGui.IsItemHovered()) ImGui.SetTooltip("Play the entity arena from a snapshot of the current drafts, unsaved edits included.");
         ImGui.SameLine(); ImGui.TextDisabled("|"); ImGui.SameLine();
         if (Ui.Button("Save", document is not null)) Session.Save(document);
         ImGui.SameLine();
@@ -174,8 +184,8 @@ internal sealed class EditorShell : IDisposable
         if (io.KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.S)) { if (io.KeyShift) Session.SaveAll(); else Session.Save(Session.ActiveDocument); }
         if (io.KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.Z)) Session.Undo();
         if (io.KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.Y)) Session.Redo();
-        if (!ImGui.IsAnyItemActive() && ImGui.IsKeyPressed(ImGuiKey.Space, false)) Session.TogglePlay();
+        if (!Test.Active && !ImGui.IsAnyItemActive() && ImGui.IsKeyPressed(ImGuiKey.Space, false)) Session.TogglePlay();
     }
 
-    public void Dispose() => Viewport.Dispose();
+    public void Dispose() { Viewport.Dispose(); Test.Dispose(); }
 }

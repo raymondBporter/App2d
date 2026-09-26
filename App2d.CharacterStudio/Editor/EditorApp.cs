@@ -52,7 +52,8 @@ internal sealed class EditorApp : Game
         _gui = new(this, scale); _renderer = new(GraphicsDevice);
         var root = _authoredRoot;
         if (_smokePath is not null) { _smoke = new(_smokePath); root = _smoke.PrepareWorkspace(_authoredRoot); }
-        _shell = new(new EditorSession(AuthoringWorkspace.Open(root)), new Viewport(GraphicsDevice, _gui, _renderer), _gui);
+        var assets = AuthoringWorkspace.Open(root);
+        _shell = new(new EditorSession(assets), new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui);
         if (_smokePath is null)
         {
             _form = Control.FromHandle(Window.Handle)?.FindForm();

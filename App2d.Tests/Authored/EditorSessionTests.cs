@@ -22,6 +22,26 @@ public sealed class EditorSessionTests : IDisposable
     private static void Ok(EditorSession session, bool result) => Assert.True(result, session.Message);
 
     [Fact]
+    public void ATestSnapshotPlaysUnsavedDraftsAndIgnoresLaterEdits()
+    {
+        var session = Session();
+        var thrust = session.Assets.Clip("person-thrust")!;
+        Ok(session, session.Edit(thrust, () => thrust.Asset.Markers.Single(m => m.Id == "strike").Time = .3f));
+        var (entities, problems) = session.Assets.SnapshotEntities();
+        Assert.Empty(problems);
+        var guard = entities.Single(e => e.Id == "spear-guard");
+        Assert.Equal(.3f, guard.Actions["attack"].Hits[0].Start); // the unsaved marker move reaches the playtest
+        Ok(session, session.Edit(thrust, () => thrust.Asset.Markers.Single(m => m.Id == "strike").Time = .35f));
+        Assert.Equal(.3f, guard.Actions["attack"].Clip.Markers.Single(m => m.Id == "strike").Time); // a running test never sees later edits
+        Assert.Equal(.4f, AuthoredCatalog.Load(_root).Animations["person-thrust"].Markers.Single(m => m.Id == "strike").Time);
+
+        Ok(session, session.Edit(thrust, () => thrust.Asset.Markers.RemoveAll(m => m.Id == "recover")));
+        (entities, problems) = session.Assets.SnapshotEntities();
+        Assert.DoesNotContain(entities, e => e.Id == "spear-guard");
+        Assert.Contains(problems, p => p.Contains("no marker 'recover'"));
+    }
+
+    [Fact]
     public void ANamedTallVariantSavesAndReopens()
     {
         var session = Session();

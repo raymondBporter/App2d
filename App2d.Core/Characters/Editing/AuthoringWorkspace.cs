@@ -99,6 +99,41 @@ public sealed class AuthoringWorkspace
         return error is null;
     }
 
+    /// <summary>
+    /// An explicit snapshot for a playtest: entities and props from disk, compiled against copies of the current model,
+    /// variant and clip drafts. Later edits never reach a running test; restarting takes a new snapshot. Entities that do
+    /// not compile are left out and reported, never patched up.
+    /// </summary>
+    public (IReadOnlyList<ResolvedEntity> Entities, IReadOnlyList<string> Problems) SnapshotEntities()
+    {
+        var problems = new List<string>(); var disk = AuthoredCatalog.Load(Root);
+        var loaded = disk.EntityAssets.Keys.Concat(disk.Props.Keys).Concat(disk.Models.Keys).Concat(disk.Variants.Keys).Concat(disk.Animations.Keys).Select(disk.PathOf).ToList();
+        // Unreadable entity or prop files; reference problems are re-checked below against the drafts.
+        problems.AddRange(disk.Errors.Where(e => !loaded.Any(path => e.StartsWith(path + ":", StringComparison.Ordinal))));
+        T? Copy<T>(AssetDocument<T>? document, Func<string, T> parse) where T : class
+        {
+            if (document is null) return null;
+            try { return parse(JsonSerializer.Serialize(document.Asset, AuthoredJson.Options)); }
+            catch (Exception ex) when (IsAssetError(ex)) { problems.Add($"{document.Id}: {ex.Message}"); return null; }
+        }
+        var clips = Clips.Select(c => Copy(c, MotionClip.FromJson)).OfType<MotionClip>().ToDictionary(c => c.Id, StringComparer.Ordinal);
+        var resolved = new Dictionary<string, ResolvedModel>(StringComparer.Ordinal);
+        ResolvedModel ResolveCopy(string id)
+        {
+            if (resolved.TryGetValue(id, out var cached)) return cached;
+            var variant = Copy(Variant(id), ModelVariant.FromJson);
+            var model = Copy(Model(variant?.Base ?? id), CharacterModel.FromJson) ?? throw new KeyNotFoundException($"No model or variant '{id}'.");
+            return resolved[id] = ResolvedModel.From(model, variant);
+        }
+        var entities = new List<ResolvedEntity>();
+        foreach (var asset in disk.EntityAssets.Values)
+        {
+            try { entities.Add(ResolvedEntity.Compile(asset, ResolveCopy, clips.GetValueOrDefault, disk.Props.GetValueOrDefault)); }
+            catch (Exception ex) when (IsAssetError(ex)) { problems.Add(ex.Message); }
+        }
+        return (entities, problems);
+    }
+
     /// <summary>Clips that name this subject's base model, playable or not; compatibility is checked separately, never inferred from names.</summary>
     public IEnumerable<AssetDocument<MotionClip>> ClipsFor(string subjectId) { var basis = BaseOf(subjectId); return Clips.Where(c => c.Asset.Model == basis); }
 

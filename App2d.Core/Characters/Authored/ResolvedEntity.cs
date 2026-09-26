@@ -20,6 +20,7 @@ public sealed class ResolvedEntity
 
     public EntityAsset Asset { get; }
     public string Id => Asset.Id;
+    public string Name => Asset.Name;
     public ResolvedModel Model { get; }
     public ControllerSpec Controller { get; }
     public IReadOnlyDictionary<string, RoleClip> Roles { get; private set; } = new Dictionary<string, RoleClip>();

@@ -60,6 +60,19 @@ internal sealed class EditorSmoke(string output)
                 Record(reopened.Documents.All(d => reopened.Problems(d).Count == 0), "no asset needs repair");
                 shell.Session.Open("tripod-walk"); shell.Session.TogglePlay();
             }),
+            ("09-test-arena", shell =>
+            {
+                shell.Session.TogglePlay(); shell.LiveTest = false;
+                shell.Test.Roster.Clear(); shell.Test.Roster.AddRange(["player", "spear-guard", "stalker-pest"]);
+                shell.Test.Start();
+                Record(shell.Test.Problems.Count == 0 && shell.Test.Arena?.Actors.Count == 3, "Test starts the player, spear guard and stalker from the drafts");
+                // The player walks in and thrusts; the guard answers. Fixed steps, so the frame is reproducible.
+                for (var i = 0; i < 150; i++) shell.Test.Advance(1 / 120f, new(Move: 1));
+                for (var i = 0; i < 90; i++) shell.Test.Advance(1 / 120f, new(Attack: true));
+                shell.Test.Paused = true;
+                Record(shell.Test.Arena!.Events.Any(e => e.Event.Sound == "swing"), "a thrust played its swing sound on the strike marker");
+                Record(shell.Session.Mode == Workspace.Animate && shell.Session.ClipId == "tripod-walk", "testing left the open document and workspace alone");
+            }),
         ];
         return workspace;
     }
