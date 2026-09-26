@@ -117,6 +117,10 @@ public sealed class ResolvedEntity
             var events = action.Events.Select(e => new ResolvedEvent(e, Seconds(e.At, $"event '{e.Id}'"))).OrderBy(e => e.Seconds).ToList();
             if (action.Id == EntityControllers.Jump && !events.Any(e => e.Event.Id == EntityControllers.Launch))
                 throw new InvalidDataException($"{field}: a jump needs a '{EntityControllers.Launch}' event.");
+            if (events.Any(e => e.Event.Id == EntityControllers.Fire) && !equipment.Any(e => e.Prop.Muzzle is not null))
+                throw new InvalidDataException($"{field}: a '{EntityControllers.Fire}' event needs an equipped prop with a muzzle.");
+            if (action.Id is EntityControllers.Shoot or EntityControllers.WallShot && !events.Any(e => e.Event.Id == EntityControllers.Fire))
+                throw new InvalidDataException($"{field}: a shot needs a '{EntityControllers.Fire}' event.");
             IReadOnlySet<string>? mask = null;
             if (action.Mask is { } maskId)
             {

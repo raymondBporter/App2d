@@ -55,7 +55,40 @@ internal static class PlayerMoves
         var model = ResolvedModel.From(person);
         foreach (var prop in Props()) prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
         foreach (var clip in Clips(model)) clip.Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
+        Directory.CreateDirectory(Path.Combine(authoredRoot, "entities"));
+        Hero().Save(Path.Combine(authoredRoot, "entities", Hero().Id + ".json"));
     }
+
+    /// <summary>
+    /// The game's traversal player. Person2D moves it; this entity supplies what the move set's clips already say: the sword's
+    /// duration and strike → recover window from the draw-slash (and the slash for a follow-up while the blade is out), its hit box on the sword tip, and the muzzle at each shot's fire
+    /// marker. Health and the movement box are the player's too.
+    /// </summary>
+    public static EntityAsset Hero() => new()
+    {
+        Id = "hero", Name = "Hero", Model = PersonTemplate.Id, MotionSet = "standard",
+        Roles = new() { ["idle"] = "player-idle", ["jump"] = "player-jump", ["fall"] = "player-fall", ["hit"] = "player-hit", ["death"] = "player-death" },
+        Controller = new() { Kind = EntityControllers.Traversal, WalkSpeed = 1.8f, RunSpeed = 4.2f, Range = 1.2f, Cooldown = 0 },
+        Health = 30, Movement = new() { Width = .55f, Height = 1.9f }, Hurt = new() { Layout = "standard" },
+        Equipment = [new() { Prop = PersonLoadout.Sword, Socket = MoveBuilder.SwordSocket }, new() { Prop = PersonLoadout.Pistol, Socket = MoveBuilder.GunSocket }],
+        Actions =
+        [
+            new()
+            {
+                Id = EntityControllers.Attack, Clip = "player-sword-draw-slash",
+                Hits = [new() { Id = "blade", Prop = PersonLoadout.Sword, Along = -.35f, Width = 1.1f, Height = 1.3f, Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
+                Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
+            },
+            new()
+            {
+                Id = EntityControllers.FollowUp, Clip = "player-sword-slash",
+                Hits = [new() { Id = "blade", Prop = PersonLoadout.Sword, Along = -.35f, Width = 1.1f, Height = 1.3f, Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
+                Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
+            },
+            new() { Id = EntityControllers.Shoot, Clip = "player-gun-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }] },
+            new() { Id = EntityControllers.WallShot, Clip = "player-gun-wall-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }] },
+        ],
+    };
 
     private static MoveBuilder New(ResolvedModel m, string id, string name, float duration, bool loop) => new(m, id, name, duration, loop);
 

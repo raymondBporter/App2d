@@ -43,11 +43,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     public ActorPose? Pose { get; private set; }
 
     /// <summary>The top of the rest pose's drawn shapes above the feet.</summary>
-    public static float RestHeight(ResolvedModel model)
-    {
-        var rest = PoseEvaluator.Rest(model);
-        return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, rest.World)).Max(p => p.Y);
-    }
+    public static float RestHeight(ResolvedModel model) => model.DrawnHeight();
 
     public void Equip(EquipmentKind2D equipment) => _director.Equipment = equipment;
     public void PlayHit() { _director.PlayHit(); _face.Hit(); }

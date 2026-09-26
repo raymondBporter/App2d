@@ -14,10 +14,12 @@ internal sealed partial class MeleeAttack2D
         int AttackId,
         bool IsInProgress,
         bool IsDamageActive,
-        TransformState2D Pose) : SimulationState2D;
+        TransformState2D Pose,
+        MeleeAttackProfile2D Profile,
+        MeleeAttackProfile2D? NextProfile) : SimulationState2D;
 
     internal SimulationState CaptureSimulation() => new SimulationState(
-        _elapsedSeconds, _inputBufferSeconds, AttackId, IsInProgress, IsDamageActive, TransformState2D.Capture(WorldObject.Transform));
+        _elapsedSeconds, _inputBufferSeconds, AttackId, IsInProgress, IsDamageActive, TransformState2D.Capture(WorldObject.Transform), Profile, NextProfile);
 
     internal void RestoreSimulation(SimulationState snapshot)
     {
@@ -28,5 +30,6 @@ internal sealed partial class MeleeAttack2D
         IsInProgress = state.IsInProgress;
         IsDamageActive = state.IsDamageActive;
         state.Pose.Apply(WorldObject.Transform);
+        Profile = state.Profile; NextProfile = state.NextProfile;
     }
 }

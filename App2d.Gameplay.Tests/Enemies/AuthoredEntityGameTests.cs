@@ -50,12 +50,44 @@ public sealed class AuthoredEntityGameTests
         Assert.Contains(first, json => json.Contains("EntityId") && json.Contains("attack"));
     }
     [Fact]
-    public void SwordUsesAuthoredTimingAndPoseRegionsIncludeHeadsOutsideMovementBody()
+    public void TheSwordTakesItsTimingAndHitBoxFromTheAuthoredHero()
+    {
+        var authored = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
+        var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
+        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
+            { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
+        var hero = new App2d.Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities["hero"], game.Player.Body.WorldObject.Shape.LocalBounds.Size);
+        var slash = authored.Animations["player-sword-draw-slash"];
+        game.Arsenal.UsePrimary(1);
+        // The gameplay swing lasts exactly as long as the drawn slash, and damages only between its strike and recover markers.
+        Assert.Equal(slash.Duration, game.Arsenal.CaptureActionState().DurationSeconds, 4);
+        Assert.Equal(slash.Markers.Single(m => m.Id == "strike").Time, hero.Attack.Hits[0].Start, 4);
+        Assert.Equal(slash.Markers.Single(m => m.Id == "recover").Time, hero.Attack.Hits[0].Finish, 4);
+        // The hit box sits ahead of the player at the sword tip, mirrored by facing.
+        var strike = hero.Attack.Hits[0].Start + .01f;
+        var right = hero.Offset(strike, 1); var left = hero.Offset(strike, -1);
+        Assert.True(right.X > 20, $"hit box ahead of the player: {right}");
+        Assert.Equal(-right.X, left.X, 3); Assert.Equal(right.Y, left.Y, 3);
+        Assert.False(game.Arsenal.CaptureActionState().FollowUp); // the first swing draws from the sheath
+        Assert.Equal(hero.Attack.Hits[0].Start, strike - .01f, 4);
+        void Tick(int ticks) { for (var i = 0; i < ticks; i++) { var tick = game.Session.Tick + 1; game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D())); } }
+        Tick(60); // past the swing, inside the follow-up window
+        game.Arsenal.UsePrimary(1);
+        Assert.True(game.Arsenal.CaptureActionState().FollowUp, "a swing soon after the last keeps the blade out");
+        Assert.NotEqual(hero.Offset(strike, 1, followUp: true), hero.Offset(strike, 1)); // and its hit box follows the other clip
+        Tick(200);
+        game.Arsenal.UsePrimary(1);
+        Assert.False(game.Arsenal.CaptureActionState().FollowUp, "after a pause the sword is drawn again");
+        var muzzle = hero.Muzzle(1, false);
+        Assert.True(muzzle.X > 10 && MathF.Abs(muzzle.Y) < game.Player.Body.WorldObject.Shape.LocalBounds.Size.Y / 2, $"muzzle in front at chest height: {muzzle}");
+    }
+
+    [Fact]
+    public void PoseRegionsIncludeHeadsOutsideMovementBody()
     {
         var catalog = Catalog();
         using var game = Game(catalog);
-        game.Arsenal.UsePrimary(1);
-        Assert.Equal(catalog.Types["player"].Actions["attack"].Duration, game.Arsenal.CaptureActionState().DurationSeconds);
         var enemy = Assert.IsType<AuthoredEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var type = enemy.Type; var pose = new EntityPose(catalog.Libraries[type.Library]);
         pose.Evaluate(type, type.Actions["idle"], 0, false);

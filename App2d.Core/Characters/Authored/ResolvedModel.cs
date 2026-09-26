@@ -35,6 +35,13 @@ public sealed class ResolvedModel
     public IReadOnlyDictionary<string, ModelChain> Chains { get; }
     public IReadOnlyDictionary<string, IReadOnlyList<string>> Children { get; }
 
+    /// <summary>The top of the rest pose's visible shapes above the feet: the height a drawn size is fitted to.</summary>
+    public float DrawnHeight()
+    {
+        var rest = PoseEvaluator.Rest(this);
+        return Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, rest.World)).Select(p => p.Y).DefaultIfEmpty(1).Max();
+    }
+
     public float Measure(string scale) => scale == CharacterModel.Unit ? 1 : Measures[scale];
     public float Length(string from, string to) => Vector2.Distance(new(Rest[from].X, Rest[from].Y), new(Rest[to].X, Rest[to].Y));
 

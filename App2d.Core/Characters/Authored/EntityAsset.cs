@@ -206,17 +206,23 @@ public sealed record ControllerSpec(string Id, IReadOnlyList<string> RequiredRol
 /// </summary>
 public static class EntityControllers
 {
-    public const string Walker = "walker", Platformer = "platformer", Stationary = "stationary";
-    public const string Attack = "attack", Jump = "jump", Hit = "hit", Death = "death";
+    public const string Walker = "walker", Platformer = "platformer", Stationary = "stationary", Traversal = "traversal";
+    public const string Attack = "attack", Jump = "jump", Hit = "hit", Death = "death", Shoot = "shoot", WallShot = "wall-shot";
+    /// <summary>A second swing played while the weapon is still out from the first.</summary>
+    public const string FollowUp = "follow-up";
     public const string Idle = "idle", Walk = "walk", Run = "run", Fall = "fall";
     /// <summary>The action event at which a jump leaves the ground.</summary>
     public const string Launch = "launch";
+    /// <summary>The action event at which a shot leaves an equipped prop's muzzle.</summary>
+    public const string Fire = "fire";
 
     private static readonly Dictionary<string, ControllerSpec> Specs = new(StringComparer.Ordinal)
     {
         [Walker] = new(Walker, [Idle, Walk], [Attack], Moves: true, Jumps: false),
         [Platformer] = new(Platformer, [Idle, Walk], [Attack, Jump], Moves: true, Jumps: true),
         [Stationary] = new(Stationary, [Idle], [Attack], Moves: false, Jumps: false),
+        // The game's traversal player: Person2D owns movement and jumping; the entity supplies the actions' timing and geometry.
+        [Traversal] = new(Traversal, [Idle, Walk], [Attack, FollowUp, Shoot, WallShot], Moves: true, Jumps: false),
     };
 
     public static IReadOnlyCollection<ControllerSpec> All => Specs.Values;

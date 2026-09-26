@@ -14,13 +14,18 @@ internal sealed partial class MeleeAttack2D(
     private float _elapsedSeconds;
     private float _inputBufferSeconds;
 
+    /// <summary>The timing of the current swing.</summary>
+    public MeleeAttackProfile2D Profile { get; private set; } = profile;
+    /// <summary>A timing for the next swing to start, taken up when it starts (immediately or from the input buffer).</summary>
+    public MeleeAttackProfile2D? NextProfile { get; set; }
+
     public SpatialObject2D WorldObject { get; } = worldObject;
     // Identity belongs to this action source, not its owner: punch and kick
     // can have the same attack sequence number without suppressing each other.
     public EntityId2D SourceId { get; } = sourceId.IsValid ? sourceId
         : throw new ArgumentException("A melee attack requires a valid source ID.", nameof(sourceId));
     public int AttackId { get; private set; }
-    public float DurationSeconds => profile.DurationSeconds;
+    public float DurationSeconds => Profile.DurationSeconds;
     public float ElapsedSeconds => _elapsedSeconds;
     public bool IsInProgress { get; private set; }
     public bool IsDamageActive { get; private set; }
@@ -33,7 +38,7 @@ internal sealed partial class MeleeAttack2D(
     {
         if (IsInProgress)
         {
-            _inputBufferSeconds = profile.InputBufferSeconds;
+            _inputBufferSeconds = Profile.InputBufferSeconds;
             return false;
         }
 
@@ -57,14 +62,14 @@ internal sealed partial class MeleeAttack2D(
         {
             var previousElapsedSeconds = _elapsedSeconds;
             _elapsedSeconds = Math.Min(
-                profile.DurationSeconds,
+                Profile.DurationSeconds,
                 _elapsedSeconds + deltaSeconds);
             IsDamageActive =
-                previousElapsedSeconds < profile.DamageEndSeconds &&
-                _elapsedSeconds >= profile.DamageStartSeconds;
+                previousElapsedSeconds < Profile.DamageEndSeconds &&
+                _elapsedSeconds >= Profile.DamageStartSeconds;
 
             PositionHitbox(ownerPosition, facing);
-            if (_elapsedSeconds >= profile.DurationSeconds)
+            if (_elapsedSeconds >= Profile.DurationSeconds)
                 IsInProgress = false;
         }
 
@@ -86,6 +91,7 @@ internal sealed partial class MeleeAttack2D(
 
     private void Start()
     {
+        if (NextProfile is { } next) { Profile = next; NextProfile = null; }
         AttackId++;
         _elapsedSeconds = 0f;
         _inputBufferSeconds = 0f;
@@ -96,7 +102,7 @@ internal sealed partial class MeleeAttack2D(
     private void PositionHitbox(Vector2 ownerPosition, float facing)
     {
         WorldObject.Transform.Position = ownerPosition +
-            new Vector2(facing * profile.ForwardOffset, profile.VerticalOffset);
+            new Vector2(facing * Profile.ForwardOffset, Profile.VerticalOffset);
         WorldObject.Transform.Rotation = 0f;
     }
 }

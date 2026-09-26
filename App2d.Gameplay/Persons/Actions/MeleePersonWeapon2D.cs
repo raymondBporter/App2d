@@ -18,7 +18,7 @@ internal abstract partial class MeleePersonWeapon2D(
     uint targetLayer,
     CombatSystem2D combat,
     Action<float> attackStarted,
-    Action<WeaponEvent2D> publish, AuthoredMelee2D? authored = null) : PersonWeapon2DBase(kind)
+    Action<WeaponEvent2D> publish, AuthoredHero2D? authored = null) : PersonWeapon2DBase(kind)
 {
     private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
     private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
@@ -27,10 +27,14 @@ internal abstract partial class MeleePersonWeapon2D(
     private readonly MeleeAttack2D _attack = new(attackSourceId, new SpatialObject2D(hitboxShape), attackProfile);
     private float _attackDirection = 1f;
     private float _bufferedAttackDirection = 1f;
+    // A swing chained onto the last, or started within FollowUpSeconds of its end, is a follow-up: the blade is still out.
+    public const float FollowUpSeconds = .6f;
+    private float _sinceSwing = float.PositiveInfinity;
+    private bool _followUp, _nextFollowUp;
 
     public virtual bool IsAttackActive => _attack.IsInProgress;
     public override PersonActionState2D CaptureActionState() => _attack.IsInProgress
-        ? new(Simulation.PlayerAttackKind2D.Melee, _attack.ElapsedSeconds, _attack.DurationSeconds) : default;
+        ? new(Simulation.PlayerAttackKind2D.Melee, _attack.ElapsedSeconds, _attack.DurationSeconds, _followUp) : default;
 
     public override IEnumerable<SpatialObject2D> ActiveHitboxes
     {
@@ -46,6 +50,8 @@ internal abstract partial class MeleePersonWeapon2D(
         var direction = MathF.Sign(facing);
         if (_attack.IsInProgress)
             _bufferedAttackDirection = direction;
+        _nextFollowUp = _attack.IsInProgress || _sinceSwing < FollowUpSeconds;
+        PrepareSwing();
         if (_attack.TryStart())
         {
             _attackDirection = direction;
@@ -59,6 +65,7 @@ internal abstract partial class MeleePersonWeapon2D(
 
     public override void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
+        _sinceSwing = _attack.IsInProgress ? 0 : _sinceSwing + deltaSeconds;
         if (_attack.Update(
             deltaSeconds,
             _ownerBody.WorldObject.Transform.Position,
@@ -73,7 +80,7 @@ internal abstract partial class MeleePersonWeapon2D(
         }
 
         if (authored is not null)
-            _attack.WorldObject.Transform.Position = _ownerBody.WorldObject.Transform.Position + authored.Offset(_attack.ElapsedSeconds, _attackDirection);
+            _attack.WorldObject.Transform.Position = _ownerBody.WorldObject.Transform.Position + authored.Offset(_attack.ElapsedSeconds, _attackDirection, _followUp);
         if (_attack.IsDamageActive &&
             _combat.ResolveAttack(
                 _attack.WorldObject,
@@ -93,5 +100,11 @@ internal abstract partial class MeleePersonWeapon2D(
     protected void ReportImpact(Vector2 position) => _publish(new SwordImpact2D(position));
     protected virtual void OnHit() { }
 
-    private void NotifyAttackStarted() => _attackStarted(_attack.DurationSeconds);
+    private void NotifyAttackStarted() { _followUp = _nextFollowUp; _attackStarted(_attack.DurationSeconds); }
+
+    /// <summary>Sets the next swing's timing from the clip it will play; the attack takes it up when that swing starts.</summary>
+    private void PrepareSwing()
+    {
+        if (authored is not null) _attack.NextProfile = authored.Profile(_nextFollowUp);
+    }
 }

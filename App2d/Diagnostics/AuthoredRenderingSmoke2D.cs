@@ -59,6 +59,7 @@ internal static class AuthoredRenderingSmoke2D
         var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
         var moves = App2d.Gameplay.Persons.PersonMoves.From(authored);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
+        var hero = new App2d.Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities[App2d.Gameplay.Persons.Actions.AuthoredHero2D.EntityId], traversal.PlayerColliderSize);
         var standing = new App2d.Gameplay.Persons.PersonState2D { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true };
         var melee = new App2d.Gameplay.Persons.PersonActionState2D(App2d.Gameplay.Simulation.PlayerAttackKind2D.Melee, 0, .35f);
         var shot = new App2d.Gameplay.Persons.PersonActionState2D(App2d.Gameplay.Simulation.PlayerAttackKind2D.Shot, 0, .2f);
@@ -71,7 +72,8 @@ internal static class AuthoredRenderingSmoke2D
             ("fall", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, LinearVelocity = new(0, -300) }, .3f, false),
             ("climb", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, IsClimbingLadder = true, LinearVelocity = new(0, 60) }, .8f, false),
             ("wall-grip", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, IsWallGripping = true }, .5f, false),
-            ("sword-strike", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { Action = melee }, .2f, true),
+            ("sword-strike", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { Action = melee }, .22f, true),
+            ("sword-follow-up", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { Action = melee with { FollowUp = true } }, .22f, true),
             ("gun-aim", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Gun, standing, .5f, false),
             ("gun-run-shot", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Gun, standing with { LinearVelocity = new(traversal.RunSpeed, 0), Action = shot }, .05f, true),
             ("death", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { HitPoints = 0 }, 1.2f, false),
@@ -97,6 +99,17 @@ internal static class AuthoredRenderingSmoke2D
             var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(2000, 2)), new SolidColorShader(Color.DarkSlateGray));
             ground.Transform.Position = new(position.X, 0); close.Draw(ground);
             close.Draw(scene);
+            // Gameplay geometry over the drawing: the sword's hit box while it is live, and where a shot leaves the pistol.
+            var elapsed = (steps - 1) / 120f;
+            if (name.StartsWith("sword-") && hero.Swing(state.Action.FollowUp) is { } swing
+                && elapsed >= swing.Hits[0].Start && elapsed < swing.Hits[0].Finish)
+            {
+                var box = new WorldObject2D(hero.Shape, new SolidColorShader(new Color(235, 60, 50, 110))); box.Transform.Position = position + hero.Offset(elapsed, facing, state.Action.FollowUp); close.Draw(box);
+            }
+            if (name == "gun-run-shot")
+            {
+                var dot = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(3)), new SolidColorShader(new Color(240, 200, 40))); dot.Transform.Position = position + hero.Muzzle(facing, false); close.Draw(dot);
+            }
             close.DrawScreenLabel($"PLAYER: {name.ToUpperInvariant()} ({player.Director.Key})", new(24, 24));
             close.EndFrame(); device.SetRenderTarget(null);
             using var stream = File.Create(Path.Combine(directory, $"player-{name}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);

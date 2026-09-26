@@ -123,7 +123,8 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         var melee = s.Action.IsActive && s.Action.Kind is PlayerAttackKind2D.Melee or PlayerAttackKind2D.Downward or PlayerAttackKind2D.Punch or PlayerAttackKind2D.Kick;
         if (_meleeActive && !melee) { _meleeEnd = _clock; _sheathePending = Equipment == EquipmentKind2D.Sword; }
         // A swing while the sword is still out (just after another, or before the sheathe puts it away) is the follow-up slash.
-        if (!_meleeActive && melee) _swing = SwordOut ? PersonMoves.Slash : PersonMoves.DrawSlash;
+        // Gameplay decides whether a swing follows up with the blade already out; its hit box samples the same clip.
+        if (!_meleeActive && melee) _swing = s.Action.FollowUp ? PersonMoves.Slash : PersonMoves.DrawSlash;
         _meleeActive = melee;
 
         PersonFrame frame;

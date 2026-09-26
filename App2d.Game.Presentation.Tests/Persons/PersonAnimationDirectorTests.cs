@@ -84,7 +84,7 @@ public sealed class PersonAnimationDirectorTests
         Assert.Equal(Moves[PersonMoves.DrawSlash].Duration / 2, mid.Seconds, 3); // the controller's timing maps onto the clip
         Assert.Contains((PersonLoadout.Sword, PersonLoadout.SwordSocket), PersonLoadout.Worn(mid.Clip, (float)mid.Seconds, mid.Gear));
         d.Step(Standing, 12);
-        Assert.Equal(PersonMoves.Slash, d.Step(swing).Key); // soon after: the follow-up, sword already out
+        Assert.Equal(PersonMoves.Slash, d.Step(swing with { Action = swing.Action with { FollowUp = true } }).Key); // gameplay says follow-up: sword already out
         d.Step(Standing);
         Assert.Equal(PersonMoves.Sheathe, d.Director.Key);
         var done = d.Step(Standing, 60);

@@ -26,7 +26,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         CombatFaction2D ownerFaction,
         CombatSystem2D combat,
         Func<Bounds2D, bool>? overlapsSpikes = null,
-        App2d.Core.Characters.EntityCatalog? characters = null, Func<float, Vector2>? muzzle = null)
+        AuthoredHero2D? hero = null, Func<float, Vector2>? muzzle = null)
     {
         ArgGuard.ThrowIfNull(ids);
         ArgGuard.ThrowIfNull(ownerBody);
@@ -36,7 +36,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         _sword = new SwordPersonWeapon2D(ids, ownerBody, ownerFaction, targetLayer, combat,
             duration => MeleeAttackStarted?.Invoke(duration), Publish,
             duration => DownAttackStarted?.Invoke(duration), overlapsSpikes,
-            characters is null ? null : new AuthoredMelee2D(characters.Types["player"], characters.Libraries[characters.Types["player"].Library], ownerBody.WorldObject.Shape.LocalBounds.Size.Y / 2));
+            hero);
         _gun = new GunPersonWeapon2D(ids, ownerBody, muzzleOffset, collision, worldLayer, targetLayer,
             ownerFaction, combat, () => ShotStarted?.Invoke(), Publish, muzzle);
         _weapons = [_sword, _gun];

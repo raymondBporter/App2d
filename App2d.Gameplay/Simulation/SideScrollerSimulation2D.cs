@@ -75,21 +75,12 @@ public sealed class SideScrollerSimulation2D : IDisposable
         var contactDamage = new ContactDamageSystem2D(collision, SideScrollerLayers2D.Enemy, combatants);
         var combat = new CombatSystem2D(collision, combatants);
         level.CreateAuthoredWorldThings(combat, definition.Characters, definition.AuthoredCharacters);
-        Func<float, Vector2>? muzzle = null;
-        if (definition.Characters is { } characters)
-        {
-            var type = characters.Types["player"];
-            var pose = new App2d.Core.Characters.EntityPose(characters.Libraries[type.Library]);
-            muzzle = facing =>
-            {
-                var action = type.Actions[player.IsWallGripping && type.Actions.ContainsKey("wall_shot") ? "wall_shot" : "shoot"];
-                pose.Evaluate(type, action, action.Contact * action.Duration, facing < 0);
-                return pose.Muzzle * App2d.Core.Characters.EntityCatalog.WorldUnits - new Vector2(0, traversal.PlayerColliderSize.Y / 2);
-            };
-        }
+        // The player's sword timing, hit box and muzzle come from its authored entity, posed exactly as it is drawn.
+        var hero = definition.AuthoredCharacters?.Entities.GetValueOrDefault(AuthoredHero2D.EntityId) is { } heroEntity ? new AuthoredHero2D(heroEntity, traversal.PlayerColliderSize) : null;
+        Func<float, Vector2>? muzzle = hero is null ? null : facing => hero.Muzzle(facing, player.IsWallGripping);
         var arsenal = new PersonArsenal2D(ids, player.Body, traversal.GunMuzzleOffset, collision,
             SideScrollerLayers2D.World, SideScrollerLayers2D.Enemy, CombatFaction2D.Player, combat,
-            overlapsSpikes: bounds => level.TryGetSpikeSource(bounds, out _), characters: definition.Characters, muzzle: muzzle);
+            overlapsSpikes: bounds => level.TryGetSpikeSource(bounds, out _), hero: hero, muzzle: muzzle);
         player.AttachActions(arsenal);
 
         var session = new SideScrollerSession2D(physics, player, arsenal,

@@ -31,12 +31,13 @@ public sealed class SideScrollerGame : Game2D
 
     public SideScrollerGame()
     {
-        var playerType = _characters.Types["player"];
+        var hero = _authored.Entities.GetValueOrDefault(App2d.Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
+            ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
         const float units = App2d.Core.Characters.EntityCatalog.WorldUnits;
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
-        var height = MathF.Round(playerType.Movement.Height * units / 4) * 4;
+        var height = MathF.Round(hero.Asset.Movement.Height * units / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
-            new(playerType.Movement.Width * units, height), playerType.Movement.OffsetX * units);
+            new(hero.Asset.Movement.Width * units, height), hero.Asset.Movement.OffsetX * units);
         _sounds = new SoundEffectBank2D(Path.Combine(AssetPaths.Root, "audio", "sfx"));
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
@@ -55,7 +56,7 @@ public sealed class SideScrollerGame : Game2D
                 .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
                 .Select(ThingTypeRegistry2D.ToRuntime).ToArray())
         {
-            PlayerMaximumHealth = playerType.Health,
+            PlayerMaximumHealth = hero.Asset.Health,
             Characters = _characters,
             AuthoredCharacters = _authored,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),

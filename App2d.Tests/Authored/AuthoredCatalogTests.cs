@@ -21,7 +21,7 @@ public sealed class AuthoredCatalogTests
             "stalker-idle", "stalker-lunge", "stalker-walk",
         }, catalog.Animations.Keys.Order());
         Assert.Equal(new[] { "pistol", "sheath", "spear", "sword" }, catalog.Props.Keys.Order());
-        Assert.Equal(new[] { "player", "spear-guard", "stalker-pest" }, catalog.Entities.Keys.Order());
+        Assert.Equal(new[] { "hero", "player", "spear-guard", "stalker-pest" }, catalog.Entities.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })
