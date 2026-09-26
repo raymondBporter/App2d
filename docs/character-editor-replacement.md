@@ -439,7 +439,7 @@ arbitrary 3D rigs and the native 2.5D controls.
 | 1. Shared motion proof | Done. Walk and run reproduce the prototype and play on three Person builds. The visual verdict on the rendered frames was never recorded. |
 | 2. Model and Animate editor | Done (`App2d.CharacterStudio --editor`). One acceptance check in `--smoke-editor` failed once and passed in every run since; the cause is unknown. |
 | 3. One entity playable end to end | Done. The spear guard, jumping player and stalker work in the arena and through the editor's **Test**. The guard and stalker replace two enemy placements in the game. |
-| 4. Repeated-authoring workflow | Done. The Entity workspace, looks, motion-set editing, entity templates and duplication, role overrides, reference navigation, and masked actions that blend in and out. The heavy walk art needs review. |
+| 4. Repeated-authoring workflow | Done. The Entity workspace, looks, motion-set editing, entity templates and duplication, role overrides, reference navigation, and masked actions that blend in and out. The heavy walk was approved on 2026-09-26. |
 | 5. Cut over | Started. The in-game player is drawn from authored assets. The rest remains. |
 
 **In the game today.** The player is drawn by `AuthoredPersonPresentation2D` using the player move set
@@ -470,7 +470,7 @@ in [the player move set spec](superpowers/specs/2026-09-25-player-move-set-desig
 5. **Moves outside the spec's scope.** Punch, kick and wall melee reuse the slash.
 
 **Next up.**
-- Review the heavy walk (`--smoke-motion`), then merge phases 3 and 4 to `main`.
+- Merge phases 3 and 4 to `main`.
 - Fix the climb keys and settle the run stride question.
 - Move the player's gameplay timing off `entities/player.json` and convert the remaining enemies (phase 5).
 
@@ -615,7 +615,6 @@ Verification:
 - `--smoke-editor` steps 10 to 17 render three people from builds and looks, Heavy versus Standard entities and the masked thrust's anticipation, active and recovery frames. They also cover the shared walk edit and the skirmisher in Test walking on planted feet while it thrusts. `--smoke-motion` now includes the heavy walk on three builds.
 
 Not yet covered:
-- The heavy walk is a derived first pass awaiting art review.
 - Whole-body actions still switch at once (no cross-fade).
 - Props are not editable in the editor.
 - Entity previews face +X only.
