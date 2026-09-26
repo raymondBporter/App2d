@@ -6,6 +6,7 @@ namespace App2d.Core.Geometry;
 /// Arithmetic queries on raw primitive parameters, independent of IShape2D.
 /// Inputs are finite; radii are nonnegative and ellipse radii/box half-extents are positive.
 /// Callers retaining shapes can validate once in their constructors.
+/// Rectangle containment and overlap also support ordered infinite bounds.
 /// </summary>
 public static class PrimitiveGeometry2D
 {
@@ -20,6 +21,16 @@ public static class PrimitiveGeometry2D
         Vector2.DistanceSquared(point, ClosestPoint2D.OnSegment(point, start, end)) <= radius * radius;
     public static bool RectangleContainsPoint(Vector2 point, Vector2 min, Vector2 max) =>
         point.X >= min.X && point.X <= max.X && point.Y >= min.Y && point.Y <= max.Y;
+
+    /// <summary>Inclusive containment of an entire rectangle in another; both sets of bounds are ordered.</summary>
+    public static bool RectangleContainsRectangle(Vector2 min, Vector2 max, Vector2 otherMin, Vector2 otherMax) =>
+        RectangleContainsPoint(otherMin, min, max) && RectangleContainsPoint(otherMax, min, max);
+
+    /// <summary>Inclusive overlap of ordered rectangle bounds, including edge and corner contact.</summary>
+    public static bool RectanglesIntersect(Vector2 firstMin, Vector2 firstMax, Vector2 secondMin, Vector2 secondMax) =>
+        firstMin.X <= secondMax.X && firstMax.X >= secondMin.X &&
+        firstMin.Y <= secondMax.Y && firstMax.Y >= secondMin.Y;
+
     public static bool EllipseContainsPoint(Vector2 point, Vector2 center, Vector2 radii) =>
         ((point - center) / radii).LengthSquared() <= 1f;
 

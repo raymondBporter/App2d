@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace App2d.Core.Geometry;
 
-public readonly record struct Bounds2D(Vector2 Min, Vector2 Max)
+public readonly record struct Bounds2D(Vector2 Min, Vector2 Max) : IRect2D
 {
     public static Bounds2D Unbounded { get; } = new(new Vector2(float.NegativeInfinity), new Vector2(float.PositiveInfinity));
 
@@ -17,8 +17,7 @@ public readonly record struct Bounds2D(Vector2 Min, Vector2 Max)
         float.IsFinite(Max.X) && float.IsFinite(Max.Y);
 
     public bool Intersects(Bounds2D other) =>
-        Left <= other.Right && Right >= other.Left &&
-        Bottom <= other.Top && Top >= other.Bottom;
+        PrimitiveGeometry2D.RectanglesIntersect(Min, Max, other.Min, other.Max);
 
     public Bounds2D TransformedBy(Matrix3x2 transform)
     {

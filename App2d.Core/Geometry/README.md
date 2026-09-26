@@ -9,6 +9,8 @@ Use `App2d.Core.Geometry` functions directly with `System.Numerics` values when 
 | `Functions/Projection2D` | Polygon, circle and capsule intervals on an arbitrary axis; polygon offsets avoid transformed copies |
 | `Functions/PolygonGeometry2D` | Area, containment, support, closest perimeter point, edge normals and convex SAT overlap |
 | `Functions/ClosestPoint2D` | Point-to-segment and segment-to-segment closest points |
+| `Functions/Rect2DExtensions` | Shared dimensions, anchors, containment, intersection, union, closest point, movement and resizing for any `IRect2D` |
+| `IRect2D`, `Rect2D` | A two-property rectangle contract and a lightweight rectangle value independent of shapes |
 | `Shapes/` | `IShape2D`, `IConvexShape2D` and concrete shapes with validated parameters and cached local bounds |
 | `Bounds2D`, `Interval1D` | Value types for bounds and projected intervals |
 
@@ -28,3 +30,29 @@ Primitive arithmetic queries assume finite inputs, nonnegative radii and ordered
 `PartGeometry` owns attachment frames and depth; the renderer owns screen-dependent tessellation and triangle emission. Both use the shared generators. `EntityRegion` delegates overlap to polygon math. General XY rotation lives in `Mathematics/Rotation2D`; `PoseEvaluator.RotateXY` remains a compatible entry point.
 
 Add raw geometry algorithms here and let shape methods delegate to them. Keep authoring, rendering, caching and gameplay policy in their respective callers.
+
+## Rectangles without shapes
+
+`IRect2D` requires only ordered `Vector2 Min` and `Vector2 Max` properties. Implement it on a class or struct and import `App2d.Core.Geometry` to get the shared operations directly on your type. C# 14 extension properties provide dimensions and anchors without interface casts; generic receivers avoid boxing value types.
+
+```csharp
+var rect = Rect2D.FromSize(new(20, 10), center: new(5, 3));
+var corner = rect.TopLeft;
+var midpoint = rect.CenterLeft;
+var area = rect.Area;
+var padded = rect.InflatedBy(2, 1);
+var hit = rect.Contains(point);
+if (rect.TryIntersect(otherBounds, out var shared)) { /* use shared.Min / shared.Max */ }
+
+// Your existing type needs only these two properties:
+public readonly record struct Region(Vector2 Min, Vector2 Max) : IRect2D;
+// A Region now has .Width, .TopLeft, .Contains(...), .Intersects(...), etc.
+```
+
+The nine anchors are `TopLeft`, `TopCenter`, `TopRight`, `CenterLeft`, `Center`, `CenterRight`, `BottomLeft`, `BottomCenter`, and `BottomRight`. `Left`, `Right`, `Bottom`, `Top`, `MidX`, `MidY`, `Width`, `Height`, `Size`, `HalfSize`, `Area`, and `IsFinite` are also available.
+
+`Bounds2D`, `Rectangle2D`, and `AxisAlignedRectangle2D` implement the contract. A shape's rectangle coordinates are still local to that shape; a rotated world transform does not turn them into a world AABB. `ScreenRectangle2D` stays separate because it uses Y-down coordinates and half-open pixel containment.
+
+Rectangles use Y-up (`Top = Max.Y`) and inclusive edges. Touching edges/corners intersect; zero-area rectangles are valid, and `default(Rect2D)` is the point at the origin. `TryIntersect` returns false and default for disjoint rectangles. `Contains(otherRect)` requires the entire rectangle to fit. `Union` returns the smallest containing rectangle; `ClosestPoint` includes the interior. `TranslatedBy`, `InflatedBy`, `InsetBy` and `ToRect` return new values. Inflation/inset amounts must be nonnegative and finite; oversized insets collapse an axis at its midpoint.
+
+`Rect2D` stores only Min/Max and checks their ordering and absence of NaN. Infinite bounds are supported for broad-phase queries, preserving `Bounds2D.Unbounded`; centers and midpoints can be undefined for infinite extents. Corner writing requires finite coordinates. There is no `LocalBounds` cache or `IShape2D` requirement.

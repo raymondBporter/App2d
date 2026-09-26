@@ -3,7 +3,7 @@ using System.Numerics;
 namespace App2d.Core.Geometry;
 
 // Axis-aligned in local space; its WorldObject transform may orient it in world space.
-public class Rectangle2D : IConvexShape2D
+public class Rectangle2D : IConvexShape2D, IRect2D
 {
     public Rectangle2D(Vector2 min, Vector2 max)
     {
