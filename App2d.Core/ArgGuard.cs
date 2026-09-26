@@ -85,6 +85,27 @@ public static class ArgGuard
         }
     }
 
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNotFiniteOrZero<T>(
+        T value,
+        [CallerArgumentExpression(nameof(value))] string? paramName = null)
+        where T : INumber<T>
+    {
+        // Check for NaN or Infinity (only meaningful for floating-point types)
+        if (T.IsNaN(value) || T.IsInfinity(value))
+        {
+            throw new ArgumentOutOfRangeException(paramName, value, "Value must be finite.");
+        }
+
+        // Check for zero
+        if (value == T.Zero)
+        {
+            throw new ArgumentOutOfRangeException(paramName, value, "Value must not be zero.");
+        }
+    }
+
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotPositive(
         int value,
