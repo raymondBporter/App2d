@@ -1,8 +1,8 @@
 # Character editor replacement
 
-Status: in progress, 2026-09-26. Phases 1 to 4 are implemented, and the in-game player is drawn from authored assets.
-Phases 1 to 3 are on branch `claude/character-editor-phase-3-cb7a61`; phase 4 builds on it in
-`claude/character-editor-phase-4-b1e2eb`. Neither is merged to `main` yet. See
+Status: in progress, 2026-09-26. Phases 1 to 4 are done. Phase 5 is mostly done: the game plays only authored assets and
+the editor is the studio's default. Everything is on branch `claude/character-editor-phase-4-b1e2eb`, which contains
+the phase 3 branch; nothing is merged to `main` yet. See
 [Where we are](#where-we-are-2026-09-26) for the summary; each phase below carries its own progress note.
 
 ## Product goal
@@ -437,8 +437,8 @@ arbitrary 3D rigs and the native 2.5D controls.
 | Phase | State |
 | --- | --- |
 | 1. Shared motion proof | Done. Walk and run reproduce the prototype and play on three Person builds. The visual verdict on the rendered frames was never recorded. |
-| 2. Model and Animate editor | Done (`App2d.CharacterStudio --editor`). One acceptance check in `--smoke-editor` failed once and passed in every run since; the cause is unknown. |
-| 3. One entity playable end to end | Done. The spear guard, jumping player and stalker work in the arena and through the editor's **Test**. The guard and stalker replace two enemy placements in the game. |
+| 2. Model and Animate editor | Done (`App2d.CharacterStudio`, no arguments since phase 5). One acceptance check in `--smoke-editor` failed once and passed in every run since; the cause is unknown. |
+| 3. One entity playable end to end | Done. The spear guard, jumping player and stalker work in the arena and through the editor's **Test**. |
 | 4. Repeated-authoring workflow | Done. The Entity workspace, looks, motion-set editing, entity templates and duplication, role overrides, reference navigation, and masked actions that blend in and out. The heavy walk was approved on 2026-09-26. |
 | 5. Cut over | Mostly done. The game's player and all four enemy placements come from authored assets, and the game no longer reads the legacy `entities/*.json`. The editor is the studio's default. The imported-motion and `.puppet.json` conversions and the removal of the legacy screens remain. |
 
@@ -449,12 +449,14 @@ arbitrary 3D rigs and the native 2.5D controls.
 
 The player move set's design and gaps are in [the player move set spec](superpowers/specs/2026-09-25-player-move-set-design.md).
 
-**Added since the phase 3 note.**
-- A masked overlay: `PoseInput.Overlay` with `PersonLoadout.UpperBody`. The gun shot and aim play on any legs. There is no blend in or out yet, and `EntityAnimator` does not use it.
+**Shared pieces outside the phase notes.**
 - `ContactHold` for in-place playback outside `EntityAnimator`.
 - `PersonLoadout`, the move set's prop rules, shared by the game and the move review.
 - A blended gameplay `FacePose` drawn on authored models.
 - Per-frame props on `AuthoredCharacterShader`.
+
+**Awaiting art review.** The gunner's `person-pistol-shot` and the maul's `person-hammer-slam` and `hammer` prop (see
+`App2d --render-smoke`, `entity-fire-*` and `entity-slam-*`). The heavy walk is approved.
 
 **Open issues, most important first.**
 1. **Run speed versus stride.** The game's run (430 px/s, about 13 model units/s at the player's drawn size) is roughly six times the run clip's authored pace (2.2 units/s). The player's gait is capped at 2.5 times its authored pace, and the feet slide beyond that. It needs a longer run stride, a sprint clip, or a different drawn scale.
@@ -468,10 +470,13 @@ The player move set's design and gaps are in [the player move set spec](superpow
 3. **Sword draw.** The draw starts at the front hip, not from the sheath on the back.
 4. **Knees on ladders and turns** need a depth-aware bend or leg foreshortening. That is an engine decision, not just keys.
 5. **Moves outside the spec's scope.** Punch, kick and wall melee reuse the slash.
+6. **Player gameplay still in code.** The down attack and the unarmed attacks are code-defined, and the player's hurt region is its movement box rather than the hero's hurt layout.
+7. **Follow-up timing lives in two places.** Gameplay's 0.6 s follow-up window (`MeleePersonWeapon2D.FollowUpSeconds`) and the director's sheathe timing (`PersonAnimationDirector.FollowUpSeconds`) are separate constants. The swing clip always follows gameplay, but the sheathe animation can disagree at the edge.
+8. **Enemy reactions.** Authored enemies hold their pose when hit or killed and only change expression; the `hit` and `death` roles are not played yet.
 
 **Next up.**
-- Review the gunner's pistol shot and the maul's hammer slam art (`App2d --render-smoke`, `entity-fire-*`, `entity-slam-*`).
-- Merge phases 3 to 5 to `main`.
+- Review the gunner and maul art.
+- Merge the branch to `main`.
 - Fix the climb keys and settle the run stride question.
 - Finish phase 5: imported-motion and `.puppet.json` conversion in the editor, then delete the legacy studio screens, `EntityCatalog`, `EntityPose` and the legacy entity files.
 
@@ -571,8 +576,8 @@ Verification:
 - Renders: `App2d.CharacterStudio --smoke-entities <dir>` draws anticipation, active and recovery frames in both facings, the jump and the stalker, with overlays. `App2d --render-smoke <dir>` writes `entity-*.png` through the game presentation. `--smoke-editor` ends in Test.
 
 Not yet covered:
-- An Entity workspace: entities are edited as JSON; Test plays them.
-- The in-game player: since 2026-09-26 it is drawn from authored assets (see Where we are). Its gameplay is still the traversal `Person2D` with legacy timing, and its hurt region is still the movement box. The authored jumping `player` entity is proven only in the arena.
+- ~~An Entity workspace~~: done in phase 4.
+- ~~The in-game player~~: drawn from authored assets, and since phase 5 its gameplay timing comes from the `hero` entity. Its hurt region is still the movement box. The authored jumping `player` entity is proven only in the arena.
 - Prop orientation tracks and an adapter for the existing `WeaponDrawing` art. The player move set brings new sword, sheath and pistol art instead.
 - ~~The game's blended `FacePose`~~: done 2026-09-26; `PuppetDrawing` takes a gameplay face.
 - Hurt regions from shape geometry: they are padded control bounds.
