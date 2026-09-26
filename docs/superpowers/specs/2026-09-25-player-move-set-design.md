@@ -17,7 +17,8 @@ is art: clip, prop and socket files. Wiring the game to play them is separate wo
   a plain clip file. `MoveBuilder` turns animator terms (foot and hand positions in actor space, torso lean, blade
   angle) into tracks, and solves hands against the shoulders the body keys actually produce.
 - **Sheathed sword.** A scabbard on the `back` socket is always worn. The sword sits there too, except between a clip's
-  `sword-draw` and `sword-sheathe` markers, when it rides the `sword-hand` socket. The draw is the wind-up of the
+  `sword-draw` and `sword-sheathe` markers, when it rides the `sword-hand` socket. In profile the sheath tucks behind
+  the torso and head; a clip marked `view-back` wears it on the `back-view` socket, across the back. The draw is the wind-up of the
   slash; the sheathe clip twirls the blade back over the shoulder. `gun-hand` holds the pistol.
 - **Layering.** Upper-body clips (the gun shot) key only chest, head, shoulders and arms, so they layer on any legs.
   The review page's Layered cards build aim+shot, walk+shot and run+shot from existing clips.
@@ -25,6 +26,8 @@ is art: clip, prop and socket files. Wiring the game to play them is separate wo
   first principles elsewhere.
 - **Timing.** Durations fit current gameplay: dash 0.16 s, sword 0.35 s (damage 0.10–0.27), downward attack 0.25 s
   (damage from frame one), jump leaves the ground on the press (no crouch).
+- **Back views.** The climb is seen from behind: girdles square to the screen, face track `none` (hides the face),
+  and target tracks with `bend` overrides so the near elbow and knee mirror outward. Both are small engine additions.
 - **Out of scope this round.** Hard landing, wall melee attack, unarmed punch and kick.
 
 ## Move list
@@ -37,7 +40,7 @@ is art: clip, prop and socket files. Wiring the game to play them is separate wo
 | Sword | `player-sword-draw-slash`, `player-sword-slash`, `player-sword-sheathe`, `player-sword-down-attack` |
 | Gun | `player-gun-aim`, `player-gun-shot` (upper body), `player-gun-wall-shot` |
 
-Props: `sword`, `sheath`, `pistol`. Sockets added to `person`: `back`, `sword-hand`, `gun-hand` (mirrored in
+Props: `sword`, `sheath`, `pistol`. Sockets added to `person`: `back`, `back-view`, `sword-hand`, `gun-hand` (mirrored in
 `StarterContent.AddPersonExtras`).
 
 ## Review loop
@@ -49,7 +52,7 @@ its `reviews` collection, one document per move, and read back to drive the next
 
 ## Open questions for review
 
-1. Climb: ladder behind the body with a hand on each rail. A back view isn't possible on this rig.
+1. Climb pops into the back view on entering the ladder; a short turn clip could bridge it.
 2. Wall grip faces away from the wall, which is how gameplay already turns the player.
 3. Sheath size and placement; sword length (0.82 units).
 4. Downward attack as a pogo stab rather than a downward slash.

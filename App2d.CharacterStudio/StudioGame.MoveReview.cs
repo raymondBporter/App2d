@@ -37,6 +37,7 @@ internal sealed partial class StudioGame
         {
             var folder = Path.Combine(_smokePath!, "frames", item.Id); Directory.CreateDirectory(folder);
             var clip = item.Clip; var count = Math.Max(2, (int)MathF.Round(clip.Duration * ReviewFps) + (clip.Loop ? 0 : 1));
+            var backSocket = sockets[clip.Markers.Any(k => k.Id == MoveBuilder.BackViewMarker) ? MoveBuilder.BackViewSocket : MoveBuilder.BackSocket];
             var drawAt = clip.Markers.FirstOrDefault(k => k.Id == "sword-draw")?.Time; var sheatheAt = clip.Markers.FirstOrDefault(k => k.Id == "sword-sheathe")?.Time;
             for (var f = 0; f < count; f++)
             {
@@ -44,10 +45,10 @@ internal sealed partial class StudioGame
                 var pose = PoseEvaluator.Sample(model, clip, seconds);
                 drawing.Build(model, pose);
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
-                drawing.AddProp(props[PlayerMoves.PlayerMoves.Sheath], placed.Socket(sockets[MoveBuilder.BackSocket]));
+                drawing.AddProp(props[PlayerMoves.PlayerMoves.Sheath], placed.Socket(backSocket));
                 // In hand from "sword-draw" (or from the start of a clip that only sheathes) until "sword-sheathe".
                 var inHand = (drawAt is { } d ? seconds >= d : sheatheAt is not null) && (sheatheAt is not { } s || seconds < s);
-                drawing.AddProp(props[PlayerMoves.PlayerMoves.Sword], placed.Socket(sockets[inHand ? MoveBuilder.SwordSocket : MoveBuilder.BackSocket]));
+                drawing.AddProp(props[PlayerMoves.PlayerMoves.Sword], placed.Socket(inHand ? sockets[MoveBuilder.SwordSocket] : backSocket));
                 if (item.Gun) drawing.AddProp(props[PlayerMoves.PlayerMoves.Pistol], placed.Socket(sockets[MoveBuilder.GunSocket]));
                 var centerX = pose.Locomotion.X + item.ViewX;
                 BuildScenery(scenery, item.Scene, centerX, seconds);
@@ -151,7 +152,7 @@ internal sealed partial class StudioGame
         if (scene == "wall") { Line(-.3f, -1, -.3f, 3, 3, ink); for (var y = -1f; y < 3; y += .2f) Line(-.3f, y, -.42f, y - .12f, 1, faint); }
         if (scene == "ladder")
         {
-            const float left = -.44f, right = .36f, spacing = .275f; var scroll = -(seconds * 1.375f % spacing);
+            const float left = -.36f, right = .36f, spacing = .275f; var scroll = -(seconds * 1.375f % spacing);
             Line(left, -1, left, 3.2f, 3, faint); Line(right, -1, right, 3.2f, 3, faint);
             for (var y = -1f + scroll; y < 3.2f; y += spacing) Line(left, y, right, y, 3, faint);
         }

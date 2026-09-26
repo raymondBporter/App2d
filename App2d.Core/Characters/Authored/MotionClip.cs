@@ -30,7 +30,7 @@ public sealed record ClipMarker
     public float Time { get; set; }
 }
 
-/// <summary>An expression held from this time until the next key.</summary>
+/// <summary>An expression held from this time until the next key; "none" draws no face.</summary>
 public sealed record ClipFaceKey
 {
     public float Time { get; set; }
@@ -54,6 +54,9 @@ public sealed record ClipTrack
     public string Target { get; set; } = "";
     /// <summary>Overrides the control's or chain's default measure. Null uses the model default.</summary>
     public string? Scale { get; set; }
+    /// <summary>Target tracks only: which side the chain's joint bends to (1 or -1) for this clip, such as knees and elbows
+    /// mirrored for a back view. Null uses the chain's own bend.</summary>
+    public int? Bend { get; set; }
     public List<ClipKey> Keys { get; set; } = [];
 }
 
@@ -118,6 +121,7 @@ public sealed class MotionClip
             Require(track is not null && track.Keys is not null && track.Target is not null, $"{owner}: incomplete track.");
             EntityVocabulary.Require(track.Kind, TrackKinds, $"{owner} track kind");
             Require(seen.Add((track.Kind, track.Target)), $"{owner}: duplicate {track.Kind} track for '{track.Target}'.");
+            Require(track.Bend is null || track.Kind == TargetKind && track.Bend is 1 or -1, $"{owner} {track.Kind} track '{track.Target}': bend is 1 or -1, on target tracks only.");
             var rotate = track.Kind == RotateKind;
             CheckKeys(track.Keys, $"{owner} {track.Kind} track '{track.Target}'",
                 rotate ? k => k.X == 0 && k.Y == 0 && k.Z == 0 : k => k.Angle == 0, rotate ? "rotate keys use angle only" : "keys use x, y and z only");
@@ -149,7 +153,8 @@ public sealed class MotionClip
                 Require(key is not null, $"{owner} face '{face.Part}': null key.");
                 new Limit(0, Duration).Check(key.Time, $"{owner} face '{face.Part}' key time");
                 Require(key.Time > previous, $"{owner} face '{face.Part}': key times must be strictly increasing."); previous = key.Time;
-                Require(FaceExpressions.Contains(key.Expression), $"{owner} face '{face.Part}': unknown expression '{key.Expression}'.");
+                // "none" hides the face for the key's span, as in a back view.
+                Require(key.Expression == "none" || FaceExpressions.Contains(key.Expression), $"{owner} face '{face.Part}': unknown expression '{key.Expression}'.");
             }
         }
         foreach (var group in Contacts.GroupBy(c => c.Chain))

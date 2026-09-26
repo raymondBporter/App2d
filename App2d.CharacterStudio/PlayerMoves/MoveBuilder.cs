@@ -11,7 +11,9 @@ namespace App2d.CharacterStudio.PlayerMoves;
 /// </summary>
 internal sealed class MoveBuilder(ResolvedModel model, string id, string name, float duration, bool loop)
 {
-    public const string BackSocket = "back", SwordSocket = "sword-hand", GunSocket = "gun-hand";
+    public const string BackSocket = "back", BackViewSocket = "back-view", SwordSocket = "sword-hand", GunSocket = "gun-hand";
+    /// <summary>Marker at 0 on a clip drawn from behind: sheath and sword use <see cref="BackViewSocket"/>.</summary>
+    public const string BackViewMarker = "view-back";
 
     private readonly Dictionary<(string Kind, string Target), SortedDictionary<float, ClipKey>> _tracks = [];
     private readonly List<(string Chain, float Time, Vector2 Offset, bool Absolute, string Ease)> _hands = [];
@@ -20,6 +22,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     private readonly List<ClipMarker> _markers = [];
     private readonly List<ClipFaceKey> _faces = [];
     private readonly List<ClipKey> _travel = [];
+    private readonly Dictionary<string, int> _bends = [];
 
     public ResolvedModel Model => model;
     public float Duration => duration;
@@ -40,6 +43,8 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
 
     public MoveBuilder Marker(string marker, float time) { _markers.Add(new() { Id = marker, Time = time }); return this; }
     public MoveBuilder Face(float time, string expression) { _faces.Add(new() { Time = time, Expression = expression }); return this; }
+    /// <summary>Flips which side a limb's joint bends to for this clip (a back view mirrors the near elbow and knee).</summary>
+    public MoveBuilder Bend(string chain, int bend) { _bends[chain] = bend; return this; }
     public MoveBuilder Travel(float time, float x, float y = 0) { _travel.Add(new() { Time = time, X = x, Y = y, Ease = ClipEase.Linear }); return this; }
 
     internal void Set(string kind, string target, float time, ClipKey key)
@@ -60,7 +65,11 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
         };
         if (_travel.Count > 0) clip.Travel.Keys = [.. _travel.OrderBy(k => k.Time)];
         if (_faces.Count > 0) clip.Faces = [new() { Part = "head", Keys = [.. _faces.OrderBy(f => f.Time)] }];
-        void Emit() => clip.Tracks = [.. _tracks.Select(t => new ClipTrack { Kind = t.Key.Kind, Target = t.Key.Target, Keys = [.. t.Value.Values] })];
+        void Emit() => clip.Tracks = [.. _tracks.Select(t => new ClipTrack
+        {
+            Kind = t.Key.Kind, Target = t.Key.Target, Keys = [.. t.Value.Values],
+            Bend = t.Key.Kind == MotionClip.TargetKind && _bends.TryGetValue(t.Key.Target, out var bend) ? bend : null,
+        })];
 
         // Pass 1: the body alone fixes each shoulder's accumulated frame. The blade angle is world-relative, so the
         // right shoulder's own turn is whatever is left after the chest's.
@@ -96,7 +105,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
 /// <summary>One key pose. Positions are actor-space deltas or absolutes as named; angles are radians, positive counter-clockwise.</summary>
 internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
 {
-    private ClipKey K(float x = 0, float y = 0) => new() { X = x, Y = y, Ease = ease };
+    private ClipKey K(float x = 0, float y = 0, float z = 0) => new() { X = x, Y = y, Z = z, Ease = ease };
     private ClipKey R(float angle) => new() { Angle = angle, Ease = ease };
 
     /// <summary>Pelvis offset from rest (hips rest at y = 1) and its turn, which the whole body inherits.</summary>
@@ -108,11 +117,13 @@ internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
     /// Torso lean about the pelvis. Negative leans forward. The torso box is drawn hips to chest, so the chest point swings
     /// round the pelvis and the chest also turns, carrying the head and shoulders with it.
     /// </summary>
-    public PoseKey Chest(float turn, float dx = 0, float dy = 0)
+    public PoseKey Chest(float turn, float dx = 0, float dy = 0, float dz = 0)
     {
         var swing = Swing("hips", "chest", turn);
-        owner.Set(MotionClip.RotateKind, "chest", time, R(turn)); owner.Set(MotionClip.TranslateKind, "chest", time, K(swing.X + dx, swing.Y + dy)); return this;
+        owner.Set(MotionClip.RotateKind, "chest", time, R(turn)); owner.Set(MotionClip.TranslateKind, "chest", time, K(swing.X + dx, swing.Y + dy, dz)); return this;
     }
+    /// <summary>A plain translate of one control from its rest offset (parent-local; Z is depth, + away from the viewer).</summary>
+    public PoseKey Move(string control, float dx, float dy, float dz = 0) { owner.Set(MotionClip.TranslateKind, control, time, K(dx, dy, dz)); return this; }
     /// <summary>Neck tilt: the head swings round the chest point (the head is drawn upright, so only its position shows).</summary>
     public PoseKey Head(float turn, float dx = 0, float dy = 0)
     {

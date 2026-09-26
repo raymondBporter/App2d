@@ -64,6 +64,7 @@ public static class PoseEvaluator
             var (value, _) = Interpolate(track.Keys, time); var ratio = Ratio(track.Scale ?? defaultScale);
             return new(value.X * ratio, value.Y * ratio, value.Z);
         }
+        int Bend(ModelChain chain) => tracks.TryGetValue((MotionClip.TargetKind, chain.Id), out var track) && track.Bend is { } bend ? bend : chain.Bend;
         float Angle(string target) => tracks.TryGetValue((MotionClip.RotateKind, target), out var track) ? Interpolate(track.Keys, time).Angle : 0;
 
         var angles = pose.Angles;
@@ -83,7 +84,7 @@ public static class PoseEvaluator
             var frameAngle = locomotion ? 0 : angles[chain.Frame];
             var frameRest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
             var target = framePoint + RotateXY(model.Rest[chain.End] - frameRest + Delta(MotionClip.TargetKind, chain.Id, chain.Scale), frameAngle);
-            pose.Chains.Add(Solve(model, pose, chain, target));
+            pose.Chains.Add(Solve(model, pose, chain, target, Bend(chain)));
         }
         foreach (var contact in clip.Contacts)
         {
@@ -91,7 +92,7 @@ public static class PoseEvaluator
             var chain = model.Chains[contact.Chain]; var ratio = Ratio(chain.Scale);
             var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio, contact.Target.Y * ratio, contact.Target.Z);
             if (input.Contact is { } hold) target = hold(chain.Id, target);
-            var result = Solve(model, pose, chain, target);
+            var result = Solve(model, pose, chain, target, Bend(chain));
             pose.Chains[pose.Chains.FindIndex(c => c.Chain == chain.Id)] = result;
             pose.Contacts.Add(new(chain.Id, target, result.Residual));
         }
@@ -112,10 +113,10 @@ public static class PoseEvaluator
         return new Vector2(end.X - start.X, end.Y - start.Y) * ratio;
     }
 
-    private static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 target)
+    private static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 target, int bend)
     {
         var root = pose.Points[chain.Root];
-        var solved = TwoBoneIk2D.Solve(new(root.X, root.Y), new(target.X, target.Y), model.Length(chain.Root, chain.Joint), model.Length(chain.Joint, chain.End), chain.Bend);
+        var solved = TwoBoneIk2D.Solve(new(root.X, root.Y), new(target.X, target.Y), model.Length(chain.Root, chain.Joint), model.Length(chain.Joint, chain.End), bend);
         var joint = new Vector3(solved.Joint, pose.Points[chain.Joint].Z);
         var end = new Vector3(solved.End, target.Z);
         MoveDescendants(model, pose, chain.Joint, joint - pose.Points[chain.Joint], chain.End);

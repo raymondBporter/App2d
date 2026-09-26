@@ -49,6 +49,37 @@ public sealed class AppearanceAndBuildTests
     }
 
     [Fact]
+    public void AClipCanHideTheFaceForABackView()
+    {
+        var model = ResolvedModel.From(Person);
+        var face = model.Parts.Single(p => p.Face != "none");
+        var clip = new MotionClip { Id = "climb", Name = "Climb", Model = "person", Duration = 1, Faces = [new() { Part = face.Id, Keys = [new() { Expression = "none" }] }] };
+        clip.Validate(model);
+        Assert.Equal("none", PoseEvaluator.Sample(model, clip, .5).Expressions[face.Id]);
+    }
+
+    [Fact]
+    public void ATargetTrackCanFlipItsChainsBendForOneClip()
+    {
+        var model = ResolvedModel.From(Person);
+        MotionClip Reach(int? bend) => new()
+        {
+            Id = "reach", Name = "Reach", Model = "person", Duration = 1, Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
+            Tracks = [new() { Kind = MotionClip.TargetKind, Target = "left-arm", Bend = bend, Keys = [new() { X = -.2f, Y = .9f }] }],
+        };
+        float ElbowSide(MotionClip clip)
+        {
+            clip.Validate(model); var pose = PoseEvaluator.Sample(model, clip, 0);
+            var shoulder = pose.Points["left-shoulder"]; var hand = pose.Points["left-hand"]; var elbow = pose.Points["left-elbow"];
+            return (hand.X - shoulder.X) * (elbow.Y - shoulder.Y) - (hand.Y - shoulder.Y) * (elbow.X - shoulder.X);
+        }
+        Assert.True(MathF.Sign(ElbowSide(Reach(null))) == -MathF.Sign(ElbowSide(Reach(1))));
+        Assert.DoesNotContain("\"bend\"", Reach(null).ToJson());
+        var invalid = Reach(2);
+        Assert.Throws<InvalidDataException>(() => invalid.Validate(model));
+    }
+
+    [Fact]
     public void AGameplayExpressionNeverMovesTheBody()
     {
         var model = ResolvedModel.From(Person); var clip = AuthoredCatalog.Load(TestModels.AuthoredRoot).Animations["person-walk"];
