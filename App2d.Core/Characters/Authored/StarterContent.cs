@@ -10,8 +10,9 @@ namespace App2d.Core.Characters;
 public static class StarterContent
 {
     public const string SpearGuard = "spear-guard", Player = "player", Stalker = "stalker", StalkerPest = "stalker-pest", Spear = "spear";
+    public const string Upper = "upper", Lower = "lower", HeavyWalk = "person-heavy-walk";
 
-    /// <summary>Sockets, motion sets and the hurt layout the Person template carries. None of them change structure.</summary>
+    /// <summary>Sockets, motion sets, hurt layout, control groups and looks the Person template carries. None of them change structure.</summary>
     public static void AddPersonExtras(CharacterModel model)
     {
         // back, back-view, sword-hand and gun-hand belong to the player move set (App2d.CharacterStudio/PlayerMoves); keep them in step.
@@ -26,6 +27,20 @@ public static class StarterContent
         [
             new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "person-idle", ["walk"] = "person-walk", ["run"] = "person-run", ["jump"] = "person-jump" } },
             new() { Id = "deliberate", Name = "Deliberate", Roles = new() { ["idle"] = "person-idle", ["walk"] = "person-walk" } },
+            new() { Id = "heavy", Name = "Heavy", Roles = new() { ["idle"] = "person-idle", ["walk"] = HeavyWalk, ["run"] = "person-run" } },
+        ];
+        // The upper group is what an upper-body action owns over locomotion; the legs and pelvis stay with the gait.
+        model.Groups =
+        [
+            new() { Id = Upper, Targets = [.. PersonLoadout.UpperBody.Order(StringComparer.Ordinal)] },
+            new() { Id = Lower, Targets = ["hips", "left-hip", "left-leg", "right-hip", "right-leg"] },
+        ];
+        model.Looks =
+        [
+            new() { Id = "sage", Name = "Sage", Parts = new() { ["body"] = new() { Fill = "#d8e9db" } } },
+            new() { Id = "slate", Name = "Slate", Parts = new() { ["body"] = new() { Fill = "#b8c4d6" }, ["head"] = new() { Fill = "#efe6da", Face = "focused" } } },
+            new() { Id = "ember", Name = "Ember", Parts = new() { ["body"] = new() { Fill = "#eab596" }, ["head"] = new() { Face = "determined" } } },
+            new() { Id = "night", Name = "Night", Parts = new() { ["body"] = new() { Fill = "#7d879a" }, ["head"] = new() { Fill = "#e2d6c6", Face = "smug" } } },
         ];
         model.HurtLayouts =
         [
@@ -61,6 +76,34 @@ public static class StarterContent
     }
 
     // ---- Person clips ---------------------------------------------------------------------------------------------
+
+    /// <summary>
+    /// A heavier walk derived from the reviewed walk rather than keyed from scratch: a slower cycle over the same stride, the
+    /// pelvis lower with a deeper bob, the chest pitched forward and a shorter arm swing. An artistic choice any build can use.
+    /// </summary>
+    public static MotionClip PersonHeavyWalk(MotionClip walk)
+    {
+        const float Slow = 1.3f, Sink = -.05f, Bob = 1.6f, Lean = .05f, Swing = .7f;
+        var clip = ClipAuthoring.Duplicate(walk, HeavyWalk, "Heavy walk");
+        clip.Duration *= Slow;
+        foreach (var key in clip.Tracks.SelectMany(t => t.Keys).Concat(clip.Travel.Keys)) key.Time *= Slow;
+        foreach (var contact in clip.Contacts) { contact.Start *= Slow; contact.Finish *= Slow; }
+        foreach (var marker in clip.Markers) marker.Time *= Slow;
+        foreach (var key in clip.Faces.SelectMany(f => f.Keys)) key.Time *= Slow;
+        ClipTrack Channel(string kind, string target)
+        {
+            var track = clip.Tracks.FirstOrDefault(t => t.Kind == kind && t.Target == target);
+            if (track is null) { track = new() { Kind = kind, Target = target, Keys = [new() { Time = 0 }, new() { Time = clip.Duration }] }; clip.Tracks.Add(track); }
+            return track;
+        }
+        var hips = Channel(MotionClip.TranslateKind, "hips"); var mean = hips.Keys.Average(k => k.Y);
+        foreach (var key in hips.Keys) key.Y = mean + (key.Y - mean) * Bob + Sink;
+        foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys) key.X += Lean;
+        foreach (var arm in new[] { "left-arm", "right-arm" })
+            if (clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.TargetKind && t.Target == arm) is { } track)
+            { var center = track.Keys.Average(k => k.X); foreach (var key in track.Keys) key.X = center + (key.X - center) * Swing; }
+        return clip;
+    }
 
     private static ClipKey K(float time, float x = 0, float y = 0, string ease = ClipEase.Smooth) => new() { Time = time, X = x, Y = y, Ease = ease };
     private static ClipKey R(float time, float angle, string ease = ClipEase.Smooth) => new() { Time = time, Angle = angle, Ease = ease };

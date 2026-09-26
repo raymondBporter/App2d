@@ -115,7 +115,9 @@ public sealed class AuthoredArena
         }
         var action = animator.Action;
         var speed = input.Run && config.RunSpeed > 0 ? config.RunSpeed : config.WalkSpeed;
-        var vx = action == EntityControllers.Attack || action == EntityControllers.Jump && !actor.Launched ? 0 : MathF.Abs(move) < .01f ? 0 : move * speed;
+        // A whole-body attack stands still; a masked one is layered over locomotion, so the controller keeps moving.
+        var standing = action == EntityControllers.Attack && animator.Current!.Mask is null || action == EntityControllers.Jump && !actor.Launched;
+        var vx = standing ? 0 : MathF.Abs(move) < .01f ? 0 : move * speed;
         var velocity = new Vector2(vx, actor.Grounded ? 0 : actor.Velocity.Y - Gravity * StepSeconds);
         var before = actor.Position;
         var position = before + velocity * StepSeconds;
@@ -128,7 +130,7 @@ public sealed class AuthoredArena
         var role = MathF.Abs(velocity.X) < 1e-3f ? EntityControllers.Idle
             : input.Run && actor.Entity.Clip(EntityControllers.Run) is not null ? EntityControllers.Run : EntityControllers.Walk;
         var hold = false;
-        if (!actor.Grounded && animator.Action is null)
+        if (!actor.Grounded && animator.Locomoting)
         {
             // Airborne without an action: the fall role when assigned, otherwise the explicit fallback of holding the pose.
             if (actor.Entity.Clip(EntityControllers.Fall) is not null) role = EntityControllers.Fall; else { role = animator.Role; hold = true; }

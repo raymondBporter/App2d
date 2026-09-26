@@ -1,11 +1,18 @@
 namespace App2d.Core.Characters.Editing;
 
-public enum AssetKind { Model, Variant, Animation }
+/// <summary>Ordered so saving everything writes what others depend on first.</summary>
+public enum AssetKind { Model, Variant, Animation, Prop, Entity }
 
 public static class AssetKinds
 {
-    public static string Folder(AssetKind kind) => kind switch { AssetKind.Model => "models", AssetKind.Variant => "variants", _ => "animations" };
-    public static string Label(AssetKind kind) => kind switch { AssetKind.Model => "Model", AssetKind.Variant => "Variant", _ => "Animation" };
+    public static string Folder(AssetKind kind) => kind switch
+    {
+        AssetKind.Model => "models", AssetKind.Variant => "variants", AssetKind.Animation => "animations", AssetKind.Prop => "props", _ => "entities",
+    };
+    public static string Label(AssetKind kind) => kind switch
+    {
+        AssetKind.Model => "Model", AssetKind.Variant => "Variant", AssetKind.Animation => "Animation", AssetKind.Prop => "Prop", _ => "Entity",
+    };
 }
 
 /// <summary>
@@ -104,4 +111,6 @@ internal static class AssetDocuments
     public static AssetDocument<CharacterModel> Of(CharacterModel model, string? path) => new(AssetKind.Model, model, model.Id, path, m => m.ToJson(), m => m.Name);
     public static AssetDocument<ModelVariant> Of(ModelVariant variant, string? path) => new(AssetKind.Variant, variant, variant.Id, path, v => v.ToJson(), v => v.Name);
     public static AssetDocument<MotionClip> Of(MotionClip clip, string? path) => new(AssetKind.Animation, clip, clip.Id, path, c => c.ToJson(), c => c.Name);
+    public static AssetDocument<PropAsset> Of(PropAsset prop, string? path) => new(AssetKind.Prop, prop, prop.Id, path, p => p.ToJson(), p => p.Name);
+    public static AssetDocument<EntityAsset> Of(EntityAsset entity, string? path) => new(AssetKind.Entity, entity, entity.Id, path, e => e.ToJson(), e => e.Name);
 }

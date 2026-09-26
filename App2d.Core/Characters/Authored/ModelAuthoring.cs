@@ -63,6 +63,7 @@ public static class ModelAuthoring
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
         var parts = model.Parts.Where(p => p.A == id || p.B == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);
+        foreach (var group in model.Groups) group.Targets.Remove(id);
         model.Validate(); return parts;
     }
 
@@ -77,12 +78,16 @@ public static class ModelAuthoring
         var joint = Control(model, end).Parent ?? throw new InvalidOperationException($"'{end}' needs a parent and grandparent to end a chain.");
         var root = Control(model, joint).Parent ?? throw new InvalidOperationException($"'{joint}' needs a parent to root a chain.");
         var chain = new ModelChain { Id = UniqueId(end + "-chain", model.Chains.Select(c => c.Id)), Root = root, Joint = joint, End = end };
-        model.Chains.Add(chain); model.Validate(); return chain;
+        model.Chains.Add(chain);
+        // A group that owned the newly solved controls now owns the chain, whole.
+        foreach (var group in model.Groups.Where(g => g.Targets.Remove(joint) | g.Targets.Remove(end))) group.Targets.Add(chain.Id);
+        model.Validate(); return chain;
     }
 
     public static void RemoveChain(CharacterModel model, string id)
     {
         if (model.Chains.RemoveAll(c => c.Id == id) == 0) throw new InvalidOperationException($"No chain '{id}'.");
+        foreach (var group in model.Groups) group.Targets.Remove(id);
         model.Validate();
     }
 

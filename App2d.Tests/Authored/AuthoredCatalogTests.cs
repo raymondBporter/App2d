@@ -14,7 +14,7 @@ public sealed class AuthoredCatalogTests
         Assert.Equal(new[] { "short-broad", "tall-thin" }, catalog.Variants.Keys.Order());
         Assert.Equal(new[]
         {
-            "person-idle", "person-jump", "person-run", "person-thrust", "person-walk",
+            "person-heavy-walk", "person-idle", "person-jump", "person-run", "person-thrust", "person-walk",
             "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-climb-off", "player-climb-on", "player-dash", "player-death", "player-fall",
             "player-gun-aim", "player-gun-shot", "player-gun-wall-shot", "player-hit", "player-idle", "player-jump", "player-land",
             "player-sword-down-attack", "player-sword-draw-slash", "player-sword-sheathe", "player-sword-slash", "player-wall-grip",

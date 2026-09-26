@@ -16,6 +16,26 @@ public sealed record PartOverride
     public float? FaceX { get; set; }
     public bool? Hidden { get; set; }
     [JsonIgnore] public bool IsEmpty => this == new PartOverride();
+
+    /// <summary>Range and vocabulary checks shared by variants and look presets.</summary>
+    public static void Check(PartOverride? part, string field)
+    {
+        if (part is null) throw new InvalidDataException($"{field}: null override.");
+        if (part.Width is { } width) new Limit(.001f, 100).Check(width, field + ".width");
+        if (part.Height is { } height) new Limit(.001f, 100).Check(height, field + ".height");
+        if (part.OffsetX is { } x) new Limit(-100, 100).Check(x, field + ".offsetX");
+        if (part.OffsetY is { } y) new Limit(-100, 100).Check(y, field + ".offsetY");
+        if (part.Fill is not null) Limit.Color(part.Fill, field + ".fill");
+        if (part.Face is not null && part.Face != "none" && !FaceExpressions.Contains(part.Face)) throw new InvalidDataException($"{field}.face: unknown expression '{part.Face}'.");
+        if (part.FaceX is { } faceX) new Limit(-1, 1).Check(faceX, field + ".faceX");
+    }
+
+    /// <summary>This override with <paramref name="over"/>'s set fields written on top.</summary>
+    public PartOverride Merge(PartOverride over) => new()
+    {
+        Width = over.Width ?? Width, Height = over.Height ?? Height, OffsetX = over.OffsetX ?? OffsetX, OffsetY = over.OffsetY ?? OffsetY,
+        Fill = over.Fill ?? Fill, Face = over.Face ?? Face, FaceX = over.FaceX ?? FaceX, Hidden = over.Hidden ?? Hidden,
+    };
 }
 
 /// <summary>Explicit overrides of one base model. Never structural: no controls, parents or chains.</summary>
@@ -46,16 +66,6 @@ public sealed class ModelVariant
         if (Build is null || Rest is null || Parts is null) throw new InvalidDataException($"{owner}: collections cannot be null.");
         foreach (var (id, value) in Build) new Limit(.01f, 100).Check(value, $"{owner} build.{id}");
         foreach (var (id, point) in Rest) point.Check($"{owner} rest.{id}");
-        foreach (var (id, part) in Parts)
-        {
-            if (part is null) throw new InvalidDataException($"{owner} parts.{id}: null override.");
-            if (part.Width is { } width) new Limit(.001f, 100).Check(width, $"{owner} parts.{id}.width");
-            if (part.Height is { } height) new Limit(.001f, 100).Check(height, $"{owner} parts.{id}.height");
-            if (part.OffsetX is { } x) new Limit(-100, 100).Check(x, $"{owner} parts.{id}.offsetX");
-            if (part.OffsetY is { } y) new Limit(-100, 100).Check(y, $"{owner} parts.{id}.offsetY");
-            if (part.Fill is not null) Limit.Color(part.Fill, $"{owner} parts.{id}.fill");
-            if (part.Face is not null && part.Face != "none" && !FaceExpressions.Contains(part.Face)) throw new InvalidDataException($"{owner} parts.{id}.face: unknown expression '{part.Face}'.");
-            if (part.FaceX is { } faceX) new Limit(-1, 1).Check(faceX, $"{owner} parts.{id}.faceX");
-        }
+        foreach (var (id, part) in Parts) PartOverride.Check(part, $"{owner} parts.{id}");
     }
 }

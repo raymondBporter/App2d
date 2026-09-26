@@ -18,7 +18,9 @@ public sealed record AnimatorState(string Role, double RoleTime, string? Action,
 /// dispatch. The controller owns movement; this never moves the actor. Locomotion phase advances by the ground distance
 /// actually covered over the clip's resolved stride. Contacts are captured in world space at touchdown and held until
 /// release; role changes, action starts and ends, facing changes and <see cref="Reset"/> release them deliberately.
-/// Scrubbing is not a thing here: every event is dispatched by <see cref="Step"/> advancing across its time.
+/// A masked action is the exception: it plays over locomotion, which keeps its phase, role changes and contacts, so an
+/// upper-body attack never steals the legs' anchors. Scrubbing is not a thing here: every event is dispatched by
+/// <see cref="Step"/> advancing across its time.
 /// </summary>
 public sealed class EntityAnimator
 {
@@ -46,20 +48,24 @@ public sealed class EntityAnimator
     public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
     public bool ActionComplete => Current is { } action && ActionTime >= action.Clip.Duration;
     public MotionClip? Clip => Current?.Clip ?? Entity.Clip(Role);
+    /// <summary>Whether locomotion is playing: no action, or a masked one layered over it.</summary>
+    public bool Locomoting => Current is null || Current.Mask is not null;
 
     /// <summary>Starts an enabled action. Unsupported or disabled actions are rejected, never replaced by idle.</summary>
     public bool TryStart(string action)
     {
         if (!Entity.Enabled(action)) return false;
-        Action = action; ActionTime = PreviousActionTime = 0; ActionSequence++; _fresh = true; _hold.Clear();
+        Action = action; ActionTime = PreviousActionTime = 0; ActionSequence++; _fresh = true;
+        if (Current!.Mask is null) _hold.Clear();
         return true;
     }
 
     /// <summary>Ends the playing action (finished or interrupted) and returns to locomotion with fresh contacts.</summary>
     public void EndAction()
     {
-        if (Action is null) return;
-        Action = null; _hold.Clear(); RoleTime = 0;
+        if (Current is not { } action) return;
+        Action = null;
+        if (action.Mask is null) { _hold.Clear(); RoleTime = 0; }
     }
 
     /// <summary>A teleport or respawn: drop the action, the phase and every anchor.</summary>
@@ -86,7 +92,7 @@ public sealed class EntityAnimator
                 if (Crosses(cue.Seconds, from, to, _fresh)) events.Add(new(AnimationEvent.EventKind, cue.Event.Id, cue.Event.Sound, action.Id, ActionSequence));
             ActionTime = to; _fresh = false;
         }
-        else
+        if (Locomoting)
         {
             if (role != Role)
             {
@@ -108,8 +114,15 @@ public sealed class EntityAnimator
 
     private void Evaluate(Vector2 position, string? expression)
     {
-        var clip = Clip; var action = Current;
-        Pose = _hold.Evaluate(Entity.Model, clip, action is null ? RoleTime : ActionTime, action is null && clip?.Loop == true, position, Facing, new(expression));
+        var action = Current;
+        if (action is null || action.Mask is not null)
+        {
+            var clip = Entity.Clip(Role);
+            var overlay = action is null ? null : new PoseLayer(action.Clip, ActionTime, action.Mask!, action.Weight(ActionTime));
+            Pose = _hold.Evaluate(Entity.Model, clip, RoleTime, clip?.Loop == true, position, Facing, new(expression) { Overlay = overlay });
+            return;
+        }
+        Pose = _hold.Evaluate(Entity.Model, action.Clip, ActionTime, false, position, Facing, new(expression));
     }
 
     /// <summary>Hit windows active at any moment of the latest step, including one that opened and closed inside it.</summary>

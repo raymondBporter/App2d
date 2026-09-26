@@ -350,6 +350,15 @@
         "idle": "person-idle",
         "walk": "person-walk"
       }
+    },
+    {
+      "id": "heavy",
+      "name": "Heavy",
+      "roles": {
+        "idle": "person-idle",
+        "walk": "person-heavy-walk",
+        "run": "person-run"
+      }
     }
   ],
   "hurtLayouts": [
@@ -386,6 +395,78 @@
           "pad": 0.07
         }
       ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "upper",
+      "targets": [
+        "chest",
+        "head",
+        "left-arm",
+        "left-shoulder",
+        "right-arm",
+        "right-shoulder"
+      ]
+    },
+    {
+      "id": "lower",
+      "targets": [
+        "hips",
+        "left-hip",
+        "left-leg",
+        "right-hip",
+        "right-leg"
+      ]
+    }
+  ],
+  "looks": [
+    {
+      "id": "sage",
+      "name": "Sage",
+      "parts": {
+        "body": {
+          "fill": "#d8e9db"
+        }
+      }
+    },
+    {
+      "id": "slate",
+      "name": "Slate",
+      "parts": {
+        "body": {
+          "fill": "#b8c4d6"
+        },
+        "head": {
+          "fill": "#efe6da",
+          "face": "focused"
+        }
+      }
+    },
+    {
+      "id": "ember",
+      "name": "Ember",
+      "parts": {
+        "body": {
+          "fill": "#eab596"
+        },
+        "head": {
+          "face": "determined"
+        }
+      }
+    },
+    {
+      "id": "night",
+      "name": "Night",
+      "parts": {
+        "body": {
+          "fill": "#7d879a"
+        },
+        "head": {
+          "fill": "#e2d6c6",
+          "face": "smug"
+        }
+      }
     }
   ]
 }

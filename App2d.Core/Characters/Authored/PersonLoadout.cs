@@ -14,7 +14,7 @@ public static class PersonLoadout
     public const string BackSocket = "back", BackViewSocket = "back-view", SwordSocket = "sword-hand", GunSocket = "gun-hand";
     public const string BackViewMarker = "view-back", ProfileViewMarker = "view-profile", DrawMarker = "sword-draw", SheatheMarker = "sword-sheathe";
     public const string Sword = "sword", Sheath = "sheath", Pistol = "pistol";
-    /// <summary>The upper-body group: channels an arms-only overlay (a gun shot) owns over any legs.</summary>
+    /// <summary>The upper-body group: channels an arms-only overlay (a gun shot) owns over any legs. The Person model carries it as its "upper" control group.</summary>
     public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { "chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm" };
 
     public static bool SeenFromBehind(MotionClip clip, float seconds) =>

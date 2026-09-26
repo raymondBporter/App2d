@@ -36,12 +36,20 @@ public sealed record ActionEvent
     public string? Sound { get; set; }
 }
 
-/// <summary>An explicitly enabled action. It plays its animation role, or a directly named clip such as a spear thrust.</summary>
+/// <summary>
+/// An explicitly enabled action. It plays its animation role, or a directly named clip such as a spear thrust. With a
+/// <see cref="Mask"/> (a control group of the model) it plays over locomotion instead of replacing it: the action owns the
+/// group's channels, locomotion keeps the rest, contacts included, and the controller keeps moving the actor. The masked
+/// layer fades in over <see cref="BlendIn"/> and out over the last <see cref="BlendOut"/> seconds of the clip.
+/// </summary>
 public sealed record EntityActionDef
 {
     public string Id { get; set; } = "";
     public string? Role { get; set; }
     public string? Clip { get; set; }
+    public string? Mask { get; set; }
+    public float BlendIn { get; set; }
+    public float BlendOut { get; set; }
     public List<HitWindow> Hits { get; set; } = [];
     public List<ActionEvent> Events { get; set; } = [];
 }
@@ -155,6 +163,9 @@ public sealed class EntityAsset
             Require((action.Role is null) != (action.Clip is null), $"{field}: name exactly one of role or clip.");
             if (action.Role is not null) AuthoredAsset.RequireId(action.Role, field + " role");
             if (action.Clip is not null) AuthoredAsset.RequireId(action.Clip, field + " clip");
+            if (action.Mask is not null) AuthoredAsset.RequireId(action.Mask, field + " mask");
+            new Limit(0, 5).Check(action.BlendIn, field + " blendIn"); new Limit(0, 5).Check(action.BlendOut, field + " blendOut");
+            Require(action.Mask is not null || action.BlendIn == 0 && action.BlendOut == 0, $"{field}: blending needs a mask; a whole-body action replaces locomotion at once.");
             var hits = new HashSet<string>(StringComparer.Ordinal);
             foreach (var hit in action.Hits)
             {

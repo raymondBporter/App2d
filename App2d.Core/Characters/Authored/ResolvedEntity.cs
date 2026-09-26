@@ -7,7 +7,23 @@ public sealed record RoleClip(string Role, MotionClip Clip, string Source);
 
 public sealed record ResolvedHit(HitWindow Window, float Start, float Finish);
 public sealed record ResolvedEvent(ActionEvent Event, float Seconds);
-public sealed record ResolvedAction(string Id, MotionClip Clip, string Source, IReadOnlyList<ResolvedHit> Hits, IReadOnlyList<ResolvedEvent> Events);
+/// <summary>An enabled action. <see cref="Mask"/>, when set, names the targets it owns over locomotion.</summary>
+public sealed record ResolvedAction(string Id, MotionClip Clip, string Source, IReadOnlyList<ResolvedHit> Hits, IReadOnlyList<ResolvedEvent> Events)
+{
+    public IReadOnlySet<string>? Mask { get; init; }
+    public float BlendIn { get; init; }
+    public float BlendOut { get; init; }
+
+    /// <summary>The masked layer's weight at a time in the action: a linear fade in, then out over the clip's end. One without a mask.</summary>
+    public float Weight(double seconds)
+    {
+        if (Mask is null) return 1;
+        var t = (float)seconds; var weight = 1f;
+        if (BlendIn > 0) weight = MathF.Min(weight, t / BlendIn);
+        if (BlendOut > 0) weight = MathF.Min(weight, (Clip.Duration - t) / BlendOut);
+        return Math.Clamp(weight, 0, 1);
+    }
+}
 public sealed record ResolvedEquipment(PropAsset Prop, ModelSocket Socket);
 
 /// <summary>
@@ -101,7 +117,16 @@ public sealed class ResolvedEntity
             var events = action.Events.Select(e => new ResolvedEvent(e, Seconds(e.At, $"event '{e.Id}'"))).OrderBy(e => e.Seconds).ToList();
             if (action.Id == EntityControllers.Jump && !events.Any(e => e.Event.Id == EntityControllers.Launch))
                 throw new InvalidDataException($"{field}: a jump needs a '{EntityControllers.Launch}' event.");
-            actions[action.Id] = new(action.Id, clip, source, hits, events);
+            IReadOnlySet<string>? mask = null;
+            if (action.Mask is { } maskId)
+            {
+                var group = model.Base.Groups.FirstOrDefault(g => g.Id == maskId)
+                    ?? throw new InvalidDataException($"{field} mask: '{model.Base.Id}' has no control group '{maskId}'.");
+                mask = group.Targets.ToHashSet(StringComparer.Ordinal);
+                if (action.Id == EntityControllers.Jump) throw new InvalidDataException($"{field}: a jump moves the whole body and cannot be masked.");
+                if (action.BlendIn + action.BlendOut > clip.Duration + 1e-4f) throw new InvalidDataException($"{field}: blend in and out ({action.BlendIn + action.BlendOut:0.###}s) exceed the clip ({clip.Duration:0.###}s).");
+            }
+            actions[action.Id] = new(action.Id, clip, source, hits, events) { Mask = mask, BlendIn = action.BlendIn, BlendOut = action.BlendOut };
         }
         entity.Actions = actions;
 

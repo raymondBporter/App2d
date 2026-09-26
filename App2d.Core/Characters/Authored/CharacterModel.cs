@@ -70,6 +70,24 @@ public sealed record HurtLayout
     public List<HurtShape> Regions { get; set; } = [];
 }
 
+/// <summary>
+/// A named set of controls and chains, such as "upper": the channels a masked action owns over locomotion. A chain is owned
+/// whole. Not structural: a group only selects existing targets.
+/// </summary>
+public sealed record ControlGroup
+{
+    public string Id { get; set; } = "";
+    public List<string> Targets { get; set; } = [];
+}
+
+/// <summary>A named appearance an author applies to a variant: part overrides it writes, never a live parent.</summary>
+public sealed record LookPreset
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public Dictionary<string, PartOverride> Parts { get; set; } = [];
+}
+
 /// <summary>A reusable character structure. Controls without a parent hang from the locomotion frame.</summary>
 public sealed class CharacterModel
 {
@@ -91,6 +109,8 @@ public sealed class CharacterModel
     public List<ModelSocket> Sockets { get; set; } = [];
     public List<MotionSet> MotionSets { get; set; } = [];
     public List<HurtLayout> HurtLayouts { get; set; } = [];
+    public List<ControlGroup> Groups { get; set; } = [];
+    public List<LookPreset> Looks { get; set; } = [];
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static CharacterModel FromJson(string json) { var model = AuthoredAsset.Parse<CharacterModel>(json, "model"); model.Validate(); return model; }
@@ -106,7 +126,7 @@ public sealed class CharacterModel
         AuthoredAsset.RequireId(Id, "model id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
-        Require(Controls is not null && Chains is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null, $"{owner}: collections cannot be null.");
+        Require(Controls is not null && Chains is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Chains.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Limit.Color(Ink, "ink"); new Limit(.001f, 1).Check(LineWidth, "lineWidth");
 
@@ -202,6 +222,32 @@ public sealed class CharacterModel
                 Require(regions.Add(region.Id), $"{field}: duplicate '{region.Id}'.");
                 Require(region.Controls.Count > 0 && region.Controls.All(Known), $"{field} '{region.Id}': needs at least one known control.");
                 new Limit(0, 10).Check(region.Pad, $"{field} '{region.Id}' pad");
+            }
+        }
+        var groups = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var group in Groups)
+        {
+            Require(group is not null && group.Targets is not null, $"{owner}: incomplete control group.");
+            AuthoredAsset.RequireId(group.Id, $"{owner} group id");
+            Require(groups.Add(group.Id), $"{owner}: duplicate group '{group.Id}'.");
+            foreach (var target in group.Targets)
+            {
+                Require(Known(target) || target is not null && chainIds.Contains(target), $"{owner} group '{group.Id}': '{target}' is not a control or chain.");
+                // A chain moves its joint and end; owning one of them without the chain would split it between two layers.
+                Require(!solved.Contains(target!), $"{owner} group '{group.Id}': '{target}' is solved by IK; name its chain instead.");
+            }
+        }
+        var looks = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var look in Looks)
+        {
+            Require(look is not null && look.Parts is not null, $"{owner}: incomplete look.");
+            AuthoredAsset.RequireId(look.Id, $"{owner} look id");
+            Require(looks.Add(look.Id), $"{owner}: duplicate look '{look.Id}'.");
+            Require(!string.IsNullOrWhiteSpace(look.Name), $"{owner} look '{look.Id}': a name is required.");
+            foreach (var (part, change) in look.Parts)
+            {
+                Require(parts.Contains(part), $"{owner} look '{look.Id}': no part '{part}'.");
+                PartOverride.Check(change, $"{owner} look '{look.Id}' parts.{part}");
             }
         }
         CheckGeometry(this, Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal), owner);

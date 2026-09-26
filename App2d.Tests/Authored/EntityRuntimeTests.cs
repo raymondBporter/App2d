@@ -68,8 +68,8 @@ public sealed class EntityRuntimeTests
         Assert.Contains("action 'attack' hit 'spear-tip' finish: animation 'person-thrust' has no marker 'follow-through'", Error(entity));
         entity = StarterContent.SpearGuardEntity(); entity.Equipment[0].Socket = "left-ear";
         Assert.Contains("'person' has no socket 'left-ear'", Error(entity));
-        entity = StarterContent.SpearGuardEntity(); entity.MotionSet = "heavy";
-        Assert.Contains("has no motion set 'heavy'", Error(entity));
+        entity = StarterContent.SpearGuardEntity(); entity.MotionSet = "hulking";
+        Assert.Contains("has no motion set 'hulking'", Error(entity));
         entity = StarterContent.SpearGuardEntity(); entity.Hurt.Regions["tail"] = new() { Disabled = true };
         Assert.Contains("hurt.regions.tail", Error(entity));
         entity = StarterContent.StalkerEntity(); entity.Actions[0].Clip = "person-thrust";
