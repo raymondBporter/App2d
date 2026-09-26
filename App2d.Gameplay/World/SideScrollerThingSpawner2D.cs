@@ -48,6 +48,7 @@ internal sealed class SideScrollerThingSpawner2D(
                 WorldThingKind2D.Shieldback => "spear-guard",
                 WorldThingKind2D.GreenDinosaur => "stalker-pest",
                 WorldThingKind2D.Rival => "cinder-gunner",
+                WorldThingKind2D.BoilerBrute => "maul-brute",
                 _ => null
             };
             if (entityId is not null && authored?.Entities.GetValueOrDefault(entityId) is { } entity)

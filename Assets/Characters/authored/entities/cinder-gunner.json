@@ -30,7 +30,6 @@
       "id": "attack",
       "clip": "person-pistol-shot",
       "projectile": {
-        "speed": 9,
         "width": 0.3,
         "height": 0.12,
         "damage": 2

@@ -173,7 +173,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             var region = ToWorld(EntityCollision.Attack(Entity, Pose, hit));
             if (!region.Overlaps(target, Vector2.Zero, Vector2.Zero) || !_ledger.TryHit(_animator.ActionSequence, hit.Window.Id, 0)) continue;
             player.TryTakeDamageFromX(hit.Window.Damage, WorldObject.Transform.Position.X);
-            _events.Add(new EntityCue2D(Id, player.Position, "hit"));
+            _events.Add(new EntityCue2D(Id, player.Position, hit.Window.Sound ?? "hit"));
         }
         return !player.IsAlive;
     }
@@ -201,7 +201,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _hurt = HurtSeconds;
         // A hit interrupts an attack; contacts are released and re-captured from the next pose.
         _animator.EndAction();
-        Body.LinearVelocity = IsAlive ? knockback : Vector2.Zero;
+        Body.LinearVelocity = IsAlive ? knockback / Entity.Asset.Mass : Vector2.Zero;
         if (!IsAlive) { Body.IsCollider = false; Body.MotionType = BodyMotionType2D.Static; }
         return true;
     }

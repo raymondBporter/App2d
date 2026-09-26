@@ -1,0 +1,60 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "maul-brute",
+  "name": "Maul brute",
+  "model": "brute",
+  "motionSet": "heavy",
+  "roles": {},
+  "controller": {
+    "walkSpeed": 1.1,
+    "range": 1.3
+  },
+  "health": 22,
+  "mass": 3,
+  "movement": {
+    "width": 0.319,
+    "height": 2.308
+  },
+  "hurt": {
+    "layout": "standard",
+    "regions": {}
+  },
+  "equipment": [
+    {
+      "prop": "hammer",
+      "socket": "sword-hand"
+    }
+  ],
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "person-hammer-slam",
+      "hits": [
+        {
+          "id": "hammer-head",
+          "start": {
+            "marker": "strike"
+          },
+          "finish": {
+            "marker": "recover"
+          },
+          "prop": "hammer",
+          "width": 1.2,
+          "height": 1,
+          "damage": 5,
+          "sound": "heavy"
+        }
+      ],
+      "events": [
+        {
+          "id": "heavy",
+          "at": {
+            "marker": "strike"
+          },
+          "sound": "heavy"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "format": "app2d-variant",
+  "version": 1,
+  "id": "brute",
+  "name": "Brute",
+  "base": "person",
+  "build": {
+    "legs": 0.95,
+    "torso": 1.05,
+    "arms": 1.1,
+    "width": 1.45,
+    "head": 0.95
+  },
+  "rest": {},
+  "parts": {
+    "body": {
+      "fill": "#8a7564"
+    },
+    "head": {
+      "fill": "#ead6c1",
+      "face": "angry"
+    }
+  }
+}

@@ -61,7 +61,66 @@ internal static class PlayerMoves
         PistolShot(model).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
         var cinder = CinderVariant(); cinder.Save(Path.Combine(authoredRoot, "variants", cinder.Id + ".json"));
         var gunner = CinderGunner(ResolvedModel.From(person, cinder)); gunner.Save(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"));
+        // The maul: a broad brute on the Heavy set with a one-handed hammer and a slow overhead slam.
+        HammerProp().Save(Path.Combine(authoredRoot, "props", "hammer.json"));
+        HammerSlam(model).Save(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"));
+        var brute = BruteVariant(); brute.Save(Path.Combine(authoredRoot, "variants", brute.Id + ".json"));
+        var maul = MaulBrute(ResolvedModel.From(person, brute)); maul.Save(Path.Combine(authoredRoot, "entities", maul.Id + ".json"));
     }
+
+    /// <summary>A short-hafted war hammer: grip at the origin, haft along +X, the head's centre is its tip.</summary>
+    public static PropAsset HammerProp() => new()
+    {
+        Id = "hammer", Name = "Hammer", Grip = new(0, 0), Tip = new(.8f, 0),
+        Shapes =
+        [
+            new() { Kind = "stroke", Points = [new(-.14f, 0, -.05f), new(.7f, 0, -.05f)], Width = .07f, Fill = "#7a5634" },
+            new() { Kind = "polygon", Points = [new(.66f, -.16f, -.06f), new(.94f, -.16f, -.06f), new(.94f, .16f, -.06f), new(.66f, .16f, -.06f)], Fill = "#5d6770" },
+        ],
+    };
+
+    /// <summary>
+    /// A slow overhead slam, 1.5 s: the hammer climbs over and behind the head (anticipation) and hangs there, then drives down
+    /// ahead of the feet with a deep sink at 0.78 s ("strike") and stays down until 0.95 s ("recover") before hauling back up.
+    /// </summary>
+    private static MotionClip HammerSlam(ResolvedModel m) => New(m, "person-hammer-slam", "Hammer slam", 1.5f, false)
+        .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHandAt(.3f, .95f).LeftHand(.05f, -.6f).Blade(.3f))
+        .Key(.55f, k => k.Hips(-.06f, -.02f).Chest(.25f).Head(-.02f).RightHandAt(-.15f, 2.05f).LeftHand(.1f, -.45f).Blade(2.4f))
+        .Key(.7f, k => k.Hips(-.06f, -.02f).Chest(.28f).Head(-.03f).RightHandAt(-.18f, 2.08f).LeftHand(.12f, -.44f).Blade(2.55f), ClipEase.Linear)
+        .Key(.78f, k => k.Hips(.08f, -.22f).Chest(-.4f).Head(.12f).RightHandAt(.62f, .95f).LeftHand(-.2f, -.4f).Blade(-.9f))
+        .Key(.95f, k => k.Hips(.08f, -.24f).Chest(-.42f).Head(.14f).RightHandAt(.62f, .9f).LeftHand(-.22f, -.4f).Blade(-1.05f))
+        .Key(1.5f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHandAt(.3f, .95f).LeftHand(.05f, -.6f).Blade(.3f))
+        .Plant("left-leg", 0, 1.5f, -.2f).Plant("right-leg", 0, 1.5f, .2f)
+        .Marker("windup", .1f).Marker("strike", .78f).Marker("recover", .95f)
+        .Face(0, "focused").Face(.5f, "determined").Face(.78f, "angry")
+        .Build();
+
+    /// <summary>Broad and heavy-armed, in iron colours: the boiler brute placement's look.</summary>
+    public static ModelVariant BruteVariant()
+    {
+        var variant = new PersonBuild { Legs = .95f, Torso = 1.05f, Arms = 1.1f, Width = 1.45f, Head = .95f }.Apply(PersonTemplate.Model(), "brute", "Brute");
+        variant.Parts["body"] = new() { Fill = "#8a7564" };
+        variant.Parts["head"] = new() { Fill = "#ead6c1", Face = "angry" };
+        return variant;
+    }
+
+    /// <summary>Heavy motion, heavy hits: walks in slowly and slams for 5 when the player is within 1.3 units. Knockback barely moves it.</summary>
+    public static EntityAsset MaulBrute(ResolvedModel model) => new()
+    {
+        Id = "maul-brute", Name = "Maul brute", Model = model.Id, MotionSet = "heavy",
+        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.1f, Range = 1.3f, Cooldown = 1 },
+        Health = 22, Mass = 3, Movement = EntityAuthoring.FitMovement(model), Hurt = new() { Layout = "standard" },
+        Equipment = [new() { Prop = "hammer", Socket = PersonLoadout.SwordSocket }],
+        Actions =
+        [
+            new()
+            {
+                Id = EntityControllers.Attack, Clip = "person-hammer-slam",
+                Hits = [new() { Id = "hammer-head", Prop = "hammer", Width = 1.2f, Height = 1f, Damage = 5, Sound = "heavy", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
+                Events = [new() { Id = "heavy", At = new() { Marker = "strike" }, Sound = "heavy" }],
+            },
+        ],
+    };
 
     /// <summary>
     /// An enemy's readable pistol shot, 1.1 s: raise to the aim pose, hold, fire at 0.6 s with the player's kick, settle and

@@ -26,6 +26,8 @@ public sealed record HitWindow
     public float Width { get; set; } = .3f;
     public float Height { get; set; } = .3f;
     public int Damage { get; set; } = 1;
+    /// <summary>Played where the hit lands; null plays the game's default impact.</summary>
+    public string? Sound { get; set; }
 }
 
 /// <summary>
@@ -126,6 +128,8 @@ public sealed class EntityAsset
     public Dictionary<string, string> Roles { get; set; } = [];
     public ControllerConfig Controller { get; set; } = new();
     public int Health { get; set; } = 3;
+    /// <summary>Divides knockback: a heavy entity barely moves when hit.</summary>
+    public float Mass { get; set; } = 1;
     public MovementBox Movement { get; set; } = new();
     public HurtSelection Hurt { get; set; } = new();
     public List<EquipmentBinding> Equipment { get; set; } = [];
@@ -151,7 +155,7 @@ public sealed class EntityAsset
         new Limit(0, 100).Check(Controller.WalkSpeed, $"{owner} controller.walkSpeed"); new Limit(0, 100).Check(Controller.RunSpeed, $"{owner} controller.runSpeed");
         new Limit(0, 100).Check(Controller.JumpSpeed, $"{owner} controller.jumpSpeed"); new Limit(0, 100).Check(Controller.Range, $"{owner} controller.range");
         new Limit(0, 60).Check(Controller.Cooldown, $"{owner} controller.cooldown");
-        new Limit(1, 10000).Check(Health, $"{owner} health");
+        new Limit(1, 10000).Check(Health, $"{owner} health"); new Limit(.1f, 100).Check(Mass, $"{owner} mass");
         new Limit(.01f, 100).Check(Movement.Width, $"{owner} movement.width"); new Limit(.01f, 100).Check(Movement.Height, $"{owner} movement.height");
         new Limit(-100, 100).Check(Movement.OffsetX, $"{owner} movement.offsetX");
         if (Hurt.Layout is not null) AuthoredAsset.RequireId(Hurt.Layout, $"{owner} hurt.layout");
@@ -201,6 +205,7 @@ public sealed class EntityAsset
                 new Limit(-100, 100).Check(hit.Along, $"{field} hit '{hit.Id}' along");
                 new Limit(.01f, 100).Check(hit.Width, $"{field} hit '{hit.Id}' width"); new Limit(.01f, 100).Check(hit.Height, $"{field} hit '{hit.Id}' height");
                 new Limit(0, 10000).Check(hit.Damage, $"{field} hit '{hit.Id}' damage");
+                if (hit.Sound is not null) AuthoredAsset.RequireId(hit.Sound, $"{field} hit '{hit.Id}' sound");
             }
             foreach (var cue in action.Events)
             {

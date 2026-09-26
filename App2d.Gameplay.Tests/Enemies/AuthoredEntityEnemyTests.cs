@@ -36,9 +36,9 @@ public sealed class AuthoredEntityEnemyTests
     {
         using var game = Game();
         var states = game.Session.CaptureEnemies();
-        Assert.Equal(new[] { "spear-guard", "maul", "stalker-pest" }, states.Select(s => s.TypeId));
+        Assert.Equal(new[] { "spear-guard", "maul-brute", "stalker-pest" }, states.Select(s => s.TypeId));
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
-        Assert.IsType<AuthoredEnemy2D>(game.Level.EnemySystem.Combatants[1]);
+        Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[1]);
         Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[2]);
         // Presentation receives the very pose object collision reads, never a second clock.
         Assert.Same(guard.Pose, states[0].AuthoredPose);
@@ -130,6 +130,28 @@ public sealed class AuthoredEntityEnemyTests
         Assert.Equal(first, second);
         Assert.Contains(first, json => json.Contains("\"X\"") && json.Contains("[{"));
         Assert.True(game.Player.Health.Current < 30, "the gunner's shots land");
+    }
+
+    [Fact]
+    public void TheMaulSlamsForFiveInsideItsWindowAndShrugsOffKnockback()
+    {
+        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var maul = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["maul-brute"], physics, new(0, 36), 1, 4);
+        maul.SetSimulationEnabled(true);
+        var player = new Person2D(App2d.Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(40, 40), 2, 1, CombatFaction2D.Player, 30);
+        var slam = maul.Entity.Actions["attack"]; var landedAt = -1.0; var cues = new List<string>();
+        for (var i = 0; i < 400 && landedAt < 0; i++)
+        {
+            maul.Update(1f / 120, player.Position); maul.SyncAfterPhysics(); maul.TryResolvePlayerHit(player);
+            cues.AddRange(maul.DrainEvents().OfType<EntityCue2D>().Select(c => c.Cue));
+            if (player.Health.Current < 30) landedAt = maul.CaptureState().AttackElapsedSeconds;
+        }
+        Assert.Equal(25, player.Health.Current);
+        Assert.InRange(landedAt, slam.Hits[0].Start, slam.Hits[0].Finish + 1 / 120f);
+        Assert.Contains("heavy", cues);
+
+        maul.TakeDamage(1, new(300, 0));
+        Assert.Equal(100, maul.Body.LinearVelocity.X, 3); // mass 3 divides knockback
     }
 
     [Fact]

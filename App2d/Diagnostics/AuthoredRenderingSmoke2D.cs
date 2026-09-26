@@ -121,13 +121,13 @@ internal static class AuthoredRenderingSmoke2D
     {
         var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
         if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
-        var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner" };
-        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f) })
+        var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute" };
+        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f) })
         foreach (var facing in new[] { 1, -1 })
         {
             var states = ids.Select((id, i) =>
             {
-                var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-190 + i * 150) / EntityCatalog.WorldUnits, 0);
+                var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-230 + i * 125) / EntityCatalog.WorldUnits, 0);
                 if (action is not null && animator.TryStart(action)) for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
                 else for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, phase, phase == "walk" ? .012f : 0, false, []);
                 return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, feet * EntityCatalog.WorldUnits, Vector2.Zero, 0, facing, true, true)
@@ -137,7 +137,7 @@ internal static class AuthoredRenderingSmoke2D
             device.SetRenderTarget(target); renderer.BeginFrame(1400, 500, default); renderer.Clear(new Color(145, 176, 190));
             renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(1200, 2)), new SolidColorShader(Color.DarkSlateGray)));
             renderer.Draw(scene);
-            renderer.DrawScreenLabel("AUTHORED: SPEAR GUARD / STALKER PEST / PLAYER / CINDER GUNNER", new(24, 24));
+            renderer.DrawScreenLabel("AUTHORED: SPEAR GUARD / STALKER PEST / PLAYER / CINDER GUNNER / MAUL BRUTE", new(24, 24));
             renderer.EndFrame(); device.SetRenderTarget(null);
             using var stream = File.Create(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
         }
