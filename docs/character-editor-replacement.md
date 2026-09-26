@@ -504,6 +504,36 @@ recovery; verify the spear grip/tip agree with collision in both facing directio
 Changing face expression must not affect locomotion. Validate marker crossings,
 hit deduplication and contact resets at starts/stops and interruptions.
 
+**Progress (2026-09-25).** Starter content (`StarterContent`, written by `--convert-studies`) adds Person idle, spear
+thrust and jump clips, a `spear` prop, a three-legged `stalker` model built from Empty with its own clips, and three
+entities: `spear-guard` (tall-thin, Deliberate set, walker, cannot jump), `player` (Person, Standard set, platformer,
+can jump) and `stalker-pest`.
+
+| Layer | Where | Holds |
+| --- | --- | --- |
+| Schema | `App2d.Core/Characters/Authored/` | Models gain `sockets` (control + offset, oriented by a frame control's rotation), `motionSets` and `hurtLayouts`. None of them change structure revision. New `props/` (`PropAsset`: art, grip, tip, second grip, muzzle) and `entities/` (`EntityAsset`). |
+| Compile | `ResolvedEntity` | Effective roles (entity override, then selected set, with the source recorded), enabled actions with marker times in seconds, equipment, and hurt regions with per-region overrides. Every missing model, set, clip, socket, prop or marker is an error naming the field. |
+| Capabilities | `EntityControllers` | `walker`, `platformer` and `stationary` declare their required roles and supported actions, replacing the universal required-action list. An entity lists its actions explicitly; unsupported ones fail validation and are rejected at runtime, never replaced by idle. A jump needs a `launch` event. |
+| Runtime | `EntityAnimator`, `EntityCollision` | In-place sampling (`PoseInput.InPlace`), gait phase from ground distance over the resolved stride, world contact anchors held from touchdown to release and reset on role, action and facing changes and on `Reset`. Markers and action events are dispatched once when time crosses them, including skipped spans and loop wraps. `HitLedger` deduplicates hits per attack. Movement, hurt and attack regions and prop points all come from one `ActorPose`. |
+| Arena | `App2d.Gameplay/Entities/AuthoredArena` | Fixed-step flat ground. Controllers own travel; the jump leaves the ground on its `launch` event. Hits interrupt attacks. |
+| Game | `AuthoredEntityEnemy2D` | Shieldback and green-dinosaur placements spawn `spear-guard` and `stalker-pest` when `SideScrollerSessionDefinition2D.AuthoredCharacters` is set (the game sets it and refuses to start on authored errors). `EnemyState2D.AuthoredPose` carries the tick's pose object, and `AuthoredCharacterShader` draws it without re-sampling. Rollback snapshots the animator. |
+| Editor | `Editor/ArenaTest` | **Test** plays the arena from `AuthoringWorkspace.SnapshotEntities()`: entities compiled against copies of the current drafts. |
+
+Verification:
+- `App2d.Tests.Authored.EntityRuntimeTests` covers capabilities, set/override sources, error messages, spear grip and tip against the hit region in both facings, mirroring, marker dispatch (skipped spans, loop wraps, no advance means no event), planted feet holding their anchors on all three entities, contact resets, face independence and capture/restore.
+- `App2d.Gameplay.Tests` `AuthoredArenaTests` covers the guard that cannot jump, the player's jump, hits inside the strike→recover window, the creature, interruptions and deterministic replay.
+- `AuthoredEntityEnemyTests` covers game spawning, the shared pose, damage to the player, rollback replay, pose-derived head hits and spear hitboxes in both facings.
+- Renders: `App2d.CharacterStudio --smoke-entities <dir>` draws anticipation, active and recovery frames in both facings, the jump and the stalker, with overlays. `App2d --render-smoke <dir>` writes `entity-*.png` through the game presentation. `--smoke-editor` ends in Test.
+
+Not yet covered:
+- An Entity workspace: entities are edited as JSON; Test plays them.
+- The in-game player: it is still the traversal `Person2D` with the legacy renderer. The authored player with jump is proven in the arena.
+- Prop orientation tracks and an adapter for the existing `WeaponDrawing` art.
+- The game's blended `FacePose`: authored faces take a gameplay expression string.
+- Hurt regions from shape geometry: they are padded control bounds.
+- Interpolated display poses between ticks.
+- Terrain beyond flat ground: airborne authored enemies hold their pose.
+
 ### 4. Complete the repeated-authoring workflow
 
 Add build/look presets, entity duplication, motion-set editing, explicit role
