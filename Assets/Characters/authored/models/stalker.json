@@ -193,7 +193,9 @@
       "name": "Standard",
       "roles": {
         "idle": "stalker-idle",
-        "walk": "stalker-walk"
+        "walk": "stalker-walk",
+        "hit": "stalker-hit",
+        "death": "stalker-death"
       }
     }
   ],

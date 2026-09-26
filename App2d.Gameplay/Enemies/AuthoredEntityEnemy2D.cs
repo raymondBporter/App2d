@@ -33,6 +33,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private readonly uint _worldLayer;
     private bool _enabled;
     private float _cooldown, _hurt, _dt;
+    private readonly EntityReaction _reaction = new();
     private int _facing = -1;
     private Vector2 _rootBefore;
 
@@ -76,8 +77,11 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _cooldown = MathF.Max(0, _cooldown - dt); _hurt = MathF.Max(0, _hurt - dt);
         Body.AngularVelocity = 0; WorldObject.Transform.Rotation = 0;
         if (!IsAlive) return;
-        if (_animator.Action is not null) { Body.LinearVelocity = new(0, Body.LinearVelocity.Y); return; }
         var config = Entity.Asset.Controller;
+        if (_reaction.Tick(dt)) _cooldown = MathF.Max(_cooldown, config.Cooldown);
+        // Staggered: no steering, so the knockback carries.
+        if (_reaction.Staggered) return;
+        if (_animator.Action is not null) { Body.LinearVelocity = new(0, Body.LinearVelocity.Y); return; }
         var delta = targetPosition - WorldObject.Transform.Position;
         if (Math.Abs(delta.X) > 1) _facing = Math.Sign(delta.X);
         var inRange = Math.Abs(delta.X) <= config.Range * Scale && Math.Abs(delta.Y) < 2 * Scale;
@@ -109,9 +113,10 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var root = Root; var grounded = MathF.Abs(Body.LinearVelocity.Y) < 1;
         var moved = MathF.Abs(root.X - _rootBefore.X) / Scale;
         var role = IsAlive && grounded && MathF.Abs(Body.LinearVelocity.X) > 1 ? EntityControllers.Walk : EntityControllers.Idle;
-        // Dead or airborne without an action: the explicit fallback is to hold the current pose.
-        var hold = !initial && (!IsAlive || !grounded && _animator.Action is null);
-        _animator.Step(dt, root / Scale, _facing, hold ? _animator.Role : role, grounded ? moved : 0, hold, _scratch, Expression);
+        // A reaction role wins; otherwise dead, or airborne without an action, holds the current pose as the explicit fallback.
+        var reaction = _reaction.Role(Entity, IsAlive);
+        var hold = !initial && reaction is null && (!IsAlive || !grounded && _animator.Action is null);
+        _animator.Step(dt, root / Scale, _facing, reaction ?? (hold ? _animator.Role : role), grounded ? moved : 0, hold, _scratch, Expression);
     }
 
     private void Fire(ProjectileDef shot)
@@ -199,8 +204,8 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         if (!Health.Damage(damage)) return false;
         _hurt = HurtSeconds;
-        // A hit interrupts an attack; contacts are released and re-captured from the next pose.
-        _animator.EndAction();
+        // A hit interrupts an attack and staggers; contacts are released and re-captured from the next pose.
+        if (IsAlive) _reaction.Hit(_animator); else _reaction.Die(_animator);
         Body.LinearVelocity = IsAlive ? knockback / Entity.Asset.Mass : Vector2.Zero;
         if (!IsAlive) { Body.IsCollider = false; Body.MotionType = BodyMotionType2D.Static; }
         return true;
@@ -215,16 +220,16 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
     public ImmutableArray<EnemyEvent2D> DrainEvents() { var events = _events.ToImmutableArray(); _events.Clear(); return events; }
 
-    private sealed record Snapshot(bool Enabled, float Cooldown, float Hurt, int Facing, int Health, Vector2 RootBefore, AnimatorState Animator,
+    private sealed record Snapshot(bool Enabled, float Cooldown, float Hurt, float Stagger, int Facing, int Health, Vector2 RootBefore, AnimatorState Animator,
         ImmutableArray<(int, string, int)> Ledger, ImmutableDictionary<EntityId2D, int> Hits, ImmutableArray<EnemyEvent2D> Events, ImmutableArray<EntityBoltState2D> Bolts) : SimulationState2D;
 
-    public SimulationState2D CaptureSimulation() => new Snapshot(_enabled, _cooldown, _hurt, _facing, Health.Current, _rootBefore, _animator.Capture(),
+    public SimulationState2D CaptureSimulation() => new Snapshot(_enabled, _cooldown, _hurt, _reaction.Capture(), _facing, Health.Current, _rootBefore, _animator.Capture(),
         _ledger.Capture(), _hitHistory.ToImmutableDictionary(), _events.ToImmutableArray(), [.. _bolts]);
 
     public void RestoreSimulation(SimulationState2D state)
     {
         var s = (Snapshot)state;
-        _enabled = s.Enabled; _cooldown = s.Cooldown; _hurt = s.Hurt; _facing = s.Facing; _rootBefore = s.RootBefore;
+        _enabled = s.Enabled; _cooldown = s.Cooldown; _hurt = s.Hurt; _reaction.Restore(s.Stagger); _facing = s.Facing; _rootBefore = s.RootBefore;
         Health.RestoreSimulation(s.Health); _ledger.Restore(s.Ledger);
         _hitHistory.Clear(); foreach (var pair in s.Hits) _hitHistory.Add(pair.Key, pair.Value);
         _events.Clear(); _events.AddRange(s.Events);

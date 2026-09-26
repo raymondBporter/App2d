@@ -68,6 +68,16 @@ public sealed class EntityAnimator
         if (action.Mask is null) { _hold.Clear(); RoleTime = 0; }
     }
 
+    /// <summary>
+    /// Switches to a role from its start, even the one already playing, as a reaction restarts on a second hit. Ends any
+    /// action and releases every anchor. A one-shot role then holds its last frame.
+    /// </summary>
+    public void Play(string role)
+    {
+        if (Entity.Clip(role) is null) throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role.");
+        Action = null; Role = role; RoleTime = 0; _hold.Clear();
+    }
+
     /// <summary>A teleport or respawn: drop the action, the phase and every anchor.</summary>
     public void Reset(string role = EntityControllers.Idle)
     {

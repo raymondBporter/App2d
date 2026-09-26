@@ -179,4 +179,43 @@ public sealed class AuthoredEntityEnemyTests
             Assert.True(sawHitbox);
         }
     }
+
+    [Fact]
+    public void AHitStaggersAndKeepsTheKnockbackThenTheControllerRecovers()
+    {
+        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var guard = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
+        guard.SetSimulationEnabled(true);
+        var target = new Vector2(400, 42);
+        guard.Update(1f / 120, target); guard.SyncAfterPhysics();
+        Assert.True(guard.TakeDamage(1, new(-200, 0)));
+        var stagger = guard.Entity.Clip(EntityControllers.Hit)!.Duration;
+        for (var t = 0f; t < stagger - .05f; t += 1f / 120)
+        {
+            guard.Update(1f / 120, target); guard.SyncAfterPhysics();
+            Assert.Equal(-200, guard.Body.LinearVelocity.X);
+            Assert.Equal(EntityControllers.Hit, guard.CaptureState().ActionId);
+        }
+        for (var i = 0; i < 30; i++) { guard.Update(1f / 120, target); guard.SyncAfterPhysics(); }
+        Assert.True(guard.Body.LinearVelocity.X > 0, "after the stagger it walks toward the target again");
+        Assert.Equal(EntityControllers.Walk, guard.CaptureState().ActionId);
+    }
+
+    [Theory, InlineData("spear-guard"), InlineData("stalker-pest")]
+    public void DeathPlaysItsClipOnceAndHoldsTheLastFrame(string id)
+    {
+        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var enemy = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities[id], physics, new(0, 42), 1, 4);
+        enemy.SetSimulationEnabled(true);
+        enemy.Update(1f / 120, new(400, 42)); enemy.SyncAfterPhysics();
+        Assert.True(enemy.TakeDamage(enemy.Health.Current, Vector2.Zero));
+        var death = enemy.Entity.Clip(EntityControllers.Death)!;
+        for (var i = 0; i < (int)(death.Duration * 120) + 60; i++) { enemy.Update(1f / 120, new(400, 42)); enemy.SyncAfterPhysics(); }
+        var state = enemy.CaptureState();
+        Assert.Equal(EntityControllers.Death, state.ActionId);
+        Assert.Equal(death.Duration, state.ActionSeconds, 3);
+        var held = enemy.Pose.Local.Points.Values.ToArray();
+        enemy.Update(1f / 120, new(400, 42)); enemy.SyncAfterPhysics();
+        Assert.Equal(held, enemy.Pose.Local.Points.Values.ToArray());
+    }
 }

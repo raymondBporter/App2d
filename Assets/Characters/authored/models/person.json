@@ -340,7 +340,9 @@
         "idle": "person-idle",
         "walk": "person-walk",
         "run": "person-run",
-        "jump": "person-jump"
+        "jump": "person-jump",
+        "hit": "person-hit",
+        "death": "person-death"
       }
     },
     {
@@ -348,7 +350,9 @@
       "name": "Deliberate",
       "roles": {
         "idle": "person-idle",
-        "walk": "person-walk"
+        "walk": "person-walk",
+        "hit": "person-hit",
+        "death": "person-death"
       }
     },
     {
@@ -357,7 +361,9 @@
       "roles": {
         "idle": "person-idle",
         "walk": "person-heavy-walk",
-        "run": "person-run"
+        "run": "person-run",
+        "hit": "person-hit",
+        "death": "person-death"
       }
     }
   ],

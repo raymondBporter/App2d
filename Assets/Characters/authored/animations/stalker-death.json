@@ -1,0 +1,65 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "stalker-death",
+  "name": "Stalker death",
+  "model": "stalker",
+  "structureRevision": 1,
+  "duration": 0.9,
+  "reference": {
+    "leg": 0.8544004
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "body",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "x": -0.06,
+          "y": 0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.08,
+          "y": -0.5,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.9,
+          "x": -0.08,
+          "y": -0.46,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "foot-0-chain",
+      "finish": 0.9
+    },
+    {
+      "chain": "foot-1-chain",
+      "finish": 0.9
+    },
+    {
+      "chain": "foot-2-chain",
+      "finish": 0.9
+    }
+  ],
+  "markers": [
+    {
+      "id": "impact",
+      "time": 0.6
+    }
+  ],
+  "faces": []
+}

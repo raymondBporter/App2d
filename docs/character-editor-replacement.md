@@ -473,7 +473,13 @@ The player move set's design and gaps are in [the player move set spec](superpow
 5. **Moves outside the spec's scope.** Punch, kick and wall melee reuse the slash.
 6. **Player gameplay still in code.** The down attack and the unarmed attacks are code-defined, and the player's hurt region is its movement box rather than the hero's hurt layout.
 7. **Follow-up timing lives in two places.** Gameplay's 0.6 s follow-up window (`MeleePersonWeapon2D.FollowUpSeconds`) and the director's sheathe timing (`PersonAnimationDirector.FollowUpSeconds`) are separate constants. The swing clip always follows gameplay, but the sheathe animation can disagree at the edge.
-8. **Enemy reactions.** Authored enemies hold their pose when hit or killed and only change expression; the `hit` and `death` roles are not played yet.
+8. ~~**Enemy reactions.**~~ Done 2026-09-26: `EntityReaction` plays the `hit` and `death` roles in the game and in Test. A hit interrupts the action and staggers for the hit clip's length (0.3 s without one), keeping the knockback, then the controller's cooldown applies; death plays once and holds. Person sets use stand-in `person-hit` and `person-death`, the stalker `stalker-hit` and `stalker-death`.
+
+**Parity with the game before the replacement (checked 2026-09-26).** Against the pre-replacement `main` (`8300bd05`):
+- Every enemy placement still spawns an enemy with a melee or projectile attack and its sounds.
+- The player's sword, gun, punch, kick and down attack still work (punch, kick and wall melee are drawn with the slash).
+- Hit stagger and death reactions are back, through the entity's roles.
+- Enemy tuning (health, speed, damage) differs from the old entity types by choice: the enemies are placeholders.
 
 **Next up.**
 - Merge the branch to `main`.

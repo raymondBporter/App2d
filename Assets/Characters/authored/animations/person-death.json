@@ -1,0 +1,141 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "person-death",
+  "name": "Death (stand-in)",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 1.1,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": -0.03,
+          "y": -0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.75,
+          "x": -0.28,
+          "y": -0.72,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "x": -0.3,
+          "y": -0.7,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "angle": -0.15,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.75,
+          "angle": 0.9,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "angle": 1.1,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "x": 0.15,
+          "y": 0.25,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "x": -0.1,
+          "y": 0.05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "x": 0.15,
+          "y": 0.25,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "x": -0.05,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 1.1
+    },
+    {
+      "chain": "right-leg",
+      "finish": 1.1
+    }
+  ],
+  "markers": [
+    {
+      "id": "impact",
+      "time": 0.75
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "hurt"
+        },
+        {
+          "time": 0.75,
+          "expression": "knocked-out"
+        }
+      ]
+    }
+  ]
+}

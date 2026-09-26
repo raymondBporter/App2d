@@ -37,6 +37,7 @@ public sealed class AuthoredArena
         public bool Launched { get; internal set; }
         public float Cooldown { get; internal set; }
         public float HurtTime { get; internal set; }
+        public EntityReaction Reaction { get; } = new();
         public bool Alive => Health > 0;
         public ActorPose Pose => Animator.Pose;
         /// <summary>The gameplay face input: a reaction wins over the clip's face channel while it lasts.</summary>
@@ -119,7 +120,11 @@ public sealed class AuthoredArena
         var animator = actor.Animator; var config = actor.Entity.Asset.Controller; var spec = actor.Entity.Controller;
         actor.Cooldown = MathF.Max(0, actor.Cooldown - StepSeconds); actor.HurtTime = MathF.Max(0, actor.HurtTime - StepSeconds);
         var events = _scratch; events.Clear();
-        if (!actor.Alive) { animator.Step(StepSeconds, actor.Position, actor.Facing, animator.Role, 0, true, events, actor.Expression); return; }
+        var reaction = actor.Reaction.Role(actor.Entity, actor.Alive);
+        if (!actor.Alive) { animator.Step(StepSeconds, actor.Position, actor.Facing, reaction ?? animator.Role, 0, reaction is null, events, actor.Expression); return; }
+        if (actor.Reaction.Tick(StepSeconds)) actor.Cooldown = MathF.Max(actor.Cooldown, actor.Entity.Asset.Controller.Cooldown);
+        // Staggered: the controller neither steers nor starts actions.
+        if (actor.Reaction.Staggered) input = default;
 
         var move = spec.Moves || input.Attack ? Math.Clamp(input.Move, -1, 1) : 0;
         // Turn before acting, so an attack starts toward where the controller is steering.
@@ -154,6 +159,7 @@ public sealed class AuthoredArena
             // Airborne without an action: the fall role when assigned, otherwise the explicit fallback of holding the pose.
             if (actor.Entity.Clip(EntityControllers.Fall) is not null) role = EntityControllers.Fall; else { role = animator.Role; hold = true; }
         }
+        if (actor.Reaction.Role(actor.Entity, true) is { } hit) { role = hit; hold = false; }
         var ground = actor.Grounded ? MathF.Abs(position.X - before.X) : 0;
         animator.Step(StepSeconds, position, actor.Facing, role, ground, hold, events, actor.Expression);
 
@@ -174,7 +180,8 @@ public sealed class AuthoredArena
     private static void Damage(Actor target, int damage)
     {
         target.Health = Math.Max(0, target.Health - damage); target.HurtTime = HurtSeconds;
-        // A hit interrupts the target's action; its contacts are released and re-captured from the next pose.
-        if (target.Animator.Action == EntityControllers.Attack) target.Animator.EndAction();
+        // A hit interrupts the target's action and staggers it; contacts are released and re-captured from the next pose.
+        if (target.Alive) target.Reaction.Hit(target.Animator); else target.Reaction.Die(target.Animator);
+        target.Launched = false;
     }
 }

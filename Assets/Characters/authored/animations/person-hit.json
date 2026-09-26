@@ -1,0 +1,111 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "person-hit",
+  "name": "Hit (stand-in)",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.3,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.06,
+          "x": -0.04,
+          "y": -0.04
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.06,
+          "angle": 0.22
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.06,
+          "x": 0.1,
+          "y": 0.12
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.06,
+          "x": 0.1,
+          "y": 0.12
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 0.3
+    },
+    {
+      "chain": "right-leg",
+      "finish": 0.3
+    }
+  ],
+  "markers": [],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "hurt"
+        }
+      ]
+    }
+  ]
+}

@@ -25,9 +25,9 @@ public static class StarterContent
         ];
         model.MotionSets =
         [
-            new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "person-idle", ["walk"] = "person-walk", ["run"] = "person-run", ["jump"] = "person-jump" } },
-            new() { Id = "deliberate", Name = "Deliberate", Roles = new() { ["idle"] = "person-idle", ["walk"] = "person-walk" } },
-            new() { Id = "heavy", Name = "Heavy", Roles = new() { ["idle"] = "person-idle", ["walk"] = HeavyWalk, ["run"] = "person-run" } },
+            new() { Id = "standard", Name = "Standard", Roles = Reactions(new() { ["idle"] = "person-idle", ["walk"] = "person-walk", ["run"] = "person-run", ["jump"] = "person-jump" }) },
+            new() { Id = "deliberate", Name = "Deliberate", Roles = Reactions(new() { ["idle"] = "person-idle", ["walk"] = "person-walk" }) },
+            new() { Id = "heavy", Name = "Heavy", Roles = Reactions(new() { ["idle"] = "person-idle", ["walk"] = HeavyWalk, ["run"] = "person-run" }) },
         ];
         // The upper group is what an upper-body action owns over locomotion; the legs and pelvis stay with the gait.
         model.Groups =
@@ -56,6 +56,14 @@ public static class StarterContent
         ];
     }
 
+    public const string PersonHitClip = "person-hit", PersonDeathClip = "person-death";
+
+    /// <summary>Every Person set reacts with the same stand-in hit and death until a set needs its own.</summary>
+    private static Dictionary<string, string> Reactions(Dictionary<string, string> roles)
+    {
+        roles[EntityControllers.Hit] = PersonHitClip; roles[EntityControllers.Death] = PersonDeathClip; return roles;
+    }
+
     public static void Write(string authoredRoot, CharacterModel person)
     {
         void Save(string folder, string id, string json)
@@ -64,13 +72,13 @@ public static class StarterContent
             AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
         }
         var resolved = ResolvedModel.From(person);
-        var clips = new[] { PersonIdle(resolved), PersonThrust(resolved), PersonJump(resolved) };
+        var clips = new[] { PersonIdle(resolved), PersonThrust(resolved), PersonJump(resolved), PersonHit(resolved), PersonDeath(resolved) };
         foreach (var clip in clips) { clip.Validate(resolved); Save("animations", clip.Id, clip.ToJson()); }
         var spear = SpearProp(); Save("props", spear.Id, spear.ToJson());
 
         var stalker = StalkerModel(); var stalkerResolved = ResolvedModel.From(stalker);
         Save("models", stalker.Id, stalker.ToJson());
-        foreach (var clip in new[] { StalkerIdle(stalkerResolved), StalkerWalk(stalkerResolved), StalkerLunge(stalkerResolved) }) { clip.Validate(stalkerResolved); Save("animations", clip.Id, clip.ToJson()); }
+        foreach (var clip in new[] { StalkerIdle(stalkerResolved), StalkerWalk(stalkerResolved), StalkerLunge(stalkerResolved), StalkerHit(stalkerResolved), StalkerDeath(stalkerResolved) }) { clip.Validate(stalkerResolved); Save("animations", clip.Id, clip.ToJson()); }
 
         foreach (var entity in new[] { SpearGuardEntity(), PlayerEntity(), StalkerEntity() }) { entity.Validate(); Save("entities", entity.Id, entity.ToJson()); }
     }
@@ -128,6 +136,39 @@ public static class StarterContent
             Track(MotionClip.TargetKind, "right-arm", K(0), K(1, .01f, .02f), K(2)),
         ];
         clip.Contacts = [Plant("left-leg", 0, 2), Plant("right-leg", 0, 2)];
+        return clip;
+    }
+
+    /// <summary>Stand-in hit reaction: the chest snaps back and the hips dip on planted feet, then settle.</summary>
+    public static MotionClip PersonHit(ResolvedModel model)
+    {
+        var clip = Clip(model, PersonHitClip, "Hit (stand-in)", .3f, false);
+        clip.Tracks =
+        [
+            Track(MotionClip.TranslateKind, "hips", K(0), K(.06f, -.04f, -.04f, ClipEase.Linear), K(.3f)),
+            Track(MotionClip.RotateKind, "chest", R(0, 0), R(.06f, .22f, ClipEase.Linear), R(.3f, 0)),
+            Track(MotionClip.TargetKind, "left-arm", K(0), K(.06f, .1f, .12f, ClipEase.Linear), K(.3f)),
+            Track(MotionClip.TargetKind, "right-arm", K(0), K(.06f, .1f, .12f, ClipEase.Linear), K(.3f)),
+        ];
+        clip.Contacts = [Plant("left-leg", 0, .3f), Plant("right-leg", 0, .3f)];
+        clip.Faces = [new() { Part = "head", Keys = [new() { Time = 0, Expression = "hurt" }] }];
+        return clip;
+    }
+
+    /// <summary>Stand-in death: the knees give, the body folds back onto the ground and stays down.</summary>
+    public static MotionClip PersonDeath(ResolvedModel model)
+    {
+        var clip = Clip(model, PersonDeathClip, "Death (stand-in)", 1.1f, false);
+        clip.Tracks =
+        [
+            Track(MotionClip.TranslateKind, "hips", K(0), K(.25f, -.03f, -.12f), K(.75f, -.28f, -.72f), K(1.1f, -.3f, -.7f)),
+            Track(MotionClip.RotateKind, "chest", R(0, 0), R(.25f, -.15f), R(.75f, .9f), R(1.1f, 1.1f)),
+            Track(MotionClip.TargetKind, "left-arm", K(0), K(.4f, .15f, .25f), K(1.1f, -.1f, .05f)),
+            Track(MotionClip.TargetKind, "right-arm", K(0), K(.4f, .15f, .25f), K(1.1f, -.05f, 0)),
+        ];
+        clip.Contacts = [Plant("left-leg", 0, 1.1f), Plant("right-leg", 0, 1.1f)];
+        clip.Markers = [new() { Id = "impact", Time = .75f }];
+        clip.Faces = [new() { Part = "head", Keys = [new() { Time = 0, Expression = "hurt" }, new() { Time = .75f, Expression = "knocked-out" }] }];
         return clip;
     }
 
@@ -199,7 +240,7 @@ public static class StarterContent
         foreach (var control in model.Controls.Where(c => c.Id == "body" || c.Id.StartsWith("hip-", StringComparison.Ordinal))) control.Scale = "leg";
         var shell = ModelAuthoring.AddPart(model, "ellipse", "body"); shell.Width = .95f; shell.Height = .38f; shell.Fill = "#c9e0b8"; shell.Depth = -.05f;
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
-        model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk" } }];
+        model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
         model.HurtLayouts = [new() { Id = "standard", Regions = [new() { Id = "shell", Controls = ["body", "hip-0", "hip-2"], Pad = .2f }, new() { Id = "legs", Controls = ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], Pad = .05f }] }];
         model.Validate(); return model;
     }
@@ -236,6 +277,25 @@ public static class StarterContent
         clip.Tracks = [Track(MotionClip.TranslateKind, "body", K(0), K(.22f, -.1f, .06f), K(.32f, .24f, -.06f, ClipEase.Linear), K(.5f, .24f, -.06f), K(.8f))];
         clip.Contacts = [Plant("foot-0-chain", 0, .8f), Plant("foot-1-chain", 0, .8f), Plant("foot-2-chain", 0, .8f)];
         clip.Markers = [new() { Id = "windup", Time = .05f }, new() { Id = "strike", Time = .3f }, new() { Id = "recover", Time = .5f }];
+        return clip;
+    }
+
+    /// <summary>Stand-in: the body jolts back and down on planted feet, then settles.</summary>
+    private static MotionClip StalkerHit(ResolvedModel model)
+    {
+        var clip = Clip(model, "stalker-hit", "Stalker hit", .3f, false);
+        clip.Tracks = [Track(MotionClip.TranslateKind, "body", K(0), K(.07f, -.1f, -.08f, ClipEase.Linear), K(.3f))];
+        clip.Contacts = [Plant("foot-0-chain", 0, .3f), Plant("foot-1-chain", 0, .3f), Plant("foot-2-chain", 0, .3f)];
+        return clip;
+    }
+
+    /// <summary>Stand-in: the body sinks onto folding legs and stays down.</summary>
+    private static MotionClip StalkerDeath(ResolvedModel model)
+    {
+        var clip = Clip(model, "stalker-death", "Stalker death", .9f, false);
+        clip.Tracks = [Track(MotionClip.TranslateKind, "body", K(0), K(.12f, -.06f, .04f), K(.6f, -.08f, -.5f), K(.9f, -.08f, -.46f))];
+        clip.Contacts = [Plant("foot-0-chain", 0, .9f), Plant("foot-1-chain", 0, .9f), Plant("foot-2-chain", 0, .9f)];
+        clip.Markers = [new() { Id = "impact", Time = .6f }];
         return clip;
     }
 

@@ -101,13 +101,15 @@ internal static class AuthoredRenderingSmoke2D
         var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
         if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
         var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute" };
-        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f) })
+        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })
         foreach (var facing in new[] { 1, -1 })
         {
             var states = ids.Select((id, i) =>
             {
                 var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-230 + i * 125) / AuthoredWorld.PixelsPerUnit, 0);
-                if (action is not null && animator.TryStart(action)) for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
+                // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
+                if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }
+                else if (action is not null && animator.TryStart(action)) for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
                 else for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, phase, phase == "walk" ? .012f : 0, false, []);
                 return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, feet * AuthoredWorld.PixelsPerUnit, Vector2.Zero, 0, facing, true, true)
                 { TypeId = id, AuthoredEntity = entity, AuthoredPose = animator.Pose };

@@ -1,0 +1,51 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "stalker-hit",
+  "name": "Stalker hit",
+  "model": "stalker",
+  "structureRevision": 1,
+  "duration": 0.3,
+  "reference": {
+    "leg": 0.8544004
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "body",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.07,
+          "x": -0.1,
+          "y": -0.08
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "foot-0-chain",
+      "finish": 0.3
+    },
+    {
+      "chain": "foot-1-chain",
+      "finish": 0.3
+    },
+    {
+      "chain": "foot-2-chain",
+      "finish": 0.3
+    }
+  ],
+  "markers": [],
+  "faces": []
+}
