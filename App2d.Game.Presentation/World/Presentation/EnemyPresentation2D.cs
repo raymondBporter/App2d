@@ -113,10 +113,10 @@ public sealed class EnemyPresentation2D(
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
         private readonly App2d.Rendering.Characters.PointCharacterShader _shader;
-        private readonly List<WorldObject2D> _bolts = [];
+        private readonly BoltViews _bolts;
         public AuthoredView(Scene2D scene, App2d.Core.Characters.EntityCatalog catalog, string typeId)
         {
-            _scene = scene; _shader = new(catalog, catalog.Types[typeId]);
+            _scene = scene; _shader = new(catalog, catalog.Types[typeId]); _bolts = new(scene);
             _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
             _visual.Transform.Scale = new(App2d.Core.Characters.EntityCatalog.WorldUnits);
             scene.Add(_visual);
@@ -127,11 +127,22 @@ public sealed class EnemyPresentation2D(
             _shader.Action = state.ActionId ?? "idle"; _shader.Seconds = state.ActionSeconds; _shader.FacingLeft = state.Facing < 0;
             _visual.Transform.Position = state.Position - new Vector2(_shader.Type.Movement.OffsetX * state.Facing, _shader.Type.Movement.Height / 2) * scale;
             _visual.IsVisible = state.IsEnabled;
+            _bolts.Update(state);
+        }
+        public override void Dispose() { _scene.Remove(_visual); _bolts.Dispose(); }
+    }
+
+    /// <summary>An enemy's live bolts as boxes, pooled.</summary>
+    private sealed class BoltViews(Scene2D scene) : IDisposable
+    {
+        private readonly List<WorldObject2D> _bolts = [];
+        public void Update(EnemyState2D state)
+        {
             var count = state.IsEnabled && !state.Bolts.IsDefault ? state.Bolts.Length : 0;
             while (_bolts.Count < count)
             {
                 var bolt = new WorldObject2D(AxisAlignedRectangle2D.FromSize(Vector2.One), new SolidColorShader(XnaColor.OrangeRed)) { ZIndex = 2 };
-                _bolts.Add(bolt); _scene.Add(bolt);
+                _bolts.Add(bolt); scene.Add(bolt);
             }
             for (var i = 0; i < _bolts.Count; i++)
             {
@@ -141,7 +152,7 @@ public sealed class EnemyPresentation2D(
                 _bolts[i].Transform.Scale = state.Bolts[i].Size;
             }
         }
-        public override void Dispose() { _scene.Remove(_visual); foreach (var bolt in _bolts) _scene.Remove(bolt); }
+        public void Dispose() { foreach (var bolt in _bolts) scene.Remove(bolt); }
     }
 
     /// <summary>Draws the simulation's own final pose for an authored entity; nothing here samples animation.</summary>
@@ -150,9 +161,10 @@ public sealed class EnemyPresentation2D(
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
         private readonly App2d.Rendering.Characters.AuthoredCharacterShader _shader;
+        private readonly BoltViews _bolts;
         public AuthoredPoseView(Scene2D scene, App2d.Core.Characters.ResolvedEntity entity)
         {
-            _scene = scene; _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
+            _scene = scene; _bolts = new(scene); _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
             _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
             _visual.Transform.Scale = new(App2d.Core.Characters.EntityCatalog.WorldUnits);
             scene.Add(_visual);
@@ -160,11 +172,12 @@ public sealed class EnemyPresentation2D(
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
         {
             _visual.IsVisible = state.IsEnabled && state.AuthoredPose is not null;
+            _bolts.Update(state);
             if (state.AuthoredPose is not { } pose) return;
             _shader.Pose = pose.Local; _shader.Facing = pose.Facing;
             _visual.Transform.Position = pose.Position * App2d.Core.Characters.EntityCatalog.WorldUnits;
         }
-        public override void Dispose() => _scene.Remove(_visual);
+        public override void Dispose() { _scene.Remove(_visual); _bolts.Dispose(); }
     }
 
     private sealed class AnimatedView : View

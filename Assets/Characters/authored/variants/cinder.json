@@ -1,0 +1,24 @@
+{
+  "format": "app2d-variant",
+  "version": 1,
+  "id": "cinder",
+  "name": "Cinder",
+  "base": "person",
+  "build": {
+    "legs": 0.9,
+    "torso": 0.95,
+    "arms": 0.95,
+    "width": 1.05,
+    "head": 1.05
+  },
+  "rest": {},
+  "parts": {
+    "body": {
+      "fill": "#e0784c"
+    },
+    "head": {
+      "fill": "#f3dcc6",
+      "face": "smug"
+    }
+  }
+}

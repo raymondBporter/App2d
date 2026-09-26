@@ -57,13 +57,63 @@ internal static class PlayerMoves
         foreach (var clip in Clips(model)) clip.Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
         Directory.CreateDirectory(Path.Combine(authoredRoot, "entities"));
         Hero().Save(Path.Combine(authoredRoot, "entities", Hero().Id + ".json"));
+        // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
+        PistolShot(model).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
+        var cinder = CinderVariant(); cinder.Save(Path.Combine(authoredRoot, "variants", cinder.Id + ".json"));
+        var gunner = CinderGunner(ResolvedModel.From(person, cinder)); gunner.Save(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"));
     }
+
+    /// <summary>
+    /// An enemy's readable pistol shot, 1.1 s: raise to the aim pose, hold, fire at 0.6 s with the player's kick, settle and
+    /// lower. Whole body, with both feet planted; reuses the gun clips' aim and recoil poses.
+    /// </summary>
+    private static MotionClip PistolShot(ResolvedModel m) => New(m, "person-pistol-shot", "Pistol shot", 1.1f, false)
+        .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
+        .Key(.35f, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
+        .Key(.6f, k => k.Hips(-.02f, -.035f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0), ClipEase.Linear)
+        .Key(.63f, k => k.Chest(.06f).Head(.05f).RightHand(.54f, 0).LeftHand(.01f, -.6f).Blade(.38f))
+        .Key(.85f, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
+        .Key(1.1f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
+        .Plant("left-leg", 0, 1.1f, Back).Plant("right-leg", 0, 1.1f, Front)
+        .Marker("fire", .6f)
+        .Face(0, "focused").Face(.6f, "determined").Face(.85f, "focused")
+        .Build();
+
+    /// <summary>Slight and quick, in hot colors: the cinder placement's look.</summary>
+    public static ModelVariant CinderVariant()
+    {
+        var variant = new PersonBuild { Legs = .9f, Torso = .95f, Arms = .95f, Width = 1.05f, Head = 1.05f }.Apply(PersonTemplate.Model(), "cinder", "Cinder");
+        variant.Parts["body"] = new() { Fill = "#e0784c" };
+        variant.Parts["head"] = new() { Fill = "#f3dcc6", Face = "smug" };
+        return variant;
+    }
+
+    /// <summary>Keeps its distance and shoots: walks in to 4.5 units, then fires an 8 unit/s bolt from the pistol's muzzle.</summary>
+    public static EntityAsset CinderGunner(ResolvedModel model) => new()
+    {
+        Id = "cinder-gunner", Name = "Cinder gunner", Model = model.Id, MotionSet = "standard",
+        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.4f, Range = 4.5f, Cooldown = 1 },
+        Health = 7, Movement = EntityAuthoring.FitMovement(model), Hurt = new() { Layout = "standard" },
+        Equipment = [new() { Prop = PersonLoadout.Pistol, Socket = PersonLoadout.GunSocket }],
+        Actions =
+        [
+            new()
+            {
+                Id = EntityControllers.Attack, Clip = "person-pistol-shot",
+                Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }],
+                Projectile = new() { Speed = 8, Width = .3f, Height = .12f, Damage = 2, Lifetime = 3 },
+            },
+        ],
+    };
 
     /// <summary>
     /// The game's traversal player. Person2D moves it; this entity supplies what the move set's clips already say: the sword's
     /// duration and strike → recover window from the draw-slash (and the slash for a follow-up while the blade is out), its hit box on the sword tip, and the muzzle at each shot's fire
     /// marker. Health and the movement box are the player's too.
     /// </summary>
+    /// <summary>The player's bolt: 30 x 10 px at 1250 px/s for 1.5 s at the player's drawn scale (about 40 px per unit).</summary>
+    private static ProjectileDef PlayerBolt => new() { Speed = 31, Width = .75f, Height = .25f, Damage = 2, Lifetime = 1.5f };
+
     public static EntityAsset Hero() => new()
     {
         Id = "hero", Name = "Hero", Model = PersonTemplate.Id, MotionSet = "standard",
@@ -85,8 +135,8 @@ internal static class PlayerMoves
                 Hits = [new() { Id = "blade", Prop = PersonLoadout.Sword, Along = -.35f, Width = 1.1f, Height = 1.3f, Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
                 Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
             },
-            new() { Id = EntityControllers.Shoot, Clip = "player-gun-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }] },
-            new() { Id = EntityControllers.WallShot, Clip = "player-gun-wall-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }] },
+            new() { Id = EntityControllers.Shoot, Clip = "player-gun-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }], Projectile = PlayerBolt },
+            new() { Id = EntityControllers.WallShot, Clip = "player-gun-wall-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }], Projectile = PlayerBolt },
         ],
     };
 

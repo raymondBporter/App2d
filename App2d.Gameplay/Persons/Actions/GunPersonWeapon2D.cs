@@ -13,7 +13,11 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
 {
     private const float ChargeSeconds = 0.6f;
     private const float RecoverySeconds = 0.06f;
-    private const float BoltWidth = 30f;
+    /// <summary>A bolt's size, speed (pixels) and lifetime, and its damage; from the authored hero's shot when it has one.</summary>
+    internal readonly record struct Shot(Vector2 Size, float Speed, float Lifetime, int Damage);
+    private static readonly Shot DefaultShot = new(new(30f, 10f), 1250f, 1.5f, 2);
+    private readonly Shot _shot;
+    private float BoltWidth => _shot.Size.X;
     private const int ProjectileIdCapacity = 1 << 20;
     private readonly PhysicsBody2D _ownerBody;
     private readonly CollisionSystem2D _collision;
@@ -40,9 +44,10 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         EntityIdAllocator2D ids,
         PhysicsBody2D ownerBody, Vector2 muzzleOffset, CollisionSystem2D collision,
         uint worldLayer, uint targetLayer, CombatFaction2D ownerFaction,
-        CombatSystem2D combat, Action shotStarted, Action<WeaponEvent2D> publish, Func<float, Vector2>? muzzle = null)
+        CombatSystem2D combat, Action shotStarted, Action<WeaponEvent2D> publish, Func<float, Vector2>? muzzle = null, Shot? shot = null)
         : base(EquipmentKind2D.Gun)
     {
+        _shot = shot ?? DefaultShot;
         _projectileIds = new EntityIdSequence2D(ids, ProjectileIdCapacity);
         _ownerBody = ArgGuard.RequireNotNull(ownerBody);
         _collision = ArgGuard.RequireNotNull(collision);
@@ -59,7 +64,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
             new Vector2(_muzzleOffset.X + BoltWidth, 4f)));
         for (var index = 0; index < 16; index++)
             _bullets.Add(new Projectile2D(new SpatialObject2D(
-                AxisAlignedRectangle2D.FromSize(new Vector2(BoltWidth, 10f)))));
+                AxisAlignedRectangle2D.FromSize(_shot.Size))));
     }
 
     public WeaponState2D CaptureState() => new(IsCharging, ChargeProgress, MuzzlePosition,
@@ -153,7 +158,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
             // Availability is simulation state; a fading client trail cannot delay a shot.
             if (projectile.IsActive) continue;
             projectile.Launch(muzzle + new Vector2(_direction * BoltWidth * 0.5f, 0f),
-                new Vector2(_direction * 1250f, 0f), lifetime: 1.5f, origin: muzzle, id: _projectileIds.Next());
+                new Vector2(_direction * _shot.Speed, 0f), lifetime: _shot.Lifetime, origin: muzzle, id: _projectileIds.Next());
             ResolveHit(projectile);
             break;
         }
@@ -163,7 +168,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
     {
         var direction = MathF.Sign(projectile.Velocity.X);
         var hit = _combat.TryDamageFirst(projectile.WorldObject, _ownerFaction,
-            _targetLayer, damage: 2, _ => new Vector2(direction * 450f, 140f));
+            _targetLayer, damage: _shot.Damage, _ => new Vector2(direction * 450f, 140f));
         if (!hit)
             hit = _collision.Overlap(projectile.WorldObject, _overlaps,
                 _worldLayer, includeSensors: false) > 0;

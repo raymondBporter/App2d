@@ -6,6 +6,8 @@ namespace App2d.Gameplay.Entities;
 public readonly record struct ArenaInput(float Move = 0, bool Run = false, bool Jump = false, bool Attack = false);
 public readonly record struct ArenaEvent(long Tick, int Actor, AnimationEvent Event, Vector2 Position);
 public readonly record struct ArenaHit(long Tick, int Attacker, int Target, string Window, int Damage);
+/// <summary>A projectile in flight, in model units.</summary>
+public readonly record struct ArenaBolt(int Owner, Vector2 Position, Vector2 Velocity, Vector2 Size, float Lifetime, int Damage);
 
 /// <summary>
 /// The flat-ground entity arena over authored entities. Actor 0 is controlled; the others walk toward it and attack in
@@ -58,6 +60,7 @@ public sealed class AuthoredArena
     public long Tick { get; private set; }
     public List<ArenaEvent> Events { get; } = [];
     public List<ArenaHit> Hits { get; } = [];
+    public List<ArenaBolt> Bolts { get; } = [];
 
     /// <summary>Moves an actor instantly. Its action, phase and contacts reset rather than stretching a foot across the jump.</summary>
     public void Teleport(int index, Vector2 position)
@@ -83,6 +86,22 @@ public sealed class AuthoredArena
                     Hits.Add(new(Tick, attacker.Index, target.Index, hit.Window.Id, hit.Window.Damage));
                     Damage(target, hit.Window.Damage);
                 }
+        }
+        StepBolts();
+    }
+
+    /// <summary>Bolts fly straight until they meet an opposing actor's hurt region, the ground or the end of their lifetime.</summary>
+    private void StepBolts()
+    {
+        for (var i = Bolts.Count - 1; i >= 0; i--)
+        {
+            var bolt = Bolts[i];
+            bolt = bolt with { Position = bolt.Position + bolt.Velocity * StepSeconds, Lifetime = bolt.Lifetime - StepSeconds };
+            var box = EntityRegion.Box("bolt", bolt.Position, bolt.Size);
+            var target = Actors.FirstOrDefault(t => t.Alive && (t.Index == 0) != (bolt.Owner == 0) && t.Hurt.Any(h => h.Overlaps(box, Vector2.Zero, Vector2.Zero)));
+            if (target is not null) { Hits.Add(new(Tick, bolt.Owner, target.Index, "bolt", bolt.Damage)); Damage(target, bolt.Damage); }
+            if (target is not null || bolt.Lifetime <= 0 || bolt.Position.Y < 0 || MathF.Abs(bolt.Position.X) > HalfWidth + 2) Bolts.RemoveAt(i);
+            else Bolts[i] = bolt;
         }
     }
 
@@ -143,6 +162,11 @@ public sealed class AuthoredArena
             Events.Add(new(Tick, actor.Index, e, position));
             if (e is { Kind: AnimationEvent.EventKind, Id: EntityControllers.Launch } && animator.Action == EntityControllers.Jump)
             { actor.Grounded = false; actor.Launched = true; actor.Velocity = new(actor.Velocity.X, config.JumpSpeed); }
+            if (e is { Kind: AnimationEvent.EventKind, Id: EntityControllers.Fire } && animator.Current?.Projectile is { } shot)
+            {
+                var (muzzle, axis) = EntityCollision.Muzzle(actor.Entity, actor.Pose);
+                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, new(shot.Width, shot.Height), shot.Lifetime, shot.Damage));
+            }
         }
         if (animator.ActionComplete && animator.Action != EntityControllers.Jump) animator.EndAction();
     }

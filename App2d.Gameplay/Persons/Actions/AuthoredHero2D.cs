@@ -47,6 +47,10 @@ public sealed class AuthoredHero2D
     }
     public int Damage => Hit.Window.Damage;
 
+    /// <summary>The player's bolt from the shoot action's projectile, in pixels.</summary>
+    internal GunPersonWeapon2D.Shot? Shot => Entity.Actions.GetValueOrDefault(EntityControllers.Shoot)?.Projectile is { } p
+        ? new(new Vector2(p.Width, p.Height) * PixelsPerUnit, p.Speed * PixelsPerUnit, p.Lifetime, p.Damage) : null;
+
     /// <summary>The hit box centre at a time into the attack, for the given facing.</summary>
     public Vector2 Offset(float seconds, float facing, bool followUp = false)
     {

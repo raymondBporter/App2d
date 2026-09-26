@@ -38,7 +38,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
             duration => DownAttackStarted?.Invoke(duration), overlapsSpikes,
             hero);
         _gun = new GunPersonWeapon2D(ids, ownerBody, muzzleOffset, collision, worldLayer, targetLayer,
-            ownerFaction, combat, () => ShotStarted?.Invoke(), Publish, muzzle);
+            ownerFaction, combat, () => ShotStarted?.Invoke(), Publish, muzzle, hero?.Shot);
         _weapons = [_sword, _gun];
         _unarmed = new UnarmedPersonActions2D(
             ids,

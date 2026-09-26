@@ -12,8 +12,11 @@ namespace App2d.CharacterStudio;
 internal sealed record ArenaActorFrame(ResolvedEntity Entity, ActorPose Pose, EntityRegion Movement, IReadOnlyList<EntityRegion> Hurt,
     IReadOnlyList<EntityRegion> Attacks, IReadOnlyDictionary<string, Vector3> Anchors, bool Alive)
 {
+    /// <summary>Every actor, with the bolts in flight shown as attack regions of the actor that fired them.</summary>
     public static IReadOnlyList<ArenaActorFrame> Capture(AuthoredArena arena) => [.. arena.Actors.Select(a => new ArenaActorFrame(
-        a.Entity, a.Pose, a.Movement, a.Hurt, [.. a.Attacks.Select(x => x.Region)], a.Animator.Anchors.ToDictionary(), a.Alive))];
+        a.Entity, a.Pose, a.Movement, a.Hurt,
+        [.. a.Attacks.Select(x => x.Region), .. arena.Bolts.Where(b => b.Owner == a.Index).Select(b => EntityRegion.Box("bolt", b.Position, b.Size))],
+        a.Animator.Anchors.ToDictionary(), a.Alive))];
 }
 
 /// <summary>

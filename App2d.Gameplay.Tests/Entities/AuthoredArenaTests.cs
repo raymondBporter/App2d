@@ -41,6 +41,18 @@ public sealed class AuthoredArenaTests
     }
 
     [Fact]
+    public void TheGunnerShootsBoltsThatHitFromRange()
+    {
+        var arena = Arena("player", "cinder-gunner");
+        arena.Teleport(0, new(0, 0)); arena.Teleport(1, new(4, 0));
+        var flew = false;
+        for (var i = 0; i < 480; i++) { arena.Step(default); flew |= arena.Bolts.Count > 0; }
+        Assert.True(flew, "the gunner fired");
+        Assert.Contains(arena.Hits, h => h.Attacker == 1 && h.Window == "bolt" && h.Damage == 2);
+        Assert.Contains(arena.Events, e => e.Actor == 1 && e.Event.Sound == "shot");
+    }
+
+    [Fact]
     public void AMaskedAttackKeepsWalkingWhileAWholeBodyOneStands()
     {
         var skirmisher = StarterContent.SpearGuardEntity(); skirmisher.Id = "skirmisher";

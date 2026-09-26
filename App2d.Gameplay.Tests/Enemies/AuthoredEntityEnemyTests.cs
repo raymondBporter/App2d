@@ -81,6 +81,57 @@ public sealed class AuthoredEntityEnemyTests
         Assert.False(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TheGunnersBoltsLeaveThePistolDamageThePlayerAndStopAtTerrain(bool wall)
+    {
+        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var gunner = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["cinder-gunner"], physics, new(0, 31), 1, 4);
+        gunner.SetSimulationEnabled(true);
+        var player = new Person2D(App2d.Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(150, 40), 2, 1, CombatFaction2D.Player, 30);
+        if (wall)
+        {
+            var shape = new App2d.Core.SpatialObject2D(App2d.Core.Geometry.AxisAlignedRectangle2D.FromSize(new(5, 400))); shape.Transform.Position = new(95, 40);
+            var body = physics.AddBody(shape, BodyMotionType2D.Static); body.CollisionLayer = 1; body.CollisionMask = 6;
+        }
+        var sawBolt = false;
+        for (var i = 0; i < 360; i++)
+        {
+            gunner.Update(1f / 120, player.Position); gunner.SyncAfterPhysics(); gunner.TryResolvePlayerHit(player);
+            var bolts = gunner.CaptureState().Bolts;
+            if (bolts.Length > 0 && !sawBolt)
+            {
+                sawBolt = true;
+                var gun = gunner.Entity.Equipment.Single();
+                var muzzle = ActorPose.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * EntityCatalog.WorldUnits;
+                Assert.True(Vector2.Distance(new(muzzle.X, muzzle.Y), bolts[0].Position) < 12, "the bolt leaves the drawn muzzle");
+                Assert.True(bolts[0].Velocity.X > 0, "toward the player");
+            }
+        }
+        Assert.True(sawBolt);
+        if (wall) Assert.Equal(30, player.Health.Current); else Assert.True(player.Health.Current < 30);
+    }
+
+    [Fact]
+    public void RivalPlacementsSpawnTheGunnerAndItsBoltsReplayExactly()
+    {
+        var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
+        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+        [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)), new(4, WorldThingKind2D.Rival, null, true, new(-200, 42))])
+        { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
+        Assert.Equal("cinder-gunner", Assert.Single(game.Session.CaptureEnemies()).TypeId);
+        for (var i = 0; i < 60; i++) game.Session.Advance();
+        var checkpoint = game.Session.CaptureCheckpoint();
+        string[] Run() => [.. Enumerable.Range(0, 240).Select(_ => JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.Bolts.Select(b => b.Position).ToArray())).ToArray(), new JsonSerializerOptions { IncludeFields = true })
+            + (game.Session.Advance() is var frame ? "" : ""))];
+        var first = Run(); game.Session.RestoreCheckpoint(checkpoint); var second = Run();
+        Assert.Equal(first, second);
+        Assert.Contains(first, json => json.Contains("\"X\"") && json.Contains("[{"));
+        Assert.True(game.Player.Health.Current < 30, "the gunner's shots land");
+    }
+
     [Fact]
     public void TheSpearHitboxFollowsThePropInBothFacings()
     {

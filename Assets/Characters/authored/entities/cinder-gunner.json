@@ -1,0 +1,50 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "cinder-gunner",
+  "name": "Cinder gunner",
+  "model": "cinder",
+  "motionSet": "standard",
+  "roles": {},
+  "controller": {
+    "walkSpeed": 1.4,
+    "range": 4.5
+  },
+  "health": 7,
+  "movement": {
+    "width": 0.353,
+    "height": 2.186
+  },
+  "hurt": {
+    "layout": "standard",
+    "regions": {}
+  },
+  "equipment": [
+    {
+      "prop": "pistol",
+      "socket": "gun-hand"
+    }
+  ],
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "person-pistol-shot",
+      "projectile": {
+        "speed": 9,
+        "width": 0.3,
+        "height": 0.12,
+        "damage": 2
+      },
+      "hits": [],
+      "events": [
+        {
+          "id": "fire",
+          "at": {
+            "marker": "fire"
+          },
+          "sound": "shot"
+        }
+      ]
+    }
+  ]
+}

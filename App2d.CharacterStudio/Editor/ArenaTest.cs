@@ -27,7 +27,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
     public bool Active { get; private set; }
     public bool Paused { get; set; }
     public bool Overlays { get; set; } = true;
-    public List<string> Roster { get; } = [StarterContent.Player, StarterContent.SpearGuard, StarterContent.StalkerPest];
+    public List<string> Roster { get; } = [StarterContent.Player, StarterContent.SpearGuard, StarterContent.StalkerPest, "cinder-gunner"];
     public IReadOnlyList<string> Problems { get; private set; } = [];
     public AuthoredArena? Arena { get; private set; }
 

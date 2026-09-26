@@ -15,7 +15,9 @@ namespace App2d.Gameplay.Enemies;
 /// An enemy compiled from an authored entity, in the real terrain/streaming/rollback simulation. Its
 /// <see cref="EntityAnimator"/> produces the one final pose per tick: hurt and attack regions are derived from it here,
 /// and the presentation draws that same pose from <see cref="EnemyState2D.AuthoredPose"/> rather than re-sampling.
-/// Movement belongs to the physics body; gait phase follows the ground distance the body actually covered.
+/// Movement belongs to the physics body; gait phase follows the ground distance the body actually covered. An action's
+/// "fire" event launches its projectile from the equipped prop's muzzle, unless terrain crosses the barrel; bolts sweep in
+/// small steps so thin walls stop them, and they are part of the rollback snapshot.
 /// </summary>
 public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IAuthoredHurt2D
 {
@@ -25,6 +27,10 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private readonly Dictionary<EntityId2D, int> _hitHistory = [];
     private readonly List<EnemyEvent2D> _events = [];
     private readonly List<AnimationEvent> _scratch = [];
+    private readonly List<EntityBoltState2D> _bolts = [];
+    private readonly List<CollisionOverlap2D> _overlaps = [];
+    private readonly CollisionSystem2D _collision;
+    private readonly uint _worldLayer;
     private bool _enabled;
     private float _cooldown, _hurt, _dt;
     private int _facing = -1;
@@ -32,7 +38,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
     public AuthoredEntityEnemy2D(EntityId2D id, ResolvedEntity entity, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
-        Id = id; Entity = entity; _animator = new(entity);
+        Id = id; Entity = entity; _animator = new(entity); _collision = physics.CollisionSystem; _worldLayer = worldLayer;
         var box = entity.Asset.Movement;
         WorldObject = new(AxisAlignedRectangle2D.FromSize(new Vector2(box.Width, box.Height) * Scale));
         WorldObject.Transform.Position = position;
@@ -60,7 +66,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _enabled = isEnabled;
         Body.IsCollider = isEnabled && IsAlive;
         Body.MotionType = Body.IsCollider ? BodyMotionType2D.Dynamic : BodyMotionType2D.Static;
-        if (!isEnabled) Body.LinearVelocity = Vector2.Zero;
+        if (!isEnabled) { Body.LinearVelocity = Vector2.Zero; _bolts.Clear(); }
     }
 
     public void Update(float dt, Vector2 targetPosition)
@@ -90,7 +96,10 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         if (!_enabled) return;
         Evaluate(_dt, false);
         foreach (var e in _scratch)
+        {
             if (e.Sound is { } sound) _events.Add(new EntityCue2D(Id, Root, sound));
+            if (IsAlive && e.Kind == AnimationEvent.EventKind && e.Id == EntityControllers.Fire && _animator.Current?.Projectile is { } shot) Fire(shot);
+        }
         if (_animator.ActionComplete) _animator.EndAction();
     }
 
@@ -105,11 +114,59 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _animator.Step(dt, root / Scale, _facing, hold ? _animator.Role : role, grounded ? moved : 0, hold, _scratch, Expression);
     }
 
+    private void Fire(ProjectileDef shot)
+    {
+        var (point, axis) = EntityCollision.Muzzle(Entity, Pose);
+        var muzzle = new Vector2(point.X, point.Y) * Scale;
+        if (BarrelBlocked(muzzle)) { _events.Add(new EntityCue2D(Id, muzzle, "blocked")); return; }
+        _bolts.Add(new(muzzle, axis * shot.Speed * Scale, new Vector2(shot.Width, shot.Height) * Scale, shot.Lifetime));
+    }
+
+    /// <summary>Terrain between the body's centre line and the muzzle: a gun poked through a wall never fires beyond it.</summary>
+    private bool BarrelBlocked(Vector2 muzzle)
+    {
+        var start = new Vector2(WorldObject.Transform.Position.X, muzzle.Y);
+        var steps = Math.Max(1, (int)MathF.Ceiling(Vector2.Distance(start, muzzle) / 2));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(4)));
+        for (var i = 0; i <= steps; i++)
+        {
+            probe.Transform.Position = Vector2.Lerp(start, muzzle, i / (float)steps);
+            if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) > 0) return true;
+        }
+        return false;
+    }
+
+    /// <summary>Moves each bolt in small swept steps: terrain stops it, the player takes its damage once, and old bolts expire.</summary>
+    private void AdvanceBolts(Person2D player)
+    {
+        if (_bolts.Count == 0) return;
+        var flying = _bolts.ToArray(); _bolts.Clear();
+        var damage = Entity.Actions.Values.FirstOrDefault(a => a.Projectile is not null)?.Projectile?.Damage ?? 0;
+        foreach (var bolt in flying)
+        {
+            var lifetime = bolt.Lifetime - _dt;
+            if (lifetime <= 0) continue;
+            var distance = bolt.Velocity * _dt;
+            var steps = Math.Max(1, (int)MathF.Ceiling(distance.Length() / 4));
+            var shape = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(bolt.Size)); var position = bolt.Position; var hit = false;
+            for (var step = 1; step <= steps; step++)
+            {
+                position = bolt.Position + distance * (step / (float)steps); shape.Transform.Position = position;
+                if (_collision.Overlap(shape, _overlaps, _worldLayer, includeSensors: false) > 0) { hit = true; _events.Add(new EntityCue2D(Id, position, "impact")); break; }
+                if (player.IsAlive && shape.WorldBounds.Intersects(player.WorldObject.WorldBounds))
+                { player.TryTakeDamageFromX(damage, bolt.Position.X); hit = true; _events.Add(new EntityCue2D(Id, position, "hit")); break; }
+            }
+            if (!hit) _bolts.Add(bolt with { Position = position, Lifetime = lifetime });
+        }
+    }
+
     private static EntityRegion ToWorld(EntityRegion region) => new(region.Id, region.Points.Select(p => p * Scale).ToArray());
 
     public bool TryResolvePlayerHit(Person2D player)
     {
-        if (!_enabled || !IsAlive) return false;
+        if (!_enabled) return false;
+        AdvanceBolts(player); // bolts already in flight keep going after their shooter falls
+        if (!IsAlive) return !player.IsAlive;
         var bounds = player.WorldObject.WorldBounds; var target = EntityRegion.Box("player", bounds.Center, bounds.Size);
         foreach (var hit in _animator.ActiveHits())
         {
@@ -153,16 +210,16 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         TypeId = Entity.Id, ActionId = _animator.Action ?? _animator.Role, ActionSeconds = (float)(_animator.Action is null ? _animator.RoleTime : _animator.ActionTime),
         IsAttacking = _animator.Action == EntityControllers.Attack, AttackElapsedSeconds = (float)_animator.ActionTime,
-        MoveSpeed = Entity.Asset.Controller.WalkSpeed * Scale, AuthoredEntity = Entity, AuthoredPose = Pose,
+        MoveSpeed = Entity.Asset.Controller.WalkSpeed * Scale, AuthoredEntity = Entity, AuthoredPose = Pose, Bolts = [.. _bolts],
     };
 
     public ImmutableArray<EnemyEvent2D> DrainEvents() { var events = _events.ToImmutableArray(); _events.Clear(); return events; }
 
     private sealed record Snapshot(bool Enabled, float Cooldown, float Hurt, int Facing, int Health, Vector2 RootBefore, AnimatorState Animator,
-        ImmutableArray<(int, string, int)> Ledger, ImmutableDictionary<EntityId2D, int> Hits, ImmutableArray<EnemyEvent2D> Events) : SimulationState2D;
+        ImmutableArray<(int, string, int)> Ledger, ImmutableDictionary<EntityId2D, int> Hits, ImmutableArray<EnemyEvent2D> Events, ImmutableArray<EntityBoltState2D> Bolts) : SimulationState2D;
 
     public SimulationState2D CaptureSimulation() => new Snapshot(_enabled, _cooldown, _hurt, _facing, Health.Current, _rootBefore, _animator.Capture(),
-        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), _events.ToImmutableArray());
+        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), _events.ToImmutableArray(), [.. _bolts]);
 
     public void RestoreSimulation(SimulationState2D state)
     {
@@ -171,6 +228,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         Health.RestoreSimulation(s.Health); _ledger.Restore(s.Ledger);
         _hitHistory.Clear(); foreach (var pair in s.Hits) _hitHistory.Add(pair.Key, pair.Value);
         _events.Clear(); _events.AddRange(s.Events);
+        _bolts.Clear(); _bolts.AddRange(s.Bolts);
         _animator.Restore(s.Animator, Root / Scale, Expression);
     }
 }

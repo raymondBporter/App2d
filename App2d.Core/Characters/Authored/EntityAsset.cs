@@ -28,6 +28,19 @@ public sealed record HitWindow
     public int Damage { get; set; } = 1;
 }
 
+/// <summary>
+/// A shot an action fires on its "fire" event: a box leaving the equipped prop's muzzle along the prop's axis. Speed is model
+/// units per second; it flies until it hits, meets terrain or its lifetime ends.
+/// </summary>
+public sealed record ProjectileDef
+{
+    public float Speed { get; set; } = 8;
+    public float Width { get; set; } = .16f;
+    public float Height { get; set; } = .08f;
+    public int Damage { get; set; } = 1;
+    public float Lifetime { get; set; } = 3;
+}
+
 /// <summary>A gameplay event bound to an action moment. The controller interprets Id (for example "launch"); Sound, when set, plays.</summary>
 public sealed record ActionEvent
 {
@@ -50,6 +63,8 @@ public sealed record EntityActionDef
     public string? Mask { get; set; }
     public float BlendIn { get; set; }
     public float BlendOut { get; set; }
+    /// <summary>What a "fire" event launches. Required with one, meaningless without.</summary>
+    public ProjectileDef? Projectile { get; set; }
     public List<HitWindow> Hits { get; set; } = [];
     public List<ActionEvent> Events { get; set; } = [];
 }
@@ -166,6 +181,14 @@ public sealed class EntityAsset
             if (action.Mask is not null) AuthoredAsset.RequireId(action.Mask, field + " mask");
             new Limit(0, 5).Check(action.BlendIn, field + " blendIn"); new Limit(0, 5).Check(action.BlendOut, field + " blendOut");
             Require(action.Mask is not null || action.BlendIn == 0 && action.BlendOut == 0, $"{field}: blending needs a mask; a whole-body action replaces locomotion at once.");
+            var fires = action.Events.Any(e => e?.Id == EntityControllers.Fire);
+            Require(fires == (action.Projectile is not null), fires ? $"{field}: a '{EntityControllers.Fire}' event needs a projectile." : $"{field}: a projectile needs a '{EntityControllers.Fire}' event to launch it.");
+            if (action.Projectile is { } shot)
+            {
+                new Limit(.1f, 200).Check(shot.Speed, field + " projectile.speed"); new Limit(.01f, 10).Check(shot.Width, field + " projectile.width");
+                new Limit(.01f, 10).Check(shot.Height, field + " projectile.height"); new Limit(0, 10000).Check(shot.Damage, field + " projectile.damage");
+                new Limit(.05f, 30).Check(shot.Lifetime, field + " projectile.lifetime");
+            }
             var hits = new HashSet<string>(StringComparer.Ordinal);
             foreach (var hit in action.Hits)
             {

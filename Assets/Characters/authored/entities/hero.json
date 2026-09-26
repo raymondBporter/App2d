@@ -96,6 +96,13 @@
     {
       "id": "shoot",
       "clip": "player-gun-shot",
+      "projectile": {
+        "speed": 31,
+        "width": 0.75,
+        "height": 0.25,
+        "damage": 2,
+        "lifetime": 1.5
+      },
       "hits": [],
       "events": [
         {
@@ -110,6 +117,13 @@
     {
       "id": "wall-shot",
       "clip": "player-gun-wall-shot",
+      "projectile": {
+        "speed": 31,
+        "width": 0.75,
+        "height": 0.25,
+        "damage": 2,
+        "lifetime": 1.5
+      },
       "hits": [],
       "events": [
         {

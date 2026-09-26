@@ -1,0 +1,335 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "person-pistol-shot",
+  "name": "Pistol shot",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 1.1,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": -0.01,
+          "y": -0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.35,
+          "x": -0.02,
+          "y": -0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.02,
+          "y": -0.035
+        },
+        {
+          "time": 0.85,
+          "x": -0.02,
+          "y": -0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "x": -0.01,
+          "y": -0.04,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.35,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6
+        },
+        {
+          "time": 0.85,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "angle": -0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.35,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6
+        },
+        {
+          "time": 0.63,
+          "angle": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.85,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "angle": -0.03,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "x": 0.019497074,
+          "y": -0.00029248,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.35,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6
+        },
+        {
+          "time": 0.63,
+          "x": -0.038976602,
+          "y": -0.001169622,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.85,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "x": 0.019497074,
+          "y": -0.00029248,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.35,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.007599493,
+          "y": -7.599592E-05
+        },
+        {
+          "time": 0.63,
+          "x": -0.018992083,
+          "y": -0.0004749,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.85,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "right-shoulder",
+      "keys": [
+        {
+          "angle": 0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.35,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6
+        },
+        {
+          "time": 0.63,
+          "angle": 0.32,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.85,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "angle": 0.03,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.04999999,
+          "y": 0.06500006,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.35,
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": 0.615,
+          "y": 0.63000005
+        },
+        {
+          "time": 0.63,
+          "x": 0.4714789,
+          "y": 0.44970298,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.85,
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "x": 0.04999999,
+          "y": 0.06500006,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": 0.037974805,
+          "y": 0.051769733,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.35,
+          "x": -0.010000005,
+          "y": 0.050000012,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.010000005,
+          "y": 0.050000012
+        },
+        {
+          "time": 0.63,
+          "x": -0.055996396,
+          "y": 0.050480068,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.85,
+          "x": -0.010000005,
+          "y": 0.050000012,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.1,
+          "x": 0.037974805,
+          "y": 0.051769733,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 1.1,
+      "target": {
+        "x": -0.065,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "right-leg",
+      "finish": 1.1,
+      "target": {
+        "x": 0.065,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "markers": [
+    {
+      "id": "fire",
+      "time": 0.6
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "focused"
+        },
+        {
+          "time": 0.6,
+          "expression": "determined"
+        },
+        {
+          "time": 0.85,
+          "expression": "focused"
+        }
+      ]
+    }
+  ]
+}

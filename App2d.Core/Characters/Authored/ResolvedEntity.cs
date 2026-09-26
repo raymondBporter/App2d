@@ -11,6 +11,7 @@ public sealed record ResolvedEvent(ActionEvent Event, float Seconds);
 public sealed record ResolvedAction(string Id, MotionClip Clip, string Source, IReadOnlyList<ResolvedHit> Hits, IReadOnlyList<ResolvedEvent> Events)
 {
     public IReadOnlySet<string>? Mask { get; init; }
+    public ProjectileDef? Projectile { get; init; }
     public float BlendIn { get; init; }
     public float BlendOut { get; init; }
 
@@ -130,7 +131,7 @@ public sealed class ResolvedEntity
                 if (action.Id == EntityControllers.Jump) throw new InvalidDataException($"{field}: a jump moves the whole body and cannot be masked.");
                 if (action.BlendIn + action.BlendOut > clip.Duration + 1e-4f) throw new InvalidDataException($"{field}: blend in and out ({action.BlendIn + action.BlendOut:0.###}s) exceed the clip ({clip.Duration:0.###}s).");
             }
-            actions[action.Id] = new(action.Id, clip, source, hits, events) { Mask = mask, BlendIn = action.BlendIn, BlendOut = action.BlendOut };
+            actions[action.Id] = new(action.Id, clip, source, hits, events) { Mask = mask, BlendIn = action.BlendIn, BlendOut = action.BlendOut, Projectile = action.Projectile };
         }
         entity.Actions = actions;
 
@@ -213,6 +214,14 @@ public static class EntityCollision
         var equipment = entity.Equipment.First(e => e.Prop.Id == hit.Prop);
         var frame = pose.Socket(equipment.Socket);
         return frame with { Origin = ActorPose.PropPoint(frame, equipment.Prop, equipment.Prop.Point(hit.Point)!.Value) };
+    }
+
+    /// <summary>Where a shot leaves: the first equipped prop with a muzzle, and its unit axis in world XY (facing included).</summary>
+    public static (Vector3 Point, Vector2 Axis) Muzzle(ResolvedEntity entity, ActorPose pose)
+    {
+        var gun = entity.Equipment.FirstOrDefault(e => e.Prop.Muzzle is not null) ?? throw new InvalidOperationException($"Entity '{entity.Id}' equips no prop with a muzzle.");
+        var frame = pose.Socket(gun.Socket);
+        return (ActorPose.PropPoint(frame, gun.Prop, gun.Prop.Muzzle!.Value), frame.Axis);
     }
 
     public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit)
