@@ -16,7 +16,9 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
     private string? _dragging;
     private Vector3 _grab;
     private bool _grabbed;
-    private bool _onion = true;
+    private bool _onion = true, _showSource = true;
+    // The converted clip's source, sampled for the comparison overlay: rebuilt when the clip, its source or the preview build changes.
+    private (MotionClip Clip, AssetSource Source, ResolvedModel Model, LibraryImport.Sampler Sampler, float Ratio, Vector3 Offset)? _source;
     private string _marker = "strike";
     // Timeline rows are rebuilt each frame, so key drags and selection name their row by label.
     private (string Row, float From, float To)? _keyDrag;
@@ -71,6 +73,7 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
         if (Ui.Drag("Duration (seconds, retimes keys)", ref duration, .005f, .05f, 60)) session.Change(document, () => ClipAuthoring.Retime(document.Asset, Math.Clamp(duration, .05f, 60)));
         var loop = clip.Loop; if (ImGui.Checkbox("Loop", ref loop)) session.Edit(document, () => document.Asset.Loop = loop);
         TravelFields(document);
+        SourceFields(clip);
 
         Ui.Header("Keying");
         var autokey = session.AutoKey; if (ImGui.Checkbox("Autokey", ref autokey)) session.AutoKey = autokey;
@@ -83,6 +86,44 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
         Markers(document);
         foreach (var problem in session.Assets.Problems(document)) Ui.Problem(problem);
         References.Draw(session, document.Id);
+    }
+
+    private void SourceFields(MotionClip clip)
+    {
+        if (clip.Source is not { } source) return;
+        Ui.Header("Source");
+        Ui.Help(source.Kind == AssetSource.Library
+            ? $"Converted from imported library '{source.File}', clip '{source.Motion}', with '{source.Rest}' as the rest reference. The library is unchanged."
+            : $"Converted from {source.File}, motion '{source.Motion}'. The file is unchanged.");
+        if (source.Kind == AssetSource.Library)
+        {
+            ImGui.Checkbox("Show source points", ref _showSource);
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("Orange: the mapped source points at the same time, scaled to this build. Compare them with the converted pose.");
+        }
+    }
+
+    /// <summary>
+    /// Mapped source points in the subject's model space: scaled by the overall measure ratio and moved so the source's root in
+    /// its reference frame sits on the model's rest root. Empty when the source is unavailable.
+    /// </summary>
+    private IEnumerable<(string Control, Vector3 Point)> SourcePoints(Subject subject, MotionClip clip)
+    {
+        if (clip.Source is not { Kind: AssetSource.Library, Points: { } points } source) return [];
+        if (_source is not { } cached || cached.Clip != clip || cached.Source != source || cached.Model != subject.Model)
+        {
+            try
+            {
+                var library = session.Sources.Get(source.File);
+                var reference = new LibraryImport.Sampler(library, source.Rest ?? LibraryImport.DefaultRest(library, source.Motion!), points).At(0);
+                var ratio = LibraryImport.Ratios(subject.Model, reference).Overall;
+                var root = subject.Model.Order.FirstOrDefault(c => reference.ContainsKey(c.Id))?.Id;
+                var offset = root is null ? Vector3.Zero : subject.Model.Rest[root] - reference[root] * ratio;
+                _source = cached = (clip, source, subject.Model, new(library, source.Motion!, points), ratio, offset);
+            }
+            catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException) { session.Report("Source unavailable: " + ex.Message, true); _showSource = false; return []; }
+        }
+        var time = session.Transport.Time;
+        return cached.Sampler.At(time).Select(p => (p.Key, p.Value * cached.Ratio + cached.Offset + subject.Pose.Locomotion));
     }
 
     private void TravelFields(AssetDocument<MotionClip> document)
@@ -207,6 +248,13 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
             }
         }
         foreach (var control in model.Order.Where(c => c.Parent is not null)) draw.AddLine(frame.Screen(pose.World(control.Parent!)), frame.Screen(pose.World(control.Id)), Ui.Color(104, 112, 122, 130), 1);
+        if (_showSource)
+        {
+            var points = SourcePoints(subject, document.Asset).ToDictionary(p => p.Control, p => frame.Screen(p.Point), StringComparer.Ordinal);
+            foreach (var control in model.Order.Where(c => c.Parent is not null && points.ContainsKey(c.Id) && points.ContainsKey(c.Parent)))
+                draw.AddLine(points[control.Parent!], points[control.Id], Ui.Color(240, 106, 50, 150), 1.5f);
+            foreach (var p in points.Values) draw.AddCircleFilled(p, 3 * Ui.Scale, Ui.Color(240, 106, 50, 200));
+        }
         foreach (var control in model.Order)
         {
             var channel = ClipAuthoring.ChannelFor(model, control.Id); var p = frame.Screen(pose.World(control.Id));

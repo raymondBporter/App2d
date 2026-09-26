@@ -111,6 +111,8 @@ public sealed class CharacterModel
     public List<HurtLayout> HurtLayouts { get; set; } = [];
     public List<ControlGroup> Groups { get; set; } = [];
     public List<LookPreset> Looks { get; set; } = [];
+    /// <summary>The prototype puppet this model was converted from, if any.</summary>
+    public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static CharacterModel FromJson(string json) { var model = AuthoredAsset.Parse<CharacterModel>(json, "model"); model.Validate(); return model; }
@@ -129,6 +131,7 @@ public sealed class CharacterModel
         Require(Controls is not null && Chains is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Chains.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Limit.Color(Ink, "ink"); new Limit(.001f, 1).Check(LineWidth, "lineWidth");
+        Source?.Validate(owner);
 
         var controls = new Dictionary<string, ModelControl>(StringComparer.Ordinal);
         foreach (var control in Controls)

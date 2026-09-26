@@ -77,6 +77,13 @@ public sealed class AuthoringWorkspace
         Add(document); return (AssetDocument<T>)document;
     }
 
+    /// <summary>Removes a document that was created in this session and never saved. Saved assets are files and stay.</summary>
+    public void Discard(AssetDocument document)
+    {
+        if (!document.IsNew) throw new InvalidOperationException($"'{document.Id}' is saved; delete its file to remove it.");
+        _documents.Remove(document.Id);
+    }
+
     /// <summary>The base model a model or variant ID stands on.</summary>
     public string? BaseOf(string id) => Find(id) switch { AssetDocument<CharacterModel> m => m.Id, AssetDocument<ModelVariant> v => v.Asset.Base, AssetDocument<MotionClip> c => c.Asset.Model, _ => null };
 

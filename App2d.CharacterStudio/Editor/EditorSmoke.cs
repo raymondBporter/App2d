@@ -10,6 +10,8 @@ namespace App2d.CharacterStudio.Editor;
 /// step. Phase two: tall variant, build change while walking, shared clip drag and undo, and a headless tripod from Empty.
 /// Phase four: several people from builds and looks, Standard and Heavy motion on different sizes, an entity from a template
 /// with a masked spear thrust over its walk, one shared walk edit reaching every walker, and the result in Test.
+/// Phase five: an imported library walk converted onto Person and compared with its source points on two builds, and a
+/// <c>.puppet.json</c> converted into a model with its motion, both saved and reopened with their sources untouched.
 /// </summary>
 internal sealed class EditorSmoke(string output)
 {
@@ -104,6 +106,10 @@ internal sealed class EditorSmoke(string output)
                 var reopened = AuthoringWorkspace.Open(s.Assets.Root);
                 Record(new[] { "brute-heavy", "ranger-guard", "skirmisher" }.All(id => reopened.CompileEntity(id) is not null), "the new entities reopen and compile");
             }),
+            ("18-imported-walk-on-person", shell => { shell.Test.Stop(); ImportLibraryWalk(shell.Session); }),
+            ("19-imported-walk-on-tall", shell => { var s = shell.Session; s.SetSubject("tall-thin"); s.Pin("short-broad"); s.Seek(.9f); }),
+            ("20-imported-puppet", shell => ImportPuppet(shell.Session)),
+            ("21-imports-reopened", shell => ImportsReopened(shell.Session)),
         ];
         return workspace;
     }
@@ -155,14 +161,14 @@ internal sealed class EditorSmoke(string output)
 
     private void SeveralPeople(EditorSession s)
     {
-        foreach (var (id, name, preset, look) in new[] { ("brute", "Brute", "short-broad", "night"), ("ranger", "Ranger", "tall-thin", "ember"), ("sage", "Sage", "standard", "slate") })
+        foreach (var (id, name, preset, look) in new[] { ("bruiser", "Bruiser", "short-broad", "night"), ("ranger", "Ranger", "tall-thin", "ember"), ("sage", "Sage", "standard", "slate") })
         {
             Check(s.NewVariant(id, name, "person", preset), s); Check(s.ApplyLook(look), s);
         }
         var sage = s.SubjectVariant!;
         Check(s.Edit(sage, () => { sage.Asset.Build["head"] = 1.25f; sage.Asset.Build["torso"] = 1.08f; }), s);
-        s.Open("brute"); s.SetClip("person-walk"); s.Pin("ranger"); s.Pin("sage"); s.Seek(.3f);
-        var people = new[] { "brute", "ranger", "sage" }.Select(id => s.Assets.Resolve(id)!).ToArray();
+        s.Open("bruiser"); s.SetClip("person-walk"); s.Pin("ranger"); s.Pin("sage"); s.Seek(.3f);
+        var people = new[] { "bruiser", "ranger", "sage" }.Select(id => s.Assets.Resolve(id)!).ToArray();
         Record(people.Select(p => p.Parts.Single(x => x.Id == "body").Fill).Distinct().Count() == 3 && people.Select(p => p.Rest["head"].Y).Distinct().Count() == 3,
             "three visibly different people: distinct colors and heights");
         Record(s.Assets.Model("person")!.Dirty == false, "building people never edited the base");
@@ -172,11 +178,11 @@ internal sealed class EditorSmoke(string output)
     {
         Check(s.NewEntity("ranger-guard", "Ranger guard", "ranger", EntityAuthoring.Guard), s);
         Check(s.SetEntityRole("attack", "person-thrust"), s);
-        Check(s.NewEntity("brute-heavy", "Heavy brute", "brute", EntityAuthoring.Guard), s);
+        Check(s.NewEntity("brute-heavy", "Heavy bruiser", "bruiser", EntityAuthoring.Guard), s);
         Check(s.SetEntityRole("attack", "person-thrust"), s);
         Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.MotionSet = "heavy"), s);
         var heavy = s.Entity!; var standard = s.Assets.CompileEntity("ranger-guard")!;
-        Record(heavy.Clip("walk")!.Id == StarterContent.HeavyWalk && standard.Clip("walk")!.Id == "person-walk", "Heavy on the short brute, Standard on the tall ranger");
+        Record(heavy.Clip("walk")!.Id == StarterContent.HeavyWalk && standard.Clip("walk")!.Id == "person-walk", "Heavy on the short bruiser, Standard on the tall ranger");
         s.PreviewRoleOf("walk"); s.Seek(.45f);
     }
 
@@ -204,7 +210,47 @@ internal sealed class EditorSmoke(string output)
         Check(s.Edit(walk, () => walk.Asset.Markers.Add(new() { Id = "step", Time = .3f })), s);
         var walkers = new[] { "ranger-guard", "skirmisher", "spear-guard", "player" }.Select(id => s.Assets.CompileEntity(id)!).ToArray();
         Record(walkers.All(e => ReferenceEquals(e.Clip("walk"), walk.Asset) && e.Clip("walk")!.Markers.Any(m => m.Id == "step")), "one walk edit reaches every walking entity without copies");
-        s.Open("person-walk"); s.Pin("ranger"); s.Pin("brute"); s.Seek(.3f);
+        s.Open("person-walk"); s.Pin("ranger"); s.Pin("bruiser"); s.Seek(.3f);
+    }
+
+    private string? _libraryHash, _puppetPath, _puppetHash;
+    private static string Hash(string path) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(path)));
+
+    private void ImportLibraryWalk(EditorSession s)
+    {
+        var library = s.Sources.Get("person"); var manifest = Path.Combine(s.Sources.Root, s.Sources.Entries.First(e => e.Id == "person").Path);
+        _libraryHash = Hash(Path.Combine(Path.GetDirectoryName(manifest)!, "points.bin")) + Hash(manifest);
+        var mapping = LibraryImport.DefaultMapping(s.Assets.Model("person")!.Asset, library);
+        Check(s.ImportLibraryClip("person", "walk", "person", mapping, "imported-walk", "Imported walk"), s);
+        var clip = s.ClipDocument!.Asset;
+        Record(clip.Source is { Kind: AssetSource.Library, File: "person", Motion: "walk" } && clip.Contacts.Count == 0 && s.ClipDocument.IsNew,
+            $"the library walk converts onto Person as an unsaved draft with its source recorded ({clip.Tracks.Count} tracks, {clip.Duration:F2} s)");
+        Record(new[] { "person", "tall-thin", "short-broad" }.All(id => s.Assets.CanPlay("imported-walk", id, out _)), "the converted walk plays on every Person build");
+        s.Seek(.4f);
+    }
+
+    private void ImportPuppet(EditorSession s)
+    {
+        _puppetPath = Path.Combine(output, "scribble-walk.puppet.json");
+        var puppet = PuppetTemplates.StepStudy(); puppet.Name = "Scribble walker"; puppet.Save(_puppetPath); _puppetHash = Hash(_puppetPath);
+        Check(s.ImportPuppet(_puppetPath, "scribble", "Scribble walker"), s);
+        var model = s.Assets.Model("scribble")!.Asset; var clip = s.ClipDocument!.Asset;
+        Record(model.Source?.Kind == AssetSource.Puppet && clip.Model == "scribble" && clip.Contacts.Count == puppet.Motions[0].Contacts.Count,
+            $"the puppet converts into model '{model.Id}' ({model.Controls.Count} controls, {model.Chains.Count} chains) and animation '{clip.Id}' with its contacts");
+        s.TogglePlay(); s.Tick(.35f); s.TogglePlay();
+    }
+
+    private void ImportsReopened(EditorSession s)
+    {
+        s.SaveAll();
+        Record(!s.Assets.DirtyDocuments.Any(), "the imports save: " + s.Message);
+        var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+        var walk = reopened.Clip("imported-walk")?.Asset; var scribble = reopened.Clips.FirstOrDefault(c => c.Asset.Model == "scribble")?.Asset;
+        Record(walk?.Source?.Points?.ContainsKey("hips") == true && scribble?.Source?.Kind == AssetSource.Puppet && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
+            "the imported walk and puppet reopen with their sources and need no repair");
+        var manifest = Path.Combine(s.Sources.Root, s.Sources.Entries.First(e => e.Id == "person").Path);
+        Record(_libraryHash == Hash(Path.Combine(Path.GetDirectoryName(manifest)!, "points.bin")) + Hash(manifest) && _puppetHash == Hash(_puppetPath!), "the library and the puppet file are unchanged");
+        s.Open("imported-walk"); s.SetSubject("short-broad"); s.Seek(.2f);
     }
 
     private static void Check(bool ok, EditorSession session) { if (!ok) throw new InvalidOperationException("Smoke step failed: " + session.Message); }

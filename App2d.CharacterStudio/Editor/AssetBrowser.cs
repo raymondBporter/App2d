@@ -8,12 +8,13 @@ namespace App2d.CharacterStudio.Editor;
 /// <summary>
 /// Models, variants, animations, entities and props in one searchable list. Unfiltered, each base model heads its family: its
 /// variants, the animations authored for it and the entities standing on it. Creating and duplicating assets goes through one
-/// modal so IDs and references stay explicit.
+/// modal so IDs and references stay explicit. Sources lists the imported libraries, read-only; converting a clip or a
+/// <c>.puppet.json</c> is an explicit import that creates new drafts and leaves the source untouched.
 /// </summary>
 internal sealed partial class AssetBrowser(EditorSession session)
 {
-    private enum Create { None, EmptyModel, PersonModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity }
-    private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props"];
+    private enum Create { None, EmptyModel, PersonModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, ImportPuppet, ImportClip }
+    private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Sources"];
     private string _search = "", _filter = "All";
     private Create _create;
     private string _name = "", _id = "", _source = "", _preset = "", _template = EntityAuthoring.Guard;
@@ -21,6 +22,10 @@ internal sealed partial class AssetBrowser(EditorSession session)
     private float _duration = 1;
     private int _problemsFor = -1;
     private readonly Dictionary<string, IReadOnlyList<string>> _problems = [];
+    // Import dialogs: the library clip, the model it goes onto, its reference clip and the control -> source points mapping.
+    private string _library = "", _clip = "", _target = "", _rest = "";
+    private Dictionary<string, List<string>> _mapping = [];
+    private PuppetDefinition? _puppet;
 
     [GeneratedRegex("[^a-z0-9]+")] private static partial Regex NotId();
 
@@ -35,12 +40,16 @@ internal sealed partial class AssetBrowser(EditorSession session)
             if (ImGui.MenuItem("Variant...", "", false, session.Assets.Models.Any())) Start(Create.Variant, basis ?? session.Assets.Models.First().Id, "New variant");
             if (ImGui.MenuItem("Animation for " + (session.SubjectId ?? "subject") + "...", "", false, session.SubjectId is not null)) Start(Create.Animation, session.SubjectId!, "New animation");
             if (ImGui.MenuItem("Entity from " + (session.SubjectId ?? "a model") + "...", "", false, session.Assets.Models.Any())) Start(Create.Entity, session.SubjectId ?? session.Assets.Models.First().Id, "New entity");
+            ImGui.Separator();
+            if (ImGui.MenuItem("Import .puppet.json...")) PickPuppet();
+            if (ImGui.MenuItem("Convert imported motion...", "", false, session.Sources.Entries.Count > 0)) _filter = "Sources";
             ImGui.EndPopup();
         }
         ImGui.SameLine(); ImGui.SetNextItemWidth(-1); ImGui.InputTextWithHint("##search", "Search names and ids", ref _search, 64);
         for (var i = 0; i < Filters.Length; i++) { if (ImGui.RadioButton(Filters[i], _filter == Filters[i])) _filter = Filters[i]; if (i % 2 == 0) ImGui.SameLine(); }
         RefreshProblems();
         ImGui.BeginChild("assets");
+        if (_filter == "Sources") { Sources(); ImGui.EndChild(); return; }
         if (_filter == "All" && _search.Length == 0)
             foreach (var model in session.Assets.Models.OrderBy(m => m.Name))
             {
@@ -58,6 +67,52 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (_filter == "All" && _search.Length == 0 && session.Assets.Props.Any()) { Ui.Header("Props"); foreach (var prop in session.Assets.Props.OrderBy(p => p.Name)) Row(prop, 0); }
         if (session.Assets.LoadErrors.Count > 0) { Ui.Header("Unreadable files"); foreach (var error in session.Assets.LoadErrors) Ui.Problem(error); }
         ImGui.EndChild();
+    }
+
+    private void Sources()
+    {
+        if (session.Sources.Entries.Count == 0) { Ui.Help("No imported libraries: the characters catalog lists none."); return; }
+        Ui.Help("Imported motion, read-only. Choose a clip to convert it onto a model through an explicit mapping.");
+        foreach (var entry in session.Sources.Entries)
+        {
+            if (!ImGui.TreeNode($"{entry.Label} ({entry.ClipCount})##{entry.Id}")) continue;
+            PointLibrary? library = null;
+            try { session.Sources.TryGet(entry.Id, out library); }
+            catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException) { Ui.Problem(ex.Message); }
+            foreach (var clip in library?.Clips.Values.Where(c => _search.Length == 0 || c.Label.Contains(_search, StringComparison.OrdinalIgnoreCase) || c.Id.Contains(_search, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(c => c.Category, StringComparer.Ordinal).ThenBy(c => c.Label, StringComparer.Ordinal) ?? Enumerable.Empty<PointClip>())
+            {
+                if (ImGui.Selectable($"{clip.Label}##{clip.Id}")) StartImport(library!, clip.Id);
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip($"{entry.Id}/{clip.Id}\n{clip.Category}, {clip.Duration:F2} s{(clip.Loop ? ", loops" : "")}{(clip.Placeholder ? ", placeholder" : "")}" + (clip.Warnings.Count > 0 ? "\n\n" + string.Join("\n", clip.Warnings) : ""));
+            }
+            ImGui.TreePop();
+        }
+    }
+
+    private void StartImport(PointLibrary library, string clip)
+    {
+        var models = session.Assets.Models.Select(m => m.Id).Order(StringComparer.Ordinal).ToArray();
+        if (models.Length == 0) { session.Report("Create or import a base model first; imported motion converts onto a model.", true); return; }
+        var target = new[] { library.Anatomy, session.Assets.BaseOf(session.SubjectId ?? "") }.FirstOrDefault(id => id is not null && models.Contains(id)) ?? models[0];
+        Start(Create.ImportClip, library.Id + "/" + clip, library.Clips[clip].Label);
+        _library = library.Id; _clip = clip; _rest = LibraryImport.DefaultRest(library, clip);
+        Target(target);
+    }
+
+    private void Target(string model)
+    {
+        _target = model;
+        _mapping = session.Assets.Model(model) is { } document && session.Sources.TryGet(_library, out var library) ? LibraryImport.DefaultMapping(document.Asset, library) : [];
+    }
+
+    private void PickPuppet()
+    {
+        using var dialog = new OpenFileDialog { Filter = "Puppet character (*.puppet.json)|*.puppet.json|JSON (*.json)|*.json", Title = "Import a puppet character" };
+        if (dialog.ShowDialog() != DialogResult.OK) return;
+        try { _puppet = PuppetDefinition.FromJson(File.ReadAllText(dialog.FileName)); }
+        catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException or UnauthorizedAccessException) { session.Report($"{Path.GetFileName(dialog.FileName)}: {ex.Message}", true); return; }
+        Start(Create.ImportPuppet, dialog.FileName, _puppet.Name);
     }
 
     private bool Matches(AssetDocument document) =>
@@ -84,7 +139,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (ImGui.Selectable(label, selected)) session.Open(document.Id);
         if (problems.Count > 0) ImGui.PopStyleColor();
         if (ImGui.IsItemHovered())
-            ImGui.SetTooltip($"{document.Id}\n{document.Path ?? "not saved yet"}" + (problems.Count > 0 ? "\n\n" + string.Join("\n", problems) : ""));
+            ImGui.SetTooltip($"{document.Id}\n{document.Path ?? "not saved yet"}" + (SourceOf(document) is { } source ? $"\nconverted from {source.File}{(source.Motion is null ? "" : ": " + source.Motion)}" : "")
+                + (problems.Count > 0 ? "\n\n" + string.Join("\n", problems) : ""));
         if (ImGui.BeginPopupContextItem("row"))
         {
             switch (document)
@@ -109,10 +165,16 @@ internal sealed partial class AssetBrowser(EditorSession session)
                     break;
             }
             if (document.Kind is AssetKind.Model or AssetKind.Variant && ImGui.MenuItem("Pin to compare", "", false, document.Id != session.SubjectId)) session.Pin(document.Id);
+            if (document.IsNew && ImGui.MenuItem("Discard (never saved)")) session.Discard(document.Id);
             ImGui.EndPopup();
         }
         ImGui.PopID();
     }
+
+    private static AssetSource? SourceOf(AssetDocument document) => document switch
+    {
+        AssetDocument<MotionClip> clip => clip.Asset.Source, AssetDocument<CharacterModel> model => model.Asset.Source, _ => null,
+    };
 
     private void Start(Create kind, string source, string name)
     {
@@ -134,7 +196,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
             Create.EmptyModel => "New model from Empty", Create.PersonModel => "New model from the Person template", Create.Variant => "New variant",
             Create.DuplicateVariant => "Duplicate variant " + _source, Create.Independent => "Independent model from " + _source,
             Create.Animation => "New animation", Create.DuplicateAnimation => "Duplicate animation " + _source,
-            Create.Entity => "New entity", _ => "Duplicate entity " + _source,
+            Create.Entity => "New entity", Create.ImportPuppet => "Import " + Path.GetFileName(_source),
+            Create.ImportClip => "Convert imported motion " + _source, _ => "Duplicate entity " + _source,
         });
         ImGui.SetNextItemWidth(320 * Ui.Scale);
         if (Ui.Text("Name", ref _name, 100) && !_idEdited) _id = session.Assets.SuggestId(Slug(_name));
@@ -166,6 +229,13 @@ internal sealed partial class AssetBrowser(EditorSession session)
             case Create.DuplicateEntity:
                 Ui.Help("A sibling with the same model, motion set, clips and props. Entities do not inherit from each other.");
                 break;
+            case Create.ImportPuppet when _puppet is not null:
+                Ui.Help($"Creates a base model with {_puppet.Controls.Count} controls and {_puppet.Chains.Count} IK chain(s), and one animation per motion: "
+                    + string.Join(", ", _puppet.Motions.Select(m => m.Name)) + ". Chains with contacts are keyed from the ground; the others from their root. The file is only read.");
+                break;
+            case Create.ImportClip:
+                ImportFields();
+                break;
         }
         if (session.Assets.Exists(_id)) Ui.Problem($"The id '{_id}' is already used.");
         if (ImGui.Button("Create") && Commit()) { _create = Create.None; ImGui.CloseCurrentPopup(); }
@@ -185,6 +255,33 @@ internal sealed partial class AssetBrowser(EditorSession session)
         Create.DuplicateAnimation => session.DuplicateClip(_source, _id, _name),
         Create.Entity => session.NewEntity(_id, _name, _source, _template),
         Create.DuplicateEntity => session.DuplicateEntity(_source, _id, _name),
+        Create.ImportPuppet => session.ImportPuppet(_source, _id, _name),
+        Create.ImportClip => session.ImportLibraryClip(_library, _clip, _target, _mapping, _id, _name, _rest),
         _ => false,
     };
+
+    private void ImportFields()
+    {
+        Ui.Help("Motion is copied as offsets from the reference frame, scaled by each measure, so the model keeps its own proportions. The library is not changed; the mapping is saved with the clip.");
+        if (Ui.Combo("Onto base model", _target, session.Assets.Models.Select(m => m.Id).Order(StringComparer.Ordinal), id => session.Assets.Find(id)?.Name is { } n ? $"{n} ({id})" : id) is { } target) Target(target);
+        if (!session.Sources.TryGet(_library, out var library) || session.Assets.Model(_target) is not { } model) return;
+        if (Ui.Combo("Reference clip (its first frame is the model's rest)", _rest, library.Clips.Keys.Order(StringComparer.Ordinal)) is { } rest) _rest = rest;
+        var controls = model.Asset.Controls;
+        ImGui.TextDisabled($"{controls.Count(c => _mapping.ContainsKey(c.Id))} of {controls.Count} controls follow source points; the others keep their rest offset. IK joints only measure.");
+        ImGui.BeginChild("mapping", new(460 * Ui.Scale, 230 * Ui.Scale), ImGuiChildFlags.Borders);
+        foreach (var control in controls)
+        {
+            ImGui.PushID(control.Id);
+            ImGui.TextUnformatted(control.Id); ImGui.SameLine(150 * Ui.Scale); ImGui.SetNextItemWidth(-1);
+            var current = _mapping.TryGetValue(control.Id, out var points) ? string.Join(" + ", points) : "(rest)";
+            if (ImGui.BeginCombo("##map", current))
+            {
+                if (ImGui.Selectable("(rest)", points is null)) _mapping.Remove(control.Id);
+                foreach (var name in library.PointNames) if (ImGui.Selectable(name, points is [var only] && only == name)) _mapping[control.Id] = [name];
+                ImGui.EndCombo();
+            }
+            ImGui.PopID();
+        }
+        ImGui.EndChild();
+    }
 }

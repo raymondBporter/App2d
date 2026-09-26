@@ -99,6 +99,8 @@ public sealed class MotionClip
     public List<ClipContact> Contacts { get; set; } = [];
     public List<ClipMarker> Markers { get; set; } = [];
     public List<ClipFaceTrack> Faces { get; set; } = [];
+    /// <summary>The imported motion this clip was converted from, if any. Null for clips authored here.</summary>
+    public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static MotionClip FromJson(string json) { var clip = AuthoredAsset.Parse<MotionClip>(json, "clip"); clip.Validate(); return clip; }
@@ -116,6 +118,7 @@ public sealed class MotionClip
         new Limit(.05f, 60).Check(Duration, $"{owner} duration");
         Require(Reference is not null && Travel is not null && Travel.Keys is not null && Tracks is not null && Contacts is not null && Markers is not null && Faces is not null, $"{owner}: collections cannot be null.");
         Require(Travel.Scale is not null, $"{owner} travel: a scale is required.");
+        Source?.Validate(owner);
         foreach (var (measure, length) in Reference) { AuthoredAsset.RequireId(measure, $"{owner} reference"); new Limit(.001f, 1000).Check(length, $"{owner} reference.{measure}"); }
         CheckKeys(Travel.Keys, $"{owner} travel", k => k.Z == 0 && k.Angle == 0, "travel keys use x and y only");
         var seen = new HashSet<(string, string)>();

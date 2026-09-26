@@ -40,14 +40,18 @@ public sealed class EditorSession
     private (string Clip, int Version, float Time) _pendingFor;
     private bool _dragging;
 
-    public EditorSession(AuthoringWorkspace assets)
+    /// <param name="sources">Imported libraries offered for conversion. Defaults to the catalog beside the authored root.</param>
+    public EditorSession(AuthoringWorkspace assets, SourceLibraries? sources = null)
     {
         Assets = assets;
+        Sources = sources ?? SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(assets.Root))!);
         var first = assets.Variants.Select(v => v.Id).Concat(assets.Models.Select(m => m.Id)).Order(StringComparer.Ordinal).FirstOrDefault();
         if (first is not null) Open(first);
     }
 
     public AuthoringWorkspace Assets { get; }
+    /// <summary>Read-only imported motion, the source for explicit conversions.</summary>
+    public SourceLibraries Sources { get; }
     public Transport Transport { get; } = new();
     public Selection Selection { get; } = new();
     public Workspace Mode { get; private set; }
@@ -480,6 +484,48 @@ public sealed class EditorSession
         var variant = SubjectVariant; var model = Assets.Model(variant?.Asset.Base);
         if (variant is null || model is null) { Report("Open a variant with a base to save its look.", true); return false; }
         return Edit(model, () => EntityAuthoring.SaveLook(model.Asset, variant.Asset, lookId, name), $"Saved look '{name}' on base '{model.Name}'; save the base to keep it.");
+    }
+
+    /// <summary>Drops an asset created in this session and never saved, such as a trial import. Saved files are never deleted here.</summary>
+    public bool Discard(string id) => Attempt(() =>
+    {
+        var document = Assets.Find(id) ?? throw new InvalidDataException($"No asset '{id}'.");
+        Assets.Discard(document);
+        if (EntityId == id) SetEntity(null);
+        if (ClipId == id) SetClip(null);
+        Compare.Remove(id);
+        if (SubjectId == id) { SubjectId = null; Selection.Clear(); SetClip(null); }
+    }, $"Discarded unsaved '{id}'.");
+
+    // ---- Imports -------------------------------------------------------------------------------------------------
+
+    /// <summary>Converts a <c>.puppet.json</c> into a new base model and one animation per motion. The file is only read.</summary>
+    public bool ImportPuppet(string path, string id, string name) => Attempt(() =>
+    {
+        var puppet = PuppetDefinition.FromJson(File.ReadAllText(path));
+        var result = PuppetImport.Convert(puppet, id, name, SourcePath(path), Assets.Documents.Select(d => d.Id));
+        Assets.Create(result.Model); foreach (var clip in result.Clips) Assets.Create(clip);
+        Open(result.Clips.Count > 0 ? result.Clips[0].Id : id);
+        Report($"Imported model '{id}' and {result.Clips.Count} animation(s) from {Path.GetFileName(path)}; the file is unchanged. Review contacts and depth, then save.");
+    });
+
+    /// <summary>
+    /// Converts one imported library clip onto a base model through an explicit mapping (control → source points), with
+    /// <paramref name="restClip"/>'s first frame standing for the model's rest. The library is only read.
+    /// </summary>
+    public bool ImportLibraryClip(string library, string clip, string modelId, IReadOnlyDictionary<string, List<string>> points, string id, string name, string? restClip = null) => Attempt(() =>
+    {
+        var model = Assets.Model(modelId) ?? throw new InvalidDataException($"No base model '{modelId}'.");
+        if (Assets.Exists(id)) throw new InvalidDataException($"The id '{id}' is already used.");
+        Assets.Create(LibraryImport.Convert(Sources.Get(library), clip, model.Asset, points, id, name, restClip)); Open(id);
+        Report($"Converted {library}/{clip} onto '{modelId}'. It has no contacts yet: plant the feet in Animate, check depth, then save.");
+    });
+
+    /// <summary>A source path as recorded in provenance: relative to the characters folder (the authored root's parent) when it lies inside it.</summary>
+    private string SourcePath(string path)
+    {
+        var relative = Path.GetRelativePath(Path.GetDirectoryName(Path.GetFullPath(Assets.Root))!, Path.GetFullPath(path));
+        return (relative.StartsWith("..", StringComparison.Ordinal) || Path.IsPathRooted(relative) ? Path.GetFullPath(path) : relative).Replace(Path.DirectorySeparatorChar, '/');
     }
 
     // ---- Messages ------------------------------------------------------------------------------------------------
