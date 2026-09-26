@@ -33,6 +33,8 @@ public sealed record WorldState2D(
     ImmutableArray<MovingPlatformState2D> MovingPlatforms,
     ImmutableArray<CheckpointState2D> Checkpoints)
 {
+    /// <summary>Session-lifetime cuts, retained when chunks unload and included in attach snapshots.</summary>
+    public ImmutableHashSet<GrassCell2D> CutGrass { get; init; } = [];
     public static WorldState2D Empty { get; } = new([], []);
 }
 

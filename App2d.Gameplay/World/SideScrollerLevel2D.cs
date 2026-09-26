@@ -186,7 +186,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     /// <summary>Per-tick dynamic observation.</summary>
     public WorldState2D CaptureWorld() => new(
         [.. _movingPlatforms.Select(p => p.CaptureState())],
-        [.. _savePoints.Select(p => p.CaptureState())]);
+        [.. _savePoints.Select(p => p.CaptureState())]) { CutGrass = _cutGrass };
 
     /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
     public LevelContent2D CaptureContent()

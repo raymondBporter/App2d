@@ -15,7 +15,8 @@ public sealed partial class SideScrollerLevel2D
     internal sealed record SimulationState(Guid Owner, long DefinitionRevision,
         SideScrollerChunkStreamer2D.SimulationState Streamer,
         ImmutableArray<PlatformEntry> Platforms, ImmutableArray<CheckpointEntry> Checkpoints,
-        ImmutableArray<EnemySystem2D.EntryState> Enemies) : WorldSimulationState2D
+        ImmutableArray<EnemySystem2D.EntryState> Enemies,
+        ImmutableHashSet<GrassCell2D> CutGrass) : WorldSimulationState2D
     {
         public override ImmutableArray<int> TerrainColliderIds => [.. Streamer.Chunks.SelectMany(c => c.ColliderIds)];
     }
@@ -35,7 +36,7 @@ public sealed partial class SideScrollerLevel2D
         return new SimulationState(_checkpointOwner, _definitionRevision, RequireEnvironment().Streamer.CaptureSimulation(),
             [.. _movingPlatforms.Select(p => new PlatformEntry(p.Id, p.CaptureSimulation()))],
             [.. _savePoints.Select(p => new CheckpointEntry(p.Spec.ThingId, p.CaptureSimulation()))],
-            EnemySystem.CaptureSimulation());
+            EnemySystem.CaptureSimulation(), _cutGrass);
     }
 
     public void ValidateSimulation(WorldSimulationState2D snapshot)
@@ -58,5 +59,6 @@ public sealed partial class SideScrollerLevel2D
         for (var i = 0; i < _movingPlatforms.Count; i++) _movingPlatforms[i].RestoreSimulation(state.Platforms[i].State);
         for (var i = 0; i < _savePoints.Count; i++) _savePoints[i].RestoreSimulation(state.Checkpoints[i].State);
         EnemySystem.RestoreSimulation(state.Enemies);
+        _cutGrass = state.CutGrass;
     }
 }

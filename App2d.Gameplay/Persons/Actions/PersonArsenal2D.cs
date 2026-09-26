@@ -91,6 +91,9 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
             yield return hitbox;
     }
 
+    public IEnumerable<SpatialObject2D> GetActiveSwordHitboxes() =>
+        Equipment == EquipmentKind2D.Sword ? _sword.ActiveHitboxes : [];
+
     public void BeginFrame(float deltaSeconds)
     {
         foreach (var weapon in _weapons)

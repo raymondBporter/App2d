@@ -65,6 +65,8 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public PlayerState2D State => _endpoint.State;
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain) => _world.SetVisibleTerrain(terrain);
+    public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);
+    public void DrawGrass(Renderer2D renderer) => _world.DrawGrass(renderer, _camera.VisibleWorldBounds);
     public bool IsControllerConnected => _input.IsControllerConnected;
     public bool ShowTraversalDebug { get; set; }
     public BallisticsDebug2D Ballistics { get; }

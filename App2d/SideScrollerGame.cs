@@ -146,9 +146,14 @@ public sealed class SideScrollerGame : Game2D
     public override void Render(Renderer2D renderer)
     {
         // BeginFrame has set the actual viewport; include the final camera position and shake.
-        _client.SetVisibleTerrain(_terrainSource.Capture(Camera.VisibleWorldBounds));
+        // Keep off-screen roots loaded while their canopies can still enter the camera.
+        var foliageMargin = new Vector2(_simulation.Level.TileMap.TileSize * 10f);
+        var visible = Camera.VisibleWorldBounds;
+        _client.SetVisibleTerrain(_terrainSource.Capture(new(visible.Min - foliageMargin, visible.Max + foliageMargin)));
         renderer.Clear(new XnaColor(103, 196, 235));
+        _client.DrawTrees(renderer);
         renderer.Draw(Scene);
+        _client.DrawGrass(renderer);
         _client.Draw(renderer);
         TileEditorView2D.Draw(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize, Textures);
     }
