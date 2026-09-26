@@ -64,9 +64,16 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     {
         var clip = new MotionClip
         {
-            Id = id, Name = name, Model = model.Base.Id, StructureRevision = model.Base.StructureRevision, Duration = duration, Loop = loop,
-            Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal), Travel = new() { Scale = "leg" },
-            Contacts = [.. _contacts], Markers = [.. _markers.OrderBy(m => m.Time)],
+            Id = id,
+            Name = name,
+            Model = model.Base.Id,
+            StructureRevision = model.Base.StructureRevision,
+            Duration = duration,
+            Loop = loop,
+            Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
+            Travel = new() { Scale = "leg" },
+            Contacts = [.. _contacts],
+            Markers = [.. _markers.OrderBy(m => m.Time)],
         };
         if (_travel.Count > 0) clip.Travel.Keys = [.. _travel.OrderBy(k => k.Time)];
         if (_faces.Count > 0) clip.Faces = [new() { Part = "head", Keys = [.. _faces.OrderBy(f => f.Time)] }];

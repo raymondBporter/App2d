@@ -18,7 +18,7 @@ public sealed partial class RivalEnemy2D
         ImmutableArray<EnemyEvent2D> Events) : SimulationState2D;
 
     public SimulationState2D CaptureSimulation() => new SimulationState(
-        _lastDeltaSeconds, _lastMoveX, _simulationEnabled, Person.CaptureSimulation(), _brain.CaptureSimulation(), _actions.CaptureSimulation(), _events.ToImmutableArray());
+        _lastDeltaSeconds, _lastMoveX, _simulationEnabled, Person.CaptureSimulation(), _brain.CaptureSimulation(), _actions.CaptureSimulation(), [.. _events]);
 
     public void RestoreSimulation(SimulationState2D snapshot)
     {

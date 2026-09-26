@@ -15,7 +15,7 @@ internal sealed partial class RivalBrain2D
         float JumpHoldSeconds,
         bool NextAttackIsKick) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _attackDelaySeconds, _dashDelaySeconds, _jumpDelaySeconds, _jumpHoldSeconds, _nextAttackIsKick);
 
     internal void RestoreSimulation(SimulationState snapshot)

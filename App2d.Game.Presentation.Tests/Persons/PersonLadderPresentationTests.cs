@@ -87,7 +87,7 @@ public sealed class PersonLadderPresentationTests
         {
             _person.BeginFrame(Dt);
             _person.ApplyCommand(new PersonCommand2D
-                { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash }, Dt);
+            { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash }, Dt);
             _physics.Step(Dt);
             _person.UpdateAfterPhysics(Dt);
         }

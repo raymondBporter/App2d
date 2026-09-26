@@ -58,40 +58,42 @@ internal static class AuthoredRenderingSmoke2D
             ("death", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { HitPoints = 0 }, 1.2f, false),
         };
         foreach (var (name, gear, state, seconds, actionClock) in cases)
-        foreach (var facing in new[] { 1f, -1f })
         {
-            var scene = new Scene2D();
-            using var player = new App2d.Gameplay.Persons.AuthoredPersonPresentation2D(scene, moves, traversal);
-            player.Equip(gear);
-            if (!state.IsAlive) player.PlayDeath();
-            var position = new Vector2(0, 38); var steps = (int)(seconds * 120);
-            for (var i = 0; i < steps; i++)
+            foreach (var facing in new[] { 1f, -1f })
             {
-                position.X += state.LinearVelocity.X / 120; // vertical motion stays out of the fixed camera; the state still reports it
-                var current = state with { Position = position, Facing = facing };
-                if (actionClock) current = current with { Action = current.Action with { ElapsedSeconds = i / 120f } };
-                player.ApplyState(current, i + 1, 0, false, false); player.Advance(1 / 120f);
+                var scene = new Scene2D();
+                using var player = new App2d.Gameplay.Persons.AuthoredPersonPresentation2D(scene, moves, traversal);
+                player.Equip(gear);
+                if (!state.IsAlive) player.PlayDeath();
+                var position = new Vector2(0, 38); var steps = (int)(seconds * 120);
+                for (var i = 0; i < steps; i++)
+                {
+                    position.X += state.LinearVelocity.X / 120; // vertical motion stays out of the fixed camera; the state still reports it
+                    var current = state with { Position = position, Facing = facing };
+                    if (actionClock) current = current with { Action = current.Action with { ElapsedSeconds = i / 120f } };
+                    player.ApplyState(current, i + 1, 0, false, false); player.Advance(1 / 120f);
+                }
+                var camera = new Camera2D { Zoom = 3, Position = new(position.X, 60) };
+                using var close = new Renderer2D(camera, device);
+                device.SetRenderTarget(target); close.BeginFrame(1400, 500, default); close.Clear(new Color(145, 176, 190));
+                var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(2000, 2)), new SolidColorShader(Color.DarkSlateGray));
+                ground.Transform.Position = new(position.X, 0); close.Draw(ground);
+                close.Draw(scene);
+                // Gameplay geometry over the drawing: the sword's hit box while it is live, and where a shot leaves the pistol.
+                var elapsed = (steps - 1) / 120f;
+                if (name.StartsWith("sword-") && hero.Swing(state.Action.FollowUp) is { } swing
+                    && elapsed >= swing.Hits[0].Start && elapsed < swing.Hits[0].Finish)
+                {
+                    var box = new WorldObject2D(hero.Shape, new SolidColorShader(new Color(235, 60, 50, 110))); box.Transform.Position = position + hero.Offset(elapsed, facing, state.Action.FollowUp); close.Draw(box);
+                }
+                if (name == "gun-run-shot")
+                {
+                    var dot = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(3)), new SolidColorShader(new Color(240, 200, 40))); dot.Transform.Position = position + hero.Muzzle(facing, false); close.Draw(dot);
+                }
+                close.DrawScreenLabel($"PLAYER: {name.ToUpperInvariant()} ({player.Director.Key})", new(24, 24));
+                close.EndFrame(); device.SetRenderTarget(null);
+                using var stream = File.Create(Path.Combine(directory, $"player-{name}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
             }
-            var camera = new Camera2D { Zoom = 3, Position = new(position.X, 60) };
-            using var close = new Renderer2D(camera, device);
-            device.SetRenderTarget(target); close.BeginFrame(1400, 500, default); close.Clear(new Color(145, 176, 190));
-            var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(2000, 2)), new SolidColorShader(Color.DarkSlateGray));
-            ground.Transform.Position = new(position.X, 0); close.Draw(ground);
-            close.Draw(scene);
-            // Gameplay geometry over the drawing: the sword's hit box while it is live, and where a shot leaves the pistol.
-            var elapsed = (steps - 1) / 120f;
-            if (name.StartsWith("sword-") && hero.Swing(state.Action.FollowUp) is { } swing
-                && elapsed >= swing.Hits[0].Start && elapsed < swing.Hits[0].Finish)
-            {
-                var box = new WorldObject2D(hero.Shape, new SolidColorShader(new Color(235, 60, 50, 110))); box.Transform.Position = position + hero.Offset(elapsed, facing, state.Action.FollowUp); close.Draw(box);
-            }
-            if (name == "gun-run-shot")
-            {
-                var dot = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(3)), new SolidColorShader(new Color(240, 200, 40))); dot.Transform.Position = position + hero.Muzzle(facing, false); close.Draw(dot);
-            }
-            close.DrawScreenLabel($"PLAYER: {name.ToUpperInvariant()} ({player.Director.Key})", new(24, 24));
-            close.EndFrame(); device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(directory, $"player-{name}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
         }
     }
 
@@ -102,25 +104,34 @@ internal static class AuthoredRenderingSmoke2D
         if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
         var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute" };
         foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })
-        foreach (var facing in new[] { 1, -1 })
         {
-            var states = ids.Select((id, i) =>
+            foreach (var facing in new[] { 1, -1 })
             {
-                var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-230 + i * 125) / AuthoredWorld.PixelsPerUnit, 0);
-                // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
-                if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }
-                else if (action is not null && animator.TryStart(action)) for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
-                else for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, phase, phase == "walk" ? .012f : 0, false, []);
-                return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, feet * AuthoredWorld.PixelsPerUnit, Vector2.Zero, 0, facing, true, true)
-                { TypeId = id, AuthoredEntity = entity, AuthoredPose = animator.Pose };
-            }).ToImmutableArray();
-            view.ApplyState(states, [], 70);
-            device.SetRenderTarget(target); renderer.BeginFrame(1400, 500, default); renderer.Clear(new Color(145, 176, 190));
-            renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(1200, 2)), new SolidColorShader(Color.DarkSlateGray)));
-            renderer.Draw(scene);
-            renderer.DrawScreenLabel("AUTHORED: SPEAR GUARD / STALKER PEST / PLAYER / CINDER GUNNER / MAUL BRUTE", new(24, 24));
-            renderer.EndFrame(); device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
+                var states = ids.Select((id, i) =>
+                {
+                    var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-230 + i * 125) / AuthoredWorld.PixelsPerUnit, 0);
+                    // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
+                    if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }
+                    else if (action is not null && animator.TryStart(action))
+                    {
+                        for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
+                    }
+                    else
+                    {
+                        for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, phase, phase == "walk" ? .012f : 0, false, []);
+                    }
+
+                    return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, feet * AuthoredWorld.PixelsPerUnit, Vector2.Zero, 0, facing, true, true)
+                    { TypeId = id, AuthoredEntity = entity, AuthoredPose = animator.Pose };
+                }).ToImmutableArray();
+                view.ApplyState(states, [], 70);
+                device.SetRenderTarget(target); renderer.BeginFrame(1400, 500, default); renderer.Clear(new Color(145, 176, 190));
+                renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(1200, 2)), new SolidColorShader(Color.DarkSlateGray)));
+                renderer.Draw(scene);
+                renderer.DrawScreenLabel("AUTHORED: SPEAR GUARD / STALKER PEST / PLAYER / CINDER GUNNER / MAUL BRUTE", new(24, 24));
+                renderer.EndFrame(); device.SetRenderTarget(null);
+                using var stream = File.Create(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
+            }
         }
     }
     private sealed class Silent : ISoundEffectSink2D { public void Play(SoundEffect2D effect) { } }

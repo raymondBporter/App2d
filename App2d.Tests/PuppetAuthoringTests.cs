@@ -211,11 +211,13 @@ public sealed class PuppetAuthoringTests
     private static void AssertBoneLengths(PuppetDefinition puppet, PuppetPose pose)
     {
         foreach (var chain in puppet.Chains)
+        {
             foreach (var (a, b) in new[] { (chain.Root, chain.Joint), (chain.Joint, chain.End) })
             {
                 var rest = Vector2.Distance(puppet.Controls.Single(c => c.Id == a).Rest.XY, puppet.Controls.Single(c => c.Id == b).Rest.XY);
                 var posed = pose.Points[a] - pose.Points[b];
                 Assert.InRange(MathF.Abs(new Vector2(posed.X, posed.Y).Length() - rest), 0, .00001f);
             }
+        }
     }
 }

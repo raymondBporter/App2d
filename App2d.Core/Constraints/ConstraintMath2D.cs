@@ -116,11 +116,16 @@ public static class ConstraintMath2D
     private static void ValidateDistanceLimits(ConstraintLimit1D limits)
     {
         if (limits.HasMinimum && limits.Minimum < 0f)
+        {
             throw new ArgumentOutOfRangeException(nameof(limits), limits,
                 "A distance minimum cannot be negative.");
+        }
+
         if (limits.HasMaximum && limits.Maximum < 0f)
+        {
             throw new ArgumentOutOfRangeException(nameof(limits), limits,
                 "A distance maximum cannot be negative.");
+        }
     }
 }
 

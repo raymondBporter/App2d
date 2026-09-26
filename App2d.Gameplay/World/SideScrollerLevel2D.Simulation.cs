@@ -17,7 +17,7 @@ public sealed partial class SideScrollerLevel2D
         ImmutableArray<PlatformEntry> Platforms, ImmutableArray<CheckpointEntry> Checkpoints,
         ImmutableArray<EnemySystem2D.EntryState> Enemies) : WorldSimulationState2D
     {
-        public override ImmutableArray<int> TerrainColliderIds => Streamer.Chunks.SelectMany(c => c.ColliderIds).ToImmutableArray();
+        public override ImmutableArray<int> TerrainColliderIds => [.. Streamer.Chunks.SelectMany(c => c.ColliderIds)];
     }
 
     private void OnMapChanged(TileChunk2D chunk)
@@ -33,8 +33,8 @@ public sealed partial class SideScrollerLevel2D
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(!_dirtyChunks.IsEmpty, "Flush editor changes before capturing simulation state.");
         return new SimulationState(_checkpointOwner, _definitionRevision, RequireEnvironment().Streamer.CaptureSimulation(),
-            _movingPlatforms.Select(p => new PlatformEntry(p.Id, p.CaptureSimulation())).ToImmutableArray(),
-            _savePoints.Select(p => new CheckpointEntry(p.Spec.ThingId, p.CaptureSimulation())).ToImmutableArray(),
+            [.. _movingPlatforms.Select(p => new PlatformEntry(p.Id, p.CaptureSimulation()))],
+            [.. _savePoints.Select(p => new CheckpointEntry(p.Spec.ThingId, p.CaptureSimulation()))],
             EnemySystem.CaptureSimulation());
     }
 

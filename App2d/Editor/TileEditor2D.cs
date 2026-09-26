@@ -611,7 +611,10 @@ internal sealed class TileEditor2D : IDisposable
         if (SelectedThingId is { } thingId &&
             _movingPlatformThings.All(item => item.ThingId != thingId) &&
             _positionThings.All(item => item.ThingId != thingId))
+        {
             SelectedThingId = null;
+        }
+
         InspectorView.RefreshFromEditor();
         if (notifyRuntime)
             ThingsChanged?.Invoke(_movingPlatformThings);

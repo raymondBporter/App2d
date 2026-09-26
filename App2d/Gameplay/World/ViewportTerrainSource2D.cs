@@ -67,7 +67,7 @@ internal sealed class ViewportTerrainSource2D : IDisposable
         }
 
         if (_terrain.IsDefault)
-            _terrain = _chunks.Values.OrderBy(c => c.Chunk.Y).ThenBy(c => c.Chunk.X).ToImmutableArray();
+            _terrain = [.. _chunks.Values.OrderBy(c => c.Chunk.Y).ThenBy(c => c.Chunk.X)];
         return _terrain;
     }
 

@@ -25,7 +25,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
     public long Version { get; private set; }
     public ImmutableArray<TerrainChunkState2D> CaptureState()
     {
-        if (_states.IsDefault) _states = _loadedChunks.Values.OrderBy(c => c.State.Chunk.Y).ThenBy(c => c.State.Chunk.X).Select(c => c.State).ToImmutableArray();
+        if (_states.IsDefault) _states = [.. _loadedChunks.Values.OrderBy(c => c.State.Chunk.Y).ThenBy(c => c.State.Chunk.X).Select(c => c.State)];
         return _states;
     }
     public void Dispose()

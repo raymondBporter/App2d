@@ -61,11 +61,24 @@ public sealed class EnemyPresentation2D(
         var occurrences = events.ToLookup(e => e.EntityId);
         foreach (var occurrence in occurrences.SelectMany(group => group))
         {
-            if (occurrence is HammerStarted2D) sounds.PlayAt(SoundEffect2D.HammerWindup, occurrence.Position);
-            else if (occurrence is HammerStruck2D) sounds.PlayAt(SoundEffect2D.HammerImpact, occurrence.Position);
-            else if (occurrence is EntityCue2D cue) sounds.PlayAt(cue.Cue switch
-            { "shot" => SoundEffect2D.GunFire, "heavy" => SoundEffect2D.HammerImpact,
-              "hit" or "bite" => SoundEffect2D.SwordHit, _ => SoundEffect2D.SwordSwing }, cue.Position);
+            if (occurrence is HammerStarted2D)
+            {
+                sounds.PlayAt(SoundEffect2D.HammerWindup, occurrence.Position);
+            }
+            else if (occurrence is HammerStruck2D)
+            {
+                sounds.PlayAt(SoundEffect2D.HammerImpact, occurrence.Position);
+            }
+            else if (occurrence is EntityCue2D cue)
+            {
+                sounds.PlayAt(cue.Cue switch
+                {
+                    "shot" => SoundEffect2D.GunFire,
+                    "heavy" => SoundEffect2D.HammerImpact,
+                    "hit" or "bite" => SoundEffect2D.SwordHit,
+                    _ => SoundEffect2D.SwordSwing
+                }, cue.Position);
+            }
         }
         _presentIds.Clear();
         if (!states.IsDefault)
@@ -78,11 +91,11 @@ public sealed class EnemyPresentation2D(
                     if (!state.IsEnabled) continue;
                     view = state.AuthoredEntity is { } entity ? new AuthoredPoseView(scene, entity)
                         : state.Kind switch
-                    {
-                        EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
-                        EnemyKind2D.TumbleProp => new PropView(scene),
-                        _ => new AnimatedView(scene, textures, state.Kind)
-                    };
+                        {
+                            EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
+                            EnemyKind2D.TumbleProp => new PropView(scene),
+                            _ => new AnimatedView(scene, textures, state.Kind)
+                        };
                     _views.Add(state.Id, view);
                 }
                 view.Update(state, occurrences[state.Id], state.IsEnabled ? dt : 0f, tick);

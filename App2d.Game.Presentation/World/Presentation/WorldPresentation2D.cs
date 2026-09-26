@@ -56,8 +56,10 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         }
 
         foreach (var platform in state.MovingPlatforms)
+        {
             if (_platforms.TryGetValue(platform.Id, out var view))
                 view.Visual.Transform.Position = platform.Position;
+        }
 
         foreach (var checkpoint in _checkpoints)
         {
@@ -80,7 +82,10 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         {
             if (_platforms.TryGetValue(platform.Id, out var view) &&
                 view.Size == platform.Size && view.ColorArgb == platform.ColorArgb)
+            {
                 continue;
+            }
+
             if (view is not null) scene.Remove(view.Visual);
             var color = platform.ColorArgb;
             var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(platform.Size),
@@ -128,8 +133,11 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             var factory = new SideScrollerTerrainVisualFactory2D(scene, chunk, resolver);
             var visuals = new List<WorldObject2D>();
             foreach (var collision in chunk.Collisions)
+            {
                 if (collision.Kind.IsSolid() && !collision.Kind.IsGrippable())
                     visuals.AddRange(factory.CreateSolidFill(collision.Bounds));
+            }
+
             visuals.AddRange(factory.CreateSurfaceVisuals(chunk.Chunk));
             _chunks.Add(chunk.Chunk, new ChunkView(chunk.Revision, visuals));
         }

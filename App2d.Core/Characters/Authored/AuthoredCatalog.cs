@@ -33,11 +33,14 @@ public sealed class AuthoredCatalog
         catalog.Scan(root, "animations", MotionClip.FromJson, catalog._animations, a => a.Id);
         foreach (var id in catalog._variants.Keys) catalog.Check(id, () => catalog.Resolve(id));
         foreach (var clip in catalog._animations.Values)
+        {
             catalog.Check(clip.Id, () =>
             {
                 if (!catalog._models.ContainsKey(clip.Model)) throw new InvalidDataException($"Clip '{clip.Id}' references missing model '{clip.Model}'.");
                 clip.Validate(catalog.Resolve(clip.Model));
             });
+        }
+
         catalog.Scan(root, "props", PropAsset.FromJson, catalog._props, p => p.Id);
         catalog.Scan(root, "entities", EntityAsset.FromJson, catalog._entityAssets, e => e.Id);
         foreach (var entity in catalog._entityAssets.Values)

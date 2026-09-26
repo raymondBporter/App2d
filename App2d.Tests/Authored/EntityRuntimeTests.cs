@@ -7,6 +7,7 @@ public sealed class EntityRuntimeTests
 {
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
     private const float Dt = 1 / 120f;
+    private static readonly string[] expected = ["body", "legs"];
 
     private static ResolvedEntity Compile(EntityAsset asset) =>
         ResolvedEntity.Compile(asset, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
@@ -83,7 +84,7 @@ public sealed class EntityRuntimeTests
     {
         var entity = StarterContent.SpearGuardEntity(); entity.Hurt.Regions["head"] = new() { Disabled = true }; entity.Hurt.Regions["legs"] = new() { Pad = .3f };
         var compiled = Compile(entity);
-        Assert.Equal(new[] { "body", "legs" }, compiled.Hurt.Select(r => r.Id));
+        Assert.Equal(expected, compiled.Hurt.Select(r => r.Id));
         Assert.Equal(.3f, compiled.Hurt.Single(r => r.Id == "legs").Pad);
     }
 
@@ -138,7 +139,7 @@ public sealed class EntityRuntimeTests
         }
         var hurtRight = EntityCollision.Hurt(guard, right.Pose); var hurtLeft = EntityCollision.Hurt(guard, left.Pose);
         for (var i = 0; i < hurtRight.Count; i++)
-            Assert.Equal(hurtRight[i].Points.Select(p => p.X).Max() - position.X, position.X - hurtLeft[i].Points.Select(p => p.X).Min(), 4);
+            Assert.Equal(hurtRight[i].Points.Max(p => p.X) - position.X, position.X - hurtLeft[i].Points.Min(p => p.X), 4);
     }
 
     [Fact]
@@ -146,13 +147,13 @@ public sealed class EntityRuntimeTests
     {
         var guard = Catalog.Entities["spear-guard"];
         var small = Attack(new EntityAnimator(guard), 1, Vector2.Zero);
-        Assert.Equal(new[] { "windup", "strike", "swing", "recover" }, small.Select(e => e.Id));
+        Assert.Equal(["windup", "strike", "swing", "recover"], small.Select(e => e.Id));
         Assert.All(small, e => Assert.Equal(1, e.ActionSequence));
 
         // One huge step crosses every marker at once and still dispatches each exactly once, in time order per kind.
         var animator = new EntityAnimator(guard); var events = new List<AnimationEvent>();
         animator.TryStart("attack"); animator.Step(5, Vector2.Zero, 1, "idle", 0, false, events);
-        Assert.Equal(new[] { "windup", "strike", "recover", "swing" }, events.Select(e => e.Id));
+        Assert.Equal(["windup", "strike", "recover", "swing"], events.Select(e => e.Id));
         Assert.Single(animator.ActiveHits()); // a window opened and closed within the step is still tested once
         events.Clear(); animator.Step(Dt, Vector2.Zero, 1, "idle", 0, false, events);
         Assert.Empty(events); Assert.Empty(animator.ActiveHits());
@@ -164,7 +165,7 @@ public sealed class EntityRuntimeTests
         var stalker = Catalog.Entities["stalker-pest"]; var animator = new EntityAnimator(stalker); var events = new List<AnimationEvent>();
         var stride = PoseEvaluator.CycleTravel(stalker.Model, stalker.Clip("walk")!).X;
         animator.Step(Dt, Vector2.Zero, 1, "walk", stride * 2.25f, false, events); // crosses two full cycles and a quarter in one step
-        Assert.Equal(new[] { "step", "step-middle", "step", "step-middle", "step" }, events.Select(e => e.Id));
+        Assert.Equal(["step", "step-middle", "step", "step-middle", "step"], events.Select(e => e.Id));
         Assert.Equal(2.25, animator.RoleTime, 5);
         events.Clear();
         for (var i = 0; i < 10; i++) animator.Step(Dt, Vector2.Zero, 1, "walk", 0, false, events);

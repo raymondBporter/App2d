@@ -15,7 +15,7 @@ public sealed partial class Projectile2D
         float RemainingLifetime,
         TransformState2D Pose) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         Id, Origin, Velocity, RemainingLifetime, TransformState2D.Capture(WorldObject.Transform));
 
     internal void RestoreSimulation(SimulationState snapshot)

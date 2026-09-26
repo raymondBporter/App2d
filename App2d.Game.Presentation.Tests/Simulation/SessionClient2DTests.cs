@@ -23,8 +23,8 @@ public sealed class SessionClient2DTests
         var snapshot = game.Session.CaptureSnapshot();
         var client = new SessionClient2D(snapshot, game.Person.Id);
         var inputs = Enumerable.Range(0, 3).Select(_ => client.CreateInput(default)).ToArray();
-        Assert.Equal(new long[] { 51, 52, 53 }, inputs.Select(i => i.Tick));
-        Assert.Equal(new long[] { 51, 52, 53 }, inputs.Select(i => i.Sequence));
+        Assert.Equal([51, 52, 53], inputs.Select(i => i.Tick));
+        Assert.Equal([51, 52, 53], inputs.Select(i => i.Sequence));
         Assert.Equal(50, client.Tick);
         var frames = inputs.Select(input => game.Session.Advance(input)).ToArray();
         Assert.True(client.Apply(frames[0]));
@@ -47,7 +47,7 @@ public sealed class SessionClient2DTests
         var frame = game.Step();
         Assert.Throws<InvalidOperationException>(() => client.Apply(frame with { Tick = frame.Tick + 1 }));
         Assert.Throws<InvalidOperationException>(() => client.Apply(frame with
-            { Players = [frame.Players[0] with { LastInputSequence = 0 }] }));
+        { Players = [frame.Players[0] with { LastInputSequence = 0 }] }));
         Assert.False(client.TryApply(frame with { Tick = frame.Tick + 1 }, out var rejection));
         Assert.Equal(FrameRejection2D.Gap, rejection);
         Assert.False(client.TryApply(frame with { Players = [] }, out rejection));
@@ -93,8 +93,11 @@ public sealed class SessionClient2DTests
         public Fixture()
         {
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-            var physics = new PhysicsWorld2D { Gravity = new Vector2(0f, -metrics.Gravity),
-                MaxSubstepSeconds = SideScrollerSession2D.FixedDeltaSeconds };
+            var physics = new PhysicsWorld2D
+            {
+                Gravity = new Vector2(0f, -metrics.Gravity),
+                MaxSubstepSeconds = SideScrollerSession2D.FixedDeltaSeconds
+            };
             Person = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2.Zero,
                 2, 1, CombatFaction2D.Player);
             var floor = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(10000f, 20f)));

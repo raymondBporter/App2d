@@ -16,11 +16,11 @@ public readonly record struct FacePose(
 
 public static class FaceExpressions
 {
-    public static IReadOnlyList<string> Names { get; } = Array.AsReadOnly(new[]
-    {
+    public static IReadOnlyList<string> Names { get; } = Array.AsReadOnly(
+    [
         "relaxed", "happy", "focused", "determined", "angry", "worried", "surprised", "panic",
         "hurt", "strained", "smug", "confused", "delighted", "tired", "blink", "knocked-out"
-    });
+    ]);
 
     public static bool Contains(string id) => Names.Contains(id) || id == "grumpy";
 

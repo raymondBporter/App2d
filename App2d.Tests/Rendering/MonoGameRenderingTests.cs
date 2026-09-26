@@ -29,8 +29,10 @@ public sealed class MonoGameRenderingTests
         var pixels = graphics.ReadPixels();
         XnaColor[] expected = [XnaColor.Red, XnaColor.Lime, XnaColor.Blue, XnaColor.Yellow];
         for (var y = 0; y < 2; y++)
+        {
             for (var x = 0; x < 2; x++)
                 Assert.Equal(expected[(flipY ? 1 - y : y) * 2 + (flipX ? 1 - x : x)], pixels[(48 + 32 * y) * 128 + 48 + 32 * x]);
+        }
     }
 
     [Fact]
@@ -75,7 +77,8 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var scene = new Scene2D();
         scene.Add(new WorldObject2D(Rectangle2D.FromSize(new Vector2(64)),
-            new SolidColorShader(XnaColor.Lime)) { ZIndex = 1 });
+            new SolidColorShader(XnaColor.Lime))
+        { ZIndex = 1 });
         scene.Add(new WorldObject2D(Rectangle2D.FromSize(new Vector2(96)),
             new LinearGradientShader(XnaColor.Red, XnaColor.Blue)));
         renderer.BeginFrame(128, 128, default);

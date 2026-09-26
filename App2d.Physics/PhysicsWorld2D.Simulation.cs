@@ -43,8 +43,8 @@ public sealed partial class PhysicsWorld2D
         StateGuard.ThrowIf(bodies.Any(b => b.IgnoredPlatforms.Any(id => !ids.Contains(id))) ||
             _lastContacts.Any(c => !ids.Contains(c.First.Collider.Id) || !ids.Contains(c.Second.Collider.Id)),
             "Capture requires a completed tick with no stale body references.");
-        return new(_checkpointOwner, bodies, _lastContacts.Select(c => new PhysicsWorldState2D.ContactState(
-            c.First.Collider.Id, c.Second.Collider.Id, c.Geometry)).ToImmutableArray(),
+        return new(_checkpointOwner, bodies, [.. _lastContacts.Select(c => new PhysicsWorldState2D.ContactState(
+            c.First.Collider.Id, c.Second.Collider.Id, c.Geometry))],
             CollisionSystem.CaptureOrder(), Gravity, PositionIterations, VelocityIterations, MaxSubstepSeconds);
     }
 

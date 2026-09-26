@@ -51,6 +51,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         ImGui.BeginChild("assets");
         if (_filter == "Sources") { Sources(); ImGui.EndChild(); return; }
         if (_filter == "All" && _search.Length == 0)
+        {
             foreach (var model in session.Assets.Models.OrderBy(m => m.Name))
             {
                 Row(model, 0);
@@ -58,8 +59,11 @@ internal sealed partial class AssetBrowser(EditorSession session)
                 foreach (var clip in session.Assets.Clips.Where(c => c.Asset.Model == model.Id).OrderBy(c => c.Name)) Row(clip, 1);
                 foreach (var entity in session.Assets.EntitiesOn(model.Id).OrderBy(e => e.Name)) Row(entity, 1);
             }
+        }
         else
+        {
             foreach (var document in session.Assets.Documents.Where(Matches).OrderBy(d => d.Kind).ThenBy(d => d.Name)) Row(document, 0);
+        }
         // Assets whose base is missing still belong somewhere visible, so they can be repaired.
         var orphans = session.Assets.Documents.Where(d => d.Kind is AssetKind.Variant or AssetKind.Animation && session.Assets.Model(session.Assets.BaseOf(d.Id)) is null
             || d is AssetDocument<EntityAsset> e && session.Assets.Model(session.Assets.BaseOf(e.Asset.Model)) is null).ToArray();
@@ -139,8 +143,11 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (ImGui.Selectable(label, selected)) session.Open(document.Id);
         if (problems.Count > 0) ImGui.PopStyleColor();
         if (ImGui.IsItemHovered())
+        {
             ImGui.SetTooltip($"{document.Id}\n{document.Path ?? "not saved yet"}" + (SourceOf(document) is { } source ? $"\nconverted from {source.File}{(source.Motion is null ? "" : ": " + source.Motion)}" : "")
                 + (problems.Count > 0 ? "\n\n" + string.Join("\n", problems) : ""));
+        }
+
         if (ImGui.BeginPopupContextItem("row"))
         {
             switch (document)
@@ -173,7 +180,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
     private static AssetSource? SourceOf(AssetDocument document) => document switch
     {
-        AssetDocument<MotionClip> clip => clip.Asset.Source, AssetDocument<CharacterModel> model => model.Asset.Source, _ => null,
+        AssetDocument<MotionClip> clip => clip.Asset.Source,
+        AssetDocument<CharacterModel> model => model.Asset.Source,
+        _ => null,
     };
 
     private void Start(Create kind, string source, string name)
@@ -193,11 +202,17 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (!ImGui.BeginPopupModal(title, ImGuiWindowFlags.AlwaysAutoResize)) { _create = Create.None; return; }
         ImGui.TextColored(Ui.Accent, _create switch
         {
-            Create.EmptyModel => "New model from Empty", Create.PersonModel => "New model from the Person template", Create.Variant => "New variant",
-            Create.DuplicateVariant => "Duplicate variant " + _source, Create.Independent => "Independent model from " + _source,
-            Create.Animation => "New animation", Create.DuplicateAnimation => "Duplicate animation " + _source,
-            Create.Entity => "New entity", Create.ImportPuppet => "Import " + Path.GetFileName(_source),
-            Create.ImportClip => "Convert imported motion " + _source, _ => "Duplicate entity " + _source,
+            Create.EmptyModel => "New model from Empty",
+            Create.PersonModel => "New model from the Person template",
+            Create.Variant => "New variant",
+            Create.DuplicateVariant => "Duplicate variant " + _source,
+            Create.Independent => "Independent model from " + _source,
+            Create.Animation => "New animation",
+            Create.DuplicateAnimation => "Duplicate animation " + _source,
+            Create.Entity => "New entity",
+            Create.ImportPuppet => "Import " + Path.GetFileName(_source),
+            Create.ImportClip => "Convert imported motion " + _source,
+            _ => "Duplicate entity " + _source,
         });
         ImGui.SetNextItemWidth(320 * Ui.Scale);
         if (Ui.Text("Name", ref _name, 100) && !_idEdited) _id = session.Assets.SuggestId(Slug(_name));

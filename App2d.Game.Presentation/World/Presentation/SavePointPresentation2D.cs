@@ -109,8 +109,8 @@ internal sealed class SavePointPresentation2D : IDisposable
     public void Dispose() { foreach (var visual in _visuals) _scene.Remove(visual); _visuals.Clear(); }
 
     private static LinearGradientShader ActiveOrbShader() =>
-        new LinearGradientShader(new XnaColor(245, 255, 255), new XnaColor(44, 193, 255));
+        new(new XnaColor(245, 255, 255), new XnaColor(44, 193, 255));
 
     private static LinearGradientShader InactiveOrbShader() =>
-        new LinearGradientShader(new XnaColor(132, 139, 158), new XnaColor(53, 60, 78));
+        new(new XnaColor(132, 139, 158), new XnaColor(53, 60, 78));
 }

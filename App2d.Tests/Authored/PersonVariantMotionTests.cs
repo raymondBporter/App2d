@@ -24,6 +24,8 @@ public sealed class PersonVariantMotionTests
         { "walk", "standard" }, { "walk", "tall" }, { "walk", "short" }, { "run", "standard" }, { "run", "tall" }, { "run", "short" },
     };
 
+    private static readonly string[] sourceArray = ["standard", "tall", "short"];
+
     [Theory, MemberData(nameof(Cases))]
     public void LimbsKeepTheirLengthsAndEveryTargetIsReached(string clipName, string build)
     {
@@ -102,7 +104,7 @@ public sealed class PersonVariantMotionTests
     [Fact]
     public void EditingTheSharedClipChangesEveryBuild()
     {
-        var clip = Clip("walk"); var builds = new[] { "standard", "tall", "short" }.Select(Build).ToArray();
+        var clip = Clip("walk"); var builds = sourceArray.Select(Build).ToArray();
         var before = builds.Select(m => PoseEvaluator.Sample(m, clip, 0).World("hips").Y).ToArray();
         clip.Tracks.Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" }).Keys[0].Y += .1f;
         var after = builds.Select(m => PoseEvaluator.Sample(m, clip, 0).World("hips").Y).ToArray();

@@ -37,7 +37,7 @@ public sealed class PersonMoveSetTests
     public void TheSwordIsInHandOnlyBetweenDrawAndSheathe()
     {
         var draw = Catalog.Animations["player-sword-draw-slash"]; var sheathe = Catalog.Animations["player-sword-sheathe"]; var idle = Catalog.Animations["player-idle"];
-        string SwordAt(MotionClip clip, float t, PersonGear gear = PersonGear.Sword) => PersonLoadout.Worn(clip, t, gear).Single(w => w.Prop == PersonLoadout.Sword).Socket;
+        static string SwordAt(MotionClip clip, float t, PersonGear gear = PersonGear.Sword) => PersonLoadout.Worn(clip, t, gear).Single(w => w.Prop == PersonLoadout.Sword).Socket;
         Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, 0));
         Assert.Equal(PersonLoadout.SwordSocket, SwordAt(draw, .06f));
         Assert.Equal(PersonLoadout.SwordSocket, SwordAt(sheathe, 0));

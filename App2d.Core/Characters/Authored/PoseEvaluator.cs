@@ -73,7 +73,7 @@ public static class PoseEvaluator
         var weight = overlay is null ? 0 : MathF.Min(overlay.Weight, 1);
         var overlayTracks = overlay?.Clip.Tracks.ToDictionary(t => (t.Kind, t.Target));
         var overlayTime = overlay is null ? 0 : (float)(overlay.Clip.Loop ? overlay.Seconds % overlay.Clip.Duration : Math.Min(overlay.Seconds, overlay.Clip.Duration));
-        bool Masked(string target) => overlay is not null && overlay.Targets.Contains(target);
+        bool Masked(string target) => overlay?.Targets.Contains(target) == true;
         // A channel read from one layer: its track, the time to read it at and the clip whose reference units it uses.
         (ClipTrack? Track, float Time, MotionClip Clip) Read(bool fromOverlay, string kind, string target) => fromOverlay
             ? (overlayTracks!.GetValueOrDefault((kind, target)), overlayTime, overlay!.Clip)

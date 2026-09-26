@@ -22,8 +22,14 @@ internal sealed partial class ProofRenders : Game
     public ProofRenders(string assetRoot, string output, Mode mode)
     {
         _assetRoot = assetRoot; _smokePath = output; _mode = mode;
-        _graphics = new(this) { GraphicsProfile = GraphicsProfile.HiDef, PreferredDepthStencilFormat = DepthFormat.Depth24, PreferMultiSampling = true,
-            PreferredBackBufferWidth = 640, PreferredBackBufferHeight = 360 };
+        _graphics = new(this)
+        {
+            GraphicsProfile = GraphicsProfile.HiDef,
+            PreferredDepthStencilFormat = DepthFormat.Depth24,
+            PreferMultiSampling = true,
+            PreferredBackBufferWidth = 640,
+            PreferredBackBufferHeight = 360
+        };
         Window.Title = "Character proof renders | App2d";
     }
 

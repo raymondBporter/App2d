@@ -7,11 +7,19 @@ public static class AssetKinds
 {
     public static string Folder(AssetKind kind) => kind switch
     {
-        AssetKind.Model => "models", AssetKind.Variant => "variants", AssetKind.Animation => "animations", AssetKind.Prop => "props", _ => "entities",
+        AssetKind.Model => "models",
+        AssetKind.Variant => "variants",
+        AssetKind.Animation => "animations",
+        AssetKind.Prop => "props",
+        _ => "entities",
     };
     public static string Label(AssetKind kind) => kind switch
     {
-        AssetKind.Model => "Model", AssetKind.Variant => "Variant", AssetKind.Animation => "Animation", AssetKind.Prop => "Prop", _ => "Entity",
+        AssetKind.Model => "Model",
+        AssetKind.Variant => "Variant",
+        AssetKind.Animation => "Animation",
+        AssetKind.Prop => "Prop",
+        _ => "Entity",
     };
 }
 

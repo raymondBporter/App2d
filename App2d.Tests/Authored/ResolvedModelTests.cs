@@ -7,7 +7,9 @@ public sealed class ResolvedModelTests
 {
     private static ModelVariant LongArm() => new()
     {
-        Id = "long-arm", Name = "Long arm", Base = "creature",
+        Id = "long-arm",
+        Name = "Long arm",
+        Base = "creature",
         Rest = { ["elbow"] = new(.6f, 1.2f), ["hand"] = new(1.2f, 1.5f) },
         Parts = { ["torso"] = new() { Width = .9f, Fill = "#aa3300" } },
     };
@@ -42,7 +44,7 @@ public sealed class ResolvedModelTests
         var resolved = ResolvedModel.From(model);
         var index = resolved.Order.Select((c, i) => (c.Id, i)).ToDictionary(p => p.Id, p => p.i);
         foreach (var control in model.Controls.Where(c => c.Parent is not null)) Assert.True(index[control.Parent!] < index[control.Id]);
-        Assert.Equal(new[] { "hip", "shoulder" }, resolved.Children["body"].Order());
+        Assert.Equal(expected, resolved.Children["body"].Order());
         Assert.Empty(resolved.Children["foot"]);
     }
 
@@ -51,6 +53,8 @@ public sealed class ResolvedModelTests
         { "wrong-base", "references base 'hound'" }, { "unknown-control", "rest.tail" },
         { "unknown-part", "parts.wing" }, { "zero-bone", "long-arm" }, { "bad-fill", "fill" },
     };
+
+    private static readonly string[] expected = ["hip", "shoulder"];
 
     [Theory, MemberData(nameof(Rejections))]
     public void BrokenVariantsFailToResolveWithTheVariantAndFieldNamed(string edit, string fragment)

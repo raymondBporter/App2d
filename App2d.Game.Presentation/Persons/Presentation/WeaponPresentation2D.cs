@@ -38,16 +38,14 @@ public sealed class WeaponPresentation2D : IDisposable
         _sounds = sounds;
         _swordHud = textures.Load("ui/hud/weapons/sword.png");
         _unarmedHud = textures.Load("ui/hud/weapons/unarmed.png");
-        _chargeHud = Enumerable.Range(0, 61)
-            .Select(i => textures.Load($"ui/hud/gun-charge/frame-{i:0000}.png")).ToArray();
+        _chargeHud = [.. Enumerable.Range(0, 61).Select(i => textures.Load($"ui/hud/gun-charge/frame-{i:0000}.png"))];
         _glow = CreateVisual(textures.Load("effects/gun/charge.png"), new Vector2(30f));
         _flash = CreateVisual(textures.Load("effects/gun/flash.png"), new Vector2(42.5f, 27.5f));
         _chargeAnimation.Play(new AnimationClip2D<Texture2D>(Enumerable.Range(0, 24)
             .Select(i => textures.Load($"effects/gun/ready/frame-{i:0000}.png")), framesPerSecond: 30f));
         _chargeAnimation.Stop();
         _boltTexture = textures.Load("effects/gun/bolt.png");
-        _trailTextures = Enumerable.Range(0, 8)
-            .Select(i => textures.Load($"effects/gun/trail-{i:00}.png")).ToArray();
+        _trailTextures = [.. Enumerable.Range(0, 8).Select(i => textures.Load($"effects/gun/trail-{i:00}.png"))];
     }
 
     public string WeaponName => _equipment switch { EquipmentKind2D.Gun => "GUN", EquipmentKind2D.Unarmed => "FISTS", _ => "SWORD" };
@@ -108,7 +106,11 @@ public sealed class WeaponPresentation2D : IDisposable
             _chargeAnimation.Update(deltaSeconds);
             ((SpriteShader2D)_glow.Shader).Texture = _chargeAnimation.CurrentFrame;
         }
-        else StopCharge();
+        else
+        {
+            StopCharge();
+        }
+
         if (equipment != EquipmentKind2D.Gun) _flashSeconds = _cancelSeconds = 0f;
         _glow.IsVisible = state.IsCharging || _cancelSeconds > 0f;
         _glow.Transform.Position = state.MuzzlePosition;
@@ -153,7 +155,7 @@ public sealed class WeaponPresentation2D : IDisposable
     private WorldObject2D CreateVisual(Texture2D texture, Vector2 size)
     {
         var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(size), new SpriteShader2D(texture))
-            { IsVisible = false, ZIndex = 2 };
+        { IsVisible = false, ZIndex = 2 };
         _scene.Add(visual);
         return visual;
     }

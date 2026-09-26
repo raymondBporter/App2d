@@ -14,7 +14,7 @@ internal abstract partial class MeleePersonWeapon2D
         MeleeAttack2D.SimulationState Attack,
         float SinceSwing, bool FollowUp, bool NextFollowUp) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _attackDirection, _bufferedAttackDirection, _attack.CaptureSimulation(), _sinceSwing, _followUp, _nextFollowUp);
 
     internal void RestoreSimulation(SimulationState snapshot)

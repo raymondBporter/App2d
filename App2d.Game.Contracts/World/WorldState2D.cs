@@ -75,7 +75,10 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
             throw new ArgumentException("Cells must include the complete chunk and its one-cell halo.", nameof(cells));
         if (tilesetIds.IsDefaultOrEmpty || tilesetIds.Length > TileCell2D.MaximumTilesetCount ||
             tilesetIds.Any(string.IsNullOrWhiteSpace))
+        {
             throw new ArgumentException("A valid tileset catalog is required.", nameof(tilesetIds));
+        }
+
         if (cells.Any(cell => new TileCell2D(cell).TilesetIndex >= tilesetIds.Length))
             throw new ArgumentException("A cell refers to a missing tileset.", nameof(cells));
         if (collisions.IsDefault || collisions.Any(c => !c.Bounds.IsFinite || c.Bounds.Size.X <= 0f || c.Bounds.Size.Y <= 0f))
@@ -97,14 +100,17 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
         ArgGuard.ThrowIfNull(map);
         var cells = ImmutableArray.CreateBuilder<byte>(checked((map.ChunkSize + 2) * (map.ChunkSize + 2)));
         for (var y = -1; y <= map.ChunkSize; y++)
+        {
             for (var x = -1; x <= map.ChunkSize; x++)
             {
                 var tileX = chunk.X * map.ChunkSize + x;
                 var tileY = chunk.Y * map.ChunkSize + y;
                 cells.Add(new TileCell2D(map.GetTileKind(tileX, tileY), map.GetTilesetIndex(tileX, tileY)).Packed);
             }
+        }
+
         return new(chunk, revision, map.Width, map.Height, map.ChunkSize, map.TileSize, map.Origin,
-            map.TilesetIds.ToImmutableArray(), map.BuildCollisionRectangles(chunk).ToImmutableArray(), cells.MoveToImmutable());
+            [.. map.TilesetIds], [.. map.BuildCollisionRectangles(chunk)], cells.MoveToImmutable());
     }
 
     private TileCell2D GetCell(int x, int y)

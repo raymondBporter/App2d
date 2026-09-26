@@ -50,10 +50,10 @@ public sealed class SideScrollerGame : Game2D
         // The same recipe a server or predicting client will use; the host only adds I/O and presentation.
         _simulation = SideScrollerSimulation2D.Create(new SideScrollerSessionDefinition2D(
             Traversal, tileMap,
-            loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime).ToArray(),
-            loadedLevel.PositionThings
+            [.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)],
+            [.. loadedLevel.PositionThings
                 .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
-                .Select(ThingTypeRegistry2D.ToRuntime).ToArray())
+                .Select(ThingTypeRegistry2D.ToRuntime)])
         {
             PlayerMaximumHealth = hero.Asset.Health,
             AuthoredCharacters = _authored,
@@ -89,7 +89,7 @@ public sealed class SideScrollerGame : Game2D
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(tileMap, LevelBootstrap2D.OpenForEditing, Camera, tileMap.Origin, Traversal.TileSize);
         _editor.ThingsChanged += things =>
-            _simulation.Level.ReloadMovingPlatforms(things.Select(ThingTypeRegistry2D.ToRuntime).ToArray());
+            _simulation.Level.ReloadMovingPlatforms([.. things.Select(ThingTypeRegistry2D.ToRuntime)]);
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, Textures, _sounds, Traversal, App2d.Gameplay.Persons.PersonMoves.From(_authored));

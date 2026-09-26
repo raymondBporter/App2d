@@ -31,7 +31,7 @@ public sealed partial class PersonLocomotion2D
         bool IsDashing,
         bool IsClimbingLadder) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _intent, _positionBeforePhysics, _verticalSpeedBeforePhysics, _gravityScaleBeforePhysics, _coyoteTime, _jumpBufferTime, _jumpInitialSpeed, _wallJumpBufferTime, _wallRelatchTime, _wallDirection, _dashTimeRemaining, _dashCooldownRemaining, _dashDirection, _ladderRelatchTime, _wasGroundedBeforePhysics, _airDashAvailable, _airJumpsRemaining, IsGrounded, IsWallGripping, IsDashing, IsClimbingLadder);
 
     internal void RestoreSimulation(SimulationState snapshot)

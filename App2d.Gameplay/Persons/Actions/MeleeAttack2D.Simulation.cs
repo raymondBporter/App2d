@@ -18,7 +18,7 @@ internal sealed partial class MeleeAttack2D
         MeleeAttackProfile2D Profile,
         MeleeAttackProfile2D? NextProfile) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _elapsedSeconds, _inputBufferSeconds, AttackId, IsInProgress, IsDamageActive, TransformState2D.Capture(WorldObject.Transform), Profile, NextProfile);
 
     internal void RestoreSimulation(SimulationState snapshot)

@@ -84,8 +84,13 @@ public sealed class CombatSystem2D(
             if (GetCombatant(overlap.Collider) is { } c && c is not IAuthoredHurt2D) yield return c;
         // Hurt geometry can extend past the terrain collider (heads, long bodies).
         foreach (var id in Combatants.Ids)
+        {
             if (Combatants.Find(id) is ICombatant2D c && (c.Body.CollisionLayer & targetLayer) != 0 &&
-                c is IAuthoredHurt2D hurt && hurt.OverlapsHurt(hitbox.WorldBounds)) yield return c;
+                c is IAuthoredHurt2D hurt && hurt.OverlapsHurt(hitbox.WorldBounds))
+            {
+                yield return c;
+            }
+        }
     }
 
     private void Damage(ICombatant2D combatant, int damage, Vector2 knockback)

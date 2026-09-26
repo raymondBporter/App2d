@@ -71,7 +71,10 @@ internal static class PlayerMoves
     /// <summary>A short-hafted war hammer: grip at the origin, haft along +X, the head's centre is its tip.</summary>
     public static PropAsset HammerProp() => new()
     {
-        Id = "hammer", Name = "Hammer", Grip = new(0, 0), Tip = new(.8f, 0),
+        Id = "hammer",
+        Name = "Hammer",
+        Grip = new(0, 0),
+        Tip = new(.8f, 0),
         Shapes =
         [
             new() { Kind = "stroke", Points = [new(-.14f, 0, -.05f), new(.7f, 0, -.05f)], Width = .07f, Fill = "#7a5634" },
@@ -107,9 +110,15 @@ internal static class PlayerMoves
     /// <summary>Heavy motion, heavy hits: walks in slowly and slams for 5 when the player is within 1.3 units. Knockback barely moves it.</summary>
     public static EntityAsset MaulBrute(ResolvedModel model) => new()
     {
-        Id = "maul-brute", Name = "Maul brute", Model = model.Id, MotionSet = "heavy",
+        Id = "maul-brute",
+        Name = "Maul brute",
+        Model = model.Id,
+        MotionSet = "heavy",
         Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.1f, Range = 1.3f, Cooldown = 1 },
-        Health = 22, Mass = 3, Movement = EntityAuthoring.FitMovement(model), Hurt = new() { Layout = "standard" },
+        Health = 22,
+        Mass = 3,
+        Movement = EntityAuthoring.FitMovement(model),
+        Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = "hammer", Socket = PersonLoadout.SwordSocket }],
         Actions =
         [
@@ -150,9 +159,14 @@ internal static class PlayerMoves
     /// <summary>Keeps its distance and shoots: walks in to 4.5 units, then fires an 8 unit/s bolt from the pistol's muzzle.</summary>
     public static EntityAsset CinderGunner(ResolvedModel model) => new()
     {
-        Id = "cinder-gunner", Name = "Cinder gunner", Model = model.Id, MotionSet = "standard",
+        Id = "cinder-gunner",
+        Name = "Cinder gunner",
+        Model = model.Id,
+        MotionSet = "standard",
         Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.4f, Range = 4.5f, Cooldown = 1 },
-        Health = 7, Movement = EntityAuthoring.FitMovement(model), Hurt = new() { Layout = "standard" },
+        Health = 7,
+        Movement = EntityAuthoring.FitMovement(model),
+        Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = PersonLoadout.Pistol, Socket = PersonLoadout.GunSocket }],
         Actions =
         [
@@ -175,10 +189,15 @@ internal static class PlayerMoves
 
     public static EntityAsset Hero() => new()
     {
-        Id = "hero", Name = "Hero", Model = PersonTemplate.Id, MotionSet = "standard",
+        Id = "hero",
+        Name = "Hero",
+        Model = PersonTemplate.Id,
+        MotionSet = "standard",
         Roles = new() { ["idle"] = "player-idle", ["jump"] = "player-jump", ["fall"] = "player-fall", ["hit"] = "player-hit", ["death"] = "player-death" },
         Controller = new() { Kind = EntityControllers.Traversal, WalkSpeed = 1.8f, RunSpeed = 4.2f, Range = 1.2f, Cooldown = 0 },
-        Health = 30, Movement = new() { Width = .55f, Height = 1.9f }, Hurt = new() { Layout = "standard" },
+        Health = 30,
+        Movement = new() { Width = .55f, Height = 1.9f },
+        Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = PersonLoadout.Sword, Socket = MoveBuilder.SwordSocket }, new() { Prop = PersonLoadout.Pistol, Socket = MoveBuilder.GunSocket }],
         Actions =
         [
@@ -556,7 +575,10 @@ internal static class PlayerMoves
     /// <summary>A straight single-edged sword, grip at the origin, blade along +X. Depth +0.2 keeps it behind the torso when sheathed.</summary>
     public static PropAsset SwordProp() => new()
     {
-        Id = Sword, Name = "Sword", Grip = new(0, 0), Tip = new(.82f, 0),
+        Id = Sword,
+        Name = "Sword",
+        Grip = new(0, 0),
+        Tip = new(.82f, 0),
         Shapes =
         [
             new() { Kind = "stroke", Points = [new(-.1f, 0, .2f), new(.05f, 0, .2f)], Width = .05f, Fill = "#6b4a2b" },
@@ -568,7 +590,10 @@ internal static class PlayerMoves
     /// <summary>Scabbard on the back socket, drawn just in front of the sheathed blade so only the hilt shows.</summary>
     public static PropAsset SheathProp() => new()
     {
-        Id = Sheath, Name = "Sheath", Grip = new(0, 0), Tip = new(.85f, 0),
+        Id = Sheath,
+        Name = "Sheath",
+        Grip = new(0, 0),
+        Tip = new(.85f, 0),
         Shapes =
         [
             new() { Kind = "polygon", Points = [new(.075f, -.034f, .19f), new(.8f, -.03f, .19f), new(.85f, 0, .19f), new(.8f, .03f, .19f), new(.075f, .034f, .19f)], Fill = "#5b4634" },
@@ -579,7 +604,11 @@ internal static class PlayerMoves
     /// <summary>A compact pistol, grip at the origin, barrel along +X, muzzle at the barrel's end.</summary>
     public static PropAsset PistolProp() => new()
     {
-        Id = Pistol, Name = "Pistol", Grip = new(0, 0), Tip = new(.26f, .06f), Muzzle = new(.26f, .06f),
+        Id = Pistol,
+        Name = "Pistol",
+        Grip = new(0, 0),
+        Tip = new(.26f, .06f),
+        Muzzle = new(.26f, .06f),
         Shapes =
         [
             new() { Kind = "polygon", Points = [new(-.04f, .025f), new(.26f, .025f), new(.26f, .095f), new(-.06f, .095f)], Fill = "#5d6368" },

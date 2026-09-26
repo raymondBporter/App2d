@@ -17,9 +17,9 @@ public sealed partial class SideScrollerSession2D
         var expectedIds = CaptureEnemies().Select(e => e.Id).Concat(PlayerIds).OrderBy(id => id.Value);
         StateGuard.ThrowIf(!ids.SequenceEqual(expectedIds), "Every combatant must belong to the captured players/world.");
         return new(_checkpointOwner, Tick, _eventSequence, IsPaused,
-            _players.Select(p => p.CaptureSimulation()).ToImmutableArray(),
+            [.. _players.Select(p => p.CaptureSimulation())],
             _world.CaptureSimulation(), _physics.CaptureSimulation(),
-            combat.DefeatedEnemies, ids, _events.ToImmutableArray());
+            combat.DefeatedEnemies, ids, [.. _events]);
     }
 
     public void ValidateCheckpoint(SessionCheckpoint2D checkpoint)
@@ -30,7 +30,7 @@ public sealed partial class SideScrollerSession2D
         StateGuard.ThrowIf(checkpoint.Players.Length != _players.Count, "Participant membership changed since capture.");
         _world.ValidateSimulation(checkpoint.World);
         _physics.ValidateSimulation(checkpoint.Physics, _world.TerrainColliderIds, checkpoint.World.TerrainColliderIds);
-        StateGuard.ThrowIf(_combat is null || !_combat.Combatants.Ids.OrderBy(id => id.Value).SequenceEqual(checkpoint.Combatants),
+        StateGuard.ThrowIf(_combat?.Combatants.Ids.OrderBy(id => id.Value).SequenceEqual(checkpoint.Combatants) != true,
             "Combatant membership changed since capture.");
     }
 
