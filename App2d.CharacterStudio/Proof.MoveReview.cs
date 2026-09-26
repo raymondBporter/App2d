@@ -18,7 +18,7 @@ internal sealed partial class ProofRenders
 {
     private const int ReviewWidth = 440, ReviewHeight = 460, ReviewFps = 30;
     private const float ReviewPpu = 150;
-    private static readonly string[] UpperTargets = ["chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm"];
+    private static readonly string[] UpperTargets = ["chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm", PersonLoadout.SwordSocket, PersonLoadout.GunSocket];
 
     private sealed record ReviewItem(string Id, string Title, MotionClip Clip, string Scene, bool Gun, string Note, float ViewX = 0);
 
@@ -26,11 +26,11 @@ internal sealed partial class ProofRenders
     {
         var catalog = ProofCatalog();
         var model = catalog.Resolve("person");
-        var props = PlayerMoves.PlayerMoves.Props().ToDictionary(p => p.Id);
+        var props = catalog.Props;
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
         var target = new RenderTarget2D(GraphicsDevice, ReviewWidth, ReviewHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         var drawing = new PuppetDrawing(); var scenery = new CharacterMesh(8192);
-        var items = ReviewItems(catalog, model);
+        var items = ReviewItems(catalog);
         var manifest = new List<object>(); var report = new List<string>();
         foreach (var item in items)
         {
@@ -74,9 +74,9 @@ internal sealed partial class ProofRenders
         return false;
     }
 
-    private static List<ReviewItem> ReviewItems(AuthoredCatalog catalog, ResolvedModel model)
+    private static List<ReviewItem> ReviewItems(AuthoredCatalog catalog)
     {
-        var clips = PlayerMoves.PlayerMoves.Clips(model).ToDictionary(c => c.Id);
+        var clips = catalog.Animations;
         ReviewItem Of(string id, string scene = "ground", bool gun = false, string note = "") => new(id, clips[id].Name, clips[id], scene, gun, note);
         var run = catalog.Animations["person-run"]; var walk = catalog.Animations["person-walk"];
         return

@@ -110,6 +110,19 @@ internal sealed class EditorSmoke(string output)
             ("19-imported-walk-on-tall", shell => { var s = shell.Session; s.SetSubject("tall-thin"); s.Pin("short-broad"); s.Seek(.9f); }),
             ("20-imported-puppet", shell => ImportPuppet(shell.Session)),
             ("21-imports-reopened", shell => ImportsReopened(shell.Session)),
+            ("22-weapon-orientation", shell =>
+            {
+                var s = shell.Session; s.Open("player-sword-slash"); s.SetSubject("person"); s.Compare.Clear();
+                s.PreviewProp = "sword"; s.PreviewSocket = PersonLoadout.SwordSocket; s.PreviewWeapon = s.EditWeapon = true; s.Seek(.16f);
+                s.PoseWeapon(new(.8f, -.3f, 0)); s.CommitAll();
+                Record(s.Scene()[0].Pose.SocketAngles[PersonLoadout.SwordSocket].X == .8f, "weapon rotation reaches the preview");
+                Check(s.Save(s.ClipDocument), s);
+            }),
+            ("23-weapon-edge-on", shell =>
+            {
+                var s = shell.Session; s.PoseWeapon(new(MathF.PI / 2, 0, 0)); s.CommitAll();
+                Record(MathF.Abs(new ActorPose(s.Scene()[0].Pose, Vector2.Zero, 1).Socket(s.Scene()[0].Model.Base.Sockets.First(x => x.Id == PersonLoadout.SwordSocket)).Across3.Z) > .99f, "edge-on blade has real depth");
+            }),
         ];
         return workspace;
     }

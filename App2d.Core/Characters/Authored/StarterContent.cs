@@ -108,11 +108,8 @@ public static class StarterContent
         foreach (var key in hips.Keys) key.Y = mean + (key.Y - mean) * Bob + Sink;
         foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys) key.X += Lean;
         foreach (var arm in new[] { "left-arm", "right-arm" })
-        {
             if (clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.TargetKind && t.Target == arm) is { } track)
             { var center = track.Keys.Average(k => k.X); foreach (var key in track.Keys) key.X = center + (key.X - center) * Swing; }
-        }
-
         return clip;
     }
 
@@ -222,13 +219,15 @@ public static class StarterContent
     {
         Id = Spear,
         Name = "Spear",
-        Grip = new(0, 0),
         Tip = new(1.38f, 0),
         SecondGrip = new(-.3f, 0),
-        Shapes =
+        LineWidth = .013f,
+        Solids =
         [
-            new() { Kind = "stroke", Points = [new(-.5f, 0), new(1.12f, 0)], Width = .045f, Fill = "#8a6a44" },
-            new() { Kind = "polygon", Points = [new(1.1f, -.055f), new(1.38f, 0), new(1.1f, .055f)], Fill = "#c9d2da" },
+            PropGeometry.Extrude([new(-.5f, -.024f), new(1.12f, -.021f), new(1.12f, .021f), new(-.5f, .024f)], .039f, "#876646"),
+            PropGeometry.Extrude([new(-.5f, -.031f), new(-.41f, -.031f), new(-.41f, .031f), new(-.5f, .031f)], .05f, "#465963"),
+            PropGeometry.Extrude([new(1.035f, -.039f), new(1.115f, -.039f), new(1.115f, .039f), new(1.035f, .039f)], .064f, "#c5a26b"),
+            PropGeometry.Blade(1.1f, 1.17f, 1.38f, .076f, .022f, "#dce5e7"),
         ],
     };
 
@@ -271,7 +270,7 @@ public static class StarterContent
     {
         var clip = Clip(model, "stalker-walk", "Stalker walk", 1, true);
         clip.Travel.Keys = [new() { Time = 0 }, new() { Time = 1, X = .6f }];
-        static ClipKey L(float t, float x, float y = 0) => K(t, x, y, ClipEase.Linear);
+        ClipKey L(float t, float x, float y = 0) => K(t, x, y, ClipEase.Linear);
         var outer = new[] { L(0, .15f), L(.5f, -.15f), L(.75f, 0, .12f), L(1, .15f) };
         clip.Tracks =
         [

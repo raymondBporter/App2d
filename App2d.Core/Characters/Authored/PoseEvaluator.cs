@@ -35,6 +35,7 @@ public sealed class EvaluatedPose
     public Dictionary<string, Vector3> Points { get; } = new(StringComparer.Ordinal);
     /// <summary>Accumulated XY rotation of each control's frame, inherited by its children.</summary>
     public Dictionary<string, float> Angles { get; } = new(StringComparer.Ordinal);
+    public Dictionary<string, Vector3> SocketAngles { get; } = new(StringComparer.Ordinal);
     /// <summary>The expression each visible face-bearing part shows: gameplay input, then the clip's face channel, then the model default.</summary>
     public Dictionary<string, string> Expressions { get; } = new(StringComparer.Ordinal);
     /// <summary>The locomotion frame's origin at this sample.</summary>
@@ -130,6 +131,15 @@ public static class PoseEvaluator
             var result = Solve(model, pose, chain, target, Bend(chain));
             pose.Chains[index] = result;
             pose.Contacts.Add(new(chain.Id, target, result.Residual));
+        }
+        foreach (var socket in model.Base.Sockets)
+        {
+            Vector3 ReadOrientation(bool fromOverlay) => Read(fromOverlay, MotionClip.OrientKind, socket.Id) is { Track: { } t, Time: var at }
+                ? Interpolate(t.Keys, at).Value : Vector3.Zero;
+            // Socket channels follow ownership of their frame, including an IK chain that owns their attachment end.
+            var owned = Masked(socket.Id) || Masked(socket.Frame ?? socket.Control) || Masked(socket.Control)
+                || model.Base.Chains.Any(c => c.End == socket.Control && Masked(c.Id));
+            pose.SocketAngles[socket.Id] = owned ? Vector3.Lerp(ReadOrientation(false), ReadOrientation(true), weight) : ReadOrientation(false);
         }
         var overlayFace = overlay is not null && weight >= .5f;
         foreach (var part in model.Parts)

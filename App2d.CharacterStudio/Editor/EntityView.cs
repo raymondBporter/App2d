@@ -247,6 +247,12 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
 
         var resolved = session.Entity?.Actions.GetValueOrDefault(id);
+        if (resolved is not null && ImGui.Button("Animate this action with weapon"))
+        {
+            var equipment = document.Asset.Equipment.FirstOrDefault();
+            session.Open(resolved.Clip.Id);
+            if (equipment is not null) { session.PreviewProp = equipment.Prop; session.PreviewSocket = equipment.Socket; session.PreviewWeapon = session.EditWeapon = true; }
+        }
 
         var groups = basis?.Groups.Select(g => g.Id).ToArray() ?? [];
         if (id != EntityControllers.Jump)

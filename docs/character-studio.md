@@ -13,6 +13,37 @@ dotnet run --project App2d.CharacterStudio
 Requires Windows and .NET 10. ImGui.NET 1.91.6.1 is pinned; MonoGame WindowsDX is the same version as the game. Startup
 exceptions are written to `character-studio-error.log` beside the executable.
 
+## Weapons and 3D rotation
+
+Open **Sword rising slash** (`player-sword-slash`) in **Animate**. Under **Weapon preview**, choose Sword and the
+`sword-hand` socket, then **Edit weapon rotation**. Opening a prop in the browser also opens these controls. An entity
+action's **Animate this action with weapon** button selects its clip and equipment together.
+
+- **Turn** aims in the screen plane, **Tilt** points toward/away from the camera, and **Twist** rolls the broad face onto
+  its edge. These are offsets from the socket's existing frame; changing them does not move the arm.
+- Drag the gold handle around the grip to turn, the blue handle up/down to tilt, or the green handle left/right to twist.
+  Shift slows adjustment. Numeric degree fields and Broadside / Edge-on / Reverse face presets are also available.
+- Autokey writes at the playhead. With autokey off, **Key pose** keeps the previewed pose; seeking discards it. The
+  **Weapon rotation** timeline row supports moving, copying, easing and deleting keys. Key the starting pose before
+  adding later poses. Angles are unwrapped: 0 to 360 makes a full turn rather than taking a shortest path.
+- Preview equipment is independent of entity equipment. Pick the same socket the entity equips. **Save animation**
+  saves motion; **Save weapon** saves the shared art asset. Ctrl+Z/Redo includes both while the weapon inspector is open.
+
+Expand **Weapon asset / import OBJ** for size, grip, tip, muzzle, ink width and solid colors. **Replace geometry from
+OBJ** imports a triangulated mesh into the current prop document as an undoable edit. Export applied transforms with
++X along the blade/barrel, +Y across the broad face, Z for thickness, and outward face winding. Pick import scale to
+convert into character model units. UVs, normals and materials are ignored; assign flat color in the editor. The imported
+mesh is stored in the prop JSON, with no runtime dependency on the OBJ or modeling application. Check grip, tip and
+muzzle after import; they remain explicit markers. Asset changes affect every entity using the prop.
+
+The starter sword, sheath, pistol, spear and hammer are simple closed meshes. Sword attacks, sheathing, gun poses and
+the hammer slam have initial orientation keys for experimentation. These are rough starting performances, not an
+automatic conversion of the old imported weapon motion. Characters keep their existing XY rig and depth controls.
+
+Rendering uses the same orthographic depth buffer as characters, with flat facet colors and visible silhouette/crease
+ink on solid props. Coplanar triangulation edges are suppressed. Legacy stroke/polygon props still load. Socket
+orientation is evaluated before both drawing and gameplay point projection; gameplay collision remains XY.
+
 ## Workspaces
 
 - **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
@@ -55,9 +86,12 @@ The conversion code is `App2d.Core/Characters/Authored/SourceImport.cs` (`Puppet
 | `--smoke-motion <dir>` | Shared walk, run and heavy walk on three Person builds, with `motion-proof.txt`. |
 | `--smoke-entities <dir>` | Arena frames with collision overlays, with `entity-proof.txt`. |
 | `--review-moves <dir>` | Player move set frames, manifest and report for `tools/MoveReview`. |
+| `--smoke-weapons <dir>` | A five-weapon turntable and sword swing in both facings. |
 
 `--convert-studies <authored-dir>` regenerates the Person model, walk, run and starter content from the prototype
 studies; `--write-player-moves <authored-dir>` regenerates the player move set.
+`--write-weapons <authored-dir>` replaces the five starter weapon assets and their sample orientation tracks, keeping
+body keys and entity settings. It is a regeneration command and overwrites edits to those weapon assets/tracks.
 
 The game has two more: `dotnet run --project App2d -- --render-smoke <dir>` draws authored entities through the game
 presentation, and `-- --face-smoke <dir>` draws every expression on the Person.

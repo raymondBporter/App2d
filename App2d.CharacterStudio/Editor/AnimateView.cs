@@ -10,7 +10,7 @@ namespace App2d.CharacterStudio.Editor;
 /// (keyed at once with autokey, held until Key pose without); a planted end moves its contact instead. The timeline shows the
 /// pose keys, the selected control's channels, contacts, markers and face keys.
 /// </summary>
-internal sealed class AnimateView(EditorSession session, Viewport viewport) : IWorkspaceView
+internal sealed partial class AnimateView(EditorSession session, Viewport viewport) : IWorkspaceView
 {
     private const float RowHeight = 20, LabelWidth = 118;
     private string? _dragging;
@@ -41,6 +41,7 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
         if (Ui.Combo("Preview on", session.SubjectId ?? basis, subjects, id => session.Assets.Find(id)?.Name ?? id) is { } subject) session.SetSubject(subject);
         Ui.Help("Keys are stored in the base's reference units, so they play on every build.");
         if (Primary is not { } primary) return;
+        WeaponOutline(primary);
         Ui.Header("Channels");
         foreach (var control in primary.Model.Order)
         {
@@ -49,7 +50,7 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
             var keyed = ClipAuthoring.Track(clip.Asset, channel.Value) is not null || ClipAuthoring.Track(clip.Asset, new(MotionClip.RotateKind, control.Id)) is not null;
             if (!keyed) ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
             if (ImGui.Selectable($"{control.Id}{(channel.Value.Kind == MotionClip.TargetKind ? "  (IK " + channel.Value.Target + ")" : "")}", session.Selection.Control == control.Id))
-            { session.Selection.Clear(); session.Selection.Control = control.Id; }
+            { session.Selection.Clear(); session.Selection.Control = control.Id; session.EditWeapon = false; }
             if (!keyed) ImGui.PopStyleColor();
         }
     }
@@ -60,6 +61,11 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
     {
         if (Clip is not { } document) { Ui.Help("No animation open."); return; }
         var clip = document.Asset;
+        if (session.EditWeapon && Primary is { } weaponSubject)
+        {
+            WeaponInspector(document, weaponSubject);
+            return;
+        }
         Ui.Header("Animation");
         var name = clip.Name; if (Ui.Text("Name", ref name, 100) && name.Trim().Length > 0) session.Change(document, () => document.Asset.Name = name);
         var builds = 1 + session.Assets.Variants.Count(v => v.Asset.Base == clip.Model);
@@ -251,6 +257,7 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
     {
         if (frame.Primary is not { } view || Clip is not { } document) return;
         var subject = view.Subject; var model = subject.Model; var pose = subject.Pose; var draw = frame.Draw;
+        if (session.EditWeapon && WeaponOverlay(frame, subject)) return;
         if (_onion && !session.Transport.Playing && subject.Clip is { } shown)
         {
             var times = ClipAuthoring.KeyTimes(shown); var now = session.Transport.Time;
@@ -317,6 +324,7 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
         float Time(float x) => Math.Clamp((x - left) / (right - left) * clip.Duration, 0, clip.Duration);
 
         var rows = new List<(string Label, IReadOnlyCollection<Channel>? Channels)> { ("Pose (all)", null) };
+        if (session.EditWeapon) rows.Add(("Weapon rotation", new[] { new Channel(MotionClip.OrientKind, session.PreviewSocket) }));
         if (session.Selection.Control is { } control && primary.Model.Controls.ContainsKey(control) && RowChannels(primary.Model, control) is { Count: > 0 } selected)
             rows.Add((control, selected));
         var y = origin.Y;
