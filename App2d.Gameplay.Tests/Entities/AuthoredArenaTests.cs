@@ -62,6 +62,16 @@ public sealed class AuthoredArenaTests
         Assert.True(guard.Animator.ActionSequence >= attacks.Count);
     }
 
+    [Theory, InlineData(1), InlineData(-1)]
+    public void TheGuardTurnsToItsTargetBeforeThrusting(int side)
+    {
+        var arena = Arena("player", "spear-guard");
+        arena.Teleport(0, new(0, 0)); arena.Teleport(1, new(2.05f * side, 0));
+        for (var i = 0; i < 120; i++) arena.Step(default);
+        Assert.Equal(-side, arena.Actors[1].Facing);
+        Assert.Contains(arena.Hits, h => h.Attacker == 1);
+    }
+
     [Fact]
     public void TheNonPersonCreatureWalksPlantsAndAttacks()
     {

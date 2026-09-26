@@ -102,6 +102,10 @@ public sealed class AuthoredArena
         var events = _scratch; events.Clear();
         if (!actor.Alive) { animator.Step(StepSeconds, actor.Position, actor.Facing, animator.Role, 0, true, events, actor.Expression); return; }
 
+        var move = spec.Moves || input.Attack ? Math.Clamp(input.Move, -1, 1) : 0;
+        // Turn before acting, so an attack starts toward where the controller is steering.
+        if (animator.Action is null && MathF.Abs(move) > 0) actor.Facing = move > 0 ? 1 : -1;
+        if (!spec.Moves) move = 0;
         if (animator.Action is null && actor.Grounded)
         {
             // Rejected requests (a guard asked to jump) simply do nothing: there is no accidental idle substitute.
@@ -110,8 +114,6 @@ public sealed class AuthoredArena
             else if (input.Jump && spec.Jumps) animator.TryStart(EntityControllers.Jump);
         }
         var action = animator.Action;
-        var move = spec.Moves ? Math.Clamp(input.Move, -1, 1) : 0;
-        if (action is null && MathF.Abs(move) > 0) actor.Facing = move > 0 ? 1 : -1;
         var speed = input.Run && config.RunSpeed > 0 ? config.RunSpeed : config.WalkSpeed;
         var vx = action == EntityControllers.Attack || action == EntityControllers.Jump && !actor.Launched ? 0 : MathF.Abs(move) < .01f ? 0 : move * speed;
         var velocity = new Vector2(vx, actor.Grounded ? 0 : actor.Velocity.Y - Gravity * StepSeconds);

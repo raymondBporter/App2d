@@ -218,7 +218,7 @@ public static class StarterContent
     public static EntityAsset StalkerEntity() => new()
     {
         Id = StalkerPest, Name = "Stalker pest", Model = Stalker, MotionSet = "standard",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .6f, Range = .9f, Cooldown = 1.4f }, Health = 2,
+        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .6f, Range = 1.2f, Cooldown = 1.4f }, Health = 2,
         Movement = new() { Width = 1, Height = 1.1f }, Hurt = new() { Layout = "standard" },
         Actions =
         [

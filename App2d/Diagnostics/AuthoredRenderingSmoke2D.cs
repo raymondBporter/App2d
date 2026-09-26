@@ -44,6 +44,36 @@ internal static class AuthoredRenderingSmoke2D
         }
         view.ApplyState([], [], 61);
         if (scene.Count() != 1) throw new InvalidOperationException("Authored enemy views leaked scene objects.");
+        RunEntities(device, view, scene, renderer, target, directory);
+        view.ApplyState([], [], 62);
+        if (scene.Count() != 1) throw new InvalidOperationException("Authored entity views leaked scene objects.");
+    }
+
+    /// <summary>Authored entities through the game's presentation: each frame draws the animator's own final pose, props included.</summary>
+    private static void RunEntities(GraphicsDevice device, EnemyPresentation2D view, Scene2D scene, Renderer2D renderer, RenderTarget2D target, string directory)
+    {
+        var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
+        var ids = new[] { "spear-guard", "stalker-pest", "player" };
+        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("recovery", "attack", .75f) })
+        foreach (var facing in new[] { 1, -1 })
+        {
+            var states = ids.Select((id, i) =>
+            {
+                var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-110 + i * 170) / EntityCatalog.WorldUnits, 0);
+                if (action is not null && animator.TryStart(action)) for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
+                else for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, phase, phase == "walk" ? .012f : 0, false, []);
+                return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, feet * EntityCatalog.WorldUnits, Vector2.Zero, 0, facing, true, true)
+                { TypeId = id, AuthoredEntity = entity, AuthoredPose = animator.Pose };
+            }).ToImmutableArray();
+            view.ApplyState(states, [], 70);
+            device.SetRenderTarget(target); renderer.BeginFrame(1400, 500, default); renderer.Clear(new Color(145, 176, 190));
+            renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(1200, 2)), new SolidColorShader(Color.DarkSlateGray)));
+            renderer.Draw(scene);
+            renderer.DrawScreenLabel("AUTHORED: SPEAR GUARD / STALKER PEST / PLAYER", new(24, 24));
+            renderer.EndFrame(); device.SetRenderTarget(null);
+            using var stream = File.Create(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
+        }
     }
     private sealed class Silent : ISoundEffectSink2D { public void Play(SoundEffect2D effect) { } }
 }
