@@ -12,7 +12,7 @@ internal sealed partial class SavePoint2D
         bool PlayerWasInside,
         bool IsActive) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _playerWasInside, IsActive);
 
     internal void RestoreSimulation(SimulationState snapshot)

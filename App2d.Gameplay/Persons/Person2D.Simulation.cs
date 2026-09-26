@@ -20,7 +20,7 @@ public sealed partial class Person2D
         int HitPoints,
         ImmutableDictionary<EntityId2D, int> HitHistory) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _footstepSeconds, _simulationEnabled, Facing, InvulnerabilitySeconds, LandingSpeedThisFrame, DownAttackBouncedThisFrame, _previousCommand, _motor.CaptureSimulation(), Health.Current, _lastAttackIds.ToImmutableDictionary());
 
     internal void RestoreSimulation(SimulationState snapshot)

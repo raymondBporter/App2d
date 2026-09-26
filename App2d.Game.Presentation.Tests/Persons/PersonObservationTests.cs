@@ -13,8 +13,14 @@ namespace App2d.Gameplay.Tests.Persons;
 
 public sealed class PersonObservationTests
 {
-    private static PersonState2D Alive => new() { Id = EntityId2D.Create(), HitPoints = 5,
-        MaximumHitPoints = 5, Facing = 1f, IsGrounded = true };
+    private static PersonState2D Alive => new()
+    {
+        Id = EntityId2D.Create(),
+        HitPoints = 5,
+        MaximumHitPoints = 5,
+        Facing = 1f,
+        IsGrounded = true
+    };
 
     [Fact]
     public void DeathAndRevivalReconstructWithoutEvents()

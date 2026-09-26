@@ -49,18 +49,18 @@ public sealed partial class SideScrollerSession2D : IDisposable
         _world.UpdateStreaming(player.Position);
         _ = _world.UpdateSavePoints(0f, player.WorldObject.WorldBounds);
 
-        if (_combat is not null) _combat.DamageResolved += OnCombatDamage;
+        _combat?.DamageResolved += OnCombatDamage;
         participant.Subscribe(this);
     }
 
     public long Tick { get; private set; }
     public bool IsPaused { get; private set; }
-    public ImmutableArray<EntityId2D> PlayerIds => _players.Select(p => p.Person.Id).ToImmutableArray();
+    public ImmutableArray<EntityId2D> PlayerIds => [.. _players.Select(p => p.Person.Id)];
 
     public LevelContent2D CaptureContent() => _world.CaptureContent();
     public WorldState2D CaptureWorld() => _world.CaptureWorld();
     public ImmutableArray<EnemyState2D> CaptureEnemies() => _world.CaptureEnemies();
-    public ImmutableArray<PlayerState2D> CapturePlayers() => _players.Select(p => p.CaptureState()).ToImmutableArray();
+    public ImmutableArray<PlayerState2D> CapturePlayers() => [.. _players.Select(p => p.CaptureState())];
 
     public SessionSnapshot2D CaptureSnapshot()
     {
@@ -110,8 +110,10 @@ public sealed partial class SideScrollerSession2D : IDisposable
             if (!TryValidateInput(inputs[i], out var rejection))
                 throw new ArgumentException($"Input for player {inputs[i].EntityId.Value} was rejected: {rejection}.", nameof(inputs));
             for (var j = 0; j < i; j++)
+            {
                 if (inputs[j].EntityId == inputs[i].EntityId)
                     throw new ArgumentException($"Input for player {inputs[i].EntityId.Value} was rejected: {InputRejection2D.DuplicatePlayer}.", nameof(inputs));
+            }
         }
 
         _advancing = true;
@@ -129,8 +131,8 @@ public sealed partial class SideScrollerSession2D : IDisposable
             Step();
             foreach (var occurrence in _world.DrainEnemyEvents())
                 _events.Add(new EnemyOccurred2D(new SessionEventStamp2D(Tick, ++_eventSequence, occurrence.EntityId), occurrence));
-            return new SessionFrame2D(Tick, CapturePlayers(), _events.ToImmutableArray())
-                { Content = CaptureContent(), Enemies = CaptureEnemies(), World = CaptureWorld() };
+            return new SessionFrame2D(Tick, CapturePlayers(), [.. _events])
+            { Content = CaptureContent(), Enemies = CaptureEnemies(), World = CaptureWorld() };
         }
         finally { _advancing = false; }
     }
@@ -249,7 +251,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        if (_combat is not null) _combat.DamageResolved -= OnCombatDamage;
+        _combat?.DamageResolved -= OnCombatDamage;
         foreach (var player in _players) player.Unsubscribe();
         _events.Clear();
     }
@@ -290,17 +292,17 @@ public sealed partial class SideScrollerSession2D : IDisposable
 
         public void Subscribe(SideScrollerSession2D session)
         {
-            Action onJump = () => session._events.Add(new JumpStarted2D(session.Stamp(this)));
-            Action<float> onLanded = speed => session._events.Add(new Landed2D(session.Stamp(this), speed));
-            Action onFootstep = () => session._events.Add(new Footstep2D(session.Stamp(this)));
-            Action onDamaged = () => session._events.Add(new Damaged2D(session.Stamp(this)));
-            Action onDied = () => session._events.Add(new Died2D(session.Stamp(this)));
-            Action<WeaponEvent2D> onWeapon = occurrence => session._events.Add(new WeaponOccurred2D(session.Stamp(this), occurrence));
-            Action<EquipmentKind2D> onEquipment = kind => session._events.Add(new EquipmentChanged2D(session.Stamp(this), kind));
-            Action<float> onMelee = duration => Attack(PlayerAttackKind2D.Melee, duration);
-            Action<float> onDownward = duration => Attack(PlayerAttackKind2D.Downward, duration);
-            Action onShot = () => Attack(PlayerAttackKind2D.Shot, 0f);
-            Action<UnarmedAttackKind2D, float> onUnarmed = (kind, duration) =>
+            void onJump() => session._events.Add(new JumpStarted2D(session.Stamp(this)));
+            void onLanded(float speed) => session._events.Add(new Landed2D(session.Stamp(this), speed));
+            void onFootstep() => session._events.Add(new Footstep2D(session.Stamp(this)));
+            void onDamaged() => session._events.Add(new Damaged2D(session.Stamp(this)));
+            void onDied() => session._events.Add(new Died2D(session.Stamp(this)));
+            void onWeapon(WeaponEvent2D occurrence) => session._events.Add(new WeaponOccurred2D(session.Stamp(this), occurrence));
+            void onEquipment(EquipmentKind2D kind) => session._events.Add(new EquipmentChanged2D(session.Stamp(this), kind));
+            void onMelee(float duration) => Attack(PlayerAttackKind2D.Melee, duration);
+            void onDownward(float duration) => Attack(PlayerAttackKind2D.Downward, duration);
+            void onShot() => Attack(PlayerAttackKind2D.Shot, 0f);
+            void onUnarmed(UnarmedAttackKind2D kind, float duration) =>
                 Attack(kind == UnarmedAttackKind2D.Punch ? PlayerAttackKind2D.Punch : PlayerAttackKind2D.Kick, duration);
 
             Person.JumpStarted += onJump; _unsubscribe.Add(() => Person.JumpStarted -= onJump);

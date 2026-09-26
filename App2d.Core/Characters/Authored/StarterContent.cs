@@ -108,8 +108,11 @@ public static class StarterContent
         foreach (var key in hips.Keys) key.Y = mean + (key.Y - mean) * Bob + Sink;
         foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys) key.X += Lean;
         foreach (var arm in new[] { "left-arm", "right-arm" })
+        {
             if (clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.TargetKind && t.Target == arm) is { } track)
             { var center = track.Keys.Average(k => k.X); foreach (var key in track.Keys) key.X = center + (key.X - center) * Swing; }
+        }
+
         return clip;
     }
 
@@ -120,8 +123,14 @@ public static class StarterContent
 
     private static MotionClip Clip(ResolvedModel model, string id, string name, float duration, bool loop) => new()
     {
-        Id = id, Name = name, Model = model.Base.Id, StructureRevision = model.Base.StructureRevision, Duration = duration, Loop = loop,
-        Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal), Travel = new() { Scale = "leg" },
+        Id = id,
+        Name = name,
+        Model = model.Base.Id,
+        StructureRevision = model.Base.StructureRevision,
+        Duration = duration,
+        Loop = loop,
+        Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
+        Travel = new() { Scale = "leg" },
     };
 
     /// <summary>A quiet two-second breath with both feet planted for the whole cycle.</summary>
@@ -211,7 +220,11 @@ public static class StarterContent
 
     public static PropAsset SpearProp() => new()
     {
-        Id = Spear, Name = "Spear", Grip = new(0, 0), Tip = new(1.38f, 0), SecondGrip = new(-.3f, 0),
+        Id = Spear,
+        Name = "Spear",
+        Grip = new(0, 0),
+        Tip = new(1.38f, 0),
+        SecondGrip = new(-.3f, 0),
         Shapes =
         [
             new() { Kind = "stroke", Points = [new(-.5f, 0), new(1.12f, 0)], Width = .045f, Fill = "#8a6a44" },
@@ -258,7 +271,7 @@ public static class StarterContent
     {
         var clip = Clip(model, "stalker-walk", "Stalker walk", 1, true);
         clip.Travel.Keys = [new() { Time = 0 }, new() { Time = 1, X = .6f }];
-        ClipKey L(float t, float x, float y = 0) => K(t, x, y, ClipEase.Linear);
+        static ClipKey L(float t, float x, float y = 0) => K(t, x, y, ClipEase.Linear);
         var outer = new[] { L(0, .15f), L(.5f, -.15f), L(.75f, 0, .12f), L(1, .15f) };
         clip.Tracks =
         [
@@ -303,33 +316,50 @@ public static class StarterContent
 
     private static EntityActionDef Thrust() => new()
     {
-        Id = EntityControllers.Attack, Clip = "person-thrust",
+        Id = EntityControllers.Attack,
+        Clip = "person-thrust",
         Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Width = .42f, Height = .26f }],
         Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
     };
 
     public static EntityAsset SpearGuardEntity() => new()
     {
-        Id = SpearGuard, Name = "Spear guard", Model = "tall-thin", MotionSet = "deliberate",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .9f, Range = 2.1f, Cooldown = 1.1f }, Health = 3,
-        Movement = new() { Width = .5f, Height = 2.1f }, Hurt = new() { Layout = "standard" },
-        Equipment = [new() { Prop = Spear, Socket = "right-grip" }], Actions = [Thrust()],
+        Id = SpearGuard,
+        Name = "Spear guard",
+        Model = "tall-thin",
+        MotionSet = "deliberate",
+        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .9f, Range = 2.1f, Cooldown = 1.1f },
+        Health = 3,
+        Movement = new() { Width = .5f, Height = 2.1f },
+        Hurt = new() { Layout = "standard" },
+        Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
+        Actions = [Thrust()],
     };
 
     public static EntityAsset PlayerEntity() => new()
     {
-        Id = Player, Name = "Player", Model = PersonTemplate.Id, MotionSet = "standard",
-        Controller = new() { Kind = EntityControllers.Platformer, WalkSpeed = 1.8f, RunSpeed = 4.2f, JumpSpeed = 7.5f, Range = 1.6f, Cooldown = .2f }, Health = 5,
-        Movement = new() { Width = .55f, Height = 1.9f }, Hurt = new() { Layout = "standard", Regions = new() { ["legs"] = new() { Pad = .05f } } },
+        Id = Player,
+        Name = "Player",
+        Model = PersonTemplate.Id,
+        MotionSet = "standard",
+        Controller = new() { Kind = EntityControllers.Platformer, WalkSpeed = 1.8f, RunSpeed = 4.2f, JumpSpeed = 7.5f, Range = 1.6f, Cooldown = .2f },
+        Health = 5,
+        Movement = new() { Width = .55f, Height = 1.9f },
+        Hurt = new() { Layout = "standard", Regions = new() { ["legs"] = new() { Pad = .05f } } },
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust(), new() { Id = EntityControllers.Jump, Role = "jump", Events = [new() { Id = EntityControllers.Launch, At = new() { Marker = "launch" } }] }],
     };
 
     public static EntityAsset StalkerEntity() => new()
     {
-        Id = StalkerPest, Name = "Stalker pest", Model = Stalker, MotionSet = "standard",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .6f, Range = 1.05f, Cooldown = 1.4f }, Health = 2,
-        Movement = new() { Width = 1, Height = 1.1f }, Hurt = new() { Layout = "standard" },
+        Id = StalkerPest,
+        Name = "Stalker pest",
+        Model = Stalker,
+        MotionSet = "standard",
+        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .6f, Range = 1.05f, Cooldown = 1.4f },
+        Health = 2,
+        Movement = new() { Width = 1, Height = 1.1f },
+        Hurt = new() { Layout = "standard" },
         Actions =
         [
             new()

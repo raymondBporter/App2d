@@ -80,7 +80,7 @@ public static class ModelAuthoring
         var chain = new ModelChain { Id = UniqueId(end + "-chain", model.Chains.Select(c => c.Id)), Root = root, Joint = joint, End = end };
         model.Chains.Add(chain);
         // A group that owned the newly solved controls now owns the chain, whole.
-        foreach (var group in model.Groups.Where(g => g.Targets.Remove(joint) | g.Targets.Remove(end))) group.Targets.Add(chain.Id);
+        foreach (var group in model.Groups.Where(g => g.Targets.Remove(joint) || g.Targets.Remove(end))) group.Targets.Add(chain.Id);
         model.Validate(); return chain;
     }
 

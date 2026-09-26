@@ -36,7 +36,11 @@ public sealed class PropAsset
     /// <summary>A named local point, or null when the prop does not define it.</summary>
     public PuppetPoint? Point(string name) => name switch
     {
-        GripPoint => Grip, TipPoint => Tip, SecondGripPoint => SecondGrip, MuzzlePoint => Muzzle, _ => null,
+        GripPoint => Grip,
+        TipPoint => Tip,
+        SecondGripPoint => SecondGrip,
+        MuzzlePoint => Muzzle,
+        _ => null,
     };
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
@@ -53,11 +57,11 @@ public sealed class PropAsset
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Limit.Color(Ink, $"{owner} ink"); new Limit(.001f, 1).Check(LineWidth, $"{owner} lineWidth");
         Grip.Check($"{owner} grip"); Tip.Check($"{owner} tip"); SecondGrip?.Check($"{owner} secondGrip"); Muzzle?.Check($"{owner} muzzle");
-        Require(Shapes is not null && Shapes.Count <= 128, $"{owner}: shapes must be a list of at most 128.");
+        Require(Shapes?.Count <= 128, $"{owner}: shapes must be a list of at most 128.");
         for (var i = 0; i < Shapes.Count; i++)
         {
             var shape = Shapes[i]; var field = $"{owner} shapes[{i}]";
-            Require(shape is not null && shape.Points is not null, $"{field}: incomplete shape.");
+            Require(shape?.Points is not null, $"{field}: incomplete shape.");
             EntityVocabulary.Require(shape.Kind, ["stroke", "polygon"], field + " kind");
             Require(shape.Kind == "stroke" ? shape.Points.Count >= 2 : shape.Points.Count >= 3, $"{field}: a stroke needs two points and a polygon three.");
             foreach (var point in shape.Points) point.Check(field + " point");

@@ -53,12 +53,18 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         {
             var anchor = session.Selection.Control ?? structure.Controls[0].Id;
             foreach (var kind in new[] { "ellipse", "box", "stroke" })
+            {
                 if (ImGui.MenuItem($"{kind} on {anchor}", "", false, kind != "stroke" || structure.Controls.Count > 1) && Base is { } document)
+                {
                     session.Edit(document, () =>
                     {
                         var other = structure.Controls.FirstOrDefault(c => c.Parent == anchor)?.Id ?? structure.Controls.FirstOrDefault(c => c.Id != anchor)?.Id;
                         Select(part: ModelAuthoring.AddPart(document.Asset, kind, anchor, kind == "stroke" ? other : null).Id);
                     });
+                }
+
+            }
+
             ImGui.EndPopup();
         }
         if (Variant is not null) Ui.Help("Variants restyle, resize or hide parts. Adding shapes belongs to the base.");
@@ -81,15 +87,23 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (structure.Controls.Count == 0) Ui.Help("An empty model. Add a first control, then connect more to it.");
         if (Base is { } model)
         {
-            if (ImGui.Button("Add control")) Structural("add a control", () =>
+            if (ImGui.Button("Add control"))
+            {
+                Structural("add a control", () =>
             {
                 var parent = session.Selection.Control; var at = parent is null ? new Vector3(0, 1, 0) : (Resolved ?? throw new InvalidDataException("The model does not resolve; repair it before adding controls.")).Rest[parent] + new Vector3(.3f, 0, 0);
                 Select(control: ModelAuthoring.AddControl(model.Asset, parent, at).Id);
             });
+            }
+
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Adds a child of the selected control, or a root control when none is selected.");
             ImGui.SameLine();
-            if (Ui.Button("Make IK chain", session.Selection.Control is not null)) Structural("add an IK chain", () =>
+            if (Ui.Button("Make IK chain", session.Selection.Control is not null))
+            {
+                Structural("add an IK chain", () =>
                 Select(chain: ModelAuthoring.AddChain(model.Asset, session.Selection.Control!).Id));
+            }
+
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("The selected control becomes the tip of a two-bone chain over its parent and grandparent.");
         }
         Ui.Header("IK chains");
@@ -137,8 +151,14 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
     public void Inspector()
     {
-        if (Variant is { } variant) VariantInspector(variant);
-        else if (Base is { } model) BaseInspector(model);
+        if (Variant is { } variant)
+        {
+            VariantInspector(variant);
+        }
+        else if (Base is { } model)
+        {
+            BaseInspector(model);
+        }
         else { Ui.Help("Open a model or variant from the browser, or create one with New."); return; }
         foreach (var problem in session.ActiveDocument is { } document ? session.Assets.Problems(document) : []) Ui.Problem(problem);
         if (Variant is null && Base is { } opened) References.Draw(session, opened.Id);
@@ -236,7 +256,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         ImGui.SetNextItemWidth(140 * Ui.Scale); ImGui.InputTextWithHint("##new-set", "new set name", ref _newSet, 60); ImGui.SameLine();
         if (Ui.Button("Add empty set", _newSet.Trim().Length > 0))
         {
-            var id = ModelAuthoring.UniqueId(new string(_newSet.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '-').ToArray()).Trim('-') is { Length: > 0 } slug ? slug : "set", model.MotionSets.Select(s => s.Id));
+            var id = ModelAuthoring.UniqueId(new string([.. _newSet.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '-')]).Trim('-') is { Length: > 0 } slug ? slug : "set", model.MotionSets.Select(s => s.Id));
             if (session.NewMotionSet(model.Id, id, _newSet.Trim(), null)) _newSet = "";
         }
         Ui.Help("Sets describe an artistic choice such as Heavy; any build can use any set. Missing roles stay visibly unassigned.");
@@ -349,7 +369,10 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         {
             Ui.Header("Control " + control);
             var overridden = variant.Rest.ContainsKey(control);
-            if (Ui.OverrideLabel("Rest X / Y / depth", overridden)) session.Edit(document, () => document.Asset.Rest.Remove(control));
+            if (Ui.OverrideLabel("Rest X / Y / depth", overridden))
+            {
+                session.Edit(document, () => document.Asset.Rest.Remove(control));
+            }
             else
             {
                 var rest = resolved.Rest[control]; ImGui.SetNextItemWidth(-1);
@@ -368,7 +391,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         ImGui.SetNextItemWidth(140 * Ui.Scale); ImGui.InputTextWithHint("##look-name", "look name", ref _lookName, 60); ImGui.SameLine();
         if (Ui.Button("Save look to base", _lookName.Trim().Length > 0))
         {
-            var id = new string(_lookName.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '-').ToArray()).Trim('-');
+            var id = new string([.. _lookName.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '-')]).Trim('-');
             if (session.SaveLook(id.Length > 0 ? id : "look", _lookName.Trim())) _lookName = "";
         }
         Ui.Help("Applying a look writes colors and faces as this variant's overrides. Saving one edits the base, which then needs saving.");
@@ -421,7 +444,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (session.Selection.Part is { } selectedPart && model.Parts.FirstOrDefault(p => p.Id == selectedPart) is { } part) Outline(frame, part, pose);
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            var hit = model.Parts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(frame.Mouse))))
+            var hit = model.Parts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse))))
                 .Where(h => h.Score <= 1).OrderBy(h => h.Score).FirstOrDefault();
             if (hit.Part is not null) Select(part: hit.Part.Id); else session.Selection.Clear();
         }
@@ -432,15 +455,18 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
     {
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            _dragging = model.Order.Select(c => c.Id).OrderBy(id => Vector2.Distance(frame.Screen(pose.World(id)), frame.Mouse))
-                .FirstOrDefault(id => Vector2.Distance(frame.Screen(pose.World(id)), frame.Mouse) < 12 * Ui.Scale);
-            if (_dragging is not null) { Select(control: _dragging); _grab = pose.World(_dragging) - frame.World(frame.Mouse); session.BeginDrag(); }
-            else session.Selection.Clear();
+            _dragging = model.Order.Select(c => c.Id).OrderBy(id => Vector2.Distance(frame.Screen(pose.World(id)), ViewportFrame.Mouse))
+                .FirstOrDefault(id => Vector2.Distance(frame.Screen(pose.World(id)), ViewportFrame.Mouse) < 12 * Ui.Scale);
+            if (_dragging is not null) { Select(control: _dragging); _grab = pose.World(_dragging) - frame.World(ViewportFrame.Mouse); session.BeginDrag(); }
+            else
+            {
+                session.Selection.Clear();
+            }
         }
         if (_dragging is null) return;
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _dragging = null; session.EndDrag(); return; }
         if (ImGui.GetIO().MouseDelta == Vector2.Zero) return;
-        var target = frame.World(frame.Mouse) + _grab;
+        var target = frame.World(ViewportFrame.Mouse) + _grab;
         session.DragControl(_dragging, target with { Z = pose.World(_dragging).Z });
     }
 

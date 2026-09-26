@@ -28,10 +28,12 @@ internal sealed class GraphicsSurface2D : Control
         if (_device?.GraphicsDeviceStatus == GraphicsDeviceStatus.Lost)
             ReleaseDevice();
         if (_device is null)
+        {
             _device = new GraphicsDevice(GraphicsAdapter.DefaultAdapter, GraphicsProfile.HiDef, CreateParameters());
+        }
         else if (_device.PresentationParameters.BackBufferWidth != ClientSize.Width ||
-            _device.PresentationParameters.BackBufferHeight != ClientSize.Height ||
-            _device.GraphicsDeviceStatus == GraphicsDeviceStatus.NotReset)
+                    _device.PresentationParameters.BackBufferHeight != ClientSize.Height ||
+                    _device.GraphicsDeviceStatus == GraphicsDeviceStatus.NotReset)
         {
             _device.Reset(CreateParameters());
         }

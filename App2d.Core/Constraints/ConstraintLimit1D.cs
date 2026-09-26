@@ -28,11 +28,17 @@ public readonly record struct ConstraintLimit1D
     public ConstraintLimit1D(float minimum, float maximum)
     {
         if (float.IsNaN(minimum) || minimum == float.PositiveInfinity)
+        {
             throw new ArgumentOutOfRangeException(nameof(minimum), minimum,
                 "The minimum must be finite or negative infinity.");
+        }
+
         if (float.IsNaN(maximum) || maximum == float.NegativeInfinity)
+        {
             throw new ArgumentOutOfRangeException(nameof(maximum), maximum,
                 "The maximum must be finite or positive infinity.");
+        }
+
         if (minimum > maximum)
             throw new ArgumentException("The minimum limit cannot exceed the maximum limit.");
 

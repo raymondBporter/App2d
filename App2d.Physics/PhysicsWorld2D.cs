@@ -225,7 +225,9 @@ public sealed partial class PhysicsWorld2D
         const float maximumTopNormalX = 0.001f;
         if (otherSeparationNormal.Y <= 0f ||
             MathF.Abs(otherSeparationNormal.X) > maximumTopNormalX)
+        {
             return false;
+        }
 
         var platformBounds = platform.WorldObject.WorldBounds;
         var otherBounds = other.WorldObject.WorldBounds;
@@ -262,7 +264,9 @@ public sealed partial class PhysicsWorld2D
         {
             var key = (contact.First, contact.Second);
             if (_index.TryGetValue(key, out var position))
+            {
                 _contacts[position] = contact;
+            }
             else
             {
                 _index.Add(key, _contacts.Count);

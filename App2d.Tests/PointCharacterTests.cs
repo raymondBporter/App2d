@@ -13,13 +13,28 @@ public sealed class PointCharacterTests
         byte[] data = [0, 0, 10, 0, 20, 0, 10, 0, 20, 0, 30, 0, 30, 0, 40, 0, 50, 0];
         var spec = new
         {
-            version = 1, format = "app2d-point-library", id = "test", label = "Test", anatomy = "test", pointNames = new[] { "root" }, drawing = new { },
+            version = 1,
+            format = "app2d-point-library",
+            id = "test",
+            label = "Test",
+            anatomy = "test",
+            pointNames = new[] { "root" },
+            drawing = new { },
             dataSha256 = Convert.ToHexString(SHA256.HashData(data)),
-            clips = new Dictionary<string, object> { ["motion"] = new
+            clips = new Dictionary<string, object>
             {
-                label = "Motion", loop, duration = 1.0, times = times ?? [0, .25, 1], sampleCount = 3, byteOffset = offset, byteLength = 18,
-                encoding = new { type = "uint16-le", layout = "sample,point,xyz", origin = new[] { -5f, 10f, 100f }, step = .5f }
-            } }
+                ["motion"] = new
+                {
+                    label = "Motion",
+                    loop,
+                    duration = 1.0,
+                    times = times ?? [0, .25, 1],
+                    sampleCount = 3,
+                    byteOffset = offset,
+                    byteLength = 18,
+                    encoding = new { type = "uint16-le", layout = "sample,point,xyz", origin = new[] { -5f, 10f, 100f }, step = .5f }
+                }
+            }
         };
         return new(JsonSerializer.Serialize(spec), dataOverride ?? data);
     }

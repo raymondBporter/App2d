@@ -46,7 +46,9 @@ public static class AuthoredJson
         var resolver = new DefaultJsonTypeInfoResolver(); resolver.Modifiers.Add(OmitDefaults);
         return new()
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true,
             UnmappedMemberHandling = strict ? JsonUnmappedMemberHandling.Disallow : JsonUnmappedMemberHandling.Skip,
             TypeInfoResolver = resolver
         };

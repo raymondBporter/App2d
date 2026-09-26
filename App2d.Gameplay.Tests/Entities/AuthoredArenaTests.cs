@@ -68,7 +68,10 @@ public sealed class AuthoredArenaTests
             for (var i = 0; i < 60; i++) arena.Step(new(Move: 1));
             Assert.Equal(EntityControllers.Attack, arena.Player.Animator.Action);
             if (walks) { Assert.True(arena.Player.Position.X > start + .3f); Assert.Equal(EntityControllers.Walk, arena.Player.Animator.Role); }
-            else Assert.Equal(start, arena.Player.Position.X, 5);
+            else
+            {
+                Assert.Equal(start, arena.Player.Position.X, 5);
+            }
         }
     }
 

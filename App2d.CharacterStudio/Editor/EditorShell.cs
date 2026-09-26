@@ -22,30 +22,24 @@ internal interface IWorkspaceView
 /// One window, one viewport, one document workflow: asset browser and outline on the left, the shared viewport in the middle,
 /// the selection inspector on the right and the timeline below. Model and Animate are views over the same session.
 /// </summary>
-internal sealed class EditorShell : IDisposable
+internal sealed class EditorShell(EditorSession session, Viewport viewport, ArenaTest test, ImGuiHost gui) : IDisposable
 {
-    private readonly ImGuiHost _gui;
-    private readonly AssetBrowser _browser;
-    private readonly IWorkspaceView[] _views;
+    private readonly AssetBrowser _browser = new(session);
+    private readonly IWorkspaceView[] _views =
+    [
+        new ModelView(session, viewport),
+        new AnimateView(session, viewport),
+        new EntityView(session)
+    ];
 
-    public EditorShell(EditorSession session, Viewport viewport, ArenaTest test, ImGuiHost gui)
-    {
-        Session = session; Viewport = viewport; Test = test; _gui = gui;
-        _browser = new(session);
-        _views = [new ModelView(session, viewport), new AnimateView(session, viewport), new EntityView(session)];
-    }
-
-    public EditorSession Session { get; }
-    public Viewport Viewport { get; }
-    /// <summary>The arena test. Shell state: entering and leaving it never changes the session's documents or selection.</summary>
-    public ArenaTest Test { get; }
-    /// <summary>False while a smoke run drives the arena itself.</summary>
+    public EditorSession Session { get; } = session; public Viewport Viewport { get; } = viewport;     /// <summary>The arena test. Shell state: entering and leaving it never changes the session's documents or selection.</summary>
+    public ArenaTest Test { get; } = test;     /// <summary>False while a smoke run drives the arena itself.</summary>
     public bool LiveTest { get; set; } = true;
     private IWorkspaceView View => _views.First(v => v.Mode == Session.Mode);
 
     public void Draw()
     {
-        Ui.Scale = _gui.UiScale; var scale = Ui.Scale;
+        Ui.Scale = gui.UiScale; var scale = Ui.Scale;
         var io = ImGui.GetIO();
         ImGui.SetNextWindowPos(Vector2.Zero); ImGui.SetNextWindowSize(io.DisplaySize);
         ImGui.Begin("Character editor", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
@@ -87,7 +81,7 @@ internal sealed class EditorShell : IDisposable
             ImGui.SameLine();
         }
         if (Test.Active) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
-        if (ImGui.Button(Test.Active ? "Stop test" : "Test")) { if (Test.Active) Test.Stop(); else { Session.CommitAll(); Test.Start(); } }
+        if (ImGui.Button(Test.Active ? "Stop test" : "Test")) { if (Test.Active) { Test.Stop(); } else { Session.CommitAll(); Test.Start(); } }
         if (Test.Active) ImGui.PopStyleColor();
         if (ImGui.IsItemHovered()) ImGui.SetTooltip("Play the entity arena from a snapshot of the current drafts, unsaved edits included.");
         ImGui.SameLine(); ImGui.TextDisabled("|"); ImGui.SameLine();
@@ -106,7 +100,7 @@ internal sealed class EditorShell : IDisposable
         if (ImGui.BeginPopup("ui-scale"))
         {
             foreach (var factor in new[] { .75f, 1f, 1.25f, 1.5f, 1.75f, 2f })
-                if (ImGui.Selectable($"{factor:P0}", MathF.Abs(_gui.UserScale - factor) < .001f)) _gui.UserScale = factor;
+                if (ImGui.Selectable($"{factor:P0}", MathF.Abs(gui.UserScale - factor) < .001f)) gui.UserScale = factor;
             ImGui.EndPopup();
         }
     }
@@ -175,7 +169,10 @@ internal sealed class EditorShell : IDisposable
     private void StatusLine()
     {
         if (Session.Message.Length > 0) { if (Session.MessageIsError) Ui.Problem(Session.Message); else ImGui.TextDisabled(Session.Message); }
-        else ImGui.TextDisabled("Space play  |  Ctrl+S save  |  Ctrl+Shift+S save all  |  Ctrl+Z undo  |  Scroll zoom  |  Middle drag pan");
+        else
+        {
+            ImGui.TextDisabled("Space play  |  Ctrl+S save  |  Ctrl+Shift+S save all  |  Ctrl+Z undo  |  Scroll zoom  |  Middle drag pan");
+        }
     }
 
     private void Shortcuts(ImGuiIOPtr io)

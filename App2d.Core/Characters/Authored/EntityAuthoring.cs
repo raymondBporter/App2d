@@ -33,7 +33,9 @@ public static class EntityAuthoring
     {
         var entity = new EntityAsset
         {
-            Id = id, Name = name, Model = model.Id,
+            Id = id,
+            Name = name,
+            Model = model.Id,
             MotionSet = model.Base.MotionSets.FirstOrDefault()?.Id ?? "standard",
             Movement = FitMovement(model),
             Hurt = new() { Layout = model.Base.HurtLayouts.FirstOrDefault()?.Id },

@@ -110,7 +110,10 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             StartAttack(targetPosition);
             AdvanceAttack(deltaSeconds);
         }
-        else _facing = Enemy.Facing;
+        else
+        {
+            _facing = Enemy.Facing;
+        }
 
         SyncHitbox();
     }
@@ -196,7 +199,8 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, _facing,
         _simulationEnabled, Enemy.IsAlive)
     {
-        MoveSpeed = Enemy.Speed, IsAttacking = _isAttacking,
+        MoveSpeed = Enemy.Speed,
+        IsAttacking = _isAttacking,
         AttackElapsedSeconds = _attackElapsedSeconds
     };
 

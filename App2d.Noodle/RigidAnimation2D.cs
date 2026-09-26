@@ -223,14 +223,14 @@ internal sealed class PoseAuthoring2D
     {
         var saved = new SavedPoseFile(
             "app2d-standard-humanoid-v1",
-            _frames.Select(frame => new SavedPoseFrame(
+            [.. _frames.Select(frame => new SavedPoseFrame(
                 frame.Time,
                 SavedPoint.From(frame.Pose.HandLeft),
                 SavedPoint.From(frame.Pose.HandRight),
                 SavedPoint.From(frame.Pose.FootLeft),
                 SavedPoint.From(frame.Pose.FootRight),
                 frame.Pose.TorsoAngle,
-                frame.Pose.HeadAngle)).ToArray());
+                frame.Pose.HeadAngle))]);
         var json = JsonSerializer.Serialize(saved, JsonOptions);
         File.WriteAllText(path, json);
         return path;

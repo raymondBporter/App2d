@@ -29,7 +29,10 @@ internal sealed class EditorApp : Game
         _authoredRoot = authoredRoot; _smokePath = smokePath;
         _graphics = new(this)
         {
-            GraphicsProfile = GraphicsProfile.HiDef, PreferredDepthStencilFormat = DepthFormat.Depth24, PreferMultiSampling = true, SynchronizeWithVerticalRetrace = true,
+            GraphicsProfile = GraphicsProfile.HiDef,
+            PreferredDepthStencilFormat = DepthFormat.Depth24,
+            PreferMultiSampling = true,
+            SynchronizeWithVerticalRetrace = true,
         };
         Window.Title = "Character Editor | App2d"; Window.AllowUserResizing = true; IsMouseVisible = true; IsFixedTimeStep = false;
         var dpi = System.Windows.Forms.Control.FromHandle(Window.Handle)?.DeviceDpi / 96f ?? 1;
@@ -43,12 +46,15 @@ internal sealed class EditorApp : Game
     {
         var scale = 1f;
         if (_smokePath is null && File.Exists(_settingsPath))
+        {
             try
             {
                 using var settings = JsonDocument.Parse(File.ReadAllText(_settingsPath));
                 if (settings.RootElement.TryGetProperty("uiScale", out var value) && value.TryGetSingle(out var s) && float.IsFinite(s)) scale = Math.Clamp(s, .75f, 2);
             }
             catch (Exception ex) when (ex is IOException or JsonException) { }
+        }
+
         _gui = new(this, scale); _renderer = new(GraphicsDevice);
         var root = _authoredRoot;
         if (_smokePath is not null) { _smoke = new(_smokePath); root = _smoke.PrepareWorkspace(_authoredRoot); }
@@ -59,7 +65,7 @@ internal sealed class EditorApp : Game
         if (_smokePath is null)
         {
             _form = Control.FromHandle(Window.Handle)?.FindForm();
-            if (_form is not null) _form.FormClosing += ConfirmClose;
+            _form?.FormClosing += ConfirmClose;
         }
     }
 
@@ -67,7 +73,11 @@ internal sealed class EditorApp : Game
     {
         var seconds = (float)Math.Min(.1, time.ElapsedGameTime.TotalSeconds);
         if (_smoke is not null) { if (!_smoke.Step(_shell)) Exit(); }
-        else if (IsActive) _shell.Session.Tick(seconds);
+        else if (IsActive)
+        {
+            _shell.Session.Tick(seconds);
+        }
+
         base.Update(time);
     }
 
@@ -106,7 +116,7 @@ internal sealed class EditorApp : Game
     {
         if (disposing)
         {
-            if (_form is not null) _form.FormClosing -= ConfirmClose;
+            _form?.FormClosing -= ConfirmClose;
             _shell?.Dispose(); _capture?.Dispose(); _renderer?.Dispose(); _gui?.Dispose();
         }
         base.Dispose(disposing);

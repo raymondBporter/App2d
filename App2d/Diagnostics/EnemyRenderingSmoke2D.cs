@@ -50,7 +50,7 @@ internal static class EnemyRenderingSmoke2D
         device.SetRenderTarget(null);
         using (var stream = File.Create(Path.Combine(directory, "enemy-client-views.png")))
             target.SaveAsPng(stream, 1100, 450);
-        view.Update(states.Select(s => s with { IsEnabled = false }).ToImmutableArray(), [], 0f, 1);
+        view.Update([.. states.Select(s => s with { IsEnabled = false })], [], 0f, 1);
         if (scene.Any(item => item.IsVisible))
             throw new InvalidOperationException("A streamed-out enemy left its visual visible.");
         view.Update([], [], 0f, 2);

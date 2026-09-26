@@ -14,7 +14,9 @@ public sealed class Camera2DTests
     {
         var camera = new Camera2D
         {
-            ReferenceViewportHeight = 1080f, Zoom = 1.35f, Position = new Vector2(150f, 70f)
+            ReferenceViewportHeight = 1080f,
+            Zoom = 1.35f,
+            Position = new Vector2(150f, 70f)
         };
         camera.SetViewport(1920, 1080);
         var originalBounds = camera.VisibleWorldBounds;
@@ -53,8 +55,10 @@ public sealed class Camera2DTests
     {
         var camera = new Camera2D
         {
-            ReferenceViewportHeight = 1080f, Zoom = 1.35f,
-            Position = new Vector2(100f, 50f), Rotation = 0.3f
+            ReferenceViewportHeight = 1080f,
+            Zoom = 1.35f,
+            Position = new Vector2(100f, 50f),
+            Rotation = 0.3f
         };
         camera.SetViewport(960, 540);
         var point = new Vector2(170f, -25f);

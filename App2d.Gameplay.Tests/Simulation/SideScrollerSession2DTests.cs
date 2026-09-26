@@ -167,8 +167,11 @@ public sealed class SideScrollerSession2DTests
         public Fixture()
         {
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-            var physics = new PhysicsWorld2D { Gravity = new Vector2(0f, -metrics.Gravity),
-                MaxSubstepSeconds = SideScrollerSession2D.FixedDeltaSeconds };
+            var physics = new PhysicsWorld2D
+            {
+                Gravity = new Vector2(0f, -metrics.Gravity),
+                MaxSubstepSeconds = SideScrollerSession2D.FixedDeltaSeconds
+            };
             Person = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2.Zero,
                 2, 1, CombatFaction2D.Player);
             var floor = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(10000f, 20f)));

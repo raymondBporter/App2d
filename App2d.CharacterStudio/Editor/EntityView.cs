@@ -41,6 +41,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             ImGui.PushID(action);
             var enabled = document.Asset.Actions.Any(a => a.Id == action);
             if (ImGui.Checkbox("##enabled", ref enabled))
+            {
                 session.Edit(document, () =>
                 {
                     if (!enabled) { document.Asset.Actions.RemoveAll(a => a.Id == action); return; }
@@ -48,6 +49,8 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                     if (action == EntityControllers.Jump) def.Events.Add(new() { Id = EntityControllers.Launch, At = new() { At = .25f } });
                     document.Asset.Actions.Add(def);
                 }, enabled ? $"Enabled '{action}'." : $"Disabled '{action}'.");
+            }
+
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Only listed actions are enabled; a shared library containing a clip never enables it.");
             ImGui.SameLine();
             ImGui.BeginDisabled(!enabled);
@@ -110,7 +113,11 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             var required = spec?.RequiredRoles.Contains(role) == true;
             var label = $"{role}{(required ? " (required)" : "")}";
             if (effective is null && required) { ImGui.PushStyleColor(ImGuiCol.Text, Ui.Warning); ImGui.TextUnformatted(label + ": unassigned"); ImGui.PopStyleColor(); }
-            else ImGui.TextUnformatted(label);
+            else
+            {
+                ImGui.TextUnformatted(label);
+            }
+
             if (overridden) { ImGui.SameLine(); ImGui.TextColored(Ui.Override, "entity"); ImGui.SameLine(); if (ImGui.SmallButton("Use set")) session.SetEntityRole(role, null); }
             else if (fromSet is not null) { ImGui.SameLine(); ImGui.TextDisabled("from " + selected!.Name); }
             ImGui.SetNextItemWidth(-1);
@@ -218,7 +225,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
 
     // ---- Actions -------------------------------------------------------------------------------------------------
 
-    private EntityActionDef Def(AssetDocument<EntityAsset> document, string id) => document.Asset.Actions.First(a => a.Id == id);
+    private static EntityActionDef Def(AssetDocument<EntityAsset> document, string id) => document.Asset.Actions.First(a => a.Id == id);
 
     private void ActionInspector(AssetDocument<EntityAsset> document, string id)
     {
@@ -235,7 +242,10 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             if (Ui.Combo("Role", action.Role!, roles) is { } role) session.Edit(document, () => Def(document, id).Role = role);
         }
         else if (Ui.Combo("Clip", action.Clip!, session.Assets.ClipsFor(document.Asset.Model).Select(c => c.Id).Order(StringComparer.Ordinal), c => session.Assets.Clip(c)?.Name is { } n ? $"{n} ({c})" : c + " (missing)") is { } clip)
+        {
             session.Edit(document, () => Def(document, id).Clip = clip);
+        }
+
         var resolved = session.Entity?.Actions.GetValueOrDefault(id);
 
         var groups = basis?.Groups.Select(g => g.Id).ToArray() ?? [];
@@ -320,7 +330,10 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             var at = time.At; ImGui.SetNextItemWidth(-1);
             if (ImGui.SliderFloat("##" + label, ref at, 0, 1, clip is null ? "%.3f" : $"%.3f  ({at * clip.Duration:F3} s)")) session.Change(document, () => set(new() { At = at }));
         }
-        else if (clip is not null && clip.Markers.All(m => m.Id != time.Marker)) Ui.Problem($"'{clip.Name}' has no marker '{time.Marker}'.");
+        else if (clip?.Markers.All(m => m.Id != time.Marker) == true)
+        {
+            Ui.Problem($"'{clip.Name}' has no marker '{time.Marker}'.");
+        }
     }
 
     private static string Describe(ActionTime time) => time.Marker ?? $"{time.At:0.###}";
@@ -396,11 +409,14 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 draw.AddText(new(X(close) + 4, start.Y + 5 * Ui.Scale), Ui.Color(40, 60, 90), "recovery");
             }
             if (action.Mask is not null)
+            {
                 for (var i = 1; i <= 64; i++)
                 {
                     float T(int k) => clip.Duration * k / 64;
                     draw.AddLine(new(X(T(i - 1)), start.Y + height * (1 - action.Weight(T(i - 1)))), new(X(T(i)), start.Y + height * (1 - action.Weight(T(i)))), Ui.Color(40, 110, 90), 1.5f);
                 }
+            }
+
             foreach (var cue in action.Events) { var x = X(cue.Seconds); draw.AddTriangleFilled(new(x - 4, start.Y + height + 8), new(x + 4, start.Y + height + 8), new(x, start.Y + height), Ui.Color(40, 90, 160)); draw.AddText(new(x + 5, start.Y + height), Ui.Color(40, 90, 160), cue.Event.Id); }
         }
         foreach (var marker in clip.Markers) { var x = X(marker.Time); draw.AddLine(new(x, start.Y - 2), new(x, start.Y + height + 2), Ui.Color(70, 70, 70), 1); draw.AddText(new(x + 3, start.Y - 15 * Ui.Scale), Ui.Color(70, 70, 70), marker.Id); }

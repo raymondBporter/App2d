@@ -73,20 +73,25 @@ public sealed class PointClip
         Source = spec.TryGetProperty("source", out var source) && source.ValueKind == JsonValueKind.String ? source.GetString()! : "";
         Placeholder = spec.TryGetProperty("placeholder", out var placeholder) && placeholder.GetBoolean();
         Loop = spec.GetProperty("loop").GetBoolean(); Duration = spec.GetProperty("duration").GetDouble();
-        _times = spec.GetProperty("times").EnumerateArray().Select(t => t.GetDouble()).ToArray();
+        _times = [.. spec.GetProperty("times").EnumerateArray().Select(t => t.GetDouble())];
         Times = Array.AsReadOnly(_times);
         Warnings = Array.AsReadOnly(spec.TryGetProperty("warnings", out var warnings)
             ? warnings.EnumerateArray().Select(w => w.GetString()!).ToArray() : []);
         if (!double.IsFinite(Duration) || Duration <= 0 || _times.Length < 2 ||
             _times.Length != spec.GetProperty("sampleCount").GetInt32() || _times[0] != 0 ||
             Math.Abs(_times[^1] - Duration) > 1e-8)
+        {
             throw new InvalidDataException($"Invalid timing in {id}.");
+        }
+
         for (var i = 1; i < _times.Length; i++)
             if (!double.IsFinite(_times[i]) || _times[i] <= _times[i - 1]) throw new InvalidDataException($"Invalid timestamps in {id}.");
         var encoding = spec.GetProperty("encoding");
         _coordinateBytes = encoding.GetProperty("type").GetString() switch
         {
-            "uint16-le" => 2, "float32-le" => 4, _ => throw new InvalidDataException("Unsupported coordinate encoding.")
+            "uint16-le" => 2,
+            "float32-le" => 4,
+            _ => throw new InvalidDataException("Unsupported coordinate encoding.")
         };
         if (encoding.GetProperty("layout").GetString() != "sample,point,xyz") throw new InvalidDataException("Invalid coordinate layout.");
         var origin = encoding.GetProperty("origin").EnumerateArray().Select(v => v.GetSingle()).ToArray();
@@ -97,9 +102,13 @@ public sealed class PointClip
         if (_offset < 0 || (long)SampleCount * pointCount * 3 * _coordinateBytes != PackedBytes || (long)_offset + PackedBytes > data.Length)
             throw new InvalidDataException($"Invalid packed range in {id}.");
         if (_coordinateBytes == 4)
+        {
             for (var i = _offset; i < _offset + PackedBytes; i += 4)
+            {
                 if (!float.IsFinite(BinaryPrimitives.ReadSingleLittleEndian(data.AsSpan(i, 4))))
                     throw new InvalidDataException($"Nonfinite point in {id}.");
+            }
+        }
     }
 
     public void Sample(double seconds, Span<Vector3> output, bool holdEnd = false)

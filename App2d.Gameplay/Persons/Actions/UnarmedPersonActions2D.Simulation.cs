@@ -14,7 +14,7 @@ public sealed partial class UnarmedPersonActions2D
         MeleeAttack2D.SimulationState Punch,
         MeleeAttack2D.SimulationState Kick) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _punch.Direction, _kick.Direction, _punch.Action.CaptureSimulation(), _kick.Action.CaptureSimulation());
 
     internal void RestoreSimulation(SimulationState snapshot)

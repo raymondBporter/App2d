@@ -14,7 +14,7 @@ public sealed partial class PatrolEnemy2D
         int HitPoints,
         ImmutableDictionary<EntityId2D, int> HitHistory) : SimulationState2D;
 
-    internal SimulationState CaptureSimulation() => new SimulationState(
+    internal SimulationState CaptureSimulation() => new(
         _direction, _stunSeconds, Health.Current, _lastAttackIds.ToImmutableDictionary());
 
     internal void RestoreSimulation(SimulationState snapshot)

@@ -8,10 +8,10 @@ using XVector2 = Microsoft.Xna.Framework.Vector2;
 namespace App2d.Rendering.Characters;
 
 /// <summary>Reusable triangle storage in character units, Y up and depth positive away.</summary>
-public sealed class CharacterMesh
+public sealed class CharacterMesh(int initialCapacity = 32768)
 {
-    private VertexPositionColorTexture[] _vertices;
-    public CharacterMesh(int initialCapacity = 32768) => _vertices = new VertexPositionColorTexture[Math.Max(3, initialCapacity)];
+    private VertexPositionColorTexture[] _vertices = new VertexPositionColorTexture[Math.Max(3, initialCapacity)];
+
     public ReadOnlySpan<VertexPositionColorTexture> Vertices => _vertices.AsSpan(0, Count);
     internal VertexPositionColorTexture[] Buffer => _vertices;
     public int Count { get; private set; }
@@ -39,10 +39,13 @@ public sealed class CharacterMesh
             var angle = i / (float)n * MathF.Tau; var r = radius * ring / rings;
             return p + new Vector3(MathF.Cos(angle) * r, MathF.Sin(angle) * r, dome ? -MathF.Sqrt(MathF.Max(0, radius * radius - r * r)) : 0);
         }
-        for (var ring = 1; ring <= rings; ring++) for (var i = 0; i < n; i++)
+        for (var ring = 1; ring <= rings; ring++)
         {
-            Triangle(At(ring - 1, i), At(ring, i), At(ring, i + 1), color);
-            if (ring > 1) Triangle(At(ring - 1, i), At(ring, i + 1), At(ring - 1, i + 1), color);
+            for (var i = 0; i < n; i++)
+            {
+                Triangle(At(ring - 1, i), At(ring, i), At(ring, i + 1), color);
+                if (ring > 1) Triangle(At(ring - 1, i), At(ring, i + 1), At(ring - 1, i + 1), color);
+            }
         }
     }
     public void Line(Vector3 a, Vector3 b, float width, Color color)
@@ -74,10 +77,13 @@ public sealed class CharacterMesh
     public void Shell(Vector3 center, IReadOnlyList<Vector3> contour, float depth, Color color)
     {
         Vector3 At(float r, int i) => Vector3.Lerp(center, contour[i], r) - new Vector3(0, 0, depth * MathF.Sqrt(MathF.Max(0, 1 - r * r)));
-        for (var r = 1; r <= 5; r++) for (var i = 0; i < contour.Count - 1; i++)
+        for (var r = 1; r <= 5; r++)
         {
-            Triangle(At((r - 1) / 5f, i), At(r / 5f, i), At(r / 5f, i + 1), color);
-            if (r > 1) Triangle(At((r - 1) / 5f, i), At(r / 5f, i + 1), At((r - 1) / 5f, i + 1), color);
+            for (var i = 0; i < contour.Count - 1; i++)
+            {
+                Triangle(At((r - 1) / 5f, i), At(r / 5f, i), At(r / 5f, i + 1), color);
+                if (r > 1) Triangle(At((r - 1) / 5f, i), At(r / 5f, i + 1), At((r - 1) / 5f, i + 1), color);
+            }
         }
     }
 }
@@ -87,8 +93,8 @@ internal static class CharacterJson
     public static float Number(this JsonElement j, string key, float fallback = 0) => j.TryGetProperty(key, out var value) ? value.GetSingle() : fallback;
     public static string Text(this JsonElement j, string key, string fallback = "") => j.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString()! : fallback;
     public static bool Flag(this JsonElement j, string key) => j.TryGetProperty(key, out var value) && value.ValueKind == JsonValueKind.True;
-    public static float[] Floats(this JsonElement j) => j.EnumerateArray().Select(v => v.GetSingle()).ToArray();
-    public static int[] Ints(this JsonElement j) => j.EnumerateArray().Select(v => v.GetInt32()).ToArray();
+    public static float[] Floats(this JsonElement j) => [.. j.EnumerateArray().Select(v => v.GetSingle())];
+    public static int[] Ints(this JsonElement j) => [.. j.EnumerateArray().Select(v => v.GetInt32())];
     public static Vector3 Vector(this JsonElement j) { var a = j.Floats(); return new(a[0], a[1], a[2]); }
     public static Color Color(string hex) => new((byte)Convert.ToInt32(hex.Substring(1, 2), 16), (byte)Convert.ToInt32(hex.Substring(3, 2), 16), (byte)Convert.ToInt32(hex.Substring(5, 2), 16));
     public static Color? Rgba(this JsonElement j) => j.ValueKind == JsonValueKind.Null ? null : new Color(j[0].GetSingle(), j[1].GetSingle(), j[2].GetSingle(), j[3].GetSingle());

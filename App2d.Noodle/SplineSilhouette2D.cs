@@ -47,7 +47,7 @@ internal static class SplineSilhouette2D
     public static ConvexPolygon2D CreateTorso(float length)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(length);
-        var startX = -8f;
+        const float startX = -8f;
         var endX = length + 9f;
         const float hipRadius = 27f;
         const float shoulderRadius = 42f;

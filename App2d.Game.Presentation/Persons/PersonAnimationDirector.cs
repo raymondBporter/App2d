@@ -128,16 +128,33 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         _meleeActive = melee;
 
         PersonFrame frame;
-        if (!s.IsAlive) frame = Play(PersonMoves.Death, _reaction == PersonMoves.Death ? _clock - _reactionStart : moves[PersonMoves.Death].Duration);
-        else if (_reaction == PersonMoves.Hit && _clock - _reactionStart < moves[PersonMoves.Hit].Duration) frame = Play(PersonMoves.Hit, _clock - _reactionStart);
+        if (!s.IsAlive)
+        {
+            frame = Play(PersonMoves.Death, _reaction == PersonMoves.Death ? _clock - _reactionStart : moves[PersonMoves.Death].Duration);
+        }
+        else if (_reaction == PersonMoves.Hit && _clock - _reactionStart < moves[PersonMoves.Hit].Duration)
+        {
+            frame = Play(PersonMoves.Hit, _clock - _reactionStart);
+        }
         else if (s.Action.IsActive && s.Action.Kind == PlayerAttackKind2D.Shot)
+        {
             frame = s.IsWallGripping ? Play(PersonMoves.GunWallShot, Scaled(PersonMoves.GunWallShot))
-                : Locomotion(gear) with { Overlay = new(moves[PersonMoves.GunShot], Scaled(PersonMoves.GunShot), PersonLoadout.UpperBody) };
+                        : Locomotion(gear) with { Overlay = new(moves[PersonMoves.GunShot], Scaled(PersonMoves.GunShot), PersonLoadout.UpperBody) };
+        }
         else if (s.Action.IsActive && s.Action.Kind == PlayerAttackKind2D.Downward) { _sheathePending = false; frame = Play(PersonMoves.DownAttack, Scaled(PersonMoves.DownAttack)); }
         else if (melee) { _sheathePending = false; frame = Play(_swing, Scaled(_swing)); }
-        else if (s.IsDashing) frame = Play(PersonMoves.Dash, _clock - _dashStart);
-        else if (s.IsGrounded && _clock - _celebrateStart < moves[PersonMoves.Celebrate].Duration) frame = Play(PersonMoves.Celebrate, _clock - _celebrateStart);
-        else frame = Locomotion(gear);
+        else if (s.IsDashing)
+        {
+            frame = Play(PersonMoves.Dash, _clock - _dashStart);
+        }
+        else if (s.IsGrounded && _clock - _celebrateStart < moves[PersonMoves.Celebrate].Duration)
+        {
+            frame = Play(PersonMoves.Celebrate, _clock - _celebrateStart);
+        }
+        else
+        {
+            frame = Locomotion(gear);
+        }
 
         if (frame.Key != _key) { _key = frame.Key; _keyStart = _clock; _cycle = 0; _outpaced = false; }
         if (_key == PersonMoves.Sheathe && _clock - _keyStart >= moves[PersonMoves.Sheathe].Duration) _sheathePending = false;

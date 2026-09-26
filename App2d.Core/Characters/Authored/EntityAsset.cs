@@ -148,7 +148,7 @@ public sealed class EntityAsset
         Require(Format == FormatId && Version == 1, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "entity id"); AuthoredAsset.RequireId(Model, $"{owner} model"); AuthoredAsset.RequireId(MotionSet, $"{owner} motionSet");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
-        Require(Roles is not null && Controller is not null && Movement is not null && Hurt is not null && Hurt.Regions is not null && Equipment is not null && Actions is not null,
+        Require(Roles is not null && Controller is not null && Movement is not null && Hurt?.Regions is not null && Equipment is not null && Actions is not null,
             $"{owner}: collections cannot be null.");
         foreach (var (role, clip) in Roles) { AuthoredAsset.RequireId(role, $"{owner} roles"); AuthoredAsset.RequireId(clip, $"{owner} roles.{role}"); }
         var spec = EntityControllers.Get(Controller.Kind, $"{owner} controller.kind");
@@ -174,7 +174,7 @@ public sealed class EntityAsset
         var actions = new HashSet<string>(StringComparer.Ordinal);
         foreach (var action in Actions)
         {
-            Require(action is not null && action.Hits is not null && action.Events is not null, $"{owner}: incomplete action.");
+            Require(action?.Hits is not null && action.Events is not null, $"{owner}: incomplete action.");
             AuthoredAsset.RequireId(action.Id, $"{owner} action id");
             var field = $"{owner} action '{action.Id}'";
             Require(actions.Add(action.Id), $"{owner}: duplicate action '{action.Id}'.");
@@ -196,7 +196,7 @@ public sealed class EntityAsset
             var hits = new HashSet<string>(StringComparer.Ordinal);
             foreach (var hit in action.Hits)
             {
-                Require(hit is not null && hit.Start is not null && hit.Finish is not null, $"{field}: incomplete hit window.");
+                Require(hit?.Start is not null && hit.Finish is not null, $"{field}: incomplete hit window.");
                 AuthoredAsset.RequireId(hit.Id, field + " hit id");
                 Require(hits.Add(hit.Id), $"{field}: duplicate hit window '{hit.Id}'.");
                 Require((hit.Socket is null) != (hit.Prop is null), $"{field} hit '{hit.Id}': anchor to exactly one of socket or prop.");
@@ -209,7 +209,7 @@ public sealed class EntityAsset
             }
             foreach (var cue in action.Events)
             {
-                Require(cue is not null && cue.At is not null, $"{field}: incomplete event.");
+                Require(cue?.At is not null, $"{field}: incomplete event.");
                 AuthoredAsset.RequireId(cue.Id, field + " event id");
                 CheckTime(cue.At, $"{field} event '{cue.Id}'");
                 if (cue.Sound is not null) AuthoredAsset.RequireId(cue.Sound, $"{field} event '{cue.Id}' sound");
@@ -219,8 +219,15 @@ public sealed class EntityAsset
 
     private static void CheckTime(ActionTime time, string field)
     {
-        if (time.Marker is not null) { AuthoredAsset.RequireId(time.Marker, field + " marker"); Require(time.At == 0, $"{field}: use a marker or a normalized time, not both."); }
-        else new Limit(0, 1).Check(time.At, field + " at");
+        if (time.Marker is not null)
+        {
+            AuthoredAsset.RequireId(time.Marker, field + " marker");
+            Require(time.At == 0, $"{field}: use a marker or a normalized time, not both.");
+        }
+        else
+        {
+            new Limit(0, 1).Check(time.At, field + " at");
+        }
     }
 }
 

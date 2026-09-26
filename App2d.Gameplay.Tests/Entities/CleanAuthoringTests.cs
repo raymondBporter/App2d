@@ -20,6 +20,9 @@ public sealed class CleanAuthoringTests : IDisposable
     private readonly string _folder = Directory.CreateTempSubdirectory("app2d-clean-authoring-").FullName;
     private string Root => Path.Combine(_folder, "authored");
 
+    private static readonly string[] expectedCatalogModelsKeys = ["beetle"];
+    private static readonly string[] expectedCatalogVariantKeys = ["red-beetle"];
+
     public void Dispose() => Directory.Delete(_folder, true);
 
     [Fact]
@@ -93,8 +96,8 @@ public sealed class CleanAuthoringTests : IDisposable
         // Reopen with the loader the game uses, then play it.
         var catalog = AuthoredCatalog.Load(Root);
         Assert.Empty(catalog.Errors);
-        Assert.Equal(new[] { "beetle" }, catalog.Models.Keys);
-        Assert.Equal(new[] { "red-beetle" }, catalog.Variants.Keys);
+        Assert.Equal(expectedCatalogModelsKeys, catalog.Models.Keys);
+        Assert.Equal(expectedCatalogVariantKeys, catalog.Variants.Keys);
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
         for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],

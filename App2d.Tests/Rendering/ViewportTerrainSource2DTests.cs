@@ -21,6 +21,7 @@ public sealed class ViewportTerrainSource2DTests
         var terrain = source.Capture(camera.VisibleWorldBounds);
 
         for (var y = 0; y < map.ChunkRows; y++)
+        {
             for (var x = 0; x < map.ChunkColumns; x++)
             {
                 var min = map.Origin + new Vector2(x, y) * map.ChunkSize * map.TileSize;
@@ -28,6 +29,7 @@ public sealed class ViewportTerrainSource2DTests
                 if (bounds.Intersects(camera.VisibleWorldBounds))
                     Assert.Contains(terrain, c => c.Chunk == new TileChunk2D(x, y));
             }
+        }
     }
 
     [Fact]

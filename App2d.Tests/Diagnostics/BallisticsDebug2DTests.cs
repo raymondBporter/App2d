@@ -76,7 +76,7 @@ public sealed class BallisticsDebug2DTests
         input.SetKey(Keys.F6, true);
         Assert.True(PlayerDebugInput2D.Capture(input).ClearBallistics);
         input.SetSuppressed(true);
-        Assert.Equal(default(PlayerDebugInput2D), PlayerDebugInput2D.Capture(input));
+        Assert.Equal(default, PlayerDebugInput2D.Capture(input));
     }
 
     private static BallisticsDebug2D Create() => new(TraversalMetrics2D.FromGeometry(

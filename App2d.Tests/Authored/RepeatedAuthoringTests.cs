@@ -287,8 +287,11 @@ public sealed class RepeatedAuthoringTests : IDisposable
         {
             var build = new PersonBuild
             {
-                Legs = .8f + (float)random.NextDouble() * .5f, Torso = .85f + (float)random.NextDouble() * .35f, Arms = .85f + (float)random.NextDouble() * .35f,
-                Width = .7f + (float)random.NextDouble() * .7f, Head = .85f + (float)random.NextDouble() * .3f,
+                Legs = .8f + (float)random.NextDouble() * .5f,
+                Torso = .85f + (float)random.NextDouble() * .35f,
+                Arms = .85f + (float)random.NextDouble() * .35f,
+                Width = .7f + (float)random.NextDouble() * .7f,
+                Head = .85f + (float)random.NextDouble() * .3f,
             };
             var variant = build.Apply(person, $"person-{i:00}", $"Person {i:00}");
             EntityAuthoring.ApplyLook(person, variant, looks[i % looks.Length]);

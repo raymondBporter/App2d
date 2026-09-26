@@ -10,18 +10,18 @@ public sealed class AuthoredCatalogTests
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         Assert.True(catalog.Errors.Count == 0, string.Join("\n", catalog.Errors));
-        Assert.Equal(new[] { "person", "stalker" }, catalog.Models.Keys.Order());
-        Assert.Equal(new[] { "brute", "cinder", "short-broad", "tall-thin" }, catalog.Variants.Keys.Order());
-        Assert.Equal(new[]
-        {
+        Assert.Equal(expected, catalog.Models.Keys.Order());
+        Assert.Equal(["brute", "cinder", "short-broad", "tall-thin"], catalog.Variants.Keys.Order());
+        Assert.Equal(
+        [
             "person-death", "person-hammer-slam", "person-heavy-walk", "person-hit", "person-idle", "person-jump", "person-pistol-shot", "person-run", "person-thrust", "person-walk",
             "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-climb-off", "player-climb-on", "player-dash", "player-death", "player-fall",
             "player-gun-aim", "player-gun-shot", "player-gun-wall-shot", "player-hit", "player-idle", "player-jump", "player-land",
             "player-sword-down-attack", "player-sword-draw-slash", "player-sword-sheathe", "player-sword-slash", "player-wall-grip",
             "stalker-death", "stalker-hit", "stalker-idle", "stalker-lunge", "stalker-walk",
-        }, catalog.Animations.Keys.Order());
-        Assert.Equal(new[] { "hammer", "pistol", "sheath", "spear", "sword" }, catalog.Props.Keys.Order());
-        Assert.Equal(new[] { "cinder-gunner", "hero", "maul-brute", "player", "spear-guard", "stalker-pest" }, catalog.Entities.Keys.Order());
+        ], catalog.Animations.Keys.Order());
+        Assert.Equal(["hammer", "pistol", "sheath", "spear", "sword"], catalog.Props.Keys.Order());
+        Assert.Equal(["cinder-gunner", "hero", "maul-brute", "player", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })
@@ -39,6 +39,8 @@ public sealed class AuthoredCatalogTests
         { "animations/person-walk.json", "\"target\": \"[^\"]*\"", "\"target\": null" },
         { "animations/person-walk.json", "\"chain\": \"[^\"]*\"", "\"chain\": null" },
     };
+
+    private static readonly string[] expected = ["person", "stalker"];
 
     [Theory, MemberData(nameof(NullReferences))]
     public void ANullReferenceInAHandEditedFileIsReportedAgainstThatFile(string file, string pattern, string replacement)

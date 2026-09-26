@@ -296,7 +296,7 @@ internal sealed class RigidCharacterHost : IDisposable
                 _notice = "Same bones and animation; only the bone -> part mapping changed.";
                 break;
             case Keys.B:
-                _showBones = !_showBones;       
+                _showBones = !_showBones;
                 break;
             case Keys.F1:
                 _authoring = !_authoring;

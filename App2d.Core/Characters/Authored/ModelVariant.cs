@@ -33,8 +33,14 @@ public sealed record PartOverride
     /// <summary>This override with <paramref name="over"/>'s set fields written on top.</summary>
     public PartOverride Merge(PartOverride over) => new()
     {
-        Width = over.Width ?? Width, Height = over.Height ?? Height, OffsetX = over.OffsetX ?? OffsetX, OffsetY = over.OffsetY ?? OffsetY,
-        Fill = over.Fill ?? Fill, Face = over.Face ?? Face, FaceX = over.FaceX ?? FaceX, Hidden = over.Hidden ?? Hidden,
+        Width = over.Width ?? Width,
+        Height = over.Height ?? Height,
+        OffsetX = over.OffsetX ?? OffsetX,
+        OffsetY = over.OffsetY ?? OffsetY,
+        Fill = over.Fill ?? Fill,
+        Face = over.Face ?? Face,
+        FaceX = over.FaceX ?? FaceX,
+        Hidden = over.Hidden ?? Hidden,
     };
 }
 

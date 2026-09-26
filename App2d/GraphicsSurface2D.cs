@@ -19,15 +19,23 @@ internal sealed class GraphicsSurface2D : Control
     protected override void OnPaint(PaintEventArgs e)
     {
         if (ClientSize.Width <= 0 || ClientSize.Height <= 0 || !Visible ||
-            FindForm()?.WindowState == FormWindowState.Minimized) return;
+            FindForm()?.WindowState == FormWindowState.Minimized)
+        {
+            return;
+        }
+
         if (_device?.GraphicsDeviceStatus == GraphicsDeviceStatus.Lost)
             ReleaseDevice();
         if (_device is null)
+        {
             _device = new GraphicsDevice(GraphicsAdapter.DefaultAdapter, GraphicsProfile.HiDef, CreateParameters());
+        }
         else if (_device.PresentationParameters.BackBufferWidth != ClientSize.Width ||
-            _device.PresentationParameters.BackBufferHeight != ClientSize.Height ||
-            _device.GraphicsDeviceStatus == GraphicsDeviceStatus.NotReset)
+                    _device.PresentationParameters.BackBufferHeight != ClientSize.Height ||
+                    _device.GraphicsDeviceStatus == GraphicsDeviceStatus.NotReset)
+        {
             _device.Reset(CreateParameters());
+        }
 
         RenderFrame?.Invoke(_device, ClientSize.Width, ClientSize.Height);
         _device.Present();

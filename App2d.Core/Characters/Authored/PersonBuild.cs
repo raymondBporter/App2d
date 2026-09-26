@@ -55,9 +55,11 @@ public sealed record PersonBuild
             new("short-broad", "Short / broad", ShortBroad.Values()),
         ];
 
+        private static readonly string[] sourceArray = ["body", "head"];
+
         public void Check(CharacterModel model)
         {
-            var missing = Controls.Where(c => !model.Controls.Any(m => m.Id == c)).Concat(new[] { "body", "head" }.Where(p => !model.Parts.Any(m => m.Id == p))).ToArray();
+            var missing = Controls.Where(c => !model.Controls.Any(m => m.Id == c)).Concat(sourceArray.Where(p => !model.Parts.Any(m => m.Id == p))).ToArray();
             if (missing.Length > 0) throw new InvalidDataException($"Model '{model.Id}': the '{RuleId}' build rule needs {string.Join(", ", missing)}.");
         }
 

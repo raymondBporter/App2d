@@ -25,7 +25,7 @@ public sealed class AuthoredEntityGameTests
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
         for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
-            { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
+        { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
         var hero = new App2d.Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities["hero"], game.Player.Body.WorldObject.Shape.LocalBounds.Size);
         var slash = authored.Animations["player-sword-draw-slash"];
         game.Arsenal.UsePrimary(1);

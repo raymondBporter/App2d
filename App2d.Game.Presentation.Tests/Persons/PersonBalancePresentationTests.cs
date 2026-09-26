@@ -112,7 +112,7 @@ public sealed class PersonBalancePresentationTests
     {
         _person.BeginFrame(Dt);
         _person.ApplyCommand(new PersonCommand2D
-            { MoveX = move, JumpHeld = jump || drop, DownHeld = drop, DashHeld = dash }, Dt);
+        { MoveX = move, JumpHeld = jump || drop, DownHeld = drop, DashHeld = dash }, Dt);
         _physics.Step(Dt);
         _person.UpdateAfterPhysics(Dt);
     }
