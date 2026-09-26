@@ -50,8 +50,7 @@ public sealed class SessionClient2D
         ArgGuard.ThrowIfNull(frame);
         var player = frame.FindPlayer(PlayerId);
         rejection = frame.Tick <= Tick ? FrameRejection2D.Stale
-            : frame.Players.IsDefault || frame.Events.IsDefault || frame.Enemies.IsDefault ||
-              frame.World is null || frame.Content is null ? FrameRejection2D.Incomplete
+            : frame.Players.IsDefault || frame.Events.IsDefault || frame.Enemies.IsDefault ? FrameRejection2D.Incomplete
             : frame.Tick != Tick + 1 ? FrameRejection2D.Gap
             : player is null ? FrameRejection2D.MissingPlayer
             : player.Value.LastInputSequence < LastInputSequence ? FrameRejection2D.AcknowledgementMovedBackwards

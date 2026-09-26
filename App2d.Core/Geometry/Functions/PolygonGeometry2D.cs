@@ -25,7 +25,7 @@ public static class PolygonGeometry2D
             for (var i = 0; i < perimeter.Count; i++)
             {
                 var edge = perimeter[(i + 1) % perimeter.Count] - perimeter[i];
-                var axis = edge.PerpCcw();
+                var axis = edge.PerpCcw;
                 if (axis.LengthSquared() < 1e-12f) continue;
                 var a = Projection2D.Polygon(first, axis, firstOffset);
                 var b = Projection2D.Polygon(second, axis, secondOffset);
@@ -107,7 +107,7 @@ public static class PolygonGeometry2D
     public static Vector2 GetOutwardEdgeNormal(ReadOnlySpan<Vector2> vertices, int edgeIndex)
     {
         var edge = vertices[(edgeIndex + 1) % vertices.Length] - vertices[edgeIndex];
-        var outward = SignedAreaTwice(vertices) >= 0f ? edge.PerpCw() : edge.PerpCcw();
+        var outward = SignedAreaTwice(vertices) >= 0f ? edge.PerpCw : edge.PerpCcw;
         return outward.LengthSquared() > float.Epsilon ? Vector2.Normalize(outward) : Vector2.UnitY;
     }
 }

@@ -184,8 +184,8 @@ public static class RayIntersection2D
             var start = vertices[i];
             var edge = vertices[(i + 1) % vertices.Length] - start;
             var outward = signedAreaTwice >= 0f
-                ? edge.PerpCw()
-                : edge.PerpCcw();
+                ? edge.PerpCw
+                : edge.PerpCcw;
             var originSide = Vector2.Dot(origin - start, outward);
             var directionProjection = Vector2.Dot(direction, outward);
 
@@ -269,7 +269,7 @@ public static class RayIntersection2D
         }
 
         var tangent = segment / segmentLength;
-        var perpendicular = tangent.PerpCcw();
+        var perpendicular = tangent.PerpCcw;
         var relativeOrigin = origin - capsule.Start;
         var originAlong = Vector2.Dot(relativeOrigin, tangent);
         var originAcross = Vector2.Dot(relativeOrigin, perpendicular);

@@ -33,7 +33,7 @@ public static partial class ShapeCollision2D
         for (var i = 0; i < vertices.Length; i++)
         {
             var edge = vertices[(i + 1) % vertices.Length] - vertices[i];
-            AddAxis(axes, ref axisCount, edge.PerpCcw());
+            AddAxis(axes, ref axisCount, edge.PerpCcw);
         }
     }
 

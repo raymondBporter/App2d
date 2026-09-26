@@ -46,6 +46,7 @@ public abstract class Game2D : IDisposable
     public virtual void Dispose()
     {
         Textures.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     protected void RegisterDebugPhysicsWorld(PhysicsWorld2D physicsWorld)

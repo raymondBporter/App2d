@@ -42,7 +42,7 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
         if (friction <= 0f)
             return;
 
-        var tangent = normal.PerpCcw();
+        var tangent = normal.PerpCcw;
         relativeVelocity = PointVelocity(first, firstArm) - PointVelocity(second, secondArm);
         var tangentSpeed = Vector2.Dot(relativeVelocity, tangent);
         var firstArmCrossTangent = firstArm.Cross(tangent);
@@ -59,7 +59,7 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
 
     // ω × r in 2D is ω * PerpCcw(r).
     private static Vector2 PointVelocity(PhysicsBody2D body, Vector2 arm) =>
-        body.LinearVelocity + body.AngularVelocity * arm.PerpCcw();
+        body.LinearVelocity + body.AngularVelocity * arm.PerpCcw;
 
     private static void Apply(PhysicsBody2D first, PhysicsBody2D second, Vector2 firstArm, Vector2 secondArm, Vector2 impulse)
     {
