@@ -13,14 +13,11 @@ public sealed class Capsule2D : IConvexShape2D
         Start = start;
         End = end;
         Radius = radius;
-        var extent = new Vector2(radius);
-        LocalBounds = new Bounds2D(Vector2.Min(start, end) - extent, Vector2.Max(start, end) + extent);
     }
 
     public Vector2 Start { get; }
     public Vector2 End { get; }
     public float Radius { get; }
-    public Bounds2D LocalBounds { get; }
     public float Area => PrimitiveGeometry2D.CapsuleArea(Start, End, Radius);
 
     public bool ContainsPoint(Vector2 localPoint) => PrimitiveGeometry2D.CapsuleContainsPoint(localPoint, Start, End, Radius);

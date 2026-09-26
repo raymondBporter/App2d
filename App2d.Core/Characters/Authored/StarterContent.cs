@@ -1,5 +1,4 @@
 using App2d.Core.Characters.Authored;
-using System.Numerics;
 
 namespace App2d.Core.Characters;
 

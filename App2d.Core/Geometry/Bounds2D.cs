@@ -19,35 +19,7 @@ public readonly record struct Bounds2D(Vector2 Min, Vector2 Max) : IRect2D
     public bool Intersects(Bounds2D other) =>
         PrimitiveGeometry2D.RectanglesIntersect(Min, Max, other.Min, other.Max);
 
-    public Bounds2D TransformedBy(Matrix3x2 transform)
-    {
-        // Infinite shapes such as half-spaces must stay broad-phase candidates.
-        // Transforming infinities directly would produce NaNs for zero matrix terms.
-        if (!IsFinite)
-            return Unbounded;
+    public Bounds2D TransformedBy(Matrix3x2 transform) => BoundsGeometry2D.Transform(this, transform);
 
-        Span<Vector2> corners =
-        [
-            Vector2.Transform(Min, transform),
-            Vector2.Transform(new Vector2(Max.X, Min.Y), transform),
-            Vector2.Transform(Max, transform),
-            Vector2.Transform(new Vector2(Min.X, Max.Y), transform),
-        ];
-        return FromPoints(corners);
-    }
-
-    public static Bounds2D FromPoints(ReadOnlySpan<Vector2> points)
-    {
-        ArgGuard.ThrowIfTooShort(points, 1);
-
-        var min = points[0];
-        var max = points[0];
-        foreach (var point in points[1..])
-        {
-            min = Vector2.Min(min, point);
-            max = Vector2.Max(max, point);
-        }
-
-        return new Bounds2D(min, max);
-    }
+    public static Bounds2D FromPoints(ReadOnlySpan<Vector2> points) => BoundsGeometry2D.FromPoints(points);
 }

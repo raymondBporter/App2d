@@ -3,7 +3,6 @@ using App2d.Diagnostics;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
-using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Persons.Presentation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;

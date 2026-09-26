@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Geometry;
 using System.Numerics;
 
@@ -59,7 +60,7 @@ public sealed class Rect2DTests
         Assert.True(bounds.Intersects(shape));
         Assert.True(shape.Contains(bounds));
         Assert.True(axisAligned.Contains(Sample));
-        Assert.Equal(bounds, shape.LocalBounds);
+        Assert.Equal(bounds, new SpatialObject2D(shape).LocalBounds);
         Assert.Equal(shape.Area, ((IRect2D)shape).Area);
         Assert.Equal(shape.ContainsPoint(Sample.Max), shape.Contains(Sample.Max));
         Assert.False(typeof(IShape2D).IsAssignableFrom(typeof(Rect2D)));

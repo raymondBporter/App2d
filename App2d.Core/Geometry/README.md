@@ -10,8 +10,10 @@ Use `App2d.Core.Geometry` functions directly with `System.Numerics` values when 
 | `Functions/PolygonGeometry2D` | Area, containment, support, closest perimeter point, edge normals and convex SAT overlap |
 | `Functions/ClosestPoint2D` | Point-to-segment and segment-to-segment closest points |
 | `Functions/Rect2DExtensions` | Shared dimensions, anchors, containment, intersection, union, closest point, movement and resizing for any `IRect2D` |
+| `Functions/BoundsGeometry2D` | Bounds from raw primitives/points, union, translation, scaling and affine transforms |
+| `Functions/ShapeBounds2D` | On-demand local bounds for shapes, including convex support-point fallback and unbounded half-spaces |
 | `IRect2D`, `Rect2D` | A two-property rectangle contract and a lightweight rectangle value independent of shapes |
-| `Shapes/` | `IShape2D`, `IConvexShape2D` and concrete shapes with validated parameters and cached local bounds |
+| `Shapes/` | `IShape2D`, `IConvexShape2D` and concrete shapes with validated geometry; no bounds properties or caches |
 | `Bounds2D`, `Interval1D` | Value types for bounds and projected intervals |
 
 ```csharp
@@ -30,6 +32,24 @@ Primitive arithmetic queries assume finite inputs, nonnegative radii and ordered
 `PartGeometry` owns attachment frames and depth; the renderer owns screen-dependent tessellation and triangle emission. Both use the shared generators. `EntityRegion` delegates overlap to polygon math. General XY rotation lives in `Mathematics/Rotation2D`; `PoseEvaluator.RotateXY` remains a compatible entry point.
 
 Add raw geometry algorithms here and let shape methods delegate to them. Keep authoring, rendering, caching and gameplay policy in their respective callers.
+
+## Bounds ownership
+
+Shapes describe geometry. Use `ShapeBounds2D.Calculate(shape)` when you need their local bounds without attaching them to anything. For raw data, use `BoundsGeometry2D.FromCircle`, `FromCapsule`, `FromRectangle` or `FromPoints`.
+
+`SpatialObject2D` owns `LocalBounds`, calculated once when its immutable shape is attached, and `WorldBounds`, updated on demand when `Transform.Version` changes. `WorldObject2D` inherits that ownership. Rendering and collision use the spatial object's cache. A shape attached to an object must remain immutable; future geometry replacement must refresh the local bounds and invalidate the world bounds cache together.
+
+`BoundsGeometry2D.Transform` encloses a transformed box. Matrices with no rotation/shear use translation or component-wise scale/translation, correctly ordering mirrored edges. Other matrices transform the four corners. The rotated result is conservative for the underlying shape: for example, rotating a circle's local box can produce a larger box than the circle needs. Tighter shape-specific world bounds can be added later without putting caches back on shapes.
+
+Half-spaces remain shapes and produce `Bounds2D.Unbounded`; transformation preserves that sentinel so they stay broad-phase candidates. Built-in shapes and custom `IConvexShape2D` implementations have bounds calculations. New non-convex shape types must add a calculation to `ShapeBounds2D`; unsupported types fail explicitly. `Bounds2D.FromPoints` and `TransformedBy` remain convenience wrappers around the shared functions.
+
+```csharp
+var local = ShapeBounds2D.Calculate(shape); // no cache or object needed
+var moved = BoundsGeometry2D.Translate(local, position);
+var transformed = BoundsGeometry2D.Transform(local, matrix);
+var placed = new SpatialObject2D(shape);
+var cached = placed.LocalBounds;
+```
 
 ## Rectangles without shapes
 

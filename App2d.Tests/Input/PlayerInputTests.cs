@@ -1,8 +1,6 @@
-using App2d.Gameplay.Persons;
 using App2d.Gameplay.Player;
 using App2d.Input;
 using System.Numerics;
-using Xunit;
 
 namespace App2d.Tests.Input;
 

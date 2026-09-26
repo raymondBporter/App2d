@@ -8,7 +8,6 @@ using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Tiles;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Diagnostics;

@@ -11,6 +11,30 @@ namespace App2d.Tests.Rendering;
 [Collection("Graphics")]
 public sealed class MonoGameRenderingTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void HalfSpacesStillRenderWithObjectOwnedBoundsAndRejectSprites(bool overlay)
+    {
+        using var texture = CreateTexture();
+        using var graphics = new GraphicsTestContext();
+        using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
+        var halfSpace = new HalfSpace2D(Vector2.UnitY, 0);
+        var item = new WorldObject2D(halfSpace, new SolidColorShader(XnaColor.Blue));
+        renderer.BeginFrame(128, 128, default);
+        renderer.Clear(XnaColor.Transparent);
+        if (overlay) renderer.DrawShapeOverlay(item, XnaColor.Blue, XnaColor.White);
+        else renderer.Draw(item);
+        Assert.Throws<InvalidOperationException>(() =>
+            renderer.Draw(new WorldObject2D(halfSpace, new SpriteShader2D(texture, TextureFilter.Point))));
+        renderer.EndFrame();
+
+        var pixels = graphics.ReadPixels();
+        Assert.Equal(Bounds2D.Unbounded, item.LocalBounds);
+        Assert.Equal(XnaColor.Blue, pixels[80 * 128 + 64]);
+        Assert.Equal(XnaColor.Transparent, pixels[48 * 128 + 64]);
+    }
+
     [Fact]
     public void SharedContoursRenderRoundPrimitivesInWorldAndScreenCoordinates()
     {

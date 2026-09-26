@@ -86,9 +86,9 @@ public sealed partial class Renderer2D : IDisposable
             return;
         }
         var matrix = worldObject.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
-        var bounds = worldObject.Shape.LocalBounds.IsFinite ? worldObject.Shape.LocalBounds : GetVisibleLocalBounds(matrix);
+        var bounds = worldObject.LocalBounds.IsFinite ? worldObject.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)
-            StateGuard.ThrowIf(!worldObject.Shape.LocalBounds.IsFinite, "Sprites require finite local bounds.");
+            StateGuard.ThrowIf(!worldObject.LocalBounds.IsFinite, "Sprites require finite local bounds.");
         SelectMaterial(worldObject.Shader);
         FillShape(worldObject.Shape, matrix, bounds, worldObject.Shader);
     }
@@ -404,7 +404,7 @@ public sealed partial class Renderer2D : IDisposable
         ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
         if (IsCulled(item)) return;
         var matrix = item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
-        var bounds = item.Shape.LocalBounds.IsFinite ? item.Shape.LocalBounds : GetVisibleLocalBounds(matrix);
+        var bounds = item.LocalBounds.IsFinite ? item.LocalBounds : GetVisibleLocalBounds(matrix);
         SelectBatch(null, null);
         FillShape(item.Shape, matrix, bounds, new SolidColorShader(fillColor));
         OutlineShape(item.Shape, matrix, outlineColor, screenStrokeWidth);

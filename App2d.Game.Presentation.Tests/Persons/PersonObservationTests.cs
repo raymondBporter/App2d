@@ -8,7 +8,6 @@ using App2d.Levels;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using Xunit;
-using App2d.Game.Presentation.Tests;
 
 namespace App2d.Game.Presentation.Tests.Persons;
 

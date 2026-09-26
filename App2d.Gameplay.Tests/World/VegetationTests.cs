@@ -1,4 +1,3 @@
-using App2d.Core.Geometry;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;

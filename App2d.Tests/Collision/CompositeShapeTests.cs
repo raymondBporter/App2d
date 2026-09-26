@@ -67,9 +67,9 @@ public sealed class CompositeShapeTests
     }
 
     [Fact]
-    public void LocalBoundsIsTheUnionOfParts()
+    public void CalculatedBoundsIsTheUnionOfParts()
     {
-        var bounds = LShape().LocalBounds;
+        var bounds = ShapeBounds2D.Calculate(LShape());
         Assert.Equal(new Vector2(-2f, -2f), bounds.Min);
         Assert.Equal(new Vector2(2f, 2f), bounds.Max);
     }

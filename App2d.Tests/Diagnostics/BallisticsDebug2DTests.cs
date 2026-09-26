@@ -1,7 +1,6 @@
 using App2d.Diagnostics;
 using App2d.Gameplay.Player;
 using System.Numerics;
-using Xunit;
 
 namespace App2d.Tests.Diagnostics;
 

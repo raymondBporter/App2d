@@ -10,12 +10,10 @@ public class Rectangle2D : IConvexShape2D, IRect2D
         ArgGuard.ThrowIfNotComponentWiseLessThan(min, max);
         Min = min;
         Max = max;
-        LocalBounds = new Bounds2D(min, max);
     }
 
     public Vector2 Min { get; }
     public Vector2 Max { get; }
-    public Bounds2D LocalBounds { get; }
     public float Area => PrimitiveGeometry2D.RectangleArea(Min, Max);
 
     public bool ContainsPoint(Vector2 localPoint) =>

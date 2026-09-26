@@ -1,4 +1,5 @@
 using App2d.Core.Curves;
+using App2d.Core.Geometry;
 using App2d.Rendering.Vegetation;
 using System.Numerics;
 
@@ -23,7 +24,8 @@ internal static class RigidPrototypeChecks2D
     {
         var limb = SplineSilhouette2D.CreateLimb(80f, 16f, 12f, 8f);
         Require(limb.Area > 2_000f, "Spline limb should produce a substantial closed silhouette.");
-        Require(limb.LocalBounds.Left < 0f && limb.LocalBounds.Right > 80f,
+        var bounds = ShapeBounds2D.Calculate(limb);
+        Require(bounds.Left < 0f && bounds.Right > 80f,
             "Spline limb joint caps should overlap both ends of its bone.");
 
         var torso = SplineSilhouette2D.CreateTorso(StandardSkeleton2D.TorsoLength);

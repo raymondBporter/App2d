@@ -1,6 +1,5 @@
 using App2d.Levels;
 using System.ComponentModel;
-using System.Drawing;
 
 namespace App2d.Editor;
 

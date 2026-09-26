@@ -2,13 +2,11 @@ using App2d.Levels;
 using App2d.Core;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Enemies;
-using App2d.Gameplay.Player;
 using App2d.Gameplay.World.Presentation;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using System.Numerics;
 using Xunit;
-using App2d.Game.Presentation.Tests;
 using App2d.Gameplay;
 
 namespace App2d.Game.Presentation.Tests.Enemies;
