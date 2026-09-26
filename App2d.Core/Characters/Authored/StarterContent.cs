@@ -194,14 +194,14 @@ public static class StarterContent
     private static EntityActionDef Thrust() => new()
     {
         Id = EntityControllers.Attack, Clip = "person-thrust",
-        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.08f, Width = .32f, Height = .24f }],
+        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Width = .42f, Height = .26f }],
         Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
     };
 
     public static EntityAsset SpearGuardEntity() => new()
     {
         Id = SpearGuard, Name = "Spear guard", Model = "tall-thin", MotionSet = "deliberate",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .9f, Range = 1.75f, Cooldown = 1.1f }, Health = 3,
+        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .9f, Range = 2.1f, Cooldown = 1.1f }, Health = 3,
         Movement = new() { Width = .5f, Height = 2.1f }, Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }], Actions = [Thrust()],
     };
