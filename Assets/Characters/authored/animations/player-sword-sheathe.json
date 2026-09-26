@@ -1,0 +1,300 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-sword-sheathe",
+  "name": "Sword sheathe",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.42,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": 0.03,
+          "y": -0.07,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "x": 0.01,
+          "y": -0.05
+        },
+        {
+          "time": 0.22,
+          "x": -0.01,
+          "y": -0.04
+        },
+        {
+          "time": 0.3,
+          "x": -0.01,
+          "y": -0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "x": -0.01,
+          "y": -0.04,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12
+        },
+        {
+          "time": 0.22
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "angle": -0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "angle": -0.02
+        },
+        {
+          "time": 0.22,
+          "angle": 0.04
+        },
+        {
+          "time": 0.3,
+          "angle": 0.02,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "angle": -0.03,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "x": 0.07781293,
+          "y": -0.004674375,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "x": 0.012999132,
+          "y": -0.00012999773
+        },
+        {
+          "time": 0.22,
+          "x": -0.025993066,
+          "y": -0.0005199313
+        },
+        {
+          "time": 0.3,
+          "x": -0.012999132,
+          "y": -0.00012999773,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "x": 0.019497074,
+          "y": -0.00029248,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.030367581,
+          "y": -0.0012153387,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "x": -0.022786321,
+          "y": -0.0006837845
+        },
+        {
+          "time": 0.22,
+          "x": -0.015195946,
+          "y": -0.0003039539
+        },
+        {
+          "time": 0.3,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "right-shoulder",
+      "keys": [
+        {
+          "angle": -0.1,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "angle": 1.62
+        },
+        {
+          "time": 0.22,
+          "angle": 3.46
+        },
+        {
+          "time": 0.3,
+          "angle": 4.612389,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "angle": 4.6623893,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.20250332,
+          "y": 0.4071676,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "x": 0.44980782,
+          "y": 0.5856974
+        },
+        {
+          "time": 0.22,
+          "x": -0.08352782,
+          "y": 0.0638054
+        },
+        {
+          "time": 0.3,
+          "x": -0.2002138,
+          "y": 0.34312454,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "x": 0.54673576,
+          "y": 0.7764942,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": -0.044780098,
+          "y": 0.1043064,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "x": -0.018400775,
+          "y": 0.07011604
+        },
+        {
+          "time": 0.22,
+          "x": -0.014025601,
+          "y": 0.0488804
+        },
+        {
+          "time": 0.3,
+          "x": 0.007990796,
+          "y": 0.04912007,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "x": 0.037974805,
+          "y": 0.051769733,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 0.42,
+      "target": {
+        "x": -0.065,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "right-leg",
+      "finish": 0.42,
+      "target": {
+        "x": 0.065,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "markers": [
+    {
+      "id": "sword-sheathe",
+      "time": 0.3
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "focused"
+        },
+        {
+          "time": 0.3
+        }
+      ]
+    }
+  ]
+}

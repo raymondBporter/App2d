@@ -1,0 +1,407 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-celebrate",
+  "name": "Celebrate",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 1.4,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": -0.01,
+          "y": -0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.01,
+          "y": -0.16,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "y": 0.12
+        },
+        {
+          "time": 0.62,
+          "x": -0.01,
+          "y": -0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.86,
+          "x": -0.01,
+          "y": -0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "x": -0.01,
+          "y": -0.04,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4
+        },
+        {
+          "time": 0.62,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.86,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "angle": -0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "angle": -0.18,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "angle": 0.06
+        },
+        {
+          "time": 0.62,
+          "angle": -0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.86,
+          "angle": 0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "angle": 0.03,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "x": 0.019497074,
+          "y": -0.00029248,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": 0.116369225,
+          "y": -0.010501623,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "x": -0.038976602,
+          "y": -0.001169622
+        },
+        {
+          "time": 0.62,
+          "x": 0.051944546,
+          "y": -0.0020788908,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.86,
+          "x": -0.019497074,
+          "y": -0.00029248,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "x": -0.019497074,
+          "y": -0.00029248,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.0379367,
+          "y": -0.0018984079,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "x": -0.030367581,
+          "y": -0.0012153387
+        },
+        {
+          "time": 0.62,
+          "x": -0.022786321,
+          "y": -0.0006837845,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.86,
+          "x": -0.030367581,
+          "y": -0.0012153387,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "x": -0.030367581,
+          "y": -0.0012153387,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-leg",
+      "keys": [
+        {
+          "x": -0.065,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.065,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "x": -0.06,
+          "y": 0.155
+        },
+        {
+          "time": 0.62,
+          "x": -0.065,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-leg",
+      "keys": [
+        {
+          "x": 0.065,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": 0.065,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "x": 0.040000003,
+          "y": 0.21499999
+        },
+        {
+          "time": 0.62,
+          "x": 0.065,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": 0.037974805,
+          "y": 0.051769733,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.058546446,
+          "y": 0.13659465,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "x": -0.31944215,
+          "y": 1.1682887
+        },
+        {
+          "time": 0.62,
+          "x": -0.3626047,
+          "y": 1.0446823,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.86,
+          "x": -0.33485827,
+          "y": 1.1593735,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.02,
+          "x": -0.30027547,
+          "y": 0.97825485,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.18,
+          "x": -0.33485827,
+          "y": 1.1593735,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "x": -0.33515823,
+          "y": 1.1493783,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.067511365,
+          "y": 0.067662895,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.015612118,
+          "y": 0.12407899,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.4,
+          "x": 0.29944217,
+          "y": 1.1311111
+        },
+        {
+          "time": 0.62,
+          "x": 0.2155403,
+          "y": 1.0910329,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.86,
+          "x": 0.2848628,
+          "y": 1.1407763,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.02,
+          "x": 0.23948157,
+          "y": 0.9620573,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.18,
+          "x": 0.2848628,
+          "y": 1.1407763,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "x": 0.28456283,
+          "y": 1.130781,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 0.3,
+      "target": {
+        "x": -0.065,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "right-leg",
+      "finish": 0.3,
+      "target": {
+        "x": 0.065,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "left-leg",
+      "start": 0.62,
+      "finish": 1.4,
+      "target": {
+        "x": -0.065,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "right-leg",
+      "start": 0.62,
+      "finish": 1.4,
+      "target": {
+        "x": 0.065,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "markers": [],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "happy"
+        },
+        {
+          "time": 0.3,
+          "expression": "delighted"
+        }
+      ]
+    }
+  ]
+}

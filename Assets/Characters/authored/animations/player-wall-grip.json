@@ -1,0 +1,228 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-wall-grip",
+  "name": "Wall grip",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 1.2,
+  "loop": true,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": -0.1,
+          "y": -0.2,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.1,
+          "y": -0.215,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "x": -0.1,
+          "y": -0.2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "angle": 0.1,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "angle": 0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "angle": 0.1,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "x": -0.06489172,
+          "y": -0.003247261,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.07781293,
+          "y": -0.004674375,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "x": -0.06489172,
+          "y": -0.003247261,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": 0.022786321,
+          "y": -0.0006837845,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": 0.030367581,
+          "y": -0.0012153387,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "x": 0.022786321,
+          "y": -0.0006837845,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-leg",
+      "keys": [
+        {
+          "x": -0.24000001,
+          "y": 0.355,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.24000001,
+          "y": 0.355,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "x": -0.24000001,
+          "y": 0.355,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-leg",
+      "keys": [
+        {
+          "x": -0.24000001,
+          "y": 0.034999996,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.25,
+          "y": 0.014999999,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "x": -0.24000001,
+          "y": 0.034999996,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": -0.077383526,
+          "y": 0.598467,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": -0.06758164,
+          "y": 0.5965799,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "x": -0.077383526,
+          "y": 0.598467,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.021580372,
+          "y": 0.16241467,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.6,
+          "x": 0.03406942,
+          "y": 0.17894256,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "x": 0.021580372,
+          "y": 0.16241467,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "strained"
+        }
+      ]
+    }
+  ]
+}

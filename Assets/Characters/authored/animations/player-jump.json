@@ -1,0 +1,277 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-jump",
+  "name": "Jump",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.5,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": 0.02,
+          "y": -0.08,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08,
+          "y": 0.02
+        },
+        {
+          "time": 0.3,
+          "y": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "y": 0.05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "angle": -0.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08,
+          "angle": -0.04
+        },
+        {
+          "time": 0.3,
+          "angle": -0.1,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "angle": -0.08,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "x": 0.14184925,
+          "y": -0.015666664,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08,
+          "x": 0.025993066,
+          "y": -0.0005199313
+        },
+        {
+          "time": 0.3,
+          "x": 0.06489172,
+          "y": -0.003247261,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "x": 0.051944546,
+          "y": -0.0020788908,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.045490637,
+          "y": -0.002732724,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08,
+          "x": -0.007599493,
+          "y": -7.599592E-05
+        },
+        {
+          "time": 0.3,
+          "x": -0.022786321,
+          "y": -0.0006837845,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "x": -0.018992083,
+          "y": -0.0004749,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-leg",
+      "keys": [
+        {
+          "x": -0.14,
+          "y": 0.034999996,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08,
+          "x": -0.08,
+          "y": -0.005000001
+        },
+        {
+          "time": 0.3,
+          "x": -0.120000005,
+          "y": 0.435,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "x": -0.09,
+          "y": 0.355,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-leg",
+      "keys": [
+        {
+          "y": 0.004999999,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08,
+          "x": -0.04,
+          "y": 0.075
+        },
+        {
+          "time": 0.3,
+          "x": 0.06,
+          "y": 0.49499997,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "x": 0.040000003,
+          "y": 0.415,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": -0.19850108,
+          "y": 0.12046498,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08,
+          "x": 0.08190614,
+          "y": 0.8546388
+        },
+        {
+          "time": 0.3,
+          "x": 0.16906744,
+          "y": 0.46896917,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "x": 0.13033007,
+          "y": 0.40201965,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": -0.13558263,
+          "y": 0.11404079,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.08,
+          "x": 0.16104235,
+          "y": 0.8778219
+        },
+        {
+          "time": 0.3,
+          "x": 0.22477433,
+          "y": 0.5147594,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "x": 0.18694158,
+          "y": 0.44668657,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "launch"
+    },
+    {
+      "id": "apex",
+      "time": 0.3
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "determined"
+        },
+        {
+          "time": 0.3,
+          "expression": "focused"
+        }
+      ]
+    }
+  ]
+}

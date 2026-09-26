@@ -1,0 +1,283 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-dash",
+  "name": "Dash",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.28,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": 0.02,
+          "y": -0.1,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "x": 0.06,
+          "y": -0.26,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": 0.07,
+          "y": -0.25,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "x": 0.02,
+          "y": -0.07,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "angle": -0.35,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "angle": -0.72,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "angle": -0.68,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "angle": -0.2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "x": 0.22288357,
+          "y": -0.03940773,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "x": 0.4286,
+          "y": -0.16132629,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": 0.40871543,
+          "y": -0.14457774,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "x": 0.12913506,
+          "y": -0.0129567385,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.068031244,
+          "y": -0.0061393976,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "x": -0.14094979,
+          "y": -0.027107447,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.13386421,
+          "y": -0.024359196,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "x": -0.0379367,
+          "y": -0.0018984079,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-leg",
+      "keys": [
+        {
+          "x": -0.19,
+          "y": 0.034999996,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "x": -0.5,
+          "y": 0.095,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.48000002,
+          "y": 0.075,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "x": -0.14,
+          "y": 0.014999999,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-leg",
+      "keys": [
+        {
+          "x": 0.09,
+          "y": 0.025,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "x": 0.24000001,
+          "y": 0.034999996,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": 0.25,
+          "y": 0.034999996,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "x": 0.09,
+          "y": 0.004999999,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": -0.09339428,
+          "y": 0.09458923,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "x": -0.17986363,
+          "y": 0.09291756,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.24272433,
+          "y": 0.117883205,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "x": -0.016751833,
+          "y": 0.08129579,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": -0.027638197,
+          "y": 0.11859208,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.04,
+          "x": -0.16113073,
+          "y": 0.16255292,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.16,
+          "x": -0.21493372,
+          "y": 0.17893797,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.28,
+          "x": 0.100856155,
+          "y": 0.1051361,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "dash-end",
+      "time": 0.16
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "determined"
+        }
+      ]
+    }
+  ]
+}

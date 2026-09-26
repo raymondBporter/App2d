@@ -1,0 +1,212 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-gun-wall-shot",
+  "name": "Gun wall shot",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.3,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": -0.1,
+          "y": -0.2
+        },
+        {
+          "time": 0.3,
+          "x": -0.1,
+          "y": -0.2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {},
+        {
+          "time": 0.3,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "angle": 0.08
+        },
+        {
+          "time": 0.03,
+          "angle": 0.13,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.3,
+          "angle": 0.08,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "x": -0.051944546,
+          "y": -0.0020788908
+        },
+        {
+          "time": 0.03,
+          "x": -0.08426219,
+          "y": -0.00548476,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.3,
+          "x": -0.051944546,
+          "y": -0.0020788908,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": 0.007599493,
+          "y": -7.599592E-05
+        },
+        {
+          "time": 0.03,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.3,
+          "x": 0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-leg",
+      "keys": [
+        {
+          "x": -0.24000001,
+          "y": 0.355
+        },
+        {
+          "time": 0.3,
+          "x": -0.24000001,
+          "y": 0.355,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-leg",
+      "keys": [
+        {
+          "x": -0.24000001,
+          "y": 0.034999996
+        },
+        {
+          "time": 0.3,
+          "x": -0.24000001,
+          "y": 0.034999996,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "right-shoulder",
+      "keys": [
+        {
+          "angle": -0.08
+        },
+        {
+          "time": 0.03,
+          "angle": 0.27,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.3,
+          "angle": -0.08,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": -0.087720364,
+          "y": 0.5951829
+        },
+        {
+          "time": 0.3,
+          "x": -0.087720364,
+          "y": 0.5951829,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.615,
+          "y": 0.63000005
+        },
+        {
+          "time": 0.03,
+          "x": 0.45284587,
+          "y": 0.4567131,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.3,
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "fire"
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "determined"
+        }
+      ]
+    }
+  ]
+}

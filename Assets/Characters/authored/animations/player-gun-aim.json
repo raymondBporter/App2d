@@ -1,0 +1,213 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-gun-aim",
+  "name": "Gun aim",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 2,
+  "loop": true,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": -0.02,
+          "y": -0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": -0.02,
+          "y": -0.042,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "x": -0.02,
+          "y": -0.03,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "angle": 0.015,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": -0.009749634,
+          "y": -7.31349E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": -0.0037999365,
+          "y": -1.9013882E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "right-shoulder",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "angle": -0.005,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.6146678,
+          "y": 0.6135517,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": -0.010000005,
+          "y": 0.050000012,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": -0.029150777,
+          "y": 0.03991866,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "x": -0.010000005,
+          "y": 0.050000012,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 2,
+      "target": {
+        "x": -0.065,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "right-leg",
+      "finish": 2,
+      "target": {
+        "x": 0.065,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "markers": [],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "focused"
+        }
+      ]
+    }
+  ]
+}

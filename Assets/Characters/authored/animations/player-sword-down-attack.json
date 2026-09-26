@@ -1,0 +1,292 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-sword-down-attack",
+  "name": "Sword downward stab",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.25,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "y": 0.04
+        },
+        {
+          "time": 0.04,
+          "y": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "y": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "y": 0.05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {},
+        {
+          "time": 0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {},
+        {
+          "time": 0.04,
+          "angle": -0.2,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "angle": -0.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "angle": -0.12,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {},
+        {
+          "time": 0.04,
+          "x": 0.12913506,
+          "y": -0.0129567385,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "x": 0.14184925,
+          "y": -0.015666664,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.07781293,
+          "y": -0.004674375,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {},
+        {
+          "time": 0.04,
+          "x": 0.06054092,
+          "y": -0.004853636,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "x": 0.068031244,
+          "y": -0.0061393976,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.030367581,
+          "y": -0.0012153387,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-leg",
+      "keys": [
+        {
+          "x": -0.08,
+          "y": 0.335
+        },
+        {
+          "time": 0.04,
+          "x": -0.120000005,
+          "y": 0.49499997,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "x": -0.120000005,
+          "y": 0.51500005,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": -0.09,
+          "y": 0.39499998,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-leg",
+      "keys": [
+        {
+          "x": 0.040000003,
+          "y": 0.39499998
+        },
+        {
+          "time": 0.04,
+          "x": 0.02,
+          "y": 0.535,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "x": 0.02,
+          "y": 0.555,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.040000003,
+          "y": 0.435,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "right-shoulder",
+      "keys": [
+        {
+          "angle": -1.6707964
+        },
+        {
+          "time": 0.04,
+          "angle": -1.3707963,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "angle": -1.3507963,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "angle": -1.13,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": -0.20021385,
+          "y": 0.34312454
+        },
+        {
+          "time": 0.04,
+          "x": 0.49505898,
+          "y": 0.6297716,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "x": 0.51134586,
+          "y": 0.6189072,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.43400893,
+          "y": 0.5631639,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": 0.07,
+          "y": 0.25000006
+        },
+        {
+          "time": 0.04,
+          "x": 0.198993,
+          "y": 0.20582044,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.18,
+          "x": 0.20081788,
+          "y": 0.18862396,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.08942462,
+          "y": 0.16077846,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "sword-draw"
+    },
+    {
+      "id": "strike",
+      "time": 0.02
+    },
+    {
+      "id": "recover",
+      "time": 0.083
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "determined"
+        }
+      ]
+    }
+  ]
+}

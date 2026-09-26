@@ -12,8 +12,15 @@ public sealed class AuthoredCatalogTests
         Assert.True(catalog.Errors.Count == 0, string.Join("\n", catalog.Errors));
         Assert.Equal(new[] { "person", "stalker" }, catalog.Models.Keys.Order());
         Assert.Equal(new[] { "short-broad", "tall-thin" }, catalog.Variants.Keys.Order());
-        Assert.Equal(new[] { "person-idle", "person-jump", "person-run", "person-thrust", "person-walk", "stalker-idle", "stalker-lunge", "stalker-walk" }, catalog.Animations.Keys.Order());
-        Assert.Equal(new[] { "spear" }, catalog.Props.Keys);
+        Assert.Equal(new[]
+        {
+            "person-idle", "person-jump", "person-run", "person-thrust", "person-walk",
+            "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-dash", "player-death", "player-fall",
+            "player-gun-aim", "player-gun-shot", "player-gun-wall-shot", "player-hit", "player-idle", "player-jump", "player-land",
+            "player-sword-down-attack", "player-sword-draw-slash", "player-sword-sheathe", "player-sword-slash", "player-wall-grip",
+            "stalker-idle", "stalker-lunge", "stalker-walk",
+        }, catalog.Animations.Keys.Order());
+        Assert.Equal(new[] { "pistol", "sheath", "spear", "sword" }, catalog.Props.Keys.Order());
         Assert.Equal(new[] { "player", "spear-guard", "stalker-pest" }, catalog.Entities.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.

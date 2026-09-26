@@ -1,0 +1,272 @@
+<title>Player Move Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#e9e8de; --surface:#f6f5ef; --paper:#f1f0e8; --ink:#1f262b; --muted:#646c66; --line:#d3d5c9;
+  --accent:#2e6f57; --accent-soft:#dbe9e1; --keep:#2e6f57; --tweak:#9a6a12; --redo:#a8412f;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ color-scheme:dark;
+    --ground:#15191b; --surface:#1d2225; --ink:#e6e8e2; --muted:#9aa29b; --line:#30373a;
+    --accent:#72b898; --accent-soft:#223a30; --keep:#72b898; --tweak:#d9a74a; --redo:#e07a66; }
+}
+:root[data-theme="dark"]{ color-scheme:dark;
+  --ground:#15191b; --surface:#1d2225; --ink:#e6e8e2; --muted:#9aa29b; --line:#30373a;
+  --accent:#72b898; --accent-soft:#223a30; --keep:#72b898; --tweak:#d9a74a; --redo:#e07a66; }
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); font:16px/1.5 var(--body); padding-inline:16px; padding-block:28px 64px}
+.wrap{max-width:1240px; margin:0 auto; display:grid; gap:36px}
+h1,h2,h3{font-family:var(--display); text-wrap:balance; margin:0; line-height:1.15}
+h1{font-size:clamp(28px,4vw,40px); font-weight:700; letter-spacing:-.01em}
+h2{font-size:22px; font-weight:700}
+h3{font-size:17px; font-weight:700}
+p{margin:0}
+.mono{font-family:var(--mono); font-size:12.5px; font-variant-numeric:tabular-nums}
+header.top{display:grid; gap:14px; max-width:820px}
+header.top p{color:var(--muted); max-width:68ch}
+.progress{display:flex; flex-wrap:wrap; gap:8px 18px; align-items:center}
+.bar{flex:1 1 220px; height:8px; border-radius:4px; background:var(--line); overflow:hidden; display:flex}
+.bar span{display:block; height:100%}
+.legend{display:flex; gap:14px; color:var(--muted); font-size:14px}
+.legend b{font-weight:600; color:var(--ink)}
+.questions{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:18px 20px; display:grid; gap:10px}
+.questions ol{margin:0; padding-left:20px; display:grid; gap:6px; max-width:90ch}
+.questions li::marker{color:var(--accent); font-family:var(--mono); font-size:13px}
+section.group{display:grid; gap:16px}
+.group-head{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; border-bottom:1px solid var(--line); padding-bottom:8px}
+.group-head p{color:var(--muted); font-size:14.5px}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:18px}
+.move{background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; flex-direction:column}
+.move[data-verdict="keep"]{box-shadow:inset 0 3px 0 var(--keep)}
+.move[data-verdict="tweak"]{box-shadow:inset 0 3px 0 var(--tweak)}
+.move[data-verdict="redo"]{box-shadow:inset 0 3px 0 var(--redo)}
+.stage{position:relative; background:var(--paper); aspect-ratio:330/345; max-width:100%}
+.stage canvas{width:100%; height:100%; display:block}
+.stage .size{position:absolute; left:8px; top:8px; font:500 11px var(--mono); color:#646c66; letter-spacing:.04em; text-transform:uppercase}
+.controls{display:grid; gap:6px; padding:10px 12px 4px}
+.row{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+button{font:600 13px var(--body); color:var(--ink); background:transparent; border:1px solid var(--line); border-radius:6px; padding:4px 9px; cursor:pointer; min-height:30px}
+button:hover{border-color:var(--muted)}
+button:focus-visible, input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent); color:var(--ink)}
+.play{width:34px; padding:0}
+.spacer{flex:1}
+.scrub{position:relative; height:26px}
+.scrub input{width:100%; margin:0; accent-color:var(--accent); position:relative; z-index:1}
+.ticks{position:absolute; left:8px; right:8px; bottom:0; height:9px; pointer-events:none}
+.ticks i{position:absolute; bottom:0; width:2px; height:9px; background:var(--tweak); border-radius:1px}
+.ticks i::after{content:attr(data-label); position:absolute; bottom:10px; left:-2px; font:10px var(--mono); color:var(--muted); white-space:nowrap}
+.info{padding:6px 12px 12px; display:grid; gap:8px}
+.meta{color:var(--muted)}
+.note{font-size:14.5px}
+.checks{font:11.5px/1.45 var(--mono); color:var(--muted)}
+details.ref summary{cursor:pointer; font-size:13.5px; color:var(--accent); font-weight:600}
+details.ref .strip{overflow-x:auto; margin-top:8px; border-radius:6px; background:#fff}
+details.ref img{max-width:none; height:110px; display:block}
+.review{border-top:1px solid var(--line); padding:10px 12px 12px; display:grid; gap:8px; margin-top:auto}
+.verdicts{display:flex; gap:6px}
+.verdicts button{flex:1}
+.verdicts button[data-v="keep"][aria-pressed="true"]{border-color:var(--keep); color:var(--keep); background:transparent; box-shadow:inset 0 0 0 1px var(--keep)}
+.verdicts button[data-v="tweak"][aria-pressed="true"]{border-color:var(--tweak); color:var(--tweak); background:transparent; box-shadow:inset 0 0 0 1px var(--tweak)}
+.verdicts button[data-v="redo"][aria-pressed="true"]{border-color:var(--redo); color:var(--redo); background:transparent; box-shadow:inset 0 0 0 1px var(--redo)}
+textarea{width:100%; min-height:58px; resize:vertical; font:14px/1.4 var(--body); color:var(--ink); background:var(--ground); border:1px solid var(--line); border-radius:6px; padding:7px 9px}
+.saved{font-size:12.5px; color:var(--muted); min-height:1.2em}
+.offline{font-size:13px; color:var(--muted)}
+@media (prefers-reduced-motion: reduce){ .stage canvas{image-rendering:auto} }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Player move review</h1>
+    <p>Every player move rebuilt on the authored Person rig in the walk and run style, rendered by the game's own drawing code. Each card loops the move; use ½× and ¼× to see the key poses, Game size to judge it at the player's in-game height, and the reference strip where a move borrows from the RGS stick-figure set. Mark each move Keep, Tweak or Redo and leave a note. Notes save as you go and Claude reads them back.</p>
+    <div class="progress" aria-live="polite">
+      <div class="bar" id="bar" role="img" aria-label="Review progress"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </header>
+
+  <section class="questions" aria-labelledby="q-title">
+    <h2 id="q-title">Decisions I made for you to check</h2>
+    <ol>
+      <li><b>Climb framing.</b> The rig can't show the back of the head, so the ladder sits behind the body with a hand on each rail. Hands reaching up the middle crossed the face.</li>
+      <li><b>Wall grip faces away from the wall.</b> Gameplay already turns the player away from the wall, as in the RGS wall slide: back and one foot on the wall, near hand braced behind, weapon hand free.</li>
+      <li><b>Jump has no crouch.</b> Gameplay leaves the ground on the button press, so the clip opens on the push instead of an anticipation squat.</li>
+      <li><b>Sword draw.</b> The hand finds the hilt over the shoulder, and pulling the blade out becomes the overhead wind-up. The downward stab damages from frame one, so its draw is a two-frame whip.</li>
+      <li><b>Gun shot is upper body only.</b> It keys only chest, head and arms, so it layers on aim, walk or run legs. The three Layered cards prove it with no new animation.</li>
+      <li><b>Sheath and sword size.</b> An 0.82-unit blade in a thin scabbard, hilt tucked behind the head. Say if it should sit higher, lower or be shorter.</li>
+    </ol>
+  </section>
+
+  <div id="groups"></div>
+</div>
+
+<script>
+const MOVES = /*MOVES*/[];
+const GROUPS = [
+  { title: "Movement", blurb: "Standing, getting airborne and back down.", ids: ["person-walk","person-run","player-idle","player-jump","player-fall","player-land","player-dash"] },
+  { title: "Traversal", blurb: "Ladder, wall and ledge-edge states.", ids: ["player-climb","player-wall-grip","player-balance-forward","player-balance-backward"] },
+  { title: "Reactions", blurb: "Taking a hit, dying and winning.", ids: ["player-hit","player-death","player-celebrate"] },
+  { title: "Sword", blurb: "Only attacks draw the sword; the sheathe clip puts it back.", ids: ["player-sword-draw-slash","player-sword-slash","player-sword-sheathe","player-sword-down-attack"] },
+  { title: "Gun", blurb: "Pistol in the far hand; the sword stays sheathed.", ids: ["player-gun-aim","player-gun-shot","player-gun-wall-shot"] },
+  { title: "Layered", blurb: "Upper-body shot arms on other legs, made at preview time from existing clips.", ids: ["layer-aim-shot","layer-walk-shot","layer-run-shot"] },
+];
+const GAME_SCALE = 40 / 150; // in-game pixels per unit over the render's
+const HOLD = 0.6;            // pause on a one-shot's last pose before it loops
+const byId = Object.fromEntries(MOVES.map(m => [m.id, m]));
+const reviews = {};          // id -> {verdict, note}
+let db = null;
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k === "text") e.textContent = v; else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k) e.append(k);
+  return e;
+}
+
+function card(m) {
+  const sheet = new Image(); sheet.src = "sheets/" + m.id + ".png";
+  const canvas = el("canvas", { width: m.w, height: m.h, "aria-label": m.title + " animation" });
+  const sizeTag = el("span", { class: "size", text: "Close-up" });
+  const stage = el("div", { class: "stage" }, canvas, sizeTag);
+  const state = { t: 0, playing: true, speed: 1, game: false, scrubbing: false };
+  const play = el("button", { class: "play", "aria-label": "Pause", text: "❚❚" });
+  const speeds = [1, .5, .25].map(s => el("button", { "aria-pressed": String(s === 1), text: s === 1 ? "1×" : s === .5 ? "½×" : "¼×" }));
+  const game = el("button", { "aria-pressed": "false", text: "Game size" });
+  const counter = el("span", { class: "mono meta" });
+  const range = el("input", { type: "range", min: "0", max: String(m.frames - 1), step: "1", value: "0", id: "scrub-" + m.id, "aria-label": "Frame" });
+  const ticks = el("div", { class: "ticks" });
+  for (const k of m.markers) {
+    const i = el("i", { "data-label": k.id }); i.style.left = (k.time / m.duration * 100) + "%"; ticks.append(i);
+  }
+  const controls = el("div", { class: "controls" },
+    el("div", { class: "row" }, play, ...speeds, el("span", { class: "spacer" }), game),
+    el("div", { class: "scrub" }, range, ticks),
+    counter);
+  const meta = el("p", { class: "mono meta", text: `${m.duration.toFixed(2)} s · ${m.loop ? "loop" : "one-shot"} · ${m.frames} frames at ${m.fps} fps` });
+  const info = el("div", { class: "info" }, el("h3", { text: m.title }), meta);
+  if (m.note) info.append(el("p", { class: "note", text: m.note }));
+  if (m.checks) info.append(el("p", { class: "checks", text: m.checks.replace(/, /g, " · ") }));
+  if (m.ref) {
+    const img = el("img", { src: "ref/" + m.ref + ".png", alt: "RGS reference frames: " + m.ref.replace(/_/g, " "), loading: "lazy" });
+    info.append(el("details", { class: "ref" }, el("summary", { text: "RGS reference" }), el("div", { class: "strip" }, img)));
+  }
+  const verdictButtons = ["keep", "tweak", "redo"].map(v => el("button", { "data-v": v, "aria-pressed": "false", text: v[0].toUpperCase() + v.slice(1) }));
+  const note = el("textarea", { id: "note-" + m.id, placeholder: "What to change…", "aria-label": "Notes on " + m.title });
+  const saved = el("p", { class: "saved" });
+  const review = el("div", { class: "review" }, el("div", { class: "verdicts", role: "group", "aria-label": "Verdict" }, ...verdictButtons), note, saved);
+  const root = el("article", { class: "move", id: m.id }, stage, controls, info, review);
+
+  function frameAt(t) {
+    if (m.loop) return Math.floor((t * m.fps) % m.frames);
+    const cycle = m.duration + HOLD, local = t % cycle;
+    return Math.min(m.frames - 1, Math.floor(local * m.fps));
+  }
+  const ctx = canvas.getContext("2d");
+  function draw(f) {
+    if (!sheet.complete || !sheet.naturalWidth) return;
+    const sx = (f % m.cols) * m.w, sy = Math.floor(f / m.cols) * m.h;
+    ctx.fillStyle = "#f1f0e8"; ctx.fillRect(0, 0, m.w, m.h);
+    if (state.game) {
+      const w = m.w * GAME_SCALE, h = m.h * GAME_SCALE;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(sheet, sx, sy, m.w, m.h, (m.w - w) / 2, m.h * .84 - h * .84, w, h);
+    } else ctx.drawImage(sheet, sx, sy, m.w, m.h, 0, 0, m.w, m.h);
+    counter.textContent = `frame ${String(f + 1).padStart(2, "0")} / ${m.frames} · ${(f / m.fps).toFixed(3)} s`;
+    if (!state.scrubbing) range.value = String(f);
+  }
+  root._tick = dt => {
+    if (state.playing) state.t += dt * state.speed;
+    draw(state.playing ? frameAt(state.t) : Number(range.value));
+  };
+  sheet.onload = () => draw(0);
+
+  play.onclick = () => {
+    state.playing = !state.playing;
+    play.textContent = state.playing ? "❚❚" : "▶"; play.setAttribute("aria-label", state.playing ? "Pause" : "Play");
+    if (state.playing) state.t = Number(range.value) / m.fps;
+  };
+  speeds.forEach((b, i) => b.onclick = () => {
+    state.speed = [1, .5, .25][i]; speeds.forEach((o, j) => o.setAttribute("aria-pressed", String(i === j)));
+  });
+  game.onclick = () => {
+    state.game = !state.game; game.setAttribute("aria-pressed", String(state.game)); sizeTag.textContent = state.game ? "Game size" : "Close-up";
+  };
+  range.oninput = () => {
+    state.scrubbing = true;
+    if (state.playing) play.onclick();
+    draw(Number(range.value)); state.scrubbing = false;
+  };
+
+  function paint() {
+    const r = reviews[m.id] || {};
+    verdictButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === r.verdict)));
+    if (r.verdict) root.dataset.verdict = r.verdict; else delete root.dataset.verdict;
+    if (document.activeElement !== note) note.value = r.note || "";
+  }
+  root._paint = paint;
+  async function save(patch) {
+    const next = { ...(reviews[m.id] || {}), ...patch, move: m.id, updatedAt: new Date().toISOString() };
+    reviews[m.id] = next; paint(); summary();
+    if (!db) { saved.textContent = "Saving is unavailable in this view."; return; }
+    saved.textContent = "Saving…";
+    try { await db.doc("reviews/" + m.id).set(next); saved.textContent = "Saved"; }
+    catch (e) { saved.textContent = e && e.code === "invalid_argument" ? "You can view this page but not save notes." : "Could not save. Try again in a moment."; }
+  }
+  verdictButtons.forEach(b => b.onclick = () => save({ verdict: reviews[m.id]?.verdict === b.dataset.v ? null : b.dataset.v }));
+  let pending = null;
+  note.oninput = () => { clearTimeout(pending); saved.textContent = "Editing…"; pending = setTimeout(() => save({ note: note.value }), 900); };
+  note.onblur = () => { if (pending) { clearTimeout(pending); pending = null; if ((reviews[m.id]?.note || "") !== note.value) save({ note: note.value }); else saved.textContent = ""; } };
+  return root;
+}
+
+const cards = [];
+const groupsRoot = document.getElementById("groups");
+groupsRoot.style.display = "grid"; groupsRoot.style.gap = "40px";
+for (const g of GROUPS) {
+  const grid = el("div", { class: "grid" });
+  for (const id of g.ids) if (byId[id]) { const c = card(byId[id]); cards.push(c); grid.append(c); }
+  groupsRoot.append(el("section", { class: "group" }, el("div", { class: "group-head" }, el("h2", { text: g.title }), el("p", { text: g.blurb })), grid));
+}
+
+function summary() {
+  const counts = { keep: 0, tweak: 0, redo: 0 };
+  for (const m of MOVES) { const v = reviews[m.id]?.verdict; if (v) counts[v]++; }
+  const total = MOVES.length, done = counts.keep + counts.tweak + counts.redo;
+  const bar = document.getElementById("bar"); bar.replaceChildren();
+  for (const [v, color] of [["keep", "var(--keep)"], ["tweak", "var(--tweak)"], ["redo", "var(--redo)"]]) {
+    const s = el("span"); s.style.width = (counts[v] / total * 100) + "%"; s.style.background = color; bar.append(s);
+  }
+  bar.setAttribute("aria-label", `${done} of ${total} reviewed`);
+  document.getElementById("legend").innerHTML = "";
+  document.getElementById("legend").append(
+    el("span", {}, el("b", { text: String(done) }), ` of ${total} reviewed`),
+    el("span", { text: `${counts.keep} keep · ${counts.tweak} tweak · ${counts.redo} redo` }));
+}
+summary();
+
+let last = performance.now();
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function loop(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  for (const c of cards) c._tick(dt);
+  requestAnimationFrame(loop);
+}
+if (reduce) cards.forEach(c => c.querySelector(".play").click());
+requestAnimationFrame(loop);
+
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch { db = null; }
+  if (!db) { document.querySelectorAll(".saved").forEach(s => s.textContent = "Notes are view-only here."); return; }
+  db.collection("reviews").onSnapshot(snap => {
+    for (const d of snap.docs) { const v = d.data(); if (v) reviews[d.id] = { verdict: v.verdict ?? null, note: v.note ?? "" }; }
+    cards.forEach(c => c._paint()); summary();
+  }, () => {});
+})();
+</script>

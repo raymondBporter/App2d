@@ -1,0 +1,207 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-land",
+  "name": "Land",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.36,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "x": -0.02,
+          "y": -0.18,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.09,
+          "x": -0.02,
+          "y": -0.24,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.36,
+          "x": -0.01,
+          "y": -0.04,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.09,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.36,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "angle": -0.28,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.09,
+          "angle": -0.34,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.36,
+          "angle": -0.03,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "x": 0.17963117,
+          "y": -0.025313973,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.09,
+          "x": 0.2167666,
+          "y": -0.03720945,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.36,
+          "x": 0.019497074,
+          "y": -0.00029248,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.06054092,
+          "y": -0.004853636,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.09,
+          "x": -0.07549434,
+          "y": -0.0075747073,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.36,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": 0.3222498,
+          "y": 0.293461,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.09,
+          "x": 0.348511,
+          "y": 0.35960484,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.36,
+          "x": 0.037974805,
+          "y": 0.051769733,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.3688589,
+          "y": 0.34848458,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.09,
+          "x": 0.3917368,
+          "y": 0.4173242,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.36,
+          "x": 0.067511365,
+          "y": 0.067662895,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 0.36,
+      "target": {
+        "x": -0.065,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "right-leg",
+      "finish": 0.36,
+      "target": {
+        "x": 0.065,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "markers": [
+    {
+      "id": "impact"
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "strained"
+        },
+        {
+          "time": 0.2
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-gun-shot",
+  "name": "Gun shot (upper body)",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.2,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {},
+        {
+          "time": 0.03,
+          "angle": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {},
+        {
+          "time": 0.03,
+          "x": -0.038976602,
+          "y": -0.001169622,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.007599493,
+          "y": -7.599592E-05
+        },
+        {
+          "time": 0.03,
+          "x": -0.018992083,
+          "y": -0.0004749,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.2,
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "right-shoulder",
+      "keys": [
+        {},
+        {
+          "time": 0.03,
+          "angle": 0.32,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.615,
+          "y": 0.63000005
+        },
+        {
+          "time": 0.03,
+          "x": 0.4714789,
+          "y": 0.44970298,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.2,
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": -0.009999998,
+          "y": 0.050000012
+        },
+        {
+          "time": 0.03,
+          "x": -0.055996396,
+          "y": 0.050480068,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.2,
+          "x": -0.009999998,
+          "y": 0.050000012,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "fire"
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "determined"
+        },
+        {
+          "time": 0.14,
+          "expression": "focused"
+        }
+      ]
+    }
+  ]
+}

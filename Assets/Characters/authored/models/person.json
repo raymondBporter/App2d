@@ -304,6 +304,24 @@
       "control": "left-hand",
       "frame": "chest",
       "angle": 0.12
+    },
+    {
+      "id": "back",
+      "control": "chest",
+      "frame": "chest",
+      "offsetX": -0.22,
+      "offsetY": 0.12,
+      "angle": -1.6707964
+    },
+    {
+      "id": "sword-hand",
+      "control": "right-hand",
+      "frame": "right-shoulder"
+    },
+    {
+      "id": "gun-hand",
+      "control": "right-hand",
+      "frame": "right-shoulder"
     }
   ],
   "motionSets": [

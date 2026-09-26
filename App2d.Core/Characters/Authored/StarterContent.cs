@@ -14,7 +14,13 @@ public static class StarterContent
     /// <summary>Sockets, motion sets and the hurt layout the Person template carries. None of them change structure.</summary>
     public static void AddPersonExtras(CharacterModel model)
     {
-        model.Sockets = [new() { Id = "right-grip", Control = "right-hand", Frame = "chest", Angle = .12f }, new() { Id = "left-grip", Control = "left-hand", Frame = "chest", Angle = .12f }];
+        // back, sword-hand and gun-hand belong to the player move set (App2d.CharacterStudio/PlayerMoves); keep them in step.
+        model.Sockets =
+        [
+            new() { Id = "right-grip", Control = "right-hand", Frame = "chest", Angle = .12f }, new() { Id = "left-grip", Control = "left-hand", Frame = "chest", Angle = .12f },
+            new() { Id = "back", Control = "chest", Frame = "chest", OffsetX = -.22f, OffsetY = .12f, Angle = -MathF.PI / 2 - .1f },
+            new() { Id = "sword-hand", Control = "right-hand", Frame = "right-shoulder" }, new() { Id = "gun-hand", Control = "right-hand", Frame = "right-shoulder" },
+        ];
         model.MotionSets =
         [
             new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "person-idle", ["walk"] = "person-walk", ["run"] = "person-run", ["jump"] = "person-jump" } },
