@@ -9,10 +9,12 @@ public sealed class AuthoredCatalogTests
     public void CheckedInAssetsLoadCleanly()
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
-        Assert.Empty(catalog.Errors);
-        Assert.Contains("person", catalog.Models.Keys);
+        Assert.True(catalog.Errors.Count == 0, string.Join("\n", catalog.Errors));
+        Assert.Equal(new[] { "person", "stalker" }, catalog.Models.Keys.Order());
         Assert.Equal(new[] { "short-broad", "tall-thin" }, catalog.Variants.Keys.Order());
-        Assert.Equal(new[] { "person-run", "person-walk" }, catalog.Animations.Keys.Order());
+        Assert.Equal(new[] { "person-idle", "person-jump", "person-run", "person-thrust", "person-walk", "stalker-idle", "stalker-lunge", "stalker-walk" }, catalog.Animations.Keys.Order());
+        Assert.Equal(new[] { "spear" }, catalog.Props.Keys);
+        Assert.Equal(new[] { "player", "spear-guard", "stalker-pest" }, catalog.Entities.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })

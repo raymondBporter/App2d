@@ -1,0 +1,51 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "stalker-pest",
+  "name": "Stalker pest",
+  "model": "stalker",
+  "motionSet": "standard",
+  "roles": {},
+  "controller": {
+    "walkSpeed": 0.6,
+    "range": 0.9,
+    "cooldown": 1.4
+  },
+  "health": 2,
+  "movement": {
+    "width": 1,
+    "height": 1.1
+  },
+  "hurt": {
+    "layout": "standard",
+    "regions": {}
+  },
+  "equipment": [],
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "stalker-lunge",
+      "hits": [
+        {
+          "id": "sting",
+          "start": {
+            "marker": "strike"
+          },
+          "finish": {
+            "marker": "recover"
+          },
+          "socket": "stinger"
+        }
+      ],
+      "events": [
+        {
+          "id": "bite",
+          "at": {
+            "marker": "strike"
+          },
+          "sound": "bite"
+        }
+      ]
+    }
+  ]
+}

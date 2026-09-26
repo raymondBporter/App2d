@@ -6,8 +6,17 @@ namespace App2d.Core.Characters;
 public sealed record ChainResult(string Chain, float Residual, bool Reached);
 public sealed record ContactResult(string Chain, Vector3 Target, float Residual);
 
-/// <summary>Gameplay inputs to evaluation. An expression here wins over the clip's face channel and the model default.</summary>
-public readonly record struct PoseInput(string? Expression = null);
+/// <summary>
+/// Gameplay inputs to evaluation. An expression here wins over the clip's face channel and the model default.
+/// <see cref="InPlace"/> drops clip travel: the locomotion frame stays at the origin because the controller owns actor
+/// movement. <see cref="Contact"/> may replace an active contact's target (chain, authored target in the locomotion
+/// frame) with a held one, such as a world anchor captured at touchdown.
+/// </summary>
+public readonly record struct PoseInput(string? Expression = null)
+{
+    public bool InPlace { get; init; }
+    public Func<string, Vector3, Vector3>? Contact { get; init; }
+}
 
 /// <summary>The final pose: world positions for every control and the residuals that produced them. Drawing, sockets and collision all read this.</summary>
 public sealed class EvaluatedPose
@@ -46,6 +55,7 @@ public static class PoseEvaluator
         var cycleTravel = (Travel(clip.Duration) - Travel(0)) * (float)cycles;
         var cycleOrigin = new Vector3(Travel(0) + cycleTravel, 0);
         var pose = new EvaluatedPose { Locomotion = new(Travel(time) + cycleTravel, 0) };
+        if (input.InPlace) { cycleOrigin -= pose.Locomotion; pose.Locomotion = Vector3.Zero; }
 
         var tracks = clip.Tracks.ToDictionary(t => (t.Kind, t.Target));
         Vector3 Delta(string kind, string target, string defaultScale)
@@ -80,6 +90,7 @@ public static class PoseEvaluator
             if (!(time >= contact.Start && (time < contact.Finish || time == clip.Duration && contact.Finish == clip.Duration))) continue;
             var chain = model.Chains[contact.Chain]; var ratio = Ratio(chain.Scale);
             var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio, contact.Target.Y * ratio, contact.Target.Z);
+            if (input.Contact is { } hold) target = hold(chain.Id, target);
             var result = Solve(model, pose, chain, target);
             pose.Chains[pose.Chains.FindIndex(c => c.Chain == chain.Id)] = result;
             pose.Contacts.Add(new(chain.Id, target, result.Residual));
@@ -90,6 +101,15 @@ public static class PoseEvaluator
             pose.Expressions[part.Id] = input.Expression ?? FaceAt(clip, part.Id, time) ?? part.Face;
         }
         return pose;
+    }
+
+    /// <summary>The locomotion frame's travel over one cycle on this model: the stride gameplay matches against ground distance.</summary>
+    public static Vector2 CycleTravel(ResolvedModel model, MotionClip clip)
+    {
+        var keys = clip.Travel.Keys; if (keys.Count == 0) return Vector2.Zero;
+        var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
+        var (end, _) = Interpolate(keys, clip.Duration); var (start, _) = Interpolate(keys, 0);
+        return new Vector2(end.X - start.X, end.Y - start.Y) * ratio;
     }
 
     private static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 target)

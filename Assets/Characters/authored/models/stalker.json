@@ -1,0 +1,228 @@
+{
+  "format": "app2d-model",
+  "version": 1,
+  "id": "stalker",
+  "name": "Stalker",
+  "structureRevision": 1,
+  "controls": [
+    {
+      "id": "body",
+      "rest": {
+        "x": 0,
+        "y": 0.9,
+        "z": 0
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "hip-0",
+      "parent": "body",
+      "rest": {
+        "x": -0.35,
+        "y": 0.8,
+        "z": -0.1
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "knee-0",
+      "parent": "hip-0",
+      "rest": {
+        "x": -0.19999999,
+        "y": 0.4,
+        "z": -0.1
+      }
+    },
+    {
+      "id": "foot-0",
+      "parent": "knee-0",
+      "rest": {
+        "x": -0.35,
+        "y": 0,
+        "z": -0.1
+      }
+    },
+    {
+      "id": "hip-1",
+      "parent": "body",
+      "rest": {
+        "x": 0,
+        "y": 0.8,
+        "z": 0
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "knee-1",
+      "parent": "hip-1",
+      "rest": {
+        "x": 0.15,
+        "y": 0.4,
+        "z": 0
+      }
+    },
+    {
+      "id": "foot-1",
+      "parent": "knee-1"
+    },
+    {
+      "id": "hip-2",
+      "parent": "body",
+      "rest": {
+        "x": 0.35,
+        "y": 0.8,
+        "z": 0.1
+      },
+      "scale": "leg"
+    },
+    {
+      "id": "knee-2",
+      "parent": "hip-2",
+      "rest": {
+        "x": 0.5,
+        "y": 0.4,
+        "z": 0.1
+      }
+    },
+    {
+      "id": "foot-2",
+      "parent": "knee-2",
+      "rest": {
+        "x": 0.35,
+        "y": 0,
+        "z": 0.1
+      }
+    }
+  ],
+  "chains": [
+    {
+      "id": "foot-0-chain",
+      "root": "hip-0",
+      "joint": "knee-0",
+      "end": "foot-0",
+      "scale": "leg"
+    },
+    {
+      "id": "foot-1-chain",
+      "root": "hip-1",
+      "joint": "knee-1",
+      "end": "foot-1",
+      "scale": "leg"
+    },
+    {
+      "id": "foot-2-chain",
+      "root": "hip-2",
+      "joint": "knee-2",
+      "end": "foot-2",
+      "scale": "leg"
+    }
+  ],
+  "measures": [
+    {
+      "id": "leg",
+      "path": [
+        "hip-1",
+        "knee-1",
+        "foot-1"
+      ]
+    }
+  ],
+  "parts": [
+    {
+      "id": "stroke",
+      "kind": "stroke",
+      "a": "hip-0",
+      "b": "knee-0",
+      "width": 0.045
+    },
+    {
+      "id": "stroke-2",
+      "kind": "stroke",
+      "a": "knee-0",
+      "b": "foot-0",
+      "width": 0.045
+    },
+    {
+      "id": "stroke-3",
+      "kind": "stroke",
+      "a": "hip-1",
+      "b": "knee-1",
+      "width": 0.045
+    },
+    {
+      "id": "stroke-4",
+      "kind": "stroke",
+      "a": "knee-1",
+      "b": "foot-1",
+      "width": 0.045
+    },
+    {
+      "id": "stroke-5",
+      "kind": "stroke",
+      "a": "hip-2",
+      "b": "knee-2",
+      "width": 0.045
+    },
+    {
+      "id": "stroke-6",
+      "kind": "stroke",
+      "a": "knee-2",
+      "b": "foot-2",
+      "width": 0.045
+    },
+    {
+      "id": "ellipse",
+      "a": "body",
+      "width": 0.95,
+      "height": 0.38,
+      "depth": -0.05,
+      "fill": "#c9e0b8"
+    }
+  ],
+  "sockets": [
+    {
+      "id": "stinger",
+      "control": "body",
+      "offsetX": 0.5,
+      "offsetY": -0.02
+    }
+  ],
+  "motionSets": [
+    {
+      "id": "standard",
+      "name": "Standard",
+      "roles": {
+        "idle": "stalker-idle",
+        "walk": "stalker-walk"
+      }
+    }
+  ],
+  "hurtLayouts": [
+    {
+      "id": "standard",
+      "regions": [
+        {
+          "id": "shell",
+          "controls": [
+            "body",
+            "hip-0",
+            "hip-2"
+          ],
+          "pad": 0.2
+        },
+        {
+          "id": "legs",
+          "controls": [
+            "knee-0",
+            "knee-1",
+            "knee-2",
+            "foot-0",
+            "foot-1",
+            "foot-2"
+          ],
+          "pad": 0.05
+        }
+      ]
+    }
+  ]
+}

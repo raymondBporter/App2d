@@ -1,0 +1,151 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "stalker-walk",
+  "name": "Stalker walk",
+  "model": "stalker",
+  "structureRevision": 1,
+  "loop": true,
+  "reference": {
+    "leg": 0.8544004
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": [
+      {},
+      {
+        "time": 1,
+        "x": 0.6
+      }
+    ]
+  },
+  "tracks": [
+    {
+      "target": "body",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "y": 0.025,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.5,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.75,
+          "y": 0.025,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "foot-0-chain",
+      "keys": [
+        {
+          "x": 0.15
+        },
+        {
+          "time": 0.5,
+          "x": -0.15
+        },
+        {
+          "time": 0.75,
+          "y": 0.12
+        },
+        {
+          "time": 1,
+          "x": 0.15
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "foot-2-chain",
+      "keys": [
+        {
+          "x": 0.15
+        },
+        {
+          "time": 0.5,
+          "x": -0.15
+        },
+        {
+          "time": 0.75,
+          "y": 0.12
+        },
+        {
+          "time": 1,
+          "x": 0.15
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "foot-1-chain",
+      "keys": [
+        {
+          "x": -0.15
+        },
+        {
+          "time": 0.25,
+          "y": 0.12
+        },
+        {
+          "time": 0.5,
+          "x": 0.15
+        },
+        {
+          "time": 1,
+          "x": -0.15
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "foot-0-chain",
+      "target": {
+        "x": 0.15,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "foot-2-chain",
+      "target": {
+        "x": 0.15,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "foot-1-chain",
+      "start": 0.5,
+      "finish": 1,
+      "target": {
+        "x": 0.45,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "markers": [
+    {
+      "id": "step"
+    },
+    {
+      "id": "step-middle",
+      "time": 0.5
+    }
+  ],
+  "faces": []
+}

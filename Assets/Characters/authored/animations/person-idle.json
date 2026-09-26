@@ -1,0 +1,106 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "person-idle",
+  "name": "Idle",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 2,
+  "loop": true,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": -0.012,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "angle": 0.018,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": -0.01,
+          "y": 0.02,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.01,
+          "y": 0.02,
+          "ease": "smooth"
+        },
+        {
+          "time": 2,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 2
+    },
+    {
+      "chain": "right-leg",
+      "finish": 2
+    }
+  ],
+  "markers": [],
+  "faces": []
+}

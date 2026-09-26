@@ -1,0 +1,52 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "stalker-idle",
+  "name": "Stalker idle",
+  "model": "stalker",
+  "structureRevision": 1,
+  "duration": 1.5,
+  "loop": true,
+  "reference": {
+    "leg": 0.8544004
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "body",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.75,
+          "y": -0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.5,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "foot-0-chain",
+      "finish": 1.5
+    },
+    {
+      "chain": "foot-1-chain",
+      "finish": 1.5
+    },
+    {
+      "chain": "foot-2-chain",
+      "finish": 1.5
+    }
+  ],
+  "markers": [],
+  "faces": []
+}

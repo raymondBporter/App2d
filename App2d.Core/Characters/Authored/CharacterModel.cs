@@ -32,6 +32,44 @@ public sealed record ModelMeasure
     public List<string> Path { get; set; } = [];
 }
 
+/// <summary>
+/// A named attachment frame for faces, equipment and collision. Its origin is Control plus (OffsetX, OffsetY) turned by
+/// Frame's accumulated rotation; its axis points at Angle radians from that frame's X axis. Not structural.
+/// </summary>
+public sealed record ModelSocket
+{
+    public string Id { get; set; } = "";
+    public string Control { get; set; } = "";
+    /// <summary>The control whose rotation orients the socket. Null uses Control's own.</summary>
+    public string? Frame { get; set; }
+    public float OffsetX { get; set; }
+    public float OffsetY { get; set; }
+    public float Angle { get; set; }
+}
+
+/// <summary>Role-to-animation assignments, such as idle → person-idle. Sets may share clips; there is no set inheritance.</summary>
+public sealed record MotionSet
+{
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public Dictionary<string, string> Roles { get; set; } = [];
+}
+
+/// <summary>A hurt region suggestion: the XY bounds of some controls, grown by Pad. Geometry only, no damage.</summary>
+public sealed record HurtShape
+{
+    public string Id { get; set; } = "";
+    public List<string> Controls { get; set; } = [];
+    public float Pad { get; set; } = .1f;
+}
+
+/// <summary>A reusable hurt-region layout. An entity selects one and may override or disable individual regions.</summary>
+public sealed record HurtLayout
+{
+    public string Id { get; set; } = "";
+    public List<HurtShape> Regions { get; set; } = [];
+}
+
 /// <summary>A reusable character structure. Controls without a parent hang from the locomotion frame.</summary>
 public sealed class CharacterModel
 {
@@ -50,6 +88,9 @@ public sealed class CharacterModel
     public List<ModelChain> Chains { get; set; } = [];
     public List<ModelMeasure> Measures { get; set; } = [];
     public List<PuppetPart> Parts { get; set; } = [];
+    public List<ModelSocket> Sockets { get; set; } = [];
+    public List<MotionSet> MotionSets { get; set; } = [];
+    public List<HurtLayout> HurtLayouts { get; set; } = [];
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static CharacterModel FromJson(string json) { var model = AuthoredAsset.Parse<CharacterModel>(json, "model"); model.Validate(); return model; }
@@ -65,7 +106,7 @@ public sealed class CharacterModel
         AuthoredAsset.RequireId(Id, "model id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
-        Require(Controls is not null && Chains is not null && Measures is not null && Parts is not null, $"{owner}: collections cannot be null.");
+        Require(Controls is not null && Chains is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Chains.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Limit.Color(Ink, "ink"); new Limit(.001f, 1).Check(LineWidth, "lineWidth");
 
@@ -126,6 +167,42 @@ public sealed class CharacterModel
             AuthoredAsset.RequireId(part.Id, $"{owner} part id");
             Require(parts.Add(part.Id), $"{owner}: duplicate part '{part.Id}'.");
             part.Validate(Known);
+        }
+        var sockets = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var socket in Sockets)
+        {
+            Require(socket is not null, $"{owner}: null socket.");
+            AuthoredAsset.RequireId(socket.Id, $"{owner} socket id");
+            Require(sockets.Add(socket.Id), $"{owner}: duplicate socket '{socket.Id}'.");
+            Require(Known(socket.Control) && (socket.Frame is null || Known(socket.Frame)), $"{owner}: socket '{socket.Id}' references an unknown control.");
+            new Limit(-100, 100).Check(socket.OffsetX, $"{owner} socket '{socket.Id}' offsetX"); new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
+            new Limit(-10, 10).Check(socket.Angle, $"{owner} socket '{socket.Id}' angle");
+        }
+        var sets = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var set in MotionSets)
+        {
+            Require(set is not null && set.Roles is not null, $"{owner}: incomplete motion set.");
+            AuthoredAsset.RequireId(set.Id, $"{owner} motion set id");
+            Require(sets.Add(set.Id), $"{owner}: duplicate motion set '{set.Id}'.");
+            Require(!string.IsNullOrWhiteSpace(set.Name), $"{owner} motion set '{set.Id}': a name is required.");
+            foreach (var (role, clip) in set.Roles) { AuthoredAsset.RequireId(role, $"{owner} motion set '{set.Id}' role"); AuthoredAsset.RequireId(clip, $"{owner} motion set '{set.Id}' role '{role}' clip"); }
+        }
+        var layouts = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var layout in HurtLayouts)
+        {
+            Require(layout is not null && layout.Regions is not null, $"{owner}: incomplete hurt layout.");
+            AuthoredAsset.RequireId(layout.Id, $"{owner} hurt layout id");
+            Require(layouts.Add(layout.Id), $"{owner}: duplicate hurt layout '{layout.Id}'.");
+            var regions = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var region in layout.Regions)
+            {
+                var field = $"{owner} hurt layout '{layout.Id}' region";
+                Require(region is not null && region.Controls is not null, $"{field}: incomplete region.");
+                AuthoredAsset.RequireId(region.Id, field + " id");
+                Require(regions.Add(region.Id), $"{field}: duplicate '{region.Id}'.");
+                Require(region.Controls.Count > 0 && region.Controls.All(Known), $"{field} '{region.Id}': needs at least one known control.");
+                new Limit(0, 10).Check(region.Pad, $"{field} '{region.Id}' pad");
+            }
         }
         CheckGeometry(this, Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal), owner);
         if (Build is not null) BuildRules.Get(Build).Check(this);

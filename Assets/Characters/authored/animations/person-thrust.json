@@ -1,0 +1,178 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "person-thrust",
+  "name": "Spear thrust",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 0.9,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.32,
+          "x": -0.04,
+          "y": -0.03,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "x": 0.09,
+          "y": -0.05
+        },
+        {
+          "time": 0.58,
+          "x": 0.09,
+          "y": -0.05,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.9,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.32,
+          "angle": 0.14,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "angle": -0.16
+        },
+        {
+          "time": 0.58,
+          "angle": -0.16,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.9,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.32,
+          "x": -0.33,
+          "y": 0.35,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "x": 0.57,
+          "y": 0.5
+        },
+        {
+          "time": 0.58,
+          "x": 0.57,
+          "y": 0.5,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.9,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.32,
+          "x": 0.12,
+          "y": 0.1,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.42,
+          "x": -0.18,
+          "y": 0.12
+        },
+        {
+          "time": 0.58,
+          "x": -0.18,
+          "y": 0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.9,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 0.9
+    },
+    {
+      "chain": "right-leg",
+      "finish": 0.9
+    }
+  ],
+  "markers": [
+    {
+      "id": "windup",
+      "time": 0.05
+    },
+    {
+      "id": "strike",
+      "time": 0.4
+    },
+    {
+      "id": "recover",
+      "time": 0.58
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "focused"
+        },
+        {
+          "time": 0.36,
+          "expression": "determined"
+        },
+        {
+          "time": 0.7,
+          "expression": "focused"
+        }
+      ]
+    }
+  ]
+}

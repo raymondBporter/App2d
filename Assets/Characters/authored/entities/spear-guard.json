@@ -1,0 +1,58 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "spear-guard",
+  "name": "Spear guard",
+  "model": "tall-thin",
+  "motionSet": "deliberate",
+  "roles": {},
+  "controller": {
+    "walkSpeed": 0.9,
+    "range": 1.75,
+    "cooldown": 1.1
+  },
+  "movement": {
+    "width": 0.5,
+    "height": 2.1
+  },
+  "hurt": {
+    "layout": "standard",
+    "regions": {}
+  },
+  "equipment": [
+    {
+      "prop": "spear",
+      "socket": "right-grip"
+    }
+  ],
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "person-thrust",
+      "hits": [
+        {
+          "id": "spear-tip",
+          "start": {
+            "marker": "strike"
+          },
+          "finish": {
+            "marker": "recover"
+          },
+          "prop": "spear",
+          "along": -0.08,
+          "width": 0.32,
+          "height": 0.24
+        }
+      ],
+      "events": [
+        {
+          "id": "swing",
+          "at": {
+            "marker": "strike"
+          },
+          "sound": "swing"
+        }
+      ]
+    }
+  ]
+}

@@ -291,5 +291,75 @@
       "face": "relaxed",
       "faceX": 0.065
     }
+  ],
+  "sockets": [
+    {
+      "id": "right-grip",
+      "control": "right-hand",
+      "frame": "chest",
+      "angle": 0.12
+    },
+    {
+      "id": "left-grip",
+      "control": "left-hand",
+      "frame": "chest",
+      "angle": 0.12
+    }
+  ],
+  "motionSets": [
+    {
+      "id": "standard",
+      "name": "Standard",
+      "roles": {
+        "idle": "person-idle",
+        "walk": "person-walk",
+        "run": "person-run",
+        "jump": "person-jump"
+      }
+    },
+    {
+      "id": "deliberate",
+      "name": "Deliberate",
+      "roles": {
+        "idle": "person-idle",
+        "walk": "person-walk"
+      }
+    }
+  ],
+  "hurtLayouts": [
+    {
+      "id": "standard",
+      "regions": [
+        {
+          "id": "body",
+          "controls": [
+            "hips",
+            "chest",
+            "left-shoulder",
+            "right-shoulder"
+          ],
+          "pad": 0.14
+        },
+        {
+          "id": "head",
+          "controls": [
+            "head"
+          ],
+          "pad": 0.3
+        },
+        {
+          "id": "legs",
+          "controls": [
+            "left-hip",
+            "right-hip",
+            "left-knee",
+            "right-knee",
+            "left-foot",
+            "right-foot"
+          ],
+          "pad": 0.07
+        }
+      ]
+    }
   ]
 }

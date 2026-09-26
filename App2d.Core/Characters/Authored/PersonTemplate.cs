@@ -37,10 +37,11 @@ public static class PersonTemplate
             ],
             Parts = [.. study.Parts.Select(p => p with { })],
         };
+        StarterContent.AddPersonExtras(model);
         model.Validate(); return model;
     }
 
-    /// <summary>Writes the Person model, its converted walk and run, and the two reviewed builds as authored assets.</summary>
+    /// <summary>Writes the Person model, its converted walk and run, the two reviewed builds and the starter entity content as authored assets.</summary>
     public static void WriteStudies(string authoredRoot)
     {
         var model = Model(); var walk = PuppetTemplates.StepStudy(); var run = PuppetTemplates.RunStudy();
@@ -54,5 +55,6 @@ public static class PersonTemplate
         Write("animations", "person-run", PuppetMotionConverter.Convert(run, run.Motions[0], model, "person-run", "Run", "leg").ToJson());
         Write("variants", "tall-thin", PersonBuild.TallThin.Apply(model, "tall-thin", "Tall and thin", "#d9e2ef").ToJson());
         Write("variants", "short-broad", PersonBuild.ShortBroad.Apply(model, "short-broad", "Short and broad", "#efdcc9").ToJson());
+        StarterContent.Write(authoredRoot, model);
     }
 }

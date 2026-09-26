@@ -1,0 +1,76 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "stalker-lunge",
+  "name": "Stalker lunge",
+  "model": "stalker",
+  "structureRevision": 1,
+  "duration": 0.8,
+  "reference": {
+    "leg": 0.8544004
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "body",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.22,
+          "x": -0.1,
+          "y": 0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.32,
+          "x": 0.24,
+          "y": -0.06
+        },
+        {
+          "time": 0.5,
+          "x": 0.24,
+          "y": -0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.8,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "foot-0-chain",
+      "finish": 0.8
+    },
+    {
+      "chain": "foot-1-chain",
+      "finish": 0.8
+    },
+    {
+      "chain": "foot-2-chain",
+      "finish": 0.8
+    }
+  ],
+  "markers": [
+    {
+      "id": "windup",
+      "time": 0.05
+    },
+    {
+      "id": "strike",
+      "time": 0.3
+    },
+    {
+      "id": "recover",
+      "time": 0.5
+    }
+  ],
+  "faces": []
+}

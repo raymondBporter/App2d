@@ -1,0 +1,76 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "player",
+  "name": "Player",
+  "model": "person",
+  "motionSet": "standard",
+  "roles": {},
+  "controller": {
+    "kind": "platformer",
+    "walkSpeed": 1.8,
+    "runSpeed": 4.2,
+    "jumpSpeed": 7.5,
+    "range": 1.6,
+    "cooldown": 0.2
+  },
+  "health": 5,
+  "hurt": {
+    "layout": "standard",
+    "regions": {
+      "legs": {
+        "pad": 0.05
+      }
+    }
+  },
+  "equipment": [
+    {
+      "prop": "spear",
+      "socket": "right-grip"
+    }
+  ],
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "person-thrust",
+      "hits": [
+        {
+          "id": "spear-tip",
+          "start": {
+            "marker": "strike"
+          },
+          "finish": {
+            "marker": "recover"
+          },
+          "prop": "spear",
+          "along": -0.08,
+          "width": 0.32,
+          "height": 0.24
+        }
+      ],
+      "events": [
+        {
+          "id": "swing",
+          "at": {
+            "marker": "strike"
+          },
+          "sound": "swing"
+        }
+      ]
+    },
+    {
+      "id": "jump",
+      "role": "jump",
+      "clip": null,
+      "hits": [],
+      "events": [
+        {
+          "id": "launch",
+          "at": {
+            "marker": "launch"
+          }
+        }
+      ]
+    }
+  ]
+}
