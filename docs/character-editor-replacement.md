@@ -464,6 +464,34 @@ Accept when a user can make/save/reopen a named tall variant, change its build w
 walking, edit a shared clip, undo one drag and see dependent previews update. Also
 create and animate a headless three-legged model from Empty, without anatomy branches.
 
+**Progress (2026-09-25).** Run the editor with `App2d.CharacterStudio --editor`; `--smoke-editor <dir>` walks the
+acceptance path on a scratch copy of the assets and writes a frame per step, plus `editor-smoke.txt`. Layers:
+
+| Layer | Where | Holds |
+| --- | --- | --- |
+| Schema | `App2d.Core/Characters/Authored/` | Variants store build values (`build`), applied by an explicit `IBuildRule` (`PersonBuild.Rule`) before rest overrides, so base edits propagate. Clips gain per-key `ease`, `markers` and `faces`. Parts gain `hidden`. `PartGeometry` is the one part layout used by drawing and picking. |
+| Authoring ops | `ClipAuthoring`, `ModelAuthoring` | Graphics-free edits. `ClipAuthoring.Pose` inverts the evaluator: a dragged world position becomes a delta in the channel's frame and reference units, so a key made on a tall preview reads correctly on every build. Structural edits refuse to discard dependents. |
+| Documents / session | `App2d.Core/Characters/Editing/` | `AssetDocument` (transaction undo: a drag is one step, serialized only at edit boundaries), `AuthoringWorkspace` (every asset as a document, resolution over drafts cached on versions, dependents, save), `Transport`, `EditorSession` (all commands). No ImGui. |
+| Views | `App2d.CharacterStudio/Editor/` | `EditorShell` layout, `Viewport` (camera, compare, game-size inset), `AssetBrowser`, and `IWorkspaceView` implementations `ModelView` and `AnimateView`. |
+
+Structure revisions are settled at save: saving a model whose structure signature changed raises its revision and moves
+each dependent clip that still validates structurally; the others are reported for repair, never edited. In the editor, drafts are checked
+structurally (`Validate(model, exactRevision: false)`); files on disk still require an exact match.
+
+`App2d.Tests.Authored.EditorSessionTests` covers the gate through the same session the UI drives: tall variant
+save/reopen, build change while walking, a shared-clip drag as one undo step reaching every compare pin, autokey-off
+pending poses, variants never editing their base, a headless tripod from Empty, and structure-revision handling.
+
+Extension points for later phases:
+- **Entity workspace:** add `Workspace.Entity`, an `IWorkspaceView`, and an `AssetKind` + `AssetDocuments.Of` overload. The shell, browser, undo and save work unchanged.
+- **Build values for new templates:** implement `IBuildRule` and register it in `BuildRules`.
+- **Motion sets, sockets, hurt layouts:** new fields on `CharacterModel`, with editing in `ModelView`'s inspector. Resolution stays in `ResolvedModel`.
+- **Composition layers:** the evaluator already takes `PoseInput`; masked layers belong there, not in the views.
+
+Not yet covered: separate channel rows per track kind in the timeline, dragging contact edges, rotation handles in the
+viewport (rotation is edited numerically), control labels separate from IDs, reload-from-disk conflict handling,
+deleting assets from the browser, and imported "Sources".
+
 ### 3. Make one new entity playable end to end
 
 Integrate motion sets, explicit action capabilities, generic movement/hurt/attack

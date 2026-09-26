@@ -333,6 +333,10 @@ Use **Create / animate**, or add `-- --workshop`, to create a character from sim
 shapes and named controls without importing animation. The [character workshop](docs/character-workshop.md)
 includes key poses, two-bone IK, world-space contact intervals and a step/plant study.
 
+The replacement editor (`-- --editor`) works on the authored assets in `Assets/Characters/authored`. It has
+base models, variants with build values and reset-to-base overrides, shared animations that play on every build,
+compare pins and per-document undo. See [the replacement design](docs/character-editor-replacement.md) for progress.
+
 The studio includes 759 point-animation clips (662 Person clips, including the Kevin Iglesias free packs) across Person, Quadruped, Blob,
 Flying and 11 creature studies. Search and scrub motions, edit appearances,
 preview sequences, and save JSON looks with semantic animation bindings.

@@ -11,9 +11,14 @@ internal static class Program
         try
         {
             if (args is ["--convert-studies", var output]) { PersonTemplate.WriteStudies(Path.GetFullPath(output)); return 0; }
+            if (args is ["--editor"] or ["--smoke-editor", _])
+            {
+                using var editor = new Editor.EditorApp(Path.Combine(FindAssets(), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
+                editor.Run(); return 0;
+            }
             var root = FindAssets(args.Contains("--workshop") || args.Contains("--smoke-workshop"));
             if (args is ["--check"]) { StudioChecks.Run(root); return 0; }
-            if (args.Length != 0 && args is not ["--workshop"] && args is not ["--smoke" or "--smoke-wolf" or "--smoke-workshop" or "--smoke-motion", _]) throw new ArgumentException("Usage: App2d.CharacterStudio [--workshop | --convert-studies authored-directory | --check | --smoke output-directory | --smoke-wolf output-directory | --smoke-workshop output-directory | --smoke-motion output-directory]");
+            if (args.Length != 0 && args is not ["--workshop"] && args is not ["--smoke" or "--smoke-wolf" or "--smoke-workshop" or "--smoke-motion", _]) throw new ArgumentException("Usage: App2d.CharacterStudio [--editor | --smoke-editor output-directory | --workshop | --convert-studies authored-directory | --check | --smoke output-directory | --smoke-wolf output-directory | --smoke-workshop output-directory | --smoke-motion output-directory]");
             using var studio = new StudioGame(root, args.Length == 2 ? Path.GetFullPath(args[1]) : null, args is ["--smoke-wolf", _], args is ["--workshop"], args is ["--smoke-workshop", _], args is ["--smoke-motion", _]); studio.Run(); return 0;
         }
         catch (Exception ex)

@@ -11,6 +11,37 @@ public sealed record ClipKey
     public float Y { get; set; }
     public float Z { get; set; }
     public float Angle { get; set; }
+    /// <summary>How the value moves from this key to the next: see <see cref="ClipEase"/>.</summary>
+    public string Ease { get; set; } = ClipEase.Linear;
+}
+
+/// <summary>Per-key easing. Linear is the default; step holds the value until the next key.</summary>
+public static class ClipEase
+{
+    public const string Linear = "linear", Smooth = "smooth", Step = "step";
+    public static readonly IReadOnlyList<string> All = [Linear, Smooth, Step];
+    public static float Apply(string ease, float u) => ease switch { Smooth => u * u * (3 - 2 * u), Step => 0, _ => u };
+}
+
+/// <summary>A named visual moment, such as a footstep or a strike. Gameplay binds events to markers; the clip owns only the time.</summary>
+public sealed record ClipMarker
+{
+    public string Id { get; set; } = "";
+    public float Time { get; set; }
+}
+
+/// <summary>An expression held from this time until the next key.</summary>
+public sealed record ClipFaceKey
+{
+    public float Time { get; set; }
+    public string Expression { get; set; } = "relaxed";
+}
+
+/// <summary>Appearance channel for one face-bearing part. Never baked into limb keys; gameplay can override it.</summary>
+public sealed record ClipFaceTrack
+{
+    public string Part { get; set; } = "";
+    public List<ClipFaceKey> Keys { get; set; } = [];
 }
 
 /// <summary>
@@ -60,6 +91,8 @@ public sealed class MotionClip
     public ClipTravel Travel { get; set; } = new();
     public List<ClipTrack> Tracks { get; set; } = [];
     public List<ClipContact> Contacts { get; set; } = [];
+    public List<ClipMarker> Markers { get; set; } = [];
+    public List<ClipFaceTrack> Faces { get; set; } = [];
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static MotionClip FromJson(string json) { var clip = AuthoredAsset.Parse<MotionClip>(json, "clip"); clip.Validate(); return clip; }
@@ -75,7 +108,7 @@ public sealed class MotionClip
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
         new Limit(.05f, 60).Check(Duration, $"{owner} duration");
-        Require(Reference is not null && Travel is not null && Travel.Keys is not null && Tracks is not null && Contacts is not null, $"{owner}: collections cannot be null.");
+        Require(Reference is not null && Travel is not null && Travel.Keys is not null && Tracks is not null && Contacts is not null && Markers is not null && Faces is not null, $"{owner}: collections cannot be null.");
         Require(Travel.Scale is not null, $"{owner} travel: a scale is required.");
         foreach (var (measure, length) in Reference) { AuthoredAsset.RequireId(measure, $"{owner} reference"); new Limit(.001f, 1000).Check(length, $"{owner} reference.{measure}"); }
         CheckKeys(Travel.Keys, $"{owner} travel", k => k.Z == 0 && k.Angle == 0, "travel keys use x and y only");
@@ -96,6 +129,28 @@ public sealed class MotionClip
             new Limit(0, Duration).Check(contact.Start, field + " start"); new Limit(0, Duration).Check(contact.Finish, field + " finish");
             Require(contact.Finish > contact.Start, $"{field}: finish must follow start.");
             contact.Target.Check(field + " target");
+        }
+        var markers = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var marker in Markers)
+        {
+            Require(marker is not null, $"{owner}: null marker.");
+            AuthoredAsset.RequireId(marker.Id, $"{owner} marker id");
+            Require(markers.Add(marker.Id), $"{owner}: duplicate marker '{marker.Id}'.");
+            new Limit(0, Duration).Check(marker.Time, $"{owner} marker '{marker.Id}' time");
+        }
+        var faceParts = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var face in Faces)
+        {
+            Require(face is not null && face.Keys is not null && face.Part is not null, $"{owner}: incomplete face track.");
+            Require(faceParts.Add(face.Part), $"{owner}: duplicate face track for '{face.Part}'.");
+            var previous = -1f;
+            foreach (var key in face.Keys)
+            {
+                Require(key is not null, $"{owner} face '{face.Part}': null key.");
+                new Limit(0, Duration).Check(key.Time, $"{owner} face '{face.Part}' key time");
+                Require(key.Time > previous, $"{owner} face '{face.Part}': key times must be strictly increasing."); previous = key.Time;
+                Require(FaceExpressions.Contains(key.Expression), $"{owner} face '{face.Part}': unknown expression '{key.Expression}'.");
+            }
         }
         foreach (var group in Contacts.GroupBy(c => c.Chain))
         {
@@ -119,16 +174,21 @@ public sealed class MotionClip
             Require(key.Time > previous, $"{field}: key times must be strictly increasing."); previous = key.Time;
             foreach (var value in new[] { key.X, key.Y, key.Z, key.Angle }) new Limit(-1000, 1000).Check(value, field + " key value");
             Require(shape(key), $"{field}: {shapeMessage}.");
+            EntityVocabulary.Require(key.Ease, ClipEase.All, field + " key ease");
         }
     }
 
-    /// <summary>Checks this clip against the model it will play on. Matching labels alone never establish compatibility.</summary>
-    public void Validate(ResolvedModel model)
+    /// <summary>
+    /// Checks this clip against the model it will play on. Matching labels alone never establish compatibility. Saved assets
+    /// must match the structure revision exactly; editor drafts pass <paramref name="exactRevision"/> false while a model's
+    /// unsaved structural edit is pending, and are then held to the structural checks alone.
+    /// </summary>
+    public void Validate(ResolvedModel model, bool exactRevision = true)
     {
         Validate();
         var owner = $"Clip '{Id}'"; var basis = model.Base;
         Require(Model == basis.Id, $"{owner} is for model '{Model}', not '{basis.Id}'.");
-        Require(StructureRevision == basis.StructureRevision, $"{owner} was authored against structure revision {StructureRevision} of '{Model}'; the model is at revision {basis.StructureRevision}.");
+        Require(!exactRevision || StructureRevision == basis.StructureRevision, $"{owner} was authored against structure revision {StructureRevision} of '{Model}'; the model is at revision {basis.StructureRevision}.");
         var solved = basis.Chains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
         void Scale(string scale, string field)
         {
@@ -159,5 +219,7 @@ public sealed class MotionClip
             Require(chain.Frame == CharacterModel.Locomotion, $"{field}: contacts need a chain keyed in the locomotion frame.");
             Require(chain.Scale == Travel.Scale, $"{field}: the chain's scale '{chain.Scale}' must match the travel scale '{Travel.Scale}'.");
         }
+        foreach (var face in Faces)
+            Require(model.Parts.Any(p => p.Id == face.Part && p.Kind != "stroke"), $"{owner} face track '{face.Part}': the model has no such shape part.");
     }
 }

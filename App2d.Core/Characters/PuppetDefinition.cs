@@ -54,6 +54,8 @@ public sealed record PuppetPart
     public string Fill { get; set; } = "#fff8e7";
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
+    /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
+    public bool Hidden { get; set; }
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)

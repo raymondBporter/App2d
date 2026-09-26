@@ -44,6 +44,8 @@ public sealed class CharacterModel
     public int StructureRevision { get; set; } = 1;
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .045f;
+    /// <summary>The explicit build rule behind this model's exposed build values, such as "person". Null exposes none.</summary>
+    public string? Build { get; set; }
     public List<ModelControl> Controls { get; set; } = [];
     public List<ModelChain> Chains { get; set; } = [];
     public List<ModelMeasure> Measures { get; set; } = [];
@@ -126,6 +128,7 @@ public sealed class CharacterModel
             part.Validate(Known);
         }
         CheckGeometry(this, Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal), owner);
+        if (Build is not null) BuildRules.Get(Build).Check(this);
     }
 
     /// <summary>Checks lengths that depend on rest geometry, so a variant's overrides are held to the same rules as its base.</summary>

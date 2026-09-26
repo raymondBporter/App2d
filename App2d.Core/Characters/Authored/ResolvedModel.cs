@@ -47,6 +47,8 @@ public sealed class ResolvedModel
         {
             var owner = $"Variant '{variant.Id}'";
             if (variant.Base != model.Id) throw new InvalidDataException($"{owner} references base '{variant.Base}', not '{model.Id}'.");
+            BuildRules.CheckValues(model, variant.Build, owner);
+            if (variant.Build.Count > 0) BuildRules.For(model)!.Apply(model, variant.Build, rest, parts);
             foreach (var (id, point) in variant.Rest)
             {
                 if (!rest.ContainsKey(id)) throw new InvalidDataException($"{owner} rest.{id}: the base has no such control.");
@@ -56,15 +58,17 @@ public sealed class ResolvedModel
             {
                 var index = parts.FindIndex(p => p.Id == id);
                 if (index < 0) throw new InvalidDataException($"{owner} parts.{id}: the base has no such part.");
-                var part = parts[index];
-                parts[index] = part with
-                {
-                    Width = change.Width ?? part.Width, Height = change.Height ?? part.Height,
-                    OffsetX = change.OffsetX ?? part.OffsetX, OffsetY = change.OffsetY ?? part.OffsetY, Fill = change.Fill ?? part.Fill,
-                };
+                parts[index] = Override(parts[index], change);
             }
             CharacterModel.CheckGeometry(model, rest, owner);
         }
         return new(model, variant, rest, parts);
     }
+
+    public static PuppetPart Override(PuppetPart part, PartOverride change) => part with
+    {
+        Width = change.Width ?? part.Width, Height = change.Height ?? part.Height,
+        OffsetX = change.OffsetX ?? part.OffsetX, OffsetY = change.OffsetY ?? part.OffsetY, Fill = change.Fill ?? part.Fill,
+        Face = change.Face ?? part.Face, FaceX = change.FaceX ?? part.FaceX, Hidden = change.Hidden ?? part.Hidden,
+    };
 }
