@@ -32,7 +32,7 @@ internal sealed class EditorShell : IDisposable
     {
         Session = session; Viewport = viewport; Test = test; _gui = gui;
         _browser = new(session);
-        _views = [new ModelView(session, viewport), new AnimateView(session, viewport)];
+        _views = [new ModelView(session, viewport), new AnimateView(session, viewport), new EntityView(session)];
     }
 
     public EditorSession Session { get; }
@@ -78,7 +78,7 @@ internal sealed class EditorShell : IDisposable
     {
         var document = Session.ActiveDocument; var rightEdge = ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X;
         ImGui.TextColored(Ui.Accent, "CHARACTER EDITOR"); ImGui.SameLine();
-        foreach (var mode in new[] { Workspace.Model, Workspace.Animate })
+        foreach (var mode in new[] { Workspace.Model, Workspace.Animate, Workspace.Entity })
         {
             var active = Session.Mode == mode;
             if (active) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
@@ -86,9 +86,6 @@ internal sealed class EditorShell : IDisposable
             if (active) ImGui.PopStyleColor();
             ImGui.SameLine();
         }
-        ImGui.BeginDisabled(); ImGui.Button("Entity"); ImGui.EndDisabled();
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) ImGui.SetTooltip("Entity editing is not built yet; entities are JSON files under authored/entities. Use Test to play them.");
-        ImGui.SameLine();
         if (Test.Active) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
         if (ImGui.Button(Test.Active ? "Stop test" : "Test")) { if (Test.Active) Test.Stop(); else { Session.CommitAll(); Test.Start(); } }
         if (Test.Active) ImGui.PopStyleColor();
@@ -118,6 +115,7 @@ internal sealed class EditorShell : IDisposable
     {
         AssetDocument<ModelVariant> v => "variant of " + (Session.Assets.Model(v.Asset.Base)?.Name ?? v.Asset.Base + " (missing)"),
         AssetDocument<MotionClip> c => "animation for " + (Session.Assets.Model(c.Asset.Model)?.Name ?? c.Asset.Model + " (missing)"),
+        AssetDocument<EntityAsset> e => "entity on " + (Session.Assets.Find(e.Asset.Model)?.Name ?? e.Asset.Model + " (missing)"),
         _ => "base model",
     };
 
@@ -128,7 +126,8 @@ internal sealed class EditorShell : IDisposable
         frame.Draw.PushClipRect(frame.Origin, frame.Origin + frame.Size, true);
         DrawContacts(frame);
         view.Overlay(frame);
-        if (frame.Primary is null) frame.Draw.AddText(frame.Origin + new Vector2(20, 20) * Ui.Scale, Ui.Color(90, 90, 80), "Open or create a model to begin.");
+        if (frame.Primary is null)
+            frame.Draw.AddText(frame.Origin + new Vector2(20, 20) * Ui.Scale, Ui.Color(90, 90, 80), Session.Mode == Workspace.Entity ? Session.EntityError ?? "Open or create an entity." : "Open or create a model to begin.");
         frame.Draw.PopClipRect();
     }
 
@@ -137,7 +136,7 @@ internal sealed class EditorShell : IDisposable
         if (ImGui.SmallButton("Fit")) Viewport.Fit(Session.Scene().FirstOrDefault());
         ImGui.SameLine(); var follow = Viewport.Follow; if (ImGui.Checkbox("Follow", ref follow)) Viewport.Follow = follow;
         ImGui.SameLine(); var game = Viewport.GameSize; if (ImGui.Checkbox("Game size", ref game)) Viewport.GameSize = game;
-        ImGui.SameLine(); if (ImGui.SmallButton(Session.Compare.Count > 0 ? $"Compare ({Session.Compare.Count + 1})" : "Compare")) ImGui.OpenPopup("compare");
+        ImGui.SameLine(); ImGui.BeginDisabled(Session.Mode == Workspace.Entity); if (ImGui.SmallButton(Session.Compare.Count > 0 ? $"Compare ({Session.Compare.Count + 1})" : "Compare")) ImGui.OpenPopup("compare");
         if (ImGui.BeginPopup("compare"))
         {
             Ui.Help("Pin up to two more builds of the same base. They play the same clip at the same phase and world scale.");
@@ -149,6 +148,7 @@ internal sealed class EditorShell : IDisposable
             }
             ImGui.EndPopup();
         }
+        ImGui.EndDisabled();
         ImGui.SameLine(); ImGui.SetNextItemWidth(150 * Ui.Scale);
         if (ImGui.BeginCombo("##expression", Session.Expression is null ? "Game face: none" : "Game face: " + Session.Expression))
         {

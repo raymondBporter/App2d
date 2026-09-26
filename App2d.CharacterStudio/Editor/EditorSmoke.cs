@@ -6,8 +6,10 @@ using System.Numerics;
 namespace App2d.CharacterStudio.Editor;
 
 /// <summary>
-/// Scripted walk through the phase-two acceptance path on a scratch copy of the authored assets, rendering the real editor
-/// after each step: tall variant, build change while walking, shared clip drag and undo, and a headless tripod from Empty.
+/// Scripted walk through the acceptance paths on a scratch copy of the authored assets, rendering the real editor after each
+/// step. Phase two: tall variant, build change while walking, shared clip drag and undo, and a headless tripod from Empty.
+/// Phase four: several people from builds and looks, Standard and Heavy motion on different sizes, an entity from a template
+/// with a masked spear thrust over its walk, one shared walk edit reaching every walker, and the result in Test.
 /// </summary>
 internal sealed class EditorSmoke(string output)
 {
@@ -73,6 +75,35 @@ internal sealed class EditorSmoke(string output)
                 Record(shell.Test.Arena!.Events.Any(e => e.Event.Sound == "swing"), "a thrust played its swing sound on the strike marker");
                 Record(shell.Session.Mode == Workspace.Animate && shell.Session.ClipId == "tripod-walk", "testing left the open document and workspace alone");
             }),
+            ("10-several-people", shell => { shell.Test.Stop(); SeveralPeople(shell.Session); }),
+            ("11-heavy-on-short-entity", shell => HeavyAndStandard(shell.Session)),
+            ("12-standard-on-tall-entity", shell => { var s = shell.Session; s.Open("ranger-guard"); s.PreviewRoleOf("walk"); s.Seek(.45f); }),
+            ("13-masked-thrust-anticipation", shell => Skirmisher(shell.Session)),
+            ("14-masked-thrust-active", shell => { var s = shell.Session; s.Seek(s.Entity!.Actions["attack"].Hits[0].Start + .02f);
+                var preview = s.EvaluateEntity()!;
+                Record(preview.Attacks.Count == 1 && preview.Weight == 1, "the spear's hit region is live inside strike → recover at full layer weight");
+                Record(preview.Pose.Local.Contacts.Count > 0, "the walk's feet stay planted under the thrust"); }),
+            ("15-masked-thrust-recovery", shell => { var s = shell.Session; s.Seek(s.Entity!.Actions["attack"].Hits[0].Finish + .15f); Record(s.EvaluateEntity()!.Attacks.Count == 0, "no hit region during recovery"); }),
+            ("16-shared-walk-once", shell => SharedWalkOnce(shell.Session)),
+            ("17-skirmisher-in-test", shell =>
+            {
+                var s = shell.Session; s.SaveAll();
+                Record(!s.Assets.DirtyDocuments.Any(), "Save all wrote every draft: " + s.Message);
+                shell.Test.Roster.Clear(); shell.Test.Roster.AddRange(["skirmisher", "stalker-pest"]); shell.Test.Start();
+                Record(shell.Test.Problems.Count == 0 && shell.Test.Arena?.Actors.Count == 2, "Test starts the new skirmisher from the drafts");
+                var arena = shell.Test.Arena!;
+                for (var i = 0; i < 120; i++) shell.Test.Advance(1 / 120f, new(Move: 1));
+                // Advance accumulates frame time into fixed steps, so hold the button until the attack has started.
+                for (var i = 0; i < 8 && arena.Player.Animator.Action is null; i++) shell.Test.Advance(1 / 120f, new(Move: 1, Attack: true));
+                var from = arena.Player.Position.X; var anchors = arena.Player.Animator.Anchors.Count;
+                for (var i = 0; i < 36; i++) shell.Test.Advance(1 / 120f, new(Move: 1));
+                shell.Test.Paused = true;
+                var player = arena.Player;
+                Record(player.Animator.Action == "attack" && player.Position.X > from + .1f && anchors > 0 && player.Animator.Anchors.Count > 0,
+                    $"the skirmisher keeps walking on planted feet while it thrusts (action {player.Animator.Action ?? "none"}, moved {player.Position.X - from:F2}, anchors {anchors} then {player.Animator.Anchors.Count})");
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root);
+                Record(new[] { "brute-heavy", "ranger-guard", "skirmisher" }.All(id => reopened.CompileEntity(id) is not null), "the new entities reopen and compile");
+            }),
         ];
         return workspace;
     }
@@ -120,6 +151,60 @@ internal sealed class EditorSmoke(string output)
         Check(s.Edit(clip, () => { ClipAuthoring.Plant(subject.Model, clip.Asset, subject.Pose, "foot-0-chain", 0, .5f); ClipAuthoring.Plant(subject.Model, clip.Asset, subject.Pose, "foot-2-chain", .5f, .5f); }), s);
         Check(s.Save(clip), s);
         s.Seek(.25f); s.Selection.Control = "foot-1";
+    }
+
+    private void SeveralPeople(EditorSession s)
+    {
+        foreach (var (id, name, preset, look) in new[] { ("brute", "Brute", "short-broad", "night"), ("ranger", "Ranger", "tall-thin", "ember"), ("sage", "Sage", "standard", "slate") })
+        {
+            Check(s.NewVariant(id, name, "person", preset), s); Check(s.ApplyLook(look), s);
+        }
+        var sage = s.SubjectVariant!;
+        Check(s.Edit(sage, () => { sage.Asset.Build["head"] = 1.25f; sage.Asset.Build["torso"] = 1.08f; }), s);
+        s.Open("brute"); s.SetClip("person-walk"); s.Pin("ranger"); s.Pin("sage"); s.Seek(.3f);
+        var people = new[] { "brute", "ranger", "sage" }.Select(id => s.Assets.Resolve(id)!).ToArray();
+        Record(people.Select(p => p.Parts.Single(x => x.Id == "body").Fill).Distinct().Count() == 3 && people.Select(p => p.Rest["head"].Y).Distinct().Count() == 3,
+            "three visibly different people: distinct colors and heights");
+        Record(s.Assets.Model("person")!.Dirty == false, "building people never edited the base");
+    }
+
+    private void HeavyAndStandard(EditorSession s)
+    {
+        Check(s.NewEntity("ranger-guard", "Ranger guard", "ranger", EntityAuthoring.Guard), s);
+        Check(s.SetEntityRole("attack", "person-thrust"), s);
+        Check(s.NewEntity("brute-heavy", "Heavy brute", "brute", EntityAuthoring.Guard), s);
+        Check(s.SetEntityRole("attack", "person-thrust"), s);
+        Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.MotionSet = "heavy"), s);
+        var heavy = s.Entity!; var standard = s.Assets.CompileEntity("ranger-guard")!;
+        Record(heavy.Clip("walk")!.Id == StarterContent.HeavyWalk && standard.Clip("walk")!.Id == "person-walk", "Heavy on the short brute, Standard on the tall ranger");
+        s.PreviewRoleOf("walk"); s.Seek(.45f);
+    }
+
+    private void Skirmisher(EditorSession s)
+    {
+        Check(s.DuplicateEntity("ranger-guard", "skirmisher", "Skirmisher"), s);
+        var entity = s.EntityDocument!;
+        Check(s.Edit(entity, () =>
+        {
+            entity.Asset.Roles.Clear();
+            entity.Asset.Equipment.Add(new() { Prop = "spear", Socket = "right-grip" });
+            var attack = entity.Asset.Actions.Single(a => a.Id == "attack");
+            attack.Role = null; attack.Clip = "person-thrust"; attack.Mask = StarterContent.Upper; attack.BlendIn = .08f; attack.BlendOut = .12f;
+            attack.Hits.Add(new() { Id = "spear-tip", Prop = "spear", Along = -.14f, Width = .42f, Height = .26f, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
+            attack.Events.Add(new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" });
+        }), s);
+        Record(s.Assets.Problems(entity).Count == 0, "the skirmisher compiles: " + string.Join("; ", s.Assets.Problems(entity)));
+        s.PreviewRoleOf("walk"); s.PreviewActionOf("attack"); s.Selection.Hit = "spear-tip"; s.Seek(.2f);
+        Record(s.EvaluateEntity() is { Attacks.Count: 0, Weight: 1 }, "anticipation: layer fully in, no hit region yet");
+    }
+
+    private void SharedWalkOnce(EditorSession s)
+    {
+        var walk = s.Assets.Clip("person-walk")!;
+        Check(s.Edit(walk, () => walk.Asset.Markers.Add(new() { Id = "step", Time = .3f })), s);
+        var walkers = new[] { "ranger-guard", "skirmisher", "spear-guard", "player" }.Select(id => s.Assets.CompileEntity(id)!).ToArray();
+        Record(walkers.All(e => ReferenceEquals(e.Clip("walk"), walk.Asset) && e.Clip("walk")!.Markers.Any(m => m.Id == "step")), "one walk edit reaches every walking entity without copies");
+        s.Open("person-walk"); s.Pin("ranger"); s.Pin("brute"); s.Seek(.3f);
     }
 
     private static void Check(bool ok, EditorSession session) { if (!ok) throw new InvalidOperationException("Smoke step failed: " + session.Message); }

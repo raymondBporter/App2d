@@ -61,7 +61,8 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
         Ui.Header("Animation");
         var name = clip.Name; if (Ui.Text("Name", ref name, 100) && name.Trim().Length > 0) session.Change(document, () => document.Asset.Name = name);
         var builds = 1 + session.Assets.Variants.Count(v => v.Asset.Base == clip.Model);
-        ImGui.TextDisabled($"Shared: plays on {builds} build(s) of '{clip.Model}'. Edits reach all of them.");
+        var entities = session.Assets.EntitiesOn(clip.Model).Count(e => session.Assets.CompileEntity(e.Id) is { } compiled && (compiled.Roles.Values.Any(r => r.Clip == clip) || compiled.Actions.Values.Any(a => a.Clip == clip)));
+        ImGui.TextDisabled($"Shared: plays on {builds} build(s) of '{clip.Model}' and in {entities} entit{(entities == 1 ? "y" : "ies")}. Edits reach all of them.");
         if (ImGui.SmallButton("Duplicate to specialize"))
         {
             var id = session.Assets.SuggestId(clip.Id + "-copy"); session.DuplicateClip(clip.Id, id, clip.Name + " copy");
@@ -81,6 +82,7 @@ internal sealed class AnimateView(EditorSession session, Viewport viewport) : IW
         Faces(document, Primary);
         Markers(document);
         foreach (var problem in session.Assets.Problems(document)) Ui.Problem(problem);
+        References.Draw(session, document.Id);
     }
 
     private void TravelFields(AssetDocument<MotionClip> document)

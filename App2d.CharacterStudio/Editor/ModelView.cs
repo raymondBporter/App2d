@@ -141,6 +141,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         else if (Base is { } model) BaseInspector(model);
         else { Ui.Help("Open a model or variant from the browser, or create one with New."); return; }
         foreach (var problem in session.ActiveDocument is { } document ? session.Assets.Problems(document) : []) Ui.Problem(problem);
+        if (Variant is null && Base is { } opened) References.Draw(session, opened.Id);
     }
 
     private void BaseInspector(AssetDocument<CharacterModel> document)
@@ -152,6 +153,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         var line = model.LineWidth; if (Ui.Slider("Outline width", ref line, .005f, .12f)) session.Change(document, () => document.Asset.LineWidth = line);
         if (model.Build is not null) Ui.Help($"Exposes '{model.Build}' build values to its variants.");
         Dependents(document);
+        MotionSets(document);
+        GroupsAndLooks(model);
 
         if (session.Selection.Control is { } id && model.Controls.FirstOrDefault(c => c.Id == id) is { } control)
         {
@@ -194,6 +197,66 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
     }
 
     private static PuppetPart Part(AssetDocument<CharacterModel> document, string id) => document.Asset.Parts.First(p => p.Id == id);
+
+    private string _newSet = "";
+
+    /// <summary>Role-to-clip tables on the base. A new set copies another's assignments; there is no set inheritance.</summary>
+    private void MotionSets(AssetDocument<CharacterModel> document)
+    {
+        var model = document.Asset;
+        Ui.Header("Motion sets");
+        var clips = session.Assets.ClipsFor(model.Id).OrderBy(c => c.Name).ToArray();
+        foreach (var set in model.MotionSets.ToArray())
+        {
+            ImGui.PushID(set.Id);
+            var users = session.Assets.EntitiesOn(model.Id).Where(e => e.Asset.MotionSet == set.Id).ToArray();
+            if (ImGui.TreeNodeEx($"{set.Name} ({set.Id})", ImGuiTreeNodeFlags.None, $"{set.Name}  ({set.Roles.Count} roles, {users.Length} entities)"))
+            {
+                var name = set.Name; if (Ui.Text("Set name", ref name, 60) && name.Trim().Length > 0) session.Change(document, () => document.Asset.MotionSets.First(s => s.Id == set.Id).Name = name);
+                foreach (var role in EntityAuthoring.CommonRoles.Concat(set.Roles.Keys).Distinct())
+                {
+                    ImGui.PushID(role);
+                    var assigned = set.Roles.GetValueOrDefault(role);
+                    ImGui.TextUnformatted(role); ImGui.SameLine(90 * Ui.Scale); ImGui.SetNextItemWidth(-1);
+                    if (ImGui.BeginCombo("##clip", assigned is null ? "(unassigned)" : session.Assets.Clip(assigned)?.Name ?? assigned + " (missing)"))
+                    {
+                        if (ImGui.Selectable("(unassigned)", assigned is null)) session.AssignRole(model.Id, set.Id, role, null);
+                        foreach (var clip in clips) if (ImGui.Selectable(clip.Name + "##" + clip.Id, clip.Id == assigned)) session.AssignRole(model.Id, set.Id, role, clip.Id);
+                        ImGui.EndCombo();
+                    }
+                    ImGui.PopID();
+                }
+                if (users.Length > 0) ImGui.TextDisabled("Selected by " + string.Join(", ", users.Select(u => u.Name)));
+                if (ImGui.SmallButton("Copy to new set")) { var id = ModelAuthoring.UniqueId(set.Id + "-copy", model.MotionSets.Select(s => s.Id)); session.NewMotionSet(model.Id, id, set.Name + " copy", set.Id); }
+                ImGui.SameLine(); if (ImGui.SmallButton("Remove set")) session.RemoveMotionSet(model.Id, set.Id);
+                ImGui.TreePop();
+            }
+            ImGui.PopID();
+        }
+        ImGui.SetNextItemWidth(140 * Ui.Scale); ImGui.InputTextWithHint("##new-set", "new set name", ref _newSet, 60); ImGui.SameLine();
+        if (Ui.Button("Add empty set", _newSet.Trim().Length > 0))
+        {
+            var id = ModelAuthoring.UniqueId(new string(_newSet.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '-').ToArray()).Trim('-') is { Length: > 0 } slug ? slug : "set", model.MotionSets.Select(s => s.Id));
+            if (session.NewMotionSet(model.Id, id, _newSet.Trim(), null)) _newSet = "";
+        }
+        Ui.Help("Sets describe an artistic choice such as Heavy; any build can use any set. Missing roles stay visibly unassigned.");
+    }
+
+    private static void GroupsAndLooks(CharacterModel model)
+    {
+        if (model.Groups.Count > 0)
+        {
+            Ui.Header("Control groups");
+            foreach (var group in model.Groups) ImGui.TextWrapped($"{group.Id}: {string.Join(", ", group.Targets)}");
+            Ui.Help("A masked action owns a group's channels over locomotion.");
+        }
+        if (model.Looks.Count > 0)
+        {
+            Ui.Header("Looks");
+            ImGui.TextWrapped(string.Join(", ", model.Looks.Select(l => l.Name)));
+            Ui.Help("Variants apply looks as overrides. Save a variant's look from its inspector.");
+        }
+    }
 
     private void Dependents(AssetDocument<CharacterModel> document)
     {
@@ -294,11 +357,30 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             }
             var children = session.MoveChildren; if (ImGui.Checkbox("Move children with it", ref children)) session.MoveChildren = children;
         }
+        Ui.Header("Look");
+        foreach (var look in basis.Asset.Looks)
+        {
+            if (ImGui.SmallButton(look.Name + "##look-" + look.Id)) session.ApplyLook(look.Id);
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Fill, p.Value.Face, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")));
+            ImGui.SameLine();
+        }
+        ImGui.NewLine();
+        ImGui.SetNextItemWidth(140 * Ui.Scale); ImGui.InputTextWithHint("##look-name", "look name", ref _lookName, 60); ImGui.SameLine();
+        if (Ui.Button("Save look to base", _lookName.Trim().Length > 0))
+        {
+            var id = new string(_lookName.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '-').ToArray()).Trim('-');
+            if (session.SaveLook(id.Length > 0 ? id : "look", _lookName.Trim())) _lookName = "";
+        }
+        Ui.Help("Applying a look writes colors and faces as this variant's overrides. Saving one edits the base, which then needs saving.");
+
         Ui.Header("Overrides");
         ImGui.TextDisabled($"{variant.Build.Count} build value(s), {variant.Rest.Count} rest position(s), {variant.Parts.Count} part(s).");
         if (Ui.Button("Reset all rest positions", variant.Rest.Count > 0)) session.Edit(document, () => document.Asset.Rest.Clear());
         Ui.Help("Unoverridden values follow the base. Structural edits need the base: use Open base.");
+        References.Draw(session, document.Id);
     }
+
+    private string _lookName = "";
 
     /// <summary>Writes a part edit as an override: the edited field is compared against the resolved part and stored only where it now differs.</summary>
     private static void Override(AssetDocument<ModelVariant> document, string partId, PuppetPart resolved, Action<PuppetPart> change)

@@ -82,7 +82,11 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         var anchor = new Vector2(width / 2f - centerX * ppu, height / 2f + _centerY * ppu) + Pan;
 
         while (_drawings.Count < views.Length) _drawings.Add(new());
-        for (var i = 0; i < views.Length; i++) _drawings[i].Build(views[i].Subject.Model, views[i].Subject.Pose);
+        for (var i = 0; i < views.Length; i++)
+        {
+            var subject = views[i].Subject;
+            if (subject.Entity is { } entity) _drawings[i].Build(entity, subject.Pose); else _drawings[i].Build(subject.Model, subject.Pose);
+        }
         Render(_target!, width, height, anchor, ppu, views, centerX);
 
         var start = ImGui.GetCursorScreenPos(); var size = new Vector2(width, height);

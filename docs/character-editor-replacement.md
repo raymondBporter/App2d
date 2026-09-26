@@ -1,7 +1,8 @@
 # Character editor replacement
 
-Status: in progress, 2026-09-26. Phases 1 to 3 are implemented, and the in-game player is drawn from authored assets.
-All of this is on branch `claude/character-editor-phase-3-cb7a61`, which is not yet merged to `main`. See
+Status: in progress, 2026-09-26. Phases 1 to 4 are implemented, and the in-game player is drawn from authored assets.
+Phases 1 to 3 are on branch `claude/character-editor-phase-3-cb7a61`; phase 4 builds on it in
+`claude/character-editor-phase-4-b1e2eb`. Neither is merged to `main` yet. See
 [Where we are](#where-we-are-2026-09-26) for the summary; each phase below carries its own progress note.
 
 ## Product goal
@@ -438,7 +439,7 @@ arbitrary 3D rigs and the native 2.5D controls.
 | 1. Shared motion proof | Done. Walk and run reproduce the prototype and play on three Person builds. The visual verdict on the rendered frames was never recorded. |
 | 2. Model and Animate editor | Done (`App2d.CharacterStudio --editor`). One acceptance check in `--smoke-editor` failed once and passed in every run since; the cause is unknown. |
 | 3. One entity playable end to end | Done. The spear guard, jumping player and stalker work in the arena and through the editor's **Test**. The guard and stalker replace two enemy placements in the game. |
-| 4. Repeated-authoring workflow | Not started, apart from the masked upper-body overlay (see below). |
+| 4. Repeated-authoring workflow | Done. The Entity workspace, looks, motion-set editing, entity templates and duplication, role overrides, reference navigation, and masked actions that blend in and out. The heavy walk art needs review. |
 | 5. Cut over | Started. The in-game player is drawn from authored assets. The rest remains. |
 
 **In the game today.** The player is drawn by `AuthoredPersonPresentation2D` using the player move set
@@ -469,13 +470,9 @@ in [the player move set spec](superpowers/specs/2026-09-25-player-move-set-desig
 5. **Moves outside the spec's scope.** Punch, kick and wall melee reuse the slash.
 
 **Next up.**
-- Merge this branch to `main`.
+- Review the heavy walk (`--smoke-motion`), then merge phases 3 and 4 to `main`.
 - Fix the climb keys and settle the run stride question.
-- Then phase 4:
-  - an Entity workspace, since entities are still hand-edited JSON;
-  - presets, entity duplication and motion-set editing;
-  - the masked upper action inside entities, with blend in and out.
-- Then move the player's gameplay timing off `entities/player.json` and convert the remaining enemies.
+- Move the player's gameplay timing off `entities/player.json` and convert the remaining enemies (phase 5).
 
 ## Implementation sequence and acceptance gates
 
@@ -591,9 +588,38 @@ motion independently of size, and changing a shared walk once. Verify an upper
 attack does not steal leg contacts. Load a representative 50-variant catalog to
 check browsing and that clips are shared rather than duplicated in memory/files.
 
-**Progress (2026-09-26).** The masked layer exists in the evaluator (`PoseInput.Overlay`: one override clip owns the
-channels in its mask, and base contacts on masked chains are skipped), and the in-game player uses it for gun shots over
-locomotion. Not yet: blend in and out, entity actions that declare a mask, and the upper-attack-keeps-leg-contacts gate.
+**Progress (2026-09-26).** Done. Run `App2d.CharacterStudio --editor` and choose **Entity**.
+
+| Layer | Where | Holds |
+| --- | --- | --- |
+| Schema | `CharacterModel`, `EntityAsset` | Models gain `groups` (controls and whole chains a masked action owns) and `looks` (part overrides a variant applies). Neither is structural. Actions gain `mask`, `blendIn` and `blendOut`. Blending without a mask, masking a jump, unknown groups and blends longer than the clip are errors. |
+| Evaluation | `PoseLayer.Weight` | Masked channels blend from the base's value toward the overlay's before the hierarchy and IK are solved. Bend choice and face switch at half weight. A base contact on a masked chain eases out and is not held. |
+| Runtime | `EntityAnimator`, `AuthoredArena` | A masked action keeps locomotion running: phase from ground distance, role changes, held contacts on start and end. The arena keeps moving an actor through a masked attack. |
+| Content | `StarterContent` | Person's `upper` group (= `PersonLoadout.UpperBody`) and `lower` group, four looks, a `heavy` motion set and `person-heavy-walk`, derived from the walk: 1.3x slower, lower and bouncier hips, chest forward, shorter arm swing. |
+| Authoring | `EntityAuthoring`, `AuthoringWorkspace`, `EditorSession` | Entity templates (guard, platformer, stationary) copy defaults and fit the movement box. Duplication keeps references. Also motion-set add/copy/assign/remove (refused while an entity selects the set), look apply/save-to-base, role override/reset and explicit movement fit. Entities and props are documents; `CompileEntity` compiles from drafts and `SnapshotEntities` uses entity drafts too. `Uses`/`UsedBy` drive the References panel on every inspector. |
+| Views | `Editor/EntityView` | Preview roles and actions and enable actions. The inspector edits model, motion set with per-role source and override, controller, movement box, hurt layout overrides, equipment, and the selected action's clip or role, body mask, blend, hit windows and events. The viewport shows movement, hurt, active hit and prop tip overlays from the preview pose. The timeline shows anticipation, active and recovery, markers, events and the layer weight. The Model view edits motion sets on bases and applies or saves looks on variants. The browser lists entities under their base, plus props, and creates or duplicates entities. |
+
+Verification:
+- `App2d.Tests.Authored.RepeatedAuthoringTests` covers:
+  - blend weights (0 is the base, the chest angle is halfway at half weight, legs untouched);
+  - the upper attack keeping leg anchors and walk phase, with one strike;
+  - mask validation;
+  - Heavy and Standard on short and tall builds sharing one clip object;
+  - sets copied, never inherited;
+  - looks editing only overrides, and saving one editing only the base;
+  - a template entity reporting its unassigned attack, then previewing hits in the window, saving, reopening and duplicating;
+  - references both ways;
+  - one walk edit reaching every walker;
+  - a 50-variant, 50-entity catalog loading in well under 5 s with every villager sharing one idle clip and no new clip files.
+- `AuthoredArenaTests.AMaskedAttackKeepsWalkingWhileAWholeBodyOneStands` covers the arena.
+- `--smoke-editor` steps 10 to 17 render three people from builds and looks, Heavy versus Standard entities and the masked thrust's anticipation, active and recovery frames. They also cover the shared walk edit and the skirmisher in Test walking on planted feet while it thrusts. `--smoke-motion` now includes the heavy walk on three builds.
+
+Not yet covered:
+- The heavy walk is a derived first pass awaiting art review.
+- Whole-body actions still switch at once (no cross-fade).
+- Props are not editable in the editor.
+- Entity previews face +X only.
+- The in-game player's gun overlay still uses `PersonLoadout.UpperBody` directly rather than an entity action.
 
 ### 5. Cut over and retire prototype screens
 

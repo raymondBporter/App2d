@@ -41,6 +41,26 @@ public sealed class AuthoredArenaTests
     }
 
     [Fact]
+    public void AMaskedAttackKeepsWalkingWhileAWholeBodyOneStands()
+    {
+        var skirmisher = StarterContent.SpearGuardEntity(); skirmisher.Id = "skirmisher";
+        skirmisher.Actions[0].Mask = StarterContent.Upper; skirmisher.Actions[0].BlendIn = .08f; skirmisher.Actions[0].BlendOut = .12f;
+        var masked = ResolvedEntity.Compile(skirmisher, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);
+        foreach (var (entity, walks) in new[] { (masked, true), (Catalog.Entities["spear-guard"], false) })
+        {
+            var arena = new AuthoredArena([entity]);
+            for (var i = 0; i < 60; i++) arena.Step(new(Move: 1));
+            arena.Step(new(Move: 1, Attack: true));
+            Assert.Equal(EntityControllers.Attack, arena.Player.Animator.Action);
+            var start = arena.Player.Position.X;
+            for (var i = 0; i < 60; i++) arena.Step(new(Move: 1));
+            Assert.Equal(EntityControllers.Attack, arena.Player.Animator.Action);
+            if (walks) { Assert.True(arena.Player.Position.X > start + .3f); Assert.Equal(EntityControllers.Walk, arena.Player.Animator.Role); }
+            else Assert.Equal(start, arena.Player.Position.X, 5);
+        }
+    }
+
+    [Fact]
     public void TheGuardsThrustHitsOncePerAttackOnlyInsideItsWindow()
     {
         var arena = Arena("player", "spear-guard");

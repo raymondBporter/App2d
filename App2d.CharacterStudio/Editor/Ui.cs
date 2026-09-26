@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
@@ -72,5 +73,32 @@ internal static class Ui
     public static bool Button(string label, bool enabled = true)
     {
         ImGui.BeginDisabled(!enabled); var pressed = ImGui.Button(label); ImGui.EndDisabled(); return pressed;
+    }
+}
+
+/// <summary>Dependency navigation: what an asset uses and what uses it, each a link that opens the other asset.</summary>
+internal static class References
+{
+    public static void Draw(EditorSession session, string id)
+    {
+        var uses = session.Assets.Uses(id); var usedBy = session.Assets.UsedBy(id);
+        if (uses.Count + usedBy.Count == 0) return;
+        Ui.Header("References");
+        void Rows(string title, IReadOnlyList<AssetReference> references)
+        {
+            if (references.Count == 0) return;
+            if (!ImGui.TreeNodeEx($"{title} ({references.Count})##{title}", ImGuiTreeNodeFlags.DefaultOpen)) return;
+            foreach (var group in references.GroupBy(r => r.Id))
+            {
+                var document = session.Assets.Find(group.Key);
+                var label = document is null ? $"{group.Key} (missing)" : $"[{AssetKinds.Label(document.Kind)[0]}] {document.Name}";
+                if (document is null) ImGui.PushStyleColor(ImGuiCol.Text, Ui.Warning);
+                if (ImGui.Selectable($"{label}##{title}{group.Key}") && document is not null && document.Kind != AssetKind.Prop) session.Open(group.Key);
+                if (document is null) ImGui.PopStyleColor();
+                if (ImGui.IsItemHovered()) ImGui.SetTooltip(string.Join("\n", group.Select(r => r.Relation)));
+            }
+            ImGui.TreePop();
+        }
+        Rows("Uses", uses); Rows("Used by", usedBy);
     }
 }

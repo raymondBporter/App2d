@@ -39,7 +39,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
         var missing = Roster.Where(id => entities.All(e => e.Id != id)).Select(id => $"Entity '{id}' is not playable; see the problems above.");
         Problems = [.. problems, .. missing];
         Arena = chosen.Count > 0 ? new AuthoredArena(chosen) : null;
-        _log.Clear(); _logged = 0; _accumulator = 0; Active = true;
+        _log.Clear(); _logged = 0; _accumulator = 0; Active = true; Paused = false;
     }
 
     public void Stop() { Active = false; Arena = null; }
