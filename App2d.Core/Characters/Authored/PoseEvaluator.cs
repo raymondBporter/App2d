@@ -1,5 +1,6 @@
 using System.Numerics;
 using App2d.Core.Kinematics;
+using App2d.Core.Mathematics;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -194,10 +195,5 @@ public static class PoseEvaluator
         return Of(keys[^1]);
     }
 
-    public static Vector3 RotateXY(Vector3 v, float angle)
-    {
-        if (angle == 0) return v;
-        var (sin, cos) = MathF.SinCos(angle);
-        return new(v.X * cos - v.Y * sin, v.X * sin + v.Y * cos, v.Z);
-    }
+    public static Vector3 RotateXY(Vector3 v, float angle) => Rotation2D.ApplyXY(v, angle);
 }

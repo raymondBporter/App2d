@@ -2,11 +2,7 @@ using System.Numerics;
 
 namespace App2d.Core.Geometry;
 
-public readonly record struct SegmentClosestPoints2D(
-    Vector2 First,
-    Vector2 Second,
-    float FirstParameter,
-    float SecondParameter);
+public readonly record struct SegmentClosestPoints2D(Vector2 First, Vector2 Second, float FirstParameter, float SecondParameter);
 
 public static class ClosestPoint2D
 {

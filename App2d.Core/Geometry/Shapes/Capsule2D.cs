@@ -21,18 +21,9 @@ public sealed class Capsule2D : IConvexShape2D
     public Vector2 End { get; }
     public float Radius { get; }
     public Bounds2D LocalBounds { get; }
-    public float Area => 2f * Radius * Vector2.Distance(Start, End) + MathF.PI * Radius * Radius;
+    public float Area => PrimitiveGeometry2D.CapsuleArea(Start, End, Radius);
 
-    public bool ContainsPoint(Vector2 localPoint) => Vector2.DistanceSquared(localPoint, ClosestPoint2D.OnSegment(localPoint, Start, End)) <= Radius * Radius;
+    public bool ContainsPoint(Vector2 localPoint) => PrimitiveGeometry2D.CapsuleContainsPoint(localPoint, Start, End, Radius);
 
-    public Vector2 GetSupportPoint(Vector2 localDirection)
-    {
-        var endpoint = Vector2.Dot(Start, localDirection) > Vector2.Dot(End, localDirection)
-            ? Start
-            : End;
-        if (localDirection.LengthSquared() <= float.Epsilon)
-            return endpoint;
-
-        return endpoint + Vector2.Normalize(localDirection) * Radius;
-    }
+    public Vector2 GetSupportPoint(Vector2 localDirection) => PrimitiveGeometry2D.CapsuleSupportPoint(localDirection, Start, End, Radius);
 }

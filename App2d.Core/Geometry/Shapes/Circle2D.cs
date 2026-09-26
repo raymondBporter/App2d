@@ -18,15 +18,9 @@ public sealed class Circle2D : IConvexShape2D
     public float Radius { get; }
     public Vector2 Center { get; }
     public Bounds2D LocalBounds { get; }
-    public float Area => MathF.PI * Radius * Radius;
+    public float Area => PrimitiveGeometry2D.CircleArea(Radius);
 
-    public bool ContainsPoint(Vector2 localPoint) => Vector2.DistanceSquared(localPoint, Center) <= Radius * Radius;
+    public bool ContainsPoint(Vector2 localPoint) => PrimitiveGeometry2D.CircleContainsPoint(localPoint, Center, Radius);
 
-    public Vector2 GetSupportPoint(Vector2 localDirection)
-    {
-        if (localDirection.LengthSquared() <= float.Epsilon)
-            return Center;
-
-        return Center + Vector2.Normalize(localDirection) * Radius;
-    }
+    public Vector2 GetSupportPoint(Vector2 localDirection) => PrimitiveGeometry2D.CircleSupportPoint(localDirection, Center, Radius);
 }

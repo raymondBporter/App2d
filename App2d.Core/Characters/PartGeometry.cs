@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using System.Numerics;
 
 namespace App2d.Core.Characters;
@@ -29,34 +30,41 @@ public static class PartGeometry
             var depth = new Vector3(0, 0, part.Depth);
             return [world(part.A) + depth, world(part.B!) + depth];
         }
-        var frame = FrameOf(part, world); var contour = new List<Vector3>();
+        var frame = FrameOf(part, world);
+        var halfSize = new Vector2(part.Width / 2, part.Height / 2);
+        Span<Vector2> vertices = stackalloc Vector2[part.Kind == "ellipse" ? 48 : 36];
         if (part.Kind == "ellipse")
         {
-            for (var i = 0; i < 48; i++) contour.Add(frame.At(new(MathF.Cos(i * MathF.Tau / 48) * part.Width / 2, MathF.Sin(i * MathF.Tau / 48) * part.Height / 2)));
-            return contour;
+            VertexGenerator2D.WriteEllipse(vertices, Vector2.Zero, halfSize);
         }
-        var radius = Math.Min(part.Width, part.Height) * .5f * part.Roundness;
-        for (var corner = 0; corner < 4; corner++)
+        else
         {
-            var angle = corner * MathF.PI / 2;
-            var center = new Vector2((corner is 0 or 3 ? 1 : -1) * (part.Width / 2 - radius), (corner < 2 ? 1 : -1) * (part.Height / 2 - radius));
-            for (var i = 0; i <= 8; i++) contour.Add(frame.At(center + new Vector2(MathF.Cos(angle + i * MathF.PI / 16), MathF.Sin(angle + i * MathF.PI / 16)) * radius));
+            var radius = Math.Min(part.Width, part.Height) * .5f * part.Roundness;
+            VertexGenerator2D.WriteRoundedRectangle(vertices, -halfSize, halfSize, radius);
         }
+        var contour = new List<Vector3>(vertices.Length);
+        foreach (var vertex in vertices) contour.Add(frame.At(vertex));
         return contour;
     }
 
-    /// <summary>How near an XY point is to a part: 0 at its centre line, 1 at its edge, above 1 outside.</summary>
+    /// <summary>
+    /// Normalized XY picking score, not a distance in world units. Ellipses use radial distance;
+    /// rounded boxes retain their bounding-box score; strokes use width with a minimum picking tolerance.
+    /// </summary>
     public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point)
     {
         var p = new Vector2(point.X, point.Y);
         if (part.Kind == "stroke")
         {
-            var a = world(part.A); var b = world(part.B!); var ab = new Vector2(b.X - a.X, b.Y - a.Y); var ap = p - new Vector2(a.X, a.Y);
-            var t = ab.LengthSquared() < 1e-10f ? 0 : Math.Clamp(Vector2.Dot(ap, ab) / ab.LengthSquared(), 0, 1);
-            return Vector2.Distance(ap, ab * t) / MathF.Max(part.Width, .06f);
+            var a = world(part.A); var b = world(part.B!);
+            return PrimitiveGeometry2D.DistanceToSegment(p, new(a.X, a.Y), new(b.X, b.Y), 1e-10f)
+                / MathF.Max(part.Width, .06f);
         }
         var frame = FrameOf(part, world); var local = p - new Vector2(frame.Origin.X, frame.Origin.Y);
-        var x = Vector2.Dot(local, frame.Right) / (part.Width / 2); var y = Vector2.Dot(local, frame.Up) / (part.Height / 2);
-        return part.Kind == "ellipse" ? MathF.Sqrt(x * x + y * y) : MathF.Max(MathF.Abs(x), MathF.Abs(y));
+        var coordinates = new Vector2(Vector2.Dot(local, frame.Right), Vector2.Dot(local, frame.Up));
+        var halfSize = new Vector2(part.Width / 2, part.Height / 2);
+        return part.Kind == "ellipse"
+            ? PrimitiveGeometry2D.NormalizedEllipseRadius(coordinates, Vector2.Zero, halfSize)
+            : PrimitiveGeometry2D.NormalizedRectangleRadius(coordinates, Vector2.Zero, halfSize);
     }
 }
