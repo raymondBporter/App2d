@@ -296,8 +296,9 @@ public sealed class EditorSession
         var clip = ClipDocument;
         if (clip is null) return;
         var pending = PendingValid() ? _pending : null; var time = Transport.Time;
-        Attempt(() => clip.Edit(() => { if (pending is not null) clip.Replace(pending); ClipAuthoring.KeyPose(clip.Asset, time); }), "Keyed pose at " + time.ToString("F3") + "s");
-        _pending = null;
+        // Keyed on a copy, so a refused key leaves the unkeyed pose intact to key once the clip is repaired.
+        if (Attempt(() => clip.Edit(() => { if (pending is not null) clip.Replace(AuthoredAsset.Parse<MotionClip>(pending.ToJson(), "animation")); ClipAuthoring.KeyPose(clip.Asset, time); }), "Keyed pose at " + time.ToString("F3") + "s")) _pending = null;
+        else if (pending is not null) _pendingFor = (clip.Id, clip.Version, time);
     }
 
     public void DiscardPendingPose() => _pending = null;
@@ -311,17 +312,45 @@ public sealed class EditorSession
     public bool Edit(AssetDocument? document, Action change, string? success = null)
     {
         if (document is null) { Report("Nothing is open to edit.", true); return false; }
-        return Attempt(() => document.Edit(change), success);
+        var applied = Attempt(() => document.Edit(change), success);
+        KeepTransport(); return applied;
     }
 
     /// <summary>Applies one frame of a continuous edit, such as a slider drag. Commit closes it.</summary>
-    public void Change(AssetDocument? document, Action change) { if (document is not null) Attempt(() => document.Change(change)); }
+    public void Change(AssetDocument? document, Action change) { if (document is not null) { Attempt(() => document.Change(change)); KeepTransport(); } }
+
+    /// <summary>After an edit or undo shortens the transport clip, brings the time back inside it so new keys stay in range.</summary>
+    private void KeepTransport() { if (TransportClip is { } clip && Transport.Time > clip.Duration) Transport.Seek(clip, Transport.Time); }
 
     /// <summary>Closes every open transaction; call once no widget or drag is active.</summary>
     public void CommitAll() { if (_dragging) return; foreach (var document in Assets.Documents) document.Commit(); }
 
-    public void Undo() { var document = ActiveDocument; if (document is null) return; _pending = null; document.Undo(); KeepSelection(); }
-    public void Redo() { var document = ActiveDocument; if (document is null) return; _pending = null; document.Redo(); KeepSelection(); }
+    /// <summary>
+    /// Documents the open workspace edits: the active one and, for a variant, its base, which saving a look changes. Undo
+    /// and redo step through them in the order the edits were made.
+    /// </summary>
+    private IEnumerable<AssetDocument> UndoScope()
+    {
+        if (ActiveDocument is { } active) yield return active;
+        if (Mode == Workspace.Model && SubjectVariant is { } variant && Assets.Model(variant.Asset.Base) is { } basis) yield return basis;
+    }
+
+    public bool CanUndo => UndoScope().Any(d => d.CanUndo);
+    public bool CanRedo => UndoScope().Any(d => d.CanRedo);
+
+    public void Undo()
+    {
+        var document = UndoScope().Where(d => d.CanUndo).MaxBy(d => d.UndoSequence);
+        if (document is null) return;
+        _pending = null; document.Undo(); KeepSelection(); KeepTransport();
+    }
+
+    public void Redo()
+    {
+        var document = UndoScope().Where(d => d.CanRedo).MaxBy(d => d.RedoSequence);
+        if (document is null) return;
+        _pending = null; document.Redo(); KeepSelection(); KeepTransport();
+    }
 
     /// <summary>After undo, drops an entity selection or preview that no longer exists instead of pointing at nothing.</summary>
     private void KeepSelection()
@@ -351,7 +380,11 @@ public sealed class EditorSession
         // Models first: saving one can move its clips to a new structure revision, which makes them dirty in turn.
         while (Assets.DirtyDocuments.OrderBy(d => d.Kind).FirstOrDefault() is { } next)
         {
-            if (!Attempt(() => Assets.Save(next))) return;
+            if (!Attempt(() => Assets.Save(next)))
+            {
+                Report((saved.Count == 0 ? "" : "Saved " + string.Join(", ", saved) + "; then ") + $"'{next.Id}' failed: {Message}", true);
+                return;
+            }
             saved.Add(next.Id);
         }
         Report(saved.Count == 0 ? "Nothing to save." : "Saved " + string.Join(", ", saved));
@@ -503,7 +536,7 @@ public sealed class EditorSession
     public bool ImportPuppet(string path, string id, string name) => Attempt(() =>
     {
         var puppet = PuppetDefinition.FromJson(File.ReadAllText(path));
-        var result = PuppetImport.Convert(puppet, id, name, SourcePath(path), Assets.Documents.Select(d => d.Id));
+        var result = PuppetImport.Convert(puppet, id, name, SourcePath(path), Assets.TakenIds);
         Assets.Create(result.Model); foreach (var clip in result.Clips) Assets.Create(clip);
         Open(result.Clips.Count > 0 ? result.Clips[0].Id : id);
         Report($"Imported model '{id}' and {result.Clips.Count} animation(s) from {Path.GetFileName(path)}; the file is unchanged. Review contacts and depth, then save.");

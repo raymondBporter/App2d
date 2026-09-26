@@ -21,6 +21,8 @@ public sealed class AuthoringWorkspace
     private readonly Dictionary<(string Clip, string Subject), (int ClipVersion, int ModelVersion, int VariantVersion, string? Error)> _playable = [];
     private readonly Dictionary<string, (int Revision, ResolvedEntity? Entity, string? Error)> _entities = new(StringComparer.Ordinal);
     private (int Revision, ILookup<string, AssetReference> UsedBy)? _usedBy;
+    // What discarded documents contributed to Revision, plus one per discard, so Revision still only grows.
+    private int _discarded;
 
     private AuthoringWorkspace(string root) => Root = root;
 
@@ -28,8 +30,8 @@ public sealed class AuthoringWorkspace
     /// <summary>Files that could not be read at all. Semantic problems are reported per document by <see cref="Problems"/>.</summary>
     public IReadOnlyList<string> LoadErrors { get; private set; } = [];
     public IEnumerable<AssetDocument> Documents => _documents.Values;
-    /// <summary>Changes whenever any document changes or is added: versions only grow, so their sum never repeats.</summary>
-    public int Revision => _documents.Count + _documents.Values.Sum(d => d.Version);
+    /// <summary>Changes whenever any document changes, is added or is discarded, and never repeats: versions only grow, and a discard adds back more than it removed.</summary>
+    public int Revision => _discarded + _documents.Count + _documents.Values.Sum(d => d.Version);
     public IEnumerable<AssetDocument> DirtyDocuments => _documents.Values.Where(d => d.Dirty || d.IsNew);
     public IEnumerable<AssetDocument<CharacterModel>> Models => _documents.Values.OfType<AssetDocument<CharacterModel>>();
     public IEnumerable<AssetDocument<ModelVariant>> Variants => _documents.Values.OfType<AssetDocument<ModelVariant>>();
@@ -58,10 +60,28 @@ public sealed class AuthoringWorkspace
     public AssetDocument<MotionClip>? Clip(string? id) => Find(id) as AssetDocument<MotionClip>;
     public AssetDocument<PropAsset>? Prop(string? id) => Find(id) as AssetDocument<PropAsset>;
     public AssetDocument<EntityAsset>? Entity(string? id) => Find(id) as AssetDocument<EntityAsset>;
-    public bool Exists(string id) => _documents.ContainsKey(id);
+    /// <summary>Whether an ID is taken: by a document, or by a file of that name that did not load and must not be overwritten.</summary>
+    public bool Exists(string id) => _documents.ContainsKey(id) || FileIds().Contains(id);
 
-    /// <summary>A free ID near <paramref name="basis"/>. IDs are unique across every asset kind.</summary>
-    public string SuggestId(string basis) => ModelAuthoring.UniqueId(basis, _documents.Keys);
+    /// <summary>Every ID in use, documents and unloaded files alike.</summary>
+    public IEnumerable<string> TakenIds => _documents.Keys.Concat(FileIds());
+
+    /// <summary>A free ID near <paramref name="basis"/>. IDs are unique across every asset kind and every file on disk.</summary>
+    public string SuggestId(string basis) => ModelAuthoring.UniqueId(basis, TakenIds);
+
+    /// <summary>File names under every asset folder. A file that failed to load is not a document but still owns its path.</summary>
+    private HashSet<string> FileIds()
+    {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var kind in Enum.GetValues<AssetKind>())
+        {
+            var folder = System.IO.Path.Combine(Root, AssetKinds.Folder(kind));
+            if (Directory.Exists(folder)) ids.UnionWith(Directory.EnumerateFiles(folder, "*.json").Select(System.IO.Path.GetFileNameWithoutExtension).OfType<string>());
+        }
+        return ids;
+    }
+
+    private string DefaultPath(AssetDocument document) => System.IO.Path.Combine(Root, AssetKinds.Folder(document.Kind), document.Id + ".json");
 
     /// <summary>Adds a new, unsaved asset. Its file is created on first save.</summary>
     public AssetDocument<T> Create<T>(T asset) where T : class
@@ -81,7 +101,10 @@ public sealed class AuthoringWorkspace
     public void Discard(AssetDocument document)
     {
         if (!document.IsNew) throw new InvalidOperationException($"'{document.Id}' is saved; delete its file to remove it.");
-        _documents.Remove(document.Id);
+        if (!_documents.Remove(document.Id)) return;
+        _discarded += document.Version + 2;
+        // Caches are keyed on document versions, which a new document with the same ID would repeat from zero.
+        _resolved.Clear(); _playable.Clear(); _entities.Clear(); _usedBy = null;
     }
 
     /// <summary>The base model a model or variant ID stands on.</summary>
@@ -282,7 +305,8 @@ public sealed class AuthoringWorkspace
             case AssetDocument<PropAsset> prop: prop.Asset.Validate(); break;
             case AssetDocument<EntityAsset> entity: entity.Asset.Validate(); break;
         }
-        var path = document.Path ?? System.IO.Path.Combine(Root, AssetKinds.Folder(document.Kind), document.Id + ".json");
+        var path = document.Path ?? DefaultPath(document);
+        if (document.IsNew && File.Exists(path)) throw new InvalidDataException($"A file already exists at {path}; it did not load, so it is left alone. Choose another id, or repair or remove that file.");
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
         AuthoredAsset.Write(path, document.Serialize());
         document.MarkSaved(path);

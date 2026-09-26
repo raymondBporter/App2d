@@ -22,7 +22,9 @@ public static class AssetKinds
 /// </summary>
 public abstract class AssetDocument
 {
-    private readonly Stack<string> _undo = [], _redo = [];
+    // Each step is stamped from one sequence shared by every document, so a session can undo across documents in order.
+    private static long s_sequence;
+    private readonly Stack<(string Json, long Sequence)> _undo = [], _redo = [];
     private string _saved;
     private string? _before;
 
@@ -39,6 +41,10 @@ public abstract class AssetDocument
     public int Version { get; private set; }
     public bool CanUndo => _undo.Count > 0 || _before is not null;
     public bool CanRedo => _redo.Count > 0;
+    /// <summary>When the step <see cref="Undo"/> would revert was made, comparable across documents; an open transaction is newest.</summary>
+    public long UndoSequence => _before is not null ? long.MaxValue : _undo.TryPeek(out var step) ? step.Sequence : 0;
+    /// <summary>When the step <see cref="Redo"/> would reapply was undone, comparable across documents.</summary>
+    public long RedoSequence => _redo.TryPeek(out var step) ? step.Sequence : 0;
 
     public abstract string Serialize();
     protected abstract void Restore(string json);
@@ -63,22 +69,22 @@ public abstract class AssetDocument
     {
         if (_before is null) return;
         var now = Serialize();
-        if (now != _before) { _undo.Push(_before); _redo.Clear(); }
+        if (now != _before) { _undo.Push((_before, ++s_sequence)); _redo.Clear(); }
         _before = null; Dirty = now != _saved;
     }
 
     public void Undo()
     {
         Commit();
-        if (!_undo.TryPop(out var previous)) return;
-        _redo.Push(Serialize()); Restore(previous); Touch(); Dirty = previous != _saved;
+        if (!_undo.TryPop(out var step)) return;
+        _redo.Push((Serialize(), ++s_sequence)); Restore(step.Json); Touch(); Dirty = step.Json != _saved;
     }
 
     public void Redo()
     {
         Commit();
-        if (!_redo.TryPop(out var next)) return;
-        _undo.Push(Serialize()); Restore(next); Touch(); Dirty = next != _saved;
+        if (!_redo.TryPop(out var step)) return;
+        _undo.Push((Serialize(), ++s_sequence)); Restore(step.Json); Touch(); Dirty = step.Json != _saved;
     }
 
     /// <summary>Records that the current state was written to <paramref name="path"/>.</summary>
