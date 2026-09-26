@@ -8,9 +8,13 @@ public sealed class PuppetDrawing
 {
     public CharacterMesh Mesh { get; } = new();
     public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World);
-    /// <summary>Faces come from the pose's evaluated expressions, never from the parts' stored defaults.</summary>
-    public void Build(ResolvedModel model, EvaluatedPose pose) =>
-        Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World, part => pose.Expressions.GetValueOrDefault(part.Id, "none"));
+    /// <summary>
+    /// Faces come from the pose's evaluated expressions, never from the parts' stored defaults. <paramref name="face"/>, when
+    /// given, replaces the drawn expression with a gameplay-blended face on every part that shows one; a clip that hides the
+    /// face ("none", for a back view) still hides it.
+    /// </summary>
+    public void Build(ResolvedModel model, EvaluatedPose pose, FacePose? face = null) =>
+        Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World, part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face);
 
     /// <summary>
     /// An entity's final pose in actor-local units, with its equipped props placed by the same socket transform that hit
@@ -40,7 +44,7 @@ public sealed class PuppetDrawing
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
-    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null)
+    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null)
     {
         Mesh.Clear(); var ink = CharacterJson.Color(inkColor);
         foreach (var part in parts)
@@ -53,7 +57,7 @@ public sealed class PuppetDrawing
             }
             Mesh.Polygon(PartGeometry.Contour(part, world), CharacterJson.Color(part.Fill), ink, lineWidth);
             var frame = PartGeometry.FrameOf(part, world);
-            if (face != "none") FaceDrawing.Build(Mesh, FaceExpressions.Get(face),
+            if (face != "none") FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),
                 p => frame.At(new(p.X * part.Width + part.FaceX, -p.Y * part.Height)) - new Vector3(0, 0, .002f), lineWidth * .6f, ink);
         }
     }

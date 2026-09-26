@@ -22,8 +22,7 @@ public sealed record AnimatorState(string Role, double RoleTime, string? Action,
 /// </summary>
 public sealed class EntityAnimator
 {
-    private readonly Dictionary<string, Vector3> _anchors = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _held = new(StringComparer.Ordinal);
+    private readonly ContactHold _hold = new();
     private bool _fresh;
 
     public EntityAnimator(ResolvedEntity entity)
@@ -43,7 +42,7 @@ public sealed class EntityAnimator
     public int ActionSequence { get; private set; }
     public int Facing { get; private set; } = 1;
     public ActorPose Pose { get; private set; }
-    public IReadOnlyDictionary<string, Vector3> Anchors => _anchors;
+    public IReadOnlyDictionary<string, Vector3> Anchors => _hold.Anchors;
     public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
     public bool ActionComplete => Current is { } action && ActionTime >= action.Clip.Duration;
     public MotionClip? Clip => Current?.Clip ?? Entity.Clip(Role);
@@ -52,7 +51,7 @@ public sealed class EntityAnimator
     public bool TryStart(string action)
     {
         if (!Entity.Enabled(action)) return false;
-        Action = action; ActionTime = PreviousActionTime = 0; ActionSequence++; _fresh = true; _anchors.Clear();
+        Action = action; ActionTime = PreviousActionTime = 0; ActionSequence++; _fresh = true; _hold.Clear();
         return true;
     }
 
@@ -60,13 +59,13 @@ public sealed class EntityAnimator
     public void EndAction()
     {
         if (Action is null) return;
-        Action = null; _anchors.Clear(); RoleTime = 0;
+        Action = null; _hold.Clear(); RoleTime = 0;
     }
 
     /// <summary>A teleport or respawn: drop the action, the phase and every anchor.</summary>
     public void Reset(string role = EntityControllers.Idle)
     {
-        Action = null; ActionTime = PreviousActionTime = RoleTime = 0; Role = role; _anchors.Clear();
+        Action = null; ActionTime = PreviousActionTime = RoleTime = 0; Role = role; _hold.Clear();
     }
 
     /// <summary>
@@ -77,7 +76,7 @@ public sealed class EntityAnimator
     public void Step(float dt, Vector2 position, int facing, string role, float groundDistance, bool hold, List<AnimationEvent> events, string? expression = null)
     {
         if (facing is not (1 or -1)) throw new ArgumentOutOfRangeException(nameof(facing));
-        if (facing != Facing) { Facing = facing; _anchors.Clear(); }
+        Facing = facing;
         if (Current is { } action)
         {
             PreviousActionTime = ActionTime;
@@ -92,7 +91,7 @@ public sealed class EntityAnimator
             if (role != Role)
             {
                 if (Entity.Clip(role) is null) throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role; the controller must choose an assigned role or hold.");
-                Role = role; RoleTime = 0; _anchors.Clear();
+                Role = role; RoleTime = 0; _hold.Clear();
             }
             var clip = Entity.Clip(Role)!;
             if (!hold)
@@ -109,19 +108,8 @@ public sealed class EntityAnimator
 
     private void Evaluate(Vector2 position, string? expression)
     {
-        var placed = new ActorPose(new EvaluatedPose(), position, Facing);
-        _held.Clear();
-        Vector3 Hold(string chain, Vector3 authored)
-        {
-            _held.Add(chain);
-            if (_anchors.TryGetValue(chain, out var anchor)) return placed.ToLocal(anchor);
-            _anchors[chain] = placed.Place(authored); return authored;
-        }
         var clip = Clip; var action = Current;
-        var local = PoseEvaluator.Sample(Entity.Model, clip, action is null ? RoleTime : ActionTime, action is null && clip?.Loop == true,
-            new(expression) { InPlace = true, Contact = Hold });
-        foreach (var chain in _anchors.Keys.Where(c => !_held.Contains(c)).ToList()) _anchors.Remove(chain);
-        Pose = placed with { Local = local };
+        Pose = _hold.Evaluate(Entity.Model, clip, action is null ? RoleTime : ActionTime, action is null && clip?.Loop == true, position, Facing, new(expression));
     }
 
     /// <summary>Hit windows active at any moment of the latest step, including one that opened and closed inside it.</summary>
@@ -149,14 +137,56 @@ public sealed class EntityAnimator
         void Add(string id) => events.Add(new(AnimationEvent.MarkerKind, id, null, action, ActionSequence));
     }
 
-    public AnimatorState Capture() => new(Role, RoleTime, Action, ActionTime, PreviousActionTime, ActionSequence, _fresh, Facing, _anchors.ToImmutableDictionary());
+    public AnimatorState Capture() => new(Role, RoleTime, Action, ActionTime, PreviousActionTime, ActionSequence, _fresh, Facing, _hold.Capture());
 
     public void Restore(AnimatorState state, Vector2 position, string? expression = null)
     {
         Role = state.Role; RoleTime = state.RoleTime; Action = state.Action; ActionTime = state.ActionTime; PreviousActionTime = state.PreviousActionTime;
         ActionSequence = state.ActionSequence; _fresh = state.Fresh; Facing = state.Facing;
-        _anchors.Clear(); foreach (var (chain, anchor) in state.Anchors) _anchors[chain] = anchor;
+        _hold.Restore(state.Anchors, state.Facing);
         Evaluate(position, expression);
+    }
+}
+
+/// <summary>
+/// World contact anchors for in-place playback. A contact is captured where the clip puts it at touchdown and held there
+/// until the clip releases it, so the controller can move the actor without feet sliding. A facing change releases every
+/// anchor; callers release them explicitly (<see cref="Clear"/>) when the clip or action changes.
+/// </summary>
+public sealed class ContactHold
+{
+    private readonly Dictionary<string, Vector3> _anchors = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _held = new(StringComparer.Ordinal);
+    private int _facing = 1;
+
+    public IReadOnlyDictionary<string, Vector3> Anchors => _anchors;
+    public void Clear() => _anchors.Clear();
+
+    /// <summary>Samples in place at <paramref name="position"/> (the feet origin) and returns the placed final pose.</summary>
+    /// <remarks>With <paramref name="hold"/> false every anchor is released and contacts follow the clip.</remarks>
+    public ActorPose Evaluate(ResolvedModel model, MotionClip? clip, double seconds, bool repeat, Vector2 position, int facing, PoseInput input, bool hold = true)
+    {
+        if (facing is not (1 or -1)) throw new ArgumentOutOfRangeException(nameof(facing));
+        if (facing != _facing) { _facing = facing; _anchors.Clear(); }
+        var placed = new ActorPose(new EvaluatedPose(), position, facing);
+        _held.Clear();
+        Vector3 Hold(string chain, Vector3 authored)
+        {
+            _held.Add(chain);
+            if (_anchors.TryGetValue(chain, out var anchor)) return placed.ToLocal(anchor);
+            _anchors[chain] = placed.Place(authored); return authored;
+        }
+        if (!hold) { _anchors.Clear(); return placed with { Local = PoseEvaluator.Sample(model, clip, seconds, repeat, input with { InPlace = true, Contact = null }) }; }
+        var local = PoseEvaluator.Sample(model, clip, seconds, repeat, input with { InPlace = true, Contact = Hold });
+        foreach (var chain in _anchors.Keys.Where(c => !_held.Contains(c)).ToList()) _anchors.Remove(chain);
+        return placed with { Local = local };
+    }
+
+    public ImmutableDictionary<string, Vector3> Capture() => _anchors.ToImmutableDictionary();
+    public void Restore(IReadOnlyDictionary<string, Vector3> anchors, int facing)
+    {
+        _facing = facing; _anchors.Clear();
+        foreach (var (chain, anchor) in anchors) _anchors[chain] = anchor;
     }
 }
 

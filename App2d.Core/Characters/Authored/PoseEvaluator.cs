@@ -16,7 +16,16 @@ public readonly record struct PoseInput(string? Expression = null)
 {
     public bool InPlace { get; init; }
     public Func<string, Vector3, Vector3>? Contact { get; init; }
+    /// <summary>A masked override: its clip owns every channel whose target is in the mask. The base clip keeps the rest.</summary>
+    public PoseLayer? Overlay { get; init; }
 }
+
+/// <summary>
+/// One override clip over the base, such as a gun shot's arms on any legs. <see cref="Targets"/> names the controls and chains
+/// the overlay owns, whole: a masked channel without an overlay track rests rather than falling back to the base. Face tracks
+/// of the overlay win too. Its travel and contacts are ignored; the base owns locomotion.
+/// </summary>
+public sealed record PoseLayer(MotionClip Clip, double Seconds, IReadOnlySet<string> Targets);
 
 /// <summary>The final pose: world positions for every control and the residuals that produced them. Drawing, sockets and collision all read this.</summary>
 public sealed class EvaluatedPose
@@ -58,15 +67,24 @@ public static class PoseEvaluator
         if (input.InPlace) { cycleOrigin -= pose.Locomotion; pose.Locomotion = Vector3.Zero; }
 
         var tracks = clip.Tracks.ToDictionary(t => (t.Kind, t.Target));
+        var overlay = input.Overlay;
+        var overlayTracks = overlay?.Clip.Tracks.ToDictionary(t => (t.Kind, t.Target));
+        var overlayTime = overlay is null ? 0 : (float)(overlay.Clip.Loop ? overlay.Seconds % overlay.Clip.Duration : Math.Min(overlay.Seconds, overlay.Clip.Duration));
+        // The channel's track, the time to read it at and the clip whose reference units it uses: overlay for masked targets.
+        (ClipTrack? Track, float Time, MotionClip Clip) Pick(string kind, string target) => overlay is not null && overlay.Targets.Contains(target)
+            ? (overlayTracks!.GetValueOrDefault((kind, target)), overlayTime, overlay.Clip)
+            : (tracks.GetValueOrDefault((kind, target)), time, clip);
         Vector3 Delta(string kind, string target, string defaultScale)
         {
-            if (!tracks.TryGetValue((kind, target), out var track)) return default;
-            var (value, _) = Interpolate(track.Keys, time); var ratio = Ratio(track.Scale ?? defaultScale);
+            var (track, at, source) = Pick(kind, target);
+            if (track is null) return default;
+            var (value, _) = Interpolate(track.Keys, at); var scale = track.Scale ?? defaultScale;
+            var ratio = scale == CharacterModel.Unit ? 1 : model.Measure(scale) / source.Reference[scale];
             return new(value.X * ratio, value.Y * ratio, value.Z);
         }
-        int Bend(ModelChain chain) => tracks.TryGetValue((MotionClip.TargetKind, chain.Id), out var track)
-            && track.Keys.LastOrDefault(k => k.Bend is not null && k.Time <= time) is { Bend: { } bend } ? bend : chain.Bend;
-        float Angle(string target) => tracks.TryGetValue((MotionClip.RotateKind, target), out var track) ? Interpolate(track.Keys, time).Angle : 0;
+        int Bend(ModelChain chain) => Pick(MotionClip.TargetKind, chain.Id) is { Track: { } track, Time: var at }
+            && track.Keys.LastOrDefault(k => k.Bend is not null && k.Time <= at) is { Bend: { } bend } ? bend : chain.Bend;
+        float Angle(string target) => Pick(MotionClip.RotateKind, target) is { Track: { } track, Time: var at } ? Interpolate(track.Keys, at).Angle : 0;
 
         var angles = pose.Angles;
         foreach (var control in model.Order)
@@ -89,6 +107,7 @@ public static class PoseEvaluator
         }
         foreach (var contact in clip.Contacts)
         {
+            if (overlay?.Targets.Contains(contact.Chain) == true) continue;
             if (!(time >= contact.Start && (time < contact.Finish || time == clip.Duration && contact.Finish == clip.Duration))) continue;
             var chain = model.Chains[contact.Chain]; var ratio = Ratio(chain.Scale);
             var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio, contact.Target.Y * ratio, contact.Target.Z);
@@ -100,7 +119,7 @@ public static class PoseEvaluator
         foreach (var part in model.Parts)
         {
             if (part.Hidden || part.Face == "none") continue;
-            pose.Expressions[part.Id] = input.Expression ?? FaceAt(clip, part.Id, time) ?? part.Face;
+            pose.Expressions[part.Id] = input.Expression ?? (overlay is null ? null : FaceAt(overlay.Clip, part.Id, overlayTime)) ?? FaceAt(clip, part.Id, time) ?? part.Face;
         }
         return pose;
     }

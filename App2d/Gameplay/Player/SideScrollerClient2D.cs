@@ -24,7 +24,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private const float SaveFeedbackDurationSeconds = 1.1f;
     private readonly SessionClient2D _endpoint;
     private readonly PlayerInputMapper2D _input = new();
-    private readonly PointPersonPresentation2D _presentation;
+    private readonly AuthoredPersonPresentation2D _presentation;
     private readonly SideScrollerCamera2D _cameraController;
     private readonly Camera2D _camera;
     private readonly SoundEffectBank2D _sounds;
@@ -41,7 +41,7 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public SideScrollerClient2D(SessionSnapshot2D initial, EntityId2D playerId, Scene2D scene,
         Camera2D camera, SideScrollerCamera2D cameraController,
-        TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal, App2d.Core.Characters.EntityCatalog characters)
+        TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal, App2d.Core.Characters.EntityCatalog characters, PersonMoves moves)
     {
         _endpoint = new SessionClient2D(initial, playerId);
         var initialState = _endpoint.State;
@@ -53,7 +53,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         Ballistics = new BallisticsDebug2D(traversal);
         _world = new WorldPresentation2D(scene, textures);
         _world.ApplyState(initial.Content, initial.World);
-        _presentation = new PointPersonPresentation2D(scene, characters, traversal);
+        _presentation = new AuthoredPersonPresentation2D(scene, moves, traversal);
         _presentation.Equip(initialState.Equipment);
         WorldSounds = new SpatialSoundEffectSink2D(sounds, () => State.Person.Position);
         _weapons = new WeaponPresentation2D(scene, textures, WorldSounds);

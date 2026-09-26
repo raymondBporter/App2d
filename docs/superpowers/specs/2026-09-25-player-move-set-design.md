@@ -6,7 +6,7 @@
 
 Replace the in-game player's animations (the 3D-sourced point library behind `PointPersonPresentation2D`) with a
 complete move set drawn on the authored Person rig, in the style of the existing `person-walk` and `person-run`. This
-is art: clip, prop and socket files. Wiring the game to play them is separate work.
+is art: clip, prop and socket files. The game now plays them; see "In the game" below.
 
 ## Decisions
 
@@ -46,6 +46,29 @@ is art: clip, prop and socket files. Wiring the game to play them is separate wo
 
 Props: `sword`, `sheath`, `pistol`. Sockets added to `person`: `back`, `back-view`, `sword-hand`, `gun-hand` (mirrored in
 `StarterContent.AddPersonExtras`).
+
+## In the game
+
+The in-game player is drawn by `AuthoredPersonPresentation2D` (`App2d.Game.Presentation/Persons/`), which replaced the
+point-library `PointPersonPresentation2D`. Gameplay is unchanged: traversal, hit boxes and attack timing still come from
+`Person2D` and `entities/player.json`.
+
+- `PersonMoves` resolves the Person model, every clip in the move list and the three props, and fails naming anything missing.
+- `PersonAnimationDirector` maps observed state to a clip: death and hit reactions, then attacks (controller timing mapped
+  onto the clip), dash, celebrate, then locomotion. Sword swings draw first and follow up with the slash while the sword is
+  out; standing still afterwards plays the sheathe. The gun shot and the aim are upper-body overlays on whatever the legs do
+  (`PoseInput.Overlay`, masked by `PersonLoadout.UpperBody`); standing with the gun plays the full aim.
+- Walk, run and climb advance by distance (climb: `ClimbRise` = 1.1 per cycle), capped at `MaxCadence` = 2.5 times the
+  clip's own pace. Beyond the cap feet follow the clip instead of holding world anchors.
+- `PersonLoadout` (Core) owns the prop rules above, shared with the review renders.
+- The figure is scaled so its rest height matches the traversal collider; the blended gameplay face (`PersonFace2D`) is
+  drawn on it, and back views still hide it.
+- `App2d --render-smoke <dir>` writes `player-*.png`: eleven states in both facings through the real presentation.
+
+Known gaps: the game's ground speed (430 px/s, about 13 model units/s at the drawn scale) is roughly six times the run's
+authored pace (2.2 units/s), so at full speed the run is capped and the feet slide; a longer stride or a sprint clip is an
+art decision. Punch and kick reuse the slash with no sword; wall melee reuses the slash; the climb-off turn plays at the
+top of a ladder as well as the bottom.
 
 ## Review loop
 

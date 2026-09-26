@@ -152,7 +152,7 @@ public sealed class EnemyPresentation2D(
         private readonly App2d.Rendering.Characters.AuthoredCharacterShader _shader;
         public AuthoredPoseView(Scene2D scene, App2d.Core.Characters.ResolvedEntity entity)
         {
-            _scene = scene; _shader = new(entity);
+            _scene = scene; _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
             _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
             _visual.Transform.Scale = new(App2d.Core.Characters.EntityCatalog.WorldUnits);
             scene.Add(_visual);

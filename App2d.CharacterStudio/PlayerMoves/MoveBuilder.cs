@@ -11,13 +11,9 @@ namespace App2d.CharacterStudio.PlayerMoves;
 /// </summary>
 internal sealed class MoveBuilder(ResolvedModel model, string id, string name, float duration, bool loop)
 {
-    public const string BackSocket = "back", BackViewSocket = "back-view", SwordSocket = "sword-hand", GunSocket = "gun-hand";
-    /// <summary>
-    /// View markers: from "view-back" the figure is seen from behind and the sheath and sword use
-    /// <see cref="BackViewSocket"/>; from "view-profile" they return to <see cref="BackSocket"/>. The latest marker at or
-    /// before the sample time wins; a clip with neither is in profile.
-    /// </summary>
-    public const string BackViewMarker = "view-back", ProfileViewMarker = "view-profile";
+    public const string BackSocket = PersonLoadout.BackSocket, BackViewSocket = PersonLoadout.BackViewSocket, SwordSocket = PersonLoadout.SwordSocket, GunSocket = PersonLoadout.GunSocket;
+    /// <summary>View markers; <see cref="PersonLoadout"/> owns how they pick the sheath socket.</summary>
+    public const string BackViewMarker = PersonLoadout.BackViewMarker, ProfileViewMarker = PersonLoadout.ProfileViewMarker;
 
     private readonly Dictionary<(string Kind, string Target), SortedDictionary<float, ClipKey>> _tracks = [];
     private readonly List<(string Chain, float Time, Vector2 Offset, bool Absolute, string Ease)> _hands = [];

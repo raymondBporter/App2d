@@ -93,7 +93,7 @@ public sealed class SideScrollerGame : Game2D
             _simulation.Level.ReloadMovingPlatforms(things.Select(ThingTypeRegistry2D.ToRuntime).ToArray());
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
-            cameraController, Textures, _sounds, Traversal, _characters);
+            cameraController, Textures, _sounds, Traversal, _characters, App2d.Gameplay.Persons.PersonMoves.From(_authored));
         _client.CheckpointActivated += checkpoint =>
             _client.ShowSaveResult(_saveStore.TrySave(new PlayerSave2D(checkpoint.CheckpointId, checkpoint.HitPoints)), checkpoint.Position);
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _client.ShowTraversalDebug,

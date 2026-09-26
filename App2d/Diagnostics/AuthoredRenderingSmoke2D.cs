@@ -45,8 +45,62 @@ internal static class AuthoredRenderingSmoke2D
         view.ApplyState([], [], 61);
         if (scene.Count() != 1) throw new InvalidOperationException("Authored enemy views leaked scene objects.");
         RunEntities(device, view, scene, renderer, target, directory);
+        RunPlayer(device, textures, renderer, target, directory);
         view.ApplyState([], [], 62);
         if (scene.Count() != 1) throw new InvalidOperationException("Authored entity views leaked scene objects.");
+    }
+
+    /// <summary>
+    /// The player through <see cref="AuthoredPersonPresentation2D"/>: each named state is fed at 120 Hz for its duration, the
+    /// way the client does, and the last frame is rendered in both facings.
+    /// </summary>
+    private static void RunPlayer(GraphicsDevice device, TextureCache2D textures, Renderer2D renderer, RenderTarget2D target, string directory)
+    {
+        var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var moves = App2d.Gameplay.Persons.PersonMoves.From(authored);
+        var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
+        var standing = new App2d.Gameplay.Persons.PersonState2D { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true };
+        var melee = new App2d.Gameplay.Persons.PersonActionState2D(App2d.Gameplay.Simulation.PlayerAttackKind2D.Melee, 0, .35f);
+        var shot = new App2d.Gameplay.Persons.PersonActionState2D(App2d.Gameplay.Simulation.PlayerAttackKind2D.Shot, 0, .2f);
+        var cases = new (string Name, App2d.Gameplay.Persons.Actions.EquipmentKind2D Gear, App2d.Gameplay.Persons.PersonState2D State, float Seconds, bool ActionClock)[]
+        {
+            ("idle", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing, 1, false),
+            ("walk", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { LinearVelocity = new(20, 0) }, .6f, false),
+            ("run", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { LinearVelocity = new(traversal.RunSpeed, 0) }, .5f, false),
+            ("jump", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, LinearVelocity = new(0, 300) }, .15f, false),
+            ("fall", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, LinearVelocity = new(0, -300) }, .3f, false),
+            ("climb", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, IsClimbingLadder = true, LinearVelocity = new(0, 60) }, .8f, false),
+            ("wall-grip", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, IsWallGripping = true }, .5f, false),
+            ("sword-strike", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { Action = melee }, .2f, true),
+            ("gun-aim", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Gun, standing, .5f, false),
+            ("gun-run-shot", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Gun, standing with { LinearVelocity = new(traversal.RunSpeed, 0), Action = shot }, .05f, true),
+            ("death", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { HitPoints = 0 }, 1.2f, false),
+        };
+        foreach (var (name, gear, state, seconds, actionClock) in cases)
+        foreach (var facing in new[] { 1f, -1f })
+        {
+            var scene = new Scene2D();
+            using var player = new App2d.Gameplay.Persons.AuthoredPersonPresentation2D(scene, moves, traversal);
+            player.Equip(gear);
+            if (!state.IsAlive) player.PlayDeath();
+            var position = new Vector2(0, 38); var steps = (int)(seconds * 120);
+            for (var i = 0; i < steps; i++)
+            {
+                position.X += state.LinearVelocity.X / 120; // vertical motion stays out of the fixed camera; the state still reports it
+                var current = state with { Position = position, Facing = facing };
+                if (actionClock) current = current with { Action = current.Action with { ElapsedSeconds = i / 120f } };
+                player.ApplyState(current, i + 1, 0, false, false); player.Advance(1 / 120f);
+            }
+            var camera = new Camera2D { Zoom = 3, Position = new(position.X, 60) };
+            using var close = new Renderer2D(camera, device);
+            device.SetRenderTarget(target); close.BeginFrame(1400, 500, default); close.Clear(new Color(145, 176, 190));
+            var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(2000, 2)), new SolidColorShader(Color.DarkSlateGray));
+            ground.Transform.Position = new(position.X, 0); close.Draw(ground);
+            close.Draw(scene);
+            close.DrawScreenLabel($"PLAYER: {name.ToUpperInvariant()} ({player.Director.Key})", new(24, 24));
+            close.EndFrame(); device.SetRenderTarget(null);
+            using var stream = File.Create(Path.Combine(directory, $"player-{name}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
+        }
     }
 
     /// <summary>Authored entities through the game's presentation: each frame draws the animator's own final pose, props included.</summary>

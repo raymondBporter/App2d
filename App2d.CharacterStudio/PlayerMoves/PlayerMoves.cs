@@ -12,7 +12,7 @@ namespace App2d.CharacterStudio.PlayerMoves;
 /// </summary>
 internal static class PlayerMoves
 {
-    public const string Sword = "sword", Sheath = "sheath", Pistol = "pistol";
+    public const string Sword = PersonLoadout.Sword, Sheath = PersonLoadout.Sheath, Pistol = PersonLoadout.Pistol;
 
     // Stance: the walk's contact spacing. Feet rest at y = 0.025 (sole on the ground).
     private const float Back = -.125f, Front = .125f, Ground = .025f;

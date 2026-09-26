@@ -37,20 +37,14 @@ internal sealed partial class StudioGame
         {
             var folder = Path.Combine(_smokePath!, "frames", item.Id); Directory.CreateDirectory(folder);
             var clip = item.Clip; var count = Math.Max(2, (int)MathF.Round(clip.Duration * ReviewFps) + (clip.Loop ? 0 : 1));
-            var drawAt = clip.Markers.FirstOrDefault(k => k.Id == "sword-draw")?.Time; var sheatheAt = clip.Markers.FirstOrDefault(k => k.Id == "sword-sheathe")?.Time;
             for (var f = 0; f < count; f++)
             {
                 var seconds = Math.Min(clip.Duration, f / (float)ReviewFps);
                 var pose = PoseEvaluator.Sample(model, clip, seconds);
                 drawing.Build(model, pose);
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
-                var view = clip.Markers.Where(k => k.Id is MoveBuilder.BackViewMarker or MoveBuilder.ProfileViewMarker && k.Time <= seconds + 1e-4f).MaxBy(k => k.Time);
-                var backSocket = sockets[view?.Id == MoveBuilder.BackViewMarker ? MoveBuilder.BackViewSocket : MoveBuilder.BackSocket];
-                drawing.AddProp(props[PlayerMoves.PlayerMoves.Sheath], placed.Socket(backSocket));
-                // In hand from "sword-draw" (or from the start of a clip that only sheathes) until "sword-sheathe".
-                var inHand = (drawAt is { } d ? seconds >= d : sheatheAt is not null) && (sheatheAt is not { } s || seconds < s);
-                drawing.AddProp(props[PlayerMoves.PlayerMoves.Sword], placed.Socket(inHand ? sockets[MoveBuilder.SwordSocket] : backSocket));
-                if (item.Gun) drawing.AddProp(props[PlayerMoves.PlayerMoves.Pistol], placed.Socket(sockets[MoveBuilder.GunSocket]));
+                foreach (var (prop, socket) in PersonLoadout.Worn(clip, seconds, item.Gun ? PersonGear.Gun : PersonGear.Sword))
+                    drawing.AddProp(props[prop], placed.Socket(sockets[socket]));
                 var centerX = pose.Locomotion.X + item.ViewX;
                 BuildScenery(scenery, item.Scene, centerX, seconds);
                 GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(241, 240, 232));
