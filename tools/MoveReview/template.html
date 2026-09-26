@@ -93,12 +93,12 @@ textarea{width:100%; min-height:58px; resize:vertical; font:14px/1.4 var(--body)
   <section class="questions" aria-labelledby="q-title">
     <h2 id="q-title">Decisions I made for you to check</h2>
     <ol>
-      <li><b>Climb is a back view.</b> The figure turns into the screen to face the ladder: face hidden, shoulders and hips square, the near elbow and knee mirrored so both bend outward, and the sheath shown across the back. Entering and leaving the ladder currently pops between views; a short turn could bridge it later.</li>
+      <li><b>Climb is a back view, reached by turning.</b> With no perspective the turn just slides the shoulders and hips across as their axis spins, swapping near and far on the way; the face gives way to the back of the head past profile and the sheath swaps to across-the-back. The turn off the ladder is the same keys reversed.</li>
       <li><b>Wall grip faces away from the wall.</b> Gameplay already turns the player away from the wall, as in the RGS wall slide: back and one foot on the wall, near hand braced behind, weapon hand free.</li>
       <li><b>Jump has no crouch.</b> Gameplay leaves the ground on the button press, so the clip opens on the push instead of an anticipation squat.</li>
       <li><b>Sword draw.</b> The hand finds the hilt over the shoulder, and pulling the blade out becomes the overhead wind-up. The downward stab damages from frame one, so its draw is a two-frame whip.</li>
       <li><b>Gun shot is upper body only.</b> It keys only chest, head and arms, so it layers on aim, walk or run legs. The three Layered cards prove it with no new animation.</li>
-      <li><b>Sheath tucked behind.</b> It now sits against the back behind the torso and head, so in profile you see only the guard at the neck and the tip below the back. The sword is 0.82 units.</li>
+      <li><b>Sheath hidden behind the back.</b> The hilt now sits below the shoulder line behind the torso, since a guard at neck height read as part of the neck. In profile only the scabbard tip shows below the back, and the draw reaches behind the shoulder for it. The sword is 0.82 units.</li>
     </ol>
   </section>
 
@@ -109,7 +109,7 @@ textarea{width:100%; min-height:58px; resize:vertical; font:14px/1.4 var(--body)
 const MOVES = /*MOVES*/[];
 const GROUPS = [
   { title: "Movement", blurb: "Standing, getting airborne and back down.", ids: ["person-walk","person-run","player-idle","player-jump","player-fall","player-land","player-dash"] },
-  { title: "Traversal", blurb: "Ladder, wall and ledge-edge states.", ids: ["player-climb","player-wall-grip","player-balance-forward","player-balance-backward"] },
+  { title: "Traversal", blurb: "Ladder, wall and ledge-edge states.", ids: ["player-climb-on","player-climb","player-climb-off","player-wall-grip","player-balance-forward","player-balance-backward"] },
   { title: "Reactions", blurb: "Taking a hit, dying and winning.", ids: ["player-hit","player-death","player-celebrate"] },
   { title: "Sword", blurb: "Only attacks draw the sword; the sheathe clip puts it back.", ids: ["player-sword-draw-slash","player-sword-slash","player-sword-sheathe","player-sword-down-attack"] },
   { title: "Gun", blurb: "Pistol in the far hand; the sword stays sheathed.", ids: ["player-gun-aim","player-gun-shot","player-gun-wall-shot"] },

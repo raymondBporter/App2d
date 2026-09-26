@@ -310,16 +310,16 @@
       "control": "chest",
       "frame": "chest",
       "offsetX": -0.1,
-      "offsetY": 0.15,
-      "angle": -1.7707964
+      "offsetY": -0.08,
+      "angle": -1.6907964
     },
     {
       "id": "back-view",
       "control": "chest",
       "frame": "chest",
-      "offsetX": 0.13,
+      "offsetX": -0.13,
       "offsetY": 0.12,
-      "angle": -2.1207964
+      "angle": -1.0207963
     },
     {
       "id": "sword-hand",

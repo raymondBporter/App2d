@@ -13,6 +13,12 @@ public sealed record ClipKey
     public float Angle { get; set; }
     /// <summary>How the value moves from this key to the next: see <see cref="ClipEase"/>.</summary>
     public string Ease { get; set; } = ClipEase.Linear;
+    /// <summary>
+    /// Target keys only: which side the chain's joint bends to (1 or -1) from this key until the next key that sets one,
+    /// such as an elbow or knee mirrored for a back view. Flip it where the limb passes straight so the change never
+    /// shows. Null keeps the current side; before any key sets one, the chain's own bend applies.
+    /// </summary>
+    public int? Bend { get; set; }
 }
 
 /// <summary>Per-key easing. Linear is the default; step holds the value until the next key.</summary>
@@ -54,9 +60,6 @@ public sealed record ClipTrack
     public string Target { get; set; } = "";
     /// <summary>Overrides the control's or chain's default measure. Null uses the model default.</summary>
     public string? Scale { get; set; }
-    /// <summary>Target tracks only: which side the chain's joint bends to (1 or -1) for this clip, such as knees and elbows
-    /// mirrored for a back view. Null uses the chain's own bend.</summary>
-    public int? Bend { get; set; }
     public List<ClipKey> Keys { get; set; } = [];
 }
 
@@ -121,7 +124,7 @@ public sealed class MotionClip
             Require(track is not null && track.Keys is not null && track.Target is not null, $"{owner}: incomplete track.");
             EntityVocabulary.Require(track.Kind, TrackKinds, $"{owner} track kind");
             Require(seen.Add((track.Kind, track.Target)), $"{owner}: duplicate {track.Kind} track for '{track.Target}'.");
-            Require(track.Bend is null || track.Kind == TargetKind && track.Bend is 1 or -1, $"{owner} {track.Kind} track '{track.Target}': bend is 1 or -1, on target tracks only.");
+            Require(track.Keys.All(k => k is null || k.Bend is null || track.Kind == TargetKind && k.Bend is 1 or -1), $"{owner} {track.Kind} track '{track.Target}': bend is 1 or -1, on target keys only.");
             var rotate = track.Kind == RotateKind;
             CheckKeys(track.Keys, $"{owner} {track.Kind} track '{track.Target}'",
                 rotate ? k => k.X == 0 && k.Y == 0 && k.Z == 0 : k => k.Angle == 0, rotate ? "rotate keys use angle only" : "keys use x, y and z only");

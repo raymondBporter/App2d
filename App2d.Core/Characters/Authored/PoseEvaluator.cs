@@ -64,7 +64,8 @@ public static class PoseEvaluator
             var (value, _) = Interpolate(track.Keys, time); var ratio = Ratio(track.Scale ?? defaultScale);
             return new(value.X * ratio, value.Y * ratio, value.Z);
         }
-        int Bend(ModelChain chain) => tracks.TryGetValue((MotionClip.TargetKind, chain.Id), out var track) && track.Bend is { } bend ? bend : chain.Bend;
+        int Bend(ModelChain chain) => tracks.TryGetValue((MotionClip.TargetKind, chain.Id), out var track)
+            && track.Keys.LastOrDefault(k => k.Bend is not null && k.Time <= time) is { Bend: { } bend } ? bend : chain.Bend;
         float Angle(string target) => tracks.TryGetValue((MotionClip.RotateKind, target), out var track) ? Interpolate(track.Keys, time).Angle : 0;
 
         var angles = pose.Angles;

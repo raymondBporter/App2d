@@ -17,12 +17,14 @@ internal static class PlayerMoves
     // Stance: the walk's contact spacing. Feet rest at y = 0.025 (sole on the ground).
     private const float Back = -.125f, Front = .125f, Ground = .025f;
     // Sheathed sword: grip in the chest frame and the blade's direction. Worn diagonally across the back, so in this
-    // profile it foreshortens to a near-vertical line tucked behind the torso and head: only the tip shows below.
-    private static readonly Vector2 SheathGrip = new(-.1f, .15f);
-    private const float SheathAngle = -MathF.PI / 2 - .2f;
-    // The same sheath seen from behind: hilt over the right shoulder, tip at the left hip, drawn across the back.
-    private static readonly Vector2 BackViewGrip = new(.13f, .12f);
-    private const float BackViewAngle = -MathF.PI / 2 - .55f;
+    // profile it foreshortens to a near-vertical line hidden behind the torso: the hilt sits below the shoulder line
+    // (a guard at neck height read as part of the neck) and only the scabbard's tip shows below the back.
+    private static readonly Vector2 SheathGrip = new(-.1f, -.08f);
+    private const float SheathAngle = -MathF.PI / 2 - .12f;
+    // The same sheath seen from behind: hilt over the right shoulder (screen left once turned), tip toward the left hip,
+    // drawn across the back.
+    private static readonly Vector2 BackViewGrip = new(-.13f, .12f);
+    private const float BackViewAngle = -MathF.PI / 2 + .55f;
 
     public static IEnumerable<ModelSocket> Sockets() =>
     [
@@ -37,7 +39,7 @@ internal static class PlayerMoves
     public static IEnumerable<MotionClip> Clips(ResolvedModel m) =>
     [
         Idle(m), Jump(m), Fall(m), Land(m), Dash(m),
-        Climb(m), WallGrip(m), BalanceForward(m), BalanceBackward(m),
+        ClimbTurn(m, onto: true), Climb(m), ClimbTurn(m, onto: false), WallGrip(m), BalanceForward(m), BalanceBackward(m),
         Hit(m), Death(m), Celebrate(m),
         DrawSlash(m), Slash(m), Sheathe(m), DownAttack(m),
         GunAim(m), GunShot(m), GunWallShot(m),
@@ -123,32 +125,97 @@ internal static class PlayerMoves
         .Face(0, "determined")
         .Build();
 
+    // ---- Turning ----------------------------------------------------------------------------------------------------
+    // There is no perspective at this size, so turning the body is orthographic: each girdle's near-to-far axis spins in
+    // the ground plane, its points slide left and right on screen, and near and far trade depth order on the way. The
+    // rest pose has that axis at 60 degrees (pointing right and away); 90 is pure profile; 180 has the back square to
+    // the viewer, with the right side on screen left.
+
+    /// <summary>Deltas from rest (x, z) for the four girdle controls at axis angle <paramref name="degrees"/>.</summary>
+    private static (Vector2 LeftShoulder, Vector2 RightShoulder, Vector2 LeftHip, Vector2 RightHip) Girdles(ResolvedModel m, float degrees)
+    {
+        const float shoulderHalf = .18f, hipHalf = .12f, setback = -.025f;
+        var a = degrees * MathF.PI / 180; var axis = new Vector2(MathF.Cos(a), MathF.Sin(a));
+        // The shoulders sit slightly behind the torso's centerline, along the facing direction (the axis turned back 90).
+        var mid = new Vector2(MathF.Sin(a), -MathF.Cos(a)) * setback;
+        Vector2 Delta(string id, Vector2 at) { var rest = m.Rest[id]; return new(at.X - rest.X, at.Y - rest.Z); }
+        return (Delta("left-shoulder", mid - axis * shoulderHalf), Delta("right-shoulder", mid + axis * shoulderHalf),
+            Delta("left-hip", -axis * hipHalf), Delta("right-hip", axis * hipHalf));
+    }
+
     /// <summary>
-    /// Seen from behind, as if the figure turned into the screen to face the ladder: shoulders and hips square to the
-    /// viewer, face hidden, the upper body brought in front of the torso so the sheath shows across the back. A hand on
-    /// each rail and hand over hand, 0.8 s per cycle; a gripping hand or foot travels down at the ladder's speed while the
-    /// free ones reach up with a small outward arc. Opposite hand and foot move together. Marker "view-back" tells the
-    /// presentation to wear the sheath on the back-view socket.
+    /// Keys the girdles at an axis angle. <paramref name="facingAway"/> (0..1) brings the chest toward the viewer so the
+    /// back-view sheath draws in front of the torso, and settles the hips just in front of the torso box.
+    /// </summary>
+    private static PoseKey Turned(this PoseKey k, ResolvedModel m, float degrees, float facingAway)
+    {
+        var (ls, rs, lh, rh) = Girdles(m, degrees);
+        var hipDepth = -.05f * facingAway;
+        return k.Chest(-.02f * facingAway, 0, 0, -.35f * facingAway)
+            .Move("left-shoulder", ls.X, 0, ls.Y).Move("right-shoulder", rs.X, 0, rs.Y)
+            .Move("left-hip", lh.X, 0, lh.Y + hipDepth).Move("right-hip", rh.X, 0, rh.Y + hipDepth);
+    }
+
+    private const float Rail = .36f, RungHigh = 1.95f, RungLow = 1.45f, StepHigh = .6f, StepLow = .05f;
+
+    /// <summary>
+    /// Stepping onto the ladder (<paramref name="onto"/>) or off it (the same keys reversed). The girdles sweep from the
+    /// rest turn to the back view in 0.15 s, the face gives way to the back of the head once past profile, and the sheath
+    /// swaps to the back-view socket as the back comes round; then the hands reach up onto the rails and the right foot
+    /// finds a rung, landing exactly on the climb's first pose. Mid-turn the body stands tall with its arms hanging
+    /// straight, and that is where the right elbow and knee switch to the climb's mirrored bend, so the switch never shows.
+    /// </summary>
+    private static MotionClip ClimbTurn(ResolvedModel m, bool onto)
+    {
+        const float duration = .3f;
+        float T(float t) => onto ? t : duration - t;
+        var b = New(m, onto ? "player-climb-on" : "player-climb-off", onto ? "Turn onto ladder" : "Turn off ladder", duration, false);
+        float[] angles = [60, 84, 108, 132, 156, 180];
+        for (var i = 0; i < angles.Length; i++)
+        {
+            var degrees = angles[i]; var away = Math.Clamp((degrees - 100) / 60, 0, 1);
+            b.Key(T(i * .03f), k => k.Turned(m, degrees, away), ClipEase.Linear);
+        }
+        for (var step = 1; step <= 5; step++)
+        {
+            var a = (-90 + 22.5f * step) * MathF.PI / 180; var (sin, cos) = MathF.SinCos(a);
+            b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(.64f * cos, .64f * sin).RightHand(-.64f * cos, .64f * sin), ClipEase.Linear);
+        }
+        return b
+            .Key(T(0), k => k.Hips(-.01f, -.04f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground), ClipEase.Linear)
+            .Key(T(.09f), k => k.Hips(0, .01f).LeftHand(0, -.645f).RightHand(0, -.645f).LeftFoot(.08f, Ground).RightFoot(-.08f, Ground), ClipEase.Linear)
+            // Arms stay straight while they swing out and up (a straight arm hides which way its elbow would fold), and
+            // bend only once the hands are above the shoulders, where the elbows then point outward.
+            .Key(T(.15f), k => k.Hips(0, -.03f).Head(0).LeftHand(.08f, -.64f).RightHand(-.08f, -.64f).LeftFoot(.1f, Ground).RightFoot(-.1f, Ground), ClipEase.Linear)
+            .Key(T(.22f), k => k.Hips(0, -.07f).LeftHand(.46f, .43f).RightHand(-.46f, .38f).LeftFoot(.1f, .03f).RightFoot(-.1f, .3f), ClipEase.Linear)
+            .Key(T(.3f), k => k.Turned(m, 180, 1).Hips(0, -.1f).Head(0).LeftHandAt(Rail, RungHigh).RightHandAt(-Rail, RungLow).LeftFoot(.1f, StepLow).RightFoot(-.1f, StepHigh), ClipEase.Linear)
+            // Profile side (the chains' own bends) before the straight moment, mirrored after; reversed when stepping off.
+            .Bend("right-arm", 0, onto ? -1 : 1).Bend("right-leg", 0, onto ? 1 : -1)
+            .Bend("right-arm", T(.09f), onto ? 1 : -1).Bend("right-leg", T(.09f), onto ? -1 : 1)
+            .Marker(onto ? MoveBuilder.ProfileViewMarker : MoveBuilder.BackViewMarker, 0)
+            .Marker(onto ? MoveBuilder.BackViewMarker : MoveBuilder.ProfileViewMarker, onto ? .09f : duration - .09f)
+            .Face(0, onto ? "relaxed" : "none").Face(onto ? .06f : duration - .06f, onto ? "none" : "relaxed")
+            .Build();
+    }
+
+    /// <summary>
+    /// Seen from behind, the end of the turn onto the ladder: back square to the viewer (right side on screen left), face
+    /// hidden, sheath across the back. A hand on each rail and hand over hand, 0.8 s per cycle; a gripping hand or foot
+    /// travels down at the ladder's speed while the free ones reach up with a small outward arc. Opposite hand and foot
+    /// move together.
     /// </summary>
     private static MotionClip Climb(ResolvedModel m)
     {
-        const float rail = .36f, high = 1.95f, low = 1.45f, footHigh = .6f, footLow = .05f;
-        // Rest to back view: shoulders out to +-0.19 and hips to +-0.1, both girdles flat to the screen. The chest comes
-        // 0.35 toward the viewer so the back-view sheath lands in front of the torso; arms end at depth -0.3.
-        static PoseKey BackView(PoseKey k) => k
-            .Chest(-.02f, 0, 0, -.35f)
-            .Move("left-shoulder", -.078f, 0, .193f).Move("right-shoulder", .122f, 0, -.118f)
-            .Move("left-hip", -.04f, 0, .054f).Move("right-hip", .04f, 0, -.154f);
         var b = New(m, "player-climb", "Climb", .8f, true);
         foreach (var t in new[] { 0f, .8f })
-            b.Key(t, k => BackView(k).Hips(0, -.1f).Head(0).LeftHandAt(-rail, high).RightHandAt(rail, low).LeftFoot(-.1f, footLow).RightFoot(.1f, footHigh), ClipEase.Linear);
+            b.Key(t, k => k.Turned(m, 180, 1).Hips(0, -.1f).Head(0).LeftHandAt(Rail, RungHigh).RightHandAt(-Rail, RungLow).LeftFoot(.1f, StepLow).RightFoot(-.1f, StepHigh), ClipEase.Linear);
         return b
-            .Key(.2f, k => k.Hips(0, -.08f).LeftHandAt(-rail, (high + low) / 2).RightHandAt(rail + .08f, 1.8f).LeftFoot(-.16f, .38f).RightFoot(.1f, (footHigh + footLow) / 2), ClipEase.Linear)
-            .Key(.4f, k => k.Hips(0, -.1f).LeftHandAt(-rail, low).RightHandAt(rail, high).LeftFoot(-.1f, footHigh).RightFoot(.1f, footLow), ClipEase.Linear)
-            .Key(.6f, k => k.Hips(0, -.08f).LeftHandAt(-rail - .08f, 1.8f).RightHandAt(rail, (high + low) / 2).LeftFoot(-.1f, (footHigh + footLow) / 2).RightFoot(.16f, .38f), ClipEase.Linear)
-            // From behind, the near (left) elbow and knee must bend outward to the left: mirror them for this clip.
-            .Bend("left-arm", 1).Bend("left-leg", -1)
-            .Marker(MoveBuilder.BackViewMarker, 0).Marker("rung-left", 0).Marker("rung-right", .4f)
+            .Key(.2f, k => k.Hips(0, -.08f).LeftHandAt(Rail, (RungHigh + RungLow) / 2).RightHandAt(-Rail - .08f, 1.8f).LeftFoot(.16f, .38f).RightFoot(-.1f, (StepHigh + StepLow) / 2), ClipEase.Linear)
+            .Key(.4f, k => k.Hips(0, -.1f).LeftHandAt(Rail, RungLow).RightHandAt(-Rail, RungHigh).LeftFoot(.1f, StepHigh).RightFoot(-.1f, StepLow), ClipEase.Linear)
+            .Key(.6f, k => k.Hips(0, -.08f).LeftHandAt(Rail + .08f, 1.8f).RightHandAt(-Rail, (RungHigh + RungLow) / 2).LeftFoot(.1f, (StepHigh + StepLow) / 2).RightFoot(-.16f, .38f), ClipEase.Linear)
+            // From behind, the right side is on screen left: its elbow and knee must bend outward, so mirror them.
+            .Bend("right-arm", 0, 1).Bend("right-leg", 0, -1)
+            .Marker(MoveBuilder.BackViewMarker, 0).Marker("rung-left", .4f).Marker("rung-right", 0)
             .Face(0, "none")
             .Build();
     }

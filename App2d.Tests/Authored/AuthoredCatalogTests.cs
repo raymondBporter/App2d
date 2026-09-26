@@ -15,7 +15,7 @@ public sealed class AuthoredCatalogTests
         Assert.Equal(new[]
         {
             "person-idle", "person-jump", "person-run", "person-thrust", "person-walk",
-            "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-dash", "player-death", "player-fall",
+            "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-climb-off", "player-climb-on", "player-dash", "player-death", "player-fall",
             "player-gun-aim", "player-gun-shot", "player-gun-wall-shot", "player-hit", "player-idle", "player-jump", "player-land",
             "player-sword-down-attack", "player-sword-draw-slash", "player-sword-sheathe", "player-sword-slash", "player-wall-grip",
             "stalker-idle", "stalker-lunge", "stalker-walk",

@@ -12,8 +12,12 @@ namespace App2d.CharacterStudio.PlayerMoves;
 internal sealed class MoveBuilder(ResolvedModel model, string id, string name, float duration, bool loop)
 {
     public const string BackSocket = "back", BackViewSocket = "back-view", SwordSocket = "sword-hand", GunSocket = "gun-hand";
-    /// <summary>Marker at 0 on a clip drawn from behind: sheath and sword use <see cref="BackViewSocket"/>.</summary>
-    public const string BackViewMarker = "view-back";
+    /// <summary>
+    /// View markers: from "view-back" the figure is seen from behind and the sheath and sword use
+    /// <see cref="BackViewSocket"/>; from "view-profile" they return to <see cref="BackSocket"/>. The latest marker at or
+    /// before the sample time wins; a clip with neither is in profile.
+    /// </summary>
+    public const string BackViewMarker = "view-back", ProfileViewMarker = "view-profile";
 
     private readonly Dictionary<(string Kind, string Target), SortedDictionary<float, ClipKey>> _tracks = [];
     private readonly List<(string Chain, float Time, Vector2 Offset, bool Absolute, string Ease)> _hands = [];
@@ -22,7 +26,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     private readonly List<ClipMarker> _markers = [];
     private readonly List<ClipFaceKey> _faces = [];
     private readonly List<ClipKey> _travel = [];
-    private readonly Dictionary<string, int> _bends = [];
+    private readonly List<(string Chain, float Time, int Bend)> _bends = [];
 
     public ResolvedModel Model => model;
     public float Duration => duration;
@@ -43,8 +47,11 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
 
     public MoveBuilder Marker(string marker, float time) { _markers.Add(new() { Id = marker, Time = time }); return this; }
     public MoveBuilder Face(float time, string expression) { _faces.Add(new() { Time = time, Expression = expression }); return this; }
-    /// <summary>Flips which side a limb's joint bends to for this clip (a back view mirrors the near elbow and knee).</summary>
-    public MoveBuilder Bend(string chain, int bend) { _bends[chain] = bend; return this; }
+    /// <summary>
+    /// Which side a limb's joint bends to from <paramref name="time"/> on (a back view mirrors an elbow and knee). The limb
+    /// must have a key at that time; place it where the limb is straight so the flip never shows.
+    /// </summary>
+    public MoveBuilder Bend(string chain, float time, int bend) { _bends.Add((chain, time, bend)); return this; }
     public MoveBuilder Travel(float time, float x, float y = 0) { _travel.Add(new() { Time = time, X = x, Y = y, Ease = ClipEase.Linear }); return this; }
 
     internal void Set(string kind, string target, float time, ClipKey key)
@@ -65,11 +72,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
         };
         if (_travel.Count > 0) clip.Travel.Keys = [.. _travel.OrderBy(k => k.Time)];
         if (_faces.Count > 0) clip.Faces = [new() { Part = "head", Keys = [.. _faces.OrderBy(f => f.Time)] }];
-        void Emit() => clip.Tracks = [.. _tracks.Select(t => new ClipTrack
-        {
-            Kind = t.Key.Kind, Target = t.Key.Target, Keys = [.. t.Value.Values],
-            Bend = t.Key.Kind == MotionClip.TargetKind && _bends.TryGetValue(t.Key.Target, out var bend) ? bend : null,
-        })];
+        void Emit() => clip.Tracks = [.. _tracks.Select(t => new ClipTrack { Kind = t.Key.Kind, Target = t.Key.Target, Keys = [.. t.Value.Values] })];
 
         // Pass 1: the body alone fixes each shoulder's accumulated frame. The blade angle is world-relative, so the
         // right shoulder's own turn is whatever is left after the chest's.
@@ -89,6 +92,12 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             var goal = absolute ? new Vector3(offset, shoulder.Z) : shoulder + new Vector3(offset, 0);
             var local = PoseEvaluator.RotateXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
             Set(MotionClip.TargetKind, chainId, time, new() { X = local.X, Y = local.Y, Ease = ease });
+        }
+        foreach (var (chain, time, bend) in _bends)
+        {
+            if (!_tracks.TryGetValue((MotionClip.TargetKind, chain), out var keys) || !keys.TryGetValue(time, out var key))
+                throw new InvalidOperationException($"{id}: bend on '{chain}' at {time} needs a key for that limb at that time.");
+            keys[time] = key with { Bend = bend };
         }
         Emit();
         clip.Validate(model);

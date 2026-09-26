@@ -59,21 +59,23 @@ public sealed class AppearanceAndBuildTests
     }
 
     [Fact]
-    public void ATargetTrackCanFlipItsChainsBendForOneClip()
+    public void ATargetKeyFlipsItsChainsBendFromThatKeyOn()
     {
         var model = ResolvedModel.From(Person);
         MotionClip Reach(int? bend) => new()
         {
             Id = "reach", Name = "Reach", Model = "person", Duration = 1, Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
-            Tracks = [new() { Kind = MotionClip.TargetKind, Target = "left-arm", Bend = bend, Keys = [new() { X = -.2f, Y = .9f }] }],
+            Tracks = [new() { Kind = MotionClip.TargetKind, Target = "left-arm", Keys = [new() { X = -.2f, Y = .9f }, new() { Time = .5f, X = -.2f, Y = .9f, Bend = bend }] }],
         };
-        float ElbowSide(MotionClip clip)
+        float ElbowSide(MotionClip clip, double seconds)
         {
-            clip.Validate(model); var pose = PoseEvaluator.Sample(model, clip, 0);
+            clip.Validate(model); var pose = PoseEvaluator.Sample(model, clip, seconds);
             var shoulder = pose.Points["left-shoulder"]; var hand = pose.Points["left-hand"]; var elbow = pose.Points["left-elbow"];
-            return (hand.X - shoulder.X) * (elbow.Y - shoulder.Y) - (hand.Y - shoulder.Y) * (elbow.X - shoulder.X);
+            return MathF.Sign((hand.X - shoulder.X) * (elbow.Y - shoulder.Y) - (hand.Y - shoulder.Y) * (elbow.X - shoulder.X));
         }
-        Assert.True(MathF.Sign(ElbowSide(Reach(null))) == -MathF.Sign(ElbowSide(Reach(1))));
+        var flipped = Reach(1);
+        Assert.Equal(ElbowSide(Reach(null), .75), ElbowSide(flipped, .25));
+        Assert.Equal(-ElbowSide(flipped, .25), ElbowSide(flipped, .75));
         Assert.DoesNotContain("\"bend\"", Reach(null).ToJson());
         var invalid = Reach(2);
         Assert.Throws<InvalidDataException>(() => invalid.Validate(model));

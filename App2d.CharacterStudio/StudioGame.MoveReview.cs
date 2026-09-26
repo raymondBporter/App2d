@@ -37,7 +37,6 @@ internal sealed partial class StudioGame
         {
             var folder = Path.Combine(_smokePath!, "frames", item.Id); Directory.CreateDirectory(folder);
             var clip = item.Clip; var count = Math.Max(2, (int)MathF.Round(clip.Duration * ReviewFps) + (clip.Loop ? 0 : 1));
-            var backSocket = sockets[clip.Markers.Any(k => k.Id == MoveBuilder.BackViewMarker) ? MoveBuilder.BackViewSocket : MoveBuilder.BackSocket];
             var drawAt = clip.Markers.FirstOrDefault(k => k.Id == "sword-draw")?.Time; var sheatheAt = clip.Markers.FirstOrDefault(k => k.Id == "sword-sheathe")?.Time;
             for (var f = 0; f < count; f++)
             {
@@ -45,6 +44,8 @@ internal sealed partial class StudioGame
                 var pose = PoseEvaluator.Sample(model, clip, seconds);
                 drawing.Build(model, pose);
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
+                var view = clip.Markers.Where(k => k.Id is MoveBuilder.BackViewMarker or MoveBuilder.ProfileViewMarker && k.Time <= seconds + 1e-4f).MaxBy(k => k.Time);
+                var backSocket = sockets[view?.Id == MoveBuilder.BackViewMarker ? MoveBuilder.BackViewSocket : MoveBuilder.BackSocket];
                 drawing.AddProp(props[PlayerMoves.PlayerMoves.Sheath], placed.Socket(backSocket));
                 // In hand from "sword-draw" (or from the start of a clip that only sheathes) until "sword-sheathe".
                 var inHand = (drawAt is { } d ? seconds >= d : sheatheAt is not null) && (sheatheAt is not { } s || seconds < s);
@@ -81,7 +82,8 @@ internal sealed partial class StudioGame
             new("person-run", "Run (existing)", run, "ground", false, "Existing run, now wearing the sheath."),
             Of("player-idle"), Of("player-jump", note: "Opens on the push; gameplay leaves the ground on frame one."),
             Of("player-fall", "air"), Of("player-land"), Of("player-dash", note: "Gameplay dash is 0.16 s (marker dash-end); the rest is recovery."),
-            Of("player-climb", "ladder"), Of("player-wall-grip", "wall"),
+            Of("player-climb-on", "ladder", note: "The girdles sweep round with no perspective: limbs slide across and swap depth, then reach for the rails."),
+            Of("player-climb", "ladder"), Of("player-climb-off", "ladder", note: "The turn onto the ladder played backward."), Of("player-wall-grip", "wall"),
             Of("player-balance-forward", "ledge-ahead"), Of("player-balance-backward", "ledge-behind"),
             Of("player-hit"), Of("player-death") with { ViewX = -.3f }, Of("player-celebrate"),
             Of("player-sword-draw-slash", note: "Damage window 0.10–0.27 s."), Of("player-sword-slash", note: "Follow-up with the sword out."),
@@ -177,7 +179,8 @@ internal sealed partial class StudioGame
             if (pose.Chains.Any(c => !c.Reached && c.Residual > .005f)) overreach++;
             var shoulders = Yaw(pose, "left-shoulder", "right-shoulder", "chest") - restShoulders;
             var hips = Yaw(pose, "left-hip", "right-hip", "hips") - restHips;
-            turnSum += shoulders - hips; swing = MathF.Max(swing, MathF.Abs(shoulders - hips));
+            var offset = MathF.IEEERemainder(shoulders - hips, MathF.Tau); // back views sit on the +-180 degree seam
+            turnSum += offset; swing = MathF.Max(swing, MathF.Abs(offset));
         }
         var seam = 0f;
         if (clip.Loop)

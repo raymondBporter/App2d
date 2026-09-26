@@ -18,8 +18,8 @@ public static class StarterContent
         model.Sockets =
         [
             new() { Id = "right-grip", Control = "right-hand", Frame = "chest", Angle = .12f }, new() { Id = "left-grip", Control = "left-hand", Frame = "chest", Angle = .12f },
-            new() { Id = "back", Control = "chest", Frame = "chest", OffsetX = -.1f, OffsetY = .15f, Angle = -MathF.PI / 2 - .2f },
-            new() { Id = "back-view", Control = "chest", Frame = "chest", OffsetX = .13f, OffsetY = .12f, Angle = -MathF.PI / 2 - .55f },
+            new() { Id = "back", Control = "chest", Frame = "chest", OffsetX = -.1f, OffsetY = -.08f, Angle = -MathF.PI / 2 - .12f },
+            new() { Id = "back-view", Control = "chest", Frame = "chest", OffsetX = -.13f, OffsetY = .12f, Angle = -MathF.PI / 2 + .55f },
             new() { Id = "sword-hand", Control = "right-hand", Frame = "right-shoulder" }, new() { Id = "gun-hand", Control = "right-hand", Frame = "right-shoulder" },
         ];
         model.MotionSets =
