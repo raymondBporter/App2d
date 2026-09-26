@@ -25,6 +25,19 @@ public sealed class ClipAuthoringTests
     }
 
     [Fact]
+    public void AnExcerptPlaysThatSectionOfTheClipFromZero()
+    {
+        var clip = TestModels.Clip(Model);
+        clip.Tracks.Add(new() { Kind = MotionClip.RotateKind, Target = "body", Keys = [new() { Time = 0, Angle = 0 }, new() { Time = .2f, Angle = .4f, Ease = ClipEase.Smooth }, new() { Time = .8f, Angle = -.2f }] });
+        clip.Markers = [new() { Id = "early", Time = .1f }, new() { Id = "strike", Time = .5f }];
+        var part = ClipAuthoring.Excerpt(clip, .2f, .8f, "part", "Part"); // cut on the body's keys
+        Assert.Equal(.6f, part.Duration, 5);
+        foreach (var t in new[] { 0, .1f, .3f, .6f }) TestModels.Near(Posed(clip, "hand", .2f + t), Posed(part, "hand", t), 1e-4f, $"hand at {t}");
+        Assert.Equal(ClipEase.Smooth, part.Tracks.Single(t => t.Target == "body").Keys[0].Ease); // an end on a key keeps its easing
+        Assert.Equal([("strike", .3f)], part.Markers.Select(m => (m.Id, MathF.Round(m.Time, 4))));
+    }
+
+    [Fact]
     public void AnIkJointCannotBePosedDirectly() =>
         Assert.Throws<InvalidOperationException>(() => ClipAuthoring.Pose(Model, TestModels.Clip(Model), PoseEvaluator.Rest(Model), 0, "knee", Vector3.Zero));
 

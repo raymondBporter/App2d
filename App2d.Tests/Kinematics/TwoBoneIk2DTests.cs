@@ -23,7 +23,7 @@ public sealed class TwoBoneIk2DTests
         var pose = TwoBoneIk2D.Solve(Vector2.Zero, new Vector2(100f, 0f), 5f, 4f, 1);
 
         Assert.False(pose.ReachesTarget);
-        Assert.Equal(8.999f, pose.End.X, 3);
+        Assert.Equal(9f * (1 - 1e-5f), pose.End.X, 4);
         Assert.Equal(0f, pose.End.Y, 3);
     }
 

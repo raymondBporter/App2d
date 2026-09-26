@@ -117,7 +117,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     private void Stage(IWorkspaceView view)
     {
         ViewportToolbar();
-        var frame = Viewport.Draw(ImGui.GetContentRegionAvail(), Session.Scene());
+        var frame = Viewport.Draw(ImGui.GetContentRegionAvail(), Session.Scene(), Session);
         frame.Draw.PushClipRect(frame.Origin, frame.Origin + frame.Size, true);
         DrawContacts(frame);
         view.Overlay(frame);

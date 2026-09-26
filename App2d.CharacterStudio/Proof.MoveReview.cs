@@ -18,7 +18,7 @@ internal sealed partial class ProofRenders
 {
     private const int ReviewWidth = 440, ReviewHeight = 460, ReviewFps = 30;
     private const float ReviewPpu = 150;
-    private static readonly string[] UpperTargets = ["chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm"];
+    private static readonly string[] UpperTargets = ["chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm", PersonLoadout.SwordSocket, PersonLoadout.GunSocket];
 
     private sealed record ReviewItem(string Id, string Title, MotionClip Clip, string Scene, bool Gun, string Note, float ViewX = 0);
 
@@ -26,11 +26,11 @@ internal sealed partial class ProofRenders
     {
         var catalog = ProofCatalog();
         var model = catalog.Resolve("person");
-        var props = PlayerMoves.PlayerMoves.Props().ToDictionary(p => p.Id);
+        var props = catalog.Props;
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
         var target = new RenderTarget2D(GraphicsDevice, ReviewWidth, ReviewHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         var drawing = new PuppetDrawing(); var scenery = new CharacterMesh(8192);
-        var items = ReviewItems(catalog, model);
+        var items = ReviewItems(catalog);
         var manifest = new List<object>(); var report = new List<string>();
         foreach (var item in items)
         {
@@ -74,9 +74,9 @@ internal sealed partial class ProofRenders
         return false;
     }
 
-    private static List<ReviewItem> ReviewItems(AuthoredCatalog catalog, ResolvedModel model)
+    private static List<ReviewItem> ReviewItems(AuthoredCatalog catalog)
     {
-        var clips = PlayerMoves.PlayerMoves.Clips(model).ToDictionary(c => c.Id);
+        var clips = catalog.Animations;
         ReviewItem Of(string id, string scene = "ground", bool gun = false, string note = "") => new(id, clips[id].Name, clips[id], scene, gun, note);
         var run = catalog.Animations["person-run"]; var walk = catalog.Animations["person-walk"];
         return
@@ -89,8 +89,9 @@ internal sealed partial class ProofRenders
             Of("player-climb", "ladder"), Of("player-climb-off", "ladder", note: "The turn onto the ladder played backward."), Of("player-wall-grip", "wall"),
             Of("player-balance-forward", "ledge-ahead"), Of("player-balance-backward", "ledge-behind"),
             Of("player-hit"), Of("player-death") with { ViewX = -.3f }, Of("player-celebrate"),
-            Of("player-sword-draw-slash", note: "Damage window 0.10–0.27 s."), Of("player-sword-slash", note: "Follow-up with the sword out."),
-            Of("player-sword-sheathe"), Of("player-sword-down-attack", "air", note: "Damage from frame one to 0.083 s."),
+            Of("player-sword-side-cut", note: "Drawn from the back; the combo's first swing."), Of("player-sword-backhand", note: "Follow-up, from the side cut's held pose."),
+            Of("player-sword-forehand", note: "Follow-up, from the backhand's held pose."), Of("player-sword-put-away"), Of("player-sword-put-away-backhand"),
+            Of("player-sword-sheathe", note: "After the down attack."), Of("player-sword-down-attack", "air", note: "Damage from frame one to 0.083 s."),
             Of("player-gun-aim", gun: true), Of("player-gun-shot", gun: true, note: "Upper body only; the legs here are unkeyed rest. See the layered previews."),
             Of("player-gun-wall-shot", "wall", gun: true),
             new("layer-aim-shot", "Layered: aim + shot", Layer(clips["player-gun-aim"], clips["player-gun-shot"], 2, .5f), "ground", true, "Shot arms on the aim stance, firing every 0.5 s."),

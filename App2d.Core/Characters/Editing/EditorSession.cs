@@ -69,6 +69,18 @@ public sealed class EditorSession
     /// <summary>Further models or variants drawn beside the subject at the same world scale and phase.</summary>
     public List<string> Compare { get; } = [];
     public bool AutoKey { get; set; } = true;
+    /// <summary>Animate-only equipment preview; never changes an entity's loadout.</summary>
+    public string PreviewProp { get; set; } = "sword";
+    public string PreviewSocket { get; set; } = PersonLoadout.SwordSocket;
+    public bool PreviewWeapon { get; set; } = true;
+    public bool EditWeapon { get; set; }
+
+    public (PropAsset Prop, ModelSocket Socket)? WeaponFor(ResolvedModel model)
+    {
+        if (!PreviewWeapon || Assets.Prop(PreviewProp) is not { } prop) return null;
+        var socket = model.Base.Sockets.FirstOrDefault(s => s.Id == PreviewSocket);
+        return socket is null ? null : (prop.Asset, socket);
+    }
     public bool MoveChildren { get; set; } = true;
     /// <summary>Model workspace: control handles and IK setup instead of drawing-part selection. Shows rest.</summary>
     public bool EditRig { get; set; }
@@ -102,7 +114,10 @@ public sealed class EditorSession
             case AssetDocument<EntityAsset> entity:
                 Mode = Workspace.Entity; SetEntity(entity.Id);
                 break;
-            case AssetDocument<PropAsset>: Report($"'{id}' is a prop: props are edited as files and shown through equipment.", true); return;
+            case AssetDocument<PropAsset> prop:
+                SetMode(Workspace.Animate); PreviewProp = prop.Id; PreviewWeapon = EditWeapon = true;
+                Report("Weapon preview opened. Choose its attachment socket; asset and OBJ controls are in the inspector.");
+                break;
             case AssetDocument document:
                 Mode = Workspace.Model; SetSubject(document.Id);
                 break;
@@ -312,6 +327,21 @@ public sealed class EditorSession
 
     public void DiscardPendingPose() => _pending = null;
 
+    /// <summary>Poses a socket independently of its arm. Respects autokey and the same pending-pose/undo workflow as control drags.</summary>
+    public void PoseWeapon(Vector3 radians)
+    {
+        Transport.Pause();
+        Attempt(() =>
+        {
+            var clip = ClipDocument ?? throw new InvalidOperationException("Choose an animation first.");
+            var channel = new Channel(MotionClip.OrientKind, PreviewSocket); var time = Transport.Time;
+            if (AutoKey) { clip.Change(() => ClipAuthoring.SetKey(clip.Asset, channel, time, radians)); return; }
+            if (!PendingValid()) _pending = MotionClip.FromJson(clip.Serialize());
+            ClipAuthoring.SetKey(_pending!, channel, time, radians);
+            _pendingFor = (clip.Id, clip.Version, time);
+        });
+    }
+
     private bool PendingValid() =>
         _pending is not null && ClipDocument is { } clip && _pendingFor.Clip == clip.Id && _pendingFor.Version == clip.Version && MathF.Abs(_pendingFor.Time - Transport.Time) < ClipAuthoring.SameTime;
 
@@ -341,6 +371,7 @@ public sealed class EditorSession
     private IEnumerable<AssetDocument> UndoScope()
     {
         if (ActiveDocument is { } active) yield return active;
+        if (Mode == Workspace.Animate && EditWeapon && Assets.Prop(PreviewProp) is { } prop) yield return prop;
         if (Mode == Workspace.Model && SubjectVariant is { } variant && Assets.Model(variant.Asset.Base) is { } basis) yield return basis;
     }
 

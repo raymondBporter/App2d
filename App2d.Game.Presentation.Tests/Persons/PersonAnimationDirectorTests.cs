@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
@@ -72,23 +73,24 @@ public sealed class PersonAnimationDirectorTests
     }
 
     [Fact]
-    public void SwordSwingsDrawThenFollowUpThenSheatheWhenStill()
+    public void SwordSwingsPlayTheHeroActionGameplayNamesThenItsRecovery()
     {
         var d = new Driver();
         d.Step(Standing, 5);
-        var swing = Standing with { Action = new(PlayerAttackKind2D.Melee, 0, .35f) };
-        var first = d.Step(swing);
-        Assert.Equal(PersonMoves.DrawSlash, first.Key);
-        var mid = d.Step(swing with { Action = new(PlayerAttackKind2D.Melee, .175f, .35f) });
-        Assert.Equal(Moves[PersonMoves.DrawSlash].Duration / 2, mid.Seconds, 3); // the controller's timing maps onto the clip
+        var cut = Moves.Swing(null); var backhand = Moves.Swing(cut.Next); var forehand = Moves.Swing(backhand.Next);
+        PersonState2D Swinging(ResolvedAction action, float elapsed = 0) => Standing with { Action = new(PlayerAttackKind2D.Melee, elapsed, action.Clip.Duration, action.Id) };
+        Assert.Equal(cut.Clip.Id, d.Step(Swinging(cut)).Key);
+        var mid = d.Step(Swinging(cut, cut.Clip.Duration / 2));
+        Assert.Equal(cut.Clip.Duration / 2, mid.Seconds, 3); // the controller's timing maps onto the clip
         Assert.Contains((PersonLoadout.Sword, PersonLoadout.SwordSocket), PersonLoadout.Worn(mid.Clip, (float)mid.Seconds, mid.Gear));
-        d.Step(Standing, 12);
-        Assert.Equal(PersonMoves.Slash, d.Step(swing with { Action = swing.Action with { FollowUp = true } }).Key); // gameplay says follow-up: sword already out
+        // A chained swing starts on the same tick the last one ends: the action changes while melee stays active.
+        Assert.Equal(backhand.Clip.Id, d.Step(Swinging(backhand)).Key);
+        Assert.Equal(forehand.Clip.Id, d.Step(Swinging(forehand)).Key);
+        Assert.Equal(0, d.Step(Swinging(forehand)).Seconds, 3);
         d.Step(Standing);
-        Assert.Equal(PersonMoves.Sheathe, d.Director.Key);
-        var done = d.Step(Standing, 60);
-        Assert.Equal(PersonMoves.Idle, done.Key);
-        Assert.Equal(PersonMoves.DrawSlash, d.Step(swing).Key); // long after: sheathed again, so it draws
+        Assert.Equal(forehand.Recovery!.Id, d.Director.Key); // the forehand's own put-away
+        Assert.Equal(PersonMoves.Idle, d.Step(Standing, 80).Key);
+        Assert.Equal(cut.Clip.Id, d.Step(Swinging(cut)).Key);
     }
 
     [Fact]

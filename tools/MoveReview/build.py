@@ -51,7 +51,7 @@ for e in m:
     sheet.quantize(colors=64,method=Image.Quantize.MEDIANCUT,dither=Image.Dither.NONE).save(f"{O}/sheets/{e['id']}.png",optimize=True)
     e=dict(e); e['cols']=cols; e['w']=W; e['h']=H; out.append(e)
 refs={'person-walk':'sword_walk','person-run':'sword_run','player-idle':'sword_Idle','player-jump':'sword_jump','player-dash':'sword_dash','player-climb':'sword_climb',
- 'player-wall-grip':'sword_wallslide','player-hit':'sword_hit','player-death':'sword_death','player-sword-draw-slash':'sword_combo','player-sword-slash':'sword_combo',
+ 'player-wall-grip':'sword_wallslide','player-hit':'sword_hit','player-death':'sword_death','player-sword-side-cut':'sword_combo','player-sword-backhand':'sword_combo','player-sword-forehand':'sword_combo',
  'player-sword-down-attack':'sword_air_attack','player-gun-aim':'pistol_Idle','player-gun-shot':'pistol_shot','player-gun-wall-shot':'pistol_wallslide'}
 for e in out:
     r=refs.get(e['id'])

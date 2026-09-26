@@ -18,7 +18,7 @@ public sealed class AuthoredCatalogTests
             "person-death", "person-hammer-slam", "person-heavy-walk", "person-hit", "person-idle", "person-jump", "person-pistol-shot", "person-run", "person-thrust", "person-walk",
             "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-climb-off", "player-climb-on", "player-dash", "player-death", "player-fall",
             "player-gun-aim", "player-gun-shot", "player-gun-wall-shot", "player-hit", "player-idle", "player-jump", "player-land",
-            "player-sword-down-attack", "player-sword-draw-slash", "player-sword-sheathe", "player-sword-slash", "player-wall-grip",
+            "player-sword-backhand", "player-sword-down-attack", "player-sword-forehand", "player-sword-put-away", "player-sword-put-away-backhand", "player-sword-sheathe", "player-sword-side-cut", "player-wall-grip",
             "stalker-death", "stalker-hit", "stalker-idle", "stalker-lunge", "stalker-walk",
         ], catalog.Animations.Keys.Order());
         Assert.Equal(["hammer", "pistol", "sheath", "spear", "sword"], catalog.Props.Keys.Order());

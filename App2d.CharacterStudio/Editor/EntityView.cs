@@ -248,6 +248,19 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
 
         var resolved = session.Entity?.Actions.GetValueOrDefault(id);
+        if (resolved is not null && ImGui.Button("Animate this action with weapon"))
+        {
+            var equipment = document.Asset.Equipment.FirstOrDefault();
+            session.Open(resolved.Clip.Id);
+            if (equipment is not null) { session.PreviewProp = equipment.Prop; session.PreviewSocket = equipment.Socket; session.PreviewWeapon = session.EditWeapon = true; }
+        }
+
+        const string None = "(none)";
+        var others = document.Asset.Actions.Select(a => a.Id).Where(a => a != id).Prepend(None);
+        if (Ui.Combo("Next on another press", action.Next ?? None, others) is { } next) session.Edit(document, () => Def(document, id).Next = next == None ? null : next);
+        var clips = session.Assets.ClipsFor(document.Asset.Model).Select(c => c.Id).Order(StringComparer.Ordinal).Prepend(None);
+        if (Ui.Combo("Recovery clip", action.Recovery ?? None, clips) is { } recovery) session.Edit(document, () => Def(document, id).Recovery = recovery == None ? null : recovery);
+        if (action.Next is not null || action.Recovery is not null) Ui.Help("A press during this action (or while its recovery still holds the weapon out) chains to the next one; the recovery plays when it ends.");
 
         var groups = basis?.Groups.Select(g => g.Id).ToArray() ?? [];
         if (id != EntityControllers.Jump)
@@ -308,11 +321,19 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         TimeField("Opens", hit.Start, resolved?.Clip, time => Hit().Start = time, document);
         TimeField("Closes", hit.Finish, resolved?.Clip, time => Hit().Finish = time, document);
         var props = document.Asset.Equipment.Select(e => "prop:" + e.Prop); var sockets = basis?.Sockets.Select(s => "socket:" + s.Id) ?? [];
-        var anchor = hit.Prop is not null ? "prop:" + hit.Prop : "socket:" + hit.Socket;
-        if (Ui.Combo("Anchored to", anchor, props.Concat(sockets)) is { } chosen)
+        var anchor = hit.Prop is not null ? "prop:" + hit.Prop : hit.Socket is not null ? "socket:" + hit.Socket : "actor:";
+        if (Ui.Combo("Anchored to", anchor, props.Concat(sockets).Prepend("actor:"), a => a == "actor:" ? "the actor (fixed box)" : a) is { } chosen)
             session.Edit(document, () => { var h = Hit(); var (kind, value) = (chosen[..chosen.IndexOf(':')], chosen[(chosen.IndexOf(':') + 1)..]); h.Prop = kind == "prop" ? value : null; h.Socket = kind == "socket" ? value : null; });
         if (hit.Prop is not null && Ui.Combo("Prop point", hit.Point, PropAsset.PointNames) is { } point) session.Edit(document, () => Hit().Point = point);
-        var along = hit.Along; if (Ui.Drag("Along the anchor's axis", ref along, .005f, -100, 100)) session.Change(document, () => Hit().Along = along);
+        if (hit.Prop is null && hit.Socket is null)
+        {
+            var offset = new Vector2(hit.OffsetX, hit.OffsetY);
+            if (Ui.Drag2("Centre ahead / above the feet", ref offset, .005f, -100, 100)) session.Change(document, () => { Hit().OffsetX = offset.X; Hit().OffsetY = offset.Y; });
+        }
+        else
+        {
+            var along = hit.Along; if (Ui.Drag("Along the anchor's axis", ref along, .005f, -100, 100)) session.Change(document, () => Hit().Along = along);
+        }
         var size = new Vector2(hit.Width, hit.Height);
         if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100)) session.Change(document, () => { Hit().Width = Math.Max(.01f, size.X); Hit().Height = Math.Max(.01f, size.Y); });
         var damage = hit.Damage; ImGui.TextUnformatted("Damage"); ImGui.SetNextItemWidth(-1);

@@ -19,6 +19,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     private readonly Dictionary<(string Kind, string Target), SortedDictionary<float, ClipKey>> _tracks = [];
     private readonly List<(string Chain, float Time, Vector2 Offset, bool Absolute, string Ease)> _hands = [];
     private readonly List<(float Time, float Angle, string Ease)> _blade = [];
+    private readonly List<(float Time, float Wrist, string Ease)> _grips = [];
     private readonly List<ClipContact> _contacts = [];
     private readonly List<ClipMarker> _markers = [];
     private readonly List<ClipFaceKey> _faces = [];
@@ -58,6 +59,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     }
     internal void Hand(string chain, float time, Vector2 offset, bool absolute, string ease) => _hands.Add((chain, time, offset, absolute, ease));
     internal void Blade(float time, float angle, string ease) => _blade.Add((time, angle, ease));
+    internal void Grip(float time, float wrist, string ease) => _grips.Add((time, wrist, ease));
 
     public MotionClip Build()
     {
@@ -80,22 +82,41 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
 
         // Pass 1: the body alone fixes each shoulder's accumulated frame. The blade angle is world-relative, so the
         // right shoulder's own turn is whatever is left after the chest's.
-        Emit();
-        foreach (var (time, angle, ease) in _blade)
+        void Blades(IEnumerable<(float Time, float Angle, string Ease)> blades)
         {
-            var body = PoseEvaluator.Sample(model, clip, time);
-            var inherited = body.Angles["right-shoulder"] - Angle(clip, "right-shoulder", time);
-            Set(MotionClip.RotateKind, "right-shoulder", time, new() { Angle = angle - inherited, Ease = ease });
+            foreach (var (time, angle, ease) in blades)
+            {
+                var body = PoseEvaluator.Sample(model, clip, time);
+                var inherited = body.Angles["right-shoulder"] - Angle(clip, "right-shoulder", time);
+                Set(MotionClip.RotateKind, "right-shoulder", time, new() { Angle = angle - inherited, Ease = ease });
+            }
         }
         // Pass 2: hands against the shoulders that pass 1 produced.
-        Emit();
-        foreach (var (chainId, time, offset, absolute, ease) in _hands)
+        void Hands()
         {
-            var chain = model.Chains[chainId]; var pose = PoseEvaluator.Sample(model, clip, time);
-            var shoulder = pose.Points[chain.Frame]; var frameAngle = pose.Angles[chain.Frame];
-            var goal = absolute ? new Vector3(offset, shoulder.Z) : shoulder + new Vector3(offset, 0);
-            var local = PoseEvaluator.RotateXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
-            Set(MotionClip.TargetKind, chainId, time, new() { X = local.X, Y = local.Y, Ease = ease });
+            foreach (var (chainId, time, offset, absolute, ease) in _hands)
+            {
+                var chain = model.Chains[chainId]; var pose = PoseEvaluator.Sample(model, clip, time);
+                var shoulder = pose.Points[chain.Frame]; var frameAngle = pose.Angles[chain.Frame];
+                var goal = absolute ? new Vector3(offset, shoulder.Z) : shoulder + new Vector3(offset, 0);
+                var local = PoseEvaluator.RotateXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
+                Set(MotionClip.TargetKind, chainId, time, new() { X = local.X, Y = local.Y, Ease = ease });
+            }
+        }
+        Emit(); Blades(_blade);
+        Emit(); Hands();
+        // Pass 3: grips turn the blade from the forearm the arm IK produced. Turning the shoulder frame never moves the
+        // elbow (the hand goal is absolute), so one more hands pass against the new frames settles it exactly.
+        if (_grips.Count > 0)
+        {
+            Emit();
+            var arm = model.Chains["right-arm"];
+            Blades([.. _grips.Select(g =>
+            {
+                var pose = PoseEvaluator.Sample(model, clip, g.Time); var forearm = pose.Points[arm.End] - pose.Points[arm.Joint];
+                return (g.Time, MathF.Atan2(forearm.Y, forearm.X) + g.Wrist, g.Ease);
+            })]);
+            Emit(); Hands();
         }
         foreach (var (chain, time, bend) in _bends)
         {
@@ -164,4 +185,9 @@ internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
     public PoseKey RightHandAt(float x, float y) { owner.Hand("right-arm", time, new(x, y), true, ease); return this; }
     /// <summary>The direction the right hand's held prop points, in world radians (0 = forward, pi/2 = up).</summary>
     public PoseKey Blade(float angle) { owner.Blade(time, angle, ease); return this; }
+    /// <summary>
+    /// The held prop's angle from the right forearm, counter-clockwise in radians. A fist holds a sword across the forearm,
+    /// so about pi/2 is neutral and the wrist bends it perhaps 0.6 either way; near 0 the blade reads as glued to the arm.
+    /// </summary>
+    public PoseKey Grip(float wrist) { owner.Grip(time, wrist, ease); return this; }
 }

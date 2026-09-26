@@ -12,7 +12,7 @@ namespace App2d.Gameplay.Persons;
 /// <summary>
 /// Draws the player as the authored Person with the player move set. Observes the existing traversal/controller state;
 /// <see cref="PersonAnimationDirector"/> picks the clip, a <see cref="ContactHold"/> keeps planted feet planted while the
-/// body moves, and <see cref="PersonLoadout"/> decides where the sheath, sword and pistol sit. The figure is scaled so its
+/// body moves, and <see cref="PersonLoadout"/> decides where the sword and pistol sit. The figure is scaled so its
 /// rest height matches the traversal collider.
 /// </summary>
 public sealed class AuthoredPersonPresentation2D : IDisposable
@@ -22,6 +22,10 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     private readonly AuthoredCharacterShader _shader;
     private readonly ContactHold _hold = new();
     private readonly PersonFace2D _face = new();
+    private readonly BladeSwoosh _swoosh = new();
+    private readonly Dictionary<MotionClip, bool> _backhands = [];
+    /// <summary>The swoosh sits just behind the blade so the sword always draws over it.</summary>
+    private static readonly Vector3 SwooshDepth = new(0, 0, .01f);
     private readonly float _halfHeight, _pixelsPerUnit;
     private PersonState2D _state;
     private double _clock;
@@ -32,7 +36,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         _scene = scene; _halfHeight = traversal.PlayerColliderSize.Y / 2;
         _pixelsPerUnit = traversal.PlayerColliderSize.Y / RestHeight(moves.Model);
         Director = new(moves, _pixelsPerUnit);
-        _shader = new(moves.Model);
+        _shader = new(moves.Model) { Swoosh = _swoosh };
         _visual = new(AxisAlignedRectangle2D.FromSize(new(10, 10), new(0, 2)), _shader) { ZIndex = 1 };
         _visual.Transform.Scale = new(_pixelsPerUnit);
         scene.Add(_visual);
@@ -49,7 +53,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     public void PlayLanding() => _face.Land();
     public void PlayCelebrate() { Director.PlayCelebrate(); _face.Celebrate(); }
     public void PlayDeath() => Director.PlayDeath();
-    public void Reset() { Director.Reset(); _hold.Clear(); _face.Reset(); _drawnKey = ""; }
+    public void Reset() { Director.Reset(); _hold.Clear(); _face.Reset(); _swoosh.Reset(); _drawnKey = ""; }
 
     public void ApplyState(PersonState2D state, long tick, float moveX, bool shield, bool melee)
     {
@@ -74,10 +78,26 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         Pose = pose;
         var model = Director.Moves.Model; var sockets = model.Base.Sockets;
         _shader.Pose = pose.Local; _shader.Facing = facing; _shader.Face = _face.Pose;
-        _shader.Props = [.. PersonLoadout.Worn(frame.Clip, (float)Math.Min(frame.Seconds, frame.Clip.Duration), frame.Gear)
-            .Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
+        var seconds = (float)Math.Min(frame.Seconds, frame.Clip.Duration);
+        _shader.Props = [.. PersonLoadout.Worn(frame.Clip, seconds, frame.Gear).Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
+        RecordSwoosh(frame, seconds, pose.Local);
         _visual.Transform.Position = Feet(s);
         _visual.IsVisible = s.InvulnerabilitySeconds <= 0 || ((int)(_clock * 20) & 1) == 0 || !s.IsAlive;
+    }
+
+    /// <summary>
+    /// Feeds the swoosh the held blade while the clip's swoosh markers say it is swinging. A backhand takes the follow-up
+    /// mark and turns the other way round.
+    /// </summary>
+    private void RecordSwoosh(PersonFrame frame, float seconds, EvaluatedPose pose)
+    {
+        var moves = Director.Moves;
+        if (frame.Gear != PersonGear.Sword || !PersonLoadout.SwordInHand(frame.Clip, seconds)) { _swoosh.Record((float)_clock, default, default, false); return; }
+        var sword = moves.Props[PersonLoadout.Sword]; var socket = moves.Model.Base.Sockets.First(k => k.Id == PersonLoadout.SwordSocket);
+        if (!_backhands.TryGetValue(frame.Clip, out var backhand)) _backhands[frame.Clip] = backhand = PersonLoadout.Backhand(moves.Model, frame.Clip, sword, socket);
+        _swoosh.Sweep = backhand ? 1 : -1; _swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary;
+        var (guard, tip) = PersonLoadout.Blade(pose, sword, socket);
+        _swoosh.Record((float)_clock, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(frame.Clip, seconds));
     }
 
     public void Dispose() => _scene.Remove(_visual);

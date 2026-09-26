@@ -311,6 +311,7 @@
       "frame": "chest",
       "offsetX": -0.1,
       "offsetY": -0.08,
+      "offsetZ": 0.2,
       "angle": -1.6907964
     },
     {
@@ -319,6 +320,7 @@
       "frame": "chest",
       "offsetX": -0.13,
       "offsetY": 0.12,
+      "offsetZ": -0.2,
       "angle": -1.0207963
     },
     {

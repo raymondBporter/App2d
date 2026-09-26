@@ -16,6 +16,38 @@ public sealed class EntityRuntimeTests
     private static string Error(EntityAsset asset) => Assert.Throws<InvalidDataException>(() => Compile(asset)).Message;
 
     [Fact]
+    public void AnActorHitBoxIsFixedToTheActorAndAComboChainsThroughNext()
+    {
+        var hero = Catalog.Entities["hero"];
+        var swing = hero.Actions[EntityControllers.Attack]; var hit = swing.Hits[0];
+        // The hit box ignores the pose: the same place ahead of the feet at any time, mirrored by facing.
+        foreach (var facing in new[] { 1, -1 })
+            foreach (var t in new[] { hit.Start, hit.Finish - .01f })
+            {
+                var box = EntityCollision.Attack(hero, new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
+                TestModels.Near(new Vector3(3 + hit.Window.OffsetX * facing, hit.Window.OffsetY, 0), new Vector3((box.Points[0] + box.Points[2]) / 2, 0), 1e-4f, $"box centre at {t}, facing {facing}");
+            }
+        // attack -> follow-up -> forehand -> follow-up: the traversal controller supports the first two, the chain the third.
+        Assert.Equal(EntityControllers.FollowUp, swing.Next);
+        Assert.Equal(EntityControllers.FollowUp, hero.Actions[hero.Actions[swing.Next!].Next!].Next);
+        Assert.All(new[] { swing, hero.Actions[swing.Next!] }, a => Assert.NotNull(a.Recovery));
+
+        var broken = EntityAsset.FromJson(hero.Asset.ToJson()); broken.Actions[0].Next = "nowhere";
+        Assert.Contains("no action 'nowhere'", Assert.Throws<InvalidDataException>(broken.Validate).Message);
+        // Nothing chains to the forehand any more, and the controller has no such action of its own.
+        var unchained = EntityAsset.FromJson(hero.Asset.ToJson()); unchained.Actions.ForEach(a => a.Next = null);
+        Assert.Contains("action 'forehand': the 'traversal' controller does not support it", Assert.Throws<InvalidDataException>(unchained.Validate).Message);
+    }
+
+    [Fact]
+    public void TheSwordCombosSwingsAlternateForehandAndBackhand()
+    {
+        var model = Catalog.Resolve("person"); var socket = model.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket); var sword = Catalog.Props[PersonLoadout.Sword];
+        bool Backhand(string clip) => PersonLoadout.Backhand(model, Catalog.Animations[clip], sword, socket);
+        Assert.False(Backhand("player-sword-side-cut")); Assert.True(Backhand("player-sword-backhand")); Assert.False(Backhand("player-sword-forehand"));
+    }
+
+    [Fact]
     public void CapabilitiesComeFromTheControllerAndTheEntitysOwnActions()
     {
         var guard = Catalog.Entities["spear-guard"]; var player = Catalog.Entities["player"];

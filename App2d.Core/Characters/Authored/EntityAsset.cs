@@ -12,7 +12,9 @@ public sealed record ActionTime
 
 /// <summary>
 /// An attack region active over [Start, Finish). A box centred on a socket, or on a named point of an equipped prop,
-/// pushed Along the anchor's axis. It reads the same resolved transform the prop is drawn with.
+/// pushed Along the anchor's axis; it reads the same resolved transform the prop is drawn with. Anchored to neither, the
+/// box is fixed to the actor: centred <see cref="OffsetX"/> ahead of the feet (mirrored by facing) and <see cref="OffsetY"/>
+/// above them, whatever the pose does. The swing then is presentation only and the hit is exactly what the box says.
 /// </summary>
 public sealed record HitWindow
 {
@@ -23,6 +25,8 @@ public sealed record HitWindow
     public string? Prop { get; set; }
     public string Point { get; set; } = PropAsset.TipPoint;
     public float Along { get; set; }
+    public float OffsetX { get; set; }
+    public float OffsetY { get; set; }
     public float Width { get; set; } = .3f;
     public float Height { get; set; } = .3f;
     public int Damage { get; set; } = 1;
@@ -69,6 +73,13 @@ public sealed record EntityActionDef
     public ProjectileDef? Projectile { get; set; }
     public List<HitWindow> Hits { get; set; } = [];
     public List<ActionEvent> Events { get; set; } = [];
+    /// <summary>
+    /// A combo: the action another press plays while this one runs (buffered to its end) or its <see cref="Recovery"/> still
+    /// holds the weapon out. An action reached this way needs no support from the controller of its own.
+    /// </summary>
+    public string? Next { get; set; }
+    /// <summary>The clip played when the action ends and nothing else takes over, such as putting the weapon away.</summary>
+    public string? Recovery { get; set; }
 }
 
 /// <summary>The controller and its supported configuration. Speeds are model units per second.</summary>
@@ -172,13 +183,16 @@ public sealed class EntityAsset
             Require(props.Add(binding.Prop), $"{owner}: prop '{binding.Prop}' is equipped twice.");
         }
         var actions = new HashSet<string>(StringComparer.Ordinal);
+        var chained = Actions.Where(a => a?.Next is not null).Select(a => a.Next!).ToHashSet(StringComparer.Ordinal);
         foreach (var action in Actions)
         {
             Require(action?.Hits is not null && action.Events is not null, $"{owner}: incomplete action.");
             AuthoredAsset.RequireId(action.Id, $"{owner} action id");
             var field = $"{owner} action '{action.Id}'";
             Require(actions.Add(action.Id), $"{owner}: duplicate action '{action.Id}'.");
-            Require(spec.Actions.Contains(action.Id), $"{field}: the '{spec.Id}' controller does not support it (supports: {string.Join(", ", spec.Actions)}).");
+            Require(spec.Actions.Contains(action.Id) || chained.Contains(action.Id), $"{field}: the '{spec.Id}' controller does not support it (supports: {string.Join(", ", spec.Actions)}, and any action another names as next).");
+            if (action.Next is not null) { AuthoredAsset.RequireId(action.Next, field + " next"); Require(Actions.Any(a => a?.Id == action.Next), $"{field} next: no action '{action.Next}'."); }
+            if (action.Recovery is not null) AuthoredAsset.RequireId(action.Recovery, field + " recovery");
             Require((action.Role is null) != (action.Clip is null), $"{field}: name exactly one of role or clip.");
             if (action.Role is not null) AuthoredAsset.RequireId(action.Role, field + " role");
             if (action.Clip is not null) AuthoredAsset.RequireId(action.Clip, field + " clip");
@@ -199,10 +213,11 @@ public sealed class EntityAsset
                 Require(hit?.Start is not null && hit.Finish is not null, $"{field}: incomplete hit window.");
                 AuthoredAsset.RequireId(hit.Id, field + " hit id");
                 Require(hits.Add(hit.Id), $"{field}: duplicate hit window '{hit.Id}'.");
-                Require((hit.Socket is null) != (hit.Prop is null), $"{field} hit '{hit.Id}': anchor to exactly one of socket or prop.");
+                Require(hit.Socket is null || hit.Prop is null, $"{field} hit '{hit.Id}': anchor to a socket or a prop, not both (neither fixes it to the actor).");
                 if (hit.Prop is not null) { Require(props.Contains(hit.Prop), $"{field} hit '{hit.Id}': prop '{hit.Prop}' is not equipped."); EntityVocabulary.Require(hit.Point, PropAsset.PointNames, $"{field} hit '{hit.Id}' point"); }
                 CheckTime(hit.Start, $"{field} hit '{hit.Id}' start"); CheckTime(hit.Finish, $"{field} hit '{hit.Id}' finish");
                 new Limit(-100, 100).Check(hit.Along, $"{field} hit '{hit.Id}' along");
+                new Limit(-100, 100).Check(hit.OffsetX, $"{field} hit '{hit.Id}' offsetX"); new Limit(-100, 100).Check(hit.OffsetY, $"{field} hit '{hit.Id}' offsetY");
                 new Limit(.01f, 100).Check(hit.Width, $"{field} hit '{hit.Id}' width"); new Limit(.01f, 100).Check(hit.Height, $"{field} hit '{hit.Id}' height");
                 new Limit(0, 10000).Check(hit.Damage, $"{field} hit '{hit.Id}' damage");
                 if (hit.Sound is not null) AuthoredAsset.RequireId(hit.Sound, $"{field} hit '{hit.Id}' sound");

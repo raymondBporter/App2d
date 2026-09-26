@@ -37,26 +37,31 @@ public sealed class PersonMoveSetTests
     [Fact]
     public void TheSwordIsInHandOnlyBetweenDrawAndSheathe()
     {
-        var draw = Catalog.Animations["player-sword-draw-slash"]; var sheathe = Catalog.Animations["player-sword-sheathe"]; var idle = Catalog.Animations["player-idle"];
-        static string SwordAt(MotionClip clip, float t, PersonGear gear = PersonGear.Sword) => PersonLoadout.Worn(clip, t, gear).Single(w => w.Prop == PersonLoadout.Sword).Socket;
+        var draw = Catalog.Animations["player-sword-side-cut"]; var sheathe = Catalog.Animations["player-sword-sheathe"]; var idle = Catalog.Animations["player-idle"];
+        static string SwordAt(MotionClip clip, float t, PersonGear gear = PersonGear.Sword)
+        {
+            var worn = PersonLoadout.Worn(clip, t, gear).ToArray();
+            Assert.Equal(gear == PersonGear.Gun ? 2 : 1, worn.Length);
+            return worn.Single(w => w.Prop == PersonLoadout.Sword).Socket;
+        }
         Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, 0));
-        Assert.Equal(PersonLoadout.SwordSocket, SwordAt(draw, .06f));
+        Assert.Equal(PersonLoadout.SwordSocket, SwordAt(draw, .03f));
         Assert.Equal(PersonLoadout.SwordSocket, SwordAt(sheathe, 0));
         Assert.Equal(PersonLoadout.BackSocket, SwordAt(sheathe, .31f));
         Assert.Equal(PersonLoadout.BackSocket, SwordAt(idle, 1));
-        Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, .06f, PersonGear.Gun)); // the gun hand holds the pistol, not the sword
+        Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, .03f, PersonGear.Gun)); // the gun hand holds the pistol, not the sword
         Assert.Contains((PersonLoadout.Pistol, PersonLoadout.GunSocket), PersonLoadout.Worn(idle, 0, PersonGear.Gun));
         Assert.Empty(PersonLoadout.Worn(idle, 0, PersonGear.None));
     }
 
     [Fact]
-    public void BackViewMarkersMoveTheSheathAcrossTheBack()
+    public void BackViewMarkersMoveTheSwordAcrossTheBack()
     {
         var on = Catalog.Animations["player-climb-on"]; var climb = Catalog.Animations["player-climb"]; var off = Catalog.Animations["player-climb-off"];
         Assert.False(PersonLoadout.SeenFromBehind(on, 0)); Assert.True(PersonLoadout.SeenFromBehind(on, .2f));
         Assert.True(PersonLoadout.SeenFromBehind(climb, .5f));
         Assert.True(PersonLoadout.SeenFromBehind(off, .1f)); Assert.False(PersonLoadout.SeenFromBehind(off, .25f));
-        Assert.Equal(PersonLoadout.BackViewSocket, PersonLoadout.Worn(climb, .5f, PersonGear.Sword).First(w => w.Prop == PersonLoadout.Sheath).Socket);
+        Assert.Equal((PersonLoadout.Sword, PersonLoadout.BackViewSocket), Assert.Single(PersonLoadout.Worn(climb, .5f, PersonGear.Sword)));
     }
 
     [Fact]

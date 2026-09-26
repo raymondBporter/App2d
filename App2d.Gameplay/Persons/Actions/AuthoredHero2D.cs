@@ -6,59 +6,68 @@ using System.Numerics;
 namespace App2d.Gameplay.Persons.Actions;
 
 /// <summary>
-/// The traversal player's action timing and geometry from its authored entity (<c>hero</c>): the sword's duration and damage
-/// window come from its attack clip's markers (the draw-slash from the sheath, or the follow-up slash when the blade is out), and the hit box and gun muzzle from the same poses the player is drawn with,
-/// at the same pixels per unit (the collider height over the model's drawn height). Positions are offsets from the collider
+/// The traversal player's action timing and geometry from its authored entity (<c>hero</c>). The sword swings are the attack
+/// action and the actions its <see cref="ResolvedAction.Next"/> chain reaches: each takes its duration and damage window
+/// from its clip's markers and its hit from a box fixed to the player, and a press chains to the next swing while one runs
+/// or its recovery clip still holds the sword. The gun muzzle comes from the same poses the player is drawn with. Sizes use
+/// the same pixels per unit (the collider height over the model's drawn height); positions are offsets from the collider
 /// centre, Y up.
 /// </summary>
 public sealed class AuthoredHero2D
 {
     public const string EntityId = "hero";
     private readonly float _halfHeight;
+    private readonly Dictionary<string, IShape2D> _shapes = new(StringComparer.Ordinal);
 
     public AuthoredHero2D(ResolvedEntity entity, Vector2 colliderSize)
     {
         Entity = entity;
         if (entity.Controller.Id != EntityControllers.Traversal) throw new InvalidDataException($"Entity '{entity.Id}' must use the '{EntityControllers.Traversal}' controller to drive the game's player.");
         Attack = entity.Actions.GetValueOrDefault(EntityControllers.Attack) ?? throw new InvalidDataException($"Entity '{entity.Id}' has no attack action.");
-        FollowUp = entity.Actions.GetValueOrDefault(EntityControllers.FollowUp) ?? Attack;
-        foreach (var swing in new[] { Attack, FollowUp })
-        {
-            if (swing.Hits.Count != 1) throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window; the sword hit box is one shape.");
-            if (swing.Hits[0].Window.Width != Attack.Hits[0].Window.Width || swing.Hits[0].Window.Height != Attack.Hits[0].Window.Height || swing.Hits[0].Window.Damage != Attack.Hits[0].Window.Damage)
-                throw new InvalidDataException($"Entity '{entity.Id}': the attack and follow-up hit boxes must share size and damage.");
-        }
         PixelsPerUnit = colliderSize.Y / entity.Model.DrawnHeight();
         _halfHeight = colliderSize.Y / 2;
+        for (var swing = Attack; swing is not null && !_shapes.ContainsKey(swing.Id); swing = swing.Next is { } next ? entity.Actions[next] : null)
+        {
+            if (swing.Hits is not [{ Window: { Socket: null, Prop: null } hit }])
+                throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window, fixed to the actor (no socket or prop): the player's sword hit is a box on the player.");
+            _shapes[swing.Id] = AxisAlignedRectangle2D.FromSize(new Vector2(hit.Width, hit.Height) * PixelsPerUnit);
+        }
     }
 
     public ResolvedEntity Entity { get; }
     public ResolvedAction Attack { get; }
-    /// <summary>The swing played when the blade is already out; the attack itself when the entity defines none.</summary>
-    public ResolvedAction FollowUp { get; }
-    public ResolvedAction Swing(bool followUp) => followUp ? FollowUp : Attack;
+    public ResolvedAction Swing(string? id) => id is null ? Attack : Entity.Actions[id];
     public float PixelsPerUnit { get; }
-    private ResolvedHit Hit => Attack.Hits[0];
 
-    public IShape2D Shape => AxisAlignedRectangle2D.FromSize(new Vector2(Hit.Window.Width, Hit.Window.Height) * PixelsPerUnit);
-    internal MeleeAttackProfile2D Profile(bool followUp)
+    public IShape2D Shape(string? swing = null) => _shapes[Swing(swing).Id];
+    public int Damage(string? swing = null) => Swing(swing).Hits[0].Window.Damage;
+
+    /// <summary>
+    /// A swing's timing and its fixed box, centred where the entity puts it (mirrored by facing when placed). A press any
+    /// time during the swing is held for its end, so mashing never drops one.
+    /// </summary>
+    internal MeleeAttackProfile2D Profile(string? id)
     {
-        var swing = Swing(followUp);
-        return new(swing.Clip.Duration, swing.Hits[0].Start, swing.Hits[0].Finish, .1f, 0);
+        var swing = Swing(id); var hit = swing.Hits[0];
+        var centre = ToWorld(new(hit.Window.OffsetX, hit.Window.OffsetY));
+        return new(swing.Clip.Duration, hit.Start, hit.Finish, swing.Clip.Duration, centre.X, centre.Y) { Shape = _shapes[swing.Id] };
     }
-    public int Damage => Hit.Window.Damage;
+
+    /// <summary>
+    /// The swing a press plays <paramref name="sinceEnd"/> seconds after <paramref name="last"/> ended (zero while it runs):
+    /// its next while its recovery still holds the sword out, otherwise the attack from the top.
+    /// </summary>
+    public string Chain(string? last, float sinceEnd)
+    {
+        if (last is null || Swing(last).Next is not { } next) return Attack.Id;
+        var recovery = Swing(last).Recovery;
+        var window = recovery is null ? 0 : recovery.Markers.FirstOrDefault(m => m.Id == PersonLoadout.SheatheMarker)?.Time ?? recovery.Duration;
+        return sinceEnd <= window ? next : Attack.Id;
+    }
 
     /// <summary>The player's bolt from the shoot action's projectile, in pixels.</summary>
     internal GunPersonWeapon2D.Shot? Shot => Entity.Actions.GetValueOrDefault(EntityControllers.Shoot)?.Projectile is { } p
         ? new(new Vector2(p.Width, p.Height) * PixelsPerUnit, p.Speed * PixelsPerUnit, p.Lifetime, p.Damage) : null;
-
-    /// <summary>The hit box centre at a time into the attack, for the given facing.</summary>
-    public Vector2 Offset(float seconds, float facing, bool followUp = false)
-    {
-        var swing = Swing(followUp);
-        var pose = Pose(swing.Clip, seconds, facing);
-        return ToWorld(Bounds2D.FromPoints([.. EntityCollision.Attack(Entity, pose, swing.Hits[0]).Points]).Center);
-    }
 
     /// <summary>Where a shot leaves the pistol: the muzzle at the shoot (or wall-shot) action's fire event.</summary>
     public Vector2 Muzzle(float facing, bool wallGrip)

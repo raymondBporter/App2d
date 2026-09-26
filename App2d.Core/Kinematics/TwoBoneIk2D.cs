@@ -32,7 +32,8 @@ public static class TwoBoneIk2D
         var targetDistance = toTarget.Length();
         var direction = targetDistance > Epsilon ? toTarget / targetDistance : Vector2.UnitX;
         var minimumReach = MathF.Abs(firstLength - secondLength) + Epsilon;
-        var maximumReach = firstLength + secondLength - Epsilon;
+        // A relative margin: a fixed one visibly bends a short limb at full reach (0.001 on a 0.66 arm is 6 degrees).
+        var maximumReach = (firstLength + secondLength) * (1 - 1e-5f);
         var solvedDistance = Math.Clamp(targetDistance, minimumReach, maximumReach);
 
         var along = (firstLength * firstLength - secondLength * secondLength + solvedDistance * solvedDistance) /
