@@ -1,7 +1,8 @@
 # Character editor replacement
 
-Status: proposed implementation design, 2026-09-25. This describes the replacement;
-it does not claim that the existing studio implements it.
+Status: in progress, 2026-09-26. Phases 1 to 3 are implemented, and the in-game player is drawn from authored assets.
+All of this is on branch `claude/character-editor-phase-3-cb7a61`, which is not yet merged to `main`. See
+[Where we are](#where-we-are-2026-09-26) for the summary; each phase below carries its own progress note.
 
 ## Product goal
 
@@ -430,6 +431,52 @@ select source and target, map controls/frames, bake a new clip, review contacts 
 depth, then save with provenance. Do not promise automatic equivalence between
 arbitrary 3D rigs and the native 2.5D controls.
 
+## Where we are (2026-09-26)
+
+| Phase | State |
+| --- | --- |
+| 1. Shared motion proof | Done. Walk and run reproduce the prototype and play on three Person builds. The visual verdict on the rendered frames was never recorded. |
+| 2. Model and Animate editor | Done (`App2d.CharacterStudio --editor`). One acceptance check in `--smoke-editor` failed once and passed in every run since; the cause is unknown. |
+| 3. One entity playable end to end | Done. The spear guard, jumping player and stalker work in the arena and through the editor's **Test**. The guard and stalker replace two enemy placements in the game. |
+| 4. Repeated-authoring workflow | Not started, apart from the masked upper-body overlay (see below). |
+| 5. Cut over | Started. The in-game player is drawn from authored assets. The rest remains. |
+
+**In the game today.** The player is drawn by `AuthoredPersonPresentation2D` using the player move set
+(`player-*` clips plus `person-walk` and `person-run`, and the `sword`, `sheath` and `pistol` props). Movement, hit boxes
+and attack timing still come from `Person2D` and the legacy `entities/player.json`. Shieldback and green-dinosaur
+placements spawn the authored `spear-guard` and `stalker-pest`. Maul, cinder and needle are still legacy point-library
+enemies. The game refuses to start if any authored asset fails to load or compile. Design and gaps for the move set are
+in [the player move set spec](superpowers/specs/2026-09-25-player-move-set-design.md).
+
+**Added since the phase 3 note.**
+- A masked overlay: `PoseInput.Overlay` with `PersonLoadout.UpperBody`. The gun shot and aim play on any legs. There is no blend in or out yet, and `EntityAnimator` does not use it.
+- `ContactHold` for in-place playback outside `EntityAnimator`.
+- `PersonLoadout`, the move set's prop rules, shared by the game and the move review.
+- A blended gameplay `FacePose` drawn on authored models.
+- Per-frame props on `AuthoredCharacterShader`.
+
+**Open issues, most important first.**
+1. **Run speed versus stride.** The game's run (430 px/s, about 13 model units/s at the player's drawn size) is roughly six times the run clip's authored pace (2.2 units/s). The player's gait is capped at 2.5 times its authored pace, and the feet slide beyond that. It needs a longer run stride, a sprint clip, or a different drawn scale.
+2. **Climb art** (reviewed from `45026b90`):
+   - A gripping hand descends 0.50 per half cycle while the feet and the ladder descend 0.55.
+   - The knees splay outside the rails, because the IK bends only in the screen plane.
+   - Hands and feet sit in front of the torso in depth, when the ladder is behind it.
+   - The turn onto the ladder flings the arms to about ±0.8 at mid-turn.
+   - The face hides one frame before the sheath switches to the back view.
+   - The turn off the ladder is reused at the top of a ladder.
+3. **Sword draw.** The draw starts at the front hip, not from the sheath on the back.
+4. **Knees on ladders and turns** need a depth-aware bend or leg foreshortening. That is an engine decision, not just keys.
+5. **Moves outside the spec's scope.** Punch, kick and wall melee reuse the slash.
+
+**Next up.**
+- Merge this branch to `main`.
+- Fix the climb keys and settle the run stride question.
+- Then phase 4:
+  - an Entity workspace, since entities are still hand-edited JSON;
+  - presets, entity duplication and motion-set editing;
+  - the masked upper action inside entities, with blend in and out.
+- Then move the player's gameplay timing off `entities/player.json` and convert the remaining enemies.
+
 ## Implementation sequence and acceptance gates
 
 ### 1. Prove shared motion before replacing the UI
@@ -527,9 +574,9 @@ Verification:
 
 Not yet covered:
 - An Entity workspace: entities are edited as JSON; Test plays them.
-- The in-game player: it is still the traversal `Person2D` with the legacy renderer. The authored player with jump is proven in the arena.
-- Prop orientation tracks and an adapter for the existing `WeaponDrawing` art.
-- The game's blended `FacePose`: authored faces take a gameplay expression string.
+- The in-game player: since 2026-09-26 it is drawn from authored assets (see Where we are). Its gameplay is still the traversal `Person2D` with legacy timing, and its hurt region is still the movement box. The authored jumping `player` entity is proven only in the arena.
+- Prop orientation tracks and an adapter for the existing `WeaponDrawing` art. The player move set brings new sword, sheath and pistol art instead.
+- ~~The game's blended `FacePose`~~: done 2026-09-26; `PuppetDrawing` takes a gameplay face.
 - Hurt regions from shape geometry: they are padded control bounds.
 - Interpolated display poses between ticks.
 - Terrain beyond flat ground: airborne authored enemies hold their pose.
@@ -544,6 +591,10 @@ motion independently of size, and changing a shared walk once. Verify an upper
 attack does not steal leg contacts. Load a representative 50-variant catalog to
 check browsing and that clips are shared rather than duplicated in memory/files.
 
+**Progress (2026-09-26).** The masked layer exists in the evaluator (`PoseInput.Overlay`: one override clip owns the
+channels in its mask, and base contacts on masked chains are skipped), and the in-game player uses it for gun shots over
+locomotion. Not yet: blend in and out, entity actions that declare a mask, and the upper-attack-keeps-leg-contacts gate.
+
 ### 5. Cut over and retire prototype screens
 
 Add explicit `.puppet.json` conversion and selective imported-motion conversion.
@@ -551,6 +602,12 @@ Preserve original files and source metadata. Convert the chosen game entities,
 compare their gameplay behavior, and make the replacement the default studio.
 Remove the old edit workflows after their needed functions are covered; retain
 source preview only where it supports importing and comparison.
+
+**Progress (2026-09-26).** The in-game player's drawing is cut over: `AuthoredPersonPresentation2D` replaced
+`PointPersonPresentation2D`, which is deleted. Still on legacy paths:
+- the player's gameplay timing and collider size (`entities/player.json`);
+- the maul, cinder and needle enemies;
+- the studio's source, entity and workshop screens.
 
 Final acceptance: from a clean checkout, create a model, animate it, make a variant,
 make an entity, save, reopen and use it in the game without a 3D import dependency.
