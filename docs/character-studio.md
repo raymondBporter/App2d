@@ -1,8 +1,8 @@
 # Character Studio
 
-The proposed successor is specified in [Character editor replacement](character-editor-replacement.md),
-including shared model variants, motion sets, implementation stages and code reuse.
-The rest of this page documents the current studio.
+This page documents the legacy studio, now started with `--legacy`. Running the studio with no arguments opens its
+replacement, the character editor, specified in [Character editor replacement](character-editor-replacement.md).
+The game no longer reads the legacy `entities/*.json` files.
 
 For characters built from scratch, use **Create / animate** or run with
 `--workshop`. The [character workshop](character-workshop.md) authors controls,
@@ -11,7 +11,7 @@ simple shapes, key poses and IK contacts without a source motion library.
 ## Run
 
 ```powershell
-dotnet run --project App2d.CharacterStudio
+dotnet run --project App2d.CharacterStudio -- --legacy
 ```
 
 Requires Windows and .NET 10. ImGui.NET 1.91.6.1 is pinned; MonoGame WindowsDX is

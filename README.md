@@ -323,20 +323,19 @@ documents what the build produces and how to author new art.
 dotnet run --project App2d
 ```
 
-Run the C# / Dear ImGui character motion studio with:
+Run the C# / Dear ImGui character editor with:
 
 ```powershell
 dotnet run --project App2d.CharacterStudio
 ```
 
-Use **Create / animate**, or add `-- --workshop`, to create a character from simple
-shapes and named controls without importing animation. The [character workshop](docs/character-workshop.md)
-includes key poses, two-bone IK, world-space contact intervals and a step/plant study.
+It works on the authored assets in `Assets/Characters/authored`, which the game plays: base models, variants with
+build values, looks and reset-to-base overrides, shared animations that play on every build, motion sets, and
+entities (controller, actions, hit windows, equipment, collision) in the **Entity** workspace. **Test** plays entities
+in an arena from the current drafts. The game's player (`hero`) and every enemy placement come from these assets.
 
-The replacement editor (`-- --editor`) works on the authored assets in `Assets/Characters/authored`. It has
-base models, variants with build values and reset-to-base overrides, shared animations that play on every build,
-compare pins and per-document undo. **Test** plays authored entities (a spear guard, a jumping player and a
-three-legged stalker) in the arena from the current drafts; the game spawns the guard and stalker from the same assets.
+The older imported-motion browser and the puppet workshop are behind `-- --legacy` and `-- --workshop` until their
+conversions reach the editor ([character workshop](docs/character-workshop.md)).
 See [the replacement design](docs/character-editor-replacement.md) for progress.
 
 The studio includes 759 point-animation clips (662 Person clips, including the Kevin Iglesias free packs) across Person, Quadruped, Blob,

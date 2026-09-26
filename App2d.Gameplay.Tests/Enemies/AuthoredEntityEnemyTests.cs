@@ -28,7 +28,7 @@ public sealed class AuthoredEntityEnemyTests
          new(2, WorldThingKind2D.Shieldback, null, true, new(-290, 42)),
          new(3, WorldThingKind2D.BoilerBrute, null, true, new(-80, 42)),
          new(5, WorldThingKind2D.GreenDinosaur, null, true, new(210, 42))])
-        { Characters = new EntityCatalog(CharactersRoot), AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
+        { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public sealed class AuthoredEntityEnemyTests
         using var game = Game();
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
-        var center = head.Points.Aggregate(Vector2.Zero, (a, b) => a + b) / head.Points.Count * EntityCatalog.WorldUnits;
+        var center = head.Points.Aggregate(Vector2.Zero, (a, b) => a + b) / head.Points.Count * AuthoredWorld.PixelsPerUnit;
         Assert.True(center.Y > guard.WorldObject.WorldBounds.Max.Y - 30, "the head region comes from the pose, not the movement box");
         var hit = new App2d.Core.SpatialObject2D(App2d.Core.Geometry.AxisAlignedRectangle2D.FromSize(new(2)));
         hit.Transform.Position = center;
@@ -104,7 +104,7 @@ public sealed class AuthoredEntityEnemyTests
             {
                 sawBolt = true;
                 var gun = gunner.Entity.Equipment.Single();
-                var muzzle = ActorPose.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * EntityCatalog.WorldUnits;
+                var muzzle = ActorPose.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * AuthoredWorld.PixelsPerUnit;
                 Assert.True(Vector2.Distance(new(muzzle.X, muzzle.Y), bolts[0].Position) < 12, "the bolt leaves the drawn muzzle");
                 Assert.True(bolts[0].Velocity.X > 0, "toward the player");
             }
@@ -170,7 +170,7 @@ public sealed class AuthoredEntityEnemyTests
                 {
                     sawHitbox = true;
                     var spear = guard.Entity.Equipment[0];
-                    var tip = ActorPose.PropPoint(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Tip) * EntityCatalog.WorldUnits;
+                    var tip = ActorPose.PropPoint(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Tip) * AuthoredWorld.PixelsPerUnit;
                     var bounds = box.WorldBounds;
                     Assert.InRange(tip.X, bounds.Min.X, bounds.Max.X); Assert.InRange(tip.Y, bounds.Min.Y, bounds.Max.Y);
                     Assert.Equal(side, Math.Sign(bounds.Center.X - guard.WorldObject.Transform.Position.X));

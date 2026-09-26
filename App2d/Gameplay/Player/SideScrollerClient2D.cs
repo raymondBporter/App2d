@@ -41,7 +41,7 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public SideScrollerClient2D(SessionSnapshot2D initial, EntityId2D playerId, Scene2D scene,
         Camera2D camera, SideScrollerCamera2D cameraController,
-        TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal, App2d.Core.Characters.EntityCatalog characters, PersonMoves moves)
+        TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal, PersonMoves moves)
     {
         _endpoint = new SessionClient2D(initial, playerId);
         var initialState = _endpoint.State;
@@ -58,7 +58,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         WorldSounds = new SpatialSoundEffectSink2D(sounds, () => State.Person.Position);
         _weapons = new WeaponPresentation2D(scene, textures, WorldSounds);
         _weapons.ApplyState(initialState.Weapons, initialState.Equipment, []);
-        _enemies = new EnemyPresentation2D(scene, textures, traversal, WorldSounds, characters);
+        _enemies = new EnemyPresentation2D(scene, textures, traversal, WorldSounds);
         _enemies.ApplyState(initial.Enemies, [], initial.Tick);
         ApplyPlayerState();
     }

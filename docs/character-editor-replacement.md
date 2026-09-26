@@ -440,14 +440,14 @@ arbitrary 3D rigs and the native 2.5D controls.
 | 2. Model and Animate editor | Done (`App2d.CharacterStudio --editor`). One acceptance check in `--smoke-editor` failed once and passed in every run since; the cause is unknown. |
 | 3. One entity playable end to end | Done. The spear guard, jumping player and stalker work in the arena and through the editor's **Test**. The guard and stalker replace two enemy placements in the game. |
 | 4. Repeated-authoring workflow | Done. The Entity workspace, looks, motion-set editing, entity templates and duplication, role overrides, reference navigation, and masked actions that blend in and out. The heavy walk was approved on 2026-09-26. |
-| 5. Cut over | Started. The in-game player is drawn from authored assets. The rest remains. |
+| 5. Cut over | Mostly done. The game's player and all four enemy placements come from authored assets, and the game no longer reads the legacy `entities/*.json`. The editor is the studio's default. The imported-motion and `.puppet.json` conversions and the removal of the legacy screens remain. |
 
-**In the game today.** The player is drawn by `AuthoredPersonPresentation2D` using the player move set
-(`player-*` clips plus `person-walk` and `person-run`, and the `sword`, `sheath` and `pistol` props). Movement, hit boxes
-and attack timing still come from `Person2D` and the legacy `entities/player.json`. Shieldback and green-dinosaur
-placements spawn the authored `spear-guard` and `stalker-pest`. Maul, cinder and needle are still legacy point-library
-enemies. The game refuses to start if any authored asset fails to load or compile. Design and gaps for the move set are
-in [the player move set spec](superpowers/specs/2026-09-25-player-move-set-design.md).
+**In the game today.** Everything comes from `Assets/Characters/authored`:
+- **Player.** Drawn by `AuthoredPersonPresentation2D` with the player move set. Its gameplay comes from the `hero` entity through `AuthoredHero2D`: movement box, health, sword timing and hit box on the sword tip (draw-slash, or follow-up slash while the blade is out; gameplay decides and the drawing follows), and the gun's muzzle and bolt.
+- **Enemies.** Shieldback spawns `spear-guard`, BoilerBrute `maul-brute` (hammer slam, Heavy motion set, mass 3), Rival `cinder-gunner` (pistol bolts), GreenDinosaur `stalker-pest`.
+- **Removed.** The legacy enemy runtime (`AuthoredEnemy2D`) and its point-library presentation are deleted. The game refuses to start if any authored asset fails to load or compile.
+
+The player move set's design and gaps are in [the player move set spec](superpowers/specs/2026-09-25-player-move-set-design.md).
 
 **Added since the phase 3 note.**
 - A masked overlay: `PoseInput.Overlay` with `PersonLoadout.UpperBody`. The gun shot and aim play on any legs. There is no blend in or out yet, and `EntityAnimator` does not use it.
@@ -470,9 +470,10 @@ in [the player move set spec](superpowers/specs/2026-09-25-player-move-set-desig
 5. **Moves outside the spec's scope.** Punch, kick and wall melee reuse the slash.
 
 **Next up.**
-- Merge phases 3 and 4 to `main`.
+- Review the gunner's pistol shot and the maul's hammer slam art (`App2d --render-smoke`, `entity-fire-*`, `entity-slam-*`).
+- Merge phases 3 to 5 to `main`.
 - Fix the climb keys and settle the run stride question.
-- Move the player's gameplay timing off `entities/player.json` and convert the remaining enemies (phase 5).
+- Finish phase 5: imported-motion and `.puppet.json` conversion in the editor, then delete the legacy studio screens, `EntityCatalog`, `EntityPose` and the legacy entity files.
 
 ## Implementation sequence and acceptance gates
 
@@ -628,11 +629,27 @@ compare their gameplay behavior, and make the replacement the default studio.
 Remove the old edit workflows after their needed functions are covered; retain
 source preview only where it supports importing and comparison.
 
-**Progress (2026-09-26).** The in-game player's drawing is cut over: `AuthoredPersonPresentation2D` replaced
-`PointPersonPresentation2D`, which is deleted. Still on legacy paths:
-- the player's gameplay timing and collider size (`entities/player.json`);
-- the maul, cinder and needle enemies;
-- the studio's source, entity and workshop screens.
+**Progress (2026-09-26).** The game is cut over.
+
+| Piece | Where | Holds |
+| --- | --- | --- |
+| Player | `AuthoredHero2D`, `entities/hero.json` (written by `--write-player-moves`) | New `traversal` controller kind: Person2D owns movement; the entity owns attack, follow-up, shoot and wall-shot. Sword duration and damage window come from the clips' strike and recover markers. The hit box is the sword tip sampled from the drawn pose at the drawn scale (collider height over `ResolvedModel.DrawnHeight`). `PersonActionState2D.FollowUp` carries gameplay's choice of slash to the director. The muzzle and bolt come from the pistol and the shoot action's projectile. |
+| Projectiles | `ProjectileDef`, `EntityCollision.Muzzle` | An action's `fire` event launches its projectile from the equipped prop's muzzle along the prop's axis. The authored enemy probes the barrel, sweeps bolts in 4 px steps, and snapshots them for rollback. The arena flies them against hurt regions. |
+| Enemies | `maul-brute`, `cinder-gunner` | New `brute` and `cinder` variants, a `hammer` prop, `person-hammer-slam` and `person-pistol-shot`. Entities gain `mass` (divides knockback) and hit windows gain an impact `sound`. |
+| Studio | `App2d.CharacterStudio` | No arguments opens the editor. The legacy studio is `--legacy`. |
+
+Verification:
+- `AuthoredEntityGameTests` covers the sword's clip timing, the follow-up choice and the mirrored hit box and muzzle.
+- `AuthoredEntityEnemyTests` covers gunner bolts leaving the muzzle, landing and stopping at walls, gunner rollback replay, the maul's slam window and cue, and mass.
+- `AuthoredArenaTests` covers gunner bolts in the arena.
+- `App2d --render-smoke` overlays the sword hit box and muzzle on the player and draws the gunner and maul.
+- The game starts and runs on authored assets alone.
+
+Still legacy:
+- The studio's source, entity and workshop screens, with their `--smoke`, `--check` and `--smoke-workshop` modes.
+- `EntityCatalog`, `EntityPose`, `EntityPlaytest` and `Assets/Characters/entities/*.json`, which only those screens read.
+- The player's down attack and unarmed attacks, which are still code-defined.
+- The player's hurt region, which is still its movement box.
 
 Final acceptance: from a clean checkout, create a model, animate it, make a variant,
 make an entity, save, reopen and use it in the game without a 3D import dependency.

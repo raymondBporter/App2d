@@ -12,14 +12,17 @@ internal static class Program
         {
             if (args is ["--convert-studies", var output]) { PersonTemplate.WriteStudies(Path.GetFullPath(output)); return 0; }
             if (args is ["--write-player-moves", var moves]) { PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves)); return 0; }
-            if (args is ["--editor"] or ["--smoke-editor", _])
+            // The character editor is the studio. The imported-source browser and puppet workshop remain behind --legacy
+            // until imported-motion and .puppet.json conversion reach the editor.
+            if (args is [] or ["--editor"] or ["--smoke-editor", _])
             {
                 using var editor = new Editor.EditorApp(Path.Combine(FindAssets(), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
                 editor.Run(); return 0;
             }
+            if (args is ["--legacy"]) args = [];
             var root = FindAssets(args.Contains("--workshop") || args.Contains("--smoke-workshop"));
             if (args is ["--check"]) { StudioChecks.Run(root); return 0; }
-            if (args.Length != 0 && args is not ["--workshop"] && args is not ["--smoke" or "--smoke-wolf" or "--smoke-workshop" or "--smoke-motion" or "--smoke-entities" or "--review-moves", _]) throw new ArgumentException("Usage: App2d.CharacterStudio [--editor | --smoke-editor output-directory | --workshop | --convert-studies authored-directory | --check | --smoke output-directory | --smoke-wolf output-directory | --smoke-workshop output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --write-player-moves authored-directory | --review-moves output-directory]");
+            if (args.Length != 0 && args is not ["--workshop"] && args is not ["--smoke" or "--smoke-wolf" or "--smoke-workshop" or "--smoke-motion" or "--smoke-entities" or "--review-moves", _]) throw new ArgumentException("Usage: App2d.CharacterStudio [--editor (default) | --smoke-editor output-directory | --legacy | --workshop | --convert-studies authored-directory | --check | --smoke output-directory | --smoke-wolf output-directory | --smoke-workshop output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --write-player-moves authored-directory | --review-moves output-directory]");
             using var studio = new StudioGame(root, args.Length == 2 ? Path.GetFullPath(args[1]) : null, args is ["--smoke-wolf", _], args is ["--workshop"], args is ["--smoke-workshop", _], args is ["--smoke-motion", _], args is ["--smoke-entities", _], args is ["--review-moves", _]); studio.Run(); return 0;
         }
         catch (Exception ex)

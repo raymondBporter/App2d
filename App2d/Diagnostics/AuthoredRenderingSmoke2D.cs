@@ -19,35 +19,14 @@ internal static class AuthoredRenderingSmoke2D
 {
     public static void Run(GraphicsDevice device, TextureCache2D textures, string directory)
     {
-        var catalog = new EntityCatalog(AssetPaths.Characters);
         var scene = new Scene2D();
-        using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(textures.ContentRoot), new Silent(), catalog);
-        var ids = new[] { "needle", "maul", "cinder", "scrap-hound" };
-        var playerShader = new PointCharacterShader(catalog, catalog.Types["player"]);
-        var player = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(10)), playerShader) { ZIndex = 1 };
-        player.Transform.Scale = new(40); player.Transform.Position = new(-280, 0); scene.Add(player);
+        using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(textures.ContentRoot), new Silent());
         using var renderer = new Renderer2D(new Camera2D { Zoom = 1.6f, Position = new(20, 42) }, device);
         using var target = new RenderTarget2D(device, 1400, 500, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        foreach (var action in new[] { "idle", "walk", "attack", "death" })
-        foreach (var facing in new[] { 1f, -1f })
-        {
-            var states = ids.Select((id, i) => new EnemyState2D(new EntityId2D(i + 1), EnemyKind2D.Rival,
-                new(-130 + i * 155, catalog.Types[id].Movement.Height * 20), Vector2.Zero, 0, facing, true, action != "death")
-            { TypeId = id, ActionId = action, ActionSeconds = catalog.Types[id].Actions[action].Duration * .5f }).ToImmutableArray();
-            view.ApplyState(states, [], 60); playerShader.Action = action; playerShader.Seconds = catalog.Types["player"].Actions[action].Duration * .5f; playerShader.FacingLeft = facing < 0;
-            device.SetRenderTarget(target); renderer.BeginFrame(1400, 500, default); renderer.Clear(new Color(145, 176, 190));
-            renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(1200, 2)), new SolidColorShader(Color.DarkSlateGray)));
-            renderer.Draw(scene);
-            renderer.DrawScreenLabel("PLAYER / NEEDLE / MAUL / CINDER / SCRAP HOUND", new(24, 24));
-            renderer.EndFrame(); device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(directory, $"authored-{action}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
-        }
-        view.ApplyState([], [], 61);
-        if (scene.Count() != 1) throw new InvalidOperationException("Authored enemy views leaked scene objects.");
         RunEntities(device, view, scene, renderer, target, directory);
         RunPlayer(device, textures, renderer, target, directory);
         view.ApplyState([], [], 62);
-        if (scene.Count() != 1) throw new InvalidOperationException("Authored entity views leaked scene objects.");
+        if (scene.Any()) throw new InvalidOperationException("Authored entity views leaked scene objects.");
     }
 
     /// <summary>
@@ -127,10 +106,10 @@ internal static class AuthoredRenderingSmoke2D
         {
             var states = ids.Select((id, i) =>
             {
-                var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-230 + i * 125) / EntityCatalog.WorldUnits, 0);
+                var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-230 + i * 125) / AuthoredWorld.PixelsPerUnit, 0);
                 if (action is not null && animator.TryStart(action)) for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
                 else for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, phase, phase == "walk" ? .012f : 0, false, []);
-                return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, feet * EntityCatalog.WorldUnits, Vector2.Zero, 0, facing, true, true)
+                return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, feet * AuthoredWorld.PixelsPerUnit, Vector2.Zero, 0, facing, true, true)
                 { TypeId = id, AuthoredEntity = entity, AuthoredPose = animator.Pose };
             }).ToImmutableArray();
             view.ApplyState(states, [], 70);

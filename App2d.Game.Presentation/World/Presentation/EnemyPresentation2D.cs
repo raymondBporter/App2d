@@ -17,8 +17,7 @@ namespace App2d.Gameplay.World.Presentation;
 
 /// <summary>Client-owned enemy views indexed by entity ID. Never reads live actors.</summary>
 public sealed class EnemyPresentation2D(
-    Scene2D scene, TextureCache2D textures, TraversalMetrics2D traversal, ISoundEffectSink2D sounds,
-    App2d.Core.Characters.EntityCatalog? characters = null) : IDisposable
+    Scene2D scene, TextureCache2D textures, TraversalMetrics2D traversal, ISoundEffectSink2D sounds) : IDisposable
 {
     private readonly Dictionary<EntityId2D, View> _views = [];
     private readonly HashSet<EntityId2D> _presentIds = [];
@@ -78,7 +77,7 @@ public sealed class EnemyPresentation2D(
                 {
                     if (!state.IsEnabled) continue;
                     view = state.AuthoredEntity is { } entity ? new AuthoredPoseView(scene, entity)
-                        : state.TypeId is { } typeId && characters is not null ? new AuthoredView(scene, characters, typeId) : state.Kind switch
+                        : state.Kind switch
                     {
                         EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
                         EnemyKind2D.TumbleProp => new PropView(scene),
@@ -106,30 +105,6 @@ public sealed class EnemyPresentation2D(
     {
         public abstract void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick);
         public abstract void Dispose();
-    }
-
-    private sealed class AuthoredView : View
-    {
-        private readonly Scene2D _scene;
-        private readonly WorldObject2D _visual;
-        private readonly App2d.Rendering.Characters.PointCharacterShader _shader;
-        private readonly BoltViews _bolts;
-        public AuthoredView(Scene2D scene, App2d.Core.Characters.EntityCatalog catalog, string typeId)
-        {
-            _scene = scene; _shader = new(catalog, catalog.Types[typeId]); _bolts = new(scene);
-            _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
-            _visual.Transform.Scale = new(App2d.Core.Characters.EntityCatalog.WorldUnits);
-            scene.Add(_visual);
-        }
-        public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
-        {
-            const float scale = App2d.Core.Characters.EntityCatalog.WorldUnits;
-            _shader.Action = state.ActionId ?? "idle"; _shader.Seconds = state.ActionSeconds; _shader.FacingLeft = state.Facing < 0;
-            _visual.Transform.Position = state.Position - new Vector2(_shader.Type.Movement.OffsetX * state.Facing, _shader.Type.Movement.Height / 2) * scale;
-            _visual.IsVisible = state.IsEnabled;
-            _bolts.Update(state);
-        }
-        public override void Dispose() { _scene.Remove(_visual); _bolts.Dispose(); }
     }
 
     /// <summary>An enemy's live bolts as boxes, pooled.</summary>
@@ -166,7 +141,7 @@ public sealed class EnemyPresentation2D(
         {
             _scene = scene; _bolts = new(scene); _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
             _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
-            _visual.Transform.Scale = new(App2d.Core.Characters.EntityCatalog.WorldUnits);
+            _visual.Transform.Scale = new(App2d.Core.Characters.AuthoredWorld.PixelsPerUnit);
             scene.Add(_visual);
         }
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
@@ -175,7 +150,7 @@ public sealed class EnemyPresentation2D(
             _bolts.Update(state);
             if (state.AuthoredPose is not { } pose) return;
             _shader.Pose = pose.Local; _shader.Facing = pose.Facing;
-            _visual.Transform.Position = pose.Position * App2d.Core.Characters.EntityCatalog.WorldUnits;
+            _visual.Transform.Position = pose.Position * App2d.Core.Characters.AuthoredWorld.PixelsPerUnit;
         }
         public override void Dispose() { _scene.Remove(_visual); _bolts.Dispose(); }
     }

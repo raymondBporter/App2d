@@ -17,7 +17,6 @@ namespace App2d;
 /// <summary>Local composition and scheduling; gameplay decisions live in the session.</summary>
 public sealed class SideScrollerGame : Game2D
 {
-    private readonly App2d.Core.Characters.EntityCatalog _characters = new(AssetPaths.Characters);
     private readonly App2d.Core.Characters.AuthoredCatalog _authored = LoadAuthored();
     private readonly TraversalMetrics2D Traversal;
 
@@ -33,7 +32,7 @@ public sealed class SideScrollerGame : Game2D
     {
         var hero = _authored.Entities.GetValueOrDefault(App2d.Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
-        const float units = App2d.Core.Characters.EntityCatalog.WorldUnits;
+        const float units = App2d.Core.Characters.AuthoredWorld.PixelsPerUnit;
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
         var height = MathF.Round(hero.Asset.Movement.Height * units / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
@@ -57,7 +56,6 @@ public sealed class SideScrollerGame : Game2D
                 .Select(ThingTypeRegistry2D.ToRuntime).ToArray())
         {
             PlayerMaximumHealth = hero.Asset.Health,
-            Characters = _characters,
             AuthoredCharacters = _authored,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
         });
@@ -94,7 +92,7 @@ public sealed class SideScrollerGame : Game2D
             _simulation.Level.ReloadMovingPlatforms(things.Select(ThingTypeRegistry2D.ToRuntime).ToArray());
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
-            cameraController, Textures, _sounds, Traversal, _characters, App2d.Gameplay.Persons.PersonMoves.From(_authored));
+            cameraController, Textures, _sounds, Traversal, App2d.Gameplay.Persons.PersonMoves.From(_authored));
         _client.CheckpointActivated += checkpoint =>
             _client.ShowSaveResult(_saveStore.TrySave(new PlayerSave2D(checkpoint.CheckpointId, checkpoint.HitPoints)), checkpoint.Position);
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _client.ShowTraversalDebug,

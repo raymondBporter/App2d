@@ -26,7 +26,7 @@ internal sealed class SideScrollerThingSpawner2D(
 {
     public void Create(
         IReadOnlyList<WorldThingSpec2D> things,
-        CombatSystem2D combat, App2d.Core.Characters.EntityCatalog? characters = null, App2d.Core.Characters.AuthoredCatalog? authored = null)
+        CombatSystem2D combat, App2d.Core.Characters.AuthoredCatalog? authored = null)
     {
         ArgGuard.ThrowIfNull(things);
         ArgGuard.ThrowIfNull(combat);
@@ -35,14 +35,6 @@ internal sealed class SideScrollerThingSpawner2D(
         {
             if (!thing.Enabled)
                 continue;
-            var typeId = thing.Kind switch
-            {
-                WorldThingKind2D.Shieldback => "needle",
-                WorldThingKind2D.BoilerBrute => "maul",
-                WorldThingKind2D.Rival => "cinder",
-                WorldThingKind2D.GreenDinosaur => "scrap-hound",
-                _ => null
-            };
             var entityId = thing.Kind switch
             {
                 WorldThingKind2D.Shieldback => "spear-guard",
@@ -54,12 +46,6 @@ internal sealed class SideScrollerThingSpawner2D(
             if (entityId is not null && authored?.Entities.GetValueOrDefault(entityId) is { } entity)
             {
                 Register(new AuthoredEntityEnemy2D(ids.Allocate(), entity, physics, thing.Position, worldLayer, enemyLayer));
-                continue;
-            }
-            if (characters is not null && typeId is not null)
-            {
-                Register(new AuthoredEnemy2D(ids.Allocate(), characters, typeId, collision, physics,
-                    thing.Position, worldLayer, enemyLayer));
                 continue;
             }
             switch (thing.Kind)

@@ -27,8 +27,7 @@ public sealed record SideScrollerSessionDefinition2D(
     IReadOnlyList<MovingPlatformSpec2D> MovingPlatforms,
     IReadOnlyList<WorldThingSpec2D> WorldThings)
 {
-    public App2d.Core.Characters.EntityCatalog? Characters { get; init; }
-    /// <summary>Authored entities; placements they cover spawn from these instead of <see cref="Characters"/>.</summary>
+    /// <summary>Authored entities; placements they cover spawn from these, otherwise the built-in sprite enemies.</summary>
     public App2d.Core.Characters.AuthoredCatalog? AuthoredCharacters { get; init; }
     public int PlayerMaximumHealth { get; init; } = 5;
     /// <summary>Resume point; ignored when it names a missing checkpoint or invalid health.</summary>
