@@ -34,6 +34,7 @@
     <None Include="..\Assets\Characters\person\*" Link="Assets\PointCharacters\person\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\Assets\Characters\quadruped\*" Link="Assets\PointCharacters\quadruped\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\Assets\Characters\faces\*.png" Link="Assets\PointCharacters\faces\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\Assets\Characters\authored\**\*.json" Link="Assets\PointCharacters\authored\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="ValidateRuntimeAssets" BeforeTargets="BeforeBuild">

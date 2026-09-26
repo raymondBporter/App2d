@@ -77,7 +77,8 @@ public sealed class EnemyPresentation2D(
                 if (!_views.TryGetValue(state.Id, out var view))
                 {
                     if (!state.IsEnabled) continue;
-                    view = state.TypeId is { } typeId && characters is not null ? new AuthoredView(scene, characters, typeId) : state.Kind switch
+                    view = state.AuthoredEntity is { } entity ? new AuthoredPoseView(scene, entity)
+                        : state.TypeId is { } typeId && characters is not null ? new AuthoredView(scene, characters, typeId) : state.Kind switch
                     {
                         EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
                         EnemyKind2D.TumbleProp => new PropView(scene),
@@ -141,6 +142,29 @@ public sealed class EnemyPresentation2D(
             }
         }
         public override void Dispose() { _scene.Remove(_visual); foreach (var bolt in _bolts) _scene.Remove(bolt); }
+    }
+
+    /// <summary>Draws the simulation's own final pose for an authored entity; nothing here samples animation.</summary>
+    private sealed class AuthoredPoseView : View
+    {
+        private readonly Scene2D _scene;
+        private readonly WorldObject2D _visual;
+        private readonly App2d.Rendering.Characters.AuthoredCharacterShader _shader;
+        public AuthoredPoseView(Scene2D scene, App2d.Core.Characters.ResolvedEntity entity)
+        {
+            _scene = scene; _shader = new(entity);
+            _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
+            _visual.Transform.Scale = new(App2d.Core.Characters.EntityCatalog.WorldUnits);
+            scene.Add(_visual);
+        }
+        public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
+        {
+            _visual.IsVisible = state.IsEnabled && state.AuthoredPose is not null;
+            if (state.AuthoredPose is not { } pose) return;
+            _shader.Pose = pose.Local; _shader.Facing = pose.Facing;
+            _visual.Transform.Position = pose.Position * App2d.Core.Characters.EntityCatalog.WorldUnits;
+        }
+        public override void Dispose() => _scene.Remove(_visual);
     }
 
     private sealed class AnimatedView : View

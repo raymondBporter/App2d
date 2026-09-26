@@ -74,7 +74,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
         combatants.Register(player);
         var contactDamage = new ContactDamageSystem2D(collision, SideScrollerLayers2D.Enemy, combatants);
         var combat = new CombatSystem2D(collision, combatants);
-        level.CreateAuthoredWorldThings(combat, definition.Characters);
+        level.CreateAuthoredWorldThings(combat, definition.Characters, definition.AuthoredCharacters);
         Func<float, Vector2>? muzzle = null;
         if (definition.Characters is { } characters)
         {

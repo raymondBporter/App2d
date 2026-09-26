@@ -85,6 +85,12 @@ public sealed partial class Renderer2D : IDisposable
             DrawCharacter(worldObject, character);
             return;
         }
+        if (worldObject.Shader is Characters.AuthoredCharacterShader authored)
+        {
+            Flush();
+            DrawAuthored(worldObject, authored);
+            return;
+        }
         var matrix = worldObject.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
         var bounds = worldObject.Shape.LocalBounds.IsFinite ? worldObject.Shape.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)

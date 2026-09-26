@@ -151,12 +151,12 @@ public sealed class EntityAnimator
 
     public AnimatorState Capture() => new(Role, RoleTime, Action, ActionTime, PreviousActionTime, ActionSequence, _fresh, Facing, _anchors.ToImmutableDictionary());
 
-    public void Restore(AnimatorState state, Vector2 position)
+    public void Restore(AnimatorState state, Vector2 position, string? expression = null)
     {
         Role = state.Role; RoleTime = state.RoleTime; Action = state.Action; ActionTime = state.ActionTime; PreviousActionTime = state.PreviousActionTime;
         ActionSequence = state.ActionSequence; _fresh = state.Fresh; Facing = state.Facing;
         _anchors.Clear(); foreach (var (chain, anchor) in state.Anchors) _anchors[chain] = anchor;
-        Evaluate(position, null);
+        Evaluate(position, expression);
     }
 }
 

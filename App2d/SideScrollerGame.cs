@@ -18,6 +18,7 @@ namespace App2d;
 public sealed class SideScrollerGame : Game2D
 {
     private readonly App2d.Core.Characters.EntityCatalog _characters = new(AssetPaths.Characters);
+    private readonly App2d.Core.Characters.AuthoredCatalog _authored = LoadAuthored();
     private readonly TraversalMetrics2D Traversal;
 
     private readonly SideScrollerSimulation2D _simulation;
@@ -56,6 +57,7 @@ public sealed class SideScrollerGame : Game2D
         {
             PlayerMaximumHealth = playerType.Health,
             Characters = _characters,
+            AuthoredCharacters = _authored,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
         });
         _session = _simulation.Session;
@@ -149,6 +151,14 @@ public sealed class SideScrollerGame : Game2D
         renderer.Draw(Scene);
         _client.Draw(renderer);
         TileEditorView2D.Draw(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize, Textures);
+    }
+
+    /// <summary>Authored entities that fail to compile are not played; the game refuses to start and names each problem instead.</summary>
+    private static App2d.Core.Characters.AuthoredCatalog LoadAuthored()
+    {
+        var catalog = App2d.Core.Characters.AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        if (catalog.Errors.Count > 0) throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
+        return catalog;
     }
 
     public override void Dispose()

@@ -21,6 +21,9 @@ public readonly record struct EnemyState2D(
     public float AttackElapsedSeconds { get; init; }
     public PersonState2D Person { get; init; }
     public float MoveX { get; init; }
+    /// <summary>For enemies compiled from authored entities: the shared compiled entity and this tick's final pose, drawn as is.</summary>
+    public App2d.Core.Characters.ResolvedEntity? AuthoredEntity { get; init; }
+    public App2d.Core.Characters.ActorPose? AuthoredPose { get; init; }
 }
 
 public readonly record struct EntityBoltState2D(Vector2 Position, Vector2 Velocity, Vector2 Size, float Lifetime);
