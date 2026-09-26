@@ -79,12 +79,6 @@ public sealed partial class Renderer2D : IDisposable
     {
         RequireFrame();
         if (!worldObject.IsVisible || IsCulled(worldObject)) return;
-        if (worldObject.Shader is Characters.PointCharacterShader character)
-        {
-            Flush();
-            DrawCharacter(worldObject, character);
-            return;
-        }
         if (worldObject.Shader is Characters.AuthoredCharacterShader authored)
         {
             Flush();

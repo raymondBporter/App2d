@@ -69,19 +69,4 @@ public sealed class PointCharacterTests
         for (var i = 0; i < 1000; i++) clip.Sample(i * .013, pose);
         Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
     }
-    [Fact]
-    public void SequenceCarriesTimeAndHoldsFinalPoseEvenForLoopClips()
-    {
-        var library = Library(); var player = new PointPlayback(library, "motion");
-        player.StartSequence(["motion", "motion"], false); player.Advance(1.2);
-        Assert.Equal(1, player.SequenceIndex); Assert.Equal(.2, player.Time, 6);
-        player.Advance(1); Assert.True(player.Finished); Assert.False(player.Playing);
-        player.Select("motion"); player.Advance(100.25); Assert.Equal(.25, player.Time);
-    }
-    [Fact]
-    public void AdaptiveSteppingCanReachAndLeaveLastLoopSample()
-    {
-        var player = new PointPlayback(Library(), "motion"); player.Seek(.25); player.Step(1);
-        Assert.True(player.Finished); player.Step(-1); Assert.Equal(.25, player.Time); Assert.False(player.Playing);
-    }
 }

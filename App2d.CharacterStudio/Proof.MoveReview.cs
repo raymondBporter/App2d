@@ -14,12 +14,11 @@ namespace App2d.CharacterStudio;
 /// held props and simple scenery (wall, ladder, ledge), plus layered previews that put upper-body clips on other legs.
 /// Writes frames, a manifest and a mechanical report; the review page is assembled from those files.
 /// </summary>
-internal sealed partial class StudioGame
+internal sealed partial class ProofRenders
 {
     private const int ReviewWidth = 440, ReviewHeight = 460, ReviewFps = 30;
     private const float ReviewPpu = 150;
     private static readonly string[] UpperTargets = ["chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm"];
-    private readonly bool _moveReview;
 
     private sealed record ReviewItem(string Id, string Title, MotionClip Clip, string Scene, bool Gun, string Note, float ViewX = 0);
 

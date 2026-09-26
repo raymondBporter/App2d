@@ -12,11 +12,10 @@ namespace App2d.CharacterStudio;
 /// anticipation, active hit geometry and recovery in both facings; the player's jump; the three-legged stalker walking
 /// and lunging. The bottom band repeats each frame at game scale.
 /// </summary>
-internal sealed partial class StudioGame
+internal sealed partial class ProofRenders
 {
     private const int EntityWidth = 1600, EntityHeight = 860, EntityPanelHeight = 640;
     private const float EntityPpu = 120, EntityGamePpu = 40;
-    private readonly bool _entitySmoke;
     private List<(string Name, float CenterX, IReadOnlyList<ArenaActorFrame> Actors)>? _entityFrames;
     private readonly List<string> _entityReport = [];
     private ArenaDrawing? _arenaDrawing;

@@ -8,13 +8,12 @@ using Matrix = Microsoft.Xna.Framework.Matrix;
 namespace App2d.CharacterStudio;
 
 /// <summary>Phase-one visual gate: one shared walk and run on three Person builds, side by side at one world scale, over a game-scale band.</summary>
-internal sealed partial class StudioGame
+internal sealed partial class ProofRenders
 {
     private const int ProofFrames = 24, ProofWidth = 1800, ProofHeight = 900, ProofPanelHeight = 640;
     private const float ProofPpu = 200, GamePpu = 48; // Arena scale is min(width / 26, height / 8): about 49 at 1280x720.
     private static readonly string[] ProofSubjects = ["person", "tall-thin", "short-broad"];
     private static readonly string[] ProofClips = ["person-walk", "person-run", StarterContent.HeavyWalk];
-    private readonly bool _motionSmoke;
     private AuthoredCatalog? _proofCatalog;
     private RenderTarget2D? _proofTarget;
     private readonly PuppetDrawing[] _proofDrawings = [new(), new(), new()];

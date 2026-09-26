@@ -106,4 +106,3 @@ fs.writeFileSync(path.join(destination,'import.json'),JSON.stringify({version:1,
   inventory:hash(fs.readFileSync(path.join(source,'output/universal/creature-inventory/inventory.json')))}},null,2));
 }
 console.log(`Imported ${catalog.length} libraries / ${catalog.reduce((n,c)=>n+c.clipCount,0)} clips / ${catalog.reduce((n,c)=>n+c.bytes,0)} packed bytes.`);
-require('./capture-reference.cjs');
