@@ -6,11 +6,11 @@ namespace App2d.CharacterStudio;
 
 /// <summary>
 /// Headless review renders of the authored assets through the real drawing path: the shared-motion proof, the entity arena
-/// proof and the player move review. Each mode writes its frames and report to an output directory, then exits.
+/// proof, the player move review and the swing lab. Each mode writes its frames and report to an output directory, then exits.
 /// </summary>
 internal sealed partial class ProofRenders : Game
 {
-    public enum Mode { Motion, Entities, MoveReview }
+    public enum Mode { Motion, Entities, MoveReview, SwingLab }
 
     private readonly GraphicsDeviceManager _graphics;
     private readonly string _assetRoot, _smokePath;
@@ -31,7 +31,7 @@ internal sealed partial class ProofRenders : Game
 
     protected override void Draw(GameTime time)
     {
-        var more = _mode switch { Mode.Motion => PrepareMotionProof(), Mode.Entities => PrepareEntityProof(), _ => RenderMoveReview() };
+        var more = _mode switch { Mode.Motion => PrepareMotionProof(), Mode.Entities => PrepareEntityProof(), Mode.SwingLab => RenderSwingLab(), _ => RenderMoveReview() };
         _smokeIndex++;
         GraphicsDevice.SetRenderTarget(null);
         if (!more) { Exit(); return; }

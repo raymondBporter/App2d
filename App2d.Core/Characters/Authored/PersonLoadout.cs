@@ -13,6 +13,12 @@ public static class PersonLoadout
 {
     public const string BackSocket = "back", BackViewSocket = "back-view", SwordSocket = "sword-hand", GunSocket = "gun-hand";
     public const string BackViewMarker = "view-back", ProfileViewMarker = "view-profile", DrawMarker = "sword-draw", SheatheMarker = "sword-sheathe";
+    /// <summary>
+    /// The blade leaves a swoosh from a "swoosh" marker to the next "swoosh-end" (or the clip's end). A clip holding several
+    /// swings numbers the later ones: "swoosh-2" and "swoosh-2-end", and so on.
+    /// </summary>
+    public const string SwooshMarker = "swoosh", SwooshEndMarker = "swoosh-end";
+
     public const string Sword = "sword", Sheath = "sheath", Pistol = "pistol";
     /// <summary>The upper-body group: channels an arms-only overlay (a gun shot) owns over any legs. The Person model carries it as its "upper" control group.</summary>
     public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { "chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm" };
@@ -26,6 +32,20 @@ public static class PersonLoadout
         var draw = clip.Markers.FirstOrDefault(m => m.Id == DrawMarker)?.Time; var sheathe = clip.Markers.FirstOrDefault(m => m.Id == SheatheMarker)?.Time;
         return (draw is { } d ? seconds >= d : sheathe is not null) && (sheathe is not { } s || seconds < s);
     }
+
+    /// <summary>Whether the held blade is leaving a swoosh at this time of <paramref name="clip"/>.</summary>
+    public static bool Swooshing(MotionClip clip, float seconds)
+    {
+        var last = clip.Markers.Where(m => IsSwoosh(m.Id) && m.Time <= seconds + 1e-4f).MaxBy(m => m.Time);
+        return last is not null && OpensSwoosh(last.Id);
+    }
+
+    /// <summary>Which swing of the clip a swoosh at this time belongs to: 0 for the first, 1 for "swoosh-2", and so on.</summary>
+    public static int SwooshIndex(MotionClip clip, float seconds) =>
+        Math.Max(0, clip.Markers.Count(m => OpensSwoosh(m.Id) && m.Time <= seconds + 1e-4f) - 1);
+
+    private static bool IsSwoosh(string id) => id == SwooshMarker || id.StartsWith(SwooshMarker + "-", StringComparison.Ordinal);
+    private static bool OpensSwoosh(string id) => IsSwoosh(id) && !id.EndsWith("-end", StringComparison.Ordinal);
 
     /// <summary>The props worn at this moment of <paramref name="clip"/>, each with the model socket it sits on.</summary>
     public static IEnumerable<(string Prop, string Socket)> Worn(MotionClip clip, float seconds, PersonGear gear)

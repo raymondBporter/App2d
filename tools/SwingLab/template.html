@@ -1,0 +1,226 @@
+<title>Swing Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#e9e8de; --surface:#f6f5ef; --paper:#f1f0e8; --ink:#1f262b; --muted:#646c66; --line:#d3d5c9;
+  --accent:#2f5fd0; --accent-soft:#e1e8f8; --keep:#2e6f57; --tweak:#9a6a12; --redo:#a8412f; --tick:#9a6a12;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ color-scheme:dark;
+    --ground:#15191b; --surface:#1d2225; --ink:#e6e8e2; --muted:#9aa29b; --line:#30373a;
+    --accent:#8eabf5; --accent-soft:#1f2a45; --keep:#72b898; --tweak:#d9a74a; --redo:#e07a66; --tick:#d9a74a; }
+}
+:root[data-theme="dark"]{ color-scheme:dark;
+  --ground:#15191b; --surface:#1d2225; --ink:#e6e8e2; --muted:#9aa29b; --line:#30373a;
+  --accent:#8eabf5; --accent-soft:#1f2a45; --keep:#72b898; --tweak:#d9a74a; --redo:#e07a66; --tick:#d9a74a; }
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); font:16px/1.5 var(--body); padding-inline:16px; padding-block:28px 64px}
+.wrap{max-width:1240px; margin:0 auto; display:grid; gap:32px}
+h1,h2,h3{font-family:var(--display); text-wrap:balance; margin:0; line-height:1.15}
+h1{font-size:clamp(28px,4vw,40px); font-weight:700; letter-spacing:-.01em}
+h2{font-size:21px; font-weight:700}
+h3{font-size:17px; font-weight:700}
+p{margin:0}
+header.top{display:grid; gap:12px; max-width:860px}
+header.top p{color:var(--muted); max-width:72ch}
+.notes{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:18px 20px; display:grid; gap:10px}
+.notes ul{margin:0; padding-left:20px; display:grid; gap:6px; max-width:92ch}
+.global{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.global .label{font-size:14px; color:var(--muted); margin-right:4px}
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:18px}
+.move{background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; flex-direction:column}
+.move[data-verdict="keep"]{box-shadow:inset 0 3px 0 var(--keep)}
+.move[data-verdict="tweak"]{box-shadow:inset 0 3px 0 var(--tweak)}
+.move[data-verdict="redo"]{box-shadow:inset 0 3px 0 var(--redo)}
+.stage{position:relative; background:var(--paper); aspect-ratio:330/345; max-width:100%}
+.stage canvas{width:100%; height:100%; display:block}
+.stage .size{position:absolute; left:8px; top:8px; font:500 11px var(--mono); color:#646c66; letter-spacing:.04em; text-transform:uppercase}
+.controls{display:grid; gap:6px; padding:10px 12px 4px}
+.row{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+button{font:600 13px var(--body); color:var(--ink); background:transparent; border:1px solid var(--line); border-radius:6px; padding:4px 9px; cursor:pointer; min-height:30px}
+button:hover{border-color:var(--muted)}
+button:focus-visible, input:focus-visible, textarea:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+button[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent)}
+.play{width:34px; padding:0}
+.spacer{flex:1}
+.scrub{position:relative; height:28px}
+.scrub input{width:100%; margin:0; accent-color:var(--accent); position:relative; z-index:1}
+.ticks{position:absolute; left:8px; right:8px; bottom:0; height:9px; pointer-events:none}
+.ticks i{position:absolute; bottom:0; width:2px; height:9px; background:var(--tick); border-radius:1px}
+.ticks i::after{content:attr(data-label); position:absolute; bottom:10px; left:-2px; font:10px var(--mono); color:var(--muted); white-space:nowrap}
+.mono{font-family:var(--mono); font-size:12.5px; font-variant-numeric:tabular-nums}
+.meta{color:var(--muted)}
+.info{padding:6px 12px 12px; display:grid; gap:8px}
+.note{font-size:14.5px}
+.checks{font:11.5px/1.45 var(--mono); color:var(--muted)}
+.review{border-top:1px solid var(--line); padding:10px 12px 12px; display:grid; gap:8px; margin-top:auto}
+.verdicts{display:flex; gap:6px}
+.verdicts button{flex:1}
+.verdicts button[data-v="keep"][aria-pressed="true"]{border-color:var(--keep); color:var(--keep); background:transparent; box-shadow:inset 0 0 0 1px var(--keep)}
+.verdicts button[data-v="tweak"][aria-pressed="true"]{border-color:var(--tweak); color:var(--tweak); background:transparent; box-shadow:inset 0 0 0 1px var(--tweak)}
+.verdicts button[data-v="redo"][aria-pressed="true"]{border-color:var(--redo); color:var(--redo); background:transparent; box-shadow:inset 0 0 0 1px var(--redo)}
+textarea{width:100%; min-height:58px; resize:vertical; font:14px/1.4 var(--body); color:var(--ink); background:var(--ground); border:1px solid var(--line); border-radius:6px; padding:7px 9px}
+.saved{font-size:12.5px; color:var(--muted); min-height:1.2em}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Swing Lab</h1>
+    <p>The player's sword slash, rebuilt swoosh first and compared one change at a time against today's clip. Each card is rendered at 60 fps by the game's own drawing code, and the swoosh is the live C# trail, fed one blade per frame the way the game would feed it. Try ½× and ¼×, scrub through the frames, turn the swoosh off to see the bare body, and use On twos to see the swing stepped at 30 fps. Mark each card and leave a note; notes save as you go and Claude reads them back.</p>
+  </header>
+
+  <section class="notes" aria-labelledby="n-title">
+    <h2 id="n-title">What changed from today's slash</h2>
+    <ul>
+      <li><b>The arc comes first.</b> Each key places the hand on a circle round the shoulder and says how the wrist holds the blade. The arm IK and the body follow from that, and the body's lean carries the arc forward.</li>
+      <li><b>The blade sits across the fist.</b> It's held at 45–80° to the forearm in every frame (except the whip's one deliberate broken frame), never laid along it. Today's clip spends 10 of its 22 frames under 40°.</li>
+      <li><b>Timing.</b> One frame to coil, two across (three in one variant), contact on frame 3 (50 ms). The tip is fastest on the step into contact and loses 90% or more of its speed within two frames. Today's is fastest 5 frames before its strike and loses 7%.</li>
+      <li><b>Combo art.</b> The rising follow-up uses the same swoosh construction with a different split, so it reads as the same family.</li>
+      <li><b>Not decided here:</b> the damage window (gameplay still uses 0.10–0.27 s), the first swing from the sheath, and hit feedback.</li>
+    </ul>
+  </section>
+
+  <div class="global" role="group" aria-label="All cards">
+    <span class="label">All cards:</span>
+    <button id="all-swoosh" aria-pressed="true">Swoosh</button>
+    <button id="all-twos" aria-pressed="false">On twos</button>
+    <button id="all-game" aria-pressed="false">Game size</button>
+    <button id="all-sync">Restart together</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const VARIANTS = /*VARIANTS*/[];
+const GAME_SCALE = 40 / 120; // in-game pixels per unit over the render's
+const HOLD = 0.5;            // pause on the last pose before looping
+const reviews = {};
+let db = null;
+const cards = [];
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v; else if (k === "text") e.textContent = v; else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k) e.append(k);
+  return e;
+}
+const toggle = (b, on) => b.setAttribute("aria-pressed", String(on));
+
+function card(m) {
+  const sheets = { plain: new Image(), swoosh: new Image() };
+  sheets.plain.src = "sheets/" + m.id + "-plain.png"; sheets.swoosh.src = "sheets/" + m.id + "-swoosh.png";
+  const canvas = el("canvas", { width: m.w, height: m.h, "aria-label": m.title + " animation" });
+  const sizeTag = el("span", { class: "size", text: "Close-up" });
+  const state = { t: 0, playing: true, speed: 1, game: false, swoosh: true, twos: false, scrubbing: false };
+  const play = el("button", { class: "play", "aria-label": "Pause", text: "❚❚" });
+  const speeds = [1, .5, .25].map(s => el("button", { "aria-pressed": String(s === 1), text: s === 1 ? "1×" : s === .5 ? "½×" : "¼×" }));
+  const swoosh = el("button", { "aria-pressed": "true", text: "Swoosh" });
+  const twos = el("button", { "aria-pressed": "false", text: "On twos" });
+  const game = el("button", { "aria-pressed": "false", text: "Game size" });
+  const counter = el("span", { class: "mono meta" });
+  const range = el("input", { type: "range", min: "0", max: String(m.frames - 1), step: "1", value: "0", id: "scrub-" + m.id, "aria-label": "Frame" });
+  const ticks = el("div", { class: "ticks" });
+  for (const k of m.markers) { const i = el("i", { "data-label": k.id }); i.style.left = (k.time / m.duration * 100) + "%"; ticks.append(i); }
+  const controls = el("div", { class: "controls" },
+    el("div", { class: "row" }, play, ...speeds, el("span", { class: "spacer" }), swoosh),
+    el("div", { class: "row" }, twos, game),
+    el("div", { class: "scrub" }, range, ticks), counter);
+  const info = el("div", { class: "info" }, el("h3", { text: m.title }),
+    el("p", { class: "mono meta", text: `${m.duration.toFixed(2)} s · ${m.frames} frames at ${m.fps} fps` }),
+    el("p", { class: "note", text: m.note }));
+  if (m.checks) info.append(el("p", { class: "checks", text: m.checks.replace(/, /g, " · ") }));
+  const verdictButtons = ["keep", "tweak", "redo"].map(v => el("button", { "data-v": v, "aria-pressed": "false", text: v[0].toUpperCase() + v.slice(1) }));
+  const note = el("textarea", { id: "note-" + m.id, placeholder: "What reads well, what looks wrong…", "aria-label": "Notes on " + m.title });
+  const saved = el("p", { class: "saved" });
+  const review = el("div", { class: "review" }, el("div", { class: "verdicts", role: "group", "aria-label": "Verdict" }, ...verdictButtons), note, saved);
+  const root = el("article", { class: "move", id: m.id }, el("div", { class: "stage" }, canvas, sizeTag), controls, info, review);
+  const ctx = canvas.getContext("2d");
+
+  function frameAt(t) {
+    const local = t % (m.duration + HOLD);
+    let f = Math.min(m.frames - 1, Math.floor(local * m.fps));
+    return state.twos ? f - (f % 2) : f;
+  }
+  function draw(f) {
+    const sheet = state.swoosh ? sheets.swoosh : sheets.plain;
+    if (!sheet.complete || !sheet.naturalWidth) return;
+    const sx = (f % m.cols) * m.w, sy = Math.floor(f / m.cols) * m.h;
+    ctx.fillStyle = "#f1f0e8"; ctx.fillRect(0, 0, m.w, m.h);
+    if (state.game) {
+      const w = m.w * GAME_SCALE, h = m.h * GAME_SCALE; ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(sheet, sx, sy, m.w, m.h, (m.w - w) * .45, m.h * .9 - h * .9, w, h);
+    } else ctx.drawImage(sheet, sx, sy, m.w, m.h, 0, 0, m.w, m.h);
+    counter.textContent = `frame ${String(f + 1).padStart(2, "0")} / ${m.frames} · ${(f / m.fps * 1000).toFixed(0)} ms`;
+    if (!state.scrubbing) range.value = String(f);
+  }
+  root._tick = dt => { if (state.playing) state.t += dt * state.speed; draw(state.playing ? frameAt(state.t) : Number(range.value)); };
+  root._set = (key, on) => {
+    state[key] = on; toggle({ swoosh, twos, game }[key], on);
+    if (key === "game") sizeTag.textContent = on ? "Game size" : "Close-up";
+  };
+  root._restart = () => { state.t = 0; if (!state.playing) play.onclick(); };
+  sheets.swoosh.onload = () => draw(0);
+
+  play.onclick = () => {
+    state.playing = !state.playing;
+    play.textContent = state.playing ? "❚❚" : "▶"; play.setAttribute("aria-label", state.playing ? "Pause" : "Play");
+    if (state.playing) state.t = Number(range.value) / m.fps;
+  };
+  speeds.forEach((b, i) => b.onclick = () => { state.speed = [1, .5, .25][i]; speeds.forEach((o, j) => toggle(o, i === j)); });
+  swoosh.onclick = () => root._set("swoosh", !state.swoosh);
+  twos.onclick = () => root._set("twos", !state.twos);
+  game.onclick = () => root._set("game", !state.game);
+  range.oninput = () => { state.scrubbing = true; if (state.playing) play.onclick(); draw(Number(range.value)); state.scrubbing = false; };
+
+  function paint() {
+    const r = reviews[m.id] || {};
+    verdictButtons.forEach(b => toggle(b, b.dataset.v === r.verdict));
+    if (r.verdict) root.dataset.verdict = r.verdict; else delete root.dataset.verdict;
+    if (document.activeElement !== note) note.value = r.note || "";
+  }
+  root._paint = paint;
+  async function save(patch) {
+    const next = { ...(reviews[m.id] || {}), ...patch, variant: m.id, updatedAt: new Date().toISOString() };
+    reviews[m.id] = next; paint();
+    if (!db) { saved.textContent = "Saving is unavailable in this view."; return; }
+    saved.textContent = "Saving…";
+    try { await db.doc("picks/" + m.id).set(next); saved.textContent = "Saved"; }
+    catch (e) { saved.textContent = e && e.code === "invalid_argument" ? "You can view this page but not save notes." : "Could not save. Try again in a moment."; }
+  }
+  verdictButtons.forEach(b => b.onclick = () => save({ verdict: reviews[m.id]?.verdict === b.dataset.v ? null : b.dataset.v }));
+  let pending = null;
+  note.oninput = () => { clearTimeout(pending); saved.textContent = "Editing…"; pending = setTimeout(() => save({ note: note.value }), 900); };
+  note.onblur = () => { if (pending) { clearTimeout(pending); pending = null; if ((reviews[m.id]?.note || "") !== note.value) save({ note: note.value }); else saved.textContent = ""; } };
+  return root;
+}
+
+const grid = document.getElementById("grid");
+for (const m of VARIANTS) { const c = card(m); cards.push(c); grid.append(c); }
+for (const [id, key] of [["all-swoosh", "swoosh"], ["all-twos", "twos"], ["all-game", "game"]]) {
+  const b = document.getElementById(id);
+  b.onclick = () => { const on = b.getAttribute("aria-pressed") !== "true"; toggle(b, on); cards.forEach(c => c._set(key, on)); };
+}
+document.getElementById("all-sync").onclick = () => cards.forEach(c => c._restart());
+
+let last = performance.now();
+function loop(now) { const dt = Math.min(.1, (now - last) / 1000); last = now; for (const c of cards) c._tick(dt); requestAnimationFrame(loop); }
+if (matchMedia("(prefers-reduced-motion: reduce)").matches) cards.forEach(c => c.querySelector(".play").click());
+requestAnimationFrame(loop);
+
+(async () => {
+  try { db = await window.claude?.use?.("db"); } catch { db = null; }
+  if (!db) { document.querySelectorAll(".saved").forEach(s => s.textContent = "Notes are view-only here."); return; }
+  db.collection("picks").onSnapshot(snap => {
+    for (const d of snap.docs) { const v = d.data(); if (v) reviews[d.id] = { verdict: v.verdict ?? null, note: v.note ?? "" }; }
+    cards.forEach(c => c._paint());
+  }, () => {});
+})();
+</script>
