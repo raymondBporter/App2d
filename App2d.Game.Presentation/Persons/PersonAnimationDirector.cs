@@ -26,7 +26,7 @@ public sealed class PersonMoves
     public static PersonMoves From(AuthoredCatalog catalog, string model = PersonTemplate.Id)
     {
         var resolved = catalog.Resolve(model);
-        var missing = All.Where(id => !catalog.Animations.ContainsKey(id)).Concat(new[] { PersonLoadout.Sword, PersonLoadout.Sheath, PersonLoadout.Pistol }.Where(id => !catalog.Props.ContainsKey(id))).ToList();
+        var missing = All.Where(id => !catalog.Animations.ContainsKey(id)).Concat(new[] { PersonLoadout.Sword, PersonLoadout.Pistol }.Where(id => !catalog.Props.ContainsKey(id))).ToList();
         if (missing.Count > 0) throw new InvalidDataException($"The player move set is incomplete; missing: {string.Join(", ", missing)}.");
         var clips = All.ToDictionary(id => id, id => { var clip = catalog.Animations[id]; clip.Validate(resolved); return clip; }, StringComparer.Ordinal);
         foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket })

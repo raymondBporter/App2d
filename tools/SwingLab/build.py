@@ -21,13 +21,16 @@ W, H = 330, 345
 variants = []
 for e in json.load(open(os.path.join(R, 'manifest.json'))):
     n = e['frames']; cols = min(n, 12); rows = math.ceil(n / cols)
-    for mode in ('plain', 'swoosh'):
+    for mode in ('plain', 'swoosh', 'box'):
         sheet = Image.new('RGB', (cols * W, rows * H), (241, 240, 232))
         for i in range(n):
             im = Image.open(os.path.join(R, 'frames', e['id'], mode, f'{i:03d}.png')).convert('RGB').resize((W, H), Image.LANCZOS)
             sheet.paste(im, ((i % cols) * W, (i // cols) * H))
         sheet.quantize(colors=64, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(os.path.join(O, 'sheets', f"{e['id']}-{mode}.png"), optimize=True)
     variants.append({**e, 'cols': cols, 'w': W, 'h': H, 'checks': checks.get(e['id'], '')})
+
+for name in ('sword-today', 'sword-cartoon'):
+    Image.open(os.path.join(R, f'{name}.png')).convert('RGB').crop((70, 40, 400, 385)).save(os.path.join(O, f'{name}.png'), optimize=True)
 
 template = open(os.path.join(ROOT, 'tools', 'SwingLab', 'template.html'), encoding='utf-8').read()
 open(os.path.join(O, 'index.html'), 'w', encoding='utf-8').write(template.replace('/*VARIANTS*/[]', json.dumps(variants, separators=(',', ':'))))

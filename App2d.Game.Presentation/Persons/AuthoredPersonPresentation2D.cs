@@ -12,7 +12,7 @@ namespace App2d.Gameplay.Persons;
 /// <summary>
 /// Draws the player as the authored Person with the player move set. Observes the existing traversal/controller state;
 /// <see cref="PersonAnimationDirector"/> picks the clip, a <see cref="ContactHold"/> keeps planted feet planted while the
-/// body moves, and <see cref="PersonLoadout"/> decides where the sheath, sword and pistol sit. The figure is scaled so its
+/// body moves, and <see cref="PersonLoadout"/> decides where the sword and pistol sit. The figure is scaled so its
 /// rest height matches the traversal collider.
 /// </summary>
 public sealed class AuthoredPersonPresentation2D : IDisposable

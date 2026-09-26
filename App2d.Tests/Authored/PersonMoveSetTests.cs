@@ -55,7 +55,7 @@ public sealed class PersonMoveSetTests
         Assert.False(PersonLoadout.SeenFromBehind(on, 0)); Assert.True(PersonLoadout.SeenFromBehind(on, .2f));
         Assert.True(PersonLoadout.SeenFromBehind(climb, .5f));
         Assert.True(PersonLoadout.SeenFromBehind(off, .1f)); Assert.False(PersonLoadout.SeenFromBehind(off, .25f));
-        Assert.Equal(PersonLoadout.BackViewSocket, PersonLoadout.Worn(climb, .5f, PersonGear.Sword).First(w => w.Prop == PersonLoadout.Sheath).Socket);
+        Assert.Equal(PersonLoadout.BackViewSocket, PersonLoadout.Worn(climb, .5f, PersonGear.Sword).First(w => w.Prop == PersonLoadout.Sword).Socket);
     }
 
     [Fact]

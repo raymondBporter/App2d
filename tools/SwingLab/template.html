@@ -30,6 +30,10 @@ header.top{display:grid; gap:12px; max-width:860px}
 header.top p{color:var(--muted); max-width:72ch}
 .notes{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:18px 20px; display:grid; gap:10px}
 .notes ul{margin:0; padding-left:20px; display:grid; gap:6px; max-width:92ch}
+.swords{display:flex; flex-wrap:wrap; gap:16px}
+.swords figure{margin:0; display:grid; gap:6px; max-width:240px}
+.swords img{width:100%; height:auto; border-radius:6px; background:var(--paper)}
+.swords figcaption{font-size:13.5px; color:var(--muted)}
 .global{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
 .global .label{font-size:14px; color:var(--muted); margin-right:4px}
 .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:18px}
@@ -75,19 +79,25 @@ textarea{width:100%; min-height:58px; resize:vertical; font:14px/1.4 var(--body)
   </header>
 
   <section class="notes" aria-labelledby="n-title">
-    <h2 id="n-title">What changed from today's slash</h2>
+    <h2 id="n-title">Round 7: the combo runs idle, four swings, idle</h2>
     <ul>
-      <li><b>The arc comes first.</b> Each key places the hand on a circle round the shoulder and says how the wrist holds the blade. The arm IK and the body follow from that, and the body's lean carries the arc forward.</li>
-      <li><b>The blade sits across the fist.</b> It's held at 45–80° to the forearm in every frame (except the whip's one deliberate broken frame), never laid along it. Today's clip spends 10 of its 22 frames under 40°.</li>
-      <li><b>Timing.</b> One frame to coil, two across (three in one variant), contact on frame 3 (50 ms). The tip is fastest on the step into contact and loses 90% or more of its speed within two frames. Today's is fastest 5 frames before its strike and loses 7%.</li>
-      <li><b>Combo art.</b> The rising follow-up uses the same swoosh construction with a different split, so it reads as the same family.</li>
-      <li><b>Not decided here:</b> the damage window (gameplay still uses 0.10–0.27 s), the first swing from the sheath, and hit feedback.</li>
+      <li><b>New this round: idle, N swings, idle.</b> The combo card now plays four swings (forehand, backhand, forehand, backhand) between idles. The count is one number in the code. Before each forehand after the first, the sword winds back round to the far side in the backhand's recovery (wind-up 3), so the shoulders keep swinging one way, then the other.</li>
+      <li><b>Combo, as if the button is mashed.</b> Contacts are 0.25 s apart. The draw is wind-up 1: the sword pulled up from the back, the shoulders turning a little back. The side cut turns them into the swing. In its recovery, wind-up 2 brings the sword up on the near side and holds a moment, then the backhand comes back across, turning the shoulders almost back to the draw. Each swing's end is the next one's wind-up, so a third press can loop straight into another forehand.</li>
+      <li><b>Lower.</b> Contact and follow-through come down so the swing cuts through things half the player's height (there's no duck).</li>
+      <li><b>Hit rectangle.</b> Turn on Hit shape. It's a rectangle fixed in front of the player, sized to what the swoosh sweeps in front of the body, capped at shoulder height (a forward hit, not overhead). The side cut's is 0.5–1.8 in front of the feet and 0.7–1.4 high.</li>
+      <li><b>The blade turns its edge.</b> It now rolls about its own length during the swing, flat when held and edge-on while cutting, so it reads thin through the cut instead of staying one width.</li>
+      <li><b>Return.</b> A little slower than round 5: a 0.2 s hold, then 0.3 s to put the sword back.</li>
     </ul>
+    <div class="swords">
+      <figure><img src="sword-today.png" alt="Today's sword in the held follow-through" width="330" height="345"><figcaption>Today's sword</figcaption></figure>
+      <figure><img src="sword-cartoon.png" alt="The cartoon sword in the same pose" width="330" height="345"><figcaption>Cartoon sword (used on every card): broad blade, chisel tip, thin guard, short grip, after the original stick-figure art</figcaption></figure>
+    </div>
   </section>
 
   <div class="global" role="group" aria-label="All cards">
     <span class="label">All cards:</span>
     <button id="all-swoosh" aria-pressed="true">Swoosh</button>
+    <button id="all-box" aria-pressed="false">Hit shape</button>
     <button id="all-twos" aria-pressed="false">On twos</button>
     <button id="all-game" aria-pressed="false">Game size</button>
     <button id="all-sync">Restart together</button>
@@ -115,14 +125,15 @@ function el(tag, attrs = {}, ...kids) {
 const toggle = (b, on) => b.setAttribute("aria-pressed", String(on));
 
 function card(m) {
-  const sheets = { plain: new Image(), swoosh: new Image() };
-  sheets.plain.src = "sheets/" + m.id + "-plain.png"; sheets.swoosh.src = "sheets/" + m.id + "-swoosh.png";
+  const sheets = { plain: new Image(), swoosh: new Image(), box: new Image() };
+  for (const k of Object.keys(sheets)) sheets[k].src = "sheets/" + m.id + "-" + k + ".png";
   const canvas = el("canvas", { width: m.w, height: m.h, "aria-label": m.title + " animation" });
   const sizeTag = el("span", { class: "size", text: "Close-up" });
-  const state = { t: 0, playing: true, speed: 1, game: false, swoosh: true, twos: false, scrubbing: false };
+  const state = { t: 0, playing: true, speed: 1, game: false, swoosh: true, box: false, twos: false, scrubbing: false };
   const play = el("button", { class: "play", "aria-label": "Pause", text: "❚❚" });
   const speeds = [1, .5, .25].map(s => el("button", { "aria-pressed": String(s === 1), text: s === 1 ? "1×" : s === .5 ? "½×" : "¼×" }));
   const swoosh = el("button", { "aria-pressed": "true", text: "Swoosh" });
+  const box = el("button", { "aria-pressed": "false", text: "Hit shape" });
   const twos = el("button", { "aria-pressed": "false", text: "On twos" });
   const game = el("button", { "aria-pressed": "false", text: "Game size" });
   const counter = el("span", { class: "mono meta" });
@@ -131,7 +142,7 @@ function card(m) {
   for (const k of m.markers) { const i = el("i", { "data-label": k.id }); i.style.left = (k.time / m.duration * 100) + "%"; ticks.append(i); }
   const controls = el("div", { class: "controls" },
     el("div", { class: "row" }, play, ...speeds, el("span", { class: "spacer" }), swoosh),
-    el("div", { class: "row" }, twos, game),
+    el("div", { class: "row" }, box, twos, game),
     el("div", { class: "scrub" }, range, ticks), counter);
   const info = el("div", { class: "info" }, el("h3", { text: m.title }),
     el("p", { class: "mono meta", text: `${m.duration.toFixed(2)} s · ${m.frames} frames at ${m.fps} fps` }),
@@ -150,7 +161,8 @@ function card(m) {
     return state.twos ? f - (f % 2) : f;
   }
   function draw(f) {
-    const sheet = state.swoosh ? sheets.swoosh : sheets.plain;
+    // The hit shape render includes the swoosh.
+    const sheet = state.box ? sheets.box : state.swoosh ? sheets.swoosh : sheets.plain;
     if (!sheet.complete || !sheet.naturalWidth) return;
     const sx = (f % m.cols) * m.w, sy = Math.floor(f / m.cols) * m.h;
     ctx.fillStyle = "#f1f0e8"; ctx.fillRect(0, 0, m.w, m.h);
@@ -163,7 +175,7 @@ function card(m) {
   }
   root._tick = dt => { if (state.playing) state.t += dt * state.speed; draw(state.playing ? frameAt(state.t) : Number(range.value)); };
   root._set = (key, on) => {
-    state[key] = on; toggle({ swoosh, twos, game }[key], on);
+    state[key] = on; toggle({ swoosh, box, twos, game }[key], on);
     if (key === "game") sizeTag.textContent = on ? "Game size" : "Close-up";
   };
   root._restart = () => { state.t = 0; if (!state.playing) play.onclick(); };
@@ -176,6 +188,7 @@ function card(m) {
   };
   speeds.forEach((b, i) => b.onclick = () => { state.speed = [1, .5, .25][i]; speeds.forEach((o, j) => toggle(o, i === j)); });
   swoosh.onclick = () => root._set("swoosh", !state.swoosh);
+  box.onclick = () => root._set("box", !state.box);
   twos.onclick = () => root._set("twos", !state.twos);
   game.onclick = () => root._set("game", !state.game);
   range.oninput = () => { state.scrubbing = true; if (state.playing) play.onclick(); draw(Number(range.value)); state.scrubbing = false; };
@@ -204,7 +217,7 @@ function card(m) {
 
 const grid = document.getElementById("grid");
 for (const m of VARIANTS) { const c = card(m); cards.push(c); grid.append(c); }
-for (const [id, key] of [["all-swoosh", "swoosh"], ["all-twos", "twos"], ["all-game", "game"]]) {
+for (const [id, key] of [["all-swoosh", "swoosh"], ["all-box", "box"], ["all-twos", "twos"], ["all-game", "game"]]) {
   const b = document.getElementById(id);
   b.onclick = () => { const on = b.getAttribute("aria-pressed") !== "true"; toggle(b, on); cards.forEach(c => c._set(key, on)); };
 }

@@ -210,7 +210,7 @@ internal static partial class PlayerMoves
     private static MoveBuilder New(ResolvedModel m, string id, string name, float duration, bool loop) => new(m, id, name, duration, loop);
 
     /// <summary>The sheathed grip's actor-space position and blade angle for a body with hips offset (dx, dy) and this chest turn.</summary>
-    private static (Vector2 Grip, float Angle) Hilt(float hipsDx, float hipsDy, float chestTurn)
+    internal static (Vector2 Grip, float Angle) Hilt(float hipsDx, float hipsDy, float chestTurn)
     {
         var (sin, cos) = MathF.SinCos(chestTurn);
         var chest = new Vector2(hipsDx - .65f * sin, 1 + hipsDy + .65f * cos);
@@ -304,6 +304,16 @@ internal static partial class PlayerMoves
         return k.Chest(-.02f * facingAway, 0, 0, -.35f * facingAway)
             .Move("left-shoulder", ls.X, 0, ls.Y).Move("right-shoulder", rs.X, 0, rs.Y)
             .Move("left-hip", lh.X, 0, lh.Y + hipDepth).Move("right-hip", rh.X, 0, rh.Y + hipDepth);
+    }
+
+    /// <summary>
+    /// Turns only the shoulder girdle to an axis angle (rest 60): body rotation into a swing without moving the hips. Lower
+    /// angles bring the far (sword) shoulder forward; higher ones wind it back.
+    /// </summary>
+    internal static PoseKey Shoulders(this PoseKey k, ResolvedModel m, float degrees)
+    {
+        var (ls, rs, _, _) = Girdles(m, degrees);
+        return k.Move("left-shoulder", ls.X, 0, ls.Y).Move("right-shoulder", rs.X, 0, rs.Y);
     }
 
     private const float Rail = .36f, RungHigh = 1.95f, RungLow = 1.45f, StepHigh = .6f, StepLow = .05f;

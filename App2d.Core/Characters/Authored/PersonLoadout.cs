@@ -4,10 +4,10 @@ namespace App2d.Core.Characters;
 public enum PersonGear { None, Sword, Gun }
 
 /// <summary>
-/// The player move set's prop rules, shared by the game and the move review. The scabbard is always worn with the sword.
-/// The sword rides the scabbard, except between a clip's "sword-draw" and "sword-sheathe" markers (from the start of a clip
+/// The player move set's prop rules, shared by the game and the move review. There is no scabbard: the sword rides the
+/// back socket, except between a clip's "sword-draw" and "sword-sheathe" markers (from the start of a clip
 /// that only sheathes), when it is in the hand. The latest "view-back" / "view-profile" marker at or before the sample
-/// picks the back socket: seen from behind the sheath is worn across the back. The pistol is in hand whenever carried.
+/// picks the back socket: seen from behind the sword is worn across the back. The pistol is in hand whenever carried.
 /// </summary>
 public static class PersonLoadout
 {
@@ -52,7 +52,6 @@ public static class PersonLoadout
     {
         if (gear == PersonGear.None) yield break;
         var back = SeenFromBehind(clip, seconds) ? BackViewSocket : BackSocket;
-        yield return (Sheath, back);
         yield return (Sword, gear == PersonGear.Sword && SwordInHand(clip, seconds) ? SwordSocket : back);
         if (gear == PersonGear.Gun) yield return (Pistol, GunSocket);
     }
