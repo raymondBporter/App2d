@@ -211,11 +211,13 @@ public static class StarterContent
 
     public static PropAsset SpearProp() => new()
     {
-        Id = Spear, Name = "Spear", Grip = new(0, 0), Tip = new(1.38f, 0), SecondGrip = new(-.3f, 0),
-        Shapes =
+        Id = Spear, Name = "Spear", Tip = new(1.38f, 0), SecondGrip = new(-.3f, 0), LineWidth = .013f,
+        Solids =
         [
-            new() { Kind = "stroke", Points = [new(-.5f, 0), new(1.12f, 0)], Width = .045f, Fill = "#8a6a44" },
-            new() { Kind = "polygon", Points = [new(1.1f, -.055f), new(1.38f, 0), new(1.1f, .055f)], Fill = "#c9d2da" },
+            PropGeometry.Extrude([new(-.5f, -.024f), new(1.12f, -.021f), new(1.12f, .021f), new(-.5f, .024f)], .039f, "#876646"),
+            PropGeometry.Extrude([new(-.5f, -.031f), new(-.41f, -.031f), new(-.41f, .031f), new(-.5f, .031f)], .05f, "#465963"),
+            PropGeometry.Extrude([new(1.035f, -.039f), new(1.115f, -.039f), new(1.115f, .039f), new(1.035f, .039f)], .064f, "#c5a26b"),
+            PropGeometry.Blade(1.1f, 1.17f, 1.38f, .076f, .022f, "#dce5e7"),
         ],
     };
 

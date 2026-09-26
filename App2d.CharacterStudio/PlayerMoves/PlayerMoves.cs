@@ -10,7 +10,7 @@ namespace App2d.CharacterStudio.PlayerMoves;
 /// returns it ("sword-sheathe"). Upper-body clips key only chest, head, shoulders and arms so they can be layered on
 /// any legs. Durations fit the current gameplay windows noted on each clip.
 /// </summary>
-internal static class PlayerMoves
+internal static partial class PlayerMoves
 {
     public const string Sword = PersonLoadout.Sword, Sheath = PersonLoadout.Sheath, Pistol = PersonLoadout.Pistol;
 
@@ -28,8 +28,8 @@ internal static class PlayerMoves
 
     public static IEnumerable<ModelSocket> Sockets() =>
     [
-        new() { Id = MoveBuilder.BackSocket, Control = "chest", Frame = "chest", OffsetX = SheathGrip.X, OffsetY = SheathGrip.Y, Angle = SheathAngle },
-        new() { Id = MoveBuilder.BackViewSocket, Control = "chest", Frame = "chest", OffsetX = BackViewGrip.X, OffsetY = BackViewGrip.Y, Angle = BackViewAngle },
+        new() { Id = MoveBuilder.BackSocket, Control = "chest", Frame = "chest", OffsetX = SheathGrip.X, OffsetY = SheathGrip.Y, OffsetZ = .2f, Angle = SheathAngle },
+        new() { Id = MoveBuilder.BackViewSocket, Control = "chest", Frame = "chest", OffsetX = BackViewGrip.X, OffsetY = BackViewGrip.Y, OffsetZ = -.2f, Angle = BackViewAngle },
         new() { Id = MoveBuilder.SwordSocket, Control = "right-hand", Frame = "right-shoulder" },
         new() { Id = MoveBuilder.GunSocket, Control = "right-hand", Frame = "right-shoulder" },
     ];
@@ -54,30 +54,22 @@ internal static class PlayerMoves
         person.Save(modelPath);
         var model = ResolvedModel.From(person);
         foreach (var prop in Props()) prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
-        foreach (var clip in Clips(model)) clip.Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
+        foreach (var clip in Clips(model)) WeaponMotion(clip).Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
         Directory.CreateDirectory(Path.Combine(authoredRoot, "entities"));
         Hero().Save(Path.Combine(authoredRoot, "entities", Hero().Id + ".json"));
         // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
-        PistolShot(model).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
+        WeaponMotion(PistolShot(model)).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
         var cinder = CinderVariant(); cinder.Save(Path.Combine(authoredRoot, "variants", cinder.Id + ".json"));
         var gunner = CinderGunner(ResolvedModel.From(person, cinder)); gunner.Save(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"));
         // The maul: a broad brute on the Heavy set with a one-handed hammer and a slow overhead slam.
         HammerProp().Save(Path.Combine(authoredRoot, "props", "hammer.json"));
-        HammerSlam(model).Save(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"));
+        WeaponMotion(HammerSlam(model)).Save(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"));
         var brute = BruteVariant(); brute.Save(Path.Combine(authoredRoot, "variants", brute.Id + ".json"));
         var maul = MaulBrute(ResolvedModel.From(person, brute)); maul.Save(Path.Combine(authoredRoot, "entities", maul.Id + ".json"));
     }
 
     /// <summary>A short-hafted war hammer: grip at the origin, haft along +X, the head's centre is its tip.</summary>
-    public static PropAsset HammerProp() => new()
-    {
-        Id = "hammer", Name = "Hammer", Grip = new(0, 0), Tip = new(.8f, 0),
-        Shapes =
-        [
-            new() { Kind = "stroke", Points = [new(-.14f, 0, -.05f), new(.7f, 0, -.05f)], Width = .07f, Fill = "#7a5634" },
-            new() { Kind = "polygon", Points = [new(.66f, -.16f, -.06f), new(.94f, -.16f, -.06f), new(.94f, .16f, -.06f), new(.66f, .16f, -.06f)], Fill = "#5d6770" },
-        ],
-    };
+    public static PropAsset HammerProp() => HammerArt();
 
     /// <summary>
     /// A slow overhead slam, 1.5 s: the hammer climbs over and behind the head (anticipation) and hangs there, then drives down
@@ -553,37 +545,7 @@ internal static class PlayerMoves
 
     // ---- Props --------------------------------------------------------------------------------------------------
 
-    /// <summary>A straight single-edged sword, grip at the origin, blade along +X. Depth +0.2 keeps it behind the torso when sheathed.</summary>
-    public static PropAsset SwordProp() => new()
-    {
-        Id = Sword, Name = "Sword", Grip = new(0, 0), Tip = new(.82f, 0),
-        Shapes =
-        [
-            new() { Kind = "stroke", Points = [new(-.1f, 0, .2f), new(.05f, 0, .2f)], Width = .05f, Fill = "#6b4a2b" },
-            new() { Kind = "stroke", Points = [new(.05f, -.065f, .2f), new(.05f, .065f, .2f)], Width = .035f, Fill = "#8c9299" },
-            new() { Kind = "polygon", Points = [new(.07f, -.028f, .2f), new(.75f, -.028f, .2f), new(.82f, .018f, .2f), new(.07f, .028f, .2f)], Fill = "#e3e9ec" },
-        ],
-    };
-
-    /// <summary>Scabbard on the back socket, drawn just in front of the sheathed blade so only the hilt shows.</summary>
-    public static PropAsset SheathProp() => new()
-    {
-        Id = Sheath, Name = "Sheath", Grip = new(0, 0), Tip = new(.85f, 0),
-        Shapes =
-        [
-            new() { Kind = "polygon", Points = [new(.075f, -.034f, .19f), new(.8f, -.03f, .19f), new(.85f, 0, .19f), new(.8f, .03f, .19f), new(.075f, .034f, .19f)], Fill = "#5b4634" },
-            new() { Kind = "stroke", Points = [new(.08f, -.042f, .185f), new(.08f, .042f, .185f)], Width = .028f, Fill = "#8c9299" },
-        ],
-    };
-
-    /// <summary>A compact pistol, grip at the origin, barrel along +X, muzzle at the barrel's end.</summary>
-    public static PropAsset PistolProp() => new()
-    {
-        Id = Pistol, Name = "Pistol", Grip = new(0, 0), Tip = new(.26f, .06f), Muzzle = new(.26f, .06f),
-        Shapes =
-        [
-            new() { Kind = "polygon", Points = [new(-.04f, .025f), new(.26f, .025f), new(.26f, .095f), new(-.06f, .095f)], Fill = "#5d6368" },
-            new() { Kind = "polygon", Points = [new(-.045f, .03f), new(.03f, .03f), new(.005f, -.09f), new(-.065f, -.09f)], Fill = "#8a4f2c" },
-        ],
-    };
+    public static PropAsset SwordProp() => SwordArt();
+    public static PropAsset SheathProp() => SheathArt();
+    public static PropAsset PistolProp() => PistolArt();
 }

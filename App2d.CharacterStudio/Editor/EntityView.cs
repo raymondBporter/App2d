@@ -237,6 +237,12 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         else if (Ui.Combo("Clip", action.Clip!, session.Assets.ClipsFor(document.Asset.Model).Select(c => c.Id).Order(StringComparer.Ordinal), c => session.Assets.Clip(c)?.Name is { } n ? $"{n} ({c})" : c + " (missing)") is { } clip)
             session.Edit(document, () => Def(document, id).Clip = clip);
         var resolved = session.Entity?.Actions.GetValueOrDefault(id);
+        if (resolved is not null && ImGui.Button("Animate this action with weapon"))
+        {
+            var equipment = document.Asset.Equipment.FirstOrDefault();
+            session.Open(resolved.Clip.Id);
+            if (equipment is not null) { session.PreviewProp = equipment.Prop; session.PreviewSocket = equipment.Socket; session.PreviewWeapon = session.EditWeapon = true; }
+        }
 
         var groups = basis?.Groups.Select(g => g.Id).ToArray() ?? [];
         if (id != EntityControllers.Jump)

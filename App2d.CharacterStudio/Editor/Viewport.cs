@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters;
 using App2d.Rendering.Characters;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
@@ -68,7 +69,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         _span = MathF.Max(1.5f, max - min + .9f); _centerY = (min + max) / 2;
     }
 
-    public ViewportFrame Draw(Vector2 available, IReadOnlyList<Subject> scene)
+    public ViewportFrame Draw(Vector2 available, IReadOnlyList<Subject> scene, EditorSession session)
     {
         if (scene.Count > 0 && _fittedFor != scene[0].Id) Fit(scene[0]);
         var width = Math.Max(1, (int)available.X); var height = Math.Max(1, (int)available.Y);
@@ -85,7 +86,12 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         for (var i = 0; i < views.Length; i++)
         {
             var subject = views[i].Subject;
-            if (subject.Entity is { } entity) _drawings[i].Build(entity, subject.Pose); else _drawings[i].Build(subject.Model, subject.Pose);
+            if (subject.Entity is { } entity) _drawings[i].Build(entity, subject.Pose); else
+            {
+                _drawings[i].Build(subject.Model, subject.Pose);
+                if (session.Mode == Workspace.Animate && session.WeaponFor(subject.Model) is { } weapon)
+                    _drawings[i].AddProp(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket));
+            }
         }
         Render(_target!, width, height, anchor, ppu, views, centerX);
 

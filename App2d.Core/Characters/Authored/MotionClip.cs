@@ -53,6 +53,7 @@ public sealed record ClipFaceTrack
 /// <summary>
 /// translate: a control's parent-local offset delta. rotate: a control's XY rotation, inherited by its children.
 /// target: an IK chain's end-target delta in the chain's frame. Deltas are from rest, in reference units.
+/// orient: a socket's local twist/tilt/turn in X/Y/Z radians, applied in that order before its inherited XY frame.
 /// </summary>
 public sealed record ClipTrack
 {
@@ -83,7 +84,9 @@ public sealed record ClipContact
 public sealed class MotionClip
 {
     public const string FormatId = "app2d-clip", TranslateKind = "translate", RotateKind = "rotate", TargetKind = "target";
-    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind];
+    /// <summary>Socket-local Euler angles in radians: X twist, Y tilt, Z turn. Unwrapped angles preserve authored full turns.</summary>
+    public const string OrientKind = "orient";
+    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind];
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = 1;
     public string Id { get; set; } = "";
@@ -211,7 +214,12 @@ public sealed class MotionClip
         foreach (var track in Tracks)
         {
             var field = $"{owner} {track.Kind} track '{track.Target}'";
-            if (track.Kind == TargetKind)
+            if (track.Kind == OrientKind)
+            {
+                Require(basis.Sockets.Any(s => s.Id == track.Target), $"{field}: unknown socket.");
+                Require(track.Scale is null or CharacterModel.Unit, $"{field}: orientation cannot scale with a measurement.");
+            }
+            else if (track.Kind == TargetKind)
             {
                 Require(model.Chains.TryGetValue(track.Target, out var chain), $"{field}: unknown chain.");
                 Scale(track.Scale ?? chain.Scale, field);

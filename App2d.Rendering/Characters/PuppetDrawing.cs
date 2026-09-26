@@ -30,6 +30,7 @@ public sealed class PuppetDrawing
     /// <summary>Appends a prop with its grip on the given frame. Strokes get an ink outline just behind them.</summary>
     public void AddProp(PropAsset prop, SocketFrame frame)
     {
+        PropDrawing.Add(Mesh, prop, frame);
         var ink = CharacterJson.Color(prop.Ink);
         foreach (var shape in prop.Shapes)
         {

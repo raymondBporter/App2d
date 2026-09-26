@@ -12,6 +12,14 @@ public sealed record PropShape
     public string Fill { get; set; } = "#c8b18a";
 }
 
+/// <summary>A closed, consistently wound triangle mesh in prop space. X along the weapon, Y across its broad face, Z thickness.</summary>
+public sealed record PropSolid
+{
+    public List<PuppetPoint> Vertices { get; set; } = [];
+    public List<int> Triangles { get; set; } = [];
+    public string Fill { get; set; } = "#c8b18a";
+}
+
 /// <summary>
 /// A held object: local art plus the named points gameplay needs. The grip lands on the equipment socket; the tip and
 /// muzzle place hit regions and projectiles from the same transform the art is drawn with. The second grip is recorded
@@ -27,11 +35,13 @@ public sealed class PropAsset
     public string Name { get; set; } = "";
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .035f;
+    public float Scale { get; set; } = 1;
     public PuppetPoint Grip { get; set; }
     public PuppetPoint Tip { get; set; } = new(1, 0);
     public PuppetPoint? SecondGrip { get; set; }
     public PuppetPoint? Muzzle { get; set; }
     public List<PropShape> Shapes { get; set; } = [];
+    public List<PropSolid> Solids { get; set; } = [];
 
     /// <summary>A named local point, or null when the prop does not define it.</summary>
     public PuppetPoint? Point(string name) => name switch
@@ -52,7 +62,23 @@ public sealed class PropAsset
         AuthoredAsset.RequireId(Id, "prop id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Limit.Color(Ink, $"{owner} ink"); new Limit(.001f, 1).Check(LineWidth, $"{owner} lineWidth");
+        new Limit(.001f, 100).Check(Scale, $"{owner} scale");
         Grip.Check($"{owner} grip"); Tip.Check($"{owner} tip"); SecondGrip?.Check($"{owner} secondGrip"); Muzzle?.Check($"{owner} muzzle");
+        Require(Solids is not null && Solids.Count <= 128, $"{owner}: solids must be a list of at most 128.");
+        Require(Solids.Sum(s => s?.Vertices?.Count ?? 0) <= 32768 && Solids.Sum(s => s?.Triangles?.Count ?? 0) <= 196608, $"{owner}: mesh is too large.");
+        foreach (var solid in Solids)
+        {
+            Require(solid is not null && solid.Vertices is not null && solid.Triangles is not null, $"{owner}: incomplete solid.");
+            Require(solid.Vertices.Count >= 3 && solid.Triangles.Count >= 3 && solid.Triangles.Count % 3 == 0, $"{owner}: a solid needs indexed triangles.");
+            foreach (var vertex in solid.Vertices) vertex.Check(owner + " mesh vertex");
+            Require(solid.Triangles.All(i => i >= 0 && i < solid.Vertices.Count), $"{owner}: triangle index outside vertices.");
+            for (var i = 0; i < solid.Triangles.Count; i += 3)
+            {
+                var a = solid.Vertices[solid.Triangles[i]].XYZ; var b = solid.Vertices[solid.Triangles[i + 1]].XYZ; var c = solid.Vertices[solid.Triangles[i + 2]].XYZ;
+                Require(System.Numerics.Vector3.Cross(b - a, c - a).LengthSquared() > 1e-16f, $"{owner}: degenerate triangle.");
+            }
+            Limit.Color(solid.Fill, owner + " mesh fill");
+        }
         Require(Shapes is not null && Shapes.Count <= 128, $"{owner}: shapes must be a list of at most 128.");
         for (var i = 0; i < Shapes.Count; i++)
         {

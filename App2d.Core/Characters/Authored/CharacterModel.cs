@@ -34,7 +34,7 @@ public sealed record ModelMeasure
 
 /// <summary>
 /// A named attachment frame for faces, equipment and collision. Its origin is Control plus (OffsetX, OffsetY) turned by
-/// Frame's accumulated rotation; its axis points at Angle radians from that frame's X axis. Not structural.
+/// Frame's accumulated rotation, plus OffsetZ in depth. Angle supplies its rest XY direction; orient tracks add local 3D rotation. Not structural.
 /// </summary>
 public sealed record ModelSocket
 {
@@ -44,6 +44,7 @@ public sealed record ModelSocket
     public string? Frame { get; set; }
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
+    public float OffsetZ { get; set; }
     public float Angle { get; set; }
 }
 
@@ -199,6 +200,7 @@ public sealed class CharacterModel
             Require(sockets.Add(socket.Id), $"{owner}: duplicate socket '{socket.Id}'.");
             Require(Known(socket.Control) && (socket.Frame is null || Known(socket.Frame)), $"{owner}: socket '{socket.Id}' references an unknown control.");
             new Limit(-100, 100).Check(socket.OffsetX, $"{owner} socket '{socket.Id}' offsetX"); new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
+            new Limit(-100, 100).Check(socket.OffsetZ, $"{owner} socket '{socket.Id}' offsetZ");
             new Limit(-10, 10).Check(socket.Angle, $"{owner} socket '{socket.Id}' angle");
         }
         var sets = new HashSet<string>(StringComparer.Ordinal);
