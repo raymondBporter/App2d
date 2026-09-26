@@ -29,7 +29,7 @@ internal sealed partial class MeleeAttack2D
         AttackId = state.AttackId;
         IsInProgress = state.IsInProgress;
         IsDamageActive = state.IsDamageActive;
+        Take(state.Profile); NextProfile = state.NextProfile;
         state.Pose.Apply(WorldObject.Transform);
-        Profile = state.Profile; NextProfile = state.NextProfile;
     }
 }

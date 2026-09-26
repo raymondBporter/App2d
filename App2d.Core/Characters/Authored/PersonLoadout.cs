@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace App2d.Core.Characters;
 
 /// <summary>What the Person carries: nothing, the sword on its back, or the sword on its back and a pistol in hand.</summary>
@@ -46,6 +48,33 @@ public static class PersonLoadout
 
     private static bool IsSwoosh(string id) => id == SwooshMarker || id.StartsWith(SwooshMarker + "-", StringComparison.Ordinal);
     private static bool OpensSwoosh(string id) => IsSwoosh(id) && !id.EndsWith("-end", StringComparison.Ordinal);
+
+    /// <summary>The held sword's blade, guard to tip, in the pose's actor space (along the blade's own axis; mesh swords are centred on it in depth).</summary>
+    public static (Vector3 Guard, Vector3 Tip) Blade(EvaluatedPose pose, PropAsset sword, ModelSocket socket)
+    {
+        var frame = new ActorPose(pose, Vector2.Zero, 1).Socket(socket);
+        return (ActorPose.PropPoint(frame, sword, new(.07f, 0, 0)), ActorPose.PropPoint(frame, sword, new(sword.Tip.X, 0, 0)));
+    }
+
+    /// <summary>
+    /// Whether a clip's first swoosh is a backhand: the blade turning round the body (about the vertical axis) the opposite
+    /// way to a forehand, which crosses from the far side toward the camera. Read from the clip, finely sampled over the
+    /// swoosh; false when it has none.
+    /// </summary>
+    public static bool Backhand(ResolvedModel model, MotionClip clip, PropAsset sword, ModelSocket socket)
+    {
+        if (clip.Markers.FirstOrDefault(m => m.Id == SwooshMarker) is not { } start) return false;
+        var end = clip.Markers.FirstOrDefault(m => m.Id == SwooshEndMarker && m.Time > start.Time)?.Time ?? clip.Duration;
+        var yaw = 0f; Vector3? last = null;
+        for (var t = start.Time; t <= end + 1e-4f; t += 1 / 240f)
+        {
+            var (guard, tip) = Blade(PoseEvaluator.Sample(model, clip, t), sword, socket);
+            var d = Vector3.Normalize(tip - guard);
+            if (last is { } a) yaw += Vector3.Cross(a, d).Y;
+            last = d;
+        }
+        return yaw < 0;
+    }
 
     /// <summary>The props worn at this moment of <paramref name="clip"/>, each with the model socket it sits on.</summary>
     public static IEnumerable<(string Prop, string Socket)> Worn(MotionClip clip, float seconds, PersonGear gear)

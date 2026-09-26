@@ -41,7 +41,7 @@ internal static partial class PlayerMoves
         Idle(m), Jump(m), Fall(m), Land(m), Dash(m),
         ClimbTurn(m, onto: true), Climb(m), ClimbTurn(m, onto: false), WallGrip(m), BalanceForward(m), BalanceBackward(m),
         Hit(m), Death(m), Celebrate(m),
-        DrawSlash(m), Slash(m), Sheathe(m), DownAttack(m),
+        .. SwingLab.GameClips(m), Sheathe(m), DownAttack(m),
         GunAim(m), GunShot(m), GunWallShot(m),
     ];
 
@@ -54,9 +54,10 @@ internal static partial class PlayerMoves
         person.Save(modelPath);
         var model = ResolvedModel.From(person);
         foreach (var prop in Props()) prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
-        foreach (var clip in Clips(model)) WeaponMotion(clip).Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
+        var clips = Clips(model).Select(WeaponMotion).ToDictionary(c => c.Id);
+        foreach (var clip in clips.Values) clip.Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
         Directory.CreateDirectory(Path.Combine(authoredRoot, "entities"));
-        Hero().Save(Path.Combine(authoredRoot, "entities", Hero().Id + ".json"));
+        var hero = Hero(model, clips); hero.Save(Path.Combine(authoredRoot, "entities", hero.Id + ".json"));
         // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
         WeaponMotion(PistolShot(model)).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
         var cinder = CinderVariant(); cinder.Save(Path.Combine(authoredRoot, "variants", cinder.Id + ".json"));
@@ -168,15 +169,16 @@ internal static partial class PlayerMoves
         ],
     };
 
-    /// <summary>
-    /// The game's traversal player. Person2D moves it; this entity supplies what the move set's clips already say: the sword's
-    /// duration and strike → recover window from the draw-slash (and the slash for a follow-up while the blade is out), its hit box on the sword tip, and the muzzle at each shot's fire
-    /// marker. Health and the movement box are the player's too.
-    /// </summary>
     /// <summary>The player's bolt: 30 x 10 px at 1250 px/s for 1.5 s at the player's drawn scale (about 40 px per unit).</summary>
     private static ProjectileDef PlayerBolt => new() { Speed = 31, Width = .75f, Height = .25f, Damage = 2, Lifetime = 1.5f };
 
-    public static EntityAsset Hero() => new()
+    /// <summary>
+    /// The game's traversal player. Person2D moves it; this entity supplies what the move set's clips already say: the
+    /// sword combo (the side cut drawn from the back, then backhand and forehand alternating for as long as the button is
+    /// pressed, each with its put-away), each swing's strike → recover window and hit rectangle, and the muzzle at each
+    /// shot's fire marker. Health and the movement box are the player's too.
+    /// </summary>
+    public static EntityAsset Hero(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips) => new()
     {
         Id = "hero",
         Name = "Hero",
@@ -190,22 +192,39 @@ internal static partial class PlayerMoves
         Equipment = [new() { Prop = PersonLoadout.Sword, Socket = MoveBuilder.SwordSocket }, new() { Prop = PersonLoadout.Pistol, Socket = MoveBuilder.GunSocket }],
         Actions =
         [
-            new()
-            {
-                Id = EntityControllers.Attack, Clip = "player-sword-draw-slash",
-                Hits = [new() { Id = "blade", Prop = PersonLoadout.Sword, Along = -.35f, Width = 1.1f, Height = 1.3f, Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
-                Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
-            },
-            new()
-            {
-                Id = EntityControllers.FollowUp, Clip = "player-sword-slash",
-                Hits = [new() { Id = "blade", Prop = PersonLoadout.Sword, Along = -.35f, Width = 1.1f, Height = 1.3f, Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
-                Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
-            },
+            Swing(model, clips, EntityControllers.Attack, SwingLab.SideCutClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
+            Swing(model, clips, EntityControllers.FollowUp, SwingLab.BackhandClip, Forehand, SwingLab.PutAwayBackhandClip),
+            Swing(model, clips, Forehand, SwingLab.ForehandClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
             new() { Id = EntityControllers.Shoot, Clip = "player-gun-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }], Projectile = PlayerBolt },
             new() { Id = EntityControllers.WallShot, Clip = "player-gun-wall-shot", Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }], Projectile = PlayerBolt },
         ],
     };
+
+
+    /// <summary>The combo's forehand: the backhand's next swing, chaining back to the backhand.</summary>
+    private const string Forehand = "forehand";
+
+    /// <summary>
+    /// One sword swing of the combo: its clip, the swing a further press plays, the clip that puts the sword away after it,
+    /// and its hit, a rectangle fixed to the player that bounds what the blade sweeps in front of the body.
+    /// </summary>
+    private static EntityActionDef Swing(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips, string id, string clip, string next, string recovery)
+    {
+        var swing = clips[clip]; float At(string marker) => swing.Markers.Single(m => m.Id == marker).Time;
+        var socket = model.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket); var sword = SwordProp();
+        var (min, max) = SwingLab.HitRectangle(model, swing, At(PersonLoadout.SwooshMarker), At("strike"), At("recover"), t => SwingLab.Blade(model, swing, t, sword, socket))
+            ?? throw new InvalidOperationException($"'{clip}': the blade never gets in front of the player.");
+        static float R(float v) => MathF.Round(v, 3);
+        return new()
+        {
+            Id = id,
+            Clip = clip,
+            Next = next,
+            Recovery = recovery,
+            Hits = [new() { Id = "blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Width = R(max.X - min.X), Height = R(max.Y - min.Y), Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
+            Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
+        };
+    }
 
     private static MoveBuilder New(ResolvedModel m, string id, string name, float duration, bool loop) => new(m, id, name, duration, loop);
 
@@ -469,40 +488,6 @@ internal static partial class PlayerMoves
         .Build();
 
     // ---- Sword --------------------------------------------------------------------------------------------------
-
-    /// <summary>
-    /// Gameplay swing: 0.35 s, damage 0.10–0.27 s. The hand finds the hilt over the shoulder ("sword-draw"), and pulling
-    /// the blade out becomes the wind-up: overhead, then a forward arc down through "strike" into a low guard. Ends drawn.
-    /// </summary>
-    private static MotionClip DrawSlash(ResolvedModel m)
-    {
-        var (hilt, sheathed) = Hilt(-.03f, -.04f, .1f);
-        return New(m, "player-sword-draw-slash", "Sword draw and slash", .35f, false)
-            .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(sheathed))
-            .Key(.05f, k => k.Hips(-.03f, -.04f).Chest(.1f).Head(.02f).RightHandAt(hilt.X, hilt.Y).LeftHand(.12f, -.52f).Blade(sheathed), ClipEase.Linear)
-            .Key(.1f, k => k.Hips(-.03f, -.05f).Chest(.16f).Head(.04f).RightHandAt(.04f, 2.16f).LeftHand(.18f, -.44f).Blade(2.1f), ClipEase.Linear)
-            .Key(.17f, k => k.Hips(.02f, -.06f).Chest(-.12f).Head(.08f).RightHandAt(.42f, 1.86f).LeftHand(-.05f, -.5f).Blade(.62f), ClipEase.Linear)
-            .Key(.22f, k => k.Hips(.06f, -.08f).Chest(-.3f).Head(.16f).RightHandAt(.52f, 1.38f).LeftHand(-.2f, -.48f).Blade(-.42f), ClipEase.Linear)
-            .Key(.27f, k => k.Hips(.06f, -.09f).Chest(-.32f).Head(.18f).RightHandAt(.36f, 1.04f).LeftHand(-.22f, -.46f).Blade(-1.2f))
-            .Key(.35f, k => k.Hips(.03f, -.07f).Chest(-.12f).Head(.08f).RightHandAt(.34f, 1.2f).LeftHand(-.08f, -.54f).Blade(-.22f))
-            .Plant("left-leg", 0, .35f, -.16f).Plant("right-leg", 0, .35f, .16f)
-            .Marker("sword-draw", .05f).Marker("strike", .2f).Marker("recover", .27f)
-            .Face(0, "focused").Face(.12f, "determined")
-            .Build();
-    }
-
-    /// <summary>A follow-up with the sword already out: drop low behind, then a rising cut forward and up, back to guard. Same 0.35 s window.</summary>
-    private static MotionClip Slash(ResolvedModel m) => New(m, "player-sword-slash", "Sword rising slash", .35f, false)
-        .Key(0, k => k.Hips(.03f, -.07f).Chest(-.12f).Head(.08f).RightHandAt(.34f, 1.2f).LeftHand(-.08f, -.54f).Blade(-.22f))
-        .Key(.09f, k => k.Hips(-.02f, -.1f).Chest(.08f).Head(.04f).RightHandAt(-.1f, 1.0f).LeftHand(.16f, -.46f).Blade(-2.5f), ClipEase.Linear)
-        .Key(.16f, k => k.Hips(.03f, -.08f).Chest(-.08f).Head(.08f).RightHandAt(.38f, 1.26f).LeftHand(-.1f, -.5f).Blade(-.3f), ClipEase.Linear)
-        .Key(.21f, k => k.Hips(.06f, -.06f).Chest(-.18f).Head(.12f).RightHandAt(.46f, 1.7f).LeftHand(-.2f, -.46f).Blade(.7f), ClipEase.Linear)
-        .Key(.27f, k => k.Hips(.05f, -.05f).Chest(-.1f).Head(.1f).RightHandAt(.28f, 2.02f).LeftHand(-.16f, -.5f).Blade(1.55f))
-        .Key(.35f, k => k.Hips(.03f, -.07f).Chest(-.12f).Head(.08f).RightHandAt(.34f, 1.2f).LeftHand(-.08f, -.54f).Blade(-.22f))
-        .Plant("left-leg", 0, .35f, -.16f).Plant("right-leg", 0, .35f, .16f)
-        .Marker("sword-draw", 0).Marker("strike", .18f).Marker("recover", .27f)
-        .Face(0, "determined")
-        .Build();
 
     /// <summary>
     /// From guard, twirl the blade up and over the back (one continuous turn) and slide it home ("sword-sheathe"), then

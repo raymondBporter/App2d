@@ -12,10 +12,10 @@ internal abstract partial class MeleePersonWeapon2D
         float AttackDirection,
         float BufferedAttackDirection,
         MeleeAttack2D.SimulationState Attack,
-        float SinceSwing, bool FollowUp, bool NextFollowUp) : SimulationState2D;
+        float SinceSwing, string? Swing, string? NextSwing) : SimulationState2D;
 
     internal SimulationState CaptureSimulation() => new(
-        _attackDirection, _bufferedAttackDirection, _attack.CaptureSimulation(), _sinceSwing, _followUp, _nextFollowUp);
+        _attackDirection, _bufferedAttackDirection, _attack.CaptureSimulation(), _sinceSwing, _swing, _nextSwing);
 
     internal void RestoreSimulation(SimulationState snapshot)
     {
@@ -23,6 +23,6 @@ internal abstract partial class MeleePersonWeapon2D
         _attackDirection = state.AttackDirection;
         _bufferedAttackDirection = state.BufferedAttackDirection;
         _attack.RestoreSimulation(state.Attack);
-        _sinceSwing = state.SinceSwing; _followUp = state.FollowUp; _nextFollowUp = state.NextFollowUp;
+        _sinceSwing = state.SinceSwing; _swing = state.Swing; _nextSwing = state.NextSwing;
     }
 }

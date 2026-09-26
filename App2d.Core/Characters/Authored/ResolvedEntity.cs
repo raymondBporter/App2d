@@ -14,6 +14,10 @@ public sealed record ResolvedAction(string Id, MotionClip Clip, string Source, I
     public ProjectileDef? Projectile { get; init; }
     public float BlendIn { get; init; }
     public float BlendOut { get; init; }
+    /// <summary>The action a further press chains to (see <see cref="EntityActionDef.Next"/>).</summary>
+    public string? Next { get; init; }
+    /// <summary>The clip played once the action ends, when nothing else takes over.</summary>
+    public MotionClip? Recovery { get; init; }
 
     /// <summary>The masked layer's weight at a time in the action: a linear fade in, then out over the clip's end. One without a mask.</summary>
     public float Weight(double seconds)
@@ -131,7 +135,8 @@ public sealed class ResolvedEntity
                 if (action.Id == EntityControllers.Jump) throw new InvalidDataException($"{field}: a jump moves the whole body and cannot be masked.");
                 if (action.BlendIn + action.BlendOut > clip.Duration + 1e-4f) throw new InvalidDataException($"{field}: blend in and out ({action.BlendIn + action.BlendOut:0.###}s) exceed the clip ({clip.Duration:0.###}s).");
             }
-            actions[action.Id] = new(action.Id, clip, source, hits, events) { Mask = mask, BlendIn = action.BlendIn, BlendOut = action.BlendOut, Projectile = action.Projectile };
+            var recovery = action.Recovery is { } recoveryId ? Clip(recoveryId, field + " recovery") : null;
+            actions[action.Id] = new(action.Id, clip, source, hits, events) { Mask = mask, BlendIn = action.BlendIn, BlendOut = action.BlendOut, Projectile = action.Projectile, Next = action.Next, Recovery = recovery };
         }
         entity.Actions = actions;
 
@@ -223,9 +228,13 @@ public static class EntityCollision
         return regions;
     }
 
-    /// <summary>The frame a hit window is anchored to: a socket, or an equipped prop's named point with the prop's orientation.</summary>
+    /// <summary>
+    /// The frame a hit window is anchored to: a socket, an equipped prop's named point with the prop's orientation, or with
+    /// neither the actor itself (its offset from the feet, the axis along its facing).
+    /// </summary>
     public static SocketFrame Anchor(ResolvedEntity entity, ActorPose pose, HitWindow hit)
     {
+        if (hit.Socket is null && hit.Prop is null) return new(pose.Place(new(hit.OffsetX, hit.OffsetY, 0)), new Vector2(pose.Facing, 0), Vector2.UnitY);
         if (hit.Socket is not null) return pose.Socket(entity.Sockets[hit.Socket]);
         var equipment = entity.Equipment.First(e => e.Prop.Id == hit.Prop);
         var frame = pose.Socket(equipment.Socket);

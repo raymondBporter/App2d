@@ -79,14 +79,13 @@ textarea{width:100%; min-height:58px; resize:vertical; font:14px/1.4 var(--body)
   </header>
 
   <section class="notes" aria-labelledby="n-title">
-    <h2 id="n-title">Round 7: the combo runs idle, four swings, idle</h2>
+    <h2 id="n-title">Round 8: the side cut and combo are in the game</h2>
     <ul>
-      <li><b>New this round: idle, N swings, idle.</b> The combo card now plays four swings (forehand, backhand, forehand, backhand) between idles. The count is one number in the code. Before each forehand after the first, the sword winds back round to the far side in the backhand's recovery (wind-up 3), so the shoulders keep swinging one way, then the other.</li>
-      <li><b>Combo, as if the button is mashed.</b> Contacts are 0.25 s apart. The draw is wind-up 1: the sword pulled up from the back, the shoulders turning a little back. The side cut turns them into the swing. In its recovery, wind-up 2 brings the sword up on the near side and holds a moment, then the backhand comes back across, turning the shoulders almost back to the draw. Each swing's end is the next one's wind-up, so a third press can loop straight into another forehand.</li>
-      <li><b>Lower.</b> Contact and follow-through come down so the swing cuts through things half the player's height (there's no duck).</li>
-      <li><b>Hit rectangle.</b> Turn on Hit shape. It's a rectangle fixed in front of the player, sized to what the swoosh sweeps in front of the body, capped at shoulder height (a forward hit, not overhead). The side cut's is 0.5–1.8 in front of the feet and 0.7–1.4 high.</li>
-      <li><b>The blade turns its edge.</b> It now rolls about its own length during the swing, flat when held and edge-on while cutting, so it reads thin through the cut instead of staying one width.</li>
-      <li><b>Return.</b> A little slower than round 5: a 0.2 s hold, then 0.3 s to put the sword back.</li>
+      <li><b>New this round: "In the game".</b> The first card plays the game's own clips back to back, the way a mashed button chains them: side cut, backhand, forehand, backhand, put away. They were cut out of the combo you picked, so it should play exactly like the combo card, apart from the idle breathing. Frame for frame it renders identically.</li>
+      <li><b>How it chains.</b> Each press during a swing queues the next. Pressed again while the put-away still holds the sword, you get the next swing. After the sword is back, it draws again with the side cut. Mashed, contacts are 0.25 s apart.</li>
+      <li><b>The hit.</b> Each swing's hit is now a rectangle fixed to the player, worked out from the game sword's sweep and saved in the hero's entity file, where the editor can change it. It no longer follows the blade.</li>
+      <li><b>The swoosh.</b> The live trail now draws in the game, behind the player, with the follow-up mark on backhands.</li>
+      <li><b>Still open.</b> The cartoon sword (the game still uses today's sword, so the game's hit rectangles are a little shorter than the ones shown here), the grip at the far-side wind-up, and the final hit rectangle size.</li>
     </ul>
     <div class="swords">
       <figure><img src="sword-today.png" alt="Today's sword in the held follow-through" width="330" height="345"><figcaption>Today's sword</figcaption></figure>

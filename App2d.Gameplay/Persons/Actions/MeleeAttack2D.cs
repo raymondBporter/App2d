@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Geometry;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
@@ -19,7 +20,8 @@ internal sealed partial class MeleeAttack2D(
     /// <summary>A timing for the next swing to start, taken up when it starts (immediately or from the input buffer).</summary>
     public MeleeAttackProfile2D? NextProfile { get; set; }
 
-    public SpatialObject2D WorldObject { get; } = worldObject;
+    /// <summary>The hit box; a profile with its own <see cref="MeleeAttackProfile2D.Shape"/> swaps it in when its swing starts.</summary>
+    public SpatialObject2D WorldObject { get; private set; } = worldObject;
     // Identity belongs to this action source, not its owner: punch and kick
     // can have the same attack sequence number without suppressing each other.
     public EntityId2D SourceId { get; } = sourceId.IsValid ? sourceId
@@ -91,12 +93,18 @@ internal sealed partial class MeleeAttack2D(
 
     private void Start()
     {
-        if (NextProfile is { } next) { Profile = next; NextProfile = null; }
+        if (NextProfile is { } next) { Take(next); NextProfile = null; }
         AttackId++;
         _elapsedSeconds = 0f;
         _inputBufferSeconds = 0f;
         IsInProgress = true;
         IsDamageActive = false;
+    }
+
+    private void Take(MeleeAttackProfile2D profile)
+    {
+        Profile = profile;
+        if (profile.Shape is { } shape && !ReferenceEquals(shape, WorldObject.Shape)) WorldObject = new(shape);
     }
 
     private void PositionHitbox(Vector2 ownerPosition, float facing)
@@ -149,4 +157,6 @@ internal readonly record struct MeleeAttackProfile2D
     public float InputBufferSeconds { get; }
     public float ForwardOffset { get; }
     public float VerticalOffset { get; }
+    /// <summary>The swing's own hit box, when it differs from the attack's.</summary>
+    public IShape2D? Shape { get; init; }
 }

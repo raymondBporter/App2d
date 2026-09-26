@@ -16,5 +16,7 @@ public sealed class AuthoredCharacterShader(ResolvedModel model) : IShader2D
     public IReadOnlyList<(PropAsset Prop, ModelSocket Socket)> Props { get; set; } = [];
     /// <summary>A gameplay-blended face drawn instead of the pose's named expression.</summary>
     public FacePose? Face { get; set; }
+    /// <summary>A live blade trail in the pose's actor space, drawn behind the character.</summary>
+    public BladeSwoosh? Swoosh { get; set; }
     public Color BaseColor => Color.White;
 }

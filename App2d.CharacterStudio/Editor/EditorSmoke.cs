@@ -112,7 +112,7 @@ internal sealed class EditorSmoke(string output)
             ("21-imports-reopened", shell => ImportsReopened(shell.Session)),
             ("22-weapon-orientation", shell =>
             {
-                var s = shell.Session; s.Open("player-sword-slash"); s.SetSubject("person"); s.Compare.Clear();
+                var s = shell.Session; s.Open("player-sword-backhand"); s.SetSubject("person"); s.Compare.Clear();
                 s.PreviewProp = "sword"; s.PreviewSocket = PersonLoadout.SwordSocket; s.PreviewWeapon = s.EditWeapon = true; s.Seek(.16f);
                 s.PoseWeapon(new(.8f, -.3f, 0)); s.CommitAll();
                 Record(s.Scene()[0].Pose.SocketAngles[PersonLoadout.SwordSocket].X == .8f, "weapon rotation reaches the preview");

@@ -15,7 +15,7 @@ exceptions are written to `character-studio-error.log` beside the executable.
 
 ## Weapons and 3D rotation
 
-Open **Sword rising slash** (`player-sword-slash`) in **Animate**. Under **Weapon preview**, choose Sword and the
+Open **Sword backhand** (`player-sword-backhand`) in **Animate**. Under **Weapon preview**, choose Sword and the
 `sword-hand` socket, then **Edit weapon rotation**. Opening a prop in the browser also opens these controls. An entity
 action's **Animate this action with weapon** button selects its clip and equipment together.
 

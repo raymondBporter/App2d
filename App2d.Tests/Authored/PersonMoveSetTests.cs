@@ -36,14 +36,14 @@ public sealed class PersonMoveSetTests
     [Fact]
     public void TheSwordIsInHandOnlyBetweenDrawAndSheathe()
     {
-        var draw = Catalog.Animations["player-sword-draw-slash"]; var sheathe = Catalog.Animations["player-sword-sheathe"]; var idle = Catalog.Animations["player-idle"];
+        var draw = Catalog.Animations["player-sword-side-cut"]; var sheathe = Catalog.Animations["player-sword-sheathe"]; var idle = Catalog.Animations["player-idle"];
         static string SwordAt(MotionClip clip, float t, PersonGear gear = PersonGear.Sword) => PersonLoadout.Worn(clip, t, gear).Single(w => w.Prop == PersonLoadout.Sword).Socket;
         Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, 0));
-        Assert.Equal(PersonLoadout.SwordSocket, SwordAt(draw, .06f));
+        Assert.Equal(PersonLoadout.SwordSocket, SwordAt(draw, .03f));
         Assert.Equal(PersonLoadout.SwordSocket, SwordAt(sheathe, 0));
         Assert.Equal(PersonLoadout.BackSocket, SwordAt(sheathe, .31f));
         Assert.Equal(PersonLoadout.BackSocket, SwordAt(idle, 1));
-        Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, .06f, PersonGear.Gun)); // the gun hand holds the pistol, not the sword
+        Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, .03f, PersonGear.Gun)); // the gun hand holds the pistol, not the sword
         Assert.Contains((PersonLoadout.Pistol, PersonLoadout.GunSocket), PersonLoadout.Worn(idle, 0, PersonGear.Gun));
         Assert.Empty(PersonLoadout.Worn(idle, 0, PersonGear.None));
     }

@@ -38,7 +38,7 @@ internal sealed partial class ProofRenders
         var target = new RenderTarget2D(GraphicsDevice, ReviewWidth, ReviewHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         var drawing = new PuppetDrawing(); var scenery = new CharacterMesh(8192); var trail = new CharacterMesh(8192);
         var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .45f, ReviewHeight * LabGround), LabPpu);
-        void Frame(string path, MotionClip clip, float seconds, Dictionary<string, PropAsset> worn, BladeSwoosh? swoosh, bool shape)
+        void Frame(string path, MotionClip clip, float seconds, Dictionary<string, PropAsset> worn, BladeSwoosh? swoosh, bool shape, float clock = 0)
         {
             var pose = PoseEvaluator.Sample(model, clip, seconds);
             drawing.Build(model, pose);
@@ -48,11 +48,12 @@ internal sealed partial class ProofRenders
             trail.Clear();
             if (swoosh is not null && LabBlade(model, clip, seconds, worn, sockets) is var (guard, tip))
             {
-                // Combo swings take the follow-up style from their second swoosh on.
-                // A combo alternates: forehands take the opening swoosh, backhands the follow-up one and turn the other way.
-                var backhand = PersonLoadout.SwooshIndex(clip, seconds) % 2 == 1;
+                // A combo alternates: forehands take the opening swoosh, backhands the follow-up one and turn the other way. A
+                // clip holding one swing reads its turn from the clip, as the game does.
+                var index = PersonLoadout.SwooshIndex(clip, seconds);
+                var backhand = index % 2 == 1 || index == 0 && PersonLoadout.Backhand(model, clip, worn[PersonLoadout.Sword], sockets[PersonLoadout.SwordSocket]);
                 swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary; swoosh.Sweep = backhand ? 1 : -1;
-                swoosh.Record(seconds, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(clip, seconds));
+                swoosh.Record(clock, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(clip, seconds));
                 swoosh.Build(trail);
             }
             if (shape && ShapesOf(clip).FirstOrDefault(w => seconds >= w.Start - 1e-4f && seconds < w.Finish - 1e-4f).Hull is { } hull)
@@ -79,7 +80,7 @@ internal sealed partial class ProofRenders
             (MotionClip Clip, float Local) At(float t)
             {
                 var (clip, start) = variant.Timeline.Last(s => s.Start <= t + 1e-4f);
-                return (clip, MathF.Min(clip.Duration, t - start));
+                return (clip, Math.Clamp(t - start, 0, clip.Duration));
             }
             foreach (var mode in new[] { "plain", "swoosh", "box" })
             {
@@ -88,7 +89,7 @@ internal sealed partial class ProofRenders
                 for (var f = 0; f < count; f++)
                 {
                     var (clip, local) = At(f / (float)LabFps);
-                    Frame(Path.Combine(folder, $"{f:D3}.png"), clip, local, props, swoosh, mode == "box");
+                    Frame(Path.Combine(folder, $"{f:D3}.png"), clip, local, props, swoosh, mode == "box", f / (float)LabFps);
                 }
             }
             // Ticks on the card's timeline: each clip's swoosh and strike markers at their place in the row.
@@ -109,47 +110,22 @@ internal sealed partial class ProofRenders
         return false;
     }
 
-    /// <summary>
-    /// The player's hit shapes for a clip, one per live window ("strike" to "recover", "strike-2" to "recover-2"): the
-    /// rectangle bounding what the swoosh sweeps in front of the player, sampled at 240 Hz in actor space. Made once from the
-    /// swing, then fixed to the player for the window; the blade never drags it about.
-    /// </summary>
-    /// <summary>Where "in front of the player" starts, in actor units from the feet.</summary>
-    private const float Front = .25f;
-
+    /// <summary>The player's hit rectangles for a clip, one per live window ("strike" to "recover", "strike-2" to "recover-2"); see <see cref="SwingLab.HitRectangle"/>.</summary>
     private static List<(float Start, float Finish, Vector2[] Hull)> HitShapes(ResolvedModel model, MotionClip clip, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets)
     {
         var result = new List<(float, float, Vector2[])>();
         foreach (var suffix in Enumerable.Range(1, 8).Select(n => n == 1 ? "" : "-" + n))
         {
             if (clip.Markers.FirstOrDefault(m => m.Id == "strike" + suffix) is not { } strike || clip.Markers.FirstOrDefault(m => m.Id == "recover" + suffix) is not { } recover) continue;
-            // The swoosh is the reach cue, so the rectangle covers what it sweeps in front of the player (from the swoosh
-            // opening to recover, the blade ahead of the body), no higher than the shoulders: a forward hit, not overhead.
             var from = clip.Markers.FirstOrDefault(m => m.Id == PersonLoadout.SwooshMarker + suffix)?.Time ?? strike.Time;
-            var points = new List<Vector2>();
-            for (var t = from; t <= recover.Time + 1e-4f; t += 1 / 240f)
-                if (LabBlade(model, clip, t, props, sockets) is var (guard, tip))
-                    for (var k = 0; k <= 8; k++) { var p = Vector3.Lerp(guard, tip, k / 8f); if (p.X > Front) points.Add(new(p.X, p.Y)); }
-            // A rectangle in front of the player: the bounds of everything the blade covers while the hit is live.
-            if (points.Count >= 2)
-            {
-                var shoulders = PoseEvaluator.Sample(model, clip, strike.Time).Points["right-shoulder"].Y;
-                var min = new Vector2(points.Min(p => p.X), points.Min(p => p.Y)); var max = new Vector2(points.Max(p => p.X), MathF.Min(shoulders, points.Max(p => p.Y)));
+            if (SwingLab.HitRectangle(model, clip, from, strike.Time, recover.Time, t => LabBlade(model, clip, t, props, sockets)) is var (min, max))
                 result.Add((strike.Time, recover.Time, [min, new(max.X, min.Y), max, new(min.X, max.Y)]));
-            }
         }
         return result;
     }
 
-    /// <summary>The held sword's blade, guard to tip, in actor space; null while it is sheathed.</summary>
-    private static (Vector3 Guard, Vector3 Tip)? LabBlade(ResolvedModel model, MotionClip clip, float seconds, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets)
-    {
-        if (!PersonLoadout.SwordInHand(clip, seconds)) return null;
-        var sword = props[PersonLoadout.Sword];
-        var frame = new ActorPose(PoseEvaluator.Sample(model, clip, seconds), Vector2.Zero, 1).Socket(sockets[PersonLoadout.SwordSocket]);
-        // Guard to tip along the blade's own axis (mesh swords are centred on it in depth).
-        return (ActorPose.PropPoint(frame, sword, new(.07f, 0, 0)), ActorPose.PropPoint(frame, sword, new(sword.Tip.X, 0, 0)));
-    }
+    private static (Vector3 Guard, Vector3 Tip)? LabBlade(ResolvedModel model, MotionClip clip, float seconds, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets) =>
+        SwingLab.Blade(model, clip, seconds, props[PersonLoadout.Sword], sockets[PersonLoadout.SwordSocket]);
 
     /// <summary>
     /// The study's mechanical checks: when the tip is fastest against the strike, how fast it brakes after, whether the tip

@@ -11,14 +11,18 @@ public sealed class PersonMoves
     public const string Idle = "player-idle", Walk = "person-walk", Run = "person-run", Jump = "player-jump", Fall = "player-fall", Land = "player-land",
         Dash = "player-dash", ClimbOn = "player-climb-on", Climb = "player-climb", ClimbOff = "player-climb-off", WallGrip = "player-wall-grip",
         BalanceForward = "player-balance-forward", BalanceBackward = "player-balance-backward", Hit = "player-hit", Death = "player-death",
-        Celebrate = "player-celebrate", DrawSlash = "player-sword-draw-slash", Slash = "player-sword-slash", Sheathe = "player-sword-sheathe",
-        DownAttack = "player-sword-down-attack", GunAim = "player-gun-aim", GunShot = "player-gun-shot", GunWallShot = "player-gun-wall-shot";
+        Celebrate = "player-celebrate", Sheathe = "player-sword-sheathe",
+        DownAttack = "player-sword-down-attack", HeroId = "hero", GunAim = "player-gun-aim", GunShot = "player-gun-shot", GunWallShot = "player-gun-wall-shot";
     public static readonly IReadOnlyList<string> All = [Idle, Walk, Run, Jump, Fall, Land, Dash, ClimbOn, Climb, ClimbOff, WallGrip, BalanceForward, BalanceBackward,
-        Hit, Death, Celebrate, DrawSlash, Slash, Sheathe, DownAttack, GunAim, GunShot, GunWallShot];
+        Hit, Death, Celebrate, Sheathe, DownAttack, GunAim, GunShot, GunWallShot];
 
-    private PersonMoves(ResolvedModel model, Dictionary<string, MotionClip> clips, Dictionary<string, PropAsset> props) { Model = model; Clips = clips; Props = props; }
+    private PersonMoves(ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, PropAsset> props) { Model = model; Hero = hero; Clips = clips; Props = props; }
 
     public ResolvedModel Model { get; }
+    /// <summary>The player's authored entity: its sword swings, and the recovery clip after each, are its actions' clips.</summary>
+    public ResolvedEntity Hero { get; }
+    /// <summary>The action a sword swing plays: the one gameplay named, or the attack.</summary>
+    public ResolvedAction Swing(string? action) => Hero.Actions[action ?? EntityControllers.Attack];
     public IReadOnlyDictionary<string, MotionClip> Clips { get; }
     public IReadOnlyDictionary<string, PropAsset> Props { get; }
     public MotionClip this[string id] => Clips[id];
@@ -28,10 +32,13 @@ public sealed class PersonMoves
         var resolved = catalog.Resolve(model);
         var missing = All.Where(id => !catalog.Animations.ContainsKey(id)).Concat(new[] { PersonLoadout.Sword, PersonLoadout.Pistol }.Where(id => !catalog.Props.ContainsKey(id))).ToList();
         if (missing.Count > 0) throw new InvalidDataException($"The player move set is incomplete; missing: {string.Join(", ", missing)}.");
+        var hero = catalog.Entities.GetValueOrDefault(HeroId) ?? throw new InvalidDataException($"The player move set needs the authored '{HeroId}' entity, which is missing or does not compile.");
         var clips = All.ToDictionary(id => id, id => { var clip = catalog.Animations[id]; clip.Validate(resolved); return clip; }, StringComparer.Ordinal);
+        foreach (var action in hero.Actions.Values)
+            foreach (var clip in new[] { action.Clip, action.Recovery }.OfType<MotionClip>()) clips[clip.Id] = clip;
         foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket })
             if (resolved.Base.Sockets.All(s => s.Id != socket)) throw new InvalidDataException($"Model '{model}' has no '{socket}' socket for the player's props.");
-        return new(resolved, clips, catalog.Props.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
+        return new(resolved, hero, clips, catalog.Props.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
     }
 }
 
@@ -54,7 +61,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
 {
     /// <summary>Height climbed per climb cycle: two rungs of the ladder the clip is keyed against.</summary>
     public const float ClimbRise = 1.1f;
-    private const float TurnSeconds = .3f, FollowUpSeconds = .6f;
+    private const float TurnSeconds = .3f;
     private readonly float _walkStride = MathF.Abs(PoseEvaluator.CycleTravel(moves.Model, moves[PersonMoves.Walk]).X);
     private readonly float _runStride = MathF.Abs(PoseEvaluator.CycleTravel(moves.Model, moves[PersonMoves.Run]).X);
     private PersonState2D _state;
@@ -62,12 +69,14 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
     private bool _hasState;
     private double _clock, _sinceState, _keyStart, _reactionStart = double.NegativeInfinity, _celebrateStart = double.NegativeInfinity;
     private double _climbStart = double.NegativeInfinity, _climbEnd = double.NegativeInfinity, _airStart, _landUntil = double.NegativeInfinity;
-    private double _dashStart, _meleeEnd = double.NegativeInfinity;
+    private double _dashStart;
     private double _cycle;
     private bool _outpaced;
     private string? _reaction;
     private bool _wasClimbing, _wasDashing, _wasGrounded = true, _meleeActive, _sheathePending;
-    private string _key = "", _swing = PersonMoves.DrawSlash;
+    private string _key = "", _swing = "", _recovery = PersonMoves.Sheathe;
+    private string? _swingAction;
+    private float _swingElapsed;
 
     public PersonMoves Moves => moves;
     public EquipmentKind2D Equipment { get; set; }
@@ -78,7 +87,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
     public void PlayCelebrate() => _celebrateStart = _clock;
     public void Reset()
     {
-        _reaction = null; _reactionStart = _celebrateStart = _climbStart = _climbEnd = _landUntil = _meleeEnd = double.NegativeInfinity;
+        _reaction = null; _reactionStart = _celebrateStart = _climbStart = _climbEnd = _landUntil = double.NegativeInfinity;
         _sheathePending = _meleeActive = false; _key = ""; _hasState = false;
     }
 
@@ -121,11 +130,16 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         double Scaled(string id) => Math.Clamp((s.Action.ElapsedSeconds + _sinceState) / s.Action.DurationSeconds, 0, 1) * moves[id].Duration;
 
         var melee = s.Action.IsActive && s.Action.Kind is PlayerAttackKind2D.Melee or PlayerAttackKind2D.Downward or PlayerAttackKind2D.Punch or PlayerAttackKind2D.Kick;
-        if (_meleeActive && !melee) { _meleeEnd = _clock; _sheathePending = Equipment == EquipmentKind2D.Sword; }
-        // A swing while the sword is still out (just after another, or before the sheathe puts it away) is the follow-up slash.
-        // Gameplay decides whether a swing follows up with the blade already out; its hit box samples the same clip.
-        if (!_meleeActive && melee) _swing = s.Action.FollowUp ? PersonMoves.Slash : PersonMoves.DrawSlash;
-        _meleeActive = melee;
+        if (_meleeActive && !melee) _sheathePending = Equipment == EquipmentKind2D.Sword;
+        // Gameplay names the hero action each swing plays (the attack, or the combo swing it chained to); a new one starts
+        // when the action changes or its time restarts. What follows it is that action's recovery clip.
+        if (melee && (!_meleeActive || s.Action.Swing != _swingAction || s.Action.ElapsedSeconds < _swingElapsed))
+        {
+            var swing = moves.Swing(s.Action.Swing);
+            _swingAction = s.Action.Swing; _swing = swing.Clip.Id;
+            _recovery = s.Action.Kind == PlayerAttackKind2D.Downward ? PersonMoves.Sheathe : swing.Recovery?.Id ?? PersonMoves.Sheathe;
+        }
+        _meleeActive = melee; _swingElapsed = melee ? s.Action.ElapsedSeconds : 0;
 
         PersonFrame frame;
         if (!s.IsAlive)
@@ -157,13 +171,9 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         }
 
         if (frame.Key != _key) { _key = frame.Key; _keyStart = _clock; _cycle = 0; _outpaced = false; }
-        if (_key == PersonMoves.Sheathe && _clock - _keyStart >= moves[PersonMoves.Sheathe].Duration) _sheathePending = false;
+        if (_key == _recovery && _clock - _keyStart >= moves[_recovery].Duration) _sheathePending = false;
         return frame;
     }
-
-    private bool SwordOut => _key == PersonMoves.Sheathe
-        ? PersonLoadout.SwordInHand(moves[PersonMoves.Sheathe], (float)(_clock - _keyStart))
-        : _sheathePending && _clock - _meleeEnd < FollowUpSeconds;
 
     private PersonFrame Locomotion(PersonGear gear)
     {
@@ -200,7 +210,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
             var edge = s.BalanceDirection == Math.Sign(s.Facing) ? PersonMoves.BalanceForward : PersonMoves.BalanceBackward;
             return Play(edge, Clock(edge));
         }
-        if (_sheathePending) return Play(PersonMoves.Sheathe, Clock(PersonMoves.Sheathe));
+        if (_sheathePending) return Play(_recovery, Clock(_recovery));
         if (gun) return Play(PersonMoves.GunAim, Clock(PersonMoves.GunAim));
         return Play(PersonMoves.Idle, Clock(PersonMoves.Idle));
     }

@@ -189,6 +189,45 @@ public static class ClipAuthoring
         clip.Duration = duration;
     }
 
+    /// <summary>
+    /// A new clip holding [<paramref name="from"/>, <paramref name="to"/>] of <paramref name="clip"/>, shifted to start at
+    /// zero: keys inside, a key on each end holding the value there (an existing key keeps its easing and bend; a new one
+    /// takes the easing of the segment it cuts and the bend in force), contacts clipped to the range, markers inside and the
+    /// expression showing at the start. Cut on key times to keep the motion exactly as authored.
+    /// </summary>
+    public static MotionClip Excerpt(MotionClip clip, float from, float to, string id, string name, bool loop = false)
+    {
+        if (from < -SameTime || to > clip.Duration + SameTime || to - from < .05f) throw new ArgumentOutOfRangeException(nameof(to), $"'{clip.Id}': excerpt {from:F3}..{to:F3} is outside 0..{clip.Duration:F3} or too short.");
+        var copy = Duplicate(clip, id, name); copy.Loop = loop; copy.Duration = to - from;
+        List<ClipKey> Cut(List<ClipKey> keys)
+        {
+            if (keys.Count == 0) return keys;
+            ClipKey End(float time)
+            {
+                if (keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } existing) return existing with { Time = time };
+                var (value, angle) = PoseEvaluator.Interpolate(keys, time);
+                var before = keys.LastOrDefault(k => k.Time < time);
+                return new() { Time = time, X = value.X, Y = value.Y, Z = value.Z, Angle = angle, Ease = before?.Ease ?? ClipEase.Linear };
+            }
+            var first = End(from); first.Bend ??= keys.LastOrDefault(k => k.Time <= from + SameTime && k.Bend is not null)?.Bend;
+            var inside = keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime);
+            return [.. new[] { first }.Concat(inside).Append(End(to)).Select(k => k with { Time = MathF.Min(copy.Duration, MathF.Max(0, k.Time - from)) })];
+        }
+        foreach (var track in copy.Tracks) track.Keys = Cut(track.Keys);
+        copy.Travel.Keys = Cut(copy.Travel.Keys);
+        copy.Contacts = [.. copy.Contacts.Where(c => c.Finish > from + SameTime && c.Start < to - SameTime)
+            .Select(c => new ClipContact { Chain = c.Chain, Start = MathF.Max(0, c.Start - from), Finish = MathF.Min(copy.Duration, c.Finish - from), Target = c.Target })];
+        copy.Markers = [.. copy.Markers.Where(m => m.Time >= from - SameTime && m.Time <= to + SameTime).Select(m => new ClipMarker { Id = m.Id, Time = Math.Clamp(m.Time - from, 0, copy.Duration) })];
+        foreach (var face in copy.Faces)
+        {
+            var showing = face.Keys.LastOrDefault(k => k.Time <= from + SameTime);
+            face.Keys = [.. (showing is null ? [] : new[] { new ClipFaceKey { Time = 0, Expression = showing.Expression } })
+                .Concat(face.Keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime).Select(k => new ClipFaceKey { Time = k.Time - from, Expression = k.Expression }))];
+        }
+        copy.Faces.RemoveAll(f => f.Keys.Count == 0);
+        return copy;
+    }
+
     public static void SetMarker(MotionClip clip, string id, float time)
     {
         AuthoredAsset.RequireId(id, "marker id");

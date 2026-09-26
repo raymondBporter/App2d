@@ -28,10 +28,10 @@ internal sealed partial class ProofRenders
         using (var file = File.Create(Path.Combine(_smokePath, "weapon-turntable.png"))) target.SaveAsPng(file, target.Width, target.Height);
 
         GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(237, 238, 226));
-        var model = catalog.Resolve("person"); var clip = catalog.Animations["player-sword-slash"];
+        var model = catalog.Resolve("person"); var clip = catalog.Animations["player-sword-backhand"];
         for (var row = 0; row < 2; row++) for (var column = 0; column < 6; column++)
         {
-            var at = new[] { 0, .09f, .16f, .21f, .27f, .35f }[column];
+            var at = column / 5f * clip.Duration;
             var pose = PoseEvaluator.Sample(model, clip, at); drawing.Build(model, pose);
             var placed = new ActorPose(pose, Vector2.Zero, 1);
             foreach (var (prop, socket) in PersonLoadout.Worn(clip, at, PersonGear.Sword))

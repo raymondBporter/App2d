@@ -37,7 +37,7 @@
   "actions": [
     {
       "id": "attack",
-      "clip": "player-sword-draw-slash",
+      "clip": "player-sword-side-cut",
       "hits": [
         {
           "id": "blade",
@@ -47,10 +47,10 @@
           "finish": {
             "marker": "recover"
           },
-          "prop": "sword",
-          "along": -0.35,
-          "width": 1.1,
-          "height": 1.3,
+          "offsetX": 1.053,
+          "offsetY": 1.041,
+          "width": 1.086,
+          "height": 0.679,
           "damage": 2
         }
       ],
@@ -62,11 +62,13 @@
           },
           "sound": "swing"
         }
-      ]
+      ],
+      "next": "follow-up",
+      "recovery": "player-sword-put-away"
     },
     {
       "id": "follow-up",
-      "clip": "player-sword-slash",
+      "clip": "player-sword-backhand",
       "hits": [
         {
           "id": "blade",
@@ -76,10 +78,10 @@
           "finish": {
             "marker": "recover"
           },
-          "prop": "sword",
-          "along": -0.35,
-          "width": 1.1,
-          "height": 1.3,
+          "offsetX": 0.856,
+          "offsetY": 1.112,
+          "width": 1.159,
+          "height": 0.565,
           "damage": 2
         }
       ],
@@ -91,7 +93,40 @@
           },
           "sound": "swing"
         }
-      ]
+      ],
+      "next": "forehand",
+      "recovery": "player-sword-put-away-backhand"
+    },
+    {
+      "id": "forehand",
+      "clip": "player-sword-forehand",
+      "hits": [
+        {
+          "id": "blade",
+          "start": {
+            "marker": "strike"
+          },
+          "finish": {
+            "marker": "recover"
+          },
+          "offsetX": 0.929,
+          "offsetY": 1.041,
+          "width": 1.335,
+          "height": 0.679,
+          "damage": 2
+        }
+      ],
+      "events": [
+        {
+          "id": "swing",
+          "at": {
+            "marker": "strike"
+          },
+          "sound": "swing"
+        }
+      ],
+      "next": "follow-up",
+      "recovery": "player-sword-put-away"
     },
     {
       "id": "shoot",

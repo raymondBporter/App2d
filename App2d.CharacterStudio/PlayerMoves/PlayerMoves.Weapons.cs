@@ -16,10 +16,6 @@ internal static partial class PlayerMoves
         }
         switch (clip.Id)
         {
-            case "player-sword-draw-slash":
-                Keys(PersonLoadout.SwordSocket, (0, 0, 0), (.05f, 0, 0), (.1f, 65, -25), (.17f, 12, -6), (.2f, 0, 0), (.22f, -8, 8), (.27f, -40, 18), (.35f, 20, 0)); break;
-            case "player-sword-slash":
-                Keys(PersonLoadout.SwordSocket, (0, 20, 0), (.09f, 78, 25), (.16f, 14, 4), (.18f, 0, 0), (.21f, -8, -5), (.27f, -48, -18), (.35f, 20, 0)); break;
             case "player-sword-sheathe":
                 Keys(PersonLoadout.SwordSocket, (0, 20, 0), (.12f, 65, -18), (.22f, 25, -10), (.3f, 0, 0), (.42f, 0, 0)); break;
             case "player-sword-down-attack":

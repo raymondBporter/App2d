@@ -72,7 +72,7 @@ internal static class SwingLab
 
     /// <summary>The right arm's full length, shoulder to elbow to hand.</summary>
     private static float ArmLength(ResolvedModel m) =>
-        (Vector3.Distance(m.Rest["right-shoulder"], m.Rest["right-elbow"]) + Vector3.Distance(m.Rest["right-elbow"], m.Rest["right-hand"])) ;
+        (Vector3.Distance(m.Rest["right-shoulder"], m.Rest["right-elbow"]) + Vector3.Distance(m.Rest["right-elbow"], m.Rest["right-hand"]));
 
     /// <summary>A clip under construction with the blade's depth tilt kept beside it; the tilt becomes orientation keys after the build.</summary>
     private sealed class Swing(ResolvedModel m, string id, string name, float duration)
@@ -283,14 +283,71 @@ internal static class SwingLab
         return swing.Build();
     }
 
+    // ---- The game's swings --------------------------------------------------------------------------------------
+
+    public const string SideCutClip = "player-sword-side-cut", BackhandClip = "player-sword-backhand", ForehandClip = "player-sword-forehand",
+        PutAwayClip = "player-sword-put-away", PutAwayBackhandClip = "player-sword-put-away-backhand";
+
+    /// <summary>
+    /// The chosen swings as the game's clips, cut out of the approved lab cycles so they play exactly as reviewed. Swing n
+    /// runs from a frame after the last one's follow-through settles to a frame after its own, so a mashed button chains
+    /// them at the combo's cadence: the side cut drawn from the back, then the backhand and forehand, each opening on the
+    /// pose the last one holds with its wind-up. The put-aways hold that pose, then sheathe. Swing markers lose their
+    /// number ("strike-2" becomes "strike"), and follow-ups start with the sword already in hand.
+    /// </summary>
+    public static IEnumerable<MotionClip> GameClips(ResolvedModel m)
+    {
+        var combo = Cycle(m, "lab-combo", Kind.SideCombo); var side = Cycle(m, "lab-side-cut", Kind.Side);
+        static float Cut(int n) => Lead + 3 * F + (n - 1) * Cadence + 7 * F;
+        MotionClip Swing(float from, float to, string id, string name, int n)
+        {
+            var clip = ClipAuthoring.Excerpt(combo, from, to, id, name);
+            if (n > 1)
+            {
+                foreach (var marker in clip.Markers) marker.Id = marker.Id.Replace(Nth(n), "");
+                ClipAuthoring.SetMarker(clip, PersonLoadout.DrawMarker, 0);
+            }
+            clip.Validate(m); return clip;
+        }
+        yield return Swing(Lead, Cut(1), SideCutClip, "Sword draw and side cut", 1);
+        yield return Swing(Cut(1), Cut(2), BackhandClip, "Sword backhand", 2);
+        yield return Swing(Cut(2), Cut(3), ForehandClip, "Sword forehand", 3);
+        yield return ClipAuthoring.Excerpt(side, Cut(1), side.Duration - Tail, PutAwayClip, "Sword put away");
+        yield return ClipAuthoring.Excerpt(combo, Cut(ComboSwings), combo.Duration - Tail, PutAwayBackhandClip, "Sword put away after a backhand");
+    }
+
+    /// <summary>The held sword's blade, guard to tip, in actor space; null while it is on the back.</summary>
+    public static (Vector3 Guard, Vector3 Tip)? Blade(ResolvedModel model, MotionClip clip, float seconds, PropAsset sword, ModelSocket socket) =>
+        PersonLoadout.SwordInHand(clip, seconds) ? PersonLoadout.Blade(PoseEvaluator.Sample(model, clip, seconds), sword, socket) : null;
+
+    /// <summary>Where "in front of the player" starts, in actor units from the feet.</summary>
+    private const float Front = .25f;
+
+    /// <summary>
+    /// The player's hit for one swing, in actor units (facing +X, feet at the origin): the rectangle bounding what the
+    /// blade sweeps ahead of the body from <paramref name="from"/> (the swoosh opening) to <paramref name="recover"/>, no
+    /// higher than the shoulders at <paramref name="strike"/>. Made once from the swing, it is fixed to the player while the
+    /// hit is live; the blade never drags it about. Null when the blade never gets in front.
+    /// </summary>
+    public static (Vector2 Min, Vector2 Max)? HitRectangle(ResolvedModel model, MotionClip clip, float from, float strike, float recover, Func<float, (Vector3 Guard, Vector3 Tip)?> blade)
+    {
+        var points = new List<Vector2>();
+        for (var t = from; t <= recover + 1e-4f; t += 1 / 240f)
+            if (blade(t) is var (guard, tip))
+                for (var k = 0; k <= 8; k++) { var p = Vector3.Lerp(guard, tip, k / 8f); if (p.X > Front) points.Add(new(p.X, p.Y)); }
+        if (points.Count < 2) return null;
+        var shoulders = PoseEvaluator.Sample(model, clip, strike).Points["right-shoulder"].Y;
+        return (new(points.Min(p => p.X), points.Min(p => p.Y)), new(points.Max(p => p.X), MathF.Min(shoulders, points.Max(p => p.Y))));
+    }
+
     public static IEnumerable<Variant> Variants(ResolvedModel m, IReadOnlyDictionary<string, MotionClip> game)
     {
-        var draw = MotionClip.FromJson(game["player-sword-draw-slash"].ToJson());
-        draw.Markers = [.. draw.Markers, new() { Id = PersonLoadout.SwooshMarker, Time = .1f }, new() { Id = PersonLoadout.SwooshEndMarker, Time = .22f }];
-        draw.Markers.Sort((a, b) => a.Time.CompareTo(b.Time));
-        var idle = game["player-idle"]; var sheathe = game["player-sword-sheathe"];
-        yield return new("today-draw", "Today's draw and slash", "The game's own clips in a row: idle, the draw and slash (swoosh on its fast part, damage 0.20–0.27 s), the sheathe, idle.", draw,
-            [(idle, 0), (draw, Lead), (sheathe, Lead + draw.Duration), (idle, Lead + draw.Duration + sheathe.Duration)], Lead + draw.Duration + sheathe.Duration + Tail);
+        // The game's own clips back to back, as a mashed button chains them: the check that the cut-up combo still plays as reviewed.
+        var chain = new[] { SideCutClip, BackhandClip, ForehandClip, BackhandClip, PutAwayBackhandClip }.Select(id => game[id]).ToList();
+        var timeline = new List<(MotionClip, float)> { (game["player-idle"], 0) }; var at = Lead;
+        foreach (var clip in chain) { timeline.Add((clip, at)); at += clip.Duration; }
+        timeline.Add((game["player-idle"], at));
+        yield return new("in-game", "In the game: the combo", $"The game's clips in a row as a mashed button chains them: side cut, backhand, forehand, backhand, put away. It should play as the combo card does.", chain[0], timeline, at + Tail);
         Variant Of(string id, string title, string note, Kind kind)
         {
             var clip = Cycle(m, "lab-" + id, kind); return new(id, title, note, clip, [(clip, 0)], clip.Duration);
