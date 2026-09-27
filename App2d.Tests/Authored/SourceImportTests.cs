@@ -1,6 +1,6 @@
-using System.Numerics;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using System.Numerics;
 using static App2d.Tests.Authored.TestModels;
 
 namespace App2d.Tests.Authored;

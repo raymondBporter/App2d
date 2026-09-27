@@ -1,7 +1,7 @@
 using Color = Microsoft.Xna.Framework.Color;
+using Quaternion = System.Numerics.Quaternion;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = System.Numerics.Vector3;
-using Quaternion = System.Numerics.Quaternion;
 
 namespace App2d.Rendering.Characters;
 

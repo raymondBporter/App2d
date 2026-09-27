@@ -36,35 +36,35 @@ internal static class AuthoredRenderingSmoke2D
     private static void RunPlayer(GraphicsDevice device, TextureCache2D textures, Renderer2D renderer, RenderTarget2D target, string directory)
     {
         var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
-        var moves = App2d.Gameplay.Persons.PersonMoves.From(authored);
+        var moves = Gameplay.Persons.PersonMoves.From(authored);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
-        var hero = new App2d.Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities[App2d.Gameplay.Persons.Actions.AuthoredHero2D.EntityId], traversal.PlayerColliderSize);
-        var standing = new App2d.Gameplay.Persons.PersonState2D { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true };
+        var hero = new Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities[Gameplay.Persons.Actions.AuthoredHero2D.EntityId], traversal.PlayerColliderSize);
+        var standing = new Gameplay.Persons.PersonState2D { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true };
         // Each sword case stops just past its strike, where the hit box is live.
         var cut = hero.Attack; var backhand = hero.Swing(cut.Next);
-        var melee = new App2d.Gameplay.Persons.PersonActionState2D(App2d.Gameplay.Simulation.PlayerAttackKind2D.Melee, 0, cut.Clip.Duration, cut.Id);
-        var shot = new App2d.Gameplay.Persons.PersonActionState2D(App2d.Gameplay.Simulation.PlayerAttackKind2D.Shot, 0, .2f);
-        var cases = new (string Name, App2d.Gameplay.Persons.Actions.EquipmentKind2D Gear, App2d.Gameplay.Persons.PersonState2D State, float Seconds, bool ActionClock)[]
+        var melee = new Gameplay.Persons.PersonActionState2D(Gameplay.Simulation.PlayerAttackKind2D.Melee, 0, cut.Clip.Duration, cut.Id);
+        var shot = new Gameplay.Persons.PersonActionState2D(Gameplay.Simulation.PlayerAttackKind2D.Shot, 0, .2f);
+        var cases = new (string Name, Gameplay.Persons.Actions.EquipmentKind2D Gear, Gameplay.Persons.PersonState2D State, float Seconds, bool ActionClock)[]
         {
-            ("idle", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing, 1, false),
-            ("walk", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { LinearVelocity = new(20, 0) }, .6f, false),
-            ("run", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { LinearVelocity = new(traversal.RunSpeed, 0) }, .5f, false),
-            ("jump", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, LinearVelocity = new(0, 300) }, .15f, false),
-            ("fall", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, LinearVelocity = new(0, -300) }, .3f, false),
-            ("climb", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, IsClimbingLadder = true, LinearVelocity = new(0, 60) }, .8f, false),
-            ("wall-grip", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, IsWallGripping = true }, .5f, false),
-            ("sword-strike", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { Action = melee }, cut.Hits[0].Start + 1 / 60f, true),
-            ("sword-follow-up", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { Action = melee with { DurationSeconds = backhand.Clip.Duration, Swing = backhand.Id } }, backhand.Hits[0].Start + 1 / 60f, true),
-            ("gun-aim", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Gun, standing, .5f, false),
-            ("gun-run-shot", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Gun, standing with { LinearVelocity = new(traversal.RunSpeed, 0), Action = shot }, .05f, true),
-            ("death", App2d.Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { HitPoints = 0 }, 1.2f, false),
+            ("idle", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing, 1, false),
+            ("walk", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { LinearVelocity = new(20, 0) }, .6f, false),
+            ("run", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { LinearVelocity = new(traversal.RunSpeed, 0) }, .5f, false),
+            ("jump", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, LinearVelocity = new(0, 300) }, .15f, false),
+            ("fall", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, LinearVelocity = new(0, -300) }, .3f, false),
+            ("climb", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, IsClimbingLadder = true, LinearVelocity = new(0, 60) }, .8f, false),
+            ("wall-grip", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { IsGrounded = false, IsWallGripping = true }, .5f, false),
+            ("sword-strike", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { Action = melee }, cut.Hits[0].Start + 1 / 60f, true),
+            ("sword-follow-up", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { Action = melee with { DurationSeconds = backhand.Clip.Duration, Swing = backhand.Id } }, backhand.Hits[0].Start + 1 / 60f, true),
+            ("gun-aim", Gameplay.Persons.Actions.EquipmentKind2D.Gun, standing, .5f, false),
+            ("gun-run-shot", Gameplay.Persons.Actions.EquipmentKind2D.Gun, standing with { LinearVelocity = new(traversal.RunSpeed, 0), Action = shot }, .05f, true),
+            ("death", Gameplay.Persons.Actions.EquipmentKind2D.Sword, standing with { HitPoints = 0 }, 1.2f, false),
         };
         foreach (var (name, gear, state, seconds, actionClock) in cases)
         {
             foreach (var facing in new[] { 1f, -1f })
             {
                 var scene = new Scene2D();
-                using var player = new App2d.Gameplay.Persons.AuthoredPersonPresentation2D(scene, moves, traversal);
+                using var player = new Gameplay.Persons.AuthoredPersonPresentation2D(scene, moves, traversal);
                 player.Equip(gear);
                 if (!state.IsAlive) player.PlayDeath();
                 var position = new Vector2(0, 38); var steps = (int)(seconds * 120);
@@ -88,7 +88,7 @@ internal static class AuthoredRenderingSmoke2D
                 {
                     var hit = swing.Hits[0].Window;
                     var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color(235, 60, 50, 110)));
-                    box.Transform.Position = position + new System.Numerics.Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.PixelsPerUnit - new System.Numerics.Vector2(0, traversal.PlayerColliderSize.Y / 2); close.Draw(box);
+                    box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.PixelsPerUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2); close.Draw(box);
                 }
                 if (name == "gun-run-shot")
                 {

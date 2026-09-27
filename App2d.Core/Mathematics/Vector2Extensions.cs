@@ -4,11 +4,21 @@ namespace App2d.Core.Mathematics;
 
 public static class Vector2Extensions
 {
-    public static float Cross(this Vector2 left, Vector2 right) => left.X * right.Y - left.Y * right.X;
 
-    /// <summary>Rotates 90° counter-clockwise (in +Y-up orientation).</summary>
-    public static Vector2 PerpCcw(this Vector2 value) => new(-value.Y, value.X);
+    public static readonly Vector2 NegativeInfinity = new(float.NegativeInfinity, float.NegativeInfinity);
+    public static readonly Vector2 PositiveInfinity = new(float.NegativeInfinity, float.NegativeInfinity);
 
-    /// <summary>Rotates 90° clockwise (in +Y-up orientation).</summary>
-    public static Vector2 PerpCw(this Vector2 value) => new(value.Y, -value.X);
+    extension(Vector2 value)
+    {
+        public bool IsFinite => float.IsFinite(value.X) && float.IsFinite(value.Y);
+
+
+        public float Cross(Vector2 right) => value.X * right.Y - value.Y * right.X;
+
+        /// <summary>Rotates 90° counter-clockwise (in +Y-up orientation).</summary>
+        public Vector2 PerpCcw => new(-value.Y, value.X);
+
+        /// <summary>Rotates 90° clockwise (in +Y-up orientation).</summary>
+        public Vector2 PerpCw => new(value.Y, -value.X);
+    }
 }

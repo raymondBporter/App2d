@@ -1,5 +1,5 @@
-using App2d.Collision;
 using App2d.Core;
+using App2d.Core.Collision;
 using System.Numerics;
 
 namespace App2d.Gameplay.Combat;

@@ -49,8 +49,7 @@ public static class PrimitiveGeometry2D
     /// <summary>Euclidean distance in input units, with an optional squared length tolerance for a point-like segment.</summary>
     public static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end,
         float degenerateLengthSquared = float.Epsilon) =>
-        Vector2.Distance(point, (end - start).LengthSquared() < degenerateLengthSquared
-            ? start : ClosestPoint2D.OnSegment(point, start, end));
+        Distance2D.DistanceToSegment(point, start, end, degenerateLengthSquared);
 
     /// <summary>Dimensionless radial score: 0 at center, 1 on the ellipse. Not Euclidean distance to its boundary.</summary>
     public static float NormalizedEllipseRadius(Vector2 point, Vector2 center, Vector2 radii) =>

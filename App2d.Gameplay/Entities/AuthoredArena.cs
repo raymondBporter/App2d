@@ -1,6 +1,6 @@
-using System.Numerics;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using System.Numerics;
 
 namespace App2d.Gameplay.Entities;
 

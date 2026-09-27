@@ -1,9 +1,9 @@
 using App2d.Core;
-using App2d.Gameplay.World;
-using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Combat;
+using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
+using App2d.Gameplay.World;
 using System.Collections.Immutable;
 using System.Numerics;
 
@@ -58,8 +58,8 @@ public sealed record SessionFrame2D(
     ImmutableArray<SessionEvent2D> Events)
 {
     /// <summary>Content the receiver may already hold; compare <see cref="LevelContent2D.Revision"/>.</summary>
-    public LevelContent2D Content { get; init; } = LevelContent2D.Empty;
-    public WorldState2D World { get; init; } = WorldState2D.Empty;
+    public required LevelContent2D Content { get; init; } = LevelContent2D.Empty;
+    public required WorldState2D World { get; init; } = WorldState2D.Empty;
     public ImmutableArray<EnemyState2D> Enemies { get; init; } = [];
     public PlayerState2D? FindPlayer(EntityId2D id) => Players.FindPlayer(id);
 }

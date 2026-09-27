@@ -76,13 +76,13 @@ public sealed class AuthoringWorkspace
         var ids = new HashSet<string>(StringComparer.Ordinal);
         foreach (var kind in Enum.GetValues<AssetKind>())
         {
-            var folder = System.IO.Path.Combine(Root, AssetKinds.Folder(kind));
-            if (Directory.Exists(folder)) ids.UnionWith(Directory.EnumerateFiles(folder, "*.json").Select(System.IO.Path.GetFileNameWithoutExtension).OfType<string>());
+            var folder = Path.Combine(Root, AssetKinds.Folder(kind));
+            if (Directory.Exists(folder)) ids.UnionWith(Directory.EnumerateFiles(folder, "*.json").Select(Path.GetFileNameWithoutExtension).OfType<string>());
         }
         return ids;
     }
 
-    private string DefaultPath(AssetDocument document) => System.IO.Path.Combine(Root, AssetKinds.Folder(document.Kind), document.Id + ".json");
+    private string DefaultPath(AssetDocument document) => Path.Combine(Root, AssetKinds.Folder(document.Kind), document.Id + ".json");
 
     /// <summary>Adds a new, unsaved asset. Its file is created on first save.</summary>
     public AssetDocument<T> Create<T>(T asset) where T : class
@@ -311,7 +311,7 @@ public sealed class AuthoringWorkspace
         }
         var path = document.Path ?? DefaultPath(document);
         if (document.IsNew && File.Exists(path)) throw new InvalidDataException($"A file already exists at {path}; it did not load, so it is left alone. Choose another id, or repair or remove that file.");
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         AuthoredAsset.Write(path, document.Serialize());
         document.MarkSaved(path);
         if (document is AssetDocument<CharacterModel> saved) _savedStructure[saved.Id] = ModelAuthoring.StructureSignature(saved.Asset);

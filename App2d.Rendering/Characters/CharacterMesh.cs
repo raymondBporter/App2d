@@ -1,10 +1,10 @@
 using App2d.Core.Geometry;
+using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using System.Text.Json;
-using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
-using XVector3 = Microsoft.Xna.Framework.Vector3;
 using XVector2 = Microsoft.Xna.Framework.Vector2;
+using XVector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace App2d.Rendering.Characters;
 

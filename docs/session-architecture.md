@@ -12,11 +12,15 @@ the extraction focused on assembly dependencies.
 
 | Project | Responsibility | Internal dependencies |
 | --- | --- | --- |
+| `App2d.Core` (`net10.0`) | Engine primitives, geometry, collision detection, physics bodies and solvers | None |
 | `App2d.Game.Contracts` (`net10.0`) | Commands, state observations, events, shared timing and traversal configuration | Core, Tiles |
-| `App2d.Gameplay` (`net10.0`) | Session, actors, combat, world simulation, local rollback | Contracts, Core, Collision, Physics, Tiles |
+| `App2d.Gameplay` (`net10.0`) | Session, actors, combat, world simulation, local rollback | Contracts, Core, Tiles |
 | `App2d.Game.Presentation` (Windows) | Views, camera, HUD, sound selection, local client endpoint | Contracts, Core, Tiles, Rendering, Audio |
 | `App2d.Levels` (`net10.0`) | Authored level storage and traversal configuration loading | Contracts, Core, Tiles |
 | `App2d` (Windows executable) | Composition, input devices, scheduling, editor, save-file I/O | Simulation, presentation, and their supporting projects |
+
+Collision and physics are folders within Core, using `App2d.Core.Collision` and
+`App2d.Core.Physics` namespaces. They no longer require separate project references.
 
 The future server can reference Gameplay without acquiring rendering, audio,
 Windows, or SQLite dependencies. A predictive client can also reference Gameplay;

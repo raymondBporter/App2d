@@ -155,13 +155,13 @@ public sealed class EnemyPresentation2D(
     {
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
-        private readonly App2d.Rendering.Characters.AuthoredCharacterShader _shader;
+        private readonly Rendering.Characters.AuthoredCharacterShader _shader;
         private readonly BoltViews _bolts;
-        public AuthoredPoseView(Scene2D scene, App2d.Core.Characters.ResolvedEntity entity)
+        public AuthoredPoseView(Scene2D scene, Core.Characters.ResolvedEntity entity)
         {
             _scene = scene; _bolts = new(scene); _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
             _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
-            _visual.Transform.Scale = new(App2d.Core.Characters.AuthoredWorld.PixelsPerUnit);
+            _visual.Transform.Scale = new(Core.Characters.AuthoredWorld.PixelsPerUnit);
             scene.Add(_visual);
         }
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
@@ -170,7 +170,7 @@ public sealed class EnemyPresentation2D(
             _bolts.Update(state);
             if (state.AuthoredPose is not { } pose) return;
             _shader.Pose = pose.Local; _shader.Facing = pose.Facing;
-            _visual.Transform.Position = pose.Position * App2d.Core.Characters.AuthoredWorld.PixelsPerUnit;
+            _visual.Transform.Position = pose.Position * Core.Characters.AuthoredWorld.PixelsPerUnit;
         }
         public override void Dispose() { _scene.Remove(_visual); _bolts.Dispose(); }
     }

@@ -3,12 +3,12 @@ using App2d.Core.Geometry;
 using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
+using GpuTexture = Microsoft.Xna.Framework.Graphics.Texture2D;
+using Texture2D = App2d.Rendering.Textures.Texture2D;
 using XnaColor = Microsoft.Xna.Framework.Color;
 using XnaMatrix = Microsoft.Xna.Framework.Matrix;
 using XnaVector2 = Microsoft.Xna.Framework.Vector2;
 using XnaVector3 = Microsoft.Xna.Framework.Vector3;
-using Texture2D = App2d.Rendering.Textures.Texture2D;
-using GpuTexture = Microsoft.Xna.Framework.Graphics.Texture2D;
 
 namespace App2d.Rendering;
 

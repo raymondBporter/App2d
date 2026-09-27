@@ -1,5 +1,5 @@
-using App2d.Gameplay.Simulation;
 using App2d.Gameplay.Combat;
+using App2d.Gameplay.Simulation;
 using System.Collections.Immutable;
 using System.Numerics;
 

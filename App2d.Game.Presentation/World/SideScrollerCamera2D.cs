@@ -1,8 +1,8 @@
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Rendering;
-using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Gameplay.World;
 

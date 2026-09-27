@@ -1,7 +1,7 @@
+using App2d.Core.Characters;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text.Json;
-using App2d.Core.Characters;
 
 namespace App2d.Tests;
 

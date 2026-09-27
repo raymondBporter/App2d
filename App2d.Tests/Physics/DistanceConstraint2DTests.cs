@@ -1,8 +1,8 @@
 using App2d.Core;
 using App2d.Core.Constraints;
 using App2d.Core.Geometry;
-using App2d.Physics;
-using App2d.Physics.Constraints;
+using App2d.Core.Physics;
+using App2d.Core.Physics.Constraints;
 using System.Numerics;
 
 namespace App2d.Tests.Physics;

@@ -15,7 +15,7 @@ internal sealed partial class SwordPersonWeapon2D
     internal void RestoreSimulation(SimulationState snapshot)
     {
         var state = snapshot;
-        base.RestoreSimulation(state.Swing);
+        RestoreSimulation(state.Swing);
         _downAttack.RestoreSimulation(state.DownSwing);
         _downAttack.RestoreBounce(state.Bounce.HasBounced, state.Bounce.BouncePending);
     }

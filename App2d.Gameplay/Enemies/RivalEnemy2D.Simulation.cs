@@ -9,9 +9,9 @@ public sealed partial class RivalEnemy2D
         float LastDeltaSeconds,
         float LastMoveX,
         bool SimulationEnabled,
-        App2d.Gameplay.Persons.Person2D.SimulationState PersonState,
-        App2d.Gameplay.Persons.RivalBrain2D.SimulationState Brain,
-        App2d.Gameplay.Persons.Actions.UnarmedPersonActions2D.SimulationState Actions,
+        Persons.Person2D.SimulationState PersonState,
+        Persons.RivalBrain2D.SimulationState Brain,
+        Persons.Actions.UnarmedPersonActions2D.SimulationState Actions,
         ImmutableArray<EnemyEvent2D> Events) : SimulationState2D;
 
     public SimulationState2D CaptureSimulation() => new SimulationState(

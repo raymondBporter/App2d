@@ -1,6 +1,6 @@
-﻿using App2d.Collision.Contacts;
-using App2d.Collision.Queries;
-using App2d.Core;
+﻿using App2d.Core;
+using App2d.Core.Collision.Contacts;
+using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
 using System.Numerics;
 

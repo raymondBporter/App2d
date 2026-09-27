@@ -1,10 +1,10 @@
 using App2d.Core;
+using App2d.Core.Physics;
 using App2d.Diagnostics;
-using App2d.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
-using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Numerics;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d;
 
@@ -46,6 +46,7 @@ public abstract class Game2D : IDisposable
     public virtual void Dispose()
     {
         Textures.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     protected void RegisterDebugPhysicsWorld(PhysicsWorld2D physicsWorld)

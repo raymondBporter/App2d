@@ -1,5 +1,5 @@
-using System.Numerics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 

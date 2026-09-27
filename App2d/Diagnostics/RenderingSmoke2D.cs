@@ -31,7 +31,7 @@ internal static class RenderingSmoke2D
         }
         if (vegetationOnly)
         {
-            using var textures = new App2d.Rendering.Textures.TextureCache2D(AssetPaths.Root);
+            using var textures = new Rendering.Textures.TextureCache2D(AssetPaths.Root);
             VegetationRenderingSmoke2D.Run(device, textures, outputDirectory);
             Console.WriteLine("Vegetation rendering smoke checks completed.");
             return;

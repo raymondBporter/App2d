@@ -1,12 +1,12 @@
-using System.Runtime.InteropServices;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using NVector2 = System.Numerics.Vector2;
+using System.Runtime.InteropServices;
+using ButtonState = Microsoft.Xna.Framework.Input.ButtonState;
 using Color = Microsoft.Xna.Framework.Color;
 using Keys = Microsoft.Xna.Framework.Input.Keys;
-using ButtonState = Microsoft.Xna.Framework.Input.ButtonState;
+using NVector2 = System.Numerics.Vector2;
 
 namespace App2d.CharacterStudio;
 
@@ -41,7 +41,7 @@ internal sealed class ImGuiHost : IDisposable
     private static readonly Keys[] KeysToPoll = Enum.GetValues<Keys>();
     private bool _disposed;
     public float UiScale { get; private set; }
-    public float DpiScale => System.Windows.Forms.Control.FromHandle(_window.Handle)?.DeviceDpi / 96f ?? 1;
+    public float DpiScale => Control.FromHandle(_window.Handle)?.DeviceDpi / 96f ?? 1;
     public float UserScale { get; set; } = 1;
 
     public unsafe ImGuiHost(Game game, float userScale = 1)
