@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Shapes;
 using App2d.Gameplay.Combat;
 using App2d.Rendering;
@@ -29,7 +30,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
             else { burst = new Burst(scene); _bursts.Add(burst); }
         }
         burst.Position = contact.Position;
-        burst.Angle = contact.Direction == Vector2.Zero ? 0 : MathF.Atan2(contact.Direction.Y, contact.Direction.X);
+        burst.Angle = contact.Direction.AngleRadians;
         burst.Size = damage.WasKilled ? 1.3f : 1;
         burst.Duration = damage.WasKilled ? .16f : .115f;
         burst.Age = 0;
@@ -52,7 +53,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
             edge.IsVisible = fill.IsVisible = live;
             if (!live) continue;
             var angle = burst.Angle + Angles[i];
-            var axis = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+            var axis = Polar2D.Direction(angle);
             var distance = (3 + 17 * t) * burst.Size;
             var length = Lengths[i] * burst.Size * (1 - .65f * t);
             var width = (i == 2 ? 5 : 3.6f) * burst.Size * (1 - .75f * t);

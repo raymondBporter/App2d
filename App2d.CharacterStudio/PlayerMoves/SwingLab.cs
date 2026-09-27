@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.PlayerMoves;
@@ -35,7 +36,7 @@ internal static class SwingLab
     /// </summary>
     private readonly record struct Arc(float Angle, float Wrist, float Radius, float Chest, float HipsX, float HipsY, float Head, float OffX, float OffY, float Tilt = 0, float Yaw = 60)
     {
-        public Vector2 Hand => new Vector2(MathF.Cos(Angle), MathF.Sin(Angle)) * Radius;
+        public Vector2 Hand => Polar2D.ToCartesian(Radius, Angle);
         public Arc With(float angle, float wrist, float tilt) => this with { Angle = angle, Wrist = wrist, Tilt = tilt };
     }
 
@@ -98,7 +99,7 @@ internal static class SwingLab
         public Swing SidePose(float time, Side p, string ease = ClipEase.Linear)
         {
             var arm = Side.Direction(p.Arm, p.ArmDip) * _arm; var blade = Side.Direction(p.Blade, p.BladeDip);
-            var angle = ContinueBlade(MathF.Atan2(blade.Y, blade.X));
+            var angle = ContinueBlade(new Vector2(blade.X, blade.Y).AngleRadians);
             var tilt = MathF.Asin(Math.Clamp(-blade.Z, -1, 1)) * 180 / MathF.PI;
             Builder.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(Builder.Model, p.Yaw).RightHand(arm.X, arm.Y).LeftHand(p.OffX, p.OffY).Blade(angle), ease);
             _orient.Add((time, p.Twist, tilt)); return this;

@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Mathematics;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
@@ -218,7 +219,7 @@ public sealed class VegetationPatch2D
             for (var petal = 0; petal < 5; petal++)
             {
                 var angle = petal / 5f * MathF.Tau + flower.Phase;
-                yield return new([Disc(head + Angle(angle) * 5.2f * scale, 3.8f * scale, flower.Color)]);
+                yield return new([Disc(head + Polar2D.Direction(angle) * 5.2f * scale, 3.8f * scale, flower.Color)]);
             }
             yield return new([Disc(head, 3f * scale, FlowerCenterColor)]);
         }
@@ -253,7 +254,7 @@ public sealed class VegetationPatch2D
         for (var petal = 0; petal < 5; petal++)
         {
             var angle = petal / 5f * MathF.Tau + flower.Phase;
-            FillDisc(renderer, head + Angle(angle) * 5.2f * scale, 3.8f * scale, flower.Color);
+            FillDisc(renderer, head + Polar2D.Direction(angle) * 5.2f * scale, 3.8f * scale, flower.Color);
         }
         FillDisc(renderer, head, 3f * scale, FlowerCenterColor);
     }
@@ -272,11 +273,9 @@ public sealed class VegetationPatch2D
     {
         var points = new Vector2[10];
         for (var index = 0; index < points.Length; index++)
-            points[index] = center + Angle(index / (float)points.Length * MathF.Tau) * radius;
+            points[index] = center + Polar2D.ToCartesian(radius, index / (float)points.Length * MathF.Tau);
         return new(points, color, InkColor, DetailOutlineWidth * radius / 3.8f);
     }
-
-    private static Vector2 Angle(float radians) => new(MathF.Cos(radians), MathF.Sin(radians));
 
     private static bool IsVisible(float x, float height, float left, float right) =>
         x >= left - height && x <= right + height;

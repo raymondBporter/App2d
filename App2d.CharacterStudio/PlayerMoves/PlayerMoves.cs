@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.PlayerMoves;
@@ -307,9 +308,9 @@ internal static partial class PlayerMoves
     private static (Vector2 LeftShoulder, Vector2 RightShoulder, Vector2 LeftHip, Vector2 RightHip) Girdles(ResolvedModel m, float degrees)
     {
         const float shoulderHalf = .18f, hipHalf = .12f, setback = -.025f;
-        var a = degrees * MathF.PI / 180; var axis = new Vector2(MathF.Cos(a), MathF.Sin(a));
+        var a = degrees * MathF.PI / 180; var axis = Polar2D.Direction(a);
         // The shoulders sit slightly behind the torso's centerline, along the facing direction (the axis turned back 90).
-        var mid = new Vector2(MathF.Sin(a), -MathF.Cos(a)) * setback;
+        var mid = axis.PerpCw * setback;
         Vector2 Delta(string id, Vector2 at) { var rest = m.Rest[id]; return new(at.X - rest.X, at.Y - rest.Z); }
         return (Delta("left-shoulder", mid - axis * shoulderHalf), Delta("right-shoulder", mid + axis * shoulderHalf),
             Delta("left-hip", -axis * hipHalf), Delta("right-hip", axis * hipHalf));
@@ -424,8 +425,8 @@ internal static partial class PlayerMoves
         for (var i = 0; i <= steps; i++)
         {
             var t = b.Duration * i / steps; var phase = MathF.Tau * i / steps * direction;
-            var left = new Vector2(MathF.Cos(phase + .4f), MathF.Sin(phase + .4f)) * radius;
-            var right = new Vector2(MathF.Cos(phase + .4f + MathF.PI), MathF.Sin(phase + .4f + MathF.PI)) * radius;
+            var left = Polar2D.ToCartesian(radius, phase + .4f);
+            var right = Polar2D.ToCartesian(radius, phase + .4f + MathF.PI);
             var tip = lean + wobble * MathF.Sin(MathF.Tau * i / steps);
             b.Key(t, k => k.Chest(tip).Head(-.22f - tip * .5f).LeftHand(left.X, left.Y - .1f).RightHand(right.X, right.Y - .1f), ClipEase.Linear);
         }

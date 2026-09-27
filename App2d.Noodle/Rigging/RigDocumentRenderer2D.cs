@@ -1,4 +1,5 @@
 using App2d.Rendering;
+using App2d.Core.Mathematics;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
@@ -34,7 +35,7 @@ internal static class RigDocumentRenderer2D
         var item = new WorldObject2D(geometry, new SolidColorShader(color));
         var boneTransform = RigDocument2D.GetWorldTransform(shape.AttachedBone);
         item.Transform.Position = Vector2.Transform(new Vector2(shape.LocalX, shape.LocalY), boneTransform);
-        item.Transform.Rotation = MathF.Atan2(boneTransform.M12, boneTransform.M11) +
+        item.Transform.Rotation = new Vector2(boneTransform.M11, boneTransform.M12).AngleRadians +
             MathF.PI / 180f * shape.AngleDegrees;
         renderer.Draw(item);
 

@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Shapes;
 using App2d.Rendering;
 using System.Numerics;
@@ -76,7 +77,7 @@ public sealed class RopeVisual2D
         var length = segment.Length();
         link.Transform.Position = from;
         link.Transform.Rotation = length > float.Epsilon
-            ? MathF.Atan2(segment.Y, segment.X)
+            ? segment.AngleRadians
             : 0f;
         link.Transform.Scale = new Vector2(
             Math.Max(length / _linkBaseLength, 0.001f),

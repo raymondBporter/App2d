@@ -34,6 +34,21 @@ public sealed class CombatContactPresentationTests
     }
 
     [Fact]
+    public void ZeroDirectionUsesTheSameHeadingAsPositiveX()
+    {
+        var scene = new Scene2D();
+        using var effects = new CombatContactPresentation2D(scene);
+        effects.Present(Hit(Vector2.UnitX));
+        var expected = scene.Select(v => (v.Transform.Position, v.Transform.Rotation)).ToArray();
+        effects.Reset();
+
+        effects.Present(Hit(Vector2.Zero));
+
+        Assert.All(scene, v => Assert.True(v.IsVisible));
+        Assert.Equal(expected, scene.Select(v => (v.Transform.Position, v.Transform.Rotation)).ToArray());
+    }
+
+    [Fact]
     public void MultipleTargetsHaveIndependentEffectsAndKillsHoldLonger()
     {
         var scene = new Scene2D();

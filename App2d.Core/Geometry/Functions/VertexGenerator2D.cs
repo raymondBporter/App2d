@@ -1,4 +1,5 @@
 using System.Numerics;
+using App2d.Core.Mathematics;
 
 namespace App2d.Core.Geometry.Functions;
 
@@ -10,7 +11,7 @@ namespace App2d.Core.Geometry.Functions;
 public static class VertexGenerator2D
 {
     public static Vector2 PointOnEllipse(Vector2 center, Vector2 radii, float angle) =>
-        center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radii;
+        center + Polar2D.Direction(angle) * radii;
 
     /// <summary>The buffer length selects the number of segments, starting on local +X.</summary>
     public static int WriteEllipse(Span<Vector2> vertices, Vector2 center, Vector2 radii)
@@ -87,7 +88,7 @@ public static class VertexGenerator2D
         ArgGuard.ThrowIfNotFinite(end);
         ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         var axis = end - start;
-        var angle = MathF.Atan2(axis.Y, axis.X);
+        var angle = axis.AngleRadians;
         WriteArc(vertices[..capCount], end, new(radius), angle - MathF.PI / 2f, MathF.PI);
         WriteArc(vertices.Slice(capCount, capCount), start, new(radius), angle + MathF.PI / 2f, MathF.PI);
         return count;
