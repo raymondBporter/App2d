@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace App2d.Gameplay.Audio;
+namespace App2d.Game.Presentation.Audio;
 
 public readonly record struct MusicSelection2D(string Piece, string Mood);
 

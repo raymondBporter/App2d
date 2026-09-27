@@ -3,6 +3,7 @@ using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Diagnostics;
 using App2d.Editor;
+using App2d.Game.Presentation.Audio;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
@@ -37,7 +38,7 @@ public sealed class SideScrollerGame : Game2D
     {
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
-        const float units = Core.Characters.AuthoredWorld.PixelsPerUnit;
+        const float units = AuthoredWorld.PixelsPerUnit;
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
         var height = MathF.Round(hero.Asset.Movement.Height * units / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,

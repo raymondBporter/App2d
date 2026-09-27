@@ -1,9 +1,10 @@
 using App2d.Core;
 using App2d.Core.Animation;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Shapes;
-using App2d.Gameplay.Assets;
-using App2d.Gameplay.Audio;
+using App2d.Game.Presentation.Assets;
+using App2d.Game.Presentation.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
@@ -158,11 +159,11 @@ public sealed class EnemyPresentation2D(
         private readonly WorldObject2D _visual;
         private readonly Rendering.Characters.AuthoredCharacterShader _shader;
         private readonly BoltViews _bolts;
-        public AuthoredPoseView(Scene2D scene, Core.Characters.ResolvedEntity entity)
+        public AuthoredPoseView(Scene2D scene, ResolvedEntity entity)
         {
             _scene = scene; _bolts = new(scene); _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
             _visual = new(AxisAlignedRectangle2D.FromSize(new(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
-            _visual.Transform.Scale = new(Core.Characters.AuthoredWorld.PixelsPerUnit);
+            _visual.Transform.Scale = new(AuthoredWorld.PixelsPerUnit);
             scene.Add(_visual);
         }
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
@@ -171,7 +172,7 @@ public sealed class EnemyPresentation2D(
             _bolts.Update(state);
             if (state.AuthoredPose is not { } pose) return;
             _shader.Pose = pose.Local; _shader.Facing = pose.Facing;
-            _visual.Transform.Position = pose.Position * Core.Characters.AuthoredWorld.PixelsPerUnit;
+            _visual.Transform.Position = pose.Position * AuthoredWorld.PixelsPerUnit;
         }
         public override void Dispose() { _scene.Remove(_visual); _bolts.Dispose(); }
     }

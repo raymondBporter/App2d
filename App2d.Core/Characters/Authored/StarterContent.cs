@@ -1,6 +1,4 @@
-using App2d.Core.Characters.Authored;
-
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>
 /// The phase 3 starter content, written as ordinary authored assets: Person idle/thrust/jump clips, a spear, a stalker

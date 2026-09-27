@@ -1,6 +1,6 @@
 using App2d.Persistence;
 
-namespace App2d.Gameplay.Tests.Persistence;
+namespace App2d.Tests.Persistence;
 
 public sealed class PlayerSaveStore2DTests : IDisposable
 {

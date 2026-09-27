@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using System.Numerics;
@@ -22,8 +23,8 @@ public readonly record struct EnemyState2D(
     public PersonState2D Person { get; init; }
     public float MoveX { get; init; }
     /// <summary>For enemies compiled from authored entities: the shared compiled entity and this tick's final pose, drawn as is.</summary>
-    public Core.Characters.ResolvedEntity? AuthoredEntity { get; init; }
-    public Core.Characters.ActorPose? AuthoredPose { get; init; }
+    public ResolvedEntity? AuthoredEntity { get; init; }
+    public ActorPose? AuthoredPose { get; init; }
 }
 
 public readonly record struct EntityBoltState2D(Vector2 Position, Vector2 Velocity, Vector2 Size, float Lifetime);

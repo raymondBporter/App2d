@@ -1,7 +1,6 @@
-using App2d.Core.Characters.Authored;
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>An effective role assignment and where it came from: the entity's own override, or its selected motion set.</summary>
 public sealed record RoleClip(string Role, MotionClip Clip, string Source);

@@ -2,7 +2,7 @@ using App2d.Core;
 using App2d.Gameplay.World;
 using System.Numerics;
 
-namespace App2d.Gameplay.Audio;
+namespace App2d.Game.Presentation.Audio;
 
 /// <summary>Client-side zone selection with a short dwell time to prevent border chatter.</summary>
 public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<string, string> select)

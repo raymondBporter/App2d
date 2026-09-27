@@ -3,7 +3,7 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Rendering;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Game.Presentation;
 
 // Purely cosmetic rope made of stretched capsule links laid along a sagging curve.
 // It never touches the physics world, so it can never yank anything.

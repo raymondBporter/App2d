@@ -1,7 +1,7 @@
 using App2d.Core;
 using System.Numerics;
 
-namespace App2d.Gameplay.Audio;
+namespace App2d.Game.Presentation.Audio;
 
 /// <summary>Smooth distance attenuation, measured in world units.</summary>
 public sealed class SoundFalloff2D

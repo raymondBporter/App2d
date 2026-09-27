@@ -1,7 +1,7 @@
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Assets;
+using App2d.Game.Presentation.Assets;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;

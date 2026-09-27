@@ -1,9 +1,8 @@
 using App2d.Core;
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
+using App2d.Game.Presentation.Audio;
 using App2d.Game.Presentation.World.Presentation;
-using App2d.Gameplay.Audio;
 using App2d.Gameplay.Enemies;
 using App2d.Levels;
 using App2d.Rendering;
