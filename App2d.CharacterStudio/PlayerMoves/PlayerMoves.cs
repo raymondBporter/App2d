@@ -127,15 +127,16 @@ internal static partial class PlayerMoves
 
     /// <summary>
     /// An enemy's readable pistol shot, 1.1 s: raise to the aim pose, hold, fire at 0.6 s with the player's kick, settle and
-    /// lower. Whole body, with both feet planted; reuses the gun clips' aim and recoil poses.
+    /// lower. Whole body, with both feet planted; reuses the gun clips' aim and recoil poses. It keeps the lower, bent-knee
+    /// stance rather than the player's <see cref="StanceY"/>: raising it lifts the muzzle and the bolts pass over the player.
     /// </summary>
     private static MotionClip PistolShot(ResolvedModel m) => New(m, "person-pistol-shot", "Pistol shot", 1.1f, false)
-        .Key(0, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
-        .Key(.35f, k => k.Hips(-.02f, StanceY).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
-        .Key(.6f, k => k.Hips(-.02f, StanceY - .005f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0), ClipEase.Linear)
+        .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
+        .Key(.35f, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
+        .Key(.6f, k => k.Hips(-.02f, -.035f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0), ClipEase.Linear)
         .Key(.63f, k => k.Chest(.06f).Head(.05f).RightHand(.54f, 0).LeftHand(.01f, -.6f).Blade(.38f))
-        .Key(.85f, k => k.Hips(-.02f, StanceY).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
-        .Key(1.1f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
+        .Key(.85f, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
+        .Key(1.1f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
         .Plant("left-leg", 0, 1.1f, Back).Plant("right-leg", 0, 1.1f, Front)
         .Marker("fire", .6f)
         .Face(0, "focused").Face(.6f, "determined").Face(.85f, "focused")
