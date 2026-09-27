@@ -4,33 +4,19 @@ using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Rendering.Vegetation;
 
-/// <summary>A frozen slice of an actual grass blade, with its original taper and color.</summary>
+/// <summary>A frozen piece of cut foliage: a blade sliver or a flower petal, in world space at release.</summary>
 public sealed class VegetationBladeTip2D
 {
-    private readonly VegetationBladeSection2D[] _sections;
-    private readonly Vector2? _flower;
-    private readonly float _flowerRadius;
-    private readonly XnaColor _flowerColor;
+    private readonly VegetationTipPolygon2D[] _polygons;
     private readonly Bounds2D _localBounds;
     public Vector2 ReleasePosition { get; }
 
-    internal VegetationBladeTip2D(List<VegetationBladeSection2D> sections,
-        Vector2? flower, float flowerRadius, XnaColor flowerColor)
+    internal VegetationBladeTip2D(IReadOnlyList<VegetationTipPolygon2D> polygons)
     {
-        var points = sections.SelectMany(s => new[] { s.A, s.B, s.C, s.D }).ToList();
-        if (flower is { } center)
-        {
-            points.Add(center - new Vector2(flowerRadius));
-            points.Add(center + new Vector2(flowerRadius));
-        }
-        var bounds = Bounds2D.FromPoints(points.ToArray());
+        var bounds = Bounds2D.FromPoints([.. polygons.SelectMany(p => p.Points)]);
         ReleasePosition = bounds.Center;
         _localBounds = new(bounds.Min - ReleasePosition, bounds.Max - ReleasePosition);
-        _sections = [.. sections.Select(s => new VegetationBladeSection2D(
-            s.A - ReleasePosition, s.B - ReleasePosition, s.C - ReleasePosition, s.D - ReleasePosition, s.Color))];
-        _flower = flower - ReleasePosition;
-        _flowerRadius = flowerRadius;
-        _flowerColor = flowerColor;
+        _polygons = [.. polygons.Select(p => p with { Points = [.. p.Points.Select(point => point - ReleasePosition)] })];
     }
 
     public Bounds2D WorldBounds(Vector2 position, float rotation) =>
@@ -39,17 +25,21 @@ public sealed class VegetationBladeTip2D
     public void Render(Renderer2D renderer, Vector2 position, float rotation, float opacity)
     {
         var transform = Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position);
-        Span<Vector2> quad = stackalloc Vector2[4];
-        foreach (var section in _sections)
+        Span<Vector2> points = stackalloc Vector2[16];
+        Span<Vector2> ring = stackalloc Vector2[17];
+        foreach (var polygon in _polygons)
         {
-            quad[0] = Vector2.Transform(section.A, transform);
-            quad[1] = Vector2.Transform(section.B, transform);
-            quad[2] = Vector2.Transform(section.C, transform);
-            quad[3] = Vector2.Transform(section.D, transform);
-            renderer.DrawWorldConvexPolygon(quad, Fade(section.Color, opacity));
+            var world = points[..polygon.Points.Length];
+            for (var index = 0; index < world.Length; index++)
+                world[index] = Vector2.Transform(polygon.Points[index], transform);
+            renderer.DrawWorldConvexPolygon(world, Fade(polygon.Fill, opacity));
+            if (polygon.Outline is not { } outline) continue;
+            var closed = ring[..(world.Length + 1)];
+            world.CopyTo(closed);
+            closed[^1] = world[0];
+            renderer.DrawWorldPolyline(closed, Fade(outline, opacity),
+                Math.Max(1f, polygon.OutlineWidth * renderer.PixelsPerWorldUnit));
         }
-        if (_flower is { } flower)
-            renderer.DrawWorldCircle(Vector2.Transform(flower, transform), _flowerRadius, Fade(_flowerColor, opacity), 1.5f);
     }
 
     private static XnaColor Fade(XnaColor color, float opacity)
@@ -59,4 +49,5 @@ public sealed class VegetationBladeTip2D
     }
 }
 
-internal readonly record struct VegetationBladeSection2D(Vector2 A, Vector2 B, Vector2 C, Vector2 D, XnaColor Color);
+/// <summary>One convex piece of a clipping; an outline draws it in ink like the living plant (width in world units).</summary>
+internal readonly record struct VegetationTipPolygon2D(Vector2[] Points, XnaColor Fill, XnaColor? Outline, float OutlineWidth);

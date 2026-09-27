@@ -133,7 +133,8 @@ public sealed class VegetationPresentation2D
             if (visible.Intersects(tree.Bounds)) tree.Render(renderer, wind);
     }
 
-    public void DrawGrass(Renderer2D renderer, Bounds2D visible)
+    /// <summary>Back grass and flowers draw before characters; front tufts and clippings after them.</summary>
+    public void DrawGrass(Renderer2D renderer, Bounds2D visible, VegetationLayer2D layer)
     {
         var wind = Wind();
         foreach (var chunk in _chunks.Values)
@@ -142,10 +143,11 @@ public sealed class VegetationPresentation2D
             var bounds = new Bounds2D(patch.Root - new Vector2(patch.Size * 0.5f, 0f),
                 patch.Root + new Vector2(patch.Size * 1.5f, patch.Size * 1.2f));
             if (bounds.Intersects(visible))
-                patch.Visual.Render(renderer, visible.Left, visible.Right, wind,
+                patch.Visual.Render(renderer, visible.Left, visible.Right, wind, layer,
                     _cuts?.Contains(patch.Cell) == true ? patch.Size * VegetationPlacement2D.CutHeightInTiles : null,
                     CutRoughness);
         }
+        if (layer != VegetationLayer2D.Front) return;
         foreach (var piece in _clippings)
         {
             if (visible.Intersects(piece.Shape.WorldBounds(piece.Position, piece.Rotation)))
@@ -172,11 +174,11 @@ public sealed class VegetationPresentation2D
     {
         var dry = tileset == "dark-cave";
         var reeds = tileset == "mossy-cavern";
-        return new(size * 0.55f, size * VegetationPlacement2D.MaximumHeightInTiles,
-            size * 0.035f, size * 0.07f, size * 0.105f, size * 0.15f,
-            dry ? new(105, 82, 39) : reeds ? new(18, 83, 82) : new(28, 104, 67),
-            dry ? new(210, 183, 94) : reeds ? new(83, 190, 145) : new(129, 211, 109),
-            dry || reeds ? 0f : 0.045f, new(255, 150, 201));
+        return new(size * 0.25f, size * 0.53f, size * 0.9f, size * 0.16f, size * 0.39f,
+            dry ? new(150, 118, 52) : reeds ? new(36, 128, 104) : new(79, 184, 47),
+            dry ? new(206, 176, 92) : reeds ? new(82, 184, 148) : new(108, 203, 66),
+            reeds ? 0.4f : 0.2f, 0.22f, dry || reeds ? 0f : 0.08f,
+            Coverage: dry ? 0.45f : 0.6f, PatchWidth: size * 6f);
     }
 
     private sealed record Patch(GrassCell2D Cell, Vector2 Root, float Size, VegetationPatch2D Visual);

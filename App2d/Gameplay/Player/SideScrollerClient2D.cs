@@ -9,6 +9,7 @@ using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Gameplay.World.Presentation;
 using App2d.Rendering;
+using App2d.Rendering.Vegetation;
 using App2d.Rendering.Textures;
 using System.Collections.Immutable;
 using System.Numerics;
@@ -68,7 +69,8 @@ internal sealed class SideScrollerClient2D : IDisposable
     public LevelContent2D Content => _endpoint.Snapshot.Content;
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain) => _world.SetVisibleTerrain(terrain);
     public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);
-    public void DrawGrass(Renderer2D renderer) => _world.DrawGrass(renderer, _camera.VisibleWorldBounds);
+    public void DrawGrass(Renderer2D renderer, VegetationLayer2D layer) =>
+        _world.DrawGrass(renderer, _camera.VisibleWorldBounds, layer);
     public bool IsControllerConnected => _input.IsControllerConnected;
     public bool ShowTraversalDebug { get; set; }
     public BallisticsDebug2D Ballistics { get; }

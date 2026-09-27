@@ -70,9 +70,19 @@ public sealed partial class Renderer2D : IDisposable
         _device.Clear(color);
     }
 
+    /// <summary>Device pixels per world unit for the current camera, for strokes that should scale with zoom.</summary>
+    public float PixelsPerWorldUnit => _camera.PixelsPerWorldUnit;
+
     public void Draw(Scene2D scene)
     {
         foreach (var item in scene.GetDrawOrder()) Draw(item);
+    }
+
+    /// <summary>Draws only the objects whose z-index falls in the inclusive range, so other passes can interleave.</summary>
+    public void Draw(Scene2D scene, int minimumZIndex, int maximumZIndex)
+    {
+        foreach (var item in scene.GetDrawOrder())
+            if (item.ZIndex >= minimumZIndex && item.ZIndex <= maximumZIndex) Draw(item);
     }
 
     public void Draw(WorldObject2D worldObject)
