@@ -5,7 +5,7 @@ namespace App2d.Gameplay.Tests.Persistence;
 public sealed class PlayerSaveStore2DTests : IDisposable
 {
     private readonly string _directory =
-        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "app2d-save-" + Guid.NewGuid().ToString("N"));
+        Path.Combine(Path.GetTempPath(), "app2d-save-" + Guid.NewGuid().ToString("N"));
 
     [Fact]
     public void SaveRoundTripsAsSmallReadableJson()
@@ -46,5 +46,5 @@ public sealed class PlayerSaveStore2DTests : IDisposable
     }
 
     private PlayerSaveStore2D NewStore() =>
-        new(System.IO.Path.Combine(_directory, "save.json"));
+        new(Path.Combine(_directory, "save.json"));
 }

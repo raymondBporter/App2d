@@ -1,14 +1,14 @@
-using App2d.Levels;
-using App2d.Core.Collision;
 using App2d.Core;
+using App2d.Core.Collision;
 using App2d.Core.Geometry;
+using App2d.Core.Physics;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Persons.Presentation;
 using App2d.Gameplay.Player;
-using App2d.Core.Physics;
+using App2d.Levels;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;

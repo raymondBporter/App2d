@@ -1,6 +1,6 @@
-using System.Text.RegularExpressions;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using System.Text.RegularExpressions;
 
 namespace App2d.Tests.Authored;
 

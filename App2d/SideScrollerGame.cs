@@ -1,15 +1,15 @@
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Editor;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
+using App2d.Persistence;
 using App2d.Rendering;
 using App2d.Things;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
-using App2d.Core.Characters.Authored;
-using App2d.Persistence;
 
 namespace App2d;
 
@@ -29,9 +29,9 @@ public sealed class SideScrollerGame : Game2D
 
     public SideScrollerGame()
     {
-        var hero = _authored.Entities.GetValueOrDefault(App2d.Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
+        var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
-        const float units = App2d.Core.Characters.AuthoredWorld.PixelsPerUnit;
+        const float units = Core.Characters.AuthoredWorld.PixelsPerUnit;
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
         var height = MathF.Round(hero.Asset.Movement.Height * units / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
@@ -91,7 +91,7 @@ public sealed class SideScrollerGame : Game2D
             _simulation.Level.ReloadMovingPlatforms([.. things.Select(ThingTypeRegistry2D.ToRuntime)]);
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
-            cameraController, Textures, _sounds, Traversal, App2d.Gameplay.Persons.PersonMoves.From(_authored));
+            cameraController, Textures, _sounds, Traversal, Gameplay.Persons.PersonMoves.From(_authored));
         _client.CheckpointActivated += checkpoint =>
             _client.ShowSaveResult(_saveStore.TrySave(new PlayerSave2D(checkpoint.CheckpointId, checkpoint.HitPoints)), checkpoint.Position);
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _client.ShowTraversalDebug,

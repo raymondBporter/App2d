@@ -3,8 +3,8 @@ using App2d.Rendering;
 using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 using Texture2D = App2d.Rendering.Textures.Texture2D;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Rendering;
 
@@ -166,11 +166,11 @@ public sealed class MonoGameRenderingTests
         var path = Path.Combine(Path.GetTempPath(), $"app2d-render-{Guid.NewGuid():N}.png");
         try
         {
-            using var bitmap = new System.Drawing.Bitmap(2, 2);
-            bitmap.SetPixel(0, 0, System.Drawing.Color.FromArgb(translucent ? 128 : 255, 255, 0, 0));
-            bitmap.SetPixel(1, 0, System.Drawing.Color.Lime);
-            bitmap.SetPixel(0, 1, System.Drawing.Color.Blue);
-            bitmap.SetPixel(1, 1, System.Drawing.Color.Yellow);
+            using var bitmap = new Bitmap(2, 2);
+            bitmap.SetPixel(0, 0, Color.FromArgb(translucent ? 128 : 255, 255, 0, 0));
+            bitmap.SetPixel(1, 0, Color.Lime);
+            bitmap.SetPixel(0, 1, Color.Blue);
+            bitmap.SetPixel(1, 1, Color.Yellow);
             bitmap.Save(path, System.Drawing.Imaging.ImageFormat.Png);
             return Texture2D.Load(path);
         }

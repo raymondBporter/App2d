@@ -35,8 +35,8 @@ internal sealed class EditorApp : Game
             SynchronizeWithVerticalRetrace = true,
         };
         Window.Title = "Character Editor | App2d"; Window.AllowUserResizing = true; IsMouseVisible = true; IsFixedTimeStep = false;
-        var dpi = System.Windows.Forms.Control.FromHandle(Window.Handle)?.DeviceDpi / 96f ?? 1;
-        var area = System.Windows.Forms.Screen.FromHandle(Window.Handle).WorkingArea;
+        var dpi = Control.FromHandle(Window.Handle)?.DeviceDpi / 96f ?? 1;
+        var area = Screen.FromHandle(Window.Handle).WorkingArea;
         // Smoke frames use a fixed logical size so captures compare across machines; the UI still scales with DPI.
         _graphics.PreferredBackBufferWidth = (int)(smokePath is null ? Math.Min(1500 * dpi, area.Width * .92f) : 1600 * dpi);
         _graphics.PreferredBackBufferHeight = (int)(smokePath is null ? Math.Min(940 * dpi, area.Height * .92f) : 940 * dpi);
@@ -60,7 +60,7 @@ internal sealed class EditorApp : Game
         if (_smokePath is not null) { _smoke = new(_smokePath); root = _smoke.PrepareWorkspace(_authoredRoot); }
         var assets = AuthoringWorkspace.Open(root);
         // Sources come from the real characters folder, also during a smoke run on a scratch copy of the authored assets.
-        var sources = App2d.Core.Characters.SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(_authoredRoot))!);
+        var sources = Core.Characters.SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(_authoredRoot))!);
         _shell = new(new EditorSession(assets, sources), new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui);
         if (_smokePath is null)
         {

@@ -1,5 +1,5 @@
-using App2d.Core.Collision.Queries;
 using App2d.Core;
+using App2d.Core.Collision.Queries;
 
 namespace App2d.Core.Physics.Queries;
 

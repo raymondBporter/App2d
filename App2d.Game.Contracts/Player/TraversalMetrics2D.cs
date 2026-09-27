@@ -210,8 +210,4 @@ public sealed class TraversalMetrics2D
         IsDesignUnitMultiple(value * 2f);
 }
 
-public readonly record struct JumpProfile2D(
-    float ApexHeight,
-    float TimeToApex,
-    float Airtime,
-    float HorizontalDistance);
+public readonly record struct JumpProfile2D(float ApexHeight, float TimeToApex, float Airtime, float HorizontalDistance);

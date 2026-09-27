@@ -7,7 +7,7 @@ public sealed class GraphicsCollection;
 
 internal sealed class GraphicsTestContext : IDisposable
 {
-    private readonly System.Windows.Forms.Form _window = new() { ClientSize = new System.Drawing.Size(128, 128) };
+    private readonly Form _window = new() { ClientSize = new Size(128, 128) };
     public GraphicsDevice Device { get; }
     public RenderTarget2D Target { get; }
 

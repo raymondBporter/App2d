@@ -1,8 +1,8 @@
-using App2d.Core.Characters.Authored;
-using System.Numerics;
 using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
+using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor;
 

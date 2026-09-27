@@ -1,6 +1,6 @@
-using System.Text.Json;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using System.Text.Json;
 
 namespace App2d.Tests.Authored;
 

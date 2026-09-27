@@ -1,5 +1,5 @@
-using App2d.Core.Characters.Authored;
 using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.PlayerMoves;

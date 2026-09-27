@@ -1,12 +1,12 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Physics;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Core.Physics;
 using App2d.Tiles;
 using System.Numerics;
 using System.Text.Json;
@@ -76,7 +76,7 @@ public sealed class AuthoredEntityEnemyTests
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
         var center = head.Points.Aggregate(Vector2.Zero, (a, b) => a + b) / head.Points.Count * AuthoredWorld.PixelsPerUnit;
         Assert.True(center.Y > guard.WorldObject.WorldBounds.Max.Y - 30, "the head region comes from the pose, not the movement box");
-        var hit = new App2d.Core.SpatialObject2D(App2d.Core.Geometry.AxisAlignedRectangle2D.FromSize(new(2)));
+        var hit = new Core.SpatialObject2D(Core.Geometry.AxisAlignedRectangle2D.FromSize(new(2)));
         hit.Transform.Position = center;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
         Assert.Equal(guard.Entity.Asset.Health - 1, guard.Health.Current);
@@ -89,12 +89,12 @@ public sealed class AuthoredEntityEnemyTests
     public void TheGunnersBoltsLeaveThePistolDamageThePlayerAndStopAtTerrain(bool wall)
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var gunner = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["cinder-gunner"], physics, new(0, 31), 1, 4);
+        var gunner = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["cinder-gunner"], physics, new(0, 31), 1, 4);
         gunner.SetSimulationEnabled(true);
-        var player = new Person2D(App2d.Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(150, 40), 2, 1, CombatFaction2D.Player, 30);
+        var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(150, 40), 2, 1, CombatFaction2D.Player, 30);
         if (wall)
         {
-            var shape = new App2d.Core.SpatialObject2D(App2d.Core.Geometry.AxisAlignedRectangle2D.FromSize(new(5, 400))); shape.Transform.Position = new(95, 40);
+            var shape = new Core.SpatialObject2D(Core.Geometry.AxisAlignedRectangle2D.FromSize(new(5, 400))); shape.Transform.Position = new(95, 40);
             var body = physics.AddBody(shape, BodyMotionType2D.Static); body.CollisionLayer = 1; body.CollisionMask = 6;
         }
         var sawBolt = false;
@@ -138,9 +138,9 @@ public sealed class AuthoredEntityEnemyTests
     public void TheMaulSlamsForFiveInsideItsWindowAndShrugsOffKnockback()
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var maul = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["maul-brute"], physics, new(0, 36), 1, 4);
+        var maul = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["maul-brute"], physics, new(0, 36), 1, 4);
         maul.SetSimulationEnabled(true);
-        var player = new Person2D(App2d.Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(40, 40), 2, 1, CombatFaction2D.Player, 30);
+        var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(40, 40), 2, 1, CombatFaction2D.Player, 30);
         var slam = maul.Entity.Actions["attack"]; var landedAt = -1.0; var cues = new List<string>();
         for (var i = 0; i < 400 && landedAt < 0; i++)
         {
@@ -162,7 +162,7 @@ public sealed class AuthoredEntityEnemyTests
         foreach (var side in new[] { -1, 1 })
         {
             var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-            var guard = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
+            var guard = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
             guard.SetSimulationEnabled(true);
             var target = new Vector2(side * 80, 42); var sawHitbox = false;
             for (var i = 0; i < 240; i++)
@@ -186,7 +186,7 @@ public sealed class AuthoredEntityEnemyTests
     public void AHitStaggersAndKeepsTheKnockbackThenTheControllerRecovers()
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var guard = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
+        var guard = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
         guard.SetSimulationEnabled(true);
         var target = new Vector2(400, 42);
         guard.Update(1f / 120, target); guard.SyncAfterPhysics();
@@ -207,7 +207,7 @@ public sealed class AuthoredEntityEnemyTests
     public void DeathPlaysItsClipOnceAndHoldsTheLastFrame(string id)
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var enemy = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities[id], physics, new(0, 42), 1, 4);
+        var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities[id], physics, new(0, 42), 1, 4);
         enemy.SetSimulationEnabled(true);
         enemy.Update(1f / 120, new(400, 42)); enemy.SyncAfterPhysics();
         Assert.True(enemy.TakeDamage(enemy.Health.Current, Vector2.Zero));

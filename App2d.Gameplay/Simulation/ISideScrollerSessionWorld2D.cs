@@ -1,9 +1,9 @@
 using App2d.Core.Geometry;
+using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.World;
-using System.Numerics;
 using System.Collections.Immutable;
-using App2d.Gameplay.Enemies;
+using System.Numerics;
 
 namespace App2d.Gameplay.Simulation;
 

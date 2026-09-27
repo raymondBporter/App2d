@@ -279,7 +279,7 @@ public sealed class SourceLibraries
     /// <summary>Reads <c>catalog.json</c> under the characters root. A missing catalog means no sources, not an error.</summary>
     public static SourceLibraries Open(string charactersRoot)
     {
-        var path = System.IO.Path.Combine(charactersRoot, "catalog.json");
+        var path = Path.Combine(charactersRoot, "catalog.json");
         if (!File.Exists(path)) return new(charactersRoot, []);
         using var catalog = JsonDocument.Parse(File.ReadAllText(path));
         var entries = catalog.RootElement.GetProperty("libraries").EnumerateArray().Select(e => new Entry(
@@ -293,7 +293,7 @@ public sealed class SourceLibraries
         if (_loaded.TryGetValue(id, out library)) return true;
         var entry = Entries.FirstOrDefault(e => e.Id == id);
         if (entry is null) return false;
-        _loaded[id] = library = PointLibrary.Load(System.IO.Path.Combine(Root, entry.Path));
+        _loaded[id] = library = PointLibrary.Load(Path.Combine(Root, entry.Path));
         return true;
     }
 

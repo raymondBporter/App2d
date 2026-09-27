@@ -78,7 +78,7 @@ public static class PuppetTemplates
             foreach (var (side, sign) in new[] { ("left", 1f), ("right", -1f) })
             {
                 var shoulder = pose.Points[side + "-shoulder"];
-                pose.Points[side + "-hand"] = shoulder + new System.Numerics.Vector3(sign * .18f * swing, -.61f, 0);
+                pose.Points[side + "-hand"] = shoulder + new Vector3(sign * .18f * swing, -.61f, 0);
             }
             motion.Keys.Add(pose.Key(time));
         }
