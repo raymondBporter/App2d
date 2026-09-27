@@ -26,6 +26,12 @@ if (args is ["--face-smoke", var faceDirectory])
     return;
 }
 
+if (args is ["--platform-study", var platformDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(platformDirectory, platformOnly: true);
+    return;
+}
+
 if (args is ["--render-smoke", var outputDirectory])
 {
     App2d.Diagnostics.RenderingSmoke2D.Run(outputDirectory);

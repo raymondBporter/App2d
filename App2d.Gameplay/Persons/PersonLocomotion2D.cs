@@ -4,6 +4,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Physics;
 using App2d.Gameplay.Player;
 using App2d.Tiles;
+using App2d.Gameplay.World;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons;
@@ -54,6 +55,8 @@ public sealed partial class PersonLocomotion2D
     public event Action? JumpStarted;
     public event Action<float>? Landed;
     public bool IsGrounded { get; private set; }
+    /// <summary>The velocity of the ground under the person (a moving platform's), or zero when airborne.</summary>
+    public Vector2 GroundVelocity => IsGrounded ? GetGroundSupportVelocity() : Vector2.Zero;
     public bool IsWallGripping { get; private set; }
     public bool IsDashing { get; private set; }
     /// <summary>The unsupported edge in world space: -1 left, +1 right, or 0.</summary>
@@ -187,7 +190,7 @@ public sealed partial class PersonLocomotion2D
         if (!_wasGroundedBeforePhysics && IsGrounded)
         {
             var relativeLandingSpeed =
-                GetGroundSupportVerticalSpeed() - _verticalSpeedBeforePhysics;
+                GetGroundSupportVelocity().Y - _verticalSpeedBeforePhysics;
             if (relativeLandingSpeed > 60f)
                 Landed?.Invoke(relativeLandingSpeed);
         }
@@ -600,28 +603,18 @@ public sealed partial class PersonLocomotion2D
         return false;
     }
 
-    private float GetGroundSupportVerticalSpeed()
+    /// <summary>The fastest-rising support's velocity: the one a landing is measured against and a rider moves with.</summary>
+    private Vector2 GetGroundSupportVelocity()
     {
-        var supportSpeed = float.NegativeInfinity;
-        foreach (var contact in _physics.LastContacts)
+        if (GroundSupport2D.Velocity(_physics.LastContacts, _body, CanSupport) is { } touching)
+            return touching;
+
+        var support = new Vector2(0f, float.NegativeInfinity);
+        void Consider(Vector2 velocity)
         {
-            if (contact.First == _body &&
-                contact.Geometry.Normal.Y >= 0.55f &&
-                CanSupport(contact.Second))
-            {
-                supportSpeed = Math.Max(supportSpeed, contact.Second.LinearVelocity.Y);
-            }
-
-            if (contact.Second == _body &&
-                -contact.Geometry.Normal.Y >= 0.55f &&
-                CanSupport(contact.First))
-            {
-                supportSpeed = Math.Max(supportSpeed, contact.First.LinearVelocity.Y);
-            }
+            if (velocity.Y > support.Y)
+                support = velocity;
         }
-
-        if (float.IsFinite(supportSpeed))
-            return supportSpeed;
 
         var bodyBounds = _body.WorldObject.WorldBounds;
         QueryBodyBounds(ExpandedDown(bodyBounds, Metrics.LandingSnapDistance));
@@ -636,10 +629,10 @@ public sealed partial class PersonLocomotion2D
 
             var gap = bodyBounds.Bottom - otherBounds.Top;
             if (gap >= -0.01f && gap <= Metrics.LandingSnapDistance)
-                supportSpeed = Math.Max(supportSpeed, other.LinearVelocity.Y);
+                Consider(other.LinearVelocity);
         }
 
-        return float.IsFinite(supportSpeed) ? supportSpeed : 0f;
+        return float.IsFinite(support.Y) ? support : Vector2.Zero;
     }
 
     private bool TrySnapToGround()

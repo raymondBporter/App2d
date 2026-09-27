@@ -33,7 +33,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     private static readonly Vector3 SwooshDepth = new(0, 0, .01f);
     private readonly float _halfHeight, _pixelsPerUnit;
     private PersonState2D _state;
-    private double _clock;
+    private double _clock, _stateClock = double.NaN;
     private string _drawnKey = "";
     private bool _enabled = true;
     public bool Enabled { get => _enabled; set { _enabled = value; _visual.IsVisible = value && Visible(); } }
@@ -62,11 +62,15 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     public void PlayLanding() => _face.Land();
     public void PlayCelebrate() { Director.PlayCelebrate(); _face.Celebrate(); }
     public void PlayDeath() { _hitstop.Reset(); Director.PlayDeath(); }
-    public void Reset() { ResetContact(); Director.Reset(); _hold.Clear(); _face.Reset(); _swoosh.Reset(); _drawnKey = ""; }
+    public void Reset() { ResetContact(); Director.Reset(); _hold.Clear(); _face.Reset(); _swoosh.Reset(); _drawnKey = ""; _stateClock = double.NaN; }
 
     public void ApplyState(PersonState2D state, long tick, float moveX, bool shield, bool melee, PersonFrame? animationSample = null)
     {
-        _state = state; _clock = tick / 120.0;
+        // Planted feet stand on the ground, so they ride a moving platform instead of staying where it was.
+        var elapsed = double.IsNaN(_stateClock) ? 0 : (float)Math.Clamp(tick / 120.0 - _stateClock, 0, .1);
+        if (state.IsGrounded && state.GroundVelocity != Vector2.Zero)
+            _hold.Shift(new Vector3(state.GroundVelocity * (float)elapsed / _pixelsPerUnit, 0));
+        _state = state; _clock = _stateClock = tick / 120.0;
         Director.ApplyState(state, Feet(state) / _pixelsPerUnit, _clock);
         Update(animationSample);
     }
