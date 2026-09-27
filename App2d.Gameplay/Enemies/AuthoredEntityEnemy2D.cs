@@ -113,12 +113,13 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private void Evaluate(float dt, bool initial)
     {
         _scratch.Clear();
-        // Grounded means still relative to the ground, so a rising or sinking platform counts; planted feet ride with it,
-        // and let go in the air to re-plant on landing. The platform carried the body before _rootBefore was taken, so the
-        // distance walked is already the body's own.
+        // Grounded means still relative to the ground, so a rising or sinking platform counts; planted feet ride with it.
+        // In the air nothing is held from one step to the next, so the feet plant afresh where they land. The platform
+        // carried the body before _rootBefore was taken, so the distance walked is already the body's own.
         var ground = initial ? null : GroundSupport2D.Velocity(_physics.LastContacts, Body, CanStandOn);
         var root = Root; var grounded = MathF.Abs(Body.LinearVelocity.Y - (ground?.Y ?? 0)) < 1;
-        if (!initial && !grounded) _animator.Lift();
+        var airborne = !initial && !grounded;
+        if (airborne) _animator.Lift();
         else if (ground is { } carry && carry != Vector2.Zero) _animator.Carry(new Vector3(carry * dt / Scale, 0));
         var moved = MathF.Abs(root.X - _rootBefore.X) / Scale;
         var role = IsAlive && grounded && MathF.Abs(Body.LinearVelocity.X) > 1 ? EntityControllers.Walk : EntityControllers.Idle;
@@ -126,6 +127,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var reaction = _reaction.Role(Entity, IsAlive);
         var hold = !initial && reaction is null && (!IsAlive || !grounded && _animator.Action is null);
         _animator.Step(dt, root / Scale, _facing, reaction ?? (hold ? _animator.Role : role), grounded ? moved : 0, hold, _scratch, Expression);
+        if (airborne) _animator.Lift();
     }
 
     private bool CanStandOn(PhysicsBody2D other) =>

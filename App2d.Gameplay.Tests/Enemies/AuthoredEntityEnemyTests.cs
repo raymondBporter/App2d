@@ -71,28 +71,36 @@ public sealed class AuthoredEntityEnemyTests
     [InlineData(60f, 0f)]
     public void PlantedFeetRideAMovingPlatform(float x, float y)
     {
+        // The guard drops onto the platform, then rides it: its feet should sit exactly as they do on a still one.
+        var (still, _) = Ride(new(0, -1e-4f));
+        var (feet, trail) = Ride(new(x, y));
+        foreach (var (foot, height) in feet)
+            Assert.True(MathF.Abs(height - still[foot]) < .005f, $"{foot} stands {height:F3} above the platform, {still[foot]:F3} when it is still");
+        foreach (var (foot, offset) in trail)
+            Assert.True(MathF.Abs(offset) < .5f, $"{foot} trails the hips by {offset:F3}");
+    }
+
+    /// <summary>Each foot's height above a moving platform, and its horizontal offset from the hips, after dropping onto it and riding.</summary>
+    private static (Dictionary<string, float> Heights, Dictionary<string, float> Trail) Ride(Vector2 velocity)
+    {
         var physics = new PhysicsWorld2D { Gravity = new(0, -1_900f), MaxSubstepSeconds = 1f / 120 };
-        var velocity = new Vector2(x, y);
         var platform = new MovingPlatform2D(App2d.Core.EntityId2D.Create(), physics, Vector2.Zero, Vector2.Normalize(velocity) * 200, new(200, 10), velocity.Length(), 1, uint.MaxValue);
         var box = Authored.Entities["spear-guard"].Asset.Movement;
         var enemy = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics,
-            new(0, platform.WorldObject.WorldBounds.Top + box.Height / 2 * AuthoredWorld.PixelsPerUnit), 1, 4);
+            new(0, platform.WorldObject.WorldBounds.Top + (box.Height / 2 + .5f) * AuthoredWorld.PixelsPerUnit), 1, 4);
         enemy.SetSimulationEnabled(true);
         const float dt = 1f / 120;
-        for (var tick = 0; tick < 40; tick++)
+        for (var tick = 0; tick < 60; tick++)
         {
             platform.Update(dt);
             enemy.Update(dt, new(4_000, 0));
             physics.Step(dt);
             enemy.SyncAfterPhysics();
         }
-        var ground = platform.WorldObject.WorldBounds.Top / AuthoredWorld.PixelsPerUnit;
         Assert.Equal(EntityControllers.Idle, enemy.CaptureState().ActionId);
-        foreach (var foot in new[] { "left-foot", "right-foot" })
-            Assert.True(MathF.Abs(enemy.Pose.World(foot).Y - ground) < .05f, $"{foot} at {enemy.Pose.World(foot).Y:F3}, ground at {ground:F3}");
-        var hips = enemy.Pose.World("hips").X;
-        foreach (var foot in new[] { "left-foot", "right-foot" })
-            Assert.True(MathF.Abs(enemy.Pose.World(foot).X - hips) < .5f, $"{foot} trails the hips by {enemy.Pose.World(foot).X - hips:F3}");
+        var ground = platform.WorldObject.WorldBounds.Top / AuthoredWorld.PixelsPerUnit; var hips = enemy.Pose.World("hips").X;
+        string[] feet = ["left-foot", "right-foot"];
+        return (feet.ToDictionary(f => f, f => enemy.Pose.World(f).Y - ground), feet.ToDictionary(f => f, f => enemy.Pose.World(f).X - hips));
     }
 
     private static readonly string CharactersRoot = Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters"));
