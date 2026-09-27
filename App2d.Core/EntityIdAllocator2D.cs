@@ -9,7 +9,7 @@ public sealed class EntityIdAllocator2D
 {
     public EntityIdAllocator2D(long next = 1)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(next);
+        ArgGuard.ThrowIfNotPositive(next);
         Next = next;
     }
 
@@ -26,7 +26,7 @@ public sealed class EntityIdAllocator2D
     /// <summary>Reserves <paramref name="count"/> consecutive values and returns the first.</summary>
     public long ReserveRange(long count)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+        ArgGuard.ThrowIfNotPositive(count);
         var start = Next;
         Next = checked(Next + count);
         return start;

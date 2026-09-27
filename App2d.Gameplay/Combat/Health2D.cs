@@ -28,7 +28,7 @@ public sealed class Health2D
 
     internal void RestoreSimulation(int current)
     {
-        if (current < 0 || current > Maximum) throw new ArgumentOutOfRangeException(nameof(current));
+        ArgGuard.ThrowIfNotInClosedRange(current, 0, Maximum);
         Current = current;
     }
 
@@ -36,13 +36,7 @@ public sealed class Health2D
 
     public void Reset(int current)
     {
-        if (current <= 0 || current > Maximum)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(current),
-                current,
-                $"Health must be between 1 and {Maximum}.");
-        }
+        ArgGuard.ThrowIfNotInClosedRange(current, 1, Maximum);
 
         Current = current;
     }

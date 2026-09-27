@@ -68,7 +68,7 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
         SoundEffect2D effect,
         float initialVolumeScale = 1f)
     {
-        ArgGuard.ThrowIfNotInClosedRange(initialVolumeScale, 0f, 1f);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(initialVolumeScale, 0f, 1f);
         if (!_cues.TryGetValue(effect, out var cue))
             throw ArgGuard.CreateOutOfRange(effect, "Unknown sound effect.");
 

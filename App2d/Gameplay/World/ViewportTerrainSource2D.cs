@@ -27,7 +27,7 @@ internal sealed class ViewportTerrainSource2D : IDisposable
     public ImmutableArray<TerrainChunkState2D> Capture(Bounds2D visibleBounds)
     {
         if (!visibleBounds.IsFinite || visibleBounds.Size.X < 0f || visibleBounds.Size.Y < 0f)
-            throw new ArgumentOutOfRangeException(nameof(visibleBounds));
+            ArgGuard.ThrowOutOfRange(visibleBounds, "Viewport bounds must be finite and ordered.");
 
         // Include a tile beyond each edge for terrain artwork that overhangs its cell.
         var padding = new Vector2(_map.TileSize);

@@ -98,11 +98,11 @@ internal sealed class SideScrollerTerrainTileset2D
         _spikeRightShader = ArgGuard.RequireNotNull(spikeRightShader);
         _ladderTopShader = ArgGuard.RequireNotNull(ladderTopShader);
         _ladderMiddleShader = ArgGuard.RequireNotNull(ladderMiddleShader);
-        ArgGuard.ThrowIfNotPositive(surfaceThickness);
-        ArgGuard.ThrowIfNotPositive(outerCornerSize);
-        ArgGuard.ThrowIfNotPositive(innerCornerSize);
-        ArgGuard.ThrowIfNotPositive(oneWayVisualHeight);
-        ArgGuard.ThrowIfNotPositive(spikeVisualHeight);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(surfaceThickness);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(outerCornerSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(innerCornerSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(oneWayVisualHeight);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(spikeVisualHeight);
         _surfaceThickness = surfaceThickness;
         _outerCornerSize = outerCornerSize;
         _innerCornerSize = innerCornerSize;
@@ -114,7 +114,7 @@ internal sealed class SideScrollerTerrainTileset2D
     {
         ArgGuard.ThrowIfNull(textures);
         AssetId2D.Validate(tilesetId);
-        ArgGuard.ThrowIfNotPositive(tileSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
         var relativeRoot = Path.Combine("environments", "tilesets", tilesetId);
         var manifestPath = Path.Combine(textures.ContentRoot, relativeRoot, "tileset.json");
         if (!File.Exists(manifestPath))

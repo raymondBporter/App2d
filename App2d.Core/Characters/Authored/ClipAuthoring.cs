@@ -197,7 +197,8 @@ public static class ClipAuthoring
     /// </summary>
     public static MotionClip Excerpt(MotionClip clip, float from, float to, string id, string name, bool loop = false)
     {
-        if (from < -SameTime || to > clip.Duration + SameTime || to - from < .05f) throw new ArgumentOutOfRangeException(nameof(to), $"'{clip.Id}': excerpt {from:F3}..{to:F3} is outside 0..{clip.Duration:F3} or too short.");
+        if (from < -SameTime || to > clip.Duration + SameTime || to - from < .05f)
+            ArgGuard.ThrowOutOfRange(to, $"'{clip.Id}': excerpt {from:F3}..{to:F3} is outside 0..{clip.Duration:F3} or too short.");
         var copy = Duplicate(clip, id, name); copy.Loop = loop; copy.Duration = to - from;
         List<ClipKey> Cut(List<ClipKey> keys)
         {

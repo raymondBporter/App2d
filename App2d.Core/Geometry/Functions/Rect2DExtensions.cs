@@ -32,9 +32,7 @@ public static class Rect2DExtensions
         public Vector2 BottomCenter => new(rectangle.MidX, rectangle.Min.Y);
         public Vector2 BottomRight => new(rectangle.Max.X, rectangle.Min.Y);
 
-        public bool IsFinite =>
-            float.IsFinite(rectangle.Min.X) && float.IsFinite(rectangle.Min.Y) &&
-            float.IsFinite(rectangle.Max.X) && float.IsFinite(rectangle.Max.Y);
+        public bool IsFinite => NumericValidation.IsFinite(rectangle.Min) && NumericValidation.IsFinite(rectangle.Max);
 
         /// <summary>Includes all four edges.</summary>
         public bool Contains(Vector2 point) =>
@@ -89,8 +87,8 @@ public static class Rect2DExtensions
         /// <summary>Expands both sides of each axis by nonnegative finite amounts.</summary>
         public Rect2D InflatedBy(float x, float y)
         {
-            ArgGuard.ThrowIfNegativeOrNotFinite(x);
-            ArgGuard.ThrowIfNegativeOrNotFinite(y);
+            ArgGuard.ThrowIfNotFiniteOrNegative(x);
+            ArgGuard.ThrowIfNotFiniteOrNegative(y);
             var amount = new Vector2(x, y);
             return new(rectangle.Min - amount, rectangle.Max + amount);
         }
@@ -98,8 +96,8 @@ public static class Rect2DExtensions
         /// <summary>Shrinks both sides of each axis. Oversized insets collapse that axis to its midpoint.</summary>
         public Rect2D InsetBy(float x, float y)
         {
-            ArgGuard.ThrowIfNegativeOrNotFinite(x);
-            ArgGuard.ThrowIfNegativeOrNotFinite(y);
+            ArgGuard.ThrowIfNotFiniteOrNegative(x);
+            ArgGuard.ThrowIfNotFiniteOrNegative(y);
             var amount = Vector2.Min(new(x, y), rectangle.HalfSize);
             return new(rectangle.Min + amount, rectangle.Max - amount);
         }

@@ -5,6 +5,14 @@ namespace App2d.Game.Presentation.Tests.Enemies;
 
 public sealed class ReactionTimeCurveTests
 {
+    [Fact]
+    public void InfiniteSlowdownCannotCreateAClockThatNeverRecovers()
+    {
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ReactionTimeCurve2D(.5f, float.PositiveInfinity, 2f));
+        Assert.Equal("slowdownSeconds", error.ParamName);
+    }
+
     [Theory]
     [InlineData(.55f, .045f, 1.6f)]
     [InlineData(.2f, .08f, 1.8f)]

@@ -24,8 +24,8 @@ public sealed class RopeVisual2D
         ArgGuard.ThrowIfNull(scene);
         ArgGuard.ThrowIfNull(shader);
         ArgGuard.ThrowIfLessThan(linkCount, 1);
-        ArgGuard.ThrowIfNotPositive(thickness);
-        ArgGuard.ThrowIfNotPositive(linkBaseLength);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(thickness);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(linkBaseLength);
 
         _linkBaseLength = linkBaseLength;
         _links = new WorldObject2D[linkCount];

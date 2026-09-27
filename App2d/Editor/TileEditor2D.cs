@@ -59,7 +59,7 @@ internal sealed class TileEditor2D : IDisposable
         _map = ArgGuard.RequireNotNull(map);
         _openDatabase = ArgGuard.RequireNotNull(openDatabase);
         _camera = ArgGuard.RequireNotNull(camera);
-        ArgGuard.ThrowIfNotPositive(tileSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
         _origin = origin;
         _tileSize = tileSize;
         _session = new TileEditSession2D(map);

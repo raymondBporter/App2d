@@ -8,7 +8,7 @@ public sealed class Capsule2D : IConvexShape2D
     {
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(end);
-        ArgGuard.ThrowIfNotPositive(radius);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(radius);
 
         Start = start;
         End = end;

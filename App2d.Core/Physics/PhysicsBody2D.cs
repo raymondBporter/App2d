@@ -59,7 +59,7 @@ public sealed partial class PhysicsBody2D
         get => _friction;
         set
         {
-            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(Friction));
+            ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(Friction));
             _friction = value;
         }
     }
@@ -97,7 +97,7 @@ public sealed partial class PhysicsBody2D
         get => _oneWaySlop;
         set
         {
-            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(OneWaySlop));
+            ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(OneWaySlop));
             _oneWaySlop = value;
         }
     }
@@ -107,7 +107,7 @@ public sealed partial class PhysicsBody2D
         get => _mass;
         set
         {
-            ArgGuard.ThrowIfNotPositive(value, nameof(Mass));
+            ArgGuard.ThrowIfNotFiniteOrNotPositive(value, nameof(Mass));
             _mass = value;
         }
     }
@@ -117,7 +117,7 @@ public sealed partial class PhysicsBody2D
         get => _momentOfInertia;
         set
         {
-            ArgGuard.ThrowIfNotPositive(value, nameof(MomentOfInertia));
+            ArgGuard.ThrowIfNotFiniteOrNotPositive(value, nameof(MomentOfInertia));
             _momentOfInertia = value;
         }
     }

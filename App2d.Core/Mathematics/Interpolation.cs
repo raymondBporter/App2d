@@ -60,7 +60,7 @@ public static class Interpolation
         float progress,
         Func<float, float> progressMapping)
     {
-        ArgumentNullException.ThrowIfNull(progressMapping);
+        ArgGuard.ThrowIfNull(progressMapping);
         return Lerp(start, end, progressMapping(progress));
     }
 
@@ -75,7 +75,7 @@ public static class Interpolation
         float progress,
         Func<float, float> progressMapping)
     {
-        ArgumentNullException.ThrowIfNull(progressMapping);
+        ArgGuard.ThrowIfNull(progressMapping);
         return Lerp(start, end, progressMapping(progress));
     }
 

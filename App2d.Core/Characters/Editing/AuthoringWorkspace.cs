@@ -94,7 +94,7 @@ public sealed class AuthoringWorkspace
             MotionClip clip => AssetDocuments.Of(clip, null),
             PropAsset prop => AssetDocuments.Of(prop, null),
             EntityAsset entity => AssetDocuments.Of(entity, null),
-            _ => throw new ArgumentException($"Not an authored asset: {typeof(T).Name}."),
+            _ => throw ArgGuard.CreateInvalid($"Not an authored asset: {typeof(T).Name}."),
         };
         AuthoredAsset.RequireId(document.Id, AssetKinds.Label(document.Kind) + " id");
         if (Exists(document.Id)) throw new InvalidDataException($"The id '{document.Id}' is already used.");

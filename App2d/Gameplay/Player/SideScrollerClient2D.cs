@@ -20,7 +20,6 @@ namespace App2d.Gameplay.Player;
 /// <summary>Local input and presentation for one player. Reads only session value messages.</summary>
 internal sealed class SideScrollerClient2D : IDisposable
 {
-    private const float HardLandingSpeed = 650f;
     private const float SaveFeedbackDurationSeconds = 1.1f;
     private readonly SessionClient2D _endpoint;
     private readonly PlayerInputMapper2D _input = new();
@@ -120,14 +119,13 @@ internal sealed class SideScrollerClient2D : IDisposable
                     break;
                 case Landed2D landed when isMine:
                     EndJumpSound();
-                    _sounds.Play(landed.ImpactSpeed >= HardLandingSpeed
+                    _sounds.Play(landed.ImpactSpeed >= _traversal.HardLandingSpeed
                         ? SoundEffect2D.PlayerLandHard : SoundEffect2D.PlayerLandSoft);
-                    if (landed.ImpactSpeed >= HardLandingSpeed)
+                    if (landed.ImpactSpeed >= _traversal.HardLandingSpeed)
                     {
                         _presentation.PlayLanding();
-                        var impact = Math.Clamp((landed.ImpactSpeed - HardLandingSpeed) /
-                            MathF.Max(1f, _traversal.MaximumFallSpeed - HardLandingSpeed), 0f, 1f);
-                        _cameraController.Shake(float.Lerp(1f, 2.5f, impact), stabilizeVerticalFollow: true);
+                        var impact = _traversal.HardLandingIntensity(landed.ImpactSpeed);
+                        _cameraController.Shake(float.Lerp(1f, 1.75f, impact), stabilizeVerticalFollow: true);
                     }
                     break;
                 case Footstep2D when isMine: _sounds.Play(SoundEffect2D.PlayerFootstep); break;
@@ -179,7 +177,7 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public void AdvancePresentation(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         _world.Advance(deltaSeconds);
         Ballistics.Advance(deltaSeconds);
         _enemies.Advance(deltaSeconds);

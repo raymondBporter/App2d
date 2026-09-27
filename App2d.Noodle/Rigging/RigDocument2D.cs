@@ -1,3 +1,4 @@
+using App2d.Core;
 using System.Numerics;
 
 namespace App2d.Noodle.Rigging;
@@ -28,7 +29,7 @@ internal sealed class RigDocument2D
             "Circle" => new RigCircleShape2D(id, $"circle-{id}", attachedBone),
             "Capsule" => new RigCapsuleShape2D(id, $"capsule-{id}", attachedBone),
             "Polygon" => new RigPolygonShape2D(id, $"polygon-{id}", attachedBone),
-            _ => throw new ArgumentOutOfRangeException(nameof(kind))
+            _ => throw ArgGuard.CreateOutOfRange(kind, "Unknown rig shape kind.")
         };
         shape.LocalX = attachedBone.Length / 2f;
         Shapes.Add(shape);

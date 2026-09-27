@@ -39,7 +39,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         set
         {
             if (value.HasMinimum && value.Minimum < 0f || value.HasMaximum && value.Maximum < 0f)
-                throw new ArgumentOutOfRangeException(nameof(value), value, "Distance limits cannot be negative.");
+                ArgGuard.ThrowOutOfRange(value, "Distance limits cannot be negative.");
             _limits = value;
         }
     }
@@ -50,7 +50,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _positionStrength;
         set
         {
-            ArgGuard.ThrowIfNotInClosedRange(value, 0f, 1f, nameof(PositionStrength));
+            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0f, 1f, nameof(PositionStrength));
             _positionStrength = value;
         }
     }
@@ -61,7 +61,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _velocityStrength;
         set
         {
-            ArgGuard.ThrowIfNotInClosedRange(value, 0f, 1f, nameof(VelocityStrength));
+            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0f, 1f, nameof(VelocityStrength));
             _velocityStrength = value;
         }
     }
@@ -71,7 +71,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _positionTolerance;
         set
         {
-            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(PositionTolerance));
+            ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(PositionTolerance));
             _positionTolerance = value;
         }
     }

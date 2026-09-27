@@ -125,7 +125,7 @@ internal static class SwingLab
 
     /// <summary>The idle stance with the sword on the back (<paramref name="blade"/> is the right shoulder's sheathed turn).</summary>
     private static void Idle(Swing s, float time, float blade) =>
-        s.Builder.Key(time, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).Shoulders(s.Builder.Model, 60).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(blade), ClipEase.Smooth);
+        s.Builder.Key(time, k => k.Hips(PlayerMoves.StanceX, PlayerMoves.StanceY).Chest(-.03f).Head(.02f).Shoulders(s.Builder.Model, 60).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(blade), ClipEase.Smooth);
 
     /// <summary>
     /// The forward hit from the back, where the sword rides whenever it isn't swinging. At <paramref name="start"/> the hand
@@ -252,7 +252,7 @@ internal static class SwingLab
     /// </summary>
     private static float PutAway(Swing s, float settled, Action<float> held)
     {
-        var (hilt, sheathed) = PlayerMoves.Hilt(-.01f, -.04f, .02f);
+        var (hilt, sheathed) = PlayerMoves.Hilt(PlayerMoves.StanceX, PlayerMoves.StanceY, .02f);
         var t = settled + HoldFor;
         held(t);
         // Side cuts unwrap their angles across revolutions. Keep the return on that same branch;
@@ -261,8 +261,8 @@ internal static class SwingLab
         var over = s.ContinueBlade(3.5f);
         var home = s.ContinueBlade(sheathed);
         s.Builder.Key(t + .08f, k => k.Hips(.01f, -.05f).Chest(-.02f).Head(.06f).Shoulders(s.Builder.Model, 70).RightHandAt(.14f, 2f).LeftHand(0, -.58f).Blade(raised), ClipEase.Linear)
-            .Key(t + .15f, k => k.Hips(-.01f, -.04f).Chest(.04f).Head(.04f).Shoulders(s.Builder.Model, 90).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(over), ClipEase.Linear)
-            .Key(t + .22f, k => k.Hips(-.01f, -.04f).Chest(.02f).Head(.02f).Shoulders(s.Builder.Model, 80).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(home))
+            .Key(t + .15f, k => k.Hips(PlayerMoves.StanceX, PlayerMoves.StanceY).Chest(.04f).Head(.04f).Shoulders(s.Builder.Model, 90).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(over), ClipEase.Linear)
+            .Key(t + .22f, k => k.Hips(PlayerMoves.StanceX, PlayerMoves.StanceY).Chest(.02f).Head(.02f).Shoulders(s.Builder.Model, 80).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(home))
             .Marker(PersonLoadout.SheatheMarker, t + .22f);
         s.Tilt(t + .08f, 0).Tilt(t + .15f, 0).Tilt(t + .22f, 0);
         Idle(s, t + .3f, home);
@@ -278,7 +278,7 @@ internal static class SwingLab
         // Author twice: the first pass finds the length, the second builds a clip of exactly that length.
         float Author(Swing s)
         {
-            var (_, sheathed) = PlayerMoves.Hilt(-.01f, -.04f, -.03f);
+            var (_, sheathed) = PlayerMoves.Hilt(PlayerMoves.StanceX, PlayerMoves.StanceY, -.03f);
             Idle(s, 0, sheathed); Idle(s, Lead - F, sheathed);
             return kind switch
             {

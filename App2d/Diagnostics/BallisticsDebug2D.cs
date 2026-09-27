@@ -21,19 +21,19 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
     public float SpeedTilesPerSecond
     {
         get => _speed;
-        set { ArgGuard.ThrowIfNotInClosedRange(value, 0.1f, 100f); _speed = value; }
+        set { ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0.1f, 100f); _speed = value; }
     }
 
     public float AngleDegrees
     {
         get => _angle;
-        set { ArgGuard.ThrowIfNotInClosedRange(value, 1f, 90f); _angle = value; }
+        set { ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 1f, 90f); _angle = value; }
     }
 
     public float ReferenceGravityTilesPerSecondSquared
     {
         get => _referenceGravity;
-        set { ArgGuard.ThrowIfNotInClosedRange(value, 0.1f, 200f); _referenceGravity = value; }
+        set { ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0.1f, 200f); _referenceGravity = value; }
     }
 
     public Shot? Reference { get; private set; }
@@ -61,7 +61,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 
     public void Advance(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         if (Reference is { } reference && World is { } world)
             _elapsed = Math.Min(_elapsed + deltaSeconds, Math.Max(reference.FlightSeconds, world.FlightSeconds));
     }

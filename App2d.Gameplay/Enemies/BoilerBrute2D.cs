@@ -85,7 +85,7 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         ArgGuard.ThrowIfNotFinite(targetPosition);
 
         if (!_simulationEnabled || !Enemy.IsAlive) return;

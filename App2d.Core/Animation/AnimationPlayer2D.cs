@@ -19,7 +19,7 @@ public sealed class AnimationPlayer2D<TFrame>
         get => _playbackSpeed;
         set
         {
-            ArgGuard.ThrowIfNegativeOrNotFinite(value, nameof(PlaybackSpeed));
+            ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(PlaybackSpeed));
             _playbackSpeed = value;
         }
     }
@@ -61,7 +61,7 @@ public sealed class AnimationPlayer2D<TFrame>
 
     public void Update(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         if (!IsPlaying || Clip is null || deltaSeconds == 0f || PlaybackSpeed == 0f)
             return;
 

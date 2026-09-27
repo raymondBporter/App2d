@@ -10,7 +10,7 @@ public static class StateGuard
         float value,
         [CallerArgumentExpression(nameof(value))] string? memberName = null)
     {
-        if (!float.IsFinite(value) || value <= 0f)
+        if (!NumericValidation.IsFiniteAndPositive(value))
             ThrowCore($"{memberName} must be positive and finite.");
     }
 
@@ -20,7 +20,7 @@ public static class StateGuard
         int minimum,
         [CallerArgumentExpression(nameof(value))] string? memberName = null)
     {
-        if (value < minimum)
+        if (NumericValidation.IsLessThan(value, minimum))
             ThrowCore($"{memberName} must be at least {minimum}.");
     }
 

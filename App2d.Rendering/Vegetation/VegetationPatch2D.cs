@@ -40,12 +40,9 @@ public sealed class VegetationPatch2D
         VegetationStyle2D style,
         int seed)
     {
-        ArgGuard.ThrowIfNotFinite(startX);
-        ArgGuard.ThrowIfNotFinite(endX);
+        ArgGuard.ThrowIfNotFiniteOrLessThanOrEqual(endX, startX);
         ArgGuard.ThrowIfNotFinite(groundY);
         style.Validate();
-        if (endX <= startX)
-            throw new ArgumentOutOfRangeException(nameof(endX), "Patch end must be after its start.");
 
         _style = style;
         var random = new Random(seed);
@@ -146,8 +143,8 @@ public sealed class VegetationPatch2D
         float? cutHeight = null,
         float cutRoughness = 0f)
     {
-        if (cutHeight is { } height) ArgGuard.ThrowIfNegativeOrNotFinite(height);
-        ValidateRoughness(cutRoughness);
+        if (cutHeight is { } height) ArgGuard.ThrowIfNotFiniteOrNegative(height);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(cutRoughness, 0f, 1f);
 
         if (layer == VegetationLayer2D.Back)
             foreach (var flower in _flowers)
@@ -195,8 +192,8 @@ public sealed class VegetationPatch2D
     public IEnumerable<VegetationBladeTip2D> CreateClippings(float cutHeight, VegetationWind2D wind,
         float cutRoughness = 0f)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(cutHeight);
-        ValidateRoughness(cutRoughness);
+        ArgGuard.ThrowIfNotFiniteOrNegative(cutHeight);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(cutRoughness, 0f, 1f);
         foreach (var blade in _blades)
         {
             var start = CutWeight(blade, cutHeight, cutRoughness);
@@ -294,12 +291,6 @@ public sealed class VegetationPatch2D
     private static float CutWeight(Blade blade, float height, float roughness) =>
         Math.Min(1f, height * (1f + roughness * MathF.Sin(blade.Phase * 3.17f)) / blade.Height);
 
-    private static void ValidateRoughness(float roughness)
-    {
-        if (!float.IsFinite(roughness) || roughness is < 0f or > 1f)
-            throw new ArgumentOutOfRangeException(nameof(roughness));
-    }
-
     private static Section2D Section(Blade blade, float from, float to, VegetationWind2D wind, float widthScale,
         XnaColor color)
     {
@@ -357,23 +348,16 @@ public readonly record struct VegetationStyle2D(
 {
     internal void Validate()
     {
-        ArgGuard.ThrowIfNotPositive(MinimumHeight);
-        ArgGuard.ThrowIfNotPositive(BladeWidth);
-        ArgGuard.ThrowIfNotPositive(Spacing);
-        ArgGuard.ThrowIfNotFinite(MaximumHeight);
-        ArgGuard.ThrowIfNotFinite(TallHeight);
-        if (MaximumHeight < MinimumHeight) throw new ArgumentOutOfRangeException(nameof(MaximumHeight));
-        if (TallHeight < MaximumHeight) throw new ArgumentOutOfRangeException(nameof(TallHeight));
-        ValidateChance(TallChance, nameof(TallChance));
-        ValidateChance(FrontChance, nameof(FrontChance));
-        ValidateChance(FlowerChance, nameof(FlowerChance));
-        ValidateChance(Coverage, nameof(Coverage));
-        ArgGuard.ThrowIfNotPositive(PatchWidth);
-    }
-
-    private static void ValidateChance(float chance, string name)
-    {
-        if (!float.IsFinite(chance) || chance is < 0f or > 1f) throw new ArgumentOutOfRangeException(name);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(MinimumHeight);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(BladeWidth);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(Spacing);
+        ArgGuard.ThrowIfNotFiniteOrLessThan(MaximumHeight, MinimumHeight);
+        ArgGuard.ThrowIfNotFiniteOrLessThan(TallHeight, MaximumHeight);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(TallChance, 0f, 1f);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(FrontChance, 0f, 1f);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(FlowerChance, 0f, 1f);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(Coverage, 0f, 1f);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(PatchWidth);
     }
 }
 

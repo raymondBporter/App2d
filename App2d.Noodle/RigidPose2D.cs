@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
@@ -70,15 +71,13 @@ internal sealed class PoseClip2D
 
     public PoseClip2D(string name, bool loops, params PoseKeyframe2D[] frames)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        if (frames.Length == 0)
-            throw new ArgumentException("A pose clip needs at least one keyframe.", nameof(frames));
-        if (frames[0].Time != 0f || frames.Any(frame => !float.IsFinite(frame.Time) || frame.Time < 0f))
-            throw new ArgumentException("Pose times must be finite, non-negative, and begin at zero.", nameof(frames));
+        ArgGuard.ThrowIfNullOrWhiteSpace(name);
+        ArgGuard.ThrowIf(frames.Length == 0, "A pose clip needs at least one keyframe.", nameof(frames));
+        ArgGuard.ThrowIf(frames[0].Time != 0f || frames.Any(frame => !NumericValidation.IsFiniteAndNonNegative(frame.Time)),
+            "Pose times must be finite, non-negative, and begin at zero.", nameof(frames));
         for (var index = 1; index < frames.Length; index++)
         {
-            if (frames[index].Time <= frames[index - 1].Time)
-                throw new ArgumentException("Pose times must be strictly increasing.", nameof(frames));
+            ArgGuard.ThrowIf(frames[index].Time <= frames[index - 1].Time, "Pose times must be strictly increasing.", nameof(frames));
         }
 
         Name = name;

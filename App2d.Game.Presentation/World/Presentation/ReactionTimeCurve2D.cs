@@ -12,7 +12,7 @@ public sealed class ReactionTimeCurve2D
     public ReactionTimeCurve2D(float minimumSpeed, float slowdownSeconds, float recoveryPeak, float holdSeconds = 0)
     {
         if (!float.IsFinite(minimumSpeed) || minimumSpeed < 0 || minimumSpeed > 1) throw new ArgumentOutOfRangeException(nameof(minimumSpeed));
-        ArgGuard.ThrowIfNotPositive(slowdownSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(slowdownSeconds);
         if (!float.IsFinite(recoveryPeak) || recoveryPeak <= 1) throw new ArgumentOutOfRangeException(nameof(recoveryPeak));
         if (!float.IsFinite(holdSeconds) || holdSeconds < 0) throw new ArgumentOutOfRangeException(nameof(holdSeconds));
         MinimumSpeed = minimumSpeed; SlowdownSeconds = slowdownSeconds; RecoveryPeak = recoveryPeak;

@@ -103,7 +103,7 @@ public static class ConstraintMath2D
     {
         ArgGuard.ThrowIfNotFinite(anchor);
         ArgGuard.ThrowIfNotFinite(requestedPoint);
-        ArgGuard.ThrowIfNotPositive(radius);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(radius);
         ArgGuard.ThrowIfNotFinite(fallbackAngle);
         var delta = requestedPoint - anchor;
         var angle = delta.LengthSquared() > MinimumDirectionLengthSquared
@@ -117,13 +117,13 @@ public static class ConstraintMath2D
     {
         if (limits.HasMinimum && limits.Minimum < 0f)
         {
-            throw new ArgumentOutOfRangeException(nameof(limits), limits,
+            ArgGuard.ThrowOutOfRange(limits,
                 "A distance minimum cannot be negative.");
         }
 
         if (limits.HasMaximum && limits.Maximum < 0f)
         {
-            throw new ArgumentOutOfRangeException(nameof(limits), limits,
+            ArgGuard.ThrowOutOfRange(limits,
                 "A distance maximum cannot be negative.");
         }
     }

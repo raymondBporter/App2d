@@ -92,7 +92,7 @@ public sealed class VegetationPresentation2D
 
     public void Advance(float dt)
     {
-        Core.ArgGuard.ThrowIfNegativeOrNotFinite(dt);
+        Core.ArgGuard.ThrowIfNotFiniteOrNegative(dt);
         _time += dt;
         var wind = Wind();
         for (var i = _clippings.Count - 1; i >= 0; i--)

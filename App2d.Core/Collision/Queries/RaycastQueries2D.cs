@@ -13,7 +13,7 @@ public static class RaycastQueries2D
         where T : SpatialObject2D
     {
         ArgGuard.ThrowIfNull(worldObjects);
-        RayIntersection2D.ValidateMaxDistance(maxDistance);
+        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
 
         var found = false;
         var nearestDistance = maxDistance;
@@ -47,7 +47,7 @@ public static class RaycastQueries2D
         where T : SpatialObject2D
     {
         ArgGuard.ThrowIfNull(worldObjects);
-        RayIntersection2D.ValidateMaxDistance(maxDistance);
+        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
         if (hits.IsEmpty)
             return 0;
 

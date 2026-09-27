@@ -24,7 +24,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
     {
         ArgGuard.ThrowIfNotPositive(width);
         ArgGuard.ThrowIfNotPositive(height);
-        ArgGuard.ThrowIfNotPositive(tileSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
         ArgGuard.ThrowIfNotPositive(chunkSize);
         ArgGuard.ThrowIfNotFinite(origin);
 

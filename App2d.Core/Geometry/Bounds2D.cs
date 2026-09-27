@@ -12,9 +12,7 @@ public readonly record struct Bounds2D(Vector2 Min, Vector2 Max) : IRect2D
     public float Right => Max.X;
     public float Bottom => Min.Y;
     public float Top => Max.Y;
-    public bool IsFinite =>
-        float.IsFinite(Min.X) && float.IsFinite(Min.Y) &&
-        float.IsFinite(Max.X) && float.IsFinite(Max.Y);
+    public bool IsFinite => NumericValidation.IsFinite(Min) && NumericValidation.IsFinite(Max);
 
     public bool Intersects(Bounds2D other) =>
         PrimitiveGeometry2D.RectanglesIntersect(Min, Max, other.Min, other.Max);

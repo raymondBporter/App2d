@@ -11,7 +11,7 @@ public static class PhysicsRaycastQueries2D
             RayQueryFilter2D<PhysicsBody2D>? filter = null)
         {
             ArgGuard.ThrowIfNull(world);
-            RayIntersection2D.ValidateMaxDistance(maxDistance);
+            ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
 
             var found = false;
             var nearestDistance = maxDistance;
@@ -40,7 +40,7 @@ public static class PhysicsRaycastQueries2D
             RayQueryFilter2D<PhysicsBody2D>? filter = null)
         {
             ArgGuard.ThrowIfNull(world);
-            RayIntersection2D.ValidateMaxDistance(maxDistance);
+            ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
             if (hits.IsEmpty)
                 return 0;
 

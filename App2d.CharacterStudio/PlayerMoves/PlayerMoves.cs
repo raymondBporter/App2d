@@ -17,6 +17,9 @@ internal static partial class PlayerMoves
 
     // Stance: the walk's contact spacing. Feet rest at y = 0.025 (sole on the ground).
     private const float Back = -.125f, Front = .125f, Ground = .025f;
+    // Standing pelvis offset. The rest pose already bends the knees about 20 degrees, so standing tall sits slightly above
+    // rest: over the stance feet this leaves 6-8 degrees (0.015 locks the front leg), and every 0.01 lower adds roughly 5.
+    internal const float StanceX = -.01f, StanceY = .012f;
     // Sheathed sword: grip in the chest frame and the blade's direction. Worn diagonally across the back, so in this
     // profile it foreshortens to a near-vertical line hidden behind the torso: the hilt sits below the shoulder line
     // (a guard at neck height read as part of the neck) and only the scabbard's tip shows below the back.
@@ -124,7 +127,8 @@ internal static partial class PlayerMoves
 
     /// <summary>
     /// An enemy's readable pistol shot, 1.1 s: raise to the aim pose, hold, fire at 0.6 s with the player's kick, settle and
-    /// lower. Whole body, with both feet planted; reuses the gun clips' aim and recoil poses.
+    /// lower. Whole body, with both feet planted; reuses the gun clips' aim and recoil poses. It keeps the lower, bent-knee
+    /// stance rather than the player's <see cref="StanceY"/>: raising it lifts the muzzle and the bolts pass over the player.
     /// </summary>
     private static MotionClip PistolShot(ResolvedModel m) => New(m, "person-pistol-shot", "Pistol shot", 1.1f, false)
         .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
@@ -241,9 +245,9 @@ internal static partial class PlayerMoves
 
     /// <summary>A ready stance breathing on a 2.4 s loop. Arms drift a beat behind the chest so the loop never looks pumped.</summary>
     private static MotionClip Idle(ResolvedModel m) => New(m, "player-idle", "Idle", 2.4f, true)
-        .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f))
-        .Key(1.2f, k => k.Hips(-.01f, -.055f).Chest(-.005f).Head(-.01f))
-        .Key(2.4f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f))
+        .Key(0, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f))
+        .Key(1.2f, k => k.Hips(StanceX, StanceY - .008f).Chest(-.005f).Head(-.01f))
+        .Key(2.4f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f))
         .Key(0, k => k.LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
         .Key(.35f, k => k.LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
         .Key(1.55f, k => k.LeftHand(.035f, -.615f).RightHand(.065f, -.6f))
@@ -276,7 +280,7 @@ internal static partial class PlayerMoves
     private static MotionClip Land(ResolvedModel m) => New(m, "player-land", "Land", .36f, false)
         .Key(0, k => k.Hips(-.02f, -.18f).Chest(-.28f).Head(.16f).LeftHand(.24f, -.44f).RightHand(.3f, -.4f))
         .Key(.09f, k => k.Hips(-.02f, -.24f).Chest(-.34f).Head(.2f).LeftHand(.26f, -.4f).RightHand(.32f, -.36f))
-        .Key(.36f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
+        .Key(.36f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
         .Plant("left-leg", 0, .36f, Back).Plant("right-leg", 0, .36f, Front)
         .Marker("impact", 0)
         .Face(0, "strained").Face(.2f, "relaxed")
@@ -362,7 +366,7 @@ internal static partial class PlayerMoves
             b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(.64f * cos, .64f * sin).RightHand(-.64f * cos, .64f * sin), ClipEase.Linear);
         }
         return b
-            .Key(T(0), k => k.Hips(-.01f, -.04f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground), ClipEase.Linear)
+            .Key(T(0), k => k.Hips(StanceX, StanceY).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground), ClipEase.Linear)
             .Key(T(.09f), k => k.Hips(0, .01f).LeftHand(0, -.645f).RightHand(0, -.645f).LeftFoot(.08f, Ground).RightFoot(-.08f, Ground), ClipEase.Linear)
             // Arms stay straight while they swing out and up (a straight arm hides which way its elbow would fold), and
             // bend only once the hands are above the shoulders, where the elbows then point outward.
@@ -448,10 +452,10 @@ internal static partial class PlayerMoves
 
     /// <summary>Snap back from the chest with the arms flung forward, then recover to the idle stance.</summary>
     private static MotionClip Hit(ResolvedModel m) => New(m, "player-hit", "Hit", .35f, false)
-        .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
+        .Key(0, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
         .Key(.05f, k => k.Hips(-.07f, -.06f).Chest(.36f).Head(.3f).LeftHand(.3f, -.22f).RightHand(.36f, -.16f), ClipEase.Linear)
         .Key(.18f, k => k.Hips(-.05f, -.06f).Chest(.14f).Head(.1f).LeftHand(.18f, -.42f).RightHand(.22f, -.38f))
-        .Key(.35f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
+        .Key(.35f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
         .Plant("left-leg", 0, .35f, Back).Plant("right-leg", 0, .35f, Front)
         .Face(0, "hurt").Face(.24f, "strained")
         .Build();
@@ -461,7 +465,7 @@ internal static partial class PlayerMoves
     /// with the arms spread on the ground. Ends held.
     /// </summary>
     private static MotionClip Death(ResolvedModel m) => New(m, "player-death", "Death", 1.6f, false)
-        .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).LeftFoot(Back, Ground).RightFoot(Front, Ground).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
+        .Key(0, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftFoot(Back, Ground).RightFoot(Front, Ground).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
         .Key(.07f, k => k.Hips(-.08f, -.06f).Chest(.4f).Head(.32f).LeftFoot(Back, Ground).RightFoot(Front, Ground).LeftHand(.32f, -.2f).RightHand(.38f, -.14f), ClipEase.Linear)
         .Key(.34f, k => k.Hips(-.24f, -.18f, .12f).Chest(.3f).Head(.2f).LeftFoot(-.38f, Ground).RightFoot(.02f, .06f).LeftHand(.2f, .05f).RightHand(.28f, .1f))
         .Key(.68f, k => k.Hips(-.46f, -.56f, .85f).Chest(.22f).Head(.14f).LeftFoot(-.1f, .04f).RightFoot(.22f, .2f).LeftHand(.1f, .3f).RightHand(.25f, .28f), ClipEase.Linear)
@@ -475,14 +479,14 @@ internal static partial class PlayerMoves
 
     /// <summary>Crouch, hop with both arms thrown up in a V either side of the head, land and pump twice. Ends held, arms up.</summary>
     private static MotionClip Celebrate(ResolvedModel m) => New(m, "player-celebrate", "Celebrate", 1.4f, false)
-        .Key(0, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground))
+        .Key(0, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f).LeftFoot(Back, Ground).RightFoot(Front, Ground))
         .Key(.16f, k => k.Hips(-.01f, -.16f).Chest(-.18f).Head(.1f).LeftHand(-.12f, -.5f).RightHand(-.08f, -.52f).LeftFoot(Back, Ground).RightFoot(Front, Ground))
         .Key(.4f, k => k.Hips(0, .12f).Chest(.06f).Head(.08f).LeftHand(-.32f, .5f).RightHand(.3f, .5f).LeftFoot(-.12f, .18f).RightFoot(.1f, .24f), ClipEase.Linear)
         .Key(.62f, k => k.Hips(-.01f, -.12f).Chest(-.08f).Head(.06f).LeftHand(-.3f, .42f).RightHand(.28f, .42f).LeftFoot(Back, Ground).RightFoot(Front, Ground))
-        .Key(.86f, k => k.Hips(-.01f, -.04f).Chest(.03f).Head(.08f).LeftHand(-.32f, .5f).RightHand(.3f, .5f))
+        .Key(.86f, k => k.Hips(StanceX, StanceY).Chest(.03f).Head(.08f).LeftHand(-.32f, .5f).RightHand(.3f, .5f))
         .Key(1.02f, k => k.LeftHand(-.28f, .32f).RightHand(.26f, .32f))
         .Key(1.18f, k => k.LeftHand(-.32f, .5f).RightHand(.3f, .5f))
-        .Key(1.4f, k => k.Hips(-.01f, -.04f).Chest(.03f).Head(.08f).LeftHand(-.32f, .49f).RightHand(.3f, .49f))
+        .Key(1.4f, k => k.Hips(StanceX, StanceY).Chest(.03f).Head(.08f).LeftHand(-.32f, .49f).RightHand(.3f, .49f))
         .Plant("left-leg", 0, .3f, Back).Plant("right-leg", 0, .3f, Front)
         .Plant("left-leg", .62f, 1.4f, Back).Plant("right-leg", .62f, 1.4f, Front)
         .Face(0, "happy").Face(.3f, "delighted")
@@ -496,13 +500,13 @@ internal static partial class PlayerMoves
     /// </summary>
     private static MotionClip Sheathe(ResolvedModel m)
     {
-        var (hilt, sheathed) = Hilt(-.01f, -.04f, .02f);
+        var (hilt, sheathed) = Hilt(StanceX, StanceY, .02f);
         return New(m, "player-sword-sheathe", "Sword sheathe", .42f, false)
             .Key(0, k => k.Hips(.03f, -.07f).Chest(-.12f).Head(.08f).RightHandAt(.34f, 1.2f).LeftHand(-.08f, -.54f).Blade(-.22f))
             .Key(.12f, k => k.Hips(.01f, -.05f).Chest(-.02f).Head(.06f).RightHandAt(.14f, 2.0f).LeftHand(0, -.58f).Blade(1.6f), ClipEase.Linear)
-            .Key(.22f, k => k.Hips(-.01f, -.04f).Chest(.04f).Head(.04f).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(3.5f), ClipEase.Linear)
-            .Key(.3f, k => k.Hips(-.01f, -.04f).Chest(.02f).Head(.02f).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
-            .Key(.42f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
+            .Key(.22f, k => k.Hips(StanceX, StanceY).Chest(.04f).Head(.04f).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(3.5f), ClipEase.Linear)
+            .Key(.3f, k => k.Hips(StanceX, StanceY).Chest(.02f).Head(.02f).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
+            .Key(.42f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
             .Plant("left-leg", 0, .42f, Back).Plant("right-leg", 0, .42f, Front)
             .Marker("sword-sheathe", .3f)
             .Face(0, "focused").Face(.3f, "relaxed")
@@ -530,9 +534,9 @@ internal static partial class PlayerMoves
 
     /// <summary>Standing aim: far arm straight out at shoulder height, pistol level, the rest of the body breathing on 2 s.</summary>
     private static MotionClip GunAim(ResolvedModel m) => New(m, "player-gun-aim", "Gun aim", 2, true)
-        .Key(0, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
-        .Key(1, k => k.Hips(-.02f, -.042f).Chest(.015f).Head(.01f).RightHand(.645f, -.03f).LeftHand(.01f, -.61f).Blade(.01f))
-        .Key(2, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
+        .Key(0, k => k.Hips(-.02f, StanceY).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
+        .Key(1, k => k.Hips(-.02f, StanceY - .008f).Chest(.015f).Head(.01f).RightHand(.645f, -.03f).LeftHand(.01f, -.61f).Blade(.01f))
+        .Key(2, k => k.Hips(-.02f, StanceY).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
         .Plant("left-leg", 0, 2, Back).Plant("right-leg", 0, 2, Front)
         .Face(0, "focused")
         .Build();

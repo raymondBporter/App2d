@@ -50,7 +50,7 @@ public sealed class SessionReplayBuffer2D
     {
         if (tick == _oldest.Tick) return _oldest;
         foreach (var (_, After) in _history) if (After.Tick == tick) return After;
-        throw new ArgumentOutOfRangeException(nameof(tick), "The tick is outside retained history.");
+        throw ArgGuard.CreateOutOfRange(tick, "The tick is outside retained history.");
     }
 
     public ImmutableArray<SessionFrame2D> ReplayFrom(long tick)

@@ -7,7 +7,7 @@ public sealed class TextureCache2D(string contentRoot) : IDisposable
     private readonly Dictionary<string, Texture2D> _textures = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
-    public string ContentRoot { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhitespace(contentRoot));
+    public string ContentRoot { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(contentRoot));
     public int Count => _textures.Count;
 
     public Texture2D Load(string relativePath)

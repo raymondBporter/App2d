@@ -37,7 +37,7 @@ public sealed partial class CollisionSystem2D
         get => _cellSize;
         set
         {
-            ArgGuard.ThrowIfNotPositive(value);
+            ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
             if (_cellSize == value)
                 return;
             _cellSize = value;

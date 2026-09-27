@@ -14,9 +14,8 @@ public sealed partial class Projectile2D(SpatialObject2D worldObject)
 
     public void Launch(Vector2 position, Vector2 velocity, float lifetime, Vector2 origin, EntityId2D id)
     {
-        ArgGuard.ThrowIfNotPositive(lifetime);
-        if (!id.IsValid)
-            throw new ArgumentException("A projectile requires a valid entity ID.", nameof(id));
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(lifetime);
+        ArgGuard.ThrowIf(!id.IsValid, "A projectile requires a valid entity ID.", nameof(id));
 
         Id = id;
         Origin = origin;

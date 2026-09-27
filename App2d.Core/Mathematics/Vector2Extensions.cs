@@ -10,7 +10,7 @@ public static class Vector2Extensions
 
     extension(Vector2 value)
     {
-        public bool IsFinite => float.IsFinite(value.X) && float.IsFinite(value.Y);
+        public bool IsFinite => NumericValidation.IsFinite(value);
 
 
         public float Cross(Vector2 right) => value.X * right.Y - value.Y * right.X;

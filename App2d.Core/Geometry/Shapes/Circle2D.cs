@@ -6,7 +6,7 @@ public sealed class Circle2D : IConvexShape2D
 {
     public Circle2D(float radius, Vector2 center = default)
     {
-        ArgGuard.ThrowIfNotPositive(radius);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(radius);
         ArgGuard.ThrowIfNotFinite(center);
 
         Radius = radius;

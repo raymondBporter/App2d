@@ -12,7 +12,7 @@ public sealed partial class CollisionSystem2D
     public void RestoreOrder(CollisionOrderState2D state)
     {
         ArgGuard.ThrowIfNull(state);
-        ArgGuard.ThrowIfNotPositive(state.CellSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(state.CellSize);
         StateGuard.ThrowIf(state.ColliderIds.IsDefault || state.NextColliderId <= 0 ||
             state.ColliderIds.Any(id => id <= 0 || id >= state.NextColliderId), "Invalid collider allocation state.");
         var byId = _colliders.ToDictionary(c => c.Id);

@@ -78,13 +78,14 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
     private double _cycle;
     private bool _outpaced;
     private string? _reaction;
-    private bool _wasClimbing, _wasDashing, _wasGrounded = true, _meleeActive, _sheathePending;
+    private bool _wasClimbing, _wasDashing, _wasGrounded = true, _meleeActive, _sheathePending, _swingLayered;
     private string _key = "", _swing = "", _recovery = PersonMoves.Sheathe;
     private string? _swingAction;
     private float _swingElapsed;
     private double _recoveryStart;
 
     public PersonMoves Moves => moves;
+    public float HardLandingSpeed { get; init; }
     public EquipmentKind2D Equipment { get; set; }
     public string Key => _key;
 
@@ -117,7 +118,9 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
                 _outpaced = matched > limit + 1e-9; _cycle += Math.Min(matched, limit);
             }
         }
-        if (state.LandingSpeedThisFrame > 0) _landUntil = clock + moves[PersonMoves.Land].Duration;
+        if (state.LandingSpeedThisFrame > 0)
+            _landUntil = state.LandingSpeedThisFrame >= HardLandingSpeed
+                ? clock + moves[PersonMoves.Land].Duration : double.NegativeInfinity;
         if (state.IsClimbingLadder && !_wasClimbing) _climbStart = clock;
         if (!state.IsClimbingLadder && _wasClimbing) _climbEnd = clock;
         if (state.IsDashing && !_wasDashing) _dashStart = clock;
@@ -148,7 +151,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         if (melee && (!_meleeActive || s.Action.Swing != _swingAction || s.Action.ElapsedSeconds < _swingElapsed))
         {
             var swing = moves.Swing(s.Action.Swing);
-            _swingAction = s.Action.Swing; _swing = swing.Clip.Id;
+            _swingAction = s.Action.Swing; _swing = swing.Clip.Id; _swingLayered = false;
             _recovery = s.Action.Kind == PlayerAttackKind2D.Downward ? PersonMoves.Sheathe : swing.Recovery?.Id ?? PersonMoves.Sheathe;
         }
         _meleeActive = melee; _swingElapsed = melee ? s.Action.ElapsedSeconds : 0;
@@ -168,7 +171,14 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
                         : Locomotion(gear) with { Overlay = new(moves[PersonMoves.GunShot], Scaled(PersonMoves.GunShot), PersonLoadout.UpperBody) };
         }
         else if (s.Action.IsActive && s.Action.Kind == PlayerAttackKind2D.Downward) { _sheathePending = false; frame = Play(PersonMoves.DownAttack, Scaled(PersonMoves.DownAttack)); }
-        else if (melee) { _sheathePending = false; frame = Play(_swing, Scaled(_swing)); }
+        else if (melee)
+        {
+            // Swings plant both feet, which drags the legs out behind a moving body. Once the body moves during a swing,
+            // the legs keep their gait and the swing plays over them from the waist up until it ends.
+            _sheathePending = false;
+            _swingLayered |= !s.IsGrounded || s.IsClimbingLadder || s.IsWallGripping || MathF.Abs(s.LinearVelocity.X) / pixelsPerUnit > WalkSpeedThreshold;
+            frame = _swingLayered ? Locomotion(gear) with { Overlay = new(moves[_swing], Scaled(_swing), PersonLoadout.SwordUpperBody) } : Play(_swing, Scaled(_swing));
+        }
         else if (s.IsDashing)
         {
             frame = Play(PersonMoves.Dash, _clock - _dashStart);

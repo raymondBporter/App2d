@@ -20,8 +20,7 @@ internal sealed partial class TumbleProp2D : IEnemyActor2D, ICombatant2D
 
     public TumbleProp2D(EntityId2D id, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
-        if (!id.IsValid)
-            throw new ArgumentException("A prop requires a valid entity ID.", nameof(id));
+        ArgGuard.ThrowIf(!id.IsValid, "A prop requires a valid entity ID.", nameof(id));
         Id = id;
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNotFinite(position);
@@ -79,8 +78,7 @@ internal sealed partial class TumbleProp2D : IEnemyActor2D, ICombatant2D
 
     public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
     {
-        if (!attackSourceId.IsValid)
-            throw new ArgumentException("An attack source ID is required.", nameof(attackSourceId));
+        ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
         if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) && lastAttackId == attackId)
             return false;
 

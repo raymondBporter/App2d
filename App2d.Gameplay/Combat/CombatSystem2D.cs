@@ -31,8 +31,7 @@ public sealed class CombatSystem2D(
         EntityId2D attackerId = default)
     {
         ArgGuard.ThrowIfNull(hitbox);
-        if (!attackSourceId.IsValid)
-            throw new ArgumentException("An attack source ID is required.", nameof(attackSourceId));
+        ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
         ArgGuard.ThrowIfNull(knockback);
 
         var hitAny = false;
