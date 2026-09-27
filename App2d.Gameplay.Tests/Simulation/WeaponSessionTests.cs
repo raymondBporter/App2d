@@ -7,7 +7,7 @@ using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Physics;
+using App2d.Core.Physics;
 using System.Numerics;
 using Xunit;
 

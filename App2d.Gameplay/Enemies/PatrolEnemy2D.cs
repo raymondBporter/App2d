@@ -1,6 +1,6 @@
 using App2d.Core;
 using App2d.Gameplay.Combat;
-using App2d.Physics;
+using App2d.Core.Physics;
 using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;

@@ -47,11 +47,12 @@ public static class ClosestPoint2D
             var firstDotDelta = Vector2.Dot(firstDirection, startDelta);
             var directionsDot = Vector2.Dot(firstDirection, secondDirection);
             var secondDotDelta = Vector2.Dot(secondDirection, startDelta);
-            var denominator = firstLengthSquared * secondLengthSquared - directionsDot * directionsDot;
-            var parallelTolerance = 0.000001f * firstLengthSquared * secondLengthSquared;
-
-            firstParameter = MathF.Abs(denominator) > parallelTolerance
-                ? Math.Clamp((directionsDot * secondDotDelta - firstDotDelta * secondLengthSquared) / denominator, 0f, 1f)
+            // In 2D, solve the line intersection with cross products. Subtracting squared dot
+            // products loses precision near parallel, and an angle tolerance can miss crossings.
+            var determinant = (double)firstDirection.X * secondDirection.Y - (double)firstDirection.Y * secondDirection.X;
+            var numerator = (double)secondDirection.X * startDelta.Y - (double)secondDirection.Y * startDelta.X;
+            firstParameter = determinant != 0d
+                ? (float)Math.Clamp(numerator / determinant, 0d, 1d)
                 : 0f;
 
             var secondNumerator = directionsDot * firstParameter + secondDotDelta;

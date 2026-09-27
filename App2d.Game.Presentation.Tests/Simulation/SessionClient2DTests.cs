@@ -6,7 +6,7 @@ using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Physics;
+using App2d.Core.Physics;
 using System.Numerics;
 using Xunit;
 
@@ -51,9 +51,21 @@ public sealed class SessionClient2DTests
         Assert.Equal(FrameRejection2D.Gap, rejection);
         Assert.False(client.TryApply(frame with { Players = [] }, out rejection));
         Assert.Equal(FrameRejection2D.MissingPlayer, rejection);
-        Assert.Throws<InvalidOperationException>(() => client.Apply(frame with { World = null! }));
+        SessionFrame2D[] incompleteFrames = [frame with { World = null! }, frame with { Content = null! }];
+        foreach (var incomplete in incompleteFrames)
+        {
+            Assert.False(client.TryApply(incomplete, out rejection));
+            Assert.Equal(FrameRejection2D.Incomplete, rejection);
+            Assert.Throws<InvalidOperationException>(() => client.Apply(incomplete));
+            Assert.Same(snapshot, client.Snapshot);
+            Assert.Equal(snapshot.Players[0], client.State);
+            Assert.Equal(snapshot.Tick, client.InputTick);
+        }
         Assert.Same(snapshot, client.Snapshot);
         Assert.Equal(snapshot.Tick, client.InputTick);
+        var nextInput = client.CreateInput(default);
+        Assert.Equal(snapshot.Tick + 1, nextInput.Tick);
+        Assert.Equal(snapshot.Players[0].LastInputSequence + 1, nextInput.Sequence);
         Assert.True(client.Apply(frame));
     }
 

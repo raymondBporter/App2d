@@ -1,9 +1,9 @@
 using App2d.Core;
-using App2d.Collision;
+using App2d.Core.Collision;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.World;
 using App2d.Gameplay.World.Presentation;
-using App2d.Physics;
+using App2d.Core.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Tiles;

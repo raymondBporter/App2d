@@ -1,5 +1,6 @@
 using App2d.Levels;
 using App2d.Core;
+using App2d.Core.Physics;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.World.Presentation;
@@ -84,7 +85,7 @@ public sealed class EnemyPresentationTests
         var scene = new Scene2D();
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
-        var physics = new Physics.PhysicsWorld2D();
+        var physics = new PhysicsWorld2D();
         var prop = new TumbleProp2D(EntityId2D.Create(), physics, Vector2.Zero, 1, 4);
         var original = prop.CaptureState();
         view.Update([original], [], 0f, 0);

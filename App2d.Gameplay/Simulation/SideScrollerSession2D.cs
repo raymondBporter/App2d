@@ -4,7 +4,7 @@ using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
-using App2d.Physics;
+using App2d.Core.Physics;
 using System.Collections.Immutable;
 using System.Numerics;
 

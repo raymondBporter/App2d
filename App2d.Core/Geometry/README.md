@@ -5,7 +5,8 @@ Use `App2d.Core.Geometry` functions directly with `System.Numerics` values when 
 | Location | Purpose |
 | --- | --- |
 | `Functions/VertexGenerator2D` | Circle, ellipse, arc, rectangle, rounded rectangle and capsule contours into a caller-owned `Span<Vector2>` |
-| `Functions/PrimitiveGeometry2D` | Areas, containment, support points, segment distance and normalized picking scores |
+| `Functions/PrimitiveGeometry2D` | Areas, containment, support points and normalized picking scores |
+| `Functions/Distance2D` | Euclidean and signed distances: raw parameters, convex perimeters, shapes and placed spatial objects |
 | `Functions/Projection2D` | Polygon, circle and capsule intervals on an arbitrary axis; polygon offsets avoid transformed copies |
 | `Functions/PolygonGeometry2D` | Area, containment, support, closest perimeter point, edge normals and convex SAT overlap |
 | `Functions/ClosestPoint2D` | Point-to-segment and segment-to-segment closest points |
@@ -32,6 +33,35 @@ Primitive arithmetic queries assume finite inputs, nonnegative radii and ordered
 `PartGeometry` owns attachment frames and depth; the renderer owns screen-dependent tessellation and triangle emission. Both use the shared generators. `EntityRegion` delegates overlap to polygon math. General XY rotation lives in `Mathematics/Rotation2D`; `PoseEvaluator.RotateXY` remains a compatible entry point.
 
 Add raw geometry algorithms here and let shape methods delegate to them. Keep authoring, rendering, caching and gameplay policy in their respective callers.
+
+## Distance queries
+
+```csharp
+using static App2d.Core.Geometry.Distance2D;
+
+float gap = Distance(shapeA, shapeB);       // 0 if touching or overlapping
+float signed = SignedDistance(shapeA, shapeB); // positive gap, 0 contact, negative penetration
+float fromPoint = SignedDistance(point, shapeA); // negative inside, 0 boundary, positive outside
+float worldGap = Distance(spatialA, spatialB); // SpatialObject2D poses, world units
+
+// No shape allocation required:
+float capsuleSdf = SignedDistanceToCapsule(point, start, end, radius);
+float polygonGap = DistanceBetweenConvexPolygons(firstVertices, secondVertices);
+float rectSdf = rect.SignedDistanceTo(point); // any finite IRect2D
+float rectGap = rect.DistanceTo(otherRect);
+```
+
+`Distance2D.cs` contains primitive and interval arithmetic. `Distance2D.Convex.cs` handles convex pairs; `Distance2D.Shapes.cs` adapts existing shapes and spatial objects to those functions. Raw circle, capsule, rectangle, half-space and convex-polygon point queries have both `DistanceTo...` and `SignedDistanceTo...` versions. Segment distance uses the existing closest-point functions; `PrimitiveGeometry2D.DistanceToSegment` remains a compatibility wrapper.
+
+Distances are Euclidean lengths in the input coordinate system. Ordinary distance measures the gap between **filled** shapes, so it is zero inside or during overlap. A point's signed distance measures the nearest boundary, with a negative sign inside. For two convex shapes, a negative result measures the shortest translation needed to reach non-penetrating contact, including full containment; it is not merely the length of their intersection. Signed distance is symmetric between shapes, but does not provide a contact normal or manifold.
+
+Local shape overloads require both shapes in the same coordinate space. Every pairing of circles, capsules, rectangles and convex polygons is supported, along with convex shape/half-space queries. Explicit `Similarity2D` pose overloads and `SpatialObject2D` overloads support rotation, translation, reflection and uniform nonzero scale, returning world units. They use the same transform restrictions as collision. Half-space/half-space pairs and unknown bounded shape implementations are unsupported and throw `NotSupportedException`.
+
+Convex pair queries reuse SAT for penetration and closest features for separated cores: a separating-axis gap alone is not the Euclidean distance across diagonal corners. A circle is a point core plus radius, a capsule is a segment core plus radius, and polygons have zero radius. Expanding these convex cores subtracts the combined radii from their signed distance. This also handles crossed capsules correctly, where subtracting radii from the distance between intersecting spines would underestimate penetration. Raw cores can have one or two vertices; larger cores must be convex perimeter order with nonzero area. Either winding and repeated adjacent vertices are supported. Work is O((n+m)^2), suitable for small primitives; raw span queries allocate nothing, and shape adapters use stack buffers up to 64 vertices per shape.
+
+`CompositeShape2D` supports unsigned distance, including composite/composite pairs, by taking the minimum across its convex parts. Signed composite queries deliberately throw: a minimum of part SDFs can underestimate the distance out of an overlapping union. An exact union-boundary query can be added separately. Ellipse normalized picking scores retain their existing semantics and are not relabeled as Euclidean distances.
+
+Collision's polygon/circle, half-space and interval penetration routines consume these shared functions while retaining contact normals and contact generation in `App2d.Core.Collision`. Touching remains zero distance and produces no penetrating contact. The polygon point query optionally returns its nearest boundary point and edge, avoiding another perimeter search during contact generation.
 
 ## Bounds ownership
 

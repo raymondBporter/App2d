@@ -7,8 +7,7 @@ using System.Numerics;
 namespace App2d.Gameplay.World;
 
 /// <summary>Fixed per platform instance; a replaced platform gets a new runtime ID.</summary>
-public readonly record struct MovingPlatformDefinition2D(
-    EntityId2D Id, long ThingId, Vector2 Size, uint ColorArgb);
+public readonly record struct MovingPlatformDefinition2D(EntityId2D Id, long ThingId, Vector2 Size, uint ColorArgb);
 public readonly record struct MovingPlatformState2D(EntityId2D Id, Vector2 Position);
 public readonly record struct CheckpointPlacement2D(long ThingId, Vector2 BasePosition);
 public readonly record struct CheckpointState2D(long ThingId, bool IsActive);
@@ -122,6 +121,7 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
         return localX >= 0 && localX < ChunkSize + 2 && localY >= 0 && localY < ChunkSize + 2
             ? new TileCell2D(Cells[localY * (ChunkSize + 2) + localX]) : default;
     }
+
     public TileKind2D GetTileKind(int x, int y) => GetCell(x, y).Kind;
     public byte GetTilesetIndex(int x, int y) => GetCell(x, y).TilesetIndex;
     public bool IsSolid(int x, int y) => GetTileKind(x, y).IsSolid();

@@ -1,5 +1,5 @@
 using App2d.Core;
-using App2d.Physics;
+using App2d.Core.Physics;
 using System.Collections.Immutable;
 
 namespace App2d.Gameplay.Simulation;

@@ -2,10 +2,11 @@
 
 A deliberately small MonoGame/XNA 2D engine skeleton with compile-time module boundaries.
 
-The solution has separate projects for core types, collision, tiles, authored content,
-physics, rendering, audio, and game code, plus the game and NoodleBRO rig-lab Windows executables.
+The solution has separate projects for core engine types, tiles, authored content,
+rendering, audio, and game code, plus the game and NoodleBRO rig-lab Windows executables.
+Collision and physics live inside Core as folders and namespaces.
 Each project physically owns its source files — there are no linked-file views.
-Core, collision, tiles, levels, physics, `App2d.Game.Contracts`, `App2d.Gameplay`, and
+Core, tiles, levels, `App2d.Game.Contracts`, `App2d.Gameplay`, and
 the gameplay tests target plain `net10.0`. Rendering uses MonoGame WindowsDX;
 rendering, audio, `App2d.Game.Presentation`, the host, and their tests target
 `net10.0-windows10.0.19041.0`.
@@ -25,9 +26,9 @@ The engine is grouped by responsibility:
   that collision consumes. The namespace uses `Mathematics` rather than `Math` so it
   never shadows `System.Math`.
 - `App2d.Rendering` contains the renderer and shader abstractions.
-- `App2d.Core` presents guards, mathematics, animation, geometry, and the
+- `App2d.Core` presents guards, mathematics, animation, geometry, collision, physics, and the
   render-agnostic `SpatialObject2D`. `App2d.Tiles` presents the tile maps and mesher.
-  `App2d.Collision` contains only collision work: `BroadPhase`, `Contacts`,
+  `App2d.Core/Collision` contains collision work: `BroadPhase`, `Contacts`,
   `Filtering`, `Intersections`, and `Queries`.
 - `App2d.Levels` stores authored levels as SQLite files. Tiles are run-length encoded
   per chunk so a single edit rewrites a single row; a missing chunk row means an
@@ -38,17 +39,21 @@ The engine is grouped by responsibility:
 - `CollisionSystem2D` owns runtime collider registration, collision layers and masks,
   cached static/dynamic spatial indexes, candidate discovery, and exact contacts. It has
   no dependency on physics; physics and gameplay are consumers of collision data.
-- `App2d.Collision/BroadPhase` contains generic AABB candidate-pair searches, while
-  `App2d.Collision/Filtering` contains their generic filtering contract.
-- `App2d.Collision/Contacts` contains overlap/contact generation. Shape-pair code is
+- `App2d.Core/Collision/BroadPhase` contains generic AABB candidate-pair searches, while
+  `App2d.Core/Collision/Filtering` contains their generic filtering contract.
+- `App2d.Core/Collision/Contacts` contains overlap/contact generation. Shape-pair code is
   split into circle, capsule, polygon/SAT, and utility partials behind one dispatcher.
-- `App2d.Collision/Queries` contains rays, exact shape intersections, and generic
-  spatial-object raycasts. Physics-world extensions live in `App2d.Physics/Queries`,
-  preventing the collision module from depending back on physics. Query hits retain
+- `App2d.Core/Collision/Queries` contains rays, exact shape intersections, and generic
+  spatial-object raycasts. Physics-world extensions live in `App2d.Core/Physics/Queries`,
+  keeping physics-specific queries alongside physics. Query hits retain
   direct references to the object or body that was hit.
-- `App2d.Physics/Integration`, `App2d.Physics/Filtering`, and `App2d.Physics/Solvers`
+- `App2d.Core/Physics/Integration`, `App2d.Core/Physics/Filtering`, and `App2d.Core/Physics/Solvers`
   contain physics-specific policies; bodies, contacts, constraints, and the world remain
   at the physics root.
+
+Collision and physics namespaces follow their Core folders: `App2d.Core.Collision`
+and `App2d.Core.Physics`, including their subnamespaces. Both compile into
+`App2d.Core.dll`; consumers need only the Core project reference for these types.
 
 `ArgGuard` centralizes null, null-or-whitespace, and range validation for integers,
 finite scalars, and `Vector2` values. It uses caller expressions for parameter names and

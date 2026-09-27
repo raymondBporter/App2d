@@ -1,6 +1,6 @@
 using App2d.Core;
 using App2d.Diagnostics;
-using App2d.Physics;
+using App2d.Core.Physics;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using XnaColor = Microsoft.Xna.Framework.Color;

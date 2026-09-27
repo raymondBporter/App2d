@@ -1,7 +1,7 @@
 using System.Numerics;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Physics;
+using App2d.Core.Physics;
 
 namespace App2d.Gameplay.World;
 

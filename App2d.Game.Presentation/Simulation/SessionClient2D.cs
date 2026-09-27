@@ -48,10 +48,20 @@ public sealed class SessionClient2D
     public bool TryApply(SessionFrame2D frame, out FrameRejection2D rejection)
     {
         ArgGuard.ThrowIfNull(frame);
+        if (frame.Tick <= Tick)
+        {
+            rejection = FrameRejection2D.Stale;
+            return false;
+        }
+        if (frame.Players.IsDefault || frame.Events.IsDefault || frame.Enemies.IsDefault ||
+            frame.Content is null || frame.World is null)
+        {
+            rejection = FrameRejection2D.Incomplete;
+            return false;
+        }
+
         var player = frame.FindPlayer(PlayerId);
-        rejection = frame.Tick <= Tick ? FrameRejection2D.Stale
-            : frame.Players.IsDefault || frame.Events.IsDefault || frame.Enemies.IsDefault ? FrameRejection2D.Incomplete
-            : frame.Tick != Tick + 1 ? FrameRejection2D.Gap
+        rejection = frame.Tick != Tick + 1 ? FrameRejection2D.Gap
             : player is null ? FrameRejection2D.MissingPlayer
             : player.Value.LastInputSequence < LastInputSequence ? FrameRejection2D.AcknowledgementMovedBackwards
             : FrameRejection2D.None;

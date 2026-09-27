@@ -67,6 +67,19 @@ public static class Rect2DExtensions
         /// <summary>The closest point in or on this rectangle. Interior points are returned unchanged.</summary>
         public Vector2 ClosestPoint(Vector2 point) => Vector2.Clamp(point, rectangle.Min, rectangle.Max);
 
+        /// <summary>Euclidean distance to the filled rectangle (zero inside); coordinates must be finite.</summary>
+        public float DistanceTo(Vector2 point) => Distance2D.DistanceToRectangle(point, rectangle.Min, rectangle.Max);
+
+        /// <summary>Positive outside, zero on the boundary, negative inside; coordinates must be finite.</summary>
+        public float SignedDistanceTo(Vector2 point) => Distance2D.SignedDistanceToRectangle(point, rectangle.Min, rectangle.Max);
+
+        public float DistanceTo<TOther>(TOther other) where TOther : IRect2D =>
+            Distance2D.Distance(rectangle.ToRect(), other.ToRect());
+
+        /// <summary>Negative minimum escape translation when overlapping; both rectangles must be finite.</summary>
+        public float SignedDistanceTo<TOther>(TOther other) where TOther : IRect2D =>
+            Distance2D.SignedDistance(rectangle.ToRect(), other.ToRect());
+
         public Rect2D TranslatedBy(Vector2 offset)
         {
             ArgGuard.ThrowIfNotFinite(offset);

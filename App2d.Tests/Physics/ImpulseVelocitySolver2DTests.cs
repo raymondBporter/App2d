@@ -1,8 +1,8 @@
-﻿using App2d.Collision.Contacts;
+﻿using App2d.Core.Collision.Contacts;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Physics;
-using App2d.Physics.Solvers;
+using App2d.Core.Physics;
+using App2d.Core.Physics.Solvers;
 using System.Numerics;
 
 namespace App2d.Tests.Physics;
