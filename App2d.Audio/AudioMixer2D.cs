@@ -37,7 +37,7 @@ public sealed class AudioMixer2D : IDisposable
         get => _masterVolume.Volume;
         set
         {
-            ArgGuard.ThrowIfNotInClosedRange(value, 0f, 1f);
+            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0f, 1f);
             _masterVolume.Volume = value;
         }
     }
@@ -52,8 +52,8 @@ public sealed class AudioMixer2D : IDisposable
     public void Play(AudioClip2D clip, float volume = 1f, float playbackRate = 1f)
     {
         ArgGuard.ThrowIfNull(clip);
-        ArgGuard.ThrowIfNotInClosedRange(volume, 0f, 1f);
-        ArgGuard.ThrowIfNotInClosedRange(playbackRate, 0.5f, 2f);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volume, 0f, 1f);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(playbackRate, 0.5f, 2f);
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (volume == 0f)
             return;
@@ -67,8 +67,8 @@ public sealed class AudioMixer2D : IDisposable
         float playbackRate = 1f)
     {
         ArgGuard.ThrowIfNull(clip);
-        ArgGuard.ThrowIfNotInClosedRange(volume, 0f, 1f);
-        ArgGuard.ThrowIfNotInClosedRange(playbackRate, 0.5f, 2f);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volume, 0f, 1f);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(playbackRate, 0.5f, 2f);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         var sequence = _mixer.Play(clip, volume, playbackRate);

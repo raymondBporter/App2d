@@ -14,11 +14,10 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
     public PatrolEnemy2D(EntityId2D id,
         SpatialObject2D worldObject, PhysicsBody2D body, float patrolMinX, float patrolMaxX, float speed, int health)
     {
-        if (!id.IsValid)
-            throw new ArgumentException("An enemy requires a valid entity ID.", nameof(id));
+        ArgGuard.ThrowIf(!id.IsValid, "An enemy requires a valid entity ID.", nameof(id));
         Id = id;
-        ArgGuard.ThrowIfGreaterThanOrEqual(patrolMinX, patrolMaxX);
-        ArgGuard.ThrowIfNotPositive(speed);
+        ArgGuard.ThrowIfNotFiniteOrGreaterThanOrEqual(patrolMinX, patrolMaxX);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(speed);
 
         WorldObject = worldObject;
         Body = body;
@@ -57,8 +56,7 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 
     public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
     {
-        if (!attackSourceId.IsValid)
-            throw new ArgumentException("An attack source ID is required.", nameof(attackSourceId));
+        ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
         if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) &&
             lastAttackId == attackId)
         {

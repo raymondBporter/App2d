@@ -42,7 +42,7 @@ public static class FaceExpressions
         "tired" => new(Eyes: .3f, Smile: -.4f, MouthWidth: .7f),
         "blink" => new(Eyes: 0, Smile: .25f),
         "knocked-out" => new(MouthOpen: .3f, MouthWidth: .65f, CrossEyes: true),
-        _ => throw new ArgumentException("Unknown face expression: " + id, nameof(id))
+        _ => throw ArgGuard.CreateInvalid("Unknown face expression: " + id, nameof(id))
     };
 
     public static FacePose Blink(FacePose pose, double seconds)

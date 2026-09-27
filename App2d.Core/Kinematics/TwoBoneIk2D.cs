@@ -23,10 +23,9 @@ public static class TwoBoneIk2D
     {
         ArgGuard.ThrowIfNotFinite(root);
         ArgGuard.ThrowIfNotFinite(target);
-        ArgGuard.ThrowIfNotPositive(firstLength);
-        ArgGuard.ThrowIfNotPositive(secondLength);
-        if (bendDirection == 0)
-            throw new ArgumentOutOfRangeException(nameof(bendDirection), "Bend direction cannot be zero.");
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(firstLength);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(secondLength);
+        ArgGuard.ThrowIfZero(bendDirection);
 
         var toTarget = target - root;
         var targetDistance = toTarget.Length();

@@ -37,8 +37,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
         ArgGuard.ThrowIfNull(player);
         ArgGuard.ThrowIfNull(actions);
         ArgGuard.ThrowIfNotFinite(respawn.Position);
-        if (respawn.HitPoints <= 0 || respawn.HitPoints > player.Health.Maximum)
-            throw new ArgumentOutOfRangeException(nameof(respawn));
+        ArgGuard.ThrowIfNotInClosedRange(respawn.HitPoints, 1, player.Health.Maximum, nameof(respawn));
         StateGuard.ThrowIf(!physics.Bodies.Contains(player.Body), "The player must belong to the session's physics world.");
         StateGuard.ThrowIf(!ReferenceEquals(player.Actions, actions), "The session actions must be attached to the player.");
 
@@ -108,11 +107,11 @@ public sealed partial class SideScrollerSession2D : IDisposable
         for (var i = 0; i < inputs.Length; i++)
         {
             if (!TryValidateInput(inputs[i], out var rejection))
-                throw new ArgumentException($"Input for player {inputs[i].EntityId.Value} was rejected: {rejection}.", nameof(inputs));
+                throw ArgGuard.CreateInvalid($"Input for player {inputs[i].EntityId.Value} was rejected: {rejection}.", nameof(inputs));
             for (var j = 0; j < i; j++)
             {
                 if (inputs[j].EntityId == inputs[i].EntityId)
-                    throw new ArgumentException($"Input for player {inputs[i].EntityId.Value} was rejected: {InputRejection2D.DuplicatePlayer}.", nameof(inputs));
+                    throw ArgGuard.CreateInvalid($"Input for player {inputs[i].EntityId.Value} was rejected: {InputRejection2D.DuplicatePlayer}.", nameof(inputs));
             }
         }
 

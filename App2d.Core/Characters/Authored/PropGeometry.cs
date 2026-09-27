@@ -26,7 +26,7 @@ public static class PropGeometry
     public static PropSolid Extrude(IEnumerable<PuppetPoint> outline, float thickness, string fill)
     {
         var points = outline.ToList();
-        if (points.Count < 3 || thickness <= 0) throw new ArgumentException("An extrusion needs an outline and positive thickness.");
+        ArgGuard.ThrowIf(points.Count < 3 || thickness <= 0, "An extrusion needs an outline and positive thickness.");
         var area = points.Select((p, i) => p.X * points[(i + 1) % points.Count].Y - p.Y * points[(i + 1) % points.Count].X).Sum();
         if (area < 0) points.Reverse();
         var n = points.Count; var mesh = new PropSolid { Fill = fill };

@@ -58,7 +58,7 @@ public static class PoseEvaluator
     public static EvaluatedPose Sample(ResolvedModel model, MotionClip? clip, double seconds, bool repeat = false, PoseInput input = default)
     {
         clip ??= Still;
-        if (!double.IsFinite(seconds) || seconds < 0) throw new ArgumentOutOfRangeException(nameof(seconds));
+        ArgGuard.ThrowIfNotFiniteOrNegative(seconds);
         var cycles = repeat && clip.Loop ? Math.Floor(seconds / clip.Duration) : 0;
         var time = (float)(cycles > 0 ? seconds % clip.Duration : Math.Min(seconds, clip.Duration));
         float Ratio(string scale) => scale == CharacterModel.Unit ? 1 : model.Measure(scale) / clip.Reference[scale];

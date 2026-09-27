@@ -46,9 +46,8 @@ public sealed partial class Person2D : ICombatant2D
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNotFinite(spawnPoint);
         ArgGuard.ThrowIfNotPositive(maximumHealth);
-        ArgGuard.ThrowIfNotPositive(mass);
-        if (!id.IsValid)
-            throw new ArgumentException("A person requires a valid entity ID.", nameof(id));
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(mass);
+        ArgGuard.ThrowIf(!id.IsValid, "A person requires a valid entity ID.", nameof(id));
         Id = id;
 
         WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(
@@ -111,7 +110,7 @@ public sealed partial class Person2D : ICombatant2D
 
     public void BeginFrame(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         LandingSpeedThisFrame = 0f;
         DownAttackBouncedThisFrame = false;
         InvulnerabilitySeconds = Math.Max(0f, InvulnerabilitySeconds - deltaSeconds);
@@ -209,8 +208,7 @@ public sealed partial class Person2D : ICombatant2D
 
     public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
     {
-        if (!attackSourceId.IsValid)
-            throw new ArgumentException("An attack source ID is required.", nameof(attackSourceId));
+        ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
         if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) &&
             lastAttackId == attackId)
         {
@@ -252,8 +250,8 @@ public sealed partial class Person2D : ICombatant2D
     {
         ArgGuard.ThrowIfNotPositive(damage);
         ArgGuard.ThrowIfNotFinite(sourceX);
-        ArgGuard.ThrowIfNotPositive(horizontalKnockback);
-        ArgGuard.ThrowIfNotPositive(verticalKnockback);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(horizontalKnockback);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(verticalKnockback);
 
         float direction = MathF.Sign(Position.X - sourceX);
         if (direction == 0f)

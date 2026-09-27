@@ -11,7 +11,7 @@ public static class Curve2D
     /// <summary>Returns a unit tangent, or zero when the curve is locally degenerate.</summary>
     public static Vector2 Tangent(ICurve2D curve, float amount)
     {
-        ArgumentNullException.ThrowIfNull(curve);
+        ArgGuard.ThrowIfNull(curve);
         amount = Math.Clamp(amount, 0f, 1f);
         var derivative = curve.EvaluateDerivative(amount);
         if (derivative.LengthSquared() <= DerivativeEpsilon * DerivativeEpsilon)
@@ -35,8 +35,8 @@ public static class Curve2D
     /// <summary>Samples both endpoints and the requested number of equal parameter-space segments.</summary>
     public static Vector2[] Sample(ICurve2D curve, int segmentCount)
     {
-        ArgumentNullException.ThrowIfNull(curve);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(segmentCount);
+        ArgGuard.ThrowIfNull(curve);
+        ArgGuard.ThrowIfNotPositive(segmentCount);
         var points = new Vector2[segmentCount + 1];
         for (var index = 0; index <= segmentCount; index++)
             points[index] = curve.Evaluate(index / (float)segmentCount);
@@ -48,7 +48,7 @@ public static class Curve2D
     {
         ArgGuard.ThrowIfNotFinite(amount);
         ArgGuard.ThrowIfNotFinite(center);
-        ArgGuard.ThrowIfNotPositive(sigma);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(sigma);
         var distance = amount - center;
         return MathF.Exp(-(distance * distance) / (2f * sigma * sigma));
     }

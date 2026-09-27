@@ -29,7 +29,7 @@ public sealed class Camera2D
         get;
         set
         {
-            if (value is { } height) ArgGuard.ThrowIfNotPositive(height);
+            if (value is { } height) ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
             field = value;
         }
     }

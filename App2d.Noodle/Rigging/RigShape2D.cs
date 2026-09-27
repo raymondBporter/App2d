@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Geometry;
 using System.ComponentModel;
 using System.Globalization;
@@ -137,7 +138,7 @@ internal sealed class RigPolygonShape2D(int id, string name, RigBone2D bone) : R
 
     private static IEnumerable<Vector2> Parse(string text)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+        ArgGuard.ThrowIfNullOrWhiteSpace(text);
         foreach (var pair in text.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             var coordinates = pair.Split(',', StringSplitOptions.TrimEntries);

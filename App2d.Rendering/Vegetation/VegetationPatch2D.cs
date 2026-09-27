@@ -21,12 +21,9 @@ public sealed class VegetationPatch2D
         VegetationStyle2D style,
         int seed)
     {
-        ArgGuard.ThrowIfNotFinite(startX);
-        ArgGuard.ThrowIfNotFinite(endX);
+        ArgGuard.ThrowIfNotFiniteOrLessThanOrEqual(endX, startX);
         ArgGuard.ThrowIfNotFinite(groundY);
         style.Validate();
-        if (endX <= startX)
-            throw new ArgumentOutOfRangeException(nameof(endX), "Patch end must be after its start.");
 
         _style = style;
         var random = new Random(seed);
@@ -64,7 +61,7 @@ public sealed class VegetationPatch2D
         VegetationWind2D wind,
         float? cutHeight = null)
     {
-        if (cutHeight is { } height) ArgGuard.ThrowIfNegativeOrNotFinite(height);
+        if (cutHeight is { } height) ArgGuard.ThrowIfNotFiniteOrNegative(height);
         Span<Vector2> quad = stackalloc Vector2[4];
 
         foreach (var blade in _blades)
@@ -92,7 +89,7 @@ public sealed class VegetationPatch2D
     /// <summary>Captures the exact wind-bent tops at the cut line, ready to tumble independently.</summary>
     public IEnumerable<VegetationBladeTip2D> CreateClippings(float cutHeight, VegetationWind2D wind)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(cutHeight);
+        ArgGuard.ThrowIfNotFiniteOrNegative(cutHeight);
         foreach (var blade in _blades)
         {
             if (blade.Height <= cutHeight) continue;
@@ -156,16 +153,13 @@ public readonly record struct VegetationStyle2D(
 {
     internal void Validate()
     {
-        ArgGuard.ThrowIfNotPositive(MinimumHeight);
-        ArgGuard.ThrowIfNotPositive(MinimumWidth);
-        ArgGuard.ThrowIfNotPositive(Spacing);
-        ArgGuard.ThrowIfNotFinite(MaximumHeight);
-        ArgGuard.ThrowIfNotFinite(MaximumWidth);
-        if (MaximumHeight < MinimumHeight) throw new ArgumentOutOfRangeException(nameof(MaximumHeight));
-        if (MaximumWidth < MinimumWidth) throw new ArgumentOutOfRangeException(nameof(MaximumWidth));
-        ArgGuard.ThrowIfNegativeOrNotFinite(MaximumLean);
-        ArgGuard.ThrowIfNotFinite(FlowerChance);
-        if (FlowerChance is < 0f or > 1f) throw new ArgumentOutOfRangeException(nameof(FlowerChance));
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(MinimumHeight);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(MinimumWidth);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(Spacing);
+        ArgGuard.ThrowIfNotFiniteOrLessThan(MaximumHeight, MinimumHeight);
+        ArgGuard.ThrowIfNotFiniteOrLessThan(MaximumWidth, MinimumWidth);
+        ArgGuard.ThrowIfNotFiniteOrNegative(MaximumLean);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(FlowerChance, 0f, 1f);
     }
 }
 

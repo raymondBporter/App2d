@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Geometry;
 using System.Collections.Immutable;
 
@@ -11,7 +12,7 @@ public sealed partial class SideScrollerLevel2D
     public void CutGrass(Bounds2D strike)
     {
         if (!strike.IsFinite || strike.Size.X < 0f || strike.Size.Y < 0f)
-            throw new ArgumentOutOfRangeException(nameof(strike));
+            ArgGuard.ThrowOutOfRange(strike, "Grass cutting bounds must be finite and ordered.");
         var firstX = Math.Clamp((int)MathF.Floor((strike.Min.X - TileMap.Origin.X) / _tileSize), 0, TileMap.Width - 1);
         var lastX = Math.Clamp((int)MathF.Floor((strike.Max.X - TileMap.Origin.X) / _tileSize), 0, TileMap.Width - 1);
         var firstY = Math.Clamp((int)MathF.Floor((strike.Min.Y - TileMap.Origin.Y) / _tileSize -

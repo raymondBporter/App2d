@@ -9,8 +9,8 @@ internal sealed class DistanceProjector2D
 {
     public DistanceProjector2D(float minimumDistance, float maximumDistance)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(minimumDistance);
-        ArgGuard.ThrowIfNegativeOrNotFinite(maximumDistance);
+        ArgGuard.ThrowIfNotFiniteOrNegative(minimumDistance);
+        ArgGuard.ThrowIfNotFiniteOrNegative(maximumDistance);
         Limits = ConstraintLimit1D.Between(minimumDistance, maximumDistance);
     }
 

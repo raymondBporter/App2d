@@ -8,7 +8,7 @@ public sealed class AxisAlignedRectangle2D(Vector2 min, Vector2 max) : Rectangle
 {
     public static new AxisAlignedRectangle2D FromSize(Vector2 size, Vector2 center = default)
     {
-        ArgGuard.ThrowIfNotPositive(size);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(size);
         ArgGuard.ThrowIfNotFinite(center);
 
         var halfSize = size / 2f;

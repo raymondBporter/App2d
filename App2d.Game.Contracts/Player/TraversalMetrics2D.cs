@@ -15,11 +15,10 @@ public sealed class TraversalMetrics2D
         Vector2 visualSize, float footAnchorYFraction,
         Vector2 standingColliderSize, float colliderCenterOffsetX)
     {
-        ArgGuard.ThrowIfNotPositive(visualSize);
-        ArgGuard.ThrowIfNotPositive(standingColliderSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(visualSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(standingColliderSize);
         ArgGuard.ThrowIfNotFinite(colliderCenterOffsetX);
-        if (!float.IsFinite(footAnchorYFraction) || footAnchorYFraction <= 0f || footAnchorYFraction >= 1f)
-            throw new ArgumentOutOfRangeException(nameof(footAnchorYFraction));
+        ArgGuard.ThrowIfNotFiniteOrNotInOpenRange(footAnchorYFraction, 0f, 1f);
         return new TraversalMetrics2D
         {
             PlayerColliderSize = standingColliderSize,
@@ -82,34 +81,31 @@ public sealed class TraversalMetrics2D
 
     public void ValidateScaleContract()
     {
-        ArgGuard.ThrowIfNotPositive(TileSize);
-        ArgGuard.ThrowIfNotPositive(LadderClimbSpeed);
-        ArgGuard.ThrowIfNotPositive(LadderRelatchDelay);
-        ArgGuard.ThrowIfNotPositive(PlayerColliderSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(TileSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(LadderClimbSpeed);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(LadderRelatchDelay);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(PlayerColliderSize);
         ArgGuard.ThrowIfNotFinite(PlayerColliderCenterOffsetX);
-        ArgGuard.ThrowIfNotPositive(PlayerVisualSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(PlayerVisualSize);
         ArgGuard.ThrowIfNotFinite(PlayerVisualOffset);
-        ArgGuard.ThrowIfNotPositive(AirJumpSpeedMultiplier);
-        ArgGuard.ThrowIfNotPositive(DownAttackBounceSpeed);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(AirJumpSpeedMultiplier);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(DownAttackBounceSpeed);
         ArgGuard.ThrowIfNotPositive(MaximumJumpCount);
-        ArgGuard.ThrowIfNotPositive(OneWayDropSpeed);
-        ArgGuard.ThrowIfNotPositive(WallGripProbeDistance);
-        ArgGuard.ThrowIfNotPositive(WallGripMinimumOverlap);
-        ArgGuard.ThrowIfNotPositive(WallJumpHorizontalSpeed);
-        ArgGuard.ThrowIfNotPositive(WallJumpRelatchDelay);
-        ArgGuard.ThrowIfNotPositive(DashSpeed);
-        ArgGuard.ThrowIfNotPositive(DashDuration);
-        ArgGuard.ThrowIfNotPositive(DashCooldown);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(OneWayDropSpeed);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(WallGripProbeDistance);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(WallGripMinimumOverlap);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(WallJumpHorizontalSpeed);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(WallJumpRelatchDelay);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(DashSpeed);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(DashDuration);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(DashCooldown);
         StateGuard.ThrowIf(
-            !float.IsFinite(BalanceOverhangFraction) ||
-            BalanceOverhangFraction <= 0f || BalanceOverhangFraction >= 0.5f,
+            !NumericValidation.IsInOpenRange(BalanceOverhangFraction, 0f, 0.5f),
             "The balance overhang must be a fraction between zero and one half.");
 
         StateGuard.ThrowIf(AirJumpSpeedMultiplier >= 1f, "The air-jump speed multiplier must be less than one.");
         StateGuard.ThrowIf(
-            !float.IsFinite(PlayerSpriteFootYFraction) ||
-            PlayerSpriteFootYFraction <= 0f ||
-            PlayerSpriteFootYFraction >= 1f,
+            !NumericValidation.IsInOpenRange(PlayerSpriteFootYFraction, 0f, 1f),
             "The player sprite foot anchor must be a fraction between zero and one.");
 
         StateGuard.ThrowIf(
@@ -118,7 +114,7 @@ public sealed class TraversalMetrics2D
             $"Tile and player collider heights must use half increments of the {DesignUnit:0}-unit design grid.");
         StateGuard.ThrowIf(StandingClearance < DesignUnit, $"The minimum whole-tile standing passage must leave at least {DesignUnit:0} units of clearance.");
 
-        ArgGuard.ThrowIfNotPositive(ReliableJumpRiseTiles);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(ReliableJumpRiseTiles);
         var requiredJumpHeight = TileSize * ReliableJumpRiseTiles + DesignUnit;
         var standingJump = MeasureJump(0f);
         StateGuard.ThrowIf(
@@ -129,7 +125,7 @@ public sealed class TraversalMetrics2D
 
     public JumpProfile2D MeasureJump(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
     {
-        ValidateFixedDelta(fixedDeltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(fixedDeltaSeconds);
 
         var position = Vector2.Zero;
         var velocity = new Vector2(initialHorizontalSpeed, JumpSpeed);
@@ -164,7 +160,7 @@ public sealed class TraversalMetrics2D
 
     public Vector2[] BuildJumpArc(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
     {
-        ValidateFixedDelta(fixedDeltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(fixedDeltaSeconds);
 
         var points = new List<Vector2> { Vector2.Zero };
         var position = Vector2.Zero;
@@ -196,9 +192,6 @@ public sealed class TraversalMetrics2D
             return target;
         return current + MathF.Sign(target - current) * maxDelta;
     }
-
-    private static void ValidateFixedDelta(float fixedDeltaSeconds)
-        => ArgGuard.ThrowIfNotPositive(fixedDeltaSeconds);
 
     private static bool IsDesignUnitMultiple(float value)
     {

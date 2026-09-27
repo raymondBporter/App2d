@@ -27,8 +27,7 @@ public sealed class EntityIdSequence2D
 
     public void Restore(int position)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(position);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(position, _capacity);
+        ArgGuard.ThrowIfNotInClosedRange(position, 0, _capacity);
         Position = position;
     }
 }

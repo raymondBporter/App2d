@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.CharacterStudio;
@@ -28,7 +29,7 @@ internal static class Program
                         using var proofs = new ProofRenders(FindAssets(), Path.GetFullPath(output), mode);
                         proofs.Run(); return 0;
                     }
-                default: throw new ArgumentException(Usage);
+                default: throw ArgGuard.CreateInvalid(Usage);
             }
         }
         catch (Exception ex)

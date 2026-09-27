@@ -46,7 +46,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         ArgGuard.ThrowIfNull(groundY);
         _traversal = traversal;
         _tileSize = traversal.TileSize;
-        ArgGuard.ThrowIfNotPositive(_tileSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(_tileSize);
         _groundY = groundY;
         _movingPlatformSpecs = movingPlatforms ?? [];
         _worldThingSpecs = worldThings ?? [];
@@ -120,8 +120,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     {
         if (!actorBounds.IsFinite)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(actorBounds),
+            ArgGuard.ThrowOutOfRange(
                 actorBounds,
                 "Bounds must be finite.");
         }
@@ -205,7 +204,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Bounds2D playerBounds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         foreach (var savePoint in _savePoints)
         {
             if (savePoint.Update(deltaSeconds, playerBounds))
@@ -223,7 +222,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public void UpdateMovingPlatforms(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         foreach (var platform in _movingPlatforms)
             platform.Update(deltaSeconds);
     }

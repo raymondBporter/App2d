@@ -66,24 +66,21 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
         ArgGuard.ThrowIfNotPositive(width);
         ArgGuard.ThrowIfNotPositive(height);
         ArgGuard.ThrowIfNotPositive(chunkSize);
-        ArgGuard.ThrowIfNotPositive(tileSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
         ArgGuard.ThrowIfNotFinite(origin);
-        ArgumentOutOfRangeException.ThrowIfNegative(revision);
+        ArgGuard.ThrowIfNegative(revision);
         if (chunk.X < 0 || chunk.Y < 0 || chunk.X > (width - 1) / chunkSize || chunk.Y > (height - 1) / chunkSize)
-            throw new ArgumentOutOfRangeException(nameof(chunk));
+            ArgGuard.ThrowOutOfRange(chunk, "Chunk coordinates must lie within the map.");
         var cellCount = checked((chunkSize + 2) * (chunkSize + 2));
-        if (cells.IsDefault || cells.Length != cellCount)
-            throw new ArgumentException("Cells must include the complete chunk and its one-cell halo.", nameof(cells));
-        if (tilesetIds.IsDefaultOrEmpty || tilesetIds.Length > TileCell2D.MaximumTilesetCount ||
-            tilesetIds.Any(string.IsNullOrWhiteSpace))
-        {
-            throw new ArgumentException("A valid tileset catalog is required.", nameof(tilesetIds));
-        }
-
-        if (cells.Any(cell => new TileCell2D(cell).TilesetIndex >= tilesetIds.Length))
-            throw new ArgumentException("A cell refers to a missing tileset.", nameof(cells));
-        if (collisions.IsDefault || collisions.Any(c => !c.Bounds.IsFinite || c.Bounds.Size.X <= 0f || c.Bounds.Size.Y <= 0f))
-            throw new ArgumentException("Collision rectangles must be initialized and finite.", nameof(collisions));
+        ArgGuard.ThrowIf(cells.IsDefault || cells.Length != cellCount,
+            "Cells must include the complete chunk and its one-cell halo.", nameof(cells));
+        ArgGuard.ThrowIf(tilesetIds.IsDefaultOrEmpty || tilesetIds.Length > TileCell2D.MaximumTilesetCount ||
+            tilesetIds.Any(string.IsNullOrWhiteSpace), "A valid tileset catalog is required.", nameof(tilesetIds));
+        ArgGuard.ThrowIf(cells.Any(cell => new TileCell2D(cell).TilesetIndex >= tilesetIds.Length),
+            "A cell refers to a missing tileset.", nameof(cells));
+        ArgGuard.ThrowIf(collisions.IsDefault ||
+            collisions.Any(c => !c.Bounds.IsFinite || !NumericValidation.IsPositive(c.Bounds.Size)),
+            "Collision rectangles must be initialized and finite.", nameof(collisions));
         Chunk = chunk;
         Revision = revision;
         Width = width;
@@ -129,5 +126,5 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
         (int)MathF.Floor((position.X - Origin.X) / (TileSize * ChunkSize)),
         (int)MathF.Floor((position.Y - Origin.Y) / (TileSize * ChunkSize)));
     public IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(TileChunk2D chunk) =>
-        chunk == Chunk ? Collisions : throw new ArgumentException("This snapshot contains one chunk.", nameof(chunk));
+        chunk == Chunk ? Collisions : throw ArgGuard.CreateInvalid("This snapshot contains one chunk.", nameof(chunk));
 }

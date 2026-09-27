@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
@@ -53,7 +54,7 @@ public sealed class AuthoredArena
     public AuthoredArena(IEnumerable<ResolvedEntity> entities)
     {
         var list = entities.ToList();
-        if (list.Count == 0) throw new ArgumentException("The arena needs at least one entity.", nameof(entities));
+        ArgGuard.ThrowIf(list.Count == 0, "The arena needs at least one entity.", nameof(entities));
         for (var i = 0; i < list.Count; i++) Actors.Add(new(i, list[i], new(i == 0 ? -6 : -2 + 3.2f * i, 0), i == 0 ? 1 : -1));
     }
 

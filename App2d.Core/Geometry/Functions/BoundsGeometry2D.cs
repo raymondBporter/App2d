@@ -8,7 +8,7 @@ public static class BoundsGeometry2D
     public static Bounds2D FromCircle(Vector2 center, float radius)
     {
         ArgGuard.ThrowIfNotFinite(center);
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         var extent = new Vector2(radius);
         return new(center - extent, center + extent);
     }
@@ -17,7 +17,7 @@ public static class BoundsGeometry2D
     {
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(end);
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         var extent = new Vector2(radius);
         return new(Vector2.Min(start, end) - extent, Vector2.Max(start, end) + extent);
     }

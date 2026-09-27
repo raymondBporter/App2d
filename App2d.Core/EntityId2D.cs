@@ -11,7 +11,7 @@ public readonly record struct EntityId2D
 
     public EntityId2D(long value)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
+        ArgGuard.ThrowIfNotPositive(value);
         Value = value;
     }
 

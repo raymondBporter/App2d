@@ -569,8 +569,8 @@ public sealed partial class LevelDatabase2D
     private static void ValidateDefinition(string name, float width, float height)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(width);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
     }
 
     private static void ValidateThing(float x, float y, float rotation, float travelX, float travelY, float speed)
@@ -580,7 +580,7 @@ public sealed partial class LevelDatabase2D
         ArgGuard.ThrowIfNotFinite(rotation);
         ArgGuard.ThrowIfNotFinite(travelX);
         ArgGuard.ThrowIfNotFinite(travelY);
-        ArgGuard.ThrowIfNotPositive(speed);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(speed);
         StateGuard.ThrowIf(travelX == 0f && travelY == 0f, "A moving platform needs non-zero travel.");
     }
 

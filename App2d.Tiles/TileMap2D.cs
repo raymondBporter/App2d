@@ -16,7 +16,7 @@ public sealed class TileMap2D : ISolidTileMap2D
     {
         ArgGuard.ThrowIfNotPositive(width);
         ArgGuard.ThrowIfNotPositive(height);
-        ArgGuard.ThrowIfNotPositive(tileSize);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
         ArgGuard.ThrowIfNotFinite(origin);
 
         Width = width;

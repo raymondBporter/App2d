@@ -91,7 +91,7 @@ public sealed class EntityAnimator
     /// </summary>
     public void Step(float dt, Vector2 position, int facing, string role, float groundDistance, bool hold, List<AnimationEvent> events, string? expression = null)
     {
-        if (facing is not (1 or -1)) throw new ArgumentOutOfRangeException(nameof(facing));
+        if (facing is not (1 or -1)) ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
         Facing = facing;
         if (Current is { } action)
         {
@@ -192,7 +192,7 @@ public sealed class ContactHold
     /// <remarks>With <paramref name="hold"/> false every anchor is released and contacts follow the clip.</remarks>
     public ActorPose Evaluate(ResolvedModel model, MotionClip? clip, double seconds, bool repeat, Vector2 position, int facing, PoseInput input, bool hold = true)
     {
-        if (facing is not (1 or -1)) throw new ArgumentOutOfRangeException(nameof(facing));
+        if (facing is not (1 or -1)) ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
         if (facing != _facing) { _facing = facing; _anchors.Clear(); }
         var placed = new ActorPose(new EvaluatedPose(), position, facing);
         _held.Clear();

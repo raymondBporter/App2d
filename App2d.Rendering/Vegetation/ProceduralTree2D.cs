@@ -17,7 +17,7 @@ public sealed class ProceduralTree2D
     public ProceduralTree2D(Vector2 root, float height, int seed)
     {
         ArgGuard.ThrowIfNotFinite(root);
-        ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
         _root = root;
         _height = height;
         Bounds = new(root - new Vector2(height, 0f), root + new Vector2(height, height * 1.5f));

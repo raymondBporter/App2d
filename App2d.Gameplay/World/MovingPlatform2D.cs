@@ -28,14 +28,13 @@ public sealed partial class MovingPlatform2D : IDisposable
         long thingId = 0,
         uint colorArgb = 0xFF25D2BE)
     {
-        if (!id.IsValid)
-            throw new ArgumentException("A platform requires a valid entity ID.", nameof(id));
+        ArgGuard.ThrowIf(!id.IsValid, "A platform requires a valid entity ID.", nameof(id));
         Id = id;
         _physics = ArgGuard.RequireNotNull(physics);
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(travel);
-        ArgGuard.ThrowIfNotPositive(size);
-        ArgGuard.ThrowIfNotPositive(speed);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(size);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(speed);
         if (travel.LengthSquared() <= float.Epsilon)
             ArgGuard.ThrowOutOfRange(travel, "A moving platform needs a non-zero travel path.");
 
@@ -76,7 +75,7 @@ public sealed partial class MovingPlatform2D : IDisposable
 
     public void Update(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         if (deltaSeconds == 0f)
         {
             Body.LinearVelocity = Vector2.Zero;

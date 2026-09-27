@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Curves;
 using App2d.Core.Geometry;
 using System.Numerics;
@@ -20,10 +21,10 @@ internal static class SplineSilhouette2D
         float tipRadius,
         float overlap)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(length);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rootRadius);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(tipRadius);
-        ArgumentOutOfRangeException.ThrowIfNegative(overlap);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(length);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(rootRadius);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(tipRadius);
+        ArgGuard.ThrowIfNotFiniteOrNegative(overlap);
 
         var startX = -overlap;
         var endX = length + overlap;
@@ -46,7 +47,7 @@ internal static class SplineSilhouette2D
 
     public static ConvexPolygon2D CreateTorso(float length)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(length);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(length);
         const float startX = -8f;
         var endX = length + 9f;
         const float hipRadius = 27f;

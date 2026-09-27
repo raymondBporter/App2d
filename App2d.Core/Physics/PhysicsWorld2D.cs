@@ -73,7 +73,7 @@ public sealed partial class PhysicsWorld2D
 
     public void Step(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         if (deltaSeconds == 0f)
             return;
         StateGuard.ThrowIfNotPositive(MaxSubstepSeconds);
