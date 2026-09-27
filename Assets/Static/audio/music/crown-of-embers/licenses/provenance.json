@@ -1,0 +1,7 @@
+{
+  "soundfont": "GeneralUser GS 2.0.3 \u2014 S. Christian Collins",
+  "source": "https://github.com/mrbumpy409/GeneralUser-GS",
+  "sha256": "9575028c7a1f589f5770fccc8cff2734566af40cd26ed836944e9a5152688cfe",
+  "composition": "Original score created for App2d; no third-party melody input.",
+  "synthesis": "FluidSynth 2.6.1; offline only."
+}

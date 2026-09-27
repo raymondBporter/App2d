@@ -10,6 +10,7 @@ namespace App2d.Gameplay.World.Presentation;
 /// <summary>Camera-streamed foliage; only the simulation's observation supplies cut state.</summary>
 public sealed class VegetationPresentation2D
 {
+    private const float CutRoughness = 0.45f;
     private readonly Dictionary<TileChunk2D, Chunk> _chunks = [];
     private readonly List<GrassClipping2D> _clippings = [];
     internal int ClippingCount => _clippings.Count;
@@ -142,7 +143,8 @@ public sealed class VegetationPresentation2D
                 patch.Root + new Vector2(patch.Size * 1.5f, patch.Size * 1.2f));
             if (bounds.Intersects(visible))
                 patch.Visual.Render(renderer, visible.Left, visible.Right, wind,
-                    _cuts?.Contains(patch.Cell) == true ? patch.Size * VegetationPlacement2D.CutHeightInTiles : null);
+                    _cuts?.Contains(patch.Cell) == true ? patch.Size * VegetationPlacement2D.CutHeightInTiles : null,
+                    CutRoughness);
         }
         foreach (var piece in _clippings)
         {
@@ -157,7 +159,7 @@ public sealed class VegetationPresentation2D
     {
         var random = new Random(VegetationPlacement2D.Seed(patch.Cell.X, patch.Cell.Y));
         var scale = patch.Size / 32f;
-        foreach (var tip in patch.Visual.CreateClippings(patch.Size * VegetationPlacement2D.CutHeightInTiles, Wind()))
+        foreach (var tip in patch.Visual.CreateClippings(patch.Size * VegetationPlacement2D.CutHeightInTiles, Wind(), CutRoughness))
         {
             if (_clippings.Count >= 256) break;
             _clippings.Add(new(tip,

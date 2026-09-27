@@ -11,7 +11,7 @@ public readonly record struct AnimationEvent(string Kind, string Id, string? Sou
 
 /// <summary>Everything an animator needs to resume exactly; immutable, for rollback and snapshots.</summary>
 public sealed record AnimatorState(string Role, double RoleTime, string? Action, double ActionTime, double PreviousActionTime, int ActionSequence,
-    bool Fresh, int Facing, ImmutableDictionary<string, Vector3> Anchors);
+    bool Fresh, int Facing, ImmutableDictionary<string, Vector3> Anchors, bool ReverseRoleMotion = false);
 
 /// <summary>
 /// Gameplay animation state for one actor: locomotion phase, the playing action, world contact anchors and event
@@ -26,6 +26,7 @@ public sealed class EntityAnimator
 {
     private readonly ContactHold _hold = new();
     private bool _fresh;
+    private bool _reverseRoleMotion;
 
     public EntityAnimator(ResolvedEntity entity)
     {
@@ -72,16 +73,16 @@ public sealed class EntityAnimator
     /// Switches to a role from its start, even the one already playing, as a reaction restarts on a second hit. Ends any
     /// action and releases every anchor. A one-shot role then holds its last frame.
     /// </summary>
-    public void Play(string role)
+    public void Play(string role, bool reverseHorizontalMotion = false)
     {
         if (Entity.Clip(role) is null) throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role.");
-        Action = null; Role = role; RoleTime = 0; _hold.Clear();
+        Action = null; Role = role; RoleTime = 0; _hold.Clear(); _reverseRoleMotion = reverseHorizontalMotion;
     }
 
     /// <summary>A teleport or respawn: drop the action, the phase and every anchor.</summary>
     public void Reset(string role = EntityControllers.Idle)
     {
-        Action = null; ActionTime = PreviousActionTime = RoleTime = 0; Role = role; _hold.Clear();
+        Action = null; ActionTime = PreviousActionTime = RoleTime = 0; Role = role; _hold.Clear(); _reverseRoleMotion = false;
     }
 
     /// <summary>
@@ -107,7 +108,7 @@ public sealed class EntityAnimator
             if (role != Role)
             {
                 if (Entity.Clip(role) is null) throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role; the controller must choose an assigned role or hold.");
-                Role = role; RoleTime = 0; _hold.Clear();
+                Role = role; RoleTime = 0; _hold.Clear(); _reverseRoleMotion = false;
             }
             var clip = Entity.Clip(Role)!;
             if (!hold)
@@ -129,7 +130,8 @@ public sealed class EntityAnimator
         {
             var clip = Entity.Clip(Role);
             var overlay = action is null ? null : new PoseLayer(action.Clip, ActionTime, action.Mask!, action.Weight(ActionTime));
-            Pose = _hold.Evaluate(Entity.Model, clip, RoleTime, clip?.Loop == true, position, Facing, new(expression) { Overlay = overlay });
+            Pose = _hold.Evaluate(Entity.Model, clip, RoleTime, clip?.Loop == true, position, Facing,
+                new(expression) { Overlay = overlay, ReverseHorizontalMotion = _reverseRoleMotion });
             return;
         }
         Pose = _hold.Evaluate(Entity.Model, action.Clip, ActionTime, false, position, Facing, new(expression));
@@ -163,12 +165,13 @@ public sealed class EntityAnimator
         void Add(string id) => events.Add(new(AnimationEvent.MarkerKind, id, null, action, ActionSequence));
     }
 
-    public AnimatorState Capture() => new(Role, RoleTime, Action, ActionTime, PreviousActionTime, ActionSequence, _fresh, Facing, _hold.Capture());
+    public AnimatorState Capture() => new(Role, RoleTime, Action, ActionTime, PreviousActionTime, ActionSequence, _fresh, Facing, _hold.Capture(), _reverseRoleMotion);
 
     public void Restore(AnimatorState state, Vector2 position, string? expression = null)
     {
         Role = state.Role; RoleTime = state.RoleTime; Action = state.Action; ActionTime = state.ActionTime; PreviousActionTime = state.PreviousActionTime;
         ActionSequence = state.ActionSequence; _fresh = state.Fresh; Facing = state.Facing;
+        _reverseRoleMotion = state.ReverseRoleMotion;
         _hold.Restore(state.Anchors, state.Facing);
         Evaluate(position, expression);
     }

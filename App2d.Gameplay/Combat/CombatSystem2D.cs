@@ -25,7 +25,10 @@ public sealed class CombatSystem2D(
         uint targetLayer,
         int damage,
         Func<ICombatant2D, Vector2> knockback,
-        bool stopAfterFirstHit = false)
+        bool stopAfterFirstHit = false,
+        CombatImpactKind2D impactKind = CombatImpactKind2D.Generic,
+        Vector2 impactDirection = default,
+        EntityId2D attackerId = default)
     {
         ArgGuard.ThrowIfNull(hitbox);
         if (!attackSourceId.IsValid)
@@ -43,7 +46,17 @@ public sealed class CombatSystem2D(
                 continue;
             }
 
-            Damage(combatant, damage, knockback(combatant));
+            var force = knockback(combatant);
+            var direction = impactDirection == Vector2.Zero ? force : impactDirection;
+            if (direction.LengthSquared() > 0) direction = Vector2.Normalize(direction);
+            var position = combatant is IAuthoredHurt2D hurt ? hurt.HurtContact(hitbox.WorldBounds)
+                : Vector2.Clamp(hitbox.WorldBounds.Center, combatant.WorldObject.WorldBounds.Min, combatant.WorldObject.WorldBounds.Max);
+            var contact = new CombatContact2D(attackSourceId, attackId,
+                position ?? combatant.WorldObject.Transform.Position, direction, impactKind)
+                { AttackerId = attackerId.IsValid ? attackerId : attackSourceId };
+            // Physical contact can still bounce a downward attack off an invulnerable target.
+            // Only accepted damage emits the contact fact used by audiovisual feedback.
+            Damage(combatant, damage, force, contact);
             hitAny = true;
             if (stopAfterFirstHit)
                 break;
@@ -93,7 +106,7 @@ public sealed class CombatSystem2D(
         }
     }
 
-    private void Damage(ICombatant2D combatant, int damage, Vector2 knockback)
+    private void Damage(ICombatant2D combatant, int damage, Vector2 knockback, CombatContact2D? contact = null)
     {
         var wasAlive = combatant.IsAlive;
         if (!combatant.TakeDamage(damage, knockback))
@@ -102,6 +115,6 @@ public sealed class CombatSystem2D(
         var killed = wasAlive && !combatant.IsAlive;
         if (killed && combatant.Faction == CombatFaction2D.Enemy) DefeatedEnemies++;
         DamageResolved?.Invoke(new CombatDamage2D(combatant.Id, combatant.Faction,
-            combatant.WorldObject.Transform.Position, killed));
+            combatant.WorldObject.Transform.Position, killed) { Contact = contact });
     }
 }

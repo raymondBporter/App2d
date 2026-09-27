@@ -78,7 +78,8 @@ public sealed class ObservationRoundTripTests
             new Damaged2D(stamp), new Died2D(stamp), new Respawned2D(stamp, position),
             new GoalReached2D(stamp), new CheckpointActivated2D(stamp, 42, 3, position),
             new EquipmentChanged2D(stamp, EquipmentKind2D.Gun), new AttackStarted2D(stamp, PlayerAttackKind2D.Downward, 0.4f, true),
-            new CombatDamageOccurred2D(stamp, new(enemyId, CombatFaction2D.Enemy, position, true))
+            new CombatDamageOccurred2D(stamp, new(enemyId, CombatFaction2D.Enemy, position, true)
+                { Contact = new CombatContact2D(new(777), 17, position + Vector2.UnitX, -Vector2.UnitX, CombatImpactKind2D.Sword) { AttackerId = playerId } })
         };
         EnemyEvent2D[] enemyEvents = [new HammerStarted2D(enemyId, position), new HammerStruck2D(enemyId, position),
             new RivalAttackStarted2D(enemyId, position, UnarmedAttackKind2D.Kick, 0.3f),

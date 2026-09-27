@@ -90,9 +90,11 @@ internal abstract partial class MeleePersonWeapon2D(
                 ownerFaction,
                 targetLayer,
                 damage,
-                _ => new Vector2(_attackDirection * knockback.X, knockback.Y)))
+                _ => new Vector2(_attackDirection * knockback.X, knockback.Y),
+                impactKind: CombatImpactKind2D.Sword,
+                impactDirection: knockback.X == 0 ? new Vector2(0, MathF.Sign(knockback.Y)) : new Vector2(_attackDirection, 0),
+                attackerId: _ownerBody.EntityId))
         {
-            ReportImpact(_attack.WorldObject.Transform.Position);
             OnHit();
         }
     }

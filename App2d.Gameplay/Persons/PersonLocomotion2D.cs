@@ -158,7 +158,8 @@ public sealed partial class PersonLocomotion2D
 
     public void UpdateAfterPhysics(float deltaSeconds)
     {
-        if (IsClimbingLadder && TryFindLadder(out _))
+        if (IsClimbingLadder && TryFindLadder(out _) &&
+            !(_intent.ClimbY <= 0f && HasGroundSupport(Metrics.GroundProbeDistance)))
         {
             IsGrounded = false;
             return;

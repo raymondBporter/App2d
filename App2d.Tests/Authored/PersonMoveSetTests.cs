@@ -55,6 +55,28 @@ public sealed class PersonMoveSetTests
     }
 
     [Fact]
+    public void SwordReturnDoesNotAddAFullTurnAndMeetsTheBackHilt()
+    {
+        foreach (var id in new[] { "player-sword-put-away", "player-sword-put-away-backhand" })
+        {
+            var clip = Catalog.Animations[id];
+            var keys = clip.Tracks.Single(t => t.Kind == MotionClip.RotateKind && t.Target == "right-shoulder").Keys;
+            for (var i = 1; i < keys.Count; i++)
+                Assert.InRange(MathF.Abs(keys[i].Angle - keys[i - 1].Angle), 0, MathF.PI);
+            var time = clip.Markers.Single(m => m.Id == PersonLoadout.SheatheMarker).Time;
+            var pose = new ActorPose(PoseEvaluator.Sample(Person, clip, time), Vector2.Zero, 1);
+            var hand = pose.Socket(Person.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket));
+            var back = pose.Socket(Person.Base.Sockets.Single(s => s.Id == PersonLoadout.BackSocket));
+            var sword = Catalog.Props[PersonLoadout.Sword];
+            foreach (var point in new PuppetPoint[] { new(0, 0, 0), new(sword.Tip.X, 0, 0) })
+            {
+                var a = ActorPose.PropPoint(hand, sword, point); var b = ActorPose.PropPoint(back, sword, point);
+                Assert.InRange(Vector2.Distance(new(a.X, a.Y), new(b.X, b.Y)), 0, .01f);
+            }
+        }
+    }
+
+    [Fact]
     public void BackViewMarkersMoveTheSwordAcrossTheBack()
     {
         var on = Catalog.Animations["player-climb-on"]; var climb = Catalog.Animations["player-climb"]; var off = Catalog.Animations["player-climb-off"];

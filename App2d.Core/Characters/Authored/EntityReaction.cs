@@ -13,18 +13,18 @@ public sealed class EntityReaction
     public float Stagger { get; private set; }
     public bool Staggered => Stagger > 0;
 
-    public void Hit(EntityAnimator animator)
+    public void Hit(EntityAnimator animator, int incomingDirection = 0)
     {
         animator.EndAction();
         var clip = animator.Entity.Clip(EntityControllers.Hit);
         Stagger = clip?.Duration ?? DefaultStaggerSeconds;
-        if (clip is not null) animator.Play(EntityControllers.Hit);
+        if (clip is not null) animator.Play(EntityControllers.Hit, incomingDirection * animator.Facing > 0);
     }
 
-    public void Die(EntityAnimator animator)
+    public void Die(EntityAnimator animator, int incomingDirection = 0)
     {
         animator.EndAction(); Stagger = 0;
-        if (animator.Entity.Clip(EntityControllers.Death) is not null) animator.Play(EntityControllers.Death);
+        if (animator.Entity.Clip(EntityControllers.Death) is not null) animator.Play(EntityControllers.Death, incomingDirection * animator.Facing > 0);
     }
 
     /// <summary>Counts the stagger down. True on the step it ends, when the controller applies its recovery cooldown.</summary>

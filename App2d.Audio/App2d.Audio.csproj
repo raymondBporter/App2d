@@ -9,5 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
     <PackageReference Include="NAudio" Version="3.0.1" />
+    <PackageReference Include="NVorbis" Version="0.10.4" />
   </ItemGroup>
 </Project>

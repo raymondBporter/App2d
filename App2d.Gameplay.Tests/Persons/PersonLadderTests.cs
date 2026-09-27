@@ -160,15 +160,61 @@ public sealed class PersonLadderTests
         Assert.True(_person.Position.X > 160f);
     }
 
-    [Fact]
-    public void DescendingThroughOneWaySupportDoesNotGetStuck()
+    [Theory]
+    [InlineData(8)] // One empty tile between the ladder and the floor.
+    [InlineData(7)] // The ladder touches the floor.
+    [InlineData(1)] // The ladder continues below the floor.
+    public void DescendingOntoOneWayFloorStopsAndStands(int firstLadderRow)
     {
-        var platform = AddSolid(new Vector2(144f, 250f), new Vector2(96f, 8f));
+        var platform = AddSolid(new Vector2(144f, 208f), new Vector2(96f, 32f));
         platform.IsOneWayPlatform = true;
         Step(climb: 1f, frames: 200);
-        Step(climb: -1f, frames: 160);
         Assert.True(_person.IsClimbingLadder);
-        Assert.True(_person.WorldObject.WorldBounds.Top < 246f);
+        Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);
+        for (var y = 1; y < firstLadderRow; y++)
+            _map.SetTileKind(4, y, TileKind2D.Empty);
+
+        Step(climb: -1f, frames: 240);
+
+        Assert.True(_person.IsGrounded);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.InRange(_person.WorldObject.WorldBounds.Bottom, 223.9f, 224.1f);
+        Assert.Equal(0, _person.Body.IgnoredOneWayPlatformCount);
+        Assert.Equal(1f, _person.Body.GravityScale);
+
+        Step(frames: 60);
+        Assert.True(_person.IsGrounded);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.InRange(_person.WorldObject.WorldBounds.Bottom, 223.9f, 224.1f);
+    }
+
+    [Theory]
+    [InlineData(7)]
+    [InlineData(1)]
+    public void DownAndJumpDeliberatelyDropsThroughFloorBesideLadder(int firstLadderRow)
+    {
+        DescendingOntoOneWayFloorStopsAndStands(firstLadderRow);
+
+        Step(climb: -1f, down: true, jump: true);
+
+        Assert.False(_person.IsGrounded);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.Body.LinearVelocity.Y < 0f);
+        Assert.Equal(1, _person.Body.IgnoredOneWayPlatformCount);
+        Step(climb: -1f, down: true, frames: 120);
+        Assert.True(_person.WorldObject.WorldBounds.Top < 192f);
+    }
+
+    [Fact]
+    public void CanClimbUpAgainFromOneWayFloorTouchingLadder()
+    {
+        DescendingOntoOneWayFloorStopsAndStands(7);
+
+        Step(climb: 1f, frames: 30);
+
+        Assert.True(_person.IsClimbingLadder);
+        Assert.False(_person.IsGrounded);
+        Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);
     }
 
     [Fact]
@@ -219,13 +265,13 @@ public sealed class PersonLadderTests
     }
 
     private void Step(float climb = 0f, float move = 0f, bool jump = false,
-        bool jumpOff = false, bool dash = false, int frames = 1)
+        bool jumpOff = false, bool dash = false, int frames = 1, bool down = false)
     {
         for (var i = 0; i < frames; i++)
         {
             _person.BeginFrame(Dt);
             _person.ApplyCommand(new PersonCommand2D
-            { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash }, Dt);
+            { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash, DownHeld = down }, Dt);
             _physics.Step(Dt);
             _person.UpdateAfterPhysics(Dt);
         }

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "cues": ["crown-of-embers", "copper-circuit"],
+  "default": { "piece": "crown-of-embers", "mood": "drive" },
+  "zones": {
+    "trailhead": { "piece": "crown-of-embers", "mood": "explore" },
+    "copper-reach": { "piece": "copper-circuit", "mood": "drive" },
+    "high-keep": { "piece": "crown-of-embers", "mood": "combat" }
+  }
+}

@@ -128,12 +128,14 @@ in-memory and level-blob detail. The level metadata stores the ordered, stable t
 
 Exposed plain solid tiles grow seeded grass, using the Noodle vegetation prototype's
 anchored wind equation and batched geometry. Active sword strikes (including downward
-attacks) cut a tile's tuft at `VegetationPlacement2D.CutHeightInTiles` (0.35 tiles).
+attacks) cut a tile's tuft around `VegetationPlacement2D.CutHeightInTiles` (0.35 tiles),
+with seeded per-blade height variation for a ragged edge and matching severed tops.
 The actual severed tops, including flowers, launch upward, tumble and flutter with
 the wind, and fall under gravity. They disappear on terrain contact or fade out
-within one second. Cuts survive chunk streaming,
-snapshot attachment, and rollback for the current session; they reset on a new game
-process and are not written to the level or player save. Seeded branching trees occupy
+within one second. Cut state is limited to the nearby active simulation chunks and
+forgotten when those chunks unload, so returning grass is full height. Snapshot
+attachment and rollback preserve this bounded state; cuts are not written to the
+level or player save. Seeded branching trees occupy
 open stretches behind the terrain and actors; they are decorative and cannot be chopped.
 The shared rendering code lives in `App2d.Rendering/Vegetation`, and the original lab
 is available with `dotnet run --project App2d.Noodle -- --vegetation`.
@@ -450,6 +452,13 @@ at 800 (25 tiles); hammer impacts use 128 and 1200 units. Out-of-range one-shots
 skipped. Player movement/feedback and global cues use `Play`/`Begin` at their normal levels.
 Set `sfx_volume` in the developer
 console to a value from 0 through 1 to adjust the master sound-effect level.
+
+Music plays automatically from four synchronized Ogg stems on a separate streaming
+bus. Rectangular world zones choose the piece and mood, with a default outside zones
+and smooth transitions. `music_volume`, `music_piece`, `music_mood`, `music_status`
+and `draw_zones` are available in the developer console. Geometry is authored in
+`Assets/Static/levels/cavern/zones.json`; music assignments live in
+`Assets/Static/audio/music/soundtrack.json`. See [music and zones](docs/music-and-zones.md).
 
 Person movement is owned by `App2d.Gameplay/Persons/PersonLocomotion2D`. `PersonMovementIntent2D` describes
 what a human or AI controller requested; locomotion turns that into desired velocity and grace-window

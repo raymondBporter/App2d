@@ -8,6 +8,18 @@ if (args.SequenceEqual(["--migrate-level"]))
 
 ApplicationConfiguration.Initialize();
 
+if (args is ["--hitstop-study", var timingDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(timingDirectory, timingOnly: true);
+    return;
+}
+
+if (args is ["--contact-study", var contactDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(contactDirectory, contactOnly: true);
+    return;
+}
+
 if (args is ["--face-smoke", var faceDirectory])
 {
     App2d.Diagnostics.RenderingSmoke2D.Run(faceDirectory, facesOnly: true);

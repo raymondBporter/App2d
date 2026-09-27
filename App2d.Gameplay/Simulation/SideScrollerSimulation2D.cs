@@ -62,7 +62,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
         var groundHeights = TileGroundHeights2D.Derive(definition.TileMap);
         var level = new SideScrollerLevel2D(traversal, definition.TileMap,
             x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)],
-            definition.MovingPlatforms, definition.WorldThings);
+            definition.MovingPlatforms, definition.WorldThings, definition.Zones);
         var respawn = ResolveRespawn(level, definition);
         level.CreateSimulation(collision, physics, ids,
             SideScrollerLayers2D.World, SideScrollerLayers2D.Player, SideScrollerLayers2D.Enemy);

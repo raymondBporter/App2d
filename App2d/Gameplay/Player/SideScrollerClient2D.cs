@@ -31,6 +31,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private readonly TraversalDebugRenderer2D _traversalDebug;
     private readonly WeaponPresentation2D _weapons;
     private readonly EnemyPresentation2D _enemies;
+    private readonly CombatContactPresentation2D _contacts;
     private readonly WorldPresentation2D _world;
     private SoundEffectVoice2D _jumpSound;
     private float _saveFeedbackSeconds;
@@ -58,11 +59,13 @@ internal sealed class SideScrollerClient2D : IDisposable
         _weapons = new WeaponPresentation2D(scene, textures, WorldSounds);
         _weapons.ApplyState(initialState.Weapons, initialState.Equipment, []);
         _enemies = new EnemyPresentation2D(scene, textures, traversal, WorldSounds);
+        _contacts = new CombatContactPresentation2D(scene);
         _enemies.ApplyState(initial.Enemies, [], initial.Tick);
         ApplyPlayerState();
     }
 
     public PlayerState2D State => _endpoint.State;
+    public LevelContent2D Content => _endpoint.Snapshot.Content;
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain) => _world.SetVisibleTerrain(terrain);
     public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);
     public void DrawGrass(Renderer2D renderer) => _world.DrawGrass(renderer, _camera.VisibleWorldBounds);
@@ -87,7 +90,6 @@ internal sealed class SideScrollerClient2D : IDisposable
     {
         if (!_endpoint.Apply(frame)) return;
         _world.ApplyState(frame.Content, frame.World);
-        _enemies.ApplyState(frame.Enemies, frame.Events.OfType<EnemyOccurred2D>().Select(e => e.Occurrence), frame.Tick);
         _weapons.ApplyState(State.Weapons, State.Equipment,
             frame.Events.OfType<WeaponOccurred2D>().Select(e => e.Occurrence));
 
@@ -95,6 +97,14 @@ internal sealed class SideScrollerClient2D : IDisposable
         {
             // Player-scoped facts belong to this client's player; other players' facts are not presented here yet.
             var isMine = occurrence.Stamp.EntityId == _endpoint.PlayerId;
+            if (occurrence is CombatDamageOccurred2D confirmed)
+            {
+                _contacts.Present(confirmed.Damage);
+                _presentation.PresentContact(confirmed.Damage, _endpoint.PlayerId, frame.Tick);
+                _enemies.PresentContact(confirmed.Damage);
+                if (confirmed.Damage.Contact is { Kind: CombatImpactKind2D.Sword } contact)
+                    WorldSounds.PlayAt(SoundEffect2D.SwordHit, contact.Position);
+            }
             switch (occurrence)
             {
                 case CombatDamageOccurred2D combat when combat.Damage.Faction != CombatFaction2D.Player &&
@@ -134,6 +144,8 @@ internal sealed class SideScrollerClient2D : IDisposable
                     _cameraController.Reset(respawn.Position);
                     _sounds.Play(SoundEffect2D.PlayerRespawn);
                     _weapons.Reset();
+                    _contacts.Reset();
+                    _enemies.ResetContact();
                     break;
                 case GoalReached2D when isMine: _sounds.Play(SoundEffect2D.GoalReached); _presentation.PlayCelebrate(); break;
                 case CheckpointActivated2D checkpoint when isMine: CheckpointActivated?.Invoke(checkpoint); break;
@@ -144,12 +156,14 @@ internal sealed class SideScrollerClient2D : IDisposable
             }
         }
 
+        _enemies.ApplyState(frame.Enemies, frame.Events.OfType<EnemyOccurred2D>().Select(e => e.Occurrence), frame.Tick);
         UpdateJumpSound();
         ApplyPlayerState();
     }
 
     private void PresentAttack(AttackStarted2D attack)
     {
+        _presentation.ResetContact();
         if (attack.Kind is PlayerAttackKind2D.Melee or PlayerAttackKind2D.Downward)
             _sounds.Play(SoundEffect2D.SwordSwing);
     }
@@ -167,6 +181,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _world.Advance(deltaSeconds);
         Ballistics.Advance(deltaSeconds);
         _enemies.Advance(deltaSeconds);
+        _contacts.Advance(deltaSeconds);
         _weapons.Advance(deltaSeconds);
         _presentation.Advance(deltaSeconds);
         _cameraController.Update(State.Person.Position, State.Person.LinearVelocity, State.Person.IsGrounded, deltaSeconds);
@@ -174,6 +189,7 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public void RefreshEditorWorld(ImmutableArray<EnemyState2D> enemies, LevelContent2D content, WorldState2D world)
     {
+        _enemies.ResetContact(); _presentation.ResetContact();
         _world.ApplyState(content, world);
         _enemies.ApplyState(enemies, [], _endpoint.Tick);
     }
@@ -192,6 +208,8 @@ internal sealed class SideScrollerClient2D : IDisposable
     {
         EndJumpSound();
         _weapons.Suspend();
+        _contacts.Reset();
+        _enemies.ResetContact(); _presentation.ResetContact();
         _input.Reset();
     }
 
@@ -232,6 +250,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         EndJumpSound();
         _world.Dispose();
         _enemies.Dispose();
+        _contacts.Dispose();
         _weapons.Dispose();
         _presentation.Dispose();
     }

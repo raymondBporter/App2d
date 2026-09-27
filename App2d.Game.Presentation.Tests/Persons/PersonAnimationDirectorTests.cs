@@ -94,6 +94,49 @@ public sealed class PersonAnimationDirectorTests
     }
 
     [Fact]
+    public void SwordRecoveryIsNotInterruptedByAnEarlierLanding()
+    {
+        var d = new Driver();
+        d.Step(Standing with { LandingSpeedThisFrame = 8 });
+        var cut = Moves.Swing(null);
+        d.Step(Standing with { Action = new(PlayerAttackKind2D.Melee, .1f, cut.Clip.Duration, cut.Id) });
+        for (var i = 0; i < 45; i++)
+        {
+            var frame = d.Step(Standing);
+            Assert.Equal(cut.Recovery!.Id, frame.Key);
+            Assert.True(PersonLoadout.SwordInHand(frame.PropClip, (float)frame.PropSeconds));
+            Assert.Equal(i / 120.0, frame.PropSeconds, 5);
+        }
+    }
+
+    [Fact]
+    public void SwordRecoveryKeepsItsClockAndAttachmentThroughMovementAndLanding()
+    {
+        var d = new Driver();
+        var cut = Moves.Swing(null);
+        d.Step(Standing with { Action = new(PlayerAttackKind2D.Melee, .1f, cut.Clip.Duration, cut.Id) });
+        var recovery = cut.Recovery!;
+        var home = recovery.Markers.Single(m => m.Id == PersonLoadout.SheatheMarker).Time;
+        for (var i = 0; i < 60; i++)
+        {
+            var state = i < 15 ? Standing with { LinearVelocity = new(4, 0) }
+                : i < 30 ? Standing with { IsGrounded = false, LinearVelocity = new(-4, -2), Facing = -1 }
+                : Standing;
+            var frame = d.Step(state);
+            if (i / 120.0 >= recovery.Duration) { Assert.Equal(PersonMoves.Idle, frame.Key); continue; }
+            Assert.Equal(recovery.Id, frame.PropClip.Id);
+            Assert.Equal(i / 120.0, frame.PropSeconds, 5);
+            Assert.Equal(i / 120.0 < home, PersonLoadout.SwordInHand(frame.PropClip, (float)frame.PropSeconds));
+            if (i < 30)
+            {
+                Assert.NotEqual(recovery.Id, frame.Key);
+                Assert.Contains(PersonLoadout.SwordSocket, frame.Overlay!.Targets);
+                Assert.DoesNotContain("hips", frame.Overlay.Targets);
+            }
+        }
+    }
+
+    [Fact]
     public void GunShotsLayerTheArmsOverWhateverTheLegsAreDoing()
     {
         var d = new Driver(EquipmentKind2D.Gun);

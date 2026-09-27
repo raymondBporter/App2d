@@ -25,7 +25,8 @@ internal static class LevelBootstrap2D
         return new LoadedLevel2D(
             database.Load(TerrainTilesetIds),
             database.LoadMovingPlatforms(),
-            database.LoadPositionThings());
+            database.LoadPositionThings(),
+            WorldZoneFile2D.Load(Path.Combine(Path.GetDirectoryName(CavernLevelPath)!, "zones.json")));
     }
 
     /// <summary>
@@ -61,4 +62,5 @@ internal static class LevelBootstrap2D
 internal sealed record LoadedLevel2D(
     EditableTileMap2D TileMap,
     IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms,
-    IReadOnlyList<PositionThingRecord2D> PositionThings);
+    IReadOnlyList<PositionThingRecord2D> PositionThings,
+    System.Collections.Immutable.ImmutableArray<App2d.Gameplay.World.WorldZone2D> Zones);

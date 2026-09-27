@@ -34,6 +34,12 @@ thing definitions, placed instances, and their typed pieces. They are durable au
 `Runtime` like any other static asset. The `.db-wal` and `.db-shm` files SQLite leaves
 alongside are transient and are not committed.
 
+`levels/<id>/zones.json` adds reusable rectangular world regions beside a level.
+`audio/music/soundtrack.json` binds those IDs to music; cue folders contain Ogg
+stems, their playback manifests and licenses. Selected music is durable under
+`Static/audio/music`, so playing the game never requires Music Lab or its ignored
+working files. See [music and zones](../docs/music-and-zones.md).
+
 Character animation folders contain contiguous four-digit files beginning with
 `frame-0001.png`. The adjacent `character.json` records timing and looping but
 does not repeat folder paths. `characters/player-geometry.json` is generated from the
