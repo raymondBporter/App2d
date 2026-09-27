@@ -22,7 +22,7 @@ public sealed partial class GreenDinosaur2D(PatrolEnemy2D enemy) : IEnemyActor2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         ArgGuard.ThrowIfNotFinite(targetPosition);
         if (_simulationEnabled) Enemy.Update(deltaSeconds);
     }

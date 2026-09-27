@@ -25,7 +25,7 @@ internal sealed partial class MeleeAttack2D(
     // Identity belongs to this action source, not its owner: punch and kick
     // can have the same attack sequence number without suppressing each other.
     public EntityId2D SourceId { get; } = sourceId.IsValid ? sourceId
-        : throw new ArgumentException("A melee attack requires a valid source ID.", nameof(sourceId));
+        : throw ArgGuard.CreateInvalid("A melee attack requires a valid source ID.", nameof(sourceId));
     public int AttackId { get; private set; }
     public float DurationSeconds => Profile.DurationSeconds;
     public float ElapsedSeconds => _elapsedSeconds;
@@ -53,7 +53,7 @@ internal sealed partial class MeleeAttack2D(
     /// </summary>
     public bool Update(float deltaSeconds, Vector2 ownerPosition, float facing)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         ArgGuard.ThrowIfNotFinite(ownerPosition);
         ArgGuard.ThrowIfNotFinite(facing);
 
@@ -125,21 +125,16 @@ internal readonly record struct MeleeAttackProfile2D
         float forwardOffset,
         float verticalOffset = 0f)
     {
-        ArgGuard.ThrowIfNotPositive(durationSeconds);
-        ArgGuard.ThrowIfNegativeOrNotFinite(damageStartSeconds);
-        ArgGuard.ThrowIfGreaterThanOrEqual(
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(durationSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(damageStartSeconds);
+        ArgGuard.ThrowIfNotFiniteOrGreaterThanOrEqual(
             damageStartSeconds,
             durationSeconds);
-        ArgGuard.ThrowIfLessThanOrEqual(
+        ArgGuard.ThrowIfNotFiniteOrLessThanOrEqual(
             damageEndSeconds,
             damageStartSeconds);
-        if (damageEndSeconds > durationSeconds)
-        {
-            ArgGuard.ThrowOutOfRange(
-                damageEndSeconds,
-                "Damage end must not exceed the attack duration.");
-        }
-        ArgGuard.ThrowIfNegativeOrNotFinite(inputBufferSeconds);
+        ArgGuard.ThrowIfGreaterThan(damageEndSeconds, durationSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(inputBufferSeconds);
         ArgGuard.ThrowIfNotFinite(forwardOffset);
         ArgGuard.ThrowIfNotFinite(verticalOffset);
 

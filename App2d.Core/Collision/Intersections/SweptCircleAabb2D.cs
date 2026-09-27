@@ -10,7 +10,7 @@ public static class SweptCircleAabb2D
 
     public static bool TryIntersect(Vector2 start, Vector2 end, float radius, Bounds2D bounds, out SweptCircleHit2D hit)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         if (!bounds.IsFinite)
         {
             hit = default;

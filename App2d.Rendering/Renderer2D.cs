@@ -265,8 +265,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawScreenRoundedRectangle(ScreenRectangle2D bounds, float radius, XnaColor color, float strokeWidth = 0f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
-        ArgGuard.ThrowIfNegativeOrNotFinite(strokeWidth);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
+        ArgGuard.ThrowIfNotFiniteOrNegative(strokeWidth);
         if (bounds.Width <= 0 || bounds.Height <= 0) return;
         SelectBatch(null, null);
         Span<Vector2> points = stackalloc Vector2[36];
@@ -349,8 +349,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawWorldCircle(Vector2 center, float radius, XnaColor color, float strokeWidth = 2f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
-        ArgGuard.ThrowIfNotPositive(strokeWidth);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(strokeWidth);
         SelectBatch(null, null);
         Span<Vector2> points = stackalloc Vector2[128];
         var segments = CurveSegments(radius, _camera.WorldToDeviceMatrix);
@@ -361,7 +361,7 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, XnaColor color, float strokeWidth = 2f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNotPositive(strokeWidth);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(strokeWidth);
         SelectBatch(null, null);
         for (var i = 1; i < points.Length; i++)
             Line(_camera.WorldToDevice(points[i - 1]), _camera.WorldToDevice(points[i]), color, strokeWidth);
@@ -370,7 +370,7 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNotPositive(spacing);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(spacing);
         ArgGuard.ThrowIfNotPositive(majorLineEvery);
         SelectBatch(null, null);
         var visible = _camera.VisibleWorldBounds;
@@ -391,7 +391,7 @@ public sealed partial class Renderer2D : IDisposable
     {
         RequireFrame();
         ArgGuard.ThrowIfNull(item);
-        ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
         if (IsCulled(item)) return;
         SelectBatch(null, null);
         OutlineShape(item.Shape, item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix, color, screenStrokeWidth);
@@ -401,7 +401,7 @@ public sealed partial class Renderer2D : IDisposable
     {
         RequireFrame();
         ArgGuard.ThrowIfNull(item);
-        ArgGuard.ThrowIfNotPositive(screenStrokeWidth);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
         if (IsCulled(item)) return;
         var matrix = item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
         var bounds = item.LocalBounds.IsFinite ? item.LocalBounds : GetVisibleLocalBounds(matrix);

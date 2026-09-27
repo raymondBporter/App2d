@@ -87,7 +87,7 @@ public sealed class SideScrollerGame : Game2D
             tileMap.WorldBounds, startPosition, CameraFloorY);
         DeveloperConsole.RegisterVariable("camera_zoom", () => Camera.Zoom, value =>
         {
-            ArgGuard.ThrowIfNotPositive(value);
+            ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
             Camera.Zoom = value;
         }, "Camera zoom (0.05 to 20; default 1.35). Larger values zoom in.");
 

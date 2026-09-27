@@ -7,7 +7,7 @@ public class Rectangle2D : IConvexShape2D, IRect2D
 {
     public Rectangle2D(Vector2 min, Vector2 max)
     {
-        ArgGuard.ThrowIfNotComponentWiseLessThan(min, max);
+        ArgGuard.ThrowIfNotFiniteOrNotComponentWiseLessThan(min, max);
         Min = min;
         Max = max;
     }
@@ -26,7 +26,7 @@ public class Rectangle2D : IConvexShape2D, IRect2D
 
     public static Rectangle2D FromSize(Vector2 size, Vector2 center = default)
     {
-        ArgGuard.ThrowIfNotPositive(size);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(size);
         ArgGuard.ThrowIfNotFinite(center);
 
         var halfSize = size / 2f;

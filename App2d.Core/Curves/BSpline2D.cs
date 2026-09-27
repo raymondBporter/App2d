@@ -16,14 +16,13 @@ public sealed class BSpline2D : ICurve2D
 
     public BSpline2D(IEnumerable<Vector2> controlPoints, int degree = 3)
     {
-        ArgumentNullException.ThrowIfNull(controlPoints);
-        if (degree < 1)
-            throw new ArgumentOutOfRangeException(nameof(degree), degree, "Degree must be positive.");
+        ArgGuard.ThrowIfNull(controlPoints);
+        ArgGuard.ThrowIfNotPositive(degree);
 
         _controlPoints = [.. controlPoints];
         if (_controlPoints.Length <= degree)
         {
-            throw new ArgumentException(
+            throw ArgGuard.CreateInvalid(
                 $"A degree-{degree} B-spline needs at least {degree + 1} control points.",
                 nameof(controlPoints));
         }

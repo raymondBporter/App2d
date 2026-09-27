@@ -23,7 +23,7 @@ public static class Projection2D
     public static Interval1D Polygon(IReadOnlyList<Vector2> vertices, Vector2 axis, Vector2 offset = default)
     {
         ArgGuard.ThrowIfNull(vertices);
-        if (vertices.Count == 0) throw new ArgumentException("At least one vertex is required.", nameof(vertices));
+        ArgGuard.ThrowIf(vertices.Count == 0, "At least one vertex is required.", nameof(vertices));
         var min = Vector2.Dot(vertices[0] + offset, axis);
         var max = min;
         for (var i = 1; i < vertices.Count; i++)

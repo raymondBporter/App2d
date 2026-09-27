@@ -16,7 +16,7 @@ public static class RayIntersection2D
         out RayHit2D hit)
     {
         ArgGuard.ThrowIfNull(worldObject);
-        ValidateMaxDistance(maxDistance);
+        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
 
         var worldBounds = worldObject.WorldBounds;
         if (worldBounds.IsFinite && !IntersectsBounds(ray, worldBounds, maxDistance))
@@ -59,7 +59,7 @@ public static class RayIntersection2D
         Bounds2D bounds,
         float maxDistance)
     {
-        ValidateMaxDistance(maxDistance);
+        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
         if (!bounds.IsFinite)
             return true;
 
@@ -390,9 +390,6 @@ public static class RayIntersection2D
         maximumDistance = Math.Min(maximumDistance, second);
         return minimumDistance <= maximumDistance;
     }
-
-    public static void ValidateMaxDistance(float maxDistance)
-        => ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
 
     private readonly record struct LocalRayHit(Vector2 Normal, float Distance);
 }

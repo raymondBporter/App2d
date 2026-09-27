@@ -1,3 +1,4 @@
+using App2d.Core;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
@@ -32,7 +33,8 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     /// <summary>Keys every channel mentioned in <paramref name="pose"/> at one time. Unmentioned channels interpolate through.</summary>
     public MoveBuilder Key(float time, Action<PoseKey> pose, string ease = ClipEase.Smooth)
     {
-        if (time < 0 || time > duration + 1e-4f) throw new ArgumentOutOfRangeException(nameof(time), $"{id}: key at {time} is outside 0..{duration}.");
+        if (time < 0 || time > duration + 1e-4f)
+            ArgGuard.ThrowOutOfRange(time, $"{id}: key at {time} is outside 0..{duration}.");
         pose(new PoseKey(this, MathF.Min(time, duration), ease)); return this;
     }
 

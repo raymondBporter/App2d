@@ -17,7 +17,7 @@ public static class VertexGenerator2D
     {
         ArgGuard.ThrowIfTooShort(vertices, 3);
         ArgGuard.ThrowIfNotFinite(center);
-        ValidateRadii(radii);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radii);
         for (var i = 0; i < vertices.Length; i++)
             vertices[i] = PointOnEllipse(center, radii, i * MathF.Tau / vertices.Length);
         return vertices.Length;
@@ -31,7 +31,7 @@ public static class VertexGenerator2D
     {
         ArgGuard.ThrowIfTooShort(vertices, 2);
         ArgGuard.ThrowIfNotFinite(center);
-        ValidateRadii(radii);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radii);
         ArgGuard.ThrowIfNotFinite(startAngle);
         ArgGuard.ThrowIfNotFinite(sweepAngle);
         for (var i = 0; i < vertices.Length; i++)
@@ -43,7 +43,7 @@ public static class VertexGenerator2D
     public static int WriteRectangle(Span<Vector2> vertices, Vector2 min, Vector2 max)
     {
         ArgGuard.ThrowIfTooShort(vertices, 4);
-        ValidateBox(min, max);
+        ArgGuard.ThrowIfNotFiniteOrNotComponentWiseGreaterThanOrEqual(max, min);
         vertices[0] = min;
         vertices[1] = new(max.X, min.Y);
         vertices[2] = max;
@@ -62,8 +62,8 @@ public static class VertexGenerator2D
         ArgGuard.ThrowIfNotPositive(segmentsPerCorner);
         var count = checked(4 * (segmentsPerCorner + 1));
         ArgGuard.ThrowIfTooShort(vertices, count);
-        ValidateBox(min, max);
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
+        ArgGuard.ThrowIfNotFiniteOrNotComponentWiseGreaterThanOrEqual(max, min);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         radius = Math.Min(radius, Math.Min(max.X - min.X, max.Y - min.Y) * 0.5f);
         for (var corner = 0; corner < 4; corner++)
         {
@@ -85,7 +85,7 @@ public static class VertexGenerator2D
         ArgGuard.ThrowIfTooShort(vertices, count);
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(end);
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         var axis = end - start;
         var angle = MathF.Atan2(axis.Y, axis.X);
         WriteArc(vertices[..capCount], end, new(radius), angle - MathF.PI / 2f, MathF.PI);
@@ -93,16 +93,4 @@ public static class VertexGenerator2D
         return count;
     }
 
-    private static void ValidateRadii(Vector2 radii)
-    {
-        ArgGuard.ThrowIfNotFinite(radii);
-        if (radii.X < 0f || radii.Y < 0f) throw new ArgumentOutOfRangeException(nameof(radii));
-    }
-
-    private static void ValidateBox(Vector2 min, Vector2 max)
-    {
-        ArgGuard.ThrowIfNotFinite(min);
-        ArgGuard.ThrowIfNotFinite(max);
-        if (min.X > max.X || min.Y > max.Y) throw new ArgumentOutOfRangeException(nameof(max));
-    }
 }

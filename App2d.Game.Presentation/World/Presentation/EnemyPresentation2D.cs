@@ -35,7 +35,7 @@ public sealed class EnemyPresentation2D(
 
     public void Advance(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         _secondsSinceState += deltaSeconds;
         var states = _states.Select(s => !s.IsEnabled ? s : s with
         {
@@ -54,7 +54,7 @@ public sealed class EnemyPresentation2D(
     public void Update(ImmutableArray<EnemyState2D> states,
         IEnumerable<EnemyEvent2D> events, float dt, long tick)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(dt);
+        ArgGuard.ThrowIfNotFiniteOrNegative(dt);
         _states = states.IsDefault ? [] : states;
         _tick = tick;
         _secondsSinceState = 0f;
@@ -194,7 +194,7 @@ public sealed class EnemyPresentation2D(
                 EnemyKind2D.Shieldback => ("shieldback", new Vector2(144f, 108f), new Vector2(0f, 10f)),
                 EnemyKind2D.GreenDinosaur => ("green-dinosaur", new Vector2(112f), new Vector2(0f, 24f)),
                 EnemyKind2D.BoilerBrute => ("boiler-brute", new Vector2(196f), new Vector2(0f, 32f)),
-                _ => throw new ArgumentOutOfRangeException(nameof(kind))
+                _ => throw ArgGuard.CreateOutOfRange(kind, "Unknown enemy kind.")
             };
             _offset = offset;
             _walk = CharacterAnimationAssets2D.LoadClip(textures, asset, "walk");

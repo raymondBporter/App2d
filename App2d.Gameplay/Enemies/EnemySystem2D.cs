@@ -55,7 +55,7 @@ public sealed partial class EnemySystem2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         ArgGuard.ThrowIfNotFinite(targetPosition);
 
         foreach (var registered in _registeredEnemies)

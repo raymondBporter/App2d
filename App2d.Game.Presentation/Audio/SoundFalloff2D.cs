@@ -11,10 +11,8 @@ public sealed class SoundFalloff2D
 
     public SoundFalloff2D(float innerRadius, float outerRadius)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(innerRadius);
-        ArgGuard.ThrowIfNotPositive(outerRadius);
-        if (outerRadius <= innerRadius)
-            throw new ArgumentOutOfRangeException(nameof(outerRadius), "Outer radius must exceed inner radius.");
+        ArgGuard.ThrowIfNotFiniteOrNegative(innerRadius);
+        ArgGuard.ThrowIfNotFiniteOrLessThanOrEqual(outerRadius, innerRadius);
         InnerRadius = innerRadius;
         OuterRadius = outerRadius;
     }

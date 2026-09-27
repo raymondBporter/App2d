@@ -55,13 +55,14 @@ Collision and physics namespaces follow their Core folders: `App2d.Core.Collisio
 and `App2d.Core.Physics`, including their subnamespaces. Both compile into
 `App2d.Core.dll`; consumers need only the Core project reference for these types.
 
-`ArgGuard` centralizes null, null-or-whitespace, and range validation for integers,
-finite scalars, and `Vector2` values. It uses caller expressions for parameter names and
-preserves rejected range values in `ArgumentOutOfRangeException.ActualValue`; successful
-checks do not allocate. Specialized guards cover positive, non-negative, bounded, and
-non-zero vector inputs, plus minimum lengths for span-backed collections. Unbounded ray
-distances deliberately have a separate guard that permits positive infinity while
-rejecting negative values and NaN.
+`App2d.Core/Validation` separates reusable `NumericValidation` predicates, `ArgGuard`
+checks, and shared exception helpers. Numeric guards support integer and floating-point
+types plus `Vector2`, `Vector3`, and `Vector4`. Plain comparisons check their named
+condition; explicit `ThrowIfNotFiniteOr...` variants also reject NaN and infinity.
+Caller names and rejected values are preserved, including whole vectors, and successful
+checks do not allocate. Unbounded rays retain a separate guard that permits positive
+infinity. See [the validation API](App2d.Core/Validation/README.md) for naming, vector
+semantics, range checks, and examples.
 
 `StateGuard` performs the corresponding checks for invalid engine state while preserving
 `InvalidOperationException` semantics. Physics iteration settings, collapsed transforms,

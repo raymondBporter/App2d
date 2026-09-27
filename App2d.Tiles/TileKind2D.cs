@@ -1,5 +1,7 @@
 using App2d.Core.Geometry;
 
+using App2d.Core;
+
 namespace App2d.Tiles;
 
 [Flags]
@@ -45,9 +47,9 @@ public readonly record struct TileCell2D
     public TileCell2D(TileKind2D kind, byte tilesetIndex)
     {
         if (((byte)kind & ~KindMask) != 0)
-            throw new ArgumentOutOfRangeException(nameof(kind), "Tile kind must fit in four bits.");
+            ArgGuard.ThrowOutOfRange(kind, "Tile kind must fit in four bits.");
         if (tilesetIndex >= MaximumTilesetCount)
-            throw new ArgumentOutOfRangeException(nameof(tilesetIndex), "Tileset index must fit in four bits.");
+            ArgGuard.ThrowOutOfRange(tilesetIndex, "Tileset index must fit in four bits.");
         Packed = (byte)((tilesetIndex << 4) | (byte)kind);
     }
 

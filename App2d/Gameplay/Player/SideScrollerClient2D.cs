@@ -175,7 +175,7 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public void AdvancePresentation(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         _world.Advance(deltaSeconds);
         Ballistics.Advance(deltaSeconds);
         _enemies.Advance(deltaSeconds);

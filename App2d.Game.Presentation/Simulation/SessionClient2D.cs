@@ -21,14 +21,13 @@ public sealed class SessionClient2D
     public SessionClient2D(SessionSnapshot2D snapshot, EntityId2D playerId)
     {
         ArgGuard.ThrowIfNull(snapshot);
-        ArgumentOutOfRangeException.ThrowIfNegative(snapshot.Tick);
-        if (!playerId.IsValid)
-            throw new ArgumentException("A player identity is required.", nameof(playerId));
-        if (snapshot.Players.IsDefault || snapshot.Content is null || snapshot.World is null || snapshot.Enemies.IsDefault)
-            throw new ArgumentException("A complete initial observation is required.", nameof(snapshot));
+        ArgGuard.ThrowIfNegative(snapshot.Tick);
+        ArgGuard.ThrowIf(!playerId.IsValid, "A player identity is required.", nameof(playerId));
+        ArgGuard.ThrowIf(snapshot.Players.IsDefault || snapshot.Content is null || snapshot.World is null || snapshot.Enemies.IsDefault,
+            "A complete initial observation is required.", nameof(snapshot));
         State = snapshot.FindPlayer(playerId)
-            ?? throw new ArgumentException("The snapshot does not observe this player.", nameof(playerId));
-        ArgumentOutOfRangeException.ThrowIfNegative(State.LastInputSequence);
+            ?? throw ArgGuard.CreateInvalid("The snapshot does not observe this player.", nameof(playerId));
+        ArgGuard.ThrowIfNegative(State.LastInputSequence);
         PlayerId = playerId;
         Snapshot = snapshot;
         InputTick = snapshot.Tick;

@@ -23,8 +23,8 @@ public readonly record struct SoundEffectVoice2D
 
     public void SetVolumeScale(float volumeScale, float rampSeconds = 0f)
     {
-        ArgGuard.ThrowIfNotInClosedRange(volumeScale, 0f, 1f);
-        ArgGuard.ThrowIfNegativeOrNotFinite(rampSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volumeScale, 0f, 1f);
+        ArgGuard.ThrowIfNotFiniteOrNegative(rampSeconds);
         if (_voice is not null)
             _voice.SetVolumeScale(volumeScale, rampSeconds);
         else
@@ -40,7 +40,7 @@ public readonly record struct SoundEffectVoice2D
 
     public void Stop(float fadeOutSeconds = 0f)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(fadeOutSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(fadeOutSeconds);
         if (_voice is not null)
             _voice.Stop(fadeOutSeconds);
         else

@@ -29,18 +29,17 @@ public readonly record struct ConstraintLimit1D
     {
         if (float.IsNaN(minimum) || minimum == float.PositiveInfinity)
         {
-            throw new ArgumentOutOfRangeException(nameof(minimum), minimum,
+            ArgGuard.ThrowOutOfRange(minimum,
                 "The minimum must be finite or negative infinity.");
         }
 
         if (float.IsNaN(maximum) || maximum == float.NegativeInfinity)
         {
-            throw new ArgumentOutOfRangeException(nameof(maximum), maximum,
+            ArgGuard.ThrowOutOfRange(maximum,
                 "The maximum must be finite or positive infinity.");
         }
 
-        if (minimum > maximum)
-            throw new ArgumentException("The minimum limit cannot exceed the maximum limit.");
+        ArgGuard.ThrowIf(minimum > maximum, "The minimum limit cannot exceed the maximum limit.");
 
         Minimum = minimum;
         Maximum = maximum;
@@ -95,7 +94,7 @@ public readonly record struct ConstraintLimit1D
     public ConstraintLimitEvaluation1D Evaluate(float coordinate, float activationTolerance = 0f)
     {
         ArgGuard.ThrowIfNotFinite(coordinate);
-        ArgGuard.ThrowIfNegativeOrNotFinite(activationTolerance);
+        ArgGuard.ThrowIfNotFiniteOrNegative(activationTolerance);
         var target = Math.Clamp(coordinate, Minimum, Maximum);
         var state = ConstraintLimitState1D.Inactive;
         if (IsLocked)

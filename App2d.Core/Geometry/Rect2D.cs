@@ -11,8 +11,8 @@ public readonly record struct Rect2D : IRect2D
 {
     public Rect2D(Vector2 min, Vector2 max)
     {
-        if (!(min.X <= max.X && min.Y <= max.Y))
-            throw new ArgumentException("Rectangle bounds must be ordered and cannot contain NaN.", nameof(max));
+        ArgGuard.ThrowIf(!NumericValidation.IsComponentWiseLessThanOrEqual(min, max),
+            "Rectangle bounds must be ordered and cannot contain NaN.", nameof(max));
         Min = min;
         Max = max;
     }
@@ -22,8 +22,7 @@ public readonly record struct Rect2D : IRect2D
 
     public static Rect2D FromSize(Vector2 size, Vector2 center = default)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(size.X);
-        ArgGuard.ThrowIfNegativeOrNotFinite(size.Y);
+        ArgGuard.ThrowIfNotFiniteOrNegative(size);
         ArgGuard.ThrowIfNotFinite(center);
         var halfSize = size / 2f;
         return new(center - halfSize, center + halfSize);

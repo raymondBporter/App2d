@@ -16,8 +16,8 @@ public static class PolygonGeometry2D
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
-        if (first.Count < 3) throw new ArgumentException("A convex perimeter requires at least three vertices.", nameof(first));
-        if (second.Count < 3) throw new ArgumentException("A convex perimeter requires at least three vertices.", nameof(second));
+        ArgGuard.ThrowIf(first.Count < 3, "A convex perimeter requires at least three vertices.", nameof(first));
+        ArgGuard.ThrowIf(second.Count < 3, "A convex perimeter requires at least three vertices.", nameof(second));
         return !Separated(first) && !Separated(second);
 
         bool Separated(IReadOnlyList<Vector2> perimeter)
