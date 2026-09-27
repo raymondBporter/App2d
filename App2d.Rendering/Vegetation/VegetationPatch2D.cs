@@ -149,7 +149,7 @@ public sealed class VegetationPatch2D
         if (layer == VegetationLayer2D.Back)
             foreach (var flower in _flowers)
                 if (IsVisible(flower.Root.X, flower.Height, visibleLeft, visibleRight) &&
-                    (cutHeight is not { } cut || cut < FlowerHeadHeight(flower)))
+                    !IsSevered(flower, cutHeight))
                     RenderFlower(renderer, flower, wind);
 
         Span<Vector2> quad = stackalloc Vector2[4];
@@ -212,7 +212,7 @@ public sealed class VegetationPatch2D
 
         foreach (var flower in _flowers)
         {
-            if (cutHeight >= FlowerHeadHeight(flower)) continue;
+            if (!IsSevered(flower, cutHeight)) continue;
             var head = FlowerHead(flower, wind);
             var scale = _style.BladeWidth / 4.5f;
             for (var petal = 0; petal < 5; petal++)
@@ -281,7 +281,9 @@ public sealed class VegetationPatch2D
     private static bool IsVisible(float x, float height, float left, float right) =>
         x >= left - height && x <= right + height;
 
-    private static float FlowerHeadHeight(Flower flower) => flower.Height * 0.85f;
+    // One rule for both drawing and bursting, so a cut flower never also stays standing.
+    private static bool IsSevered(Flower flower, float? cutHeight) =>
+        cutHeight is { } cut && cut < flower.Height * 0.85f;
 
     private static Vector2 FlowerHead(Flower flower, VegetationWind2D wind) => FlowerPoint(flower, 1f, wind);
 
