@@ -63,6 +63,83 @@ public sealed class PersonLadderTests
         Assert.True(_person.IsClimbingLadder); // Holding up without a new jump press regrabs on the way past.
     }
 
+    [Theory]
+    [InlineData(-22f, -1f)]
+    [InlineData(-22f, 1f)]
+    [InlineData(22f, -1f)]
+    [InlineData(22f, 1f)]
+    public void UpJustOutsideLadderGentlyCentersFromEitherSide(float offset, float facing)
+    {
+        _person.Face(facing);
+        _person.WorldObject.Transform.Position += new Vector2(
+            144f + offset - _person.WorldObject.WorldBounds.Center.X, 0f);
+        var initialY = _person.Position.Y;
+
+        Step(climb: 1f);
+
+        Assert.True(_person.IsClimbingLadder);
+        var remaining = MathF.Abs(_person.WorldObject.WorldBounds.Center.X - 144f);
+        Assert.InRange(remaining, 0.1f, MathF.Abs(offset) - 0.1f);
+        Assert.True(_person.Position.Y > initialY);
+
+        Step(climb: 1f, frames: 30);
+        Assert.Equal(144f, _person.WorldObject.WorldBounds.Center.X, 3);
+        Assert.True(_person.IsClimbingLadder);
+    }
+
+    [Theory]
+    [InlineData(-25f)]
+    [InlineData(25f)]
+    public void UpBeyondSmallGrabGraceDoesNotPullPlayer(float offset)
+    {
+        _person.WorldObject.Transform.Position += new Vector2(offset, 0f);
+        var initialX = _person.Position.X;
+
+        Step(climb: 1f, frames: 30);
+
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(initialX, _person.Position.X);
+    }
+
+    [Fact]
+    public void StandingWithinGrabGraceWithoutClimbInputDoesNotPullPlayer()
+    {
+        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+        var initialX = _person.Position.X;
+
+        Step(frames: 30);
+
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(initialX, _person.Position.X);
+    }
+
+    [Fact]
+    public void AlignmentCannotPullPlayerThroughSolidWall()
+    {
+        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+        var wallRight = _person.WorldObject.WorldBounds.Left - 0.5f;
+        AddSolid(new Vector2(wallRight - 1f, 160f), new Vector2(2f, 256f));
+
+        Step(climb: 1f, frames: 30);
+
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.WorldObject.WorldBounds.Left >= wallRight);
+        Assert.Equal(1f, _person.Body.GravityScale);
+    }
+
+    [Fact]
+    public void OverlappingGrabRangesChooseNearestLadder()
+    {
+        for (var y = 1; y <= 20; y++)
+            _map.SetTileKind(5, y, TileKind2D.Ladder);
+        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+
+        Step(climb: 1f, frames: 30);
+
+        Assert.True(_person.IsClimbingLadder);
+        Assert.Equal(176f, _person.WorldObject.WorldBounds.Center.X, 3);
+    }
+
     [Fact]
     public void JumpOffWorksWhileHoldingUpAndDoesNotImmediatelyRegrab()
     {

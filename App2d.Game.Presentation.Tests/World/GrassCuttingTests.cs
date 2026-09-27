@@ -2,6 +2,7 @@ using App2d.Gameplay.World;
 using App2d.Gameplay.World.Presentation;
 using App2d.Rendering.Vegetation;
 using App2d.Tiles;
+using System.Collections.Immutable;
 using System.Numerics;
 using Xunit;
 using Color = Microsoft.Xna.Framework.Color;
@@ -21,7 +22,7 @@ public sealed class GrassCuttingTests
         Assert.True(heights.Max() - heights.Min() > 5f);
         Assert.Equal(heights, Patch(320f).CreateClippings(12f, Wind(20f), 0.45f)
             .Select(t => t.WorldBounds(t.ReleasePosition, 0f).Bottom).ToArray());
-        Assert.All(tips, tip => Assert.Equal(37f, tip.WorldBounds(tip.ReleasePosition, 0f).Top, 4));
+        Assert.All(tips, tip => AssertBladeTop(tip.WorldBounds(tip.ReleasePosition, 0f).Top));
     }
 
     [Fact]
@@ -34,19 +35,21 @@ public sealed class GrassCuttingTests
         {
             var bounds = tip.WorldBounds(tip.ReleasePosition, 0f);
             Assert.Equal(19f, bounds.Bottom, 4); // Ground 7 + cut 12.
-            Assert.Equal(37f, bounds.Top, 4); // Ground 7 + original blade 30.
+            AssertBladeTop(bounds.Top); // Ground 7 + the blade's original length.
         }
-        Assert.Empty(patch.CreateClippings(30f, Wind()));
+        Assert.Empty(patch.CreateClippings(30.01f, Wind())); // Lerp rounding can leave 30 a hair short.
         Assert.Empty(patch.CreateClippings(40f, Wind()));
     }
 
     [Fact]
-    public void FlowersRemainPartOfTheReleasedTop()
+    public void CutFlowersBurstIntoFivePetalsAndACenter()
     {
-        var patch = new VegetationPatch2D(0f, 10f, 7f,
-            new(30f, 30f, 3f, 3f, 6f, 0f, Color.DarkGreen, Color.LightGreen, 1f, Color.Pink), 107);
-        var tip = patch.CreateClippings(12f, Wind(0f)).First();
-        Assert.Equal(37f + 3f * 1.15f, tip.WorldBounds(tip.ReleasePosition, 0f).Top, 4);
+        var patch = new VegetationPatch2D(0f, 64f, 7f,
+            new(30f, 30f, 30f, 3f, 6f, Color.DarkGreen, Color.LightGreen, 0f, 0f, 1f), 107);
+        Assert.True(patch.FlowerCount > 0);
+        var tips = patch.CreateClippings(12f, Wind(0f)).ToArray();
+        Assert.Equal(patch.BladeCount + patch.FlowerCount * 6, tips.Length);
+        Assert.Empty(patch.CreateClippings(34f, Wind(0f))); // Above every blade and flower head.
     }
 
     [Fact]
@@ -99,13 +102,15 @@ public sealed class GrassCuttingTests
         var map = new EditableTileMap2D(16, 16, 32f, 16, Vector2.Zero, ["kenney-grassland"]);
         for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 1, TileKind2D.Solid);
         var terrain = TerrainChunkState2D.Capture(map, new(0, 0), 1);
+        // Grass grows in patches, so cut the whole row to be sure some of it is grassy.
+        ImmutableHashSet<GrassCell2D> row = [.. Enumerable.Range(0, map.Width).Select(x => new GrassCell2D(x, 1))];
         var view = new VegetationPresentation2D();
         view.SetTerrain([terrain]);
         view.ApplyCuts([]);
-        view.ApplyCuts([new(4, 1)]);
+        view.ApplyCuts(row);
         var count = view.ClippingCount;
         Assert.True(count > 0);
-        view.ApplyCuts([new(4, 1)]);
+        view.ApplyCuts(row);
         Assert.Equal(count, view.ClippingCount);
         for (var i = 0; i < 108; i++) view.Advance(1f / 120f);
         Assert.True(view.ClippingCount < count); // 0.9 s: ground, not the 1 s timeout.
@@ -113,15 +118,18 @@ public sealed class GrassCuttingTests
         Assert.Equal(0, view.ClippingCount);
         var attached = new VegetationPresentation2D();
         attached.SetTerrain([terrain]);
-        attached.ApplyCuts([new(4, 1)]);
+        attached.ApplyCuts(row);
         Assert.Equal(0, attached.ClippingCount); // Snapshot attachment never replays old cuts.
         view.ApplyCuts([]); // Unloading forgets the old cut.
-        view.ApplyCuts([new(4, 1)]);
+        view.ApplyCuts(row);
         Assert.True(view.ClippingCount > 0); // Cutting the regrown patch emits a fresh burst.
     }
 
+    // Tufts alternate full and 0.7-length blades.
+    private static void AssertBladeTop(float top) =>
+        Assert.True(MathF.Abs(top - 37f) < 1e-3f || MathF.Abs(top - 28f) < 1e-3f, $"Unexpected blade top {top}.");
     private static VegetationPatch2D Patch(float endX = 32f) => new(0f, endX, 7f,
-        new(30f, 30f, 2f, 3f, 6f, 5f, Color.DarkGreen, Color.LightGreen, 0f, Color.Pink), 107);
+        new(30f, 30f, 30f, 3f, 6f, Color.DarkGreen, Color.LightGreen, 0f, 0f, 0f), 107);
     private static VegetationWind2D Wind(float strength = 5f) => new(0f, strength, 1.15f, 0.027f, 0.12f);
     private static GrassClipping2D Clipping() =>
         new(Patch().CreateClippings(12f, Wind()).First(), new(0f, 100f), 4f, 0.7f, 1f);

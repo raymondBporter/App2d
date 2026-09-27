@@ -44,6 +44,8 @@ public sealed class TraversalMetrics2D
         (PlayerSpriteFootYFraction - 206f / 512f) * PlayerVisualSize.Y - PlayerColliderSize.Y * 0.5f);
     public float RunSpeed { get; init; } = 430f;
     public float LadderClimbSpeed { get; init; } = 180f;
+    public float LadderGrabGrace { get; init; } = DesignUnit;
+    public float LadderAlignSpeed { get; init; } = 120f;
     public float LadderRelatchDelay { get; init; } = 0.2f;
     public float GroundAcceleration { get; init; } = 3_600f;
     public float AirAcceleration { get; init; } = 1_450f;
@@ -123,6 +125,8 @@ public sealed class TraversalMetrics2D
     {
         ArgGuard.ThrowIfNotFiniteOrNotPositive(TileSize);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(LadderClimbSpeed);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(LadderGrabGrace);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(LadderAlignSpeed);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(LadderRelatchDelay);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(PlayerColliderSize);
         ArgGuard.ThrowIfNotFinite(PlayerColliderCenterOffsetX);
