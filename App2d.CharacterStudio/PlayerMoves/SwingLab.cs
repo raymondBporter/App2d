@@ -1,5 +1,5 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.PlayerMoves;
@@ -36,10 +36,9 @@ internal static class SwingLab
     /// </summary>
     private readonly record struct Arc(float Angle, float Wrist, float Radius, float Chest, float HipsX, float HipsY, float Head, float OffX, float OffY, float Tilt = 0, float Yaw = 60)
     {
-        public Vector2 Hand => new Vector2(MathF.Cos(Angle), MathF.Sin(Angle)) * Radius;
+        public Vector2 Hand => Polar2D.ToCartesian(Radius, Angle);
         public Arc With(float angle, float wrist, float tilt) => this with { Angle = angle, Wrist = wrist, Tilt = tilt };
     }
-
 
     // Over the top, just clear of the back: arm up and forward, blade trailing back, swung round to point almost at the
     // camera, so it reads short (a side swing seen side on).
@@ -72,8 +71,7 @@ internal static class SwingLab
         b.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(b.Model, p.Yaw).RightHand(p.Hand.X, p.Hand.Y).LeftHand(p.OffX, p.OffY).Grip(p.Wrist), ease);
 
     /// <summary>The right arm's full length, shoulder to elbow to hand.</summary>
-    private static float ArmLength(ResolvedModel m) =>
-        (Vector3.Distance(m.Rest["right-shoulder"], m.Rest["right-elbow"]) + Vector3.Distance(m.Rest["right-elbow"], m.Rest["right-hand"]));
+    private static float ArmLength(ResolvedModel m) => Vector3.Distance(m.Rest["right-shoulder"], m.Rest["right-elbow"]) + Vector3.Distance(m.Rest["right-elbow"], m.Rest["right-hand"]);
 
     /// <summary>A clip under construction with the blade's depth tilt kept beside it; the tilt becomes orientation keys after the build.</summary>
     private sealed class Swing(ResolvedModel m, string id, string name, float duration)
@@ -101,7 +99,7 @@ internal static class SwingLab
         public Swing SidePose(float time, Side p, string ease = ClipEase.Linear)
         {
             var arm = Side.Direction(p.Arm, p.ArmDip) * _arm; var blade = Side.Direction(p.Blade, p.BladeDip);
-            var angle = ContinueBlade(MathF.Atan2(blade.Y, blade.X));
+            var angle = ContinueBlade(new Vector2(blade.X, blade.Y).AngleRadians);
             var tilt = MathF.Asin(Math.Clamp(-blade.Z, -1, 1)) * 180 / MathF.PI;
             Builder.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(Builder.Model, p.Yaw).RightHand(arm.X, arm.Y).LeftHand(p.OffX, p.OffY).Blade(angle), ease);
             _orient.Add((time, p.Twist, tilt)); return this;
@@ -148,7 +146,6 @@ internal static class SwingLab
             .Marker("strike", contact).Marker("recover", contact + 5 * F);
         return contact + 6 * F;
     }
-
 
     // The forehand side cut, on a tilted plane: wound back high on the far side, across the front at contact with the arm
     // pointing down and the blade level out of the fist, following through low toward the camera where the blade narrows.
@@ -357,7 +354,7 @@ internal static class SwingLab
         var timeline = new List<(MotionClip, float)> { (game["player-idle"], 0) }; var at = Lead;
         foreach (var clip in chain) { timeline.Add((clip, at)); at += clip.Duration; }
         timeline.Add((game["player-idle"], at));
-        yield return new("in-game", "In the game: the combo", $"The game's clips in a row as a mashed button chains them: side cut, backhand, forehand, backhand, put away. It should play as the combo card does.", chain[0], timeline, at + Tail);
+        yield return new("in-game", "In the game: the combo", "The game's clips in a row as a mashed button chains them: side cut, backhand, forehand, backhand, put away. It should play as the combo card does.", chain[0], timeline, at + Tail);
         Variant Of(string id, string title, string note, Kind kind)
         {
             var clip = Cycle(m, "lab-" + id, kind); return new(id, title, note, clip, [(clip, 0)], clip.Duration);

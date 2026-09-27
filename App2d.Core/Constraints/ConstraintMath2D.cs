@@ -1,4 +1,5 @@
 using System.Numerics;
+using App2d.Core.Mathematics;
 
 namespace App2d.Core.Constraints;
 
@@ -107,10 +108,10 @@ public static class ConstraintMath2D
         ArgGuard.ThrowIfNotFinite(fallbackAngle);
         var delta = requestedPoint - anchor;
         var angle = delta.LengthSquared() > MinimumDirectionLengthSquared
-            ? MathF.Atan2(delta.Y, delta.X)
+            ? delta.AngleRadians
             : fallbackAngle;
         angle = angleLimits.Clamp(angle);
-        return anchor + radius * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+        return anchor + Polar2D.ToCartesian(radius, angle);
     }
 
     private static void ValidateDistanceLimits(ConstraintLimit1D limits)

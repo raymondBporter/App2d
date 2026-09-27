@@ -1,14 +1,14 @@
 using App2d.Core;
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
-using System.Collections.Immutable;
 using App2d.Gameplay.World;
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;

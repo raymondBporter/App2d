@@ -1,4 +1,3 @@
-using App2d.Core;
 using System.Numerics;
 
 namespace App2d.Core.Physics.Integration;

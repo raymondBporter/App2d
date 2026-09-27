@@ -1,24 +1,14 @@
+using App2d.Core.Assets;
+
 namespace App2d;
 
+/// <summary>The game host's resolved locations. Shared layout and discovery live in Core.</summary>
 internal static class AssetPaths
 {
-    public static string Root { get; } = FindRoot();
-    public static string Characters => Directory.Exists(Path.Combine(Root, "..", "Characters", "authored"))
-        ? Path.GetFullPath(Path.Combine(Root, "..", "Characters")) : Path.Combine(Root, "PointCharacters");
-
-    private static string FindRoot()
-    {
+    public static AssetLocations Current { get; } = AssetLocations.ForGame(AppContext.BaseDirectory,
 #if DEBUG
-        for (var directory = new DirectoryInfo(AppContext.BaseDirectory);
-             directory is not null;
-             directory = directory.Parent)
-        {
-            var sourceRoot = Path.Combine(directory.FullName, "Assets", "Runtime");
-            if (Directory.Exists(sourceRoot))
-                return sourceRoot;
-        }
+        useSourceAssets: true);
+#else
+        useSourceAssets: false);
 #endif
-
-        return Path.Combine(AppContext.BaseDirectory, "Assets");
-    }
 }

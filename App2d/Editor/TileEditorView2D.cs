@@ -16,7 +16,7 @@ internal static class TileEditorView2D
     // compete visually with the cursor outline or the painted tiles themselves.
     private static readonly XnaColor GridColor = new(255, 255, 255, 28);
 
-    public static void Draw(Renderer2D renderer, TileEditor2D editor, Bounds2D mapBounds, float tileSize, TextureCache2D textures)
+    public static void DrawWorldDebug(Renderer2D renderer, TileEditor2D editor, Bounds2D mapBounds, float tileSize)
     {
         if (!editor.IsActive)
             return;
@@ -45,8 +45,12 @@ internal static class TileEditorView2D
             ];
             renderer.DrawWorldPolyline(outline, CursorColor, strokeWidth: 2f);
         }
+    }
 
-        TileEditorMenu2D.Draw(renderer, editor, textures);
+    public static void DrawUI(Renderer2D renderer, TileEditor2D editor, TextureCache2D textures)
+    {
+        if (editor.IsActive && editor.Mode == LevelEditorMode2D.Tiles)
+            TileEditorMenu2D.Draw(renderer, editor, textures);
     }
 
     private static void DrawThings(Renderer2D renderer, TileEditor2D editor, float tileSize)

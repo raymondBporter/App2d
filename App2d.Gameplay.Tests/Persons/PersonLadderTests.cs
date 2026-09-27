@@ -272,13 +272,13 @@ public sealed class PersonLadderTests
     {
         DescendingOntoOneWayFloorStopsAndStands(firstLadderRow);
 
-        Step(climb: -1f, down: true, jump: true);
+        Step(climb: -1f, jump: true, down: true);
 
         Assert.False(_person.IsGrounded);
         Assert.False(_person.IsClimbingLadder);
         Assert.True(_person.Body.LinearVelocity.Y < 0f);
         Assert.Equal(1, _person.Body.IgnoredOneWayPlatformCount);
-        Step(climb: -1f, down: true, frames: 120);
+        Step(climb: -1f, frames: 120, down: true);
         Assert.True(_person.WorldObject.WorldBounds.Top < 192f);
     }
 

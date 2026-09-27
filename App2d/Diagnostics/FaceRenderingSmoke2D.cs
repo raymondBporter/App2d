@@ -13,7 +13,7 @@ internal static class FaceRenderingSmoke2D
 {
     public static void Run(GraphicsDevice device, string directory)
     {
-        var catalog = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         if (catalog.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
         var person = catalog.Resolve(PersonTemplate.Id);
         var drawing = new PuppetDrawing();

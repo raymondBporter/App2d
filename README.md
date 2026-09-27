@@ -573,6 +573,7 @@ and changed with either whitespace or an equals sign:
 ```text
 draw_fps
 draw_fps true
+draw_grid = true
 draw_collision_shapes = true
 draw_graphics = false
 camera_zoom = 2
@@ -593,12 +594,17 @@ their `PhysicsWorld2D` for collider visualization with `RegisterDebugPhysicsWorl
 Physics collision shapes are drawn as translucent green overlays above the game
 graphics, while active combat hitboxes use a red-orange overlay. Set
 `draw_graphics = false` (or `toggle draw_graphics`) to keep the simulation running and
-play using only collision geometry; the collision overlay and FPS display remain available.
+inspect collision geometry; all world debug and UI remain available.
+`draw_grid = true` enables the world-space debug grid (off by default).
+The grid and other world diagnostics draw over game graphics, while HUD, menus,
+and diagnostic labels draw last.
 
 ## Frame and coordinate flow
 
-Each UI-timer tick calls `Update(FrameTime, InputState)` and then synchronously repaints,
-which calls `Render(Renderer2D)`.
+Each UI-timer tick advances simulation in fixed steps and then synchronously repaints.
+The host calls `RenderFrame(Renderer2D, FrameTime)`, which clears once and draws
+`Render` (game graphics), `RenderWorldDebug`, and `RenderUI` in that order.
+See [rendering passes](docs/rendering-passes.md) for pass responsibilities and toggles.
 
 Rendering follows this transform chain:
 
@@ -636,10 +642,17 @@ character.
 ## Assets and textures
 
 Repository assets are separated by lifecycle under the top-level `Assets` directory.
-Only generated `Assets/Runtime` ships; Debug reads it in place and Release packages it
-beside the executable as `Assets`. `Assets/Static` holds curated runtime-ready inputs,
-`Assets/Sources` retains originals and licenses, and ignored `Assets/Work` holds
-intermediate pipeline output and previews. `Assets/README.md` describes the lifecycle.
+Debug reads generated art from `Assets/Runtime` and durable levels/music directly
+from `Assets/Static`. Release packages content beside the executable as `Assets`,
+including current music/zones from `Static` and authored character documents from
+`Assets/Characters/authored`. `Assets/Sources` retains originals and licenses, and
+ignored `Assets/Work` holds intermediate output and previews.
+[The asset layout](Assets/README.md) defines where each kind of new content belongs.
+
+`App2d.Core.Assets.AssetLocations` names the main roots and categories; the game
+resolves them once as `AssetPaths.Current`. `UserDataLocations` names player saves
+and editor settings outside the asset tree. Shared relative-path checks and safe
+single-file saves live in `App2d.Core.IO`; asset formats retain their own validation.
 
 Runtime paths use lowercase semantic IDs. Every `Game2D` owns a `TextureCache2D`
 rooted at the deployed `Assets` directory, so textures load only when requested:

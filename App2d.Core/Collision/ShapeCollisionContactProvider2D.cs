@@ -1,5 +1,4 @@
-﻿using App2d.Core;
-using App2d.Core.Collision.Contacts;
+﻿using App2d.Core.Collision.Contacts;
 
 namespace App2d.Core.Collision;
 

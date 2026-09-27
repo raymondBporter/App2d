@@ -1,4 +1,4 @@
-using App2d.Gameplay.World.Presentation;
+using App2d.Game.Presentation.World.Presentation;
 using Xunit;
 
 namespace App2d.Game.Presentation.Tests.Enemies;

@@ -109,7 +109,7 @@ public sealed class Grid2DTests
     {
         var range = new GridCellRange2D(new(int.MaxValue - 1, int.MaxValue), new(int.MaxValue, int.MaxValue));
         GridCell2D[] cells = [.. range];
-        Assert.Equal(new[] { range.Minimum, range.Maximum }, cells);
+        Assert.Equal([range.Minimum, range.Maximum], cells);
         Assert.Empty((GridCell2D[])[.. default(GridCellRange2D)]);
         Assert.False(default(GridCellRange2D).Contains(default));
         Assert.Equal(4294967296L,

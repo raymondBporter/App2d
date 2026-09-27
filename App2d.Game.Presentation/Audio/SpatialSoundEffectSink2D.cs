@@ -1,7 +1,7 @@
 using App2d.Core;
 using System.Numerics;
 
-namespace App2d.Gameplay.Audio;
+namespace App2d.Game.Presentation.Audio;
 
 /// <summary>Adds listener-relative falloff to a sound bank. Update once per game frame.</summary>
 public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vector2> listenerPosition) : ISoundEffectSink2D

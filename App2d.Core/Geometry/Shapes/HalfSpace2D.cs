@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Shapes;
 
 // The solid side satisfies dot(point, Normal) <= Offset; Normal points toward free space.
 public sealed class HalfSpace2D : IShape2D

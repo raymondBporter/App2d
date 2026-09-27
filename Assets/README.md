@@ -9,10 +9,56 @@ The first folder describes the asset lifecycle:
   transforming. This directory is durable and committed.
 - `Sources` contains original and third-party inputs with their licenses and
   provenance. Importers transform these into runtime assets.
-- `Runtime` is the complete generated game-facing tree. Debug reads it directly;
-  Release builds and publishes package it as `Assets`. It is ignored and disposable.
+- `Characters` contains the character libraries and the durable documents under
+  `authored`: models, variants, animations, props, and entities edited in Character
+  Studio. Source libraries and their provenance also live here. These are separate
+  from generated sprite animation folders in `Runtime/characters`.
+- `Runtime` is the complete generated game-facing tree. Debug reads generated art
+  from it; Release builds and publishes package it as `Assets`. Authored levels
+  and music are read from `Static` in Debug, and packaging takes music and zones
+  directly from `Static` to pick up pulled changes. `Runtime` is ignored and disposable.
 - `Work` contains regenerable output: pipeline staging, previews, validation
   reports, and caches. It is ignored by Git, so nothing durable may live there.
+
+## Choosing a home for new content
+
+| Content | Canonical source location | Shared game location |
+| --- | --- | --- |
+| Levels and zone definitions | `Static/levels/<id>` | `AssetLocations.Levels` |
+| Music, manifests, and licenses | `Static/audio/music` | `AssetLocations.Music` |
+| Character models, clips, props, and entities | `Characters/authored` | `AssetLocations.AuthoredCharacters` |
+| Imported character motion libraries | `Characters/<id>` | `AssetLocations.CharacterLibrary` |
+| Curated sound effects | `Static/audio/sfx` | `AssetLocations.SoundEffects` (generated copy) |
+| Tilesets and UI images | `Static` or an importer from `Sources` | `AssetLocations.Tilesets` / `UI` (generated output) |
+| Third-party originals, licenses, source art | `Sources` | Build tools only |
+| Previews, experiments, intermediate files | `Work` | Build tools only |
+| Player saves and editor preferences | User's local application data, outside this tree | `UserDataLocations` |
+
+The path definitions live in `App2d.Core/Assets/AssetLocations.cs`; the game host
+resolves them once through `AssetPaths.Current`. Character Studio uses the same
+module for discovery. Loaders receive roots from their caller rather than searching
+upward or choosing a new resource location themselves. Keep asset-specific filenames
+and format rules beside their loader; this registry names the major locations.
+
+When adding content, choose a lifecycle folder above first. Hand-authored work goes
+in a committed source location, never only in `Runtime`, `Work`, or a `bin` output.
+Add a new top-level category deliberately: document it here and add a named location
+when application code needs it. Paths resolve without creating directories or moving
+assets. Explicit export destinations selected by the user remain valid.
+
+Game Debug builds read `Runtime` art, `Static` authored content, and sibling
+`Characters` documents in a checkout. Packaged games use only their executable's
+`Assets`, with character documents under `Assets/PointCharacters/authored`.
+Character Studio preserves its packaged-first lookup at `Assets/Characters`, then
+searches above its working directory. That means a Studio run against copied assets
+edits those copies; check the selected document path when intending to edit sources.
+
+For single-file document saves use `App2d.Core.IO.AtomicFile`: it creates the parent,
+writes a unique sibling temporary file, and replaces the destination after writing.
+Validation and serialization remain in the asset loader/editor. SQLite levels keep
+their database transaction handling. This helper is not a multi-file transaction.
+
+## Building and packaging
 
 From a clean clone, run `tools/setup.ps1` from the repository root before starting the
 game; see `tools/ArtPipeline/README.md`. The pipeline stages a fresh tree, copies

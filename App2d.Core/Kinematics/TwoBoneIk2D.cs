@@ -1,4 +1,5 @@
 using System.Numerics;
+using App2d.Core.Mathematics;
 
 namespace App2d.Core.Kinematics;
 
@@ -46,8 +47,8 @@ public static class TwoBoneIk2D
             root,
             joint,
             end,
-            MathF.Atan2(joint.Y - root.Y, joint.X - root.X),
-            MathF.Atan2(end.Y - joint.Y, end.X - joint.X),
+            (joint - root).AngleRadians,
+            (end - joint).AngleRadians,
             MathF.Abs(targetDistance - solvedDistance) <= 0.01f);
     }
 }

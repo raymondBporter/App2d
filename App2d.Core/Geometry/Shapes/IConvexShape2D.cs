@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Shapes;
 
 public interface IConvexShape2D : IShape2D
 {

@@ -1,6 +1,5 @@
-using App2d.Core;
+using App2d.Game.Presentation.World.Presentation;
 using App2d.Gameplay.Combat;
-using App2d.Gameplay.World.Presentation;
 using App2d.Rendering;
 using System.Numerics;
 using Xunit;
@@ -32,6 +31,21 @@ public sealed class CombatContactPresentationTests
         Assert.All(scene, v => Assert.False(v.IsVisible));
         effects.Dispose();
         Assert.Empty(scene);
+    }
+
+    [Fact]
+    public void ZeroDirectionUsesTheSameHeadingAsPositiveX()
+    {
+        var scene = new Scene2D();
+        using var effects = new CombatContactPresentation2D(scene);
+        effects.Present(Hit(Vector2.UnitX));
+        var expected = scene.Select(v => (v.Transform.Position, v.Transform.Rotation)).ToArray();
+        effects.Reset();
+
+        effects.Present(Hit(Vector2.Zero));
+
+        Assert.All(scene, v => Assert.True(v.IsVisible));
+        Assert.Equal(expected, scene.Select(v => (v.Transform.Position, v.Transform.Rotation)).ToArray());
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 using App2d.Rendering.Textures;
 
-namespace App2d.Gameplay.Assets;
+namespace App2d.Game.Presentation.Assets;
 
 public static class LadderAssets2D
 {

@@ -1,19 +1,16 @@
-using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
-using App2d.Gameplay.Audio;
+using App2d.Game.Presentation.Audio;
+using App2d.Game.Presentation.World.Presentation;
 using App2d.Gameplay.Combat;
-using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Gameplay.World.Presentation;
 using App2d.Levels;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Tiles;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Diagnostics;
@@ -23,14 +20,14 @@ internal static class CombatContactStudy2D
 {
     public static void Run(GraphicsDevice device, TextureCache2D textures, string directory, bool timingStudy = false)
     {
-        var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var report = new List<string>();
         var camera = new Camera2D { Zoom = 1.7f, Position = new(-255, 52) };
         using var renderer = new Renderer2D(camera, device);
         using var target = new RenderTarget2D(device, 640, 240, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        foreach (var name in timingStudy ? new[] { "hit", "kill", "run", "reverse" } : new[] { "miss", "hit", "kill", "run", "reverse" })
+        foreach (var name in timingStudy ? new[] { "hit", "kill", "run", "reverse" } : ["miss", "hit", "kill", "run", "reverse"])
         {
             var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
             for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);

@@ -21,7 +21,22 @@
 
   <ItemGroup>
     <None Include="..\Assets\Runtime\**\*"
+          Exclude="..\Assets\Runtime\audio\music\**\*;..\Assets\Runtime\levels\**\zones.json"
           Link="Assets\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToPublishDirectory="PreserveNewest">
+      <CopyToOutputDirectory Condition="'$(Configuration)' == 'Debug'">Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <!-- These committed files can arrive through git pull after the art pipeline
+         last ran. Package them directly, including on the first build. -->
+    <None Include="..\Assets\Static\audio\music\**\*"
+          Link="Assets\audio\music\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToPublishDirectory="PreserveNewest">
+      <CopyToOutputDirectory Condition="'$(Configuration)' == 'Debug'">Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\Assets\Static\levels\**\zones.json"
+          Link="Assets\levels\%(RecursiveDir)%(Filename)%(Extension)"
           CopyToPublishDirectory="PreserveNewest">
       <CopyToOutputDirectory Condition="'$(Configuration)' == 'Debug'">Never</CopyToOutputDirectory>
       <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core;
+namespace App2d.Core.Validation;
 
 /// <summary>
 /// Reusable numeric predicates, independent of exceptions. Plain comparisons use numeric operators;

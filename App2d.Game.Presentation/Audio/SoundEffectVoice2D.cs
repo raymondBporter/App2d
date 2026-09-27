@@ -2,7 +2,7 @@ using App2d.Audio;
 using App2d.Core;
 using System.Numerics;
 
-namespace App2d.Gameplay.Audio;
+namespace App2d.Game.Presentation.Audio;
 
 /// <summary>A gameplay cue instance whose relative level can change while playing.</summary>
 public readonly record struct SoundEffectVoice2D

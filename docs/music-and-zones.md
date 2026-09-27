@@ -59,10 +59,11 @@ loads zone geometry beside the durable level database directly.
 
 `Assets/Static/audio/music/soundtrack.json` assigns zone IDs to `{piece, mood}`
 pairs, declares available cues and supplies the fallback. Bindings to missing
-zones or moods fail with a content error. Run the regular asset pipeline after
-editing static music configuration, or copy the changed soundtrack file into
-`Assets/Runtime/audio/music/` for a quick local iteration. Restart the game to
-load the change. Release/publish includes both geometry and music assets.
+zones or moods fail with a content error. Debug reads music directly from
+`Assets/Static`, just like the level and its zones. Restart the game after edits
+or pulling new music; no asset-pipeline run or manual copy is needed.
+Release/publish packages music and zones directly from these committed sources,
+even when the generated runtime tree predates them.
 
 ## Playback
 
@@ -120,8 +121,10 @@ only added runtime package. License/provenance files ship beside each cue.
 ## Asset lifecycle and validation
 
 The selected renders are promoted into durable `Assets/Static/audio/music/`.
-The normal art pipeline copies them into disposable `Assets/Runtime`, hashes
-them in the content manifest, and packages them in Release/publish. The game
+The normal art pipeline also copies them into disposable `Assets/Runtime` and
+hashes them in the content manifest. Debug and packaging use the committed music
+and zones directly, so an older generated tree cannot hide newly pulled music.
+Other generated art still requires the normal initial setup. The game
 does not depend on ignored Music Lab outputs. `tools/MusicLab/publish_game.py`
 can promote a new accepted render and refresh just these runtime files plus the
 manifest without rebuilding unrelated art. It expects the Music Lab revisions

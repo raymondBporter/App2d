@@ -1,4 +1,5 @@
 using App2d.Noodle.Projectors;
+using App2d.Core.Mathematics;
 using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -29,12 +30,12 @@ internal sealed class JointShowcase2D
         for (var index = 0; index < limitArc.Length; index++)
         {
             var angle = float.Lerp(_revolute.MinimumAngle, _revolute.MaximumAngle, index / (limitArc.Length - 1f));
-            limitArc[index] = anchor + 58f * new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+            limitArc[index] = anchor + Polar2D.ToCartesian(58f, angle);
         }
         renderer.DrawWorldPolyline(limitArc, GuideColor, 2f);
 
         var requestedAngle = MathF.Sin((float)time * 0.9f) * 1.45f;
-        var requested = anchor + _revolute.Length * new Vector2(MathF.Cos(requestedAngle), MathF.Sin(requestedAngle));
+        var requested = anchor + Polar2D.ToCartesian(_revolute.Length, requestedAngle);
         var constrained = _revolute.Project(anchor, requested);
         DrawRequestedAndConstrained(renderer, anchor, requested, constrained);
         DrawLabel(renderer, camera, PolarLinkProjector2D.DisplayName, PolarLinkProjector2D.DisplayEquation,

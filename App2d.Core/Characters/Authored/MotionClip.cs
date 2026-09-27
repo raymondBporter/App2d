@@ -79,8 +79,8 @@ public sealed class Easing
 
     private static double BounceOut(double x)
     {
-        double n1 = 7.5625;
-        double d1 = 2.75;
+        const double n1 = 7.5625;
+        const double d1 = 2.75;
 
         if (x < 1 / d1)
         {

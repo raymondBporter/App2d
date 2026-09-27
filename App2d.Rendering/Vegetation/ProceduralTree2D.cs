@@ -1,5 +1,7 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Mathematics;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
@@ -26,7 +28,7 @@ public sealed class ProceduralTree2D
 
     private void Grow(Vector2 start, float angle, float length, float width, int depth, Random random)
     {
-        var end = start + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * length;
+        var end = start + Polar2D.ToCartesian(length, angle);
         _branches.Add(new(start, end, width));
         if (depth <= 1)
         {
@@ -63,7 +65,7 @@ public sealed class ProceduralTree2D
             for (var i = 0; i < leaves.Length; i++)
             {
                 var angle = i * MathF.Tau / leaves.Length + crown.Phase;
-                leaves[i] = center + new Vector2(MathF.Cos(angle), MathF.Sin(angle) * 0.78f) * crown.Radius;
+                leaves[i] = VertexGenerator2D.PointOnEllipse(center, new(crown.Radius, crown.Radius * 0.78f), angle);
             }
             renderer.DrawWorldConvexPolygon(leaves, crown.Color);
         }

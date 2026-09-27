@@ -1,6 +1,7 @@
+using App2d.Core.Geometry.Functions;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Shapes;
 
 // Axis-aligned in local space; its WorldObject transform may orient it in world space.
 public class Rectangle2D : IConvexShape2D, IRect2D

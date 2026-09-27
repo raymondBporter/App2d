@@ -1,4 +1,5 @@
 using App2d.Core.Kinematics;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Noodle;
@@ -27,7 +28,7 @@ internal static class StandardBones2D
 internal readonly record struct BoneSegment2D(Vector2 Start, Vector2 End)
 {
     public float Length => Vector2.Distance(Start, End);
-    public float Angle => MathF.Atan2(End.Y - Start.Y, End.X - Start.X);
+    public float Angle => (End - Start).AngleRadians;
 }
 
 internal readonly record struct RigidSocket2D(Vector2 Position, float Angle);

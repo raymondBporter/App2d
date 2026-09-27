@@ -5,7 +5,7 @@ using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using System.Collections.Immutable;
 
-namespace App2d.Gameplay.World.Presentation;
+namespace App2d.Game.Presentation.World.Presentation;
 
 /// <summary>Code-only tuning for confirmed sword contact. All durations are seconds; simulation always stays live.</summary>
 public static class CombatHitstop2D

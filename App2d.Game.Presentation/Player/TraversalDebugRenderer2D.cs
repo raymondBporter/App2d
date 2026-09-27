@@ -1,9 +1,10 @@
 using App2d.Core;
+using App2d.Gameplay.Player;
 using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Gameplay.Player;
+namespace App2d.Game.Presentation.Player;
 
 public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 {
@@ -13,7 +14,7 @@ public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
     private readonly JumpProfile2D _runningJumpProfile = traversal.MeasureJump(traversal.RunSpeed);
     private readonly JumpProfile2D _standingJumpProfile = traversal.MeasureJump(0f);
 
-    public void Draw(Renderer2D renderer, Vector2 playerPosition, float facing)
+    public void DrawWorldDebug(Renderer2D renderer, Vector2 playerPosition, float facing)
     {
         ArgGuard.ThrowIfNull(renderer);
         Span<Vector2> runningArc = stackalloc Vector2[_runningJumpArc.Length];
@@ -29,6 +30,11 @@ public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 
         renderer.DrawWorldPolyline(runningArc, new XnaColor(255, 92, 137, 220), 3f);
         renderer.DrawWorldPolyline(standingArc, new XnaColor(110, 235, 255, 220), 2f);
+    }
+
+    public void DrawUI(Renderer2D renderer)
+    {
+        ArgGuard.ThrowIfNull(renderer);
         renderer.DrawScreenLabel(
             $"GRID {TraversalMetrics2D.DesignUnit:0}u  |  BODY {_traversal.PlayerColliderSize.X / _traversal.TileSize:0.00}t x {_traversal.PlayerColliderSize.Y / _traversal.TileSize:0.00}t  |  " +
             $"PASSAGE {_traversal.StandingPassageTiles}t + {_traversal.StandingClearance:0}u  |  " +

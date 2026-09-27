@@ -1,5 +1,7 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -29,7 +31,7 @@ public sealed class BoundsGeometry2DTests
         Assert.Equal(new Bounds2D(new(3, 4), new(3, 4)), BoundsGeometry2D.FromPoints(points.AsSpan(0, 1)));
         Assert.Equal(new Bounds2D(new(-2, -4), new(10, 7)),
             BoundsGeometry2D.Union(bounds, new(new(8, -4), new(10, 3))));
-        Assert.Throws<ArgumentOutOfRangeException>(() => BoundsGeometry2D.FromPoints(ReadOnlySpan<Vector2>.Empty));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BoundsGeometry2D.FromPoints([]));
     }
 
     [Fact]

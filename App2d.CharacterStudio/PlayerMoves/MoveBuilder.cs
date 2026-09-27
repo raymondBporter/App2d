@@ -1,5 +1,5 @@
 using App2d.Core;
-using App2d.Core.Characters;
+using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 
@@ -116,7 +116,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             Blades([.. _grips.Select(g =>
             {
                 var pose = PoseEvaluator.Sample(model, clip, g.Time); var forearm = pose.Points[arm.End] - pose.Points[arm.Joint];
-                return (g.Time, MathF.Atan2(forearm.Y, forearm.X) + g.Wrist, g.Ease);
+                return (g.Time, new Vector2(forearm.X, forearm.Y).AngleRadians + g.Wrist, g.Ease);
             })]);
             Emit(); Hands();
         }

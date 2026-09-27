@@ -1,5 +1,8 @@
 using App2d.Core;
 using App2d.Diagnostics;
+using App2d.Game.Presentation.Audio;
+using App2d.Game.Presentation.Player;
+using App2d.Game.Presentation.World.Presentation;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
@@ -7,10 +10,9 @@ using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Presentation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Gameplay.World.Presentation;
 using App2d.Rendering;
-using App2d.Rendering.Vegetation;
 using App2d.Rendering.Textures;
+using App2d.Rendering.Vegetation;
 using System.Collections.Immutable;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -215,20 +217,31 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public string WeaponName => _weapons.WeaponName;
 
-    public void Draw(Renderer2D renderer)
+    public void DrawWorldEffects(Renderer2D renderer)
     {
-        PlayerHud2D.Draw(renderer, State.Person.HitPoints, State.Person.MaximumHitPoints,
-            _weapons.HudTexture);
         if (_saveFeedbackSeconds > 0f)
         {
             var feedbackProgress = 1f - _saveFeedbackSeconds / SaveFeedbackDurationSeconds;
             var alpha = (int)Math.Clamp(230f * (1f - feedbackProgress), 0f, 230f);
             renderer.DrawWorldCircle(_saveFeedbackCenter, float.Lerp(28f, 108f, feedbackProgress),
                 _lastSaveSucceeded ? new XnaColor(105, 225, 255, alpha) : new XnaColor(255, 95, 95, alpha), 4f);
-            renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 170f));
         }
-        if (ShowTraversalDebug) _traversalDebug.Draw(renderer, State.Person.Position, State.Person.Facing);
-        Ballistics.Draw(renderer);
+    }
+
+    public void DrawWorldDebug(Renderer2D renderer)
+    {
+        if (ShowTraversalDebug) _traversalDebug.DrawWorldDebug(renderer, State.Person.Position, State.Person.Facing);
+        Ballistics.DrawWorldDebug(renderer);
+    }
+
+    public void DrawUI(Renderer2D renderer)
+    {
+        PlayerHud2D.Draw(renderer, State.Person.HitPoints, State.Person.MaximumHitPoints,
+            _weapons.HudTexture);
+        if (_saveFeedbackSeconds > 0f)
+            renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 170f));
+        if (ShowTraversalDebug) _traversalDebug.DrawUI(renderer);
+        Ballistics.DrawUI(renderer);
     }
 
     private void UpdateJumpSound()

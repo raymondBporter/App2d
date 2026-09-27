@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
@@ -32,7 +33,7 @@ public sealed class GeometryQueryTests
         Assert.Equal(new Interval1D(-3, 7), Projection2D.Polygon(points.AsSpan(), axis, offset));
         Assert.Equal(new Interval1D(-3, 7), Projection2D.Polygon((IReadOnlyList<Vector2>)points, axis, offset));
         Assert.Equal(new Interval1D(0, 0), Projection2D.Polygon(points.AsSpan(), default, offset));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Projection2D.Polygon(ReadOnlySpan<Vector2>.Empty, axis));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Projection2D.Polygon([], axis));
     }
 
     [Fact]

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Gameplay.Audio;
+namespace App2d.Game.Presentation.Audio;
 
 public interface ISoundEffectSink2D
 {

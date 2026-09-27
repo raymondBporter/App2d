@@ -1,9 +1,10 @@
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
+using App2d.Core.Geometry.Shapes;
 using App2d.Rendering;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Game.Presentation;
 
 // Purely cosmetic rope made of stretched capsule links laid along a sagging curve.
 // It never touches the physics world, so it can never yank anything.
@@ -76,7 +77,7 @@ public sealed class RopeVisual2D
         var length = segment.Length();
         link.Transform.Position = from;
         link.Transform.Rotation = length > float.Epsilon
-            ? MathF.Atan2(segment.Y, segment.X)
+            ? segment.AngleRadians
             : 0f;
         link.Transform.Scale = new Vector2(
             Math.Max(length / _linkBaseLength, 0.001f),

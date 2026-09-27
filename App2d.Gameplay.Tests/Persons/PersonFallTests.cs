@@ -7,7 +7,6 @@ using App2d.Gameplay.Persons;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using System.Numerics;
 using Xunit;
 
 namespace App2d.Gameplay.Tests.Persons;

@@ -1,7 +1,6 @@
-using App2d.Core.Characters.Authored;
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>A base model with one variant's overrides applied, compiled once and shared by every actor that uses it.</summary>
 public sealed class ResolvedModel

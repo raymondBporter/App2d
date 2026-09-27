@@ -1,4 +1,5 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -186,10 +187,10 @@ internal sealed class RigidPuppetRenderer2D
     {
         var hand = pose.Sockets[StandardBones2D.HandSocketRight];
         var swordAngle = hand.Angle - 0.08f;
-        var swordStart = hand.Position - Direction(swordAngle) * 10f;
-        var swordEnd = swordStart + Direction(swordAngle) * 112f;
+        var swordStart = hand.Position - Polar2D.Direction(swordAngle) * 10f;
+        var swordEnd = swordStart + Polar2D.Direction(swordAngle) * 112f;
         DrawThickSegment(renderer, swordStart, swordEnd, 6f, new XnaColor(219, 230, 241));
-        var guard = Perpendicular(Direction(swordAngle));
+        var guard = Perpendicular(Polar2D.Direction(swordAngle));
         Span<Vector2> guardLine = [hand.Position - guard * 19f, hand.Position + guard * 19f];
         renderer.DrawWorldPolyline(guardLine, _partSet.Accent, 7f);
 
@@ -197,7 +198,7 @@ internal sealed class RigidPuppetRenderer2D
         // ponytail, antenna, cloth tip, or any other cheap secondary motion.
         var head = pose.Sockets[StandardBones2D.HeadTopSocket];
         var wobble = MathF.Sin((float)totalSeconds * 4.1f) * 0.12f;
-        var hatDirection = Direction(head.Angle + MathF.PI / 2f + wobble);
+        var hatDirection = Polar2D.Direction(head.Angle + MathF.PI / 2f + wobble);
         var brimDirection = Perpendicular(hatDirection);
         Span<Vector2> brim = [head.Position - brimDirection * 32f, head.Position + brimDirection * 32f];
         renderer.DrawWorldPolyline(brim, _partSet.Accent, 9f);
@@ -282,7 +283,6 @@ internal sealed class RigidPuppetRenderer2D
         _ => 1f
     };
 
-    private static Vector2 Direction(float angle) => new(MathF.Cos(angle), MathF.Sin(angle));
     private static Vector2 Perpendicular(Vector2 value) => new(-value.Y, value.X);
     private sealed record PartInstance(RigidPartAsset2D Asset, WorldObject2D Object);
 }

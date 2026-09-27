@@ -1,6 +1,9 @@
+using App2d.Audio;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
+using App2d.Diagnostics;
 using App2d.Editor;
+using App2d.Game.Presentation.Audio;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
@@ -11,8 +14,6 @@ using App2d.Rendering.Vegetation;
 using App2d.Things;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
-using App2d.Audio;
-using App2d.Diagnostics;
 
 namespace App2d;
 
@@ -37,12 +38,12 @@ public sealed class SideScrollerGame : Game2D
     {
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
-        const float units = Core.Characters.AuthoredWorld.PixelsPerUnit;
+        const float units = AuthoredWorld.PixelsPerUnit;
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
         var height = MathF.Round(hero.Asset.Movement.Height * units / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
             new(hero.Asset.Movement.Width * units, height), hero.Asset.Movement.OffsetX * units);
-        _sounds = new SoundEffectBank2D(Path.Combine(AssetPaths.Root, "audio", "sfx"));
+        _sounds = new SoundEffectBank2D(AssetPaths.Current.SoundEffects);
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
 
@@ -99,7 +100,7 @@ public sealed class SideScrollerGame : Game2D
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, Textures, _sounds, Traversal, Gameplay.Persons.PersonMoves.From(_authored));
-        var soundtrack = WorldSoundtrack2D.Load(Path.Combine(AssetPaths.Root, "audio", "music"), loadedLevel.Zones);
+        var soundtrack = WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones);
         _music = new MusicPlayer2D(soundtrack.Cues);
         _musicDirector = new(soundtrack, _music.Select);
         _musicDirector.Update(snapshot.Content, startPosition, 0f);
@@ -134,6 +135,7 @@ public sealed class SideScrollerGame : Game2D
         $"App2d Side Scroller | PAD: {(_client.IsControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     internal override Control? OverlayControl => _editor.InspectorView;
+    protected override XnaColor BackgroundColor => new(103, 196, 235);
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -172,15 +174,20 @@ public sealed class SideScrollerGame : Game2D
         var foliageMargin = new Vector2(_simulation.Level.TileMap.TileSize * 10f);
         var visible = Camera.VisibleWorldBounds;
         _client.SetVisibleTerrain(_terrainSource.Capture(new(visible.Min - foliageMargin, visible.Max + foliageMargin)));
-        renderer.Clear(new XnaColor(103, 196, 235));
         _client.DrawTrees(renderer);
         // Terrain sits at z 0 and characters above it, so back grass slots in between.
         renderer.Draw(Scene, int.MinValue, 0);
         _client.DrawGrass(renderer, VegetationLayer2D.Back);
         renderer.Draw(Scene, 1, int.MaxValue);
         _client.DrawGrass(renderer, VegetationLayer2D.Front);
-        _client.Draw(renderer);
-        TileEditorView2D.Draw(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize, Textures);
+        _client.DrawWorldEffects(renderer);
+    }
+
+    public override void RenderWorldDebug(Renderer2D renderer)
+    {
+        base.RenderWorldDebug(renderer);
+        _client.DrawWorldDebug(renderer);
+        TileEditorView2D.DrawWorldDebug(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize);
         if (_showZones)
             foreach (var zone in _client.Content.Zones)
             {
@@ -191,10 +198,17 @@ public sealed class SideScrollerGame : Game2D
             }
     }
 
+    public override void RenderUI(Renderer2D renderer, FrameTime time)
+    {
+        _client.DrawUI(renderer);
+        TileEditorView2D.DrawUI(renderer, _editor, Textures);
+        base.RenderUI(renderer, time);
+    }
+
     /// <summary>Authored entities that fail to compile are not played; the game refuses to start and names each problem instead.</summary>
     private static AuthoredCatalog LoadAuthored()
     {
-        var catalog = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         if (catalog.Errors.Count > 0) throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
         return catalog;
     }

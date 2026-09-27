@@ -1,4 +1,5 @@
 using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 
 namespace App2d.CharacterStudio.PlayerMoves;
 
@@ -55,7 +56,7 @@ internal static partial class PlayerMoves
             ],
         };
         // The broad front of the scabbard covers the blade on the shared back socket.
-        foreach (var solid in prop.Solids) solid.Vertices = solid.Vertices.Select(p => p with { Z = p.Z - .022f }).ToList();
+        foreach (var solid in prop.Solids) solid.Vertices = [.. solid.Vertices.Select(p => p with { Z = p.Z - .022f })];
         return prop;
     }
 

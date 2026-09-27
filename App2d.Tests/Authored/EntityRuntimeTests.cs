@@ -1,4 +1,3 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 
@@ -30,7 +29,7 @@ public sealed class EntityRuntimeTests
         // attack -> follow-up -> forehand -> follow-up: the traversal controller supports the first two, the chain the third.
         Assert.Equal(EntityControllers.FollowUp, swing.Next);
         Assert.Equal(EntityControllers.FollowUp, hero.Actions[hero.Actions[swing.Next!].Next!].Next);
-        Assert.All(new[] { swing, hero.Actions[swing.Next!] }, a => Assert.NotNull(a.Recovery));
+        Assert.All([swing, hero.Actions[swing.Next!]], a => Assert.NotNull(a.Recovery));
 
         var broken = EntityAsset.FromJson(hero.Asset.ToJson()); broken.Actions[0].Next = "nowhere";
         Assert.Contains("no action 'nowhere'", Assert.Throws<InvalidDataException>(broken.Validate).Message);
