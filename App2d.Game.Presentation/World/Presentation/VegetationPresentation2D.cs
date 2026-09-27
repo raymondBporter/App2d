@@ -10,7 +10,7 @@ namespace App2d.Gameplay.World.Presentation;
 /// <summary>Camera-streamed foliage; only the simulation's observation supplies cut state.</summary>
 public sealed class VegetationPresentation2D
 {
-    private const float CutRoughness = 0.45f;
+    private const float CutRoughness = 0.6f;
     private readonly Dictionary<TileChunk2D, Chunk> _chunks = [];
     private readonly List<GrassClipping2D> _clippings = [];
     internal int ClippingCount => _clippings.Count;
@@ -178,7 +178,7 @@ public sealed class VegetationPresentation2D
             dry ? new(150, 118, 52) : reeds ? new(36, 128, 104) : new(79, 184, 47),
             dry ? new(206, 176, 92) : reeds ? new(82, 184, 148) : new(108, 203, 66),
             reeds ? 0.4f : 0.2f, 0.22f, dry || reeds ? 0f : 0.08f,
-            Coverage: dry ? 0.45f : 0.6f, PatchWidth: size * 6f);
+            Coverage: dry ? 0.45f : 0.6f, PatchWidth: size * 6f, SprigChance: 0.35f);
     }
 
     private sealed record Patch(GrassCell2D Cell, Vector2 Root, float Size, VegetationPatch2D Visual);

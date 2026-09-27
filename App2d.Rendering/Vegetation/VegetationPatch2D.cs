@@ -20,6 +20,7 @@ public sealed class VegetationPatch2D
 {
     public static readonly XnaColor InkColor = new(35, 48, 31);
     private const int SegmentCount = 4;
+    private const float GrazedTuftChance = 0.2f;
     // Ink widths are world units relative to a 4.5-unit blade, so the doodle reads the same at any zoom.
     private const float OutlineWidth = 0.8f;
     private const float DetailOutlineWidth = 0.65f;
@@ -46,6 +47,9 @@ public sealed class VegetationPatch2D
 
         _style = style;
         var random = new Random(seed);
+        // Separate stream so how grass cuts never reshuffles how it grows.
+        var cutTraits = new Random(seed ^ 0x2c1b3c6d);
+        var sprigs = new Random(seed ^ 0x51ed2701);
         var blades = new List<Blade>();
         var flowers = new List<Flower>();
         var position = startX + style.Spacing * 0.5f * random.NextSingle();
@@ -53,6 +57,8 @@ public sealed class VegetationPatch2D
         {
             var density = Density(position, style);
             var skip = random.NextSingle() >= density;
+            if (sprigs.NextSingle() < style.SprigChance)
+                AddSprig(blades, position + style.Spacing * (sprigs.NextSingle() - 0.5f), groundY, style, sprigs);
             var tall = random.NextSingle() < style.TallChance;
             var layer = random.NextSingle() < style.FrontChance ? VegetationLayer2D.Front : VegetationLayer2D.Back;
             var height = tall
@@ -68,8 +74,13 @@ public sealed class VegetationPatch2D
             }
             var phase = random.NextSingle() * MathF.Tau;
             var windResponse = float.Lerp(0.8f, 1.2f, random.NextSingle()) * height / style.MaximumHeight;
+            // A grazed tuft only loses its tips, so a hit always shows without mowing everything flat.
+            var kept = cutTraits.NextSingle() < GrazedTuftChance ? float.Lerp(0.55f, 0.8f, cutTraits.NextSingle()) : 0f;
             for (var index = 0; index < count; index++)
             {
+                // Mostly near the cut line, with a long tail of blades that only lose their tips.
+                var jitter = cutTraits.NextSingle() * 2f - 1f;
+                jitter = jitter < 0f ? jitter * 0.5f : jitter * jitter * 0.6f;
                 var offset = (index - (count - 1) * 0.5f) * style.BladeWidth * 0.9f;
                 var light = index % 2 == 0;
                 blades.Add(new(
@@ -80,7 +91,9 @@ public sealed class VegetationPatch2D
                     phase + index * 0.37f,
                     windResponse,
                     Shade(light ? style.LightColor : style.DarkColor, layer),
-                    layer));
+                    layer,
+                    jitter,
+                    kept));
             }
             if (density > 0.6f && random.NextSingle() < style.FlowerChance)
             {
@@ -97,6 +110,22 @@ public sealed class VegetationPatch2D
     }
 
     public int BladeCount => _blades.Length;
+
+    /// <summary>A couple of tiny blades below the cut line: they never get cut, so mowed and bare ground keep some green.</summary>
+    private static void AddSprig(List<Blade> blades, float x, float groundY, VegetationStyle2D style, Random random)
+    {
+        var height = style.MinimumHeight * float.Lerp(0.4f, 0.6f, random.NextSingle());
+        var count = 2 + random.Next(2);
+        var phase = random.NextSingle() * MathF.Tau;
+        for (var index = 0; index < count; index++)
+        {
+            var offset = (index - (count - 1) * 0.5f) * style.BladeWidth * 0.8f;
+            blades.Add(new(new Vector2(x + offset, groundY), height * (index % 2 == 0 ? 1f : 0.75f),
+                style.BladeWidth * 0.8f, offset * 0.8f, phase + index * 0.4f, 0.2f,
+                Shade(index % 2 == 0 ? style.LightColor : style.DarkColor, VegetationLayer2D.Back),
+                VegetationLayer2D.Back, Uncuttable: true));
+        }
+    }
 
     /// <summary>
     /// How much grass grows at a world X, from 0 (bare) to 1 (full). Two octaves of smooth value noise,
@@ -290,8 +319,13 @@ public sealed class VegetationPatch2D
     private static Vector2 FlowerPoint(Flower flower, float weight, VegetationWind2D wind) =>
         flower.Root + new Vector2(wind.Offset(flower.Root.X, weight, flower.Phase, 0.6f), flower.Height * weight);
 
+    /// <summary>
+    /// Share of the blade left standing after a cut. Roughness zero cuts every blade exactly at the line;
+    /// above zero, blades cut at scattered heights and some tufts are only grazed.
+    /// </summary>
     private static float CutWeight(Blade blade, float height, float roughness) =>
-        Math.Min(1f, height * (1f + roughness * MathF.Sin(blade.Phase * 3.17f)) / blade.Height);
+        blade.Uncuttable ? 1f : roughness <= 0f ? Math.Min(1f, height / blade.Height)
+            : Math.Min(1f, Math.Max(blade.GrazedKeep, height * (1f + roughness * blade.CutJitter) / blade.Height));
 
     private static Section2D Section(Blade blade, float from, float to, VegetationWind2D wind, float widthScale,
         XnaColor color)
@@ -325,7 +359,10 @@ public sealed class VegetationPatch2D
         float Phase,
         float WindResponse,
         XnaColor Color,
-        VegetationLayer2D Layer);
+        VegetationLayer2D Layer,
+        float CutJitter = 0f,
+        float GrazedKeep = 0f,
+        bool Uncuttable = false);
 
     private readonly record struct Flower(Vector2 Root, float Height, float Phase, XnaColor Color);
 }
@@ -333,6 +370,7 @@ public sealed class VegetationPatch2D
 /// <summary>
 /// Sizes are world units; ordinary tufts span Minimum..Maximum, tall clumps reach TallHeight.
 /// Coverage is the rough share of ground that grows grass; PatchWidth sets how wide the grassy and bare stretches run.
+/// SprigChance scatters tiny uncuttable blades everywhere, bare ground included.
 /// </summary>
 public readonly record struct VegetationStyle2D(
     float MinimumHeight,
@@ -346,7 +384,8 @@ public readonly record struct VegetationStyle2D(
     float FrontChance,
     float FlowerChance,
     float Coverage = 1f,
-    float PatchWidth = 1f)
+    float PatchWidth = 1f,
+    float SprigChance = 0f)
 {
     internal void Validate()
     {
@@ -360,6 +399,7 @@ public readonly record struct VegetationStyle2D(
         ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(FlowerChance, 0f, 1f);
         ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(Coverage, 0f, 1f);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(PatchWidth);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(SprigChance, 0f, 1f);
     }
 }
 
