@@ -149,6 +149,26 @@ public sealed class PersonAnimationDirectorTests
     }
 
     [Fact]
+    public void SwordSwingsLayerOverTheLegsOnceTheBodyMoves()
+    {
+        var d = new Driver();
+        var cut = Moves.Swing(null);
+        PersonState2D Swinging(PersonState2D state, float elapsed) => state with { Action = new(PlayerAttackKind2D.Melee, elapsed, cut.Clip.Duration, cut.Id) };
+        var standing = d.Step(Swinging(Standing, 0));
+        Assert.Equal(cut.Clip.Id, standing.Key);
+        Assert.Null(standing.Overlay);
+        var running = d.Step(Swinging(Standing with { LinearVelocity = new(4, 0) }, .05f));
+        Assert.Equal(PersonMoves.Run, running.Key);
+        Assert.Equal(cut.Clip.Id, running.PropClip.Id);
+        Assert.Same(PersonLoadout.SwordUpperBody, running.Overlay!.Targets);
+        // Stopping mid-swing keeps the legs' own pose rather than snapping back to the swing's planted stance.
+        Assert.Equal(PersonMoves.Idle, d.Step(Swinging(Standing, .1f)).Key);
+        var airborne = d.Step(Swinging(Standing with { IsGrounded = false, LinearVelocity = new(0, 3) }, 0));
+        Assert.Equal(PersonMoves.Jump, airborne.Key);
+        Assert.Equal(cut.Clip.Id, airborne.Overlay!.Clip.Id);
+    }
+
+    [Fact]
     public void GunShotsLayerTheArmsOverWhateverTheLegsAreDoing()
     {
         var d = new Driver(EquipmentKind2D.Gun);

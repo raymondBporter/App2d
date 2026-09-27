@@ -78,7 +78,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
     private double _cycle;
     private bool _outpaced;
     private string? _reaction;
-    private bool _wasClimbing, _wasDashing, _wasGrounded = true, _meleeActive, _sheathePending;
+    private bool _wasClimbing, _wasDashing, _wasGrounded = true, _meleeActive, _sheathePending, _swingLayered;
     private string _key = "", _swing = "", _recovery = PersonMoves.Sheathe;
     private string? _swingAction;
     private float _swingElapsed;
@@ -151,7 +151,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         if (melee && (!_meleeActive || s.Action.Swing != _swingAction || s.Action.ElapsedSeconds < _swingElapsed))
         {
             var swing = moves.Swing(s.Action.Swing);
-            _swingAction = s.Action.Swing; _swing = swing.Clip.Id;
+            _swingAction = s.Action.Swing; _swing = swing.Clip.Id; _swingLayered = false;
             _recovery = s.Action.Kind == PlayerAttackKind2D.Downward ? PersonMoves.Sheathe : swing.Recovery?.Id ?? PersonMoves.Sheathe;
         }
         _meleeActive = melee; _swingElapsed = melee ? s.Action.ElapsedSeconds : 0;
@@ -171,7 +171,14 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
                         : Locomotion(gear) with { Overlay = new(moves[PersonMoves.GunShot], Scaled(PersonMoves.GunShot), PersonLoadout.UpperBody) };
         }
         else if (s.Action.IsActive && s.Action.Kind == PlayerAttackKind2D.Downward) { _sheathePending = false; frame = Play(PersonMoves.DownAttack, Scaled(PersonMoves.DownAttack)); }
-        else if (melee) { _sheathePending = false; frame = Play(_swing, Scaled(_swing)); }
+        else if (melee)
+        {
+            // Swings plant both feet, which drags the legs out behind a moving body. Once the body moves during a swing,
+            // the legs keep their gait and the swing plays over them from the waist up until it ends.
+            _sheathePending = false;
+            _swingLayered |= !s.IsGrounded || s.IsClimbingLadder || s.IsWallGripping || MathF.Abs(s.LinearVelocity.X) / pixelsPerUnit > WalkSpeedThreshold;
+            frame = _swingLayered ? Locomotion(gear) with { Overlay = new(moves[_swing], Scaled(_swing), PersonLoadout.SwordUpperBody) } : Play(_swing, Scaled(_swing));
+        }
         else if (s.IsDashing)
         {
             frame = Play(PersonMoves.Dash, _clock - _dashStart);
