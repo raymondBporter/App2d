@@ -1,12 +1,13 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Grids;
 using System.Numerics;
 
 namespace App2d.Tiles;
 
 public sealed class TileMap2D : ISolidTileMap2D
 {
-    private readonly bool[] _solidTiles;
+    private readonly Grid2D<bool> _solidTiles;
     private readonly List<Bounds2D> _collisionRectangles = [];
     private readonly List<TileCellRectangle2D> _meshBuffer = [];
     private readonly TileRectangleMesher2D.KindAt _kindAt;
@@ -19,19 +20,17 @@ public sealed class TileMap2D : ISolidTileMap2D
         ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
         ArgGuard.ThrowIfNotFinite(origin);
 
-        Width = width;
-        Height = height;
-        TileSize = tileSize;
-        Origin = origin;
-        _solidTiles = new bool[width * height];
-        _kindAt = (x, y) => _solidTiles[y * Width + x] ? TileKind2D.Solid : TileKind2D.Empty;
+        _solidTiles = new(width, height, tileSize, origin);
+        _kindAt = (x, y) => _solidTiles[x, y] ? TileKind2D.Solid : TileKind2D.Empty;
     }
 
-    public int Width { get; }
-    public int Height { get; }
-    public float TileSize { get; }
-    public Vector2 Origin { get; }
-    public Bounds2D WorldBounds => new(Origin, Origin + new Vector2(Width * TileSize, Height * TileSize));
+    public int Width => _solidTiles.Width;
+    public int Height => _solidTiles.Height;
+    public float TileSize => _solidTiles.CellSize.X;
+    public Vector2 Origin => _solidTiles.Origin;
+    public Bounds2D WorldBounds => _solidTiles.WorldBounds;
+    public GridSize2D GridSize => _solidTiles.Size;
+    public GridGeometry2D GridGeometry => _solidTiles.Geometry;
 
     public IReadOnlyList<Bounds2D> CollisionRectangles
     {
@@ -43,12 +42,11 @@ public sealed class TileMap2D : ISolidTileMap2D
         }
     }
 
-    public bool IsSolid(int x, int y) => IsInside(x, y) && _solidTiles[y * Width + x];
+    public bool IsSolid(int x, int y) => GridSize.Contains(x, y) && _solidTiles[x, y];
 
     public void SetSolid(int x, int y, bool isSolid = true)
     {
-        ValidateCoordinates(x, y);
-        _solidTiles[y * Width + x] = isSolid;
+        _solidTiles[x, y] = isSolid;
         _collisionRectanglesDirty = true;
     }
 
@@ -57,13 +55,12 @@ public sealed class TileMap2D : ISolidTileMap2D
         ArgGuard.ThrowIfNotPositive(width);
         ArgGuard.ThrowIfNotPositive(height);
 
-        if (!IsInside(x, y) || !IsInside(x + width - 1, y + height - 1))
+        if (!GridSize.Contains(x, y) || width > Width - x || height > Height - y)
             ArgGuard.ThrowOutOfRange(width, "Fill rectangle must stay inside the tilemap.");
 
         for (var row = y; row < y + height; row++)
         {
-            var start = row * Width + x;
-            _solidTiles.AsSpan(start, width).Fill(isSolid);
+            _solidTiles.GetRowSpan(row).Slice(x, width).Fill(isSolid);
         }
 
         _collisionRectanglesDirty = true;
@@ -76,18 +73,11 @@ public sealed class TileMap2D : ISolidTileMap2D
         TileRectangleMesher2D.Mesh(Width, Height, _kindAt, _meshBuffer);
         foreach (var cell in _meshBuffer)
         {
-            var min = Origin + new Vector2(cell.X, cell.Y) * TileSize;
-            _collisionRectangles.Add(new Bounds2D(min, min + new Vector2(cell.Width, cell.Height) * TileSize));
+            _collisionRectangles.Add(GridGeometry.GetBounds(new GridCellRange2D(
+                new(cell.X, cell.Y), new(cell.X + cell.Width - 1, cell.Y + cell.Height - 1))));
         }
 
         _collisionRectanglesDirty = false;
     }
 
-    private bool IsInside(int x, int y) => x >= 0 && x < Width && y >= 0 && y < Height;
-
-    private void ValidateCoordinates(int x, int y)
-    {
-        if (!IsInside(x, y))
-            ArgGuard.ThrowOutOfRange(x, $"Tile ({x}, {y}) is outside the map.");
-    }
 }

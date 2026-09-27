@@ -11,6 +11,42 @@ public sealed class CollisionSystem2DTests
     private const uint ActorLayer = 1u << 1;
 
     [Fact]
+    public void GridQueriesMatchBoundsScanningAcrossNegativeCoordinatesAndCellEdges()
+    {
+        var system = new CollisionSystem2D { CellSize = 16f };
+        var random = new Random(173);
+        for (var i = 0; i < 80; i++)
+        {
+            var shape = new SpatialObject2D(Rectangle2D.FromSize(new(8 + i % 7, 10)));
+            shape.Transform.Position = new(random.Next(-8, 9) * 16, random.Next(-4, 5) * 16);
+            system.AddCollider(shape, i % 2 == 0 ? ColliderMobility2D.Static : ColliderMobility2D.Dynamic);
+        }
+        var results = new List<Collider2D>();
+        for (var i = 0; i < 40; i++)
+        {
+            var min = new Vector2(random.Next(-10, 10) * 16, random.Next(-6, 6) * 16);
+            var query = new Bounds2D(min, min + new Vector2(i % 3 * 16, i % 4 * 16));
+            system.QueryBounds(query, results);
+            var expected = system.Colliders.Where(c => query.Intersects(c.WorldObject.WorldBounds)).Select(c => c.Id).Order();
+            Assert.Equal(expected, results.Select(c => c.Id).Order());
+        }
+    }
+
+    [Fact]
+    public void UnrepresentableGridCoordinatesUseTheOverflowPathWithoutLosingColliders()
+    {
+        var system = new CollisionSystem2D { CellSize = 1e-20f };
+        var shape = new SpatialObject2D(new Circle2D(2));
+        shape.Transform.Position = new(50, -50);
+        var collider = system.AddCollider(shape);
+        var results = new List<Collider2D>();
+        system.QueryBounds(new Bounds2D(new(49, -51), new(51, -49)), results);
+        Assert.Same(collider, Assert.Single(results));
+        system.QueryBounds(Bounds2D.Unbounded, results);
+        Assert.Same(collider, Assert.Single(results));
+    }
+
+    [Fact]
     public void RegistersAndRemovesColliders()
     {
         var system = new CollisionSystem2D();
