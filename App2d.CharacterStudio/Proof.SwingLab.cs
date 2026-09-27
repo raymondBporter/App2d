@@ -29,6 +29,7 @@ internal sealed partial class ProofRenders
         var model = catalog.Resolve("person");
         // The lab and game share the approved cartoon sword.
         var props = PlayerMoves.PlayerMoves.Props().ToDictionary(p => p.Id);
+        foreach (var (id, art) in catalog.Props) props.TryAdd(id, art);
         var todaySword = props[PersonLoadout.Sword];
         props[PersonLoadout.Sword] = PlayerMoves.PlayerMoves.CartoonSwordArt();
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
@@ -44,7 +45,7 @@ internal sealed partial class ProofRenders
             var pose = PoseEvaluator.Sample(model, clip, seconds);
             drawing.Build(model, pose);
             var placed = new ActorPose(pose, Vector2.Zero, 1);
-            foreach (var (prop, socket) in PersonLoadout.Worn(clip, seconds, PersonGear.Sword))
+            foreach (var (prop, socket) in PersonLoadout.Dressed(clip, seconds, PersonGear.Sword, catalog.Entities["hero"]))
                 drawing.AddProp(worn[prop], placed.Socket(sockets[socket]));
             trail.Clear();
             if (swoosh is not null && LabBlade(model, clip, seconds, worn, sockets) is var (guard, tip))

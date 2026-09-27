@@ -31,6 +31,7 @@ internal static class PropDrawing
                     faces.Add(face);
                 }
             }
+            if (!solid.Outlined) continue;
             foreach (var (edge, faces) in edges)
             {
                 var visible = faces.Any(f => normals[f].Z < -1e-5f);

@@ -32,6 +32,10 @@
     {
       "prop": "pistol",
       "socket": "gun-hand"
+    },
+    {
+      "prop": "hair-short",
+      "socket": "head-art"
     }
   ],
   "actions": [

@@ -217,6 +217,7 @@ public sealed class AuthoringWorkspace
         var uses = new List<AssetReference>();
         switch (Find(id))
         {
+            case AssetDocument<PropAsset> prop when prop.Asset.BackView is { } back: uses.Add(new(back, "back view")); break;
             case AssetDocument<ModelVariant> variant: uses.Add(new(variant.Asset.Base, "base")); break;
             case AssetDocument<MotionClip> clip: uses.Add(new(clip.Asset.Model, "model")); break;
             case AssetDocument<CharacterModel> model:
@@ -273,7 +274,10 @@ public sealed class AuthoringWorkspace
                 if (problems.Count == 0 && clip.Asset.StructureRevision != basis.Base.StructureRevision && !StructureChanged(Model(basis.Base.Id)!))
                     problems.Add($"Clip '{clip.Id}' was authored against structure revision {clip.Asset.StructureRevision} of '{basis.Base.Id}'; the model is at revision {basis.Base.StructureRevision}.");
                 break;
-            case AssetDocument<PropAsset> prop: Try(prop.Asset.Validate); break;
+            case AssetDocument<PropAsset> prop:
+                Try(prop.Asset.Validate);
+                if (prop.Asset.BackView is { } back && Prop(back) is null) problems.Add($"No back-view appearance '{back}'.");
+                break;
             case AssetDocument<EntityAsset> entity: if (CompileEntity(entity.Id, out var compile) is null) problems.Add(compile!); break;
         }
         return problems;

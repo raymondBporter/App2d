@@ -22,19 +22,45 @@ public static class PropGeometry
         return mesh;
     }
 
-    /// <summary>Extrudes a convex XY outline; either input winding is accepted. Thickness is centered about Z.</summary>
+    /// <summary>Extrudes a simple XY outline, including concave silhouettes; either winding is accepted. Thickness is centered about Z.</summary>
     public static PropSolid Extrude(IEnumerable<PuppetPoint> outline, float thickness, string fill)
     {
         var points = outline.ToList();
         ArgGuard.ThrowIf(points.Count < 3 || thickness <= 0, "An extrusion needs an outline and positive thickness.");
         var area = points.Select((p, i) => p.X * points[(i + 1) % points.Count].Y - p.Y * points[(i + 1) % points.Count].X).Sum();
         if (area < 0) points.Reverse();
-        var n = points.Count; var mesh = new PropSolid { Fill = fill };
+        var n = points.Count; var mesh = new PropSolid { Fill = fill, Outline = [.. points], Thickness = thickness };
         mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z - thickness / 2 }));
         mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z + thickness / 2 }));
-        for (var i = 1; i < n - 1; i++) { mesh.Triangles.AddRange([0, i + 1, i, n, n + i, n + i + 1]); }
+        foreach (var (a, b, c) in Triangulate(points))
+            mesh.Triangles.AddRange([a, c, b, n + a, n + b, n + c]);
         for (var i = 0; i < n; i++) { var j = (i + 1) % n; mesh.Triangles.AddRange([i, j, n + j, i, n + j, n + i]); }
         return mesh;
+    }
+
+    // Ear clipping happens at authoring time. Runtime props already contain indexed triangles.
+    private static IEnumerable<(int A, int B, int C)> Triangulate(List<PuppetPoint> points)
+    {
+        static float Cross(Vector2 a, Vector2 b, Vector2 c) => (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X);
+        var remaining = Enumerable.Range(0, points.Count).ToList();
+        while (remaining.Count > 3)
+        {
+            var found = false;
+            for (var i = 0; i < remaining.Count; i++)
+            {
+                var a = remaining[(i + remaining.Count - 1) % remaining.Count];
+                var b = remaining[i]; var c = remaining[(i + 1) % remaining.Count];
+                var pa = points[a].XY; var pb = points[b].XY; var pc = points[c].XY;
+                if (Cross(pa, pb, pc) <= 1e-8f) continue;
+                if (remaining.Any(j => j != a && j != b && j != c &&
+                    Cross(pa, pb, points[j].XY) >= -1e-8f && Cross(pb, pc, points[j].XY) >= -1e-8f && Cross(pc, pa, points[j].XY) >= -1e-8f)) continue;
+                yield return (a, b, c); remaining.RemoveAt(i); found = true; break;
+            }
+            if (!found) throw new InvalidDataException("The prop outline must be simple and have nonzero area.");
+        }
+        if (Cross(points[remaining[0]].XY, points[remaining[1]].XY, points[remaining[2]].XY) <= 1e-8f)
+            throw new InvalidDataException("The prop outline has a degenerate final triangle.");
+        yield return (remaining[0], remaining[1], remaining[2]);
     }
 
     /// <summary>Turns the existing convex weapon silhouettes into simple solids, preserving their color and dimensions.</summary>

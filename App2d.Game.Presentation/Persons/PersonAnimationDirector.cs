@@ -37,7 +37,7 @@ public sealed class PersonMoves
         var clips = All.ToDictionary(id => id, id => { var clip = catalog.Animations[id]; clip.Validate(resolved); return clip; }, StringComparer.Ordinal);
         foreach (var action in hero.Actions.Values)
             foreach (var clip in new[] { action.Clip, action.Recovery }.OfType<MotionClip>()) clips[clip.Id] = clip;
-        foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket })
+        foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket, PersonWardrobe.HeadSocket })
             if (resolved.Base.Sockets.All(s => s.Id != socket)) throw new InvalidDataException($"Model '{model}' has no '{socket}' socket for the player's props.");
         return new(resolved, hero, clips, catalog.Props.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
     }

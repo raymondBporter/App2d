@@ -22,7 +22,7 @@ public static class PartGeometry
         return new(a + new Vector3(new Vector2(up.Y, -up.X) * part.OffsetX + up * part.OffsetY, 0), new(up.Y, -up.X), up, part.Depth);
     }
 
-    /// <summary>The closed outline of an ellipse or rounded box, or a stroke's two endpoints.</summary>
+    /// <summary>The closed outline of an ellipse, rounded box or trapezoid, or a stroke's two endpoints.</summary>
     public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world)
     {
         if (part.Kind == "stroke")
@@ -41,6 +41,9 @@ public static class PartGeometry
         {
             var radius = Math.Min(part.Width, part.Height) * .5f * part.Roundness;
             VertexGenerator2D.WriteRoundedRectangle(vertices, -halfSize, halfSize, radius);
+            if (part.Kind == "trapezoid")
+                for (var i = 0; i < vertices.Length; i++)
+                    vertices[i].X *= TrapezoidWidthScale(part, vertices[i].Y);
         }
         var contour = new List<Vector3>(vertices.Length);
         foreach (var vertex in vertices) contour.Add(frame.At(vertex));
@@ -49,7 +52,7 @@ public static class PartGeometry
 
     /// <summary>
     /// Normalized XY picking score, not a distance in world units. Ellipses use radial distance;
-    /// rounded boxes retain their bounding-box score; strokes use width with a minimum picking tolerance.
+    /// rounded boxes retain their bounding-box score with taper accounted for; strokes use width with a minimum picking tolerance.
     /// </summary>
     public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point)
     {
@@ -62,9 +65,13 @@ public static class PartGeometry
         }
         var frame = FrameOf(part, world); var local = p - new Vector2(frame.Origin.X, frame.Origin.Y);
         var coordinates = new Vector2(Vector2.Dot(local, frame.Right), Vector2.Dot(local, frame.Up));
+        if (part.Kind == "trapezoid") coordinates.X /= TrapezoidWidthScale(part, coordinates.Y);
         var halfSize = new Vector2(part.Width / 2, part.Height / 2);
         return part.Kind == "ellipse"
             ? PrimitiveGeometry2D.NormalizedEllipseRadius(coordinates, Vector2.Zero, halfSize)
             : PrimitiveGeometry2D.NormalizedRectangleRadius(coordinates, Vector2.Zero, halfSize);
     }
+
+    private static float TrapezoidWidthScale(PuppetPart part, float y) =>
+        1 + (part.TopWidthScale - 1) * Math.Clamp(y / part.Height + .5f, 0, 1);
 }

@@ -22,6 +22,7 @@ public static class StarterContent
             new() { Id = "back", Control = "chest", Frame = "chest", OffsetX = -.1f, OffsetY = -.08f, Angle = -MathF.PI / 2 - .12f },
             new() { Id = "back-view", Control = "chest", Frame = "chest", OffsetX = -.13f, OffsetY = .12f, Angle = -MathF.PI / 2 + .55f },
             new() { Id = "sword-hand", Control = "right-hand", Frame = "right-shoulder" }, new() { Id = "gun-hand", Control = "right-hand", Frame = "right-shoulder" },
+            .. PersonWardrobe.Sockets(),
         ];
         model.MotionSets =
         [

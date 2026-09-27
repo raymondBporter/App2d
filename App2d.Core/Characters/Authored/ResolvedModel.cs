@@ -80,6 +80,8 @@ public sealed class ResolvedModel
         OffsetX = change.OffsetX ?? part.OffsetX,
         OffsetY = change.OffsetY ?? part.OffsetY,
         Fill = change.Fill ?? part.Fill,
+        OutlineWidth = change.OutlineWidth ?? part.OutlineWidth,
+        Paint = change.Paint ?? part.Paint,
         Face = change.Face ?? part.Face,
         FaceX = change.FaceX ?? part.FaceX,
         Hidden = change.Hidden ?? part.Hidden,

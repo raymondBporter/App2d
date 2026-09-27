@@ -124,6 +124,19 @@ internal sealed class EditorSmoke(string output)
                 var s = shell.Session; s.PoseWeapon(new(MathF.PI / 2, 0, 0)); s.CommitAll();
                 Record(MathF.Abs(new ActorPose(s.Scene()[0].Pose, Vector2.Zero, 1).Socket(s.Scene()[0].Model.Base.Sockets.First(x => x.Id == PersonLoadout.SwordSocket)).Across3.Z) > .99f, "edge-on blade has real depth");
             }),
+            ("24-appearance-editor", shell =>
+            {
+                var s = shell.Session; s.Open("maul-brute"); s.Compare.Clear(); s.ShowRest = true; s.EditRig = false;
+                Check(s.DuplicateAppearance("brute-hide-wrap", "test-wrap", "Custom hide wrap"), s);
+                var doc = s.AppearanceDocument!;
+                Check(s.Edit(doc, () => doc.Asset.Solids[0].Fill = "#ac7243"), s);
+                Check(s.EquipAppearance("maul-brute", doc.Id, PersonWardrobe.BodySocket), s);
+                Check(s.Edit(s.EntityDocument!, () => s.EntityDocument!.Asset.Equipment.RemoveAll(e => e.Prop == "brute-hide-wrap")), s);
+                s.SaveAll();
+                var reopened = AuthoredCatalog.Load(s.Assets.Root);
+                Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Solids[0].Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");
+                Record(doc.Asset.Solids[0].Outline is not null, "outline remains editable after saving");
+            }),
         ];
         return workspace;
     }

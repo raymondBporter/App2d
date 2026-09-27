@@ -8,6 +8,33 @@ namespace App2d.Tests;
 public sealed class PuppetAuthoringTests
 {
     [Fact]
+    public void TrapezoidTapersTowardItsUpperControlAndPickingFollowsTheTaper()
+    {
+        var part = new PuppetPart { Kind = "trapezoid", A = "base", B = "top", Width = 2, Height = 2, Roundness = 0, TopWidthScale = .7f };
+        // Local up points right in this pose, so the narrow end is at world X = 1.
+        Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
+        var contour = PartGeometry.Contour(part, World);
+        Assert.Equal(.7f, contour.Where(p => p.X > .999f).Max(p => MathF.Abs(p.Y)), 5);
+        Assert.Equal(1, contour.Where(p => p.X < -.999f).Max(p => MathF.Abs(p.Y)), 5);
+        Assert.True(PartGeometry.Distance(part, World, new(.9f, .9f, 0)) > 1);
+        Assert.True(PartGeometry.Distance(part, World, new(.9f, .6f, 0)) < 1);
+        Assert.True(PartGeometry.Distance(part with { Kind = "box" }, World, new(.9f, .9f, 0)) < 1);
+    }
+
+    [Fact]
+    public void EditorCanAddBothBoxesAndTrapezoidsAndSaveTheirShapeSettings()
+    {
+        var model = App2d.Core.Characters.Authored.PersonTemplate.Model();
+        var box = App2d.Core.Characters.Authored.ModelAuthoring.AddPart(model, "box", "hips");
+        var trapezoid = App2d.Core.Characters.Authored.ModelAuthoring.AddPart(model, "trapezoid", "hips");
+        trapezoid.TopWidthScale = .6f;
+        var restored = App2d.Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
+        Assert.Equal("box", restored.Parts.Single(p => p.Id == box.Id).Kind);
+        Assert.Equal(.6f, restored.Parts.Single(p => p.Id == trapezoid.Id).TopWidthScale);
+        Assert.Equal("trapezoid", restored.Parts.Single(p => p.Id == "body").Kind);
+    }
+
+    [Fact]
     public void EmptyAndHeadlessCharactersNeedNoLibraryOrAnatomy()
     {
         var empty = PuppetDefinition.FromJson(new PuppetDefinition().ToJson());

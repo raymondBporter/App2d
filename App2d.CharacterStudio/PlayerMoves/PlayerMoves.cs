@@ -71,6 +71,7 @@ internal static partial class PlayerMoves
         WeaponMotion(HammerSlam(model)).Save(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"));
         var brute = BruteVariant(); brute.Save(Path.Combine(authoredRoot, "variants", brute.Id + ".json"));
         var maul = MaulBrute(ResolvedModel.From(person, brute)); maul.Save(Path.Combine(authoredRoot, "entities", maul.Id + ".json"));
+        PersonWardrobe.Write(authoredRoot);
     }
 
     /// <summary>A short-hafted war hammer: grip at the origin, haft along +X, the head's centre is its tip.</summary>
