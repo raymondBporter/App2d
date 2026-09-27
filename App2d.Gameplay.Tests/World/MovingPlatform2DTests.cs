@@ -150,6 +150,32 @@ public sealed class MovingPlatform2DTests
         Assert.Equal(210f, landingSpeed, 3);
     }
 
+    [Theory]
+    [InlineData(60f, 0f)]
+    [InlineData(0f, -90f)]
+    public void RiderReportsTheVelocityOfTheGroundItStandsOn(float x, float y)
+    {
+        var collision = new CollisionSystem2D();
+        var physics = CreatePhysics(collision);
+        physics.Gravity = new Vector2(0f, -1_900f);
+        physics.MaxSubstepSeconds = 1f / 120f;
+        var velocity = new Vector2(x, y);
+        var platform = CreatePlatform(physics, Vector2.Normalize(velocity) * 100f, speed: velocity.Length());
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
+        var rider = CreateRider(collision, physics, platform, traversal);
+        const float deltaSeconds = 1f / 120f;
+        for (var frame = 0; frame < 10; frame++)
+        {
+            platform.Update(deltaSeconds);
+            StepPerson(rider, physics, deltaSeconds);
+        }
+
+        var state = rider.CaptureState();
+        Assert.True(state.IsGrounded);
+        Assert.Equal(x, state.GroundVelocity.X, 2);
+        Assert.Equal(y, state.GroundVelocity.Y, 2);
+    }
+
     [Fact]
     public void PlatformUsesKinematicOneWayCollision()
     {

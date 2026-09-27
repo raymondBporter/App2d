@@ -97,4 +97,16 @@ public sealed class PersonMoveSetTests
         hold.Evaluate(Person, idle, .6, true, new(.03f, 0), -1, default);
         Assert.NotEqual(foot, hold.Anchors["left-leg"]); // turning round re-plants
     }
+
+    [Fact]
+    public void ContactHoldCarriesPlantedFeetWithTheGround()
+    {
+        // A descending platform: the body drops with it, and held feet must drop too rather than stay at the old height.
+        var idle = Catalog.Animations["player-idle"]; var hold = new ContactHold();
+        var foot = hold.Evaluate(Person, idle, 0, true, Vector2.Zero, 1, default).World("left-foot");
+        var drop = new Vector3(.2f, -.4f, 0);
+        hold.Shift(drop);
+        var later = hold.Evaluate(Person, idle, .05, true, new(drop.X, drop.Y), 1, default);
+        TestModels.Near(foot + drop, later.World("left-foot"), 1e-3f, "carried foot");
+    }
 }

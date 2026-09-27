@@ -79,6 +79,12 @@ public sealed class EntityAnimator
         Action = null; Role = role; RoleTime = 0; _hold.Clear(); _reverseRoleMotion = reverseHorizontalMotion;
     }
 
+    /// <summary>The ground under the actor moved by <paramref name="delta"/> (model units): planted contacts ride with it.</summary>
+    public void Carry(Vector3 delta) => _hold.Shift(delta);
+
+    /// <summary>The actor left the ground: planted contacts let go, and re-plant where the clip puts them on landing.</summary>
+    public void Lift() => _hold.Clear();
+
     /// <summary>A teleport or respawn: drop the action, the phase and every anchor.</summary>
     public void Reset(string role = EntityControllers.Idle)
     {
@@ -179,7 +185,8 @@ public sealed class EntityAnimator
 
 /// <summary>
 /// World contact anchors for in-place playback. A contact is captured where the clip puts it at touchdown and held there
-/// until the clip releases it, so the controller can move the actor without feet sliding. A facing change releases every
+/// until the clip releases it, so the controller can move the actor without feet sliding; <see cref="Shift"/> carries the
+/// anchors when the ground itself moves. A facing change releases every
 /// anchor; callers release them explicitly (<see cref="Clear"/>) when the clip or action changes.
 /// </summary>
 public sealed class ContactHold
@@ -190,6 +197,12 @@ public sealed class ContactHold
 
     public IReadOnlyDictionary<string, Vector3> Anchors => _anchors;
     public void Clear() => _anchors.Clear();
+
+    /// <summary>Moves every held anchor by <paramref name="delta"/>: the ground they stand on moved, as a platform does.</summary>
+    public void Shift(Vector3 delta)
+    {
+        foreach (var chain in _anchors.Keys.ToList()) _anchors[chain] += delta;
+    }
 
     /// <summary>Samples in place at <paramref name="position"/> (the feet origin) and returns the placed final pose.</summary>
     /// <remarks>With <paramref name="hold"/> false every anchor is released and contacts follow the clip.</remarks>

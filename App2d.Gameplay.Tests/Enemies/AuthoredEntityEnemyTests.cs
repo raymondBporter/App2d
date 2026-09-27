@@ -65,6 +65,36 @@ public sealed class AuthoredEntityEnemyTests
         Assert.Single(facts);
     }
 
+    [Theory]
+    [InlineData(0f, -90f)]
+    [InlineData(0f, 90f)]
+    [InlineData(60f, 0f)]
+    public void PlantedFeetRideAMovingPlatform(float x, float y)
+    {
+        var physics = new PhysicsWorld2D { Gravity = new(0, -1_900f), MaxSubstepSeconds = 1f / 120 };
+        var velocity = new Vector2(x, y);
+        var platform = new MovingPlatform2D(App2d.Core.EntityId2D.Create(), physics, Vector2.Zero, Vector2.Normalize(velocity) * 200, new(200, 10), velocity.Length(), 1, uint.MaxValue);
+        var box = Authored.Entities["spear-guard"].Asset.Movement;
+        var enemy = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics,
+            new(0, platform.WorldObject.WorldBounds.Top + box.Height / 2 * AuthoredWorld.PixelsPerUnit), 1, 4);
+        enemy.SetSimulationEnabled(true);
+        const float dt = 1f / 120;
+        for (var tick = 0; tick < 40; tick++)
+        {
+            platform.Update(dt);
+            enemy.Update(dt, new(4_000, 0));
+            physics.Step(dt);
+            enemy.SyncAfterPhysics();
+        }
+        var ground = platform.WorldObject.WorldBounds.Top / AuthoredWorld.PixelsPerUnit;
+        Assert.Equal(EntityControllers.Idle, enemy.CaptureState().ActionId);
+        foreach (var foot in new[] { "left-foot", "right-foot" })
+            Assert.True(MathF.Abs(enemy.Pose.World(foot).Y - ground) < .05f, $"{foot} at {enemy.Pose.World(foot).Y:F3}, ground at {ground:F3}");
+        var hips = enemy.Pose.World("hips").X;
+        foreach (var foot in new[] { "left-foot", "right-foot" })
+            Assert.True(MathF.Abs(enemy.Pose.World(foot).X - hips) < .5f, $"{foot} trails the hips by {enemy.Pose.World(foot).X - hips:F3}");
+    }
+
     private static readonly string CharactersRoot = Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters"));
     private static readonly AuthoredCatalog Authored = AuthoredCatalog.Load(Path.Combine(CharactersRoot, "authored"));
     private static readonly string[] expected = ["spear-guard", "maul-brute", "stalker-pest"];

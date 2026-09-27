@@ -8,6 +8,7 @@ using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using System.Collections.Immutable;
+using App2d.Gameplay.World;
 using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
@@ -31,6 +32,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private readonly List<EntityBoltState2D> _bolts = [];
     private readonly List<CollisionOverlap2D> _overlaps = [];
     private readonly CollisionSystem2D _collision;
+    private readonly PhysicsWorld2D _physics;
     private readonly uint _worldLayer;
     private bool _enabled;
     private float _cooldown, _hurt, _dt;
@@ -40,7 +42,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
     public AuthoredEntityEnemy2D(EntityId2D id, ResolvedEntity entity, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
-        Id = id; Entity = entity; _animator = new(entity); _collision = physics.CollisionSystem; _worldLayer = worldLayer;
+        Id = id; Entity = entity; _animator = new(entity); _collision = physics.CollisionSystem; _physics = physics; _worldLayer = worldLayer;
         var box = entity.Asset.Movement;
         WorldObject = new(AxisAlignedRectangle2D.FromSize(new Vector2(box.Width, box.Height) * Scale));
         WorldObject.Transform.Position = position;
@@ -111,7 +113,13 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private void Evaluate(float dt, bool initial)
     {
         _scratch.Clear();
-        var root = Root; var grounded = MathF.Abs(Body.LinearVelocity.Y) < 1;
+        // Grounded means still relative to the ground, so a rising or sinking platform counts; planted feet ride with it,
+        // and let go in the air to re-plant on landing. The platform carried the body before _rootBefore was taken, so the
+        // distance walked is already the body's own.
+        var ground = initial ? null : GroundSupport2D.Velocity(_physics.LastContacts, Body, CanStandOn);
+        var root = Root; var grounded = MathF.Abs(Body.LinearVelocity.Y - (ground?.Y ?? 0)) < 1;
+        if (!initial && !grounded) _animator.Lift();
+        else if (ground is { } carry && carry != Vector2.Zero) _animator.Carry(new Vector3(carry * dt / Scale, 0));
         var moved = MathF.Abs(root.X - _rootBefore.X) / Scale;
         var role = IsAlive && grounded && MathF.Abs(Body.LinearVelocity.X) > 1 ? EntityControllers.Walk : EntityControllers.Idle;
         // A reaction role wins; otherwise dead, or airborne without an action, holds the current pose as the explicit fallback.
@@ -119,6 +127,9 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var hold = !initial && reaction is null && (!IsAlive || !grounded && _animator.Action is null);
         _animator.Step(dt, root / Scale, _facing, reaction ?? (hold ? _animator.Role : role), grounded ? moved : 0, hold, _scratch, Expression);
     }
+
+    private bool CanStandOn(PhysicsBody2D other) =>
+        other.MotionType != BodyMotionType2D.Dynamic && !other.IsSensor && !Body.IsIgnoringOneWayPlatform(other) && Body.CanCollideWith(other);
 
     private void Fire(ProjectileDef shot)
     {

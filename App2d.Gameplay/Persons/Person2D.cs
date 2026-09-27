@@ -100,7 +100,7 @@ public sealed partial class Person2D : ICombatant2D
         InvulnerabilitySeconds, LandingSpeedThisFrame, BalanceDirection,
         IsGrounded, IsWallGripping, IsDashing, IsClimbingLadder,
         IsSustainingJump, JumpPower, _actions?.IsChargingPrimary == true)
-    { Action = _actions?.CaptureActionState() ?? default };
+    { Action = _actions?.CaptureActionState() ?? default, GroundVelocity = _motor.GroundVelocity };
 
     public event Action? JumpStarted;
     public event Action<float>? Landed;
