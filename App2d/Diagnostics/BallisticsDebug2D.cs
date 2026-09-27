@@ -66,14 +66,18 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
             _elapsed = Math.Min(_elapsed + deltaSeconds, Math.Max(reference.FlightSeconds, world.FlightSeconds));
     }
 
-    public void Draw(Renderer2D renderer)
+    public void DrawWorldDebug(Renderer2D renderer)
     {
         if (Reference is not { } reference || World is not { } world) return;
         var referenceColor = new XnaColor(255, 220, 65);
         var worldColor = new XnaColor(255, 100, 180);
         DrawShot(renderer, reference, referenceColor);
         DrawShot(renderer, world, worldColor);
+    }
 
+    public void DrawUI(Renderer2D renderer)
+    {
+        if (Reference is not { } reference || World is not { } world) return;
         var speed = reference.Velocity.Length() / _traversal.TileSize;
         var angle = MathF.Atan2(reference.Velocity.Y, MathF.Abs(reference.Velocity.X)) * 180f / MathF.PI;
         renderer.DrawScreenLabel(

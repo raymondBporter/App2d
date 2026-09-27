@@ -134,6 +134,7 @@ public sealed class SideScrollerGame : Game2D
         $"App2d Side Scroller | PAD: {(_client.IsControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     internal override Control? OverlayControl => _editor.InspectorView;
+    protected override XnaColor BackgroundColor => new(103, 196, 235);
 
     public override void Update(FrameTime time, InputState input)
     {
@@ -172,15 +173,20 @@ public sealed class SideScrollerGame : Game2D
         var foliageMargin = new Vector2(_simulation.Level.TileMap.TileSize * 10f);
         var visible = Camera.VisibleWorldBounds;
         _client.SetVisibleTerrain(_terrainSource.Capture(new(visible.Min - foliageMargin, visible.Max + foliageMargin)));
-        renderer.Clear(new XnaColor(103, 196, 235));
         _client.DrawTrees(renderer);
         // Terrain sits at z 0 and characters above it, so back grass slots in between.
         renderer.Draw(Scene, int.MinValue, 0);
         _client.DrawGrass(renderer, VegetationLayer2D.Back);
         renderer.Draw(Scene, 1, int.MaxValue);
         _client.DrawGrass(renderer, VegetationLayer2D.Front);
-        _client.Draw(renderer);
-        TileEditorView2D.Draw(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize, Textures);
+        _client.DrawWorldEffects(renderer);
+    }
+
+    public override void RenderWorldDebug(Renderer2D renderer)
+    {
+        base.RenderWorldDebug(renderer);
+        _client.DrawWorldDebug(renderer);
+        TileEditorView2D.DrawWorldDebug(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize);
         if (_showZones)
             foreach (var zone in _client.Content.Zones)
             {
@@ -189,6 +195,13 @@ public sealed class SideScrollerGame : Game2D
                 Span<Vector2> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
                 renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? XnaColor.Gold : XnaColor.Cyan, 2f);
             }
+    }
+
+    public override void RenderUI(Renderer2D renderer, FrameTime time)
+    {
+        _client.DrawUI(renderer);
+        TileEditorView2D.DrawUI(renderer, _editor, Textures);
+        base.RenderUI(renderer, time);
     }
 
     /// <summary>Authored entities that fail to compile are not played; the game refuses to start and names each problem instead.</summary>

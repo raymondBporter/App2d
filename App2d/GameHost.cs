@@ -3,7 +3,6 @@ using App2d.Diagnostics;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d;
 
@@ -135,11 +134,7 @@ public sealed class GameHost : IDisposable
         _renderer.BeginFrame(width, height, _frameTime);
         try
         {
-            if (_game.DrawGraphics)
-                _game.Render(_renderer);
-            else
-                _renderer.Clear(new XnaColor(24, 27, 36));
-            _game.RenderDiagnostics(_renderer, _renderFrameTime);
+            _game.RenderFrame(_renderer, _renderFrameTime);
         }
         finally
         {

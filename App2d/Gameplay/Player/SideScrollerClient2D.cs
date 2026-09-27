@@ -215,20 +215,31 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public string WeaponName => _weapons.WeaponName;
 
-    public void Draw(Renderer2D renderer)
+    public void DrawWorldEffects(Renderer2D renderer)
     {
-        PlayerHud2D.Draw(renderer, State.Person.HitPoints, State.Person.MaximumHitPoints,
-            _weapons.HudTexture);
         if (_saveFeedbackSeconds > 0f)
         {
             var feedbackProgress = 1f - _saveFeedbackSeconds / SaveFeedbackDurationSeconds;
             var alpha = (int)Math.Clamp(230f * (1f - feedbackProgress), 0f, 230f);
             renderer.DrawWorldCircle(_saveFeedbackCenter, float.Lerp(28f, 108f, feedbackProgress),
                 _lastSaveSucceeded ? new XnaColor(105, 225, 255, alpha) : new XnaColor(255, 95, 95, alpha), 4f);
-            renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 170f));
         }
-        if (ShowTraversalDebug) _traversalDebug.Draw(renderer, State.Person.Position, State.Person.Facing);
-        Ballistics.Draw(renderer);
+    }
+
+    public void DrawWorldDebug(Renderer2D renderer)
+    {
+        if (ShowTraversalDebug) _traversalDebug.DrawWorldDebug(renderer, State.Person.Position, State.Person.Facing);
+        Ballistics.DrawWorldDebug(renderer);
+    }
+
+    public void DrawUI(Renderer2D renderer)
+    {
+        PlayerHud2D.Draw(renderer, State.Person.HitPoints, State.Person.MaximumHitPoints,
+            _weapons.HudTexture);
+        if (_saveFeedbackSeconds > 0f)
+            renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 170f));
+        if (ShowTraversalDebug) _traversalDebug.DrawUI(renderer);
+        Ballistics.DrawUI(renderer);
     }
 
     private void UpdateJumpSound()
