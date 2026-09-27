@@ -13,6 +13,18 @@ public sealed class PersonAnimationDirectorTests
     private static readonly PersonMoves Moves = PersonMoves.From(AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored"))));
     private static PersonState2D Standing => new() { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true, Facing = 1 };
 
+    [Fact]
+    public void DeepLandingCrouchIsReservedForHardImpacts()
+    {
+        var director = new PersonAnimationDirector(Moves) { HardLandingSpeed = 1045 };
+        director.ApplyState(Standing with { LandingSpeedThisFrame = 760 }, Vector2.Zero, 1);
+        Assert.Equal(PersonMoves.Idle, director.Frame().Key);
+        director.ApplyState(Standing with { LandingSpeedThisFrame = 1060 }, Vector2.Zero, 2);
+        Assert.Equal(PersonMoves.Land, director.Frame().Key);
+        director.ApplyState(Standing, Vector2.Zero, 2.5);
+        Assert.Equal(PersonMoves.Idle, director.Frame().Key);
+    }
+
     /// <summary>Feeds states at 120 Hz with a frame per tick, the way the client does; returns the last frame.</summary>
     private sealed class Driver(EquipmentKind2D equipment = EquipmentKind2D.Sword)
     {
@@ -134,6 +146,26 @@ public sealed class PersonAnimationDirectorTests
                 Assert.DoesNotContain("hips", frame.Overlay.Targets);
             }
         }
+    }
+
+    [Fact]
+    public void SwordSwingsLayerOverTheLegsOnceTheBodyMoves()
+    {
+        var d = new Driver();
+        var cut = Moves.Swing(null);
+        PersonState2D Swinging(PersonState2D state, float elapsed) => state with { Action = new(PlayerAttackKind2D.Melee, elapsed, cut.Clip.Duration, cut.Id) };
+        var standing = d.Step(Swinging(Standing, 0));
+        Assert.Equal(cut.Clip.Id, standing.Key);
+        Assert.Null(standing.Overlay);
+        var running = d.Step(Swinging(Standing with { LinearVelocity = new(4, 0) }, .05f));
+        Assert.Equal(PersonMoves.Run, running.Key);
+        Assert.Equal(cut.Clip.Id, running.PropClip.Id);
+        Assert.Same(PersonLoadout.SwordUpperBody, running.Overlay!.Targets);
+        // Stopping mid-swing keeps the legs' own pose rather than snapping back to the swing's planted stance.
+        Assert.Equal(PersonMoves.Idle, d.Step(Swinging(Standing, .1f)).Key);
+        var airborne = d.Step(Swinging(Standing with { IsGrounded = false, LinearVelocity = new(0, 3) }, 0));
+        Assert.Equal(PersonMoves.Jump, airborne.Key);
+        Assert.Equal(cut.Clip.Id, airborne.Overlay!.Clip.Id);
     }
 
     [Fact]

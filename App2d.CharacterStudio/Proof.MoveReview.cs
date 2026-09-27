@@ -1,5 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.CharacterStudio.PlayerMoves;
 using App2d.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -20,7 +21,16 @@ internal sealed partial class ProofRenders
     private const float ReviewPpu = 150;
     private static readonly string[] UpperTargets = ["chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm", PersonLoadout.SwordSocket, PersonLoadout.GunSocket];
 
-    private sealed record ReviewItem(string Id, string Title, MotionClip Clip, string Scene, bool Gun, string Note, float ViewX = 0);
+    /// <summary>
+    /// One review card. <see cref="Upper"/>, when set, plays clips over the base from the waist up through the same overlay the
+    /// game uses (the base then repeats for <see cref="Length"/> seconds): the upper-body clip and its time at each moment, or null.
+    /// </summary>
+    private sealed record ReviewItem(string Id, string Title, MotionClip Clip, string Scene, bool Gun, string Note, float ViewX = 0,
+        float Length = 0, Func<float, (MotionClip Clip, float Seconds)?>? Upper = null)
+    {
+        public float Duration => Upper is null ? Clip.Duration : Length;
+        public bool Loop => Upper is null && Clip.Loop;
+    }
 
     private bool RenderMoveReview()
     {
@@ -35,14 +45,16 @@ internal sealed partial class ProofRenders
         foreach (var item in items)
         {
             var folder = Path.Combine(_smokePath!, "frames", item.Id); Directory.CreateDirectory(folder);
-            var clip = item.Clip; var count = Math.Max(2, (int)MathF.Round(clip.Duration * ReviewFps) + (clip.Loop ? 0 : 1));
+            var clip = item.Clip; var count = Math.Max(2, (int)MathF.Round(item.Duration * ReviewFps) + (item.Loop ? 0 : 1));
             for (var f = 0; f < count; f++)
             {
-                var seconds = Math.Min(clip.Duration, f / (float)ReviewFps);
-                var pose = PoseEvaluator.Sample(model, clip, seconds);
+                var seconds = Math.Min(item.Duration, f / (float)ReviewFps);
+                var upper = item.Upper?.Invoke(seconds);
+                var input = upper is { } u ? new PoseInput { Overlay = new(u.Clip, u.Seconds, PersonLoadout.SwordUpperBody) } : default;
+                var pose = PoseEvaluator.Sample(model, clip, seconds, item.Upper is not null, input);
                 drawing.Build(model, pose);
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
-                foreach (var (prop, socket) in PersonLoadout.Worn(clip, seconds, item.Gun ? PersonGear.Gun : PersonGear.Sword))
+                foreach (var (prop, socket) in PersonLoadout.Worn(upper?.Clip ?? clip, upper?.Seconds ?? seconds, item.Gun ? PersonGear.Gun : PersonGear.Sword))
                     drawing.AddProp(props[prop], placed.Socket(sockets[socket]));
                 var centerX = pose.Locomotion.X + item.ViewX;
                 BuildScenery(scenery, item.Scene, centerX, seconds);
@@ -59,8 +71,8 @@ internal sealed partial class ProofRenders
                 id = item.Id,
                 title = item.Title,
                 clip = clip.Id,
-                duration = clip.Duration,
-                loop = clip.Loop,
+                duration = item.Duration,
+                loop = item.Loop,
                 frames = count,
                 fps = ReviewFps,
                 note = item.Note,
@@ -79,6 +91,7 @@ internal sealed partial class ProofRenders
         var clips = catalog.Animations;
         ReviewItem Of(string id, string scene = "ground", bool gun = false, string note = "") => new(id, clips[id].Name, clips[id], scene, gun, note);
         var run = catalog.Animations["person-run"]; var walk = catalog.Animations["person-walk"];
+        var combo = Sequence(.1f, clips[SwingLab.SideCutClip], clips[SwingLab.BackhandClip], clips[SwingLab.ForehandClip], clips[SwingLab.PutAwayClip]);
         return
         [
             new("person-walk", "Walk (existing)", walk, "ground", false, "Existing walk, now wearing the sheath."),
@@ -97,8 +110,21 @@ internal sealed partial class ProofRenders
             new("layer-aim-shot", "Layered: aim + shot", Layer(clips["player-gun-aim"], clips["player-gun-shot"], 2, .5f), "ground", true, "Shot arms on the aim stance, firing every 0.5 s."),
             new("layer-walk-shot", "Layered: walk + shot", Layer(walk, clips["player-gun-shot"], 2, .4f), "ground", true, "Walk legs, shot arms. No new animation."),
             new("layer-run-shot", "Layered: run + shot", Layer(run, clips["player-gun-shot"], 3, .36f), "ground", true, "Run legs, shot arms. No new animation."),
+            new("layer-run-combo", "Layered: run + sword combo", run, "ground", false, "Side cut, backhand, forehand and put-away over the run legs, as the game plays a swing once the body moves.", Length: 1.6f, Upper: combo),
+            new("layer-walk-combo", "Layered: walk + sword combo", walk, "ground", false, "The same combo over the walk legs.", Length: 1.6f, Upper: combo),
+            new("layer-jump-cut", "Layered: jump + side cut", clips["player-jump"], "air", false, "The side cut and its put-away over the jump.", Length: 1.2f,
+                Upper: Sequence(.08f, clips[SwingLab.SideCutClip], clips[SwingLab.PutAwayClip])),
         ];
     }
+
+    /// <summary>Clips played back to back from <paramref name="start"/>, each from its own zero; nothing before or after.</summary>
+    private static Func<float, (MotionClip, float)?> Sequence(float start, params MotionClip[] clips) => seconds =>
+    {
+        var t = seconds - start;
+        if (t < 0) return null;
+        foreach (var clip in clips) { if (t < clip.Duration) return (clip, t); t -= clip.Duration; }
+        return null;
+    };
 
     /// <summary>
     /// Legs, hips, travel and contacts from <paramref name="legs"/> repeated <paramref name="cycles"/> times; chest, head,

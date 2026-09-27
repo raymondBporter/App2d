@@ -153,6 +153,7 @@ public sealed partial class PersonLocomotion2D
         }
 
         UpdateGravityScale();
+        ApplyFallResistance(deltaSeconds);
         RecordPrePhysicsState();
     }
 
@@ -168,13 +169,6 @@ public sealed partial class PersonLocomotion2D
             DetachFromLadder();
         TryCorrectUpwardCorner(deltaSeconds);
         UpdateIgnoredOneWayPlatforms();
-
-        if (_body.LinearVelocity.Y < -Metrics.MaximumFallSpeed)
-        {
-            _body.LinearVelocity = new Vector2(
-                _body.LinearVelocity.X,
-                -Metrics.MaximumFallSpeed);
-        }
 
         IsGrounded = HasGroundSupport(Metrics.GroundProbeDistance);
         if (!IsGrounded)
@@ -398,6 +392,19 @@ public sealed partial class PersonLocomotion2D
             !IsGrounded
             ? Metrics.ApexGravityScale
             : 1f;
+    }
+
+    private void ApplyFallResistance(float deltaSeconds)
+    {
+        if (deltaSeconds <= 0f || _body.GravityScale == 0f || _physics.Gravity.Y >= 0f)
+            return;
+        var velocity = _body.LinearVelocity.Y;
+        if (velocity + _physics.Gravity.Y * _body.GravityScale * deltaSeconds >= -Metrics.MaximumFallSpeed * Metrics.FallDragStartFraction)
+            return;
+        var nextVelocity = Metrics.AdvanceVerticalSpeed(velocity, -_physics.Gravity.Y * _body.GravityScale, deltaSeconds);
+        // Let the integrator apply this acceleration before moving/colliding. This leaves lateral
+        // air control intact and keeps the pre-impact velocity available to landing detection.
+        _body.GravityScale = (nextVelocity - velocity) / (_physics.Gravity.Y * deltaSeconds);
     }
 
     private void UpdateWallGrip()
