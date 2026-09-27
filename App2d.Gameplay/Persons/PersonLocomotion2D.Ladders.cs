@@ -54,11 +54,12 @@ public sealed partial class PersonLocomotion2D
         if (!IsClimbingLadder && MathF.Abs(_intent.ClimbY) < 0.01f)
             return false;
 
-        // Align the collider (including its facing-dependent offset), only if
-        // the destination is clear. Climbing retains normal solid collision.
+        // Ease the collider (including its facing-dependent offset) toward the
+        // ladder, only if this step is clear. Climbing retains solid collision.
         var bounds = _body.WorldObject.WorldBounds;
         var position = _body.WorldObject.Transform.Position;
-        position.X += ladder.Center.X - bounds.Center.X;
+        position.X += MoveTowards(bounds.Center.X, ladder.Center.X,
+            Metrics.LadderAlignSpeed * deltaSeconds) - bounds.Center.X;
         if (!CanOccupy(position))
         {
             DetachFromLadder();
@@ -91,27 +92,35 @@ public sealed partial class PersonLocomotion2D
         var bounds = _body.WorldObject.WorldBounds;
         var size = _tileMap.TileSize;
         var origin = _tileMap.Origin;
-        var x = (int)MathF.Floor((bounds.Center.X - origin.X) / size);
-        if (x < 0 || x >= _tileMap.Width)
-            return false;
+        // Give the center a little reach beyond either edge of a ladder tile.
+        var firstX = Math.Max(0, (int)MathF.Floor((bounds.Center.X - Metrics.LadderGrabGrace - origin.X) / size));
+        var lastX = Math.Min(_tileMap.Width - 1, (int)MathF.Floor((bounds.Center.X + Metrics.LadderGrabGrace - origin.X) / size));
         // Reach slightly below the feet to permit descending from a ledge.
         var firstY = Math.Max(0, (int)MathF.Floor((bounds.Bottom - Metrics.GroundProbeDistance - origin.Y) / size));
         var lastY = Math.Min(_tileMap.Height - 1, (int)MathF.Floor((bounds.Center.Y - origin.Y) / size));
-        for (var y = firstY; y <= lastY; y++)
+        var nearestDistance = float.PositiveInfinity;
+        for (var x = firstX; x <= lastX; x++)
         {
-            if (!_tileMap.GetTileKind(x, y).IsLadder())
+            var distance = MathF.Abs(origin.X + (x + 0.5f) * size - bounds.Center.X);
+            if (distance >= nearestDistance)
                 continue;
-            var bottom = y;
-            var top = y;
-            while (bottom > 0 && _tileMap.GetTileKind(x, bottom - 1).IsLadder())
-                bottom--;
-            while (top + 1 < _tileMap.Height && _tileMap.GetTileKind(x, top + 1).IsLadder())
-                top++;
-            ladder = new Bounds2D(
-                origin + new Vector2(x, bottom) * size,
-                origin + new Vector2(x + 1, top + 1) * size);
-            return true;
+            for (var y = firstY; y <= lastY; y++)
+            {
+                if (!_tileMap.GetTileKind(x, y).IsLadder())
+                    continue;
+                var bottom = y;
+                var top = y;
+                while (bottom > 0 && _tileMap.GetTileKind(x, bottom - 1).IsLadder())
+                    bottom--;
+                while (top + 1 < _tileMap.Height && _tileMap.GetTileKind(x, top + 1).IsLadder())
+                    top++;
+                ladder = new Bounds2D(
+                    origin + new Vector2(x, bottom) * size,
+                    origin + new Vector2(x + 1, top + 1) * size);
+                nearestDistance = distance;
+                break;
+            }
         }
-        return false;
+        return float.IsFinite(nearestDistance);
     }
 }

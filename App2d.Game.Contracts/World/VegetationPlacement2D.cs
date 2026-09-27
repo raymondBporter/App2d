@@ -12,7 +12,7 @@ public static class VegetationPlacement2D
 {
     public const float MaximumHeightInTiles = 1.1f;
     /// <summary>Height of the remaining stalk above its terrain surface.</summary>
-    public const float CutHeightInTiles = 0.35f;
+    public const float CutHeightInTiles = 0.12f;
 
     public static bool HasGrass(IChunkedTileMap2D map, int x, int y) =>
         x >= 0 && x < map.Width && y >= 0 && y < map.Height - 1 &&

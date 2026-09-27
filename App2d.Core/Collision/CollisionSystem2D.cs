@@ -2,6 +2,7 @@ using App2d.Core;
 using App2d.Core.Collision.BroadPhase;
 using App2d.Core.Collision.Filtering;
 using App2d.Core.Geometry;
+using App2d.Core.Grids;
 
 namespace App2d.Core.Collision;
 
@@ -13,15 +14,15 @@ public sealed partial class CollisionSystem2D
     private readonly List<Collider2D> _colliders = [];
     private readonly List<BroadPhasePair2D<Collider2D>> _candidatePairs = [];
     private readonly List<Collider2D> _queryCandidates = [];
-    private readonly Dictionary<GridCell, List<Collider2D>> _staticCells = [];
-    private readonly Dictionary<GridCell, List<Collider2D>> _dynamicCells = [];
+    private readonly Dictionary<GridCell2D, List<Collider2D>> _staticCells = [];
+    private readonly Dictionary<GridCell2D, List<Collider2D>> _dynamicCells = [];
     private readonly List<Collider2D> _staticOverflow = [];
     private readonly List<Collider2D> _dynamicOverflow = [];
-    private readonly List<GridCell> _staleCells = [];
+    private readonly List<GridCell2D> _staleCells = [];
     private readonly CombinedPairFilter _combinedFilter = new();
     private int _nextColliderId = 1;
     private int _queryStamp;
-    private float _cellSize = 256f;
+    private GridGeometry2D _grid = new(256f);
     private bool _staticIndexDirty = true;
     private bool _dynamicIndexDirty = true;
 
@@ -34,13 +35,13 @@ public sealed partial class CollisionSystem2D
 
     public float CellSize
     {
-        get => _cellSize;
+        get => _grid.CellSize.X;
         set
         {
             ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
-            if (_cellSize == value)
+            if (CellSize == value)
                 return;
-            _cellSize = value;
+            _grid = new(value);
             _staticIndexDirty = true;
             _dynamicIndexDirty = true;
         }
@@ -210,7 +211,7 @@ public sealed partial class CollisionSystem2D
         }
     }
 
-    private void RebuildIndex(ColliderMobility2D mobility, Dictionary<GridCell, List<Collider2D>> cells, List<Collider2D> overflow)
+    private void RebuildIndex(ColliderMobility2D mobility, Dictionary<GridCell2D, List<Collider2D>> cells, List<Collider2D> overflow)
     {
         foreach (var bucket in cells.Values)
             bucket.Clear();
@@ -236,28 +237,24 @@ public sealed partial class CollisionSystem2D
             cells.Remove(cell);
     }
 
-    private void AddToIndex(Collider2D collider, Dictionary<GridCell, List<Collider2D>> cells, List<Collider2D> overflow)
+    private void AddToIndex(Collider2D collider, Dictionary<GridCell2D, List<Collider2D>> cells, List<Collider2D> overflow)
     {
         var bounds = collider.WorldObject.WorldBounds;
-        if (!TryGetCellRange(bounds, out var range) ||
+        if (!_grid.TryGetCellRange(bounds, out var range) ||
             range.CellCount > MaximumCellsPerCollider)
         {
             overflow.Add(collider);
             return;
         }
 
-        for (var y = range.MinimumY; y <= range.MaximumY; y++)
+        foreach (var cell in range)
         {
-            for (var x = range.MinimumX; x <= range.MaximumX; x++)
+            if (!cells.TryGetValue(cell, out var bucket))
             {
-                var key = new GridCell(x, y);
-                if (!cells.TryGetValue(key, out var bucket))
-                {
-                    bucket = [];
-                    cells.Add(key, bucket);
-                }
-                bucket.Add(collider);
+                bucket = [];
+                cells.Add(cell, bucket);
             }
+            bucket.Add(collider);
         }
     }
 
@@ -265,7 +262,7 @@ public sealed partial class CollisionSystem2D
     {
         results.Clear();
         var stamp = NextQueryStamp();
-        if (!TryGetCellRange(bounds, out var range) ||
+        if (!_grid.TryGetCellRange(bounds, out var range) ||
             range.CellCount > MaximumCellsPerCollider)
         {
             foreach (var collider in _colliders)
@@ -281,18 +278,15 @@ public sealed partial class CollisionSystem2D
             TryAddQueryCandidate(collider, bounds, stamp, results);
     }
 
-    private static void QueryCells(Dictionary<GridCell, List<Collider2D>> cells, CellRange range, Bounds2D bounds, int stamp, List<Collider2D> results)
+    private static void QueryCells(Dictionary<GridCell2D, List<Collider2D>> cells, GridCellRange2D range, Bounds2D bounds, int stamp, List<Collider2D> results)
     {
-        for (var y = range.MinimumY; y <= range.MaximumY; y++)
+        foreach (var cell in range)
         {
-            for (var x = range.MinimumX; x <= range.MaximumX; x++)
+            if (cells.TryGetValue(cell, out var bucket))
             {
-                if (cells.TryGetValue(new GridCell(x, y), out var bucket))
+                foreach (var collider in bucket)
                 {
-                    foreach (var collider in bucket)
-                    {
-                        TryAddQueryCandidate(collider, bounds, stamp, results);
-                    }
+                    TryAddQueryCandidate(collider, bounds, stamp, results);
                 }
             }
         }
@@ -307,22 +301,6 @@ public sealed partial class CollisionSystem2D
         }
         collider.QueryStamp = stamp;
         results.Add(collider);
-    }
-
-    private bool TryGetCellRange(Bounds2D bounds, out CellRange range)
-    {
-        if (!bounds.IsFinite)
-        {
-            range = default;
-            return false;
-        }
-
-        var minimumX = (int)MathF.Floor(bounds.Left / CellSize);
-        var maximumX = (int)MathF.Floor(bounds.Right / CellSize);
-        var minimumY = (int)MathF.Floor(bounds.Bottom / CellSize);
-        var maximumY = (int)MathF.Floor(bounds.Top / CellSize);
-        range = new CellRange(minimumX, maximumX, minimumY, maximumY);
-        return true;
     }
 
     private int NextQueryStamp()
@@ -358,10 +336,4 @@ public sealed partial class CollisionSystem2D
         public bool ShouldTest(Collider2D first, Collider2D second) => Primary.ShouldTest(first, second) && (Additional?.ShouldTest(first, second) != false);
     }
 
-    private readonly record struct GridCell(int X, int Y);
-
-    private readonly record struct CellRange(int MinimumX, int MaximumX, int MinimumY, int MaximumY)
-    {
-        public long CellCount => (long)(MaximumX - MinimumX + 1) * (MaximumY - MinimumY + 1);
-    }
 }

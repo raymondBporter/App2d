@@ -1,5 +1,6 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Grids;
 using App2d.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;
@@ -16,7 +17,7 @@ internal sealed class ViewportTerrainSource2D : IDisposable
     private readonly Dictionary<TileChunk2D, TerrainChunkState2D> _chunks = [];
     private ImmutableArray<TerrainChunkState2D> _terrain;
     private long _revision;
-    private (TileChunk2D Minimum, TileChunk2D Maximum)? _range;
+    private GridCellRange2D _range;
 
     public ViewportTerrainSource2D(IChunkedTileMap2D map)
     {
@@ -32,38 +33,31 @@ internal sealed class ViewportTerrainSource2D : IDisposable
         // Include a tile beyond each edge for terrain artwork that overhangs its cell.
         var padding = new Vector2(_map.TileSize);
         var bounds = new Bounds2D(visibleBounds.Min - padding, visibleBounds.Max + padding);
-        if (!bounds.Intersects(_map.WorldBounds))
+        if (!bounds.TryIntersect(_map.WorldBounds, out var clipped))
         {
             _chunks.Clear();
-            _range = null;
+            _range = default;
             return _terrain = [];
         }
 
-        var minimum = _map.WorldToChunk(Vector2.Max(bounds.Min, _map.WorldBounds.Min));
-        var maximum = _map.WorldToChunk(Vector2.Min(bounds.Max, _map.WorldBounds.Max));
-        var maxX = Math.Min(maximum.X, _map.ChunkColumns - 1);
-        var maxY = Math.Min(maximum.Y, _map.ChunkRows - 1);
-        var range = (minimum, new TileChunk2D(maxX, maxY));
+        var range = _map.ChunkGridGeometry.GetCellRange(clipped, _map.ChunkGridSize);
         if (_range == range && !_terrain.IsDefault) return _terrain;
         _range = range;
 
         foreach (var chunk in _chunks.Keys.ToArray())
         {
-            if (chunk.X < minimum.X || chunk.X > maxX || chunk.Y < minimum.Y || chunk.Y > maxY)
+            if (!range.Contains(new(chunk.X, chunk.Y)))
             {
                 _chunks.Remove(chunk);
                 _terrain = default;
             }
         }
-        for (var y = minimum.Y; y <= maxY; y++)
+        foreach (var cell in range)
         {
-            for (var x = minimum.X; x <= maxX; x++)
-            {
-                var chunk = new TileChunk2D(x, y);
-                if (_chunks.ContainsKey(chunk)) continue;
-                _chunks.Add(chunk, TerrainChunkState2D.Capture(_map, chunk, ++_revision));
-                _terrain = default;
-            }
+            var chunk = new TileChunk2D(cell.X, cell.Y);
+            if (_chunks.ContainsKey(chunk)) continue;
+            _chunks.Add(chunk, TerrainChunkState2D.Capture(_map, chunk, ++_revision));
+            _terrain = default;
         }
 
         if (_terrain.IsDefault)
@@ -82,6 +76,6 @@ internal sealed class ViewportTerrainSource2D : IDisposable
         if (_map is EditableTileMap2D editable) editable.ChunkChanged -= Invalidate;
         _chunks.Clear();
         _terrain = default;
-        _range = null;
+        _range = default;
     }
 }

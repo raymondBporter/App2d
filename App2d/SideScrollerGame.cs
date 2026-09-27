@@ -7,6 +7,7 @@ using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Persistence;
 using App2d.Rendering;
+using App2d.Rendering.Vegetation;
 using App2d.Things;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -173,8 +174,11 @@ public sealed class SideScrollerGame : Game2D
         _client.SetVisibleTerrain(_terrainSource.Capture(new(visible.Min - foliageMargin, visible.Max + foliageMargin)));
         renderer.Clear(new XnaColor(103, 196, 235));
         _client.DrawTrees(renderer);
-        renderer.Draw(Scene);
-        _client.DrawGrass(renderer);
+        // Terrain sits at z 0 and characters above it, so back grass slots in between.
+        renderer.Draw(Scene, int.MinValue, 0);
+        _client.DrawGrass(renderer, VegetationLayer2D.Back);
+        renderer.Draw(Scene, 1, int.MaxValue);
+        _client.DrawGrass(renderer, VegetationLayer2D.Front);
         _client.Draw(renderer);
         TileEditorView2D.Draw(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize, Textures);
         if (_showZones)

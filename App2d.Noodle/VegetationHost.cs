@@ -38,17 +38,17 @@ internal sealed class VegetationHost : IDisposable
         _patches =
         [
             new(-650f, -205f, GroundY, new(
-                42f, 86f, 3.5f, 7.5f, 8f, 16f,
-                new XnaColor(28, 104, 67), new XnaColor(129, 231, 109),
-                0.045f, new XnaColor(255, 150, 201)), seed: 107),
+                22f, 46f, 78f, 12f, 34f,
+                new XnaColor(79, 184, 47), new XnaColor(108, 203, 66),
+                0.2f, 0.22f, 0.08f, 0.6f, 190f), seed: 107),
             new(-225f, 225f, GroundY, new(
-                55f, 116f, 2.5f, 5.5f, 9f, 24f,
-                new XnaColor(105, 82, 39), new XnaColor(244, 205, 99),
-                0.025f, new XnaColor(255, 238, 172)), seed: 211),
+                26f, 54f, 90f, 11f, 32f,
+                new XnaColor(150, 118, 52), new XnaColor(206, 176, 92),
+                0.2f, 0.22f, 0f, 0.45f, 190f), seed: 211),
             new(205f, 650f, GroundY, new(
-                76f, 154f, 3f, 6.5f, 12f, 12f,
-                new XnaColor(18, 83, 82), new XnaColor(83, 213, 176),
-                0f, new XnaColor(104, 228, 190)), seed: 313)
+                30f, 64f, 120f, 11f, 36f,
+                new XnaColor(36, 128, 104), new XnaColor(82, 184, 148),
+                0.4f, 0.22f, 0f, 0.6f, 190f), seed: 313)
         ];
 
         _window = new Form
@@ -107,8 +107,9 @@ internal sealed class VegetationHost : IDisposable
                 _windSpeed,
                 SpatialFrequency: 0.027f,
                 _gust);
-            foreach (var patch in _patches)
-                patch.Render(_renderer, visible.Left, visible.Right, wind);
+            foreach (var layer in (VegetationLayer2D[])[VegetationLayer2D.Back, VegetationLayer2D.Front])
+                foreach (var patch in _patches)
+                    patch.Render(_renderer, visible.Left, visible.Right, wind, layer);
 
             DrawLabels(_renderer);
             DrawHud(_renderer, width);

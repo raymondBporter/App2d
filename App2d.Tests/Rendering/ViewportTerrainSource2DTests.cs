@@ -8,6 +8,19 @@ namespace App2d.Tests.Rendering;
 
 public sealed class ViewportTerrainSource2DTests
 {
+    [Fact]
+    public void PartialEdgeChunksDoNotExtendTheVisibleMapFootprint()
+    {
+        var map = new EditableTileMap2D(10, 6, 10f, 4, new(-30, -20));
+        using var source = new ViewportTerrainSource2D(map);
+        var all = source.Capture(map.WorldBounds);
+        Assert.Equal(6, all.Length);
+        Assert.Contains(all, c => c.Chunk == new TileChunk2D(2, 1));
+        // The final chunk extends to X=90, but terrain ends at X=70 plus one tile of artwork padding.
+        Assert.Empty(source.Capture(new Bounds2D(new(81, 0), new(89, 10))));
+        Assert.Contains(source.Capture(new Bounds2D(new(69, 0), new(70, 10))), c => c.Chunk.X == 2);
+    }
+
     [Theory]
     [InlineData(800, 600, 1.35f, 0f)]
     [InlineData(3840, 2160, 0.25f, 0f)]
