@@ -85,6 +85,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
     private double _recoveryStart;
 
     public PersonMoves Moves => moves;
+    public float HardLandingSpeed { get; init; }
     public EquipmentKind2D Equipment { get; set; }
     public string Key => _key;
 
@@ -117,7 +118,9 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
                 _outpaced = matched > limit + 1e-9; _cycle += Math.Min(matched, limit);
             }
         }
-        if (state.LandingSpeedThisFrame > 0) _landUntil = clock + moves[PersonMoves.Land].Duration;
+        if (state.LandingSpeedThisFrame > 0)
+            _landUntil = state.LandingSpeedThisFrame >= HardLandingSpeed
+                ? clock + moves[PersonMoves.Land].Duration : double.NegativeInfinity;
         if (state.IsClimbingLadder && !_wasClimbing) _climbStart = clock;
         if (!state.IsClimbingLadder && _wasClimbing) _climbEnd = clock;
         if (state.IsDashing && !_wasDashing) _dashStart = clock;

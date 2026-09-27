@@ -42,7 +42,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     {
         _scene = scene; _halfHeight = traversal.PlayerColliderSize.Y / 2;
         _pixelsPerUnit = traversal.PlayerColliderSize.Y / RestHeight(moves.Model);
-        Director = new(moves, _pixelsPerUnit);
+        Director = new(moves, _pixelsPerUnit) { HardLandingSpeed = traversal.HardLandingSpeed };
         _shader = new(moves.Model) { Swoosh = _swoosh };
         _visual = new(AxisAlignedRectangle2D.FromSize(new(10, 10), new(0, 2)), _shader) { ZIndex = 1 };
         _visual.Transform.Scale = new(_pixelsPerUnit);

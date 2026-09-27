@@ -13,6 +13,18 @@ public sealed class PersonAnimationDirectorTests
     private static readonly PersonMoves Moves = PersonMoves.From(AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored"))));
     private static PersonState2D Standing => new() { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true, Facing = 1 };
 
+    [Fact]
+    public void DeepLandingCrouchIsReservedForHardImpacts()
+    {
+        var director = new PersonAnimationDirector(Moves) { HardLandingSpeed = 1045 };
+        director.ApplyState(Standing with { LandingSpeedThisFrame = 760 }, Vector2.Zero, 1);
+        Assert.Equal(PersonMoves.Idle, director.Frame().Key);
+        director.ApplyState(Standing with { LandingSpeedThisFrame = 1060 }, Vector2.Zero, 2);
+        Assert.Equal(PersonMoves.Land, director.Frame().Key);
+        director.ApplyState(Standing, Vector2.Zero, 2.5);
+        Assert.Equal(PersonMoves.Idle, director.Frame().Key);
+    }
+
     /// <summary>Feeds states at 120 Hz with a frame per tick, the way the client does; returns the last frame.</summary>
     private sealed class Driver(EquipmentKind2D equipment = EquipmentKind2D.Sword)
     {

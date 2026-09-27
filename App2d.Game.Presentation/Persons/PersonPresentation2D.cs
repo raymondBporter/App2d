@@ -17,7 +17,6 @@ namespace App2d.Gameplay.Persons;
 /// </summary>
 public sealed class PersonPresentation2D : IDisposable
 {
-    private const float TerminalVelocityEpsilon = 25f;
     private const string SwordCharacterId = "player-sword";
     private const string GunCharacterId = "player-gun";
     private const string UnarmedCharacterId = "player-unarmed";
@@ -28,7 +27,7 @@ public sealed class PersonPresentation2D : IDisposable
     private readonly SpriteShader2D _spriteShader;
     private readonly WorldObject2D _visual;
     private readonly Vector2 _visualOffset;
-    private readonly float _maximumFallSpeed;
+    private readonly float _hardLandingSpeed;
 
     private AnimationClip2D<Texture2D> _idleAnimation = null!;
     private AnimationClip2D<Texture2D> _balanceLeftFootAnimation = null!;
@@ -99,7 +98,7 @@ public sealed class PersonPresentation2D : IDisposable
         ArgGuard.ThrowIfNull(traversal);
 
         _visualOffset = traversal.PlayerVisualOffset;
-        _maximumFallSpeed = traversal.MaximumFallSpeed;
+        _hardLandingSpeed = traversal.HardLandingSpeed;
 
         LoadCharacter(SwordCharacterId);
         _animation.Play(_idleAnimation);
@@ -258,16 +257,16 @@ public sealed class PersonPresentation2D : IDisposable
             isPlayingShieldBlock = true;
         }
 
-        var landedAtTerminalVelocity =
+        var landedHard =
             person.IsGrounded &&
-            person.LandingSpeedThisFrame >= _maximumFallSpeed - TerminalVelocityEpsilon;
+            person.LandingSpeedThisFrame >= _hardLandingSpeed;
         if (!person.IsDashing &&
             !isMeleeAttackActive &&
             !isPlayingMeleeAnimation &&
             !isShieldBlocking &&
             !isPlayingShot &&
             !isPlayingHit &&
-            landedAtTerminalVelocity)
+            landedHard)
         {
             _animation.Play(_landingAnimation, restart: true);
             _animation.PlaybackSpeed = 1f;
