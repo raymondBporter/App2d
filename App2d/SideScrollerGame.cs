@@ -99,7 +99,7 @@ public sealed class SideScrollerGame : Game2D
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, Textures, _sounds, Traversal, Gameplay.Persons.PersonMoves.From(_authored));
-        var soundtrack = WorldSoundtrack2D.Load(Path.Combine(AssetPaths.Root, "audio", "music"), loadedLevel.Zones);
+        var soundtrack = WorldSoundtrack2D.Load(AssetPaths.Music, loadedLevel.Zones);
         _music = new MusicPlayer2D(soundtrack.Cues);
         _musicDirector = new(soundtrack, _music.Select);
         _musicDirector.Update(snapshot.Content, startPosition, 0f);

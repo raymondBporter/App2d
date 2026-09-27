@@ -17,7 +17,7 @@ internal static class LevelBootstrap2D
     /// read from there directly in Debug. <c>Assets/Runtime</c> is generated and disposable
     /// and must never be the only home for a hand-edited file.
     /// </summary>
-    public static string CavernLevelPath { get; } = ResolveLevelPath();
+    public static string CavernLevelPath { get; } = Path.Combine(AssetPaths.AuthoredRoot, "levels", LevelId, "level.db");
 
     public static LoadedLevel2D Load()
     {
@@ -41,22 +41,6 @@ internal static class LevelBootstrap2D
             : throw new FileNotFoundException(
                 "The authored cavern level is missing. Restore Assets/Static/levels/cavern/level.db.",
                 CavernLevelPath);
-
-    private static string ResolveLevelPath()
-    {
-#if DEBUG
-        for (var directory = new DirectoryInfo(AppContext.BaseDirectory);
-             directory is not null;
-             directory = directory.Parent)
-        {
-            var staticRoot = Path.Combine(directory.FullName, "Assets", "Static");
-            if (Directory.Exists(staticRoot))
-                return Path.Combine(staticRoot, "levels", LevelId, "level.db");
-        }
-#endif
-
-        return Path.Combine(AssetPaths.Root, "levels", LevelId, "level.db");
-    }
 }
 
 internal sealed record LoadedLevel2D(

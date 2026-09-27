@@ -9,8 +9,10 @@ The first folder describes the asset lifecycle:
   transforming. This directory is durable and committed.
 - `Sources` contains original and third-party inputs with their licenses and
   provenance. Importers transform these into runtime assets.
-- `Runtime` is the complete generated game-facing tree. Debug reads it directly;
-  Release builds and publishes package it as `Assets`. It is ignored and disposable.
+- `Runtime` is the complete generated game-facing tree. Debug reads generated art
+  from it; Release builds and publishes package it as `Assets`. Authored levels
+  and music are read from `Static` in Debug, and packaging takes music and zones
+  directly from `Static` to pick up pulled changes. `Runtime` is ignored and disposable.
 - `Work` contains regenerable output: pipeline staging, previews, validation
   reports, and caches. It is ignored by Git, so nothing durable may live there.
 
