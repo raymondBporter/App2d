@@ -2,7 +2,7 @@
   "format": "app2d-clip",
   "version": 1,
   "id": "person-hit",
-  "name": "Hit (stand-in)",
+  "name": "Hit recoil",
   "model": "person",
   "structureRevision": 1,
   "duration": 0.3,
@@ -17,19 +17,61 @@
   },
   "tracks": [
     {
+      "kind": "translate",
       "target": "hips",
       "keys": [
         {
+          "time": 0,
+          "x": -0.045,
+          "y": -0.025
+        },
+        {
+          "time": 0.016666666666666666,
+          "x": -0.1,
+          "y": -0.055
+        },
+        {
+          "time": 0.05,
+          "x": -0.1,
+          "y": -0.055,
           "ease": "smooth"
         },
         {
-          "time": 0.06,
-          "x": -0.04,
-          "y": -0.04
+          "time": 0.17,
+          "x": -0.03,
+          "y": -0.015,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.3
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "time": 0,
+          "angle": 0.16
+        },
+        {
+          "time": 0.016666666666666666,
+          "angle": 0.32
+        },
+        {
+          "time": 0.05,
+          "angle": 0.32,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.17,
+          "angle": 0.08,
+          "ease": "smooth"
         },
         {
           "time": 0.3,
-          "ease": "smooth"
+          "angle": 0
         }
       ]
     },
@@ -38,15 +80,26 @@
       "target": "chest",
       "keys": [
         {
+          "time": 0,
+          "angle": 0.08
+        },
+        {
+          "time": 0.016666666666666666,
+          "angle": 0.16
+        },
+        {
+          "time": 0.05,
+          "angle": 0.16,
           "ease": "smooth"
         },
         {
-          "time": 0.06,
-          "angle": 0.22
+          "time": 0.17,
+          "angle": 0.04,
+          "ease": "smooth"
         },
         {
           "time": 0.3,
-          "ease": "smooth"
+          "angle": 0
         }
       ]
     },
@@ -55,16 +108,23 @@
       "target": "left-arm",
       "keys": [
         {
-          "ease": "smooth"
-        },
-        {
-          "time": 0.06,
+          "time": 0,
           "x": 0.1,
-          "y": 0.12
+          "y": 0.1
         },
         {
-          "time": 0.3,
+          "time": 0.016666666666666666,
+          "x": 0.22,
+          "y": 0.16
+        },
+        {
+          "time": 0.05,
+          "x": 0.22,
+          "y": 0.16,
           "ease": "smooth"
+        },
+        {
+          "time": 0.3
         }
       ]
     },
@@ -73,16 +133,23 @@
       "target": "right-arm",
       "keys": [
         {
+          "time": 0,
+          "x": -0.05,
+          "y": 0.06
+        },
+        {
+          "time": 0.016666666666666666,
+          "x": -0.12,
+          "y": 0.16
+        },
+        {
+          "time": 0.05,
+          "x": -0.12,
+          "y": 0.16,
           "ease": "smooth"
         },
         {
-          "time": 0.06,
-          "x": 0.1,
-          "y": 0.12
-        },
-        {
-          "time": 0.3,
-          "ease": "smooth"
+          "time": 0.3
         }
       ]
     }

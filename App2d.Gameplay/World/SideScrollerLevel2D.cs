@@ -39,7 +39,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         IChunkedTileMap2D tileMap,
         Func<int, int> groundY,
         IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null,
-        IReadOnlyList<WorldThingSpec2D>? worldThings = null)
+        IReadOnlyList<WorldThingSpec2D>? worldThings = null,
+        IEnumerable<WorldZone2D>? zones = null)
     {
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
@@ -51,6 +52,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         _movingPlatformSpecs = movingPlatforms ?? [];
         _worldThingSpecs = worldThings ?? [];
         TileMap = tileMap;
+        Zones = zones is null ? [] : [.. zones];
 
         // Only an editable map can change under us. A read-only map never raises the event.
         if (tileMap is EditableTileMap2D editable)
@@ -97,6 +99,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     }
 
     public IChunkedTileMap2D TileMap { get; }
+    public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; }
     public Vector2 SpawnPoint { get; }
     public float GoalX { get; }
     public float GoalGroundY { get; }
@@ -197,7 +200,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(),
                 [.. _movingPlatforms.Select(p => p.CaptureDefinition())],
                 [.. _savePoints.Select(p => p.CapturePlacement())],
-                GoalThing?.Position);
+                GoalThing?.Position) { Zones = Zones };
         }
         return _content;
     }
@@ -242,7 +245,10 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     {
         ArgGuard.ThrowIfNotFinite(focus);
         var environment = RequireEnvironment();
+        var previousVersion = environment.Streamer.Version;
         environment.Streamer.Update(focus);
+        if (environment.Streamer.Version != previousVersion)
+            ForgetUnloadedGrass(environment.Streamer);
         EnemySystem.UpdateStreaming(environment.Streamer.IsChunkActive);
     }
 

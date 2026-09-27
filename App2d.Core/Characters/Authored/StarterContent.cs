@@ -58,7 +58,7 @@ public static class StarterContent
 
     public const string PersonHitClip = "person-hit", PersonDeathClip = "person-death";
 
-    /// <summary>Every Person set reacts with the same stand-in hit and death until a set needs its own.</summary>
+    /// <summary>Every Person set reacts with the same hit and death until a set needs its own.</summary>
     private static Dictionary<string, string> Reactions(Dictionary<string, string> roles)
     {
         roles[EntityControllers.Hit] = PersonHitClip; roles[EntityControllers.Death] = PersonDeathClip; return roles;
@@ -145,32 +145,46 @@ public static class StarterContent
         return clip;
     }
 
-    /// <summary>Stand-in hit reaction: the chest snaps back and the hips dip on planted feet, then settle.</summary>
+    /// <summary>Hit reaction: the chest snaps back and the hips dip on planted feet, then settle.</summary>
     public static MotionClip PersonHit(ResolvedModel model)
     {
-        var clip = Clip(model, PersonHitClip, "Hit (stand-in)", .3f, false);
+        var clip = Clip(model, PersonHitClip, "Hit recoil", .3f, false);
         clip.Tracks =
         [
-            Track(MotionClip.TranslateKind, "hips", K(0), K(.06f, -.04f, -.04f, ClipEase.Linear), K(.3f)),
-            Track(MotionClip.RotateKind, "chest", R(0, 0), R(.06f, .22f, ClipEase.Linear), R(.3f, 0)),
-            Track(MotionClip.TargetKind, "left-arm", K(0), K(.06f, .1f, .12f, ClipEase.Linear), K(.3f)),
-            Track(MotionClip.TargetKind, "right-arm", K(0), K(.06f, .1f, .12f, ClipEase.Linear), K(.3f)),
+            Track(MotionClip.TranslateKind, "hips",
+                K(0, -0.045f, -0.025f, ClipEase.Linear), K(1 / 60f, -0.1f, -0.055f, ClipEase.Linear), K(0.05f, -0.1f, -0.055f, ClipEase.Smooth), K(0.17f, -0.03f, -0.015f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
+            Track(MotionClip.RotateKind, "hips",
+                R(0, 0.16f, ClipEase.Linear), R(1 / 60f, 0.32f, ClipEase.Linear), R(0.05f, 0.32f, ClipEase.Smooth), R(0.17f, 0.08f, ClipEase.Smooth), R(0.3f, 0, ClipEase.Linear)),
+            Track(MotionClip.RotateKind, "chest",
+                R(0, 0.08f, ClipEase.Linear), R(1 / 60f, 0.16f, ClipEase.Linear), R(0.05f, 0.16f, ClipEase.Smooth), R(0.17f, 0.04f, ClipEase.Smooth), R(0.3f, 0, ClipEase.Linear)),
+            Track(MotionClip.TargetKind, "left-arm",
+                K(0, 0.1f, 0.1f, ClipEase.Linear), K(1 / 60f, 0.22f, 0.16f, ClipEase.Linear), K(0.05f, 0.22f, 0.16f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
+            Track(MotionClip.TargetKind, "right-arm",
+                K(0, -0.05f, 0.06f, ClipEase.Linear), K(1 / 60f, -0.12f, 0.16f, ClipEase.Linear), K(0.05f, -0.12f, 0.16f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
         ];
         clip.Contacts = [Plant("left-leg", 0, .3f), Plant("right-leg", 0, .3f)];
         clip.Faces = [new() { Part = "head", Keys = [new() { Time = 0, Expression = "hurt" }] }];
         return clip;
     }
 
-    /// <summary>Stand-in death: the knees give, the body folds back onto the ground and stays down.</summary>
+    /// <summary>Death: the knees give, the body folds back onto the ground and stays down.</summary>
     public static MotionClip PersonDeath(ResolvedModel model)
     {
-        var clip = Clip(model, PersonDeathClip, "Death (stand-in)", 1.1f, false);
+        var clip = Clip(model, PersonDeathClip, "Recoil and collapse", 1.1f, false);
         clip.Tracks =
         [
-            Track(MotionClip.TranslateKind, "hips", K(0), K(.25f, -.03f, -.12f), K(.75f, -.28f, -.72f), K(1.1f, -.3f, -.7f)),
-            Track(MotionClip.RotateKind, "chest", R(0, 0), R(.25f, -.15f), R(.75f, .9f), R(1.1f, 1.1f)),
-            Track(MotionClip.TargetKind, "left-arm", K(0), K(.4f, .15f, .25f), K(1.1f, -.1f, .05f)),
-            Track(MotionClip.TargetKind, "right-arm", K(0), K(.4f, .15f, .25f), K(1.1f, -.05f, 0)),
+            Track(MotionClip.TranslateKind, "hips",
+                K(0, -0.045f, -0.025f, ClipEase.Linear), K(1 / 60f, -0.13f, -0.06f, ClipEase.Linear), K(0.075f, -0.16f, -0.08f, ClipEase.Smooth), K(0.25f, -0.2f, -0.2f, ClipEase.Smooth), K(0.75f, -0.28f, -0.81f, ClipEase.Smooth), K(1.1f, -0.3f, -0.79f, ClipEase.Smooth)),
+            Track(MotionClip.RotateKind, "hips",
+                R(0, 0.16f, ClipEase.Linear), R(1 / 60f, 0.34f, ClipEase.Linear), R(0.075f, 0.37f, ClipEase.Smooth), R(0.25f, 0.53f, ClipEase.Smooth), R(0.75f, 1.42f, ClipEase.Smooth), R(1.1f, 1.45f, ClipEase.Smooth)),
+            Track(MotionClip.RotateKind, "chest",
+                R(0, 0.08f, ClipEase.Linear), R(1 / 60f, 0.18f, ClipEase.Linear), R(0.075f, 0.18f, ClipEase.Smooth), R(0.25f, 0.12f, ClipEase.Smooth), R(0.75f, 0.05f, ClipEase.Smooth), R(1.1f, 0.05f, ClipEase.Smooth)),
+            Track(MotionClip.TargetKind, "left-arm",
+                K(0, 0.1f, 0.1f, ClipEase.Linear), K(1 / 60f, 0.24f, 0.18f, ClipEase.Linear), K(0.075f, 0.24f, 0.18f, ClipEase.Smooth), K(0.4f, 0.15f, 0.25f, ClipEase.Smooth), K(1.1f, -0.1f, 0.05f, ClipEase.Smooth)),
+            Track(MotionClip.TargetKind, "right-arm",
+                K(0, -0.05f, 0.06f, ClipEase.Linear), K(1 / 60f, -0.14f, 0.18f, ClipEase.Linear), K(0.075f, -0.14f, 0.18f, ClipEase.Smooth), K(0.4f, 0.15f, 0.25f, ClipEase.Smooth), K(1.1f, -0.05f, 0, ClipEase.Smooth)),
+            Track(MotionClip.OrientKind, "right-grip",
+                new ClipKey { Time = 0, Z = 0, Ease = ClipEase.Linear }, new ClipKey { Time = 0.075f, Z = 0, Ease = ClipEase.Smooth }, new ClipKey { Time = 0.75f, Z = -1.47f, Ease = ClipEase.Smooth }, new ClipKey { Time = 1.1f, Z = -1.5f, Ease = ClipEase.Linear }),
         ];
         clip.Contacts = [Plant("left-leg", 0, 1.1f), Plant("right-leg", 0, 1.1f)];
         clip.Markers = [new() { Id = "impact", Time = .75f }];

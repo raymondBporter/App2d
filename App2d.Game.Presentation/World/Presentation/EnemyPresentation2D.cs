@@ -3,6 +3,7 @@ using App2d.Core.Animation;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Assets;
 using App2d.Gameplay.Audio;
+using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
@@ -24,6 +25,10 @@ public sealed class EnemyPresentation2D(
     private ImmutableArray<EnemyState2D> _states = [];
     private long _tick;
     private float _secondsSinceState;
+    private readonly EnemyContactHold2D _hitstop = new(CombatHitstop2D.Curve);
+
+    public void PresentContact(CombatDamage2D damage) => _hitstop.Present(damage);
+    public void ResetContact() => _hitstop.Reset();
 
     public void ApplyState(ImmutableArray<EnemyState2D> states, IEnumerable<EnemyEvent2D> events, long tick) =>
         Update(states, events, 0f, tick);
@@ -58,6 +63,7 @@ public sealed class EnemyPresentation2D(
 
     private void RenderStates(ImmutableArray<EnemyState2D> states, IEnumerable<EnemyEvent2D> events, float dt, long tick)
     {
+        states = _hitstop.Sample(states);
         var occurrences = events.ToLookup(e => e.EntityId);
         foreach (var occurrence in occurrences.SelectMany(group => group))
         {
@@ -110,6 +116,7 @@ public sealed class EnemyPresentation2D(
 
     public void Dispose()
     {
+        _hitstop.Reset();
         foreach (var view in _views.Values) view.Dispose();
         _views.Clear();
     }

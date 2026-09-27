@@ -30,6 +30,8 @@ public sealed record SideScrollerSessionDefinition2D(
 {
     /// <summary>Authored entities; placements they cover spawn from these, otherwise the built-in sprite enemies.</summary>
     public AuthoredCatalog? AuthoredCharacters { get; init; }
+    /// <summary>Rectangular regions shared by simulation and presentation consumers.</summary>
+    public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; init; } = [];
     public int PlayerMaximumHealth { get; init; } = 5;
     /// <summary>Resume point; ignored when it names a missing checkpoint or invalid health.</summary>
     public SavedProgress2D? SavedProgress { get; init; }
@@ -42,6 +44,8 @@ public sealed record SideScrollerSessionDefinition2D(
         ArgGuard.ThrowIfNull(TileMap);
         ArgGuard.ThrowIfNull(MovingPlatforms);
         ArgGuard.ThrowIfNull(WorldThings);
+        if (Zones.IsDefault || Zones.Any(z => z is null) || Zones.Select(z => z.Id).Distinct(StringComparer.Ordinal).Count() != Zones.Length)
+            throw new ArgumentException("Zones must be initialized and have unique IDs.", nameof(Zones));
         ArgGuard.ThrowIfNotPositive(PlayerMaximumHealth);
         ArgGuard.ThrowIfNotPositive(PositionIterations);
         ArgGuard.ThrowIfNotPositive(VelocityIterations);

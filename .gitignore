@@ -15,6 +15,7 @@ venv/
 *.nupkg
 *.snupkg
 artifacts/
+/output/
 Assets/Work/
 /Assets/Runtime/
 

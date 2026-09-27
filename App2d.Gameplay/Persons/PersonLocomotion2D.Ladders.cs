@@ -22,6 +22,14 @@ public sealed partial class PersonLocomotion2D
 
     private bool TryUpdateLadder(float deltaSeconds)
     {
+        // Down on a ladder still lands on the floor. Once supported, use normal
+        // grounded movement (including an explicit down+jump drop-through).
+        if (IsGrounded && _intent.ClimbY <= 0f)
+        {
+            DetachFromLadder();
+            return false;
+        }
+
         // A jump press while climbing always leaves the ladder; a jump press beside a
         // ladder jumps instead of grabbing it. Climbing itself comes only from ClimbY.
         var jumpOff = _intent.JumpPressed;
@@ -57,8 +65,6 @@ public sealed partial class PersonLocomotion2D
             return false;
         }
         _body.WorldObject.Transform.Position = position;
-        if (_intent.ClimbY < 0f)
-            TryBeginDropThrough();
 
         IsClimbingLadder = true;
         IsGrounded = IsWallGripping = false;

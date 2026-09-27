@@ -47,9 +47,9 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 1.053,
+          "offsetX": 1.151,
           "offsetY": 1.041,
-          "width": 1.086,
+          "width": 1.282,
           "height": 0.679,
           "damage": 2
         }
@@ -78,9 +78,9 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 0.856,
+          "offsetX": 0.944,
           "offsetY": 1.112,
-          "width": 1.159,
+          "width": 1.35,
           "height": 0.565,
           "damage": 2
         }
@@ -109,9 +109,9 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 0.929,
+          "offsetX": 1.026,
           "offsetY": 1.041,
-          "width": 1.335,
+          "width": 1.532,
           "height": 0.679,
           "damage": 2
         }

@@ -1,0 +1,69 @@
+{
+  "title": "Crown of Embers",
+  "revision": "01 \u2014 Epic orchestra",
+  "bpm": 120,
+  "beats_per_bar": 4,
+  "bars": 32,
+  "key": "D minor",
+  "asset_id": "crown-of-embers",
+  "presentation": {
+    "stem_names": [
+      "Landscape",
+      "Hero theme",
+      "String motion",
+      "Battle"
+    ],
+    "mood_names": {
+      "explore": "Explore",
+      "drive": "Advance",
+      "combat": "Epic"
+    }
+  },
+  "sample_rate": 44100,
+  "channels": 2,
+  "loop_start_frame": 0,
+  "loop_end_frame": 2822400,
+  "stems": [
+    {
+      "id": "world",
+      "file": "world.ogg"
+    },
+    {
+      "id": "theme",
+      "file": "theme.ogg"
+    },
+    {
+      "id": "motion",
+      "file": "motion.ogg"
+    },
+    {
+      "id": "battle",
+      "file": "battle.ogg"
+    }
+  ],
+  "moods": {
+    "explore": [
+      1,
+      0.64,
+      0,
+      0
+    ],
+    "drive": [
+      0.92,
+      0.9,
+      0.7,
+      0
+    ],
+    "combat": [
+      0.86,
+      1,
+      1,
+      0.9
+    ]
+  },
+  "transition": {
+    "quantize_beats": 4,
+    "fade_beats": 4
+  },
+  "playback": "All stems share a sample cursor. Never independently restart a muted stem."
+}

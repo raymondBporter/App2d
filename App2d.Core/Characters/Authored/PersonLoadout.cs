@@ -24,6 +24,7 @@ public static class PersonLoadout
     public const string Sword = "sword", Sheath = "sheath", Pistol = "pistol";
     /// <summary>The upper-body group: channels an arms-only overlay (a gun shot) owns over any legs. The Person model carries it as its "upper" control group.</summary>
     public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { "chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm" };
+    public static readonly IReadOnlySet<string> SwordUpperBody = new HashSet<string>(UpperBody, StringComparer.Ordinal) { SwordSocket };
 
     public static bool SeenFromBehind(MotionClip clip, float seconds) =>
         clip.Markers.Where(m => m.Id is BackViewMarker or ProfileViewMarker && m.Time <= seconds + 1e-4f).MaxBy(m => m.Time)?.Id == BackViewMarker;

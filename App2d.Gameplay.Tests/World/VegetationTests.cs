@@ -30,7 +30,7 @@ public sealed class VegetationTests
     }
 
     [Fact]
-    public void CutsAreIdempotentSurviveStreamingAndRestoreWithTheSession()
+    public void CutsAreIdempotentForgottenOnUnloadAndRestoreWithTheSession()
     {
         using var game = Create();
         var session = game.Session;
@@ -46,13 +46,37 @@ public sealed class VegetationTests
         Assert.Same(cut.World.CutGrass, session.CaptureSnapshot().World.CutGrass);
         Assert.Empty(original.World.CutGrass);
         var after = session.CaptureCheckpoint();
+        game.Level.UpdateStreaming(game.Level.SpawnPoint + new Vector2(32f, 0f));
+        Assert.Same(cut.World.CutGrass, session.CaptureWorld().CutGrass);
         game.Level.UpdateStreaming(game.Level.TileMap.WorldBounds.Max);
+        Assert.Empty(session.CaptureWorld().CutGrass);
         game.Level.UpdateStreaming(game.Level.SpawnPoint);
-        Assert.Contains(cell, session.CaptureSnapshot().World.CutGrass);
+        Assert.Empty(session.CaptureWorld().CutGrass);
+        game.Level.CutGrass(bounds);
+        Assert.Contains(cell, session.CaptureWorld().CutGrass);
         session.RestoreCheckpoint(before);
         Assert.Empty(session.CaptureSnapshot().World.CutGrass);
         session.RestoreCheckpoint(after);
         Assert.Contains(cell, session.CaptureSnapshot().World.CutGrass);
+    }
+
+    [Fact]
+    public void CuttingAcrossTheWorldOnlyRetainsNearbyGrass()
+    {
+        using var game = Create();
+        var map = game.Level.TileMap;
+        for (var x = 0; x < map.Width; x += map.ChunkSize)
+        {
+            game.Level.UpdateStreaming(map.Origin + new Vector2(x + 0.5f, 20f) * map.TileSize);
+            // Even an oversized strike must never add unloaded terrain to the set.
+            game.Level.CutGrass(map.WorldBounds);
+            var cuts = game.Session.CaptureWorld().CutGrass;
+            Assert.NotEmpty(cuts);
+            var active = game.Level.CaptureContent().Terrain.Select(c => c.Chunk).ToHashSet();
+            Assert.All(cuts, cell => Assert.Contains(new TileChunk2D(cell.X / map.ChunkSize,
+                cell.Y / map.ChunkSize), active));
+            Assert.True(cuts.Count <= 5 * map.ChunkSize);
+        }
     }
 
     [Theory]

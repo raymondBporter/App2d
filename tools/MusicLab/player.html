@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Copper Circuit · Music Lab</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+:root{color-scheme:dark;--bg:#121615;--panel:#1b211e;--ink:#eee9d8;--muted:#9da99c;--line:#354137;--lime:#c8e57d;--copper:#eea56f;--blue:#87bfc0;--red:#ee8171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px 'DM Sans',system-ui,sans-serif}body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:radial-gradient(#9da99c 0.5px,transparent .5px);background-size:7px 7px}main{position:relative;max-width:1120px;padding:36px 36px 24px;margin:auto}header{display:flex;justify-content:space-between;align-items:center;padding-bottom:24px;border-bottom:1px solid var(--line)}.brand,.tag,.eyebrow,.section-label{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase}.brand{display:flex;gap:10px;align-items:center}.mark{width:20px;height:20px;background:var(--lime);clip-path:polygon(0 0,70% 0,70% 30%,100% 30%,100% 100%,30% 100%,30% 70%,0 70%)}.tag{color:var(--muted);letter-spacing:1px}.hero{display:grid;grid-template-columns:1fr 210px;gap:30px;padding:38px 0 28px}.eyebrow{color:var(--copper);margin-bottom:14px}h1{font:600 clamp(40px,6vw,67px)/1.05 'Space Grotesk',system-ui;margin:0 0 15px;letter-spacing:-3px}.intro{color:var(--muted);max-width:580px;font-size:16px;line-height:1.6;margin:0}.hero-art{border:1px solid var(--line);border-radius:50%;width:176px;height:176px;align-self:center;justify-self:end;position:relative;background:repeating-radial-gradient(circle,#1d251e 0,#1d251e 2px,#131915 3px,#131915 6px);display:grid;place-items:center}.hero-art:before{content:"";width:69px;height:69px;border-radius:50%;background:var(--copper)}.hero-art:after{content:"";position:absolute;width:11px;height:11px;border-radius:50%;background:var(--bg)}.orbit{position:absolute;left:-12px;bottom:20px;background:var(--lime);color:#1a2516;padding:7px 12px;font-size:11px;font-weight:700;transform:rotate(-9deg)}.specs{display:flex;gap:24px;font-size:12px;color:var(--muted);margin-bottom:25px}.specs b{color:var(--ink);font-weight:500}.panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:24px}.transport{display:flex;align-items:center;gap:14px}.play{border:0;background:var(--lime);color:#172014;width:52px;height:52px;border-radius:50%;font-size:19px;cursor:pointer;flex-shrink:0}.play:hover{background:#daeea2}.play:disabled{opacity:.5;cursor:wait}.now{min-width:160px}.now strong{display:block;font:500 18px 'Space Grotesk';margin-bottom:4px}.now small{color:var(--muted)}.transport-right{margin-left:auto;display:flex;align-items:center;gap:16px}.time{font:15px 'Space Grotesk';font-variant-numeric:tabular-nums}.muted{color:var(--muted)}button{font:inherit}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--lime);outline-offset:5px}.tour{background:transparent;border:1px solid #58664c;color:var(--ink);padding:9px 12px;border-radius:7px;cursor:pointer;font-size:12px}.tour[aria-pressed=true]{background:#c8e57d22;color:var(--lime);border-color:var(--lime)}.timeline{margin:24px 0 10px;height:95px;position:relative;border-bottom:1px solid var(--line);overflow:hidden}.timeline canvas{width:100%;height:85px}.cursor{height:100%;width:1px;background:var(--ink);position:absolute;left:0;top:0;pointer-events:none}.cursor:before{content:"";position:absolute;width:7px;height:7px;background:var(--ink);left:-3px;top:0;border-radius:1px}.parts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.parts button{border:0;background:none;text-align:left;color:var(--muted);font-size:11px;cursor:pointer;padding:4px 0}.parts button:hover{color:var(--ink)}.parts b{display:block;color:var(--ink);font-weight:500;font-size:12px;margin-bottom:5px}.section-label{color:var(--muted);margin:27px 0 13px;font-size:10px}.moods{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.mood{padding:18px 18px 17px;text-align:left;border:1px solid var(--line);border-radius:11px;background:#171d19;color:var(--ink);cursor:pointer;transition:background .2s,border-color .2s}.mood:hover{background:#252d25}.mood[aria-pressed=true]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,#171d19)}.mood-top{display:flex;align-items:center;justify-content:space-between}.mood h2{font:500 19px 'Space Grotesk';margin:0}.number{color:var(--accent);font:12px 'Space Grotesk'}.mood p{margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.5}.bottom{display:grid;grid-template-columns:1.25fr 1fr;gap:28px;margin-top:5px}.stem{display:grid;grid-template-columns:105px 1fr 36px;gap:13px;align-items:center;margin:15px 0}.stem label{font-size:12px;color:var(--ink)}.stem output{color:var(--muted);font-size:11px;text-align:right;font-variant-numeric:tabular-nums}input[type=range]{accent-color:var(--lime);width:100%;height:4px;cursor:pointer}.volume{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:11px}.volume input{width:65px}.note{font-size:13px;line-height:1.7;color:var(--muted);margin-top:0}.note b{color:var(--ink);font-weight:500}.downloads{display:flex;gap:10px;flex-wrap:wrap}.downloads a{font-size:12px;color:var(--ink);text-decoration:none;border-bottom:1px solid #647353;padding-bottom:4px}.downloads a:hover{color:var(--lime)}footer{display:flex;justify-content:space-between;gap:15px;border-top:1px solid var(--line);padding-top:19px;margin-top:26px;color:var(--muted);font-size:11px}.status{font-size:11px;color:var(--lime);min-height:18px;margin-top:14px}#error{color:var(--red);line-height:1.5}.legend{display:flex;gap:16px;color:var(--muted);font-size:10px;margin-top:9px}.legend span:before{content:"";display:inline-block;width:6px;height:6px;background:var(--c);margin-right:5px;border-radius:50%}@media(max-width:650px){main{padding:20px}.hero{grid-template-columns:1fr}.hero-art{display:none}.specs{gap:13px;flex-wrap:wrap}.panel{padding:17px}.transport{flex-wrap:wrap}.transport-right{margin-left:0;width:100%;justify-content:space-between}.bottom{grid-template-columns:1fr;gap:0}.moods{gap:7px}.mood{padding:13px 10px}.mood h2{font-size:16px}.mood p{font-size:11px}.parts b{font-size:10px}footer{flex-direction:column}.tag{font-size:9px}.volume input{width:90px}}
+</style>
+</head>
+<body><main>
+<header><div class="brand"><span class="mark"></span>App2d / Music Lab</div><div class="tag">Experiment 01 · Original score</div></header>
+<section class="hero"><div><div class="eyebrow">A little cartridge. A little amplifier.</div><h1>Copper Circuit</h1><p class="intro">An adventurous chip melody with a rock-band backbone.<br>One musical world, three gears. You choose the energy.</p></div><div class="hero-art" aria-hidden="true"><span class="orbit">SIDE A / LOOP FOREVER</span></div></section>
+<div class="specs"><span><b>144</b> BPM</span><span><b>E minor</b></span><span><b>32 bars</b> / 0:53</span><span><b>4 synchronized layers</b></span></div>
+<section class="panel" aria-label="Music player">
+<div class="transport"><button class="play" id="play" aria-label="Play music">▶</button><div class="now"><strong id="now">Explore</strong><small id="bar">Ready when you are</small></div><div class="transport-right"><span class="time"><span id="time">0:00</span> <span class="muted">/ 0:53</span></span><button class="tour" id="tour" aria-pressed="false">Auto tour</button><label class="volume">Volume <input id="volume" type="range" min="0" max="100" value="65" aria-label="Master volume"></label></div></div>
+<div class="timeline"><canvas id="wave" aria-label="Four-layer audio waveform"></canvas><div class="cursor" id="cursor"></div></div>
+<div class="parts" id="parts"></div><div class="legend"><span style="--c:var(--lime)">World</span><span style="--c:var(--copper)">Theme</span><span style="--c:var(--blue)">Rock</span><span style="--c:var(--red)">Overdrive</span></div>
+<div class="status" id="status" role="status">Press play, then change moods. Transitions follow the next bar.</div><div id="error" role="alert"></div>
+</section>
+<div class="section-label">Change the scene</div>
+<section class="moods" aria-label="Music moods">
+<button class="mood" data-mood="explore" aria-pressed="true" style="--accent:var(--lime)"><div class="mood-top"><h2>Explore</h2><span class="number">01 / LOW</span></div><p>Clean guitar, bass &amp; a bright chip theme.<br>Room to find your way.</p></button>
+<button class="mood" data-mood="drive" aria-pressed="false" style="--accent:var(--blue)"><div class="mood-top"><h2>Drive</h2><span class="number">02 / MID</span></div><p>Guitars plug in. The drums arrive.<br>Keep moving.</p></button>
+<button class="mood" data-mood="combat" aria-pressed="false" style="--accent:var(--red)"><div class="mood-top"><h2>Overdrive</h2><span class="number">03 / HIGH</span></div><p>Lead guitar, tom fills &amp; extra bite.<br>Same theme. More trouble.</p></button>
+</section>
+<section class="bottom"><div><div class="section-label">Try your own balance</div><div id="stems"></div></div><div><div class="section-label">The experiment</div><p class="note">Does the melody hold up? Does the rock layer add weight? Switch moods midway through a phrase: <b>the song keeps its place.</b> Auto tour visits all three moods in one loop.</p><div class="downloads"><a href="listen-first.mp3" download>Guided listen ↓</a><a href="copper-circuit-game.zip" download>Game assets ↓</a><a href="source/copper-circuit.mid" download>Editable MIDI ↓</a><a href="README.md">Process notes ↗</a></div></div></section>
+<footer><span>Original composition · Sampled band + synthesized chip voices</span><span id="size">Baked audio. No AI or synthesis during gameplay.</span></footer>
+</main>
+<script>
+'use strict';
+const manifest=__MANIFEST__, sections=__SCORE_SECTIONS__;
+const $=id=>document.getElementById(id), names=manifest.presentation?.stem_names||['World','Theme','Rock','Overdrive'];
+document.querySelector('.tag').textContent=manifest.revision||'01 — Original';
+if(manifest.revision?.startsWith('02')){
+ document.querySelector('.intro').textContent='The same chip melody, with tighter low guitar riffs and a heavier band. Choose Drive or Overdrive to hear the revision.';
+ const original=document.createElement('a');original.href='../../';original.target='_blank';original.rel='noopener';original.textContent='Original version ↗';document.querySelector('.downloads').prepend(original);
+}
+if(manifest.revision?.startsWith('03')){
+ document.querySelector('.intro').textContent='Overdrive takes the spotlight: more lead guitar, rolling toms and drum breaks. Explore and Drive keep their previous sound.';
+ const previous=document.createElement('a');previous.href='../heavier-v2/';previous.target='_blank';previous.rel='noopener';previous.textContent='Previous version ↗';document.querySelector('.downloads').prepend(previous);
+}
+const colors=['#c8e57d','#eea56f','#87bfc0','#ee8171'];
+const labels=manifest.presentation?.mood_names||{explore:'Explore',drive:'Drive',combat:'Overdrive'};
+const duration=manifest.loop_end_frame/manifest.sample_rate, beat=60/manifest.bpm, barLength=beat*4;
+if(manifest.title==='Crown of Embers'){
+ document.title=manifest.title+' · Music Lab';document.querySelector('h1').textContent=manifest.title;
+ document.querySelector('.eyebrow').textContent='Strings rise. Brass answers. The gates open.';
+ document.querySelector('.intro').textContent='A sweeping orchestral adventure: quiet strings and harp, a rising horn theme, then the full force of brass and percussion.';
+ document.querySelector('.specs').innerHTML=`<span><b>${manifest.bpm}</b> BPM</span><span><b>${manifest.key}</b></span><span><b>32 bars</b> / 1:04</span><span><b>4 synchronized layers</b></span>`;
+ document.querySelector('.time .muted').textContent='/ 1:04';
+ document.querySelectorAll('.legend span').forEach((el,i)=>el.textContent=names[i]);
+ const descriptions=['Harp, long strings and a distant hero theme. Space to explore.','Strings gather momentum. The horn theme steps forward.','Brass, timpani and rolling percussion. The full orchestra.'];
+ document.querySelectorAll('[data-mood]').forEach((el,i)=>{el.querySelector('h2').textContent=labels[el.dataset.mood];el.querySelector('p').textContent=descriptions[i];});
+ document.querySelector('.note').textContent='Try the three moods: the orchestra builds while the theme stays in place. Auto tour moves through all three, then returns to exploration.';
+ document.querySelector('footer span').textContent='Original composition · Sampled orchestra';
+ const previous=document.createElement('a');previous.href='../overdrive-v3/';previous.target='_blank';previous.rel='noopener';previous.textContent='Rock version ↗';document.querySelector('.downloads').prepend(previous);
+}
+let context,master,buffers=[],sources=[],gains=[],playing=false,startTime=0,offset=0;
+let selected='explore',target=[...manifest.moods.explore],auto=false,lastAuto=-1,pending=null,loading=null;
+let waveform=[];
+for(let i=0;i<4;i++){
+ const div=document.createElement('div');div.className='stem';
+ div.innerHTML=`<label for="stem${i}">${names[i]}</label><input id="stem${i}" type="range" min="0" max="100" value="${Math.round(target[i]*100)}" aria-label="${names[i]} layer volume"><output id="value${i}">${Math.round(target[i]*100)}%</output>`;
+ $('stems').append(div);
+ $(`stem${i}`).addEventListener('input',e=>{auto=false;syncTour();selected='custom';pending=null;target[i]=Number(e.target.value)/100;updateControls();if(playing)ramp(gains[i].gain,target[i],context.currentTime,.08);$('now').textContent='Your mix';$('status').textContent='Custom balance · all layers remain synchronized';});
+ const button=document.createElement('button');button.innerHTML=`<b>${String(sections[i].bar).padStart(2,'0')} / ${sections[i].name}</b>${i*8+1}–${i*8+8}`;
+ button.addEventListener('click',()=>seek(i*8*barLength));$('parts').append(button);
+}
+function updateControls(){document.querySelectorAll('[data-mood]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mood===selected)));target.forEach((v,i)=>{$(`stem${i}`).value=Math.round(v*100);$(`value${i}`).textContent=Math.round(v*100)+'%';});}
+function syncTour(){$('tour').setAttribute('aria-pressed',String(auto));}
+function ramp(param,value,time,length){if(param.cancelAndHoldAtTime)param.cancelAndHoldAtTime(time);else{param.cancelScheduledValues(time);param.setValueAtTime(param.value,time);}param.linearRampToValueAtTime(value,time+length);}
+async function load(){
+ if(buffers.length)return;if(loading)return loading;
+ loading=(async()=>{
+  $('play').disabled=true;$('status').textContent='Loading the four music layers…';
+  context=new AudioContext({sampleRate:manifest.sample_rate});master=context.createGain();master.gain.value=Number($('volume').value)/100;master.connect(context.destination);
+  buffers=await Promise.all(manifest.stems.map(async s=>{const response=await fetch('game/'+s.file);if(!response.ok)throw Error('Could not load '+s.file);return context.decodeAudioData(await response.arrayBuffer());}));
+  buffers.forEach(b=>{if(Math.abs(b.duration-duration)>1/context.sampleRate)throw Error('Decoded stems have different lengths');});
+  waveform=buffers.map(b=>{const data=b.getChannelData(0),peaks=[];for(let x=0;x<400;x++){let sum=0;const first=Math.floor(x*data.length/400),last=Math.floor((x+1)*data.length/400);for(let j=first;j<last;j+=8)sum=Math.max(sum,Math.abs(data[j]));peaks.push(sum);}return peaks;});
+  drawWave();$('status').textContent='Ready · choose a mood at any time';
+ })();
+ try{await loading;}catch(e){buffers=[];loading=null;$('error').textContent='Audio could not load. Open this page with serve.py (not directly as a file). '+e.message;throw e;}finally{$('play').disabled=false;}
+}
+function spawn(position){const when=context.currentTime+.045;startTime=when;offset=position;sources=[];gains=[];
+ buffers.forEach((buffer,i)=>{const source=context.createBufferSource(),gain=context.createGain();source.buffer=buffer;source.loop=true;source.loopStart=0;source.loopEnd=duration;gain.gain.setValueAtTime(0,when);gain.gain.linearRampToValueAtTime(target[i],when+.035);source.connect(gain).connect(master);source.start(when,position);sources.push(source);gains.push(gain);});playing=true;$('play').textContent='Ⅱ';$('play').setAttribute('aria-label','Pause music');}
+function currentPosition(){return playing?((Math.max(0,context.currentTime-startTime)+offset)%duration):offset;}
+function stopSources(){const now=context.currentTime;sources.forEach((s,i)=>{ramp(gains[i].gain,0,now,.025);s.stop(now+.03);s.onended=()=>{s.disconnect();};});sources=[];gains=[];}
+async function toggle(){try{await load();await context.resume();if(playing){offset=currentPosition();stopSources();playing=false;pending=null;$('play').textContent='▶';$('play').setAttribute('aria-label','Play music');$('status').textContent='Paused · resume from this position';}else{spawn(offset);$('now').textContent=labels[selected]||'Your mix';$('status').textContent='Playing · mood changes fade over one bar';}}catch(e){console.error(e);}}
+function seek(position){offset=position;lastAuto=-1;pending=null;if(playing){stopSources();spawn(position);}drawWave();}
+function choose(mood,quantized=true){selected=mood;target=[...manifest.moods[mood]];updateControls();if(!playing){$('now').textContent=labels[mood];return;}
+ const now=context.currentTime,pos=currentPosition();let wait=quantized?(barLength-pos%barLength)%barLength:0;if(wait<.035&&quantized)wait=barLength;
+ const when=now+wait;gains.forEach((g,i)=>{ // Cancel a superseded mood change before scheduling the new one.
+  if(g.gain.cancelAndHoldAtTime)g.gain.cancelAndHoldAtTime(now);else g.gain.cancelScheduledValues(now);
+  g.gain.setValueAtTime(g.gain.value,when);g.gain.linearRampToValueAtTime(target[i],when+barLength);
+ });pending={time:when,mood};$('status').textContent=quantized?`${labels[mood]} queued · next bar, one-bar fade`:`Fading to ${labels[mood]}`;
+}
+document.querySelectorAll('[data-mood]').forEach(b=>b.addEventListener('click',()=>{auto=false;syncTour();choose(b.dataset.mood);}));
+$('play').addEventListener('click',toggle);$('volume').addEventListener('input',e=>{if(master)ramp(master.gain,Number(e.target.value)/100,context.currentTime,.03);});
+$('tour').addEventListener('click',async()=>{auto=!auto;syncTour();lastAuto=-1;if(auto){if(playing)seek(0);else offset=0;choose('explore',false);if(!playing)await toggle();}});
+function drawWave(){const canvas=$('wave'),rect=canvas.getBoundingClientRect(),ratio=devicePixelRatio||1;canvas.width=rect.width*ratio;canvas.height=rect.height*ratio;const c=canvas.getContext('2d');c.scale(ratio,ratio);const w=rect.width,h=rect.height;c.clearRect(0,0,w,h);
+ for(let k=0;k<4;k++){const y=11+k*21;const peaks=waveform[k]||Array.from({length:400},()=>0);const max=Math.max(.001,...peaks);c.strokeStyle=colors[k];c.globalAlpha=.7;c.lineWidth=1;for(let i=0;i<400;i++){const amp=waveform.length?peaks[i]/max*8:1;c.beginPath();c.moveTo(i*w/400,y-amp);c.lineTo(i*w/400,y+amp);c.stroke();}}
+ c.globalAlpha=.3;c.strokeStyle='#9da99c';for(let i=1;i<4;i++){c.beginPath();c.moveTo(w*i/4,0);c.lineTo(w*i/4,h);c.stroke();}}
+function tick(){const pos=currentPosition();$('cursor').style.left=(pos/duration*100)+'%';$('time').textContent=`${Math.floor(pos/60)}:${String(Math.floor(pos%60)).padStart(2,'0')}`;
+ if(playing){const bar=Math.min(32,Math.floor(pos/barLength)+1);$('bar').textContent=`Bar ${String(bar).padStart(2,'0')} / 32 · ${sections[Math.floor((bar-1)/8)].name}`;
+  if(pending&&context.currentTime>=pending.time){$('now').textContent=labels[pending.mood];$('status').textContent=`${labels[pending.mood]} · same song, same playback position`;pending=null;}
+  if(auto){const block=Math.floor(pos/(barLength*8));if(block!==lastAuto){lastAuto=block;choose(['explore','drive','combat','explore'][block],false);}}
+ }requestAnimationFrame(tick);}
+window.addEventListener('resize',drawWave);drawWave();tick();
+if(manifest.revision?.startsWith('03'))choose('combat',false);
+if(manifest.title==='Crown of Embers')choose('combat',false);
+// Exposes read-only playback facts for automated smoke checks, not a second player.
+window.musicLabState=()=>({playing,selected,position:currentPosition(),duration,loaded:buffers.length,
+ frames:buffers.map(b=>b.length),sampleRate:context?.sampleRate,sources:sources.length,auto});
+</script></body></html>

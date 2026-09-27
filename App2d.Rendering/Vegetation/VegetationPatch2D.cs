@@ -59,9 +59,11 @@ public sealed class VegetationPatch2D
         float visibleLeft,
         float visibleRight,
         VegetationWind2D wind,
-        float? cutHeight = null)
+        float? cutHeight = null,
+        float cutRoughness = 0f)
     {
         if (cutHeight is { } height) ArgGuard.ThrowIfNotFiniteOrNegative(height);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(cutRoughness, 0f, 1f);
         Span<Vector2> quad = stackalloc Vector2[4];
 
         foreach (var blade in _blades)
@@ -69,7 +71,7 @@ public sealed class VegetationPatch2D
             if (blade.Root.X < visibleLeft - blade.Height || blade.Root.X > visibleRight + blade.Height)
                 continue;
 
-            var end = cutHeight is { } cut ? Math.Min(1f, cut / blade.Height) : 1f;
+            var end = cutHeight is { } cut ? CutWeight(blade, cut, cutRoughness) : 1f;
             for (var index = 0; index < SegmentCount; index++)
             {
                 var startWeight = index / (float)SegmentCount;
@@ -87,13 +89,15 @@ public sealed class VegetationPatch2D
     }
 
     /// <summary>Captures the exact wind-bent tops at the cut line, ready to tumble independently.</summary>
-    public IEnumerable<VegetationBladeTip2D> CreateClippings(float cutHeight, VegetationWind2D wind)
+    public IEnumerable<VegetationBladeTip2D> CreateClippings(float cutHeight, VegetationWind2D wind,
+        float cutRoughness = 0f)
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(cutHeight);
+        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(cutRoughness, 0f, 1f);
         foreach (var blade in _blades)
         {
-            if (blade.Height <= cutHeight) continue;
-            var start = cutHeight / blade.Height;
+            var start = CutWeight(blade, cutHeight, cutRoughness);
+            if (start >= 1f) continue;
             var sections = new List<VegetationBladeSection2D>(SegmentCount);
             for (var index = 0; index < SegmentCount; index++)
             {
@@ -105,6 +109,9 @@ public sealed class VegetationPatch2D
                 blade.Width * 1.15f, _style.FlowerColor);
         }
     }
+
+    private static float CutWeight(Blade blade, float height, float roughness) =>
+        Math.Min(1f, height * (1f + roughness * MathF.Sin(blade.Phase * 3.17f)) / blade.Height);
 
     private VegetationBladeSection2D Section(Blade blade, float from, float to, VegetationWind2D wind)
     {

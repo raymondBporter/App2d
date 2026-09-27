@@ -27,7 +27,7 @@ internal sealed partial class ProofRenders
     {
         var catalog = ProofCatalog();
         var model = catalog.Resolve("person");
-        // The lab draws the cartoon sword under review; the game's sword is unchanged until it is approved.
+        // The lab and game share the approved cartoon sword.
         var props = PlayerMoves.PlayerMoves.Props().ToDictionary(p => p.Id);
         var todaySword = props[PersonLoadout.Sword];
         props[PersonLoadout.Sword] = PlayerMoves.PlayerMoves.CartoonSwordArt();

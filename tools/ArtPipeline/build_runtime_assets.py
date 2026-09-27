@@ -42,6 +42,18 @@ def check_downloaded_sources(assets: Path) -> None:
 def write_manifest(content_root: Path) -> None:
     required = (
         "audio/sfx/player-jump.wav",
+        "audio/music/soundtrack.json",
+        "audio/music/crown-of-embers/manifest.json",
+        "audio/music/crown-of-embers/world.ogg",
+        "audio/music/crown-of-embers/theme.ogg",
+        "audio/music/crown-of-embers/motion.ogg",
+        "audio/music/crown-of-embers/battle.ogg",
+        "audio/music/copper-circuit/manifest.json",
+        "audio/music/copper-circuit/world.ogg",
+        "audio/music/copper-circuit/theme.ogg",
+        "audio/music/copper-circuit/rock.ogg",
+        "audio/music/copper-circuit/overdrive.ogg",
+        "levels/cavern/zones.json",
         "characters/player-geometry.json",
         "characters/player-sword/character.json",
         "characters/player-gun/character.json",

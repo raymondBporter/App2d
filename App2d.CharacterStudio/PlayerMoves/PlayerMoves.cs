@@ -557,7 +557,7 @@ internal static partial class PlayerMoves
 
     // ---- Props --------------------------------------------------------------------------------------------------
 
-    public static PropAsset SwordProp() => SwordArt();
+    public static PropAsset SwordProp() => CartoonSwordArt();
     public static PropAsset SheathProp() => SheathArt();
     public static PropAsset PistolProp() => PistolArt();
 }

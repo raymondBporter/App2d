@@ -1,8 +1,11 @@
 using App2d.Core.Characters;
+using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Player;
+using App2d.Gameplay.Combat;
+using App2d.Gameplay.World.Presentation;
 using App2d.Rendering;
 using App2d.Rendering.Characters;
 using System.Numerics;
@@ -21,6 +24,8 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     private readonly WorldObject2D _visual;
     private readonly AuthoredCharacterShader _shader;
     private readonly ContactHold _hold = new();
+    private readonly PersonFrameHistory2D _history = new();
+    private readonly PlayerContactHold2D _hitstop = new(CombatHitstop2D.Curve);
     private readonly PersonFace2D _face = new();
     private readonly BladeSwoosh _swoosh = new();
     private readonly Dictionary<MotionClip, bool> _backhands = [];
@@ -30,6 +35,8 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     private PersonState2D _state;
     private double _clock;
     private string _drawnKey = "";
+    private bool _enabled = true;
+    public bool Enabled { get => _enabled; set { _enabled = value; _visual.IsVisible = value && Visible(); } }
 
     public AuthoredPersonPresentation2D(Scene2D scene, PersonMoves moves, TraversalMetrics2D traversal)
     {
@@ -49,28 +56,37 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     public static float RestHeight(ResolvedModel model) => model.DrawnHeight();
 
     public void Equip(EquipmentKind2D equipment) => Director.Equipment = equipment;
-    public void PlayHit() { Director.PlayHit(); _face.Hit(); }
+    public void PresentContact(CombatDamage2D damage, EntityId2D playerId, long tick) => _hitstop.Present(damage, playerId, tick / 120.0);
+    public void ResetContact() { _hitstop.Reset(); _history.Clear(); }
+    public void PlayHit() { _hitstop.Reset(); Director.PlayHit(); _face.Hit(); }
     public void PlayLanding() => _face.Land();
     public void PlayCelebrate() { Director.PlayCelebrate(); _face.Celebrate(); }
-    public void PlayDeath() => Director.PlayDeath();
-    public void Reset() { Director.Reset(); _hold.Clear(); _face.Reset(); _swoosh.Reset(); _drawnKey = ""; }
+    public void PlayDeath() { _hitstop.Reset(); Director.PlayDeath(); }
+    public void Reset() { ResetContact(); Director.Reset(); _hold.Clear(); _face.Reset(); _swoosh.Reset(); _drawnKey = ""; }
 
-    public void ApplyState(PersonState2D state, long tick, float moveX, bool shield, bool melee)
+    public void ApplyState(PersonState2D state, long tick, float moveX, bool shield, bool melee, PersonFrame? animationSample = null)
     {
         _state = state; _clock = tick / 120.0;
         Director.ApplyState(state, Feet(state) / _pixelsPerUnit, _clock);
-        Update();
+        Update(animationSample);
     }
 
     public void Advance(float dt) { _clock += dt; Director.Advance(dt); _face.Update(_state, dt); Update(); }
 
     private Vector2 Feet(PersonState2D state) => state.Position - new Vector2(0, _halfHeight);
 
-    private void Update()
+    private bool Visible() => _state.InvulnerabilitySeconds <= 0 || ((int)(_clock * 20) & 1) == 0 || !_state.IsAlive;
+
+    private void Update(PersonFrame? animationSample = null)
     {
         var s = _state;
         _face.Update(s, 0);
-        var frame = Director.Frame();
+        var frame = animationSample ?? Director.Frame();
+        if (animationSample is null)
+        {
+            _history.Record(_clock, frame);
+            frame = _hitstop.Sample(_history, _clock, frame);
+        }
         // A new clip starts with fresh contacts; they are captured again from its first pose.
         if (frame.Key != _drawnKey) { _drawnKey = frame.Key; _hold.Clear(); }
         var facing = s.Facing < 0 ? -1 : 1;
@@ -78,11 +94,11 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         Pose = pose;
         var model = Director.Moves.Model; var sockets = model.Base.Sockets;
         _shader.Pose = pose.Local; _shader.Facing = facing; _shader.Face = _face.Pose;
-        var seconds = (float)Math.Min(frame.Seconds, frame.Clip.Duration);
-        _shader.Props = [.. PersonLoadout.Worn(frame.Clip, seconds, frame.Gear).Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
+        var seconds = (float)Math.Min(frame.PropSeconds, frame.PropClip.Duration);
+        _shader.Props = [.. PersonLoadout.Worn(frame.PropClip, seconds, frame.Gear).Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
         RecordSwoosh(frame, seconds, pose.Local);
         _visual.Transform.Position = Feet(s);
-        _visual.IsVisible = s.InvulnerabilitySeconds <= 0 || ((int)(_clock * 20) & 1) == 0 || !s.IsAlive;
+        _visual.IsVisible = _enabled && Visible();
     }
 
     /// <summary>
@@ -92,12 +108,13 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
     private void RecordSwoosh(PersonFrame frame, float seconds, EvaluatedPose pose)
     {
         var moves = Director.Moves;
-        if (frame.Gear != PersonGear.Sword || !PersonLoadout.SwordInHand(frame.Clip, seconds)) { _swoosh.Record((float)_clock, default, default, false); return; }
+        var clip = frame.PropClip;
+        if (frame.Gear != PersonGear.Sword || !PersonLoadout.SwordInHand(clip, seconds)) { _swoosh.Record((float)_clock, default, default, false); return; }
         var sword = moves.Props[PersonLoadout.Sword]; var socket = moves.Model.Base.Sockets.First(k => k.Id == PersonLoadout.SwordSocket);
-        if (!_backhands.TryGetValue(frame.Clip, out var backhand)) _backhands[frame.Clip] = backhand = PersonLoadout.Backhand(moves.Model, frame.Clip, sword, socket);
+        if (!_backhands.TryGetValue(clip, out var backhand)) _backhands[clip] = backhand = PersonLoadout.Backhand(moves.Model, clip, sword, socket);
         _swoosh.Sweep = backhand ? 1 : -1; _swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary;
         var (guard, tip) = PersonLoadout.Blade(pose, sword, socket);
-        _swoosh.Record((float)_clock, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(frame.Clip, seconds));
+        _swoosh.Record((float)_clock, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(clip, seconds));
     }
 
     public void Dispose() => _scene.Remove(_visual);

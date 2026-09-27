@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using System.Numerics;
 
 namespace App2d.Gameplay.Combat;
 
@@ -6,4 +7,5 @@ namespace App2d.Gameplay.Combat;
 public interface IAuthoredHurt2D
 {
     bool OverlapsHurt(Bounds2D hit);
+    Vector2? HurtContact(Bounds2D hit);
 }

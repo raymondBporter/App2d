@@ -13,6 +13,7 @@ public sealed partial class SideScrollerLevel2D
     {
         if (!strike.IsFinite || strike.Size.X < 0f || strike.Size.Y < 0f)
             ArgGuard.ThrowOutOfRange(strike, "Grass cutting bounds must be finite and ordered.");
+        var streamer = RequireEnvironment().Streamer;
         var firstX = Math.Clamp((int)MathF.Floor((strike.Min.X - TileMap.Origin.X) / _tileSize), 0, TileMap.Width - 1);
         var lastX = Math.Clamp((int)MathF.Floor((strike.Max.X - TileMap.Origin.X) / _tileSize), 0, TileMap.Width - 1);
         var firstY = Math.Clamp((int)MathF.Floor((strike.Min.Y - TileMap.Origin.Y) / _tileSize -
@@ -23,10 +24,20 @@ public sealed partial class SideScrollerLevel2D
         {
             var cell = new GrassCell2D(x, y);
             var grass = VegetationPlacement2D.GrassBounds(TileMap, cell);
-            if (!_cutGrass.Contains(cell) && VegetationPlacement2D.HasGrass(TileMap, x, y) &&
+            if (streamer.IsChunkActive(new(x / TileMap.ChunkSize, y / TileMap.ChunkSize)) &&
+                !_cutGrass.Contains(cell) && VegetationPlacement2D.HasGrass(TileMap, x, y) &&
                 strike.Left < grass.Right && strike.Right > grass.Left &&
                 strike.Bottom < grass.Top && strike.Top > grass.Bottom)
                 _cutGrass = _cutGrass.Add(cell);
         }
+    }
+
+    private void ForgetUnloadedGrass(SideScrollerChunkStreamer2D streamer)
+    {
+        // Iterate the old immutable snapshot while replacing only the live set.
+        // No timers, per-blade state, or growing history of visited terrain.
+        foreach (var cell in _cutGrass)
+            if (!streamer.IsChunkActive(new(cell.X / TileMap.ChunkSize, cell.Y / TileMap.ChunkSize)))
+                _cutGrass = _cutGrass.Remove(cell);
     }
 }

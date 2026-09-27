@@ -11,6 +11,20 @@ namespace App2d.Game.Presentation.Tests.World;
 public sealed class GrassCuttingTests
 {
     [Fact]
+    public void RoughCutsVaryBetweenBladesAndStayStableAcrossWindAndRecreation()
+    {
+        var patch = Patch(320f);
+        var tips = patch.CreateClippings(12f, Wind(), 0.45f).ToArray();
+        var heights = tips.Select(t => t.WorldBounds(t.ReleasePosition, 0f).Bottom).ToArray();
+        Assert.Equal(patch.BladeCount, tips.Length);
+        Assert.All(heights, height => Assert.InRange(height, 7f + 12f * 0.55f, 7f + 12f * 1.45f));
+        Assert.True(heights.Max() - heights.Min() > 5f);
+        Assert.Equal(heights, Patch(320f).CreateClippings(12f, Wind(20f), 0.45f)
+            .Select(t => t.WorldBounds(t.ReleasePosition, 0f).Bottom).ToArray());
+        Assert.All(tips, tip => Assert.Equal(37f, tip.WorldBounds(tip.ReleasePosition, 0f).Top, 4));
+    }
+
+    [Fact]
     public void SeveredTopsStartExactlyAtCutHeightAndKeepTheirOriginalLength()
     {
         var patch = Patch();
@@ -101,9 +115,12 @@ public sealed class GrassCuttingTests
         attached.SetTerrain([terrain]);
         attached.ApplyCuts([new(4, 1)]);
         Assert.Equal(0, attached.ClippingCount); // Snapshot attachment never replays old cuts.
+        view.ApplyCuts([]); // Unloading forgets the old cut.
+        view.ApplyCuts([new(4, 1)]);
+        Assert.True(view.ClippingCount > 0); // Cutting the regrown patch emits a fresh burst.
     }
 
-    private static VegetationPatch2D Patch() => new(0f, 32f, 7f,
+    private static VegetationPatch2D Patch(float endX = 32f) => new(0f, endX, 7f,
         new(30f, 30f, 2f, 3f, 6f, 5f, Color.DarkGreen, Color.LightGreen, 0f, Color.Pink), 107);
     private static VegetationWind2D Wind(float strength = 5f) => new(0f, strength, 1.15f, 0.027f, 0.12f);
     private static GrassClipping2D Clipping() =>

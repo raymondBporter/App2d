@@ -25,6 +25,8 @@ public sealed record LevelContent2D(
     Vector2? GoalPosition)
 {
     public static LevelContent2D Empty { get; } = new(0, [], [], [], null);
+    /// <summary>Whole-level regions, available even when their terrain chunks are unloaded.</summary>
+    public ImmutableArray<WorldZone2D> Zones { get; init; } = [];
 }
 
 /// <summary>Per-tick dynamic world observation, not a physics restore point.</summary>
@@ -32,7 +34,7 @@ public sealed record WorldState2D(
     ImmutableArray<MovingPlatformState2D> MovingPlatforms,
     ImmutableArray<CheckpointState2D> Checkpoints)
 {
-    /// <summary>Session-lifetime cuts, retained when chunks unload and included in attach snapshots.</summary>
+    /// <summary>Cuts in active simulation chunks; forgotten on unload and included in attach snapshots.</summary>
     public ImmutableHashSet<GrassCell2D> CutGrass { get; init; } = [];
     public static WorldState2D Empty { get; } = new([], []);
 }

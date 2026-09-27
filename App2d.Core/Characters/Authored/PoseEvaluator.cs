@@ -19,6 +19,8 @@ public readonly record struct PoseInput(string? Expression = null)
     public Func<string, Vector3, Vector3>? Contact { get; init; }
     /// <summary>A masked override: its clip owns every channel whose target is in the mask. The base clip keeps the rest.</summary>
     public PoseLayer? Overlay { get; init; }
+    /// <summary>Reverse authored horizontal offsets and rotation, without turning the actor's rest pose.</summary>
+    public bool ReverseHorizontalMotion { get; init; }
 }
 
 /// <summary>
@@ -86,7 +88,7 @@ public static class PoseEvaluator
             if (track is null) return default;
             var (value, _) = Interpolate(track.Keys, at); var scale = track.Scale ?? defaultScale;
             var ratio = scale == CharacterModel.Unit ? 1 : model.Measure(scale) / source.Reference[scale];
-            return new(value.X * ratio, value.Y * ratio, value.Z);
+            return new(value.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), value.Y * ratio, value.Z);
         }
         Vector3 Delta(string kind, string target, string defaultScale) => !Masked(target) ? LayerDelta(false, kind, target, defaultScale)
             : weight >= 1 ? LayerDelta(true, kind, target, defaultScale)
@@ -94,7 +96,8 @@ public static class PoseEvaluator
         int LayerBend(bool fromOverlay, ModelChain chain) => Read(fromOverlay, MotionClip.TargetKind, chain.Id) is { Track: { } track, Time: var at }
             && track.Keys.LastOrDefault(k => k.Bend is not null && k.Time <= at) is { Bend: { } bend } ? bend : chain.Bend;
         int Bend(ModelChain chain) => LayerBend(Masked(chain.Id) && weight >= .5f, chain);
-        float LayerAngle(bool fromOverlay, string target) => Read(fromOverlay, MotionClip.RotateKind, target) is { Track: { } track, Time: var at } ? Interpolate(track.Keys, at).Angle : 0;
+        float LayerAngle(bool fromOverlay, string target) => Read(fromOverlay, MotionClip.RotateKind, target) is { Track: { } track, Time: var at }
+            ? Interpolate(track.Keys, at).Angle * (input.ReverseHorizontalMotion ? -1 : 1) : 0;
         float Angle(string target) => !Masked(target) ? LayerAngle(false, target) : LayerAngle(false, target) + (LayerAngle(true, target) - LayerAngle(false, target)) * weight;
         var chainTargets = new Dictionary<string, Vector3>(StringComparer.Ordinal);
 
@@ -124,7 +127,7 @@ public static class PoseEvaluator
             if (masked && weight >= 1) continue;
             if (!(time >= contact.Start && (time < contact.Finish || time == clip.Duration && contact.Finish == clip.Duration))) continue;
             var chain = model.Chains[contact.Chain]; var ratio = Ratio(chain.Scale);
-            var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio, contact.Target.Y * ratio, contact.Target.Z);
+            var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), contact.Target.Y * ratio, contact.Target.Z);
             var index = pose.Chains.FindIndex(c => c.Chain == chain.Id);
             // A masked chain fading in leaves its base contact gradually; it is neither held nor reported as planted.
             if (masked) { pose.Chains[index] = Solve(model, pose, chain, Vector3.Lerp(target, chainTargets[chain.Id], weight), Bend(chain)); continue; }
@@ -136,7 +139,8 @@ public static class PoseEvaluator
         foreach (var socket in model.Base.Sockets)
         {
             Vector3 ReadOrientation(bool fromOverlay) => Read(fromOverlay, MotionClip.OrientKind, socket.Id) is { Track: { } t, Time: var at }
-                ? Interpolate(t.Keys, at).Value : Vector3.Zero;
+                ? ReverseOrientation(Interpolate(t.Keys, at).Value) : Vector3.Zero;
+            Vector3 ReverseOrientation(Vector3 value) => input.ReverseHorizontalMotion ? new(value.X, -value.Y, -value.Z) : value;
             // Socket channels follow ownership of their frame, including an IK chain that owns their attachment end.
             var owned = Masked(socket.Id) || Masked(socket.Frame ?? socket.Control) || Masked(socket.Control)
                 || model.Base.Chains.Any(c => c.End == socket.Control && Masked(c.Id));

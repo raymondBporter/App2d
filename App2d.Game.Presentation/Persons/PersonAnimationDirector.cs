@@ -49,7 +49,11 @@ public sealed class PersonMoves
 /// false when the gait could not keep pace with the body (see <see cref="PersonAnimationDirector.MaxCadence"/>); contacts
 /// should then follow the clip rather than hold world anchors that would stretch the legs.
 /// </summary>
-public readonly record struct PersonFrame(string Key, MotionClip Clip, double Seconds, bool Repeat, PoseLayer? Overlay, PersonGear Gear, bool Planted = true);
+public readonly record struct PersonFrame(string Key, MotionClip Clip, double Seconds, bool Repeat, PoseLayer? Overlay, PersonGear Gear, bool Planted = true)
+{
+    public MotionClip PropClip => Overlay?.Clip ?? Clip;
+    public double PropSeconds => Overlay?.Seconds ?? Seconds;
+}
 
 /// <summary>
 /// Chooses the player's authored animation from observed traversal/controller state, the way an animator would sequence
@@ -78,6 +82,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
     private string _key = "", _swing = "", _recovery = PersonMoves.Sheathe;
     private string? _swingAction;
     private float _swingElapsed;
+    private double _recoveryStart;
 
     public PersonMoves Moves => moves;
     public EquipmentKind2D Equipment { get; set; }
@@ -131,7 +136,13 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         double Scaled(string id) => Math.Clamp((s.Action.ElapsedSeconds + _sinceState) / s.Action.DurationSeconds, 0, 1) * moves[id].Duration;
 
         var melee = s.Action.IsActive && s.Action.Kind is PlayerAttackKind2D.Melee or PlayerAttackKind2D.Downward or PlayerAttackKind2D.Punch or PlayerAttackKind2D.Kick;
-        if (_meleeActive && !melee) _sheathePending = Equipment == EquipmentKind2D.Sword;
+        if (_meleeActive && !melee)
+        {
+            _sheathePending = Equipment == EquipmentKind2D.Sword;
+            _recoveryStart = _clock;
+        }
+        if (_sheathePending && (Equipment != EquipmentKind2D.Sword || _clock - _recoveryStart >= moves[_recovery].Duration))
+            _sheathePending = false;
         // Gameplay names the hero action each swing plays (the attack, or the combo swing it chained to); a new one starts
         // when the action changes or its time restarts. What follows it is that action's recovery clip.
         if (melee && (!_meleeActive || s.Action.Swing != _swingAction || s.Action.ElapsedSeconds < _swingElapsed))
@@ -172,7 +183,8 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         }
 
         if (frame.Key != _key) { _key = frame.Key; _keyStart = _clock; _cycle = 0; _outpaced = false; }
-        if (_key == _recovery && _clock - _keyStart >= moves[_recovery].Duration) _sheathePending = false;
+        // Reactions/traversal that require both arms cancel recovery rather than replaying it later.
+        if (_sheathePending && frame.PropClip.Id != _recovery) _sheathePending = false;
         return frame;
     }
 
@@ -184,6 +196,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         PersonFrame Play(string id, double seconds, PoseLayer? overlay = null) => new(id, moves[id], seconds, moves[id].Loop, overlay, gear);
         double Clock(string id) => id == _key ? _clock - _keyStart : 0;
         PersonFrame Gait(string id, PoseLayer? overlay = null) => Play(id, id == _key ? _cycle : 0, overlay) with { Planted = id != _key || !_outpaced };
+        var recovery = _sheathePending ? new PoseLayer(moves[_recovery], _clock - _recoveryStart, PersonLoadout.SwordUpperBody) : null;
 
         var speed = MathF.Abs(s.LinearVelocity.X) / pixelsPerUnit;
         if (s.IsClimbingLadder)
@@ -196,22 +209,20 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         if (s.IsWallGripping) { _sheathePending = false; return Play(PersonMoves.WallGrip, Clock(PersonMoves.WallGrip)); }
         if (!s.IsGrounded)
         {
-            _sheathePending = false;
-            return s.LinearVelocity.Y > 0 ? Play(PersonMoves.Jump, _clock - _airStart, aim) : Play(PersonMoves.Fall, Clock(PersonMoves.Fall), aim);
+            return s.LinearVelocity.Y > 0 ? Play(PersonMoves.Jump, _clock - _airStart, recovery ?? aim) : Play(PersonMoves.Fall, Clock(PersonMoves.Fall), recovery ?? aim);
         }
         if (speed > WalkSpeedThreshold)
         {
-            _sheathePending = false;
             var run = speed > RunThreshold;
-            return Gait(run ? PersonMoves.Run : PersonMoves.Walk, aim);
+            return Gait(run ? PersonMoves.Run : PersonMoves.Walk, recovery ?? aim);
         }
+        if (_sheathePending) return Play(_recovery, _clock - _recoveryStart);
         if (_clock < _landUntil) return Play(PersonMoves.Land, _clock - (_landUntil - moves[PersonMoves.Land].Duration), aim);
         if (s.BalanceDirection != 0)
         {
             var edge = s.BalanceDirection == Math.Sign(s.Facing) ? PersonMoves.BalanceForward : PersonMoves.BalanceBackward;
             return Play(edge, Clock(edge));
         }
-        if (_sheathePending) return Play(_recovery, Clock(_recovery));
         if (gun) return Play(PersonMoves.GunAim, Clock(PersonMoves.GunAim));
         return Play(PersonMoves.Idle, Clock(PersonMoves.Idle));
     }

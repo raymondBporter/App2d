@@ -1,0 +1,54 @@
+{
+  "title": "Copper Circuit",
+  "revision": "03 \u2014 Lead guitar & drum fireworks",
+  "bpm": 144,
+  "beats_per_bar": 4,
+  "bars": 32,
+  "sample_rate": 44100,
+  "channels": 2,
+  "loop_start_frame": 0,
+  "loop_end_frame": 2352000,
+  "stems": [
+    {
+      "id": "world",
+      "file": "world.ogg"
+    },
+    {
+      "id": "theme",
+      "file": "theme.ogg"
+    },
+    {
+      "id": "rock",
+      "file": "rock.ogg"
+    },
+    {
+      "id": "overdrive",
+      "file": "overdrive.ogg"
+    }
+  ],
+  "moods": {
+    "explore": [
+      1,
+      0.82,
+      0,
+      0
+    ],
+    "drive": [
+      0.92,
+      1,
+      0.68,
+      0
+    ],
+    "combat": [
+      0.86,
+      0.95,
+      1,
+      0.85
+    ]
+  },
+  "transition": {
+    "quantize_beats": 4,
+    "fade_beats": 4
+  },
+  "playback": "All stems share a sample cursor. Never independently restart a muted stem."
+}

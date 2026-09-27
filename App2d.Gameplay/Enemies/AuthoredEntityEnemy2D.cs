@@ -184,11 +184,24 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return !player.IsAlive;
     }
 
-    public bool OverlapsHurt(Bounds2D hit)
+    public bool OverlapsHurt(Bounds2D hit) => HurtContact(hit) is not null;
+
+    public Vector2? HurtContact(Bounds2D hit)
     {
-        if (!_enabled || !IsAlive) return false;
-        var box = EntityRegion.Box("attack", hit.Center, hit.Size);
-        return EntityCollision.Hurt(Entity, Pose).Any(region => ToWorld(region).Overlaps(box, Vector2.Zero, Vector2.Zero));
+        if (!_enabled || !IsAlive) return null;
+        Vector2? closest = null;
+        var distance = float.PositiveInfinity;
+        // Authored hurt regions are world-aligned boxes around pose controls. Pick an overlap centre,
+        // not the attack box's centre (which can be outside the visible target).
+        foreach (var region in EntityCollision.Hurt(Entity, Pose))
+        {
+            var bounds = Bounds2D.FromPoints([.. region.Points.Select(p => p * Scale)]);
+            if (!bounds.Intersects(hit)) continue;
+            var point = (Vector2.Max(bounds.Min, hit.Min) + Vector2.Min(bounds.Max, hit.Max)) / 2;
+            var d = Vector2.DistanceSquared(point, hit.Center);
+            if (d < distance) { distance = d; closest = point; }
+        }
+        return closest;
     }
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
@@ -206,7 +219,9 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         if (!Health.Damage(damage)) return false;
         _hurt = HurtSeconds;
         // A hit interrupts an attack and staggers; contacts are released and re-captured from the next pose.
-        if (IsAlive) _reaction.Hit(_animator); else _reaction.Die(_animator);
+        if (IsAlive) _reaction.Hit(_animator, Math.Sign(knockback.X)); else _reaction.Die(_animator, Math.Sign(knockback.X));
+        // Publish the reaction pose on the damage tick; collision and rendering continue to share it.
+        Evaluate(0, false);
         Body.LinearVelocity = IsAlive ? knockback / Entity.Asset.Mass : Vector2.Zero;
         if (!IsAlive) { Body.IsCollider = false; Body.MotionType = BodyMotionType2D.Static; }
         return true;

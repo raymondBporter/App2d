@@ -17,6 +17,54 @@ namespace App2d.Gameplay.Tests.Enemies;
 /// <summary>Authored entities in the real game: spawning, the shared final pose, combat and rollback.</summary>
 public sealed class AuthoredEntityEnemyTests
 {
+    [Theory]
+    [InlineData(-1, -1, false)]
+    [InlineData(-1, 1, false)]
+    [InlineData(1, -1, false)]
+    [InlineData(1, 1, false)]
+    [InlineData(-1, -1, true)]
+    [InlineData(1, 1, true)]
+    public void ContactRecoilFollowsTheHitWithoutTurningAndRestoresExactly(int facing, int direction, bool kill)
+    {
+        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var enemy = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
+        enemy.SetSimulationEnabled(true);
+        enemy.Update(0, new(facing * 400, 42)); enemy.SyncAfterPhysics();
+        var before = enemy.Pose.World("hips").X;
+        Assert.True(enemy.TakeDamage(kill ? enemy.Health.Current : 1, new(direction * 200, 0)));
+        Assert.Equal(facing, enemy.Pose.Facing);
+        Assert.True((enemy.Pose.World("hips").X - before) * direction > 0, "recoil is visible on the damage tick, in the incoming direction");
+        var snapshot = enemy.CaptureSimulation();
+        var immediate = enemy.Pose.Local.Points.Values.ToArray();
+        enemy.Update(1f / 60, new(400, 42)); enemy.SyncAfterPhysics();
+        var next = enemy.Pose.Local.Points.Values.ToArray();
+        enemy.RestoreSimulation(snapshot);
+        Assert.Equal(immediate, enemy.Pose.Local.Points.Values.ToArray());
+        enemy.Update(1f / 60, new(400, 42)); enemy.SyncAfterPhysics();
+        Assert.Equal(next, enemy.Pose.Local.Points.Values.ToArray());
+    }
+
+    [Fact]
+    public void ConfirmedContactUsesTheHeadOverlapBeforeTheReactionChangesThePose()
+    {
+        using var game = Game();
+        var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
+        var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
+        var bounds = App2d.Core.Geometry.Bounds2D.FromPoints([.. head.Points.Select(p => p * AuthoredWorld.PixelsPerUnit)]);
+        var hit = new App2d.Core.SpatialObject2D(App2d.Core.Geometry.AxisAlignedRectangle2D.FromSize(new(4)));
+        hit.Transform.Position = bounds.Center;
+        var facts = new List<CombatDamage2D>(); game.Combat.DamageResolved += facts.Add;
+        Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy,
+            1, _ => new(200, 100), impactKind: CombatImpactKind2D.Sword, impactDirection: Vector2.UnitX));
+        var contact = Assert.Single(facts).Contact!.Value;
+        Assert.Equal(bounds.Center, contact.Position);
+        Assert.Equal(Vector2.UnitX, contact.Direction);
+        Assert.Equal(game.Player.Id, contact.SourceId);
+        Assert.Equal(42, contact.AttackId);
+        Assert.False(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
+        Assert.Single(facts);
+    }
+
     private static readonly string CharactersRoot = Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters"));
     private static readonly AuthoredCatalog Authored = AuthoredCatalog.Load(Path.Combine(CharactersRoot, "authored"));
     private static readonly string[] expected = ["spear-guard", "maul-brute", "stalker-pest"];

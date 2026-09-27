@@ -92,12 +92,16 @@ internal static class SwingLab
         /// <summary>Continues side keys from a blade angle keyed by other means, so the first one turns the short way from it.</summary>
         public Swing SeedBlade(float angle) { _lastBlade = angle; return this; }
 
+        public float ContinueBlade(float angle)
+        {
+            if (!float.IsNaN(_lastBlade)) angle = _lastBlade + MathF.IEEERemainder(angle - _lastBlade, MathF.Tau);
+            return _lastBlade = angle;
+        }
+
         public Swing SidePose(float time, Side p, string ease = ClipEase.Linear)
         {
             var arm = Side.Direction(p.Arm, p.ArmDip) * _arm; var blade = Side.Direction(p.Blade, p.BladeDip);
-            var angle = MathF.Atan2(blade.Y, blade.X);
-            if (!float.IsNaN(_lastBlade)) angle = _lastBlade + MathF.IEEERemainder(angle - _lastBlade, MathF.Tau);
-            _lastBlade = angle;
+            var angle = ContinueBlade(MathF.Atan2(blade.Y, blade.X));
             var tilt = MathF.Asin(Math.Clamp(-blade.Z, -1, 1)) * 180 / MathF.PI;
             Builder.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(Builder.Model, p.Yaw).RightHand(arm.X, arm.Y).LeftHand(p.OffX, p.OffY).Blade(angle), ease);
             _orient.Add((time, p.Twist, tilt)); return this;
@@ -251,13 +255,18 @@ internal static class SwingLab
         var (hilt, sheathed) = PlayerMoves.Hilt(-.01f, -.04f, .02f);
         var t = settled + HoldFor;
         held(t);
-        s.Builder.Key(t + .08f, k => k.Hips(.01f, -.05f).Chest(-.02f).Head(.06f).Shoulders(s.Builder.Model, 70).RightHandAt(.14f, 2f).LeftHand(0, -.58f).Blade(1.6f), ClipEase.Linear)
-            .Key(t + .15f, k => k.Hips(-.01f, -.04f).Chest(.04f).Head(.04f).Shoulders(s.Builder.Model, 90).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(3.5f), ClipEase.Linear)
-            .Key(t + .22f, k => k.Hips(-.01f, -.04f).Chest(.02f).Head(.02f).Shoulders(s.Builder.Model, 80).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
+        // Side cuts unwrap their angles across revolutions. Keep the return on that same branch;
+        // restarting at +1.6 would spin an extra full turn from the held angle near -2*pi.
+        var raised = s.ContinueBlade(1.6f);
+        var over = s.ContinueBlade(3.5f);
+        var home = s.ContinueBlade(sheathed);
+        s.Builder.Key(t + .08f, k => k.Hips(.01f, -.05f).Chest(-.02f).Head(.06f).Shoulders(s.Builder.Model, 70).RightHandAt(.14f, 2f).LeftHand(0, -.58f).Blade(raised), ClipEase.Linear)
+            .Key(t + .15f, k => k.Hips(-.01f, -.04f).Chest(.04f).Head(.04f).Shoulders(s.Builder.Model, 90).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(over), ClipEase.Linear)
+            .Key(t + .22f, k => k.Hips(-.01f, -.04f).Chest(.02f).Head(.02f).Shoulders(s.Builder.Model, 80).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(home))
             .Marker(PersonLoadout.SheatheMarker, t + .22f);
         s.Tilt(t + .08f, 0).Tilt(t + .15f, 0).Tilt(t + .22f, 0);
-        Idle(s, t + .3f, sheathed + MathF.Tau);
-        Idle(s, t + .3f + Tail, sheathed + MathF.Tau);
+        Idle(s, t + .3f, home);
+        Idle(s, t + .3f + Tail, home);
         return t + .3f + Tail;
     }
 

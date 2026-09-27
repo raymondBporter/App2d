@@ -28,14 +28,15 @@ internal static partial class PlayerMoves
     /// <summary>
     /// A cartoon sword after the RGS stick-figure art: a broad blade about six times as long as it is wide with a chisel
     /// tip, a thin guard, and a grip short enough to disappear in the fist. Larger than <see cref="SwordArt"/> so the blade,
-    /// not the hilt, is what reads at game size. Swing lab only until approved.
+    /// not the hilt, is what reads at game size. Approved for the player's runtime sword.
     /// </summary>
     internal static PropAsset CartoonSwordArt() => new()
     {
         Id = Sword, Name = "Sword", Tip = new(1.02f, .03f), LineWidth = .02f,
+        // A narrow, round-ended stroke keeps the grip as simple as the character's hand.
+        Shapes = [new() { Points = [new(-.055f, 0), new(.025f, 0)], Width = .006f, Fill = Leather }],
         Solids =
         [
-            Block(Leather, -.07f, .035f, -.028f, .028f, .045f, .008f),
             Block(DarkSteel, .035f, .065f, -.11f, .11f, .06f, .01f),
             Plate(Steel, .03f, new(.065f, -.075f), new(.88f, -.075f), new(1.02f, .03f), new(.96f, .075f), new(.065f, .075f)),
         ],

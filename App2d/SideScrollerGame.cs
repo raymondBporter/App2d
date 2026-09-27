@@ -10,6 +10,8 @@ using App2d.Rendering;
 using App2d.Things;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
+using App2d.Audio;
+using App2d.Diagnostics;
 
 namespace App2d;
 
@@ -23,6 +25,9 @@ public sealed class SideScrollerGame : Game2D
     private readonly SideScrollerSession2D _session;
     private readonly SideScrollerClient2D _client;
     private readonly SoundEffectBank2D _sounds;
+    private readonly MusicPlayer2D _music;
+    private readonly WorldMusicDirector2D _musicDirector;
+    private bool _showZones;
     private readonly TileEditor2D _editor;
     private readonly PlayerSaveStore2D _saveStore;
     private readonly ViewportTerrainSource2D _terrainSource;
@@ -56,6 +61,7 @@ public sealed class SideScrollerGame : Game2D
         {
             PlayerMaximumHealth = hero.Asset.Health,
             AuthoredCharacters = _authored,
+            Zones = loadedLevel.Zones,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
         });
         _session = _simulation.Session;
@@ -92,6 +98,22 @@ public sealed class SideScrollerGame : Game2D
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, Textures, _sounds, Traversal, Gameplay.Persons.PersonMoves.From(_authored));
+        var soundtrack = WorldSoundtrack2D.Load(Path.Combine(AssetPaths.Root, "audio", "music"), loadedLevel.Zones);
+        _music = new MusicPlayer2D(soundtrack.Cues);
+        _musicDirector = new(soundtrack, _music.Select);
+        _musicDirector.Update(snapshot.Content, startPosition, 0f);
+        DeveloperConsole.RegisterVariable("music_volume", () => _music.Volume, value => _music.Volume = value,
+            "Music volume from 0 to 1; default 0.45. Independent of sound effects.");
+        DeveloperConsole.RegisterVariable("music_mood", () => _musicDirector.MoodOverride, value => _musicDirector.MoodOverride = value,
+            "auto follows the zone; explore, drive or combat auditions a mood.");
+        DeveloperConsole.RegisterVariable("music_piece", () => _musicDirector.PieceOverride, value => _musicDirector.PieceOverride = value,
+            "auto follows zones; crown-of-embers or copper-circuit auditions a piece.");
+        DeveloperConsole.RegisterVariable("draw_zones", () => _showZones, value => _showZones = value,
+            "Draw authored zone boundaries. Use music_status to see the zone at the player.");
+        DeveloperConsole.RegisterCommand("music_status", "Show the current zone, music selection and available cues.", _ =>
+            ConsoleCommandResult.From($"Zone: {_musicDirector.CurrentZone?.Name ?? "outside zones"} ({_musicDirector.CurrentZone?.Id ?? "default"})",
+                $"Music: {_musicDirector.CurrentSelection?.Piece} / {_musicDirector.CurrentSelection?.Mood}; volume {_music.Volume:0.00}",
+                $"Cues: {string.Join(", ", soundtrack.Cues.Keys)}"));
         _client.CheckpointActivated += checkpoint =>
             _client.ShowSaveResult(_saveStore.TrySave(new PlayerSave2D(checkpoint.CheckpointId, checkpoint.HitPoints)), checkpoint.Position);
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _client.ShowTraversalDebug,
@@ -136,6 +158,7 @@ public sealed class SideScrollerGame : Game2D
 
     public override void AdvancePresentation(FrameTime time)
     {
+        _musicDirector.Update(_client.Content, _client.State.Person.Position, time.DeltaSeconds);
         _client.UpdateFeedback(time.DeltaSeconds);
         if (!_editor.IsActive) _client.AdvancePresentation(time.DeltaSeconds);
         _client.WorldSounds.Update();
@@ -154,6 +177,14 @@ public sealed class SideScrollerGame : Game2D
         _client.DrawGrass(renderer);
         _client.Draw(renderer);
         TileEditorView2D.Draw(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize, Textures);
+        if (_showZones)
+            foreach (var zone in _client.Content.Zones)
+            {
+                var b = zone.Bounds;
+                if (!b.Intersects(Camera.VisibleWorldBounds)) continue;
+                Span<Vector2> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
+                renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? XnaColor.Gold : XnaColor.Cyan, 2f);
+            }
     }
 
     /// <summary>Authored entities that fail to compile are not played; the game refuses to start and names each problem instead.</summary>
@@ -171,6 +202,7 @@ public sealed class SideScrollerGame : Game2D
         _client.Dispose();
         _editor.Dispose();
         _sounds.Dispose();
+        _music.Dispose();
         base.Dispose();
     }
 }
