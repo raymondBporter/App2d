@@ -5,7 +5,7 @@ namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--smoke-editor output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--smoke-editor output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --angelia-gallery [output-directory]]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -22,6 +22,11 @@ internal static class Program
                     {
                         using var editor = new Editor.EditorApp(Path.Combine(FindAssets(), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
                         editor.Run(); return 0;
+                    }
+                case ["--angelia-gallery"] or ["--angelia-gallery", _]:
+                    {
+                        using var gallery = new AngeliaGallery.AngeliaGalleryApp(FindAssets(), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
+                        gallery.Run(); return 0;
                     }
                 case ["--smoke-motion" or "--smoke-entities" or "--review-moves" or "--smoke-weapons" or "--swing-lab", var output]:
                     {
