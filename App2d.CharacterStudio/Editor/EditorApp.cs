@@ -1,3 +1,4 @@
+using App2d.Core.Assets;
 using App2d.Core.Characters.Editing;
 using App2d.Rendering.Characters;
 using Microsoft.Xna.Framework;
@@ -16,7 +17,7 @@ internal sealed class EditorApp : Game
     private readonly GraphicsDeviceManager _graphics;
     private readonly string _authoredRoot;
     private readonly string? _smokePath;
-    private readonly string _settingsPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "App2d", "CharacterStudio", "settings.json");
+    private readonly string _settingsPath = UserDataLocations.ForCurrentUser().CharacterStudioSettings;
     private ImGuiHost _gui = null!;
     private PointCharacterRenderer _renderer = null!;
     private EditorShell _shell = null!;

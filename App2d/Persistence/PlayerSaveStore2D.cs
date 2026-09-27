@@ -1,4 +1,6 @@
 using App2d.Core;
+using App2d.Core.Assets;
+using App2d.Core.IO;
 using System.Security;
 using System.Text.Json;
 
@@ -21,11 +23,7 @@ public sealed class PlayerSaveStore2D
 
     public string Path { get; }
 
-    public static PlayerSaveStore2D CreateDefault()
-    {
-        var localData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return new PlayerSaveStore2D(System.IO.Path.Combine(localData, "App2d", "save.json"));
-    }
+    public static PlayerSaveStore2D CreateDefault() => new(UserDataLocations.ForCurrentUser().PlayerSave);
 
     public PlayerSave2D? TryLoad()
     {
@@ -46,31 +44,14 @@ public sealed class PlayerSaveStore2D
     public bool TrySave(PlayerSave2D save)
     {
         ArgGuard.ThrowIfNull(save);
-        var directory = System.IO.Path.GetDirectoryName(Path)!;
-        var temporaryPath = System.IO.Path.Combine(
-            directory,
-            $".{System.IO.Path.GetFileName(Path)}.{Guid.NewGuid():N}.tmp");
-
         try
         {
-            Directory.CreateDirectory(directory);
-            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(save, JsonOptions));
-            File.Move(temporaryPath, Path, overwrite: true);
+            AtomicFile.WriteAllText(Path, JsonSerializer.Serialize(save, JsonOptions));
             return true;
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
             return false;
-        }
-        finally
-        {
-            try
-            {
-                File.Delete(temporaryPath);
-            }
-            catch (Exception exception) when (IsRecoverableFileException(exception))
-            {
-            }
         }
     }
 

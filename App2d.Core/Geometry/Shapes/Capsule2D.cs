@@ -1,6 +1,7 @@
+using App2d.Core.Geometry.Functions;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Shapes;
 
 public sealed class Capsule2D : IConvexShape2D
 {

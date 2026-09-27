@@ -1,5 +1,7 @@
+using App2d.Audio;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
+using App2d.Diagnostics;
 using App2d.Editor;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Player;
@@ -11,8 +13,6 @@ using App2d.Rendering.Vegetation;
 using App2d.Things;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
-using App2d.Audio;
-using App2d.Diagnostics;
 
 namespace App2d;
 
@@ -42,7 +42,7 @@ public sealed class SideScrollerGame : Game2D
         var height = MathF.Round(hero.Asset.Movement.Height * units / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
             new(hero.Asset.Movement.Width * units, height), hero.Asset.Movement.OffsetX * units);
-        _sounds = new SoundEffectBank2D(Path.Combine(AssetPaths.Root, "audio", "sfx"));
+        _sounds = new SoundEffectBank2D(AssetPaths.Current.SoundEffects);
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
 
@@ -99,7 +99,7 @@ public sealed class SideScrollerGame : Game2D
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, Textures, _sounds, Traversal, Gameplay.Persons.PersonMoves.From(_authored));
-        var soundtrack = WorldSoundtrack2D.Load(AssetPaths.Music, loadedLevel.Zones);
+        var soundtrack = WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones);
         _music = new MusicPlayer2D(soundtrack.Cues);
         _musicDirector = new(soundtrack, _music.Select);
         _musicDirector.Update(snapshot.Content, startPosition, 0f);
@@ -207,7 +207,7 @@ public sealed class SideScrollerGame : Game2D
     /// <summary>Authored entities that fail to compile are not played; the game refuses to start and names each problem instead.</summary>
     private static AuthoredCatalog LoadAuthored()
     {
-        var catalog = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         if (catalog.Errors.Count > 0) throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
         return catalog;
     }

@@ -40,7 +40,6 @@ internal static class SwingLab
         public Arc With(float angle, float wrist, float tilt) => this with { Angle = angle, Wrist = wrist, Tilt = tilt };
     }
 
-
     // Over the top, just clear of the back: arm up and forward, blade trailing back, swung round to point almost at the
     // camera, so it reads short (a side swing seen side on).
     private static readonly Arc Over = new(1.1f, 1.3f, Straight, 0, .01f, -.07f, .08f, .05f, -.46f, 80, 85);
@@ -72,8 +71,7 @@ internal static class SwingLab
         b.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(b.Model, p.Yaw).RightHand(p.Hand.X, p.Hand.Y).LeftHand(p.OffX, p.OffY).Grip(p.Wrist), ease);
 
     /// <summary>The right arm's full length, shoulder to elbow to hand.</summary>
-    private static float ArmLength(ResolvedModel m) =>
-        (Vector3.Distance(m.Rest["right-shoulder"], m.Rest["right-elbow"]) + Vector3.Distance(m.Rest["right-elbow"], m.Rest["right-hand"]));
+    private static float ArmLength(ResolvedModel m) => Vector3.Distance(m.Rest["right-shoulder"], m.Rest["right-elbow"]) + Vector3.Distance(m.Rest["right-elbow"], m.Rest["right-hand"]);
 
     /// <summary>A clip under construction with the blade's depth tilt kept beside it; the tilt becomes orientation keys after the build.</summary>
     private sealed class Swing(ResolvedModel m, string id, string name, float duration)
@@ -148,7 +146,6 @@ internal static class SwingLab
             .Marker("strike", contact).Marker("recover", contact + 5 * F);
         return contact + 6 * F;
     }
-
 
     // The forehand side cut, on a tilted plane: wound back high on the far side, across the front at contact with the arm
     // pointing down and the blade level out of the fist, following through low toward the camera where the blade narrows.
@@ -357,7 +354,7 @@ internal static class SwingLab
         var timeline = new List<(MotionClip, float)> { (game["player-idle"], 0) }; var at = Lead;
         foreach (var clip in chain) { timeline.Add((clip, at)); at += clip.Duration; }
         timeline.Add((game["player-idle"], at));
-        yield return new("in-game", "In the game: the combo", $"The game's clips in a row as a mashed button chains them: side cut, backhand, forehand, backhand, put away. It should play as the combo card does.", chain[0], timeline, at + Tail);
+        yield return new("in-game", "In the game: the combo", "The game's clips in a row as a mashed button chains them: side cut, backhand, forehand, backhand, put away. It should play as the combo card does.", chain[0], timeline, at + Tail);
         Variant Of(string id, string title, string note, Kind kind)
         {
             var clip = Cycle(m, "lab-" + id, kind); return new(id, title, note, clip, [(clip, 0)], clip.Duration);

@@ -60,7 +60,7 @@ internal sealed partial class ProofRenders
             if (shape && ShapesOf(clip).FirstOrDefault(w => seconds >= w.Start - 1e-4f && seconds < w.Finish - 1e-4f).Hull is { } hull)
             {
                 // The player's hit: one shape fixed to the player for the live window, made from everything the blade covers then.
-                var red = new Color(214, 62, 48); var w = 2 / LabPpu;
+                var red = new Color(214, 62, 48); const float w = 2 / LabPpu;
                 for (var k = 0; k < hull.Length; k++) trail.Line(new(hull[k], -2), new(hull[(k + 1) % hull.Length], -2), w, red);
             }
             BuildScenery(scenery, "ground", 0, seconds);
@@ -135,7 +135,7 @@ internal sealed partial class ProofRenders
     /// </summary>
     private static string SwingCheck(ResolvedModel model, SwingLab.Variant variant, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets, List<(float Start, float Finish, Vector2[] Hull)> shapes)
     {
-        var clip = variant.Clip; const int rate = 240; var frame = 1f / LabFps;
+        var clip = variant.Clip; const int rate = 240; const float frame = 1f / LabFps;
         var times = Enumerable.Range(0, (int)(clip.Duration * rate) + 1).Select(i => i / (float)rate).ToArray();
         var tips = times.Select(t => LabBlade(model, clip, t, props, sockets)?.Tip).ToArray();
         var speed = new float[times.Length];
@@ -162,8 +162,8 @@ internal sealed partial class ProofRenders
             .Where(t => PersonLoadout.SwordInHand(clip, t) && t >= swoosh - 1e-4f && t <= lastRecover + 6 * frame).ToArray();
         var grips = gripTimes.Select(t =>
         {
-            var p = PoseEvaluator.Sample(model, clip, t); var blade = LabBlade(model, clip, t, props, sockets)!.Value;
-            var forearm = p.Points["right-hand"] - p.Points["right-elbow"]; var along = blade.Tip - blade.Guard;
+            var p = PoseEvaluator.Sample(model, clip, t); var (Guard, Tip) = LabBlade(model, clip, t, props, sockets)!.Value;
+            var forearm = p.Points["right-hand"] - p.Points["right-elbow"]; var along = Tip - Guard;
             return MathF.Abs(MathF.IEEERemainder(MathF.Atan2(along.Y, along.X) - MathF.Atan2(forearm.Y, forearm.X), MathF.Tau)) * 180 / MathF.PI;
         }).ToArray();
         // All out: the elbow's bend (0 = locked straight) at contact and in the held follow-through.

@@ -1,3 +1,4 @@
+using App2d.Core.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -18,9 +19,5 @@ public static partial class AuthoredAsset
     public static T Parse<T>(string json, string kind) where T : class =>
         JsonSerializer.Deserialize<T>(json, AuthoredJson.Options) ?? throw new InvalidDataException($"Empty {kind} file.");
 
-    public static void Write(string path, string json)
-    {
-        var temporary = path + ".tmp";
-        File.WriteAllText(temporary, json); File.Move(temporary, path, true);
-    }
+    public static void Write(string path, string json) => AtomicFile.WriteAllText(path, json);
 }

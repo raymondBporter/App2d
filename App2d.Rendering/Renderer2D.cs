@@ -1,5 +1,8 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Validation;
 using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;

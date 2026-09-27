@@ -205,7 +205,6 @@ internal static partial class PlayerMoves
         ],
     };
 
-
     /// <summary>The combo's forehand: the backhand's next swing, chaining back to the backhand.</summary>
     private const string Forehand = "forehand";
 

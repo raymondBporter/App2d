@@ -1,5 +1,3 @@
-using App2d.Core;
-
 namespace App2d.Core.Collision.Queries;
 
 public static class RaycastQueries2D

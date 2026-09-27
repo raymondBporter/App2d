@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Functions;
 
 /// <summary>Bounds calculations on raw geometry. These functions do not retain or cache their results.</summary>
 public static class BoundsGeometry2D

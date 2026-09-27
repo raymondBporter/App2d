@@ -25,19 +25,19 @@ internal static class RenderingSmoke2D
         if (facesOnly) { FaceRenderingSmoke2D.Run(device, outputDirectory); return; }
         if (platformOnly)
         {
-            using var textures = new App2d.Rendering.Textures.TextureCache2D(AssetPaths.Root);
+            using var textures = new App2d.Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
             PlatformStudy2D.Run(device, textures, outputDirectory);
             return;
         }
         if (contactOnly || timingOnly)
         {
-            using var textures = new App2d.Rendering.Textures.TextureCache2D(AssetPaths.Root);
+            using var textures = new App2d.Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
             CombatContactStudy2D.Run(device, textures, outputDirectory, timingOnly);
             return;
         }
         if (vegetationOnly)
         {
-            using var textures = new Rendering.Textures.TextureCache2D(AssetPaths.Root);
+            using var textures = new Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
             VegetationRenderingSmoke2D.Run(device, textures, outputDirectory);
             Console.WriteLine("Vegetation rendering smoke checks completed.");
             return;

@@ -31,7 +31,7 @@ public sealed class WeaponOrientationTests
 
     private static (ResolvedModel Model, ModelSocket Socket, MotionClip Clip) Setup()
     {
-        var model = ResolvedModel.From(PersonTemplate.Model()); var socket = model.Base.Sockets.First();
+        var model = ResolvedModel.From(PersonTemplate.Model()); var socket = model.Base.Sockets[0];
         return (model, socket, ClipAuthoring.New(model, "weapon-test", "Weapon test", 1, false));
     }
 
@@ -75,7 +75,7 @@ public sealed class WeaponOrientationTests
         clip = MotionClip.FromJson(clip.ToJson()); clip.Validate(model);
         Assert.Equal(MathF.PI, PoseEvaluator.Sample(model, clip, .5).SocketAngles[socket.Id].X, 5);
         ClipAuthoring.MoveKeys(clip, 1, .75f, [channel]); ClipAuthoring.Retime(clip, 2);
-        Assert.Equal(new[] { 0f, 1.5f }, ClipAuthoring.KeyTimes(clip, [channel]));
+        Assert.Equal([0f, 1.5f], ClipAuthoring.KeyTimes(clip, [channel]));
         ClipAuthoring.DeleteKeys(clip, 1.5f, [channel]); Assert.Single(clip.Tracks[0].Keys);
     }
 

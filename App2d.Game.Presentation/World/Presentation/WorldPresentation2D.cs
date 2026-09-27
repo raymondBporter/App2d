@@ -1,14 +1,16 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
+using App2d.Gameplay.World;
 using App2d.Rendering;
-using App2d.Rendering.Vegetation;
 using App2d.Rendering.Textures;
+using App2d.Rendering.Vegetation;
 using App2d.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Gameplay.World.Presentation;
+namespace App2d.Game.Presentation.World.Presentation;
 
 /// <summary>
 /// Draws level content and per-tick world observations without reading simulation objects or

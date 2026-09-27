@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using System.Text.Json;

@@ -1,11 +1,12 @@
 using App2d.Core.Geometry;
+using App2d.Gameplay.World;
 using App2d.Rendering;
 using App2d.Rendering.Vegetation;
 using App2d.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;
 
-namespace App2d.Gameplay.World.Presentation;
+namespace App2d.Game.Presentation.World.Presentation;
 
 /// <summary>Camera-streamed foliage; only the simulation's observation supplies cut state.</summary>
 public sealed class VegetationPresentation2D

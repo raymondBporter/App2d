@@ -121,8 +121,7 @@ public sealed class PuppetDefinition
     }
     public void Save(string path)
     {
-        Validate(); var temporary = path + ".tmp";
-        File.WriteAllText(temporary, ToJson()); File.Move(temporary, path, true);
+        Validate(); IO.AtomicFile.WriteAllText(path, ToJson());
     }
 
     public void Validate()

@@ -1,5 +1,5 @@
 using App2d.Core.Characters;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 

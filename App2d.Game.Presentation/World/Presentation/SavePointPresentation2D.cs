@@ -1,10 +1,12 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
+using App2d.Gameplay.World;
 using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Gameplay.World.Presentation;
+namespace App2d.Game.Presentation.World.Presentation;
 
 /// <summary>Client-owned checkpoint beacon animation.</summary>
 internal sealed class SavePointPresentation2D : IDisposable

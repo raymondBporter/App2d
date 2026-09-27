@@ -1,6 +1,7 @@
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
 using App2d.Gameplay.Assets;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Combat;
@@ -14,7 +15,7 @@ using System.Collections.Immutable;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Gameplay.World.Presentation;
+namespace App2d.Game.Presentation.World.Presentation;
 
 /// <summary>Client-owned enemy views indexed by entity ID. Never reads live actors.</summary>
 public sealed class EnemyPresentation2D(

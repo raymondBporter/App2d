@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.IO;
 
 namespace App2d.Rendering.Textures;
 
@@ -49,25 +50,7 @@ public sealed class TextureCache2D(string contentRoot) : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    private string ResolvePath(string relativePath)
-    {
-        ArgGuard.ThrowIfNullOrWhiteSpace(relativePath);
-
-        if (Path.IsPathRooted(relativePath))
-            ArgGuard.ThrowInvalid(relativePath, "Texture cache paths must be relative to the content root.");
-
-        var fullPath = Path.GetFullPath(Path.Combine(ContentRoot, relativePath));
-
-        var relativeToRoot = Path.GetRelativePath(ContentRoot, fullPath);
-        if (relativeToRoot == ".." ||
-            relativeToRoot.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) ||
-            Path.IsPathRooted(relativeToRoot))
-        {
-            ArgGuard.ThrowInvalid(relativePath, "Texture path must stay inside the content root.");
-        }
-
-        return fullPath;
-    }
+    private string ResolvePath(string relativePath) => FilePaths.ResolveUnderRoot(ContentRoot, relativePath);
 
     private void ReleaseAll()
     {

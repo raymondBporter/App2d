@@ -1,5 +1,5 @@
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
 using System.ComponentModel;
 using System.Globalization;
 using System.Numerics;

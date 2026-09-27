@@ -20,16 +20,16 @@ public sealed class PersonFrameHistory2D
         if (time <= _frames[0].Time) return _frames[0].Frame;
         for (var i = 1; i < _frames.Count; i++)
         {
-            var b = _frames[i];
-            if (b.Time < time) continue;
-            if (b.Time == time) return b.Frame;
+            var (Time, Frame) = _frames[i];
+            if (Time < time) continue;
+            if (Time == time) return Frame;
             var a = _frames[i - 1];
-            if (a.Frame.Key != b.Frame.Key || a.Frame.Seconds > b.Frame.Seconds) return a.Frame;
-            var t = (time - a.Time) / (b.Time - a.Time);
+            if (a.Frame.Key != Frame.Key || a.Frame.Seconds > Frame.Seconds) return a.Frame;
+            var t = (time - a.Time) / (Time - a.Time);
             var overlay = a.Frame.Overlay;
-            if (overlay is not null && b.Frame.Overlay is { } next && overlay.Clip == next.Clip && next.Seconds >= overlay.Seconds)
+            if (overlay is not null && Frame.Overlay is { } next && overlay.Clip == next.Clip && next.Seconds >= overlay.Seconds)
                 overlay = overlay with { Seconds = overlay.Seconds + (next.Seconds - overlay.Seconds) * t };
-            return a.Frame with { Seconds = a.Frame.Seconds + (b.Frame.Seconds - a.Frame.Seconds) * t, Overlay = overlay };
+            return a.Frame with { Seconds = a.Frame.Seconds + (Frame.Seconds - a.Frame.Seconds) * t, Overlay = overlay };
         }
         return _frames[^1].Frame;
     }

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Functions;
 
 /// <summary>
 /// Writes local-space perimeters into caller-owned buffers. No shapes, cached bounds,

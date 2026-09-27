@@ -1,11 +1,11 @@
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
 using App2d.Gameplay.Combat;
 using App2d.Rendering;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Gameplay.World.Presentation;
+namespace App2d.Game.Presentation.World.Presentation;
 
 /// <summary>Short, directional ink marks from confirmed sword damage. No simulation clocks or actor poses are changed.</summary>
 public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable

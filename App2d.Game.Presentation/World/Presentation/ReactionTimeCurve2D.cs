@@ -1,6 +1,6 @@
 using App2d.Core;
 
-namespace App2d.Gameplay.World.Presentation;
+namespace App2d.Game.Presentation.World.Presentation;
 
 /// <summary>
 /// A presentation-only reaction clock. Smooth speed lobes lose and recover equal time; an optional initial hold

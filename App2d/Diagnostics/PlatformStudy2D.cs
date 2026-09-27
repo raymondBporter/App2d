@@ -1,11 +1,10 @@
-using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
+using App2d.Game.Presentation.World.Presentation;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Gameplay.World.Presentation;
 using App2d.Levels;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
@@ -24,7 +23,7 @@ internal static class PlatformStudy2D
 {
     public static void Run(GraphicsDevice device, TextureCache2D textures, string directory)
     {
-        var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var camera = new Camera2D { Zoom = 2.2f };
         using var renderer = new Renderer2D(camera, device);

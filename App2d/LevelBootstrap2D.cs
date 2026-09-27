@@ -17,7 +17,7 @@ internal static class LevelBootstrap2D
     /// read from there directly in Debug. <c>Assets/Runtime</c> is generated and disposable
     /// and must never be the only home for a hand-edited file.
     /// </summary>
-    public static string CavernLevelPath { get; } = Path.Combine(AssetPaths.AuthoredRoot, "levels", LevelId, "level.db");
+    public static string CavernLevelPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "level.db");
 
     public static LoadedLevel2D Load()
     {

@@ -2,9 +2,9 @@ using App2d.Core;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
+using App2d.Game.Presentation.World.Presentation;
 using App2d.Gameplay.Audio;
 using App2d.Gameplay.Enemies;
-using App2d.Gameplay.World.Presentation;
 using App2d.Levels;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
@@ -35,7 +35,7 @@ internal static class AuthoredRenderingSmoke2D
     /// </summary>
     private static void RunPlayer(GraphicsDevice device, TextureCache2D textures, Renderer2D renderer, RenderTarget2D target, string directory)
     {
-        var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var moves = Gameplay.Persons.PersonMoves.From(authored);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var hero = new Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities[Gameplay.Persons.Actions.AuthoredHero2D.EntityId], traversal.PlayerColliderSize);
@@ -104,7 +104,7 @@ internal static class AuthoredRenderingSmoke2D
     /// <summary>Authored entities through the game's presentation: each frame draws the animator's own final pose, props included.</summary>
     private static void RunEntities(GraphicsDevice device, EnemyPresentation2D view, Scene2D scene, Renderer2D renderer, RenderTarget2D target, string directory)
     {
-        var authored = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
         var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute" };
         foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })

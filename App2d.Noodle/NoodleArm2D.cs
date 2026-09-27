@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
 using App2d.Rendering;

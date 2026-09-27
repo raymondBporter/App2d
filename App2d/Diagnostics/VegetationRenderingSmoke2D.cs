@@ -1,12 +1,12 @@
 using App2d.Core.Characters.Authored;
+using App2d.Game.Presentation.World.Presentation;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Gameplay.World.Presentation;
 using App2d.Levels;
 using App2d.Rendering;
-using App2d.Rendering.Vegetation;
 using App2d.Rendering.Textures;
+using App2d.Rendering.Vegetation;
 using App2d.Tiles;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
@@ -22,7 +22,7 @@ internal static class VegetationRenderingSmoke2D
             SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
             SideScrollerLevel2D.WorldOrigin, ["kenney-grassland"]);
         for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
-        var catalog = AuthoredCatalog.Load(Path.Combine(AssetPaths.Characters, "authored"));
+        var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         using var game = SideScrollerSimulation2D.Create(new(traversal, map, [],
             [new(1, WorldThingKind2D.PlayerSpawn, "Start", true, new(-368f, 40f))])

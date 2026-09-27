@@ -1,6 +1,7 @@
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Functions;
 
 /// <summary>Calculates local bounds on demand. Shape geometry carries no bounds cache.</summary>
 public static class ShapeBounds2D

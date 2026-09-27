@@ -1,5 +1,7 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -77,7 +79,7 @@ public sealed class Distance2DTests
         Assert.Equal(-1f, Distance2D.SignedDistanceToConvexPolygon(Vector2.Zero, vertices));
         Assert.Equal(5f, Distance2D.SignedDistanceToConvexPolygon(new(4, 5), vertices));
         Assert.True(Distance2D.SignedDistanceToConvexPolygon(new(1.000001f, 0), vertices) > 0f);
-        Assert.Throws<ArgumentOutOfRangeException>(() => Distance2D.SignedDistanceToConvexPolygon(default, ReadOnlySpan<Vector2>.Empty));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Distance2D.SignedDistanceToConvexPolygon(default, []));
     }
 
     [Theory]

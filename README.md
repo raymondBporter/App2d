@@ -642,10 +642,17 @@ character.
 ## Assets and textures
 
 Repository assets are separated by lifecycle under the top-level `Assets` directory.
-Only generated `Assets/Runtime` ships; Debug reads it in place and Release packages it
-beside the executable as `Assets`. `Assets/Static` holds curated runtime-ready inputs,
-`Assets/Sources` retains originals and licenses, and ignored `Assets/Work` holds
-intermediate pipeline output and previews. `Assets/README.md` describes the lifecycle.
+Debug reads generated art from `Assets/Runtime` and durable levels/music directly
+from `Assets/Static`. Release packages content beside the executable as `Assets`,
+including current music/zones from `Static` and authored character documents from
+`Assets/Characters/authored`. `Assets/Sources` retains originals and licenses, and
+ignored `Assets/Work` holds intermediate output and previews.
+[The asset layout](Assets/README.md) defines where each kind of new content belongs.
+
+`App2d.Core.Assets.AssetLocations` names the main roots and categories; the game
+resolves them once as `AssetPaths.Current`. `UserDataLocations` names player saves
+and editor settings outside the asset tree. Shared relative-path checks and safe
+single-file saves live in `App2d.Core.IO`; asset formats retain their own validation.
 
 Runtime paths use lowercase semantic IDs. Every `Game2D` owns a `TextureCache2D`
 rooted at the deployed `Assets` directory, so textures load only when requested:

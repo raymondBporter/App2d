@@ -284,7 +284,7 @@ public static class StarterContent
     {
         var clip = Clip(model, "stalker-walk", "Stalker walk", 1, true);
         clip.Travel.Keys = [new() { Time = 0 }, new() { Time = 1, X = .6f }];
-        ClipKey L(float t, float x, float y = 0) => K(t, x, y, ClipEase.Linear);
+        static ClipKey L(float t, float x, float y = 0) => K(t, x, y, ClipEase.Linear);
         var outer = new[] { L(0, .15f), L(.5f, -.15f), L(.75f, 0, .12f), L(1, .15f) };
         clip.Tracks =
         [

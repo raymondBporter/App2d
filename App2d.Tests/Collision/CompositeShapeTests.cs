@@ -1,7 +1,8 @@
 using App2d.Core;
 using App2d.Core.Collision;
 using App2d.Core.Collision.Queries;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Collision;

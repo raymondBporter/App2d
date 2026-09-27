@@ -26,7 +26,7 @@ internal sealed class AngeliaGalleryApp : Game
     private ImGuiHost _gui = null!;
     private ResolvedModel _model = null!;
     private AngeliaRig _rig = null!;
-    private readonly PuppetDrawing[] _drawings = AngeliaPoses.All.Select(_ => new PuppetDrawing()).ToArray();
+    private readonly PuppetDrawing[] _drawings = [.. AngeliaPoses.All.Select(_ => new PuppetDrawing())];
     private readonly CharacterMesh _ground = new(256);
 
     public AngeliaGalleryApp(string assetRoot, string? snapshotDir = null)

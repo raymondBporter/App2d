@@ -1,5 +1,5 @@
-using System.Collections.Immutable;
 using NVorbis;
+using System.Collections.Immutable;
 
 namespace App2d.Audio;
 
@@ -25,7 +25,7 @@ internal sealed class MusicStream2D : IDisposable
     internal MusicStream2D(MusicCue2D cue, IMusicStem2D[] stems)
     {
         _cue = cue; _stems = stems;
-        _buffers = stems.Select(_ => new float[BlockFrames * 2]).ToArray();
+        _buffers = [.. stems.Select(_ => new float[BlockFrames * 2])];
         _gains = new float[stems.Length]; _steps = new float[stems.Length];
     }
 

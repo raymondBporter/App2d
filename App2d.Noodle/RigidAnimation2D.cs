@@ -232,7 +232,7 @@ internal sealed class PoseAuthoring2D
                 frame.Pose.TorsoAngle,
                 frame.Pose.HeadAngle))]);
         var json = JsonSerializer.Serialize(saved, JsonOptions);
-        File.WriteAllText(path, json);
+        App2d.Core.IO.AtomicFile.WriteAllText(path, json);
         return path;
     }
 

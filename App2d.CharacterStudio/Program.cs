@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.CharacterStudio;
@@ -46,13 +47,5 @@ internal static class Program
         }
     }
 
-    /// <summary>The characters folder: packaged beside the executable, or the nearest Assets/Characters above the working directory.</summary>
-    private static string FindAssets()
-    {
-        var packaged = Path.Combine(AppContext.BaseDirectory, "Assets", "Characters");
-        if (Directory.Exists(Path.Combine(packaged, "authored"))) return packaged;
-        for (var folder = new DirectoryInfo(Environment.CurrentDirectory); folder is not null; folder = folder.Parent)
-        { var root = Path.Combine(folder.FullName, "Assets", "Characters"); if (Directory.Exists(Path.Combine(root, "authored"))) return root; }
-        throw new DirectoryNotFoundException("Assets/Characters/authored was not found above the working directory.");
-    }
+    private static string FindAssets() => AssetLocations.FindCharacterLibrary(AppContext.BaseDirectory, Environment.CurrentDirectory);
 }

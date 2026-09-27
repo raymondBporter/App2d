@@ -2,7 +2,7 @@ using App2d.Core;
 using App2d.Rendering.Vegetation;
 using System.Numerics;
 
-namespace App2d.Gameplay.World.Presentation;
+namespace App2d.Game.Presentation.World.Presentation;
 
 /// <summary>Short-lived visual motion only; no rigid bodies or gameplay collisions.</summary>
 internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 velocity, float spin, float phase, float scale)

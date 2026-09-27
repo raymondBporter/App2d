@@ -90,7 +90,7 @@ public sealed class PersonAnimationDirectorTests
         var d = new Driver();
         d.Step(Standing, 5);
         var cut = Moves.Swing(null); var backhand = Moves.Swing(cut.Next); var forehand = Moves.Swing(backhand.Next);
-        PersonState2D Swinging(ResolvedAction action, float elapsed = 0) => Standing with { Action = new(PlayerAttackKind2D.Melee, elapsed, action.Clip.Duration, action.Id) };
+        static PersonState2D Swinging(ResolvedAction action, float elapsed = 0) => Standing with { Action = new(PlayerAttackKind2D.Melee, elapsed, action.Clip.Duration, action.Id) };
         Assert.Equal(cut.Clip.Id, d.Step(Swinging(cut)).Key);
         var mid = d.Step(Swinging(cut, cut.Clip.Duration / 2));
         Assert.Equal(cut.Clip.Duration / 2, mid.Seconds, 3); // the controller's timing maps onto the clip

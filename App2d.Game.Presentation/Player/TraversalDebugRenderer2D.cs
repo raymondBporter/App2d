@@ -1,9 +1,10 @@
 using App2d.Core;
+using App2d.Gameplay.Player;
 using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Gameplay.Player;
+namespace App2d.Game.Presentation.Player;
 
 public sealed class TraversalDebugRenderer2D(TraversalMetrics2D traversal)
 {

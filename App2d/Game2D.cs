@@ -28,7 +28,7 @@ public abstract class Game2D : IDisposable
 
     public Camera2D Camera { get; } = new();
     public Scene2D Scene { get; } = [];
-    public TextureCache2D Textures { get; } = new(AssetPaths.Root);
+    public TextureCache2D Textures { get; } = new(AssetPaths.Current.Runtime);
     public DeveloperConsole DeveloperConsole { get; } = new();
     public virtual string WindowTitle => "App2d";
     protected virtual XnaColor BackgroundColor => new(24, 27, 36);
