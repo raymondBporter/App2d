@@ -20,8 +20,10 @@ because it is authored content. The runtime build copies it into `Assets/Runtime
 python tools/TileArt/generate.py --also-runtime
 ```
 
-`--also-runtime` mirrors the output into `Assets/Runtime`, so a Debug run picks it up without a
-full `build_runtime_assets.py`. The generator is deterministic.
+The generator is deterministic. Building `App2d` copies changed tilesets from `Assets/Static`
+into `Assets/Runtime`, where Debug loads them, and Release packages them from `Assets/Static`
+directly. So a git pull or a regenerate needs no art-pipeline run. `--also-runtime` also writes
+`Assets/Runtime`, for tools that load tilesets without building the game first.
 
 ## Judge it in the engine
 
