@@ -6,6 +6,20 @@ public readonly record struct SegmentClosestPoints2D(Vector2 First, Vector2 Seco
 
 public static class ClosestPoint2D
 {
+    /// <summary>Closest point on an infinite line. Direction must be finite and nonzero; unit length is not required.</summary>
+    public static Vector2 OnLine(Vector2 point, Vector2 origin, Vector2 direction)
+    {
+        var (x, y) = LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: false);
+        return new((float)x, (float)y);
+    }
+
+    /// <summary>Closest point on a forward ray, clamped at its origin. Direction need not be unit length.</summary>
+    public static Vector2 OnRay(Vector2 point, Vector2 origin, Vector2 direction)
+    {
+        var (x, y) = LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: true);
+        return new((float)x, (float)y);
+    }
+
     public static Vector2 OnSegment(Vector2 point, Vector2 start, Vector2 end)
     {
         var segment = end - start;

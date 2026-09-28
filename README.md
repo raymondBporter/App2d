@@ -271,6 +271,9 @@ pairing switches can opt specific combinations back in without changing the broa
 
 ## Ray queries
 
+`Ray2D` lives in `App2d.Core.Geometry.Shapes` alongside `Line2D`. Both implement
+`IGeometry2D` and support point containment, closest points, and distances without scene
+objects. `Intersection2D` provides line/line, line/ray, and ray/ray tests. For world queries,
 `Ray2D` stores a normalized world-space direction, so every hit distance is measured in
 world units. `RayIntersection2D` intersects transformed circles, rectangles, convex
 polygons, capsules, and half-spaces exactly through the object's `CollisionPose`. Rays
@@ -280,7 +283,8 @@ and mirroring preserve the correct world normal.
 The scene and physics extensions return the nearest hit without allocating:
 
 ```csharp
-using App2d.Engine.Physics.Queries;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Physics.Queries;
 
 var ray = Ray2D.FromPoints(origin, mouseWorld);
 

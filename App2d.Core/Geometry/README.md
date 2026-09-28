@@ -1,6 +1,6 @@
 # Geometry
 
-Use `App2d.Core.Geometry` functions directly with `System.Numerics` values when you need math without constructing a shape. The folders separate algorithms from objects; their public namespace stays the same.
+Use geometry functions directly with `System.Numerics` values when you need math without constructing a shape. Primitives live in `App2d.Core.Geometry.Shapes`; algorithms generally live in `App2d.Core.Geometry.Functions`. `Distance2D`, `PolygonGeometry2D`, and rectangle extensions currently live in `App2d.Core.Geometry`.
 
 | Location | Purpose |
 | --- | --- |
@@ -9,12 +9,13 @@ Use `App2d.Core.Geometry` functions directly with `System.Numerics` values when 
 | `Functions/Distance2D` | Euclidean and signed distances: raw parameters, convex perimeters, shapes and placed spatial objects |
 | `Functions/Projection2D` | Polygon, circle and capsule intervals on an arbitrary axis; polygon offsets avoid transformed copies |
 | `Functions/PolygonGeometry2D` | Area, containment, support, closest perimeter point, edge normals and convex SAT overlap |
-| `Functions/ClosestPoint2D` | Point-to-segment and segment-to-segment closest points |
+| `Functions/ClosestPoint2D` | Point-to-line/ray/segment and segment-to-segment closest points |
+| `Functions/Intersection2D` | Line/line, line/ray, and ray/ray intersections |
 | `Functions/Rect2DExtensions` | Shared dimensions, anchors, containment, intersection, union, closest point, movement and resizing for any `IRect2D` |
 | `Functions/BoundsGeometry2D` | Bounds from raw primitives/points, union, translation, scaling and affine transforms |
 | `Functions/ShapeBounds2D` | On-demand local bounds for shapes, including convex support-point fallback and unbounded half-spaces |
 | `IRect2D`, `Rect2D` | A two-property rectangle contract and a lightweight rectangle value independent of shapes |
-| `Shapes/` | `IShape2D`, `IConvexShape2D` and concrete shapes with validated geometry; no bounds properties or caches |
+| `Shapes/` | `IGeometry2D`, `IShape2D`, `IConvexShape2D`, lines, rays and concrete shapes, including `Triangle2D`; no bounds properties or caches |
 | `Bounds2D`, `Interval1D` | Value types for bounds and projected intervals |
 
 ```csharp
@@ -28,11 +29,42 @@ Contour angles are radians, increasing counter-clockwise in Y-up coordinates. Cl
 
 Primitive arithmetic queries assume finite inputs, nonnegative radii and ordered box bounds; ellipse radii and normalized box half-extents must be positive. Shape constructors retain their validation. Vertex writers additionally validate their dimensions and buffer sizes. Polygon queries expect ordered convex perimeters; overlap accepts either winding, skips repeated adjacent vertices and includes touching edges. Projections support non-unit axes and project everything to zero on a zero axis.
 
+`Triangle2D(a, b, c)` is a filled convex shape. It accepts either winding, rejects collinear or non-finite-area vertices, and stores the three points directly. `ContainsPoint` checks its three oriented edges, `GetSupportPoint` compares only three vertices, and `WriteVertices` copies into a caller-owned span. Its bounds, distances, raycasts, rendering, and collision contacts use the existing convex pipelines without a retained vertex array. Collision covers circles, capsules, rectangles, other triangles, convex polygons, half-spaces and composite parts.
+
 `DistanceToSegment` returns a Euclidean distance in input units. `NormalizedEllipseRadius` and `NormalizedRectangleRadius` return dimensionless scores: zero at the center, one at the boundary. An ellipse's normalized radius is **not** the shortest distance to its boundary. `PartGeometry.Distance` keeps its existing picking semantics, including bounding-box picking for rounded boxes and the minimum stroke tolerance.
 
 `PartGeometry` owns attachment frames and depth; the renderer owns screen-dependent tessellation and triangle emission. Both use the shared generators. `EntityRegion` delegates overlap to polygon math. General XY rotation lives in `Mathematics/Rotation2D`; `PoseEvaluator.RotateXY` remains a compatible entry point.
 
 Add raw geometry algorithms here and let shape methods delegate to them. Keep authoring, rendering, caching and gameplay policy in their respective callers.
+
+## Lines, rays, and the geometry contract
+
+`IGeometry2D` is the common point-containment contract. `IShape2D` adds area for existing spatial/collision shapes; `IConvexShape2D` adds finite support points. Lines and rays implement `IGeometry2D` directly. They need no scene object, transform, area, or bounds cache. The `Shapes` namespace remains their shared home.
+
+```csharp
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry.Shapes;
+
+var ray = Ray2D.FromPoints(origin, target);
+var line = new Line2D(pointOnLine, direction);
+Vector2 ahead = ray.PointAt(10); // Distance in input units, not a fraction.
+Vector2 closest = ray.ClosestPoint(point); // Clamped at the origin.
+float distance = Distance2D.Distance(point, ray);
+bool onLine = line.ContainsPoint(point, tolerance: .001f);
+int side = line.WhichSide(point, tolerance: .001f); // +1 right, -1 left, 0 on line.
+bool crossing = ray.Intersects(line); // Also Intersection2D.Intersects(ray, line).
+```
+
+`Line2D` is infinite in both directions; `Ray2D` includes its origin and extends forward. Both are immutable value types whose constructors normalize a finite nonzero direction. `FromPoints(from, to)` builds either one from two distinct points, including when their float-coordinate difference would overflow. `PointAt(t)` takes a finite distance, which may be negative for a line and must be nonnegative for a ray. `GetPoint` remains an alias. Construct them explicitly: `default` has no direction, `IsValid` is false, and query methods reject it.
+
+`Line2D.WhichSide(test, tolerance)` uses `cross(test - Origin, Direction)`. With a line pointing along +X, points below it return +1 and points above it return -1; reversing the line reverses the signs. A point within `tolerance` distance returns 0. Tolerance is nonnegative, defaults to zero, and is measured in input units because the direction is normalized. This classifies sides of the infinite supporting line.
+
+When a direction is already normalized, use `Line2D.FromDirection(point, direction)` or `Ray2D.FromDirection(origin, direction)` with `Direction2D` from `App2d.Core.Mathematics`. Both primitives expose the typed value as `UnitDirection` and retain their `Vector2 Direction` property for existing callers.
+
+Point containment defaults to a distance tolerance of `0.00001` input units. Pass zero for exact containment. A ray's tolerance also applies around its origin. Raw `ClosestPoint2D.OnLine` / `OnRay` and `Distance2D.DistanceToLine` / `DistanceToRay` accept non-unit directions. Lines and rays use unsigned point distance because neither defines a filled interior.
+
+Intersection overloads include touching endpoints and collinear overlap. They test the actual forward domains and use double intermediates without an angular cutoff for nearly parallel crossings. Intersections use the stored coordinates and directions without the point-containment tolerance; normal floating-point rounding still applies. Add more supported pairs as typed overloads instead of requiring every geometry to implement every pair. Line/shape and ray/shape intersection overloads are not provided yet; existing spatial-object raycasts remain in `Collision.Queries` and physics raycasts in `Physics.Queries`, both consuming this same `Shapes.Ray2D`.
 
 ## Distance queries
 
