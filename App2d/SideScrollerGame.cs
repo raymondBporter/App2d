@@ -1,10 +1,12 @@
+using App2d.Core.Validation;
+using App2d.Contracts.Player;
+using App2d.Presentation.World;
 using App2d.Audio;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Diagnostics;
 using App2d.Editor;
-using App2d.Game.Presentation.Audio;
-using App2d.Gameplay.Audio;
+using App2d.Presentation.Audio;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
@@ -99,7 +101,7 @@ public sealed class SideScrollerGame : Game2D
             _simulation.Level.ReloadMovingPlatforms([.. things.Select(ThingTypeRegistry2D.ToRuntime)]);
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
-            cameraController, Textures, _sounds, Traversal, Gameplay.Persons.PersonMoves.From(_authored));
+            cameraController, Textures, _sounds, Traversal, App2d.Presentation.Persons.PersonMoves.From(_authored));
         var soundtrack = WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones);
         _music = new MusicPlayer2D(soundtrack.Cues);
         _musicDirector = new(soundtrack, _music.Select);

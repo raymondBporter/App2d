@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - **Naming:** every public type ends in `2D`. Universal in this codebase.
-- **Validation:** use `App2d.Core.ArgGuard` for arguments and `App2d.Core.StateGuard` for invalid state. Never hand-roll `throw new ArgumentException` / `InvalidOperationException`.
+- **Validation:** use `App2d.Core.Validation.ArgGuard` for arguments and `App2d.Core.StateGuard` for invalid state. Never hand-roll `throw new ArgumentException` / `InvalidOperationException`.
 - **Target frameworks:** `App2d.Core`, `App2d.Collision`, `App2d.Tiles`, `App2d.Levels`, `App2d.Physics`, `App2d.Rendering`, `App2d.Tests` are plain `net10.0`. `App2d.Gameplay`, `App2d.Gameplay.Tests`, `App2d` are `net10.0-windows10.0.19041.0`.
 - **Module boundaries — do not violate:** `App2d.Gameplay` must NOT reference `App2d.Levels`. `App2d.Tiles` must NOT reference `App2d.Levels` or `Microsoft.Data.Sqlite`. Only `App2d.Levels` (and test projects) reference SQLite. **The host is the only place that sees both the database and gameplay.**
 - **`Microsoft.Data.Sqlite` stays pinned at exactly `10.0.11`.** Do not change it.

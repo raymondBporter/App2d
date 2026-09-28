@@ -121,7 +121,7 @@ public static class ModelAuthoring
     public static void MoveRest(CharacterModel model, string id, Vector3 position, bool children)
     {
         var delta = position - Control(model, id).Rest.XYZ;
-        IEnumerable<ModelControl> moved = children ? Subtree(model.Controls, id) : [Control(model, id)];
+        var moved = children ? Subtree(model.Controls, id) : [Control(model, id)];
         foreach (var control in moved) control.Rest = PuppetPoint.From(control.Rest.XYZ + delta);
     }
 
@@ -131,7 +131,7 @@ public static class ModelAuthoring
     public static void MoveRest(ResolvedModel resolved, ModelVariant variant, string id, Vector3 position, bool children)
     {
         var delta = position - resolved.Rest[id];
-        IEnumerable<ModelControl> moved = children ? Subtree(resolved.Base.Controls, id) : [resolved.Controls[id]];
+        var moved = children ? Subtree(resolved.Base.Controls, id) : [resolved.Controls[id]];
         foreach (var control in moved)
             variant.Rest[control.Id] = PuppetPoint.From(resolved.Rest[control.Id] + delta);
     }

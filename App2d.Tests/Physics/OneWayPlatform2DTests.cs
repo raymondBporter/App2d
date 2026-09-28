@@ -1,7 +1,6 @@
 using App2d.Core;
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Physics;

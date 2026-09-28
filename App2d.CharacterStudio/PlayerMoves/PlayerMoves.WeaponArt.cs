@@ -15,7 +15,10 @@ internal static partial class PlayerMoves
 
     private static PropAsset SwordArt() => new()
     {
-        Id = Sword, Name = "Sword", Tip = new(.82f, 0), LineWidth = .013f,
+        Id = Sword,
+        Name = "Sword",
+        Tip = new(.82f, 0),
+        LineWidth = .013f,
         Solids =
         [
             Block(Leather, -.12f, .04f, -.026f, .026f, .043f, .006f),
@@ -33,7 +36,10 @@ internal static partial class PlayerMoves
     /// </summary>
     internal static PropAsset CartoonSwordArt() => new()
     {
-        Id = Sword, Name = "Sword", Tip = new(1.02f, .03f), LineWidth = .02f,
+        Id = Sword,
+        Name = "Sword",
+        Tip = new(1.02f, .03f),
+        LineWidth = .02f,
         // A narrow, round-ended stroke keeps the grip as simple as the character's hand.
         Shapes = [new() { Points = [new(-.055f, 0), new(.025f, 0)], Width = .006f, Fill = Leather }],
         Solids =
@@ -47,7 +53,10 @@ internal static partial class PlayerMoves
     {
         var prop = new PropAsset
         {
-            Id = Sheath, Name = "Sheath", Tip = new(.85f, 0), LineWidth = .012f,
+            Id = Sheath,
+            Name = "Sheath",
+            Tip = new(.85f, 0),
+            LineWidth = .012f,
             Solids =
             [
                 Plate("#344b53", .064f, new(.075f, -.056f), new(.68f, -.043f), new(.85f, 0), new(.68f, .043f), new(.075f, .056f)),
@@ -62,7 +71,11 @@ internal static partial class PlayerMoves
 
     private static PropAsset PistolArt() => new()
     {
-        Id = Pistol, Name = "Pistol", Tip = new(.26f, .06f), Muzzle = new(.26f, .06f), LineWidth = .011f,
+        Id = Pistol,
+        Name = "Pistol",
+        Tip = new(.26f, .06f),
+        Muzzle = new(.26f, .06f),
+        LineWidth = .011f,
         Solids =
         [
             Plate(Leather, .067f, new(-.063f, -.123f), new(-.005f, -.116f), new(.031f, .036f), new(-.045f, .041f)),
@@ -76,7 +89,10 @@ internal static partial class PlayerMoves
 
     private static PropAsset HammerArt() => new()
     {
-        Id = "hammer", Name = "Hammer", Tip = new(.8f, 0), LineWidth = .016f,
+        Id = "hammer",
+        Name = "Hammer",
+        Tip = new(.8f, 0),
+        LineWidth = .016f,
         Solids =
         [
             Block("#866344", -.14f, .74f, -.028f, .028f, .049f, .012f),

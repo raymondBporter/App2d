@@ -1,6 +1,10 @@
+using App2d.Core.Validation;
+using App2d.Contracts.Combat;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Persons.Actions;
 using App2d.Core;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
+using App2d.Core.Shapes;
 using App2d.Gameplay.Combat;
 using System.Numerics;
 
@@ -34,7 +38,7 @@ internal abstract partial class MeleePersonWeapon2D(
 
     public virtual bool IsAttackActive => _attack.IsInProgress;
     public override PersonActionState2D CaptureActionState() => _attack.IsInProgress
-        ? new(Simulation.PlayerAttackKind2D.Melee, _attack.ElapsedSeconds, _attack.DurationSeconds, _swing) : default;
+        ? new(App2d.Contracts.Simulation.PlayerAttackKind2D.Melee, _attack.ElapsedSeconds, _attack.DurationSeconds, _swing) : default;
 
     public override IEnumerable<SpatialObject2D> ActiveHitboxes
     {

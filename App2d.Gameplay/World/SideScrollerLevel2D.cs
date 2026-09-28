@@ -1,3 +1,6 @@
+using App2d.Core.Geometry.Functions;
+using App2d.Contracts.Player;
+using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
@@ -6,7 +9,6 @@ using App2d.Core.Physics;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
-using App2d.Gameplay.Player;
 using App2d.Tiles;
 using System.Numerics;
 
@@ -188,7 +190,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     /// <summary>Per-tick dynamic observation.</summary>
     public WorldState2D CaptureWorld() => new(
         [.. _movingPlatforms.Select(p => p.CaptureState())],
-        [.. _savePoints.Select(p => p.CaptureState())]) { CutGrass = _cutGrass };
+        [.. _savePoints.Select(p => p.CaptureState())])
+    { CutGrass = _cutGrass };
 
     /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
     public LevelContent2D CaptureContent()
@@ -201,7 +204,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(),
                 [.. _movingPlatforms.Select(p => p.CaptureDefinition())],
                 [.. _savePoints.Select(p => p.CapturePlacement())],
-                GoalThing?.Position) { Zones = Zones };
+                GoalThing?.Position)
+            { Zones = Zones };
         }
         return _content;
     }

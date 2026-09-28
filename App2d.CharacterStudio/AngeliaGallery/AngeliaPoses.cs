@@ -69,8 +69,15 @@ internal static class AngeliaPoses
         var shift = Lerp(0, A * .7f, WalkEase[i]);
         return new()
         {
-            RootY = WalkEase[i + 16] * A, LegXL = shift, LegXR = -shift,
-            ArmUL = WalkRots[i, 0], ArmUR = WalkRots[i, 1], LegUL = WalkRots[i, 2], LegUR = WalkRots[i, 3], LegLL = WalkRots[i, 4], LegLR = WalkRots[i, 5],
+            RootY = WalkEase[i + 16] * A,
+            LegXL = shift,
+            LegXR = -shift,
+            ArmUL = WalkRots[i, 0],
+            ArmUR = WalkRots[i, 1],
+            LegUL = WalkRots[i, 2],
+            LegUR = WalkRots[i, 3],
+            LegLL = WalkRots[i, 4],
+            LegLR = WalkRots[i, 5],
         };
     }
 
@@ -86,11 +93,19 @@ internal static class AngeliaPoses
         var shift = Lerp(0, A * .9f, p);
         return new()
         {
-            RootY = ((1 - easeD) * 2 - 1) * A, BodyRot = lean, HeadRot = -lean * 2 / 3,
-            ArmUL = Lerp(-10, 80, p) - lean / 2, ArmUR = Lerp(-10, 80, q) - lean / 2, ArmLL = Lerp(-65, -90, p), ArmLR = Lerp(-65, -90, q),
-            LegXL = shift, LegXR = -shift,
-            LegUL = Lerp(55, -65, p) + lean / 3, LegUR = Lerp(55, -65, q) + lean / 3,
-            LegLL = Lerp(90, 0, InOutBack(pAlt)), LegLR = Lerp(90, 0, InOutBack(qAlt)),
+            RootY = ((1 - easeD) * 2 - 1) * A,
+            BodyRot = lean,
+            HeadRot = -lean * 2 / 3,
+            ArmUL = Lerp(-10, 80, p) - lean / 2,
+            ArmUR = Lerp(-10, 80, q) - lean / 2,
+            ArmLL = Lerp(-65, -90, p),
+            ArmLR = Lerp(-65, -90, q),
+            LegXL = shift,
+            LegXR = -shift,
+            LegUL = Lerp(55, -65, p) + lean / 3,
+            LegUR = Lerp(55, -65, q) + lean / 3,
+            LegLL = Lerp(90, 0, InOutBack(pAlt)),
+            LegLR = Lerp(90, 0, InOutBack(qAlt)),
         };
     }
 
@@ -100,9 +115,19 @@ internal static class AngeliaPoses
         var alt = f % 8 >= 4;
         return new()
         {
-            RootY = A, ChestDrop = alt ? -A / 4 : 0,
-            ArmUL = alt ? 65 : 55, ArmUR = alt ? -65 : -55, ArmLL = alt ? -55 : -45, ArmLR = alt ? 55 : 45,
-            LegXL = -A / 2, LegXR = -A / 2, LegUL = 0, LegUR = -20, LegLL = 0, LegLR = 45, LowerLegScaleR = .75f,
+            RootY = A,
+            ChestDrop = alt ? -A / 4 : 0,
+            ArmUL = alt ? 65 : 55,
+            ArmUR = alt ? -65 : -55,
+            ArmLL = alt ? -55 : -45,
+            ArmLR = alt ? 55 : 45,
+            LegXL = -A / 2,
+            LegXR = -A / 2,
+            LegUL = 0,
+            LegUR = -20,
+            LegLL = 0,
+            LegLR = 45,
+            LowerLegScaleR = .75f,
         };
     }
 
@@ -113,8 +138,18 @@ internal static class AngeliaPoses
         return new()
         {
             RootY = -A,
-            ArmUL = alt ? 135 : 125, ArmUR = alt ? -125 : -135, ArmLL = alt ? 35 : 45, ArmLR = alt ? -45 : -35,
-            LegXL = A / 2, LegXR = A / 2, LegUL = 0, LegUR = -25, LegLL = 3, LegLR = 15, LowerLegScaleL = .75f, LowerLegScaleR = .75f,
+            ArmUL = alt ? 135 : 125,
+            ArmUR = alt ? -125 : -135,
+            ArmLL = alt ? 35 : 45,
+            ArmLR = alt ? -45 : -35,
+            LegXL = A / 2,
+            LegXR = A / 2,
+            LegUL = 0,
+            LegUR = -25,
+            LegLL = 3,
+            LegLR = 15,
+            LowerLegScaleL = .75f,
+            LowerLegScaleR = .75f,
         };
     }
 
@@ -126,8 +161,16 @@ internal static class AngeliaPoses
         if (a >= 2) e = 1 - e;
         return new()
         {
-            HipY = .5f, PlantFeet = true, TorsoScale = .6f, ChestDrop = e * A,
-            ArmUL = 25, ArmUR = -25, ArmLL = -90, ArmLR = 90, ArmScaleL = .85f, ArmScaleR = .85f,
+            HipY = .5f,
+            PlantFeet = true,
+            TorsoScale = .6f,
+            ChestDrop = e * A,
+            ArmUL = 25,
+            ArmUR = -25,
+            ArmLL = -90,
+            ArmLR = 90,
+            ArmScaleL = .85f,
+            ArmScaleR = .85f,
         };
     }
 
@@ -138,9 +181,21 @@ internal static class AngeliaPoses
         var wobble = alt ? 2 : -2;
         return new()
         {
-            HipY = .12f, HipX = 2 * A, LegXL = -2 * A, LegXR = -2 * A, BodyRot = -40, HeadRot = 20, TorsoScale = .85f,
-            ArmUL = 60 + wobble, ArmUR = -135 - wobble, ArmLL = -60 + wobble, ArmLR = 45 + wobble,
-            LegUL = -90, LegUR = -135, LegLL = alt ? 2 : 0, LegLR = 90 - (alt ? 2 : 0),
+            HipY = .12f,
+            HipX = 2 * A,
+            LegXL = -2 * A,
+            LegXR = -2 * A,
+            BodyRot = -40,
+            HeadRot = 20,
+            TorsoScale = .85f,
+            ArmUL = 60 + wobble,
+            ArmUR = -135 - wobble,
+            ArmLL = -60 + wobble,
+            ArmLR = 45 + wobble,
+            LegUL = -90,
+            LegUR = -135,
+            LegLL = alt ? 2 : 0,
+            LegLR = 90 - (alt ? 2 : 0),
         };
     }
 
@@ -156,9 +211,12 @@ internal static class AngeliaPoses
         a = Math.Clamp(a, 0, 4);
         var pose = new AngeliaPose
         {
-            RootY = -Math.Abs(a - 2) * A, BodyRot = 2 * a - 4,
-            ArmUL = Math.Clamp(135 - 35 * (3 - d), 45, 135), ArmUR = Math.Clamp(35 * d - 135, -135, -45),
-            LegUL = Math.Clamp(35 * a, 0, 60), LegUR = Math.Clamp(-35 * (3 - a), -60, 0),
+            RootY = -Math.Abs(a - 2) * A,
+            BodyRot = 2 * a - 4,
+            ArmUL = Math.Clamp(135 - 35 * (3 - d), 45, 135),
+            ArmUR = Math.Clamp(35 * d - 135, -135, -45),
+            LegUL = Math.Clamp(35 * a, 0, 60),
+            LegUR = Math.Clamp(-35 * (3 - a), -60, 0),
         };
         pose.ArmLL = 180 - pose.ArmUL; pose.ArmLR = -180 - pose.ArmUR;
         pose.LegLL = -pose.LegUL - 5; pose.LegLR = -pose.LegUR + 5;
@@ -173,7 +231,10 @@ internal static class AngeliaPoses
         return new()
         {
             RootY = A - (fr < 6 ? fr / 2f : 8 - fr) * A / 2,
-            LegUL = 20, LegUR = -20, LegLL = 4 * pp - 20, LegLR = -4 * pp + 20,
+            LegUL = 20,
+            LegUR = -20,
+            LegLL = 4 * pp - 20,
+            LegLR = -4 * pp + 20,
         };
     }
 
@@ -183,9 +244,17 @@ internal static class AngeliaPoses
         var alt = f / 4 % 2 == 0;
         return new()
         {
-            HeadRot = -6, BodyRot = 8,
-            ArmUL = 70, ArmUR = -175, ArmLL = -65, ArmLR = 0, ArmScaleR = 1.5f + (alt ? .1f : 0),
-            LegUL = -15 + (alt ? 1 : 0), LegUR = -30 + (alt ? 0 : 1), LegLL = -30, LegLR = 20,
+            HeadRot = -6,
+            BodyRot = 8,
+            ArmUL = 70,
+            ArmUR = -175,
+            ArmLL = -65,
+            ArmLR = 0,
+            ArmScaleR = 1.5f + (alt ? .1f : 0),
+            LegUL = -15 + (alt ? 1 : 0),
+            LegUR = -30 + (alt ? 0 : 1),
+            LegLL = -30,
+            LegLR = 20,
         };
     }
 
@@ -198,8 +267,14 @@ internal static class AngeliaPoses
         var reach = 1 + (2 - fr) * A / .33f;
         var pose = new AngeliaPose
         {
-            BodyRot = 6, HeadRot = -6, ArmUL = -90, ArmUR = -90, ArmScaleL = reach, ArmScaleR = reach,
-            LegUL = 25 + 15 * k, LegUR = 25 - 15 * k,
+            BodyRot = 6,
+            HeadRot = -6,
+            ArmUL = -90,
+            ArmUR = -90,
+            ArmScaleL = reach,
+            ArmScaleR = reach,
+            LegUL = 25 + 15 * k,
+            LegUR = 25 - 15 * k,
         };
         pose.LegLL = 85 - pose.LegUL; pose.LegLR = 85 - pose.LegUR;
         return pose;
@@ -212,8 +287,17 @@ internal static class AngeliaPoses
         var i = f % 24 / 3;
         return new()
         {
-            HipY = .35f + RollRootY[i] / 1500f * .35f, WholeRot = i * 45, TorsoScale = .75f,
-            ArmUL = -40, ArmUR = -45, ArmLL = -70, ArmLR = -70, LegUL = -110, LegUR = -100, LegLL = 140, LegLR = 140,
+            HipY = .35f + RollRootY[i] / 1500f * .35f,
+            WholeRot = i * 45,
+            TorsoScale = .75f,
+            ArmUL = -40,
+            ArmUR = -45,
+            ArmLL = -70,
+            ArmLR = -70,
+            LegUL = -110,
+            LegUR = -100,
+            LegLL = 140,
+            LegLR = 140,
         };
     }
 
@@ -227,7 +311,13 @@ internal static class AngeliaPoses
     // PoseAnimation_Sit (Platformer): thighs forward, shins hanging.
     private static AngeliaPose Sit(int f) => new()
     {
-        HipY = .5f, ArmUL = -20, ArmUR = 20, LegUL = -80, LegUR = -80, LegLL = 120, LegLR = 120,
+        HipY = .5f,
+        ArmUL = -20,
+        ArmUR = 20,
+        LegUL = -80,
+        LegUR = -80,
+        LegLL = 120,
+        LegLR = 120,
     };
 }
 

@@ -1,10 +1,10 @@
+using App2d.Contracts.Combat;
+using App2d.Contracts.Enemies;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Persons.Actions;
+using App2d.Contracts.Simulation;
+using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Gameplay.Combat;
-using App2d.Gameplay.Enemies;
-using App2d.Gameplay.Persons;
-using App2d.Gameplay.Persons.Actions;
-using App2d.Gameplay.Simulation;
-using App2d.Gameplay.World;
 using App2d.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;
@@ -42,7 +42,7 @@ public sealed class ObservationRoundTripTests
         var content = new LevelContent2D(3, [terrain], [new(new EntityId2D(103), 40, new(90f, 12f), 0xffaabbcc)],
             [new(42, position)], new(300f, 0f));
         var world = new WorldState2D([new(new EntityId2D(103), position)], [new(42, true)])
-            { CutGrass = [new(3, 1), new(5, 2)] };
+        { CutGrass = [new(3, 1), new(5, 2)] };
         ImmutableArray<EnemyState2D> enemies = [new(enemyId, EnemyKind2D.Rival, position, new(5f, 1f), 0.2f, -1f, true, true)
             { Person = person with { Id = enemyId }, IsAttacking = true, AttackElapsedSeconds = 0.12f, MoveX = -1f }];
         var snapshot = new SessionSnapshot2D(500, [player], content, world, enemies);

@@ -1,3 +1,6 @@
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Validation;
+using App2d.Core.Geometry;
 using System.Globalization;
 using System.Numerics;
 
@@ -27,40 +30,21 @@ public static class PropGeometry
     {
         var points = outline.ToList();
         ArgGuard.ThrowIf(points.Count < 3 || thickness <= 0, "An extrusion needs an outline and positive thickness.");
-        var area = points.Select((p, i) => p.X * points[(i + 1) % points.Count].Y - p.Y * points[(i + 1) % points.Count].X).Sum();
+        var area = PolygonGeometry2D.SignedAreaTwiceDouble([.. points.Select(p => p.XY)]);
         if (area < 0) points.Reverse();
+        TriangleMesh2D triangles;
+        try { triangles = TriangleMesh2D.TriangulateSimplePolygon(points.Select(p => p.XY), 1e-8); }
+        catch (ArgumentException ex) { throw new InvalidDataException("The prop outline must be simple and have nonzero area.", ex); }
         var n = points.Count; var mesh = new PropSolid { Fill = fill, Outline = [.. points], Thickness = thickness };
         mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z - thickness / 2 }));
         mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z + thickness / 2 }));
-        foreach (var (a, b, c) in Triangulate(points))
+        for (var i = 0; i < triangles.Indices.Length; i += 3)
+        {
+            var a = triangles.Indices[i]; var b = triangles.Indices[i + 1]; var c = triangles.Indices[i + 2];
             mesh.Triangles.AddRange([a, c, b, n + a, n + b, n + c]);
+        }
         for (var i = 0; i < n; i++) { var j = (i + 1) % n; mesh.Triangles.AddRange([i, j, n + j, i, n + j, n + i]); }
         return mesh;
-    }
-
-    // Ear clipping happens at authoring time. Runtime props already contain indexed triangles.
-    private static IEnumerable<(int A, int B, int C)> Triangulate(List<PuppetPoint> points)
-    {
-        static float Cross(Vector2 a, Vector2 b, Vector2 c) => (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X);
-        var remaining = Enumerable.Range(0, points.Count).ToList();
-        while (remaining.Count > 3)
-        {
-            var found = false;
-            for (var i = 0; i < remaining.Count; i++)
-            {
-                var a = remaining[(i + remaining.Count - 1) % remaining.Count];
-                var b = remaining[i]; var c = remaining[(i + 1) % remaining.Count];
-                var pa = points[a].XY; var pb = points[b].XY; var pc = points[c].XY;
-                if (Cross(pa, pb, pc) <= 1e-8f) continue;
-                if (remaining.Any(j => j != a && j != b && j != c &&
-                    Cross(pa, pb, points[j].XY) >= -1e-8f && Cross(pb, pc, points[j].XY) >= -1e-8f && Cross(pc, pa, points[j].XY) >= -1e-8f)) continue;
-                yield return (a, b, c); remaining.RemoveAt(i); found = true; break;
-            }
-            if (!found) throw new InvalidDataException("The prop outline must be simple and have nonzero area.");
-        }
-        if (Cross(points[remaining[0]].XY, points[remaining[1]].XY, points[remaining[2]].XY) <= 1e-8f)
-            throw new InvalidDataException("The prop outline has a degenerate final triangle.");
-        yield return (remaining[0], remaining[1], remaining[2]);
     }
 
     /// <summary>Turns the existing convex weapon silhouettes into simple solids, preserving their color and dimensions.</summary>
@@ -69,12 +53,18 @@ public static class PropGeometry
         foreach (var shape in prop.Shapes)
         {
             var points = shape.Points.Select(p => centerDepth ? p with { Z = 0 } : p).ToList();
-            if (shape.Kind == "polygon") prop.Solids.Add(Extrude(points, thickness, shape.Fill));
-            else for (var i = 1; i < points.Count; i++)
+            if (shape.Kind == "polygon")
             {
-                var a = points[i - 1]; var b = points[i]; var d = Vector2.Normalize(b.XY - a.XY);
-                var off = new Vector3(-d.Y, d.X, 0) * shape.Width / 2;
-                prop.Solids.Add(Extrude([PuppetPoint.From(a.XYZ - off), PuppetPoint.From(b.XYZ - off), PuppetPoint.From(b.XYZ + off), PuppetPoint.From(a.XYZ + off)], shape.Width * .85f, shape.Fill));
+                prop.Solids.Add(Extrude(points, thickness, shape.Fill));
+            }
+            else
+            {
+                for (var i = 1; i < points.Count; i++)
+                {
+                    var a = points[i - 1]; var b = points[i]; var d = Vector2.Normalize(b.XY - a.XY);
+                    var off = new Vector3(-d.Y, d.X, 0) * shape.Width / 2;
+                    prop.Solids.Add(Extrude([PuppetPoint.From(a.XYZ - off), PuppetPoint.From(b.XYZ - off), PuppetPoint.From(b.XYZ + off), PuppetPoint.From(a.XYZ + off)], shape.Width * .85f, shape.Fill));
+                }
             }
         }
         prop.Shapes.Clear(); prop.LineWidth = .012f; prop.Validate(); return prop;

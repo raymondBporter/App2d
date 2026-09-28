@@ -1,8 +1,10 @@
+using App2d.Contracts.Persons;
+using App2d.Contracts.Simulation;
+using App2d.Presentation.Persons;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
-using App2d.Game.Presentation.Audio;
-using App2d.Game.Presentation.World.Presentation;
-using App2d.Gameplay.Persons;
+using App2d.Core.Shapes;
+using App2d.Presentation.Audio;
+using App2d.Presentation.World.Presentation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;

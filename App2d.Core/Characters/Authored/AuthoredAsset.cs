@@ -2,7 +2,7 @@ using App2d.Core.IO;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>Shared rules for authored character files: stable lowercase IDs, strict parsing and atomic per-file writes.</summary>
 public static partial class AuthoredAsset

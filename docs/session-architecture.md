@@ -6,16 +6,16 @@ first local boundary while preserving the existing single-player campaign.
 
 ## Project boundaries
 
-The compiler now enforces the simulation/presentation split. Each project owns
-its files physically; existing `App2d.Gameplay.*` namespaces are retained to keep
-the extraction focused on assembly dependencies.
+The compiler enforces the simulation/presentation split. Each project owns its
+files physically, and Contracts, Gameplay, and Presentation namespaces follow
+their project directories.
 
 | Project | Responsibility | Internal dependencies |
 | --- | --- | --- |
 | `App2d.Core` (`net10.0`) | Engine primitives, geometry, collision detection, physics bodies and solvers | None |
-| `App2d.Game.Contracts` (`net10.0`) | Commands, state observations, events, shared timing and traversal configuration | Core, Tiles |
+| `App2d.Contracts` (`net10.0`) | Commands, state observations, events, shared timing and traversal configuration | Core, Tiles |
 | `App2d.Gameplay` (`net10.0`) | Session, actors, combat, world simulation, local rollback | Contracts, Core, Tiles |
-| `App2d.Game.Presentation` (Windows) | Views, camera, HUD, sound selection, local client endpoint | Contracts, Core, Tiles, Rendering, Audio |
+| `App2d.Presentation` (Windows) | Views, camera, HUD, sound selection, local client endpoint | Contracts, Core, Tiles, Rendering, Audio |
 | `App2d.Levels` (`net10.0`) | Authored level storage and traversal configuration loading | Contracts, Core, Tiles |
 | `App2d` (Windows executable) | Composition, input devices, scheduling, editor, save-file I/O | Simulation, presentation, and their supporting projects |
 
@@ -40,7 +40,7 @@ or presentation. This checks assembly dependencies; it does not police every BCL
 API or prevent a host from passing an inappropriate callback.
 
 Simulation tests remain in `App2d.Gameplay.Tests`. Graphics/audio and client endpoint
-tests live in `App2d.Game.Presentation.Tests`, whose integration tests may reference
+tests live in `App2d.Presentation.Tests`, whose integration tests may reference
 simulation and content loaders. Save-store tests live with host tests in `App2d.Tests`.
 
 ```powershell
@@ -276,7 +276,7 @@ physics or save state.
 These are in-process observations, not a bandwidth-optimized wire format. Static
 level distribution, terrain revision delivery, and network interest management
 remain future work. The gameplay assembly targets plain `net10.0`; client views
-and their Windows/rendering/audio dependencies live in `App2d.Game.Presentation`.
+and their Windows/rendering/audio dependencies live in `App2d.Presentation`.
 
 ## Remaining scope
 

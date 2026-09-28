@@ -131,7 +131,7 @@ internal sealed class EditorSmoke(string output)
                 var doc = s.AppearanceDocument!;
                 Check(s.Edit(doc, () => doc.Asset.Solids[0].Fill = "#ac7243"), s);
                 Check(s.EquipAppearance("maul-brute", doc.Id, PersonWardrobe.BodySocket), s);
-                Check(s.Edit(s.EntityDocument!, () => s.EntityDocument!.Asset.Equipment.RemoveAll(e => e.Prop == "brute-hide-wrap")), s);
+                Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.Equipment.RemoveAll(e => e.Prop == "brute-hide-wrap")), s);
                 s.SaveAll();
                 var reopened = AuthoredCatalog.Load(s.Assets.Root);
                 Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Solids[0].Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");

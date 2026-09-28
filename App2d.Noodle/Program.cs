@@ -34,15 +34,8 @@ internal static class Program
             return;
         }
 
-        if (args.SequenceEqual(["--vegetation"]))
-        {
-            using var vegetation = new VegetationHost();
-            vegetation.Run();
-            return;
-        }
-
         MessageBox.Show(
-            "Use --rigid, --bones, --prototype, --vegetation, or --check.",
+            "Use --rigid, --bones, --prototype, or --check.",
             "App2d.Noodle",
             MessageBoxButtons.OK,
             MessageBoxIcon.Information);

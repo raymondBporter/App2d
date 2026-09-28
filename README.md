@@ -6,18 +6,18 @@ The solution has separate projects for core engine types, tiles, authored conten
 rendering, audio, and game code, plus the game and NoodleBRO rig-lab Windows executables.
 Collision and physics live inside Core as folders and namespaces.
 Each project physically owns its source files — there are no linked-file views.
-Core, tiles, levels, `App2d.Game.Contracts`, `App2d.Gameplay`, and
+Core, tiles, levels, `App2d.Contracts`, `App2d.Gameplay`, and
 the gameplay tests target plain `net10.0`. Rendering uses MonoGame WindowsDX;
-rendering, audio, `App2d.Game.Presentation`, the host, and their tests target
+rendering, audio, `App2d.Presentation`, the host, and their tests target
 `net10.0-windows10.0.19041.0`.
 
-`App2d.Game.Contracts` owns commands, immutable observations/events, and shared
+`App2d.Contracts` owns commands, immutable observations/events, and shared
 configuration. `App2d.Gameplay` owns simulation and rollback; it cannot reference
-presentation, rendering, audio, or persistence. `App2d.Game.Presentation` owns views,
+presentation, rendering, audio, or persistence. `App2d.Presentation` owns views,
 camera, HUD, sound selection, and the local client endpoint; it cannot reference
 simulation. `Directory.Build.targets` rejects forbidden direct or transitive internal
-assembly references. Existing `App2d.Gameplay.*` namespaces are retained across these
-assemblies. See [the project boundaries](docs/session-architecture.md#project-boundaries).
+assembly references. Their namespaces follow the owning project directories.
+See [the project boundaries](docs/session-architecture.md#project-boundaries).
 
 The engine is grouped by responsibility:
 
@@ -39,7 +39,7 @@ The engine is grouped by responsibility:
   entirely empty chunk. It is the only project that references `Microsoft.Data.Sqlite`,
   and it never references simulation. It also loads authored player geometry into
   shared traversal configuration through `TraversalMetricsLoader2D`; its game
-  dependency is limited to `App2d.Game.Contracts`.
+  dependency is limited to `App2d.Contracts`.
 - `CollisionSystem2D` owns runtime collider registration, collision layers and masks,
   cached static/dynamic spatial indexes, candidate discovery, and exact contacts. It has
   no dependency on physics; physics and gameplay are consumers of collision data.
@@ -136,7 +136,7 @@ Each editable cell is one byte: four bits select one of up to 16 tilesets and fo
 hold the composable tile type. Code exposes those as separate values; the packing is an
 in-memory and level-blob detail. The level metadata stores the ordered, stable tileset IDs.
 
-Exposed plain solid tiles grow seeded grass, using the Noodle vegetation prototype's
+Exposed plain solid tiles grow seeded grass, using an
 anchored wind equation and batched geometry. Active sword strikes (including downward
 attacks) cut a tile's tuft around `VegetationPlacement2D.CutHeightInTiles` (0.35 tiles),
 with seeded per-blade height variation for a ragged edge and matching severed tops.
@@ -147,8 +147,7 @@ forgotten when those chunks unload, so returning grass is full height. Snapshot
 attachment and rollback preserve this bounded state; cuts are not written to the
 level or player save. Seeded branching trees occupy
 open stretches behind the terrain and actors; they are decorative and cannot be chopped.
-The shared rendering code lives in `App2d.Rendering/Vegetation`, and the original lab
-is available with `dotnet run --project App2d.Noodle -- --vegetation`.
+The shared rendering code lives in `App2d.Rendering/Vegetation`.
 Wind deformation currently runs on the CPU and uses the existing GPU triangle batch.
 The camera's terrain coverage includes extra foliage margin for overhanging canopies.
 

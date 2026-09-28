@@ -63,7 +63,8 @@ public static class PartGeometry
             return PrimitiveGeometry2D.DistanceToSegment(p, new(a.X, a.Y), new(b.X, b.Y), 1e-10f)
                 / MathF.Max(part.Width, .06f);
         }
-        var frame = FrameOf(part, world); var local = p - new Vector2(frame.Origin.X, frame.Origin.Y);
+        var frame = FrameOf(part, world);
+        var local = p - new Vector2(frame.Origin.X, frame.Origin.Y);
         var coordinates = new Vector2(Vector2.Dot(local, frame.Right), Vector2.Dot(local, frame.Up));
         if (part.Kind == "trapezoid") coordinates.X /= TrapezoidWidthScale(part, coordinates.Y);
         var halfSize = new Vector2(part.Width / 2, part.Height / 2);

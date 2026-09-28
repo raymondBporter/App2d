@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core;
+namespace App2d.Core.Validation;
 
 /// <summary>
 /// Argument validation with caller names and rejected values. Numeric predicates live in NumericValidation;

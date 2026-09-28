@@ -1,9 +1,9 @@
+using App2d.Contracts.Enemies;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Persons.Actions;
 using App2d.Core;
-using App2d.Game.Presentation.Audio;
-using App2d.Game.Presentation.World.Presentation;
-using App2d.Gameplay.Enemies;
-using App2d.Gameplay.Persons;
-using App2d.Gameplay.Persons.Actions;
+using App2d.Presentation.Audio;
+using App2d.Presentation.World.Presentation;
 using App2d.Levels;
 using App2d.Rendering;
 using App2d.Rendering.Textures;

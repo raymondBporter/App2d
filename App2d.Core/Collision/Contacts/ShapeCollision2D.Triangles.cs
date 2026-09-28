@@ -1,6 +1,7 @@
+using App2d.Core.Geometry.Functions;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Collision.Contacts;
@@ -46,13 +47,13 @@ public static partial class ShapeCollision2D
     private static CollisionResult PolygonVsPolygon(ReadOnlySpan<Vector2> firstLocal, Similarity2D firstPose,
         ReadOnlySpan<Vector2> secondLocal, Similarity2D secondPose)
     {
-        Span<Vector2> first = firstLocal.Length <= 64 ? stackalloc Vector2[firstLocal.Length] : new Vector2[firstLocal.Length];
-        Span<Vector2> second = secondLocal.Length <= 64 ? stackalloc Vector2[secondLocal.Length] : new Vector2[secondLocal.Length];
+        var first = firstLocal.Length <= 64 ? stackalloc Vector2[firstLocal.Length] : new Vector2[firstLocal.Length];
+        var second = secondLocal.Length <= 64 ? stackalloc Vector2[secondLocal.Length] : new Vector2[secondLocal.Length];
         for (var i = 0; i < first.Length; i++) first[i] = firstPose.TransformPoint(firstLocal[i]);
         for (var i = 0; i < second.Length; i++) second[i] = secondPose.TransformPoint(secondLocal[i]);
 
         var maximumAxes = first.Length + second.Length;
-        Span<Vector2> axes = maximumAxes <= 128 ? stackalloc Vector2[maximumAxes] : new Vector2[maximumAxes];
+        var axes = maximumAxes <= 128 ? stackalloc Vector2[maximumAxes] : new Vector2[maximumAxes];
         var axisCount = 0;
         AddPolygonEdgeAxes(axes, ref axisCount, first);
         AddPolygonEdgeAxes(axes, ref axisCount, second);

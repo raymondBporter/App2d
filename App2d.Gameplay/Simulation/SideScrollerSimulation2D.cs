@@ -1,3 +1,6 @@
+using App2d.Core.Validation;
+using App2d.Contracts.Combat;
+using App2d.Contracts.Simulation;
 using App2d.Core;
 using App2d.Core.Collision;
 using App2d.Core.Physics;

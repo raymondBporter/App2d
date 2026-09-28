@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Functions;
+using App2d.Contracts.Enemies;
+using App2d.Contracts.World;
 using App2d.Core.Geometry;
 using App2d.Gameplay.Combat;
-using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;

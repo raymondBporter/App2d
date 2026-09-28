@@ -1,6 +1,10 @@
+using App2d.Contracts.Combat;
+using App2d.Contracts.Enemies;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Simulation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
-using App2d.Gameplay.Combat;
+using App2d.Core.Shapes;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
@@ -50,7 +54,7 @@ public sealed class AuthoredEntityEnemyTests
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
         var bounds = App2d.Core.Geometry.Bounds2D.FromPoints([.. head.Points.Select(p => p * AuthoredWorld.PixelsPerUnit)]);
-        var hit = new App2d.Core.SpatialObject2D(App2d.Core.Geometry.AxisAlignedRectangle2D.FromSize(new(4)));
+        var hit = new App2d.Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(4)));
         hit.Transform.Position = bounds.Center;
         var facts = new List<CombatDamage2D>(); game.Combat.DamageResolved += facts.Add;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy,
@@ -161,7 +165,7 @@ public sealed class AuthoredEntityEnemyTests
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
         var center = head.Points.Aggregate(Vector2.Zero, (a, b) => a + b) / head.Points.Count * AuthoredWorld.PixelsPerUnit;
         Assert.True(center.Y > guard.WorldObject.WorldBounds.Max.Y - 30, "the head region comes from the pose, not the movement box");
-        var hit = new Core.SpatialObject2D(Core.Geometry.AxisAlignedRectangle2D.FromSize(new(2)));
+        var hit = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(2)));
         hit.Transform.Position = center;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
         Assert.Equal(guard.Entity.Asset.Health - 1, guard.Health.Current);
@@ -179,7 +183,7 @@ public sealed class AuthoredEntityEnemyTests
         var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(150, 40), 2, 1, CombatFaction2D.Player, 30);
         if (wall)
         {
-            var shape = new Core.SpatialObject2D(Core.Geometry.AxisAlignedRectangle2D.FromSize(new(5, 400))); shape.Transform.Position = new(95, 40);
+            var shape = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(5, 400))); shape.Transform.Position = new(95, 40);
             var body = physics.AddBody(shape, BodyMotionType2D.Static); body.CollisionLayer = 1; body.CollisionMask = 6;
         }
         var sawBolt = false;

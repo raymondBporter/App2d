@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 namespace App2d.Core.Characters;
 
 /// <summary>Small, rig-independent facial pose. Feature coordinates use X right, Y down.</summary>

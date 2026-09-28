@@ -1,7 +1,7 @@
-using App2d.Game.Presentation.World.Presentation;
-using App2d.Gameplay.Enemies;
-using App2d.Gameplay.Persons;
-using App2d.Gameplay.Simulation;
+using App2d.Contracts.Enemies;
+using App2d.Contracts.Simulation;
+using App2d.Presentation.Persons;
+using App2d.Presentation.World.Presentation;
 using System.Collections.Immutable;
 
 namespace App2d.Diagnostics;

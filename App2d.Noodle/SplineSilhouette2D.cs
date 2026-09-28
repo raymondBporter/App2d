@@ -1,6 +1,8 @@
+using App2d.Core.Validation;
 using App2d.Core;
 using App2d.Core.Curves;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Noodle;
@@ -139,45 +141,7 @@ internal static class SplineSilhouette2D
         {
             if (Vector2.DistanceSquared(_points[^1], _start) <= 0.0001f)
                 _points.RemoveAt(_points.Count - 1);
-            return new ConvexPolygon2D(CreateConvexHull(_points));
-        }
-
-        private static List<Vector2> CreateConvexHull(IEnumerable<Vector2> source)
-        {
-            var points = source
-                .Distinct()
-                .OrderBy(point => point.X)
-                .ThenBy(point => point.Y)
-                .ToArray();
-            if (points.Length < 3)
-                throw new InvalidOperationException("A closed spline silhouette needs at least three distinct points.");
-
-            var hull = new List<Vector2>(points.Length * 2);
-            foreach (var point in points)
-            {
-                while (hull.Count >= 2 && Cross(hull[^2], hull[^1], point) <= 0f)
-                    hull.RemoveAt(hull.Count - 1);
-                hull.Add(point);
-            }
-
-            var lowerCount = hull.Count;
-            for (var index = points.Length - 2; index >= 0; index--)
-            {
-                var point = points[index];
-                while (hull.Count > lowerCount && Cross(hull[^2], hull[^1], point) <= 0f)
-                    hull.RemoveAt(hull.Count - 1);
-                hull.Add(point);
-            }
-
-            hull.RemoveAt(hull.Count - 1);
-            return hull;
-        }
-
-        private static float Cross(Vector2 origin, Vector2 a, Vector2 b)
-        {
-            var first = a - origin;
-            var second = b - origin;
-            return first.X * second.Y - first.Y * second.X;
+            return new ConvexPolygon2D(PolygonGeometry2D.ConvexHull(_points));
         }
     }
 }

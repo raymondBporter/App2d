@@ -107,8 +107,13 @@ public sealed class WeaponOrientationTests
     [Fact]
     public void SolidBladeKeepsAThinVisibleEdgeAndDoesNotLoseItsReverseFace()
     {
-        var prop = new PropAsset { Id = "blade", Name = "Blade", LineWidth = .008f,
-            Solids = [PropGeometry.Extrude([new(0, -.1f), new(1, -.1f), new(1, .1f), new(0, .1f)], .02f, "#cccccc")] };
+        var prop = new PropAsset
+        {
+            Id = "blade",
+            Name = "Blade",
+            LineWidth = .008f,
+            Solids = [PropGeometry.Extrude([new(0, -.1f), new(1, -.1f), new(1, .1f), new(0, .1f)], .02f, "#cccccc")]
+        };
         var drawing = new PuppetDrawing();
         float Width(float angle)
         {

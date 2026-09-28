@@ -1,6 +1,5 @@
 using App2d.Core.Curves;
 using App2d.Core.Geometry.Functions;
-using App2d.Rendering.Vegetation;
 using System.Numerics;
 
 namespace App2d.Noodle;
@@ -13,8 +12,6 @@ internal static class RigidPrototypeChecks2D
         CheckPartSetsMatchSkeleton();
         CheckSkeletonMirrorsAndKeepsLengths();
         CheckSplineSilhouettes();
-        var wind = new VegetationWind2D(1.25d, 18f, 1.1f, 0.03f, 0.5f);
-        RequireClose(wind.Offset(42f, 0f, 0.7f, 1f), 0f, "vegetation root offset");
         CheckSideViewBlend();
         CheckPoseInterpolation();
         CheckStanceFootStaysInWorldSpace();

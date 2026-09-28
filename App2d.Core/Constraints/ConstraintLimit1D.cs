@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 namespace App2d.Core.Constraints;
 
 public enum ConstraintLimitState1D

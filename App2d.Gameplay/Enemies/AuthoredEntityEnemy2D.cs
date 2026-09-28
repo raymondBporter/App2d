@@ -1,9 +1,12 @@
+using App2d.Core.Geometry.Functions;
+using App2d.Contracts.Combat;
+using App2d.Contracts.Enemies;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
+using App2d.Core.Shapes;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
@@ -179,18 +182,17 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
     }
 
-    private static EntityRegion ToWorld(EntityRegion region) => new(region.Id, [.. region.Points.Select(p => p * Scale)]);
+    private static EntityRegion ToWorld(EntityRegion region) => region.Scaled(Scale);
 
     public bool TryResolvePlayerHit(Person2D player)
     {
         if (!_enabled) return false;
         AdvanceBolts(player); // bolts already in flight keep going after their shooter falls
         if (!IsAlive) return !player.IsAlive;
-        var bounds = player.WorldObject.WorldBounds; var target = EntityRegion.Box("player", bounds.Center, bounds.Size);
         foreach (var hit in _animator.ActiveHits())
         {
             var region = ToWorld(EntityCollision.Attack(Entity, Pose, hit));
-            if (!region.Overlaps(target, Vector2.Zero, Vector2.Zero) || !_ledger.TryHit(_animator.ActionSequence, hit.Window.Id, 0)) continue;
+            if (!region.Overlaps(player.WorldObject) || !_ledger.TryHit(_animator.ActionSequence, hit.Window.Id, 0)) continue;
             player.TryTakeDamageFromX(hit.Window.Damage, WorldObject.Transform.Position.X);
             _events.Add(new EntityCue2D(Id, player.Position, hit.Window.Sound ?? "hit"));
         }
@@ -221,7 +223,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         if (!_enabled || !IsAlive) yield break;
         foreach (var hit in _animator.ActiveHits())
-            yield return new SpatialObject2D(new ConvexPolygon2D([.. ToWorld(EntityCollision.Attack(Entity, Pose, hit)).Points]));
+            yield return new SpatialObject2D(ToWorld(EntityCollision.Attack(Entity, Pose, hit)).ToShape());
     }
 
     public bool TryRegisterHit(EntityId2D source, int attack)

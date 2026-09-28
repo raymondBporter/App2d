@@ -1,4 +1,4 @@
-using App2d.Gameplay.World;
+using App2d.Contracts.World;
 using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;

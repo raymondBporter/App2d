@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authored;
 
 /// <summary>
 /// Where a converted asset came from. The source file is never changed; this record is enough to repeat the conversion.

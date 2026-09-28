@@ -1,6 +1,7 @@
+using App2d.Core.Geometry.Functions;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -105,7 +106,7 @@ public sealed class NumericValidationTests
         var unbounded = new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity));
         Assert.False(unbounded.IsFinite);
         Assert.True(unbounded.Contains(Vector2.Zero));
-        Assert.Equal(default(Rect2D), Rect2D.FromSize(Vector2.Zero));
+        Assert.Equal(default, Rect2D.FromSize(Vector2.Zero));
         Assert.Throws<ArgumentException>(() => new Rect2D(new(float.NaN, 0), Vector2.One));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Circle2D(float.PositiveInfinity));
         Assert.Throws<ArgumentOutOfRangeException>(() => Rectangle2D.FromSize(new(float.PositiveInfinity, 1)));

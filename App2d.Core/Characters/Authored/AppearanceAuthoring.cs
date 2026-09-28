@@ -11,7 +11,7 @@ public static class AppearanceAuthoring
         var art = source is null ? new PropAsset { Usage = "clothing", Attachment = PersonWardrobe.BodySocket, Tip = default } :
             PropAsset.FromJson(PersonWardrobe.Props().Single(p => p.Id == source).ToJson());
         art.Id = id; art.Name = name; art.Ink = ink; art.LineWidth = lineWidth; art.BackView = null;
-        if (source is null) art.Solids.Add(PropGeometry.Extrude([new(-.15f, 0), new(.15f, 0), new(.15f,.3f), new(-.15f,.3f)], .02f, "#b97549"));
+        if (source is null) art.Solids.Add(PropGeometry.Extrude([new(-.15f, 0), new(.15f, 0), new(.15f, .3f), new(-.15f, .3f)], .02f, "#b97549"));
         art.Validate(); return art;
     }
 

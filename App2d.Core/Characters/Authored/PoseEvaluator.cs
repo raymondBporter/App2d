@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
 using System.Numerics;
