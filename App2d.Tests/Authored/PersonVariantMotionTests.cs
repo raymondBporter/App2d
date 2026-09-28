@@ -12,7 +12,7 @@ public sealed class PersonVariantMotionTests
     private static MotionClip Clip(string which)
     {
         var puppet = which == "walk" ? PuppetTemplates.StepStudy() : PuppetTemplates.RunStudy();
-        return PuppetMotionConverter.Convert(puppet, puppet.Motions[0], Person, "person-" + which, which, "leg");
+        return PuppetMotionConverter.Convert(puppet, puppet.Motions[0], PersonTemplate.StudyReference(), "person-" + which, which, "leg");
     }
     private static PersonBuild BuildValues(string build) => build switch { "tall" => PersonBuild.TallThin, "short" => PersonBuild.ShortBroad, _ => new() };
     private static ResolvedModel Build(string build) =>
@@ -109,22 +109,23 @@ public sealed class PersonVariantMotionTests
         var before = builds.Select(m => PoseEvaluator.Sample(m, clip, 0).World("hips").Y).ToArray();
         clip.Tracks.Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" }).Keys[0].Y += .1f;
         var after = builds.Select(m => PoseEvaluator.Sample(m, clip, 0).World("hips").Y).ToArray();
-        Assert.Equal(.1f, after[0] - before[0], 4);
-        Assert.Equal(.1f * PersonBuild.TallThin.Legs, after[1] - before[1], 4);
-        Assert.Equal(.1f * PersonBuild.ShortBroad.Legs, after[2] - before[2], 4);
+        Assert.Equal(.1f * PersonTemplate.LegLength, after[0] - before[0], 4);
+        Assert.Equal(.1f * PersonTemplate.LegLength * PersonBuild.TallThin.Legs, after[1] - before[1], 4);
+        Assert.Equal(.1f * PersonTemplate.LegLength * PersonBuild.ShortBroad.Legs, after[2] - before[2], 4);
     }
 
     [Fact]
     public void AnUnreachableBuildKeepsLimbLengthsAndReportsTheShortfall()
     {
-        // Straighten the left knee: that leg can no longer reach mid-stance, while the leg measure (right leg) is unchanged.
+        // Straighten the left leg and ask it to plant below its reach; the right-leg reference measure stays unchanged.
         var hip = Person.Controls.Single(c => c.Id == "left-hip").Rest.XYZ; var foot = Person.Controls.Single(c => c.Id == "left-foot").Rest.XYZ;
         var variant = new ModelVariant { Id = "stiff-left", Name = "Stiff left", Base = "person", Rest = { ["left-knee"] = PuppetPoint.From(Vector3.Lerp(hip, foot, .5f)) } };
         var model = ResolvedModel.From(Person, variant); var clip = Clip("walk"); clip.Validate(model);
         var misses = 0;
         foreach (var seconds in TwoCycles(clip))
         {
-            var pose = PoseEvaluator.Sample(model, clip, seconds, repeat: true);
+            var pose = PoseEvaluator.Sample(model, clip, seconds, repeat: true,
+                input: new() { Contact = (chain, target) => chain == "left-leg" ? target - new Vector3(0, .1f, 0) : target });
             Assert.InRange(MathF.Abs(model.Length("left-hip", "left-knee") - Vector2.Distance(XY(pose.World("left-hip")), XY(pose.World("left-knee")))), 0, 1e-4f);
             if (pose.Chains.Single(c => c.Chain == "left-leg") is { Reached: false, Residual: > 1e-3f }) misses++;
         }

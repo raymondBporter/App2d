@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Gameplay.Player;
 using System.Numerics;
 using System.Text.Json;
@@ -24,12 +25,19 @@ public static class TraversalMetricsLoader2D
                 $"Player geometry manifest is empty: {path}");
         Validate(manifest, path);
 
+        // The sprite manifest predates the authored Person. Keep its world scale when the
+        // shared proportions change, with the standing box snapped to the traversal grid.
+        var heightRatio = ResolvedModel.From(PersonTemplate.Model()).DrawnHeight() /
+            ResolvedModel.From(PersonTemplate.StudyReference()).DrawnHeight();
+        var halfUnit = TraversalMetrics2D.DesignUnit / 2;
+        var standingHeight = MathF.Round(manifest.StandingCollider.Size.Height * heightRatio / halfUnit) * halfUnit;
+
         return TraversalMetrics2D.FromGeometry(
             new Vector2(manifest.VisualSize.Width, manifest.VisualSize.Height),
             manifest.FootAnchorYFraction,
             new Vector2(
                 manifest.StandingCollider.Size.Width,
-                manifest.StandingCollider.Size.Height),
+                standingHeight),
             manifest.StandingCollider.CenterOffsetX);
     }
 

@@ -13,7 +13,7 @@
   "health": 7,
   "movement": {
     "width": 0.353,
-    "height": 2.186
+    "height": 2.01
   },
   "hurt": {
     "layout": "standard",

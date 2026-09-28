@@ -9,7 +9,7 @@ public sealed class PersonStudyConversionTests
     public void ConvertedStudiesReproduceThePrototypeAtReferenceProportions(string which)
     {
         var puppet = which == "walk" ? PuppetTemplates.StepStudy() : PuppetTemplates.RunStudy();
-        var model = PersonTemplate.Model();
+        var model = PersonTemplate.StudyReference();
         var clip = PuppetMotionConverter.Convert(puppet, puppet.Motions[0], model, "person-" + which, which, "leg");
         var resolved = ResolvedModel.From(model);
         clip.Validate(resolved);
@@ -19,7 +19,7 @@ public sealed class PersonStudyConversionTests
     [Fact]
     public void ConversionKeysTargetsNotSolvedJointsAndDropsEmptyTracks()
     {
-        var puppet = PuppetTemplates.StepStudy(); var model = PersonTemplate.Model();
+        var puppet = PuppetTemplates.StepStudy(); var model = PersonTemplate.StudyReference();
         var clip = PuppetMotionConverter.Convert(puppet, puppet.Motions[0], model, "person-walk", "Walk", "leg");
         Assert.DoesNotContain(clip.Tracks, t => t.Target.EndsWith("-knee") || t.Target.EndsWith("-elbow") || t.Target.EndsWith("-foot") || t.Target.EndsWith("-hand"));
         Assert.Contains(clip.Tracks, t => t is { Kind: MotionClip.TargetKind, Target: "left-leg" });

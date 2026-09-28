@@ -15,6 +15,9 @@
     "cooldown": 0.2
   },
   "health": 5,
+  "movement": {
+    "height": 1.705
+  },
   "hurt": {
     "layout": "standard",
     "regions": {

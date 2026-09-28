@@ -38,7 +38,7 @@ public sealed class GunChargeTests
         Assert.Equal(1, game.Shots);
         var bolt = Assert.Single(game.Arsenal.GetActiveAttackHitboxes());
         Assert.Equal(58.664f * facing, bolt.Transform.Position.X - game.Person.Position.X, 2);
-        Assert.Equal(4.074f, bolt.Transform.Position.Y - game.Person.Position.Y, 2);
+        Assert.Equal(6.074f, bolt.Transform.Position.Y - game.Person.Position.Y, 2); // 52px standing box; legacy sprite muzzle stays foot-anchored
         var shotX = bolt.Transform.Position.X;
         game.Step(Hold);
         Assert.True((bolt.Transform.Position.X - shotX) * facing > 0f);
