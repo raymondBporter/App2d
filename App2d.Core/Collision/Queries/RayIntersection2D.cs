@@ -16,6 +16,7 @@ public static class RayIntersection2D
         out RayHit2D hit)
     {
         ArgGuard.ThrowIfNull(worldObject);
+        ray.Validate();
         ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
 
         var worldBounds = worldObject.WorldBounds;
@@ -59,6 +60,7 @@ public static class RayIntersection2D
         Bounds2D bounds,
         float maxDistance)
     {
+        ray.Validate();
         ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
         if (!bounds.IsFinite)
             return true;

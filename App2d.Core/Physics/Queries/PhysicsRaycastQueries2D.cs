@@ -1,4 +1,5 @@
 using App2d.Core.Collision.Queries;
+using App2d.Core.Geometry.Shapes;
 
 namespace App2d.Core.Physics.Queries;
 
@@ -10,6 +11,7 @@ public static class PhysicsRaycastQueries2D
             RayQueryFilter2D<PhysicsBody2D>? filter = null)
         {
             ArgGuard.ThrowIfNull(world);
+            ray.Validate();
             ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
 
             var found = false;
@@ -39,6 +41,7 @@ public static class PhysicsRaycastQueries2D
             RayQueryFilter2D<PhysicsBody2D>? filter = null)
         {
             ArgGuard.ThrowIfNull(world);
+            ray.Validate();
             ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
             if (hits.IsEmpty)
                 return 0;

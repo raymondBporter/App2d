@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Shapes;
+
 namespace App2d.Core.Collision.Queries;
 
 public static class RaycastQueries2D
@@ -11,6 +13,7 @@ public static class RaycastQueries2D
         where T : SpatialObject2D
     {
         ArgGuard.ThrowIfNull(worldObjects);
+        ray.Validate();
         ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
 
         var found = false;
@@ -45,6 +48,7 @@ public static class RaycastQueries2D
         where T : SpatialObject2D
     {
         ArgGuard.ThrowIfNull(worldObjects);
+        ray.Validate();
         ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
         if (hits.IsEmpty)
             return 0;
