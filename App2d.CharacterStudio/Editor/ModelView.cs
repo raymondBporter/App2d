@@ -53,7 +53,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (ImGui.BeginPopup("add-part"))
         {
             var anchor = session.Selection.Control ?? structure.Controls[0].Id;
-            foreach (var kind in new[] { "ellipse", "box", "stroke" })
+            foreach (var kind in new[] { "ellipse", "box", "trapezoid", "stroke" })
             {
                 if (ImGui.MenuItem($"{kind} on {anchor}", "", false, kind != "stroke" || structure.Controls.Count > 1) && Base is { } document)
                 {
@@ -308,9 +308,39 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => p.Height = v, o => o.Height = null);
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
-            if (overrides is null && part.Kind == "box") Float("Roundness", part.Roundness, 0, 1, false, (p, v) => p.Roundness = v, _ => { });
+            if (overrides is null && part.Kind is "box" or "trapezoid") Float("Roundness", part.Roundness, 0, 1, false, (p, v) => p.Roundness = v, _ => { });
+            if (overrides is null && part.Kind == "trapezoid") Float("Top width scale", part.TopWidthScale, .01f, 1, false, (p, v) => p.TopWidthScale = v, _ => { });
             if (!Marked("Fill", overrides?.Fill is not null, o => o.Fill = null))
             { var fill = part.Fill; if (Ui.ColorHex("##fill", ref fill)) change(p => p.Fill = fill); }
+            Float("Outline width", part.OutlineWidth ?? .045f, 0, .15f, overrides?.OutlineWidth is not null, (p, v) => p.OutlineWidth = v, o => o.OutlineWidth = null);
+            if (!Marked("Fabric paint", overrides?.Paint is not null, o => o.Paint = null) && ImGui.CollapsingHeader("Edit fabric paint"))
+            {
+                Ui.Help("Paint follows the body's shape and motion. Coordinates are relative to its width and height. Use the body fill as the fabric color.");
+                void Paint(Action<List<PartPaint>> edit)
+                {
+                    var patches = (part.Paint ?? []).Select(p => new PartPaint { Fill = p.Fill, Points = [.. p.Points] }).ToList();
+                    edit(patches);
+                    try { PartPaint.Check(patches); change(p => p.Paint = patches); }
+                    catch (InvalidDataException) { /* Keep the last valid convex patch during a drag. */ }
+                }
+                if (ImGui.Button("Add fabric patch")) Paint(p => p.Add(new() { Fill = "#754222", Points = [new(-.1f, -.1f), new(.1f, -.1f), new(.1f, .1f), new(-.1f, .1f)] }));
+                for (var i = 0; i < (part.Paint?.Count ?? 0); i++)
+                {
+                    var index = i; var patch = part.Paint![i]; ImGui.PushID("paint-" + i);
+                    if (ImGui.TreeNode("Patch " + (i + 1)))
+                    {
+                        var color = patch.Fill; if (Ui.ColorHex("Color", ref color)) Paint(p => p[index].Fill = color);
+                        for (var j = 0; j < patch.Points.Count; j++)
+                        {
+                            var point = j; var xy = patch.Points[j].XY;
+                            if (Ui.Drag2("Point " + (j + 1), ref xy, .005f, -2, 2)) Paint(p => p[index].Points[point] = new(xy.X, xy.Y));
+                        }
+                        if (ImGui.SmallButton("Delete patch")) Paint(p => p.RemoveAt(index));
+                        ImGui.TreePop();
+                    }
+                    ImGui.PopID();
+                }
+            }
             if (!Marked("Default expression", overrides?.Face is not null, o => o.Face = null))
             {
                 ImGui.SetNextItemWidth(-1);
@@ -416,6 +446,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (edited.OffsetX != resolved.OffsetX) o.OffsetX = edited.OffsetX;
         if (edited.OffsetY != resolved.OffsetY) o.OffsetY = edited.OffsetY;
         if (edited.Fill != resolved.Fill) o.Fill = edited.Fill;
+        if (edited.OutlineWidth != resolved.OutlineWidth) o.OutlineWidth = edited.OutlineWidth;
+        if (edited.Paint != resolved.Paint) o.Paint = edited.Paint;
         if (edited.Face != resolved.Face) o.Face = edited.Face;
         if (edited.FaceX != resolved.FaceX) o.FaceX = edited.FaceX;
         if (edited.Hidden != resolved.Hidden) o.Hidden = edited.Hidden;

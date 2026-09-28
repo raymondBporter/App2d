@@ -38,6 +38,38 @@ public sealed record PuppetChain
     public int Bend { get; set; } = 1;
 }
 
+/// <summary>A convex patch of color in normalized part coordinates; clipped to the part's actual silhouette.</summary>
+public sealed record PartPaint
+{
+    public string Fill { get; set; } = "#ffffff";
+    public List<PuppetPoint> Points { get; set; } = [];
+
+    public static void Check(IReadOnlyList<PartPaint>? paint)
+    {
+        if (paint is null) return;
+        if (paint.Count > 64) throw new InvalidDataException("A part supports at most 64 paint patches.");
+        foreach (var patch in paint)
+        {
+            if (patch?.Points is not { Count: >= 3 and <= 64 }) throw new InvalidDataException("Paint needs 3 to 64 polygon points.");
+            Limit.Color(patch.Fill, "paint.fill");
+            var sign = 0;
+            for (var i = 0; i < patch.Points.Count; i++)
+            {
+                var p = patch.Points[i]; p.Check("paint.point");
+                if (p.Z != 0) throw new InvalidDataException("Paint coordinates are XY only.");
+                var a = patch.Points[(i + 1) % patch.Points.Count].XY - p.XY;
+                var b = patch.Points[(i + 2) % patch.Points.Count].XY - patch.Points[(i + 1) % patch.Points.Count].XY;
+                var cross = a.X * b.Y - a.Y * b.X;
+                if (MathF.Abs(cross) < 1e-8f) continue;
+                var next = MathF.Sign(cross);
+                if (sign != 0 && sign != next) throw new InvalidDataException("Paint patches must be convex.");
+                sign = next;
+            }
+            if (sign == 0) throw new InvalidDataException("Paint patch has no area.");
+        }
+    }
+}
+
 /// <summary>Stroke endpoints follow controls. Other shapes attach to A; B optionally points their local +Y axis.</summary>
 public sealed record PuppetPart
 {
@@ -51,7 +83,12 @@ public sealed record PuppetPart
     public float OffsetY { get; set; }
     public float Depth { get; set; }
     public float Roundness { get; set; } = .25f;
+    /// <summary>Trapezoid width at local +Y relative to its base; ignored by other shapes.</summary>
+    public float TopWidthScale { get; set; } = .7f;
     public string Fill { get; set; } = "#fff8e7";
+    /// <summary>Null inherits the model's ink width. Does not change facial expression strokes.</summary>
+    public float? OutlineWidth { get; set; }
+    public List<PartPaint>? Paint { get; set; }
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
@@ -62,11 +99,14 @@ public sealed record PuppetPart
     {
         if (A is null || !isControl(A)) throw new InvalidDataException("Unknown control: " + A);
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
-        EntityVocabulary.Require(Kind, ["stroke", "ellipse", "box"], "part.kind");
+        EntityVocabulary.Require(Kind, ["stroke", "ellipse", "box", "trapezoid"], "part.kind");
         if (Kind == "stroke" && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
         new Limit(-16, 16).Check(Depth, "part.depth"); new Limit(0, 1).Check(Roundness, "part.roundness"); Limit.Color(Fill, "part.fill");
+        new Limit(.01f, 1).Check(TopWidthScale, "part.topWidthScale");
+        if (OutlineWidth is { } outline) new Limit(0, 1).Check(outline, "part.outlineWidth");
+        PartPaint.Check(Paint);
         if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
         new Limit(-1, 1).Check(FaceX, "part.faceX");
     }

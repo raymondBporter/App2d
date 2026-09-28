@@ -12,15 +12,16 @@ namespace App2d.Game.Presentation.Tests.World;
 public sealed class GrassCuttingTests
 {
     [Fact]
-    public void RoughCutsVaryBetweenBladesAndStayStableAcrossWindAndRecreation()
+    public void RoughCutsAreRaggedGrazeSomeTuftsAndStayStableAcrossWindAndRecreation()
     {
-        var patch = Patch(320f);
+        var patch = Patch(640f);
         var tips = patch.CreateClippings(12f, Wind(), 0.45f).ToArray();
         var heights = tips.Select(t => t.WorldBounds(t.ReleasePosition, 0f).Bottom).ToArray();
-        Assert.Equal(patch.BladeCount, tips.Length);
-        Assert.All(heights, height => Assert.InRange(height, 7f + 12f * 0.55f, 7f + 12f * 1.45f));
+        Assert.Equal(patch.BladeCount, tips.Length); // Every blade loses at least its tip.
+        Assert.All(heights, height => Assert.InRange(height, 7f + 12f * 0.75f, 7f + 30f * 0.8f + 1e-3f));
+        Assert.Contains(heights, height => height > 7f + 30f * 0.55f - 1e-3f); // Grazed tufts keep most of their length.
         Assert.True(heights.Max() - heights.Min() > 5f);
-        Assert.Equal(heights, Patch(320f).CreateClippings(12f, Wind(20f), 0.45f)
+        Assert.Equal(heights, Patch(640f).CreateClippings(12f, Wind(20f), 0.45f)
             .Select(t => t.WorldBounds(t.ReleasePosition, 0f).Bottom).ToArray());
         Assert.All(tips, tip => AssertBladeTop(tip.WorldBounds(tip.ReleasePosition, 0f).Top));
     }

@@ -44,10 +44,51 @@ Rendering uses the same orthographic depth buffer as characters, with flat facet
 ink on solid props. Coplanar triangulation edges are suppressed. Legacy stroke/polygon props still load. Socket
 orientation is evaluated before both drawing and gameplay point projection; gameplay collision remains XY.
 
+## Hair and clothing
+
+The Hero wears short tousled hair. Maul brute is bare-chested with an ochre hide skirt; Cinder gunner
+wears a russet one-shoulder tunic and hide wrap. Both enemies keep wild hair and caveman beards.
+The tunic is the torso's fill plus normalized `paint`
+patches for the spots and exposed shoulder. Paint follows the torso dimensions and frame and is clipped
+to its contour. Head and torso inherit the same thick outline as the rest of the character, and
+the hair and clothing use matching ink. Fabric spots have no separate border.
+Hair, beards and wraps are editable prop assets equipped on `head-art` and `body-art`.
+`PersonWardrobeDepths` derives named depth slots from each build's rest pose. From far to near:
+far arm, wrap back, far leg, torso, near leg, wrap front, belt/pattern details, near arm.
+The belt and pattern have their own thickness budget inside the leg-to-arm gap, including clearance
+for their outlines. This avoids belt details cutting across the near forearm on narrower builds.
+The wrap encloses both hip strokes; animation keeps its authored XYZ rather than being flattened
+onto these slots. These are indexed meshes, not animation frame images.
+The body socket's `toward: "chest"` follows the evaluated hips-to-chest direction. The head socket uses
+`frame: "locomotion"` to match the current screen-facing head drawing. The player's runtime loadout
+keeps hair when unarmed and selects its back silhouette using the existing view markers.
+
+Use **New > Appearance: hair / clothing** to start from hair, beard, skirt, or a blank cutout.
+Right-click an existing appearance asset to duplicate it. The **Appearance** workspace previews the
+selected asset on a wearer; choose the socket and drag the gold silhouette points, or edit their
+coordinates. Each piece has fill, outline, depth and thickness controls. The waist depth guide shows
+where the arms, legs, belt and wrap surfaces sit. **Match body ink** copies the model's stroke style.
+**Equip on wearer** adds the asset; remove the old style under **Entity > Equipment** when replacing it.
+**Save all** saves both artwork and equipment. Undo/redo covers both. The player reads its appearance
+from the Hero's equipment, including an optional back-view asset, independently of carried weapons.
+
+For a fitted tunic, select the torso in **Model**, set its fill, then use **Fabric paint > Edit fabric paint**
+to add colored patches and edit their normalized polygon points. Save a look on the base to reuse it
+on other variants. Cutout outlines are stored alongside the meshes, so they remain editable after reopening.
+When launched from the repository, the editor saves into source `Assets/Characters/authored`, rather
+than the build output copy. Rebuild/restart the game to pick up saved asset changes.
+
+`--write-wardrobe <authored-dir>` regenerates only these wardrobe assets, sockets and equipment bindings,
+and the two enemies' torso paint and outline widths. It overwrites edits to that wardrobe art; `--write-player-moves`
+also runs this step. `--smoke-wardrobe <dir>` renders idle, run, attacks, and climbing/death samples in both
+facings, including game-size views. Clothing follows the rig rigidly; this first pass has no cloth simulation.
+
 ## Workspaces
 
 - **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
   model. On a variant: build values, part overrides with **Reset to base**, and looks. **Edit rig** shows control handles.
+- **Appearance**: reusable hair, beards and clothes, editable cutout silhouettes, colors, ink, depth and thickness,
+  with wearer preview and equipment binding.
 - **Animate**: clips compatible with the subject's base. Dragging keys the channel it drives (autokey), contacts,
   markers, face keys, easing and onion skin. **Compare** pins two more builds at the same phase and world scale.
 - **Entity**: model and motion set with per-role overrides, controller, movement box, hurt regions, equipment and the

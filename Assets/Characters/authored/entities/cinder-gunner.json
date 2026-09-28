@@ -23,6 +23,18 @@
     {
       "prop": "pistol",
       "socket": "gun-hand"
+    },
+    {
+      "prop": "cinder-hide-wrap",
+      "socket": "body-art"
+    },
+    {
+      "prop": "cinder-hair",
+      "socket": "head-art"
+    },
+    {
+      "prop": "cinder-beard",
+      "socket": "head-art"
     }
   ],
   "actions": [

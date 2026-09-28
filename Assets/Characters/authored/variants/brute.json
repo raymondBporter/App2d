@@ -14,7 +14,8 @@
   "rest": {},
   "parts": {
     "body": {
-      "fill": "#8a7564"
+      "fill": "#ead6c1",
+      "paint": []
     },
     "head": {
       "fill": "#ead6c1",

@@ -190,7 +190,7 @@ public sealed class AuthoredEntityEnemyTests
             if (bolts.Length > 0 && !sawBolt)
             {
                 sawBolt = true;
-                var gun = gunner.Entity.Equipment.Single();
+                var gun = gunner.Entity.Equipment.Single(e => e.Prop.Muzzle is not null); // Hair and clothing are equipment too.
                 var muzzle = ActorPose.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * AuthoredWorld.PixelsPerUnit;
                 Assert.True(Vector2.Distance(new(muzzle.X, muzzle.Y), bolts[0].Position) < 12, "the bolt leaves the drawn muzzle");
                 Assert.True(bolts[0].Velocity.X > 0, "toward the player");

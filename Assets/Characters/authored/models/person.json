@@ -273,7 +273,7 @@
     },
     {
       "id": "body",
-      "kind": "box",
+      "kind": "trapezoid",
       "a": "hips",
       "b": "chest",
       "width": 0.36,
@@ -332,6 +332,17 @@
       "id": "gun-hand",
       "control": "right-hand",
       "frame": "right-shoulder"
+    },
+    {
+      "id": "head-art",
+      "control": "head",
+      "frame": "locomotion"
+    },
+    {
+      "id": "body-art",
+      "control": "hips",
+      "frame": "hips",
+      "toward": "chest"
     }
   ],
   "motionSets": [

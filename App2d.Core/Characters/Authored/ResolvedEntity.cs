@@ -91,6 +91,7 @@ public sealed class ResolvedEntity
         foreach (var binding in asset.Equipment)
         {
             var prop = propOf(binding.Prop) ?? throw new InvalidDataException($"{owner} equipment: no prop '{binding.Prop}'.");
+            if (prop.BackView is { } back && propOf(back) is null) throw new InvalidDataException($"{owner} equipment '{prop.Id}': no back-view appearance '{back}'.");
             if (!entity.Sockets.TryGetValue(binding.Socket, out var socket)) throw new InvalidDataException($"{owner} equipment '{binding.Prop}': '{model.Base.Id}' has no socket '{binding.Socket}'.");
             equipment.Add(new(prop, socket));
         }
@@ -184,9 +185,22 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
     public Vector3 ToLocal(Vector3 world) => new((world.X - Position.X) * Facing, world.Y - Position.Y, world.Z);
     public Vector3 World(string control) => Place(Local.Points[control]);
 
+    /// <summary>The socket's XY base angle before authored socket orientation, shared with editor handles.</summary>
+    public float SocketBaseAngle(ModelSocket socket)
+    {
+        var angle = socket.Frame == CharacterModel.Locomotion ? 0 : Local.Angles[socket.Frame ?? socket.Control];
+        if (socket.Toward is { } toward)
+        {
+            var direction = Local.Points[toward] - Local.Points[socket.Control];
+            if (direction.X * direction.X + direction.Y * direction.Y > 1e-10f)
+                angle = MathF.Atan2(-direction.X, direction.Y);
+        }
+        return angle;
+    }
+
     public SocketFrame Socket(ModelSocket socket)
     {
-        var angle = Local.Angles[socket.Frame ?? socket.Control];
+        var angle = SocketBaseAngle(socket);
         var origin = Local.Points[socket.Control] + PoseEvaluator.RotateXY(new(socket.OffsetX, socket.OffsetY, socket.OffsetZ), angle);
         var orientation = Local.SocketAngles.GetValueOrDefault(socket.Id);
         var rotation = Matrix4x4.CreateRotationX(orientation.X) * Matrix4x4.CreateRotationY(orientation.Y)

@@ -4,7 +4,7 @@ using System.Numerics;
 namespace App2d.Core.Characters.Editing;
 
 /// <summary>Model edits rest geometry and appearance; Animate edits motion; Entity edits what a character does in the game.</summary>
-public enum Workspace { Model, Animate, Entity }
+public enum Workspace { Model, Animate, Entity, Appearance }
 
 /// <summary>What the author has picked. Session state, never saved into assets.</summary>
 public sealed class Selection
@@ -74,6 +74,7 @@ public sealed class EditorSession
     public string PreviewSocket { get; set; } = PersonLoadout.SwordSocket;
     public bool PreviewWeapon { get; set; } = true;
     public bool EditWeapon { get; set; }
+    public AssetDocument<PropAsset>? AppearanceDocument => Assets.Prop(PreviewProp);
 
     public (PropAsset Prop, ModelSocket Socket)? WeaponFor(ResolvedModel model)
     {
@@ -90,7 +91,7 @@ public sealed class EditorSession
     public string Message { get; private set; } = "";
     public bool MessageIsError { get; private set; }
 
-    public AssetDocument? ActiveDocument => Mode switch { Workspace.Model => Assets.Find(SubjectId), Workspace.Animate => Assets.Find(ClipId), _ => Assets.Find(EntityId) };
+    public AssetDocument? ActiveDocument => Mode switch { Workspace.Model => Assets.Find(SubjectId), Workspace.Animate => Assets.Find(ClipId), Workspace.Appearance => AppearanceDocument, _ => Assets.Find(EntityId) };
     public AssetDocument<EntityAsset>? EntityDocument => Assets.Entity(EntityId);
     /// <summary>The open entity compiled against the drafts, or null with <see cref="EntityError"/> saying why.</summary>
     public ResolvedEntity? Entity => Assets.CompileEntity(EntityId, out _);
@@ -115,6 +116,11 @@ public sealed class EditorSession
                 Mode = Workspace.Entity; SetEntity(entity.Id);
                 break;
             case AssetDocument<PropAsset> prop:
+                if (prop.Asset.Usage != "prop")
+                {
+                    Mode = Workspace.Appearance; PreviewProp = prop.Id; PreviewSocket = prop.Asset.Attachment ?? PersonWardrobe.HeadSocket;
+                    PreviewWeapon = true; Selection.Clear(); break;
+                }
                 SetMode(Workspace.Animate); PreviewProp = prop.Id; PreviewWeapon = EditWeapon = true;
                 Report("Weapon preview opened. Choose its attachment socket; asset and OBJ controls are in the inspector.");
                 break;
@@ -128,6 +134,11 @@ public sealed class EditorSession
     public void SetMode(Workspace mode)
     {
         CommitAll(); Mode = mode;
+        if (mode == Workspace.Appearance && AppearanceDocument?.Asset.Usage is null or "prop")
+        {
+            var art = Assets.Props.FirstOrDefault(p => p.Asset.Usage != "prop");
+            if (art is not null) { PreviewProp = art.Id; PreviewSocket = art.Asset.Attachment ?? PersonWardrobe.HeadSocket; }
+        }
         if (mode == Workspace.Animate && ClipId is null) SetClip(Assets.ClipsFor(SubjectId ?? "").Select(c => c.Id).Order(StringComparer.Ordinal).FirstOrDefault());
         if (mode == Workspace.Entity)
         {
@@ -197,7 +208,7 @@ public sealed class EditorSession
     public MotionClip? ClipFor(string subjectId)
     {
         if (Mode == Workspace.Entity) return null;
-        if (Mode == Workspace.Model && (EditRig || ShowRest)) return null;
+        if ((Mode is Workspace.Model or Workspace.Appearance) && (EditRig || ShowRest)) return null;
         if (ClipId is null || !Assets.CanPlay(ClipId, subjectId, out _)) return null;
         return PendingValid() ? _pending : ClipDocument!.Asset;
     }
@@ -371,6 +382,7 @@ public sealed class EditorSession
     private IEnumerable<AssetDocument> UndoScope()
     {
         if (ActiveDocument is { } active) yield return active;
+        if (Mode == Workspace.Appearance && EntityDocument is { } wearer) yield return wearer;
         if (Mode == Workspace.Animate && EditWeapon && Assets.Prop(PreviewProp) is { } prop) yield return prop;
         if (Mode == Workspace.Model && SubjectVariant is { } variant && Assets.Model(variant.Asset.Base) is { } basis) yield return basis;
     }
@@ -431,6 +443,32 @@ public sealed class EditorSession
     }
 
     // ---- New assets ----------------------------------------------------------------------------------------------
+
+    public bool NewAppearance(string id, string name, string template) => Attempt(() =>
+    {
+        var model = Assets.Resolve(SubjectId);
+        Assets.Create(AppearanceAuthoring.New(id, name, template, model?.Base.Ink ?? "#222b32", model?.Base.LineWidth ?? .045f));
+        Open(id);
+    }, $"Created appearance '{id}'. Edit the outline, then equip it on an entity and save all.");
+
+    public bool DuplicateAppearance(string source, string id, string name) => Attempt(() =>
+    {
+        var prop = Assets.Prop(source) ?? throw new InvalidDataException($"No appearance '{source}'.");
+        Assets.Create(AppearanceAuthoring.Duplicate(prop.Asset, id, name)); Open(id);
+    }, $"Created appearance '{id}'.");
+
+    public bool EquipAppearance(string entityId, string propId, string socketId) => Attempt(() =>
+    {
+        var entity = Assets.Entity(entityId) ?? throw new InvalidDataException("Choose an entity first.");
+        var prop = Assets.Prop(propId) ?? throw new InvalidDataException("Choose an appearance first.");
+        var model = Assets.Resolve(entity.Asset.Model) ?? throw new InvalidDataException("The entity's model is invalid.");
+        if (model.Base.Sockets.All(s => s.Id != socketId)) throw new InvalidDataException("Choose a socket on this entity's model.");
+        entity.Edit(() =>
+        {
+            entity.Asset.Equipment.RemoveAll(e => e.Prop == prop.Id);
+            entity.Asset.Equipment.Add(new() { Prop = prop.Id, Socket = socketId });
+        });
+    }, $"Equipped '{propId}' on '{entityId}'. Save all to keep the appearance and its binding.");
 
     /// <summary>A new base model: <c>empty</c> or the <c>person</c> template.</summary>
     public bool NewModel(string id, string name, string template) => Attempt(() =>
