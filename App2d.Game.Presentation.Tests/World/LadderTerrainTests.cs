@@ -16,7 +16,7 @@ namespace App2d.Game.Presentation.Tests.World;
 public sealed class LadderTerrainTests
 {
     [Theory]
-    [InlineData("kenney-grassland")]
+    [InlineData("ink-medieval-ground")]
     [InlineData("dark-cave")]
     public void LadderArtUpdatesAcrossChunkBoundaryAndNeverCreatesSolids(string tilesetId)
     {

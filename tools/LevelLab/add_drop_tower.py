@@ -1,4 +1,4 @@
-"""Add the authored drop-test tower beside Trailhead, without rewriting other level content.
+"""Add the authored drop-test tower beside the player spawn, without rewriting other level content.
 
 Run from the repository root: python tools/LevelLab/add_drop_tower.py
 The operation is idempotent and refuses to replace existing nonempty terrain.
@@ -17,7 +17,7 @@ def main():
         meta = dict(db.execute("SELECT key, value FROM meta"))
         width, height, size = (int(meta[k]) for k in ("width", "height", "chunk_size"))
         assert (width, height, size) == (640, 96, 32), "Tower layout requires the authored cavern dimensions."
-        assert meta["tileset_0"] == "kenney-grassland"
+        assert meta["tileset_0"] == "ink-medieval-ground"  # catalog order; cells may use other entries
         originals = dict(((cx, cy), blob) for cx, cy, blob in db.execute("SELECT cx, cy, tiles FROM chunks"))
         chunks = {}
         for key, blob in originals.items():
@@ -56,7 +56,7 @@ def main():
                 changed += 1
         assert db.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
         print(f"Drop tower: {changed} chunks updated; boards at 4, 12, 24, 48, 80 tiles above ground.")
-        print("Ladder world X = -432; head left from the Trailhead spawn, hold Up, then exit right.")
+        print("Ladder world X = -432; head left from the player spawn, hold Up, then exit right.")
 
 
 if __name__ == "__main__":

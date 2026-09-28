@@ -20,7 +20,7 @@ internal static class VegetationRenderingSmoke2D
     {
         var map = new EditableTileMap2D(SideScrollerLevel2D.WorldWidthTiles,
             SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
-            SideScrollerLevel2D.WorldOrigin, ["kenney-grassland"]);
+            SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
         for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
         var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);

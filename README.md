@@ -164,7 +164,7 @@ holds the strokes and undo history and lives in `App2d.Tiles`, so the editable c
 without input or storage.
 
 Paint a vertical column of **Ladder** tiles to make a climbable ladder of any height.
-Ladders use Kenney's top and repeating rung art (also as a fallback for other tilesets).
+Ladders use each tileset's top and repeating rung art; tilesets without one borrow the medieval ink ladder.
 Hold `W/S` or `Up/Down`, or use the controller's vertical left stick / D-pad, to
 climb. Release to hang, move sideways to let go, or press `Space` / controller `A`
 to jump off. Holding Up stops at the last rung. Dash also releases the ladder.

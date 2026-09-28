@@ -12,7 +12,7 @@ namespace App2d.Gameplay.Tests.World;
 public sealed class VegetationTests
 {
     [Fact]
-    public void GrassOnlyGrowsOnExposedPlainSolidsIncludingAcrossChunkEdges()
+    public void GrassGrowsOnExposedUnspikedSolidsIncludingGrippableAndAcrossChunkEdges()
     {
         var map = Map();
         map.SetTileKind(10, 19, TileKind2D.Solid | TileKind2D.Spikes);
@@ -21,6 +21,8 @@ public sealed class VegetationTests
         map.SetTileKind(13, 20, TileKind2D.Solid);
         Assert.True(VegetationPlacement2D.HasGrass(map, 9, 19));
         for (var x = 10; x <= 13; x++) Assert.False(VegetationPlacement2D.HasGrass(map, x, 19));
+        map.SetTileKind(14, 19, TileKind2D.Solid | TileKind2D.Grippable);
+        Assert.True(VegetationPlacement2D.HasGrass(map, 14, 19));
         map.SetTileKind(31, 31, TileKind2D.Solid);
         var chunk = TerrainChunkState2D.Capture(map, new(0, 0), 1);
         Assert.True(VegetationPlacement2D.HasGrass(chunk, 31, 31));
@@ -143,7 +145,7 @@ public sealed class VegetationTests
     {
         var map = new EditableTileMap2D(SideScrollerLevel2D.WorldWidthTiles,
             SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
-            SideScrollerLevel2D.WorldOrigin, ["kenney-grassland"]);
+            SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
         for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
         return map;
     }

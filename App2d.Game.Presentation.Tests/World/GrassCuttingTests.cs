@@ -99,7 +99,7 @@ public sealed class GrassCuttingTests
     [Fact]
     public void LiveCutsBurstOnlyOnceAndLandingRemovesPiecesBeforeTheirTimeout()
     {
-        var map = new EditableTileMap2D(16, 16, 32f, 16, Vector2.Zero, ["kenney-grassland"]);
+        var map = new EditableTileMap2D(16, 16, 32f, 16, Vector2.Zero, ["ink-medieval-ground"]);
         for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 1, TileKind2D.Solid);
         var terrain = TerrainChunkState2D.Capture(map, new(0, 0), 1);
         // Grass grows in patches, so cut the whole row to be sure some of it is grassy.

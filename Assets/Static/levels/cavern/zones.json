@@ -1,8 +1,8 @@
 {
   "version": 1,
   "zones": [
-    { "id": "trailhead", "name": "Trailhead", "minX": -512, "minY": -640, "maxX": 4096, "maxY": 2432, "priority": 0 },
-    { "id": "copper-reach", "name": "Copper Reach", "minX": 4096, "minY": -640, "maxX": 12288, "maxY": 2432, "priority": 0 },
-    { "id": "high-keep", "name": "High Keep", "minX": 12288, "minY": -640, "maxX": 19968, "maxY": 2432, "priority": 0 }
+    {"id": "prehistoric", "name": "Fern Hollow", "minX": -512, "minY": -640, "maxX": 6304, "maxY": 2432, "priority": 0},
+    {"id": "medieval", "name": "Kingsroad", "minX": 6304, "minY": -640, "maxX": 13120, "maxY": 2432, "priority": 0},
+    {"id": "wasteland", "name": "The Rust", "minX": 13120, "minY": -640, "maxX": 19968, "maxY": 2432, "priority": 0}
   ]
 }

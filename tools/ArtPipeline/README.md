@@ -51,7 +51,6 @@ against `Assets/Runtime` while iterating.
 | `import_stick_figure.py` | `characters/player-sword`, `player-gun`, `player-unarmed`, `characters/player-geometry.json`, `ui/hud/weapons/*.png`, `effects/bullet/orange.png` | CC0 RGS Dev stick-figure pack in `Sources/third-party/rgs-stick-figure` |
 | `import_blender_character.py` | Authored sword clips (balance and downward attack) added to `characters/player-sword` | Cached Blender renders in `Sources/characters/player-sword` |
 | `import_maaot_caves.py` | `environments/tilesets/dark-cave`, `mossy-cavern` | Maaot zips (see above) |
-| `import_kenney_pixel_platformer.py` | `environments/tilesets/kenney-grassland` | CC0 `Sources/third-party/kenney/pixel-platformer.zip` |
 | `build_gun_effects.py` | `effects/gun/*`, `ui/hud/gun-charge/*`, `audio/sfx/gun-*.wav` | Procedural; design notes are in the script's docstring |
 | `import_green_dinosaur.py` | `characters/green-dinosaur` | `Sources/user/green-dinosaur/walk-cycle.png` |
 

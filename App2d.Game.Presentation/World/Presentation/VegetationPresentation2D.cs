@@ -54,7 +54,7 @@ public sealed class VegetationPresentation2D
                 var (x, y) = patch.Cell;
                 var seed = VegetationPlacement2D.Seed(x, y);
                 // One candidate per eight columns avoids trees bunching together.
-                if (x % 8 == 4 && seed % 3 != 0 &&
+                if (x % 8 == 4 && seed % 3 != 0 && GrowsTrees(map.TilesetIds[map.GetTilesetIndex(x, y)]) &&
                     VegetationPlacement2D.HasGrass(map, x - 1, y) &&
                     VegetationPlacement2D.HasGrass(map, x + 1, y) && HasTreeClearance(map, x, y, sources))
                     chunk.Trees.Add(new(patch.Root + new Vector2(patch.Size * 0.5f, 0f),
@@ -171,15 +171,28 @@ public sealed class VegetationPresentation2D
         }
     }
 
+    /// <summary>The leafy procedural trees would contradict a dead wasteland.</summary>
+    private static bool GrowsTrees(string tileset) => !tileset.StartsWith("ink-wasteland-", StringComparison.Ordinal);
+
     private static VegetationStyle2D Style(string tileset, float size)
     {
-        var dry = tileset == "dark-cave";
+        // Wasteland grass is sparse and dead, and concrete barely grows any; prehistoric grass runs tall.
+        var dry = tileset is "dark-cave" or "ink-wasteland-ground" or "ink-wasteland-wall";
         var reeds = tileset == "mossy-cavern";
-        return new(size * 0.25f, size * 0.53f, size * 0.9f, size * 0.16f, size * 0.39f,
+        var lush = tileset.StartsWith("ink-prehistoric-", StringComparison.Ordinal);
+        var coverage = tileset switch
+        {
+            "ink-wasteland-wall" => 0.12f,
+            "ink-wasteland-ground" => 0.35f,
+            _ when dry => 0.45f,
+            _ when lush => 0.75f,
+            _ => 0.6f
+        };
+        return new(size * 0.25f, size * 0.53f, size * (lush ? 1.1f : 0.9f), size * 0.16f, size * 0.39f,
             dry ? new(150, 118, 52) : reeds ? new(36, 128, 104) : new(79, 184, 47),
             dry ? new(206, 176, 92) : reeds ? new(82, 184, 148) : new(108, 203, 66),
-            reeds ? 0.4f : 0.2f, 0.22f, dry || reeds ? 0f : 0.08f,
-            Coverage: dry ? 0.45f : 0.6f, PatchWidth: size * 6f);
+            reeds || lush ? 0.4f : 0.2f, 0.22f, dry || reeds ? 0f : 0.08f,
+            Coverage: coverage, PatchWidth: size * 6f);
     }
 
     private sealed record Patch(GrassCell2D Cell, Vector2 Root, float Size, VegetationPatch2D Visual);
