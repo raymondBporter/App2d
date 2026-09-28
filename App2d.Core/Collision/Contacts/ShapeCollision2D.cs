@@ -44,6 +44,7 @@ public static partial class ShapeCollision2D
             Circle2D circle => CircleAgainst(circle, firstPose, second, secondPose),
             Capsule2D capsule => CapsuleAgainst(capsule, firstPose, second, secondPose),
             Rectangle2D rectangle => RectangleAgainst(rectangle, firstPose, second, secondPose),
+            Triangle2D triangle => TriangleAgainst(triangle, firstPose, second, secondPose),
             HalfSpace2D halfSpace => HalfSpaceAgainst(halfSpace, firstPose, second, secondPose),
             _ => CollisionResult.None
         };
@@ -53,6 +54,7 @@ public static partial class ShapeCollision2D
         {
             Circle2D otherCircle => CircleVsCircle(circle, circlePose, otherCircle, otherPose),
             ConvexPolygon2D polygon => CircleVsPolygon(circle, circlePose, polygon.Vertices, otherPose),
+            Triangle2D triangle => CircleVsTriangle(circle, circlePose, triangle, otherPose),
             Rectangle2D rectangle => CircleVsRectangle(circle, circlePose, rectangle, otherPose),
             Capsule2D capsule => CircleVsCapsule(circle, circlePose, capsule, otherPose),
             HalfSpace2D halfSpace => CircleVsHalfSpace(circle, circlePose, halfSpace, otherPose),

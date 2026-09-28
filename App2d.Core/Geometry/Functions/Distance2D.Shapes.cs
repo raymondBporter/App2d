@@ -17,6 +17,7 @@ public static partial class Distance2D
             Circle2D circle => SignedDistanceToCircle(point, circle.Center, circle.Radius),
             Capsule2D capsule => SignedDistanceToCapsule(point, capsule.Start, capsule.End, capsule.Radius),
             IRect2D rectangle => SignedDistanceToRectangle(point, rectangle.Min, rectangle.Max),
+            Triangle2D triangle => SignedDistanceToTriangle(point, triangle),
             ConvexPolygon2D polygon => SignedDistanceToConvexPolygon(point, polygon.Vertices),
             HalfSpace2D halfSpace => SignedDistanceToHalfSpace(point, halfSpace.Normal, halfSpace.Offset),
             _ => throw UnsupportedDistance(shape)
@@ -125,6 +126,7 @@ public static partial class Distance2D
         Circle2D => 1,
         Capsule2D => 2,
         Rectangle2D => 4,
+        Triangle2D => 3,
         ConvexPolygon2D polygon => polygon.Vertices.Length,
         _ => throw UnsupportedDistance(shape)
     };
@@ -146,6 +148,9 @@ public static partial class Distance2D
             case Rectangle2D rectangle:
                 rectangle.WriteCorners(vertices);
                 break;
+            case Triangle2D triangle:
+                triangle.WriteVertices(vertices);
+                break;
             case ConvexPolygon2D polygon:
                 polygon.Vertices.CopyTo(vertices);
                 break;
@@ -158,6 +163,13 @@ public static partial class Distance2D
 
     private static NotSupportedException UnsupportedDistance(IShape2D shape) => new(
         $"Signed distance does not support {shape.GetType().Name} in this query. Composite unions support unsigned Distance only.");
+
+    private static float SignedDistanceToTriangle(Vector2 point, Triangle2D triangle)
+    {
+        Span<Vector2> vertices = stackalloc Vector2[3];
+        triangle.WriteVertices(vertices);
+        return SignedDistanceToConvexPolygon(point, vertices);
+    }
 
     private static Similarity2D CreateIdentityPose()
     {

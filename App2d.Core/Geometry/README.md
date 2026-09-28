@@ -15,7 +15,7 @@ Use geometry functions directly with `System.Numerics` values when you need math
 | `Functions/BoundsGeometry2D` | Bounds from raw primitives/points, union, translation, scaling and affine transforms |
 | `Functions/ShapeBounds2D` | On-demand local bounds for shapes, including convex support-point fallback and unbounded half-spaces |
 | `IRect2D`, `Rect2D` | A two-property rectangle contract and a lightweight rectangle value independent of shapes |
-| `Shapes/` | `IGeometry2D`, `IShape2D`, `IConvexShape2D`, lines, rays and concrete shapes; no bounds properties or caches |
+| `Shapes/` | `IGeometry2D`, `IShape2D`, `IConvexShape2D`, lines, rays and concrete shapes, including `Triangle2D`; no bounds properties or caches |
 | `Bounds2D`, `Interval1D` | Value types for bounds and projected intervals |
 
 ```csharp
@@ -28,6 +28,8 @@ var inside = PrimitiveGeometry2D.EllipseContainsPoint(point, center, radii);
 Contour angles are radians, increasing counter-clockwise in Y-up coordinates. Closed perimeters omit a repeated closing vertex. Circle/ellipse buffer length determines tessellation; arcs include both endpoints. Rectangle, rounded-rectangle and capsule writers return the number of written vertices and leave the rest of the buffer untouched. Rounded rectangles clamp radius to half the shorter side and retain their corner samples even at zero radius. Screen-space Y-down coordinates naturally reverse the visual winding.
 
 Primitive arithmetic queries assume finite inputs, nonnegative radii and ordered box bounds; ellipse radii and normalized box half-extents must be positive. Shape constructors retain their validation. Vertex writers additionally validate their dimensions and buffer sizes. Polygon queries expect ordered convex perimeters; overlap accepts either winding, skips repeated adjacent vertices and includes touching edges. Projections support non-unit axes and project everything to zero on a zero axis.
+
+`Triangle2D(a, b, c)` is a filled convex shape. It accepts either winding, rejects collinear or non-finite-area vertices, and stores the three points directly. `ContainsPoint` checks its three oriented edges, `GetSupportPoint` compares only three vertices, and `WriteVertices` copies into a caller-owned span. Its bounds, distances, raycasts, rendering, and collision contacts use the existing convex pipelines without a retained vertex array. Collision covers circles, capsules, rectangles, other triangles, convex polygons, half-spaces and composite parts.
 
 `DistanceToSegment` returns a Euclidean distance in input units. `NormalizedEllipseRadius` and `NormalizedRectangleRadius` return dimensionless scores: zero at the center, one at the boundary. An ellipse's normalized radius is **not** the shortest distance to its boundary. `PartGeometry.Distance` keeps its existing picking semantics, including bounding-box picking for rounded boxes and the minimum stroke tolerance.
 

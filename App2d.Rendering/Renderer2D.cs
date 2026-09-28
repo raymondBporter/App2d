@@ -224,6 +224,13 @@ public sealed partial class Renderer2D : IDisposable
             return;
         }
         if (shape is ConvexPolygon2D polygon) { FillPolygon(polygon.Vertices, matrix, bounds, shader); return; }
+        if (shape is Triangle2D triangle)
+        {
+            Triangle(MaterialVertex(triangle.A, matrix, bounds, shader),
+                MaterialVertex(triangle.B, matrix, bounds, shader),
+                MaterialVertex(triangle.C, matrix, bounds, shader));
+            return;
+        }
         Span<Vector2> points = stackalloc Vector2[260];
         var count = GetShapePoints(shape, matrix, points);
         if (count >= 3) FillPolygon(points[..count], matrix, bounds, shader);
@@ -431,6 +438,13 @@ public sealed partial class Renderer2D : IDisposable
             return;
         }
         if (shape is ConvexPolygon2D polygon) { StrokePolygon(polygon.Vertices, matrix, color, width); return; }
+        if (shape is Triangle2D triangle)
+        {
+            Span<Vector2> vertices = stackalloc Vector2[3];
+            triangle.WriteVertices(vertices);
+            StrokePolygon(vertices, matrix, color, width);
+            return;
+        }
         Span<Vector2> points = stackalloc Vector2[260];
         var count = GetShapePoints(shape, matrix, points);
         if (shape is HalfSpace2D) Line(Vector2.Transform(points[0], matrix), Vector2.Transform(points[1], matrix), color, width);

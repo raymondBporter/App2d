@@ -97,6 +97,11 @@ public static class RayIntersection2D
             case ConvexPolygon2D polygon:
                 return TryConvexPolygon(origin, direction, polygon.Vertices, maxDistance, out hit);
 
+            case Triangle2D triangle:
+                Span<Vector2> triangleVertices = stackalloc Vector2[3];
+                triangle.WriteVertices(triangleVertices);
+                return TryConvexPolygon(origin, direction, triangleVertices, maxDistance, out hit);
+
             case Capsule2D capsule:
                 return TryCapsule(origin, direction, capsule, maxDistance, out hit);
 

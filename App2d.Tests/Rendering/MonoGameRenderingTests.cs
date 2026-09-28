@@ -15,6 +15,27 @@ public sealed class MonoGameRenderingTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public void TriangleRendersFilledAndWithAnOutline(bool overlay)
+    {
+        using var graphics = new GraphicsTestContext();
+        using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
+        var triangle = new Triangle2D(new(-16, -12), new(16, -12), new(0, 16));
+        var item = new WorldObject2D(triangle, new SolidColorShader(XnaColor.Lime));
+        renderer.BeginFrame(128, 128, default);
+        renderer.Clear(XnaColor.Transparent);
+        if (overlay) renderer.DrawShapeOverlay(item, XnaColor.Lime, XnaColor.White);
+        else renderer.Draw(item);
+        renderer.EndFrame();
+
+        var pixels = graphics.ReadPixels();
+        Assert.Equal(XnaColor.Lime, pixels[64 * 128 + 64]);
+        if (overlay) Assert.Equal(XnaColor.White, pixels[76 * 128 + 64]);
+        Assert.Equal(XnaColor.Transparent, pixels[84 * 128 + 64]);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public void HalfSpacesStillRenderWithObjectOwnedBoundsAndRejectSprites(bool overlay)
     {
         using var texture = CreateTexture();

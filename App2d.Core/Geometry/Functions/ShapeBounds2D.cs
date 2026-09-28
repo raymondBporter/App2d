@@ -18,6 +18,9 @@ public static class ShapeBounds2D
             Circle2D circle => BoundsGeometry2D.FromCircle(circle.Center, circle.Radius),
             Capsule2D capsule => BoundsGeometry2D.FromCapsule(capsule.Start, capsule.End, capsule.Radius),
             IRect2D rectangle => BoundsGeometry2D.FromRectangle(rectangle),
+            Triangle2D triangle => new(
+                Vector2.Min(Vector2.Min(triangle.A, triangle.B), triangle.C),
+                Vector2.Max(Vector2.Max(triangle.A, triangle.B), triangle.C)),
             ConvexPolygon2D polygon => BoundsGeometry2D.FromPoints(polygon.Vertices),
             CompositeShape2D composite => Composite(composite.Parts),
             HalfSpace2D => Bounds2D.Unbounded,

@@ -53,31 +53,42 @@ public static partial class ShapeCollision2D
 
     private static CollisionResult RectangleVsCapsule(Rectangle2D rectangle, Similarity2D rectanglePose, Capsule2D capsule, Similarity2D capsulePose)
     {
-        var (capsuleStart, capsuleEnd, capsuleRadius) = CollisionMath2D.GetWorldCapsule(capsule, capsulePose);
-
         Span<Vector2> rectangleVertices = stackalloc Vector2[4];
-        WriteWorldRectangleVertices(rectangle, rectanglePose, rectangleVertices);
-        Span<Vector2> axes = stackalloc Vector2[12];
+        rectangle.WriteCorners(rectangleVertices);
+        return PolygonVsCapsule(rectangleVertices, rectanglePose, capsule, capsulePose);
+    }
+
+    private static CollisionResult PolygonVsCapsule(ReadOnlySpan<Vector2> localVertices, Similarity2D polygonPose,
+        Capsule2D capsule, Similarity2D capsulePose)
+    {
+        var (capsuleStart, capsuleEnd, capsuleRadius) = CollisionMath2D.GetWorldCapsule(capsule, capsulePose);
+        Span<Vector2> polygonVertices = localVertices.Length <= 64
+            ? stackalloc Vector2[localVertices.Length] : new Vector2[localVertices.Length];
+        for (var i = 0; i < polygonVertices.Length; i++)
+            polygonVertices[i] = polygonPose.TransformPoint(localVertices[i]);
+
+        var maximumAxes = 2 * polygonVertices.Length + 3;
+        Span<Vector2> axes = maximumAxes <= 128 ? stackalloc Vector2[maximumAxes] : new Vector2[maximumAxes];
         var axisCount = 0;
-        AddPolygonEdgeAxes(axes, ref axisCount, rectangleVertices);
+        AddPolygonEdgeAxes(axes, ref axisCount, polygonVertices);
         var capsuleDirection = capsuleEnd - capsuleStart;
         AddAxis(axes, ref axisCount, capsuleDirection.PerpCcw);
 
-        foreach (var vertex in rectangleVertices)
+        foreach (var vertex in polygonVertices)
             AddAxis(axes, ref axisCount, vertex - ClosestPoint2D.OnSegment(vertex, capsuleStart, capsuleEnd));
 
-        var closestToStart = PolygonGeometry2D.ClosestPointOnPerimeter(capsuleStart, rectangleVertices, out _);
-        var closestToEnd = PolygonGeometry2D.ClosestPointOnPerimeter(capsuleEnd, rectangleVertices, out _);
+        var closestToStart = PolygonGeometry2D.ClosestPointOnPerimeter(capsuleStart, polygonVertices, out _);
+        var closestToEnd = PolygonGeometry2D.ClosestPointOnPerimeter(capsuleEnd, polygonVertices, out _);
         AddAxis(axes, ref axisCount, capsuleStart - closestToStart);
         AddAxis(axes, ref axisCount, capsuleEnd - closestToEnd);
 
-        if (!TryGetPolygonCapsuleMtv(rectangleVertices, capsuleStart, capsuleEnd, capsuleRadius, axes[..axisCount], out var normal, out var depth))
+        if (!TryGetPolygonCapsuleMtv(polygonVertices, capsuleStart, capsuleEnd, capsuleRadius, axes[..axisCount], out var normal, out var depth))
         {
             return CollisionResult.None;
         }
 
-        var rectangleSurface = PolygonGeometry2D.GetSupportPoint(rectangleVertices, -normal);
+        var polygonSurface = PolygonGeometry2D.GetSupportPoint(polygonVertices, -normal);
         var capsuleSurface = GetCapsuleSupportPoint(capsuleStart, capsuleEnd, capsuleRadius, normal);
-        return CollisionResult.From(new CollisionContact2D((rectangleSurface + capsuleSurface) / 2f, normal, depth));
+        return CollisionResult.From(new CollisionContact2D((polygonSurface + capsuleSurface) / 2f, normal, depth));
     }
 }
