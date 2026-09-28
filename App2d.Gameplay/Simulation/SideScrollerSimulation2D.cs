@@ -8,7 +8,6 @@ using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.World;
-using App2d.Tiles;
 using System.Numerics;
 
 namespace App2d.Gameplay.Simulation;

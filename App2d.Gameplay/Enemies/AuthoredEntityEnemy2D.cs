@@ -1,5 +1,4 @@
 using App2d.Contracts.World;
-using App2d.Core.Geometry.Functions;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Core;

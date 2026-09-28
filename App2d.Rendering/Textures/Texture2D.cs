@@ -1,5 +1,4 @@
 using App2d.Core.Validation;
-using App2d.Core;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using XnaColor = Microsoft.Xna.Framework.Color;

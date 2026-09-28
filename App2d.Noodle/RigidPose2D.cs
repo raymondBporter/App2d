@@ -1,4 +1,3 @@
-using App2d.Core;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;

@@ -1,6 +1,5 @@
 using App2d.Core.Validation;
 using App2d.Contracts.Player;
-using App2d.Core;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 using System.Text.Json;

@@ -1,4 +1,3 @@
-using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using App2d.Core.Shapes;
 using System.Numerics;

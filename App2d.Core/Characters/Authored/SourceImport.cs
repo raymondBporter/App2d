@@ -1,4 +1,3 @@
-using App2d.Core.Characters.Authored;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
