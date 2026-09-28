@@ -33,6 +33,7 @@ public sealed class SideScrollerGame : Game2D
     private readonly MusicPlayer2D _music;
     private readonly WorldMusicDirector2D _musicDirector;
     private bool _showZones;
+    private bool _isControllerConnected;
     private readonly TileEditor2D _editor;
     private readonly PlayerSaveStore2D _saveStore;
     private readonly ViewportTerrainSource2D _terrainSource;
@@ -125,13 +126,14 @@ public sealed class SideScrollerGame : Game2D
     }
 
     public override string WindowTitle =>
-        $"App2d Side Scroller | PAD: {(_client.IsControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
+        $"App2d Side Scroller | PAD: {(_isControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
     internal override Control? OverlayControl => _editor.InspectorView;
     protected override XnaColor BackgroundColor => new(103, 196, 235);
 
     public override void Update(FrameTime time, InputState input)
     {
+        _isControllerConnected = input.Gamepad.IsConnected;
         var wasEditing = _editor.IsActive;
         _editor.Update(input);
         if (wasEditing != _editor.IsActive) input.CancelButtons();

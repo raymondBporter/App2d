@@ -5,6 +5,6 @@ internal readonly record struct PlayerDebugInput2D(
     bool ToggleTraversal, bool ShieldPose, bool FireBallistics, bool ClearBallistics)
 {
     public static PlayerDebugInput2D Capture(InputState input) => input.IsSuppressed ? default : new(
-        input.WasKeyPressed(Keys.F3), input.IsKeyDown(Keys.B),
-        input.WasKeyPressed(Keys.F4), input.WasKeyPressed(Keys.F6));
+        input.Keyboard.WasPressed(Keys.F3), input.Keyboard.IsDown(Keys.B),
+        input.Keyboard.WasPressed(Keys.F4), input.Keyboard.WasPressed(Keys.F6));
 }

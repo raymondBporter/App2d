@@ -1,40 +1,19 @@
+using App2d.Input;
 using System.Numerics;
 
 namespace App2d;
 
+/// <summary>Raw device state for one simulation tick. Game and editor bindings read this state separately.</summary>
 public sealed class InputState
 {
-    private readonly HashSet<Keys> _keysDown = [];
-    private readonly HashSet<Keys> _keysPressed = [];
-    private readonly HashSet<Keys> _keysReleased = [];
-    private readonly HashSet<MouseButtons> _mouseButtonsDown = [];
-    private readonly HashSet<MouseButtons> _mouseButtonsPressed = [];
-    private readonly HashSet<MouseButtons> _mouseButtonsReleased = [];
-    private readonly HashSet<Keys> _blockedKeys = [];
-    private readonly HashSet<MouseButtons> _blockedMouseButtons = [];
-    private Vector2 _mouseClientPosition;
-    private Vector2 _clientToDeviceScale = Vector2.One;
+    private readonly XboxControllerInput2D _gamepadInput = new();
     private bool _isSuppressed;
     private bool _isWindowActive = true;
 
-    public Vector2 MousePositionDevice => _mouseClientPosition * _clientToDeviceScale;
-    public float MouseWheelDelta { get; private set; }
+    public KeyboardState2D Keyboard { get; } = new();
+    public MouseState2D Mouse { get; } = new();
+    public GamepadState2D Gamepad { get; private set; }
     public bool IsSuppressed => _isSuppressed || !_isWindowActive;
-    public bool IsControlDown =>
-        IsKeyDown(Keys.ControlKey) ||
-        IsKeyDown(Keys.LControlKey) ||
-        IsKeyDown(Keys.RControlKey);
-    public bool IsShiftDown =>
-        IsKeyDown(Keys.ShiftKey) ||
-        IsKeyDown(Keys.LShiftKey) ||
-        IsKeyDown(Keys.RShiftKey);
-
-    public bool IsKeyDown(Keys key) => _keysDown.Contains(key);
-    public bool WasKeyPressed(Keys key) => _keysPressed.Contains(key);
-    public bool WasKeyReleased(Keys key) => _keysReleased.Contains(key);
-    public bool IsMouseDown(MouseButtons button) => _mouseButtonsDown.Contains(button);
-    public bool WasMousePressed(MouseButtons button) => _mouseButtonsPressed.Contains(button);
-    public bool WasMouseReleased(MouseButtons button) => _mouseButtonsReleased.Contains(button);
 
     internal void Attach(Form window, Control surface)
     {
@@ -49,35 +28,35 @@ public sealed class InputState
             if (e.KeyCode is Keys.Left or Keys.Right or Keys.Up or Keys.Down)
                 e.IsInputKey = true;
         };
-        surface.MouseMove += (_, e) => _mouseClientPosition = new Vector2(e.X, e.Y);
+        surface.MouseMove += (_, e) => Mouse.SetClientPosition(new Vector2(e.X, e.Y));
         surface.MouseDown += (_, e) =>
         {
             surface.Focus();
-            _mouseClientPosition = new Vector2(e.X, e.Y);
+            Mouse.SetClientPosition(new Vector2(e.X, e.Y));
             SetMouseButton(e.Button, true);
         };
         surface.MouseUp += (_, e) =>
         {
-            _mouseClientPosition = new Vector2(e.X, e.Y);
+            Mouse.SetClientPosition(new Vector2(e.X, e.Y));
             SetMouseButton(e.Button, false);
         };
-        surface.MouseWheel += (_, e) => { if (!IsSuppressed) MouseWheelDelta += e.Delta; };
+        surface.MouseWheel += (_, e) => { if (!IsSuppressed) Mouse.AddWheelDelta(e.Delta); };
     }
 
-    internal void SetDeviceMapping(Size clientSize, int deviceWidth, int deviceHeight)
+    internal void SetDeviceMapping(Size clientSize, int deviceWidth, int deviceHeight) =>
+        Mouse.SetDeviceMapping(clientSize, deviceWidth, deviceHeight);
+
+    /// <summary>Sample XInput once before the game and editor read this simulation tick.</summary>
+    internal void PollGamepad()
     {
-        _clientToDeviceScale = new Vector2(
-            clientSize.Width > 0 ? deviceWidth / (float)clientSize.Width : 1f,
-            clientSize.Height > 0 ? deviceHeight / (float)clientSize.Height : 1f);
+        Gamepad = IsSuppressed ? default : _gamepadInput.Capture();
     }
 
     internal void EndFrame()
     {
-        _keysPressed.Clear();
-        _keysReleased.Clear();
-        _mouseButtonsPressed.Clear();
-        _mouseButtonsReleased.Clear();
-        MouseWheelDelta = 0f;
+        Keyboard.EndFrame();
+        Mouse.EndFrame();
+        Gamepad = Gamepad with { Pressed = GamepadButton2D.None, Released = GamepadButton2D.None };
     }
 
     internal void SetSuppressed(bool isSuppressed)
@@ -96,57 +75,15 @@ public sealed class InputState
 
     internal void CancelButtons()
     {
-        ResetButtons();
-        EndFrame();
+        Keyboard.CancelHeld();
+        Mouse.CancelHeld();
+        _gamepadInput.Reset();
+        Gamepad = default;
     }
 
-    internal void SetKey(Keys key, bool isDown)
-    {
-        if (!isDown) _blockedKeys.Remove(key);
-        if (IsSuppressed)
-        {
-            if (isDown) _blockedKeys.Add(key);
-            return;
-        }
-        if (_blockedKeys.Contains(key)) return;
+    internal void SetKey(Keys key, bool isDown) => Keyboard.SetKey(key, isDown, IsSuppressed);
+    internal void SetMouseButton(MouseButtons button, bool isDown) => Mouse.SetButton(button, isDown, IsSuppressed);
 
-        if (isDown)
-        {
-            if (_keysDown.Add(key))
-                _keysPressed.Add(key);
-        }
-        else if (_keysDown.Remove(key))
-        {
-            _keysReleased.Add(key);
-        }
-    }
-
-    internal void SetMouseButton(MouseButtons button, bool isDown)
-    {
-        if (!isDown) _blockedMouseButtons.Remove(button);
-        if (IsSuppressed)
-        {
-            if (isDown) _blockedMouseButtons.Add(button);
-            return;
-        }
-        if (_blockedMouseButtons.Contains(button)) return;
-
-        if (isDown)
-        {
-            if (_mouseButtonsDown.Add(button))
-                _mouseButtonsPressed.Add(button);
-        }
-        else if (_mouseButtonsDown.Remove(button))
-        {
-            _mouseButtonsReleased.Add(button);
-        }
-    }
-
-    private void ResetButtons()
-    {
-        _blockedKeys.UnionWith(_keysDown);
-        _blockedMouseButtons.UnionWith(_mouseButtonsDown);
-        _keysDown.Clear();
-        _mouseButtonsDown.Clear();
-    }
+    // Test seam: device transitions can be injected without native hardware.
+    internal void SetGamepad(GamepadState2D state) => Gamepad = IsSuppressed ? default : state;
 }

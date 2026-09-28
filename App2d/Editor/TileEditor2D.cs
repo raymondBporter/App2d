@@ -121,7 +121,7 @@ internal sealed class TileEditor2D : IDisposable
 
     public void Update(InputState input)
     {
-        if (input.WasKeyPressed(Keys.F1))
+        if (input.Keyboard.WasPressed(Keys.F1))
         {
             IsActive = !IsActive;
             if (IsActive)
@@ -133,19 +133,19 @@ internal sealed class TileEditor2D : IDisposable
         if (!IsActive)
             return;
 
-        _lastMouseDevice = input.MousePositionDevice;
+        _lastMouseDevice = input.Mouse.PositionDevice;
         if (Mode == LevelEditorMode2D.Things)
         {
             UpdateCamera(input, isPointerOverMenu: false);
             UpdateThings(input);
-            if (input.IsControlDown && input.WasKeyPressed(Keys.Z))
+            if (input.Keyboard.IsControlDown && input.Keyboard.WasPressed(Keys.Z))
                 UndoThingEdit();
             _camera.Position = _cameraFocus;
             return;
         }
 
         var isPointerOverMenu = TileEditorMenu2D.Contains(_camera.ViewportSize, _lastMouseDevice);
-        if (isPointerOverMenu && input.WasMousePressed(MouseButtons.Left))
+        if (isPointerOverMenu && input.Mouse.WasPressed(MouseButtons.Left))
         {
             EndStrokeIfActive();
             TileEditorMenu2D.TrySelect(this, _camera.ViewportSize, _lastMouseDevice);
@@ -157,7 +157,7 @@ internal sealed class TileEditor2D : IDisposable
         // A stroke may still be in progress (mouse button held). TileEditSession2D.Undo()
         // throws if called mid-stroke, so ignore the request rather than let it crash the
         // editor; the in-progress stroke is left untouched either way.
-        if (input.IsControlDown && input.WasKeyPressed(Keys.Z) && !_session.IsStrokeActive)
+        if (input.Keyboard.IsControlDown && input.Keyboard.WasPressed(Keys.Z) && !_session.IsStrokeActive)
             CommitChunks(_session.Undo());
 
         _camera.Position = _cameraFocus;
@@ -336,7 +336,7 @@ internal sealed class TileEditor2D : IDisposable
 
     private void UpdateCamera(InputState input, bool isPointerOverMenu)
     {
-        if (input.WasMouseReleased(MouseButtons.Middle))
+        if (input.Mouse.WasReleased(MouseButtons.Middle))
             _isPanning = false;
 
         if (isPointerOverMenu)
@@ -345,26 +345,26 @@ internal sealed class TileEditor2D : IDisposable
             return;
         }
 
-        if (input.WasMousePressed(MouseButtons.Middle))
+        if (input.Mouse.WasPressed(MouseButtons.Middle))
         {
             _isPanning = true;
-            _panAnchorDevice = input.MousePositionDevice;
+            _panAnchorDevice = input.Mouse.PositionDevice;
             _panAnchorFocus = _cameraFocus;
         }
 
         if (_isPanning)
         {
-            var deviceDelta = input.MousePositionDevice - _panAnchorDevice;
+            var deviceDelta = input.Mouse.PositionDevice - _panAnchorDevice;
             // Transform a displacement without translation, accounting for viewport scale,
             // zoom, rotation, and the device-to-world Y flip.
             _cameraFocus = _panAnchorFocus - Vector2.TransformNormal(deviceDelta, _camera.DeviceToWorldMatrix);
         }
 
-        if (input.MouseWheelDelta != 0f)
+        if (input.Mouse.WheelDelta != 0f)
         {
             // Camera2D.Zoom clamps to its own MinZoom/MaxZoom on assignment; do not
             // add a second clamp here with different bounds.
-            var factor = input.MouseWheelDelta > 0f ? ZoomStep : 1f / ZoomStep;
+            var factor = input.Mouse.WheelDelta > 0f ? ZoomStep : 1f / ZoomStep;
             _camera.Zoom *= factor;
         }
     }
@@ -377,10 +377,10 @@ internal sealed class TileEditor2D : IDisposable
             return;
         }
 
-        var isPainting = input.IsMouseDown(MouseButtons.Left);
-        var isErasing = input.IsMouseDown(MouseButtons.Right);
+        var isPainting = input.Mouse.IsDown(MouseButtons.Left);
+        var isErasing = input.Mouse.IsDown(MouseButtons.Right);
 
-        if (input.WasMousePressed(MouseButtons.Left) || input.WasMousePressed(MouseButtons.Right))
+        if (input.Mouse.WasPressed(MouseButtons.Left) || input.Mouse.WasPressed(MouseButtons.Right))
         {
             // Pressing the other button mid-stroke (e.g. RMB while LMB is still held)
             // must commit the in-progress stroke rather than discard it: BeginStroke
@@ -406,8 +406,8 @@ internal sealed class TileEditor2D : IDisposable
         }
 
         // End on button *state* rather than the release edge: losing window focus or
-        // opening the developer console clears held mouse buttons (InputState.ResetButtons)
-        // without ever raising WasMouseReleased, which would otherwise orphan the stroke —
+        // opening the developer console clears held mouse buttons (InputState.CancelButtons)
+        // without ever raising a release edge, which would otherwise orphan the stroke —
         // IsStrokeActive stays true forever, painting stops working, and Ctrl+Z is silently
         // swallowed by the "no undo mid-stroke" guard.
         if (_session.IsStrokeActive && !isPainting && !isErasing)
@@ -416,26 +416,26 @@ internal sealed class TileEditor2D : IDisposable
 
     private void UpdateThings(InputState input)
     {
-        if (_isPlacingThing && input.WasMousePressed(MouseButtons.Left))
+        if (_isPlacingThing && input.Mouse.WasPressed(MouseButtons.Left))
         {
             PlaceThing();
             return;
         }
 
-        if (input.WasMousePressed(MouseButtons.Right))
+        if (input.Mouse.WasPressed(MouseButtons.Right))
         {
             _isPlacingThing = false;
             InspectorView.RefreshFromEditor();
             return;
         }
 
-        if (input.WasMousePressed(MouseButtons.Left))
+        if (input.Mouse.WasPressed(MouseButtons.Left))
             BeginThingSelectionOrDrag();
 
-        if (_thingDragHandle != ThingDragHandle2D.None && input.IsMouseDown(MouseButtons.Left))
+        if (_thingDragHandle != ThingDragHandle2D.None && input.Mouse.IsDown(MouseButtons.Left))
             UpdateThingDrag();
 
-        if (_thingDragHandle != ThingDragHandle2D.None && !input.IsMouseDown(MouseButtons.Left))
+        if (_thingDragHandle != ThingDragHandle2D.None && !input.Mouse.IsDown(MouseButtons.Left))
             CommitThingDrag();
     }
 

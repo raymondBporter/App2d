@@ -95,7 +95,7 @@ public sealed class GameHost : IDisposable
         _input.SetDeviceMapping(_surface.ClientSize, deviceWidth, deviceHeight);
         _game.Camera.SetViewport(deviceWidth, deviceHeight);
 
-        if (!_consoleView.IsOpen && _input.WasKeyPressed(Keys.Escape))
+        if (!_consoleView.IsOpen && _input.Keyboard.WasPressed(Keys.Escape))
         {
             _input.EndFrame();
             _window.Close();
@@ -104,6 +104,7 @@ public sealed class GameHost : IDisposable
 
         while (_accumulator >= FixedDeltaSeconds)
         {
+            _input.PollGamepad();
             _simulationTime += FixedDeltaSeconds;
             _frameTime = new FrameTime(
                 (float)FixedDeltaSeconds,
