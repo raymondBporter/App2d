@@ -203,6 +203,11 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         {
             ImGui.PushID(binding.Prop);
             ImGui.TextUnformatted(session.Assets.Prop(binding.Prop)?.Name ?? binding.Prop + " (missing)");
+            if (session.Assets.Prop(binding.Prop)?.Asset.Usage is "hair" or "clothing")
+            {
+                if (ImGui.SmallButton("Edit appearance")) session.Open(binding.Prop);
+                ImGui.SameLine();
+            }
             ImGui.SameLine(); if (ImGui.SmallButton("Remove"))
             {
                 var used = document.Asset.Actions.SelectMany(a => a.Hits).Any(h => h.Prop == binding.Prop);

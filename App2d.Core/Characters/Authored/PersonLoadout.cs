@@ -85,4 +85,15 @@ public static class PersonLoadout
         yield return (Sword, gear == PersonGear.Sword && SwordInHand(clip, seconds) ? SwordSocket : back);
         if (gear == PersonGear.Gun) yield return (Pistol, GunSocket);
     }
+
+    /// <summary>Player appearance plus the carried weapons. Hair stays on even when unarmed.</summary>
+    public static IEnumerable<(string Prop, string Socket)> Dressed(MotionClip clip, float seconds, PersonGear gear, ResolvedEntity? wearer = null)
+    {
+        if (wearer is null)
+            yield return (SeenFromBehind(clip, seconds) ? PersonWardrobe.ShortHairBack : PersonWardrobe.ShortHair, PersonWardrobe.HeadSocket);
+        else
+            foreach (var item in wearer.Equipment.Where(e => e.Prop.Usage is "hair" or "clothing"))
+                yield return (SeenFromBehind(clip, seconds) && item.Prop.BackView is { } back ? back : item.Prop.Id, item.Socket.Id);
+        foreach (var item in Worn(clip, seconds, gear)) yield return item;
+    }
 }

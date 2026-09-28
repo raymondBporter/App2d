@@ -24,6 +24,18 @@
     {
       "prop": "hammer",
       "socket": "sword-hand"
+    },
+    {
+      "prop": "brute-hide-wrap",
+      "socket": "body-art"
+    },
+    {
+      "prop": "brute-hair",
+      "socket": "head-art"
+    },
+    {
+      "prop": "brute-beard",
+      "socket": "head-art"
     }
   ],
   "actions": [

@@ -18,6 +18,10 @@ public sealed record PropSolid
     public List<PuppetPoint> Vertices { get; set; } = [];
     public List<int> Triangles { get; set; } = [];
     public string Fill { get; set; } = "#c8b18a";
+    public bool Outlined { get; set; } = true;
+    /// <summary>Optional editable source for an extruded cutout. Indexed geometry remains the runtime representation.</summary>
+    public List<PuppetPoint>? Outline { get; set; }
+    public float Thickness { get; set; }
 }
 
 /// <summary>
@@ -33,6 +37,9 @@ public sealed class PropAsset
     public int Version { get; set; } = 1;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
+    public string Usage { get; set; } = "prop";
+    public string? Attachment { get; set; }
+    public string? BackView { get; set; }
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .035f;
     public float Scale { get; set; } = 1;
@@ -65,6 +72,9 @@ public sealed class PropAsset
         Require(Format == FormatId && Version == 1, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "prop id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
+        EntityVocabulary.Require(Usage, ["prop", "hair", "clothing"], owner + " usage");
+        if (Attachment is not null) AuthoredAsset.RequireId(Attachment, owner + " attachment");
+        if (BackView is not null) { AuthoredAsset.RequireId(BackView, owner + " backView"); Require(BackView != Id, owner + ": back view cannot reference itself."); }
         Limit.Color(Ink, $"{owner} ink"); new Limit(.001f, 1).Check(LineWidth, $"{owner} lineWidth");
         new Limit(.001f, 100).Check(Scale, $"{owner} scale");
         Grip.Check($"{owner} grip"); Tip.Check($"{owner} tip"); SecondGrip?.Check($"{owner} secondGrip"); Muzzle?.Check($"{owner} muzzle");
@@ -82,6 +92,12 @@ public sealed class PropAsset
                 Require(System.Numerics.Vector3.Cross(b - a, c - a).LengthSquared() > 1e-16f, $"{owner}: degenerate triangle.");
             }
             Limit.Color(solid.Fill, owner + " mesh fill");
+            if (solid.Outline is { } outline)
+            {
+                Require(outline.Count is >= 3 and <= 256, owner + ": outline needs 3 to 256 points.");
+                new Limit(.0001f, 32).Check(solid.Thickness, owner + " thickness");
+                foreach (var p in outline) p.Check(owner + " outline");
+            }
         }
         Require(Shapes is not null && Shapes.Count <= 128, $"{owner}: shapes must be a list of at most 128.");
         for (var i = 0; i < Shapes.Count; i++)

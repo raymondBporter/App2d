@@ -57,8 +57,12 @@ public sealed class PuppetDrawing
             {
                 var ends = PartGeometry.Contour(part, world); Mesh.Line(ends[0], ends[1], part.Width, ink); continue;
             }
-            Mesh.Polygon(PartGeometry.Contour(part, world), CharacterJson.Color(part.Fill), ink, lineWidth);
+            var contour = PartGeometry.Contour(part, world);
+            Mesh.Polygon(contour, CharacterJson.Color(part.Fill), null, 0);
             var frame = PartGeometry.FrameOf(part, world);
+            PartPainting.Add(Mesh, part, frame, contour);
+            var outline = part.OutlineWidth ?? lineWidth;
+            if (outline > 0) Mesh.Polygon(contour, null, ink, outline);
             if (face != "none")
             {
                 FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),

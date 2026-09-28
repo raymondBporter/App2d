@@ -30,7 +30,8 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     [
         new ModelView(session, viewport),
         new AnimateView(session, viewport),
-        new EntityView(session)
+        new EntityView(session),
+        new AppearanceView(session)
     ];
 
     public EditorSession Session { get; } = session; public Viewport Viewport { get; } = viewport;     /// <summary>The arena test. Shell state: entering and leaving it never changes the session's documents or selection.</summary>
@@ -73,7 +74,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
     {
         var document = Session.ActiveDocument; var rightEdge = ImGui.GetCursorPosX() + ImGui.GetContentRegionAvail().X;
         ImGui.TextColored(Ui.Accent, "CHARACTER EDITOR"); ImGui.SameLine();
-        foreach (var mode in new[] { Workspace.Model, Workspace.Animate, Workspace.Entity })
+        foreach (var mode in new[] { Workspace.Model, Workspace.Animate, Workspace.Entity, Workspace.Appearance })
         {
             var active = Session.Mode == mode;
             if (active) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
@@ -111,6 +112,7 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         AssetDocument<ModelVariant> v => "variant of " + (Session.Assets.Model(v.Asset.Base)?.Name ?? v.Asset.Base + " (missing)"),
         AssetDocument<MotionClip> c => "animation for " + (Session.Assets.Model(c.Asset.Model)?.Name ?? c.Asset.Model + " (missing)"),
         AssetDocument<EntityAsset> e => "entity on " + (Session.Assets.Find(e.Asset.Model)?.Name ?? e.Asset.Model + " (missing)"),
+        AssetDocument<PropAsset> => "shared appearance",
         _ => "base model",
     };
 

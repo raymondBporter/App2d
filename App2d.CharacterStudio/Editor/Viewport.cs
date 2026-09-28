@@ -90,7 +90,10 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
             if (subject.Entity is { } entity) _drawings[i].Build(entity, subject.Pose); else
             {
                 _drawings[i].Build(subject.Model, subject.Pose);
-                if (session.Mode == Workspace.Animate && session.WeaponFor(subject.Model) is { } weapon)
+                if (session.Mode == Workspace.Appearance && session.Entity is { } wearer && wearer.Model.Id == subject.Model.Id)
+                    foreach (var item in wearer.Equipment.Where(e => e.Prop.Id != session.PreviewProp))
+                        _drawings[i].AddProp(item.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(item.Socket));
+                if (session.Mode is Workspace.Animate or Workspace.Appearance && session.WeaponFor(subject.Model) is { } weapon)
                     _drawings[i].AddProp(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket));
             }
         }

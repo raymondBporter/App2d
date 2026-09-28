@@ -21,7 +21,7 @@ public sealed class AuthoredCatalogTests
             "player-sword-backhand", "player-sword-down-attack", "player-sword-forehand", "player-sword-put-away", "player-sword-put-away-backhand", "player-sword-sheathe", "player-sword-side-cut", "player-wall-grip",
             "stalker-death", "stalker-hit", "stalker-idle", "stalker-lunge", "stalker-walk",
         ], catalog.Animations.Keys.Order());
-        Assert.Equal(["hammer", "pistol", "sheath", "spear", "sword"], catalog.Props.Keys.Order());
+        Assert.Equal(["brute-beard", "brute-hair", "brute-hide-wrap", "cinder-beard", "cinder-hair", "cinder-hide-wrap", "hair-short", "hair-short-back", "hammer", "pistol", "sheath", "spear", "sword"], catalog.Props.Keys.Order());
         Assert.Equal(["cinder-gunner", "hero", "maul-brute", "player", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.

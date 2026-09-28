@@ -120,7 +120,7 @@ public static class EntityAuthoring
         var parts = new Dictionary<string, PartOverride>(StringComparer.Ordinal);
         foreach (var (part, change) in variant.Parts)
         {
-            var look = new PartOverride { Fill = change.Fill, Face = change.Face, FaceX = change.FaceX, Hidden = change.Hidden };
+            var look = new PartOverride { Fill = change.Fill, OutlineWidth = change.OutlineWidth, Paint = change.Paint, Face = change.Face, FaceX = change.FaceX, Hidden = change.Hidden };
             if (!look.IsEmpty) parts[part] = look;
         }
         if (parts.Count == 0) throw new InvalidDataException($"Variant '{variant.Id}' overrides no colors, faces or visibility to save as a look.");

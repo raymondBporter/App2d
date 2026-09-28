@@ -40,8 +40,10 @@ public sealed record ModelSocket
 {
     public string Id { get; set; } = "";
     public string Control { get; set; } = "";
-    /// <summary>The control whose rotation orients the socket. Null uses Control's own.</summary>
+    /// <summary>The control whose rotation orients the socket. Null uses Control's own; locomotion keeps the screen axes.</summary>
     public string? Frame { get; set; }
+    /// <summary>When set, local +Y points from Control to this control in XY. Useful for clothing following a torso segment.</summary>
+    public string? Toward { get; set; }
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public float OffsetZ { get; set; }
@@ -198,7 +200,8 @@ public sealed class CharacterModel
             Require(socket is not null, $"{owner}: null socket.");
             AuthoredAsset.RequireId(socket.Id, $"{owner} socket id");
             Require(sockets.Add(socket.Id), $"{owner}: duplicate socket '{socket.Id}'.");
-            Require(Known(socket.Control) && (socket.Frame is null || Known(socket.Frame)), $"{owner}: socket '{socket.Id}' references an unknown control.");
+            Require(Known(socket.Control) && (socket.Frame is null or Locomotion || Known(socket.Frame)), $"{owner}: socket '{socket.Id}' references an unknown control.");
+            Require(socket.Toward is null || Known(socket.Toward) && socket.Toward != socket.Control, $"{owner}: socket '{socket.Id}' needs a different known toward control.");
             new Limit(-100, 100).Check(socket.OffsetX, $"{owner} socket '{socket.Id}' offsetX"); new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
             new Limit(-100, 100).Check(socket.OffsetZ, $"{owner} socket '{socket.Id}' offsetZ");
             new Limit(-10, 10).Check(socket.Angle, $"{owner} socket '{socket.Id}' angle");

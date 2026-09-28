@@ -14,7 +14,8 @@ namespace App2d.CharacterStudio.Editor;
 /// </summary>
 internal sealed partial class AssetBrowser(EditorSession session)
 {
-    private enum Create { None, EmptyModel, PersonModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, ImportPuppet, ImportClip }
+    private enum Create { None, EmptyModel, PersonModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip }
+    private string _appearanceTemplate = "hair";
     private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Sources"];
     private string _search = "", _filter = "All";
     private Create _create;
@@ -35,6 +36,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (ImGui.Button("New")) ImGui.OpenPopup("new-asset");
         if (ImGui.BeginPopup("new-asset"))
         {
+            if (ImGui.MenuItem("Appearance: hair / clothing...")) Start(Create.Appearance, "", "New appearance");
             if (ImGui.MenuItem("Model: empty")) Start(Create.EmptyModel, "", "New model");
             if (ImGui.MenuItem("Model: Person template")) Start(Create.PersonModel, "", "New person");
             var basis = session.Assets.BaseOf(session.SubjectId ?? "");
@@ -139,7 +141,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
         var tag = document.Kind switch { AssetKind.Model => "[M]", AssetKind.Variant => "[V]", AssetKind.Animation => "[A]", AssetKind.Entity => "[E]", _ => "[P]" };
         var label = $"{new string(' ', indent * 3)}{tag} {document.Name}{(document.Dirty || document.IsNew ? " *" : "")}";
         var selected = document.Id == session.SubjectId && session.Mode == Workspace.Model || document.Id == session.ClipId && session.Mode == Workspace.Animate
-            || document.Id == session.EntityId && session.Mode == Workspace.Entity;
+            || document.Id == session.EntityId && session.Mode == Workspace.Entity
+            || document.Id == session.PreviewProp && session.Mode == Workspace.Appearance;
         if (problems.Count > 0) ImGui.PushStyleColor(ImGuiCol.Text, Ui.Warning);
         if (ImGui.Selectable(label, selected)) session.Open(document.Id);
         if (problems.Count > 0) ImGui.PopStyleColor();
@@ -153,6 +156,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
         {
             switch (document)
             {
+                case AssetDocument<PropAsset> art when art.Asset.Usage != "prop":
+                    if (ImGui.MenuItem("Duplicate appearance")) Start(Create.DuplicateAppearance, art.Id, art.Name + " copy");
+                    break;
                 case AssetDocument<CharacterModel> model:
                     if (ImGui.MenuItem("New variant of this")) Start(Create.Variant, model.Id, model.Name + " variant");
                     if (ImGui.MenuItem("New animation for this")) { session.Open(model.Id); Start(Create.Animation, model.Id, "New animation"); }
@@ -203,6 +209,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (!ImGui.BeginPopupModal(title, ImGuiWindowFlags.AlwaysAutoResize)) { _create = Create.None; return; }
         ImGui.TextColored(Ui.Accent, _create switch
         {
+            Create.Appearance => "New hair or clothing",
+            Create.DuplicateAppearance => "Duplicate appearance " + _source,
             Create.EmptyModel => "New model from Empty",
             Create.PersonModel => "New model from the Person template",
             Create.Variant => "New variant",
@@ -221,6 +229,10 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (Ui.Text("ID (file name and stable reference)", ref _id, 64)) _idEdited = true;
         switch (_create)
         {
+            case Create.Appearance:
+                if (Ui.Combo("Starting shape", _appearanceTemplate, AppearanceAuthoring.Templates) is { } artTemplate) _appearanceTemplate = artTemplate;
+                Ui.Help("Edit the silhouette on a character, then equip and save it. For a torso-fitted tunic, edit the body's fill and fabric paint in Model.");
+                break;
             case Create.Variant:
                 if (Ui.Combo("Base model", _source, session.Assets.Models.Select(m => m.Id)) is { } basis) { _source = basis; _preset = ""; }
                 if (session.Assets.Model(_source) is { } model && BuildRules.For(model.Asset) is { } rule)
@@ -262,6 +274,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
 
     private bool Commit() => _create switch
     {
+        Create.Appearance => session.NewAppearance(_id, _name, _appearanceTemplate),
+        Create.DuplicateAppearance => session.DuplicateAppearance(_source, _id, _name),
         Create.EmptyModel => session.NewModel(_id, _name, "empty"),
         Create.PersonModel => session.NewModel(_id, _name, "person"),
         Create.Variant => session.NewVariant(_id, _name, _source, _preset.Length == 0 ? null : _preset),
