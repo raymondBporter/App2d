@@ -10,7 +10,7 @@ public sealed class ModelDrawingTests
     public void AVariantDrawsFromTheSameEvaluatedPoseAsItsBase()
     {
         var person = PersonTemplate.Model();
-        var clip = PuppetMotionConverter.Convert(PuppetTemplates.StepStudy(), PuppetTemplates.StepStudy().Motions[0], person, "person-walk", "Walk", "leg");
+        var clip = PuppetMotionConverter.Convert(PuppetTemplates.StepStudy(), PuppetTemplates.StepStudy().Motions[0], PersonTemplate.StudyReference(), "person-walk", "Walk", "leg");
         var standard = ResolvedModel.From(person);
         var tall = ResolvedModel.From(person, PersonBuild.TallThin.Apply(person, "tall-thin", "Tall"));
         var a = new PuppetDrawing(); a.Build(standard, PoseEvaluator.Sample(standard, clip, .3));

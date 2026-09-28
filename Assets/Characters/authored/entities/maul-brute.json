@@ -14,7 +14,7 @@
   "mass": 3,
   "movement": {
     "width": 0.319,
-    "height": 2.308
+    "height": 2.123
   },
   "hurt": {
     "layout": "standard",

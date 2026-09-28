@@ -106,27 +106,21 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
                     continue;
                 }
 
-                if (kind.IsSolid() && kind.IsGrippable())
-                {
-                    var grippableBounds = GetTileBounds(x, y);
-                    AddVisual(visuals, _tilesets.GetTileset(x, y).CreateGrippable(grippableBounds));
-                    continue;
-                }
-
                 var surfaces = _tileMap.GetExposedSurfaces(x, y);
                 if (surfaces == TileSurface2D.None)
                     continue;
 
                 var tileset = _tilesets.GetTileset(x, y);
                 var tileBounds = GetTileBounds(x, y);
+                var grippable = kind.IsGrippable();
                 if (surfaces.HasFlag(TileSurface2D.Top))
                     AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Top));
                 if (surfaces.HasFlag(TileSurface2D.Right))
-                    AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Right));
+                    AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Right, grippable));
                 if (surfaces.HasFlag(TileSurface2D.Bottom))
                     AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Bottom));
                 if (surfaces.HasFlag(TileSurface2D.Left))
-                    AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Left));
+                    AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Left, grippable));
             }
         }
 
@@ -134,9 +128,6 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         {
             for (var x = startX; x < endX; x++)
             {
-                if (_tileMap.GetTileKind(x, y).IsGrippable())
-                    continue;
-
                 var corners = _tileMap.GetCorners(x, y);
                 if (corners == TileCorner2D.None)
                     continue;

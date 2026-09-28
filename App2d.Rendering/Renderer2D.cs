@@ -203,7 +203,9 @@ public sealed partial class Renderer2D : IDisposable
                 break;
             case TextureShader2D tile:
                 // Preserve local-origin tiling; unlike sprites, tiled images use positive local Y.
-                uv = local / tile.TileSize;
+                uv = tile.ImageOrigin is { } origin
+                    ? new Vector2(local.X - origin.X, origin.Y - local.Y) / tile.TileSize
+                    : local / tile.TileSize;
                 break;
         }
         return Vertex(Vector2.Transform(local, matrix), shader.GetVertexColor(local, bounds), uv);

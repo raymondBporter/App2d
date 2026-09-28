@@ -56,12 +56,17 @@ internal static partial class PlayerMoves
         var person = CharacterModel.FromJson(File.ReadAllText(modelPath));
         foreach (var socket in Sockets()) { person.Sockets.RemoveAll(s => s.Id == socket.Id); person.Sockets.Add(socket); }
         person.Save(modelPath);
-        var model = ResolvedModel.From(person);
+        // These absolute pose studies were authored at the original proportions. Keep their
+        // reference measures so playback retargets the legs, including after regeneration.
+        var reference = CharacterModel.FromJson(person.ToJson());
+        var study = PersonTemplate.StudyReference();
+        foreach (var control in reference.Controls) control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
+        var model = ResolvedModel.From(reference);
         foreach (var prop in Props()) prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
         var clips = Clips(model).Select(WeaponMotion).ToDictionary(c => c.Id);
         foreach (var clip in clips.Values) clip.Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
         Directory.CreateDirectory(Path.Combine(authoredRoot, "entities"));
-        var hero = Hero(model, clips); hero.Save(Path.Combine(authoredRoot, "entities", hero.Id + ".json"));
+        var hero = Hero(ResolvedModel.From(person), clips); hero.Save(Path.Combine(authoredRoot, "entities", hero.Id + ".json"));
         // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
         WeaponMotion(PistolShot(model)).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
         var cinder = CinderVariant(); cinder.Save(Path.Combine(authoredRoot, "variants", cinder.Id + ".json"));
@@ -193,7 +198,7 @@ internal static partial class PlayerMoves
         Roles = new() { ["idle"] = "player-idle", ["jump"] = "player-jump", ["fall"] = "player-fall", ["hit"] = "player-hit", ["death"] = "player-death" },
         Controller = new() { Kind = EntityControllers.Traversal, WalkSpeed = 1.8f, RunSpeed = 4.2f, Range = 1.2f, Cooldown = 0 },
         Health = 30,
-        Movement = new() { Width = .55f, Height = 1.9f },
+        Movement = new() { Width = .55f, Height = 1.705f },
         Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = PersonLoadout.Sword, Socket = MoveBuilder.SwordSocket }, new() { Prop = PersonLoadout.Pistol, Socket = MoveBuilder.GunSocket }],
         Actions =

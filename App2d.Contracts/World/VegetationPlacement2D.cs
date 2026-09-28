@@ -17,7 +17,7 @@ public static class VegetationPlacement2D
 
     public static bool HasGrass(IChunkedTileMap2D map, int x, int y) =>
         x >= 0 && x < map.Width && y >= 0 && y < map.Height - 1 &&
-        map.GetTileKind(x, y) == TileKind2D.Solid &&
+        map.GetTileKind(x, y) is var kind && kind.IsSolid() && !kind.IsSpikes() &&
         map.GetTileKind(x, y + 1) == TileKind2D.Empty;
 
     public static Bounds2D GrassBounds(IChunkedTileMap2D map, GrassCell2D cell)

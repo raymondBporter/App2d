@@ -38,6 +38,13 @@ if (args is ["--render-smoke", var outputDirectory])
     return;
 }
 
+if (args is ["--tileset-smoke", var tilesetDirectory, .. var tilesetPairs] &&
+    (tilesetPairs is ["level"] || tilesetPairs.Length is > 0 and var count && count % 2 == 0))
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(tilesetDirectory, tilesetPairs: tilesetPairs);
+    return;
+}
+
 if (args is ["--vegetation-smoke", var vegetationDirectory])
 {
     App2d.Diagnostics.RenderingSmoke2D.Run(vegetationDirectory, vegetationOnly: true);

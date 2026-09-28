@@ -1,0 +1,10 @@
+{
+  "id": "ink-prehistoric-wall",
+  "tileSize": 32,
+  "fillPeriod": 128,
+  "surfaceThickness": 12,
+  "outerCornerSize": 6,
+  "innerCornerSize": 6,
+  "oneWayVisualHeight": 20,
+  "spikeVisualHeight": 26
+}

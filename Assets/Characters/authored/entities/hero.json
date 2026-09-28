@@ -20,6 +20,9 @@
     "cooldown": 0
   },
   "health": 30,
+  "movement": {
+    "height": 1.705
+  },
   "hurt": {
     "layout": "standard",
     "regions": {}
@@ -51,10 +54,10 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 1.151,
-          "offsetY": 1.041,
-          "width": 1.282,
-          "height": 0.679,
+          "offsetX": 1.143,
+          "offsetY": 0.874,
+          "width": 1.274,
+          "height": 0.667,
           "damage": 2
         }
       ],
@@ -82,10 +85,10 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 0.944,
-          "offsetY": 1.112,
-          "width": 1.35,
-          "height": 0.565,
+          "offsetX": 0.937,
+          "offsetY": 0.946,
+          "width": 1.342,
+          "height": 0.559,
           "damage": 2
         }
       ],
@@ -113,10 +116,10 @@
           "finish": {
             "marker": "recover"
           },
-          "offsetX": 1.026,
-          "offsetY": 1.041,
-          "width": 1.532,
-          "height": 0.679,
+          "offsetX": 1.018,
+          "offsetY": 0.874,
+          "width": 1.524,
+          "height": 0.667,
           "damage": 2
         }
       ],

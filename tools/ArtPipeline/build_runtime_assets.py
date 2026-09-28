@@ -78,9 +78,9 @@ def write_manifest(content_root: Path) -> None:
         "environments/tilesets/rust-cyberpunk/tileset.json",
         "environments/tilesets/dark-cave/tileset.json",
         "environments/tilesets/mossy-cavern/tileset.json",
-        "environments/tilesets/kenney-grassland/tileset.json",
-        "environments/tilesets/kenney-grassland/ladder/top.png",
-        "environments/tilesets/kenney-grassland/ladder/middle.png",
+        "environments/tilesets/ink-medieval-ground/tileset.json",
+        "environments/tilesets/ink-medieval-ground/ladder/top.png",
+        "environments/tilesets/ink-medieval-ground/ladder/middle.png",
         "ui/hud/weapons/sword.png",
         "ui/hud/weapons/gun.png",
         "ui/hud/weapons/unarmed.png",
@@ -164,13 +164,6 @@ def main() -> None:
             repository,
             "Importing Maaot DarkCave and Mossy Cavern environments",
             str(pipeline / "import_maaot_caves.py"),
-            "--content-root",
-            str(staging_root),
-        )
-        run(
-            repository,
-            "Importing Kenney Pixel Platformer grassland environment",
-            str(pipeline / "import_kenney_pixel_platformer.py"),
             "--content-root",
             str(staging_root),
         )

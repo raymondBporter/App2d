@@ -44,6 +44,16 @@ Rendering uses the same orthographic depth buffer as characters, with flat facet
 ink on solid props. Coplanar triangulation edges are suppressed. Legacy stroke/polygon props still load. Socket
 orientation is evaluated before both drawing and gameplay point projection; gameplay collision remains XY.
 
+## Human proportions
+
+Humans use legs at 80% of the original study length. This is baked into the shared Person rest pose;
+the tall, broad, brute and cinder builds retain their relative proportions on that base. Head, torso
+and arm dimensions are unchanged. Walk, run and heavy walk retain their original reference measures,
+so stride, foot lift and pelvis motion retarget to the shorter legs; distance-based playback follows
+the shorter stride. `PersonTemplate.StudyReference()` preserves the source proportions for converting
+and regenerating the original motion studies. The player's grid-aligned standing collider is 52 px
+(previously 56 px), and the authored human movement boxes and Hero sword-hit rectangles follow the lower stance.
+
 ## Hair and clothing
 
 The Hero wears short tousled hair. Maul brute is bare-chested with an ochre hide skirt; Cinder gunner

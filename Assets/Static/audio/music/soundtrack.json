@@ -3,8 +3,8 @@
   "cues": ["crown-of-embers", "copper-circuit"],
   "default": { "piece": "crown-of-embers", "mood": "drive" },
   "zones": {
-    "trailhead": { "piece": "crown-of-embers", "mood": "explore" },
-    "copper-reach": { "piece": "copper-circuit", "mood": "drive" },
-    "high-keep": { "piece": "crown-of-embers", "mood": "combat" }
+    "prehistoric": { "piece": "crown-of-embers", "mood": "explore" },
+    "medieval": { "piece": "crown-of-embers", "mood": "combat" },
+    "wasteland": { "piece": "copper-circuit", "mood": "drive" }
   }
 }

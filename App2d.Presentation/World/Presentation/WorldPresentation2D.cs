@@ -147,7 +147,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             var visuals = new List<WorldObject2D>();
             foreach (var collision in chunk.Collisions)
             {
-                if (collision.Kind.IsSolid() && !collision.Kind.IsGrippable())
+                if (collision.Kind.IsSolid())
                     visuals.AddRange(factory.CreateSolidFill(collision.Bounds));
             }
 

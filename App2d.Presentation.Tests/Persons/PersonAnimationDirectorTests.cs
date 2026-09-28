@@ -52,7 +52,9 @@ public sealed class PersonAnimationDirectorTests
         var walk = d.Step(Standing with { LinearVelocity = new(.3f, 0) }, 60);
         Assert.Equal(PersonMoves.Walk, walk.Key);
         var stride = PoseEvaluator.CycleTravel(Moves.Model, Moves[PersonMoves.Walk]).X;
-        Assert.Equal(59 * .3 / 120 / stride * Moves[PersonMoves.Walk].Duration, walk.Seconds, 3); // phase follows ground covered since the walk began
+        // Compare error directly: the shorter stride puts this value on a decimal rounding boundary.
+        var expected = 59 * .3 / 120 / stride * Moves[PersonMoves.Walk].Duration;
+        Assert.InRange(Math.Abs(expected - walk.Seconds), 0, 1e-6); // phase follows ground covered since the walk began
         Assert.True(walk.Planted);
         var run = d.Step(Standing with { LinearVelocity = new(d.Director.RunThreshold + .5f, 0) }, 30);
         Assert.Equal(PersonMoves.Run, run.Key); Assert.True(run.Planted);

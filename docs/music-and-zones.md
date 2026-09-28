@@ -8,13 +8,14 @@ There is no enemy-proximity or combat-state heuristic yet.
 
 | Region | World X range | Music |
 | --- | --- | --- |
-| Trailhead | -512 to 4096 | Crown of Embers / Explore |
-| Copper Reach | 4096 to 12288 | Copper Circuit / Drive |
-| High Keep | 12288 to 19968 | Crown of Embers / Combat |
+| Fern Hollow (`prehistoric`) | -512 to 6304 | Crown of Embers / Explore |
+| Kingsroad (`medieval`) | 6304 to 13120 | Crown of Embers / Combat |
+| The Rust (`wasteland`) | 13120 to 19968 | Copper Circuit / Drive |
 | Outside all zones or an unassigned zone | — | Crown of Embers / Drive |
 
-All three starter rectangles span Y=-640 to Y=2432. These are initial authoring
-choices, independent of tile appearance, checkpoints and enemy placement.
+The zones are the map's three equal thirds, one per era, and span Y=-640 to Y=2432.
+`tools/LevelLab/era_zones.py` writes them and paints each third with its era's ink ground and
+wall tilesets. They are independent of checkpoints and enemy placement.
 
 ## Audition in the game
 

@@ -13,7 +13,7 @@
   },
   "movement": {
     "width": 0.5,
-    "height": 2.1
+    "height": 1.866
   },
   "hurt": {
     "layout": "standard",

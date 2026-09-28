@@ -143,6 +143,23 @@ public sealed class MonoGameRenderingTests
     }
 
     [Fact]
+    public void TiledTextureWithImageOriginDrawsUprightFromThatCorner()
+    {
+        using var texture = CreateTexture();
+        using var graphics = new GraphicsTestContext();
+        using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
+        renderer.BeginFrame(128, 128, default);
+        renderer.Clear(XnaColor.Transparent);
+        renderer.Draw(new WorldObject2D(Rectangle2D.FromSize(new Vector2(64)),
+            new TextureShader2D(texture, new Vector2(64), filterMode: TextureFilter.Point, imageOrigin: new Vector2(-32, 32))));
+        renderer.EndFrame();
+        var pixels = graphics.ReadPixels();
+        Assert.Equal(XnaColor.Red, pixels[40 * 128 + 40]);
+        Assert.Equal(XnaColor.Lime, pixels[40 * 128 + 88]);
+        Assert.Equal(XnaColor.Blue, pixels[88 * 128 + 40]);
+    }
+
+    [Fact]
     public void GradientAndLayerOrderSurviveMaterialBatchChanges()
     {
         using var graphics = new GraphicsTestContext();

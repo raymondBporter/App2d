@@ -65,7 +65,7 @@ public sealed class AuthoredCatalogTests
     {
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var puppet = id == "person-walk" ? PuppetTemplates.StepStudy() : PuppetTemplates.RunStudy();
-        TestModels.AssertMatchesPrototype(puppet, catalog.Resolve("person"), catalog.Animations[id]);
+        TestModels.AssertMatchesPrototype(puppet, ResolvedModel.From(PersonTemplate.StudyReference()), catalog.Animations[id]);
     }
 
     [Fact]
