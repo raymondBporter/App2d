@@ -13,7 +13,6 @@ public sealed class SideScrollerCamera2D
 {
     private const float GroundedVerticalOffset = 40f;
     private const float FallingVerticalOffset = -110f;
-    private const float FloorClearance = 96f;
     private const float HorizontalDeadZoneViewportRatio = 0.22f;
     private const float VerticalDeadZoneViewportRatio = 0.30f;
     private const float FallingVerticalDeadZoneViewportRatio = 0.12f;
@@ -29,8 +28,6 @@ public sealed class SideScrollerCamera2D
     private const float MinimumVerticalFollowRateScale = 0.25f;
 
     private readonly Camera2D _camera;
-    private readonly Bounds2D _levelBounds;
-    private readonly Func<float, float> _floorHeightAtX;
     private readonly List<ParallaxItem> _parallaxItems = [];
     private float _lookAhead;
     private float _fallDuration;
@@ -39,16 +36,15 @@ public sealed class SideScrollerCamera2D
     private float _shakeStrength;
     private float _shakeTime;
     private float _verticalFollowSuppression;
+    private float _lastGroundedPlayerY;
 
-    public SideScrollerCamera2D(Scene2D scene, Camera2D camera, Bounds2D levelBounds, Vector2 initialPlayerPosition, Func<float, float> floorHeightAtX)
+    public SideScrollerCamera2D(Scene2D scene, Camera2D camera, Bounds2D levelBounds, Vector2 initialPlayerPosition)
     {
         ArgGuard.ThrowIfNull(scene);
         _camera = ArgGuard.RequireNotNull(camera);
         if (!levelBounds.IsFinite)
             ArgGuard.ThrowOutOfRange(levelBounds, "Value must be finite.");
-        _levelBounds = levelBounds;
-        _floorHeightAtX = ArgGuard.RequireNotNull(floorHeightAtX);
-
+        _camera.WorldBounds = levelBounds;
         _camera.Zoom = 1.35f;
         Reset(initialPlayerPosition);
         CreateParallaxBackground(scene);
@@ -60,6 +56,9 @@ public sealed class SideScrollerCamera2D
         if (deltaSeconds <= 0f)
             return;
 
+        if (isGrounded)
+            _lastGroundedPlayerY = playerPosition.Y;
+
         var halfView = _camera.VisibleWorldBounds.Size / 2f;
         UpdateLookAhead(playerVelocity.X, halfView.X, deltaSeconds);
         UpdateVerticalFraming(playerVelocity.Y, isGrounded, deltaSeconds);
@@ -68,7 +67,7 @@ public sealed class SideScrollerCamera2D
         var target = _followPosition;
         target.X = KeepInsideDeadZone(target.X, focus.X, halfView.X * HorizontalDeadZoneViewportRatio);
         target.Y = KeepInsideDeadZone(target.Y, focus.Y, halfView.Y * float.Lerp(VerticalDeadZoneViewportRatio, FallingVerticalDeadZoneViewportRatio, _fallBlend));
-        target = ClampToLevel(target, halfView);
+        target = ClampToLevel(target);
 
         var distance = Vector2.Abs(target - _followPosition);
         var horizontalRate = CatchUpRate(distance.X, halfView.X, 4.5f, 11f);
@@ -78,7 +77,7 @@ public sealed class SideScrollerCamera2D
             : CatchUpRate(distance.Y, halfView.Y, 3.2f, 8f);
         verticalRate *= float.Lerp(1f, MinimumVerticalFollowRateScale, _verticalFollowSuppression);
         _followPosition = new Vector2(Damp(_followPosition.X, target.X, horizontalRate, deltaSeconds), Damp(_followPosition.Y, target.Y, verticalRate, deltaSeconds));
-        _followPosition = ClampToLevel(_followPosition, halfView);
+        _followPosition = ClampToLevel(_followPosition);
         _verticalFollowSuppression = Damp(_verticalFollowSuppression, 0f, VerticalFollowSuppressionRate, deltaSeconds);
         _camera.Position = _followPosition;
         UpdateParallax();
@@ -102,8 +101,8 @@ public sealed class SideScrollerCamera2D
         _shakeStrength = 0f;
         _shakeTime = 0f;
         _verticalFollowSuppression = 0f;
-        var halfView = _camera.VisibleWorldBounds.Size / 2f;
-        _followPosition = ClampToLevel(new Vector2(playerPosition.X, GetVerticalFocus(playerPosition)), halfView);
+        _lastGroundedPlayerY = playerPosition.Y;
+        _followPosition = ClampToLevel(new Vector2(playerPosition.X, GetVerticalFocus(playerPosition)));
         _camera.Position = _followPosition;
         UpdateParallax();
     }
@@ -130,12 +129,8 @@ public sealed class SideScrollerCamera2D
 
     private float GetVerticalFocus(Vector2 playerPosition)
     {
-        var floorY = _floorHeightAtX(playerPosition.X);
-        if (!float.IsFinite(floorY))
-            throw new InvalidOperationException("The camera floor height must be finite.");
-
         var playerFocus = playerPosition.Y + float.Lerp(GroundedVerticalOffset, FallingVerticalOffset, _fallBlend);
-        var floorAnchoredFocus = MathF.Max(playerFocus, floorY + FloorClearance);
+        var floorAnchoredFocus = MathF.Max(playerFocus, _lastGroundedPlayerY + GroundedVerticalOffset);
 
         // Keep ordinary jumps framed against the terrain, but let a sustained
         // fall reveal the space below instead of pinning the camera above a pit.
@@ -166,14 +161,11 @@ public sealed class SideScrollerCamera2D
         _lookAhead = Damp(_lookAhead, target, response, deltaSeconds);
     }
 
-    private Vector2 ClampToLevel(Vector2 position, Vector2 halfView)
+    private Vector2 ClampToLevel(Vector2 position)
     {
         // Leave enough room for the largest shake so its render-only offset can
         // never expose space beyond the authored level at any viewport edge.
-        var shakeSafeHalfView = halfView + new Vector2(MaximumShakeStrength);
-        return new Vector2(
-            ClampViewCenter(position.X, _levelBounds.Min.X, _levelBounds.Max.X, shakeSafeHalfView.X),
-            ClampViewCenter(position.Y, _levelBounds.Min.Y, _levelBounds.Max.Y, shakeSafeHalfView.Y));
+        return _camera.ClampToWorld(position, MaximumShakeStrength);
     }
 
     private static float KeepInsideDeadZone(float cameraCenter, float focus, float halfSize)
@@ -250,13 +242,6 @@ public sealed class SideScrollerCamera2D
     }
 
     private static float WrapCentered(float value, float period) => value - MathF.Floor((value + period / 2f) / period) * period;
-
-    private static float ClampViewCenter(float value, float min, float max, float halfExtent)
-    {
-        if (max - min <= halfExtent * 2f)
-            return (min + max) / 2f;
-        return Math.Clamp(value, min + halfExtent, max - halfExtent);
-    }
 
     private readonly record struct ParallaxItem(WorldObject2D Object, Vector2 Anchor, float ScrollFactor, float RepeatWidth);
 }

@@ -23,7 +23,6 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     private readonly float _tileSize;
     private readonly TraversalMetrics2D _traversal;
-    private readonly Func<int, int> _groundY;
     private IReadOnlyList<MovingPlatformSpec2D> _movingPlatformSpecs;
     private readonly IReadOnlyList<WorldThingSpec2D> _worldThingSpecs;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
@@ -40,18 +39,15 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public SideScrollerLevel2D(
         TraversalMetrics2D traversal,
         IChunkedTileMap2D tileMap,
-        Func<int, int> groundY,
         IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null,
         IReadOnlyList<WorldThingSpec2D>? worldThings = null,
         IEnumerable<WorldZone2D>? zones = null)
     {
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
-        ArgGuard.ThrowIfNull(groundY);
         _traversal = traversal;
         _tileSize = traversal.TileSize;
         ArgGuard.ThrowIfNotFiniteOrNotPositive(_tileSize);
-        _groundY = groundY;
         _movingPlatformSpecs = movingPlatforms ?? [];
         _worldThingSpecs = worldThings ?? [];
         TileMap = tileMap;
@@ -91,7 +87,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             const int fallbackSpawnTileX = 4;
             SpawnPoint = new Vector2(
                 TileCenterX(fallbackSpawnTileX),
-                TileMap.Origin.Y + _groundY(fallbackSpawnTileX) * _tileSize +
+                TileMap.Origin.Y + TileGroundHeights2D.AtColumn(TileMap, fallbackSpawnTileX) * _tileSize +
                 traversal.PlayerColliderSize.Y / 2f + traversal.GroundProbeDistance);
         }
 

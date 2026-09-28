@@ -67,11 +67,9 @@ public sealed class SpikeTerrain2DTests : IDisposable
         using var database = LevelDatabase2D.Open(copyPath);
         var tileMap = database.Load();
 
-        var groundHeights = TileGroundHeights2D.Derive(tileMap);
         var level = new SideScrollerLevel2D(
             traversal,
-            tileMap,
-            x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)]);
+            tileMap);
         var spikes = FindSpikes(level);
         Assert.NotEmpty(spikes);
         Assert.All(spikes, spike =>

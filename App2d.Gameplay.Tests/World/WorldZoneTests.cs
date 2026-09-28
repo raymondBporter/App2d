@@ -58,7 +58,7 @@ public sealed class WorldZoneTests
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
         var zone = new WorldZone2D("far", "Far zone", new(new(15000, -640), new(19968, 2432)));
-        using var level = new SideScrollerLevel2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, _ => 1, zones: [zone]);
+        using var level = new SideScrollerLevel2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, zones: [zone]);
         var physics = new PhysicsWorld2D();
         level.CreateSimulation(physics.CollisionSystem, physics, new EntityIdAllocator2D(), 1, 2, 4);
         var content = level.CaptureContent();

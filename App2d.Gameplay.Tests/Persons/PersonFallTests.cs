@@ -89,7 +89,7 @@ public sealed class PersonFallTests
         var map = database.Load();
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision) { Gravity = new(0, -Metrics.Gravity), MaxSubstepSeconds = Dt };
-        using var level = new SideScrollerLevel2D(Metrics, map, _ => 12);
+        using var level = new SideScrollerLevel2D(Metrics, map);
         level.CreateSimulation(collision, physics, new EntityIdAllocator2D(), 1, 2, 4);
         var groundY = map.Origin.Y + 12 * map.TileSize;
         var person = new Person2D(EntityId2D.Create(), collision, physics, Metrics,

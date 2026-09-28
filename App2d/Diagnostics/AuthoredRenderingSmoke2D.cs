@@ -1,3 +1,4 @@
+using App2d.Contracts.World;
 using App2d.Contracts.Enemies;
 using App2d.Presentation.Persons;
 using App2d.Core;
@@ -88,7 +89,7 @@ internal static class AuthoredRenderingSmoke2D
                 {
                     var hit = swing.Hits[0].Window;
                     var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color(235, 60, 50, 110)));
-                    box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.PixelsPerUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2); close.Draw(box);
+                    box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2); close.Draw(box);
                 }
                 if (name == "gun-run-shot")
                 {
@@ -113,7 +114,7 @@ internal static class AuthoredRenderingSmoke2D
             {
                 var states = ids.Select((id, i) =>
                 {
-                    var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2((-230 + i * 125) / AuthoredWorld.PixelsPerUnit, 0);
+                    var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-230 + i * 125), 0);
                     // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
                     if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }
                     else if (action is not null && animator.TryStart(action))
@@ -125,7 +126,7 @@ internal static class AuthoredRenderingSmoke2D
                         for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, phase, phase == "walk" ? .012f : 0, false, []);
                     }
 
-                    return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, feet * AuthoredWorld.PixelsPerUnit, Vector2.Zero, 0, facing, true, true)
+                    return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, GameWorldUnits2D.AuthoredToWorld(feet), Vector2.Zero, 0, facing, true, true)
                     { TypeId = id, AuthoredEntity = entity, AuthoredPose = animator.Pose };
                 }).ToImmutableArray();
                 view.ApplyState(states, [], 70);

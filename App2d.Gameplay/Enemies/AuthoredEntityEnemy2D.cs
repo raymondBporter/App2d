@@ -1,3 +1,4 @@
+using App2d.Contracts.World;
 using App2d.Core.Geometry.Functions;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
@@ -26,7 +27,7 @@ namespace App2d.Gameplay.Enemies;
 /// </summary>
 public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IAuthoredHurt2D
 {
-    private const float Scale = AuthoredWorld.PixelsPerUnit, HurtSeconds = .45f;
+    private const float Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit, HurtSeconds = .45f;
     private readonly EntityAnimator _animator;
     private readonly HitLedger _ledger = new();
     private readonly Dictionary<EntityId2D, int> _hitHistory = [];

@@ -1,3 +1,4 @@
+using App2d.Contracts.World;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
@@ -109,7 +110,7 @@ public sealed class CombatHitstopTests
         var held = shader.Pose!.Points["head"];
         view.Advance(.02f);
         Assert.Equal(held, shader.Pose.Points["head"]);
-        Assert.Equal(pose.Position * AuthoredWorld.PixelsPerUnit, visual.Transform.Position);
+        Assert.Equal(pose.Position * GameWorldUnits2D.WorldUnitsPerAuthoredUnit, visual.Transform.Position);
         view.ResetContact(); view.ApplyState([state], [], 126);
         Assert.Same(pose.Local, shader.Pose);
         view.ApplyState([], [], 127); Assert.Empty(scene);

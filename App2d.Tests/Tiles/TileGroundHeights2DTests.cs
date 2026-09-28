@@ -62,4 +62,16 @@ public sealed class TileGroundHeights2DTests
 
         Assert.All(TileGroundHeights2D.Derive(map), height => Assert.True(height >= 1));
     }
+
+    [Fact]
+    public void ColumnQueryReflectsEditsWithoutKeepingAHeightArray()
+    {
+        var map = new EditableTileMap2D(2, 8, 32f, 4);
+        map.SetTileKind(0, 0, TileKind2D.Solid);
+        map.SetTileKind(0, 1, TileKind2D.Solid);
+        Assert.Equal(2, TileGroundHeights2D.AtColumn(map, 0));
+
+        map.SetTileKind(0, 1, TileKind2D.Empty);
+        Assert.Equal(1, TileGroundHeights2D.AtColumn(map, 0));
+    }
 }

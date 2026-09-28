@@ -23,20 +23,20 @@ public sealed class AuthoredHero2D
         Entity = entity;
         if (entity.Controller.Id != EntityControllers.Traversal) throw new InvalidDataException($"Entity '{entity.Id}' must use the '{EntityControllers.Traversal}' controller to drive the game's player.");
         Attack = entity.Actions.GetValueOrDefault(EntityControllers.Attack) ?? throw new InvalidDataException($"Entity '{entity.Id}' has no attack action.");
-        PixelsPerUnit = colliderSize.Y / entity.Model.DrawnHeight();
+        WorldUnitsPerModelUnit = colliderSize.Y / entity.Model.DrawnHeight();
         _halfHeight = colliderSize.Y / 2;
         for (var swing = Attack; swing is not null && !_shapes.ContainsKey(swing.Id); swing = swing.Next is { } next ? entity.Actions[next] : null)
         {
             if (swing.Hits is not [{ Window: { Socket: null, Prop: null } hit }])
                 throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window, fixed to the actor (no socket or prop): the player's sword hit is a box on the player.");
-            _shapes[swing.Id] = AxisAlignedRectangle2D.FromSize(new Vector2(hit.Width, hit.Height) * PixelsPerUnit);
+            _shapes[swing.Id] = AxisAlignedRectangle2D.FromSize(new Vector2(hit.Width, hit.Height) * WorldUnitsPerModelUnit);
         }
     }
 
     public ResolvedEntity Entity { get; }
     public ResolvedAction Attack { get; }
     public ResolvedAction Swing(string? id) => id is null ? Attack : Entity.Actions[id];
-    public float PixelsPerUnit { get; }
+    public float WorldUnitsPerModelUnit { get; }
 
     public IShape2D Shape(string? swing = null) => _shapes[Swing(swing).Id];
     public int Damage(string? swing = null) => Swing(swing).Hits[0].Window.Damage;
@@ -64,9 +64,9 @@ public sealed class AuthoredHero2D
         return sinceEnd <= window ? next : Attack.Id;
     }
 
-    /// <summary>The player's bolt from the shoot action's projectile, in pixels.</summary>
+    /// <summary>The player's bolt from the shoot action's projectile, in world units.</summary>
     internal GunPersonWeapon2D.Shot? Shot => Entity.Actions.GetValueOrDefault(EntityControllers.Shoot)?.Projectile is { } p
-        ? new(new Vector2(p.Width, p.Height) * PixelsPerUnit, p.Speed * PixelsPerUnit, p.Lifetime, p.Damage) : null;
+        ? new(new Vector2(p.Width, p.Height) * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, p.Damage) : null;
 
     /// <summary>Where a shot leaves the pistol: the muzzle at the shoot (or wall-shot) action's fire event.</summary>
     public Vector2 Muzzle(float facing, bool wallGrip)
@@ -83,5 +83,5 @@ public sealed class AuthoredHero2D
     private ActorPose Pose(MotionClip clip, float seconds, float facing) =>
         new(PoseEvaluator.Sample(Entity.Model, clip, Math.Clamp(seconds, 0, clip.Duration), input: new() { InPlace = true }), Vector2.Zero, facing < 0 ? -1 : 1);
 
-    private Vector2 ToWorld(Vector2 units) => units * PixelsPerUnit - new Vector2(0, _halfHeight);
+    private Vector2 ToWorld(Vector2 units) => units * WorldUnitsPerModelUnit - new Vector2(0, _halfHeight);
 }

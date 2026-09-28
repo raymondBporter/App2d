@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using System.Numerics;
@@ -9,6 +10,19 @@ namespace App2d.Tests.Rendering;
 [Collection("Graphics")]
 public sealed class GameRenderPassTests
 {
+    [Fact]
+    public void GameAttachesOnlyOnePhysicsWorld()
+    {
+        using var game = new TestGame();
+        var world = new PhysicsWorld2D();
+        game.AttachWorld(world);
+        game.AttachWorld(world);
+
+        Assert.Same(world, game.PhysicsWorld);
+        Assert.Throws<InvalidOperationException>(() => game.AttachWorld(new PhysicsWorld2D()));
+        Assert.Same(world, game.PhysicsWorld);
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
@@ -55,6 +69,8 @@ public sealed class GameRenderPassTests
     private sealed class TestGame : Game2D
     {
         public List<string> Passes { get; } = [];
+
+        public void AttachWorld(PhysicsWorld2D world) => AttachPhysicsWorld(world);
 
         public TestGame() => Scene.Add(new WorldObject2D(
             Rectangle2D.FromSize(new Vector2(512)), new SolidColorShader(XnaColor.Red)));

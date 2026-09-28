@@ -36,7 +36,7 @@ public sealed class AuthoredMovingPlatform2DTests
             new Vector2(80f, 14f),
             48f,
             0xFF25D2BEu);
-        using var level = new SideScrollerLevel2D(traversal, map, _ => 1, [authored]);
+        using var level = new SideScrollerLevel2D(traversal, map, [authored]);
         var scene = new Scene2D();
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision);

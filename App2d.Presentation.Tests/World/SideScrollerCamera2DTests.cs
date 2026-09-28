@@ -17,8 +17,8 @@ public sealed class SideScrollerCamera2DTests
         var large = new Camera2D { ReferenceViewportHeight = 1080f };
         small.SetViewport(960, 540);
         large.SetViewport(1920, 1080);
-        var smallController = new SideScrollerCamera2D(new Scene2D(), small, bounds, Vector2.Zero, _ => -2000f);
-        var largeController = new SideScrollerCamera2D(new Scene2D(), large, bounds, Vector2.Zero, _ => -2000f);
+        var smallController = new SideScrollerCamera2D(new Scene2D(), small, bounds, Vector2.Zero);
+        var largeController = new SideScrollerCamera2D(new Scene2D(), large, bounds, Vector2.Zero);
         for (var frame = 0; frame < 180; frame++)
         {
             var position = new Vector2(frame * 10f, -frame * 10f);
@@ -72,8 +72,7 @@ public sealed class SideScrollerCamera2DTests
             new Scene2D(),
             camera,
             levelBounds,
-            new Vector2(0f, levelBounds.Min.Y),
-            _ => -10_000f);
+            new Vector2(0f, levelBounds.Min.Y));
 
         controller.Shake(20f);
         for (var frame = 0; frame < 60; frame++)
@@ -102,6 +101,33 @@ public sealed class SideScrollerCamera2DTests
         Assert.True(stabilizedCamera.Position.Y > regularCamera.Position.Y);
     }
 
+    [Fact]
+    public void LastGroundedPositionHoldsFramingUntilARealFall()
+    {
+        var (controller, camera) = CreateCamera();
+        var restingY = camera.Position.Y;
+
+        controller.Update(new Vector2(0f, -50f), new Vector2(0f, -200f), false, 1f / 60f);
+        Assert.Equal(restingY, camera.Position.Y);
+
+        for (var frame = 0; frame < 120; frame++)
+            controller.Update(new Vector2(0f, -300f), new Vector2(0f, -400f), false, 1f / 60f);
+        Assert.True(camera.Position.Y < restingY);
+    }
+
+    [Fact]
+    public void LooksAheadInTravelDirection()
+    {
+        var (controller, camera) = CreateCamera();
+        for (var frame = 0; frame < 120; frame++)
+            controller.Update(Vector2.Zero, new Vector2(600f, 0f), true, 1f / 60f);
+        Assert.True(camera.Position.X > 0f);
+
+        for (var frame = 0; frame < 120; frame++)
+            controller.Update(Vector2.Zero, new Vector2(-600f, 0f), true, 1f / 60f);
+        Assert.True(camera.Position.X < 0f);
+    }
+
     private static (SideScrollerCamera2D Controller, Camera2D Camera) CreateCamera(
         Vector2? initialPlayerPosition = null)
     {
@@ -110,8 +136,7 @@ public sealed class SideScrollerCamera2DTests
             new Scene2D(),
             camera,
             new Bounds2D(new Vector2(-5_000f), new Vector2(5_000f)),
-            initialPlayerPosition ?? Vector2.Zero,
-            _ => -1_000f);
+            initialPlayerPosition ?? Vector2.Zero);
         return (controller, camera);
     }
 }

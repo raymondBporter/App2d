@@ -1,3 +1,4 @@
+using App2d.Contracts.World;
 using App2d.Core.Validation;
 using App2d.Contracts.Player;
 using App2d.Presentation.World;
@@ -40,11 +41,11 @@ public sealed class SideScrollerGame : Game2D
     {
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
-        const float units = AuthoredWorld.PixelsPerUnit;
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
-        var height = MathF.Round(hero.Asset.Movement.Height * units / 4) * 4;
+        var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.Height) / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
-            new(hero.Asset.Movement.Width * units, height), hero.Asset.Movement.OffsetX * units);
+            new(GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.Width), height),
+            GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.OffsetX));
         _sounds = new SoundEffectBank2D(AssetPaths.Current.SoundEffects);
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
@@ -69,26 +70,16 @@ public sealed class SideScrollerGame : Game2D
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
         });
         _session = _simulation.Session;
-        RegisterDebugPhysicsWorld(_simulation.Physics);
+        AttachPhysicsWorld(_simulation.Physics);
         RegisterDebugAttackShapes(_simulation.Arsenal.GetActiveAttackHitboxes);
         RegisterDebugAttackShapes(_simulation.Level.EnemySystem.GetActiveAttackHitboxes);
 
         var snapshot = _session.CaptureSnapshot();
         var playerId = _session.PlayerIds[0];
         var startPosition = snapshot.FindPlayer(playerId)!.Value.Person.Position;
-        var cameraOrigin = tileMap.Origin;
-        var cameraTileSize = tileMap.TileSize;
-        var cameraGroundHeights = (int[])_simulation.GroundHeights.Clone();
-        float CameraFloorY(float worldX)
-        {
-            ArgGuard.ThrowIfNotFinite(worldX);
-            var tileX = (int)MathF.Floor((worldX - cameraOrigin.X) / cameraTileSize);
-            tileX = Math.Clamp(tileX, 0, cameraGroundHeights.Length - 1);
-            return cameraOrigin.Y + cameraGroundHeights[tileX] * cameraTileSize;
-        }
         Camera.ReferenceViewportHeight = 1080f;
         var cameraController = new SideScrollerCamera2D(Scene, Camera,
-            tileMap.WorldBounds, startPosition, CameraFloorY);
+            tileMap.WorldBounds, startPosition);
         DeveloperConsole.RegisterVariable("camera_zoom", () => Camera.Zoom, value =>
         {
             ArgGuard.ThrowIfNotFiniteOrNotPositive(value);

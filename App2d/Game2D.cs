@@ -11,7 +11,6 @@ namespace App2d;
 
 public abstract class Game2D : IDisposable
 {
-    private readonly List<PhysicsWorld2D> _debugPhysicsWorlds = [];
     private readonly List<Func<IEnumerable<SpatialObject2D>>> _debugAttackShapeProviders = [];
     private bool _drawGraphics = true;
     private bool _drawGrid;
@@ -28,6 +27,7 @@ public abstract class Game2D : IDisposable
     }
 
     public Camera2D Camera { get; } = new();
+    public PhysicsWorld2D? PhysicsWorld { get; private set; }
     public Scene2D Scene { get; } = [];
     public TextureCache2D Textures { get; } = new(AssetPaths.Current.Runtime);
     public DeveloperConsole DeveloperConsole { get; } = new();
@@ -57,11 +57,12 @@ public abstract class Game2D : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    protected void RegisterDebugPhysicsWorld(PhysicsWorld2D physicsWorld)
+    protected void AttachPhysicsWorld(PhysicsWorld2D physicsWorld)
     {
         ArgGuard.ThrowIfNull(physicsWorld);
-        if (!_debugPhysicsWorlds.Contains(physicsWorld))
-            _debugPhysicsWorlds.Add(physicsWorld);
+        if (PhysicsWorld is not null && !ReferenceEquals(PhysicsWorld, physicsWorld))
+            throw new InvalidOperationException("A game can attach only one physics world.");
+        PhysicsWorld = physicsWorld;
     }
 
     protected void RegisterDebugAttackShapes(Func<IEnumerable<SpatialObject2D>> provider)
@@ -80,7 +81,7 @@ public abstract class Game2D : IDisposable
         {
             var fillColor = new XnaColor(70, 245, 190, 55);
             var outlineColor = new XnaColor(70, 245, 190, 235);
-            foreach (var physicsWorld in _debugPhysicsWorlds)
+            if (PhysicsWorld is { } physicsWorld)
             {
                 foreach (var body in physicsWorld.Bodies)
                 {

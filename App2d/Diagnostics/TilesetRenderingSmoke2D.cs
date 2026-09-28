@@ -2,10 +2,10 @@ using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Physics;
-using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
+using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
@@ -49,7 +49,7 @@ internal static class TilesetRenderingSmoke2D
     {
         Directory.CreateDirectory(directory);
         var map = LevelBootstrap2D.Load().TileMap;
-        using var level = new SideScrollerLevel2D(TraversalMetricsLoader2D.Load(textures.ContentRoot), map, _ => 1);
+        using var level = new SideScrollerLevel2D(TraversalMetricsLoader2D.Load(textures.ContentRoot), map);
         var collision = new CollisionSystem2D();
         level.CreateSimulation(collision, new PhysicsWorld2D(collision), new EntityIdAllocator2D(), 1u, 2u, 4u);
         var scene = new Scene2D();

@@ -26,7 +26,7 @@ public sealed class LadderTerrainTests
         map.SetTileKind(4, 31, TileKind2D.Ladder);
         map.SetTileKind(4, 32, TileKind2D.Ladder);
         var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        using var level = new SideScrollerLevel2D(metrics, map, _ => 1);
+        using var level = new SideScrollerLevel2D(metrics, map);
         var scene = new Scene2D();
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision);

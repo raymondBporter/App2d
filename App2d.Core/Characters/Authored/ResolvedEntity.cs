@@ -214,12 +214,6 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
         frame.At((local.X - prop.Grip.X) * prop.Scale, (local.Y - prop.Grip.Y) * prop.Scale, (local.Z - prop.Grip.Z) * prop.Scale);
 }
 
-/// <summary>The game's scale for authored entities: world pixels per model unit.</summary>
-public static class AuthoredWorld
-{
-    public const float PixelsPerUnit = 40;
-}
-
 /// <summary>Movement, hurt and attack regions from one placed final pose. Graphics-free.</summary>
 public static class EntityCollision
 {

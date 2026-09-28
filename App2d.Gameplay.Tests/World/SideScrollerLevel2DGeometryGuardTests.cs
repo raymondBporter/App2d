@@ -28,7 +28,7 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
     [Fact]
     public void MatchingGeometryConstructsSuccessfully()
     {
-        var level = new SideScrollerLevel2D(DefaultTraversal(), ValidMap(), _ => 1);
+        var level = new SideScrollerLevel2D(DefaultTraversal(), ValidMap());
         Assert.NotNull(level);
     }
 
@@ -43,7 +43,7 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.WorldOrigin);
 
         Assert.Throws<InvalidOperationException>(
-            () => new SideScrollerLevel2D(DefaultTraversal(), map, _ => 1));
+            () => new SideScrollerLevel2D(DefaultTraversal(), map));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.WorldOrigin);
 
         Assert.Throws<InvalidOperationException>(
-            () => new SideScrollerLevel2D(DefaultTraversal(), map, _ => 1));
+            () => new SideScrollerLevel2D(DefaultTraversal(), map));
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.WorldOrigin);
 
         Assert.Throws<InvalidOperationException>(
-            () => new SideScrollerLevel2D(DefaultTraversal(), map, _ => 1));
+            () => new SideScrollerLevel2D(DefaultTraversal(), map));
     }
 
     [Fact]
@@ -85,6 +85,6 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.WorldOrigin + new Vector2(1f, 0f));
 
         Assert.Throws<InvalidOperationException>(
-            () => new SideScrollerLevel2D(DefaultTraversal(), map, _ => 1));
+            () => new SideScrollerLevel2D(DefaultTraversal(), map));
     }
 }

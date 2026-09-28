@@ -80,7 +80,7 @@ internal sealed class TileEditor2D : IDisposable
     public Bounds2D VisibleWorldBounds => _camera.VisibleWorldBounds;
     public Vector2 VisibleDeviceSize => _camera.ViewportSize;
     public float Zoom => _camera.Zoom;
-    public float PixelsPerWorldUnit => _camera.PixelsPerWorldUnit;
+    public float PixelsToWorldUnits(float pixels) => _camera.PixelsToWorldUnits(pixels);
     public ThingEditorInspector2D InspectorView { get; }
     public IReadOnlyList<MovingPlatformDefinitionRecord2D> MovingPlatformDefinitions => _movingPlatformDefinitions;
     public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatformThings => _movingPlatformThings;
@@ -480,7 +480,7 @@ internal sealed class TileEditor2D : IDisposable
     private void BeginThingSelectionOrDrag()
     {
         var world = _camera.DeviceToWorld(_lastMouseDevice);
-        var handleRadius = 12f / _camera.PixelsPerWorldUnit;
+        var handleRadius = _camera.PixelsToWorldUnits(12f);
         var handleRadiusSquared = handleRadius * handleRadius;
 
         foreach (var thing in _movingPlatformThings.AsEnumerable().Reverse())

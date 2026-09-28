@@ -17,10 +17,38 @@ public sealed class Camera2D
     const float MinZoom = 0.05f;
     const float MaxZoom = 20f;
 
-    public Vector2 Position { get; set; }
-    public float Rotation { get; set; }
+    public Vector2 Position
+    {
+        get;
+        set => field = ClampToWorld(value);
+    }
+
+    public float Rotation
+    {
+        get;
+        set
+        {
+            ArgGuard.ThrowIfNotFinite(value);
+            field = value;
+            Position = Position;
+        }
+    }
 
     public Vector2 ViewportSize { get; private set; } = new(InitialSizeX, InitialSizeY);
+
+    /// <summary>Optional world limit for the viewport center and its visible area.</summary>
+    public Bounds2D? WorldBounds
+    {
+        get;
+        set
+        {
+            if (value is { } bounds)
+                ArgGuard.ThrowIf(!bounds.IsFinite || bounds.Min.X > bounds.Max.X || bounds.Min.Y > bounds.Max.Y,
+                    "World bounds must be finite and ordered.", nameof(value));
+            field = value;
+            Position = Position;
+        }
+    }
 
     /// <summary>
     /// When set, resizing preserves vertical world framing and scales the scene uniformly.
@@ -33,6 +61,7 @@ public sealed class Camera2D
         {
             if (value is { } height) ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
             field = value;
+            Position = Position;
         }
     }
 
@@ -40,10 +69,18 @@ public sealed class Camera2D
     public float PixelsPerWorldUnit => Zoom *
         (ReferenceViewportHeight is { } height ? ViewportSize.Y / height : 1f);
 
+    public float WorldUnitsToPixels(float worldUnits) => worldUnits * PixelsPerWorldUnit;
+    public float PixelsToWorldUnits(float pixels) => pixels / PixelsPerWorldUnit;
+
     public float Zoom
     {
         get;
-        set => field = Math.Clamp(value, MinZoom, MaxZoom);
+        set
+        {
+            ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
+            field = Math.Clamp(value, MinZoom, MaxZoom);
+            Position = Position;
+        }
     } = InitialZoom;
 
     public Matrix3x2 WorldToDeviceMatrix =>
@@ -68,8 +105,26 @@ public sealed class Camera2D
 
     public Vector2 DeviceToWorld(Vector2 devicePoint) => Vector2.Transform(devicePoint, DeviceToWorldMatrix);
 
+    /// <summary>Constrain a desired center, with optional room for render effects such as shake.</summary>
+    public Vector2 ClampToWorld(Vector2 desiredPosition, float padding = 0f)
+    {
+        ArgGuard.ThrowIfNotFinite(desiredPosition);
+        ArgGuard.ThrowIfNotFiniteOrNegative(padding);
+        if (WorldBounds is not { } bounds)
+            return desiredPosition;
+
+        var halfView = VisibleWorldBounds.Size / 2f + new Vector2(padding);
+        return new Vector2(
+            ClampCenter(desiredPosition.X, bounds.Min.X, bounds.Max.X, halfView.X),
+            ClampCenter(desiredPosition.Y, bounds.Min.Y, bounds.Max.Y, halfView.Y));
+    }
+
+    private static float ClampCenter(float value, float min, float max, float halfView) =>
+        max - min <= halfView * 2f ? min + (max - min) / 2f : Math.Clamp(value, min + halfView, max - halfView);
+
     public void SetViewport(int width, int height)
     {
         ViewportSize = new Vector2(Math.Max(width, MinSizeX), Math.Max(height, MinSizeY));
+        Position = Position;
     }
 }

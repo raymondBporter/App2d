@@ -24,11 +24,11 @@ public sealed class SideScrollerSimulation2D : IDisposable
 
     private SideScrollerSimulation2D(SideScrollerSessionDefinition2D definition, EntityIdAllocator2D ids,
         CollisionSystem2D collision, PhysicsWorld2D physics, CombatantRegistry2D combatants, CombatSystem2D combat,
-        SideScrollerLevel2D level, int[] groundHeights, Person2D player, PersonArsenal2D arsenal,
+        SideScrollerLevel2D level, Person2D player, PersonArsenal2D arsenal,
         SideScrollerSession2D session)
     {
         Definition = definition; Ids = ids; Collision = collision; Physics = physics; Combatants = combatants;
-        Combat = combat; Level = level; GroundHeights = groundHeights; Player = player; Arsenal = arsenal; Session = session;
+        Combat = combat; Level = level; Player = player; Arsenal = arsenal; Session = session;
     }
 
     public SideScrollerSessionDefinition2D Definition { get; }
@@ -38,8 +38,6 @@ public sealed class SideScrollerSimulation2D : IDisposable
     public CombatantRegistry2D Combatants { get; }
     public CombatSystem2D Combat { get; }
     public SideScrollerLevel2D Level { get; }
-    /// <summary>Ground tile row per column, derived from the definition's map at construction.</summary>
-    public int[] GroundHeights { get; }
     public Person2D Player { get; }
     public PersonArsenal2D Arsenal { get; }
     public SideScrollerSession2D Session { get; }
@@ -62,9 +60,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
             VelocityIterations = definition.VelocityIterations,
         };
 
-        var groundHeights = TileGroundHeights2D.Derive(definition.TileMap);
         var level = new SideScrollerLevel2D(traversal, definition.TileMap,
-            x => groundHeights[Math.Clamp(x, 0, groundHeights.Length - 1)],
             definition.MovingPlatforms, definition.WorldThings, definition.Zones);
         var respawn = ResolveRespawn(level, definition);
         level.CreateSimulation(collision, physics, ids,
@@ -89,7 +85,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
         var session = new SideScrollerSession2D(physics, player, arsenal,
             new SideScrollerSessionWorld2D(level, contactDamage), respawn, combat);
         return new SideScrollerSimulation2D(definition, ids, collision, physics, combatants, combat,
-            level, groundHeights, player, arsenal, session);
+            level, player, arsenal, session);
     }
 
     /// <summary>Saved progress resumes at its checkpoint when the checkpoint still exists and health is valid.</summary>

@@ -236,7 +236,7 @@ public sealed class SwordDownAttackTests
             Physics = new(_collision) { Gravity = Vector2.Zero };
             TileMap = new(SideScrollerLevel2D.WorldWidthTiles, SideScrollerLevel2D.WorldHeightTiles,
                 32f, SideScrollerLevel2D.ChunkSizeTiles, SideScrollerLevel2D.WorldOrigin);
-            Level = new(_metrics, TileMap, _ => 0);
+            Level = new(_metrics, TileMap);
             ContactDamage = new(_collision, 4, _combatants);
             Person = new(EntityId2D.Create(), _collision, Physics, _metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
             if (grounded)

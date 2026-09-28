@@ -58,11 +58,11 @@ public readonly record struct PersonFrame(string Key, MotionClip Clip, double Se
 /// <summary>
 /// Chooses the player's authored animation from observed traversal/controller state, the way an animator would sequence
 /// it. Presentation only: the simulation never reads it. Positions and speeds are in model units. Walk and run advance by
-/// ground distance over their stride, and the climb by height over its rise. State velocities are in pixels per second and
-/// are divided by <c>pixelsPerUnit</c>; so feet and hands keep pace with the body;
+/// ground distance over their stride, and the climb by height over its rise. State velocities are in world units per second and
+/// are divided by <c>worldUnitsPerModelUnit</c>; so feet and hands keep pace with the body;
 /// everything else runs on the clock from the moment it starts. Attacks map the controller's timing onto their clips.
 /// </summary>
-public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUnit = 1)
+public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsPerModelUnit = 1)
 {
     /// <summary>Height climbed per climb cycle: two rungs of the ladder the clip is keyed against.</summary>
     public const float ClimbRise = 1.1f;
@@ -176,7 +176,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
             // Swings plant both feet, which drags the legs out behind a moving body. Once the body moves during a swing,
             // the legs keep their gait and the swing plays over them from the waist up until it ends.
             _sheathePending = false;
-            _swingLayered |= !s.IsGrounded || s.IsClimbingLadder || s.IsWallGripping || MathF.Abs(s.LinearVelocity.X) / pixelsPerUnit > WalkSpeedThreshold;
+            _swingLayered |= !s.IsGrounded || s.IsClimbingLadder || s.IsWallGripping || MathF.Abs(s.LinearVelocity.X) / worldUnitsPerModelUnit > WalkSpeedThreshold;
             frame = _swingLayered ? Locomotion(gear) with { Overlay = new(moves[_swing], Scaled(_swing), PersonLoadout.SwordUpperBody) } : Play(_swing, Scaled(_swing));
         }
         else if (s.IsDashing)
@@ -208,7 +208,7 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float pixelsPerUn
         PersonFrame Gait(string id, PoseLayer? overlay = null) => Play(id, id == _key ? _cycle : 0, overlay) with { Planted = id != _key || !_outpaced };
         var recovery = _sheathePending ? new PoseLayer(moves[_recovery], _clock - _recoveryStart, PersonLoadout.SwordUpperBody) : null;
 
-        var speed = MathF.Abs(s.LinearVelocity.X) / pixelsPerUnit;
+        var speed = MathF.Abs(s.LinearVelocity.X) / worldUnitsPerModelUnit;
         if (s.IsClimbingLadder)
         {
             _sheathePending = false;

@@ -1,3 +1,4 @@
+using App2d.Contracts.World;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
@@ -53,7 +54,7 @@ public sealed class AuthoredEntityEnemyTests
         using var game = Game();
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
-        var bounds = App2d.Core.Geometry.Bounds2D.FromPoints([.. head.Points.Select(p => p * AuthoredWorld.PixelsPerUnit)]);
+        var bounds = App2d.Core.Geometry.Bounds2D.FromPoints([.. head.Points.Select(p => p * GameWorldUnits2D.WorldUnitsPerAuthoredUnit)]);
         var hit = new App2d.Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(4)));
         hit.Transform.Position = bounds.Center;
         var facts = new List<CombatDamage2D>(); game.Combat.DamageResolved += facts.Add;
@@ -90,7 +91,7 @@ public sealed class AuthoredEntityEnemyTests
         var platform = new MovingPlatform2D(App2d.Core.EntityId2D.Create(), physics, Vector2.Zero, Vector2.Normalize(velocity) * 200, new(200, 10), velocity.Length(), 1, uint.MaxValue);
         var box = Authored.Entities["spear-guard"].Asset.Movement;
         var enemy = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics,
-            new(0, platform.WorldObject.WorldBounds.Top + (box.Height / 2 + .5f) * AuthoredWorld.PixelsPerUnit), 1, 4);
+            new(0, platform.WorldObject.WorldBounds.Top + (box.Height / 2 + .5f) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit), 1, 4);
         enemy.SetSimulationEnabled(true);
         const float dt = 1f / 120;
         for (var tick = 0; tick < 60; tick++)
@@ -101,7 +102,7 @@ public sealed class AuthoredEntityEnemyTests
             enemy.SyncAfterPhysics();
         }
         Assert.Equal(EntityControllers.Idle, enemy.CaptureState().ActionId);
-        var ground = platform.WorldObject.WorldBounds.Top / AuthoredWorld.PixelsPerUnit; var hips = enemy.Pose.World("hips").X;
+        var ground = platform.WorldObject.WorldBounds.Top / GameWorldUnits2D.WorldUnitsPerAuthoredUnit; var hips = enemy.Pose.World("hips").X;
         string[] feet = ["left-foot", "right-foot"];
         return (feet.ToDictionary(f => f, f => enemy.Pose.World(f).Y - ground), feet.ToDictionary(f => f, f => enemy.Pose.World(f).X - hips));
     }
@@ -163,7 +164,7 @@ public sealed class AuthoredEntityEnemyTests
         using var game = Game();
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
-        var center = head.Points.Aggregate(Vector2.Zero, (a, b) => a + b) / head.Points.Count * AuthoredWorld.PixelsPerUnit;
+        var center = head.Points.Aggregate(Vector2.Zero, (a, b) => a + b) / head.Points.Count * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
         Assert.True(center.Y > guard.WorldObject.WorldBounds.Max.Y - 30, "the head region comes from the pose, not the movement box");
         var hit = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(2)));
         hit.Transform.Position = center;
@@ -195,7 +196,7 @@ public sealed class AuthoredEntityEnemyTests
             {
                 sawBolt = true;
                 var gun = gunner.Entity.Equipment.Single(e => e.Prop.Muzzle is not null); // Hair and clothing are equipment too.
-                var muzzle = ActorPose.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * AuthoredWorld.PixelsPerUnit;
+                var muzzle = ActorPose.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
                 Assert.True(Vector2.Distance(new(muzzle.X, muzzle.Y), bolts[0].Position) < 12, "the bolt leaves the drawn muzzle");
                 Assert.True(bolts[0].Velocity.X > 0, "toward the player");
             }
@@ -261,7 +262,7 @@ public sealed class AuthoredEntityEnemyTests
                 {
                     sawHitbox = true;
                     var spear = guard.Entity.Equipment[0];
-                    var tip = ActorPose.PropPoint(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Tip) * AuthoredWorld.PixelsPerUnit;
+                    var tip = ActorPose.PropPoint(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Tip) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
                     var bounds = box.WorldBounds;
                     Assert.InRange(tip.X, bounds.Min.X, bounds.Max.X); Assert.InRange(tip.Y, bounds.Min.Y, bounds.Max.Y);
                     Assert.Equal(side, Math.Sign(bounds.Center.X - guard.WorldObject.Transform.Position.X));

@@ -420,7 +420,7 @@ public sealed class SimulationRollbackTests
             Physics.MaxSubstepSeconds = SideScrollerSession2D.FixedDeltaSeconds;
             var spawn = new Vector2(ladder ? 16f - Metrics.PlayerColliderCenterOffsetX : 0f, Metrics.PlayerColliderSize.Y / 2 + 1f);
             var authored = new[] { new WorldThingSpec2D(1, WorldThingKind2D.PlayerSpawn, null, true, spawn) }.Concat(things ?? []).ToArray();
-            Level = new(Metrics, Map, _ => 20, platform ?
+            Level = new(Metrics, Map, platform ?
                 [new(2, "Lift", true, new(0, 96), new(64, 64), new(200, 16), 96, 0xFF25D2BEu)] : [], authored);
             var ids = new EntityIdAllocator2D();
             Level.CreateSimulation(Physics.CollisionSystem, Physics, ids, 1, 2, 4);

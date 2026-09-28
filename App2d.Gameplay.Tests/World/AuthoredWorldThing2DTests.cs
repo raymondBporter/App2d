@@ -24,7 +24,6 @@ public sealed class AuthoredWorldThing2DTests
         var level = new SideScrollerLevel2D(
             DefaultTraversal(),
             ValidMap(),
-            _ => 1,
             worldThings: things);
 
         Assert.Equal(spawn, level.SpawnPoint);
@@ -39,7 +38,7 @@ public sealed class AuthoredWorldThing2DTests
     [Fact]
     public void EmptyThingLayerKeepsEditorBootableWithoutCreatingAnImplicitGoal()
     {
-        var level = new SideScrollerLevel2D(DefaultTraversal(), ValidMap(), _ => 1);
+        var level = new SideScrollerLevel2D(DefaultTraversal(), ValidMap());
 
         Assert.True(float.IsFinite(level.SpawnPoint.X));
         Assert.True(float.IsFinite(level.SpawnPoint.Y));

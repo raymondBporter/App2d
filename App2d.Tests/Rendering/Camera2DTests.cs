@@ -95,6 +95,39 @@ public sealed class Camera2DTests
     }
 
     [Fact]
+    public void OptionalWorldBoundsConstrainPositionAfterZoomAndResize()
+    {
+        var camera = new Camera2D
+        {
+            WorldBounds = new(new(-500f), new(500f)),
+            Position = new(1000f),
+        };
+        Assert.Equal(new Vector2(100f, 200f), camera.Position);
+
+        camera.Zoom = 2f;
+        camera.Position = new(1000f);
+        Assert.Equal(new Vector2(300f, 350f), camera.Position);
+
+        camera.SetViewport(1200, 1000);
+        Assert.Equal(new Vector2(200f, 250f), camera.Position);
+        Assert.True(camera.VisibleWorldBounds.Max.X <= 500f);
+        Assert.True(camera.VisibleWorldBounds.Max.Y <= 500f);
+    }
+
+    [Fact]
+    public void PixelAndWorldUnitDistancesUseTheLiveCameraScale()
+    {
+        var camera = new Camera2D { ReferenceViewportHeight = 1080f, Zoom = 2f };
+        camera.SetViewport(960, 540);
+        Assert.Equal(15f, camera.WorldUnitsToPixels(15f));
+        Assert.Equal(15f, camera.PixelsToWorldUnits(15f));
+
+        camera.Zoom = 4f;
+        Assert.Equal(30f, camera.WorldUnitsToPixels(15f));
+        Assert.Equal(7.5f, camera.PixelsToWorldUnits(15f));
+    }
+
+    [Fact]
     public void RotationStillBoundsTheWholeView()
     {
         var camera = new Camera2D { Rotation = MathF.PI / 4f };
