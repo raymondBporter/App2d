@@ -2,7 +2,6 @@ using App2d.Core.Validation;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
-using App2d.Gameplay.Player;
 using System.Numerics;
 using System.Text.Json;
 
