@@ -1,7 +1,7 @@
 ﻿using App2d.Core.Geometry;
 using App2d.Core.Geometry.Functions;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Collision.Contacts;
@@ -62,13 +62,13 @@ public static partial class ShapeCollision2D
         Capsule2D capsule, Similarity2D capsulePose)
     {
         var (capsuleStart, capsuleEnd, capsuleRadius) = CollisionMath2D.GetWorldCapsule(capsule, capsulePose);
-        Span<Vector2> polygonVertices = localVertices.Length <= 64
+        var polygonVertices = localVertices.Length <= 64
             ? stackalloc Vector2[localVertices.Length] : new Vector2[localVertices.Length];
         for (var i = 0; i < polygonVertices.Length; i++)
             polygonVertices[i] = polygonPose.TransformPoint(localVertices[i]);
 
         var maximumAxes = 2 * polygonVertices.Length + 3;
-        Span<Vector2> axes = maximumAxes <= 128 ? stackalloc Vector2[maximumAxes] : new Vector2[maximumAxes];
+        var axes = maximumAxes <= 128 ? stackalloc Vector2[maximumAxes] : new Vector2[maximumAxes];
         var axisCount = 0;
         AddPolygonEdgeAxes(axes, ref axisCount, polygonVertices);
         var capsuleDirection = capsuleEnd - capsuleStart;

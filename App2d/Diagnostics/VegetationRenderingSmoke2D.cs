@@ -1,6 +1,8 @@
+using App2d.Contracts.Persons;
+using App2d.Contracts.Simulation;
+using App2d.Presentation.Persons;
 using App2d.Core.Characters.Authored;
-using App2d.Game.Presentation.World.Presentation;
-using App2d.Gameplay.Persons;
+using App2d.Presentation.World.Presentation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
@@ -26,7 +28,7 @@ internal static class VegetationRenderingSmoke2D
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         using var game = SideScrollerSimulation2D.Create(new(traversal, map, [],
             [new(1, WorldThingKind2D.PlayerSpawn, "Start", true, new(-368f, 40f))])
-            { AuthoredCharacters = catalog });
+        { AuthoredCharacters = catalog });
         var scene = new Scene2D();
         using var world = new WorldPresentation2D(scene, textures);
         using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);

@@ -12,7 +12,7 @@ public sealed class PuppetAuthoringTests
     {
         var part = new PuppetPart { Kind = "trapezoid", A = "base", B = "top", Width = 2, Height = 2, Roundness = 0, TopWidthScale = .7f };
         // Local up points right in this pose, so the narrow end is at world X = 1.
-        Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
+        static Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
         var contour = PartGeometry.Contour(part, World);
         Assert.Equal(.7f, contour.Where(p => p.X > .999f).Max(p => MathF.Abs(p.Y)), 5);
         Assert.Equal(1, contour.Where(p => p.X < -.999f).Max(p => MathF.Abs(p.Y)), 5);

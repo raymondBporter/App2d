@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using App2d.Core;
 using NAudio.Wave;
 
@@ -85,7 +86,7 @@ public sealed class MusicMixer2D : ISampleProvider, IDisposable
                 if (_fadePosition < FadeFrames) frames = Math.Min(frames, FadeFrames - _fadePosition);
                 var samples = frames * 2;
                 _current!.Read(_first.AsSpan(0, samples));
-                if (_outgoing is not null) _outgoing.Read(_second.AsSpan(0, samples));
+                _outgoing?.Read(_second.AsSpan(0, samples));
                 for (var frame = 0; frame < frames; frame++)
                 {
                     var mix = Math.Min(1f, (float)_fadePosition / FadeFrames);

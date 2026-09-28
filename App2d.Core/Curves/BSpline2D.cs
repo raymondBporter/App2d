@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using System.Collections.ObjectModel;
 using System.Numerics;
 
@@ -85,7 +86,7 @@ public sealed class BSpline2D : ICurve2D
         while (span < controlPoints.Length - 1 && amount >= knots[span + 1])
             span++;
 
-        Span<Vector2> values = degree <= 15
+        var values = degree <= 15
             ? stackalloc Vector2[degree + 1]
             : new Vector2[degree + 1];
         for (var index = 0; index <= degree; index++)

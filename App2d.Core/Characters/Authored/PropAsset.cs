@@ -78,11 +78,11 @@ public sealed class PropAsset
         Limit.Color(Ink, $"{owner} ink"); new Limit(.001f, 1).Check(LineWidth, $"{owner} lineWidth");
         new Limit(.001f, 100).Check(Scale, $"{owner} scale");
         Grip.Check($"{owner} grip"); Tip.Check($"{owner} tip"); SecondGrip?.Check($"{owner} secondGrip"); Muzzle?.Check($"{owner} muzzle");
-        Require(Solids is not null && Solids.Count <= 128, $"{owner}: solids must be a list of at most 128.");
+        Require(Solids?.Count <= 128, $"{owner}: solids must be a list of at most 128.");
         Require(Solids.Sum(s => s?.Vertices?.Count ?? 0) <= 32768 && Solids.Sum(s => s?.Triangles?.Count ?? 0) <= 196608, $"{owner}: mesh is too large.");
         foreach (var solid in Solids)
         {
-            Require(solid is not null && solid.Vertices is not null && solid.Triangles is not null, $"{owner}: incomplete solid.");
+            Require(solid?.Vertices is not null && solid.Triangles is not null, $"{owner}: incomplete solid.");
             Require(solid.Vertices.Count >= 3 && solid.Triangles.Count >= 3 && solid.Triangles.Count % 3 == 0, $"{owner}: a solid needs indexed triangles.");
             foreach (var vertex in solid.Vertices) vertex.Check(owner + " mesh vertex");
             Require(solid.Triangles.All(i => i >= 0 && i < solid.Vertices.Count), $"{owner}: triangle index outside vertices.");
@@ -99,11 +99,11 @@ public sealed class PropAsset
                 foreach (var p in outline) p.Check(owner + " outline");
             }
         }
-        Require(Shapes is not null && Shapes.Count <= 128, $"{owner}: shapes must be a list of at most 128.");
+        Require(Shapes?.Count <= 128, $"{owner}: shapes must be a list of at most 128.");
         for (var i = 0; i < Shapes.Count; i++)
         {
             var shape = Shapes[i]; var field = $"{owner} shapes[{i}]";
-            Require(shape is not null && shape.Points is not null, $"{field}: incomplete shape.");
+            Require(shape?.Points is not null, $"{field}: incomplete shape.");
             EntityVocabulary.Require(shape.Kind, ["stroke", "polygon"], field + " kind");
             Require(shape.Kind == "stroke" ? shape.Points.Count >= 2 : shape.Points.Count >= 3, $"{field}: a stroke needs two points and a polygon three.");
             foreach (var point in shape.Points) point.Check(field + " point");

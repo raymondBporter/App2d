@@ -1,3 +1,4 @@
+using App2d.Contracts.Persons;
 using System.Numerics;
 
 namespace App2d.Gameplay.Persons;

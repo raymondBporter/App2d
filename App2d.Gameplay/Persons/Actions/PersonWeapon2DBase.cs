@@ -1,3 +1,5 @@
+using App2d.Contracts.Persons;
+using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 
 namespace App2d.Gameplay.Persons.Actions;

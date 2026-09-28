@@ -1,8 +1,10 @@
+using App2d.Core.Geometry;
+using App2d.Core.Validation;
 using App2d.Core.Geometry.Functions;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Functions;
 
 public static partial class Distance2D
 {
@@ -62,12 +64,12 @@ public static partial class Distance2D
     {
         var bestSquared = float.PositiveInfinity;
         for (var i = 0; i < first.Length; i++)
-        for (var j = 0; j < second.Length; j++)
-        {
-            var closest = ClosestPoint2D.BetweenSegments(first[i], first[(i + 1) % first.Length],
-                second[j], second[(j + 1) % second.Length]);
-            bestSquared = Math.Min(bestSquared, Vector2.DistanceSquared(closest.First, closest.Second));
-        }
+            for (var j = 0; j < second.Length; j++)
+            {
+                var closest = ClosestPoint2D.BetweenSegments(first[i], first[(i + 1) % first.Length],
+                    second[j], second[(j + 1) % second.Length]);
+                bestSquared = Math.Min(bestSquared, Vector2.DistanceSquared(closest.First, closest.Second));
+            }
         return MathF.Sqrt(bestSquared);
     }
 }

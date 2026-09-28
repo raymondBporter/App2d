@@ -1,7 +1,8 @@
+using App2d.Core.Geometry.Functions;
 using App2d.Core;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Collision;
@@ -28,19 +29,19 @@ public sealed class DistanceContactConsistencyTests
         ];
         var random = new Random(1984);
         foreach (var (firstShape, secondShape) in pairs)
-        for (var i = 0; i < 50; i++)
-        {
-            var first = Place(firstShape);
-            var second = Place(secondShape);
-            var distance = Distance2D.SignedDistance(first, second);
-            var reversed = Distance2D.SignedDistance(second, first);
-            Assert.True(MathF.Abs(distance - reversed) < .0001f, $"Asymmetric distance: {distance}, {reversed}");
-            var hasContact = ShapeCollision2D.TryGetContact(first, second, out var contact);
-            Assert.Equal(distance < 0f, hasContact);
-            if (hasContact)
-                Assert.True(MathF.Abs(contact.PenetrationDepth + distance) < .0002f,
-                    $"{firstShape.GetType().Name}/{secondShape.GetType().Name}: depth {contact.PenetrationDepth}, signed distance {distance}");
-        }
+            for (var i = 0; i < 50; i++)
+            {
+                var first = Place(firstShape);
+                var second = Place(secondShape);
+                var distance = Distance2D.SignedDistance(first, second);
+                var reversed = Distance2D.SignedDistance(second, first);
+                Assert.True(MathF.Abs(distance - reversed) < .0001f, $"Asymmetric distance: {distance}, {reversed}");
+                var hasContact = ShapeCollision2D.TryGetContact(first, second, out var contact);
+                Assert.Equal(distance < 0f, hasContact);
+                if (hasContact)
+                    Assert.True(MathF.Abs(contact.PenetrationDepth + distance) < .0002f,
+                        $"{firstShape.GetType().Name}/{secondShape.GetType().Name}: depth {contact.PenetrationDepth}, signed distance {distance}");
+            }
 
         SpatialObject2D Place(IShape2D shape)
         {

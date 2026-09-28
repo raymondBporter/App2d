@@ -1,3 +1,4 @@
+using App2d.Contracts.Enemies;
 using App2d.Core.Mathematics;
 using App2d.Gameplay.Simulation;
 using System.Collections.Immutable;

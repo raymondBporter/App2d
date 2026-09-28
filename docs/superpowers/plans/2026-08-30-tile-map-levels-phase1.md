@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - **Naming:** every public type ends in `2D`. This is universal in this codebase — follow it.
-- **Validation:** use `App2d.Core.ArgGuard` for argument checks (`ThrowIfNotPositive`, `ThrowIfNull`, `RequireNotNull`, `ThrowIfNotFinite`, `ThrowOutOfRange`) and `StateGuard` for invalid-state checks. Do not hand-roll `throw new ArgumentException`.
+- **Validation:** use `App2d.Core.Validation.ArgGuard` for argument checks (`ThrowIfNotPositive`, `ThrowIfNull`, `RequireNotNull`, `ThrowIfNotFinite`, `ThrowOutOfRange`) and `StateGuard` for invalid-state checks. Do not hand-roll `throw new ArgumentException`.
 - **Target frameworks:** `App2d.Core`, `App2d.Collision`, `App2d.Tiles`, `App2d.Physics`, `App2d.Rendering`, `App2d.Tests` are plain `net10.0`. `App2d.Gameplay`, `App2d.Gameplay.Tests`, `App2d` are `net10.0-windows10.0.19041.0`. **`App2d.Levels` must be plain `net10.0`.**
 - **Dependency limits:** `Microsoft.Data.Sqlite` may be referenced **only** by `App2d.Levels` (and test projects). `App2d.Gameplay` must NOT reference `App2d.Levels`.
 - **Nullable and implicit usings are enabled** in every project; `AnalysisModePerformance` is `All` in engine projects, so avoid obvious per-frame allocations.

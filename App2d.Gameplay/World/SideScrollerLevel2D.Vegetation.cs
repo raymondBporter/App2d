@@ -1,3 +1,6 @@
+using App2d.Core.Geometry.Functions;
+using App2d.Core.Validation;
+using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Geometry;
 using System.Collections.Immutable;
@@ -20,16 +23,16 @@ public sealed partial class SideScrollerLevel2D
             1f - VegetationPlacement2D.MaximumHeightInTiles), 0, TileMap.Height - 1);
         var lastY = Math.Clamp((int)MathF.Floor((strike.Max.Y - TileMap.Origin.Y) / _tileSize), 0, TileMap.Height - 1);
         for (var y = firstY; y <= lastY; y++)
-        for (var x = firstX; x <= lastX; x++)
-        {
-            var cell = new GrassCell2D(x, y);
-            var grass = VegetationPlacement2D.GrassBounds(TileMap, cell);
-            if (streamer.IsChunkActive(new(x / TileMap.ChunkSize, y / TileMap.ChunkSize)) &&
-                !_cutGrass.Contains(cell) && VegetationPlacement2D.HasGrass(TileMap, x, y) &&
-                strike.Left < grass.Right && strike.Right > grass.Left &&
-                strike.Bottom < grass.Top && strike.Top > grass.Bottom)
-                _cutGrass = _cutGrass.Add(cell);
-        }
+            for (var x = firstX; x <= lastX; x++)
+            {
+                var cell = new GrassCell2D(x, y);
+                var grass = VegetationPlacement2D.GrassBounds(TileMap, cell);
+                if (streamer.IsChunkActive(new(x / TileMap.ChunkSize, y / TileMap.ChunkSize)) &&
+                    !_cutGrass.Contains(cell) && VegetationPlacement2D.HasGrass(TileMap, x, y) &&
+                    strike.Left < grass.Right && strike.Right > grass.Left &&
+                    strike.Bottom < grass.Top && strike.Top > grass.Bottom)
+                    _cutGrass = _cutGrass.Add(cell);
+            }
     }
 
     private void ForgetUnloadedGrass(SideScrollerChunkStreamer2D streamer)

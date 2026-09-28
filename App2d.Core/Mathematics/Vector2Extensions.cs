@@ -14,7 +14,7 @@ public static class Vector2Extensions
 
         public Polar2D ToPolar() => Polar2D.FromCartesian(value);
 
-        public float Cross(Vector2 right) => value.X * right.Y - value.Y * right.X;
+        public float Cross(Vector2 right) => (float)CrossProduct2D.Of(value, right);
 
         /// <summary>Rotates 90° counter-clockwise (in +Y-up orientation).</summary>
         public Vector2 PerpCcw => new(-value.Y, value.X);

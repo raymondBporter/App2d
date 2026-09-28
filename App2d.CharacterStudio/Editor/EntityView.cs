@@ -326,7 +326,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         TimeField("Closes", hit.Finish, resolved?.Clip, time => Hit().Finish = time, document);
         var props = document.Asset.Equipment.Select(e => "prop:" + e.Prop); var sockets = basis?.Sockets.Select(s => "socket:" + s.Id) ?? [];
         var anchor = hit.Prop is not null ? "prop:" + hit.Prop : hit.Socket is not null ? "socket:" + hit.Socket : "actor:";
-        if (Ui.Combo("Anchored to", anchor, props.Concat(sockets).Prepend("actor:"), a => a == "actor:" ? "the actor (fixed box)" : a) is { } chosen)
+        if (Ui.Combo("Anchored to", anchor, props.Concat(sockets).Prepend("actor:"), a => a == "actor:" ? "the actor" : a) is { } chosen)
             session.Edit(document, () => { var h = Hit(); var (kind, value) = (chosen[..chosen.IndexOf(':')], chosen[(chosen.IndexOf(':') + 1)..]); h.Prop = kind == "prop" ? value : null; h.Socket = kind == "socket" ? value : null; });
         if (hit.Prop is not null && Ui.Combo("Prop point", hit.Point, PropAsset.PointNames) is { } point) session.Edit(document, () => Hit().Point = point);
         if (hit.Prop is null && hit.Socket is null)
@@ -338,8 +338,23 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         {
             var along = hit.Along; if (Ui.Drag("Along the anchor's axis", ref along, .005f, -100, 100)) session.Change(document, () => Hit().Along = along);
         }
-        var size = new Vector2(hit.Width, hit.Height);
-        if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100)) session.Change(document, () => { Hit().Width = Math.Max(.01f, size.X); Hit().Height = Math.Max(.01f, size.Y); });
+        if (Ui.Combo("Shape", hit.Shape, ["box", "circle", "capsule"]) is { } shape)
+            session.Edit(document, () => { Hit().Shape = shape; if (shape == "capsule") Hit().Width = Math.Max(Hit().Width, Hit().Height); });
+        if (hit.Shape == "circle")
+        {
+            var diameter = hit.Width;
+            if (Ui.Drag("Diameter", ref diameter, .005f, .01f, 100)) session.Change(document, () => { Hit().Width = Math.Clamp(diameter, .01f, 100); Hit().Height = Hit().Width; });
+        }
+        else
+        {
+            var size = new Vector2(hit.Width, hit.Height);
+            var label = hit.Shape == "capsule" ? "Length / diameter" : "Width / height";
+            if (Ui.Drag2(label, ref size, .005f, .01f, 100)) session.Change(document, () =>
+            {
+                Hit().Height = Math.Clamp(size.Y, .01f, 100);
+                Hit().Width = Math.Clamp(Math.Max(size.X, hit.Shape == "capsule" ? Hit().Height : .01f), .01f, 100);
+            });
+        }
         var damage = hit.Damage; ImGui.TextUnformatted("Damage"); ImGui.SetNextItemWidth(-1);
         if (ImGui.DragInt("##damage", ref damage, .1f, 0, 10000)) session.Change(document, () => Hit().Damage = Math.Clamp(damage, 0, 10000));
     }
@@ -381,7 +396,8 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         foreach (var (hit, region) in preview.Attacks)
         {
             var points = region.Points.Select(Screen).ToArray();
-            draw.AddQuadFilled(points[0], points[1], points[2], points[3], Ui.Color(235, 60, 50, 90));
+            for (var i = 1; i < points.Length - 1; i++)
+                draw.AddTriangleFilled(points[0], points[i], points[i + 1], Ui.Color(235, 60, 50, 90));
             Outline(region, Ui.Color(220, 40, 30), 2.5f);
             draw.AddText(points[2] + new Vector2(4, -16), Ui.Color(200, 40, 30), hit.Window.Id);
         }

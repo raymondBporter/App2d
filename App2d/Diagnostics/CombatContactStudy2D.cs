@@ -1,9 +1,11 @@
+using App2d.Contracts.Combat;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Simulation;
+using App2d.Presentation.Persons;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
-using App2d.Game.Presentation.Audio;
-using App2d.Game.Presentation.World.Presentation;
-using App2d.Gameplay.Combat;
-using App2d.Gameplay.Persons;
+using App2d.Core.Shapes;
+using App2d.Presentation.Audio;
+using App2d.Presentation.World.Presentation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
@@ -34,7 +36,7 @@ internal static class CombatContactStudy2D
             using var game = SideScrollerSimulation2D.Create(new(traversal, map, [],
                 [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)),
                  new(2, WorldThingKind2D.Shieldback, null, true, new(name == "miss" ? -175 : -326, 42))])
-                { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
+            { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
             if (name == "kill")
             {
                 var enemy = game.Level.EnemySystem.Combatants[0];

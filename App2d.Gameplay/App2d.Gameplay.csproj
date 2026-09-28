@@ -9,6 +9,6 @@
   <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
     <ProjectReference Include="..\App2d.Tiles\App2d.Tiles.csproj" />
-    <ProjectReference Include="..\App2d.Game.Contracts\App2d.Game.Contracts.csproj" />
+    <ProjectReference Include="..\App2d.Contracts\App2d.Contracts.csproj" />
   </ItemGroup>
 </Project>

@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 namespace App2d.Core.Grids;
 
 /// <summary>Dimensions and row-major addressing for a finite grid. Default is empty; the cell count fits an int.</summary>

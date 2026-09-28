@@ -1,12 +1,55 @@
+using App2d.Core.Geometry;
+using App2d.Core.Validation;
 using App2d.Core.Geometry.Functions;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Functions;
 
 /// <summary>Shared math over convex polygon perimeters given as vertex spans or lists.</summary>
 public static class PolygonGeometry2D
 {
+    /// <summary>
+    /// Minimal counter-clockwise convex perimeter around finite points. Duplicate and
+    /// collinear interior points are omitted; the first point is not repeated at the end.
+    /// </summary>
+    public static Vector2[] ConvexHull(IEnumerable<Vector2> source)
+    {
+        ArgGuard.ThrowIfNull(source);
+        var input = source.ToArray();
+        ArgGuard.ThrowIf(input.Any(point => !NumericValidation.IsFinite(point)),
+            "Hull points must be finite.", nameof(source));
+
+        var points = input.Distinct()
+            .OrderBy(point => point.X)
+            .ThenBy(point => point.Y)
+            .ToArray();
+        ArgGuard.ThrowIf(points.Length < 3,
+            "A convex hull requires at least three distinct points.", nameof(source));
+
+        var hull = new List<Vector2>(points.Length * 2);
+        foreach (var point in points)
+        {
+            while (hull.Count >= 2 && CrossProduct2D.Orientation(hull[^2], hull[^1], point) <= 0d)
+                hull.RemoveAt(hull.Count - 1);
+            hull.Add(point);
+        }
+
+        var lowerCount = hull.Count;
+        for (var index = points.Length - 2; index >= 0; index--)
+        {
+            var point = points[index];
+            while (hull.Count > lowerCount && CrossProduct2D.Orientation(hull[^2], hull[^1], point) <= 0d)
+                hull.RemoveAt(hull.Count - 1);
+            hull.Add(point);
+        }
+
+        hull.RemoveAt(hull.Count - 1);
+        ArgGuard.ThrowIf(hull.Count < 3,
+            "A convex hull requires three non-collinear points.", nameof(source));
+        return [.. hull];
+    }
+
     /// <summary>
     /// Separating-axis overlap of two convex perimeters with at least three vertices, in either winding.
     /// Offsets place each local perimeter in the same coordinate space. Touching counts as overlap;
@@ -36,29 +79,32 @@ public static class PolygonGeometry2D
         }
     }
 
-    public static float SignedAreaTwice(ReadOnlySpan<Vector2> vertices)
+    public static double SignedAreaTwiceDouble(ReadOnlySpan<Vector2> vertices)
     {
-        var signedAreaTwice = 0f;
+        var signedAreaTwice = 0d;
         for (var i = 0; i < vertices.Length; i++)
-            signedAreaTwice += vertices[i].Cross(vertices[(i + 1) % vertices.Length]);
+            signedAreaTwice += CrossProduct2D.Of(vertices[i], vertices[(i + 1) % vertices.Length]);
         return signedAreaTwice;
     }
+
+    public static float SignedAreaTwice(ReadOnlySpan<Vector2> vertices) =>
+        (float)SignedAreaTwiceDouble(vertices);
 
     public static float Area(ReadOnlySpan<Vector2> vertices) => MathF.Abs(SignedAreaTwice(vertices)) / 2f;
 
     public static bool ContainsPoint(ReadOnlySpan<Vector2> vertices, Vector2 point, float collinearEpsilon = 0.0001f)
     {
-        var winding = 0f;
+        var winding = 0;
         for (var i = 0; i < vertices.Length; i++)
         {
             var start = vertices[i];
             var end = vertices[(i + 1) % vertices.Length];
-            var cross = (end - start).Cross(point - start);
-            if (MathF.Abs(cross) <= collinearEpsilon)
+            var cross = CrossProduct2D.Orientation(start, end, point);
+            if (Math.Abs(cross) <= collinearEpsilon)
                 continue;
 
-            float turn = MathF.Sign(cross);
-            if (winding == 0f)
+            var turn = Math.Sign(cross);
+            if (winding == 0)
                 winding = turn;
             else if (turn != winding)
                 return false;
@@ -108,7 +154,7 @@ public static class PolygonGeometry2D
     public static Vector2 GetOutwardEdgeNormal(ReadOnlySpan<Vector2> vertices, int edgeIndex)
     {
         var edge = vertices[(edgeIndex + 1) % vertices.Length] - vertices[edgeIndex];
-        var outward = SignedAreaTwice(vertices) >= 0f ? edge.PerpCw : edge.PerpCcw;
+        var outward = SignedAreaTwiceDouble(vertices) >= 0 ? edge.PerpCw : edge.PerpCcw;
         return outward.LengthSquared() > float.Epsilon ? Vector2.Normalize(outward) : Vector2.UnitY;
     }
 }

@@ -1,7 +1,11 @@
+using App2d.Core.Validation;
+using App2d.Contracts.Combat;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
 using App2d.Core.Physics;
+using App2d.Core.Shapes;
 using App2d.Gameplay.Combat;
 using System.Numerics;
 
@@ -73,7 +77,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
             b.Id, b.WorldObject.Transform.Position, b.Velocity, b.Origin))]);
 
     public override PersonActionState2D CaptureActionState() => _secondsSinceShot is { } elapsed
-        ? new(Simulation.PlayerAttackKind2D.Shot, elapsed, RecoverySeconds) : default;
+        ? new(App2d.Contracts.Simulation.PlayerAttackKind2D.Shot, elapsed, RecoverySeconds) : default;
 
     public bool IsCharging { get; private set; }
     public float ChargeProgress => Math.Clamp(_chargeTime / ChargeSeconds, 0f, 1f);

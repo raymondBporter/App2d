@@ -11,8 +11,18 @@ public sealed class CharacterGeometryTests
     [InlineData("box", 36)]
     public void ContoursAndPickingShareTheRotatedOffsetFrame(string kind, int count)
     {
-        var part = new PuppetPart { Kind = kind, A = "a", B = "b", Width = 4, Height = 2,
-            OffsetX = 1, OffsetY = 2, Depth = .5f, Roundness = .5f };
+        var part = new PuppetPart
+        {
+            Kind = kind,
+            A = "a",
+            B = "b",
+            Width = 4,
+            Height = 2,
+            OffsetX = 1,
+            OffsetY = 2,
+            Depth = .5f,
+            Roundness = .5f
+        };
         var contour = PartGeometry.Contour(part, World);
         Assert.Equal(count, contour.Count);
         Assert.All(contour, point => Assert.Equal(3.5f, point.Z));

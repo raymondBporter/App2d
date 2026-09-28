@@ -11,10 +11,9 @@ public sealed record ActionTime
 }
 
 /// <summary>
-/// An attack region active over [Start, Finish). A box centred on a socket, or on a named point of an equipped prop,
-/// pushed Along the anchor's axis; it reads the same resolved transform the prop is drawn with. Anchored to neither, the
-/// box is fixed to the actor: centred <see cref="OffsetX"/> ahead of the feet (mirrored by facing) and <see cref="OffsetY"/>
-/// above them, whatever the pose does. The swing then is presentation only and the hit is exactly what the box says.
+/// An attack region active over [Start, Finish). It is centred on a socket or prop point and pushed Along the anchor's
+/// axis. Without an anchor it is fixed to the actor at OffsetX/OffsetY from the feet. Boxes stay world-aligned;
+/// capsules follow the anchor's projected XY axis. Circles use Width as their diameter.
 /// </summary>
 public sealed record HitWindow
 {
@@ -29,6 +28,7 @@ public sealed record HitWindow
     public float OffsetY { get; set; }
     public float Width { get; set; } = .3f;
     public float Height { get; set; } = .3f;
+    public string Shape { get; set; } = "box";
     public int Damage { get; set; } = 1;
     /// <summary>Played where the hit lands; null plays the game's default impact.</summary>
     public string? Sound { get; set; }
@@ -219,6 +219,8 @@ public sealed class EntityAsset
                 new Limit(-100, 100).Check(hit.Along, $"{field} hit '{hit.Id}' along");
                 new Limit(-100, 100).Check(hit.OffsetX, $"{field} hit '{hit.Id}' offsetX"); new Limit(-100, 100).Check(hit.OffsetY, $"{field} hit '{hit.Id}' offsetY");
                 new Limit(.01f, 100).Check(hit.Width, $"{field} hit '{hit.Id}' width"); new Limit(.01f, 100).Check(hit.Height, $"{field} hit '{hit.Id}' height");
+                Require(hit.Shape is "box" or "circle" or "capsule", $"{field} hit '{hit.Id}': shape must be box, circle or capsule.");
+                Require(hit.Shape != "capsule" || hit.Width >= hit.Height, $"{field} hit '{hit.Id}': capsule width must be at least its height (diameter).");
                 new Limit(0, 10000).Check(hit.Damage, $"{field} hit '{hit.Id}' damage");
                 if (hit.Sound is not null) AuthoredAsset.RequireId(hit.Sound, $"{field} hit '{hit.Id}' sound");
             }

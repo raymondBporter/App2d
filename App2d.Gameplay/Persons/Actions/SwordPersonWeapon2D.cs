@@ -1,6 +1,11 @@
+using App2d.Core.Geometry.Functions;
+using App2d.Contracts.Combat;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Core.Physics;
+using App2d.Core.Shapes;
 using App2d.Gameplay.Combat;
 using System.Numerics;
 
@@ -39,7 +44,7 @@ internal sealed partial class SwordPersonWeapon2D(
 
     public bool ConsumeBounce() => _downAttack.ConsumeBounce();
     public override PersonActionState2D CaptureActionState() => _downAttack.IsAttackActive
-        ? _downAttack.CaptureActionState() with { Kind = Simulation.PlayerAttackKind2D.Downward }
+        ? _downAttack.CaptureActionState() with { Kind = App2d.Contracts.Simulation.PlayerAttackKind2D.Downward }
         : base.CaptureActionState();
 
     public override bool IsAttackActive => base.IsAttackActive || _downAttack.IsAttackActive;

@@ -1,6 +1,6 @@
 # Geometry
 
-Use geometry functions directly with `System.Numerics` values when you need math without constructing a shape. Primitives live in `App2d.Core.Geometry.Shapes`; algorithms generally live in `App2d.Core.Geometry.Functions`. `Distance2D`, `PolygonGeometry2D`, and rectangle extensions currently live in `App2d.Core.Geometry`.
+Use geometry functions directly with `System.Numerics` values when you need math without constructing a shape. Primitives live in `App2d.Core.Shapes`; algorithms generally live in `App2d.Core.Geometry.Functions`.
 
 | Location | Purpose |
 | --- | --- |
@@ -8,14 +8,16 @@ Use geometry functions directly with `System.Numerics` values when you need math
 | `Functions/PrimitiveGeometry2D` | Areas, containment, support points and normalized picking scores |
 | `Functions/Distance2D` | Euclidean and signed distances: raw parameters, convex perimeters, shapes and placed spatial objects |
 | `Functions/Projection2D` | Polygon, circle and capsule intervals on an arbitrary axis; polygon offsets avoid transformed copies |
-| `Functions/PolygonGeometry2D` | Area, containment, support, closest perimeter point, edge normals and convex SAT overlap |
+| `Functions/PolygonGeometry2D` | Convex hulls, area, containment, support, closest perimeter point, edge normals and convex SAT overlap |
+| `TriangleMesh2D` | Indexed triangle storage, area, bounds, point containment and simple-polygon ear clipping |
+| `PolygonClipping2D` | Convex clipping in XY, with an overload that interpolates Z on `Vector3` vertices |
 | `Functions/ClosestPoint2D` | Point-to-line/ray/segment and segment-to-segment closest points |
 | `Functions/Intersection2D` | Line/line, line/ray, and ray/ray intersections |
 | `Functions/Rect2DExtensions` | Shared dimensions, anchors, containment, intersection, union, closest point, movement and resizing for any `IRect2D` |
 | `Functions/BoundsGeometry2D` | Bounds from raw primitives/points, union, translation, scaling and affine transforms |
 | `Functions/ShapeBounds2D` | On-demand local bounds for shapes, including convex support-point fallback and unbounded half-spaces |
 | `IRect2D`, `Rect2D` | A two-property rectangle contract and a lightweight rectangle value independent of shapes |
-| `Shapes/` | `IGeometry2D`, `IShape2D`, `IConvexShape2D`, lines, rays and concrete shapes, including `Triangle2D`; no bounds properties or caches |
+| `App2d.Core/Shapes/` | `IGeometry2D`, `IShape2D`, `IConvexShape2D`, lines, rays and concrete shapes, including `Triangle2D`; no bounds properties or caches |
 | `Bounds2D`, `Interval1D` | Value types for bounds and projected intervals |
 
 ```csharp
@@ -23,7 +25,17 @@ Span<Vector2> outline = stackalloc Vector2[48];
 VertexGenerator2D.WriteEllipse(outline, center, radii);
 var interval = Projection2D.Polygon(outline, axis);
 var inside = PrimitiveGeometry2D.EllipseContainsPoint(point, center, radii);
+var mesh = TriangleMesh2D.TriangulateSimplePolygon(outline);
+bool inMesh = mesh.ContainsPoint(point);
+var hull = PolygonGeometry2D.ConvexHull(outline.ToArray());
 ```
+
+`TriangleMesh2D` owns copies of its vertex and triangle-index arrays. It validates complete,
+in-range, nondegenerate triangles; its area sums triangle areas and its point test treats the
+mesh as a union. Ear clipping accepts a simple unclosed perimeter in either winding and keeps
+indices tied to the input order. Its predicate tolerance defaults to zero and can be supplied
+in squared coordinate units when needed. This is a geometry mesh, not a physics collider. `PolygonClipping2D`
+clips a subject against a convex perimeter and can carry interpolated Z through an XY clip.
 
 Contour angles are radians, increasing counter-clockwise in Y-up coordinates. Closed perimeters omit a repeated closing vertex. Circle/ellipse buffer length determines tessellation; arcs include both endpoints. Rectangle, rounded-rectangle and capsule writers return the number of written vertices and leave the rest of the buffer untouched. Rounded rectangles clamp radius to half the shorter side and retain their corner samples even at zero radius. Screen-space Y-down coordinates naturally reverse the visual winding.
 
@@ -33,7 +45,7 @@ Primitive arithmetic queries assume finite inputs, nonnegative radii and ordered
 
 `DistanceToSegment` returns a Euclidean distance in input units. `NormalizedEllipseRadius` and `NormalizedRectangleRadius` return dimensionless scores: zero at the center, one at the boundary. An ellipse's normalized radius is **not** the shortest distance to its boundary. `PartGeometry.Distance` keeps its existing picking semantics, including bounding-box picking for rounded boxes and the minimum stroke tolerance.
 
-`PartGeometry` owns attachment frames and depth; the renderer owns screen-dependent tessellation and triangle emission. Both use the shared generators. `EntityRegion` delegates overlap to polygon math. General XY rotation lives in `Mathematics/Rotation2D`; `PoseEvaluator.RotateXY` remains a compatible entry point.
+`PartGeometry` owns attachment frames and depth; the renderer owns screen-dependent tessellation and triangle emission. Both use the shared generators. `EntityRegion` uses convex polygon overlap for boxes and polygons, and the shared signed-distance core for exact circle and capsule overlap; sampled outlines are for drawing only. General XY rotation lives in `Mathematics/Rotation2D`; `PoseEvaluator.RotateXY` remains a compatible entry point.
 
 Add raw geometry algorithms here and let shape methods delegate to them. Keep authoring, rendering, caching and gameplay policy in their respective callers.
 
@@ -44,7 +56,7 @@ Add raw geometry algorithms here and let shape methods delegate to them. Keep au
 ```csharp
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Functions;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 
 var ray = Ray2D.FromPoints(origin, target);
 var line = new Line2D(pointOnLine, direction);
@@ -69,7 +81,7 @@ Intersection overloads include touching endpoints and collinear overlap. They te
 ## Distance queries
 
 ```csharp
-using static App2d.Core.Geometry.Distance2D;
+using static App2d.Core.Geometry.Functions.Distance2D;
 
 float gap = Distance(shapeA, shapeB);       // 0 if touching or overlapping
 float signed = SignedDistance(shapeA, shapeB); // positive gap, 0 contact, negative penetration
@@ -115,7 +127,7 @@ var cached = placed.LocalBounds;
 
 ## Rectangles without shapes
 
-`IRect2D` requires only ordered `Vector2 Min` and `Vector2 Max` properties. Implement it on a class or struct and import `App2d.Core.Geometry` to get the shared operations directly on your type. C# 14 extension properties provide dimensions and anchors without interface casts; generic receivers avoid boxing value types.
+`IRect2D` requires only ordered `Vector2 Min` and `Vector2 Max` properties. Implement it on a class or struct and import `App2d.Core.Geometry.Functions` to get the shared operations directly on your type. C# 14 extension properties provide dimensions and anchors without interface casts; generic receivers avoid boxing value types.
 
 ```csharp
 var rect = Rect2D.FromSize(new(20, 10), center: new(5, 3));

@@ -1,4 +1,5 @@
-using App2d.Gameplay.Persons;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Simulation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;

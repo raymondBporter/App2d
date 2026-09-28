@@ -1,4 +1,7 @@
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry;
+using App2d.Core.Validation;
+using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Functions;
@@ -27,9 +30,9 @@ public static class Intersection2D
         ArgGuard.ThrowIfNotFiniteOrZero(secondDirection);
         var dx = (double)secondOrigin.X - firstOrigin.X;
         var dy = (double)secondOrigin.Y - firstOrigin.Y;
-        var determinant = Cross(firstDirection.X, firstDirection.Y, secondDirection.X, secondDirection.Y);
-        var firstNumerator = Cross(dx, dy, secondDirection.X, secondDirection.Y);
-        var secondNumerator = Cross(dx, dy, firstDirection.X, firstDirection.Y);
+        var determinant = CrossProduct2D.Of(firstDirection.X, firstDirection.Y, secondDirection.X, secondDirection.Y);
+        var firstNumerator = CrossProduct2D.Of(dx, dy, secondDirection.X, secondDirection.Y);
+        var secondNumerator = CrossProduct2D.Of(dx, dy, firstDirection.X, firstDirection.Y);
         if (determinant != 0)
             return (!firstIsRay || firstNumerator / determinant >= 0) &&
                    (!secondIsRay || secondNumerator / determinant >= 0);
@@ -41,5 +44,4 @@ public static class Intersection2D
         return sameDirection || dx * firstDirection.X + dy * firstDirection.Y >= 0;
     }
 
-    private static double Cross(double x, double y, double otherX, double otherY) => x * otherY - y * otherX;
 }

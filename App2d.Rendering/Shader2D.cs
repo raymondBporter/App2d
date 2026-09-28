@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Functions;
 using App2d.Core.Geometry;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;

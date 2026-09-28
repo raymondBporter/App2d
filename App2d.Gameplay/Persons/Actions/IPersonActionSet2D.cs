@@ -1,3 +1,4 @@
+using App2d.Contracts.Persons;
 namespace App2d.Gameplay.Persons.Actions;
 
 /// <summary>Coarse action seam coordinated by <see cref="Person2D"/>.</summary>

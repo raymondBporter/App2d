@@ -91,7 +91,7 @@ optional. Contact Hold is now the runtime setting for confirmed sword damage, in
 kills. Normal, old Strong+ and Exaggerated remain diagnostic comparisons. Rumble and
 camera shake are excluded so the animation timing can be judged on its own.
 
-Runtime tuning lives in `App2d.Game.Presentation/World/Presentation/CombatHitstop2D.cs`:
+Runtime tuning lives in `App2d.Presentation/World/Presentation/CombatHitstop2D.cs`:
 `HoldSeconds = .070f`, `ReleaseSeconds = .025f`, and `RecoveryPeak = 2.5f`.
 There are no editor controls or configuration assets. The client feeds accepted damage
 facts to the attacking player's view and the contacted enemy's view. New attacks and

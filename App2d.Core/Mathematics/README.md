@@ -7,6 +7,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Direction2D` | Finite unit vector with angle, perpendicular, reversal and signed scaling helpers |
 | `Polar2D` | Radius/angle value and direct polar/Cartesian conversions |
 | `Vector2Extensions` | `AngleRadians`, `ToPolar()`, cross product, and perpendicular vectors |
+| `CrossProduct2D` | Double-precision perpendicular dot products and three-point orientation |
 | `Rotation2D` | Rotate an existing vector in XY, including a Vector3 while preserving Z |
 | `Interpolation` | Progress mappings, lerp, and inverse lerp |
 | `Similarity2D` | Translation, rotation, uniform scale, and mirroring used by collision |
@@ -30,6 +31,11 @@ var authored = new Polar2D(radius: 24, angleRadians: 3 * MathF.Tau + heading);
 Angles are radians, increasing counter-clockwise from +X in Y-up coordinates.
 In a screen coordinate system where Y points down, convert the Y component explicitly
 when you want the same visual convention. Angles are not degrees.
+
+`Vector2.Cross(right)` returns a float for existing callers. It uses the same determinant as
+`CrossProduct2D.Of`, which returns a double. `CrossProduct2D.Orientation(a, b, c)` computes
+`cross(b - a, c - a)` after widening the coordinates to double, so geometric predicates
+do not lose precision in the subtraction.
 
 `AngleOf` / `AngleRadians` return an angle in [-PI, PI]. A zero vector has no
 direction; the shared convention returns zero, including for signed-zero components.

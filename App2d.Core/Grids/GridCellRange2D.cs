@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 namespace App2d.Core.Grids;
 
 /// <summary>An inclusive rectangle of integer cells. Default is empty. Foreach visits X first without allocating.</summary>

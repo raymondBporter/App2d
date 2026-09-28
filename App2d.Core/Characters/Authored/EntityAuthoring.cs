@@ -15,7 +15,16 @@ public static class EntityAuthoring
 
     /// <summary>Roles the editor always lists: every controller's requirements, then the common optional ones.</summary>
     public static readonly IReadOnlyList<string> CommonRoles =
-        [EntityControllers.Idle, EntityControllers.Walk, EntityControllers.Run, EntityControllers.Jump, EntityControllers.Fall, EntityControllers.Hit, EntityControllers.Death, "attack"];
+    [
+        EntityControllers.Idle,
+        EntityControllers.Walk,
+        EntityControllers.Run,
+        EntityControllers.Jump,
+        EntityControllers.Fall,
+        EntityControllers.Hit,
+        EntityControllers.Death,
+        EntityControllers.Attack
+    ];
 
     public static IReadOnlyList<EntityTemplate> Templates { get; } =
     [

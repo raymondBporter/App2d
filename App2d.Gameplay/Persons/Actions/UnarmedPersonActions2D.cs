@@ -1,7 +1,10 @@
+using App2d.Core.Validation;
+using App2d.Contracts.Combat;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Persons.Actions;
 using App2d.Core;
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
+using App2d.Core.Shapes;
 using App2d.Gameplay.Combat;
 using System.Numerics;
 
@@ -61,9 +64,9 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
 
     public bool IsAttackActive => _punch.Action.IsInProgress || _kick.Action.IsInProgress;
     public PersonActionState2D CaptureActionState() => _punch.Action.IsInProgress
-        ? new(Simulation.PlayerAttackKind2D.Punch, _punch.Action.ElapsedSeconds, _punch.Action.DurationSeconds)
+        ? new(App2d.Contracts.Simulation.PlayerAttackKind2D.Punch, _punch.Action.ElapsedSeconds, _punch.Action.DurationSeconds)
         : _kick.Action.IsInProgress
-            ? new(Simulation.PlayerAttackKind2D.Kick, _kick.Action.ElapsedSeconds, _kick.Action.DurationSeconds) : default;
+            ? new(App2d.Contracts.Simulation.PlayerAttackKind2D.Kick, _kick.Action.ElapsedSeconds, _kick.Action.DurationSeconds) : default;
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {

@@ -1,8 +1,10 @@
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry;
+using App2d.Core.Validation;
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Functions;
 
 public static partial class Distance2D
 {
@@ -59,8 +61,8 @@ public static partial class Distance2D
 
         var firstCount = CoreVertexCount(first);
         var secondCount = CoreVertexCount(second);
-        Span<Vector2> firstVertices = firstCount <= 64 ? stackalloc Vector2[firstCount] : new Vector2[firstCount];
-        Span<Vector2> secondVertices = secondCount <= 64 ? stackalloc Vector2[secondCount] : new Vector2[secondCount];
+        var firstVertices = firstCount <= 64 ? stackalloc Vector2[firstCount] : new Vector2[firstCount];
+        var secondVertices = secondCount <= 64 ? stackalloc Vector2[secondCount] : new Vector2[secondCount];
         var firstRadius = WriteCore(first, firstPose, firstVertices);
         var secondRadius = WriteCore(second, secondPose, secondVertices);
         return SignedDistanceBetweenConvexPolygons(firstVertices, secondVertices, firstRadius, secondRadius);

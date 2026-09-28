@@ -49,7 +49,7 @@ Props: `sword`, `sheath`, `pistol`. Sockets added to `person`: `back`, `back-vie
 
 ## In the game
 
-The in-game player is drawn by `AuthoredPersonPresentation2D` (`App2d.Game.Presentation/Persons/`), which replaced the
+The in-game player is drawn by `AuthoredPersonPresentation2D` (`App2d.Presentation/Persons/`), which replaced the
 point-library `PointPersonPresentation2D`. Gameplay is unchanged: traversal, hit boxes and attack timing still come from
 `Person2D` and `entities/player.json`.
 

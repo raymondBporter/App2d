@@ -1,4 +1,3 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Rendering.Characters;
@@ -87,7 +86,8 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         for (var i = 0; i < views.Length; i++)
         {
             var subject = views[i].Subject;
-            if (subject.Entity is { } entity) _drawings[i].Build(entity, subject.Pose); else
+            if (subject.Entity is { } entity) _drawings[i].Build(entity, subject.Pose);
+            else
             {
                 _drawings[i].Build(subject.Model, subject.Pose);
                 if (session.Mode == Workspace.Appearance && session.Entity is { } wearer && wearer.Model.Id == subject.Model.Id)

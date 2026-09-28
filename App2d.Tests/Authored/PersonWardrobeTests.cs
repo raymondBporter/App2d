@@ -96,7 +96,11 @@ public sealed class PersonWardrobeTests
     {
         var part = new PuppetPart
         {
-            A = "origin", Kind = "ellipse", Width = 2, Height = 1, OutlineWidth = 0,
+            A = "origin",
+            Kind = "ellipse",
+            Width = 2,
+            Height = 1,
+            OutlineWidth = 0,
             Paint = [new() { Fill = "#ff0000", Points = [new(-2, -2), new(2, -2), new(2, 2), new(-2, 2)] }],
         };
         var drawing = new PuppetDrawing(); drawing.Build("#000000", .04f, [part], _ => Vector3.Zero);

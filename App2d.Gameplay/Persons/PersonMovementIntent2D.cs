@@ -1,3 +1,4 @@
+using App2d.Contracts.Persons;
 namespace App2d.Gameplay.Persons;
 
 /// <summary>Locomotion intent with edges derived from consecutive held-state commands.</summary>

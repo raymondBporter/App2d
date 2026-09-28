@@ -1,3 +1,5 @@
+using App2d.Core.Validation;
+using App2d.Contracts.Combat;
 using App2d.Core;
 using App2d.Core.Collision;
 using System.Numerics;
@@ -52,7 +54,7 @@ public sealed class CombatSystem2D(
                 : Vector2.Clamp(hitbox.WorldBounds.Center, combatant.WorldObject.WorldBounds.Min, combatant.WorldObject.WorldBounds.Max);
             var contact = new CombatContact2D(attackSourceId, attackId,
                 position ?? combatant.WorldObject.Transform.Position, direction, impactKind)
-                { AttackerId = attackerId.IsValid ? attackerId : attackSourceId };
+            { AttackerId = attackerId.IsValid ? attackerId : attackSourceId };
             // Physical contact can still bounce a downward attack off an invulnerable target.
             // Only accepted damage emits the contact fact used by audiovisual feedback.
             Damage(combatant, damage, force, contact);
@@ -114,6 +116,7 @@ public sealed class CombatSystem2D(
         var killed = wasAlive && !combatant.IsAlive;
         if (killed && combatant.Faction == CombatFaction2D.Enemy) DefeatedEnemies++;
         DamageResolved?.Invoke(new CombatDamage2D(combatant.Id, combatant.Faction,
-            combatant.WorldObject.Transform.Position, killed) { Contact = contact });
+            combatant.WorldObject.Transform.Position, killed)
+        { Contact = contact });
     }
 }

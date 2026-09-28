@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core;
+namespace App2d.Core.Validation;
 
 public static partial class ArgGuard
 {

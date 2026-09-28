@@ -267,7 +267,17 @@ public static class EntityCollision
 
     public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit)
     {
-        var anchor = Anchor(entity, pose, hit.Window).At(hit.Window.Along, 0);
-        return EntityRegion.Box(hit.Window.Id, new(anchor.X, anchor.Y), new(hit.Window.Width, hit.Window.Height));
+        var frame = Anchor(entity, pose, hit.Window);
+        var anchor = frame.At(hit.Window.Along, 0);
+        var center = new Vector2(anchor.X, anchor.Y);
+        var window = hit.Window;
+        if (window.Shape == "circle") return EntityRegion.Circle(window.Id, center, window.Width / 2);
+        if (window.Shape == "capsule")
+        {
+            var axis = frame.Axis.LengthSquared() > 1e-8f ? Vector2.Normalize(frame.Axis) : new Vector2(pose.Facing, 0);
+            var halfSegment = (window.Width - window.Height) / 2;
+            return EntityRegion.Capsule(window.Id, center - axis * halfSegment, center + axis * halfSegment, window.Height / 2);
+        }
+        return EntityRegion.Box(window.Id, center, new(window.Width, window.Height));
     }
 }
