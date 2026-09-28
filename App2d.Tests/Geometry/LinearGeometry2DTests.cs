@@ -20,9 +20,42 @@ public sealed class LinearGeometry2DTests
         Assert.Equal(line.Direction, ray.Direction);
         Assert.Equal(new Vector2(-1, -1), line.GetPoint(-5));
         Assert.Equal(new Vector2(5, 7), ray.GetPoint(5));
+        Assert.Equal(line.GetPoint(-5), line.PointAt(-5));
+        Assert.Equal(ray.GetPoint(5), ray.PointAt(5));
         Assert.True(line.ContainsPoint(line.GetPoint(-5)));
         Assert.False(ray.ContainsPoint(line.GetPoint(-5)));
         Assert.Throws<ArgumentOutOfRangeException>(() => ray.GetPoint(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ray.PointAt(-1));
+    }
+
+    [Fact]
+    public void FromPointsHandlesVeryDistantOriginsWithoutOverflowingTheDirection()
+    {
+        var from = new Vector2(float.MaxValue, 0);
+        var to = new Vector2(-float.MaxValue, 0);
+        var line = Line2D.FromPoints(from, to);
+        var ray = Ray2D.FromPoints(from, to);
+        Assert.Equal(-Vector2.UnitX, line.Direction);
+        Assert.Equal(line.Direction, ray.Direction);
+        Assert.Equal(Vector2.Zero, line.PointAt(float.MaxValue));
+        Assert.Equal(Vector2.Zero, ray.PointAt(float.MaxValue));
+    }
+
+    [Fact]
+    public void WhichSideUsesTheRequestedDeterminantAndDistanceTolerance()
+    {
+        var line = Line2D.FromPoints(new(10, 20), new(13, 20));
+        Assert.Equal(1, line.WhichSide(new(12, 19)));
+        Assert.Equal(-1, line.WhichSide(new(12, 21)));
+        Assert.Equal(0, line.WhichSide(new(-100, 20)));
+        Assert.Equal(0, line.WhichSide(new(12, 19.875f), tolerance: .125f));
+        Assert.Equal(1, line.WhichSide(new(12, 19.75f), tolerance: .125f));
+        Assert.Equal(0, line.WhichSide(new(12, 20.125f), tolerance: .125f));
+        Assert.Equal(-1, Line2D.FromPoints(new(13, 20), new(10, 20)).WhichSide(new(12, 19)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => line.WhichSide(default, -1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => line.WhichSide(default, float.NaN));
+        Assert.Throws<ArgumentOutOfRangeException>(() => line.WhichSide(new(float.PositiveInfinity, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).WhichSide(default));
     }
 
     [Theory]

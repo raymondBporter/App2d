@@ -46,14 +46,19 @@ using App2d.Core.Geometry.Shapes;
 
 var ray = Ray2D.FromPoints(origin, target);
 var line = new Line2D(pointOnLine, direction);
-Vector2 ahead = ray.GetPoint(10); // Distance in input units, not a fraction.
+Vector2 ahead = ray.PointAt(10); // Distance in input units, not a fraction.
 Vector2 closest = ray.ClosestPoint(point); // Clamped at the origin.
 float distance = Distance2D.Distance(point, ray);
 bool onLine = line.ContainsPoint(point, tolerance: .001f);
+int side = line.WhichSide(point, tolerance: .001f); // +1 right, -1 left, 0 on line.
 bool crossing = ray.Intersects(line); // Also Intersection2D.Intersects(ray, line).
 ```
 
-`Line2D` is infinite in both directions; `Ray2D` includes its origin and extends forward. Both are immutable value types whose constructors normalize a finite nonzero direction. `GetPoint` takes a finite distance, which may be negative for a line and must be nonnegative for a ray. Construct them explicitly: `default` has no direction, `IsValid` is false, and query methods reject it.
+`Line2D` is infinite in both directions; `Ray2D` includes its origin and extends forward. Both are immutable value types whose constructors normalize a finite nonzero direction. `FromPoints(from, to)` builds either one from two distinct points, including when their float-coordinate difference would overflow. `PointAt(t)` takes a finite distance, which may be negative for a line and must be nonnegative for a ray. `GetPoint` remains an alias. Construct them explicitly: `default` has no direction, `IsValid` is false, and query methods reject it.
+
+`Line2D.WhichSide(test, tolerance)` uses `cross(test - Origin, Direction)`. With a line pointing along +X, points below it return +1 and points above it return -1; reversing the line reverses the signs. A point within `tolerance` distance returns 0. Tolerance is nonnegative, defaults to zero, and is measured in input units because the direction is normalized. This classifies sides of the infinite supporting line.
+
+When a direction is already normalized, use `Line2D.FromDirection(point, direction)` or `Ray2D.FromDirection(origin, direction)` with `Direction2D` from `App2d.Core.Mathematics`. Both primitives expose the typed value as `UnitDirection` and retain their `Vector2 Direction` property for existing callers.
 
 Point containment defaults to a distance tolerance of `0.00001` input units. Pass zero for exact containment. A ray's tolerance also applies around its origin. Raw `ClosestPoint2D.OnLine` / `OnRay` and `Distance2D.DistanceToLine` / `DistanceToRay` accept non-unit directions. Lines and rays use unsigned point distance because neither defines a filled interior.
 

@@ -7,14 +7,6 @@ internal static class LinearGeometry2D
 {
     internal const float DefaultPointTolerance = 0.00001f;
 
-    internal static Vector2 NormalizeDirection(Vector2 direction)
-    {
-        ArgGuard.ThrowIfNotFiniteOrZero(direction);
-        // Float squares can overflow or underflow even for valid finite nonzero vectors.
-        var length = Math.Sqrt((double)direction.X * direction.X + (double)direction.Y * direction.Y);
-        return new((float)(direction.X / length), (float)(direction.Y / length));
-    }
-
     internal static (double X, double Y) ClosestPoint(Vector2 point, Vector2 origin, Vector2 direction, bool forwardOnly)
     {
         ArgGuard.ThrowIfNotFinite(point);
