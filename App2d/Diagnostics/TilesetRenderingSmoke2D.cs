@@ -86,20 +86,20 @@ internal static class TilesetRenderingSmoke2D
             SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
             SideScrollerLevel2D.WorldOrigin, [groundId, wallId]);
         for (var row = 0; row < Layout.Length; row++)
-        for (var column = 0; column < Layout[row].Length; column++)
-        {
-            var (kind, tileset) = Layout[row][column] switch
+            for (var column = 0; column < Layout[row].Length; column++)
             {
-                'D' => (TileKind2D.Solid, 0),
-                'S' => (TileKind2D.Solid, 1),
-                'G' => (TileKind2D.Solid | TileKind2D.Grippable, 1),
-                '=' => (TileKind2D.OneWay, 0),
-                '^' => (TileKind2D.Spikes, 0),
-                'H' => (TileKind2D.Ladder, 0),
-                _ => (TileKind2D.Empty, 0)
-            };
-            map.SetTile(Left + column, Bottom + Layout.Length - 1 - row, new TileCell2D(kind, (byte)tileset));
-        }
+                var (kind, tileset) = Layout[row][column] switch
+                {
+                    'D' => (TileKind2D.Solid, 0),
+                    'S' => (TileKind2D.Solid, 1),
+                    'G' => (TileKind2D.Solid | TileKind2D.Grippable, 1),
+                    '=' => (TileKind2D.OneWay, 0),
+                    '^' => (TileKind2D.Spikes, 0),
+                    'H' => (TileKind2D.Ladder, 0),
+                    _ => (TileKind2D.Empty, 0)
+                };
+                map.SetTile(Left + column, Bottom + Layout.Length - 1 - row, new TileCell2D(kind, (byte)tileset));
+            }
 
         var origin = SideScrollerLevel2D.WorldOrigin;
         var groundTop = origin.Y + (Bottom + 3) * 32f;
@@ -107,7 +107,7 @@ internal static class TilesetRenderingSmoke2D
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         using var game = SideScrollerSimulation2D.Create(new(traversal, map, [],
             [new(1, WorldThingKind2D.PlayerSpawn, "Start", true, new(origin.X + (Left + 2.4f) * 32f, groundTop + 8f))])
-            { AuthoredCharacters = catalog });
+        { AuthoredCharacters = catalog });
         var scene = new Scene2D();
         using var world = new WorldPresentation2D(scene, textures);
         using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
