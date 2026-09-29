@@ -6,6 +6,20 @@ namespace App2d.Tests.Curves;
 public sealed class Curve2DTests
 {
     [Fact]
+    public void QuadraticBezierSamplesTheFaceArcIntoCallerStorage()
+    {
+        var curve = new QuadraticBezier2D(new(0f, 0f), new(1f, 2f), new(2f, 0f));
+        Span<Vector2> points = stackalloc Vector2[5];
+        Curve2D.Sample(curve, points);
+
+        Assert.Equal(curve.Start, points[0]);
+        Assert.Equal(new Vector2(1f, 1f), points[2]);
+        Assert.Equal(curve.End, points[^1]);
+        Assert.Equal(new Vector2(2f, 4f), curve.EvaluateDerivative(0f));
+        Assert.Equal(new Vector2(2f, -4f), curve.EvaluateDerivative(1f));
+    }
+
+    [Fact]
     public void CubicBezierPreservesEndpointsAndHasAnalyticDerivative()
     {
         var curve = new CubicBezier2D(

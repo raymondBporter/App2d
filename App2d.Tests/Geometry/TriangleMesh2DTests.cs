@@ -1,5 +1,8 @@
 using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
+using App2d.Core.Collision.Contacts;
+using App2d.Core.Shapes;
+using App2d.Core;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -67,6 +70,20 @@ public sealed class TriangleMesh2DTests
         Assert.Equal(9d, CrossProduct2D.Of(b - a, c - a));
         Assert.Equal(9f, (b - a).Cross(c - a));
         Assert.Equal(-9d, CrossProduct2D.Orientation(a, c, b));
+    }
+
+    [Fact]
+    public void ConcaveMeshTrianglesWorkAsACompositeCollisionShape()
+    {
+        var mesh = TriangleMesh2D.TriangulateSimplePolygon(Notched);
+        var shape = mesh.ToCompositeShape();
+        var world = new SpatialObject2D(shape);
+        var solidPoint = new SpatialObject2D(new Circle2D(.1f, new(.5f, 1.5f)));
+        var notch = new SpatialObject2D(new Circle2D(.1f, new(1.5f, 1.5f)));
+
+        Assert.Equal(mesh.Area, shape.Area, 5);
+        Assert.True(ShapeCollision2D.TryGetContact(world, solidPoint, out _));
+        Assert.False(ShapeCollision2D.TryGetContact(world, notch, out _));
     }
 
     [Theory]

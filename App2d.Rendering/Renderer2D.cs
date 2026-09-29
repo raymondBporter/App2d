@@ -380,13 +380,18 @@ public sealed partial class Renderer2D : IDisposable
         StrokePolygon(points[..segments], _camera.WorldToDeviceMatrix, color, strokeWidth);
     }
 
-    public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, XnaColor color, float strokeWidth = 2f)
+    public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, XnaColor color, float strokeWidth = 2f,
+        LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
         ArgGuard.ThrowIfNotFiniteOrNotPositive(strokeWidth);
+        ValidateLineCap(cap);
+        foreach (var point in points) ArgGuard.ThrowIfNotFinite(point, nameof(points));
         SelectBatch(null, null);
         for (var i = 1; i < points.Length; i++)
-            Line(_camera.WorldToDevice(points[i - 1]), _camera.WorldToDevice(points[i]), color, strokeWidth);
+            Line(_camera.WorldToDevice(points[i - 1]), _camera.WorldToDevice(points[i]), color, strokeWidth,
+                i == 1 ? cap : LineCap2D.Butt,
+                i == points.Length - 1 ? cap : LineCap2D.Butt);
     }
 
     public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
@@ -409,28 +414,11 @@ public sealed partial class Renderer2D : IDisposable
         }
     }
 
-    public void DrawShapeOutline(SpatialObject2D item, XnaColor color, float screenStrokeWidth = 2f)
-    {
-        RequireFrame();
-        ArgGuard.ThrowIfNull(item);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
-        if (IsCulled(item)) return;
-        SelectBatch(null, null);
-        OutlineShape(item.Shape, item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix, color, screenStrokeWidth);
-    }
+    public void DrawShapeOutline(SpatialObject2D item, XnaColor color, float screenStrokeWidth = 2f) =>
+        DrawShape(item, outlineColor: color, screenStrokeWidth: screenStrokeWidth);
 
-    public void DrawShapeOverlay(SpatialObject2D item, XnaColor fillColor, XnaColor outlineColor, float screenStrokeWidth = 2f)
-    {
-        RequireFrame();
-        ArgGuard.ThrowIfNull(item);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
-        if (IsCulled(item)) return;
-        var matrix = item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
-        var bounds = item.LocalBounds.IsFinite ? item.LocalBounds : GetVisibleLocalBounds(matrix);
-        SelectBatch(null, null);
-        FillShape(item.Shape, matrix, bounds, new SolidColorShader(fillColor));
-        OutlineShape(item.Shape, matrix, outlineColor, screenStrokeWidth);
-    }
+    public void DrawShapeOverlay(SpatialObject2D item, XnaColor fillColor, XnaColor outlineColor, float screenStrokeWidth = 2f) =>
+        DrawShape(item, fillColor, outlineColor, screenStrokeWidth);
 
     private void OutlineShape(IShape2D shape, Matrix3x2 matrix, XnaColor color, float width)
     {
@@ -459,17 +447,37 @@ public sealed partial class Renderer2D : IDisposable
             Line(Vector2.Transform(points[i], matrix), Vector2.Transform(points[(i + 1) % points.Length], matrix), color, width);
     }
 
-    private void Line(Vector2 start, Vector2 end, XnaColor color, float width)
+    private void Line(Vector2 start, Vector2 end, XnaColor color, float width,
+        LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
     {
         var axis = end - start;
-        if (axis.LengthSquared() <= float.Epsilon) return;
-        var normal = Vector2.Normalize(new Vector2(-axis.Y, axis.X)) * width * 0.5f;
+        if (axis.LengthSquared() <= float.Epsilon)
+        {
+            if (startCap == LineCap2D.Round || endCap == LineCap2D.Round) FillDisk(start, width * 0.5f, color);
+            else if (startCap == LineCap2D.Square || endCap == LineCap2D.Square)
+            {
+                var half = new Vector2(width * 0.5f);
+                var topLeft = Vertex(start + new Vector2(-half.X, -half.Y), color);
+                var topRight = Vertex(start + new Vector2(half.X, -half.Y), color);
+                var bottomRight = Vertex(start + half, color);
+                var bottomLeft = Vertex(start + new Vector2(-half.X, half.Y), color);
+                Triangle(topLeft, topRight, bottomRight);
+                Triangle(topLeft, bottomRight, bottomLeft);
+            }
+            return;
+        }
+        var unit = Vector2.Normalize(axis);
+        var normal = new Vector2(-unit.Y, unit.X) * width * 0.5f;
+        if (startCap == LineCap2D.Square) start -= unit * width * 0.5f;
+        if (endCap == LineCap2D.Square) end += unit * width * 0.5f;
         var a = Vertex(start + normal, color);
         var b = Vertex(end + normal, color);
         var c = Vertex(end - normal, color);
         var d = Vertex(start - normal, color);
         Triangle(a, b, c);
         Triangle(a, c, d);
+        if (startCap == LineCap2D.Round) FillRoundCap(start, -unit, width * 0.5f, color);
+        if (endCap == LineCap2D.Round) FillRoundCap(end, unit, width * 0.5f, color);
     }
 
     private bool IsCulled(SpatialObject2D item) => item.WorldBounds.IsFinite && !item.WorldBounds.Intersects(_visibleWorldBounds);

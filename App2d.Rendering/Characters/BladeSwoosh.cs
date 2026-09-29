@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using Color = Microsoft.Xna.Framework.Color;
 using Quaternion = System.Numerics.Quaternion;
 using Vector2 = System.Numerics.Vector2;
@@ -115,7 +116,7 @@ public sealed class BladeSwoosh
         var length = _distance[^1];
         if (length < 1e-3f) return;
 
-        var alpha = 1 - SmoothStep(.55f, 1, clear);
+        var alpha = 1 - Interpolation.SmoothStep(Interpolation.InverseLerpClamped(.55f, 1f, clear));
         var fill = WithAlpha(CharacterJson.Color(style.Fill), alpha);
         float Split(float u) => style.SplitPosition - Gap(style, u) / 2;
         float InnerEdge(float u) => style.SplitPosition + Gap(style, u) / 2;
@@ -265,6 +266,5 @@ public sealed class BladeSwoosh
 
     private static Vector2 Flat(Vector3 v) => new(v.X, v.Y);
     private static Vector2 Turned(Vector2 v, float angle) { var (s, c) = MathF.SinCos(angle); return new(c * v.X - s * v.Y, s * v.X + c * v.Y); }
-    private static float SmoothStep(float a, float b, float x) { var t = Math.Clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
     private static Color WithAlpha(Color c, float a) => new(c.R, c.G, c.B, (byte)Math.Clamp(MathF.Round(a * 255), 0, 255));
 }

@@ -1,5 +1,5 @@
 using App2d.Core.Characters;
-using App2d.Core.Geometry.Functions;
+using App2d.Core.Curves;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
@@ -13,21 +13,14 @@ public static class FaceDrawing
         void Line(Vector2 a, Vector2 b, float weight = 1) => mesh.Line(at(a), at(b), width * weight, ink);
         void Curve(Vector2 a, Vector2 control, Vector2 b, float weight = 1)
         {
-            var previous = a;
-            for (var i = 1; i <= 12; i++)
-            {
-                var t = i / 12f; var next = a * ((1 - t) * (1 - t)) + control * (2 * t * (1 - t)) + b * (t * t);
-                Line(previous, next, weight: weight); previous = next;
-            }
+            Span<Vector2> points = stackalloc Vector2[13];
+            Curve2D.Sample(new QuadraticBezier2D(a, control, b), points);
+            for (var i = 1; i < points.Length; i++) Line(points[i - 1], points[i], weight);
         }
         void Oval(Vector2 center, float rx, float ry, Color? fill = null, float depth = 0)
         {
             var offset = new Vector3(0, 0, depth);
-            Vector3 Point(int i) => at(VertexGenerator2D.PointOnEllipse(center, new(rx, ry), i * MathF.Tau / 24)) - offset;
-            for (var i = 0; i < 24; i++)
-            {
-                mesh.Triangle(at(center) - offset, Point(i), Point(i + 1), fill ?? ink);
-            }
+            mesh.Ellipse(center, new(rx, ry), point => at(point) - offset, fill ?? ink);
         }
         foreach (var side in new[] { -1f, 1f })
         {

@@ -1,6 +1,7 @@
 using App2d.Core.Geometry.Functions;
 using App2d.Core.Validation;
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Geometry;
@@ -67,6 +68,15 @@ public sealed class TriangleMesh2D
         }
         return false;
     }
+
+    /// <summary>Turns the filled triangles into a non-convex collision shape without filling concavities.</summary>
+    /// <remarks>Collision resolves per triangle, so dynamic bodies may encounter internal edges.</remarks>
+    public CompositeShape2D ToCompositeShape() => new(
+        Enumerable.Range(0, TriangleCount).Select(index =>
+        {
+            var (a, b, c) = TriangleAt(index);
+            return (IConvexShape2D)new Triangle2D(a, b, c);
+        }));
 
     private bool Bounds2DContains(Vector2 point) =>
         point.X >= Bounds.Min.X && point.X <= Bounds.Max.X && point.Y >= Bounds.Min.Y && point.Y <= Bounds.Max.Y;
