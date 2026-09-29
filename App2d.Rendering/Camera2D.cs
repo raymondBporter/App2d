@@ -40,9 +40,7 @@ public sealed class Camera2D
         get;
         set
         {
-            if (value is { } bounds)
-                ArgGuard.ThrowIf(!bounds.IsFinite || bounds.Min.X > bounds.Max.X || bounds.Min.Y > bounds.Max.Y,
-                    "World bounds must be finite and ordered.", nameof(value));
+            ArgGuard.ThrowIf(value is not { } bounds || !bounds.IsFinite || bounds.Min.X > bounds.Max.X || bounds.Min.Y > bounds.Max.Y, "World bounds must be finite and ordered.", nameof(value));
             field = value;
             Position = Position;
         }
@@ -64,8 +62,7 @@ public sealed class Camera2D
     }
 
     /// <summary>Actual device pixels per world unit, including viewport scaling and zoom.</summary>
-    public float PixelsPerWorldUnit => Zoom *
-        (ReferenceViewportHeight is { } height ? ViewportSize.Y / height : 1f);
+    public float PixelsPerWorldUnit => Zoom * (ReferenceViewportHeight is { } height ? ViewportSize.Y / height : 1f);
 
     public float WorldUnitsToPixels(float worldUnits) => worldUnits * PixelsPerWorldUnit;
     public float PixelsToWorldUnits(float pixels) => pixels / PixelsPerWorldUnit;

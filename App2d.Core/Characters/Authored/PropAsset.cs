@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -89,7 +90,7 @@ public sealed class PropAsset
             for (var i = 0; i < solid.Triangles.Count; i += 3)
             {
                 var a = solid.Vertices[solid.Triangles[i]].XYZ; var b = solid.Vertices[solid.Triangles[i + 1]].XYZ; var c = solid.Vertices[solid.Triangles[i + 2]].XYZ;
-                Require(System.Numerics.Vector3.Cross(b - a, c - a).LengthSquared() > 1e-16f, $"{owner}: degenerate triangle.");
+                Require(new Triangle3D(a, b, c).DoubleArea > 1e-8d, $"{owner}: degenerate triangle.");
             }
             Limit.Color(solid.Fill, owner + " mesh fill");
             if (solid.Outline is { } outline)

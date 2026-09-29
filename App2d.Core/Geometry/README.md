@@ -10,9 +10,11 @@ Use geometry functions directly with `System.Numerics` values when you need math
 | `Functions/Projection2D` | Polygon, circle and capsule intervals on an arbitrary axis; polygon offsets avoid transformed copies |
 | `Functions/PolygonGeometry2D` | Convex hulls, area, containment, support, closest perimeter point, edge normals and convex SAT overlap |
 | `TriangleMesh2D` | Indexed triangle storage, area, bounds, point containment and simple-polygon ear clipping |
+| `Triangle3D`, `TriangleMeshAnalysis3D` | Robust 3D triangle normals/area and indexed mesh face/feature-edge analysis |
 | `PolygonClipping2D` | Convex clipping in XY, including allocation-free polygon/rectangle clipping against a half-space and an overload that interpolates Z on `Vector3` vertices |
 | `Functions/ClosestPoint2D` | Point-to-line/ray/segment and segment-to-segment closest points |
 | `Functions/Intersection2D` | Line/line, line/ray, and ray/ray intersections; finite rectangle clipping for lines and rays |
+| `Functions/Orientation3D` | Handedness of a 3D basis, including reflected and degenerate frames |
 | `Functions/Rect2DExtensions` | Shared dimensions, anchors, containment, intersection, union, closest point, movement and resizing for any `IRect2D` |
 | `Functions/BoundsGeometry2D` | Bounds from raw primitives/points, union, translation, scaling and affine transforms |
 | `Functions/ShapeBounds2D` | On-demand local bounds for shapes, including convex support-point fallback and unbounded half-spaces |

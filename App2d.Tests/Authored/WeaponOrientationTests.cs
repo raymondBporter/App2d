@@ -128,6 +128,28 @@ public sealed class WeaponOrientationTests
     }
 
     [Fact]
+    public void CollapsedPlacementSkipsDegenerateFacesWithoutNaNGeometry()
+    {
+        var prop = new PropAsset
+        {
+            Id = "triangle",
+            Name = "Triangle",
+            Solids = [new PropSolid
+            {
+                Vertices = [new(0, 0), new(1, 0), new(0, 1)],
+                Triangles = [0, 1, 2]
+            }]
+        };
+        prop.Validate();
+        var drawing = new PuppetDrawing();
+        drawing.AddProp(prop, new(new Vector3(1e9f), Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
+        Assert.Equal(0, drawing.Mesh.Count);
+
+        drawing.AddProp(prop, new(Vector3.Zero, Vector3.UnitX, Vector3.UnitX, Vector3.UnitZ));
+        Assert.Equal(0, drawing.Mesh.Count);
+    }
+
+    [Fact]
     public void WeaponPoseSupportsPendingKeysUndoSaveAndReopen()
     {
         var root = Path.Combine(Path.GetTempPath(), "weapon-editor-" + Guid.NewGuid().ToString("N"));
