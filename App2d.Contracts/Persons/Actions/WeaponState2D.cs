@@ -5,12 +5,9 @@ using System.Numerics;
 namespace App2d.Contracts.Persons.Actions;
 
 /// <summary>Client observations, not a complete simulation restore point.</summary>
-public readonly record struct ProjectileState2D(
-    EntityId2D Id, Vector2 Position, Vector2 Velocity, Vector2 Origin);
+public readonly record struct ProjectileState2D(EntityId2D Id, Vector2 Position, Vector2 Velocity, Vector2 Origin);
 
-public readonly record struct WeaponState2D(
-    bool IsCharging, float ChargeProgress, Vector2 MuzzlePosition,
-    ImmutableArray<ProjectileState2D> Projectiles)
+public readonly record struct WeaponState2D(bool IsCharging, float ChargeProgress, Vector2 MuzzlePosition, ImmutableArray<ProjectileState2D> Projectiles)
 {
     public static WeaponState2D Empty => new(false, 0f, Vector2.Zero, []);
 }

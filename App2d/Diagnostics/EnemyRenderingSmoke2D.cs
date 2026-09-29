@@ -28,7 +28,7 @@ internal static class EnemyRenderingSmoke2D
             new(EntityId2D.Create(), EnemyKind2D.Shieldback, new(-280f, 0f), new(118f, 0f), 0f, 1f, true, true) { MoveSpeed = 118f },
             new(EntityId2D.Create(), EnemyKind2D.GreenDinosaur, new(-130f, 0f), new(-82f, 0f), 0f, -1f, true, true) { MoveSpeed = 82f },
             new(EntityId2D.Create(), EnemyKind2D.BoilerBrute, new(35f, 0f), Vector2.Zero, 0f, 1f, true, true)
-                { MoveSpeed = 62f, IsAttacking = true, AttackElapsedSeconds = 0.55f },
+                { MoveSpeed = 62f, IsAttacking = true, AttackElapsedSeconds = 0.55f, AttackDurationSeconds = 0.8f },
             new(rivalId, EnemyKind2D.Rival, new(220f, 0f), Vector2.Zero, 0f, -1f, true, true)
             {
                 IsAttacking = true,

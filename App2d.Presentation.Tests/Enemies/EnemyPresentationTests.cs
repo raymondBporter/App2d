@@ -23,11 +23,13 @@ public sealed class EnemyPresentationTests
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.BoilerBrute,
             Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
-        { IsAttacking = true, AttackElapsedSeconds = 0.15f };
+        { IsAttacking = true, AttackElapsedSeconds = 0.15f, AttackDurationSeconds = 0.8f };
         view.ApplyState([state], [new HammerStarted2D(state.Id, state.Position)], 500);
         var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
         Assert.Same(textures.Load("characters/boiler-brute/animations/hammer-attack/frame-0002.png"), shader.Texture);
         view.Advance(0.2f);
+        Assert.Same(textures.Load("characters/boiler-brute/animations/hammer-attack/frame-0004.png"), shader.Texture);
+        view.ApplyState([state with { AttackDurationSeconds = 0.4f }], [], 501);
         Assert.Same(textures.Load("characters/boiler-brute/animations/hammer-attack/frame-0004.png"), shader.Texture);
         Assert.Single(sounds.Played);
     }
@@ -61,7 +63,7 @@ public sealed class EnemyPresentationTests
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.BoilerBrute,
             new Vector2(100f, 0f), Vector2.Zero, 0f, -1f, true, true)
-        { MoveSpeed = 62f, IsAttacking = true, AttackElapsedSeconds = 0.55f };
+        { MoveSpeed = 62f, IsAttacking = true, AttackElapsedSeconds = 0.55f, AttackDurationSeconds = 0.8f };
         var position = new Vector2(38f, -10f);
         view.Update([state], [new HammerStruck2D(state.Id, position)], 3f, 1);
         var visual = Assert.Single(scene);

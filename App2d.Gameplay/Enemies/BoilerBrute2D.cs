@@ -14,9 +14,9 @@ namespace App2d.Gameplay.Enemies;
 public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
 {
     // Gameplay timing is fixed independently of sprite count or playback speed.
-    public const float AttackDurationSeconds = BoilerBruteTiming2D.AttackDurationSeconds;
-    public const float DamageStartSeconds = BoilerBruteTiming2D.DamageStartSeconds;
-    public const float DamageEndSeconds = BoilerBruteTiming2D.DamageEndSeconds;
+    public const float AttackDurationSeconds = 0.8f;
+    public const float DamageStartSeconds = 0.5f;
+    public const float DamageEndSeconds = 0.6f;
     private float _attackElapsedSeconds;
     private readonly List<EnemyEvent2D> _events = [];
     private const float AttackRangeX = 155f;
@@ -203,7 +203,8 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     {
         MoveSpeed = Enemy.Speed,
         IsAttacking = _isAttacking,
-        AttackElapsedSeconds = _attackElapsedSeconds
+        AttackElapsedSeconds = _attackElapsedSeconds,
+        AttackDurationSeconds = BoilerBrute2D.AttackDurationSeconds
     };
 
     public ImmutableArray<EnemyEvent2D> DrainEvents()

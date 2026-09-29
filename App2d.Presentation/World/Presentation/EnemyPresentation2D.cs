@@ -218,7 +218,9 @@ public sealed class EnemyPresentation2D(
             if (state.IsAttacking && _attack is not null)
             {
                 // Fit authored poses to authoritative attack time. Changing art cannot change damage timing.
-                var progress = Math.Clamp(state.AttackElapsedSeconds / BoilerBruteTiming2D.AttackDurationSeconds, 0f, 1f);
+                StateGuard.ThrowIf(!float.IsFinite(state.AttackDurationSeconds) || state.AttackDurationSeconds <= 0f,
+                    "An attacking enemy needs a positive attack duration in its state.");
+                var progress = Math.Clamp(state.AttackElapsedSeconds / state.AttackDurationSeconds, 0f, 1f);
                 _shader.Texture = _attack[_attack.GetFrameIndexAtTime(progress * _attack.Duration)];
             }
             else
