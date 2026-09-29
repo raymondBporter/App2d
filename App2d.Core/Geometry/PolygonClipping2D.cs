@@ -1,5 +1,6 @@
 using App2d.Core.Validation;
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Geometry;
@@ -7,6 +8,60 @@ namespace App2d.Core.Geometry;
 /// <summary>Sutherland-Hodgman clipping against a convex polygon in either winding.</summary>
 public static class PolygonClipping2D
 {
+    /// <summary>
+    /// Writes the part of a finite rectangle inside a half-space. Returns 0 to 5 perimeter vertices;
+    /// output must have room for five. The half-space boundary is included.
+    /// </summary>
+    public static int ClipRectangleToHalfSpace<TRect>(TRect rectangle, HalfSpace2D halfSpace, Span<Vector2> output)
+        where TRect : IRect2D
+    {
+        ArgGuard.ThrowIfNull(rectangle);
+        ArgGuard.ThrowIfNull(halfSpace);
+        ValidateFiniteRectangle(rectangle);
+        ArgGuard.ThrowIf(output.Length < 5, "Output needs room for five vertices.", nameof(output));
+        Span<Vector2> corners = [rectangle.Min, new(rectangle.Max.X, rectangle.Min.Y),
+            rectangle.Max, new(rectangle.Min.X, rectangle.Max.Y)];
+        return ClipConvexToHalfSpace(corners, halfSpace, output);
+    }
+
+    /// <summary>
+    /// Clips a convex polygon against dot(point, Normal) &lt;= Offset without allocating.
+    /// Output needs at least subject.Length + 1 slots and must not overlap subject.
+    /// </summary>
+    public static int ClipConvexToHalfSpace(ReadOnlySpan<Vector2> subject, HalfSpace2D halfSpace,
+        Span<Vector2> output)
+    {
+        ArgGuard.ThrowIfNull(halfSpace);
+        if (subject.IsEmpty) return 0;
+        ArgGuard.ThrowIf(output.Length < subject.Length + 1,
+            "Output needs room for one more vertex than the subject.", nameof(output));
+        ArgGuard.ThrowIf(subject.Overlaps(output), "Input and output must not overlap.", nameof(output));
+        foreach (var point in subject) ArgGuard.ThrowIfNotFinite(point, nameof(subject));
+
+        var count = 0;
+        var previous = subject[^1];
+        var before = SignedSide(previous, halfSpace);
+        foreach (var current in subject)
+        {
+            var after = SignedSide(current, halfSpace);
+            if ((before < 0 && after > 0) || (before > 0 && after < 0))
+                output[count++] = Vector2.Lerp(previous, current, (float)(before / (before - after)));
+            if (after <= 0) output[count++] = current;
+            previous = current;
+            before = after;
+        }
+        return count;
+    }
+
+    private static double SignedSide(Vector2 point, HalfSpace2D halfSpace) =>
+        (double)point.X * halfSpace.Normal.X + (double)point.Y * halfSpace.Normal.Y - halfSpace.Offset;
+
+    private static void ValidateFiniteRectangle<TRect>(TRect rectangle) where TRect : IRect2D =>
+        ArgGuard.ThrowIf(!float.IsFinite(rectangle.Min.X) || !float.IsFinite(rectangle.Min.Y) ||
+            !float.IsFinite(rectangle.Max.X) || !float.IsFinite(rectangle.Max.Y) ||
+            rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y,
+            "Rectangle bounds must be finite and ordered.", nameof(rectangle));
+
     public static List<Vector2> ClipConvex(IReadOnlyList<Vector2> subject, IReadOnlyList<Vector2> clip) =>
         Clip(subject, clip, static point => point, static (a, b, t) => Vector2.Lerp(a, b, t));
 

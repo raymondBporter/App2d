@@ -1,5 +1,6 @@
 using App2d.Core.Validation;
 using App2d.Core.Mathematics;
+using App2d.Core.Geometry;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -11,6 +12,50 @@ namespace App2d.Core.Geometry.Functions;
 /// </summary>
 public static class Intersection2D
 {
+    /// <summary>Clips an infinite line to a finite axis-aligned rectangle, including edge and corner touches.</summary>
+    public static bool TryClipToRectangle<TRect>(this Line2D line, TRect rectangle,
+        out Vector2 start, out Vector2 end) where TRect : IRect2D =>
+        TryClipLinearToRectangle(line.Origin, line.Direction, line.IsValid, false, rectangle, out start, out end);
+
+    /// <summary>Clips a forward ray to a finite axis-aligned rectangle, including its origin.</summary>
+    public static bool TryClipToRectangle<TRect>(this Ray2D ray, TRect rectangle,
+        out Vector2 start, out Vector2 end) where TRect : IRect2D =>
+        TryClipLinearToRectangle(ray.Origin, ray.Direction, ray.IsValid, true, rectangle, out start, out end);
+
+    private static bool TryClipLinearToRectangle<TRect>(Vector2 origin, Vector2 direction, bool valid,
+        bool forwardOnly, TRect rectangle, out Vector2 start, out Vector2 end) where TRect : IRect2D
+    {
+        if (!valid) throw new ArgumentException("The line or ray needs a valid direction.", nameof(direction));
+        ArgGuard.ThrowIfNull(rectangle);
+        ArgGuard.ThrowIf(!float.IsFinite(rectangle.Min.X) || !float.IsFinite(rectangle.Min.Y) ||
+            !float.IsFinite(rectangle.Max.X) || !float.IsFinite(rectangle.Max.Y) ||
+            rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y,
+            "Rectangle bounds must be finite and ordered.", nameof(rectangle));
+
+        var min = forwardOnly ? 0d : double.NegativeInfinity;
+        var max = double.PositiveInfinity;
+        if (!ClipAxis(origin.X, direction.X, rectangle.Min.X, rectangle.Max.X, ref min, ref max) ||
+            !ClipAxis(origin.Y, direction.Y, rectangle.Min.Y, rectangle.Max.Y, ref min, ref max))
+        {
+            start = end = default;
+            return false;
+        }
+        start = new((float)(origin.X + direction.X * min), (float)(origin.Y + direction.Y * min));
+        end = new((float)(origin.X + direction.X * max), (float)(origin.Y + direction.Y * max));
+        return true;
+    }
+
+    private static bool ClipAxis(double origin, double direction, double low, double high,
+        ref double min, ref double max)
+    {
+        if (direction == 0d) return origin >= low && origin <= high;
+        var first = (low - origin) / direction;
+        var second = (high - origin) / direction;
+        min = Math.Max(min, Math.Min(first, second));
+        max = Math.Min(max, Math.Max(first, second));
+        return min <= max;
+    }
+
     public static bool Intersects(this Line2D first, Line2D second) =>
         Intersects(first.Origin, first.Direction, false, second.Origin, second.Direction, false);
 

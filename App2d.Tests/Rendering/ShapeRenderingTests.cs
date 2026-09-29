@@ -91,6 +91,23 @@ public sealed class ShapeRenderingTests
     }
 
     [Theory]
+    [InlineData(-1000, false)]
+    [InlineData(1000, true)]
+    public void HalfSpaceOutsideOrCoveringViewHasNoVisibleBoundary(float offset, bool fillsView)
+    {
+        using var graphics = new GraphicsTestContext();
+        using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
+        renderer.BeginFrame(128, 128, default);
+        renderer.Clear(XnaColor.Transparent);
+        renderer.DrawShape(new HalfSpace2D(Vector2.UnitX, offset), XnaColor.Blue, XnaColor.White);
+        renderer.EndFrame();
+
+        var pixels = graphics.ReadPixels();
+        Assert.Equal(fillsView ? XnaColor.Blue : XnaColor.Transparent, pixels[64 * 128 + 64]);
+        Assert.DoesNotContain(XnaColor.White, pixels);
+    }
+
+    [Theory]
     [InlineData(LineCap2D.Butt, false, false)]
     [InlineData(LineCap2D.Square, true, true)]
     [InlineData(LineCap2D.Round, true, false)]

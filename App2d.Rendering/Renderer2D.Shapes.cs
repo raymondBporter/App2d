@@ -118,8 +118,9 @@ public sealed partial class Renderer2D
         RequireFrame();
         if (!line.IsValid) throw new ArgumentException("The line needs a valid direction.", nameof(line));
         ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
-        if (!ClipLinearGeometry(line.Origin, line.Direction, false, screenStrokeWidth,
-            out var start, out var end, out _)) return;
+        var deviceLine = new Line2D(_camera.WorldToDevice(line.Origin),
+            Vector2.TransformNormal(line.Direction, _camera.WorldToDeviceMatrix));
+        if (!deviceLine.TryClipToRectangle(PaddedDeviceBounds(screenStrokeWidth), out var start, out var end)) return;
         SelectBatch(null, null);
         Line(start, end, color, screenStrokeWidth);
     }
@@ -132,43 +133,19 @@ public sealed partial class Renderer2D
         if (!ray.IsValid) throw new ArgumentException("The ray needs a valid direction.", nameof(ray));
         ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
         ValidateLineCap(originCap);
-        if (!ClipLinearGeometry(ray.Origin, ray.Direction, true, screenStrokeWidth,
-            out var start, out var end, out var originVisible)) return;
+        var deviceOrigin = _camera.WorldToDevice(ray.Origin);
+        var bounds = PaddedDeviceBounds(screenStrokeWidth);
+        var deviceRay = new Ray2D(deviceOrigin,
+            Vector2.TransformNormal(ray.Direction, _camera.WorldToDeviceMatrix));
+        if (!deviceRay.TryClipToRectangle(bounds, out var start, out var end)) return;
         SelectBatch(null, null);
-        Line(start, end, color, screenStrokeWidth, originVisible ? originCap : LineCap2D.Butt);
+        Line(start, end, color, screenStrokeWidth, bounds.Contains(deviceOrigin) ? originCap : LineCap2D.Butt);
     }
 
-    private bool ClipLinearGeometry(Vector2 origin, Vector2 direction, bool forwardOnly, float width,
-        out Vector2 start, out Vector2 end, out bool originVisible)
+    private Rect2D PaddedDeviceBounds(float width)
     {
-        var deviceOrigin = _camera.WorldToDevice(origin);
-        var deviceDirection = Vector2.TransformNormal(direction, _camera.WorldToDeviceMatrix);
-        var min = forwardOnly ? 0d : double.NegativeInfinity;
-        var max = double.PositiveInfinity;
         var padding = width * 0.5f + 1f;
-        if (!ClipAxis(deviceOrigin.X, deviceDirection.X, -padding, _camera.ViewportSize.X + padding, ref min, ref max) ||
-            !ClipAxis(deviceOrigin.Y, deviceDirection.Y, -padding, _camera.ViewportSize.Y + padding, ref min, ref max) ||
-            min > max)
-        {
-            start = end = default;
-            originVisible = false;
-            return false;
-        }
-        originVisible = forwardOnly && min == 0d;
-        start = deviceOrigin + deviceDirection * (float)min;
-        end = deviceOrigin + deviceDirection * (float)max;
-        return true;
-    }
-
-    private static bool ClipAxis(double origin, double direction, double low, double high,
-        ref double min, ref double max)
-    {
-        if (direction == 0d) return origin >= low && origin <= high;
-        var first = (low - origin) / direction;
-        var second = (high - origin) / direction;
-        min = Math.Max(min, Math.Min(first, second));
-        max = Math.Min(max, Math.Max(first, second));
-        return min <= max;
+        return new Rect2D(new(-padding), _camera.ViewportSize + new Vector2(padding));
     }
 
     private void FillDisk(Vector2 center, float radius, XnaColor color)

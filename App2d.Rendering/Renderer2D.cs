@@ -251,28 +251,7 @@ public sealed partial class Renderer2D : IDisposable
                 var halfSegments = CurveSegments(capsule.Radius, matrix) / 2;
                 return VertexGenerator2D.WriteCapsule(points, capsule.Start, capsule.End, capsule.Radius, halfSegments);
             case HalfSpace2D halfSpace:
-                var visible = GetVisibleLocalBounds(matrix);
-                Span<Vector2> corners = [visible.Min, new(visible.Max.X, visible.Min.Y), visible.Max, new(visible.Min.X, visible.Max.Y)];
-                var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
-                var minT = float.PositiveInfinity;
-                var maxT = float.NegativeInfinity;
-                var minN = float.PositiveInfinity;
-                foreach (var corner in corners)
-                {
-                    var t = Vector2.Dot(corner, tangent);
-                    minT = Math.Min(minT, t);
-                    maxT = Math.Max(maxT, t);
-                    minN = Math.Min(minN, Vector2.Dot(corner, halfSpace.Normal));
-                }
-                var margin = Math.Max(visible.Size.Length() * 0.1f, 10f);
-                minT -= margin;
-                maxT += margin;
-                var deep = Math.Min(minN, halfSpace.Offset) - margin;
-                points[0] = halfSpace.Normal * halfSpace.Offset + tangent * minT;
-                points[1] = halfSpace.Normal * halfSpace.Offset + tangent * maxT;
-                points[2] = halfSpace.Normal * deep + tangent * maxT;
-                points[3] = halfSpace.Normal * deep + tangent * minT;
-                return 4;
+                return PolygonClipping2D.ClipRectangleToHalfSpace(GetVisibleLocalBounds(matrix), halfSpace, points);
             default:
                 throw new NotSupportedException($"No renderer is registered for {shape.GetType().Name}.");
         }
@@ -435,10 +414,17 @@ public sealed partial class Renderer2D : IDisposable
             StrokePolygon(vertices, matrix, color, width);
             return;
         }
+        if (shape is HalfSpace2D halfSpace)
+        {
+            var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
+            var boundary = new Line2D(halfSpace.Normal * halfSpace.Offset, tangent);
+            if (boundary.TryClipToRectangle(GetVisibleLocalBounds(matrix), out var start, out var end))
+                Line(Vector2.Transform(start, matrix), Vector2.Transform(end, matrix), color, width);
+            return;
+        }
         Span<Vector2> points = stackalloc Vector2[260];
         var count = GetShapePoints(shape, matrix, points);
-        if (shape is HalfSpace2D) Line(Vector2.Transform(points[0], matrix), Vector2.Transform(points[1], matrix), color, width);
-        else StrokePolygon(points[..count], matrix, color, width);
+        StrokePolygon(points[..count], matrix, color, width);
     }
 
     private void StrokePolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, XnaColor color, float width)
