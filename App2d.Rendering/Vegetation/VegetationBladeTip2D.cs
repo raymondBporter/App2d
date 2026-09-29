@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
@@ -32,20 +33,14 @@ public sealed class VegetationBladeTip2D
             var world = points[..polygon.Points.Length];
             for (var index = 0; index < world.Length; index++)
                 world[index] = Vector2.Transform(polygon.Points[index], transform);
-            renderer.DrawWorldConvexPolygon(world, Fade(polygon.Fill, opacity));
+            renderer.DrawWorldConvexPolygon(world, polygon.Fill.ScaleAlpha(opacity));
             if (polygon.Outline is not { } outline) continue;
             var closed = ring[..(world.Length + 1)];
             world.CopyTo(closed);
             closed[^1] = world[0];
-            renderer.DrawWorldPolyline(closed, Fade(outline, opacity),
+            renderer.DrawWorldPolyline(closed, outline.ScaleAlpha(opacity),
                 Math.Max(1f, polygon.OutlineWidth * renderer.PixelsPerWorldUnit));
         }
-    }
-
-    private static XnaColor Fade(XnaColor color, float opacity)
-    {
-        color.A = (byte)(color.A * Math.Clamp(opacity, 0f, 1f));
-        return color;
     }
 }
 

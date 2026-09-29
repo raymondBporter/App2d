@@ -56,52 +56,17 @@ public static class Rotation2D
         return true;
     }
 
-    public static Vector2 InterpolateArc2(Vector2 from, Vector2 to, float radians, float fraction)
-    {
-        ValidateArc(from, to, radians);
-        ArgGuard.ThrowIfNotFinite(fraction);
-
-        if (fraction <= 0f) return from;
-        if (fraction >= 1f) return to;
-        
-        double halfAngle = radians * 0.5;
-        double sinHalf = Math.Sin(halfAngle);
-
-        // If the arc is too small, fall back to linear interpolation
-        if (Math.Abs(sinHalf) < MinimumHalfAngleSine)
-            return Vector2.Lerp(from, to, fraction);
-
-        // Scale factor for arc interpolation
-        double scale = Math.Sin(fraction * halfAngle) / sinHalf;
-
-        // Rotation phase for the complex multiplication
-        double phase = (fraction - 1d) * halfAngle;
-
-        // Rotation components
-        double cosPhase = Math.Cos(phase);
-        double sinPhase = Math.Sin(phase);
-
-        // Displacement vector
-        double dx = to.X - from.X;
-        double dy = to.Y - from.Y;
-
-        // Apply rotation and scaling
-        float x = (float)(from.X + scale * (cosPhase * dx - sinPhase * dy));
-        float y = (float)(from.Y + scale * (sinPhase * dx + cosPhase * dy));
-
-        return new Vector2(x, y);
-    }
-
     /// <summary>
     /// Interpolates the circular motion carrying from to to through radians, including long turns.
-    /// Near a whole revolution the pivot is ill-conditioned, so this uses linear interpolation.
+    /// Fractions outside [0, 1] return the nearest endpoint. Near a whole revolution the pivot
+    /// is ill-conditioned, so this uses linear interpolation.
     /// </summary>
     public static Vector2 InterpolateArc(Vector2 from, Vector2 to, float radians, float fraction)
     {
         ValidateArc(from, to, radians);
-        if (!float.IsFinite(fraction)) throw new ArgumentOutOfRangeException(nameof(fraction));
-        if (fraction == 0f) return from;
-        if (fraction == 1f) return to;
+        ArgGuard.ThrowIfNotFinite(fraction);
+        if (fraction <= 0f) return from;
+        if (fraction >= 1f) return to;
         var half = (double)radians * 0.5d;
         var sinHalf = Math.Sin(half);
         if (Math.Abs(sinHalf) < MinimumHalfAngleSine) return Vector2.Lerp(from, to, fraction);
@@ -109,8 +74,9 @@ public static class Rotation2D
         // (1 - exp(i*fraction*angle)) / (1 - exp(i*angle)) applied to the endpoint displacement.
         var scale = Math.Sin(fraction * half) / sinHalf;
         var phase = (fraction - 1d) * half;
-        var real = scale * Math.Cos(phase);
-        var imaginary = scale * Math.Sin(phase);
+        var (sinPhase, cosPhase) = Math.SinCos(phase);
+        var real = scale * cosPhase;
+        var imaginary = scale * sinPhase;
         var dx = (double)to.X - from.X;
         var dy = (double)to.Y - from.Y;
         return new((float)(from.X + real * dx - imaginary * dy),

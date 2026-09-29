@@ -1,4 +1,5 @@
 using App2d.Core.Mathematics;
+using App2d.Rendering;
 using Color = Microsoft.Xna.Framework.Color;
 using Quaternion = System.Numerics.Quaternion;
 using Vector2 = System.Numerics.Vector2;
@@ -117,7 +118,7 @@ public sealed class BladeSwoosh
         if (length < 1e-3f) return;
 
         var alpha = 1 - Interpolation.SmoothStep(Interpolation.InverseLerpClamped(.55f, 1f, clear));
-        var fill = WithAlpha(CharacterJson.Color(style.Fill), alpha);
+        var fill = ColorExtensions.FromHexRgb(style.Fill).WithAlpha(alpha);
         float Split(float u) => style.SplitPosition - Gap(style, u) / 2;
         float InnerEdge(float u) => style.SplitPosition + Gap(style, u) / 2;
         for (var i = 1; i < _sections.Count; i++)
@@ -132,7 +133,7 @@ public sealed class BladeSwoosh
         if (style.InkWidth > 0)
         {
             _edge.Clear(); foreach (var s in _sections) _edge.Add(s.Tip - new Vector3(0, 0, .0005f));
-            mesh.Path(_edge, WithAlpha(CharacterJson.Color(style.Ink), alpha), 0, style.InkWidth);
+            mesh.Path(_edge, ColorExtensions.FromHexRgb(style.Ink).WithAlpha(alpha), 0, style.InkWidth);
         }
     }
 
@@ -253,6 +254,4 @@ public sealed class BladeSwoosh
 
     private static Section Lerp(Section a, Section b, float u) =>
         new(float.Lerp(a.Time, b.Time, u), Vector3.Lerp(a.Guard, b.Guard, u), Vector3.Lerp(a.Tip, b.Tip, u));
-
-    private static Color WithAlpha(Color c, float a) => new(c.R, c.G, c.B, (byte)Math.Clamp(MathF.Round(a * 255), 0, 255));
 }

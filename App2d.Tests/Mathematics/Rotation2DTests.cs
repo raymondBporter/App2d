@@ -62,6 +62,25 @@ public sealed class Rotation2DTests
     }
 
     [Fact]
+    public void ArcFractionsOutsideTheStepReturnTheNearestEndpoint()
+    {
+        var from = new Vector2(2, 3);
+        var to = new Vector2(8, 9);
+        Assert.Equal(from, Rotation2D.InterpolateArc(from, to, MathF.PI / 2, -.25f));
+        Assert.Equal(to, Rotation2D.InterpolateArc(from, to, MathF.PI / 2, 1.25f));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rotation2D.InterpolateArc(from, to, 0, float.NaN));
+    }
+
+    [Fact]
+    public void ArcDisplacementUsesDoublePrecisionBeforeSubtractingLargeEndpoints()
+    {
+        var middle = Rotation2D.InterpolateArc(new(-2e38f, 0), new(2e38f, 0), MathF.PI, .5f);
+        Assert.True(float.IsFinite(middle.X) && float.IsFinite(middle.Y));
+        Assert.InRange(MathF.Abs(middle.X), 0f, 1e32f);
+        Assert.InRange(middle.Y / 2e38f, -1.001f, -.999f);
+    }
+
+    [Fact]
     public void Vector3PlaneProjectionsKeepTheRequestedCoordinates()
     {
         var vector = new Vector3(2, 3, 5);

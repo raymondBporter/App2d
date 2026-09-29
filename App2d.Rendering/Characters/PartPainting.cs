@@ -1,5 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Geometry;
+using App2d.Rendering;
 using System.Numerics;
 
 namespace App2d.Rendering.Characters;
@@ -17,7 +18,7 @@ internal static class PartPainting
             points = PolygonClipping2D.ClipConvexXY(points, contour);
             // Tiny raster bias only: paint remains on the torso rather than becoming another garment plane.
             var bias = new Vector3(0, 0, .00001f * (layer + 1));
-            mesh.Polygon(points.Select(p => p - bias).ToArray(), CharacterJson.Color(patch.Fill), null, 0);
+            mesh.Polygon(points.Select(p => p - bias).ToArray(), ColorExtensions.FromHexRgb(patch.Fill), null, 0);
         }
     }
 }
