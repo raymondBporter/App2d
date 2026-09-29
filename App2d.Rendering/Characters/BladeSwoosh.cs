@@ -217,7 +217,7 @@ public sealed class BladeSwoosh
         var planar = cross.LengthSquared() < 1e-10f || MathF.Abs(cross.Z) > .97f * cross.Length();
         if (planar)
         {
-            var d0 = Flat(a); var d1 = Flat(b);
+            var d0 = a.XY; var d1 = b.XY;
             var turn = MathF.Atan2(d0.X * d1.Y - d0.Y * d1.X, Vector2.Dot(d0, d1));
             var (expected, limit) = previous.Turn != 0 && previous.Planar ? (MathF.Sign(previous.Turn), 2.6f) : (Math.Sign(sweep), MathF.PI / 2);
             if (expected != 0 && MathF.Sign(turn) != expected && MathF.Abs(turn) > limit) turn -= MathF.Sign(turn) * MathF.Tau;
@@ -243,28 +243,16 @@ public sealed class BladeSwoosh
             return new(time, at, at + direction * length);
         }
         var z = float.Lerp(a.Guard.Z, b.Guard.Z, u); var tipZ = float.Lerp(a.Tip.Z, b.Tip.Z, u);
-        var d0 = Flat(a.Tip - a.Guard); var d1 = Flat(b.Tip - b.Guard);
+        var d0 = (a.Tip - a.Guard).XY; var d1 = (b.Tip - b.Guard).XY;
         var flatLength = float.Lerp(d0.Length(), d1.Length(), u);
         var turn = b.Turn;
-        Vector2 guard;
-        if (MathF.Abs(turn) < 1e-3f) guard = Vector2.Lerp(Flat(a.Guard), Flat(b.Guard), u);
-        else
-        {
-            // The pivot C that the turn carries a.Guard onto b.Guard about: C = (I - R)^-1 (b.Guard - R a.Guard).
-            var (s, c) = MathF.SinCos(turn); var g0 = Flat(a.Guard); var g1 = Flat(b.Guard);
-            var v = g1 - new Vector2(c * g0.X - s * g0.Y, s * g0.X + c * g0.Y);
-            var det = (1 - c) * (1 - c) + s * s;
-            var pivot = new Vector2(((1 - c) * v.X - s * v.Y) / det, (s * v.X + (1 - c) * v.Y) / det);
-            guard = pivot + Turned(g0 - pivot, turn * u);
-        }
-        var flat = Turned(d0.Length() > 1e-6f ? Vector2.Normalize(d0) : Vector2.UnitX, turn * u);
+        var guard = Rotation2D.InterpolateArc(a.Guard.XY, b.Guard.XY, turn, u);
+        var flat = Rotation2D.Apply(d0.Length() > 1e-6f ? Vector2.Normalize(d0) : Vector2.UnitX, turn * u);
         return new(time, new(guard, z), new(guard + flat * flatLength, tipZ));
     }
 
     private static Section Lerp(Section a, Section b, float u) =>
         new(float.Lerp(a.Time, b.Time, u), Vector3.Lerp(a.Guard, b.Guard, u), Vector3.Lerp(a.Tip, b.Tip, u));
 
-    private static Vector2 Flat(Vector3 v) => new(v.X, v.Y);
-    private static Vector2 Turned(Vector2 v, float angle) { var (s, c) = MathF.SinCos(angle); return new(c * v.X - s * v.Y, s * v.X + c * v.Y); }
     private static Color WithAlpha(Color c, float a) => new(c.R, c.G, c.B, (byte)Math.Clamp(MathF.Round(a * 255), 0, 255));
 }

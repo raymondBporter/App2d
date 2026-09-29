@@ -14,6 +14,12 @@ public static class Vector2Extensions
 
         public Polar2D ToPolar() => Polar2D.FromCartesian(value);
 
+        /// <summary>Rotates counter-clockwise by radians in Y-up coordinates.</summary>
+        public Vector2 Rotate(float radians) => Rotation2D.Apply(value, radians);
+
+        /// <summary>Rotates this point about a pivot.</summary>
+        public Vector2 RotateAround(Vector2 pivot, float radians) => Rotation2D.ApplyAround(value, pivot, radians);
+
         public float Cross(Vector2 right) => (float)CrossProduct2D.Of(value, right);
 
         /// <summary>Rotates 90° counter-clockwise (in +Y-up orientation).</summary>
