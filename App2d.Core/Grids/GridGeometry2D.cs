@@ -1,4 +1,3 @@
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -57,14 +56,14 @@ public readonly record struct GridGeometry2D
             (int)Math.Clamp(Math.Floor(((double)position.Y - Origin.Y) / CellSize.Y), 0, size.Height - 1));
     }
 
-    public Bounds2D GetCellBounds(GridCell2D cell) => new(
+    public Rect2D GetCellBounds(GridCell2D cell) => new(
         Corner(cell.X, cell.Y), Corner((double)cell.X + 1, (double)cell.Y + 1));
 
     public Vector2 GetCellCenter(GridCell2D cell) => Corner((double)cell.X + .5, (double)cell.Y + .5);
 
-    public Bounds2D GetBounds(GridSize2D size) => new(Corner(0, 0), Corner(size.Width, size.Height));
+    public Rect2D GetBounds(GridSize2D size) => new(Corner(0, 0), Corner(size.Width, size.Height));
 
-    public Bounds2D GetBounds(GridCellRange2D cells)
+    public Rect2D GetBounds(GridCellRange2D cells)
     {
         ArgGuard.ThrowIf(cells.IsEmpty, "An empty cell range has no world bounds.", nameof(cells));
         return new(Corner(cells.Minimum.X, cells.Minimum.Y),

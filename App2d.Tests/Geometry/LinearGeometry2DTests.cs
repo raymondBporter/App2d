@@ -1,7 +1,6 @@
 using App2d.Core;
 using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -170,7 +169,7 @@ public sealed class LinearGeometry2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).ClosestPoint(default));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Ray2D).ContainsPoint(default));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).Intersects(new Line2D(default, Vector2.UnitX)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => RayIntersection2D.IntersectsBounds(default, Bounds2D.Unbounded, 10));
+        Assert.Throws<ArgumentOutOfRangeException>(() => RayIntersection2D.IntersectsBounds(default, Rect2D.Unbounded, 10));
         Assert.Throws<ArgumentOutOfRangeException>(() => Array.Empty<SpatialObject2D>().Raycast(default, 10, out _));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, Vector2.UnitX).GetPoint(float.NaN));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Ray2D(default, Vector2.UnitX).DistanceTo(new(float.NaN, 0)));

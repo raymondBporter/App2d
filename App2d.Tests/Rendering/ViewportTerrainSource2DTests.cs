@@ -17,8 +17,8 @@ public sealed class ViewportTerrainSource2DTests
         Assert.Equal(6, all.Length);
         Assert.Contains(all, c => c.Chunk == new TileChunk2D(2, 1));
         // The final chunk extends to X=90, but terrain ends at X=70 plus one tile of artwork padding.
-        Assert.Empty(source.Capture(new Bounds2D(new(81, 0), new(89, 10))));
-        Assert.Contains(source.Capture(new Bounds2D(new(69, 0), new(70, 10))), c => c.Chunk.X == 2);
+        Assert.Empty(source.Capture(new Rect2D(new(81, 0), new(89, 10))));
+        Assert.Contains(source.Capture(new Rect2D(new(69, 0), new(70, 10))), c => c.Chunk.X == 2);
     }
 
     [Theory]
@@ -38,7 +38,7 @@ public sealed class ViewportTerrainSource2DTests
             for (var x = 0; x < map.ChunkColumns; x++)
             {
                 var min = map.Origin + new Vector2(x, y) * map.ChunkSize * map.TileSize;
-                var bounds = new Bounds2D(min, min + new Vector2(map.ChunkSize * map.TileSize));
+                var bounds = new Rect2D(min, min + new Vector2(map.ChunkSize * map.TileSize));
                 if (bounds.Intersects(camera.VisibleWorldBounds))
                     Assert.Contains(terrain, c => c.Chunk == new TileChunk2D(x, y));
             }
@@ -93,7 +93,7 @@ public sealed class ViewportTerrainSource2DTests
         var map = CreateMap();
         using var source = new ViewportTerrainSource2D(map);
         var original = source.Capture(map.WorldBounds);
-        Assert.Empty(source.Capture(new Bounds2D(new Vector2(-10000f), new Vector2(-9000f))));
+        Assert.Empty(source.Capture(new Rect2D(new Vector2(-10000f), new Vector2(-9000f))));
         Assert.Equal(original.Length, source.Capture(map.WorldBounds).Length);
     }
 

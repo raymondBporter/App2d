@@ -22,13 +22,13 @@ public interface ISideScrollerSessionWorld2D
     WorldState2D CaptureWorld() => WorldState2D.Empty;
     ImmutableArray<EnemyState2D> CaptureEnemies() => [];
     ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => [];
-    Bounds2D Bounds { get; }
+    Rect2D Bounds { get; }
     float GoalX { get; }
     void UpdateStreaming(Vector2 focus);
     void UpdateMovingPlatforms(float deltaSeconds);
     void UpdateEnemies(float deltaSeconds, Vector2 targetPosition);
     void SyncEnemiesAfterPhysics();
     void ResolveDamage(Person2D player);
-    WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Bounds2D playerBounds);
+    WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Rect2D playerBounds);
     void SetActiveSavePoint(long? id);
 }

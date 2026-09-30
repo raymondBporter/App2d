@@ -190,7 +190,7 @@ public sealed class SideScrollerSession2DTests
 
     private sealed class TestWorld : ISideScrollerSessionWorld2D
     {
-        public Bounds2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
+        public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
         public float GoalX { get; set; } = 9000f;
         public int PlatformUpdates { get; private set; }
         public int EnemyUpdates { get; private set; }
@@ -207,7 +207,7 @@ public sealed class SideScrollerSession2DTests
             player.TakeDamage(DamageNextStep, Vector2.Zero);
             DamageNextStep = 0;
         }
-        public WorldThingSpec2D? UpdateSavePoints(float dt, Bounds2D bounds)
+        public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds)
         {
             var checkpoint = PendingCheckpoint;
             PendingCheckpoint = null;

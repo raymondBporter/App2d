@@ -2,7 +2,6 @@ using App2d.Core;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -15,7 +14,7 @@ public sealed class Ellipse2DTests
     {
         var ellipse = new Ellipse2D(new(3, 2), new(4, -1));
         Assert.Equal(6f * MathF.PI, ellipse.Area, 5);
-        Assert.Equal(new Bounds2D(new(1, -3), new(7, 1)), ShapeBounds2D.Calculate(ellipse));
+        Assert.Equal(new Rect2D(new(1, -3), new(7, 1)), ShapeBounds2D.Calculate(ellipse));
         Assert.True(ellipse.ContainsPoint(new(7, -1)));
         Assert.True(ellipse.ContainsPoint(new(4, 1)));
         Assert.False(ellipse.ContainsPoint(new(7, 1)));

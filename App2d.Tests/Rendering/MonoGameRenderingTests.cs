@@ -52,7 +52,7 @@ public sealed class MonoGameRenderingTests
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Bounds2D.Unbounded, item.LocalBounds);
+        Assert.Equal(Rect2D.Unbounded, item.LocalBounds);
         Assert.Equal(XnaColor.Blue, pixels[80 * 128 + 64]);
         Assert.Equal(XnaColor.Transparent, pixels[48 * 128 + 64]);
     }

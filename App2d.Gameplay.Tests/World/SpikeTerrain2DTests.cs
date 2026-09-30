@@ -75,7 +75,7 @@ public sealed class SpikeTerrain2DTests : IDisposable
         {
             var spikeTileMin = level.TileMap.Origin +
                 new System.Numerics.Vector2(spike.X, spike.Y) * level.TileMap.TileSize;
-            var insideSpike = new Bounds2D(
+            var insideSpike = new Rect2D(
                 spikeTileMin + new System.Numerics.Vector2(8f, 0f),
                 spikeTileMin + new System.Numerics.Vector2(24f, 20f));
             Assert.True(level.TryGetSpikeSource(insideSpike, out var spikeSourceX));
@@ -84,7 +84,7 @@ public sealed class SpikeTerrain2DTests : IDisposable
 
         var (X, Y) = FindClearTile(level);
         var clearTileMin = level.TileMap.Origin + new System.Numerics.Vector2(X, Y) * level.TileMap.TileSize;
-        var insideClearTile = new Bounds2D(
+        var insideClearTile = new Rect2D(
             clearTileMin + new System.Numerics.Vector2(8f),
             clearTileMin + new System.Numerics.Vector2(24f));
         Assert.False(level.TryGetSpikeSource(insideClearTile, out _));

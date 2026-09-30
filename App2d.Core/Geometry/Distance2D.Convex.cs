@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Functions;
+namespace App2d.Core.Geometry;
 
 public static partial class Distance2D
 {

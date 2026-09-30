@@ -1,8 +1,7 @@
-using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using App2d.Contracts.Player;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
 using App2d.Core.Physics;
 using App2d.Gameplay.World;
 using App2d.Tiles;
@@ -761,7 +760,7 @@ public sealed partial class PersonLocomotion2D
         !other.IsSensor &&
         _body.CanCollideWith(other);
 
-    private void QueryBodyBounds(Bounds2D bounds) =>
+    private void QueryBodyBounds(Rect2D bounds) =>
         _collision.QueryBounds(
             bounds,
             _queryResults,
@@ -769,15 +768,15 @@ public sealed partial class PersonLocomotion2D
             includeSensors: false,
             excluded: _body.Collider);
 
-    private static Bounds2D ExpandedDown(Bounds2D bounds, float distance) =>
+    private static Rect2D ExpandedDown(Rect2D bounds, float distance) =>
         new(bounds.Min - new Vector2(0f, distance), bounds.Max);
 
-    private static Bounds2D ExpandedSide(Bounds2D bounds, float direction, float distance) =>
+    private static Rect2D ExpandedSide(Rect2D bounds, float direction, float distance) =>
         direction > 0f
-            ? new Bounds2D(bounds.Min, bounds.Max + new Vector2(distance, 0f))
-            : new Bounds2D(bounds.Min - new Vector2(distance, 0f), bounds.Max);
+            ? new Rect2D(bounds.Min, bounds.Max + new Vector2(distance, 0f))
+            : new Rect2D(bounds.Min - new Vector2(distance, 0f), bounds.Max);
 
-    private bool HasHorizontalSupport(Bounds2D bodyBounds, Bounds2D supportBounds) =>
+    private bool HasHorizontalSupport(Rect2D bodyBounds, Rect2D supportBounds) =>
         bodyBounds.Right + Metrics.HorizontalSupportGrace >= supportBounds.Left &&
         bodyBounds.Left - Metrics.HorizontalSupportGrace <= supportBounds.Right;
 

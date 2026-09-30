@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Functions;
+namespace App2d.Core.Geometry;
 
 /// <summary>
 /// Shared rectangle properties and queries for any IRect2D. Generic receivers keep value-type
@@ -104,6 +104,29 @@ public static class Rect2DExtensions
         }
 
         public Rect2D ToRect() => new(rectangle.Min, rectangle.Max);
+
+        /// <summary>
+        /// Encloses this rectangle after a matrix transform. Rotation or shear transforms all four corners;
+        /// otherwise the two corners are scaled and translated directly. This bounds the box, not the shape
+        /// inside it. Non-finite rectangles stay <see cref="Rect2D.Unbounded"/> so broad-phase candidates survive.
+        /// </summary>
+        /// <param name="transform">The local-to-world matrix to apply.</param>
+        /// <returns>The axis-aligned box around the transformed corners.</returns>
+        public Rect2D TransformedBy(Matrix3x2 transform)
+        {
+            if (!rectangle.IsFinite) return Rect2D.Unbounded;
+            if (transform.M12 == 0f && transform.M21 == 0f)
+            {
+                var scale = new Vector2(transform.M11, transform.M22);
+                var first = rectangle.Min * scale + transform.Translation;
+                var second = rectangle.Max * scale + transform.Translation;
+                return new(Vector2.Min(first, second), Vector2.Max(first, second));
+            }
+            Span<Vector2> corners = stackalloc Vector2[4];
+            rectangle.WriteCorners(corners);
+            for (var i = 0; i < corners.Length; i++) corners[i] = Vector2.Transform(corners[i], transform);
+            return Rect2D.FromPoints(corners);
+        }
 
         /// <summary>Writes four finite corners counter-clockwise from Min, leaving extra entries untouched.</summary>
         public void WriteCorners(Span<Vector2> corners) =>

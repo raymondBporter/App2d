@@ -199,9 +199,9 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return !player.IsAlive;
     }
 
-    public bool OverlapsHurt(Bounds2D hit) => HurtContact(hit) is not null;
+    public bool OverlapsHurt(Rect2D hit) => HurtContact(hit) is not null;
 
-    public Vector2? HurtContact(Bounds2D hit)
+    public Vector2? HurtContact(Rect2D hit)
     {
         if (!_enabled || !IsAlive) return null;
         Vector2? closest = null;
@@ -210,7 +210,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         // not the attack box's centre (which can be outside the visible target).
         foreach (var region in EntityCollision.Hurt(Entity, Pose))
         {
-            var bounds = Bounds2D.FromPoints([.. region.Points.Select(p => p * Scale)]);
+            var bounds = Rect2D.FromPoints([.. region.Points.Select(p => p * Scale)]);
             if (!bounds.Intersects(hit)) continue;
             var point = (Vector2.Max(bounds.Min, hit.Min) + Vector2.Min(bounds.Max, hit.Max)) / 2;
             var d = Vector2.DistanceSquared(point, hit.Center);

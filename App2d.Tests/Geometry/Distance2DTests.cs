@@ -1,6 +1,5 @@
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -48,7 +47,7 @@ public sealed class Distance2DTests
     public void AnyRectangleContractGetsDistanceQueries()
     {
         var region = new Region(new(-1), new(1));
-        var other = new Bounds2D(new(4, 5), new(5, 6));
+        var other = new Rect2D(new(4, 5), new(5, 6));
         Assert.Equal(-1f, region.SignedDistanceTo(Vector2.Zero));
         Assert.Equal(0f, region.DistanceTo(Vector2.Zero));
         Assert.Equal(5f, region.DistanceTo(other));

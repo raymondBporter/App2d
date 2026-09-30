@@ -35,7 +35,7 @@ public sealed class Camera2D
     public Vector2 ViewportSize { get; private set; } = new(InitialSizeX, InitialSizeY);
 
     /// <summary>Optional world limit for the viewport center and its visible area.</summary>
-    public Bounds2D? WorldBounds
+    public Rect2D? WorldBounds
     {
         get;
         set
@@ -94,7 +94,7 @@ public sealed class Camera2D
     }
 
     /// <summary>The world-space bounding box of everything the viewport can see.</summary>
-    public Bounds2D VisibleWorldBounds => new Bounds2D(Vector2.Zero, ViewportSize).TransformedBy(DeviceToWorldMatrix);
+    public Rect2D VisibleWorldBounds => new Rect2D(Vector2.Zero, ViewportSize).TransformedBy(DeviceToWorldMatrix);
 
     public Vector2 WorldToDevice(Vector2 worldPoint) => Vector2.Transform(worldPoint, WorldToDeviceMatrix);
 

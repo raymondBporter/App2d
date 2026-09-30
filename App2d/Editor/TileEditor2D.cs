@@ -75,7 +75,7 @@ internal sealed class TileEditor2D : IDisposable
     public IReadOnlyList<string> TilesetIds => _map.TilesetIds;
     public Vector2 MouseDevicePosition => _lastMouseDevice;
     public Vector2 CameraFocus => _cameraFocus;
-    public Bounds2D VisibleWorldBounds => _camera.VisibleWorldBounds;
+    public Rect2D VisibleWorldBounds => _camera.VisibleWorldBounds;
     public Vector2 VisibleDeviceSize => _camera.ViewportSize;
     public float Zoom => _camera.Zoom;
     public float PixelsToWorldUnits(float pixels) => _camera.PixelsToWorldUnits(pixels);

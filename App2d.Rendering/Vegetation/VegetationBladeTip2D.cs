@@ -9,18 +9,18 @@ namespace App2d.Rendering.Vegetation;
 public sealed class VegetationBladeTip2D
 {
     private readonly VegetationTipPolygon2D[] _polygons;
-    private readonly Bounds2D _localBounds;
+    private readonly Rect2D _localBounds;
     public Vector2 ReleasePosition { get; }
 
     internal VegetationBladeTip2D(IReadOnlyList<VegetationTipPolygon2D> polygons)
     {
-        var bounds = Bounds2D.FromPoints([.. polygons.SelectMany(p => p.Points)]);
+        var bounds = Rect2D.FromPoints([.. polygons.SelectMany(p => p.Points)]);
         ReleasePosition = bounds.Center;
         _localBounds = new(bounds.Min - ReleasePosition, bounds.Max - ReleasePosition);
         _polygons = [.. polygons.Select(p => p with { Points = [.. p.Points.Select(point => point - ReleasePosition)] })];
     }
 
-    public Bounds2D WorldBounds(Vector2 position, float rotation) =>
+    public Rect2D WorldBounds(Vector2 position, float rotation) =>
         _localBounds.TransformedBy(Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position));
 
     public void Render(Renderer2D renderer, Vector2 position, float rotation, float opacity)

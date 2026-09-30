@@ -1,5 +1,5 @@
 using App2d.Core.Validation;
-using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -35,7 +35,7 @@ public sealed record EntityRegion(string Id, IReadOnlyList<Vector2> Points)
         ArgGuard.ThrowIfNull(other);
         ArgGuard.ThrowIfNotFinite(position);
         var shape = ToShape();
-        var bounds = BoundsGeometry2D.Translate(ShapeBounds2D.Calculate(shape), position);
+        var bounds = ShapeBounds2D.Calculate(shape).TranslatedBy(position);
         if (!bounds.Intersects(other.WorldBounds)) return false;
         Similarity2D.TryFromMatrix(Matrix3x2.CreateTranslation(position), out var pose);
         return Distance2D.Distance(shape, pose, other.Shape, other.CollisionPose) == 0;

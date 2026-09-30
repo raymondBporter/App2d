@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;

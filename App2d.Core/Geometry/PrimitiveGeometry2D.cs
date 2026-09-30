@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Functions;
+namespace App2d.Core.Geometry;
 
 /// <summary>
 /// Arithmetic queries on raw primitive parameters, independent of IShape2D.

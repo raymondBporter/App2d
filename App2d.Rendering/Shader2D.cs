@@ -8,7 +8,7 @@ namespace App2d.Rendering;
 public interface IShader2D
 {
     XnaColor BaseColor { get; }
-    XnaColor GetVertexColor(Vector2 position, Bounds2D bounds) => BaseColor;
+    XnaColor GetVertexColor(Vector2 position, Rect2D bounds) => BaseColor;
 }
 
 public sealed class SolidColorShader(XnaColor color) : IShader2D
@@ -19,7 +19,7 @@ public sealed class SolidColorShader(XnaColor color) : IShader2D
 public sealed class LinearGradientShader(XnaColor startColor, XnaColor endColor) : IShader2D
 {
     public XnaColor BaseColor => XnaColor.White;
-    public XnaColor GetVertexColor(Vector2 position, Bounds2D bounds) =>
+    public XnaColor GetVertexColor(Vector2 position, Rect2D bounds) =>
         XnaColor.Lerp(startColor, endColor,
             bounds.Size.Y > 0f ? Math.Clamp((bounds.Max.Y - position.Y) / bounds.Size.Y, 0f, 1f) : 0f);
 }

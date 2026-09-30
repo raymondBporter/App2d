@@ -12,8 +12,7 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
 
     // Global/UI cues intentionally bypass spatial attenuation.
     public void Play(SoundEffect2D effect) => _sounds.Play(effect);
-    public SoundEffectVoice2D Begin(SoundEffect2D effect, float initialVolumeScale = 1f) =>
-        _sounds.Begin(effect, initialVolumeScale);
+    public SoundEffectVoice2D Begin(SoundEffect2D effect, float initialVolumeScale = 1f) => _sounds.Begin(effect, initialVolumeScale);
 
     public void PlayAt(SoundEffect2D effect, Vector2 position)
     {
@@ -48,9 +47,7 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         }
     }
 
-    private SoundEffectVoice2D BeginSpatial(
-        SoundEffect2D effect, Vector2 position, float volumeScale,
-        SoundFalloff2D falloff, float attenuation)
+    private SoundEffectVoice2D BeginSpatial(SoundEffect2D effect, Vector2 position, float volumeScale, SoundFalloff2D falloff, float attenuation)
     {
         var playback = _sounds.Begin(effect, volumeScale * attenuation);
         if (!playback.IsPlaying)
@@ -60,8 +57,9 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         return new SoundEffectVoice2D(voice);
     }
 
-    private static SoundFalloff2D GetFalloff(SoundEffect2D effect) =>
-        effect == SoundEffect2D.HammerImpact ? SoundFalloff2D.HammerImpact : SoundFalloff2D.Default;
+    private static SoundFalloff2D GetFalloff(SoundEffect2D effect) => effect == SoundEffect2D.HammerImpact
+        ? SoundFalloff2D.HammerImpact
+        : SoundFalloff2D.Default;
 
     private sealed class SpatialVoice(
         SoundEffectVoice2D playback, Vector2 position, float volumeScale,

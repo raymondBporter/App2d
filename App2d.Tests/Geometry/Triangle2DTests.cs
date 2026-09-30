@@ -2,7 +2,6 @@ using App2d.Core;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -28,8 +27,8 @@ public sealed class Triangle2DTests
         Assert.False(triangle.ContainsPoint(new(-.1f, 1)));
         Assert.Equal(new Vector2(4, 0), triangle.GetSupportPoint(Vector2.UnitX));
         Assert.Equal(new Vector2(0, 3), triangle.GetSupportPoint(Vector2.UnitY));
-        Assert.Equal(new Bounds2D(default, new(4, 3)), ShapeBounds2D.Calculate(triangle));
-        Assert.Equal(new Bounds2D(default, new(4, 3)), new SpatialObject2D(triangle).LocalBounds);
+        Assert.Equal(new Rect2D(default, new(4, 3)), ShapeBounds2D.Calculate(triangle));
+        Assert.Equal(new Rect2D(default, new(4, 3)), new SpatialObject2D(triangle).LocalBounds);
         Assert.Equal(-1f, Distance2D.SignedDistance(new Vector2(1, 1), triangle), 5);
         Assert.Equal(1f, Distance2D.Distance(new Vector2(5, 0), triangle), 5);
     }

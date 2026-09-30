@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Contracts.World;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
@@ -54,7 +55,7 @@ public sealed class AuthoredEntityEnemyTests
         using var game = Game();
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
-        var bounds = App2d.Core.Geometry.Bounds2D.FromPoints([.. head.Points.Select(p => p * GameWorldUnits2D.WorldUnitsPerAuthoredUnit)]);
+        var bounds = App2d.Core.Geometry.Rect2D.FromPoints([.. head.Points.Select(p => p * GameWorldUnits2D.WorldUnitsPerAuthoredUnit)]);
         var hit = new App2d.Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(4)));
         hit.Transform.Position = bounds.Center;
         var facts = new List<CombatDamage2D>(); game.Combat.DamageResolved += facts.Add;

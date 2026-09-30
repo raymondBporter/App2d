@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Functions;
+namespace App2d.Core.Geometry;
 
 /// <summary>
 /// Euclidean distance and signed distance in input units. Distance is zero for overlapping solids.

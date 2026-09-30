@@ -13,7 +13,7 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
     private readonly SideScrollerTerrainTilesetResolver2D _tilesets = ArgGuard.RequireNotNull(tilesets);
     private readonly float _tileSize = tileMap.TileSize;
 
-    public List<WorldObject2D> CreateSolidFill(Bounds2D bounds)
+    public List<WorldObject2D> CreateSolidFill(Rect2D bounds)
     {
         var visuals = new List<WorldObject2D>();
         var startX = WorldToTileX(bounds.Min.X);
@@ -67,7 +67,7 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
 
     private void AddFillVisual(List<WorldObject2D> visuals, FillRun run, int startY, int endY)
     {
-        var runBounds = new Bounds2D(new Vector2(TileToWorldX(run.StartX), TileToWorldY(startY)), new Vector2(TileToWorldX(run.EndX), TileToWorldY(endY)));
+        var runBounds = new Rect2D(new Vector2(TileToWorldX(run.StartX), TileToWorldY(startY)), new Vector2(TileToWorldX(run.EndX), TileToWorldY(endY)));
         AddVisual(visuals, run.Tileset.CreateSolidFill(runBounds));
     }
 
@@ -137,7 +137,7 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         return visuals;
     }
 
-    private void AddCornerVisuals(List<WorldObject2D> visuals, int tileX, int tileY, Bounds2D tileBounds, TileCorner2D corners)
+    private void AddCornerVisuals(List<WorldObject2D> visuals, int tileX, int tileY, Rect2D tileBounds, TileCorner2D corners)
     {
         var tileset = _tilesets.GetTileset(tileX, tileY);
         if (corners.HasFlag(TileCorner2D.OuterTopRight))
@@ -199,10 +199,10 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         };
     }
 
-    private Bounds2D GetTileBounds(int x, int y)
+    private Rect2D GetTileBounds(int x, int y)
     {
         var min = _tileMap.Origin + new Vector2(x, y) * _tileSize;
-        return new Bounds2D(min, min + new Vector2(_tileSize));
+        return new Rect2D(min, min + new Vector2(_tileSize));
     }
 
     private int WorldToTileX(float worldX) => (int)MathF.Round((worldX - _tileMap.Origin.X) / _tileSize);

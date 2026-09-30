@@ -1,6 +1,5 @@
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -40,7 +39,7 @@ public sealed partial class Renderer2D
         DrawShapeCore(item.Shape, matrix, item.LocalBounds, fillColor, outlineColor, screenStrokeWidth);
     }
 
-    private void DrawShapeCore(IShape2D shape, Matrix3x2 matrix, Bounds2D bounds,
+    private void DrawShapeCore(IShape2D shape, Matrix3x2 matrix, Rect2D bounds,
         XnaColor? fillColor, XnaColor? outlineColor, float width)
     {
         SelectBatch(null, null);

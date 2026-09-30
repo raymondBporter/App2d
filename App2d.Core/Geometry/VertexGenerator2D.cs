@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Functions;
+namespace App2d.Core.Geometry;
 
 /// <summary>
 /// Writes local-space perimeters into caller-owned buffers. No shapes, cached bounds,

@@ -8,7 +8,7 @@ public static class SweptCircleAabb2D
 {
     private const float ParallelEpsilon = 1e-7f;
 
-    public static bool TryIntersect(Vector2 start, Vector2 end, float radius, Bounds2D bounds, out SweptCircleHit2D hit)
+    public static bool TryIntersect(Vector2 start, Vector2 end, float radius, Rect2D bounds, out SweptCircleHit2D hit)
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         if (!bounds.IsFinite)

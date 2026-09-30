@@ -7,7 +7,7 @@ namespace App2d.Contracts.World;
 /// <summary>A named rectangular region in world units, independent of any zone consumer.</summary>
 public sealed record WorldZone2D
 {
-    public WorldZone2D(string id, string name, Bounds2D bounds, int priority = 0)
+    public WorldZone2D(string id, string name, Rect2D bounds, int priority = 0)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(id);
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
@@ -19,7 +19,7 @@ public sealed record WorldZone2D
 
     public string Id { get; }
     public string Name { get; }
-    public Bounds2D Bounds { get; }
+    public Rect2D Bounds { get; }
     public int Priority { get; }
 
     // Half-open bounds assign a shared edge to exactly one adjacent rectangle.

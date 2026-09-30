@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Player;
 using App2d.Core;

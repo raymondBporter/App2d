@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Functions;
+namespace App2d.Core.Geometry;
 
 /// <summary>Shared math over convex polygon perimeters given as vertex spans or lists.</summary>
 public static class PolygonGeometry2D

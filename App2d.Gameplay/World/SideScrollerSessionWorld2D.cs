@@ -22,13 +22,13 @@ public sealed class SideScrollerSessionWorld2D(
     public WorldState2D CaptureWorld() => level.CaptureWorld();
     public ImmutableArray<EnemyState2D> CaptureEnemies() => level.EnemySystem.CaptureStates();
     public ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => level.EnemySystem.DrainEvents();
-    public Bounds2D Bounds => level.TileMap.WorldBounds;
+    public Rect2D Bounds => level.TileMap.WorldBounds;
     public float GoalX => level.GoalX;
     public void UpdateStreaming(Vector2 focus) => level.UpdateStreaming(focus);
     public void UpdateMovingPlatforms(float dt) => level.UpdateMovingPlatforms(dt);
     public void UpdateEnemies(float dt, Vector2 target) => level.EnemySystem.Update(dt, target);
     public void SyncEnemiesAfterPhysics() => level.EnemySystem.SyncAfterPhysics();
-    public WorldThingSpec2D? UpdateSavePoints(float dt, Bounds2D bounds) => level.UpdateSavePoints(dt, bounds);
+    public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => level.UpdateSavePoints(dt, bounds);
     public void SetActiveSavePoint(long? id) => level.SetActiveSavePoint(id);
 
     public void ResolveDamage(Person2D player)

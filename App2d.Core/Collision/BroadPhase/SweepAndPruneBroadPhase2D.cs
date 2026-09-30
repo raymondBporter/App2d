@@ -9,10 +9,10 @@ namespace App2d.Core.Collision.BroadPhase;
 public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
     where T : class
 {
-    private readonly Func<T, Bounds2D> _getBounds;
+    private readonly Func<T, Rect2D> _getBounds;
     private readonly List<Proxy> _proxies = [];
 
-    public SweepAndPruneBroadPhase2D(Func<T, Bounds2D> getBounds, SweepAxis2D axis = SweepAxis2D.X)
+    public SweepAndPruneBroadPhase2D(Func<T, Rect2D> getBounds, SweepAxis2D axis = SweepAxis2D.X)
     {
         ArgGuard.ThrowIfNull(getBounds);
         _getBounds = getBounds;

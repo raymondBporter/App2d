@@ -83,7 +83,7 @@ public sealed partial class PersonLocomotion2D
         return true;
     }
 
-    private bool TryFindLadder(out Bounds2D ladder)
+    private bool TryFindLadder(out Rect2D ladder)
     {
         ladder = default;
         if (_tileMap is null)
@@ -114,7 +114,7 @@ public sealed partial class PersonLocomotion2D
                     bottom--;
                 while (top + 1 < _tileMap.Height && _tileMap.GetTileKind(x, top + 1).IsLadder())
                     top++;
-                ladder = new Bounds2D(
+                ladder = new Rect2D(
                     origin + new Vector2(x, bottom) * size,
                     origin + new Vector2(x + 1, top + 1) * size);
                 nearestDistance = distance;

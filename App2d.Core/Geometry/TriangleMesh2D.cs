@@ -1,4 +1,4 @@
-using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
@@ -34,7 +34,7 @@ public sealed class TriangleMesh2D
         }
         ArgGuard.ThrowIf(area > float.MaxValue, "Triangle mesh area is too large.", nameof(vertices));
         Area = (float)area;
-        Bounds = Bounds2D.FromPoints(_vertices);
+        Bounds = Rect2D.FromPoints(_vertices);
     }
 
     public ReadOnlySpan<Vector2> Vertices => _vertices;
@@ -42,7 +42,7 @@ public sealed class TriangleMesh2D
     public int TriangleCount => _indices.Length / 3;
     /// <summary>The sum of triangle areas; overlaps are counted once per triangle.</summary>
     public float Area { get; }
-    public Bounds2D Bounds { get; }
+    public Rect2D Bounds { get; }
 
     public (Vector2 A, Vector2 B, Vector2 C) TriangleAt(int index)
     {

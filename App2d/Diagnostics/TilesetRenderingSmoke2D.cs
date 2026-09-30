@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;

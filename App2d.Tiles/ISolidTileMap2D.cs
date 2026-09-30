@@ -22,7 +22,7 @@ public interface IChunkedTileMap2D : ISolidTileMap2D
     int ChunkSize { get; }
     int ChunkColumns { get; }
     int ChunkRows { get; }
-    Bounds2D WorldBounds { get; }
+    Rect2D WorldBounds { get; }
     IReadOnlyList<string> TilesetIds { get; }
 
     TileKind2D GetTileKind(int x, int y);

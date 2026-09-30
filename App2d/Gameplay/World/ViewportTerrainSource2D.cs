@@ -1,7 +1,6 @@
-using App2d.Core.Geometry.Functions;
+using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
 using App2d.Core.Grids;
 using App2d.Tiles;
 using System.Collections.Immutable;
@@ -27,14 +26,14 @@ internal sealed class ViewportTerrainSource2D : IDisposable
         if (map is EditableTileMap2D editable) editable.ChunkChanged += Invalidate;
     }
 
-    public ImmutableArray<TerrainChunkState2D> Capture(Bounds2D visibleBounds)
+    public ImmutableArray<TerrainChunkState2D> Capture(Rect2D visibleBounds)
     {
         if (!visibleBounds.IsFinite || visibleBounds.Size.X < 0f || visibleBounds.Size.Y < 0f)
             ArgGuard.ThrowOutOfRange(visibleBounds, "Viewport bounds must be finite and ordered.");
 
         // Include a tile beyond each edge for terrain artwork that overhangs its cell.
         var padding = new Vector2(_map.TileSize);
-        var bounds = new Bounds2D(visibleBounds.Min - padding, visibleBounds.Max + padding);
+        var bounds = new Rect2D(visibleBounds.Min - padding, visibleBounds.Max + padding);
         if (!bounds.TryIntersect(_map.WorldBounds, out var clipped))
         {
             _chunks.Clear();

@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Functions;
+namespace App2d.Core.Geometry;
 
 /// <summary>Shared arithmetic for public closest-point, distance and primitive APIs.</summary>
 internal static class LinearGeometry2D

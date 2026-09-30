@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry.Functions;
+namespace App2d.Core.Geometry;
 
 /// <summary>Raw geometry projected onto any finite axis, including non-unit and zero axes.</summary>
 public static class Projection2D
