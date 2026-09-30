@@ -2,7 +2,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Meshes;
 
 /// <summary>
 /// Builds an unindexed triangle stream. The vertex factory supplies rendering attributes,

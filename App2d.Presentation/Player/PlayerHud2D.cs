@@ -8,11 +8,7 @@ namespace App2d.Presentation.Player;
 
 public static class PlayerHud2D
 {
-    public static void Draw(
-        Renderer2D renderer,
-        int currentHealth,
-        int maximumHealth,
-        Texture2D weaponTexture)
+    public static void Draw(Renderer2D renderer, int currentHealth, int maximumHealth, Texture2D weaponTexture)
     {
         ArgGuard.ThrowIfNull(renderer);
         ArgGuard.ThrowIfNotPositive(maximumHealth);
@@ -63,12 +59,7 @@ public static class PlayerHud2D
         DrawWeaponIcon(renderer, weaponTexture, weaponBounds, panelColor, accentColor);
     }
 
-    private static void DrawWeaponIcon(
-        Renderer2D renderer,
-        Texture2D texture,
-        ScreenRectangle2D bounds,
-        XnaColor panelColor,
-        XnaColor accentColor)
+    private static void DrawWeaponIcon(Renderer2D renderer, Texture2D texture, ScreenRectangle2D bounds, XnaColor panelColor, XnaColor accentColor)
     {
         renderer.DrawScreenRoundedRectangle(bounds, 9f, panelColor);
         renderer.DrawScreenRoundedRectangle(bounds, 9f, accentColor, 3f);

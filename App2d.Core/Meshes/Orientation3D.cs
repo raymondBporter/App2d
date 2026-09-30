@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Meshes;
 
 /// <summary>Orientation of three 3D basis vectors, including reflections.</summary>
 public static class Orientation3D

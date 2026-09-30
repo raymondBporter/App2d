@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Meshes;
 
 /// <summary>Three finite 3D points with winding-defined area and normal.</summary>
 public readonly record struct Triangle3D

@@ -1,28 +1,41 @@
-using App2d.Core.Validation;
 using App2d.Core.Geometry;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Shapes;
 
+/// <summary>A filled capsule in local space: every point within <see cref="Radius"/> of the spine segment.</summary>
 public sealed class Capsule2D : IConvexShape2D
 {
+    /// <summary>Creates a capsule.</summary>
+    /// <param name="start">The finite spine start; may equal <paramref name="end"/> for a circle.</param>
+    /// <param name="end">The finite spine end.</param>
+    /// <param name="radius">The finite, positive radius.</param>
     public Capsule2D(Vector2 start, Vector2 end, float radius)
     {
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(end);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(radius);
-
         Start = start;
         End = end;
         Radius = radius;
     }
 
+    /// <summary>The spine start.</summary>
     public Vector2 Start { get; }
+
+    /// <summary>The spine end.</summary>
     public Vector2 End { get; }
+
+    /// <summary>The radius around the spine.</summary>
     public float Radius { get; }
-    public float Area => PrimitiveGeometry2D.CapsuleArea(Start, End, Radius);
 
-    public bool ContainsPoint(Vector2 localPoint) => PrimitiveGeometry2D.CapsuleContainsPoint(localPoint, Start, End, Radius);
+    /// <inheritdoc/>
+    public float Area => Area2D.Capsule(Start, End, Radius);
 
-    public Vector2 GetSupportPoint(Vector2 localDirection) => PrimitiveGeometry2D.CapsuleSupportPoint(localDirection, Start, End, Radius);
+    /// <inheritdoc/>
+    public bool ContainsPoint(Vector2 localPoint) => Containment2D.Capsule(localPoint, Start, End, Radius);
+
+    /// <inheritdoc/>
+    public Vector2 GetSupportPoint(Vector2 localDirection) => SupportPoint2D.Capsule(localDirection, Start, End, Radius);
 }

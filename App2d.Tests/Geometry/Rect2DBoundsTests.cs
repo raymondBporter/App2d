@@ -162,11 +162,11 @@ public sealed class Rect2DBoundsTests
     {
         public int SupportCalls { get; private set; }
         public float Area => 24;
-        public bool ContainsPoint(Vector2 point) => PrimitiveGeometry2D.RectangleContainsPoint(point, new(-2, -1), new(4, 3));
+        public bool ContainsPoint(Vector2 point) => Containment2D.Rectangle(point, new(-2, -1), new(4, 3));
         public Vector2 GetSupportPoint(Vector2 direction)
         {
             SupportCalls++;
-            return PrimitiveGeometry2D.RectangleSupportPoint(direction, new(-2, -1), new(4, 3));
+            return SupportPoint2D.Rectangle(direction, new(-2, -1), new(4, 3));
         }
     }
 

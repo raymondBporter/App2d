@@ -30,7 +30,7 @@ public sealed class Ellipse2DTests
         foreach (var direction in new[] { Vector2.UnitX, -Vector2.UnitY, Vector2.Normalize(new Vector2(1, 2)) })
         {
             var support = ellipse.GetSupportPoint(direction);
-            Assert.InRange(PrimitiveGeometry2D.NormalizedEllipseRadius(support, ellipse.Center, ellipse.Radii), .99999f, 1.00001f);
+            Assert.InRange(Containment2D.NormalizedEllipseRadius(support, ellipse.Center, ellipse.Radii), .99999f, 1.00001f);
             for (var i = 0; i < 256; i++)
             {
                 var sample = VertexGenerator2D.PointOnEllipse(ellipse.Center, ellipse.Radii, i * MathF.Tau / 256);
@@ -59,12 +59,12 @@ public sealed class Ellipse2DTests
     public void PointAndShapeDistancesIncludeEllipse()
     {
         var ellipse = new Ellipse2D(new(2, 1));
-        Assert.InRange(Distance2D.SignedDistance(new Vector2(3, 0), ellipse), .999f, 1.001f);
-        Assert.InRange(Distance2D.SignedDistance(Vector2.Zero, ellipse), -1.001f, -.99f);
+        Assert.InRange(ShapeDistance2D.SignedDistance(new Vector2(3, 0), ellipse), .999f, 1.001f);
+        Assert.InRange(ShapeDistance2D.SignedDistance(Vector2.Zero, ellipse), -1.001f, -.99f);
         var first = new SpatialObject2D(ellipse);
         var second = new SpatialObject2D(new Circle2D(1));
         second.Transform.Position = new(4, 0);
-        Assert.InRange(Distance2D.Distance(first, second), .999f, 1.001f);
+        Assert.InRange(ShapeDistance2D.Distance(first, second), .999f, 1.001f);
     }
 
     public static TheoryData<IShape2D> ConvexPartners => new()

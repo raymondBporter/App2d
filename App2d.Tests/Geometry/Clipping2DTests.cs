@@ -53,18 +53,15 @@ public sealed class Clipping2DTests
     public void RectangleHalfSpaceClipReturnsOnlyTheVisiblePolygon()
     {
         Span<Vector2> output = stackalloc Vector2[5];
-        var count = PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle,
-            new HalfSpace2D(Vector2.UnitX, 0), output);
+        var count = PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, Vector2.UnitX, 0, output);
         Assert.Equal(4, count);
         Assert.Equal(new Vector2(-2, -1), output[0]);
         Assert.Equal(new Vector2(0, -1), output[1]);
         Assert.Equal(new Vector2(0, 1), output[2]);
         Assert.Equal(new Vector2(-2, 1), output[3]);
 
-        Assert.Equal(4, PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle,
-            new HalfSpace2D(Vector2.UnitX, 10), output));
-        Assert.Equal(0, PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle,
-            new HalfSpace2D(Vector2.UnitX, -10), output));
+        Assert.Equal(4, PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, Vector2.UnitX, 10, output));
+        Assert.Equal(0, PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, Vector2.UnitX, -10, output));
     }
 
     [Fact]
@@ -72,7 +69,7 @@ public sealed class Clipping2DTests
     {
         Span<Vector2> output = stackalloc Vector2[5];
         var halfSpace = new HalfSpace2D(new(1, 1), 2);
-        var count = PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, halfSpace, output);
+        var count = PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, halfSpace.Normal, halfSpace.Offset, output);
         Assert.Equal(5, count);
         foreach (var point in output[..count]) Assert.True(halfSpace.ContainsPoint(point));
     }
@@ -82,8 +79,7 @@ public sealed class Clipping2DTests
     {
         Vector2[] triangle = [new(-2, 0), new(2, 0), new(0, 2)];
         Span<Vector2> output = stackalloc Vector2[4];
-        var count = PolygonClipping2D.ClipConvexToHalfSpace(triangle,
-            new HalfSpace2D(Vector2.UnitX, 0), output);
+        var count = PolygonClipping2D.ClipConvexToHalfSpace(triangle, Vector2.UnitX, 0, output);
         Assert.Equal(3, count);
         Assert.Equal(new Vector2(-2, 0), output[0]);
         Assert.Equal(new Vector2(0, 0), output[1]);
@@ -96,9 +92,7 @@ public sealed class Clipping2DTests
         var unbounded = new Rect2D(new(float.NegativeInfinity, -1), new(float.PositiveInfinity, 1));
         Assert.Throws<ArgumentException>(() => new Line2D(Vector2.Zero, Vector2.UnitX)
             .TryClipToRectangle(unbounded, out _, out _));
-        Assert.Throws<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(unbounded,
-            new HalfSpace2D(Vector2.UnitX, 0), new Vector2[5]));
-        Assert.Throws<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle,
-            new HalfSpace2D(Vector2.UnitX, 0), new Vector2[4]));
+        Assert.Throws<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(unbounded, Vector2.UnitX, 0, new Vector2[5]));
+        Assert.Throws<ArgumentException>(() => PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, Vector2.UnitX, 0, new Vector2[4]));
     }
 }

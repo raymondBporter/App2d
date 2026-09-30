@@ -18,7 +18,7 @@ public sealed record EntityRegion(string Id, IReadOnlyList<Vector2> Points)
     {
         ArgGuard.ThrowIfNull(other);
         if (_radius == 0 && other._radius == 0)
-            return PolygonGeometry2D.OverlapsConvex(Points, other.Points, position, otherPosition);
+            return Intersection2D.ConvexPolygonsOverlap(Points, other.Points, position, otherPosition);
 
         var firstCore = _core ?? Points;
         var secondCore = other._core ?? other.Points;
@@ -38,7 +38,7 @@ public sealed record EntityRegion(string Id, IReadOnlyList<Vector2> Points)
         var bounds = ShapeBounds2D.Calculate(shape).TranslatedBy(position);
         if (!bounds.Intersects(other.WorldBounds)) return false;
         Similarity2D.TryFromMatrix(Matrix3x2.CreateTranslation(position), out var pose);
-        return Distance2D.Distance(shape, pose, other.Shape, other.CollisionPose) == 0;
+        return ShapeDistance2D.Distance(shape, pose, other.Shape, other.CollisionPose) == 0;
     }
 
     public static EntityRegion Box(string id, Vector2 center, Vector2 size)

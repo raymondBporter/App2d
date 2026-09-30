@@ -253,7 +253,7 @@ public sealed partial class Renderer2D : IDisposable
                 var halfSegments = CurveSegments(capsule.Radius, matrix) / 2;
                 return VertexGenerator2D.WriteCapsule(points, capsule.Start, capsule.End, capsule.Radius, halfSegments);
             case HalfSpace2D halfSpace:
-                return PolygonClipping2D.ClipRectangleToHalfSpace(GetVisibleLocalBounds(matrix), halfSpace, points);
+                return PolygonClipping2D.ClipRectangleToHalfSpace(GetVisibleLocalBounds(matrix), halfSpace.Normal, halfSpace.Offset, points);
             default:
                 throw new NotSupportedException($"No renderer is registered for {shape.GetType().Name}.");
         }

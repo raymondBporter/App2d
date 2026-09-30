@@ -29,8 +29,8 @@ public sealed class Triangle2DTests
         Assert.Equal(new Vector2(0, 3), triangle.GetSupportPoint(Vector2.UnitY));
         Assert.Equal(new Rect2D(default, new(4, 3)), ShapeBounds2D.Calculate(triangle));
         Assert.Equal(new Rect2D(default, new(4, 3)), new SpatialObject2D(triangle).LocalBounds);
-        Assert.Equal(-1f, Distance2D.SignedDistance(new Vector2(1, 1), triangle), 5);
-        Assert.Equal(1f, Distance2D.Distance(new Vector2(5, 0), triangle), 5);
+        Assert.Equal(-1f, ShapeDistance2D.SignedDistance(new Vector2(1, 1), triangle), 5);
+        Assert.Equal(1f, ShapeDistance2D.Distance(new Vector2(5, 0), triangle), 5);
     }
 
     [Fact]

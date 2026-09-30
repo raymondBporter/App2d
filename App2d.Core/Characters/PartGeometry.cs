@@ -61,7 +61,7 @@ public static class PartGeometry
         if (PuppetPartKinds.IsStroke(part.Kind))
         {
             var a = world(part.A); var b = world(part.B!);
-            return PrimitiveGeometry2D.DistanceToSegment(p, new(a.X, a.Y), new(b.X, b.Y), 1e-10f)
+            return Distance2D.DistanceToSegment(p, new(a.X, a.Y), new(b.X, b.Y), 1e-10f)
                 / MathF.Max(part.Width, .06f);
         }
         var frame = FrameOf(part, world);
@@ -70,8 +70,8 @@ public static class PartGeometry
         if (part.Kind == PuppetPartKinds.Trapezoid) coordinates.X /= TrapezoidWidthScale(part, coordinates.Y);
         var halfSize = new Vector2(part.Width / 2, part.Height / 2);
         return part.Kind == PuppetPartKinds.Ellipse
-            ? PrimitiveGeometry2D.NormalizedEllipseRadius(coordinates, Vector2.Zero, halfSize)
-            : PrimitiveGeometry2D.NormalizedRectangleRadius(coordinates, Vector2.Zero, halfSize);
+            ? Containment2D.NormalizedEllipseRadius(coordinates, Vector2.Zero, halfSize)
+            : Containment2D.NormalizedRectangleRadius(coordinates, Vector2.Zero, halfSize);
     }
 
     private static float TrapezoidWidthScale(PuppetPart part, float y) =>

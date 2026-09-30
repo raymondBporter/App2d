@@ -74,7 +74,7 @@ public sealed class VertexGenerator2DTests
         Assert.Equal(new Vector2(99), points[18]);
         Assert.True(PolygonGeometry2D.SignedAreaTwice(points[..count]) > 0);
         foreach (var point in points[..count])
-            Assert.Equal(2, PrimitiveGeometry2D.DistanceToSegment(point, start, end), 5);
+            Assert.Equal(2, Distance2D.DistanceToSegment(point, start, end), 5);
     }
 
     [Fact]

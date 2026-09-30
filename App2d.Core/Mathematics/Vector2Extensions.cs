@@ -5,7 +5,7 @@ namespace App2d.Core.Mathematics;
 public static class Vector2Extensions
 {
     public static readonly Vector2 NegativeInfinity = new(float.NegativeInfinity, float.NegativeInfinity);
-    public static readonly Vector2 PositiveInfinity = new(float.NegativeInfinity, float.NegativeInfinity);
+    public static readonly Vector2 PositiveInfinity = new(float.PositiveInfinity, float.PositiveInfinity);
 
     extension(Vector2 value)
     {
