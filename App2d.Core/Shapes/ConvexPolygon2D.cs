@@ -35,24 +35,15 @@ public sealed class ConvexPolygon2D : IConvexShape2D
     private static void Validate(ReadOnlySpan<Vector2> vertices)
     {
         ArgGuard.ThrowIfTooShort(vertices, 3);
-        var winding = 0;
         for (var i = 0; i < vertices.Length; i++)
         {
             var current = vertices[i];
             var next = vertices[(i + 1) % vertices.Length];
-            var afterNext = vertices[(i + 2) % vertices.Length];
 
             ArgGuard.ThrowIfNotFinite(current, nameof(vertices));
             if (Vector2.DistanceSquared(current, next) <= Epsilon * Epsilon) ArgGuard.ThrowInvalid("Adjacent polygon vertices must be distinct.", nameof(vertices));
-
-            var cross = CrossProduct2D.Orientation(current, next, afterNext);
-            if (Math.Abs(cross) <= Epsilon) continue;
-
-            var turn = Math.Sign(cross);
-            if (winding == 0) winding = turn;
-            else if (turn != winding) ArgGuard.ThrowInvalid("Vertices must form a convex polygon in perimeter order.", nameof(vertices));
         }
-
-        if (winding == 0) ArgGuard.ThrowInvalid("Polygon vertices cannot all be collinear.", nameof(vertices));
+        if (!PolygonGeometry2D.IsConvexPerimeter(vertices, Epsilon))
+            ArgGuard.ThrowInvalid("Vertices must form a convex polygon in perimeter order with nonzero area.", nameof(vertices));
     }
 }

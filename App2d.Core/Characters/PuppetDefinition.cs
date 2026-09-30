@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -48,24 +49,21 @@ public sealed record PartPaint
     {
         if (paint is null) return;
         if (paint.Count > 64) throw new InvalidDataException("A part supports at most 64 paint patches.");
+        Span<Vector2> xy = stackalloc Vector2[64];
         foreach (var patch in paint)
         {
             if (patch?.Points is not { Count: >= 3 and <= 64 }) throw new InvalidDataException("Paint needs 3 to 64 polygon points.");
             Limit.Color(patch.Fill, "paint.fill");
-            var sign = 0;
+            var vertices = xy[..patch.Points.Count];
             for (var i = 0; i < patch.Points.Count; i++)
             {
-                var p = patch.Points[i]; p.Check("paint.point");
-                if (p.Z != 0) throw new InvalidDataException("Paint coordinates are XY only.");
-                var a = patch.Points[(i + 1) % patch.Points.Count].XY - p.XY;
-                var b = patch.Points[(i + 2) % patch.Points.Count].XY - patch.Points[(i + 1) % patch.Points.Count].XY;
-                var cross = a.X * b.Y - a.Y * b.X;
-                if (MathF.Abs(cross) < 1e-8f) continue;
-                var next = MathF.Sign(cross);
-                if (sign != 0 && sign != next) throw new InvalidDataException("Paint patches must be convex.");
-                sign = next;
+                var point = patch.Points[i];
+                point.Check("paint.point");
+                if (point.Z != 0) throw new InvalidDataException("Paint coordinates are XY only.");
+                vertices[i] = point.XY;
             }
-            if (sign == 0) throw new InvalidDataException("Paint patch has no area.");
+            if (!PolygonGeometry2D.IsConvexPerimeter(vertices, 1e-8d))
+                throw new InvalidDataException("Paint patches must be convex and have area.");
         }
     }
 }

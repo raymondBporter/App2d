@@ -10,6 +10,24 @@ namespace App2d.Core.Geometry;
 /// </summary>
 public static class PolygonGeometry2D
 {
+    /// <summary>Whether finite perimeter vertices turn consistently and have nonzero area.</summary>
+    /// <param name="vertices">At least three vertices in perimeter order, in either winding.</param>
+    /// <param name="collinearEpsilon">Turns this close to zero are treated as collinear.</param>
+    public static bool IsConvexPerimeter(ReadOnlySpan<Vector2> vertices, double collinearEpsilon = 0d)
+    {
+        if (vertices.Length < 3) return false;
+        var winding = 0;
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            var cross = CrossProduct2D.Orientation(vertices[i], vertices[(i + 1) % vertices.Length], vertices[(i + 2) % vertices.Length]);
+            if (Math.Abs(cross) <= collinearEpsilon) continue;
+            var turn = Math.Sign(cross);
+            if (winding != 0 && winding != turn) return false;
+            winding = turn;
+        }
+        return winding != 0;
+    }
+
     /// <summary>
     /// The minimal counter-clockwise convex perimeter around finite points. Duplicate and collinear
     /// interior points are omitted; the first point is not repeated at the end.
