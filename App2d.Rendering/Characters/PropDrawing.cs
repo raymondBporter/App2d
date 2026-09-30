@@ -21,11 +21,11 @@ internal static class PropDrawing
             var fill = ColorExtensions.FromHexRgb(solid.Fill); var ink = ColorExtensions.FromHexRgb(prop.Ink);
             for (var i = 0; i < solid.Triangles.Count; i += 3)
             {
+                if (!analysis.TryGetFaceNormal(i / 3, out var normal)) continue;
+                var light = .72f + .28f * MathF.Max(0, Vector3.Dot(normal, LightDirection));
                 var a = solid.Triangles[i];
                 var b = solid.Triangles[i + 1];
                 var c = solid.Triangles[i + 2];
-                if (!analysis.TryGetFaceNormal(i / 3, out var normal)) continue;
-                var light = .72f + .28f * MathF.Max(0, Vector3.Dot(normal, LightDirection));
                 mesh.Triangle(vertices[a], vertices[b], vertices[c], fill.ScaleRgb(light));
             }
             if (!solid.Outlined) continue;
