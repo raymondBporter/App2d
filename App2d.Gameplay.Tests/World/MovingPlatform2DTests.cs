@@ -25,11 +25,11 @@ public sealed class MovingPlatform2DTests
 
         platform.Update(2f);
         physics.Step(2f);
-        Assert.Equal(new Vector2(8f, 0f), platform.WorldObject.Transform.Position);
+        Assert.Equal(new Vector2(8.96f, 0f), platform.WorldObject.Transform.Position);
 
         platform.Update(1f);
         physics.Step(1f);
-        Assert.Equal(new Vector2(8f, 0f), platform.WorldObject.Transform.Position);
+        Assert.Equal(new Vector2(8.96f, 0f), platform.WorldObject.Transform.Position);
 
         platform.Update(2f);
         physics.Step(2f);
@@ -54,9 +54,58 @@ public sealed class MovingPlatform2DTests
             ReferenceEquals(contact.Second, platform.Body));
 
         var riderXBeforeCarry = riderObject.Transform.Position.X;
+        var platformXBeforeCarry = platform.WorldObject.Transform.Position.X;
         platform.Update(0.1f);
+        physics.Step(0.1f);
 
-        Assert.Equal(riderXBeforeCarry + 1f, riderObject.Transform.Position.X, 4);
+        var platformDisplacement = platform.WorldObject.Transform.Position.X - platformXBeforeCarry;
+        Assert.Equal(riderXBeforeCarry + platformDisplacement, riderObject.Transform.Position.X, 4);
+    }
+
+    [Fact]
+    public void StandingRiderStaysLevelThroughPlatformReversal()
+    {
+        var physics = CreatePhysics();
+        physics.Gravity = new Vector2(0f, -100f);
+        var platform = CreatePlatform(physics, new Vector2(20f, 0f), speed: 10f);
+        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(10f)));
+        riderObject.Transform.Position = new Vector2(0f, 10f);
+        var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
+        rider.Restitution = 0f;
+        const float dt = 1f / 120f;
+
+        for (var frame = 0; frame < 500; frame++)
+        {
+            platform.Update(dt);
+            physics.Step(dt);
+            Assert.InRange(riderObject.Transform.Position.Y, 9.999f, 10.001f);
+            Assert.InRange(rider.LinearVelocity.Y, -0.001f, 0.001f);
+        }
+
+        // The first update has no prior support contact, so carry begins one tick later.
+        Assert.InRange(MathF.Abs(riderObject.Transform.Position.X - platform.WorldObject.Transform.Position.X),
+            0f, 10f * dt + 0.001f);
+    }
+
+    [Fact]
+    public void StandingRiderStaysSupportedThroughVerticalReversal()
+    {
+        var physics = CreatePhysics();
+        physics.Gravity = new Vector2(0f, -100f);
+        var platform = CreatePlatform(physics, new Vector2(0f, 20f), speed: 10f);
+        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(10f)));
+        riderObject.Transform.Position = new Vector2(0f, 10f);
+        var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
+        rider.Restitution = 0f;
+        const float dt = 1f / 120f;
+
+        for (var frame = 0; frame < 500; frame++)
+        {
+            platform.Update(dt);
+            physics.Step(dt);
+            var gap = riderObject.WorldBounds.Bottom - platform.WorldObject.WorldBounds.Top;
+            Assert.InRange(gap, -0.001f, 0.001f);
+        }
     }
 
     [Fact]
@@ -86,7 +135,7 @@ public sealed class MovingPlatform2DTests
 
         Assert.InRange(MathF.Abs(firstGap), 0f, 0.001f);
         Assert.InRange(MathF.Abs(secondGap), 0f, 0.001f);
-        Assert.Equal(10f, rider.LinearVelocity.Y, 3);
+        Assert.Equal(platform.Body.LinearVelocity.Y, rider.LinearVelocity.Y, 3);
         Assert.Contains(physics.LastContacts, contact =>
             ReferenceEquals(contact.First, platform.Body) ||
             ReferenceEquals(contact.Second, platform.Body));
@@ -122,6 +171,32 @@ public sealed class MovingPlatform2DTests
         Assert.Empty(landingSpeeds);
     }
 
+    [Theory]
+    [InlineData(80f)]
+    [InlineData(-80f)]
+    public void IdlePersonTracksVerticalPlatformThroughFullCycle(float travelY)
+    {
+        var collision = new CollisionSystem2D();
+        var physics = CreatePhysics(collision);
+        physics.Gravity = new Vector2(0f, -1_900f);
+        physics.MaxSubstepSeconds = 1f / 120f;
+        var platform = CreatePlatform(physics, new Vector2(0f, travelY), speed: 90f);
+        var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
+        var rider = CreateRider(collision, physics, platform, traversal);
+        const float dt = 1f / 120f;
+        const int frames = 220;
+
+        StepPerson(rider, physics, dt); // Establish the support contact before motion begins.
+
+        for (var frame = 0; frame < frames; frame++)
+        {
+            platform.Update(dt);
+            StepPerson(rider, physics, dt);
+            var gap = rider.Body.WorldObject.WorldBounds.Bottom - platform.WorldObject.WorldBounds.Top;
+            Assert.InRange(gap, -0.05f, 0.05f);
+        }
+    }
+
     [Fact]
     public void LandingSpeedIsRelativeToDescendingPlatform()
     {
@@ -147,7 +222,7 @@ public sealed class MovingPlatform2DTests
         StepPerson(rider, physics, deltaSeconds);
 
         var landingSpeed = Assert.Single(landingSpeeds);
-        Assert.Equal(210f, landingSpeed, 3);
+        Assert.Equal(300f + platform.Body.LinearVelocity.Y, landingSpeed, 3);
     }
 
     [Theory]
@@ -172,8 +247,8 @@ public sealed class MovingPlatform2DTests
 
         var state = rider.CaptureState();
         Assert.True(state.IsGrounded);
-        Assert.Equal(x, state.GroundVelocity.X, 2);
-        Assert.Equal(y, state.GroundVelocity.Y, 2);
+        Assert.Equal(platform.Body.LinearVelocity.X, state.GroundVelocity.X, 2);
+        Assert.Equal(platform.Body.LinearVelocity.Y, state.GroundVelocity.Y, 2);
     }
 
     [Fact]

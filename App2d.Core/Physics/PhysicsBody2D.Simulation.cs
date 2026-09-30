@@ -16,12 +16,14 @@ public sealed partial class PhysicsBody2D
         float AccumulatedTorque,
         Vector2 PreviousPosition,
         float PreviousRotation,
+        Vector2 LastStepLinearVelocity,
         float GravityScale,
         float Restitution,
         float Friction,
         bool IsCollider,
         bool IsSensor,
-        bool IsOneWayPlatform,
+        Vector2? OneWaySurfaceNormal,
+        bool TransfersContactMotion,
         bool IsWallGrippable,
         uint CollisionLayer,
         uint CollisionMask,
@@ -32,7 +34,7 @@ public sealed partial class PhysicsBody2D
         ImmutableArray<int> IgnoredPlatforms);
 
     internal SimulationState CaptureSimulation() => new(Collider.Id,
-        TransformState2D.Capture(WorldObject.Transform), MotionType, LinearVelocity, AngularVelocity, FreezeRotation, AccumulatedForce, AccumulatedTorque, PreviousPosition, PreviousRotation, GravityScale, Restitution, Friction, IsCollider, IsSensor, IsOneWayPlatform, IsWallGrippable, CollisionLayer, CollisionMask, EntityId, OneWaySlop, Mass, MomentOfInertia,
+        TransformState2D.Capture(WorldObject.Transform), MotionType, LinearVelocity, AngularVelocity, FreezeRotation, AccumulatedForce, AccumulatedTorque, PreviousPosition, PreviousRotation, LastStepLinearVelocity, GravityScale, Restitution, Friction, IsCollider, IsSensor, OneWaySurfaceNormal, TransfersContactMotion, IsWallGrippable, CollisionLayer, CollisionMask, EntityId, OneWaySlop, Mass, MomentOfInertia,
         _ignoredOneWayPlatforms?.Select(b => b.Collider.Id).Order().ToImmutableArray() ?? []);
 
     internal void RestoreSimulation(SimulationState state, IReadOnlyDictionary<int, PhysicsBody2D> bodies)
@@ -46,12 +48,14 @@ public sealed partial class PhysicsBody2D
         AccumulatedTorque = state.AccumulatedTorque;
         PreviousPosition = state.PreviousPosition;
         PreviousRotation = state.PreviousRotation;
+        LastStepLinearVelocity = state.LastStepLinearVelocity;
         GravityScale = state.GravityScale;
         Restitution = state.Restitution;
         Friction = state.Friction;
         IsCollider = state.IsCollider;
         IsSensor = state.IsSensor;
-        IsOneWayPlatform = state.IsOneWayPlatform;
+        OneWaySurfaceNormal = state.OneWaySurfaceNormal;
+        TransfersContactMotion = state.TransfersContactMotion;
         IsWallGrippable = state.IsWallGrippable;
         CollisionLayer = state.CollisionLayer;
         CollisionMask = state.CollisionMask;

@@ -305,8 +305,9 @@ return `PhysicsBody2D` references.
 
 Bodies support static, kinematic, and dynamic motion; linear/angular velocity; force,
 torque, and impulses; mass and inertia; gravity scaling; restitution; sensors; and
-collision layers/masks. Static bodies can opt into `IsOneWayPlatform`; only top-facing
-contacts from bodies that were previously above and are now moving downward are kept.
+collision layers/masks. A body can set `OneWaySurfaceNormal` to the outward normal
+of its blocking face (`+Y` for a floor, `+X` for a wall). Contacts from other faces
+or from bodies passing through are ignored. `IsOneWayPlatform` is a `+Y` shorthand.
 Accumulated forces clear after a public step. The latest contacts remain available
 through `LastContacts`, `IsTouching(body)`, and directional `IsTouching(body, direction)`.
 
@@ -416,8 +417,9 @@ mapping, and traversal diagnostics have similarly narrow owners.
 The 640x96-tile level provides merged tilemap collision, explicit one-way strips, fall
 respawning, an authorable goal flag, smooth bounded camera follow, and procedural parallax
 depths. Authored moving platforms use kinematic one-way slabs that follow horizontal or
-vertical ping-pong paths and carry dynamic bodies supported on top without replacing the
-rider's own movement velocity.
+vertical ping-pong paths with smooth turnarounds. Physics carries supported dynamic bodies
+along those surfaces. The same kinematic motion driver also accepts other `ICurve2D` paths;
+see [Kinematics](App2d.Gameplay/World/KINEMATICS.md).
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
 ledges are authored in `Assets/Static/levels/cavern/level.db`, the committed level file
 `LevelBootstrap2D` loads at startup. That load opens the file read-only, so ordinary
