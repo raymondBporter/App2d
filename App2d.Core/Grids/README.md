@@ -29,7 +29,7 @@ wind[4, 2] = new Vector2(25f, 3f);
 
 int index = wind.Size.GetIndex(4, 2); // 4 + 2 * 64
 GridCell2D coordinates = wind.Size.GetCell(index);
-var cellBounds = wind.GetCellBounds(coordinates); // Bounds2D also implements IRect2D.
+var cellBounds = wind.GetCellBounds(coordinates); // Rect2D implements IRect2D.
 var center = wind.Geometry.GetCellCenter(coordinates);
 
 if (wind.TryGetCell(playerPosition, out var cell))

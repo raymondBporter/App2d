@@ -119,7 +119,7 @@ Geometry lives under `App2d.Core/Geometry`:
   keeps transform rotation at zero.
 - `HalfSpace2D` represents an infinite solid side of a line. Its normal points out of
   the solid region and into permitted space.
-- `Bounds2D` supplies local bounds to rendering and shaders.
+- `Rect2D` supplies local bounds to rendering and shaders.
 
 `App2d.Tiles/TileMap2D` stores compact authored maps as a bool-only grid; it carries
 no `TileKind2D`. `App2d.Tiles/EditableTileMap2D` is the only `IChunkedTileMap2D`

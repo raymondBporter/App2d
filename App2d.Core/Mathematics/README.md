@@ -61,4 +61,4 @@ hold it internally, expose it as `UnitDirection`, and retain their `Vector2 Dire
 property for existing callers.
 
 For circles, ellipses, and arcs with multiple vertices, use `VertexGenerator2D` in
-`App2d.Core.Geometry.Functions`. Its point calculations use the same polar helpers.
+`App2d.Core.Geometry`. Its point calculations use the same polar helpers.
