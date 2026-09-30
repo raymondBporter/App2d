@@ -32,33 +32,43 @@ public abstract class CurveDefinition2D
 
     public abstract ICurve2D Build();
 
-    public string ToJson() => JsonSerializer.Serialize<CurveDefinition2D>(this, JsonOptions);
+    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
-    public static CurveDefinition2D FromJson(string json) =>
-        JsonSerializer.Deserialize<CurveDefinition2D>(json, JsonOptions)
+    public static CurveDefinition2D FromJson(string json) => JsonSerializer.Deserialize<CurveDefinition2D>(json, JsonOptions)
         ?? throw new JsonException("Empty curve definition.");
 
     /// <summary>Copies a built-in runtime curve into editable data. Arbitrary implementations have no known schema.</summary>
     public static CurveDefinition2D FromCurve(ICurve2D curve) => curve switch
     {
-        LineSegmentCurve2D line => new LineCurveDefinition2D { Start = CurvePoint2D.From(line.Start), End = CurvePoint2D.From(line.End) },
+        LineSegmentCurve2D line => new LineCurveDefinition2D
+        {
+            Start = CurvePoint2D.From(line.Start),
+            End = CurvePoint2D.From(line.End)
+        },
         Arc2D arc => new ArcCurveDefinition2D
         {
-            Center = CurvePoint2D.From(arc.Center), Radius = arc.Radius,
-            StartAngleRadians = arc.StartAngleRadians, SweepAngleRadians = arc.SweepAngleRadians
+            Center = CurvePoint2D.From(arc.Center),
+            Radius = arc.Radius,
+            StartAngleRadians = arc.StartAngleRadians,
+            SweepAngleRadians = arc.SweepAngleRadians
         },
         QuadraticBezier2D quadratic => new QuadraticBezierCurveDefinition2D
         {
-            Start = CurvePoint2D.From(quadratic.Start), Control = CurvePoint2D.From(quadratic.Control), End = CurvePoint2D.From(quadratic.End)
+            Start = CurvePoint2D.From(quadratic.Start),
+            Control = CurvePoint2D.From(quadratic.Control),
+            End = CurvePoint2D.From(quadratic.End)
         },
         CubicBezier2D cubic => new CubicBezierCurveDefinition2D
         {
-            Start = CurvePoint2D.From(cubic.Start), Control1 = CurvePoint2D.From(cubic.Control1),
-            Control2 = CurvePoint2D.From(cubic.Control2), End = CurvePoint2D.From(cubic.End)
+            Start = CurvePoint2D.From(cubic.Start),
+            Control1 = CurvePoint2D.From(cubic.Control1),
+            Control2 = CurvePoint2D.From(cubic.Control2),
+            End = CurvePoint2D.From(cubic.End)
         },
         BSpline2D spline => new BSplineCurveDefinition2D
         {
-            Degree = spline.Degree, ControlPoints = [.. spline.ControlPoints.Select(CurvePoint2D.From)]
+            Degree = spline.Degree,
+            ControlPoints = [.. spline.ControlPoints.Select(CurvePoint2D.From)]
         },
         null => throw new ArgumentNullException(nameof(curve)),
         _ => throw new NotSupportedException($"No curve definition exists for {curve.GetType().Name}.")
