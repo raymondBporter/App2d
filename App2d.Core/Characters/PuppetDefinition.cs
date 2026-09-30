@@ -74,7 +74,7 @@ public sealed record PartPaint
 public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
-    public string Kind { get; set; } = "ellipse";
+    public string Kind { get; set; } = PuppetPartKinds.Ellipse;
     public string A { get; set; } = "";
     public string? B { get; set; }
     public float Width { get; set; } = .4f;
@@ -99,8 +99,8 @@ public sealed record PuppetPart
     {
         if (A is null || !isControl(A)) throw new InvalidDataException("Unknown control: " + A);
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
-        EntityVocabulary.Require(Kind, ["stroke", "ellipse", "box", "trapezoid"], "part.kind");
-        if (Kind == "stroke" && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");
+        EntityVocabulary.Require(Kind, PuppetPartKinds.All, "part.kind");
+        if (PuppetPartKinds.IsStroke(Kind) && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
         new Limit(-16, 16).Check(Depth, "part.depth"); new Limit(0, 1).Check(Roundness, "part.roundness"); Limit.Color(Fill, "part.fill");

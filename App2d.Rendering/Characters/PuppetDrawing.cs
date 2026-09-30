@@ -54,7 +54,7 @@ public sealed class PuppetDrawing
         {
             if (part.Hidden) continue;
             var face = expression?.Invoke(part) ?? part.Face;
-            if (part.Kind == "stroke")
+            if (PuppetPartKinds.IsStroke(part.Kind))
             {
                 var ends = PartGeometry.Contour(part, world); Mesh.Line(ends[0], ends[1], part.Width, ink); continue;
             }

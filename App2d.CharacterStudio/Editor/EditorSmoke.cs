@@ -155,11 +155,11 @@ internal sealed class EditorSmoke(string output)
                 ModelAuthoring.AddControl(model.Asset, $"hip-{i}", new(x + .15f, .4f, (i - 1) * .1f), $"knee-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"knee-{i}", new(x, 0, (i - 1) * .1f), $"foot-{i}");
                 ModelAuthoring.AddChain(model.Asset, $"foot-{i}");
-                ModelAuthoring.AddPart(model.Asset, "stroke", $"hip-{i}", $"knee-{i}"); ModelAuthoring.AddPart(model.Asset, "stroke", $"knee-{i}", $"foot-{i}");
+                ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Stroke, $"hip-{i}", $"knee-{i}"); ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Stroke, $"knee-{i}", $"foot-{i}");
             }
             ModelAuthoring.AddMeasure(model.Asset, "leg", ["hip-1", "knee-1", "foot-1"]);
             foreach (var chain in model.Asset.Chains) chain.Scale = "leg";
-            var shell = ModelAuthoring.AddPart(model.Asset, "ellipse", "body"); shell.Width = .95f; shell.Height = .38f; shell.Fill = "#c9e0b8";
+            var shell = ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Fill = "#c9e0b8";
         }), s);
         Check(s.Save(model), s);
         s.EditRig = true; s.Selection.Control = "knee-1";

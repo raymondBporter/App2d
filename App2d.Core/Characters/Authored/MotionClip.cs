@@ -239,6 +239,6 @@ public sealed class MotionClip
             Require(chain.Scale == Travel.Scale, $"{field}: the chain's scale '{chain.Scale}' must match the travel scale '{Travel.Scale}'.");
         }
         foreach (var face in Faces)
-            Require(model.Parts.Any(p => p.Id == face.Part && p.Kind != "stroke"), $"{owner} face track '{face.Part}': the model has no such shape part.");
+            Require(model.Parts.Any(p => p.Id == face.Part && !PuppetPartKinds.IsStroke(p.Kind)), $"{owner} face track '{face.Part}': the model has no such shape part.");
     }
 }

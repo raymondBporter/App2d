@@ -12,7 +12,7 @@ public static class PuppetTemplates
         void Bone(string from, string to, bool visible = true)
         {
             puppet.Bones.Add(new() { From = from, To = to });
-            if (visible) puppet.Parts.Add(new() { Id = from + "-" + to, Kind = "stroke", A = from, B = to, Width = .045f });
+            if (visible) puppet.Parts.Add(new() { Id = from + "-" + to, Kind = PuppetPartKinds.Stroke, A = from, B = to, Width = .045f });
         }
         Control("hips", 0, 1); Control("chest", 0, 1.65f); Control("head", 0, 2.03f);
         Bone("hips", "chest", false); Bone("chest", "head");
@@ -25,8 +25,8 @@ public static class PuppetTemplates
             puppet.Chains.Add(new() { Root = side + "-shoulder", Joint = side + "-elbow", End = side + "-hand", Bend = -1 });
             puppet.Chains.Add(new() { Root = side + "-hip", Joint = side + "-knee", End = side + "-foot", Bend = 1 });
         }
-        puppet.Parts.Add(new() { Id = "body", Kind = "trapezoid", A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Roundness = .3f, TopWidthScale = .7f, Fill = "#d8e9db" });
-        puppet.Parts.Add(new() { Id = "head", Kind = "ellipse", A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
+        puppet.Parts.Add(new() { Id = "body", Kind = PuppetPartKinds.Trapezoid, A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Roundness = .3f, TopWidthScale = .7f, Fill = "#d8e9db" });
+        puppet.Parts.Add(new() { Id = "head", Kind = PuppetPartKinds.Ellipse, A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
         puppet.Motions[0].Name = "Pose study";
         puppet.Validate(); return puppet;
     }
