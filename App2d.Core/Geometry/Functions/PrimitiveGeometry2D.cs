@@ -11,6 +11,7 @@ namespace App2d.Core.Geometry.Functions;
 public static class PrimitiveGeometry2D
 {
     public static float CircleArea(float radius) => MathF.PI * radius * radius;
+    public static float EllipseArea(Vector2 radii) => MathF.PI * radii.X * radii.Y;
     public static float CapsuleArea(Vector2 start, Vector2 end, float radius) =>
         2f * radius * Vector2.Distance(start, end) + CircleArea(radius);
     public static float RectangleArea(Vector2 min, Vector2 max) => (max.X - min.X) * (max.Y - min.Y);
@@ -36,6 +37,14 @@ public static class PrimitiveGeometry2D
 
     public static Vector2 CircleSupportPoint(Vector2 direction, Vector2 center, float radius) =>
         direction.LengthSquared() <= float.Epsilon ? center : center + Vector2.Normalize(direction) * radius;
+
+    /// <summary>Farthest point on an axis-aligned ellipse in a local direction.</summary>
+    public static Vector2 EllipseSupportPoint(Vector2 direction, Vector2 center, Vector2 radii)
+    {
+        var scaled = direction * radii;
+        var length = scaled.Length();
+        return length <= float.Epsilon ? center : center + radii * (scaled / length);
+    }
 
     public static Vector2 CapsuleSupportPoint(Vector2 direction, Vector2 start, Vector2 end, float radius)
     {

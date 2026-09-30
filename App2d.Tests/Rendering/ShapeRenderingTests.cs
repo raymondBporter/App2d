@@ -13,6 +13,7 @@ public sealed class ShapeRenderingTests
     {
         new Rectangle2D(new(-16, -12), new(16, 12)),
         new Circle2D(16),
+        new Ellipse2D(new(20, 12)),
         new Capsule2D(new(-10, 0), new(10, 0), 8),
         new Triangle2D(new(-16, -14), new(16, -14), new(0, 18)),
         new ConvexPolygon2D([new(-15, -12), new(15, -12), new(18, 10), new(-18, 10)]),

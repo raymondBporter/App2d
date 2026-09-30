@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Functions;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters;
@@ -35,7 +36,7 @@ public static class PartGeometry
         Span<Vector2> vertices = stackalloc Vector2[part.Kind == PuppetPartKinds.Ellipse ? 48 : 36];
         if (part.Kind == PuppetPartKinds.Ellipse)
         {
-            VertexGenerator2D.WriteEllipse(vertices, Vector2.Zero, halfSize);
+            new Ellipse2D(halfSize).WriteVertices(vertices);
         }
         else
         {

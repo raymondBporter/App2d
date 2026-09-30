@@ -247,6 +247,9 @@ public sealed partial class Renderer2D : IDisposable
             case Circle2D circle:
                 var segments = CurveSegments(circle.Radius, matrix);
                 return VertexGenerator2D.WriteCircle(points[..segments], circle.Center, circle.Radius);
+            case Ellipse2D ellipse:
+                var ellipseSegments = CurveSegments(MathF.Max(ellipse.Radii.X, ellipse.Radii.Y), matrix);
+                return ellipse.WriteVertices(points[..ellipseSegments]);
             case Capsule2D capsule:
                 var halfSegments = CurveSegments(capsule.Radius, matrix) / 2;
                 return VertexGenerator2D.WriteCapsule(points, capsule.Start, capsule.End, capsule.Radius, halfSegments);

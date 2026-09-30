@@ -16,6 +16,7 @@ public static partial class Distance2D
         return shape switch
         {
             Circle2D circle => SignedDistanceToCircle(point, circle.Center, circle.Radius),
+            Ellipse2D ellipse => SignedDistanceToEllipse(point, ellipse),
             Capsule2D capsule => SignedDistanceToCapsule(point, capsule.Start, capsule.End, capsule.Radius),
             IRect2D rectangle => SignedDistanceToRectangle(point, rectangle.Min, rectangle.Max),
             Triangle2D triangle => SignedDistanceToTriangle(point, triangle),
@@ -45,7 +46,7 @@ public static partial class Distance2D
     public static float Distance(IShape2D first, IShape2D second) => Distance(first, IdentityPose, second, IdentityPose);
 
     /// <summary>
-    /// World-unit distance for circles, capsules, rectangles and convex polygons in any pairing,
+    /// World-unit distance for circles, ellipses, capsules, rectangles and convex polygons in any pairing,
     /// or a convex shape against a half-space. Poses must be valid rotation/uniform-scale/mirror/translation transforms.
     /// Composite signed distance and half-space/half-space pairs are deliberately unsupported.
     /// </summary>
@@ -125,6 +126,7 @@ public static partial class Distance2D
     private static int CoreVertexCount(IShape2D shape) => shape switch
     {
         Circle2D => 1,
+        Ellipse2D => Ellipse2D.CollisionSegments,
         Capsule2D => 2,
         Rectangle2D => 4,
         Triangle2D => 3,
@@ -140,6 +142,9 @@ public static partial class Distance2D
             case Circle2D circle:
                 vertices[0] = circle.Center;
                 radius = circle.Radius;
+                break;
+            case Ellipse2D ellipse:
+                ellipse.WriteVertices(vertices);
                 break;
             case Capsule2D capsule:
                 vertices[0] = capsule.Start;
@@ -169,6 +174,13 @@ public static partial class Distance2D
     {
         Span<Vector2> vertices = stackalloc Vector2[3];
         triangle.WriteVertices(vertices);
+        return SignedDistanceToConvexPolygon(point, vertices);
+    }
+
+    private static float SignedDistanceToEllipse(Vector2 point, Ellipse2D ellipse)
+    {
+        Span<Vector2> vertices = stackalloc Vector2[Ellipse2D.CollisionSegments];
+        ellipse.WriteVertices(vertices);
         return SignedDistanceToConvexPolygon(point, vertices);
     }
 

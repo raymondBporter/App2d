@@ -17,6 +17,7 @@ public static class ShapeBounds2D
         return shape switch
         {
             Circle2D circle => BoundsGeometry2D.FromCircle(circle.Center, circle.Radius),
+            Ellipse2D ellipse => new(ellipse.Center - ellipse.Radii, ellipse.Center + ellipse.Radii),
             Capsule2D capsule => BoundsGeometry2D.FromCapsule(capsule.Start, capsule.End, capsule.Radius),
             IRect2D rectangle => BoundsGeometry2D.FromRectangle(rectangle),
             Triangle2D triangle => new(

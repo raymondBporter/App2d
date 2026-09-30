@@ -91,6 +91,9 @@ public static class RayIntersection2D
                     maxDistance,
                     out hit);
 
+            case Ellipse2D ellipse:
+                return TryEllipse(origin, direction, ellipse, maxDistance, out hit);
+
             case Rectangle2D rectangle:
                 Span<Vector2> rectangleVertices = stackalloc Vector2[4];
                 rectangle.WriteCorners(rectangleVertices);
@@ -171,6 +174,46 @@ public static class RayIntersection2D
         }
 
         hit = new LocalRayHit(Vector2.Normalize(normal), distance);
+        return true;
+    }
+
+    private static bool TryEllipse(Vector2 origin, Vector2 direction, Ellipse2D ellipse, float maxDistance, out LocalRayHit hit)
+    {
+        var ox = (double)(origin.X - ellipse.Center.X) / ellipse.Radii.X;
+        var oy = (double)(origin.Y - ellipse.Center.Y) / ellipse.Radii.Y;
+        var dx = (double)direction.X / ellipse.Radii.X;
+        var dy = (double)direction.Y / ellipse.Radii.Y;
+        var a = dx * dx + dy * dy;
+        var b = 2d * (ox * dx + oy * dy);
+        var c = ox * ox + oy * oy - 1d;
+        var discriminant = b * b - 4d * a * c;
+        if (a == 0d || discriminant < 0d)
+        {
+            hit = default;
+            return false;
+        }
+
+        var root = Math.Sqrt(discriminant);
+        var first = (-b - root) / (2d * a);
+        var second = (-b + root) / (2d * a);
+        var distance = first >= 0d ? first : second;
+        if (distance < 0d || distance > maxDistance)
+        {
+            hit = default;
+            return false;
+        }
+
+        // The ellipse gradient is the local outward normal, including for a ray starting inside.
+        var nx = (ox + dx * distance) / ellipse.Radii.X;
+        var ny = (oy + dy * distance) / ellipse.Radii.Y;
+        var normalLength = Math.Sqrt(nx * nx + ny * ny);
+        if (normalLength == 0d)
+        {
+            hit = default;
+            return false;
+        }
+
+        hit = new LocalRayHit(new((float)(nx / normalLength), (float)(ny / normalLength)), (float)distance);
         return true;
     }
 

@@ -42,6 +42,7 @@ public static partial class ShapeCollision2D
         {
             CompositeShape2D composite => CompositeAgainst(composite, firstPose, second, secondPose),
             Circle2D circle => CircleAgainst(circle, firstPose, second, secondPose),
+            Ellipse2D ellipse => EllipseAgainst(ellipse, firstPose, second, secondPose),
             Capsule2D capsule => CapsuleAgainst(capsule, firstPose, second, secondPose),
             Rectangle2D rectangle => RectangleAgainst(rectangle, firstPose, second, secondPose),
             Triangle2D triangle => TriangleAgainst(triangle, firstPose, second, secondPose),
