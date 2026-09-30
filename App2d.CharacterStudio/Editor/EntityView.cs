@@ -388,14 +388,14 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         Vector2 Screen(Vector2 p) => frame.Screen(new(p, 0));
         void Outline(EntityRegion region, uint color, float width)
         {
-            var points = region.Points.Select(Screen).ToArray();
+            var points = region.Outline().Select(Screen).ToArray();
             for (var i = 0; i < points.Length; i++) draw.AddLine(points[i], points[(i + 1) % points.Length], color, width);
         }
         Outline(preview.Movement, Ui.Color(120, 120, 120), 1.5f);
         foreach (var region in preview.Hurt) Outline(region, Ui.Color(60, 120, 220), 2);
         foreach (var (hit, region) in preview.Attacks)
         {
-            var points = region.Points.Select(Screen).ToArray();
+            var points = region.Outline().Select(Screen).ToArray();
             for (var i = 1; i < points.Length - 1; i++)
                 draw.AddTriangleFilled(points[0], points[i], points[i + 1], Ui.Color(235, 60, 50, 90));
             Outline(region, Ui.Color(220, 40, 30), 2.5f);

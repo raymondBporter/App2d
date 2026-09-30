@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 
@@ -24,7 +25,7 @@ public sealed class EntityRuntimeTests
             foreach (var t in new[] { hit.Start, hit.Finish - .01f })
             {
                 var box = EntityCollision.Attack(hero, new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
-                TestModels.Near(new Vector3(3 + hit.Window.OffsetX * facing, hit.Window.OffsetY, 0), new Vector3((box.Points[0] + box.Points[2]) / 2, 0), 1e-4f, $"box centre at {t}, facing {facing}");
+                TestModels.Near(new Vector3(3 + hit.Window.OffsetX * facing, hit.Window.OffsetY, 0), new Vector3(box.Bounds.Center, 0), 1e-4f, $"box centre at {t}, facing {facing}");
             }
         // attack -> follow-up -> forehand -> follow-up: the traversal controller supports the first two, the chain the third.
         Assert.Equal(EntityControllers.FollowUp, swing.Next);
@@ -149,8 +150,8 @@ public sealed class EntityRuntimeTests
             else if (animator.ActionTime < hit.Finish)
             {
                 sawActive = true; var region = EntityCollision.Attack(guard, pose, Assert.Single(active));
-                var xs = region.Points.Select(p => p.X); var ys = region.Points.Select(p => p.Y);
-                Assert.InRange(tip.X, xs.Min(), xs.Max()); Assert.InRange(tip.Y, ys.Min(), ys.Max());
+                var bounds = region.Bounds;
+                Assert.InRange(tip.X, bounds.Min.X, bounds.Max.X); Assert.InRange(tip.Y, bounds.Min.Y, bounds.Max.Y);
                 Assert.True((tip.X - position.X) * facing > 1.8f, "the strike reaches forward");
             }
             else if (animator.PreviousActionTime >= hit.Finish) { sawRecovery = true; Assert.Empty(active); }
@@ -171,7 +172,7 @@ public sealed class EntityRuntimeTests
         }
         var hurtRight = EntityCollision.Hurt(guard, right.Pose); var hurtLeft = EntityCollision.Hurt(guard, left.Pose);
         for (var i = 0; i < hurtRight.Count; i++)
-            Assert.Equal(hurtRight[i].Points.Max(p => p.X) - position.X, position.X - hurtLeft[i].Points.Min(p => p.X), 4);
+            Assert.Equal(hurtRight[i].Bounds.Max.X - position.X, position.X - hurtLeft[i].Bounds.Min.X, 4);
     }
 
     [Fact]

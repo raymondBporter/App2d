@@ -58,7 +58,7 @@ public sealed class CharacterGeometryTests
     public void EntityRegionsKeepTranslatedAndTouchingOverlapBehavior()
     {
         var region = EntityRegion.Box("hurt", new(2, 3), new(4, 2));
-        Assert.Equal(new Vector2(0, 2), region.Points[0]);
+        Assert.Equal(new Vector2(0, 2), region.Outline()[0]);
         Assert.True(region.Overlaps(region, new(10, 20), new(14, 20)));
         Assert.False(region.Overlaps(region, new(10, 20), new(14.01f, 20)));
     }

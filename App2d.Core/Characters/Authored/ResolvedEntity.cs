@@ -217,6 +217,9 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
 /// <summary>Movement, hurt and attack regions from one placed final pose. Graphics-free.</summary>
 public static class EntityCollision
 {
+    /// <summary>Radius, in authored units, given to hurt regions whose controls enclose no area.</summary>
+    public const float DegenerateHurtRadius = .005f;
+
     public static EntityRegion Movement(ResolvedEntity entity, Vector2 position, int facing)
     {
         var box = entity.Asset.Movement;
@@ -231,7 +234,9 @@ public static class EntityCollision
             var min = new Vector2(float.PositiveInfinity); var max = new Vector2(float.NegativeInfinity);
             foreach (var control in shape.Controls) { var p = pose.World(control); var xy = new Vector2(p.X, p.Y); min = Vector2.Min(min, xy); max = Vector2.Max(max, xy); }
             min -= new Vector2(shape.Pad); max += new Vector2(shape.Pad);
-            regions.Add(new(shape.Id, [min, new(max.X, min.Y), max, new(min.X, max.Y)]));
+            var size = max - min;
+            // Controls on one line with no pad enclose no area: a hairline capsule keeps them hittable without a degenerate box.
+            regions.Add(size.X > 0 && size.Y > 0 ? EntityRegion.Box(shape.Id, (min + max) / 2, size) : EntityRegion.Capsule(shape.Id, min, max, DegenerateHurtRadius));
         }
         return regions;
     }

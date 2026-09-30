@@ -210,7 +210,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         // not the attack box's centre (which can be outside the visible target).
         foreach (var region in EntityCollision.Hurt(Entity, Pose))
         {
-            var bounds = Rect2D.FromPoints([.. region.Points.Select(p => p * Scale)]);
+            var bounds = ToWorld(region).Bounds;
             if (!bounds.Intersects(hit)) continue;
             var point = (Vector2.Max(bounds.Min, hit.Min) + Vector2.Min(bounds.Max, hit.Max)) / 2;
             var d = Vector2.DistanceSquared(point, hit.Center);
@@ -223,7 +223,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         if (!_enabled || !IsAlive) yield break;
         foreach (var hit in _animator.ActiveHits())
-            yield return new SpatialObject2D(ToWorld(EntityCollision.Attack(Entity, Pose, hit)).ToShape());
+            yield return new SpatialObject2D(ToWorld(EntityCollision.Attack(Entity, Pose, hit)).Shape);
     }
 
     public bool TryRegisterHit(EntityId2D source, int attack)

@@ -52,7 +52,7 @@ internal sealed class ArenaDrawing(GraphicsDevice device, PointCharacterRenderer
         for (var x = (int)MathF.Floor(centerX - 14); x <= centerX + 14; x++) mesh.Line(new(x, 0, 7), new(x, -8 * pixel, 7), pixel, ground);
         void Outline(EntityRegion region, Color color, float width)
         {
-            var points = region.Points.Select(p => new Vector3(p, -6)).ToList();
+            var points = region.Outline().Select(p => new Vector3(p, -6)).ToList();
             for (var i = 0; i < points.Count; i++) mesh.Line(points[i], points[(i + 1) % points.Count], width * pixel, color);
         }
         foreach (var actor in actors)
@@ -61,7 +61,7 @@ internal sealed class ArenaDrawing(GraphicsDevice device, PointCharacterRenderer
             if (!detail || !actor.Alive) continue;
             foreach (var region in actor.Hurt) Outline(region, new Color(60, 120, 220), 2);
             foreach (var region in actor.Attacks)
-                mesh.Polygon([.. region.Points.Select(q => new Vector3(q, -6.1f))], new Color(235, 60, 50, 90), new Color(220, 40, 30), 3 * pixel);
+                mesh.Polygon([.. region.Outline().Select(q => new Vector3(q, -6.1f))], new Color(235, 60, 50, 90), new Color(220, 40, 30), 3 * pixel);
             foreach (var equipment in actor.Entity.Equipment)
                 mesh.Disk(ActorPose.PropPoint(actor.Pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip) with { Z = -6.2f }, 5 * pixel, new Color(240, 200, 40));
             foreach (var anchor in actor.Anchors.Values)

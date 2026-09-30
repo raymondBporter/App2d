@@ -1,13 +1,15 @@
 using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Shapes;
 
 /// <summary>
 /// Turns a local shape plus a <see cref="Similarity2D"/> pose into the world-space raw parameters that the
-/// <see cref="App2d.Core.Geometry"/> functions consume, and writes the perimeters and convex cores that
-/// <see cref="ShapeDistance2D"/> and the collision table operate on. Adding a shape means adding it here once.
+/// <see cref="App2d.Core.Geometry"/> functions consume, writes the perimeters and convex cores that
+/// <see cref="ShapeDistance2D"/> and the collision table operate on, and bakes simple transforms into new shapes.
+/// Adding a shape means adding it here once.
 /// </summary>
 public static class WorldShape2D
 {
@@ -118,5 +120,63 @@ public static class WorldShape2D
         for (var i = 0; i < count; i++) vertices[i] = pose.TransformPoint(vertices[i]);
         radius *= pose.Scale;
         return count;
+    }
+
+    /// <summary>The number of vertices <see cref="WriteOutline"/> produces: the perimeter count for polygonal shapes, or the sample count for round ones.</summary>
+    /// <param name="shape">Any shape.</param>
+    /// <param name="roundSegments">Samples around a circle or ellipse; a capsule uses half per cap.</param>
+    /// <returns>The outline vertex count, or 0 for half-spaces and composites.</returns>
+    public static int OutlineVertexCount(IShape2D shape, int roundSegments) => shape switch
+    {
+        Circle2D or Ellipse2D => roundSegments,
+        Capsule2D => 2 * (roundSegments / 2 + 1),
+        _ => PerimeterVertexCount(shape)
+    };
+
+    /// <summary>Writes a drawable local perimeter for any bounded shape. Round shapes are sampled; polygonal shapes use their exact perimeter.</summary>
+    /// <param name="shape">Any shape.</param>
+    /// <param name="vertices">A buffer of at least <see cref="OutlineVertexCount"/> entries.</param>
+    /// <param name="roundSegments">Samples around a circle or ellipse, at least three; a capsule uses half per cap.</param>
+    /// <returns>The number of vertices written.</returns>
+    public static int WriteOutline(IShape2D shape, Span<Vector2> vertices, int roundSegments)
+    {
+        ArgGuard.ThrowIfNull(shape);
+        ArgGuard.ThrowIf(roundSegments < 3, "Round shapes need at least three segments.", nameof(roundSegments));
+        return shape switch
+        {
+            Circle2D circle => VertexGenerator2D.WriteCircle(vertices[..roundSegments], circle.Center, circle.Radius),
+            Ellipse2D ellipse => VertexGenerator2D.WriteEllipse(vertices[..roundSegments], ellipse.Center, ellipse.Radii),
+            Capsule2D capsule => VertexGenerator2D.WriteCapsule(vertices, capsule.Start, capsule.End, capsule.Radius, roundSegments / 2),
+            _ => WritePerimeter(shape, vertices)
+        };
+    }
+
+    /// <summary>A copy of a built-in convex shape uniformly scaled about the local origin.</summary>
+    /// <param name="shape">A built-in convex shape.</param>
+    /// <param name="scale">The finite, positive scale factor.</param>
+    /// <returns>A new shape of the same type with scaled geometry.</returns>
+    /// <exception cref="NotSupportedException">The shape is not a built-in convex type.</exception>
+    public static IConvexShape2D Scaled(IConvexShape2D shape, float scale)
+    {
+        ArgGuard.ThrowIfNull(shape);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(scale);
+        return shape switch
+        {
+            Circle2D circle => new Circle2D(circle.Radius * scale, circle.Center * scale),
+            Ellipse2D ellipse => new Ellipse2D(ellipse.Radii * scale, ellipse.Center * scale),
+            Capsule2D capsule => new Capsule2D(capsule.Start * scale, capsule.End * scale, capsule.Radius * scale),
+            AxisAlignedRectangle2D rectangle => new AxisAlignedRectangle2D(rectangle.Min * scale, rectangle.Max * scale),
+            Rectangle2D rectangle => new Rectangle2D(rectangle.Min * scale, rectangle.Max * scale),
+            Triangle2D triangle => new Triangle2D(triangle.A * scale, triangle.B * scale, triangle.C * scale),
+            ConvexPolygon2D polygon => ScaledPolygon(polygon, scale),
+            _ => throw new NotSupportedException($"Cannot scale {shape.GetType().Name}.")
+        };
+    }
+
+    private static ConvexPolygon2D ScaledPolygon(ConvexPolygon2D polygon, float scale)
+    {
+        var vertices = polygon.Vertices.ToArray();
+        for (var i = 0; i < vertices.Length; i++) vertices[i] *= scale;
+        return new ConvexPolygon2D(vertices);
     }
 }
