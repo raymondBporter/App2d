@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -17,7 +18,7 @@ public sealed class DistanceSquaredTests
             var end = Random();
             var otherStart = Random();
             var otherEnd = Random();
-            var direction = new Vector2(random.NextSingle() * 4 - 2, random.NextSingle() * 4 - 2);
+            var direction = new Vector2(random.NextFloat(-2f, 2f), random.NextFloat(-2f, 2f));
             if (direction.LengthSquared() < .01f) direction = Vector2.UnitX;
             var rectangle = Rect2D.FromPoints(start, end);
 
@@ -32,7 +33,7 @@ public sealed class DistanceSquaredTests
             Near(Vector2.Distance(point, ClosestPoint2D.OnPolygonPerimeter(point, square)), Distance2D.DistanceSquaredToPolygonPerimeter(point, square));
         }
 
-        Vector2 Random() => new(random.NextSingle() * 10 - 5, random.NextSingle() * 10 - 5);
+        Vector2 Random() => new(random.NextFloat(-5f, 5f), random.NextFloat(-5f, 5f));
 
         static void Near(float distance, float squared) => Assert.InRange(squared, distance * distance - 1e-3f, distance * distance + 1e-3f);
     }

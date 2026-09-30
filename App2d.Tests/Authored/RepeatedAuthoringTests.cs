@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Mathematics;
 using System.Diagnostics;
 using System.Numerics;
 
@@ -287,11 +288,11 @@ public sealed class RepeatedAuthoringTests : IDisposable
         {
             var build = new PersonBuild
             {
-                Legs = .8f + (float)random.NextDouble() * .5f,
-                Torso = .85f + (float)random.NextDouble() * .35f,
-                Arms = .85f + (float)random.NextDouble() * .35f,
-                Width = .7f + (float)random.NextDouble() * .7f,
-                Head = .85f + (float)random.NextDouble() * .3f,
+                Legs = random.NextFloat(.8f, 1.3f),
+                Torso = random.NextFloat(.85f, 1.2f),
+                Arms = random.NextFloat(.85f, 1.2f),
+                Width = random.NextFloat(.7f, 1.4f),
+                Head = random.NextFloat(.85f, 1.15f),
             };
             var variant = build.Apply(person, $"person-{i:00}", $"Person {i:00}");
             EntityAuthoring.ApplyLook(person, variant, looks[i % looks.Length]);

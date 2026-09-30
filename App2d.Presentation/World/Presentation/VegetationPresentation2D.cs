@@ -1,5 +1,6 @@
 using App2d.Contracts.World;
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Rendering;
 using App2d.Rendering.Vegetation;
 using App2d.Tiles;
@@ -166,8 +167,8 @@ public sealed class VegetationPresentation2D
         {
             if (_clippings.Count >= 256) break;
             _clippings.Add(new(tip,
-                new Vector2((random.NextSingle() - 0.5f) * 65f, 90f + random.NextSingle() * 40f) * scale,
-                (random.NextSingle() - 0.5f) * 12f, random.NextSingle() * MathF.Tau, scale));
+                new Vector2(random.NextFloat(-0.5f, 0.5f) * 65f, random.NextFloat(90f, 130f)) * scale,
+                random.NextFloat(-0.5f, 0.5f) * 12f, random.NextFloat(MathF.Tau), scale));
         }
     }
 

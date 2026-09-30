@@ -32,7 +32,7 @@ public sealed class ProceduralTree2D
         if (depth <= 1)
         {
             var radius = _height * float.Lerp(0.12f, 0.21f, random.NextSingle());
-            _crowns.Add(new(end, radius, random.NextSingle() * MathF.Tau,
+            _crowns.Add(new(end, radius, random.NextFloat(MathF.Tau),
                 XnaColor.Lerp(new(32, 87, 68), new(83, 145, 88), random.NextSingle())));
         }
         if (depth == 0) return;

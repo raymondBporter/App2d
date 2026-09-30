@@ -1,6 +1,7 @@
 using App2d.Core;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -21,7 +22,7 @@ public sealed class EllipseDistanceTests
         [
             center, center + new Vector2(a, 0), center + new Vector2(0, b), center + new Vector2(-a * 3, 0), center + new Vector2(0, b * 3),
             center + new Vector2(a * .5f, 0), center + new Vector2(0, b * .5f), center + new Vector2(a * 2, b * 2), center + new Vector2(-a * .1f, b * .9f),
-            .. Enumerable.Range(0, 60).Select(_ => center + new Vector2((random.NextSingle() * 6 - 3) * a, (random.NextSingle() * 6 - 3) * b))
+            .. Enumerable.Range(0, 60).Select(_ => center + new Vector2(random.NextFloat(-3f, 3f) * a, random.NextFloat(-3f, 3f) * b))
         ];
         foreach (var point in queries)
         {
@@ -69,7 +70,7 @@ public sealed class EllipseDistanceTests
         var contacts = 0;
         for (var i = 0; i < 200; i++)
         {
-            circle.Transform.Position = ellipse.Transform.Position + new Vector2(random.NextSingle() * 8 - 4, random.NextSingle() * 8 - 4);
+            circle.Transform.Position = ellipse.Transform.Position + new Vector2(random.NextFloat(-4f, 4f), random.NextFloat(-4f, 4f));
             var signed = ShapeDistance2D.SignedDistance(circle, ellipse);
             Assert.Equal(signed, ShapeDistance2D.SignedDistance(ellipse, circle), 5);
             var hit = ShapeCollision2D.TryGetContact(circle, ellipse, out var contact);

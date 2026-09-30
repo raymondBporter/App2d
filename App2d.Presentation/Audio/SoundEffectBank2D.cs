@@ -1,4 +1,5 @@
 using App2d.Core.Validation;
+using App2d.Core.Mathematics;
 using App2d.Audio;
 
 namespace App2d.Presentation.Audio;
@@ -65,16 +66,14 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
         if (!_cues.TryGetValue(effect, out var cue))
             throw ArgGuard.CreateOutOfRange(effect, "Unknown sound effect.");
 
-        var fullVolume = cue.Volume * RandomInRange(MinimumVolumeScale, MaximumVolumeScale);
+        var fullVolume = cue.Volume * Random.Shared.NextFloat(MinimumVolumeScale, MaximumVolumeScale);
         var voice = _mixer.Begin(cue.NextClip(), fullVolume * initialVolumeScale, effect == SoundEffect2D.GunCharge
             ? 1f
-            : RandomInRange(MinimumPlaybackRate, MaximumPlaybackRate));
+            : Random.Shared.NextFloat(MinimumPlaybackRate, MaximumPlaybackRate));
         return new SoundEffectVoice2D(voice, fullVolume);
     }
 
     public void Dispose() => _mixer.Dispose();
-
-    private static float RandomInRange(float minimum, float maximum) => minimum + (Random.Shared.NextSingle() * (maximum - minimum));
 
     private Cue Load(string rootPath, float volume, params string[] stems)
     {
