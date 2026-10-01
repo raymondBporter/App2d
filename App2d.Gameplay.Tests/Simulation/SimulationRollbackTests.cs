@@ -25,19 +25,18 @@ public sealed class SimulationRollbackTests
 {
     private static PersonCommand2D Hold => new() { PrimaryHeld = true };
     private static PersonCommand2D Press => Hold; // A press is a hold after a release.
-    private static PersonCommand2D Switch => new() { SwitchHeld = true };
+    private static PersonCommand2D Cast => new() { CastHeld = true };
     private static PersonCommand2D Move(float x) => new() { MoveX = x };
 
     [Fact]
     public void ChargeProjectileCreationExpiryAndSlotReuseReplayWithIdenticalIds()
     {
         using var game = new Fixture(gravity: false);
-        game.Step(Switch);
-        game.Step(Press);
-        game.Steps(30, Hold);
+        game.Step(Cast);
+        game.Steps(30, Cast);
         Assert.True(game.Arsenal.IsChargingPrimary);
-        var commands = Enumerable.Range(0, 330).Select(i => i == 100 || i == 200 ? Press :
-            i == 99 || i == 199 ? default : Hold).ToArray();
+        var commands = Enumerable.Range(0, 330).Select(i => i == 100 || i == 200 ? Cast :
+            i == 99 || i == 199 ? default : Cast).ToArray();
         var frames = AssertReplay(game, commands);
         Assert.Equal(3, frames.SelectMany(f => f.Events).OfType<WeaponOccurred2D>().Count(e => e.Occurrence is GunFired2D));
         var ids = frames.SelectMany(f => f.Players[0].Weapons.Projectiles).Select(p => p.Id).Distinct().ToArray();
@@ -45,8 +44,8 @@ public sealed class SimulationRollbackTests
         Assert.All(ids, id => Assert.True(id.IsValid));
         // Checkpoint with a live projectile retains its remaining lifetime and slot state.
         game.Step(default);
-        game.Step(Press);
-        game.Steps(75, Hold);
+        game.Step(Cast);
+        game.Steps(75, Cast);
         Assert.NotEmpty(game.Session.CapturePlayers()[0].Weapons.Projectiles);
         AssertReplay(game, Enumerable.Repeat(default(PersonCommand2D), 190));
     }
@@ -155,7 +154,6 @@ public sealed class SimulationRollbackTests
         var callbacks = 0;
         game.Player.Died += () => callbacks++;
         game.Player.Damaged += () => callbacks++;
-        game.Arsenal.EquipmentChanged += _ => callbacks++;
         game.Session.RestoreCheckpoint(entered);
         Assert.Equal(0, callbacks);
         Assert.Equal(enteredValue, Describe(game.Session.CaptureCheckpoint()));
@@ -216,15 +214,13 @@ public sealed class SimulationRollbackTests
     {
         using var first = new Fixture(gravity: false);
         using var second = new Fixture(gravity: false);
-        first.Step(Switch);
-        second.Step(Switch);
         var checkpoint = first.Session.CaptureCheckpoint();
-        first.Step(Press); first.Steps(71, Hold);
+        first.Step(Cast); first.Steps(71, Cast);
         var firstId = Assert.Single(first.Session.CapturePlayers()[0].Weapons.Projectiles).Id;
-        second.Step(Press); second.Steps(71, Hold);
+        second.Step(Cast); second.Steps(71, Cast);
         var secondId = Assert.Single(second.Session.CapturePlayers()[0].Weapons.Projectiles).Id;
         first.Session.RestoreCheckpoint(checkpoint);
-        first.Step(Press); first.Steps(71, Hold);
+        first.Step(Cast); first.Steps(71, Cast);
         Assert.Equal(firstId, Assert.Single(first.Session.CapturePlayers()[0].Weapons.Projectiles).Id);
         // Deterministic allocation: a server and a predicting client built the same way agree on IDs.
         Assert.Equal(firstId, secondId);
@@ -276,11 +272,10 @@ public sealed class SimulationRollbackTests
             [new(11, WorldThingKind2D.GreenDinosaur, null, true, new Vector2(240, 45))]);
         var enemy = Assert.Single(game.Level.EnemySystem.Combatants);
         enemy.Health.Damage(2);
-        game.Step(Switch);
-        game.Step(Press);
-        game.Steps(60, Hold);
+        game.Step(Cast);
+        game.Steps(60, Cast);
         var beforeHit = game.Session.CaptureCheckpoint();
-        var frames = AssertReplay(game, Enumerable.Repeat(Hold, 100));
+        var frames = AssertReplay(game, Enumerable.Repeat(Cast, 100));
         Assert.False(enemy.IsAlive);
         Assert.Contains(frames.SelectMany(f => f.Events).OfType<CombatDamageOccurred2D>(), e => e.Damage.WasKilled);
         var dead = game.Session.CaptureCheckpoint();
@@ -430,7 +425,8 @@ public sealed class SimulationRollbackTests
             Player = new(ids.Allocate(), Physics.CollisionSystem, Physics, Metrics, spawn, 2, 1, CombatFaction2D.Player, tileMap: Map);
             registry.Register(Player);
             Arsenal = new(ids, Player.Body, Metrics.GunMuzzleOffset, Physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat,
-                bounds => Level.TryGetSpikeSource(bounds, out _));
+                bounds => Level.TryGetSpikeSource(bounds, out _),
+                spells: new() { ShotChargeSeconds = .6f, MaximumEnergy = 300, StartingEnergy = 300 });
             Player.AttachActions(Arsenal);
             Session = new(Physics, Player, Arsenal, new SideScrollerSessionWorld2D(Level,
                 new ContactDamageSystem2D(Physics.CollisionSystem, 4, registry)), new(spawn, 5), combat);

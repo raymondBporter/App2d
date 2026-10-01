@@ -8,6 +8,12 @@ if (args.SequenceEqual(["--migrate-level"]))
 
 ApplicationConfiguration.Initialize();
 
+if (args is ["--spell-study", var spellDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(spellDirectory, spellsOnly: true);
+    return;
+}
+
 if (args is ["--hitstop-study", var timingDirectory])
 {
     App2d.Diagnostics.RenderingSmoke2D.Run(timingDirectory, timingOnly: true);

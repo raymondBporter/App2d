@@ -43,19 +43,19 @@ internal static class GunRenderingSmoke2D
         floorBody.CollisionMask = 2;
         var sounds = new SilentSounds();
         var arsenal = new PersonArsenal2D(ids, person.Body, metrics.GunMuzzleOffset, collision, 1, 4,
-            CombatFaction2D.Player, new CombatSystem2D(collision, new CombatantRegistry2D()));
+            CombatFaction2D.Player, new CombatSystem2D(collision, new CombatantRegistry2D()),
+            health: person.Health, spells: new() { ShotChargeSeconds = .6f, ShotRecoverySeconds = .06f });
         using var weaponPresentation = new WeaponPresentation2D(scene, textures, sounds);
         var weaponEvents = new List<WeaponEvent2D>();
         arsenal.WeaponOccurred += weaponEvents.Add;
         person.AttachActions(arsenal);
         using var presentation = new PersonPresentation2D(scene, textures, metrics);
-        arsenal.EquipmentChanged += presentation.Equip;
+        presentation.Equip(EquipmentKind2D.Gun);
         arsenal.ShotStarted += () => presentation.PlayShot(false);
-        arsenal.SelectNext();
         var camera = new Camera2D { Zoom = 4f };
         using var renderer = new Renderer2D(camera, device);
         using var target = new RenderTarget2D(device, width, height);
-        var hold = new PersonCommand2D(0f, 0f, false, false, false, PrimaryHeld: true, false);
+        var hold = new PersonCommand2D(0f, 0f, false, false, false, PrimaryHeld: false, false, CastHeld: true);
 
         foreach (var facing in new[] { 1f, -1f })
         {

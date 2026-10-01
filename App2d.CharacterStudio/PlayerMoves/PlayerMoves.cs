@@ -46,7 +46,7 @@ internal static partial class PlayerMoves
         ClimbTurn(m, onto: true), Climb(m), ClimbTurn(m, onto: false), WallGrip(m), BalanceForward(m), BalanceBackward(m),
         Hit(m), Death(m), Celebrate(m),
         .. SwingLab.GameClips(m), Sheathe(m), DownAttack(m),
-        GunAim(m), GunShot(m), GunWallShot(m),
+        GunAim(m), GunShot(m), GunWallShot(m), GunCharge(m), HealGather(m),
     ];
 
     /// <summary>Adds the move set's sockets to the Person model, then writes props and clips beside it.</summary>

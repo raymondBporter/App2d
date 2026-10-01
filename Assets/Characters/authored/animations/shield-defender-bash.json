@@ -1,0 +1,214 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "shield-defender-bash",
+  "name": "Shell defender / pullback bash recovery",
+  "model": "person",
+  "structureRevision": 1,
+  "duration": 1.4,
+  "loop": false,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "time": 0,
+          "x": 0.5,
+          "y": 0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": -0.35,
+          "y": 0.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "x": -0.35,
+          "y": 0.22,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.55,
+          "x": 0.78,
+          "y": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.7,
+          "x": 0.78,
+          "y": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.95,
+          "x": -0.25,
+          "y": 0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.2,
+          "x": -0.25,
+          "y": 0.12,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "x": 0.5,
+          "y": 0.12,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "time": 0,
+          "x": 0,
+          "y": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "x": 0.1,
+          "y": 0.15,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.55,
+          "x": 0.15,
+          "y": 0.2,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "x": 0,
+          "y": 0,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "hips",
+      "keys": [
+        {
+          "time": 0,
+          "x": 0,
+          "y": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "x": -0.035,
+          "y": -0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.55,
+          "x": 0.06,
+          "y": -0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.7,
+          "x": 0.06,
+          "y": -0.06,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "x": 0,
+          "y": 0,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "time": 0,
+          "angle": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "angle": 0.1,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.55,
+          "angle": -0.16,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.7,
+          "angle": -0.16,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.4,
+          "angle": 0,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 1.4
+    },
+    {
+      "chain": "right-leg",
+      "finish": 1.4
+    }
+  ],
+  "markers": [
+    {
+      "id": "pullback",
+      "time": 0.2
+    },
+    {
+      "id": "strike",
+      "time": 0.55
+    },
+    {
+      "id": "recover",
+      "time": 0.7
+    }
+  ],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "focused"
+        },
+        {
+          "time": 0.45,
+          "expression": "determined"
+        },
+        {
+          "time": 0.55,
+          "expression": "angry"
+        }
+      ]
+    }
+  ]
+}

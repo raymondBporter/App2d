@@ -6,6 +6,23 @@ namespace App2d.Tests.Input;
 
 public sealed class PlayerInputTests
 {
+    [Theory]
+    [InlineData(GamepadButton2D.Y, true)]
+    [InlineData(GamepadButton2D.B, false)]
+    public void XboxFaceButtonsHoldSpellsAndReleaseCleanly(GamepadButton2D button, bool shot)
+    {
+        var input = new InputState();
+        var mapper = new PlayerInputMapper2D();
+        input.SetGamepad(new(default, button, button, default) { IsConnected = true });
+        var command = mapper.Capture(input);
+        Assert.Equal(shot, command.CastHeld);
+        Assert.Equal(!shot, command.HealHeld);
+        Assert.False(command.PrimaryHeld);
+        Assert.False(command.SecondaryHeld);
+        input.SetGamepad(default);
+        Assert.Equal(default, mapper.Capture(input));
+    }
+
     [Fact]
     public void DeviceViewsReportTheSameHeldPressedAndReleasedLifecycle()
     {
@@ -118,8 +135,8 @@ public sealed class PlayerInputTests
         var input = new InputState();
         var mapper = new PlayerInputMapper2D();
         foreach (var key in new[] { Keys.E, Keys.B, Keys.F3 }) input.SetKey(key, true);
-        var pad = new GamepadState2D(default, GamepadButton2D.B | GamepadButton2D.Y,
-            GamepadButton2D.B | GamepadButton2D.Y, default);
+        var pad = new GamepadState2D(default, GamepadButton2D.LeftShoulder | GamepadButton2D.RightShoulder,
+            GamepadButton2D.LeftShoulder | GamepadButton2D.RightShoulder, default);
         input.SetGamepad(pad);
         Assert.Equal(default, mapper.Capture(input));
     }

@@ -22,3 +22,6 @@ public sealed record ChargeCancelled2D(Vector2 Position, float Progress) : Weapo
 public sealed record GunFired2D(Vector2 Position) : WeaponEvent2D(Position);
 public sealed record ProjectileImpact2D(Vector2 Position, EntityId2D ProjectileId) : WeaponEvent2D(Position);
 public sealed record SwordImpact2D(Vector2 Position) : WeaponEvent2D(Position);
+public sealed record HealStarted2D(Vector2 Position) : WeaponEvent2D(Position);
+public sealed record HealCancelled2D(Vector2 Position) : WeaponEvent2D(Position);
+public sealed record HealCompleted2D(Vector2 Position, int Amount) : WeaponEvent2D(Position);

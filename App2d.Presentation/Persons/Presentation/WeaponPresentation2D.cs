@@ -112,7 +112,6 @@ public sealed class WeaponPresentation2D : IDisposable
             StopCharge();
         }
 
-        if (equipment != EquipmentKind2D.Gun) _flashSeconds = _cancelSeconds = 0f;
         _glow.IsVisible = state.IsCharging || _cancelSeconds > 0f;
         _glow.Transform.Position = state.MuzzlePosition;
         var scale = state.IsCharging ? 0.2f + 0.8f * state.ChargeProgress

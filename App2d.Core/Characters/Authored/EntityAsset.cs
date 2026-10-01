@@ -45,6 +45,10 @@ public sealed record ProjectileDef
     public float Height { get; set; } = .08f;
     public int Damage { get; set; } = 1;
     public float Lifetime { get; set; } = 3;
+    /// <summary>Downward acceleration in model units/s²; zero preserves straight shots.</summary>
+    public float Gravity { get; set; }
+    /// <summary>When positive, solve an arc to the target sampled when the attack starts.</summary>
+    public float FlightSeconds { get; set; }
 }
 
 /// <summary>A gameplay event bound to an action moment. The controller interprets Id (for example "launch"); Sound, when set, plays.</summary>
@@ -93,6 +97,15 @@ public sealed record ControllerConfig
     /// <summary>AI: attack within this horizontal distance.</summary>
     public float Range { get; set; } = 1.5f;
     public float Cooldown { get; set; } = 1;
+    public bool RespectTerrain { get; set; }
+    public float VerticalRange { get; set; } = 2;
+    public float RetreatRange { get; set; }
+    public float RetreatSeconds { get; set; } = .35f;
+    public float RetreatPause { get; set; } = .65f;
+    public float ChargeSpeed { get; set; }
+    public float ChargeStartSeconds { get; set; }
+    public float ChargeEndSeconds { get; set; }
+    public float BrakeSeconds { get; set; } = .3f;
 }
 
 /// <summary>The stable body-local movement box. Animation never changes it.</summary>
@@ -122,6 +135,14 @@ public sealed record EquipmentBinding
     public string Socket { get; set; } = "";
 }
 
+/// <summary>Pose-derived front protection; an action's guard-open event exposes it through recovery.</summary>
+public sealed record GuardDef
+{
+    public string Prop { get; set; } = "";
+    public float Width { get; set; } = .9f;
+    public float Height { get; set; } = 1.4f;
+}
+
 /// <summary>
 /// What a character does in the game. References a model or variant and one of its base's motion sets; owns the
 /// controller, explicit actions, movement and hurt geometry, equipment and events. No entity inheritance.
@@ -135,6 +156,7 @@ public sealed class EntityAsset
     public string Name { get; set; } = "";
     public string Model { get; set; } = "";
     public string MotionSet { get; set; } = "";
+    public GuardDef? Guard { get; set; }
     /// <summary>Role assignments that win over the selected motion set.</summary>
     public Dictionary<string, string> Roles { get; set; } = [];
     public ControllerConfig Controller { get; set; } = new();
@@ -166,6 +188,15 @@ public sealed class EntityAsset
         new Limit(0, 100).Check(Controller.WalkSpeed, $"{owner} controller.walkSpeed"); new Limit(0, 100).Check(Controller.RunSpeed, $"{owner} controller.runSpeed");
         new Limit(0, 100).Check(Controller.JumpSpeed, $"{owner} controller.jumpSpeed"); new Limit(0, 100).Check(Controller.Range, $"{owner} controller.range");
         new Limit(0, 60).Check(Controller.Cooldown, $"{owner} controller.cooldown");
+        new Limit(0, 100).Check(Controller.VerticalRange, $"{owner} controller.verticalRange");
+        new Limit(0, 100).Check(Controller.RetreatRange, $"{owner} controller.retreatRange");
+        new Limit(0, 10).Check(Controller.RetreatSeconds, $"{owner} controller.retreatSeconds");
+        new Limit(0, 10).Check(Controller.RetreatPause, $"{owner} controller.retreatPause");
+        new Limit(0, 100).Check(Controller.ChargeSpeed, $"{owner} controller.chargeSpeed");
+        new Limit(0, 30).Check(Controller.ChargeStartSeconds, $"{owner} controller.chargeStartSeconds");
+        new Limit(0, 30).Check(Controller.ChargeEndSeconds, $"{owner} controller.chargeEndSeconds");
+        new Limit(.01f, 10).Check(Controller.BrakeSeconds, $"{owner} controller.brakeSeconds");
+        Require(Controller.ChargeSpeed == 0 || Controller.ChargeEndSeconds > Controller.ChargeStartSeconds, $"{owner}: charge end must follow charge start.");
         new Limit(1, 10000).Check(Health, $"{owner} health"); new Limit(.1f, 100).Check(Mass, $"{owner} mass");
         new Limit(.01f, 100).Check(Movement.Width, $"{owner} movement.width"); new Limit(.01f, 100).Check(Movement.Height, $"{owner} movement.height");
         new Limit(-100, 100).Check(Movement.OffsetX, $"{owner} movement.offsetX");
@@ -183,6 +214,12 @@ public sealed class EntityAsset
             Require(props.Add(binding.Prop), $"{owner}: prop '{binding.Prop}' is equipped twice.");
         }
         var actions = new HashSet<string>(StringComparer.Ordinal);
+        if (Guard is { } guard)
+        {
+            Require(props.Contains(guard.Prop), $"{owner}: guard prop '{guard.Prop}' must be equipped.");
+            new Limit(.01f, 10).Check(guard.Width, $"{owner} guard.width");
+            new Limit(.01f, 10).Check(guard.Height, $"{owner} guard.height");
+        }
         var chained = Actions.Where(a => a?.Next is not null).Select(a => a.Next!).ToHashSet(StringComparer.Ordinal);
         foreach (var action in Actions)
         {
@@ -206,6 +243,8 @@ public sealed class EntityAsset
                 new Limit(.1f, 200).Check(shot.Speed, field + " projectile.speed"); new Limit(.01f, 10).Check(shot.Width, field + " projectile.width");
                 new Limit(.01f, 10).Check(shot.Height, field + " projectile.height"); new Limit(0, 10000).Check(shot.Damage, field + " projectile.damage");
                 new Limit(.05f, 30).Check(shot.Lifetime, field + " projectile.lifetime");
+                new Limit(0, 200).Check(shot.Gravity, field + " projectile.gravity");
+                new Limit(0, 10).Check(shot.FlightSeconds, field + " projectile.flightSeconds");
             }
             var hits = new HashSet<string>(StringComparer.Ordinal);
             foreach (var hit in action.Hits)

@@ -67,7 +67,6 @@ internal abstract partial class MeleePersonWeapon2D(
         return facing;
     }
 
-    public override void OnDeselected() => _attack.Cancel();
     public override void Reset() => _attack.Cancel();
 
     public override void UpdateAfterPhysics(float deltaSeconds, float facing)

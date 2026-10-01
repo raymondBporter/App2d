@@ -1,0 +1,153 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-gun-charge",
+  "name": "Spell shot: gather",
+  "model": "person",
+  "structureRevision": 1,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "x": -0.007599493,
+          "y": -7.599592E-05,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "x": 0.011398289,
+          "y": -0.00017097592,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.022786321,
+          "y": -0.0006837845,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "right-shoulder",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.615,
+          "y": 0.63000005,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": 0.009999998,
+          "y": 0.15000004,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.45,
+          "x": 0.32,
+          "y": 0.53000003,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.41,
+          "y": 0.5900001,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "focused"
+        },
+        {
+          "time": 0.7,
+          "expression": "determined"
+        }
+      ]
+    }
+  ]
+}

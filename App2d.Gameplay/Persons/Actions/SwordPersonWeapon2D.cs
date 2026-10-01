@@ -63,8 +63,6 @@ internal sealed partial class SwordPersonWeapon2D(
         _downAttack.UpdateAfterPhysics(deltaSeconds, facing);
     }
 
-    public override void OnDeselected() => Reset();
-
     public override void Reset()
     {
         base.Reset();

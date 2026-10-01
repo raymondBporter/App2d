@@ -13,4 +13,5 @@ public readonly record struct PersonCommand2D(
     bool DownHeld,
     bool PrimaryHeld,
     bool SecondaryHeld,
-    bool SwitchHeld = false);
+    bool CastHeld = false,
+    bool HealHeld = false);

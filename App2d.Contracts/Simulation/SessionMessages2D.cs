@@ -89,7 +89,6 @@ public sealed record Respawned2D(SessionEventStamp2D Stamp, Vector2 Position) : 
 public sealed record GoalReached2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
 public sealed record CheckpointActivated2D(
     SessionEventStamp2D Stamp, long CheckpointId, int HitPoints, Vector2 Position) : SessionEvent2D(Stamp);
-public sealed record EquipmentChanged2D(SessionEventStamp2D Stamp, EquipmentKind2D Equipment) : SessionEvent2D(Stamp);
 public enum PlayerAttackKind2D { Melee, Downward, Shot, Punch, Kick }
 public sealed record AttackStarted2D(
     SessionEventStamp2D Stamp, PlayerAttackKind2D Kind,

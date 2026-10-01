@@ -1,0 +1,1147 @@
+{
+  "format": "app2d-model",
+  "version": 1,
+  "id": "triceratops",
+  "name": "Triceratops",
+  "structureRevision": 1,
+  "ink": "#242a29",
+  "controls": [
+    {
+      "id": "body",
+      "rest": {
+        "x": -0.25,
+        "y": 0.92,
+        "z": 0
+      }
+    },
+    {
+      "id": "body-up",
+      "parent": "body",
+      "rest": {
+        "x": -0.25,
+        "y": 1.42,
+        "z": 0
+      }
+    },
+    {
+      "id": "head",
+      "parent": "body",
+      "rest": {
+        "x": 0.72,
+        "y": 0.86,
+        "z": 0
+      }
+    },
+    {
+      "id": "head-up",
+      "parent": "head",
+      "rest": {
+        "x": 0.72,
+        "y": 1.36,
+        "z": 0
+      }
+    },
+    {
+      "id": "tail",
+      "parent": "body",
+      "rest": {
+        "x": -1.04,
+        "y": 0.98,
+        "z": 0
+      }
+    },
+    {
+      "id": "tail-up",
+      "parent": "tail",
+      "rest": {
+        "x": -1.04,
+        "y": 1.48,
+        "z": 0
+      }
+    },
+    {
+      "id": "far-hind-root",
+      "parent": "body",
+      "rest": {
+        "x": -0.72,
+        "y": 0.84,
+        "z": 0.16
+      }
+    },
+    {
+      "id": "far-hind-joint",
+      "parent": "far-hind-root",
+      "rest": {
+        "x": -0.56000006,
+        "y": 0.46,
+        "z": 0.16
+      }
+    },
+    {
+      "id": "far-hind-foot",
+      "parent": "far-hind-joint",
+      "rest": {
+        "x": -0.70000005,
+        "y": 0.1,
+        "z": 0.16
+      }
+    },
+    {
+      "id": "far-front-root",
+      "parent": "body",
+      "rest": {
+        "x": 0.38,
+        "y": 0.84,
+        "z": 0.16
+      }
+    },
+    {
+      "id": "far-front-joint",
+      "parent": "far-front-root",
+      "rest": {
+        "x": 0.26,
+        "y": 0.46,
+        "z": 0.16
+      }
+    },
+    {
+      "id": "far-front-foot",
+      "parent": "far-front-joint",
+      "rest": {
+        "x": 0.4,
+        "y": 0.1,
+        "z": 0.16
+      }
+    },
+    {
+      "id": "near-hind-root",
+      "parent": "body",
+      "rest": {
+        "x": -0.95,
+        "y": 0.84,
+        "z": -0.12
+      }
+    },
+    {
+      "id": "near-hind-joint",
+      "parent": "near-hind-root",
+      "rest": {
+        "x": -0.78999996,
+        "y": 0.46,
+        "z": -0.12
+      }
+    },
+    {
+      "id": "near-hind-foot",
+      "parent": "near-hind-joint",
+      "rest": {
+        "x": -0.93,
+        "y": 0.1,
+        "z": -0.12
+      }
+    },
+    {
+      "id": "near-front-root",
+      "parent": "body",
+      "rest": {
+        "x": 0.15,
+        "y": 0.84,
+        "z": -0.12
+      }
+    },
+    {
+      "id": "near-front-joint",
+      "parent": "near-front-root",
+      "rest": {
+        "x": 0.030000009,
+        "y": 0.46,
+        "z": -0.12
+      }
+    },
+    {
+      "id": "near-front-foot",
+      "parent": "near-front-joint",
+      "rest": {
+        "x": 0.17,
+        "y": 0.1,
+        "z": -0.12
+      }
+    }
+  ],
+  "chains": [
+    {
+      "id": "far-hind",
+      "root": "far-hind-root",
+      "joint": "far-hind-joint",
+      "end": "far-hind-foot",
+      "bend": -1
+    },
+    {
+      "id": "far-front",
+      "root": "far-front-root",
+      "joint": "far-front-joint",
+      "end": "far-front-foot"
+    },
+    {
+      "id": "near-hind",
+      "root": "near-hind-root",
+      "joint": "near-hind-joint",
+      "end": "near-hind-foot",
+      "bend": -1
+    },
+    {
+      "id": "near-front",
+      "root": "near-front-root",
+      "joint": "near-front-joint",
+      "end": "near-front-foot"
+    }
+  ],
+  "measures": [],
+  "parts": [
+    {
+      "id": "tail",
+      "kind": "polygon",
+      "a": "tail",
+      "b": "tail-up",
+      "width": 0.85,
+      "height": 0.52,
+      "offsetX": -0.35,
+      "offsetY": 0.03,
+      "depth": 0.02,
+      "fill": "#79bdb0",
+      "points": [
+        {
+          "x": 0.5,
+          "y": -0.25,
+          "z": 0
+        },
+        {
+          "x": -0.2,
+          "y": -0.17,
+          "z": 0
+        },
+        {
+          "x": -0.5,
+          "y": 0.32,
+          "z": 0
+        },
+        {
+          "x": -0.12,
+          "y": 0.12,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": 0.45,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "far-hind-upper",
+      "a": "far-hind-root",
+      "b": "far-hind-joint",
+      "width": 0.25,
+      "height": 0.60231054,
+      "offsetY": 0.20615526,
+      "fill": "#527f78"
+    },
+    {
+      "id": "far-hind-lower",
+      "a": "far-hind-joint",
+      "b": "far-hind-foot",
+      "width": 0.23,
+      "height": 0.5362642,
+      "offsetY": 0.19313207,
+      "depth": -0.005,
+      "fill": "#527f78"
+    },
+    {
+      "id": "far-hind-paw",
+      "kind": "polygon",
+      "a": "far-hind-foot",
+      "width": 0.36,
+      "height": 0.22,
+      "offsetX": 0.015,
+      "offsetY": -0.005,
+      "depth": -0.015,
+      "fill": "#527f78",
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.47,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": -0.02,
+          "z": 0
+        },
+        {
+          "x": 0.24,
+          "y": 0.45,
+          "z": 0
+        },
+        {
+          "x": -0.25,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": -0.47,
+          "y": 0.12,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "far-hind-toe-0",
+      "a": "far-hind-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": -0.08,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "far-hind-toe-1",
+      "a": "far-hind-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": 0.0050000027,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "far-hind-toe-2",
+      "a": "far-hind-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": 0.09,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "far-front-upper",
+      "a": "far-front-root",
+      "b": "far-front-joint",
+      "width": 0.25,
+      "height": 0.58849716,
+      "offsetY": 0.19924857,
+      "fill": "#527f78"
+    },
+    {
+      "id": "far-front-lower",
+      "a": "far-front-joint",
+      "b": "far-front-foot",
+      "width": 0.23,
+      "height": 0.5362642,
+      "offsetY": 0.19313209,
+      "depth": -0.005,
+      "fill": "#527f78"
+    },
+    {
+      "id": "far-front-paw",
+      "kind": "polygon",
+      "a": "far-front-foot",
+      "width": 0.36,
+      "height": 0.22,
+      "offsetX": 0.015,
+      "offsetY": -0.005,
+      "depth": -0.015,
+      "fill": "#527f78",
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.47,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": -0.02,
+          "z": 0
+        },
+        {
+          "x": 0.24,
+          "y": 0.45,
+          "z": 0
+        },
+        {
+          "x": -0.25,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": -0.47,
+          "y": 0.12,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "far-front-toe-0",
+      "a": "far-front-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": -0.08,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "far-front-toe-1",
+      "a": "far-front-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": 0.0050000027,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "far-front-toe-2",
+      "a": "far-front-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": 0.09,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "near-hind-upper",
+      "a": "near-hind-root",
+      "b": "near-hind-joint",
+      "width": 0.25,
+      "height": 0.60231054,
+      "offsetY": 0.20615527,
+      "fill": "#79bdb0"
+    },
+    {
+      "id": "near-hind-lower",
+      "a": "near-hind-joint",
+      "b": "near-hind-foot",
+      "width": 0.23,
+      "height": 0.5362642,
+      "offsetY": 0.19313209,
+      "depth": -0.005,
+      "fill": "#79bdb0"
+    },
+    {
+      "id": "near-hind-paw",
+      "kind": "polygon",
+      "a": "near-hind-foot",
+      "width": 0.36,
+      "height": 0.22,
+      "offsetX": 0.015,
+      "offsetY": -0.005,
+      "depth": -0.015,
+      "fill": "#79bdb0",
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.47,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": -0.02,
+          "z": 0
+        },
+        {
+          "x": 0.24,
+          "y": 0.45,
+          "z": 0
+        },
+        {
+          "x": -0.25,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": -0.47,
+          "y": 0.12,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "near-hind-toe-0",
+      "a": "near-hind-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": -0.08,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "near-hind-toe-1",
+      "a": "near-hind-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": 0.0050000027,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "near-hind-toe-2",
+      "a": "near-hind-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": 0.09,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "near-front-upper",
+      "a": "near-front-root",
+      "b": "near-front-joint",
+      "width": 0.25,
+      "height": 0.58849716,
+      "offsetY": 0.19924857,
+      "fill": "#79bdb0"
+    },
+    {
+      "id": "near-front-lower",
+      "a": "near-front-joint",
+      "b": "near-front-foot",
+      "width": 0.23,
+      "height": 0.5362642,
+      "offsetY": 0.19313207,
+      "depth": -0.005,
+      "fill": "#79bdb0"
+    },
+    {
+      "id": "near-front-paw",
+      "kind": "polygon",
+      "a": "near-front-foot",
+      "width": 0.36,
+      "height": 0.22,
+      "offsetX": 0.015,
+      "offsetY": -0.005,
+      "depth": -0.015,
+      "fill": "#79bdb0",
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.47,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": -0.02,
+          "z": 0
+        },
+        {
+          "x": 0.24,
+          "y": 0.45,
+          "z": 0
+        },
+        {
+          "x": -0.25,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": -0.47,
+          "y": 0.12,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "near-front-toe-0",
+      "a": "near-front-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": -0.08,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "near-front-toe-1",
+      "a": "near-front-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": 0.0050000027,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "near-front-toe-2",
+      "a": "near-front-foot",
+      "width": 0.045,
+      "height": 0.065,
+      "offsetX": 0.09,
+      "offsetY": -0.055,
+      "depth": -0.025,
+      "fill": "#f6e4bb",
+      "outlineWidth": 0.012
+    },
+    {
+      "id": "body",
+      "a": "body",
+      "b": "body-up",
+      "width": 1.92,
+      "height": 0.9,
+      "offsetX": -0.05,
+      "offsetY": 0.04,
+      "fill": "#79bdb0",
+      "paint": [
+        {
+          "fill": "#397783",
+          "points": [
+            {
+              "x": -0.14999999,
+              "y": 0.15,
+              "z": 0
+            },
+            {
+              "x": -0.1620577,
+              "y": 0.245,
+              "z": 0
+            },
+            {
+              "x": -0.195,
+              "y": 0.31454486,
+              "z": 0
+            },
+            {
+              "x": -0.24,
+              "y": 0.34,
+              "z": 0
+            },
+            {
+              "x": -0.285,
+              "y": 0.31454483,
+              "z": 0
+            },
+            {
+              "x": -0.3179423,
+              "y": 0.24499997,
+              "z": 0
+            },
+            {
+              "x": -0.32999998,
+              "y": 0.14999999,
+              "z": 0
+            },
+            {
+              "x": -0.31794226,
+              "y": 0.05499997,
+              "z": 0
+            },
+            {
+              "x": -0.285,
+              "y": -0.01454483,
+              "z": 0
+            },
+            {
+              "x": -0.24,
+              "y": -0.03999999,
+              "z": 0
+            },
+            {
+              "x": -0.19499996,
+              "y": -0.014544785,
+              "z": 0
+            },
+            {
+              "x": -0.1620577,
+              "y": 0.05500005,
+              "z": 0
+            }
+          ]
+        },
+        {
+          "fill": "#397783",
+          "points": [
+            {
+              "x": 0.024999999,
+              "y": 0.03,
+              "z": 0
+            },
+            {
+              "x": 0.016291648,
+              "y": 0.1,
+              "z": 0
+            },
+            {
+              "x": -0.007500004,
+              "y": 0.15124357,
+              "z": 0
+            },
+            {
+              "x": -0.040000003,
+              "y": 0.17,
+              "z": 0
+            },
+            {
+              "x": -0.072500005,
+              "y": 0.15124355,
+              "z": 0
+            },
+            {
+              "x": -0.096291654,
+              "y": 0.09999998,
+              "z": 0
+            },
+            {
+              "x": -0.105,
+              "y": 0.029999986,
+              "z": 0
+            },
+            {
+              "x": -0.09629164,
+              "y": -0.04000002,
+              "z": 0
+            },
+            {
+              "x": -0.07249999,
+              "y": -0.091243565,
+              "z": 0
+            },
+            {
+              "x": -0.04,
+              "y": -0.11,
+              "z": 0
+            },
+            {
+              "x": -0.007499978,
+              "y": -0.09124353,
+              "z": 0
+            },
+            {
+              "x": 0.01629166,
+              "y": -0.03999997,
+              "z": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "head",
+      "kind": "polygon",
+      "a": "head",
+      "b": "head-up",
+      "width": 0.97,
+      "height": 0.68,
+      "offsetX": 0.12,
+      "offsetY": -0.02,
+      "depth": -0.24,
+      "fill": "#79bdb0",
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.18,
+          "z": 0
+        },
+        {
+          "x": -0.25,
+          "y": -0.42,
+          "z": 0
+        },
+        {
+          "x": 0.25,
+          "y": -0.5,
+          "z": 0
+        },
+        {
+          "x": 0.48,
+          "y": -0.22,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": 0.02,
+          "z": 0
+        },
+        {
+          "x": 0.25,
+          "y": 0.25,
+          "z": 0
+        },
+        {
+          "x": -0.15,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": -0.48,
+          "y": 0.32,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "frill",
+      "kind": "polygon",
+      "a": "head",
+      "b": "head-up",
+      "width": 0.88,
+      "height": 1.38,
+      "offsetX": -0.22,
+      "offsetY": 0.35,
+      "depth": -0.26,
+      "fill": "#91cebf",
+      "points": [
+        {
+          "x": -0.3,
+          "y": -0.48,
+          "z": 0
+        },
+        {
+          "x": 0.08,
+          "y": -0.5,
+          "z": 0
+        },
+        {
+          "x": 0.43,
+          "y": -0.23,
+          "z": 0
+        },
+        {
+          "x": 0.47,
+          "y": 0.14,
+          "z": 0
+        },
+        {
+          "x": 0.32,
+          "y": 0.48,
+          "z": 0
+        },
+        {
+          "x": 0.19,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": 0.06,
+          "y": 0.4,
+          "z": 0
+        },
+        {
+          "x": -0.1,
+          "y": 0.43,
+          "z": 0
+        },
+        {
+          "x": -0.22,
+          "y": 0.31,
+          "z": 0
+        },
+        {
+          "x": -0.38,
+          "y": 0.3,
+          "z": 0
+        },
+        {
+          "x": -0.43,
+          "y": 0.13,
+          "z": 0
+        },
+        {
+          "x": -0.5,
+          "y": 0.02,
+          "z": 0
+        },
+        {
+          "x": -0.45,
+          "y": -0.15,
+          "z": 0
+        },
+        {
+          "x": -0.48,
+          "y": -0.28,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "far-brow-horn",
+      "kind": "polygon",
+      "a": "head",
+      "b": "head-up",
+      "width": 0.31,
+      "height": 0.36,
+      "offsetX": 0.25,
+      "offsetY": 0.47,
+      "depth": -0.255,
+      "fill": "#f6e4bb",
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.5,
+          "z": 0
+        },
+        {
+          "x": 0.05,
+          "y": -0.4,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": 0.5,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "near-brow-horn",
+      "kind": "polygon",
+      "a": "head",
+      "b": "head-up",
+      "width": 0.36,
+      "height": 0.37,
+      "offsetX": 0.05,
+      "offsetY": 0.48,
+      "depth": -0.29,
+      "fill": "#f6e4bb",
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.25,
+          "z": 0
+        },
+        {
+          "x": -0.13,
+          "y": -0.5,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": 0.12,
+          "y": 0.4,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "nose-horn",
+      "kind": "polygon",
+      "a": "head",
+      "b": "head-up",
+      "width": 0.22,
+      "height": 0.25,
+      "offsetX": 0.54,
+      "offsetY": 0.2,
+      "depth": -0.29,
+      "fill": "#f6e4bb",
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.32,
+          "z": 0
+        },
+        {
+          "x": 0.06,
+          "y": -0.5,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": 0.5,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "eye",
+      "a": "head",
+      "b": "head-up",
+      "width": 0.09,
+      "height": 0.12,
+      "offsetX": 0.34,
+      "offsetY": 0.01,
+      "depth": -0.31,
+      "fill": "#242a29",
+      "outlineWidth": 0
+    },
+    {
+      "id": "brow",
+      "kind": "polygon",
+      "a": "head",
+      "b": "head-up",
+      "width": 0.16,
+      "height": 0.09,
+      "offsetX": 0.33,
+      "offsetY": 0.11,
+      "depth": -0.31,
+      "fill": "#242a29",
+      "outlineWidth": 0,
+      "points": [
+        {
+          "x": -0.5,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": -0.08,
+          "z": 0
+        },
+        {
+          "x": 0.35,
+          "y": -0.5,
+          "z": 0
+        },
+        {
+          "x": -0.5,
+          "y": 0.1,
+          "z": 0
+        }
+      ]
+    },
+    {
+      "id": "mouth",
+      "kind": "polygon",
+      "a": "head",
+      "b": "head-up",
+      "width": 0.23,
+      "height": 0.08,
+      "offsetX": 0.35,
+      "offsetY": -0.17,
+      "depth": -0.31,
+      "fill": "#242a29",
+      "outlineWidth": 0,
+      "points": [
+        {
+          "x": -0.5,
+          "y": -0.3,
+          "z": 0
+        },
+        {
+          "x": -0.1,
+          "y": 0.5,
+          "z": 0
+        },
+        {
+          "x": 0.5,
+          "y": -0.35,
+          "z": 0
+        },
+        {
+          "x": 0.44,
+          "y": -0.5,
+          "z": 0
+        },
+        {
+          "x": -0.1,
+          "y": 0.1,
+          "z": 0
+        },
+        {
+          "x": -0.42,
+          "y": -0.5,
+          "z": 0
+        }
+      ]
+    }
+  ],
+  "sockets": [
+    {
+      "id": "head-art",
+      "control": "head",
+      "toward": "head-up"
+    },
+    {
+      "id": "body-art",
+      "control": "body",
+      "toward": "body-up"
+    }
+  ],
+  "motionSets": [
+    {
+      "id": "standard",
+      "name": "Quadruped",
+      "roles": {
+        "idle": "triceratops-idle",
+        "walk": "triceratops-walk",
+        "run": "triceratops-run",
+        "scrape": "triceratops-scrape",
+        "head-down": "triceratops-head-down",
+        "rush": "triceratops-rush",
+        "brake": "triceratops-brake",
+        "recover": "triceratops-recover"
+      }
+    }
+  ],
+  "hurtLayouts": [
+    {
+      "id": "body",
+      "regions": [
+        {
+          "id": "body",
+          "controls": [
+            "body",
+            "head"
+          ],
+          "pad": 0.35
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "id": "head",
+      "targets": [
+        "head",
+        "head-up"
+      ]
+    },
+    {
+      "id": "legs",
+      "targets": [
+        "far-hind",
+        "far-front",
+        "near-hind",
+        "near-front"
+      ]
+    }
+  ],
+  "looks": []
+}

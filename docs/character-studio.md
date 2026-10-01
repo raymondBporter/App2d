@@ -44,6 +44,34 @@ Rendering uses the same orthographic depth buffer as characters, with flat facet
 ink on solid props. Coplanar triangulation edges are suppressed. Legacy stroke/polygon props still load. Socket
 orientation is evaluated before both drawing and gameplay point projection; gameplay collision remains XY.
 
+## Quadrupeds and Triceratops
+
+Use **New > Model: Quadruped template** for a simple four-legged creature, or **Model: Triceratops template**
+for the concept-art starter: mint body, broad scalloped frill, three horns, tail, dark spots and chunky clawed feet.
+Both create an independent base and eight unsaved animations with IDs prefixed by the model ID. Use **Save all**
+to keep the model and clips together. The shipped `quadruped` and `triceratops` assets are also available in the browser.
+
+Each has four two-bone IK chains with locomotion-frame foot targets, a body/root, and separate head and tail controls.
+In **Model > Edit rig**, move the rest controls to change anatomy. In **Animate**, drag feet to key their targets;
+rotate the head or tail to pose their attached artwork. Walk/run/rush have travel and planted contact intervals.
+The clips are idle, walk, run, scrape, head-down, rush, brake and recover. These are editable animation studies;
+charge AI, damage, dust effects and a view-changing slow turn are separate gameplay/artwork work.
+
+Drawing parts now include **polygon** cutouts. Select a cutout in Model, expand **Edit cutout silhouette**, and enable
+**Drag silhouette points in viewport** to drag its gold handles. Coordinates are relative to the part's width/height;
+insert or remove perimeter points in the inspector. Self-crossing/degenerate outlines retain the last valid shape.
+Cutouts attach to a control and use **Point toward** for orientation, just like other shapes. Concave silhouettes
+are triangulated for fill and picking respects their actual perimeter. **Surface paint** reuses clothing's normalized
+color patches, clipped to the outline. Variants can resize/recolor/hide these parts; perimeter edits belong to the base.
+No texture or deformable mesh is needed for this starter.
+
+```powershell
+dotnet run --project App2d.CharacterStudio -- --smoke-quadrupeds artifacts/quadrupeds
+```
+
+This renders pose samples and both facings through the game drawing path. `--write-quadrupeds <authored-dir>`
+explicitly regenerates the two starter models and their clips, overwriting edits to those files.
+
 ## Human proportions
 
 Humans use legs at 80% of the original study length. This is baked into the shared Person rest pose;

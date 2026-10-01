@@ -1,0 +1,78 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "baby-triceratops",
+  "name": "Baby triceratops",
+  "model": "baby-triceratops-rig",
+  "motionSet": "standard",
+  "roles": {},
+  "health": 8,
+  "mass": 1.5,
+  "movement": {
+    "width": 1.6,
+    "height": 0.95,
+    "offsetX": -0.1
+  },
+  "hurt": {
+    "layout": "body",
+    "regions": {}
+  },
+  "equipment": [],
+  "controller": {
+    "walkSpeed": 1.2,
+    "range": 4.5,
+    "cooldown": 0.7,
+    "respectTerrain": true,
+    "verticalRange": 0.8,
+    "chargeSpeed": 5,
+    "chargeStartSeconds": 1,
+    "chargeEndSeconds": 1.85,
+    "brakeSeconds": 0.3
+  },
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "baby-triceratops-charge",
+      "hits": [
+        {
+          "id": "horns",
+          "socket": "head-art",
+          "width": 0.75,
+          "height": 0.65,
+          "offsetX": 0,
+          "start": {
+            "marker": "rush"
+          },
+          "finish": {
+            "marker": "brake"
+          },
+          "damage": 3,
+          "sound": "hit"
+        }
+      ],
+      "events": [
+        {
+          "id": "scrape",
+          "at": {
+            "marker": "scrape"
+          },
+          "sound": "charge-scrape"
+        },
+        {
+          "id": "rush",
+          "at": {
+            "marker": "rush"
+          },
+          "sound": "charge-rush"
+        },
+        {
+          "id": "brake",
+          "at": {
+            "marker": "brake"
+          },
+          "sound": "charge-stop"
+        }
+      ]
+    }
+  ]
+}

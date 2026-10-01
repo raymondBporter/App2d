@@ -6,6 +6,9 @@ public interface IPersonActionSet2D
 {
     PersonActionState2D CaptureActionState() => default;
     bool IsChargingPrimary => false;
+    SpellState2D CaptureSpellState() => default;
+    void SetSpellInput(bool castHeld, bool castPressed, bool healHeld, bool canHeal, bool canCast, float facing) { }
+    void CancelHealing() { }
     void SetPrimaryInput(bool held, bool canCharge, bool released = false) { }
     void InterruptPrimary() { }
     bool ConsumeDownAttackBounce() => false;
@@ -14,6 +17,5 @@ public interface IPersonActionSet2D
     float UsePrimary(float facing);
     float UseDownwardPrimary(float facing) => UsePrimary(facing);
     float UseSecondary(float facing);
-    void SelectNext();
     void Reset();
 }

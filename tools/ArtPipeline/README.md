@@ -52,6 +52,7 @@ against `Assets/Runtime` while iterating.
 | `import_blender_character.py` | Authored sword clips (balance and downward attack) added to `characters/player-sword` | Cached Blender renders in `Sources/characters/player-sword` |
 | `import_maaot_caves.py` | `environments/tilesets/dark-cave`, `mossy-cavern` | Maaot zips (see above) |
 | `build_gun_effects.py` | `effects/gun/*`, `ui/hud/gun-charge/*`, `audio/sfx/gun-*.wav` | Procedural; design notes are in the script's docstring |
+| `build_spell_audio.py` | `audio/sfx/gun-charge.wav`, `audio/sfx/heal-*.wav` | Procedural; uses `Static/gameplay/player-spells.json` durations after the gun bake |
 | `import_green_dinosaur.py` | `characters/green-dinosaur` | `Sources/user/green-dinosaur/walk-cycle.png` |
 
 `import_stick_figure.py` owns the shared character normalization: it scales and

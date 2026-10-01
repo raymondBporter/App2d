@@ -27,7 +27,10 @@ public readonly record struct EnemyState2D(
     public ActorPose? AuthoredPose { get; init; }
 }
 
-public readonly record struct EntityBoltState2D(Vector2 Position, Vector2 Velocity, Vector2 Size, float Lifetime);
+public readonly record struct EntityBoltState2D(Vector2 Position, Vector2 Velocity, Vector2 Size, float Lifetime)
+{
+    public float Gravity { get; init; }
+}
 public sealed record EntityCue2D(EntityId2D EntityId, Vector2 Position, string Cue) : EnemyEvent2D(EntityId, Position);
 
 public abstract record EnemyEvent2D(EntityId2D EntityId, Vector2 Position);

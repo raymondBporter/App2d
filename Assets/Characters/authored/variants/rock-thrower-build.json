@@ -1,0 +1,25 @@
+{
+  "format": "app2d-variant",
+  "version": 1,
+  "id": "rock-thrower-build",
+  "name": "Rock thrower",
+  "base": "person",
+  "build": {
+    "legs": 0.9,
+    "torso": 0.95,
+    "arms": 1.05,
+    "width": 1.05,
+    "head": 1.05
+  },
+  "rest": {},
+  "parts": {
+    "body": {
+      "fill": "#f3dcc6",
+      "paint": []
+    },
+    "head": {
+      "fill": "#f3dcc6",
+      "face": "smug"
+    }
+  }
+}

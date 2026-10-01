@@ -10,7 +10,7 @@ namespace App2d.CharacterStudio;
 /// </summary>
 internal sealed partial class ProofRenders : Game
 {
-    public enum Mode { Motion, Entities, MoveReview, Weapons, SwingLab, Wardrobe }
+    public enum Mode { Motion, Entities, MoveReview, Weapons, SwingLab, Wardrobe, Quadrupeds }
 
     private readonly GraphicsDeviceManager _graphics;
     private readonly string _assetRoot, _smokePath;
@@ -37,7 +37,7 @@ internal sealed partial class ProofRenders : Game
 
     protected override void Draw(GameTime time)
     {
-        var more = _mode switch { Mode.Motion => PrepareMotionProof(), Mode.Entities => PrepareEntityProof(), Mode.Weapons => RenderWeaponProof(), Mode.Wardrobe => RenderWardrobeProof(), Mode.SwingLab => RenderSwingLab(), _ => RenderMoveReview() };
+        var more = _mode switch { Mode.Quadrupeds => RenderQuadrupedProof(), Mode.Motion => PrepareMotionProof(), Mode.Entities => PrepareEntityProof(), Mode.Weapons => RenderWeaponProof(), Mode.Wardrobe => RenderWardrobeProof(), Mode.SwingLab => RenderSwingLab(), _ => RenderMoveReview() };
         _smokeIndex++;
         GraphicsDevice.SetRenderTarget(null);
         if (!more) { Exit(); return; }

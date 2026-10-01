@@ -2,6 +2,7 @@ using App2d.Core.Validation;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
+using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
 using App2d.Core.Geometry;
@@ -16,9 +17,6 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
 {
     private readonly SwordPersonWeapon2D _sword;
     private readonly GunPersonWeapon2D _gun;
-    private readonly IPersonWeapon2D[] _weapons;
-    private readonly UnarmedPersonActions2D _unarmed;
-    private int _equipmentIndex;
 
     public PersonArsenal2D(
         EntityIdAllocator2D ids,
@@ -30,117 +28,90 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         CombatFaction2D ownerFaction,
         CombatSystem2D combat,
         Func<Bounds2D, bool>? overlapsSpikes = null,
-        AuthoredHero2D? hero = null, Func<float, Vector2>? muzzle = null)
+        AuthoredHero2D? hero = null, Func<float, Vector2>? muzzle = null,
+        Health2D? health = null, SpellTuning2D? spells = null)
     {
         ArgGuard.ThrowIfNull(ids);
         ArgGuard.ThrowIfNull(ownerBody);
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(combat);
+        _spellHealth = health ?? (combat.Combatants.Find(ownerBody.EntityId) as Person2D)?.Health;
+        _spellTuning = (spells ?? new SpellTuning2D()).Validate();
+        _spellPosition = () => ownerBody.WorldObject.Transform.Position;
+        _energy = _spellTuning.StartingEnergy;
 
         _sword = new SwordPersonWeapon2D(ids, ownerBody, ownerFaction, targetLayer, combat,
             duration => MeleeAttackStarted?.Invoke(duration), Publish,
             duration => DownAttackStarted?.Invoke(duration), overlapsSpikes,
             hero);
         _gun = new GunPersonWeapon2D(ids, ownerBody, muzzleOffset, collision, worldLayer, targetLayer,
-            ownerFaction, combat, () => ShotStarted?.Invoke(), Publish, muzzle, hero?.Shot);
-        _weapons = [_sword, _gun];
-        _unarmed = new UnarmedPersonActions2D(
-            ids,
-            ownerBody,
-            ownerFaction,
-            targetLayer,
-            combat);
-        _unarmed.AttackStarted += (kind, duration) =>
-            UnarmedAttackStarted?.Invoke(kind, duration);
+            ownerFaction, combat, () => ShotStarted?.Invoke(), Publish, muzzle, hero?.Shot,
+            _spellTuning.ShotChargeSeconds, _spellTuning.ShotRecoverySeconds,
+            () => SpendEnergy(_spellTuning.ShotCost));
     }
 
     public event Action<WeaponEvent2D>? WeaponOccurred;
     private void Publish(WeaponEvent2D occurrence) => WeaponOccurred?.Invoke(occurrence);
     public WeaponState2D CaptureWeaponState() => _gun.CaptureState();
-    public PersonActionState2D CaptureActionState() => IsUnarmed ? _unarmed.CaptureActionState() : EquippedWeapon.CaptureActionState();
+    public PersonActionState2D CaptureActionState() => _sword.IsAttackActive
+        ? _sword.CaptureActionState() : _gun.CaptureActionState();
 
-    public event Action<EquipmentKind2D>? EquipmentChanged;
     public event Action<float>? MeleeAttackStarted;
     public event Action<float>? DownAttackStarted;
     public event Action? ShotStarted;
-    public event Action<UnarmedAttackKind2D, float>? UnarmedAttackStarted;
+    public event Action<UnarmedAttackKind2D, float>? UnarmedAttackStarted { add { } remove { } }
 
     public bool ConsumeDownAttackBounce() => _sword.ConsumeBounce();
-    public bool IsChargingPrimary => !IsUnarmed && EquippedWeapon == _gun && _gun.IsCharging;
-    public void SetPrimaryInput(bool held, bool canCharge, bool released = false) =>
-        _gun.SetInput(held, canCharge && !IsUnarmed && EquippedWeapon == _gun);
+    public bool IsChargingPrimary => _gun.IsCharging;
     public void InterruptPrimary()
     {
         _gun.CancelCharge();
         _sword.Reset();
+        CancelHealing();
+        _healNeedsRelease = true;
     }
 
-    public bool IsMeleeAttackActive =>
-        IsUnarmed
-            ? _unarmed.IsAttackActive
-            : EquippedWeapon is MeleePersonWeapon2D { IsAttackActive: true };
-    public EquipmentKind2D Equipment => IsUnarmed ? EquipmentKind2D.Unarmed : EquippedWeapon.Kind;
-
-    private bool IsUnarmed => _equipmentIndex == _weapons.Length;
-    private IPersonWeapon2D EquippedWeapon => _weapons[_equipmentIndex];
+    public bool IsMeleeAttackActive => _sword.IsAttackActive;
+    public EquipmentKind2D Equipment => EquipmentKind2D.Sword;
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
-        foreach (var weapon in _weapons)
-        {
-            foreach (var hitbox in weapon.ActiveHitboxes)
-                yield return hitbox;
-        }
-        foreach (var hitbox in _unarmed.GetActiveAttackHitboxes())
-            yield return hitbox;
+        foreach (var hitbox in _sword.ActiveHitboxes) yield return hitbox;
+        foreach (var hitbox in _gun.ActiveHitboxes) yield return hitbox;
     }
 
     public IEnumerable<SpatialObject2D> GetActiveSwordHitboxes() =>
-        Equipment == EquipmentKind2D.Sword ? _sword.ActiveHitboxes : [];
+        _sword.ActiveHitboxes;
 
     public void BeginFrame(float deltaSeconds)
     {
-        foreach (var weapon in _weapons)
-            weapon.BeginFrame(deltaSeconds);
-        _unarmed.BeginFrame(deltaSeconds);
+        _sword.BeginFrame(deltaSeconds);
+        _gun.BeginFrame(deltaSeconds);
     }
 
     public void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
-        foreach (var weapon in _weapons)
-            weapon.UpdateAfterPhysics(deltaSeconds, facing);
-        _unarmed.UpdateAfterPhysics(deltaSeconds, facing);
+        RechargeEnergy(deltaSeconds);
+        _sword.UpdateAfterPhysics(deltaSeconds, facing);
+        _gun.UpdateAfterPhysics(deltaSeconds, facing);
+        UpdateHealing(deltaSeconds);
     }
 
     public void Reset()
     {
-        foreach (var weapon in _weapons)
-            weapon.Reset();
-        _unarmed.Reset();
+        _sword.Reset();
+        _gun.Reset();
+        CancelHealing();
+        _healNeedsRelease = true;
+        _energy = _spellTuning.StartingEnergy;
+        _energyRecharge = 0;
     }
 
     public float UsePrimary(float facing) =>
-        IsUnarmed
-            ? _unarmed.UsePrimary(facing)
-            : EquippedWeapon.Use(facing);
+        SpellBusy ? facing : _sword.Use(facing);
 
     public float UseDownwardPrimary(float facing) =>
-        !IsUnarmed && EquippedWeapon is SwordPersonWeapon2D sword
-            ? sword.UseDownward(facing)
-            : UsePrimary(facing);
+        SpellBusy ? facing : _sword.UseDownward(facing);
 
-    public float UseSecondary(float facing) =>
-        IsUnarmed
-            ? _unarmed.UseSecondary(facing)
-            : facing;
-
-    public void SelectNext()
-    {
-        if (IsUnarmed)
-            _unarmed.Reset();
-        else
-            EquippedWeapon.OnDeselected();
-        _equipmentIndex = (_equipmentIndex + 1) % (_weapons.Length + 1);
-        EquipmentChanged?.Invoke(Equipment);
-    }
+    public float UseSecondary(float facing) => facing;
 }

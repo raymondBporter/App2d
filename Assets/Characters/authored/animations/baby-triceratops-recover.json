@@ -1,0 +1,78 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "baby-triceratops-recover",
+  "name": "Baby triceratops / recover",
+  "model": "baby-triceratops-rig",
+  "structureRevision": 1,
+  "duration": 1.2,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "head",
+      "keys": [
+        {
+          "angle": -0.95
+        },
+        {
+          "time": 0.6,
+          "angle": -0.35
+        },
+        {
+          "time": 1.2
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "y": -0.126
+        },
+        {
+          "time": 1.2
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "tail",
+      "keys": [
+        {
+          "angle": -0.15
+        },
+        {
+          "time": 0.6,
+          "angle": 0.16
+        },
+        {
+          "time": 1.2
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "far-hind",
+      "finish": 1.2
+    },
+    {
+      "chain": "far-front",
+      "finish": 1.2
+    },
+    {
+      "chain": "near-hind",
+      "finish": 1.2
+    },
+    {
+      "chain": "near-front",
+      "finish": 1.2
+    }
+  ],
+  "markers": [],
+  "faces": []
+}

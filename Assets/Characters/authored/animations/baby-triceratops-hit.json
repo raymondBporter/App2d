@@ -1,0 +1,59 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "baby-triceratops-hit",
+  "name": "Baby triceratops / hit",
+  "model": "baby-triceratops-rig",
+  "structureRevision": 1,
+  "duration": 0.3,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "body",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "ease": "smooth",
+          "angle": 0.18
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth",
+          "angle": 0
+        }
+      ]
+    },
+    {
+      "kind": "translate",
+      "target": "body",
+      "keys": [
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.12,
+          "ease": "smooth",
+          "x": -0.08,
+          "y": 0
+        },
+        {
+          "time": 0.3,
+          "ease": "smooth",
+          "x": 0,
+          "y": 0
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": []
+}

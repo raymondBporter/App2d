@@ -1,0 +1,191 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "player-heal-gather",
+  "name": "Heal: gather",
+  "model": "person",
+  "structureRevision": 1,
+  "reference": {
+    "leg": 0.9914766,
+    "arm": 0.6544882,
+    "torso": 0.65
+  },
+  "travel": {
+    "scale": "leg",
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "hips",
+      "keys": [
+        {
+          "y": 0.012,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "y": -0.027999999,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "y": -0.058,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "hips",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "angle": -0.1,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "angle": -0.14,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "chest",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.06489172,
+          "y": -0.003247261,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.090703025,
+          "y": -0.006359577,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.06054092,
+          "y": -0.004853636,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.07549434,
+          "y": -0.0075747073,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "right-arm",
+      "keys": [
+        {
+          "x": 0.089999996,
+          "y": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.18896753,
+          "y": 0.47096583,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.18325882,
+          "y": 0.49827427,
+          "ease": "smooth"
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "left-arm",
+      "keys": [
+        {
+          "x": 0.15,
+          "y": 0.3,
+          "ease": "smooth"
+        },
+        {
+          "time": 0.25,
+          "x": 0.22477436,
+          "y": 0.5147594,
+          "ease": "smooth"
+        },
+        {
+          "time": 1,
+          "x": 0.21728572,
+          "y": 0.5434647,
+          "ease": "smooth"
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "left-leg",
+      "finish": 1,
+      "target": {
+        "x": -0.065,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "chain": "right-leg",
+      "finish": 1,
+      "target": {
+        "x": 0.065,
+        "y": 0,
+        "z": 0
+      }
+    }
+  ],
+  "markers": [],
+  "faces": [
+    {
+      "part": "head",
+      "keys": [
+        {
+          "expression": "focused"
+        }
+      ]
+    }
+  ]
+}

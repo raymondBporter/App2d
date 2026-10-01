@@ -89,6 +89,8 @@ public sealed record PuppetPart
     /// <summary>Null inherits the model's ink width. Does not change facial expression strokes.</summary>
     public float? OutlineWidth { get; set; }
     public List<PartPaint>? Paint { get; set; }
+    /// <summary>Normalized cutout perimeter, scaled by Width/Height in the attachment frame.</summary>
+    public List<PuppetPoint>? Points { get; set; }
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
@@ -99,7 +101,7 @@ public sealed record PuppetPart
     {
         if (A is null || !isControl(A)) throw new InvalidDataException("Unknown control: " + A);
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
-        EntityVocabulary.Require(Kind, ["stroke", "ellipse", "box", "trapezoid"], "part.kind");
+        EntityVocabulary.Require(Kind, ["stroke", "ellipse", "box", "trapezoid", "polygon"], "part.kind");
         if (Kind == "stroke" && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
@@ -107,6 +109,7 @@ public sealed record PuppetPart
         new Limit(.01f, 1).Check(TopWidthScale, "part.topWidthScale");
         if (OutlineWidth is { } outline) new Limit(0, 1).Check(outline, "part.outlineWidth");
         PartPaint.Check(Paint);
+        if (Kind == "polygon") PartGeometry.CheckCutout(Points);
         if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
         new Limit(-1, 1).Check(FaceX, "part.faceX");
     }

@@ -78,7 +78,8 @@ public sealed class SideScrollerSimulation2D : IDisposable
         Func<float, Vector2>? muzzle = hero is null ? null : facing => hero.Muzzle(facing, player.IsWallGripping);
         var arsenal = new PersonArsenal2D(ids, player.Body, traversal.GunMuzzleOffset, collision,
             SideScrollerLayers2D.World, SideScrollerLayers2D.Enemy, CombatFaction2D.Player, combat,
-            overlapsSpikes: bounds => level.TryGetSpikeSource(bounds, out _), hero: hero, muzzle: muzzle);
+            overlapsSpikes: bounds => level.TryGetSpikeSource(bounds, out _), hero: hero, muzzle: muzzle,
+            health: player.Health, spells: definition.Spells);
         player.AttachActions(arsenal);
 
         var session = new SideScrollerSession2D(physics, player, arsenal,

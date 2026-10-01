@@ -8,7 +8,7 @@ namespace App2d.Diagnostics;
 /// <summary>Renders real game assets and the tile palette without opening a play/edit session.</summary>
 internal static class RenderingSmoke2D
 {
-    public static void Run(string outputDirectory, bool facesOnly = false, bool vegetationOnly = false, bool contactOnly = false, bool timingOnly = false, bool platformOnly = false, IReadOnlyList<string>? tilesetPairs = null)
+    public static void Run(string outputDirectory, bool facesOnly = false, bool vegetationOnly = false, bool contactOnly = false, bool timingOnly = false, bool platformOnly = false, IReadOnlyList<string>? tilesetPairs = null, bool spellsOnly = false)
     {
         Directory.CreateDirectory(outputDirectory);
         using var window = new Form { ClientSize = new Size(1280, 720) };
@@ -23,6 +23,12 @@ internal static class RenderingSmoke2D
                 PresentationInterval = PresentInterval.Immediate
             });
         if (facesOnly) { FaceRenderingSmoke2D.Run(device, outputDirectory); return; }
+        if (spellsOnly)
+        {
+            using var textures = new App2d.Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
+            SpellRenderingSmoke2D.Run(device, textures, outputDirectory);
+            return;
+        }
         if (tilesetPairs is not null)
         {
             using var textures = new App2d.Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);

@@ -92,10 +92,6 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
     public float UseSecondary(float facing) =>
         Use(_kick, facing);
 
-    public void SelectNext()
-    {
-    }
-
     public void Reset()
     {
         _punch.Action.Cancel();

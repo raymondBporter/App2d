@@ -14,8 +14,9 @@ namespace App2d.Gameplay.Persons.Actions;
 /// <summary>Hold to charge one shot, fired automatically as soon as charging completes.</summary>
 internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
 {
-    private const float ChargeSeconds = 0.6f;
-    private const float RecoverySeconds = 0.06f;
+    private readonly float ChargeSeconds;
+    private readonly float RecoverySeconds;
+    private readonly Func<bool>? _spendEnergy;
     /// <summary>A bolt's size, speed (pixels) and lifetime, and its damage; from the authored hero's shot when it has one.</summary>
     internal readonly record struct Shot(Vector2 Size, float Speed, float Lifetime, int Damage);
     private static readonly Shot DefaultShot = new(new(30f, 10f), 1250f, 1.5f, 2);
@@ -47,9 +48,13 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         EntityIdAllocator2D ids,
         PhysicsBody2D ownerBody, Vector2 muzzleOffset, CollisionSystem2D collision,
         uint worldLayer, uint targetLayer, CombatFaction2D ownerFaction,
-        CombatSystem2D combat, Action shotStarted, Action<WeaponEvent2D> publish, Func<float, Vector2>? muzzle = null, Shot? shot = null)
+        CombatSystem2D combat, Action shotStarted, Action<WeaponEvent2D> publish, Func<float, Vector2>? muzzle = null, Shot? shot = null,
+        float chargeSeconds = .6f, float recoverySeconds = .06f, Func<bool>? spendEnergy = null)
         : base(EquipmentKind2D.Gun)
     {
+        ChargeSeconds = chargeSeconds;
+        RecoverySeconds = recoverySeconds;
+        _spendEnergy = spendEnergy;
         _shot = shot ?? DefaultShot;
         _projectileIds = new EntityIdSequence2D(ids, ProjectileIdCapacity);
         _ownerBody = ArgGuard.RequireNotNull(ownerBody);
@@ -143,6 +148,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
 
     private void Fire()
     {
+        if (_spendEnergy is not null && !_spendEnergy()) { CancelCharge(); return; }
         IsCharging = false;
         _chargeTime = 0f;
         var muzzle = MuzzlePosition;
@@ -200,16 +206,11 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         _publish(new ChargeCancelled2D(MuzzlePosition, progress));
     }
 
-    public override void OnDeselected()
+    public override void Reset()
     {
         CancelCharge();
         _recoverySeconds = 0f;
         _secondsSinceShot = null;
-    }
-
-    public override void Reset()
-    {
-        OnDeselected();
         _needsRelease = true;
         foreach (var projectile in _bullets) projectile.Deactivate();
     }

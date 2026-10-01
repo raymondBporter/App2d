@@ -18,7 +18,7 @@ namespace App2d.Gameplay.Tests.Persons;
 public sealed class GunChargeTests
 {
     // Held-state commands: the person derives the press from the previous tick's command.
-    private static PersonCommand2D Hold => new() { PrimaryHeld = true };
+    private static PersonCommand2D Hold => new() { CastHeld = true };
     private static PersonCommand2D Release => default;
     private static PersonCommand2D Press => Hold;
 
@@ -54,7 +54,7 @@ public sealed class GunChargeTests
 
     [Theory]
     [InlineData("release")]
-    [InlineData("switch")]
+    [InlineData("dash")]
     [InlineData("hit")]
     [InlineData("reset")]
     [InlineData("disable")]
@@ -68,7 +68,7 @@ public sealed class GunChargeTests
         switch (cause)
         {
             case "release": command = Release; break;
-            case "switch": command = Hold with { SwitchHeld = true }; break;
+            case "dash": command = Hold with { DashHeld = true }; break;
             case "hit": Assert.True(game.Person.TakeDamage(1, new Vector2(-100f, 100f))); break;
             case "reset": game.Person.Reset(Vector2.Zero); break;
             case "disable": game.Person.SetSimulationEnabled(false); break;
@@ -119,14 +119,10 @@ public sealed class GunChargeTests
     [Theory]
     [InlineData("move", false)]
     [InlineData("jump", false)]
-    [InlineData("dash", false)]
     [InlineData("drop", false)]
-    [InlineData("climb", false)]
     [InlineData("move", true)]
     [InlineData("jump", true)]
-    [InlineData("dash", true)]
     [InlineData("drop", true)]
-    [InlineData("climb", true)]
     public void ChargingAndAutomaticFiringPreserveNormalMovement(string kind, bool chargeFirst)
     {
         using var game = new Fixture(ladder: kind == "climb");
@@ -152,7 +148,7 @@ public sealed class GunChargeTests
             // One-tick pulses become presses; only the jump stays held.
             var intent = i == 0 ? movement : movement with
             { DashHeld = false, DownHeld = false, JumpHeld = kind == "jump" };
-            game.Step(intent with { PrimaryHeld = true });
+            game.Step(intent with { CastHeld = true });
             baseline.Step(intent);
             Assert.Equal((chargeFirst ? 30 : 0) + i + 1 < 72, game.Arsenal.IsChargingPrimary);
             Assert.Equal(baseline.Person.Position, game.Person.Position);
@@ -237,10 +233,10 @@ public sealed class GunChargeTests
             Ground.CollisionLayer = 1;
             Ground.CollisionMask = 2;
             Arsenal = new(new EntityIdAllocator2D(), Person.Body, metrics.GunMuzzleOffset, collision, 1, 4,
-                CombatFaction2D.Player, new CombatSystem2D(collision, new CombatantRegistry2D()));
+                CombatFaction2D.Player, new CombatSystem2D(collision, new CombatantRegistry2D()),
+                health: Person.Health, spells: new() { ShotChargeSeconds = .6f, ShotRecoverySeconds = .06f });
             Arsenal.WeaponOccurred += Events.Add;
             Person.AttachActions(Arsenal);
-            Arsenal.SelectNext();
             Arsenal.ShotStarted += () => Shots++;
         }
 
