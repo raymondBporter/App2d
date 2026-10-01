@@ -7,12 +7,9 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Combat;
 
-public sealed class CombatSystem2D(
-    CollisionSystem2D collision,
-    CombatantRegistry2D combatants)
+public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistry2D combatants)
 {
-    private readonly CollisionSystem2D _collision =
-        ArgGuard.RequireNotNull(collision);
+    private readonly CollisionSystem2D _collision = ArgGuard.RequireNotNull(collision);
     private readonly List<CollisionOverlap2D> _overlaps = [];
 
     public CombatantRegistry2D Combatants { get; } = ArgGuard.RequireNotNull(combatants);
