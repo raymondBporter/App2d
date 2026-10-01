@@ -56,17 +56,17 @@ internal static class StandardSkeleton2D
         var solved = new SolvedRigidPose2D { Facing = facing };
         var torsoAngle = pose.TorsoAngle * facing;
         var torsoStart = hips + new Vector2(0f, 5f);
-        var chest = torsoStart + Rotate(new Vector2(0f, TorsoLength), torsoAngle);
+        var chest = torsoStart + Polar2D.ToCartesian(TorsoLength, torsoAngle + MathF.PI / 2f);
         solved.Bones.Add(StandardBones2D.Torso, new BoneSegment2D(torsoStart, chest));
 
         var headAngle = torsoAngle + pose.HeadAngle * facing;
-        var headCenter = chest + Rotate(new Vector2(0f, 48f), headAngle);
+        var headCenter = chest + Polar2D.ToCartesian(48f, headAngle + MathF.PI / 2f);
         // Unit length keeps a meaningful rigid transform for an eventual asymmetric
         // head PNG while the circle stand-in remains visually unchanged.
         solved.Bones.Add(StandardBones2D.Head,
-            new BoneSegment2D(headCenter, headCenter + Rotate(Vector2.UnitX, headAngle)));
+            new BoneSegment2D(headCenter, headCenter + Polar2D.Direction(headAngle)));
 
-        var shoulderCenter = chest + Rotate(new Vector2(0f, -20f), torsoAngle);
+        var shoulderCenter = chest + Polar2D.ToCartesian(20f, torsoAngle - MathF.PI / 2f);
         var shoulderLeft = shoulderCenter + new Vector2(-5f * facing, -2f);
         var shoulderRight = shoulderCenter + new Vector2(5f * facing, 2f);
         var hipLeft = hips + new Vector2(-7f * facing, 0f);
@@ -127,7 +127,7 @@ internal static class StandardSkeleton2D
         solved.Sockets.Add(StandardBones2D.HandSocketRight,
             new RigidSocket2D(rightHand.End, rightHand.Angle));
         solved.Sockets.Add(StandardBones2D.HeadTopSocket,
-            new RigidSocket2D(headCenter + Rotate(new Vector2(0f, HeadRadius), headAngle), headAngle));
+            new RigidSocket2D(headCenter + Polar2D.ToCartesian(HeadRadius, headAngle + MathF.PI / 2f), headAngle));
         return solved;
     }
 
@@ -165,6 +165,4 @@ internal static class StandardSkeleton2D
 
     public static Vector2 ToLocal(Vector2 hips, Vector2 world, int facing) =>
         new((world.X - hips.X) * facing, world.Y - hips.Y);
-
-    private static Vector2 Rotate(Vector2 value, float angle) => Vector2.Transform(value, Matrix3x2.CreateRotation(angle));
 }
