@@ -8,7 +8,7 @@ using System.Numerics;
 namespace App2d.Contracts.World;
 
 /// <summary>Fixed per platform instance; a replaced platform gets a new runtime ID.</summary>
-public readonly record struct MovingPlatformDefinition2D(EntityId2D Id, long ThingId, Vector2 Size, uint ColorArgb);
+public readonly record struct MovingPlatformDefinition2D(EntityId2D Id, long ThingId, Size2D Size, uint ColorArgb);
 public readonly record struct MovingPlatformState2D(EntityId2D Id, Vector2 Position);
 public readonly record struct CheckpointPlacement2D(long ThingId, Vector2 BasePosition);
 public readonly record struct CheckpointState2D(long ThingId, bool IsActive);

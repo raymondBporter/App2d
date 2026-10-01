@@ -4,6 +4,7 @@ using App2d.Core;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Mathematics;
+using App2d.Core.Geometry;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
@@ -18,7 +19,7 @@ public sealed partial class MovingPlatform2D : IDisposable
         PhysicsWorld2D physics,
         Vector2 start,
         Vector2 travel,
-        Vector2 size,
+        Size2D size,
         float speed,
         uint collisionLayer,
         uint collisionMask,
@@ -29,12 +30,12 @@ public sealed partial class MovingPlatform2D : IDisposable
         ArgGuard.ThrowIf(!id.IsValid, "A platform requires a valid entity ID.", nameof(id));
         Id = id;
         ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(size);
+        ArgGuard.ThrowIf(!size.IsValid, "Platform size must have positive finite dimensions.", nameof(size));
         _motion = new PingPongMotion2D(start, travel, speed, easing ?? Easing.Smooth);
         Size = size;
         ThingId = thingId;
         ColorArgb = colorArgb;
-        _kinematic = new KinematicEntity2D(id, physics, AxisAlignedRectangle2D.FromSize(size),
+        _kinematic = new KinematicEntity2D(id, physics, AxisAlignedRectangle2D.FromSize(size.ToVector2()),
             _motion, collisionLayer, collisionMask);
         Body = _kinematic.Body;
         WorldObject = _kinematic.WorldObject;
@@ -45,7 +46,7 @@ public sealed partial class MovingPlatform2D : IDisposable
 
     public EntityId2D Id { get; }
     public long ThingId { get; }
-    public Vector2 Size { get; }
+    public Size2D Size { get; }
     public uint ColorArgb { get; }
     public MovingPlatformDefinition2D CaptureDefinition() => new(Id, ThingId, Size, ColorArgb);
     public MovingPlatformState2D CaptureState() => new(Id, WorldObject.Transform.Position);

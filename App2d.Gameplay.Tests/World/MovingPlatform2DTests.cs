@@ -319,7 +319,7 @@ public sealed class MovingPlatform2DTests
             physics,
             Vector2.Zero,
             travel,
-            new Vector2(40f, 10f),
+            new Size2D(40f, 10f),
             speed,
             collisionLayer: WorldLayer,
             collisionMask: uint.MaxValue);

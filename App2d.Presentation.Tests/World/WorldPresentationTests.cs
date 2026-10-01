@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Physics;
@@ -62,7 +63,7 @@ public sealed class WorldPresentationTests
         view.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.Equal(platform.WorldObject.Transform.Position, platformVisual.Transform.Position);
         Assert.NotEqual(original.MovingPlatforms[0].Position, platformVisual.Transform.Position);
-        level.ReloadMovingPlatforms([Platform() with { Size = new Vector2(100f, 12f) }]);
+        level.ReloadMovingPlatforms([Platform() with { Size = new Size2D(100f, 12f) }]);
         Assert.NotEqual(platform.Id, Assert.Single(level.CaptureContent().MovingPlatforms).Id);
         view.Update(level.CaptureContent(), level.CaptureWorld(), 0f);
         Assert.DoesNotContain(platformVisual, scene);
@@ -76,5 +77,5 @@ public sealed class WorldPresentationTests
     private static SideScrollerLevel2D CreateLevel(EditableTileMap2D map, MovingPlatformSpec2D[]? platforms = null) =>
             new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms);
     private static MovingPlatformSpec2D Platform() => new(41, "Lift", true,
-        new Vector2(-200f, 100f), new Vector2(96f, 0f), new Vector2(80f, 14f), 48f, 0xFF25D2BEu);
+        new Vector2(-200f, 100f), new Vector2(96f, 0f), new Size2D(80f, 14f), 48f, 0xFF25D2BEu);
 }

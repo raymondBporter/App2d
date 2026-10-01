@@ -99,7 +99,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
             if (view is not null) scene.Remove(view.Visual);
             var color = platform.ColorArgb;
-            var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(platform.Size),
+            var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(platform.Size.ToVector2()),
                 new SolidColorShader(new XnaColor((byte)(color >> 16), (byte)(color >> 8), (byte)color, (byte)(color >> 24))));
             scene.Add(visual);
             _platforms[platform.Id] = new PlatformView(visual, platform.Size, color);
@@ -200,7 +200,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         _visibleTerrain = null;
     }
 
-    private sealed record PlatformView(WorldObject2D Visual, Vector2 Size, uint ColorArgb);
+    private sealed record PlatformView(WorldObject2D Visual, Size2D Size, uint ColorArgb);
     private sealed record CheckpointView(SavePointPresentation2D Visual, Vector2 BasePosition);
     private sealed record ChunkView(long Revision, List<WorldObject2D> Visuals);
 }

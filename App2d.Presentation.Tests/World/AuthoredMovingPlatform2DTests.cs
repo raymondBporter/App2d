@@ -2,6 +2,7 @@ using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
 using App2d.Core.Physics;
+using App2d.Core.Geometry;
 using App2d.Presentation.World.Presentation;
 using App2d.Gameplay.World;
 using App2d.Rendering;
@@ -33,7 +34,7 @@ public sealed class AuthoredMovingPlatform2DTests
             true,
             new Vector2(128f, -64f),
             new Vector2(96f, 0f),
-            new Vector2(80f, 14f),
+            new Size2D(80f, 14f),
             48f,
             0xFF25D2BEu);
         using var level = new SideScrollerLevel2D(traversal, map, [authored]);

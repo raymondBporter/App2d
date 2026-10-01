@@ -15,6 +15,9 @@ public sealed class Grid2D<T>
     public Grid2D(int width, int height, Vector2 cellSize, Vector2 origin = default)
         : this(new(width, height), new GridGeometry2D(cellSize, origin)) { }
 
+    public Grid2D(int width, int height, Size2D cellSize, Vector2 origin = default)
+        : this(new(width, height), new GridGeometry2D(cellSize, origin)) { }
+
     public Grid2D(GridSize2D size, GridGeometry2D geometry)
     {
         ArgGuard.ThrowIf(!geometry.IsValid, "Grid geometry must be initialized.", nameof(geometry));
@@ -29,7 +32,7 @@ public sealed class Grid2D<T>
     public int Width => Size.Width;
     public int Height => Size.Height;
     public int Count => Size.CellCount;
-    public Vector2 CellSize => Geometry.CellSize;
+    public Size2D CellSize => Geometry.CellSize;
     public Vector2 Origin => Geometry.Origin;
     public Rect2D WorldBounds { get; }
 

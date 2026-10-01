@@ -49,7 +49,7 @@ internal static class PlatformStudy2D
             using var enemies = new EnemyPresentation2D(scene, textures, traversal, new Silent());
             var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(5000, 2)), new SolidColorShader(new Color(70, 88, 93)));
             scene.Add(ground);
-            var platform = new WorldObject2D(AxisAlignedRectangle2D.FromSize(spec.Size), new SolidColorShader(new Color(37, 210, 190)));
+            var platform = new WorldObject2D(AxisAlignedRectangle2D.FromSize(spec.Size.ToVector2()), new SolidColorShader(new Color(37, 210, 190)));
             scene.Add(platform);
             camera.Position = focus;
             for (var step = 0; step < 240; step++)

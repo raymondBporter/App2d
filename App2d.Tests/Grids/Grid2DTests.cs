@@ -17,6 +17,7 @@ public sealed class Grid2DTests
             grid[cell] = new(index, -index);
         }
         Assert.Equal(15, grid.Count);
+        Assert.Equal(new Size2D(10, 20), grid.CellSize);
         Assert.Equal(new Vector2(13, -13), grid[3, 2]);
         grid[3, 2].X = 100; // Ref access can update a struct cell without a copy/write-back.
         Assert.Equal(100, grid[13].X);
@@ -70,7 +71,7 @@ public sealed class Grid2DTests
     [InlineData(-10.01f, -20.01f, -2, -2)]
     public void WorldCoordinatesUseFloorAndRespectRectangularCells(float x, float y, int cx, int cy)
     {
-        var geometry = new GridGeometry2D(new Vector2(10, 20), new(-70, 30));
+        var geometry = new GridGeometry2D(new Size2D(10, 20), new(-70, 30));
         Assert.Equal(new GridCell2D(cx, cy), geometry.WorldToCell(new Vector2(x, y) + geometry.Origin));
         Assert.Equal(new GridCell2D(cx, cy), geometry.WorldToCell(geometry.GetCellCenter(new(cx, cy))));
     }

@@ -26,7 +26,7 @@ public sealed class TileMap2D : ISolidTileMap2D
 
     public int Width => _solidTiles.Width;
     public int Height => _solidTiles.Height;
-    public float TileSize => _solidTiles.CellSize.X;
+    public float TileSize => _solidTiles.CellSize.Width;
     public Vector2 Origin => _solidTiles.Origin;
     public Rect2D WorldBounds => _solidTiles.WorldBounds;
     public GridSize2D GridSize => _solidTiles.Size;

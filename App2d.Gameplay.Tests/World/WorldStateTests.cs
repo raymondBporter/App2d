@@ -108,5 +108,5 @@ public sealed class WorldStateTests
     private static SideScrollerLevel2D CreateLevel(EditableTileMap2D map, MovingPlatformSpec2D[]? platforms = null) =>
             new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms);
     private static MovingPlatformSpec2D Platform() => new(41, "Lift", true,
-        new Vector2(-200f, 100f), new Vector2(96f, 0f), new Vector2(80f, 14f), 48f, 0xFF25D2BEu);
+        new Vector2(-200f, 100f), new Vector2(96f, 0f), new Size2D(80f, 14f), 48f, 0xFF25D2BEu);
 }

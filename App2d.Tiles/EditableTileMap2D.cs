@@ -41,7 +41,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
 
     public int Width => _tiles.Width;
     public int Height => _tiles.Height;
-    public float TileSize => _tiles.CellSize.X;
+    public float TileSize => _tiles.CellSize.Width;
     public int ChunkSize { get; }
     public Vector2 Origin => _tiles.Origin;
     public int ChunkColumns => ChunkGridSize.Width;

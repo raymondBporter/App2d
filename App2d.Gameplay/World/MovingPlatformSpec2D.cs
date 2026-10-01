@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
@@ -9,6 +10,6 @@ public sealed record MovingPlatformSpec2D(
     bool Enabled,
     Vector2 Position,
     Vector2 Travel,
-    Vector2 Size,
+    Size2D Size,
     float Speed,
     uint ColorArgb);

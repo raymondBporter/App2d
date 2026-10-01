@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Gameplay.World;
 using App2d.Levels;
 using System.Numerics;
@@ -73,7 +74,7 @@ internal static class ThingTypeRegistry2D
             record.Enabled,
             new Vector2(record.X, record.Y),
             new Vector2(record.TravelX, record.TravelY),
-            new Vector2(record.Width, record.Height),
+            new Size2D(record.Width, record.Height),
             record.Speed,
             unchecked((uint)record.ColorArgb));
     }

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Gameplay.Simulation;
@@ -78,7 +79,7 @@ public sealed class SideScrollerSimulation2DTests
             new(7, WorldThingKind2D.TumbleProp, null, true, new Vector2(500f, 50f)),
         ];
         MovingPlatformSpec2D[] platforms =
-            [new(41, "Lift", true, new Vector2(-200f, 100f), new Vector2(96f, 0f), new Vector2(80f, 14f), 48f, 0xFF25D2BEu)];
+            [new(41, "Lift", true, new Vector2(-200f, 100f), new Vector2(96f, 0f), new Size2D(80f, 14f), 48f, 0xFF25D2BEu)];
         return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms, things);
     }
 }
