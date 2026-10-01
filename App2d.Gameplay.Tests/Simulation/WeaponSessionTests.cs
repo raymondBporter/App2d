@@ -147,14 +147,14 @@ public sealed class WeaponSessionTests
         public WorldSimulationState2D CaptureSimulation() => new EmptyState();
         public void ValidateSimulation(WorldSimulationState2D state) => Assert.IsType<EmptyState>(state);
         public void RestoreSimulation(WorldSimulationState2D state) => ValidateSimulation(state);
-        public Bounds2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
+        public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
         public float GoalX => 9000f;
         public void UpdateStreaming(Vector2 position) { }
         public void UpdateMovingPlatforms(float dt) { }
         public void UpdateEnemies(float dt, Vector2 position) { }
         public void SyncEnemiesAfterPhysics() { }
         public void ResolveDamage(Person2D player) { }
-        public WorldThingSpec2D? UpdateSavePoints(float dt, Bounds2D bounds) => null;
+        public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => null;
         public void SetActiveSavePoint(long? id) { }
     }
 }

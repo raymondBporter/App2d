@@ -10,6 +10,5 @@ public sealed class UserDataLocations(string root)
     public string PlayerSave => FilePaths.ResolveUnderRoot(Root, "save.json");
     public string CharacterStudioSettings => FilePaths.ResolveUnderRoot(Root, "CharacterStudio/settings.json");
 
-    public static UserDataLocations ForCurrentUser() => new(FilePaths.ResolveUnderRoot(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "App2d"));
+    public static UserDataLocations ForCurrentUser() => new(FilePaths.ResolveUnderRoot(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "App2d"));
 }

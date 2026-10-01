@@ -13,7 +13,6 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, PropAsset> _props = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EntityAsset> _entityAssets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
-
     public IReadOnlyDictionary<string, CharacterModel> Models => _models;
     public IReadOnlyDictionary<string, ModelVariant> Variants => _variants;
     public IReadOnlyDictionary<string, MotionClip> Animations => _animations;

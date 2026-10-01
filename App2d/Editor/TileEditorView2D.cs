@@ -16,7 +16,7 @@ internal static class TileEditorView2D
     // compete visually with the cursor outline or the painted tiles themselves.
     private static readonly XnaColor GridColor = new(255, 255, 255, 28);
 
-    public static void DrawWorldDebug(Renderer2D renderer, TileEditor2D editor, Bounds2D mapBounds, float tileSize)
+    public static void DrawWorldDebug(Renderer2D renderer, TileEditor2D editor, Rect2D mapBounds, float tileSize)
     {
         if (!editor.IsActive)
             return;
@@ -134,7 +134,7 @@ internal static class TileEditorView2D
     /// than the whole map (a zoomed-out view could otherwise ask for hundreds of lines)
     /// and clamped to the map bounds so nothing is drawn outside the paintable area.
     /// </summary>
-    private static void DrawGrid(Renderer2D renderer, Bounds2D visible, Bounds2D mapBounds, float tileSize)
+    private static void DrawGrid(Renderer2D renderer, Rect2D visible, Rect2D mapBounds, float tileSize)
     {
         var minX = MathF.Max(visible.Left, mapBounds.Left);
         var maxX = MathF.Min(visible.Right, mapBounds.Right);

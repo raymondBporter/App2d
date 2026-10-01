@@ -141,7 +141,7 @@ public sealed partial class CollisionSystem2D
         return ContactProvider.TryGetContact(query, collider.WorldObject, out contact);
     }
 
-    public int QueryBounds(Bounds2D bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null)
+    public int QueryBounds(Rect2D bounds, List<Collider2D> results, uint layerMask = uint.MaxValue, bool includeSensors = true, Collider2D? excluded = null)
     {
         ArgGuard.ThrowIfNull(results);
         if (excluded is not null)
@@ -258,7 +258,7 @@ public sealed partial class CollisionSystem2D
         }
     }
 
-    private void QueryBoundsCore(Bounds2D bounds, List<Collider2D> results)
+    private void QueryBoundsCore(Rect2D bounds, List<Collider2D> results)
     {
         results.Clear();
         var stamp = NextQueryStamp();
@@ -278,7 +278,7 @@ public sealed partial class CollisionSystem2D
             TryAddQueryCandidate(collider, bounds, stamp, results);
     }
 
-    private static void QueryCells(Dictionary<GridCell2D, List<Collider2D>> cells, GridCellRange2D range, Bounds2D bounds, int stamp, List<Collider2D> results)
+    private static void QueryCells(Dictionary<GridCell2D, List<Collider2D>> cells, GridCellRange2D range, Rect2D bounds, int stamp, List<Collider2D> results)
     {
         foreach (var cell in range)
         {
@@ -292,7 +292,7 @@ public sealed partial class CollisionSystem2D
         }
     }
 
-    private static void TryAddQueryCandidate(Collider2D collider, Bounds2D bounds, int stamp, List<Collider2D> results)
+    private static void TryAddQueryCandidate(Collider2D collider, Rect2D bounds, int stamp, List<Collider2D> results)
     {
         if (collider.QueryStamp == stamp ||
             !bounds.Intersects(collider.WorldObject.WorldBounds))

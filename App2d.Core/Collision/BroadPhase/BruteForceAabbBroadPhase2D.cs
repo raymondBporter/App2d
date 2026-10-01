@@ -9,10 +9,10 @@ namespace App2d.Core.Collision.BroadPhase;
 public sealed class BruteForceAabbBroadPhase2D<T> : IBroadPhase2D<T>
     where T : class
 {
-    private readonly Func<T, Bounds2D> _getBounds;
-    private readonly List<Bounds2D> _worldBounds = [];
+    private readonly Func<T, Rect2D> _getBounds;
+    private readonly List<Rect2D> _worldBounds = [];
 
-    public BruteForceAabbBroadPhase2D(Func<T, Bounds2D> getBounds)
+    public BruteForceAabbBroadPhase2D(Func<T, Rect2D> getBounds)
     {
         ArgGuard.ThrowIfNull(getBounds);
         _getBounds = getBounds;

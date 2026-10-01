@@ -55,14 +55,14 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (ImGui.BeginPopup("add-part"))
         {
             var anchor = session.Selection.Control ?? structure.Controls[0].Id;
-            foreach (var kind in new[] { "ellipse", "box", "trapezoid", "polygon", "stroke" })
+            foreach (var kind in PuppetPartKinds.All)
             {
-                if (ImGui.MenuItem($"{kind} on {anchor}", "", false, kind != "stroke" || structure.Controls.Count > 1) && Base is { } document)
+                if (ImGui.MenuItem($"{kind} on {anchor}", "", false, !PuppetPartKinds.IsStroke(kind) || structure.Controls.Count > 1) && Base is { } document)
                 {
                     session.Edit(document, () =>
                     {
                         var other = structure.Controls.FirstOrDefault(c => c.Parent == anchor)?.Id ?? structure.Controls.FirstOrDefault(c => c.Id != anchor)?.Id;
-                        Select(part: ModelAuthoring.AddPart(document.Asset, kind, anchor, kind == "stroke" ? other : null).Id);
+                        Select(part: ModelAuthoring.AddPart(document.Asset, kind, anchor, PuppetPartKinds.IsStroke(kind) ? other : null).Id);
                     });
                 }
 
@@ -211,8 +211,13 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         {
             Ui.Header($"Part {part.Id} ({part.Kind})");
             var controls = model.Controls.Select(c => c.Id).ToArray();
+            if (Ui.Combo("Shape", part.Kind, PuppetPartKinds.All.Where(kind => !PuppetPartKinds.IsStroke(kind) || controls.Length > 1)) is { } kind)
+            {
+                session.Edit(document, () => ModelAuthoring.SetPartKind(document.Asset, partId, kind));
+                return;
+            }
             if (Ui.Combo("Attach to", part.A, controls) is { } a) session.Edit(document, () => { Part(document, partId).A = a; document.Asset.Validate(); });
-            if (Ui.Combo(part.Kind == "stroke" ? "End" : "Point toward", part.B ?? "(none)", part.Kind == "stroke" ? controls : controls.Prepend("(none)")) is { } b)
+            if (Ui.Combo(PuppetPartKinds.IsStroke(part.Kind) ? "End" : "Point toward", part.B ?? "(none)", PuppetPartKinds.IsStroke(part.Kind) ? controls : controls.Prepend("(none)")) is { } b)
                 session.Edit(document, () => { Part(document, partId).B = b == "(none)" ? null : b; document.Asset.Validate(); });
             PartFields(part, null, change => session.Change(document, () => change(Part(document, partId))));
             if (ImGui.Button("Delete part")) session.Edit(document, () => { ModelAuthoring.RemovePart(document.Asset, partId); session.Selection.Clear(); });
@@ -304,13 +309,13 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             ImGui.SetNextItemWidth(-1);
             if (ImGui.SliderFloat("##" + label, ref value, min, max, "%.3f")) change(p => set(p, value));
         }
-        Float(part.Kind == "stroke" ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => p.Width = v, o => o.Width = null);
-        if (part.Kind != "stroke")
+        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => p.Width = v, o => o.Width = null);
+        if (!PuppetPartKinds.IsStroke(part.Kind))
         {
             Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => p.Height = v, o => o.Height = null);
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
-            if (overrides is null && part.Kind is "box" or "trapezoid") Float("Roundness", part.Roundness, 0, 1, false, (p, v) => p.Roundness = v, _ => { });
+            if (overrides is null && PuppetPartKinds.HasRoundness(part.Kind)) Float("Roundness", part.Roundness, 0, 1, false, (p, v) => p.Roundness = v, _ => { });
             if (overrides is null && part.Kind == "trapezoid") Float("Top width scale", part.TopWidthScale, .01f, 1, false, (p, v) => p.TopWidthScale = v, _ => { });
             if (overrides is null && part.Kind == "polygon" && ImGui.CollapsingHeader("Edit cutout silhouette"))
             {

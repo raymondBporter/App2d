@@ -1,5 +1,7 @@
+using App2d.Core.Meshes;
 using App2d.Core.Characters;
 using App2d.Core.Geometry;
+using App2d.Rendering;
 using System.Numerics;
 
 namespace App2d.Rendering.Characters;
@@ -27,7 +29,7 @@ internal static class PartPainting
             foreach (var region in regions)
             {
                 var clipped = PolygonClipping2D.ClipConvexXY(points, region);
-                mesh.Polygon(clipped.Select(p => p - bias).ToArray(), CharacterJson.Color(patch.Fill), null, 0);
+                mesh.Polygon(clipped.Select(p => p - bias).ToArray(), ColorExtensions.FromHexRgb(patch.Fill), null, 0);
             }
         }
     }

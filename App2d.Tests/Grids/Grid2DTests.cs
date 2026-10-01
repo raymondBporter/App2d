@@ -22,8 +22,8 @@ public sealed class Grid2DTests
         Assert.Equal(100, grid[13].X);
         grid.GetRowSpan(1).Fill(Vector2.One);
         Assert.All(grid.AsSpan().Slice(5, 5).ToArray(), v => Assert.Equal(Vector2.One, v));
-        Assert.Equal(new Bounds2D(new(-30, -40), new(20, 20)), grid.WorldBounds);
-        Assert.Equal(new Bounds2D(new(0, 0), new(10, 20)), grid.GetCellBounds(new(3, 2)));
+        Assert.Equal(new Rect2D(new(-30, -40), new(20, 20)), grid.WorldBounds);
+        Assert.Equal(new Rect2D(new(0, 0), new(10, 20)), grid.GetCellBounds(new(3, 2)));
         Assert.Equal(new Vector2(5, 10), grid.Geometry.GetCellCenter(new(3, 2)));
         grid.Fill(new(7, 8));
         Assert.All(grid.AsSpan().ToArray(), v => Assert.Equal(new Vector2(7, 8), v));
@@ -94,7 +94,7 @@ public sealed class Grid2DTests
         Assert.Equal(new GridCell2D(-1, -1), range.Minimum);
         Assert.Equal(new GridCell2D(1, 1), range.Maximum);
         Assert.Equal(9, range.CellCount);
-        Assert.Equal(1, geometry.GetCellRange(new Bounds2D(new(10), new(10))).CellCount);
+        Assert.Equal(1, geometry.GetCellRange(new Rect2D(new(10), new(10))).CellCount);
 
         var size = new GridSize2D(3, 2);
         Assert.Equal(size.Cells, geometry.GetCellRange(new Rect2D(new(-float.MaxValue), new(float.MaxValue)), size));
@@ -135,8 +135,8 @@ public sealed class Grid2DTests
         var geometry = new GridGeometry2D(1f);
         Assert.False(geometry.TryWorldToCell(new(float.MaxValue, 0), out _));
         Assert.False(geometry.TryWorldToCell(new(float.NaN, 0), out _));
-        Assert.False(geometry.TryGetCellRange(Bounds2D.Unbounded, out _));
-        Assert.False(geometry.TryGetCellRange(new Bounds2D(Vector2.One, Vector2.Zero), out _));
+        Assert.False(geometry.TryGetCellRange(Rect2D.Unbounded, out _));
+        Assert.False(geometry.TryGetCellRange(new BackwardsRect(Vector2.One, Vector2.Zero), out _));
         Assert.False(default(GridGeometry2D).TryWorldToCell(Vector2.Zero, out _));
         Assert.Throws<InvalidOperationException>(() => default(GridGeometry2D).WorldToCell(Vector2.Zero));
         Assert.Throws<ArgumentOutOfRangeException>(() => geometry.WorldToCell(new(float.MaxValue)));
@@ -147,7 +147,7 @@ public sealed class Grid2DTests
     public void GeometryQueriesAndRangeIterationDoNotAllocate()
     {
         var geometry = new GridGeometry2D(16f);
-        var bounds = new Bounds2D(new(-32), new(32));
+        var bounds = new Rect2D(new(-32), new(32));
         for (var i = 0; i < 100; i++) Visit();
         var before = GC.GetAllocatedBytesForCurrentThread();
         for (var i = 0; i < 1000; i++) Visit();
@@ -159,4 +159,6 @@ public sealed class Grid2DTests
                 geometry.WorldToCell(geometry.GetCellCenter(cell));
         }
     }
+
+    private readonly record struct BackwardsRect(Vector2 Min, Vector2 Max) : IRect2D;
 }

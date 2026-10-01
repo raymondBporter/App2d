@@ -1,6 +1,5 @@
 using App2d.Core.Validation;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Mathematics;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -14,7 +13,7 @@ public sealed class ProceduralTree2D
     private readonly List<Crown> _crowns = [];
     private readonly Vector2 _root;
     private readonly float _height;
-    public Bounds2D Bounds { get; }
+    public Rect2D Bounds { get; }
 
     public ProceduralTree2D(Vector2 root, float height, int seed)
     {
@@ -33,7 +32,7 @@ public sealed class ProceduralTree2D
         if (depth <= 1)
         {
             var radius = _height * float.Lerp(0.12f, 0.21f, random.NextSingle());
-            _crowns.Add(new(end, radius, random.NextSingle() * MathF.Tau,
+            _crowns.Add(new(end, radius, random.NextFloat(MathF.Tau),
                 XnaColor.Lerp(new(32, 87, 68), new(83, 145, 88), random.NextSingle())));
         }
         if (depth == 0) return;

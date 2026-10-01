@@ -8,7 +8,7 @@ namespace App2d.Tiles;
 public sealed class TileMap2D : ISolidTileMap2D
 {
     private readonly Grid2D<bool> _solidTiles;
-    private readonly List<Bounds2D> _collisionRectangles = [];
+    private readonly List<Rect2D> _collisionRectangles = [];
     private readonly List<TileCellRectangle2D> _meshBuffer = [];
     private readonly TileRectangleMesher2D.KindAt _kindAt;
     private bool _collisionRectanglesDirty = true;
@@ -28,11 +28,11 @@ public sealed class TileMap2D : ISolidTileMap2D
     public int Height => _solidTiles.Height;
     public float TileSize => _solidTiles.CellSize.X;
     public Vector2 Origin => _solidTiles.Origin;
-    public Bounds2D WorldBounds => _solidTiles.WorldBounds;
+    public Rect2D WorldBounds => _solidTiles.WorldBounds;
     public GridSize2D GridSize => _solidTiles.Size;
     public GridGeometry2D GridGeometry => _solidTiles.Geometry;
 
-    public IReadOnlyList<Bounds2D> CollisionRectangles
+    public IReadOnlyList<Rect2D> CollisionRectangles
     {
         get
         {

@@ -11,6 +11,7 @@ public sealed partial class PhysicsBody2D
     private float _momentOfInertia = 1f;
     private float _oneWaySlop = 2f;
     private float _friction;
+    private Vector2? _oneWaySurfaceNormal;
 
     private BodyMotionType2D _motionType;
 
@@ -50,6 +51,7 @@ public sealed partial class PhysicsBody2D
     public float AccumulatedTorque { get; private set; }
     public Vector2 PreviousPosition { get; internal set; }
     public float PreviousRotation { get; internal set; }
+    internal Vector2 LastStepLinearVelocity { get; set; }
     public float GravityScale { get; set; } = 1f;
     public float Restitution { get; set; } = 0.5f;
 
@@ -73,7 +75,43 @@ public sealed partial class PhysicsBody2D
         get => Collider.IsSensor;
         set => Collider.IsSensor = value;
     }
-    public bool IsOneWayPlatform { get; set; }
+    /// <summary>
+    /// Outward normal of the only face that blocks other bodies. Null makes every
+    /// face solid. For a floor this is +Y; for a wall blocking from the right, +X.
+    /// </summary>
+    public Vector2? OneWaySurfaceNormal
+    {
+        get => _oneWaySurfaceNormal;
+        set
+        {
+            if (value is { } normal)
+            {
+                ArgGuard.ThrowIfNotFinite(normal);
+                var length = normal.Length();
+                ArgGuard.ThrowIf(!float.IsFinite(length) || length <= 0f,
+                    "A one-way surface normal must have finite, non-zero length.", nameof(OneWaySurfaceNormal));
+                normal /= length;
+                ArgGuard.ThrowIfNotFinite(normal);
+                _oneWaySurfaceNormal = normal;
+            }
+            else
+            {
+                _oneWaySurfaceNormal = null;
+            }
+        }
+    }
+
+    /// <summary>Compatibility shorthand for a one-way floor facing +Y.</summary>
+    public bool IsOneWayPlatform
+    {
+        get => _oneWaySurfaceNormal == Vector2.UnitY;
+        set => OneWaySurfaceNormal = value ? Vector2.UnitY : null;
+    }
+    /// <summary>
+    /// When kinematic, transfer this body's tangential step displacement and
+    /// supporting normal velocity to dynamic bodies from the previous contact step.
+    /// </summary>
+    public bool TransfersContactMotion { get; set; }
     public bool IsWallGrippable { get; set; }
     public uint CollisionLayer
     {

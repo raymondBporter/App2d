@@ -63,7 +63,7 @@ public sealed class EnemySessionClientTests
     private sealed class EnemyWorld : ISideScrollerSessionWorld2D
     {
         public EnemySystem2D Enemies { get; } = new();
-        public Bounds2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
+        public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
         public float GoalX => 9000f;
         public ImmutableArray<EnemyState2D> CaptureEnemies() => Enemies.CaptureStates();
         public ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => Enemies.DrainEvents();
@@ -72,7 +72,7 @@ public sealed class EnemySessionClientTests
         public void UpdateEnemies(float dt, Vector2 target) => Enemies.Update(dt, target);
         public void SyncEnemiesAfterPhysics() => Enemies.SyncAfterPhysics();
         public void ResolveDamage(Person2D player) => Enemies.TryResolvePlayerHits(player);
-        public WorldThingSpec2D? UpdateSavePoints(float dt, Bounds2D bounds) => null;
+        public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => null;
         public void SetActiveSavePoint(long? id) { }
     }
 }

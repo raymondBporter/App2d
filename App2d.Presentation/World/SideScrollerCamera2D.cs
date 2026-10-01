@@ -36,7 +36,7 @@ public sealed class SideScrollerCamera2D
     private float _verticalFollowSuppression;
     private float _lastGroundedPlayerY;
 
-    public SideScrollerCamera2D(Scene2D scene, Camera2D camera, Bounds2D levelBounds, Vector2 initialPlayerPosition)
+    public SideScrollerCamera2D(Scene2D scene, Camera2D camera, Rect2D levelBounds, Vector2 initialPlayerPosition)
     {
         ArgGuard.ThrowIfNull(scene);
         _camera = ArgGuard.RequireNotNull(camera);

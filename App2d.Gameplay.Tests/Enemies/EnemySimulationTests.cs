@@ -68,6 +68,7 @@ public sealed class EnemySimulationTests
         Assert.Empty(brute.DrainEvents());
         Assert.True(before.IsAttacking);
         Assert.Equal(0.2f, before.AttackElapsedSeconds);
+        Assert.Equal(BoilerBrute2D.AttackDurationSeconds, before.AttackDurationSeconds);
     }
 
     [Fact]

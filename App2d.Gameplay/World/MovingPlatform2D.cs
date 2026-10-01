@@ -3,20 +3,15 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
 public sealed partial class MovingPlatform2D : IDisposable
 {
-    private const float MinimumSupportNormalY = 0.55f;
-
-    private readonly PhysicsWorld2D _physics;
-    private readonly Vector2 _pathDirection;
-    private readonly float _pathLength;
-    private readonly float _speed;
-    private float _distanceAlongPath;
-    private float _travelDirection = 1f;
+    private readonly PingPongMotion2D _motion;
+    private readonly KinematicEntity2D _kinematic;
 
     public MovingPlatform2D(
         EntityId2D id,
@@ -28,35 +23,24 @@ public sealed partial class MovingPlatform2D : IDisposable
         uint collisionLayer,
         uint collisionMask,
         long thingId = 0,
-        uint colorArgb = 0xFF25D2BE)
+        uint colorArgb = 0xFF25D2BE,
+        IProgressMap? easing = null)
     {
         ArgGuard.ThrowIf(!id.IsValid, "A platform requires a valid entity ID.", nameof(id));
         Id = id;
-        _physics = ArgGuard.RequireNotNull(physics);
-        ArgGuard.ThrowIfNotFinite(start);
-        ArgGuard.ThrowIfNotFinite(travel);
+        ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(size);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(speed);
-        if (travel.LengthSquared() <= float.Epsilon)
-            ArgGuard.ThrowOutOfRange(travel, "A moving platform needs a non-zero travel path.");
-
-        Start = start;
+        _motion = new PingPongMotion2D(start, travel, speed, easing ?? Easing.Smooth);
         Size = size;
         ThingId = thingId;
         ColorArgb = colorArgb;
-        _pathLength = travel.Length();
-        _pathDirection = travel / _pathLength;
-        _speed = speed;
-
-        WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(size));
-        WorldObject.Transform.Position = start;
-
-        Body = physics.AddBody(WorldObject, BodyMotionType2D.Kinematic);
-        Body.EntityId = Id;
+        _kinematic = new KinematicEntity2D(id, physics, AxisAlignedRectangle2D.FromSize(size),
+            _motion, collisionLayer, collisionMask);
+        Body = _kinematic.Body;
+        WorldObject = _kinematic.WorldObject;
         Body.Restitution = 0f;
         Body.IsOneWayPlatform = true;
-        Body.CollisionLayer = collisionLayer;
-        Body.CollisionMask = collisionMask;
+        Body.TransfersContactMotion = true;
     }
 
     public EntityId2D Id { get; }
@@ -67,93 +51,13 @@ public sealed partial class MovingPlatform2D : IDisposable
     public MovingPlatformState2D CaptureState() => new(Id, WorldObject.Transform.Position);
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
-    public Vector2 Start { get; }
-    public Vector2 End => Start + _pathDirection * _pathLength;
+    public Vector2 Start => _motion.Start;
+    public Vector2 End => _motion.End;
 
     public void Dispose()
     {
-        _physics.RemoveBody(Body);
+        _kinematic.Dispose();
     }
 
-    public void Update(float deltaSeconds)
-    {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        if (deltaSeconds == 0f)
-        {
-            Body.LinearVelocity = Vector2.Zero;
-            return;
-        }
-
-        var nextDistance = Advance(deltaSeconds);
-        var target = Start + _pathDirection * nextDistance;
-        var displacement = target - WorldObject.Transform.Position;
-        var velocity = displacement / deltaSeconds;
-        CarrySupportedBodies(displacement, velocity);
-        Body.LinearVelocity = velocity;
-        _distanceAlongPath = nextDistance;
-    }
-
-    private float Advance(float deltaSeconds)
-    {
-        var distance = _distanceAlongPath;
-        var remaining = _speed * deltaSeconds;
-        while (remaining > 0f)
-        {
-            var endpoint = _travelDirection > 0f ? _pathLength : 0f;
-            var available = MathF.Abs(endpoint - distance);
-            if (remaining <= available)
-            {
-                distance += _travelDirection * remaining;
-                break;
-            }
-
-            distance = endpoint;
-            remaining -= available;
-            _travelDirection = -_travelDirection;
-        }
-
-        return distance;
-    }
-
-    private void CarrySupportedBodies(Vector2 displacement, Vector2 velocity)
-    {
-        if (displacement == Vector2.Zero)
-            return;
-
-        foreach (var contact in _physics.LastContacts)
-        {
-            PhysicsBody2D? rider = null;
-            var supportNormal = Vector2.Zero;
-            if (ReferenceEquals(contact.First, Body))
-            {
-                rider = contact.Second;
-                supportNormal = -contact.Geometry.Normal;
-            }
-            else if (ReferenceEquals(contact.Second, Body))
-            {
-                rider = contact.First;
-                supportNormal = contact.Geometry.Normal;
-            }
-
-            if (rider is not { MotionType: BodyMotionType2D.Dynamic } ||
-                rider.IsSensor ||
-                supportNormal.Y < MinimumSupportNormalY ||
-                rider.IsIgnoringOneWayPlatform(Body))
-            {
-                continue;
-            }
-
-            // Physics resolves motion into the support normal. Carry only the
-            // tangential displacement here, then match normal velocity so a
-            // platform reversal does not leave its rider behind.
-            var normalDisplacement = supportNormal *
-                Vector2.Dot(displacement, supportNormal);
-            rider.WorldObject.Transform.Position +=
-                displacement - normalDisplacement;
-
-            var normalVelocityDelta =
-                Vector2.Dot(velocity - rider.LinearVelocity, supportNormal);
-            rider.LinearVelocity += supportNormal * normalVelocityDelta;
-        }
-    }
+    public void Update(float deltaSeconds) => _kinematic.Update(deltaSeconds);
 }

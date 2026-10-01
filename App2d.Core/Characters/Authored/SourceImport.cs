@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -254,14 +255,13 @@ public static class LibraryImport
         var ratios = new Dictionary<string, float>(StringComparer.Ordinal);
         foreach (var measure in model.Base.Measures.Where(m => m.Path.All(reference.ContainsKey)))
         {
-            var length = measure.Path.Zip(measure.Path.Skip(1)).Sum(p => Vector2.Distance(Flat(reference[p.First]), Flat(reference[p.Second])));
+            var length = measure.Path.Zip(measure.Path.Skip(1)).Sum(p => Vector2.Distance(reference[p.First].XY, reference[p.Second].XY));
             if (length > .001f) ratios[measure.Id] = model.Measures[measure.Id] / length;
         }
         var overall = ratios.Count > 0 ? ratios.Values.Average() : Height(model.Rest.Values) / MathF.Max(.001f, Height(reference.Values));
         return (ratios, overall);
     }
 
-    private static Vector2 Flat(Vector3 p) => new(p.X, p.Y);
     private static float Height(IEnumerable<Vector3> points) { var ys = points.Select(p => p.Y).ToArray(); return ys.Length == 0 ? 1 : ys.Max() - ys.Min(); }
 }
 

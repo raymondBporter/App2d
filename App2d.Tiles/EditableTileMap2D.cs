@@ -46,7 +46,7 @@ public sealed class EditableTileMap2D : IChunkedTileMap2D
     public Vector2 Origin => _tiles.Origin;
     public int ChunkColumns => ChunkGridSize.Width;
     public int ChunkRows => ChunkGridSize.Height;
-    public Bounds2D WorldBounds => _tiles.WorldBounds;
+    public Rect2D WorldBounds => _tiles.WorldBounds;
     public GridSize2D GridSize => _tiles.Size;
     public GridGeometry2D GridGeometry => _tiles.Geometry;
     public GridSize2D ChunkGridSize { get; }

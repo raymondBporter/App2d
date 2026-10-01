@@ -1,6 +1,6 @@
-using App2d.Core.Geometry.Functions;
-using App2d.Core.Validation;
+using App2d.Core.Meshes;
 using App2d.Core.Geometry;
+using App2d.Core.Validation;
 using System.Globalization;
 using System.Numerics;
 

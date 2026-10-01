@@ -117,7 +117,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                 thing.Kind == WorldThingKind2D.SavePoint &&
                 thing.ThingId == thingId);
 
-    public bool TryGetSpikeSource(Bounds2D actorBounds, out float sourceX)
+    public bool TryGetSpikeSource(Rect2D actorBounds, out float sourceX)
     {
         if (!actorBounds.IsFinite)
         {
@@ -152,7 +152,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                     continue;
 
                 var tileMin = TileMap.Origin + new Vector2(x, y) * _tileSize;
-                var spikeBounds = new Bounds2D(
+                var spikeBounds = new Rect2D(
                     tileMin + new Vector2(horizontalInset, 0f),
                     tileMin + new Vector2(_tileSize - horizontalInset, _tileSize * 0.9f));
                 if (!actorBounds.Intersects(spikeBounds))
@@ -205,7 +205,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         return _content;
     }
 
-    public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Bounds2D playerBounds)
+    public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Rect2D playerBounds)
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         foreach (var savePoint in _savePoints)

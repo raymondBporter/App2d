@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
@@ -8,18 +9,18 @@ namespace App2d.Rendering.Vegetation;
 public sealed class VegetationBladeTip2D
 {
     private readonly VegetationTipPolygon2D[] _polygons;
-    private readonly Bounds2D _localBounds;
+    private readonly Rect2D _localBounds;
     public Vector2 ReleasePosition { get; }
 
     internal VegetationBladeTip2D(IReadOnlyList<VegetationTipPolygon2D> polygons)
     {
-        var bounds = Bounds2D.FromPoints([.. polygons.SelectMany(p => p.Points)]);
+        var bounds = Rect2D.FromPoints([.. polygons.SelectMany(p => p.Points)]);
         ReleasePosition = bounds.Center;
         _localBounds = new(bounds.Min - ReleasePosition, bounds.Max - ReleasePosition);
         _polygons = [.. polygons.Select(p => p with { Points = [.. p.Points.Select(point => point - ReleasePosition)] })];
     }
 
-    public Bounds2D WorldBounds(Vector2 position, float rotation) =>
+    public Rect2D WorldBounds(Vector2 position, float rotation) =>
         _localBounds.TransformedBy(Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position));
 
     public void Render(Renderer2D renderer, Vector2 position, float rotation, float opacity)
@@ -32,20 +33,14 @@ public sealed class VegetationBladeTip2D
             var world = points[..polygon.Points.Length];
             for (var index = 0; index < world.Length; index++)
                 world[index] = Vector2.Transform(polygon.Points[index], transform);
-            renderer.DrawWorldConvexPolygon(world, Fade(polygon.Fill, opacity));
+            renderer.DrawWorldConvexPolygon(world, polygon.Fill.ScaleAlpha(opacity));
             if (polygon.Outline is not { } outline) continue;
             var closed = ring[..(world.Length + 1)];
             world.CopyTo(closed);
             closed[^1] = world[0];
-            renderer.DrawWorldPolyline(closed, Fade(outline, opacity),
+            renderer.DrawWorldPolyline(closed, outline.ScaleAlpha(opacity),
                 Math.Max(1f, polygon.OutlineWidth * renderer.PixelsPerWorldUnit));
         }
-    }
-
-    private static XnaColor Fade(XnaColor color, float opacity)
-    {
-        color.A = (byte)(color.A * Math.Clamp(opacity, 0f, 1f));
-        return color;
     }
 }
 

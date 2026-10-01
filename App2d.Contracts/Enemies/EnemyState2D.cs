@@ -20,6 +20,8 @@ public readonly record struct EnemyState2D(
     public float MoveSpeed { get; init; }
     public bool IsAttacking { get; init; }
     public float AttackElapsedSeconds { get; init; }
+    /// <summary>Authoritative duration for attack animation; zero when this state has no timed attack.</summary>
+    public float AttackDurationSeconds { get; init; }
     public PersonState2D Person { get; init; }
     public float MoveX { get; init; }
     /// <summary>For enemies compiled from authored entities: the shared compiled entity and this tick's final pose, drawn as is.</summary>

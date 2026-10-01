@@ -1,3 +1,4 @@
+using App2d.Core.Collision.Filtering;
 using App2d.Core.Collision;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Physics.Filtering;

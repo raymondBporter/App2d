@@ -1,9 +1,11 @@
+using App2d.Core.Geometry;
 using App2d.Contracts.World;
 using App2d.Core.Validation;
 using App2d.Contracts.Player;
 using App2d.Presentation.World;
 using App2d.Audio;
 using App2d.Core;
+using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
 using App2d.Diagnostics;
 using App2d.Editor;
@@ -23,7 +25,8 @@ namespace App2d;
 /// <summary>Local composition and scheduling; gameplay decisions live in the session.</summary>
 public sealed class SideScrollerGame : Game2D
 {
-    private readonly AuthoredCatalog _authored = LoadAuthored();
+    private readonly ResourceManager2D _resources = new();
+    private readonly AuthoredCatalog _authored;
     private static readonly System.Text.Json.JsonSerializerOptions SpellJsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly TraversalMetrics2D Traversal;
 
@@ -41,6 +44,13 @@ public sealed class SideScrollerGame : Game2D
 
     public SideScrollerGame()
     {
+        _resources.Register("characters/authored", LoadAuthored, AssetPaths.Current.AuthoredCharacters);
+        _authored = _resources.GetLoad<AuthoredCatalog>("characters/authored", "simulation");
+        _resources.Get<AuthoredCatalog>("characters/authored", "presentation");
+        _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
+        var textures = _resources.GetLoad<App2d.Rendering.Textures.TextureCache2D>("textures/runtime", "presentation");
+        _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects),
+            AssetPaths.Current.SoundEffects);
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
@@ -48,11 +58,12 @@ public sealed class SideScrollerGame : Game2D
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
             new(GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.Width), height),
             GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.OffsetX));
-        _sounds = new SoundEffectBank2D(AssetPaths.Current.SoundEffects);
+        _sounds = _resources.GetLoad<SoundEffectBank2D>("audio/sfx", "presentation");
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
 
-        var loadedLevel = LevelBootstrap2D.Load();
+        _resources.Register("level/cavern", LevelBootstrap2D.Load, LevelBootstrap2D.CavernLevelPath);
+        var loadedLevel = _resources.GetLoad<LoadedLevel2D>("level/cavern", "simulation");
         var tileMap = loadedLevel.TileMap;
         _terrainSource = new ViewportTerrainSource2D(tileMap);
         _saveStore = PlayerSaveStore2D.CreateDefault();
@@ -94,12 +105,16 @@ public sealed class SideScrollerGame : Game2D
 
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(tileMap, LevelBootstrap2D.OpenForEditing, Camera, tileMap.Origin, Traversal.TileSize);
+        _resources.Get<LoadedLevel2D>("level/cavern", "editor");
+        _resources.Get<App2d.Rendering.Textures.TextureCache2D>("textures/runtime", "editor");
         _editor.ThingsChanged += things =>
             _simulation.Level.ReloadMovingPlatforms([.. things.Select(ThingTypeRegistry2D.ToRuntime)]);
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
-            cameraController, Textures, _sounds, Traversal, App2d.Presentation.Persons.PersonMoves.From(_authored));
-        var soundtrack = WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones);
+            cameraController, textures, _sounds, Traversal, App2d.Presentation.Persons.PersonMoves.From(_authored));
+        _resources.Register("audio/soundtrack", () => WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones),
+            Path.Combine(AssetPaths.Current.Music, "soundtrack.json"));
+        var soundtrack = _resources.GetLoad<WorldSoundtrack2D>("audio/soundtrack", "music");
         _music = new MusicPlayer2D(soundtrack.Cues);
         _musicDirector = new(soundtrack, _music.Select);
         _musicDirector.Update(snapshot.Content, startPosition, 0f);
@@ -115,6 +130,10 @@ public sealed class SideScrollerGame : Game2D
             ConsoleCommandResult.From($"Zone: {_musicDirector.CurrentZone?.Name ?? "outside zones"} ({_musicDirector.CurrentZone?.Id ?? "default"})",
                 $"Music: {_musicDirector.CurrentSelection?.Piece} / {_musicDirector.CurrentSelection?.Mood}; volume {_music.Volume:0.00}",
                 $"Cues: {string.Join(", ", soundtrack.Cues.Keys)}"));
+        DeveloperConsole.RegisterCommand("resources", "List resource keys, sources and consumers; optionally filter by key.", args =>
+            ConsoleCommandResult.From([.. _resources.Snapshot()
+                .Where(resource => args.Count == 0 || resource.Key.Contains(args[0], StringComparison.OrdinalIgnoreCase))
+                .Select(resource => $"{resource.Key} [{resource.Type.Name}] {(resource.IsLoaded ? "loaded" : "unloaded")} | used by: {string.Join(", ", resource.Owners)} | source: {resource.Source ?? "in memory"}")]));
         _client.CheckpointActivated += checkpoint =>
             _client.ShowSaveResult(_saveStore.TrySave(new PlayerSave2D(checkpoint.CheckpointId, checkpoint.HitPoints)), checkpoint.Position);
         DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _client.ShowTraversalDebug,
@@ -219,8 +238,8 @@ public sealed class SideScrollerGame : Game2D
         _simulation.Dispose();
         _client.Dispose();
         _editor.Dispose();
-        _sounds.Dispose();
         _music.Dispose();
+        _resources.Dispose();
         base.Dispose();
     }
 }

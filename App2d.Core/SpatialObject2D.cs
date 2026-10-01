@@ -1,5 +1,4 @@
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
@@ -12,7 +11,7 @@ namespace App2d.Core;
 /// </summary>
 public class SpatialObject2D
 {
-    private Bounds2D _worldBounds;
+    private Rect2D _worldBounds;
     private int _worldBoundsVersion = -1;
     private Similarity2D _collisionPose;
     private int _collisionPoseVersion = -1;
@@ -27,16 +26,16 @@ public class SpatialObject2D
     public IShape2D Shape { get; }
 
     /// <summary>Calculated once when the immutable shape is attached; independent of this object's transform.</summary>
-    public Bounds2D LocalBounds { get; }
+    public Rect2D LocalBounds { get; }
 
-    public Bounds2D WorldBounds
+    public Rect2D WorldBounds
     {
         get
         {
             if (_worldBoundsVersion == Transform.Version)
                 return _worldBounds;
 
-            _worldBounds = BoundsGeometry2D.Transform(LocalBounds, Transform.LocalToWorldMatrix);
+            _worldBounds = LocalBounds.TransformedBy(Transform.LocalToWorldMatrix);
             _worldBoundsVersion = Transform.Version;
             return _worldBounds;
         }

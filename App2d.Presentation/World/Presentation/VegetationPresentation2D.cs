@@ -1,5 +1,6 @@
 using App2d.Contracts.World;
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Rendering;
 using App2d.Rendering.Vegetation;
 using App2d.Tiles;
@@ -106,7 +107,7 @@ public sealed class VegetationPresentation2D
         }
     }
 
-    private bool HitsGround(Bounds2D previous, Bounds2D current)
+    private bool HitsGround(Rect2D previous, Rect2D current)
     {
         if (current.Bottom >= previous.Bottom || _chunks.Count == 0) return false;
         var map = _chunks.Values.First().Source;
@@ -126,7 +127,7 @@ public sealed class VegetationPresentation2D
         return false;
     }
 
-    public void DrawTrees(Renderer2D renderer, Bounds2D visible)
+    public void DrawTrees(Renderer2D renderer, Rect2D visible)
     {
         var wind = Wind();
         foreach (var chunk in _chunks.Values)
@@ -135,13 +136,13 @@ public sealed class VegetationPresentation2D
     }
 
     /// <summary>Back grass and flowers draw before characters; front tufts and clippings after them.</summary>
-    public void DrawGrass(Renderer2D renderer, Bounds2D visible, VegetationLayer2D layer)
+    public void DrawGrass(Renderer2D renderer, Rect2D visible, VegetationLayer2D layer)
     {
         var wind = Wind();
         foreach (var chunk in _chunks.Values)
             foreach (var patch in chunk.Patches)
             {
-                var bounds = new Bounds2D(patch.Root - new Vector2(patch.Size * 0.5f, 0f),
+                var bounds = new Rect2D(patch.Root - new Vector2(patch.Size * 0.5f, 0f),
                     patch.Root + new Vector2(patch.Size * 1.5f, patch.Size * 1.2f));
                 if (bounds.Intersects(visible))
                     patch.Visual.Render(renderer, visible.Left, visible.Right, wind, layer,
@@ -166,8 +167,8 @@ public sealed class VegetationPresentation2D
         {
             if (_clippings.Count >= 256) break;
             _clippings.Add(new(tip,
-                new Vector2((random.NextSingle() - 0.5f) * 65f, 90f + random.NextSingle() * 40f) * scale,
-                (random.NextSingle() - 0.5f) * 12f, random.NextSingle() * MathF.Tau, scale));
+                new Vector2(random.NextFloat(-0.5f, 0.5f) * 65f, random.NextFloat(90f, 130f)) * scale,
+                random.NextFloat(-0.5f, 0.5f) * 12f, random.NextFloat(MathF.Tau), scale));
         }
     }
 

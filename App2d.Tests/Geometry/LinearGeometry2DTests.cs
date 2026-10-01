@@ -1,7 +1,6 @@
 using App2d.Core;
 using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -170,9 +169,29 @@ public sealed class LinearGeometry2DTests
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).ClosestPoint(default));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Ray2D).ContainsPoint(default));
         Assert.Throws<ArgumentOutOfRangeException>(() => default(Line2D).Intersects(new Line2D(default, Vector2.UnitX)));
-        Assert.Throws<ArgumentOutOfRangeException>(() => RayIntersection2D.IntersectsBounds(default, Bounds2D.Unbounded, 10));
+        Assert.Throws<ArgumentOutOfRangeException>(() => RayIntersection2D.IntersectsBounds(default, Rect2D.Unbounded, 10));
         Assert.Throws<ArgumentOutOfRangeException>(() => Array.Empty<SpatialObject2D>().Raycast(default, 10, out _));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Line2D(default, Vector2.UnitX).GetPoint(float.NaN));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Ray2D(default, Vector2.UnitX).DistanceTo(new(float.NaN, 0)));
+    }
+
+    [Fact]
+    public void AxisAlignedFactoriesProduceHorizontalAndVerticalLines()
+    {
+        var horizontal = Line2D.Horizontal(3);
+        var vertical = Line2D.Vertical(-2);
+        Assert.Equal(Vector2.UnitX, horizontal.Direction);
+        Assert.Equal(Vector2.UnitY, vertical.Direction);
+        Assert.True(horizontal.ContainsPoint(new(1000, 3), tolerance: 0));
+        Assert.False(horizontal.ContainsPoint(new(1000, 3.5f)));
+        Assert.True(vertical.ContainsPoint(new(-2, -1000), tolerance: 0));
+        Assert.Equal(4, horizontal.DistanceTo(new(7, 7)));
+        Assert.Equal(9, vertical.DistanceTo(new(7, 7)));
+        Assert.Equal(new Vector2(7, 3), horizontal.ClosestPoint(new(7, 7)));
+        Assert.Equal(new Vector2(-2, 7), vertical.ClosestPoint(new(7, 7)));
+        Assert.True(horizontal.Intersects(vertical));
+        Assert.False(horizontal.Intersects(Line2D.Horizontal(4)));
+        Assert.Equal(1, horizontal.WhichSide(new(0, 2)));
+        Assert.Equal(-1, horizontal.WhichSide(new(0, 4)));
     }
 }

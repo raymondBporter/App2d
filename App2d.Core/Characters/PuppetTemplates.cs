@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Characters;
@@ -11,7 +12,7 @@ public static class PuppetTemplates
         void Bone(string from, string to, bool visible = true)
         {
             puppet.Bones.Add(new() { From = from, To = to });
-            if (visible) puppet.Parts.Add(new() { Id = from + "-" + to, Kind = "stroke", A = from, B = to, Width = .045f });
+            if (visible) puppet.Parts.Add(new() { Id = from + "-" + to, Kind = PuppetPartKinds.Stroke, A = from, B = to, Width = .045f });
         }
         Control("hips", 0, 1); Control("chest", 0, 1.65f); Control("head", 0, 2.03f);
         Bone("hips", "chest", false); Bone("chest", "head");
@@ -24,8 +25,8 @@ public static class PuppetTemplates
             puppet.Chains.Add(new() { Root = side + "-shoulder", Joint = side + "-elbow", End = side + "-hand", Bend = -1 });
             puppet.Chains.Add(new() { Root = side + "-hip", Joint = side + "-knee", End = side + "-foot", Bend = 1 });
         }
-        puppet.Parts.Add(new() { Id = "body", Kind = "trapezoid", A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Roundness = .3f, TopWidthScale = .7f, Fill = "#d8e9db" });
-        puppet.Parts.Add(new() { Id = "head", Kind = "ellipse", A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
+        puppet.Parts.Add(new() { Id = "body", Kind = PuppetPartKinds.Trapezoid, A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Roundness = .3f, TopWidthScale = .7f, Fill = "#d8e9db" });
+        puppet.Parts.Add(new() { Id = "head", Kind = PuppetPartKinds.Ellipse, A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
         puppet.Motions[0].Name = "Pose study";
         puppet.Validate(); return puppet;
     }
@@ -130,11 +131,7 @@ public static class PuppetTemplates
         Vector2[] bobHeights = [new(.985f), new(.945f), new(.875f), new(.935f), new(.985f), new(.945f), new(.875f)];
         float Hips(float q) => Curve(Wrap(q), bobTimes, bobHeights, default, default).X;
 
-        Vector3 Lean(Vector3 point, float angle)
-        {
-            var (sin, cos) = MathF.SinCos(angle); var y = point.Y - 1;
-            return new(point.X * cos + y * sin, 1 - point.X * sin + y * cos, point.Z);
-        }
+        Vector3 Lean(Vector3 point, float angle) => Rotation2D.ApplyXYAround(point, new(0, 1), -angle);
 
         const int keyCount = 36;
         for (var i = 0; i <= keyCount; i++)
@@ -162,8 +159,7 @@ public static class PuppetTemplates
                 pose.Points[side + "-shoulder"] = shoulder;
                 // Elbows stay bent near 90 degrees: high and forward, then low and back.
                 var hand = new Vector2(.03f + .26f * swing, -.33f + .09f * swing - .05f * MathF.Sin(armAngle));
-                var (sin, cos) = MathF.SinCos(lean * .6f);
-                pose.Points[side + "-hand"] = shoulder + new Vector3(hand.X * cos + hand.Y * sin, hand.Y * cos - hand.X * sin, 0);
+                pose.Points[side + "-hand"] = shoulder + new Vector3(Rotation2D.Apply(hand, -lean * .6f), 0);
             }
             motion.Keys.Add(pose.Key(phase * motion.Duration));
         }

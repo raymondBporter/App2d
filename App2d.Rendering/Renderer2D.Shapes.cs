@@ -1,6 +1,6 @@
+using App2d.Core.Meshes;
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -40,7 +40,7 @@ public sealed partial class Renderer2D
         DrawShapeCore(item.Shape, matrix, item.LocalBounds, fillColor, outlineColor, screenStrokeWidth);
     }
 
-    private void DrawShapeCore(IShape2D shape, Matrix3x2 matrix, Bounds2D bounds,
+    private void DrawShapeCore(IShape2D shape, Matrix3x2 matrix, Rect2D bounds,
         XnaColor? fillColor, XnaColor? outlineColor, float width)
     {
         SelectBatch(null, null);
@@ -70,9 +70,11 @@ public sealed partial class Renderer2D
         if (fillColor is { } fill)
         {
             for (var i = 0; i < indices.Length; i += 3)
+            {
                 Triangle(Vertex(Vector2.Transform(vertices[indices[i]], matrix), fill),
                     Vertex(Vector2.Transform(vertices[indices[i + 1]], matrix), fill),
                     Vertex(Vector2.Transform(vertices[indices[i + 2]], matrix), fill));
+            }
         }
         if (outlineColor is not { } outline) return;
 
@@ -89,7 +91,6 @@ public sealed partial class Renderer2D
             Line(Vector2.Transform(vertices[edge.Item1], matrix), Vector2.Transform(vertices[edge.Item2], matrix),
                 outline, screenStrokeWidth);
         }
-        return;
 
         void CountEdge(int first, int second)
         {

@@ -22,7 +22,7 @@ internal sealed partial class SavePoint2D
     public bool IsActive { get; private set; }
     public CheckpointPlacement2D CapturePlacement() => new(Spec.ThingId, _basePosition);
     public CheckpointState2D CaptureState() => new(Spec.ThingId, IsActive);
-    public bool Update(float deltaSeconds, Bounds2D playerBounds)
+    public bool Update(float deltaSeconds, Rect2D playerBounds)
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         var isInside = TriggerBounds.Intersects(playerBounds);
@@ -31,6 +31,6 @@ internal sealed partial class SavePoint2D
         return entered;
     }
     public void SetActive(bool active) => IsActive = active;
-    private Bounds2D TriggerBounds => new(
+    private Rect2D TriggerBounds => new(
         _basePosition + new Vector2(-64f, -8f), _basePosition + new Vector2(64f, 132f));
 }

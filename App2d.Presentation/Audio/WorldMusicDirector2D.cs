@@ -42,7 +42,7 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
         CurrentZone = WorldZone2D.FindAt(content.Zones.AsSpan(), playerPosition);
         var authored = soundtrack.ForZone(CurrentZone);
         var desired = new MusicSelection2D(
-            _pieceOverride == "auto" ? authored.Piece : _pieceOverride, 
+            _pieceOverride == "auto" ? authored.Piece : _pieceOverride,
             _moodOverride == "auto" ? authored.Mood : _moodOverride);
         if (desired != _candidate)
         {

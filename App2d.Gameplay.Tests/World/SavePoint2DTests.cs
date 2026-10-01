@@ -37,6 +37,6 @@ public sealed class SavePoint2DTests
         Assert.False(savePoint.IsActive);
     }
 
-    private static Bounds2D BoundsAt(Vector2 center) =>
+    private static Rect2D BoundsAt(Vector2 center) =>
         new(center - new Vector2(10f), center + new Vector2(10f));
 }

@@ -109,8 +109,21 @@ public static class ModelAuthoring
     {
         var part = new PuppetPart { Id = UniqueId(kind, model.Parts.Select(p => p.Id)), Kind = kind, A = a, B = b, Face = "none" };
         if (kind == "polygon") part.Points = [new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)];
-        if (kind == "stroke") part.Width = model.LineWidth;
+        if (PuppetPartKinds.IsStroke(kind)) part.Width = model.LineWidth;
         model.Parts.Add(part); model.Validate(); return part;
+    }
+
+    /// <summary>Changes drawing geometry while keeping the part ID. Face tracks may need repair when a shape becomes a stroke.</summary>
+    public static void SetPartKind(CharacterModel model, string id, string kind)
+    {
+        EntityVocabulary.Require(kind, PuppetPartKinds.All, "part.kind");
+        var part = model.Parts.First(p => p.Id == id);
+        if (PuppetPartKinds.IsStroke(kind) && (part.B is null || part.B == part.A))
+            part.B = model.Controls.FirstOrDefault(control => control.Parent == part.A)?.Id
+                ?? model.Controls.FirstOrDefault(control => control.Id != part.A)?.Id
+                ?? throw new InvalidOperationException("A stroke needs a second control.");
+        part.Kind = kind;
+        model.Validate();
     }
 
     public static void RemovePart(CharacterModel model, string id)

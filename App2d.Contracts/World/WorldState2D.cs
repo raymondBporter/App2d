@@ -57,7 +57,7 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
     public Vector2 Origin { get; }
     public int ChunkColumns => (Width + ChunkSize - 1) / ChunkSize;
     public int ChunkRows => (Height + ChunkSize - 1) / ChunkSize;
-    public Bounds2D WorldBounds => new(Origin, Origin + new Vector2(Width, Height) * TileSize);
+    public Rect2D WorldBounds => new(Origin, Origin + new Vector2(Width, Height) * TileSize);
     public ImmutableArray<string> TilesetIds { get; }
     IReadOnlyList<string> IChunkedTileMap2D.TilesetIds => TilesetIds;
     public ImmutableArray<TileCollisionRectangle2D> Collisions { get; }

@@ -17,7 +17,10 @@ public readonly record struct SoundEffectVoice2D
         _fullVolume = fullVolume;
     }
 
-    internal SoundEffectVoice2D(ISoundEffectVoice2D voice) => _voice = voice;
+    internal SoundEffectVoice2D(ISoundEffectVoice2D voice)
+    {
+        _voice = voice;
+    }
 
     public bool IsPlaying => _voice?.IsPlaying ?? _audioVoice.IsPlaying;
 

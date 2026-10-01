@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Physics;
@@ -33,7 +34,7 @@ public sealed class WorldZoneTests
     [InlineData(1, float.NaN)]
     [InlineData(float.PositiveInfinity, 1)]
     public void DegenerateAndNonFiniteZonesAreRejected(float x, float y) =>
-        Assert.Throws<ArgumentOutOfRangeException>(() => new WorldZone2D("test", "Test", new(Vector2.Zero, new(x, y))));
+        Assert.ThrowsAny<ArgumentException>(() => new WorldZone2D("test", "Test", new(Vector2.Zero, new(x, y))));
 
     [Fact]
     public void ZoneFileRejectsDuplicatesAndInvalidBoundsButOldLevelsMayHaveNoFile()

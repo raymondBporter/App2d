@@ -35,6 +35,26 @@ public sealed class PuppetAuthoringTests
     }
 
     [Fact]
+    public void ChangingPartKindKeepsItsIdentityAndSuppliesAStrokeEndpoint()
+    {
+        var model = App2d.Core.Characters.Authored.ModelAuthoring.Empty("test", "Test");
+        App2d.Core.Characters.Authored.ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
+        App2d.Core.Characters.Authored.ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
+        var part = App2d.Core.Characters.Authored.ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "root");
+        var id = part.Id;
+
+        App2d.Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Stroke);
+        Assert.Equal(id, part.Id);
+        Assert.Equal(PuppetPartKinds.Stroke, part.Kind);
+        Assert.Equal("tip", part.B);
+
+        App2d.Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Trapezoid);
+        var restored = App2d.Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
+        Assert.Equal(PuppetPartKinds.Trapezoid, restored.Parts.Single().Kind);
+        Assert.Equal(id, restored.Parts.Single().Id);
+    }
+
+    [Fact]
     public void EmptyAndHeadlessCharactersNeedNoLibraryOrAnatomy()
     {
         var empty = PuppetDefinition.FromJson(new PuppetDefinition().ToJson());

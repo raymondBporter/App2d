@@ -270,14 +270,14 @@ public sealed class PlayerSpellTests
         public WorldSimulationState2D CaptureSimulation() => new State();
         public void ValidateSimulation(WorldSimulationState2D state) => Assert.IsType<State>(state);
         public void RestoreSimulation(WorldSimulationState2D state) => ValidateSimulation(state);
-        public Bounds2D Bounds => new(new(-10000), new(10000));
+        public Rect2D Bounds => new(new(-10000), new(10000));
         public float GoalX => 9000;
         public void UpdateStreaming(Vector2 position) { }
         public void UpdateMovingPlatforms(float dt) { }
         public void UpdateEnemies(float dt, Vector2 position) { }
         public void SyncEnemiesAfterPhysics() { }
         public void ResolveDamage(Person2D player) { }
-        public WorldThingSpec2D? UpdateSavePoints(float dt, Bounds2D bounds) => null;
+        public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => null;
         public void SetActiveSavePoint(long? id) { }
     }
 }

@@ -1,5 +1,6 @@
-using App2d.Core.Geometry.Functions;
+using App2d.Core.Meshes;
 using App2d.Core.Geometry;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters;
@@ -38,7 +39,7 @@ public static class PartGeometry
     /// <summary>The closed outline of an ellipse, rounded box, trapezoid or cutout, or a stroke's two endpoints.</summary>
     public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world)
     {
-        if (part.Kind == "stroke")
+        if (PuppetPartKinds.IsStroke(part.Kind))
         {
             var depth = new Vector3(0, 0, part.Depth);
             return [world(part.A) + depth, world(part.B!) + depth];
@@ -47,16 +48,16 @@ public static class PartGeometry
         if (part.Kind == "polygon")
             return part.Points!.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
         var halfSize = new Vector2(part.Width / 2, part.Height / 2);
-        Span<Vector2> vertices = stackalloc Vector2[part.Kind == "ellipse" ? 48 : 36];
-        if (part.Kind == "ellipse")
+        Span<Vector2> vertices = stackalloc Vector2[part.Kind == PuppetPartKinds.Ellipse ? 48 : 36];
+        if (part.Kind == PuppetPartKinds.Ellipse)
         {
-            VertexGenerator2D.WriteEllipse(vertices, Vector2.Zero, halfSize);
+            new Ellipse2D(halfSize).WriteVertices(vertices);
         }
         else
         {
             var radius = Math.Min(part.Width, part.Height) * .5f * part.Roundness;
             VertexGenerator2D.WriteRoundedRectangle(vertices, -halfSize, halfSize, radius);
-            if (part.Kind == "trapezoid")
+            if (part.Kind == PuppetPartKinds.Trapezoid)
                 for (var i = 0; i < vertices.Length; i++)
                     vertices[i].X *= TrapezoidWidthScale(part, vertices[i].Y);
         }
@@ -72,10 +73,10 @@ public static class PartGeometry
     public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point)
     {
         var p = new Vector2(point.X, point.Y);
-        if (part.Kind == "stroke")
+        if (PuppetPartKinds.IsStroke(part.Kind))
         {
             var a = world(part.A); var b = world(part.B!);
-            return PrimitiveGeometry2D.DistanceToSegment(p, new(a.X, a.Y), new(b.X, b.Y), 1e-10f)
+            return Distance2D.DistanceToSegment(p, new(a.X, a.Y), new(b.X, b.Y), 1e-10f)
                 / MathF.Max(part.Width, .06f);
         }
         var frame = FrameOf(part, world);
@@ -88,16 +89,16 @@ public static class PartGeometry
             for (var i = 0; i < points.Count; i++)
             {
                 var a = points[i].XY; var b = points[(i + 1) % points.Count].XY;
-                nearest = MathF.Min(nearest, PrimitiveGeometry2D.DistanceToSegment(q, a, b, 1e-10f));
+                nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(q, a, b, 1e-10f));
                 if ((a.Y > q.Y) != (b.Y > q.Y) && q.X < (b.X - a.X) * (q.Y - a.Y) / (b.Y - a.Y) + a.X) inside = !inside;
             }
             return nearest < 1e-6f ? 1 : inside ? .5f : 1 + nearest;
         }
         if (part.Kind == "trapezoid") coordinates.X /= TrapezoidWidthScale(part, coordinates.Y);
         var halfSize = new Vector2(part.Width / 2, part.Height / 2);
-        return part.Kind == "ellipse"
-            ? PrimitiveGeometry2D.NormalizedEllipseRadius(coordinates, Vector2.Zero, halfSize)
-            : PrimitiveGeometry2D.NormalizedRectangleRadius(coordinates, Vector2.Zero, halfSize);
+        return part.Kind == PuppetPartKinds.Ellipse
+            ? Containment2D.NormalizedEllipseRadius(coordinates, Vector2.Zero, halfSize)
+            : Containment2D.NormalizedRectangleRadius(coordinates, Vector2.Zero, halfSize);
     }
 
     private static float TrapezoidWidthScale(PuppetPart part, float y) =>

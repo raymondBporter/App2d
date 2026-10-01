@@ -1,6 +1,5 @@
 using App2d.Core;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Rendering.Textures;
@@ -32,7 +31,7 @@ public sealed partial class Renderer2D : IDisposable
     private long _textureBytes;
     private bool _frameActive;
     private bool _disposed;
-    private Bounds2D _visibleWorldBounds;
+    private Rect2D _visibleWorldBounds;
 
     public Renderer2D(Camera2D camera, GraphicsDevice device)
     {
@@ -191,7 +190,7 @@ public sealed partial class Renderer2D : IDisposable
         new(new XnaVector3(point.X, point.Y, 0),
             XnaColor.FromNonPremultiplied(color.R, color.G, color.B, color.A), new XnaVector2(uv.X, uv.Y));
 
-    private static VertexPositionColorTexture MaterialVertex(Vector2 local, Matrix3x2 matrix, Bounds2D bounds, IShader2D shader)
+    private static VertexPositionColorTexture MaterialVertex(Vector2 local, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
     {
         var uv = Vector2.Zero;
         switch (shader)
@@ -211,14 +210,14 @@ public sealed partial class Renderer2D : IDisposable
         return Vertex(Vector2.Transform(local, matrix), shader.GetVertexColor(local, bounds), uv);
     }
 
-    private void FillPolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, Bounds2D bounds, IShader2D shader)
+    private void FillPolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
     {
         var first = MaterialVertex(points[0], matrix, bounds, shader);
         for (var index = 1; index < points.Length - 1; index++)
             Triangle(first, MaterialVertex(points[index], matrix, bounds, shader), MaterialVertex(points[index + 1], matrix, bounds, shader));
     }
 
-    private void FillShape(IShape2D shape, Matrix3x2 matrix, Bounds2D bounds, IShader2D shader)
+    private void FillShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
     {
         if (shape is CompositeShape2D composite)
         {
@@ -247,11 +246,14 @@ public sealed partial class Renderer2D : IDisposable
             case Circle2D circle:
                 var segments = CurveSegments(circle.Radius, matrix);
                 return VertexGenerator2D.WriteCircle(points[..segments], circle.Center, circle.Radius);
+            case Ellipse2D ellipse:
+                var ellipseSegments = CurveSegments(MathF.Max(ellipse.Radii.X, ellipse.Radii.Y), matrix);
+                return ellipse.WriteVertices(points[..ellipseSegments]);
             case Capsule2D capsule:
                 var halfSegments = CurveSegments(capsule.Radius, matrix) / 2;
                 return VertexGenerator2D.WriteCapsule(points, capsule.Start, capsule.End, capsule.Radius, halfSegments);
             case HalfSpace2D halfSpace:
-                return PolygonClipping2D.ClipRectangleToHalfSpace(GetVisibleLocalBounds(matrix), halfSpace, points);
+                return PolygonClipping2D.ClipRectangleToHalfSpace(GetVisibleLocalBounds(matrix), halfSpace.Normal, halfSpace.Offset, points);
             default:
                 throw new NotSupportedException($"No renderer is registered for {shape.GetType().Name}.");
         }
@@ -467,10 +469,10 @@ public sealed partial class Renderer2D : IDisposable
     }
 
     private bool IsCulled(SpatialObject2D item) => item.WorldBounds.IsFinite && !item.WorldBounds.Intersects(_visibleWorldBounds);
-    private Bounds2D GetVisibleLocalBounds(Matrix3x2 matrix)
+    private Rect2D GetVisibleLocalBounds(Matrix3x2 matrix)
     {
         if (!Matrix3x2.Invert(matrix, out var inverse)) StateGuard.Throw("Cannot render a shape with a singular transform.");
-        return new Bounds2D(Vector2.Zero, _camera.ViewportSize).TransformedBy(inverse);
+        return new Rect2D(Vector2.Zero, _camera.ViewportSize).TransformedBy(inverse);
     }
     private void RequireFrame()
     {

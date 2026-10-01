@@ -30,8 +30,7 @@ public sealed class WorldSoundtrack2D
         foreach (var selection in Zones.Values) Validate(selection);
     }
 
-    public MusicSelection2D ForZone(WorldZone2D? zone) =>
-        zone is not null && Zones.TryGetValue(zone.Id, out var selection) ? selection : Default;
+    public MusicSelection2D ForZone(WorldZone2D? zone) => zone is not null && Zones.TryGetValue(zone.Id, out var selection) ? selection : Default;
 
     public void Validate(MusicSelection2D selection)
     {
@@ -60,6 +59,5 @@ public sealed class WorldSoundtrack2D
         return new(cues, file.Default, file.Zones);
     }
 
-    private sealed record SoundtrackFile(int Version, string[] Cues, MusicSelection2D Default,
-        Dictionary<string, MusicSelection2D> Zones);
+    private sealed record SoundtrackFile(int Version, string[] Cues, MusicSelection2D Default, Dictionary<string, MusicSelection2D> Zones);
 }

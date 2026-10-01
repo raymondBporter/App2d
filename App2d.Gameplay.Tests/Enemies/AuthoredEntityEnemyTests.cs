@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Contracts.World;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
@@ -54,7 +55,7 @@ public sealed class AuthoredEntityEnemyTests
         using var game = Game();
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
-        var bounds = App2d.Core.Geometry.Bounds2D.FromPoints([.. head.Points.Select(p => p * GameWorldUnits2D.WorldUnitsPerAuthoredUnit)]);
+        var bounds = head.Scaled(GameWorldUnits2D.WorldUnitsPerAuthoredUnit).Bounds;
         var hit = new App2d.Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(4)));
         hit.Transform.Position = bounds.Center;
         var facts = new List<CombatDamage2D>(); game.Combat.DamageResolved += facts.Add;
@@ -164,7 +165,7 @@ public sealed class AuthoredEntityEnemyTests
         using var game = Game();
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
-        var center = head.Points.Aggregate(Vector2.Zero, (a, b) => a + b) / head.Points.Count * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
+        var center = head.Bounds.Center * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
         Assert.True(center.Y > guard.WorldObject.WorldBounds.Max.Y - 30, "the head region comes from the pose, not the movement box");
         var hit = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(2)));
         hit.Transform.Position = center;
@@ -378,7 +379,7 @@ public sealed class AuthoredEntityEnemyTests
             var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 40), 1, 4);
             enemy.SetSimulationEnabled(true);
             var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(facing * 40, 26), 2, 1, CombatFaction2D.Player, 30);
-            var boxes = new List<App2d.Core.Geometry.Bounds2D>();
+            var boxes = new List<App2d.Core.Geometry.Rect2D>();
             for (var i = 0; i < 200; i++)
             {
                 if (dodge && i == 60) player.WorldObject.Transform.Position += new Vector2(facing * 100, 0);

@@ -32,8 +32,8 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
     private ImmutableArray<TerrainChunkState2D>? _visibleTerrain;
     private readonly VegetationPresentation2D _vegetation = new();
 
-    public void DrawTrees(Renderer2D renderer, Bounds2D visible) => _vegetation.DrawTrees(renderer, visible);
-    public void DrawGrass(Renderer2D renderer, Bounds2D visible, VegetationLayer2D layer) =>
+    public void DrawTrees(Renderer2D renderer, Rect2D visible) => _vegetation.DrawTrees(renderer, visible);
+    public void DrawGrass(Renderer2D renderer, Rect2D visible, VegetationLayer2D layer) =>
         _vegetation.DrawGrass(renderer, visible, layer);
 
     /// <summary>Use camera-selected terrain instead of the simulation's active terrain set.</summary>

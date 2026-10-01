@@ -1,6 +1,5 @@
-using App2d.Core.Geometry.Functions;
-using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -53,7 +52,7 @@ public sealed class Rect2DTests
     [Fact]
     public void BoundsAndBothRectangleShapesAdoptTheContractInTheirOwnCoordinateSpace()
     {
-        var bounds = new Bounds2D(Sample.Min, Sample.Max);
+        var bounds = new Rect2D(Sample.Min, Sample.Max);
         var shape = new Rectangle2D(Sample.Min, Sample.Max);
         var axisAligned = new AxisAlignedRectangle2D(Sample.Min, Sample.Max);
         Assert.Equal(6, bounds.Width);
@@ -83,7 +82,7 @@ public sealed class Rect2DTests
     [Fact]
     public void RectangleContainmentRequiresTheWholeOtherRectangle()
     {
-        Assert.True(Sample.Contains(new Bounds2D(new(-3, -1), new(1, 7))));
+        Assert.True(Sample.Contains(new Rect2D(new(-3, -1), new(1, 7))));
         Assert.True(Sample.Contains(Sample));
         var partial = new CustomValue(new(1, 7), new(3, 9));
         Assert.True(Sample.Intersects(partial));
@@ -100,7 +99,7 @@ public sealed class Rect2DTests
         float x, float y, bool intersects, float width, float height)
     {
         var first = new Rect2D(Vector2.Zero, new(2));
-        var second = new Bounds2D(new(x, y), new(x + 2, y + 2));
+        var second = new Rect2D(new(x, y), new(x + 2, y + 2));
         Assert.Equal(intersects, first.Intersects(second));
         Assert.Equal(intersects, second.Intersects(first));
         Assert.Equal(intersects, first.TryIntersect(second, out var result));
@@ -155,7 +154,7 @@ public sealed class Rect2DTests
     [Fact]
     public void InfiniteBoundsKeepTheirBroadPhaseBehavior()
     {
-        var unbounded = Bounds2D.Unbounded;
+        var unbounded = Rect2D.Unbounded;
         Assert.False(unbounded.IsFinite);
         Assert.False(unbounded.ToRect().IsFinite);
         Assert.True(unbounded.Contains(Sample));
@@ -164,7 +163,7 @@ public sealed class Rect2DTests
         Assert.Equal(Sample, finite);
         Assert.Equal(unbounded.ToRect(), Sample.Union(unbounded));
         Assert.Equal(unbounded, unbounded.TransformedBy(Matrix3x2.Identity));
-        Assert.True(unbounded.Intersects(new Bounds2D(Sample.Min, Sample.Max)));
+        Assert.True(unbounded.Intersects(new Rect2D(Sample.Min, Sample.Max)));
     }
 
     [Fact]

@@ -19,7 +19,7 @@ internal sealed partial class SwordPersonWeapon2D(
     Action<float> attackStarted,
     Action<WeaponEvent2D> publish,
     Action<float> downAttackStarted,
-    Func<Bounds2D, bool>? overlapsSpikes = null, AuthoredHero2D? authored = null) : MeleePersonWeapon2D(
+    Func<Rect2D, bool>? overlapsSpikes = null, AuthoredHero2D? authored = null) : MeleePersonWeapon2D(
         EquipmentKind2D.Sword,
         ids.Allocate(),
         ownerBody,
@@ -77,7 +77,7 @@ internal sealed partial class SwordPersonWeapon2D(
         CombatSystem2D combatSystem,
         Action<float> started,
         Action<WeaponEvent2D> emit,
-        Func<Bounds2D, bool>? spikeOverlap) : MeleePersonWeapon2D(
+        Func<Rect2D, bool>? spikeOverlap) : MeleePersonWeapon2D(
             EquipmentKind2D.Sword, sourceId, body,
             AxisAlignedRectangle2D.FromSize(new Vector2(64f, 48f)),
             new MeleeAttackProfile2D(

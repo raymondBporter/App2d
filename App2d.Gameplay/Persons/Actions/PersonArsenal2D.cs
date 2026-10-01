@@ -27,7 +27,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         uint targetLayer,
         CombatFaction2D ownerFaction,
         CombatSystem2D combat,
-        Func<Bounds2D, bool>? overlapsSpikes = null,
+        Func<Rect2D, bool>? overlapsSpikes = null,
         AuthoredHero2D? hero = null, Func<float, Vector2>? muzzle = null,
         Health2D? health = null, SpellTuning2D? spells = null)
     {

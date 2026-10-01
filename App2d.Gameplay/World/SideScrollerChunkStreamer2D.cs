@@ -101,7 +101,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
         {
             var isOneWay = collision.Kind.IsOneWay();
             var bounds = isOneWay
-                ? new Bounds2D(new Vector2(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
+                ? new Rect2D(new Vector2(collision.Bounds.Min.X, collision.Bounds.Max.Y - OneWaySurfaceThickness), collision.Bounds.Max)
                 : collision.Bounds;
             var platform = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(bounds.Size));
             platform.Transform.Position = bounds.Center;

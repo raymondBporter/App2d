@@ -1,6 +1,8 @@
+using App2d.Core.Geometry;
 using App2d.Core.Collision;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Collision.Filtering;
+using App2d.Core.Shapes;
 using App2d.Core.Physics.Filtering;
 using App2d.Core.Physics.Integration;
 using App2d.Core.Physics.Solvers;
@@ -80,6 +82,7 @@ public sealed partial class PhysicsWorld2D
         StateGuard.ThrowIfLessThan(PositionIterations, 1);
         StateGuard.ThrowIfLessThan(VelocityIterations, 1);
 
+        TransferContactMotion(deltaSeconds);
         foreach (var body in _bodies)
         {
             body.PreviousPosition = body.WorldObject.Transform.Position;
@@ -96,7 +99,56 @@ public sealed partial class PhysicsWorld2D
 
         _lastContacts.AddRange(_frameContacts.Contacts);
         foreach (var body in _bodies)
+        {
+            body.LastStepLinearVelocity = body.LinearVelocity;
             body.ClearAccumulators();
+        }
+    }
+
+    private void TransferContactMotion(float deltaSeconds)
+    {
+        foreach (var contact in _lastContacts)
+        {
+            PhysicsBody2D surface;
+            PhysicsBody2D rider;
+            Vector2 normal;
+            if (contact.First.MotionType == BodyMotionType2D.Kinematic &&
+                contact.First.TransfersContactMotion)
+            {
+                surface = contact.First;
+                rider = contact.Second;
+                normal = -contact.Geometry.Normal;
+            }
+            else if (contact.Second.MotionType == BodyMotionType2D.Kinematic &&
+                contact.Second.TransfersContactMotion)
+            {
+                surface = contact.Second;
+                rider = contact.First;
+                normal = contact.Geometry.Normal;
+            }
+            else
+            {
+                continue;
+            }
+
+            if (rider.MotionType != BodyMotionType2D.Dynamic || rider.IsSensor ||
+                rider.IsIgnoringOneWayPlatform(surface))
+                continue;
+
+            const float separationSpeedTolerance = 0.0001f;
+            var previousRelativeSpeed = Vector2.Dot(
+                rider.LastStepLinearVelocity - surface.LastStepLinearVelocity, normal);
+            var riderVelocityChange = Vector2.Dot(
+                rider.LinearVelocity - rider.LastStepLinearVelocity, normal);
+            if (previousRelativeSpeed > separationSpeedTolerance ||
+                riderVelocityChange > separationSpeedTolerance)
+                continue; // Preserve a rebound or jump applied after the last contact.
+
+            var displacement = surface.LinearVelocity * deltaSeconds;
+            rider.WorldObject.Transform.Position += displacement - normal * Vector2.Dot(displacement, normal);
+            var relativeNormalSpeed = Vector2.Dot(rider.LinearVelocity - surface.LinearVelocity, normal);
+            rider.LinearVelocity -= normal * relativeNormalSpeed;
+        }
     }
 
     public bool IsTouching(PhysicsBody2D body)
@@ -148,7 +200,7 @@ public sealed partial class PhysicsWorld2D
                 }
 
                 var contact = new PhysicsContact2D(firstBody, secondBody, pair.Contact);
-                if (!AllowsOneWayContact(contact))
+                if (!AllowsDirectionalContact(contact))
                     continue;
 
                 foundContact = true;
@@ -194,14 +246,18 @@ public sealed partial class PhysicsWorld2D
         }
     }
 
-    private static bool AllowsOneWayContact(PhysicsContact2D contact)
+    private static bool AllowsDirectionalContact(PhysicsContact2D contact)
     {
-        if (contact.First.IsOneWayPlatform && !AllowsOneWayPlatform(contact.First, contact.Second, -contact.Geometry.Normal, contact.Geometry))
+        if (contact.First.OneWaySurfaceNormal is { } firstNormal &&
+            !AllowsOneWaySurface(contact.First, contact.Second, firstNormal,
+                -contact.Geometry.Normal, contact.Geometry))
         {
             return false;
         }
 
-        if (contact.Second.IsOneWayPlatform && !AllowsOneWayPlatform(contact.Second, contact.First, contact.Geometry.Normal, contact.Geometry))
+        if (contact.Second.OneWaySurfaceNormal is { } secondNormal &&
+            !AllowsOneWaySurface(contact.Second, contact.First, secondNormal,
+                contact.Geometry.Normal, contact.Geometry))
         {
             return false;
         }
@@ -209,49 +265,65 @@ public sealed partial class PhysicsWorld2D
         return true;
     }
 
-    private static bool AllowsOneWayPlatform(
-        PhysicsBody2D platform,
+    private static bool AllowsOneWaySurface(
+        PhysicsBody2D surface,
         PhysicsBody2D other,
+        Vector2 surfaceNormal,
         Vector2 otherSeparationNormal,
         CollisionContact2D geometry)
     {
-        if (other.IsIgnoringOneWayPlatform(platform))
+        if (other.IsIgnoringOneWayPlatform(surface))
             return false;
 
         // A one-way surface has no collidable corner or side. Rounded shapes
-        // report diagonal normals at the platform's top corners, so accepting
-        // merely "mostly upward" normals makes them snag and lose horizontal
-        // motion at an otherwise non-solid edge.
-        const float maximumTopNormalX = 0.001f;
-        if (otherSeparationNormal.Y <= 0f ||
-            MathF.Abs(otherSeparationNormal.X) > maximumTopNormalX)
+        // report diagonal normals at corners, which should pass through.
+        const float minimumNormalAlignment = 0.999999f;
+        if (Vector2.Dot(otherSeparationNormal, surfaceNormal) < minimumNormalAlignment)
         {
             return false;
         }
 
-        var platformBounds = platform.WorldObject.WorldBounds;
+        var surfaceBounds = surface.WorldObject.WorldBounds;
         var otherBounds = other.WorldObject.WorldBounds;
-        if (!platformBounds.IsFinite || !otherBounds.IsFinite)
+        if (!surfaceBounds.IsFinite || !otherBounds.IsFinite)
             return false;
 
-        var top = platformBounds.Max.Y;
-        if (MathF.Abs(geometry.Point.Y - top) > platform.OneWaySlop + geometry.PenetrationDepth)
+        var face = MaximumProjection(surface.WorldObject, surfaceNormal);
+        if (MathF.Abs(Vector2.Dot(geometry.Point, surfaceNormal) - face) >
+            surface.OneWaySlop + geometry.PenetrationDepth)
             return false;
 
-        var previousBottom = otherBounds.Min.Y +
-            other.PreviousPosition.Y - other.WorldObject.Transform.Position.Y;
-        if (previousBottom < top - platform.OneWaySlop)
+        var previousNearSide = MinimumProjection(other.WorldObject, surfaceNormal) +
+            Vector2.Dot(other.PreviousPosition - other.WorldObject.Transform.Position, surfaceNormal);
+        if (previousNearSide < face - surface.OneWaySlop)
             return false;
 
-        var relativeVerticalMotion =
-            other.WorldObject.Transform.Position.Y - other.PreviousPosition.Y -
-            (platform.WorldObject.Transform.Position.Y - platform.PreviousPosition.Y);
-        if (relativeVerticalMotion > 0f)
+        var relativeMotion = Vector2.Dot(
+            other.WorldObject.Transform.Position - other.PreviousPosition -
+            (surface.WorldObject.Transform.Position - surface.PreviousPosition), surfaceNormal);
+        if (relativeMotion > 0f)
             return false;
 
-        var relativeVerticalSpeed = other.LinearVelocity.Y - platform.LinearVelocity.Y;
-        return relativeVerticalSpeed <= 0f;
+        var relativeSpeed = Vector2.Dot(other.LinearVelocity - surface.LinearVelocity, surfaceNormal);
+        return relativeSpeed <= 0f;
     }
+
+    private static float MaximumProjection(SpatialObject2D worldObject, Vector2 normal)
+    {
+        if (worldObject.Shape is IConvexShape2D shape)
+        {
+            var pose = worldObject.CollisionPose;
+            var point = pose.TransformPoint(shape.GetSupportPoint(pose.TransposeTransformDirection(normal)));
+            return Vector2.Dot(point, normal);
+        }
+
+        var bounds = worldObject.WorldBounds;
+        return Vector2.Dot(bounds.Center, normal) +
+            (MathF.Abs(normal.X) * bounds.Size.X + MathF.Abs(normal.Y) * bounds.Size.Y) * 0.5f;
+    }
+
+    private static float MinimumProjection(SpatialObject2D worldObject, Vector2 normal) =>
+        -MaximumProjection(worldObject, -normal);
 
     private sealed class ContactSet
     {

@@ -53,13 +53,13 @@ public sealed class VegetationPatch2D
         var sprigs = new Random(seed ^ 0x51ed2701);
         var blades = new List<Blade>();
         var flowers = new List<Flower>();
-        var position = startX + style.Spacing * 0.5f * random.NextSingle();
+        var position = startX + random.NextFloat(style.Spacing * 0.5f);
         while (position < endX)
         {
             var density = Density(position, style);
             var skip = random.NextSingle() >= density;
             if (sprigs.NextSingle() < style.SprigChance)
-                AddSprig(blades, position + style.Spacing * (sprigs.NextSingle() - 0.5f), groundY, style, sprigs);
+                AddSprig(blades, position + style.Spacing * sprigs.NextFloat(-0.5f, 0.5f), groundY, style, sprigs);
             var tall = random.NextSingle() < style.TallChance;
             var layer = random.NextSingle() < style.FrontChance ? VegetationLayer2D.Front : VegetationLayer2D.Back;
             var height = tall
@@ -73,14 +73,14 @@ public sealed class VegetationPatch2D
                 position += style.Spacing * float.Lerp(0.6f, 1.45f, random.NextSingle());
                 continue;
             }
-            var phase = random.NextSingle() * MathF.Tau;
+            var phase = random.NextFloat(MathF.Tau);
             var windResponse = float.Lerp(0.8f, 1.2f, random.NextSingle()) * height / style.MaximumHeight;
             // A grazed tuft only loses its tips, so a hit always shows without mowing everything flat.
             var kept = cutTraits.NextSingle() < GrazedTuftChance ? float.Lerp(0.55f, 0.8f, cutTraits.NextSingle()) : 0f;
             for (var index = 0; index < count; index++)
             {
                 // Mostly near the cut line, with a long tail of blades that only lose their tips.
-                var jitter = cutTraits.NextSingle() * 2f - 1f;
+                var jitter = cutTraits.NextFloat(-1f, 1f);
                 jitter = jitter < 0f ? jitter * 0.5f : jitter * jitter * 0.6f;
                 var offset = (index - (count - 1) * 0.5f) * style.BladeWidth * 0.9f;
                 var light = index % 2 == 0;
@@ -98,10 +98,10 @@ public sealed class VegetationPatch2D
             }
             if (density > 0.6f && random.NextSingle() < style.FlowerChance)
             {
-                var flowerX = position + style.BladeWidth * (random.NextSingle() - 0.5f) * 2f;
+                var flowerX = position + style.BladeWidth * random.NextFloat(-0.5f, 0.5f) * 2f;
                 flowers.Add(new(new Vector2(flowerX, groundY),
                     float.Lerp(style.MaximumHeight * 1.05f, style.TallHeight * 1.1f, random.NextSingle()),
-                    random.NextSingle() * MathF.Tau,
+                    random.NextFloat(MathF.Tau),
                     FlowerColors[random.Next(FlowerColors.Length)]));
             }
             position += style.Spacing * float.Lerp(0.6f, 1.45f, random.NextSingle());
@@ -117,7 +117,7 @@ public sealed class VegetationPatch2D
     {
         var height = style.MinimumHeight * float.Lerp(0.4f, 0.6f, random.NextSingle());
         var count = 2 + random.Next(2);
-        var phase = random.NextSingle() * MathF.Tau;
+        var phase = random.NextFloat(MathF.Tau);
         for (var index = 0; index < count; index++)
         {
             var offset = (index - (count - 1) * 0.5f) * style.BladeWidth * 0.8f;

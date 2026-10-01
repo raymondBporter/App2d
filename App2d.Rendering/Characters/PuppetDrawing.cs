@@ -1,6 +1,8 @@
+using App2d.Core.Meshes;
 using App2d.Core.Characters;
 using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
+using App2d.Rendering;
 using System.Numerics;
 
 namespace App2d.Rendering.Characters;
@@ -33,10 +35,10 @@ public sealed class PuppetDrawing
     public void AddProp(PropAsset prop, SocketFrame frame)
     {
         PropDrawing.Add(Mesh, prop, frame);
-        var ink = CharacterJson.Color(prop.Ink);
+        var ink = ColorExtensions.FromHexRgb(prop.Ink);
         foreach (var shape in prop.Shapes)
         {
-            var points = shape.Points.Select(p => ActorPose.PropPoint(frame, prop, p)).ToList(); var fill = CharacterJson.Color(shape.Fill);
+            var points = shape.Points.Select(p => ActorPose.PropPoint(frame, prop, p)).ToList(); var fill = ColorExtensions.FromHexRgb(shape.Fill);
             if (shape.Kind == "polygon") { Mesh.Polygon(points, fill, ink, prop.LineWidth); continue; }
             for (var i = 1; i < points.Count; i++)
             {
@@ -49,20 +51,20 @@ public sealed class PuppetDrawing
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
     public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null)
     {
-        Mesh.Clear(); var ink = CharacterJson.Color(inkColor);
+        Mesh.Clear(); var ink = ColorExtensions.FromHexRgb(inkColor);
         foreach (var part in parts)
         {
             if (part.Hidden) continue;
             var face = expression?.Invoke(part) ?? part.Face;
-            if (part.Kind == "stroke")
+            if (PuppetPartKinds.IsStroke(part.Kind))
             {
                 var ends = PartGeometry.Contour(part, world); Mesh.Line(ends[0], ends[1], part.Width, ink); continue;
             }
             var contour = PartGeometry.Contour(part, world);
             var frame = PartGeometry.FrameOf(part, world);
             if (part.Kind == "polygon")
-                Mesh.Add(TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => new Vector2(p.X * part.Width, p.Y * part.Height)), 1e-8), frame.At, CharacterJson.Color(part.Fill));
-            else Mesh.Polygon(contour, CharacterJson.Color(part.Fill), null, 0);
+                Mesh.Add(TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => new Vector2(p.X * part.Width, p.Y * part.Height)), 1e-8), frame.At, ColorExtensions.FromHexRgb(part.Fill));
+            else Mesh.Polygon(contour, ColorExtensions.FromHexRgb(part.Fill), null, 0);
             PartPainting.Add(Mesh, part, frame, contour);
             var outline = part.OutlineWidth ?? lineWidth;
             if (outline > 0) Mesh.Polygon(contour, null, ink, outline);

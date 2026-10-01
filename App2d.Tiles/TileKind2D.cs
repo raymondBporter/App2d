@@ -32,7 +32,7 @@ public static class TileKind2DExtensions
     public static bool IsCollidable(this TileKind2D kind) => kind.IsSolid() || kind.IsOneWay();
 }
 
-public readonly record struct TileCollisionRectangle2D(Bounds2D Bounds, TileKind2D Kind);
+public readonly record struct TileCollisionRectangle2D(Rect2D Bounds, TileKind2D Kind);
 
 /// <summary>
 /// One compact authored map cell: the low nibble is the tile type and the high

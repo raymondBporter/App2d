@@ -252,9 +252,9 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return !player.IsAlive;
     }
 
-    public bool OverlapsHurt(Bounds2D hit) => HurtContact(hit) is not null;
+    public bool OverlapsHurt(Rect2D hit) => HurtContact(hit) is not null;
 
-    public Vector2? HurtContact(Bounds2D hit)
+    public Vector2? HurtContact(Rect2D hit)
     {
         if (!_enabled || !IsAlive) return null;
         Vector2? closest = null;
@@ -263,7 +263,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         // not the attack box's centre (which can be outside the visible target).
         foreach (var region in EntityCollision.Hurt(Entity, Pose))
         {
-            var bounds = Bounds2D.FromPoints([.. region.Points.Select(p => p * Scale)]);
+            var bounds = ToWorld(region).Bounds;
             if (!bounds.Intersects(hit)) continue;
             var point = (Vector2.Max(bounds.Min, hit.Min) + Vector2.Min(bounds.Max, hit.Max)) / 2;
             var d = Vector2.DistanceSquared(point, hit.Center);
@@ -276,25 +276,25 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         if (!_enabled || !IsAlive || _chargeBlocked) yield break;
         foreach (var hit in _animator.ActiveHits())
-            yield return new SpatialObject2D(ToWorld(EntityCollision.Attack(Entity, Pose, hit)).ToShape());
+            yield return new SpatialObject2D(ToWorld(EntityCollision.Attack(Entity, Pose, hit)).Shape);
     }
 
     public bool TryRegisterHit(EntityId2D source, int attack)
     { if (_hitHistory.GetValueOrDefault(source, -1) == attack) return false; _hitHistory[source] = attack; return true; }
 
-    private Bounds2D? GuardBounds()
+    private Rect2D? GuardBounds()
     {
         if (!_enabled || !IsAlive || _reaction.Staggered || Entity.Asset.Guard is not { } guard) return null;
         var open = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == "guard-open");
         if (open is not null && _animator.ActionTime >= open.Seconds) return null;
         var shield = ToWorld(EntityCollision.Attack(Entity, Pose,
             new ResolvedHit(new HitWindow { Prop = guard.Prop, Width = guard.Width, Height = guard.Height }, 0, 1)));
-        return Bounds2D.FromPoints([.. shield.Points]);
+        return ShapeBounds2D.Calculate(shield.Shape);
     }
 
-    public bool OverlapsGuard(Bounds2D attackBounds) => GuardBounds() is { } bounds && bounds.Intersects(attackBounds);
+    public bool OverlapsGuard(Rect2D attackBounds) => GuardBounds() is { } bounds && bounds.Intersects(attackBounds);
 
-    public bool CanBlock(Bounds2D attackBounds, Vector2 incomingDirection, Vector2? attackerPosition)
+    public bool CanBlock(Rect2D attackBounds, Vector2 incomingDirection, Vector2? attackerPosition)
     {
         var fromFront = attackerPosition is { } source
             ? (source.X - WorldObject.Transform.Position.X) * _facing > 0
@@ -304,7 +304,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         return OverlapsGuard(attackBounds);
     }
 
-    public bool TryBlock(Bounds2D attackBounds, Vector2 incomingDirection, Vector2? attackerPosition)
+    public bool TryBlock(Rect2D attackBounds, Vector2 incomingDirection, Vector2? attackerPosition)
     {
         if (!CanBlock(attackBounds, incomingDirection, attackerPosition)) return false;
         var bounds = GuardBounds()!.Value;

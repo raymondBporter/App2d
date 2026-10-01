@@ -31,7 +31,7 @@ public sealed class Grid2D<T>
     public int Count => Size.CellCount;
     public Vector2 CellSize => Geometry.CellSize;
     public Vector2 Origin => Geometry.Origin;
-    public Bounds2D WorldBounds { get; }
+    public Rect2D WorldBounds { get; }
 
     public ref T this[int x, int y] => ref _values[Size.GetIndex(x, y)];
     public ref T this[GridCell2D cell] => ref _values[Size.GetIndex(cell)];
@@ -46,7 +46,7 @@ public sealed class Grid2D<T>
 
     public void Fill(T value) => _values.AsSpan().Fill(value);
     public void Clear() => _values.AsSpan().Clear();
-    public Bounds2D GetCellBounds(GridCell2D cell)
+    public Rect2D GetCellBounds(GridCell2D cell)
     {
         if (!Size.Contains(cell)) ArgGuard.ThrowOutOfRange(cell, "Cell must be inside the grid.");
         return Geometry.GetCellBounds(cell);

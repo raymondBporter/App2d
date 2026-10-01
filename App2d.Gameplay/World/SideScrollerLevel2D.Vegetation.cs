@@ -10,7 +10,7 @@ public sealed partial class SideScrollerLevel2D
     private ImmutableHashSet<GrassCell2D> _cutGrass = [];
 
     /// <summary>Called with an active sword hitbox after physics. Grass adds no physics bodies.</summary>
-    public void CutGrass(Bounds2D strike)
+    public void CutGrass(Rect2D strike)
     {
         if (!strike.IsFinite || strike.Size.X < 0f || strike.Size.Y < 0f)
             ArgGuard.ThrowOutOfRange(strike, "Grass cutting bounds must be finite and ordered.");

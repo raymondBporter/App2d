@@ -1,8 +1,8 @@
+using App2d.Core.Meshes;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Functions;
+using App2d.Rendering;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Rendering.Characters;
 
@@ -18,15 +18,15 @@ internal static class PropDrawing
         {
             var vertices = solid.Vertices.Select(p => ActorPose.PropPoint(frame, prop, p)).ToArray();
             var analysis = new TriangleMeshAnalysis3D(vertices, solid.Triangles, handedness);
-            var fill = CharacterJson.Color(solid.Fill); var ink = CharacterJson.Color(prop.Ink);
+            var fill = ColorExtensions.FromHexRgb(solid.Fill); var ink = ColorExtensions.FromHexRgb(prop.Ink);
             for (var i = 0; i < solid.Triangles.Count; i += 3)
             {
+                if (!analysis.TryGetFaceNormal(i / 3, out var normal)) continue;
+                var light = .72f + .28f * MathF.Max(0, Vector3.Dot(normal, LightDirection));
                 var a = solid.Triangles[i];
                 var b = solid.Triangles[i + 1];
                 var c = solid.Triangles[i + 2];
-                if (!analysis.TryGetFaceNormal(i / 3, out var normal)) continue;
-                var light = .72f + .28f * MathF.Max(0, Vector3.Dot(normal, LightDirection));
-                mesh.Triangle(vertices[a], vertices[b], vertices[c], new Color((int)(fill.R * light), (int)(fill.G * light), (int)(fill.B * light)));
+                mesh.Triangle(vertices[a], vertices[b], vertices[c], fill.ScaleRgb(light));
             }
             if (!solid.Outlined) continue;
             var bias = new Vector3(0, 0, .0005f);
