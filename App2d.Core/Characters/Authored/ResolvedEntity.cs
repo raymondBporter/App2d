@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -232,8 +233,14 @@ public static class EntityCollision
         foreach (var shape in entity.Hurt)
         {
             var min = new Vector2(float.PositiveInfinity); var max = new Vector2(float.NegativeInfinity);
-            foreach (var control in shape.Controls) { var p = pose.World(control); var xy = new Vector2(p.X, p.Y); min = Vector2.Min(min, xy); max = Vector2.Max(max, xy); }
-            min -= new Vector2(shape.Pad); max += new Vector2(shape.Pad);
+            foreach (var control in shape.Controls)
+            {
+                var xy = pose.World(control).XY;
+                min = Vector2.Min(min, xy);
+                max = Vector2.Max(max, xy);
+            }
+            min -= new Vector2(shape.Pad);
+            max += new Vector2(shape.Pad);
             var size = max - min;
             // Controls on one line with no pad enclose no area: a hairline capsule keeps them hittable without a degenerate box.
             regions.Add(size.X > 0 && size.Y > 0 ? EntityRegion.Box(shape.Id, (min + max) / 2, size) : EntityRegion.Capsule(shape.Id, min, max, DegenerateHurtRadius));

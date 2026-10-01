@@ -9,15 +9,60 @@ namespace App2d.Presentation.Persons;
 /// <summary>The authored Person and the player move set, resolved once. Missing clips or props are an error naming them.</summary>
 public sealed class PersonMoves
 {
-    public const string Idle = "player-idle", Walk = "person-walk", Run = "person-run", Jump = "player-jump", Fall = "player-fall", Land = "player-land",
-        Dash = "player-dash", ClimbOn = "player-climb-on", Climb = "player-climb", ClimbOff = "player-climb-off", WallGrip = "player-wall-grip",
-        BalanceForward = "player-balance-forward", BalanceBackward = "player-balance-backward", Hit = "player-hit", Death = "player-death",
-        Celebrate = "player-celebrate", Sheathe = "player-sword-sheathe",
-        DownAttack = "player-sword-down-attack", HeroId = "hero", GunAim = "player-gun-aim", GunShot = "player-gun-shot", GunWallShot = "player-gun-wall-shot";
-    public static readonly IReadOnlyList<string> All = [Idle, Walk, Run, Jump, Fall, Land, Dash, ClimbOn, Climb, ClimbOff, WallGrip, BalanceForward, BalanceBackward,
-        Hit, Death, Celebrate, Sheathe, DownAttack, GunAim, GunShot, GunWallShot];
+    public const string Idle = "player-idle";
+    public const string Walk = "person-walk";
+    public const string Run = "person-run";
+    public const string Jump = "player-jump";
+    public const string Fall = "player-fall";
+    public const string Land = "player-land";
+    public const string Dash = "player-dash";
+    public const string ClimbOn = "player-climb-on";
+    public const string Climb = "player-climb";
+    public const string ClimbOff = "player-climb-off";
+    public const string WallGrip = "player-wall-grip";
+    public const string BalanceForward = "player-balance-forward";
+    public const string BalanceBackward = "player-balance-backward";
+    public const string Hit = "player-hit";
+    public const string Death = "player-death";
+    public const string Celebrate = "player-celebrate";
+    public const string Sheathe = "player-sword-sheathe";
+    public const string DownAttack = "player-sword-down-attack";
+    public const string HeroId = "hero";
+    public const string GunAim = "player-gun-aim";
+    public const string GunShot = "player-gun-shot";
+    public const string GunWallShot = "player-gun-wall-shot";
+    public static readonly IReadOnlyList<string> All =
+    [
+        Idle,
+        Walk,
+        Run,
+        Jump,
+        Fall,
+        Land,
+        Dash,
+        ClimbOn,
+        Climb,
+        ClimbOff,
+        WallGrip,
+        BalanceForward,
+        BalanceBackward,
+        Hit,
+        Death,
+        Celebrate,
+        Sheathe,
+        DownAttack,
+        GunAim,
+        GunShot,
+        GunWallShot
+    ];
 
-    private PersonMoves(ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, PropAsset> props) { Model = model; Hero = hero; Clips = clips; Props = props; }
+    private PersonMoves(ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, PropAsset> props)
+    {
+        Model = model;
+        Hero = hero;
+        Clips = clips;
+        Props = props;
+    }
 
     public ResolvedModel Model { get; }
     /// <summary>The player's authored entity: its sword swings, and the recovery clip after each, are its actions' clips.</summary>
@@ -31,14 +76,30 @@ public sealed class PersonMoves
     public static PersonMoves From(AuthoredCatalog catalog, string model = PersonTemplate.Id)
     {
         var resolved = catalog.Resolve(model);
-        var missing = All.Where(id => !catalog.Animations.ContainsKey(id)).Concat(new[] { PersonLoadout.Sword, PersonLoadout.Pistol }.Where(id => !catalog.Props.ContainsKey(id))).ToList();
-        if (missing.Count > 0) throw new InvalidDataException($"The player move set is incomplete; missing: {string.Join(", ", missing)}.");
-        var hero = catalog.Entities.GetValueOrDefault(HeroId) ?? throw new InvalidDataException($"The player move set needs the authored '{HeroId}' entity, which is missing or does not compile.");
+        var missing = All
+            .Where(id => !catalog.Animations.ContainsKey(id))
+            .Concat(new[] { PersonLoadout.Sword, PersonLoadout.Pistol }
+            .Where(id => !catalog.Props.ContainsKey(id)))
+            .ToList();
+
+        if (missing.Count > 0)
+            throw new InvalidDataException($"The player move set is incomplete; missing: {string.Join(", ", missing)}.");
+
+        var hero = catalog.Entities.GetValueOrDefault(HeroId)
+            ?? throw new InvalidDataException($"The player move set needs the authored '{HeroId}' entity, which is missing or does not compile.");
+
         var clips = All.ToDictionary(id => id, id => { var clip = catalog.Animations[id]; clip.Validate(resolved); return clip; }, StringComparer.Ordinal);
+
         foreach (var action in hero.Actions.Values)
-            foreach (var clip in new[] { action.Clip, action.Recovery }.OfType<MotionClip>()) clips[clip.Id] = clip;
+        {
+            foreach (var clip in new MotionClip[] { action.Clip, action.Recovery }.OfType<MotionClip>())
+                clips[clip.Id] = clip;
+        }
+
         foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket, PersonWardrobe.HeadSocket })
-            if (resolved.Base.Sockets.All(s => s.Id != socket)) throw new InvalidDataException($"Model '{model}' has no '{socket}' socket for the player's props.");
+            if (resolved.Base.Sockets.All(s => s.Id != socket))
+                throw new InvalidDataException($"Model '{model}' has no '{socket}' socket for the player's props.");
+
         return new(resolved, hero, clips, catalog.Props.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
     }
 }

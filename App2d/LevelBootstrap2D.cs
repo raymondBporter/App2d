@@ -48,4 +48,4 @@ internal sealed record LoadedLevel2D(
     EditableTileMap2D TileMap,
     IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms,
     IReadOnlyList<PositionThingRecord2D> PositionThings,
-    System.Collections.Immutable.ImmutableArray<App2d.Contracts.World.WorldZone2D> Zones);
+    System.Collections.Immutable.ImmutableArray<Contracts.World.WorldZone2D> Zones);

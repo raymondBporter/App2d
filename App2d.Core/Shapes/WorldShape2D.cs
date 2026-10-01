@@ -7,7 +7,7 @@ namespace App2d.Core.Shapes;
 
 /// <summary>
 /// Turns a local shape plus a <see cref="Similarity2D"/> pose into the world-space raw parameters that the
-/// <see cref="App2d.Core.Geometry"/> functions consume, writes the perimeters and convex cores that
+/// <see cref="Geometry"/> functions consume, writes the perimeters and convex cores that
 /// <see cref="ShapeDistance2D"/> and the collision table operate on, and bakes simple transforms into new shapes.
 /// Adding a shape means adding it here once.
 /// </summary>

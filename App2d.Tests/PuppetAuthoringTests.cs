@@ -24,11 +24,11 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void EditorCanAddBothBoxesAndTrapezoidsAndSaveTheirShapeSettings()
     {
-        var model = App2d.Core.Characters.Authored.PersonTemplate.Model();
-        var box = App2d.Core.Characters.Authored.ModelAuthoring.AddPart(model, "box", "hips");
-        var trapezoid = App2d.Core.Characters.Authored.ModelAuthoring.AddPart(model, "trapezoid", "hips");
+        var model = Core.Characters.Authored.PersonTemplate.Model();
+        var box = Core.Characters.Authored.ModelAuthoring.AddPart(model, "box", "hips");
+        var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, "trapezoid", "hips");
         trapezoid.TopWidthScale = .6f;
-        var restored = App2d.Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
+        var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
         Assert.Equal("box", restored.Parts.Single(p => p.Id == box.Id).Kind);
         Assert.Equal(.6f, restored.Parts.Single(p => p.Id == trapezoid.Id).TopWidthScale);
         Assert.Equal("trapezoid", restored.Parts.Single(p => p.Id == "body").Kind);
@@ -37,19 +37,19 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void ChangingPartKindKeepsItsIdentityAndSuppliesAStrokeEndpoint()
     {
-        var model = App2d.Core.Characters.Authored.ModelAuthoring.Empty("test", "Test");
-        App2d.Core.Characters.Authored.ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
-        App2d.Core.Characters.Authored.ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
-        var part = App2d.Core.Characters.Authored.ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "root");
+        var model = Core.Characters.Authored.ModelAuthoring.Empty("test", "Test");
+        Core.Characters.Authored.ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
+        Core.Characters.Authored.ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
+        var part = Core.Characters.Authored.ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "root");
         var id = part.Id;
 
-        App2d.Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Stroke);
+        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Stroke);
         Assert.Equal(id, part.Id);
         Assert.Equal(PuppetPartKinds.Stroke, part.Kind);
         Assert.Equal("tip", part.B);
 
-        App2d.Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Trapezoid);
-        var restored = App2d.Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
+        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Trapezoid);
+        var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
         Assert.Equal(PuppetPartKinds.Trapezoid, restored.Parts.Single().Kind);
         Assert.Equal(id, restored.Parts.Single().Id);
     }

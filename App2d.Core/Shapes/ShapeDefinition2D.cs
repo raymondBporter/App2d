@@ -34,7 +34,7 @@ public abstract class ShapeDefinition2D
 
     /// <summary>Serializes this definition with its kind tag.</summary>
     /// <returns>The JSON text.</returns>
-    public string ToJson() => JsonSerializer.Serialize<ShapeDefinition2D>(this, JsonOptions);
+    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
     /// <summary>Reads a tagged definition.</summary>
     /// <param name="json">JSON produced by <see cref="ToJson"/> or written by hand with a kind tag.</param>

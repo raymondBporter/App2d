@@ -50,27 +50,27 @@ public static class ShapeBounds2D
             case Capsule2D capsule: return ((capsule.Start + capsule.End) / 2f, Vector2.Distance(capsule.Start, capsule.End) / 2f + capsule.Radius);
             case HalfSpace2D: return (Vector2.Zero, float.PositiveInfinity);
             case CompositeShape2D composite:
-            {
-                var center = Calculate(composite).Center;
-                var radius = 0f;
-                foreach (var part in composite.Parts)
                 {
-                    var (partCenter, partRadius) = CalculateBoundingCircle(part);
-                    radius = Math.Max(radius, Vector2.Distance(center, partCenter) + partRadius);
+                    var center = Calculate(composite).Center;
+                    var radius = 0f;
+                    foreach (var part in composite.Parts)
+                    {
+                        var (partCenter, partRadius) = CalculateBoundingCircle(part);
+                        radius = Math.Max(radius, Vector2.Distance(center, partCenter) + partRadius);
+                    }
+                    return (center, radius);
                 }
-                return (center, radius);
-            }
             default:
-            {
-                var bounds = Calculate(shape);
-                var count = WorldShape2D.PerimeterVertexCount(shape);
-                if (count == 0) return (bounds.Center, bounds.HalfSize.Length());
-                Span<Vector2> vertices = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
-                WorldShape2D.WritePerimeter(shape, vertices);
-                var radiusSquared = 0f;
-                foreach (var vertex in vertices) radiusSquared = Math.Max(radiusSquared, Vector2.DistanceSquared(bounds.Center, vertex));
-                return (bounds.Center, MathF.Sqrt(radiusSquared));
-            }
+                {
+                    var bounds = Calculate(shape);
+                    var count = WorldShape2D.PerimeterVertexCount(shape);
+                    if (count == 0) return (bounds.Center, bounds.HalfSize.Length());
+                    Span<Vector2> vertices = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
+                    WorldShape2D.WritePerimeter(shape, vertices);
+                    var radiusSquared = 0f;
+                    foreach (var vertex in vertices) radiusSquared = Math.Max(radiusSquared, Vector2.DistanceSquared(bounds.Center, vertex));
+                    return (bounds.Center, MathF.Sqrt(radiusSquared));
+                }
         }
     }
 

@@ -106,7 +106,12 @@ public sealed class MotionClip
     public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    public static MotionClip FromJson(string json) { var clip = AuthoredAsset.Parse<MotionClip>(json, "clip"); clip.Validate(); return clip; }
+    public static MotionClip FromJson(string json)
+    {
+        var clip = AuthoredAsset.Parse<MotionClip>(json, "clip");
+        clip.Validate();
+        return clip;
+    }
     public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
@@ -200,7 +205,8 @@ public sealed class MotionClip
     public void Validate(ResolvedModel model, bool exactRevision = true)
     {
         Validate();
-        var owner = $"Clip '{Id}'"; var basis = model.Base;
+        var owner = $"Clip '{Id}'";
+        var basis = model.Base;
         Require(Model == basis.Id, $"{owner} is for model '{Model}', not '{basis.Id}'.");
         Require(!exactRevision || StructureRevision == basis.StructureRevision, $"{owner} was authored against structure revision {StructureRevision} of '{Model}'; the model is at revision {basis.StructureRevision}.");
         var solved = basis.Chains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);

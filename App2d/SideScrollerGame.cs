@@ -47,7 +47,7 @@ public sealed class SideScrollerGame : Game2D
         _authored = _resources.GetLoad<AuthoredCatalog>("characters/authored", "simulation");
         _resources.Get<AuthoredCatalog>("characters/authored", "presentation");
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
-        var textures = _resources.GetLoad<App2d.Rendering.Textures.TextureCache2D>("textures/runtime", "presentation");
+        var textures = _resources.GetLoad<Rendering.Textures.TextureCache2D>("textures/runtime", "presentation");
         _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects),
             AssetPaths.Current.SoundEffects);
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
@@ -101,12 +101,12 @@ public sealed class SideScrollerGame : Game2D
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(tileMap, LevelBootstrap2D.OpenForEditing, Camera, tileMap.Origin, Traversal.TileSize);
         _resources.Get<LoadedLevel2D>("level/cavern", "editor");
-        _resources.Get<App2d.Rendering.Textures.TextureCache2D>("textures/runtime", "editor");
+        _resources.Get<Rendering.Textures.TextureCache2D>("textures/runtime", "editor");
         _editor.ThingsChanged += things =>
             _simulation.Level.ReloadMovingPlatforms([.. things.Select(ThingTypeRegistry2D.ToRuntime)]);
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
-            cameraController, textures, _sounds, Traversal, App2d.Presentation.Persons.PersonMoves.From(_authored));
+            cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored));
         _resources.Register("audio/soundtrack", () => WorldSoundtrack2D.Load(AssetPaths.Current.Music, loadedLevel.Zones),
             Path.Combine(AssetPaths.Current.Music, "soundtrack.json"));
         var soundtrack = _resources.GetLoad<WorldSoundtrack2D>("audio/soundtrack", "music");

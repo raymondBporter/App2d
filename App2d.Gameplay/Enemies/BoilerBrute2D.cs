@@ -204,7 +204,7 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         MoveSpeed = Enemy.Speed,
         IsAttacking = _isAttacking,
         AttackElapsedSeconds = _attackElapsedSeconds,
-        AttackDurationSeconds = BoilerBrute2D.AttackDurationSeconds
+        AttackDurationSeconds = AttackDurationSeconds
     };
 
     public ImmutableArray<EnemyEvent2D> DrainEvents()

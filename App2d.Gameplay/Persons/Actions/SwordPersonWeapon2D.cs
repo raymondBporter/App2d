@@ -43,7 +43,7 @@ internal sealed partial class SwordPersonWeapon2D(
 
     public bool ConsumeBounce() => _downAttack.ConsumeBounce();
     public override PersonActionState2D CaptureActionState() => _downAttack.IsAttackActive
-        ? _downAttack.CaptureActionState() with { Kind = App2d.Contracts.Simulation.PlayerAttackKind2D.Downward }
+        ? _downAttack.CaptureActionState() with { Kind = Contracts.Simulation.PlayerAttackKind2D.Downward }
         : base.CaptureActionState();
 
     public override bool IsAttackActive => base.IsAttackActive || _downAttack.IsAttackActive;

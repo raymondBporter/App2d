@@ -16,7 +16,7 @@ public sealed class ConvexHull2DTests
 
         var hull = PolygonGeometry2D.ConvexHull(points);
 
-        Assert.Equal<Vector2>([new(0, 0), new(2, 0), new(2, 2), new(0, 2)], hull);
+        Assert.Equal([new(0, 0), new(2, 0), new(2, 2), new(0, 2)], hull);
     }
 
     [Fact]

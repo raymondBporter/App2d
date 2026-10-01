@@ -32,7 +32,7 @@ public sealed class AuthoredEntityEnemyTests
     public void ContactRecoilFollowsTheHitWithoutTurningAndRestoresExactly(int facing, int direction, bool kill)
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var enemy = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
+        var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
         enemy.SetSimulationEnabled(true);
         enemy.Update(0, new(facing * 400, 42)); enemy.SyncAfterPhysics();
         var before = enemy.Pose.World("hips").X;
@@ -56,7 +56,7 @@ public sealed class AuthoredEntityEnemyTests
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
         var bounds = head.Scaled(GameWorldUnits2D.WorldUnitsPerAuthoredUnit).Bounds;
-        var hit = new App2d.Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4)));
+        var hit = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4)));
         hit.Transform.Position = bounds.Center;
         var facts = new List<CombatDamage2D>(); game.Combat.DamageResolved += facts.Add;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy,
@@ -89,9 +89,9 @@ public sealed class AuthoredEntityEnemyTests
     private static (Dictionary<string, float> Heights, Dictionary<string, float> Trail) Ride(Vector2 velocity)
     {
         var physics = new PhysicsWorld2D { Gravity = new(0, -1_900f), MaxSubstepSeconds = 1f / 120 };
-        var platform = new MovingPlatform2D(App2d.Core.EntityId2D.Create(), physics, Vector2.Zero, Vector2.Normalize(velocity) * 200, new(200, 10), velocity.Length(), 1, uint.MaxValue);
+        var platform = new MovingPlatform2D(Core.EntityId2D.Create(), physics, Vector2.Zero, Vector2.Normalize(velocity) * 200, new(200, 10), velocity.Length(), 1, uint.MaxValue);
         var box = Authored.Entities["spear-guard"].Asset.Movement;
-        var enemy = new AuthoredEntityEnemy2D(App2d.Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics,
+        var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics,
             new(0, platform.WorldObject.WorldBounds.Top + (box.Height / 2 + .5f) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit), 1, 4);
         enemy.SetSimulationEnabled(true);
         const float dt = 1f / 120;

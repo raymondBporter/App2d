@@ -44,7 +44,7 @@ public sealed class EnemyPresentationTests
         var id = EntityId2D.Create();
         var state = new EnemyState2D(id, EnemyKind2D.Rival, Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
         {
-            Person = default(App2d.Contracts.Persons.PersonState2D) with
+            Person = default(Contracts.Persons.PersonState2D) with
             { Id = id, Facing = 1f, HitPoints = 12, MaximumHitPoints = 12, IsGrounded = true }
         };
         view.Update([state], [], 0f, 1);
