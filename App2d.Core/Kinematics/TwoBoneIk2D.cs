@@ -40,7 +40,7 @@ public static class TwoBoneIk2D
         var along = (firstLength * firstLength - secondLength * secondLength + solvedDistance * solvedDistance) /
             (2f * solvedDistance);
         var perpendicularDistance = MathF.Sqrt(MathF.Max(0f, firstLength * firstLength - along * along));
-        var perpendicular = new Vector2(-direction.Y, direction.X) * MathF.Sign(bendDirection);
+        var perpendicular = direction.PerpCcw * MathF.Sign(bendDirection);
         var joint = root + direction * along + perpendicular * perpendicularDistance;
         var end = root + direction * solvedDistance;
 
