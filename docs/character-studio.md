@@ -17,6 +17,17 @@ The transport's **Preview end** menu follows the clip's loop setting by default.
 Loop wraps to the beginning, and Ping pong plays to the end and back. A ping pong trip from start to end takes
 one clip duration. Preview speed and end mode are session settings; they do not change the saved clip.
 
+## Character layers
+
+Model controls, variant rest positions, appearance attachment origins, and animation translations are edited as
+screen-plane X/Y plus a **character layer**. Front, Middle, and Back are quick order presets. The numeric order lets
+shapes fit between other shapes or move between layers during an animation; smaller values draw closer to the viewer.
+Each shape has a layer offset from its attached control. The existing `z` and `depth` fields in saved assets keep their
+exact values, so opening and saving an older character does not rearrange its artwork.
+
+These layers order parts **within one character**. The game's scene `ZIndex` still orders the character as one world
+object. Solid weapon meshes and their socket orientation continue to use three-dimensional coordinates.
+
 ## Weapons and 3D rotation
 
 Open **Sword backhand** (`player-sword-backhand`) in **Animate**. Under **Weapon preview**, choose Sword and the
@@ -42,7 +53,7 @@ muzzle after import; they remain explicit markers. Asset changes affect every en
 
 The starter sword, sheath, pistol, spear and hammer are simple closed meshes. Sword attacks, sheathing, gun poses and
 the hammer slam have initial orientation keys for experimentation. These are rough starting performances, not an
-automatic conversion of the old imported weapon motion. Characters keep their existing XY rig and depth controls.
+automatic conversion of the old imported weapon motion. Characters keep their existing XY rig and character layers.
 
 Rendering uses the same orthographic depth buffer as characters, with flat facet colors and visible silhouette/crease
 ink on solid props. Coplanar triangulation edges are suppressed. Legacy stroke/polygon props still load. Socket

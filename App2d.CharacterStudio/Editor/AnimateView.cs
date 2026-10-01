@@ -164,7 +164,8 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         var track = ClipAuthoring.Track(clip, channel.Value);
         ImGui.TextDisabled($"{channel.Value.Kind} channel on '{channel.Value.Target}'{(track is null ? ", not keyed yet" : $", {track.Keys.Count} keys")}");
         var (value, _) = ClipAuthoring.Value(clip, channel.Value, time);
-        if (Ui.Drag3("Delta from rest (reference units)", ref value)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, channel.Value, time, value));
+        var layered = LayeredPoint2D.From(value);
+        if (Ui.LayeredPoint("Delta from rest (reference units)", ref layered, layerIsOffset: true)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, channel.Value, time, layered.ToVector3()));
         if (channel.Value.Kind == MotionClip.TranslateKind)
         {
             var rotate = new Channel(MotionClip.RotateKind, control);

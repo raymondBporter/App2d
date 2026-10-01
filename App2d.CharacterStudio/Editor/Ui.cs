@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
@@ -29,6 +30,41 @@ internal static class Ui
 
     public static bool Drag3(string label, ref Vector3 value, float speed = .005f, float min = -100, float max = 100)
     { Label(label); return ImGui.DragFloat3("##" + label, ref value, speed, min, max, "%.3f"); }
+
+    /// <summary>Edits character drawing order without presenting it as a third position axis.</summary>
+    public static bool CharacterLayer(string label, ref CharacterLayer2D layer, float min = -32, float max = 32, bool offset = false)
+    {
+        var changed = false;
+        var preset = layer == CharacterLayer2D.Front ? "Front" : layer == CharacterLayer2D.Middle ? "Middle" :
+            layer == CharacterLayer2D.Back ? "Back" : "Custom";
+        if (!offset && Combo(label + " preset", preset, ["Front", "Middle", "Back"]) is { } selected)
+        {
+            layer = selected switch
+            {
+                "Front" => CharacterLayer2D.Front,
+                "Middle" => CharacterLayer2D.Middle,
+                _ => CharacterLayer2D.Back
+            };
+            changed = true;
+        }
+        var order = layer.Order;
+        if (Drag(label + (offset ? " shift (- front, + back)" : " order (- front, + back)"), ref order, .002f, min, max))
+        {
+            layer = new(order);
+            changed = true;
+        }
+        return changed;
+    }
+
+    public static bool LayeredPoint(string label, ref LayeredPoint2D point, bool layerIsOffset = false)
+    {
+        var xy = point.Position;
+        var moved = Drag2(label + " X / Y", ref xy);
+        var layer = point.Layer;
+        var reordered = CharacterLayer(label + " layer", ref layer, offset: layerIsOffset);
+        if (moved || reordered) point = new(xy, layer);
+        return moved || reordered;
+    }
 
     public static bool Text(string label, ref string value, uint length = 80)
     { Label(label); return ImGui.InputText("##" + label, ref value, length); }

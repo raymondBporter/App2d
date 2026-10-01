@@ -6,7 +6,7 @@ using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor;
 
-/// <summary>Reusable cutout art, edited on its wearer with the same sockets and depth as the game.</summary>
+/// <summary>Reusable cutout art, edited on its wearer with the same sockets and character layers as the game.</summary>
 internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 {
     private int _piece, _drag = -1;
@@ -49,7 +49,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         Ui.Help("Equipping adds this piece. Remove unwanted hair or clothes in Entity > Equipment. Shared edits affect all wearers.");
         var rest = session.ShowRest; if (ImGui.Checkbox("Rest pose", ref rest)) session.ShowRest = rest;
         var size = art.Scale; if (Ui.Drag("Size", ref size, .005f, .001f, 100)) session.Change(doc, () => doc.Asset.Scale = Math.Clamp(size, .001f, 100));
-        var grip = art.Grip.XYZ; if (Ui.Drag3("Attachment origin", ref grip)) session.Change(doc, () => doc.Asset.Grip = PuppetPoint.From(grip));
+        var grip = art.Grip.Layered; if (Ui.LayeredPoint("Attachment origin", ref grip)) session.Change(doc, () => doc.Asset.Grip = PuppetPoint.From(grip));
         var ink = art.Ink; if (Ui.ColorHex("Ink", ref ink)) session.Change(doc, () => doc.Asset.Ink = ink);
         var line = art.LineWidth; if (Ui.Drag("Line width", ref line, .001f, .001f, .2f)) session.Change(doc, () => doc.Asset.LineWidth = Math.Clamp(line, .001f, .2f));
         if (model is not null && ImGui.Button("Match body ink")) session.Edit(doc, () => { doc.Asset.Ink = model.Base.Ink; doc.Asset.LineWidth = model.Base.LineWidth; });
@@ -72,18 +72,18 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         if (piece.Outline is not { } points) { Ui.Help("This imported mesh has no editable cutout outline."); return; }
         var thickness = piece.Thickness;
         if (Ui.Drag("Thickness", ref thickness, .001f, .0001f, 2)) Cut(doc, points, Math.Clamp(thickness, .0001f, 2));
-        var z = points.Average(p => p.Z);
-        if (Ui.Drag("Depth (+ behind)", ref z, .001f, -2, 2))
-        { var delta = z - points.Average(p => p.Z); Cut(doc, points.Select(p => p with { Z = p.Z + delta }), thickness); }
-        Ui.Help("Drag the gold points in the viewport, or edit coordinates below. Clothing can span both legs in depth; keep the near arm in front of the belt.");
+        var layer = new CharacterLayer2D(points.Average(p => p.Z));
+        if (Ui.CharacterLayer("Piece layer", ref layer, -2, 2))
+        { var delta = layer.Order - points.Average(p => p.Z); Cut(doc, points.Select(p => p with { Z = p.Z + delta }), thickness); }
+        Ui.Help("Drag the gold points in the viewport, or edit coordinates below. Clothing can span both legs in layer order; keep the near arm in front of the belt.");
         if (session.PreviewSocket == PersonWardrobe.BodySocket && session.Assets.Resolve(session.SubjectId) is { } model && model.Rest.ContainsKey("left-hip") && model.Rest.ContainsKey("right-hip"))
         {
             try
             {
                 var layers = PersonWardrobeDepths.From(model);
-                Ui.Help($"Depth guide: near arm {layers.NearArm:F3}, belt {layers.FrontDetail:F3}, wrap front {layers.WrapFront:F3}, near leg {layers.NearLeg:F3}, far leg {layers.FarLeg:F3}, wrap back {layers.WrapBack:F3}.");
+                Ui.Help($"Layer guide: near arm {layers.NearArm:F3}, belt {layers.FrontDetail:F3}, wrap front {layers.WrapFront:F3}, near leg {layers.NearLeg:F3}, far leg {layers.FarLeg:F3}, wrap back {layers.WrapBack:F3}.");
             }
-            catch (Exception ex) when (ex is InvalidDataException or KeyNotFoundException) { Ui.Help("This rig has custom depth lanes; place the garment using its depth and thickness."); }
+            catch (Exception ex) when (ex is InvalidDataException or KeyNotFoundException) { Ui.Help("This rig has custom layer spacing; place the garment using its layer and thickness."); }
         }
         if (ImGui.CollapsingHeader("Outline points"))
         {

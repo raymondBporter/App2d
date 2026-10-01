@@ -1,10 +1,30 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters;
+using System.Numerics;
 using System.Text.Json;
 
 namespace App2d.Tests.Authored;
 
 public sealed class CharacterModelTests
 {
+    [Fact]
+    public void LegacyRestDepthIsPreservedByLayerEditingAndJson()
+    {
+        var model = TestModels.Creature();
+        var control = model.Controls.First();
+        control.Rest = new(.25f, 1.5f, -.14338458f);
+
+        var layered = control.Rest.Layered;
+        Assert.Equal(new Vector2(.25f, 1.5f), layered.Position);
+        Assert.Equal(-.14338458f, layered.Layer.Order);
+        control.Rest = PuppetPoint.From(layered with { Position = new(.5f, 1.5f) });
+
+        var json = model.ToJson();
+        Assert.Contains("\"z\": -0.14338458", json);
+        Assert.DoesNotContain("\"layered\"", json);
+        Assert.Equal(control.Rest, CharacterModel.FromJson(json).Controls.First().Rest);
+    }
+
     [Fact]
     public void JsonRoundTripIsExactAndRejectsMisspelledFields()
     {

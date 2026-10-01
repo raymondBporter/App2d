@@ -201,8 +201,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (session.Selection.Control is { } id && model.Controls.FirstOrDefault(c => c.Id == id) is { } control)
         {
             Ui.Header((control.Length > 0 ? "Bone " : "Control ") + control.Id);
-            var rest = control.Rest.XYZ;
-            if (Ui.Drag3(control.Length > 0 ? "Origin X / Y / depth" : "Rest X / Y / depth", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest, session.MoveChildren));
+            var rest = control.Rest.Layered;
+            if (Ui.LayeredPoint(control.Length > 0 ? "Origin" : "Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
             if (control.Length > 0)
             {
                 var length = control.Length;
@@ -414,7 +414,12 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             }
             if (part.Face != "none") Float("Face offset", part.FaceX, -.4f, .4f, overrides?.FaceX is not null, (p, v) => p.FaceX = v, o => o.FaceX = null);
         }
-        if (overrides is null) Float("Depth (positive is behind)", part.Depth, -2, 2, false, (p, v) => p.Depth = v, _ => { });
+        if (overrides is null)
+        {
+            var layer = new CharacterLayer2D(part.Depth);
+            if (Ui.CharacterLayer("Shape layer offset", ref layer, -2, 2, offset: true)) change(p => p.Depth = layer.Order);
+            Ui.Help("Offsets the shape from its attached control's layer.");
+        }
         if (!Marked("Visibility", overrides?.Hidden is not null, o => o.Hidden = null))
         { var hidden = part.Hidden; if (ImGui.Checkbox("Hidden", ref hidden)) change(p => p.Hidden = hidden); }
     }
@@ -462,14 +467,14 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         {
             Ui.Header("Control " + control);
             var overridden = variant.Rest.ContainsKey(control);
-            if (Ui.OverrideLabel("Rest X / Y / depth", overridden))
+            if (Ui.OverrideLabel("Rest position and layer", overridden))
             {
                 session.Edit(document, () => document.Asset.Rest.Remove(control));
             }
             else
             {
-                var rest = resolved.Rest[control]; ImGui.SetNextItemWidth(-1);
-                if (ImGui.DragFloat3("##rest", ref rest, .005f)) session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, control, rest, session.MoveChildren));
+                var rest = LayeredPoint2D.From(resolved.Rest[control]);
+                if (Ui.LayeredPoint("Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, control, rest.ToVector3(), session.MoveChildren));
             }
             var children = session.MoveChildren; if (ImGui.Checkbox("Move children with it", ref children)) session.MoveChildren = children;
         }
