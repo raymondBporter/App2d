@@ -46,12 +46,14 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private float _retreatRemaining;
     private bool _retreatUsed;
     private bool _chargeBlocked;
+    /// <summary>The movement shape's local bounds: feet at the origin, +X toward facing, authored units.</summary>
+    private readonly Rect2D _movement;
 
     public AuthoredEntityEnemy2D(EntityId2D id, ResolvedEntity entity, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
         Id = id; Entity = entity; _animator = new(entity); _collision = physics.CollisionSystem; _physics = physics; _worldLayer = worldLayer;
-        var box = entity.Asset.Movement;
-        WorldObject = new(AxisAlignedRectangle2D.FromSize(new Vector2(box.Width, box.Height) * Scale));
+        _movement = ShapeBounds2D.Calculate(entity.MovementShape);
+        WorldObject = new(AxisAlignedRectangle2D.FromSize(_movement.Size * Scale));
         WorldObject.Transform.Position = position;
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
         Body.EntityId = id; Body.CollisionLayer = enemyLayer; Body.CollisionMask = worldLayer; Body.Restitution = 0;
@@ -69,7 +71,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     public ICombatant2D Combatant => this;
     public ActorPose Pose => _animator.Pose;
     /// <summary>The feet origin in world pixels; the animator works in model units from here.</summary>
-    private Vector2 Root => WorldObject.Transform.Position - new Vector2(Entity.Asset.Movement.OffsetX * _facing, Entity.Asset.Movement.Height / 2) * Scale;
+    private Vector2 Root => WorldObject.Transform.Position - new Vector2(_movement.Center.X * _facing, _movement.Center.Y) * Scale;
     private string? Expression => !IsAlive ? "knocked-out" : _hurt > 0 ? "hurt" : null;
 
     public void SetSimulationEnabled(bool isEnabled)
@@ -140,7 +142,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         var bounds = WorldObject.WorldBounds;
         var x = WorldObject.Transform.Position.X + direction *
-            (Entity.Asset.Movement.Width * Scale / 2 + (speed ?? Entity.Asset.Controller.WalkSpeed) * Scale * dt + 3);
+            (_movement.Width * Scale / 2 + (speed ?? Entity.Asset.Controller.WalkSpeed) * Scale * dt + 3);
         var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4, 8)));
         probe.Transform.Position = new(x, bounds.Min.Y - 3);
         if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0) return false;
@@ -192,7 +194,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var velocity = shot.FlightSeconds > 0
             ? (_attackTarget - muzzle) / shot.FlightSeconds + new Vector2(0, gravity * shot.FlightSeconds / 2)
             : axis * shot.Speed * Scale;
-        _bolts.Add(new(muzzle, velocity, new Vector2(shot.Width, shot.Height) * Scale, shot.Lifetime) { Gravity = gravity });
+        _bolts.Add(new(muzzle, velocity, ShapeBounds2D.Calculate(shot.Shape.Build()).Size * Scale, shot.Lifetime) { Gravity = gravity });
     }
 
     /// <summary>Terrain between the body's centre line and the muzzle: a gun poked through a wall never fires beyond it.</summary>
@@ -276,7 +278,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         if (!_enabled || !IsAlive || _chargeBlocked) yield break;
         foreach (var hit in _animator.ActiveHits())
-            yield return new SpatialObject2D(ToWorld(EntityCollision.Attack(Entity, Pose, hit)).Shape);
+            yield return ToWorld(EntityCollision.Attack(Entity, Pose, hit)).ToSpatialObject();
     }
 
     public bool TryRegisterHit(EntityId2D source, int attack)
@@ -288,8 +290,8 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var open = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == "guard-open");
         if (open is not null && _animator.ActionTime >= open.Seconds) return null;
         var shield = ToWorld(EntityCollision.Attack(Entity, Pose,
-            new ResolvedHit(new HitWindow { Prop = guard.Prop, Width = guard.Width, Height = guard.Height }, 0, 1)));
-        return ShapeBounds2D.Calculate(shield.Shape);
+            new ResolvedHit(new HitWindow { Prop = guard.Prop, Shape = guard.Shape }, 0, 1)));
+        return shield.Bounds;
     }
 
     public bool OverlapsGuard(Rect2D attackBounds) => GuardBounds() is { } bounds && bounds.Intersects(attackBounds);

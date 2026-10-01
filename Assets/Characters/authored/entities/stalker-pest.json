@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "stalker-pest",
   "name": "Stalker pest",
   "model": "stalker",
@@ -13,8 +13,17 @@
   },
   "health": 2,
   "movement": {
-    "width": 1,
-    "height": 1.1
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.5,
+        "y": 0
+      },
+      "max": {
+        "x": 0.5,
+        "y": 1.1
+      }
+    }
   },
   "hurt": {
     "layout": "standard",

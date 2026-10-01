@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "hero",
   "name": "Hero",
   "model": "person",
@@ -21,7 +21,17 @@
   },
   "health": 30,
   "movement": {
-    "height": 1.705
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.275,
+        "y": 0
+      },
+      "max": {
+        "x": 0.275,
+        "y": 1.705
+      }
+    }
   },
   "hurt": {
     "layout": "standard",
@@ -56,8 +66,17 @@
           },
           "offsetX": 1.143,
           "offsetY": 0.874,
-          "width": 1.274,
-          "height": 0.667,
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.637,
+              "y": -0.3335
+            },
+            "max": {
+              "x": 0.637,
+              "y": 0.3335
+            }
+          },
           "damage": 2
         }
       ],
@@ -87,8 +106,17 @@
           },
           "offsetX": 0.937,
           "offsetY": 0.946,
-          "width": 1.342,
-          "height": 0.559,
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.671,
+              "y": -0.2795
+            },
+            "max": {
+              "x": 0.671,
+              "y": 0.2795
+            }
+          },
           "damage": 2
         }
       ],
@@ -118,8 +146,17 @@
           },
           "offsetX": 1.018,
           "offsetY": 0.874,
-          "width": 1.524,
-          "height": 0.667,
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.762,
+              "y": -0.3335
+            },
+            "max": {
+              "x": 0.762,
+              "y": 0.3335
+            }
+          },
           "damage": 2
         }
       ],
@@ -140,8 +177,17 @@
       "clip": "player-gun-shot",
       "projectile": {
         "speed": 31,
-        "width": 0.75,
-        "height": 0.25,
+        "shape": {
+          "kind": "rectangle",
+          "min": {
+            "x": -0.375,
+            "y": -0.125
+          },
+          "max": {
+            "x": 0.375,
+            "y": 0.125
+          }
+        },
         "damage": 2,
         "lifetime": 1.5
       },
@@ -161,8 +207,17 @@
       "clip": "player-gun-wall-shot",
       "projectile": {
         "speed": 31,
-        "width": 0.75,
-        "height": 0.25,
+        "shape": {
+          "kind": "rectangle",
+          "min": {
+            "x": -0.375,
+            "y": -0.125
+          },
+          "max": {
+            "x": 0.375,
+            "y": 0.125
+          }
+        },
         "damage": 2,
         "lifetime": 1.5
       },

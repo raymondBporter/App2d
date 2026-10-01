@@ -1,3 +1,5 @@
+using App2d.Core.Shapes;
+using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
@@ -151,13 +153,10 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
 
     private void Movement(AssetDocument<EntityAsset> document)
     {
-        var box = document.Asset.Movement;
-        Ui.Header("Movement box");
-        var size = new Vector2(box.Width, box.Height);
-        if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100)) session.Change(document, () => { document.Asset.Movement.Width = Math.Max(.01f, size.X); document.Asset.Movement.Height = Math.Max(.01f, size.Y); });
-        var offset = box.OffsetX; if (Ui.Drag("Offset X", ref offset, .005f, -100, 100)) session.Change(document, () => document.Asset.Movement.OffsetX = offset);
+        Ui.Header("Movement shape");
+        ShapeFields(document, document.Asset.Movement.Shape, shape => document.Asset.Movement.Shape = shape);
         if (ImGui.SmallButton("Fit to rest pose")) session.FitMovement();
-        Ui.Help("Stable and body-local: animation never changes it. Fit only on request.");
+        Ui.Help("Stable and body-local: feet at the origin, +X toward facing. Animation never changes it. Fit only on request.");
     }
 
     private void Hurt(AssetDocument<EntityAsset> document)
@@ -338,25 +337,79 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         {
             var along = hit.Along; if (Ui.Drag("Along the anchor's axis", ref along, .005f, -100, 100)) session.Change(document, () => Hit().Along = along);
         }
-        if (Ui.Combo("Shape", hit.Shape, ["box", "circle", "capsule"]) is { } shape)
-            session.Edit(document, () => { Hit().Shape = shape; if (shape == "capsule") Hit().Width = Math.Max(Hit().Width, Hit().Height); });
-        if (hit.Shape == "circle")
-        {
-            var diameter = hit.Width;
-            if (Ui.Drag("Diameter", ref diameter, .005f, .01f, 100)) session.Change(document, () => { Hit().Width = Math.Clamp(diameter, .01f, 100); Hit().Height = Hit().Width; });
-        }
-        else
-        {
-            var size = new Vector2(hit.Width, hit.Height);
-            var label = hit.Shape == "capsule" ? "Length / diameter" : "Width / height";
-            if (Ui.Drag2(label, ref size, .005f, .01f, 100)) session.Change(document, () =>
-            {
-                Hit().Height = Math.Clamp(size.Y, .01f, 100);
-                Hit().Width = Math.Clamp(Math.Max(size.X, hit.Shape == "capsule" ? Hit().Height : .01f), .01f, 100);
-            });
-        }
+        ShapeFields(document, hit.Shape, shape => Hit().Shape = shape);
+        Ui.Help("The shape sits in the anchor frame: +X along the anchor's axis, following facing.");
         var damage = hit.Damage; ImGui.TextUnformatted("Damage"); ImGui.SetNextItemWidth(-1);
         if (ImGui.DragInt("##damage", ref damage, .1f, 0, 10000)) session.Change(document, () => Hit().Damage = Math.Clamp(damage, 0, 10000));
+    }
+
+    private static readonly string[] EditableShapeKinds = [ShapeKinds2D.Rectangle, ShapeKinds2D.Circle, ShapeKinds2D.Capsule, ShapeKinds2D.Ellipse, ShapeKinds2D.Triangle, ShapeKinds2D.ConvexPolygon];
+
+    /// <summary>Kind and geometry fields for one shape definition. Kind changes are discrete edits; drags are continuous changes.</summary>
+    private void ShapeFields(AssetDocument<EntityAsset> document, ShapeDefinition2D shape, Action<ShapeDefinition2D> set)
+    {
+        IEnumerable<string> kinds = EditableShapeKinds.Contains(shape.Kind) ? EditableShapeKinds : EditableShapeKinds.Append(shape.Kind);
+        if (Ui.Combo("Shape", shape.Kind, kinds) is { } kind) session.Edit(document, () => set(shape.WithKind(kind)));
+        void Drag(ShapeDefinition2D changed) => session.Change(document, () => set(changed));
+        switch (shape)
+        {
+            case RectangleShapeDefinition2D rectangle:
+            {
+                var centre = (rectangle.Min.Vector + rectangle.Max.Vector) / 2; var size = rectangle.Max.Vector - rectangle.Min.Vector;
+                if (Ui.Drag2("Centre", ref centre)) Drag(RectangleShapeDefinition2D.FromSize(size, centre));
+                if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100)) Drag(RectangleShapeDefinition2D.FromSize(Vector2.Max(size, new(.01f)), centre));
+                break;
+            }
+            case CircleShapeDefinition2D circle:
+            {
+                var centre = circle.Center.Vector; var radius = circle.Radius;
+                if (Ui.Drag2("Centre", ref centre)) Drag(circle with { Center = Point2D.From(centre) });
+                if (Ui.Drag("Radius", ref radius, .005f, .005f, 50)) Drag(circle with { Radius = Math.Max(.005f, radius) });
+                break;
+            }
+            case CapsuleShapeDefinition2D capsule:
+            {
+                var start = capsule.Start.Vector; var end = capsule.End.Vector; var radius = capsule.Radius;
+                if (Ui.Drag2("Start", ref start)) Drag(capsule with { Start = Point2D.From(start) });
+                if (Ui.Drag2("End", ref end)) Drag(capsule with { End = Point2D.From(end) });
+                if (Ui.Drag("Radius", ref radius, .005f, .005f, 50)) Drag(capsule with { Radius = Math.Max(.005f, radius) });
+                break;
+            }
+            case EllipseShapeDefinition2D ellipse:
+            {
+                var centre = ellipse.Center.Vector; var radii = ellipse.Radii.Vector;
+                if (Ui.Drag2("Centre", ref centre)) Drag(ellipse with { Center = Point2D.From(centre) });
+                if (Ui.Drag2("Radii", ref radii, .005f, .005f, 50)) Drag(ellipse with { Radii = Point2D.From(Vector2.Max(radii, new(.005f))) });
+                break;
+            }
+            case TriangleShapeDefinition2D triangle:
+            {
+                var a = triangle.A.Vector; var b = triangle.B.Vector; var c = triangle.C.Vector;
+                if (Ui.Drag2("A", ref a)) Drag(triangle with { A = Point2D.From(a) });
+                if (Ui.Drag2("B", ref b)) Drag(triangle with { B = Point2D.From(b) });
+                if (Ui.Drag2("C", ref c)) Drag(triangle with { C = Point2D.From(c) });
+                break;
+            }
+            case ConvexPolygonShapeDefinition2D polygon:
+            {
+                for (var i = 0; i < polygon.Vertices.Count; i++)
+                {
+                    var vertex = polygon.Vertices[i].Vector;
+                    if (Ui.Drag2($"Vertex {i + 1}", ref vertex)) { var vertices = polygon.Vertices.ToList(); vertices[i] = Point2D.From(vertex); Drag(polygon with { Vertices = vertices }); }
+                }
+                if (ImGui.SmallButton("Add vertex"))
+                {
+                    var midpoint = (polygon.Vertices[^1].Vector + polygon.Vertices[0].Vector) / 2;
+                    session.Edit(document, () => set(polygon with { Vertices = [.. polygon.Vertices, Point2D.From(midpoint)] }));
+                }
+                if (polygon.Vertices.Count > 3) { ImGui.SameLine(); if (ImGui.SmallButton("Remove last")) session.Edit(document, () => set(polygon with { Vertices = polygon.Vertices.Take(polygon.Vertices.Count - 1).ToList() })); }
+                Ui.Help("Vertices go around the perimeter and must stay convex.");
+                break;
+            }
+            default:
+                Ui.Help("Edit this shape kind in the file.");
+                break;
+        }
     }
 
     /// <summary>A moment: a clip marker, or a normalized time over the clip. Markers keep hits on the visual moment when the clip is retimed.</summary>

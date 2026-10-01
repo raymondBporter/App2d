@@ -1,23 +1,11 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "baby-triceratops",
   "name": "Baby triceratops",
   "model": "baby-triceratops-rig",
   "motionSet": "standard",
   "roles": {},
-  "health": 8,
-  "mass": 1.5,
-  "movement": {
-    "width": 1.6,
-    "height": 0.95,
-    "offsetX": -0.1
-  },
-  "hurt": {
-    "layout": "body",
-    "regions": {}
-  },
-  "equipment": [],
   "controller": {
     "walkSpeed": 1.2,
     "range": 4.5,
@@ -26,9 +14,28 @@
     "verticalRange": 0.8,
     "chargeSpeed": 5,
     "chargeStartSeconds": 1,
-    "chargeEndSeconds": 1.85,
-    "brakeSeconds": 0.3
+    "chargeEndSeconds": 1.85
   },
+  "health": 8,
+  "mass": 1.5,
+  "movement": {
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.9,
+        "y": 0
+      },
+      "max": {
+        "x": 0.7,
+        "y": 0.95
+      }
+    }
+  },
+  "hurt": {
+    "layout": "body",
+    "regions": {}
+  },
+  "equipment": [],
   "actions": [
     {
       "id": "attack",
@@ -36,15 +43,23 @@
       "hits": [
         {
           "id": "horns",
-          "socket": "head-art",
-          "width": 0.75,
-          "height": 0.65,
-          "offsetX": 0,
           "start": {
             "marker": "rush"
           },
           "finish": {
             "marker": "brake"
+          },
+          "socket": "head-art",
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.375,
+              "y": -0.325
+            },
+            "max": {
+              "x": 0.375,
+              "y": 0.325
+            }
           },
           "damage": 3,
           "sound": "hit"

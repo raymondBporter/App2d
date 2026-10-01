@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "spear-guard",
   "name": "Spear guard",
   "model": "tall-thin",
@@ -12,8 +12,17 @@
     "cooldown": 1.1
   },
   "movement": {
-    "width": 0.5,
-    "height": 1.866
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.25,
+        "y": 0
+      },
+      "max": {
+        "x": 0.25,
+        "y": 1.866
+      }
+    }
   },
   "hurt": {
     "layout": "standard",
@@ -40,8 +49,17 @@
           },
           "prop": "spear",
           "along": -0.14,
-          "width": 0.42,
-          "height": 0.26
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.21,
+              "y": -0.13
+            },
+            "max": {
+              "x": 0.21,
+              "y": 0.13
+            }
+          }
         }
       ],
       "events": [

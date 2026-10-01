@@ -1,3 +1,5 @@
+using App2d.Core.Shapes;
+using App2d.Core.Geometry;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -11,9 +13,9 @@ public sealed record ActionTime
 }
 
 /// <summary>
-/// An attack region active over [Start, Finish). It is centred on a socket or prop point and pushed Along the anchor's
-/// axis. Without an anchor it is fixed to the actor at OffsetX/OffsetY from the feet. Boxes stay world-aligned;
-/// capsules follow the anchor's projected XY axis. Circles use Width as their diameter.
+/// An attack region active over [Start, Finish). Its <see cref="Shape"/> lives in the anchor frame: the origin is a socket
+/// or prop point pushed <see cref="Along"/> the anchor's axis, +X runs along that axis and the frame follows the actor's
+/// facing. Without an anchor it is fixed to the actor at OffsetX/OffsetY from the feet with +X toward facing.
 /// </summary>
 public sealed record HitWindow
 {
@@ -26,9 +28,8 @@ public sealed record HitWindow
     public float Along { get; set; }
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
-    public float Width { get; set; } = .3f;
-    public float Height { get; set; } = .3f;
-    public string Shape { get; set; } = "box";
+    /// <summary>The region in the anchor frame; any convex shape definition.</summary>
+    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.3f, .3f));
     public int Damage { get; set; } = 1;
     /// <summary>Played where the hit lands; null plays the game's default impact.</summary>
     public string? Sound { get; set; }
@@ -41,8 +42,8 @@ public sealed record HitWindow
 public sealed record ProjectileDef
 {
     public float Speed { get; set; } = 8;
-    public float Width { get; set; } = .16f;
-    public float Height { get; set; } = .08f;
+    /// <summary>The bolt's shape around its position; its bounds size the bolt in flight.</summary>
+    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.16f, .08f));
     public int Damage { get; set; } = 1;
     public float Lifetime { get; set; } = 3;
     /// <summary>Downward acceleration in model units/s²; zero preserves straight shots.</summary>
@@ -108,12 +109,17 @@ public sealed record ControllerConfig
     public float BrakeSeconds { get; set; } = .3f;
 }
 
-/// <summary>The stable body-local movement box. Animation never changes it.</summary>
-public sealed record MovementBox
+/// <summary>The stable body-local movement shape: feet at the origin, +X toward facing. Animation never changes it.</summary>
+public sealed record MovementDef
 {
-    public float Width { get; set; } = .55f;
-    public float Height { get; set; } = 1.9f;
-    public float OffsetX { get; set; }
+    public ShapeDefinition2D Shape { get; set; } = Box(.55f, 1.9f);
+
+    /// <summary>A rectangle standing on the feet, offset sideways toward facing.</summary>
+    /// <param name="width">The finite, positive width.</param>
+    /// <param name="height">The finite, positive height.</param>
+    /// <param name="offsetX">How far the box centre sits ahead of the feet.</param>
+    /// <returns>A rectangle definition from the feet up to the height.</returns>
+    public static RectangleShapeDefinition2D Box(float width, float height, float offsetX = 0) => RectangleShapeDefinition2D.FromSize(new(width, height), new(offsetX, height / 2));
 }
 
 public sealed record HurtOverride
@@ -139,8 +145,8 @@ public sealed record EquipmentBinding
 public sealed record GuardDef
 {
     public string Prop { get; set; } = "";
-    public float Width { get; set; } = .9f;
-    public float Height { get; set; } = 1.4f;
+    /// <summary>The shield region in the prop's anchor frame.</summary>
+    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.9f, 1.4f));
 }
 
 /// <summary>
@@ -151,7 +157,8 @@ public sealed class EntityAsset
 {
     public const string FormatId = "app2d-entity";
     public string Format { get; set; } = FormatId;
-    public int Version { get; set; } = 1;
+    public const int CurrentVersion = 2;
+    public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Model { get; set; } = "";
@@ -163,22 +170,35 @@ public sealed class EntityAsset
     public int Health { get; set; } = 3;
     /// <summary>Divides knockback: a heavy entity barely moves when hit.</summary>
     public float Mass { get; set; } = 1;
-    public MovementBox Movement { get; set; } = new();
+    public MovementDef Movement { get; set; } = new();
     public HurtSelection Hurt { get; set; } = new();
     public List<EquipmentBinding> Equipment { get; set; } = [];
     public List<EntityActionDef> Actions { get; set; } = [];
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    public static EntityAsset FromJson(string json) { var entity = AuthoredAsset.Parse<EntityAsset>(json, "entity"); entity.Validate(); return entity; }
+    public static EntityAsset FromJson(string json) { var entity = AuthoredAsset.Parse<EntityAsset>(EntityAssetUpgrade.ToCurrent(json), "entity"); entity.Validate(); return entity; }
     public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
+
+    /// <summary>A convex shape definition that builds and fits the authored limits: extents between .01 and the size limit, centre within 100 units.</summary>
+    private static void CheckShape(ShapeDefinition2D? shape, string field, float sizeLimit = 100)
+    {
+        Require(shape is not null, $"{field}: a shape is required.");
+        IShape2D built;
+        try { built = shape.Build(); }
+        catch (Exception error) when (error is ArgumentException or InvalidOperationException or NotSupportedException) { throw new InvalidDataException($"{field}: {error.Message}", error); }
+        Require(built is IConvexShape2D, $"{field}: the shape must be convex; composites and half-spaces are not supported here.");
+        var bounds = ShapeBounds2D.Calculate(built);
+        new Limit(.01f, sizeLimit).Check(bounds.Width, field + " width"); new Limit(.01f, sizeLimit).Check(bounds.Height, field + " height");
+        new Limit(-100, 100).Check(bounds.Center.X, field + " centre x"); new Limit(-100, 100).Check(bounds.Center.Y, field + " centre y");
+    }
 
     /// <summary>Checks the file on its own. References to models, clips and props are checked when compiling.</summary>
     public void Validate()
     {
         var owner = $"Entity '{Id}'";
-        Require(Format == FormatId && Version == 1, $"{owner}: unsupported format/version.");
+        Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "entity id"); AuthoredAsset.RequireId(Model, $"{owner} model"); AuthoredAsset.RequireId(MotionSet, $"{owner} motionSet");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(Roles is not null && Controller is not null && Movement is not null && Hurt?.Regions is not null && Equipment is not null && Actions is not null,
@@ -198,8 +218,7 @@ public sealed class EntityAsset
         new Limit(.01f, 10).Check(Controller.BrakeSeconds, $"{owner} controller.brakeSeconds");
         Require(Controller.ChargeSpeed == 0 || Controller.ChargeEndSeconds > Controller.ChargeStartSeconds, $"{owner}: charge end must follow charge start.");
         new Limit(1, 10000).Check(Health, $"{owner} health"); new Limit(.1f, 100).Check(Mass, $"{owner} mass");
-        new Limit(.01f, 100).Check(Movement.Width, $"{owner} movement.width"); new Limit(.01f, 100).Check(Movement.Height, $"{owner} movement.height");
-        new Limit(-100, 100).Check(Movement.OffsetX, $"{owner} movement.offsetX");
+        CheckShape(Movement.Shape, $"{owner} movement.shape");
         if (Hurt.Layout is not null) AuthoredAsset.RequireId(Hurt.Layout, $"{owner} hurt.layout");
         foreach (var (region, change) in Hurt.Regions)
         {
@@ -217,8 +236,7 @@ public sealed class EntityAsset
         if (Guard is { } guard)
         {
             Require(props.Contains(guard.Prop), $"{owner}: guard prop '{guard.Prop}' must be equipped.");
-            new Limit(.01f, 10).Check(guard.Width, $"{owner} guard.width");
-            new Limit(.01f, 10).Check(guard.Height, $"{owner} guard.height");
+            CheckShape(guard.Shape, $"{owner} guard.shape", 10);
         }
         var chained = Actions.Where(a => a?.Next is not null).Select(a => a.Next!).ToHashSet(StringComparer.Ordinal);
         foreach (var action in Actions)
@@ -240,8 +258,8 @@ public sealed class EntityAsset
             Require(fires == (action.Projectile is not null), fires ? $"{field}: a '{EntityControllers.Fire}' event needs a projectile." : $"{field}: a projectile needs a '{EntityControllers.Fire}' event to launch it.");
             if (action.Projectile is { } shot)
             {
-                new Limit(.1f, 200).Check(shot.Speed, field + " projectile.speed"); new Limit(.01f, 10).Check(shot.Width, field + " projectile.width");
-                new Limit(.01f, 10).Check(shot.Height, field + " projectile.height"); new Limit(0, 10000).Check(shot.Damage, field + " projectile.damage");
+                new Limit(.1f, 200).Check(shot.Speed, field + " projectile.speed"); CheckShape(shot.Shape, field + " projectile.shape", 10);
+                new Limit(0, 10000).Check(shot.Damage, field + " projectile.damage");
                 new Limit(.05f, 30).Check(shot.Lifetime, field + " projectile.lifetime");
                 new Limit(0, 200).Check(shot.Gravity, field + " projectile.gravity");
                 new Limit(0, 10).Check(shot.FlightSeconds, field + " projectile.flightSeconds");
@@ -257,9 +275,7 @@ public sealed class EntityAsset
                 CheckTime(hit.Start, $"{field} hit '{hit.Id}' start"); CheckTime(hit.Finish, $"{field} hit '{hit.Id}' finish");
                 new Limit(-100, 100).Check(hit.Along, $"{field} hit '{hit.Id}' along");
                 new Limit(-100, 100).Check(hit.OffsetX, $"{field} hit '{hit.Id}' offsetX"); new Limit(-100, 100).Check(hit.OffsetY, $"{field} hit '{hit.Id}' offsetY");
-                new Limit(.01f, 100).Check(hit.Width, $"{field} hit '{hit.Id}' width"); new Limit(.01f, 100).Check(hit.Height, $"{field} hit '{hit.Id}' height");
-                Require(hit.Shape is "box" or "circle" or "capsule", $"{field} hit '{hit.Id}': shape must be box, circle or capsule.");
-                Require(hit.Shape != "capsule" || hit.Width >= hit.Height, $"{field} hit '{hit.Id}': capsule width must be at least its height (diameter).");
+                CheckShape(hit.Shape, $"{field} hit '{hit.Id}' shape");
                 new Limit(0, 10000).Check(hit.Damage, $"{field} hit '{hit.Id}' damage");
                 if (hit.Sound is not null) AuthoredAsset.RequireId(hit.Sound, $"{field} hit '{hit.Id}' sound");
             }

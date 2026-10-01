@@ -90,7 +90,7 @@ public sealed class AuthoredEntityEnemyTests
     {
         var physics = new PhysicsWorld2D { Gravity = new(0, -1_900f), MaxSubstepSeconds = 1f / 120 };
         var platform = new MovingPlatform2D(Core.EntityId2D.Create(), physics, Vector2.Zero, Vector2.Normalize(velocity) * 200, new(200, 10), velocity.Length(), 1, uint.MaxValue);
-        var box = Authored.Entities["spear-guard"].Asset.Movement;
+        var box = ShapeBounds2D.Calculate(Authored.Entities["spear-guard"].MovementShape);
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics,
             new(0, platform.WorldObject.WorldBounds.Top + (box.Height / 2 + .5f) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit), 1, 4);
         enemy.SetSimulationEnabled(true);

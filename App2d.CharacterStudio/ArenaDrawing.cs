@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using App2d.Gameplay.Entities;
 using App2d.Rendering.Characters;
@@ -15,7 +16,7 @@ internal sealed record ArenaActorFrame(ResolvedEntity Entity, ActorPose Pose, En
     /// <summary>Every actor, with the bolts in flight shown as attack regions of the actor that fired them.</summary>
     public static IReadOnlyList<ArenaActorFrame> Capture(AuthoredArena arena) => [.. arena.Actors.Select(a => new ArenaActorFrame(
         a.Entity, a.Pose, a.Movement, a.Hurt,
-        [.. a.Attacks.Select(x => x.Region), .. arena.Bolts.Where(b => b.Owner == a.Index).Select(b => EntityRegion.Box("bolt", b.Position, b.Size))],
+        [.. a.Attacks.Select(x => x.Region), .. arena.Bolts.Where(b => b.Owner == a.Index).Select(b => new EntityRegion("bolt", b.Shape, Similarity2D.FromTranslation(b.Position)))],
         a.Animator.Anchors.ToDictionary(), a.Alive))];
 }
 

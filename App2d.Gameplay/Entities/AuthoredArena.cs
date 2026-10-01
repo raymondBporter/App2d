@@ -1,3 +1,5 @@
+using App2d.Core.Shapes;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
@@ -8,7 +10,7 @@ public readonly record struct ArenaInput(float Move = 0, bool Run = false, bool 
 public readonly record struct ArenaEvent(long Tick, int Actor, AnimationEvent Event, Vector2 Position);
 public readonly record struct ArenaHit(long Tick, int Attacker, int Target, string Window, int Damage);
 /// <summary>A projectile in flight, in model units.</summary>
-public readonly record struct ArenaBolt(int Owner, Vector2 Position, Vector2 Velocity, Vector2 Size, float Lifetime, int Damage);
+public readonly record struct ArenaBolt(int Owner, Vector2 Position, Vector2 Velocity, IConvexShape2D Shape, float Lifetime, int Damage);
 
 /// <summary>
 /// The flat-ground entity arena over authored entities. Actor 0 is controlled; the others walk toward it and attack in
@@ -101,7 +103,7 @@ public sealed class AuthoredArena
         {
             var bolt = Bolts[i];
             bolt = bolt with { Position = bolt.Position + bolt.Velocity * StepSeconds, Lifetime = bolt.Lifetime - StepSeconds };
-            var box = EntityRegion.Box("bolt", bolt.Position, bolt.Size);
+            var box = new EntityRegion("bolt", bolt.Shape, Similarity2D.FromTranslation(bolt.Position));
             var target = Actors.FirstOrDefault(t => t.Alive && (t.Index == 0) != (bolt.Owner == 0) && t.Hurt.Any(h => h.Overlaps(box, Vector2.Zero, Vector2.Zero)));
             if (target is not null) { Hits.Add(new(Tick, bolt.Owner, target.Index, "bolt", bolt.Damage)); Damage(target, bolt.Damage); }
             if (target is not null || bolt.Lifetime <= 0 || bolt.Position.Y < 0 || MathF.Abs(bolt.Position.X) > HalfWidth + 2) Bolts.RemoveAt(i);
@@ -174,7 +176,7 @@ public sealed class AuthoredArena
             if (e is { Kind: AnimationEvent.EventKind, Id: EntityControllers.Fire } && animator.Current?.Projectile is { } shot)
             {
                 var (muzzle, axis) = EntityCollision.Muzzle(actor.Entity, actor.Pose);
-                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, new(shot.Width, shot.Height), shot.Lifetime, shot.Damage));
+                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, (IConvexShape2D)shot.Shape.Build(), shot.Lifetime, shot.Damage));
             }
         }
         if (animator.ActionComplete && animator.Action != EntityControllers.Jump) animator.EndAction();

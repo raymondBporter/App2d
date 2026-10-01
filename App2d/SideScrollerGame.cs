@@ -1,3 +1,4 @@
+using App2d.Core.Shapes;
 using App2d.Core.Geometry;
 using App2d.Contracts.World;
 using App2d.Core.Validation;
@@ -54,10 +55,11 @@ public sealed class SideScrollerGame : Game2D
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
-        var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.Height) / 4) * 4;
+        var movement = ShapeBounds2D.Calculate(hero.MovementShape);
+        var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(movement.Height) / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
-            new(GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.Width), height),
-            GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.OffsetX));
+            new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height),
+            GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
         _sounds = _resources.GetLoad<SoundEffectBank2D>("audio/sfx", "presentation");
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");

@@ -74,13 +74,14 @@ public static class EntityAuthoring
     }
 
     /// <summary>The movement box around the rest pose's visible parts: full height from the feet, a narrow body width. Explicit, never automatic.</summary>
-    public static MovementBox FitMovement(ResolvedModel model)
+    /// <param name="offsetX">How far the box centre sits ahead of the feet; kept from the previous shape when refitting.</param>
+    public static MovementDef FitMovement(ResolvedModel model, float offsetX = 0)
     {
         var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, id => model.Rest[id]))
             .Concat(model.Rest.Values).DefaultIfEmpty(Vector3.Zero).ToList();
         var height = MathF.Max(.2f, points.Max(p => p.Y));
         var width = Math.Clamp((points.Max(p => p.X) - points.Min(p => p.X)) * .6f, .2f, height);
-        return new() { Width = MathF.Round(width, 3), Height = MathF.Round(height, 3) };
+        return new() { Shape = MovementDef.Box(MathF.Round(width, 3), MathF.Round(height, 3), offsetX) };
     }
 
     // ---- Motion sets ---------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "player",
   "name": "Player",
   "model": "person",
@@ -16,7 +16,17 @@
   },
   "health": 5,
   "movement": {
-    "height": 1.705
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.275,
+        "y": 0
+      },
+      "max": {
+        "x": 0.275,
+        "y": 1.705
+      }
+    }
   },
   "hurt": {
     "layout": "standard",
@@ -47,8 +57,17 @@
           },
           "prop": "spear",
           "along": -0.14,
-          "width": 0.42,
-          "height": 0.26
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.21,
+              "y": -0.13
+            },
+            "max": {
+              "x": 0.21,
+              "y": 0.13
+            }
+          }
         }
       ],
       "events": [

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -27,9 +28,9 @@ public sealed class AuthoredHero2D
         _halfHeight = colliderSize.Y / 2;
         for (var swing = Attack; swing is not null && !_shapes.ContainsKey(swing.Id); swing = swing.Next is { } next ? entity.Actions[next] : null)
         {
-            if (swing.Hits is not [{ Window: { Socket: null, Prop: null } hit }])
+            if (swing.Hits is not [{ Window: { Socket: null, Prop: null } } hit])
                 throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window, fixed to the actor (no socket or prop): the player's sword hit is a box on the player.");
-            _shapes[swing.Id] = AxisAlignedRectangle2D.FromSize(new Vector2(hit.Width, hit.Height) * WorldUnitsPerModelUnit);
+            _shapes[swing.Id] = WorldShape2D.Scaled(hit.Shape, WorldUnitsPerModelUnit);
         }
     }
 
@@ -66,7 +67,7 @@ public sealed class AuthoredHero2D
 
     /// <summary>The player's bolt from the shoot action's projectile, in world units.</summary>
     internal GunPersonWeapon2D.Shot? Shot => Entity.Actions.GetValueOrDefault(EntityControllers.Shoot)?.Projectile is { } p
-        ? new(new Vector2(p.Width, p.Height) * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, p.Damage) : null;
+        ? new(ShapeBounds2D.Calculate(p.Shape.Build()).Size * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, p.Damage) : null;
 
     /// <summary>Where a shot leaves the pistol: the muzzle at the shoot (or wall-shot) action's fire event.</summary>
     public Vector2 Muzzle(float facing, bool wallGrip)

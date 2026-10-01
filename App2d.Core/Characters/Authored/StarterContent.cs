@@ -1,3 +1,5 @@
+using App2d.Core.Shapes;
+
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>
@@ -330,7 +332,7 @@ public static class StarterContent
     {
         Id = EntityControllers.Attack,
         Clip = "person-thrust",
-        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Width = .42f, Height = .26f }],
+        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Shape = RectangleShapeDefinition2D.FromSize(new(.42f, .26f)) }],
         Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
     };
 
@@ -342,7 +344,7 @@ public static class StarterContent
         MotionSet = "deliberate",
         Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .9f, Range = 2.1f, Cooldown = 1.1f },
         Health = 3,
-        Movement = new() { Width = .5f, Height = 1.866f },
+        Movement = new() { Shape = MovementDef.Box(.5f, 1.866f) },
         Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust()],
@@ -356,7 +358,7 @@ public static class StarterContent
         MotionSet = "standard",
         Controller = new() { Kind = EntityControllers.Platformer, WalkSpeed = 1.8f, RunSpeed = 4.2f, JumpSpeed = 7.5f, Range = 1.6f, Cooldown = .2f },
         Health = 5,
-        Movement = new() { Width = .55f, Height = 1.705f },
+        Movement = new() { Shape = MovementDef.Box(.55f, 1.705f) },
         Hurt = new() { Layout = "standard", Regions = new() { ["legs"] = new() { Pad = .05f } } },
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust(), new() { Id = EntityControllers.Jump, Role = "jump", Events = [new() { Id = EntityControllers.Launch, At = new() { Marker = "launch" } }] }],
@@ -370,14 +372,14 @@ public static class StarterContent
         MotionSet = "standard",
         Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .6f, Range = 1.05f, Cooldown = 1.4f },
         Health = 2,
-        Movement = new() { Width = 1, Height = 1.1f },
+        Movement = new() { Shape = MovementDef.Box(1, 1.1f) },
         Hurt = new() { Layout = "standard" },
         Actions =
         [
             new()
             {
                 Id = EntityControllers.Attack, Clip = "stalker-lunge",
-                Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Socket = "stinger", Width = .3f, Height = .3f }],
+                Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Socket = "stinger", Shape = RectangleShapeDefinition2D.FromSize(new(.3f, .3f)) }],
                 Events = [new() { Id = "bite", At = new() { Marker = "strike" }, Sound = "bite" }],
             },
         ],

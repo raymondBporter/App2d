@@ -1,3 +1,4 @@
+using App2d.Core.Shapes;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
@@ -6,7 +7,12 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>An effective role assignment and where it came from: the entity's own override, or its selected motion set.</summary>
 public sealed record RoleClip(string Role, MotionClip Clip, string Source);
 
-public sealed record ResolvedHit(HitWindow Window, float Start, float Finish);
+/// <summary>A hit window with marker times in seconds and its shape built once, ready to be placed every frame.</summary>
+public sealed record ResolvedHit(HitWindow Window, float Start, float Finish)
+{
+    /// <summary>The window's convex shape in its anchor frame.</summary>
+    public IConvexShape2D Shape { get; } = (IConvexShape2D)Window.Shape.Build();
+}
 public sealed record ResolvedEvent(ActionEvent Event, float Seconds);
 /// <summary>An enabled action. <see cref="Mask"/>, when set, names the targets it owns over locomotion.</summary>
 public sealed record ResolvedAction(string Id, MotionClip Clip, string Source, IReadOnlyList<ResolvedHit> Hits, IReadOnlyList<ResolvedEvent> Events)
@@ -38,9 +44,11 @@ public sealed record ResolvedEquipment(PropAsset Prop, ModelSocket Socket);
 /// </summary>
 public sealed class ResolvedEntity
 {
-    private ResolvedEntity(EntityAsset asset, ResolvedModel model, ControllerSpec controller) { Asset = asset; Model = model; Controller = controller; }
+    private ResolvedEntity(EntityAsset asset, ResolvedModel model, ControllerSpec controller) { Asset = asset; Model = model; Controller = controller; MovementShape = (IConvexShape2D)asset.Movement.Shape.Build(); }
 
     public EntityAsset Asset { get; }
+    /// <summary>The movement shape built once: feet at the origin, +X toward facing.</summary>
+    public IConvexShape2D MovementShape { get; }
     public string Id => Asset.Id;
     public string Name => Asset.Name;
     public ResolvedModel Model { get; }
@@ -221,11 +229,9 @@ public static class EntityCollision
     /// <summary>Radius, in authored units, given to hurt regions whose controls enclose no area.</summary>
     public const float DegenerateHurtRadius = .005f;
 
-    public static EntityRegion Movement(ResolvedEntity entity, Vector2 position, int facing)
-    {
-        var box = entity.Asset.Movement;
-        return EntityRegion.Box("movement", new(position.X + box.OffsetX * facing, position.Y + box.Height / 2), new(box.Width, box.Height));
-    }
+    /// <summary>The movement shape placed at the feet, mirrored to the facing.</summary>
+    public static EntityRegion Movement(ResolvedEntity entity, Vector2 position, int facing) =>
+        new("movement", entity.MovementShape, Similarity2D.FromAxis(position, new(facing, 0), mirror: facing < 0));
 
     public static List<EntityRegion> Hurt(ResolvedEntity entity, ActorPose pose)
     {
@@ -271,19 +277,15 @@ public static class EntityCollision
         return (ActorPose.PropPoint(frame, gun.Prop, gun.Prop.Muzzle!.Value), axis);
     }
 
+    /// <summary>
+    /// The hit window's shape placed in its anchor frame: origin pushed along the anchor's axis, +X along that axis (the
+    /// facing when the axis is foreshortened away), and +Y toward the frame's across direction so mirroring keeps up up.
+    /// </summary>
     public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit)
     {
         var frame = Anchor(entity, pose, hit.Window);
-        var anchor = frame.At(hit.Window.Along, 0);
-        var center = new Vector2(anchor.X, anchor.Y);
-        var window = hit.Window;
-        if (window.Shape == "circle") return EntityRegion.Circle(window.Id, center, window.Width / 2);
-        if (window.Shape == "capsule")
-        {
-            var axis = frame.Axis.LengthSquared() > 1e-8f ? Vector2.Normalize(frame.Axis) : new Vector2(pose.Facing, 0);
-            var halfSegment = (window.Width - window.Height) / 2;
-            return EntityRegion.Capsule(window.Id, center - axis * halfSegment, center + axis * halfSegment, window.Height / 2);
-        }
-        return EntityRegion.Box(window.Id, center, new(window.Width, window.Height));
+        var axis = frame.Axis.LengthSquared() > 1e-8f ? Vector2.Normalize(frame.Axis) : new Vector2(pose.Facing, 0);
+        var mirror = CrossProduct2D.Of(axis, frame.Across) < 0d;
+        return new(hit.Window.Id, hit.Shape, Similarity2D.FromAxis(frame.At(hit.Window.Along, 0).XY, axis, mirror));
     }
 }

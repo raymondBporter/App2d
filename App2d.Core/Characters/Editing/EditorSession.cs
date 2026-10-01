@@ -1,3 +1,5 @@
+using App2d.Core.Shapes;
+using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 
@@ -566,8 +568,8 @@ public sealed class EditorSession
         return Edit(document, () =>
         {
             var model = Assets.Resolve(document!.Asset.Model, out var error) ?? throw new InvalidDataException(error);
-            var fitted = EntityAuthoring.FitMovement(model);
-            document.Asset.Movement = fitted with { OffsetX = document.Asset.Movement.OffsetX };
+            var current = ShapeBounds2D.Calculate(document.Asset.Movement.Shape.Build());
+            document.Asset.Movement = EntityAuthoring.FitMovement(model, current.Center.X);
         }, "Fitted the movement box to the rest pose.");
     }
 
