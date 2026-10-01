@@ -1,4 +1,5 @@
 using App2d.Core.Validation;
+using App2d.Core.Timing;
 
 namespace App2d.Core.Animation;
 
@@ -7,57 +8,54 @@ namespace App2d.Core.Animation;
 /// </summary>
 public sealed class AnimationPlayer2D<TFrame>
 {
-    private float _elapsedSeconds;
-    private float _playbackSpeed = 1f;
+    private readonly PlaybackClock _clock = new();
 
     public AnimationClip2D<TFrame>? Clip { get; private set; }
-    public float ElapsedSeconds => _elapsedSeconds;
+    public float ElapsedSeconds => (float)_clock.TimeSeconds;
     public int CurrentFrameIndex { get; private set; }
-    public bool IsPlaying { get; private set; }
-    public bool IsFinished { get; private set; }
+    public bool IsPlaying => _clock.IsPlaying;
+    public bool IsFinished => _clock.IsComplete;
 
     public float PlaybackSpeed
     {
-        get => _playbackSpeed;
+        get => (float)_clock.Speed;
         set
         {
             ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(PlaybackSpeed));
-            _playbackSpeed = value;
+            _clock.Speed = value;
         }
     }
 
     public TFrame CurrentFrame => StateGuard.RequireNotNull(Clip, "Play a clip before reading its current frame.")[CurrentFrameIndex];
 
-    public void Play(AnimationClip2D<TFrame> clip, bool restart = false)
+    public void Play(AnimationClip2D<TFrame> clip, bool restart = false, PlaybackEndMode? endMode = null)
     {
         ArgGuard.ThrowIfNull(clip);
+        var mode = endMode ?? (clip.IsLooping ? PlaybackEndMode.Loop : PlaybackEndMode.Hold);
 
-        if (ReferenceEquals(Clip, clip) && !restart && IsPlaying)
+        if (ReferenceEquals(Clip, clip) && !restart && IsPlaying && _clock.EndMode == mode)
             return;
 
+        _clock.Configure(clip.Duration, mode);
         Clip = clip;
-        _elapsedSeconds = 0f;
+        _clock.Restart();
         CurrentFrameIndex = 0;
-        IsFinished = false;
-        IsPlaying = true;
     }
 
-    public void Pause() => IsPlaying = false;
+    public void Pause() => _clock.Pause();
 
     public void Resume()
     {
         if (Clip is not null && !IsFinished)
-            IsPlaying = true;
+            _clock.Play();
     }
 
     public void Stop(bool resetToFirstFrame = true)
     {
-        IsPlaying = false;
-        IsFinished = false;
+        _clock.Stop(resetToFirstFrame);
         if (!resetToFirstFrame)
             return;
 
-        _elapsedSeconds = 0f;
         CurrentFrameIndex = 0;
     }
 
@@ -67,23 +65,7 @@ public sealed class AnimationPlayer2D<TFrame>
         if (!IsPlaying || Clip is null || deltaSeconds == 0f || PlaybackSpeed == 0f)
             return;
 
-        _elapsedSeconds += deltaSeconds * PlaybackSpeed;
-        if (Clip.IsLooping)
-        {
-            _elapsedSeconds %= Clip.Duration;
-            CurrentFrameIndex = Clip.GetFrameIndexAtTime(_elapsedSeconds);
-            return;
-        }
-
-        if (_elapsedSeconds >= Clip.Duration)
-        {
-            _elapsedSeconds = Clip.Duration;
-            CurrentFrameIndex = Clip.FrameCount - 1;
-            IsPlaying = false;
-            IsFinished = true;
-            return;
-        }
-
-        CurrentFrameIndex = Clip.GetFrameIndexAtTime(_elapsedSeconds);
+        _clock.Advance(deltaSeconds);
+        CurrentFrameIndex = Clip.GetFrameIndexAtTime(ElapsedSeconds);
     }
 }

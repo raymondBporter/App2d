@@ -221,7 +221,7 @@ public sealed class EditorSession
         if (model is null) return null;
         var clip = ClipFor(subjectId); var input = new PoseInput(Expression);
         var pose = clip is null ? PoseEvaluator.Rest(model, input)
-            : PoseEvaluator.Sample(model, clip, Transport.Playing ? Transport.Seconds(clip) : Transport.Time, repeat: Transport.Playing, input);
+            : PoseEvaluator.Sample(model, clip, Transport.Playing ? Transport.Seconds(clip) : Transport.Time, repeat: Transport.Repeats(clip), input);
         return new(subjectId, model, pose, clip);
     }
 
@@ -252,7 +252,8 @@ public sealed class EditorSession
         if (action is null)
         {
             var clip = entity.Clip(PreviewRole);
-            local = PoseEvaluator.Sample(entity.Model, clip, clip is not null && Transport.Playing ? Transport.Seconds(clip) : time, repeat: Transport.Playing, new(Expression));
+            local = PoseEvaluator.Sample(entity.Model, clip, clip is not null && Transport.Playing ? Transport.Seconds(clip) : time,
+                repeat: clip is not null && Transport.Repeats(clip), new(Expression));
         }
         else if (action.Mask is { } mask)
         {

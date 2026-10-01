@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Editing;
+using App2d.Core.Timing;
 using ImGuiNET;
 
 namespace App2d.CharacterStudio.Editor;
@@ -32,8 +33,9 @@ internal static class TransportBar
         if (ImGui.SliderFloat("##time", ref time, 0, duration, $"%.3f / {duration:F3} s")) { session.Transport.Pause(); session.Seek(time); }
         ImGui.SameLine(); ImGui.SetNextItemWidth(90 * Ui.Scale);
         var speed = transport.Speed; if (ImGui.SliderFloat("##speed", ref speed, .1f, 2, "%.2fx speed")) transport.Speed = speed;
+        PlaybackModePicker.Draw(session, clip.Asset);
         if (preview) { ImGui.SameLine(); var rest = session.ShowRest; if (ImGui.Checkbox("Rest", ref rest)) session.ShowRest = rest; }
         if (preview && session.EditRig) Ui.Help("Editing the rig shows rest. Turn off Edit rig to watch the build move.");
-        else if (!clip.Asset.Loop && transport.Time >= duration) ImGui.TextDisabled("Holding the final pose.");
+        else if (transport.EndMode(clip.Asset) == PlaybackEndMode.Hold && transport.Time >= duration) ImGui.TextDisabled("Holding the final pose.");
     }
 }

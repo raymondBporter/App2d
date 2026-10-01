@@ -13,6 +13,10 @@ dotnet run --project App2d.CharacterStudio
 Requires Windows and .NET 10. ImGui.NET 1.91.6.1 is pinned; MonoGame WindowsDX is the same version as the game. Startup
 exceptions are written to `character-studio-error.log` beside the executable.
 
+The transport's **Preview end** menu follows the clip's loop setting by default. Hold stops on the final pose,
+Loop wraps to the beginning, and Ping pong plays to the end and back. A ping pong trip from start to end takes
+one clip duration. Preview speed and end mode are session settings; they do not change the saved clip.
+
 ## Weapons and 3D rotation
 
 Open **Sword backhand** (`player-sword-backhand`) in **Animate**. Under **Weapon preview**, choose Sword and the

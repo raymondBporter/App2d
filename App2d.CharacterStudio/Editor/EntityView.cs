@@ -481,6 +481,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         if (ImGui.SliderFloat("##time", ref time, 0, clip.Duration, $"%.3f / {clip.Duration:F3} s")) { transport.Pause(); session.Seek(time); }
         ImGui.SameLine(); ImGui.SetNextItemWidth(-1);
         var speed = transport.Speed; if (ImGui.SliderFloat("##speed", ref speed, .1f, 2, "%.2fx")) transport.Speed = speed;
+        PlaybackModePicker.Draw(session, clip);
         Phases(clip, session.Entity?.Actions.GetValueOrDefault(session.PreviewAction ?? ""));
     }
 
