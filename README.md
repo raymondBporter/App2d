@@ -328,24 +328,18 @@ consumes the resulting collision contacts.
 
 ## First run
 
-The game reads generated art from ignored `Assets/Runtime`, so a fresh clone must build
-it once. The build needs Python 3.12+ and two Maaot cave packs that their license does
-not allow us to redistribute:
+Open `App2d.slnx` in Visual Studio, select `App2d` as the startup project, and
+press Run. Runtime-ready art, sound effects, music, and gameplay settings are
+committed under `Assets/Static`. Normal builds automatically copy them into the
+Debug resource tree; Release builds and publishes package those committed files.
+After pulling changes, build and run again. No Python, cave-pack downloads, or
+asset generation is required to play or edit levels.
 
-1. Download [2D DarkCave Assets](https://maaot.itch.io/2d-browncave-assets) and
-   [Mossy Cavern](https://maaot.itch.io/mossy-cavern) from itch.io.
-2. Save them as `Assets/Sources/third-party/maaot/dark-cave.zip` and
-   `Assets/Sources/third-party/maaot/mossy-cavern.zip`.
-3. From the repository root, run:
-
-```powershell
-.\tools\setup.ps1
-```
-
-The script creates an ignored `.venv`, installs the pipeline's only dependency
-(Pillow), checks for the Maaot archives, and runs the asset build. Re-run it whenever
-source art or an importer changes; it is safe to repeat. `tools/ArtPipeline/README.md`
-documents what the build produces and how to author new art.
+Asset authors can optionally run `tools/setup.ps1` to regenerate imported art and
+procedural effects. It requires Python and installs Pillow. The pipeline updates
+both `Assets/Runtime` and the baked outputs under `Assets/Static`; commit those
+outputs together with source/script changes so everyone receives the update.
+See [the authoring pipeline](tools/ArtPipeline/README.md).
 
 ## Run
 
@@ -652,7 +646,7 @@ character.
 Repository assets are separated by lifecycle under the top-level `Assets` directory.
 Debug reads generated art from `Assets/Runtime` and durable levels/music directly
 from `Assets/Static`. Release packages content beside the executable as `Assets`,
-including current music/zones from `Static` and authored character documents from
+using all runtime-ready content from `Static` and authored character documents from
 `Assets/Characters/authored`. `Assets/Sources` retains originals and licenses, and
 ignored `Assets/Work` holds intermediate output and previews.
 [The asset layout](Assets/README.md) defines where each kind of new content belongs.

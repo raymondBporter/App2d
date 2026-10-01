@@ -1,9 +1,9 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-Prepares a fresh clone to run App2d: creates a Python virtual environment, installs the
-asset pipeline's dependencies, checks for non-redistributable source packs, and builds
-Assets/Runtime. Safe to re-run at any time.
+Optional asset-authoring setup: creates a Python virtual environment, installs
+the pipeline dependencies, and regenerates Runtime plus baked Static outputs.
+Normal game builds do not need this script. Commit changed Static outputs.
 #>
 [CmdletBinding()]
 param(
@@ -15,19 +15,6 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 $venv = Join-Path $repo '.venv'
 $venvPython = Join-Path $venv 'Scripts\python.exe'
-$maaot = Join-Path $repo 'Assets\Sources\third-party\maaot'
-
-$missing = @('dark-cave.zip', 'mossy-cavern.zip') | Where-Object { -not (Test-Path (Join-Path $maaot $_)) }
-if ($missing) {
-    Write-Host ''
-    Write-Host 'Missing Maaot cave packs. Their license forbids redistribution, so download them once:' -ForegroundColor Yellow
-    Write-Host '  dark-cave.zip     https://maaot.itch.io/2d-browncave-assets'
-    Write-Host '  mossy-cavern.zip  https://maaot.itch.io/mossy-cavern'
-    Write-Host "Save them under $maaot and run this script again."
-    Write-Host ''
-    exit 1
-}
-
 if (-not (Test-Path $venvPython)) {
     Write-Host "==> Creating virtual environment at $venv"
     & $Python -m venv $venv

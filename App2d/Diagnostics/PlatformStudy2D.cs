@@ -39,7 +39,7 @@ internal static class PlatformStudy2D
         };
         foreach (var (name, focus, spec, withEnemy) in scenarios)
         {
-            var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
+            var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
             for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
             var things = new List<WorldThingSpec2D> { new(1, WorldThingKind2D.PlayerSpawn, null, true, withEnemy ? new(-600, 40) : spec.Position + new Vector2(0, 90)) };
             if (withEnemy) things.Add(new(2, WorldThingKind2D.Shieldback, null, true, spec.Position + new Vector2(0, 110)));

@@ -13,10 +13,10 @@ The first folder describes the asset lifecycle:
   `authored`: models, variants, animations, props, and entities edited in Character
   Studio. Source libraries and their provenance also live here. These are separate
   from generated sprite animation folders in `Runtime/characters`.
-- `Runtime` is the complete generated game-facing tree. Debug reads generated art
-  from it; Release builds and publishes package it as `Assets`. Authored levels
-  and music are read from `Static` in Debug, and packaging takes music and zones
-  directly from `Static` to pick up pulled changes. `Runtime` is ignored and disposable.
+- `Runtime` is the disposable Debug resource tree, automatically populated from
+  committed `Static` files by normal builds. Release builds and publishes package
+  `Static` directly. Asset generation is only needed by asset authors; generated
+  redistributable outputs are baked into `Static` and shared through Git.
 - `Work` contains regenerable output: pipeline staging, previews, validation
   reports, and caches. It is ignored by Git, so nothing durable may live there.
 
@@ -28,7 +28,7 @@ The first folder describes the asset lifecycle:
 | Music, manifests, and licenses | `Static/audio/music` | `AssetLocations.Music` |
 | Character models, clips, props, and entities | `Characters/authored` | `AssetLocations.AuthoredCharacters` |
 | Imported character motion libraries | `Characters/<id>` | `AssetLocations.CharacterLibrary` |
-| Curated sound effects | `Static/audio/sfx` | `AssetLocations.SoundEffects` (generated copy) |
+| Curated and baked sound effects | `Static/audio/sfx` | `AssetLocations.SoundEffects` (generated copy) |
 | Tilesets and UI images | `Static` or an importer from `Sources` | `AssetLocations.Tilesets` / `UI` (generated output) |
 | Third-party originals, licenses, source art | `Sources` | Build tools only |
 | Previews, experiments, intermediate files | `Work` | Build tools only |
@@ -60,19 +60,20 @@ their database transaction handling. This helper is not a multi-file transaction
 
 ## Building and packaging
 
-From a clean clone, run `tools/setup.ps1` from the repository root before starting the
-game; see `tools/ArtPipeline/README.md`. The pipeline stages a fresh tree, copies
-`Static`, runs every importer from `Sources`, validates required assets, writes
-`Runtime/content-manifest.json` with file sizes and SHA-256 hashes, and only then swaps
-the completed tree into place. A failed build leaves the previous `Runtime` untouched.
+A normal Visual Studio build prepares `Runtime` from committed `Static` resources,
+including on a fresh clone. Release builds and publishes package `Static` directly.
+No Python or downloaded cave packs are required. Deleting `Runtime` is safe; the
+next build recreates it.
 
-Delete `Runtime` whenever you want a clean checkout-like state; running the pipeline
-recreates it. Durable or hand-edited files must never live only in `Runtime`.
+Asset authors can optionally run `tools/setup.ps1`. The pipeline stages imported art
+and generated effects, validates the result, and updates the baked outputs in
+`Static` for committing. See `tools/ArtPipeline/README.md`. Always commit generated
+outputs alongside the inputs or scripts that changed them.
 
 Runtime content is organized by game concept rather than file format. Asset IDs
 use lowercase letters, digits, and hyphens. A canonical ID and its folder name are
 the same: the `walk` animation lives at `animations/walk`, and the
-`dark-cave` tileset lives at `tilesets/dark-cave`.
+`ink-medieval-ground` tileset lives at `tilesets/ink-medieval-ground`.
 
 Levels live at `levels/<id>/level.db` — one SQLite file per level, holding the tile grid,
 thing definitions, placed instances, and their typed pieces. They are durable authored content, so they are committed under

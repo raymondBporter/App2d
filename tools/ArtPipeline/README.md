@@ -1,45 +1,24 @@
 # Runtime asset pipeline
 
-`Assets/Runtime` is disposable output that the game reads in Debug and packages in
-Release. This pipeline rebuilds it from the durable inputs described in
-`Assets/README.md`: curated files under `Assets/Static` and original or third-party
-inputs under `Assets/Sources`.
+Playing the game requires no asset tools: normal Visual Studio builds copy the
+committed runtime-ready resources from `Assets/Static` into `Assets/Runtime`, and
+Release/publish packages `Static` directly. Pull changes and press Run.
 
-## Building
+## Optional authoring build
 
-From the repository root:
+Only asset authors need Python and Pillow. From the repository root:
 
 ```powershell
 .\tools\setup.ps1
 ```
 
-`setup.ps1` creates an ignored `.venv`, installs Pillow (the only dependency), checks
-for the Maaot cave packs, and runs `build_runtime_assets.py`. Once the environment
-exists you can also run the build directly:
+This creates an ignored `.venv`, installs Pillow, and regenerates imported art and
+procedural effects. The pipeline validates a staged tree before replacing Runtime,
+then promotes generated player/dinosaur sprites, geometry, gun effects, HUD images,
+and gun/healing sounds into `Assets/Static`. Commit these baked files with source
+changes. Contributors receive the results without running the pipeline.
 
-```powershell
-.\.venv\Scripts\python tools/ArtPipeline/build_runtime_assets.py
-```
-
-The build stages a fresh tree under `Assets/Work`, copies `Assets/Static`, runs each
-importer below, validates required files, writes `Runtime/content-manifest.json` with
-sizes and SHA-256 hashes, and only then swaps the new tree into `Assets/Runtime`. A
-failed build leaves the previous `Runtime` untouched. Deleting `Assets/Runtime` and
-rebuilding is the supported clean rebuild. `App2d.csproj` refuses to build when the
-manifest is missing and prints the command to run.
-
-### Inputs that are not in git
-
-Maaot's license forbids redistributing the cave packs, so every clone must download
-them once and save them as:
-
-- `Assets/Sources/third-party/maaot/dark-cave.zip` from
-  [2D DarkCave Assets](https://maaot.itch.io/2d-browncave-assets)
-- `Assets/Sources/third-party/maaot/mossy-cavern.zip` from
-  [Mossy Cavern](https://maaot.itch.io/mossy-cavern)
-
-The build stops with these instructions before doing any work if either is missing.
-Every other input is committed.
+The unused Maaot cave packs are no longer imported or required.
 
 ## What the build produces
 
@@ -50,7 +29,6 @@ against `Assets/Runtime` while iterating.
 | --- | --- | --- |
 | `import_stick_figure.py` | `characters/player-sword`, `player-gun`, `player-unarmed`, `characters/player-geometry.json`, `ui/hud/weapons/*.png`, `effects/bullet/orange.png` | CC0 RGS Dev stick-figure pack in `Sources/third-party/rgs-stick-figure` |
 | `import_blender_character.py` | Authored sword clips (balance and downward attack) added to `characters/player-sword` | Cached Blender renders in `Sources/characters/player-sword` |
-| `import_maaot_caves.py` | `environments/tilesets/dark-cave`, `mossy-cavern` | Maaot zips (see above) |
 | `build_gun_effects.py` | `effects/gun/*`, `ui/hud/gun-charge/*`, `audio/sfx/gun-*.wav` | Procedural; design notes are in the script's docstring |
 | `build_spell_audio.py` | `audio/sfx/gun-charge.wav`, `audio/sfx/heal-*.wav` | Procedural; uses `Static/gameplay/player-spells.json` durations after the gun bake |
 | `import_green_dinosaur.py` | `characters/green-dinosaur` | `Sources/user/green-dinosaur/walk-cycle.png` |

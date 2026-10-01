@@ -32,7 +32,7 @@ internal static class CombatContactStudy2D
         using var target = new RenderTarget2D(device, 640, 240, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         foreach (var name in timingStudy ? new[] { "hit", "kill", "run", "reverse" } : ["miss", "hit", "kill", "run", "reverse"])
         {
-            var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
+            var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
             for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
             using var game = SideScrollerSimulation2D.Create(new(traversal, map, [],
                 [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)),

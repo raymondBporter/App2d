@@ -20,25 +20,6 @@ def run(repository: Path, description: str, *arguments: str) -> None:
     )
 
 
-MAAOT_PACKS = {
-    "dark-cave.zip": "https://maaot.itch.io/2d-browncave-assets",
-    "mossy-cavern.zip": "https://maaot.itch.io/mossy-cavern",
-}
-
-
-def check_downloaded_sources(assets: Path) -> None:
-    """Fail early, with download instructions, when non-redistributable packs are absent."""
-    maaot = assets / "Sources/third-party/maaot"
-    missing = [name for name in MAAOT_PACKS if not (maaot / name).is_file()]
-    if missing:
-        lines = [f"  {name:<18} {MAAOT_PACKS[name]}" for name in missing]
-        raise SystemExit(
-            "Missing Maaot cave packs. Their license forbids redistribution, so download them once:\n"
-            + "\n".join(lines)
-            + f"\nSave them under {maaot} and run the build again."
-        )
-
-
 def write_manifest(content_root: Path) -> None:
     required = (
         "audio/sfx/player-jump.wav",
@@ -80,8 +61,6 @@ def write_manifest(content_root: Path) -> None:
         "audio/sfx/heal-cancel.wav",
         "effects/fireball/ember-energy.png",
         "environments/tilesets/rust-cyberpunk/tileset.json",
-        "environments/tilesets/dark-cave/tileset.json",
-        "environments/tilesets/mossy-cavern/tileset.json",
         "environments/tilesets/ink-medieval-ground/tileset.json",
         "environments/tilesets/ink-medieval-ground/ladder/top.png",
         "environments/tilesets/ink-medieval-ground/ladder/middle.png",
@@ -143,7 +122,6 @@ def main() -> None:
     work_root = assets / "Work"
     staging_root = work_root / "runtime-assets-staging"
 
-    check_downloaded_sources(assets)
     if staging_root.exists():
         shutil.rmtree(staging_root)
     staging_root.parent.mkdir(parents=True, exist_ok=True)
@@ -164,13 +142,6 @@ def main() -> None:
             "--content-root",
             str(staging_root),
         )
-        run(
-            repository,
-            "Importing Maaot DarkCave and Mossy Cavern environments",
-            str(pipeline / "import_maaot_caves.py"),
-            "--content-root",
-            str(staging_root),
-        )
         run(repository, "Baking blue charged-gun effects and audio",
             str(pipeline / "build_gun_effects.py"), "--content-root", str(staging_root))
         run(repository, "Baking player spell audio",
@@ -183,6 +154,24 @@ def main() -> None:
             str(staging_root),
         )
         write_manifest(staging_root)
+        # Bake once on the authoring machine; contributors receive the results in Git.
+        for relative in (
+            "characters/player-sword", "characters/player-gun", "characters/player-unarmed",
+            "characters/player-geometry.json", "characters/green-dinosaur",
+            "effects/bullet", "effects/gun", "ui/hud/weapons", "ui/hud/gun-charge",
+        ):
+            source = staging_root / relative
+            destination = static_root / relative
+            if source.is_dir():
+                if destination.exists():
+                    shutil.rmtree(destination)
+                shutil.copytree(source, destination)
+            else:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(source, destination)
+        for pattern in ("gun-*.wav", "heal-*.wav"):
+            for source in (staging_root / "audio/sfx").glob(pattern):
+                shutil.copy2(source, static_root / "audio/sfx" / source.name)
         replace_runtime_tree(runtime_root, staging_root, work_root)
     finally:
         if staging_root.exists():

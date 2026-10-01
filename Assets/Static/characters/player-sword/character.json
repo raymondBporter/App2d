@@ -1,0 +1,73 @@
+{
+  "id": "player-sword",
+  "animations": {
+    "idle": {
+      "loop": true,
+      "framesPerSecond": 12
+    },
+    "walk": {
+      "loop": true,
+      "framesPerSecond": 14
+    },
+    "jump-start": {
+      "loop": false,
+      "framesPerSecond": 14
+    },
+    "fall": {
+      "loop": true,
+      "framesPerSecond": 1
+    },
+    "wall-grip": {
+      "loop": true,
+      "framesPerSecond": 4
+    },
+    "climb": {
+      "loop": true,
+      "framesPerSecond": 8
+    },
+    "dash": {
+      "loop": false,
+      "durationSeconds": 0.16
+    },
+    "land": {
+      "loop": false,
+      "framesPerSecond": 12
+    },
+    "hit-a": {
+      "loop": false,
+      "durationSeconds": 0.28
+    },
+    "death": {
+      "loop": false,
+      "durationSeconds": 0.75
+    },
+    "shield-block": {
+      "loop": true,
+      "framesPerSecond": 1
+    },
+    "sword-attack": {
+      "loop": false,
+      "durationSeconds": 0.35
+    },
+    "wall-sword-attack": {
+      "loop": false,
+      "durationSeconds": 0.35
+    },
+    "magic-shot": {
+      "loop": false,
+      "durationSeconds": 0.18
+    },
+    "balance-left-foot": {
+      "loop": true,
+      "durationSeconds": 2.0
+    },
+    "balance-right-foot": {
+      "loop": true,
+      "durationSeconds": 2.0
+    },
+    "sword-down-attack": {
+      "loop": false,
+      "durationSeconds": 0.25
+    }
+  }
+}

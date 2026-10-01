@@ -20,35 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Committed tilesets (tools/TileArt output) also arrive through git pull. -->
-    <StaticTileset Include="..\Assets\Static\environments\tilesets\**\*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\Assets\Runtime\**\*"
-          Exclude="..\Assets\Runtime\audio\music\**\*;..\Assets\Runtime\levels\**\zones.json;@(StaticTileset->'..\Assets\Runtime\environments\tilesets\%(RecursiveDir)%(Filename)%(Extension)')"
-          Link="Assets\%(RecursiveDir)%(Filename)%(Extension)"
-          CopyToPublishDirectory="PreserveNewest">
-      <CopyToOutputDirectory Condition="'$(Configuration)' == 'Debug'">Never</CopyToOutputDirectory>
-      <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <!-- These committed files can arrive through git pull after the art pipeline
-         last ran. Package them directly, including on the first build. -->
-    <None Include="..\Assets\Static\audio\music\**\*"
-          Link="Assets\audio\music\%(RecursiveDir)%(Filename)%(Extension)"
-          CopyToPublishDirectory="PreserveNewest">
-      <CopyToOutputDirectory Condition="'$(Configuration)' == 'Debug'">Never</CopyToOutputDirectory>
-      <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="@(StaticTileset)"
-          Link="Assets\environments\tilesets\%(RecursiveDir)%(Filename)%(Extension)"
-          CopyToPublishDirectory="PreserveNewest">
-      <CopyToOutputDirectory Condition="'$(Configuration)' == 'Debug'">Never</CopyToOutputDirectory>
-      <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\Assets\Static\levels\**\zones.json"
-          Link="Assets\levels\%(RecursiveDir)%(Filename)%(Extension)"
-          CopyToPublishDirectory="PreserveNewest">
+    <!-- Runtime-ready assets arrive through Git; playing requires no Python. -->
+    <StaticAsset Include="..\Assets\Static\**\*" Exclude="..\Assets\Static\**\*.db-wal;..\Assets\Static\**\*.db-shm" />
+    <None Include="@(StaticAsset)" Link="Assets\%(RecursiveDir)%(Filename)%(Extension)" CopyToPublishDirectory="PreserveNewest">
       <CopyToOutputDirectory Condition="'$(Configuration)' == 'Debug'">Never</CopyToOutputDirectory>
       <CopyToOutputDirectory Condition="'$(Configuration)' != 'Debug'">PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -57,17 +31,10 @@
     <None Include="..\Assets\Characters\authored\**\*.json" Link="Assets\PointCharacters\authored\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
-  <Target Name="ValidateRuntimeAssets" BeforeTargets="BeforeBuild">
-    <Error Condition="!Exists('..\Assets\Runtime\content-manifest.json')"
-           Text="Runtime assets are missing. Run: python tools/ArtPipeline/build_runtime_assets.py" />
-  </Target>
-
-  <!-- Debug loads tilesets from Assets/Runtime in place, so bring pulled or regenerated
-       committed tilesets across without a full art-pipeline run. -->
-  <Target Name="SyncStaticTilesets" AfterTargets="ValidateRuntimeAssets" BeforeTargets="BeforeBuild"
-          Condition="'$(DesignTimeBuild)' != 'true'">
-    <Copy SourceFiles="@(StaticTileset)"
-          DestinationFiles="@(StaticTileset->'..\Assets\Runtime\environments\tilesets\%(RecursiveDir)%(Filename)%(Extension)')"
+  <!-- Refresh pulled resources and bootstrap a missing Debug tree on normal builds. -->
+  <Target Name="SyncStaticAssets" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Copy SourceFiles="@(StaticAsset)"
+          DestinationFiles="@(StaticAsset->'..\Assets\Runtime\%(RecursiveDir)%(Filename)%(Extension)')"
           SkipUnchangedFiles="true" />
   </Target>
 
