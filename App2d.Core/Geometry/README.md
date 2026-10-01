@@ -61,6 +61,10 @@ bounds cache. The switch tables map a shape to raw parameters once:
 `TriangleMesh2D` is a mesh, not a shape; `ToCompositeShape()` bridges to collision. `CompositeShape2D` is the
 non-convex shape and always resolves per part.
 
+`ShapeDefinition2D` is the editable, JSON-tagged form of every built-in shape, mirroring `CurveDefinition2D`:
+`FromShape(shape).ToJson()` writes it, `FromJson(json).Build()` reads it back through the validating constructors,
+and `ShapeKinds2D` lists the kind tags. Both definition families share the JSON-friendly `Geometry.Point2D`.
+
 ## Collision
 
 `ShapeCollision2D.cs` is the whole dispatch table: `Dispatch` picks the row for the first shape, and each row switches
