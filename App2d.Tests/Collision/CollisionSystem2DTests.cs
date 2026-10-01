@@ -18,7 +18,7 @@ public sealed class CollisionSystem2DTests
         var random = new Random(173);
         for (var i = 0; i < 80; i++)
         {
-            var shape = new SpatialObject2D(Rectangle2D.FromSize(new(8 + i % 7, 10)));
+            var shape = new SpatialObject2D(Rectangle2D.FromSize(new Vector2(8 + i % 7, 10)));
             shape.Transform.Position = new(random.Next(-8, 9) * 16, random.Next(-4, 5) * 16);
             system.AddCollider(shape, i % 2 == 0 ? ColliderMobility2D.Static : ColliderMobility2D.Dynamic);
         }

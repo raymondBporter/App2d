@@ -52,7 +52,7 @@ public sealed class ShapeUtilityTests
     public void BoundingCirclesAreExactForRoundShapesAndBoxDiagonals()
     {
         Assert.Equal((new Vector2(1, 2), 1.5f), ShapeBounds2D.CalculateBoundingCircle(new Circle2D(1.5f, new(1, 2))));
-        Assert.Equal((new Vector2(0, 0), MathF.Sqrt(2)), ShapeBounds2D.CalculateBoundingCircle(Rectangle2D.FromSize(new(2, 2))));
+        Assert.Equal((new Vector2(0, 0), MathF.Sqrt(2)), ShapeBounds2D.CalculateBoundingCircle(Rectangle2D.FromSize(new Vector2(2, 2))));
         Assert.Equal((new Vector2(0, 0), 1.5f), ShapeBounds2D.CalculateBoundingCircle(new Capsule2D(new(-1, 0), new(1, 0), .5f)));
         Assert.Equal((new Vector2(0, 0), 2f), ShapeBounds2D.CalculateBoundingCircle(new Ellipse2D(new(2, 1))));
         var composite = ShapeBounds2D.CalculateBoundingCircle(new CompositeShape2D([new Circle2D(1, new(-3, 0)), new Circle2D(1, new(3, 0))]));

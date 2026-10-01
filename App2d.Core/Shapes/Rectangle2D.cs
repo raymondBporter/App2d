@@ -47,4 +47,19 @@ public class Rectangle2D : IConvexShape2D, IRect2D
         var halfSize = size / 2f;
         return new Rectangle2D(center - halfSize, center + halfSize);
     }
+
+    /// <summary>Creates a rectangle of positive size around a center.</summary>
+    public static Rectangle2D FromSize(Size2D size, Vector2 center = default)
+    {
+        ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
+        return FromSize(size.ToVector2(), center);
+    }
+
+    /// <summary>Creates a rectangle from its minimum corner and positive size.</summary>
+    public static Rectangle2D FromMinAndSize(Vector2 min, Size2D size)
+    {
+        ArgGuard.ThrowIfNotFinite(min);
+        ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
+        return new Rectangle2D(min, min + size.ToVector2());
+    }
 }

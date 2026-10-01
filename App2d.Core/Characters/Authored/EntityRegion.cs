@@ -26,7 +26,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape)
     public bool Overlaps(EntityRegion other, Vector2 position = default, Vector2 otherPosition = default)
     {
         ArgGuard.ThrowIfNull(other);
-        return ShapeDistance2D.SignedDistance(Shape, Translation(position), other.Shape, Translation(otherPosition)) <= 0f;
+        return ShapeDistance2D.SignedDistance(Shape, Similarity2D.FromTranslation(position), other.Shape, Similarity2D.FromTranslation(otherPosition)) <= 0f;
     }
 
     /// <summary>Tests the region against a placed physics shape without requesting contact details.</summary>
@@ -38,7 +38,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape)
         ArgGuard.ThrowIfNull(other);
         ArgGuard.ThrowIfNotFinite(position);
         if (!Bounds.TranslatedBy(position).Intersects(other.WorldBounds)) return false;
-        return ShapeDistance2D.Distance(Shape, Translation(position), other.Shape, other.CollisionPose) == 0f;
+        return ShapeDistance2D.Distance(Shape, Similarity2D.FromTranslation(position), other.Shape, other.CollisionPose) == 0f;
     }
 
     /// <summary>The same region scaled uniformly about its origin, for example from authored units into world units.</summary>
@@ -78,9 +78,4 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape)
     /// <returns>A capsule region.</returns>
     public static EntityRegion Capsule(string id, Vector2 start, Vector2 end, float radius) => new(id, new Capsule2D(start, end, radius));
 
-    private static Similarity2D Translation(Vector2 position)
-    {
-        Similarity2D.TryFromMatrix(Matrix3x2.CreateTranslation(position), out var pose);
-        return pose;
-    }
 }

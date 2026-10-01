@@ -99,7 +99,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
             if (view is not null) scene.Remove(view.Visual);
             var color = platform.ColorArgb;
-            var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(platform.Size.ToVector2()),
+            var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(platform.Size),
                 new SolidColorShader(new XnaColor((byte)(color >> 16), (byte)(color >> 8), (byte)color, (byte)(color >> 24))));
             scene.Add(visual);
             _platforms[platform.Id] = new PlatformView(visual, platform.Size, color);

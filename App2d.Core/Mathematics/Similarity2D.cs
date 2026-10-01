@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Mathematics;
@@ -21,6 +22,13 @@ public readonly record struct Similarity2D
     public Vector2 YAxis { get; }
     public Vector2 Translation { get; }
     public float Scale { get; }
+
+    /// <summary>A pose with unit scale and no rotation, placed at a finite position.</summary>
+    public static Similarity2D FromTranslation(Vector2 translation)
+    {
+        ArgGuard.ThrowIfNotFinite(translation);
+        return new Similarity2D(Vector2.UnitX, Vector2.UnitY, translation, 1f);
+    }
 
     public static bool TryFromMatrix(Matrix3x2 matrix, out Similarity2D similarity)
     {

@@ -10,6 +10,23 @@ public sealed class Rect2DTests
     private static readonly Rect2D Sample = new(new(-4, -2), new(2, 8));
 
     [Fact]
+    public void PositiveSizesCreateCenteredAndMinAnchoredRectangles()
+    {
+        var size = new Size2D(6f, 10f);
+        Assert.Equal(Sample, Rect2D.FromSize(size, new(-1f, 3f)));
+        Assert.Equal(Sample, Rect2D.FromMinAndSize(Sample.Min, size));
+        Assert.Equal(Sample, Rectangle2D.FromSize(size, new(-1f, 3f)).ToRect());
+        Assert.Equal(Sample, Rectangle2D.FromMinAndSize(Sample.Min, size).ToRect());
+        Assert.Equal(Sample, AxisAlignedRectangle2D.FromSize(size, new(-1f, 3f)).ToRect());
+        Assert.Equal(Sample, AxisAlignedRectangle2D.FromMinAndSize(Sample.Min, size).ToRect());
+        Assert.True(Sample.TryGetPositiveSize(out var measured));
+        Assert.Equal(size, measured);
+        Assert.False(default(Rect2D).TryGetPositiveSize(out _));
+        Assert.False(Rect2D.Unbounded.TryGetPositiveSize(out _));
+        Assert.Throws<ArgumentException>(() => Rect2D.FromMinAndSize(Vector2.Zero, default));
+    }
+
+    [Fact]
     public void ReportsDimensionsAndAllNineYUpAnchorPoints()
     {
         Assert.Equal(6, Sample.Width);
@@ -148,7 +165,7 @@ public sealed class Rect2DTests
         Assert.True(point.Contains(Vector2.Zero));
         Assert.False(point.Contains(Vector2.One));
         Assert.True(point.Intersects(point));
-        Assert.Equal(new Rect2D(new(3, 4), new(3, 4)), Rect2D.FromSize(default, new(3, 4)));
+        Assert.Equal(new Rect2D(new(3, 4), new(3, 4)), Rect2D.FromSize(default(Vector2), new(3, 4)));
     }
 
     [Fact]
@@ -171,10 +188,10 @@ public sealed class Rect2DTests
     {
         Assert.Throws<ArgumentException>(() => new Rect2D(Vector2.One, Vector2.Zero));
         Assert.Throws<ArgumentException>(() => new Rect2D(new(float.NaN, 0), Vector2.One));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2D.FromSize(new(-1, 2)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2D.FromSize(new Vector2(-1, 2)));
         Assert.Throws<ArgumentOutOfRangeException>(() => Sample.InflatedBy(-1, 2));
         Assert.Throws<ArgumentOutOfRangeException>(() => Sample.InsetBy(1, float.NaN));
-        Assert.Equal(Sample, Rect2D.FromSize(new(6, 10), new(-1, 3)));
+        Assert.Equal(Sample, Rect2D.FromSize(new Vector2(6, 10), new(-1, 3)));
         Assert.Equal(Sample, Rect2D.FromPoints(Sample.Max, Sample.Min));
     }
 

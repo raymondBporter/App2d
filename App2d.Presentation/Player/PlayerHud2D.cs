@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
@@ -55,7 +56,7 @@ public static class PlayerHud2D
         if (maximumHealth > 20) renderer.DrawScreenText($"{currentHealth}/{maximumHealth}", new Vector2(barLeft + 88, top + 33), XnaColor.White);
 
         const float weaponTop = top + panelHeight + 10f;
-        var weaponBounds = new ScreenRectangle2D(left, weaponTop, left + 70f, weaponTop + 70f);
+        var weaponBounds = ScreenRectangle2D.FromTopLeftAndSize(new(left, weaponTop), new Size2D(70f, 70f));
         DrawWeaponIcon(renderer, weaponTexture, weaponBounds, panelColor, accentColor);
     }
 

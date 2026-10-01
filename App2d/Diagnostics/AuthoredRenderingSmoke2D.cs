@@ -79,7 +79,7 @@ internal static class AuthoredRenderingSmoke2D
                 var camera = new Camera2D { Zoom = 3, Position = new(position.X, 60) };
                 using var close = new Renderer2D(camera, device);
                 device.SetRenderTarget(target); close.BeginFrame(1400, 500, default); close.Clear(new Color(145, 176, 190));
-                var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(2000, 2)), new SolidColorShader(Color.DarkSlateGray));
+                var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(2000, 2)), new SolidColorShader(Color.DarkSlateGray));
                 ground.Transform.Position = new(position.X, 0); close.Draw(ground);
                 close.Draw(scene);
                 // Gameplay geometry over the drawing: the sword's hit box while it is live, and where a shot leaves the pistol.
@@ -93,7 +93,7 @@ internal static class AuthoredRenderingSmoke2D
                 }
                 if (name == "gun-run-shot")
                 {
-                    var dot = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(3)), new SolidColorShader(new Color(240, 200, 40))); dot.Transform.Position = position + hero.Muzzle(facing, false); close.Draw(dot);
+                    var dot = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(3)), new SolidColorShader(new Color(240, 200, 40))); dot.Transform.Position = position + hero.Muzzle(facing, false); close.Draw(dot);
                 }
                 close.DrawScreenLabel($"PLAYER: {name.ToUpperInvariant()} ({player.Director.Key})", new(24, 24));
                 close.EndFrame(); device.SetRenderTarget(null);
@@ -131,7 +131,7 @@ internal static class AuthoredRenderingSmoke2D
                 }).ToImmutableArray();
                 view.ApplyState(states, [], 70);
                 device.SetRenderTarget(target); renderer.BeginFrame(1400, 500, default); renderer.Clear(new Color(145, 176, 190));
-                renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(1200, 2)), new SolidColorShader(Color.DarkSlateGray)));
+                renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(1200, 2)), new SolidColorShader(Color.DarkSlateGray)));
                 renderer.Draw(scene);
                 renderer.DrawScreenLabel("AUTHORED: SPEAR GUARD / STALKER PEST / PLAYER / CINDER GUNNER / MAUL BRUTE", new(24, 24));
                 renderer.EndFrame(); device.SetRenderTarget(null);

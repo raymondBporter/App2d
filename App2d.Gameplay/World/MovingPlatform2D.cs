@@ -35,7 +35,7 @@ public sealed partial class MovingPlatform2D : IDisposable
         Size = size;
         ThingId = thingId;
         ColorArgb = colorArgb;
-        _kinematic = new KinematicEntity2D(id, physics, AxisAlignedRectangle2D.FromSize(size.ToVector2()),
+        _kinematic = new KinematicEntity2D(id, physics, AxisAlignedRectangle2D.FromSize(size),
             _motion, collisionLayer, collisionMask);
         Body = _kinematic.Body;
         WorldObject = _kinematic.WorldObject;

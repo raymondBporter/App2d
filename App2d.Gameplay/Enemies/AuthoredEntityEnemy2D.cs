@@ -149,7 +149,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         var start = new Vector2(WorldObject.Transform.Position.X, muzzle.Y);
         var steps = Math.Max(1, (int)MathF.Ceiling(Vector2.Distance(start, muzzle) / 2));
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new(4)));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4)));
         for (var i = 0; i <= steps; i++)
         {
             probe.Transform.Position = Vector2.Lerp(start, muzzle, i / (float)steps);

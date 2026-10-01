@@ -71,7 +71,7 @@ public sealed class Ellipse2DTests
     {
         new Circle2D(.75f),
         new Capsule2D(new(0, -.5f), new(0, .5f), .5f),
-        Rectangle2D.FromSize(new(1, 1)),
+        Rectangle2D.FromSize(new Vector2(1, 1)),
         new Triangle2D(new(-.5f, -.5f), new(.5f, -.5f), new(0, .5f)),
         new ConvexPolygon2D([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]),
         new Ellipse2D(new(.75f, .5f))

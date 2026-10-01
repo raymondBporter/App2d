@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -21,5 +22,20 @@ public sealed class AxisAlignedRectangle2D(Vector2 min, Vector2 max) : Rectangle
         ArgGuard.ThrowIfNotFinite(center);
         var halfSize = size / 2f;
         return new AxisAlignedRectangle2D(center - halfSize, center + halfSize);
+    }
+
+    /// <summary>Creates an axis-aligned rectangle of positive size around a center.</summary>
+    public static new AxisAlignedRectangle2D FromSize(Size2D size, Vector2 center = default)
+    {
+        ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
+        return FromSize(size.ToVector2(), center);
+    }
+
+    /// <summary>Creates an axis-aligned rectangle from its minimum corner and positive size.</summary>
+    public static new AxisAlignedRectangle2D FromMinAndSize(Vector2 min, Size2D size)
+    {
+        ArgGuard.ThrowIfNotFinite(min);
+        ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
+        return new AxisAlignedRectangle2D(min, min + size.ToVector2());
     }
 }

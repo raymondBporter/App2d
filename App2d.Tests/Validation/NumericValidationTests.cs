@@ -107,6 +107,6 @@ public sealed class NumericValidationTests
         Assert.Equal(default, Rect2D.FromSize(Vector2.Zero));
         Assert.Throws<ArgumentException>(() => new Rect2D(new(float.NaN, 0), Vector2.One));
         Assert.Throws<ArgumentOutOfRangeException>(() => new Circle2D(float.PositiveInfinity));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Rectangle2D.FromSize(new(float.PositiveInfinity, 1)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rectangle2D.FromSize(new Vector2(float.PositiveInfinity, 1)));
     }
 }

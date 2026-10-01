@@ -9,6 +9,20 @@ public sealed class Similarity2DTests
         Matrix3x2.CreateScale(scale) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(translation);
 
     [Fact]
+    public void TranslationFactoryMatchesMatrixAndRejectsNonFinitePositions()
+    {
+        var position = new Vector2(3f, -4f);
+        var pose = Similarity2D.FromTranslation(position);
+
+        Assert.Equal(Vector2.UnitX, pose.XAxis);
+        Assert.Equal(Vector2.UnitY, pose.YAxis);
+        Assert.Equal(1f, pose.Scale);
+        AssertClose(Vector2.Transform(new Vector2(2f, 5f), Matrix3x2.CreateTranslation(position)),
+            pose.TransformPoint(new Vector2(2f, 5f)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Similarity2D.FromTranslation(new(float.NaN, 0f)));
+    }
+
+    [Fact]
     public void RoundTripsRotationScaleTranslation()
     {
         var matrix = Trs(new Vector2(2f, 2f), 0.7f, new Vector2(3f, -4f));

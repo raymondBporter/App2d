@@ -32,6 +32,20 @@ public static class Rect2DExtensions
         /// <summary>The extents along both axes.</summary>
         public Vector2 Size => rectangle.Max - rectangle.Min;
 
+        /// <summary>Returns a typed size when both extents are finite and strictly positive.</summary>
+        public bool TryGetPositiveSize(out Size2D size)
+        {
+            var width = rectangle.Max.X - rectangle.Min.X;
+            var height = rectangle.Max.Y - rectangle.Min.Y;
+            if (!float.IsFinite(width) || width <= 0f || !float.IsFinite(height) || height <= 0f)
+            {
+                size = default;
+                return false;
+            }
+            size = new Size2D(width, height);
+            return true;
+        }
+
         /// <summary>Half the extents along both axes.</summary>
         public Vector2 HalfSize => (rectangle.Max - rectangle.Min) / 2f;
 

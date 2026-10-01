@@ -13,6 +13,7 @@ using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Tiles;
 using Microsoft.Xna.Framework.Graphics;
+using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Diagnostics;
@@ -50,7 +51,7 @@ internal static class CombatContactStudy2D
             using var enemies = new EnemyPresentation2D(scene, textures, traversal, new Silent());
             using var contacts = new CombatContactPresentation2D(scene);
             var timing = HitstopTimingStudy2D.CreateVariants();
-            var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new(5000, 2)), new SolidColorShader(new Color(70, 88, 93)));
+            var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(5000, 2)), new SolidColorShader(new Color(70, 88, 93)));
             ground.Transform.Position = new(-250, 0); scene.Add(ground);
             var hits = 0; var firstHit = -1L;
             for (var step = 0; step < 180; step++)

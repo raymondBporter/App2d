@@ -14,7 +14,7 @@ namespace App2d.Core.Shapes;
 /// </summary>
 public static class ShapeDistance2D
 {
-    private static readonly Similarity2D IdentityPose = CreateIdentityPose();
+    private static readonly Similarity2D IdentityPose = Similarity2D.FromTranslation(Vector2.Zero);
 
     /// <summary>Signed distance from a point to a shape in the same coordinate space.</summary>
     /// <param name="point">The query point.</param>
@@ -203,9 +203,4 @@ public static class ShapeDistance2D
 
     private static NotSupportedException Unsupported(IShape2D shape) => new($"Signed distance does not support {shape.GetType().Name} in this query. Composite unions support unsigned Distance only.");
 
-    private static Similarity2D CreateIdentityPose()
-    {
-        Similarity2D.TryFromMatrix(Matrix3x2.Identity, out var pose);
-        return pose;
-    }
 }

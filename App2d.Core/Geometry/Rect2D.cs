@@ -46,6 +46,23 @@ public readonly record struct Rect2D : IRect2D
         return new(center - halfSize, center + halfSize);
     }
 
+    /// <summary>Creates a rectangle of positive size around a center.</summary>
+    public static Rect2D FromSize(Size2D size, Vector2 center = default)
+    {
+        ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
+        return FromSize(size.ToVector2(), center);
+    }
+
+    /// <summary>Creates a rectangle from its minimum corner and positive size.</summary>
+    public static Rect2D FromMinAndSize(Vector2 min, Size2D size)
+    {
+        ArgGuard.ThrowIfNotFinite(min);
+        ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
+        var max = min + size.ToVector2();
+        ArgGuard.ThrowIfNotFinite(max);
+        return new(min, max);
+    }
+
     /// <summary>Orders any two finite points into opposite corners.</summary>
     /// <param name="first">One corner.</param>
     /// <param name="second">The opposite corner, in any order relative to <paramref name="first"/>.</param>
