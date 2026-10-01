@@ -16,8 +16,9 @@ Outputs and the gameplay facts they encode:
   and fades in place over 0.05 s on impact.
 - ui/hud/gun-charge/frame-0000..0060.png: 61 continuous radial HUD charge frames.
 - audio/sfx/gun-charge.wav, gun-fire.wav, gun-cancel.wav, gun-impact.wav: deterministic
-  PCM cues. The charge cue is exactly 0.6 s; keep it in sync with
-  GunPersonWeapon2D.ChargeSeconds. It plays at a fixed rate and its voice stops
+  PCM cues. This baseline charge cue is 0.6 s; the runtime pipeline subsequently
+  runs build_spell_audio.py to match the player's configured charge duration.
+  It plays at a fixed rate and its voice stops
   immediately on cancellation or fire.
 
 The standing pistol muzzle socket is pixel (418, 206) on the normalized 512 px canvas.

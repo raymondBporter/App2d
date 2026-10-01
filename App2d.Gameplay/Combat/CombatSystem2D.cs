@@ -42,8 +42,7 @@ public sealed class CombatSystem2D(
         foreach (var combatant in Candidates(hitbox, targetLayer))
         {
             if (!combatant.IsAlive ||
-                combatant.Faction == attackerFaction ||
-                !combatant.TryRegisterHit(attackSourceId, attackId))
+                combatant.Faction == attackerFaction)
             {
                 continue;
             }
@@ -51,6 +50,10 @@ public sealed class CombatSystem2D(
             var force = knockback(combatant);
             var direction = impactDirection == Vector2.Zero ? force : impactDirection;
             if (direction.LengthSquared() > 0) direction = Vector2.Normalize(direction);
+            var attackerPosition = Combatants.Find(attackerId.IsValid ? attackerId : attackSourceId)?.WorldObject.Transform.Position;
+            var blocked = combatant is ICombatGuard2D protectedTarget && protectedTarget.CanBlock(hitbox.WorldBounds, direction, attackerPosition);
+            if (combatant is IAuthoredHurt2D authored && !authored.OverlapsHurt(hitbox.WorldBounds) && !blocked) continue;
+            if (!combatant.TryRegisterHit(attackSourceId, attackId)) continue;
             var position = combatant is IAuthoredHurt2D hurt ? hurt.HurtContact(hitbox.WorldBounds)
                 : Vector2.Clamp(hitbox.WorldBounds.Center, combatant.WorldObject.WorldBounds.Min, combatant.WorldObject.WorldBounds.Max);
             var contact = new CombatContact2D(attackSourceId, attackId,
@@ -58,7 +61,8 @@ public sealed class CombatSystem2D(
             { AttackerId = attackerId.IsValid ? attackerId : attackSourceId };
             // Physical contact can still bounce a downward attack off an invulnerable target.
             // Only accepted damage emits the contact fact used by audiovisual feedback.
-            Damage(combatant, damage, force, contact);
+            if (combatant is not ICombatGuard2D guard || !guard.TryBlock(hitbox.WorldBounds, direction, attackerPosition))
+                Damage(combatant, damage, force, contact);
             hitAny = true;
             if (stopAfterFirstHit)
                 break;
@@ -83,7 +87,11 @@ public sealed class CombatSystem2D(
             if (!combatant.IsAlive || combatant.Faction == attackerFaction)
                 continue;
 
-            Damage(combatant, damage, knockback(combatant));
+            var force = knockback(combatant);
+            if (combatant is IAuthoredHurt2D hurt && !hurt.OverlapsHurt(hitbox.WorldBounds) &&
+                (combatant is not ICombatGuard2D protection || !protection.CanBlock(hitbox.WorldBounds, force, null))) continue;
+            if (combatant is not ICombatGuard2D guard || !guard.TryBlock(hitbox.WorldBounds, force, null))
+                Damage(combatant, damage, force);
             return true;
         }
 
@@ -101,7 +109,8 @@ public sealed class CombatSystem2D(
         foreach (var id in Combatants.Ids)
         {
             if (Combatants.Find(id) is ICombatant2D c && (c.Body.CollisionLayer & targetLayer) != 0 &&
-                c is IAuthoredHurt2D hurt && hurt.OverlapsHurt(hitbox.WorldBounds))
+                c is IAuthoredHurt2D hurt && (hurt.OverlapsHurt(hitbox.WorldBounds) ||
+                    c is ICombatGuard2D guard && guard.OverlapsGuard(hitbox.WorldBounds)))
             {
                 yield return c;
             }

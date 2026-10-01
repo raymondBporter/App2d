@@ -12,17 +12,24 @@ public sealed class AuthoredCatalogTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         Assert.True(catalog.Errors.Count == 0, string.Join("\n", catalog.Errors));
         Assert.Equal(expected, catalog.Models.Keys.Order());
-        Assert.Equal(["brute", "cinder", "short-broad", "tall-thin"], catalog.Variants.Keys.Order());
+        Assert.Equal(["brute", "cinder", "club-caveman-build", "rock-thrower-build", "shield-defender-build", "short-broad", "tall-thin"], catalog.Variants.Keys.Order());
         Assert.Equal(
         [
+            "baby-triceratops-brake", "baby-triceratops-charge", "baby-triceratops-death", "baby-triceratops-head-down", "baby-triceratops-hit", "baby-triceratops-idle", "baby-triceratops-recover", "baby-triceratops-run", "baby-triceratops-rush", "baby-triceratops-scrape", "baby-triceratops-walk",
+            "club-caveman-slam",
             "person-death", "person-hammer-slam", "person-heavy-walk", "person-hit", "person-idle", "person-jump", "person-pistol-shot", "person-run", "person-thrust", "person-walk",
             "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-climb-off", "player-climb-on", "player-dash", "player-death", "player-fall",
-            "player-gun-aim", "player-gun-shot", "player-gun-wall-shot", "player-hit", "player-idle", "player-jump", "player-land",
+            "player-gun-aim", "player-gun-charge", "player-gun-shot", "player-gun-wall-shot", "player-heal-gather", "player-hit", "player-idle", "player-jump", "player-land",
             "player-sword-backhand", "player-sword-down-attack", "player-sword-forehand", "player-sword-put-away", "player-sword-put-away-backhand", "player-sword-sheathe", "player-sword-side-cut", "player-wall-grip",
+            "quadruped-brake", "quadruped-head-down", "quadruped-idle", "quadruped-recover", "quadruped-run", "quadruped-rush", "quadruped-scrape", "quadruped-walk",
+            "rock-thrower-throw", "shield-defender-bash", "shield-defender-idle", "shield-defender-walk",
             "stalker-death", "stalker-hit", "stalker-idle", "stalker-lunge", "stalker-walk",
+            "triceratops-brake", "triceratops-head-down", "triceratops-idle", "triceratops-recover", "triceratops-run", "triceratops-rush", "triceratops-scrape", "triceratops-walk",
         ], catalog.Animations.Keys.Order());
-        Assert.Equal(["brute-beard", "brute-hair", "brute-hide-wrap", "cinder-beard", "cinder-hair", "cinder-hide-wrap", "hair-short", "hair-short-back", "hammer", "pistol", "sheath", "spear", "sword"], catalog.Props.Keys.Order());
-        Assert.Equal(["cinder-gunner", "hero", "maul-brute", "player", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
+        Assert.Equal(["brute-beard", "brute-hair", "brute-hide-wrap", "cinder-beard", "cinder-hair", "cinder-hide-wrap", "club-caveman-beard", "club-caveman-hair", "club-caveman-hide-wrap",
+            "hair-short", "hair-short-back", "hammer", "pistol", "rock-thrower-bag", "rock-thrower-beard", "rock-thrower-hair", "rock-thrower-hide-wrap",
+            "scavenged-shell", "sheath", "shield-defender-beard", "shield-defender-hair", "shield-defender-hide-wrap", "spear", "sword", "throwing-rock", "wooden-club"], catalog.Props.Keys.Order());
+        Assert.Equal(["baby-triceratops", "cinder-gunner", "club-caveman", "hero", "maul-brute", "player", "rock-thrower", "shield-defender", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })
@@ -41,7 +48,7 @@ public sealed class AuthoredCatalogTests
         { "animations/person-walk.json", "\"chain\": \"[^\"]*\"", "\"chain\": null" },
     };
 
-    private static readonly string[] expected = ["person", "stalker"];
+    private static readonly string[] expected = ["baby-triceratops-rig", "person", "quadruped", "stalker", "triceratops"];
 
     [Theory, MemberData(nameof(NullReferences))]
     public void ANullReferenceInAHandEditedFileIsReportedAgainstThatFile(string file, string pattern, string replacement)

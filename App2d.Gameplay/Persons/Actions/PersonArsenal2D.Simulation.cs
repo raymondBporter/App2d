@@ -5,20 +5,23 @@ namespace App2d.Gameplay.Persons.Actions;
 public sealed partial class PersonArsenal2D
 {
     internal sealed record SimulationState(
-        int EquipmentIndex,
         SwordPersonWeapon2D.SimulationState Sword,
         GunPersonWeapon2D.SimulationState Gun,
-        UnarmedPersonActions2D.SimulationState Unarmed) : SimulationState2D;
+        int Energy, double EnergyRecharge, float HealElapsed, bool Healing, bool HealNeedsRelease) : SimulationState2D;
 
     public SimulationState2D CaptureSimulation() => new SimulationState(
-        _equipmentIndex, _sword.CaptureSimulation(), _gun.CaptureSimulation(), _unarmed.CaptureSimulation());
+        _sword.CaptureSimulation(), _gun.CaptureSimulation(),
+        _energy, _energyRecharge, _healElapsed, _healing, _healNeedsRelease);
 
     public void RestoreSimulation(SimulationState2D snapshot)
     {
         var state = (SimulationState)snapshot;
-        _equipmentIndex = state.EquipmentIndex;
         _sword.RestoreSimulation(state.Sword);
         _gun.RestoreSimulation(state.Gun);
-        _unarmed.RestoreSimulation(state.Unarmed);
+        _energy = state.Energy;
+        _energyRecharge = state.EnergyRecharge;
+        _healElapsed = state.HealElapsed;
+        _healing = state.Healing;
+        _healNeedsRelease = state.HealNeedsRelease;
     }
 }

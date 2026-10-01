@@ -20,5 +20,8 @@ public enum SoundEffect2D
     GunCharge,
     GunFire,
     GunCancel,
-    GunImpact
+    GunImpact,
+    HealCharge,
+    HealComplete,
+    HealCancel
 }

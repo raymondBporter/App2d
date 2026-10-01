@@ -36,6 +36,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private readonly TraversalMetrics2D _traversal;
     private readonly TraversalDebugRenderer2D _traversalDebug;
     private readonly WeaponPresentation2D _weapons;
+    private readonly SpellPresentation2D _spells;
     private readonly EnemyPresentation2D _enemies;
     private readonly CombatContactPresentation2D _contacts;
     private readonly WorldPresentation2D _world;
@@ -64,6 +65,8 @@ internal sealed class SideScrollerClient2D : IDisposable
         WorldSounds = new SpatialSoundEffectSink2D(sounds, () => State.Person.Position);
         _weapons = new WeaponPresentation2D(scene, textures, WorldSounds);
         _weapons.ApplyState(initialState.Weapons, initialState.Equipment, []);
+        _spells = new SpellPresentation2D(WorldSounds);
+        _spells.Apply(initialState.Person, []);
         _enemies = new EnemyPresentation2D(scene, textures, traversal, WorldSounds);
         _contacts = new CombatContactPresentation2D(scene);
         _enemies.ApplyState(initial.Enemies, [], initial.Tick);
@@ -97,7 +100,9 @@ internal sealed class SideScrollerClient2D : IDisposable
         if (!_endpoint.Apply(frame)) return;
         _world.ApplyState(frame.Content, frame.World);
         _weapons.ApplyState(State.Weapons, State.Equipment,
-            frame.Events.OfType<WeaponOccurred2D>().Select(e => e.Occurrence));
+            frame.Events.OfType<WeaponOccurred2D>().Where(e => e.Stamp.EntityId == _endpoint.PlayerId).Select(e => e.Occurrence));
+        _spells.Apply(State.Person,
+            frame.Events.OfType<WeaponOccurred2D>().Where(e => e.Stamp.EntityId == _endpoint.PlayerId).Select(e => e.Occurrence));
 
         foreach (var occurrence in frame.Events)
         {
@@ -149,14 +154,12 @@ internal sealed class SideScrollerClient2D : IDisposable
                     _cameraController.Reset(respawn.Position);
                     _sounds.Play(SoundEffect2D.PlayerRespawn);
                     _weapons.Reset();
+                    _spells.Reset();
                     _contacts.Reset();
                     _enemies.ResetContact();
                     break;
                 case GoalReached2D when isMine: _sounds.Play(SoundEffect2D.GoalReached); _presentation.PlayCelebrate(); break;
                 case CheckpointActivated2D checkpoint when isMine: CheckpointActivated?.Invoke(checkpoint); break;
-                case EquipmentChanged2D equipment when isMine:
-                    _presentation.Equip(equipment.Equipment);
-                    break;
                 case AttackStarted2D attack when isMine: PresentAttack(attack); break;
             }
         }
@@ -188,6 +191,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _enemies.Advance(deltaSeconds);
         _contacts.Advance(deltaSeconds);
         _weapons.Advance(deltaSeconds);
+        _spells.Advance(deltaSeconds);
         _presentation.Advance(deltaSeconds);
         _cameraController.Update(State.Person.Position, State.Person.LinearVelocity, State.Person.IsGrounded, deltaSeconds);
     }
@@ -213,6 +217,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     {
         EndJumpSound();
         _weapons.Suspend();
+        _spells.Reset();
         _contacts.Reset();
         _enemies.ResetContact(); _presentation.ResetContact();
         _input.Reset();
@@ -222,6 +227,7 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public void DrawWorldEffects(Renderer2D renderer)
     {
+        _spells.Draw(renderer);
         if (_saveFeedbackSeconds > 0f)
         {
             var feedbackProgress = 1f - _saveFeedbackSeconds / SaveFeedbackDurationSeconds;
@@ -240,9 +246,9 @@ internal sealed class SideScrollerClient2D : IDisposable
     public void DrawUI(Renderer2D renderer)
     {
         PlayerHud2D.Draw(renderer, State.Person.HitPoints, State.Person.MaximumHitPoints,
-            _weapons.HudTexture);
+            _weapons.HudTexture, State.Person.Spells, State.Weapons.IsCharging);
         if (_saveFeedbackSeconds > 0f)
-            renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 170f));
+            renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 198f));
         if (ShowTraversalDebug) _traversalDebug.DrawUI(renderer);
         Ballistics.DrawUI(renderer);
     }
@@ -268,6 +274,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _enemies.Dispose();
         _contacts.Dispose();
         _weapons.Dispose();
+        _spells.Dispose();
         _presentation.Dispose();
     }
 }

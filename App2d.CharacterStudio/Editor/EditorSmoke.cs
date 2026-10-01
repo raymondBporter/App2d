@@ -137,6 +137,25 @@ internal sealed class EditorSmoke(string output)
                 Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Solids[0].Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");
                 Record(doc.Asset.Solids[0].Outline is not null, "outline remains editable after saving");
             }),
+            ("25-triceratops-cutout", shell =>
+            {
+                var s = shell.Session; s.Compare.Clear(); s.PreviewWeapon = s.EditWeapon = false; s.ShowRest = true;
+                Check(s.NewModel("review-triceratops", "Triceratops review", "triceratops"), s);
+                s.Selection.Part = "frill"; shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
+                var doc = s.SubjectModel!; var before = doc.Serialize();
+                Check(s.Edit(doc, () => doc.Asset.Parts.Single(p => p.Id == "frill").Points![0] = new(-.32f, -.46f)), s);
+                s.Undo(); Record(before == doc.Serialize(), "cutout silhouette edit undoes exactly");
+                s.Redo(); s.SaveAll();
+                Record(AuthoredCatalog.Load(s.Assets.Root).Animations.ContainsKey("review-triceratops-rush"), "quadruped starter art and clips save together");
+            }),
+            ("26-quadruped-rig", shell => { var s = shell.Session; s.EditRig = true; s.Selection.Control = "near-front-foot"; }),
+            ("27-quadruped-rush", shell =>
+            {
+                var s = shell.Session; s.EditRig = s.ShowRest = false; s.SetMode(Workspace.Animate); s.SetClip("review-triceratops-rush"); s.Seek(.18f);
+                s.Selection.Control = "near-front-foot"; shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
+                Record(s.Scene()[0].Pose.Chains.Count == 4, "quadruped IK reaches the animation viewport");
+            }),
+            ("28-quadruped-head-down", shell => { var s = shell.Session; s.SetClip("review-triceratops-head-down"); s.Seek(.55f); }),
         ];
         return workspace;
     }

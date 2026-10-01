@@ -17,6 +17,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
     private Vector3 _grab;
     private (string Description, Action Apply)? _structural;
     private bool _confirmOpen;
+    private bool _editCutout;
+    private int _cutoutDrag = -1;
 
     public Workspace Mode => Workspace.Model;
     public float TimelineHeight => 64;
@@ -293,7 +295,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
     }
 
     /// <summary>Shape fields shared by base parts and variant overrides. <paramref name="overrides"/> is null for a base part.</summary>
-    private static void PartFields(PuppetPart part, PartOverride? overrides, Action<Action<PuppetPart>> change, Action<Action<PartOverride>>? reset = null)
+    private void PartFields(PuppetPart part, PartOverride? overrides, Action<Action<PuppetPart>> change, Action<Action<PartOverride>>? reset = null)
     {
         bool Marked(string label, bool overridden, Action<PartOverride> clear)
         {
@@ -314,11 +316,31 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
             if (overrides is null && PuppetPartKinds.HasRoundness(part.Kind)) Float("Roundness", part.Roundness, 0, 1, false, (p, v) => p.Roundness = v, _ => { });
-            if (overrides is null && part.Kind == PuppetPartKinds.Trapezoid) Float("Top width scale", part.TopWidthScale, .01f, 1, false, (p, v) => p.TopWidthScale = v, _ => { });
+            if (overrides is null && part.Kind == "trapezoid") Float("Top width scale", part.TopWidthScale, .01f, 1, false, (p, v) => p.TopWidthScale = v, _ => { });
+            if (overrides is null && part.Kind == "polygon" && ImGui.CollapsingHeader("Edit cutout silhouette"))
+            {
+                ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
+                Ui.Help("Perimeter points follow the attachment frame and scale with width and height. Keep the outline from crossing itself.");
+                void Cutout(Action<List<PuppetPoint>> edit)
+                {
+                    var points = new List<PuppetPoint>(part.Points!); edit(points);
+                    try { PartGeometry.CheckCutout(points); change(p => p.Points = points); }
+                    catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
+                }
+                for (var i = 0; i < part.Points!.Count; i++)
+                {
+                    var index = i; var xy = part.Points[i].XY; ImGui.PushID("cutout-" + i);
+                    if (Ui.Drag2("Point " + (i + 1), ref xy, .005f, -2, 2)) Cutout(p => p[index] = new(xy.X, xy.Y));
+                    if (part.Points.Count < 64 && ImGui.SmallButton("Insert after")) Cutout(p => p.Insert(index + 1, PuppetPoint.Lerp(p[index], p[(index + 1) % p.Count], .5f)));
+                    ImGui.SameLine();
+                    if (part.Points.Count > 3 && ImGui.SmallButton("Remove")) Cutout(p => p.RemoveAt(index));
+                    ImGui.PopID();
+                }
+            }
             if (!Marked("Fill", overrides?.Fill is not null, o => o.Fill = null))
             { var fill = part.Fill; if (Ui.ColorHex("##fill", ref fill)) change(p => p.Fill = fill); }
             Float("Outline width", part.OutlineWidth ?? .045f, 0, .15f, overrides?.OutlineWidth is not null, (p, v) => p.OutlineWidth = v, o => o.OutlineWidth = null);
-            if (!Marked("Fabric paint", overrides?.Paint is not null, o => o.Paint = null) && ImGui.CollapsingHeader("Edit fabric paint"))
+            if (!Marked("Surface paint", overrides?.Paint is not null, o => o.Paint = null) && ImGui.CollapsingHeader("Edit surface paint"))
             {
                 Ui.Help("Paint follows the body's shape and motion. Coordinates are relative to its width and height. Use the body fill as the fabric color.");
                 void Paint(Action<List<PartPaint>> edit)
@@ -328,7 +350,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                     try { PartPaint.Check(patches); change(p => p.Paint = patches); }
                     catch (InvalidDataException) { /* Keep the last valid convex patch during a drag. */ }
                 }
-                if (ImGui.Button("Add fabric patch")) Paint(p => p.Add(new() { Fill = "#754222", Points = [new(-.1f, -.1f), new(.1f, -.1f), new(.1f, .1f), new(-.1f, .1f)] }));
+                if (ImGui.Button("Add paint patch")) Paint(p => p.Add(new() { Fill = "#754222", Points = [new(-.1f, -.1f), new(.1f, -.1f), new(.1f, .1f), new(-.1f, .1f)] }));
                 for (var i = 0; i < (part.Paint?.Count ?? 0); i++)
                 {
                     var index = i; var patch = part.Paint![i]; ImGui.PushID("paint-" + i);
@@ -479,7 +501,14 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             DragControls(frame, model, pose);
             return;
         }
-        if (session.Selection.Part is { } selectedPart && model.Parts.FirstOrDefault(p => p.Id == selectedPart) is { } part) Outline(frame, part, pose);
+        if (session.Selection.Part is { } selectedPart && model.Parts.FirstOrDefault(p => p.Id == selectedPart) is { } part)
+        {
+            Outline(frame, part, pose);
+            if (_editCutout && part.Kind == "polygon" && Base is not null)
+            {
+                DragCutout(frame, part, pose); return;
+            }
+        }
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
             var hit = model.Parts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse))))
@@ -487,6 +516,27 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             if (hit.Part is not null) Select(part: hit.Part.Id); else session.Selection.Clear();
         }
         if (frame.Hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) viewport.Fit(primary.Subject);
+    }
+
+    private void DragCutout(ViewportFrame frame, PuppetPart part, EvaluatedPose pose)
+    {
+        var placement = PartGeometry.FrameOf(part, pose.World); var points = part.Points!;
+        for (var i = 0; i < points.Count; i++)
+        {
+            var at = frame.Screen(placement.At(new(points[i].X * part.Width, points[i].Y * part.Height)));
+            frame.Draw.AddCircleFilled(at, 4.5f * Ui.Scale, Ui.Color(232, 169, 55));
+            if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(at, ViewportFrame.Mouse) < 9 * Ui.Scale)
+            { _cutoutDrag = i; session.BeginDrag(); }
+        }
+        if (_cutoutDrag < 0) return;
+        if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _cutoutDrag = -1; session.EndDrag(); return; }
+        if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || Base is not { } document) return;
+        var delta = frame.World(ViewportFrame.Mouse) - placement.Origin;
+        var xy = new Vector2(Vector2.Dot(new(delta.X, delta.Y), placement.Right) / part.Width, Vector2.Dot(new(delta.X, delta.Y), placement.Up) / part.Height);
+        var edited = new List<PuppetPoint>(points); edited[_cutoutDrag] = new(xy.X, xy.Y);
+        try { PartGeometry.CheckCutout(edited); }
+        catch (InvalidDataException) { return; }
+        session.Change(document, () => document.Asset.Parts.First(p => p.Id == part.Id).Points = edited);
     }
 
     private void DragControls(ViewportFrame frame, ResolvedModel model, EvaluatedPose pose)

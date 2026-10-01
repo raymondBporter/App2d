@@ -35,7 +35,8 @@ public sealed class ObservationRoundTripTests
             HitPoints = 3,
             MaximumHitPoints = 5,
             IsGrounded = true,
-            Action = new(PlayerAttackKind2D.Melee, 0.12f, 0.4f)
+            Action = new(PlayerAttackKind2D.Melee, 0.12f, 0.4f),
+            Spells = new(60, 90, 30, 30, true, .42f, 0, 1, .25f)
         };
         var player = new PlayerState2D(person, 620, -1f, EquipmentKind2D.Sword, true, 0f, 42, false,
             new(false, 0f, position, [new(new EntityId2D(102), position, new(1250f, 0f), new(2f, 4f))]));
@@ -82,7 +83,7 @@ public sealed class ObservationRoundTripTests
             new JumpStarted2D(stamp), new Landed2D(stamp, 700f), new Footstep2D(stamp),
             new Damaged2D(stamp), new Died2D(stamp), new Respawned2D(stamp, position),
             new GoalReached2D(stamp), new CheckpointActivated2D(stamp, 42, 3, position),
-            new EquipmentChanged2D(stamp, EquipmentKind2D.Gun), new AttackStarted2D(stamp, PlayerAttackKind2D.Downward, 0.4f, true),
+            new AttackStarted2D(stamp, PlayerAttackKind2D.Downward, 0.4f, true),
             new CombatDamageOccurred2D(stamp, new(enemyId, CombatFaction2D.Enemy, position, true)
                 { Contact = new CombatContact2D(new(777), 17, position + Vector2.UnitX, -Vector2.UnitX, CombatImpactKind2D.Sword) { AttackerId = playerId } })
         };
@@ -90,7 +91,8 @@ public sealed class ObservationRoundTripTests
             new RivalAttackStarted2D(enemyId, position, UnarmedAttackKind2D.Kick, 0.3f),
             new RivalDamaged2D(enemyId, position), new RivalDied2D(enemyId, position)];
         WeaponEvent2D[] weaponEvents = [new ChargeStarted2D(position), new ChargeCancelled2D(position, 0.5f),
-            new GunFired2D(position), new ProjectileImpact2D(position, EntityId2D.None), new SwordImpact2D(position)];
+            new GunFired2D(position), new ProjectileImpact2D(position, EntityId2D.None), new SwordImpact2D(position),
+            new HealStarted2D(position), new HealCancelled2D(position), new HealCompleted2D(position, 6)];
         events.AddRange(enemyEvents.Select(e => new EnemyOccurred2D(stamp, e)));
         events.AddRange(weaponEvents.Select(e => new WeaponOccurred2D(stamp, e)));
         var frame = new SessionFrame2D(501, [player], [.. events]) { Content = content, World = world, Enemies = enemies };

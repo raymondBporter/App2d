@@ -1,0 +1,77 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "quadruped-scrape",
+  "name": "Quadruped \u00B7 scrape",
+  "model": "quadruped",
+  "structureRevision": 1,
+  "duration": 1.1,
+  "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "head",
+      "keys": [
+        {
+          "angle": -0.12
+        },
+        {
+          "time": 0.55,
+          "angle": -0.18
+        },
+        {
+          "time": 1.1,
+          "angle": -0.12
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "near-front",
+      "keys": [
+        {},
+        {
+          "time": 0.25,
+          "x": 0.16,
+          "y": 0.12
+        },
+        {
+          "time": 0.45,
+          "x": 0.22
+        },
+        {
+          "time": 0.78,
+          "x": -0.18
+        },
+        {
+          "time": 1.1
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "far-hind",
+      "finish": 1.1
+    },
+    {
+      "chain": "far-front",
+      "finish": 1.1
+    },
+    {
+      "chain": "near-hind",
+      "finish": 1.1
+    }
+  ],
+  "markers": [
+    {
+      "id": "scrape",
+      "time": 0.45
+    }
+  ],
+  "faces": []
+}

@@ -43,7 +43,7 @@ public sealed class EnemyPresentation2D(
         var states = _states.Select(s => !s.IsEnabled ? s : s with
         {
             AttackElapsedSeconds = s.AttackElapsedSeconds + _secondsSinceState,
-            ActionSeconds = s.ActionSeconds + _secondsSinceState,
+            ActionSeconds = s.ActionSeconds + (s.Kind == EnemyKind2D.Authored ? 0 : _secondsSinceState),
             Person = s.Person with
             {
                 LandingSpeedThisFrame = 0f,
@@ -84,6 +84,15 @@ public sealed class EnemyPresentation2D(
                 {
                     "shot" => SoundEffect2D.GunFire,
                     "heavy" => SoundEffect2D.HammerImpact,
+                    "club-windup" => SoundEffect2D.HammerWindup,
+                    "rock-search" => SoundEffect2D.HammerWindup,
+                    "rock-throw" => SoundEffect2D.SwordSwing,
+                    "rock-impact" => SoundEffect2D.HammerImpact,
+                    "charge-scrape" or "charge-stop" => SoundEffect2D.PlayerLandHard,
+                    "charge-rush" => SoundEffect2D.HammerWindup,
+                    "shield-block" => SoundEffect2D.HammerImpact,
+                    "shield-pullback" => SoundEffect2D.HammerWindup,
+                    "shield-bash" => SoundEffect2D.SwordSwing,
                     "hit" or "bite" => SoundEffect2D.SwordHit,
                     _ => SoundEffect2D.SwordSwing
                 }, cue.Position);
@@ -139,7 +148,11 @@ public sealed class EnemyPresentation2D(
             var count = state.IsEnabled && !state.Bolts.IsDefault ? state.Bolts.Length : 0;
             while (_bolts.Count < count)
             {
-                var bolt = new WorldObject2D(AxisAlignedRectangle2D.FromSize(Vector2.One), new SolidColorShader(XnaColor.OrangeRed)) { ZIndex = 2 };
+                var rock = state.Bolts[_bolts.Count].Gravity > 0;
+                App2d.Core.Shapes.IShape2D shape = rock
+                    ? new ConvexPolygon2D([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
+                    : AxisAlignedRectangle2D.FromSize(Vector2.One);
+                var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new XnaColor(133, 139, 134) : XnaColor.OrangeRed)) { ZIndex = 2 };
                 _bolts.Add(bolt); scene.Add(bolt);
             }
             for (var i = 0; i < _bolts.Count; i++)
@@ -160,8 +173,10 @@ public sealed class EnemyPresentation2D(
         private readonly WorldObject2D _visual;
         private readonly Rendering.Characters.AuthoredCharacterShader _shader;
         private readonly BoltViews _bolts;
+        private readonly ResolvedEntity _entity;
         public AuthoredPoseView(Scene2D scene, ResolvedEntity entity)
         {
+            _entity = entity;
             _scene = scene; _bolts = new(scene); _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
             _visual = new(AxisAlignedRectangle2D.FromSize(new Vector2(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
             _visual.Transform.Scale = new(GameWorldUnits2D.WorldUnitsPerAuthoredUnit);
@@ -173,6 +188,11 @@ public sealed class EnemyPresentation2D(
             _bolts.Update(state);
             if (state.AuthoredPose is not { } pose) return;
             _shader.Pose = pose.Local; _shader.Facing = pose.Facing;
+            // A throwable is visible only while being prepared, and leaves the hand on the fire marker.
+            var action = state.ActionId is { } id ? _entity.Actions.GetValueOrDefault(id) : null;
+            var holding = action?.Projectile?.Gravity > 0 && state.ActionSeconds < action.Events.First(e => e.Event.Id == EntityControllers.Fire).Seconds;
+            _shader.Props = [.. _entity.Equipment.Where(e => e.Prop.Muzzle is null ||
+                !_entity.Actions.Values.Any(a => a.Projectile?.Gravity > 0) || holding).Select(e => (e.Prop, e.Socket))];
             _visual.Transform.Position = GameWorldUnits2D.AuthoredToWorld(pose.Position);
         }
         public override void Dispose() { _scene.Remove(_visual); _bolts.Dispose(); }

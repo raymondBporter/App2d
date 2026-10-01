@@ -14,7 +14,7 @@ namespace App2d.CharacterStudio.Editor;
 /// </summary>
 internal sealed partial class AssetBrowser(EditorSession session)
 {
-    private enum Create { None, EmptyModel, PersonModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip }
+    private enum Create { None, EmptyModel, PersonModel, QuadrupedModel, TriceratopsModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip }
     private string _appearanceTemplate = "hair";
     private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Sources"];
     private string _search = "", _filter = "All";
@@ -39,6 +39,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
             if (ImGui.MenuItem("Appearance: hair / clothing...")) Start(Create.Appearance, "", "New appearance");
             if (ImGui.MenuItem("Model: empty")) Start(Create.EmptyModel, "", "New model");
             if (ImGui.MenuItem("Model: Person template")) Start(Create.PersonModel, "", "New person");
+            if (ImGui.MenuItem("Model: Quadruped template")) Start(Create.QuadrupedModel, "", "New quadruped");
+            if (ImGui.MenuItem("Model: Triceratops template")) Start(Create.TriceratopsModel, "", "New triceratops");
             var basis = session.Assets.BaseOf(session.SubjectId ?? "");
             if (ImGui.MenuItem("Variant...", "", false, session.Assets.Models.Any())) Start(Create.Variant, basis ?? session.Assets.Models.First().Id, "New variant");
             if (ImGui.MenuItem("Animation for " + (session.SubjectId ?? "subject") + "...", "", false, session.SubjectId is not null)) Start(Create.Animation, session.SubjectId!, "New animation");
@@ -213,6 +215,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
             Create.DuplicateAppearance => "Duplicate appearance " + _source,
             Create.EmptyModel => "New model from Empty",
             Create.PersonModel => "New model from the Person template",
+            Create.QuadrupedModel => "New quadruped with four IK legs and starter animations",
+            Create.TriceratopsModel => "New triceratops with editable cutout art and starter animations",
             Create.Variant => "New variant",
             Create.DuplicateVariant => "Duplicate variant " + _source,
             Create.Independent => "Independent model from " + _source,
@@ -278,6 +282,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
         Create.DuplicateAppearance => session.DuplicateAppearance(_source, _id, _name),
         Create.EmptyModel => session.NewModel(_id, _name, "empty"),
         Create.PersonModel => session.NewModel(_id, _name, "person"),
+        Create.QuadrupedModel => session.NewModel(_id, _name, "quadruped"),
+        Create.TriceratopsModel => session.NewModel(_id, _name, "triceratops"),
         Create.Variant => session.NewVariant(_id, _name, _source, _preset.Length == 0 ? null : _preset),
         Create.DuplicateVariant => session.DuplicateVariant(_source, _id, _name),
         Create.Independent => session.MakeIndependent(_source, _id, _name),

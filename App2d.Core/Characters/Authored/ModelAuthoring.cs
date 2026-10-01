@@ -108,6 +108,7 @@ public static class ModelAuthoring
     public static PuppetPart AddPart(CharacterModel model, string kind, string a, string? b = null)
     {
         var part = new PuppetPart { Id = UniqueId(kind, model.Parts.Select(p => p.Id)), Kind = kind, A = a, B = b, Face = "none" };
+        if (kind == "polygon") part.Points = [new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)];
         if (PuppetPartKinds.IsStroke(kind)) part.Width = model.LineWidth;
         model.Parts.Add(part); model.Validate(); return part;
     }

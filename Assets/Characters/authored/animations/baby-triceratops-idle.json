@@ -1,0 +1,77 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "baby-triceratops-idle",
+  "name": "Baby triceratops / idle",
+  "model": "baby-triceratops-rig",
+  "structureRevision": 1,
+  "duration": 2,
+  "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "target": "body",
+      "keys": [
+        {},
+        {
+          "time": 1,
+          "y": 0.017499999999999998
+        },
+        {
+          "time": 2
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "head",
+      "keys": [
+        {},
+        {
+          "time": 1,
+          "angle": -0.025
+        },
+        {
+          "time": 2
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "tail",
+      "keys": [
+        {},
+        {
+          "time": 1,
+          "angle": 0.12
+        },
+        {
+          "time": 2
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "far-hind",
+      "finish": 2
+    },
+    {
+      "chain": "far-front",
+      "finish": 2
+    },
+    {
+      "chain": "near-hind",
+      "finish": 2
+    },
+    {
+      "chain": "near-front",
+      "finish": 2
+    }
+  ],
+  "markers": [],
+  "faces": []
+}

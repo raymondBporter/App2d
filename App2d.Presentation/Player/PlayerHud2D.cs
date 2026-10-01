@@ -1,5 +1,6 @@
 using App2d.Core.Geometry;
 using App2d.Core.Validation;
+using App2d.Contracts.Persons;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using System.Numerics;
@@ -9,7 +10,11 @@ namespace App2d.Presentation.Player;
 
 public static class PlayerHud2D
 {
-    public static void Draw(Renderer2D renderer, int currentHealth, int maximumHealth, Texture2D weaponTexture)
+    public static void Draw(
+        Renderer2D renderer,
+        int currentHealth,
+        int maximumHealth,
+        Texture2D weaponTexture, SpellState2D spells = default, bool charging = false)
     {
         ArgGuard.ThrowIfNull(renderer);
         ArgGuard.ThrowIfNotPositive(maximumHealth);
@@ -57,7 +62,24 @@ public static class PlayerHud2D
 
         const float weaponTop = top + panelHeight + 10f;
         var weaponBounds = ScreenRectangle2D.FromTopLeftAndSize(new(left, weaponTop), new Size2D(70f, 70f));
-        DrawWeaponIcon(renderer, weaponTexture, weaponBounds, panelColor, accentColor);
+        if (!spells.Enabled) DrawWeaponIcon(renderer, weaponTexture, weaponBounds, panelColor, accentColor);
+        else
+        {
+            renderer.DrawScreenRoundedRectangle(new(left, weaponTop, left + 350, weaponTop + 92), 9, panelColor);
+            renderer.DrawScreenText($"ENERGY  {spells.Energy}/{spells.MaximumEnergy}", new(left + 12, weaponTop + 22), accentColor);
+            var energyLeft = left + 12;
+            renderer.DrawScreenRoundedRectangle(new(energyLeft, weaponTop + 30, left + 338, weaponTop + 43), 4, emptyHealthColor);
+            var fill = 326f * spells.Energy / spells.MaximumEnergy;
+            if (fill > 0) renderer.DrawScreenRoundedRectangle(new(energyLeft, weaponTop + 30, energyLeft + fill, weaponTop + 43), 4, accentColor);
+            renderer.DrawScreenText("Y / Q  SHOT", new(left + 12, weaponTop + 66), spells.Energy >= spells.ShotCost ? XnaColor.White : XnaColor.Gray);
+            renderer.DrawScreenText("B / R  HEAL", new(left + 182, weaponTop + 66), spells.Energy >= spells.HealCost && currentHealth < maximumHealth ? XnaColor.White : XnaColor.Gray);
+            var progress = charging ? spells.ChargeProgress : spells.IsHealing ? spells.HealProgress : 0;
+            if (progress > 0)
+            {
+                var x = left + (charging ? 12 : 182);
+                renderer.DrawScreenRoundedRectangle(new(x, weaponTop + 75, x + 145 * progress, weaponTop + 80), 2, accentColor);
+            }
+        }
     }
 
     private static void DrawWeaponIcon(Renderer2D renderer, Texture2D texture, ScreenRectangle2D bounds, XnaColor panelColor, XnaColor accentColor)

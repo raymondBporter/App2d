@@ -17,13 +17,15 @@ public sealed class PlayerInputMapper2D
     private static readonly ButtonBinding Jump = new([Keys.Space], GamepadButton2D.A);
     private static readonly ButtonBinding Dash = new([Keys.ShiftKey, Keys.LShiftKey, Keys.RShiftKey], GamepadButton2D.RightTrigger);
     private static readonly ButtonBinding Primary = new([Keys.F], GamepadButton2D.X, MouseButtons.Left);
-    private static readonly ButtonBinding Secondary = new([Keys.Q], GamepadButton2D.RightShoulder, MouseButtons.Right);
-    // E / Y are reserved for Interact once gameplay has an interaction command.
+    private static readonly ButtonBinding Cast = new([Keys.Q], GamepadButton2D.Y, MouseButtons.Right);
+    private static readonly ButtonBinding Heal = new([Keys.R], GamepadButton2D.B);
+    // E is reserved for Interact once gameplay has an interaction command.
 
     private InputButtonState _jump;
     private InputButtonState _dash;
     private InputButtonState _primary;
     private InputButtonState _secondary;
+    private InputButtonState _heal;
 
     public PersonCommand2D Capture(InputState input)
     {
@@ -37,7 +39,8 @@ public sealed class PlayerInputMapper2D
         _jump = Jump.Read(input, _jump);
         _dash = Dash.Read(input, _dash);
         _primary = Primary.Read(input, _primary);
-        _secondary = Secondary.Read(input, _secondary);
+        _secondary = Cast.Read(input, _secondary);
+        _heal = Heal.Read(input, _heal);
         var moveX = Axis(Left, Right, input, input.Gamepad.LeftStick.X);
         var climbY = Axis(Down, Up, input, input.Gamepad.LeftStick.Y);
         var downHeld = Down.Read(input).Held || input.Gamepad.LeftStick.Y < -0.5f;
@@ -49,12 +52,14 @@ public sealed class PlayerInputMapper2D
             DashHeld: Pulse(_dash),
             DownHeld: downHeld,
             PrimaryHeld: Pulse(_primary),
-            SecondaryHeld: Pulse(_secondary));
+            SecondaryHeld: false,
+            CastHeld: Pulse(_secondary),
+            HealHeld: Pulse(_heal));
     }
 
     public void Reset()
     {
-        _jump = _dash = _primary = _secondary = default;
+        _jump = _dash = _primary = _secondary = _heal = default;
     }
 
     /// <summary>A tap that begins and ends inside one tick still reaches the simulation as a one-tick hold.</summary>

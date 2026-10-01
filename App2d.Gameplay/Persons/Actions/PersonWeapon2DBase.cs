@@ -11,7 +11,6 @@ internal abstract class PersonWeapon2DBase(EquipmentKind2D kind) : IPersonWeapon
     public virtual PersonActionState2D CaptureActionState() => default;
 
     public abstract float Use(float facing);
-    public virtual void OnDeselected() { }
     public virtual void BeginFrame(float deltaSeconds) { }
     public virtual void UpdateAfterPhysics(float deltaSeconds, float facing) { }
     public virtual void Reset() { }

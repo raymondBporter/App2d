@@ -1,0 +1,133 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "quadruped-brake",
+  "name": "Quadruped \u00B7 brake",
+  "model": "quadruped",
+  "structureRevision": 1,
+  "duration": 0.65,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "head",
+      "keys": [
+        {
+          "angle": -0.32
+        },
+        {
+          "time": 0.325,
+          "angle": 0.1
+        },
+        {
+          "time": 0.65
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "body",
+      "keys": [
+        {},
+        {
+          "time": 0.325,
+          "angle": 0.08
+        },
+        {
+          "time": 0.65
+        }
+      ]
+    },
+    {
+      "target": "body",
+      "keys": [
+        {
+          "y": -0.055
+        },
+        {
+          "time": 0.25,
+          "x": 0.08,
+          "y": -0.1
+        },
+        {
+          "time": 0.65
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "far-hind",
+      "keys": [
+        {
+          "x": 0.15
+        },
+        {
+          "time": 0.3,
+          "x": 0.22
+        },
+        {
+          "time": 0.65
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "far-front",
+      "keys": [
+        {
+          "x": 0.15
+        },
+        {
+          "time": 0.3,
+          "x": 0.22
+        },
+        {
+          "time": 0.65
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "near-hind",
+      "keys": [
+        {
+          "x": 0.15
+        },
+        {
+          "time": 0.3,
+          "x": 0.22
+        },
+        {
+          "time": 0.65
+        }
+      ]
+    },
+    {
+      "kind": "target",
+      "target": "near-front",
+      "keys": [
+        {
+          "x": 0.15
+        },
+        {
+          "time": 0.3,
+          "x": 0.22
+        },
+        {
+          "time": 0.65
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "stop",
+      "time": 0.3
+    }
+  ],
+  "faces": []
+}

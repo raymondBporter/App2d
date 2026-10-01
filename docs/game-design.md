@@ -30,6 +30,9 @@ versions of eras, with room for fantasy rather than strict historical rules.
 Keep the initial scope to these three. Specific creatures, locations, and their
 order are provisional; additional eras can be considered later.
 
+See the [prehistoric enemy roster](prehistoric-enemies.md) for role-based enemy
+ideas, curated reference sheets, and encounter combinations.
+
 ## Game structure
 
 1. **Distinct worlds:** a more guided opening establishes each world's identity,

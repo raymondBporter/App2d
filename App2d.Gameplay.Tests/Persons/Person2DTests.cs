@@ -222,18 +222,18 @@ public sealed class Person2DTests
             CombatFaction2D.Player,
             new CombatSystem2D(collision, _combatants));
         person.AttachActions(arsenal);
-        var fire = new PersonCommand2D { PrimaryHeld = true, SwitchHeld = true };
+        var fire = new PersonCommand2D { CastHeld = true };
 
         AddGroundSupport(physics, person);
         person.Face(1f);
-        person.BeginFrame(0.59f);
-        person.ApplyCommand(fire, 0.59f);
-        physics.Step(0.59f);
-        person.UpdateAfterPhysics(0.59f);
+        person.BeginFrame(0.24f);
+        person.ApplyCommand(fire, 0.24f);
+        physics.Step(0.24f);
+        person.UpdateAfterPhysics(0.24f);
         Assert.Empty(arsenal.GetActiveAttackHitboxes());
 
         person.BeginFrame(0.01f);
-        person.ApplyCommand(fire with { SwitchHeld = false }, 0.01f);
+        person.ApplyCommand(fire, 0.01f);
         physics.Step(0.01f);
         person.UpdateAfterPhysics(0.01f);
         Assert.Single(arsenal.GetActiveAttackHitboxes());
@@ -258,7 +258,7 @@ public sealed class Person2DTests
 
         person.BeginFrame(0.01f);
         person.ApplyCommand(
-            WallGripCommand(useWeapon: true, switchWeapon: false),
+            WallGripCommand(useWeapon: true, castSpell: false),
             0.01f);
         Assert.True(person.IsWallGripping);
         Assert.Equal(-1f, person.Facing);
@@ -267,7 +267,7 @@ public sealed class Person2DTests
 
         person.BeginFrame(0.10f);
         person.ApplyCommand(
-            WallGripCommand(useWeapon: false, switchWeapon: false),
+            WallGripCommand(useWeapon: false, castSpell: false),
             0.10f);
         physics.Step(0.10f);
         person.UpdateAfterPhysics(0.10f);
@@ -295,7 +295,7 @@ public sealed class Person2DTests
 
         person.BeginFrame(0.04f);
         person.ApplyCommand(
-            WallGripCommand(useWeapon: true, switchWeapon: true),
+            WallGripCommand(useWeapon: true, castSpell: true),
             0.04f);
         Assert.True(person.IsWallGripping);
 
@@ -306,7 +306,7 @@ public sealed class Person2DTests
         for (var i = 0; i < 72; i++)
         {
             person.BeginFrame(1f / 120f);
-            person.ApplyCommand(WallGripCommand(useWeapon: true, switchWeapon: false), 1f / 120f);
+            person.ApplyCommand(WallGripCommand(useWeapon: true, castSpell: true), 1f / 120f);
             physics.Step(1f / 120f);
             person.UpdateAfterPhysics(1f / 120f);
         }
@@ -463,8 +463,8 @@ public sealed class Person2DTests
 
     private static PersonCommand2D WallGripCommand(
         bool useWeapon,
-        bool switchWeapon) =>
-        new() { MoveX = 1f, PrimaryHeld = useWeapon, SwitchHeld = switchWeapon };
+        bool castSpell) =>
+        new() { MoveX = 1f, PrimaryHeld = useWeapon && !castSpell, CastHeld = useWeapon && castSpell };
 
     private static PhysicsWorld2D CreatePhysics(CollisionSystem2D collision) =>
         new(collision)

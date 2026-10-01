@@ -87,6 +87,8 @@ public sealed record PuppetPart
     /// <summary>Null inherits the model's ink width. Does not change facial expression strokes.</summary>
     public float? OutlineWidth { get; set; }
     public List<PartPaint>? Paint { get; set; }
+    /// <summary>Normalized cutout perimeter, scaled by Width/Height in the attachment frame.</summary>
+    public List<PuppetPoint>? Points { get; set; }
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
@@ -105,6 +107,7 @@ public sealed record PuppetPart
         new Limit(.01f, 1).Check(TopWidthScale, "part.topWidthScale");
         if (OutlineWidth is { } outline) new Limit(0, 1).Check(outline, "part.outlineWidth");
         PartPaint.Check(Paint);
+        if (Kind == "polygon") PartGeometry.CheckCutout(Points);
         if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
         new Limit(-1, 1).Check(FaceX, "part.faceX");
     }

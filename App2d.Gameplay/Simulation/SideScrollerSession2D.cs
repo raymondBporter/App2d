@@ -302,7 +302,6 @@ public sealed partial class SideScrollerSession2D : IDisposable
             void onDamaged() => session._events.Add(new Damaged2D(session.Stamp(this)));
             void onDied() => session._events.Add(new Died2D(session.Stamp(this)));
             void onWeapon(WeaponEvent2D occurrence) => session._events.Add(new WeaponOccurred2D(session.Stamp(this), occurrence));
-            void onEquipment(EquipmentKind2D kind) => session._events.Add(new EquipmentChanged2D(session.Stamp(this), kind));
             void onMelee(float duration) => Attack(PlayerAttackKind2D.Melee, duration);
             void onDownward(float duration) => Attack(PlayerAttackKind2D.Downward, duration);
             void onShot() => Attack(PlayerAttackKind2D.Shot, 0f);
@@ -315,7 +314,6 @@ public sealed partial class SideScrollerSession2D : IDisposable
             Person.Damaged += onDamaged; _unsubscribe.Add(() => Person.Damaged -= onDamaged);
             Person.Died += onDied; _unsubscribe.Add(() => Person.Died -= onDied);
             Actions.WeaponOccurred += onWeapon; _unsubscribe.Add(() => Actions.WeaponOccurred -= onWeapon);
-            Actions.EquipmentChanged += onEquipment; _unsubscribe.Add(() => Actions.EquipmentChanged -= onEquipment);
             Actions.MeleeAttackStarted += onMelee; _unsubscribe.Add(() => Actions.MeleeAttackStarted -= onMelee);
             Actions.DownAttackStarted += onDownward; _unsubscribe.Add(() => Actions.DownAttackStarted -= onDownward);
             Actions.ShotStarted += onShot; _unsubscribe.Add(() => Actions.ShotStarted -= onShot);

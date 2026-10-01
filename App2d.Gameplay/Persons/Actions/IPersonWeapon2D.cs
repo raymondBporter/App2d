@@ -11,7 +11,6 @@ public interface IPersonWeapon2D
     IEnumerable<SpatialObject2D> ActiveHitboxes { get; }
 
     float Use(float facing);
-    void OnDeselected();
     void BeginFrame(float deltaSeconds);
     void UpdateAfterPhysics(float deltaSeconds, float facing);
     void Reset();

@@ -74,6 +74,10 @@ def write_manifest(content_root: Path) -> None:
         "audio/sfx/gun-fire.wav",
         "audio/sfx/gun-cancel.wav",
         "audio/sfx/gun-impact.wav",
+        "gameplay/player-spells.json",
+        "audio/sfx/heal-charge.wav",
+        "audio/sfx/heal-complete.wav",
+        "audio/sfx/heal-cancel.wav",
         "effects/fireball/ember-energy.png",
         "environments/tilesets/rust-cyberpunk/tileset.json",
         "environments/tilesets/dark-cave/tileset.json",
@@ -169,6 +173,8 @@ def main() -> None:
         )
         run(repository, "Baking blue charged-gun effects and audio",
             str(pipeline / "build_gun_effects.py"), "--content-root", str(staging_root))
+        run(repository, "Baking player spell audio",
+            str(pipeline / "build_spell_audio.py"), "--content-root", str(staging_root))
         run(
             repository,
             "Importing the green dinosaur walk cycle",

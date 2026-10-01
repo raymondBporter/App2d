@@ -41,7 +41,10 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
                 [SoundEffect2D.GunCharge] = Load(rootPath, 0.45f, "gun-charge"),
                 [SoundEffect2D.GunFire] = Load(rootPath, 0.72f, "gun-fire"),
                 [SoundEffect2D.GunCancel] = Load(rootPath, 0.34f, "gun-cancel"),
-                [SoundEffect2D.GunImpact] = Load(rootPath, 0.50f, "gun-impact")
+                [SoundEffect2D.GunImpact] = Load(rootPath, 0.5f, "gun-impact"),
+                [SoundEffect2D.HealCharge] = Load(rootPath, 0.3f, "heal-charge"),
+                [SoundEffect2D.HealComplete] = Load(rootPath, 0.55f, "heal-complete"),
+                [SoundEffect2D.HealCancel] = Load(rootPath, 0.25f, "heal-cancel")
             };
         }
         catch

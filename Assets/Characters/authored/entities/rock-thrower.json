@@ -1,0 +1,87 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "rock-thrower",
+  "name": "Rock thrower",
+  "model": "rock-thrower-build",
+  "motionSet": "standard",
+  "roles": {
+    "walk": "person-run",
+    "hit": "person-hit",
+    "death": "person-death"
+  },
+  "controller": {
+    "walkSpeed": 1.8,
+    "range": 7,
+    "cooldown": 0.7,
+    "respectTerrain": true,
+    "verticalRange": 3,
+    "retreatRange": 2,
+    "retreatSeconds": 0.35,
+    "retreatPause": 0.65
+  },
+  "health": 6,
+  "mass": 1,
+  "movement": {
+    "width": 0.353,
+    "height": 2.01
+  },
+  "hurt": {
+    "layout": "standard",
+    "regions": {}
+  },
+  "equipment": [
+    {
+      "prop": "throwing-rock",
+      "socket": "sword-hand"
+    },
+    {
+      "prop": "rock-thrower-hide-wrap",
+      "socket": "body-art"
+    },
+    {
+      "prop": "rock-thrower-bag",
+      "socket": "body-art"
+    },
+    {
+      "prop": "rock-thrower-hair",
+      "socket": "head-art"
+    },
+    {
+      "prop": "rock-thrower-beard",
+      "socket": "head-art"
+    }
+  ],
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "rock-thrower-throw",
+      "hits": [],
+      "projectile": {
+        "speed": 8,
+        "width": 0.36,
+        "height": 0.36,
+        "damage": 2,
+        "lifetime": 3,
+        "gravity": 15,
+        "flightSeconds": 0.85
+      },
+      "events": [
+        {
+          "id": "bag-search",
+          "at": {
+            "marker": "search"
+          },
+          "sound": "rock-search"
+        },
+        {
+          "id": "fire",
+          "at": {
+            "marker": "release"
+          },
+          "sound": "rock-throw"
+        }
+      ]
+    }
+  ]
+}

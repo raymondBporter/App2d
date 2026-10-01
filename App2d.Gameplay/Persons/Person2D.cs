@@ -103,7 +103,8 @@ public sealed partial class Person2D : ICombatant2D
         InvulnerabilitySeconds, LandingSpeedThisFrame, BalanceDirection,
         IsGrounded, IsWallGripping, IsDashing, IsClimbingLadder,
         IsSustainingJump, JumpPower, _actions?.IsChargingPrimary == true)
-    { Action = _actions?.CaptureActionState() ?? default, GroundVelocity = _motor.GroundVelocity };
+    { Action = _actions?.CaptureActionState() ?? default, GroundVelocity = _motor.GroundVelocity,
+      Spells = _actions?.CaptureSpellState() ?? default };
 
     public event Action? JumpStarted;
     public event Action<float>? Landed;
@@ -145,13 +146,17 @@ public sealed partial class Person2D : ICombatant2D
         var primaryPressed = command.PrimaryHeld && !previous.PrimaryHeld;
         var primaryReleased = !command.PrimaryHeld && previous.PrimaryHeld;
         var secondaryPressed = command.SecondaryHeld && !previous.SecondaryHeld;
-        if (command.SwitchHeld && !previous.SwitchHeld)
-            _actions?.SelectNext();
 
         if (MathF.Abs(command.MoveX) > 0.01f)
             Face(command.MoveX);
         var previousWallDirection = _motor.IsWallGripping ? _motor.WallDirection : 0f;
         _motor.UpdateBeforePhysics(intent, Facing, deltaSeconds);
+        var canHeal = IsGrounded && !IsDashing && !IsClimbingLadder && !IsWallGripping &&
+            MathF.Abs(command.MoveX) < .01f && MathF.Abs(command.ClimbY) < .01f &&
+            !command.JumpHeld && !command.DashHeld && !command.PrimaryHeld && !command.SecondaryHeld && !command.CastHeld &&
+            MathF.Abs(Body.LinearVelocity.X - _motor.GroundVelocity.X) < 1f;
+        _actions?.SetSpellInput(command.CastHeld, command.CastHeld && !previous.CastHeld,
+            command.HealHeld, canHeal, !IsDashing && !IsClimbingLadder && !command.DashHeld, Facing);
         _actions?.SetPrimaryInput(command.PrimaryHeld, canCharge: true, released: primaryReleased);
         if ((primaryPressed || secondaryPressed) && _actions is not null)
         {
@@ -190,6 +195,8 @@ public sealed partial class Person2D : ICombatant2D
         }
 
         _motor.UpdateAfterPhysics(deltaSeconds);
+        if (!IsGrounded || IsDashing || IsClimbingLadder || IsWallGripping)
+            _actions?.CancelHealing();
         _actions?.UpdateAfterPhysics(deltaSeconds, Facing);
         if (_actions?.ConsumeDownAttackBounce() == true)
         {

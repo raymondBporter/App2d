@@ -12,7 +12,6 @@ public interface ISessionPlayerActions2D : IPersonActionSet2D
     event Action<WeaponEvent2D>? WeaponOccurred;
     EquipmentKind2D Equipment { get; }
     bool IsMeleeAttackActive { get; }
-    event Action<EquipmentKind2D>? EquipmentChanged;
     event Action<float>? MeleeAttackStarted;
     event Action<float>? DownAttackStarted;
     event Action? ShotStarted;

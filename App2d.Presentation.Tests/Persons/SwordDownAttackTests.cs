@@ -101,7 +101,6 @@ public sealed class SwordDownAttackTests
 
     [Theory]
     [InlineData("damage")]
-    [InlineData("switch")]
     [InlineData("reset")]
     [InlineData("disable")]
     public void InterruptionClearsDownwardHitbox(string cause)
@@ -112,7 +111,6 @@ public sealed class SwordDownAttackTests
         switch (cause)
         {
             case "damage": Assert.True(game.Person.TakeDamage(1, Vector2.Zero)); break;
-            case "switch": game.Arsenal.SelectNext(); break;
             case "reset": game.Person.Reset(Vector2.Zero); break;
             case "disable": game.Person.SetSimulationEnabled(false); break;
         }

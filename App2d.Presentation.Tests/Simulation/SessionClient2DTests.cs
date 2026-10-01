@@ -164,7 +164,6 @@ public sealed class SessionClient2DTests
         public int BeginFrames { get; private set; }
         public int Interruptions { get; private set; }
         public event Action<UnarmedAttackKind2D, float>? UnarmedAttackStarted;
-        public event Action<EquipmentKind2D>? EquipmentChanged { add { } remove { } }
         public event Action<float>? MeleeAttackStarted { add { } remove { } }
         public event Action<float>? DownAttackStarted { add { } remove { } }
         public event Action? ShotStarted { add { } remove { } }
@@ -177,7 +176,6 @@ public sealed class SessionClient2DTests
             return facing;
         }
         public float UseSecondary(float facing) => facing;
-        public void SelectNext() { }
         public void Reset() { }
     }
 }

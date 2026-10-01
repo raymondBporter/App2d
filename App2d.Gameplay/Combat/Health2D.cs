@@ -16,6 +16,15 @@ public sealed class Health2D
     public int Current { get; private set; }
     public bool IsAlive => Current > 0;
 
+    public int Heal(int amount)
+    {
+        ArgGuard.ThrowIfNotPositive(amount);
+        if (!IsAlive) return 0;
+        var restored = Math.Min(amount, Maximum - Current);
+        Current += restored;
+        return restored;
+    }
+
     public bool Damage(int amount)
     {
         ArgGuard.ThrowIfNotPositive(amount);

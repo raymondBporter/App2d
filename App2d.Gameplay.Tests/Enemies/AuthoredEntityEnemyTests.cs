@@ -294,7 +294,107 @@ public sealed class AuthoredEntityEnemyTests
         Assert.Equal(EntityControllers.Walk, guard.CaptureState().ActionId);
     }
 
-    [Theory, InlineData("spear-guard"), InlineData("stalker-pest")]
+    [Fact]
+    public void CavemanCommitsHisFacingAndAHittingSwordCancelsTheSlamAcrossRollback()
+    {
+        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 42), 1, 4);
+        enemy.SetSimulationEnabled(true);
+        for (var i = 0; i < 60; i++)
+        {
+            enemy.Update(1f / 120, new(i < 1 ? 40 : -40, 42)); enemy.SyncAfterPhysics();
+        }
+        Assert.Equal("attack", enemy.CaptureState().ActionId);
+        Assert.Equal(1, enemy.Pose.Facing);
+        Assert.Empty(enemy.GetActiveAttackHitboxes());
+        Assert.Contains(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "club-windup");
+        var before = enemy.CaptureSimulation();
+        Assert.True(enemy.TakeDamage(3, new(-200, 0)));
+        Assert.Equal("hit", enemy.CaptureState().ActionId);
+        Assert.Empty(enemy.GetActiveAttackHitboxes());
+        var after = enemy.CaptureSimulation();
+        for (var i = 0; i < 80; i++) { enemy.Update(1f / 120, new(-40, 42)); enemy.SyncAfterPhysics(); }
+        Assert.DoesNotContain(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "heavy");
+        enemy.RestoreSimulation(before);
+        Assert.Equal("attack", enemy.CaptureState().ActionId);
+        Assert.Equal(9, enemy.Health.Current);
+        enemy.RestoreSimulation(after);
+        Assert.Equal("hit", enemy.CaptureState().ActionId);
+        Assert.Equal(6, enemy.Health.Current);
+    }
+
+    [Fact]
+    public void CavemanPlacementPursuesOnTerrainAndReplaysExactly()
+    {
+        var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
+        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+            [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
+             new(2, WorldThingKind2D.ClubCaveman, null, true, new(-200, 40))])
+            { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
+        Assert.Equal("club-caveman", Assert.Single(game.Session.CaptureEnemies()).TypeId);
+        for (var i = 0; i < 60; i++) game.Session.Advance();
+        Assert.True(Assert.Single(game.Session.CaptureEnemies()).Position.X < -200);
+        var checkpoint = game.Session.CaptureCheckpoint();
+        string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
+        {
+            game.Session.Advance();
+            var enemy = Assert.Single(game.Session.CaptureEnemies());
+            return $"{enemy.Position};{enemy.ActionId};{enemy.ActionSeconds};{game.Player.Health.Current}";
+        })];
+        var first = Run(); game.Session.RestoreCheckpoint(checkpoint);
+        Assert.Equal(first, Run());
+        Assert.True(game.Player.Health.Current < 30);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void CavemanStopsAtLedgesAndWalls(bool wall)
+    {
+        var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+        var ground = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(wall ? 500 : 14, 20)));
+        ground.Transform.Position = new(0, -10);
+        physics.AddBody(ground, BodyMotionType2D.Static).CollisionLayer = 1;
+        if (wall)
+        {
+            var obstacle = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(20, 120)));
+            obstacle.Transform.Position = new(20, 60);
+            physics.AddBody(obstacle, BodyMotionType2D.Static).CollisionLayer = 1;
+        }
+        var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 40.2f), 1, 4);
+        enemy.SetSimulationEnabled(true);
+        enemy.Update(1f / 120, new(300, 26)); enemy.SyncAfterPhysics();
+        Assert.Equal(0, enemy.Body.LinearVelocity.X);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(1)]
+    public void CavemanSlamHitsOnceDuringTheStrikeAndCanBeWalkedAwayFrom(int facing)
+    {
+        foreach (var dodge in new[] { false, true })
+        {
+            var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
+            var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 40), 1, 4);
+            enemy.SetSimulationEnabled(true);
+            var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(facing * 40, 26), 2, 1, CombatFaction2D.Player, 30);
+            var boxes = new List<App2d.Core.Geometry.Rect2D>();
+            for (var i = 0; i < 200; i++)
+            {
+                if (dodge && i == 60) player.WorldObject.Transform.Position += new Vector2(facing * 100, 0);
+                enemy.Update(1f / 120, player.Position); enemy.SyncAfterPhysics();
+                boxes.AddRange(enemy.GetActiveAttackHitboxes().Select(b => b.WorldBounds));
+                var before = player.Health.Current;
+                enemy.TryResolvePlayerHit(player);
+                if (before != player.Health.Current)
+                    Assert.InRange(enemy.CaptureState().AttackElapsedSeconds, .78f, .95f);
+            }
+            Assert.True(player.Health.Current == (dodge ? 30 : 27), $"Health {player.Health.Current}; player {player.WorldObject.WorldBounds}; first strike {boxes.FirstOrDefault()}");
+        }
+    }
+
+    [Theory, InlineData("spear-guard"), InlineData("stalker-pest"), InlineData("club-caveman")]
     public void DeathPlaysItsClipOnceAndHoldsTheLastFrame(string id)
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };

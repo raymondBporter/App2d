@@ -448,7 +448,7 @@ strips.
 Player traversal has
 acceleration, coyote time, jump buffering, variable jump height, wall grip and wall jump,
 a high-speed enemy-phasing dash with one airborne charge restored on landing, a sword,
-a fixed pool of 16 fireballs, and an unarmed punch/kick loadout. A hostile unarmed rival
+a short charged shot, and held healing powered by a shared energy reserve. Weapon switching has been removed. A hostile unarmed rival
 uses the same person locomotion, punch, kick, damage, and presentation-state paths under a small AI command producer;
 the patrol enemies and Boiler Brute remain bespoke actors. While airborne and falling, holding toward a
 nearby static solid wall suspends the player; jumping launches away. One-way platforms
@@ -502,6 +502,9 @@ clearances, but there is no parallel procedural source of truth to drift away fr
 
 ## Controls
 
+Player spell behavior, tunable values and the visual preview command are documented in
+[Player spells](docs/player-spells.md).
+
 Xbox controller:
 
 - Left stick or D-pad: run
@@ -509,10 +512,10 @@ Xbox controller:
 - Hold Down on the left stick or D-pad and press A: drop through a one-way platform
 - A: jump; release early to shorten the jump
 - Right trigger: dash
-- X: use the selected primary action (sword, gun, or punch)
+- X: sword attack
 - Sword: hold Down and press X while airborne for a downward cut
-- Right bumper: kick while unarmed
-- Y: reserved for future interaction (currently unbound)
+- Y: hold briefly to charge and fire the spell shot
+- B: hold while stationary on the ground to heal
 
 Keyboard and mouse fallback:
 
@@ -523,19 +526,20 @@ Keyboard and mouse fallback:
 - Hold S or Down and press jump: drop through the supporting one-way strip
 - Release jump early: shorten the jump
 - Left or Right Shift: dash
-- F or left click: use the selected primary action (punch while unarmed)
+- F or left click: sword attack
 - Sword: hold S or Down and press F or left click while airborne for a downward cut.
   The 0.25-second stab hits immediately during its first two frames. Connecting
   with an enemy or spikes bounces you upward once per attack, preserving sideways
   movement. A successful bounce takes priority over body-contact damage that frame.
-- Gun: hold F, left click, or controller X for 0.6 seconds to automatically fire
-  one blue bolt. Release and press again for another shot. You can run, jump,
-  dash, wall-grip, or climb while charging. Movement and gravity work normally;
-  the shot follows your facing direction (away from a wall while gripping it).
-  The HUD ring fills and the muzzle glow shimmers during charging.
-  Releasing early, taking damage, switching gear, or entering the editor cancels it.
-  Input suppression cancels instead of firing.
-- Q or right click: kick while unarmed
+- Q or right click: hold for 0.25 seconds to fire one blue spell bolt. Release and
+  press again for another shot. Running, jumping and wall gripping are supported;
+  dashing, climbing, damage, early release or input suppression cancels charging.
+- R: hold while stationary on the ground to heal 20% of maximum health per second.
+  Continued holding repeats until full or out of energy. Moving, jumping, dashing,
+  attacking, damage and input suppression interrupt. Damage requires a fresh hold.
+- Both spells cost 30 energy; the reserve starts at 90 and restores 10 per second
+  during active play, up to 90. Cancelled casts cost nothing. Hits do not restore energy.
+  The HUD shows energy, controls and cast progress.
 - E: reserved for future interaction (currently unbound)
 
 Developer / editor controls:
@@ -565,8 +569,7 @@ owns temporary player inspection keys; the editor and console own their shortcut
 Opening the editor/console or losing window focus cancels held gameplay input.
 Held buttons must be released before they can trigger again after cancellation.
 
-Sword/gun loadout changes, interaction behavior, and a pause menu are future gameplay
-work. E/Y remain available for interaction; Escape currently retains its host close
+Interaction behavior and a pause menu are future gameplay work. E remains available for interaction; Escape currently retains its host close
 behavior. There is no remapping UI or configurable binding file yet.
 
 ## Developer console

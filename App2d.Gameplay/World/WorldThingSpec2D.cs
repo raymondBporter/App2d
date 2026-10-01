@@ -11,7 +11,11 @@ public enum WorldThingKind2D
     BoilerBrute,
     Rival,
     GreenDinosaur,
-    TumbleProp
+    TumbleProp,
+    ClubCaveman,
+    RockThrower,
+    BabyTriceratops,
+    ShieldDefender
 }
 
 /// <summary>Minimal storage-neutral input for a code-configured positioned thing.</summary>

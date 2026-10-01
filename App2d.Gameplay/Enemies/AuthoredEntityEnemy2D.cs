@@ -24,7 +24,7 @@ namespace App2d.Gameplay.Enemies;
 /// "fire" event launches its projectile from the equipped prop's muzzle, unless terrain crosses the barrel; bolts sweep in
 /// small steps so thin walls stop them, and they are part of the rollback snapshot.
 /// </summary>
-public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IAuthoredHurt2D
+public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IAuthoredHurt2D, ICombatGuard2D
 {
     private const float Scale = GameWorldUnits2D.WorldUnitsPerAuthoredUnit, HurtSeconds = .45f;
     private readonly EntityAnimator _animator;
@@ -42,6 +42,10 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private readonly EntityReaction _reaction = new();
     private int _facing = -1;
     private Vector2 _rootBefore;
+    private Vector2 _attackTarget;
+    private float _retreatRemaining;
+    private bool _retreatUsed;
+    private bool _chargeBlocked;
 
     public AuthoredEntityEnemy2D(EntityId2D id, ResolvedEntity entity, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
@@ -87,18 +91,61 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         if (_reaction.Tick(dt)) _cooldown = MathF.Max(_cooldown, config.Cooldown);
         // Staggered: no steering, so the knockback carries.
         if (_reaction.Staggered) return;
-        if (_animator.Action is not null) { Body.LinearVelocity = new(0, Body.LinearVelocity.Y); return; }
+        if (_animator.Action is not null)
+        {
+            var at = (float)_animator.ActionTime;
+            var start = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == "rush")?.Seconds ?? config.ChargeStartSeconds;
+            var finish = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == "brake")?.Seconds ?? config.ChargeEndSeconds;
+            var speed = config.ChargeSpeed > 0 && at >= start && !_chargeBlocked
+                ? config.ChargeSpeed * Math.Clamp(1 - (at - finish) / config.BrakeSeconds, 0, 1) : 0;
+            if (speed > 0 && config.RespectTerrain && !CanAdvance(dt, _facing, speed))
+            {
+                _chargeBlocked = true; speed = 0;
+                _events.Add(new EntityCue2D(Id, Root, "charge-stop"));
+            }
+            Body.LinearVelocity = new(_facing * speed * Scale, Body.LinearVelocity.Y);
+            return;
+        }
         var delta = targetPosition - WorldObject.Transform.Position;
         if (Math.Abs(delta.X) > 1) _facing = Math.Sign(delta.X);
-        var inRange = Math.Abs(delta.X) <= config.Range * Scale && Math.Abs(delta.Y) < 2 * Scale;
+        if (config.RetreatRange > 0 && !_retreatUsed && Math.Abs(delta.X) < config.RetreatRange * Scale)
+        {
+            _retreatUsed = true; _retreatRemaining = config.RetreatSeconds + config.RetreatPause;
+        }
+        if (_retreatRemaining > 0)
+        {
+            _retreatRemaining = MathF.Max(0, _retreatRemaining - dt);
+            var retreat = _retreatRemaining > config.RetreatPause ? -_facing : 0;
+            if (config.RespectTerrain && retreat != 0 && !CanAdvance(dt, retreat)) retreat = 0;
+            Body.LinearVelocity = new(retreat * config.WalkSpeed * Scale, Body.LinearVelocity.Y);
+            return;
+        }
+        var inRange = Math.Abs(delta.X) <= config.Range * Scale && Math.Abs(delta.Y) < config.VerticalRange * Scale;
+        if (config.RespectTerrain && inRange && BarrelBlocked(targetPosition)) inRange = false;
         if (inRange && _cooldown <= 0 && _animator.TryStart(EntityControllers.Attack))
         {
             _cooldown = _animator.Current!.Clip.Duration + config.Cooldown;
+            _attackTarget = targetPosition; _retreatUsed = false;
+            _chargeBlocked = false;
             Body.LinearVelocity = new(0, Body.LinearVelocity.Y);
             return;
         }
         var move = !Entity.Controller.Moves || inRange || Math.Abs(delta.X) > 14 * Scale ? 0 : _facing;
+        if (config.RespectTerrain && move != 0 && !CanAdvance(dt, move)) move = 0;
         Body.LinearVelocity = new(move * config.WalkSpeed * Scale, Body.LinearVelocity.Y);
+    }
+
+    // Look beyond the leading foot by this tick's travel: do not walk off ledges or into walls.
+    private bool CanAdvance(float dt, int direction, float? speed = null)
+    {
+        var bounds = WorldObject.WorldBounds;
+        var x = WorldObject.Transform.Position.X + direction *
+            (Entity.Asset.Movement.Width * Scale / 2 + (speed ?? Entity.Asset.Controller.WalkSpeed) * Scale * dt + 3);
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4, 8)));
+        probe.Transform.Position = new(x, bounds.Min.Y - 3);
+        if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0) return false;
+        probe.Transform.Position = new(x, bounds.Min.Y + 8);
+        return _collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0;
     }
 
     public void SyncAfterPhysics()
@@ -141,7 +188,11 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var (point, axis) = EntityCollision.Muzzle(Entity, Pose);
         var muzzle = new Vector2(point.X, point.Y) * Scale;
         if (BarrelBlocked(muzzle)) { _events.Add(new EntityCue2D(Id, muzzle, "blocked")); return; }
-        _bolts.Add(new(muzzle, axis * shot.Speed * Scale, new Vector2(shot.Width, shot.Height) * Scale, shot.Lifetime));
+        var gravity = shot.Gravity * Scale;
+        var velocity = shot.FlightSeconds > 0
+            ? (_attackTarget - muzzle) / shot.FlightSeconds + new Vector2(0, gravity * shot.FlightSeconds / 2)
+            : axis * shot.Speed * Scale;
+        _bolts.Add(new(muzzle, velocity, new Vector2(shot.Width, shot.Height) * Scale, shot.Lifetime) { Gravity = gravity });
     }
 
     /// <summary>Terrain between the body's centre line and the muzzle: a gun poked through a wall never fires beyond it.</summary>
@@ -168,17 +219,19 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         {
             var lifetime = bolt.Lifetime - _dt;
             if (lifetime <= 0) continue;
-            var distance = bolt.Velocity * _dt;
+            var acceleration = new Vector2(0, -bolt.Gravity);
+            var distance = bolt.Velocity * _dt + acceleration * (_dt * _dt / 2);
             var steps = Math.Max(1, (int)MathF.Ceiling(distance.Length() / 4));
             var shape = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(bolt.Size)); var position = bolt.Position; var hit = false;
             for (var step = 1; step <= steps; step++)
             {
-                position = bolt.Position + distance * (step / (float)steps); shape.Transform.Position = position;
-                if (_collision.Overlap(shape, _overlaps, _worldLayer, includeSensors: false) > 0) { hit = true; _events.Add(new EntityCue2D(Id, position, "impact")); break; }
+                var t = _dt * step / steps;
+                position = bolt.Position + bolt.Velocity * t + acceleration * (t * t / 2); shape.Transform.Position = position;
+                if (_collision.Overlap(shape, _overlaps, _worldLayer, includeSensors: false) > 0) { hit = true; _events.Add(new EntityCue2D(Id, position, bolt.Gravity > 0 ? "rock-impact" : "impact")); break; }
                 if (player.IsAlive && shape.WorldBounds.Intersects(player.WorldObject.WorldBounds))
                 { player.TryTakeDamageFromX(damage, bolt.Position.X); hit = true; _events.Add(new EntityCue2D(Id, position, "hit")); break; }
             }
-            if (!hit) _bolts.Add(bolt with { Position = position, Lifetime = lifetime });
+            if (!hit) _bolts.Add(bolt with { Position = position, Velocity = bolt.Velocity + acceleration * _dt, Lifetime = lifetime });
         }
     }
 
@@ -188,7 +241,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         if (!_enabled) return false;
         AdvanceBolts(player); // bolts already in flight keep going after their shooter falls
-        if (!IsAlive) return !player.IsAlive;
+        if (!IsAlive || _chargeBlocked) return !player.IsAlive;
         foreach (var hit in _animator.ActiveHits())
         {
             var region = ToWorld(EntityCollision.Attack(Entity, Pose, hit));
@@ -221,13 +274,44 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
-        if (!_enabled || !IsAlive) yield break;
+        if (!_enabled || !IsAlive || _chargeBlocked) yield break;
         foreach (var hit in _animator.ActiveHits())
             yield return new SpatialObject2D(ToWorld(EntityCollision.Attack(Entity, Pose, hit)).Shape);
     }
 
     public bool TryRegisterHit(EntityId2D source, int attack)
     { if (_hitHistory.GetValueOrDefault(source, -1) == attack) return false; _hitHistory[source] = attack; return true; }
+
+    private Rect2D? GuardBounds()
+    {
+        if (!_enabled || !IsAlive || _reaction.Staggered || Entity.Asset.Guard is not { } guard) return null;
+        var open = _animator.Current?.Events.FirstOrDefault(e => e.Event.Id == "guard-open");
+        if (open is not null && _animator.ActionTime >= open.Seconds) return null;
+        var shield = ToWorld(EntityCollision.Attack(Entity, Pose,
+            new ResolvedHit(new HitWindow { Prop = guard.Prop, Width = guard.Width, Height = guard.Height }, 0, 1)));
+        return ShapeBounds2D.Calculate(shield.Shape);
+    }
+
+    public bool OverlapsGuard(Rect2D attackBounds) => GuardBounds() is { } bounds && bounds.Intersects(attackBounds);
+
+    public bool CanBlock(Rect2D attackBounds, Vector2 incomingDirection, Vector2? attackerPosition)
+    {
+        var fromFront = attackerPosition is { } source
+            ? (source.X - WorldObject.Transform.Position.X) * _facing > 0
+            : incomingDirection.X != 0 ? incomingDirection.X * _facing < 0
+            : (attackBounds.Center.X - WorldObject.Transform.Position.X) * _facing > 0;
+        if (!fromFront) return false;
+        return OverlapsGuard(attackBounds);
+    }
+
+    public bool TryBlock(Rect2D attackBounds, Vector2 incomingDirection, Vector2? attackerPosition)
+    {
+        if (!CanBlock(attackBounds, incomingDirection, attackerPosition)) return false;
+        var bounds = GuardBounds()!.Value;
+        var point = (Vector2.Max(bounds.Min, attackBounds.Min) + Vector2.Min(bounds.Max, attackBounds.Max)) / 2;
+        _events.Add(new EntityCue2D(Id, point, "shield-block"));
+        return true;
+    }
 
     public bool TakeDamage(int damage, Vector2 knockback)
     {
@@ -258,15 +342,18 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     public ImmutableArray<EnemyEvent2D> DrainEvents() { var events = _events.ToImmutableArray(); _events.Clear(); return events; }
 
     private sealed record Snapshot(bool Enabled, float Cooldown, float Hurt, float Stagger, int Facing, int Health, Vector2 RootBefore, AnimatorState Animator,
-        ImmutableArray<(int, string, int)> Ledger, ImmutableDictionary<EntityId2D, int> Hits, ImmutableArray<EnemyEvent2D> Events, ImmutableArray<EntityBoltState2D> Bolts) : SimulationState2D;
+        ImmutableArray<(int, string, int)> Ledger, ImmutableDictionary<EntityId2D, int> Hits, ImmutableArray<EnemyEvent2D> Events, ImmutableArray<EntityBoltState2D> Bolts,
+        Vector2 AttackTarget, float RetreatRemaining, bool RetreatUsed, bool ChargeBlocked) : SimulationState2D;
 
     public SimulationState2D CaptureSimulation() => new Snapshot(_enabled, _cooldown, _hurt, _reaction.Capture(), _facing, Health.Current, _rootBefore, _animator.Capture(),
-        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), [.. _events], [.. _bolts]);
+        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), [.. _events], [.. _bolts], _attackTarget, _retreatRemaining, _retreatUsed, _chargeBlocked);
 
     public void RestoreSimulation(SimulationState2D state)
     {
         var s = (Snapshot)state;
         _enabled = s.Enabled; _cooldown = s.Cooldown; _hurt = s.Hurt; _reaction.Restore(s.Stagger); _facing = s.Facing; _rootBefore = s.RootBefore;
+        _attackTarget = s.AttackTarget; _retreatRemaining = s.RetreatRemaining; _retreatUsed = s.RetreatUsed;
+        _chargeBlocked = s.ChargeBlocked;
         Health.RestoreSimulation(s.Health); _ledger.Restore(s.Ledger);
         _hitHistory.Clear(); foreach (var pair in s.Hits) _hitHistory.Add(pair.Key, pair.Value);
         _events.Clear(); _events.AddRange(s.Events);

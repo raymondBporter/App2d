@@ -14,6 +14,27 @@ public sealed class PersonAnimationDirectorTests
     private static PersonState2D Standing => new() { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true, Facing = 1 };
 
     [Fact]
+    public void SpellsTemporarilyShowGunOrHealingPoseWithoutChangingMeleeEquipment()
+    {
+        var d = new Driver();
+        var state = Standing with { IsChargingPrimary = true, Spells = new(90, 90, 30, 30, false, 0, .6f, 1, .25f) };
+        var charging = d.Step(state);
+        Assert.Equal(PersonGear.Gun, charging.Gear);
+        Assert.Equal(PersonMoves.GunCharge, charging.Overlay!.Clip.Id);
+        Assert.Equal(.6, charging.Overlay.Seconds, 5);
+        var firing = d.Step(Standing with { Action = new(PlayerAttackKind2D.Shot, .03f, .2f) });
+        Assert.Equal(PersonGear.Gun, firing.Gear);
+        Assert.Equal(PersonMoves.GunShot, firing.Overlay!.Clip.Id);
+        var healing = d.Step(Standing with { Spells = state.Spells with { IsHealing = true, HealProgress = .7f } });
+        Assert.Equal(PersonMoves.HealGather, healing.Key);
+        Assert.Equal(PersonGear.Sword, healing.Gear);
+        Assert.Equal(.7, healing.Seconds, 5);
+        Assert.DoesNotContain(PersonLoadout.Worn(healing.Clip, (float)healing.Seconds, healing.Gear), prop => prop.Prop == PersonLoadout.Pistol);
+        Assert.Equal(PersonMoves.Idle, d.Step(Standing).Key);
+        Assert.Equal(EquipmentKind2D.Sword, d.Director.Equipment);
+    }
+
+    [Fact]
     public void DeepLandingCrouchIsReservedForHardImpacts()
     {
         var director = new PersonAnimationDirector(Moves) { HardLandingSpeed = 1045 };

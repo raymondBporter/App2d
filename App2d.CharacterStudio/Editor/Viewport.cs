@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Rendering.Characters;
@@ -50,7 +51,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private readonly CharacterMesh _ground = new(8192);
     private RenderTarget2D? _target, _inset;
     private nint _targetId, _insetId;
-    private float _span = 3.2f, _centerY = 1.1f;
+    private float _span = 3.2f, _widthSpan = 4.16f, _centerX, _centerY = 1.1f;
     private string? _fittedFor;
 
     public float Zoom { get; set; } = 1;
@@ -64,10 +65,16 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     {
         Zoom = 1; Pan = default; _fittedFor = subject?.Id;
         if (subject is null) return;
-        var ys = subject.Model.Rest.Values.Select(p => p.Y).DefaultIfEmpty(0).ToArray();
-        var (min, max) = (MathF.Min(0, ys.Min()), MathF.Max(1, ys.Max()));
+        var points = DrawingPoints(subject.Model).ToArray();
+        var (min, max) = (MathF.Min(0, points.Min(p => p.Y)), MathF.Max(1, points.Max(p => p.Y)));
+        var (left, right) = (points.Min(p => p.X), points.Max(p => p.X));
         _span = MathF.Max(1.5f, max - min + .9f); _centerY = (min + max) / 2;
+        _widthSpan = MathF.Max(1.5f, right - left + .9f); _centerX = (left + right) / 2;
     }
+
+    private static IEnumerable<Vector3> DrawingPoints(ResolvedModel model) =>
+        model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, id => model.Rest[id]))
+            .Concat(model.Rest.Values).Append(Vector3.Zero);
 
     public ViewportFrame Draw(Vector2 available, IReadOnlyList<Subject> scene, EditorSession session)
     {
@@ -75,11 +82,11 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         var width = Math.Max(1, (int)available.X); var height = Math.Max(1, (int)available.Y);
         Ensure(ref _target, ref _targetId, width, height);
 
-        var spacing = scene.Select(s => s.Model.Rest.Values.Select(p => p.X).DefaultIfEmpty(0)).Select(xs => xs.Max() - xs.Min()).DefaultIfEmpty(0).Max() + 1.1f;
+        var spacing = scene.Select(s => DrawingPoints(s.Model).Select(p => p.X)).Select(xs => xs.Max() - xs.Min()).DefaultIfEmpty(0).Max() + 1.1f;
         var views = scene.Select((s, i) => new SubjectView(s, new(i * spacing, 0, 0))).ToArray();
-        var ppu = MathF.Min(height / _span, width / (_span * 1.3f + (views.Length - 1) * spacing)) * Zoom;
+        var ppu = MathF.Min(height / _span, width / (_widthSpan + (views.Length - 1) * spacing)) * Zoom;
         var followX = Follow && views.Length > 0 ? views[0].Subject.Pose.Locomotion.X : 0;
-        var centerX = followX + (views.Length - 1) * spacing / 2;
+        var centerX = _centerX + followX + (views.Length - 1) * spacing / 2;
         var anchor = new Vector2(width / 2f - centerX * ppu, height / 2f + _centerY * ppu) + Pan;
 
         while (_drawings.Count < views.Length) _drawings.Add(new());

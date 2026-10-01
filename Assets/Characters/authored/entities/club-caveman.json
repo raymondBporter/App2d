@@ -1,0 +1,86 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "club-caveman",
+  "name": "Club caveman",
+  "model": "club-caveman-build",
+  "motionSet": "standard",
+  "roles": {
+    "walk": "person-run",
+    "hit": "person-hit",
+    "death": "person-death"
+  },
+  "controller": {
+    "walkSpeed": 2.5,
+    "range": 1.15,
+    "cooldown": 0.35,
+    "respectTerrain": true,
+    "verticalRange": 0.75
+  },
+  "health": 9,
+  "mass": 1,
+  "movement": {
+    "width": 0.353,
+    "height": 2.01
+  },
+  "hurt": {
+    "layout": "standard",
+    "regions": {}
+  },
+  "equipment": [
+    {
+      "prop": "wooden-club",
+      "socket": "sword-hand"
+    },
+    {
+      "prop": "club-caveman-hide-wrap",
+      "socket": "body-art"
+    },
+    {
+      "prop": "club-caveman-hair",
+      "socket": "head-art"
+    },
+    {
+      "prop": "club-caveman-beard",
+      "socket": "head-art"
+    }
+  ],
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "club-caveman-slam",
+      "hits": [
+        {
+          "id": "club-head",
+          "start": {
+            "marker": "strike"
+          },
+          "finish": {
+            "marker": "recover"
+          },
+          "prop": "wooden-club",
+          "width": 0.7,
+          "height": 0.65,
+          "damage": 3,
+          "sound": "heavy"
+        }
+      ],
+      "events": [
+        {
+          "id": "club-lift",
+          "at": {
+            "marker": "windup"
+          },
+          "sound": "club-windup"
+        },
+        {
+          "id": "heavy",
+          "at": {
+            "marker": "strike"
+          },
+          "sound": "heavy"
+        }
+      ]
+    }
+  ]
+}

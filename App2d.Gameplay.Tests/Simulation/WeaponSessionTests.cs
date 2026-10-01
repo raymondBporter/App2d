@@ -28,7 +28,7 @@ public sealed class WeaponSessionTests
         Assert.True(shot.Players[0].Person.Action.IsActive);
         for (var i = 0; i < 12; i++) game.Step();
         var snapshot = game.Session.CaptureSnapshot();
-        Assert.Equal(EquipmentKind2D.Gun, snapshot.Players[0].Equipment);
+        Assert.Equal(EquipmentKind2D.Sword, snapshot.Players[0].Equipment);
         Assert.False(snapshot.Players[0].Person.Action.IsActive);
         Assert.InRange(snapshot.Players[0].Person.Action.ElapsedSeconds, 0.099f, 0.101f);
         var checkpoint = game.Session.CaptureCheckpoint();
@@ -40,7 +40,7 @@ public sealed class WeaponSessionTests
         Assert.Empty(replayed.Events.OfType<AttackStarted2D>());
     }
 
-    private static PersonCommand2D Hold => new() { PrimaryHeld = true };
+    private static PersonCommand2D Hold => new() { CastHeld = true };
 
     [Fact]
     public void RealWeaponsRunWithoutPresentationAndOldFramesSurviveProjectileReuse()
@@ -120,9 +120,9 @@ public sealed class WeaponSessionTests
             Registry.Register(Player);
             var combat = new CombatSystem2D(Physics.CollisionSystem, Registry);
             var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), Player.Body, Metrics.GunMuzzleOffset,
-                Physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat);
+                Physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat,
+                health: Player.Health, spells: new() { ShotChargeSeconds = .6f, ShotRecoverySeconds = .06f });
             Player.AttachActions(arsenal);
-            arsenal.SelectNext();
             Session = new SideScrollerSession2D(Physics, Player, arsenal, new EmptyWorld(),
                 new RespawnState2D(Vector2.Zero, Player.Health.Maximum), combat);
         }

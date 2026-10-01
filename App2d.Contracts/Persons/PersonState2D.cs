@@ -26,6 +26,7 @@ public readonly record struct PersonState2D(
     bool IsChargingPrimary)
 {
     public PersonActionState2D Action { get; init; }
+    public SpellState2D Spells { get; init; }
     /// <summary>The velocity of the ground under the person, in pixels per second: a moving platform's, else zero.</summary>
     public Vector2 GroundVelocity { get; init; }
     public bool IsAlive => HitPoints > 0;

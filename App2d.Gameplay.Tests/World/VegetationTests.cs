@@ -85,18 +85,16 @@ public sealed class VegetationTests
     }
 
     [Theory]
-    [InlineData(EquipmentKind2D.Sword, true)]
-    [InlineData(EquipmentKind2D.Gun, false)]
-    [InlineData(EquipmentKind2D.Unarmed, false)]
-    public void OnlyTheActiveSwordDamageWindowCutsGrass(EquipmentKind2D equipment, bool shouldCut)
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    public void OnlyTheActiveSwordDamageWindowCutsGrass(bool cast, bool shouldCut)
     {
         using var game = Create();
-        while (game.Arsenal.Equipment != equipment) game.Arsenal.SelectNext();
         for (var i = 0; i < 80; i++) Step(default);
         Assert.Empty(game.Session.CaptureWorld().CutGrass);
-        Step(new() { PrimaryHeld = true });
+        Step(new() { PrimaryHeld = !cast, CastHeld = cast });
         Assert.Empty(game.Session.CaptureWorld().CutGrass); // Windup, not damage.
-        for (var i = 0; i < 50; i++) Step(new() { PrimaryHeld = true });
+        for (var i = 0; i < 50; i++) Step(new() { PrimaryHeld = !cast, CastHeld = cast });
         Assert.Equal(shouldCut, game.Session.CaptureWorld().CutGrass.Count > 0);
         if (shouldCut)
         {

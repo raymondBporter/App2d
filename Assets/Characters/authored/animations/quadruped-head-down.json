@@ -1,0 +1,60 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "quadruped-head-down",
+  "name": "Quadruped \u00B7 head-down",
+  "model": "quadruped",
+  "structureRevision": 1,
+  "duration": 0.55,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "head",
+      "keys": [
+        {},
+        {
+          "time": 0.275,
+          "angle": -0.4
+        },
+        {
+          "time": 0.55,
+          "angle": -0.95
+        }
+      ]
+    },
+    {
+      "target": "head",
+      "keys": [
+        {},
+        {
+          "time": 0.55,
+          "y": -0.18
+        }
+      ]
+    }
+  ],
+  "contacts": [
+    {
+      "chain": "far-hind",
+      "finish": 0.55
+    },
+    {
+      "chain": "far-front",
+      "finish": 0.55
+    },
+    {
+      "chain": "near-hind",
+      "finish": 0.55
+    },
+    {
+      "chain": "near-front",
+      "finish": 0.55
+    }
+  ],
+  "markers": [],
+  "faces": []
+}

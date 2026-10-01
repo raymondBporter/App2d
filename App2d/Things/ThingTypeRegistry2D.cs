@@ -35,6 +35,18 @@ internal static class ThingTypeRegistry2D
     public static ThingTypeDescriptor2D BoilerBrute { get; } =
         new("boiler-brute", "Maul", WorldThingKind2D.BoilerBrute, new XnaColor(240, 160, 100));
 
+    public static ThingTypeDescriptor2D ClubCaveman { get; } =
+        new("club-caveman", "Club caveman", WorldThingKind2D.ClubCaveman, new XnaColor(215, 163, 72));
+
+    public static ThingTypeDescriptor2D RockThrower { get; } =
+        new("rock-thrower", "Rock thrower", WorldThingKind2D.RockThrower, new XnaColor(83, 142, 137));
+
+    public static ThingTypeDescriptor2D BabyTriceratops { get; } =
+        new("baby-triceratops", "Baby triceratops", WorldThingKind2D.BabyTriceratops, new XnaColor(121, 189, 176));
+
+    public static ThingTypeDescriptor2D ShieldDefender { get; } =
+        new("shield-defender", "Shell-shield defender", WorldThingKind2D.ShieldDefender, new XnaColor(145, 162, 118));
+
     public static ThingTypeDescriptor2D Rival { get; } =
         new("rival", "Cinder", WorldThingKind2D.Rival, new XnaColor(240, 210, 110));
 
@@ -56,6 +68,10 @@ internal static class ThingTypeRegistry2D
             Goal,
             Shieldback,
             BoilerBrute,
+            ClubCaveman,
+            RockThrower,
+            BabyTriceratops,
+            ShieldDefender,
             Rival,
             GreenDinosaur,
             TumbleProp

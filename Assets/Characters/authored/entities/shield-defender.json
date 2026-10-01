@@ -1,0 +1,92 @@
+{
+  "format": "app2d-entity",
+  "version": 1,
+  "id": "shield-defender",
+  "name": "Shell-shield defender",
+  "model": "shield-defender-build",
+  "motionSet": "standard",
+  "roles": {
+    "walk": "shield-defender-walk",
+    "hit": "person-hit",
+    "death": "person-death",
+    "idle": "shield-defender-idle"
+  },
+  "controller": {
+    "walkSpeed": 0.8,
+    "range": 1.1,
+    "cooldown": 0.5,
+    "respectTerrain": true,
+    "verticalRange": 0.75
+  },
+  "health": 8,
+  "mass": 1.5,
+  "movement": {
+    "width": 0.353,
+    "height": 2.01
+  },
+  "hurt": {
+    "layout": "standard",
+    "regions": {}
+  },
+  "equipment": [
+    {
+      "prop": "scavenged-shell",
+      "socket": "left-grip"
+    },
+    {
+      "prop": "shield-defender-hide-wrap",
+      "socket": "body-art"
+    },
+    {
+      "prop": "shield-defender-hair",
+      "socket": "head-art"
+    },
+    {
+      "prop": "shield-defender-beard",
+      "socket": "head-art"
+    }
+  ],
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "shield-defender-bash",
+      "hits": [
+        {
+          "id": "shell-bash",
+          "prop": "scavenged-shell",
+          "width": 0.9,
+          "height": 1.4,
+          "damage": 2,
+          "sound": "hit",
+          "start": {
+            "marker": "strike"
+          },
+          "finish": {
+            "marker": "recover"
+          }
+        }
+      ],
+      "events": [
+        {
+          "id": "guard-open",
+          "at": {
+            "marker": "pullback"
+          },
+          "sound": "shield-pullback"
+        },
+        {
+          "id": "bash",
+          "at": {
+            "marker": "strike"
+          },
+          "sound": "shield-bash"
+        }
+      ]
+    }
+  ],
+  "guard": {
+    "prop": "scavenged-shell",
+    "width": 0.9,
+    "height": 1.4
+  }
+}

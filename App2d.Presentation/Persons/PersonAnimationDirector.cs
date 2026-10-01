@@ -9,6 +9,8 @@ namespace App2d.Presentation.Persons;
 /// <summary>The authored Person and the player move set, resolved once. Missing clips or props are an error naming them.</summary>
 public sealed class PersonMoves
 {
+    public const string GunCharge = "player-gun-charge";
+    public const string HealGather = "player-heal-gather";
     public const string Idle = "player-idle";
     public const string Walk = "person-walk";
     public const string Run = "person-run";
@@ -53,7 +55,9 @@ public sealed class PersonMoves
         DownAttack,
         GunAim,
         GunShot,
-        GunWallShot
+        GunWallShot,
+        GunCharge,
+        HealGather
     ];
 
     private PersonMoves(ResolvedModel model, ResolvedEntity hero, Dictionary<string, MotionClip> clips, Dictionary<string, PropAsset> props)
@@ -228,8 +232,25 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
         }
         else if (s.Action.IsActive && s.Action.Kind == PlayerAttackKind2D.Shot)
         {
+            gear = PersonGear.Gun;
+            _sheathePending = false;
             frame = s.IsWallGripping ? Play(PersonMoves.GunWallShot, Scaled(PersonMoves.GunWallShot))
                         : Locomotion(gear) with { Overlay = new(moves[PersonMoves.GunShot], Scaled(PersonMoves.GunShot), PersonLoadout.UpperBody) };
+        }
+        else if (s.Spells.IsHealing)
+        {
+            _sheathePending = false;
+            frame = Play(PersonMoves.HealGather, s.Spells.HealProgress * moves[PersonMoves.HealGather].Duration) with { Gear = PersonGear.Sword };
+        }
+        else if (s.IsChargingPrimary)
+        {
+            _sheathePending = false;
+            var progress = s.Spells.Enabled ? s.Spells.ChargeProgress : .5f;
+            // Wall casting keeps the gripping arm planted; the standing overlay uses both arms.
+            frame = s.IsWallGripping
+                ? Play(PersonMoves.GunWallShot, 0) with { Gear = PersonGear.Gun }
+                : Locomotion(PersonGear.Gun) with
+                { Overlay = new(moves[PersonMoves.GunCharge], progress * moves[PersonMoves.GunCharge].Duration, PersonLoadout.UpperBody) };
         }
         else if (s.Action.IsActive && s.Action.Kind == PlayerAttackKind2D.Downward) { _sheathePending = false; frame = Play(PersonMoves.DownAttack, Scaled(PersonMoves.DownAttack)); }
         else if (melee)

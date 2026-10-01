@@ -1,4 +1,6 @@
+using App2d.Core.Meshes;
 using App2d.Core.Characters;
+using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
 using App2d.Rendering;
 using System.Numerics;
@@ -59,8 +61,10 @@ public sealed class PuppetDrawing
                 var ends = PartGeometry.Contour(part, world); Mesh.Line(ends[0], ends[1], part.Width, ink); continue;
             }
             var contour = PartGeometry.Contour(part, world);
-            Mesh.Polygon(contour, ColorExtensions.FromHexRgb(part.Fill), null, 0);
             var frame = PartGeometry.FrameOf(part, world);
+            if (part.Kind == "polygon")
+                Mesh.Add(TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => new Vector2(p.X * part.Width, p.Y * part.Height)), 1e-8), frame.At, ColorExtensions.FromHexRgb(part.Fill));
+            else Mesh.Polygon(contour, ColorExtensions.FromHexRgb(part.Fill), null, 0);
             PartPainting.Add(Mesh, part, frame, contour);
             var outline = part.OutlineWidth ?? lineWidth;
             if (outline > 0) Mesh.Polygon(contour, null, ink, outline);

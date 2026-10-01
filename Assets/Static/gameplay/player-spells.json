@@ -1,0 +1,11 @@
+{
+  "maximumEnergy": 90,
+  "startingEnergy": 90,
+  "energyPerSecond": 10,
+  "shotCost": 30,
+  "healCost": 30,
+  "shotChargeSeconds": 0.25,
+  "shotRecoverySeconds": 0.2,
+  "healSeconds": 1.0,
+  "healFraction": 0.2
+}

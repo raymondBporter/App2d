@@ -107,14 +107,14 @@ internal static class AuthoredRenderingSmoke2D
     {
         var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
-        var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute" };
-        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })
+        var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute", "club-caveman", "rock-thrower", "baby-triceratops", "shield-defender" };
+        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("charge-rush", "attack", 1.25f), ("charge-brake", "attack", 2.05f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })
         {
             foreach (var facing in new[] { 1, -1 })
             {
                 var states = ids.Select((id, i) =>
                 {
-                    var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-230 + i * 125), 0);
+                    var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-380 + i * 95), 0);
                     // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
                     if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }
                     else if (action is not null && animator.TryStart(action))
@@ -130,14 +130,18 @@ internal static class AuthoredRenderingSmoke2D
                     {
                         TypeId = id,
                         AuthoredEntity = entity,
-                        AuthoredPose = animator.Pose
+                        AuthoredPose = animator.Pose,
+                        ActionId = animator.Action ?? animator.Role,
+                        ActionSeconds = (float)(animator.Action is null ? animator.RoleTime : animator.ActionTime),
+                        Bolts = id == "rock-thrower" && phase == "recovery" ?
+                            [new(GameWorldUnits2D.AuthoredToWorld(feet) + new Vector2(facing * 50, 80), new(facing * 160, 80), new(14.4f), 3) { Gravity = 600 }] : []
                     };
                 }).ToImmutableArray();
                 view.ApplyState(states, [], 70);
                 device.SetRenderTarget(target); renderer.BeginFrame(1400, 500, default); renderer.Clear(new Color(145, 176, 190));
                 renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(1200, 2)), new SolidColorShader(Color.DarkSlateGray)));
                 renderer.Draw(scene);
-                renderer.DrawScreenLabel("AUTHORED: SPEAR GUARD / STALKER PEST / PLAYER / CINDER GUNNER / MAUL BRUTE", new(24, 24));
+                renderer.DrawScreenLabel("AUTHORED ENEMIES / EQUIPMENT, CHARGE AND PROJECTILE POSES", new(24, 24));
                 renderer.EndFrame();
                 device.SetRenderTarget(null);
                 using var stream = File.Create(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
