@@ -91,4 +91,3 @@ public sealed class QuadrupedTests
         finally { Directory.Delete(root, true); }
     }
 }
-
