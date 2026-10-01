@@ -1,0 +1,9 @@
+# Noodle bone editor to authored character model
+
+The authored `CharacterModel` is the runtime rig. The older `PuppetDefinition` already converts to it through `PuppetImport`. The Noodle bone editor now exports its current hierarchy through `RigAuthoredBridge2D`: run `App2d.Noodle --bones`, edit the rig, then press **Ctrl+S** to save a model JSON file. The exported file can be loaded by the authored model pipeline.
+
+Each Noodle bone becomes an animatable origin control plus a tip control. Each shape becomes a drawing part with two helper controls for its center and local up direction. Those controls preserve arbitrary bone attachment points and shape angles. Noodle pixels become authored units at 100 pixels per unit. `rotate` tracks on bone origin controls carry descendants and attached shapes with them; the deterministic `App2d.Noodle --check` command compares both paths before and after parent and child rotations.
+
+This is a one-way rest-pose export. Noodle has no clip authoring or JSON document format yet. The bridge does not create IK chains, path constraints, or per-bone physics. Those need explicit constraint definitions and solver ordering in the authored evaluator. A collision-only Noodle shape is exported as a hidden drawing part; it does not automatically become a gameplay collider. Color alpha is not represented by `PuppetPart` and is omitted. The helper controls also make the JSON larger than a native bone-and-attachment schema would.
+
+The next useful schema change is a bone-local attachment frame on authored parts and sockets, so exported shapes can refer directly to one bone instead of carrying center/up helper controls. A general constraint stack can then operate on the evaluated pose after FK and before drawing, with IK, path following, and physics implemented as separate constraints over the same controls.

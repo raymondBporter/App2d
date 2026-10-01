@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Noodle.Rigging;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
@@ -83,7 +84,7 @@ internal sealed class BoneEditorHost : IDisposable
             _renderer.DrawScreenRoundedRectangle(new(18f, 18f, 575f, 101f), 12f,
                 new XnaColor(9, 14, 24, 225));
             _renderer.DrawScreenText("APP2D ENTITY EDITOR  /  BONES", new Vector2(36f, 51f), XnaColor.White);
-            _renderer.DrawScreenText("Build hierarchy -> add shape -> attach to bone -> edit properties",
+            _renderer.DrawScreenText("Build hierarchy -> attach shapes -> edit properties -> Ctrl+S exports a model",
                 new Vector2(36f, 83f), new XnaColor(170, 185, 207));
         }
         finally
@@ -128,11 +129,43 @@ internal sealed class BoneEditorHost : IDisposable
 
     private void OnKeyDown(object? sender, KeyEventArgs e)
     {
+        if (e.Control && e.KeyCode == Keys.S)
+        {
+            ExportModel();
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            return;
+        }
         if (e.KeyCode != Keys.Escape)
             return;
         _window.Close();
         e.Handled = true;
         e.SuppressKeyPress = true;
+    }
+
+    private void ExportModel()
+    {
+        using var dialog = new SaveFileDialog
+        {
+            Filter = "App2d model (*.model.json)|*.model.json|JSON (*.json)|*.json",
+            FileName = "noodle-rig.model.json"
+        };
+        if (dialog.ShowDialog(_window) != DialogResult.OK) return;
+        try
+        {
+            var fileName = Path.GetFileName(dialog.FileName);
+            var name = fileName.EndsWith(".model.json", StringComparison.OrdinalIgnoreCase)
+                ? fileName[..^".model.json".Length]
+                : Path.GetFileNameWithoutExtension(fileName);
+            if (string.IsNullOrWhiteSpace(name)) name = "Noodle rig";
+            CharacterModel model = RigAuthoredBridge2D.Export(_document, PuppetImport.Slug(name, "noodle-rig"), name);
+            model.Save(dialog.FileName);
+            MessageBox.Show(_window, $"Saved authored model to {dialog.FileName}", "Model exported");
+        }
+        catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            MessageBox.Show(_window, ex.Message, "Model export failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void OnResize(object? sender, EventArgs e) =>

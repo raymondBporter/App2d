@@ -8,7 +8,8 @@ internal static class Program
         if (args.SequenceEqual(["--check"]))
         {
             RigidPrototypeChecks2D.Run();
-            Console.WriteLine("SplineBRO deterministic checks passed.");
+            Rigging.RigAuthoredBridgeChecks2D.Run();
+            Console.WriteLine("SplineBRO and authored rig bridge checks passed.");
             return;
         }
 
