@@ -1,4 +1,5 @@
 using App2d.Core.Mathematics;
+using App2d.Core.Characters;
 using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -51,13 +52,11 @@ internal static class RigDocumentRenderer2D
         RigBone2D bone,
         bool isSelected)
     {
-        var transform = RigDocument2D.GetWorldTransform(bone);
-        var start = Vector2.Transform(Vector2.Zero, transform);
-        var end = Vector2.Transform(new Vector2(bone.Length, 0f), transform);
-        Span<Vector2> line = [start, end];
+        var frame = BoneFrame2D.FromTransform(RigDocument2D.GetWorldTransform(bone), bone.Length);
+        Span<Vector2> line = [frame.Origin, frame.Tip];
         var color = isSelected ? SelectedColor : BoneColor;
         renderer.DrawWorldPolyline(line, color, isSelected ? 7f : 4f);
-        renderer.DrawWorldCircle(start, isSelected ? 9f : 6f, color, isSelected ? 4f : 3f);
-        renderer.DrawWorldCircle(end, 4f, color, 2f);
+        renderer.DrawWorldCircle(frame.Origin, isSelected ? 9f : 6f, color, isSelected ? 4f : 3f);
+        renderer.DrawWorldCircle(frame.Tip, 4f, color, 2f);
     }
 }

@@ -128,6 +128,8 @@ facings, including game-size views. Clothing follows the rig rigidly; this first
 
 ## Workspaces
 
+In **Model → Edit rig**, **Add root bone** creates a bone with an origin, rest angle, and length; **Add child bone** starts at the selected bone's tip. Drag the origin to move it, drag the tip to change its rest angle and length, or edit those values in the inspector. Turn off **Edit rig** and use **Add shape to selected bone** to attach an ellipse, box, capsule, or polygon in that bone's local frame. The shape's offset and angle remain editable. **Save** writes these as controls and parts in the ordinary model JSON; **Animate** uses a `rotate` track on the bone control. Existing point-control models and their animations continue to use the same editor. The existing two-bone IK tool still applies to point controls; bone-frame IK is a separate constraint step.
+
 - **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
   model. On a variant: build values, part overrides with **Reset to base**, and looks. **Edit rig** shows control handles.
 - **Appearance**: reusable hair, beards and clothes, editable cutout silhouettes, colors, ink, depth and thickness,

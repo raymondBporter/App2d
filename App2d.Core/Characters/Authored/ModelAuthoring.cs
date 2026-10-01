@@ -1,4 +1,5 @@
 using System.Numerics;
+using App2d.Core.Mathematics;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -51,6 +52,18 @@ public static class ModelAuthoring
         model.Controls.Add(control); model.Validate(); return control;
     }
 
+    /// <summary>Adds a bone at a parent's tip. Its own local +X axis points toward its tip.</summary>
+    public static ModelControl AddBone(CharacterModel model, string? parent, string? id = null)
+    {
+        var basis = parent is null ? null : Control(model, parent);
+        var origin = basis is null ? Vector3.Zero : basis.Rest.XYZ + Rotation2D.ApplyXY(new(MathF.Max(basis.Length, .3f), 0, 0), basis.RestAngle);
+        var bone = AddControl(model, parent, origin, id ?? UniqueId("bone", Names(model)));
+        bone.RestAngle = basis?.RestAngle ?? 0;
+        bone.Length = .5f;
+        model.Validate();
+        return bone;
+    }
+
     /// <summary>
     /// Removes a control and the drawing parts attached to it, which are returned. Refused while other structure depends on it:
     /// children, chains, measures or chain frames must be changed first, so nothing is discarded silently.
@@ -61,7 +74,7 @@ public static class ModelAuthoring
         if (model.Controls.FirstOrDefault(c => c.Parent == id) is { } child) throw new InvalidOperationException($"{owner}: '{id}' still has child '{child.Id}'.");
         if (model.Chains.FirstOrDefault(c => c.Root == id || c.Joint == id || c.End == id || c.Frame == id) is { } chain) throw new InvalidOperationException($"{owner}: chain '{chain.Id}' uses '{id}'.");
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
-        var parts = model.Parts.Where(p => p.A == id || p.B == id).ToList();
+        var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);
         foreach (var group in model.Groups) group.Targets.Remove(id);
         model.Validate(); return parts;
@@ -113,6 +126,20 @@ public static class ModelAuthoring
         model.Parts.Add(part); model.Validate(); return part;
     }
 
+    /// <summary>Creates a drawing part centered on a bone and carried by its local XY frame.</summary>
+    public static PuppetPart AddPartToBone(CharacterModel model, string kind, string boneId)
+    {
+        if (PuppetPartKinds.IsStroke(kind)) throw new InvalidOperationException("Strokes connect two controls; choose their endpoints instead.");
+        var bone = Control(model, boneId);
+        if (bone.Length <= 0) throw new InvalidOperationException($"'{boneId}' has no bone length.");
+        var part = AddPart(model, kind, boneId);
+        part.Frame = boneId;
+        part.OffsetX = bone.Length / 2;
+        if (kind == PuppetPartKinds.Box) { part.Width = bone.Length; part.Height = .2f; }
+        model.Validate();
+        return part;
+    }
+
     /// <summary>Changes drawing geometry while keeping the part ID. Face tracks may need repair when a shape becomes a stroke.</summary>
     public static void SetPartKind(CharacterModel model, string id, string kind)
     {
@@ -122,6 +149,7 @@ public static class ModelAuthoring
             part.B = model.Controls.FirstOrDefault(control => control.Parent == part.A)?.Id
                 ?? model.Controls.FirstOrDefault(control => control.Id != part.A)?.Id
                 ?? throw new InvalidOperationException("A stroke needs a second control.");
+        if (PuppetPartKinds.IsStroke(kind)) part.Frame = null;
         part.Kind = kind;
         model.Validate();
     }
@@ -137,6 +165,21 @@ public static class ModelAuthoring
         var delta = position - Control(model, id).Rest.XYZ;
         var moved = children ? Subtree(model.Controls, id) : [Control(model, id)];
         foreach (var control in moved) control.Rest = PuppetPoint.From(control.Rest.XYZ + delta);
+    }
+
+    /// <summary>Turns a bone in the rest pose, carrying descendant origins and their rest directions.</summary>
+    public static void RotateRestBone(CharacterModel model, string id, float angle)
+    {
+        var bone = Control(model, id);
+        var delta = angle - bone.RestAngle;
+        var pivot = bone.Rest.XYZ.XY;
+        foreach (var control in Subtree(model.Controls, id))
+        {
+            if (control != bone)
+                control.Rest = PuppetPoint.From(Rotation2D.ApplyXYAround(control.Rest.XYZ, pivot, delta));
+            control.RestAngle += delta;
+        }
+        model.Validate();
     }
 
     /// <summary>

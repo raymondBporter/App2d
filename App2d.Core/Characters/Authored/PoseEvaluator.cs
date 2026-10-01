@@ -107,10 +107,11 @@ public static class PoseEvaluator
         {
             var parentPoint = control.Parent is null ? pose.Locomotion : pose.Points[control.Parent];
             var parentAngle = control.Parent is null ? 0 : angles[control.Parent];
+            var parentRestAngle = control.Parent is null ? 0 : model.Controls[control.Parent].RestAngle;
             var parentRest = control.Parent is null ? Vector3.Zero : model.Rest[control.Parent];
             var offset = model.Rest[control.Id] - parentRest + Delta(MotionClip.TranslateKind, control.Id, control.Scale);
-            pose.Points[control.Id] = parentPoint + RotateXY(offset, parentAngle);
-            angles[control.Id] = parentAngle + Angle(control.Id);
+            pose.Points[control.Id] = parentPoint + RotateXY(offset, parentAngle - parentRestAngle);
+            angles[control.Id] = parentAngle + control.RestAngle - parentRestAngle + Angle(control.Id);
         }
         foreach (var chain in model.Base.Chains)
         {

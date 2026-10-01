@@ -77,7 +77,8 @@ public static class EntityAuthoring
     /// <param name="offsetX">How far the box centre sits ahead of the feet; kept from the previous shape when refitting.</param>
     public static MovementDef FitMovement(ResolvedModel model, float offsetX = 0)
     {
-        var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, id => model.Rest[id]))
+        var pose = PoseEvaluator.Rest(model);
+        var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, pose.World, id => pose.Angles[id]))
             .Concat(model.Rest.Values).DefaultIfEmpty(Vector3.Zero).ToList();
         var height = MathF.Max(.2f, points.Max(p => p.Y));
         var width = Math.Clamp((points.Max(p => p.X) - points.Min(p => p.X)) * .6f, .2f, height);

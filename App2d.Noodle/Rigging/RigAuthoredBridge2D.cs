@@ -6,43 +6,30 @@ using System.Numerics;
 namespace App2d.Noodle.Rigging;
 
 /// <summary>
-/// Exports the bone editor's current rest pose to the authored runtime model. Bone origins remain
-/// animatable controls; helper controls carry each bone's tip and each shape's local attachment frame.
+/// Exports the bone editor's current rest pose to the authored runtime model.
+/// Each Noodle bone becomes one authored bone control; parts use that bone's local frame.
 /// </summary>
 internal static class RigAuthoredBridge2D
 {
     public const float UnitsPerPixel = .01f;
 
     public static string BoneControl(RigBone2D bone) => $"bone-{bone.Id}";
-    public static string ShapeControl(RigShape2D shape) => $"shape-{shape.Id}";
 
     public static CharacterModel Export(RigDocument2D document, string id, string name)
     {
         var model = new CharacterModel { Id = id, Name = name };
         foreach (var bone in document.Bones)
         {
-            var frame = RigDocument2D.GetWorldTransform(bone);
+            var frame = BoneFrame2D.FromTransform(RigDocument2D.GetWorldTransform(bone), bone.Length);
             var control = BoneControl(bone);
             var parent = bone.Parent is null ? null : BoneControl(bone.Parent);
-            model.Controls.Add(new ModelControl { Id = control, Parent = parent, Rest = Point(Vector2.Transform(Vector2.Zero, frame)) });
-            model.Controls.Add(new ModelControl
-            {
-                Id = $"{control}-tip", Parent = control,
-                Rest = Point(Vector2.Transform(new Vector2(bone.Length, 0), frame))
-            });
+            model.Controls.Add(new ModelControl { Id = control, Parent = parent, Rest = Point(frame.Origin),
+                RestAngle = frame.Angle, Length = frame.Length * UnitsPerPixel });
         }
 
         foreach (var shape in document.Shapes)
         {
-            var frame = RigDocument2D.GetWorldTransform(shape.AttachedBone);
-            var origin = Vector2.Transform(new Vector2(shape.LocalX, shape.LocalY), frame);
-            var direction = Vector2.TransformNormal(Vector2.UnitY,
-                Matrix3x2.CreateRotation(MathF.PI / 180f * shape.AngleDegrees) * frame);
-            var control = ShapeControl(shape);
-            var parent = BoneControl(shape.AttachedBone);
-            model.Controls.Add(new ModelControl { Id = control, Parent = parent, Rest = Point(origin) });
-            model.Controls.Add(new ModelControl { Id = $"{control}-up", Parent = control, Rest = Point(origin + direction) });
-            model.Parts.Add(Part(shape, control));
+            model.Parts.Add(Part(shape, BoneControl(shape.AttachedBone)));
         }
 
         model.Validate();
@@ -52,11 +39,13 @@ internal static class RigAuthoredBridge2D
     private static PuppetPoint Point(Vector2 pixels) =>
         new(pixels.X * UnitsPerPixel, pixels.Y * UnitsPerPixel);
 
-    private static PuppetPart Part(RigShape2D shape, string control)
+    private static PuppetPart Part(RigShape2D shape, string bone)
     {
         var part = new PuppetPart
         {
-            Id = $"part-{shape.Id}", A = control, B = $"{control}-up",
+            Id = $"part-{shape.Id}", A = bone, Frame = bone,
+            OffsetX = shape.LocalX * UnitsPerPixel, OffsetY = shape.LocalY * UnitsPerPixel,
+            Angle = MathF.PI / 180f * shape.AngleDegrees,
             Fill = $"#{shape.Color.R:x2}{shape.Color.G:x2}{shape.Color.B:x2}",
             OutlineWidth = 0,
             Hidden = shape.Purpose == RigShapePurpose.Collision

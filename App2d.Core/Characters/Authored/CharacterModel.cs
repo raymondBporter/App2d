@@ -10,6 +10,10 @@ public sealed record ModelControl
     public string Id { get; set; } = "";
     public string? Parent { get; set; }
     public PuppetPoint Rest { get; set; }
+    /// <summary>World XY direction of this bone in rest, in radians. Zero preserves legacy point controls.</summary>
+    public float RestAngle { get; set; }
+    /// <summary>Bone length along local +X. Zero is an ordinary point control.</summary>
+    public float Length { get; set; }
     public string Scale { get; set; } = CharacterModel.Unit;
 }
 
@@ -144,6 +148,8 @@ public sealed class CharacterModel
             AuthoredAsset.RequireId(control.Id, $"{owner} control id");
             Require(controls.TryAdd(control.Id, control), $"{owner}: duplicate control '{control.Id}'.");
             control.Rest.Check($"{owner} control '{control.Id}' rest");
+            new Limit(-1000, 1000).Check(control.RestAngle, $"{owner} control '{control.Id}' restAngle");
+            new Limit(0, 100).Check(control.Length, $"{owner} control '{control.Id}' length");
         }
         foreach (var control in Controls)
             Require(control.Parent is null || control.Parent != control.Id && controls.ContainsKey(control.Parent), $"{owner}: control '{control.Id}' has unknown parent '{control.Parent}'.");
@@ -175,6 +181,8 @@ public sealed class CharacterModel
             Require(chain.Bend is -1 or 1, $"{owner}: chain '{chain.Id}' bend must be -1 or 1.");
             Require(Known(chain.Root) && Known(chain.Joint) && Known(chain.End), $"{owner}: chain '{chain.Id}' references an unknown control.");
             Require(controls[chain.Joint].Parent == chain.Root && controls[chain.End].Parent == chain.Joint, $"{owner}: chain '{chain.Id}' needs two connected bones (root → joint → end).");
+            Require(controls[chain.Root].Length == 0 && controls[chain.Joint].Length == 0 && controls[chain.End].Length == 0,
+                $"{owner}: chain '{chain.Id}' uses explicit bone frames; this IK solver supports point controls only.");
             Require(solved.Add(chain.Joint) && solved.Add(chain.End), $"{owner}: chains cannot share solved controls ('{chain.Id}').");
             Require(scales.Contains(chain.Scale), $"{owner}: chain '{chain.Id}' uses unknown scale '{chain.Scale}'.");
             Require(chain.Frame == Locomotion || Known(chain.Frame), $"{owner}: chain '{chain.Id}' frame '{chain.Frame}' is not a control or '{Locomotion}'.");

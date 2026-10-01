@@ -68,13 +68,17 @@ public sealed record PartPaint
     }
 }
 
-/// <summary>Stroke endpoints follow controls. Other shapes attach to A; B optionally points their local +Y axis.</summary>
+/// <summary>Stroke endpoints follow controls. Other shapes attach to A; B points local +Y or Frame supplies a bone-local orientation.</summary>
 public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
     public string Kind { get; set; } = PuppetPartKinds.Ellipse;
     public string A { get; set; } = "";
     public string? B { get; set; }
+    /// <summary>Optional bone whose XY rotation carries this shape's local offset and direction.</summary>
+    public string? Frame { get; set; }
+    /// <summary>Additional shape rotation in its bone frame, in radians.</summary>
+    public float Angle { get; set; }
     public float Width { get; set; } = .4f;
     public float Height { get; set; } = .4f;
     public float OffsetX { get; set; }
@@ -99,8 +103,12 @@ public sealed record PuppetPart
     {
         if (A is null || !isControl(A)) throw new InvalidDataException("Unknown control: " + A);
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
+        if (Frame is not null && !isControl(Frame)) throw new InvalidDataException("Unknown part frame: " + Frame);
+        if (Frame is not null && B is not null) throw new InvalidDataException("A part uses either a bone frame or a toward control.");
         EntityVocabulary.Require(Kind, PuppetPartKinds.All, "part.kind");
         if (PuppetPartKinds.IsStroke(Kind) && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");
+        if (PuppetPartKinds.IsStroke(Kind) && Frame is not null) throw new InvalidDataException("A stroke cannot use a bone frame.");
+        new Limit(-1000, 1000).Check(Angle, "part.angle");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
         new Limit(-16, 16).Check(Depth, "part.depth"); new Limit(0, 1).Check(Roundness, "part.roundness"); Limit.Color(Fill, "part.fill");
@@ -218,6 +226,7 @@ public sealed class PuppetDefinition
         {
             Require(part is not null && !string.IsNullOrWhiteSpace(part.Id) && partIds.Add(part.Id), "Part IDs must be nonempty and unique.");
             part!.Validate(controls.ContainsKey);
+            Require(part.Frame is null, "Prototype puppet parts cannot use authored bone frames.");
         }
         foreach (var motion in Motions)
         {

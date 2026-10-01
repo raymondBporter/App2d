@@ -18,7 +18,7 @@ public sealed class PuppetDrawing
     /// face ("none", for a back view) still hides it.
     /// </summary>
     public void Build(ResolvedModel model, EvaluatedPose pose, FacePose? face = null) =>
-        Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World, part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face);
+        Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World, part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, id => pose.Angles[id]);
 
     /// <summary>
     /// An entity's final pose in actor-local units, with its equipped props placed by the same socket transform that hit
@@ -49,7 +49,7 @@ public sealed class PuppetDrawing
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
-    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null)
+    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, float>? angle = null)
     {
         Mesh.Clear(); var ink = ColorExtensions.FromHexRgb(inkColor);
         foreach (var part in parts)
@@ -60,8 +60,8 @@ public sealed class PuppetDrawing
             {
                 var ends = PartGeometry.Contour(part, world); Mesh.Line(ends[0], ends[1], part.Width, ink); continue;
             }
-            var contour = PartGeometry.Contour(part, world);
-            var frame = PartGeometry.FrameOf(part, world);
+            var contour = PartGeometry.Contour(part, world, angle);
+            var frame = PartGeometry.FrameOf(part, world, angle);
             if (part.Kind == "polygon")
                 Mesh.Add(TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => new Vector2(p.X * part.Width, p.Y * part.Height)), 1e-8), frame.At, ColorExtensions.FromHexRgb(part.Fill));
             else Mesh.Polygon(contour, ColorExtensions.FromHexRgb(part.Fill), null, 0);

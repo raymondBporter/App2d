@@ -1,13 +1,14 @@
 using App2d.Core.Meshes;
 using App2d.Core.Geometry;
 using App2d.Core.Shapes;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Characters;
 
 /// <summary>
 /// Where a drawing part lies, from a world-position lookup. Drawing, picking and outlines share this one layout, so what the
-/// author clicks is exactly what is drawn. Shapes attach to A; B, when set, points their local +Y axis.
+/// author clicks is exactly what is drawn. Shapes attach to A; B points their local +Y axis, or Frame uses a bone's angle.
 /// </summary>
 public static class PartGeometry
 {
@@ -28,8 +29,17 @@ public static class PartGeometry
         catch (ArgumentException ex) { throw new InvalidDataException("Cutout must be a simple polygon with area: " + ex.Message, ex); }
     }
 
-    public static Frame FrameOf(PuppetPart part, Func<string, Vector3> world)
+    public static Frame FrameOf(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null)
     {
+        if (part.Frame is { } bone)
+        {
+            var baseAngle = angle is null ? throw new InvalidOperationException("A bone-attached part needs bone angles.") : angle(bone);
+            var origin = world(part.A);
+            var position = Rotation2D.Apply(new(part.OffsetX, part.OffsetY), baseAngle);
+            var right = Rotation2D.Apply(Vector2.UnitX, baseAngle + part.Angle);
+            var boneUp = Rotation2D.Apply(Vector2.UnitY, baseAngle + part.Angle);
+            return new(origin + new Vector3(position, 0), right, boneUp, part.Depth);
+        }
         var a = world(part.A); var b = part.B is { } end ? world(end) : a + Vector3.UnitY;
         var direction = new Vector2(b.X - a.X, b.Y - a.Y);
         var up = direction.LengthSquared() > 1e-10f ? Vector2.Normalize(direction) : Vector2.UnitY;
@@ -37,14 +47,14 @@ public static class PartGeometry
     }
 
     /// <summary>The closed outline of an ellipse, rounded box, trapezoid or cutout, or a stroke's two endpoints.</summary>
-    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world)
+    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null)
     {
         if (PuppetPartKinds.IsStroke(part.Kind))
         {
             var depth = new Vector3(0, 0, part.Depth);
             return [world(part.A) + depth, world(part.B!) + depth];
         }
-        var frame = FrameOf(part, world);
+        var frame = FrameOf(part, world, angle);
         if (part.Kind == "polygon")
             return part.Points!.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
         var halfSize = new Vector2(part.Width / 2, part.Height / 2);
@@ -70,7 +80,7 @@ public static class PartGeometry
     /// Normalized XY picking score, not a distance in world units. Ellipses use radial distance;
     /// rounded boxes retain their bounding-box score with taper accounted for; strokes use width with a minimum picking tolerance.
     /// </summary>
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point)
+    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null)
     {
         var p = new Vector2(point.X, point.Y);
         if (PuppetPartKinds.IsStroke(part.Kind))
@@ -79,7 +89,7 @@ public static class PartGeometry
             return Distance2D.DistanceToSegment(p, new(a.X, a.Y), new(b.X, b.Y), 1e-10f)
                 / MathF.Max(part.Width, .06f);
         }
-        var frame = FrameOf(part, world);
+        var frame = FrameOf(part, world, angle);
         var local = p - new Vector2(frame.Origin.X, frame.Origin.Y);
         var coordinates = new Vector2(Vector2.Dot(local, frame.Right), Vector2.Dot(local, frame.Up));
         if (part.Kind == "polygon")

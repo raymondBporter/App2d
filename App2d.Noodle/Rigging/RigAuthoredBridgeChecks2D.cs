@@ -28,7 +28,9 @@ internal static class RigAuthoredBridgeChecks2D
 
         var model = RigAuthoredBridge2D.Export(rig, "check-rig", "Check rig");
         var resolved = ResolvedModel.From(CharacterModel.FromJson(model.ToJson()));
-        Compare(rig, PoseEvaluator.Rest(resolved));
+        if (resolved.Controls.Count != rig.Bones.Count)
+            throw new InvalidOperationException("The exported rig should need one control per bone.");
+        Compare(rig, resolved, PoseEvaluator.Rest(resolved));
         if (!resolved.Parts.Single(p => p.Id == $"part-{capsule.Id}").Hidden)
             throw new InvalidOperationException("Collision-only geometry should not be drawn.");
         if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Points?.Count != 5)
@@ -43,17 +45,18 @@ internal static class RigAuthoredBridgeChecks2D
         clip.Validate(resolved);
         root.AngleDegrees += .4f * 180 / MathF.PI;
         child.AngleDegrees -= .2f * 180 / MathF.PI;
-        Compare(rig, PoseEvaluator.Sample(resolved, clip, 1));
+        Compare(rig, resolved, PoseEvaluator.Sample(resolved, clip, 1));
     }
 
-    private static void Compare(RigDocument2D rig, EvaluatedPose pose)
+    private static void Compare(RigDocument2D rig, ResolvedModel model, EvaluatedPose pose)
     {
         foreach (var bone in rig.Bones)
         {
             var frame = RigDocument2D.GetWorldTransform(bone);
             var id = RigAuthoredBridge2D.BoneControl(bone);
             Near(Vector2.Transform(Vector2.Zero, frame), pose.World(id), id);
-            Near(Vector2.Transform(new Vector2(bone.Length, 0), frame), pose.World($"{id}-tip"), $"{id}-tip");
+            var authored = new BoneFrame2D(new(pose.World(id).X, pose.World(id).Y), pose.Angles[id], model.Controls[id].Length);
+            Near(Vector2.Transform(new Vector2(bone.Length, 0), frame), new Vector3(authored.Tip, 0), $"{id}-tip");
         }
         foreach (var shape in rig.Shapes)
         {
@@ -61,11 +64,10 @@ internal static class RigAuthoredBridgeChecks2D
             var center = Vector2.Transform(new Vector2(shape.LocalX, shape.LocalY), frame);
             var up = Vector2.TransformNormal(Vector2.UnitY,
                 Matrix3x2.CreateRotation(MathF.PI / 180f * shape.AngleDegrees) * frame);
-            var id = RigAuthoredBridge2D.ShapeControl(shape);
-            Near(center, pose.World(id), id);
-            Near(center + up, pose.World($"{id}-up"), $"{id}-up");
-            var part = new PuppetPart { A = id, B = $"{id}-up" };
-            var authored = PartGeometry.FrameOf(part, pose.World);
+            var id = $"part-{shape.Id}";
+            var part = model.Parts.Single(p => p.Id == id);
+            var authored = PartGeometry.FrameOf(part, pose.World, control => pose.Angles[control]);
+            Near(center, authored.Origin, id);
             if (Vector2.Distance(authored.Up, up) > 1e-4f)
                 throw new InvalidOperationException($"{id} orientation differs from the Noodle attachment.");
         }
