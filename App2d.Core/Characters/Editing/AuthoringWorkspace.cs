@@ -317,7 +317,7 @@ public sealed class AuthoringWorkspace
         var path = document.Path ?? DefaultPath(document);
         if (document.IsNew && File.Exists(path)) throw new InvalidDataException($"A file already exists at {path}; it did not load, so it is left alone. Choose another id, or repair or remove that file.");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        AuthoredAsset.Write(path, document.Serialize());
+        AuthoredAsset.Write(path, document is AssetDocument<PropAsset> propDocument ? propDocument.Asset.ToJson() : document.Serialize());
         document.MarkSaved(path);
         if (document is AssetDocument<CharacterModel> saved) _savedStructure[saved.Id] = ModelAuthoring.StructureSignature(saved.Asset);
         return new(path, updated, Problems(document));

@@ -5,11 +5,11 @@ public static class AppearanceAuthoring
 {
     public static readonly string[] Templates = ["hair", "beard", "skirt", "blank"];
 
-    public static PropAsset New(string id, string name, string template, string ink, float lineWidth)
+    public static PropAsset New(string id, string name, string template, string ink, float lineWidth, Func<string, PropAsset?>? findTemplate = null)
     {
         var source = template switch { "hair" => PersonWardrobe.ShortHair, "beard" => "brute-beard", "skirt" => "cinder-hide-wrap", "blank" => null, _ => throw new InvalidDataException("Unknown appearance template.") };
         var art = source is null ? new PropAsset { Usage = "clothing", Attachment = PersonWardrobe.BodySocket, Tip = default } :
-            PropAsset.FromJson(PersonWardrobe.Props().Single(p => p.Id == source).ToJson());
+            PropAsset.FromJson((findTemplate?.Invoke(source) ?? PersonWardrobe.Props().Single(p => p.Id == source)).ToJson());
         art.Id = id; art.Name = name; art.Ink = ink; art.LineWidth = lineWidth; art.BackView = null;
         if (source is null) art.Solids.Add(PropGeometry.Extrude([new(-.15f, 0), new(.15f, 0), new(.15f, .3f), new(-.15f, .3f)], .02f, "#b97549"));
         art.Validate(); return art;

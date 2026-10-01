@@ -113,14 +113,18 @@ public static class PersonWardrobe
         return art;
     }
 
-    /// <summary>Updates only wardrobe art, its sockets and these three entities. Animation and combat data remain authored.</summary>
-    public static void Write(string root)
+    /// <summary>Seeds missing wardrobe art and updates its bindings. Existing art belongs to the editor unless replacement is explicit.</summary>
+    public static void Write(string root, bool replaceExistingProps = false)
     {
         var modelPath = Path.Combine(root, "models", "person.json");
         var model = CharacterModel.Load(modelPath);
         foreach (var socket in Sockets()) { model.Sockets.RemoveAll(s => s.Id == socket.Id); model.Sockets.Add(socket); }
         model.Save(modelPath);
-        foreach (var prop in Props()) prop.Save(Path.Combine(root, "props", prop.Id + ".json"));
+        foreach (var prop in Props())
+        {
+            var path = Path.Combine(root, "props", prop.Id + ".json");
+            if (replaceExistingProps || !File.Exists(path)) prop.Save(path);
+        }
         foreach (var id in new[] { "hero", "maul-brute", "cinder-gunner" })
         {
             var path = Path.Combine(root, "entities", id + ".json");

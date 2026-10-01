@@ -112,13 +112,14 @@ from the Hero's equipment, including an optional back-view asset, independently 
 
 For a fitted tunic, select the torso in **Model**, set its fill, then use **Fabric paint > Edit fabric paint**
 to add colored patches and edit their normalized polygon points. Save a look on the base to reuse it
-on other variants. Cutout outlines are stored alongside the meshes, so they remain editable after reopening.
+on other variants. Cutout outlines are saved as editable source; their meshes are rebuilt when loaded.
 When launched from the repository, the editor saves into source `Assets/Characters/authored`, rather
 than the build output copy. Rebuild/restart the game to pick up saved asset changes.
 
-`--write-wardrobe <authored-dir>` regenerates only these wardrobe assets, sockets and equipment bindings,
-and the two enemies' torso paint and outline widths. It overwrites edits to that wardrobe art; `--write-player-moves`
-also runs this step. `--smoke-wardrobe <dir>` renders idle, run, attacks, and climbing/death samples in both
+`--write-wardrobe <authored-dir>` seeds missing wardrobe art and updates its sockets, equipment bindings,
+and the two enemies' torso paint and outline widths. Existing prop JSON remains editor-owned, including when
+`--write-player-moves` runs this step. `--replace-wardrobe-art <authored-dir>` explicitly regenerates that art.
+`--smoke-wardrobe <dir>` renders idle, run, attacks, and climbing/death samples in both
 facings, including game-size views. Clothing follows the rig rigidly; this first pass has no cloth simulation.
 
 ## Workspaces

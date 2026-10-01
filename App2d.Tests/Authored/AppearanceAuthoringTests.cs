@@ -32,6 +32,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
         s.Redo(); Assert.Contains(s.EntityDocument!.Asset.Equipment, e => e.Prop == doc.Id);
         s.Edit(s.EntityDocument, () => s.EntityDocument.Asset.Equipment.RemoveAll(e => e.Prop == PersonWardrobe.ShortHair));
         s.SaveAll(); Assert.False(s.MessageIsError, s.Message);
+        Assert.DoesNotContain("\"vertices\"", File.ReadAllText(Path.Combine(_root, "props", "custom-hair.json")));
         var catalog = AuthoredCatalog.Load(_root); Assert.Empty(catalog.Errors);
         var clip = catalog.Animations["player-idle"];
         var equipped = PersonLoadout.Dressed(clip, 0, PersonGear.None, catalog.Entities["hero"]).ToArray();
@@ -50,5 +51,50 @@ public sealed class AppearanceAuthoringTests : IDisposable
         var before = original.ToJson();
         Assert.Throws<InvalidDataException>(() => AppearanceAuthoring.Cutout(original, 0, [new(0, 0), new(1, 0), new(2, 0)], .02f));
         Assert.Equal(before, original.ToJson());
+    }
+
+    [Fact]
+    public void HairOutlineJsonRebuildsItsMeshAndKeepsMeshOnlyProps()
+    {
+        var hair = PersonWardrobe.Props().Single(p => p.Id == PersonWardrobe.ShortHair);
+        var json = hair.ToJson();
+        Assert.Contains("\"outline\"", json);
+        Assert.DoesNotContain("\"vertices\"", json);
+        Assert.DoesNotContain("\"triangles\"", json);
+
+        var loaded = PropAsset.FromJson(json);
+        Assert.Equal(json, loaded.ToJson());
+        for (var i = 0; i < hair.Solids.Count; i++)
+        {
+            Assert.Equal(hair.Solids[i].Vertices.ToArray(), loaded.Solids[i].Vertices.ToArray());
+            Assert.Equal(hair.Solids[i].Triangles.ToArray(), loaded.Solids[i].Triangles.ToArray());
+        }
+
+        var meshOnly = new PropAsset { Id = "mesh-only", Name = "Mesh only", Solids = [PropGeometry.Blade(0, .5f, 1, .1f, .02f, "#aaaaaa")] };
+        Assert.Contains("\"vertices\"", meshOnly.ToJson());
+        Assert.Contains("\"triangles\"", meshOnly.ToJson());
+        PropAsset.FromJson(meshOnly.ToJson());
+    }
+
+    [Fact]
+    public void EditedHairJsonSurvivesWardrobeSeedingAndSuppliesNewHairTemplate()
+    {
+        var path = Path.Combine(_root, "props", PersonWardrobe.ShortHair + ".json");
+        var original = File.ReadAllText(path);
+        Assert.DoesNotContain("\"vertices\"", original);
+        var edited = original.Replace("#654334", "#123456", StringComparison.Ordinal);
+        Assert.NotEqual(original, edited);
+        File.WriteAllText(path, edited);
+
+        PersonWardrobe.Write(_root);
+        Assert.Equal(edited, File.ReadAllText(path));
+
+        var session = new EditorSession(AuthoringWorkspace.Open(_root));
+        session.Open("hero");
+        Assert.True(session.NewAppearance("artist-hair", "Artist hair", "hair"), session.Message);
+        Assert.Equal("#123456", session.AppearanceDocument!.Asset.Solids[0].Fill);
+
+        PersonWardrobe.Write(_root, replaceExistingProps: true);
+        Assert.Equal("#654334", PropAsset.FromJson(File.ReadAllText(path)).Solids[0].Fill);
     }
 }

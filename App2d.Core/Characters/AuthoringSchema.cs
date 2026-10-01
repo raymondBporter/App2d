@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using App2d.Core.Characters.Authored;
 
 namespace App2d.Core.Characters;
 
@@ -35,15 +36,17 @@ public readonly record struct Limit(float Min, float Max, float SoftMin, float S
 /// <summary>Serializer settings for authored files: camelCase, tolerant of member case, strict about unknown members, and sparse. Values equal to the type's defaults are omitted so files stay small and diffs stay readable.</summary>
 public static class AuthoredJson
 {
-    public static JsonSerializerOptions Options { get; } = Create(strict: true);
+    public static JsonSerializerOptions Options { get; } = Create(strict: true, compactExtrusions: true);
+    // Undo snapshots keep derived meshes because draft restoration intentionally skips validation and rebuilding.
+    internal static JsonSerializerOptions SnapshotOptions { get; } = Create(strict: true, compactExtrusions: false);
     /// <summary>For files written by other tools, such as head workshop exports, where extra members are tolerated.</summary>
-    public static JsonSerializerOptions Tolerant { get; } = Create(strict: false);
+    public static JsonSerializerOptions Tolerant { get; } = Create(strict: false, compactExtrusions: true);
     // Identity members are always written even when they equal the defaults, so a file states what it is.
     private static readonly HashSet<string> AlwaysWritten = new(StringComparer.Ordinal) { "format", "version", "id", "name", "library", "clip", "structureRevision" };
 
-    private static JsonSerializerOptions Create(bool strict)
+    private static JsonSerializerOptions Create(bool strict, bool compactExtrusions)
     {
-        var resolver = new DefaultJsonTypeInfoResolver(); resolver.Modifiers.Add(OmitDefaults);
+        var resolver = new DefaultJsonTypeInfoResolver(); resolver.Modifiers.Add(info => OmitDefaults(info, compactExtrusions));
         return new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -53,7 +56,7 @@ public static class AuthoredJson
             TypeInfoResolver = resolver
         };
     }
-    private static void OmitDefaults(JsonTypeInfo info)
+    private static void OmitDefaults(JsonTypeInfo info, bool compactExtrusions)
     {
         if (info.Kind != JsonTypeInfoKind.Object || info.Type.Namespace?.StartsWith(typeof(AuthoredJson).Namespace!, StringComparison.Ordinal) != true || info.Type.GetConstructor(Type.EmptyTypes) is null) return;
         var defaults = Activator.CreateInstance(info.Type)!;
@@ -61,7 +64,11 @@ public static class AuthoredJson
         {
             if (property.Get is null || AlwaysWritten.Contains(property.Name)) continue;
             var baseline = property.Get(defaults);
-            property.ShouldSerialize = (_, value) => !Equals(value, baseline);
+            // An extrusion's outline is its editable source. Its mesh is rebuilt when loaded.
+            if (compactExtrusions && info.Type == typeof(PropSolid) && property.Name is ("vertices" or "triangles"))
+                property.ShouldSerialize = (owner, value) => ((PropSolid)owner).Outline is null && !Equals(value, baseline);
+            else
+                property.ShouldSerialize = (_, value) => !Equals(value, baseline);
         }
     }
 }

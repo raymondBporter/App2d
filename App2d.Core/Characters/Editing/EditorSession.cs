@@ -447,7 +447,8 @@ public sealed class EditorSession
     public bool NewAppearance(string id, string name, string template) => Attempt(() =>
     {
         var model = Assets.Resolve(SubjectId);
-        Assets.Create(AppearanceAuthoring.New(id, name, template, model?.Base.Ink ?? "#222b32", model?.Base.LineWidth ?? .045f));
+        Assets.Create(AppearanceAuthoring.New(id, name, template, model?.Base.Ink ?? "#222b32", model?.Base.LineWidth ?? .045f,
+            source => Assets.Prop(source)?.Asset));
         Open(id);
     }, $"Created appearance '{id}'. Edit the outline, then equip it on an entity and save all.");
 

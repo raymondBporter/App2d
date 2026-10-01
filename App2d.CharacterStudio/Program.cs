@@ -6,7 +6,7 @@ namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --angelia-gallery [output-directory]]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --angelia-gallery [output-directory]]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -22,6 +22,7 @@ internal static class Program
                 case ["--write-spells", var spells]: PlayerMoves.PlayerMoves.WriteSpells(Path.GetFullPath(spells)); return 0;
                 case ["--write-weapons", var root]: PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root)); return 0;
                 case ["--write-wardrobe", var root]: PersonWardrobe.Write(Path.GetFullPath(root)); return 0;
+                case ["--replace-wardrobe-art", var root]: PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true); return 0;
                 case [] or ["--editor"] or ["--smoke-editor", _]:
                     {
                         using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);

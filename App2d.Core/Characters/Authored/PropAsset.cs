@@ -21,7 +21,7 @@ public sealed record PropSolid
     public List<int> Triangles { get; set; } = [];
     public string Fill { get; set; } = "#c8b18a";
     public bool Outlined { get; set; } = true;
-    /// <summary>Optional editable source for an extruded cutout. Indexed geometry remains the runtime representation.</summary>
+    /// <summary>Editable source for an extruded cutout. The indexed runtime mesh is rebuilt from it when loaded.</summary>
     public List<PuppetPoint>? Outline { get; set; }
     public float Thickness { get; set; }
 }
@@ -63,7 +63,22 @@ public sealed class PropAsset
     };
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    public static PropAsset FromJson(string json) { var prop = AuthoredAsset.Parse<PropAsset>(json, "prop"); prop.Validate(); return prop; }
+    internal string ToSnapshotJson() => JsonSerializer.Serialize(this, AuthoredJson.SnapshotOptions);
+    public static PropAsset FromJson(string json)
+    {
+        var prop = AuthoredAsset.Parse<PropAsset>(json, "prop");
+        if (prop.Solids is not null)
+            foreach (var solid in prop.Solids)
+            {
+                if (solid?.Outline is not { } outline) continue;
+                if (outline.Count is < 3 or > 256) throw new InvalidDataException($"Prop '{prop.Id}': outline needs 3 to 256 points.");
+                var mesh = PropGeometry.Extrude(outline, solid.Thickness, solid.Fill);
+                solid.Vertices = mesh.Vertices;
+                solid.Triangles = mesh.Triangles;
+            }
+        prop.Validate();
+        return prop;
+    }
     public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
