@@ -25,7 +25,7 @@ public sealed class EnemyPresentationTests
         var scene = new Scene2D(); var sounds = new RecordingSounds();
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, Vector2.Zero, Vector2.Zero, 0, 1, true, true)
-            { TypeId = entity.Id, AuthoredEntity = entity, AuthoredPose = pose, ActionId = "attack", ActionSeconds = 1 };
+        { TypeId = entity.Id, AuthoredEntity = entity, AuthoredPose = pose, ActionId = "attack", ActionSeconds = 1 };
         view.ApplyState([state], [], 1);
         var shader = Assert.IsType<App2d.Rendering.Characters.AuthoredCharacterShader>(Assert.Single(scene).Shader);
         Assert.Contains(shader.Props, p => p.Prop.Id == "throwing-rock");

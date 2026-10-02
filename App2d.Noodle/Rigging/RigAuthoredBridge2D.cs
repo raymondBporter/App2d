@@ -23,8 +23,14 @@ internal static class RigAuthoredBridge2D
             var frame = BoneFrame2D.FromTransform(RigDocument2D.GetWorldTransform(bone), bone.Length);
             var control = BoneControl(bone);
             var parent = bone.Parent is null ? null : BoneControl(bone.Parent);
-            model.Controls.Add(new ModelControl { Id = control, Parent = parent, Rest = Point(frame.Origin),
-                RestAngle = frame.Angle, Length = frame.Length * UnitsPerPixel });
+            model.Controls.Add(new ModelControl
+            {
+                Id = control,
+                Parent = parent,
+                Rest = Point(frame.Origin),
+                RestAngle = frame.Angle,
+                Length = frame.Length * UnitsPerPixel
+            });
         }
 
         foreach (var shape in document.Shapes)
@@ -43,8 +49,11 @@ internal static class RigAuthoredBridge2D
     {
         var part = new PuppetPart
         {
-            Id = $"part-{shape.Id}", A = bone, Frame = bone,
-            OffsetX = shape.LocalX * UnitsPerPixel, OffsetY = shape.LocalY * UnitsPerPixel,
+            Id = $"part-{shape.Id}",
+            A = bone,
+            Frame = bone,
+            OffsetX = shape.LocalX * UnitsPerPixel,
+            OffsetY = shape.LocalY * UnitsPerPixel,
             Angle = MathF.PI / 180f * shape.AngleDegrees,
             Fill = $"#{shape.Color.R:x2}{shape.Color.G:x2}{shape.Color.B:x2}",
             OutlineWidth = 0,

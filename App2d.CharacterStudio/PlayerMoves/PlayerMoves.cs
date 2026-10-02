@@ -115,19 +115,65 @@ internal static partial class PlayerMoves
         Name = "Maul brute",
         Model = model.Id,
         MotionSet = "heavy",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.1f, Range = 1.3f, Cooldown = 1 },
+        Controller = new ControllerConfig()
+        {
+            Kind = EntityControllers.Walker,
+            WalkSpeed = 1.1f,
+            Range = 1.3f,
+            Cooldown = 1
+        },
         Health = 22,
         Mass = 3,
         Movement = EntityAuthoring.FitMovement(model),
-        Hurt = new() { Layout = "standard" },
-        Equipment = [new() { Prop = "hammer", Socket = PersonLoadout.SwordSocket }],
+        Hurt = new()
+        {
+            Layout = "standard"
+        },
+        Equipment =
+        [
+            new EquipmentBinding()
+            {
+                Prop = "hammer",
+                Socket = PersonLoadout.SwordSocket
+            }
+        ],
         Actions =
         [
             new()
             {
-                Id = EntityControllers.Attack, Clip = "person-hammer-slam",
-                Hits = [new() { Id = "hammer-head", Prop = "hammer", Shape = RectangleShapeDefinition2D.FromSize(new(1.2f, 1f)), Damage = 5, Sound = "heavy", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
-                Events = [new() { Id = "heavy", At = new() { Marker = "strike" }, Sound = "heavy" }],
+                Id = EntityControllers.Attack,
+                Clip = "person-hammer-slam",
+                Hits =
+                [
+                    new HitWindow()
+                    {
+                        Id = "hammer-head",
+                        Prop = "hammer",
+                        Shape = RectangleShapeDefinition2D.FromSize(new(1.2f, 1f)),
+                        Damage = 5,
+                        Sound = "heavy",
+                        Start = new()
+                        {
+                            Marker = "strike"
+                        },
+                        Finish = new()
+                        {
+                            Marker = "recover"
+                        }
+                    }
+                ],
+                Events =
+                [
+                    new ActionEvent()
+                    {
+                        Id = "heavy",
+                        At = new()
+                        {
+                            Marker = "strike"
+                        },
+                        Sound = "heavy"
+                    }
+                ],
             },
         ],
     };
@@ -165,24 +211,58 @@ internal static partial class PlayerMoves
         Name = "Cinder gunner",
         Model = model.Id,
         MotionSet = "standard",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.4f, Range = 4.5f, Cooldown = 1 },
+        Controller = new()
+        {
+            Kind = EntityControllers.Walker,
+            WalkSpeed = 1.4f,
+            Range = 4.5f,
+            Cooldown = 1
+        },
         Health = 7,
         Movement = EntityAuthoring.FitMovement(model),
         Hurt = new() { Layout = "standard" },
-        Equipment = [new() { Prop = PersonLoadout.Pistol, Socket = PersonLoadout.GunSocket }],
+        Equipment =
+        [
+            new()
+            {
+                Prop = PersonLoadout.Pistol,
+                Socket = PersonLoadout.GunSocket
+            }
+        ],
         Actions =
         [
             new()
             {
-                Id = EntityControllers.Attack, Clip = "person-pistol-shot",
-                Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }],
-                Projectile = new() { Speed = 8, Shape = RectangleShapeDefinition2D.FromSize(new(.3f, .12f)), Damage = 2, Lifetime = 3 },
+                Id = EntityControllers.Attack,
+                Clip = "person-pistol-shot",
+                Events =
+                [
+                    new ActionEvent()
+                    {
+                        Id = EntityControllers.Fire,
+                        At = new ActionTime() { Marker = "fire" },
+                        Sound = "shot"
+                    }
+                ],
+                Projectile = new()
+                {
+                    Speed = 8,
+                    Shape = RectangleShapeDefinition2D.FromSize(new(.3f, .12f)),
+                    Damage = 2,
+                    Lifetime = 3
+                },
             },
         ],
     };
 
     /// <summary>The player's bolt: 30 x 10 px at 1250 px/s for 1.5 s at the player's drawn scale (about 40 px per unit).</summary>
-    private static ProjectileDef PlayerBolt => new() { Speed = 31, Shape = RectangleShapeDefinition2D.FromSize(new(.75f, .25f)), Damage = 2, Lifetime = 1.5f };
+    private static ProjectileDef PlayerBolt => new ProjectileDef()
+    {
+        Speed = 31,
+        Shape = RectangleShapeDefinition2D.FromSize(new(.75f, .25f)),
+        Damage = 2,
+        Lifetime = 1.5f
+    };
 
     /// <summary>
     /// The game's traversal player. Person2D moves it; this entity supplies what the move set's clips already say: the
@@ -196,12 +276,38 @@ internal static partial class PlayerMoves
         Name = "Hero",
         Model = PersonTemplate.Id,
         MotionSet = "standard",
-        Roles = new() { ["idle"] = "player-idle", ["jump"] = "player-jump", ["fall"] = "player-fall", ["hit"] = "player-hit", ["death"] = "player-death" },
-        Controller = new() { Kind = EntityControllers.Traversal, WalkSpeed = 1.8f, RunSpeed = 4.2f, Range = 1.2f, Cooldown = 0 },
+        Roles = new()
+        {
+            ["idle"] = "player-idle",
+            ["jump"] = "player-jump",
+            ["fall"] = "player-fall",
+            ["hit"] = "player-hit",
+            ["death"] = "player-death"
+        },
+        Controller = new()
+        {
+            Kind = EntityControllers.Traversal,
+            WalkSpeed = 1.8f,
+            RunSpeed = 4.2f,
+            Range = 1.2f,
+            Cooldown = 0
+        },
         Health = 30,
         Movement = new() { Shape = MovementDef.Box(.55f, 1.705f) },
         Hurt = new() { Layout = "standard" },
-        Equipment = [new() { Prop = PersonLoadout.Sword, Socket = MoveBuilder.SwordSocket }, new() { Prop = PersonLoadout.Pistol, Socket = MoveBuilder.GunSocket }],
+        Equipment =
+        [
+            new()
+            {
+                Prop = PersonLoadout.Sword,
+                Socket = MoveBuilder.SwordSocket
+            },
+            new()
+            {
+                Prop = PersonLoadout.Pistol,
+                Socket = MoveBuilder.GunSocket
+            }
+        ],
         Actions =
         [
             Swing(model, clips, EntityControllers.Attack, SwingLab.SideCutClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),

@@ -44,9 +44,15 @@ public sealed class QuadrupedTests
     [Fact]
     public void ConcaveCutoutPickingAndPaintRespectTheNotch()
     {
-        var part = new PuppetPart { A = "body", Kind = "polygon", Width = 1, Height = 1,
+        var part = new PuppetPart
+        {
+            A = "body",
+            Kind = "polygon",
+            Width = 1,
+            Height = 1,
             Points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)],
-            Paint = [new() { Fill = "#ff0000", Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }] };
+            Paint = [new() { Fill = "#ff0000", Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }]
+        };
         part.Validate(_ => true);
         Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
         Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.8f, .8f, 0)) > 1);

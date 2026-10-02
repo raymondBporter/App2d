@@ -38,10 +38,18 @@ internal static class RigAuthoredBridgeChecks2D
 
         // A rotate track on a bone origin must carry all child bones and attachments with it.
         var clip = new MotionClip { Id = "check-rotation", Name = "Rotation", Model = model.Id };
-        clip.Tracks.Add(new ClipTrack { Kind = MotionClip.RotateKind, Target = RigAuthoredBridge2D.BoneControl(root),
-            Keys = [new ClipKey { Time = 0 }, new ClipKey { Time = 1, Angle = .4f }] });
-        clip.Tracks.Add(new ClipTrack { Kind = MotionClip.RotateKind, Target = RigAuthoredBridge2D.BoneControl(child),
-            Keys = [new ClipKey { Time = 0 }, new ClipKey { Time = 1, Angle = -.2f }] });
+        clip.Tracks.Add(new ClipTrack
+        {
+            Kind = MotionClip.RotateKind,
+            Target = RigAuthoredBridge2D.BoneControl(root),
+            Keys = [new ClipKey { Time = 0 }, new ClipKey { Time = 1, Angle = .4f }]
+        });
+        clip.Tracks.Add(new ClipTrack
+        {
+            Kind = MotionClip.RotateKind,
+            Target = RigAuthoredBridge2D.BoneControl(child),
+            Keys = [new ClipKey { Time = 0 }, new ClipKey { Time = 1, Angle = -.2f }]
+        });
         clip.Validate(resolved);
         root.AngleDegrees += .4f * 180 / MathF.PI;
         child.AngleDegrees -= .2f * 180 / MathF.PI;

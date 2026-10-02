@@ -26,12 +26,17 @@ public sealed class BoneAuthoringTests
         Near(new(.5f * MathF.Cos(.3f), .5f * MathF.Sin(.3f)), rest.World(child.Id));
         Assert.Equal(.3f, rest.Angles[child.Id], 4);
 
-        var clip = new MotionClip { Id = "bones-turn", Name = "Turn", Model = model.Id,
+        var clip = new MotionClip
+        {
+            Id = "bones-turn",
+            Name = "Turn",
+            Model = model.Id,
             Tracks =
             [
                 new() { Kind = MotionClip.RotateKind, Target = root.Id, Keys = [new() { Time = 1, Angle = .2f }] },
                 new() { Kind = MotionClip.RotateKind, Target = child.Id, Keys = [new() { Time = 1, Angle = -.1f }] }
-            ] };
+            ]
+        };
         clip.Validate(resolved);
         var pose = PoseEvaluator.Sample(resolved, clip, 1);
         Near(new(.5f * MathF.Cos(.5f), .5f * MathF.Sin(.5f)), pose.World(child.Id));

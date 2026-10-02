@@ -309,7 +309,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Assert.True(catalog.Errors.Count == 0, string.Join("\n", catalog.Errors));
         Assert.Equal(52, catalog.Variants.Count); Assert.Equal(53, catalog.Entities.Count);
         Assert.Equal(clipFiles, catalog.Animations.Count); // fifty people, no copied clips
-        var idles = catalog.Entities.Values.Where(e => e.Id.StartsWith("villager-")).Select(e => e.Clip("idle")!).Distinct(ReferenceEqualityComparer.Instance).ToList();
+        var idles = catalog.Entities.Values.Where(e => e.Id.StartsWith("villager-")).Select(e => e.Clip("idle")).Distinct(ReferenceEqualityComparer.Instance).ToList();
         Assert.Single(idles); // every villager's idle is the one shared clip object
         Assert.True(loaded < TimeSpan.FromSeconds(5), $"catalog load took {loaded}");
 

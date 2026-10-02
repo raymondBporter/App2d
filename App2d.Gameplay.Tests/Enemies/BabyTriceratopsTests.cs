@@ -107,7 +107,7 @@ public sealed class BabyTriceratopsTests
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
              new(2, WorldThingKind2D.BabyTriceratops, null, true, new(-218, 19))])
-            { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
+        { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
         Assert.Equal("baby-triceratops", Assert.Single(game.Session.CaptureEnemies()).TypeId);
         for (var i = 0; i < 150; i++) game.Session.Advance();
         var checkpoint = game.Session.CaptureCheckpoint();

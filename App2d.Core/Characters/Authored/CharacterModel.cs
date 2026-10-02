@@ -250,7 +250,7 @@ public sealed class CharacterModel
             {
                 Require(Known(target) || target is not null && chainIds.Contains(target), $"{owner} group '{group.Id}': '{target}' is not a control or chain.");
                 // A chain moves its joint and end; owning one of them without the chain would split it between two layers.
-                Require(!solved.Contains(target!), $"{owner} group '{group.Id}': '{target}' is solved by IK; name its chain instead.");
+                Require(!solved.Contains(target), $"{owner} group '{group.Id}': '{target}' is solved by IK; name its chain instead.");
             }
         }
         var looks = new HashSet<string>(StringComparer.Ordinal);

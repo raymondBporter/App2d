@@ -56,7 +56,7 @@ internal sealed partial class ProofRenders
             _renderer.Draw(_proofDrawings[i].Mesh, game, Matrix.Identity);
         }
         GraphicsDevice.SetRenderTarget(null);
-        using var stream = File.Create(Path.Combine(_smokePath!, $"{clipId}-{frame:D2}.png"));
+        using var stream = File.Create(Path.Combine(_smokePath, $"{clipId}-{frame:D2}.png"));
         _proofTarget.SaveAsPng(stream, ProofWidth, ProofHeight);
         return true;
     }
@@ -92,6 +92,6 @@ internal sealed partial class ProofRenders
             }
         }
 
-        File.WriteAllLines(Path.Combine(_smokePath!, "motion-proof.txt"), lines);
+        File.WriteAllLines(Path.Combine(_smokePath, "motion-proof.txt"), lines);
     }
 }

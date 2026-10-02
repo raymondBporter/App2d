@@ -43,7 +43,7 @@ internal sealed partial class ProofRenders
         var manifest = new List<object>(); var report = new List<string>();
         foreach (var item in items)
         {
-            var folder = Path.Combine(_smokePath!, "frames", item.Id); Directory.CreateDirectory(folder);
+            var folder = Path.Combine(_smokePath, "frames", item.Id); Directory.CreateDirectory(folder);
             var clip = item.Clip; var count = Math.Max(2, (int)MathF.Round(item.Duration * ReviewFps) + (item.Loop ? 0 : 1));
             for (var f = 0; f < count; f++)
             {
@@ -79,8 +79,8 @@ internal sealed partial class ProofRenders
             });
             report.Add(Check(model, item));
         }
-        File.WriteAllText(Path.Combine(_smokePath!, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
-        File.WriteAllLines(Path.Combine(_smokePath!, "checks.txt"), report);
+        File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllLines(Path.Combine(_smokePath, "checks.txt"), report);
         target.Dispose();
         return false;
     }

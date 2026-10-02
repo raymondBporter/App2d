@@ -138,7 +138,7 @@ public sealed class RockThrowerTests
         };
         if (paired) things.Add(new(3, WorldThingKind2D.ClubCaveman, null, true, new(-280, 40)));
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], things)
-            { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
+        { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
         for (var i = 0; i < 150; i++) game.Session.Advance();
         var checkpoint = game.Session.CaptureCheckpoint();
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>

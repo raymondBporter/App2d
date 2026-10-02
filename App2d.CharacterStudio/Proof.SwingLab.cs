@@ -85,7 +85,7 @@ internal sealed partial class ProofRenders
             }
             foreach (var mode in new[] { "plain", "swoosh", "box" })
             {
-                var folder = Path.Combine(_smokePath!, "frames", variant.Id, mode); Directory.CreateDirectory(folder);
+                var folder = Path.Combine(_smokePath, "frames", variant.Id, mode); Directory.CreateDirectory(folder);
                 var swoosh = mode == "plain" ? null : new BladeSwoosh();
                 for (var f = 0; f < count; f++)
                 {
@@ -103,10 +103,10 @@ internal sealed partial class ProofRenders
         // The sword under review beside today's, in the same held follow-through.
         var still = variants.Single(v => v.Id == "side-cut").Clip;
         var stillAt = still.Markers.Single(m => m.Id == "strike").Time + 6 / (float)LabFps;
-        Frame(Path.Combine(_smokePath!, "sword-today.png"), still, stillAt, new(props) { [PersonLoadout.Sword] = todaySword }, null, false);
-        Frame(Path.Combine(_smokePath!, "sword-cartoon.png"), still, stillAt, props, null, false);
-        File.WriteAllText(Path.Combine(_smokePath!, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
-        File.WriteAllLines(Path.Combine(_smokePath!, "checks.txt"), report);
+        Frame(Path.Combine(_smokePath, "sword-today.png"), still, stillAt, new(props) { [PersonLoadout.Sword] = todaySword }, null, false);
+        Frame(Path.Combine(_smokePath, "sword-cartoon.png"), still, stillAt, props, null, false);
+        File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllLines(Path.Combine(_smokePath, "checks.txt"), report);
         target.Dispose();
         return false;
     }

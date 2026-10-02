@@ -21,19 +21,21 @@ internal sealed partial class ProofRenders
     private bool PrepareEntityProof()
     {
         _entityFrames ??= BuildEntityFrames();
-        if (_smokeIndex >= _entityFrames.Count) { File.WriteAllLines(Path.Combine(_smokePath!, "entity-proof.txt"), _entityReport); return false; }
+        if (_smokeIndex >= _entityFrames.Count) { File.WriteAllLines(Path.Combine(_smokePath, "entity-proof.txt"), _entityReport); return false; }
         _proofTarget ??= new(GraphicsDevice, EntityWidth, EntityHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         _arenaDrawing ??= new(GraphicsDevice, _renderer);
         var (name, centerX, actors) = _entityFrames[_smokeIndex];
         GraphicsDevice.SetRenderTarget(_proofTarget); GraphicsDevice.Clear(new Color(237, 238, 226));
-        foreach (var (viewport, ppu, anchorY) in new[] { (new Viewport(0, 0, EntityWidth, EntityPanelHeight), EntityPpu, EntityPanelHeight * .9f), (new Viewport(0, EntityPanelHeight, EntityWidth, EntityHeight - EntityPanelHeight), EntityGamePpu, (EntityHeight - EntityPanelHeight) * .85f) })
+        foreach (var (viewport, ppu, anchorY) in new[] { (
+            new Viewport(0, 0, EntityWidth, EntityPanelHeight), EntityPpu, EntityPanelHeight * .9f),
+            (new Viewport(0, EntityPanelHeight, EntityWidth, EntityHeight - EntityPanelHeight), EntityGamePpu, (EntityHeight - EntityPanelHeight) * .85f) })
         {
             GraphicsDevice.Viewport = viewport;
             var projection = PointCharacterRenderer.Projection(viewport.Width, viewport.Height, new(viewport.Width * .5f - centerX * ppu, anchorY), ppu);
             _arenaDrawing.Draw(actors, projection, ppu, centerX, ppu == EntityPpu);
         }
         GraphicsDevice.SetRenderTarget(null);
-        using var stream = File.Create(Path.Combine(_smokePath!, name + ".png"));
+        using var stream = File.Create(Path.Combine(_smokePath, name + ".png"));
         _proofTarget.SaveAsPng(stream, EntityWidth, EntityHeight);
         return true;
     }

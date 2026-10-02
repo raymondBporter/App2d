@@ -140,7 +140,7 @@ public sealed class ArgGuardTests
         text = "valid";
         ArgGuard.ThrowIfNullOrWhiteSpace(text);
         Assert.Equal(5, text.Length); // The guard preserves nullable flow analysis.
-        Assert.Throws<ArgumentException>(() => ArgGuard.ThrowIfContainsNull(["first", null!]));
+        Assert.Throws<ArgumentException>(() => ArgGuard.ThrowIfContainsNull(["first", null]));
         Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfTooShort<int>([], 1));
         Assert.Throws<InvalidOperationException>(() => StateGuard.ThrowIfNotPositive(float.PositiveInfinity));
         Assert.Throws<InvalidOperationException>(() => StateGuard.ThrowIfLessThan(0, 1));

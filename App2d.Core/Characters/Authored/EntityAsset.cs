@@ -238,7 +238,7 @@ public sealed class EntityAsset
             Require(props.Contains(guard.Prop), $"{owner}: guard prop '{guard.Prop}' must be equipped.");
             CheckShape(guard.Shape, $"{owner} guard.shape", 10);
         }
-        var chained = Actions.Where(a => a?.Next is not null).Select(a => a.Next!).ToHashSet(StringComparer.Ordinal);
+        var chained = Actions.Where(a => a?.Next is not null).Select(a => a.Next).ToHashSet(StringComparer.Ordinal);
         foreach (var action in Actions)
         {
             Require(action?.Hits is not null && action.Events is not null, $"{owner}: incomplete action.");
@@ -313,11 +313,22 @@ public sealed record ControllerSpec(string Id, IReadOnlyList<string> RequiredRol
 /// </summary>
 public static class EntityControllers
 {
-    public const string Walker = "walker", Platformer = "platformer", Stationary = "stationary", Traversal = "traversal";
-    public const string Attack = "attack", Jump = "jump", Hit = "hit", Death = "death", Shoot = "shoot", WallShot = "wall-shot";
+    public const string Walker = "walker";
+    public const string Platformer = "platformer";
+    public const string Stationary = "stationary";
+    public const string Traversal = "traversal";
+    public const string Attack = "attack";
+    public const string Jump = "jump";
+    public const string Hit = "hit";
+    public const string Death = "death";
+    public const string Shoot = "shoot";
+    public const string WallShot = "wall-shot";
     /// <summary>A second swing played while the weapon is still out from the first.</summary>
     public const string FollowUp = "follow-up";
-    public const string Idle = "idle", Walk = "walk", Run = "run", Fall = "fall";
+    public const string Idle = "idle";
+    public const string Walk = "walk";
+    public const string Run = "run";
+    public const string Fall = "fall";
     /// <summary>The action event at which a jump leaves the ground.</summary>
     public const string Launch = "launch";
     /// <summary>The action event at which a shot leaves an equipped prop's muzzle.</summary>

@@ -331,7 +331,7 @@ public sealed class AuthoredEntityEnemyTests
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
              new(2, WorldThingKind2D.ClubCaveman, null, true, new(-200, 40))])
-            { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
+        { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
         Assert.Equal("club-caveman", Assert.Single(game.Session.CaptureEnemies()).TypeId);
         for (var i = 0; i < 60; i++) game.Session.Advance();
         Assert.True(Assert.Single(game.Session.CaptureEnemies()).Position.X < -200);
