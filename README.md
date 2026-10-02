@@ -34,7 +34,7 @@ The engine is grouped by responsibility:
   `Filtering`, `Intersections`, and `Queries`.
 - `App2d/Levels` stores authored levels as SQLite files. Tiles are run-length encoded
   per chunk so a single edit rewrites a single row; a missing chunk row means an
-  entirely empty chunk. It is the only project that references `Microsoft.Data.Sqlite`,
+  entirely empty chunk. It is the only code that uses `Microsoft.Data.Sqlite`,
   and it never references simulation. It also loads authored player geometry into
   shared traversal configuration through `TraversalMetricsLoader2D`; its game
   dependency is limited to the `App2d.Contracts` namespace.

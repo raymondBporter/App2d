@@ -3,12 +3,13 @@ using App2d.Rendering;
 using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
+using Xunit.Abstractions;
 using Texture2D = App2d.Rendering.Textures.Texture2D;
 
 namespace App2d.Tests.Rendering;
 
 [Collection("Graphics")]
-public sealed class TextureRenderingAllocationTests
+public sealed class TextureRenderingAllocationTests(ITestOutputHelper output)
 {
     [Fact]
     public void WarmTextureDrawDoesNotAllocateManagedMemory()
@@ -23,9 +24,11 @@ public sealed class TextureRenderingAllocationTests
         for (var iteration = 0; iteration < 1_000; iteration++) renderer.Draw(worldObject);
         renderer.EndFrame();
 
-        // Other tests share this process and can trigger GCs or tiering work while this thread measures, and
-        // a one-off allocation from that (a few KB, observed once per run at most) is not a renderer leak.
-        // A per-draw allocation would show in every pass, so the minimum of three passes is the signal.
+        // Since the test projects merged into one process, a single warm pass occasionally reports exactly 5,904
+        // bytes (about two runs in five, never in isolation, never more than once per run). The source has not
+        // been identified; it is a one-off on this thread, not a per-draw leak, which would cost at least 24 KB
+        // per pass. A per-draw allocation still fails every pass, so the minimum of three passes is the signal,
+        // and the measurements are written to the test output so a recurrence stays visible.
         var measurements = new long[3];
         var gcs = new int[3];
         for (var attempt = 0; attempt < measurements.Length; attempt++)
@@ -37,7 +40,11 @@ public sealed class TextureRenderingAllocationTests
             renderer.EndFrame();
             measurements[attempt] = GC.GetAllocatedBytesForCurrentThread() - before;
             gcs[attempt] = GC.CollectionCount(0) - gen0;
-            if (measurements[attempt] == 0) return;
+            if (measurements[attempt] == 0)
+            {
+                output.WriteLine($"Warm pass allocations: {string.Join(", ", measurements[..(attempt + 1)])} bytes; gen0 GCs during each pass: {string.Join(", ", gcs[..(attempt + 1)])}.");
+                return;
+            }
         }
         Assert.Fail($"Every warm pass allocated: bytes {string.Join(", ", measurements)}; gen0 GCs during each pass {string.Join(", ", gcs)}.");
     }

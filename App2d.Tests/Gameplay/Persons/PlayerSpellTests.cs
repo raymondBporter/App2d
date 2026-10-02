@@ -58,11 +58,15 @@ public sealed class PlayerSpellTests
     public void FractionalRechargeSurvivesPauseAndResetsOnRespawn()
     {
         using var f = new Fixture(new() { StartingEnergy = 0, EnergyPerSecond = 7 });
-        f.Steps(50);
+        using var unpaused = new Fixture(new() { StartingEnergy = 0, EnergyPerSecond = 7 });
+        f.Steps(50); unpaused.Steps(50);
         f.Session.SetPaused(true);
         Assert.Equal(2, f.Spells.Energy);
         f.Session.SetPaused(false);
-        f.Steps(200);
+        // Pausing must not touch the fractional accumulator: afterwards the session recharges exactly like one that never paused.
+        var energy = Enumerable.Range(0, 200).Select(_ => f.Step(default).Players[0].Person.Spells.Energy).ToArray();
+        var reference = Enumerable.Range(0, 200).Select(_ => unpaused.Step(default).Players[0].Person.Spells.Energy).ToArray();
+        Assert.Equal(reference, energy);
         f.Player.Reset(Vector2.Zero);
         f.Steps(17);
         Assert.Equal(0, f.Spells.Energy);

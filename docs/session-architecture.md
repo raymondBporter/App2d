@@ -23,9 +23,8 @@ These decisions shape how the session is built and advanced:
   client, so identities never need to be negotiated. `EntityId2D.Create()` remains
   for tests and diagnostics only.
 - **Held-state commands.** `PersonCommand2D` carries axes and held buttons only.
-  `Person2D` derives presses and releases from the previous command it saw (part of
-  its rollback state), so a lost packet cannot drop a jump and a repeated command
-  cannot re-trigger one. A tap that begins and ends inside one tick reaches the
+  `Person2D` derives presses and releases from the previous command it saw, so a
+  lost packet cannot drop a jump and a repeated command cannot re-trigger one. A tap that begins and ends inside one tick reaches the
   simulation as a one-tick hold.
 - **Missing input policy.** `Advance` takes any number of inputs for one tick. A
   player without an input repeats its last command and its acknowledged sequence
@@ -44,9 +43,7 @@ These decisions shape how the session is built and advanced:
 - **Equipment is an enum** (`EquipmentKind2D`), and physics contact order is kept
   in explicit lists rather than relying on dictionary enumeration.
 
-Not done in this pass: gameplay timers are still accumulated floats rather than
-tick counts. Local replay is exact; cross-machine float determinism remains a
-known caveat.
+Gameplay timers are accumulated floats rather than tick counts.
 
 ## Running path
 
@@ -77,7 +74,7 @@ accumulator.
 `SideScrollerSession2D.CaptureSnapshot()` captures a complete observation at a tick
 boundary: tick, acknowledged input sequence, player, enemies, and world. It contains
 no historical events. Construct `SessionClient2D` from this `SessionSnapshot2D` to
-attach at an arbitrary tick. This observation is distinct from a rollback checkpoint.
+attach at an arbitrary tick.
 
 The endpoint tracks sent input ticks/sequences separately from its received tick.
 It can create several inputs before any responses arrive. Acknowledgements update
@@ -119,7 +116,7 @@ frames, ignores repeated/older frames, and rejects gaps in this synchronous
 transport. Consequently the presentation consumes each delivered frame's events
 once. This is not a UDP delivery protocol and does not yet match predicted events
 to authoritative confirmations. Event sequence numbers identify occurrences in
-this session; matching them across rollback needs additional policy.
+this session.
 
 The B-key shield pose remains presentation-only, matching current behavior. It
 does not imply a server-side blocking mechanic.
@@ -135,7 +132,7 @@ fade, and trail durations belong to `WeaponPresentation2D`.
 Each player observation includes a `WeaponState2D` with charge state and immutable
 active projectile values. Every launch gets a new entity ID, including when a
 simulation slot is reused. Each gun reserves an ID range from the session allocator
-and captures its creation sequence, so replay reproduces projectile IDs without
+and captures its creation sequence, so two sessions built the same way produce the same projectile IDs without
 affecting another session. Actor and melee-source identities remain fixed for the
 lifetime of the owning session.
 
@@ -228,8 +225,8 @@ physics or save state.
 
 These are in-process observations, not a bandwidth-optimized wire format. Static
 level distribution, terrain revision delivery, and network interest management
-remain future work. The gameplay assembly targets plain `net10.0`; client views
-and their Windows/rendering/audio dependencies live in `App2d.Presentation`.
+remain future work. Simulation code lives under `App2d/Gameplay`; client views
+and their rendering/audio dependencies live under `App2d/Presentation`.
 
 ## Remaining scope
 
