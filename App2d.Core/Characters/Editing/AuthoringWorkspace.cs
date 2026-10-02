@@ -1,5 +1,5 @@
-using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Validation;
 using System.Text.Json;
 
 namespace App2d.Core.Characters.Editing;

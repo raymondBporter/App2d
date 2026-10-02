@@ -18,7 +18,16 @@ internal sealed partial class ProofRenders
 {
     private const int ReviewWidth = 440, ReviewHeight = 460, ReviewFps = 30;
     private const float ReviewPpu = 150;
-    private static readonly string[] UpperTargets = ["chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm", PersonLoadout.SwordSocket, PersonLoadout.GunSocket];
+    private static readonly string[] UpperTargets =
+    [
+        "chest",
+        "head",
+        "left-shoulder",
+        "right-shoulder",
+        "left-arm",
+        "right-arm",
+        PersonLoadout.SwordSocket, PersonLoadout.GunSocket
+    ];
 
     /// <summary>
     /// One review card. <see cref="Upper"/>, when set, plays clips over the base from the waist up through the same overlay the

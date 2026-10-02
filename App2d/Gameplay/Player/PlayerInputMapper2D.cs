@@ -1,6 +1,6 @@
-using App2d.Core.Validation;
 using App2d.Contracts.Persons;
-using App2d.Input;
+using App2d.Core.Input;
+using App2d.Core.Validation;
 
 namespace App2d.Gameplay.Player;
 

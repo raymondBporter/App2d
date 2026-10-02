@@ -1,8 +1,8 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
-using App2d.Presentation.Persons;
 using App2d.Core.Characters.Authored;
+using App2d.Presentation.Persons;
 using System.Numerics;
 
 namespace App2d.Presentation.Tests.Persons;

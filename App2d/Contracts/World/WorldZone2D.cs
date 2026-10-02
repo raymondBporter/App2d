@@ -1,5 +1,5 @@
-using App2d.Core.Validation;
 using App2d.Core.Geometry;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Contracts.World;

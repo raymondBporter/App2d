@@ -1,7 +1,7 @@
-using App2d.Core.Shapes;
-using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Geometry;
+using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
 

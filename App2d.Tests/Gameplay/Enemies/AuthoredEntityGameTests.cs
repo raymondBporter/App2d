@@ -1,7 +1,7 @@
-using App2d.Core.Geometry;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;

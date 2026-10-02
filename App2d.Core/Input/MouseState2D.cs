@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Input;
+namespace App2d.Core.Input;
 
 /// <summary>Physical mouse state in device pixel coordinates.</summary>
 public sealed class MouseState2D

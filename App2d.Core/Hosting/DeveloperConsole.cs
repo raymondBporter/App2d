@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 
-namespace App2d.Diagnostics;
+namespace App2d.Core.Hosting;
 
 public sealed class DeveloperConsole
 {

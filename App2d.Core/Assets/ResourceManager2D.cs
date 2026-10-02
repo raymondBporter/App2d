@@ -22,6 +22,9 @@ public sealed class ResourceManager2D : IDisposable
 
     public int Count => _entries.Count;
 
+    /// <summary>
+    /// Register the resource with the manager, providing a loader function to create it on demand.
+    /// </summary>
     /// <param name="ownsResource">False when another object owns and disposes the loaded value.</param>
     public void Register<T>(string key, Func<T> loader, string? source = null, bool ownsResource = true)
         where T : class

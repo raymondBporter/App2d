@@ -1,10 +1,10 @@
-using System.Text.Json;
-using App2d.Core.Mathematics;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
+using System.Text.Json;
 
 namespace App2d.Tests.Authored;
 

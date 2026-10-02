@@ -1,8 +1,8 @@
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
-using App2d.Presentation.Persons;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
+using App2d.Presentation.Persons;
 using System.Collections.Immutable;
 
 namespace App2d.Presentation.World.Presentation;

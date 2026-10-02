@@ -1,7 +1,7 @@
-using App2d.Core.Shapes;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Shapes;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 

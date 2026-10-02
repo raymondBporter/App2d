@@ -1,6 +1,6 @@
-using App2d.Core.Shapes;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.PlayerMoves;
@@ -17,10 +17,14 @@ internal static partial class PlayerMoves
     public const string Sword = PersonLoadout.Sword, Sheath = PersonLoadout.Sheath, Pistol = PersonLoadout.Pistol;
 
     // Stance: the walk's contact spacing. Feet rest at y = 0.025 (sole on the ground).
-    private const float Back = -.125f, Front = .125f, Ground = .025f;
+    private const float Back = -.125f;
+    private const float Front = .125f;
+    private const float Ground = .025f;
+
     // Standing pelvis offset. The rest pose already bends the knees about 20 degrees, so standing tall sits slightly above
     // rest: over the stance feet this leaves 6-8 degrees (0.015 locks the front leg), and every 0.01 lower adds roughly 5.
-    internal const float StanceX = -.01f, StanceY = .012f;
+    internal const float StanceX = -.01f;
+    internal const float StanceY = .012f;
     // Sheathed sword: grip in the chest frame and the blade's direction. Worn diagonally across the back, so in this
     // profile it foreshortens to a near-vertical line hidden behind the torso: the hilt sits below the shoulder line
     // (a guard at neck height read as part of the neck) and only the scabbard's tip shows below the back.
@@ -33,21 +37,66 @@ internal static partial class PlayerMoves
 
     public static IEnumerable<ModelSocket> Sockets() =>
     [
-        new() { Id = MoveBuilder.BackSocket, Control = "chest", Frame = "chest", OffsetX = SheathGrip.X, OffsetY = SheathGrip.Y, OffsetZ = .2f, Angle = SheathAngle },
-        new() { Id = MoveBuilder.BackViewSocket, Control = "chest", Frame = "chest", OffsetX = BackViewGrip.X, OffsetY = BackViewGrip.Y, OffsetZ = -.2f, Angle = BackViewAngle },
-        new() { Id = MoveBuilder.SwordSocket, Control = "right-hand", Frame = "right-shoulder" },
-        new() { Id = MoveBuilder.GunSocket, Control = "right-hand", Frame = "right-shoulder" },
+        new ModelSocket()
+        {
+            Id = MoveBuilder.BackSocket,
+            Control = "chest",
+            Frame = "chest",
+            OffsetX = SheathGrip.X,
+            OffsetY = SheathGrip.Y,
+            OffsetZ = .2f,
+            Angle = SheathAngle
+        },
+        new ModelSocket()
+        {
+            Id = MoveBuilder.BackViewSocket,
+            Control = "chest",
+            Frame = "chest",
+            OffsetX = BackViewGrip.X,
+            OffsetY = BackViewGrip.Y,
+            OffsetZ = -.2f,
+            Angle = BackViewAngle
+        },
+        new ModelSocket()
+        {
+            Id = MoveBuilder.SwordSocket,
+            Control = "right-hand",
+            Frame = "right-shoulder"
+        },
+        new ModelSocket()
+        {
+            Id = MoveBuilder.GunSocket,
+            Control = "right-hand",
+            Frame = "right-shoulder"
+        },
     ];
 
     public static IEnumerable<PropAsset> Props() => [SwordProp(), SheathProp(), PistolProp()];
 
     public static IEnumerable<MotionClip> Clips(ResolvedModel m) =>
     [
-        Idle(m), Jump(m), Fall(m), Land(m), Dash(m),
-        ClimbTurn(m, onto: true), Climb(m), ClimbTurn(m, onto: false), WallGrip(m), BalanceForward(m), BalanceBackward(m),
-        Hit(m), Death(m), Celebrate(m),
-        .. SwingLab.GameClips(m), Sheathe(m), DownAttack(m),
-        GunAim(m), GunShot(m), GunWallShot(m), GunCharge(m), HealGather(m),
+        Idle(m),
+        Jump(m),
+        Fall(m),
+        Land(m),
+        Dash(m),
+        ClimbTurn(m, onto: true),
+        Climb(m),
+        ClimbTurn(m, onto: false),
+        WallGrip(m),
+        BalanceForward(m),
+        BalanceBackward(m),
+        Hit(m),
+        Death(m),
+        Celebrate(m),
+        .. SwingLab.GameClips(m),
+        Sheathe(m),
+        DownAttack(m),
+        GunAim(m),
+        GunShot(m),
+        GunWallShot(m),
+        GunCharge(m),
+        HealGather(m),
     ];
 
     /// <summary>Adds the move set's sockets to the Person model, then writes props and clips beside it.</summary>
@@ -256,7 +305,7 @@ internal static partial class PlayerMoves
     };
 
     /// <summary>The player's bolt: 30 x 10 px at 1250 px/s for 1.5 s at the player's drawn scale (about 40 px per unit).</summary>
-    private static ProjectileDef PlayerBolt => new ProjectileDef()
+    private static ProjectileDef PlayerBolt => new()
     {
         Speed = 31,
         Shape = RectangleShapeDefinition2D.FromSize(new(.75f, .25f)),

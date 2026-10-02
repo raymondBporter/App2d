@@ -1,7 +1,7 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace App2d.Input;
+namespace App2d.Core.Input;
 
 /// <summary>Reads physical controls only. Gameplay bindings belong to the player mapper.</summary>
 internal sealed class XboxControllerInput2D

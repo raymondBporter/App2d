@@ -1,6 +1,6 @@
+using App2d.Contracts.Persons;
 using App2d.Core.Geometry;
 using App2d.Core.Validation;
-using App2d.Contracts.Persons;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using System.Numerics;

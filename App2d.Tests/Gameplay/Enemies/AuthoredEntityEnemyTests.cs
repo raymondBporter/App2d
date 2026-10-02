@@ -1,10 +1,10 @@
-using App2d.Core.Geometry;
-using App2d.Contracts.World;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
+using App2d.Contracts.World;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Gameplay.Enemies;

@@ -1,4 +1,4 @@
-namespace App2d.Input;
+namespace App2d.Core.Input;
 
 /// <summary>Physical keyboard state accumulated until the next simulation tick.</summary>
 public sealed class KeyboardState2D

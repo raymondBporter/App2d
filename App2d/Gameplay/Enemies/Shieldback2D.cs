@@ -1,5 +1,5 @@
-using App2d.Core.Validation;
 using App2d.Contracts.Enemies;
+using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using System.Numerics;
 

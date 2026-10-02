@@ -1,6 +1,6 @@
 using App2d.Contracts.Persons;
-using App2d.Presentation.Persons;
 using App2d.Core.Characters;
+using App2d.Presentation.Persons;
 using System.Numerics;
 
 namespace App2d.Presentation.Tests;

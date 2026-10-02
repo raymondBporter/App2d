@@ -1,9 +1,10 @@
-using App2d.Core.Validation;
 using App2d.Core.Geometry;
 using App2d.Core.Grids;
+using App2d.Core.Validation;
+using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Tiles;
+namespace App2d.Core.Tiles;
 
 public sealed class TileMap2D : ISolidTileMap2D
 {

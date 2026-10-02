@@ -38,17 +38,29 @@ internal static partial class PlayerMoves
     {
         var path = Path.Combine(root, "models", "person.json");
         var model = CharacterModel.FromJson(File.ReadAllText(path));
+
         foreach (var socket in model.Sockets)
+        {
             if (socket.Id is PersonLoadout.BackSocket or PersonLoadout.BackViewSocket)
                 socket.OffsetZ = socket.Id == PersonLoadout.BackSocket ? .2f : -.2f;
+        }
+
         model.Save(path);
         foreach (var prop in Props().Append(HammerProp()).Append(StarterContent.SpearProp()))
+        {
             prop.Save(Path.Combine(root, "props", prop.Id + ".json"));
+        }
+
         foreach (var file in Directory.EnumerateFiles(Path.Combine(root, "animations"), "*.json"))
         {
-            var clip = MotionClip.FromJson(File.ReadAllText(file)); var before = clip.ToJson();
+            var clip = MotionClip.FromJson(File.ReadAllText(file));
+            var before = clip.ToJson();
             WeaponMotion(clip);
-            if (before != clip.ToJson()) { clip.Validate(ResolvedModel.From(model)); clip.Save(file); }
+            if (before != clip.ToJson())
+            {
+                clip.Validate(ResolvedModel.From(model));
+                clip.Save(file);
+            }
         }
     }
 }

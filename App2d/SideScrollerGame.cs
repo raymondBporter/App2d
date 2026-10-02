@@ -1,20 +1,21 @@
-using App2d.Core.Shapes;
-using App2d.Core.Geometry;
-using App2d.Contracts.World;
-using App2d.Core.Validation;
-using App2d.Contracts.Player;
-using App2d.Presentation.World;
 using App2d.Audio;
+using App2d.Contracts.Player;
+using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
-using App2d.Diagnostics;
+using App2d.Core.Geometry;
+using App2d.Core.Hosting;
+using App2d.Core.Input;
+using App2d.Core.Shapes;
+using App2d.Core.Validation;
 using App2d.Editor;
-using App2d.Presentation.Audio;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Persistence;
+using App2d.Presentation.Audio;
+using App2d.Presentation.World;
 using App2d.Rendering;
 using App2d.Rendering.Vegetation;
 using App2d.Things;
@@ -50,16 +51,14 @@ public sealed class SideScrollerGame : Game2D
         _resources.Get<AuthoredCatalog>("characters/authored", "presentation");
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
         var textures = _resources.GetLoad<Rendering.Textures.TextureCache2D>("textures/runtime", "presentation");
-        _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects),
-            AssetPaths.Current.SoundEffects);
+        _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects), AssetPaths.Current.SoundEffects);
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
+
         var movement = ShapeBounds2D.Calculate(hero.MovementShape);
         var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(movement.Height) / 4) * 4;
-        Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
-            new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height),
-            GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
+        Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f, new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height), GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
         _sounds = _resources.GetLoad<SoundEffectBank2D>("audio/sfx", "presentation");
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");

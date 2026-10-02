@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Input;
+namespace App2d.Core.Input;
 
 /// <summary>One physical gamepad sample, with button edges since the previous simulation tick.</summary>
 public readonly record struct GamepadState2D(

@@ -1,7 +1,7 @@
-using App2d.Core.Meshes;
 using App2d.Core.Geometry;
-using App2d.Core.Shapes;
 using App2d.Core.Mathematics;
+using App2d.Core.Meshes;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters;

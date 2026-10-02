@@ -1,6 +1,6 @@
-using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.PlayerMoves;
@@ -13,9 +13,13 @@ namespace App2d.CharacterStudio.PlayerMoves;
 /// </summary>
 internal sealed class MoveBuilder(ResolvedModel model, string id, string name, float duration, bool loop)
 {
-    public const string BackSocket = PersonLoadout.BackSocket, BackViewSocket = PersonLoadout.BackViewSocket, SwordSocket = PersonLoadout.SwordSocket, GunSocket = PersonLoadout.GunSocket;
+    public const string BackSocket = PersonLoadout.BackSocket;
+    public const string BackViewSocket = PersonLoadout.BackViewSocket;
+    public const string SwordSocket = PersonLoadout.SwordSocket;
+    public const string GunSocket = PersonLoadout.GunSocket;
     /// <summary>View markers; <see cref="PersonLoadout"/> owns how they pick the sheath socket.</summary>
-    public const string BackViewMarker = PersonLoadout.BackViewMarker, ProfileViewMarker = PersonLoadout.ProfileViewMarker;
+    public const string BackViewMarker = PersonLoadout.BackViewMarker;
+    public const string ProfileViewMarker = PersonLoadout.ProfileViewMarker;
 
     private readonly Dictionary<(string Kind, string Target), SortedDictionary<float, ClipKey>> _tracks = [];
     private readonly List<(string Chain, float Time, Vector2 Offset, bool Absolute, string Ease)> _hands = [];

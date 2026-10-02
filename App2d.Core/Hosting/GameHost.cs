@@ -1,11 +1,12 @@
-using App2d.Core.Geometry;
 using App2d.Core;
+using App2d.Core.Geometry;
+using App2d.Core.Input;
 using App2d.Diagnostics;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
 
-namespace App2d;
+namespace App2d.Core.Hosting;
 
 public sealed class GameHost : IDisposable
 {

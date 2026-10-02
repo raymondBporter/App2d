@@ -1,5 +1,5 @@
-using App2d.Core.Validation;
 using App2d.Core.Kinematics;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Characters;

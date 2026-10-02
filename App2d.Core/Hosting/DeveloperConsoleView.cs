@@ -1,3 +1,5 @@
+using App2d.Core.Hosting;
+
 namespace App2d.Diagnostics;
 
 internal sealed class DeveloperConsoleView : UserControl

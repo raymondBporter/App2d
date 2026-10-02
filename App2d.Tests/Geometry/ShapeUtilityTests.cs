@@ -66,11 +66,11 @@ public sealed class ShapeUtilityTests
     {
         var box = new SpatialObject2D(new Rectangle2D(new(-3, -1), new(3, 1)));
         var (center, radius) = ShapeBounds2D.CalculateBoundingCircle(box.Shape);
+        Span<Vector2> corners = stackalloc Vector2[4];
         for (var i = 0; i < 12; i++)
         {
             box.Transform.Rotation = i * MathF.Tau / 12;
             var worldCenter = Vector2.Transform(center, box.Transform.LocalToWorldMatrix);
-            Span<Vector2> corners = stackalloc Vector2[4];
             WorldShape2D.WriteWorldPerimeter(box.Shape, box.CollisionPose, corners);
             foreach (var corner in corners) Assert.True(Vector2.Distance(corner, worldCenter) <= radius + 1e-4f);
         }

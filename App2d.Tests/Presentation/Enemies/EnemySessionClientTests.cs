@@ -1,7 +1,6 @@
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Simulation;
-using App2d.Presentation.Simulation;
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Core.Physics;
@@ -12,6 +11,7 @@ using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
+using App2d.Presentation.Simulation;
 using App2d.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;

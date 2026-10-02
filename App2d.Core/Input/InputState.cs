@@ -1,7 +1,6 @@
-using App2d.Input;
 using System.Numerics;
 
-namespace App2d;
+namespace App2d.Core.Input;
 
 /// <summary>Raw device state for one simulation tick. Game and editor bindings read this state separately.</summary>
 public sealed class InputState

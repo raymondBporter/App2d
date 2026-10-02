@@ -1,12 +1,13 @@
-using App2d.Core.Geometry;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
-using App2d.Presentation.Persons;
+using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
-using App2d.Presentation.World.Presentation;
+using App2d.Core.Geometry;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
+using App2d.Presentation.Persons;
+using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using App2d.Rendering.Vegetation;

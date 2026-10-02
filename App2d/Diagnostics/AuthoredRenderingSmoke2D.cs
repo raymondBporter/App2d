@@ -1,12 +1,13 @@
-using App2d.Contracts.World;
 using App2d.Contracts.Enemies;
-using App2d.Presentation.Persons;
+using App2d.Contracts.World;
 using App2d.Core;
+using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Shapes;
-using App2d.Presentation.Audio;
-using App2d.Presentation.World.Presentation;
 using App2d.Levels;
+using App2d.Presentation.Audio;
+using App2d.Presentation.Persons;
+using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;

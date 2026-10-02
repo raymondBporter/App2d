@@ -1,9 +1,9 @@
-using App2d.Core.Geometry;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Collision;
+using App2d.Core.Geometry;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Gameplay.Combat;

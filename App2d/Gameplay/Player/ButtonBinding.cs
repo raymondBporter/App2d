@@ -1,4 +1,4 @@
-using App2d.Input;
+using App2d.Core.Input;
 
 namespace App2d.Gameplay.Player;
 

@@ -1,6 +1,6 @@
-using App2d.Core.Shapes;
-using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Editing;

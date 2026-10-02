@@ -1,7 +1,7 @@
+using App2d.Core.Characters.Authored;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using App2d.Core.Characters.Authored;
 
 namespace App2d.Core.Characters;
 
