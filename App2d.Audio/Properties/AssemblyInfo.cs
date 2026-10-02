@@ -1,2 +1,3 @@
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("App2d.Presentation.Tests")]
+
+[assembly: InternalsVisibleTo("App2d.Tests")]

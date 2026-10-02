@@ -11,8 +11,6 @@
   <Project Path="App2d.Gameplay/App2d.Gameplay.csproj" />
   <Project Path="App2d.Presentation/App2d.Presentation.csproj" />
   <Project Path="App2d.Contracts/App2d.Contracts.csproj" />
-  <Project Path="App2d.Presentation.Tests/App2d.Presentation.Tests.csproj" />
-  <Project Path="App2d.Gameplay.Tests/App2d.Gameplay.Tests.csproj" />
   <Project Path="App2d/App2d.csproj" />
   <Project Path="App2d.Noodle/App2d.Noodle.csproj" />
   <Project Path="App2d.CharacterStudio/App2d.CharacterStudio.csproj" />

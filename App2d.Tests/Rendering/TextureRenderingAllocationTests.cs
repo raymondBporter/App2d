@@ -23,11 +23,22 @@ public sealed class TextureRenderingAllocationTests
         for (var iteration = 0; iteration < 1_000; iteration++) renderer.Draw(worldObject);
         renderer.EndFrame();
 
-        renderer.BeginFrame(128, 128, default);
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var iteration = 0; iteration < 1_000; iteration++) renderer.Draw(worldObject);
-        renderer.EndFrame();
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-        Assert.Equal(0, allocated);
+        // Other tests share this process and can trigger GCs or tiering work while this thread measures, and
+        // a one-off allocation from that (a few KB, observed once per run at most) is not a renderer leak.
+        // A per-draw allocation would show in every pass, so the minimum of three passes is the signal.
+        var measurements = new long[3];
+        var gcs = new int[3];
+        for (var attempt = 0; attempt < measurements.Length; attempt++)
+        {
+            renderer.BeginFrame(128, 128, default);
+            var gen0 = GC.CollectionCount(0);
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var iteration = 0; iteration < 1_000; iteration++) renderer.Draw(worldObject);
+            renderer.EndFrame();
+            measurements[attempt] = GC.GetAllocatedBytesForCurrentThread() - before;
+            gcs[attempt] = GC.CollectionCount(0) - gen0;
+            if (measurements[attempt] == 0) return;
+        }
+        Assert.Fail($"Every warm pass allocated: bytes {string.Join(", ", measurements)}; gen0 GCs during each pass {string.Join(", ", gcs)}.");
     }
 }

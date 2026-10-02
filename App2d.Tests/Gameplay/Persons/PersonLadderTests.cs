@@ -1,0 +1,367 @@
+using App2d.Core.Geometry;
+using App2d.Contracts.Combat;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Player;
+using App2d.Core;
+using App2d.Core.Collision;
+using App2d.Core.Physics;
+using App2d.Core.Shapes;
+using App2d.Gameplay.Persons;
+using App2d.Levels;
+using App2d.Tiles;
+using System.Numerics;
+
+namespace App2d.Gameplay.Tests.Persons;
+
+public sealed class PersonLadderTests
+{
+    private const float Dt = 1f / 120f;
+    private readonly EditableTileMap2D _map = new(16, 64, 32f, 8);
+    private readonly PhysicsWorld2D _physics;
+    private readonly TraversalMetrics2D _metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
+    private readonly Person2D _person;
+
+    public PersonLadderTests()
+    {
+        var collision = new CollisionSystem2D();
+        _physics = new PhysicsWorld2D(collision)
+        {
+            Gravity = new Vector2(0f, -_metrics.Gravity),
+            MaxSubstepSeconds = Dt,
+            PositionIterations = 3,
+            VelocityIterations = 2
+        };
+        for (var y = 1; y <= 20; y++)
+            _map.SetTileKind(4, y, TileKind2D.Ladder);
+        _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
+            new Vector2(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
+            2u, 1u, CombatFaction2D.Player, tileMap: _map);
+        AddSolid(new Vector2(256f, 16f), new Vector2(512f, 32f));
+    }
+
+    [Fact]
+    public void ClimbPauseAndDescendAcrossChunkBoundaries()
+    {
+        var initialY = _person.Position.Y;
+        Step(climb: 1f, frames: 180);
+        Assert.True(_person.IsClimbingLadder);
+        Assert.Equal(initialY + _metrics.LadderClimbSpeed * 1.5f, _person.Position.Y, 2);
+        var hangY = _person.Position.Y;
+        Step(frames: 120);
+        Assert.Equal(hangY, _person.Position.Y, 3);
+        Assert.Equal(0f, _person.Body.GravityScale);
+        Step(climb: -1f, frames: 60);
+        Assert.Equal(hangY - _metrics.LadderClimbSpeed * 0.5f, _person.Position.Y, 2);
+    }
+
+    [Fact]
+    public void JumpPressedWithUpBesideLadderJumpsInsteadOfGrabbing()
+    {
+        Step(climb: 1f, jump: true);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.Body.LinearVelocity.Y > _metrics.LadderClimbSpeed);
+        Step(climb: 1f, frames: 30);
+        Assert.True(_person.IsClimbingLadder); // Holding up without a new jump press regrabs on the way past.
+    }
+
+    [Theory]
+    [InlineData(-22f, -1f)]
+    [InlineData(-22f, 1f)]
+    [InlineData(22f, -1f)]
+    [InlineData(22f, 1f)]
+    public void UpJustOutsideLadderGentlyCentersFromEitherSide(float offset, float facing)
+    {
+        _person.Face(facing);
+        _person.WorldObject.Transform.Position += new Vector2(
+            144f + offset - _person.WorldObject.WorldBounds.Center.X, 0f);
+        var initialY = _person.Position.Y;
+
+        Step(climb: 1f);
+
+        Assert.True(_person.IsClimbingLadder);
+        var remaining = MathF.Abs(_person.WorldObject.WorldBounds.Center.X - 144f);
+        Assert.InRange(remaining, 0.1f, MathF.Abs(offset) - 0.1f);
+        Assert.True(_person.Position.Y > initialY);
+
+        Step(climb: 1f, frames: 30);
+        Assert.Equal(144f, _person.WorldObject.WorldBounds.Center.X, 3);
+        Assert.True(_person.IsClimbingLadder);
+    }
+
+    [Theory]
+    [InlineData(-25f)]
+    [InlineData(25f)]
+    public void UpBeyondSmallGrabGraceDoesNotPullPlayer(float offset)
+    {
+        _person.WorldObject.Transform.Position += new Vector2(offset, 0f);
+        var initialX = _person.Position.X;
+
+        Step(climb: 1f, frames: 30);
+
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(initialX, _person.Position.X);
+    }
+
+    [Fact]
+    public void StandingWithinGrabGraceWithoutClimbInputDoesNotPullPlayer()
+    {
+        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+        var initialX = _person.Position.X;
+
+        Step(frames: 30);
+
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(initialX, _person.Position.X);
+    }
+
+    [Fact]
+    public void AlignmentCannotPullPlayerThroughSolidWall()
+    {
+        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+        var wallRight = _person.WorldObject.WorldBounds.Left - 0.5f;
+        AddSolid(new Vector2(wallRight - 1f, 160f), new Vector2(2f, 256f));
+
+        Step(climb: 1f, frames: 30);
+
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.WorldObject.WorldBounds.Left >= wallRight);
+        Assert.Equal(1f, _person.Body.GravityScale);
+    }
+
+    [Fact]
+    public void OverlappingGrabRangesChooseNearestLadder()
+    {
+        for (var y = 1; y <= 20; y++)
+            _map.SetTileKind(5, y, TileKind2D.Ladder);
+        _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
+
+        Step(climb: 1f, frames: 30);
+
+        Assert.True(_person.IsClimbingLadder);
+        Assert.Equal(176f, _person.WorldObject.WorldBounds.Center.X, 3);
+    }
+
+    [Fact]
+    public void JumpOffWorksWhileHoldingUpAndDoesNotImmediatelyRegrab()
+    {
+        Step(climb: 1f, frames: 60);
+        Step(climb: 1f, jumpOff: true);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.Body.LinearVelocity.Y > _metrics.LadderClimbSpeed);
+        Step(climb: 1f, frames: 5);
+        Assert.False(_person.IsClimbingLadder);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MovingSidewaysOrDashingLeavesLadder(bool dash)
+    {
+        Step(climb: 1f, frames: 60);
+        Step(move: 1f, dash: dash);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.Body.LinearVelocity.X > 0f);
+        Assert.Equal(dash, _person.IsDashing);
+        if (!dash)
+        {
+            Assert.Equal(1f, _person.Body.GravityScale);
+            Step(move: 1f, frames: 30);
+            Assert.True(_person.Body.LinearVelocity.Y < 0f);
+        }
+    }
+
+    [Fact]
+    public void TopStopsAtLastRungAndAllowsDescendingAgain()
+    {
+        Step(climb: 1f, frames: 600);
+        Assert.True(_person.IsClimbingLadder);
+        Assert.Equal(21 * 32f, _person.WorldObject.WorldBounds.Center.Y, 2);
+        Assert.Equal(21 * 32f - _metrics.PlayerColliderSize.Y / 2f,
+            _person.WorldObject.WorldBounds.Bottom, 2);
+        var topPosition = _person.Position;
+        Step(climb: 1f, frames: 120);
+        Assert.Equal(topPosition, _person.Position);
+        Assert.Equal(0f, _person.Body.LinearVelocity.Y);
+        Step(frames: 60);
+        Assert.Equal(topPosition, _person.Position);
+        Step(climb: -1f, frames: 30);
+        Assert.True(_person.IsClimbingLadder);
+        Assert.True(_person.WorldObject.WorldBounds.Center.Y < 21 * 32f);
+    }
+
+    [Theory]
+    [InlineData(false, 0f)]
+    [InlineData(false, 1f)]
+    [InlineData(true, 0f)]
+    [InlineData(true, 1f)]
+    public void FreshJumpAtTopReleasesLadderEvenWithUpInput(bool dedicatedJump, float move)
+    {
+        Step(climb: 1f, frames: 600);
+        Step(); // Release W/Up before pressing it again to jump.
+        var topY = _person.Position.Y;
+        var jumps = 0;
+        _person.JumpStarted += () => jumps++;
+
+        Step(climb: 1f, move: move, jump: true, jumpOff: dedicatedJump);
+
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(1, jumps);
+        Assert.True(_person.Body.LinearVelocity.Y > _metrics.LadderClimbSpeed);
+        Assert.True(_person.Position.Y > topY);
+        Step(climb: 1f, frames: 5);
+        Assert.False(_person.IsClimbingLadder);
+    }
+
+    [Fact]
+    public void PressingUpAgainBelowTopContinuesClimbing()
+    {
+        Step(climb: 1f, frames: 60);
+        Step();
+        Step(climb: 1f);
+        Assert.True(_person.IsClimbingLadder);
+        Assert.Equal(_metrics.LadderClimbSpeed, _person.Body.LinearVelocity.Y);
+    }
+
+    [Fact]
+    public void CeilingBlocksClimbing()
+    {
+        AddSolid(new Vector2(144f, 300f), new Vector2(96f, 32f));
+        Step(climb: 1f, frames: 240);
+        Assert.True(_person.WorldObject.WorldBounds.Top <= 284.1f);
+    }
+
+    [Fact]
+    public void WalkingPastLadderDoesNotAttach()
+    {
+        Step(move: 1f, frames: 30);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.Position.X > 160f);
+    }
+
+    [Theory]
+    [InlineData(8)] // One empty tile between the ladder and the floor.
+    [InlineData(7)] // The ladder touches the floor.
+    [InlineData(1)] // The ladder continues below the floor.
+    public void DescendingOntoOneWayFloorStopsAndStands(int firstLadderRow)
+    {
+        var platform = AddSolid(new Vector2(144f, 208f), new Vector2(96f, 32f));
+        platform.IsOneWayPlatform = true;
+        Step(climb: 1f, frames: 200);
+        Assert.True(_person.IsClimbingLadder);
+        Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);
+        for (var y = 1; y < firstLadderRow; y++)
+            _map.SetTileKind(4, y, TileKind2D.Empty);
+
+        Step(climb: -1f, frames: 240);
+
+        Assert.True(_person.IsGrounded);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.InRange(_person.WorldObject.WorldBounds.Bottom, 223.9f, 224.1f);
+        Assert.Equal(0, _person.Body.IgnoredOneWayPlatformCount);
+        Assert.Equal(1f, _person.Body.GravityScale);
+
+        Step(frames: 60);
+        Assert.True(_person.IsGrounded);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.InRange(_person.WorldObject.WorldBounds.Bottom, 223.9f, 224.1f);
+    }
+
+    [Theory]
+    [InlineData(7)]
+    [InlineData(1)]
+    public void DownAndJumpDeliberatelyDropsThroughFloorBesideLadder(int firstLadderRow)
+    {
+        DescendingOntoOneWayFloorStopsAndStands(firstLadderRow);
+
+        Step(climb: -1f, jump: true, down: true);
+
+        Assert.False(_person.IsGrounded);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.Body.LinearVelocity.Y < 0f);
+        Assert.Equal(1, _person.Body.IgnoredOneWayPlatformCount);
+        Step(climb: -1f, frames: 120, down: true);
+        Assert.True(_person.WorldObject.WorldBounds.Top < 192f);
+    }
+
+    [Fact]
+    public void CanClimbUpAgainFromOneWayFloorTouchingLadder()
+    {
+        DescendingOntoOneWayFloorStopsAndStands(7);
+
+        Step(climb: 1f, frames: 30);
+
+        Assert.True(_person.IsClimbingLadder);
+        Assert.False(_person.IsGrounded);
+        Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);
+    }
+
+    [Fact]
+    public void DescendingPastBottomLetsGo()
+    {
+        Step(climb: 1f, frames: 180);
+        for (var y = 1; y < 8; y++)
+            _map.SetTileKind(4, y, TileKind2D.Empty);
+        Step(climb: -1f, frames: 90);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(1f, _person.Body.GravityScale);
+    }
+
+    [Fact]
+    public void ErasingLadderRestoresGravityImmediately()
+    {
+        Step(climb: 1f, frames: 60);
+        for (var y = 1; y <= 20; y++)
+            _map.SetTileKind(4, y, TileKind2D.Empty);
+        Step(frames: 30);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(1f, _person.Body.GravityScale);
+        Assert.True(_person.Body.LinearVelocity.Y < 0f);
+    }
+
+    [Fact]
+    public void DamageReleasesLadderAndPreservesKnockback()
+    {
+        Step(climb: 1f, frames: 60);
+        Assert.True(_person.TakeDamage(1, new Vector2(220f, 170f)));
+        Step(climb: 1f);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.True(_person.Body.LinearVelocity.X > 0f);
+    }
+
+    [Fact]
+    public void ResetAndDeathClearClimbingState()
+    {
+        Step(climb: 1f, frames: 30);
+        var position = _person.Position;
+        _person.Reset(position);
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(1f, _person.Body.GravityScale);
+        Step(climb: 1f, frames: 60);
+        Assert.True(_person.TakeDamage(5, Vector2.Zero));
+        Assert.False(_person.IsClimbingLadder);
+        Assert.Equal(1f, _person.Body.GravityScale);
+    }
+
+    private void Step(float climb = 0f, float move = 0f, bool jump = false,
+        bool jumpOff = false, bool dash = false, int frames = 1, bool down = false)
+    {
+        for (var i = 0; i < frames; i++)
+        {
+            _person.BeginFrame(Dt);
+            _person.ApplyCommand(new PersonCommand2D
+            { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash, DownHeld = down }, Dt);
+            _physics.Step(Dt);
+            _person.UpdateAfterPhysics(Dt);
+        }
+    }
+
+    private PhysicsBody2D AddSolid(Vector2 center, Vector2 size)
+    {
+        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(size));
+        spatial.Transform.Position = center;
+        var body = _physics.AddBody(spatial, BodyMotionType2D.Static);
+        body.CollisionLayer = 1u;
+        body.CollisionMask = 2u;
+        return body;
+    }
+}
