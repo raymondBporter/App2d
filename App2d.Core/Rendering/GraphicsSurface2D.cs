@@ -1,14 +1,17 @@
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.Noodle;
+namespace App2d.Rendering;
 
-/// <summary>A Direct3D-backed MonoGame surface hosted by the rig editor window.</summary>
-internal sealed class GraphicsSurface2D : Control
+/// <summary>A Direct3D-backed MonoGame surface hosted in a WinForms control. The game host and the tool windows share it.</summary>
+public sealed class GraphicsSurface2D : Control
 {
     private GraphicsDevice? _device;
-
     public event Action<GraphicsDevice, int, int>? RenderFrame;
     public event Action? DeviceDisposing;
+
+    /// <summary>Depth buffer format for the swap chain. The game needs a depth buffer; flat tool views can pass <see cref="DepthFormat.None"/>.</summary>
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public DepthFormat DepthStencilFormat { get; init; } = DepthFormat.Depth24;
 
     public GraphicsSurface2D()
     {
@@ -49,7 +52,7 @@ internal sealed class GraphicsSurface2D : Control
             BackBufferWidth = ClientSize.Width,
             BackBufferHeight = ClientSize.Height,
             BackBufferFormat = SurfaceFormat.Color,
-            DepthStencilFormat = DepthFormat.None,
+            DepthStencilFormat = DepthStencilFormat,
             IsFullScreen = false,
             PresentationInterval = PresentInterval.One,
             MultiSampleCount = 4
@@ -63,16 +66,13 @@ internal sealed class GraphicsSurface2D : Control
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
-            ReleaseDevice();
+        if (disposing) ReleaseDevice();
         base.Dispose(disposing);
     }
 
     private void ReleaseDevice()
     {
-        if (_device is null)
-            return;
-
+        if (_device is null) return;
         DeviceDisposing?.Invoke();
         _device.Dispose();
         _device = null;

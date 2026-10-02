@@ -14,7 +14,7 @@ internal sealed class RigidCharacterHost : IDisposable
     private static readonly XnaColor MutedColor = new(157, 174, 199);
     private static readonly XnaColor ActiveColor = new(116, 255, 180);
     private readonly Camera2D _camera = new() { Position = new Vector2(0f, -66f), Zoom = 1.15f };
-    private readonly GraphicsSurface2D _surface = new() { Dock = DockStyle.Fill, TabStop = true };
+    private readonly GraphicsSurface2D _surface = new() { Dock = DockStyle.Fill, TabStop = true, DepthStencilFormat = DepthFormat.None };
     private readonly RigidCharacterDemo2D _demo = new();
     private readonly PoseAuthoring2D _author = new();
     private readonly RigidPuppetRenderer2D _puppet = new(RigidPartSet2D.PrototypeSets[0]);

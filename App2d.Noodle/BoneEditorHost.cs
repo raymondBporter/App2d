@@ -13,7 +13,7 @@ internal sealed class BoneEditorHost : IDisposable
 {
     private readonly RigDocument2D _document = RigDocument2D.CreateStarterPerson();
     private readonly Camera2D _camera = new() { Position = new Vector2(0f, -55f), Zoom = 1.05f };
-    private readonly GraphicsSurface2D _surface = new() { Dock = DockStyle.Fill, TabStop = true };
+    private readonly GraphicsSurface2D _surface = new() { Dock = DockStyle.Fill, TabStop = true, DepthStencilFormat = DepthFormat.None };
     private readonly BoneEditorPanel _panel;
     private readonly Form _window;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };

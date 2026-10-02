@@ -20,8 +20,5 @@
   <ItemGroup>
     <ProjectReference Include="..\App2d\App2d.csproj" />
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
-    <ProjectReference Include="..\App2d.Tiles\App2d.Tiles.csproj" />
-    <ProjectReference Include="..\App2d.Rendering\App2d.Rendering.csproj" />
-    <ProjectReference Include="..\App2d.Audio\App2d.Audio.csproj" />
   </ItemGroup>
 </Project>

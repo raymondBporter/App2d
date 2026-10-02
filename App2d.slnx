@@ -1,13 +1,10 @@
 <Solution>
   <Project Path="App2d.Core/App2d.Core.csproj" />
-  <Project Path="App2d.Tiles/App2d.Tiles.csproj" />
-  <Project Path="App2d.Rendering/App2d.Rendering.csproj" />
+  <Project Path="App2d/App2d.csproj" />
   <Project Path="App2d.Tests/App2d.Tests.csproj" />
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
   </Folder>
-  <Project Path="App2d.Audio/App2d.Audio.csproj" />
-  <Project Path="App2d/App2d.csproj" />
   <Project Path="App2d.Noodle/App2d.Noodle.csproj" />
   <Project Path="App2d.CharacterStudio/App2d.CharacterStudio.csproj" />
 </Solution>
