@@ -1,5 +1,4 @@
 using App2d.Core.Characters.Authored;
-using App2d.Gameplay.Entities;
 
 namespace App2d.Gameplay.Tests.Entities;
 

@@ -1,4 +1,4 @@
-using App2d.Gameplay.Entities;
+using App2d.Core.Characters.Authored;
 using App2d.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
