@@ -35,11 +35,10 @@ public sealed class VegetationTests
     }
 
     [Fact]
-    public void CutsAreIdempotentForgottenOnUnloadAndRestoreWithTheSession()
+    public void CutsAreIdempotentAndForgottenOnUnload()
     {
         using var game = Create();
         var session = game.Session;
-        var before = session.CaptureCheckpoint();
         var original = session.CaptureSnapshot();
         var cell = new GrassCell2D(6, 19);
         var bounds = VegetationPlacement2D.GrassBounds(game.Level.TileMap, cell);
@@ -50,7 +49,6 @@ public sealed class VegetationTests
         game.Level.CutGrass(bounds);
         Assert.Same(cut.World.CutGrass, session.CaptureSnapshot().World.CutGrass);
         Assert.Empty(original.World.CutGrass);
-        var after = session.CaptureCheckpoint();
         game.Level.UpdateStreaming(game.Level.SpawnPoint + new Vector2(32f, 0f));
         Assert.Same(cut.World.CutGrass, session.CaptureWorld().CutGrass);
         game.Level.UpdateStreaming(game.Level.TileMap.WorldBounds.Max);
@@ -59,10 +57,6 @@ public sealed class VegetationTests
         Assert.Empty(session.CaptureWorld().CutGrass);
         game.Level.CutGrass(bounds);
         Assert.Contains(cell, session.CaptureWorld().CutGrass);
-        session.RestoreCheckpoint(before);
-        Assert.Empty(session.CaptureSnapshot().World.CutGrass);
-        session.RestoreCheckpoint(after);
-        Assert.Contains(cell, session.CaptureSnapshot().World.CutGrass);
     }
 
     [Fact]

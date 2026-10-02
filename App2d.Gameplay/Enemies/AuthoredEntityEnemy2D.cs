@@ -9,7 +9,6 @@ using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
-using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using System.Collections.Immutable;
 using System.Numerics;
@@ -342,24 +341,4 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     };
 
     public ImmutableArray<EnemyEvent2D> DrainEvents() { var events = _events.ToImmutableArray(); _events.Clear(); return events; }
-
-    private sealed record Snapshot(bool Enabled, float Cooldown, float Hurt, float Stagger, int Facing, int Health, Vector2 RootBefore, AnimatorState Animator,
-        ImmutableArray<(int, string, int)> Ledger, ImmutableDictionary<EntityId2D, int> Hits, ImmutableArray<EnemyEvent2D> Events, ImmutableArray<EntityBoltState2D> Bolts,
-        Vector2 AttackTarget, float RetreatRemaining, bool RetreatUsed, bool ChargeBlocked) : SimulationState2D;
-
-    public SimulationState2D CaptureSimulation() => new Snapshot(_enabled, _cooldown, _hurt, _reaction.Capture(), _facing, Health.Current, _rootBefore, _animator.Capture(),
-        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), [.. _events], [.. _bolts], _attackTarget, _retreatRemaining, _retreatUsed, _chargeBlocked);
-
-    public void RestoreSimulation(SimulationState2D state)
-    {
-        var s = (Snapshot)state;
-        _enabled = s.Enabled; _cooldown = s.Cooldown; _hurt = s.Hurt; _reaction.Restore(s.Stagger); _facing = s.Facing; _rootBefore = s.RootBefore;
-        _attackTarget = s.AttackTarget; _retreatRemaining = s.RetreatRemaining; _retreatUsed = s.RetreatUsed;
-        _chargeBlocked = s.ChargeBlocked;
-        Health.RestoreSimulation(s.Health); _ledger.Restore(s.Ledger);
-        _hitHistory.Clear(); foreach (var pair in s.Hits) _hitHistory.Add(pair.Key, pair.Value);
-        _events.Clear(); _events.AddRange(s.Events);
-        _bolts.Clear(); _bolts.AddRange(s.Bolts);
-        _animator.Restore(s.Animator, Root / Scale, Expression);
-    }
 }

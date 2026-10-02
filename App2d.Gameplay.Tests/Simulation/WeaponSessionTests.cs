@@ -20,7 +20,7 @@ namespace App2d.Gameplay.Tests.Simulation;
 public sealed class WeaponSessionTests
 {
     [Fact]
-    public void SnapshotPreservesShotPhaseAfterRecoveryAndAcrossRollback()
+    public void SnapshotPreservesShotPhaseAfterRecovery()
     {
         using var game = new Fixture();
         var shot = game.Fire();
@@ -31,13 +31,6 @@ public sealed class WeaponSessionTests
         Assert.Equal(EquipmentKind2D.Sword, snapshot.Players[0].Equipment);
         Assert.False(snapshot.Players[0].Person.Action.IsActive);
         Assert.InRange(snapshot.Players[0].Person.Action.ElapsedSeconds, 0.099f, 0.101f);
-        var checkpoint = game.Session.CaptureCheckpoint();
-        var next = game.Step();
-        game.Session.RestoreCheckpoint(checkpoint);
-        var replayed = game.Step();
-        Assert.Equal(next.Players[0].Person.Action, replayed.Players[0].Person.Action);
-        Assert.Equal(snapshot.Tick + 1, replayed.Tick);
-        Assert.Empty(replayed.Events.OfType<AttackStarted2D>());
     }
 
     private static PersonCommand2D Hold => new() { CastHeld = true };
@@ -140,13 +133,6 @@ public sealed class WeaponSessionTests
 
     private sealed class EmptyWorld : ISideScrollerSessionWorld2D
     {
-        private sealed record EmptyState : WorldSimulationState2D
-        {
-            public override System.Collections.Immutable.ImmutableArray<int> TerrainColliderIds => [];
-        }
-        public WorldSimulationState2D CaptureSimulation() => new EmptyState();
-        public void ValidateSimulation(WorldSimulationState2D state) => Assert.IsType<EmptyState>(state);
-        public void RestoreSimulation(WorldSimulationState2D state) => ValidateSimulation(state);
         public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
         public float GoalX => 9000f;
         public void UpdateStreaming(Vector2 position) { }

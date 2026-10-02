@@ -14,10 +14,6 @@ namespace App2d.Gameplay.Simulation;
 /// </summary>
 public interface ISideScrollerSessionWorld2D
 {
-    ImmutableArray<int> TerrainColliderIds => [];
-    WorldSimulationState2D CaptureSimulation() => throw new NotSupportedException("This world does not support rollback.");
-    void ValidateSimulation(WorldSimulationState2D state) => throw new NotSupportedException("This world does not support rollback.");
-    void RestoreSimulation(WorldSimulationState2D state) => throw new NotSupportedException("This world does not support rollback.");
     LevelContent2D CaptureContent() => LevelContent2D.Empty;
     WorldState2D CaptureWorld() => WorldState2D.Empty;
     ImmutableArray<EnemyState2D> CaptureEnemies() => [];

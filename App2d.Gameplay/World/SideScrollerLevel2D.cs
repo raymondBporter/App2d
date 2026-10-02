@@ -326,6 +326,14 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         }
     }
 
+    private long _definitionRevision;
+
+    private void OnMapChanged(TileChunk2D chunk)
+    {
+        _definitionRevision++;
+        _dirtyChunks.Mark(chunk);
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

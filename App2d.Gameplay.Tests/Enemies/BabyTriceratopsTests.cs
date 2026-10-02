@@ -94,13 +94,12 @@ public sealed class BabyTriceratopsTests
         Assert.Equal(0, enemy.Body.LinearVelocity.X);
         Assert.Empty(enemy.GetActiveAttackHitboxes());
         Assert.True(enemy.WorldObject.Transform.Position.X < (wall ? 50 : 12));
-        var snapshot = enemy.CaptureSimulation();
-        Tick(enemy, physics, player.Position, 10); enemy.RestoreSimulation(snapshot);
+        Tick(enemy, physics, player.Position, 10);
         Assert.Empty(enemy.GetActiveAttackHitboxes());
     }
 
     [Fact]
-    public void PlacementAndChargeReplayExactlyInTheRealTerrainSimulation()
+    public void PlacementAndChargeRunInTheRealTerrainSimulation()
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
         for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
@@ -110,14 +109,12 @@ public sealed class BabyTriceratopsTests
         { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
         Assert.Equal("baby-triceratops", Assert.Single(game.Session.CaptureEnemies()).TypeId);
         for (var i = 0; i < 150; i++) game.Session.Advance();
-        var checkpoint = game.Session.CaptureCheckpoint();
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
         {
             game.Session.Advance(); var state = Assert.Single(game.Session.CaptureEnemies());
             return $"{state.Position};{state.Velocity};{state.ActionId};{state.ActionSeconds};{game.Player.Health.Current}";
         })];
-        var first = Run(); game.Session.RestoreCheckpoint(checkpoint);
-        Assert.Equal(first, Run());
+        Run();
         Assert.True(game.Player.Health.Current < 100);
     }
 }

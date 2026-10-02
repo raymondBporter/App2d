@@ -17,8 +17,8 @@ namespace App2d.Gameplay.Simulation;
 
 /// <summary>
 /// Authoritative session. Owns stepping and progression for its participants, but has
-/// no input devices, renderer, audio playback or save-file access. The same type runs
-/// on a server and inside a predicting client.
+/// no input devices, renderer, audio playback or save-file access. It is the one place
+/// the local game advances gameplay.
 /// </summary>
 public sealed partial class SideScrollerSession2D : IDisposable
 {
@@ -31,6 +31,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
     private readonly List<SessionEvent2D> _events = [];
     private bool _disposed;
     private long _eventSequence;
+    private bool _advancing;
 
     public SideScrollerSession2D(PhysicsWorld2D physics, Person2D player,
         ISessionPlayerActions2D actions, ISideScrollerSessionWorld2D world,
@@ -68,7 +69,8 @@ public sealed partial class SideScrollerSession2D : IDisposable
 
     public SessionSnapshot2D CaptureSnapshot()
     {
-        RequireCheckpointBoundary();
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        StateGuard.ThrowIf(_advancing, "Snapshots require a completed simulation tick.");
         return new(Tick, CapturePlayers(), CaptureContent(), CaptureWorld(), CaptureEnemies());
     }
 
@@ -77,7 +79,6 @@ public sealed partial class SideScrollerSession2D : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(_advancing, "Pause changes require a completed simulation tick.");
         if (paused == IsPaused) return;
-        TimelineRevision++;
         if (paused)
             foreach (var player in _players) player.Actions.InterruptPrimary();
         IsPaused = paused;
@@ -121,7 +122,6 @@ public sealed partial class SideScrollerSession2D : IDisposable
         }
 
         _advancing = true;
-        TimelineRevision++;
         try
         {
             Tick++;
@@ -279,21 +279,6 @@ public sealed partial class SideScrollerSession2D : IDisposable
             Actions.Equipment, Actions.IsMeleeAttackActive,
             RestartSeconds, Respawn.CheckpointId, ReachedGoal, Actions.CaptureWeaponState());
 
-        public ParticipantState CaptureSimulation() => new(Respawn, RestartSeconds, MoveX, ReachedGoal,
-            LastInputSequence, LastCommand, Person.CaptureSimulation(), Actions.CaptureSimulation());
-
-        public void RestoreSimulation(ParticipantState state)
-        {
-            Respawn = state.Respawn;
-            RestartSeconds = state.RestartSeconds;
-            MoveX = state.MoveX;
-            ReachedGoal = state.ReachedGoal;
-            LastInputSequence = state.LastInputSequence;
-            LastCommand = state.LastCommand;
-            Person.RestoreSimulation(state.Person);
-            Actions.RestoreSimulation(state.Actions);
-        }
-
         public void Subscribe(SideScrollerSession2D session)
         {
             void onJump() => session._events.Add(new JumpStarted2D(session.Stamp(this)));
@@ -329,7 +314,4 @@ public sealed partial class SideScrollerSession2D : IDisposable
             _unsubscribe.Clear();
         }
     }
-
-    internal sealed record ParticipantState(RespawnState2D Respawn, float RestartSeconds, float MoveX, bool ReachedGoal,
-        long LastInputSequence, PersonCommand2D LastCommand, Person2D.SimulationState Person, SimulationState2D Actions);
 }

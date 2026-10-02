@@ -19,7 +19,7 @@ using Xunit;
 
 namespace App2d.Gameplay.Tests.Enemies;
 
-/// <summary>Authored entities in the real game: spawning, the shared final pose, combat and rollback.</summary>
+/// <summary>Authored entities in the real game: spawning, the shared final pose and combat.</summary>
 public sealed class AuthoredEntityEnemyTests
 {
     [Theory]
@@ -29,7 +29,7 @@ public sealed class AuthoredEntityEnemyTests
     [InlineData(1, 1, false)]
     [InlineData(-1, -1, true)]
     [InlineData(1, 1, true)]
-    public void ContactRecoilFollowsTheHitWithoutTurningAndRestoresExactly(int facing, int direction, bool kill)
+    public void ContactRecoilFollowsTheHitWithoutTurning(int facing, int direction, bool kill)
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
@@ -39,14 +39,6 @@ public sealed class AuthoredEntityEnemyTests
         Assert.True(enemy.TakeDamage(kill ? enemy.Health.Current : 1, new(direction * 200, 0)));
         Assert.Equal(facing, enemy.Pose.Facing);
         Assert.True((enemy.Pose.World("hips").X - before) * direction > 0, "recoil is visible on the damage tick, in the incoming direction");
-        var snapshot = enemy.CaptureSimulation();
-        var immediate = enemy.Pose.Local.Points.Values.ToArray();
-        enemy.Update(1f / 60, new(400, 42)); enemy.SyncAfterPhysics();
-        var next = enemy.Pose.Local.Points.Values.ToArray();
-        enemy.RestoreSimulation(snapshot);
-        Assert.Equal(immediate, enemy.Pose.Local.Points.Values.ToArray());
-        enemy.Update(1f / 60, new(400, 42)); enemy.SyncAfterPhysics();
-        Assert.Equal(next, enemy.Pose.Local.Points.Values.ToArray());
     }
 
     [Fact]
@@ -139,11 +131,10 @@ public sealed class AuthoredEntityEnemyTests
     }
 
     [Fact]
-    public void TheGuardThrustsAtThePlayerAndCombatReplaysExactly()
+    public void TheGuardThrustsAtThePlayer()
     {
         using var game = Game();
         for (var i = 0; i < 30; i++) game.Session.Advance();
-        var checkpoint = game.Session.CaptureCheckpoint();
         string[] Run() => [.. Enumerable.Range(0, 480).Select(i =>
         {
             var tick = game.Session.Tick + 1;
@@ -153,8 +144,6 @@ public sealed class AuthoredEntityEnemyTests
                 new JsonSerializerOptions { IncludeFields = true });
         })];
         var first = Run(); var damaged = game.Player.Health.Current;
-        game.Session.RestoreCheckpoint(checkpoint); var second = Run();
-        Assert.Equal(first, second);
         Assert.Contains(first, json => json.Contains("\"ActionId\":\"attack\""));
         Assert.True(damaged < 30, "the spear reached the player");
     }
@@ -207,7 +196,7 @@ public sealed class AuthoredEntityEnemyTests
     }
 
     [Fact]
-    public void RivalPlacementsSpawnTheGunnerAndItsBoltsReplayExactly()
+    public void RivalPlacementsSpawnTheGunnerAndItsBolts()
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
         for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
@@ -216,11 +205,9 @@ public sealed class AuthoredEntityEnemyTests
         { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
         Assert.Equal("cinder-gunner", Assert.Single(game.Session.CaptureEnemies()).TypeId);
         for (var i = 0; i < 60; i++) game.Session.Advance();
-        var checkpoint = game.Session.CaptureCheckpoint();
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ => JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.Bolts.Select(b => b.Position).ToArray())).ToArray(), new JsonSerializerOptions { IncludeFields = true })
             + (game.Session.Advance() is var frame ? "" : ""))];
-        var first = Run(); game.Session.RestoreCheckpoint(checkpoint); var second = Run();
-        Assert.Equal(first, second);
+        var first = Run();
         Assert.Contains(first, json => json.Contains("\"X\"") && json.Contains("[{"));
         Assert.True(game.Player.Health.Current < 30, "the gunner's shots land");
     }
@@ -295,7 +282,7 @@ public sealed class AuthoredEntityEnemyTests
     }
 
     [Fact]
-    public void CavemanCommitsHisFacingAndAHittingSwordCancelsTheSlamAcrossRollback()
+    public void CavemanCommitsHisFacingAndAHittingSwordCancelsTheSlam()
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 42), 1, 4);
@@ -308,23 +295,16 @@ public sealed class AuthoredEntityEnemyTests
         Assert.Equal(1, enemy.Pose.Facing);
         Assert.Empty(enemy.GetActiveAttackHitboxes());
         Assert.Contains(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "club-windup");
-        var before = enemy.CaptureSimulation();
         Assert.True(enemy.TakeDamage(3, new(-200, 0)));
         Assert.Equal("hit", enemy.CaptureState().ActionId);
         Assert.Empty(enemy.GetActiveAttackHitboxes());
-        var after = enemy.CaptureSimulation();
+        Assert.Equal(6, enemy.Health.Current);
         for (var i = 0; i < 80; i++) { enemy.Update(1f / 120, new(-40, 42)); enemy.SyncAfterPhysics(); }
         Assert.DoesNotContain(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "heavy");
-        enemy.RestoreSimulation(before);
-        Assert.Equal("attack", enemy.CaptureState().ActionId);
-        Assert.Equal(9, enemy.Health.Current);
-        enemy.RestoreSimulation(after);
-        Assert.Equal("hit", enemy.CaptureState().ActionId);
-        Assert.Equal(6, enemy.Health.Current);
     }
 
     [Fact]
-    public void CavemanPlacementPursuesOnTerrainAndReplaysExactly()
+    public void CavemanPlacementPursuesOnTerrain()
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
         for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
@@ -335,15 +315,13 @@ public sealed class AuthoredEntityEnemyTests
         Assert.Equal("club-caveman", Assert.Single(game.Session.CaptureEnemies()).TypeId);
         for (var i = 0; i < 60; i++) game.Session.Advance();
         Assert.True(Assert.Single(game.Session.CaptureEnemies()).Position.X < -200);
-        var checkpoint = game.Session.CaptureCheckpoint();
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
         {
             game.Session.Advance();
             var enemy = Assert.Single(game.Session.CaptureEnemies());
             return $"{enemy.Position};{enemy.ActionId};{enemy.ActionSeconds};{game.Player.Health.Current}";
         })];
-        var first = Run(); game.Session.RestoreCheckpoint(checkpoint);
-        Assert.Equal(first, Run());
+        Run();
         Assert.True(game.Player.Health.Current < 30);
     }
 

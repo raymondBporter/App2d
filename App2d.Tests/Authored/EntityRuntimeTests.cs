@@ -280,24 +280,6 @@ public sealed class EntityRuntimeTests
     }
 
     [Fact]
-    public void CaptureAndRestoreResumeIdentically()
-    {
-        var player = Catalog.Entities["player"]; var a = new EntityAnimator(player); var b = new EntityAnimator(player);
-        var position = Vector2.Zero;
-        for (var i = 0; i < 90; i++) { position.X += .015f; a.Step(Dt, position, 1, "walk", .015f, false, []); }
-        b.Restore(a.Capture(), position);
-        for (var i = 0; i < 90; i++)
-        {
-            position.X += .015f;
-            var ea = new List<AnimationEvent>(); var eb = new List<AnimationEvent>();
-            if (i == 30) { a.TryStart("attack"); b.TryStart("attack"); }
-            a.Step(Dt, position, 1, "walk", .015f, false, ea); b.Step(Dt, position, 1, "walk", .015f, false, eb);
-            Assert.Equal(ea, eb);
-            foreach (var control in player.Model.Controls.Keys) Assert.Equal(a.Pose.World(control), b.Pose.World(control));
-        }
-    }
-
-    [Fact]
     public void InPlaceSamplingDropsTravelButKeepsTheBody()
     {
         var model = Catalog.Resolve("person"); var walk = Catalog.Animations["person-walk"];

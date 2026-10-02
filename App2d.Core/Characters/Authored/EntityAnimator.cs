@@ -10,10 +10,6 @@ public readonly record struct AnimationEvent(string Kind, string Id, string? Sou
     public const string MarkerKind = "marker", EventKind = "event";
 }
 
-/// <summary>Everything an animator needs to resume exactly; immutable, for rollback and snapshots.</summary>
-public sealed record AnimatorState(string Role, double RoleTime, string? Action, double ActionTime, double PreviousActionTime, int ActionSequence,
-    bool Fresh, int Facing, ImmutableDictionary<string, Vector3> Anchors, bool ReverseRoleMotion = false);
-
 /// <summary>
 /// Gameplay animation state for one actor: locomotion phase, the playing action, world contact anchors and event
 /// dispatch. The controller owns movement; this never moves the actor. Locomotion phase advances by the ground distance
@@ -172,16 +168,6 @@ public sealed class EntityAnimator
         void Add(string id) => events.Add(new(AnimationEvent.MarkerKind, id, null, action, ActionSequence));
     }
 
-    public AnimatorState Capture() => new(Role, RoleTime, Action, ActionTime, PreviousActionTime, ActionSequence, _fresh, Facing, _hold.Capture(), _reverseRoleMotion);
-
-    public void Restore(AnimatorState state, Vector2 position, string? expression = null)
-    {
-        Role = state.Role; RoleTime = state.RoleTime; Action = state.Action; ActionTime = state.ActionTime; PreviousActionTime = state.PreviousActionTime;
-        ActionSequence = state.ActionSequence; _fresh = state.Fresh; Facing = state.Facing;
-        _reverseRoleMotion = state.ReverseRoleMotion;
-        _hold.Restore(state.Anchors, state.Facing);
-        Evaluate(position, expression);
-    }
 }
 
 /// <summary>
@@ -224,13 +210,6 @@ public sealed class ContactHold
         foreach (var chain in _anchors.Keys.Where(c => !_held.Contains(c)).ToList()) _anchors.Remove(chain);
         return placed with { Local = local };
     }
-
-    public ImmutableDictionary<string, Vector3> Capture() => _anchors.ToImmutableDictionary();
-    public void Restore(IReadOnlyDictionary<string, Vector3> anchors, int facing)
-    {
-        _facing = facing; _anchors.Clear();
-        foreach (var (chain, anchor) in anchors) _anchors[chain] = anchor;
-    }
 }
 
 /// <summary>Per-action hit deduplication: one attack instance damages each target at most once per window.</summary>
@@ -242,6 +221,4 @@ public sealed class HitLedger
         _hits.RemoveWhere(h => h.Sequence != sequence);
         return _hits.Add((sequence, window, target));
     }
-    public ImmutableArray<(int Sequence, string Window, int Target)> Capture() => [.. _hits];
-    public void Restore(IEnumerable<(int Sequence, string Window, int Target)> hits) { _hits.Clear(); _hits.UnionWith(hits); }
 }

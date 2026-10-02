@@ -170,10 +170,6 @@ public sealed class OneWayPlatform2DTests
 
         Assert.InRange(Vector2.Dot(actorObject.Transform.Position, normal), 17.999f, 18.001f);
         Assert.Single(world.LastContacts);
-        var checkpoint = world.CaptureSimulation();
-        surface.OneWaySurfaceNormal = null;
-        world.RestoreSimulation(checkpoint);
-        Assert.InRange(Vector2.Distance(normal, surface.OneWaySurfaceNormal!.Value), 0f, 0.00001f);
     }
 
     private static PhysicsWorld2D CreateWorld() =>

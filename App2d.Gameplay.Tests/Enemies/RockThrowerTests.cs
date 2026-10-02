@@ -48,10 +48,6 @@ public sealed class RockThrowerTests
         var landing = rock.Position + rock.Velocity * .85f + new Vector2(0, -rock.Gravity * .85f * .85f / 2);
         Assert.InRange(Vector2.Distance(landing, player.Position), 0, .01f);
         Assert.Contains(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "rock-throw");
-        var snapshot = enemy.CaptureSimulation();
-        enemy.TakeDamage(1, Vector2.Zero);
-        enemy.RestoreSimulation(snapshot);
-        Assert.Equal(rock, Assert.Single(enemy.CaptureState().Bolts));
     }
 
     [Theory, InlineData(false), InlineData(true)]
@@ -113,21 +109,15 @@ public sealed class RockThrowerTests
         player.WorldObject.Transform.Position = new(60, 26);
         Tick(enemy, player.Position, 1);
         Assert.True(enemy.Body.LinearVelocity.X < 0);
-        var checkpoint = enemy.CaptureSimulation();
         Tick(enemy, player.Position, 50);
         Assert.Equal(0, enemy.Body.LinearVelocity.X);
         Assert.False(enemy.CaptureState().IsAttacking);
         Tick(enemy, player.Position, 75);
         Assert.True(enemy.CaptureState().IsAttacking);
-        var state = enemy.CaptureState();
-        enemy.RestoreSimulation(checkpoint);
-        Tick(enemy, player.Position, 125);
-        Assert.Equal(state.ActionSeconds, enemy.CaptureState().ActionSeconds);
-        Assert.Equal(state.IsAttacking, enemy.CaptureState().IsAttacking);
     }
 
     [Theory, InlineData(false), InlineData(true)]
-    public void SoloAndPairedEncountersSpawnAndReplayTheirProjectiles(bool paired)
+    public void SoloAndPairedEncountersSpawnTheirProjectiles(bool paired)
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
         for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
@@ -140,14 +130,12 @@ public sealed class RockThrowerTests
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], things)
         { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
         for (var i = 0; i < 150; i++) game.Session.Advance();
-        var checkpoint = game.Session.CaptureCheckpoint();
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
         {
             game.Session.Advance();
             return JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.ActionId, e.ActionSeconds, e.Bolts)).ToArray(), new JsonSerializerOptions { IncludeFields = true });
         })];
-        var first = Run(); game.Session.RestoreCheckpoint(checkpoint);
-        Assert.Equal(first, Run());
+        Run();
         Assert.True(game.Player.Health.Current < 100);
     }
 }

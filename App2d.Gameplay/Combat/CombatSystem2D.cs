@@ -15,7 +15,6 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
     public CombatantRegistry2D Combatants { get; } = ArgGuard.RequireNotNull(combatants);
     public int DefeatedEnemies { get; private set; }
     public event Action<CombatDamage2D>? DamageResolved;
-    internal void RestoreSimulation(int defeatedEnemies) => DefeatedEnemies = defeatedEnemies;
 
     public bool ResolveAttack(
         SpatialObject2D hitbox,

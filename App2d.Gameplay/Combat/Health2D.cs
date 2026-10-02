@@ -35,12 +35,6 @@ public sealed class Health2D
         return true;
     }
 
-    internal void RestoreSimulation(int current)
-    {
-        ArgGuard.ThrowIfNotInClosedRange(current, 0, Maximum);
-        Current = current;
-    }
-
     public void Reset() => Current = Maximum;
 
     public void Reset(int current)

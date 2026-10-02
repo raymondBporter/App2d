@@ -56,18 +56,14 @@ public sealed class PlayerSpellTests
     }
 
     [Fact]
-    public void FractionalRechargeSurvivesRollbackAndPauseAndResetsOnRespawn()
+    public void FractionalRechargeSurvivesPauseAndResetsOnRespawn()
     {
         using var f = new Fixture(new() { StartingEnergy = 0, EnergyPerSecond = 7 });
         f.Steps(50);
-        var checkpoint = f.Session.CaptureCheckpoint();
-        var energy = Enumerable.Range(0, 200).Select(_ => f.Step(default).Players[0].Person.Spells.Energy).ToArray();
-        f.Session.RestoreCheckpoint(checkpoint);
         f.Session.SetPaused(true);
         Assert.Equal(2, f.Spells.Energy);
         f.Session.SetPaused(false);
-        var replay = Enumerable.Range(0, 200).Select(_ => f.Step(default).Players[0].Person.Spells.Energy).ToArray();
-        Assert.Equal(energy, replay);
+        f.Steps(200);
         f.Player.Reset(Vector2.Zero);
         f.Steps(17);
         Assert.Equal(0, f.Spells.Energy);
@@ -180,25 +176,6 @@ public sealed class PlayerSpellTests
     }
 
     [Fact]
-    public void MidHealRollbackRestoresProgressHealthEnergyAndCompletionEvents()
-    {
-        using var f = new Fixture();
-        f.Player.Health.Damage(12);
-        f.Steps(51, Heal);
-        var checkpoint = f.Session.CaptureCheckpoint();
-        var states = Enumerable.Range(0, 200).Select(_ => f.Step(Heal)).ToArray();
-        f.Session.RestoreCheckpoint(checkpoint);
-        var replay = Enumerable.Range(0, 200).Select(_ => f.Step(Heal)).ToArray();
-        for (var i = 0; i < states.Length; i++)
-        {
-            Assert.Equal(states[i].Players[0].Person, replay[i].Players[0].Person);
-            Assert.Equal(states[i].Events.ToArray(), replay[i].Events.ToArray());
-        }
-        Assert.Equal(30, f.Player.Health.Current);
-        Assert.Equal(30, f.Spells.Energy);
-    }
-
-    [Fact]
     public void CustomTimingAndSharedEnergyLimitBothSpells()
     {
         using var f = new Fixture(new() { ShotChargeSeconds = .1f, HealSeconds = .5f, StartingEnergy = 60, EnergyPerSecond = 0 });
@@ -263,13 +240,6 @@ public sealed class PlayerSpellTests
 
     private sealed class EmptyWorld : ISideScrollerSessionWorld2D
     {
-        private sealed record State : WorldSimulationState2D
-        {
-            public override System.Collections.Immutable.ImmutableArray<int> TerrainColliderIds => [];
-        }
-        public WorldSimulationState2D CaptureSimulation() => new State();
-        public void ValidateSimulation(WorldSimulationState2D state) => Assert.IsType<State>(state);
-        public void RestoreSimulation(WorldSimulationState2D state) => ValidateSimulation(state);
         public Rect2D Bounds => new(new(-10000), new(10000));
         public float GoalX => 9000;
         public void UpdateStreaming(Vector2 position) { }

@@ -14,10 +14,6 @@ namespace App2d.Gameplay.World;
 public sealed class SideScrollerSessionWorld2D(
     SideScrollerLevel2D level, ContactDamageSystem2D contactDamage) : ISideScrollerSessionWorld2D
 {
-    public ImmutableArray<int> TerrainColliderIds => level.TerrainColliderIds;
-    public WorldSimulationState2D CaptureSimulation() => level.CaptureSimulation();
-    public void ValidateSimulation(WorldSimulationState2D state) => level.ValidateSimulation(state);
-    public void RestoreSimulation(WorldSimulationState2D state) => level.RestoreSimulation(state);
     public LevelContent2D CaptureContent() => level.CaptureContent();
     public WorldState2D CaptureWorld() => level.CaptureWorld();
     public ImmutableArray<EnemyState2D> CaptureEnemies() => level.EnemySystem.CaptureStates();

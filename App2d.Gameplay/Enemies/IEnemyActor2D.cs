@@ -1,6 +1,5 @@
 using App2d.Contracts.Enemies;
 using App2d.Gameplay.Combat;
-using App2d.Gameplay.Simulation;
 using System.Collections.Immutable;
 using System.Numerics;
 
@@ -8,8 +7,6 @@ namespace App2d.Gameplay.Enemies;
 
 public interface IEnemyActor2D
 {
-    SimulationState2D CaptureSimulation() => throw new NotSupportedException("This participant does not support rollback.");
-    void RestoreSimulation(SimulationState2D state) => throw new NotSupportedException("This participant does not support rollback.");
     ICombatant2D Combatant { get; }
     EnemyState2D CaptureState();
     ImmutableArray<EnemyEvent2D> DrainEvents() => [];
