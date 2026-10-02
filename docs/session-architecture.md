@@ -1,63 +1,16 @@
 # Local session and client boundary
 
-The intended networking model is an authoritative session with shared simulation
-code that clients can eventually run predictively. This change establishes the
-first local boundary while preserving the existing single-player campaign.
+> Networking was considered and dropped on 2026-10-01. The compile-time project boundary,
+> rollback checkpoints, and replay buffer described in earlier versions of this document
+> were removed with it. Contracts, Gameplay, and Presentation are now folders inside the
+> `App2d` game project. The frame and observation flow below still describes the code.
 
-## Project boundaries
+The session advances the simulation at a fixed rate and hands immutable frames to the
+presentation. This document describes that flow.
 
-The compiler enforces the simulation/presentation split. Each project owns its
-files physically, and Contracts, Gameplay, and Presentation namespaces follow
-their project directories.
+## Session design decisions
 
-| Project | Responsibility | Internal dependencies |
-| --- | --- | --- |
-| `App2d.Core` (`net10.0`) | Engine primitives, geometry, collision detection, physics bodies and solvers | None |
-| `App2d.Contracts` (`net10.0`) | Commands, state observations, events, shared timing and traversal configuration | Core, Tiles |
-| `App2d.Gameplay` (`net10.0`) | Session, actors, combat, world simulation, local rollback | Contracts, Core, Tiles |
-| `App2d.Presentation` (Windows) | Views, camera, HUD, sound selection, local client endpoint | Contracts, Core, Tiles, Rendering, Audio |
-| `App2d.Levels` (`net10.0`) | Authored level storage and traversal configuration loading | Contracts, Core, Tiles |
-| `App2d` (Windows executable) | Composition, input devices, scheduling, editor, save-file I/O | Simulation, presentation, and their supporting projects |
-
-Collision and physics are folders within Core, using `App2d.Core.Collision` and
-`App2d.Core.Physics` namespaces. They no longer require separate project references.
-
-The future server can reference Gameplay without acquiring rendering, audio,
-Windows, or SQLite dependencies. A predictive client can also reference Gameplay;
-the presentation assembly only consumes the shared contracts. Rollback checkpoints
-and actor/action interfaces stay in Gameplay rather than in the observation contracts.
-
-`TraversalMetrics2D.FromGeometry` constructs shared configuration from values.
-`App2d.Levels.TraversalMetricsLoader2D.Load` owns manifest validation and file I/O.
-The host supplies a private copy of the authored ground-height profile to its
-camera callback, so the camera no longer reads the live simulation level.
-`BoilerBruteTiming2D` shares attack timing without a presentation reference to the actor.
-
-`Directory.Build.targets` checks resolved internal assembly references, including
-transitive ones. Adding a forbidden reference fails the build even if no code uses
-it yet. It also prevents the plain `net10.0` gameplay tests from acquiring the host
-or presentation. This checks assembly dependencies; it does not police every BCL
-API or prevent a host from passing an inappropriate callback.
-
-Simulation tests remain in `App2d.Gameplay.Tests`. Graphics/audio and client endpoint
-tests live in `App2d.Presentation.Tests`, whose integration tests may reference
-simulation and content loaders. Save-store tests live with host tests in `App2d.Tests`.
-
-```powershell
-dotnet build App2d.Gameplay/App2d.Gameplay.csproj
-dotnet test App2d.Gameplay.Tests/App2d.Gameplay.Tests.csproj
-dotnet build App2d.slnx
-dotnet test App2d.slnx
-```
-
-This extraction changes file ownership and dependency direction. Identity allocation,
-network transport, multi-player policy, prediction scheduling, and transferable
-corrections remain separate passes.
-
-## Network-readiness pass
-
-These decisions were made so that adding a transport later is a drop-in rather than
-a rewrite:
+These decisions shape how the session is built and advanced:
 
 - **One construction recipe.** `SideScrollerSessionDefinition2D` is a value (traversal
   metrics, tile map, authored specs, health, saved progress) and
@@ -285,94 +238,6 @@ provide a boundary for adding player membership later; enemy targeting, streamin
 checkpoints, and cameras still need explicit multi-player policies. No player
 limit or multiplayer performance claim follows from this extraction.
 
-## Simulation capture and restore
-
-`CaptureState()` and the frame messages remain client observations.
-`SideScrollerSession2D.CaptureCheckpoint()` instead returns an immutable,
-opaque `SessionCheckpoint2D` containing the current production simulation's
-mutable state at a completed tick boundary:
-
-- Tick, acknowledged input sequence, event sequence, queued facts, pause state,
-  respawn location/health, restart countdown, and goal/checkpoint progression.
-- Player and rival movement intent, jump buffers/coyote time, wall/ladder relatch,
-  jump sustain, dash availability/cooldown, footsteps, invulnerability, and health.
-- Equipment selection, charge/recovery/release state, every projectile pool slot
-  (including inactive slots), lifetime, creation sequence, buffered melee swings,
-  hitbox poses, attack numbers/directions, downward bounce state, and hit history.
-- All authored enemy kinds, AI and stun/attack timers, hammer connection state,
-  activation, queued occurrences, health/hit history, and the defeated-enemy count.
-- Platform path distance/direction, checkpoint entry/activation history, loaded
-  terrain chunks/revisions, and their collider identities.
-- Physics body poses, previous poses, velocities, forces/torques, motion/material/
-  collision settings, one-way exclusions, previous contacts, body/collider order,
-  collider allocation sequence, gravity, and solver iteration/substep settings.
-
-Snapshots own immutable value collections. They hold no live actor, physics body,
-scene, texture, sound voice, or mutable map reference. Terrain data is shared only
-through immutable chunk snapshots. Restoring recreates streamed terrain bodies,
-then restores physics references using collider IDs and reinstates solver/query
-ordering. Removed bodies immediately leave contact and one-way-exclusion lists.
-Scratch query buffers and spatial indexes are rebuilt rather than captured.
-
-```csharp
-var checkpoint = session.CaptureCheckpoint();
-// Record inputs while advancing normally.
-
-session.RestoreCheckpoint(checkpoint);
-foreach (var input in recordedInputsAfterCheckpoint)
-{
-    var replayedFrame = session.Advance(input);
-    // The caller decides which state/facts to present after replay.
-}
-```
-
-Restore assigns state directly: it does not call damage, reset, checkpoint entry,
-physics stepping, or other gameplay operations that emit occurrences. Subsequent
-replayed ticks generate their normal facts with restored tick/sequence stamps.
-This does not itself suppress sounds, save writes, or other effects if a caller
-chooses to deliver those replayed facts to presentation again. The existing local
-client still rejects old frames; no live reconciliation loop is wired into it.
-
-`SessionReplayBuffer2D` provides bounded input/checkpoint history (240 ticks by
-default). Advance through the buffer, then call `ReplayFrom(tick)` to restore that
-retained boundary and repeat its subsequent inputs with their original sequence
-numbers. It returns replayed frames and replaces the corresponding checkpoints.
-Expired history is rejected before restore. Outside session advances, restores,
-or pause changes invalidate the buffer; recreate it after resuming or changing
-session state outside the recorded input path. Direct capture/restore also works
-while paused. The host still owns the render accumulator.
-
-## Capture/restore boundaries
-
-This is local rollback for an **existing session with fixed level/actor
-configuration**. It is not a serialized save game, network message, or a way to
-construct a second session. Ownership and membership checks reject foreign
-checkpoints before mutation. Editable-map changes (including unloaded chunks),
-platform replacement, actor membership changes, and disposal invalidate older
-checkpoints. Flush pending editor changes before starting fresh history.
-Normal terrain streaming, actor death/respawn, and projectile creation/removal
-are supported and do not invalidate history.
-
-The session must receive its combat system and own the captured combatants.
-World/action implementations must explicitly support rollback; the interface
-defaults throw instead of silently omitting state. Physics capture supports the
-production built-in integration/filter/solver pipeline, without constraints or
-standalone non-physics colliders. Custom solvers, mutable constraints, or new
-subsystems need explicit checkpoint support before being used in this path.
-Static shapes, traversal metrics, actor definitions, and other configuration must
-remain fixed during retained history.
-
-The remaining prediction work includes constructing matching server/client
-instances with shared identities/configuration, a transferable correction format,
-authoritative input acknowledgements, prediction/reconciliation scheduling, remote
-interpolation, and presentation/effect confirmation policies. Replaying the same
-inputs produces matching IDs/stamps; changed inputs may change occurrence order,
-so sequence stamps alone do not match predicted effects across divergent branches.
-
-Exact replay tests on this runtime establish local repeatability, not
-cross-platform floating-point determinism. Capture currently favors explicit,
-complete state over allocation or bandwidth optimization.
-
 ## Verification
 
 The session tests use actual character movement and physics without graphics,
@@ -402,14 +267,6 @@ inside a session without graphics. They verify platform carrying/reversal,
 checkpoint entry, immutable terrain/halo revisions, cross-chunk ladder updates,
 platform replacement identity, view isolation, and level/view cleanup. The normal
 rendering smoke exercises the real terrain, checkpoints, goal, and platform views.
-
-Rollback tests capture during interacting gameplay and compare every subsequent
-checkpoint value and frame/event stream against the original run. They cover
-charge/fire/expiration/pool reuse, independent session identity allocation, buffered
-melee and hit history, all enemy kinds, lethal hits, platform reversal/carrying and
-drop-through, ladder/wall/jump/dash state, downward bounces, accumulated forces and
-spin, streamed collider ordering, checkpoint entry, death/respawn/goal progression,
-pause, invalidated/foreign state, and bounded history expiration.
 
 
 Interface tests attach at nonzero ticks, issue inputs ahead of responses, reconstruct

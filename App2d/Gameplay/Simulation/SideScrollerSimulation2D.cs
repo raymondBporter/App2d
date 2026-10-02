@@ -14,8 +14,8 @@ namespace App2d.Gameplay.Simulation;
 
 /// <summary>
 /// The one construction recipe for a side-scroller session and everything it owns. The
-/// local host, a future server, and a predicting client all build through here, so they
-/// cannot drift apart in wiring, layers, physics settings, or identity allocation.
+/// game, the tests, and the diagnostics all build through here, so they cannot drift
+/// apart in wiring, layers, physics settings, or identity allocation.
 /// </summary>
 public sealed class SideScrollerSimulation2D : IDisposable
 {

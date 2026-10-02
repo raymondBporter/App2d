@@ -1,23 +1,21 @@
 # App2d
 
-A deliberately small MonoGame/XNA 2D engine skeleton with compile-time module boundaries.
+A small MonoGame/XNA 2D engine and the side-scroller built on it.
 
-The solution has separate projects for core engine types, tiles, authored content,
-rendering, audio, and game code, plus the game and NoodleBRO rig-lab Windows executables.
-Collision and physics live inside Core as folders and namespaces.
-Each project physically owns its source files — there are no linked-file views.
-Core, tiles, levels, `App2d.Contracts`, `App2d.Gameplay`, and
-the gameplay tests target plain `net10.0`. Rendering uses MonoGame WindowsDX;
-rendering, audio, `App2d.Presentation`, the host, and their tests target
-`net10.0-windows10.0.19041.0`.
+The solution has five projects. `App2d.Core` is the engine: mathematics, geometry,
+collision, physics, tiles, rendering, audio, authored characters, and the WinForms game
+host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
+level storage, the editor, and diagnostics. `App2d.Tests` holds every test.
+`App2d.CharacterStudio` is the character editor and `App2d.Noodle` holds the rig
+experiments; both build on `App2d.Core`. `tools/ClothLab` is a small cape study.
+Everything targets `net10.0-windows10.0.19041.0`.
 
-`App2d.Contracts` owns commands, immutable observations/events, and shared
-configuration. `App2d.Gameplay` owns simulation and rollback; it cannot reference
-presentation, rendering, audio, or persistence. `App2d.Presentation` owns views,
-camera, HUD, sound selection, and the local client endpoint; it cannot reference
-simulation. `Directory.Build.targets` rejects forbidden direct or transitive internal
-assembly references. Their namespaces follow the owning project directories.
-See [the project boundaries](docs/session-architecture.md#project-boundaries).
+Within the game project, `Contracts` owns commands, immutable observations/events, and
+shared configuration; `Gameplay` owns the simulation; `Presentation` owns views, camera,
+HUD, and sound selection; `Levels` owns SQLite level storage. Those are folders and
+namespaces, not assemblies. Networking was considered and dropped on 2026-10-01; the
+remaining frame/observation layer is described in
+[the session architecture](docs/session-architecture.md).
 
 The engine is grouped by responsibility:
 
@@ -29,17 +27,17 @@ The engine is grouped by responsibility:
   `Similarity2D` — the validated rotation + uniform scale + mirror + translation pose
   that collision consumes. The namespace uses `Mathematics` rather than `Math` so it
   never shadows `System.Math`.
-- `App2d.Rendering` contains the renderer and shader abstractions.
+- `App2d.Core/Rendering` contains the renderer, shader abstractions, and the `GraphicsSurface2D` WinForms host surface.
 - `App2d.Core` presents guards, mathematics, animation, geometry, collision, physics, and the
-  render-agnostic `SpatialObject2D`. `App2d.Tiles` presents the tile maps and mesher.
+  render-agnostic `SpatialObject2D`. `App2d.Core/Tiles` presents the tile maps and mesher.
   `App2d.Core/Collision` contains collision work: `BroadPhase`, `Contacts`,
   `Filtering`, `Intersections`, and `Queries`.
-- `App2d.Levels` stores authored levels as SQLite files. Tiles are run-length encoded
+- `App2d/Levels` stores authored levels as SQLite files. Tiles are run-length encoded
   per chunk so a single edit rewrites a single row; a missing chunk row means an
   entirely empty chunk. It is the only project that references `Microsoft.Data.Sqlite`,
   and it never references simulation. It also loads authored player geometry into
   shared traversal configuration through `TraversalMetricsLoader2D`; its game
-  dependency is limited to `App2d.Contracts`.
+  dependency is limited to the `App2d.Contracts` namespace.
 - `CollisionSystem2D` owns runtime collider registration, collision layers and masks,
   cached static/dynamic spatial indexes, candidate discovery, and exact contacts. It has
   no dependency on physics; physics and gameplay are consumers of collision data.
@@ -85,8 +83,7 @@ and diagnostics only. IDs are distinct from authored level IDs. Object storage, 
 body references, and rendering ownership are unchanged; there is no packed storage.
 
 `SideScrollerSimulation2D.Create(SideScrollerSessionDefinition2D)` is the one recipe
-that builds a session and everything it owns; the host, a future server, and a
-predicting client all construct through it. The local game advances through
+that builds a session and everything it owns; the host constructs through it. The local game advances through
 `SideScrollerSession2D`: ID-addressed held-state input commands enter a fixed 120 Hz
 session (a player with no input this tick repeats its last command), and immutable
 per-player, enemy, level-content, and world observations plus gameplay events return
@@ -96,15 +93,11 @@ The production level, weapons, enemy actors, moving platforms, checkpoints, and
 terrain colliders run without constructing graphics or playing audio. Client presentation owns
 sprites, terrain, effects, HUD, and sound; the host handles persistence and editing.
 Terrain observations use cached immutable chunk revisions, including neighboring
-tiles for correct edge rendering. Simulation and presentation live in separate
-assemblies. A complete `SessionSnapshot2D` supports attaching at any tick; input
+tiles for correct edge rendering. Simulation and presentation are separate folders of the game project. A complete `SessionSnapshot2D` supports attaching at any tick; input
 production and display-time advancement run independently of received frames.
 Persistent character poses and attack phases reconstruct from state, and terrain
-observations can be rebuilt from values without a live map. Local simulation
-capture/restore and bounded input replay are available.
-Networking and client prediction/reconciliation are not yet wired up. See
-[the session architecture](docs/session-architecture.md) for the boundaries and
-next capture/restore work.
+observations can be rebuilt from values without a live map. See
+[the session architecture](docs/session-architecture.md) for the frame and observation flow.
 
 Geometry lives under `App2d.Core/Geometry`:
 
@@ -121,8 +114,8 @@ Geometry lives under `App2d.Core/Geometry`:
   the solid region and into permitted space.
 - `Rect2D` supplies local bounds to rendering and shaders.
 
-`App2d.Tiles/TileMap2D` stores compact authored maps as a bool-only grid; it carries
-no `TileKind2D`. `App2d.Tiles/EditableTileMap2D` is the only `IChunkedTileMap2D`
+`App2d.Core/Tiles/TileMap2D` stores compact authored maps as a bool-only grid; it carries
+no `TileKind2D`. `App2d.Core/Tiles/EditableTileMap2D` is the only `IChunkedTileMap2D`
 implementation: a dense, mutable map loaded from a level file rather
 than evaluated from a seed function. It still greedily merges each 32x32 chunk into
 AABB colliders on demand, and raises a `ChunkChanged` event that the in-game tile editor
@@ -144,10 +137,10 @@ The actual severed tops, including flowers, launch upward, tumble and flutter wi
 the wind, and fall under gravity. They disappear on terrain contact or fade out
 within one second. Cut state is limited to the nearby active simulation chunks and
 forgotten when those chunks unload, so returning grass is full height. Snapshot
-attachment and rollback preserve this bounded state; cuts are not written to the
+attachment preserves this bounded state; cuts are not written to the
 level or player save. Seeded branching trees occupy
 open stretches behind the terrain and actors; they are decorative and cannot be chopped.
-The shared rendering code lives in `App2d.Rendering/Vegetation`.
+The shared rendering code lives in `App2d.Core/Rendering/Vegetation`.
 Wind deformation currently runs on the CPU and uses the existing GPU triangle batch.
 The camera's terrain coverage includes extra foliage margin for overhanging canopies.
 
@@ -159,7 +152,7 @@ Painting mutates the loaded `EditableTileMap2D`,
 whose `ChunkChanged` event feeds a `DirtyChunkTracker2D`; the editor flushes that tracker once
 per frame so a drag rebuilds each affected chunk at most once instead of once per event. Each
 stroke commits its changed chunks to the level file in a single transaction. `TileEditSession2D`
-holds the strokes and undo history and lives in `App2d.Tiles`, so the editable core is testable
+holds the strokes and undo history and lives in `App2d.Core/Tiles`, so the editable core is testable
 without input or storage.
 
 Paint a vertical column of **Ladder** tiles to make a climbable ladder of any height.
@@ -413,7 +406,7 @@ respawning, an authorable goal flag, smooth bounded camera follow, and procedura
 depths. Authored moving platforms use kinematic one-way slabs that follow horizontal or
 vertical ping-pong paths with smooth turnarounds. Physics carries supported dynamic bodies
 along those surfaces. The same kinematic motion driver also accepts other `ICurve2D` paths;
-see [Kinematics](App2d.Gameplay/World/KINEMATICS.md).
+see [Kinematics](App2d/Gameplay/World/KINEMATICS.md).
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
 ledges are authored in `Assets/Static/levels/cavern/level.db`, the committed level file
 `LevelBootstrap2D` loads at startup. That load opens the file read-only, so ordinary
@@ -469,7 +462,7 @@ and `draw_zones` are available in the developer console. Geometry is authored in
 `Assets/Static/levels/cavern/zones.json`; music assignments live in
 `Assets/Static/audio/music/soundtrack.json`. See [music and zones](docs/music-and-zones.md).
 
-Person movement is owned by `App2d.Gameplay/Persons/PersonLocomotion2D`. `PersonMovementIntent2D` describes
+Person movement is owned by `App2d/Gameplay/Persons/PersonLocomotion2D`. `PersonMovementIntent2D` describes
 what a human or AI controller requested; locomotion turns that into desired velocity and grace-window
 state; `PhysicsWorld2D` decides what the level and active constraints permit. The motor
 then consumes new landing contacts, allowing a buffered jump to fire on the fixed step

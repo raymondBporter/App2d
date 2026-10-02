@@ -71,7 +71,7 @@ public sealed class SideScrollerGame : Game2D
         _saveStore = PlayerSaveStore2D.CreateDefault();
         var loadedSave = _saveStore.TryLoad();
 
-        // The same recipe a server or predicting client will use; the host only adds I/O and presentation.
+        // The one construction recipe for the simulation; the host only adds I/O and presentation.
         _simulation = SideScrollerSimulation2D.Create(new SideScrollerSessionDefinition2D(
             Traversal, tileMap,
             [.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)],

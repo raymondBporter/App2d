@@ -19,9 +19,9 @@ public static class SideScrollerLayers2D
 public readonly record struct SavedProgress2D(long SavePointId, int HitPoints);
 
 /// <summary>
-/// Everything needed to construct a session. A server and a predicting client that share
-/// a definition and construct from it in the same order get identical actors, identities,
-/// and physics; nothing here is a live simulation object.
+/// Everything needed to construct a session. Two sessions built from the same definition
+/// in the same order get identical actors, identities, and physics; nothing here is a live
+/// simulation object.
 /// </summary>
 public sealed record SideScrollerSessionDefinition2D(
     TraversalMetrics2D Traversal,
