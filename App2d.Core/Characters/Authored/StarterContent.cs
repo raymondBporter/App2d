@@ -38,10 +38,10 @@ public static class StarterContent
         ];
         model.Looks =
         [
-            new() { Id = "sage", Name = "Sage", Parts = new() { ["body"] = new() { Fill = "#d8e9db" } } },
-            new() { Id = "slate", Name = "Slate", Parts = new() { ["body"] = new() { Fill = "#b8c4d6" }, ["head"] = new() { Fill = "#efe6da", Face = "focused" } } },
-            new() { Id = "ember", Name = "Ember", Parts = new() { ["body"] = new() { Fill = "#eab596" }, ["head"] = new() { Face = "determined" } } },
-            new() { Id = "night", Name = "Night", Parts = new() { ["body"] = new() { Fill = "#7d879a" }, ["head"] = new() { Fill = "#e2d6c6", Face = "smug" } } },
+            new() { Id = "sage", Name = "Sage", Parts = new() { ["body"] = new() { Material = new() { Fill = "#d8e9db" } } } },
+            new() { Id = "slate", Name = "Slate", Parts = new() { ["body"] = new() { Material = new() { Fill = "#b8c4d6" } }, ["head"] = new() { Material = new() { Fill = "#efe6da" }, Face = "focused" } } },
+            new() { Id = "ember", Name = "Ember", Parts = new() { ["body"] = new() { Material = new() { Fill = "#eab596" } }, ["head"] = new() { Face = "determined" } } },
+            new() { Id = "night", Name = "Night", Parts = new() { ["body"] = new() { Material = new() { Fill = "#7d879a" } }, ["head"] = new() { Material = new() { Fill = "#e2d6c6" }, Face = "smug" } } },
         ];
         model.HurtLayouts =
         [
@@ -268,7 +268,7 @@ public static class StarterContent
         ModelAuthoring.AddMeasure(model, "leg", ["hip-1", "knee-1", "foot-1"]);
         foreach (var chain in model.Chains) chain.Scale = "leg";
         foreach (var control in model.Controls.Where(c => c.Id == "body" || c.Id.StartsWith("hip-", StringComparison.Ordinal))) control.Scale = "leg";
-        var shell = ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Fill = "#c9e0b8"; shell.Depth = -.05f;
+        var shell = ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" }; shell.Depth = -.05f;
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
         model.HurtLayouts = [new() { Id = "standard", Regions = [new() { Id = "shell", Controls = ["body", "hip-0", "hip-2"], Pad = .2f }, new() { Id = "legs", Controls = ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], Pad = .05f }] }];

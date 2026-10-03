@@ -7,6 +7,17 @@ public sealed record RenderMaterialDefinition2D
     public string? Fill { get; init; }
     public RenderOutlineDefinition2D? Outline { get; init; }
 
+    /// <summary>Apply only the values supplied by an appearance override.</summary>
+    public RenderMaterialDefinition2D WithOverride(RenderMaterialDefinition2D? value) => value is null ? this : this with
+    {
+        Fill = value.Fill ?? Fill,
+        Outline = value.Outline is null ? Outline : (Outline ?? new RenderOutlineDefinition2D()) with
+        {
+            Color = value.Outline.Color ?? Outline?.Color,
+            Width = value.Outline.Width ?? Outline?.Width,
+        },
+    };
+
     public void Validate(string field)
     {
         if (Fill is not null) Limit.Color(Fill, field + ".fill");

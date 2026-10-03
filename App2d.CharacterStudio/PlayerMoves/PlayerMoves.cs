@@ -152,8 +152,8 @@ internal static partial class PlayerMoves
     public static ModelVariant BruteVariant()
     {
         var variant = new PersonBuild { Legs = .95f, Torso = 1.05f, Arms = 1.1f, Width = 1.45f, Head = .95f }.Apply(PersonTemplate.Model(), "brute", "Brute");
-        variant.Parts["body"] = new() { Fill = "#8a7564" };
-        variant.Parts["head"] = new() { Fill = "#ead6c1", Face = "angry" };
+        variant.Parts["body"] = new() { Material = new() { Fill = "#8a7564" } };
+        variant.Parts["head"] = new() { Material = new() { Fill = "#ead6c1" }, Face = "angry" };
         return variant;
     }
 
@@ -248,8 +248,8 @@ internal static partial class PlayerMoves
     public static ModelVariant CinderVariant()
     {
         var variant = new PersonBuild { Legs = .9f, Torso = .95f, Arms = .95f, Width = 1.05f, Head = 1.05f }.Apply(PersonTemplate.Model(), "cinder", "Cinder");
-        variant.Parts["body"] = new() { Fill = "#e0784c" };
-        variant.Parts["head"] = new() { Fill = "#f3dcc6", Face = "smug" };
+        variant.Parts["body"] = new() { Material = new() { Fill = "#e0784c" } };
+        variant.Parts["head"] = new() { Material = new() { Fill = "#f3dcc6" }, Face = "smug" };
         return variant;
     }
 

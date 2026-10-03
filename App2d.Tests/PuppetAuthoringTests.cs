@@ -1,5 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Rendering.Characters;
+using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json;
 
@@ -10,7 +11,8 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void TrapezoidTapersTowardItsUpperControlAndPickingFollowsTheTaper()
     {
-        var part = new PuppetPart { Kind = "trapezoid", A = "base", B = "top", Width = 2, Height = 2, Roundness = 0, TopWidthScale = .7f };
+        var part = new PuppetPart { Kind = "trapezoid", A = "base", B = "top", Width = 2, Height = 2 };
+        part.Geometry = PartGeometry.FromPreset(part);
         // Local up points right in this pose, so the narrow end is at world X = 1.
         static Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
         var contour = PartGeometry.Contour(part, World);
@@ -18,20 +20,19 @@ public sealed class PuppetAuthoringTests
         Assert.Equal(1, contour.Where(p => p.X < -.999f).Max(p => MathF.Abs(p.Y)), 5);
         Assert.True(PartGeometry.Distance(part, World, new(.9f, .9f, 0)) > 1);
         Assert.True(PartGeometry.Distance(part, World, new(.9f, .6f, 0)) < 1);
-        Assert.True(PartGeometry.Distance(part with { Kind = "box" }, World, new(.9f, .9f, 0)) < 1);
+        Assert.True(PartGeometry.Distance(part with { Geometry = RectangleShapeDefinition2D.FromSize(Vector2.One) }, World, new(.9f, .9f, 0)) < 1);
     }
 
     [Fact]
-    public void EditorCanAddBothBoxesAndTrapezoidsAndSaveTheirShapeSettings()
+    public void EditorCanAddRoundedBoxesAndFourVertexTrapezoids()
     {
         var model = Core.Characters.Authored.PersonTemplate.Model();
         var box = Core.Characters.Authored.ModelAuthoring.AddPart(model, "box", "hips");
         var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, "trapezoid", "hips");
-        trapezoid.TopWidthScale = .6f;
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
         Assert.Equal("box", restored.Parts.Single(p => p.Id == box.Id).Kind);
-        Assert.Equal(.6f, restored.Parts.Single(p => p.Id == trapezoid.Id).TopWidthScale);
-        Assert.Equal("trapezoid", restored.Parts.Single(p => p.Id == "body").Kind);
+        Assert.Equal(4, Assert.IsType<SimplePolygonShapeDefinition2D>(restored.Parts.Single(p => p.Id == trapezoid.Id).Geometry).Vertices.Count);
+        Assert.Equal("polygon", restored.Parts.Single(p => p.Id == "body").Kind);
     }
 
     [Fact]
@@ -50,8 +51,13 @@ public sealed class PuppetAuthoringTests
 
         Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Trapezoid);
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
-        Assert.Equal(PuppetPartKinds.Trapezoid, restored.Parts.Single().Kind);
+        Assert.Equal(PuppetPartKinds.Polygon, restored.Parts.Single().Kind);
         Assert.Equal(id, restored.Parts.Single().Id);
+
+        var stroke = Core.Characters.Authored.ModelAuthoring.AddPart(model, PuppetPartKinds.Stroke, "root", "tip");
+        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, stroke.Id, PuppetPartKinds.Box);
+        Assert.NotNull(stroke.RenderMaterial.Fill);
+        Assert.NotNull(stroke.RenderMaterial.Outline);
     }
 
     [Fact]

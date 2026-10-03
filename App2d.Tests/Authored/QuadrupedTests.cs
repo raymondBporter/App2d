@@ -43,24 +43,25 @@ public sealed class QuadrupedTests
     [Fact]
     public void ConcaveCutoutPickingAndPaintRespectTheNotch()
     {
+        List<PuppetPoint> points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)];
         var part = new PuppetPart
         {
             A = "body",
             Kind = "polygon",
             Width = 1,
             Height = 1,
-            Points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)],
-            Paint = [new() { Fill = "#ff0000", Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }]
+            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }]
         };
+        part.Material = new() { Fill = "#fff8e7", Outline = new() };
+        PartGeometry.SetPolygon(part, points);
         part.Validate(_ => true);
         Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
         Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.8f, .8f, 0)) > 1);
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(part.Points.Select(p => p.XY)); Assert.Equal(.51f, mesh.Area, 5);
+        var mesh = TriangleMesh2D.TriangulateSimplePolygon(points.Select(p => p.XY)); Assert.Equal(.51f, mesh.Area, 5);
         var drawing = new PuppetDrawing(); drawing.Build("#000000", 0, [part], _ => Vector3.Zero);
         foreach (var vertex in drawing.Mesh.Vertices)
             Assert.True(vertex.Position.X <= .30001f || vertex.Position.Y <= .30001f, "Fill or paint spills across the notch.");
-        part.Points = [new(0, 0), new(1, 1), new(0, 1), new(1, 0)];
-        Assert.Throws<InvalidDataException>(() => part.Validate(_ => true));
+        Assert.Throws<InvalidDataException>(() => PartGeometry.SetPolygon(part, [new(0, 0), new(1, 1), new(0, 1), new(1, 0)]));
     }
 
     [Fact]

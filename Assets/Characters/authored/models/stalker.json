@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 1,
+  "version": 2,
   "id": "stalker",
   "name": "Stalker",
   "structureRevision": 1,
@@ -144,8 +144,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "stroke-2",
@@ -163,8 +162,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "stroke-3",
@@ -182,8 +180,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "stroke-4",
@@ -201,8 +198,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "stroke-5",
@@ -220,8 +216,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "stroke-6",
@@ -239,8 +234,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "ellipse",
@@ -262,8 +256,7 @@
       "material": {
         "fill": "#c9e0b8",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     }
   ],
   "sockets": [

@@ -10,16 +10,15 @@ public sealed record PartOverride
     public float? Height { get; set; }
     public float? OffsetX { get; set; }
     public float? OffsetY { get; set; }
-    public string? Fill { get; set; }
     public RenderMaterialDefinition2D? Material { get; set; }
-    public float? OutlineWidth { get; set; }
-    public string? OutlineColor { get; set; }
     public List<PartPaint>? Paint { get; set; }
     /// <summary>Default expression; "none" removes the face.</summary>
     public string? Face { get; set; }
     public float? FaceX { get; set; }
     public bool? Hidden { get; set; }
-    [JsonIgnore] public bool IsEmpty => this == new PartOverride();
+    [JsonIgnore] public bool IsEmpty => Width is null && Height is null && OffsetX is null && OffsetY is null &&
+        Material?.Fill is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&
+        Paint is null && Face is null && FaceX is null && Hidden is null;
 
     /// <summary>Range and vocabulary checks shared by variants and look presets.</summary>
     public static void Check(PartOverride? part, string field)
@@ -29,10 +28,7 @@ public sealed record PartOverride
         if (part.Height is { } height) new Limit(.001f, 100).Check(height, field + ".height");
         if (part.OffsetX is { } x) new Limit(-100, 100).Check(x, field + ".offsetX");
         if (part.OffsetY is { } y) new Limit(-100, 100).Check(y, field + ".offsetY");
-        if (part.Fill is not null) Limit.Color(part.Fill, field + ".fill");
         part.Material?.Validate(field + ".material");
-        if (part.OutlineWidth is { } outline) new Limit(0, 1).Check(outline, field + ".outlineWidth");
-        if (part.OutlineColor is not null) Limit.Color(part.OutlineColor, field + ".outlineColor");
         PartPaint.Check(part.Paint);
         if (part.Face is not null && part.Face != "none" && !FaceExpressions.Contains(part.Face)) throw new InvalidDataException($"{field}.face: unknown expression '{part.Face}'.");
         if (part.FaceX is { } faceX) new Limit(-1, 1).Check(faceX, field + ".faceX");
@@ -45,10 +41,7 @@ public sealed record PartOverride
         Height = over.Height ?? Height,
         OffsetX = over.OffsetX ?? OffsetX,
         OffsetY = over.OffsetY ?? OffsetY,
-        Fill = over.Fill ?? Fill,
-        Material = over.Material ?? Material,
-        OutlineWidth = over.OutlineWidth ?? OutlineWidth,
-        OutlineColor = over.OutlineColor ?? OutlineColor,
+        Material = Material is null ? over.Material : Material.WithOverride(over.Material),
         Paint = over.Paint ?? Paint,
         Face = over.Face ?? Face,
         FaceX = over.FaceX ?? FaceX,
@@ -60,8 +53,9 @@ public sealed record PartOverride
 public sealed class ModelVariant
 {
     public const string FormatId = "app2d-variant";
+    public const int CurrentVersion = 2;
     public string Format { get; set; } = FormatId;
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Base { get; set; } = "";
@@ -78,7 +72,7 @@ public sealed class ModelVariant
     public void Validate()
     {
         var owner = $"Variant '{Id}'";
-        if (Format != FormatId || Version != 1) throw new InvalidDataException($"{owner}: unsupported format/version.");
+        if (Format != FormatId || Version != CurrentVersion) throw new InvalidDataException($"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "variant id"); AuthoredAsset.RequireId(Base, $"{owner} base");
         if (string.IsNullOrWhiteSpace(Name)) throw new InvalidDataException($"{owner}: a name is required.");
         if (Build is null || Rest is null || Parts is null) throw new InvalidDataException($"{owner}: collections cannot be null.");

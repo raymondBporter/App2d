@@ -1,4 +1,5 @@
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -121,8 +122,10 @@ public static class ModelAuthoring
     public static PuppetPart AddPart(CharacterModel model, string kind, string a, string? b = null)
     {
         var part = new PuppetPart { Id = UniqueId(kind, model.Parts.Select(p => p.Id)), Kind = kind, A = a, B = b, Face = "none" };
-        if (kind == "polygon") part.Points = [new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)];
         if (PuppetPartKinds.IsStroke(kind)) part.Width = model.LineWidth;
+        part.Geometry = PartGeometry.FromPreset(part);
+        part.Material = PuppetPartKinds.IsStroke(kind) ? new RenderMaterialDefinition2D()
+            : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Parts.Add(part); model.Validate(); return part;
     }
 
@@ -136,6 +139,7 @@ public static class ModelAuthoring
         part.Frame = boneId;
         part.OffsetX = bone.Length / 2;
         if (kind == PuppetPartKinds.Box) { part.Width = bone.Length; part.Height = .2f; }
+        part.Geometry = PartGeometry.FromPreset(part);
         model.Validate();
         return part;
     }
@@ -154,7 +158,9 @@ public static class ModelAuthoring
 
         if (PuppetPartKinds.IsStroke(kind)) part.Frame = null;
         part.Kind = kind;
-        part.Geometry = null;
+        part.Geometry = PartGeometry.FromPreset(part);
+        if (part.Geometry is ShapeDefinition2D && part.Material is { Fill: null, Outline: null })
+            part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Validate();
     }
 

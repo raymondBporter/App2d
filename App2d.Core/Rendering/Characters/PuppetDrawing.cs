@@ -79,7 +79,7 @@ public sealed class PuppetDrawing
             var outlineWidth = outline?.Width ?? lineWidth;
             var outlineColor = outline?.Color is { } color ? ColorExtensions.FromHexRgb(color) : ink;
             var face = expression?.Invoke(part) ?? part.Face;
-            if (part.Geometry is CurveDefinition2D || part.Geometry is null && PuppetPartKinds.IsStroke(part.Kind))
+            if (part.Geometry is CurveDefinition2D)
             {
                 var path = PartGeometry.Contour(part, world);
                 var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink;
@@ -98,8 +98,6 @@ public sealed class PuppetDrawing
                 var fillColor = ColorExtensions.FromHexRgb(shapeFill);
                 if (part.Geometry is ShapeDefinition2D typed && PartGeometry.ShapeOf(typed) is SimplePolygon2D polygon)
                     Mesh.Add(polygon.Mesh, vertex => frame.At(new(vertex.X * part.Width, vertex.Y * part.Height)), fillColor);
-                else if (part.Kind == "polygon")
-                    Mesh.Add(TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => new Vector2(p.X * part.Width, p.Y * part.Height)), 1e-8), frame.At, fillColor);
                 else Mesh.Polygon(contour, fillColor, null, 0);
             }
             PartPainting.Add(Mesh, part, frame, contour);

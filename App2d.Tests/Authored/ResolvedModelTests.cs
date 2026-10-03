@@ -12,7 +12,7 @@ public sealed class ResolvedModelTests
         Name = "Long arm",
         Base = "creature",
         Rest = { ["elbow"] = new(.6f, 1.2f), ["hand"] = new(1.2f, 1.5f) },
-        Parts = { ["torso"] = new() { Width = .9f, Fill = "#aa3300" } },
+        Parts = { ["torso"] = new() { Width = .9f, Material = new() { Fill = "#aa3300" } } },
     };
 
     [Fact]
@@ -24,7 +24,7 @@ public sealed class ResolvedModelTests
         TestModels.Near(new(1.2f, 1.5f, 0), resolved.Rest["hand"]);
         Assert.Equal(new PuppetPoint(.8f, 1.5f), model.Controls.Single(c => c.Id == "hand").Rest);
         var torso = resolved.Parts.Single(p => p.Id == "torso");
-        Assert.Equal(.9f, torso.Width); Assert.Equal("#aa3300", torso.Fill);
+        Assert.Equal(.9f, torso.Width); Assert.Equal("#aa3300", torso.RenderMaterial.Fill);
         Assert.Equal(.4f, model.Parts.Single(p => p.Id == "torso").Width);
         Assert.Equal(1.5f * 2 * MathF.Sqrt(.2f), resolved.Measures["arm"], 4);
         Assert.Equal(2 * MathF.Sqrt(.26f), resolved.Measures["leg"], 4);
@@ -67,7 +67,7 @@ public sealed class ResolvedModelTests
             case "unknown-control": variant.Rest["tail"] = new(1, 1); break;
             case "unknown-part": variant.Parts["wing"] = new() { Width = 1 }; break;
             case "zero-bone": variant.Rest["elbow"] = new(0, 1.5f); break;
-            case "bad-fill": variant.Parts["torso"].Fill = "red"; break;
+            case "bad-fill": variant.Parts["torso"].Material = new() { Fill = "red" }; break;
         }
         var error = Assert.Throws<InvalidDataException>(() => ResolvedModel.From(TestModels.Creature(), variant));
         Assert.Contains(fragment, error.Message);

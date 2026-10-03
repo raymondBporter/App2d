@@ -130,6 +130,7 @@ internal static class AssetDocuments
         new(AssetKind.Model, model, model.Id, path, m => m.ToJson(), m => m.Name, CharacterModel.FromDraftJson);
     public static AssetDocument<ModelVariant> Of(ModelVariant variant, string? path) => new(AssetKind.Variant, variant, variant.Id, path, v => v.ToJson(), v => v.Name);
     public static AssetDocument<MotionClip> Of(MotionClip clip, string? path) => new(AssetKind.Animation, clip, clip.Id, path, c => c.ToJson(), c => c.Name);
-    public static AssetDocument<PropAsset> Of(PropAsset prop, string? path) => new(AssetKind.Prop, prop, prop.Id, path, p => p.ToSnapshotJson(), p => p.Name);
+    public static AssetDocument<PropAsset> Of(PropAsset prop, string? path) =>
+        new(AssetKind.Prop, prop, prop.Id, path, p => p.ToSnapshotJson(), p => p.Name, PropAsset.FromDraftJson);
     public static AssetDocument<EntityAsset> Of(EntityAsset entity, string? path) => new(AssetKind.Entity, entity, entity.Id, path, e => e.ToJson(), e => e.Name);
 }

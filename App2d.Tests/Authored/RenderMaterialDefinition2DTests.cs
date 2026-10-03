@@ -1,6 +1,9 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Shapes;
+using App2d.Core.Geometry;
+using App2d.Core.Curves;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
@@ -30,6 +33,7 @@ public sealed class RenderMaterialDefinition2DTests
         var part = new PuppetPart
         {
             A = "root", Face = "none", Width = 1, Height = 1,
+            Geometry = RectangleShapeDefinition2D.FromSize(Vector2.One),
             Material = new()
             {
                 Fill = "#123456",
@@ -42,14 +46,14 @@ public sealed class RenderMaterialDefinition2DTests
         Assert.Contains(ColorExtensions.FromHexRgb("#123456"), colors);
         Assert.Contains(ColorExtensions.FromHexRgb("#abcdef"), colors);
 
-        var changed = ResolvedModel.Override(part, new PartOverride { Fill = "#654321" });
+        var changed = ResolvedModel.Override(part, new PartOverride { Material = new() { Fill = "#654321" } });
         Assert.Equal("#123456", part.Material!.Fill);
         Assert.Equal("#654321", changed.Material!.Fill);
         Assert.Equal("#abcdef", changed.Material.Outline!.Color);
 
-        var recolored = ResolvedModel.Override(part, new PartOverride { OutlineColor = "#ff8800" });
-        Assert.Equal("#abcdef", part.OutlineColor);
-        Assert.Equal("#ff8800", recolored.OutlineColor);
+        var recolored = ResolvedModel.Override(part, new PartOverride { Material = new() { Outline = new() { Color = "#ff8800" } } });
+        Assert.Equal("#abcdef", part.RenderMaterial.Outline?.Color);
+        Assert.Equal("#ff8800", recolored.RenderMaterial.Outline?.Color);
     }
 
     [Fact]
@@ -62,7 +66,7 @@ public sealed class RenderMaterialDefinition2DTests
             [
                 new PropShape
                 {
-                    Kind = "polygon", Points = [new(0, 0), new(1, 0), new(0, 1)],
+                    Geometry = new SimplePolygonShapeDefinition2D { Vertices = [new(0, 0), new(1, 0), new(0, 1)] },
                     Material = new() { Fill = "#224466", Outline = new() { Color = "#ffeeaa", Width = .03f } }
                 }
             ]
@@ -81,9 +85,9 @@ public sealed class RenderMaterialDefinition2DTests
         Assert.Contains(ColorExtensions.FromHexRgb("#ffeeaa"), colors);
 
         var solid = PropGeometry.Extrude([new(0, 0), new(1, 0), new(0, 1)], .1f, "#224466");
-        solid.OutlineColor = "#ff8800";
+        solid.Material = solid.RenderMaterial with { Outline = solid.RenderMaterial.Outline! with { Color = "#ff8800" } };
         Assert.Equal("#ff8800", solid.Material!.Outline!.Color);
-        solid.Outlined = false;
+        solid.Material = solid.RenderMaterial with { Outline = null };
         Assert.Null(solid.Material.Outline);
     }
 
@@ -93,8 +97,28 @@ public sealed class RenderMaterialDefinition2DTests
         var model = CharacterModel.FromJson(PersonTemplate.Model().ToJson());
         var document = AssetDocuments.Of(model, null);
         var before = document.Serialize();
-        document.Edit(() => document.Asset.Parts.Single(part => part.Id == "body").Fill = "#123456");
+        document.Edit(() =>
+        { var part = document.Asset.Parts.Single(part => part.Id == "body"); part.Material = part.RenderMaterial with { Fill = "#123456" }; });
         document.Undo();
         Assert.Equal(before, document.Serialize());
+    }
+
+    [Fact]
+    public void PropUndoRestoresPointsDerivedFromTypedGeometry()
+    {
+        var prop = new PropAsset
+        {
+            Id = "undo-prop", Name = "Undo prop",
+            Shapes = [new()
+            {
+                Geometry = new LineCurveDefinition2D { Start = new(0, 0), End = new(1, 0) },
+                Depths = [.1f, .2f], Material = new() { Fill = "#224466", Outline = new() }
+            }]
+        };
+        prop.Validate();
+        var document = AssetDocuments.Of(prop, null);
+        document.Edit(() => document.Asset.Shapes[0].Width = .2f);
+        document.Undo();
+        Assert.Equal([.1f, .2f], document.Asset.Shapes[0].Points.Select(p => p.Z));
     }
 }

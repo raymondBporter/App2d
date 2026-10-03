@@ -49,7 +49,7 @@ public sealed class CleanAuthoringTests : IDisposable
             }
             ModelAuthoring.AddMeasure(m, "leg", ["front-hip", "front-knee", "front-foot"]);
             foreach (var chain in m.Chains) chain.Scale = "leg";
-            var shell = ModelAuthoring.AddPart(m, "ellipse", "body"); shell.Width = .8f; shell.Height = .4f; shell.Fill = "#9ec27a"; shellPart = shell.Id;
+            var shell = ModelAuthoring.AddPart(m, "ellipse", "body"); shell.Width = .8f; shell.Height = .4f; shell.Material = shell.RenderMaterial with { Fill = "#9ec27a" }; shellPart = shell.Id;
             m.Sockets.Add(new() { Id = "mouth", Control = "jaw" });
             m.HurtLayouts.Add(new() { Id = "body", Regions = [new() { Id = "shell", Controls = ["body", "jaw", "front-hip", "back-hip"], Pad = .12f }] });
         }), s.Message);
@@ -80,7 +80,7 @@ public sealed class CleanAuthoringTests : IDisposable
         // Variant and entity. The GreenDinosaur placement spawns whatever entity is called stalker-pest.
         Assert.True(s.NewVariant("red-beetle", "Red beetle", "beetle"), s.Message);
         var variant = s.SubjectVariant!;
-        Assert.True(s.Edit(variant, () => variant.Asset.Parts[shellPart] = new() { Fill = "#c9563c" }), s.Message);
+        Assert.True(s.Edit(variant, () => variant.Asset.Parts[shellPart] = new() { Material = new() { Fill = "#c9563c" } }), s.Message);
         Assert.True(s.NewEntity("stalker-pest", "Red beetle pest", "red-beetle", EntityAuthoring.Guard), s.Message);
         var entity = s.EntityDocument!;
         Assert.True(s.Edit(entity, () =>

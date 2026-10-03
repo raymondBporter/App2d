@@ -13,5 +13,4 @@ public static class PuppetPartKinds
         [Ellipse, Box, Trapezoid, Polygon, Stroke];
 
     public static bool IsStroke(string kind) => kind == Stroke;
-    public static bool HasRoundness(string kind) => kind is Box or Trapezoid;
 }

@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
 
@@ -76,7 +77,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 session.Edit(boneDocument, () =>
                 {
                     var capsule = ModelAuthoring.AddPartToBone(boneDocument.Asset, PuppetPartKinds.Box, anchor);
-                    capsule.Roundness = 1;
+                    PartGeometry.SetRoundedRectangleRadius(capsule, capsule.Height / 2f);
                     Select(part: capsule.Id);
                 });
             }
@@ -346,60 +347,69 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             ImGui.SetNextItemWidth(-1);
             if (ImGui.SliderFloat("##" + label, ref value, min, max, "%.3f")) change(p => set(p, value));
         }
-        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => { p.Width = v; if (overrides is null && p.Kind == PuppetPartKinds.Box) p.Geometry = null; }, o => o.Width = null);
+        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => { if (overrides is null) PartGeometry.ResizeRoundedRectangle(p, v, p.Height); p.Width = v; }, o => o.Width = null);
         if (!PuppetPartKinds.IsStroke(part.Kind))
         {
-            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => { p.Height = v; if (overrides is null && p.Kind == PuppetPartKinds.Box) p.Geometry = null; }, o => o.Height = null);
+            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => { if (overrides is null) PartGeometry.ResizeRoundedRectangle(p, p.Width, v); p.Height = v; }, o => o.Height = null);
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
-            if (overrides is null && PuppetPartKinds.HasRoundness(part.Kind)) Float("Roundness", part.Roundness, 0, 1, false, (p, v) => { p.Roundness = v; p.Geometry = null; }, _ => { });
-            if (overrides is null && part.Kind == "trapezoid") Float("Top width scale", part.TopWidthScale, .01f, 1, false, (p, v) => { p.TopWidthScale = v; p.Geometry = null; }, _ => { });
-            if (overrides is null && part.Kind == "polygon" && ImGui.CollapsingHeader("Edit cutout silhouette"))
+            if (overrides is null && part.Geometry is RoundedRectangleShapeDefinition2D rounded)
+                Float("Corner radius", rounded.Radius, 0, MathF.Min(part.Width, part.Height) / 2f, false,
+                    PartGeometry.SetRoundedRectangleRadius, _ => { });
+            if (overrides is null && part.Geometry is SimplePolygonShapeDefinition2D polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
             {
                 ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
                 Ui.Help("Perimeter points follow the attachment frame and scale with width and height. Keep the outline from crossing itself.");
+                var vertices = polygon.Vertices.Select(point => new PuppetPoint(point.X, point.Y)).ToList();
                 void Cutout(Action<List<PuppetPoint>> edit)
                 {
-                    var points = new List<PuppetPoint>(part.Points!); edit(points);
-                    try { PartGeometry.CheckCutout(points); change(p => { p.Points = points; p.Geometry = null; }); }
+                    var points = new List<PuppetPoint>(vertices); edit(points);
+                    try { PartGeometry.CheckCutout(points); change(p => PartGeometry.SetPolygon(p, points)); }
                     catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
                 }
-                for (var i = 0; i < part.Points!.Count; i++)
+                for (var i = 0; i < vertices.Count; i++)
                 {
-                    var index = i; var xy = part.Points[i].XY; ImGui.PushID("cutout-" + i);
+                    var index = i; var xy = vertices[i].XY; ImGui.PushID("cutout-" + i);
                     if (Ui.Drag2("Point " + (i + 1), ref xy, .005f, -2, 2)) Cutout(p => p[index] = new(xy.X, xy.Y));
-                    if (part.Points.Count < 64 && ImGui.SmallButton("Insert after")) Cutout(p => p.Insert(index + 1, PuppetPoint.Lerp(p[index], p[(index + 1) % p.Count], .5f)));
+                    if (vertices.Count < 64 && ImGui.SmallButton("Insert after")) Cutout(p => p.Insert(index + 1, PuppetPoint.Lerp(p[index], p[(index + 1) % p.Count], .5f)));
                     ImGui.SameLine();
-                    if (part.Points.Count > 3 && ImGui.SmallButton("Remove")) Cutout(p => p.RemoveAt(index));
+                    if (vertices.Count > 3 && ImGui.SmallButton("Remove")) Cutout(p => p.RemoveAt(index));
                     ImGui.PopID();
                 }
             }
-            if (!Marked("Fill", overrides?.Fill is not null, o => o.Fill = null))
-            { var fill = part.Fill; if (Ui.ColorHex("##fill", ref fill)) change(p => p.Fill = fill); }
-            Float("Outline width", part.OutlineWidth ?? .045f, 0, .15f, overrides?.OutlineWidth is not null, (p, v) => p.OutlineWidth = v, o => o.OutlineWidth = null);
-            if (part.RenderMaterial.Outline is not null && !Marked("Outline color", overrides?.OutlineColor is not null, o => o.OutlineColor = null))
+            if (!Marked("Fill", overrides?.Material?.Fill is not null, o => o.Material = o.Material is null ? null : o.Material with { Fill = null }))
+            { var fill = part.RenderMaterial.Fill ?? "#fff8e7"; if (Ui.ColorHex("##fill", ref fill)) change(p => p.Material = p.RenderMaterial with { Fill = fill }); }
+            Float("Outline width", part.RenderMaterial.Outline?.Width ?? .045f, 0, .15f, overrides?.Material?.Outline?.Width is not null,
+                (p, v) => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = v } },
+                o => o.Material = o.Material is null ? null : o.Material with
+                { Outline = o.Material.Outline?.Color is { } color ? new RenderOutlineDefinition2D { Color = color } : null });
+            if (part.RenderMaterial.Outline is not null && !Marked("Outline color", overrides?.Material?.Outline?.Color is not null,
+                o => o.Material = o.Material is null ? null : o.Material with
+                { Outline = o.Material.Outline?.Width is { } width ? new RenderOutlineDefinition2D { Width = width } : null }))
             {
-                var outlineColor = part.OutlineColor ?? Structure?.Ink ?? "#222b32";
-                if (Ui.ColorHex("##outline-color", ref outlineColor)) change(p => p.OutlineColor = outlineColor);
-                if (part.OutlineColor is not null && ImGui.SmallButton("Use model ink")) change(p => p.OutlineColor = null);
+                var outlineColor = part.RenderMaterial.Outline?.Color ?? Structure?.Ink ?? "#222b32";
+                if (Ui.ColorHex("##outline-color", ref outlineColor)) change(p => p.Material = p.RenderMaterial with { Outline = p.RenderMaterial.Outline! with { Color = outlineColor } });
+                if (part.RenderMaterial.Outline?.Color is not null && ImGui.SmallButton("Use model ink"))
+                    change(p => p.Material = p.RenderMaterial with { Outline = p.RenderMaterial.Outline! with { Color = null } });
             }
             if (!Marked("Surface paint", overrides?.Paint is not null, o => o.Paint = null) && ImGui.CollapsingHeader("Edit surface paint"))
             {
                 Ui.Help("Paint follows the body's shape and motion. Coordinates are relative to its width and height. Use the body fill as the fabric color.");
                 void Paint(Action<List<PartPaint>> edit)
                 {
-                    var patches = (part.Paint ?? []).Select(p => new PartPaint { Fill = p.Fill, Points = [.. p.Points] }).ToList();
+                    var patches = (part.Paint ?? []).Select(p => new PartPaint { Material = p.Material, Points = [.. p.Points] }).ToList();
                     edit(patches);
                     try { PartPaint.Check(patches); change(p => p.Paint = patches); }
                     catch (InvalidDataException) { /* Keep the last valid convex patch during a drag. */ }
                 }
-                if (ImGui.Button("Add paint patch")) Paint(p => p.Add(new() { Fill = "#754222", Points = [new(-.1f, -.1f), new(.1f, -.1f), new(.1f, .1f), new(-.1f, .1f)] }));
+                if (ImGui.Button("Add paint patch")) Paint(p => p.Add(new() { Material = new() { Fill = "#754222" }, Points = [new(-.1f, -.1f), new(.1f, -.1f), new(.1f, .1f), new(-.1f, .1f)] }));
                 for (var i = 0; i < (part.Paint?.Count ?? 0); i++)
                 {
                     var index = i; var patch = part.Paint![i]; ImGui.PushID("paint-" + i);
                     if (ImGui.TreeNode("Patch " + (i + 1)))
                     {
-                        var color = patch.Fill; if (Ui.ColorHex("Color", ref color)) Paint(p => p[index].Fill = color);
+                        var color = patch.Material!.Fill!;
+                        if (Ui.ColorHex("Color", ref color)) Paint(p => p[index].Material = p[index].Material! with { Fill = color });
                         for (var j = 0; j < patch.Points.Count; j++)
                         {
                             var point = j; var xy = patch.Points[j].XY;
@@ -490,7 +500,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         foreach (var look in basis.Asset.Looks)
         {
             if (ImGui.SmallButton(look.Name + "##look-" + look.Id)) session.ApplyLook(look.Id);
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Fill, p.Value.Face, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")));
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Material?.Fill, p.Value.Face, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")));
             ImGui.SameLine();
         }
         ImGui.NewLine();
@@ -520,9 +530,18 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (edited.Height != resolved.Height) o.Height = edited.Height;
         if (edited.OffsetX != resolved.OffsetX) o.OffsetX = edited.OffsetX;
         if (edited.OffsetY != resolved.OffsetY) o.OffsetY = edited.OffsetY;
-        if (edited.Fill != resolved.Fill) o.Fill = edited.Fill;
-        if (edited.OutlineWidth != resolved.OutlineWidth) o.OutlineWidth = edited.OutlineWidth;
-        if (edited.OutlineColor != resolved.OutlineColor) o.OutlineColor = edited.OutlineColor;
+        if (edited.RenderMaterial.Fill != resolved.RenderMaterial.Fill)
+            o.Material = (o.Material ?? new RenderMaterialDefinition2D()) with { Fill = edited.RenderMaterial.Fill };
+        if (edited.RenderMaterial.Outline?.Width != resolved.RenderMaterial.Outline?.Width)
+        {
+            var material = o.Material ?? new RenderMaterialDefinition2D();
+            o.Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Width = edited.RenderMaterial.Outline?.Width } };
+        }
+        if (edited.RenderMaterial.Outline?.Color != resolved.RenderMaterial.Outline?.Color)
+        {
+            var material = o.Material ?? new RenderMaterialDefinition2D();
+            o.Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Color = edited.RenderMaterial.Outline?.Color } };
+        }
         if (edited.Paint != resolved.Paint) o.Paint = edited.Paint;
         if (edited.Face != resolved.Face) o.Face = edited.Face;
         if (edited.FaceX != resolved.FaceX) o.FaceX = edited.FaceX;
@@ -561,7 +580,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (session.Selection.Part is { } selectedPart && model.Parts.FirstOrDefault(p => p.Id == selectedPart) is { } part)
         {
             Outline(frame, part, pose);
-            if (_editCutout && part.Kind == "polygon" && Base is not null)
+            if (_editCutout && part.Geometry is SimplePolygonShapeDefinition2D && Base is not null)
             {
                 DragCutout(frame, part, pose); return;
             }
@@ -577,7 +596,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
     private void DragCutout(ViewportFrame frame, PuppetPart part, EvaluatedPose pose)
     {
-        var placement = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id]); var points = part.Points!;
+        var placement = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id]);
+        var points = ((SimplePolygonShapeDefinition2D)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToList();
         for (var i = 0; i < points.Count; i++)
         {
             var at = frame.Screen(placement.At(new(points[i].X * part.Width, points[i].Y * part.Height)));
@@ -596,7 +616,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         };
         try { PartGeometry.CheckCutout(edited); }
         catch (InvalidDataException) { return; }
-        session.Change(document, () => { var changed = document.Asset.Parts.First(p => p.Id == part.Id); changed.Points = edited; changed.Geometry = null; });
+        session.Change(document, () => PartGeometry.SetPolygon(document.Asset.Parts.First(p => p.Id == part.Id), edited));
     }
 
     private void DragControls(ViewportFrame frame, ResolvedModel model, EvaluatedPose pose)

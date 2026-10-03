@@ -12,7 +12,7 @@ public static class PropGeometry
     /// <summary>A tapered diamond-section blade. The ridge supplies broad-face highlights without painted detail.</summary>
     public static PropSolid Blade(float root, float shoulder, float tip, float halfWidth, float halfDepth, string fill)
     {
-        var mesh = new PropSolid { Fill = fill };
+        var mesh = new PropSolid { Material = new() { Fill = fill, Outline = new() } };
         foreach (var (x, width) in new[] { (root, halfWidth), (shoulder, halfWidth * .72f) })
             mesh.Vertices.AddRange([new(x, -width, 0), new(x, 0, -halfDepth), new(x, width, 0), new(x, 0, halfDepth)]);
         mesh.Vertices.Add(new(tip, 0, 0));
@@ -35,7 +35,7 @@ public static class PropGeometry
         TriangleMesh2D triangles;
         try { triangles = TriangleMesh2D.TriangulateSimplePolygon(points.Select(p => p.XY), 1e-8); }
         catch (ArgumentException ex) { throw new InvalidDataException("The prop outline must be simple and have nonzero area.", ex); }
-        var n = points.Count; var mesh = new PropSolid { Fill = fill, Outline = [.. points], Thickness = thickness };
+        var n = points.Count; var mesh = new PropSolid { Material = new() { Fill = fill, Outline = new() }, Outline = [.. points], Thickness = thickness };
         mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z - thickness / 2 }));
         mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z + thickness / 2 }));
         for (var i = 0; i < triangles.Indices.Length; i += 3)
@@ -52,10 +52,18 @@ public static class PropGeometry
     {
         foreach (var shape in prop.Shapes)
         {
+            if (shape.Points.Count == 0) shape.RestorePoints();
             var points = shape.Points.Select(p => centerDepth ? p with { Z = 0 } : p).ToList();
+            var fill = shape.RenderMaterial.Fill ?? prop.Ink;
+            PropSolid Solid(IEnumerable<PuppetPoint> outline, float depth)
+            {
+                var solid = Extrude(outline, depth, fill);
+                solid.Material = shape.RenderMaterial with { Fill = fill };
+                return solid;
+            }
             if (shape.IsFilled)
             {
-                prop.Solids.Add(Extrude(points, thickness, shape.Fill));
+                prop.Solids.Add(Solid(points, thickness));
             }
             else
             {
@@ -63,7 +71,7 @@ public static class PropGeometry
                 {
                     var a = points[i - 1]; var b = points[i]; var d = Vector2.Normalize(b.XY - a.XY);
                     var off = new Vector3(-d.Y, d.X, 0) * shape.Width / 2;
-                    prop.Solids.Add(Extrude([PuppetPoint.From(a.XYZ - off), PuppetPoint.From(b.XYZ - off), PuppetPoint.From(b.XYZ + off), PuppetPoint.From(a.XYZ + off)], shape.Width * .85f, shape.Fill));
+                    prop.Solids.Add(Solid([PuppetPoint.From(a.XYZ - off), PuppetPoint.From(b.XYZ - off), PuppetPoint.From(b.XYZ + off), PuppetPoint.From(a.XYZ + off)], shape.Width * .85f));
                 }
             }
         }
@@ -75,7 +83,7 @@ public static class PropGeometry
     public static PropSolid ImportObj(string text, float scale = 1, string fill = "#c8b18a")
     {
         if (!float.IsFinite(scale) || scale <= 0) throw new InvalidDataException("OBJ scale must be positive.");
-        var positions = new List<int>(); var welded = new Dictionary<Vector3, int>(); var mesh = new PropSolid { Fill = fill };
+        var positions = new List<int>(); var welded = new Dictionary<Vector3, int>(); var mesh = new PropSolid { Material = new() { Fill = fill, Outline = new() } };
         var lineNumber = 0;
         foreach (var line in text.Split('\n'))
         {

@@ -42,8 +42,8 @@ public static class AppearanceAuthoring
     public static void Cutout(PropAsset art, int index, IEnumerable<PuppetPoint> points, float thickness)
     {
         var old = art.Solids[index];
-        var mesh = PropGeometry.Extrude(points, thickness, old.Fill);
-        mesh.Outlined = old.Outlined;
+        var mesh = PropGeometry.Extrude(points, thickness, old.RenderMaterial.Fill!);
+        mesh.Material = old.Material;
         new PropAsset
         {
             Id = "check",

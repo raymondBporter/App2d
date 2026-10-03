@@ -6,6 +6,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Collision.Queries;
 using App2d.Core;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Geometry;
 
@@ -75,35 +76,35 @@ public sealed class GeometryDefinition2DTests
     }
 
     [Fact]
-    public void ModelWritesTypedPartsAndReadsLegacyKinds()
+    public void ModelRequiresTypedParts()
     {
         var model = PersonTemplate.Model();
-        var legacy = JsonSerializer.Serialize(model, AuthoredJson.Options);
-        Assert.Contains("\"kind\": \"trapezoid\"", legacy);
-
-        var restoredLegacy = CharacterModel.FromJson(legacy);
-        var typed = restoredLegacy.ToJson();
+        var typed = model.ToJson();
         Assert.Contains("\"geometry\"", typed);
-        Assert.Contains("\"editorKind\": \"trapezoid\"", typed);
+        Assert.DoesNotContain("\"editorKind\"", typed);
         Assert.Equal(typed, CharacterModel.FromJson(typed).ToJson());
         Assert.IsType<SimplePolygonShapeDefinition2D>(CharacterModel.FromJson(typed).Parts.Single(part => part.Id == "body").Geometry);
+        var missing = JsonNode.Parse(typed)!.AsObject();
+        missing["parts"]![0]!.AsObject().Remove("geometry");
+        Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(missing.ToJsonString()));
+        var oldField = JsonNode.Parse(typed)!.AsObject();
+        oldField["parts"]![0]!["kind"] = "box";
+        Assert.Throws<JsonException>(() => CharacterModel.FromJson(oldField.ToJsonString()));
     }
 
     [Fact]
-    public void PropWritesTypedGeometryAndPreservesStrokeDepth()
+    public void PropKeepsTypedGeometryAndStrokeDepth()
     {
         var prop = new PropAsset
         {
             Id = "test-prop", Name = "Test prop",
             Shapes =
             [
-                new PropShape { Points = [new(0, 0, .1f), new(.5f, 1, .2f), new(1, 0, .3f)] },
-                new PropShape { Kind = "polygon", Points = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }
+                new PropShape { Geometry = new PolylineCurveDefinition2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }, Depths = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },
+                new PropShape { Geometry = new SimplePolygonShapeDefinition2D { Vertices = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }, Material = new() { Fill = "#c8b18a", Outline = new() } }
             ]
         };
-        var legacy = JsonSerializer.Serialize(prop, AuthoredJson.Options);
-        Assert.Contains("\"kind\": \"polygon\"", legacy);
-        var typed = PropAsset.FromJson(legacy).ToJson();
+        var typed = prop.ToJson();
         Assert.Contains("\"kind\": \"polyline\"", typed);
         Assert.Contains("\"kind\": \"simple-polygon\"", typed);
         var restored = PropAsset.FromJson(typed);
@@ -111,5 +112,8 @@ public sealed class GeometryDefinition2DTests
         Assert.Equal([.1f, .2f, .3f], restored.Shapes[0].Points.Select(point => point.Z));
         Assert.IsType<PolylineCurveDefinition2D>(restored.Shapes[0].Geometry);
         Assert.IsType<SimplePolygonShapeDefinition2D>(restored.Shapes[1].Geometry);
+        var oldField = JsonNode.Parse(typed)!.AsObject();
+        oldField["shapes"]![0]!["points"] = new JsonArray();
+        Assert.Throws<JsonException>(() => PropAsset.FromJson(oldField.ToJsonString()));
     }
 }

@@ -34,20 +34,25 @@ internal static partial class PlayerMoves
     /// tip, a thin guard, and a grip short enough to disappear in the fist. Larger than <see cref="SwordArt"/> so the blade,
     /// not the hilt, is what reads at game size. Approved for the player's runtime sword.
     /// </summary>
-    internal static PropAsset CartoonSwordArt() => new()
+    internal static PropAsset CartoonSwordArt()
     {
+        var prop = new PropAsset
+        {
         Id = Sword,
         Name = "Sword",
         Tip = new(1.02f, .03f),
         LineWidth = .02f,
         // A narrow, round-ended stroke keeps the grip as simple as the character's hand.
-        Shapes = [new() { Points = [new(-.055f, 0), new(.025f, 0)], Width = .006f, Fill = Leather }],
+        Shapes = [new() { Geometry = new App2d.Core.Curves.LineCurveDefinition2D { Start = new(-.055f, 0), End = new(.025f, 0) }, Width = .006f, Material = new() { Fill = Leather, Outline = new() } }],
         Solids =
         [
             Block(DarkSteel, .035f, .065f, -.11f, .11f, .06f, .01f),
             Plate(Steel, .03f, new(.065f, -.075f), new(.88f, -.075f), new(1.02f, .03f), new(.96f, .075f), new(.065f, .075f)),
         ],
-    };
+        };
+        prop.Shapes[0].RestorePoints();
+        return prop;
+    }
 
     private static PropAsset SheathArt()
     {

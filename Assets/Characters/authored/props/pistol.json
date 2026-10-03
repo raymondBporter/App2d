@@ -1,6 +1,6 @@
 {
   "format": "app2d-prop",
-  "version": 1,
+  "version": 2,
   "id": "pistol",
   "name": "Pistol",
   "lineWidth": 0.011,

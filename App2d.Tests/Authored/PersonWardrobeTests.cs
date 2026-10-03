@@ -105,8 +105,9 @@ public sealed class PersonWardrobeTests
             Kind = "ellipse",
             Width = 2,
             Height = 1,
-            OutlineWidth = 0,
-            Paint = [new() { Fill = "#ff0000", Points = [new(-2, -2), new(2, -2), new(2, 2), new(-2, 2)] }],
+            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(-2, -2), new(2, -2), new(2, 2), new(-2, 2)] }],
+            Geometry = new App2d.Core.Shapes.EllipseShapeDefinition2D { Center = new(0, 0), Radii = new(.5f, .5f) },
+            Material = new() { Fill = "#fff8e7", Outline = new() { Width = 0 } },
         };
         var drawing = new PuppetDrawing(); drawing.Build("#000000", .04f, [part], _ => Vector3.Zero);
         var red = drawing.Mesh.Vertices.ToArray().Where(v => v.Color.R == 255 && v.Color.G == 0).ToArray();
@@ -133,7 +134,7 @@ public sealed class PersonWardrobeTests
             if (id == "maul-brute")
             {
                 Assert.Empty(body.Paint!);
-                Assert.Equal(entity.Model.Parts.Single(p => p.Id == "head").Fill, body.Fill);
+                Assert.Equal(entity.Model.Parts.Single(p => p.Id == "head").RenderMaterial.Fill, body.RenderMaterial.Fill);
             }
             else
             {
@@ -141,7 +142,7 @@ public sealed class PersonWardrobeTests
             }
 
             Assert.DoesNotContain(entity.Equipment, e => e.Prop.Id.EndsWith("-tunic", StringComparison.Ordinal));
-            Assert.Null(entity.Model.Parts.Single(p => p.Id == "head").OutlineWidth);
+            Assert.Null(entity.Model.Parts.Single(p => p.Id == "head").RenderMaterial.Outline?.Width);
             Assert.All(entity.Equipment.Where(e => e.Prop.Usage != "prop"), e => Assert.Equal(entity.Model.Base.LineWidth, e.Prop.LineWidth));
             var wrap = entity.Equipment.Single(e => e.Prop.Id.EndsWith("-hide-wrap", StringComparison.Ordinal));
             var shell = wrap.Prop.Solids[0];

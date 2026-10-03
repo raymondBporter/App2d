@@ -46,7 +46,7 @@ public sealed record PuppetChain
 /// <summary>A convex patch of color in normalized part coordinates; clipped to the part's actual silhouette.</summary>
 public sealed record PartPaint
 {
-    public string Fill { get; set; } = "#ffffff";
+    public RenderMaterialDefinition2D? Material { get; set; }
     public List<PuppetPoint> Points { get; set; } = [];
 
     public static void Check(IReadOnlyList<PartPaint>? paint)
@@ -57,7 +57,9 @@ public sealed record PartPaint
         foreach (var patch in paint)
         {
             if (patch?.Points is not { Count: >= 3 and <= 64 }) throw new InvalidDataException("Paint needs 3 to 64 polygon points.");
-            Limit.Color(patch.Fill, "paint.fill");
+            if (patch.Material?.Fill is null) throw new InvalidDataException("Paint needs a material fill.");
+            patch.Material.Validate("paint.material");
+            if (patch.Material.Outline is not null) throw new InvalidDataException("Paint patch outlines are not supported.");
             var vertices = xy[..patch.Points.Count];
             for (var i = 0; i < patch.Points.Count; i++)
             {
@@ -75,18 +77,12 @@ public sealed record PartPaint
 /// <summary>Stroke endpoints follow controls. Other shapes attach to A; B points local +Y or Frame supplies a bone-local orientation.</summary>
 public sealed record PuppetPart
 {
-    private string _fill = "#fff8e7";
-    private float? _outlineWidth;
     public string Id { get; set; } = "part";
+    [JsonIgnore]
     public string Kind { get; set; } = PuppetPartKinds.Ellipse;
-    /// <summary>Optional editor preset; geometry is the saved silhouette.</summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? EditorKind { get; set; }
-    /// <summary>Typed geometry for new authored parts; legacy kind fields remain readable during migration.</summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    /// <summary>The shape or curve attached to this part.</summary>
     public GeometryDefinition2D? Geometry { get; set; }
-    /// <summary>Authored rendering data. Old fill and outline fields are accepted while assets migrate.</summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    /// <summary>Authored drawing style.</summary>
     public RenderMaterialDefinition2D? Material { get; set; }
     public string A { get; set; } = "";
     public string? B { get; set; }
@@ -99,53 +95,15 @@ public sealed record PuppetPart
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public float Depth { get; set; }
-    public float Roundness { get; set; } = .25f;
-    /// <summary>Trapezoid width at local +Y relative to its base; ignored by other shapes.</summary>
-    public float TopWidthScale { get; set; } = .7f;
-    public string Fill
-    {
-        get => Material?.Fill ?? _fill;
-        set
-        {
-            _fill = value;
-            if (Material is { } material) Material = material with { Fill = value };
-        }
-    }
-    /// <summary>Null inherits the model's ink width. Does not change facial expression strokes.</summary>
-    public float? OutlineWidth
-    {
-        get => Material?.Outline?.Width ?? _outlineWidth;
-        set
-        {
-            _outlineWidth = value;
-            if (Material is { } material)
-                Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Width = value } };
-        }
-    }
-    [JsonIgnore]
-    public string? OutlineColor
-    {
-        get => Material?.Outline?.Color;
-        set
-        {
-            var material = RenderMaterial;
-            Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Color = value } };
-        }
-    }
     public List<PartPaint>? Paint { get; set; }
-    /// <summary>Normalized cutout perimeter, scaled by Width/Height in the attachment frame.</summary>
-    public List<PuppetPoint>? Points { get; set; }
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
     public bool Hidden { get; set; }
 
-    /// <summary>Converts the old appearance fields only when this part has no authored material.</summary>
     [JsonIgnore]
-    public RenderMaterialDefinition2D RenderMaterial => Material ??
-        (Geometry is CurveDefinition2D || Geometry is null && PuppetPartKinds.IsStroke(Kind)
-            ? new RenderMaterialDefinition2D()
-            : new RenderMaterialDefinition2D { Fill = _fill, Outline = new() { Width = _outlineWidth } });
+    public RenderMaterialDefinition2D RenderMaterial => Material
+        ?? throw new InvalidDataException($"Part '{Id}' needs a material.");
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
@@ -154,8 +112,7 @@ public sealed record PuppetPart
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
         if (Frame is not null && !isControl(Frame)) throw new InvalidDataException("Unknown part frame: " + Frame);
         if (Frame is not null && B is not null) throw new InvalidDataException("A part uses either a bone frame or a toward control.");
-        if (Geometry is null) EntityVocabulary.Require(Kind, PuppetPartKinds.All, "part.kind");
-        if (Geometry is not null and not ShapeDefinition2D and not CurveDefinition2D)
+        if (Geometry is not ShapeDefinition2D and not CurveDefinition2D)
             throw new InvalidDataException("A part needs a shape or curve definition.");
         if (Geometry is ShapeDefinition2D shape)
         {
@@ -164,19 +121,16 @@ public sealed record PuppetPart
                 throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
         }
         if (Geometry is CurveDefinition2D curve) _ = curve.Build();
-        var linkedStroke = Geometry is CurveDefinition2D || Geometry is null && PuppetPartKinds.IsStroke(Kind);
+        var linkedStroke = Geometry is CurveDefinition2D;
         if (linkedStroke && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
         if (linkedStroke && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
         new Limit(-1000, 1000).Check(Angle, "part.angle");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
-        new Limit(-16, 16).Check(Depth, "part.depth"); new Limit(0, 1).Check(Roundness, "part.roundness");
-        if (Material is null) Limit.Color(_fill, "part.fill");
-        else Material.Validate("part.material");
-        new Limit(.01f, 1).Check(TopWidthScale, "part.topWidthScale");
-        if (OutlineWidth is { } outline) new Limit(0, 1).Check(outline, "part.outlineWidth");
+        new Limit(-16, 16).Check(Depth, "part.depth");
+        if (Material is null) throw new InvalidDataException("A part needs a material.");
+        Material.Validate("part.material");
         PartPaint.Check(Paint);
-        if (Geometry is null && Kind == "polygon") PartGeometry.CheckCutout(Points);
         if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
         new Limit(-1, 1).Check(FaceX, "part.faceX");
     }
@@ -210,8 +164,9 @@ public sealed record PuppetMotion
 public sealed class PuppetDefinition
 {
     public const string FormatId = "app2d-puppet";
+    public const int CurrentVersion = 2;
     public string Format { get; set; } = FormatId;
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string Name { get; set; } = "New character";
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .045f;
@@ -226,6 +181,7 @@ public sealed class PuppetDefinition
     public string ToJson() => PartAssetJson.Write(this, Parts, JsonOptions);
     public static PuppetDefinition FromJson(string json)
     {
+        PartAssetJson.RequireTypedJson(json);
         var definition = JsonSerializer.Deserialize<PuppetDefinition>(json, JsonOptions) ?? throw new InvalidDataException("Empty puppet file.");
         PartAssetJson.Restore(definition.Parts);
         definition.Validate(); return definition;
@@ -240,7 +196,7 @@ public sealed class PuppetDefinition
         void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
         void Number(float value, float min, float max, string field) => new Limit(min, max).Check(value, field);
         void Point(PuppetPoint point, string field) => point.Check(field);
-        Require(Format == FormatId && Version == 1, "Unsupported puppet format/version.");
+        Require(Format == FormatId && Version == CurrentVersion, "Unsupported puppet format/version.");
         Require(!string.IsNullOrWhiteSpace(Name), "A character name is required.");
         Require(Controls is not null && Bones is not null && Chains is not null && Parts is not null && Motions is not null, "Puppet collections cannot be null.");
         Require(Controls.Count <= 256 && Parts.Count <= 512 && Motions.Count is > 0 and <= 128, "Puppet capacity exceeded or no motions defined.");

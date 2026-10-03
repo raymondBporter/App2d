@@ -99,8 +99,9 @@ public sealed record LookPreset
 public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
+    public const int CurrentVersion = 2;
     public string Format { get; set; } = FormatId;
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     /// <summary>Changes when controls, parents, chains or frames change; proportions and appearance never change it.</summary>
@@ -124,6 +125,7 @@ public sealed class CharacterModel
     public string ToJson() => PartAssetJson.Write(this, Parts, AuthoredJson.Options);
     internal static CharacterModel FromDraftJson(string json)
     {
+        PartAssetJson.RequireTypedJson(json);
         var model = AuthoredAsset.Parse<CharacterModel>(json, "model");
         PartAssetJson.Restore(model.Parts);
         return model;
@@ -137,7 +139,7 @@ public sealed class CharacterModel
     public void Validate()
     {
         var owner = $"Model '{Id}'";
-        Require(Format == FormatId && Version == 1, $"{owner}: unsupported format/version.");
+        Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "model id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");

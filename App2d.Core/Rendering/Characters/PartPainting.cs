@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Geometry;
 using App2d.Core.Meshes;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Rendering.Characters;
@@ -11,7 +12,8 @@ internal static class PartPainting
     public static void Add(CharacterMesh mesh, PuppetPart part, PartGeometry.Frame frame, IReadOnlyList<Vector3> contour)
     {
         if (part.Paint is null) return;
-        var triangles = part.Kind == "polygon" ? TriangleMesh2D.TriangulateSimplePolygon(contour.Select(p => new Vector2(p.X, p.Y)), 1e-8) : null;
+        var triangles = part.Geometry is SimplePolygonShapeDefinition2D
+            ? TriangleMesh2D.TriangulateSimplePolygon(contour.Select(p => new Vector2(p.X, p.Y)), 1e-8) : null;
         for (var layer = 0; layer < part.Paint.Count; layer++)
         {
             var patch = part.Paint[layer];
@@ -34,7 +36,7 @@ internal static class PartPainting
             foreach (var region in regions)
             {
                 var clipped = PolygonClipping2D.ClipConvexXY(points, region);
-                mesh.Polygon(clipped.Select(p => p - bias).ToArray(), ColorExtensions.FromHexRgb(patch.Fill), null, 0);
+                mesh.Polygon(clipped.Select(p => p - bias).ToArray(), ColorExtensions.FromHexRgb(patch.Material!.Fill!), null, 0);
             }
         }
     }

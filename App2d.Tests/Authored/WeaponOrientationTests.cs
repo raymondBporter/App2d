@@ -136,6 +136,7 @@ public sealed class WeaponOrientationTests
             Name = "Triangle",
             Solids = [new PropSolid
             {
+                Material = new() { Fill = "#c8b18a", Outline = new() },
                 Vertices = [new(0, 0), new(1, 0), new(0, 1)],
                 Triangles = [0, 1, 2]
             }]

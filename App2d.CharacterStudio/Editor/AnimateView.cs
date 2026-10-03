@@ -214,7 +214,7 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
     private void Faces(AssetDocument<MotionClip> document, Subject? primary)
     {
         if (primary is null) return;
-        var parts = primary.Model.Parts.Where(p => !PuppetPartKinds.IsStroke(p.Kind) && p.Face != "none").ToArray();
+        var parts = primary.Model.Parts.Where(p => p.Geometry is App2d.Core.Shapes.ShapeDefinition2D && p.Face != "none").ToArray();
         if (parts.Length == 0) return;
         Ui.Header("Face");
         var time = session.Transport.Time;

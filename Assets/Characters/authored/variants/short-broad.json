@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 1,
+  "version": 2,
   "id": "short-broad",
   "name": "Short and broad",
   "base": "person",
@@ -14,7 +14,9 @@
   "rest": {},
   "parts": {
     "body": {
-      "fill": "#efdcc9"
+      "material": {
+        "fill": "#efdcc9"
+      }
     }
   }
 }

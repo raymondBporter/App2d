@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 1,
+  "version": 2,
   "id": "baby-triceratops-rig",
   "name": "Baby triceratops",
   "structureRevision": 1,
@@ -235,8 +235,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "far-hind-upper",
@@ -259,8 +258,7 @@
       "material": {
         "fill": "#527f78",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-hind-lower",
@@ -284,8 +282,7 @@
       "material": {
         "fill": "#527f78",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-hind-paw",
@@ -327,8 +324,7 @@
       "material": {
         "fill": "#527f78",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "far-hind-toe-0",
@@ -354,8 +350,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-hind-toe-1",
@@ -381,8 +376,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-hind-toe-2",
@@ -408,8 +402,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-front-upper",
@@ -432,8 +425,7 @@
       "material": {
         "fill": "#527f78",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-front-lower",
@@ -457,8 +449,7 @@
       "material": {
         "fill": "#527f78",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-front-paw",
@@ -500,8 +491,7 @@
       "material": {
         "fill": "#527f78",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "far-front-toe-0",
@@ -527,8 +517,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-front-toe-1",
@@ -554,8 +543,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "far-front-toe-2",
@@ -581,8 +569,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-hind-upper",
@@ -605,8 +592,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-hind-lower",
@@ -630,8 +616,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-hind-paw",
@@ -673,8 +658,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "near-hind-toe-0",
@@ -700,8 +684,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-hind-toe-1",
@@ -727,8 +710,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-hind-toe-2",
@@ -754,8 +736,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-front-upper",
@@ -778,8 +759,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-front-lower",
@@ -803,8 +783,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-front-paw",
@@ -846,8 +825,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "near-front-toe-0",
@@ -873,8 +851,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-front-toe-1",
@@ -900,8 +877,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "near-front-toe-2",
@@ -927,8 +903,7 @@
         "outline": {
           "width": 0.012
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "body",
@@ -940,7 +915,9 @@
       "offsetY": 0.028,
       "paint": [
         {
-          "fill": "#397783",
+          "material": {
+            "fill": "#397783"
+          },
           "points": [
             {
               "x": -0.14999999,
@@ -1005,7 +982,9 @@
           ]
         },
         {
-          "fill": "#397783",
+          "material": {
+            "fill": "#397783"
+          },
           "points": [
             {
               "x": 0.024999999,
@@ -1084,8 +1063,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "head",
@@ -1136,8 +1114,7 @@
       "material": {
         "fill": "#79bdb0",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "frill",
@@ -1212,8 +1189,7 @@
       "material": {
         "fill": "#91cebf",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "far-brow-horn",
@@ -1244,8 +1220,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "near-brow-horn",
@@ -1280,8 +1255,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "nose-horn",
@@ -1312,8 +1286,7 @@
       "material": {
         "fill": "#f6e4bb",
         "outline": {}
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "eye",
@@ -1340,8 +1313,7 @@
         "outline": {
           "width": 0
         }
-      },
-      "editorKind": "ellipse"
+      }
     },
     {
       "id": "brow",
@@ -1378,8 +1350,7 @@
         "outline": {
           "width": 0
         }
-      },
-      "editorKind": "polygon"
+      }
     },
     {
       "id": "mouth",
@@ -1424,8 +1395,7 @@
         "outline": {
           "width": 0
         }
-      },
-      "editorKind": "polygon"
+      }
     }
   ],
   "sockets": [

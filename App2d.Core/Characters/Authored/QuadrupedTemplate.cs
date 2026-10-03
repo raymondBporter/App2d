@@ -25,13 +25,15 @@ public static class QuadrupedTemplate
         }
         PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, string kind = "ellipse")
         {
-            var p = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Fill = fill, Kind = kind };
+            var p = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Kind = kind };
             m.Parts.Add(p); return p;
         }
         PuppetPart Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params PuppetPoint[] points)
         {
-            var p = Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, "polygon"); p.Points = [.. points]; return p;
+            var p = Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, "polygon"); PartGeometry.SetPolygon(p, points); return p;
         }
+        void SetOutlineWidth(PuppetPart part, float width) => part.Material = part.RenderMaterial with
+            { Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = width } };
         const string skin = "#79bdb0", shade = "#527f78", horn = "#f6e4bb";
         Cutout("tail", "tail", .85f, .52f, -.35f, .03f, .02f, skin,
             new(.5f, -.25f), new(-.2f, -.17f), new(-.5f, .32f), new(-.12f, .12f), new(.5f, .45f));
@@ -43,8 +45,8 @@ public static class QuadrupedTemplate
             Shape(chain.Id + "-upper", chain.Root, chain.Joint, .25f, upper + .19f, 0, upper / 2, 0, color);
             Shape(chain.Id + "-lower", chain.Joint, chain.End, .23f, lower + .15f, 0, lower / 2, -.005f, color);
             var p = Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, "polygon");
-            p.Points = [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)];
-            for (var i = 0; i < 3; i++) Shape(chain.Id + "-toe-" + i, chain.End, null, .045f, .065f, -.08f + i * .085f, -.055f, -.025f, horn).OutlineWidth = .012f;
+            PartGeometry.SetPolygon(p, [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)]);
+            for (var i = 0; i < 3; i++) SetOutlineWidth(Shape(chain.Id + "-toe-" + i, chain.End, null, .045f, .065f, -.08f + i * .085f, -.055f, -.025f, horn), .012f);
         }
         var body = Shape("body", "body", "body-up", 1.92f, .90f, -.05f, .04f, 0, skin);
         body.Paint = [Spot(-.24f, .15f, .09f, .19f), Spot(-.04f, .03f, .065f, .14f)];
@@ -63,19 +65,20 @@ public static class QuadrupedTemplate
             Shape("head", "head", "head-up", .74f, .58f, .13f, .02f, -.24f, skin);
         }
 
-        Shape("eye", "head", "head-up", .09f, .12f, .34f, .01f, -.31f, m.Ink).OutlineWidth = 0;
-        Cutout("brow", "head", .16f, .09f, .33f, .11f, -.31f, m.Ink, new(-.5f, .5f), new(.5f, -.08f), new(.35f, -.5f), new(-.5f, .1f)).OutlineWidth = 0;
-        Cutout("mouth", "head", .23f, .08f, .35f, -.17f, -.31f, m.Ink, new(-.5f, -.3f), new(-.1f, .5f), new(.5f, -.35f), new(.44f, -.5f), new(-.1f, .10f), new(-.42f, -.5f)).OutlineWidth = 0;
+        SetOutlineWidth(Shape("eye", "head", "head-up", .09f, .12f, .34f, .01f, -.31f, m.Ink), 0);
+        SetOutlineWidth(Cutout("brow", "head", .16f, .09f, .33f, .11f, -.31f, m.Ink, new(-.5f, .5f), new(.5f, -.08f), new(.35f, -.5f), new(-.5f, .1f)), 0);
+        SetOutlineWidth(Cutout("mouth", "head", .23f, .08f, .35f, -.17f, -.31f, m.Ink, new(-.5f, -.3f), new(-.1f, .5f), new(.5f, -.35f), new(.44f, -.5f), new(-.1f, .10f), new(-.42f, -.5f)), 0);
         m.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
         m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.Chains.Select(c => c.Id)] }];
         m.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .35f }] }];
         m.MotionSets = [new() { Id = "standard", Name = "Quadruped", Roles = new() { ["idle"] = id + "-idle", ["walk"] = id + "-walk", ["run"] = id + "-run", ["scrape"] = id + "-scrape", ["head-down"] = id + "-head-down", ["rush"] = id + "-rush", ["brake"] = id + "-brake", ["recover"] = id + "-recover" } }];
+        foreach (var part in m.Parts) part.Geometry ??= PartGeometry.FromPreset(part);
         m.Validate(); return m;
     }
 
     private static PartPaint Spot(float x, float y, float rx, float ry) => new()
     {
-        Fill = "#397783",
+        Material = new() { Fill = "#397783" },
         Points = [.. Enumerable.Range(0, 12).Select(i => new PuppetPoint(x + rx * MathF.Cos(i * MathF.Tau / 12), y + ry * MathF.Sin(i * MathF.Tau / 12)))]
     };
 

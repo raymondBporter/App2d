@@ -80,15 +80,12 @@ public sealed class ResolvedModel
             Height = change.Height ?? part.Height,
             OffsetX = change.OffsetX ?? part.OffsetX,
             OffsetY = change.OffsetY ?? part.OffsetY,
-            Material = change.Material ?? part.Material,
+            Material = part.RenderMaterial.WithOverride(change.Material),
             Paint = change.Paint ?? part.Paint,
             Face = change.Face ?? part.Face,
             FaceX = change.FaceX ?? part.FaceX,
             Hidden = change.Hidden ?? part.Hidden,
         };
-        if (change.Fill is { } fill) result.Fill = fill;
-        if (change.OutlineWidth is { } outlineWidth) result.OutlineWidth = outlineWidth;
-        if (change.OutlineColor is { } outlineColor) result.OutlineColor = outlineColor;
         return result;
     }
 }

@@ -69,13 +69,20 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
     {
         var piece = doc.Asset.Solids[_piece];
         Ui.Header($"Piece {_piece + 1}");
-        var fill = piece.Fill; if (Ui.ColorHex("Fill", ref fill)) session.Change(doc, () => doc.Asset.Solids[_piece].Fill = fill);
-        var outlined = piece.Outlined; if (ImGui.Checkbox("Outline", ref outlined)) session.Edit(doc, () => doc.Asset.Solids[_piece].Outlined = outlined);
+        var fill = piece.RenderMaterial.Fill!;
+        if (Ui.ColorHex("Fill", ref fill)) session.Change(doc, () =>
+        { var solid = doc.Asset.Solids[_piece]; solid.Material = solid.RenderMaterial with { Fill = fill }; });
+        var outlined = piece.RenderMaterial.Outline is not null;
+        if (ImGui.Checkbox("Outline", ref outlined)) session.Edit(doc, () =>
+        { var solid = doc.Asset.Solids[_piece]; solid.Material = solid.RenderMaterial with
+            { Outline = outlined ? solid.RenderMaterial.Outline ?? new RenderOutlineDefinition2D() : null }; });
         if (outlined)
         {
-            var outlineColor = piece.OutlineColor ?? doc.Asset.Ink;
-            if (Ui.ColorHex("Outline color", ref outlineColor)) session.Change(doc, () => doc.Asset.Solids[_piece].OutlineColor = outlineColor);
-            if (piece.OutlineColor is not null && ImGui.SmallButton("Use prop ink")) session.Change(doc, () => doc.Asset.Solids[_piece].OutlineColor = null);
+            var outlineColor = piece.RenderMaterial.Outline?.Color ?? doc.Asset.Ink;
+            if (Ui.ColorHex("Outline color", ref outlineColor)) session.Change(doc, () =>
+            { var solid = doc.Asset.Solids[_piece]; solid.Material = solid.RenderMaterial with { Outline = solid.RenderMaterial.Outline! with { Color = outlineColor } }; });
+            if (piece.RenderMaterial.Outline?.Color is not null && ImGui.SmallButton("Use prop ink")) session.Change(doc, () =>
+            { var solid = doc.Asset.Solids[_piece]; solid.Material = solid.RenderMaterial with { Outline = solid.RenderMaterial.Outline! with { Color = null } }; });
         }
         if (Ui.Button("Remove piece", doc.Asset.Solids.Count > 1)) { session.Edit(doc, () => doc.Asset.Solids.RemoveAt(_piece)); _piece = 0; return; }
         if (piece.Outline is not { } points) { Ui.Help("This imported mesh has no editable cutout outline."); return; }

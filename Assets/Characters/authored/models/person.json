@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 1,
+  "version": 2,
   "id": "person",
   "name": "Person",
   "structureRevision": 1,
@@ -224,8 +224,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "left-shoulder-left-elbow",
@@ -243,8 +242,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "left-elbow-left-hand",
@@ -262,8 +260,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "left-hip-left-knee",
@@ -281,8 +278,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "left-knee-left-foot",
@@ -300,8 +296,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "right-shoulder-right-elbow",
@@ -319,8 +314,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "right-elbow-right-hand",
@@ -338,8 +332,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "right-hip-right-knee",
@@ -357,8 +350,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "right-knee-right-foot",
@@ -376,8 +368,7 @@
           "y": 1
         }
       },
-      "material": {},
-      "editorKind": "stroke"
+      "material": {}
     },
     {
       "id": "body",
@@ -386,7 +377,6 @@
       "width": 0.36,
       "height": 0.68,
       "offsetY": 0.32,
-      "roundness": 0.3,
       "geometry": {
         "kind": "simple-polygon",
         "vertices": [
@@ -539,8 +529,7 @@
       "material": {
         "fill": "#d8e9db",
         "outline": {}
-      },
-      "editorKind": "trapezoid"
+      }
     },
     {
       "id": "head",
@@ -564,8 +553,7 @@
       "material": {
         "fill": "#fff8e7",
         "outline": {}
-      },
-      "editorKind": "ellipse"
+      }
     }
   ],
   "sockets": [
@@ -721,7 +709,9 @@
       "name": "Sage",
       "parts": {
         "body": {
-          "fill": "#d8e9db"
+          "material": {
+            "fill": "#d8e9db"
+          }
         }
       }
     },
@@ -730,10 +720,14 @@
       "name": "Slate",
       "parts": {
         "body": {
-          "fill": "#b8c4d6"
+          "material": {
+            "fill": "#b8c4d6"
+          }
         },
         "head": {
-          "fill": "#efe6da",
+          "material": {
+            "fill": "#efe6da"
+          },
           "face": "focused"
         }
       }
@@ -743,9 +737,12 @@
       "name": "Ember",
       "parts": {
         "body": {
-          "fill": "#eab596"
+          "material": {
+            "fill": "#eab596"
+          }
         },
         "head": {
+          "material": {},
           "face": "determined"
         }
       }
@@ -755,10 +752,14 @@
       "name": "Night",
       "parts": {
         "body": {
-          "fill": "#7d879a"
+          "material": {
+            "fill": "#7d879a"
+          }
         },
         "head": {
-          "fill": "#e2d6c6",
+          "material": {
+            "fill": "#e2d6c6"
+          },
           "face": "smug"
         }
       }

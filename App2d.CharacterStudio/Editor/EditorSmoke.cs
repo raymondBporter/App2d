@@ -130,12 +130,12 @@ internal sealed class EditorSmoke(string output)
                 var s = shell.Session; s.Open("maul-brute"); s.Compare.Clear(); s.ShowRest = true; s.EditRig = false;
                 Check(s.DuplicateAppearance("brute-hide-wrap", "test-wrap", "Custom hide wrap"), s);
                 var doc = s.AppearanceDocument!;
-                Check(s.Edit(doc, () => doc.Asset.Solids[0].Fill = "#ac7243"), s);
+                Check(s.Edit(doc, () => doc.Asset.Solids[0].Material = doc.Asset.Solids[0].RenderMaterial with { Fill = "#ac7243" }), s);
                 Check(s.EquipAppearance("maul-brute", doc.Id, PersonWardrobe.BodySocket), s);
                 Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.Equipment.RemoveAll(e => e.Prop == "brute-hide-wrap")), s);
                 s.SaveAll();
                 var reopened = AuthoredCatalog.Load(s.Assets.Root);
-                Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Solids[0].Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");
+                Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Solids[0].RenderMaterial.Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");
                 Record(doc.Asset.Solids[0].Outline is not null, "outline remains editable after saving");
             }),
             ("25-triceratops-cutout", shell =>
@@ -144,7 +144,14 @@ internal sealed class EditorSmoke(string output)
                 Check(s.NewModel("review-triceratops", "Triceratops review", "triceratops"), s);
                 s.Selection.Part = "frill"; shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
                 var doc = s.SubjectModel!; var before = doc.Serialize();
-                Check(s.Edit(doc, () => doc.Asset.Parts.Single(p => p.Id == "frill").Points![0] = new(-.32f, -.46f)), s);
+                Check(s.Edit(doc, () =>
+                {
+                    var part = doc.Asset.Parts.Single(p => p.Id == "frill");
+                    var polygon = (SimplePolygonShapeDefinition2D)part.Geometry!;
+                    var vertices = polygon.Vertices.Select(point => new PuppetPoint(point.X, point.Y)).ToList();
+                    vertices[0] = new(-.32f, -.46f);
+                    PartGeometry.SetPolygon(part, vertices);
+                }), s);
                 s.Undo(); Record(before == doc.Serialize(), "cutout silhouette edit undoes exactly");
                 s.Redo(); s.SaveAll();
                 Record(AuthoredCatalog.Load(s.Assets.Root).Animations.ContainsKey("review-triceratops-rush"), "quadruped starter art and clips save together");
@@ -179,7 +186,7 @@ internal sealed class EditorSmoke(string output)
             }
             ModelAuthoring.AddMeasure(model.Asset, "leg", ["hip-1", "knee-1", "foot-1"]);
             foreach (var chain in model.Asset.Chains) chain.Scale = "leg";
-            var shell = ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Fill = "#c9e0b8";
+            var shell = ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" };
         }), s);
         Check(s.Save(model), s);
         s.EditRig = true; s.Selection.Control = "knee-1";
@@ -216,7 +223,7 @@ internal sealed class EditorSmoke(string output)
         Check(s.Edit(sage, () => { sage.Asset.Build["head"] = 1.25f; sage.Asset.Build["torso"] = 1.08f; }), s);
         s.Open("bruiser"); s.SetClip("person-walk"); s.Pin("ranger"); s.Pin("sage"); s.Seek(.3f);
         var people = new[] { "bruiser", "ranger", "sage" }.Select(id => s.Assets.Resolve(id)!).ToArray();
-        Record(people.Select(p => p.Parts.Single(x => x.Id == "body").Fill).Distinct().Count() == 3 && people.Select(p => p.Rest["head"].Y).Distinct().Count() == 3,
+        Record(people.Select(p => p.Parts.Single(x => x.Id == "body").RenderMaterial.Fill).Distinct().Count() == 3 && people.Select(p => p.Rest["head"].Y).Distinct().Count() == 3,
             "three visibly different people: distinct colors and heights");
         Record(!s.Assets.Model("person")!.Dirty, "building people never edited the base");
     }

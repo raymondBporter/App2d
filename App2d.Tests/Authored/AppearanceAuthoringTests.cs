@@ -92,9 +92,9 @@ public sealed class AppearanceAuthoringTests : IDisposable
         var session = new EditorSession(AuthoringWorkspace.Open(_root));
         session.Open("hero");
         Assert.True(session.NewAppearance("artist-hair", "Artist hair", "hair"), session.Message);
-        Assert.Equal("#123456", session.AppearanceDocument!.Asset.Solids[0].Fill);
+        Assert.Equal("#123456", session.AppearanceDocument!.Asset.Solids[0].RenderMaterial.Fill);
 
         PersonWardrobe.Write(_root, replaceExistingProps: true);
-        Assert.Equal("#654334", PropAsset.FromJson(File.ReadAllText(path)).Solids[0].Fill);
+        Assert.Equal("#654334", PropAsset.FromJson(File.ReadAllText(path)).Solids[0].RenderMaterial.Fill);
     }
 }

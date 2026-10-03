@@ -1,6 +1,6 @@
 {
   "format": "app2d-prop",
-  "version": 1,
+  "version": 2,
   "id": "sheath",
   "name": "Sheath",
   "lineWidth": 0.012,

@@ -23,43 +23,53 @@ public static class PartGeometry
         ? new(part.Width / (rounded.Max.X - rounded.Min.X), part.Height / (rounded.Max.Y - rounded.Min.Y))
         : new(part.Width, part.Height);
 
-    /// <summary>Converts the old editor fields to the shared geometry schema.</summary>
-    public static GeometryDefinition2D Definition(PuppetPart part) => part.Geometry ?? LegacyDefinition(part);
+    public static GeometryDefinition2D Definition(PuppetPart part) => part.Geometry
+        ?? throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");
 
-    public static GeometryDefinition2D LegacyDefinition(PuppetPart part)
+    /// <summary>Builds a typed definition from an editor shape preset.</summary>
+    public static GeometryDefinition2D FromPreset(PuppetPart part)
     {
         if (PuppetPartKinds.IsStroke(part.Kind))
             return new LineCurveDefinition2D { Start = new(0, 0), End = new(0, 1) };
         if (part.Kind == PuppetPartKinds.Ellipse)
             return new EllipseShapeDefinition2D { Center = new(0, 0), Radii = new(.5f, .5f) };
         if (part.Kind == PuppetPartKinds.Polygon)
-            return Polygon(part.Points!.Select(point => point.XY));
-        if (part.Kind == PuppetPartKinds.Box && part.Roundness == 0)
-            return RectangleShapeDefinition2D.FromSize(Vector2.One);
+            return Polygon([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]);
         if (part.Kind == PuppetPartKinds.Box)
             return RoundedRectangleShapeDefinition2D.FromSize(new(part.Width, part.Height),
-                Math.Min(part.Width, part.Height) * .5f * part.Roundness);
-        if (part.Kind == PuppetPartKinds.Trapezoid && part.Roundness == 0)
-            return Polygon([new Vector2(-.5f, -.5f), new Vector2(.5f, -.5f),
-                new Vector2(.5f * part.TopWidthScale, .5f), new Vector2(-.5f * part.TopWidthScale, .5f)]);
-
-        var half = new Vector2(part.Width / 2, part.Height / 2);
-        Span<Vector2> outline = stackalloc Vector2[36];
-        VertexGenerator2D.WriteRoundedRectangle(outline, -half, half,
-            Math.Min(part.Width, part.Height) * .5f * part.Roundness);
+                Math.Min(part.Width, part.Height) * .125f);
         if (part.Kind == PuppetPartKinds.Trapezoid)
-            for (var i = 0; i < outline.Length; i++)
-                outline[i].X *= 1 + (part.TopWidthScale - 1) * (outline[i].Y / part.Height + .5f);
-        return Polygon(outline.ToArray().Select(point => new Vector2(point.X / part.Width, point.Y / part.Height)));
+            return Polygon([new Vector2(-.5f, -.5f), new Vector2(.5f, -.5f),
+                new Vector2(.35f, .5f), new Vector2(-.35f, .5f)]);
+        throw new InvalidDataException($"Unknown editor geometry preset '{part.Kind}'.");
     }
 
     private static SimplePolygonShapeDefinition2D Polygon(IEnumerable<Vector2> vertices) =>
         new() { Vertices = [.. vertices.Select(Point2D.From)] };
 
-    /// <summary>Restores the editor's old controls from a typed definition without changing its geometry.</summary>
+    public static void SetPolygon(PuppetPart part, IReadOnlyList<PuppetPoint> points)
+    {
+        CheckCutout(points);
+        part.Geometry = Polygon(points.Select(point => point.XY));
+        part.Kind = PuppetPartKinds.Polygon;
+    }
+
+    public static void ResizeRoundedRectangle(PuppetPart part, float width, float height)
+    {
+        if (part.Geometry is not RoundedRectangleShapeDefinition2D rounded) return;
+        part.Geometry = RoundedRectangleShapeDefinition2D.FromSize(new(width, height),
+            MathF.Min(rounded.Radius, MathF.Min(width, height) / 2f));
+    }
+
+    public static void SetRoundedRectangleRadius(PuppetPart part, float radius)
+    {
+        if (part.Geometry is not RoundedRectangleShapeDefinition2D) return;
+        part.Geometry = RoundedRectangleShapeDefinition2D.FromSize(new(part.Width, part.Height), radius);
+    }
+
+    /// <summary>Derives editor controls from typed geometry without changing the saved silhouette.</summary>
     public static void RestoreEditorFields(PuppetPart part)
     {
-        var editorKind = part.EditorKind;
         switch (part.Geometry)
         {
             case CurveDefinition2D:
@@ -73,27 +83,17 @@ public static class PartGeometry
                 break;
             case RectangleShapeDefinition2D:
                 part.Kind = PuppetPartKinds.Box;
-                part.Roundness = 0;
                 break;
-            case RoundedRectangleShapeDefinition2D rounded:
+            case RoundedRectangleShapeDefinition2D:
                 part.Kind = PuppetPartKinds.Box;
-                part.Roundness = 2f * rounded.Radius / MathF.Min(rounded.Max.X - rounded.Min.X, rounded.Max.Y - rounded.Min.Y);
                 break;
-            case SimplePolygonShapeDefinition2D polygon:
+            case SimplePolygonShapeDefinition2D:
                 part.Kind = PuppetPartKinds.Polygon;
-                part.Points = [.. polygon.Vertices.Select(point => new PuppetPoint(point.X, point.Y))];
                 break;
-            case ShapeDefinition2D definition:
+            case ShapeDefinition2D:
                 part.Kind = PuppetPartKinds.Polygon;
-                var shape = definition.Build();
-                var count = WorldShape2D.OutlineVertexCount(shape, 48);
-                if (count == 0) throw new InvalidDataException($"A {definition.Kind} cannot be used as a drawable part.");
-                var points = new Vector2[count];
-                WorldShape2D.WriteOutline(shape, points, 48);
-                part.Points = [.. points.Select(point => new PuppetPoint(point.X, point.Y))];
                 break;
         }
-        if (editorKind is not null) part.Kind = editorKind;
     }
     public readonly record struct Frame(Vector3 Origin, Vector2 Right, Vector2 Up, float Depth)
     {
@@ -159,33 +159,7 @@ public static class PartGeometry
             var scale = ShapeScale(part, shape);
             return [.. outline.Select(vertex => typedFrame.At(vertex * scale))];
         }
-        if (PuppetPartKinds.IsStroke(part.Kind))
-        {
-            var depth = new Vector3(0, 0, part.Depth);
-            return [world(part.A) + depth, world(part.B!) + depth];
-        }
-        var frame = FrameOf(part, world, angle);
-        if (part.Kind == "polygon")
-            return [.. part.Points!.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height)))];
-        var halfSize = new Vector2(part.Width / 2, part.Height / 2);
-        Span<Vector2> vertices = stackalloc Vector2[part.Kind == PuppetPartKinds.Ellipse ? 48 : 36];
-        if (part.Kind == PuppetPartKinds.Ellipse)
-        {
-            new Ellipse2D(halfSize).WriteVertices(vertices);
-        }
-        else
-        {
-            var radius = Math.Min(part.Width, part.Height) * .5f * part.Roundness;
-            VertexGenerator2D.WriteRoundedRectangle(vertices, -halfSize, halfSize, radius);
-            if (part.Kind == PuppetPartKinds.Trapezoid)
-            {
-                for (var i = 0; i < vertices.Length; i++)
-                    vertices[i].X *= TrapezoidWidthScale(part, vertices[i].Y);
-            }
-        }
-        var contour = new List<Vector3>(vertices.Length);
-        foreach (var vertex in vertices) contour.Add(frame.At(vertex));
-        return contour;
+        throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");
     }
 
     /// <summary>
@@ -214,34 +188,6 @@ public static class PartGeometry
                 Vector2.Dot(delta, typedFrame.Up) / scale.Y);
             return shape.ContainsPoint(normalized) ? .5f : 1 + ShapeDistance2D.Distance(normalized, shape);
         }
-        if (PuppetPartKinds.IsStroke(part.Kind))
-        {
-            var a = world(part.A); var b = world(part.B!);
-            return Distance2D.DistanceToSegment(p, new(a.X, a.Y), new(b.X, b.Y), 1e-10f)
-                / MathF.Max(part.Width, .06f);
-        }
-        var frame = FrameOf(part, world, angle);
-        var local = p - new Vector2(frame.Origin.X, frame.Origin.Y);
-        var coordinates = new Vector2(Vector2.Dot(local, frame.Right), Vector2.Dot(local, frame.Up));
-        if (part.Kind == "polygon")
-        {
-            var q = new Vector2(coordinates.X / part.Width, coordinates.Y / part.Height);
-            var inside = false; var nearest = float.MaxValue; var points = part.Points!;
-            for (var i = 0; i < points.Count; i++)
-            {
-                var a = points[i].XY; var b = points[(i + 1) % points.Count].XY;
-                nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(q, a, b, 1e-10f));
-                if ((a.Y > q.Y) != (b.Y > q.Y) && q.X < (b.X - a.X) * (q.Y - a.Y) / (b.Y - a.Y) + a.X) inside = !inside;
-            }
-            return nearest < 1e-6f ? 1 : inside ? .5f : 1 + nearest;
-        }
-        if (part.Kind == "trapezoid") coordinates.X /= TrapezoidWidthScale(part, coordinates.Y);
-        var halfSize = new Vector2(part.Width / 2, part.Height / 2);
-        return part.Kind == PuppetPartKinds.Ellipse
-            ? Containment2D.NormalizedEllipseRadius(coordinates, Vector2.Zero, halfSize)
-            : Containment2D.NormalizedRectangleRadius(coordinates, Vector2.Zero, halfSize);
+        throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");
     }
-
-    private static float TrapezoidWidthScale(PuppetPart part, float y) =>
-        1 + (part.TopWidthScale - 1) * Math.Clamp(y / part.Height + .5f, 0, 1);
 }

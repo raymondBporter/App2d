@@ -13,37 +13,22 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>Local prop art: a stroke through its points, or a filled polygon. X runs along the socket axis, Y across it, Z is depth.</summary>
 public sealed record PropShape
 {
-    private string _fill = "#c8b18a";
-    public string Kind { get; set; } = "stroke";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public GeometryDefinition2D? Geometry { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public RenderMaterialDefinition2D? Material { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<float>? Depths { get; set; }
-    public List<PuppetPoint> Points { get; set; } = [];
+    [JsonIgnore] public List<PuppetPoint> Points { get; set; } = [];
     public float Width { get; set; } = .05f;
-    public string Fill
-    {
-        get => Material?.Fill ?? _fill;
-        set
-        {
-            _fill = value;
-            if (Material is { } material) Material = material with { Fill = value };
-        }
-    }
-
     [JsonIgnore]
-    public RenderMaterialDefinition2D RenderMaterial => Material ??
-        new() { Fill = _fill, Outline = new() };
+    public RenderMaterialDefinition2D RenderMaterial => Material
+        ?? throw new InvalidDataException("A prop shape needs a material.");
 
-    [JsonIgnore] public bool IsFilled => Geometry is ShapeDefinition2D || Geometry is null && Kind == "polygon";
+    [JsonIgnore] public bool IsFilled => Geometry is ShapeDefinition2D;
 
-    public GeometryDefinition2D Definition() => Geometry ?? (Kind == "polygon"
-        ? new SimplePolygonShapeDefinition2D { Vertices = [.. Points.Select(point => Point2D.From(point.XY))] }
-        : Points.Count == 2
-            ? new LineCurveDefinition2D { Start = Point2D.From(Points[0].XY), End = Point2D.From(Points[1].XY) }
-            : new PolylineCurveDefinition2D { Points = [.. Points.Select(point => Point2D.From(point.XY))] });
+    public GeometryDefinition2D Definition() => Geometry
+        ?? throw new InvalidDataException("A prop shape needs typed geometry.");
 
     public void RestorePoints()
     {
@@ -51,7 +36,6 @@ public sealed record PropShape
         Vector2[] xy;
         if (Geometry is ShapeDefinition2D definition)
         {
-            Kind = "polygon";
             var shape = definition.Build();
             var count = WorldShape2D.OutlineVertexCount(shape, 48);
             if (count == 0) throw new InvalidDataException($"A {definition.Kind} cannot be used as prop art.");
@@ -60,7 +44,6 @@ public sealed record PropShape
         }
         else
         {
-            Kind = "stroke";
             xy = Geometry switch
             {
                 LineCurveDefinition2D line => [line.Start.Vector, line.End.Vector],
@@ -84,44 +67,13 @@ public sealed record PropShape
 /// <summary>A closed, consistently wound triangle mesh in prop space. X along the weapon, Y across its broad face, Z thickness.</summary>
 public sealed record PropSolid
 {
-    private string _fill = "#c8b18a";
-    private bool _outlined = true;
     public List<PuppetPoint> Vertices { get; set; } = [];
     public List<int> Triangles { get; set; } = [];
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public RenderMaterialDefinition2D? Material { get; set; }
-    public string Fill
-    {
-        get => Material?.Fill ?? _fill;
-        set
-        {
-            _fill = value;
-            if (Material is { } material) Material = material with { Fill = value };
-        }
-    }
-    public bool Outlined
-    {
-        get => Material is { } material ? material.Outline is not null : _outlined;
-        set
-        {
-            _outlined = value;
-            if (Material is { } material)
-                Material = material with { Outline = value ? material.Outline ?? new RenderOutlineDefinition2D() : null };
-        }
-    }
     [JsonIgnore]
-    public string? OutlineColor
-    {
-        get => Material?.Outline?.Color;
-        set
-        {
-            var material = RenderMaterial;
-            Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Color = value } };
-        }
-    }
-    [JsonIgnore]
-    public RenderMaterialDefinition2D RenderMaterial => Material ??
-        new() { Fill = _fill, Outline = _outlined ? new() : null };
+    public RenderMaterialDefinition2D RenderMaterial => Material
+        ?? throw new InvalidDataException("A prop solid needs a material.");
     /// <summary>Editable source for an extruded cutout. The indexed runtime mesh is rebuilt from it when loaded.</summary>
     public List<PuppetPoint>? Outline { get; set; }
     public float Thickness { get; set; }
@@ -136,8 +88,9 @@ public sealed class PropAsset
 {
     public const string FormatId = "app2d-prop", GripPoint = "grip", TipPoint = "tip", SecondGripPoint = "second-grip", MuzzlePoint = "muzzle";
     public static readonly IReadOnlyList<string> PointNames = [GripPoint, TipPoint, SecondGripPoint, MuzzlePoint];
+    public const int CurrentVersion = 2;
     public string Format { get; set; } = FormatId;
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Usage { get; set; } = "prop";
@@ -172,8 +125,6 @@ public sealed class PropAsset
         for (var i = 0; i < Shapes.Count; i++)
         {
             var entry = entries[i]!.AsObject();
-            entry.Remove("kind"); entry.Remove("points"); entry.Remove("geometry"); entry.Remove("depths");
-            entry.Remove("fill"); entry.Remove("material");
             entry["geometry"] = JsonNode.Parse(Shapes[i].Definition().ToGeometryJson());
             entry["depths"] = JsonSerializer.SerializeToNode(Shapes[i].Points.Select(point => point.Z).ToArray(), AuthoredJson.Options);
             entry["material"] = JsonSerializer.SerializeToNode(Shapes[i].RenderMaterial, AuthoredJson.Options);
@@ -182,23 +133,29 @@ public sealed class PropAsset
         for (var i = 0; i < Solids.Count; i++)
         {
             var entry = solids[i]!.AsObject();
-            entry.Remove("fill"); entry.Remove("outlined"); entry.Remove("material");
             entry["material"] = JsonSerializer.SerializeToNode(Solids[i].RenderMaterial, AuthoredJson.Options);
         }
         return root.ToJsonString(AuthoredJson.Options);
     }
     internal string ToSnapshotJson() => JsonSerializer.Serialize(this, AuthoredJson.SnapshotOptions);
+    internal static PropAsset FromDraftJson(string json)
+    {
+        RequireTypedJson(json);
+        var prop = AuthoredAsset.Parse<PropAsset>(json, "prop");
+        if (prop.Shapes is not null)
+            foreach (var shape in prop.Shapes) shape?.RestorePoints();
+        return prop;
+    }
     public static PropAsset FromJson(string json)
     {
-        var prop = AuthoredAsset.Parse<PropAsset>(json, "prop");
-        foreach (var shape in prop.Shapes) shape.RestorePoints();
+        var prop = FromDraftJson(json);
         if (prop.Solids is not null)
         {
             foreach (var solid in prop.Solids)
             {
                 if (solid?.Outline is not { } outline) continue;
                 if (outline.Count is < 3 or > 256) throw new InvalidDataException($"Prop '{prop.Id}': outline needs 3 to 256 points.");
-                var mesh = PropGeometry.Extrude(outline, solid.Thickness, solid.Fill);
+                var mesh = PropGeometry.Extrude(outline, solid.Thickness, solid.RenderMaterial.Fill!);
                 solid.Vertices = mesh.Vertices;
                 solid.Triangles = mesh.Triangles;
             }
@@ -207,6 +164,27 @@ public sealed class PropAsset
         prop.Validate();
         return prop;
     }
+
+    private static void RequireTypedJson(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        foreach (var group in document.RootElement.EnumerateObject())
+        {
+            if (group.Value.ValueKind != JsonValueKind.Array ||
+                !group.Name.Equals("shapes", StringComparison.OrdinalIgnoreCase) &&
+                !group.Name.Equals("solids", StringComparison.OrdinalIgnoreCase)) continue;
+            foreach (var item in group.Value.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Object) continue;
+                foreach (var field in item.EnumerateObject())
+                    if (field.Name.Equals("kind", StringComparison.OrdinalIgnoreCase) ||
+                        field.Name.Equals("points", StringComparison.OrdinalIgnoreCase) ||
+                        field.Name.Equals("fill", StringComparison.OrdinalIgnoreCase) ||
+                        field.Name.Equals("outlined", StringComparison.OrdinalIgnoreCase))
+                        throw new JsonException($"Prop field '{field.Name}' is from the old drawing format; use geometry and material.");
+            }
+        }
+    }
     public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
 
     private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
@@ -214,7 +192,7 @@ public sealed class PropAsset
     public void Validate()
     {
         var owner = $"Prop '{Id}'";
-        Require(Format == FormatId && Version == 1, $"{owner}: unsupported format/version.");
+        Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "prop id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         EntityVocabulary.Require(Usage, ["prop", "hair", "clothing"], owner + " usage");
@@ -236,12 +214,9 @@ public sealed class PropAsset
                 var a = solid.Vertices[solid.Triangles[i]].XYZ; var b = solid.Vertices[solid.Triangles[i + 1]].XYZ; var c = solid.Vertices[solid.Triangles[i + 2]].XYZ;
                 Require(new Triangle3D(a, b, c).DoubleArea > 1e-8d, $"{owner}: degenerate triangle.");
             }
-            if (solid.Material is null) Limit.Color(solid.Fill, owner + " mesh fill");
-            else
-            {
-                solid.Material.Validate(owner + " mesh material");
-                Require(solid.Material.Fill is not null, owner + " mesh material needs a fill.");
-            }
+            Require(solid.Material is not null, owner + " mesh material is required.");
+            solid.Material.Validate(owner + " mesh material");
+            Require(solid.Material.Fill is not null, owner + " mesh material needs a fill.");
             if (solid.Outline is { } outline)
             {
                 Require(outline.Count is >= 3 and <= 256, owner + ": outline needs 3 to 256 points.");
@@ -255,14 +230,14 @@ public sealed class PropAsset
             var shape = Shapes[i]; var field = $"{owner} shapes[{i}]";
             Require(shape?.Points is not null, $"{field}: incomplete shape.");
             if (shape.Geometry is not null && shape.Points.Count == 0) shape.RestorePoints();
-            if (shape.Geometry is null) EntityVocabulary.Require(shape.Kind, ["stroke", "polygon"], field + " kind");
+            Require(shape.Geometry is ShapeDefinition2D or CurveDefinition2D, $"{field}: typed geometry is required.");
             if (shape.Geometry is ShapeDefinition2D typedShape) _ = typedShape.Build();
             if (shape.Geometry is CurveDefinition2D typedCurve) _ = typedCurve.Build();
             Require(shape.IsFilled ? shape.Points.Count >= 3 : shape.Points.Count >= 2, $"{field}: a stroke needs two points and a polygon three.");
             foreach (var point in shape.Points) point.Check(field + " point");
             new Limit(.001f, 10).Check(shape.Width, field + " width");
-            if (shape.Material is null) Limit.Color(shape.Fill, field + " fill");
-            else shape.Material.Validate(field + " material");
+            Require(shape.Material is not null, field + " material is required.");
+            shape.Material.Validate(field + " material");
         }
     }
 }

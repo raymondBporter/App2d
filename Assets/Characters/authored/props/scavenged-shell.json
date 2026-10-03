@@ -1,6 +1,6 @@
 {
   "format": "app2d-prop",
-  "version": 1,
+  "version": 2,
   "id": "scavenged-shell",
   "name": "Scavenged shell shield",
   "ink": "#303b32",

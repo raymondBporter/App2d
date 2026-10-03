@@ -1,6 +1,6 @@
 {
   "format": "app2d-prop",
-  "version": 1,
+  "version": 2,
   "id": "throwing-rock",
   "name": "Throwing rock",
   "ink": "#30373a",
