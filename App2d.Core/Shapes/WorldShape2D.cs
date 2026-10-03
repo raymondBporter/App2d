@@ -43,6 +43,7 @@ public static class WorldShape2D
     public static int PerimeterVertexCount(IShape2D shape) => shape switch
     {
         Rectangle2D => 4,
+        RoundedRectangle2D => 36,
         Triangle2D => 3,
         ConvexPolygon2D polygon => polygon.Vertices.Length,
         SimplePolygon2D polygon => polygon.Vertices.Length,
@@ -59,6 +60,8 @@ public static class WorldShape2D
         switch (shape)
         {
             case Rectangle2D rectangle: rectangle.WriteCorners(vertices); return 4;
+            case RoundedRectangle2D rounded:
+                return VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.Min, rounded.Max, rounded.Radius);
             case Triangle2D triangle: triangle.WriteVertices(vertices); return 3;
             case ConvexPolygon2D polygon: polygon.Vertices.CopyTo(vertices); return polygon.Vertices.Length;
             case SimplePolygon2D polygon: polygon.Vertices.CopyTo(vertices); return polygon.Vertices.Length;
@@ -86,6 +89,9 @@ public static class WorldShape2D
     {
         Circle2D => 1,
         Capsule2D => 2,
+        RoundedRectangle2D rounded when rounded.CoreMin == rounded.CoreMax => 1,
+        RoundedRectangle2D rounded when rounded.CoreMin.X == rounded.CoreMax.X || rounded.CoreMin.Y == rounded.CoreMax.Y => 2,
+        RoundedRectangle2D => 4,
         _ => PerimeterVertexCount(shape)
     };
 
@@ -113,6 +119,13 @@ public static class WorldShape2D
                 vertices[1] = capsule.End;
                 radius = capsule.Radius;
                 count = 2;
+                break;
+            case RoundedRectangle2D rounded:
+                radius = rounded.Radius;
+                count = ConvexCoreVertexCount(rounded);
+                if (count == 1) vertices[0] = rounded.CoreMin;
+                else if (count == 2) { vertices[0] = rounded.CoreMin; vertices[1] = rounded.CoreMax; }
+                else VertexGenerator2D.WriteRectangle(vertices, rounded.CoreMin, rounded.CoreMax);
                 break;
             default:
                 radius = 0f;
@@ -167,6 +180,7 @@ public static class WorldShape2D
             Circle2D circle => new Circle2D(circle.Radius * scale, circle.Center * scale),
             Ellipse2D ellipse => new Ellipse2D(ellipse.Radii * scale, ellipse.Center * scale),
             Capsule2D capsule => new Capsule2D(capsule.Start * scale, capsule.End * scale, capsule.Radius * scale),
+            RoundedRectangle2D rounded => new RoundedRectangle2D(rounded.Min * scale, rounded.Max * scale, rounded.Radius * scale),
             AxisAlignedRectangle2D rectangle => new AxisAlignedRectangle2D(rectangle.Min * scale, rectangle.Max * scale),
             Rectangle2D rectangle => new Rectangle2D(rectangle.Min * scale, rectangle.Max * scale),
             Triangle2D triangle => new Triangle2D(triangle.A * scale, triangle.B * scale, triangle.C * scale),

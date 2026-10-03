@@ -346,10 +346,10 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             ImGui.SetNextItemWidth(-1);
             if (ImGui.SliderFloat("##" + label, ref value, min, max, "%.3f")) change(p => set(p, value));
         }
-        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => p.Width = v, o => o.Width = null);
+        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => { p.Width = v; if (overrides is null && p.Kind == PuppetPartKinds.Box) p.Geometry = null; }, o => o.Width = null);
         if (!PuppetPartKinds.IsStroke(part.Kind))
         {
-            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => p.Height = v, o => o.Height = null);
+            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => { p.Height = v; if (overrides is null && p.Kind == PuppetPartKinds.Box) p.Geometry = null; }, o => o.Height = null);
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
             if (overrides is null && PuppetPartKinds.HasRoundness(part.Kind)) Float("Roundness", part.Roundness, 0, 1, false, (p, v) => { p.Roundness = v; p.Geometry = null; }, _ => { });

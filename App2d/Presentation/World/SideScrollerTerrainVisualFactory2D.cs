@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.Grids;
 using App2d.Core.Rendering;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
@@ -199,11 +200,8 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
         };
     }
 
-    private Rect2D GetTileBounds(int x, int y)
-    {
-        var min = _tileMap.Origin + new Vector2(x, y) * _tileSize;
-        return Rect2D.FromMinAndSize(min, new Size2D(_tileSize, _tileSize));
-    }
+    private Rect2D GetTileBounds(int x, int y) =>
+        _tileMap.GridGeometry.GetCellBounds(new GridCell2D(x, y));
 
     private int WorldToTileX(float worldX) => (int)MathF.Round((worldX - _tileMap.Origin.X) / _tileSize);
 

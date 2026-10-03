@@ -70,14 +70,21 @@ public sealed class PuppetPose
 
     public void Move(PuppetDefinition definition, string id, Vector3 target)
     {
-        if (definition.Chains.Any(c => c.Joint == id)) throw new InvalidOperationException("This bend is solved by IK. Move the tip, or change the chain's bend direction.");
+        if (definition.Chains.Any(c => c.Joint == id))
+            throw new InvalidOperationException("This bend is solved by IK. Move the tip, or change the chain's bend direction.");
+
         var chain = definition.Chains.FirstOrDefault(c => c.End == id);
-        if (chain is not null) { Solve(definition, chain, target); return; }
+        if (chain is not null)
+        {
+            Solve(definition, chain, target);
+            return;
+        }
         var delta = target - Points[id];
         void Translate(string point)
         {
             Points[point] += delta;
-            foreach (var bone in definition.Bones.Where(b => b.From == point)) Translate(bone.To);
+            foreach (var bone in definition.Bones.Where(b => b.From == point)) 
+                Translate(bone.To);
         }
         Translate(id);
     }

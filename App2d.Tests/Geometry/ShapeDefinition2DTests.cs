@@ -13,6 +13,7 @@ public sealed class ShapeDefinition2DTests
         { new Ellipse2D(new(2, 1), new(-1, .5f)), ShapeKinds2D.Ellipse },
         { new Capsule2D(new(-1, 0), new(1, .5f), .3f), ShapeKinds2D.Capsule },
         { new Rectangle2D(new(-1, -2), new(3, 1)), ShapeKinds2D.Rectangle },
+        { new RoundedRectangle2D(new(-2, -1), new(2, 1), .4f), ShapeKinds2D.RoundedRectangle },
         { new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)), ShapeKinds2D.Rectangle },
         { new Triangle2D(new(0, 0), new(2, 0), new(1, 3)), ShapeKinds2D.Triangle },
         { new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]), ShapeKinds2D.ConvexPolygon },
@@ -72,7 +73,7 @@ public sealed class ShapeDefinition2DTests
         var circle = Assert.IsType<Circle2D>(ShapeDefinition2D.FromJson("{\"center\":{\"x\":1,\"y\":2},\"radius\":3,\"kind\":\"circle\"}").Build());
         Assert.Equal(new Vector2(1, 2), circle.Center);
         Assert.Equal(3f, circle.Radius);
-        Assert.Equal(9, ShapeKinds2D.All.Count);
+        Assert.Equal(10, ShapeKinds2D.All.Count);
     }
 
     [Fact]

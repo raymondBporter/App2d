@@ -1,5 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Noodle.Rigging;
@@ -21,6 +22,7 @@ internal static class RigAuthoredBridgeChecks2D
         circle.LocalX = 10; circle.LocalY = 4;
         var rectangle = (RigRectangleShape2D)rig.AddShape("Rectangle", child);
         rectangle.AngleDegrees = 17;
+        rectangle.CornerRadius = 8;
         var capsule = (RigCapsuleShape2D)rig.AddShape("Capsule", child);
         capsule.Purpose = RigShapePurpose.Collision;
         var polygon = (RigPolygonShape2D)rig.AddShape("Polygon", child);
@@ -33,6 +35,8 @@ internal static class RigAuthoredBridgeChecks2D
         Compare(rig, resolved, PoseEvaluator.Rest(resolved));
         if (!resolved.Parts.Single(p => p.Id == $"part-{capsule.Id}").Hidden)
             throw new InvalidOperationException("Collision-only geometry should not be drawn.");
+        if (resolved.Parts.Single(p => p.Id == $"part-{rectangle.Id}").Geometry is not RoundedRectangleShapeDefinition2D)
+            throw new InvalidOperationException("Noodle's corner radius should export as a rounded rectangle.");
         if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Points?.Count != 5)
             throw new InvalidOperationException("Polygon vertices were lost.");
 

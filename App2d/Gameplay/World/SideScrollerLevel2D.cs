@@ -126,41 +126,23 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                 "Bounds must be finite.");
         }
 
-        var startX = Math.Clamp(
-            (int)MathF.Floor((actorBounds.Min.X - TileMap.Origin.X) / _tileSize),
-            0,
-            TileMap.Width - 1);
-        var endX = Math.Clamp(
-            (int)MathF.Floor((actorBounds.Max.X - TileMap.Origin.X) / _tileSize),
-            0,
-            TileMap.Width - 1);
-        var startY = Math.Clamp(
-            (int)MathF.Floor((actorBounds.Min.Y - TileMap.Origin.Y) / _tileSize),
-            0,
-            TileMap.Height - 1);
-        var endY = Math.Clamp(
-            (int)MathF.Floor((actorBounds.Max.Y - TileMap.Origin.Y) / _tileSize),
-            0,
-            TileMap.Height - 1);
+        var cells = TileMap.GridGeometry.GetCellRange(actorBounds, TileMap.GridSize);
 
         var horizontalInset = _tileSize * 0.1f;
-        for (var y = startY; y <= endY; y++)
+        foreach (var cell in cells)
         {
-            for (var x = startX; x <= endX; x++)
-            {
-                if (!TileMap.GetTileKind(x, y).IsSpikes())
-                    continue;
+            if (!TileMap.GetTileKind(cell.X, cell.Y).IsSpikes())
+                continue;
 
-                var tileMin = TileMap.Origin + new Vector2(x, y) * _tileSize;
-                var spikeBounds = new Rect2D(
-                    tileMin + new Vector2(horizontalInset, 0f),
-                    tileMin + new Vector2(_tileSize - horizontalInset, _tileSize * 0.9f));
-                if (!actorBounds.Intersects(spikeBounds))
-                    continue;
+            var tileMin = TileMap.GridGeometry.GetCellBounds(cell).Min;
+            var spikeBounds = new Rect2D(
+                tileMin + new Vector2(horizontalInset, 0f),
+                tileMin + new Vector2(_tileSize - horizontalInset, _tileSize * 0.9f));
+            if (!actorBounds.Intersects(spikeBounds))
+                continue;
 
-                sourceX = tileMin.X + _tileSize / 2f;
-                return true;
-            }
+            sourceX = tileMin.X + _tileSize / 2f;
+            return true;
         }
 
         sourceX = 0f;

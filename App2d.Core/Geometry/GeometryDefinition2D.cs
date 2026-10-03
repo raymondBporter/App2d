@@ -14,6 +14,7 @@ namespace App2d.Core.Geometry;
 [JsonDerivedType(typeof(EllipseShapeDefinition2D), ShapeKinds2D.Ellipse)]
 [JsonDerivedType(typeof(CapsuleShapeDefinition2D), ShapeKinds2D.Capsule)]
 [JsonDerivedType(typeof(RectangleShapeDefinition2D), ShapeKinds2D.Rectangle)]
+[JsonDerivedType(typeof(RoundedRectangleShapeDefinition2D), ShapeKinds2D.RoundedRectangle)]
 [JsonDerivedType(typeof(TriangleShapeDefinition2D), ShapeKinds2D.Triangle)]
 [JsonDerivedType(typeof(ConvexPolygonShapeDefinition2D), ShapeKinds2D.ConvexPolygon)]
 [JsonDerivedType(typeof(SimplePolygonShapeDefinition2D), ShapeKinds2D.SimplePolygon)]

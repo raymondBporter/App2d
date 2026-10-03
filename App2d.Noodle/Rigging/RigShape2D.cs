@@ -54,23 +54,35 @@ internal sealed class RigRectangleShape2D(int id, string name, RigBone2D bone) :
 {
     private float _width = 100f;
     private float _height = 40f;
+    private float _cornerRadius;
 
 
     [Category("Geometry")]
     public float Width
     {
         get => _width;
-        set => _width = Positive(value);
+        set { _width = Positive(value); _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius); }
     }
 
     [Category("Geometry")]
     public float Height
     {
         get => _height;
-        set => _height = Positive(value);
+        set { _height = Positive(value); _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius); }
     }
 
-    internal override IShape2D CreateGeometry() => Rectangle2D.FromSize(new Vector2(Width, Height));
+    [Category("Geometry"), DisplayName("Corner radius")]
+    public float CornerRadius
+    {
+        get => _cornerRadius;
+        set => _cornerRadius = float.IsFinite(value) ? Math.Clamp(value, 0f, MaximumRadius) : 0f;
+    }
+
+    private float MaximumRadius => MathF.Min(Width, Height) / 2f;
+
+    internal override IShape2D CreateGeometry() => CornerRadius > 0f
+        ? RoundedRectangle2D.FromSize(new Vector2(Width, Height), CornerRadius)
+        : Rectangle2D.FromSize(new Vector2(Width, Height));
 
     private static float Positive(float value) => float.IsFinite(value) && value > 1f ? value : 1f;
 }

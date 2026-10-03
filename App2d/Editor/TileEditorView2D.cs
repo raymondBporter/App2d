@@ -1,5 +1,7 @@
 using App2d.Core.Geometry;
+using App2d.Core.Grids;
 using App2d.Core.Rendering.Textures;
+using App2d.Core.Shapes;
 using App2d.Rendering;
 using App2d.Things;
 using System.Numerics;
@@ -16,34 +18,25 @@ internal static class TileEditorView2D
     // compete visually with the cursor outline or the painted tiles themselves.
     private static readonly XnaColor GridColor = new(255, 255, 255, 28);
 
-    public static void DrawWorldDebug(Renderer2D renderer, TileEditor2D editor, Rect2D mapBounds, float tileSize)
+    public static void DrawWorldDebug(Renderer2D renderer, TileEditor2D editor)
     {
         if (!editor.IsActive)
             return;
 
-        var origin = mapBounds.Min;
-        DrawGrid(renderer, editor.VisibleWorldBounds, mapBounds, tileSize);
+        DrawGrid(renderer, editor.VisibleWorldBounds, editor.MapBounds, editor.GridGeometry);
 
         if (editor.Mode == LevelEditorMode2D.Things)
         {
-            DrawThings(renderer, editor, tileSize);
+            DrawThings(renderer, editor);
             return;
         }
 
         var hasTile = editor.TryGetHoveredTile(out var tileX, out var tileY);
         if (hasTile)
         {
-            var min = origin + new Vector2(tileX, tileY) * tileSize;
-            var max = min + new Vector2(tileSize);
-            Span<Vector2> outline =
-            [
-                new(min.X, min.Y),
-                new(max.X, min.Y),
-                new(max.X, max.Y),
-                new(min.X, max.Y),
-                new(min.X, min.Y)
-            ];
-            renderer.DrawWorldPolyline(outline, CursorColor, strokeWidth: 2f);
+            var bounds = editor.GridGeometry.GetCellBounds(new GridCell2D(tileX, tileY));
+            renderer.DrawShape(new Rectangle2D(bounds.Min, bounds.Max),
+                outlineColor: CursorColor, screenStrokeWidth: 2f);
         }
     }
 
@@ -53,7 +46,7 @@ internal static class TileEditorView2D
             TileEditorMenu2D.Draw(renderer, editor, textures);
     }
 
-    private static void DrawThings(Renderer2D renderer, TileEditor2D editor, float tileSize)
+    private static void DrawThings(Renderer2D renderer, TileEditor2D editor)
     {
         var pathColor = new XnaColor(130, 180, 210, 170);
         var selectedColor = new XnaColor(255, 214, 64);
@@ -75,9 +68,9 @@ internal static class TileEditorView2D
             var end = start + new Vector2(thing.TravelX, thing.TravelY);
             var isSelected = editor.SelectedThingId == thing.ThingId;
             var color = isSelected ? selectedColor : thing.Enabled ? pathColor : disabledColor;
-            Span<Vector2> path = [start, end];
-            renderer.DrawWorldPolyline(path, color, isSelected ? 3f : 2f);
-            DrawRectangleOutline(renderer, start, new Vector2(thing.Width, thing.Height), color, isSelected ? 3f : 2f);
+            renderer.DrawWorldSegment(start, end, color, isSelected ? 3f : 2f);
+            renderer.DrawShape(Rectangle2D.FromSize(new Vector2(thing.Width, thing.Height), start),
+                outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
             if (isSelected)
             {
                 var radius = editor.PixelsToWorldUnits(9f);
@@ -88,14 +81,10 @@ internal static class TileEditorView2D
 
         if (editor.TryGetPlacementPreview(out var definition, out var position))
         {
-            DrawRectangleOutline(
-                renderer,
-                position,
-                new Vector2(definition.Width, definition.Height),
-                new XnaColor(105, 245, 180, 220),
-                3f);
-            Span<Vector2> previewPath = [position, position + new Vector2(tileSize * 3f, 0f)];
-            renderer.DrawWorldPolyline(previewPath, new XnaColor(105, 245, 180, 180), 2f);
+            renderer.DrawShape(Rectangle2D.FromSize(new Vector2(definition.Width, definition.Height), position),
+                outlineColor: new XnaColor(105, 245, 180, 220), screenStrokeWidth: 3f);
+            renderer.DrawWorldSegment(position, position + new Vector2(editor.TileSize * 3f, 0f),
+                new XnaColor(105, 245, 180, 180), 2f);
         }
 
         if (editor.TryGetPositionPlacementPreview(out var positionDefinition, out var positionPreview))
@@ -109,52 +98,29 @@ internal static class TileEditorView2D
         }
     }
 
-    private static void DrawRectangleOutline(
-        Renderer2D renderer,
-        Vector2 center,
-        Vector2 size,
-        XnaColor color,
-        float strokeWidth)
-    {
-        var half = size / 2f;
-        Span<Vector2> outline =
-        [
-            center + new Vector2(-half.X, -half.Y),
-            center + new Vector2(half.X, -half.Y),
-            center + new Vector2(half.X, half.Y),
-            center + new Vector2(-half.X, half.Y),
-            center + new Vector2(-half.X, -half.Y)
-        ];
-        renderer.DrawWorldPolyline(outline, color, strokeWidth);
-    }
-
     /// <summary>
     /// Draws grid lines over the tiles currently on screen, in world space so the grid
     /// tracks pan and zoom like the cursor outline. Bounded to the visible region rather
     /// than the whole map (a zoomed-out view could otherwise ask for hundreds of lines)
     /// and clamped to the map bounds so nothing is drawn outside the paintable area.
     /// </summary>
-    private static void DrawGrid(Renderer2D renderer, Rect2D visible, Rect2D mapBounds, float tileSize)
+    private static void DrawGrid(Renderer2D renderer, Rect2D visible, Rect2D mapBounds, GridGeometry2D grid)
     {
-        var minX = MathF.Max(visible.Left, mapBounds.Left);
-        var maxX = MathF.Min(visible.Right, mapBounds.Right);
-        var minY = MathF.Max(visible.Bottom, mapBounds.Bottom);
-        var maxY = MathF.Min(visible.Top, mapBounds.Top);
-        if (minX >= maxX || minY >= maxY)
+        if (!visible.TryIntersect(mapBounds, out var clipped) ||
+            !clipped.TryGetPositiveSize(out _))
             return;
 
-        var firstX = mapBounds.Left + MathF.Floor((minX - mapBounds.Left) / tileSize) * tileSize;
-        for (var x = firstX; x <= maxX; x += tileSize)
+        var cells = grid.GetCellRange(clipped);
+        for (var x = cells.Minimum.X; x <= cells.Maximum.X; x++)
         {
-            Span<Vector2> line = [new(x, minY), new(x, maxY)];
-            renderer.DrawWorldPolyline(line, GridColor, strokeWidth: 1f);
+            var worldX = grid.GetCellBounds(new GridCell2D(x, 0)).Left;
+            renderer.DrawWorldSegment(new(worldX, clipped.Bottom), new(worldX, clipped.Top), GridColor, 1f);
         }
 
-        var firstY = mapBounds.Bottom + MathF.Floor((minY - mapBounds.Bottom) / tileSize) * tileSize;
-        for (var y = firstY; y <= maxY; y += tileSize)
+        for (var y = cells.Minimum.Y; y <= cells.Maximum.Y; y++)
         {
-            Span<Vector2> line = [new(minX, y), new(maxX, y)];
-            renderer.DrawWorldPolyline(line, GridColor, strokeWidth: 1f);
+            var worldY = grid.GetCellBounds(new GridCell2D(0, y)).Bottom;
+            renderer.DrawWorldSegment(new(clipped.Left, worldY), new(clipped.Right, worldY), GridColor, 1f);
         }
     }
 

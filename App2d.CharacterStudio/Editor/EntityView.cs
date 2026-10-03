@@ -343,7 +343,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         if (ImGui.DragInt("##damage", ref damage, .1f, 0, 10000)) session.Change(document, () => Hit().Damage = Math.Clamp(damage, 0, 10000));
     }
 
-    private static readonly string[] EditableShapeKinds = [ShapeKinds2D.Rectangle, ShapeKinds2D.Circle, ShapeKinds2D.Capsule, ShapeKinds2D.Ellipse, ShapeKinds2D.Triangle, ShapeKinds2D.ConvexPolygon];
+    private static readonly string[] EditableShapeKinds = [ShapeKinds2D.Rectangle, ShapeKinds2D.RoundedRectangle, ShapeKinds2D.Circle, ShapeKinds2D.Capsule, ShapeKinds2D.Ellipse, ShapeKinds2D.Triangle, ShapeKinds2D.ConvexPolygon];
 
     /// <summary>Kind and geometry fields for one shape definition. Kind changes are discrete edits; drags are continuous changes.</summary>
     private void ShapeFields(AssetDocument<EntityAsset> document, ShapeDefinition2D shape, Action<ShapeDefinition2D> set)
@@ -358,6 +358,20 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                     var centre = (rectangle.Min.Vector + rectangle.Max.Vector) / 2; var size = rectangle.Max.Vector - rectangle.Min.Vector;
                     if (Ui.Drag2("Centre", ref centre)) Drag(RectangleShapeDefinition2D.FromSize(size, centre));
                     if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100)) Drag(RectangleShapeDefinition2D.FromSize(Vector2.Max(size, new(.01f)), centre));
+                    break;
+                }
+            case RoundedRectangleShapeDefinition2D rounded:
+                {
+                    var centre = (rounded.Min.Vector + rounded.Max.Vector) / 2; var size = rounded.Max.Vector - rounded.Min.Vector;
+                    if (Ui.Drag2("Centre", ref centre)) Drag(RoundedRectangleShapeDefinition2D.FromSize(size, rounded.Radius, centre));
+                    if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
+                    {
+                        size = Vector2.Max(size, new(.01f));
+                        Drag(RoundedRectangleShapeDefinition2D.FromSize(size, MathF.Min(rounded.Radius, MathF.Min(size.X, size.Y) / 2f), centre));
+                    }
+                    var radius = rounded.Radius;
+                    if (Ui.Drag("Corner radius", ref radius, .005f, 0, MathF.Min(size.X, size.Y) / 2f))
+                        Drag(rounded with { Radius = Math.Clamp(radius, 0, MathF.Min(size.X, size.Y) / 2f) });
                     break;
                 }
             case CircleShapeDefinition2D circle:

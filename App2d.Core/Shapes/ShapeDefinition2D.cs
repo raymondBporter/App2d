@@ -15,6 +15,7 @@ namespace App2d.Core.Shapes;
 [JsonDerivedType(typeof(EllipseShapeDefinition2D), ShapeKinds2D.Ellipse)]
 [JsonDerivedType(typeof(CapsuleShapeDefinition2D), ShapeKinds2D.Capsule)]
 [JsonDerivedType(typeof(RectangleShapeDefinition2D), ShapeKinds2D.Rectangle)]
+[JsonDerivedType(typeof(RoundedRectangleShapeDefinition2D), ShapeKinds2D.RoundedRectangle)]
 [JsonDerivedType(typeof(TriangleShapeDefinition2D), ShapeKinds2D.Triangle)]
 [JsonDerivedType(typeof(ConvexPolygonShapeDefinition2D), ShapeKinds2D.ConvexPolygon)]
 [JsonDerivedType(typeof(SimplePolygonShapeDefinition2D), ShapeKinds2D.SimplePolygon)]
@@ -58,6 +59,7 @@ public abstract record ShapeDefinition2D : GeometryDefinition2D
         Capsule2D capsule => new CapsuleShapeDefinition2D { Start = Point2D.From(capsule.Start), End = Point2D.From(capsule.End), Radius = capsule.Radius },
         AxisAlignedRectangle2D rectangle => new RectangleShapeDefinition2D { Min = Point2D.From(rectangle.Min), Max = Point2D.From(rectangle.Max), AxisAligned = true },
         Rectangle2D rectangle => new RectangleShapeDefinition2D { Min = Point2D.From(rectangle.Min), Max = Point2D.From(rectangle.Max) },
+        RoundedRectangle2D rectangle => new RoundedRectangleShapeDefinition2D { Min = Point2D.From(rectangle.Min), Max = Point2D.From(rectangle.Max), Radius = rectangle.Radius },
         Triangle2D triangle => new TriangleShapeDefinition2D { A = Point2D.From(triangle.A), B = Point2D.From(triangle.B), C = Point2D.From(triangle.C) },
         ConvexPolygon2D polygon => new ConvexPolygonShapeDefinition2D { Vertices = [.. polygon.Vertices.ToArray().Select(Point2D.From)] },
         SimplePolygon2D polygon => new SimplePolygonShapeDefinition2D { Vertices = [.. polygon.Vertices.ToArray().Select(Point2D.From)] },
@@ -86,6 +88,7 @@ public abstract record ShapeDefinition2D : GeometryDefinition2D
         return kind switch
         {
             ShapeKinds2D.Rectangle => RectangleShapeDefinition2D.FromSize(size, center),
+            ShapeKinds2D.RoundedRectangle => RoundedRectangleShapeDefinition2D.FromSize(size, MathF.Min(size.X, size.Y) * .1f, center),
             ShapeKinds2D.Circle => new CircleShapeDefinition2D { Center = Point2D.From(center), Radius = MathF.Min(size.X, size.Y) / 2f },
             ShapeKinds2D.Ellipse => new EllipseShapeDefinition2D { Center = Point2D.From(center), Radii = Point2D.From(size / 2f) },
             ShapeKinds2D.Capsule => size.X >= size.Y
@@ -144,6 +147,19 @@ public sealed record RectangleShapeDefinition2D : ShapeDefinition2D
     /// <param name="center">The center point.</param>
     /// <returns>The definition spanning half the size on each side of the center.</returns>
     public static RectangleShapeDefinition2D FromSize(Vector2 size, Vector2 center = default) => new() { Min = Point2D.From(center - size / 2f), Max = Point2D.From(center + size / 2f) };
+}
+
+/// <summary>A rectangle with circular corners: <see cref="RoundedRectangle2D"/>.</summary>
+public sealed record RoundedRectangleShapeDefinition2D : ShapeDefinition2D
+{
+    public required Point2D Min { get; init; }
+    public required Point2D Max { get; init; }
+    public required float Radius { get; init; }
+    [JsonIgnore] public override string Kind => ShapeKinds2D.RoundedRectangle;
+    public override IShape2D Build() => new RoundedRectangle2D(Min.Vector, Max.Vector, Radius);
+
+    public static RoundedRectangleShapeDefinition2D FromSize(Vector2 size, float radius, Vector2 center = default) =>
+        new() { Min = Point2D.From(center - size / 2f), Max = Point2D.From(center + size / 2f), Radius = radius };
 }
 
 /// <summary>A triangle: <see cref="Triangle2D"/>.</summary>

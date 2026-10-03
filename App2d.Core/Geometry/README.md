@@ -57,6 +57,8 @@ bounds cache. The switch tables map a shape to raw parameters once:
 - `ShapeBounds2D.Calculate(shape)` gives local bounds; `SpatialObject2D` caches local and world bounds.
 - `ShapeDistance2D` gives point/shape, shape/shape and object/object distances. Ellipse point and circle queries are
   exact; other ellipse pairings polygonize with `Ellipse2D.CollisionSegments`.
+- `RoundedRectangle2D` is an inset rectangle expanded by a radius. Point distances and pair distances against
+  circles, capsules and polygonal convex shapes use that core exactly; collision contacts and ray casts sample its curved perimeter.
 
 `TriangleMesh2D` is a mesh, not a shape; `ToCompositeShape()` bridges to collision. `CompositeShape2D` is the
 non-convex shape and always resolves per part.

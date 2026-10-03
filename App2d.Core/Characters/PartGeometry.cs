@@ -14,13 +14,14 @@ namespace App2d.Core.Characters;
 /// </summary>
 public static class PartGeometry
 {
-    private static readonly ConditionalWeakTable<GeometryDefinition2D, object> Built = new();
+    private static readonly ConditionalWeakTable<GeometryDefinition2D, object> Built = [];
 
-    public static IShape2D ShapeOf(ShapeDefinition2D definition) =>
-        (IShape2D)Built.GetValue(definition, key => ((ShapeDefinition2D)key).Build());
+    public static IShape2D ShapeOf(ShapeDefinition2D definition) => (IShape2D)Built.GetValue(definition, key => ((ShapeDefinition2D)key).Build());
+    public static ICurve2D CurveOf(CurveDefinition2D definition) => (ICurve2D)Built.GetValue(definition, key => ((CurveDefinition2D)key).Build());
 
-    public static ICurve2D CurveOf(CurveDefinition2D definition) =>
-        (ICurve2D)Built.GetValue(definition, key => ((CurveDefinition2D)key).Build());
+    private static Vector2 ShapeScale(PuppetPart part, IShape2D shape) => shape is RoundedRectangle2D rounded
+        ? new(part.Width / (rounded.Max.X - rounded.Min.X), part.Height / (rounded.Max.Y - rounded.Min.Y))
+        : new(part.Width, part.Height);
 
     /// <summary>Converts the old editor fields to the shared geometry schema.</summary>
     public static GeometryDefinition2D Definition(PuppetPart part) => part.Geometry ?? LegacyDefinition(part);
@@ -35,6 +36,9 @@ public static class PartGeometry
             return Polygon(part.Points!.Select(point => point.XY));
         if (part.Kind == PuppetPartKinds.Box && part.Roundness == 0)
             return RectangleShapeDefinition2D.FromSize(Vector2.One);
+        if (part.Kind == PuppetPartKinds.Box)
+            return RoundedRectangleShapeDefinition2D.FromSize(new(part.Width, part.Height),
+                Math.Min(part.Width, part.Height) * .5f * part.Roundness);
         if (part.Kind == PuppetPartKinds.Trapezoid && part.Roundness == 0)
             return Polygon([new Vector2(-.5f, -.5f), new Vector2(.5f, -.5f),
                 new Vector2(.5f * part.TopWidthScale, .5f), new Vector2(-.5f * part.TopWidthScale, .5f)]);
@@ -70,6 +74,10 @@ public static class PartGeometry
             case RectangleShapeDefinition2D:
                 part.Kind = PuppetPartKinds.Box;
                 part.Roundness = 0;
+                break;
+            case RoundedRectangleShapeDefinition2D rounded:
+                part.Kind = PuppetPartKinds.Box;
+                part.Roundness = 2f * rounded.Radius / MathF.Min(rounded.Max.X - rounded.Min.X, rounded.Max.Y - rounded.Min.Y);
                 break;
             case SimplePolygonShapeDefinition2D polygon:
                 part.Kind = PuppetPartKinds.Polygon;
@@ -148,7 +156,8 @@ public static class PartGeometry
             var outline = new Vector2[count];
             WorldShape2D.WriteOutline(shape, outline, 48);
             var typedFrame = FrameOf(part, world, angle);
-            return [.. outline.Select(vertex => typedFrame.At(new(vertex.X * part.Width, vertex.Y * part.Height)))];
+            var scale = ShapeScale(part, shape);
+            return [.. outline.Select(vertex => typedFrame.At(vertex * scale))];
         }
         if (PuppetPartKinds.IsStroke(part.Kind))
         {
@@ -199,9 +208,10 @@ public static class PartGeometry
         {
             var typedFrame = FrameOf(part, world, angle);
             var delta = p - new Vector2(typedFrame.Origin.X, typedFrame.Origin.Y);
-            var normalized = new Vector2(Vector2.Dot(delta, typedFrame.Right) / part.Width,
-                Vector2.Dot(delta, typedFrame.Up) / part.Height);
             var shape = ShapeOf(typed);
+            var scale = ShapeScale(part, shape);
+            var normalized = new Vector2(Vector2.Dot(delta, typedFrame.Right) / scale.X,
+                Vector2.Dot(delta, typedFrame.Up) / scale.Y);
             return shape.ContainsPoint(normalized) ? .5f : 1 + ShapeDistance2D.Distance(normalized, shape);
         }
         if (PuppetPartKinds.IsStroke(part.Kind))

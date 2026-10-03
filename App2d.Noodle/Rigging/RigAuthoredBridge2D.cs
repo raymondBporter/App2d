@@ -62,6 +62,11 @@ internal static class RigAuthoredBridge2D
             Height = 1,
             Geometry = ShapeDefinition2D.FromShape(WorldShape2D.Scaled((IConvexShape2D)shape.CreateGeometry(), UnitsPerPixel))
         };
+        if (part.Geometry is RoundedRectangleShapeDefinition2D rounded)
+        {
+            part.Width = rounded.Max.X - rounded.Min.X;
+            part.Height = rounded.Max.Y - rounded.Min.Y;
+        }
         PartGeometry.RestoreEditorFields(part);
         return part;
     }

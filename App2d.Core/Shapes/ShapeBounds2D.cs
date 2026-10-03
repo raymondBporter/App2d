@@ -23,6 +23,7 @@ public static class ShapeBounds2D
             Circle2D circle => Rect2D.FromCircle(circle.Center, circle.Radius),
             Ellipse2D ellipse => new(ellipse.Center - ellipse.Radii, ellipse.Center + ellipse.Radii),
             Capsule2D capsule => Rect2D.FromCapsule(capsule.Start, capsule.End, capsule.Radius),
+            RoundedRectangle2D rectangle => new(rectangle.Min, rectangle.Max),
             IRect2D rectangle => rectangle.ToRect(),
             Triangle2D triangle => new(Vector2.Min(Vector2.Min(triangle.A, triangle.B), triangle.C), Vector2.Max(Vector2.Max(triangle.A, triangle.B), triangle.C)),
             ConvexPolygon2D polygon => Rect2D.FromPoints(polygon.Vertices),
@@ -49,6 +50,8 @@ public static class ShapeBounds2D
             case Circle2D circle: return (circle.Center, circle.Radius);
             case Ellipse2D ellipse: return (ellipse.Center, Math.Max(ellipse.Radii.X, ellipse.Radii.Y));
             case Capsule2D capsule: return ((capsule.Start + capsule.End) / 2f, Vector2.Distance(capsule.Start, capsule.End) / 2f + capsule.Radius);
+            case RoundedRectangle2D rectangle:
+                return ((rectangle.Min + rectangle.Max) / 2f, (rectangle.CoreMax - rectangle.CoreMin).Length() / 2f + rectangle.Radius);
             case HalfSpace2D: return (Vector2.Zero, float.PositiveInfinity);
             case CompositeShape2D composite:
                 {

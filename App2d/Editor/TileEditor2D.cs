@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.Grids;
 using App2d.Core.Input;
 using App2d.Core.Rendering;
 using App2d.Core.Tiles;
@@ -21,8 +22,6 @@ internal sealed class TileEditor2D : IDisposable
     private readonly Func<LevelDatabase2D> _openDatabase;
     private readonly Camera2D _camera;
     private readonly TileEditSession2D _session;
-    private readonly Vector2 _origin;
-    private readonly float _tileSize;
 
     private LevelDatabase2D? _database;
     private Vector2 _cameraFocus;
@@ -53,16 +52,11 @@ internal sealed class TileEditor2D : IDisposable
     public TileEditor2D(
         EditableTileMap2D map,
         Func<LevelDatabase2D> openDatabase,
-        Camera2D camera,
-        Vector2 origin,
-        float tileSize)
+        Camera2D camera)
     {
         _map = ArgGuard.RequireNotNull(map);
         _openDatabase = ArgGuard.RequireNotNull(openDatabase);
         _camera = ArgGuard.RequireNotNull(camera);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
-        _origin = origin;
-        _tileSize = tileSize;
         _session = new TileEditSession2D(map);
         SelectedKind = TileKind2D.Solid;
         InspectorView = new ThingEditorInspector2D(this);
@@ -77,6 +71,9 @@ internal sealed class TileEditor2D : IDisposable
     public Vector2 MouseDevicePosition => _lastMouseDevice;
     public Vector2 CameraFocus => _cameraFocus;
     public Rect2D VisibleWorldBounds => _camera.VisibleWorldBounds;
+    public Rect2D MapBounds => _map.WorldBounds;
+    public GridGeometry2D GridGeometry => _map.GridGeometry;
+    public float TileSize => _map.TileSize;
     public Vector2 VisibleDeviceSize => _camera.ViewportSize;
     public float Zoom => _camera.Zoom;
     public float PixelsToWorldUnits(float pixels) => _camera.PixelsToWorldUnits(pixels);
@@ -115,9 +112,15 @@ internal sealed class TileEditor2D : IDisposable
         }
 
         var world = _camera.DeviceToWorld(_lastMouseDevice);
-        x = (int)MathF.Floor((world.X - _origin.X) / _tileSize);
-        y = (int)MathF.Floor((world.Y - _origin.Y) / _tileSize);
-        return x >= 0 && x < _map.Width && y >= 0 && y < _map.Height;
+        if (!GridGeometry.TryWorldToCell(world, out var cell))
+        {
+            x = 0;
+            y = 0;
+            return false;
+        }
+        x = cell.X;
+        y = cell.Y;
+        return _map.GridSize.Contains(cell);
     }
 
     public void Update(InputState input)
@@ -455,9 +458,9 @@ internal sealed class TileEditor2D : IDisposable
                 position.X,
                 position.Y,
                 Rotation: 0f,
-                TravelX: _tileSize * 3f,
+                TravelX: TileSize * 3f,
                 TravelY: 0f,
-                Speed: _tileSize * 1.5f));
+                Speed: TileSize * 1.5f));
             _thingUndo.Push(database => database.DeleteMovingPlatform(created.ThingId));
             SelectedThingId = created.ThingId;
         }
@@ -588,10 +591,7 @@ internal sealed class TileEditor2D : IDisposable
         ReloadThings(notifyRuntime: true);
     }
 
-    private Vector2 SnapToGrid(Vector2 world) =>
-        _origin + new Vector2(
-            MathF.Round((world.X - _origin.X) / _tileSize) * _tileSize,
-            MathF.Round((world.Y - _origin.Y) / _tileSize) * _tileSize);
+    private Vector2 SnapToGrid(Vector2 world) => GridGeometry.SnapToNearestCorner(world);
 
     private void ReloadThings(bool notifyRuntime)
     {

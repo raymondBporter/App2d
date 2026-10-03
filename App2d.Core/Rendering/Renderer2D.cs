@@ -256,6 +256,8 @@ public sealed partial class Renderer2D : IDisposable
         {
             case Rectangle2D rectangle:
                 return VertexGenerator2D.WriteRectangle(points, rectangle.Min, rectangle.Max);
+            case RoundedRectangle2D rounded:
+                return VertexGenerator2D.WriteRoundedRectangle(points, rounded.Min, rounded.Max, rounded.Radius);
             case Circle2D circle:
                 var segments = CurveSegments(circle.Radius, matrix);
                 return VertexGenerator2D.WriteCircle(points[..segments], circle.Center, circle.Radius);
