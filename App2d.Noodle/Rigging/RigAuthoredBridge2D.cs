@@ -55,8 +55,11 @@ internal static class RigAuthoredBridge2D
             OffsetX = shape.LocalX * UnitsPerPixel,
             OffsetY = shape.LocalY * UnitsPerPixel,
             Angle = MathF.PI / 180f * shape.AngleDegrees,
-            Fill = $"#{shape.Color.R:x2}{shape.Color.G:x2}{shape.Color.B:x2}",
-            OutlineWidth = 0,
+            Material = new RenderMaterialDefinition2D
+            {
+                Fill = $"#{shape.Color.R:x2}{shape.Color.G:x2}{shape.Color.B:x2}",
+                Outline = new() { Width = 0 }
+            },
             Hidden = shape.Purpose == RigShapePurpose.Collision,
             Width = 1,
             Height = 1,

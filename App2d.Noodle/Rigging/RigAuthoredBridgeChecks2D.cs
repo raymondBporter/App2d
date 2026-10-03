@@ -37,7 +37,7 @@ internal static class RigAuthoredBridgeChecks2D
             throw new InvalidOperationException("Collision-only geometry should not be drawn.");
         if (resolved.Parts.Single(p => p.Id == $"part-{rectangle.Id}").Geometry is not RoundedRectangleShapeDefinition2D)
             throw new InvalidOperationException("Noodle's corner radius should export as a rounded rectangle.");
-        if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Points?.Count != 5)
+        if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Geometry is not ConvexPolygonShapeDefinition2D { Vertices.Count: 5 })
             throw new InvalidOperationException("Polygon vertices were lost.");
 
         // A rotate track on a bone origin must carry all child bones and attachments with it.

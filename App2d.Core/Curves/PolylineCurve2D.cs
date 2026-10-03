@@ -1,4 +1,5 @@
 using App2d.Core.Validation;
+using App2d.Core.Geometry;
 using System.Numerics;
 
 namespace App2d.Core.Curves;
@@ -28,6 +29,14 @@ public sealed class PolylineCurve2D : ICurve2D
     {
         var (index, _) = Segment(amount);
         return (_points[index + 1] - _points[index]) * (_points.Length - 1);
+    }
+
+    public float Distance(Vector2 point)
+    {
+        var nearestSquared = float.PositiveInfinity;
+        for (var i = 1; i < _points.Length; i++)
+            nearestSquared = MathF.Min(nearestSquared, Distance2D.DistanceSquaredToSegment(point, _points[i - 1], _points[i]));
+        return MathF.Sqrt(nearestSquared);
     }
 
     private (int Index, float Fraction) Segment(float amount)

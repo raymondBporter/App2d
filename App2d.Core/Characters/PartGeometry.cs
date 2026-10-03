@@ -143,8 +143,7 @@ public static class PartGeometry
             for (var i = 0; i < count; i++)
             {
                 var p = geometry.Evaluate((float)i / (count - 1));
-                result.Add(new Vector3(new Vector2(a.X, a.Y) + across * p.X + along * p.Y,
-                    a.Z + (b.Z - a.Z) * p.Y + part.Depth));
+                result.Add(new Vector3(new Vector2(a.X, a.Y) + across * p.X + along * p.Y, a.Z + (b.Z - a.Z) * p.Y + part.Depth));
             }
             return result;
         }
@@ -163,19 +162,23 @@ public static class PartGeometry
     }
 
     /// <summary>
-    /// Normalized XY picking score, not a distance in world units. Ellipses use radial distance;
-    /// rounded boxes retain their bounding-box score with taper accounted for; strokes use width with a minimum picking tolerance.
+    /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
+    /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
     public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null)
     {
         var p = new Vector2(point.X, point.Y);
-        if (part.Geometry is CurveDefinition2D)
+        if (part.Geometry is CurveDefinition2D curve)
         {
-            var contour = Contour(part, world, angle);
-            var distance = float.MaxValue;
-            for (var i = 1; i < contour.Count; i++)
-                distance = MathF.Min(distance, Distance2D.DistanceToSegment(p,
-                    new(contour[i - 1].X, contour[i - 1].Y), new(contour[i].X, contour[i].Y), 1e-10f));
+            var a = world(part.A); var b = world(part.B!);
+            var origin = new Vector2(a.X, a.Y);
+            var along = new Vector2(b.X - a.X, b.Y - a.Y);
+            var lengthSquared = along.LengthSquared();
+            if (lengthSquared < 1e-10f) return Vector2.Distance(p, origin) / MathF.Max(part.Width, .06f);
+            var across = new Vector2(along.Y, -along.X);
+            var delta = p - origin;
+            var local = new Vector2(Vector2.Dot(delta, across), Vector2.Dot(delta, along)) / lengthSquared;
+            var distance = CurveOf(curve).Distance(local) * MathF.Sqrt(lengthSquared);
             return distance / MathF.Max(part.Width, .06f);
         }
         if (part.Geometry is ShapeDefinition2D typed)

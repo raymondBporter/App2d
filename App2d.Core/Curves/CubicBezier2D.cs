@@ -41,4 +41,6 @@ public readonly record struct CubicBezier2D : ICurve2D
             6f * inverse * amount * (Control2 - Control1) +
             3f * amount * amount * (End - Control2);
     }
+
+    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 128);
 }

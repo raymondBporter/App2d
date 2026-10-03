@@ -20,6 +20,8 @@ public sealed class NormalOffsetCurve2D : ICurve2D
 
     public Vector2 Evaluate(float amount) => EvaluateCore(Math.Clamp(amount, 0f, 1f));
 
+    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 128);
+
     public Vector2 EvaluateDerivative(float amount)
     {
         amount = Math.Clamp(amount, 0f, 1f);

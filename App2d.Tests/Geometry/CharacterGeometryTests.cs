@@ -1,11 +1,26 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Curves;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 
 public sealed class CharacterGeometryTests
 {
+    [Fact]
+    public void CurvePickingUsesTheCurveDistanceInItsAttachmentFrame()
+    {
+        var part = new PuppetPart
+        {
+            A = "a", B = "b", Width = .2f,
+            Geometry = new LineCurveDefinition2D { Start = new(.5f, 0), End = new(.5f, 1) }
+        };
+        static Vector3 World(string id) => id == "a" ? new(2, 3, 0) : new(2, 5, 0);
+        Assert.Equal(0, PartGeometry.Distance(part, World, new(3, 4, 0)), 5);
+        Assert.Equal(5, PartGeometry.Distance(part, World, new(4, 4, 0)), 5);
+        Assert.Equal(0, PartGeometry.Distance(part, _ => new(2, 3, 0), new(2, 3, 0)), 5);
+    }
+
     [Theory]
     [InlineData("ellipse", 48)]
     [InlineData("box", 36)]

@@ -41,4 +41,27 @@ public readonly record struct Arc2D : ICurve2D
         var speed = (double)Radius * SweepAngleRadians;
         return new((float)(-speed * Math.Sin(angle)), (float)(speed * Math.Cos(angle)));
     }
+
+    public float Distance(Vector2 point)
+    {
+        if (Radius == 0 || SweepAngleRadians == 0) return Vector2.Distance(point, Start);
+        var delta = point - Center;
+        var radial = delta.Length();
+        if (radial == 0 || Math.Abs((double)SweepAngleRadians) >= Math.Tau)
+            return MathF.Abs(radial - Radius);
+
+        var angle = Math.Atan2(delta.Y, delta.X);
+        var sweep = (double)SweepAngleRadians;
+        var progress = sweep > 0
+            ? PositiveAngle(angle - StartAngleRadians)
+            : PositiveAngle(StartAngleRadians - angle);
+        if (progress <= Math.Abs(sweep)) return MathF.Abs(radial - Radius);
+        return MathF.Min(Vector2.Distance(point, Start), Vector2.Distance(point, End));
+    }
+
+    private static double PositiveAngle(double angle)
+    {
+        var result = angle % Math.Tau;
+        return result < 0 ? result + Math.Tau : result;
+    }
 }

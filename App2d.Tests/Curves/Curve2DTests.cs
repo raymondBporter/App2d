@@ -6,6 +6,37 @@ namespace App2d.Tests.Curves;
 public sealed class Curve2DTests
 {
     [Fact]
+    public void LineAndPolylineDistanceUseTheirFiniteSegments()
+    {
+        ICurve2D line = new LineSegmentCurve2D(new(0, 0), new(2, 0));
+        Assert.Equal(3, line.Distance(new(1, 3)), 5);
+        Assert.Equal(MathF.Sqrt(10), CurveDistance2D.Distance(new(3, 3), line), 5);
+        Assert.Equal(0, line.Distance(new(1, 0)), 5);
+
+        ICurve2D polyline = new PolylineCurve2D([new(0, 0), new(2, 0), new(2, 2)]);
+        Assert.Equal(1, polyline.Distance(new(1, 1)), 5);
+        Assert.Equal(1, polyline.Distance(new(3, 1)), 5);
+        Assert.Equal(MathF.Sqrt(2), polyline.Distance(new(3, 3)), 5);
+    }
+
+    [Fact]
+    public void SmoothCurveDistancesIncludeTheInteriorAndEndpoints()
+    {
+        ICurve2D quadratic = new QuadraticBezier2D(new(0, 0), new(1, 1), new(2, 0));
+        Assert.InRange(quadratic.Distance(new(1, 1)), .49f, .51f);
+
+        ICurve2D cubic = new CubicBezier2D(new(0, 0), new(1, 0), new(2, 0), new(3, 0));
+        Assert.Equal(2, cubic.Distance(new(1, 2)), 4);
+        Assert.Equal(1, cubic.Distance(new(4, 0)), 4);
+
+        ICurve2D spline = new BSpline2D([new(0, 0), new(1, 0), new(2, 0)], degree: 1);
+        Assert.Equal(1, spline.Distance(new(1, 1)), 4);
+
+        ICurve2D offset = new NormalOffsetCurve2D(cubic, amount => 1);
+        Assert.InRange(offset.Distance(new(1.5f, 2)), .99f, 1.01f);
+    }
+
+    [Fact]
     public void QuadraticBezierSamplesTheFaceArcIntoCallerStorage()
     {
         var curve = new QuadraticBezier2D(new(0f, 0f), new(1f, 2f), new(2f, 0f));
