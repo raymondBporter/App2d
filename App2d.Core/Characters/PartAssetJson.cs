@@ -17,7 +17,11 @@ internal static class PartAssetJson
             entry.Remove("editorKind");
             entry.Remove("kind");
             entry.Remove("points");
+            entry.Remove("fill");
+            entry.Remove("outlineWidth");
+            entry.Remove("material");
             entry["geometry"] = JsonNode.Parse(PartGeometry.Definition(parts[i]).ToGeometryJson());
+            entry["material"] = JsonSerializer.SerializeToNode(parts[i].RenderMaterial, options);
             var editorKind = parts[i].Kind;
             if (parts[i].Geometry is not null && parts[i].EditorKind is null)
             {

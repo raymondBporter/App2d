@@ -180,7 +180,10 @@
         8,
         15
       ],
-      "fill": "#866344"
+      "material": {
+        "fill": "#866344",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -351,7 +354,10 @@
         8,
         15
       ],
-      "fill": "#714b3e"
+      "material": {
+        "fill": "#714b3e",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -522,7 +528,10 @@
         8,
         15
       ],
-      "fill": "#c5a26b"
+      "material": {
+        "fill": "#c5a26b",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -693,7 +702,10 @@
         8,
         15
       ],
-      "fill": "#798c96"
+      "material": {
+        "fill": "#798c96",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -864,7 +876,10 @@
         8,
         15
       ],
-      "fill": "#dce5e7"
+      "material": {
+        "fill": "#dce5e7",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -1035,7 +1050,10 @@
         8,
         15
       ],
-      "fill": "#dce5e7"
+      "material": {
+        "fill": "#dce5e7",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -1206,7 +1224,10 @@
         8,
         15
       ],
-      "fill": "#465963"
+      "material": {
+        "fill": "#465963",
+        "outline": {}
+      }
     }
   ]
 }

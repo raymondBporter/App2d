@@ -71,6 +71,12 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         Ui.Header($"Piece {_piece + 1}");
         var fill = piece.Fill; if (Ui.ColorHex("Fill", ref fill)) session.Change(doc, () => doc.Asset.Solids[_piece].Fill = fill);
         var outlined = piece.Outlined; if (ImGui.Checkbox("Outline", ref outlined)) session.Edit(doc, () => doc.Asset.Solids[_piece].Outlined = outlined);
+        if (outlined)
+        {
+            var outlineColor = piece.OutlineColor ?? doc.Asset.Ink;
+            if (Ui.ColorHex("Outline color", ref outlineColor)) session.Change(doc, () => doc.Asset.Solids[_piece].OutlineColor = outlineColor);
+            if (piece.OutlineColor is not null && ImGui.SmallButton("Use prop ink")) session.Change(doc, () => doc.Asset.Solids[_piece].OutlineColor = null);
+        }
         if (Ui.Button("Remove piece", doc.Asset.Solids.Count > 1)) { session.Edit(doc, () => doc.Asset.Solids.RemoveAt(_piece)); _piece = 0; return; }
         if (piece.Outline is not { } points) { Ui.Help("This imported mesh has no editable cutout outline."); return; }
         var thickness = piece.Thickness;

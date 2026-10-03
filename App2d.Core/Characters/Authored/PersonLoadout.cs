@@ -90,7 +90,9 @@ public static class PersonLoadout
     public static IEnumerable<(string Prop, string Socket)> Dressed(MotionClip clip, float seconds, PersonGear gear, ResolvedEntity? wearer = null)
     {
         if (wearer is null)
+        {
             yield return (SeenFromBehind(clip, seconds) ? PersonWardrobe.ShortHairBack : PersonWardrobe.ShortHair, PersonWardrobe.HeadSocket);
+        }
         else
         {
             foreach (var item in wearer.Equipment.Where(e => e.Prop.Usage is "hair" or "clothing"))

@@ -210,77 +210,337 @@
   "parts": [
     {
       "id": "chest-head",
-      "kind": "stroke",
       "a": "chest",
       "b": "head",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "left-shoulder-left-elbow",
-      "kind": "stroke",
       "a": "left-shoulder",
       "b": "left-elbow",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "left-elbow-left-hand",
-      "kind": "stroke",
       "a": "left-elbow",
       "b": "left-hand",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "left-hip-left-knee",
-      "kind": "stroke",
       "a": "left-hip",
       "b": "left-knee",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "left-knee-left-foot",
-      "kind": "stroke",
       "a": "left-knee",
       "b": "left-foot",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "right-shoulder-right-elbow",
-      "kind": "stroke",
       "a": "right-shoulder",
       "b": "right-elbow",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "right-elbow-right-hand",
-      "kind": "stroke",
       "a": "right-elbow",
       "b": "right-hand",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "right-hip-right-knee",
-      "kind": "stroke",
       "a": "right-hip",
       "b": "right-knee",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "right-knee-right-foot",
-      "kind": "stroke",
       "a": "right-knee",
       "b": "right-foot",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "body",
-      "kind": "trapezoid",
       "a": "hips",
       "b": "chest",
       "width": 0.36,
       "height": 0.68,
       "offsetY": 0.32,
       "roundness": 0.3,
-      "fill": "#d8e9db"
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": 0.36191177,
+            "y": 0.42058825
+          },
+          {
+            "x": 0.3575151,
+            "y": 0.43608072
+          },
+          {
+            "x": 0.3491927,
+            "y": 0.4509778
+          },
+          {
+            "x": 0.33733058,
+            "y": 0.46470708
+          },
+          {
+            "x": 0.3224285,
+            "y": 0.47674087
+          },
+          {
+            "x": 0.3050747,
+            "y": 0.48661673
+          },
+          {
+            "x": 0.28592056,
+            "y": 0.49395517
+          },
+          {
+            "x": 0.26565805,
+            "y": 0.49847415
+          },
+          {
+            "x": 0.245,
+            "y": 0.50000006
+          },
+          {
+            "x": -0.245,
+            "y": 0.50000006
+          },
+          {
+            "x": -0.2656581,
+            "y": 0.49847415
+          },
+          {
+            "x": -0.28592056,
+            "y": 0.49395517
+          },
+          {
+            "x": -0.3050747,
+            "y": 0.48661673
+          },
+          {
+            "x": -0.3224285,
+            "y": 0.47674087
+          },
+          {
+            "x": -0.33733058,
+            "y": 0.46470708
+          },
+          {
+            "x": -0.34919277,
+            "y": 0.4509778
+          },
+          {
+            "x": -0.3575151,
+            "y": 0.4360807
+          },
+          {
+            "x": -0.36191177,
+            "y": 0.42058825
+          },
+          {
+            "x": -0.48808825,
+            "y": -0.42058825
+          },
+          {
+            "x": -0.4875852,
+            "y": -0.43608072
+          },
+          {
+            "x": -0.48139647,
+            "y": -0.4509778
+          },
+          {
+            "x": -0.46969414,
+            "y": -0.46470708
+          },
+          {
+            "x": -0.4528837,
+            "y": -0.47674087
+          },
+          {
+            "x": -0.43159568,
+            "y": -0.48661673
+          },
+          {
+            "x": -0.40666372,
+            "y": -0.49395517
+          },
+          {
+            "x": -0.37908986,
+            "y": -0.49847415
+          },
+          {
+            "x": -0.35,
+            "y": -0.50000006
+          },
+          {
+            "x": 0.35,
+            "y": -0.50000006
+          },
+          {
+            "x": 0.37908995,
+            "y": -0.49847415
+          },
+          {
+            "x": 0.40666372,
+            "y": -0.49395517
+          },
+          {
+            "x": 0.43159568,
+            "y": -0.48661673
+          },
+          {
+            "x": 0.4528837,
+            "y": -0.47674087
+          },
+          {
+            "x": 0.46969414,
+            "y": -0.46470708
+          },
+          {
+            "x": 0.48139653,
+            "y": -0.4509778
+          },
+          {
+            "x": 0.4875852,
+            "y": -0.43608072
+          },
+          {
+            "x": 0.48808825,
+            "y": -0.42058825
+          }
+        ]
+      },
+      "material": {
+        "fill": "#d8e9db",
+        "outline": {}
+      },
+      "editorKind": "trapezoid"
     },
     {
       "id": "head",
@@ -289,7 +549,23 @@
       "height": 0.58,
       "depth": -0.12,
       "face": "relaxed",
-      "faceX": 0.065
+      "faceX": 0.065,
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#fff8e7",
+        "outline": {}
+      },
+      "editorKind": "ellipse"
     }
   ],
   "sockets": [

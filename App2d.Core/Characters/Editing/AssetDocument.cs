@@ -101,16 +101,24 @@ public sealed class AssetDocument<T> : AssetDocument where T : class
 {
     private readonly Func<T, string> _serialize;
     private readonly Func<T, string> _name;
+    private readonly Func<string, T> _restore;
 
-    internal AssetDocument(AssetKind kind, T asset, string id, string? path, Func<T, string> serialize, Func<T, string> name)
-        : base(kind, id, path, path is null ? "" : serialize(asset)) { Asset = asset; _serialize = serialize; _name = name; }
+    internal AssetDocument(AssetKind kind, T asset, string id, string? path, Func<T, string> serialize, Func<T, string> name,
+        Func<string, T>? restore = null)
+        : base(kind, id, path, path is null ? "" : serialize(asset))
+    {
+        Asset = asset;
+        _serialize = serialize;
+        _name = name;
+        _restore = restore ?? (json => AuthoredAsset.Parse<T>(json, AssetKinds.Label(kind)));
+    }
 
     /// <summary>The current draft. Undo replaces the instance, so views read it each frame rather than keeping it.</summary>
     public T Asset { get; private set; }
     public override string Name => _name(Asset);
     public override string Serialize() => _serialize(Asset);
     // Drafts may be semantically invalid while being repaired, so restoring parses without validating.
-    protected override void Restore(string json) => Asset = AuthoredAsset.Parse<T>(json, AssetKinds.Label(Kind));
+    protected override void Restore(string json) => Asset = _restore(json);
 
     /// <summary>Replaces the draft wholesale; call inside <see cref="AssetDocument.Change"/> or <see cref="AssetDocument.Edit"/>.</summary>
     public void Replace(T asset) => Asset = asset;
@@ -118,7 +126,8 @@ public sealed class AssetDocument<T> : AssetDocument where T : class
 
 internal static class AssetDocuments
 {
-    public static AssetDocument<CharacterModel> Of(CharacterModel model, string? path) => new(AssetKind.Model, model, model.Id, path, m => m.ToJson(), m => m.Name);
+    public static AssetDocument<CharacterModel> Of(CharacterModel model, string? path) =>
+        new(AssetKind.Model, model, model.Id, path, m => m.ToJson(), m => m.Name, CharacterModel.FromDraftJson);
     public static AssetDocument<ModelVariant> Of(ModelVariant variant, string? path) => new(AssetKind.Variant, variant, variant.Id, path, v => v.ToJson(), v => v.Name);
     public static AssetDocument<MotionClip> Of(MotionClip clip, string? path) => new(AssetKind.Animation, clip, clip.Id, path, c => c.ToJson(), c => c.Name);
     public static AssetDocument<PropAsset> Of(PropAsset prop, string? path) => new(AssetKind.Prop, prop, prop.Id, path, p => p.ToSnapshotJson(), p => p.Name);

@@ -75,6 +75,8 @@ public sealed record PartPaint
 /// <summary>Stroke endpoints follow controls. Other shapes attach to A; B points local +Y or Frame supplies a bone-local orientation.</summary>
 public sealed record PuppetPart
 {
+    private string _fill = "#fff8e7";
+    private float? _outlineWidth;
     public string Id { get; set; } = "part";
     public string Kind { get; set; } = PuppetPartKinds.Ellipse;
     /// <summary>Optional editor preset; geometry is the saved silhouette.</summary>
@@ -83,6 +85,9 @@ public sealed record PuppetPart
     /// <summary>Typed geometry for new authored parts; legacy kind fields remain readable during migration.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public GeometryDefinition2D? Geometry { get; set; }
+    /// <summary>Authored rendering data. Old fill and outline fields are accepted while assets migrate.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RenderMaterialDefinition2D? Material { get; set; }
     public string A { get; set; } = "";
     public string? B { get; set; }
     /// <summary>Optional bone whose XY rotation carries this shape's local offset and direction.</summary>
@@ -97,9 +102,36 @@ public sealed record PuppetPart
     public float Roundness { get; set; } = .25f;
     /// <summary>Trapezoid width at local +Y relative to its base; ignored by other shapes.</summary>
     public float TopWidthScale { get; set; } = .7f;
-    public string Fill { get; set; } = "#fff8e7";
+    public string Fill
+    {
+        get => Material?.Fill ?? _fill;
+        set
+        {
+            _fill = value;
+            if (Material is { } material) Material = material with { Fill = value };
+        }
+    }
     /// <summary>Null inherits the model's ink width. Does not change facial expression strokes.</summary>
-    public float? OutlineWidth { get; set; }
+    public float? OutlineWidth
+    {
+        get => Material?.Outline?.Width ?? _outlineWidth;
+        set
+        {
+            _outlineWidth = value;
+            if (Material is { } material)
+                Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Width = value } };
+        }
+    }
+    [JsonIgnore]
+    public string? OutlineColor
+    {
+        get => Material?.Outline?.Color;
+        set
+        {
+            var material = RenderMaterial;
+            Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Color = value } };
+        }
+    }
     public List<PartPaint>? Paint { get; set; }
     /// <summary>Normalized cutout perimeter, scaled by Width/Height in the attachment frame.</summary>
     public List<PuppetPoint>? Points { get; set; }
@@ -107,6 +139,13 @@ public sealed record PuppetPart
     public float FaceX { get; set; }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
     public bool Hidden { get; set; }
+
+    /// <summary>Converts the old appearance fields only when this part has no authored material.</summary>
+    [JsonIgnore]
+    public RenderMaterialDefinition2D RenderMaterial => Material ??
+        (Geometry is CurveDefinition2D || Geometry is null && PuppetPartKinds.IsStroke(Kind)
+            ? new RenderMaterialDefinition2D()
+            : new RenderMaterialDefinition2D { Fill = _fill, Outline = new() { Width = _outlineWidth } });
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
@@ -131,7 +170,9 @@ public sealed record PuppetPart
         new Limit(-1000, 1000).Check(Angle, "part.angle");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
-        new Limit(-16, 16).Check(Depth, "part.depth"); new Limit(0, 1).Check(Roundness, "part.roundness"); Limit.Color(Fill, "part.fill");
+        new Limit(-16, 16).Check(Depth, "part.depth"); new Limit(0, 1).Check(Roundness, "part.roundness");
+        if (Material is null) Limit.Color(_fill, "part.fill");
+        else Material.Validate("part.material");
         new Limit(.01f, 1).Check(TopWidthScale, "part.topWidthScale");
         if (OutlineWidth is { } outline) new Limit(0, 1).Check(outline, "part.outlineWidth");
         PartPaint.Check(Paint);

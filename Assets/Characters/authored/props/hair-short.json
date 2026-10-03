@@ -15,7 +15,6 @@
   "shapes": [],
   "solids": [
     {
-      "fill": "#654334",
       "outline": [
         {
           "x": -0.25,
@@ -43,10 +42,13 @@
           "z": -0.095
         }
       ],
-      "thickness": 0.008
+      "thickness": 0.008,
+      "material": {
+        "fill": "#654334",
+        "outline": {}
+      }
     },
     {
-      "fill": "#654334",
       "outline": [
         {
           "x": -0.22,
@@ -149,7 +151,11 @@
           "z": -0.15
         }
       ],
-      "thickness": 0.008
+      "thickness": 0.008,
+      "material": {
+        "fill": "#654334",
+        "outline": {}
+      }
     }
   ]
 }

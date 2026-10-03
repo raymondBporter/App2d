@@ -130,45 +130,117 @@
   "parts": [
     {
       "id": "stroke",
-      "kind": "stroke",
       "a": "hip-0",
       "b": "knee-0",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "stroke-2",
-      "kind": "stroke",
       "a": "knee-0",
       "b": "foot-0",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "stroke-3",
-      "kind": "stroke",
       "a": "hip-1",
       "b": "knee-1",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "stroke-4",
-      "kind": "stroke",
       "a": "knee-1",
       "b": "foot-1",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "stroke-5",
-      "kind": "stroke",
       "a": "hip-2",
       "b": "knee-2",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "stroke-6",
-      "kind": "stroke",
       "a": "knee-2",
       "b": "foot-2",
-      "width": 0.045
+      "width": 0.045,
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": 0,
+          "y": 0
+        },
+        "end": {
+          "x": 0,
+          "y": 1
+        }
+      },
+      "material": {},
+      "editorKind": "stroke"
     },
     {
       "id": "ellipse",
@@ -176,7 +248,22 @@
       "width": 0.95,
       "height": 0.38,
       "depth": -0.05,
-      "fill": "#c9e0b8"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#c9e0b8",
+        "outline": {}
+      },
+      "editorKind": "ellipse"
     }
   ],
   "sockets": [

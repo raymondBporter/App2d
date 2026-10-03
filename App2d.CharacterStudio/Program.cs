@@ -6,7 +6,7 @@ namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --angelia-gallery [output-directory]]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--migrate-materials authored-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --angelia-gallery [output-directory]]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -16,6 +16,7 @@ internal static class Program
         {
             switch (args)
             {
+                case ["--migrate-materials", var materialRoot]: AuthoredMaterialMigration.Run(Path.GetFullPath(materialRoot)); return 0;
                 case ["--write-quadrupeds", var quadRoot]: QuadrupedTemplate.Write(Path.GetFullPath(quadRoot)); return 0;
                 case ["--convert-studies", var output]: PersonTemplate.WriteStudies(Path.GetFullPath(output)); return 0;
                 case ["--write-player-moves", var moves]: PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves)); return 0;

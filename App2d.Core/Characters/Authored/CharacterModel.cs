@@ -122,7 +122,13 @@ public sealed class CharacterModel
     public AssetSource? Source { get; set; }
 
     public string ToJson() => PartAssetJson.Write(this, Parts, AuthoredJson.Options);
-    public static CharacterModel FromJson(string json) { var model = AuthoredAsset.Parse<CharacterModel>(json, "model"); PartAssetJson.Restore(model.Parts); model.Validate(); return model; }
+    internal static CharacterModel FromDraftJson(string json)
+    {
+        var model = AuthoredAsset.Parse<CharacterModel>(json, "model");
+        PartAssetJson.Restore(model.Parts);
+        return model;
+    }
+    public static CharacterModel FromJson(string json) { var model = FromDraftJson(json); model.Validate(); return model; }
     public static CharacterModel Load(string path) => FromJson(File.ReadAllText(path));
     public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
 

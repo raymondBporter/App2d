@@ -97,7 +97,10 @@
         4,
         7
       ],
-      "fill": "#876646"
+      "material": {
+        "fill": "#876646",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -180,7 +183,10 @@
         4,
         7
       ],
-      "fill": "#465963"
+      "material": {
+        "fill": "#465963",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -263,7 +269,10 @@
         4,
         7
       ],
-      "fill": "#c5a26b"
+      "material": {
+        "fill": "#c5a26b",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -357,7 +366,10 @@
         4,
         8
       ],
-      "fill": "#dce5e7"
+      "material": {
+        "fill": "#dce5e7",
+        "outline": {}
+      }
     }
   ]
 }

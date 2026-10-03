@@ -11,7 +11,9 @@ public sealed record PartOverride
     public float? OffsetX { get; set; }
     public float? OffsetY { get; set; }
     public string? Fill { get; set; }
+    public RenderMaterialDefinition2D? Material { get; set; }
     public float? OutlineWidth { get; set; }
+    public string? OutlineColor { get; set; }
     public List<PartPaint>? Paint { get; set; }
     /// <summary>Default expression; "none" removes the face.</summary>
     public string? Face { get; set; }
@@ -28,7 +30,9 @@ public sealed record PartOverride
         if (part.OffsetX is { } x) new Limit(-100, 100).Check(x, field + ".offsetX");
         if (part.OffsetY is { } y) new Limit(-100, 100).Check(y, field + ".offsetY");
         if (part.Fill is not null) Limit.Color(part.Fill, field + ".fill");
+        part.Material?.Validate(field + ".material");
         if (part.OutlineWidth is { } outline) new Limit(0, 1).Check(outline, field + ".outlineWidth");
+        if (part.OutlineColor is not null) Limit.Color(part.OutlineColor, field + ".outlineColor");
         PartPaint.Check(part.Paint);
         if (part.Face is not null && part.Face != "none" && !FaceExpressions.Contains(part.Face)) throw new InvalidDataException($"{field}.face: unknown expression '{part.Face}'.");
         if (part.FaceX is { } faceX) new Limit(-1, 1).Check(faceX, field + ".faceX");
@@ -42,7 +46,9 @@ public sealed record PartOverride
         OffsetX = over.OffsetX ?? OffsetX,
         OffsetY = over.OffsetY ?? OffsetY,
         Fill = over.Fill ?? Fill,
+        Material = over.Material ?? Material,
         OutlineWidth = over.OutlineWidth ?? OutlineWidth,
+        OutlineColor = over.OutlineColor ?? OutlineColor,
         Paint = over.Paint ?? Paint,
         Face = over.Face ?? Face,
         FaceX = over.FaceX ?? FaceX,

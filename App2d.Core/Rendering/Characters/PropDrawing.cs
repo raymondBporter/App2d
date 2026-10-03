@@ -16,7 +16,11 @@ internal static class PropDrawing
         {
             var vertices = solid.Vertices.Select(p => ActorPose.PropPoint(frame, prop, p)).ToArray();
             var analysis = new TriangleMeshAnalysis3D(vertices, solid.Triangles, handedness);
-            var fill = ColorExtensions.FromHexRgb(solid.Fill); var ink = ColorExtensions.FromHexRgb(prop.Ink);
+            var material = solid.RenderMaterial;
+            var fill = material.Fill is { } fillHex ? ColorExtensions.FromHexRgb(fillHex) : (Microsoft.Xna.Framework.Color?)null;
+            var outline = material.Outline;
+            var ink = outline?.Color is { } outlineHex ? ColorExtensions.FromHexRgb(outlineHex) : ColorExtensions.FromHexRgb(prop.Ink);
+            var outlineWidth = outline?.Width ?? prop.LineWidth;
             for (var i = 0; i < solid.Triangles.Count; i += 3)
             {
                 if (!analysis.TryGetFaceNormal(i / 3, out var normal)) continue;
@@ -24,12 +28,12 @@ internal static class PropDrawing
                 var a = solid.Triangles[i];
                 var b = solid.Triangles[i + 1];
                 var c = solid.Triangles[i + 2];
-                mesh.Triangle(vertices[a], vertices[b], vertices[c], fill.ScaleRgb(light));
+                if (fill is { } color) mesh.Triangle(vertices[a], vertices[b], vertices[c], color.ScaleRgb(light));
             }
-            if (!solid.Outlined) continue;
+            if (outline is null || outlineWidth <= 0) continue;
             var bias = new Vector3(0, 0, .0005f);
             foreach (var edge in analysis.FeatureEdges(-Vector3.UnitZ, .7f, 1e-5f))
-                mesh.Line(vertices[edge.A] - bias, vertices[edge.B] - bias, prop.LineWidth, ink);
+                mesh.Line(vertices[edge.A] - bias, vertices[edge.B] - bias, outlineWidth, ink);
         }
     }
 }

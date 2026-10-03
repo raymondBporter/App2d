@@ -377,6 +377,12 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             if (!Marked("Fill", overrides?.Fill is not null, o => o.Fill = null))
             { var fill = part.Fill; if (Ui.ColorHex("##fill", ref fill)) change(p => p.Fill = fill); }
             Float("Outline width", part.OutlineWidth ?? .045f, 0, .15f, overrides?.OutlineWidth is not null, (p, v) => p.OutlineWidth = v, o => o.OutlineWidth = null);
+            if (part.RenderMaterial.Outline is not null && !Marked("Outline color", overrides?.OutlineColor is not null, o => o.OutlineColor = null))
+            {
+                var outlineColor = part.OutlineColor ?? Structure?.Ink ?? "#222b32";
+                if (Ui.ColorHex("##outline-color", ref outlineColor)) change(p => p.OutlineColor = outlineColor);
+                if (part.OutlineColor is not null && ImGui.SmallButton("Use model ink")) change(p => p.OutlineColor = null);
+            }
             if (!Marked("Surface paint", overrides?.Paint is not null, o => o.Paint = null) && ImGui.CollapsingHeader("Edit surface paint"))
             {
                 Ui.Help("Paint follows the body's shape and motion. Coordinates are relative to its width and height. Use the body fill as the fabric color.");
@@ -516,6 +522,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (edited.OffsetY != resolved.OffsetY) o.OffsetY = edited.OffsetY;
         if (edited.Fill != resolved.Fill) o.Fill = edited.Fill;
         if (edited.OutlineWidth != resolved.OutlineWidth) o.OutlineWidth = edited.OutlineWidth;
+        if (edited.OutlineColor != resolved.OutlineColor) o.OutlineColor = edited.OutlineColor;
         if (edited.Paint != resolved.Paint) o.Paint = edited.Paint;
         if (edited.Face != resolved.Face) o.Face = edited.Face;
         if (edited.FaceX != resolved.FaceX) o.FaceX = edited.FaceX;

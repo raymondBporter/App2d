@@ -13,14 +13,29 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>Local prop art: a stroke through its points, or a filled polygon. X runs along the socket axis, Y across it, Z is depth.</summary>
 public sealed record PropShape
 {
+    private string _fill = "#c8b18a";
     public string Kind { get; set; } = "stroke";
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public GeometryDefinition2D? Geometry { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RenderMaterialDefinition2D? Material { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<float>? Depths { get; set; }
     public List<PuppetPoint> Points { get; set; } = [];
     public float Width { get; set; } = .05f;
-    public string Fill { get; set; } = "#c8b18a";
+    public string Fill
+    {
+        get => Material?.Fill ?? _fill;
+        set
+        {
+            _fill = value;
+            if (Material is { } material) Material = material with { Fill = value };
+        }
+    }
+
+    [JsonIgnore]
+    public RenderMaterialDefinition2D RenderMaterial => Material ??
+        new() { Fill = _fill, Outline = new() };
 
     [JsonIgnore] public bool IsFilled => Geometry is ShapeDefinition2D || Geometry is null && Kind == "polygon";
 
@@ -69,10 +84,44 @@ public sealed record PropShape
 /// <summary>A closed, consistently wound triangle mesh in prop space. X along the weapon, Y across its broad face, Z thickness.</summary>
 public sealed record PropSolid
 {
+    private string _fill = "#c8b18a";
+    private bool _outlined = true;
     public List<PuppetPoint> Vertices { get; set; } = [];
     public List<int> Triangles { get; set; } = [];
-    public string Fill { get; set; } = "#c8b18a";
-    public bool Outlined { get; set; } = true;
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public RenderMaterialDefinition2D? Material { get; set; }
+    public string Fill
+    {
+        get => Material?.Fill ?? _fill;
+        set
+        {
+            _fill = value;
+            if (Material is { } material) Material = material with { Fill = value };
+        }
+    }
+    public bool Outlined
+    {
+        get => Material is { } material ? material.Outline is not null : _outlined;
+        set
+        {
+            _outlined = value;
+            if (Material is { } material)
+                Material = material with { Outline = value ? material.Outline ?? new RenderOutlineDefinition2D() : null };
+        }
+    }
+    [JsonIgnore]
+    public string? OutlineColor
+    {
+        get => Material?.Outline?.Color;
+        set
+        {
+            var material = RenderMaterial;
+            Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Color = value } };
+        }
+    }
+    [JsonIgnore]
+    public RenderMaterialDefinition2D RenderMaterial => Material ??
+        new() { Fill = _fill, Outline = _outlined ? new() : null };
     /// <summary>Editable source for an extruded cutout. The indexed runtime mesh is rebuilt from it when loaded.</summary>
     public List<PuppetPoint>? Outline { get; set; }
     public float Thickness { get; set; }
@@ -124,8 +173,17 @@ public sealed class PropAsset
         {
             var entry = entries[i]!.AsObject();
             entry.Remove("kind"); entry.Remove("points"); entry.Remove("geometry"); entry.Remove("depths");
+            entry.Remove("fill"); entry.Remove("material");
             entry["geometry"] = JsonNode.Parse(Shapes[i].Definition().ToGeometryJson());
             entry["depths"] = JsonSerializer.SerializeToNode(Shapes[i].Points.Select(point => point.Z).ToArray(), AuthoredJson.Options);
+            entry["material"] = JsonSerializer.SerializeToNode(Shapes[i].RenderMaterial, AuthoredJson.Options);
+        }
+        var solids = root["solids"]!.AsArray();
+        for (var i = 0; i < Solids.Count; i++)
+        {
+            var entry = solids[i]!.AsObject();
+            entry.Remove("fill"); entry.Remove("outlined"); entry.Remove("material");
+            entry["material"] = JsonSerializer.SerializeToNode(Solids[i].RenderMaterial, AuthoredJson.Options);
         }
         return root.ToJsonString(AuthoredJson.Options);
     }
@@ -178,7 +236,12 @@ public sealed class PropAsset
                 var a = solid.Vertices[solid.Triangles[i]].XYZ; var b = solid.Vertices[solid.Triangles[i + 1]].XYZ; var c = solid.Vertices[solid.Triangles[i + 2]].XYZ;
                 Require(new Triangle3D(a, b, c).DoubleArea > 1e-8d, $"{owner}: degenerate triangle.");
             }
-            Limit.Color(solid.Fill, owner + " mesh fill");
+            if (solid.Material is null) Limit.Color(solid.Fill, owner + " mesh fill");
+            else
+            {
+                solid.Material.Validate(owner + " mesh material");
+                Require(solid.Material.Fill is not null, owner + " mesh material needs a fill.");
+            }
             if (solid.Outline is { } outline)
             {
                 Require(outline.Count is >= 3 and <= 256, owner + ": outline needs 3 to 256 points.");
@@ -197,7 +260,9 @@ public sealed class PropAsset
             if (shape.Geometry is CurveDefinition2D typedCurve) _ = typedCurve.Build();
             Require(shape.IsFilled ? shape.Points.Count >= 3 : shape.Points.Count >= 2, $"{field}: a stroke needs two points and a polygon three.");
             foreach (var point in shape.Points) point.Check(field + " point");
-            new Limit(.001f, 10).Check(shape.Width, field + " width"); Limit.Color(shape.Fill, field + " fill");
+            new Limit(.001f, 10).Check(shape.Width, field + " width");
+            if (shape.Material is null) Limit.Color(shape.Fill, field + " fill");
+            else shape.Material.Validate(field + " material");
         }
     }
 }

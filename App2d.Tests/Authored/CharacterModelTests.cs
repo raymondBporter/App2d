@@ -11,7 +11,7 @@ public sealed class CharacterModelTests
     public void LegacyRestDepthIsPreservedByLayerEditingAndJson()
     {
         var model = TestModels.Creature();
-        var control = model.Controls.First();
+        var control = model.Controls[0];
         control.Rest = new(.25f, 1.5f, -.14338458f);
 
         var layered = control.Rest.Layered;
@@ -22,7 +22,7 @@ public sealed class CharacterModelTests
         var json = model.ToJson();
         Assert.Contains("\"z\": -0.14338458", json);
         Assert.DoesNotContain("\"layered\"", json);
-        Assert.Equal(control.Rest, CharacterModel.FromJson(json).Controls.First().Rest);
+        Assert.Equal(control.Rest, CharacterModel.FromJson(json).Controls[0].Rest);
     }
 
     [Fact]

@@ -11,20 +11,26 @@
   },
   "shapes": [
     {
-      "points": [
-        {
-          "x": -0.055,
-          "y": 0,
-          "z": 0
-        },
-        {
-          "x": 0.025,
-          "y": 0,
-          "z": 0
-        }
-      ],
       "width": 0.006,
-      "fill": "#714b3e"
+      "geometry": {
+        "kind": "line",
+        "start": {
+          "x": -0.055,
+          "y": 0
+        },
+        "end": {
+          "x": 0.025,
+          "y": 0
+        }
+      },
+      "depths": [
+        0,
+        0
+      ],
+      "material": {
+        "fill": "#714b3e",
+        "outline": {}
+      }
     }
   ],
   "solids": [
@@ -197,7 +203,10 @@
         8,
         15
       ],
-      "fill": "#465963"
+      "material": {
+        "fill": "#465963",
+        "outline": {}
+      }
     },
     {
       "vertices": [
@@ -302,7 +311,10 @@
         5,
         9
       ],
-      "fill": "#dce5e7"
+      "material": {
+        "fill": "#dce5e7",
+        "outline": {}
+      }
     }
   ]
 }

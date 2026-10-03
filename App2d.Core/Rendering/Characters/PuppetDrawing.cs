@@ -39,20 +39,30 @@ public sealed class PuppetDrawing
         foreach (var shape in prop.Shapes)
         {
             var points = shape.Points.Select(p => ActorPose.PropPoint(frame, prop, p)).ToList();
-            var fill = ColorExtensions.FromHexRgb(shape.Fill);
+            var material = shape.RenderMaterial;
+            var outline = material.Outline;
+            var outlineColor = outline?.Color is { } color ? ColorExtensions.FromHexRgb(color) : ink;
+            var outlineWidth = outline?.Width ?? prop.LineWidth;
             if (shape.IsFilled)
             {
-                var triangles = TriangleMesh2D.TriangulateSimplePolygon(shape.Points.Select(point => point.XY), 1e-8);
-                var indices = triangles.Indices;
-                for (var i = 0; i < indices.Length; i += 3)
-                    Mesh.Triangle(points[indices[i]], points[indices[i + 1]], points[indices[i + 2]], fill);
-                Mesh.Polygon(points, null, ink, prop.LineWidth);
+                if (material.Fill is { } fill)
+                {
+                    var fillColor = ColorExtensions.FromHexRgb(fill);
+                    var triangles = TriangleMesh2D.TriangulateSimplePolygon(shape.Points.Select(point => point.XY), 1e-8);
+                    var indices = triangles.Indices;
+                    for (var i = 0; i < indices.Length; i += 3)
+                        Mesh.Triangle(points[indices[i]], points[indices[i + 1]], points[indices[i + 2]], fillColor);
+                }
+                if (outline is not null && outlineWidth > 0)
+                    Mesh.Polygon(points, null, outlineColor, outlineWidth);
                 continue;
             }
             for (var i = 1; i < points.Count; i++)
             {
-                Mesh.Line(points[i - 1] + new Vector3(0, 0, .001f), points[i] + new Vector3(0, 0, .001f), shape.Width + prop.LineWidth * 2, ink);
-                Mesh.Line(points[i - 1], points[i], shape.Width, fill);
+                if (outline is not null && outlineWidth > 0)
+                    Mesh.Line(points[i - 1] + new Vector3(0, 0, .001f), points[i] + new Vector3(0, 0, .001f), shape.Width + outlineWidth * 2, outlineColor);
+                Mesh.Line(points[i - 1], points[i], shape.Width,
+                    material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink);
             }
         }
     }
@@ -64,23 +74,37 @@ public sealed class PuppetDrawing
         foreach (var part in parts)
         {
             if (part.Hidden) continue;
+            var material = part.RenderMaterial;
+            var outline = material.Outline;
+            var outlineWidth = outline?.Width ?? lineWidth;
+            var outlineColor = outline?.Color is { } color ? ColorExtensions.FromHexRgb(color) : ink;
             var face = expression?.Invoke(part) ?? part.Face;
             if (part.Geometry is CurveDefinition2D || part.Geometry is null && PuppetPartKinds.IsStroke(part.Kind))
             {
                 var path = PartGeometry.Contour(part, world);
-                for (var i = 1; i < path.Count; i++) Mesh.Line(path[i - 1], path[i], part.Width, ink);
+                var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink;
+                for (var i = 1; i < path.Count; i++)
+                {
+                    if (outline is not null && outlineWidth > 0)
+                        Mesh.Line(path[i - 1], path[i], part.Width + outlineWidth * 2, outlineColor);
+                    Mesh.Line(path[i - 1], path[i], part.Width, strokeColor);
+                }
                 continue;
             }
             var contour = PartGeometry.Contour(part, world, angle);
             var frame = PartGeometry.FrameOf(part, world, angle);
-            if (part.Geometry is ShapeDefinition2D typed && PartGeometry.ShapeOf(typed) is SimplePolygon2D polygon)
-                Mesh.Add(polygon.Mesh, vertex => frame.At(new(vertex.X * part.Width, vertex.Y * part.Height)), ColorExtensions.FromHexRgb(part.Fill));
-            else if (part.Kind == "polygon")
-                Mesh.Add(TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => new Vector2(p.X * part.Width, p.Y * part.Height)), 1e-8), frame.At, ColorExtensions.FromHexRgb(part.Fill));
-            else Mesh.Polygon(contour, ColorExtensions.FromHexRgb(part.Fill), null, 0);
+            if (material.Fill is { } shapeFill)
+            {
+                var fillColor = ColorExtensions.FromHexRgb(shapeFill);
+                if (part.Geometry is ShapeDefinition2D typed && PartGeometry.ShapeOf(typed) is SimplePolygon2D polygon)
+                    Mesh.Add(polygon.Mesh, vertex => frame.At(new(vertex.X * part.Width, vertex.Y * part.Height)), fillColor);
+                else if (part.Kind == "polygon")
+                    Mesh.Add(TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => new Vector2(p.X * part.Width, p.Y * part.Height)), 1e-8), frame.At, fillColor);
+                else Mesh.Polygon(contour, fillColor, null, 0);
+            }
             PartPainting.Add(Mesh, part, frame, contour);
-            var outline = part.OutlineWidth ?? lineWidth;
-            if (outline > 0) Mesh.Polygon(contour, null, ink, outline);
+            if (outline is not null && outlineWidth > 0)
+                Mesh.Polygon(contour, null, outlineColor, outlineWidth);
             if (face != "none")
             {
                 FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),
