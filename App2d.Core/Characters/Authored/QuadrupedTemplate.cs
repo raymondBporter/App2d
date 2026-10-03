@@ -58,12 +58,16 @@ public static class QuadrupedTemplate
             Cutout("near-brow-horn", "head", .36f, .37f, .05f, .48f, -.29f, horn, new(-.5f, -.25f), new(-.13f, -.5f), new(.5f, .5f), new(.12f, .40f));
             Cutout("nose-horn", "head", .22f, .25f, .54f, .20f, -.29f, horn, new(-.5f, -.32f), new(.06f, -.5f), new(.5f, .5f));
         }
-        else Shape("head", "head", "head-up", .74f, .58f, .13f, .02f, -.24f, skin);
+        else
+        {
+            Shape("head", "head", "head-up", .74f, .58f, .13f, .02f, -.24f, skin);
+        }
+
         Shape("eye", "head", "head-up", .09f, .12f, .34f, .01f, -.31f, m.Ink).OutlineWidth = 0;
         Cutout("brow", "head", .16f, .09f, .33f, .11f, -.31f, m.Ink, new(-.5f, .5f), new(.5f, -.08f), new(.35f, -.5f), new(-.5f, .1f)).OutlineWidth = 0;
         Cutout("mouth", "head", .23f, .08f, .35f, -.17f, -.31f, m.Ink, new(-.5f, -.3f), new(-.1f, .5f), new(.5f, -.35f), new(.44f, -.5f), new(-.1f, .10f), new(-.42f, -.5f)).OutlineWidth = 0;
         m.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
-        m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = m.Chains.Select(c => c.Id).ToList() }];
+        m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.Chains.Select(c => c.Id)] }];
         m.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .35f }] }];
         m.MotionSets = [new() { Id = "standard", Name = "Quadruped", Roles = new() { ["idle"] = id + "-idle", ["walk"] = id + "-walk", ["run"] = id + "-run", ["scrape"] = id + "-scrape", ["head-down"] = id + "-head-down", ["rush"] = id + "-rush", ["brake"] = id + "-brake", ["recover"] = id + "-recover" } }];
         m.Validate(); return m;
@@ -72,7 +76,7 @@ public static class QuadrupedTemplate
     private static PartPaint Spot(float x, float y, float rx, float ry) => new()
     {
         Fill = "#397783",
-        Points = Enumerable.Range(0, 12).Select(i => new PuppetPoint(x + rx * MathF.Cos(i * MathF.Tau / 12), y + ry * MathF.Sin(i * MathF.Tau / 12))).ToList()
+        Points = [.. Enumerable.Range(0, 12).Select(i => new PuppetPoint(x + rx * MathF.Cos(i * MathF.Tau / 12), y + ry * MathF.Sin(i * MathF.Tau / 12)))]
     };
 
     public static IReadOnlyList<MotionClip> Clips(CharacterModel model)
@@ -101,7 +105,7 @@ public static class QuadrupedTemplate
             foreach (var chain in model.Chains)
             {
                 var phase = chain.Id is "near-front" or "far-hind" ? 0f : .5f;
-                var times = Enumerable.Range(0, 25).Select(i => i / 24f).Concat(new[] { (1 - phase) % 1, (stance - phase + 1) % 1 }).Append(1f).Distinct().Order().ToArray();
+                var times = Enumerable.Range(0, 25).Select(i => i / 24f).Concat([(1 - phase) % 1, (stance - phase + 1) % 1]).Append(1f).Distinct().Order().ToArray();
                 foreach (var t in times)
                 {
                     var p = (t + phase) % 1; var swing = Math.Clamp((p - stance) / (1 - stance), 0, 1);
@@ -109,7 +113,7 @@ public static class QuadrupedTemplate
                     Key(c, "target", chain.Id, t * duration, x, p < stance ? 0 : lift * MathF.Sin(swing * MathF.PI));
                 }
                 // Split a planted interval at the loop boundary so its anchor advances with cycle travel.
-                foreach (var (start, finish) in phase == 0 ? new[] { (0f, stance) } : new[] { (0f, stance - phase), (1 - phase, 1f) })
+                foreach (var (start, finish) in phase == 0 ? [(0f, stance)] : new[] { (0f, stance - phase), (1 - phase, 1f) })
                 {
                     var p = (start + phase) % 1;
                     c.Contacts.Add(new() { Chain = chain.Id, Start = start * duration, Finish = finish * duration, Target = new(stride * .5f - distance * p + distance * start, 0) });

@@ -1,7 +1,7 @@
 using System.Drawing.Text;
-using Texture2D = App2d.Rendering.Textures.Texture2D;
+using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
 
-namespace App2d.Rendering;
+namespace App2d.Core.Rendering;
 
 /// <summary>Rasterizes a small font atlas once; all on-screen text is drawn by MonoGame.</summary>
 internal sealed class FontAtlas2D : IDisposable

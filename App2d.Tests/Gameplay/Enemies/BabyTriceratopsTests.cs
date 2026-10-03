@@ -4,15 +4,15 @@ using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Tiles;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Enemies;
+namespace App2d.Tests.Gameplay.Enemies;
 
 public sealed class BabyTriceratopsTests
 {

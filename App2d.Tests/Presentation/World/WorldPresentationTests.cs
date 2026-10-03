@@ -2,16 +2,16 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Core.Physics;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
+using App2d.Core.Tiles;
 using App2d.Gameplay.World;
 using App2d.Levels;
 using App2d.Presentation.World.Presentation;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
-using App2d.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.World;
+namespace App2d.Tests.Presentation.World;
 
 public sealed class WorldPresentationTests
 {

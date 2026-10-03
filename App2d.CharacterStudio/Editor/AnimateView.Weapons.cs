@@ -133,8 +133,15 @@ internal sealed partial class AnimateView
                     _weaponStart.Z += MathF.IEEERemainder(pointer - _weaponPointerAngle, MathF.Tau) * speed;
                     _weaponPointerAngle = pointer;
                 }
-                else if (_weaponDrag == "Tilt") _weaponStart.Y -= ImGui.GetIO().MouseDelta.Y * .01f / scale * speed;
-                else _weaponStart.X += ImGui.GetIO().MouseDelta.X * .01f / scale * speed;
+                else if (_weaponDrag == "Tilt")
+                {
+                    _weaponStart.Y -= ImGui.GetIO().MouseDelta.Y * .01f / scale * speed;
+                }
+                else
+                {
+                    _weaponStart.X += ImGui.GetIO().MouseDelta.X * .01f / scale * speed;
+                }
+
                 session.PoseWeapon(_weaponStart);
             }
         }

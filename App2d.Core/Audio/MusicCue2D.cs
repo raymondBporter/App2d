@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json;
 
-namespace App2d.Audio;
+namespace App2d.Core.Audio;
 
 /// <summary>Validated authoring manifest for stereo stems sharing one musical timeline.</summary>
 public sealed class MusicCue2D
@@ -28,7 +28,10 @@ public sealed class MusicCue2D
             data.LoopStartFrame != 0 || data.LoopEndFrame <= 0 || !double.IsFinite(data.Bpm) ||
             data.Bpm < 20 || data.Bpm > 400 || data.BeatsPerBar is < 1 or > 16 ||
             data.Stems is not { Length: > 0 and <= 8 } || data.Moods is not { Count: > 0 })
+        {
             throw new InvalidDataException($"Invalid stereo music manifest: {manifestPath}");
+        }
+
         var bar = SampleRate * 60d / data.Bpm * data.BeatsPerBar;
         var barFrames = checked((int)Math.Round(bar));
         if (Math.Abs(bar - barFrames) > .0001 || data.LoopEndFrame % barFrames != 0)
@@ -41,7 +44,10 @@ public sealed class MusicCue2D
             if (stem is null || string.IsNullOrWhiteSpace(stem.Id) || !ids.Add(stem.Id) ||
                 string.IsNullOrWhiteSpace(stem.File) || Path.GetFileName(stem.File) != stem.File ||
                 stem.File.IndexOfAny(['/', '\\', ':']) >= 0 || !stem.File.EndsWith(".ogg", StringComparison.OrdinalIgnoreCase))
+            {
                 throw new InvalidDataException("Music stems need unique IDs and local Ogg filenames.");
+            }
+
             var path = Path.Combine(directory, stem.File);
             if (!File.Exists(path)) throw new FileNotFoundException("Music stem is missing.", path);
             paths.Add(path);
@@ -51,7 +57,10 @@ public sealed class MusicCue2D
         {
             if (string.IsNullOrWhiteSpace(name) || gains is null || gains.Length != paths.Count ||
                 gains.Any(g => !float.IsFinite(g) || g is < 0 or > 1))
+            {
                 throw new InvalidDataException($"Invalid music mood '{name}'.");
+            }
+
             moods.Add(name, [.. gains]);
         }
         return new(data.Title, data.LoopEndFrame, barFrames, paths.MoveToImmutable(), moods.ToImmutable());

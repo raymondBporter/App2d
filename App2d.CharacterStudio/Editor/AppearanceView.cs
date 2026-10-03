@@ -24,11 +24,14 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         if (_asset != doc.Id) { _asset = doc.Id; _piece = 0; _drag = -1; }
         for (var i = 0; i < doc.Asset.Solids.Count; i++)
             if (ImGui.Selectable($"Piece {i + 1}", i == _piece)) _piece = i;
-        if (ImGui.Button("Add piece")) session.Edit(doc, () =>
+        if (ImGui.Button("Add piece"))
         {
-            doc.Asset.Solids.Add(PropGeometry.Extrude([new(-.1f, 0), new(.1f, 0), new(.1f, .2f), new(-.1f, .2f)], .02f, "#8c4d2c"));
-            _piece = doc.Asset.Solids.Count - 1;
-        });
+            session.Edit(doc, () =>
+            {
+                doc.Asset.Solids.Add(PropGeometry.Extrude([new(-.1f, 0), new(.1f, 0), new(.1f, .2f), new(-.1f, .2f)], .02f, "#8c4d2c"));
+                _piece = doc.Asset.Solids.Count - 1;
+            });
+        }
     }
 
     public void Inspector()
@@ -109,7 +112,11 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
     {
         if (frame.Primary is not { } primary || session.AppearanceDocument is not { } doc ||
             session.WeaponFor(primary.Subject.Model) is not { } worn || _piece >= doc.Asset.Solids.Count ||
-            doc.Asset.Solids[_piece].Outline is not { } points) return;
+            doc.Asset.Solids[_piece].Outline is not { } points)
+        {
+            return;
+        }
+
         var socket = new ActorPose(primary.Subject.Pose, Vector2.Zero, 1).Socket(worn.Socket);
         var gold = Ui.Color(220, 157, 39);
         for (var i = 0; i < points.Count; i++)

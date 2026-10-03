@@ -1,4 +1,3 @@
-using App2d.Core.Geometry;
 using App2d.Core.Meshes;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
@@ -68,6 +67,7 @@ public sealed class PropAsset
     {
         var prop = AuthoredAsset.Parse<PropAsset>(json, "prop");
         if (prop.Solids is not null)
+        {
             foreach (var solid in prop.Solids)
             {
                 if (solid?.Outline is not { } outline) continue;
@@ -76,6 +76,8 @@ public sealed class PropAsset
                 solid.Vertices = mesh.Vertices;
                 solid.Triangles = mesh.Triangles;
             }
+        }
+
         prop.Validate();
         return prop;
     }

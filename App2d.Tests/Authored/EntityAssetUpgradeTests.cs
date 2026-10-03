@@ -48,7 +48,7 @@ public sealed class EntityAssetUpgradeTests
         {
             var entity = EntityAsset.FromJson(File.ReadAllText(path));
             Assert.Equal(EntityAsset.CurrentVersion, entity.Version);
-            Assert.IsAssignableFrom<IConvexShape2D>(entity.Movement.Shape.Build());
+            Assert.IsType<IConvexShape2D>(entity.Movement.Shape.Build(), exactMatch: false);
         }
         Assert.Throws<InvalidDataException>(() => EntityAssetUpgrade.ToCurrent("[]"));
         Assert.Throws<InvalidDataException>(() => EntityAssetUpgrade.ToCurrent("not json"));

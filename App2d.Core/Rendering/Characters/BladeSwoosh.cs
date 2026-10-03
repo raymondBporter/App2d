@@ -1,11 +1,10 @@
 using App2d.Core.Mathematics;
-using App2d.Rendering;
 using Color = Microsoft.Xna.Framework.Color;
 using Quaternion = System.Numerics.Quaternion;
 using Vector2 = System.Numerics.Vector2;
 using Vector3 = System.Numerics.Vector3;
 
-namespace App2d.Rendering.Characters;
+namespace App2d.Core.Rendering.Characters;
 
 /// <summary>
 /// How a swoosh looks. Lengths along the trail are fractions of its length, measured from the old end; positions across

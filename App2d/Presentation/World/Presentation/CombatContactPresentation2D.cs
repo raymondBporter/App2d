@@ -1,8 +1,8 @@
 using App2d.Contracts.Combat;
 using App2d.Core.Mathematics;
+using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
-using App2d.Rendering;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
@@ -26,8 +26,15 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
         var burst = _bursts.FirstOrDefault(b => b.Age >= b.Duration);
         if (burst is null)
         {
-            if (_bursts.Count == MaximumBursts) burst = _bursts.MaxBy(b => b.Age / b.Duration)!;
-            else { burst = new Burst(scene); _bursts.Add(burst); }
+            if (_bursts.Count == MaximumBursts)
+            {
+                burst = _bursts.MaxBy(b => b.Age / b.Duration)!;
+            }
+            else
+            {
+                burst = new Burst(scene);
+                _bursts.Add(burst);
+            }
         }
         burst.Position = contact.Position;
         burst.Angle = contact.Direction.AngleRadians;

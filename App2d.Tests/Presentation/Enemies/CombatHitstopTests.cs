@@ -5,16 +5,16 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
+using App2d.Core.Rendering.Textures;
 using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
-using App2d.Rendering;
-using App2d.Rendering.Characters;
-using App2d.Rendering.Textures;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.Enemies;
+namespace App2d.Tests.Presentation.Enemies;
 
 public sealed class CombatHitstopTests
 {

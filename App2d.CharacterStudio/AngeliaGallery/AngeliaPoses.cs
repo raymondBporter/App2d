@@ -362,11 +362,13 @@ internal sealed class AngeliaRig
         Leg("right", p.LegUR, p.LegLR, p.LowerLegScaleR, p.LegXR);
 
         if (p.WholeRot != 0)
+        {
             foreach (var id in points.Keys.ToList())
             {
                 var v = points[id]; var local = Rot(new Vector2(v.X, v.Y) - hips, p.WholeRot) + hips;
                 points[id] = new(local.X, local.Y, v.Z);
             }
+        }
 
         void Arm(string side, float upper, float lower, float scale)
         {

@@ -1,7 +1,7 @@
 using App2d.Core.IO;
 using App2d.Core.Validation;
 
-namespace App2d.Rendering.Textures;
+namespace App2d.Core.Rendering.Textures;
 
 public sealed class TextureCache2D(string contentRoot) : IDisposable
 {

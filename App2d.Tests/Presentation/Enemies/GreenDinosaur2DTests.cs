@@ -1,15 +1,15 @@
 using App2d.Core;
 using App2d.Core.Physics;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Gameplay.Enemies;
 using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World.Presentation;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.Enemies;
+namespace App2d.Tests.Presentation.Enemies;
 
 public sealed class GreenDinosaur2DTests
 {

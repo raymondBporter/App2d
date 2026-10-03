@@ -1,13 +1,13 @@
 using App2d.Contracts.World;
 using App2d.Core.Geometry;
+using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Tiles;
 using App2d.Presentation.World.Presentation;
-using App2d.Rendering.Vegetation;
-using App2d.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Presentation.Tests.World;
+namespace App2d.Tests.Presentation.World;
 
 public sealed class GrassCuttingTests
 {

@@ -7,16 +7,16 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Tiles;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Tiles;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.Gameplay.Tests.Enemies;
+namespace App2d.Tests.Gameplay.Enemies;
 
 /// <summary>Authored entities in the real game: spawning, the shared final pose and combat.</summary>
 public sealed class AuthoredEntityEnemyTests
@@ -356,7 +356,7 @@ public sealed class AuthoredEntityEnemyTests
             var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 40), 1, 4);
             enemy.SetSimulationEnabled(true);
             var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(facing * 40, 26), 2, 1, CombatFaction2D.Player, 30);
-            var boxes = new List<App2d.Core.Geometry.Rect2D>();
+            var boxes = new List<Rect2D>();
             for (var i = 0; i < 200; i++)
             {
                 if (dodge && i == 60) player.WorldObject.Transform.Position += new Vector2(facing * 100, 0);

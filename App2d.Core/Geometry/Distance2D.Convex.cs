@@ -79,8 +79,11 @@ public static partial class Distance2D
     {
         var bestSquared = float.PositiveInfinity;
         for (var i = 0; i < first.Length; i++)
+        {
             for (var j = 0; j < second.Length; j++)
                 bestSquared = Math.Min(bestSquared, DistanceSquaredBetweenSegments(first[i], first[(i + 1) % first.Length], second[j], second[(j + 1) % second.Length]));
+        }
+
         return MathF.Sqrt(bestSquared);
     }
 }

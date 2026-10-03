@@ -64,7 +64,10 @@ public sealed class TriangleMesh2D
             var sign = Math.Sign(CrossProduct2D.Orientation(a, b, c));
             if (sign * CrossProduct2D.Orientation(a, b, point) >= -edgeTolerance &&
                 sign * CrossProduct2D.Orientation(b, c, point) >= -edgeTolerance &&
-                sign * CrossProduct2D.Orientation(c, a, point) >= -edgeTolerance) return true;
+                sign * CrossProduct2D.Orientation(c, a, point) >= -edgeTolerance)
+            {
+                return true;
+            }
         }
         return false;
     }
@@ -107,7 +110,11 @@ public sealed class TriangleMesh2D
                 if (remaining.Any(j => j != a && j != b && j != c &&
                     winding * CrossProduct2D.Orientation(points[a], points[b], points[j]) >= -tolerance &&
                     winding * CrossProduct2D.Orientation(points[b], points[c], points[j]) >= -tolerance &&
-                    winding * CrossProduct2D.Orientation(points[c], points[a], points[j]) >= -tolerance)) continue;
+                    winding * CrossProduct2D.Orientation(points[c], points[a], points[j]) >= -tolerance))
+                {
+                    continue;
+                }
+
                 indices.AddRange([a, b, c]);
                 remaining.RemoveAt(i);
                 found = true;

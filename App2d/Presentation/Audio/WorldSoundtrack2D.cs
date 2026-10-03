@@ -1,5 +1,5 @@
-using App2d.Audio;
 using App2d.Contracts.World;
+using App2d.Core.Audio;
 using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -36,7 +36,9 @@ public sealed class WorldSoundtrack2D
     {
         if (string.IsNullOrWhiteSpace(selection.Piece) || string.IsNullOrWhiteSpace(selection.Mood) ||
             !Cues.TryGetValue(selection.Piece, out var cue) || !cue.Moods.ContainsKey(selection.Mood))
+        {
             throw new InvalidDataException($"Unknown music selection: {selection}");
+        }
     }
 
     public static WorldSoundtrack2D Load(string root, IEnumerable<WorldZone2D> worldZones)

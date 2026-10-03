@@ -92,8 +92,11 @@ public static class PersonLoadout
         if (wearer is null)
             yield return (SeenFromBehind(clip, seconds) ? PersonWardrobe.ShortHairBack : PersonWardrobe.ShortHair, PersonWardrobe.HeadSocket);
         else
+        {
             foreach (var item in wearer.Equipment.Where(e => e.Prop.Usage is "hair" or "clothing"))
                 yield return (SeenFromBehind(clip, seconds) && item.Prop.BackView is { } back ? back : item.Prop.Id, item.Socket.Id);
+        }
+
         foreach (var item in Worn(clip, seconds, gear)) yield return item;
     }
 }

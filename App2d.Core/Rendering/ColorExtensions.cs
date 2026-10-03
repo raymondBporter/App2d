@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using System.Globalization;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering;
+namespace App2d.Core.Rendering;
 
 /// <summary>Color operations shared by renderers. Alpha and RGB channels are stored as straight, unpremultiplied values.</summary>
 public static class ColorExtensions

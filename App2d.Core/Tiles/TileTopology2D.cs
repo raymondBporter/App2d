@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Tiles;
+namespace App2d.Core.Tiles;
 
 [Flags]
 public enum TileSurface2D : byte

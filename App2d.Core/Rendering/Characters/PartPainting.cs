@@ -1,10 +1,9 @@
 using App2d.Core.Characters;
 using App2d.Core.Geometry;
 using App2d.Core.Meshes;
-using App2d.Rendering;
 using System.Numerics;
 
-namespace App2d.Rendering.Characters;
+namespace App2d.Core.Rendering.Characters;
 
 /// <summary>Paint is mapped through the same frame and dimensions as the body, then clipped to its contour; concave cutouts are clipped triangle by triangle.</summary>
 internal static class PartPainting
@@ -18,11 +17,17 @@ internal static class PartPainting
             var patch = part.Paint[layer];
             var points = patch.Points.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
             var regions = new List<IReadOnlyList<Vector3>>();
-            if (triangles is null) regions.Add(contour);
-            else for (var i = 0; i < triangles.TriangleCount; i++)
+            if (triangles is null)
             {
-                var (a, b, c) = triangles.TriangleAt(i);
-                regions.Add(new[] { new Vector3(a, contour[0].Z), new Vector3(b, contour[0].Z), new Vector3(c, contour[0].Z) });
+                regions.Add(contour);
+            }
+            else
+            {
+                for (var i = 0; i < triangles.TriangleCount; i++)
+                {
+                    var (a, b, c) = triangles.TriangleAt(i);
+                    regions.Add([new Vector3(a, contour[0].Z), new Vector3(b, contour[0].Z), new Vector3(c, contour[0].Z)]);
+                }
             }
             // Tiny raster bias only: paint remains on the torso rather than becoming another garment plane.
             var bias = new Vector3(0, 0, .00001f * (layer + 1));

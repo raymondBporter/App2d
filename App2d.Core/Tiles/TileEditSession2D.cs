@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Tiles;
+namespace App2d.Core.Tiles;
 
 /// <summary>
 /// The editable core of the tile painter: strokes, undo, and which chunks a stroke's data

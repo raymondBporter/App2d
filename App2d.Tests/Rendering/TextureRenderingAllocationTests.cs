@@ -1,10 +1,11 @@
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Rendering;
-using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Xunit.Abstractions;
-using Texture2D = App2d.Rendering.Textures.Texture2D;
+using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
 
 namespace App2d.Tests.Rendering;
 

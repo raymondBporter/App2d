@@ -66,8 +66,8 @@ public sealed class AppearanceAuthoringTests : IDisposable
         Assert.Equal(json, loaded.ToJson());
         for (var i = 0; i < hair.Solids.Count; i++)
         {
-            Assert.Equal(hair.Solids[i].Vertices.ToArray(), loaded.Solids[i].Vertices.ToArray());
-            Assert.Equal(hair.Solids[i].Triangles.ToArray(), loaded.Solids[i].Triangles.ToArray());
+            Assert.Equal([.. hair.Solids[i].Vertices], [.. loaded.Solids[i].Vertices]);
+            Assert.Equal([.. hair.Solids[i].Triangles], [.. loaded.Solids[i].Triangles]);
         }
 
         var meshOnly = new PropAsset { Id = "mesh-only", Name = "Mesh only", Solids = [PropGeometry.Blade(0, .5f, 1, .1f, .02f, "#aaaaaa")] };

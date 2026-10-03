@@ -1,11 +1,9 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
 using App2d.Core.Meshes;
-using App2d.Rendering;
 using System.Numerics;
 
-namespace App2d.Rendering.Characters;
+namespace App2d.Core.Rendering.Characters;
 
 /// <summary>Plain primitives over an evaluated pose; independent of source clips and anatomy names.</summary>
 public sealed class PuppetDrawing
@@ -38,8 +36,13 @@ public sealed class PuppetDrawing
         var ink = ColorExtensions.FromHexRgb(prop.Ink);
         foreach (var shape in prop.Shapes)
         {
-            var points = shape.Points.Select(p => ActorPose.PropPoint(frame, prop, p)).ToList(); var fill = ColorExtensions.FromHexRgb(shape.Fill);
-            if (shape.Kind == "polygon") { Mesh.Polygon(points, fill, ink, prop.LineWidth); continue; }
+            var points = shape.Points.Select(p => ActorPose.PropPoint(frame, prop, p)).ToList();
+            var fill = ColorExtensions.FromHexRgb(shape.Fill);
+            if (shape.Kind == "polygon")
+            {
+                Mesh.Polygon(points, fill, ink, prop.LineWidth);
+                continue;
+            }
             for (var i = 1; i < points.Count; i++)
             {
                 Mesh.Line(points[i - 1] + new Vector3(0, 0, .001f), points[i] + new Vector3(0, 0, .001f), shape.Width + prop.LineWidth * 2, ink);

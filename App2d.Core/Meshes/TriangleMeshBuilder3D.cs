@@ -72,12 +72,14 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
                 dome ? -MathF.Sqrt(MathF.Max(0f, radius * radius - ringRadius * ringRadius)) : 0f);
         }
         for (var ring = 1; ring <= rings; ring++)
+        {
             for (var index = 0; index < segments; index++)
             {
                 Triangle(At(ring - 1, index), At(ring, index), At(ring, index + 1), material);
                 if (ring > 1)
                     Triangle(At(ring - 1, index), At(ring, index + 1), At(ring - 1, index + 1), material);
             }
+        }
     }
 
     /// <summary>Fills an ellipse after placing its 2D samples on a 3D surface.</summary>
@@ -154,12 +156,14 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         Vector3 At(float radius, int index) => Vector3.Lerp(center, contour[index], radius) -
             new Vector3(0f, 0f, depth * MathF.Sqrt(MathF.Max(0f, 1f - radius * radius)));
         for (var ring = 1; ring <= 5; ring++)
+        {
             for (var index = 0; index < contour.Count - 1; index++)
             {
                 Triangle(At((ring - 1) / 5f, index), At(ring / 5f, index), At(ring / 5f, index + 1), material);
                 if (ring > 1)
                     Triangle(At((ring - 1) / 5f, index), At(ring / 5f, index + 1), At((ring - 1) / 5f, index + 1), material);
             }
+        }
     }
 
     /// <summary>Places an indexed 2D mesh on a 3D surface without exposing its index format.</summary>

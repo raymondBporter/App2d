@@ -1,6 +1,5 @@
 using App2d.Core;
 using App2d.Core.Collision.Contacts;
-using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -33,6 +32,7 @@ public sealed class DistanceContactConsistencyTests
         ];
         var random = new Random(1984);
         foreach (var (firstShape, secondShape) in pairs)
+        {
             for (var i = 0; i < 50; i++)
             {
                 var first = Place(firstShape);
@@ -43,9 +43,12 @@ public sealed class DistanceContactConsistencyTests
                 var hasContact = ShapeCollision2D.TryGetContact(first, second, out var contact);
                 Assert.Equal(distance < 0f, hasContact);
                 if (hasContact)
+                {
                     Assert.True(MathF.Abs(contact.PenetrationDepth + distance) < .0002f,
                         $"{firstShape.GetType().Name}/{secondShape.GetType().Name}: depth {contact.PenetrationDepth}, signed distance {distance}");
+                }
             }
+        }
 
         SpatialObject2D Place(IShape2D shape)
         {

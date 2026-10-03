@@ -1,15 +1,16 @@
 using App2d.Contracts.Enemies;
 using App2d.Core;
 using App2d.Core.Physics;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
+using App2d.Core.Rendering.Textures;
 using App2d.Gameplay;
 using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World.Presentation;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.Enemies;
+namespace App2d.Tests.Presentation.Enemies;
 
 public sealed class EnemyPresentationTests
 {
@@ -18,7 +19,7 @@ public sealed class EnemyPresentationTests
     {
         var catalog = App2d.Core.Characters.Authored.AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
         var entity = catalog.Entities["rock-thrower"];
-        var pose = new App2d.Core.Characters.Authored.ActorPose(
+        var pose = new Core.Characters.Authored.ActorPose(
             App2d.Core.Characters.Authored.PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2.Zero, 1);
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D(); var sounds = new RecordingSounds();
@@ -26,12 +27,12 @@ public sealed class EnemyPresentationTests
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, Vector2.Zero, Vector2.Zero, 0, 1, true, true)
         { TypeId = entity.Id, AuthoredEntity = entity, AuthoredPose = pose, ActionId = "attack", ActionSeconds = 1 };
         view.ApplyState([state], [], 1);
-        var shader = Assert.IsType<App2d.Rendering.Characters.AuthoredCharacterShader>(Assert.Single(scene).Shader);
+        var shader = Assert.IsType<AuthoredCharacterShader>(Assert.Single(scene).Shader);
         Assert.Contains(shader.Props, p => p.Prop.Id == "throwing-rock");
         state = state with { ActionSeconds = 1.2f, Bolts = [new(new(70, 80), new(100, 120), new(14.4f), 3) { Gravity = 600 }] };
         view.ApplyState([state], [new EntityCue2D(state.Id, Vector2.Zero, "rock-throw")], 2);
         Assert.DoesNotContain(shader.Props, p => p.Prop.Id == "throwing-rock");
-        Assert.Contains(scene, o => o.Shape is App2d.Core.Shapes.ConvexPolygon2D);
+        Assert.Contains(scene, o => o.Shape is Core.Shapes.ConvexPolygon2D);
         Assert.Contains(sounds.Played, cue => cue.Item1 == SoundEffect2D.SwordSwing);
         view.ApplyState([state with { IsEnabled = false }], [], 3);
         Assert.DoesNotContain(scene, o => o.IsVisible);

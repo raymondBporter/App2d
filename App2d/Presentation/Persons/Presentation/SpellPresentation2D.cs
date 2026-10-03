@@ -39,7 +39,10 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D sounds) : IDisposable
                     break;
             }
         }
-        if (!state.Spells.IsHealing) StopHeal();
+        if (!state.Spells.IsHealing)
+        {
+            StopHeal();
+        }
         else if (!_healing) { _healing = true; _healVoice = sounds.BeginAt(SoundEffect2D.HealCharge, Center); }
         _healVoice.SetPosition(Center);
     }
@@ -78,8 +81,10 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D sounds) : IDisposable
             renderer.DrawWorldCircle(_pulsePosition, float.Lerp(10, 44, p), new Color(175, 250, 233, (int)(230 * (1 - p))), 3f);
         }
         if (_cancel > 0)
+        {
             renderer.DrawWorldCircle(Center, 10 + (1 - _cancel / .18f) * 10,
                 new Color(124, 177, 200, (int)(140 * _cancel / .18f)), 1f);
+        }
     }
 
     private void StopHeal() { _healVoice.Stop(.025f); _healVoice = default; _healing = false; }

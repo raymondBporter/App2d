@@ -67,15 +67,15 @@ public sealed class Ellipse2DTests
         Assert.InRange(ShapeDistance2D.Distance(first, second), .999f, 1.001f);
     }
 
-    public static TheoryData<IShape2D> ConvexPartners => new()
-    {
+    public static TheoryData<IShape2D> ConvexPartners =>
+    [
         new Circle2D(.75f),
         new Capsule2D(new(0, -.5f), new(0, .5f), .5f),
         Rectangle2D.FromSize(new Vector2(1, 1)),
         new Triangle2D(new(-.5f, -.5f), new(.5f, -.5f), new(0, .5f)),
         new ConvexPolygon2D([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]),
         new Ellipse2D(new(.75f, .5f))
-    };
+    ];
 
     [Theory]
     [MemberData(nameof(ConvexPartners))]

@@ -1,20 +1,19 @@
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
-using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Tiles;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Tiles;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.Gameplay.Tests.Enemies;
+namespace App2d.Tests.Gameplay.Enemies;
 
 public sealed class RockThrowerTests
 {
@@ -89,7 +88,11 @@ public sealed class RockThrowerTests
                 obstacle.Transform.Position = new(100, 100);
                 physics.AddBody(obstacle, BodyMotionType2D.Static).CollisionLayer = 1;
             }
-            else player.WorldObject.Transform.Position += new Vector2(150, 0);
+            else
+            {
+                player.WorldObject.Transform.Position += new Vector2(150, 0);
+            }
+
             enemy.TakeDamage(6, Vector2.Zero);
             for (var i = 0; i < 400; i++) { Tick(enemy, player.Position, 1); enemy.TryResolvePlayerHit(player); }
             Assert.Equal(30, player.Health.Current);

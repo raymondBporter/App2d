@@ -56,7 +56,7 @@ public static class PartGeometry
         }
         var frame = FrameOf(part, world, angle);
         if (part.Kind == "polygon")
-            return part.Points!.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
+            return [.. part.Points!.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height)))];
         var halfSize = new Vector2(part.Width / 2, part.Height / 2);
         Span<Vector2> vertices = stackalloc Vector2[part.Kind == PuppetPartKinds.Ellipse ? 48 : 36];
         if (part.Kind == PuppetPartKinds.Ellipse)
@@ -68,8 +68,10 @@ public static class PartGeometry
             var radius = Math.Min(part.Width, part.Height) * .5f * part.Roundness;
             VertexGenerator2D.WriteRoundedRectangle(vertices, -halfSize, halfSize, radius);
             if (part.Kind == PuppetPartKinds.Trapezoid)
+            {
                 for (var i = 0; i < vertices.Length; i++)
                     vertices[i].X *= TrapezoidWidthScale(part, vertices[i].Y);
+            }
         }
         var contour = new List<Vector3>(vertices.Length);
         foreach (var vertex in vertices) contour.Add(frame.At(vertex));

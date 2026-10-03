@@ -3,7 +3,7 @@ using App2d.Core.Shapes;
 using App2d.Gameplay.Persons.Actions;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Player.Weapons;
+namespace App2d.Tests.Gameplay.Player.Weapons;
 
 public sealed class MeleeAttack2DTests
 {

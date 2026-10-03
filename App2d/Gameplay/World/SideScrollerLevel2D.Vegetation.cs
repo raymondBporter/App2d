@@ -21,6 +21,7 @@ public sealed partial class SideScrollerLevel2D
             1f - VegetationPlacement2D.MaximumHeightInTiles), 0, TileMap.Height - 1);
         var lastY = Math.Clamp((int)MathF.Floor((strike.Max.Y - TileMap.Origin.Y) / _tileSize), 0, TileMap.Height - 1);
         for (var y = firstY; y <= lastY; y++)
+        {
             for (var x = firstX; x <= lastX; x++)
             {
                 var cell = new GrassCell2D(x, y);
@@ -29,8 +30,11 @@ public sealed partial class SideScrollerLevel2D
                     !_cutGrass.Contains(cell) && VegetationPlacement2D.HasGrass(TileMap, x, y) &&
                     strike.Left < grass.Right && strike.Right > grass.Left &&
                     strike.Bottom < grass.Top && strike.Top > grass.Bottom)
+                {
                     _cutGrass = _cutGrass.Add(cell);
+                }
             }
+        }
     }
 
     private void ForgetUnloadedGrass(SideScrollerChunkStreamer2D streamer)
@@ -38,7 +42,9 @@ public sealed partial class SideScrollerLevel2D
         // Iterate the old immutable snapshot while replacing only the live set.
         // No timers, per-blade state, or growing history of visited terrain.
         foreach (var cell in _cutGrass)
+        {
             if (!streamer.IsChunkActive(new(cell.X / TileMap.ChunkSize, cell.Y / TileMap.ChunkSize)))
                 _cutGrass = _cutGrass.Remove(cell);
+        }
     }
 }

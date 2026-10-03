@@ -1,5 +1,6 @@
 using App2d.Core;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Rendering;
 using App2d.Noodle.Rigging;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;

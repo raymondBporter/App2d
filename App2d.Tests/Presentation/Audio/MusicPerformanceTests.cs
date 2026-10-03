@@ -1,11 +1,11 @@
-using App2d.Audio;
 using App2d.Contracts.World;
+using App2d.Core.Audio;
 using App2d.Presentation.Audio;
 using System.Diagnostics;
 using System.Numerics;
 using Xunit.Abstractions;
 
-namespace App2d.Presentation.Tests.Audio;
+namespace App2d.Tests.Presentation.Audio;
 
 public sealed class MusicPerformanceTests(ITestOutputHelper output)
 {
@@ -66,7 +66,7 @@ public sealed class MusicPerformanceTests(ITestOutputHelper output)
         for (var i = 0; i < blocks; i++) stream.Read(buffer);
         var elapsed = Stopwatch.GetElapsedTime(start);
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
-        var seconds = blocks * 1024d / MusicCue2D.SampleRate;
+        const double seconds = blocks * 1024d / MusicCue2D.SampleRate;
         output.WriteLine($"{id}: {seconds:F2}s audio, {elapsed.TotalMilliseconds:F1}ms processing, {allocated:N0} allocated bytes ({allocated / seconds:N0} bytes/audio-second).");
         // Pin the known dependency cost, without pretending it is allocation-free.
         // Do not gate wall-clock time: a shared CI machine is not a benchmark rig.

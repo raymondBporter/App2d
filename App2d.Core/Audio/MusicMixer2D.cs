@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using NAudio.Wave;
 
-namespace App2d.Audio;
+namespace App2d.Core.Audio;
 
 /// <summary>Streaming music bus, separate from the SFX voice pool. No audio device required.</summary>
 public sealed class MusicMixer2D : ISampleProvider, IDisposable

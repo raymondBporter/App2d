@@ -1,11 +1,11 @@
 using App2d.Contracts.Player;
 using App2d.Core.Geometry;
+using App2d.Core.Tiles;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Tiles;
 using Microsoft.Data.Sqlite;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Tests.Gameplay.World;
 
 /// <summary>
 /// Characterizes spike terrain in the committed cavern level, not the (soon to be deleted)

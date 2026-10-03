@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Tiles;
+namespace App2d.Core.Tiles;
 
 /// <summary>
 /// Accumulates chunks whose tiles or appearance changed, so a burst of edits rebuilds

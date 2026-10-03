@@ -6,7 +6,7 @@ using App2d.Core.Shapes;
 using App2d.Gameplay.World;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Tests.Gameplay.World;
 
 public sealed class KinematicEntity2DTests
 {

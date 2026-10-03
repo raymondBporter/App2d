@@ -1,12 +1,14 @@
-using App2d.Audio;
 using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Assets;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Hosting;
 using App2d.Core.Input;
+using App2d.Core.Rendering.Textures;
+using App2d.Core.Rendering.Vegetation;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Editor;
@@ -17,7 +19,6 @@ using App2d.Persistence;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World;
 using App2d.Rendering;
-using App2d.Rendering.Vegetation;
 using App2d.Things;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -50,7 +51,7 @@ public sealed class SideScrollerGame : Game2D
         _authored = _resources.GetLoad<AuthoredCatalog>("characters/authored", "simulation");
         _resources.Get<AuthoredCatalog>("characters/authored", "presentation");
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
-        var textures = _resources.GetLoad<Rendering.Textures.TextureCache2D>("textures/runtime", "presentation");
+        var textures = _resources.GetLoad<TextureCache2D>("textures/runtime", "presentation");
         _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects), AssetPaths.Current.SoundEffects);
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
@@ -107,7 +108,7 @@ public sealed class SideScrollerGame : Game2D
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(tileMap, LevelBootstrap2D.OpenForEditing, Camera, tileMap.Origin, Traversal.TileSize);
         _resources.Get<LoadedLevel2D>("level/cavern", "editor");
-        _resources.Get<Rendering.Textures.TextureCache2D>("textures/runtime", "editor");
+        _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ThingsChanged += things =>
             _simulation.Level.ReloadMovingPlatforms([.. things.Select(ThingTypeRegistry2D.ToRuntime)]);
 
@@ -209,6 +210,7 @@ public sealed class SideScrollerGame : Game2D
         _client.DrawWorldDebug(renderer);
         TileEditorView2D.DrawWorldDebug(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize);
         if (_showZones)
+        {
             foreach (var zone in _client.Content.Zones)
             {
                 var b = zone.Bounds;
@@ -216,6 +218,7 @@ public sealed class SideScrollerGame : Game2D
                 Span<Vector2> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
                 renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? XnaColor.Gold : XnaColor.Cyan, 2f);
             }
+        }
     }
 
     public override void RenderUI(Renderer2D renderer, FrameTime time)

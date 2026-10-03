@@ -1,6 +1,6 @@
 using App2d.Presentation.World.Presentation;
 
-namespace App2d.Presentation.Tests.Enemies;
+namespace App2d.Tests.Presentation.Enemies;
 
 public sealed class ReactionTimeCurveTests
 {

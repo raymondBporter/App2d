@@ -19,25 +19,21 @@ public static class TraversalMetricsLoader2D
         if (!File.Exists(path))
             throw new FileNotFoundException("Player geometry manifest was not found.", path);
 
-        var manifest = JsonSerializer.Deserialize<PlayerGeometryManifest>(
-            File.ReadAllText(path),
-            JsonOptions) ?? throw new InvalidDataException(
-                $"Player geometry manifest is empty: {path}");
+        var manifest = JsonSerializer.Deserialize<PlayerGeometryManifest>(File.ReadAllText(path), JsonOptions)
+            ?? throw new InvalidDataException($"Player geometry manifest is empty: {path}");
         Validate(manifest, path);
 
         // The sprite manifest predates the authored Person. Keep its world scale when the
         // shared proportions change, with the standing box snapped to the traversal grid.
         var heightRatio = ResolvedModel.From(PersonTemplate.Model()).DrawnHeight() /
             ResolvedModel.From(PersonTemplate.StudyReference()).DrawnHeight();
-        var halfUnit = TraversalMetrics2D.DesignUnit / 2;
+        const float halfUnit = TraversalMetrics2D.DesignUnit / 2;
         var standingHeight = MathF.Round(manifest.StandingCollider.Size.Height * heightRatio / halfUnit) * halfUnit;
 
         return TraversalMetrics2D.FromGeometry(
             new Vector2(manifest.VisualSize.Width, manifest.VisualSize.Height),
             manifest.FootAnchorYFraction,
-            new Vector2(
-                manifest.StandingCollider.Size.Width,
-                standingHeight),
+            new Vector2(manifest.StandingCollider.Size.Width, standingHeight),
             manifest.StandingCollider.CenterOffsetX);
     }
 
@@ -45,8 +41,7 @@ public static class TraversalMetricsLoader2D
     {
         if (manifest.SchemaVersion != 1)
         {
-            throw new InvalidDataException(
-                $"Unsupported player geometry schema version {manifest.SchemaVersion}: {path}");
+            throw new InvalidDataException($"Unsupported player geometry schema version {manifest.SchemaVersion}: {path}");
         }
 
         var canvasSize = new Vector2(
@@ -63,30 +58,26 @@ public static class TraversalMetricsLoader2D
             !IsPositive(visualSize) ||
             !IsPositive(standingSize))
         {
-            throw new InvalidDataException(
-                $"Player canvas, visual, and collider sizes must be positive: {path}");
+            throw new InvalidDataException($"Player canvas, visual, and collider sizes must be positive: {path}");
         }
 
         var canvasAspect = canvasSize.X / canvasSize.Y;
         var visualAspect = visualSize.X / visualSize.Y;
         if (MathF.Abs(canvasAspect - visualAspect) > 0.001f)
         {
-            throw new InvalidDataException(
-                $"Player visual size must preserve the authored canvas aspect ratio: {path}");
+            throw new InvalidDataException($"Player visual size must preserve the authored canvas aspect ratio: {path}");
         }
 
         if (!float.IsFinite(manifest.FootAnchorYFraction) ||
             manifest.FootAnchorYFraction <= 0f ||
             manifest.FootAnchorYFraction >= 1f)
         {
-            throw new InvalidDataException(
-                $"Player foot anchor must be a fraction between zero and one: {path}");
+            throw new InvalidDataException($"Player foot anchor must be a fraction between zero and one: {path}");
         }
 
         if (!float.IsFinite(manifest.StandingCollider.CenterOffsetX))
         {
-            throw new InvalidDataException(
-                $"Player collider center offset must be finite: {path}");
+            throw new InvalidDataException($"Player collider center offset must be finite: {path}");
         }
     }
 

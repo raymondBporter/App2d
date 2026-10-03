@@ -11,7 +11,7 @@ using App2d.Gameplay.World;
 using App2d.Levels;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Persons;
+namespace App2d.Tests.Gameplay.Persons;
 
 public sealed class PersonFallTests
 {

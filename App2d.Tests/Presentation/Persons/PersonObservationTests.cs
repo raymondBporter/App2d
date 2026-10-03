@@ -3,13 +3,13 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Core;
 using App2d.Core.Animation;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
 using App2d.Levels;
 using App2d.Presentation.Assets;
 using App2d.Presentation.Persons;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 
-namespace App2d.Presentation.Tests.Persons;
+namespace App2d.Tests.Presentation.Persons;
 
 public sealed class PersonObservationTests
 {

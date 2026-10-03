@@ -128,7 +128,10 @@ public sealed class Rect2DTests
             Assert.True(first.Contains(result));
             Assert.True(second.Contains(result));
         }
-        else Assert.Equal(default, result);
+        else
+        {
+            Assert.Equal(default, result);
+        }
     }
 
     [Fact]

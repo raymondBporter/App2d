@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Audio;
+namespace App2d.Core.Audio;
 
 /// <summary>A safe handle for adjusting one sound while it is playing.</summary>
 public readonly record struct AudioVoice2D

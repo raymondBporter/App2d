@@ -1,6 +1,4 @@
-using App2d.Core.Hosting;
-
-namespace App2d.Diagnostics;
+namespace App2d.Core.Hosting;
 
 internal sealed class DeveloperConsoleView : UserControl
 {

@@ -92,7 +92,7 @@ public sealed class ArgGuardTests
         var error = Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrGreaterThan(1f, maximum));
         Assert.Equal(nameof(maximum), error.ParamName);
         Assert.True(float.IsNaN(Assert.IsType<float>(error.ActualValue)));
-        var minimum = float.NegativeInfinity;
+        const float minimum = float.NegativeInfinity;
         error = Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrLessThan(1f, minimum));
         Assert.Equal(nameof(minimum), error.ParamName);
         error = Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(1f, 0f, maximum));
@@ -105,7 +105,7 @@ public sealed class ArgGuardTests
     [Fact]
     public void CallerExpressionsAndExplicitPropertyNamesReachTheException()
     {
-        var radius = -3f;
+        const float radius = -3f;
         var error = Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrNotPositive(radius));
         Assert.Equal(nameof(radius), error.ParamName);
         Assert.Equal(radius, error.ActualValue);

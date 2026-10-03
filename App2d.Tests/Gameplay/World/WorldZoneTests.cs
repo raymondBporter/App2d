@@ -1,13 +1,12 @@
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Core.Geometry;
 using App2d.Core.Physics;
+using App2d.Core.Tiles;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Tests.Gameplay.World;
 
 public sealed class WorldZoneTests
 {

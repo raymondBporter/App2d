@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.Rendering;
+namespace App2d.Core.Rendering;
 
 /// <summary>A Direct3D-backed MonoGame surface hosted in a WinForms control. The game host and the tool windows share it.</summary>
 public sealed class GraphicsSurface2D : Control

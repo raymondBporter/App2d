@@ -2,7 +2,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Characters;
+namespace App2d.Core.Rendering.Characters;
 
 /// <summary>
 /// Draws an authored model from a final pose the simulation or presentation already evaluated. It never samples animation

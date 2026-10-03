@@ -2,7 +2,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Rendering;
+namespace App2d.Core.Rendering;
 
 /// <summary>A floating-point rectangle in device pixels, with Y increasing downward.</summary>
 public readonly record struct ScreenRectangle2D(float Left, float Top, float Right, float Bottom)

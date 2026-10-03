@@ -1,6 +1,6 @@
 using App2d.Core.Assets;
 using App2d.Core.Characters.Editing;
-using App2d.Rendering.Characters;
+using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Text.Json;

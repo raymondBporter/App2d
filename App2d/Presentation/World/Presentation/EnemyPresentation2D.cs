@@ -6,13 +6,14 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
+using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Presentation.Assets;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using System.Collections.Immutable;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -171,7 +172,7 @@ public sealed class EnemyPresentation2D(
     {
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
-        private readonly Rendering.Characters.AuthoredCharacterShader _shader;
+        private readonly AuthoredCharacterShader _shader;
         private readonly BoltViews _bolts;
         private readonly ResolvedEntity _entity;
         public AuthoredPoseView(Scene2D scene, ResolvedEntity entity)

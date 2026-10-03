@@ -1,7 +1,7 @@
-using App2d.Audio;
+using App2d.Core.Audio;
 using System.Collections.Immutable;
 
-namespace App2d.Presentation.Tests.Audio;
+namespace App2d.Tests.Presentation.Audio;
 
 public sealed class MusicStreamTests
 {

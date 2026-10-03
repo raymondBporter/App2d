@@ -5,7 +5,10 @@ using App2d.Core;
 using App2d.Core.Collision;
 using App2d.Core.Geometry;
 using App2d.Core.Physics;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
+using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
@@ -14,12 +17,9 @@ using App2d.Gameplay.World;
 using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
-using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.Persons;
+namespace App2d.Tests.Presentation.Persons;
 
 public sealed class SwordDownAttackTests
 {

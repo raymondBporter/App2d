@@ -1,7 +1,7 @@
 using App2d.Core.Characters.Authored;
 using App2d.Presentation.Persons;
 
-namespace App2d.Presentation.Tests.Persons;
+namespace App2d.Tests.Presentation.Persons;
 
 public sealed class PersonFrameHistoryTests
 {

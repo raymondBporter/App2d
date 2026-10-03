@@ -7,8 +7,8 @@ namespace App2d.Tests.Geometry;
 
 public sealed class ShapeUtilityTests
 {
-    public static TheoryData<IConvexShape2D> Shapes => new()
-    {
+    public static TheoryData<IConvexShape2D> Shapes =>
+    [
         new Circle2D(1.5f, new(1, 2)),
         new Ellipse2D(new(2, 1), new(-1, .5f)),
         new Capsule2D(new(-1, 0), new(1, .5f), .3f),
@@ -16,7 +16,7 @@ public sealed class ShapeUtilityTests
         new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)),
         new Triangle2D(new(0, 0), new(2, 0), new(1, 3)),
         new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
-    };
+    ];
 
     [Theory]
     [MemberData(nameof(Shapes))]
@@ -55,9 +55,9 @@ public sealed class ShapeUtilityTests
         Assert.Equal((new Vector2(0, 0), MathF.Sqrt(2)), ShapeBounds2D.CalculateBoundingCircle(Rectangle2D.FromSize(new Vector2(2, 2))));
         Assert.Equal((new Vector2(0, 0), 1.5f), ShapeBounds2D.CalculateBoundingCircle(new Capsule2D(new(-1, 0), new(1, 0), .5f)));
         Assert.Equal((new Vector2(0, 0), 2f), ShapeBounds2D.CalculateBoundingCircle(new Ellipse2D(new(2, 1))));
-        var composite = ShapeBounds2D.CalculateBoundingCircle(new CompositeShape2D([new Circle2D(1, new(-3, 0)), new Circle2D(1, new(3, 0))]));
-        Assert.Equal(Vector2.Zero, composite.Center);
-        Assert.Equal(4f, composite.Radius, 5);
+        var (Center, Radius) = ShapeBounds2D.CalculateBoundingCircle(new CompositeShape2D([new Circle2D(1, new(-3, 0)), new Circle2D(1, new(3, 0))]));
+        Assert.Equal(Vector2.Zero, Center);
+        Assert.Equal(4f, Radius, 5);
         Assert.Equal(float.PositiveInfinity, ShapeBounds2D.CalculateBoundingCircle(new HalfSpace2D(Vector2.UnitY, 0)).Radius);
     }
 

@@ -58,11 +58,14 @@ internal static class Program
     private static string FindAssets(bool preferSource = false)
     {
         if (preferSource)
+        {
             for (var folder = new DirectoryInfo(Environment.CurrentDirectory); folder is not null; folder = folder.Parent)
             {
                 var root = Path.Combine(folder.FullName, "Assets", "Characters");
                 if (Directory.Exists(Path.Combine(root, "authored"))) return root;
             }
+        }
+
         return AssetLocations.FindCharacterLibrary(AppContext.BaseDirectory, Environment.CurrentDirectory);
     }
 }

@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Tiles;
+namespace App2d.Core.Tiles;
 
 /// <summary>
 /// Ground row queries derived from tile data, replacing the world generator's

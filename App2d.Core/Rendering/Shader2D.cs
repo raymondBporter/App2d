@@ -2,7 +2,7 @@ using App2d.Core.Geometry;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering;
+namespace App2d.Core.Rendering;
 
 /// <summary>Material data evaluated by the MonoGame renderer in object space.</summary>
 public interface IShader2D

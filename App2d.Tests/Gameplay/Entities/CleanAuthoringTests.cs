@@ -1,14 +1,14 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Shapes;
+using App2d.Core.Tiles;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Entities;
+namespace App2d.Tests.Gameplay.Entities;
 
 /// <summary>
 /// The replacement's final acceptance: from an empty authored folder and no imported libraries, create a model, animate it,

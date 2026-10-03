@@ -3,7 +3,7 @@ using App2d.Core.Characters;
 using App2d.Presentation.Persons;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests;
+namespace App2d.Tests.Presentation;
 
 public sealed class PersonFaceTests
 {

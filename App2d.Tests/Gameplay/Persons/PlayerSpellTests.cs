@@ -15,7 +15,7 @@ using App2d.Gameplay.World;
 using App2d.Levels;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Persons;
+namespace App2d.Tests.Gameplay.Persons;
 
 public sealed class PlayerSpellTests
 {
@@ -122,7 +122,7 @@ public sealed class PlayerSpellTests
         Assert.Equal(30, f.Spells.Energy);
         f.Steps(180, Heal);
         Assert.Equal(30, f.Spells.Energy);
-        Assert.Equal(new[] { 6, 4 }, f.Events.OfType<HealCompleted2D>().Select(e => e.Amount));
+        Assert.Equal([6, 4], f.Events.OfType<HealCompleted2D>().Select(e => e.Amount));
     }
 
     [Theory]

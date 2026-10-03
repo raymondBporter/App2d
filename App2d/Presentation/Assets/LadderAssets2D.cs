@@ -1,4 +1,4 @@
-using App2d.Rendering.Textures;
+using App2d.Core.Rendering.Textures;
 
 namespace App2d.Presentation.Assets;
 

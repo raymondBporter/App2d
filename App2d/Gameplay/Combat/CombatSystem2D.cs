@@ -85,7 +85,11 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
 
             var force = knockback(combatant);
             if (combatant is IAuthoredHurt2D hurt && !hurt.OverlapsHurt(hitbox.WorldBounds) &&
-                (combatant is not ICombatGuard2D protection || !protection.CanBlock(hitbox.WorldBounds, force, null))) continue;
+                (combatant is not ICombatGuard2D protection || !protection.CanBlock(hitbox.WorldBounds, force, null)))
+            {
+                continue;
+            }
+
             if (combatant is not ICombatGuard2D guard || !guard.TryBlock(hitbox.WorldBounds, force, null))
                 Damage(combatant, damage, force);
             return true;

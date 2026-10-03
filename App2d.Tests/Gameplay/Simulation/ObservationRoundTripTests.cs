@@ -5,14 +5,14 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Tiles;
+using App2d.Core.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace App2d.Gameplay.Tests.Simulation;
+namespace App2d.Tests.Gameplay.Simulation;
 
 public sealed class ObservationRoundTripTests
 {

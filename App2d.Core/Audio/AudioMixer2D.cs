@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
 
-namespace App2d.Audio;
+namespace App2d.Core.Audio;
 
 /// <summary>
 /// A polyphonic mixer for short, memory-resident sound effects. Sounds may be

@@ -146,9 +146,12 @@ public static class ModelAuthoring
         EntityVocabulary.Require(kind, PuppetPartKinds.All, "part.kind");
         var part = model.Parts.First(p => p.Id == id);
         if (PuppetPartKinds.IsStroke(kind) && (part.B is null || part.B == part.A))
+        {
             part.B = model.Controls.FirstOrDefault(control => control.Parent == part.A)?.Id
                 ?? model.Controls.FirstOrDefault(control => control.Id != part.A)?.Id
                 ?? throw new InvalidOperationException("A stroke needs a second control.");
+        }
+
         if (PuppetPartKinds.IsStroke(kind)) part.Frame = null;
         part.Kind = kind;
         model.Validate();

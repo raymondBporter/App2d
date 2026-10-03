@@ -43,7 +43,7 @@ public sealed class Polar2DTests
         Assert.Equal(5f, radius);
         Assert.InRange(angle, 0f, MathF.PI / 2);
 
-        var unwrapped = -3 * MathF.Tau + .37f;
+        const float unwrapped = -3 * MathF.Tau + .37f;
         var polar = new Polar2D(2, unwrapped);
         Assert.Equal(unwrapped, polar.AngleRadians);
         AssertClose(Rotation2D.Apply(Vector2.UnitX * 2, unwrapped), polar.ToCartesian());

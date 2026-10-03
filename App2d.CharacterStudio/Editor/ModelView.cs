@@ -72,12 +72,14 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
             }
             if (selectedBone is not null && ImGui.MenuItem($"capsule on {anchor}") && Base is { } boneDocument)
+            {
                 session.Edit(boneDocument, () =>
                 {
                     var capsule = ModelAuthoring.AddPartToBone(boneDocument.Asset, PuppetPartKinds.Box, anchor);
                     capsule.Roundness = 1;
                     Select(part: capsule.Id);
                 });
+            }
 
             ImGui.EndPopup();
         }
@@ -581,7 +583,10 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || Base is not { } document) return;
         var delta = frame.World(ViewportFrame.Mouse) - placement.Origin;
         var xy = new Vector2(Vector2.Dot(new(delta.X, delta.Y), placement.Right) / part.Width, Vector2.Dot(new(delta.X, delta.Y), placement.Up) / part.Height);
-        var edited = new List<PuppetPoint>(points); edited[_cutoutDrag] = new(xy.X, xy.Y);
+        var edited = new List<PuppetPoint>(points)
+        {
+            [_cutoutDrag] = new(xy.X, xy.Y)
+        };
         try { PartGeometry.CheckCutout(edited); }
         catch (InvalidDataException) { return; }
         session.Change(document, () => document.Asset.Parts.First(p => p.Id == part.Id).Points = edited);

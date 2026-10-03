@@ -18,7 +18,7 @@ public sealed class TriangleMesh2DTests
     [InlineData(true)]
     public void EarClippingPreservesAConcaveOutlineInEitherWinding(bool reverse)
     {
-        var points = reverse ? Notched.Reverse().ToArray() : Notched;
+        var points = reverse ? [.. Notched.Reverse()] : Notched;
         var mesh = TriangleMesh2D.TriangulateSimplePolygon(points);
         Assert.Equal(4, mesh.TriangleCount);
         Assert.Equal(3f, mesh.Area, 5);

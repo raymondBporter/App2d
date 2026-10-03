@@ -1,7 +1,7 @@
 using App2d.Presentation.Audio;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.Audio;
+namespace App2d.Tests.Presentation.Audio;
 
 public sealed class SpatialSoundEffectTests
 {

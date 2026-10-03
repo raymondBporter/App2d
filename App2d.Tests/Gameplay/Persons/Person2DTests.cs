@@ -13,7 +13,7 @@ using App2d.Gameplay.Persons.Actions;
 using App2d.Levels;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Persons;
+namespace App2d.Tests.Gameplay.Persons;
 
 public sealed class Person2DTests
 {

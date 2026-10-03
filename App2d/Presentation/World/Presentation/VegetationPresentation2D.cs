@@ -1,9 +1,9 @@
 using App2d.Contracts.World;
 using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
+using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Tiles;
 using App2d.Rendering;
-using App2d.Rendering.Vegetation;
-using App2d.Tiles;
 using System.Collections.Immutable;
 using System.Numerics;
 
@@ -33,6 +33,7 @@ public sealed class VegetationPresentation2D
             var patches = new List<Patch>();
             var trees = new List<ProceduralTree2D>();
             for (var y = map.Chunk.Y * map.ChunkSize; y < Math.Min(map.Height, (map.Chunk.Y + 1) * map.ChunkSize); y++)
+            {
                 for (var x = map.Chunk.X * map.ChunkSize; x < Math.Min(map.Width, (map.Chunk.X + 1) * map.ChunkSize); x++)
                 {
                     if (!VegetationPlacement2D.HasGrass(map, x, y)) continue;
@@ -43,6 +44,8 @@ public sealed class VegetationPresentation2D
                     patches.Add(new(cell, root, map.TileSize,
                         new VegetationPatch2D(root.X, root.X + map.TileSize, root.Y, style, seed)));
                 }
+            }
+
             _chunks[map.Chunk] = new(map, patches, trees);
         }
         // Canopies cross chunk boundaries: recheck their clearance when any neighbor changes.
@@ -58,8 +61,10 @@ public sealed class VegetationPresentation2D
                 if (x % 8 == 4 && seed % 3 != 0 && GrowsTrees(map.TilesetIds[map.GetTilesetIndex(x, y)]) &&
                     VegetationPlacement2D.HasGrass(map, x - 1, y) &&
                     VegetationPlacement2D.HasGrass(map, x + 1, y) && HasTreeClearance(map, x, y, sources))
+                {
                     chunk.Trees.Add(new(patch.Root + new Vector2(patch.Size * 0.5f, 0f),
                         patch.Size * (4.5f + seed % 100 / 50f), seed));
+                }
             }
         }
     }
@@ -68,14 +73,20 @@ public sealed class VegetationPresentation2D
         Dictionary<TileChunk2D, TerrainChunkState2D> sources)
     {
         for (var dy = 1; dy <= 10; dy++)
+        {
             for (var dx = -3; dx <= 3; dx++)
             {
                 var tx = x + dx;
                 var ty = y + dy;
                 if (tx < 0 || tx >= map.Width || ty >= map.Height ||
                     !sources.TryGetValue(new(tx / map.ChunkSize, ty / map.ChunkSize), out var source) ||
-                    source.GetTileKind(tx, ty) != TileKind2D.Empty) return false;
+                    source.GetTileKind(tx, ty) != TileKind2D.Empty)
+                {
+                    return false;
+                }
             }
+        }
+
         return true;
     }
 
@@ -85,9 +96,13 @@ public sealed class VegetationPresentation2D
         if (_cuts is not null)
         {
             foreach (var chunk in _chunks.Values)
+            {
                 foreach (var patch in chunk.Patches)
+                {
                     if (cuts.Contains(patch.Cell) && !_cuts.Contains(patch.Cell))
                         Burst(patch);
+                }
+            }
         }
         _cuts = cuts;
     }
@@ -116,6 +131,7 @@ public sealed class VegetationPresentation2D
         var firstY = Math.Clamp((int)MathF.Floor((current.Bottom - map.Origin.Y) / map.TileSize) - 1, 0, map.Height - 1);
         var lastY = Math.Clamp((int)MathF.Floor((previous.Bottom - map.Origin.Y) / map.TileSize), 0, map.Height - 1);
         for (var y = firstY; y <= lastY; y++)
+        {
             for (var x = firstX; x <= lastX; x++)
             {
                 if (!_chunks.TryGetValue(new(x / map.ChunkSize, y / map.ChunkSize), out var chunk)) continue;
@@ -124,6 +140,8 @@ public sealed class VegetationPresentation2D
                 if ((kind.IsCollidable() || kind.IsSpikes()) && current.Bottom <= top && previous.Bottom > top)
                     return true;
             }
+        }
+
         return false;
     }
 
@@ -131,8 +149,10 @@ public sealed class VegetationPresentation2D
     {
         var wind = Wind();
         foreach (var chunk in _chunks.Values)
+        {
             foreach (var tree in chunk.Trees)
                 if (visible.Intersects(tree.Bounds)) tree.Render(renderer, wind);
+        }
     }
 
     /// <summary>Back grass and flowers draw before characters; front tufts and clippings after them.</summary>
@@ -140,15 +160,20 @@ public sealed class VegetationPresentation2D
     {
         var wind = Wind();
         foreach (var chunk in _chunks.Values)
+        {
             foreach (var patch in chunk.Patches)
             {
                 var bounds = new Rect2D(patch.Root - new Vector2(patch.Size * 0.5f, 0f),
                     patch.Root + new Vector2(patch.Size * 1.5f, patch.Size * 1.2f));
                 if (bounds.Intersects(visible))
+                {
                     patch.Visual.Render(renderer, visible.Left, visible.Right, wind, layer,
                         _cuts?.Contains(patch.Cell) == true ? patch.Size * VegetationPlacement2D.CutHeightInTiles : null,
                         CutRoughness);
+                }
             }
+        }
+
         if (layer != VegetationLayer2D.Front) return;
         foreach (var piece in _clippings)
         {

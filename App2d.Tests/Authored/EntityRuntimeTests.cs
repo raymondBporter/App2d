@@ -22,11 +22,13 @@ public sealed class EntityRuntimeTests
         var swing = hero.Actions[EntityControllers.Attack]; var hit = swing.Hits[0];
         // The hit box ignores the pose: the same place ahead of the feet at any time, mirrored by facing.
         foreach (var facing in new[] { 1, -1 })
+        {
             foreach (var t in new[] { hit.Start, hit.Finish - .01f })
             {
                 var box = EntityCollision.Attack(hero, new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
                 TestModels.Near(new Vector3(3 + hit.Window.OffsetX * facing, hit.Window.OffsetY, 0), new Vector3(box.Bounds.Center, 0), 1e-4f, $"box centre at {t}, facing {facing}");
             }
+        }
         // attack -> follow-up -> forehand -> follow-up: the traversal controller supports the first two, the chain the third.
         Assert.Equal(EntityControllers.FollowUp, swing.Next);
         Assert.Equal(EntityControllers.FollowUp, hero.Actions[hero.Actions[swing.Next!].Next!].Next);

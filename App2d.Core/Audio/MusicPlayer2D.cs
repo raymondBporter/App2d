@@ -1,6 +1,6 @@
 using NAudio.Wave;
 
-namespace App2d.Audio;
+namespace App2d.Core.Audio;
 
 /// <summary>Owns the device for the streaming music bus; SFX cannot evict its voices.</summary>
 public sealed class MusicPlayer2D : IDisposable

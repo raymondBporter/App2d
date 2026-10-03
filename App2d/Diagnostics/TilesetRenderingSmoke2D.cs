@@ -3,17 +3,17 @@ using App2d.Core;
 using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
 using App2d.Core.Physics;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
+using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
 using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
-using App2d.Rendering.Textures;
-using App2d.Rendering.Vegetation;
-using App2d.Tiles;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
@@ -88,6 +88,7 @@ internal static class TilesetRenderingSmoke2D
             SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
             SideScrollerLevel2D.WorldOrigin, [groundId, wallId]);
         for (var row = 0; row < Layout.Length; row++)
+        {
             for (var column = 0; column < Layout[row].Length; column++)
             {
                 var (kind, tileset) = Layout[row][column] switch
@@ -102,6 +103,7 @@ internal static class TilesetRenderingSmoke2D
                 };
                 map.SetTile(Left + column, Bottom + Layout.Length - 1 - row, new TileCell2D(kind, (byte)tileset));
             }
+        }
 
         var origin = SideScrollerLevel2D.WorldOrigin;
         var groundTop = origin.Y + (Bottom + 3) * 32f;

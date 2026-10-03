@@ -13,7 +13,7 @@ using App2d.Levels;
 using App2d.Presentation.Simulation;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.Simulation;
+namespace App2d.Tests.Presentation.Simulation;
 
 public sealed class SessionClient2DTests
 {

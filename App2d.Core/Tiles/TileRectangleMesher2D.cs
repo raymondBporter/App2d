@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Tiles;
+namespace App2d.Core.Tiles;
 
 public readonly record struct TileCellRectangle2D(int X, int Y, int Width, int Height, TileKind2D Kind);
 

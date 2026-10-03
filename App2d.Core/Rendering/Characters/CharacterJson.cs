@@ -2,7 +2,7 @@ using System.Numerics;
 using System.Text.Json;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Characters;
+namespace App2d.Core.Rendering.Characters;
 
 internal static class CharacterJson
 {

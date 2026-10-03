@@ -1,4 +1,3 @@
-using App2d.Core.Hosting;
 using App2d.Core.Input;
 using App2d.Gameplay.Player;
 using System.Numerics;

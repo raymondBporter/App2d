@@ -1,5 +1,5 @@
 using App2d.Core.Characters.Authored;
-using App2d.Rendering.Characters;
+using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
@@ -14,13 +14,17 @@ internal sealed partial class ProofRenders
         using var target = new RenderTarget2D(GraphicsDevice, 1440, 960, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(247, 241, 221));
         var drawing = new PuppetDrawing(); var roles = new[] { "idle", "scrape", "head-down", "walk", "rush", "brake", "run", "recover" };
-        for (var row = 0; row < roles.Length; row++) for (var column = 0; column < 4; column++)
+        for (var row = 0; row < roles.Length; row++)
         {
-            var clip = catalog.Animations["triceratops-" + roles[row]];
-            var pose = PoseEvaluator.Sample(model, clip, clip.Duration * column / 3f, input: new() { InPlace = true });
-            drawing.Build(model, pose);
-            _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(column * 360 + 180, row * 120 + 112), 55), Matrix.Identity);
+            for (var column = 0; column < 4; column++)
+            {
+                var clip = catalog.Animations["triceratops-" + roles[row]];
+                var pose = PoseEvaluator.Sample(model, clip, clip.Duration * column / 3f, input: new() { InPlace = true });
+                drawing.Build(model, pose);
+                _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(column * 360 + 180, row * 120 + 112), 55), Matrix.Identity);
+            }
         }
+
         GraphicsDevice.SetRenderTarget(null);
         using (var output = File.Create(Path.Combine(_smokePath, "triceratops-poses.png"))) target.SaveAsPng(output, target.Width, target.Height);
         GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(247, 241, 221));

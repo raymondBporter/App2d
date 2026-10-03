@@ -1,6 +1,6 @@
 using App2d.Core.Characters.Authored;
 
-namespace App2d.Gameplay.Tests.Entities;
+namespace App2d.Tests.Gameplay.Entities;
 
 public sealed class AuthoredArenaTests
 {

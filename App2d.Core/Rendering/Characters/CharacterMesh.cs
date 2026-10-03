@@ -1,4 +1,3 @@
-using App2d.Core.Geometry;
 using App2d.Core.Meshes;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -6,7 +5,7 @@ using Color = Microsoft.Xna.Framework.Color;
 using XVector2 = Microsoft.Xna.Framework.Vector2;
 using XVector3 = Microsoft.Xna.Framework.Vector3;
 
-namespace App2d.Rendering.Characters;
+namespace App2d.Core.Rendering.Characters;
 
 /// <summary>XNA vertex adapter for reusable triangle geometry in character units.</summary>
 public sealed class CharacterMesh(int initialCapacity = 32768)
@@ -33,9 +32,13 @@ public sealed class CharacterMesh(int initialCapacity = 32768)
     {
         if (fill is { } color) _geometry.TriangleFan(points, color);
         if (ink is { } outline)
+        {
             for (var index = 0; index < points.Count; index++)
+            {
                 _geometry.Line(points[index] - new Vector3(0f, 0f, .0005f),
                     points[(index + 1) % points.Count] - new Vector3(0f, 0f, .0005f), width, outline);
+            }
+        }
     }
 
     public void Path(IReadOnlyList<Vector3> points, Color color, float startWidth, float? endWidth = null) =>

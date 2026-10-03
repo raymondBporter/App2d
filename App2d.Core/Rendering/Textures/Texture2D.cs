@@ -3,7 +3,7 @@ using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Textures;
+namespace App2d.Core.Rendering.Textures;
 
 /// <summary>Decoded straight-alpha RGBA pixels, uploaded lazily by the renderer.</summary>
 public sealed class Texture2D : IDisposable

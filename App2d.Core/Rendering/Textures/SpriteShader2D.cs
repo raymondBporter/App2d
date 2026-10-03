@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using Microsoft.Xna.Framework.Graphics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Textures;
+namespace App2d.Core.Rendering.Textures;
 
 /// <summary>Maps one full texture onto finite local bounds in the Y-up world.</summary>
 public sealed class SpriteShader2D(Texture2D texture, TextureFilter filterMode = TextureFilter.Linear) : IShader2D

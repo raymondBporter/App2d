@@ -1,5 +1,4 @@
 using App2d.Core.Geometry;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Collision.Queries;

@@ -1,8 +1,9 @@
 using App2d.Contracts.Persons;
 using App2d.Core.Geometry;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
 using App2d.Core.Validation;
 using App2d.Rendering;
-using App2d.Rendering.Textures;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
@@ -62,12 +63,15 @@ public static class PlayerHud2D
 
         const float weaponTop = top + panelHeight + 10f;
         var weaponBounds = ScreenRectangle2D.FromTopLeftAndSize(new(left, weaponTop), new Size2D(70f, 70f));
-        if (!spells.Enabled) DrawWeaponIcon(renderer, weaponTexture, weaponBounds, panelColor, accentColor);
+        if (!spells.Enabled)
+        {
+            DrawWeaponIcon(renderer, weaponTexture, weaponBounds, panelColor, accentColor);
+        }
         else
         {
             renderer.DrawScreenRoundedRectangle(new(left, weaponTop, left + 350, weaponTop + 92), 9, panelColor);
             renderer.DrawScreenText($"ENERGY  {spells.Energy}/{spells.MaximumEnergy}", new(left + 12, weaponTop + 22), accentColor);
-            var energyLeft = left + 12;
+            const float energyLeft = left + 12;
             renderer.DrawScreenRoundedRectangle(new(energyLeft, weaponTop + 30, left + 338, weaponTop + 43), 4, emptyHealthColor);
             var fill = 326f * spells.Energy / spells.MaximumEnergy;
             if (fill > 0) renderer.DrawScreenRoundedRectangle(new(energyLeft, weaponTop + 30, energyLeft + fill, weaponTop + 43), 4, accentColor);

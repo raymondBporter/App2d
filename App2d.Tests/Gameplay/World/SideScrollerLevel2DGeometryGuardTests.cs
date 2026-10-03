@@ -1,9 +1,9 @@
 using App2d.Contracts.Player;
+using App2d.Core.Tiles;
 using App2d.Gameplay.World;
-using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.World;
+namespace App2d.Tests.Gameplay.World;
 
 /// <summary>
 /// Nothing else reconciles a loaded map's geometry with the constants gameplay math

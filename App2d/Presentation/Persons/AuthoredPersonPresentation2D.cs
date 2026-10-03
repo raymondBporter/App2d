@@ -4,10 +4,10 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using App2d.Presentation.World.Presentation;
-using App2d.Rendering;
-using App2d.Rendering.Characters;
 using System.Numerics;
 
 namespace App2d.Presentation.Persons;

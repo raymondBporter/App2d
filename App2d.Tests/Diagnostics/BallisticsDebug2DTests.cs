@@ -1,5 +1,4 @@
 using App2d.Contracts.Player;
-using App2d.Core.Hosting;
 using App2d.Core.Input;
 using App2d.Diagnostics;
 using System.Numerics;

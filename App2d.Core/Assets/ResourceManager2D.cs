@@ -125,8 +125,11 @@ public sealed class ResourceManager2D : IDisposable
         if (!_entries.TryGetValue(key, out var entry))
             throw new KeyNotFoundException($"Resource '{key}' is not registered.");
         if (entry.Type != typeof(T))
+        {
             throw new InvalidOperationException(
                 $"Resource '{key}' is {entry.Type.Name}, not {typeof(T).Name}.");
+        }
+
         return entry;
     }
 

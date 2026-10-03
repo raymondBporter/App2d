@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Textures;
+namespace App2d.Core.Rendering.Textures;
 
 /// <param name="imageOrigin">
 /// When set, the local point where the image's top-left corner sits, with the image upright

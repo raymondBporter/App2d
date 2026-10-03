@@ -1,4 +1,3 @@
-using App2d.Core.Geometry;
 using App2d.Core.Meshes;
 using System.Numerics;
 

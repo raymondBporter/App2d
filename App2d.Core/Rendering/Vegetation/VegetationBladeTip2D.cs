@@ -3,7 +3,7 @@ using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Vegetation;
+namespace App2d.Core.Rendering.Vegetation;
 
 /// <summary>A frozen piece of cut foliage: a blade sliver or a flower petal, in world space at release.</summary>
 public sealed class VegetationBladeTip2D

@@ -1,10 +1,11 @@
 using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
+using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Vegetation;
+namespace App2d.Core.Rendering.Vegetation;
 
 /// <summary>Seeded, bounded branching geometry with small wind-driven leaf motion.</summary>
 public sealed class ProceduralTree2D
@@ -37,8 +38,10 @@ public sealed class ProceduralTree2D
         }
         if (depth == 0) return;
         for (var side = -1; side <= 1; side += 2)
+        {
             Grow(end, angle + side * float.Lerp(0.3f, 0.65f, random.NextSingle()),
                 length * float.Lerp(0.62f, 0.79f, random.NextSingle()), width * 0.61f, depth - 1, random);
+        }
     }
 
     public void Render(Renderer2D renderer, VegetationWind2D wind)

@@ -2,13 +2,14 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
+using App2d.Core.Tiles;
+using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Enemies;
+namespace App2d.Tests.Gameplay.Enemies;
 
 /// <summary>The game's player drawn and played from its authored hero entity.</summary>
 public sealed class AuthoredEntityGameTests
@@ -21,7 +22,7 @@ public sealed class AuthoredEntityGameTests
         for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
         { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
-        var hero = new Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities["hero"], game.Player.Body.WorldObject.LocalBounds.Size);
+        var hero = new AuthoredHero2D(authored.Entities["hero"], game.Player.Body.WorldObject.LocalBounds.Size);
         var cut = hero.Attack.Clip;
         void Tick(int ticks) { for (var i = 0; i < ticks; i++) { var tick = game.Session.Tick + 1; game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D())); } }
         string? Swing() => game.Arsenal.CaptureActionState().Swing;

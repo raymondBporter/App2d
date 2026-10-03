@@ -1,7 +1,7 @@
 using NVorbis;
 using System.Collections.Immutable;
 
-namespace App2d.Audio;
+namespace App2d.Core.Audio;
 
 /// <summary>One cursor for every layer, including muted layers. Owned by the audio mixer thread.</summary>
 internal sealed class MusicStream2D : IDisposable

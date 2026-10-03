@@ -1,9 +1,9 @@
 using App2d.Contracts.Combat;
+using App2d.Core.Rendering;
 using App2d.Presentation.World.Presentation;
-using App2d.Rendering;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.Enemies;
+namespace App2d.Tests.Presentation.Enemies;
 
 public sealed class CombatContactPresentationTests
 {

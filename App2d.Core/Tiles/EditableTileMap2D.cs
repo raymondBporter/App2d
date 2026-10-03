@@ -3,7 +3,7 @@ using App2d.Core.Grids;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Tiles;
+namespace App2d.Core.Tiles;
 
 /// <summary>
 /// The dense, mutable tile map that authored levels load into. It is the only

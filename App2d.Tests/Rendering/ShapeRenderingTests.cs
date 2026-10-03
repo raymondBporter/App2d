@@ -1,5 +1,6 @@
 using App2d.Core.Geometry;
 using App2d.Core.Meshes;
+using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using System.Numerics;
@@ -10,8 +11,8 @@ namespace App2d.Tests.Rendering;
 [Collection("Graphics")]
 public sealed class ShapeRenderingTests
 {
-    public static TheoryData<IShape2D> FiniteShapes => new()
-    {
+    public static TheoryData<IShape2D> FiniteShapes =>
+    [
         new Rectangle2D(new(-16, -12), new(16, 12)),
         new Circle2D(16),
         new Ellipse2D(new(20, 12)),
@@ -22,7 +23,7 @@ public sealed class ShapeRenderingTests
             new Rectangle2D(new(-16, -12), new(5, 12)),
             new Rectangle2D(new(-5, -12), new(16, 12)),
         ]),
-    };
+    ];
 
     [Theory]
     [MemberData(nameof(FiniteShapes))]

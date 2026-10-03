@@ -3,7 +3,7 @@ using App2d.Core.Curves;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Characters;
+namespace App2d.Core.Rendering.Characters;
 
 /// <summary>Bold vector features that work on both the original dome and edited heads.</summary>
 public static class FaceDrawing

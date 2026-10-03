@@ -1,6 +1,7 @@
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Core.Meshes;
+using App2d.Core.Rendering;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -196,6 +197,8 @@ public sealed partial class Renderer2D
         if (!float.IsFinite(transform.M11) || !float.IsFinite(transform.M12) ||
             !float.IsFinite(transform.M21) || !float.IsFinite(transform.M22) ||
             !float.IsFinite(transform.M31) || !float.IsFinite(transform.M32))
+        {
             throw new ArgumentException("The transform must be finite.", nameof(transform));
+        }
     }
 }

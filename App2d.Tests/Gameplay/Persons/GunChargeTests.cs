@@ -6,14 +6,14 @@ using App2d.Core.Collision;
 using App2d.Core.Geometry;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Levels;
-using App2d.Tiles;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Persons;
+namespace App2d.Tests.Gameplay.Persons;
 
 public sealed class GunChargeTests
 {

@@ -1,8 +1,7 @@
-using App2d.Core;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 
-namespace App2d.Rendering;
+namespace App2d.Core.Rendering;
 
 /// <summary>
 /// The optional rendering component for a spatial object.

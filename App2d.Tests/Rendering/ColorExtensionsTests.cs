@@ -1,4 +1,4 @@
-using App2d.Rendering;
+using App2d.Core.Rendering;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Rendering;

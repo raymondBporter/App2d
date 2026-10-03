@@ -109,8 +109,11 @@ public static class StarterContent
         foreach (var key in hips.Keys) key.Y = mean + (key.Y - mean) * Bob + Sink;
         foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys) key.X += Lean;
         foreach (var arm in new[] { "left-arm", "right-arm" })
+        {
             if (clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.TargetKind && t.Target == arm) is { } track)
             { var center = track.Keys.Average(k => k.X); foreach (var key in track.Keys) key.X = center + (key.X - center) * Swing; }
+        }
+
         return clip;
     }
 

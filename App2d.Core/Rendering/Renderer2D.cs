@@ -1,12 +1,14 @@
 using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
+using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
-using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using GpuTexture = Microsoft.Xna.Framework.Graphics.Texture2D;
-using Texture2D = App2d.Rendering.Textures.Texture2D;
+using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
 using XnaColor = Microsoft.Xna.Framework.Color;
 using XnaMatrix = Microsoft.Xna.Framework.Matrix;
 using XnaVector2 = Microsoft.Xna.Framework.Vector2;
@@ -91,7 +93,7 @@ public sealed partial class Renderer2D : IDisposable
     {
         RequireFrame();
         if (!worldObject.IsVisible || IsCulled(worldObject)) return;
-        if (worldObject.Shader is Characters.AuthoredCharacterShader authored)
+        if (worldObject.Shader is AuthoredCharacterShader authored)
         {
             Flush();
             DrawAuthored(worldObject, authored);
@@ -370,9 +372,11 @@ public sealed partial class Renderer2D : IDisposable
         foreach (var point in points) ArgGuard.ThrowIfNotFinite(point, nameof(points));
         SelectBatch(null, null);
         for (var i = 1; i < points.Length; i++)
+        {
             Line(_camera.WorldToDevice(points[i - 1]), _camera.WorldToDevice(points[i]), color, strokeWidth,
                 i == 1 ? cap : LineCap2D.Butt,
                 i == points.Length - 1 ? cap : LineCap2D.Butt);
+        }
     }
 
     public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
@@ -441,7 +445,10 @@ public sealed partial class Renderer2D : IDisposable
         var axis = end - start;
         if (axis.LengthSquared() <= float.Epsilon)
         {
-            if (startCap == LineCap2D.Round || endCap == LineCap2D.Round) FillDisk(start, width * 0.5f, color);
+            if (startCap == LineCap2D.Round || endCap == LineCap2D.Round)
+            {
+                FillDisk(start, width * 0.5f, color);
+            }
             else if (startCap == LineCap2D.Square || endCap == LineCap2D.Square)
             {
                 var half = new Vector2(width * 0.5f);

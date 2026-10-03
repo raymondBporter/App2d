@@ -21,9 +21,9 @@ public sealed class ResourceManager2DTests
         var info = Assert.Single(resources.Snapshot());
         Assert.Equal("levels/cavern/level.db", info.Source);
         Assert.True(info.IsLoaded);
-        Assert.Equal(["editor", "simulation"], info.Owners.ToArray());
+        Assert.Equal(["editor", "simulation"], [.. info.Owners]);
         resources.ForgetOwner("editor");
-        Assert.Equal(["simulation"], resources.Snapshot()[0].Owners.ToArray());
+        Assert.Equal(["simulation"], [.. resources.Snapshot()[0].Owners]);
     }
 
     [Fact]

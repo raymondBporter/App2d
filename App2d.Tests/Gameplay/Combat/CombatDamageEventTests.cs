@@ -4,9 +4,11 @@ using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
+using App2d.Gameplay.Persons;
+using App2d.Levels;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Combat;
+namespace App2d.Tests.Gameplay.Combat;
 
 public sealed class CombatDamageEventTests
 {
@@ -14,8 +16,8 @@ public sealed class CombatDamageEventTests
     public void SwordContactCarriesItsWielderWithoutChangingWeaponHitDeduplication()
     {
         var physics = new PhysicsWorld2D();
-        var metrics = Levels.TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        var target = new Gameplay.Persons.Person2D(EntityId2D.Create(), physics.CollisionSystem, physics,
+        var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
+        var target = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics,
             metrics, Vector2.Zero, 2, 1, CombatFaction2D.Enemy);
         var registry = new CombatantRegistry2D(); registry.Register(target);
         var combat = new CombatSystem2D(physics.CollisionSystem, registry);
@@ -34,8 +36,8 @@ public sealed class CombatDamageEventTests
     public void InvulnerableContactStillAllowsBounceButEmitsNoDamageFeedback()
     {
         var physics = new PhysicsWorld2D();
-        var metrics = Levels.TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        var target = new Gameplay.Persons.Person2D(EntityId2D.Create(), physics.CollisionSystem, physics,
+        var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
+        var target = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics,
             metrics, Vector2.Zero, 2, 1, CombatFaction2D.Enemy);
         Assert.True(target.TakeDamage(1, Vector2.Zero));
         var health = target.Health.Current;

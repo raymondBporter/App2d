@@ -1,5 +1,5 @@
 using App2d.Core.Characters.Authored;
-using App2d.Rendering.Characters;
+using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
@@ -39,7 +39,10 @@ internal sealed partial class ProofRenders
                     foreach (var (prop, socket) in PersonLoadout.Dressed(clip, at, PersonGear.Sword, entity))
                         drawing.AddProp(catalog.Props[prop], placed.Socket(entity.Sockets[socket]));
                 }
-                else drawing.Build(entity, pose);
+                else
+                {
+                    drawing.Build(entity, pose);
+                }
                 // Large right/left views plus an actual game-size pair along the bottom.
                 foreach (var (x, y, ppu, facing) in new[] { (150, 650, 215, 1), (365, 650, 130, -1), (195, 865, 48, 1), (305, 865, 48, -1) })
                 {
@@ -62,8 +65,8 @@ internal sealed partial class ProofRenders
         };
         for (var i = 0; i < samples.Length; i++)
         {
-            var sample = samples[i];
-            var pose = PoseEvaluator.Sample(caveman.Model, catalog.Animations[sample.Clip], sample.At, false, new() { InPlace = true });
+            var (Clip, At) = samples[i];
+            var pose = PoseEvaluator.Sample(caveman.Model, catalog.Animations[Clip], At, false, new() { InPlace = true });
             drawing.Build(caveman, pose);
             foreach (var (ppu, y, facing) in new[] { (125, 380, 1), (48, 440, -1) })
             {
@@ -84,8 +87,8 @@ internal sealed partial class ProofRenders
         };
         for (var i = 0; i < throws.Length; i++)
         {
-            var sample = throws[i];
-            var pose = PoseEvaluator.Sample(thrower.Model, catalog.Animations[sample.Clip], sample.At, false, new() { InPlace = true });
+            var (Clip, At) = throws[i];
+            var pose = PoseEvaluator.Sample(thrower.Model, catalog.Animations[Clip], At, false, new() { InPlace = true });
             drawing.Build(thrower.Model, pose);
             var placed = new ActorPose(pose, Vector2.Zero, 1);
             foreach (var equipment in thrower.Equipment.Where(e => e.Prop.Muzzle is null || i is 2 or 3 or 4))
@@ -109,8 +112,8 @@ internal sealed partial class ProofRenders
         };
         for (var i = 0; i < babySamples.Length; i++)
         {
-            var sample = babySamples[i];
-            drawing.Build(baby, PoseEvaluator.Sample(baby.Model, catalog.Animations[sample.Clip], sample.At, false, new() { InPlace = true }));
+            var (Clip, At) = babySamples[i];
+            drawing.Build(baby, PoseEvaluator.Sample(baby.Model, catalog.Animations[Clip], At, false, new() { InPlace = true }));
             foreach (var (ppu, y, facing) in new[] { (125, 340, 1), (40, 430, -1) })
             {
                 GraphicsDevice.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1, 0);

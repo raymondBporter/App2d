@@ -101,8 +101,10 @@ public sealed class PersonMoves
         }
 
         foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket, PersonWardrobe.HeadSocket })
+        {
             if (resolved.Base.Sockets.All(s => s.Id != socket))
                 throw new InvalidDataException($"Model '{model}' has no '{socket}' socket for the player's props.");
+        }
 
         return new(resolved, hero, clips, catalog.Props.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal));
     }
@@ -184,8 +186,11 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
             }
         }
         if (state.LandingSpeedThisFrame > 0)
+        {
             _landUntil = state.LandingSpeedThisFrame >= HardLandingSpeed
                 ? clock + moves[PersonMoves.Land].Duration : double.NegativeInfinity;
+        }
+
         if (state.IsClimbingLadder && !_wasClimbing) _climbStart = clock;
         if (!state.IsClimbingLadder && _wasClimbing) _climbEnd = clock;
         if (state.IsDashing && !_wasDashing) _dashStart = clock;

@@ -1,5 +1,4 @@
 using App2d.Core.Characters;
-using App2d.Core.Geometry;
 using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json;

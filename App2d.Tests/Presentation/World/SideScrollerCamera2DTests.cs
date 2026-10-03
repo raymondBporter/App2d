@@ -1,9 +1,9 @@
 using App2d.Core.Geometry;
+using App2d.Core.Rendering;
 using App2d.Presentation.World;
-using App2d.Rendering;
 using System.Numerics;
 
-namespace App2d.Presentation.Tests.World;
+namespace App2d.Tests.Presentation.World;
 
 public sealed class SideScrollerCamera2DTests
 {
@@ -15,8 +15,8 @@ public sealed class SideScrollerCamera2DTests
         var large = new Camera2D { ReferenceViewportHeight = 1080f };
         small.SetViewport(960, 540);
         large.SetViewport(1920, 1080);
-        var smallController = new SideScrollerCamera2D(new Scene2D(), small, bounds, Vector2.Zero);
-        var largeController = new SideScrollerCamera2D(new Scene2D(), large, bounds, Vector2.Zero);
+        var smallController = new SideScrollerCamera2D([], small, bounds, Vector2.Zero);
+        var largeController = new SideScrollerCamera2D([], large, bounds, Vector2.Zero);
         for (var frame = 0; frame < 180; frame++)
         {
             var position = new Vector2(frame * 10f, -frame * 10f);
@@ -67,7 +67,7 @@ public sealed class SideScrollerCamera2DTests
         var levelBounds = new Rect2D(new Vector2(-5_000f), new Vector2(5_000f));
         var camera = new Camera2D();
         var controller = new SideScrollerCamera2D(
-            new Scene2D(),
+            [],
             camera,
             levelBounds,
             new Vector2(0f, levelBounds.Min.Y));
@@ -131,7 +131,7 @@ public sealed class SideScrollerCamera2DTests
     {
         var camera = new Camera2D();
         var controller = new SideScrollerCamera2D(
-            new Scene2D(),
+            [],
             camera,
             new Rect2D(new Vector2(-5_000f), new Vector2(5_000f)),
             initialPlayerPosition ?? Vector2.Zero);

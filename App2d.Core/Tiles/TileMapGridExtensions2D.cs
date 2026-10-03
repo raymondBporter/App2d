@@ -1,6 +1,6 @@
 using App2d.Core.Grids;
 
-namespace App2d.Tiles;
+namespace App2d.Core.Tiles;
 
 /// <summary>Adapts tile maps to the storage-independent Core grid math.</summary>
 public static class TileMapGridExtensions2D

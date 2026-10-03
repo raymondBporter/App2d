@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace App2d.Rendering.Characters;
+namespace App2d.Core.Rendering.Characters;
 
 /// <summary>GPU submission only. Caller owns targets, clearing, camera and actor ordering.</summary>
 public sealed class PointCharacterRenderer : IDisposable

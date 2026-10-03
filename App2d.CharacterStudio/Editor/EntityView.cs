@@ -402,7 +402,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                         var midpoint = (polygon.Vertices[^1].Vector + polygon.Vertices[0].Vector) / 2;
                         session.Edit(document, () => set(polygon with { Vertices = [.. polygon.Vertices, Point2D.From(midpoint)] }));
                     }
-                    if (polygon.Vertices.Count > 3) { ImGui.SameLine(); if (ImGui.SmallButton("Remove last")) session.Edit(document, () => set(polygon with { Vertices = polygon.Vertices.Take(polygon.Vertices.Count - 1).ToList() })); }
+                    if (polygon.Vertices.Count > 3) { ImGui.SameLine(); if (ImGui.SmallButton("Remove last")) session.Edit(document, () => set(polygon with { Vertices = [.. polygon.Vertices.Take(polygon.Vertices.Count - 1)] })); }
                     Ui.Help("Vertices go around the perimeter and must stay convex.");
                     break;
                 }

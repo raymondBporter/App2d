@@ -8,7 +8,7 @@ using App2d.Gameplay.Persons;
 using App2d.Levels;
 using System.Numerics;
 
-namespace App2d.Gameplay.Tests.Combat;
+namespace App2d.Tests.Gameplay.Combat;
 
 public sealed class CombatEntityIdentityTests
 {

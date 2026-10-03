@@ -92,7 +92,11 @@ public readonly record struct GridGeometry2D
         cells = default;
         if ((!typeof(TRect).IsValueType && bounds is null) ||
             !NumericValidation.IsComponentWiseLessThanOrEqual(bounds.Min, bounds.Max) ||
-            !TryWorldToCell(bounds.Min, out var min) || !TryWorldToCell(bounds.Max, out var max)) return false;
+            !TryWorldToCell(bounds.Min, out var min) || !TryWorldToCell(bounds.Max, out var max))
+        {
+            return false;
+        }
+
         var width = (long)max.X - min.X + 1;
         var height = (long)max.Y - min.Y + 1;
         if (width > long.MaxValue / height) return false;

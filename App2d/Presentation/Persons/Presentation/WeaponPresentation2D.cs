@@ -1,11 +1,11 @@
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Animation;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Presentation.Audio;
-using App2d.Rendering;
-using App2d.Rendering.Textures;
 using System.Numerics;
 
 namespace App2d.Presentation.Persons.Presentation;

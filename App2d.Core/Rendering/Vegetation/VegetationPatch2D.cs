@@ -1,9 +1,10 @@
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
+using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering.Vegetation;
+namespace App2d.Core.Rendering.Vegetation;
 
 /// <summary>Which side of the characters a piece of foliage draws on.</summary>
 public enum VegetationLayer2D
@@ -177,10 +178,16 @@ public sealed class VegetationPatch2D
         ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(cutRoughness, 0f, 1f);
 
         if (layer == VegetationLayer2D.Back)
+        {
             foreach (var flower in _flowers)
+            {
                 if (IsVisible(flower.Root.X, flower.Height, visibleLeft, visibleRight) &&
                     !IsSevered(flower, cutHeight))
+                {
                     RenderFlower(renderer, flower, wind);
+                }
+            }
+        }
 
         Span<Vector2> quad = stackalloc Vector2[4];
         Span<Vector2> outline = stackalloc Vector2[SegmentCount * 2 + 3];

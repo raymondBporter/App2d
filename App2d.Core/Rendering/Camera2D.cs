@@ -2,7 +2,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Rendering;
+namespace App2d.Core.Rendering;
 
 public sealed class Camera2D
 {
