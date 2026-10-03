@@ -1,0 +1,115 @@
+using App2d.Core.Curves;
+using App2d.Core.Geometry;
+using App2d.Core.Shapes;
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
+using App2d.Core.Collision.Queries;
+using App2d.Core;
+using System.Text.Json;
+
+namespace App2d.Tests.Geometry;
+
+public sealed class GeometryDefinition2DTests
+{
+    private sealed record GeometryDocument(GeometryDefinition2D Geometry);
+
+    [Fact]
+    public void OneTaggedFieldRoundTripsShapesAndCurves()
+    {
+        GeometryDefinition2D[] definitions =
+        [
+            new CircleShapeDefinition2D { Center = new(1, 2), Radius = 3 },
+            new SimplePolygonShapeDefinition2D { Vertices = [new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)] },
+            new LineCurveDefinition2D { Start = new(1, 2), End = new(3, 4) },
+            new PolylineCurveDefinition2D { Points = [new(0, 0), new(1, 2), new(2, 0)] }
+        ];
+
+        foreach (var definition in definitions)
+        {
+            var json = JsonSerializer.Serialize(new GeometryDocument(definition), GeometryDefinition2D.JsonOptions);
+            var restored = JsonSerializer.Deserialize<GeometryDocument>(json, GeometryDefinition2D.JsonOptions);
+            Assert.Equal(definition.ToGeometryJson(), restored?.Geometry.ToGeometryJson());
+            Assert.Equal(definition.ToGeometryJson(), GeometryDefinition2D.FromJson(definition.ToGeometryJson()).ToGeometryJson());
+        }
+    }
+
+    [Fact]
+    public void PolylinePreservesEachAuthoredPoint()
+    {
+        var curve = new PolylineCurve2D([new(0, 0), new(1, 2), new(2, 0)]);
+        Assert.Equal(new System.Numerics.Vector2(1, 2), curve.Evaluate(.5f));
+        Assert.Equal(new System.Numerics.Vector2(2, 0), curve.Evaluate(1));
+        Assert.IsType<PolylineCurveDefinition2D>(CurveDefinition2D.FromCurve(curve));
+    }
+
+    [Fact]
+    public void ConcavePolygonKeepsItsNotchForContainmentDistanceAndBounds()
+    {
+        var polygon = new SimplePolygon2D([
+            new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)
+        ]);
+
+        Assert.True(polygon.ContainsPoint(new(0.5f, 2.5f)));
+        Assert.False(polygon.ContainsPoint(new(2.5f, 2.5f)));
+        Assert.Equal(5f, polygon.Area, 5);
+        Assert.Equal(new System.Numerics.Vector2(3, 3), ShapeBounds2D.Calculate(polygon).Max);
+        Assert.Equal(1.5f, ShapeDistance2D.Distance(new System.Numerics.Vector2(2.5f, 2.5f), polygon), 5);
+        Assert.Equal(0f, ShapeDistance2D.Distance(new System.Numerics.Vector2(.5f, 2.5f), polygon), 5);
+        Assert.True(ShapeDistance2D.Distance(polygon, new Circle2D(.25f, new(2.5f, 2.5f))) > 1f);
+        Assert.True(RayIntersection2D.TryIntersect(new Ray2D(new(.5f, .5f), System.Numerics.Vector2.UnitX),
+            new SpatialObject2D(polygon), 10, out var exit));
+        Assert.Equal(2.5f, exit.Distance, 5);
+        Assert.True(RayIntersection2D.TryIntersect(new Ray2D(new(2, 2), -System.Numerics.Vector2.UnitX),
+            new SpatialObject2D(polygon), 10, out var notch));
+        Assert.Equal(1f, notch.Distance, 5);
+    }
+
+    [Fact]
+    public void ExistingShapeAndCurveJsonCanBeReadThroughTheSharedRoot()
+    {
+        var shape = new CapsuleShapeDefinition2D { Start = new(0, 0), End = new(1, 0), Radius = .5f };
+        var curve = new ArcCurveDefinition2D { Center = new(0, 0), Radius = 2, StartAngleRadians = 0, SweepAngleRadians = 1 };
+
+        Assert.IsType<CapsuleShapeDefinition2D>(GeometryDefinition2D.FromJson(shape.ToJson()));
+        Assert.IsType<ArcCurveDefinition2D>(GeometryDefinition2D.FromJson(curve.ToJson()));
+    }
+
+    [Fact]
+    public void ModelWritesTypedPartsAndReadsLegacyKinds()
+    {
+        var model = PersonTemplate.Model();
+        var legacy = JsonSerializer.Serialize(model, AuthoredJson.Options);
+        Assert.Contains("\"kind\": \"trapezoid\"", legacy);
+
+        var restoredLegacy = CharacterModel.FromJson(legacy);
+        var typed = restoredLegacy.ToJson();
+        Assert.Contains("\"geometry\"", typed);
+        Assert.Contains("\"editorKind\": \"trapezoid\"", typed);
+        Assert.Equal(typed, CharacterModel.FromJson(typed).ToJson());
+        Assert.IsType<SimplePolygonShapeDefinition2D>(CharacterModel.FromJson(typed).Parts.Single(part => part.Id == "body").Geometry);
+    }
+
+    [Fact]
+    public void PropWritesTypedGeometryAndPreservesStrokeDepth()
+    {
+        var prop = new PropAsset
+        {
+            Id = "test-prop", Name = "Test prop",
+            Shapes =
+            [
+                new PropShape { Points = [new(0, 0, .1f), new(.5f, 1, .2f), new(1, 0, .3f)] },
+                new PropShape { Kind = "polygon", Points = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }
+            ]
+        };
+        var legacy = JsonSerializer.Serialize(prop, AuthoredJson.Options);
+        Assert.Contains("\"kind\": \"polygon\"", legacy);
+        var typed = PropAsset.FromJson(legacy).ToJson();
+        Assert.Contains("\"kind\": \"polyline\"", typed);
+        Assert.Contains("\"kind\": \"simple-polygon\"", typed);
+        var restored = PropAsset.FromJson(typed);
+        Assert.Equal(typed, restored.ToJson());
+        Assert.Equal([.1f, .2f, .3f], restored.Shapes[0].Points.Select(point => point.Z));
+        Assert.IsType<PolylineCurveDefinition2D>(restored.Shapes[0].Geometry);
+        Assert.IsType<SimplePolygonShapeDefinition2D>(restored.Shapes[1].Geometry);
+    }
+}

@@ -51,15 +51,21 @@ public static partial class ShapeCollision2D
     }
 
     // Rectangle2D rows intentionally also catch the AxisAlignedRectangle2D subtype through the perimeter writer.
-    private static CollisionResult Dispatch(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose) => first switch
+    private static CollisionResult Dispatch(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose)
     {
-        CompositeShape2D composite => CompositeAgainst(composite, firstPose, second, secondPose),
-        Circle2D circle => CircleAgainst(circle, firstPose, second, secondPose),
-        Capsule2D capsule => CapsuleAgainst(capsule, firstPose, second, secondPose),
-        HalfSpace2D halfSpace => HalfSpaceAgainst(halfSpace, firstPose, second, secondPose),
-        IConvexShape2D convex when WorldShape2D.PerimeterVertexCount(convex) > 0 => PolygonAgainst(convex, firstPose, second, secondPose),
-        _ => CollisionResult.None
-    };
+        if (first is SimplePolygon2D polygon) return CompositeAgainst(polygon.ConvexPieces, firstPose, second, secondPose);
+        if (second is SimplePolygon2D otherPolygon)
+            return CompositeAgainst(otherPolygon.ConvexPieces, secondPose, first, firstPose).Flipped();
+        return first switch
+        {
+            CompositeShape2D composite => CompositeAgainst(composite, firstPose, second, secondPose),
+            Circle2D circle => CircleAgainst(circle, firstPose, second, secondPose),
+            Capsule2D capsule => CapsuleAgainst(capsule, firstPose, second, secondPose),
+            HalfSpace2D halfSpace => HalfSpaceAgainst(halfSpace, firstPose, second, secondPose),
+            IConvexShape2D convex when WorldShape2D.PerimeterVertexCount(convex) > 0 => PolygonAgainst(convex, firstPose, second, secondPose),
+            _ => CollisionResult.None
+        };
+    }
 
     private static CollisionResult CircleAgainst(Circle2D circle, Similarity2D circlePose, IShape2D other, Similarity2D otherPose)
     {

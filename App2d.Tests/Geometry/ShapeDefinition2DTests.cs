@@ -72,7 +72,7 @@ public sealed class ShapeDefinition2DTests
         var circle = Assert.IsType<Circle2D>(ShapeDefinition2D.FromJson("{\"center\":{\"x\":1,\"y\":2},\"radius\":3,\"kind\":\"circle\"}").Build());
         Assert.Equal(new Vector2(1, 2), circle.Center);
         Assert.Equal(3f, circle.Radius);
-        Assert.Equal(8, ShapeKinds2D.All.Count);
+        Assert.Equal(9, ShapeKinds2D.All.Count);
     }
 
     [Fact]

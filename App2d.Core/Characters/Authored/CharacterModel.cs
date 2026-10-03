@@ -121,8 +121,8 @@ public sealed class CharacterModel
     /// <summary>The prototype puppet this model was converted from, if any.</summary>
     public AssetSource? Source { get; set; }
 
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    public static CharacterModel FromJson(string json) { var model = AuthoredAsset.Parse<CharacterModel>(json, "model"); model.Validate(); return model; }
+    public string ToJson() => PartAssetJson.Write(this, Parts, AuthoredJson.Options);
+    public static CharacterModel FromJson(string json) { var model = AuthoredAsset.Parse<CharacterModel>(json, "model"); PartAssetJson.Restore(model.Parts); model.Validate(); return model; }
     public static CharacterModel Load(string path) => FromJson(File.ReadAllText(path));
     public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
 

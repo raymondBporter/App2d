@@ -1,6 +1,12 @@
 using App2d.Core.Meshes;
+using App2d.Core.Geometry;
+using App2d.Core.Curves;
+using App2d.Core.Shapes;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
+using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -8,9 +14,56 @@ namespace App2d.Core.Characters.Authored;
 public sealed record PropShape
 {
     public string Kind { get; set; } = "stroke";
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GeometryDefinition2D? Geometry { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<float>? Depths { get; set; }
     public List<PuppetPoint> Points { get; set; } = [];
     public float Width { get; set; } = .05f;
     public string Fill { get; set; } = "#c8b18a";
+
+    [JsonIgnore] public bool IsFilled => Geometry is ShapeDefinition2D || Geometry is null && Kind == "polygon";
+
+    public GeometryDefinition2D Definition() => Geometry ?? (Kind == "polygon"
+        ? new SimplePolygonShapeDefinition2D { Vertices = [.. Points.Select(point => Point2D.From(point.XY))] }
+        : Points.Count == 2
+            ? new LineCurveDefinition2D { Start = Point2D.From(Points[0].XY), End = Point2D.From(Points[1].XY) }
+            : new PolylineCurveDefinition2D { Points = [.. Points.Select(point => Point2D.From(point.XY))] });
+
+    public void RestorePoints()
+    {
+        if (Geometry is null) return;
+        Vector2[] xy;
+        if (Geometry is ShapeDefinition2D definition)
+        {
+            Kind = "polygon";
+            var shape = definition.Build();
+            var count = WorldShape2D.OutlineVertexCount(shape, 48);
+            if (count == 0) throw new InvalidDataException($"A {definition.Kind} cannot be used as prop art.");
+            xy = new Vector2[count];
+            WorldShape2D.WriteOutline(shape, xy, 48);
+        }
+        else
+        {
+            Kind = "stroke";
+            xy = Geometry switch
+            {
+                LineCurveDefinition2D line => [line.Start.Vector, line.End.Vector],
+                PolylineCurveDefinition2D polyline => [.. polyline.Points.Select(point => point.Vector)],
+                CurveDefinition2D curve => Sample(curve),
+                _ => throw new InvalidDataException("A prop needs shape or curve geometry.")
+            };
+        }
+        if (Depths is { } depths && depths.Count != xy.Length)
+            throw new InvalidDataException("Prop depth count must match geometry points.");
+        Points = [.. xy.Select((point, i) => new PuppetPoint(point.X, point.Y, Depths is { } z ? z[i] : 0))];
+    }
+
+    private static Vector2[] Sample(CurveDefinition2D curve)
+    {
+        var built = curve.Build();
+        return [.. Enumerable.Range(0, 33).Select(i => built.Evaluate(i / 32f))];
+    }
 }
 
 /// <summary>A closed, consistently wound triangle mesh in prop space. X along the weapon, Y across its broad face, Z thickness.</summary>
@@ -61,11 +114,26 @@ public sealed class PropAsset
         _ => null,
     };
 
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
+    public string ToJson()
+    {
+        foreach (var shape in Shapes)
+            if (shape.Geometry is not null && shape.Points.Count == 0) shape.RestorePoints();
+        var root = JsonNode.Parse(JsonSerializer.Serialize(this, AuthoredJson.Options))!.AsObject();
+        var entries = root["shapes"]!.AsArray();
+        for (var i = 0; i < Shapes.Count; i++)
+        {
+            var entry = entries[i]!.AsObject();
+            entry.Remove("kind"); entry.Remove("points"); entry.Remove("geometry"); entry.Remove("depths");
+            entry["geometry"] = JsonNode.Parse(Shapes[i].Definition().ToGeometryJson());
+            entry["depths"] = JsonSerializer.SerializeToNode(Shapes[i].Points.Select(point => point.Z).ToArray(), AuthoredJson.Options);
+        }
+        return root.ToJsonString(AuthoredJson.Options);
+    }
     internal string ToSnapshotJson() => JsonSerializer.Serialize(this, AuthoredJson.SnapshotOptions);
     public static PropAsset FromJson(string json)
     {
         var prop = AuthoredAsset.Parse<PropAsset>(json, "prop");
+        foreach (var shape in prop.Shapes) shape.RestorePoints();
         if (prop.Solids is not null)
         {
             foreach (var solid in prop.Solids)
@@ -123,8 +191,11 @@ public sealed class PropAsset
         {
             var shape = Shapes[i]; var field = $"{owner} shapes[{i}]";
             Require(shape?.Points is not null, $"{field}: incomplete shape.");
-            EntityVocabulary.Require(shape.Kind, ["stroke", "polygon"], field + " kind");
-            Require(shape.Kind == "stroke" ? shape.Points.Count >= 2 : shape.Points.Count >= 3, $"{field}: a stroke needs two points and a polygon three.");
+            if (shape.Geometry is not null && shape.Points.Count == 0) shape.RestorePoints();
+            if (shape.Geometry is null) EntityVocabulary.Require(shape.Kind, ["stroke", "polygon"], field + " kind");
+            if (shape.Geometry is ShapeDefinition2D typedShape) _ = typedShape.Build();
+            if (shape.Geometry is CurveDefinition2D typedCurve) _ = typedCurve.Build();
+            Require(shape.IsFilled ? shape.Points.Count >= 3 : shape.Points.Count >= 2, $"{field}: a stroke needs two points and a polygon three.");
             foreach (var point in shape.Points) point.Check(field + " point");
             new Limit(.001f, 10).Check(shape.Width, field + " width"); Limit.Color(shape.Fill, field + " fill");
         }

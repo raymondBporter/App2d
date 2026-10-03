@@ -352,8 +352,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => p.Height = v, o => o.Height = null);
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
-            if (overrides is null && PuppetPartKinds.HasRoundness(part.Kind)) Float("Roundness", part.Roundness, 0, 1, false, (p, v) => p.Roundness = v, _ => { });
-            if (overrides is null && part.Kind == "trapezoid") Float("Top width scale", part.TopWidthScale, .01f, 1, false, (p, v) => p.TopWidthScale = v, _ => { });
+            if (overrides is null && PuppetPartKinds.HasRoundness(part.Kind)) Float("Roundness", part.Roundness, 0, 1, false, (p, v) => { p.Roundness = v; p.Geometry = null; }, _ => { });
+            if (overrides is null && part.Kind == "trapezoid") Float("Top width scale", part.TopWidthScale, .01f, 1, false, (p, v) => { p.TopWidthScale = v; p.Geometry = null; }, _ => { });
             if (overrides is null && part.Kind == "polygon" && ImGui.CollapsingHeader("Edit cutout silhouette"))
             {
                 ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
@@ -361,7 +361,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 void Cutout(Action<List<PuppetPoint>> edit)
                 {
                     var points = new List<PuppetPoint>(part.Points!); edit(points);
-                    try { PartGeometry.CheckCutout(points); change(p => p.Points = points); }
+                    try { PartGeometry.CheckCutout(points); change(p => { p.Points = points; p.Geometry = null; }); }
                     catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
                 }
                 for (var i = 0; i < part.Points!.Count; i++)
@@ -589,7 +589,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         };
         try { PartGeometry.CheckCutout(edited); }
         catch (InvalidDataException) { return; }
-        session.Change(document, () => document.Asset.Parts.First(p => p.Id == part.Id).Points = edited);
+        session.Change(document, () => { var changed = document.Asset.Parts.First(p => p.Id == part.Id); changed.Points = edited; changed.Geometry = null; });
     }
 
     private void DragControls(ViewportFrame frame, ResolvedModel model, EvaluatedPose pose)

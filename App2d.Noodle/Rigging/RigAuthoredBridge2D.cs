@@ -57,35 +57,12 @@ internal static class RigAuthoredBridge2D
             Angle = MathF.PI / 180f * shape.AngleDegrees,
             Fill = $"#{shape.Color.R:x2}{shape.Color.G:x2}{shape.Color.B:x2}",
             OutlineWidth = 0,
-            Hidden = shape.Purpose == RigShapePurpose.Collision
+            Hidden = shape.Purpose == RigShapePurpose.Collision,
+            Width = 1,
+            Height = 1,
+            Geometry = ShapeDefinition2D.FromShape(WorldShape2D.Scaled((IConvexShape2D)shape.CreateGeometry(), UnitsPerPixel))
         };
-        switch (shape)
-        {
-            case RigCircleShape2D circle:
-                part.Kind = PuppetPartKinds.Ellipse;
-                part.Width = part.Height = 2 * circle.Radius * UnitsPerPixel;
-                break;
-            case RigRectangleShape2D rectangle:
-                part.Kind = PuppetPartKinds.Box;
-                part.Width = rectangle.Width * UnitsPerPixel;
-                part.Height = rectangle.Height * UnitsPerPixel;
-                part.Roundness = 0;
-                break;
-            case RigCapsuleShape2D capsule:
-                part.Kind = PuppetPartKinds.Box;
-                part.Width = (capsule.Length + 2 * capsule.Radius) * UnitsPerPixel;
-                part.Height = 2 * capsule.Radius * UnitsPerPixel;
-                part.Roundness = 1;
-                break;
-            case RigPolygonShape2D polygon:
-                part.Kind = PuppetPartKinds.Polygon;
-                part.Width = part.Height = 1;
-                part.Points = [.. ((ConvexPolygon2D)polygon.CreateGeometry()).Vertices.ToArray()
-                    .Select(vertex => Point(vertex))];
-                break;
-            default:
-                throw new NotSupportedException($"Cannot export rig shape '{shape.Kind}'.");
-        }
+        PartGeometry.RestoreEditorFields(part);
         return part;
     }
 }

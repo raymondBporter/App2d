@@ -45,6 +45,7 @@ public static class WorldShape2D
         Rectangle2D => 4,
         Triangle2D => 3,
         ConvexPolygon2D polygon => polygon.Vertices.Length,
+        SimplePolygon2D polygon => polygon.Vertices.Length,
         Ellipse2D => Ellipse2D.CollisionSegments,
         _ => 0
     };
@@ -60,6 +61,7 @@ public static class WorldShape2D
             case Rectangle2D rectangle: rectangle.WriteCorners(vertices); return 4;
             case Triangle2D triangle: triangle.WriteVertices(vertices); return 3;
             case ConvexPolygon2D polygon: polygon.Vertices.CopyTo(vertices); return polygon.Vertices.Length;
+            case SimplePolygon2D polygon: polygon.Vertices.CopyTo(vertices); return polygon.Vertices.Length;
             case Ellipse2D ellipse: return ellipse.WriteVertices(vertices[..Ellipse2D.CollisionSegments]);
             default: return 0;
         }

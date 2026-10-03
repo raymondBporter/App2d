@@ -17,12 +17,13 @@ namespace App2d.Core.Shapes;
 [JsonDerivedType(typeof(RectangleShapeDefinition2D), ShapeKinds2D.Rectangle)]
 [JsonDerivedType(typeof(TriangleShapeDefinition2D), ShapeKinds2D.Triangle)]
 [JsonDerivedType(typeof(ConvexPolygonShapeDefinition2D), ShapeKinds2D.ConvexPolygon)]
+[JsonDerivedType(typeof(SimplePolygonShapeDefinition2D), ShapeKinds2D.SimplePolygon)]
 [JsonDerivedType(typeof(HalfSpaceShapeDefinition2D), ShapeKinds2D.HalfSpace)]
 [JsonDerivedType(typeof(CompositeShapeDefinition2D), ShapeKinds2D.Composite)]
-public abstract record ShapeDefinition2D
+public abstract record ShapeDefinition2D : GeometryDefinition2D
 {
     /// <summary>Web-style camelCase JSON with an indented layout, strict members and a leading or trailing kind tag.</summary>
-    public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
+    public new static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
@@ -44,13 +45,13 @@ public abstract record ShapeDefinition2D
     /// <param name="json">JSON produced by <see cref="ToJson"/> or written by hand with a kind tag.</param>
     /// <returns>The definition.</returns>
     /// <exception cref="JsonException">The kind is unknown, a required member is missing or an unknown member is present.</exception>
-    public static ShapeDefinition2D FromJson(string json) => JsonSerializer.Deserialize<ShapeDefinition2D>(json, JsonOptions) ?? throw new JsonException("Empty shape definition.");
+    public new static ShapeDefinition2D FromJson(string json) => JsonSerializer.Deserialize<ShapeDefinition2D>(json, JsonOptions) ?? throw new JsonException("Empty shape definition.");
 
     /// <summary>Copies a built-in runtime shape into editable data. Arbitrary implementations have no known schema.</summary>
     /// <param name="shape">A built-in shape.</param>
     /// <returns>A definition that builds an equivalent shape.</returns>
     /// <exception cref="NotSupportedException">The shape is a custom implementation.</exception>
-    public static ShapeDefinition2D FromShape(IShape2D shape) => shape switch
+    public new static ShapeDefinition2D FromShape(IShape2D shape) => shape switch
     {
         Circle2D circle => new CircleShapeDefinition2D { Center = Point2D.From(circle.Center), Radius = circle.Radius },
         Ellipse2D ellipse => new EllipseShapeDefinition2D { Center = Point2D.From(ellipse.Center), Radii = Point2D.From(ellipse.Radii) },
@@ -59,6 +60,7 @@ public abstract record ShapeDefinition2D
         Rectangle2D rectangle => new RectangleShapeDefinition2D { Min = Point2D.From(rectangle.Min), Max = Point2D.From(rectangle.Max) },
         Triangle2D triangle => new TriangleShapeDefinition2D { A = Point2D.From(triangle.A), B = Point2D.From(triangle.B), C = Point2D.From(triangle.C) },
         ConvexPolygon2D polygon => new ConvexPolygonShapeDefinition2D { Vertices = [.. polygon.Vertices.ToArray().Select(Point2D.From)] },
+        SimplePolygon2D polygon => new SimplePolygonShapeDefinition2D { Vertices = [.. polygon.Vertices.ToArray().Select(Point2D.From)] },
         HalfSpace2D halfSpace => new HalfSpaceShapeDefinition2D { Normal = Point2D.From(halfSpace.Normal), Offset = halfSpace.Offset },
         CompositeShape2D composite => new CompositeShapeDefinition2D { Parts = [.. composite.Parts.ToArray().Select(FromShape)] },
         null => throw new ArgumentNullException(nameof(shape)),
@@ -91,6 +93,7 @@ public abstract record ShapeDefinition2D
                 : new CapsuleShapeDefinition2D { Start = Point2D.From(center - new Vector2(0f, reach)), End = Point2D.From(center + new Vector2(0f, reach)), Radius = size.X / 2f },
             ShapeKinds2D.Triangle => new TriangleShapeDefinition2D { A = Point2D.From(bounds.BottomLeft), B = Point2D.From(bounds.BottomRight), C = Point2D.From(bounds.TopCenter) },
             ShapeKinds2D.ConvexPolygon => new ConvexPolygonShapeDefinition2D { Vertices = [Point2D.From(bounds.BottomLeft), Point2D.From(bounds.BottomRight), Point2D.From(bounds.TopRight), Point2D.From(bounds.TopLeft)] },
+            ShapeKinds2D.SimplePolygon => new SimplePolygonShapeDefinition2D { Vertices = [Point2D.From(bounds.BottomLeft), Point2D.From(bounds.BottomRight), Point2D.From(bounds.TopRight), Point2D.From(bounds.TopLeft)] },
             ShapeKinds2D.HalfSpace => new HalfSpaceShapeDefinition2D { Normal = new(0f, 1f), Offset = bounds.Top },
             ShapeKinds2D.Composite => new CompositeShapeDefinition2D { Parts = [this] },
             _ => throw new ArgumentException($"Unknown shape kind '{kind}'.", nameof(kind))
@@ -159,6 +162,14 @@ public sealed record ConvexPolygonShapeDefinition2D : ShapeDefinition2D
     public required List<Point2D> Vertices { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.ConvexPolygon;
     public override IShape2D Build() => new ConvexPolygon2D(Vertices.Select(point => point.Vector));
+}
+
+/// <summary>A simple polygon that may be concave.</summary>
+public sealed record SimplePolygonShapeDefinition2D : ShapeDefinition2D
+{
+    public required List<Point2D> Vertices { get; init; }
+    [JsonIgnore] public override string Kind => ShapeKinds2D.SimplePolygon;
+    public override IShape2D Build() => new SimplePolygon2D(Vertices.Select(point => point.Vector));
 }
 
 /// <summary>A half-space whose solid side is dot(point, Normal) &lt;= Offset: <see cref="HalfSpace2D"/>.</summary>

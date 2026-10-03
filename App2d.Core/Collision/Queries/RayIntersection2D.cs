@@ -74,6 +74,7 @@ public static class RayIntersection2D
             case Ellipse2D ellipse: return Raycast2D.TryEllipse(origin, direction, ellipse.Center, ellipse.Radii, maxDistance, out hit);
             case Capsule2D capsule: return Raycast2D.TryCapsule(origin, direction, capsule.Start, capsule.End, capsule.Radius, maxDistance, out hit);
             case HalfSpace2D halfSpace: return Raycast2D.TryHalfSpace(origin, direction, halfSpace.Normal, halfSpace.Offset, maxDistance, out hit);
+            case SimplePolygon2D polygon: return TrySimplePolygon(origin, direction, polygon, maxDistance, out hit);
             case CompositeShape2D composite:
                 hit = default;
                 var found = false;
@@ -97,5 +98,28 @@ public static class RayIntersection2D
                 WorldShape2D.WritePerimeter(shape, vertices);
                 return Raycast2D.TryConvexPolygon(origin, direction, vertices, maxDistance, out hit);
         }
+    }
+
+    private static bool TrySimplePolygon(Vector2 origin, Vector2 direction, SimplePolygon2D polygon, float maxDistance, out RayHit2D hit)
+    {
+        var vertices = polygon.Vertices;
+        var winding = Math.Sign(PolygonGeometry2D.SignedAreaTwiceDouble(vertices));
+        hit = default;
+        var found = false;
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            var start = vertices[i];
+            var edge = vertices[(i + 1) % vertices.Length] - start;
+            var denominator = direction.X * edge.Y - direction.Y * edge.X;
+            if (MathF.Abs(denominator) < Epsilon) continue;
+            var offset = start - origin;
+            var distance = (offset.X * edge.Y - offset.Y * edge.X) / denominator;
+            var fraction = (offset.X * direction.Y - offset.Y * direction.X) / denominator;
+            if (distance < 0 || distance > maxDistance || fraction < 0 || fraction > 1 || found && distance >= hit.Distance) continue;
+            var normal = Vector2.Normalize(new Vector2(edge.Y, -edge.X) * winding);
+            hit = new RayHit2D(origin + direction * distance, normal, distance);
+            found = true;
+        }
+        return found;
     }
 }

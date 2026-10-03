@@ -26,6 +26,7 @@ public static class ShapeBounds2D
             IRect2D rectangle => rectangle.ToRect(),
             Triangle2D triangle => new(Vector2.Min(Vector2.Min(triangle.A, triangle.B), triangle.C), Vector2.Max(Vector2.Max(triangle.A, triangle.B), triangle.C)),
             ConvexPolygon2D polygon => Rect2D.FromPoints(polygon.Vertices),
+            SimplePolygon2D polygon => Rect2D.FromPoints(polygon.Vertices),
             CompositeShape2D composite => Composite(composite.Parts),
             HalfSpace2D => Rect2D.Unbounded,
             IConvexShape2D convex => Convex(convex),

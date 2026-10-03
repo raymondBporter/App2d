@@ -154,6 +154,7 @@ public static class ModelAuthoring
 
         if (PuppetPartKinds.IsStroke(kind)) part.Frame = null;
         part.Kind = kind;
+        part.Geometry = null;
         model.Validate();
     }
 

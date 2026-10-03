@@ -1,4 +1,6 @@
 using App2d.Core.Geometry;
+using App2d.Core.Curves;
+using App2d.Core.Shapes;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -75,6 +77,12 @@ public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
     public string Kind { get; set; } = PuppetPartKinds.Ellipse;
+    /// <summary>Optional editor preset; geometry is the saved silhouette.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? EditorKind { get; set; }
+    /// <summary>Typed geometry for new authored parts; legacy kind fields remain readable during migration.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GeometryDefinition2D? Geometry { get; set; }
     public string A { get; set; } = "";
     public string? B { get; set; }
     /// <summary>Optional bone whose XY rotation carries this shape's local offset and direction.</summary>
@@ -107,9 +115,19 @@ public sealed record PuppetPart
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
         if (Frame is not null && !isControl(Frame)) throw new InvalidDataException("Unknown part frame: " + Frame);
         if (Frame is not null && B is not null) throw new InvalidDataException("A part uses either a bone frame or a toward control.");
-        EntityVocabulary.Require(Kind, PuppetPartKinds.All, "part.kind");
-        if (PuppetPartKinds.IsStroke(Kind) && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");
-        if (PuppetPartKinds.IsStroke(Kind) && Frame is not null) throw new InvalidDataException("A stroke cannot use a bone frame.");
+        if (Geometry is null) EntityVocabulary.Require(Kind, PuppetPartKinds.All, "part.kind");
+        if (Geometry is not null and not ShapeDefinition2D and not CurveDefinition2D)
+            throw new InvalidDataException("A part needs a shape or curve definition.");
+        if (Geometry is ShapeDefinition2D shape)
+        {
+            var built = shape.Build();
+            if (WorldShape2D.OutlineVertexCount(built, 48) == 0)
+                throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
+        }
+        if (Geometry is CurveDefinition2D curve) _ = curve.Build();
+        var linkedStroke = Geometry is CurveDefinition2D || Geometry is null && PuppetPartKinds.IsStroke(Kind);
+        if (linkedStroke && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
+        if (linkedStroke && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
         new Limit(-1000, 1000).Check(Angle, "part.angle");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
@@ -117,7 +135,7 @@ public sealed record PuppetPart
         new Limit(.01f, 1).Check(TopWidthScale, "part.topWidthScale");
         if (OutlineWidth is { } outline) new Limit(0, 1).Check(outline, "part.outlineWidth");
         PartPaint.Check(Paint);
-        if (Kind == "polygon") PartGeometry.CheckCutout(Points);
+        if (Geometry is null && Kind == "polygon") PartGeometry.CheckCutout(Points);
         if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
         new Limit(-1, 1).Check(FaceX, "part.faceX");
     }
@@ -164,10 +182,11 @@ public sealed class PuppetDefinition
     public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
     { WriteIndented = true, UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
 
-    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
+    public string ToJson() => PartAssetJson.Write(this, Parts, JsonOptions);
     public static PuppetDefinition FromJson(string json)
     {
         var definition = JsonSerializer.Deserialize<PuppetDefinition>(json, JsonOptions) ?? throw new InvalidDataException("Empty puppet file.");
+        PartAssetJson.Restore(definition.Parts);
         definition.Validate(); return definition;
     }
     public void Save(string path)

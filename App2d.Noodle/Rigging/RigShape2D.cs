@@ -43,7 +43,7 @@ internal abstract class RigShape2D(int id, string name, RigBone2D attachedBone)
     public RigShapePurpose Purpose { get; set; } = RigShapePurpose.VisualAndCollision;
 
     [Browsable(false)]
-    public abstract string Kind { get; }
+    public string Kind => ShapeDefinition2D.FromShape(CreateGeometry()).Kind;
 
     internal abstract IShape2D CreateGeometry();
 
@@ -55,7 +55,6 @@ internal sealed class RigRectangleShape2D(int id, string name, RigBone2D bone) :
     private float _width = 100f;
     private float _height = 40f;
 
-    public override string Kind => "Rectangle";
 
     [Category("Geometry")]
     public float Width
@@ -80,7 +79,6 @@ internal sealed class RigCircleShape2D(int id, string name, RigBone2D bone) : Ri
 {
     private float _radius = 35f;
 
-    public override string Kind => "Circle";
 
     [Category("Geometry")]
     public float Radius
@@ -97,7 +95,6 @@ internal sealed class RigCapsuleShape2D(int id, string name, RigBone2D bone) : R
     private float _length = 100f;
     private float _radius = 20f;
 
-    public override string Kind => "Capsule";
 
     [Category("Geometry")]
     public float Length
@@ -121,7 +118,6 @@ internal sealed class RigPolygonShape2D(int id, string name, RigBone2D bone) : R
 {
     private string _vertices = "-45,-30; 45,-30; 55,15; 0,45; -55,15";
 
-    public override string Kind => "Polygon";
 
     [Category("Geometry"), Description("Convex perimeter vertices formatted as x,y; x,y; ...")]
     public string Vertices

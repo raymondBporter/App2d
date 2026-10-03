@@ -32,6 +32,7 @@ public static class ShapeDistance2D
             IRect2D rectangle => Distance2D.SignedDistanceToRectangle(point, rectangle.Min, rectangle.Max),
             HalfSpace2D halfSpace => Distance2D.SignedDistanceToHalfSpace(point, halfSpace.Normal, halfSpace.Offset),
             Triangle2D or ConvexPolygon2D => SignedDistanceToPerimeter(point, shape),
+            SimplePolygon2D polygon => SignedDistanceToSimplePolygon(point, polygon),
             _ => throw Unsupported(shape)
         };
     }
@@ -87,6 +88,8 @@ public static class ShapeDistance2D
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
+        if (first is SimplePolygon2D) throw Unsupported(first);
+        if (second is SimplePolygon2D) throw Unsupported(second);
         if (first is HalfSpace2D firstPlane && second is IConvexShape2D secondConvex) return SignedDistanceToPlane(secondConvex, secondPose, firstPlane, firstPose);
         if (second is HalfSpace2D secondPlane && first is IConvexShape2D firstConvex) return SignedDistanceToPlane(firstConvex, firstPose, secondPlane, secondPose);
         if (first is Circle2D circle && second is Ellipse2D ellipse) return SignedDistanceCircleToEllipse(circle, firstPose, ellipse, secondPose);
@@ -113,6 +116,8 @@ public static class ShapeDistance2D
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
+        if (first is SimplePolygon2D firstPolygon) return Distance(firstPolygon.ConvexPieces, firstPose, second, secondPose);
+        if (second is SimplePolygon2D secondPolygon) return Distance(first, firstPose, secondPolygon.ConvexPieces, secondPose);
         if (first is CompositeShape2D composite)
         {
             var distance = float.PositiveInfinity;
@@ -185,6 +190,15 @@ public static class ShapeDistance2D
         Span<Vector2> vertices = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
         WorldShape2D.WritePerimeter(shape, vertices);
         return Distance2D.SignedDistanceToConvexPolygon(point, vertices);
+    }
+
+    private static float SignedDistanceToSimplePolygon(Vector2 point, SimplePolygon2D polygon)
+    {
+        var vertices = polygon.Vertices;
+        var distance = float.PositiveInfinity;
+        for (var i = 0; i < vertices.Length; i++)
+            distance = Math.Min(distance, Distance2D.DistanceToSegment(point, vertices[i], vertices[(i + 1) % vertices.Length]));
+        return polygon.ContainsPoint(point) ? -distance : distance;
     }
 
     private static float SignedDistanceToPlane(IConvexShape2D shape, Similarity2D pose, HalfSpace2D plane, Similarity2D planePose)

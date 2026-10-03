@@ -9,9 +9,10 @@ public static class ShapeKinds2D
     public const string Rectangle = "rectangle";
     public const string Triangle = "triangle";
     public const string ConvexPolygon = "convex-polygon";
+    public const string SimplePolygon = "simple-polygon";
     public const string HalfSpace = "half-space";
     public const string Composite = "composite";
 
     /// <summary>Every kind in a stable order for editors and validation.</summary>
-    public static IReadOnlyList<string> All { get; } = [Circle, Ellipse, Capsule, Rectangle, Triangle, ConvexPolygon, HalfSpace, Composite];
+    public static IReadOnlyList<string> All { get; } = [Circle, Ellipse, Capsule, Rectangle, Triangle, ConvexPolygon, SimplePolygon, HalfSpace, Composite];
 }

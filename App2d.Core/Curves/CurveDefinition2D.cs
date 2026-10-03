@@ -10,13 +10,14 @@ namespace App2d.Core.Curves;
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "kind")]
 [JsonDerivedType(typeof(LineCurveDefinition2D), CurveKinds2D.Line)]
+[JsonDerivedType(typeof(PolylineCurveDefinition2D), CurveKinds2D.Polyline)]
 [JsonDerivedType(typeof(ArcCurveDefinition2D), CurveKinds2D.Arc)]
 [JsonDerivedType(typeof(QuadraticBezierCurveDefinition2D), CurveKinds2D.QuadraticBezier)]
 [JsonDerivedType(typeof(CubicBezierCurveDefinition2D), CurveKinds2D.CubicBezier)]
 [JsonDerivedType(typeof(BSplineCurveDefinition2D), CurveKinds2D.BSpline)]
-public abstract class CurveDefinition2D
+public abstract record CurveDefinition2D : GeometryDefinition2D
 {
-    public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
+    public new static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
@@ -27,16 +28,20 @@ public abstract class CurveDefinition2D
 
     public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
 
-    public static CurveDefinition2D FromJson(string json) => JsonSerializer.Deserialize<CurveDefinition2D>(json, JsonOptions)
+    public new static CurveDefinition2D FromJson(string json) => JsonSerializer.Deserialize<CurveDefinition2D>(json, JsonOptions)
         ?? throw new JsonException("Empty curve definition.");
 
     /// <summary>Copies a built-in runtime curve into editable data. Arbitrary implementations have no known schema.</summary>
-    public static CurveDefinition2D FromCurve(ICurve2D curve) => curve switch
+    public new static CurveDefinition2D FromCurve(ICurve2D curve) => curve switch
     {
         LineSegmentCurve2D line => new LineCurveDefinition2D
         {
             Start = Point2D.From(line.Start),
             End = Point2D.From(line.End)
+        },
+        PolylineCurve2D polyline => new PolylineCurveDefinition2D
+        {
+            Points = [.. polyline.Points.ToArray().Select(Point2D.From)]
         },
         Arc2D arc => new ArcCurveDefinition2D
         {
@@ -68,14 +73,20 @@ public abstract class CurveDefinition2D
     };
 }
 
-public sealed class LineCurveDefinition2D : CurveDefinition2D
+public sealed record LineCurveDefinition2D : CurveDefinition2D
 {
     public required Point2D Start { get; init; }
     public required Point2D End { get; init; }
     public override ICurve2D Build() => new LineSegmentCurve2D(Start.Vector, End.Vector);
 }
 
-public sealed class ArcCurveDefinition2D : CurveDefinition2D
+public sealed record PolylineCurveDefinition2D : CurveDefinition2D
+{
+    public required List<Point2D> Points { get; init; }
+    public override ICurve2D Build() => new PolylineCurve2D(Points.Select(point => point.Vector));
+}
+
+public sealed record ArcCurveDefinition2D : CurveDefinition2D
 {
     public required Point2D Center { get; init; }
     public required float Radius { get; init; }
@@ -84,7 +95,7 @@ public sealed class ArcCurveDefinition2D : CurveDefinition2D
     public override ICurve2D Build() => new Arc2D(Center.Vector, Radius, StartAngleRadians, SweepAngleRadians);
 }
 
-public sealed class QuadraticBezierCurveDefinition2D : CurveDefinition2D
+public sealed record QuadraticBezierCurveDefinition2D : CurveDefinition2D
 {
     public required Point2D Start { get; init; }
     public required Point2D Control { get; init; }
@@ -92,7 +103,7 @@ public sealed class QuadraticBezierCurveDefinition2D : CurveDefinition2D
     public override ICurve2D Build() => new QuadraticBezier2D(Start.Vector, Control.Vector, End.Vector);
 }
 
-public sealed class CubicBezierCurveDefinition2D : CurveDefinition2D
+public sealed record CubicBezierCurveDefinition2D : CurveDefinition2D
 {
     public required Point2D Start { get; init; }
     public required Point2D Control1 { get; init; }
@@ -101,7 +112,7 @@ public sealed class CubicBezierCurveDefinition2D : CurveDefinition2D
     public override ICurve2D Build() => new CubicBezier2D(Start.Vector, Control1.Vector, Control2.Vector, End.Vector);
 }
 
-public sealed class BSplineCurveDefinition2D : CurveDefinition2D
+public sealed record BSplineCurveDefinition2D : CurveDefinition2D
 {
     public required List<Point2D> ControlPoints { get; init; }
     public int Degree { get; init; } = 3;

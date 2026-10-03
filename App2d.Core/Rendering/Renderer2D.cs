@@ -226,6 +226,17 @@ public sealed partial class Renderer2D : IDisposable
             foreach (var part in composite.Parts) FillShape(part, matrix, bounds, shader);
             return;
         }
+        if (shape is SimplePolygon2D simplePolygon)
+        {
+            var mesh = simplePolygon.Mesh;
+            var vertices = mesh.Vertices;
+            var indices = mesh.Indices;
+            for (var i = 0; i < indices.Length; i += 3)
+                Triangle(MaterialVertex(vertices[indices[i]], matrix, bounds, shader),
+                    MaterialVertex(vertices[indices[i + 1]], matrix, bounds, shader),
+                    MaterialVertex(vertices[indices[i + 2]], matrix, bounds, shader));
+            return;
+        }
         if (shape is ConvexPolygon2D polygon) { FillPolygon(polygon.Vertices, matrix, bounds, shader); return; }
         if (shape is Triangle2D triangle)
         {
@@ -413,6 +424,7 @@ public sealed partial class Renderer2D : IDisposable
             return;
         }
         if (shape is ConvexPolygon2D polygon) { StrokePolygon(polygon.Vertices, matrix, color, width); return; }
+        if (shape is SimplePolygon2D simplePolygon) { StrokePolygon(simplePolygon.Vertices, matrix, color, width); return; }
         if (shape is Triangle2D triangle)
         {
             Span<Vector2> vertices = stackalloc Vector2[3];

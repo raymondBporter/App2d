@@ -53,7 +53,7 @@ public static class PropGeometry
         foreach (var shape in prop.Shapes)
         {
             var points = shape.Points.Select(p => centerDepth ? p with { Z = 0 } : p).ToList();
-            if (shape.Kind == "polygon")
+            if (shape.IsFilled)
             {
                 prop.Solids.Add(Extrude(points, thickness, shape.Fill));
             }
