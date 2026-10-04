@@ -112,10 +112,16 @@ public static class PartGeometry
         catch (ArgumentException ex) { throw new InvalidDataException("Cutout must be a simple polygon with area: " + ex.Message, ex); }
     }
 
-    public static Frame FrameOf(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null)
+    public static Frame FrameOf(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null)
     {
         if (part.Frame is { } bone)
         {
+            if (transform is not null)
+            {
+                var matrix = Matrix3x2.CreateScale(part.ScaleX, part.ScaleY) * Matrix3x2.CreateRotation(part.Angle) * transform(bone);
+                var offset = Vector2.TransformNormal(new(part.OffsetX, part.OffsetY), transform(bone));
+                return new(world(part.A) + new Vector3(offset, 0), new(matrix.M11, matrix.M12), new(matrix.M21, matrix.M22), part.Depth);
+            }
             var baseAngle = angle is null ? throw new InvalidOperationException("A bone-attached part needs bone angles.") : angle(bone);
             var origin = world(part.A);
             var position = Rotation2D.Apply(new(part.OffsetX, part.OffsetY), baseAngle);
@@ -130,7 +136,7 @@ public static class PartGeometry
     }
 
     /// <summary>The closed outline of an ellipse, rounded box, trapezoid or cutout, or a stroke's two endpoints.</summary>
-    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null)
+    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null)
     {
         if (part.Geometry is CurveDefinition2D curve)
         {
@@ -154,7 +160,7 @@ public static class PartGeometry
             if (count == 0) throw new NotSupportedException($"A {typed.Kind} has no drawable outline.");
             var outline = new Vector2[count];
             WorldShape2D.WriteOutline(shape, outline, 48);
-            var typedFrame = FrameOf(part, world, angle);
+            var typedFrame = FrameOf(part, world, angle, transform);
             var scale = ShapeScale(part, shape);
             return [.. outline.Select(vertex => typedFrame.At(vertex * scale))];
         }
@@ -165,7 +171,7 @@ public static class PartGeometry
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null)
+    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null)
     {
         var p = new Vector2(point.X, point.Y);
         if (part.Geometry is CurveDefinition2D curve)
@@ -183,12 +189,13 @@ public static class PartGeometry
         }
         if (part.Geometry is ShapeDefinition2D typed)
         {
-            var typedFrame = FrameOf(part, world, angle);
+            var typedFrame = FrameOf(part, world, angle, transform);
             var delta = p - new Vector2(typedFrame.Origin.X, typedFrame.Origin.Y);
             var shape = ShapeOf(typed);
             var scale = ShapeScale(part, shape);
-            var normalized = new Vector2(Vector2.Dot(delta, typedFrame.Right) / scale.X,
-                Vector2.Dot(delta, typedFrame.Up) / scale.Y);
+            var basis = new Matrix3x2(typedFrame.Right.X, typedFrame.Right.Y, typedFrame.Up.X, typedFrame.Up.Y, 0, 0);
+            if (!Matrix3x2.Invert(basis, out var inverse)) return float.PositiveInfinity;
+            var normalized = Vector2.TransformNormal(delta, inverse) / scale;
             return shape.ContainsPoint(normalized) ? .5f : 1 + ShapeDistance2D.Distance(normalized, shape);
         }
         throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");

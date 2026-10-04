@@ -26,16 +26,21 @@ public static class ModelAuthoring
     {
         var model = CharacterModel.FromJson(resolved.Base.ToJson());
         model.Id = id; model.Name = name; model.StructureRevision = 1; model.Build = null;
-        foreach (var control in model.Controls) control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
+        foreach (var control in model.Controls)
+        {
+            control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
+            if (resolved.SetupTransforms.TryGetValue(control.Id, out var setup)) control.Transform = setup with { };
+        }
         model.Parts = [.. resolved.Parts.Select(p => p with { })];
         model.Validate(); return model;
     }
 
     /// <summary>What decides clip compatibility: controls and parents, chains, frames and default scales. Proportions and appearance never change it.</summary>
     public static string StructureSignature(CharacterModel model) => string.Join("|",
-        model.Controls.Select(c => $"c:{c.Id}<{c.Parent}~{c.Scale}").Order(StringComparer.Ordinal)
+        model.Controls.Select(c => $"c:{c.Id}<{c.Parent}~{c.Scale}~affine:{c.Transform is not null}").Order(StringComparer.Ordinal)
             .Concat(model.Chains.Select(c => $"k:{c.Id}={c.Root}>{c.Joint}>{c.End}@{c.Frame}~{c.Scale}").Order(StringComparer.Ordinal))
-            .Concat(model.Measures.Select(m => $"m:{m.Id}").Order(StringComparer.Ordinal)));
+            .Concat(model.Measures.Select(m => $"m:{m.Id}").Order(StringComparer.Ordinal))
+            .Concat(model.Slots.Select(s => $"s:{s.Id}={s.Bone}").Order(StringComparer.Ordinal)));
 
     public static string UniqueId(string basis, IEnumerable<string> taken)
     {
@@ -50,6 +55,13 @@ public static class ModelAuthoring
     public static ModelControl AddControl(CharacterModel model, string? parent, Vector3 rest, string? id = null)
     {
         var control = new ModelControl { Id = id ?? UniqueId(parent is null ? "control" : parent + "-child", Names(model)), Parent = parent, Rest = PuppetPoint.From(rest) };
+        if (parent is not null && Control(model, parent).Transform is not null)
+        {
+            var frame = ResolvedModel.From(model).RestTransforms[parent];
+            if (!Matrix3x2.Invert(frame, out var inverse)) throw new InvalidOperationException("Cannot add a bone beneath a collapsed parent transform.");
+            var local = Vector2.Transform(new(rest.X, rest.Y), inverse);
+            control.Transform = new() { X = local.X, Y = local.Y };
+        }
         model.Controls.Add(control); model.Validate(); return control;
     }
 
@@ -61,6 +73,9 @@ public static class ModelAuthoring
         var bone = AddControl(model, parent, origin, id ?? UniqueId("bone", Names(model)));
         bone.RestAngle = basis?.RestAngle ?? 0;
         bone.Length = .5f;
+        if (basis is null || basis.Transform is not null)
+            bone.Transform = new() { X = basis is null ? origin.X : MathF.Max(basis.Length, .3f) };
+        if (bone.Transform is not null) SyncAffineRest(model);
         model.Validate();
         return bone;
     }
@@ -75,6 +90,7 @@ public static class ModelAuthoring
         if (model.Controls.FirstOrDefault(c => c.Parent == id) is { } child) throw new InvalidOperationException($"{owner}: '{id}' still has child '{child.Id}'.");
         if (model.Chains.FirstOrDefault(c => c.Root == id || c.Joint == id || c.End == id || c.Frame == id) is { } chain) throw new InvalidOperationException($"{owner}: chain '{chain.Id}' uses '{id}'.");
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
+        if (model.Slots.FirstOrDefault(s => s.Bone == id) is { } slot) throw new InvalidOperationException($"{owner}: slot '{slot.Id}' uses '{id}'. Move or remove the slot first.");
         var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);
         foreach (var group in model.Groups) group.Targets.Remove(id);
@@ -83,7 +99,16 @@ public static class ModelAuthoring
 
     public static void Reparent(CharacterModel model, string id, string? parent)
     {
-        Control(model, id).Parent = parent; model.Validate();
+        var control = Control(model, id);
+        if (control.Transform is not null)
+        {
+            var resolved = ResolvedModel.From(model);
+            var frame = parent is null ? Matrix3x2.Identity : resolved.RestTransforms[parent];
+            if (!Matrix3x2.Invert(frame, out var inverse)) throw new InvalidOperationException("Cannot reparent a bone beneath a collapsed parent transform.");
+            control.Transform = BoneTransform2D.FromMatrix(resolved.RestTransforms[id] * inverse);
+        }
+        control.Parent = parent; model.Validate();
+        if (control.Transform is not null) SyncAffineRest(model);
     }
 
     /// <summary>Makes <paramref name="end"/> the tip of a two-bone chain over its parent and grandparent.</summary>
@@ -167,11 +192,34 @@ public static class ModelAuthoring
     public static void RemovePart(CharacterModel model, string id)
     {
         if (model.Parts.RemoveAll(p => p.Id == id) == 0) throw new InvalidOperationException($"No part '{id}'.");
+        foreach (var skin in model.Skins) foreach (var entries in skin.Attachments.Values)
+            foreach (var key in entries.Where(p => p.Value == id).Select(p => p.Key).ToList()) entries.Remove(key);
     }
 
     /// <summary>Moves a control's rest position, and with <paramref name="children"/> its whole subtree by the same amount.</summary>
     public static void MoveRest(CharacterModel model, string id, Vector3 position, bool children)
     {
+        if (Control(model, id).Transform is not null)
+        {
+            var resolved = ResolvedModel.From(model);
+            var deltaAffine = position - resolved.Rest[id];
+            var movedIds = (children ? Subtree(model.Controls, id) : [Control(model, id)]).Select(c => c.Id).ToHashSet();
+            var frames = new Dictionary<string, Matrix3x2>();
+            foreach (var control in resolved.Order)
+            {
+                var desired = resolved.Rest[control.Id] + (movedIds.Contains(control.Id) ? deltaAffine : Vector3.Zero);
+                if (control.Transform is { } local)
+                {
+                    var parent = control.Parent is null ? Matrix3x2.Identity : frames[control.Parent];
+                    if (!Matrix3x2.Invert(parent, out var inverse)) throw new InvalidOperationException("Cannot move a bone through a collapsed parent transform.");
+                    var point = Vector2.Transform(new(desired.X, desired.Y), inverse); local.X = point.X; local.Y = point.Y;
+                    frames[control.Id] = local.Matrix * parent;
+                }
+                else frames[control.Id] = resolved.RestTransforms[control.Id] with { M31 = desired.X, M32 = desired.Y };
+                control.Rest = PuppetPoint.From(desired);
+            }
+            return;
+        }
         var delta = position - Control(model, id).Rest.XYZ;
         var moved = children ? Subtree(model.Controls, id) : [Control(model, id)];
         foreach (var control in moved) control.Rest = PuppetPoint.From(control.Rest.XYZ + delta);
@@ -181,8 +229,18 @@ public static class ModelAuthoring
     public static void RotateRestBone(CharacterModel model, string id, float angle)
     {
         var bone = Control(model, id);
+        if (bone.Transform is { } affine)
+        {
+            var resolved = ResolvedModel.From(model);
+            var parent = bone.Parent is null ? Matrix3x2.Identity : resolved.RestTransforms[bone.Parent];
+            if (!Matrix3x2.Invert(parent, out var inverse)) throw new InvalidOperationException("Cannot rotate a bone through a collapsed parent transform.");
+            var axis = Vector2.TransformNormal(new(MathF.Cos(angle), MathF.Sin(angle)), inverse);
+            affine.Rotation = MathF.Atan2(axis.Y, axis.X) - affine.ShearX - (affine.ScaleX < 0 ? MathF.PI : 0);
+            SyncAffineRest(model);
+            return;
+        }
         var delta = angle - bone.RestAngle;
-        var pivot = bone.Rest.XYZ.XY;
+        var pivot = bone.Rest.XY;
         foreach (var control in Subtree(model.Controls, id))
         {
             if (control != bone)
@@ -201,6 +259,9 @@ public static class ModelAuthoring
         var moved = children ? Subtree(resolved.Base.Controls, id) : [resolved.Controls[id]];
         foreach (var control in moved)
             variant.Rest[control.Id] = PuppetPoint.From(resolved.Rest[control.Id] + delta);
+        if (!children && resolved.Controls[id].Transform is not null)
+            foreach (var child in Subtree(resolved.Base.Controls, id).Where(c => c.Id != id))
+                variant.Rest[child.Id] = PuppetPoint.From(resolved.Rest[child.Id]);
     }
 
     private static IEnumerable<ModelControl> Subtree(IReadOnlyList<ModelControl> controls, string id)
@@ -217,4 +278,14 @@ public static class ModelAuthoring
 
     private static ModelControl Control(CharacterModel model, string id) =>
         model.Controls.FirstOrDefault(c => c.Id == id) ?? throw new InvalidOperationException($"Model '{model.Id}' has no control '{id}'.");
+
+    public static void SyncAffineRest(CharacterModel model)
+    {
+        var resolved = ResolvedModel.From(model);
+        foreach (var control in model.Controls.Where(c => c.Transform is not null))
+        {
+            control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
+            var frame = resolved.RestTransforms[control.Id]; control.RestAngle = MathF.Atan2(frame.M12, frame.M11);
+        }
+    }
 }

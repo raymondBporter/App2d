@@ -31,7 +31,7 @@ public sealed partial class Renderer2D
             (_swooshMesh ??= new(4096)).Clear(); swoosh.Build(_swooshMesh);
             if (_swooshMesh.Count > 0) _characterRenderer.Draw(_swooshMesh, projection, world);
         }
-        _characterRenderer.Draw(_authoredDrawing.Mesh, projection, world);
+        _characterRenderer.Draw(_authoredDrawing, projection, world);
     }
 
     private void DisposeCharacters()

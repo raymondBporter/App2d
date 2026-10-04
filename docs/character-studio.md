@@ -4,6 +4,9 @@ The studio is the character editor: one window, one viewport and one document wo
 `Assets/Characters/authored`, which the game plays. Its design and history are in
 [Character editor replacement](character-editor-replacement.md).
 
+**Export Spine** and **New > Import Spine 4.2 JSON** provide an initial bone/slot/skin/image interchange path.
+See [Spine 4.2 interchange](spine-interchange.md) for the editor workflow, supported timelines, and conversion limits.
+
 ## Run
 
 ```powershell
@@ -30,8 +33,8 @@ object. Solid weapon meshes and their socket orientation continue to use three-d
 
 ## Weapons and 3D rotation
 
-Open **Sword backhand** (`player-sword-backhand`) in **Animate**. Under **Weapon preview**, choose Sword and the
-`sword-hand` socket, then **Edit weapon rotation**. Opening a prop in the browser also opens these controls. An entity
+Open **Sword backhand** (`player-sword-backhand`) in **Animate**. Under **Attachment preview**, choose Sword and the
+`sword-hand` socket, then **Edit attachment rotation**. Opening a prop in the browser also opens these controls. An entity
 action's **Animate this action with weapon** button selects its clip and equipment together.
 
 - **Turn** aims in the screen plane, **Tilt** points toward/away from the camera, and **Twist** rolls the broad face onto

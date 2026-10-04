@@ -14,7 +14,8 @@ namespace App2d.CharacterStudio.Editor;
 /// </summary>
 internal sealed partial class AssetBrowser(EditorSession session)
 {
-    private enum Create { None, EmptyModel, PersonModel, QuadrupedModel, TriceratopsModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip }
+    private enum Create { None, EmptyModel, PersonModel, QuadrupedModel, TriceratopsModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip, ImportSpine }
+    private string _spineImages = "";
     private string _appearanceTemplate = "hair";
     private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Sources"];
     private string _search = "", _filter = "All";
@@ -47,6 +48,11 @@ internal sealed partial class AssetBrowser(EditorSession session)
             if (ImGui.MenuItem("Entity from " + (session.SubjectId ?? "a model") + "...", "", false, session.Assets.Models.Any())) Start(Create.Entity, session.SubjectId ?? session.Assets.Models.First().Id, "New entity");
             ImGui.Separator();
             if (ImGui.MenuItem("Import .puppet.json...")) PickPuppet();
+            if (ImGui.MenuItem("Import Spine 4.2 JSON..."))
+            {
+                using var dialog = new OpenFileDialog { Filter = "Spine JSON (*.json)|*.json", Title = "Import Spine 4.2" };
+                if (dialog.ShowDialog() == DialogResult.OK) { _spineImages = ""; Start(Create.ImportSpine, dialog.FileName, Path.GetFileNameWithoutExtension(dialog.FileName)); }
+            }
             if (ImGui.MenuItem("Convert imported motion...", "", false, session.Sources.Entries.Count > 0)) _filter = "Sources";
             ImGui.EndPopup();
         }
@@ -268,6 +274,10 @@ internal sealed partial class AssetBrowser(EditorSession session)
             case Create.ImportClip:
                 ImportFields();
                 break;
+            case Create.ImportSpine:
+                Ui.Help("Creates a new model and animations from Spine 4.2 region attachments. Source files remain untouched. Unsupported features are reported before drafts are created.");
+                Ui.Text("Images directory (optional)", ref _spineImages, 512);
+                break;
         }
         if (session.Assets.Exists(_id)) Ui.Problem($"The id '{_id}' is already used.");
         if (ImGui.Button("Create") && Commit()) { _create = Create.None; ImGui.CloseCurrentPopup(); }
@@ -292,6 +302,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         Create.Entity => session.NewEntity(_id, _name, _source, _template),
         Create.DuplicateEntity => session.DuplicateEntity(_source, _id, _name),
         Create.ImportPuppet => session.ImportPuppet(_source, _id, _name),
+        Create.ImportSpine => session.ImportSpine(_source, _id, _name, _spineImages.Length == 0 ? null : _spineImages),
         Create.ImportClip => session.ImportLibraryClip(_library, _clip, _target, _mapping, _id, _name, _rest),
         _ => false,
     };

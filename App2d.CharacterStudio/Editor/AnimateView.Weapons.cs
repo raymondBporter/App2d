@@ -16,15 +16,15 @@ internal sealed partial class AnimateView
     private void WeaponOutline(Subject primary)
     {
         if (primary.Model.Base.Sockets.Count == 0) return;
-        Ui.Header("Weapon preview");
+        Ui.Header("Attachment preview");
         var visible = session.PreviewWeapon;
-        if (ImGui.Checkbox("Show weapon", ref visible)) session.PreviewWeapon = visible;
+        if (ImGui.Checkbox("Show attachment", ref visible)) session.PreviewWeapon = visible;
         if (Ui.Combo("Prop", session.PreviewProp, session.Assets.Props.Select(p => p.Id), id => session.Assets.Prop(id)?.Name ?? id) is { } prop)
         { session.PreviewProp = prop; session.EditWeapon = true; }
         var sockets = primary.Model.Base.Sockets.Select(s => s.Id).ToArray();
         if (!sockets.Contains(session.PreviewSocket)) session.PreviewSocket = sockets[0];
         if (Ui.Combo("Attachment socket", session.PreviewSocket, sockets) is { } socket) { session.PreviewSocket = socket; session.EditWeapon = true; }
-        if (ImGui.Selectable("Edit weapon rotation", session.EditWeapon)) { session.EditWeapon = true; session.Selection.Clear(); }
+        if (ImGui.Selectable("Edit attachment rotation", session.EditWeapon)) { session.EditWeapon = true; session.Selection.Clear(); }
         Ui.Help("Preview only. Equipment in Entity determines what is carried in game.");
     }
 

@@ -57,7 +57,7 @@ public static class ClipAuthoring
     public static ClipTrack? Track(MotionClip clip, Channel channel) => clip.Tracks.FirstOrDefault(t => t.Kind == channel.Kind && t.Target == channel.Target);
 
     public static (Vector3 Value, float Angle) Value(MotionClip clip, Channel channel, float time) =>
-        Track(clip, channel) is { } track ? PoseEvaluator.Interpolate(track.Keys, time) : default;
+        Track(clip, channel) is { } track ? PoseEvaluator.Interpolate(track, time) : default;
 
     /// <summary>Writes a key at <paramref name="time"/>, replacing a key already there and keeping its easing.</summary>
     public static void SetKey(MotionClip clip, Channel channel, float time, Vector3 value, float angle = 0)
@@ -66,6 +66,8 @@ public static class ClipAuthoring
         if (track is null) clip.Tracks.Add(track = new() { Kind = channel.Kind, Target = channel.Target });
         var rotate = channel.Kind == MotionClip.RotateKind;
         var key = new ClipKey { Time = time, X = rotate ? 0 : value.X, Y = rotate ? 0 : value.Y, Z = rotate ? 0 : value.Z, Angle = rotate ? angle : 0 };
+        if (track.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } existing)
+        { key.Ease = existing.Ease; key.Curve = existing.Curve; key.CurveY = existing.CurveY; key.Bend = existing.Bend; }
         Put(track.Keys, key, k => k.Time);
     }
 
@@ -92,6 +94,15 @@ public static class ClipAuthoring
             return channel;
         }
         var spec = model.Controls[control];
+        if (model.SetupTransforms.TryGetValue(control, out var setup))
+        {
+            var parent = spec.Parent is null ? Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y) : pose.Bones[spec.Parent];
+            if (!Matrix3x2.Invert(parent, out var inverse)) throw new InvalidOperationException("Cannot pose a bone through a collapsed parent transform.");
+            var local = Vector2.Transform(new(world.X, world.Y), inverse); var ratio = Ratio(model, clip, trackScale());
+            SetKey(clip, channel, time, new((local.X - setup.X) / ratio, (local.Y - setup.Y) / ratio, world.Z - model.Rest[control].Z));
+            return channel;
+            string trackScale() => Track(clip, channel)?.Scale ?? spec.Scale;
+        }
         var (parentPoint, parentAngle, parentRest) = Frame(model, pose, spec.Parent);
         SetKey(clip, channel, time, Delta(world, parentPoint, parentAngle, model.Rest[control] - parentRest, Ratio(model, clip, Track(clip, channel)?.Scale ?? spec.Scale)));
         return channel;
@@ -138,7 +149,7 @@ public static class ClipAuthoring
     {
         foreach (var track in clip.Tracks)
         {
-            var (value, angle) = PoseEvaluator.Interpolate(track.Keys, time);
+            var (value, angle) = PoseEvaluator.Interpolate(track, time);
             SetKey(clip, new(track.Kind, track.Target), time, value, angle);
         }
         if (clip.Travel.Keys.Count > 0)
@@ -174,7 +185,7 @@ public static class ClipAuthoring
     public static void SetEase(MotionClip clip, float time, string ease, IReadOnlyCollection<Channel>? channels = null)
     {
         EntityVocabulary.Require(ease, ClipEase.All, "ease");
-        foreach (var key in Tracks(clip, channels).SelectMany(t => t.Keys).Where(k => MathF.Abs(k.Time - time) < SameTime)) key.Ease = ease;
+        foreach (var key in Tracks(clip, channels).SelectMany(t => t.Keys).Where(k => MathF.Abs(k.Time - time) < SameTime)) { key.Ease = ease; key.Curve = key.CurveY = null; }
     }
 
     /// <summary>Changes the duration, scaling every key, contact, marker and face time with it.</summary>
@@ -187,6 +198,9 @@ public static class ClipAuthoring
         foreach (var contact in clip.Contacts) { contact.Start = Scale(contact.Start); contact.Finish = Scale(contact.Finish); }
         foreach (var marker in clip.Markers) marker.Time = Scale(marker.Time);
         foreach (var key in clip.Faces.SelectMany(f => f.Keys)) key.Time = Scale(key.Time);
+        foreach (var key in clip.Attachments.SelectMany(t => t.Keys)) key.Time = Scale(key.Time);
+        foreach (var key in clip.DrawOrder) key.Time = Scale(key.Time);
+        foreach (var key in clip.Events) key.Time = Scale(key.Time);
         clip.Duration = duration;
     }
 

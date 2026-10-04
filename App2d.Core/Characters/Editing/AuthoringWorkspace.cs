@@ -124,7 +124,7 @@ public sealed class AuthoringWorkspace
         var key = variant?.Id ?? model.Id;
         if (_resolved.TryGetValue(key, out var cached) && cached.ModelVersion == model.Version && cached.VariantVersion == (variant?.Version ?? -1)) { error = cached.Error; return cached.Resolved; }
         ResolvedModel? resolved = null;
-        try { resolved = ResolvedModel.From(model.Asset, variant?.Asset); }
+        try { resolved = ResolvedModel.From(model.Asset, variant?.Asset); resolved.TextureRoot = Root; }
         catch (Exception ex) when (IsAssetError(ex)) { error = ex.Message; }
         _resolved[key] = (model.Version, variant?.Version ?? -1, resolved, error);
         return resolved;
@@ -193,7 +193,8 @@ public sealed class AuthoringWorkspace
             if (resolved.TryGetValue(id, out var cached)) return cached;
             var variant = Copy(Variant(id), ModelVariant.FromJson);
             var model = Copy(Model(variant?.Base ?? id), CharacterModel.FromJson) ?? throw new KeyNotFoundException($"No model or variant '{id}'.");
-            return resolved[id] = ResolvedModel.From(model, variant);
+            var copy = ResolvedModel.From(model, variant); copy.TextureRoot = Root;
+            return resolved[id] = copy;
         }
         var entities = new List<ResolvedEntity>();
         foreach (var document in Entities.OrderBy(e => e.Id, StringComparer.Ordinal))

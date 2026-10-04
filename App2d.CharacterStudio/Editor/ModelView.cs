@@ -52,7 +52,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             if (ImGui.Selectable($"{part.Id}  ({part.Kind}){(part.Hidden ? "  hidden" : "")}", session.Selection.Part == part.Id)) Select(part: part.Id);
             if (part.Hidden) ImGui.PopStyleColor();
         }
-        var selectedBone = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control && c.Length > 0);
+        var selectedBone = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control && (c.Length > 0 || c.Transform is not null));
         if (Base is not null && Ui.Button(selectedBone is null ? "Add shape to selected control" : "Add shape to selected bone", session.Selection.Control is not null || structure.Controls.Count > 0))
             ImGui.OpenPopup("add-part");
         if (ImGui.BeginPopup("add-part"))
@@ -85,6 +85,12 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             ImGui.EndPopup();
         }
         if (Variant is not null) Ui.Help("Variants restyle, resize or hide parts. Adding shapes belongs to the base.");
+        if (structure.Slots.Count > 0)
+        {
+            Ui.Header("Slots (back to front)");
+            foreach (var slot in structure.Slots) ImGui.TextDisabled($"{slot.Name ?? slot.Id} on {slot.Bone}");
+            Ui.Help("Choose the skin above the viewport. Animate edits attachment choices and draw order.");
+        }
     }
 
     private void Rig(CharacterModel structure)
@@ -123,7 +129,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             var pointEnd = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control);
             var pointJoint = structure.Controls.FirstOrDefault(c => c.Id == pointEnd?.Parent);
             var pointRoot = structure.Controls.FirstOrDefault(c => c.Id == pointJoint?.Parent);
-            if (Ui.Button("Make IK chain", pointEnd is { Length: 0 } && pointJoint is { Length: 0 } && pointRoot is { Length: 0 }))
+            if (Ui.Button("Make IK chain", pointEnd is { Length: 0, Transform: null } && pointJoint is { Length: 0, Transform: null } && pointRoot is { Length: 0, Transform: null }))
             {
                 Structural("add an IK chain", () =>
                 Select(chain: ModelAuthoring.AddChain(model.Asset, session.Selection.Control!).Id));
@@ -205,6 +211,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         {
             Ui.Header((control.Length > 0 ? "Bone " : "Control ") + control.Id);
             var rest = control.Rest.Layered;
+            if (control.Transform is not null && Resolved is { } resolved) rest = LayeredPoint2D.From(resolved.Rest[id]);
             if (Ui.LayeredPoint(control.Length > 0 ? "Origin" : "Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
             if (control.Length > 0)
             {
@@ -214,6 +221,22 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
                     session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, degrees * MathF.PI / 180f));
                 Ui.Help("The bone starts at this control and points along its local +X axis. Its children and attached shapes follow rotation.");
+            }
+            if (control.Transform is { } transform)
+            {
+                Ui.Header("Local affine transform");
+                void Number(string label, float value, Action<BoneTransform2D, float> set, float min = -100, float max = 100)
+                {
+                    if (Ui.Drag(label, ref value, .01f, min, max)) session.Change(document, () =>
+                    { set(document.Asset.Controls.First(c => c.Id == id).Transform!, value); ModelAuthoring.SyncAffineRest(document.Asset); });
+                }
+                Number("Local X", transform.X, (t, v) => t.X = v);
+                Number("Local Y", transform.Y, (t, v) => t.Y = v);
+                Number("Local rotation (degrees)", transform.Rotation * 180 / MathF.PI, (t, v) => t.Rotation = v * MathF.PI / 180, -720, 720);
+                Number("Scale X", transform.ScaleX, (t, v) => t.ScaleX = v);
+                Number("Scale Y", transform.ScaleY, (t, v) => t.ScaleY = v);
+                Number("Shear X (degrees)", transform.ShearX * 180 / MathF.PI, (t, v) => t.ShearX = v * MathF.PI / 180, -720, 720);
+                Number("Shear Y (degrees)", transform.ShearY * 180 / MathF.PI, (t, v) => t.ShearY = v * MathF.PI / 180, -720, 720);
             }
             var children = session.MoveChildren; if (ImGui.Checkbox("Move children with it", ref children)) session.MoveChildren = children;
             var parents = model.Controls.Select(c => c.Id).Where(c => c != id).Prepend("(locomotion)");
@@ -248,7 +271,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 return;
             }
             if (Ui.Combo("Attach to", part.A, controls) is { } a) session.Edit(document, () => { Part(document, partId).A = a; document.Asset.Validate(); });
-            if (!PuppetPartKinds.IsStroke(part.Kind) && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && c.Length > 0)).Prepend("(none)")) is { } bone)
+            if (!PuppetPartKinds.IsStroke(part.Kind) && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
                 session.Edit(document, () => { var edited = Part(document, partId); edited.Frame = bone == "(none)" ? null : bone; if (edited.Frame is not null) edited.B = null; document.Asset.Validate(); });
             if (Ui.Combo(PuppetPartKinds.IsStroke(part.Kind) ? "End" : "Point toward", part.B ?? "(none)", PuppetPartKinds.IsStroke(part.Kind) ? controls : controls.Prepend("(none)")) is { } b)
                 session.Edit(document, () => { var edited = Part(document, partId); edited.B = b == "(none)" ? null : b; if (edited.B is not null) edited.Frame = null; document.Asset.Validate(); });
@@ -256,6 +279,13 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             {
                 var degrees = part.Angle * 180f / MathF.PI;
                 if (Ui.Drag("Shape angle (degrees)", ref degrees, 1f, -360, 360)) session.Change(document, () => Part(document, partId).Angle = degrees * MathF.PI / 180f);
+                if (part.Material?.Texture is { } texture)
+                {
+                    ImGui.TextDisabled("Image: " + texture);
+                    var scaleX = part.ScaleX; var scaleY = part.ScaleY;
+                    if (Ui.Drag("Attachment scale X", ref scaleX, .01f, -100, 100)) session.Change(document, () => Part(document, partId).ScaleX = scaleX);
+                    if (Ui.Drag("Attachment scale Y", ref scaleY, .01f, -100, 100)) session.Change(document, () => Part(document, partId).ScaleY = scaleY);
+                }
             }
             PartFields(part, null, change => session.Change(document, () => change(Part(document, partId))));
             if (ImGui.Button("Delete part")) session.Edit(document, () => { ModelAuthoring.RemovePart(document.Asset, partId); session.Selection.Clear(); });
@@ -587,7 +617,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         }
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            var hit = model.Parts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id])))
+            var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!).ToArray();
+            var hit = visibleParts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id])))
                 .Where(h => h.Score <= 1).OrderBy(h => h.Score).FirstOrDefault();
             if (hit.Part is not null) Select(part: hit.Part.Id); else session.Selection.Clear();
         }
@@ -596,7 +627,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
     private void DragCutout(ViewportFrame frame, PuppetPart part, EvaluatedPose pose)
     {
-        var placement = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id]);
+        var placement = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
         var points = ((SimplePolygonShapeDefinition2D)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToList();
         for (var i = 0; i < points.Count; i++)
         {
@@ -609,7 +640,10 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _cutoutDrag = -1; session.EndDrag(); return; }
         if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || Base is not { } document) return;
         var delta = frame.World(ViewportFrame.Mouse) - placement.Origin;
-        var xy = new Vector2(Vector2.Dot(new(delta.X, delta.Y), placement.Right) / part.Width, Vector2.Dot(new(delta.X, delta.Y), placement.Up) / part.Height);
+        var axes = new Matrix3x2(placement.Right.X, placement.Right.Y, placement.Up.X, placement.Up.Y, 0, 0);
+        if (!Matrix3x2.Invert(axes, out var inverse)) return;
+        var local = Vector2.TransformNormal(new(delta.X, delta.Y), inverse);
+        var xy = new Vector2(local.X / part.Width, local.Y / part.Height);
         var edited = new List<PuppetPoint>(points)
         {
             [_cutoutDrag] = new(xy.X, xy.Y)
@@ -659,21 +693,22 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         session.Change(document, () =>
         {
             ModelAuthoring.RotateRestBone(document.Asset, id, MathF.Atan2(delta.Y, delta.X));
-            document.Asset.Controls.First(c => c.Id == id).Length = delta.Length();
+            var bone = document.Asset.Controls.First(c => c.Id == id);
+            var unit = bone.Transform is null ? 1 : Vector2.TransformNormal(Vector2.UnitX, ResolvedModel.From(document.Asset).RestTransforms[id]).Length();
+            if (unit > 1e-6f) bone.Length = delta.Length() / unit;
         });
     }
 
     private static void Outline(ViewportFrame frame, PuppetPart part, EvaluatedPose pose)
     {
-        var outline = PartGeometry.Contour(part, pose.World, id => pose.Angles[id]).Select(p => frame.Screen(p)).ToArray();
+        var outline = PartGeometry.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]).Select(p => frame.Screen(p)).ToArray();
         for (var i = 0; i < outline.Length; i++) frame.Draw.AddLine(outline[i], outline[(i + 1) % outline.Length], Ui.Color(232, 169, 55), 2);
     }
 
     private static Vector3 BoneTip(ModelControl control, EvaluatedPose pose)
     {
         var origin = pose.World(control.Id);
-        var frame = new BoneFrame2D(new(origin.X, origin.Y), pose.Angles[control.Id], control.Length);
-        return new(frame.Tip, origin.Z);
+        return new(Vector2.Transform(new(control.Length, 0), pose.Bones[control.Id]), origin.Z);
     }
 
     // ---- Timeline: preview transport -----------------------------------------------------------------------------

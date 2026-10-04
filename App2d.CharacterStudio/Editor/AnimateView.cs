@@ -21,6 +21,7 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
     // The converted clip's source, sampled for the comparison overlay: rebuilt when the clip, its source or the preview build changes.
     private (MotionClip Clip, AssetSource Source, ResolvedModel Model, LibraryImport.Sampler Sampler, float Ratio, Vector3 Offset)? _source;
     private string _marker = "strike";
+    private string? _slot;
     // Timeline rows are rebuilt each frame, so key drags and selection name their row by label.
     private (string Row, float From, float To)? _keyDrag;
     private (string Row, IReadOnlyCollection<Channel>? Channels)? _keyRow;
@@ -51,8 +52,14 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
             var keyed = ClipAuthoring.Track(clip.Asset, channel.Value) is not null || ClipAuthoring.Track(clip.Asset, new(MotionClip.RotateKind, control.Id)) is not null;
             if (!keyed) ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
             if (ImGui.Selectable($"{control.Id}{(channel.Value.Kind == MotionClip.TargetKind ? "  (IK " + channel.Value.Target + ")" : "")}", session.Selection.Control == control.Id))
-            { session.Selection.Clear(); session.Selection.Control = control.Id; session.EditWeapon = false; }
+            { session.Selection.Clear(); session.Selection.Control = control.Id; session.EditWeapon = false; _slot = null; }
             if (!keyed) ImGui.PopStyleColor();
+        }
+        if (primary.Model.Base.Slots.Count > 0)
+        {
+            Ui.Header("Slots");
+            foreach (var slot in primary.Model.Base.Slots)
+                if (ImGui.Selectable(slot.Name ?? slot.Id, _slot == slot.Id)) { _slot = slot.Id; session.Selection.Clear(); session.EditWeapon = false; }
         }
     }
 
@@ -89,6 +96,7 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         ImGui.Checkbox("Onion skin", ref _onion);
 
         if (Primary is { } primary && session.Selection.Control is { } control && primary.Model.Controls.ContainsKey(control)) ControlFields(document, primary, control);
+        if (_slot is not null && Primary is { } slotSubject) SlotFields(document, slotSubject, _slot);
         Faces(document, Primary);
         Markers(document);
         foreach (var problem in session.Assets.Problems(document)) Ui.Problem(problem);
@@ -171,6 +179,22 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
             var rotate = new Channel(MotionClip.RotateKind, control);
             var degrees = ClipAuthoring.Value(clip, rotate, time).Angle * 180 / MathF.PI;
             if (Ui.Drag("Rotation (degrees, turns children)", ref degrees, .5f, -720, 720)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, degrees * MathF.PI / 180));
+            if (model.Controls[control].Transform is not null)
+            {
+                void Axis(string label, string kind, int axis)
+                {
+                    var channel = new Channel(kind, control); var delta = ClipAuthoring.Value(clip, channel, time).Value;
+                    var value = (axis == 0 ? delta.X : delta.Y) + (kind == MotionClip.ScaleKind ? 1 : 0);
+                    if (kind == MotionClip.ShearKind) value *= 180 / MathF.PI;
+                    if (Ui.Drag(label, ref value, .01f, -100, 100)) session.Change(document, () =>
+                    {
+                        var v = kind == MotionClip.ScaleKind ? value - 1 : value * MathF.PI / 180;
+                        if (axis == 0) delta.X = v; else delta.Y = v; ClipAuthoring.SetKey(document.Asset, channel, time, delta);
+                    });
+                }
+                Axis("Scale X multiplier", MotionClip.ScaleKind, 0); Axis("Scale Y multiplier", MotionClip.ScaleKind, 1);
+                Axis("Shear X offset (degrees)", MotionClip.ShearKind, 0); Axis("Shear Y offset (degrees)", MotionClip.ShearKind, 1);
+            }
         }
         var channels = RowChannels(model, control);
         var key = channels.SelectMany(c => ClipAuthoring.Track(clip, c)?.Keys ?? []).FirstOrDefault(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
@@ -312,7 +336,7 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
 
     private static IReadOnlyCollection<Channel> RowChannels(ResolvedModel model, string control) =>
         ClipAuthoring.ChannelFor(model, control) is { } channel
-            ? channel.Kind == MotionClip.TranslateKind ? [channel, new(MotionClip.RotateKind, control)] : [channel]
+            ? channel.Kind == MotionClip.TranslateKind ? [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.ShearKind, control)] : [channel]
             : [];
 
     public void Timeline()
@@ -346,6 +370,8 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         ContactRows(draw, document, primary.Model, origin.X, ref y, X);
         PointRow(draw, "Markers", clip.Markers.Select(m => (m.Time, m.Id)), origin.X, y, X, Ui.Color(210, 140, 220)); y += RowHeight * scale;
         foreach (var face in clip.Faces) { PointRow(draw, "Face " + face.Part, face.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, Ui.Color(240, 200, 90)); y += RowHeight * scale; }
+        foreach (var slot in clip.Attachments) { PointRow(draw, "Slot " + slot.Slot, slot.Keys.Select(k => (k.Time, k.Attachment ?? "hidden")), origin.X, y, X, Ui.Color(90, 200, 240)); y += RowHeight * scale; }
+        if (clip.DrawOrder.Count > 0) { PointRow(draw, "Draw order", clip.DrawOrder.Select(k => (k.Time, "order")), origin.X, y, X, Ui.Color(90, 200, 240)); y += RowHeight * scale; }
 
         var head = X(session.Transport.Time);
         draw.AddLine(new(head, origin.Y), new(head, y), Ui.Color(232, 169, 55), 2);
@@ -354,6 +380,39 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
             session.Edit(document, () => ClipAuthoring.DeleteKeys(document.Asset, selectedKey, _keyRow?.Channels));
         ImGui.SetCursorScreenPos(new(origin.X, y + 4 * scale));
         ImGui.TextDisabled("Click a key to jump  |  drag to move, Ctrl+drag to copy  |  right-click for easing  |  Delete removes the selected key");
+    }
+
+    private void SlotFields(AssetDocument<MotionClip> document, Subject subject, string id)
+    {
+        var slot = subject.Model.Base.Slots.FirstOrDefault(s => s.Id == id); if (slot is null) return;
+        Ui.Header("Slot " + (slot.Name ?? id)); var time = session.Transport.Time;
+        var track = document.Asset.Attachments.FirstOrDefault(t => t.Slot == id);
+        var attachmentKey = track?.Keys.LastOrDefault(k => k.Time <= time);
+        var current = attachmentKey is null ? slot.Attachment : attachmentKey.Attachment;
+        var choices = subject.Model.Base.Skins.SelectMany(s => s.Attachments.GetValueOrDefault(id)?.Keys.AsEnumerable() ?? []).Distinct().Prepend("(none)");
+        if (Ui.Combo("Attachment at playhead", current ?? "(none)", choices) is { } attachment)
+            session.Edit(document, () =>
+            {
+                var edited = document.Asset.Attachments.FirstOrDefault(t => t.Slot == id);
+                if (edited is null) document.Asset.Attachments.Add(edited = new() { Slot = id });
+                edited.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
+                edited.Keys.Add(new() { Time = time, Attachment = attachment == "(none)" ? null : attachment });
+                edited.Keys.Sort((a, b) => a.Time.CompareTo(b.Time));
+            });
+        if (ImGui.Button("Remove attachment key here")) session.Edit(document, () => document.Asset.Attachments.FirstOrDefault(t => t.Slot == id)?.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime));
+        void Move(int delta)
+        {
+            session.Edit(document, () =>
+            {
+                var order = (document.Asset.DrawOrder.LastOrDefault(k => k.Time <= time)?.Slots ?? subject.Model.Base.Slots.Select(s => s.Id).ToList()).ToList();
+                var index = order.IndexOf(id); var next = index + delta; if (next < 0 || next >= order.Count) return;
+                (order[index], order[next]) = (order[next], order[index]);
+                document.Asset.DrawOrder.RemoveAll(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
+                document.Asset.DrawOrder.Add(new() { Time = time, Slots = order }); document.Asset.DrawOrder.Sort((a, b) => a.Time.CompareTo(b.Time));
+            });
+        }
+        if (ImGui.Button("Draw earlier")) Move(-1); ImGui.SameLine(); if (ImGui.Button("Draw later")) Move(1);
+        Ui.Help("Attachment and order changes are keyed at the playhead. Slots are listed from back to front.");
     }
 
     private void KeyRow(ImDrawListPtr draw, AssetDocument<MotionClip> document, string label, IReadOnlyCollection<Channel>? channels, float x0, float y, Func<float, float> X, Func<float, float> Time)

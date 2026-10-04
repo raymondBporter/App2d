@@ -90,6 +90,8 @@ public sealed record PuppetPart
     public string? Frame { get; set; }
     /// <summary>Additional shape rotation in its bone frame, in radians.</summary>
     public float Angle { get; set; }
+    public float ScaleX { get; set; } = 1;
+    public float ScaleY { get; set; } = 1;
     public float Width { get; set; } = .4f;
     public float Height { get; set; } = .4f;
     public float OffsetX { get; set; }
@@ -130,6 +132,7 @@ public sealed record PuppetPart
         new Limit(-16, 16).Check(Depth, "part.depth");
         if (Material is null) throw new InvalidDataException("A part needs a material.");
         Material.Validate("part.material");
+        if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY)) throw new InvalidDataException("Part scale must be finite.");
         PartPaint.Check(Paint);
         if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
         new Limit(-1, 1).Check(FaceX, "part.faceX");

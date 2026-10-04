@@ -18,6 +18,7 @@ public sealed record PartOverride
     public bool? Hidden { get; set; }
     [JsonIgnore] public bool IsEmpty => Width is null && Height is null && OffsetX is null && OffsetY is null &&
         Material?.Fill is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&
+        Material?.Texture is null && Material?.Tint is null &&
         Paint is null && Face is null && FaceX is null && Hidden is null;
 
     /// <summary>Range and vocabulary checks shared by variants and look presets.</summary>
@@ -53,7 +54,7 @@ public sealed record PartOverride
 public sealed class ModelVariant
 {
     public const string FormatId = "app2d-variant";
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -66,7 +67,12 @@ public sealed class ModelVariant
     public Dictionary<string, PartOverride> Parts { get; set; } = [];
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    public static ModelVariant FromJson(string json) { var variant = AuthoredAsset.Parse<ModelVariant>(json, "variant"); variant.Validate(); return variant; }
+    public static ModelVariant FromJson(string json)
+    {
+        var variant = AuthoredAsset.Parse<ModelVariant>(json, "variant");
+        if (variant.Version == 2) variant.Version = CurrentVersion;
+        variant.Validate(); return variant;
+    }
     public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
 
     public void Validate()

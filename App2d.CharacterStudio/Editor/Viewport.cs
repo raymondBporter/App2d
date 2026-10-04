@@ -85,13 +85,12 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private static IEnumerable<Vector3> DrawingPoints(ResolvedModel model)
     {
         var pose = PoseEvaluator.Rest(model);
-        return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, pose.World, id => pose.Angles[id]))
+        return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, pose.World, id => pose.Angles[id], id => pose.Bones[id]))
             .Concat(model.Rest.Values)
             .Concat(model.Order.Where(c => c.Length > 0).Select(c =>
             {
                 var origin = pose.World(c.Id);
-                var bone = new BoneFrame2D(new(origin.X, origin.Y), pose.Angles[c.Id], c.Length);
-                return new Vector3(bone.Tip, origin.Z);
+                return new Vector3(Vector2.Transform(new(c.Length, 0), pose.Bones[c.Id]), origin.Z);
             }))
             .Append(Vector3.Zero);
     }
@@ -164,7 +163,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         var projection = PointCharacterRenderer.Projection(width, height, anchor, ppu);
         BuildGround(centerX, width / ppu, ppu);
         renderer.Draw(_ground, projection, Matrix.Identity, writeDepth: false);
-        for (var i = 0; i < views.Length; i++) renderer.Draw(_drawings[i].Mesh, projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
+        for (var i = 0; i < views.Length; i++) renderer.Draw(_drawings[i], projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
         device.SetRenderTarget(null);
     }
 

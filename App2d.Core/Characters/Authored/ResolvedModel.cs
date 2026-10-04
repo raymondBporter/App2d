@@ -11,7 +11,6 @@ public sealed class ResolvedModel
         Controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
         Chains = model.Chains.ToDictionary(c => c.Id, StringComparer.Ordinal);
         Children = model.Controls.ToDictionary(c => c.Id, c => (IReadOnlyList<string>)[.. model.Controls.Where(child => child.Parent == c.Id).Select(child => child.Id)], StringComparer.Ordinal);
-        Measures = model.Measures.ToDictionary(m => m.Id, m => m.Path.Zip(m.Path.Skip(1)).Sum(p => Length(p.First, p.Second)), StringComparer.Ordinal);
         var order = new List<ModelControl>(); var placed = new HashSet<string>(StringComparer.Ordinal);
         void Place(ModelControl control)
         {
@@ -21,12 +20,37 @@ public sealed class ResolvedModel
         }
         foreach (var control in model.Controls) Place(control);
         Order = order;
+        var frames = new Dictionary<string, Matrix3x2>(StringComparer.Ordinal);
+        var setups = new Dictionary<string, BoneTransform2D>(StringComparer.Ordinal);
+        foreach (var control in order)
+        {
+            var parent = control.Parent is null ? Matrix3x2.Identity : frames[control.Parent];
+            var setup = control.Transform;
+            if (setup is not null && variant?.Rest.ContainsKey(control.Id) == true)
+            {
+                if (!Matrix3x2.Invert(parent, out var inverse)) throw new InvalidDataException($"Variant '{variant.Id}': cannot move '{control.Id}' beneath a collapsed parent.");
+                var local = Vector2.Transform(new(rest[control.Id].X, rest[control.Id].Y), inverse);
+                setup = setup with { X = local.X, Y = local.Y };
+            }
+            var frame = setup is null
+                ? Matrix3x2.CreateRotation(control.RestAngle) * Matrix3x2.CreateTranslation(rest[control.Id].X, rest[control.Id].Y)
+                : setup.Matrix * parent;
+            if (setup is not null) setups.Add(control.Id, setup);
+            frames[control.Id] = frame;
+            rest[control.Id] = new(frame.M31, frame.M32, rest[control.Id].Z);
+        }
+        RestTransforms = frames;
+        SetupTransforms = setups;
+        Measures = model.Measures.ToDictionary(m => m.Id, m => m.Path.Zip(m.Path.Skip(1)).Sum(p => Length(p.First, p.Second)), StringComparer.Ordinal);
     }
 
     public CharacterModel Base { get; }
     public ModelVariant? Variant { get; }
     public string Id => Variant?.Id ?? Base.Id;
     public IReadOnlyDictionary<string, Vector3> Rest { get; }
+    public IReadOnlyDictionary<string, Matrix3x2> RestTransforms { get; }
+    public IReadOnlyDictionary<string, BoneTransform2D> SetupTransforms { get; }
+    public string TextureRoot { get; set; } = Environment.CurrentDirectory;
     public IReadOnlyList<PuppetPart> Parts { get; }
     public IReadOnlyDictionary<string, float> Measures { get; }
     /// <summary>Controls ordered so every parent precedes its children.</summary>
@@ -39,7 +63,7 @@ public sealed class ResolvedModel
     public float DrawnHeight()
     {
         var rest = PoseEvaluator.Rest(this);
-        return Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, rest.World, id => rest.Angles[id])).Select(p => p.Y).DefaultIfEmpty(1).Max();
+        return Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, rest.World, id => rest.Angles[id], id => rest.Bones[id])).Select(p => p.Y).DefaultIfEmpty(1).Max();
     }
 
     public float Measure(string scale) => scale == CharacterModel.Unit ? 1 : Measures[scale];

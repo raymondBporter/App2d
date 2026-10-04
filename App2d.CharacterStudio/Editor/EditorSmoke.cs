@@ -164,6 +164,21 @@ internal sealed class EditorSmoke(string output)
                 Record(s.Scene()[0].Pose.Chains.Count == 4, "quadruped IK reaches the animation viewport");
             }),
             ("28-quadruped-head-down", shell => { var s = shell.Session; s.SetClip("review-triceratops-head-down"); s.Seek(.55f); }),
+            ("29-spine-export", shell =>
+            {
+                var s = shell.Session; s.Open("tripod"); s.SetClip("tripod-walk"); s.Seek(.25f);
+                Check(s.ExportSpine(Path.Combine(output, "spine", "tripod.json")), s);
+                Record(File.Exists(Path.Combine(output, "spine", "tripod.app2d.json")), "Spine export preserves a native backup");
+            }),
+            ("30-spine-import", shell =>
+            {
+                var s = shell.Session;
+                Check(s.ImportSpine(Path.Combine(output, "spine", "tripod.json"), "spine-tripod", "Spine tripod"), s);
+                s.ShowRest = false; s.SetMode(Workspace.Animate); s.SetClip("spine-tripod-tripod-walk"); s.Seek(.25f);
+                shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
+                Record(s.Scene()[0].Pose.Slots.Count > 0 && s.SubjectModel!.Asset.Parts.All(p => p.Material?.Texture is not null), "Spine image slots reach the viewport");
+                s.SaveAll(); Record(AuthoredCatalog.Load(s.Assets.Root).Models.ContainsKey("spine-tripod"), "imported Spine rig saves through the ordinary workspace");
+            }),
         ];
         return workspace;
     }

@@ -22,6 +22,7 @@ public readonly record struct PoseInput(string? Expression = null)
     public PoseLayer? Overlay { get; init; }
     /// <summary>Reverse authored horizontal offsets and rotation, without turning the actor's rest pose.</summary>
     public bool ReverseHorizontalMotion { get; init; }
+    public string? Skin { get; init; }
 }
 
 /// <summary>
@@ -39,6 +40,8 @@ public sealed class EvaluatedPose
     public Dictionary<string, Vector3> Points { get; } = new(StringComparer.Ordinal);
     /// <summary>Accumulated XY rotation of each control's frame, inherited by its children.</summary>
     public Dictionary<string, float> Angles { get; } = new(StringComparer.Ordinal);
+    public Dictionary<string, Matrix3x2> Bones { get; } = new(StringComparer.Ordinal);
+    public List<EvaluatedSlot2D> Slots { get; } = [];
     public Dictionary<string, Vector3> SocketAngles { get; } = new(StringComparer.Ordinal);
     /// <summary>The expression each visible face-bearing part shows: gameplay input, then the clip's face channel, then the model default.</summary>
     public Dictionary<string, string> Expressions { get; } = new(StringComparer.Ordinal);
@@ -87,7 +90,7 @@ public static class PoseEvaluator
         {
             var (track, at, source) = Read(fromOverlay, kind, target);
             if (track is null) return default;
-            var (value, _) = Interpolate(track.Keys, at); var scale = track.Scale ?? defaultScale;
+            var (value, _) = Interpolate(track, at); var scale = track.Scale ?? defaultScale;
             var ratio = scale == CharacterModel.Unit ? 1 : model.Measure(scale) / source.Reference[scale];
             return new(value.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), value.Y * ratio, value.Z);
         }
@@ -98,13 +101,32 @@ public static class PoseEvaluator
             && track.Keys.LastOrDefault(k => k.Bend is not null && k.Time <= at) is { Bend: { } bend } ? bend : chain.Bend;
         int Bend(ModelChain chain) => LayerBend(Masked(chain.Id) && weight >= .5f, chain);
         float LayerAngle(bool fromOverlay, string target) => Read(fromOverlay, MotionClip.RotateKind, target) is { Track: { } track, Time: var at }
-            ? Interpolate(track.Keys, at).Angle * (input.ReverseHorizontalMotion ? -1 : 1) : 0;
+            ? Interpolate(track, at).Angle * (input.ReverseHorizontalMotion ? -1 : 1) : 0;
         float Angle(string target) => !Masked(target) ? LayerAngle(false, target) : LayerAngle(false, target) + (LayerAngle(true, target) - LayerAngle(false, target)) * weight;
         var chainTargets = new Dictionary<string, Vector3>(StringComparer.Ordinal);
 
         var angles = pose.Angles;
         foreach (var control in model.Order)
         {
+            if (model.SetupTransforms.TryGetValue(control.Id, out var setup))
+            {
+                var translate = Delta(MotionClip.TranslateKind, control.Id, control.Scale);
+                var scale = Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit);
+                var shear = Delta(MotionClip.ShearKind, control.Id, CharacterModel.Unit);
+                var local = setup with
+                {
+                    X = setup.X + translate.X, Y = setup.Y + translate.Y,
+                    Rotation = setup.Rotation + Angle(control.Id),
+                    ScaleX = setup.ScaleX * (1 + scale.X), ScaleY = setup.ScaleY * (1 + scale.Y),
+                    ShearX = setup.ShearX + shear.X, ShearY = setup.ShearY + shear.Y
+                };
+                var parent = control.Parent is null ? Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y) : pose.Bones[control.Parent];
+                var matrix = local.Matrix * parent;
+                pose.Bones[control.Id] = matrix;
+                pose.Points[control.Id] = new(matrix.M31, matrix.M32, model.Rest[control.Id].Z + translate.Z);
+                angles[control.Id] = MathF.Atan2(matrix.M12, matrix.M11);
+                continue;
+            }
             var parentPoint = control.Parent is null ? pose.Locomotion : pose.Points[control.Parent];
             var parentAngle = control.Parent is null ? 0 : angles[control.Parent];
             var parentRestAngle = control.Parent is null ? 0 : model.Controls[control.Parent].RestAngle;
@@ -112,6 +134,7 @@ public static class PoseEvaluator
             var offset = model.Rest[control.Id] - parentRest + Delta(MotionClip.TranslateKind, control.Id, control.Scale);
             pose.Points[control.Id] = parentPoint + RotateXY(offset, parentAngle - parentRestAngle);
             angles[control.Id] = parentAngle + control.RestAngle - parentRestAngle + Angle(control.Id);
+            pose.Bones[control.Id] = Matrix3x2.CreateRotation(angles[control.Id]) * Matrix3x2.CreateTranslation(pose.Points[control.Id].X, pose.Points[control.Id].Y);
         }
         foreach (var chain in model.Base.Chains)
         {
@@ -148,6 +171,12 @@ public static class PoseEvaluator
                 || model.Base.Chains.Any(c => c.End == socket.Control && Masked(c.Id));
             pose.SocketAngles[socket.Id] = owned ? Vector3.Lerp(ReadOrientation(false), ReadOrientation(true), weight) : ReadOrientation(false);
         }
+        foreach (var control in model.Order)
+        {
+            var frame = pose.Bones[control.Id]; var point = pose.Points[control.Id];
+            frame.M31 = point.X; frame.M32 = point.Y; pose.Bones[control.Id] = frame;
+        }
+        SkeletonAppearance2D.Evaluate(model, clip, time, input.Skin, pose);
         var overlayFace = overlay is not null && weight >= .5f;
         foreach (var part in model.Parts)
         {
@@ -205,11 +234,15 @@ public static class PoseEvaluator
         {
             if (time > keys[i].Time) continue;
             if (time == keys[i].Time) return Of(keys[i]);
-            var a = keys[i - 1]; var b = keys[i]; var u = ClipEase.Apply(a.Ease, (time - a.Time) / (b.Time - a.Time));
-            return (Vector3.Lerp(new(a.X, a.Y, a.Z), new(b.X, b.Y, b.Z), u), a.Angle + (b.Angle - a.Angle) * u);
+            var a = keys[i - 1]; var b = keys[i]; var phase = (time - a.Time) / (b.Time - a.Time);
+            var u = a.Curve?.Apply(phase) ?? ClipEase.Apply(a.Ease, phase);
+            var uy = a.CurveY?.Apply(phase) ?? u;
+            return (new(a.X + (b.X - a.X) * u, a.Y + (b.Y - a.Y) * uy, a.Z + (b.Z - a.Z) * u), a.Angle + (b.Angle - a.Angle) * u);
         }
         return Of(keys[^1]);
     }
 
     public static Vector3 RotateXY(Vector3 v, float angle) => Rotation2D.ApplyXY(v, angle);
+    public static (Vector3 Value, float Angle) Interpolate(ClipTrack track, float time) =>
+        track.SetupBeforeFirst && track.Keys.Count > 0 && time < track.Keys[0].Time ? default : Interpolate(track.Keys, time);
 }

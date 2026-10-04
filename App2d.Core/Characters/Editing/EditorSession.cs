@@ -72,10 +72,11 @@ public sealed class EditorSession
     public List<string> Compare { get; } = [];
     public bool AutoKey { get; set; } = true;
     /// <summary>Animate-only equipment preview; never changes an entity's loadout.</summary>
-    public string PreviewProp { get; set; } = "sword";
-    public string PreviewSocket { get; set; } = PersonLoadout.SwordSocket;
-    public bool PreviewWeapon { get; set; } = true;
+    public string PreviewProp { get; set; } = "";
+    public string PreviewSocket { get; set; } = "";
+    public bool PreviewWeapon { get; set; }
     public bool EditWeapon { get; set; }
+    public string? Skin { get; set; }
     public AssetDocument<PropAsset>? AppearanceDocument => Assets.Prop(PreviewProp);
 
     public (PropAsset Prop, ModelSocket Socket)? WeaponFor(ResolvedModel model)
@@ -219,7 +220,7 @@ public sealed class EditorSession
     {
         var model = Assets.Resolve(subjectId);
         if (model is null) return null;
-        var clip = ClipFor(subjectId); var input = new PoseInput(Expression);
+        var clip = ClipFor(subjectId); var input = new PoseInput(Expression) { Skin = model.Base.Skins.Any(s => s.Id == Skin) ? Skin : null };
         var pose = clip is null ? PoseEvaluator.Rest(model, input)
             : PoseEvaluator.Sample(model, clip, Transport.Playing ? Transport.Seconds(clip) : Transport.Time, repeat: Transport.Repeats(clip), input);
         return new(subjectId, model, pose, clip);
@@ -446,6 +447,30 @@ public sealed class EditorSession
     }
 
     // ---- New assets ----------------------------------------------------------------------------------------------
+
+    public bool ExportSpine(string path) => Attempt(() =>
+    {
+        var model = Assets.Resolve(SubjectId) ?? throw new InvalidDataException("Open a model or variant first.");
+        var clips = Assets.ClipsFor(model.Id).Select(c => c.Asset).ToArray();
+        Characters.Spine.SpineExport2D.Build(model, clips).Save(path);
+    }, "Exported Spine 4.2 JSON, images, atlas and native backup. See the adjacent conversion notes.");
+
+    public bool ImportSpine(string path, string id, string name, string? imagesDirectory = null) => Attempt(() =>
+    {
+        var result = Characters.Spine.SpineImport2D.Load(path, id, name, imagesDirectory);
+        if (Assets.Exists(id) || result.Animations.Any(c => Assets.Exists(c.Id))) throw new InvalidDataException("An imported asset id is already used. Choose a different model id.");
+        foreach (var (image, bytes) in result.Images)
+        {
+            var target = IO.FilePaths.ResolveUnderRoot(Assets.Root, image);
+            if (File.Exists(target)) throw new InvalidDataException($"Imported image already exists: {image}. Choose a different model id.");
+        }
+        foreach (var (image, bytes) in result.Images)
+        {
+            var target = IO.FilePaths.ResolveUnderRoot(Assets.Root, image); Directory.CreateDirectory(Path.GetDirectoryName(target)!); File.WriteAllBytes(target, bytes);
+        }
+        Assets.Create(result.Model); foreach (var clip in result.Animations) Assets.Create(clip);
+        Open(id); EditRig = false; Skin = result.Model.Skins.FirstOrDefault()?.Id;
+    }, "Imported Spine 4.2 as new editable drafts. Save all to keep the model and animations.");
 
     public bool NewAppearance(string id, string name, string template) => Attempt(() =>
     {
