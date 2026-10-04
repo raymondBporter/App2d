@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using App2d.Core.IO;
 using App2d.Core.Shapes;
@@ -65,7 +66,7 @@ public static partial class SpineImport2D
             if (entry?["skin"]?.GetValue<bool>() == true) Unsupported($"bone '{boneName}' skin activation");
             var parentName = Text(entry, "parent");
             if (parentName.Length > 0 && !bones.ContainsKey(parentName)) throw new InvalidDataException($"Bone '{boneName}': parent '{parentName}' must precede it.");
-            var setup = new BoneTransform2D
+            var setup = new Affine2D
             {
                 X = Number(entry, "x") * unitsPerPixel, Y = Number(entry, "y") * unitsPerPixel,
                 Rotation = Number(entry, "rotation") * Radians, ScaleX = Number(entry, "scaleX", 1), ScaleY = Number(entry, "scaleY", 1),

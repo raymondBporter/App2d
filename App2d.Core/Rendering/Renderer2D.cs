@@ -99,7 +99,7 @@ public sealed partial class Renderer2D : IDisposable
             DrawAuthored(worldObject, authored);
             return;
         }
-        var matrix = worldObject.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
+        var matrix = worldObject.Transform.Matrix * _camera.WorldToDeviceMatrix;
         var bounds = worldObject.LocalBounds.IsFinite ? worldObject.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)
             StateGuard.ThrowIf(!worldObject.LocalBounds.IsFinite, "Sprites require finite local bounds.");

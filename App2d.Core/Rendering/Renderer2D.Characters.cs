@@ -21,7 +21,7 @@ public sealed partial class Renderer2D
         _authoredDrawing.Build(shader.Model, pose, shader.Face);
         var local = new ActorPose(pose, System.Numerics.Vector2.Zero, 1);
         foreach (var (prop, socket) in shader.Props) _authoredDrawing.AddProp(prop, local.Socket(socket));
-        var m = visual.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
+        var m = visual.Transform.Matrix * _camera.WorldToDeviceMatrix;
         var world = Matrix.CreateScale(shader.Facing, 1, 1) * new Matrix(m.M11, m.M12, 0, 0, m.M21, m.M22, 0, 0, 0, 0, 1, 0, m.M31, m.M32, 0, 1);
         var projection = Matrix.CreateOrthographicOffCenter(0, _device.Viewport.Width, _device.Viewport.Height, 0, -64, 64);
         projection.M33 = 1f / 128; projection.M43 = .5f;

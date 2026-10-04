@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -21,7 +22,7 @@ public sealed class ResolvedModel
         foreach (var control in model.Controls) Place(control);
         Order = order;
         var frames = new Dictionary<string, Matrix3x2>(StringComparer.Ordinal);
-        var setups = new Dictionary<string, BoneTransform2D>(StringComparer.Ordinal);
+        var setups = new Dictionary<string, Affine2D>(StringComparer.Ordinal);
         foreach (var control in order)
         {
             var parent = control.Parent is null ? Matrix3x2.Identity : frames[control.Parent];
@@ -49,7 +50,7 @@ public sealed class ResolvedModel
     public string Id => Variant?.Id ?? Base.Id;
     public IReadOnlyDictionary<string, Vector3> Rest { get; }
     public IReadOnlyDictionary<string, Matrix3x2> RestTransforms { get; }
-    public IReadOnlyDictionary<string, BoneTransform2D> SetupTransforms { get; }
+    public IReadOnlyDictionary<string, Affine2D> SetupTransforms { get; }
     public string TextureRoot { get; set; } = Environment.CurrentDirectory;
     public IReadOnlyList<PuppetPart> Parts { get; }
     public IReadOnlyDictionary<string, float> Measures { get; }

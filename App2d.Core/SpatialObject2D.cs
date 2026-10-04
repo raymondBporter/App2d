@@ -22,7 +22,7 @@ public class SpatialObject2D
         LocalBounds = ShapeBounds2D.Calculate(shape);
     }
 
-    public Transform2D Transform { get; } = new();
+    public Affine2D Transform { get; } = new();
     public IShape2D Shape { get; }
 
     /// <summary>Calculated once when the immutable shape is attached; independent of this object's transform.</summary>
@@ -35,7 +35,7 @@ public class SpatialObject2D
             if (_worldBoundsVersion == Transform.Version)
                 return _worldBounds;
 
-            _worldBounds = LocalBounds.TransformedBy(Transform.LocalToWorldMatrix);
+            _worldBounds = LocalBounds.TransformedBy(Transform.Matrix);
             _worldBoundsVersion = Transform.Version;
             return _worldBounds;
         }
@@ -43,8 +43,8 @@ public class SpatialObject2D
 
     /// <summary>
     /// The validated pose (rotation, uniform scale, mirror, translation) that
-    /// collision consumes. Collidable objects must not use non-uniform scale;
-    /// render-only objects may, as long as nothing queries them for collision.
+    /// collision consumes. Collidable objects need orthogonal axes with a uniform, nonzero scale;
+    /// render-only objects may use general affine transforms.
     /// </summary>
     public Similarity2D CollisionPose
     {
@@ -53,7 +53,7 @@ public class SpatialObject2D
             if (_collisionPoseVersion == Transform.Version)
                 return _collisionPose;
 
-            StateGuard.ThrowIf(!Similarity2D.TryFromMatrix(Transform.LocalToWorldMatrix, out _collisionPose), "Collision requires a uniform, non-zero scale on the transform.");
+            StateGuard.ThrowIf(!Similarity2D.TryFromMatrix(Transform.Matrix, out _collisionPose), "Collision requires a uniform, non-zero scale and orthogonal axes on the transform.");
             _collisionPoseVersion = Transform.Version;
             return _collisionPose;
         }
@@ -61,7 +61,7 @@ public class SpatialObject2D
 
     public bool ContainsWorldPoint(Vector2 worldPoint)
     {
-        if (!Matrix3x2.Invert(Transform.LocalToWorldMatrix, out var worldToLocal))
+        if (!Matrix3x2.Invert(Transform.Matrix, out var worldToLocal))
             return false;
 
         return Shape.ContainsPoint(Vector2.Transform(worldPoint, worldToLocal));

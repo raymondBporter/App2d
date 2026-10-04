@@ -105,7 +105,7 @@ public static class ModelAuthoring
             var resolved = ResolvedModel.From(model);
             var frame = parent is null ? Matrix3x2.Identity : resolved.RestTransforms[parent];
             if (!Matrix3x2.Invert(frame, out var inverse)) throw new InvalidOperationException("Cannot reparent a bone beneath a collapsed parent transform.");
-            control.Transform = BoneTransform2D.FromMatrix(resolved.RestTransforms[id] * inverse);
+            control.Transform = Affine2D.FromMatrix(resolved.RestTransforms[id] * inverse);
         }
         control.Parent = parent; model.Validate();
         if (control.Transform is not null) SyncAffineRest(model);

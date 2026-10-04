@@ -69,7 +69,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     public SpatialObject2D ToSpatialObject()
     {
         var placed = new SpatialObject2D(Shape);
-        Pose.ToTransformState().Apply(placed.Transform);
+        placed.Transform.CopyFrom(Pose.ToAffine());
         return placed;
     }
 

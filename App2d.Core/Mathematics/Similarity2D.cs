@@ -59,7 +59,7 @@ public readonly record struct Similarity2D
         ArgGuard.ThrowIfNotFinite(translation);
         ArgGuard.ThrowIfNotFiniteOrZero(xAxis);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(scale);
-        var x = Vector2.Normalize(xAxis) * scale;
+        var x = new Direction2D(xAxis).Vector * scale;
         return new Similarity2D(x, mirror ? x.PerpCw : x.PerpCcw, translation, scale);
     }
 
@@ -74,7 +74,9 @@ public readonly record struct Similarity2D
         var xLength = xAxis.Length();
         var yLength = yAxis.Length();
         var largest = Math.Max(xLength, yLength);
-        if (largest <= float.Epsilon || MathF.Abs(xLength - yLength) > largest * 0.001f)
+        var dot = (double)xAxis.X * yAxis.X + (double)xAxis.Y * yAxis.Y;
+        if (!matrix.IsFinite() || !float.IsFinite(largest) || largest <= float.Epsilon ||
+            MathF.Abs(xLength - yLength) > largest * 0.001f || Math.Abs(dot) > (double)xLength * yLength * 0.001)
         {
             similarity = default;
             return false;
@@ -106,13 +108,12 @@ public readonly record struct Similarity2D
     /// <returns>A matrix that transforms points the same way as <see cref="TransformPoint"/>.</returns>
     public Matrix3x2 ToMatrix() => new(XAxis.X, XAxis.Y, YAxis.X, YAxis.Y, Translation.X, Translation.Y);
 
-    /// <summary>The pose as position, rotation and scale for a <see cref="Transform2D"/>; a mirror becomes a negative X scale.</summary>
-    /// <returns>A transform state that rebuilds this pose.</returns>
-    public TransformState2D ToTransformState()
+    /// <summary>A new editable affine transform carrying this pose; a mirror becomes a negative X scale.</summary>
+    public Affine2D ToAffine()
     {
         var mirrored = IsMirrored;
         var forward = mirrored ? -XAxis : XAxis;
-        return new TransformState2D(Translation, MathF.Atan2(forward.Y, forward.X), new Vector2(mirrored ? -Scale : Scale, Scale));
+        return new() { Position = Translation, Rotation = MathF.Atan2(forward.Y, forward.X), Scale = new(mirrored ? -Scale : Scale, Scale) };
     }
 
     /// <summary>Maps a local point into world space.</summary>

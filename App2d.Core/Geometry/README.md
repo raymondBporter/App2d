@@ -4,7 +4,7 @@
 
 | Namespace | Holds | Depends on |
 | --- | --- | --- |
-| `App2d.Core.Mathematics` | Vectors, cross products, polar/direction values, rotation, `Similarity2D`, `Transform2D`, easing | `System.Numerics` |
+| `App2d.Core.Mathematics` | Vectors, cross products, polar/direction values, rotation, `Similarity2D`, `Affine2D`, easing | `System.Numerics` |
 | `App2d.Core.Geometry` | Raw 2D math on numbers plus small value types. Never references `IShape2D`. | `Mathematics` |
 | `App2d.Core.Shapes` | `IShape2D` classes and the per-shape switch tables (`ShapeBounds2D`, `ShapeDistance2D`, `WorldShape2D`) | `Geometry` |
 | `App2d.Core.Meshes` | `TriangleMesh2D`, `Triangle3D`, `TriangleMeshAnalysis3D`, `TriangleMeshBuilder3D`, `Orientation3D` | `Geometry`, `Shapes` |

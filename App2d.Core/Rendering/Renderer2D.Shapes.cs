@@ -37,7 +37,7 @@ public sealed partial class Renderer2D
         ArgGuard.ThrowIfNull(item);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
         if (IsCulled(item)) return;
-        var matrix = item.Transform.LocalToWorldMatrix * _camera.WorldToDeviceMatrix;
+        var matrix = item.Transform.Matrix * _camera.WorldToDeviceMatrix;
         DrawShapeCore(item.Shape, matrix, item.LocalBounds, fillColor, outlineColor, screenStrokeWidth);
     }
 

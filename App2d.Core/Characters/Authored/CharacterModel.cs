@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -11,7 +12,7 @@ public sealed record ModelControl
     public string? Parent { get; set; }
     public string? Name { get; set; }
     /// <summary>Explicit parent-local affine setup pose. Null keeps the existing model-space point-control convention.</summary>
-    public BoneTransform2D? Transform { get; set; }
+    public Affine2D? Transform { get; set; }
     public PuppetPoint Rest { get; set; }
     /// <summary>World XY direction of this bone in rest, in radians. Zero preserves legacy point controls.</summary>
     public float RestAngle { get; set; }

@@ -70,7 +70,7 @@ public sealed class ShapeUtilityTests
         for (var i = 0; i < 12; i++)
         {
             box.Transform.Rotation = i * MathF.Tau / 12;
-            var worldCenter = Vector2.Transform(center, box.Transform.LocalToWorldMatrix);
+            var worldCenter = Vector2.Transform(center, box.Transform.Matrix);
             WorldShape2D.WriteWorldPerimeter(box.Shape, box.CollisionPose, corners);
             foreach (var corner in corners) Assert.True(Vector2.Distance(corner, worldCenter) <= radius + 1e-4f);
         }

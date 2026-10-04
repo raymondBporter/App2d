@@ -36,7 +36,7 @@ dotnet run --project App2d.CharacterStudio -- --export-spine quadruped artifacts
 | Concept | Native representation | Meaning |
 | --- | --- | --- |
 | Skeleton | `CharacterModel` and its bone hierarchy | General rig; anatomy names are authored data. |
-| Bone | `ModelControl.Transform` / `BoneTransform2D` | A parent-local affine frame; length is independent of the transform. |
+| Bone | `ModelControl.Transform` / math `Affine2D` | A parent-local affine frame; length is independent of the transform. |
 | Joint | Bone origin / parent-child connection | A rig connection, not a mandatory separate Spine object. |
 | Constraint | Existing `ModelChain`, with Spine constraint support still pending | A solver relationship, separate from animation channels. |
 | Slot | `SkeletonSlot2D` | A named location on a bone, with attachment selection, tint, blend, and draw order. |

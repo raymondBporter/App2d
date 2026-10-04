@@ -8,7 +8,7 @@ public sealed class Similarity2DPoseTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void AxisPosesRoundTripThroughTransformStatesAndMatrices(bool mirror)
+    public void AxisPosesRoundTripThroughAffineTransformsAndMatrices(bool mirror)
     {
         var pose = Similarity2D.FromAxis(new(3, -4), new(1, 2), mirror, scale: 1.5f);
         Assert.Equal(1.5f, pose.Scale, 5);
@@ -16,9 +16,8 @@ public sealed class Similarity2DPoseTests
         Assert.Equal(0f, Vector2.Dot(pose.XAxis, pose.YAxis), 5);
         Assert.Equal(1.5f, pose.YAxis.Length(), 5);
 
-        var transform = new Transform2D();
-        pose.ToTransformState().Apply(transform);
-        Assert.True(Similarity2D.TryFromMatrix(transform.LocalToWorldMatrix, out var rebuilt));
+        var transform = pose.ToAffine();
+        Assert.True(Similarity2D.TryFromMatrix(transform.Matrix, out var rebuilt));
         var point = new Vector2(.7f, -1.3f);
         Assert.True(Vector2.Distance(pose.TransformPoint(point), rebuilt.TransformPoint(point)) < 1e-4f);
         Assert.True(Vector2.Distance(pose.TransformPoint(point), Vector2.Transform(point, pose.ToMatrix())) < 1e-5f);

@@ -116,7 +116,7 @@ public sealed class Rect2DBoundsTests
         for (var i = 0; i < 64; i++)
         {
             var point = VertexGenerator2D.PointOnEllipse(circle.Center, new(circle.Radius), i * MathF.Tau / 64);
-            Assert.True(world.Contains(Vector2.Transform(point, item.Transform.LocalToWorldMatrix)));
+            Assert.True(world.Contains(Vector2.Transform(point, item.Transform.Matrix)));
         }
     }
 

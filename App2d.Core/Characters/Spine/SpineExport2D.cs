@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using App2d.Core.IO;
 using App2d.Core.Rendering.Characters;
@@ -50,7 +51,7 @@ public static class SpineExport2D
         var used = names.Values.ToHashSet(StringComparer.Ordinal);
         var bones = new JsonArray();
         if (rootName is not null) { used.Add(rootName); bones.Add(new JsonObject { ["name"] = rootName }); }
-        var setup = new Dictionary<string, BoneTransform2D>();
+        var setup = new Dictionary<string, Affine2D>();
         Matrix3x2 Relative(Matrix3x2 frame, Matrix3x2 parent)
         {
             if (!Matrix3x2.Invert(parent, out var inverse)) throw new InvalidDataException("Cannot bake an attachment or point rig through a singular parent transform. Use nonzero parent scale when exporting this rig.");
@@ -59,7 +60,7 @@ public static class SpineExport2D
         foreach (var control in model.Order)
         {
             var local = model.SetupTransforms.TryGetValue(control.Id, out var resolvedSetup) ? resolvedSetup
-                : BoneTransform2D.FromMatrix(Relative(model.RestTransforms[control.Id], control.Parent is null ? Matrix3x2.Identity : model.RestTransforms[control.Parent]));
+                : Affine2D.FromMatrix(Relative(model.RestTransforms[control.Id], control.Parent is null ? Matrix3x2.Identity : model.RestTransforms[control.Parent]));
             setup[control.Id] = local;
             bones.Add(Bone(names[control.Id], control.Parent is null ? rootName : names[control.Parent], local, control.Length, pixelsPerUnit));
         }
@@ -115,7 +116,7 @@ public static class SpineExport2D
                 var helper = Unique("app2d-part-" + part.Id, used); used.Add(helper);
                 var length = part.B is { } end ? Vector2.Distance(restPose.World(part.A).XY(), restPose.World(end).XY()) : 1;
                 var frame = PartFrame(part, restPose, MathF.Max(length, .0001f));
-                var local = BoneTransform2D.FromMatrix(Relative(frame, restPose.Bones[part.A]));
+                var local = Affine2D.FromMatrix(Relative(frame, restPose.Bones[part.A]));
                 bones.Add(Bone(helper, names[part.A], local, 0, pixelsPerUnit));
                 parts.Add(new(part, helper, frame, MathF.Max(length, .0001f))); setup[helper] = local;
                 slots.Add(new JsonObject { ["name"] = part.Id, ["bone"] = helper, ["attachment"] = part.Face });
@@ -162,12 +163,12 @@ public static class SpineExport2D
                     foreach (var control in model.Order)
                     {
                         var frame = Relative(pose.Bones[control.Id], control.Parent is null ? motionFrame : pose.Bones[control.Parent]);
-                        Append(timelines, names[control.Id], control.Id, BoneTransform2D.FromMatrix(frame), setup[control.Id], time, previous, pixelsPerUnit);
+                        Append(timelines, names[control.Id], control.Id, Affine2D.FromMatrix(frame), setup[control.Id], time, previous, pixelsPerUnit);
                     }
                     foreach (var part in parts)
                     {
                         var frame = Relative(PartFrame(part.Part, pose, part.StrokeLength), pose.Bones[part.Part.A]);
-                        Append(timelines, part.Name, part.Name, BoneTransform2D.FromMatrix(frame), setup[part.Name], time, previous, pixelsPerUnit);
+                        Append(timelines, part.Name, part.Name, Affine2D.FromMatrix(frame), setup[part.Name], time, previous, pixelsPerUnit);
                     }
                 }
             }
@@ -179,7 +180,7 @@ public static class SpineExport2D
                 {
                     var pose = PoseEvaluator.Sample(model, clip, time);
                     foreach (var part in parts) Append(timelines, part.Name, part.Name,
-                        BoneTransform2D.FromMatrix(Relative(PartFrame(part.Part, pose, part.StrokeLength), pose.Bones[part.Part.A])), setup[part.Name], time, previous, pixelsPerUnit);
+                        Affine2D.FromMatrix(Relative(PartFrame(part.Part, pose, part.StrokeLength), pose.Bones[part.Part.A])), setup[part.Name], time, previous, pixelsPerUnit);
                 }
             }
             var slotTimelines = new JsonObject();
@@ -241,7 +242,7 @@ public static class SpineExport2D
         var fill = part.RenderMaterial.Fill is { } value ? App2d.Core.Rendering.ColorExtensions.FromHexRgb(value) : Microsoft.Xna.Framework.Color.White;
         return $"{(byte)((color >> 24) * fill.R / 255):x2}{(byte)(((color >> 16) & 255) * fill.G / 255):x2}{(byte)(((color >> 8) & 255) * fill.B / 255):x2}{(part.Hidden ? 0 : (byte)color):x2}";
     }
-    private static JsonObject Bone(string name, string? parent, BoneTransform2D t, float length, float ppu)
+    private static JsonObject Bone(string name, string? parent, Affine2D t, float length, float ppu)
     {
         var result = new JsonObject
         {
@@ -265,7 +266,7 @@ public static class SpineExport2D
     private static float Depth(PuppetPart part, EvaluatedPose pose) => part.Depth + (pose.World(part.A).Z + (part.B is null ? pose.World(part.A).Z : pose.World(part.B).Z)) / 2;
     private static float[] SampleTimes(MotionClip clip, int fps) => Enumerable.Range(0, (int)MathF.Ceiling(clip.Duration * fps) + 1).Select(i => MathF.Min(clip.Duration, (float)i / fps))
         .Concat(clip.Tracks.SelectMany(t => t.Keys).Select(k => k.Time)).Concat(clip.Travel.Keys.Select(k => k.Time)).Concat(clip.Contacts.SelectMany(c => new[] { c.Start, c.Finish })).Append(clip.Duration).Distinct().Order().ToArray();
-    private static void Append(JsonObject timelines, string name, string id, BoneTransform2D value, BoneTransform2D setup, float time, Dictionary<string, float> previous, float ppu)
+    private static void Append(JsonObject timelines, string name, string id, Affine2D value, Affine2D setup, float time, Dictionary<string, float> previous, float ppu)
     {
         if (timelines[name] is not JsonObject channels)
             timelines[name] = channels = new() { ["translate"] = new JsonArray(), ["rotate"] = new JsonArray(), ["scale"] = new JsonArray(), ["shear"] = new JsonArray() };

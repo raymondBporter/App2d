@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -225,7 +226,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             if (control.Transform is { } transform)
             {
                 Ui.Header("Local affine transform");
-                void Number(string label, float value, Action<BoneTransform2D, float> set, float min = -100, float max = 100)
+                void Number(string label, float value, Action<Affine2D, float> set, float min = -100, float max = 100)
                 {
                     if (Ui.Drag(label, ref value, .01f, min, max)) session.Change(document, () =>
                     { set(document.Asset.Controls.First(c => c.Id == id).Transform!, value); ModelAuthoring.SyncAffineRest(document.Asset); });
