@@ -22,7 +22,10 @@ The original authored library remains usable; existing templates and game entiti
 The viewport skin selector chooses the active skin. Model mode edits local bone translation, rotation, scale, and shear,
 plus attachment dimensions, offsets, and angle. Animate mode keys bone transforms, slot attachment selection (including
 hidden), and slot draw order. Original external bone, slot, skin, and animation names are retained for export, while native
-asset IDs are normalized for the library. Spine JSON does not carry a loop flag; enable Loop on imported clips when needed.
+asset IDs are normalized for the library. The slot inspector also keys RGBA tint, RGB, and opacity. Expand a motion or
+color component's curve to edit its two time/value controls. Value controls in channel units allow overshoot between
+equal endpoint values; fractional controls retain the usual normalized easing. Rotation and shear controls use radians.
+Spine JSON does not carry a loop flag; enable Loop on imported clips when needed.
 
 Command-line export uses the same converter:
 
@@ -44,13 +47,13 @@ dotnet run --project App2d.CharacterStudio -- --export-spine quadruped artifacts
 | Skin | `SkeletonSkin2D` | A slot-to-attachment lookup. Missing entries fall back to the default skin. |
 | Material | `RenderMaterialDefinition2D` | Texture, tint, fill, and outline settings for artwork. A skin is not a material. |
 | Socket | Existing `ModelSocket` | A placement frame for equipment and gameplay; it does not itself select visible artwork. |
-| Animation | `MotionClip` | Bone channels, discrete attachment/order keys, and named events. |
+| Animation | `MotionClip` | Bone channels, slot colors, discrete attachment/order keys, and named events. |
 
 The existing class names remain for native asset and gameplay compatibility. The new transform and appearance path
 does not require arms, legs, a head, a weapon, or Person-specific IDs. Templates, motion-role tables, loadouts, and game
 actions remain higher-level authored/gameplay concepts rather than requirements of a skeleton.
 
-Native models/variants now use format version 3 and clips use version 2. Existing version 2 models/variants and version 1
+Native models/variants use format version 3 and clips use version 3. Existing version 2 models/variants and version 1/2
 clips upgrade in memory on load, with their point and animation behavior preserved. Saving writes the new version;
 older Studio builds reject it rather than opening an affine/image rig with incomplete behavior.
 
@@ -63,6 +66,11 @@ older Studio builds reject it rather than opening an affine/image rig with incom
   timelines and one isolated axis are supported; separate X and Y timelines for the same channel are currently rejected.
 - Slot attachment timelines, attachment hiding, draw-order timelines, and repeated named events with int/float/string
   payloads. Imported event data is retained; binding those events to gameplay is separate work.
+- RGBA, RGB, and alpha slot timelines, including independent RGB/alpha key times, setup values before the first key,
+  stepped changes, and per-component cubic curves. Tint multiplies the attachment/material color at rendering time;
+  evaluation leaves setup colors unchanged. Colors clamp to [0,1] when displayed, and Spine color keys use 8-bit hex values.
+- Cubic value controls can overshoot or animate between equal endpoints. Native X/Y/Z components can have separate
+  curves. Move/copy/delete, retiming, save/reopen, and excerpts include attachment, color, and draw-order keys.
 - Loose PNG artwork and text atlases with modern `bounds`/`offsets` or legacy `xy`/`size`/`orig`/`offset` fields,
   trim restoration, packing rotation, and premultiplied-alpha recovery. Export currently uses one atlas page per image;
   packing several regions into a shared page is a later optimization. Atlas pixels are extracted to loose native images.
@@ -71,8 +79,8 @@ older Studio builds reject it rather than opening an affine/image rig with incom
 
 Unsupported features fail import explicitly: weighted/unweighted mesh and linked-mesh attachments, deform timelines,
 paths/clipping/bounding-box/point attachments, IK/transform/path/physics constraints, alternate inheritance modes,
-skin-dependent bone/constraint activation, image sequences, animated slot colors, two-color tint, multiply/screen blends,
-event audio, and Bezier overshoot whose segment endpoints have equal values. Native clip duration is limited to 60 seconds.
+skin-dependent bone/constraint activation, image sequences, two-color tint, multiply/screen blends,
+and event audio. Native clip duration is limited to 60 seconds.
 A visible part in a slot rig must belong to a skin for export; image artwork needs a bone frame. Mixed unmanaged procedural
 artwork is rejected instead of silently omitted. Collapsed parent frames cannot be inverted for world-space editing or baking.
 
@@ -105,10 +113,12 @@ The converter is written against the published format and 4.2 example data. No S
 Actual import into the installed Spine editor still needs manual verification; this workstation has no Spine editor installed.
 
 The next architectural steps are generic constraint definitions and solvers, image/slot/skin creation tools, independent
-axis and color timelines, weighted meshes/deforms, efficient atlas packing, and a stable-identity merge workflow. Keep
+axis timelines, weighted meshes/deforms, efficient atlas packing, and a stable-identity merge workflow. Keep
 Person templates and game actions above the reusable skeleton layer as these features are added.
 
 References: [JSON format](https://esotericsoftware.com/spine-json-format),
 [Import Data](https://esotericsoftware.com/spine-import), [atlas format](https://esotericsoftware.com/spine-atlas-format),
 [versioning](https://esotericsoftware.com/spine-versioning), and
 [official 4.2 Spineboy example](https://github.com/EsotericSoftware/spine-runtimes/blob/4.2/examples/spineboy/export/spineboy-ess.json).
+The current timeline field layout is also checked against the
+[official 4.2 JSON reader](https://github.com/EsotericSoftware/spine-runtimes/blob/4.2/spine-ts/spine-core/src/SkeletonJson.ts).

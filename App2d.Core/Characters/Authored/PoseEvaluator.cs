@@ -92,7 +92,9 @@ public static class PoseEvaluator
             if (track is null) return default;
             var (value, _) = Interpolate(track, at); var scale = track.Scale ?? defaultScale;
             var ratio = scale == CharacterModel.Unit ? 1 : model.Measure(scale) / source.Reference[scale];
-            return new(value.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), value.Y * ratio, value.Z);
+            var delta = new Vector3(value.X * ratio, value.Y * ratio, value.Z);
+            if (!input.ReverseHorizontalMotion || kind == MotionClip.ScaleKind) return delta;
+            return new(-delta.X, kind == MotionClip.ShearKind ? -delta.Y : delta.Y, delta.Z);
         }
         Vector3 Delta(string kind, string target, string defaultScale) => !Masked(target) ? LayerDelta(false, kind, target, defaultScale)
             : weight >= 1 ? LayerDelta(true, kind, target, defaultScale)
@@ -225,7 +227,7 @@ public static class PoseEvaluator
     }
 
     /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>
-    public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time)
+    public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false)
     {
         if (keys.Count == 0) return default;
         static (Vector3, float) Of(ClipKey k) => (new(k.X, k.Y, k.Z), k.Angle);
@@ -235,14 +237,15 @@ public static class PoseEvaluator
             if (time > keys[i].Time) continue;
             if (time == keys[i].Time) return Of(keys[i]);
             var a = keys[i - 1]; var b = keys[i]; var phase = (time - a.Time) / (b.Time - a.Time);
-            var u = a.Curve?.Apply(phase) ?? ClipEase.Apply(a.Ease, phase);
-            var uy = a.CurveY?.Apply(phase) ?? u;
-            return (new(a.X + (b.X - a.X) * u, a.Y + (b.Y - a.Y) * uy, a.Z + (b.Z - a.Z) * u), a.Angle + (b.Angle - a.Angle) * u);
+            float At(float start, float end, KeyCurve2D? curve) => a.Ease == ClipEase.Step ? start : curve?.Evaluate(phase, start, end)
+                ?? start + (end - start) * ClipEase.Apply(a.Ease, phase);
+            return (new(At(a.X, b.X, rotate ? null : a.Curve), At(a.Y, b.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
+                At(a.Z, b.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))), At(a.Angle, b.Angle, rotate ? a.Curve : null));
         }
         return Of(keys[^1]);
     }
 
     public static Vector3 RotateXY(Vector3 v, float angle) => Rotation2D.ApplyXY(v, angle);
     public static (Vector3 Value, float Angle) Interpolate(ClipTrack track, float time) =>
-        track.SetupBeforeFirst && track.Keys.Count > 0 && time < track.Keys[0].Time ? default : Interpolate(track.Keys, time);
+        track.SetupBeforeFirst && track.Keys.Count > 0 && time < track.Keys[0].Time ? default : Interpolate(track.Keys, time, track.Kind == MotionClip.RotateKind);
 }

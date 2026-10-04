@@ -89,6 +89,110 @@ public sealed class SpineInterchangeTests : IDisposable
     }
 
     [Fact]
+    public void SlotColorsUseIndependentCurvesReachRenderingAndRoundTripWithoutChangingSetup()
+    {
+        var json = JsonNode.Parse(Rig)!;
+        json["slots"]![1]!["color"] = "80402080";
+        json["animations"]!["Spin wheel"]!["slots"]!["front paint"] = JsonNode.Parse("""
+            { "rgba": [
+                { "time": 0.25, "color": "0000ffff", "curve": [0.5,1,0.75,1, 0.5,0,0.75,1, 0.5,1,0.75,0, 0.5,1,0.75,0] },
+                { "time": 1, "color": "00ff0000" }
+            ] }
+            """);
+        var initial = SpineImport2D.Parse(json.ToJsonString(), "wheel", "Wheel", _ => Image());
+        Store(initial.Images); var model = ResolvedModel.From(initial.Model); model.TextureRoot = _root;
+        var clip = initial.Animations[0];
+        Assert.Equal(SlotColorTrack2D.ParseColor("80402080"), PoseEvaluator.Sample(model, clip, .1).Slots.Single(s => s.Slot.Id == "front-paint").Color);
+        var pose = PoseEvaluator.Sample(model, clip, .625);
+        var tint = pose.Slots.Single(s => s.Slot.Id == "front-paint").Color;
+        Assert.True(Vector4.Distance(new(.75f, .5f, .5f, .5f), tint) < 1e-5f);
+        Assert.Equal("80402080", model.Base.Slots[1].Color);
+        var drawing = new PuppetDrawing(); drawing.Build(model, pose);
+        var batch = drawing.Batches[pose.Slots.FindIndex(s => s.Slot.Id == "front-paint")];
+        var vertex = drawing.Mesh.Vertices[batch.Start];
+        Assert.Equal(191, vertex.Color.R); Assert.InRange(vertex.Color.G, 127, 128); Assert.InRange(vertex.Color.A, 127, 128);
+        var package = SpineExport2D.Build(model, [clip]);
+        var returned = SpineImport2D.Parse(package.Json, "returned", "Returned", name => package.Images["images/" + name + ".png"]);
+        var returnedModel = ResolvedModel.From(returned.Model);
+        foreach (var time in Enumerable.Range(0, 41).Select(i => i / 40f))
+        {
+            var a = PoseEvaluator.Sample(model, clip, time).Slots.Single(s => s.Slot.Name == "front paint").Color;
+            var b = PoseEvaluator.Sample(returnedModel, returned.Animations[0], time).Slots.Single(s => s.Slot.Name == "front paint").Color;
+            Assert.True(Vector4.Distance(a, b) < 1e-5f);
+        }
+        var native = MotionClip.FromJson(clip.ToJson());
+        Assert.Equal(clip.ToJson(), native.ToJson());
+        Assert.True(native.Colors[0].Keys[0].CurveR!.Absolute);
+    }
+
+    [Fact]
+    public void RgbAndAlphaTimelinesHaveIndependentTimingAndSteppedAlpha()
+    {
+        var json = JsonNode.Parse(Rig)!;
+        json["slots"]![0]!["color"] = "ffffffff";
+        json["animations"]!["Spin wheel"]!["slots"]!["rear paint"] = JsonNode.Parse("""
+            { "rgb": [{ "time":0.25, "color":"ff0000" }, { "time":1, "color":"00ff00" }],
+              "alpha": [{ "time":0.5, "value":0.2, "curve":"stepped" }, { "time":0.75, "value":0.8 }] }
+            """);
+        var imported = SpineImport2D.Parse(json.ToJsonString(), "wheel", "Wheel", _ => Image());
+        var model = ResolvedModel.From(imported.Model); var clip = imported.Animations[0];
+        Vector4 At(float time) => PoseEvaluator.Sample(model, clip, time).Slots.Single(s => s.Slot.Id == "rear-paint").Color;
+        Assert.Equal(Vector4.One, At(.1f)); Assert.Equal(1, At(.4f).W);
+        Assert.Equal(.2f, At(.6f).W); Assert.Equal(.8f, At(.75f).W);
+        Assert.True(Vector4.Distance(new(.5f, .5f, 0, .2f), At(.625f)) < 1e-5f);
+        Store(imported.Images); model.TextureRoot = _root;
+        var package = SpineExport2D.Build(model, [clip]);
+        var returned = SpineImport2D.Parse(package.Json, "returned", "Returned", name => package.Images["images/" + name + ".png"]);
+        var other = ResolvedModel.From(returned.Model);
+        foreach (var time in new[] { .1f, .4f, .5f, .625f, .75f, 1f })
+            Assert.True(Vector4.Distance(At(time), PoseEvaluator.Sample(other, returned.Animations[0], time).Slots.Single(s => s.Slot.Id == "rear-paint").Color) < 1e-5f);
+        clip.Colors.Add(new() { Slot = "rear-paint" });
+        Assert.Contains("overlapping", Assert.Throws<InvalidDataException>(() => clip.Validate(model)).Message);
+    }
+
+    [Theory]
+    [InlineData("translate", 0, 20, .15f)]
+    [InlineData("scale", 1, 2, .75f)]
+    [InlineData("shear", 0, 40, MathF.PI / 6)]
+    public void EqualEndpointBoneCurvesKeepOvershootInNativeUnitsAndSpineRoundTrips(string kind, float endpoint, float control, float expected)
+    {
+        var json = JsonNode.Parse(Rig)!;
+        json["animations"]!["Spin wheel"]!["bones"]!["Wheel Root"]![kind] = JsonNode.Parse($$"""
+            [{"x":{{endpoint}},"y":{{endpoint}},"curve":[0.33333334,{{control}},0.6666667,{{control}},0.33333334,{{endpoint}},0.6666667,{{endpoint}}]},
+             {"time":1,"x":{{endpoint}},"y":{{endpoint}}}]
+            """);
+        var imported = SpineImport2D.Parse(json.ToJsonString(), "wheel", "Wheel", _ => Image());
+        Store(imported.Images); var model = ResolvedModel.From(imported.Model); model.TextureRoot = _root;
+        var track = imported.Animations[0].Tracks.Single(t => t.Kind == kind && t.Target == "wheel-root");
+        Assert.Equal(expected, PoseEvaluator.Interpolate(track, .5f).Value.X, 5);
+        var package = SpineExport2D.Build(model, imported.Animations);
+        var returned = SpineImport2D.Parse(package.Json, "returned", "Returned", name => package.Images["images/" + name + ".png"]);
+        var other = returned.Animations[0].Tracks.Single(t => t.Kind == kind && t.Target == "wheel-root");
+        foreach (var time in new[] { 0f, .1f, .5f, .9f, 1f })
+            TestModels.Near(PoseEvaluator.Interpolate(track, time).Value, PoseEvaluator.Interpolate(other, time).Value, 1e-5f);
+        ClipAuthoring.Retime(imported.Animations[0], 2);
+        Assert.Equal(expected, PoseEvaluator.Interpolate(track, 1).Value.X, 5);
+    }
+
+    [Fact]
+    public void RotationCanOvershootBetweenZeroAnglesWithoutCreatingTranslation()
+    {
+        var json = JsonNode.Parse(Rig)!;
+        json["animations"]!["Spin wheel"]!["bones"]!["Wheel Root"]!["rotate"] = JsonNode.Parse("""
+            [{"value":0,"curve":[0.33333334,40,0.6666667,40]}, {"time":1,"value":0}]
+            """);
+        var imported = SpineImport2D.Parse(json.ToJsonString(), "wheel", "Wheel", _ => Image());
+        Store(imported.Images); var model = ResolvedModel.From(imported.Model); model.TextureRoot = _root;
+        var track = imported.Animations[0].Tracks.Single(t => t.Kind == MotionClip.RotateKind);
+        Assert.Equal(MathF.PI / 6, PoseEvaluator.Interpolate(track, .5f).Angle, 5);
+        Assert.Equal(Vector3.Zero, PoseEvaluator.Interpolate(track, .5f).Value);
+        var package = SpineExport2D.Build(model, imported.Animations);
+        var returned = SpineImport2D.Parse(package.Json, "returned", "Returned", name => package.Images["images/" + name + ".png"]);
+        var other = returned.Animations[0].Tracks.Single(t => t.Kind == MotionClip.RotateKind);
+        Assert.Equal(PoseEvaluator.Interpolate(track, .5f).Angle, PoseEvaluator.Interpolate(other, .5f).Angle, 5);
+    }
+
+    [Fact]
     public void NativeAffineRoundTripPreservesCurvesNamesMatricesAndTimelineSemantics()
     {
         var initial = SpineImport2D.Parse(Rig, "wheel", "Wheel", _ => Image());

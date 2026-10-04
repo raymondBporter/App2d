@@ -138,7 +138,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
     private static float Angle(MotionClip clip, string target, float time)
     {
         var track = clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.RotateKind && t.Target == target);
-        return track is null ? 0 : PoseEvaluator.Interpolate(track.Keys, time).Angle;
+        return track is null ? 0 : PoseEvaluator.Interpolate(track, time).Angle;
     }
 }
 

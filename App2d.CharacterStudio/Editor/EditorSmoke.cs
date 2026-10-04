@@ -179,6 +179,42 @@ internal sealed class EditorSmoke(string output)
                 Record(s.Scene()[0].Pose.Slots.Count > 0 && s.SubjectModel!.Asset.Parts.All(p => p.Material?.Texture is not null), "Spine image slots reach the viewport");
                 s.SaveAll(); Record(AuthoredCatalog.Load(s.Assets.Root).Models.ContainsKey("spine-tripod"), "imported Spine rig saves through the ordinary workspace");
             }),
+            ("31-slot-tint-and-curves", shell =>
+            {
+                var s = shell.Session; var model = s.SubjectModel!.Asset; var document = s.ClipDocument!; var slot = model.Slots[0];
+                Check(s.Edit(document, () =>
+                {
+                    ClipAuthoring.SetColorKey(document.Asset, slot.Id, SlotColorTrack2D.Rgba, 0, new(0, .3f, 1, 1));
+                    ClipAuthoring.SetColorKey(document.Asset, slot.Id, SlotColorTrack2D.Rgba, 1, new(0, 1, .3f, .8f));
+                    document.Asset.Colors[0].Keys[0].CurveR = new() { X1 = 1f / 3, X2 = 2f / 3, Y1 = 1, Y2 = 1, Absolute = true };
+                    document.Asset.Tracks.RemoveAll(t => t.Target == slot.Bone && t.Kind is MotionClip.ScaleKind or MotionClip.ShearKind);
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ScaleKind, slot.Bone), 0, new(.1f, .2f, 0));
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ScaleKind, slot.Bone), 1, new(.3f, -.1f, 0));
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ShearKind, slot.Bone), 0, new(.05f, -.1f, 0));
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ShearKind, slot.Bone), 1, new(-.15f, .1f, 0));
+                    document.Asset.Attachments.Add(new() { Slot = slot.Id, Keys = [new() { Time = .45f }, new() { Time = .8f, Attachment = slot.Attachment }] });
+                    document.Asset.DrawOrder = [new() { Time = .2f, Slots = [.. model.Slots.Select(v => v.Id).Reverse()] }];
+                }), s);
+                s.Seek(.25f); var pose = s.Scene()[0].Pose;
+                Record(pose.Slots.Single(v => v.Slot.Id == slot.Id).Color.X > .5f, "equal-endpoint tint curve reaches the viewport");
+                Record(pose.Slots[0].Slot.Id == model.Slots[^1].Id, "animated draw order reaches the viewport");
+            }),
+            ("32-hidden-slot", shell =>
+            {
+                var s = shell.Session; s.Seek(.6f);
+                Record(s.Scene()[0].Pose.Slots.Single(v => v.Slot.Id == s.SubjectModel!.Asset.Slots[0].Id).Part is null, "attachment key hides the slot");
+            }),
+            ("33-slot-timelines-round-trip", shell =>
+            {
+                var s = shell.Session; var path = Path.Combine(output, "tinted-spine", "tripod.json");
+                Check(s.ExportSpine(path), s); Check(s.ImportSpine(path, "tint-returned", "Tint returned"), s);
+                s.SetClip("tint-returned-tripod-walk"); s.Seek(.25f); s.SaveAll();
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root); var clip = reopened.Clip("tint-returned-tripod-walk")!.Asset;
+                Record(clip.Colors.Count == 1 && clip.Attachments.Count > 0 && clip.DrawOrder.Count > 0,
+                    "slot color, attachment, and draw order keys survive Spine and save/reopen");
+                Record(clip.Tracks.Any(t => t.Kind == MotionClip.ScaleKind) && clip.Tracks.Any(t => t.Kind == MotionClip.ShearKind),
+                    "scale and shear keys survive Spine and save/reopen");
+            }),
         ];
         return workspace;
     }

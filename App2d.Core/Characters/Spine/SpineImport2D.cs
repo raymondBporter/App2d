@@ -138,8 +138,11 @@ public static partial class SpineImport2D
                 if (!slots.TryGetValue(slot.Key, out var slotId)) throw new InvalidDataException($"Unknown animated slot '{slot.Key}'.");
                 foreach (var timeline in slot.Value?.AsObject() ?? [])
                 {
-                    if (timeline.Key != "attachment") Unsupported($"animation '{entry.Key}', slot '{slot.Key}' timeline '{timeline.Key}'");
-                    clip.Attachments.Add(new() { Slot = slotId, Keys = [.. timeline.Value!.AsArray().Select(k => new SlotAttachmentKey2D { Time = Number(k, "time"), Attachment = k?["name"]?.GetValue<string>() })] });
+                    if (timeline.Key == "attachment")
+                        clip.Attachments.Add(new() { Slot = slotId, Keys = [.. timeline.Value!.AsArray().Select(k => new SlotAttachmentKey2D { Time = Number(k, "time"), Attachment = k?["name"]?.GetValue<string>() })] });
+                    else if (timeline.Key is SlotColorTrack2D.Rgba or SlotColorTrack2D.Rgb or SlotColorTrack2D.Alpha)
+                        clip.Colors.Add(ReadColors(timeline.Key, timeline.Value!.AsArray(), slotId));
+                    else Unsupported($"animation '{entry.Key}', slot '{slot.Key}' timeline '{timeline.Key}'");
                 }
             }
             foreach (var key in entry.Value?["drawOrder"]?.AsArray() ?? [])
@@ -194,20 +197,54 @@ public static partial class SpineImport2D
             else if (entry?["curve"] is JsonArray controls && i + 1 < keys.Count)
             {
                 var next = keys[i + 1]; var endTime = Number(next, "time");
-                KeyCurve2D? Read(int index, float start, float end)
-                {
-                    if (controls.Count < index + 4 || endTime <= key.Time) throw new InvalidDataException("Invalid Spine Bezier controls.");
-                    if (start == end)
-                    {
-                        if (controls[index + 1]!.GetValue<float>() != start || controls[index + 3]!.GetValue<float>() != start) Unsupported("Bezier overshoot between equal key values");
-                        return null;
-                    }
-                    return new() { X1 = (controls[index]!.GetValue<float>() - key.Time) / (endTime - key.Time), Y1 = (controls[index + 1]!.GetValue<float>() - start) / (end - start), X2 = (controls[index + 2]!.GetValue<float>() - key.Time) / (endTime - key.Time), Y2 = (controls[index + 3]!.GetValue<float>() - start) / (end - start) };
-                }
-                var c = Read(0, x, Number(next, single ? "value" : "x", baseline));
+                if (controls.Count != (single ? 4 : 8)) throw new InvalidDataException("Invalid Spine Bezier component count.");
+                var c = ReadCurve(controls, 0, key.Time, endTime, scale, -baseline * scale);
                 if (yOnly) key.CurveY = c; else key.Curve = c;
-                if (!single) key.CurveY = Read(4, y, Number(next, "y", baseline));
+                if (!single) key.CurveY = ReadCurve(controls, 4, key.Time, endTime, scale, -baseline * scale);
             }
+            else if (entry?["curve"] is not null && i + 1 < keys.Count) throw new InvalidDataException("Invalid Spine timeline curve.");
+            track.Keys.Add(key);
+        }
+        return track;
+    }
+
+    private static KeyCurve2D ReadCurve(JsonArray controls, int index, float startTime, float endTime, float scale = 1, float offset = 0)
+    {
+        if (controls.Count < index + 4 || endTime <= startTime) throw new InvalidDataException("Invalid Spine Bezier controls.");
+        var curve = new KeyCurve2D
+        {
+            X1 = (controls[index]!.GetValue<float>() - startTime) / (endTime - startTime),
+            X2 = (controls[index + 2]!.GetValue<float>() - startTime) / (endTime - startTime),
+            Y1 = controls[index + 1]!.GetValue<float>() * scale + offset,
+            Y2 = controls[index + 3]!.GetValue<float>() * scale + offset, Absolute = true
+        };
+        curve.Validate(); return curve;
+    }
+
+    private static SlotColorTrack2D ReadColors(string kind, JsonArray keys, string slot)
+    {
+        var track = new SlotColorTrack2D { Slot = slot, Kind = kind };
+        for (var i = 0; i < keys.Count; i++)
+        {
+            var entry = keys[i];
+            var value = kind == SlotColorTrack2D.Alpha ? new Vector4(1, 1, 1, Number(entry, "value"))
+                : SlotColorTrack2D.ParseColor(Text(entry, "color") + (kind == SlotColorTrack2D.Rgb ? "ff" : ""));
+            var key = new SlotColorKey2D { Time = Number(entry, "time"), R = value.X, G = value.Y, B = value.Z, A = value.W };
+            if (entry?["curve"] is JsonValue step && step.TryGetValue<string>(out var ease) && ease == "stepped") key.Ease = ClipEase.Step;
+            else if (entry?["curve"] is JsonArray controls && i + 1 < keys.Count)
+            {
+                var endTime = Number(keys[i + 1], "time");
+                var components = kind == SlotColorTrack2D.Alpha ? 1 : kind == SlotColorTrack2D.Rgb ? 3 : 4;
+                if (controls.Count != components * 4) throw new InvalidDataException("Invalid Spine color Bezier component count.");
+                if (kind == SlotColorTrack2D.Alpha) key.CurveA = ReadCurve(controls, 0, key.Time, endTime);
+                else
+                {
+                    key.CurveR = ReadCurve(controls, 0, key.Time, endTime); key.CurveG = ReadCurve(controls, 4, key.Time, endTime);
+                    key.CurveB = ReadCurve(controls, 8, key.Time, endTime);
+                    if (kind == SlotColorTrack2D.Rgba) key.CurveA = ReadCurve(controls, 12, key.Time, endTime);
+                }
+            }
+            else if (entry?["curve"] is not null && i + 1 < keys.Count) throw new InvalidDataException("Invalid Spine color curve.");
             track.Keys.Add(key);
         }
         return track;

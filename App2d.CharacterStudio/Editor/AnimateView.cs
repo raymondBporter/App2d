@@ -202,6 +202,7 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         {
             if (Ui.Combo("Ease to next key", key.Ease, ClipEase.All) is { } ease) session.Edit(document, () => ClipAuthoring.SetEase(document.Asset, time, ease, channels));
             if (ImGui.SmallButton("Delete this key")) session.Edit(document, () => ClipAuthoring.DeleteKeys(document.Asset, time, channels));
+            CurveFields(document, channels, time);
         }
         else
         {
@@ -371,6 +372,7 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         PointRow(draw, "Markers", clip.Markers.Select(m => (m.Time, m.Id)), origin.X, y, X, Ui.Color(210, 140, 220)); y += RowHeight * scale;
         foreach (var face in clip.Faces) { PointRow(draw, "Face " + face.Part, face.Keys.Select(k => (k.Time, k.Expression)), origin.X, y, X, Ui.Color(240, 200, 90)); y += RowHeight * scale; }
         foreach (var slot in clip.Attachments) { PointRow(draw, "Slot " + slot.Slot, slot.Keys.Select(k => (k.Time, k.Attachment ?? "hidden")), origin.X, y, X, Ui.Color(90, 200, 240)); y += RowHeight * scale; }
+        foreach (var colors in clip.Colors) { PointRow(draw, colors.Slot + " " + colors.Kind, colors.Keys.Select(k => (k.Time, "tint")), origin.X, y, X, Ui.Color(210, 150, 240)); y += RowHeight * scale; }
         if (clip.DrawOrder.Count > 0) { PointRow(draw, "Draw order", clip.DrawOrder.Select(k => (k.Time, "order")), origin.X, y, X, Ui.Color(90, 200, 240)); y += RowHeight * scale; }
 
         var head = X(session.Transport.Time);
@@ -412,6 +414,8 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
             });
         }
         if (ImGui.Button("Draw earlier")) Move(-1); ImGui.SameLine(); if (ImGui.Button("Draw later")) Move(1);
+        if (ImGui.Button("Remove draw order key here")) session.Edit(document, () => document.Asset.DrawOrder.RemoveAll(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime));
+        ColorFields(document, slot, time);
         Ui.Help("Attachment and order changes are keyed at the playhead. Slots are listed from back to front.");
     }
 

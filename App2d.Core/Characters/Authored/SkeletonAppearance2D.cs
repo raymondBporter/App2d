@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>An ordered attachment location on a bone. A socket is a placement frame; a slot also owns visible artwork.</summary>
@@ -43,13 +45,15 @@ public sealed record AnimationEvent2D
     public string? String { get; set; }
 }
 
-/// <summary>Normalized cubic timing curve. Y control values may overshoot the keyed values.</summary>
+/// <summary>Cubic curve with normalized time controls. Value controls may overshoot, including between equal endpoints.</summary>
 public sealed record KeyCurve2D
 {
     public float X1 { get; set; }
     public float Y1 { get; set; }
     public float X2 { get; set; } = 1;
     public float Y2 { get; set; } = 1;
+    /// <summary>When true, Y1/Y2 are channel values; otherwise they are fractions of the endpoint difference.</summary>
+    public bool Absolute { get; set; }
 
     public void Validate()
     {
@@ -58,14 +62,51 @@ public sealed record KeyCurve2D
     }
     public float Apply(float time)
     {
-        static float Cubic(float t, float a, float b) => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t;
-        var low = 0f; var high = 1f;
-        for (var i = 0; i < 24; i++) { var mid = (low + high) / 2; if (Cubic(mid, X1, X2) < time) low = mid; else high = mid; }
-        return Cubic((low + high) / 2, Y1, Y2);
+        var t = Parameter(time);
+        return Cubic(t, 0, Y1, Y2, 1);
     }
+    public float Evaluate(float time, float start, float end)
+    {
+        if (time <= 0) return start;
+        if (time >= 1) return end;
+        var (a, b) = Controls(start, end);
+        return Cubic(Parameter(time), start, a, b, end);
+    }
+    public (float First, float Second) Controls(float start, float end) => Absolute ? (Y1, Y2)
+        : (start + Y1 * (end - start), start + Y2 * (end - start));
+
+    /// <summary>The same curve restricted to a time interval, with time controls normalized to the new segment.</summary>
+    public KeyCurve2D Slice(float from, float to, float start, float end)
+    {
+        if (!(from >= 0 && to <= 1 && to > from)) throw new ArgumentOutOfRangeException(nameof(to));
+        var (first, second) = Controls(start, end);
+        var points = new[] { new Vector2(0, start), new Vector2(X1, first), new Vector2(X2, second), new Vector2(1, end) };
+        static (Vector2[] Left, Vector2[] Right) Split(Vector2[] p, float t)
+        {
+            var a = Vector2.Lerp(p[0], p[1], t); var b = Vector2.Lerp(p[1], p[2], t); var c = Vector2.Lerp(p[2], p[3], t);
+            var d = Vector2.Lerp(a, b, t); var e = Vector2.Lerp(b, c, t); var f = Vector2.Lerp(d, e, t);
+            return ([p[0], a, d, f], [f, e, c, p[3]]);
+        }
+        var t0 = Parameter(from); var t1 = Parameter(to);
+        var left = Split(points, t1).Left;
+        var segment = from == 0 ? left : Split(left, t0 / t1).Right;
+        return new() { X1 = Math.Clamp((segment[1].X - from) / (to - from), 0, 1), Y1 = segment[1].Y,
+            X2 = Math.Clamp((segment[2].X - from) / (to - from), 0, 1), Y2 = segment[2].Y, Absolute = true };
+    }
+
+    private float Parameter(float time)
+    {
+        if (time <= 0) return 0;
+        if (time >= 1) return 1;
+        var low = 0f; var high = 1f;
+        for (var i = 0; i < 24; i++) { var mid = (low + high) / 2; if (Cubic(mid, 0, X1, X2, 1) < time) low = mid; else high = mid; }
+        return (low + high) / 2;
+    }
+    private static float Cubic(float t, float start, float a, float b, float end) =>
+        (1 - t) * (1 - t) * (1 - t) * start + 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t * end;
 }
 
-public sealed record EvaluatedSlot2D(SkeletonSlot2D Slot, PuppetPart? Part);
+public sealed record EvaluatedSlot2D(SkeletonSlot2D Slot, PuppetPart? Part, Vector4 Color);
 
 internal static class SkeletonAppearance2D
 {
@@ -116,7 +157,7 @@ internal static class SkeletonAppearance2D
             string? part = null;
             if (name is not null)
                 part = skin?.Attachments.GetValueOrDefault(id)?.GetValueOrDefault(name) ?? fallback?.Attachments.GetValueOrDefault(id)?.GetValueOrDefault(name);
-            pose.Slots.Add(new(slot, part is null ? null : model.Parts.First(p => p.Id == part)));
+            pose.Slots.Add(new(slot, part is null ? null : model.Parts.First(p => p.Id == part), SlotColorTrack2D.Evaluate(clip, slot, time)));
         }
     }
 }

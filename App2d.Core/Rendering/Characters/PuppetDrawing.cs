@@ -30,7 +30,7 @@ public sealed class PuppetDrawing
             var slot = pose.Slots[i]; if (slot.Part is not { Hidden: false } part) continue;
             if (part.Material?.Texture is null) throw new InvalidDataException("Slot attachments currently require image materials.");
             var frame = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
-            AddImage(part, frame, slot.Slot.Color, slot.Slot.Blend, -i * .001f);
+            AddImage(part, frame, SlotColorTrack2D.FormatColor(slot.Color), slot.Slot.Blend, -i * .001f);
         }
     }
 

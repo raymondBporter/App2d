@@ -67,7 +67,7 @@ public static class ClipAuthoring
         var rotate = channel.Kind == MotionClip.RotateKind;
         var key = new ClipKey { Time = time, X = rotate ? 0 : value.X, Y = rotate ? 0 : value.Y, Z = rotate ? 0 : value.Z, Angle = rotate ? angle : 0 };
         if (track.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } existing)
-        { key.Ease = existing.Ease; key.Curve = existing.Curve; key.CurveY = existing.CurveY; key.Bend = existing.Bend; }
+        { key.Ease = existing.Ease; key.Curve = existing.Curve; key.CurveY = existing.CurveY; key.CurveZ = existing.CurveZ; key.Bend = existing.Bend; }
         Put(track.Keys, key, k => k.Time);
     }
 
@@ -138,7 +138,9 @@ public static class ClipAuthoring
     public static IReadOnlyList<float> KeyTimes(MotionClip clip, IReadOnlyCollection<Channel>? channels = null)
     {
         var times = Tracks(clip, channels).SelectMany(t => t.Keys).Select(k => k.Time);
-        if (channels is null) times = times.Concat(clip.Travel.Keys.Select(k => k.Time));
+        if (channels is null) times = times.Concat(clip.Travel.Keys.Select(k => k.Time))
+            .Concat(clip.Attachments.SelectMany(t => t.Keys).Select(k => k.Time)).Concat(clip.Colors.SelectMany(t => t.Keys).Select(k => k.Time))
+            .Concat(clip.DrawOrder.Select(k => k.Time));
         var sorted = times.Order().ToList(); var distinct = new List<float>();
         foreach (var time in sorted) if (distinct.Count == 0 || time - distinct[^1] > SameTime) distinct.Add(time);
         return distinct;
@@ -173,19 +175,64 @@ public static class ClipAuthoring
         }
         foreach (var track in Tracks(clip, channels)) Move(track.Keys);
         if (channels is null) Move(clip.Travel.Keys);
+        if (channels is null)
+        {
+            void MoveAppearance<T>(List<T> keys, Func<T, float> time, Func<T, T> at)
+            {
+                var key = keys.FirstOrDefault(k => MathF.Abs(time(k) - from) < SameTime);
+                if (key is null) return;
+                if (!copy) keys.Remove(key);
+                Put(keys, at(key), time);
+            }
+            foreach (var track in clip.Attachments) MoveAppearance(track.Keys, k => k.Time, k => k with { Time = to });
+            foreach (var track in clip.Colors) MoveAppearance(track.Keys, k => k.Time, k => k with { Time = to });
+            MoveAppearance(clip.DrawOrder, k => k.Time, k => k with { Time = to, Slots = [.. k.Slots] });
+        }
     }
 
     public static void DeleteKeys(MotionClip clip, float time, IReadOnlyCollection<Channel>? channels = null)
     {
         foreach (var track in Tracks(clip, channels)) track.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
         if (channels is null) clip.Travel.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+        if (channels is null)
+        {
+            foreach (var track in clip.Attachments) track.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+            foreach (var track in clip.Colors) track.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+            clip.DrawOrder.RemoveAll(k => MathF.Abs(k.Time - time) < SameTime);
+            clip.Attachments.RemoveAll(t => t.Keys.Count == 0); clip.Colors.RemoveAll(t => t.Keys.Count == 0);
+        }
         clip.Tracks.RemoveAll(t => t.Keys.Count == 0);
     }
 
     public static void SetEase(MotionClip clip, float time, string ease, IReadOnlyCollection<Channel>? channels = null)
     {
         EntityVocabulary.Require(ease, ClipEase.All, "ease");
-        foreach (var key in Tracks(clip, channels).SelectMany(t => t.Keys).Where(k => MathF.Abs(k.Time - time) < SameTime)) { key.Ease = ease; key.Curve = key.CurveY = null; }
+        foreach (var key in Tracks(clip, channels).SelectMany(t => t.Keys).Concat(channels is null ? clip.Travel.Keys : []).Where(k => MathF.Abs(k.Time - time) < SameTime))
+        { key.Ease = ease; key.Curve = key.CurveY = key.CurveZ = null; }
+        if (channels is null)
+            foreach (var key in clip.Colors.SelectMany(t => t.Keys).Where(k => MathF.Abs(k.Time - time) < SameTime))
+            { key.Ease = ease; key.CurveR = key.CurveG = key.CurveB = key.CurveA = null; }
+    }
+
+    public static void SetCurve(MotionClip clip, Channel channel, float time, int component, KeyCurve2D? curve)
+    {
+        if (component is < 0 or > 2) throw new ArgumentOutOfRangeException(nameof(component));
+        curve?.Validate();
+        var key = Track(clip, channel)?.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime)
+            ?? throw new InvalidOperationException("Add a key at the playhead before editing its curve.");
+        var copy = curve is null ? null : curve with { };
+        if (copy is not null && key.Ease == ClipEase.Step) key.Ease = ClipEase.Linear;
+        if (component == 0) key.Curve = copy; else if (component == 1) key.CurveY = copy; else key.CurveZ = copy;
+    }
+
+    public static void SetColorKey(MotionClip clip, string slot, string kind, float time, Vector4 value)
+    {
+        var track = clip.Colors.FirstOrDefault(t => t.Slot == slot && t.Kind == kind);
+        if (track is null) clip.Colors.Add(track = new() { Slot = slot, Kind = kind });
+        var key = new SlotColorKey2D { Time = time, R = value.X, G = value.Y, B = value.Z, A = value.W };
+        if (track.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } previous)
+        { key.Ease = previous.Ease; key.CurveR = previous.CurveR; key.CurveG = previous.CurveG; key.CurveB = previous.CurveB; key.CurveA = previous.CurveA; }
+        Put(track.Keys, key, k => k.Time);
     }
 
     /// <summary>Changes the duration, scaling every key, contact, marker and face time with it.</summary>
@@ -199,6 +246,7 @@ public static class ClipAuthoring
         foreach (var marker in clip.Markers) marker.Time = Scale(marker.Time);
         foreach (var key in clip.Faces.SelectMany(f => f.Keys)) key.Time = Scale(key.Time);
         foreach (var key in clip.Attachments.SelectMany(t => t.Keys)) key.Time = Scale(key.Time);
+        foreach (var key in clip.Colors.SelectMany(t => t.Keys)) key.Time = Scale(key.Time);
         foreach (var key in clip.DrawOrder) key.Time = Scale(key.Time);
         foreach (var key in clip.Events) key.Time = Scale(key.Time);
         clip.Duration = duration;
@@ -215,21 +263,38 @@ public static class ClipAuthoring
         if (from < -SameTime || to > clip.Duration + SameTime || to - from < .05f)
             ArgGuard.ThrowOutOfRange(to, $"'{clip.Id}': excerpt {from:F3}..{to:F3} is outside 0..{clip.Duration:F3} or too short.");
         var copy = Duplicate(clip, id, name); copy.Loop = loop; copy.Duration = to - from;
-        List<ClipKey> Cut(List<ClipKey> keys)
+        KeyCurve2D? Segment(KeyCurve2D? curve, string ease, float startTime, float endTime, float a, float b, float start, float end)
+        {
+            if (ease == ClipEase.Step) return null;
+            if (MathF.Abs(startTime - a) < SameTime && MathF.Abs(endTime - b) < SameTime) return curve;
+            curve ??= ease == ClipEase.Smooth ? new() { X1 = 1f / 3, X2 = 2f / 3, Y1 = 0, Y2 = 1 } : null;
+            return curve?.Slice(Math.Clamp((a - startTime) / (endTime - startTime), 0, 1), Math.Clamp((b - startTime) / (endTime - startTime), 0, 1), start, end);
+        }
+        List<ClipKey> Cut(List<ClipKey> keys, bool setupBeforeFirst = false, bool rotate = false)
         {
             if (keys.Count == 0) return keys;
             ClipKey End(float time)
             {
                 if (keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } existing) return existing with { Time = time };
-                var (value, angle) = PoseEvaluator.Interpolate(keys, time);
+                var (value, angle) = setupBeforeFirst && time < keys[0].Time ? default : PoseEvaluator.Interpolate(keys, time, rotate);
                 var before = keys.LastOrDefault(k => k.Time < time);
                 return new() { Time = time, X = value.X, Y = value.Y, Z = value.Z, Angle = angle, Ease = before?.Ease ?? ClipEase.Linear };
             }
             var first = End(from); first.Bend ??= keys.LastOrDefault(k => k.Time <= from + SameTime && k.Bend is not null)?.Bend;
             var inside = keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime);
-            return [.. new[] { first }.Concat(inside).Append(End(to)).Select(k => k with { Time = MathF.Min(copy.Duration, MathF.Max(0, k.Time - from)) })];
+            var cut = new[] { first }.Concat(inside).Append(End(to)).Select(k => k with { }).ToList();
+            for (var i = 0; i + 1 < cut.Count; i++)
+            {
+                var a = cut[i]; var b = cut[i + 1]; var index = keys.FindLastIndex(k => k.Time <= a.Time);
+                if (index < 0 || index + 1 >= keys.Count) { a.Ease = ClipEase.Step; a.Curve = a.CurveY = a.CurveZ = null; continue; }
+                var start = keys[index]; var end = keys[index + 1];
+                a.Curve = Segment(start.Curve, start.Ease, start.Time, end.Time, a.Time, b.Time, rotate ? start.Angle : start.X, rotate ? end.Angle : end.X);
+                a.CurveY = Segment(start.CurveY ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, a.Time, b.Time, start.Y, end.Y);
+                a.CurveZ = Segment(start.CurveZ ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, a.Time, b.Time, start.Z, end.Z);
+            }
+            return [.. cut.Select(k => k with { Time = MathF.Min(copy.Duration, MathF.Max(0, k.Time - from)) })];
         }
-        foreach (var track in copy.Tracks) track.Keys = Cut(track.Keys);
+        foreach (var track in copy.Tracks) track.Keys = Cut(track.Keys, track.SetupBeforeFirst, track.Kind == MotionClip.RotateKind);
         copy.Travel.Keys = Cut(copy.Travel.Keys);
         copy.Contacts = [.. copy.Contacts.Where(c => c.Finish > from + SameTime && c.Start < to - SameTime)
             .Select(c => new ClipContact { Chain = c.Chain, Start = MathF.Max(0, c.Start - from), Finish = MathF.Min(copy.Duration, c.Finish - from), Target = c.Target })];
@@ -241,6 +306,43 @@ public static class ClipAuthoring
                 .Concat(face.Keys.Where(k => k.Time > from + SameTime && k.Time < to - SameTime).Select(k => new ClipFaceKey { Time = k.Time - from, Expression = k.Expression }))];
         }
         copy.Faces.RemoveAll(f => f.Keys.Count == 0);
+        foreach (var track in copy.Attachments)
+        {
+            var showing = track.Keys.LastOrDefault(k => k.Time <= from);
+            track.Keys = [.. (showing is null ? [] : new[] { showing with { Time = 0 } })
+                .Concat(track.Keys.Where(k => k.Time > from && k.Time <= to).Select(k => k with { Time = k.Time - from }))];
+        }
+        copy.Attachments.RemoveAll(t => t.Keys.Count == 0);
+        var order = copy.DrawOrder.LastOrDefault(k => k.Time <= from);
+        copy.DrawOrder = [.. (order is null ? [] : new[] { order with { Time = 0, Slots = [.. order.Slots] } })
+            .Concat(copy.DrawOrder.Where(k => k.Time > from && k.Time <= to).Select(k => k with { Time = k.Time - from, Slots = [.. k.Slots] }))];
+        copy.Events = [.. copy.Events.Where(k => k.Time >= from && k.Time <= to).Select(k => k with { Time = k.Time - from })];
+        foreach (var track in copy.Colors)
+        {
+            var keys = track.Keys; if (keys.Count == 0) continue;
+            var startTime = track.SetupBeforeFirst ? MathF.Max(from, keys[0].Time) : from;
+            if (startTime > to) { track.Keys = []; continue; }
+            SlotColorKey2D End(float at)
+            {
+                if (keys.FirstOrDefault(k => MathF.Abs(k.Time - at) < SameTime) is { } existing) return existing with { Time = at };
+                var value = Vector4.Clamp(SlotColorTrack2D.Sample(keys, at), Vector4.Zero, Vector4.One);
+                return new() { Time = at, R = value.X, G = value.Y, B = value.Z, A = value.W, Ease = keys.LastOrDefault(k => k.Time < at)?.Ease ?? ClipEase.Linear };
+            }
+            var cut = new[] { End(startTime) }.Concat(keys.Where(k => k.Time > startTime && k.Time < to).Select(k => k with { }))
+                .Concat(to > startTime ? new[] { End(to) } : []).ToList();
+            for (var i = 0; i + 1 < cut.Count; i++)
+            {
+                var a = cut[i]; var b = cut[i + 1]; var index = keys.FindLastIndex(k => k.Time <= a.Time);
+                if (index < 0 || index + 1 >= keys.Count) { a.Ease = ClipEase.Step; a.CurveR = a.CurveG = a.CurveB = a.CurveA = null; continue; }
+                var start = keys[index]; var end = keys[index + 1];
+                a.CurveR = Segment(start.CurveR, start.Ease, start.Time, end.Time, a.Time, b.Time, start.R, end.R);
+                a.CurveG = Segment(start.CurveG, start.Ease, start.Time, end.Time, a.Time, b.Time, start.G, end.G);
+                a.CurveB = Segment(start.CurveB, start.Ease, start.Time, end.Time, a.Time, b.Time, start.B, end.B);
+                a.CurveA = Segment(start.CurveA, start.Ease, start.Time, end.Time, a.Time, b.Time, start.A, end.A);
+            }
+            track.Keys = [.. cut.Select(k => k with { Time = Math.Clamp(k.Time - from, 0, copy.Duration) })];
+        }
+        copy.Colors.RemoveAll(t => t.Keys.Count == 0);
         return copy;
     }
 

@@ -146,11 +146,13 @@ public static class SpineExport2D
                     if ((track.Scale ?? model.Controls[track.Target].Scale) != CharacterModel.Unit) throw new InvalidDataException("Affine Spine tracks must use unscaled model units.");
                     if (timelines[names[track.Target]] is not JsonObject channels) timelines[names[track.Target]] = channels = new();
                     var keys = track.Keys.ToList();
-                    if (!track.SetupBeforeFirst && keys.Count > 0 && keys[0].Time > 0) keys.Insert(0, keys[0] with { Time = 0 });
+                    if (!track.SetupBeforeFirst && keys.Count > 0 && keys[0].Time > 0) keys.Insert(0, keys[0] with { Time = 0, Ease = ClipEase.Step, Curve = null, CurveY = null });
                     channels[track.Kind] = Track(keys, track.Kind, pixelsPerUnit);
                 }
                 var travelRatio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
-                motion["translate"] = Track(clip.Travel.Keys.Count == 0 ? [new() { Time = clip.Duration }] : clip.Travel.Keys.Select(k => k with { X = k.X * travelRatio, Y = k.Y * travelRatio }).ToList(), MotionClip.TranslateKind, pixelsPerUnit);
+                KeyCurve2D? Retarget(KeyCurve2D? curve) => curve?.Absolute == true ? curve with { Y1 = curve.Y1 * travelRatio, Y2 = curve.Y2 * travelRatio } : curve;
+                motion["translate"] = Track(clip.Travel.Keys.Count == 0 ? [new() { Time = clip.Duration }] : clip.Travel.Keys.Select(k => k with
+                { X = k.X * travelRatio, Y = k.Y * travelRatio, Curve = Retarget(k.Curve), CurveY = Retarget(k.CurveY) }).ToList(), MotionClip.TranslateKind, pixelsPerUnit);
             }
             else
             {
@@ -185,6 +187,11 @@ public static class SpineExport2D
             }
             var slotTimelines = new JsonObject();
             foreach (var track in clip.Attachments) slotTimelines[slotNames[track.Slot]] = new JsonObject { ["attachment"] = new JsonArray([.. track.Keys.Select(k => (JsonNode)new JsonObject { ["time"] = k.Time, ["name"] = k.Attachment })]) };
+            foreach (var track in clip.Colors)
+            {
+                if (slotTimelines[slotNames[track.Slot]] is not JsonObject channels) slotTimelines[slotNames[track.Slot]] = channels = new();
+                channels[track.Kind] = Colors(track);
+            }
             if (!nativeImages)
                 foreach (var track in clip.Faces.Where(t => slotNames.ContainsKey(t.Part)))
                 {
@@ -294,8 +301,46 @@ public static class SpineExport2D
                 var next = keys[i + 1]; var controls = new JsonArray();
                 var curve = key.Curve ?? (key.Ease == ClipEase.Smooth ? new KeyCurve2D { X1 = 1f / 3, X2 = 2f / 3, Y1 = 0, Y2 = 1 } : new KeyCurve2D { X1 = 1f / 3, Y1 = 1f / 3, X2 = 2f / 3, Y2 = 2f / 3 });
                 void Add(KeyCurve2D c, float a, float b)
-                { var dt = next.Time - key.Time; controls.Add(key.Time + c.X1 * dt); controls.Add(a + c.Y1 * (b - a)); controls.Add(key.Time + c.X2 * dt); controls.Add(a + c.Y2 * (b - a)); }
-                Add(curve, X(key), X(next)); if (!rotate) Add(key.CurveY ?? curve, Y(key), Y(next)); node["curve"] = controls;
+                {
+                    var dt = next.Time - key.Time; var (first, second) = c.Absolute
+                        ? (c.Y1 * multiplier + (scale ? 1 : 0), c.Y2 * multiplier + (scale ? 1 : 0)) : c.Controls(a, b);
+                    controls.Add(key.Time + c.X1 * dt); controls.Add(first); controls.Add(key.Time + c.X2 * dt); controls.Add(second);
+                }
+                Add(curve, X(key), X(next));
+                if (!rotate) Add(key.CurveY ?? (curve.Absolute ? DefaultCurve(key.Ease) : curve), Y(key), Y(next)); node["curve"] = controls;
+            }
+            result.Add(node);
+        }
+        return result;
+    }
+    private static KeyCurve2D DefaultCurve(string ease) => ease == ClipEase.Smooth
+        ? new() { X1 = 1f / 3, X2 = 2f / 3, Y1 = 0, Y2 = 1 }
+        : new() { X1 = 1f / 3, Y1 = 1f / 3, X2 = 2f / 3, Y2 = 2f / 3 };
+
+    private static JsonArray Colors(SlotColorTrack2D track)
+    {
+        var keys = track.Keys.ToList();
+        if (!track.SetupBeforeFirst && keys.Count > 0 && keys[0].Time > 0)
+            keys.Insert(0, keys[0] with { Time = 0, Ease = ClipEase.Step, CurveR = null, CurveG = null, CurveB = null, CurveA = null });
+        var result = new JsonArray();
+        for (var i = 0; i < keys.Count; i++)
+        {
+            var key = keys[i]; var node = new JsonObject { ["time"] = key.Time };
+            if (track.Kind == SlotColorTrack2D.Alpha) node["value"] = key.A;
+            else node["color"] = SlotColorTrack2D.FormatColor(key.Value)[..(track.Kind == SlotColorTrack2D.Rgb ? 6 : 8)];
+            if (key.Ease == ClipEase.Step) node["curve"] = "stepped";
+            else if (i + 1 < keys.Count && (key.Ease == ClipEase.Smooth || key.CurveR is not null || key.CurveG is not null || key.CurveB is not null || key.CurveA is not null))
+            {
+                var next = keys[i + 1]; var controls = new JsonArray();
+                void Add(KeyCurve2D? curve, float start, float end)
+                {
+                    var c = curve ?? DefaultCurve(key.Ease); var (first, second) = c.Controls(start, end); var dt = next.Time - key.Time;
+                    controls.Add(key.Time + c.X1 * dt); controls.Add(first); controls.Add(key.Time + c.X2 * dt); controls.Add(second);
+                }
+                if (track.Kind != SlotColorTrack2D.Alpha)
+                { Add(key.CurveR, key.R, next.R); Add(key.CurveG, key.G, next.G); Add(key.CurveB, key.B, next.B); }
+                if (track.Kind != SlotColorTrack2D.Rgb) Add(key.CurveA, key.A, next.A);
+                node["curve"] = controls;
             }
             result.Add(node);
         }
