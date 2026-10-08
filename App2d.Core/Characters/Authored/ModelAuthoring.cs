@@ -61,6 +61,8 @@ public static class ModelAuthoring
         if (model.Controls.FirstOrDefault(c => c.Parent == id) is { } child) throw new InvalidOperationException($"{owner}: '{id}' still has child '{child.Id}'.");
         if (model.Chains.FirstOrDefault(c => c.Root == id || c.Joint == id || c.End == id || c.Frame == id) is { } chain) throw new InvalidOperationException($"{owner}: chain '{chain.Id}' uses '{id}'.");
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
+        if (model.Parts.FirstOrDefault(p => p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true) is { } bound)
+            throw new InvalidOperationException($"{owner}: cutout '{bound.Id}' uses '{id}'; detach its points first.");
         var parts = model.Parts.Where(p => p.A == id || p.B == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);
         foreach (var group in model.Groups) group.Targets.Remove(id);
@@ -122,8 +124,30 @@ public static class ModelAuthoring
             part.B = model.Controls.FirstOrDefault(control => control.Parent == part.A)?.Id
                 ?? model.Controls.FirstOrDefault(control => control.Id != part.A)?.Id
                 ?? throw new InvalidOperationException("A stroke needs a second control.");
+        if (kind == PuppetPartKinds.Polygon && part.Points is null)
+            part.Points = [new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)];
+        if (kind != PuppetPartKinds.Polygon && part.Bindings is { Count: > 0 })
+            throw new InvalidOperationException("Detach cutout points before changing to a rigid primitive.");
         part.Kind = kind;
         model.Validate();
+    }
+
+    /// <summary>Edits the perimeter and remaps attachments in the same transaction. New points inherit their preceding attachment.</summary>
+    public static void InsertCutoutPoint(PuppetPart part, int after)
+    {
+        var points = new List<PuppetPoint>(part.Points!);
+        points.Insert(after + 1, PuppetPoint.Lerp(points[after], points[(after + 1) % points.Count], .5f));
+        PartGeometry.CheckCutout(points);
+        var bindings = (part.Bindings ?? []).Select(b => b with { Point = b.Point > after ? b.Point + 1 : b.Point }).ToList();
+        if (part.Bindings?.FirstOrDefault(b => b.Point == after) is { } source) bindings.Add(source with { Point = after + 1 });
+        part.Points = points; part.Bindings = bindings.Count > 0 ? bindings : null;
+    }
+
+    public static void RemoveCutoutPoint(PuppetPart part, int index)
+    {
+        var points = new List<PuppetPoint>(part.Points!); points.RemoveAt(index); PartGeometry.CheckCutout(points);
+        part.Points = points;
+        part.Bindings = part.Bindings?.Where(b => b.Point != index).Select(b => b with { Point = b.Point > index ? b.Point - 1 : b.Point }).ToList();
     }
 
     public static void RemovePart(CharacterModel model, string id)

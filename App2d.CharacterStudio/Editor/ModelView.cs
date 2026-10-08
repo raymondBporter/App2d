@@ -320,7 +320,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             if (overrides is null && part.Kind == "polygon" && ImGui.CollapsingHeader("Edit cutout silhouette"))
             {
                 ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
-                Ui.Help("Perimeter points follow the attachment frame and scale with width and height. Keep the outline from crossing itself.");
+                Ui.Help("Draw the rest silhouette here. Each point can follow the part frame or a named control; Point toward follows that control frame's rotation. Animate the controls, not the outline.");
                 void Cutout(Action<List<PuppetPoint>> edit)
                 {
                     var points = new List<PuppetPoint>(part.Points!); edit(points);
@@ -331,9 +331,22 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 {
                     var index = i; var xy = part.Points[i].XY; ImGui.PushID("cutout-" + i);
                     if (Ui.Drag2("Point " + (i + 1), ref xy, .005f, -2, 2)) Cutout(p => p[index] = new(xy.X, xy.Y));
-                    if (part.Points.Count < 64 && ImGui.SmallButton("Insert after")) Cutout(p => p.Insert(index + 1, PuppetPoint.Lerp(p[index], p[(index + 1) % p.Count], .5f)));
+                    var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
+                    void Attach(string? control, string? toward)
+                    {
+                        var bindings = (part.Bindings ?? []).Where(b => b.Point != index).Select(b => b with { }).ToList();
+                        if (control is not null) bindings.Add(new() { Point = index, Control = control, Toward = toward });
+                        change(p => p.Bindings = bindings.Count > 0 ? bindings : null);
+                    }
+                    var controls = Structure!.Controls.Select(c => c.Id).ToArray();
+                    if (Ui.Combo("Follow", binding?.Control ?? "(part frame)", controls.Prepend("(part frame)")) is { } follow)
+                        Attach(follow == "(part frame)" ? null : follow, null);
+                    if (binding is not null && Ui.Combo("Point toward", binding.Toward ?? "(translation only)", controls.Where(c => c != binding.Control).Prepend("(translation only)")) is { } toward)
+                        Attach(binding.Control, toward == "(translation only)" ? null : toward);
+                    if (part.Points.Count < 64 && ImGui.SmallButton("Insert after")) change(p => ModelAuthoring.InsertCutoutPoint(p, index));
                     ImGui.SameLine();
-                    if (part.Points.Count > 3 && ImGui.SmallButton("Remove")) Cutout(p => p.RemoveAt(index));
+                    if (part.Points.Count > 3 && ImGui.SmallButton("Remove"))
+                    { try { change(p => ModelAuthoring.RemoveCutoutPoint(p, index)); } catch (InvalidDataException) { } }
                     ImGui.PopID();
                 }
             }
@@ -503,27 +516,27 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         }
         if (session.Selection.Part is { } selectedPart && model.Parts.FirstOrDefault(p => p.Id == selectedPart) is { } part)
         {
-            Outline(frame, part, pose);
+            Outline(frame, part, pose, model);
             if (_editCutout && part.Kind == "polygon" && Base is not null)
             {
-                DragCutout(frame, part, pose); return;
+                DragCutout(frame, part, pose, model); return;
             }
         }
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            var hit = model.Parts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse))))
+            var hit = model.Parts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => model.Rest[id])))
                 .Where(h => h.Score <= 1).OrderBy(h => h.Score).FirstOrDefault();
             if (hit.Part is not null) Select(part: hit.Part.Id); else session.Selection.Clear();
         }
         if (frame.Hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) viewport.Fit(primary.Subject);
     }
 
-    private void DragCutout(ViewportFrame frame, PuppetPart part, EvaluatedPose pose)
+    private void DragCutout(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
-        var placement = PartGeometry.FrameOf(part, pose.World); var points = part.Points!;
+        var contour = PartGeometry.Contour(part, pose.World, id => model.Rest[id]); var points = part.Points!;
         for (var i = 0; i < points.Count; i++)
         {
-            var at = frame.Screen(placement.At(new(points[i].X * part.Width, points[i].Y * part.Height)));
+            var at = frame.Screen(contour[i]);
             frame.Draw.AddCircleFilled(at, 4.5f * Ui.Scale, Ui.Color(232, 169, 55));
             if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(at, ViewportFrame.Mouse) < 9 * Ui.Scale)
             { _cutoutDrag = i; session.BeginDrag(); }
@@ -531,9 +544,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (_cutoutDrag < 0) return;
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _cutoutDrag = -1; session.EndDrag(); return; }
         if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || Base is not { } document) return;
-        var delta = frame.World(ViewportFrame.Mouse) - placement.Origin;
-        var xy = new Vector2(Vector2.Dot(new(delta.X, delta.Y), placement.Right) / part.Width, Vector2.Dot(new(delta.X, delta.Y), placement.Up) / part.Height);
-        var edited = new List<PuppetPoint>(points); edited[_cutoutDrag] = new(xy.X, xy.Y);
+        var edited = new List<PuppetPoint>(points);
+        edited[_cutoutDrag] = PartGeometry.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse), pose.World, id => model.Rest[id]);
         try { PartGeometry.CheckCutout(edited); }
         catch (InvalidDataException) { return; }
         session.Change(document, () => document.Asset.Parts.First(p => p.Id == part.Id).Points = edited);
@@ -558,9 +570,9 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         session.DragControl(_dragging, target with { Z = pose.World(_dragging).Z });
     }
 
-    private static void Outline(ViewportFrame frame, PuppetPart part, EvaluatedPose pose)
+    private static void Outline(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
-        var outline = PartGeometry.Contour(part, pose.World).Select(p => frame.Screen(p)).ToArray();
+        var outline = PartGeometry.Contour(part, pose.World, id => model.Rest[id]).Select(p => frame.Screen(p)).ToArray();
         for (var i = 0; i < outline.Length; i++) frame.Draw.AddLine(outline[i], outline[(i + 1) % outline.Length], Ui.Color(232, 169, 55), 2);
     }
 

@@ -21,6 +21,7 @@ internal static class TileEditorView2D
         if (!editor.IsActive)
             return;
 
+        mapBounds = editor.MapBounds;
         var origin = mapBounds.Min;
         DrawGrid(renderer, editor.VisibleWorldBounds, mapBounds, tileSize);
 

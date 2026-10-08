@@ -6,12 +6,6 @@ using Xunit;
 
 namespace App2d.Gameplay.Tests.World;
 
-/// <summary>
-/// Nothing else reconciles a loaded map's geometry with the constants gameplay math
-/// assumes (finding #1) -- a mismatched tile size, extent, or origin must fail loudly
-/// at construction rather than silently misplacing colliders relative to spawn/goal/camera
-/// math.
-/// </summary>
 public sealed class SideScrollerLevel2DGeometryGuardTests
 {
     private static TraversalMetrics2D DefaultTraversal() =>
@@ -47,7 +41,7 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
     }
 
     [Fact]
-    public void MismatchedWidthThrows()
+    public void AuthoredWidthIsAccepted()
     {
         var map = new EditableTileMap2D(
             SideScrollerLevel2D.WorldWidthTiles - 1,
@@ -56,12 +50,12 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.ChunkSizeTiles,
             SideScrollerLevel2D.WorldOrigin);
 
-        Assert.Throws<InvalidOperationException>(
-            () => new SideScrollerLevel2D(DefaultTraversal(), map));
+        using var level = new SideScrollerLevel2D(DefaultTraversal(), map);
+        Assert.Same(map, level.TileMap);
     }
 
     [Fact]
-    public void MismatchedHeightThrows()
+    public void AuthoredHeightIsAccepted()
     {
         var map = new EditableTileMap2D(
             SideScrollerLevel2D.WorldWidthTiles,
@@ -70,12 +64,12 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.ChunkSizeTiles,
             SideScrollerLevel2D.WorldOrigin);
 
-        Assert.Throws<InvalidOperationException>(
-            () => new SideScrollerLevel2D(DefaultTraversal(), map));
+        using var level = new SideScrollerLevel2D(DefaultTraversal(), map);
+        Assert.Same(map, level.TileMap);
     }
 
     [Fact]
-    public void MismatchedOriginThrows()
+    public void AuthoredOriginIsAccepted()
     {
         var map = new EditableTileMap2D(
             SideScrollerLevel2D.WorldWidthTiles,
@@ -84,7 +78,7 @@ public sealed class SideScrollerLevel2DGeometryGuardTests
             SideScrollerLevel2D.ChunkSizeTiles,
             SideScrollerLevel2D.WorldOrigin + new Vector2(1f, 0f));
 
-        Assert.Throws<InvalidOperationException>(
-            () => new SideScrollerLevel2D(DefaultTraversal(), map));
+        using var level = new SideScrollerLevel2D(DefaultTraversal(), map);
+        Assert.Same(map, level.TileMap);
     }
 }

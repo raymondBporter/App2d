@@ -73,7 +73,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     }
 
     private static IEnumerable<Vector3> DrawingPoints(ResolvedModel model) =>
-        model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, id => model.Rest[id]))
+        model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, id => model.Rest[id], id => model.Rest[id]))
             .Concat(model.Rest.Values).Append(Vector3.Zero);
 
     public ViewportFrame Draw(Vector2 available, IReadOnlyList<Subject> scene, EditorSession session)

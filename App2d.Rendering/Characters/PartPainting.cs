@@ -1,35 +1,40 @@
 using App2d.Core.Meshes;
 using App2d.Core.Characters;
 using App2d.Core.Geometry;
-using App2d.Rendering;
 using System.Numerics;
 
 namespace App2d.Rendering.Characters;
 
-/// <summary>Paint is mapped through the same frame and dimensions as the body, then clipped to its contour; concave cutouts are clipped triangle by triangle.</summary>
+/// <summary>Paint lives in rest artwork coordinates and follows the same triangles as fill, including folding membranes.</summary>
 internal static class PartPainting
 {
-    public static void Add(CharacterMesh mesh, PuppetPart part, PartGeometry.Frame frame, IReadOnlyList<Vector3> contour)
+    public static void Add(CharacterMesh mesh, PuppetPart part, PartGeometry.Frame frame, IReadOnlyList<Vector3> contour, TriangleMesh2D? triangles)
     {
         if (part.Paint is null) return;
-        var triangles = part.Kind == "polygon" ? TriangleMesh2D.TriangulateSimplePolygon(contour.Select(p => new Vector2(p.X, p.Y)), 1e-8) : null;
         for (var layer = 0; layer < part.Paint.Count; layer++)
         {
-            var patch = part.Paint[layer];
-            var points = patch.Points.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
-            var regions = new List<IReadOnlyList<Vector3>>();
-            if (triangles is null) regions.Add(contour);
-            else for (var i = 0; i < triangles.TriangleCount; i++)
-            {
-                var (a, b, c) = triangles.TriangleAt(i);
-                regions.Add(new[] { new Vector3(a, contour[0].Z), new Vector3(b, contour[0].Z), new Vector3(c, contour[0].Z) });
-            }
-            // Tiny raster bias only: paint remains on the torso rather than becoming another garment plane.
+            var patch = part.Paint[layer]; var color = ColorExtensions.FromHexRgb(patch.Fill);
             var bias = new Vector3(0, 0, .00001f * (layer + 1));
-            foreach (var region in regions)
+            if (triangles is null)
             {
-                var clipped = PolygonClipping2D.ClipConvexXY(points, region);
-                mesh.Polygon(clipped.Select(p => p - bias).ToArray(), ColorExtensions.FromHexRgb(patch.Fill), null, 0);
+                var points = patch.Points.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
+                var clipped = PolygonClipping2D.ClipConvexXY(points, contour);
+                mesh.Polygon(clipped.Select(p => p - bias).ToArray(), color, null, 0); continue;
+            }
+            var paint = patch.Points.Select(p => p.XYZ).ToArray();
+            for (var i = 0; i < triangles.Indices.Length; i += 3)
+            {
+                var ia = triangles.Indices[i]; var ib = triangles.Indices[i + 1]; var ic = triangles.Indices[i + 2];
+                var a = part.Points![ia].XY; var b = part.Points[ib].XY; var c = part.Points[ic].XY;
+                var clipped = PolygonClipping2D.ClipConvexXY(paint, new[] { new Vector3(a, 0), new Vector3(b, 0), new Vector3(c, 0) });
+                var ab = b - a; var ac = c - a; var determinant = ab.X * ac.Y - ab.Y * ac.X;
+                Vector3 Place(Vector3 point)
+                {
+                    var d = new Vector2(point.X, point.Y) - a;
+                    var u = (d.X * ac.Y - d.Y * ac.X) / determinant; var v = (ab.X * d.Y - ab.Y * d.X) / determinant;
+                    return contour[ia] * (1 - u - v) + contour[ib] * u + contour[ic] * v - bias;
+                }
+                mesh.Polygon(clipped.Select(Place).ToArray(), color, null, 0);
             }
         }
     }

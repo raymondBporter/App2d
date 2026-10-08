@@ -1,0 +1,120 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "pterosaur-fold",
+  "name": "Pterosaur \u00B7 fold",
+  "model": "pterosaur",
+  "structureRevision": 1,
+  "duration": 0.48,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "near-shoulder",
+      "keys": [
+        {
+          "angle": -0.22
+        },
+        {
+          "time": 0.24,
+          "angle": -0.15
+        },
+        {
+          "time": 0.48,
+          "angle": -0.15
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-shoulder",
+      "keys": [
+        {
+          "angle": 0.22
+        },
+        {
+          "time": 0.24,
+          "angle": 1.3
+        },
+        {
+          "time": 0.48,
+          "angle": 1.3
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-bend",
+      "keys": [
+        {},
+        {
+          "time": 0.24,
+          "angle": -1.1
+        },
+        {
+          "time": 0.48,
+          "angle": -1.1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-bend",
+      "keys": [
+        {},
+        {
+          "time": 0.24,
+          "angle": 0.1
+        },
+        {
+          "time": 0.48,
+          "angle": 0.1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "body",
+      "keys": [
+        {},
+        {
+          "time": 0.24,
+          "angle": -0.22
+        },
+        {
+          "time": 0.48,
+          "angle": -0.4
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "jaw",
+      "keys": [
+        {},
+        {
+          "time": 0.24,
+          "angle": -0.5
+        },
+        {
+          "time": 0.48
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "screech",
+      "time": 0.2
+    },
+    {
+      "id": "commit",
+      "time": 0.4
+    }
+  ],
+  "faces": []
+}

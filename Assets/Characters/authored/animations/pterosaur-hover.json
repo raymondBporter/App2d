@@ -1,0 +1,110 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "pterosaur-hover",
+  "name": "Pterosaur \u00B7 hover",
+  "model": "pterosaur",
+  "structureRevision": 1,
+  "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "near-shoulder",
+      "keys": [
+        {
+          "angle": -0.22
+        },
+        {
+          "time": 0.5,
+          "angle": 0.28
+        },
+        {
+          "time": 1,
+          "angle": -0.22
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-shoulder",
+      "keys": [
+        {
+          "angle": 0.22
+        },
+        {
+          "time": 0.5,
+          "angle": -0.28
+        },
+        {
+          "time": 1,
+          "angle": 0.22
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-bend",
+      "keys": [
+        {},
+        {
+          "time": 0.5,
+          "angle": -0.1
+        },
+        {
+          "time": 1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-bend",
+      "keys": [
+        {},
+        {
+          "time": 0.5,
+          "angle": 0.1
+        },
+        {
+          "time": 1
+        }
+      ]
+    },
+    {
+      "target": "body",
+      "keys": [
+        {},
+        {
+          "time": 0.5,
+          "y": 0.05
+        },
+        {
+          "time": 1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "head",
+      "keys": [
+        {
+          "angle": -0.08
+        },
+        {
+          "time": 0.5,
+          "angle": -0.12
+        },
+        {
+          "time": 1,
+          "angle": -0.08
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [],
+  "faces": []
+}

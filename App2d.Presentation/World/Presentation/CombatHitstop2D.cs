@@ -51,6 +51,7 @@ public sealed class PlayerContactHold2D(ReactionTimeCurve2D curve)
 public sealed class EnemyContactHold2D(ReactionTimeCurve2D curve)
 {
     private readonly Dictionary<EntityId2D, Reaction> _reactions = [];
+    private readonly HashSet<EntityId2D> _present = [];
 
     public void Present(CombatDamage2D damage)
     {
@@ -63,20 +64,34 @@ public sealed class EnemyContactHold2D(ReactionTimeCurve2D curve)
     public ImmutableArray<EnemyState2D> Sample(ImmutableArray<EnemyState2D> states)
     {
         if (_reactions.Count == 0) return states;
-        var present = states.Select(s => s.Id).ToHashSet();
-        foreach (var id in _reactions.Keys.Where(id => !present.Contains(id)).ToArray()) _reactions.Remove(id);
-        return [.. states.Select(state =>
-        {
-            if (!_reactions.TryGetValue(state.Id, out var reaction)) return state;
-            if (state.ActionId != reaction.Role || !state.IsEnabled || state.ActionSeconds >= curve.Duration ||
-                state.AuthoredEntity is not { } entity || state.AuthoredPose is not { } live || entity.Clip(reaction.Role) is not { } clip)
-            { _reactions.Remove(state.Id); return state; }
-            reaction.Reverse ??= reaction.Direction * live.Facing > 0;
-            var delayed = reaction.Hold.Evaluate(entity.Model, clip, curve.Sample(state.ActionSeconds), false,
-                live.Position, live.Facing, new(reaction.Role == EntityControllers.Death ? "knocked-out" : "hurt")
-                { ReverseHorizontalMotion = reaction.Reverse.Value });
-            return state with { AuthoredPose = delayed };
-        })];
+        Prune(states);
+        if (_reactions.Count == 0) return states;
+        var sampled = ImmutableArray.CreateBuilder<EnemyState2D>(states.Length);
+        foreach (var state in states) sampled.Add(SampleState(state));
+        return sampled.MoveToImmutable();
+    }
+
+    internal void Prune(ImmutableArray<EnemyState2D> states)
+    {
+        if (_reactions.Count == 0) return;
+        _present.Clear();
+        foreach (var state in states) _present.Add(state.Id);
+        // Dictionary removal preserves active enumerators on the supported .NET runtime.
+        foreach (var id in _reactions.Keys)
+            if (!_present.Contains(id)) _reactions.Remove(id);
+    }
+
+    internal EnemyState2D SampleState(EnemyState2D state)
+    {
+        if (!_reactions.TryGetValue(state.Id, out var reaction)) return state;
+        if (state.ActionId != reaction.Role || !state.IsEnabled || state.ActionSeconds >= curve.Duration ||
+            state.AuthoredEntity is not { } entity || state.AuthoredPose is not { } live || entity.Clip(reaction.Role) is not { } clip)
+        { _reactions.Remove(state.Id); return state; }
+        reaction.Reverse ??= reaction.Direction * live.Facing > 0;
+        var delayed = reaction.Hold.Evaluate(entity.Model, clip, curve.Sample(state.ActionSeconds), false,
+            live.Position, live.Facing, new(reaction.Role == EntityControllers.Death ? "knocked-out" : "hurt")
+            { ReverseHorizontalMotion = reaction.Reverse.Value });
+        return state with { AuthoredPose = delayed };
     }
 
     private sealed class Reaction(string role, float direction)

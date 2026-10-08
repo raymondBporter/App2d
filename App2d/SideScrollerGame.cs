@@ -63,7 +63,7 @@ public sealed class SideScrollerGame : Game2D
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
 
         _resources.Register("level/cavern", LevelBootstrap2D.Load, LevelBootstrap2D.CavernLevelPath);
-        var loadedLevel = _resources.GetLoad<LoadedLevel2D>("level/cavern", "simulation");
+        var loadedLevel = _resources.GetLoad<App2d.Levels.WorldAsset2D>("level/cavern", "simulation");
         var tileMap = loadedLevel.TileMap;
         _terrainSource = new ViewportTerrainSource2D(tileMap);
         _saveStore = PlayerSaveStore2D.CreateDefault();
@@ -104,11 +104,15 @@ public sealed class SideScrollerGame : Game2D
         }, "Camera zoom (0.05 to 20; default 1.35). Larger values zoom in.");
 
         // Only editor mode opens a writable database handle.
-        _editor = new TileEditor2D(tileMap, LevelBootstrap2D.OpenForEditing, Camera, tileMap.Origin, Traversal.TileSize);
-        _resources.Get<LoadedLevel2D>("level/cavern", "editor");
+        _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => App2d.Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera, loadedLevel.Maps[0].TileMap.Origin, Traversal.TileSize);
+        _resources.Get<App2d.Levels.WorldAsset2D>("level/cavern", "editor");
         _resources.Get<Rendering.Textures.TextureCache2D>("textures/runtime", "editor");
+        _editor.ConfigureMaps(loadedLevel.Maps);
         _editor.ThingsChanged += things =>
-            _simulation.Level.ReloadMovingPlatforms([.. things.Select(ThingTypeRegistry2D.ToRuntime)]);
+        {
+            loadedLevel.Maps[_editor.SelectedMapIndex].MovingPlatforms = things.ToArray();
+            _simulation.Level.ReloadMovingPlatforms([.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)]);
+        };
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored));

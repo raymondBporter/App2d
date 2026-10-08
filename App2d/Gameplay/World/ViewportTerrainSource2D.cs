@@ -23,7 +23,7 @@ internal sealed class ViewportTerrainSource2D : IDisposable
     public ViewportTerrainSource2D(IChunkedTileMap2D map)
     {
         _map = ArgGuard.RequireNotNull(map);
-        if (map is EditableTileMap2D editable) editable.ChunkChanged += Invalidate;
+        if (map is IChangingTileMap2D editable) editable.ChunkChanged += Invalidate;
     }
 
     public ImmutableArray<TerrainChunkState2D> Capture(Rect2D visibleBounds)
@@ -74,7 +74,7 @@ internal sealed class ViewportTerrainSource2D : IDisposable
 
     public void Dispose()
     {
-        if (_map is EditableTileMap2D editable) editable.ChunkChanged -= Invalidate;
+        if (_map is IChangingTileMap2D editable) editable.ChunkChanged -= Invalidate;
         _chunks.Clear();
         _terrain = default;
         _range = default;

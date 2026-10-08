@@ -1,5 +1,4 @@
 using App2d.Levels;
-using App2d.Tiles;
 
 namespace App2d;
 
@@ -20,16 +19,22 @@ internal static class LevelBootstrap2D
     /// </summary>
     public static string CavernLevelPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "level.db");
 
-    public static LoadedLevel2D Load()
+    public static WorldAsset2D Load()
     {
-        using var database = LevelDatabase2D.OpenRead(RequireLevelPath());
-        return new LoadedLevel2D(
-            database.Load(TerrainTilesetIds),
-            database.LoadMovingPlatforms(),
-            database.LoadPositionThings(),
-            WorldZoneFile2D.Load(Path.Combine(Path.GetDirectoryName(CavernLevelPath)!, "zones.json")));
+        var directory = Path.GetDirectoryName(CavernLevelPath)!;
+        var manifest = Path.Combine(directory, "world.json");
+        if (File.Exists(manifest))
+        {
+            using var world = WorldFile2D.Load(manifest, TerrainTilesetIds);
+            // Existing biome/audio regions remain available inside authored map containers.
+            var regionIds = world.Zones.Select(z => z.Id).ToHashSet(StringComparer.Ordinal);
+            var regions = WorldZoneFile2D.Load(Path.Combine(directory, "zones.json"));
+            return new(world.Maps, [.. world.Zones, .. regions.Where(z => !regionIds.Contains(z.Id))]);
+        }
+        return new WorldAsset2D(
+            [WorldFile2D.LoadMap(RequireLevelPath(), "cavern", "Cavern", "cavern", 0, TerrainTilesetIds)],
+            WorldZoneFile2D.Load(Path.Combine(directory, "zones.json")));
     }
-
     /// <summary>
     /// Opens the cavern level read-write for an editing session. The caller owns the
     /// returned database and must dispose it.
@@ -43,9 +48,3 @@ internal static class LevelBootstrap2D
                 "The authored cavern level is missing. Restore Assets/Static/levels/cavern/level.db.",
                 CavernLevelPath);
 }
-
-internal sealed record LoadedLevel2D(
-    EditableTileMap2D TileMap,
-    IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms,
-    IReadOnlyList<PositionThingRecord2D> PositionThings,
-    System.Collections.Immutable.ImmutableArray<Contracts.World.WorldZone2D> Zones);

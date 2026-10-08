@@ -76,7 +76,7 @@ public static class EntityAuthoring
     /// <summary>The movement box around the rest pose's visible parts: full height from the feet, a narrow body width. Explicit, never automatic.</summary>
     public static MovementBox FitMovement(ResolvedModel model)
     {
-        var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, id => model.Rest[id]))
+        var points = model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, id => model.Rest[id], id => model.Rest[id]))
             .Concat(model.Rest.Values).DefaultIfEmpty(Vector3.Zero).ToList();
         var height = MathF.Max(.2f, points.Max(p => p.Y));
         var width = Math.Clamp((points.Max(p => p.X) - points.Min(p => p.X)) * .6f, .2f, height);

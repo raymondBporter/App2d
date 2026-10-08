@@ -9,7 +9,7 @@ namespace App2d.Tiles;
 /// The dense, mutable tile map that authored levels load into. It is the only
 /// <see cref="IChunkedTileMap2D"/> implementation: terrain is data, not a generator.
 /// </summary>
-public sealed class EditableTileMap2D : IChunkedTileMap2D
+public sealed class EditableTileMap2D : IChangingTileMap2D
 {
     private readonly Grid2D<TileCell2D> _tiles;
     private readonly string[] _tilesetIds;

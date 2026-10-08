@@ -11,14 +11,14 @@ namespace App2d.Rendering.Characters;
 public sealed class PuppetDrawing
 {
     public CharacterMesh Mesh { get; } = new();
-    public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World);
+    public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World, rest: id => definition.Controls.First(c => c.Id == id).Rest.XYZ);
     /// <summary>
     /// Faces come from the pose's evaluated expressions, never from the parts' stored defaults. <paramref name="face"/>, when
     /// given, replaces the drawn expression with a gameplay-blended face on every part that shows one; a clip that hides the
     /// face ("none", for a back view) still hides it.
     /// </summary>
     public void Build(ResolvedModel model, EvaluatedPose pose, FacePose? face = null) =>
-        Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World, part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face);
+        Build(model.Base.Ink, model.Base.LineWidth, model.Parts, pose.World, part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, id => model.Rest[id]);
 
     /// <summary>
     /// An entity's final pose in actor-local units, with its equipped props placed by the same socket transform that hit
@@ -49,7 +49,7 @@ public sealed class PuppetDrawing
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
-    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null)
+    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, Vector3>? rest = null)
     {
         Mesh.Clear(); var ink = ColorExtensions.FromHexRgb(inkColor);
         foreach (var part in parts)
@@ -60,12 +60,14 @@ public sealed class PuppetDrawing
             {
                 var ends = PartGeometry.Contour(part, world); Mesh.Line(ends[0], ends[1], part.Width, ink); continue;
             }
-            var contour = PartGeometry.Contour(part, world);
+            var contour = PartGeometry.Contour(part, world, rest);
             var frame = PartGeometry.FrameOf(part, world);
-            if (part.Kind == "polygon")
-                Mesh.Add(TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => new Vector2(p.X * part.Width, p.Y * part.Height)), 1e-8), frame.At, ColorExtensions.FromHexRgb(part.Fill));
+            var triangles = part.Kind == PuppetPartKinds.Polygon ? TriangleMesh2D.TriangulateSimplePolygon(part.Points!.Select(p => p.XY), 1e-8) : null;
+            if (triangles is not null)
+                for (var i = 0; i < triangles.Indices.Length; i += 3)
+                    Mesh.Triangle(contour[triangles.Indices[i]], contour[triangles.Indices[i + 1]], contour[triangles.Indices[i + 2]], ColorExtensions.FromHexRgb(part.Fill));
             else Mesh.Polygon(contour, ColorExtensions.FromHexRgb(part.Fill), null, 0);
-            PartPainting.Add(Mesh, part, frame, contour);
+            PartPainting.Add(Mesh, part, frame, contour, triangles);
             var outline = part.OutlineWidth ?? lineWidth;
             if (outline > 0) Mesh.Polygon(contour, null, ink, outline);
             if (face != "none")

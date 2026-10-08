@@ -46,15 +46,17 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private float _retreatRemaining;
     private bool _retreatUsed;
     private bool _chargeBlocked;
+    private readonly AuthoredFlightController2D? _flight;
 
     public AuthoredEntityEnemy2D(EntityId2D id, ResolvedEntity entity, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
     {
         Id = id; Entity = entity; _animator = new(entity); _collision = physics.CollisionSystem; _physics = physics; _worldLayer = worldLayer;
+        _flight = entity.Asset.Controller.Flight is { } flight ? new(flight) : null;
         var box = entity.Asset.Movement;
         WorldObject = new(AxisAlignedRectangle2D.FromSize(new Vector2(box.Width, box.Height) * Scale));
         WorldObject.Transform.Position = position;
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
-        Body.EntityId = id; Body.CollisionLayer = enemyLayer; Body.CollisionMask = worldLayer; Body.Restitution = 0;
+        Body.EntityId = id; Body.CollisionLayer = enemyLayer; Body.CollisionMask = worldLayer; Body.Restitution = 0; Body.GravityScale = _flight is null ? 1 : 0;
         Health = new(entity.Asset.Health);
         _rootBefore = Root; Evaluate(0, true);
     }
@@ -69,7 +71,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     public ICombatant2D Combatant => this;
     public ActorPose Pose => _animator.Pose;
     /// <summary>The feet origin in world pixels; the animator works in model units from here.</summary>
-    private Vector2 Root => WorldObject.Transform.Position - new Vector2(Entity.Asset.Movement.OffsetX * _facing, Entity.Asset.Movement.Height / 2) * Scale;
+    private Vector2 Root => WorldObject.Transform.Position - new Vector2(Entity.Asset.Movement.OffsetX * _facing, Entity.Asset.Movement.Height / 2 + Entity.Asset.Movement.OffsetY) * Scale;
     private string? Expression => !IsAlive ? "knocked-out" : _hurt > 0 ? "hurt" : null;
 
     public void SetSimulationEnabled(bool isEnabled)
@@ -91,6 +93,26 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         if (_reaction.Tick(dt)) _cooldown = MathF.Max(_cooldown, config.Cooldown);
         // Staggered: no steering, so the knockback carries.
         if (_reaction.Staggered) return;
+        if (_flight is not null)
+        {
+            var velocity = _flight.Update(dt, WorldObject.Transform.Position, targetPosition,
+                _animator.Current, (float)_animator.ActionTime, Entity.Asset.Controller, ref _facing, _chargeBlocked, RecoveryAltitude);
+            if (_animator.Action is null && _flight.Ready && _cooldown <= 0 && CanFly(targetPosition - WorldObject.Transform.Position) &&
+                _animator.TryStart(EntityControllers.Attack))
+            {
+                _cooldown = _animator.Current!.Clip.Duration + config.Cooldown;
+                _flight.Begin(WorldObject.Transform.Position); _chargeBlocked = false; velocity = Vector2.Zero;
+            }
+            if (!CanFly(velocity * dt))
+            {
+                if (_animator.Action is not null && !_chargeBlocked)
+                    _events.Add(new EntityCue2D(Id, Root, "flight-stop"));
+                if (_animator.Action is not null) _chargeBlocked = true;
+                velocity = Vector2.Zero;
+            }
+            Body.LinearVelocity = velocity;
+            return;
+        }
         if (_animator.Action is not null)
         {
             var at = (float)_animator.ActionTime;
@@ -135,6 +157,30 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         Body.LinearVelocity = new(move * config.WalkSpeed * Scale, Body.LinearVelocity.Y);
     }
 
+    private float RecoveryAltitude(Vector2 target)
+    {
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4)));
+        for (var down = 0; down <= 800; down += 4)
+        {
+            probe.Transform.Position = target - new Vector2(0, down);
+            if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) > 0)
+                return _overlaps.Max(o => o.Collider.WorldObject.WorldBounds.Max.Y) + 26;
+        }
+        return target.Y;
+    }
+
+    private bool CanFly(Vector2 displacement)
+    {
+        var steps = Math.Max(1, (int)MathF.Ceiling(displacement.Length() / 4));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(Entity.Asset.Movement.Width, Entity.Asset.Movement.Height) * Scale));
+        for (var i = 1; i <= steps; i++)
+        {
+            probe.Transform.Position = WorldObject.Transform.Position + displacement * (i / (float)steps);
+            if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) > 0) return false;
+        }
+        return true;
+    }
+
     // Look beyond the leading foot by this tick's travel: do not walk off ledges or into walls.
     private bool CanAdvance(float dt, int direction, float? speed = null)
     {
@@ -168,15 +214,15 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         // carried the body before _rootBefore was taken, so the distance walked is already the body's own.
         var ground = initial ? null : GroundSupport2D.Velocity(_physics.LastContacts, Body, CanStandOn);
         var root = Root; var grounded = MathF.Abs(Body.LinearVelocity.Y - (ground?.Y ?? 0)) < 1;
-        var airborne = !initial && !grounded;
+        var airborne = _flight is not null || !initial && !grounded;
         if (airborne) _animator.Lift();
         else if (ground is { } carry && carry != Vector2.Zero) _animator.Carry(new Vector3(carry * dt / Scale, 0));
         var moved = MathF.Abs(root.X - _rootBefore.X) / Scale;
-        var role = IsAlive && grounded && MathF.Abs(Body.LinearVelocity.X) > 1 ? EntityControllers.Walk : EntityControllers.Idle;
+        var role = IsAlive && grounded && _flight is null && MathF.Abs(Body.LinearVelocity.X) > 1 ? EntityControllers.Walk : EntityControllers.Idle;
         // A reaction role wins; otherwise dead, or airborne without an action, holds the current pose as the explicit fallback.
         var reaction = _reaction.Role(Entity, IsAlive);
-        var hold = !initial && reaction is null && (!IsAlive || !grounded && _animator.Action is null);
-        _animator.Step(dt, root / Scale, _facing, reaction ?? (hold ? _animator.Role : role), grounded ? moved : 0, hold, _scratch, Expression);
+        var hold = !initial && reaction is null && (!IsAlive || _flight is null && !grounded && _animator.Action is null);
+        _animator.Step(dt, root / Scale, _facing, reaction ?? (hold ? _animator.Role : role), grounded && _flight is null ? moved : 0, hold, _scratch, Expression);
         if (airborne) _animator.Lift();
     }
 
@@ -343,10 +389,10 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
     private sealed record Snapshot(bool Enabled, float Cooldown, float Hurt, float Stagger, int Facing, int Health, Vector2 RootBefore, AnimatorState Animator,
         ImmutableArray<(int, string, int)> Ledger, ImmutableDictionary<EntityId2D, int> Hits, ImmutableArray<EnemyEvent2D> Events, ImmutableArray<EntityBoltState2D> Bolts,
-        Vector2 AttackTarget, float RetreatRemaining, bool RetreatUsed, bool ChargeBlocked) : SimulationState2D;
+        Vector2 AttackTarget, float RetreatRemaining, bool RetreatUsed, bool ChargeBlocked, AuthoredFlightController2D.State? Flight) : SimulationState2D;
 
     public SimulationState2D CaptureSimulation() => new Snapshot(_enabled, _cooldown, _hurt, _reaction.Capture(), _facing, Health.Current, _rootBefore, _animator.Capture(),
-        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), [.. _events], [.. _bolts], _attackTarget, _retreatRemaining, _retreatUsed, _chargeBlocked);
+        _ledger.Capture(), _hitHistory.ToImmutableDictionary(), [.. _events], [.. _bolts], _attackTarget, _retreatRemaining, _retreatUsed, _chargeBlocked, _flight?.Capture());
 
     public void RestoreSimulation(SimulationState2D state)
     {
@@ -354,6 +400,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         _enabled = s.Enabled; _cooldown = s.Cooldown; _hurt = s.Hurt; _reaction.Restore(s.Stagger); _facing = s.Facing; _rootBefore = s.RootBefore;
         _attackTarget = s.AttackTarget; _retreatRemaining = s.RetreatRemaining; _retreatUsed = s.RetreatUsed;
         _chargeBlocked = s.ChargeBlocked;
+        if (_flight is not null && s.Flight is { } flight) _flight.Restore(flight);
         Health.RestoreSimulation(s.Health); _ledger.Restore(s.Ledger);
         _hitHistory.Clear(); foreach (var pair in s.Hits) _hitHistory.Add(pair.Key, pair.Value);
         _events.Clear(); _events.AddRange(s.Events);

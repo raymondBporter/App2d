@@ -114,3 +114,5 @@ variable at a time: timing, distance/speed, then damage/health. Test the solo en
 before tuning the pair. Prefer encounter placement and timing over extra health.
 
 For guards, verify attack direction and posed shield coverage independently. Test shield-only projectile contact, rear and uncovered body hits, commitment, and the exposed recovery window. A block must stop the attack without emitting damage feedback.
+
+[Pterosaur](pterosaur.md) demonstrates using an existing model and joining pose studies into a gameplay action. Keep flight targeting and world movement in the controller. Test commit-time sampling, fixed lane, body-only hurt geometry, and a grounded-reachable low recovery before climbing.

@@ -1,0 +1,372 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "pterosaur-swoop",
+  "name": "Pterosaur / committed dive and low pass",
+  "model": "pterosaur",
+  "structureRevision": 1,
+  "duration": 3.65,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "body",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": -0.22
+        },
+        {
+          "angle": -0.4,
+          "time": 0.48
+        },
+        {
+          "angle": -0.65,
+          "time": 1.13
+        },
+        {
+          "time": 1.29,
+          "angle": -0.12
+        },
+        {
+          "time": 1.45
+        },
+        {
+          "time": 1.95,
+          "angle": -0.02
+        },
+        {
+          "time": 2.45
+        },
+        {
+          "time": 2.85,
+          "angle": 0.12
+        },
+        {
+          "time": 3.25,
+          "angle": 0.06
+        },
+        {
+          "time": 3.65
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-bend",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": 0.1
+        },
+        {
+          "angle": 0.1,
+          "time": 0.48
+        },
+        {
+          "angle": 0.1,
+          "time": 1.13
+        },
+        {
+          "time": 1.29,
+          "angle": 0.05
+        },
+        {
+          "time": 1.45
+        },
+        {
+          "time": 1.95,
+          "angle": 0.08
+        },
+        {
+          "time": 2.45
+        },
+        {
+          "time": 3.05,
+          "angle": 0.08
+        },
+        {
+          "time": 3.65
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-leg",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "angle": 0.6,
+          "time": 0.48
+        },
+        {
+          "angle": 0.6,
+          "time": 1.13
+        },
+        {
+          "time": 1.29,
+          "angle": 0.3
+        },
+        {
+          "angle": 0.1,
+          "time": 1.45
+        },
+        {
+          "time": 1.95,
+          "angle": 0.15
+        },
+        {
+          "time": 2.45
+        },
+        {
+          "time": 3.65
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-shoulder",
+      "keys": [
+        {
+          "angle": 0.22,
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": 1.3
+        },
+        {
+          "angle": 1.3,
+          "time": 0.48
+        },
+        {
+          "angle": 1.3,
+          "time": 1.13
+        },
+        {
+          "time": 1.29,
+          "angle": 0.4
+        },
+        {
+          "angle": -0.28,
+          "time": 1.45
+        },
+        {
+          "time": 1.95,
+          "angle": -0.12
+        },
+        {
+          "angle": -0.28,
+          "time": 2.45
+        },
+        {
+          "time": 2.85,
+          "angle": 0.22
+        },
+        {
+          "time": 3.25,
+          "angle": -0.28
+        },
+        {
+          "time": 3.65,
+          "angle": 0.22
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "jaw",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": -0.5
+        },
+        {
+          "time": 0.48
+        },
+        {
+          "time": 1.13
+        },
+        {
+          "time": 1.45
+        },
+        {
+          "time": 2.45
+        },
+        {
+          "time": 3.65
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-bend",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": -1.1
+        },
+        {
+          "angle": -1.1,
+          "time": 0.48
+        },
+        {
+          "angle": -1.1,
+          "time": 1.13
+        },
+        {
+          "time": 1.29,
+          "angle": -0.3
+        },
+        {
+          "time": 1.45
+        },
+        {
+          "time": 1.95,
+          "angle": -0.08
+        },
+        {
+          "time": 2.45
+        },
+        {
+          "time": 3.05,
+          "angle": -0.08
+        },
+        {
+          "time": 3.65
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-leg",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "angle": 0.6,
+          "time": 0.48
+        },
+        {
+          "angle": 0.6,
+          "time": 1.13
+        },
+        {
+          "time": 1.29,
+          "angle": 0.3
+        },
+        {
+          "angle": 0.1,
+          "time": 1.45
+        },
+        {
+          "time": 1.95,
+          "angle": 0.15
+        },
+        {
+          "time": 2.45
+        },
+        {
+          "time": 3.65
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-shoulder",
+      "keys": [
+        {
+          "angle": -0.22,
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": -0.15
+        },
+        {
+          "angle": -0.15,
+          "time": 0.48
+        },
+        {
+          "angle": -0.15,
+          "time": 1.13
+        },
+        {
+          "time": 1.29,
+          "angle": 0.1
+        },
+        {
+          "angle": 0.28,
+          "time": 1.45
+        },
+        {
+          "time": 1.95,
+          "angle": 0.12
+        },
+        {
+          "angle": 0.28,
+          "time": 2.45
+        },
+        {
+          "time": 2.85,
+          "angle": -0.22
+        },
+        {
+          "time": 3.25,
+          "angle": 0.28
+        },
+        {
+          "time": 3.65,
+          "angle": -0.22
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "screech",
+      "time": 0.2
+    },
+    {
+      "id": "commit",
+      "time": 0.4
+    },
+    {
+      "id": "rush",
+      "time": 0.48
+    },
+    {
+      "id": "brake",
+      "time": 1.13
+    },
+    {
+      "id": "low",
+      "time": 1.45
+    },
+    {
+      "id": "reset",
+      "time": 2.45
+    }
+  ],
+  "faces": [],
+  "loop": false
+}

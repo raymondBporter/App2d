@@ -15,7 +15,8 @@ public enum WorldThingKind2D
     ClubCaveman,
     RockThrower,
     BabyTriceratops,
-    ShieldDefender
+    ShieldDefender,
+    Pterosaur
 }
 
 /// <summary>Minimal storage-neutral input for a code-configured positioned thing.</summary>

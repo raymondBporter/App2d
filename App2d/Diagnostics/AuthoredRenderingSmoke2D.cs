@@ -107,14 +107,14 @@ internal static class AuthoredRenderingSmoke2D
     {
         var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
-        var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute", "club-caveman", "rock-thrower", "baby-triceratops", "shield-defender" };
-        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("charge-rush", "attack", 1.25f), ("charge-brake", "attack", 2.05f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })
+        var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute", "club-caveman", "rock-thrower", "baby-triceratops", "shield-defender", "flying-pterosaur" };
+        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("charge-rush", "attack", 1.25f), ("charge-brake", "attack", 2.05f), ("flight-dive", "attack", .9f), ("flight-low", "attack", 1.9f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })
         {
             foreach (var facing in new[] { 1, -1 })
             {
                 var states = ids.Select((id, i) =>
                 {
-                    var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-380 + i * 95), 0);
+                    var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-400 + i * 90), 0);
                     // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
                     if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }
                     else if (action is not null && animator.TryStart(action))
@@ -123,7 +123,8 @@ internal static class AuthoredRenderingSmoke2D
                     }
                     else
                     {
-                        for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, phase, phase == "walk" ? .012f : 0, false, []);
+                        var role = entity.Clip(phase) is null ? EntityControllers.Idle : phase;
+                        for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, role, role == "walk" ? .012f : 0, false, []);
                     }
 
                     return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, GameWorldUnits2D.AuthoredToWorld(feet), Vector2.Zero, 0, facing, true, true)

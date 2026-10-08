@@ -470,22 +470,16 @@ public sealed class EditorSession
         });
     }, $"Equipped '{propId}' on '{entityId}'. Save all to keep the appearance and its binding.");
 
-    /// <summary>A new base model from empty, person, quadruped or triceratops. Creature templates include unsaved starter clips.</summary>
+    /// <summary>A new base model from the shared template catalog. Creature templates include unsaved starter clips.</summary>
     public bool NewModel(string id, string name, string template) => Attempt(() =>
     {
-        var model = template switch
-        {
-            "person" => ModelAuthoring.FromPerson(id, name),
-            "quadruped" or "triceratops" => QuadrupedTemplate.Model(id, name, template == "triceratops"),
-            "empty" => ModelAuthoring.Empty(id, name),
-            _ => throw new InvalidDataException("Unknown model template.")
-        };
-        var clips = template is "quadruped" or "triceratops" ? QuadrupedTemplate.Clips(model) : [];
+        var starter = CharacterTemplates.Get(template);
+        var model = starter.Model(id, name); var clips = starter.Clips(model);
         if (clips.Any(c => Assets.Exists(c.Id))) throw new InvalidDataException("A starter animation id is already used; choose another model id.");
         Assets.Create(model);
         foreach (var clip in clips) Assets.Create(clip);
         Open(id); EditRig = template == "empty";
-        if (clips.Count > 0) SetClip(id + "-idle");
+        if (starter.Preview is { } preview) SetClip(id + "-" + preview);
     }, $"Created model '{id}'.");
 
     /// <summary>A new variant of a base, optionally starting from one of its build presets.</summary>

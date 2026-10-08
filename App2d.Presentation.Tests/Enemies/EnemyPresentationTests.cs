@@ -131,6 +131,31 @@ public sealed class EnemyPresentationTests
         Assert.False(visual.IsVisible);
     }
 
+    [Fact]
+    public void SteadyStatePropPresentationDoesNotAllocateOrMutateObservations()
+    {
+        using var textures = new TextureCache2D(TestAssetPath.Root);
+        using var view = new EnemyPresentation2D(new Scene2D(), textures,
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
+        var state = new EnemyState2D(new(42), EnemyKind2D.TumbleProp,
+            Vector2.Zero, Vector2.Zero, 0f, 1f, true, true);
+        System.Collections.Immutable.ImmutableArray<EnemyState2D> states = [state];
+        for (var i = 0; i < 1000; i++)
+        {
+            view.ApplyState(states, Array.Empty<EnemyEvent2D>(), i);
+            view.Advance(1f / 240f);
+        }
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1000; i++)
+        {
+            view.ApplyState(states, Array.Empty<EnemyEvent2D>(), i);
+            view.Advance(1f / 240f);
+        }
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(0, allocated);
+        Assert.Equal(state, states[0]);
+    }
+
     private sealed class RecordingSounds : ISoundEffectSink2D
     {
         public List<(SoundEffect2D, Vector2)> Played { get; } = [];

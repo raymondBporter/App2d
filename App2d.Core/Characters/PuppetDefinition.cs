@@ -68,6 +68,15 @@ public sealed record PartPaint
     }
 }
 
+/// <summary>One cutout perimeter point follows a control frame; its rest offset is derived from the drawing.</summary>
+public sealed record PartPointBinding
+{
+    public int Point { get; set; }
+    public string Control { get; set; } = "";
+    /// <summary>Optional control defining local +Y. Null follows translation only.</summary>
+    public string? Toward { get; set; }
+}
+
 /// <summary>Stroke endpoints follow controls. Other shapes attach to A; B optionally points their local +Y axis.</summary>
 public sealed record PuppetPart
 {
@@ -89,6 +98,8 @@ public sealed record PuppetPart
     public List<PartPaint>? Paint { get; set; }
     /// <summary>Normalized cutout perimeter, scaled by Width/Height in the attachment frame.</summary>
     public List<PuppetPoint>? Points { get; set; }
+    /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
+    public List<PartPointBinding>? Bindings { get; set; }
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
@@ -107,7 +118,20 @@ public sealed record PuppetPart
         new Limit(.01f, 1).Check(TopWidthScale, "part.topWidthScale");
         if (OutlineWidth is { } outline) new Limit(0, 1).Check(outline, "part.outlineWidth");
         PartPaint.Check(Paint);
-        if (Kind == "polygon") PartGeometry.CheckCutout(Points);
+        if (Kind == PuppetPartKinds.Polygon) PartGeometry.CheckCutout(Points);
+        if (Bindings is { Count: > 0 })
+        {
+            if (Kind != PuppetPartKinds.Polygon) throw new InvalidDataException("Point attachments require a cutout.");
+            var seen = new HashSet<int>();
+            foreach (var binding in Bindings)
+            {
+                if (binding is null || binding.Point < 0 || binding.Point >= Points!.Count || !seen.Add(binding.Point))
+                    throw new InvalidDataException("Cutout attachments need unique valid point indices.");
+                if (!isControl(binding.Control) || binding.Toward is not null && !isControl(binding.Toward))
+                    throw new InvalidDataException("Unknown cutout attachment control.");
+                if (binding.Control == binding.Toward) throw new InvalidDataException("An attachment must point toward a different control.");
+            }
+        }
         if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
         new Limit(-1, 1).Check(FaceX, "part.faceX");
     }
@@ -252,7 +276,7 @@ public sealed class PuppetDefinition
     {
         Controls.RemoveAll(c => c.Id == id); Bones.RemoveAll(b => b.From == id || b.To == id);
         Chains.RemoveAll(c => c.Root == id || c.Joint == id || c.End == id);
-        Parts.RemoveAll(p => p.A == id || p.B == id);
+        Parts.RemoveAll(p => p.A == id || p.B == id || p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true);
         foreach (var motion in Motions)
         {
             foreach (var key in motion.Keys) key.Points.Remove(id);

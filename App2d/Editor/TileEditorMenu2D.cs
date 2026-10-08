@@ -40,6 +40,11 @@ internal static class TileEditorMenu2D
 
     public static void TrySelect(TileEditor2D editor, Vector2 viewportSize, Vector2 point)
     {
+        if (GetMapButton(viewportSize).Contains(point.X, point.Y))
+        {
+            editor.CycleMap(1);
+            return;
+        }
         if (GetThingsButton(viewportSize).Contains(point.X, point.Y))
         {
             editor.SelectMode(LevelEditorMode2D.Things);
@@ -76,7 +81,7 @@ internal static class TileEditorMenu2D
             DividerColor);
 
         var left = panel.Left + Padding;
-        renderer.DrawScreenText("TILE EDITOR", new Vector2(left, 42f), TextColor);
+        DrawButton(renderer, GetMapButton(viewport), editor.MapLabel, false, editor.MouseDevicePosition);
         renderer.DrawScreenText("TILESET", new Vector2(left, 80f), MutedTextColor);
 
         for (var index = 0; index < editor.TilesetIds.Count; index++)
@@ -115,7 +120,8 @@ internal static class TileEditorMenu2D
             ? $"Tile  {tileX}, {tileY}"
             : "Tile  —";
         renderer.DrawScreenText(position, new Vector2(left, panel.Bottom - 64f), MutedTextColor);
-        renderer.DrawScreenText("Ctrl+Z  Undo     F1  Play", new Vector2(left, panel.Bottom - 24f), TextColor);
+        renderer.DrawScreenText("PgUp/Dn Map   F1 Play", new Vector2(left, panel.Bottom - 36f), TextColor);
+        renderer.DrawScreenText("Ctrl+Z Undo", new Vector2(left, panel.Bottom - 8f), TextColor);
     }
 
     private static void DrawButton(
@@ -208,6 +214,9 @@ internal static class TileEditorMenu2D
             textures.Load(Path.Combine(root, "surfaces", "top.png")),
             new ScreenRectangle2D(bounds.Left, bounds.Top, bounds.Right, bounds.Top + topHeight));
     }
+
+    private static ScreenRectangle2D GetMapButton(Vector2 viewportSize) =>
+        new(GetPanelBounds(viewportSize).Left + Padding, 12f, viewportSize.X - Padding, 60f);
 
     private static ScreenRectangle2D GetPanelBounds(Vector2 viewportSize) =>
         new(MathF.Max(0f, viewportSize.X - PanelWidth), 0f, viewportSize.X, viewportSize.Y);

@@ -47,6 +47,7 @@ internal sealed class SideScrollerThingSpawner2D(
                 WorldThingKind2D.RockThrower => "rock-thrower",
                 WorldThingKind2D.BabyTriceratops => "baby-triceratops",
                 WorldThingKind2D.ShieldDefender => "shield-defender",
+                WorldThingKind2D.Pterosaur => "flying-pterosaur",
                 _ => null
             };
             if (entityId is not null && authored?.Entities.GetValueOrDefault(entityId) is { } entity)
@@ -59,6 +60,7 @@ internal sealed class SideScrollerThingSpawner2D(
                 case WorldThingKind2D.ClubCaveman:
                 case WorldThingKind2D.RockThrower:
                 case WorldThingKind2D.BabyTriceratops:
+                case WorldThingKind2D.Pterosaur:
                 case WorldThingKind2D.ShieldDefender:
                     throw new InvalidDataException($"{thing.Kind} requires its authored entity '{entityId}'.");
                 case WorldThingKind2D.Shieldback:

@@ -40,6 +40,42 @@ and ImGui. Reuse the renderer and math; replace the competing editor workflows.
 | Editing | Dragging in Model changes rest geometry; dragging in Animate changes motion. Selecting a variant never silently edits the base. |
 | Imports | Existing imported libraries remain source assets. Conversion is explicit and selective. |
 
+## Creature-driven editor design (2026-10-01)
+
+Triceratops and pterosaur are acceptance subjects for one authoring system. Templates supply anatomy and example
+performances; they do not introduce runtime species categories or separate editors. `CharacterTemplates` is the shared
+catalog used by New and the document-creation path. A template creates an independent model and compatible draft clips.
+
+The ownership boundary remains **Model / Animate / Entity**:
+
+- Model owns rest controls, optional IK, artwork, point attachments, sockets, paint, depth and hurt-layout suggestions.
+- Animate owns control translation/rotation/IK targets, contacts, face tracks and named visual timing markers.
+- Entity and its controller own targeting, movement, facing, action availability, hit windows and sound/effect bindings.
+  The pterosaur's committed world dive and mandatory low pass belong here, rather than in membrane vertices or a clip's travel.
+
+An ordinary cutout follows one attachment frame. An optional point binding makes a perimeter point follow a named control,
+with another control optionally defining its rotation. Offsets are derived from rest artwork and resolved rest controls:
+adding an attachment preserves the drawing. This first extension uses one frame per point, without weight painting or a
+second animation language. It is useful for wings, tails and necks; rigid cutouts keep the same behavior and file defaults.
+
+Fill is triangulated from the rest perimeter and keeps that topology during a pose. Paint is clipped in rest artwork space,
+then carried by those triangles. The outline follows the evaluated perimeter. Picking uses the filled triangles for a bound
+cutout, including overlapping folds; dragging inverses the same attachment transform. An animated fold can flatten or overlap
+without requiring its projected perimeter to remain a simple polygon. Rest outlines must still be simple and have area.
+Point insertion/removal remaps bindings atomically; unknown controls, duplicate point bindings and invalid indices fail
+validation. Deleting a used control requires detaching its cutout points first. Attachment edits are drawing edits; controls
+and clip compatibility remain owned by the base model's structure revision.
+
+The triceratops exercises planted four-foot IK, head lowering and distinct body/head/tail artwork. The pterosaur exercises
+articulated membranes, a jaw, depth between its two wings, broad versus folded silhouettes, and reusable flight poses.
+Clips key normal controls in both cases. No automatic collision is inferred from a wing's visual span: the pterosaur's body
+must remain a deliberate hurt region and its low recovery must bring that body into normal grounded sword reach.
+
+Acceptance includes existing people/clothing, both creature starters, save/reopen/undo, picking a folded membrane, and paint
+remaining attached across a fold. Gameplay acceptance for the pterosaur additionally requires sampling the player once at
+commit, a fixed dive lane, and a low vulnerable pass after every attack before climbing. Flight AI is a separate controller
+implementation; the current template supplies the editable model and poses for it.
+
 ## Assets and ownership
 
 There are four main asset types in the browser. Props are supporting assets exposed

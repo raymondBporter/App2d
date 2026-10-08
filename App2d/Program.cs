@@ -6,6 +6,19 @@ if (args.SequenceEqual(["--migrate-level"]))
     return;
 }
 
+if (args is ["--create-map", var mapPath, var width, var height, var originX, var originY])
+{
+    var culture = System.Globalization.CultureInfo.InvariantCulture;
+    var map = new App2d.Tiles.EditableTileMap2D(int.Parse(width, culture), int.Parse(height, culture), 32, 32,
+        new(float.Parse(originX, culture), float.Parse(originY, culture)), LevelBootstrap2D.TerrainTilesetIds);
+    // CreateNew prevents accidentally replacing authored terrain.
+    using (File.Open(mapPath, FileMode.CreateNew, FileAccess.Write)) { }
+    using var database = App2d.Levels.LevelDatabase2D.Open(mapPath);
+    database.Save(map, 0);
+    Console.WriteLine($"Created map: {Path.GetFullPath(mapPath)}");
+    return;
+}
+
 ApplicationConfiguration.Initialize();
 
 if (args is ["--spell-study", var spellDirectory])

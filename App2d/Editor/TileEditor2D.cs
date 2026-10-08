@@ -16,11 +16,11 @@ internal sealed class TileEditor2D : IDisposable
 {
     private const float ZoomStep = 1.1f;
 
-    private readonly EditableTileMap2D _map;
-    private readonly Func<LevelDatabase2D> _openDatabase;
+    private EditableTileMap2D _map;
+    private Func<LevelDatabase2D> _openDatabase;
     private readonly Camera2D _camera;
-    private readonly TileEditSession2D _session;
-    private readonly Vector2 _origin;
+    private TileEditSession2D _session;
+    private Vector2 _origin;
     private readonly float _tileSize;
 
     private LevelDatabase2D? _database;
@@ -38,7 +38,7 @@ internal sealed class TileEditor2D : IDisposable
     private readonly List<MovingPlatformThingRecord2D> _movingPlatformThings = [];
     private readonly List<ThingDefinitionRecord2D> _thingDefinitions = [];
     private readonly List<PositionThingRecord2D> _positionThings = [];
-    private readonly Stack<Action<LevelDatabase2D>> _thingUndo = [];
+    private Stack<Action<LevelDatabase2D>> _thingUndo = [];
     private bool _isPlacingThing;
     private ThingDragHandle2D _thingDragHandle;
     private MovingPlatformThingRecord2D? _thingDragOriginal;
@@ -67,6 +67,51 @@ internal sealed class TileEditor2D : IDisposable
         InspectorView = new ThingEditorInspector2D(this);
     }
 
+    private IReadOnlyList<WorldMapAsset2D> _maps = [];
+    private readonly Dictionary<int, TileEditSession2D> _mapSessions = [];
+    private readonly Dictionary<int, Stack<Action<LevelDatabase2D>>> _mapThingUndo = [];
+    public int SelectedMapIndex { get; private set; }
+    public string MapLabel => _maps.Count == 0 ? "Tile editor" : $"{_maps[SelectedMapIndex].ZoneId} / {_maps[SelectedMapIndex].Name}";
+    public Rect2D MapBounds => _map.WorldBounds;
+    public int MapCount => _maps.Count;
+
+    internal void ConfigureMaps(IReadOnlyList<WorldMapAsset2D> maps)
+    {
+        if (IsActive || maps.Count == 0 || !ReferenceEquals(maps[0].TileMap, _map))
+            throw new InvalidOperationException("Configure maps before editing, with the current map first.");
+        _maps = maps;
+        _mapSessions[0] = _session;
+        _mapThingUndo[0] = _thingUndo;
+    }
+
+    internal void CycleMap(int direction)
+    {
+        if (!IsActive || _maps.Count < 2) return;
+        var next = (SelectedMapIndex + direction + _maps.Count) % _maps.Count;
+        EndStrokeIfActive();
+        CommitThingDrag();
+        var asset = _maps[next];
+        // Open the destination first: failure leaves the current editing session usable.
+        var database = LevelDatabase2D.Open(asset.DatabasePath);
+        _database?.Dispose();
+        _database = database;
+        SelectedMapIndex = next;
+        _map = asset.TileMap;
+        _origin = _map.Origin;
+        _openDatabase = () => LevelDatabase2D.Open(asset.DatabasePath);
+        if (!_mapSessions.TryGetValue(next, out _session!))
+            _mapSessions[next] = _session = new TileEditSession2D(_map);
+        if (!_mapThingUndo.TryGetValue(next, out _thingUndo!))
+            _mapThingUndo[next] = _thingUndo = [];
+        SelectedTilesetIndex = 0;
+        SelectedThingId = null;
+        SelectedDefinitionId = null;
+        _isPlacingThing = false;
+        _isPanning = false;
+        _cameraFocus = (_map.WorldBounds.Min + _map.WorldBounds.Max) / 2;
+        _camera.Position = _cameraFocus;
+        ReloadThings(notifyRuntime: false);
+    }
     public bool IsActive { get; private set; }
     public LevelEditorMode2D Mode { get; private set; }
     public TileKind2D SelectedKind { get; private set; }
@@ -133,6 +178,8 @@ internal sealed class TileEditor2D : IDisposable
         if (!IsActive)
             return;
 
+        if (input.Keyboard.WasPressed(Keys.PageDown)) CycleMap(1);
+        if (input.Keyboard.WasPressed(Keys.PageUp)) CycleMap(-1);
         _lastMouseDevice = input.Mouse.PositionDevice;
         if (Mode == LevelEditorMode2D.Things)
         {

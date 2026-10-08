@@ -21,6 +21,7 @@ public sealed class AuthoredCatalogTests
             "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-climb-off", "player-climb-on", "player-dash", "player-death", "player-fall",
             "player-gun-aim", "player-gun-charge", "player-gun-shot", "player-gun-wall-shot", "player-heal-gather", "player-hit", "player-idle", "player-jump", "player-land",
             "player-sword-backhand", "player-sword-down-attack", "player-sword-forehand", "player-sword-put-away", "player-sword-put-away-backhand", "player-sword-sheathe", "player-sword-side-cut", "player-wall-grip",
+            "pterosaur-brake", "pterosaur-death", "pterosaur-dive", "pterosaur-fold", "pterosaur-hit", "pterosaur-hover", "pterosaur-low-recovery", "pterosaur-reset", "pterosaur-swoop",
             "quadruped-brake", "quadruped-head-down", "quadruped-idle", "quadruped-recover", "quadruped-run", "quadruped-rush", "quadruped-scrape", "quadruped-walk",
             "rock-thrower-throw", "shield-defender-bash", "shield-defender-idle", "shield-defender-walk",
             "stalker-death", "stalker-hit", "stalker-idle", "stalker-lunge", "stalker-walk",
@@ -29,7 +30,7 @@ public sealed class AuthoredCatalogTests
         Assert.Equal(["brute-beard", "brute-hair", "brute-hide-wrap", "cinder-beard", "cinder-hair", "cinder-hide-wrap", "club-caveman-beard", "club-caveman-hair", "club-caveman-hide-wrap",
             "hair-short", "hair-short-back", "hammer", "pistol", "rock-thrower-bag", "rock-thrower-beard", "rock-thrower-hair", "rock-thrower-hide-wrap",
             "scavenged-shell", "sheath", "shield-defender-beard", "shield-defender-hair", "shield-defender-hide-wrap", "spear", "sword", "throwing-rock", "wooden-club"], catalog.Props.Keys.Order());
-        Assert.Equal(["baby-triceratops", "cinder-gunner", "club-caveman", "hero", "maul-brute", "player", "rock-thrower", "shield-defender", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
+        Assert.Equal(["baby-triceratops", "cinder-gunner", "club-caveman", "flying-pterosaur", "hero", "maul-brute", "player", "rock-thrower", "shield-defender", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })
@@ -48,7 +49,7 @@ public sealed class AuthoredCatalogTests
         { "animations/person-walk.json", "\"chain\": \"[^\"]*\"", "\"chain\": null" },
     };
 
-    private static readonly string[] expected = ["baby-triceratops-rig", "person", "quadruped", "stalker", "triceratops"];
+    private static readonly string[] expected = ["baby-triceratops-rig", "person", "pterosaur", "quadruped", "stalker", "triceratops"];
 
     [Theory, MemberData(nameof(NullReferences))]
     public void ANullReferenceInAHandEditedFileIsReportedAgainstThatFile(string file, string pattern, string replacement)

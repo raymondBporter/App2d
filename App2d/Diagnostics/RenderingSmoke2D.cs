@@ -60,10 +60,11 @@ internal static class RenderingSmoke2D
         using var game = new SideScrollerGame();
         game.Initialize();
         using var renderer = new Renderer2D(game.Camera, device);
-        var loaded = LevelBootstrap2D.Load();
-        using var editor = new TileEditor2D(loaded.TileMap,
+        using var loaded = LevelBootstrap2D.Load();
+        using var editor = new TileEditor2D(loaded.Maps[0].TileMap,
             () => throw new InvalidOperationException("Rendering smoke checks never open a level for writing."),
-            game.Camera, Vector2.Zero, 32f);
+            game.Camera, loaded.Maps[0].TileMap.Origin, 32f);
+        editor.ConfigureMaps(loaded.Maps);
 
         foreach (var (width, height) in new[] { (1280, 720), (960, 640) })
         {
