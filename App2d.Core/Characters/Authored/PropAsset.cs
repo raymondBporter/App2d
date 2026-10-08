@@ -37,17 +37,17 @@ public sealed record PropShape
         if (Geometry is ShapeDefinition2D definition)
         {
             var shape = definition.Build();
-            var count = WorldShape2D.OutlineVertexCount(shape, 48);
+            var count = shape.GetOutlineVertCount(48);
             if (count == 0) throw new InvalidDataException($"A {definition.Kind} cannot be used as prop art.");
             xy = new Vector2[count];
-            WorldShape2D.WriteOutline(shape, xy, 48);
+            shape.GetOutlineVerts(xy, 48);
         }
         else
         {
             xy = Geometry switch
             {
-                LineCurveDefinition2D line => [line.Start.Vector, line.End.Vector],
-                PolylineCurveDefinition2D polyline => [.. polyline.Points.Select(point => point.Vector)],
+                LineCurveDefinition2D line => [line.Start, line.End],
+                PolylineCurveDefinition2D polyline => [.. polyline.Points],
                 CurveDefinition2D curve => Sample(curve),
                 _ => throw new InvalidDataException("A prop needs shape or curve geometry.")
             };

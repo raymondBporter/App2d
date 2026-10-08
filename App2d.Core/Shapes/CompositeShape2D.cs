@@ -9,6 +9,9 @@ namespace App2d.Core.Shapes;
 /// </summary>
 public sealed class CompositeShape2D : IShape2D
 {
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.Composite;
+
     private readonly IConvexShape2D[] _parts;
 
     /// <summary>Creates a composite and copies its part list.</summary>

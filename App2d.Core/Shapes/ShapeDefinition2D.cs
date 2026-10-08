@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.IO;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -28,7 +29,8 @@ public abstract record ShapeDefinition2D : GeometryDefinition2D
     {
         WriteIndented = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        AllowOutOfOrderMetadataProperties = true
+        AllowOutOfOrderMetadataProperties = true,
+        Converters = { new Vector2JsonConverter() }
     };
 
     /// <summary>The kind tag this definition serializes under; one of <see cref="ShapeKinds2D"/>.</summary>
@@ -54,16 +56,16 @@ public abstract record ShapeDefinition2D : GeometryDefinition2D
     /// <exception cref="NotSupportedException">The shape is a custom implementation.</exception>
     public new static ShapeDefinition2D FromShape(IShape2D shape) => shape switch
     {
-        Circle2D circle => new CircleShapeDefinition2D { Center = Point2D.From(circle.Center), Radius = circle.Radius },
-        Ellipse2D ellipse => new EllipseShapeDefinition2D { Center = Point2D.From(ellipse.Center), Radii = Point2D.From(ellipse.Radii) },
-        Capsule2D capsule => new CapsuleShapeDefinition2D { Start = Point2D.From(capsule.Start), End = Point2D.From(capsule.End), Radius = capsule.Radius },
-        AxisAlignedRectangle2D rectangle => new RectangleShapeDefinition2D { Min = Point2D.From(rectangle.Min), Max = Point2D.From(rectangle.Max), AxisAligned = true },
-        Rectangle2D rectangle => new RectangleShapeDefinition2D { Min = Point2D.From(rectangle.Min), Max = Point2D.From(rectangle.Max) },
-        RoundedRectangle2D rectangle => new RoundedRectangleShapeDefinition2D { Min = Point2D.From(rectangle.Min), Max = Point2D.From(rectangle.Max), Radius = rectangle.Radius },
-        Triangle2D triangle => new TriangleShapeDefinition2D { A = Point2D.From(triangle.A), B = Point2D.From(triangle.B), C = Point2D.From(triangle.C) },
-        ConvexPolygon2D polygon => new ConvexPolygonShapeDefinition2D { Vertices = [.. polygon.Vertices.ToArray().Select(Point2D.From)] },
-        SimplePolygon2D polygon => new SimplePolygonShapeDefinition2D { Vertices = [.. polygon.Vertices.ToArray().Select(Point2D.From)] },
-        HalfSpace2D halfSpace => new HalfSpaceShapeDefinition2D { Normal = Point2D.From(halfSpace.Normal), Offset = halfSpace.Offset },
+        Circle2D circle => new CircleShapeDefinition2D { Center = circle.Center, Radius = circle.Radius },
+        Ellipse2D ellipse => new EllipseShapeDefinition2D { Center = ellipse.Center, Radii = ellipse.Radii },
+        Capsule2D capsule => new CapsuleShapeDefinition2D { Start = capsule.Start, End = capsule.End, Radius = capsule.Radius },
+        AxisAlignedRectangle2D rectangle => new RectangleShapeDefinition2D { Min = rectangle.Min, Max = rectangle.Max, AxisAligned = true },
+        Rectangle2D rectangle => new RectangleShapeDefinition2D { Min = rectangle.Min, Max = rectangle.Max },
+        RoundedRectangle2D rectangle => new RoundedRectangleShapeDefinition2D { Min = rectangle.Min, Max = rectangle.Max, Radius = rectangle.Radius },
+        Triangle2D triangle => new TriangleShapeDefinition2D { A = triangle.A, B = triangle.B, C = triangle.C },
+        ConvexPolygon2D polygon => new ConvexPolygonShapeDefinition2D { Vertices = [.. polygon.Vertices] },
+        SimplePolygon2D polygon => new SimplePolygonShapeDefinition2D { Vertices = [.. polygon.Vertices] },
+        HalfSpace2D halfSpace => new HalfSpaceShapeDefinition2D { Normal = halfSpace.Normal, Offset = halfSpace.Offset },
         CompositeShape2D composite => new CompositeShapeDefinition2D { Parts = [.. composite.Parts.ToArray().Select(FromShape)] },
         null => throw new ArgumentNullException(nameof(shape)),
         _ => throw new NotSupportedException($"No shape definition exists for {shape.GetType().Name}.")
@@ -89,14 +91,14 @@ public abstract record ShapeDefinition2D : GeometryDefinition2D
         {
             ShapeKinds2D.Rectangle => RectangleShapeDefinition2D.FromSize(size, center),
             ShapeKinds2D.RoundedRectangle => RoundedRectangleShapeDefinition2D.FromSize(size, MathF.Min(size.X, size.Y) * .1f, center),
-            ShapeKinds2D.Circle => new CircleShapeDefinition2D { Center = Point2D.From(center), Radius = MathF.Min(size.X, size.Y) / 2f },
-            ShapeKinds2D.Ellipse => new EllipseShapeDefinition2D { Center = Point2D.From(center), Radii = Point2D.From(size / 2f) },
+            ShapeKinds2D.Circle => new CircleShapeDefinition2D { Center = center, Radius = MathF.Min(size.X, size.Y) / 2f },
+            ShapeKinds2D.Ellipse => new EllipseShapeDefinition2D { Center = center, Radii = size / 2f },
             ShapeKinds2D.Capsule => size.X >= size.Y
-                ? new CapsuleShapeDefinition2D { Start = Point2D.From(center - new Vector2(reach, 0f)), End = Point2D.From(center + new Vector2(reach, 0f)), Radius = size.Y / 2f }
-                : new CapsuleShapeDefinition2D { Start = Point2D.From(center - new Vector2(0f, reach)), End = Point2D.From(center + new Vector2(0f, reach)), Radius = size.X / 2f },
-            ShapeKinds2D.Triangle => new TriangleShapeDefinition2D { A = Point2D.From(bounds.BottomLeft), B = Point2D.From(bounds.BottomRight), C = Point2D.From(bounds.TopCenter) },
-            ShapeKinds2D.ConvexPolygon => new ConvexPolygonShapeDefinition2D { Vertices = [Point2D.From(bounds.BottomLeft), Point2D.From(bounds.BottomRight), Point2D.From(bounds.TopRight), Point2D.From(bounds.TopLeft)] },
-            ShapeKinds2D.SimplePolygon => new SimplePolygonShapeDefinition2D { Vertices = [Point2D.From(bounds.BottomLeft), Point2D.From(bounds.BottomRight), Point2D.From(bounds.TopRight), Point2D.From(bounds.TopLeft)] },
+                ? new CapsuleShapeDefinition2D { Start = center - new Vector2(reach, 0f), End = center + new Vector2(reach, 0f), Radius = size.Y / 2f }
+                : new CapsuleShapeDefinition2D { Start = center - new Vector2(0f, reach), End = center + new Vector2(0f, reach), Radius = size.X / 2f },
+            ShapeKinds2D.Triangle => new TriangleShapeDefinition2D { A = bounds.BottomLeft, B = bounds.BottomRight, C = bounds.TopCenter },
+            ShapeKinds2D.ConvexPolygon => new ConvexPolygonShapeDefinition2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] },
+            ShapeKinds2D.SimplePolygon => new SimplePolygonShapeDefinition2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] },
             ShapeKinds2D.HalfSpace => new HalfSpaceShapeDefinition2D { Normal = new(0f, 1f), Offset = bounds.Top },
             ShapeKinds2D.Composite => new CompositeShapeDefinition2D { Parts = [this] },
             _ => throw new ArgumentException($"Unknown shape kind '{kind}'.", nameof(kind))
@@ -107,94 +109,94 @@ public abstract record ShapeDefinition2D : GeometryDefinition2D
 /// <summary>A circle: <see cref="Circle2D"/>.</summary>
 public sealed record CircleShapeDefinition2D : ShapeDefinition2D
 {
-    public required Point2D Center { get; init; }
+    public required Vector2 Center { get; init; }
     public required float Radius { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.Circle;
-    public override IShape2D Build() => new Circle2D(Radius, Center.Vector);
+    public override IShape2D Build() => new Circle2D(Radius, Center);
 }
 
 /// <summary>An axis-aligned ellipse: <see cref="Ellipse2D"/>.</summary>
 public sealed record EllipseShapeDefinition2D : ShapeDefinition2D
 {
-    public required Point2D Center { get; init; }
-    public required Point2D Radii { get; init; }
+    public required Vector2 Center { get; init; }
+    public required Vector2 Radii { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.Ellipse;
-    public override IShape2D Build() => new Ellipse2D(Radii.Vector, Center.Vector);
+    public override IShape2D Build() => new Ellipse2D(Radii, Center);
 }
 
 /// <summary>A capsule: <see cref="Capsule2D"/>.</summary>
 public sealed record CapsuleShapeDefinition2D : ShapeDefinition2D
 {
-    public required Point2D Start { get; init; }
-    public required Point2D End { get; init; }
+    public required Vector2 Start { get; init; }
+    public required Vector2 End { get; init; }
     public required float Radius { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.Capsule;
-    public override IShape2D Build() => new Capsule2D(Start.Vector, End.Vector, Radius);
+    public override IShape2D Build() => new Capsule2D(Start, End, Radius);
 }
 
 /// <summary>A rectangle: <see cref="Rectangle2D"/>, or <see cref="AxisAlignedRectangle2D"/> when <see cref="AxisAligned"/> is set.</summary>
 public sealed record RectangleShapeDefinition2D : ShapeDefinition2D
 {
-    public required Point2D Min { get; init; }
-    public required Point2D Max { get; init; }
+    public required Vector2 Min { get; init; }
+    public required Vector2 Max { get; init; }
     /// <summary>Marks a rectangle its owner keeps axis-aligned in world space.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool AxisAligned { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.Rectangle;
-    public override IShape2D Build() => AxisAligned ? new AxisAlignedRectangle2D(Min.Vector, Max.Vector) : new Rectangle2D(Min.Vector, Max.Vector);
+    public override IShape2D Build() => AxisAligned ? new AxisAlignedRectangle2D(Min, Max) : new Rectangle2D(Min, Max);
 
     /// <summary>A rectangle of a given size around a center.</summary>
     /// <param name="size">The width and height.</param>
     /// <param name="center">The center point.</param>
     /// <returns>The definition spanning half the size on each side of the center.</returns>
-    public static RectangleShapeDefinition2D FromSize(Vector2 size, Vector2 center = default) => new() { Min = Point2D.From(center - size / 2f), Max = Point2D.From(center + size / 2f) };
+    public static RectangleShapeDefinition2D FromSize(Vector2 size, Vector2 center = default) => new() { Min = center - size / 2f, Max = center + size / 2f };
 }
 
 /// <summary>A rectangle with circular corners: <see cref="RoundedRectangle2D"/>.</summary>
 public sealed record RoundedRectangleShapeDefinition2D : ShapeDefinition2D
 {
-    public required Point2D Min { get; init; }
-    public required Point2D Max { get; init; }
+    public required Vector2 Min { get; init; }
+    public required Vector2 Max { get; init; }
     public required float Radius { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.RoundedRectangle;
-    public override IShape2D Build() => new RoundedRectangle2D(Min.Vector, Max.Vector, Radius);
+    public override IShape2D Build() => new RoundedRectangle2D(Min, Max, Radius);
 
     public static RoundedRectangleShapeDefinition2D FromSize(Vector2 size, float radius, Vector2 center = default) =>
-        new() { Min = Point2D.From(center - size / 2f), Max = Point2D.From(center + size / 2f), Radius = radius };
+        new() { Min = center - size / 2f, Max = center + size / 2f, Radius = radius };
 }
 
 /// <summary>A triangle: <see cref="Triangle2D"/>.</summary>
 public sealed record TriangleShapeDefinition2D : ShapeDefinition2D
 {
-    public required Point2D A { get; init; }
-    public required Point2D B { get; init; }
-    public required Point2D C { get; init; }
+    public required Vector2 A { get; init; }
+    public required Vector2 B { get; init; }
+    public required Vector2 C { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.Triangle;
-    public override IShape2D Build() => new Triangle2D(A.Vector, B.Vector, C.Vector);
+    public override IShape2D Build() => new Triangle2D(A, B, C);
 }
 
 /// <summary>A convex polygon in perimeter order: <see cref="ConvexPolygon2D"/>.</summary>
 public sealed record ConvexPolygonShapeDefinition2D : ShapeDefinition2D
 {
-    public required List<Point2D> Vertices { get; init; }
+    public required List<Vector2> Vertices { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.ConvexPolygon;
-    public override IShape2D Build() => new ConvexPolygon2D(Vertices.Select(point => point.Vector));
+    public override IShape2D Build() => new ConvexPolygon2D(Vertices);
 }
 
 /// <summary>A simple polygon that may be concave.</summary>
 public sealed record SimplePolygonShapeDefinition2D : ShapeDefinition2D
 {
-    public required List<Point2D> Vertices { get; init; }
+    public required List<Vector2> Vertices { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.SimplePolygon;
-    public override IShape2D Build() => new SimplePolygon2D(Vertices.Select(point => point.Vector));
+    public override IShape2D Build() => new SimplePolygon2D(Vertices);
 }
 
 /// <summary>A half-space whose solid side is dot(point, Normal) &lt;= Offset: <see cref="HalfSpace2D"/>.</summary>
 public sealed record HalfSpaceShapeDefinition2D : ShapeDefinition2D
 {
-    public required Point2D Normal { get; init; }
+    public required Vector2 Normal { get; init; }
     public required float Offset { get; init; }
     [JsonIgnore] public override string Kind => ShapeKinds2D.HalfSpace;
-    public override IShape2D Build() => new HalfSpace2D(Normal.Vector, Offset);
+    public override IShape2D Build() => new HalfSpace2D(Normal, Offset);
 }
 
 /// <summary>A union of convex parts: <see cref="CompositeShape2D"/>.</summary>

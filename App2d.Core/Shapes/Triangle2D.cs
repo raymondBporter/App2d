@@ -7,6 +7,9 @@ namespace App2d.Core.Shapes;
 /// <summary>A filled triangle in local space. Either perimeter winding is accepted; collinear vertices are rejected.</summary>
 public sealed class Triangle2D : IConvexShape2D
 {
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.Triangle;
+
     private const double EdgeTolerance = 0.0001;
     private readonly bool _counterClockwise;
 

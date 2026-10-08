@@ -7,6 +7,9 @@ namespace App2d.Core.Shapes;
 /// <summary>A rectangle with circular corners: its inset rectangle expanded by <see cref="Radius"/>.</summary>
 public sealed class RoundedRectangle2D : IConvexShape2D
 {
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.RoundedRectangle;
+
     public RoundedRectangle2D(Vector2 min, Vector2 max, float radius)
     {
         ArgGuard.ThrowIfNotFiniteOrNotComponentWiseLessThan(min, max);

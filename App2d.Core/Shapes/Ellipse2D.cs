@@ -11,6 +11,9 @@ namespace App2d.Core.Shapes;
 /// </summary>
 public sealed class Ellipse2D : IConvexShape2D
 {
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.Ellipse;
+
     /// <summary>Perimeter samples used where an ellipse is polygonized for contact and distance queries.</summary>
     public const int CollisionSegments = 64;
 

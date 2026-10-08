@@ -38,7 +38,7 @@ public sealed class CurveDefinition2DTests
         var original = new BSpline2D([new(0, 0), new(1, 2), new(3, 0)], degree: 2);
         var definition = Assert.IsType<BSplineCurveDefinition2D>(CurveDefinition2D.FromJson(CurveDefinition2D.FromCurve(original).ToJson()));
         Assert.Equal(2, definition.Degree);
-        Assert.Equal(original.ControlPoints, definition.ControlPoints.Select(point => point.Vector));
+        Assert.Equal(original.ControlPoints, definition.ControlPoints);
     }
 
     private sealed class CurveEnvelope

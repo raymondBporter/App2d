@@ -78,8 +78,8 @@ public sealed class ShapeUtilityTests
 
     private static Vector2[] Outline(IShape2D shape)
     {
-        var vertices = new Vector2[WorldShape2D.OutlineVertexCount(shape, 24)];
-        WorldShape2D.WriteOutline(shape, vertices, 24);
+        var vertices = new Vector2[shape.GetOutlineVertCount(24)];
+        shape.GetOutlineVerts(vertices, 24);
         return vertices;
     }
 }

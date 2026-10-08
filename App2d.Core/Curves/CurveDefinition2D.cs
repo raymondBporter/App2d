@@ -1,4 +1,6 @@
 using App2d.Core.Geometry;
+using App2d.Core.IO;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -21,7 +23,8 @@ public abstract record CurveDefinition2D : GeometryDefinition2D
     {
         WriteIndented = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        AllowOutOfOrderMetadataProperties = true
+        AllowOutOfOrderMetadataProperties = true,
+        Converters = { new Vector2JsonConverter() }
     };
 
     public abstract ICurve2D Build();
@@ -36,37 +39,37 @@ public abstract record CurveDefinition2D : GeometryDefinition2D
     {
         LineSegmentCurve2D line => new LineCurveDefinition2D
         {
-            Start = Point2D.From(line.Start),
-            End = Point2D.From(line.End)
+            Start = line.Start,
+            End = line.End
         },
         PolylineCurve2D polyline => new PolylineCurveDefinition2D
         {
-            Points = [.. polyline.Points.ToArray().Select(Point2D.From)]
+            Points = [.. polyline.Points]
         },
         Arc2D arc => new ArcCurveDefinition2D
         {
-            Center = Point2D.From(arc.Center),
+            Center = arc.Center,
             Radius = arc.Radius,
             StartAngleRadians = arc.StartAngleRadians,
             SweepAngleRadians = arc.SweepAngleRadians
         },
         QuadraticBezier2D quadratic => new QuadraticBezierCurveDefinition2D
         {
-            Start = Point2D.From(quadratic.Start),
-            Control = Point2D.From(quadratic.Control),
-            End = Point2D.From(quadratic.End)
+            Start = quadratic.Start,
+            Control = quadratic.Control,
+            End = quadratic.End
         },
         CubicBezier2D cubic => new CubicBezierCurveDefinition2D
         {
-            Start = Point2D.From(cubic.Start),
-            Control1 = Point2D.From(cubic.Control1),
-            Control2 = Point2D.From(cubic.Control2),
-            End = Point2D.From(cubic.End)
+            Start = cubic.Start,
+            Control1 = cubic.Control1,
+            Control2 = cubic.Control2,
+            End = cubic.End
         },
         BSpline2D spline => new BSplineCurveDefinition2D
         {
             Degree = spline.Degree,
-            ControlPoints = [.. spline.ControlPoints.Select(Point2D.From)]
+            ControlPoints = [.. spline.ControlPoints]
         },
         null => throw new ArgumentNullException(nameof(curve)),
         _ => throw new NotSupportedException($"No curve definition exists for {curve.GetType().Name}.")
@@ -75,46 +78,46 @@ public abstract record CurveDefinition2D : GeometryDefinition2D
 
 public sealed record LineCurveDefinition2D : CurveDefinition2D
 {
-    public required Point2D Start { get; init; }
-    public required Point2D End { get; init; }
-    public override ICurve2D Build() => new LineSegmentCurve2D(Start.Vector, End.Vector);
+    public required Vector2 Start { get; init; }
+    public required Vector2 End { get; init; }
+    public override ICurve2D Build() => new LineSegmentCurve2D(Start, End);
 }
 
 public sealed record PolylineCurveDefinition2D : CurveDefinition2D
 {
-    public required List<Point2D> Points { get; init; }
-    public override ICurve2D Build() => new PolylineCurve2D(Points.Select(point => point.Vector));
+    public required List<Vector2> Points { get; init; }
+    public override ICurve2D Build() => new PolylineCurve2D(Points);
 }
 
 public sealed record ArcCurveDefinition2D : CurveDefinition2D
 {
-    public required Point2D Center { get; init; }
+    public required Vector2 Center { get; init; }
     public required float Radius { get; init; }
     public required float StartAngleRadians { get; init; }
     public required float SweepAngleRadians { get; init; }
-    public override ICurve2D Build() => new Arc2D(Center.Vector, Radius, StartAngleRadians, SweepAngleRadians);
+    public override ICurve2D Build() => new Arc2D(Center, Radius, StartAngleRadians, SweepAngleRadians);
 }
 
 public sealed record QuadraticBezierCurveDefinition2D : CurveDefinition2D
 {
-    public required Point2D Start { get; init; }
-    public required Point2D Control { get; init; }
-    public required Point2D End { get; init; }
-    public override ICurve2D Build() => new QuadraticBezier2D(Start.Vector, Control.Vector, End.Vector);
+    public required Vector2 Start { get; init; }
+    public required Vector2 Control { get; init; }
+    public required Vector2 End { get; init; }
+    public override ICurve2D Build() => new QuadraticBezier2D(Start, Control, End);
 }
 
 public sealed record CubicBezierCurveDefinition2D : CurveDefinition2D
 {
-    public required Point2D Start { get; init; }
-    public required Point2D Control1 { get; init; }
-    public required Point2D Control2 { get; init; }
-    public required Point2D End { get; init; }
-    public override ICurve2D Build() => new CubicBezier2D(Start.Vector, Control1.Vector, Control2.Vector, End.Vector);
+    public required Vector2 Start { get; init; }
+    public required Vector2 Control1 { get; init; }
+    public required Vector2 Control2 { get; init; }
+    public required Vector2 End { get; init; }
+    public override ICurve2D Build() => new CubicBezier2D(Start, Control1, Control2, End);
 }
 
 public sealed record BSplineCurveDefinition2D : CurveDefinition2D
 {
-    public required List<Point2D> ControlPoints { get; init; }
+    public required List<Vector2> ControlPoints { get; init; }
     public int Degree { get; init; } = 3;
-    public override ICurve2D Build() => new BSpline2D(ControlPoints.Select(point => point.Vector), Degree);
+    public override ICurve2D Build() => new BSpline2D(ControlPoints, Degree);
 }

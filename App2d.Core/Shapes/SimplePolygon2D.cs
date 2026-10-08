@@ -6,6 +6,9 @@ namespace App2d.Core.Shapes;
 /// <summary>A filled simple polygon, including concave outlines, in either winding.</summary>
 public sealed class SimplePolygon2D : IShape2D
 {
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.SimplePolygon;
+
     private readonly Vector2[] _vertices;
     private readonly TriangleMesh2D _mesh;
     private readonly CompositeShape2D _pieces;

@@ -65,7 +65,25 @@ non-convex shape and always resolves per part.
 
 `ShapeDefinition2D` is the editable, JSON-tagged form of every built-in shape, mirroring `CurveDefinition2D`:
 `FromShape(shape).ToJson()` writes it, `FromJson(json).Build()` reads it back through the validating constructors,
-and `ShapeKinds2D` lists the kind tags. Both definition families share the JSON-friendly `Geometry.Point2D`.
+and `ShapeKinds2D` lists the kind tags, also available as `IShape2D.Kind` on runtime shapes. Both definition families
+use `System.Numerics.Vector2` directly. `IO.Vector2JsonConverter` is registered in geometry and character authoring
+settings and preserves the existing `{ "x": ..., "y": ... }` coordinate format. It can also be registered in other
+`JsonSerializerOptions.Converters` collections.
+
+`ShapeVertices2D` exposes exact local convex cores and sampled drawing outlines without allocating:
+
+```csharp
+Span<Vector2> buffer = stackalloc Vector2[shape.GetVertCount()];
+ReadOnlySpan<Vector2> core = shape.GetVerts(buffer, out float radius);
+```
+
+The core is a point for circles, a segment for capsules, inset corners for rounded rectangles (possibly collapsing
+to a segment or point), or the original vertices for rectangles, triangles and convex polygons. The radius expands
+the core into the shape. `GetVertCount()` returns zero and `GetVerts()` throws for ellipses, concave polygons,
+composites, half-spaces and custom shapes, which have no known exact finite polygonal convex core.
+`GetOutlineVertCount(roundSegments)` and `GetOutlineVerts(buffer, roundSegments)` provide drawing perimeters,
+including ellipses and concave polygons. Returned spans refer to the caller's buffer; unused entries stay untouched.
+The existing world-space distance adapter still explicitly samples ellipses where its algorithms require polygons.
 
 ## Collision
 

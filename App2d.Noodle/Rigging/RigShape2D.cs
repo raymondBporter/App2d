@@ -43,7 +43,7 @@ internal abstract class RigShape2D(int id, string name, RigBone2D attachedBone)
     public RigShapePurpose Purpose { get; set; } = RigShapePurpose.VisualAndCollision;
 
     [Browsable(false)]
-    public string Kind => ShapeDefinition2D.FromShape(CreateGeometry()).Kind;
+    public string Kind => CreateGeometry().Kind;
 
     internal abstract IShape2D CreateGeometry();
 

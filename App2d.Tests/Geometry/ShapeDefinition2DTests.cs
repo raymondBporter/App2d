@@ -27,6 +27,7 @@ public sealed class ShapeDefinition2DTests
     {
         var json = ShapeDefinition2D.FromShape(original).ToJson();
         using var document = JsonDocument.Parse(json);
+        Assert.Equal(kind, original.Kind);
         Assert.Equal(kind, document.RootElement.GetProperty("kind").GetString());
         var restored = ShapeDefinition2D.FromJson(json).Build();
         Assert.Equal(original.GetType(), restored.GetType());
@@ -106,6 +107,7 @@ public sealed class ShapeDefinition2DTests
 
     private sealed class CustomShape : IShape2D
     {
+        public string Kind => "custom";
         public float Area => 1;
         public bool ContainsPoint(Vector2 point) => false;
     }
