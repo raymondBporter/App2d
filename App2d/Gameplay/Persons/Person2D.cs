@@ -198,6 +198,9 @@ public sealed partial class Person2D : ICombatant2D
         }
 
         _motor.UpdateAfterPhysics(deltaSeconds);
+        // Held toward the wall to grip it, but drawn (and fighting) with the back to it.
+        if (IsWallGripping)
+            Face(-_motor.WallDirection);
         if (!IsGrounded || IsDashing || IsClimbingLadder || IsWallGripping)
             _actions?.CancelHealing();
         _actions?.UpdateAfterPhysics(deltaSeconds, Facing);

@@ -572,10 +572,12 @@ internal static partial class PlayerMoves
     private static MotionClip WallGrip(ResolvedModel m)
     {
         var b = New(m, "player-wall-grip", "Wall grip", 1.2f, true);
+        // Per the user's sketch: hips and one foot against the wall, torso leaning out in a diagonal, head up and out,
+        // the near arm reaching straight back to the wall at shoulder height, the far arm and leg dangling free.
         foreach (var t in new[] { 0f, 1.2f })
-            b.Key(t, k => k.Hips(-.1f, -.2f).Chest(.1f).Head(-.06f).LeftHandAt(-.31f, 1.3f).RightHand(.1f, -.48f).LeftFoot(-.3f, .38f).RightFoot(-.18f, .06f));
+            b.Key(t, k => k.Hips(-.08f, -.1f).Chest(-.5f).Head(.3f).LeftHandAt(-.75f, 2.5f).RightHand(.2f, -.5f).LeftFoot(-.4f, .06f).RightFoot(.0f, .2f));
         return b
-            .Key(.6f, k => k.Hips(-.1f, -.215f).Chest(.12f).Head(-.08f).LeftHandAt(-.31f, 1.28f).RightHand(.12f, -.46f).LeftFoot(-.3f, .38f).RightFoot(-.19f, .04f))
+            .Key(.6f, k => k.Hips(-.08f, -.115f).Chest(-.48f).Head(.28f).LeftHandAt(-.75f, 2.48f).RightHand(.24f, -.46f).LeftFoot(-.4f, .05f).RightFoot(.02f, .18f))
             .Face(0, "strained")
             .Build();
     }
