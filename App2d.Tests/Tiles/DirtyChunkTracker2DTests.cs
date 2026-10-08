@@ -1,4 +1,4 @@
-using App2d.Tiles;
+using App2d.Core.Tiles;
 
 namespace App2d.Tests.Tiles;
 

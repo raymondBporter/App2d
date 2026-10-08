@@ -1,10 +1,13 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "shield-defender",
   "name": "Shell-shield defender",
   "model": "shield-defender-build",
   "motionSet": "standard",
+  "guard": {
+    "prop": "scavenged-shell"
+  },
   "roles": {
     "walk": "shield-defender-walk",
     "hit": "person-hit",
@@ -21,8 +24,17 @@
   "health": 8,
   "mass": 1.5,
   "movement": {
-    "width": 0.353,
-    "height": 2.01
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.1765,
+        "y": 0
+      },
+      "max": {
+        "x": 0.1765,
+        "y": 2.01
+      }
+    }
   },
   "hurt": {
     "layout": "standard",
@@ -53,17 +65,26 @@
       "hits": [
         {
           "id": "shell-bash",
-          "prop": "scavenged-shell",
-          "width": 0.9,
-          "height": 1.4,
-          "damage": 2,
-          "sound": "hit",
           "start": {
             "marker": "strike"
           },
           "finish": {
             "marker": "recover"
-          }
+          },
+          "prop": "scavenged-shell",
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.45,
+              "y": -0.7
+            },
+            "max": {
+              "x": 0.45,
+              "y": 0.7
+            }
+          },
+          "damage": 2,
+          "sound": "hit"
         }
       ],
       "events": [
@@ -83,10 +104,5 @@
         }
       ]
     }
-  ],
-  "guard": {
-    "prop": "scavenged-shell",
-    "width": 0.9,
-    "height": 1.4
-  }
+  ]
 }

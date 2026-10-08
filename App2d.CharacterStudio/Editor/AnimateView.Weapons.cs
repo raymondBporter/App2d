@@ -16,15 +16,15 @@ internal sealed partial class AnimateView
     private void WeaponOutline(Subject primary)
     {
         if (primary.Model.Base.Sockets.Count == 0) return;
-        Ui.Header("Weapon preview");
+        Ui.Header("Attachment preview");
         var visible = session.PreviewWeapon;
-        if (ImGui.Checkbox("Show weapon", ref visible)) session.PreviewWeapon = visible;
+        if (ImGui.Checkbox("Show attachment", ref visible)) session.PreviewWeapon = visible;
         if (Ui.Combo("Prop", session.PreviewProp, session.Assets.Props.Select(p => p.Id), id => session.Assets.Prop(id)?.Name ?? id) is { } prop)
         { session.PreviewProp = prop; session.EditWeapon = true; }
         var sockets = primary.Model.Base.Sockets.Select(s => s.Id).ToArray();
         if (!sockets.Contains(session.PreviewSocket)) session.PreviewSocket = sockets[0];
         if (Ui.Combo("Attachment socket", session.PreviewSocket, sockets) is { } socket) { session.PreviewSocket = socket; session.EditWeapon = true; }
-        if (ImGui.Selectable("Edit weapon rotation", session.EditWeapon)) { session.EditWeapon = true; session.Selection.Clear(); }
+        if (ImGui.Selectable("Edit attachment rotation", session.EditWeapon)) { session.EditWeapon = true; session.Selection.Clear(); }
         Ui.Help("Preview only. Equipment in Entity determines what is carried in game.");
     }
 
@@ -74,8 +74,9 @@ internal sealed partial class AnimateView
         var ink = prop.LineWidth; if (Ui.Drag("Ink width", ref ink, .001f, .001f, .1f)) session.Change(document, () => document.Asset.LineWidth = Math.Clamp(ink, .001f, .1f));
         for (var i = 0; i < prop.Solids.Count; i++)
         {
-            var index = i; var color = prop.Solids[i].Fill;
-            if (Ui.ColorHex("Color " + (i + 1), ref color)) session.Change(document, () => document.Asset.Solids[index].Fill = color);
+            var index = i; var color = prop.Solids[i].RenderMaterial.Fill!;
+            if (Ui.ColorHex("Color " + (i + 1), ref color)) session.Change(document, () =>
+            { var solid = document.Asset.Solids[index]; solid.Material = solid.RenderMaterial with { Fill = color }; });
         }
         Ui.Drag("OBJ import scale", ref _objScale, .001f, .001f, 100);
         Ui.Help("Triangulated OBJ, outward face winding. +X along blade/barrel, +Y across broad face, Z thickness. Export applied transforms. Materials/textures are not imported.");
@@ -87,7 +88,7 @@ internal sealed partial class AnimateView
                 try
                 {
                     if (new FileInfo(dialog.FileName).Length > 16 * 1024 * 1024) throw new InvalidDataException("OBJ must be under 16 MB.");
-                    var mesh = PropGeometry.ImportObj(File.ReadAllText(dialog.FileName), _objScale, prop.Solids.FirstOrDefault()?.Fill ?? "#c8b18a");
+                    var mesh = PropGeometry.ImportObj(File.ReadAllText(dialog.FileName), _objScale, prop.Solids.FirstOrDefault()?.RenderMaterial.Fill ?? "#c8b18a");
                     session.Edit(document, () => { document.Asset.Shapes.Clear(); document.Asset.Solids = [mesh]; }, "Imported geometry. Check size, grip, tip and muzzle, then save weapon.");
                 }
                 catch (Exception ex) when (ex is IOException or ArgumentException) { session.Report(ex.Message, true); }
@@ -133,8 +134,15 @@ internal sealed partial class AnimateView
                     _weaponStart.Z += MathF.IEEERemainder(pointer - _weaponPointerAngle, MathF.Tau) * speed;
                     _weaponPointerAngle = pointer;
                 }
-                else if (_weaponDrag == "Tilt") _weaponStart.Y -= ImGui.GetIO().MouseDelta.Y * .01f / scale * speed;
-                else _weaponStart.X += ImGui.GetIO().MouseDelta.X * .01f / scale * speed;
+                else if (_weaponDrag == "Tilt")
+                {
+                    _weaponStart.Y -= ImGui.GetIO().MouseDelta.Y * .01f / scale * speed;
+                }
+                else
+                {
+                    _weaponStart.X += ImGui.GetIO().MouseDelta.X * .01f / scale * speed;
+                }
+
                 session.PoseWeapon(_weaponStart);
             }
         }

@@ -340,8 +340,18 @@ internal static class SwingLab
     {
         var points = new List<Vector2>();
         for (var t = from; t <= recover + 1e-4f; t += 1 / 240f)
+        {
             if (blade(t) is var (guard, tip))
-                for (var k = 0; k <= 8; k++) { var p = Vector3.Lerp(guard, tip, k / 8f); if (p.X > Front) points.Add(new(p.X, p.Y)); }
+            {
+                for (var k = 0; k <= 8; k++)
+                {
+                    var p = Vector3.Lerp(guard, tip, k / 8f);
+                    if (p.X > Front)
+                        points.Add(new(p.X, p.Y));
+                }
+            }
+        }
+
         if (points.Count < 2) return null;
         var shoulders = PoseEvaluator.Sample(model, clip, strike).Points["right-shoulder"].Y;
         return (new(points.Min(p => p.X), points.Min(p => p.Y)), new(points.Max(p => p.X), MathF.Min(shoulders, points.Max(p => p.Y))));

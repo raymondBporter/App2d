@@ -88,6 +88,15 @@ public sealed class Grid2DTests
     }
 
     [Fact]
+    public void NearestCornerUsesGridOriginAndPreservesMidpointRounding()
+    {
+        var geometry = new GridGeometry2D(new Size2D(10, 20), new(-70, 30));
+        Assert.Equal(new Vector2(-70, 30), geometry.SnapToNearestCorner(new(-65, 40)));
+        Assert.Equal(new Vector2(-50, 70), geometry.SnapToNearestCorner(new(-55, 60)));
+        Assert.Equal(new Vector2(-90, -10), geometry.SnapToNearestCorner(new(-85, 0)));
+    }
+
+    [Fact]
     public void RangesKeepMaximumEdgeContactsAndClipWithoutFoldingDistantBoundsOntoTheGrid()
     {
         var geometry = new GridGeometry2D(10f);

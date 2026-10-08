@@ -1,5 +1,5 @@
-using App2d.Core.Geometry;
 using App2d.Core;
+using App2d.Core.Geometry;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -128,7 +128,10 @@ public sealed class Rect2DTests
             Assert.True(first.Contains(result));
             Assert.True(second.Contains(result));
         }
-        else Assert.Equal(default, result);
+        else
+        {
+            Assert.Equal(default, result);
+        }
     }
 
     [Fact]

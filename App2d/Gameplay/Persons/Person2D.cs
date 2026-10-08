@@ -1,0 +1,341 @@
+using App2d.Contracts.Combat;
+using App2d.Contracts.Persons;
+using App2d.Contracts.Player;
+using App2d.Core;
+using App2d.Core.Collision;
+using App2d.Core.Physics;
+using App2d.Core.Shapes;
+using App2d.Core.Tiles;
+using App2d.Core.Validation;
+using App2d.Gameplay.Combat;
+using App2d.Gameplay.Persons.Actions;
+using System.Numerics;
+
+namespace App2d.Gameplay.Persons;
+
+/// <summary>
+/// Shared humanoid simulation. Input, AI, rendering, audio, respawning, and
+/// encounter policy live outside this type.
+/// </summary>
+public sealed partial class Person2D : ICombatant2D
+{
+    private const float FootstepSpeedThreshold = 65f;
+    private const float FootstepIntervalSeconds = 0.29f;
+    private const float DefaultDamageKnockbackX = 220f;
+    private const float DefaultDamageKnockbackY = 170f;
+
+    private readonly PersonLocomotion2D _motor;
+    private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
+    private IPersonActionSet2D? _actions;
+    private PersonCommand2D _previousCommand;
+    private float _footstepSeconds;
+    private bool _simulationEnabled = true;
+
+    public Person2D(
+        EntityId2D id,
+        CollisionSystem2D collision,
+        PhysicsWorld2D physics,
+        TraversalMetrics2D traversal,
+        Vector2 spawnPoint,
+        uint bodyLayer,
+        uint worldLayer,
+        CombatFaction2D faction,
+        int maximumHealth = 5,
+        float mass = 1f,
+        IChunkedTileMap2D? tileMap = null)
+    {
+        ArgGuard.ThrowIfNull(collision);
+        ArgGuard.ThrowIfNull(physics);
+        ArgGuard.ThrowIfNull(traversal);
+        ArgGuard.ThrowIfNotFinite(spawnPoint);
+        ArgGuard.ThrowIfNotPositive(maximumHealth);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(mass);
+        ArgGuard.ThrowIf(!id.IsValid, "A person requires a valid entity ID.", nameof(id));
+        Id = id;
+
+        WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(
+            traversal.PlayerColliderSize,
+            new Vector2(traversal.PlayerColliderCenterOffsetX, 0f)));
+        WorldObject.Transform.Position = spawnPoint;
+
+        Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
+        Body.Restitution = 0f;
+        Body.Mass = mass;
+        Body.CollisionLayer = bodyLayer;
+        Body.CollisionMask = worldLayer;
+        Body.EntityId = Id;
+        Health = new Health2D(maximumHealth);
+        Faction = faction;
+
+        _motor = new PersonLocomotion2D(collision, physics, Body, traversal, tileMap);
+        _motor.JumpStarted += () => JumpStarted?.Invoke();
+        _motor.Landed += speed =>
+        {
+            LandingSpeedThisFrame = speed;
+            Landed?.Invoke(speed);
+            _footstepSeconds = FootstepIntervalSeconds * 0.5f;
+        };
+    }
+
+    public EntityId2D Id { get; }
+    public SpatialObject2D WorldObject { get; }
+    public PhysicsBody2D Body { get; }
+    public Health2D Health { get; }
+    public CombatFaction2D Faction { get; }
+    public Vector2 Position => WorldObject.Transform.Position;
+    public float Facing { get; private set; } = 1f;
+    public float InvulnerabilitySeconds { get; private set; }
+    public float LandingSpeedThisFrame { get; private set; }
+    public bool DownAttackBouncedThisFrame { get; private set; }
+    public bool IsGrounded => _motor.IsGrounded;
+    public int BalanceDirection => IsAlive && _simulationEnabled ? _motor.BalanceDirection : 0;
+    public bool IsWallGripping => _motor.IsWallGripping;
+    public bool IsDashing => _motor.IsDashing;
+    public bool IsClimbingLadder => _motor.IsClimbingLadder;
+    public bool IsSustainingJump => _motor.IsSustainingJump;
+    public float JumpPower => _motor.JumpPower;
+    public bool IsAlive => Health.IsAlive;
+    public bool IsSimulationEnabled => _simulationEnabled;
+    public IPersonActionSet2D? Actions => _actions;
+
+    public PersonState2D CaptureState() => new(
+        Id, Position, Body.LinearVelocity, Facing, Health.Current, Health.Maximum,
+        InvulnerabilitySeconds, LandingSpeedThisFrame, BalanceDirection,
+        IsGrounded, IsWallGripping, IsDashing, IsClimbingLadder,
+        IsSustainingJump, JumpPower, _actions?.IsChargingPrimary == true)
+    {
+        Action = _actions?.CaptureActionState() ?? default,
+        GroundVelocity = _motor.GroundVelocity,
+        Spells = _actions?.CaptureSpellState() ?? default
+    };
+
+    public event Action? JumpStarted;
+    public event Action<float>? Landed;
+    public event Action? Footstep;
+    public event Action? Damaged;
+    public event Action? Died;
+
+    public void BeginFrame(float deltaSeconds)
+    {
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        LandingSpeedThisFrame = 0f;
+        DownAttackBouncedThisFrame = false;
+        InvulnerabilitySeconds = Math.Max(0f, InvulnerabilitySeconds - deltaSeconds);
+        _actions?.BeginFrame(deltaSeconds);
+    }
+
+    public void AttachActions(IPersonActionSet2D actions)
+    {
+        ArgGuard.ThrowIfNull(actions);
+        StateGuard.ThrowIf(
+            _actions is not null,
+            "The person already has an action set.");
+        _actions = actions;
+    }
+
+    /// <summary>
+    /// Applies one tick of held-state input. Edges come from the previous command this
+    /// person saw, so the same command repeated (or a command that never arrived) cannot
+    /// double or drop a press. The previous command is tracked even while dead or disabled.
+    /// </summary>
+    public void ApplyCommand(PersonCommand2D command, float deltaSeconds)
+    {
+        var previous = _previousCommand;
+        _previousCommand = command;
+        if (!_simulationEnabled || !IsAlive)
+            return;
+
+        var intent = PersonMovementIntent2D.Derive(command, previous);
+        var primaryPressed = command.PrimaryHeld && !previous.PrimaryHeld;
+        var primaryReleased = !command.PrimaryHeld && previous.PrimaryHeld;
+        var secondaryPressed = command.SecondaryHeld && !previous.SecondaryHeld;
+
+        if (MathF.Abs(command.MoveX) > 0.01f)
+            Face(command.MoveX);
+        var previousWallDirection = _motor.IsWallGripping ? _motor.WallDirection : 0f;
+        _motor.UpdateBeforePhysics(intent, Facing, deltaSeconds);
+        var canHeal = IsGrounded && !IsDashing && !IsClimbingLadder && !IsWallGripping &&
+            MathF.Abs(command.MoveX) < .01f && MathF.Abs(command.ClimbY) < .01f &&
+            !command.JumpHeld && !command.DashHeld && !command.PrimaryHeld && !command.SecondaryHeld && !command.CastHeld &&
+            MathF.Abs(Body.LinearVelocity.X - _motor.GroundVelocity.X) < 1f;
+        _actions?.SetSpellInput(command.CastHeld, command.CastHeld && !previous.CastHeld,
+            command.HealHeld, canHeal, !IsDashing && !IsClimbingLadder && !command.DashHeld, Facing);
+        _actions?.SetPrimaryInput(command.PrimaryHeld, canCharge: true, released: primaryReleased);
+        if ((primaryPressed || secondaryPressed) && _actions is not null)
+        {
+            var isWallAttack = _motor.IsWallGripping;
+            var attackFacing = isWallAttack
+                ? -_motor.WallDirection
+                : Facing;
+            if (primaryPressed)
+            {
+                var isDownAttack = command.DownHeld && !_motor.IsGrounded &&
+                    !isWallAttack && !_motor.IsClimbingLadder && !_motor.IsDashing;
+                Face(isDownAttack
+                    ? _actions.UseDownwardPrimary(attackFacing)
+                    : _actions.UsePrimary(attackFacing));
+            }
+            if (secondaryPressed)
+                Face(_actions.UseSecondary(attackFacing));
+        }
+        if (_actions?.IsChargingPrimary == true)
+        {
+            var wallDirection = _motor.IsWallGripping ? _motor.WallDirection : previousWallDirection;
+            if (wallDirection != 0f)
+                Face(-wallDirection);
+        }
+    }
+
+    public void UpdateAfterPhysics(float deltaSeconds)
+    {
+        if (!_simulationEnabled)
+            return;
+
+        if (!IsAlive)
+        {
+            _motor.UpdatePassiveAfterPhysics();
+            return;
+        }
+
+        _motor.UpdateAfterPhysics(deltaSeconds);
+        // Held toward the wall to grip it, but drawn (and fighting) with the back to it.
+        if (IsWallGripping)
+            Face(-_motor.WallDirection);
+        if (!IsGrounded || IsDashing || IsClimbingLadder || IsWallGripping)
+            _actions?.CancelHealing();
+        _actions?.UpdateAfterPhysics(deltaSeconds, Facing);
+        if (_actions?.ConsumeDownAttackBounce() == true)
+        {
+            _motor.BounceFromDownAttack();
+            DownAttackBouncedThisFrame = true;
+        }
+        UpdateFootsteps(deltaSeconds);
+    }
+
+    public void Face(float direction)
+    {
+        if (MathF.Abs(direction) <= 0.01f)
+            return;
+
+        Facing = MathF.Sign(direction);
+        var scale = WorldObject.Transform.Scale;
+        WorldObject.Transform.Scale = new Vector2(Facing, scale.Y);
+    }
+
+    public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
+    {
+        ArgGuard.ThrowIf(!attackSourceId.IsValid, "An attack source ID is required.", nameof(attackSourceId));
+        if (_lastAttackIds.TryGetValue(attackSourceId, out var lastAttackId) &&
+            lastAttackId == attackId)
+        {
+            return false;
+        }
+
+        _lastAttackIds[attackSourceId] = attackId;
+        return true;
+    }
+
+    public bool TakeDamage(int damage, Vector2 knockback)
+    {
+        ArgGuard.ThrowIfNotPositive(damage);
+        ArgGuard.ThrowIfNotFinite(knockback);
+        if (IsDashing || InvulnerabilitySeconds > 0f || !IsAlive)
+            return false;
+
+        Health.Damage(damage);
+        _actions?.InterruptPrimary();
+        _motor.DetachFromLadder();
+        InvulnerabilitySeconds = 0.9f;
+        Body.LinearVelocity = knockback;
+        Damaged?.Invoke();
+        if (!IsAlive)
+        {
+            Body.LinearVelocity = Vector2.Zero;
+            _motor.EnterPassiveState();
+            _actions?.Reset();
+            Died?.Invoke();
+        }
+        return true;
+    }
+
+    public bool TryTakeDamageFromX(
+        int damage,
+        float sourceX,
+        float horizontalKnockback = DefaultDamageKnockbackX,
+        float verticalKnockback = DefaultDamageKnockbackY)
+    {
+        ArgGuard.ThrowIfNotPositive(damage);
+        ArgGuard.ThrowIfNotFinite(sourceX);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(horizontalKnockback);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(verticalKnockback);
+
+        float direction = MathF.Sign(Position.X - sourceX);
+        if (direction == 0f)
+            direction = -Facing;
+        return TakeDamage(
+            damage,
+            new Vector2(direction * horizontalKnockback, verticalKnockback));
+    }
+
+    public void SetSimulationEnabled(bool enabled)
+    {
+        DownAttackBouncedThisFrame = false;
+        _simulationEnabled = enabled;
+        Body.IsCollider = enabled;
+        Body.MotionType = enabled
+            ? BodyMotionType2D.Dynamic
+            : BodyMotionType2D.Static;
+        if (!enabled)
+        {
+            _motor.DetachFromLadder();
+            Body.LinearVelocity = Vector2.Zero;
+            _actions?.Reset();
+        }
+    }
+
+    public void Reset(Vector2 spawnPoint, int? hitPoints = null)
+    {
+        DownAttackBouncedThisFrame = false;
+        ArgGuard.ThrowIfNotFinite(spawnPoint);
+        if (hitPoints is { } savedHitPoints)
+            Health.Reset(savedHitPoints);
+        else
+            Health.Reset();
+        WorldObject.Transform.Position = spawnPoint;
+        Body.IsCollider = _simulationEnabled;
+        Body.MotionType = _simulationEnabled
+            ? BodyMotionType2D.Dynamic
+            : BodyMotionType2D.Static;
+        Body.LinearVelocity = Vector2.Zero;
+        Body.AngularVelocity = 0f;
+        _motor.Reset();
+        _actions?.Reset();
+        _lastAttackIds.Clear();
+        Face(Facing);
+        _footstepSeconds = 0f;
+        LandingSpeedThisFrame = 0f;
+        InvulnerabilitySeconds = Math.Max(InvulnerabilitySeconds, 0.35f);
+    }
+
+    private void UpdateFootsteps(float deltaSeconds)
+    {
+        if (IsDashing ||
+            !IsGrounded ||
+            MathF.Abs(Body.LinearVelocity.X) < FootstepSpeedThreshold)
+        {
+            _footstepSeconds = 0f;
+            return;
+        }
+
+        _footstepSeconds -= deltaSeconds;
+        if (_footstepSeconds > 0f)
+            return;
+
+        Footstep?.Invoke();
+        var speedRatio = Math.Clamp(
+            MathF.Abs(Body.LinearVelocity.X) / _motor.Metrics.RunSpeed,
+            0.65f,
+            1.15f);
+        _footstepSeconds = FootstepIntervalSeconds / speedRatio;
+    }
+}

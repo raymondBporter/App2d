@@ -1,3 +1,5 @@
+using App2d.Core.Input;
+
 namespace App2d.Diagnostics;
 
 /// <summary>Temporary player inspection controls, separate from gameplay bindings.</summary>

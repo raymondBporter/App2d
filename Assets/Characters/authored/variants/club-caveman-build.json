@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 1,
+  "version": 2,
   "id": "club-caveman-build",
   "name": "Club caveman",
   "base": "person",
@@ -14,10 +14,14 @@
   "rest": {},
   "parts": {
     "body": {
-      "fill": "#d7a348",
+      "material": {
+        "fill": "#d7a348"
+      },
       "paint": [
         {
-          "fill": "#f3dcc6",
+          "material": {
+            "fill": "#f3dcc6"
+          },
           "points": [
             {
               "x": -0.35,
@@ -37,7 +41,9 @@
           ]
         },
         {
-          "fill": "#765033",
+          "material": {
+            "fill": "#765033"
+          },
           "points": [
             {
               "x": -0.16499999,
@@ -77,7 +83,9 @@
           ]
         },
         {
-          "fill": "#765033",
+          "material": {
+            "fill": "#765033"
+          },
           "points": [
             {
               "x": 0.28,
@@ -117,7 +125,9 @@
           ]
         },
         {
-          "fill": "#765033",
+          "material": {
+            "fill": "#765033"
+          },
           "points": [
             {
               "x": -0.16,
@@ -159,7 +169,9 @@
       ]
     },
     "head": {
-      "fill": "#f3dcc6",
+      "material": {
+        "fill": "#f3dcc6"
+      },
       "face": "smug"
     }
   }

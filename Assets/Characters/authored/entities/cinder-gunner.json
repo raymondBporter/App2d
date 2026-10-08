@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "cinder-gunner",
   "name": "Cinder gunner",
   "model": "cinder",
@@ -12,8 +12,17 @@
   },
   "health": 7,
   "movement": {
-    "width": 0.353,
-    "height": 2.01
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.1765,
+        "y": 0
+      },
+      "max": {
+        "x": 0.1765,
+        "y": 2.01
+      }
+    }
   },
   "hurt": {
     "layout": "standard",
@@ -42,8 +51,17 @@
       "id": "attack",
       "clip": "person-pistol-shot",
       "projectile": {
-        "width": 0.3,
-        "height": 0.12,
+        "shape": {
+          "kind": "rectangle",
+          "min": {
+            "x": -0.15,
+            "y": -0.06
+          },
+          "max": {
+            "x": 0.15,
+            "y": 0.06
+          }
+        },
         "damage": 2
       },
       "hits": [],

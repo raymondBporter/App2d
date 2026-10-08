@@ -95,6 +95,12 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         ImGui.SameLine(); if (Ui.Button("Undo", Session.CanUndo)) Session.Undo();
         ImGui.SameLine(); if (Ui.Button("Redo", Session.CanRedo)) Session.Redo();
         ImGui.SameLine();
+        if (Ui.Button("Export Spine", Session.SubjectId is not null))
+        {
+            using var dialog = new SaveFileDialog { Filter = "Spine 4.2 JSON (*.json)|*.json", FileName = Session.SubjectId + ".json", Title = "Export Spine package into its own folder" };
+            if (dialog.ShowDialog() == DialogResult.OK) Session.ExportSpine(dialog.FileName);
+        }
+        ImGui.SameLine();
         ImGui.TextUnformatted(document is null ? "Nothing open" : $"{document.Name}{(document.Dirty || document.IsNew ? " *" : "")}");
         ImGui.SameLine(); ImGui.TextDisabled(document is null ? "" : Describe(document));
         ImGui.SameLine(Math.Max(ImGui.GetCursorPosX(), rightEdge - ImGui.CalcTextSize("UI").X - 2 * ImGui.GetStyle().FramePadding.X));
@@ -130,6 +136,11 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
 
     private void ViewportToolbar()
     {
+        if (Session.Assets.Resolve(Session.SubjectId) is { Base.Skins.Count: > 0 } skinned)
+        {
+            if (Ui.Combo("Skin", Session.Skin ?? "default", skinned.Base.Skins.Select(s => s.Id)) is { } skin) Session.Skin = skin;
+            ImGui.SameLine();
+        }
         if (ImGui.SmallButton("Fit")) Viewport.Fit(Session.Scene().FirstOrDefault());
         ImGui.SameLine(); var follow = Viewport.Follow; if (ImGui.Checkbox("Follow", ref follow)) Viewport.Follow = follow;
         ImGui.SameLine(); var game = Viewport.GameSize; if (ImGui.Checkbox("Game size", ref game)) Viewport.GameSize = game;

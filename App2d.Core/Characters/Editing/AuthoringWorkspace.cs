@@ -1,5 +1,5 @@
-using App2d.Core.Validation;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Validation;
 using System.Text.Json;
 
 namespace App2d.Core.Characters.Editing;
@@ -124,7 +124,7 @@ public sealed class AuthoringWorkspace
         var key = variant?.Id ?? model.Id;
         if (_resolved.TryGetValue(key, out var cached) && cached.ModelVersion == model.Version && cached.VariantVersion == (variant?.Version ?? -1)) { error = cached.Error; return cached.Resolved; }
         ResolvedModel? resolved = null;
-        try { resolved = ResolvedModel.From(model.Asset, variant?.Asset); }
+        try { resolved = ResolvedModel.From(model.Asset, variant?.Asset); resolved.TextureRoot = Root; }
         catch (Exception ex) when (IsAssetError(ex)) { error = ex.Message; }
         _resolved[key] = (model.Version, variant?.Version ?? -1, resolved, error);
         return resolved;
@@ -193,7 +193,8 @@ public sealed class AuthoringWorkspace
             if (resolved.TryGetValue(id, out var cached)) return cached;
             var variant = Copy(Variant(id), ModelVariant.FromJson);
             var model = Copy(Model(variant?.Base ?? id), CharacterModel.FromJson) ?? throw new KeyNotFoundException($"No model or variant '{id}'.");
-            return resolved[id] = ResolvedModel.From(model, variant);
+            var copy = ResolvedModel.From(model, variant); copy.TextureRoot = Root;
+            return resolved[id] = copy;
         }
         var entities = new List<ResolvedEntity>();
         foreach (var document in Entities.OrderBy(e => e.Id, StringComparer.Ordinal))
@@ -317,7 +318,7 @@ public sealed class AuthoringWorkspace
         var path = document.Path ?? DefaultPath(document);
         if (document.IsNew && File.Exists(path)) throw new InvalidDataException($"A file already exists at {path}; it did not load, so it is left alone. Choose another id, or repair or remove that file.");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        AuthoredAsset.Write(path, document.Serialize());
+        AuthoredAsset.Write(path, document is AssetDocument<PropAsset> propDocument ? propDocument.Asset.ToJson() : document.Serialize());
         document.MarkSaved(path);
         if (document is AssetDocument<CharacterModel> saved) _savedStructure[saved.Id] = ModelAuthoring.StructureSignature(saved.Asset);
         return new(path, updated, Problems(document));

@@ -17,8 +17,8 @@ public sealed class PolygonContactTests
 
     private static ConvexPolygon2D Diamond(float size) => new([new(0, -size), new(size, 0), new(0, size), new(-size, 0)]);
 
-    public static TheoryData<IShape2D> Partners => new()
-    {
+    public static TheoryData<IShape2D> Partners =>
+    [
         Diamond(1),
         Rectangle2D.FromSize(new Vector2(2, 2)),
         new AxisAlignedRectangle2D(new(-1), new(1)),
@@ -27,7 +27,7 @@ public sealed class PolygonContactTests
         new Circle2D(1),
         new Ellipse2D(new(1.2f, .8f)),
         new HalfSpace2D(-Vector2.UnitX, 1),
-    };
+    ];
 
     [Theory]
     [MemberData(nameof(Partners))]

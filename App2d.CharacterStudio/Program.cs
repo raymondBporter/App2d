@@ -1,12 +1,12 @@
-using App2d.Core.Validation;
 using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Validation;
 
 namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --angelia-gallery [output-directory]]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --export-spine model-or-variant json-path | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --angelia-gallery [output-directory]]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -17,12 +17,20 @@ internal static class Program
             switch (args)
             {
                 case ["--write-pterosaur", var flyingRoot]: PterosaurTemplate.Write(Path.GetFullPath(flyingRoot)); return 0;
+                case ["--export-spine", var subject, var spinePath]:
+                    {
+                        var catalog = AuthoredCatalog.Load(Path.Combine(FindAssets(preferSource: true), "authored"));
+                        var model = catalog.Resolve(subject);
+                        var package = App2d.Core.Characters.Spine.SpineExport2D.Build(model, catalog.Animations.Values.Where(c => c.Model == model.Base.Id));
+                        package.Save(spinePath); foreach (var note in package.Notes) Console.WriteLine(note); return 0;
+                    }
                 case ["--write-quadrupeds", var quadRoot]: QuadrupedTemplate.Write(Path.GetFullPath(quadRoot)); return 0;
                 case ["--convert-studies", var output]: PersonTemplate.WriteStudies(Path.GetFullPath(output)); return 0;
                 case ["--write-player-moves", var moves]: PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves)); return 0;
                 case ["--write-spells", var spells]: PlayerMoves.PlayerMoves.WriteSpells(Path.GetFullPath(spells)); return 0;
                 case ["--write-weapons", var root]: PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root)); return 0;
                 case ["--write-wardrobe", var root]: PersonWardrobe.Write(Path.GetFullPath(root)); return 0;
+                case ["--replace-wardrobe-art", var root]: PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true); return 0;
                 case [] or ["--editor"] or ["--smoke-editor", _]:
                     {
                         using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
@@ -58,11 +66,14 @@ internal static class Program
     private static string FindAssets(bool preferSource = false)
     {
         if (preferSource)
+        {
             for (var folder = new DirectoryInfo(Environment.CurrentDirectory); folder is not null; folder = folder.Parent)
             {
                 var root = Path.Combine(folder.FullName, "Assets", "Characters");
                 if (Directory.Exists(Path.Combine(root, "authored"))) return root;
             }
+        }
+
         return AssetLocations.FindCharacterLibrary(AppContext.BaseDirectory, Environment.CurrentDirectory);
     }
 }

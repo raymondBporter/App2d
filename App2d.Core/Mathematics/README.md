@@ -11,7 +11,45 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `CrossProduct2D` | Double-precision perpendicular dot products and three-point orientation |
 | `Rotation2D` | Rotate vectors or points about a pivot, solve a pivot from two endpoints and a turn, and interpolate an endpoint arc |
 | `Interpolation` | Progress mappings, lerp, and inverse lerp |
-| `Similarity2D` | Translation, rotation, uniform scale, and mirroring used by collision |
+| `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
+| `Affine2D` | Editable translation, rotation, independent axis scales and shear; shared by scene objects and authored rigs |
+
+## Transforms
+
+There are two transform families. `Similarity2D` is the uniform-scale, orthogonal subset used by collision.
+`Affine2D` is the general affine transform shared by scene objects, rendering, and animation. Nonuniform scales and
+composition can introduce shear. Both use `Matrix3x2`'s row-vector convention: local * parent.
+
+`Affine2D` permits reflections and singular transforms, including zero scale. "Affine" here means an affine map;
+it does not promise an inverse. Use `TryInverse` when invertibility matters. Collision rejects an affine transform
+unless `Similarity2D.TryFromMatrix` accepts its finite, equal-length, orthogonal axes.
+
+Use `affine.Matrix`, `TransformPoint`, and `TransformDirection` for evaluation. `first.Then(second)` applies the first
+transform and then the second. `FromMatrix` / `TryFromMatrix` decompose a raw matrix, including a singular one, with
+`ShearX = 0`; this preserves the supplied matrix exactly until a channel is edited, but may choose different channel
+values from the original authored transform. Editing channels rebuilds the matrix with ordinary float roundoff.
+`similarity.ToAffine()` creates an editable copy of a similarity pose.
+
+Scene and animation callers use the same `Affine2D`. Its `Position` and `Scale` vector properties edit the same channels
+as `X`/`Y` and `ScaleX`/`ScaleY`; the scalar channels retain the existing authored JSON layout. `Matrix`, `Version`, and
+the vector conveniences are not serialized. Setters increment `Version` and raise `Changed` only when values change,
+so scene bounds and collision caches stay current. `CopyFrom(other)` updates an existing owner once.
+
+For a snapshot, use `var saved = transform with { };` and restore with `transform.CopyFrom(saved)`. A copy owns its
+cache and does not copy event subscribers. Record equality compares the seven channels, never cache/version state.
+`Affine2D` replaces the former `BoneTransform2D`, `Transform2D`, and `TransformState2D`; there is no additional snapshot
+transform type. Rigid motions and isometries can use unit-scale `Similarity2D` until an API needs a stricter type.
+
+```csharp
+var local = new Affine2D { Position = new(2, 3), Rotation = .4f, Scale = new(2, 1), ShearY = .2f };
+var parent = Similarity2D.FromTranslation(new(10, 0)).ToAffine();
+var world = local.Then(parent);
+Vector2 point = world.TransformPoint(new(1, 0));
+if (world.TryInverse(out var inverse))
+{
+    Vector2 restoredPoint = inverse.TransformPoint(point);
+}
+```
 
 ```csharp
 using App2d.Core.Mathematics;

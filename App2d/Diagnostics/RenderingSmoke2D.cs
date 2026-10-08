@@ -1,7 +1,8 @@
+using App2d.Core.Assets;
+using App2d.Core.Rendering.Textures;
 using App2d.Editor;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 
 namespace App2d.Diagnostics;
 
@@ -25,13 +26,13 @@ internal static class RenderingSmoke2D
         if (facesOnly) { FaceRenderingSmoke2D.Run(device, outputDirectory); return; }
         if (spellsOnly)
         {
-            using var textures = new App2d.Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
+            using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
             SpellRenderingSmoke2D.Run(device, textures, outputDirectory);
             return;
         }
         if (tilesetPairs is not null)
         {
-            using var textures = new Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
+            using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
             if (tilesetPairs is ["level"])
                 TilesetRenderingSmoke2D.RunLevel(device, textures, outputDirectory);
             for (var i = 0; i + 1 < tilesetPairs.Count; i += 2)
@@ -40,19 +41,19 @@ internal static class RenderingSmoke2D
         }
         if (platformOnly)
         {
-            using var textures = new Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
+            using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
             PlatformStudy2D.Run(device, textures, outputDirectory);
             return;
         }
         if (contactOnly || timingOnly)
         {
-            using var textures = new Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
+            using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
             CombatContactStudy2D.Run(device, textures, outputDirectory, timingOnly);
             return;
         }
         if (vegetationOnly)
         {
-            using var textures = new Rendering.Textures.TextureCache2D(AssetPaths.Current.Runtime);
+            using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
             VegetationRenderingSmoke2D.Run(device, textures, outputDirectory);
             Console.WriteLine("Vegetation rendering smoke checks completed.");
             return;
@@ -63,7 +64,7 @@ internal static class RenderingSmoke2D
         using var loaded = LevelBootstrap2D.Load();
         using var editor = new TileEditor2D(loaded.Maps[0].TileMap,
             () => throw new InvalidOperationException("Rendering smoke checks never open a level for writing."),
-            game.Camera, loaded.Maps[0].TileMap.Origin, 32f);
+            game.Camera);
         editor.ConfigureMaps(loaded.Maps);
 
         foreach (var (width, height) in new[] { (1280, 720), (960, 640) })

@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "maul-brute",
   "name": "Maul brute",
   "model": "brute",
@@ -13,8 +13,17 @@
   "health": 22,
   "mass": 3,
   "movement": {
-    "width": 0.319,
-    "height": 2.123
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.1595,
+        "y": 0
+      },
+      "max": {
+        "x": 0.1595,
+        "y": 2.123
+      }
+    }
   },
   "hurt": {
     "layout": "standard",
@@ -52,8 +61,17 @@
             "marker": "recover"
           },
           "prop": "hammer",
-          "width": 1.2,
-          "height": 1,
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.6,
+              "y": -0.5
+            },
+            "max": {
+              "x": 0.6,
+              "y": 0.5
+            }
+          },
           "damage": 5,
           "sound": "heavy"
         }

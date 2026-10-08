@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Rendering;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
@@ -16,7 +17,7 @@ internal sealed class NoodleEditorHost : IDisposable
     private readonly Camera2D _camera = new() { Position = new Vector2(20f, -55f), Zoom = 1.05f };
     private readonly NoodlePerson2D _person = new();
     private readonly JointShowcase2D _jointShowcase = new();
-    private readonly GraphicsSurface2D _surface = new() { Dock = DockStyle.Fill, TabStop = true };
+    private readonly GraphicsSurface2D _surface = new() { Dock = DockStyle.Fill, TabStop = true, DepthStencilFormat = DepthFormat.None };
     private readonly Form _window;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
     private readonly Stopwatch _clock = new();

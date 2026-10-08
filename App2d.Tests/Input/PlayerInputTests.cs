@@ -1,5 +1,5 @@
+using App2d.Core.Input;
 using App2d.Gameplay.Player;
-using App2d.Input;
 using System.Numerics;
 
 namespace App2d.Tests.Input;

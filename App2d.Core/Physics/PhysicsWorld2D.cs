@@ -1,11 +1,11 @@
-using App2d.Core.Geometry;
 using App2d.Core.Collision;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Collision.Filtering;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry;
 using App2d.Core.Physics.Filtering;
 using App2d.Core.Physics.Integration;
 using App2d.Core.Physics.Solvers;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -133,7 +133,9 @@ public sealed partial class PhysicsWorld2D
 
             if (rider.MotionType != BodyMotionType2D.Dynamic || rider.IsSensor ||
                 rider.IsIgnoringOneWayPlatform(surface))
+            {
                 continue;
+            }
 
             const float separationSpeedTolerance = 0.0001f;
             var previousRelativeSpeed = Vector2.Dot(
@@ -142,7 +144,9 @@ public sealed partial class PhysicsWorld2D
                 rider.LinearVelocity - rider.LastStepLinearVelocity, normal);
             if (previousRelativeSpeed > separationSpeedTolerance ||
                 riderVelocityChange > separationSpeedTolerance)
+            {
                 continue; // Preserve a rebound or jump applied after the last contact.
+            }
 
             var displacement = surface.LinearVelocity * deltaSeconds;
             rider.WorldObject.Transform.Position += displacement - normal * Vector2.Dot(displacement, normal);
@@ -291,7 +295,9 @@ public sealed partial class PhysicsWorld2D
         var face = MaximumProjection(surface.WorldObject, surfaceNormal);
         if (MathF.Abs(Vector2.Dot(geometry.Point, surfaceNormal) - face) >
             surface.OneWaySlop + geometry.PenetrationDepth)
+        {
             return false;
+        }
 
         var previousNearSide = MinimumProjection(other.WorldObject, surfaceNormal) +
             Vector2.Dot(other.PreviousPosition - other.WorldObject.Transform.Position, surfaceNormal);

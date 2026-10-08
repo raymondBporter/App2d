@@ -1,7 +1,8 @@
 using App2d.Editor;
 using App2d.Levels;
-using App2d.Rendering;
-using App2d.Tiles;
+using App2d.Core.Rendering;
+using App2d.Core.Input;
+using App2d.Core.Tiles;
 using Microsoft.Data.Sqlite;
 using System.Numerics;
 
@@ -25,7 +26,7 @@ public sealed class WorldMapEditorTests
             var left = Create("left", 0, 0);
             var right = Create("right", 1, 512);
             var camera = new Camera2D { Position = new(128, 128) };
-            using var editor = new TileEditor2D(left.TileMap, () => LevelDatabase2D.Open(left.DatabasePath), camera, left.TileMap.Origin, 32);
+            using var editor = new TileEditor2D(left.TileMap, () => LevelDatabase2D.Open(left.DatabasePath), camera);
             editor.ConfigureMaps([left, right]);
             var input = new InputState();
             input.Mouse.SetClientPosition(new(400, 300));

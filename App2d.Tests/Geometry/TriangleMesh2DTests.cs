@@ -1,9 +1,9 @@
-using App2d.Core.Meshes;
+using App2d.Core;
+using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
-using App2d.Core.Collision.Contacts;
+using App2d.Core.Meshes;
 using App2d.Core.Shapes;
-using App2d.Core;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -18,7 +18,7 @@ public sealed class TriangleMesh2DTests
     [InlineData(true)]
     public void EarClippingPreservesAConcaveOutlineInEitherWinding(bool reverse)
     {
-        var points = reverse ? Notched.Reverse().ToArray() : Notched;
+        var points = reverse ? [.. Notched.Reverse()] : Notched;
         var mesh = TriangleMesh2D.TriangulateSimplePolygon(points);
         Assert.Equal(4, mesh.TriangleCount);
         Assert.Equal(3f, mesh.Area, 5);

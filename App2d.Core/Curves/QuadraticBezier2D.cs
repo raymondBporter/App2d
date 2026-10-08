@@ -32,4 +32,6 @@ public readonly record struct QuadraticBezier2D : ICurve2D
         amount = Math.Clamp(amount, 0f, 1f);
         return 2f * ((1f - amount) * (Control - Start) + amount * (End - Control));
     }
+
+    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 64);
 }

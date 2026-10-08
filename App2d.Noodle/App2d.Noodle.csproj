@@ -10,6 +10,5 @@
 
   <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
-    <ProjectReference Include="..\App2d.Rendering\App2d.Rendering.csproj" />
   </ItemGroup>
 </Project>

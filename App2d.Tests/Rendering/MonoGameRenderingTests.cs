@@ -1,10 +1,11 @@
 using App2d.Core.Geometry;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Rendering;
-using App2d.Rendering.Textures;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Texture2D = App2d.Rendering.Textures.Texture2D;
+using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Tests.Rendering;
@@ -163,12 +164,14 @@ public sealed class MonoGameRenderingTests
     {
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
-        var scene = new Scene2D();
-        scene.Add(new WorldObject2D(Rectangle2D.FromSize(new Vector2(64)),
+        var scene = new Scene2D
+        {
+            new WorldObject2D(Rectangle2D.FromSize(new Vector2(64)),
             new SolidColorShader(XnaColor.Lime))
-        { ZIndex = 1 });
-        scene.Add(new WorldObject2D(Rectangle2D.FromSize(new Vector2(96)),
-            new LinearGradientShader(XnaColor.Red, XnaColor.Blue)));
+            { ZIndex = 1 },
+            new WorldObject2D(Rectangle2D.FromSize(new Vector2(96)),
+            new LinearGradientShader(XnaColor.Red, XnaColor.Blue))
+        };
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
         renderer.Draw(scene);

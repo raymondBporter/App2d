@@ -1,5 +1,5 @@
 using App2d.Core.Characters.Authored;
-using App2d.Rendering.Characters;
+using App2d.Core.Rendering.Characters;
 using ImGuiNET;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;

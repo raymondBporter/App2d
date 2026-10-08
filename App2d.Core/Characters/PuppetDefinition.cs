@@ -1,4 +1,6 @@
 using App2d.Core.Geometry;
+using App2d.Core.Curves;
+using App2d.Core.Shapes;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -6,12 +8,14 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters;
 
-/// <summary>Authoring coordinates: Y up, positive Z away from the viewer. No imported library or anatomy is required.</summary>
+/// <summary>Authoring coordinates: Y up. For 2D rig points, serialized Z is character layer order; 3D props use Z as a spatial coordinate.</summary>
 public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
 {
     [JsonIgnore] public Vector2 XY => new(X, Y);
     [JsonIgnore] public Vector3 XYZ => new(X, Y, Z);
+    [JsonIgnore] public LayeredPoint2D Layered => new(XY, new(Z));
     public static PuppetPoint From(Vector3 p) => new(p.X, p.Y, p.Z);
+    public static PuppetPoint From(LayeredPoint2D p) => new(p.Position.X, p.Position.Y, p.Layer.Order);
     public static PuppetPoint Lerp(PuppetPoint a, PuppetPoint b, float t) => From(Vector3.Lerp(a.XYZ, b.XYZ, t));
     public void Check(string field)
     {
@@ -42,7 +46,7 @@ public sealed record PuppetChain
 /// <summary>A convex patch of color in normalized part coordinates; clipped to the part's actual silhouette.</summary>
 public sealed record PartPaint
 {
-    public string Fill { get; set; } = "#ffffff";
+    public RenderMaterialDefinition2D? Material { get; set; }
     public List<PuppetPoint> Points { get; set; } = [];
 
     public static void Check(IReadOnlyList<PartPaint>? paint)
@@ -53,7 +57,9 @@ public sealed record PartPaint
         foreach (var patch in paint)
         {
             if (patch?.Points is not { Count: >= 3 and <= 64 }) throw new InvalidDataException("Paint needs 3 to 64 polygon points.");
-            Limit.Color(patch.Fill, "paint.fill");
+            if (patch.Material?.Fill is null) throw new InvalidDataException("Paint needs a material fill.");
+            patch.Material.Validate("paint.material");
+            if (patch.Material.Outline is not null) throw new InvalidDataException("Paint patch outlines are not supported.");
             var vertices = xy[..patch.Points.Count];
             for (var i = 0; i < patch.Points.Count; i++)
             {
@@ -81,23 +87,26 @@ public sealed record PartPointBinding
 public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
+    [JsonIgnore]
     public string Kind { get; set; } = PuppetPartKinds.Ellipse;
+    /// <summary>The shape or curve attached to this part.</summary>
+    public GeometryDefinition2D? Geometry { get; set; }
+    /// <summary>Authored drawing style.</summary>
+    public RenderMaterialDefinition2D? Material { get; set; }
     public string A { get; set; } = "";
     public string? B { get; set; }
+    /// <summary>Optional bone whose XY rotation carries this shape's local offset and direction.</summary>
+    public string? Frame { get; set; }
+    /// <summary>Additional shape rotation in its bone frame, in radians.</summary>
+    public float Angle { get; set; }
+    public float ScaleX { get; set; } = 1;
+    public float ScaleY { get; set; } = 1;
     public float Width { get; set; } = .4f;
     public float Height { get; set; } = .4f;
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public float Depth { get; set; }
-    public float Roundness { get; set; } = .25f;
-    /// <summary>Trapezoid width at local +Y relative to its base; ignored by other shapes.</summary>
-    public float TopWidthScale { get; set; } = .7f;
-    public string Fill { get; set; } = "#fff8e7";
-    /// <summary>Null inherits the model's ink width. Does not change facial expression strokes.</summary>
-    public float? OutlineWidth { get; set; }
     public List<PartPaint>? Paint { get; set; }
-    /// <summary>Normalized cutout perimeter, scaled by Width/Height in the attachment frame.</summary>
-    public List<PuppetPoint>? Points { get; set; }
     /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
     public List<PartPointBinding>? Bindings { get; set; }
     public string Face { get; set; } = "none";
@@ -105,27 +114,44 @@ public sealed record PuppetPart
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
     public bool Hidden { get; set; }
 
+    [JsonIgnore]
+    public RenderMaterialDefinition2D RenderMaterial => Material
+        ?? throw new InvalidDataException($"Part '{Id}' needs a material.");
+
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
     {
         if (A is null || !isControl(A)) throw new InvalidDataException("Unknown control: " + A);
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
-        EntityVocabulary.Require(Kind, PuppetPartKinds.All, "part.kind");
-        if (PuppetPartKinds.IsStroke(Kind) && (B is null || A == B)) throw new InvalidDataException("A stroke needs two different controls.");
+        if (Frame is not null && !isControl(Frame)) throw new InvalidDataException("Unknown part frame: " + Frame);
+        if (Frame is not null && B is not null) throw new InvalidDataException("A part uses either a bone frame or a toward control.");
+        if (Geometry is not ShapeDefinition2D and not CurveDefinition2D)
+            throw new InvalidDataException("A part needs a shape or curve definition.");
+        if (Geometry is ShapeDefinition2D shape)
+        {
+            var built = shape.Build();
+            if (WorldShape2D.OutlineVertexCount(built, 48) == 0)
+                throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
+        }
+        if (Geometry is CurveDefinition2D curve) _ = curve.Build();
+        var linkedStroke = Geometry is CurveDefinition2D;
+        if (linkedStroke && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
+        if (linkedStroke && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
+        new Limit(-1000, 1000).Check(Angle, "part.angle");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
-        new Limit(-16, 16).Check(Depth, "part.depth"); new Limit(0, 1).Check(Roundness, "part.roundness"); Limit.Color(Fill, "part.fill");
-        new Limit(.01f, 1).Check(TopWidthScale, "part.topWidthScale");
-        if (OutlineWidth is { } outline) new Limit(0, 1).Check(outline, "part.outlineWidth");
+        new Limit(-16, 16).Check(Depth, "part.depth");
+        if (Material is null) throw new InvalidDataException("A part needs a material.");
+        Material.Validate("part.material");
+        if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY)) throw new InvalidDataException("Part scale must be finite.");
         PartPaint.Check(Paint);
-        if (Kind == PuppetPartKinds.Polygon) PartGeometry.CheckCutout(Points);
         if (Bindings is { Count: > 0 })
         {
-            if (Kind != PuppetPartKinds.Polygon) throw new InvalidDataException("Point attachments require a cutout.");
+            if (Geometry is not SimplePolygonShapeDefinition2D) throw new InvalidDataException("Point attachments require a cutout.");
             var seen = new HashSet<int>();
             foreach (var binding in Bindings)
             {
-                if (binding is null || binding.Point < 0 || binding.Point >= Points!.Count || !seen.Add(binding.Point))
+                if (binding is null || binding.Point < 0 || binding.Point >= PartGeometry.CutoutPoints(this).Count || !seen.Add(binding.Point))
                     throw new InvalidDataException("Cutout attachments need unique valid point indices.");
                 if (!isControl(binding.Control) || binding.Toward is not null && !isControl(binding.Toward))
                     throw new InvalidDataException("Unknown cutout attachment control.");
@@ -165,8 +191,9 @@ public sealed record PuppetMotion
 public sealed class PuppetDefinition
 {
     public const string FormatId = "app2d-puppet";
+    public const int CurrentVersion = 2;
     public string Format { get; set; } = FormatId;
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string Name { get; set; } = "New character";
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .045f;
@@ -178,10 +205,12 @@ public sealed class PuppetDefinition
     public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
     { WriteIndented = true, UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
 
-    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
+    public string ToJson() => PartAssetJson.Write(this, Parts, JsonOptions);
     public static PuppetDefinition FromJson(string json)
     {
+        PartAssetJson.RequireTypedJson(json);
         var definition = JsonSerializer.Deserialize<PuppetDefinition>(json, JsonOptions) ?? throw new InvalidDataException("Empty puppet file.");
+        PartAssetJson.Restore(definition.Parts);
         definition.Validate(); return definition;
     }
     public void Save(string path)
@@ -194,22 +223,22 @@ public sealed class PuppetDefinition
         void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
         void Number(float value, float min, float max, string field) => new Limit(min, max).Check(value, field);
         void Point(PuppetPoint point, string field) => point.Check(field);
-        Require(Format == FormatId && Version == 1, "Unsupported puppet format/version.");
+        Require(Format == FormatId && Version == CurrentVersion, "Unsupported puppet format/version.");
         Require(!string.IsNullOrWhiteSpace(Name), "A character name is required.");
         Require(Controls is not null && Bones is not null && Chains is not null && Parts is not null && Motions is not null, "Puppet collections cannot be null.");
-        Require(Controls!.Count <= 256 && Parts!.Count <= 512 && Motions!.Count is > 0 and <= 128, "Puppet capacity exceeded or no motions defined.");
+        Require(Controls.Count <= 256 && Parts.Count <= 512 && Motions.Count is > 0 and <= 128, "Puppet capacity exceeded or no motions defined.");
         Limit.Color(Ink, "ink"); Number(LineWidth, .001f, 1, "lineWidth");
         var controls = new Dictionary<string, PuppetControl>(StringComparer.Ordinal);
         foreach (var control in Controls)
         {
             Require(control is not null && !string.IsNullOrWhiteSpace(control.Id), "Every control needs an ID.");
-            Require(controls.TryAdd(control!.Id, control), "Duplicate control: " + control.Id); Point(control.Rest, control.Id);
+            Require(controls.TryAdd(control.Id, control), "Duplicate control: " + control.Id); Point(control.Rest, control.Id);
         }
         void Reference(string? id) => Require(id is not null && controls.ContainsKey(id), "Unknown control: " + id);
         var parents = new Dictionary<string, string>();
-        foreach (var bone in Bones!)
+        foreach (var bone in Bones)
         {
-            Require(bone is not null, "Null bone."); Reference(bone!.From); Reference(bone.To);
+            Require(bone is not null, "Null bone."); Reference(bone.From); Reference(bone.To);
             Require(bone.From != bone.To && parents.TryAdd(bone.To, bone.From), "Bones must form a forest with one parent per control.");
         }
         foreach (var id in controls.Keys)
@@ -218,9 +247,9 @@ public sealed class PuppetDefinition
             while (parents.TryGetValue(current, out var parent)) { Require(seen.Add(current), "Bone cycle at " + current); current = parent; }
         }
         var solvedControls = new HashSet<string>();
-        foreach (var chain in Chains!)
+        foreach (var chain in Chains)
         {
-            Require(chain is not null, "Null IK chain."); Reference(chain!.Root); Reference(chain.Joint); Reference(chain.End);
+            Require(chain is not null, "Null IK chain."); Reference(chain.Root); Reference(chain.Joint); Reference(chain.End);
             Require(chain.Bend is -1 or 1, "IK bend must be -1 or 1.");
             Require(parents.GetValueOrDefault(chain.Joint) == chain.Root && parents.GetValueOrDefault(chain.End) == chain.Joint, "IK needs two connected bones.");
             Require(solvedControls.Add(chain.Joint) && solvedControls.Add(chain.End), "IK chains cannot share solved controls.");
@@ -241,23 +270,24 @@ public sealed class PuppetDefinition
         foreach (var part in Parts)
         {
             Require(part is not null && !string.IsNullOrWhiteSpace(part.Id) && partIds.Add(part.Id), "Part IDs must be nonempty and unique.");
-            part!.Validate(controls.ContainsKey);
+            part.Validate(controls.ContainsKey);
+            Require(part.Frame is null, "Prototype puppet parts cannot use authored bone frames.");
         }
         foreach (var motion in Motions)
         {
             Require(motion?.Keys is not null && motion.Contacts is not null, "Incomplete motion.");
-            Number(motion!.Duration, .05f, 60, "motion.duration"); Require(motion.Keys.Count <= 4096, "Too many keys.");
+            Number(motion.Duration, .05f, 60, "motion.duration"); Require(motion.Keys.Count <= 4096, "Too many keys.");
             var previous = -1f;
             foreach (var key in motion.Keys)
             {
-                Require(key?.Points is not null, "Incomplete key."); Number(key!.Time, 0, motion.Duration, "key.time");
+                Require(key?.Points is not null, "Incomplete key."); Number(key.Time, 0, motion.Duration, "key.time");
                 Require(key.Time > previous, "Key times must be strictly increasing."); previous = key.Time; Point(key.Position, "key.position");
-                foreach (var (id, p) in key.Points!) { Reference(id); Point(p, "key." + id); }
+                foreach (var (id, p) in key.Points) { Reference(id); Point(p, "key." + id); }
             }
             foreach (var contact in motion.Contacts)
             {
                 Require(contact is not null && Chains.Any(c => c.End == contact.End), "Contacts need an IK end control.");
-                Number(contact!.Start, 0, motion.Duration, "contact.start"); Number(contact.Finish, 0, motion.Duration, "contact.finish");
+                Number(contact.Start, 0, motion.Duration, "contact.start"); Number(contact.Finish, 0, motion.Duration, "contact.finish");
                 Require(contact.Finish > contact.Start, "Contact finish must follow its start."); Point(contact.Target, "contact.target");
             }
             foreach (var group in motion.Contacts.GroupBy(c => c.End))

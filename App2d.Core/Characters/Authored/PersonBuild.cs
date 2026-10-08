@@ -34,7 +34,7 @@ public sealed record PersonBuild
         if (person.Build != RuleId) throw new InvalidDataException($"Person build values apply to models using the '{RuleId}' build rule, not '{person.Id}'.");
         var variant = new ModelVariant { Id = id, Name = name, Base = person.Id };
         foreach (var (value, amount) in Values()) if (amount != 1) variant.Build[value] = amount;
-        if (bodyFill is not null) variant.Parts["body"] = new() { Fill = bodyFill };
+        if (bodyFill is not null) variant.Parts["body"] = new() { Material = new() { Fill = bodyFill } };
         variant.Validate(); return variant;
     }
 

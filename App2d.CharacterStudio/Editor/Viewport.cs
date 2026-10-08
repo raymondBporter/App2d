@@ -1,7 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Rendering.Characters;
+using App2d.Core.Rendering.Characters;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -51,7 +51,10 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private readonly CharacterMesh _ground = new(8192);
     private RenderTarget2D? _target, _inset;
     private nint _targetId, _insetId;
-    private float _span = 3.2f, _widthSpan = 4.16f, _centerX, _centerY = 1.1f;
+    private float _span = 3.2f;
+    private float _widthSpan = 4.16f;
+    private float _centerX;
+    private float _centerY = 1.1f;
     private string? _fittedFor;
 
     public float Zoom { get; set; } = 1;
@@ -63,18 +66,34 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
 
     public void Fit(Subject? subject)
     {
-        Zoom = 1; Pan = default; _fittedFor = subject?.Id;
+        Zoom = 1;
+        Pan = default;
+        _fittedFor = subject?.Id;
+
         if (subject is null) return;
+
         var points = DrawingPoints(subject.Model).ToArray();
         var (min, max) = (MathF.Min(0, points.Min(p => p.Y)), MathF.Max(1, points.Max(p => p.Y)));
         var (left, right) = (points.Min(p => p.X), points.Max(p => p.X));
-        _span = MathF.Max(1.5f, max - min + .9f); _centerY = (min + max) / 2;
-        _widthSpan = MathF.Max(1.5f, right - left + .9f); _centerX = (left + right) / 2;
+
+        _span = MathF.Max(1.5f, max - min + .9f);
+        _centerY = (min + max) / 2;
+        _widthSpan = MathF.Max(1.5f, right - left + .9f);
+        _centerX = (left + right) / 2;
     }
 
-    private static IEnumerable<Vector3> DrawingPoints(ResolvedModel model) =>
-        model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, id => model.Rest[id], id => model.Rest[id]))
-            .Concat(model.Rest.Values).Append(Vector3.Zero);
+    private static IEnumerable<Vector3> DrawingPoints(ResolvedModel model)
+    {
+        var pose = PoseEvaluator.Rest(model);
+        return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]))
+            .Concat(model.Rest.Values)
+            .Concat(model.Order.Where(c => c.Length > 0).Select(c =>
+            {
+                var origin = pose.World(c.Id);
+                return new Vector3(Vector2.Transform(new(c.Length, 0), pose.Bones[c.Id]), origin.Z);
+            }))
+            .Append(Vector3.Zero);
+    }
 
     public ViewportFrame Draw(Vector2 available, IReadOnlyList<Subject> scene, EditorSession session)
     {
@@ -93,13 +112,19 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         for (var i = 0; i < views.Length; i++)
         {
             var subject = views[i].Subject;
-            if (subject.Entity is { } entity) _drawings[i].Build(entity, subject.Pose);
+            if (subject.Entity is { } entity)
+            {
+                _drawings[i].Build(entity, subject.Pose);
+            }
             else
             {
                 _drawings[i].Build(subject.Model, subject.Pose);
                 if (session.Mode == Workspace.Appearance && session.Entity is { } wearer && wearer.Model.Id == subject.Model.Id)
+                {
                     foreach (var item in wearer.Equipment.Where(e => e.Prop.Id != session.PreviewProp))
                         _drawings[i].AddProp(item.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(item.Socket));
+                }
+
                 if (session.Mode is Workspace.Animate or Workspace.Appearance && session.WeaponFor(subject.Model) is { } weapon)
                     _drawings[i].AddProp(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket));
             }
@@ -138,7 +163,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         var projection = PointCharacterRenderer.Projection(width, height, anchor, ppu);
         BuildGround(centerX, width / ppu, ppu);
         renderer.Draw(_ground, projection, Matrix.Identity, writeDepth: false);
-        for (var i = 0; i < views.Length; i++) renderer.Draw(_drawings[i].Mesh, projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
+        for (var i = 0; i < views.Length; i++) renderer.Draw(_drawings[i], projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
         device.SetRenderTarget(null);
     }
 

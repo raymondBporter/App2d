@@ -1,6 +1,6 @@
 {
   "format": "app2d-prop",
-  "version": 1,
+  "version": 2,
   "id": "pistol",
   "name": "Pistol",
   "lineWidth": 0.011,
@@ -97,7 +97,7 @@
         4,
         7
       ],
-      "fill": "#714b3e",
+      "material": { "fill": "#714b3e", "outline": {} },
       "outline": [
         {
           "x": -0.063,
@@ -247,7 +247,7 @@
         6,
         11
       ],
-      "fill": "#465963",
+      "material": { "fill": "#465963", "outline": {} },
       "outline": [
         {
           "x": -0.074,
@@ -451,7 +451,7 @@
         8,
         15
       ],
-      "fill": "#dce5e7",
+      "material": { "fill": "#dce5e7", "outline": {} },
       "outline": [
         {
           "x": -0.046,
@@ -665,7 +665,7 @@
         8,
         15
       ],
-      "fill": "#c5a26b",
+      "material": { "fill": "#c5a26b", "outline": {} },
       "outline": [
         {
           "x": -0.065,
@@ -879,7 +879,7 @@
         8,
         15
       ],
-      "fill": "#293941",
+      "material": { "fill": "#293941", "outline": {} },
       "outline": [
         {
           "x": 0.20099999,

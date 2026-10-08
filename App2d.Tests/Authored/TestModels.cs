@@ -1,5 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Curves;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -27,7 +29,11 @@ internal static class TestModels
             new() { Id = "leg", Root = "hip", Joint = "knee", End = "foot", Bend = 1, Scale = "leg" },
         ],
         Measures = [new() { Id = "leg", Path = ["hip", "knee", "foot"] }, new() { Id = "arm", Path = ["shoulder", "elbow", "hand"] }],
-        Parts = [new() { Id = "torso", Kind = "box", A = "hip", B = "shoulder" }, new() { Id = "upper-arm", Kind = "stroke", A = "shoulder", B = "elbow" }],
+        Parts =
+        [
+            new() { Id = "torso", A = "hip", B = "shoulder", Geometry = RoundedRectangleShapeDefinition2D.FromSize(new(.4f, .4f), .05f), Material = new() { Fill = "#fff8e7", Outline = new() } },
+            new() { Id = "upper-arm", A = "shoulder", B = "elbow", Geometry = new LineCurveDefinition2D { Start = new(0, 0), End = new(0, 1) }, Material = new() },
+        ],
     };
 
     /// <summary>An empty one-second looping clip authored against this model's own measures, so every ratio is 1.</summary>

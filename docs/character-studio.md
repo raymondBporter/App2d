@@ -4,6 +4,9 @@ The studio is the character editor: one window, one viewport and one document wo
 `Assets/Characters/authored`, which the game plays. Its design and history are in
 [Character editor replacement](character-editor-replacement.md).
 
+**Export Spine** and **New > Import Spine 4.2 JSON** provide an initial bone/slot/skin/image interchange path.
+See [Spine 4.2 interchange](spine-interchange.md) for the editor workflow, supported timelines, and conversion limits.
+
 ## Run
 
 ```powershell
@@ -13,10 +16,25 @@ dotnet run --project App2d.CharacterStudio
 Requires Windows and .NET 10. ImGui.NET 1.91.6.1 is pinned; MonoGame WindowsDX is the same version as the game. Startup
 exceptions are written to `character-studio-error.log` beside the executable.
 
+The transport's **Preview end** menu follows the clip's loop setting by default. Hold stops on the final pose,
+Loop wraps to the beginning, and Ping pong plays to the end and back. A ping pong trip from start to end takes
+one clip duration. Preview speed and end mode are session settings; they do not change the saved clip.
+
+## Character layers
+
+Model controls, variant rest positions, appearance attachment origins, and animation translations are edited as
+screen-plane X/Y plus a **character layer**. Front, Middle, and Back are quick order presets. The numeric order lets
+shapes fit between other shapes or move between layers during an animation; smaller values draw closer to the viewer.
+Each shape has a layer offset from its attached control. The existing `z` and `depth` fields in saved assets keep their
+exact values, so opening and saving an older character does not rearrange its artwork.
+
+These layers order parts **within one character**. The game's scene `ZIndex` still orders the character as one world
+object. Solid weapon meshes and their socket orientation continue to use three-dimensional coordinates.
+
 ## Weapons and 3D rotation
 
-Open **Sword backhand** (`player-sword-backhand`) in **Animate**. Under **Weapon preview**, choose Sword and the
-`sword-hand` socket, then **Edit weapon rotation**. Opening a prop in the browser also opens these controls. An entity
+Open **Sword backhand** (`player-sword-backhand`) in **Animate**. Under **Attachment preview**, choose Sword and the
+`sword-hand` socket, then **Edit attachment rotation**. Opening a prop in the browser also opens these controls. An entity
 action's **Animate this action with weapon** button selects its clip and equipment together.
 
 - **Turn** aims in the screen plane, **Tilt** points toward/away from the camera, and **Twist** rolls the broad face onto
@@ -38,7 +56,7 @@ muzzle after import; they remain explicit markers. Asset changes affect every en
 
 The starter sword, sheath, pistol, spear and hammer are simple closed meshes. Sword attacks, sheathing, gun poses and
 the hammer slam have initial orientation keys for experimentation. These are rough starting performances, not an
-automatic conversion of the old imported weapon motion. Characters keep their existing XY rig and depth controls.
+automatic conversion of the old imported weapon motion. Characters keep their existing XY rig and character layers.
 
 Rendering uses the same orthographic depth buffer as characters, with flat facet colors and visible silhouette/crease
 ink on solid props. Coplanar triangulation edges are suppressed. Legacy stroke/polygon props still load. Socket
@@ -137,16 +155,19 @@ from the Hero's equipment, including an optional back-view asset, independently 
 
 For a fitted tunic, select the torso in **Model**, set its fill, then use **Fabric paint > Edit fabric paint**
 to add colored patches and edit their normalized polygon points. Save a look on the base to reuse it
-on other variants. Cutout outlines are stored alongside the meshes, so they remain editable after reopening.
+on other variants. Cutout outlines are saved as editable source; their meshes are rebuilt when loaded.
 When launched from the repository, the editor saves into source `Assets/Characters/authored`, rather
 than the build output copy. Rebuild/restart the game to pick up saved asset changes.
 
-`--write-wardrobe <authored-dir>` regenerates only these wardrobe assets, sockets and equipment bindings,
-and the two enemies' torso paint and outline widths. It overwrites edits to that wardrobe art; `--write-player-moves`
-also runs this step. `--smoke-wardrobe <dir>` renders idle, run, attacks, and climbing/death samples in both
+`--write-wardrobe <authored-dir>` seeds missing wardrobe art and updates its sockets, equipment bindings,
+and the two enemies' torso paint and outline widths. Existing prop JSON remains editor-owned, including when
+`--write-player-moves` runs this step. `--replace-wardrobe-art <authored-dir>` explicitly regenerates that art.
+`--smoke-wardrobe <dir>` renders idle, run, attacks, and climbing/death samples in both
 facings, including game-size views. Clothing follows the rig rigidly; this first pass has no cloth simulation.
 
 ## Workspaces
+
+In **Model → Edit rig**, **Add root bone** creates a bone with an origin, rest angle, and length; **Add child bone** starts at the selected bone's tip. Drag the origin to move it, drag the tip to change its rest angle and length, or edit those values in the inspector. Turn off **Edit rig** and use **Add shape to selected bone** to attach an ellipse, box, capsule, or polygon in that bone's local frame. The shape's offset and angle remain editable. **Save** writes these as controls and parts in the ordinary model JSON; **Animate** uses a `rotate` track on the bone control. Existing point-control models and their animations continue to use the same editor. The existing two-bone IK tool still applies to point controls; bone-frame IK is a separate constraint step.
 
 - **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
   model. On a variant: build values, part overrides with **Reset to base**, and looks. **Edit rig** shows control handles.

@@ -61,6 +61,14 @@ public sealed class Similarity2DTests
     public void RejectsDegenerateScale() =>
         Assert.False(Similarity2D.TryFromMatrix(Trs(Vector2.Zero, 0f, Vector2.Zero), out _));
 
+    [Fact]
+    public void RejectsEqualLengthShearedAxesAndNonFiniteMatrices()
+    {
+        Assert.False(Similarity2D.TryFromMatrix(new(1, 0, .6f, .8f, 0, 0), out _));
+        Assert.False(Similarity2D.TryFromMatrix(new(float.NaN, 0, 0, 1, 0, 0), out _));
+        Assert.False(Similarity2D.TryFromMatrix(new(1, 0, 0, 1, float.PositiveInfinity, 0), out _));
+    }
+
     private static void AssertClose(Vector2 expected, Vector2 actual)
     {
         Assert.Equal(expected.X, actual.X, 3);

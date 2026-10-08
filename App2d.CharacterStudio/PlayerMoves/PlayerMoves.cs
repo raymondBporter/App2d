@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.PlayerMoves;
@@ -16,10 +17,14 @@ internal static partial class PlayerMoves
     public const string Sword = PersonLoadout.Sword, Sheath = PersonLoadout.Sheath, Pistol = PersonLoadout.Pistol;
 
     // Stance: the walk's contact spacing. Feet rest at y = 0.025 (sole on the ground).
-    private const float Back = -.125f, Front = .125f, Ground = .025f;
+    private const float Back = -.125f;
+    private const float Front = .125f;
+    private const float Ground = .025f;
+
     // Standing pelvis offset. The rest pose already bends the knees about 20 degrees, so standing tall sits slightly above
     // rest: over the stance feet this leaves 6-8 degrees (0.015 locks the front leg), and every 0.01 lower adds roughly 5.
-    internal const float StanceX = -.01f, StanceY = .012f;
+    internal const float StanceX = -.01f;
+    internal const float StanceY = .012f;
     // Sheathed sword: grip in the chest frame and the blade's direction. Worn diagonally across the back, so in this
     // profile it foreshortens to a near-vertical line hidden behind the torso: the hilt sits below the shoulder line
     // (a guard at neck height read as part of the neck) and only the scabbard's tip shows below the back.
@@ -32,21 +37,66 @@ internal static partial class PlayerMoves
 
     public static IEnumerable<ModelSocket> Sockets() =>
     [
-        new() { Id = MoveBuilder.BackSocket, Control = "chest", Frame = "chest", OffsetX = SheathGrip.X, OffsetY = SheathGrip.Y, OffsetZ = .2f, Angle = SheathAngle },
-        new() { Id = MoveBuilder.BackViewSocket, Control = "chest", Frame = "chest", OffsetX = BackViewGrip.X, OffsetY = BackViewGrip.Y, OffsetZ = -.2f, Angle = BackViewAngle },
-        new() { Id = MoveBuilder.SwordSocket, Control = "right-hand", Frame = "right-shoulder" },
-        new() { Id = MoveBuilder.GunSocket, Control = "right-hand", Frame = "right-shoulder" },
+        new ModelSocket()
+        {
+            Id = MoveBuilder.BackSocket,
+            Control = "chest",
+            Frame = "chest",
+            OffsetX = SheathGrip.X,
+            OffsetY = SheathGrip.Y,
+            OffsetZ = .2f,
+            Angle = SheathAngle
+        },
+        new ModelSocket()
+        {
+            Id = MoveBuilder.BackViewSocket,
+            Control = "chest",
+            Frame = "chest",
+            OffsetX = BackViewGrip.X,
+            OffsetY = BackViewGrip.Y,
+            OffsetZ = -.2f,
+            Angle = BackViewAngle
+        },
+        new ModelSocket()
+        {
+            Id = MoveBuilder.SwordSocket,
+            Control = "right-hand",
+            Frame = "right-shoulder"
+        },
+        new ModelSocket()
+        {
+            Id = MoveBuilder.GunSocket,
+            Control = "right-hand",
+            Frame = "right-shoulder"
+        },
     ];
 
     public static IEnumerable<PropAsset> Props() => [SwordProp(), SheathProp(), PistolProp()];
 
     public static IEnumerable<MotionClip> Clips(ResolvedModel m) =>
     [
-        Idle(m), Jump(m), Fall(m), Land(m), Dash(m),
-        ClimbTurn(m, onto: true), Climb(m), ClimbTurn(m, onto: false), WallGrip(m), BalanceForward(m), BalanceBackward(m),
-        Hit(m), Death(m), Celebrate(m),
-        .. SwingLab.GameClips(m), Sheathe(m), DownAttack(m),
-        GunAim(m), GunShot(m), GunWallShot(m), GunCharge(m), HealGather(m),
+        Idle(m),
+        Jump(m),
+        Fall(m),
+        Land(m),
+        Dash(m),
+        ClimbTurn(m, onto: true),
+        Climb(m),
+        ClimbTurn(m, onto: false),
+        WallGrip(m),
+        BalanceForward(m),
+        BalanceBackward(m),
+        Hit(m),
+        Death(m),
+        Celebrate(m),
+        .. SwingLab.GameClips(m),
+        Sheathe(m),
+        DownAttack(m),
+        GunAim(m),
+        GunShot(m),
+        GunWallShot(m),
+        GunCharge(m),
+        HealGather(m),
     ];
 
     /// <summary>Adds the move set's sockets to the Person model, then writes props and clips beside it.</summary>
@@ -102,8 +152,8 @@ internal static partial class PlayerMoves
     public static ModelVariant BruteVariant()
     {
         var variant = new PersonBuild { Legs = .95f, Torso = 1.05f, Arms = 1.1f, Width = 1.45f, Head = .95f }.Apply(PersonTemplate.Model(), "brute", "Brute");
-        variant.Parts["body"] = new() { Fill = "#8a7564" };
-        variant.Parts["head"] = new() { Fill = "#ead6c1", Face = "angry" };
+        variant.Parts["body"] = new() { Material = new() { Fill = "#8a7564" } };
+        variant.Parts["head"] = new() { Material = new() { Fill = "#ead6c1" }, Face = "angry" };
         return variant;
     }
 
@@ -114,19 +164,65 @@ internal static partial class PlayerMoves
         Name = "Maul brute",
         Model = model.Id,
         MotionSet = "heavy",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.1f, Range = 1.3f, Cooldown = 1 },
+        Controller = new ControllerConfig()
+        {
+            Kind = EntityControllers.Walker,
+            WalkSpeed = 1.1f,
+            Range = 1.3f,
+            Cooldown = 1
+        },
         Health = 22,
         Mass = 3,
         Movement = EntityAuthoring.FitMovement(model),
-        Hurt = new() { Layout = "standard" },
-        Equipment = [new() { Prop = "hammer", Socket = PersonLoadout.SwordSocket }],
+        Hurt = new()
+        {
+            Layout = "standard"
+        },
+        Equipment =
+        [
+            new EquipmentBinding()
+            {
+                Prop = "hammer",
+                Socket = PersonLoadout.SwordSocket
+            }
+        ],
         Actions =
         [
             new()
             {
-                Id = EntityControllers.Attack, Clip = "person-hammer-slam",
-                Hits = [new() { Id = "hammer-head", Prop = "hammer", Width = 1.2f, Height = 1f, Damage = 5, Sound = "heavy", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
-                Events = [new() { Id = "heavy", At = new() { Marker = "strike" }, Sound = "heavy" }],
+                Id = EntityControllers.Attack,
+                Clip = "person-hammer-slam",
+                Hits =
+                [
+                    new HitWindow()
+                    {
+                        Id = "hammer-head",
+                        Prop = "hammer",
+                        Shape = RectangleShapeDefinition2D.FromSize(new(1.2f, 1f)),
+                        Damage = 5,
+                        Sound = "heavy",
+                        Start = new()
+                        {
+                            Marker = "strike"
+                        },
+                        Finish = new()
+                        {
+                            Marker = "recover"
+                        }
+                    }
+                ],
+                Events =
+                [
+                    new ActionEvent()
+                    {
+                        Id = "heavy",
+                        At = new()
+                        {
+                            Marker = "strike"
+                        },
+                        Sound = "heavy"
+                    }
+                ],
             },
         ],
     };
@@ -152,8 +248,8 @@ internal static partial class PlayerMoves
     public static ModelVariant CinderVariant()
     {
         var variant = new PersonBuild { Legs = .9f, Torso = .95f, Arms = .95f, Width = 1.05f, Head = 1.05f }.Apply(PersonTemplate.Model(), "cinder", "Cinder");
-        variant.Parts["body"] = new() { Fill = "#e0784c" };
-        variant.Parts["head"] = new() { Fill = "#f3dcc6", Face = "smug" };
+        variant.Parts["body"] = new() { Material = new() { Fill = "#e0784c" } };
+        variant.Parts["head"] = new() { Material = new() { Fill = "#f3dcc6" }, Face = "smug" };
         return variant;
     }
 
@@ -164,24 +260,58 @@ internal static partial class PlayerMoves
         Name = "Cinder gunner",
         Model = model.Id,
         MotionSet = "standard",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = 1.4f, Range = 4.5f, Cooldown = 1 },
+        Controller = new()
+        {
+            Kind = EntityControllers.Walker,
+            WalkSpeed = 1.4f,
+            Range = 4.5f,
+            Cooldown = 1
+        },
         Health = 7,
         Movement = EntityAuthoring.FitMovement(model),
         Hurt = new() { Layout = "standard" },
-        Equipment = [new() { Prop = PersonLoadout.Pistol, Socket = PersonLoadout.GunSocket }],
+        Equipment =
+        [
+            new()
+            {
+                Prop = PersonLoadout.Pistol,
+                Socket = PersonLoadout.GunSocket
+            }
+        ],
         Actions =
         [
             new()
             {
-                Id = EntityControllers.Attack, Clip = "person-pistol-shot",
-                Events = [new() { Id = EntityControllers.Fire, At = new() { Marker = "fire" }, Sound = "shot" }],
-                Projectile = new() { Speed = 8, Width = .3f, Height = .12f, Damage = 2, Lifetime = 3 },
+                Id = EntityControllers.Attack,
+                Clip = "person-pistol-shot",
+                Events =
+                [
+                    new ActionEvent()
+                    {
+                        Id = EntityControllers.Fire,
+                        At = new ActionTime() { Marker = "fire" },
+                        Sound = "shot"
+                    }
+                ],
+                Projectile = new()
+                {
+                    Speed = 8,
+                    Shape = RectangleShapeDefinition2D.FromSize(new(.3f, .12f)),
+                    Damage = 2,
+                    Lifetime = 3
+                },
             },
         ],
     };
 
     /// <summary>The player's bolt: 30 x 10 px at 1250 px/s for 1.5 s at the player's drawn scale (about 40 px per unit).</summary>
-    private static ProjectileDef PlayerBolt => new() { Speed = 31, Width = .75f, Height = .25f, Damage = 2, Lifetime = 1.5f };
+    private static ProjectileDef PlayerBolt => new()
+    {
+        Speed = 31,
+        Shape = RectangleShapeDefinition2D.FromSize(new(.75f, .25f)),
+        Damage = 2,
+        Lifetime = 1.5f
+    };
 
     /// <summary>
     /// The game's traversal player. Person2D moves it; this entity supplies what the move set's clips already say: the
@@ -195,12 +325,38 @@ internal static partial class PlayerMoves
         Name = "Hero",
         Model = PersonTemplate.Id,
         MotionSet = "standard",
-        Roles = new() { ["idle"] = "player-idle", ["jump"] = "player-jump", ["fall"] = "player-fall", ["hit"] = "player-hit", ["death"] = "player-death" },
-        Controller = new() { Kind = EntityControllers.Traversal, WalkSpeed = 1.8f, RunSpeed = 4.2f, Range = 1.2f, Cooldown = 0 },
+        Roles = new()
+        {
+            ["idle"] = "player-idle",
+            ["jump"] = "player-jump",
+            ["fall"] = "player-fall",
+            ["hit"] = "player-hit",
+            ["death"] = "player-death"
+        },
+        Controller = new()
+        {
+            Kind = EntityControllers.Traversal,
+            WalkSpeed = 1.8f,
+            RunSpeed = 4.2f,
+            Range = 1.2f,
+            Cooldown = 0
+        },
         Health = 30,
-        Movement = new() { Width = .55f, Height = 1.705f },
+        Movement = new() { Shape = MovementDef.Box(.55f, 1.705f) },
         Hurt = new() { Layout = "standard" },
-        Equipment = [new() { Prop = PersonLoadout.Sword, Socket = MoveBuilder.SwordSocket }, new() { Prop = PersonLoadout.Pistol, Socket = MoveBuilder.GunSocket }],
+        Equipment =
+        [
+            new()
+            {
+                Prop = PersonLoadout.Sword,
+                Socket = MoveBuilder.SwordSocket
+            },
+            new()
+            {
+                Prop = PersonLoadout.Pistol,
+                Socket = MoveBuilder.GunSocket
+            }
+        ],
         Actions =
         [
             Swing(model, clips, EntityControllers.Attack, SwingLab.SideCutClip, EntityControllers.FollowUp, SwingLab.PutAwayClip),
@@ -231,7 +387,7 @@ internal static partial class PlayerMoves
             Clip = clip,
             Next = next,
             Recovery = recovery,
-            Hits = [new() { Id = "blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Width = R(max.X - min.X), Height = R(max.Y - min.Y), Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
+            Hits = [new() { Id = "blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Shape = RectangleShapeDefinition2D.FromSize(new(R(max.X - min.X), R(max.Y - min.Y))), Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
             Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
         };
     }

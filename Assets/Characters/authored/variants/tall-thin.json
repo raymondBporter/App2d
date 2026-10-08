@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 1,
+  "version": 2,
   "id": "tall-thin",
   "name": "Tall and thin",
   "base": "person",
@@ -14,7 +14,9 @@
   "rest": {},
   "parts": {
     "body": {
-      "fill": "#d9e2ef"
+      "material": {
+        "fill": "#d9e2ef"
+      }
     }
   }
 }

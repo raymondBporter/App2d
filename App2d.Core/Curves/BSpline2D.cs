@@ -51,6 +51,9 @@ public sealed class BSpline2D : ICurve2D
             Degree - 1,
             Math.Clamp(amount, 0f, 1f));
 
+    public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this,
+        Math.Clamp((_controlPoints.Length - Degree) * 32, 64, 1024));
+
     private static float[] CreateClampedUniformKnots(int controlPointCount, int degree)
     {
         var knots = new float[controlPointCount + degree + 1];

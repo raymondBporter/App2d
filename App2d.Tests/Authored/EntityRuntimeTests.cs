@@ -1,5 +1,5 @@
-using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -22,11 +22,13 @@ public sealed class EntityRuntimeTests
         var swing = hero.Actions[EntityControllers.Attack]; var hit = swing.Hits[0];
         // The hit box ignores the pose: the same place ahead of the feet at any time, mirrored by facing.
         foreach (var facing in new[] { 1, -1 })
+        {
             foreach (var t in new[] { hit.Start, hit.Finish - .01f })
             {
                 var box = EntityCollision.Attack(hero, new ActorPose(PoseEvaluator.Sample(hero.Model, swing.Clip, t), new(3, 0), facing), hit);
                 TestModels.Near(new Vector3(3 + hit.Window.OffsetX * facing, hit.Window.OffsetY, 0), new Vector3(box.Bounds.Center, 0), 1e-4f, $"box centre at {t}, facing {facing}");
             }
+        }
         // attack -> follow-up -> forehand -> follow-up: the traversal controller supports the first two, the chain the third.
         Assert.Equal(EntityControllers.FollowUp, swing.Next);
         Assert.Equal(EntityControllers.FollowUp, hero.Actions[hero.Actions[swing.Next!].Next!].Next);
@@ -277,24 +279,6 @@ public sealed class EntityRuntimeTests
         Assert.False(ledger.TryHit(1, "spear-tip", 7));
         Assert.True(ledger.TryHit(1, "spear-tip", 8));
         Assert.True(ledger.TryHit(2, "spear-tip", 7)); // the next attack may hit again
-    }
-
-    [Fact]
-    public void CaptureAndRestoreResumeIdentically()
-    {
-        var player = Catalog.Entities["player"]; var a = new EntityAnimator(player); var b = new EntityAnimator(player);
-        var position = Vector2.Zero;
-        for (var i = 0; i < 90; i++) { position.X += .015f; a.Step(Dt, position, 1, "walk", .015f, false, []); }
-        b.Restore(a.Capture(), position);
-        for (var i = 0; i < 90; i++)
-        {
-            position.X += .015f;
-            var ea = new List<AnimationEvent>(); var eb = new List<AnimationEvent>();
-            if (i == 30) { a.TryStart("attack"); b.TryStart("attack"); }
-            a.Step(Dt, position, 1, "walk", .015f, false, ea); b.Step(Dt, position, 1, "walk", .015f, false, eb);
-            Assert.Equal(ea, eb);
-            foreach (var control in player.Model.Controls.Keys) Assert.Equal(a.Pose.World(control), b.Pose.World(control));
-        }
     }
 
     [Fact]

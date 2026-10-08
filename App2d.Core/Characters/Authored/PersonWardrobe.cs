@@ -68,13 +68,13 @@ public static class PersonWardrobe
     {
         PartPaint SpotPaint(float x, float y, float rx, float ry) => new()
         {
-            Fill = "#765033",
+            Material = new() { Fill = "#765033" },
             Points = [.. Enumerable.Range(0, 7).Select(i => new PuppetPoint(x + MathF.Cos(i * MathF.Tau / 7) * rx, y + MathF.Sin(i * MathF.Tau / 7) * ry))],
         };
         return
         [
             // Exposed shoulder/neckline, clipped to the same rounded torso contour as the fabric.
-            new() { Fill = skin, Points = [new(-.35f,.65f), new(.8f,.65f), new(.8f,-.04f)] },
+            new() { Material = new() { Fill = skin }, Points = [new(-.35f,.65f), new(.8f,.65f), new(.8f,-.04f)] },
             SpotPaint(-.25f, .20f, .085f, .055f),
             SpotPaint(.18f, -.07f, .10f, .065f),
             SpotPaint(-.23f, -.30f, .07f, .045f),
@@ -87,7 +87,7 @@ public static class PersonWardrobe
         {
             var angle = i * MathF.Tau / 7; return (x + MathF.Cos(angle) * radius * .8f, y + MathF.Sin(angle) * radius);
         })], thickness: thickness);
-        art.Solids[^1].Outlined = false;
+        art.Solids[^1].Material = art.Solids[^1].RenderMaterial with { Outline = null };
     }
 
     private static PropAsset Hair(string id, string name, float scale, string color, bool wild)
@@ -113,14 +113,18 @@ public static class PersonWardrobe
         return art;
     }
 
-    /// <summary>Updates only wardrobe art, its sockets and these three entities. Animation and combat data remain authored.</summary>
-    public static void Write(string root)
+    /// <summary>Seeds missing wardrobe art and updates its bindings. Existing art belongs to the editor unless replacement is explicit.</summary>
+    public static void Write(string root, bool replaceExistingProps = false)
     {
         var modelPath = Path.Combine(root, "models", "person.json");
         var model = CharacterModel.Load(modelPath);
         foreach (var socket in Sockets()) { model.Sockets.RemoveAll(s => s.Id == socket.Id); model.Sockets.Add(socket); }
         model.Save(modelPath);
-        foreach (var prop in Props()) prop.Save(Path.Combine(root, "props", prop.Id + ".json"));
+        foreach (var prop in Props())
+        {
+            var path = Path.Combine(root, "props", prop.Id + ".json");
+            if (replaceExistingProps || !File.Exists(path)) prop.Save(path);
+        }
         foreach (var id in new[] { "hero", "maul-brute", "cinder-gunner" })
         {
             var path = Path.Combine(root, "entities", id + ".json");
@@ -137,11 +141,9 @@ public static class PersonWardrobe
             var variant = ModelVariant.FromJson(File.ReadAllText(path));
             variant.Parts["body"] = variant.Parts["body"] with
             {
-                Fill = id == "brute" ? variant.Parts["head"].Fill : "#b97549",
-                OutlineWidth = null,
-                Paint = id == "brute" ? [] : TunicPaint(variant.Parts["head"].Fill!),
+                Material = new() { Fill = id == "brute" ? variant.Parts["head"].Material?.Fill : "#b97549" },
+                Paint = id == "brute" ? [] : TunicPaint(variant.Parts["head"].Material!.Fill!),
             };
-            variant.Parts["head"] = variant.Parts["head"] with { OutlineWidth = null };
             variant.Save(path);
         }
     }

@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "flying-pterosaur",
   "name": "Pterosaur",
   "model": "pterosaur",
@@ -12,9 +12,17 @@
   "health": 4,
   "mass": 0.8,
   "movement": {
-    "width": 0.85,
-    "height": 0.6,
-    "offsetY": 0.4
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.425,
+        "y": 0.4
+      },
+      "max": {
+        "x": 0.425,
+        "y": 1.0
+      }
+    }
   },
   "hurt": {
     "layout": "body",
@@ -40,8 +48,6 @@
         {
           "id": "beak",
           "socket": "head-art",
-          "width": 0.65,
-          "height": 0.5,
           "offsetX": 0.15,
           "damage": 2,
           "sound": "hit",
@@ -50,6 +56,17 @@
           },
           "finish": {
             "marker": "brake"
+          },
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.325,
+              "y": -0.25
+            },
+            "max": {
+              "x": 0.325,
+              "y": 0.25
+            }
           }
         }
       ],

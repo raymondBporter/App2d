@@ -10,4 +10,7 @@ public interface ICurve2D
 
     /// <summary>Returns the first derivative with respect to normalized progress.</summary>
     Vector2 EvaluateDerivative(float amount);
+
+    /// <summary>Returns the nonnegative distance from a point to the finite curve, including its endpoints.</summary>
+    float Distance(Vector2 point);
 }

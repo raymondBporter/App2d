@@ -1,19 +1,22 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor;
 
 /// <summary>
-/// What a character is made of. Drawing parts are selected by default; Edit rig exposes control handles and IK setup.
+/// What a character is made of. Drawing parts are selected by default; Edit rig exposes bones, point controls and IK setup.
 /// A base model edits structure and rest geometry. A variant edits build values and appearance as explicit overrides,
 /// each with a reset, and never touches its base.
 /// </summary>
 internal sealed class ModelView(EditorSession session, Viewport viewport) : IWorkspaceView
 {
     private string? _dragging;
+    private bool _draggingTip;
     private Vector3 _grab;
     private (string Description, Action Apply)? _structural;
     private bool _confirmOpen;
@@ -50,7 +53,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             if (ImGui.Selectable($"{part.Id}  ({part.Kind}){(part.Hidden ? "  hidden" : "")}", session.Selection.Part == part.Id)) Select(part: part.Id);
             if (part.Hidden) ImGui.PopStyleColor();
         }
-        if (Base is not null && Ui.Button("Add shape to selected control", session.Selection.Control is not null || structure.Controls.Count > 0))
+        var selectedBone = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control && (c.Length > 0 || c.Transform is not null));
+        if (Base is not null && Ui.Button(selectedBone is null ? "Add shape to selected control" : "Add shape to selected bone", session.Selection.Control is not null || structure.Controls.Count > 0))
             ImGui.OpenPopup("add-part");
         if (ImGui.BeginPopup("add-part"))
         {
@@ -62,34 +66,56 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                     session.Edit(document, () =>
                     {
                         var other = structure.Controls.FirstOrDefault(c => c.Parent == anchor)?.Id ?? structure.Controls.FirstOrDefault(c => c.Id != anchor)?.Id;
-                        Select(part: ModelAuthoring.AddPart(document.Asset, kind, anchor, PuppetPartKinds.IsStroke(kind) ? other : null).Id);
+                        Select(part: selectedBone is not null && !PuppetPartKinds.IsStroke(kind)
+                            ? ModelAuthoring.AddPartToBone(document.Asset, kind, anchor).Id
+                            : ModelAuthoring.AddPart(document.Asset, kind, anchor, PuppetPartKinds.IsStroke(kind) ? other : null).Id);
                     });
                 }
 
+            }
+            if (selectedBone is not null && ImGui.MenuItem($"capsule on {anchor}") && Base is { } boneDocument)
+            {
+                session.Edit(boneDocument, () =>
+                {
+                    var capsule = ModelAuthoring.AddPartToBone(boneDocument.Asset, PuppetPartKinds.Box, anchor);
+                    PartGeometry.SetRoundedRectangleRadius(capsule, capsule.Height / 2f);
+                    Select(part: capsule.Id);
+                });
             }
 
             ImGui.EndPopup();
         }
         if (Variant is not null) Ui.Help("Variants restyle, resize or hide parts. Adding shapes belongs to the base.");
+        if (structure.Slots.Count > 0)
+        {
+            Ui.Header("Slots (back to front)");
+            foreach (var slot in structure.Slots) ImGui.TextDisabled($"{slot.Name ?? slot.Id} on {slot.Bone}");
+            Ui.Help("Choose the skin above the viewport. Animate edits attachment choices and draw order.");
+        }
     }
 
     private void Rig(CharacterModel structure)
     {
-        Ui.Header("Controls");
+        Ui.Header("Bones and joints");
         void Node(ModelControl control)
         {
             var children = structure.Controls.Where(c => c.Parent == control.Id).ToArray();
             var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanAvailWidth | (children.Length == 0 ? ImGuiTreeNodeFlags.Leaf : 0)
                 | (session.Selection.Control == control.Id ? ImGuiTreeNodeFlags.Selected : 0);
             var ik = structure.Chains.FirstOrDefault(c => c.Joint == control.Id || c.End == control.Id);
-            var open = ImGui.TreeNodeEx(control.Id, flags, control.Id + (ik is null ? "" : ik.End == control.Id ? "  (IK end)" : "  (IK bend)"));
+            var label = control.Length > 0 ? $"{control.Id}  (bone {control.Length:0.##})" : control.Id;
+            var open = ImGui.TreeNodeEx(control.Id, flags, label + (ik is null ? "" : ik.End == control.Id ? "  (IK end)" : "  (IK bend)"));
             if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) Select(control: control.Id);
             if (open) { foreach (var child in children) Node(child); ImGui.TreePop(); }
         }
         foreach (var root in structure.Controls.Where(c => c.Parent is null)) Node(root);
-        if (structure.Controls.Count == 0) Ui.Help("An empty model. Add a first control, then connect more to it.");
+        if (structure.Controls.Count == 0) Ui.Help("An empty model. Add a root bone, then child bones and shapes.");
         if (Base is { } model)
         {
+            if (ImGui.Button("Add root bone")) Structural("add a root bone", () => Select(control: ModelAuthoring.AddBone(model.Asset, null).Id));
+            ImGui.SameLine();
+            if (Ui.Button("Add child bone", session.Selection.Control is not null))
+                Structural("add a child bone", () => Select(control: ModelAuthoring.AddBone(model.Asset, session.Selection.Control).Id));
             if (ImGui.Button("Add control"))
             {
                 Structural("add a control", () =>
@@ -101,13 +127,16 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
             if (ImGui.IsItemHovered()) ImGui.SetTooltip("Adds a child of the selected control, or a root control when none is selected.");
             ImGui.SameLine();
-            if (Ui.Button("Make IK chain", session.Selection.Control is not null))
+            var pointEnd = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control);
+            var pointJoint = structure.Controls.FirstOrDefault(c => c.Id == pointEnd?.Parent);
+            var pointRoot = structure.Controls.FirstOrDefault(c => c.Id == pointJoint?.Parent);
+            if (Ui.Button("Make IK chain", pointEnd is { Length: 0, Transform: null } && pointJoint is { Length: 0, Transform: null } && pointRoot is { Length: 0, Transform: null }))
             {
                 Structural("add an IK chain", () =>
                 Select(chain: ModelAuthoring.AddChain(model.Asset, session.Selection.Control!).Id));
             }
 
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip("The selected control becomes the tip of a two-bone chain over its parent and grandparent.");
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("The current two-bone IK solver uses point controls. Bone-frame IK needs its own constraint solver.");
         }
         Ui.Header("IK chains");
         foreach (var chain in structure.Chains) if (ImGui.Selectable($"{chain.Id}  ({chain.Root} > {chain.Joint} > {chain.End})", session.Selection.Chain == chain.Id)) Select(chain: chain.Id);
@@ -181,9 +210,35 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
         if (session.Selection.Control is { } id && model.Controls.FirstOrDefault(c => c.Id == id) is { } control)
         {
-            Ui.Header("Control " + control.Id);
-            var rest = control.Rest.XYZ;
-            if (Ui.Drag3("Rest X / Y / depth", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest, session.MoveChildren));
+            Ui.Header((control.Length > 0 ? "Bone " : "Control ") + control.Id);
+            var rest = control.Rest.Layered;
+            if (control.Transform is not null && Resolved is { } resolved) rest = LayeredPoint2D.From(resolved.Rest[id]);
+            if (Ui.LayeredPoint(control.Length > 0 ? "Origin" : "Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
+            if (control.Length > 0)
+            {
+                var length = control.Length;
+                if (Ui.Drag("Bone length", ref length, .01f, .01f, 100)) session.Change(document, () => document.Asset.Controls.First(c => c.Id == id).Length = length);
+                var degrees = control.RestAngle * 180f / MathF.PI;
+                if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
+                    session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, degrees * MathF.PI / 180f));
+                Ui.Help("The bone starts at this control and points along its local +X axis. Its children and attached shapes follow rotation.");
+            }
+            if (control.Transform is { } transform)
+            {
+                Ui.Header("Local affine transform");
+                void Number(string label, float value, Action<Affine2D, float> set, float min = -100, float max = 100)
+                {
+                    if (Ui.Drag(label, ref value, .01f, min, max)) session.Change(document, () =>
+                    { set(document.Asset.Controls.First(c => c.Id == id).Transform!, value); ModelAuthoring.SyncAffineRest(document.Asset); });
+                }
+                Number("Local X", transform.X, (t, v) => t.X = v);
+                Number("Local Y", transform.Y, (t, v) => t.Y = v);
+                Number("Local rotation (degrees)", transform.Rotation * 180 / MathF.PI, (t, v) => t.Rotation = v * MathF.PI / 180, -720, 720);
+                Number("Scale X", transform.ScaleX, (t, v) => t.ScaleX = v);
+                Number("Scale Y", transform.ScaleY, (t, v) => t.ScaleY = v);
+                Number("Shear X (degrees)", transform.ShearX * 180 / MathF.PI, (t, v) => t.ShearX = v * MathF.PI / 180, -720, 720);
+                Number("Shear Y (degrees)", transform.ShearY * 180 / MathF.PI, (t, v) => t.ShearY = v * MathF.PI / 180, -720, 720);
+            }
             var children = session.MoveChildren; if (ImGui.Checkbox("Move children with it", ref children)) session.MoveChildren = children;
             var parents = model.Controls.Select(c => c.Id).Where(c => c != id).Prepend("(locomotion)");
             if (Ui.Combo("Parent", control.Parent ?? "(locomotion)", parents) is { } parent)
@@ -217,8 +272,22 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 return;
             }
             if (Ui.Combo("Attach to", part.A, controls) is { } a) session.Edit(document, () => { Part(document, partId).A = a; document.Asset.Validate(); });
+            if (!PuppetPartKinds.IsStroke(part.Kind) && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
+                session.Edit(document, () => { var edited = Part(document, partId); edited.Frame = bone == "(none)" ? null : bone; if (edited.Frame is not null) edited.B = null; document.Asset.Validate(); });
             if (Ui.Combo(PuppetPartKinds.IsStroke(part.Kind) ? "End" : "Point toward", part.B ?? "(none)", PuppetPartKinds.IsStroke(part.Kind) ? controls : controls.Prepend("(none)")) is { } b)
-                session.Edit(document, () => { Part(document, partId).B = b == "(none)" ? null : b; document.Asset.Validate(); });
+                session.Edit(document, () => { var edited = Part(document, partId); edited.B = b == "(none)" ? null : b; if (edited.B is not null) edited.Frame = null; document.Asset.Validate(); });
+            if (part.Frame is not null)
+            {
+                var degrees = part.Angle * 180f / MathF.PI;
+                if (Ui.Drag("Shape angle (degrees)", ref degrees, 1f, -360, 360)) session.Change(document, () => Part(document, partId).Angle = degrees * MathF.PI / 180f);
+                if (part.Material?.Texture is { } texture)
+                {
+                    ImGui.TextDisabled("Image: " + texture);
+                    var scaleX = part.ScaleX; var scaleY = part.ScaleY;
+                    if (Ui.Drag("Attachment scale X", ref scaleX, .01f, -100, 100)) session.Change(document, () => Part(document, partId).ScaleX = scaleX);
+                    if (Ui.Drag("Attachment scale Y", ref scaleY, .01f, -100, 100)) session.Change(document, () => Part(document, partId).ScaleY = scaleY);
+                }
+            }
             PartFields(part, null, change => session.Change(document, () => change(Part(document, partId))));
             if (ImGui.Button("Delete part")) session.Edit(document, () => { ModelAuthoring.RemovePart(document.Asset, partId); session.Selection.Clear(); });
         }
@@ -309,27 +378,29 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             ImGui.SetNextItemWidth(-1);
             if (ImGui.SliderFloat("##" + label, ref value, min, max, "%.3f")) change(p => set(p, value));
         }
-        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => p.Width = v, o => o.Width = null);
+        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => { if (overrides is null) PartGeometry.ResizeRoundedRectangle(p, v, p.Height); p.Width = v; }, o => o.Width = null);
         if (!PuppetPartKinds.IsStroke(part.Kind))
         {
-            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => p.Height = v, o => o.Height = null);
+            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => { if (overrides is null) PartGeometry.ResizeRoundedRectangle(p, p.Width, v); p.Height = v; }, o => o.Height = null);
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
-            if (overrides is null && PuppetPartKinds.HasRoundness(part.Kind)) Float("Roundness", part.Roundness, 0, 1, false, (p, v) => p.Roundness = v, _ => { });
-            if (overrides is null && part.Kind == "trapezoid") Float("Top width scale", part.TopWidthScale, .01f, 1, false, (p, v) => p.TopWidthScale = v, _ => { });
-            if (overrides is null && part.Kind == "polygon" && ImGui.CollapsingHeader("Edit cutout silhouette"))
+            if (overrides is null && part.Geometry is RoundedRectangleShapeDefinition2D rounded)
+                Float("Corner radius", rounded.Radius, 0, MathF.Min(part.Width, part.Height) / 2f, false,
+                    PartGeometry.SetRoundedRectangleRadius, _ => { });
+            if (overrides is null && part.Geometry is SimplePolygonShapeDefinition2D polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
             {
                 ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
                 Ui.Help("Draw the rest silhouette here. Each point can follow the part frame or a named control; Point toward follows that control frame's rotation. Animate the controls, not the outline.");
+                var vertices = polygon.Vertices.Select(point => new PuppetPoint(point.X, point.Y)).ToList();
                 void Cutout(Action<List<PuppetPoint>> edit)
                 {
-                    var points = new List<PuppetPoint>(part.Points!); edit(points);
-                    try { PartGeometry.CheckCutout(points); change(p => p.Points = points); }
+                    var points = new List<PuppetPoint>(vertices); edit(points);
+                    try { PartGeometry.CheckCutout(points); change(p => PartGeometry.SetPolygon(p, points)); }
                     catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
                 }
-                for (var i = 0; i < part.Points!.Count; i++)
+                for (var i = 0; i < vertices.Count; i++)
                 {
-                    var index = i; var xy = part.Points[i].XY; ImGui.PushID("cutout-" + i);
+                    var index = i; var xy = vertices[i].XY; ImGui.PushID("cutout-" + i);
                     if (Ui.Drag2("Point " + (i + 1), ref xy, .005f, -2, 2)) Cutout(p => p[index] = new(xy.X, xy.Y));
                     var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
                     void Attach(string? control, string? toward)
@@ -343,33 +414,46 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                         Attach(follow == "(part frame)" ? null : follow, null);
                     if (binding is not null && Ui.Combo("Point toward", binding.Toward ?? "(translation only)", controls.Where(c => c != binding.Control).Prepend("(translation only)")) is { } toward)
                         Attach(binding.Control, toward == "(translation only)" ? null : toward);
-                    if (part.Points.Count < 64 && ImGui.SmallButton("Insert after")) change(p => ModelAuthoring.InsertCutoutPoint(p, index));
+                    if (vertices.Count < 64 && ImGui.SmallButton("Insert after")) change(p => ModelAuthoring.InsertCutoutPoint(p, index));
                     ImGui.SameLine();
-                    if (part.Points.Count > 3 && ImGui.SmallButton("Remove"))
+                    if (vertices.Count > 3 && ImGui.SmallButton("Remove"))
                     { try { change(p => ModelAuthoring.RemoveCutoutPoint(p, index)); } catch (InvalidDataException) { } }
                     ImGui.PopID();
                 }
             }
-            if (!Marked("Fill", overrides?.Fill is not null, o => o.Fill = null))
-            { var fill = part.Fill; if (Ui.ColorHex("##fill", ref fill)) change(p => p.Fill = fill); }
-            Float("Outline width", part.OutlineWidth ?? .045f, 0, .15f, overrides?.OutlineWidth is not null, (p, v) => p.OutlineWidth = v, o => o.OutlineWidth = null);
+            if (!Marked("Fill", overrides?.Material?.Fill is not null, o => o.Material = o.Material is null ? null : o.Material with { Fill = null }))
+            { var fill = part.RenderMaterial.Fill ?? "#fff8e7"; if (Ui.ColorHex("##fill", ref fill)) change(p => p.Material = p.RenderMaterial with { Fill = fill }); }
+            Float("Outline width", part.RenderMaterial.Outline?.Width ?? .045f, 0, .15f, overrides?.Material?.Outline?.Width is not null,
+                (p, v) => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = v } },
+                o => o.Material = o.Material is null ? null : o.Material with
+                { Outline = o.Material.Outline?.Color is { } color ? new RenderOutlineDefinition2D { Color = color } : null });
+            if (part.RenderMaterial.Outline is not null && !Marked("Outline color", overrides?.Material?.Outline?.Color is not null,
+                o => o.Material = o.Material is null ? null : o.Material with
+                { Outline = o.Material.Outline?.Width is { } width ? new RenderOutlineDefinition2D { Width = width } : null }))
+            {
+                var outlineColor = part.RenderMaterial.Outline?.Color ?? Structure?.Ink ?? "#222b32";
+                if (Ui.ColorHex("##outline-color", ref outlineColor)) change(p => p.Material = p.RenderMaterial with { Outline = p.RenderMaterial.Outline! with { Color = outlineColor } });
+                if (part.RenderMaterial.Outline?.Color is not null && ImGui.SmallButton("Use model ink"))
+                    change(p => p.Material = p.RenderMaterial with { Outline = p.RenderMaterial.Outline! with { Color = null } });
+            }
             if (!Marked("Surface paint", overrides?.Paint is not null, o => o.Paint = null) && ImGui.CollapsingHeader("Edit surface paint"))
             {
                 Ui.Help("Paint follows the body's shape and motion. Coordinates are relative to its width and height. Use the body fill as the fabric color.");
                 void Paint(Action<List<PartPaint>> edit)
                 {
-                    var patches = (part.Paint ?? []).Select(p => new PartPaint { Fill = p.Fill, Points = [.. p.Points] }).ToList();
+                    var patches = (part.Paint ?? []).Select(p => new PartPaint { Material = p.Material, Points = [.. p.Points] }).ToList();
                     edit(patches);
                     try { PartPaint.Check(patches); change(p => p.Paint = patches); }
                     catch (InvalidDataException) { /* Keep the last valid convex patch during a drag. */ }
                 }
-                if (ImGui.Button("Add paint patch")) Paint(p => p.Add(new() { Fill = "#754222", Points = [new(-.1f, -.1f), new(.1f, -.1f), new(.1f, .1f), new(-.1f, .1f)] }));
+                if (ImGui.Button("Add paint patch")) Paint(p => p.Add(new() { Material = new() { Fill = "#754222" }, Points = [new(-.1f, -.1f), new(.1f, -.1f), new(.1f, .1f), new(-.1f, .1f)] }));
                 for (var i = 0; i < (part.Paint?.Count ?? 0); i++)
                 {
                     var index = i; var patch = part.Paint![i]; ImGui.PushID("paint-" + i);
                     if (ImGui.TreeNode("Patch " + (i + 1)))
                     {
-                        var color = patch.Fill; if (Ui.ColorHex("Color", ref color)) Paint(p => p[index].Fill = color);
+                        var color = patch.Material!.Fill!;
+                        if (Ui.ColorHex("Color", ref color)) Paint(p => p[index].Material = p[index].Material! with { Fill = color });
                         for (var j = 0; j < patch.Points.Count; j++)
                         {
                             var point = j; var xy = patch.Points[j].XY;
@@ -392,7 +476,12 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             }
             if (part.Face != "none") Float("Face offset", part.FaceX, -.4f, .4f, overrides?.FaceX is not null, (p, v) => p.FaceX = v, o => o.FaceX = null);
         }
-        if (overrides is null) Float("Depth (positive is behind)", part.Depth, -2, 2, false, (p, v) => p.Depth = v, _ => { });
+        if (overrides is null)
+        {
+            var layer = new CharacterLayer2D(part.Depth);
+            if (Ui.CharacterLayer("Shape layer offset", ref layer, -2, 2, offset: true)) change(p => p.Depth = layer.Order);
+            Ui.Help("Offsets the shape from its attached control's layer.");
+        }
         if (!Marked("Visibility", overrides?.Hidden is not null, o => o.Hidden = null))
         { var hidden = part.Hidden; if (ImGui.Checkbox("Hidden", ref hidden)) change(p => p.Hidden = hidden); }
     }
@@ -440,14 +529,14 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         {
             Ui.Header("Control " + control);
             var overridden = variant.Rest.ContainsKey(control);
-            if (Ui.OverrideLabel("Rest X / Y / depth", overridden))
+            if (Ui.OverrideLabel("Rest position and layer", overridden))
             {
                 session.Edit(document, () => document.Asset.Rest.Remove(control));
             }
             else
             {
-                var rest = resolved.Rest[control]; ImGui.SetNextItemWidth(-1);
-                if (ImGui.DragFloat3("##rest", ref rest, .005f)) session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, control, rest, session.MoveChildren));
+                var rest = LayeredPoint2D.From(resolved.Rest[control]);
+                if (Ui.LayeredPoint("Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, control, rest.ToVector3(), session.MoveChildren));
             }
             var children = session.MoveChildren; if (ImGui.Checkbox("Move children with it", ref children)) session.MoveChildren = children;
         }
@@ -455,7 +544,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         foreach (var look in basis.Asset.Looks)
         {
             if (ImGui.SmallButton(look.Name + "##look-" + look.Id)) session.ApplyLook(look.Id);
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Fill, p.Value.Face, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")));
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Material?.Fill, p.Value.Face, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")));
             ImGui.SameLine();
         }
         ImGui.NewLine();
@@ -485,8 +574,18 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (edited.Height != resolved.Height) o.Height = edited.Height;
         if (edited.OffsetX != resolved.OffsetX) o.OffsetX = edited.OffsetX;
         if (edited.OffsetY != resolved.OffsetY) o.OffsetY = edited.OffsetY;
-        if (edited.Fill != resolved.Fill) o.Fill = edited.Fill;
-        if (edited.OutlineWidth != resolved.OutlineWidth) o.OutlineWidth = edited.OutlineWidth;
+        if (edited.RenderMaterial.Fill != resolved.RenderMaterial.Fill)
+            o.Material = (o.Material ?? new RenderMaterialDefinition2D()) with { Fill = edited.RenderMaterial.Fill };
+        if (edited.RenderMaterial.Outline?.Width != resolved.RenderMaterial.Outline?.Width)
+        {
+            var material = o.Material ?? new RenderMaterialDefinition2D();
+            o.Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Width = edited.RenderMaterial.Outline?.Width } };
+        }
+        if (edited.RenderMaterial.Outline?.Color != resolved.RenderMaterial.Outline?.Color)
+        {
+            var material = o.Material ?? new RenderMaterialDefinition2D();
+            o.Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Color = edited.RenderMaterial.Outline?.Color } };
+        }
         if (edited.Paint != resolved.Paint) o.Paint = edited.Paint;
         if (edited.Face != resolved.Face) o.Face = edited.Face;
         if (edited.FaceX != resolved.FaceX) o.FaceX = edited.FaceX;
@@ -503,6 +602,14 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (session.EditRig)
         {
             foreach (var control in model.Order.Where(c => c.Parent is not null)) draw.AddLine(frame.Screen(pose.World(control.Parent!)), frame.Screen(pose.World(control.Id)), Ui.Color(104, 112, 122, 170), 1.5f);
+            foreach (var control in model.Order.Where(c => c.Length > 0))
+            {
+                var origin = pose.World(control.Id);
+                var selected = session.Selection.Control == control.Id;
+                var color = selected ? Ui.Color(232, 169, 55) : Ui.Color(84, 179, 160);
+                draw.AddLine(frame.Screen(origin), frame.Screen(BoneTip(control, pose)), color, (selected ? 4 : 2.5f) * Ui.Scale);
+                draw.AddCircleFilled(frame.Screen(BoneTip(control, pose)), 4 * Ui.Scale, color);
+            }
             foreach (var control in model.Order)
             {
                 var p = frame.Screen(pose.World(control.Id)); var selected = session.Selection.Control == control.Id;
@@ -517,14 +624,15 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (session.Selection.Part is { } selectedPart && model.Parts.FirstOrDefault(p => p.Id == selectedPart) is { } part)
         {
             Outline(frame, part, pose, model);
-            if (_editCutout && part.Kind == "polygon" && Base is not null)
+            if (_editCutout && part.Geometry is SimplePolygonShapeDefinition2D && Base is not null)
             {
                 DragCutout(frame, part, pose, model); return;
             }
         }
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            var hit = model.Parts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => model.Rest[id])))
+            var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!).ToArray();
+            var hit = visibleParts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id])))
                 .Where(h => h.Score <= 1).OrderBy(h => h.Score).FirstOrDefault();
             if (hit.Part is not null) Select(part: hit.Part.Id); else session.Selection.Clear();
         }
@@ -533,7 +641,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
     private void DragCutout(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
-        var contour = PartGeometry.Contour(part, pose.World, id => model.Rest[id]); var points = part.Points!;
+        var contour = PartGeometry.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
+        var points = ((SimplePolygonShapeDefinition2D)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToList();
         for (var i = 0; i < points.Count; i++)
         {
             var at = frame.Screen(contour[i]);
@@ -545,19 +654,35 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _cutoutDrag = -1; session.EndDrag(); return; }
         if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || Base is not { } document) return;
         var edited = new List<PuppetPoint>(points);
-        edited[_cutoutDrag] = PartGeometry.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse), pose.World, id => model.Rest[id]);
+        try { edited[_cutoutDrag] = PartGeometry.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse), pose.World, id => model.Rest[id], id => pose.Angles[id], id => pose.Bones[id], id => model.RestTransforms[id]); }
+        catch (InvalidOperationException) { return; }
         try { PartGeometry.CheckCutout(edited); }
         catch (InvalidDataException) { return; }
-        session.Change(document, () => document.Asset.Parts.First(p => p.Id == part.Id).Points = edited);
+        session.Change(document, () => PartGeometry.SetPolygon(document.Asset.Parts.First(p => p.Id == part.Id), edited));
     }
 
     private void DragControls(ViewportFrame frame, ResolvedModel model, EvaluatedPose pose)
     {
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            _dragging = model.Order.Select(c => c.Id).OrderBy(id => Vector2.Distance(frame.Screen(pose.World(id)), ViewportFrame.Mouse))
-                .FirstOrDefault(id => Vector2.Distance(frame.Screen(pose.World(id)), ViewportFrame.Mouse) < 12 * Ui.Scale);
-            if (_dragging is not null) { Select(control: _dragging); _grab = pose.World(_dragging) - frame.World(ViewportFrame.Mouse); session.BeginDrag(); }
+            _dragging = null; _draggingTip = false;
+            var best = 12 * Ui.Scale;
+            foreach (var control in model.Order)
+            {
+                var origin = pose.World(control.Id);
+                var distance = Vector2.Distance(frame.Screen(origin), ViewportFrame.Mouse);
+                if (distance < best) { best = distance; _dragging = control.Id; _draggingTip = false; }
+                if (control.Length <= 0) continue;
+                var tip = BoneTip(control, pose);
+                distance = Vector2.Distance(frame.Screen(tip), ViewportFrame.Mouse);
+                if (distance < best) { best = distance; _dragging = control.Id; _draggingTip = true; }
+            }
+            if (_dragging is not null)
+            {
+                Select(control: _dragging);
+                var picked = _draggingTip ? BoneTip(model.Controls[_dragging], pose) : pose.World(_dragging);
+                _grab = picked - frame.World(ViewportFrame.Mouse); session.BeginDrag();
+            }
             else
             {
                 session.Selection.Clear();
@@ -567,13 +692,31 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _dragging = null; session.EndDrag(); return; }
         if (ImGui.GetIO().MouseDelta == Vector2.Zero) return;
         var target = frame.World(ViewportFrame.Mouse) + _grab;
-        session.DragControl(_dragging, target with { Z = pose.World(_dragging).Z });
+        if (!_draggingTip) { session.DragControl(_dragging, target with { Z = pose.World(_dragging).Z }); return; }
+        if (Base is not { } document) return;
+        var origin2 = pose.World(_dragging);
+        var delta = new Vector2(target.X - origin2.X, target.Y - origin2.Y);
+        if (delta.LengthSquared() < .0001f) return;
+        var id = _dragging;
+        session.Change(document, () =>
+        {
+            ModelAuthoring.RotateRestBone(document.Asset, id, MathF.Atan2(delta.Y, delta.X));
+            var bone = document.Asset.Controls.First(c => c.Id == id);
+            var unit = bone.Transform is null ? 1 : Vector2.TransformNormal(Vector2.UnitX, ResolvedModel.From(document.Asset).RestTransforms[id]).Length();
+            if (unit > 1e-6f) bone.Length = delta.Length() / unit;
+        });
     }
 
     private static void Outline(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
-        var outline = PartGeometry.Contour(part, pose.World, id => model.Rest[id]).Select(p => frame.Screen(p)).ToArray();
+        var outline = PartGeometry.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]).Select(p => frame.Screen(p)).ToArray();
         for (var i = 0; i < outline.Length; i++) frame.Draw.AddLine(outline[i], outline[(i + 1) % outline.Length], Ui.Color(232, 169, 55), 2);
+    }
+
+    private static Vector3 BoneTip(ModelControl control, EvaluatedPose pose)
+    {
+        var origin = pose.World(control.Id);
+        return new(Vector2.Transform(new(control.Length, 0), pose.Bones[control.Id]), origin.Z);
     }
 
     // ---- Timeline: preview transport -----------------------------------------------------------------------------

@@ -3,8 +3,8 @@ namespace App2d.Core;
 
 /// <summary>
 /// Deterministic, session-owned identity allocation. Two sessions built from the same
-/// definition in the same construction order allocate the same IDs, so a server and a
-/// predicting client agree on identities without exchanging them.
+/// definition in the same construction order allocate the same IDs, which keeps tests
+/// and diagnostics reproducible.
 /// </summary>
 public sealed class EntityIdAllocator2D
 {

@@ -13,6 +13,7 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, PropAsset> _props = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EntityAsset> _entityAssets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
+    private string _textureRoot = Environment.CurrentDirectory;
     public IReadOnlyDictionary<string, CharacterModel> Models => _models;
     public IReadOnlyDictionary<string, ModelVariant> Variants => _variants;
     public IReadOnlyDictionary<string, MotionClip> Animations => _animations;
@@ -26,7 +27,7 @@ public sealed class AuthoredCatalog
 
     public static AuthoredCatalog Load(string root)
     {
-        var catalog = new AuthoredCatalog();
+        var catalog = new AuthoredCatalog { _textureRoot = Path.GetFullPath(root) };
         catalog.Scan(root, "models", CharacterModel.FromJson, catalog._models, m => m.Id);
         catalog.Scan(root, "variants", ModelVariant.FromJson, catalog._variants, v => v.Id);
         catalog.Scan(root, "animations", MotionClip.FromJson, catalog._animations, a => a.Id);
@@ -56,6 +57,7 @@ public sealed class AuthoredCatalog
         else if (!_variants.TryGetValue(id, out var variant)) throw new KeyNotFoundException($"No model or variant '{id}'.");
         else if (!_models.TryGetValue(variant.Base, out model)) throw new InvalidDataException($"Variant '{id}' references missing base model '{variant.Base}'.");
         else resolved = ResolvedModel.From(model, variant);
+        resolved.TextureRoot = _textureRoot;
         return _resolved[id] = resolved;
     }
 

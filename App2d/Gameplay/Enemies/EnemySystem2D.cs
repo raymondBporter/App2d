@@ -1,0 +1,119 @@
+using App2d.Contracts.Combat;
+using App2d.Contracts.Enemies;
+using App2d.Core;
+using App2d.Core.Tiles;
+using App2d.Core.Validation;
+using App2d.Gameplay.Combat;
+using App2d.Gameplay.Persons;
+using System.Collections.Immutable;
+using System.Numerics;
+
+namespace App2d.Gameplay.Enemies;
+
+public sealed partial class EnemySystem2D
+{
+    private readonly List<RegisteredEnemy> _registeredEnemies = [];
+    private readonly List<ICombatant2D> _combatants = [];
+
+    public IReadOnlyList<ICombatant2D> Combatants => _combatants;
+    public int Count => _combatants.Count(
+        combatant => combatant.Faction == CombatFaction2D.Enemy);
+
+    public ImmutableArray<EnemyState2D> CaptureStates() =>
+        [.. _registeredEnemies.Select(e => e.Actor.CaptureState())];
+
+    public ImmutableArray<EnemyEvent2D> DrainEvents() =>
+        [.. _registeredEnemies.SelectMany(e => e.Actor.DrainEvents())];
+
+    public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
+    {
+        ArgGuard.ThrowIfNull(actor);
+        StateGuard.ThrowIf(
+            _combatants.Any(item => item.Id == actor.Combatant.Id),
+            "The enemy combatant is already registered.");
+
+        actor.SetSimulationEnabled(false);
+        _registeredEnemies.Add(
+            new RegisteredEnemy(
+                actor,
+                actor as IEnemyAttackSource2D,
+                homeChunk));
+        _combatants.Add(actor.Combatant);
+    }
+
+    public void UpdateStreaming(Func<TileChunk2D, bool> isChunkActive)
+    {
+        ArgGuard.ThrowIfNull(isChunkActive);
+
+        foreach (var registered in _registeredEnemies)
+        {
+            var isEnabled = isChunkActive(registered.HomeChunk);
+            if (registered.IsEnabled == isEnabled)
+                continue;
+
+            registered.IsEnabled = isEnabled;
+            registered.Actor.SetSimulationEnabled(isEnabled);
+        }
+    }
+
+    public void Update(float deltaSeconds, Vector2 targetPosition)
+    {
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.ThrowIfNotFinite(targetPosition);
+
+        foreach (var registered in _registeredEnemies)
+        {
+            if (registered.IsEnabled)
+                registered.Actor.Update(deltaSeconds, targetPosition);
+        }
+    }
+
+    public void SyncAfterPhysics()
+    {
+        foreach (var registered in _registeredEnemies)
+        {
+            if (registered.IsEnabled)
+                registered.Actor.SyncAfterPhysics();
+        }
+    }
+
+    public bool TryResolvePlayerHits(Person2D player)
+    {
+        ArgGuard.ThrowIfNull(player);
+
+        var playerDefeated = false;
+        foreach (var registered in _registeredEnemies)
+        {
+            if (registered.IsEnabled && registered.AttackSource is not null)
+            {
+                playerDefeated |=
+                    registered.AttackSource.TryResolvePlayerHit(player);
+            }
+        }
+
+        return playerDefeated;
+    }
+
+    public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
+    {
+        foreach (var registered in _registeredEnemies)
+        {
+            if (!registered.IsEnabled || registered.AttackSource is null)
+                continue;
+
+            foreach (var hitbox in registered.AttackSource.GetActiveAttackHitboxes())
+                yield return hitbox;
+        }
+    }
+
+    private sealed class RegisteredEnemy(
+        IEnemyActor2D actor,
+        IEnemyAttackSource2D? attackSource,
+        TileChunk2D homeChunk)
+    {
+        public IEnemyActor2D Actor { get; } = actor;
+        public IEnemyAttackSource2D? AttackSource { get; } = attackSource;
+        public TileChunk2D HomeChunk { get; } = homeChunk;
+        public bool IsEnabled { get; set; }
+    }
+}

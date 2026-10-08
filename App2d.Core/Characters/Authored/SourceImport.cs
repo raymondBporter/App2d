@@ -14,7 +14,7 @@ namespace App2d.Core.Characters.Authored;
 /// </summary>
 public sealed record AssetSource
 {
-    public const string Puppet = "puppet", Library = "library";
+    public const string Puppet = "puppet", Library = "library", Spine = "spine";
     public string Kind { get; set; } = "";
     public string File { get; set; } = "";
     public string? Motion { get; set; }
@@ -23,7 +23,7 @@ public sealed record AssetSource
 
     public void Validate(string owner)
     {
-        EntityVocabulary.Require(Kind, [Puppet, Library], owner + " source kind");
+        EntityVocabulary.Require(Kind, [Puppet, Library, Spine], owner + " source kind");
         if (string.IsNullOrWhiteSpace(File)) throw new InvalidDataException($"{owner} source: a file is required.");
         if (Points?.Any(p => p.Value is null || p.Value.Count == 0 || p.Value.Any(string.IsNullOrWhiteSpace)) == true)
             throw new InvalidDataException($"{owner} source: every mapped control needs at least one source point.");

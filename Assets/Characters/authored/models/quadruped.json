@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 1,
+  "version": 2,
   "id": "quadruped",
   "name": "Quadruped",
   "structureRevision": 1,
@@ -200,7 +200,6 @@
   "parts": [
     {
       "id": "tail",
-      "kind": "polygon",
       "a": "tail",
       "b": "tail-up",
       "width": 0.85,
@@ -208,34 +207,35 @@
       "offsetX": -0.35,
       "offsetY": 0.03,
       "depth": 0.02,
-      "fill": "#79bdb0",
-      "points": [
-        {
-          "x": 0.5,
-          "y": -0.25,
-          "z": 0
-        },
-        {
-          "x": -0.2,
-          "y": -0.17,
-          "z": 0
-        },
-        {
-          "x": -0.5,
-          "y": 0.32,
-          "z": 0
-        },
-        {
-          "x": -0.12,
-          "y": 0.12,
-          "z": 0
-        },
-        {
-          "x": 0.5,
-          "y": 0.45,
-          "z": 0
-        }
-      ]
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": 0.5,
+            "y": -0.25
+          },
+          {
+            "x": -0.2,
+            "y": -0.17
+          },
+          {
+            "x": -0.5,
+            "y": 0.32
+          },
+          {
+            "x": -0.12,
+            "y": 0.12
+          },
+          {
+            "x": 0.5,
+            "y": 0.45
+          }
+        ]
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "far-hind-upper",
@@ -244,7 +244,21 @@
       "width": 0.25,
       "height": 0.60231054,
       "offsetY": 0.20615526,
-      "fill": "#527f78"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#527f78",
+        "outline": {}
+      }
     },
     {
       "id": "far-hind-lower",
@@ -254,50 +268,63 @@
       "height": 0.5362642,
       "offsetY": 0.19313207,
       "depth": -0.005,
-      "fill": "#527f78"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#527f78",
+        "outline": {}
+      }
     },
     {
       "id": "far-hind-paw",
-      "kind": "polygon",
       "a": "far-hind-foot",
       "width": 0.36,
       "height": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
       "depth": -0.015,
-      "fill": "#527f78",
-      "points": [
-        {
-          "x": -0.5,
-          "y": -0.4,
-          "z": 0
-        },
-        {
-          "x": 0.47,
-          "y": -0.4,
-          "z": 0
-        },
-        {
-          "x": 0.5,
-          "y": -0.02,
-          "z": 0
-        },
-        {
-          "x": 0.24,
-          "y": 0.45,
-          "z": 0
-        },
-        {
-          "x": -0.25,
-          "y": 0.5,
-          "z": 0
-        },
-        {
-          "x": -0.47,
-          "y": 0.12,
-          "z": 0
-        }
-      ]
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": -0.5,
+            "y": -0.4
+          },
+          {
+            "x": 0.47,
+            "y": -0.4
+          },
+          {
+            "x": 0.5,
+            "y": -0.02
+          },
+          {
+            "x": 0.24,
+            "y": 0.45
+          },
+          {
+            "x": -0.25,
+            "y": 0.5
+          },
+          {
+            "x": -0.47,
+            "y": 0.12
+          }
+        ]
+      },
+      "material": {
+        "fill": "#527f78",
+        "outline": {}
+      }
     },
     {
       "id": "far-hind-toe-0",
@@ -307,8 +334,23 @@
       "offsetX": -0.08,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "far-hind-toe-1",
@@ -318,8 +360,23 @@
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "far-hind-toe-2",
@@ -329,8 +386,23 @@
       "offsetX": 0.09,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "far-front-upper",
@@ -339,7 +411,21 @@
       "width": 0.25,
       "height": 0.58849716,
       "offsetY": 0.19924857,
-      "fill": "#527f78"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#527f78",
+        "outline": {}
+      }
     },
     {
       "id": "far-front-lower",
@@ -349,50 +435,63 @@
       "height": 0.5362642,
       "offsetY": 0.19313209,
       "depth": -0.005,
-      "fill": "#527f78"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#527f78",
+        "outline": {}
+      }
     },
     {
       "id": "far-front-paw",
-      "kind": "polygon",
       "a": "far-front-foot",
       "width": 0.36,
       "height": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
       "depth": -0.015,
-      "fill": "#527f78",
-      "points": [
-        {
-          "x": -0.5,
-          "y": -0.4,
-          "z": 0
-        },
-        {
-          "x": 0.47,
-          "y": -0.4,
-          "z": 0
-        },
-        {
-          "x": 0.5,
-          "y": -0.02,
-          "z": 0
-        },
-        {
-          "x": 0.24,
-          "y": 0.45,
-          "z": 0
-        },
-        {
-          "x": -0.25,
-          "y": 0.5,
-          "z": 0
-        },
-        {
-          "x": -0.47,
-          "y": 0.12,
-          "z": 0
-        }
-      ]
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": -0.5,
+            "y": -0.4
+          },
+          {
+            "x": 0.47,
+            "y": -0.4
+          },
+          {
+            "x": 0.5,
+            "y": -0.02
+          },
+          {
+            "x": 0.24,
+            "y": 0.45
+          },
+          {
+            "x": -0.25,
+            "y": 0.5
+          },
+          {
+            "x": -0.47,
+            "y": 0.12
+          }
+        ]
+      },
+      "material": {
+        "fill": "#527f78",
+        "outline": {}
+      }
     },
     {
       "id": "far-front-toe-0",
@@ -402,8 +501,23 @@
       "offsetX": -0.08,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "far-front-toe-1",
@@ -413,8 +527,23 @@
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "far-front-toe-2",
@@ -424,8 +553,23 @@
       "offsetX": 0.09,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "near-hind-upper",
@@ -434,7 +578,21 @@
       "width": 0.25,
       "height": 0.60231054,
       "offsetY": 0.20615527,
-      "fill": "#79bdb0"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "near-hind-lower",
@@ -444,50 +602,63 @@
       "height": 0.5362642,
       "offsetY": 0.19313209,
       "depth": -0.005,
-      "fill": "#79bdb0"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "near-hind-paw",
-      "kind": "polygon",
       "a": "near-hind-foot",
       "width": 0.36,
       "height": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
       "depth": -0.015,
-      "fill": "#79bdb0",
-      "points": [
-        {
-          "x": -0.5,
-          "y": -0.4,
-          "z": 0
-        },
-        {
-          "x": 0.47,
-          "y": -0.4,
-          "z": 0
-        },
-        {
-          "x": 0.5,
-          "y": -0.02,
-          "z": 0
-        },
-        {
-          "x": 0.24,
-          "y": 0.45,
-          "z": 0
-        },
-        {
-          "x": -0.25,
-          "y": 0.5,
-          "z": 0
-        },
-        {
-          "x": -0.47,
-          "y": 0.12,
-          "z": 0
-        }
-      ]
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": -0.5,
+            "y": -0.4
+          },
+          {
+            "x": 0.47,
+            "y": -0.4
+          },
+          {
+            "x": 0.5,
+            "y": -0.02
+          },
+          {
+            "x": 0.24,
+            "y": 0.45
+          },
+          {
+            "x": -0.25,
+            "y": 0.5
+          },
+          {
+            "x": -0.47,
+            "y": 0.12
+          }
+        ]
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "near-hind-toe-0",
@@ -497,8 +668,23 @@
       "offsetX": -0.08,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "near-hind-toe-1",
@@ -508,8 +694,23 @@
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "near-hind-toe-2",
@@ -519,8 +720,23 @@
       "offsetX": 0.09,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "near-front-upper",
@@ -529,7 +745,21 @@
       "width": 0.25,
       "height": 0.58849716,
       "offsetY": 0.19924857,
-      "fill": "#79bdb0"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "near-front-lower",
@@ -539,50 +769,63 @@
       "height": 0.5362642,
       "offsetY": 0.19313207,
       "depth": -0.005,
-      "fill": "#79bdb0"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "near-front-paw",
-      "kind": "polygon",
       "a": "near-front-foot",
       "width": 0.36,
       "height": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
       "depth": -0.015,
-      "fill": "#79bdb0",
-      "points": [
-        {
-          "x": -0.5,
-          "y": -0.4,
-          "z": 0
-        },
-        {
-          "x": 0.47,
-          "y": -0.4,
-          "z": 0
-        },
-        {
-          "x": 0.5,
-          "y": -0.02,
-          "z": 0
-        },
-        {
-          "x": 0.24,
-          "y": 0.45,
-          "z": 0
-        },
-        {
-          "x": -0.25,
-          "y": 0.5,
-          "z": 0
-        },
-        {
-          "x": -0.47,
-          "y": 0.12,
-          "z": 0
-        }
-      ]
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": -0.5,
+            "y": -0.4
+          },
+          {
+            "x": 0.47,
+            "y": -0.4
+          },
+          {
+            "x": 0.5,
+            "y": -0.02
+          },
+          {
+            "x": 0.24,
+            "y": 0.45
+          },
+          {
+            "x": -0.25,
+            "y": 0.5
+          },
+          {
+            "x": -0.47,
+            "y": 0.12
+          }
+        ]
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "near-front-toe-0",
@@ -592,8 +835,23 @@
       "offsetX": -0.08,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "near-front-toe-1",
@@ -603,8 +861,23 @@
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "near-front-toe-2",
@@ -614,8 +887,23 @@
       "offsetX": 0.09,
       "offsetY": -0.055,
       "depth": -0.025,
-      "fill": "#f6e4bb",
-      "outlineWidth": 0.012
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#f6e4bb",
+        "outline": {
+          "width": 0.012
+        }
+      }
     },
     {
       "id": "body",
@@ -625,10 +913,11 @@
       "height": 0.9,
       "offsetX": -0.05,
       "offsetY": 0.04,
-      "fill": "#79bdb0",
       "paint": [
         {
-          "fill": "#397783",
+          "material": {
+            "fill": "#397783"
+          },
           "points": [
             {
               "x": -0.14999999,
@@ -693,7 +982,9 @@
           ]
         },
         {
-          "fill": "#397783",
+          "material": {
+            "fill": "#397783"
+          },
           "points": [
             {
               "x": 0.024999999,
@@ -757,7 +1048,22 @@
             }
           ]
         }
-      ]
+      ],
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "head",
@@ -768,7 +1074,21 @@
       "offsetX": 0.13,
       "offsetY": 0.02,
       "depth": -0.24,
-      "fill": "#79bdb0"
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#79bdb0",
+        "outline": {}
+      }
     },
     {
       "id": "eye",
@@ -779,12 +1099,26 @@
       "offsetX": 0.34,
       "offsetY": 0.01,
       "depth": -0.31,
-      "fill": "#242a29",
-      "outlineWidth": 0
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.5,
+          "y": 0.5
+        }
+      },
+      "material": {
+        "fill": "#242a29",
+        "outline": {
+          "width": 0
+        }
+      }
     },
     {
       "id": "brow",
-      "kind": "polygon",
       "a": "head",
       "b": "head-up",
       "width": 0.16,
@@ -792,34 +1126,36 @@
       "offsetX": 0.33,
       "offsetY": 0.11,
       "depth": -0.31,
-      "fill": "#242a29",
-      "outlineWidth": 0,
-      "points": [
-        {
-          "x": -0.5,
-          "y": 0.5,
-          "z": 0
-        },
-        {
-          "x": 0.5,
-          "y": -0.08,
-          "z": 0
-        },
-        {
-          "x": 0.35,
-          "y": -0.5,
-          "z": 0
-        },
-        {
-          "x": -0.5,
-          "y": 0.1,
-          "z": 0
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": -0.5,
+            "y": 0.5
+          },
+          {
+            "x": 0.5,
+            "y": -0.08
+          },
+          {
+            "x": 0.35,
+            "y": -0.5
+          },
+          {
+            "x": -0.5,
+            "y": 0.1
+          }
+        ]
+      },
+      "material": {
+        "fill": "#242a29",
+        "outline": {
+          "width": 0
         }
-      ]
+      }
     },
     {
       "id": "mouth",
-      "kind": "polygon",
       "a": "head",
       "b": "head-up",
       "width": 0.23,
@@ -827,40 +1163,41 @@
       "offsetX": 0.35,
       "offsetY": -0.17,
       "depth": -0.31,
-      "fill": "#242a29",
-      "outlineWidth": 0,
-      "points": [
-        {
-          "x": -0.5,
-          "y": -0.3,
-          "z": 0
-        },
-        {
-          "x": -0.1,
-          "y": 0.5,
-          "z": 0
-        },
-        {
-          "x": 0.5,
-          "y": -0.35,
-          "z": 0
-        },
-        {
-          "x": 0.44,
-          "y": -0.5,
-          "z": 0
-        },
-        {
-          "x": -0.1,
-          "y": 0.1,
-          "z": 0
-        },
-        {
-          "x": -0.42,
-          "y": -0.5,
-          "z": 0
+      "geometry": {
+        "kind": "simple-polygon",
+        "vertices": [
+          {
+            "x": -0.5,
+            "y": -0.3
+          },
+          {
+            "x": -0.1,
+            "y": 0.5
+          },
+          {
+            "x": 0.5,
+            "y": -0.35
+          },
+          {
+            "x": 0.44,
+            "y": -0.5
+          },
+          {
+            "x": -0.1,
+            "y": 0.1
+          },
+          {
+            "x": -0.42,
+            "y": -0.5
+          }
+        ]
+      },
+      "material": {
+        "fill": "#242a29",
+        "outline": {
+          "width": 0
         }
-      ]
+      }
     }
   ],
   "sockets": [

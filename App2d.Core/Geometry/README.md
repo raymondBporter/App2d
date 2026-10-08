@@ -4,7 +4,7 @@
 
 | Namespace | Holds | Depends on |
 | --- | --- | --- |
-| `App2d.Core.Mathematics` | Vectors, cross products, polar/direction values, rotation, `Similarity2D`, `Transform2D`, easing | `System.Numerics` |
+| `App2d.Core.Mathematics` | Vectors, cross products, polar/direction values, rotation, `Similarity2D`, `Affine2D`, easing | `System.Numerics` |
 | `App2d.Core.Geometry` | Raw 2D math on numbers plus small value types. Never references `IShape2D`. | `Mathematics` |
 | `App2d.Core.Shapes` | `IShape2D` classes and the per-shape switch tables (`ShapeBounds2D`, `ShapeDistance2D`, `WorldShape2D`) | `Geometry` |
 | `App2d.Core.Meshes` | `TriangleMesh2D`, `Triangle3D`, `TriangleMeshAnalysis3D`, `TriangleMeshBuilder3D`, `Orientation3D` | `Geometry`, `Shapes` |
@@ -57,6 +57,8 @@ bounds cache. The switch tables map a shape to raw parameters once:
 - `ShapeBounds2D.Calculate(shape)` gives local bounds; `SpatialObject2D` caches local and world bounds.
 - `ShapeDistance2D` gives point/shape, shape/shape and object/object distances. Ellipse point and circle queries are
   exact; other ellipse pairings polygonize with `Ellipse2D.CollisionSegments`.
+- `RoundedRectangle2D` is an inset rectangle expanded by a radius. Point distances and pair distances against
+  circles, capsules and polygonal convex shapes use that core exactly; collision contacts and ray casts sample its curved perimeter.
 
 `TriangleMesh2D` is a mesh, not a shape; `ToCompositeShape()` bridges to collision. `CompositeShape2D` is the
 non-convex shape and always resolves per part.

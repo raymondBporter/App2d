@@ -25,8 +25,14 @@ public static class PuppetTemplates
             puppet.Chains.Add(new() { Root = side + "-shoulder", Joint = side + "-elbow", End = side + "-hand", Bend = -1 });
             puppet.Chains.Add(new() { Root = side + "-hip", Joint = side + "-knee", End = side + "-foot", Bend = 1 });
         }
-        puppet.Parts.Add(new() { Id = "body", Kind = PuppetPartKinds.Trapezoid, A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Roundness = .3f, TopWidthScale = .7f, Fill = "#d8e9db" });
+        puppet.Parts.Add(new() { Id = "body", Kind = PuppetPartKinds.Trapezoid, A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Material = new() { Fill = "#d8e9db", Outline = new() } });
         puppet.Parts.Add(new() { Id = "head", Kind = PuppetPartKinds.Ellipse, A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
+        foreach (var part in puppet.Parts)
+        {
+            part.Geometry = PartGeometry.FromPreset(part);
+            part.Material ??= PuppetPartKinds.IsStroke(part.Kind) ? new RenderMaterialDefinition2D()
+                : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
+        }
         puppet.Motions[0].Name = "Pose study";
         puppet.Validate(); return puppet;
     }

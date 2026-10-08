@@ -1,21 +1,24 @@
-using App2d.Core.Geometry;
-using App2d.Contracts.World;
-using App2d.Core.Validation;
 using App2d.Contracts.Player;
-using App2d.Presentation.World;
-using App2d.Audio;
+using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Assets;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
-using App2d.Diagnostics;
+using App2d.Core.Geometry;
+using App2d.Core.Hosting;
+using App2d.Core.Input;
+using App2d.Core.Rendering.Textures;
+using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Shapes;
+using App2d.Core.Validation;
 using App2d.Editor;
-using App2d.Presentation.Audio;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Persistence;
+using App2d.Presentation.Audio;
+using App2d.Presentation.World;
 using App2d.Rendering;
-using App2d.Rendering.Vegetation;
 using App2d.Things;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -48,16 +51,15 @@ public sealed class SideScrollerGame : Game2D
         _authored = _resources.GetLoad<AuthoredCatalog>("characters/authored", "simulation");
         _resources.Get<AuthoredCatalog>("characters/authored", "presentation");
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
-        var textures = _resources.GetLoad<Rendering.Textures.TextureCache2D>("textures/runtime", "presentation");
-        _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects),
-            AssetPaths.Current.SoundEffects);
+        var textures = _resources.GetLoad<TextureCache2D>("textures/runtime", "presentation");
+        _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects), AssetPaths.Current.SoundEffects);
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
-        var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.Height) / 4) * 4;
-        Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f,
-            new(GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.Width), height),
-            GameWorldUnits2D.AuthoredToWorld(hero.Asset.Movement.OffsetX));
+
+        var movement = ShapeBounds2D.Calculate(hero.MovementShape);
+        var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(movement.Height) / 4) * 4;
+        Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f, new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height), GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
         _sounds = _resources.GetLoad<SoundEffectBank2D>("audio/sfx", "presentation");
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
@@ -69,7 +71,7 @@ public sealed class SideScrollerGame : Game2D
         _saveStore = PlayerSaveStore2D.CreateDefault();
         var loadedSave = _saveStore.TryLoad();
 
-        // The same recipe a server or predicting client will use; the host only adds I/O and presentation.
+        // The one construction recipe for the simulation; the host only adds I/O and presentation.
         _simulation = SideScrollerSimulation2D.Create(new SideScrollerSessionDefinition2D(
             Traversal, tileMap,
             [.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)],
@@ -104,9 +106,9 @@ public sealed class SideScrollerGame : Game2D
         }, "Camera zoom (0.05 to 20; default 1.35). Larger values zoom in.");
 
         // Only editor mode opens a writable database handle.
-        _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => App2d.Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera, loadedLevel.Maps[0].TileMap.Origin, Traversal.TileSize);
+        _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => App2d.Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
         _resources.Get<App2d.Levels.WorldAsset2D>("level/cavern", "editor");
-        _resources.Get<Rendering.Textures.TextureCache2D>("textures/runtime", "editor");
+        _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ConfigureMaps(loadedLevel.Maps);
         _editor.ThingsChanged += things =>
         {
@@ -210,8 +212,9 @@ public sealed class SideScrollerGame : Game2D
     {
         base.RenderWorldDebug(renderer);
         _client.DrawWorldDebug(renderer);
-        TileEditorView2D.DrawWorldDebug(renderer, _editor, _simulation.Level.TileMap.WorldBounds, _simulation.Level.TileMap.TileSize);
+        TileEditorView2D.DrawWorldDebug(renderer, _editor);
         if (_showZones)
+        {
             foreach (var zone in _client.Content.Zones)
             {
                 var b = zone.Bounds;
@@ -219,6 +222,7 @@ public sealed class SideScrollerGame : Game2D
                 Span<Vector2> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
                 renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? XnaColor.Gold : XnaColor.Cyan, 2f);
             }
+        }
     }
 
     public override void RenderUI(Renderer2D renderer, FrameTime time)

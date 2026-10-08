@@ -1,6 +1,6 @@
 {
   "format": "app2d-prop",
-  "version": 1,
+  "version": 2,
   "id": "hammer",
   "name": "Hammer",
   "lineWidth": 0.016,
@@ -180,7 +180,7 @@
         8,
         15
       ],
-      "fill": "#866344",
+      "material": { "fill": "#866344", "outline": {} },
       "outline": [
         {
           "x": -0.128,
@@ -394,7 +394,7 @@
         8,
         15
       ],
-      "fill": "#714b3e",
+      "material": { "fill": "#714b3e", "outline": {} },
       "outline": [
         {
           "x": -0.088,
@@ -608,7 +608,7 @@
         8,
         15
       ],
-      "fill": "#c5a26b",
+      "material": { "fill": "#c5a26b", "outline": {} },
       "outline": [
         {
           "x": 0.598,
@@ -822,7 +822,7 @@
         8,
         15
       ],
-      "fill": "#798c96",
+      "material": { "fill": "#798c96", "outline": {} },
       "outline": [
         {
           "x": 0.69,
@@ -1036,7 +1036,7 @@
         8,
         15
       ],
-      "fill": "#dce5e7",
+      "material": { "fill": "#dce5e7", "outline": {} },
       "outline": [
         {
           "x": 0.662,
@@ -1250,7 +1250,7 @@
         8,
         15
       ],
-      "fill": "#dce5e7",
+      "material": { "fill": "#dce5e7", "outline": {} },
       "outline": [
         {
           "x": 0.662,
@@ -1464,7 +1464,7 @@
         8,
         15
       ],
-      "fill": "#465963",
+      "material": { "fill": "#465963", "outline": {} },
       "outline": [
         {
           "x": 0.768,

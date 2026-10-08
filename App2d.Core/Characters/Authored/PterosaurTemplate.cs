@@ -23,12 +23,13 @@ public static class PterosaurTemplate
         }
         PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, string kind = PuppetPartKinds.Ellipse)
         {
-            var part = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Fill = fill, Kind = kind };
+            var part = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Kind = kind };
+            part.Geometry = PartGeometry.FromPreset(part);
             model.Parts.Add(part); return part;
         }
         PuppetPart Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params PuppetPoint[] points)
         {
-            var part = Shape(key, a, a + "-up", w, h, x, y, depth, fill, PuppetPartKinds.Polygon); part.Points = [.. points]; return part;
+            var part = Shape(key, a, a + "-up", w, h, x, y, depth, fill, PuppetPartKinds.Polygon); PartGeometry.SetPolygon(part, points); return part;
         }
         foreach (var (side, sign, depth, fill) in new[] { ("far", 1f, .12f, "#9e5f7e"), ("near", -1f, -.02f, "#b56e8b") })
         {
@@ -43,7 +44,7 @@ public static class PterosaurTemplate
                 new() { Point = 4, Control = side + "-tip" },
                 new() { Point = 5, Control = side + "-bend" },
             ];
-            wing.Paint = [new() { Fill = "#80506d", Points = [new(sign * .15f, .15f), new(sign * .18f, .15f), new(sign * .53f, .59f), new(sign * .48f, .60f)] }];
+            wing.Paint = [new() { Material = new() { Fill = "#80506d" }, Points = [new(sign * .15f, .15f), new(sign * .18f, .15f), new(sign * .53f, .59f), new(sign * .48f, .60f)] }];
             Shape(side + "-leg", side + "-leg", side + "-foot", .025f, .1f, 0, 0, depth, model.Ink, PuppetPartKinds.Stroke);
             for (var i = 0; i < 3; i++) Shape(side + "-toe-" + i, side + "-foot", side + "-toe-" + i, .021f, .1f, 0, 0, depth, model.Ink, PuppetPartKinds.Stroke);
         }
@@ -53,8 +54,8 @@ public static class PterosaurTemplate
         Shape("head", "head", "head-up", .33f, .29f, .015f, .015f, -.16f, "#ba829d");
         Cutout("beak", "head", .35f, .23f, .30f, -.015f, -.17f, "#edbd71", new(-.5f, .5f), new(.5f, -.5f), new(-.5f, -.22f));
         Cutout("lower-beak", "jaw", .26f, .075f, .10f, -.025f, -.18f, "#d99a54", new(-.5f, .5f), new(.5f, -.4f), new(-.5f, -.5f));
-        Shape("eye", "head", "head-up", .048f, .069f, .079f, .019f, -.19f, model.Ink).OutlineWidth = 0;
-        Cutout("brow", "head", .10f, .035f, .075f, .092f, -.19f, model.Ink, new(-.5f, .5f), new(.5f, -.10f), new(.40f, -.5f), new(-.5f, .12f)).OutlineWidth = 0;
+        Shape("eye", "head", "head-up", .048f, .069f, .079f, .019f, -.19f, model.Ink).Material = new() { Fill = model.Ink };
+        Cutout("brow", "head", .10f, .035f, .075f, .092f, -.19f, model.Ink, new(-.5f, .5f), new(.5f, -.10f), new(.40f, -.5f), new(-.5f, .12f)).Material = new() { Fill = model.Ink };
         model.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
         model.Groups = [new() { Id = "wings", Targets = ["near-shoulder", "near-bend", "near-tip", "far-shoulder", "far-bend", "far-tip"] }];
         model.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .16f }] }];
@@ -67,7 +68,7 @@ public static class PterosaurTemplate
         var resolved = ResolvedModel.From(model); var clips = new List<MotionClip>();
         MotionClip Clip(string role, float duration, bool loop)
         {
-            var c = ClipAuthoring.New(resolved, model.Id + "-" + role, model.Name + " · " + role, duration, loop); clips.Add(c); return c;
+            var c = ClipAuthoring.New(resolved, model.Id + "-" + role, model.Name + " - " + role, duration, loop); clips.Add(c); return c;
         }
         void Rotate(MotionClip c, string target, params float[] angles)
         {

@@ -1,7 +1,6 @@
+using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
 using App2d.Core.Validation;
-using App2d.Core.Collision.Queries;
-using App2d.Core.Shapes;
 
 namespace App2d.Core.Physics.Queries;
 

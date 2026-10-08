@@ -13,6 +13,9 @@ public sealed record ClipKey
     public float Angle { get; set; }
     /// <summary>How the value moves from this key to the next: see <see cref="ClipEase"/>.</summary>
     public string Ease { get; set; } = ClipEase.Linear;
+    public KeyCurve2D? Curve { get; set; }
+    public KeyCurve2D? CurveY { get; set; }
+    public KeyCurve2D? CurveZ { get; set; }
     /// <summary>
     /// Target keys only: which side the chain's joint bends to (1 or -1) from this key until the next key that sets one,
     /// such as an elbow or knee mirrored for a back view. Flip it where the limb passes straight so the change never
@@ -62,6 +65,8 @@ public sealed record ClipTrack
     /// <summary>Overrides the control's or chain's default measure. Null uses the model default.</summary>
     public string? Scale { get; set; }
     public List<ClipKey> Keys { get; set; } = [];
+    /// <summary>Imported timelines use the setup value before their first key.</summary>
+    public bool SetupBeforeFirst { get; set; }
 }
 
 /// <summary>The locomotion frame's travel in authored preview. The controller owns travel in gameplay.</summary>
@@ -80,15 +85,17 @@ public sealed record ClipContact
     public PuppetPoint Target { get; set; }
 }
 
-/// <summary>A named animation compatible with one base model's structure revision. Owns no colors, proportions or gameplay.</summary>
+/// <summary>A named animation compatible with one model revision. Owns motion and appearance timelines, not proportions or gameplay.</summary>
 public sealed class MotionClip
 {
     public const string FormatId = "app2d-clip", TranslateKind = "translate", RotateKind = "rotate", TargetKind = "target";
     /// <summary>Socket-local Euler angles in radians: X twist, Y tilt, Z turn. Unwrapped angles preserve authored full turns.</summary>
     public const string OrientKind = "orient";
-    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind];
+    public const string ScaleKind = "scale", ShearKind = "shear";
+    public static readonly IReadOnlyList<string> TrackKinds = [TranslateKind, RotateKind, TargetKind, OrientKind, ScaleKind, ShearKind];
     public string Format { get; set; } = FormatId;
-    public int Version { get; set; } = 1;
+    public const int CurrentVersion = 3;
+    public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Model { get; set; } = "";
@@ -102,6 +109,10 @@ public sealed class MotionClip
     public List<ClipContact> Contacts { get; set; } = [];
     public List<ClipMarker> Markers { get; set; } = [];
     public List<ClipFaceTrack> Faces { get; set; } = [];
+    public List<SlotAttachmentTrack2D> Attachments { get; set; } = [];
+    public List<SlotColorTrack2D> Colors { get; set; } = [];
+    public List<DrawOrderKey2D> DrawOrder { get; set; } = [];
+    public List<AnimationEvent2D> Events { get; set; } = [];
     /// <summary>The imported motion this clip was converted from, if any. Null for clips authored here.</summary>
     public AssetSource? Source { get; set; }
 
@@ -109,6 +120,7 @@ public sealed class MotionClip
     public static MotionClip FromJson(string json)
     {
         var clip = AuthoredAsset.Parse<MotionClip>(json, "clip");
+        if (clip.Version is 1 or 2) clip.Version = CurrentVersion;
         clip.Validate();
         return clip;
     }
@@ -119,7 +131,7 @@ public sealed class MotionClip
     public void Validate()
     {
         var owner = $"Clip '{Id}'";
-        Require(Format == FormatId && Version == 1, $"{owner}: unsupported format/version.");
+        Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "clip id"); AuthoredAsset.RequireId(Model, $"{owner} model");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
@@ -127,6 +139,48 @@ public sealed class MotionClip
         Require(Reference is not null && Travel?.Keys is not null && Tracks is not null && Contacts is not null && Markers is not null && Faces is not null, $"{owner}: collections cannot be null.");
         Require(Travel.Scale is not null, $"{owner} travel: a scale is required.");
         Source?.Validate(owner);
+        if (Attachments is null || Colors is null || DrawOrder is null || Events is null) throw new InvalidDataException($"{owner}: skeleton timelines cannot be null.");
+        var attachmentSlots = new HashSet<string>();
+        foreach (var track in Attachments)
+        {
+            if (track is null || track.Keys is null || !attachmentSlots.Add(track.Slot)) throw new InvalidDataException($"{owner}: invalid attachment timeline.");
+            AuthoredAsset.RequireId(track.Slot, $"{owner} attachment slot");
+            var previous = -1f;
+            foreach (var key in track.Keys)
+            {
+                if (key is null || !float.IsFinite(key.Time) || key.Time < 0 || key.Time > Duration || key.Time <= previous) throw new InvalidDataException($"{owner}: invalid attachment key time.");
+                Require(key.Attachment is null || !string.IsNullOrWhiteSpace(key.Attachment), $"{owner}: attachment names cannot be empty.");
+                previous = key.Time;
+            }
+        }
+        var colorChannels = new HashSet<(string Slot, int Component)>();
+        foreach (var track in Colors)
+        {
+            Require(track?.Keys is not null, $"{owner}: incomplete color timeline.");
+            AuthoredAsset.RequireId(track.Slot, $"{owner} color slot");
+            Require(track.Kind is SlotColorTrack2D.Rgba or SlotColorTrack2D.Rgb or SlotColorTrack2D.Alpha, $"{owner}: unknown color timeline kind.");
+            foreach (var component in track.Kind == SlotColorTrack2D.Alpha ? new[] { 3 } : track.Kind == SlotColorTrack2D.Rgb ? new[] { 0, 1, 2 } : new[] { 0, 1, 2, 3 })
+                Require(colorChannels.Add((track.Slot, component)), $"{owner}: overlapping color timelines for slot '{track.Slot}'.");
+            Require(track.Keys.Count <= 4096, $"{owner}: too many color keys.");
+            var previous = -1f;
+            foreach (var key in track.Keys)
+            {
+                Require(key is not null, $"{owner}: null color key.");
+                new Limit(0, Duration).Check(key.Time, $"{owner} color key time");
+                Require(key.Time > previous, $"{owner}: color key times must be strictly increasing."); previous = key.Time;
+                foreach (var value in new[] { key.R, key.G, key.B, key.A }) new Limit(0, 1).Check(value, $"{owner} color component");
+                EntityVocabulary.Require(key.Ease, ClipEase.All, $"{owner} color key ease");
+                key.CurveR?.Validate(); key.CurveG?.Validate(); key.CurveB?.Validate(); key.CurveA?.Validate();
+            }
+        }
+        var previousOrder = -1f;
+        foreach (var key in DrawOrder)
+        {
+            if (key is null || key.Slots is null || !float.IsFinite(key.Time) || key.Time < 0 || key.Time > Duration || key.Time <= previousOrder) throw new InvalidDataException($"{owner}: invalid draw order key.");
+            previousOrder = key.Time;
+        }
+        foreach (var key in Events)
+            if (key is null || string.IsNullOrWhiteSpace(key.Name) || !float.IsFinite(key.Time) || key.Time < 0 || key.Time > Duration || !float.IsFinite(key.Float)) throw new InvalidDataException($"{owner}: invalid event.");
         foreach (var (measure, length) in Reference) { AuthoredAsset.RequireId(measure, $"{owner} reference"); new Limit(.001f, 1000).Check(length, $"{owner} reference.{measure}"); }
         CheckKeys(Travel.Keys, $"{owner} travel", k => k.Z == 0 && k.Angle == 0, "travel keys use x and y only");
         var seen = new HashSet<(string, string)>();
@@ -194,6 +248,7 @@ public sealed class MotionClip
             foreach (var value in new[] { key.X, key.Y, key.Z, key.Angle }) new Limit(-1000, 1000).Check(value, field + " key value");
             Require(shape(key), $"{field}: {shapeMessage}.");
             EntityVocabulary.Require(key.Ease, ClipEase.All, field + " key ease");
+            key.Curve?.Validate(); key.CurveY?.Validate(); key.CurveZ?.Validate();
         }
     }
 
@@ -217,6 +272,16 @@ public sealed class MotionClip
             Require(Reference.ContainsKey(scale), $"{field}: no reference measurement for '{scale}'.");
         }
         Scale(Travel.Scale, $"{owner} travel");
+        foreach (var track in Attachments)
+        {
+            Require(basis.Slots.Any(s => s.Id == track.Slot), $"{owner}: unknown slot '{track.Slot}'.");
+            foreach (var key in track.Keys.Where(k => k.Attachment is not null))
+                Require(basis.Skins.Any(s => s.Attachments.GetValueOrDefault(track.Slot)?.ContainsKey(key.Attachment!) == true), $"{owner}: unknown attachment '{key.Attachment}' for slot '{track.Slot}'.");
+        }
+        foreach (var track in Colors)
+            Require(basis.Slots.Any(s => s.Id == track.Slot), $"{owner}: unknown color slot '{track.Slot}'.");
+        foreach (var key in DrawOrder)
+            Require(key.Slots.Count == basis.Slots.Count && key.Slots.Distinct().Count() == key.Slots.Count && key.Slots.All(id => basis.Slots.Any(s => s.Id == id)), $"{owner}: draw order must contain every slot exactly once.");
         foreach (var track in Tracks)
         {
             var field = $"{owner} {track.Kind} track '{track.Target}'";
@@ -234,7 +299,12 @@ public sealed class MotionClip
             {
                 Require(model.Controls.TryGetValue(track.Target, out var control), $"{field}: unknown control.");
                 Require(!solved.Contains(track.Target), $"{field}: this control is solved by IK; key its chain's target instead.");
-                Scale(track.Scale ?? control.Scale, field);
+                if (track.Kind is ScaleKind or ShearKind)
+                {
+                    Require(control.Transform is not null, $"{field}: scale and shear require an affine bone.");
+                    Require(track.Scale is null or CharacterModel.Unit, $"{field}: scale and shear cannot use proportion measurements.");
+                }
+                else Scale(track.Scale ?? control.Scale, field);
             }
         }
         foreach (var contact in Contacts)
@@ -245,6 +315,6 @@ public sealed class MotionClip
             Require(chain.Scale == Travel.Scale, $"{field}: the chain's scale '{chain.Scale}' must match the travel scale '{Travel.Scale}'.");
         }
         foreach (var face in Faces)
-            Require(model.Parts.Any(p => p.Id == face.Part && !PuppetPartKinds.IsStroke(p.Kind)), $"{owner} face track '{face.Part}': the model has no such shape part.");
+            Require(model.Parts.Any(p => p.Id == face.Part && p.Geometry is App2d.Core.Shapes.ShapeDefinition2D), $"{owner} face track '{face.Part}': the model has no such shape part.");
     }
 }

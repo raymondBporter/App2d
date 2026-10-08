@@ -41,7 +41,4 @@ public sealed class EntityReaction
         var role = !alive ? EntityControllers.Death : Staggered ? EntityControllers.Hit : null;
         return role is not null && entity.Clip(role) is not null ? role : null;
     }
-
-    public float Capture() => Stagger;
-    public void Restore(float stagger) => Stagger = stagger;
 }

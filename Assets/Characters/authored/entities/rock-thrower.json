@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "rock-thrower",
   "name": "Rock thrower",
   "model": "rock-thrower-build",
@@ -16,15 +16,21 @@
     "cooldown": 0.7,
     "respectTerrain": true,
     "verticalRange": 3,
-    "retreatRange": 2,
-    "retreatSeconds": 0.35,
-    "retreatPause": 0.65
+    "retreatRange": 2
   },
   "health": 6,
-  "mass": 1,
   "movement": {
-    "width": 0.353,
-    "height": 2.01
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.1765,
+        "y": 0
+      },
+      "max": {
+        "x": 0.1765,
+        "y": 2.01
+      }
+    }
   },
   "hurt": {
     "layout": "standard",
@@ -56,16 +62,23 @@
     {
       "id": "attack",
       "clip": "rock-thrower-throw",
-      "hits": [],
       "projectile": {
-        "speed": 8,
-        "width": 0.36,
-        "height": 0.36,
+        "shape": {
+          "kind": "rectangle",
+          "min": {
+            "x": -0.18,
+            "y": -0.18
+          },
+          "max": {
+            "x": 0.18,
+            "y": 0.18
+          }
+        },
         "damage": 2,
-        "lifetime": 3,
         "gravity": 15,
         "flightSeconds": 0.85
       },
+      "hits": [],
       "events": [
         {
           "id": "bag-search",

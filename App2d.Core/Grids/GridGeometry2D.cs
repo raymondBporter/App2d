@@ -63,6 +63,16 @@ public readonly record struct GridGeometry2D
 
     public Vector2 GetCellCenter(GridCell2D cell) => Corner((double)cell.X + .5, (double)cell.Y + .5);
 
+    /// <summary>Snaps a finite world point to its nearest cell corner. Halfway ties round to an even grid index.</summary>
+    public Vector2 SnapToNearestCorner(Vector2 position)
+    {
+        StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
+        ArgGuard.ThrowIfNotFinite(position);
+        return Corner(
+            Math.Round(((double)position.X - Origin.X) / CellSize.Width),
+            Math.Round(((double)position.Y - Origin.Y) / CellSize.Height));
+    }
+
     public Rect2D GetBounds(GridSize2D size) => new(Corner(0, 0), Corner(size.Width, size.Height));
 
     public Rect2D GetBounds(GridCellRange2D cells)
@@ -92,7 +102,11 @@ public readonly record struct GridGeometry2D
         cells = default;
         if ((!typeof(TRect).IsValueType && bounds is null) ||
             !NumericValidation.IsComponentWiseLessThanOrEqual(bounds.Min, bounds.Max) ||
-            !TryWorldToCell(bounds.Min, out var min) || !TryWorldToCell(bounds.Max, out var max)) return false;
+            !TryWorldToCell(bounds.Min, out var min) || !TryWorldToCell(bounds.Max, out var max))
+        {
+            return false;
+        }
+
         var width = (long)max.X - min.X + 1;
         var height = (long)max.Y - min.Y + 1;
         if (width > long.MaxValue / height) return false;

@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Shapes;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
@@ -129,12 +130,12 @@ internal sealed class EditorSmoke(string output)
                 var s = shell.Session; s.Open("maul-brute"); s.Compare.Clear(); s.ShowRest = true; s.EditRig = false;
                 Check(s.DuplicateAppearance("brute-hide-wrap", "test-wrap", "Custom hide wrap"), s);
                 var doc = s.AppearanceDocument!;
-                Check(s.Edit(doc, () => doc.Asset.Solids[0].Fill = "#ac7243"), s);
+                Check(s.Edit(doc, () => doc.Asset.Solids[0].Material = doc.Asset.Solids[0].RenderMaterial with { Fill = "#ac7243" }), s);
                 Check(s.EquipAppearance("maul-brute", doc.Id, PersonWardrobe.BodySocket), s);
                 Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.Equipment.RemoveAll(e => e.Prop == "brute-hide-wrap")), s);
                 s.SaveAll();
                 var reopened = AuthoredCatalog.Load(s.Assets.Root);
-                Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Solids[0].Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");
+                Record(reopened.Entities["maul-brute"].Equipment.Any(e => e.Prop.Id == "test-wrap" && e.Prop.Solids[0].RenderMaterial.Fill == "#ac7243"), "custom clothing saves and reaches the runtime entity");
                 Record(doc.Asset.Solids[0].Outline is not null, "outline remains editable after saving");
             }),
             ("25-triceratops-cutout", shell =>
@@ -143,7 +144,14 @@ internal sealed class EditorSmoke(string output)
                 Check(s.NewModel("review-triceratops", "Triceratops review", "triceratops"), s);
                 s.Selection.Part = "frill"; shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
                 var doc = s.SubjectModel!; var before = doc.Serialize();
-                Check(s.Edit(doc, () => doc.Asset.Parts.Single(p => p.Id == "frill").Points![0] = new(-.32f, -.46f)), s);
+                Check(s.Edit(doc, () =>
+                {
+                    var part = doc.Asset.Parts.Single(p => p.Id == "frill");
+                    var polygon = (SimplePolygonShapeDefinition2D)part.Geometry!;
+                    var vertices = polygon.Vertices.Select(point => new PuppetPoint(point.X, point.Y)).ToList();
+                    vertices[0] = new(-.32f, -.46f);
+                    PartGeometry.SetPolygon(part, vertices);
+                }), s);
                 s.Undo(); Record(before == doc.Serialize(), "cutout silhouette edit undoes exactly");
                 s.Redo(); s.SaveAll();
                 Record(AuthoredCatalog.Load(s.Assets.Root).Animations.ContainsKey("review-triceratops-rush"), "quadruped starter art and clips save together");
@@ -156,7 +164,7 @@ internal sealed class EditorSmoke(string output)
                 Record(s.Scene()[0].Pose.Chains.Count == 4, "quadruped IK reaches the animation viewport");
             }),
             ("28-quadruped-head-down", shell => { var s = shell.Session; s.SetClip("review-triceratops-head-down"); s.Seek(.55f); }),
-            ("29-pterosaur-model", shell =>
+            ("34-pterosaur-model", shell =>
             {
                 var s = shell.Session; s.SetMode(Workspace.Model); s.ShowRest = true;
                 Check(s.NewModel("review-pterosaur", "Pterosaur review", "pterosaur"), s);
@@ -168,14 +176,65 @@ internal sealed class EditorSmoke(string output)
                 var reopened = AuthoredCatalog.Load(s.Assets.Root);
                 Record(reopened.Models["review-pterosaur"].Parts.Single(p => p.Id == "near-wing").Bindings!.Count == 7, "wing attachments and clips reopen together");
             }),
-            ("30-pterosaur-rig", shell => { var s = shell.Session; s.EditRig = true; s.Selection.Control = "near-tip"; }),
-            ("31-pterosaur-fold", shell =>
+            ("35-pterosaur-rig", shell => { var s = shell.Session; s.EditRig = true; s.Selection.Control = "near-tip"; }),
+            ("36-pterosaur-fold", shell =>
             {
                 var s = shell.Session; s.EditRig = s.ShowRest = false; s.SetMode(Workspace.Animate); s.SetClip("review-pterosaur-fold"); s.Seek(.48f);
                 s.Selection.Control = "near-tip"; shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
                 Record(s.Scene()[0].Clip!.Tracks.All(t => t.Kind is "rotate" or "translate"), "membranes animate through ordinary control channels");
             }),
-            ("32-pterosaur-recovery", shell => { var s = shell.Session; s.SetClip("review-pterosaur-low-recovery"); s.Seek(.25f); }),
+            ("37-pterosaur-recovery", shell => { var s = shell.Session; s.SetClip("review-pterosaur-low-recovery"); s.Seek(.25f); }),
+            ("29-spine-export", shell =>
+            {
+                var s = shell.Session; s.Open("tripod"); s.SetClip("tripod-walk"); s.Seek(.25f);
+                Check(s.ExportSpine(Path.Combine(output, "spine", "tripod.json")), s);
+                Record(File.Exists(Path.Combine(output, "spine", "tripod.app2d.json")), "Spine export preserves a native backup");
+            }),
+            ("30-spine-import", shell =>
+            {
+                var s = shell.Session;
+                Check(s.ImportSpine(Path.Combine(output, "spine", "tripod.json"), "spine-tripod", "Spine tripod"), s);
+                s.ShowRest = false; s.SetMode(Workspace.Animate); s.SetClip("spine-tripod-tripod-walk"); s.Seek(.25f);
+                shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
+                Record(s.Scene()[0].Pose.Slots.Count > 0 && s.SubjectModel!.Asset.Parts.All(p => p.Material?.Texture is not null), "Spine image slots reach the viewport");
+                s.SaveAll(); Record(AuthoredCatalog.Load(s.Assets.Root).Models.ContainsKey("spine-tripod"), "imported Spine rig saves through the ordinary workspace");
+            }),
+            ("31-slot-tint-and-curves", shell =>
+            {
+                var s = shell.Session; var model = s.SubjectModel!.Asset; var document = s.ClipDocument!; var slot = model.Slots[0];
+                Check(s.Edit(document, () =>
+                {
+                    ClipAuthoring.SetColorKey(document.Asset, slot.Id, SlotColorTrack2D.Rgba, 0, new(0, .3f, 1, 1));
+                    ClipAuthoring.SetColorKey(document.Asset, slot.Id, SlotColorTrack2D.Rgba, 1, new(0, 1, .3f, .8f));
+                    document.Asset.Colors[0].Keys[0].CurveR = new() { X1 = 1f / 3, X2 = 2f / 3, Y1 = 1, Y2 = 1, Absolute = true };
+                    document.Asset.Tracks.RemoveAll(t => t.Target == slot.Bone && t.Kind is MotionClip.ScaleKind or MotionClip.ShearKind);
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ScaleKind, slot.Bone), 0, new(.1f, .2f, 0));
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ScaleKind, slot.Bone), 1, new(.3f, -.1f, 0));
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ShearKind, slot.Bone), 0, new(.05f, -.1f, 0));
+                    ClipAuthoring.SetKey(document.Asset, new(MotionClip.ShearKind, slot.Bone), 1, new(-.15f, .1f, 0));
+                    document.Asset.Attachments.Add(new() { Slot = slot.Id, Keys = [new() { Time = .45f }, new() { Time = .8f, Attachment = slot.Attachment }] });
+                    document.Asset.DrawOrder = [new() { Time = .2f, Slots = [.. model.Slots.Select(v => v.Id).Reverse()] }];
+                }), s);
+                s.Seek(.25f); var pose = s.Scene()[0].Pose;
+                Record(pose.Slots.Single(v => v.Slot.Id == slot.Id).Color.X > .5f, "equal-endpoint tint curve reaches the viewport");
+                Record(pose.Slots[0].Slot.Id == model.Slots[^1].Id, "animated draw order reaches the viewport");
+            }),
+            ("32-hidden-slot", shell =>
+            {
+                var s = shell.Session; s.Seek(.6f);
+                Record(s.Scene()[0].Pose.Slots.Single(v => v.Slot.Id == s.SubjectModel!.Asset.Slots[0].Id).Part is null, "attachment key hides the slot");
+            }),
+            ("33-slot-timelines-round-trip", shell =>
+            {
+                var s = shell.Session; var path = Path.Combine(output, "tinted-spine", "tripod.json");
+                Check(s.ExportSpine(path), s); Check(s.ImportSpine(path, "tint-returned", "Tint returned"), s);
+                s.SetClip("tint-returned-tripod-walk"); s.Seek(.25f); s.SaveAll();
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root); var clip = reopened.Clip("tint-returned-tripod-walk")!.Asset;
+                Record(clip.Colors.Count == 1 && clip.Attachments.Count > 0 && clip.DrawOrder.Count > 0,
+                    "slot color, attachment, and draw order keys survive Spine and save/reopen");
+                Record(clip.Tracks.Any(t => t.Kind == MotionClip.ScaleKind) && clip.Tracks.Any(t => t.Kind == MotionClip.ShearKind),
+                    "scale and shear keys survive Spine and save/reopen");
+            }),
         ];
         return workspace;
     }
@@ -198,7 +257,7 @@ internal sealed class EditorSmoke(string output)
             }
             ModelAuthoring.AddMeasure(model.Asset, "leg", ["hip-1", "knee-1", "foot-1"]);
             foreach (var chain in model.Asset.Chains) chain.Scale = "leg";
-            var shell = ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Fill = "#c9e0b8";
+            var shell = ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" };
         }), s);
         Check(s.Save(model), s);
         s.EditRig = true; s.Selection.Control = "knee-1";
@@ -235,7 +294,7 @@ internal sealed class EditorSmoke(string output)
         Check(s.Edit(sage, () => { sage.Asset.Build["head"] = 1.25f; sage.Asset.Build["torso"] = 1.08f; }), s);
         s.Open("bruiser"); s.SetClip("person-walk"); s.Pin("ranger"); s.Pin("sage"); s.Seek(.3f);
         var people = new[] { "bruiser", "ranger", "sage" }.Select(id => s.Assets.Resolve(id)!).ToArray();
-        Record(people.Select(p => p.Parts.Single(x => x.Id == "body").Fill).Distinct().Count() == 3 && people.Select(p => p.Rest["head"].Y).Distinct().Count() == 3,
+        Record(people.Select(p => p.Parts.Single(x => x.Id == "body").RenderMaterial.Fill).Distinct().Count() == 3 && people.Select(p => p.Rest["head"].Y).Distinct().Count() == 3,
             "three visibly different people: distinct colors and heights");
         Record(!s.Assets.Model("person")!.Dirty, "building people never edited the base");
     }
@@ -262,7 +321,7 @@ internal sealed class EditorSmoke(string output)
             entity.Asset.Equipment.Add(new() { Prop = "spear", Socket = "right-grip" });
             var attack = entity.Asset.Actions.Single(a => a.Id == "attack");
             attack.Role = null; attack.Clip = "person-thrust"; attack.Mask = StarterContent.Upper; attack.BlendIn = .08f; attack.BlendOut = .12f;
-            attack.Hits.Add(new() { Id = "spear-tip", Prop = "spear", Along = -.14f, Width = .42f, Height = .26f, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
+            attack.Hits.Add(new() { Id = "spear-tip", Prop = "spear", Along = -.14f, Shape = RectangleShapeDefinition2D.FromSize(new(.42f, .26f)), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
             attack.Events.Add(new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" });
         }), s);
         Record(s.Assets.Problems(entity).Count == 0, "the skirmisher compiles: " + string.Join("; ", s.Assets.Problems(entity)));

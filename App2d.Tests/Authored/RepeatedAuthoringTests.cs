@@ -186,17 +186,17 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.NewVariant("ranger", "Ranger", "person", "tall-thin"));
         Ok(session, session.ApplyLook("ember"));
         var variant = session.SubjectVariant!;
-        Assert.Equal("#eab596", variant.Asset.Parts["body"].Fill);
+        Assert.Equal("#eab596", variant.Asset.Parts["body"].Material?.Fill);
         Assert.Equal("determined", session.Assets.Resolve("ranger")!.Parts.Single(p => p.Id == "head").Face);
         var person = session.Assets.Model("person")!;
         Assert.False(person.Dirty);
 
-        Ok(session, session.Edit(variant, () => variant.Asset.Parts["body"].Fill = "#88aa66"));
+        Ok(session, session.Edit(variant, () => variant.Asset.Parts["body"].Material = new() { Fill = "#88aa66" }));
         Ok(session, session.SaveLook("fern", "Fern"));
         Assert.True(person.Dirty);
-        Assert.Equal("#88aa66", person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Fill);
+        Assert.Equal("#88aa66", person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Material?.Fill);
         Assert.Null(person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Width); // looks carry appearance, never sizes
-        Assert.Equal("#d8e9db", person.Asset.Parts.Single(p => p.Id == "body").Fill); // the base's own parts are untouched
+        Assert.Equal("#d8e9db", person.Asset.Parts.Single(p => p.Id == "body").RenderMaterial.Fill); // the base's own parts are untouched
     }
 
     [Fact]
@@ -309,7 +309,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Assert.True(catalog.Errors.Count == 0, string.Join("\n", catalog.Errors));
         Assert.Equal(52, catalog.Variants.Count); Assert.Equal(53, catalog.Entities.Count);
         Assert.Equal(clipFiles, catalog.Animations.Count); // fifty people, no copied clips
-        var idles = catalog.Entities.Values.Where(e => e.Id.StartsWith("villager-")).Select(e => e.Clip("idle")!).Distinct(ReferenceEqualityComparer.Instance).ToList();
+        var idles = catalog.Entities.Values.Where(e => e.Id.StartsWith("villager-")).Select(e => e.Clip("idle")).Distinct(ReferenceEqualityComparer.Instance).ToList();
         Assert.Single(idles); // every villager's idle is the one shared clip object
         Assert.True(loaded < TimeSpan.FromSeconds(5), $"catalog load took {loaded}");
 

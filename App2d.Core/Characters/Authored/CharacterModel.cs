@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
@@ -9,7 +10,14 @@ public sealed record ModelControl
 {
     public string Id { get; set; } = "";
     public string? Parent { get; set; }
+    public string? Name { get; set; }
+    /// <summary>Explicit parent-local affine setup pose. Null keeps the existing model-space point-control convention.</summary>
+    public Affine2D? Transform { get; set; }
     public PuppetPoint Rest { get; set; }
+    /// <summary>World XY direction of this bone in rest, in radians. Zero preserves legacy point controls.</summary>
+    public float RestAngle { get; set; }
+    /// <summary>Bone length along local +X. Zero is an ordinary point control.</summary>
+    public float Length { get; set; }
     public string Scale { get; set; } = CharacterModel.Unit;
 }
 
@@ -95,8 +103,9 @@ public sealed record LookPreset
 public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
+    public const int CurrentVersion = 3;
     public string Format { get; set; } = FormatId;
-    public int Version { get; set; } = 1;
+    public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     /// <summary>Changes when controls, parents, chains or frames change; proportions and appearance never change it.</summary>
@@ -109,6 +118,8 @@ public sealed class CharacterModel
     public List<ModelChain> Chains { get; set; } = [];
     public List<ModelMeasure> Measures { get; set; } = [];
     public List<PuppetPart> Parts { get; set; } = [];
+    public List<SkeletonSlot2D> Slots { get; set; } = [];
+    public List<SkeletonSkin2D> Skins { get; set; } = [];
     public List<ModelSocket> Sockets { get; set; } = [];
     public List<MotionSet> MotionSets { get; set; } = [];
     public List<HurtLayout> HurtLayouts { get; set; } = [];
@@ -117,8 +128,16 @@ public sealed class CharacterModel
     /// <summary>The prototype puppet this model was converted from, if any.</summary>
     public AssetSource? Source { get; set; }
 
-    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    public static CharacterModel FromJson(string json) { var model = AuthoredAsset.Parse<CharacterModel>(json, "model"); model.Validate(); return model; }
+    public string ToJson() => PartAssetJson.Write(this, Parts, AuthoredJson.Options);
+    internal static CharacterModel FromDraftJson(string json)
+    {
+        PartAssetJson.RequireTypedJson(json);
+        var model = AuthoredAsset.Parse<CharacterModel>(json, "model");
+        if (model.Version == 2) model.Version = CurrentVersion;
+        PartAssetJson.Restore(model.Parts);
+        return model;
+    }
+    public static CharacterModel FromJson(string json) { var model = FromDraftJson(json); model.Validate(); return model; }
     public static CharacterModel Load(string path) => FromJson(File.ReadAllText(path));
     public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
 
@@ -127,7 +146,7 @@ public sealed class CharacterModel
     public void Validate()
     {
         var owner = $"Model '{Id}'";
-        Require(Format == FormatId && Version == 1, $"{owner}: unsupported format/version.");
+        Require(Format == FormatId && Version == CurrentVersion, $"{owner}: unsupported format/version.");
         AuthoredAsset.RequireId(Id, "model id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
@@ -144,6 +163,9 @@ public sealed class CharacterModel
             AuthoredAsset.RequireId(control.Id, $"{owner} control id");
             Require(controls.TryAdd(control.Id, control), $"{owner}: duplicate control '{control.Id}'.");
             control.Rest.Check($"{owner} control '{control.Id}' rest");
+            control.Transform?.Validate($"{owner} bone '{control.Id}'");
+            new Limit(-1000, 1000).Check(control.RestAngle, $"{owner} control '{control.Id}' restAngle");
+            new Limit(0, 100).Check(control.Length, $"{owner} control '{control.Id}' length");
         }
         foreach (var control in Controls)
             Require(control.Parent is null || control.Parent != control.Id && controls.ContainsKey(control.Parent), $"{owner}: control '{control.Id}' has unknown parent '{control.Parent}'.");
@@ -175,6 +197,8 @@ public sealed class CharacterModel
             Require(chain.Bend is -1 or 1, $"{owner}: chain '{chain.Id}' bend must be -1 or 1.");
             Require(Known(chain.Root) && Known(chain.Joint) && Known(chain.End), $"{owner}: chain '{chain.Id}' references an unknown control.");
             Require(controls[chain.Joint].Parent == chain.Root && controls[chain.End].Parent == chain.Joint, $"{owner}: chain '{chain.Id}' needs two connected bones (root → joint → end).");
+            Require(controls[chain.Root].Length == 0 && controls[chain.Joint].Length == 0 && controls[chain.End].Length == 0 && controls[chain.Root].Transform is null && controls[chain.Joint].Transform is null && controls[chain.End].Transform is null,
+                $"{owner}: chain '{chain.Id}' uses explicit bone frames; this IK solver supports point controls only.");
             Require(solved.Add(chain.Joint) && solved.Add(chain.End), $"{owner}: chains cannot share solved controls ('{chain.Id}').");
             Require(scales.Contains(chain.Scale), $"{owner}: chain '{chain.Id}' uses unknown scale '{chain.Scale}'.");
             Require(chain.Frame == Locomotion || Known(chain.Frame), $"{owner}: chain '{chain.Id}' frame '{chain.Frame}' is not a control or '{Locomotion}'.");
@@ -242,7 +266,7 @@ public sealed class CharacterModel
             {
                 Require(Known(target) || target is not null && chainIds.Contains(target), $"{owner} group '{group.Id}': '{target}' is not a control or chain.");
                 // A chain moves its joint and end; owning one of them without the chain would split it between two layers.
-                Require(!solved.Contains(target!), $"{owner} group '{group.Id}': '{target}' is solved by IK; name its chain instead.");
+                Require(!solved.Contains(target), $"{owner} group '{group.Id}': '{target}' is solved by IK; name its chain instead.");
             }
         }
         var looks = new HashSet<string>(StringComparer.Ordinal);
@@ -259,6 +283,7 @@ public sealed class CharacterModel
             }
         }
         CheckGeometry(this, Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal), owner);
+        SkeletonAppearance2D.Validate(this);
         if (Build is not null) BuildRules.Get(Build).Check(this);
     }
 

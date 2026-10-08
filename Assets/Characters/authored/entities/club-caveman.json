@@ -1,6 +1,6 @@
 {
   "format": "app2d-entity",
-  "version": 1,
+  "version": 2,
   "id": "club-caveman",
   "name": "Club caveman",
   "model": "club-caveman-build",
@@ -18,10 +18,18 @@
     "verticalRange": 0.75
   },
   "health": 9,
-  "mass": 1,
   "movement": {
-    "width": 0.353,
-    "height": 2.01
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.1765,
+        "y": 0
+      },
+      "max": {
+        "x": 0.1765,
+        "y": 2.01
+      }
+    }
   },
   "hurt": {
     "layout": "standard",
@@ -59,8 +67,17 @@
             "marker": "recover"
           },
           "prop": "wooden-club",
-          "width": 0.7,
-          "height": 0.65,
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.35,
+              "y": -0.325
+            },
+            "max": {
+              "x": 0.35,
+              "y": 0.325
+            }
+          },
           "damage": 3,
           "sound": "heavy"
         }

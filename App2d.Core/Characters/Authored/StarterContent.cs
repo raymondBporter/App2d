@@ -1,3 +1,5 @@
+using App2d.Core.Shapes;
+
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>
@@ -36,10 +38,10 @@ public static class StarterContent
         ];
         model.Looks =
         [
-            new() { Id = "sage", Name = "Sage", Parts = new() { ["body"] = new() { Fill = "#d8e9db" } } },
-            new() { Id = "slate", Name = "Slate", Parts = new() { ["body"] = new() { Fill = "#b8c4d6" }, ["head"] = new() { Fill = "#efe6da", Face = "focused" } } },
-            new() { Id = "ember", Name = "Ember", Parts = new() { ["body"] = new() { Fill = "#eab596" }, ["head"] = new() { Face = "determined" } } },
-            new() { Id = "night", Name = "Night", Parts = new() { ["body"] = new() { Fill = "#7d879a" }, ["head"] = new() { Fill = "#e2d6c6", Face = "smug" } } },
+            new() { Id = "sage", Name = "Sage", Parts = new() { ["body"] = new() { Material = new() { Fill = "#d8e9db" } } } },
+            new() { Id = "slate", Name = "Slate", Parts = new() { ["body"] = new() { Material = new() { Fill = "#b8c4d6" } }, ["head"] = new() { Material = new() { Fill = "#efe6da" }, Face = "focused" } } },
+            new() { Id = "ember", Name = "Ember", Parts = new() { ["body"] = new() { Material = new() { Fill = "#eab596" } }, ["head"] = new() { Face = "determined" } } },
+            new() { Id = "night", Name = "Night", Parts = new() { ["body"] = new() { Material = new() { Fill = "#7d879a" } }, ["head"] = new() { Material = new() { Fill = "#e2d6c6" }, Face = "smug" } } },
         ];
         model.HurtLayouts =
         [
@@ -107,8 +109,11 @@ public static class StarterContent
         foreach (var key in hips.Keys) key.Y = mean + (key.Y - mean) * Bob + Sink;
         foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys) key.X += Lean;
         foreach (var arm in new[] { "left-arm", "right-arm" })
+        {
             if (clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.TargetKind && t.Target == arm) is { } track)
             { var center = track.Keys.Average(k => k.X); foreach (var key in track.Keys) key.X = center + (key.X - center) * Swing; }
+        }
+
         return clip;
     }
 
@@ -263,7 +268,7 @@ public static class StarterContent
         ModelAuthoring.AddMeasure(model, "leg", ["hip-1", "knee-1", "foot-1"]);
         foreach (var chain in model.Chains) chain.Scale = "leg";
         foreach (var control in model.Controls.Where(c => c.Id == "body" || c.Id.StartsWith("hip-", StringComparison.Ordinal))) control.Scale = "leg";
-        var shell = ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Fill = "#c9e0b8"; shell.Depth = -.05f;
+        var shell = ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" }; shell.Depth = -.05f;
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
         model.HurtLayouts = [new() { Id = "standard", Regions = [new() { Id = "shell", Controls = ["body", "hip-0", "hip-2"], Pad = .2f }, new() { Id = "legs", Controls = ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], Pad = .05f }] }];
@@ -330,7 +335,7 @@ public static class StarterContent
     {
         Id = EntityControllers.Attack,
         Clip = "person-thrust",
-        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Width = .42f, Height = .26f }],
+        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Shape = RectangleShapeDefinition2D.FromSize(new(.42f, .26f)) }],
         Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
     };
 
@@ -342,7 +347,7 @@ public static class StarterContent
         MotionSet = "deliberate",
         Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .9f, Range = 2.1f, Cooldown = 1.1f },
         Health = 3,
-        Movement = new() { Width = .5f, Height = 1.866f },
+        Movement = new() { Shape = MovementDef.Box(.5f, 1.866f) },
         Hurt = new() { Layout = "standard" },
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust()],
@@ -356,7 +361,7 @@ public static class StarterContent
         MotionSet = "standard",
         Controller = new() { Kind = EntityControllers.Platformer, WalkSpeed = 1.8f, RunSpeed = 4.2f, JumpSpeed = 7.5f, Range = 1.6f, Cooldown = .2f },
         Health = 5,
-        Movement = new() { Width = .55f, Height = 1.705f },
+        Movement = new() { Shape = MovementDef.Box(.55f, 1.705f) },
         Hurt = new() { Layout = "standard", Regions = new() { ["legs"] = new() { Pad = .05f } } },
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust(), new() { Id = EntityControllers.Jump, Role = "jump", Events = [new() { Id = EntityControllers.Launch, At = new() { Marker = "launch" } }] }],
@@ -370,14 +375,14 @@ public static class StarterContent
         MotionSet = "standard",
         Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .6f, Range = 1.05f, Cooldown = 1.4f },
         Health = 2,
-        Movement = new() { Width = 1, Height = 1.1f },
+        Movement = new() { Shape = MovementDef.Box(1, 1.1f) },
         Hurt = new() { Layout = "standard" },
         Actions =
         [
             new()
             {
                 Id = EntityControllers.Attack, Clip = "stalker-lunge",
-                Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Socket = "stinger", Width = .3f, Height = .3f }],
+                Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Socket = "stinger", Shape = RectangleShapeDefinition2D.FromSize(new(.3f, .3f)) }],
                 Events = [new() { Id = "bite", At = new() { Marker = "strike" }, Sound = "bite" }],
             },
         ],

@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -24,16 +26,21 @@ public static class ModelAuthoring
     {
         var model = CharacterModel.FromJson(resolved.Base.ToJson());
         model.Id = id; model.Name = name; model.StructureRevision = 1; model.Build = null;
-        foreach (var control in model.Controls) control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
+        foreach (var control in model.Controls)
+        {
+            control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
+            if (resolved.SetupTransforms.TryGetValue(control.Id, out var setup)) control.Transform = setup with { };
+        }
         model.Parts = [.. resolved.Parts.Select(p => p with { })];
         model.Validate(); return model;
     }
 
     /// <summary>What decides clip compatibility: controls and parents, chains, frames and default scales. Proportions and appearance never change it.</summary>
     public static string StructureSignature(CharacterModel model) => string.Join("|",
-        model.Controls.Select(c => $"c:{c.Id}<{c.Parent}~{c.Scale}").Order(StringComparer.Ordinal)
+        model.Controls.Select(c => $"c:{c.Id}<{c.Parent}~{c.Scale}~affine:{c.Transform is not null}").Order(StringComparer.Ordinal)
             .Concat(model.Chains.Select(c => $"k:{c.Id}={c.Root}>{c.Joint}>{c.End}@{c.Frame}~{c.Scale}").Order(StringComparer.Ordinal))
-            .Concat(model.Measures.Select(m => $"m:{m.Id}").Order(StringComparer.Ordinal)));
+            .Concat(model.Measures.Select(m => $"m:{m.Id}").Order(StringComparer.Ordinal))
+            .Concat(model.Slots.Select(s => $"s:{s.Id}={s.Bone}").Order(StringComparer.Ordinal)));
 
     public static string UniqueId(string basis, IEnumerable<string> taken)
     {
@@ -48,7 +55,29 @@ public static class ModelAuthoring
     public static ModelControl AddControl(CharacterModel model, string? parent, Vector3 rest, string? id = null)
     {
         var control = new ModelControl { Id = id ?? UniqueId(parent is null ? "control" : parent + "-child", Names(model)), Parent = parent, Rest = PuppetPoint.From(rest) };
+        if (parent is not null && Control(model, parent).Transform is not null)
+        {
+            var frame = ResolvedModel.From(model).RestTransforms[parent];
+            if (!Matrix3x2.Invert(frame, out var inverse)) throw new InvalidOperationException("Cannot add a bone beneath a collapsed parent transform.");
+            var local = Vector2.Transform(new(rest.X, rest.Y), inverse);
+            control.Transform = new() { X = local.X, Y = local.Y };
+        }
         model.Controls.Add(control); model.Validate(); return control;
+    }
+
+    /// <summary>Adds a bone at a parent's tip. Its own local +X axis points toward its tip.</summary>
+    public static ModelControl AddBone(CharacterModel model, string? parent, string? id = null)
+    {
+        var basis = parent is null ? null : Control(model, parent);
+        var origin = basis is null ? Vector3.Zero : basis.Rest.XYZ + Rotation2D.ApplyXY(new(MathF.Max(basis.Length, .3f), 0, 0), basis.RestAngle);
+        var bone = AddControl(model, parent, origin, id ?? UniqueId("bone", Names(model)));
+        bone.RestAngle = basis?.RestAngle ?? 0;
+        bone.Length = .5f;
+        if (basis is null || basis.Transform is not null)
+            bone.Transform = new() { X = basis is null ? origin.X : MathF.Max(basis.Length, .3f) };
+        if (bone.Transform is not null) SyncAffineRest(model);
+        model.Validate();
+        return bone;
     }
 
     /// <summary>
@@ -63,7 +92,8 @@ public static class ModelAuthoring
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
         if (model.Parts.FirstOrDefault(p => p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true) is { } bound)
             throw new InvalidOperationException($"{owner}: cutout '{bound.Id}' uses '{id}'; detach its points first.");
-        var parts = model.Parts.Where(p => p.A == id || p.B == id).ToList();
+        if (model.Slots.FirstOrDefault(s => s.Bone == id) is { } slot) throw new InvalidOperationException($"{owner}: slot '{slot.Id}' uses '{id}'. Move or remove the slot first.");
+        var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);
         foreach (var group in model.Groups) group.Targets.Remove(id);
         model.Validate(); return parts;
@@ -71,7 +101,16 @@ public static class ModelAuthoring
 
     public static void Reparent(CharacterModel model, string id, string? parent)
     {
-        Control(model, id).Parent = parent; model.Validate();
+        var control = Control(model, id);
+        if (control.Transform is not null)
+        {
+            var resolved = ResolvedModel.From(model);
+            var frame = parent is null ? Matrix3x2.Identity : resolved.RestTransforms[parent];
+            if (!Matrix3x2.Invert(frame, out var inverse)) throw new InvalidOperationException("Cannot reparent a bone beneath a collapsed parent transform.");
+            control.Transform = Affine2D.FromMatrix(resolved.RestTransforms[id] * inverse);
+        }
+        control.Parent = parent; model.Validate();
+        if (control.Transform is not null) SyncAffineRest(model);
     }
 
     /// <summary>Makes <paramref name="end"/> the tip of a two-bone chain over its parent and grandparent.</summary>
@@ -110,9 +149,26 @@ public static class ModelAuthoring
     public static PuppetPart AddPart(CharacterModel model, string kind, string a, string? b = null)
     {
         var part = new PuppetPart { Id = UniqueId(kind, model.Parts.Select(p => p.Id)), Kind = kind, A = a, B = b, Face = "none" };
-        if (kind == "polygon") part.Points = [new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)];
         if (PuppetPartKinds.IsStroke(kind)) part.Width = model.LineWidth;
+        part.Geometry = PartGeometry.FromPreset(part);
+        part.Material = PuppetPartKinds.IsStroke(kind) ? new RenderMaterialDefinition2D()
+            : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Parts.Add(part); model.Validate(); return part;
+    }
+
+    /// <summary>Creates a drawing part centered on a bone and carried by its local XY frame.</summary>
+    public static PuppetPart AddPartToBone(CharacterModel model, string kind, string boneId)
+    {
+        if (PuppetPartKinds.IsStroke(kind)) throw new InvalidOperationException("Strokes connect two controls; choose their endpoints instead.");
+        var bone = Control(model, boneId);
+        if (bone.Length <= 0) throw new InvalidOperationException($"'{boneId}' has no bone length.");
+        var part = AddPart(model, kind, boneId);
+        part.Frame = boneId;
+        part.OffsetX = bone.Length / 2;
+        if (kind == PuppetPartKinds.Box) { part.Width = bone.Length; part.Height = .2f; }
+        part.Geometry = PartGeometry.FromPreset(part);
+        model.Validate();
+        return part;
     }
 
     /// <summary>Changes drawing geometry while keeping the part ID. Face tracks may need repair when a shape becomes a stroke.</summary>
@@ -120,47 +176,100 @@ public static class ModelAuthoring
     {
         EntityVocabulary.Require(kind, PuppetPartKinds.All, "part.kind");
         var part = model.Parts.First(p => p.Id == id);
+        if (kind != PuppetPartKinds.Polygon && part.Bindings is { Count: > 0 })
+            throw new InvalidOperationException("Detach cutout points before changing to a rigid primitive.");
         if (PuppetPartKinds.IsStroke(kind) && (part.B is null || part.B == part.A))
+        {
             part.B = model.Controls.FirstOrDefault(control => control.Parent == part.A)?.Id
                 ?? model.Controls.FirstOrDefault(control => control.Id != part.A)?.Id
                 ?? throw new InvalidOperationException("A stroke needs a second control.");
-        if (kind == PuppetPartKinds.Polygon && part.Points is null)
-            part.Points = [new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)];
-        if (kind != PuppetPartKinds.Polygon && part.Bindings is { Count: > 0 })
-            throw new InvalidOperationException("Detach cutout points before changing to a rigid primitive.");
+        }
+
+        if (PuppetPartKinds.IsStroke(kind)) part.Frame = null;
         part.Kind = kind;
+        part.Geometry = PartGeometry.FromPreset(part);
+        if (part.Geometry is ShapeDefinition2D && part.Material is { Fill: null, Outline: null })
+            part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Validate();
     }
 
     /// <summary>Edits the perimeter and remaps attachments in the same transaction. New points inherit their preceding attachment.</summary>
     public static void InsertCutoutPoint(PuppetPart part, int after)
     {
-        var points = new List<PuppetPoint>(part.Points!);
+        var points = new List<PuppetPoint>(PartGeometry.CutoutPoints(part));
         points.Insert(after + 1, PuppetPoint.Lerp(points[after], points[(after + 1) % points.Count], .5f));
         PartGeometry.CheckCutout(points);
         var bindings = (part.Bindings ?? []).Select(b => b with { Point = b.Point > after ? b.Point + 1 : b.Point }).ToList();
         if (part.Bindings?.FirstOrDefault(b => b.Point == after) is { } source) bindings.Add(source with { Point = after + 1 });
-        part.Points = points; part.Bindings = bindings.Count > 0 ? bindings : null;
+        PartGeometry.SetPolygon(part, points); part.Bindings = bindings.Count > 0 ? bindings : null;
     }
 
     public static void RemoveCutoutPoint(PuppetPart part, int index)
     {
-        var points = new List<PuppetPoint>(part.Points!); points.RemoveAt(index); PartGeometry.CheckCutout(points);
-        part.Points = points;
+        var points = new List<PuppetPoint>(PartGeometry.CutoutPoints(part)); points.RemoveAt(index); PartGeometry.CheckCutout(points);
+        PartGeometry.SetPolygon(part, points);
         part.Bindings = part.Bindings?.Where(b => b.Point != index).Select(b => b with { Point = b.Point > index ? b.Point - 1 : b.Point }).ToList();
     }
 
     public static void RemovePart(CharacterModel model, string id)
     {
         if (model.Parts.RemoveAll(p => p.Id == id) == 0) throw new InvalidOperationException($"No part '{id}'.");
+        foreach (var skin in model.Skins) foreach (var entries in skin.Attachments.Values)
+            foreach (var key in entries.Where(p => p.Value == id).Select(p => p.Key).ToList()) entries.Remove(key);
     }
 
     /// <summary>Moves a control's rest position, and with <paramref name="children"/> its whole subtree by the same amount.</summary>
     public static void MoveRest(CharacterModel model, string id, Vector3 position, bool children)
     {
+        if (Control(model, id).Transform is not null)
+        {
+            var resolved = ResolvedModel.From(model);
+            var deltaAffine = position - resolved.Rest[id];
+            var movedIds = (children ? Subtree(model.Controls, id) : [Control(model, id)]).Select(c => c.Id).ToHashSet();
+            var frames = new Dictionary<string, Matrix3x2>();
+            foreach (var control in resolved.Order)
+            {
+                var desired = resolved.Rest[control.Id] + (movedIds.Contains(control.Id) ? deltaAffine : Vector3.Zero);
+                if (control.Transform is { } local)
+                {
+                    var parent = control.Parent is null ? Matrix3x2.Identity : frames[control.Parent];
+                    if (!Matrix3x2.Invert(parent, out var inverse)) throw new InvalidOperationException("Cannot move a bone through a collapsed parent transform.");
+                    var point = Vector2.Transform(new(desired.X, desired.Y), inverse); local.X = point.X; local.Y = point.Y;
+                    frames[control.Id] = local.Matrix * parent;
+                }
+                else frames[control.Id] = resolved.RestTransforms[control.Id] with { M31 = desired.X, M32 = desired.Y };
+                control.Rest = PuppetPoint.From(desired);
+            }
+            return;
+        }
         var delta = position - Control(model, id).Rest.XYZ;
         var moved = children ? Subtree(model.Controls, id) : [Control(model, id)];
         foreach (var control in moved) control.Rest = PuppetPoint.From(control.Rest.XYZ + delta);
+    }
+
+    /// <summary>Turns a bone in the rest pose, carrying descendant origins and their rest directions.</summary>
+    public static void RotateRestBone(CharacterModel model, string id, float angle)
+    {
+        var bone = Control(model, id);
+        if (bone.Transform is { } affine)
+        {
+            var resolved = ResolvedModel.From(model);
+            var parent = bone.Parent is null ? Matrix3x2.Identity : resolved.RestTransforms[bone.Parent];
+            if (!Matrix3x2.Invert(parent, out var inverse)) throw new InvalidOperationException("Cannot rotate a bone through a collapsed parent transform.");
+            var axis = Vector2.TransformNormal(new(MathF.Cos(angle), MathF.Sin(angle)), inverse);
+            affine.Rotation = MathF.Atan2(axis.Y, axis.X) - affine.ShearX - (affine.ScaleX < 0 ? MathF.PI : 0);
+            SyncAffineRest(model);
+            return;
+        }
+        var delta = angle - bone.RestAngle;
+        var pivot = bone.Rest.XY;
+        foreach (var control in Subtree(model.Controls, id))
+        {
+            if (control != bone)
+                control.Rest = PuppetPoint.From(Rotation2D.ApplyXYAround(control.Rest.XYZ, pivot, delta));
+            control.RestAngle += delta;
+        }
+        model.Validate();
     }
 
     /// <summary>
@@ -172,6 +281,9 @@ public static class ModelAuthoring
         var moved = children ? Subtree(resolved.Base.Controls, id) : [resolved.Controls[id]];
         foreach (var control in moved)
             variant.Rest[control.Id] = PuppetPoint.From(resolved.Rest[control.Id] + delta);
+        if (!children && resolved.Controls[id].Transform is not null)
+            foreach (var child in Subtree(resolved.Base.Controls, id).Where(c => c.Id != id))
+                variant.Rest[child.Id] = PuppetPoint.From(resolved.Rest[child.Id]);
     }
 
     private static IEnumerable<ModelControl> Subtree(IReadOnlyList<ModelControl> controls, string id)
@@ -188,4 +300,14 @@ public static class ModelAuthoring
 
     private static ModelControl Control(CharacterModel model, string id) =>
         model.Controls.FirstOrDefault(c => c.Id == id) ?? throw new InvalidOperationException($"Model '{model.Id}' has no control '{id}'.");
+
+    public static void SyncAffineRest(CharacterModel model)
+    {
+        var resolved = ResolvedModel.From(model);
+        foreach (var control in model.Controls.Where(c => c.Transform is not null))
+        {
+            control.Rest = PuppetPoint.From(resolved.Rest[control.Id]);
+            var frame = resolved.RestTransforms[control.Id]; control.RestAngle = MathF.Atan2(frame.M12, frame.M11);
+        }
+    }
 }

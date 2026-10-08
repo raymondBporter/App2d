@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Timing;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -20,6 +21,21 @@ public sealed class EditorSessionTests : IDisposable
     }
 
     private static void Ok(EditorSession session, bool result) => Assert.True(result, session.Message);
+
+    [Fact]
+    public void PingPongPreviewShowsTheLoopingClipsFarEndBeforeReversing()
+    {
+        var session = Session(); session.Open("person-walk");
+        var clip = session.ClipDocument!.Asset;
+        session.Transport.EndModeOverride = PlaybackEndMode.PingPong;
+        session.Seek(0); session.TogglePlay(); session.Tick(clip.Duration);
+        Assert.Equal(clip.Duration, session.Transport.Time, 5);
+        var shown = session.Evaluate("person")!;
+        var end = PoseEvaluator.Sample(shown.Model, clip, clip.Duration);
+        TestModels.Near(end.World("chest"), shown.Pose.World("chest"));
+        session.Tick(.1f);
+        Assert.True(session.Transport.Time < clip.Duration);
+    }
 
     [Fact]
     public void ATestSnapshotPlaysUnsavedDraftsAndIgnoresLaterEdits()
