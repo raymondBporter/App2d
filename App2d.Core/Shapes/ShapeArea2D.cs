@@ -11,7 +11,7 @@ public static class ShapeArea2D
     public const int DefaultOutlineSegments = 64;
 
     /// <summary>
-    /// Counts overlap once. Circles, rectangles, triangles and convex polygons use analytic boundaries;
+    /// Counts overlap once. Circles, ellipses, rectangles, triangles and convex polygons use analytic boundaries;
     /// other shapes use inscribed polygon outlines. Disconnected regions and holes are supported.
     /// </summary>
     /// <param name="parts">At least one finite convex part in a shared coordinate space.</param>
@@ -32,6 +32,11 @@ public static class ShapeArea2D
             if (shape is Circle2D circle)
             {
                 boundaries[i] = new(circle.Center, circle.Radius);
+                continue;
+            }
+            if (shape is Ellipse2D ellipse)
+            {
+                boundaries[i] = new(ellipse.Center, ellipse.Radii);
                 continue;
             }
             if (shape is ConvexPolygon2D polygon)

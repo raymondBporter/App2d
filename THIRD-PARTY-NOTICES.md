@@ -38,6 +38,15 @@ SOFTWARE.
 file version 8.0.2025.05.10. The adaptation uses double precision, orders the ellipse axes,
 handles center/axis cases directly, and brackets the remaining monotone root.
 
+`App2d.Core/Mathematics/PolynomialRoots.cs` adapts the bounded derivative-isolation and bisection
+algorithm from [RootsPolynomial.h](https://github.com/davideberly/GeometricTools/blob/master/GTE/Mathematics/RootsPolynomial.h),
+file version 8.0.2026.08.11. This C# specialization supports degrees one through four, normalizes coefficients,
+uses fused multiply-add and reciprocal evaluation for sign tests, and merges roots within evaluation precision.
+It uses double arithmetic; it does not port the arbitrary-precision rational predicates of Eberly's newer
+`RootsGeneralPolynomial`. Ellipse union area uses a half-angle quartic and elementary boundary integrals;
+see Eberly's [Intersection of Ellipses](https://www.geometrictools.com/Documentation/IntersectionOfEllipses.pdf)
+for the general conic intersection problem.
+
 David Eberly, Geometric Tools, Redmond WA 98052
 
 Copyright (c) 1998-2026

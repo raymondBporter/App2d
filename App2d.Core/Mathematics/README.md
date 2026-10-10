@@ -10,8 +10,15 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Vector3Extensions` | `XY`, `XZ`, and `YZ` coordinate-plane projections |
 | `Rotation2D` | Rotate vectors or points about a pivot, solve a pivot from two endpoints and a turn, and interpolate an endpoint arc |
 | `Interpolation` | Progress mappings, lerp, and inverse lerp |
+| `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
 | `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
 | `Affine2D` | Editable translation, rotation, independent axis scales and shear; shared by scene objects and authored rigs |
+
+`PolynomialRoots.FindRealRoots(coefficients, minimum, maximum, roots)` accepts coefficients in ascending order
+(`c0 + c1*x + ...`), writes sorted distinct roots, and returns their count. The output span needs at least the
+polynomial degree. Bounds are inclusive; repeated roots appear once. Nonzero constants have no roots, while
+the identically zero polynomial is rejected. Coefficients and bounds must be finite. The bounded derivative
+solver uses double arithmetic, so roots that cannot be distinguished within evaluation precision may merge.
 
 ## Transforms
 

@@ -126,14 +126,134 @@ public sealed class ShapeArea2DTests
     }
 
     [Theory]
-    [InlineData("Ellipse")]
+    [InlineData(1f, 1f, 0f)]
+    [InlineData(1f, 1f, 1f)]
+    [InlineData(1f, 1f, 2f)]
+    [InlineData(1f, 1f, 3f)]
+    [InlineData(2f, 1f, .5f)]
+    [InlineData(2f, 1f, 1f)]
+    [InlineData(2f, 1f, 2f)]
+    public void EllipsePairsAgreeWithAnAffineTransformationOfTheCircleLens(float firstRadius, float secondRadius, float distance)
+    {
+        var scale = new Vector2(3, .5f);
+        IConvexShape2D[] parts = [new Ellipse2D(firstRadius * scale), new Ellipse2D(secondRadius * scale, new(distance * scale.X, 0))];
+        var expected = scale.X * scale.Y * (Math.PI * (firstRadius * firstRadius + secondRadius * secondRadius) - CircleLens(firstRadius, secondRadius, distance));
+        Assert.Equal((float)expected, ShapeArea2D.Union(parts, 3), 5);
+        Assert.Equal(ShapeArea2D.Union(parts), ShapeArea2D.Union([parts[1], parts[0]]), 5);
+        Assert.Equal(ShapeArea2D.Union(parts, 3), ShapeArea2D.Union(parts, 128));
+    }
+
+    [Theory]
+    [InlineData(2f, 1f)]
+    [InlineData(50f, .01f)]
+    [InlineData(1.00001f, 1f)]
+    public void CrossingEllipsesWithFourIntersectionsKeepEveryExposedArc(float a, float b)
+    {
+        var first = new Ellipse2D(new(a, b));
+        var second = new Ellipse2D(new(b, a));
+        var expected = (float)(4d * a * b * Math.Atan2(a, b));
+        Assert.Equal(expected, ShapeArea2D.Union([first, second]), 5);
+        Assert.Equal(expected, ShapeArea2D.Union([second, first]), 5);
+    }
+
+    [Fact]
+    public void EllipseAndPolygonUnionsUseExactSegmentIntersections()
+    {
+        var ellipse = new Ellipse2D(new(2, 1));
+        Assert.Equal(8 + MathF.PI, ShapeArea2D.Union([ellipse, new Rectangle2D(new(0, -1), new(4, 1))]), 5);
+        Assert.Equal(4 + 1.5f * MathF.PI, ShapeArea2D.Union([ellipse, new Triangle2D(new(0, 0), new(4, 0), new(0, 2))]), 5);
+        Assert.Equal(2 * MathF.PI, ShapeArea2D.Union([ellipse, new Rectangle2D(new(-.5f, -.5f), new(.5f, .5f))]), 5);
+        Assert.Equal(32, ShapeArea2D.Union([ellipse, new Rectangle2D(new(-4, -2), new(4, 2))]));
+        Assert.Equal(8 + 2 * MathF.PI, ShapeArea2D.Union([ellipse, new Rectangle2D(new(2, -1), new(6, 1))]), 5);
+        // These polygon edges' infinite lines reach the ellipse; their finite segments do not.
+        var separate = new Rectangle2D(new(1.8f, .8f), new(3, 2));
+        Assert.Equal(ellipse.Area + separate.Area, ShapeArea2D.Union([ellipse, separate]), 5);
+    }
+
+    [Theory]
+    [InlineData(1f)]
+    [InlineData(1.9f)]
+    public void EllipseTriplesPreserveTripleCoverageAndHoles(float side)
+    {
+        var radii = new Vector2(2, .5f);
+        IConvexShape2D[] parts =
+        [
+            new Ellipse2D(radii), new Ellipse2D(radii, new(2 * side, 0)),
+            new Ellipse2D(radii, new(side, side * MathF.Sqrt(3) / 4))
+        ];
+        var expected = side == 1 ? 1.5 * Math.PI + Math.Sqrt(3) : 3 * Math.PI - 3 * CircleLens(1, 1, side);
+        Assert.Equal((float)expected, ShapeArea2D.Union(parts), 5);
+        Assert.Equal(ShapeArea2D.Union(parts), ShapeArea2D.Union([parts[2], parts[0], parts[1]]), 5);
+    }
+
+    [Fact]
+    public void EllipseContainmentTangencyAndCoincidentBoundariesCountOnce()
+    {
+        var ellipse = new Ellipse2D(new(2, 1));
+        Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, new Ellipse2D(new(2, 1)), new Ellipse2D(new(1, .5f)), new Circle2D(.25f)]), 5);
+        Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, new Ellipse2D(new(1, .5f), new(1, 0))]), 5);
+        Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, new Circle2D(1)]), 5);
+        Assert.Equal(MathF.PI, ShapeArea2D.Union([new Circle2D(1), new Ellipse2D(Vector2.One)]), 5);
+        Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, new Ellipse2D(new(2, 1), new(1e-25f, 0))]), 5);
+        Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, new Ellipse2D(new(2, 1), new(0, 1e-25f))]), 5);
+        Assert.Equal(ellipse.Area, ShapeArea2D.Union([ellipse, new Ellipse2D(new(2, 1), new(1e-25f, 1e-25f))]), 5);
+        Assert.Equal(2 * ellipse.Area, ShapeArea2D.Union([ellipse, new Ellipse2D(new(2, 1), new(0, 2))]), 5);
+        var translated = new Ellipse2D(new(2, 1), new(1e20f, -1e20f));
+        Assert.Equal(ellipse.Area, ShapeArea2D.Union([translated, translated]), 5);
+    }
+
+    [Fact]
+    public void EllipseUnionIsInvariantUnderTranslationAndUniformScaling()
+    {
+        var offset = new Vector2(1 << 20, -(1 << 20));
+        var expected = ShapeArea2D.Union([new Ellipse2D(new(2, 1)), new Circle2D(1, new(1, 0)), new Rectangle2D(new(0, -1), new(2, 1))]);
+        Assert.Equal(expected, ShapeArea2D.Union([new Ellipse2D(new(2, 1), offset), new Circle2D(1, offset + Vector2.UnitX), new Rectangle2D(offset + new Vector2(0, -1), offset + new Vector2(2, 1))]));
+        foreach (var scale in new[] { 1e-8f, 1e8f })
+        {
+            var actual = ShapeArea2D.Union([new Ellipse2D(scale * new Vector2(2, 1)), new Circle2D(scale, new(scale, 0)), new Rectangle2D(scale * new Vector2(0, -1), scale * new Vector2(2, 1))]);
+            Assert.InRange(MathF.Abs(actual / scale / scale - expected), 0, 2e-6f);
+        }
+    }
+
+    [Fact]
+    public void MixedEllipseUnionsAgreeWithIndependentCrossSectionIntegration()
+    {
+        var random = new Random(77613);
+        // Includes four circle/ellipse intersections, very thin ellipses, and multiple overlaps.
+        Check([new Ellipse2D(new(2, .5f)), new Circle2D(1)]);
+        Check([new Ellipse2D(new(10, .02f)), new Circle2D(.25f, new(3, 0))]);
+        for (var sample = 0; sample < 32; sample++)
+        {
+            IConvexShape2D[] parts = new IConvexShape2D[6];
+            for (var i = 0; i < parts.Length; i++)
+            {
+                var center = new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
+                parts[i] = (i % 3) switch
+                {
+                    0 => new Ellipse2D(new(.1f + (float)random.NextDouble() * 2, .1f + (float)random.NextDouble() * 2), center),
+                    1 => new Circle2D(.3f + (float)random.NextDouble(), center),
+                    _ => Rectangle2D.FromSize(new Vector2(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble()), center)
+                };
+            }
+            Check(parts);
+        }
+
+        static void Check(IConvexShape2D[] parts)
+        {
+            var expected = CrossSectionArea(parts);
+            var actual = ShapeArea2D.Union(parts, 3);
+            Assert.InRange(Math.Abs(actual - expected), 0d, .0002d);
+            Assert.Equal(actual, ShapeArea2D.Union(parts.Reverse().ToArray(), 128), 5);
+        }
+    }
+
+    [Theory]
     [InlineData("Capsule")]
     [InlineData("RoundedRectangle")]
     public void PolygonizedCurvesConvergeAsTheSampleCountIncreases(string kind)
     {
         IConvexShape2D shape = kind switch
         {
-            "Ellipse" => new Ellipse2D(new(2, 1)),
             "Capsule" => new Capsule2D(new(-1, 0), new(1, 0), 1),
             _ => new RoundedRectangle2D(new(-2, -1), new(2, 1), .5f)
         };
@@ -217,6 +337,14 @@ public sealed class ShapeArea2DTests
                     if (squared <= 0d) continue;
                     var half = Math.Sqrt(squared);
                     intervals.Add((circle.Center.Y - half, circle.Center.Y + half));
+                }
+                else if (part is Ellipse2D ellipse)
+                {
+                    var normalizedX = (x - ellipse.Center.X) / ellipse.Radii.X;
+                    var squared = 1d - normalizedX * normalizedX;
+                    if (squared <= 0d) continue;
+                    var half = ellipse.Radii.Y * Math.Sqrt(squared);
+                    intervals.Add((ellipse.Center.Y - half, ellipse.Center.Y + half));
                 }
                 else if (part is Rectangle2D rectangle && x > rectangle.Min.X && x < rectangle.Max.X)
                     intervals.Add((rectangle.Min.Y, rectangle.Max.Y));

@@ -9,7 +9,7 @@ public static partial class Area2D
     // uncovered pieces counts every point once, including when several parts overlap or enclose a hole.
     internal static float Union(ReadOnlySpan<UnionPart> parts)
     {
-        var origin = parts[0].IsCircle ? parts[0].Center : parts[0].Vertices[0];
+        var origin = parts[0].IsCurve ? parts[0].Center : parts[0].Vertices[0];
         foreach (var part in parts) part.Shift(origin);
         var covered = new List<Interval>();
         var angles = new List<double>();
@@ -18,14 +18,16 @@ public static partial class Area2D
         for (var i = 0; i < parts.Length; i++)
         {
             var part = parts[i];
-            if (part.IsCircle)
+            if (part.IsCurve)
             {
                 covered.Clear();
                 for (var j = 0; j < parts.Length; j++)
                 {
                     if (j == i || !part.Overlaps(parts[j])) continue;
-                    if (parts[j].IsCircle) CoverCircle(part, parts[j], j < i, covered);
-                    else CoverCircleWithPolygon(part, parts[j], covered, angles);
+                    var other = parts[j];
+                    if (part.IsCircle && other.IsCircle) CoverCircle(part, other, j < i, covered);
+                    else if (other.IsCurve) CoverCurveWithCurve(part, other, j < i, covered, angles);
+                    else CoverCurveWithPolygon(part, other, covered, angles);
                 }
                 AddArea(IntegrateExposed(covered, Math.Tau, (from, to) => ArcArea(part, from, to)));
             }
@@ -40,7 +42,7 @@ public static partial class Area2D
                     for (var j = 0; j < parts.Length; j++)
                     {
                         if (j == i || !part.Overlaps(parts[j])) continue;
-                        if (parts[j].IsCircle) CoverSegmentWithCircle(start, direction, parts[j], covered);
+                        if (parts[j].IsCurve) CoverSegmentWithCurve(start, direction, parts[j], covered);
                         else CoverSegmentWithPolygon(start, direction, parts[j], j < i, covered);
                     }
                     AddArea(.5d * start.Cross(direction) * ExposedLength(covered, 1d));
@@ -81,7 +83,43 @@ public static partial class Area2D
         if (end > Math.Tau) covered.Add(new(0d, end - Math.Tau));
     }
 
-    private static void CoverCircleWithPolygon(UnionPart circle, UnionPart polygon, List<Interval> covered, List<double> angles)
+    private static void CoverCurveWithCurve(UnionPart curve, UnionPart other, bool preferOther, List<Interval> covered, List<double> angles)
+    {
+        var offset = other.Normalize(curve.Center);
+        const double coincidenceTolerance = 8d * 2.2204460492503131e-16;
+        // Treat a displacement below conic evaluation precision as a coincident boundary.
+        if (curve.Radii == other.Radii && Math.Abs(offset.X) <= coincidenceTolerance && Math.Abs(offset.Y) <= coincidenceTolerance)
+        {
+            if (preferOther) covered.Add(new(0d, Math.Tau));
+            return;
+        }
+        angles.Clear();
+        angles.Add(0d);
+        angles.Add(Math.Tau);
+        var sx = curve.Radii.X / other.Radii.X;
+        var sy = curve.Radii.Y / other.Radii.Y;
+        Span<double> coefficients = stackalloc double[5];
+        Span<double> roots = stackalloc double[4];
+        for (var chart = 0; chart < 2; chart++)
+        {
+            // x = cx + rx*cos(theta), y = cy + ry*sin(theta). Substituting
+            // t = tan(theta/2) in the other ellipse's implicit equation gives a quartic.
+            // Two charts, each with t in [-1,1], cover the perimeter without an infinite root at PI.
+            var sign = chart == 0 ? 1d : -1d;
+            var x0 = offset.X + sign * sx;
+            var x2 = offset.X - sign * sx;
+            coefficients[0] = x0 * x0 + offset.Y * offset.Y - 1d;
+            coefficients[1] = 4d * offset.Y * sign * sy;
+            coefficients[2] = 2d * x0 * x2 + 2d * offset.Y * offset.Y + 4d * sy * sy - 2d;
+            coefficients[3] = coefficients[1];
+            coefficients[4] = x2 * x2 + offset.Y * offset.Y - 1d;
+            var count = PolynomialRoots.FindRealRoots(coefficients, -1d, 1d, roots);
+            for (var i = 0; i < count; i++) angles.Add(PositiveAngle(chart * Math.PI + 2d * Math.Atan(roots[i])));
+        }
+        CoverArcsInside(curve, other, covered, angles);
+    }
+
+    private static void CoverCurveWithPolygon(UnionPart curve, UnionPart polygon, List<Interval> covered, List<double> angles)
     {
         angles.Clear();
         angles.Add(0d);
@@ -90,42 +128,47 @@ public static partial class Area2D
         {
             var start = polygon.Vertices[i];
             var direction = polygon.Vertices[(i + 1) % polygon.Vertices.Length] - start;
-            if (!CircleRoots(start, direction, circle, out var low, out var high)) continue;
+            if (!CurveRoots(start, direction, curve, out var low, out var high)) continue;
             AddAngle(low);
             AddAngle(high);
 
             void AddAngle(double parameter)
             {
                 if (parameter < 0d || parameter > 1d) return;
-                var point = start + direction * parameter - circle.Center;
+                var point = curve.Normalize(start + direction * parameter);
                 angles.Add(PositiveAngle(Math.Atan2(point.Y, point.X)));
             }
         }
+        CoverArcsInside(curve, polygon, covered, angles);
+    }
+
+    private static void CoverArcsInside(UnionPart curve, UnionPart other, List<Interval> covered, List<double> angles)
+    {
         angles.Sort();
         for (var i = 1; i < angles.Count; i++)
         {
             var low = angles[i - 1];
             var high = angles[i];
             if (high <= low) continue;
-            var (sin, cos) = Math.SinCos((low + high) * .5d);
-            if (polygon.ContainsInterior(circle.Center + new Point(cos, sin) * circle.Radius)) covered.Add(new(low, high));
+            if (other.ContainsInterior(curve.PointAt((low + high) * .5d))) covered.Add(new(low, high));
         }
     }
 
-    private static void CoverSegmentWithCircle(Point start, Point direction, UnionPart circle, List<Interval> covered)
+    private static void CoverSegmentWithCurve(Point start, Point direction, UnionPart curve, List<Interval> covered)
     {
-        if (CircleRoots(start, direction, circle, out var low, out var high))
+        if (CurveRoots(start, direction, curve, out var low, out var high))
             AddInterval(covered, Math.Max(0d, low), Math.Min(1d, high));
     }
 
-    private static bool CircleRoots(Point start, Point direction, UnionPart circle, out double low, out double high)
+    private static bool CurveRoots(Point start, Point direction, UnionPart curve, out double low, out double high)
     {
         low = high = 0d;
+        var relative = curve.Normalize(start);
+        direction = new(direction.X / curve.Radii.X, direction.Y / curve.Radii.Y);
         var lengthSquared = direction.Dot(direction);
         if (lengthSquared == 0d) return false;
-        var relative = start - circle.Center;
         var cross = relative.Cross(direction);
-        var remaining = circle.Radius * circle.Radius - cross * cross / lengthSquared;
+        var remaining = 1d - cross * cross / lengthSquared;
         if (remaining < 0d) return false;
         var midpoint = -relative.Dot(direction) / lengthSquared;
         var halfWidth = Math.Sqrt(remaining / lengthSquared);
@@ -181,12 +224,13 @@ public static partial class Area2D
         return result;
     }
 
-    private static double ArcArea(UnionPart circle, double from, double to)
+    private static double ArcArea(UnionPart curve, double from, double to)
     {
         var (sinFrom, cosFrom) = EndpointSinCos(from);
         var (sinTo, cosTo) = EndpointSinCos(to);
-        return .5d * (circle.Radius * circle.Radius * (to - from)
-            + circle.Radius * (circle.Center.X * (sinTo - sinFrom) + circle.Center.Y * (cosFrom - cosTo)));
+        return .5d * (curve.Radii.X * curve.Radii.Y * (to - from)
+            + curve.Radii.Y * curve.Center.X * (sinTo - sinFrom)
+            + curve.Radii.X * curve.Center.Y * (cosFrom - cosTo));
     }
 
     private static (double Sin, double Cos) EndpointSinCos(double angle) =>
@@ -213,21 +257,25 @@ public static partial class Area2D
     internal sealed class UnionPart
     {
         internal Point Center { get; private set; }
-        internal double Radius { get; }
+        internal Point Radii { get; }
+        internal double Radius => Radii.X;
         internal Point[] Vertices { get; }
-        internal bool IsCircle => Radius > 0d;
+        internal bool IsCurve => Radii.X > 0d;
+        internal bool IsCircle => IsCurve && Radii.X == Radii.Y;
         private Point _min;
         private Point _max;
         private readonly bool _hasArea;
 
-        internal UnionPart(Vector2 center, float radius)
+        internal UnionPart(Vector2 center, float radius) : this(center, new Vector2(radius)) { }
+
+        internal UnionPart(Vector2 center, Vector2 radii)
         {
             Center = new(center);
-            Radius = radius;
+            Radii = new(radii);
             Vertices = [];
             _hasArea = true;
-            _min = Center - new Point(radius, radius);
-            _max = Center + new Point(radius, radius);
+            _min = Center - Radii;
+            _max = Center + Radii;
         }
 
         internal UnionPart(ReadOnlySpan<Vector2> vertices)
@@ -251,8 +299,16 @@ public static partial class Area2D
         internal void Shift(Point origin)
         {
             Center -= origin;
-            _min -= origin;
-            _max -= origin;
+            if (IsCurve)
+            {
+                _min = Center - Radii;
+                _max = Center + Radii;
+            }
+            else
+            {
+                _min -= origin;
+                _max -= origin;
+            }
             for (var i = 0; i < Vertices.Length; i++) Vertices[i] -= origin;
         }
 
@@ -263,12 +319,25 @@ public static partial class Area2D
         internal bool ContainsInterior(Point point)
         {
             if (!_hasArea) return false;
+            if (IsCurve)
+            {
+                var normalized = Normalize(point);
+                return normalized.Dot(normalized) < 1d;
+            }
             for (var i = 0; i < Vertices.Length; i++)
             {
                 var edge = Vertices[(i + 1) % Vertices.Length] - Vertices[i];
                 if (edge != default && edge.Cross(point - Vertices[i]) <= 0d) return false;
             }
             return true;
+        }
+
+        internal Point Normalize(Point point) => new((point.X - Center.X) / Radii.X, (point.Y - Center.Y) / Radii.Y);
+
+        internal Point PointAt(double angle)
+        {
+            var (sin, cos) = EndpointSinCos(angle);
+            return Center + new Point(Radii.X * cos, Radii.Y * sin);
         }
     }
 }

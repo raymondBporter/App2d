@@ -17,7 +17,7 @@ public sealed class CompositeShape2D : IShape2D
     /// <summary>Creates a composite and copies its part list.</summary>
     /// <param name="parts">At least one convex part in this shape's local space.</param>
     /// <param name="includeOverlap">True sums part areas; false counts overlapping regions once.</param>
-    /// <param name="areaOutlineSegments">Samples for polygonized curves when overlap is counted once. Circles stay analytic.</param>
+    /// <param name="areaOutlineSegments">Samples for polygonized curves when overlap is counted once. Circles and ellipses stay analytic.</param>
     public CompositeShape2D(IEnumerable<IConvexShape2D> parts, bool includeOverlap = true, int areaOutlineSegments = ShapeArea2D.DefaultOutlineSegments)
     {
         _parts = [.. ArgGuard.RequireNotNull(parts)];
@@ -49,7 +49,7 @@ public sealed class CompositeShape2D : IShape2D
 
     /// <summary>
     /// Cached at construction. With <see cref="IncludeOverlap"/>, this is the sum of part areas and an upper bound.
-    /// Otherwise it is union area: analytic for circles and polygons, approximate for polygonized curves.
+    /// Otherwise it is union area: analytic for circles, ellipses and polygons, approximate for polygonized curves.
     /// </summary>
     public float Area { get; }
 
