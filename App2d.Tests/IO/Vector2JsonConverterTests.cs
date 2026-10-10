@@ -11,20 +11,32 @@ namespace App2d.Tests.IO;
 
 public sealed class Vector2JsonConverterTests
 {
-    public static TheoryData<JsonSerializerOptions> AuthoringOptions =>
+    public static TheoryData<string> AuthoringOptions =>
     [
-        GeometryDefinition2D.JsonOptions,
-        ShapeDefinition2D.JsonOptions,
-        CurveDefinition2D.JsonOptions,
-        AuthoredJson.Options,
-        AuthoredJson.Tolerant,
-        PuppetDefinition.JsonOptions
+        nameof(GeometryDefinition2D),
+        nameof(ShapeDefinition2D),
+        nameof(CurveDefinition2D),
+        nameof(AuthoredJson.Options),
+        nameof(AuthoredJson.Tolerant),
+        nameof(PuppetDefinition)
     ];
+
+    private static JsonSerializerOptions GetOptions(string optionsName) => optionsName switch
+    {
+        nameof(GeometryDefinition2D) => GeometryDefinition2D.JsonOptions,
+        nameof(ShapeDefinition2D) => ShapeDefinition2D.JsonOptions,
+        nameof(CurveDefinition2D) => CurveDefinition2D.JsonOptions,
+        nameof(AuthoredJson.Options) => AuthoredJson.Options,
+        nameof(AuthoredJson.Tolerant) => AuthoredJson.Tolerant,
+        nameof(PuppetDefinition) => PuppetDefinition.JsonOptions,
+        _ => throw new ArgumentOutOfRangeException(nameof(optionsName), optionsName, null)
+    };
 
     [Theory]
     [MemberData(nameof(AuthoringOptions))]
-    public void VectorsAndVectorListsKeepTheExistingCoordinateFormat(JsonSerializerOptions options)
+    public void VectorsAndVectorListsKeepTheExistingCoordinateFormat(string optionsName)
     {
+        var options = GetOptions(optionsName);
         var vectors = new List<Vector2> { new(1.25f, -2.5f), Vector2.Zero };
         var json = JsonSerializer.Serialize(vectors, options);
         using var document = JsonDocument.Parse(json);

@@ -7,13 +7,6 @@ namespace App2d.Core.Collision.Contacts;
 
 public static partial class ShapeCollision2D
 {
-    private static CollisionResult HalfSpaceAgainst(HalfSpace2D halfSpace, Similarity2D halfSpacePose, IShape2D other, Similarity2D otherPose) => other switch
-    {
-        Circle2D circle => CircleVsHalfSpace(circle, otherPose, halfSpace, halfSpacePose).Flipped(),
-        IConvexShape2D convex => ConvexVsHalfSpace(convex, otherPose, halfSpace, halfSpacePose).Flipped(),
-        _ => CollisionResult.None
-    };
-
     private static CollisionResult ConvexVsHalfSpace(IConvexShape2D convex, Similarity2D convexPose, HalfSpace2D halfSpace, Similarity2D halfSpacePose)
     {
         if (!TryGetConvexHalfSpacePenetration(convex, convexPose, halfSpace, halfSpacePose, out var normal, out var penetration, out var deepestPoint)) return CollisionResult.None;

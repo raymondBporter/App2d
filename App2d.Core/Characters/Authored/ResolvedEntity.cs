@@ -285,7 +285,7 @@ public static class EntityCollision
     {
         var frame = Anchor(entity, pose, hit.Window);
         var axis = frame.Axis.LengthSquared() > 1e-8f ? Vector2.Normalize(frame.Axis) : new Vector2(pose.Facing, 0);
-        var mirror = CrossProduct2D.Of(axis, frame.Across) < 0d;
+        var mirror = axis.CrossDouble(frame.Across) < 0d;
         return new(hit.Window.Id, hit.Shape, Similarity2D.FromAxis(frame.At(hit.Window.Along, 0).XY, axis, mirror));
     }
 }

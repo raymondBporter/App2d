@@ -7,24 +7,40 @@ namespace App2d.Tests.Geometry;
 
 public sealed class ShapeDefinition2DTests
 {
-    public static TheoryData<IShape2D, string> BuiltInShapes => new()
+    public static TheoryData<string, string> BuiltInShapes => new()
     {
-        { new Circle2D(1.5f, new(1, -2)), ShapeKinds2D.Circle },
-        { new Ellipse2D(new(2, 1), new(-1, .5f)), ShapeKinds2D.Ellipse },
-        { new Capsule2D(new(-1, 0), new(1, .5f), .3f), ShapeKinds2D.Capsule },
-        { new Rectangle2D(new(-1, -2), new(3, 1)), ShapeKinds2D.Rectangle },
-        { new RoundedRectangle2D(new(-2, -1), new(2, 1), .4f), ShapeKinds2D.RoundedRectangle },
-        { new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)), ShapeKinds2D.Rectangle },
-        { new Triangle2D(new(0, 0), new(2, 0), new(1, 3)), ShapeKinds2D.Triangle },
-        { new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]), ShapeKinds2D.ConvexPolygon },
-        { new HalfSpace2D(new(1, 1), 2), ShapeKinds2D.HalfSpace },
-        { new CompositeShape2D([new Circle2D(1, new(-3, 0)), new Rectangle2D(new(1, -1), new(4, 1))]), ShapeKinds2D.Composite }
+        { nameof(Circle2D), ShapeKinds2D.Circle },
+        { nameof(Ellipse2D), ShapeKinds2D.Ellipse },
+        { nameof(Capsule2D), ShapeKinds2D.Capsule },
+        { nameof(Rectangle2D), ShapeKinds2D.Rectangle },
+        { nameof(RoundedRectangle2D), ShapeKinds2D.RoundedRectangle },
+        { nameof(AxisAlignedRectangle2D), ShapeKinds2D.Rectangle },
+        { nameof(Triangle2D), ShapeKinds2D.Triangle },
+        { nameof(ConvexPolygon2D), ShapeKinds2D.ConvexPolygon },
+        { nameof(HalfSpace2D), ShapeKinds2D.HalfSpace },
+        { nameof(CompositeShape2D), ShapeKinds2D.Composite }
+    };
+
+    private static IShape2D CreateShape(string shapeName) => shapeName switch
+    {
+        nameof(Circle2D) => new Circle2D(1.5f, new(1, -2)),
+        nameof(Ellipse2D) => new Ellipse2D(new(2, 1), new(-1, .5f)),
+        nameof(Capsule2D) => new Capsule2D(new(-1, 0), new(1, .5f), .3f),
+        nameof(Rectangle2D) => new Rectangle2D(new(-1, -2), new(3, 1)),
+        nameof(RoundedRectangle2D) => new RoundedRectangle2D(new(-2, -1), new(2, 1), .4f),
+        nameof(AxisAlignedRectangle2D) => new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)),
+        nameof(Triangle2D) => new Triangle2D(new(0, 0), new(2, 0), new(1, 3)),
+        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
+        nameof(HalfSpace2D) => new HalfSpace2D(new(1, 1), 2),
+        nameof(CompositeShape2D) => new CompositeShape2D([new Circle2D(1, new(-3, 0)), new Rectangle2D(new(1, -1), new(4, 1))]),
+        _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
     };
 
     [Theory]
     [MemberData(nameof(BuiltInShapes))]
-    public void TaggedDefinitionsRoundTripIntoEquivalentRuntimeShapes(IShape2D original, string kind)
+    public void TaggedDefinitionsRoundTripIntoEquivalentRuntimeShapes(string shapeName, string kind)
     {
+        var original = CreateShape(shapeName);
         var json = ShapeDefinition2D.FromShape(original).ToJson();
         using var document = JsonDocument.Parse(json);
         Assert.Equal(kind, original.Kind);

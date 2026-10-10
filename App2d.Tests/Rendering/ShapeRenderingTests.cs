@@ -11,24 +11,37 @@ namespace App2d.Tests.Rendering;
 [Collection("Graphics")]
 public sealed class ShapeRenderingTests
 {
-    public static TheoryData<IShape2D> FiniteShapes =>
+    public static TheoryData<string> FiniteShapes =>
     [
-        new Rectangle2D(new(-16, -12), new(16, 12)),
-        new Circle2D(16),
-        new Ellipse2D(new(20, 12)),
-        new Capsule2D(new(-10, 0), new(10, 0), 8),
-        new Triangle2D(new(-16, -14), new(16, -14), new(0, 18)),
-        new ConvexPolygon2D([new(-15, -12), new(15, -12), new(18, 10), new(-18, 10)]),
-        new CompositeShape2D([
+        nameof(Rectangle2D),
+        nameof(Circle2D),
+        nameof(Ellipse2D),
+        nameof(Capsule2D),
+        nameof(Triangle2D),
+        nameof(ConvexPolygon2D),
+        nameof(CompositeShape2D),
+    ];
+
+    private static IShape2D CreateShape(string shapeName) => shapeName switch
+    {
+        nameof(Rectangle2D) => new Rectangle2D(new(-16, -12), new(16, 12)),
+        nameof(Circle2D) => new Circle2D(16),
+        nameof(Ellipse2D) => new Ellipse2D(new(20, 12)),
+        nameof(Capsule2D) => new Capsule2D(new(-10, 0), new(10, 0), 8),
+        nameof(Triangle2D) => new Triangle2D(new(-16, -14), new(16, -14), new(0, 18)),
+        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(-15, -12), new(15, -12), new(18, 10), new(-18, 10)]),
+        nameof(CompositeShape2D) => new CompositeShape2D([
             new Rectangle2D(new(-16, -12), new(5, 12)),
             new Rectangle2D(new(-5, -12), new(16, 12)),
         ]),
-    ];
+        _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
+    };
 
     [Theory]
     [MemberData(nameof(FiniteShapes))]
-    public void DirectShapesCanBeFilledAndOutlined(IShape2D shape)
+    public void DirectShapesCanBeFilledAndOutlined(string shapeName)
     {
+        var shape = CreateShape(shapeName);
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);

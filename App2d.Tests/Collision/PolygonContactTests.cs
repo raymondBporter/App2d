@@ -17,22 +17,36 @@ public sealed class PolygonContactTests
 
     private static ConvexPolygon2D Diamond(float size) => new([new(0, -size), new(size, 0), new(0, size), new(-size, 0)]);
 
-    public static TheoryData<IShape2D> Partners =>
+    public static TheoryData<string> Partners =>
     [
-        Diamond(1),
-        Rectangle2D.FromSize(new Vector2(2, 2)),
-        new AxisAlignedRectangle2D(new(-1), new(1)),
-        new Triangle2D(new(-1, -1), new(1, -1), new(0, 1)),
-        new Capsule2D(new(-.5f, 0), new(.5f, 0), .5f),
-        new Circle2D(1),
-        new Ellipse2D(new(1.2f, .8f)),
-        new HalfSpace2D(-Vector2.UnitX, 1),
+        nameof(ConvexPolygon2D),
+        nameof(Rectangle2D),
+        nameof(AxisAlignedRectangle2D),
+        nameof(Triangle2D),
+        nameof(Capsule2D),
+        nameof(Circle2D),
+        nameof(Ellipse2D),
+        nameof(HalfSpace2D),
     ];
+
+    private static IShape2D CreatePartner(string shapeName) => shapeName switch
+    {
+        nameof(ConvexPolygon2D) => Diamond(1),
+        nameof(Rectangle2D) => Rectangle2D.FromSize(new Vector2(2, 2)),
+        nameof(AxisAlignedRectangle2D) => new AxisAlignedRectangle2D(new(-1), new(1)),
+        nameof(Triangle2D) => new Triangle2D(new(-1, -1), new(1, -1), new(0, 1)),
+        nameof(Capsule2D) => new Capsule2D(new(-.5f, 0), new(.5f, 0), .5f),
+        nameof(Circle2D) => new Circle2D(1),
+        nameof(Ellipse2D) => new Ellipse2D(new(1.2f, .8f)),
+        nameof(HalfSpace2D) => new HalfSpace2D(-Vector2.UnitX, 1),
+        _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
+    };
 
     [Theory]
     [MemberData(nameof(Partners))]
-    public void ConvexPolygonCollidesWithEveryShapeInEitherOrder(IShape2D partnerShape)
+    public void ConvexPolygonCollidesWithEveryShapeInEitherOrder(string shapeName)
     {
+        var partnerShape = CreatePartner(shapeName);
         var polygon = At(Diamond(1.5f), Vector2.Zero, .3f);
         var partner = At(partnerShape, new(1.2f, .1f));
         Assert.True(ShapeCollision2D.TryGetContact(polygon, partner, out var forward), partnerShape.GetType().Name);

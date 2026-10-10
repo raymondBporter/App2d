@@ -39,7 +39,7 @@ public static class WorldShape2D
 
     /// <summary>The number of vertices <see cref="WritePerimeter"/> produces for a shape.</summary>
     /// <param name="shape">Any shape.</param>
-    /// <returns>4 for rectangles, 3 for triangles, the vertex count for convex polygons, <see cref="Ellipse2D.CollisionSegments"/> for ellipses, and 0 for shapes with no polygonal perimeter.</returns>
+    /// <returns>The perimeter vertex count, using drawing samples for round boundaries.</returns>
     public static int PerimeterVertexCount(IShape2D shape) => shape switch
     {
         Rectangle2D => 4,
@@ -47,7 +47,7 @@ public static class WorldShape2D
         Triangle2D => 3,
         ConvexPolygon2D polygon => polygon.Vertices.Length,
         SimplePolygon2D polygon => polygon.Vertices.Length,
-        Ellipse2D => Ellipse2D.CollisionSegments,
+        Ellipse2D => Ellipse2D.DefaultOutlineSegments,
         _ => 0
     };
 
@@ -65,7 +65,7 @@ public static class WorldShape2D
             case Triangle2D triangle: triangle.WriteVertices(vertices); return 3;
             case ConvexPolygon2D polygon: polygon.Vertices.CopyTo(vertices); return polygon.Vertices.Length;
             case SimplePolygon2D polygon: polygon.Vertices.CopyTo(vertices); return polygon.Vertices.Length;
-            case Ellipse2D ellipse: return ellipse.WriteVertices(vertices[..Ellipse2D.CollisionSegments]);
+            case Ellipse2D ellipse: return ellipse.WriteVertices(vertices[..Ellipse2D.DefaultOutlineSegments]);
             default: return 0;
         }
     }
@@ -82,14 +82,14 @@ public static class WorldShape2D
         return count;
     }
 
-    /// <summary>The number of vertices <see cref="WriteWorldConvexCore"/> produces. Ellipses use an approximate polygon; other supported cores are exact.</summary>
+    /// <summary>The number of vertices <see cref="WriteWorldConvexCore"/> produces. Only exact polygonal cores are supported.</summary>
     /// <param name="shape">Any shape.</param>
     /// <returns>The core vertex count, or 0 for shapes without a convex core.</returns>
-    public static int ConvexCoreVertexCount(IShape2D shape) => shape is Ellipse2D ? Ellipse2D.CollisionSegments : shape.GetVertCount();
+    public static int ConvexCoreVertexCount(IShape2D shape) => shape.GetVertCount();
 
     /// <summary>
     /// Writes the world-space convex core of a shape: a point plus radius for circles, a segment plus radius for capsules,
-    /// and the perimeter with zero radius for polygonal shapes. Ellipses use a sampled approximation. This is the form
+    /// and the perimeter with zero radius for polygonal shapes. Ellipses have no polygonal core and return zero. This is the form
     /// <see cref="Distance2D.SignedDistanceBetweenConvexPolygons"/> takes; <see cref="ShapeVertices2D.GetVerts"/> exposes only exact local cores.
     /// </summary>
     /// <param name="shape">Any shape.</param>
@@ -102,15 +102,7 @@ public static class WorldShape2D
         var count = ConvexCoreVertexCount(shape);
         radius = 0f;
         if (count == 0) return 0;
-        if (shape is Ellipse2D ellipse)
-        {
-            ArgGuard.ThrowIfTooShort<Vector2>(vertices, count);
-            ellipse.WriteVertices(vertices[..count]);
-        }
-        else
-        {
-            shape.GetVerts(vertices, out radius);
-        }
+        shape.GetVerts(vertices, out radius);
 
         for (var i = 0; i < count; i++) vertices[i] = pose.TransformPoint(vertices[i]);
         radius *= pose.Scale;

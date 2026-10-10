@@ -63,7 +63,7 @@ public static class Containment2D
         var winding = 0;
         for (var i = 0; i < vertices.Length; i++)
         {
-            var cross = CrossProduct2D.Orientation(vertices[i], vertices[(i + 1) % vertices.Length], point);
+            var cross = vertices[i].Orientation(vertices[(i + 1) % vertices.Length], point);
             if (Math.Abs(cross) <= collinearEpsilon) continue;
             var turn = Math.Sign(cross);
             if (winding == 0) winding = turn;

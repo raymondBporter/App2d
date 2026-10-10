@@ -28,6 +28,14 @@ public static class Area2D
     /// <returns>Width times height.</returns>
     public static float Rectangle(Vector2 min, Vector2 max) => (max.X - min.X) * (max.Y - min.Y);
 
+    /// <summary>The rectangle area minus the four square corners outside its circular arcs.</summary>
+    /// <param name="min">The lower-left corner of the outer rectangle.</param>
+    /// <param name="max">The upper-right corner of the outer rectangle.</param>
+    /// <param name="radius">The corner radius, at most half the shorter side.</param>
+    /// <returns>The area enclosed by the rounded rectangle.</returns>
+    public static float RoundedRectangle(Vector2 min, Vector2 max, float radius) =>
+        Rectangle(min, max) - (4f - MathF.PI) * radius * radius;
+
     /// <summary>The unsigned area of a simple polygon given in perimeter order, in either winding.</summary>
     /// <param name="vertices">The perimeter vertices without a repeated closing vertex.</param>
     /// <returns>The enclosed area.</returns>

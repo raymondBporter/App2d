@@ -22,7 +22,7 @@ public sealed class Triangle2D : IConvexShape2D
         ArgGuard.ThrowIfNotFinite(a);
         ArgGuard.ThrowIfNotFinite(b);
         ArgGuard.ThrowIfNotFinite(c);
-        var signedAreaTwice = CrossProduct2D.Orientation(a, b, c);
+        var signedAreaTwice = a.Orientation(b, c);
         if (signedAreaTwice == 0d) throw new ArgumentException("Triangle vertices must not be collinear.", nameof(c));
 
         var area = (float)(Math.Abs(signedAreaTwice) * 0.5);
@@ -50,9 +50,9 @@ public sealed class Triangle2D : IConvexShape2D
     public bool ContainsPoint(Vector2 localPoint)
     {
         ArgGuard.ThrowIfNotFinite(localPoint);
-        var first = CrossProduct2D.Orientation(A, B, localPoint);
-        var second = CrossProduct2D.Orientation(B, C, localPoint);
-        var third = CrossProduct2D.Orientation(C, A, localPoint);
+        var first = A.Orientation(B, localPoint);
+        var second = B.Orientation(C, localPoint);
+        var third = C.Orientation(A, localPoint);
         return _counterClockwise
             ? first >= -EdgeTolerance && second >= -EdgeTolerance && third >= -EdgeTolerance
             : first <= EdgeTolerance && second <= EdgeTolerance && third <= EdgeTolerance;

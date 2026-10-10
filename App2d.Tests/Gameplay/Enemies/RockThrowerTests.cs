@@ -17,6 +17,8 @@ namespace App2d.Tests.Gameplay.Enemies;
 
 public sealed class RockThrowerTests
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { IncludeFields = true };
+
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
     private static (AuthoredEntityEnemy2D Enemy, PhysicsWorld2D Physics, Person2D Player) Create(int facing = 1)
     {
@@ -135,7 +137,7 @@ public sealed class RockThrowerTests
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
         {
             game.Session.Advance();
-            return JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.ActionId, e.ActionSeconds, e.Bolts)).ToArray(), new JsonSerializerOptions { IncludeFields = true });
+            return JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.ActionId, e.ActionSeconds, e.Bolts)).ToArray(), JsonOptions);
         })];
         Run();
         Assert.True(game.Player.Health.Current < 100);

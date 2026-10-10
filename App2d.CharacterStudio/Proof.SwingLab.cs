@@ -105,7 +105,7 @@ internal sealed partial class ProofRenders
         var stillAt = still.Markers.Single(m => m.Id == "strike").Time + 6 / (float)LabFps;
         Frame(Path.Combine(_smokePath, "sword-today.png"), still, stillAt, new(props) { [PersonLoadout.Sword] = todaySword }, null, false);
         Frame(Path.Combine(_smokePath, "sword-cartoon.png"), still, stillAt, props, null, false);
-        File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, ManifestJsonOptions));
         File.WriteAllLines(Path.Combine(_smokePath, "checks.txt"), report);
         target.Dispose();
         return false;

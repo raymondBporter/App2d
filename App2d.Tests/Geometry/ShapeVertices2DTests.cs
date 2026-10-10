@@ -6,24 +6,40 @@ namespace App2d.Tests.Geometry;
 
 public sealed class ShapeVertices2DTests
 {
-    public static TheoryData<IConvexShape2D> ExactCoreShapes =>
+    public static TheoryData<string> ExactCoreShapes =>
     [
-        new Circle2D(1.5f, new(1, 2)),
-        new Capsule2D(new(-2, 1), new(3, 2), .3f),
-        new Rectangle2D(new(-1, -2), new(3, 1)),
-        new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)),
-        new RoundedRectangle2D(new(-2, -1), new(2, 1), .5f),
-        RoundedRectangle2D.FromSize(new(2, 4), 1, new(1, 2)),
-        RoundedRectangle2D.FromSize(new(4, 2), 1, new(1, 2)),
-        RoundedRectangle2D.FromSize(new(2, 2), 1, new(1, 2)),
-        new Triangle2D(new(0, 0), new(2, 0), new(1, 3)),
-        new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)])
+        nameof(Circle2D),
+        nameof(Capsule2D),
+        nameof(Rectangle2D),
+        nameof(AxisAlignedRectangle2D),
+        nameof(RoundedRectangle2D),
+        "VerticalCapsule",
+        "HorizontalCapsule",
+        "CollapsedCircle",
+        nameof(Triangle2D),
+        nameof(ConvexPolygon2D)
     ];
+
+    private static IConvexShape2D CreateShape(string shapeName) => shapeName switch
+    {
+        nameof(Circle2D) => new Circle2D(1.5f, new(1, 2)),
+        nameof(Capsule2D) => new Capsule2D(new(-2, 1), new(3, 2), .3f),
+        nameof(Rectangle2D) => new Rectangle2D(new(-1, -2), new(3, 1)),
+        nameof(AxisAlignedRectangle2D) => new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)),
+        nameof(RoundedRectangle2D) => new RoundedRectangle2D(new(-2, -1), new(2, 1), .5f),
+        "VerticalCapsule" => RoundedRectangle2D.FromSize(new(2, 4), 1, new(1, 2)),
+        "HorizontalCapsule" => RoundedRectangle2D.FromSize(new(4, 2), 1, new(1, 2)),
+        "CollapsedCircle" => RoundedRectangle2D.FromSize(new(2, 2), 1, new(1, 2)),
+        nameof(Triangle2D) => new Triangle2D(new(0, 0), new(2, 0), new(1, 3)),
+        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
+        _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
+    };
 
     [Theory]
     [MemberData(nameof(ExactCoreShapes))]
-    public void ExpandingCoreByRadiusMatchesTheExactShapeSupportInEveryDirection(IConvexShape2D shape)
+    public void ExpandingCoreByRadiusMatchesTheExactShapeSupportInEveryDirection(string shapeName)
     {
+        var shape = CreateShape(shapeName);
         Span<Vector2> buffer = stackalloc Vector2[shape.GetVertCount()];
         var core = shape.GetVerts(buffer, out var radius);
         for (var i = 0; i < 32; i++)
@@ -39,8 +55,9 @@ public sealed class ShapeVertices2DTests
 
     [Theory]
     [MemberData(nameof(ExactCoreShapes))]
-    public void WorldAdapterTransformsTheSameCoreAndScalesItsRadius(IConvexShape2D shape)
+    public void WorldAdapterTransformsTheSameCoreAndScalesItsRadius(string shapeName)
     {
+        var shape = CreateShape(shapeName);
         Span<Vector2> localBuffer = stackalloc Vector2[shape.GetVertCount()];
         var local = shape.GetVerts(localBuffer, out var localRadius);
         var pose = Similarity2D.FromAxis(new(7, -3), new(1, 2), mirror: true, scale: 2.5f);
@@ -106,9 +123,8 @@ public sealed class ShapeVertices2DTests
         var ellipse = shapes[0];
         Span<Vector2> buffer = stackalloc Vector2[64];
         Assert.Equal(24, ellipse.GetOutlineVerts(buffer, 24).Length);
-        // Existing distance queries retain their explicit ellipse approximation.
-        Assert.Equal(Ellipse2D.CollisionSegments, WorldShape2D.ConvexCoreVertexCount(ellipse));
-        Assert.Equal(Ellipse2D.CollisionSegments, WorldShape2D.WriteWorldConvexCore(ellipse, Similarity2D.Identity, buffer, out var radius));
+        Assert.Equal(0, WorldShape2D.ConvexCoreVertexCount(ellipse));
+        Assert.Equal(0, WorldShape2D.WriteWorldConvexCore(ellipse, Similarity2D.Identity, buffer, out var radius));
         Assert.Equal(0f, radius);
         Assert.Equal(6, shapes[1].GetOutlineVerts(buffer).Length);
         Assert.Throws<NotSupportedException>(() => shapes[2].GetOutlineVerts(new Vector2[64]));

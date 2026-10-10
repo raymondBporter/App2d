@@ -67,20 +67,32 @@ public sealed class Ellipse2DTests
         Assert.InRange(ShapeDistance2D.Distance(first, second), .999f, 1.001f);
     }
 
-    public static TheoryData<IShape2D> ConvexPartners =>
+    public static TheoryData<string> ConvexPartners =>
     [
-        new Circle2D(.75f),
-        new Capsule2D(new(0, -.5f), new(0, .5f), .5f),
-        Rectangle2D.FromSize(new Vector2(1, 1)),
-        new Triangle2D(new(-.5f, -.5f), new(.5f, -.5f), new(0, .5f)),
-        new ConvexPolygon2D([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]),
-        new Ellipse2D(new(.75f, .5f))
+        nameof(Circle2D),
+        nameof(Capsule2D),
+        nameof(Rectangle2D),
+        nameof(Triangle2D),
+        nameof(ConvexPolygon2D),
+        nameof(Ellipse2D)
     ];
+
+    private static IShape2D CreatePartner(string shapeName) => shapeName switch
+    {
+        nameof(Circle2D) => new Circle2D(.75f),
+        nameof(Capsule2D) => new Capsule2D(new(0, -.5f), new(0, .5f), .5f),
+        nameof(Rectangle2D) => Rectangle2D.FromSize(new Vector2(1, 1)),
+        nameof(Triangle2D) => new Triangle2D(new(-.5f, -.5f), new(.5f, -.5f), new(0, .5f)),
+        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]),
+        nameof(Ellipse2D) => new Ellipse2D(new(.75f, .5f)),
+        _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
+    };
 
     [Theory]
     [MemberData(nameof(ConvexPartners))]
-    public void ContactWorksAgainstEveryFiniteConvexPartnerInEitherOrder(IShape2D partnerShape)
+    public void ContactWorksAgainstEveryFiniteConvexPartnerInEitherOrder(string shapeName)
     {
+        var partnerShape = CreatePartner(shapeName);
         var ellipse = new SpatialObject2D(new Ellipse2D(new(2, 1)));
         var partner = new SpatialObject2D(partnerShape);
         partner.Transform.Position = new(1.7f, 0);

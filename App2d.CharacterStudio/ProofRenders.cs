@@ -1,6 +1,7 @@
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Text.Json;
 
 namespace App2d.CharacterStudio;
 
@@ -10,6 +11,8 @@ namespace App2d.CharacterStudio;
 /// </summary>
 internal sealed partial class ProofRenders : Game
 {
+    private static readonly JsonSerializerOptions ManifestJsonOptions = new() { WriteIndented = true };
+
     public enum Mode { Motion, Entities, MoveReview, Weapons, SwingLab, Wardrobe, Quadrupeds }
 
     private readonly GraphicsDeviceManager _graphics;

@@ -6,16 +6,16 @@ namespace App2d.Core.Shapes;
 
 /// <summary>
 /// A filled axis-aligned ellipse in local space; the owning pose can rotate it in world space.
-/// Containment, support, bounds, ray casts, point distance and circle contacts are exact. Contacts and distances
-/// against polygons, capsules and other ellipses use a <see cref="CollisionSegments"/>-gon perimeter instead.
+/// Containment, support, bounds and ray casts are analytic. Point distance uses a bracketed root solve;
+/// convex contacts and pair distances use the analytic support mapping without perimeter sampling.
 /// </summary>
 public sealed class Ellipse2D : IConvexShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.Ellipse;
 
-    /// <summary>Perimeter samples used where an ellipse is polygonized for contact and distance queries.</summary>
-    public const int CollisionSegments = 64;
+    /// <summary>Default samples for callers requesting a drawable perimeter; collision queries do not use these.</summary>
+    public const int DefaultOutlineSegments = 64;
 
     /// <summary>Creates an ellipse.</summary>
     /// <param name="radii">The finite, positive half-extents along X and Y.</param>

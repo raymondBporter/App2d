@@ -181,9 +181,9 @@ public static class Intersection2D
         ArgGuard.ThrowIfNotFiniteOrZero(secondDirection);
         var dx = (double)secondOrigin.X - firstOrigin.X;
         var dy = (double)secondOrigin.Y - firstOrigin.Y;
-        var determinant = CrossProduct2D.Of(firstDirection.X, firstDirection.Y, secondDirection.X, secondDirection.Y);
-        var firstNumerator = CrossProduct2D.Of(dx, dy, secondDirection.X, secondDirection.Y);
-        var secondNumerator = CrossProduct2D.Of(dx, dy, firstDirection.X, firstDirection.Y);
+        var determinant = firstDirection.CrossDouble(secondDirection);
+        var firstNumerator = Vector2Extensions.CrossDouble(dx, dy, secondDirection.X, secondDirection.Y);
+        var secondNumerator = Vector2Extensions.CrossDouble(dx, dy, firstDirection.X, firstDirection.Y);
         if (determinant != 0)
             return (!firstIsRay || firstNumerator / determinant >= 0) && (!secondIsRay || secondNumerator / determinant >= 0);
 

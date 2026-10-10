@@ -7,21 +7,34 @@ namespace App2d.Tests.Geometry;
 
 public sealed class ShapeUtilityTests
 {
-    public static TheoryData<IConvexShape2D> Shapes =>
+    public static TheoryData<string> Shapes =>
     [
-        new Circle2D(1.5f, new(1, 2)),
-        new Ellipse2D(new(2, 1), new(-1, .5f)),
-        new Capsule2D(new(-1, 0), new(1, .5f), .3f),
-        new Rectangle2D(new(-1, -2), new(3, 1)),
-        new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)),
-        new Triangle2D(new(0, 0), new(2, 0), new(1, 3)),
-        new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
+        nameof(Circle2D),
+        nameof(Ellipse2D),
+        nameof(Capsule2D),
+        nameof(Rectangle2D),
+        nameof(AxisAlignedRectangle2D),
+        nameof(Triangle2D),
+        nameof(ConvexPolygon2D),
     ];
+
+    private static IConvexShape2D CreateShape(string shapeName) => shapeName switch
+    {
+        nameof(Circle2D) => new Circle2D(1.5f, new(1, 2)),
+        nameof(Ellipse2D) => new Ellipse2D(new(2, 1), new(-1, .5f)),
+        nameof(Capsule2D) => new Capsule2D(new(-1, 0), new(1, .5f), .3f),
+        nameof(Rectangle2D) => new Rectangle2D(new(-1, -2), new(3, 1)),
+        nameof(AxisAlignedRectangle2D) => new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)),
+        nameof(Triangle2D) => new Triangle2D(new(0, 0), new(2, 0), new(1, 3)),
+        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
+        _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
+    };
 
     [Theory]
     [MemberData(nameof(Shapes))]
-    public void ScalingKeepsTheTypeAndScalesEveryOutlinePointAboutTheOrigin(IConvexShape2D shape)
+    public void ScalingKeepsTheTypeAndScalesEveryOutlinePointAboutTheOrigin(string shapeName)
     {
+        var shape = CreateShape(shapeName);
         var scaled = WorldShape2D.Scaled(shape, 2.5f);
         Assert.IsType(shape.GetType(), scaled);
         Assert.Equal(shape.Area * 2.5f * 2.5f, scaled.Area, 3);
@@ -33,8 +46,9 @@ public sealed class ShapeUtilityTests
 
     [Theory]
     [MemberData(nameof(Shapes))]
-    public void OutlinePointsLieOnTheBoundaryAndBoundingCirclesEncloseThem(IConvexShape2D shape)
+    public void OutlinePointsLieOnTheBoundaryAndBoundingCirclesEncloseThem(string shapeName)
     {
+        var shape = CreateShape(shapeName);
         var outline = Outline(shape);
         Assert.Equal(WorldShape2D.OutlineVertexCount(shape, 24), outline.Length);
         var (center, radius) = ShapeBounds2D.CalculateBoundingCircle(shape);

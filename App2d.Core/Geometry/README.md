@@ -8,7 +8,7 @@
 | `App2d.Core.Geometry` | Raw 2D math on numbers plus small value types. Never references `IShape2D`. | `Mathematics` |
 | `App2d.Core.Shapes` | `IShape2D` classes and the per-shape switch tables (`ShapeBounds2D`, `ShapeDistance2D`, `WorldShape2D`) | `Geometry` |
 | `App2d.Core.Meshes` | `TriangleMesh2D`, `Triangle3D`, `TriangleMeshAnalysis3D`, `TriangleMeshBuilder3D`, `Orientation3D` | `Geometry`, `Shapes` |
-| `App2d.Core.Collision` | `ShapeCollision2D` (the double-dispatch contact table), ray queries over objects, the broad phase and system | `Shapes`, `SpatialObject2D` |
+| `App2d.Core.Collision` | `ShapeCollision2D` (contacts over convex queries and composites), ray queries over objects, the broad phase and system | `Shapes`, `SpatialObject2D` |
 
 ## Geometry
 
@@ -24,8 +24,9 @@ Operations, one static class per question, all taking raw parameters:
 | `Containment2D` | Is this point inside? (plus normalized radial picking scores) |
 | `SupportPoint2D` | Which point is farthest in a direction? |
 | `Projection2D` | What interval does it cover on an axis? |
-| `ClosestPoint2D` | Which point of it is nearest? (`OnEllipsePerimeter` iterates on the evolute; no polygonizing) |
+| `ClosestPoint2D` | Which point of it is nearest? (`OnEllipsePerimeter` brackets Eberly's monotone root; no polygonizing) |
 | `Distance2D` | How far, signed or not, squared where that saves a root? Partials: `.Linear` lines/rays, `.Convex` convex cores with radii |
+| `Gjk2D` | Convex gap, overlap, escape depth and boundary witnesses through vertex cores or `IConvexSupport2D` |
 | `Intersection2D` | Do they touch? Line/ray clipping, rectangle and convex overlap, swept circle vs rectangle |
 | `Raycast2D` | Where does a ray first hit a primitive? |
 | `PolygonGeometry2D` | Hull, winding and edge normals |
@@ -44,6 +45,7 @@ var hit = box.Contains(point) ? box.SignedDistanceTo(point) : box.DistanceSquare
 var world = box.TransformedBy(matrix);
 var onEllipse = ClosestPoint2D.OnEllipsePerimeter(point, center, radii);
 var gap = Distance2D.SignedDistanceBetweenConvexPolygons(first, second, firstRadius, secondRadius);
+var convex = Gjk2D.Query(new ConvexProxy2D(first, firstRadius), new ConvexProxy2D(second, secondRadius));
 var ground = Line2D.Horizontal(0);
 if (Raycast2D.TryCircle(origin, direction, center, radius, 100, out var rayHit)) { /* rayHit.Point, .Normal, .Distance */ }
 ```
@@ -55,10 +57,12 @@ bounds cache. The switch tables map a shape to raw parameters once:
 
 - `WorldShape2D` turns a shape plus `Similarity2D` into world parameters and writes perimeters and convex cores.
 - `ShapeBounds2D.Calculate(shape)` gives local bounds; `SpatialObject2D` caches local and world bounds.
-- `ShapeDistance2D` gives point/shape, shape/shape and object/object distances. Ellipse point and circle queries are
-  exact; other ellipse pairings polygonize with `Ellipse2D.CollisionSegments`.
+- `ShapeDistance2D` gives point/shape, shape/shape and object/object distances. Finite convex pairs use
+  `ShapeConvexQuery2D`, shared with collision contacts. Ellipses use analytic support mappings; point and circle
+  queries use the bracketed closest-point solver.
 - `RoundedRectangle2D` is an inset rectangle expanded by a radius. Point distances and pair distances against
-  circles, capsules and polygonal convex shapes use that core exactly; collision contacts and ray casts sample its curved perimeter.
+  circles, capsules and polygonal convex shapes use that core exactly, as do collision contacts. Ray casts still
+  sample its curved perimeter.
 
 `TriangleMesh2D` is a mesh, not a shape; `ToCompositeShape()` bridges to collision. `CompositeShape2D` is the
 non-convex shape and always resolves per part.
@@ -83,19 +87,33 @@ the core into the shape. `GetVertCount()` returns zero and `GetVerts()` throws f
 composites, half-spaces and custom shapes, which have no known exact finite polygonal convex core.
 `GetOutlineVertCount(roundSegments)` and `GetOutlineVerts(buffer, roundSegments)` provide drawing perimeters,
 including ellipses and concave polygons. Returned spans refer to the caller's buffer; unused entries stay untouched.
-The existing world-space distance adapter still explicitly samples ellipses where its algorithms require polygons.
+`WorldShape2D.WriteWorldConvexCore` also exposes only exact polygonal cores. Its ellipse count is zero;
+`Ellipse2D.DefaultOutlineSegments` controls its default drawing perimeter, not collision accuracy.
+
+`ConvexProxy2D` accepts a caller-owned vertex span plus radius and pose, or an `IConvexSupport2D` plus pose.
+`IConvexShape2D` inherits that support contract. GJK finds the closest core features; overlapping cores use 2D EPA
+to obtain escape depth. Small overlapping polygonal cores use the cheaper SAT projections, with the same normal
+and witness result. Circles and point-versus-segment cores keep their direct closest-feature solution.
+Applying round radii after the core query avoids iterating over rounded arcs.
+Queries return a unit normal, boundary witnesses and a residual `ErrorBound`. Float precision and iteration caps
+bound accuracy; no tessellation count controls contacts. Tied escape directions are arbitrary but chosen in a
+consistent geometric argument order. `Distance` and `Intersects` skip EPA when cores overlap.
+The raw query allocates no managed memory; built-in shape adapters borrow polygon buffers and use small stack buffers.
 
 ## Collision
 
-`ShapeCollision2D.cs` is the whole dispatch table: `Dispatch` picks the row for the first shape, and each row switches
-on the second. Rectangles, triangles, convex polygons and ellipses share the polygon row through
-`WorldShape2D.WritePerimeter`. The pair math lives in the `ShapeCollision2D.*.cs` partials.
+`ShapeCollision2D.cs` dispatches composites and concave polygons over their convex pieces, half-spaces through
+a direct support-plane query, and every finite convex pair through `ShapeConvexQuery2D`. Signed distances and
+contacts therefore use the same core and radius or analytic support, including ellipses and rounded rectangles.
+Touching counts as intersection but produces no penetration contact. A contact has one boundary witness;
+this is not a multi-point contact manifold. A custom convex shape only needs the existing support contract for
+pair distances and contacts, without a perimeter entry or pair-specific collision row.
 `RayIntersection2D` takes a world ray into object space and dispatches to `Raycast2D`.
 
 ## Adding a primitive
 
 1. Value primitive (like `Line2D`): add the struct to `Geometry` and raw functions to the operation classes you need.
-2. Collidable shape: add the class to `Shapes`, its raw functions to `Geometry`, and one arm each in
-   `WorldShape2D` (perimeter or core), `ShapeBounds2D`, `ShapeDistance2D`, `RayIntersection2D` and
-   `ShapeCollision2D`. If it has a polygonal perimeter, `WorldShape2D.PerimeterVertexCount` is often the only
-   collision and distance change needed.
+2. Finite convex shape: implement `IConvexShape2D.GetSupportPoint` using raw geometry. Pair distances and contacts
+   work immediately. Add drawing outlines, specialized bounds, point queries and ray queries as needed. An exact
+   vertex core plus radius in `ShapeVertices2D` is optional and accelerates round shapes.
+3. Concave shape: expose convex pieces through a composite rather than a support map of the entire union.

@@ -12,8 +12,6 @@ public readonly record struct SegmentClosestPoints2D(Vector2 First, Vector2 Seco
 /// <summary>Closest points on raw primitives. Inputs are finite; a query point inside a filled primitive is returned unchanged only where documented.</summary>
 public static class ClosestPoint2D
 {
-    private const int EllipseIterations = 6;
-
     /// <summary>The closest point on an infinite line.</summary>
     /// <param name="point">The query point.</param>
     /// <param name="origin">A point on the line.</param>
@@ -70,9 +68,8 @@ public static class ClosestPoint2D
     }
 
     /// <summary>
-    /// The closest point on the perimeter of an axis-aligned ellipse. There is no closed form, so this iterates
-    /// on the evolute in double precision; six steps reach float precision for any point, including the center,
-    /// the axes and interior points. It never allocates and never polygonizes the ellipse.
+    /// The closest point on the perimeter of an axis-aligned ellipse. Eberly's monotone root is bracketed
+    /// and bisected in double precision, with explicit center and axis cases. No allocations or polygonizing.
     /// </summary>
     /// <param name="point">The query point.</param>
     /// <param name="center">The ellipse center.</param>
@@ -82,33 +79,62 @@ public static class ClosestPoint2D
     {
         var dx = (double)point.X - center.X;
         var dy = (double)point.Y - center.Y;
-        var px = Math.Abs(dx);
-        var py = Math.Abs(dy);
-        double a = radii.X, b = radii.Y;
-        var tx = 0.70710678118654752d;
-        var ty = tx;
-        for (var i = 0; i < EllipseIterations; i++)
+        var swapped = radii.X < radii.Y;
+        var a = (double)(swapped ? radii.Y : radii.X);
+        var b = (double)(swapped ? radii.X : radii.Y);
+        var px = Math.Abs(swapped ? dy : dx);
+        var py = Math.Abs(swapped ? dx : dy);
+        double x, y;
+        // 2D specialization of Geometric Tools DistPointHyperellipsoid, version 8.0.2025.05.10.
+        // Copyright (c) 1998-2026 David Eberly, Boost Software License 1.0; see THIRD-PARTY-NOTICES.md.
+        if (py == 0d)
         {
-            var x = a * tx;
-            var y = b * ty;
-            var ex = (a * a - b * b) * tx * tx * tx / a;
-            var ey = (b * b - a * a) * ty * ty * ty / b;
-            var rx = x - ex;
-            var ry = y - ey;
-            var qx = px - ex;
-            var qy = py - ey;
-            var r = Math.Sqrt(rx * rx + ry * ry);
-            var q = Math.Sqrt(qx * qx + qy * qy);
-            if (q == 0d) break;
-            tx = Math.Clamp((qx * r / q + ex) / a, 0d, 1d);
-            ty = Math.Clamp((qy * r / q + ey) / b, 0d, 1d);
-            var t = Math.Sqrt(tx * tx + ty * ty);
-            if (t == 0d) { tx = ty = 0.70710678118654752d; continue; }
-            tx /= t;
-            ty /= t;
+            var numerator = a * px;
+            var denominator = a * a - b * b;
+            if (numerator < denominator)
+            {
+                var ratio = numerator / denominator;
+                x = a * ratio;
+                y = b * Math.Sqrt(Math.Max(0d, 1d - ratio * ratio));
+            }
+            else if (px == 0d) { x = 0d; y = b; }
+            else { x = a; y = 0d; }
         }
-        var boundaryX = a * tx;
-        var boundaryY = b * ty;
+        else if (px == 0d) { x = 0d; y = b; }
+        else
+        {
+            var zx = px / a;
+            var zy = py / b;
+            var normalizedSquared = zx * zx + zy * zy;
+            var ratioSquared = (a / b) * (a / b);
+            var numerator = ratioSquared * zx;
+            // Shift Eberly's root by +1 so points very close to the major axis do not lose the minor term
+            // through cancellation in s + 1. The bracket remains positive even for subnormal coordinates.
+            var denominator = ratioSquared - 1d;
+            var lower = zy;
+            var largest = Math.Max(numerator, zy);
+            var smallest = Math.Min(numerator, zy);
+            var upper = normalizedSquared < 1d ? 1d : largest * Math.Sqrt(1d + (smallest / largest) * (smallest / largest));
+            var root = 1d;
+            if (normalizedSquared != 1d)
+            {
+                for (var i = 0; i < 2048; i++)
+                {
+                    root = (lower + upper) * .5d;
+                    if (root == lower || root == upper) break;
+                    var rx = numerator / (root + denominator);
+                    var ry = zy / root;
+                    var residual = rx * rx + ry * ry - 1d;
+                    if (residual > 0d) lower = root;
+                    else if (residual < 0d) upper = root;
+                    else break;
+                }
+            }
+            x = ratioSquared * px / (root + denominator);
+            y = py / root;
+        }
+        var boundaryX = swapped ? y : x;
+        var boundaryY = swapped ? x : y;
         return new((float)(center.X + (dx < 0d ? -boundaryX : boundaryX)), (float)(center.Y + (dy < 0d ? -boundaryY : boundaryY)));
     }
 

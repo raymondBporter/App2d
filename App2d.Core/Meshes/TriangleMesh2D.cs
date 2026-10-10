@@ -28,7 +28,7 @@ public sealed class TriangleMesh2D
         var area = 0d;
         for (var i = 0; i < _indices.Length; i += 3)
         {
-            var twice = CrossProduct2D.Orientation(_vertices[_indices[i]], _vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
+            var twice = _vertices[_indices[i]].Orientation(_vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
             ArgGuard.ThrowIf(twice == 0, "Triangle vertices must not be collinear.", nameof(indices));
             area += Math.Abs(twice) / 2;
         }
@@ -61,10 +61,10 @@ public sealed class TriangleMesh2D
         for (var i = 0; i < TriangleCount; i++)
         {
             var (a, b, c) = TriangleAt(i);
-            var sign = Math.Sign(CrossProduct2D.Orientation(a, b, c));
-            if (sign * CrossProduct2D.Orientation(a, b, point) >= -edgeTolerance &&
-                sign * CrossProduct2D.Orientation(b, c, point) >= -edgeTolerance &&
-                sign * CrossProduct2D.Orientation(c, a, point) >= -edgeTolerance)
+            var sign = Math.Sign(a.Orientation(b, c));
+            if (sign * a.Orientation(b, point) >= -edgeTolerance &&
+                sign * b.Orientation(c, point) >= -edgeTolerance &&
+                sign * c.Orientation(a, point) >= -edgeTolerance)
             {
                 return true;
             }
@@ -106,11 +106,11 @@ public sealed class TriangleMesh2D
                 var a = remaining[(i + remaining.Count - 1) % remaining.Count];
                 var b = remaining[i];
                 var c = remaining[(i + 1) % remaining.Count];
-                if (winding * CrossProduct2D.Orientation(points[a], points[b], points[c]) <= tolerance) continue;
+                if (winding * points[a].Orientation(points[b], points[c]) <= tolerance) continue;
                 if (remaining.Any(j => j != a && j != b && j != c &&
-                    winding * CrossProduct2D.Orientation(points[a], points[b], points[j]) >= -tolerance &&
-                    winding * CrossProduct2D.Orientation(points[b], points[c], points[j]) >= -tolerance &&
-                    winding * CrossProduct2D.Orientation(points[c], points[a], points[j]) >= -tolerance))
+                    winding * points[a].Orientation(points[b], points[j]) >= -tolerance &&
+                    winding * points[b].Orientation(points[c], points[j]) >= -tolerance &&
+                    winding * points[c].Orientation(points[a], points[j]) >= -tolerance))
                 {
                     continue;
                 }
@@ -122,7 +122,7 @@ public sealed class TriangleMesh2D
             }
             ArgGuard.ThrowIf(!found, "The polygon must be simple and have nondegenerate ears.", nameof(perimeter));
         }
-        ArgGuard.ThrowIf(winding * CrossProduct2D.Orientation(points[remaining[0]], points[remaining[1]], points[remaining[2]]) <= tolerance,
+        ArgGuard.ThrowIf(winding * points[remaining[0]].Orientation(points[remaining[1]], points[remaining[2]]) <= tolerance,
             "The polygon has a degenerate final triangle.", nameof(perimeter));
         indices.AddRange(remaining);
         return new TriangleMesh2D(points, indices);
