@@ -68,13 +68,25 @@ public static partial class SpineImport2D
             if (parentName.Length > 0 && !bones.ContainsKey(parentName)) throw new InvalidDataException($"Bone '{boneName}': parent '{parentName}' must precede it.");
             var setup = new Affine2D
             {
-                X = Number(entry, "x") * unitsPerPixel, Y = Number(entry, "y") * unitsPerPixel,
-                Rotation = Number(entry, "rotation") * Radians, ScaleX = Number(entry, "scaleX", 1), ScaleY = Number(entry, "scaleY", 1),
-                ShearX = Number(entry, "shearX") * Radians, ShearY = Number(entry, "shearY") * Radians
+                X = Number(entry, "x") * unitsPerPixel,
+                Y = Number(entry, "y") * unitsPerPixel,
+                Rotation = Number(entry, "rotation") * Radians,
+                ScaleX = Number(entry, "scaleX", 1),
+                ScaleY = Number(entry, "scaleY", 1),
+                ShearX = Number(entry, "shearX") * Radians,
+                ShearY = Number(entry, "shearY") * Radians
             };
             var frame = setup.Matrix * (parentName.Length == 0 ? Matrix3x2.Identity : frames[parentName]);
-            model.Controls.Add(new() { Id = boneId, Name = boneName, Parent = parentName.Length == 0 ? null : bones[parentName], Transform = setup,
-                Rest = new(frame.M31, frame.M32), RestAngle = MathF.Atan2(frame.M12, frame.M11), Length = Number(entry, "length") * unitsPerPixel });
+            model.Controls.Add(new()
+            {
+                Id = boneId,
+                Name = boneName,
+                Parent = parentName.Length == 0 ? null : bones[parentName],
+                Transform = setup,
+                Rest = new(frame.M31, frame.M32),
+                RestAngle = MathF.Atan2(frame.M12, frame.M11),
+                Length = Number(entry, "length") * unitsPerPixel
+            });
             bones.Add(boneName, boneId); frames.Add(boneName, frame);
         }
         var slots = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -105,11 +117,22 @@ public static partial class SpineImport2D
                     images.Add(texture, image(Text(value, "path", Text(value, "name", attachment.Key))));
                     var width = Number(value, "width") * unitsPerPixel; var height = Number(value, "height") * unitsPerPixel;
                     var bone = model.Slots.First(s => s.Id == slotId).Bone;
-                    model.Parts.Add(new() { Id = partId, A = bone, Frame = bone, Width = width, Height = height,
-                        OffsetX = Number(value, "x") * unitsPerPixel, OffsetY = Number(value, "y") * unitsPerPixel, Angle = Number(value, "rotation") * Radians,
-                        ScaleX = Number(value, "scaleX", 1), ScaleY = Number(value, "scaleY", 1), Face = "none",
+                    model.Parts.Add(new()
+                    {
+                        Id = partId,
+                        A = bone,
+                        Frame = bone,
+                        Width = width,
+                        Height = height,
+                        OffsetX = Number(value, "x") * unitsPerPixel,
+                        OffsetY = Number(value, "y") * unitsPerPixel,
+                        Angle = Number(value, "rotation") * Radians,
+                        ScaleX = Number(value, "scaleX", 1),
+                        ScaleY = Number(value, "scaleY", 1),
+                        Face = "none",
                         Geometry = RectangleShapeDefinition2D.FromSize(new(1, 1)),
-                        Material = new() { Texture = texture, Fill = "#ffffff", Tint = Text(value, "color", "ffffffff") } });
+                        Material = new() { Texture = texture, Fill = "#ffffff", Tint = Text(value, "color", "ffffffff") }
+                    });
                     attachments.Add(attachment.Key, partId);
                 }
             }
@@ -191,9 +214,15 @@ public static partial class SpineImport2D
         {
             var entry = keys[i]; var x = Number(entry, single ? "value" : "x", baseline); var y = Number(entry, "y", baseline);
             var key = new ClipKey { Time = Number(entry, "time") };
-            if (kind == MotionClip.RotateKind) key.Angle = x * scale;
+            if (kind == MotionClip.RotateKind)
+            {
+                key.Angle = x * scale;
+            }
             else { key.X = yOnly ? 0 : (x - baseline) * scale; key.Y = yOnly ? (x - baseline) * scale : single ? 0 : (y - baseline) * scale; }
-            if (entry?["curve"] is JsonValue curve && curve.TryGetValue<string>(out var stepped) && stepped == "stepped") key.Ease = ClipEase.Step;
+            if (entry?["curve"] is JsonValue curve && curve.TryGetValue<string>(out var stepped) && stepped == "stepped")
+            {
+                key.Ease = ClipEase.Step;
+            }
             else if (entry?["curve"] is JsonArray controls && i + 1 < keys.Count)
             {
                 var next = keys[i + 1]; var endTime = Number(next, "time");
@@ -202,7 +231,11 @@ public static partial class SpineImport2D
                 if (yOnly) key.CurveY = c; else key.Curve = c;
                 if (!single) key.CurveY = ReadCurve(controls, 4, key.Time, endTime, scale, -baseline * scale);
             }
-            else if (entry?["curve"] is not null && i + 1 < keys.Count) throw new InvalidDataException("Invalid Spine timeline curve.");
+            else if (entry?["curve"] is not null && i + 1 < keys.Count)
+            {
+                throw new InvalidDataException("Invalid Spine timeline curve.");
+            }
+
             track.Keys.Add(key);
         }
         return track;
@@ -216,7 +249,8 @@ public static partial class SpineImport2D
             X1 = (controls[index]!.GetValue<float>() - startTime) / (endTime - startTime),
             X2 = (controls[index + 2]!.GetValue<float>() - startTime) / (endTime - startTime),
             Y1 = controls[index + 1]!.GetValue<float>() * scale + offset,
-            Y2 = controls[index + 3]!.GetValue<float>() * scale + offset, Absolute = true
+            Y2 = controls[index + 3]!.GetValue<float>() * scale + offset,
+            Absolute = true
         };
         curve.Validate(); return curve;
     }
@@ -230,13 +264,19 @@ public static partial class SpineImport2D
             var value = kind == SlotColorTrack2D.Alpha ? new Vector4(1, 1, 1, Number(entry, "value"))
                 : SlotColorTrack2D.ParseColor(Text(entry, "color") + (kind == SlotColorTrack2D.Rgb ? "ff" : ""));
             var key = new SlotColorKey2D { Time = Number(entry, "time"), R = value.X, G = value.Y, B = value.Z, A = value.W };
-            if (entry?["curve"] is JsonValue step && step.TryGetValue<string>(out var ease) && ease == "stepped") key.Ease = ClipEase.Step;
+            if (entry?["curve"] is JsonValue step && step.TryGetValue<string>(out var ease) && ease == "stepped")
+            {
+                key.Ease = ClipEase.Step;
+            }
             else if (entry?["curve"] is JsonArray controls && i + 1 < keys.Count)
             {
                 var endTime = Number(keys[i + 1], "time");
                 var components = kind == SlotColorTrack2D.Alpha ? 1 : kind == SlotColorTrack2D.Rgb ? 3 : 4;
                 if (controls.Count != components * 4) throw new InvalidDataException("Invalid Spine color Bezier component count.");
-                if (kind == SlotColorTrack2D.Alpha) key.CurveA = ReadCurve(controls, 0, key.Time, endTime);
+                if (kind == SlotColorTrack2D.Alpha)
+                {
+                    key.CurveA = ReadCurve(controls, 0, key.Time, endTime);
+                }
                 else
                 {
                     key.CurveR = ReadCurve(controls, 0, key.Time, endTime); key.CurveG = ReadCurve(controls, 4, key.Time, endTime);
@@ -244,7 +284,11 @@ public static partial class SpineImport2D
                     if (kind == SlotColorTrack2D.Rgba) key.CurveA = ReadCurve(controls, 12, key.Time, endTime);
                 }
             }
-            else if (entry?["curve"] is not null && i + 1 < keys.Count) throw new InvalidDataException("Invalid Spine color curve.");
+            else if (entry?["curve"] is not null && i + 1 < keys.Count)
+            {
+                throw new InvalidDataException("Invalid Spine color curve.");
+            }
+
             track.Keys.Add(key);
         }
         return track;

@@ -12,7 +12,9 @@ public sealed class CharacterGeometryTests
     {
         var part = new PuppetPart
         {
-            A = "a", B = "b", Width = .2f,
+            A = "a",
+            B = "b",
+            Width = .2f,
             Geometry = new LineCurveDefinition2D { Start = new(.5f, 0), End = new(.5f, 1) }
         };
         static Vector3 World(string id) => id == "a" ? new(2, 3, 0) : new(2, 5, 0);

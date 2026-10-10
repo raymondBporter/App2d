@@ -183,7 +183,11 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
                 var degrees = ClipAuthoring.Value(clip, rotate, time).Angle * 180 / MathF.PI;
                 if (Ui.Drag("Rotation (degrees, turns children)", ref degrees, .5f, -720, 720)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, degrees * MathF.PI / 180));
             }
-            else Ui.Help("Rotation is solved by the IK target.");
+            else
+            {
+                Ui.Help("Rotation is solved by the IK target.");
+            }
+
             if (model.Controls[control].Transform is not null && boneIk)
             {
                 var scaleChannel = new Channel(MotionClip.ScaleKind, control);
@@ -197,11 +201,14 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
                     var channel = new Channel(kind, control); var delta = ClipAuthoring.Value(clip, channel, time).Value;
                     var value = (axis == 0 ? delta.X : delta.Y) + (kind == MotionClip.ScaleKind ? 1 : 0);
                     if (kind == MotionClip.ShearKind) value *= 180 / MathF.PI;
-                    if (Ui.Drag(label, ref value, .01f, -100, 100)) session.Change(document, () =>
+                    if (Ui.Drag(label, ref value, .01f, -100, 100))
+                    {
+                        session.Change(document, () =>
                     {
                         var v = kind == MotionClip.ScaleKind ? value - 1 : value * MathF.PI / 180;
                         if (axis == 0) delta.X = v; else delta.Y = v; ClipAuthoring.SetKey(document.Asset, channel, time, delta);
                     });
+                    }
                 }
                 Axis("Scale X multiplier", MotionClip.ScaleKind, 0); Axis("Scale Y multiplier", MotionClip.ScaleKind, 1);
                 Axis("Shear X offset (degrees)", MotionClip.ShearKind, 0); Axis("Shear Y offset (degrees)", MotionClip.ShearKind, 1);
@@ -406,6 +413,7 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         var current = attachmentKey is null ? slot.Attachment : attachmentKey.Attachment;
         var choices = subject.Model.Base.Skins.SelectMany(s => s.Attachments.GetValueOrDefault(id)?.Keys.AsEnumerable() ?? []).Distinct().Prepend("(none)");
         if (Ui.Combo("Attachment at playhead", current ?? "(none)", choices) is { } attachment)
+        {
             session.Edit(document, () =>
             {
                 var edited = document.Asset.Attachments.FirstOrDefault(t => t.Slot == id);
@@ -414,12 +422,14 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
                 edited.Keys.Add(new() { Time = time, Attachment = attachment == "(none)" ? null : attachment });
                 edited.Keys.Sort((a, b) => a.Time.CompareTo(b.Time));
             });
+        }
+
         if (ImGui.Button("Remove attachment key here")) session.Edit(document, () => document.Asset.Attachments.FirstOrDefault(t => t.Slot == id)?.Keys.RemoveAll(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime));
         void Move(int delta)
         {
             session.Edit(document, () =>
             {
-                var order = (document.Asset.DrawOrder.LastOrDefault(k => k.Time <= time)?.Slots ?? subject.Model.Base.Slots.Select(s => s.Id).ToList()).ToList();
+                var order = (document.Asset.DrawOrder.LastOrDefault(k => k.Time <= time)?.Slots ?? subject.Model.Base.Slots.ConvertAll(s => s.Id)).ToList();
                 var index = order.IndexOf(id); var next = index + delta; if (next < 0 || next >= order.Count) return;
                 (order[index], order[next]) = (order[next], order[index]);
                 document.Asset.DrawOrder.RemoveAll(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);

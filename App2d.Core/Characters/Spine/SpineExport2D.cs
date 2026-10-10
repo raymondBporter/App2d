@@ -99,9 +99,18 @@ public static class SpineExport2D
                         var part = model.Parts.First(p => p.Id == partId);
                         if (part.Material?.Texture is not { } texture || part.Frame != part.A) throw new InvalidDataException($"Slot '{slot}': export currently requires a bone-attached image region.");
                         var imageName = Unique(model.Id + "-" + part.Id, images.Keys.Select(p => Path.GetFileNameWithoutExtension(p))); AddImage(imageName, File.ReadAllBytes(FilePaths.ResolveUnderRoot(model.TextureRoot, texture)));
-                        values[name] = new JsonObject { ["path"] = imageName, ["x"] = part.OffsetX * pixelsPerUnit, ["y"] = part.OffsetY * pixelsPerUnit,
-                            ["rotation"] = part.Angle * Degrees, ["scaleX"] = part.ScaleX, ["scaleY"] = part.ScaleY, ["width"] = part.Width * pixelsPerUnit, ["height"] = part.Height * pixelsPerUnit,
-                            ["color"] = RegionColor(part) };
+                        values[name] = new JsonObject
+                        {
+                            ["path"] = imageName,
+                            ["x"] = part.OffsetX * pixelsPerUnit,
+                            ["y"] = part.OffsetY * pixelsPerUnit,
+                            ["rotation"] = part.Angle * Degrees,
+                            ["scaleX"] = part.ScaleX,
+                            ["scaleY"] = part.ScaleY,
+                            ["width"] = part.Width * pixelsPerUnit,
+                            ["height"] = part.Height * pixelsPerUnit,
+                            ["color"] = RegionColor(part)
+                        };
                     }
                 }
                 skins.Add(new JsonObject { ["name"] = skin.Name ?? skin.Id, ["attachments"] = attachments });
@@ -144,15 +153,15 @@ public static class SpineExport2D
                 foreach (var track in clip.Tracks.Where(t => t.Kind is MotionClip.TranslateKind or MotionClip.RotateKind or MotionClip.ScaleKind or MotionClip.ShearKind))
                 {
                     if ((track.Scale ?? model.Controls[track.Target].Scale) != CharacterModel.Unit) throw new InvalidDataException("Affine Spine tracks must use unscaled model units.");
-                    if (timelines[names[track.Target]] is not JsonObject channels) timelines[names[track.Target]] = channels = new();
+                    if (timelines[names[track.Target]] is not JsonObject channels) timelines[names[track.Target]] = channels = [];
                     var keys = track.Keys.ToList();
                     if (!track.SetupBeforeFirst && keys.Count > 0 && keys[0].Time > 0) keys.Insert(0, keys[0] with { Time = 0, Ease = ClipEase.Step, Curve = null, CurveY = null });
                     channels[track.Kind] = Track(keys, track.Kind, pixelsPerUnit);
                 }
                 var travelRatio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
                 KeyCurve2D? Retarget(KeyCurve2D? curve) => curve?.Absolute == true ? curve with { Y1 = curve.Y1 * travelRatio, Y2 = curve.Y2 * travelRatio } : curve;
-                motion["translate"] = Track(clip.Travel.Keys.Count == 0 ? [new() { Time = clip.Duration }] : clip.Travel.Keys.Select(k => k with
-                { X = k.X * travelRatio, Y = k.Y * travelRatio, Curve = Retarget(k.Curve), CurveY = Retarget(k.CurveY) }).ToList(), MotionClip.TranslateKind, pixelsPerUnit);
+                motion["translate"] = Track(clip.Travel.Keys.Count == 0 ? [new() { Time = clip.Duration }] : [.. clip.Travel.Keys.Select(k => k with
+                { X = k.X * travelRatio, Y = k.Y * travelRatio, Curve = Retarget(k.Curve), CurveY = Retarget(k.CurveY) })], MotionClip.TranslateKind, pixelsPerUnit);
             }
             else
             {
@@ -181,28 +190,36 @@ public static class SpineExport2D
                 foreach (var time in SampleTimes(clip, samplesPerSecond))
                 {
                     var pose = PoseEvaluator.Sample(model, clip, time);
-                    foreach (var part in parts) Append(timelines, part.Name, part.Name,
+                    foreach (var part in parts)
+                    {
+                        Append(timelines, part.Name, part.Name,
                         Affine2D.FromMatrix(Relative(PartFrame(part.Part, pose, part.StrokeLength), pose.Bones[part.Part.A])), setup[part.Name], time, previous, pixelsPerUnit);
+                    }
                 }
             }
             var slotTimelines = new JsonObject();
             foreach (var track in clip.Attachments) slotTimelines[slotNames[track.Slot]] = new JsonObject { ["attachment"] = new JsonArray([.. track.Keys.Select(k => (JsonNode)new JsonObject { ["time"] = k.Time, ["name"] = k.Attachment })]) };
             foreach (var track in clip.Colors)
             {
-                if (slotTimelines[slotNames[track.Slot]] is not JsonObject channels) slotTimelines[slotNames[track.Slot]] = channels = new();
+                if (slotTimelines[slotNames[track.Slot]] is not JsonObject channels) slotTimelines[slotNames[track.Slot]] = channels = [];
                 channels[track.Kind] = Colors(track);
             }
             if (!nativeImages)
+            {
                 foreach (var track in clip.Faces.Where(t => slotNames.ContainsKey(t.Part)))
                 {
                     var keys = track.Keys.ToList();
                     if (keys.Count > 0 && keys[0].Time > 0) keys.Insert(0, keys[0] with { Time = 0 });
                     slotTimelines[track.Part] = new JsonObject { ["attachment"] = new JsonArray([.. keys.Select(k => (JsonNode)new JsonObject { ["time"] = k.Time, ["name"] = k.Expression })]) };
                 }
+            }
+
             if (slotTimelines.Count > 0) animation["slots"] = slotTimelines;
             var drawOrder = new JsonArray(); var initial = slots.Select(s => s!["name"]!.GetValue<string>()).ToArray();
             if (nativeImages)
-                foreach (var key in clip.DrawOrder) drawOrder.Add(Order(key.Time, initial, key.Slots.Select(s => slotNames[s]).ToArray()));
+            {
+                foreach (var key in clip.DrawOrder) drawOrder.Add(Order(key.Time, initial, [.. key.Slots.Select(s => slotNames[s])]));
+            }
             else
             {
                 var last = initial;
@@ -213,18 +230,21 @@ public static class SpineExport2D
                 }
             }
             if (drawOrder.Count > 0) animation["drawOrder"] = drawOrder;
-            var events = clip.Events.Select(e => new JsonObject { ["time"] = e.Time, ["name"] = e.Name, ["int"] = e.Int, ["float"] = e.Float, ["string"] = e.String }).ToList();
+            var events = clip.Events.ConvertAll(e => new JsonObject { ["time"] = e.Time, ["name"] = e.Name, ["int"] = e.Int, ["float"] = e.Float, ["string"] = e.String });
             events.AddRange(clip.Markers.Select(m => new JsonObject { ["time"] = m.Time, ["name"] = m.Id }));
-            if (events.Count > 0) animation["events"] = new JsonArray([.. events.OrderBy(e => e["time"]!.GetValue<float>()).Select(e => (JsonNode)e)]);
+            if (events.Count > 0) animation["events"] = new JsonArray([.. events.OrderBy(e => e["time"]!.GetValue<float>()).Cast<JsonNode>()]);
             // JSON has no duration field: retain the native end time even if every channel finishes earlier.
             var timelineEnd = timelines.SelectMany(b => b.Value!.AsObject().SelectMany(c => c.Value!.AsArray())).Select(k => SpineImport2D.Number(k, "time")).DefaultIfEmpty().Max();
             if (timelineEnd < clip.Duration)
             {
-                if (timelines.Count == 0) timelines[names[model.Order[0].Id]] = new JsonObject { ["translate"] = new JsonArray(new JsonObject { ["time"] = clip.Duration }) };
+                if (timelines.Count == 0)
+                {
+                    timelines[names[model.Order[0].Id]] = new JsonObject { ["translate"] = new JsonArray(new JsonObject { ["time"] = clip.Duration }) };
+                }
                 else
                 {
                     var channel = timelines.First().Value!.AsObject().First().Value!.AsArray();
-                    var end = channel.LastOrDefault()?.DeepClone()?.AsObject() ?? new JsonObject(); end["time"] = clip.Duration; channel.Add(end);
+                    var end = channel.LastOrDefault()?.DeepClone()?.AsObject() ?? []; end["time"] = clip.Duration; channel.Add(end);
                 }
             }
             outputAnimations[animationNames[clip]] = animation;
@@ -253,8 +273,15 @@ public static class SpineExport2D
     {
         var result = new JsonObject
         {
-            ["name"] = name, ["x"] = t.X * ppu, ["y"] = t.Y * ppu, ["rotation"] = t.Rotation * Degrees,
-            ["scaleX"] = t.ScaleX, ["scaleY"] = t.ScaleY, ["shearX"] = t.ShearX * Degrees, ["shearY"] = t.ShearY * Degrees, ["length"] = length * ppu
+            ["name"] = name,
+            ["x"] = t.X * ppu,
+            ["y"] = t.Y * ppu,
+            ["rotation"] = t.Rotation * Degrees,
+            ["scaleX"] = t.ScaleX,
+            ["scaleY"] = t.ScaleY,
+            ["shearX"] = t.ShearX * Degrees,
+            ["shearY"] = t.ShearY * Degrees,
+            ["length"] = length * ppu
         };
         if (parent is not null) result["parent"] = parent;
         return result;
@@ -271,8 +298,8 @@ public static class SpineExport2D
         return new(frame.Right.X, frame.Right.Y, frame.Up.X, frame.Up.Y, frame.Origin.X, frame.Origin.Y);
     }
     private static float Depth(PuppetPart part, EvaluatedPose pose) => part.Depth + (pose.World(part.A).Z + (part.B is null ? pose.World(part.A).Z : pose.World(part.B).Z)) / 2;
-    private static float[] SampleTimes(MotionClip clip, int fps) => Enumerable.Range(0, (int)MathF.Ceiling(clip.Duration * fps) + 1).Select(i => MathF.Min(clip.Duration, (float)i / fps))
-        .Concat(clip.Tracks.SelectMany(t => t.Keys).Select(k => k.Time)).Concat(clip.Travel.Keys.Select(k => k.Time)).Concat(clip.Contacts.SelectMany(c => new[] { c.Start, c.Finish })).Append(clip.Duration).Distinct().Order().ToArray();
+    private static float[] SampleTimes(MotionClip clip, int fps) => [.. Enumerable.Range(0, (int)MathF.Ceiling(clip.Duration * fps) + 1).Select(i => MathF.Min(clip.Duration, (float)i / fps))
+        .Concat(clip.Tracks.SelectMany(t => t.Keys).Select(k => k.Time)).Concat(clip.Travel.Keys.Select(k => k.Time)).Concat(clip.Contacts.SelectMany(c => new[] { c.Start, c.Finish })).Append(clip.Duration).Distinct().Order()];
     private static void Append(JsonObject timelines, string name, string id, Affine2D value, Affine2D setup, float time, Dictionary<string, float> previous, float ppu)
     {
         if (timelines[name] is not JsonObject channels)
@@ -294,8 +321,11 @@ public static class SpineExport2D
         for (var i = 0; i < keys.Count; i++)
         {
             var key = keys[i]; var node = new JsonObject { ["time"] = key.Time };
-            if (rotate) node["value"] = X(key); else { node["x"] = X(key); node["y"] = Y(key); }
-            if (key.Ease == ClipEase.Step) node["curve"] = "stepped";
+            if (rotate) { node["value"] = X(key); } else { node["x"] = X(key); node["y"] = Y(key); }
+            if (key.Ease == ClipEase.Step)
+            {
+                node["curve"] = "stepped";
+            }
             else if (i + 1 < keys.Count && (key.Curve is not null || key.CurveY is not null || key.Ease == ClipEase.Smooth))
             {
                 var next = keys[i + 1]; var controls = new JsonArray();
@@ -328,7 +358,10 @@ public static class SpineExport2D
             var key = keys[i]; var node = new JsonObject { ["time"] = key.Time };
             if (track.Kind == SlotColorTrack2D.Alpha) node["value"] = key.A;
             else node["color"] = SlotColorTrack2D.FormatColor(key.Value)[..(track.Kind == SlotColorTrack2D.Rgb ? 6 : 8)];
-            if (key.Ease == ClipEase.Step) node["curve"] = "stepped";
+            if (key.Ease == ClipEase.Step)
+            {
+                node["curve"] = "stepped";
+            }
             else if (i + 1 < keys.Count && (key.Ease == ClipEase.Smooth || key.CurveR is not null || key.CurveG is not null || key.CurveB is not null || key.CurveA is not null))
             {
                 var next = keys[i + 1]; var controls = new JsonArray();

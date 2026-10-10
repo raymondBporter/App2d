@@ -231,8 +231,11 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 Ui.Header("Local affine transform");
                 void Number(string label, float value, Action<Affine2D, float> set, float min = -100, float max = 100)
                 {
-                    if (Ui.Drag(label, ref value, .01f, min, max)) session.Change(document, () =>
+                    if (Ui.Drag(label, ref value, .01f, min, max))
+                    {
+                        session.Change(document, () =>
                     { set(document.Asset.Controls.First(c => c.Id == id).Transform!, value); ModelAuthoring.SyncAffineRest(document.Asset); });
+                    }
                 }
                 Number("Local X", transform.X, (t, v) => t.X = v);
                 Number("Local Y", transform.Y, (t, v) => t.Y = v);
@@ -396,13 +399,16 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
             if (overrides is null && part.Geometry is RoundedRectangleShapeDefinition2D rounded)
+            {
                 Float("Corner radius", rounded.Radius, 0, MathF.Min(part.Width, part.Height) / 2f, false,
                     PartGeometry.SetRoundedRectangleRadius, _ => { });
+            }
+
             if (overrides is null && part.Geometry is SimplePolygonShapeDefinition2D polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
             {
                 ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
                 Ui.Help("Perimeter points follow the attachment frame and scale with width and height. Keep the outline from crossing itself.");
-                var vertices = polygon.Vertices.Select(point => new PuppetPoint(point.X, point.Y)).ToList();
+                var vertices = polygon.Vertices.ConvertAll(point => new PuppetPoint(point.X, point.Y));
                 void Cutout(Action<List<PuppetPoint>> edit)
                 {
                     var points = new List<PuppetPoint>(vertices); edit(points);
@@ -439,7 +445,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 Ui.Help("Paint follows the body's shape and motion. Coordinates are relative to its width and height. Use the body fill as the fabric color.");
                 void Paint(Action<List<PartPaint>> edit)
                 {
-                    var patches = (part.Paint ?? []).Select(p => new PartPaint { Material = p.Material, Points = [.. p.Points] }).ToList();
+                    var patches = (part.Paint ?? []).ConvertAll(p => new PartPaint { Material = p.Material, Points = [.. p.Points] });
                     edit(patches);
                     try { PartPaint.Check(patches); change(p => p.Paint = patches); }
                     catch (InvalidDataException) { /* Keep the last valid convex patch during a drag. */ }
@@ -629,7 +635,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         }
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!).ToArray();
+            var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : [.. pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!)];
             var hit = visibleParts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id])))
                 .Where(h => h.Score <= 1).OrderBy(h => h.Score).FirstOrDefault();
             if (hit.Part is not null) Select(part: hit.Part.Id); else session.Selection.Clear();
@@ -640,7 +646,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
     private void DragCutout(ViewportFrame frame, PuppetPart part, EvaluatedPose pose)
     {
         var placement = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
-        var points = ((SimplePolygonShapeDefinition2D)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToList();
+        var points = ((SimplePolygonShapeDefinition2D)part.Geometry!).Vertices.ConvertAll(p => new PuppetPoint(p.X, p.Y));
         for (var i = 0; i < points.Count; i++)
         {
             var at = frame.Screen(placement.At(new(points[i].X * part.Width, points[i].Y * part.Height)));

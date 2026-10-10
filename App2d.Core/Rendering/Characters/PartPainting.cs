@@ -17,7 +17,7 @@ internal static class PartPainting
         for (var layer = 0; layer < part.Paint.Count; layer++)
         {
             var patch = part.Paint[layer];
-            var points = patch.Points.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
+            var points = patch.Points.ConvertAll(p => frame.At(new(p.X * part.Width, p.Y * part.Height)));
             var regions = new List<IReadOnlyList<Vector3>>();
             if (triangles is null)
             {
@@ -36,7 +36,7 @@ internal static class PartPainting
             foreach (var region in regions)
             {
                 var clipped = PolygonClipping2D.ClipConvexXY(points, region);
-                mesh.Polygon(clipped.Select(p => p - bias).ToArray(), ColorExtensions.FromHexRgb(patch.Material!.Fill!), null, 0);
+                mesh.Polygon([.. clipped.Select(p => p - bias)], ColorExtensions.FromHexRgb(patch.Material!.Fill!), null, 0);
             }
         }
     }

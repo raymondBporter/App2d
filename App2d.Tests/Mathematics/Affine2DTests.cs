@@ -37,14 +37,14 @@ public sealed class Affine2DTests
         Near(Vector2.Zero, Affine2D.Identity.TransformPoint(Vector2.Zero));
     }
 
-    public static TheoryData<Matrix3x2> Matrices => new()
-    {
+    public static TheoryData<Matrix3x2> Matrices =>
+    [
         Matrix3x2.Identity,
         new(-2, .3f, 1.1f, 3, 7, 2),
         new(0, 0, 2, 3, 4, 5),
         new(2, 3, 4, 6, 7, 8),
         new(0, 0, 0, 0, 2, 4)
-    };
+    ];
 
     [Theory, MemberData(nameof(Matrices))]
     public void MatrixConversionAndSnapshotsRetainReflectionsAndSingularMaps(Matrix3x2 matrix)
@@ -57,8 +57,11 @@ public sealed class Affine2DTests
         Assert.Equal(matrix.GetDeterminant() != 0, affine.TryInverse(out _));
         var fromChannels = new Affine2D
         {
-            Position = affine.Position, Rotation = affine.Rotation, Scale = affine.Scale,
-            ShearX = affine.ShearX, ShearY = affine.ShearY
+            Position = affine.Position,
+            Rotation = affine.Rotation,
+            Scale = affine.Scale,
+            ShearX = affine.ShearX,
+            ShearY = affine.ShearY
         };
         Near(affine.TransformPoint(new(2, -3)), fromChannels.TransformPoint(new(2, -3)));
     }

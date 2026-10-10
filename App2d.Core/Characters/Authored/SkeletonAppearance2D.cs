@@ -58,7 +58,10 @@ public sealed record KeyCurve2D
     public void Validate()
     {
         if (!float.IsFinite(X1) || !float.IsFinite(X2) || X1 < 0 || X1 > 1 || X2 < 0 || X2 > 1 ||
-            !float.IsFinite(Y1) || !float.IsFinite(Y2)) throw new InvalidDataException("Invalid keyframe Bezier curve.");
+            !float.IsFinite(Y1) || !float.IsFinite(Y2))
+        {
+            throw new InvalidDataException("Invalid keyframe Bezier curve.");
+        }
     }
     public float Apply(float time)
     {
@@ -90,8 +93,14 @@ public sealed record KeyCurve2D
         var t0 = Parameter(from); var t1 = Parameter(to);
         var left = Split(points, t1).Left;
         var segment = from == 0 ? left : Split(left, t0 / t1).Right;
-        return new() { X1 = Math.Clamp((segment[1].X - from) / (to - from), 0, 1), Y1 = segment[1].Y,
-            X2 = Math.Clamp((segment[2].X - from) / (to - from), 0, 1), Y2 = segment[2].Y, Absolute = true };
+        return new()
+        {
+            X1 = Math.Clamp((segment[1].X - from) / (to - from), 0, 1),
+            Y1 = segment[1].Y,
+            X2 = Math.Clamp((segment[2].X - from) / (to - from), 0, 1),
+            Y2 = segment[2].Y,
+            Absolute = true
+        };
     }
 
     private float Parameter(float time)
@@ -132,8 +141,10 @@ internal static class SkeletonAppearance2D
             {
                 if (!slots.Contains(slot) || attachments is null) throw new InvalidDataException($"Skin '{skin.Id}': unknown slot '{slot}'.");
                 foreach (var (name, part) in attachments)
+                {
                     if (string.IsNullOrWhiteSpace(name) || !model.Parts.Any(p => p.Id == part && p.A == model.Slots.First(s => s.Id == slot).Bone))
                         throw new InvalidDataException($"Skin '{skin.Id}': invalid attachment '{name}'.");
+                }
             }
         }
     }
@@ -147,7 +158,7 @@ internal static class SkeletonAppearance2D
         var skin = model.Base.Skins.FirstOrDefault(s => s.Id == (skinId ?? "default"));
         var fallback = model.Base.Skins.FirstOrDefault(s => s.Id == "default");
         if (skinId is not null && skin is null) throw new InvalidDataException($"Unknown skin '{skinId}'.");
-        var order = clip.DrawOrder.LastOrDefault(k => k.Time <= time)?.Slots ?? model.Base.Slots.Select(s => s.Id).ToList();
+        var order = clip.DrawOrder.LastOrDefault(k => k.Time <= time)?.Slots ?? [.. model.Base.Slots.Select(s => s.Id)];
         foreach (var id in order)
         {
             var slot = model.Base.Slots.First(s => s.Id == id);

@@ -107,7 +107,11 @@ public static class WorldShape2D
             ArgGuard.ThrowIfTooShort<Vector2>(vertices, count);
             ellipse.WriteVertices(vertices[..count]);
         }
-        else shape.GetVerts(vertices, out radius);
+        else
+        {
+            shape.GetVerts(vertices, out radius);
+        }
+
         for (var i = 0; i < count; i++) vertices[i] = pose.TransformPoint(vertices[i]);
         radius *= pose.Scale;
         return count;

@@ -53,7 +53,7 @@ public static class PropGeometry
         foreach (var shape in prop.Shapes)
         {
             if (shape.Points.Count == 0) shape.RestorePoints();
-            var points = shape.Points.Select(p => centerDepth ? p with { Z = 0 } : p).ToList();
+            var points = shape.Points.ConvertAll(p => centerDepth ? p with { Z = 0 } : p);
             var fill = shape.RenderMaterial.Fill ?? prop.Ink;
             PropSolid Solid(IEnumerable<PuppetPoint> outline, float depth)
             {

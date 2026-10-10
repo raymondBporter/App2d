@@ -36,11 +36,17 @@ public static class PartGeometry
         if (part.Kind == PuppetPartKinds.Polygon)
             return Polygon([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]);
         if (part.Kind == PuppetPartKinds.Box)
+        {
             return RoundedRectangleShapeDefinition2D.FromSize(new(part.Width, part.Height),
                 Math.Min(part.Width, part.Height) * .125f);
+        }
+
         if (part.Kind == PuppetPartKinds.Trapezoid)
+        {
             return Polygon([new Vector2(-.5f, -.5f), new Vector2(.5f, -.5f),
                 new Vector2(.35f, .5f), new Vector2(-.35f, .5f)]);
+        }
+
         throw new InvalidDataException($"Unknown editor geometry preset '{part.Kind}'.");
     }
 

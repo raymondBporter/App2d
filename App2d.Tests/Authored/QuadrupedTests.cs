@@ -50,9 +50,9 @@ public sealed class QuadrupedTests
             Kind = "polygon",
             Width = 1,
             Height = 1,
-            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }]
+            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }],
+            Material = new() { Fill = "#fff8e7", Outline = new() }
         };
-        part.Material = new() { Fill = "#fff8e7", Outline = new() };
         PartGeometry.SetPolygon(part, points);
         part.Validate(_ => true);
         Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);

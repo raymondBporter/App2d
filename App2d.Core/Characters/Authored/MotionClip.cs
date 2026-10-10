@@ -159,7 +159,7 @@ public sealed class MotionClip
             Require(track?.Keys is not null, $"{owner}: incomplete color timeline.");
             AuthoredAsset.RequireId(track.Slot, $"{owner} color slot");
             Require(track.Kind is SlotColorTrack2D.Rgba or SlotColorTrack2D.Rgb or SlotColorTrack2D.Alpha, $"{owner}: unknown color timeline kind.");
-            foreach (var component in track.Kind == SlotColorTrack2D.Alpha ? new[] { 3 } : track.Kind == SlotColorTrack2D.Rgb ? new[] { 0, 1, 2 } : new[] { 0, 1, 2, 3 })
+            foreach (var component in track.Kind == SlotColorTrack2D.Alpha ? new[] { 3 } : track.Kind == SlotColorTrack2D.Rgb ? [0, 1, 2] : [0, 1, 2, 3])
                 Require(colorChannels.Add((track.Slot, component)), $"{owner}: overlapping color timelines for slot '{track.Slot}'.");
             Require(track.Keys.Count <= 4096, $"{owner}: too many color keys.");
             var previous = -1f;
@@ -305,7 +305,10 @@ public sealed class MotionClip
                     Require(control.Transform is not null, $"{field}: scale and shear require an affine bone.");
                     Require(track.Scale is null or CharacterModel.Unit, $"{field}: scale and shear cannot use proportion measurements.");
                 }
-                else Scale(track.Scale ?? control.Scale, field);
+                else
+                {
+                    Scale(track.Scale ?? control.Scale, field);
+                }
             }
         }
         foreach (var contact in Contacts)

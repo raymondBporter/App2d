@@ -48,19 +48,27 @@ internal sealed partial class AnimateView
         var index = track.Keys.FindIndex(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
         if (index < 0) return;
         var key = track.Keys[index];
-        if (ImGui.SmallButton("Remove tint key here")) session.Edit(document, () =>
+        if (ImGui.SmallButton("Remove tint key here"))
+        {
+            session.Edit(document, () =>
         {
             document.Asset.Colors.First(t => t.Slot == slot.Id && t.Kind == selectedKind).Keys.RemoveAll(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
             document.Asset.Colors.RemoveAll(t => t.Keys.Count == 0);
         });
-        if (Ui.Combo("Tint easing to next key", key.Ease, ClipEase.All) is { } ease) session.Edit(document, () =>
+        }
+
+        if (Ui.Combo("Tint easing to next key", key.Ease, ClipEase.All) is { } ease)
+        {
+            session.Edit(document, () =>
         {
             var edited = document.Asset.Colors.First(t => t.Slot == slot.Id && t.Kind == selectedKind).Keys.First(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
             edited.Ease = ease; edited.CurveR = edited.CurveG = edited.CurveB = edited.CurveA = null;
         });
+        }
+
         if (index + 1 >= track.Keys.Count) return;
         var next = track.Keys[index + 1];
-        var components = selectedKind == SlotColorTrack2D.Alpha ? new[] { 3 } : selectedKind == SlotColorTrack2D.Rgb ? new[] { 0, 1, 2 } : new[] { 0, 1, 2, 3 };
+        var components = selectedKind == SlotColorTrack2D.Alpha ? new[] { 3 } : selectedKind == SlotColorTrack2D.Rgb ? [0, 1, 2] : [0, 1, 2, 3];
         foreach (var axis in components)
         {
             var curve = axis switch { 0 => key.CurveR, 1 => key.CurveG, 2 => key.CurveB, _ => key.CurveA };
@@ -68,7 +76,8 @@ internal sealed partial class AnimateView
             {
                 var edited = document.Asset.Colors.First(t => t.Slot == slot.Id && t.Kind == selectedKind).Keys.First(k => MathF.Abs(k.Time - time) < ClipAuthoring.SameTime);
                 if (changed is not null && edited.Ease == ClipEase.Step) edited.Ease = ClipEase.Linear;
-                if (axis == 0) edited.CurveR = changed; else if (axis == 1) edited.CurveG = changed;
+                if (axis == 0) edited.CurveR = changed;
+                else if (axis == 1) edited.CurveG = changed;
                 else if (axis == 2) edited.CurveB = changed; else edited.CurveA = changed;
             }));
         }

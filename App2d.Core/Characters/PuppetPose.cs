@@ -83,7 +83,7 @@ public sealed class PuppetPose
         void Translate(string point)
         {
             Points[point] += delta;
-            foreach (var bone in definition.Bones.Where(b => b.From == point)) 
+            foreach (var bone in definition.Bones.Where(b => b.From == point))
                 Translate(bone.To);
         }
         Translate(id);

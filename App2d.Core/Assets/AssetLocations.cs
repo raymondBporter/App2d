@@ -8,21 +8,15 @@ namespace App2d.Core.Assets;
 /// loaders do not search for the repository. See Assets/README.md for folder ownership.
 /// Construct explicitly for custom layouts, or use the discovery helpers for existing app layouts.
 /// </summary>
-public sealed class AssetLocations
+public sealed class AssetLocations(string runtime, string authored, string characterLibrary)
 {
-    public AssetLocations(string runtime, string authored, string characterLibrary)
-    {
-        Runtime = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(runtime));
-        Authored = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(authored));
-        CharacterLibrary = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(characterLibrary));
-    }
 
     /// <summary>Generated art and copied runtime inputs. Assets/Runtime in a source checkout; disposable.</summary>
-    public string Runtime { get; }
+    public string Runtime { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(runtime));
     /// <summary>Durable content such as levels and music. Assets/Static in a source checkout.</summary>
-    public string Authored { get; }
+    public string Authored { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(authored));
     /// <summary>Character source libraries and authored documents. Assets/Characters in a source checkout.</summary>
-    public string CharacterLibrary { get; }
+    public string CharacterLibrary { get; } = Path.GetFullPath(ArgGuard.RequireNotNullOrWhiteSpace(characterLibrary));
     public string AuthoredCharacters => FilePaths.ResolveUnderRoot(CharacterLibrary, "authored");
     public string Levels => FilePaths.ResolveUnderRoot(Authored, "levels");
     public string Music => FilePaths.ResolveUnderRoot(Authored, "audio/music");

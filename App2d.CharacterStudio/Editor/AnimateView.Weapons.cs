@@ -75,8 +75,11 @@ internal sealed partial class AnimateView
         for (var i = 0; i < prop.Solids.Count; i++)
         {
             var index = i; var color = prop.Solids[i].RenderMaterial.Fill!;
-            if (Ui.ColorHex("Color " + (i + 1), ref color)) session.Change(document, () =>
+            if (Ui.ColorHex("Color " + (i + 1), ref color))
+            {
+                session.Change(document, () =>
             { var solid = document.Asset.Solids[index]; solid.Material = solid.RenderMaterial with { Fill = color }; });
+            }
         }
         Ui.Drag("OBJ import scale", ref _objScale, .001f, .001f, 100);
         Ui.Help("Triangulated OBJ, outward face winding. +X along blade/barrel, +Y across broad face, Z thickness. Export applied transforms. Materials/textures are not imported.");

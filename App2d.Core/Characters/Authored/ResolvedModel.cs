@@ -10,7 +10,7 @@ public sealed class ResolvedModel
     {
         Base = model; Variant = variant; Rest = rest; Parts = parts;
         Controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
-        IkConstraints = model.IkChains.ToArray();
+        IkConstraints = [.. model.IkChains];
         Chains = IkConstraints.ToDictionary(c => c.Id, StringComparer.Ordinal);
         Children = model.Controls.ToDictionary(c => c.Id, c => (IReadOnlyList<string>)[.. model.Controls.Where(child => child.Parent == c.Id).Select(child => child.Id)], StringComparer.Ordinal);
         var order = new List<ModelControl>(); var placed = new HashSet<string>(StringComparer.Ordinal);
@@ -78,7 +78,7 @@ public sealed class ResolvedModel
     {
         model.Validate(); variant?.Validate();
         var rest = model.Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal);
-        var parts = model.Parts.Select(p => p with { }).ToList();
+        var parts = model.Parts.ConvertAll(p => p with { });
         if (variant is not null)
         {
             var owner = $"Variant '{variant.Id}'";

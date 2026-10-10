@@ -64,8 +64,8 @@ public static partial class PuppetImport
         var chainIds = new HashSet<string>(StringComparer.Ordinal);
         string ChainId(string end) => Unique(end.EndsWith("-hand", StringComparison.Ordinal) ? end[..^5] + "-arm" : end.EndsWith("-foot", StringComparison.Ordinal) ? end[..^5] + "-leg" : end + "-chain", chainIds);
 
-        var chains = puppet.Chains.Select(c => new ModelChain { Id = ChainId(ids[c.End]), Root = ids[c.Root], Joint = ids[c.Joint], End = ids[c.End], Bend = c.Bend }).ToList();
-        var measures = chains.Select(c => new ModelMeasure { Id = c.Id, Path = [c.Root, c.Joint, c.End] }).ToList();
+        var chains = puppet.Chains.ConvertAll(c => new ModelChain { Id = ChainId(ids[c.End]), Root = ids[c.Root], Joint = ids[c.Joint], End = ids[c.End], Bend = c.Bend });
+        var measures = chains.ConvertAll(c => new ModelMeasure { Id = c.Id, Path = [c.Root, c.Joint, c.End] });
         // Contacts need their chain's scale to equal the travel scale, so every grounded chain shares the first one's reach.
         var reach = chains.FirstOrDefault(c => grounded.Contains(c.End))?.Id;
         foreach (var chain in chains)

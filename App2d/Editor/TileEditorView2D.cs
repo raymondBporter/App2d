@@ -108,7 +108,9 @@ internal static class TileEditorView2D
     {
         if (!visible.TryIntersect(mapBounds, out var clipped) ||
             !clipped.TryGetPositiveSize(out _))
+        {
             return;
+        }
 
         var cells = grid.GetCellRange(clipped);
         for (var x = cells.Minimum.X; x <= cells.Maximum.X; x++)

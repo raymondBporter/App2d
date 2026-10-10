@@ -57,9 +57,16 @@ public static class ShapeVertices2D
                 break;
             case RoundedRectangle2D rounded:
                 radius = rounded.Radius;
-                if (count == 1) vertices[0] = rounded.CoreMin;
+                if (count == 1)
+                {
+                    vertices[0] = rounded.CoreMin;
+                }
                 else if (count == 2) { vertices[0] = rounded.CoreMin; vertices[1] = rounded.CoreMax; }
-                else VertexGenerator2D.WriteRectangle(vertices, rounded.CoreMin, rounded.CoreMax);
+                else
+                {
+                    VertexGenerator2D.WriteRectangle(vertices, rounded.CoreMin, rounded.CoreMax);
+                }
+
                 break;
             case Rectangle2D rectangle:
                 rectangle.WriteCorners(vertices);

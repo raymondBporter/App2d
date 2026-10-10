@@ -156,8 +156,11 @@ public sealed class ModelTemplateTests : IDisposable
         clip.Save(Path.Combine(_root, "animations", "source-performance.json"));
         var template = new ModelTemplate
         {
-            Id = "oscillator", Name = "Oscillator", Model = model.Id,
-            Animations = new() { ["swing"] = clip.Id }, PreviewAnimation = "swing"
+            Id = "oscillator",
+            Name = "Oscillator",
+            Model = model.Id,
+            Animations = new() { ["swing"] = clip.Id },
+            PreviewAnimation = "swing"
         };
         AuthoredAsset.Write(Path.Combine(_root, "templates", "oscillator.json"), JsonSerializer.Serialize(template, AuthoredJson.Options));
     }

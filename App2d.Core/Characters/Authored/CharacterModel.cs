@@ -167,7 +167,7 @@ public sealed class CharacterModel
         Require(Controls is not null && Chains is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Chains.Count + Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
-        Require(Chains.All(c => c is not null && c.Solver == ModelChain.PointSolver), $"{owner}: legacy chains require the point solver; declare bone IK in constraints.");
+        Require(Chains.All(c => c?.Solver == ModelChain.PointSolver), $"{owner}: legacy chains require the point solver; declare bone IK in constraints.");
         Limit.Color(Ink, "ink"); new Limit(.001f, 1).Check(LineWidth, "lineWidth");
         Source?.Validate(owner);
 
@@ -215,16 +215,21 @@ public sealed class CharacterModel
             Require(controls[chain.Joint].Parent == chain.Root && controls[chain.End].Parent == chain.Joint, $"{owner}: chain '{chain.Id}' needs two connected bones (root → joint → end).");
             Require(chain.Solver is ModelChain.PointSolver or ModelChain.BoneSolver, $"{owner}: chain '{chain.Id}' has unknown solver '{chain.Solver}'.");
             if (chain.Solver == ModelChain.PointSolver)
+            {
                 Require(controls[chain.Root].Length == 0 && controls[chain.Joint].Length == 0 && controls[chain.End].Length == 0 && controls[chain.Root].Transform is null && controls[chain.Joint].Transform is null && controls[chain.End].Transform is null,
                     $"{owner}: chain '{chain.Id}' uses explicit bone frames; choose a bone constraint instead of point IK.");
+            }
             else
+            {
                 Require(controls[chain.Root].Length >= .01f && controls[chain.Joint].Length >= .01f, $"{owner}: bone constraint '{chain.Id}' needs positive root and joint lengths of at least 0.01.");
+            }
+
             Require(solved.Add(chain.Joint) && solved.Add(chain.End), $"{owner}: chains cannot share solved controls ('{chain.Id}').");
             Require(scales.Contains(chain.Scale), $"{owner}: chain '{chain.Id}' uses unknown scale '{chain.Scale}'.");
             Require(chain.Frame == Locomotion || Known(chain.Frame), $"{owner}: chain '{chain.Id}' frame '{chain.Frame}' is not a control or '{Locomotion}'.");
         }
         IEnumerable<string> SelfAndAncestors(string id) { for (string? current = id; current is not null; current = controls[current].Parent) yield return current; }
-        var writes = IkChains.SelectMany(c => (c.Solver == ModelChain.BoneSolver ? new[] { c.Root } : new[] { c.Joint, c.End }).Select(id => (Chain: c, Id: id))).ToArray();
+        var writes = IkChains.SelectMany(c => (c.Solver == ModelChain.BoneSolver ? new[] { c.Root } : [c.Joint, c.End]).Select(id => (Chain: c, Id: id))).ToArray();
         foreach (var chain in IkChains)
         {
             Require(!SelfAndAncestors(chain.Root).Any(id => writes.Any(w => w.Chain != chain && w.Id == id)), $"{owner}: chain '{chain.Id}' overlaps or is nested inside another chain; nested IK is not supported.");

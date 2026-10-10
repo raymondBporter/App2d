@@ -95,7 +95,7 @@ public sealed class TriangleMesh2DTests
         Vector2[] clip = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
         if (reverse) Array.Reverse(clip);
         Vector3[] subject = [new(-1, .5f, 0), new(2, .5f, 3), new(2, 1.5f, 3), new(-1, 1.5f, 0)];
-        var clipped = PolygonClipping2D.ClipConvexXY(subject, clip.Select(p => new Vector3(p, 0)).ToArray());
+        var clipped = PolygonClipping2D.ClipConvexXY(subject, [.. clip.Select(p => new Vector3(p, 0))]);
         Assert.NotEmpty(clipped);
         Assert.All(clipped, point =>
         {

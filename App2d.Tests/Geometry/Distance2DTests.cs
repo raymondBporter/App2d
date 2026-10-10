@@ -38,7 +38,7 @@ public sealed class Distance2DTests
         Assert.Equal(-1f, Distance2D.SignedDistance(Vector2.Zero, rectangle));
         Assert.Equal(0f, Distance2D.Distance(Vector2.Zero, rectangle));
         Assert.Equal(5f, Distance2D.Distance(new Vector2(3, 4), default(Rect2D)));
-        Assert.Equal(0f, Distance2D.SignedDistance(Vector2.Zero, default(Rect2D)));
+        Assert.Equal(0f, Distance2D.SignedDistance(Vector2.Zero, default));
         Assert.Equal(-1f, Distance2D.SignedDistance(default(Rect2D), rectangle));
         Assert.Equal(5f, Distance2D.Distance(default(Rect2D), new Rect2D(new(3, 4), new(3, 4))));
     }

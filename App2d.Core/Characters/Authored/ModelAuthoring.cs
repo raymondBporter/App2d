@@ -197,8 +197,11 @@ public static class ModelAuthoring
     public static void RemovePart(CharacterModel model, string id)
     {
         if (model.Parts.RemoveAll(p => p.Id == id) == 0) throw new InvalidOperationException($"No part '{id}'.");
-        foreach (var skin in model.Skins) foreach (var entries in skin.Attachments.Values)
+        foreach (var skin in model.Skins)
+        {
+            foreach (var entries in skin.Attachments.Values)
             foreach (var key in entries.Where(p => p.Value == id).Select(p => p.Key).ToList()) entries.Remove(key);
+        }
     }
 
     /// <summary>Moves a control's rest position, and with <paramref name="children"/> its whole subtree by the same amount.</summary>
@@ -220,7 +223,11 @@ public static class ModelAuthoring
                     var point = Vector2.Transform(new(desired.X, desired.Y), inverse); local.X = point.X; local.Y = point.Y;
                     frames[control.Id] = local.Matrix * parent;
                 }
-                else frames[control.Id] = resolved.RestTransforms[control.Id] with { M31 = desired.X, M32 = desired.Y };
+                else
+                {
+                    frames[control.Id] = resolved.RestTransforms[control.Id] with { M31 = desired.X, M32 = desired.Y };
+                }
+
                 control.Rest = PuppetPoint.From(desired);
             }
             return;
@@ -284,8 +291,10 @@ public static class ModelAuthoring
         foreach (var control in moved)
             variant.Rest[control.Id] = PuppetPoint.From(resolved.Rest[control.Id] + delta);
         if (!children && resolved.Controls[id].Transform is not null)
+        {
             foreach (var child in Subtree(resolved.Base.Controls, id).Where(c => c.Id != id))
                 variant.Rest[child.Id] = PuppetPoint.From(resolved.Rest[child.Id]);
+        }
     }
 
     private static IEnumerable<ModelControl> Subtree(IReadOnlyList<ModelControl> controls, string id)

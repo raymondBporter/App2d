@@ -139,9 +139,13 @@ public static class ClipAuthoring
     public static IReadOnlyList<float> KeyTimes(MotionClip clip, IReadOnlyCollection<Channel>? channels = null)
     {
         var times = Tracks(clip, channels).SelectMany(t => t.Keys).Select(k => k.Time);
-        if (channels is null) times = times.Concat(clip.Travel.Keys.Select(k => k.Time))
+        if (channels is null)
+        {
+            times = times.Concat(clip.Travel.Keys.Select(k => k.Time))
             .Concat(clip.Attachments.SelectMany(t => t.Keys).Select(k => k.Time)).Concat(clip.Colors.SelectMany(t => t.Keys).Select(k => k.Time))
             .Concat(clip.DrawOrder.Select(k => k.Time));
+        }
+
         var sorted = times.Order().ToList(); var distinct = new List<float>();
         foreach (var time in sorted) if (distinct.Count == 0 || time - distinct[^1] > SameTime) distinct.Add(time);
         return distinct;
@@ -211,8 +215,10 @@ public static class ClipAuthoring
         foreach (var key in Tracks(clip, channels).SelectMany(t => t.Keys).Concat(channels is null ? clip.Travel.Keys : []).Where(k => MathF.Abs(k.Time - time) < SameTime))
         { key.Ease = ease; key.Curve = key.CurveY = key.CurveZ = null; }
         if (channels is null)
+        {
             foreach (var key in clip.Colors.SelectMany(t => t.Keys).Where(k => MathF.Abs(k.Time - time) < SameTime))
             { key.Ease = ease; key.CurveR = key.CurveG = key.CurveB = key.CurveA = null; }
+        }
     }
 
     public static void SetCurve(MotionClip clip, Channel channel, float time, int component, KeyCurve2D? curve)

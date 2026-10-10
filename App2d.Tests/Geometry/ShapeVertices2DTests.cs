@@ -57,13 +57,13 @@ public sealed class ShapeVertices2DTests
         var rounded = new RoundedRectangle2D(new(-2, -1), new(2, 1), .5f);
         var core = rounded.GetVerts(buffer, out var radius);
         Assert.Equal(.5f, radius);
-        Assert.Equal(new Vector2[] { new(-1.5f, -.5f), new(1.5f, -.5f), new(1.5f, .5f), new(-1.5f, .5f) }, core.ToArray());
+        Assert.Equal([new(-1.5f, -.5f), new(1.5f, -.5f), new(1.5f, .5f), new(-1.5f, .5f)], core.ToArray());
 
         var capsule = RoundedRectangle2D.FromSize(new(4, 2), 1);
-        Assert.Equal(new Vector2[] { new(-1, 0), new(1, 0) }, capsule.GetVerts(buffer, out radius).ToArray());
+        Assert.Equal([new(-1, 0), new(1, 0)], capsule.GetVerts(buffer, out radius).ToArray());
         Assert.Equal(1f, radius);
         var circle = RoundedRectangle2D.FromSize(new(2, 2), 1, new(3, 4));
-        Assert.Equal(new Vector2[] { new(3, 4) }, circle.GetVerts(buffer, out radius).ToArray());
+        Assert.Equal([new(3, 4)], circle.GetVerts(buffer, out radius).ToArray());
         Assert.Equal(1f, radius);
     }
 
@@ -101,7 +101,7 @@ public sealed class ShapeVertices2DTests
         foreach (var shape in shapes)
         {
             Assert.Equal(0, shape.GetVertCount());
-            Assert.Throws<NotSupportedException>(() => { shape.GetVerts(new Vector2[64], out _); });
+            Assert.Throws<NotSupportedException>(() => shape.GetVerts(new Vector2[64], out _));
         }
         var ellipse = shapes[0];
         Span<Vector2> buffer = stackalloc Vector2[64];
@@ -111,8 +111,8 @@ public sealed class ShapeVertices2DTests
         Assert.Equal(Ellipse2D.CollisionSegments, WorldShape2D.WriteWorldConvexCore(ellipse, Similarity2D.Identity, buffer, out var radius));
         Assert.Equal(0f, radius);
         Assert.Equal(6, shapes[1].GetOutlineVerts(buffer).Length);
-        Assert.Throws<NotSupportedException>(() => { shapes[2].GetOutlineVerts(new Vector2[64]); });
-        Assert.Throws<NotSupportedException>(() => { shapes[3].GetOutlineVerts(new Vector2[64]); });
+        Assert.Throws<NotSupportedException>(() => shapes[2].GetOutlineVerts(new Vector2[64]));
+        Assert.Throws<NotSupportedException>(() => shapes[3].GetOutlineVerts(new Vector2[64]));
     }
 
     [Fact]
@@ -120,9 +120,9 @@ public sealed class ShapeVertices2DTests
     {
         var rectangle = Rectangle2D.FromSize(new Vector2(2, 2));
         var shortBuffer = Enumerable.Repeat(new Vector2(123), 3).ToArray();
-        Assert.Throws<ArgumentOutOfRangeException>(() => { rectangle.GetVerts(shortBuffer, out _); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => rectangle.GetVerts(shortBuffer, out _));
         Assert.All(shortBuffer, point => Assert.Equal(new Vector2(123), point));
-        Assert.Throws<ArgumentOutOfRangeException>(() => { rectangle.GetOutlineVerts(shortBuffer); });
+        Assert.Throws<ArgumentOutOfRangeException>(() => rectangle.GetOutlineVerts(shortBuffer));
         Assert.Throws<ArgumentException>(() => rectangle.GetOutlineVertCount(2));
     }
 }

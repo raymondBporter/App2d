@@ -53,7 +53,7 @@ public sealed class PuppetDrawing
         var ink = ColorExtensions.FromHexRgb(prop.Ink);
         foreach (var shape in prop.Shapes)
         {
-            var points = shape.Points.Select(p => ActorPose.PropPoint(frame, prop, p)).ToList();
+            var points = shape.Points.ConvertAll(p => ActorPose.PropPoint(frame, prop, p));
             var material = shape.RenderMaterial;
             var outline = material.Outline;
             var outlineColor = outline?.Color is { } color ? ColorExtensions.FromHexRgb(color) : ink;

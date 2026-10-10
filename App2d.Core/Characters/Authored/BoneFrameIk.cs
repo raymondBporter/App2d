@@ -40,7 +40,10 @@ internal static class BoneFrameIk
         var size = x.LengthSquared(); var length = bone.Length * MathF.Sqrt(size);
         if (!float.IsFinite(length) || length < .01f || !float.IsFinite(y.LengthSquared())
             || MathF.Abs(size - y.LengthSquared()) > size * 1e-4f || MathF.Abs(Vector2.Dot(x, y)) > size * 1e-4f)
+        {
             throw new InvalidDataException($"Bone constraint '{chain.Id}': '{bone.Id}' needs a uniform, unsheared frame and a world segment of at least 0.01; collapsed or nonuniform animated scales are unsupported.");
+        }
+
         var tip = new Vector2(frame.M31, frame.M32) + x * bone.Length;
         var actual = new Vector2(child.M31, child.M32);
         if (!float.IsFinite(actual.X) || !float.IsFinite(actual.Y) || Vector2.Distance(tip, actual) > MathF.Max(1e-5f, length * 1e-4f))

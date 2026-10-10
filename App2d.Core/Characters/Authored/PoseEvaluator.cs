@@ -115,10 +115,13 @@ public static class PoseEvaluator
                 var shear = Delta(MotionClip.ShearKind, control.Id, CharacterModel.Unit);
                 var local = setup with
                 {
-                    X = setup.X + translate.X, Y = setup.Y + translate.Y,
+                    X = setup.X + translate.X,
+                    Y = setup.Y + translate.Y,
                     Rotation = setup.Rotation + Angle(control.Id),
-                    ScaleX = setup.ScaleX * (1 + scale.X), ScaleY = setup.ScaleY * (1 + scale.Y),
-                    ShearX = setup.ShearX + shear.X, ShearY = setup.ShearY + shear.Y
+                    ScaleX = setup.ScaleX * (1 + scale.X),
+                    ScaleY = setup.ScaleY * (1 + scale.Y),
+                    ShearX = setup.ShearX + shear.X,
+                    ShearY = setup.ShearY + shear.Y
                 };
                 var parent = control.Parent is null ? Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y) : pose.Bones[control.Parent];
                 var matrix = local.Matrix * parent;

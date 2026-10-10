@@ -32,7 +32,10 @@ public sealed class RenderMaterialDefinition2DTests
     {
         var part = new PuppetPart
         {
-            A = "root", Face = "none", Width = 1, Height = 1,
+            A = "root",
+            Face = "none",
+            Width = 1,
+            Height = 1,
             Geometry = RectangleShapeDefinition2D.FromSize(Vector2.One),
             Material = new()
             {
@@ -61,7 +64,8 @@ public sealed class RenderMaterialDefinition2DTests
     {
         var prop = new PropAsset
         {
-            Id = "material-prop", Name = "Material prop",
+            Id = "material-prop",
+            Name = "Material prop",
             Shapes =
             [
                 new PropShape
@@ -108,7 +112,8 @@ public sealed class RenderMaterialDefinition2DTests
     {
         var prop = new PropAsset
         {
-            Id = "undo-prop", Name = "Undo prop",
+            Id = "undo-prop",
+            Name = "Undo prop",
             Shapes = [new()
             {
                 Geometry = new LineCurveDefinition2D { Start = new(0, 0), End = new(1, 0) },

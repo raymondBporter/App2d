@@ -56,7 +56,6 @@ internal sealed class RigRectangleShape2D(int id, string name, RigBone2D bone) :
     private float _height = 40f;
     private float _cornerRadius;
 
-
     [Category("Geometry")]
     public float Width
     {
@@ -91,7 +90,6 @@ internal sealed class RigCircleShape2D(int id, string name, RigBone2D bone) : Ri
 {
     private float _radius = 35f;
 
-
     [Category("Geometry")]
     public float Radius
     {
@@ -106,7 +104,6 @@ internal sealed class RigCapsuleShape2D(int id, string name, RigBone2D bone) : R
 {
     private float _length = 100f;
     private float _radius = 20f;
-
 
     [Category("Geometry")]
     public float Length
@@ -129,7 +126,6 @@ internal sealed class RigCapsuleShape2D(int id, string name, RigBone2D bone) : R
 internal sealed class RigPolygonShape2D(int id, string name, RigBone2D bone) : RigShape2D(id, name, bone)
 {
     private string _vertices = "-45,-30; 45,-30; 55,15; 0,45; -55,15";
-
 
     [Category("Geometry"), Description("Convex perimeter vertices formatted as x,y; x,y; ...")]
     public string Vertices

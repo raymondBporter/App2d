@@ -9,24 +9,18 @@ namespace App2d.Core;
 /// <summary>
 /// A render-agnostic immutable shape placed in world space. Owns local and world bounds caches.
 /// </summary>
-public class SpatialObject2D
+public class SpatialObject2D(IShape2D shape)
 {
     private Rect2D _worldBounds;
     private int _worldBoundsVersion = -1;
     private Similarity2D _collisionPose;
     private int _collisionPoseVersion = -1;
 
-    public SpatialObject2D(IShape2D shape)
-    {
-        Shape = ArgGuard.RequireNotNull(shape);
-        LocalBounds = ShapeBounds2D.Calculate(shape);
-    }
-
     public Affine2D Transform { get; } = new();
-    public IShape2D Shape { get; }
+    public IShape2D Shape { get; } = ArgGuard.RequireNotNull(shape);
 
     /// <summary>Calculated once when the immutable shape is attached; independent of this object's transform.</summary>
-    public Rect2D LocalBounds { get; }
+    public Rect2D LocalBounds { get; } = ShapeBounds2D.Calculate(shape);
 
     public Rect2D WorldBounds
     {

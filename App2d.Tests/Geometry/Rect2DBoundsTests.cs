@@ -29,7 +29,7 @@ public sealed class Rect2DBoundsTests
         Assert.Equal(new Rect2D(new(3, 4), new(3, 4)), Rect2D.FromPoints(points.AsSpan(0, 1)));
         Assert.Equal(new Rect2D(new(-2, -4), new(10, 7)),
             bounds.Union(new Rect2D(new(8, -4), new(10, 3))));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2D.FromPoints(ReadOnlySpan<Vector2>.Empty));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2D.FromPoints([]));
     }
 
     [Fact]

@@ -172,16 +172,24 @@ public sealed class PropAsset
         {
             if (group.Value.ValueKind != JsonValueKind.Array ||
                 !group.Name.Equals("shapes", StringComparison.OrdinalIgnoreCase) &&
-                !group.Name.Equals("solids", StringComparison.OrdinalIgnoreCase)) continue;
+                !group.Name.Equals("solids", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             foreach (var item in group.Value.EnumerateArray())
             {
                 if (item.ValueKind != JsonValueKind.Object) continue;
                 foreach (var field in item.EnumerateObject())
+                {
                     if (field.Name.Equals("kind", StringComparison.OrdinalIgnoreCase) ||
                         field.Name.Equals("points", StringComparison.OrdinalIgnoreCase) ||
                         field.Name.Equals("fill", StringComparison.OrdinalIgnoreCase) ||
                         field.Name.Equals("outlined", StringComparison.OrdinalIgnoreCase))
+                    {
                         throw new JsonException($"Prop field '{field.Name}' is from the old drawing format; use geometry and material.");
+                    }
+                }
             }
         }
     }

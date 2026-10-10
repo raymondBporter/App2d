@@ -16,7 +16,8 @@ public sealed record PartOverride
     public string? Face { get; set; }
     public float? FaceX { get; set; }
     public bool? Hidden { get; set; }
-    [JsonIgnore] public bool IsEmpty => Width is null && Height is null && OffsetX is null && OffsetY is null &&
+    [JsonIgnore]
+    public bool IsEmpty => Width is null && Height is null && OffsetX is null && OffsetY is null &&
         Material?.Fill is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&
         Material?.Texture is null && Material?.Tint is null &&
         Paint is null && Face is null && FaceX is null && Hidden is null;

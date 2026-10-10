@@ -22,20 +22,24 @@ public sealed class RigConstraintTests
         clip.Contacts = [new() { Chain = "leg", Start = .2f, Finish = .7f, Target = new(.03f, .01f, .1f) }];
         clip.Validate(after);
         foreach (var time in new[] { 0, .2, .35, .69999, .7, 1, 2.35 })
-        foreach (var weight in new[] { 0, .5f, 1 })
         {
-            var input = new PoseInput
+            foreach (var weight in new[] { 0, .5f, 1 })
             {
-                InPlace = true, ReverseHorizontalMotion = true, Contact = (_, p) => p + new Vector3(.01f, .02f, 0),
-                Overlay = new(clip, .3, new HashSet<string> { "leg" }, weight)
-            };
-            var a = PoseEvaluator.Sample(before, clip, time, true, input); var b = PoseEvaluator.Sample(after, clip, time, true, input);
-            foreach (var control in before.Order)
-            {
-                Assert.Equal(a.Points[control.Id], b.Points[control.Id]); Assert.Equal(a.Bones[control.Id], b.Bones[control.Id]);
-                Assert.Equal(a.Angles[control.Id], b.Angles[control.Id]);
+                var input = new PoseInput
+                {
+                    InPlace = true,
+                    ReverseHorizontalMotion = true,
+                    Contact = (_, p) => p + new Vector3(.01f, .02f, 0),
+                    Overlay = new(clip, .3, new HashSet<string> { "leg" }, weight)
+                };
+                var a = PoseEvaluator.Sample(before, clip, time, true, input); var b = PoseEvaluator.Sample(after, clip, time, true, input);
+                foreach (var control in before.Order)
+                {
+                    Assert.Equal(a.Points[control.Id], b.Points[control.Id]); Assert.Equal(a.Bones[control.Id], b.Bones[control.Id]);
+                    Assert.Equal(a.Angles[control.Id], b.Angles[control.Id]);
+                }
+                Assert.Equal(a.Chains, b.Chains); Assert.Equal(a.Contacts, b.Contacts);
             }
-            Assert.Equal(a.Chains, b.Chains); Assert.Equal(a.Contacts, b.Contacts);
         }
     }
 
@@ -108,7 +112,8 @@ public sealed class RigConstraintTests
         var overlay = Aim(resolved, new(1.2f, .8f, .2f));
         var fading = PoseEvaluator.Sample(resolved, clip, .5, input: new()
         {
-            Contact = (_, p) => { calls++; return p; }, Overlay = new(overlay, .5, new HashSet<string> { "reach" }, .5f)
+            Contact = (_, p) => { calls++; return p; },
+            Overlay = new(overlay, .5, new HashSet<string> { "reach" }, .5f)
         });
         TestModels.Near(new(1.1f, .95f, .2f), fading.World("tool")); Assert.Empty(fading.Contacts); Assert.Equal(1, calls);
         var released = PoseEvaluator.Sample(resolved, clip, .5, input: new() { Overlay = new(overlay, .5, new HashSet<string> { "reach" }) });
@@ -285,7 +290,8 @@ public sealed class RigConstraintTests
     {
         var model = new CharacterModel
         {
-            Id = "machine", Name = "Machine",
+            Id = "machine",
+            Name = "Machine",
             Controls =
             [
                 new() { Id = "carrier", Transform = affine ? new() : null },
