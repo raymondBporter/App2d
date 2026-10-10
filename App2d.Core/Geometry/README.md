@@ -67,6 +67,15 @@ bounds cache. The switch tables map a shape to raw parameters once:
 `TriangleMesh2D` is a mesh, not a shape; `ToCompositeShape()` bridges to collision. `CompositeShape2D` is the
 non-convex shape and always resolves per part.
 
+Composite area is cached at construction. The default sums part areas, including overlap; use
+`new CompositeShape2D(parts, includeOverlap: false)` to count the covered region once. `ShapeArea2D.Union(parts)`
+also calculates that area directly. Circles stay analytic, and rectangles, triangles and convex polygons use
+their exact edges. The shared boundary integral keeps only exposed edges and circular arcs, handling multiple
+overlaps, disconnected regions and holes. Two axis-aligned rectangles use a direct formula.
+Other curves use inscribed polygon outlines; `areaOutlineSegments` (default 64) controls this approximation,
+including custom convex shapes sampled through their support mapping. This sampling affects area only.
+The area mode and sample count survive shape-definition JSON round trips; older definitions retain summed area.
+
 `ShapeDefinition2D` is the editable, JSON-tagged form of every built-in shape, mirroring `CurveDefinition2D`:
 `FromShape(shape).ToJson()` writes it, `FromJson(json).Build()` reads it back through the validating constructors,
 and `ShapeKinds2D` lists the kind tags, also available as `IShape2D.Kind` on runtime shapes. Both definition families

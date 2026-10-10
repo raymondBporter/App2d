@@ -3,7 +3,7 @@ using System.Numerics;
 namespace App2d.Core.Geometry;
 
 /// <summary>Areas of raw primitives. Inputs are finite; radii and extents are nonnegative.</summary>
-public static class Area2D
+public static partial class Area2D
 {
     /// <summary>The area of a circle.</summary>
     /// <param name="radius">The circle radius.</param>
@@ -27,6 +27,15 @@ public static class Area2D
     /// <param name="max">The upper-right corner.</param>
     /// <returns>Width times height.</returns>
     public static float Rectangle(Vector2 min, Vector2 max) => (max.X - min.X) * (max.Y - min.Y);
+
+    /// <summary>The area covered by two ordered axis-aligned rectangles, counting overlap once.</summary>
+    public static float RectangleUnion(Vector2 firstMin, Vector2 firstMax, Vector2 secondMin, Vector2 secondMax)
+    {
+        var width = Math.Max(0d, (double)Math.Min(firstMax.X, secondMax.X) - Math.Max(firstMin.X, secondMin.X));
+        var height = Math.Max(0d, (double)Math.Min(firstMax.Y, secondMax.Y) - Math.Max(firstMin.Y, secondMin.Y));
+        return (float)(((double)firstMax.X - firstMin.X) * ((double)firstMax.Y - firstMin.Y)
+            + ((double)secondMax.X - secondMin.X) * ((double)secondMax.Y - secondMin.Y) - width * height);
+    }
 
     /// <summary>The rectangle area minus the four square corners outside its circular arcs.</summary>
     /// <param name="min">The lower-left corner of the outer rectangle.</param>

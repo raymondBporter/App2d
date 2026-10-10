@@ -66,7 +66,12 @@ public abstract record ShapeDefinition2D : GeometryDefinition2D
         ConvexPolygon2D polygon => new ConvexPolygonShapeDefinition2D { Vertices = [.. polygon.Vertices] },
         SimplePolygon2D polygon => new SimplePolygonShapeDefinition2D { Vertices = [.. polygon.Vertices] },
         HalfSpace2D halfSpace => new HalfSpaceShapeDefinition2D { Normal = halfSpace.Normal, Offset = halfSpace.Offset },
-        CompositeShape2D composite => new CompositeShapeDefinition2D { Parts = [.. composite.Parts.ToArray().Select(FromShape)] },
+        CompositeShape2D composite => new CompositeShapeDefinition2D
+        {
+            Parts = [.. composite.Parts.ToArray().Select(FromShape)],
+            IncludeOverlap = composite.IncludeOverlap,
+            AreaOutlineSegments = composite.AreaOutlineSegments
+        },
         null => throw new ArgumentNullException(nameof(shape)),
         _ => throw new NotSupportedException($"No shape definition exists for {shape.GetType().Name}.")
     };
@@ -203,6 +208,10 @@ public sealed record HalfSpaceShapeDefinition2D : ShapeDefinition2D
 public sealed record CompositeShapeDefinition2D : ShapeDefinition2D
 {
     public required List<ShapeDefinition2D> Parts { get; init; }
+    public bool IncludeOverlap { get; init; } = true;
+    public int AreaOutlineSegments { get; init; } = ShapeArea2D.DefaultOutlineSegments;
     [JsonIgnore] public override string Kind => ShapeKinds2D.Composite;
-    public override IShape2D Build() => new CompositeShape2D(Parts.Select(part => part.Build() as IConvexShape2D ?? throw new InvalidOperationException($"Composite parts must be convex; a {part.Kind} is not.")));
+    public override IShape2D Build() => new CompositeShape2D(
+        Parts.Select(part => part.Build() as IConvexShape2D ?? throw new InvalidOperationException($"Composite parts must be convex; a {part.Kind} is not.")),
+        IncludeOverlap, AreaOutlineSegments);
 }
