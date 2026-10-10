@@ -248,15 +248,144 @@ public sealed class ShapeArea2DTests
     }
 
     [Theory]
-    [InlineData("Capsule")]
-    [InlineData("RoundedRectangle")]
-    public void PolygonizedCurvesConvergeAsTheSampleCountIncreases(string kind)
+    [InlineData(2f, 0f, 1f)]
+    [InlineData(0f, 2f, 1f)]
+    [InlineData(3f, 4f, .25f)]
+    [InlineData(-3f, 4f, 1f)]
+    [InlineData(3f, -4f, .3f)]
+    [InlineData(2f, 3f, .001f)]
+    [InlineData(.01f, 0f, 2f)]
+    [InlineData(0f, 0f, 1f)]
+    [InlineData(1e-18f, 0f, 1f)]
+    public void CapsuleBoundariesStayAnalyticInEverySpineDirection(float x, float y, float radius)
     {
-        IConvexShape2D shape = kind switch
+        var capsule = new Capsule2D(Vector2.Zero, new(x, y), radius);
+        var reversed = new Capsule2D(capsule.End, capsule.Start, radius);
+        var expected = 2d * radius * Math.Sqrt((double)x * x + (double)y * y) + Math.PI * radius * radius;
+        var actual = ShapeArea2D.Union([capsule, reversed], 3);
+        Assert.InRange(Math.Abs(actual - expected), 0, expected * 2e-6);
+        Assert.Equal(actual, ShapeArea2D.Union([capsule, capsule], 128));
+        Assert.Equal(actual, ShapeArea2D.Union([reversed, capsule], 8));
+    }
+
+    [Fact]
+    public void CollinearCapsulesMergeTheirStraightEdgesAndEndCaps()
+    {
+        var first = new Capsule2D(new(-2, 0), Vector2.Zero, 1);
+        var second = new Capsule2D(new(-1, 0), new(2, 0), 1);
+        var adjacent = new Capsule2D(Vector2.Zero, new(2, 0), 1);
+        var contained = new Capsule2D(new(-1, 0), new(1, 0), .5f);
+        Assert.Equal(8 + MathF.PI, ShapeArea2D.Union([first, second, contained]), 5);
+        Assert.Equal(8 + MathF.PI, ShapeArea2D.Union([first, adjacent]), 5);
+        var left = new Capsule2D(new(-4, 0), new(-2, 0), 3);
+        var right = new Capsule2D(new(2, 0), new(4, 0), 3);
+        Assert.Equal((float)(24 + 18 * Math.PI - CircleLens(3, 3, 4)), ShapeArea2D.Union([left, right]), 5);
+    }
+
+    [Fact]
+    public void CrossingAndTouchingCapsulesCountCoveredRegionsOnce()
+    {
+        var horizontal = new Capsule2D(new(-2, 0), new(2, 0), 1);
+        var vertical = new Capsule2D(new(0, -2), new(0, 2), 1);
+        Assert.Equal(12 + 2 * MathF.PI, ShapeArea2D.Union([horizontal, vertical, new Circle2D(.5f)]), 5);
+        Assert.Equal(ShapeArea2D.Union([horizontal, vertical]), ShapeArea2D.Union([vertical, horizontal]));
+        var touching = new Capsule2D(new(-2, 2), new(2, 2), 1);
+        Assert.Equal(16 + 2 * MathF.PI, ShapeArea2D.Union([horizontal, touching]), 5);
+    }
+
+    [Fact]
+    public void CapsuleUnionsWithCirclesEllipsesAndPolygonsKeepExposedArcsAndEdges()
+    {
+        var capsule = new Capsule2D(new(-1, 0), new(1, 0), 1);
+        Assert.Equal(capsule.Area, ShapeArea2D.Union([capsule, new Circle2D(1, new(1, 0))]), 5);
+        Assert.Equal(capsule.Area, ShapeArea2D.Union([capsule, new Ellipse2D(new(1, .5f))]), 5);
+        Assert.Equal(6 * MathF.PI, ShapeArea2D.Union([capsule, new Ellipse2D(new(3, 2))]), 5);
+        Assert.Equal(24, ShapeArea2D.Union([capsule, new Rectangle2D(new(-3, -2), new(3, 2))]));
+        Assert.Equal(capsule.Area, ShapeArea2D.Union([capsule, new Rectangle2D(new(-1, -1), new(1, 1))]), 5);
+        Assert.Equal(8 + MathF.PI / 2, ShapeArea2D.Union([capsule, new Rectangle2D(new(0, -1), new(3, 1))]), 5);
+        Assert.Equal(10 + MathF.PI / 2, ShapeArea2D.Union([capsule, new Triangle2D(new(0, -2), new(4, 0), new(0, 2))]), 5);
+        var pointCapsule = new Capsule2D(Vector2.Zero, Vector2.Zero, 1);
+        Assert.Equal((float)(2 * Math.PI - CircleLens(1, 1, 1)), ShapeArea2D.Union([pointCapsule, new Circle2D(1, Vector2.UnitX)]), 5);
+    }
+
+    [Fact]
+    public void SmallCapsuleRadiiSurviveLargeTranslationsAndUniformScaling()
+    {
+        var offset = new Vector2(1 << 20, -(1 << 20));
+        var capsule = new Capsule2D(Vector2.Zero, new(3, 4), .001f);
+        var moved = new Capsule2D(offset, offset + new Vector2(3, 4), capsule.Radius);
+        var expected = ShapeArea2D.Union([capsule, capsule]);
+        Assert.Equal(expected, ShapeArea2D.Union([moved, moved]));
+        Assert.InRange(Math.Abs(expected - (10d * capsule.Radius + Math.PI * capsule.Radius * capsule.Radius)), 0, 2e-8);
+        foreach (var scale in new[] { 1e-8f, 1e8f })
         {
-            "Capsule" => new Capsule2D(new(-1, 0), new(1, 0), 1),
-            _ => new RoundedRectangle2D(new(-2, -1), new(2, 1), .5f)
-        };
+            var scaled = new Capsule2D(Vector2.Zero, scale * new Vector2(3, 4), scale * capsule.Radius);
+            var actual = ShapeArea2D.Union([scaled, scaled]) / scale / scale;
+            Assert.InRange(MathF.Abs(actual - expected), 0, expected * 2e-6f);
+        }
+        var farCircle = new Capsule2D(new(1e20f, -1e20f), new(1e20f, -1e20f), 1);
+        Assert.Equal(MathF.PI, ShapeArea2D.Union([farCircle, farCircle]), 5);
+    }
+
+    [Fact]
+    public void DisjointRotatedCapsulesRetainTheirOwnAreasInDifferentCoordinateFrames()
+    {
+        var first = new Capsule2D(new(-1.7308766f, -1.4338739f), new(-2.312859f, -1.8960081f), .5353085f);
+        var second = new Capsule2D(new(1.833708f, .050317526f), new(2.3724792f, .65145564f), .44707787f);
+        var offset = new Vector2(1 << 20, -(1 << 20));
+        var moved = new Capsule2D(second.Start + offset, second.End + offset, second.Radius);
+        foreach (var other in new[] { second, moved })
+        {
+            var expected = first.Area + other.Area;
+            Assert.InRange(MathF.Abs(ShapeArea2D.Union([first, other]) - expected), 0, 2e-6f);
+            Assert.InRange(MathF.Abs(ShapeArea2D.Union([other, first]) - expected), 0, 2e-6f);
+        }
+    }
+
+    [Fact]
+    public void MixedCapsuleUnionsAgreeWithIndependentDistanceCrossSections()
+    {
+        var random = new Random(71653);
+        for (var sample = 0; sample < 20; sample++)
+        {
+            IConvexShape2D[] parts = new IConvexShape2D[6];
+            for (var i = 0; i < parts.Length; i++)
+            {
+                var center = new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
+                parts[i] = i switch
+                {
+                    0 or 1 => new Capsule2D(center, center + new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2), .15f + (float)random.NextDouble() * .75f),
+                    2 => new Circle2D(.3f + (float)random.NextDouble(), center),
+                    3 => new Ellipse2D(new(.2f + (float)random.NextDouble() * 2, .2f + (float)random.NextDouble() * 2), center),
+                    _ => Rectangle2D.FromSize(new Vector2(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble()), center)
+                };
+            }
+            var expected = CrossSectionArea(parts);
+            var actual = ShapeArea2D.Union(parts, 3);
+            Assert.True(Math.Abs(actual - expected) <= .0003d, $"Sample {sample}: expected {expected}, actual {actual}.");
+            Assert.Equal(actual, ShapeArea2D.Union(parts.Reverse().ToArray(), 128), 5);
+        }
+    }
+
+    [Fact]
+    public void CapsuleCompositeCachesAreaAndKeepsItsPartsInJson()
+    {
+        IConvexShape2D[] parts = [new Capsule2D(new(-2, 0), new(2, 0), 1), new Capsule2D(new(0, -2), new(0, 2), 1)];
+        var composite = new CompositeShape2D(parts, includeOverlap: false, areaOutlineSegments: 3);
+        Assert.Equal(12 + 2 * MathF.PI, composite.Area, 5);
+        Assert.Equal(16 + 2 * MathF.PI, new CompositeShape2D(parts).Area, 5);
+        var restored = Assert.IsType<CompositeShape2D>(ShapeDefinition2D.FromJson(ShapeDefinition2D.FromShape(composite).ToJson()).Build());
+        Assert.Equal(2, restored.Parts.Length);
+        foreach (var part in restored.Parts) Assert.IsType<Capsule2D>(part);
+        Assert.Equal(3, restored.AreaOutlineSegments);
+        Assert.False(restored.IncludeOverlap);
+        Assert.Equal(composite.Area, restored.Area);
+    }
+
+    [Fact]
+    public void PolygonizedRoundedRectanglesConvergeAsTheSampleCountIncreases()
+    {
+        var shape = new RoundedRectangle2D(new(-2, -1), new(2, 1), .5f);
         var coarse = ShapeArea2D.Union([shape, shape], 8);
         var fine = ShapeArea2D.Union([shape, shape], 128);
         Assert.True(coarse < fine);
@@ -348,6 +477,30 @@ public sealed class ShapeArea2DTests
                 }
                 else if (part is Rectangle2D rectangle && x > rectangle.Min.X && x < rectangle.Max.X)
                     intervals.Add((rectangle.Min.Y, rectangle.Max.Y));
+                else if (part is Capsule2D capsule)
+                {
+                    if (x <= Math.Min(capsule.Start.X, capsule.End.X) - (double)capsule.Radius || x >= Math.Max(capsule.Start.X, capsule.End.X) + (double)capsule.Radius) continue;
+                    var dx = (double)capsule.End.X - capsule.Start.X;
+                    var dy = (double)capsule.End.Y - capsule.Start.Y;
+                    var parameter = dx == 0d ? .5d : Math.Clamp((x - capsule.Start.X) / dx, 0d, 1d);
+                    var inside = capsule.Start.Y + parameter * dy;
+                    var lowOutside = Math.Min(capsule.Start.Y, capsule.End.Y) - (double)capsule.Radius;
+                    var lowInside = inside;
+                    var highInside = inside;
+                    var highOutside = Math.Max(capsule.Start.Y, capsule.End.Y) + (double)capsule.Radius;
+                    // Locate the two vertical crossings using distance to the spine, independently
+                    // of the production rectangle-and-disks boundary decomposition.
+                    for (var step = 0; step < 32; step++)
+                    {
+                        var lowMiddle = (lowOutside + lowInside) * .5d;
+                        if (CapsuleContains(capsule, x, lowMiddle)) lowInside = lowMiddle;
+                        else lowOutside = lowMiddle;
+                        var highMiddle = (highInside + highOutside) * .5d;
+                        if (CapsuleContains(capsule, x, highMiddle)) highInside = highMiddle;
+                        else highOutside = highMiddle;
+                    }
+                    intervals.Add((lowInside, highInside));
+                }
             }
             intervals.Sort(static (a, b) => a.Low.CompareTo(b.Low));
             var end = double.NegativeInfinity;
@@ -358,6 +511,17 @@ public sealed class ShapeArea2DTests
             }
         }
         return area;
+    }
+
+    private static bool CapsuleContains(Capsule2D capsule, double x, double y)
+    {
+        var dx = (double)capsule.End.X - capsule.Start.X;
+        var dy = (double)capsule.End.Y - capsule.Start.Y;
+        var lengthSquared = dx * dx + dy * dy;
+        var parameter = lengthSquared == 0 ? 0 : Math.Clamp(((x - capsule.Start.X) * dx + (y - capsule.Start.Y) * dy) / lengthSquared, 0, 1);
+        var ox = x - capsule.Start.X - parameter * dx;
+        var oy = y - capsule.Start.Y - parameter * dy;
+        return ox * ox + oy * oy <= (double)capsule.Radius * capsule.Radius;
     }
 
     private sealed class CountingCircle : IConvexShape2D

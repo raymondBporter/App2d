@@ -2,6 +2,7 @@ using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace App2d.Core.Shapes;
 
@@ -11,7 +12,7 @@ public static class ShapeArea2D
     public const int DefaultOutlineSegments = 64;
 
     /// <summary>
-    /// Counts overlap once. Circles, ellipses, rectangles, triangles and convex polygons use analytic boundaries;
+    /// Counts overlap once. Circles, ellipses, capsules, rectangles, triangles and convex polygons use analytic boundaries;
     /// other shapes use inscribed polygon outlines. Disconnected regions and holes are supported.
     /// </summary>
     /// <param name="parts">At least one finite convex part in a shared coordinate space.</param>
@@ -25,23 +26,27 @@ public static class ShapeArea2D
         if (parts.Length == 2 && parts[0] is IRect2D first && parts[1] is IRect2D second)
             return Area2D.RectangleUnion(first.Min, first.Max, second.Min, second.Max);
 
-        var boundaries = new Area2D.UnionPart[parts.Length];
-        for (var i = 0; i < parts.Length; i++)
+        var boundaries = new List<Area2D.UnionPart>(parts.Length);
+        foreach (var shape in parts)
         {
-            var shape = parts[i];
             if (shape is Circle2D circle)
             {
-                boundaries[i] = new(circle.Center, circle.Radius);
+                boundaries.Add(new(circle.Center, circle.Radius));
                 continue;
             }
             if (shape is Ellipse2D ellipse)
             {
-                boundaries[i] = new(ellipse.Center, ellipse.Radii);
+                boundaries.Add(new(ellipse.Center, ellipse.Radii));
+                continue;
+            }
+            if (shape is Capsule2D capsule)
+            {
+                AddCapsule(boundaries, capsule);
                 continue;
             }
             if (shape is ConvexPolygon2D polygon)
             {
-                boundaries[i] = new(polygon.Vertices);
+                boundaries.Add(new(polygon.Vertices));
                 continue;
             }
             Vector2[] vertices;
@@ -65,8 +70,26 @@ public static class ShapeArea2D
                     }
                 }
             }
-            boundaries[i] = new(vertices);
+            boundaries.Add(new(vertices));
         }
-        return Area2D.Union(boundaries);
+        return Area2D.Union(CollectionsMarshal.AsSpan(boundaries));
+    }
+
+    private static void AddCapsule(List<Area2D.UnionPart> boundaries, Capsule2D capsule)
+    {
+        var start = capsule.Start;
+        var end = capsule.End;
+        // Reversed spines describe the same capsule; canonical order makes their rectangle boundaries identical.
+        if (start.X > end.X || start.X == end.X && start.Y > end.Y) (start, end) = (end, start);
+        boundaries.Add(new(start, capsule.Radius));
+        if (start == end) return;
+
+        var origin = new Area2D.Point(start);
+        var spine = new Area2D.Point(end) - origin;
+        var normal = new Area2D.Point(-spine.Y, spine.X) * (capsule.Radius / Math.Sqrt(spine.Dot(spine)));
+        // A capsule is exactly the union of this rectangle and the two endpoint disks.
+        // Store the rectangle relative to its start; translation happens inside the shared integral.
+        boundaries.Add(new([normal * -1d, spine - normal, spine + normal, normal], origin));
+        boundaries.Add(new(end, capsule.Radius));
     }
 }

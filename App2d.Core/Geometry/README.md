@@ -69,15 +69,21 @@ non-convex shape and always resolves per part.
 
 Composite area is cached at construction. The default sums part areas, including overlap; use
 `new CompositeShape2D(parts, includeOverlap: false)` to count the covered region once. `ShapeArea2D.Union(parts)`
-also calculates that area directly. Circles and ellipses stay analytic, and rectangles, triangles and convex polygons use
+also calculates that area directly. Circles, ellipses and capsules stay analytic, and rectangles, triangles and convex polygons use
 their exact edges. The shared boundary integral keeps only exposed edges and conic arcs, handling multiple
 overlaps, disconnected regions and holes. Two axis-aligned rectangles use a direct formula.
 Ellipse/segment intersections are quadratic in normalized ellipse coordinates; ellipse/ellipse and circle/ellipse
 intersections are quartic and can have four boundary crossings. Two bounded half-angle charts avoid an infinite
 parameter at PI. `PolynomialRoots` isolates real roots using derivatives and bisection; the exposed arcs have an
 elementary Green's-theorem integral. Calculations use double intermediates and return float area, without perimeter
-samples for circles or ellipses. Nearly coincident or tangent roots remain subject to floating-point precision.
-Capsules and rounded rectangles use inscribed polygon outlines; `areaOutlineSegments` (default 64) controls this approximation,
+samples for circles, ellipses or capsules. Nearly coincident or tangent roots remain subject to floating-point precision.
+A capsule contributes its spine rectangle and two endpoint circles to this same union calculation; internal edges
+and arcs disappear through the existing coverage rules. Reversed spines share a canonical rectangle, zero-length
+spines reduce to a circle, and generated rectangle coordinates remain in double precision relative to the spine start.
+Primitive vertices and bounds keep their own coordinate frames; coverage tests translate between these frames,
+and corner contacts within rounding precision provide the cuts where straight edges join circular arcs.
+This decomposition is internal to area calculation; the composite's public part list and JSON retain the original capsules.
+Rounded rectangles use inscribed polygon outlines; `areaOutlineSegments` (default 64) controls this approximation,
 including custom convex shapes sampled through their support mapping. This sampling affects area only.
 The area mode and sample count survive shape-definition JSON round trips; older definitions retain summed area.
 

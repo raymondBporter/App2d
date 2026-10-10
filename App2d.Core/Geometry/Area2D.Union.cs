@@ -5,11 +5,13 @@ namespace App2d.Core.Geometry;
 
 public static partial class Area2D
 {
+    private const double ConicCoincidenceTolerance = 8d * 2.2204460492503131e-16;
+
     // Each convex part has its interior on the left of its boundary. Integrating only the
     // uncovered pieces counts every point once, including when several parts overlap or enclose a hole.
     internal static float Union(ReadOnlySpan<UnionPart> parts)
     {
-        var origin = parts[0].IsCurve ? parts[0].Center : parts[0].Vertices[0];
+        var origin = parts[0].Origin;
         foreach (var part in parts) part.Shift(origin);
         var covered = new List<Interval>();
         var angles = new List<double>();
@@ -42,10 +44,11 @@ public static partial class Area2D
                     for (var j = 0; j < parts.Length; j++)
                     {
                         if (j == i || !part.Overlaps(parts[j])) continue;
-                        if (parts[j].IsCurve) CoverSegmentWithCurve(start, direction, parts[j], covered);
-                        else CoverSegmentWithPolygon(start, direction, parts[j], j < i, covered);
+                        var relativeStart = part.Origin - parts[j].Origin + start;
+                        if (parts[j].IsCurve) CoverSegmentWithCurve(relativeStart, direction, parts[j], covered);
+                        else CoverSegmentWithPolygon(relativeStart, direction, parts[j], j < i, covered);
                     }
-                    AddArea(.5d * start.Cross(direction) * ExposedLength(covered, 1d));
+                    AddArea(.5d * (start.Cross(direction) + part.Origin.Cross(direction)) * ExposedLength(covered, 1d));
                 }
             }
         }
@@ -64,7 +67,7 @@ public static partial class Area2D
     {
         var delta = other.Center - circle.Center;
         var distance = Math.Sqrt(delta.Dot(delta));
-        if (distance == 0d && circle.Radius == other.Radius)
+        if (circle.Radius == other.Radius && distance <= ConicCoincidenceTolerance * circle.Radius)
         {
             if (preferOther) covered.Add(new(0d, Math.Tau));
             return;
@@ -85,10 +88,9 @@ public static partial class Area2D
 
     private static void CoverCurveWithCurve(UnionPart curve, UnionPart other, bool preferOther, List<Interval> covered, List<double> angles)
     {
-        var offset = other.Normalize(curve.Center);
-        const double coincidenceTolerance = 8d * 2.2204460492503131e-16;
+        var offset = other.NormalizeRelative(curve.Center - other.Center);
         // Treat a displacement below conic evaluation precision as a coincident boundary.
-        if (curve.Radii == other.Radii && Math.Abs(offset.X) <= coincidenceTolerance && Math.Abs(offset.Y) <= coincidenceTolerance)
+        if (curve.Radii == other.Radii && Math.Abs(offset.X) <= ConicCoincidenceTolerance && Math.Abs(offset.Y) <= ConicCoincidenceTolerance)
         {
             if (preferOther) covered.Add(new(0d, Math.Tau));
             return;
@@ -124,10 +126,19 @@ public static partial class Area2D
         angles.Clear();
         angles.Add(0d);
         angles.Add(Math.Tau);
+        var offset = polygon.Origin - curve.Origin;
         for (var i = 0; i < polygon.Vertices.Length; i++)
         {
-            var start = polygon.Vertices[i];
-            var direction = polygon.Vertices[(i + 1) % polygon.Vertices.Length] - start;
+            var vertex = polygon.Vertices[i];
+            var start = offset + vertex;
+            var direction = polygon.Vertices[(i + 1) % polygon.Vertices.Length] - vertex;
+            var normalized = curve.NormalizeRelative(start);
+            var magnitude = 1d + (Math.Abs(offset.X) + Math.Abs(vertex.X)) / curve.Radii.X
+                + (Math.Abs(offset.Y) + Math.Abs(vertex.Y)) / curve.Radii.Y;
+            // Preserve corner contacts when a tangent's discriminant or endpoint parameter rounds
+            // just outside the edge. This is especially important at a capsule's arc/edge seams.
+            if (Math.Abs(normalized.Dot(normalized) - 1d) <= 8d * ConicCoincidenceTolerance * magnitude)
+                angles.Add(PositiveAngle(Math.Atan2(normalized.Y, normalized.X)));
             if (!CurveRoots(start, direction, curve, out var low, out var high)) continue;
             AddAngle(low);
             AddAngle(high);
@@ -135,7 +146,7 @@ public static partial class Area2D
             void AddAngle(double parameter)
             {
                 if (parameter < 0d || parameter > 1d) return;
-                var point = curve.Normalize(start + direction * parameter);
+                var point = curve.NormalizeRelative(start + direction * parameter);
                 angles.Add(PositiveAngle(Math.Atan2(point.Y, point.X)));
             }
         }
@@ -150,7 +161,8 @@ public static partial class Area2D
             var low = angles[i - 1];
             var high = angles[i];
             if (high <= low) continue;
-            if (other.ContainsInterior(curve.PointAt((low + high) * .5d))) covered.Add(new(low, high));
+            var point = curve.Origin - other.Origin + curve.PointAt((low + high) * .5d);
+            if (other.ContainsInterior(point)) covered.Add(new(low, high));
         }
     }
 
@@ -163,7 +175,7 @@ public static partial class Area2D
     private static bool CurveRoots(Point start, Point direction, UnionPart curve, out double low, out double high)
     {
         low = high = 0d;
-        var relative = curve.Normalize(start);
+        var relative = curve.NormalizeRelative(start);
         direction = new(direction.X / curve.Radii.X, direction.Y / curve.Radii.Y);
         var lengthSquared = direction.Dot(direction);
         if (lengthSquared == 0d) return false;
@@ -260,11 +272,13 @@ public static partial class Area2D
         internal Point Radii { get; }
         internal double Radius => Radii.X;
         internal Point[] Vertices { get; }
+        internal Point Origin => IsCurve ? Center : _vertexOrigin;
         internal bool IsCurve => Radii.X > 0d;
         internal bool IsCircle => IsCurve && Radii.X == Radii.Y;
-        private Point _min;
-        private Point _max;
+        private readonly Point _min;
+        private readonly Point _max;
         private readonly bool _hasArea;
+        private Point _vertexOrigin;
 
         internal UnionPart(Vector2 center, float radius) : this(center, new Vector2(radius)) { }
 
@@ -274,21 +288,23 @@ public static partial class Area2D
             Radii = new(radii);
             Vertices = [];
             _hasArea = true;
-            _min = Center - Radii;
-            _max = Center + Radii;
+            _min = Radii * -1d;
+            _max = Radii;
         }
 
-        internal UnionPart(ReadOnlySpan<Vector2> vertices)
+        internal UnionPart(ReadOnlySpan<Vector2> vertices) : this(ToPoints(vertices), new Point(vertices[0])) { }
+
+        internal UnionPart(Point[] vertices, Point origin = default)
         {
-            Vertices = new Point[vertices.Length];
-            for (var i = 0; i < vertices.Length; i++) Vertices[i] = new(vertices[i]);
+            Vertices = vertices;
+            _vertexOrigin = origin;
             var areaTwice = 0d;
-            var origin = Vertices[0];
-            _min = _max = origin;
+            var first = Vertices[0];
+            _min = _max = first;
             for (var i = 0; i < Vertices.Length; i++)
             {
                 var point = Vertices[i];
-                areaTwice += (point - origin).Cross(Vertices[(i + 1) % Vertices.Length] - origin);
+                areaTwice += (point - first).Cross(Vertices[(i + 1) % Vertices.Length] - first);
                 _min = new(Math.Min(_min.X, point.X), Math.Min(_min.Y, point.Y));
                 _max = new(Math.Max(_max.X, point.X), Math.Max(_max.Y, point.Y));
             }
@@ -298,30 +314,24 @@ public static partial class Area2D
 
         internal void Shift(Point origin)
         {
-            Center -= origin;
-            if (IsCurve)
-            {
-                _min = Center - Radii;
-                _max = Center + Radii;
-            }
-            else
-            {
-                _min -= origin;
-                _max -= origin;
-            }
-            for (var i = 0; i < Vertices.Length; i++) Vertices[i] -= origin;
+            if (IsCurve) Center -= origin;
+            else _vertexOrigin -= origin;
         }
 
-        internal bool Overlaps(UnionPart other) =>
-            _hasArea && other._hasArea &&
-            _min.X < other._max.X && _max.X > other._min.X && _min.Y < other._max.Y && _max.Y > other._min.Y;
+        internal bool Overlaps(UnionPart other)
+        {
+            var offset = other.Origin - Origin;
+            return _hasArea && other._hasArea &&
+                _min.X < offset.X + other._max.X && _max.X > offset.X + other._min.X &&
+                _min.Y < offset.Y + other._max.Y && _max.Y > offset.Y + other._min.Y;
+        }
 
         internal bool ContainsInterior(Point point)
         {
             if (!_hasArea) return false;
             if (IsCurve)
             {
-                var normalized = Normalize(point);
+                var normalized = NormalizeRelative(point);
                 return normalized.Dot(normalized) < 1d;
             }
             for (var i = 0; i < Vertices.Length; i++)
@@ -332,12 +342,20 @@ public static partial class Area2D
             return true;
         }
 
-        internal Point Normalize(Point point) => new((point.X - Center.X) / Radii.X, (point.Y - Center.Y) / Radii.Y);
+        internal Point NormalizeRelative(Point point) => new(point.X / Radii.X, point.Y / Radii.Y);
 
         internal Point PointAt(double angle)
         {
             var (sin, cos) = EndpointSinCos(angle);
-            return Center + new Point(Radii.X * cos, Radii.Y * sin);
+            return new Point(Radii.X * cos, Radii.Y * sin);
+        }
+
+        private static Point[] ToPoints(ReadOnlySpan<Vector2> vertices)
+        {
+            var points = new Point[vertices.Length];
+            var origin = new Point(vertices[0]);
+            for (var i = 0; i < points.Length; i++) points[i] = new Point(vertices[i]) - origin;
+            return points;
         }
     }
 }
