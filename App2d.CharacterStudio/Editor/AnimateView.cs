@@ -176,10 +176,21 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         if (Ui.LayeredPoint("Delta from rest (reference units)", ref layered, layerIsOffset: true)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, channel.Value, time, layered.ToVector3()));
         if (channel.Value.Kind == MotionClip.TranslateKind)
         {
-            var rotate = new Channel(MotionClip.RotateKind, control);
-            var degrees = ClipAuthoring.Value(clip, rotate, time).Angle * 180 / MathF.PI;
-            if (Ui.Drag("Rotation (degrees, turns children)", ref degrees, .5f, -720, 720)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, degrees * MathF.PI / 180));
-            if (model.Controls[control].Transform is not null)
+            var boneIk = model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == control);
+            if (!boneIk)
+            {
+                var rotate = new Channel(MotionClip.RotateKind, control);
+                var degrees = ClipAuthoring.Value(clip, rotate, time).Angle * 180 / MathF.PI;
+                if (Ui.Drag("Rotation (degrees, turns children)", ref degrees, .5f, -720, 720)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, degrees * MathF.PI / 180));
+            }
+            else Ui.Help("Rotation is solved by the IK target.");
+            if (model.Controls[control].Transform is not null && boneIk)
+            {
+                var scaleChannel = new Channel(MotionClip.ScaleKind, control);
+                var scale = ClipAuthoring.Value(clip, scaleChannel, time).Value.X + 1;
+                if (Ui.Drag("Uniform scale multiplier", ref scale, .01f, .01f, 100)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, scaleChannel, time, new(scale - 1, scale - 1, 0)));
+            }
+            else if (model.Controls[control].Transform is not null)
             {
                 void Axis(string label, string kind, int axis)
                 {
@@ -337,7 +348,9 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
 
     private static IReadOnlyCollection<Channel> RowChannels(ResolvedModel model, string control) =>
         ClipAuthoring.ChannelFor(model, control) is { } channel
-            ? channel.Kind == MotionClip.TranslateKind ? [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.ShearKind, control)] : [channel]
+            ? channel.Kind != MotionClip.TranslateKind ? [channel]
+                : model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == control) ? [channel, new(MotionClip.ScaleKind, control)]
+                : [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.ShearKind, control)]
             : [];
 
     public void Timeline()

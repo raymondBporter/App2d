@@ -1,4 +1,3 @@
-using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -105,7 +104,6 @@ public static class PoseEvaluator
         float LayerAngle(bool fromOverlay, string target) => Read(fromOverlay, MotionClip.RotateKind, target) is { Track: { } track, Time: var at }
             ? Interpolate(track, at).Angle * (input.ReverseHorizontalMotion ? -1 : 1) : 0;
         float Angle(string target) => !Masked(target) ? LayerAngle(false, target) : LayerAngle(false, target) + (LayerAngle(true, target) - LayerAngle(false, target)) * weight;
-        var chainTargets = new Dictionary<string, Vector3>(StringComparer.Ordinal);
 
         var angles = pose.Angles;
         foreach (var control in model.Order)
@@ -138,15 +136,11 @@ public static class PoseEvaluator
             angles[control.Id] = parentAngle + control.RestAngle - parentRestAngle + Angle(control.Id);
             pose.Bones[control.Id] = Matrix3x2.CreateRotation(angles[control.Id]) * Matrix3x2.CreateTranslation(pose.Points[control.Id].X, pose.Points[control.Id].Y);
         }
-        foreach (var chain in model.Base.Chains)
+        var constraints = new RigConstraintEvaluator(model, pose);
+        foreach (var chain in model.IkConstraints)
         {
-            var locomotion = chain.Frame == CharacterModel.Locomotion;
-            var framePoint = locomotion ? pose.Locomotion : pose.Points[chain.Frame];
-            var frameAngle = locomotion ? 0 : angles[chain.Frame];
-            var frameRest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
-            var target = framePoint + RotateXY(model.Rest[chain.End] - frameRest + Delta(MotionClip.TargetKind, chain.Id, chain.Scale), frameAngle);
-            chainTargets[chain.Id] = target;
-            pose.Chains.Add(Solve(model, pose, chain, target, Bend(chain)));
+            var target = RigConstraintEvaluator.TargetPosition(model, pose, chain, Delta(MotionClip.TargetKind, chain.Id, chain.Scale));
+            constraints.Apply(new RigIkTarget(chain.Id, target, Bend(chain)));
         }
         foreach (var contact in clip.Contacts)
         {
@@ -155,13 +149,10 @@ public static class PoseEvaluator
             if (!(time >= contact.Start && (time < contact.Finish || time == clip.Duration && contact.Finish == clip.Duration))) continue;
             var chain = model.Chains[contact.Chain]; var ratio = Ratio(chain.Scale);
             var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), contact.Target.Y * ratio, contact.Target.Z);
-            var index = pose.Chains.FindIndex(c => c.Chain == chain.Id);
             // A masked chain fading in leaves its base contact gradually; it is neither held nor reported as planted.
-            if (masked) { pose.Chains[index] = Solve(model, pose, chain, Vector3.Lerp(target, chainTargets[chain.Id], weight), Bend(chain)); continue; }
+            if (masked) { constraints.Apply(new RigContactPin(chain.Id, target, weight)); continue; }
             if (input.Contact is { } hold) target = hold(chain.Id, target);
-            var result = Solve(model, pose, chain, target, Bend(chain));
-            pose.Chains[index] = result;
-            pose.Contacts.Add(new(chain.Id, target, result.Residual));
+            constraints.Apply(new RigContactPin(chain.Id, target));
         }
         foreach (var socket in model.Base.Sockets)
         {
@@ -170,7 +161,7 @@ public static class PoseEvaluator
             Vector3 ReverseOrientation(Vector3 value) => input.ReverseHorizontalMotion ? new(value.X, -value.Y, -value.Z) : value;
             // Socket channels follow ownership of their frame, including an IK chain that owns their attachment end.
             var owned = Masked(socket.Id) || Masked(socket.Frame ?? socket.Control) || Masked(socket.Control)
-                || model.Base.Chains.Any(c => c.End == socket.Control && Masked(c.Id));
+                || model.Chains.Values.Any(c => c.End == socket.Control && Masked(c.Id));
             pose.SocketAngles[socket.Id] = owned ? Vector3.Lerp(ReadOrientation(false), ReadOrientation(true), weight) : ReadOrientation(false);
         }
         foreach (var control in model.Order)
@@ -195,27 +186,6 @@ public static class PoseEvaluator
         var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
         var (end, _) = Interpolate(keys, clip.Duration); var (start, _) = Interpolate(keys, 0);
         return new Vector2(end.X - start.X, end.Y - start.Y) * ratio;
-    }
-
-    private static ChainResult Solve(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 target, int bend)
-    {
-        var root = pose.Points[chain.Root];
-        var solved = TwoBoneIk2D.Solve(new(root.X, root.Y), new(target.X, target.Y), model.Length(chain.Root, chain.Joint), model.Length(chain.Joint, chain.End), bend);
-        var joint = new Vector3(solved.Joint, pose.Points[chain.Joint].Z);
-        var end = new Vector3(solved.End, target.Z);
-        MoveDescendants(model, pose, chain.Joint, joint - pose.Points[chain.Joint], chain.End);
-        MoveDescendants(model, pose, chain.End, end - pose.Points[chain.End], null);
-        pose.Points[chain.Joint] = joint; pose.Points[chain.End] = end;
-        return new(chain.Id, Vector2.Distance(solved.End, new(target.X, target.Y)), solved.ReachesTarget);
-    }
-
-    private static void MoveDescendants(ResolvedModel model, EvaluatedPose pose, string id, Vector3 delta, string? except)
-    {
-        foreach (var child in model.Children[id])
-        {
-            if (child == except) continue;
-            pose.Points[child] += delta; MoveDescendants(model, pose, child, delta, null);
-        }
     }
 
     /// <summary>The clip's expression for a part at a time: the last key at or before it, else the first key. Null without a track.</summary>

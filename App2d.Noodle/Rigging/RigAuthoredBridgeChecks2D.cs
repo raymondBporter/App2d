@@ -58,6 +58,25 @@ internal static class RigAuthoredBridgeChecks2D
         root.AngleDegrees += .4f * 180 / MathF.PI;
         child.AngleDegrees -= .2f * 180 / MathF.PI;
         Compare(rig, resolved, PoseEvaluator.Sample(resolved, clip, 1));
+        CheckSharedBoneIk();
+    }
+
+    private static void CheckSharedBoneIk()
+    {
+        var rig = new RigDocument2D();
+        var root = rig.AddBone(name: "beam"); root.Length = 60;
+        var joint = rig.AddBone(root, "hinge"); joint.LocalX = 60; joint.LocalY = 0; joint.AngleDegrees = 0; joint.Length = 40;
+        var end = rig.AddBone(joint, "tool"); end.LocalX = 40; end.LocalY = 0; end.AngleDegrees = 0; end.Length = 10;
+        rig.AddShape("Rectangle", root); rig.AddShape("Capsule", joint); rig.AddShape("Circle", end);
+        var model = RigAuthoredBridge2D.Export(rig, "ik-bridge", "IK bridge");
+        var constraint = ModelAuthoring.AddBoneIk(model, RigAuthoredBridge2D.BoneControl(end)); constraint.Bend = -1;
+        var resolved = ResolvedModel.From(CharacterModel.FromJson(model.ToJson()));
+        var clip = ClipAuthoring.New(resolved, "ik-bridge-aim", "Aim");
+        ClipAuthoring.Pose(resolved, clip, PoseEvaluator.Rest(resolved), 0, constraint.End, new(.6f, .4f, 0));
+        clip.Validate(resolved);
+        // The exported Noodle bones and artwork use exactly the Studio constraint evaluator.
+        joint.AngleDegrees = 90;
+        Compare(rig, resolved, PoseEvaluator.Sample(resolved, clip, 0));
     }
 
     private static void Compare(RigDocument2D rig, ResolvedModel model, EvaluatedPose pose)

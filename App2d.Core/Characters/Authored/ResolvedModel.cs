@@ -10,7 +10,8 @@ public sealed class ResolvedModel
     {
         Base = model; Variant = variant; Rest = rest; Parts = parts;
         Controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
-        Chains = model.Chains.ToDictionary(c => c.Id, StringComparer.Ordinal);
+        IkConstraints = model.IkChains.ToArray();
+        Chains = IkConstraints.ToDictionary(c => c.Id, StringComparer.Ordinal);
         Children = model.Controls.ToDictionary(c => c.Id, c => (IReadOnlyList<string>)[.. model.Controls.Where(child => child.Parent == c.Id).Select(child => child.Id)], StringComparer.Ordinal);
         var order = new List<ModelControl>(); var placed = new HashSet<string>(StringComparer.Ordinal);
         void Place(ModelControl control)
@@ -42,6 +43,7 @@ public sealed class ResolvedModel
         }
         RestTransforms = frames;
         SetupTransforms = setups;
+        BoneFrameIk.ValidateFrames(Controls, Chains.Values, frames);
         Measures = model.Measures.ToDictionary(m => m.Id, m => m.Path.Zip(m.Path.Skip(1)).Sum(p => Length(p.First, p.Second)), StringComparer.Ordinal);
     }
 
@@ -58,6 +60,8 @@ public sealed class ResolvedModel
     public IReadOnlyList<ModelControl> Order { get; }
     public IReadOnlyDictionary<string, ModelControl> Controls { get; }
     public IReadOnlyDictionary<string, ModelChain> Chains { get; }
+    /// <summary>Legacy point chains, followed by typed IK constraints, each in document order.</summary>
+    public IReadOnlyList<ModelChain> IkConstraints { get; }
     public IReadOnlyDictionary<string, IReadOnlyList<string>> Children { get; }
 
     /// <summary>The top of the rest pose's visible shapes above the feet: the height a drawn size is fitted to.</summary>

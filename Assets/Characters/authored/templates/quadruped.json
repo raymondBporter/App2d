@@ -1,0 +1,19 @@
+{
+  "format": "app2d-model-template",
+  "version": 1,
+  "id": "quadruped",
+  "name": "Quadruped",
+  "description": "A four-legged creature with planted IK targets, head and tail controls, and eight starter animations.",
+  "model": "quadruped",
+  "animations": {
+    "idle": "quadruped-idle",
+    "walk": "quadruped-walk",
+    "run": "quadruped-run",
+    "scrape": "quadruped-scrape",
+    "head-down": "quadruped-head-down",
+    "rush": "quadruped-rush",
+    "brake": "quadruped-brake",
+    "recover": "quadruped-recover"
+  },
+  "previewAnimation": "idle"
+}

@@ -40,14 +40,18 @@ public sealed class AuthoringWorkspace
     public IEnumerable<AssetDocument<MotionClip>> Clips => _documents.Values.OfType<AssetDocument<MotionClip>>();
     public IEnumerable<AssetDocument<PropAsset>> Props => _documents.Values.OfType<AssetDocument<PropAsset>>();
     public IEnumerable<AssetDocument<EntityAsset>> Entities => _documents.Values.OfType<AssetDocument<EntityAsset>>();
+    /// <summary>JSON recipes for creating independent models and animation bundles from this workspace's resources.</summary>
+    public IReadOnlyDictionary<string, ModelTemplate> ModelTemplates { get; private set; } = new Dictionary<string, ModelTemplate>();
 
     public static AuthoringWorkspace Open(string root)
     {
         var workspace = new AuthoringWorkspace(root);
         var catalog = AuthoredCatalog.Load(root);
+        var templates = ModelTemplateCatalog.Load(root);
+        workspace.ModelTemplates = templates.Entries;
         // Only unreadable files are load errors; reference problems stay visible on their documents.
         var loaded = catalog.Models.Keys.Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Concat(catalog.Props.Keys).Concat(catalog.EntityAssets.Keys).Select(catalog.PathOf).ToList();
-        workspace.LoadErrors = [.. catalog.Errors.Where(e => !loaded.Any(path => e.StartsWith(path + ":", StringComparison.Ordinal)))];
+        workspace.LoadErrors = [.. catalog.Errors.Where(e => !loaded.Any(path => e.StartsWith(path + ":", StringComparison.Ordinal))), .. templates.Errors];
         foreach (var model in catalog.Models.Values) workspace.Add(AssetDocuments.Of(model, catalog.PathOf(model.Id)));
         foreach (var variant in catalog.Variants.Values) workspace.Add(AssetDocuments.Of(variant, catalog.PathOf(variant.Id)));
         foreach (var clip in catalog.Animations.Values) workspace.Add(AssetDocuments.Of(clip, catalog.PathOf(clip.Id)));

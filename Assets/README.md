@@ -11,7 +11,8 @@ The first folder describes the asset lifecycle:
   provenance. Importers transform these into runtime assets.
 - `Characters` contains the character libraries and the durable documents under
   `authored`: models, variants, animations, props, and entities edited in Character
-  Studio. Source libraries and their provenance also live here. These are separate
+  Studio, plus JSON model recipes in `authored/templates`. Recipes reference existing model/clip IDs and populate Studio's
+  New menu; see [Character resources](../docs/character-resources.md). Source libraries and their provenance also live here. These are separate
   from generated sprite animation folders in `Runtime/characters`.
 - `Runtime` is the disposable Debug resource tree, automatically populated from
   committed `Static` files by normal builds. Release builds and publishes package

@@ -187,6 +187,8 @@ public static class LibraryImport
     public static MotionClip Convert(PointLibrary library, string clipId, CharacterModel model, IReadOnlyDictionary<string, List<string>> points, string id, string name, string? restClip = null)
     {
         var resolved = ResolvedModel.From(model);
+        if (model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
+            throw new InvalidDataException("Point-library retargeting cannot infer bone-frame rotations. Import a point rig or author the bone constraint's target in Animate.");
         foreach (var control in points.Keys)
             if (!resolved.Controls.ContainsKey(control)) throw new InvalidDataException($"The mapping names '{control}', which model '{model.Id}' does not have.");
         restClip ??= DefaultRest(library, clipId);
@@ -196,7 +198,7 @@ public static class LibraryImport
         var (ratios, overall) = Ratios(resolved, reference);
         float Ratio(string scale) => ratios.TryGetValue(scale, out var ratio) ? ratio : overall;
 
-        var solved = model.Chains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
+        var solved = model.IkChains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
         var duration = (float)source.Clip.Duration;
         var clip = new MotionClip
         {
@@ -220,7 +222,7 @@ public static class LibraryImport
         var tracks = new List<ClipTrack>();
         foreach (var control in resolved.Order.Where(c => !solved.Contains(c.Id)))
             tracks.Add(new() { Kind = MotionClip.TranslateKind, Target = control.Id, Keys = [] });
-        foreach (var chain in model.Chains) tracks.Add(new() { Kind = MotionClip.TargetKind, Target = chain.Id, Keys = [] });
+        foreach (var chain in model.IkChains) tracks.Add(new() { Kind = MotionClip.TargetKind, Target = chain.Id, Keys = [] });
         var count = (int)MathF.Floor(duration * Rate + 1e-4f);
         var times = Enumerable.Range(0, count + 1).Select(i => MathF.Min(duration, i / (float)Rate)).Append(duration).Distinct().ToArray();
         foreach (var time in times)

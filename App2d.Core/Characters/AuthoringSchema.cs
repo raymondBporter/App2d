@@ -52,6 +52,7 @@ public static class AuthoredJson
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
+            AllowOutOfOrderMetadataProperties = true,
             WriteIndented = true,
             UnmappedMemberHandling = strict ? JsonUnmappedMemberHandling.Disallow : JsonUnmappedMemberHandling.Skip,
             TypeInfoResolver = resolver,

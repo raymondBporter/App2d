@@ -1,0 +1,18 @@
+{
+  "format": "app2d-model-template",
+  "version": 1,
+  "id": "person",
+  "name": "Person",
+  "description": "A human rig with editable proportions, appearance, IK limbs and seven starter animations.",
+  "model": "person",
+  "animations": {
+    "idle": "person-idle",
+    "walk": "person-walk",
+    "run": "person-run",
+    "jump": "person-jump",
+    "hit": "person-hit",
+    "death": "person-death",
+    "heavy-walk": "person-heavy-walk"
+  },
+  "previewAnimation": "idle"
+}

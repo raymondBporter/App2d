@@ -264,7 +264,7 @@ public sealed class MotionClip
         var basis = model.Base;
         Require(Model == basis.Id, $"{owner} is for model '{Model}', not '{basis.Id}'.");
         Require(!exactRevision || StructureRevision == basis.StructureRevision, $"{owner} was authored against structure revision {StructureRevision} of '{Model}'; the model is at revision {basis.StructureRevision}.");
-        var solved = basis.Chains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
+        var solved = model.Chains.Values.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
         void Scale(string scale, string field)
         {
             if (scale == CharacterModel.Unit) return;
@@ -299,6 +299,7 @@ public sealed class MotionClip
             {
                 Require(model.Controls.TryGetValue(track.Target, out var control), $"{field}: unknown control.");
                 Require(!solved.Contains(track.Target), $"{field}: this control is solved by IK; key its chain's target instead.");
+                Require(track.Kind != RotateKind || !model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
                 if (track.Kind is ScaleKind or ShearKind)
                 {
                     Require(control.Transform is not null, $"{field}: scale and shear require an affine bone.");

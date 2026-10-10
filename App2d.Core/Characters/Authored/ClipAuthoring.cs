@@ -89,8 +89,9 @@ public static class ClipAuthoring
                 var local = world - origin - model.Rest[chain.End];
                 contact.Target = new(local.X / ratio, local.Y / ratio, local.Z); return null;
             }
-            var (framePoint, frameAngle, frameRest) = Frame(model, pose, chain.Frame);
-            SetKey(clip, channel, time, Delta(world, framePoint, frameAngle, model.Rest[chain.End] - frameRest, Ratio(model, clip, Track(clip, channel)?.Scale ?? chain.Scale)));
+            var offset = RigConstraintEvaluator.TargetDelta(model, pose, chain, world);
+            var scale = Ratio(model, clip, Track(clip, channel)?.Scale ?? chain.Scale);
+            SetKey(clip, channel, time, new(offset.X / scale, offset.Y / scale, offset.Z));
             return channel;
         }
         var spec = model.Controls[control];

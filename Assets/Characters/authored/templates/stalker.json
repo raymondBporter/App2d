@@ -1,0 +1,16 @@
+{
+  "format": "app2d-model-template",
+  "version": 1,
+  "id": "stalker",
+  "name": "Stalker",
+  "description": "The existing small creature rig as a reusable model, with idle, walk, attack and reaction animations.",
+  "model": "stalker",
+  "animations": {
+    "idle": "stalker-idle",
+    "walk": "stalker-walk",
+    "lunge": "stalker-lunge",
+    "hit": "stalker-hit",
+    "death": "stalker-death"
+  },
+  "previewAnimation": "idle"
+}

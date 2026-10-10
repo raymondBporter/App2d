@@ -4,6 +4,12 @@ The studio is the character editor: one window, one viewport and one document wo
 `Assets/Characters/authored`, which the game plays. Its design and history are in
 [Character editor replacement](character-editor-replacement.md).
 
+The reusable resource boundaries and staged migration are described in [Character resources and migration](character-resources.md).
+Model templates now come from `Assets/Characters/authored/templates/*.json`. The New menu discovers their names and copies
+the referenced model and animations into independent drafts. Add a recipe and its source assets, then reopen Studio;
+no C# menu entry is needed. Person includes seven starter clips, Quadruped and Triceratops eight each, and Stalker five.
+Use **Save all** to save the created bundle. Existing model, clip and entity files are unaffected by template creation.
+
 **Export Spine** and **New > Import Spine 4.2 JSON** provide an initial bone/slot/skin/image interchange path.
 See [Spine 4.2 interchange](spine-interchange.md) for the editor workflow, supported timelines, and conversion limits.
 
@@ -142,7 +148,11 @@ facings, including game-size views. Clothing follows the rig rigidly; this first
 
 ## Workspaces
 
-In **Model → Edit rig**, **Add root bone** creates a bone with an origin, rest angle, and length; **Add child bone** starts at the selected bone's tip. Drag the origin to move it, drag the tip to change its rest angle and length, or edit those values in the inspector. Turn off **Edit rig** and use **Add shape to selected bone** to attach an ellipse, box, capsule, or polygon in that bone's local frame. The shape's offset and angle remain editable. **Save** writes these as controls and parts in the ordinary model JSON; **Animate** uses a `rotate` track on the bone control. Existing point-control models and their animations continue to use the same editor. The existing two-bone IK tool still applies to point controls; bone-frame IK is a separate constraint step.
+In **Model → Edit rig**, **Add root bone** creates a bone with an origin, rest angle, and length; **Add child bone** starts at the selected bone's tip. Drag the origin to move it, drag the tip to change its rest angle and length, or edit those values in the inspector. Turn off **Edit rig** and use **Add shape to selected bone** to attach an ellipse, box, capsule, or polygon in that bone's local frame. The shape's offset and angle remain editable. **Save** writes these as controls and parts in the ordinary model JSON; **Animate** uses a `rotate` track on an unconstrained bone control. Existing point-control models and their animations continue to use the same editor.
+
+To add bone IK, create a root, child and endpoint, select the endpoint and press **Make IK constraint**. The first two bones supply the segment lengths; the endpoint may itself have artwork and child bones. Bone children must meet their parent's +X tip. The new constraint appears under **IK constraints**, with a bend direction, target frame and reference measure. In **Animate**, drag the endpoint to key the constraint's target. Both segments turn, carrying attached shapes and descendants. The root still has translation and uniform-scale channels; its rotation belongs to IK. Existing point controls use the compatible point solver through the same UI.
+
+Choose the **locomotion** target frame to use the existing **Plant** contact controls. Contacts pin any endpoint; they are not restricted to feet. A free control frame makes a bone target follow that frame's translation, rotation, scale and reflection. A constrained frame cannot drive another constraint. Bone length edits carry the connected IK joint to the new tip. Uniform scale and reflection are supported; collapsed, sheared or nonuniform segment frames produce a named diagnostic, including when encountered during animation. Floor/wall queries, self-collision and stateful physics remain later extensions. See [constraint resources and compatibility](character-resources.md#second-migration-typed-ik-and-contact-evaluation).
 
 - **Model**: controls, IK chains, measures, drawing parts, sockets, motion sets, hurt layouts, groups and looks on a base
   model. On a variant: build values, part overrides with **Reset to base**, and looks. **Edit rig** shows control handles.

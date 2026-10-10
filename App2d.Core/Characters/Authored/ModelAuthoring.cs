@@ -38,7 +38,7 @@ public static class ModelAuthoring
     /// <summary>What decides clip compatibility: controls and parents, chains, frames and default scales. Proportions and appearance never change it.</summary>
     public static string StructureSignature(CharacterModel model) => string.Join("|",
         model.Controls.Select(c => $"c:{c.Id}<{c.Parent}~{c.Scale}~affine:{c.Transform is not null}").Order(StringComparer.Ordinal)
-            .Concat(model.Chains.Select(c => $"k:{c.Id}={c.Root}>{c.Joint}>{c.End}@{c.Frame}~{c.Scale}").Order(StringComparer.Ordinal))
+            .Concat(model.IkChains.Select(c => $"k:{c.Id}={c.Root}>{c.Joint}>{c.End}@{c.Frame}~{c.Scale}~{c.Solver}").Order(StringComparer.Ordinal))
             .Concat(model.Measures.Select(m => $"m:{m.Id}").Order(StringComparer.Ordinal))
             .Concat(model.Slots.Select(s => $"s:{s.Id}={s.Bone}").Order(StringComparer.Ordinal)));
 
@@ -88,7 +88,7 @@ public static class ModelAuthoring
     {
         var owner = $"Model '{model.Id}'";
         if (model.Controls.FirstOrDefault(c => c.Parent == id) is { } child) throw new InvalidOperationException($"{owner}: '{id}' still has child '{child.Id}'.");
-        if (model.Chains.FirstOrDefault(c => c.Root == id || c.Joint == id || c.End == id || c.Frame == id) is { } chain) throw new InvalidOperationException($"{owner}: chain '{chain.Id}' uses '{id}'.");
+        if (model.IkChains.FirstOrDefault(c => c.Root == id || c.Joint == id || c.End == id || c.Frame == id) is { } chain) throw new InvalidOperationException($"{owner}: chain '{chain.Id}' uses '{id}'.");
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
         if (model.Slots.FirstOrDefault(s => s.Bone == id) is { } slot) throw new InvalidOperationException($"{owner}: slot '{slot.Id}' uses '{id}'. Move or remove the slot first.");
         var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
@@ -112,20 +112,25 @@ public static class ModelAuthoring
     }
 
     /// <summary>Makes <paramref name="end"/> the tip of a two-bone chain over its parent and grandparent.</summary>
-    public static ModelChain AddChain(CharacterModel model, string end)
+    public static ModelChain AddChain(CharacterModel model, string end) => AddIk(model, end, bone: false);
+
+    /// <summary>Adds a typed bone-frame IK constraint. Both segment origins must meet their parent's +X tip.</summary>
+    public static ModelChain AddBoneIk(CharacterModel model, string end) => AddIk(model, end, bone: true);
+
+    private static ModelChain AddIk(CharacterModel model, string end, bool bone)
     {
         var joint = Control(model, end).Parent ?? throw new InvalidOperationException($"'{end}' needs a parent and grandparent to end a chain.");
         var root = Control(model, joint).Parent ?? throw new InvalidOperationException($"'{joint}' needs a parent to root a chain.");
-        var chain = new ModelChain { Id = UniqueId(end + "-chain", model.Chains.Select(c => c.Id)), Root = root, Joint = joint, End = end };
-        model.Chains.Add(chain);
+        var chain = new ModelChain { Id = UniqueId(end + "-chain", model.IkChains.Select(c => c.Id)), Root = root, Joint = joint, End = end, Solver = bone ? ModelChain.BoneSolver : ModelChain.PointSolver };
+        if (bone) model.Constraints.Add(chain); else model.Chains.Add(chain);
         // A group that owned the newly solved controls now owns the chain, whole.
-        foreach (var group in model.Groups.Where(g => g.Targets.Remove(joint) || g.Targets.Remove(end))) group.Targets.Add(chain.Id);
+        foreach (var group in model.Groups.Where(g => g.Targets.RemoveAll(t => t == joint || t == end) > 0)) group.Targets.Add(chain.Id);
         model.Validate(); return chain;
     }
 
     public static void RemoveChain(CharacterModel model, string id)
     {
-        if (model.Chains.RemoveAll(c => c.Id == id) == 0) throw new InvalidOperationException($"No chain '{id}'.");
+        if (model.Chains.RemoveAll(c => c.Id == id) + model.Constraints.RemoveAll(c => c.Id == id) == 0) throw new InvalidOperationException($"No chain '{id}'.");
         foreach (var group in model.Groups) group.Targets.Remove(id);
         model.Validate();
     }
@@ -140,7 +145,7 @@ public static class ModelAuthoring
 
     public static void RemoveMeasure(CharacterModel model, string id)
     {
-        if (model.Controls.Any(c => c.Scale == id) || model.Chains.Any(c => c.Scale == id)) throw new InvalidOperationException($"Measure '{id}' is still used as a scale.");
+        if (model.Controls.Any(c => c.Scale == id) || model.IkChains.Any(c => c.Scale == id)) throw new InvalidOperationException($"Measure '{id}' is still used as a scale.");
         model.Measures.RemoveAll(m => m.Id == id); model.Validate();
     }
 
@@ -248,6 +253,25 @@ public static class ModelAuthoring
             control.RestAngle += delta;
         }
         model.Validate();
+    }
+
+    /// <summary>Changes a segment's length, carrying the connected IK joint and its descendants to the new tip.</summary>
+    public static void ResizeBone(CharacterModel model, string id, float length)
+    {
+        new Limit(.01f, 100).Check(length, "bone length");
+        var bone = Control(model, id);
+        var next = model.IkChains.Where(c => c.Solver == ModelChain.BoneSolver && (c.Root == id || c.Joint == id))
+            .Select(c => c.Root == id ? c.Joint : c.End).Distinct().ToArray();
+        if (next.Length == 0) { bone.Length = length; model.Validate(); return; }
+        var resolved = ResolvedModel.From(model);
+        var delta = new Vector3(Vector2.TransformNormal(new(length - bone.Length, 0), resolved.RestTransforms[id]), 0);
+        bone.Length = length;
+        foreach (var child in next)
+        {
+            if (Control(model, child).Transform is { } local) { local.X = length; local.Y = 0; }
+            foreach (var member in Subtree(model.Controls, child)) member.Rest = PuppetPoint.From(resolved.Rest[member.Id] + delta);
+        }
+        SyncAffineRest(model); model.Validate();
     }
 
     /// <summary>
