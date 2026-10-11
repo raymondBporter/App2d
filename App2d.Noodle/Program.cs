@@ -14,6 +14,11 @@ internal static class Program
         }
 
         ApplicationConfiguration.Initialize();
+        if (args is ["--smoke-editor-ui", var outputDirectory])
+        {
+            EditorUiSmoke.Run(outputDirectory);
+            return;
+        }
         if (args.Length == 0 || args.SequenceEqual(["--rigid"]))
         {
             using var rigid = new RigidCharacterHost();

@@ -173,7 +173,7 @@ internal sealed partial class AnimateView(EditorSession session, Viewport viewpo
         ImGui.TextDisabled($"{channel.Value.Kind} channel on '{channel.Value.Target}'{(track is null ? ", not keyed yet" : $", {track.Keys.Count} keys")}");
         var (value, _) = ClipAuthoring.Value(clip, channel.Value, time);
         var layered = LayeredPoint2D.From(value);
-        if (Ui.LayeredPoint("Delta from rest (reference units)", ref layered, layerIsOffset: true)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, channel.Value, time, layered.ToVector3()));
+        if (CharacterUi.LayeredPoint("Delta from rest (reference units)", ref layered, layerIsOffset: true)) session.Change(document, () => ClipAuthoring.SetKey(document.Asset, channel.Value, time, layered.ToVector3()));
         if (channel.Value.Kind == MotionClip.TranslateKind)
         {
             var boneIk = model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == control);

@@ -28,17 +28,13 @@ public readonly record struct ConstraintLimit1D
 {
     public ConstraintLimit1D(float minimum, float maximum)
     {
-        if (float.IsNaN(minimum) || minimum == float.PositiveInfinity)
-        {
-            ArgGuard.ThrowOutOfRange(minimum,
-                "The minimum must be finite or negative infinity.");
-        }
+        ArgGuard.ThrowIfNan(minimum, nameof(minimum));
+        if (minimum == float.PositiveInfinity)
+            ArgGuard.ThrowOutOfRange(minimum, "The minimum must be finite or negative infinity.");
 
-        if (float.IsNaN(maximum) || maximum == float.NegativeInfinity)
-        {
-            ArgGuard.ThrowOutOfRange(maximum,
-                "The maximum must be finite or positive infinity.");
-        }
+        ArgGuard.ThrowIfNan(maximum, nameof(minimum));
+        if (maximum == float.NegativeInfinity) 
+            ArgGuard.ThrowOutOfRange(maximum, "The maximum must be finite or positive infinity.");
 
         ArgGuard.ThrowIf(minimum > maximum, "The minimum limit cannot exceed the maximum limit.");
 
@@ -53,9 +49,7 @@ public readonly record struct ConstraintLimit1D
     public bool IsFree => !HasMinimum && !HasMaximum;
     public bool IsLocked => Minimum == Maximum;
 
-    public static ConstraintLimit1D Free { get; } =
-        new(float.NegativeInfinity, float.PositiveInfinity);
-
+    public static ConstraintLimit1D Free { get; } = new(float.NegativeInfinity, float.PositiveInfinity);
     public static ConstraintLimit1D AtLeast(float minimum)
     {
         ArgGuard.ThrowIfNotFinite(minimum);

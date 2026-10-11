@@ -1,17 +1,85 @@
-using App2d.Core.Characters;
-using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.EditorUi;
 
 /// <summary>Small shared widgets. Labels sit above full-width controls so the narrow side panels stay readable.</summary>
-internal static class Ui
+public static class Ui
 {
     public static readonly Vector4 Accent = new(.42f, .84f, .75f, 1), Warning = new(.98f, .66f, .38f, 1), Override = new(.55f, .72f, 1, 1);
-    public static float Scale { get; set; } = 1;
+    public static float Scale { get; internal set; } = 1;
 
     public static uint Color(byte r, byte g, byte b, byte a = 255) => (uint)(a << 24 | b << 16 | g << 8 | r);
+
+    /// <summary>A window filled by the supplied view. Begin/End are balanced even when hidden or the view throws.</summary>
+    public static void Window(string id, Action content, ImGuiWindowFlags flags = ImGuiWindowFlags.None)
+    {
+        var visible = ImGui.Begin(id, flags);
+        try { if (visible) content(); }
+        finally { ImGui.End(); }
+    }
+
+    /// <summary>A fixed root window covering the host's drawing surface.</summary>
+    public static void Root(string id, Action content)
+    {
+        ImGui.SetNextWindowPos(Vector2.Zero); ImGui.SetNextWindowSize(ImGui.GetIO().DisplaySize);
+        Window(id, content, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
+    }
+
+    /// <summary>A fixed right-hand tool window. The world stays visible and interactive beside it.</summary>
+    public static float Sidebar(string id, Action content, float width = 340)
+    {
+        var display = ImGui.GetIO().DisplaySize;
+        var pixels = MathF.Min(width * Scale, display.X * .45f);
+        ImGui.SetNextWindowPos(new(display.X - pixels, 0));
+        ImGui.SetNextWindowSize(new(pixels, display.Y));
+        Window(id, content, ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse |
+            ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
+        return pixels;
+    }
+
+    /// <summary>A child panel, optionally with a header. Zero size fills the available space; size is in device pixels.</summary>
+    public static void Panel(string id, Action content, Action? header = null, Vector2 size = default, bool border = true, ImGuiWindowFlags flags = ImGuiWindowFlags.None)
+    {
+        var visible = ImGui.BeginChild(id, size, border ? ImGuiChildFlags.Borders : ImGuiChildFlags.None, flags);
+        try
+        {
+            if (!visible) return;
+            if (header is not null) { header(); ImGui.Separator(); }
+            content();
+        }
+        finally { ImGui.EndChild(); }
+    }
+
+    /// <summary>Places each child callback beside the previous one. A callback may draw a widget or a whole panel.</summary>
+    public static void Row(params Action[] children)
+    {
+        ImGui.BeginGroup();
+        try
+        {
+            for (var i = 0; i < children.Length; i++)
+            {
+                if (i > 0) ImGui.SameLine();
+                children[i]();
+            }
+        }
+        finally { ImGui.EndGroup(); }
+    }
+
+    /// <summary>A titled vertical group. Its ID scopes repeated field labels independently from other sections.</summary>
+    public static void Section(string title, Action content, string? id = null)
+    {
+        ImGui.PushID(id ?? title);
+        try { Header(title); content(); }
+        finally { ImGui.PopID(); }
+    }
+
+    public static void CollapsibleSection(string title, Action content, bool defaultOpen = false)
+    {
+        ImGui.PushID(title);
+        try { if (ImGui.CollapsingHeader(title, defaultOpen ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None)) content(); }
+        finally { ImGui.PopID(); }
+    }
 
     public static void Header(string text) { ImGui.Spacing(); ImGui.TextColored(Accent, text.ToUpperInvariant()); }
     public static void Help(string text) { ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]); ImGui.TextWrapped(text); ImGui.PopStyleColor(); }
@@ -30,41 +98,6 @@ internal static class Ui
 
     public static bool Drag3(string label, ref Vector3 value, float speed = .005f, float min = -100, float max = 100)
     { Label(label); return ImGui.DragFloat3("##" + label, ref value, speed, min, max, "%.3f"); }
-
-    /// <summary>Edits character drawing order without presenting it as a third position axis.</summary>
-    public static bool CharacterLayer(string label, ref CharacterLayer2D layer, float min = -32, float max = 32, bool offset = false)
-    {
-        var changed = false;
-        var preset = layer == CharacterLayer2D.Front ? "Front" : layer == CharacterLayer2D.Middle ? "Middle" :
-            layer == CharacterLayer2D.Back ? "Back" : "Custom";
-        if (!offset && Combo(label + " preset", preset, ["Front", "Middle", "Back"]) is { } selected)
-        {
-            layer = selected switch
-            {
-                "Front" => CharacterLayer2D.Front,
-                "Middle" => CharacterLayer2D.Middle,
-                _ => CharacterLayer2D.Back
-            };
-            changed = true;
-        }
-        var order = layer.Order;
-        if (Drag(label + (offset ? " shift (- front, + back)" : " order (- front, + back)"), ref order, .002f, min, max))
-        {
-            layer = new(order);
-            changed = true;
-        }
-        return changed;
-    }
-
-    public static bool LayeredPoint(string label, ref LayeredPoint2D point, bool layerIsOffset = false)
-    {
-        var xy = point.Position;
-        var moved = Drag2(label + " X / Y", ref xy);
-        var layer = point.Layer;
-        var reordered = CharacterLayer(label + " layer", ref layer, offset: layerIsOffset);
-        if (moved || reordered) point = new(xy, layer);
-        return moved || reordered;
-    }
 
     public static bool Text(string label, ref string value, uint length = 80)
     { Label(label); return ImGui.InputText("##" + label, ref value, length); }
@@ -110,31 +143,10 @@ internal static class Ui
     {
         ImGui.BeginDisabled(!enabled); var pressed = ImGui.Button(label); ImGui.EndDisabled(); return pressed;
     }
-}
 
-/// <summary>Dependency navigation: what an asset uses and what uses it, each a link that opens the other asset.</summary>
-internal static class References
-{
-    public static void Draw(EditorSession session, string id)
+    public static void Button(string label, Action onClick, bool enabled = true)
     {
-        var uses = session.Assets.Uses(id); var usedBy = session.Assets.UsedBy(id);
-        if (uses.Count + usedBy.Count == 0) return;
-        Ui.Header("References");
-        void Rows(string title, IReadOnlyList<AssetReference> references)
-        {
-            if (references.Count == 0) return;
-            if (!ImGui.TreeNodeEx($"{title} ({references.Count})##{title}", ImGuiTreeNodeFlags.DefaultOpen)) return;
-            foreach (var group in references.GroupBy(r => r.Id))
-            {
-                var document = session.Assets.Find(group.Key);
-                var label = document is null ? $"{group.Key} (missing)" : $"[{AssetKinds.Label(document.Kind)[0]}] {document.Name}";
-                if (document is null) ImGui.PushStyleColor(ImGuiCol.Text, Ui.Warning);
-                if (ImGui.Selectable($"{label}##{title}{group.Key}") && document is not null && document.Kind != AssetKind.Prop) session.Open(group.Key);
-                if (document is null) ImGui.PopStyleColor();
-                if (ImGui.IsItemHovered()) ImGui.SetTooltip(string.Join("\n", group.Select(r => r.Relation)));
-            }
-            ImGui.TreePop();
-        }
-        Rows("Uses", uses); Rows("Used by", usedBy);
+        if (Button(label, enabled)) onClick();
     }
 }
+

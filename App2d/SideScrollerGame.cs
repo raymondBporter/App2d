@@ -43,6 +43,7 @@ public sealed class SideScrollerGame : Game2D
     private bool _showZones;
     private bool _isControllerConnected;
     private readonly TileEditor2D _editor;
+    private readonly MapEditorUi2D _editorUi;
     private readonly PlayerSaveStore2D _saveStore;
     private readonly ViewportTerrainSource2D _terrainSource;
 
@@ -109,6 +110,7 @@ public sealed class SideScrollerGame : Game2D
 
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(tileMap, LevelBootstrap2D.OpenForEditing, Camera);
+        _editorUi = new(_editor, Textures);
         _resources.Get<LoadedLevel2D>("level/cavern", "editor");
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ThingsChanged += things =>
@@ -163,7 +165,7 @@ public sealed class SideScrollerGame : Game2D
     public override string WindowTitle =>
         $"App2d Side Scroller | PAD: {(_isControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
-    internal override Control? OverlayControl => _editor.InspectorView;
+    public override IGameToolUi2D? ToolUi => _editorUi;
     protected override XnaColor BackgroundColor => new(103, 196, 235);
 
     public override void Update(FrameTime time, InputState input)
@@ -233,7 +235,6 @@ public sealed class SideScrollerGame : Game2D
     public override void RenderUI(Renderer2D renderer, FrameTime time)
     {
         _client.DrawUI(renderer);
-        TileEditorView2D.DrawUI(renderer, _editor, Textures);
         base.RenderUI(renderer, time);
     }
 
@@ -251,6 +252,7 @@ public sealed class SideScrollerGame : Game2D
         _simulation.Dispose();
         _client.Dispose();
         _editor.Dispose();
+        _editorUi.Dispose();
         _music.Dispose();
         _resources.Dispose();
         base.Dispose();

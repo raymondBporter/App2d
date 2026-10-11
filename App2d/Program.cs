@@ -9,6 +9,12 @@ if (args.SequenceEqual(["--migrate-level"]))
 
 ApplicationConfiguration.Initialize();
 
+if (args is ["--smoke-editor-ui", var editorDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(editorDirectory, editorOnly: true);
+    return;
+}
+
 if (args is ["--giant-tree-study", var giantTreeDirectory])
 {
     App2d.Diagnostics.RenderingSmoke2D.Run(giantTreeDirectory, giantTreesOnly: true);

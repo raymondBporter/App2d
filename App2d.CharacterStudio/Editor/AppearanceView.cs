@@ -52,7 +52,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         Ui.Help("Equipping adds this piece. Remove unwanted hair or clothes in Entity > Equipment. Shared edits affect all wearers.");
         var rest = session.ShowRest; if (ImGui.Checkbox("Rest pose", ref rest)) session.ShowRest = rest;
         var size = art.Scale; if (Ui.Drag("Size", ref size, .005f, .001f, 100)) session.Change(doc, () => doc.Asset.Scale = Math.Clamp(size, .001f, 100));
-        var grip = art.Grip.Layered; if (Ui.LayeredPoint("Attachment origin", ref grip)) session.Change(doc, () => doc.Asset.Grip = PuppetPoint.From(grip));
+        var grip = art.Grip.Layered; if (CharacterUi.LayeredPoint("Attachment origin", ref grip)) session.Change(doc, () => doc.Asset.Grip = PuppetPoint.From(grip));
         var ink = art.Ink; if (Ui.ColorHex("Ink", ref ink)) session.Change(doc, () => doc.Asset.Ink = ink);
         var line = art.LineWidth; if (Ui.Drag("Line width", ref line, .001f, .001f, .2f)) session.Change(doc, () => doc.Asset.LineWidth = Math.Clamp(line, .001f, .2f));
         if (model is not null && ImGui.Button("Match body ink")) session.Edit(doc, () => { doc.Asset.Ink = model.Base.Ink; doc.Asset.LineWidth = model.Base.LineWidth; });
@@ -106,7 +106,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         var thickness = piece.Thickness;
         if (Ui.Drag("Thickness", ref thickness, .001f, .0001f, 2)) Cut(doc, points, Math.Clamp(thickness, .0001f, 2));
         var layer = new CharacterLayer2D(points.Average(p => p.Z));
-        if (Ui.CharacterLayer("Piece layer", ref layer, -2, 2))
+        if (CharacterUi.CharacterLayer("Piece layer", ref layer, -2, 2))
         { var delta = layer.Order - points.Average(p => p.Z); Cut(doc, points.Select(p => p with { Z = p.Z + delta }), thickness); }
         Ui.Help("Drag the gold points in the viewport, or edit coordinates below. Clothing can span both legs in layer order; keep the near arm in front of the belt.");
         if (session.PreviewSocket == PersonWardrobe.BodySocket && session.Assets.Resolve(session.SubjectId) is { } model && model.Rest.ContainsKey("left-hip") && model.Rest.ContainsKey("right-hip"))

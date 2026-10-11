@@ -10,5 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
+    <ProjectReference Include="..\App2d.EditorUi\App2d.EditorUi.csproj" />
   </ItemGroup>
 </Project>

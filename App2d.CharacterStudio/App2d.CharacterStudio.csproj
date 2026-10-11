@@ -6,12 +6,10 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../App2d.Core/App2d.Core.csproj" />
-    <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
+    <ProjectReference Include="../App2d.EditorUi/App2d.EditorUi.csproj" />
     <None Include="../Assets/Characters/**" Exclude="../Assets/Characters/provenance/**" Link="Assets/Characters/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-    <None Update="ThirdPartyNotices/**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

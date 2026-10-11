@@ -60,6 +60,12 @@ internal sealed class NoodlePerson2D
 
     public NoodleArm2D TargetLimb => _limbs[_selectedLimbIndex].Limb;
     public string SelectedControlName => _limbs[_selectedLimbIndex].Name;
+    public string[] ControlNames => _limbs.Select(limb => limb.Name).ToArray();
+    public void SelectControl(string name)
+    {
+        var index = Array.FindIndex(_limbs, limb => limb.Name == name);
+        if (index >= 0) _selectedLimbIndex = index;
+    }
 
     public void SelectNearestControl(Vector2 position)
     {

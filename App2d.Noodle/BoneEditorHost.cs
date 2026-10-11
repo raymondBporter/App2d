@@ -3,214 +3,60 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Noodle.Rigging;
 using App2d.Rendering;
-using Microsoft.Xna.Framework.Graphics;
-using System.Diagnostics;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Noodle;
 
-internal sealed class BoneEditorHost : IDisposable
+internal sealed class BoneEditorHost : NoodleToolHost
 {
     private readonly RigDocument2D _document = RigDocument2D.CreateStarterPerson();
-    private readonly Camera2D _camera = new() { Position = new Vector2(0f, -55f), Zoom = 1.05f };
-    private readonly GraphicsSurface2D _surface = new() { Dock = DockStyle.Fill, TabStop = true, DepthStencilFormat = DepthFormat.None };
     private readonly BoneEditorPanel _panel;
-    private readonly Form _window;
-    private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
-    private readonly Stopwatch _clock = new();
-
-    private Renderer2D? _renderer;
-    private FrameTime _frameTime;
-    private double _previousTime;
     private bool _panning;
-    private Point _previousMouse;
-    private bool _disposed;
 
-    public BoneEditorHost()
+    public BoneEditorHost() : base("App2d Entity Editor — Bones", new Size(1380, 840),
+        new Camera2D { Position = new Vector2(0, -55), Zoom = 1.05f }) => _panel = new(_document);
+
+    protected override void DrawControls() => _panel.Draw(() => AfterFrame(ExportModel));
+    internal void ShowShapeStudy() => _panel.Select(_document.Shapes.FirstOrDefault());
+    protected override void DrawScene(Renderer2D renderer, FrameTime time)
     {
-        _panel = new BoneEditorPanel(_document);
-        _window = new Form
+        renderer.Clear(new XnaColor(17, 22, 33));
+        renderer.DrawGrid(50, 5);
+        RigDocumentRenderer2D.Render(renderer, _document, _panel.SelectedItem);
+    }
+    protected override void HandleSceneInput(bool mouseCaptured, bool keyboardCaptured)
+    {
+        if (ImGui.GetIO().KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.S, false)) AfterFrame(ExportModel);
+        if (!keyboardCaptured)
         {
-            Text = "App2d Entity Editor — Bones",
-            ClientSize = new Size(1380, 840),
-            MinimumSize = new Size(980, 640),
-            StartPosition = FormStartPosition.CenterScreen,
-            KeyPreview = true
-        };
-        _window.Controls.Add(_surface);
-        _window.Controls.Add(_panel);
-        _panel.BringToFront();
-
-        _surface.RenderFrame += Render;
-        _surface.DeviceDisposing += ReleaseRenderer;
-        _surface.MouseDown += OnMouseDown;
-        _surface.MouseMove += OnMouseMove;
-        _surface.MouseUp += OnMouseUp;
-        _surface.MouseWheel += OnMouseWheel;
-        _panel.DocumentChanged += RefreshSurface;
-        _panel.SelectionChanged += RefreshSurface;
-        _window.KeyDown += OnKeyDown;
-        _window.Resize += OnResize;
-        _window.Shown += OnShown;
-        _window.FormClosed += OnFormClosed;
-        _timer.Tick += OnTick;
-    }
-
-    public void Run()
-    {
-        _clock.Start();
-        _timer.Start();
-        Application.Run(_window);
-    }
-
-    private void OnTick(object? sender, EventArgs e)
-    {
-        var totalTime = _clock.Elapsed.TotalSeconds;
-        var elapsed = Math.Clamp(totalTime - _previousTime, 0d, 0.1d);
-        _previousTime = totalTime;
-        _frameTime = new FrameTime((float)elapsed, totalTime, _frameTime.FrameNumber + 1);
-        _surface.Refresh();
-    }
-
-    private void Render(GraphicsDevice device, int width, int height)
-    {
-        _renderer ??= new Renderer2D(_camera, device);
-        _renderer.BeginFrame(width, height, _frameTime);
-        try
-        {
-            _renderer.Clear(new XnaColor(17, 22, 33));
-            _renderer.DrawGrid(50f, 5);
-            RigDocumentRenderer2D.Render(_renderer, _document, _panel.SelectedItem);
-            _renderer.DrawScreenRoundedRectangle(new(18f, 18f, 575f, 101f), 12f,
-                new XnaColor(9, 14, 24, 225));
-            _renderer.DrawScreenText("APP2D ENTITY EDITOR  /  BONES", new Vector2(36f, 51f), XnaColor.White);
-            _renderer.DrawScreenText("Build hierarchy -> attach shapes -> edit properties -> Ctrl+S exports a model",
-                new Vector2(36f, 83f), new XnaColor(170, 185, 207));
+            if (ImGui.IsKeyPressed(ImGuiKey.Escape, false)) Close();
         }
-        finally
+        if (mouseCaptured || !ImGui.IsMouseDown(ImGuiMouseButton.Middle)) _panning = false;
+        if (mouseCaptured) return;
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Middle)) _panning = true;
+        if (_panning)
         {
-            _renderer.EndFrame();
+            var delta = ImGui.GetIO().MouseDelta;
+            Camera.Position -= new Vector2(delta.X, -delta.Y) / Camera.Zoom;
         }
+        ZoomAtPointer();
     }
-
-    private void OnMouseDown(object? sender, MouseEventArgs e)
-    {
-        if (e.Button != MouseButtons.Middle)
-            return;
-        _panning = true;
-        _previousMouse = e.Location;
-        _surface.Capture = true;
-    }
-
-    private void OnMouseMove(object? sender, MouseEventArgs e)
-    {
-        if (!_panning)
-            return;
-        var delta = new Vector2(e.X - _previousMouse.X, e.Y - _previousMouse.Y);
-        _camera.Position -= new Vector2(delta.X, -delta.Y) / _camera.Zoom;
-        _previousMouse = e.Location;
-    }
-
-    private void OnMouseUp(object? sender, MouseEventArgs e)
-    {
-        if (e.Button != MouseButtons.Middle)
-            return;
-        _panning = false;
-        _surface.Capture = false;
-    }
-
-    private void OnMouseWheel(object? sender, MouseEventArgs e)
-    {
-        var devicePoint = new Vector2(e.X, e.Y);
-        var beforeZoom = _camera.DeviceToWorld(devicePoint);
-        _camera.Zoom *= e.Delta > 0 ? 1.1f : 1f / 1.1f;
-        _camera.Position += beforeZoom - _camera.DeviceToWorld(devicePoint);
-    }
-
-    private void OnKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.Control && e.KeyCode == Keys.S)
-        {
-            ExportModel();
-            e.Handled = true;
-            e.SuppressKeyPress = true;
-            return;
-        }
-        if (e.KeyCode != Keys.Escape)
-            return;
-        _window.Close();
-        e.Handled = true;
-        e.SuppressKeyPress = true;
-    }
-
     private void ExportModel()
     {
-        using var dialog = new SaveFileDialog
-        {
-            Filter = "App2d model (*.model.json)|*.model.json|JSON (*.json)|*.json",
-            FileName = "noodle-rig.model.json"
-        };
-        if (dialog.ShowDialog(_window) != DialogResult.OK) return;
+        if (!_panel.Commit()) return;
+        using var dialog = new SaveFileDialog { Filter = "App2d model (*.model.json)|*.model.json|JSON (*.json)|*.json", FileName = "noodle-rig.model.json" };
+        if (dialog.ShowDialog(Window) != DialogResult.OK) return;
         try
         {
             var fileName = Path.GetFileName(dialog.FileName);
-            var name = fileName.EndsWith(".model.json", StringComparison.OrdinalIgnoreCase)
-                ? fileName[..^".model.json".Length]
-                : Path.GetFileNameWithoutExtension(fileName);
+            var name = fileName.EndsWith(".model.json", StringComparison.OrdinalIgnoreCase) ? fileName[..^".model.json".Length] : Path.GetFileNameWithoutExtension(fileName);
             if (string.IsNullOrWhiteSpace(name)) name = "Noodle rig";
             CharacterModel model = RigAuthoredBridge2D.Export(_document, PuppetImport.Slug(name, "noodle-rig"), name);
             model.Save(dialog.FileName);
-            MessageBox.Show(_window, $"Saved authored model to {dialog.FileName}", "Model exported");
+            MessageBox.Show(Window, $"Saved authored model to {dialog.FileName}", "Model exported");
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException or NotSupportedException)
-        {
-            MessageBox.Show(_window, ex.Message, "Model export failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-
-    private void OnResize(object? sender, EventArgs e) =>
-        _camera.SetViewport(Math.Max(1, _surface.ClientSize.Width), Math.Max(1, _surface.ClientSize.Height));
-
-    private void OnShown(object? sender, EventArgs e)
-    {
-        OnResize(sender, e);
-        _surface.Focus();
-    }
-
-    private void OnFormClosed(object? sender, FormClosedEventArgs e) => _timer.Stop();
-    private void RefreshSurface() => _surface.Refresh();
-
-    private void ReleaseRenderer()
-    {
-        _renderer?.Dispose();
-        _renderer = null;
-    }
-
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        _timer.Stop();
-        _timer.Tick -= OnTick;
-        _surface.RenderFrame -= Render;
-        _surface.DeviceDisposing -= ReleaseRenderer;
-        _surface.MouseDown -= OnMouseDown;
-        _surface.MouseMove -= OnMouseMove;
-        _surface.MouseUp -= OnMouseUp;
-        _surface.MouseWheel -= OnMouseWheel;
-        _panel.DocumentChanged -= RefreshSurface;
-        _panel.SelectionChanged -= RefreshSurface;
-        _window.KeyDown -= OnKeyDown;
-        _window.Resize -= OnResize;
-        _window.Shown -= OnShown;
-        _window.FormClosed -= OnFormClosed;
-        ReleaseRenderer();
-        _timer.Dispose();
-        _panel.Dispose();
-        _surface.Dispose();
-        _window.Dispose();
+        { MessageBox.Show(Window, ex.Message, "Model export failed", MessageBoxButtons.OK, MessageBoxIcon.Error); }
     }
 }
