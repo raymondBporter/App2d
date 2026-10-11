@@ -4,6 +4,7 @@ namespace App2d.Core.Mathematics;
 
 public static class Matrix3x2Extensions
 {
+    /// <summary>True when every matrix entry is finite. Singular matrices are allowed.</summary>
     public static bool IsFinite(this Matrix3x2 matrix) =>
         float.IsFinite(matrix.M11) && float.IsFinite(matrix.M12) && float.IsFinite(matrix.M21) &&
         float.IsFinite(matrix.M22) && float.IsFinite(matrix.M31) && float.IsFinite(matrix.M32);

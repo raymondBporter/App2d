@@ -76,7 +76,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
     private ChainResult Solve(string id, Vector3 target, int bend)
     {
-        if (!float.IsFinite(target.X) || !float.IsFinite(target.Y) || !float.IsFinite(target.Z))
+        if (!target.IsFinite())
             throw new InvalidDataException($"Constraint '{id}': target must be finite.");
         if (!model.Chains.TryGetValue(id, out var chain)) throw new InvalidDataException($"Unknown IK constraint '{id}'.");
         return chain.Solver == ModelChain.BoneSolver ? BoneFrameIk.Solve(model, pose, chain, target, bend, _foldDirections[id]) : SolvePoints(chain, target, bend);

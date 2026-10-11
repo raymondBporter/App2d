@@ -11,8 +11,7 @@ public sealed record WorldZone2D
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(id);
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
-        if (!bounds.IsFinite || !float.IsFinite(bounds.Size.X) || !float.IsFinite(bounds.Size.Y) ||
-            bounds.Size.X <= 0 || bounds.Size.Y <= 0)
+        if (!bounds.IsFinite || !NumericValidation.IsFiniteAndPositive(bounds.Size))
         {
             throw new ArgumentOutOfRangeException(nameof(bounds), "Zones need finite, positive rectangles.");
         }

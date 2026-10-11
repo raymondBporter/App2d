@@ -10,6 +10,40 @@ public sealed class Affine2DTests
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
+    [Theory]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.NegativeInfinity)]
+    public void NonfiniteAuthoredChannelsFailValidation(float bad)
+    {
+        foreach (var transform in new Affine2D[]
+        {
+            new() { X = bad }, new() { Y = bad }, new() { Rotation = bad },
+            new() { ScaleX = bad }, new() { ScaleY = bad },
+            new() { ShearX = bad }, new() { ShearY = bad }
+        })
+        {
+            Assert.False(transform.IsFinite);
+            var error = Assert.Throws<InvalidDataException>(() => transform.Validate("bone"));
+            Assert.Equal("bone: transform values must be finite.", error.Message);
+        }
+    }
+
+    [Fact]
+    public void FiniteChannelsAllowCollapseAndAreDistinctFromAnEvaluatedMatrixOverflow()
+    {
+        var collapsed = new Affine2D { Scale = Vector2.Zero };
+        Assert.True(collapsed.IsFinite);
+        collapsed.Validate("collapsed");
+        Assert.False(collapsed.TryInverse(out _));
+
+        var overflow = new Affine2D { Rotation = float.MaxValue, ShearX = float.MaxValue };
+        Assert.True(overflow.IsFinite);
+        overflow.Validate("overflow");
+        Assert.False(overflow.Matrix.IsFinite());
+        Assert.False(overflow.TryInverse(out _));
+    }
+
     [Fact]
     public void ComposingRotationWithNonuniformScaleRetainsTheIntroducedShear()
     {

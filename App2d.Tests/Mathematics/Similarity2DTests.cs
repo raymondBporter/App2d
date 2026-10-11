@@ -9,6 +9,20 @@ public sealed class Similarity2DTests
         Matrix3x2.CreateScale(scale) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(translation);
 
     [Fact]
+    public void FinitenessDetectsArithmeticOverflowAndDoesNotPromiseNonzeroScale()
+    {
+        Assert.True(Similarity2D.Identity.IsFinite);
+        Assert.True(default(Similarity2D).IsFinite);
+        Assert.False(Similarity2D.TryFromMatrix(default(Similarity2D).ToMatrix(), out _));
+
+        var large = Similarity2D.FromTranslation(new(float.MaxValue, 0));
+        Assert.True(large.IsFinite);
+        Assert.False(large.Translated(new(float.MaxValue, 0)).IsFinite);
+        Assert.False(large.ScaledBy(2).IsFinite);
+        Assert.False(Similarity2D.FromAxis(Vector2.Zero, Vector2.UnitX, scale: float.MaxValue).ScaledBy(2).IsFinite);
+    }
+
+    [Fact]
     public void TranslationFactoryMatchesMatrixAndRejectsNonFinitePositions()
     {
         var position = new Vector2(3f, -4f);

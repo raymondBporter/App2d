@@ -70,11 +70,7 @@ public static class Interpolation
         start + amount * (end - start);
 
     /// <summary>Interpolates between vectors after mapping normalized progress.</summary>
-    public static Vector2 Lerp(
-        Vector2 start,
-        Vector2 end,
-        float progress,
-        Func<float, float> progressMapping)
+    public static Vector2 Lerp(Vector2 start, Vector2 end, float progress, Func<float, float> progressMapping)
     {
         ArgGuard.ThrowIfNull(progressMapping);
         return Lerp(start, end, progressMapping(progress));

@@ -6,8 +6,10 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | --- | --- |
 | `Direction2D` | Finite unit vector with angle, perpendicular, reversal and signed scaling helpers |
 | `Polar2D` | Radius/angle value and direct polar/Cartesian conversions |
-| `Vector2Extensions` | `AngleRadians`, `ToPolar()`, `Rotate()`, `RotateAround()`, cross products, three-point orientation, and perpendicular vectors |
-| `Vector3Extensions` | `XY`, `XZ`, and `YZ` coordinate-plane projections |
+| `Vector2Extensions` | `IsFinite()`, `AngleRadians`, `ToPolar()`, `Rotate()`, `RotateAround()`, cross products, three-point orientation, and perpendicular vectors |
+| `Vector3Extensions` | `IsFinite()` and `XY`, `XZ`, and `YZ` coordinate-plane projections |
+| `Vector4Extensions` | `IsFinite()` component query |
+| `Matrix3x2Extensions` | `IsFinite()` entry query and transpose direction transform |
 | `Rotation2D` | Rotate vectors or points about a pivot, solve a pivot from two endpoints and a turn, and interpolate an endpoint arc |
 | `Interpolation` | Progress mappings, lerp, and inverse lerp |
 | `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
@@ -21,6 +23,12 @@ the identically zero polynomial is rejected. Coefficients and bounds must be fin
 solver uses double arithmetic, so roots that cannot be distinguished within evaluation precision may merge.
 
 ## Transforms
+
+`Vector2`, `Vector3`, `Vector4`, and `Matrix3x2` share the `IsFinite()` extension name: every component or entry
+must be finite. Zero values and singular matrices are finite; a finite vector's magnitude can still overflow.
+`Affine2D.IsFinite` checks its seven authored channels, while `affine.Matrix.IsFinite()` checks the evaluated map
+(channel arithmetic can overflow). `Similarity2D.IsFinite` checks both axes, translation, and scale; it does not
+require nonzero scale. Use `TryInverse` or `Similarity2D.TryFromMatrix` for those stricter requirements.
 
 There are two transform families. `Similarity2D` is the uniform-scale, orthogonal subset used by collision.
 `Affine2D` is the general affine transform shared by scene objects, rendering, and animation. Nonuniform scales and

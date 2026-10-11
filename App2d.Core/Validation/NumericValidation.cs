@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Validation;
@@ -10,6 +11,7 @@ namespace App2d.Core.Validation;
 public static class NumericValidation
 {
     public static bool IsFinite<T>(T value) where T : INumberBase<T> => T.IsFinite(value);
+    public static bool IsFinite(Matrix3x2 value) => value.IsFinite();
     public static bool IsZero<T>(T value) where T : INumberBase<T> => value == T.Zero;
     public static bool IsPositive<T>(T value) where T : INumber<T> => value > T.Zero;
     public static bool IsNegative<T>(T value) where T : INumber<T> => value < T.Zero;
@@ -24,7 +26,7 @@ public static class NumericValidation
     public static bool IsInClosedRange<T>(T value, T minimum, T maximum) where T : INumber<T> => value >= minimum && value <= maximum;
     public static bool IsInOpenRange<T>(T value, T minimum, T maximum) where T : INumber<T> => value > minimum && value < maximum;
 
-    public static bool IsFinite(Vector2 value) => float.IsFinite(value.X) && float.IsFinite(value.Y);
+    public static bool IsFinite(Vector2 value) => value.IsFinite();
     public static bool IsZero(Vector2 value) => value == Vector2.Zero;
     public static bool IsPositive(Vector2 value) => value.X > 0f && value.Y > 0f;
     public static bool HasNegativeComponent(Vector2 value) => value.X < 0f || value.Y < 0f;
@@ -41,7 +43,7 @@ public static class NumericValidation
     public static bool IsInOpenRange(Vector2 value, Vector2 minimum, Vector2 maximum) =>
         IsComponentWiseGreaterThan(value, minimum) && IsComponentWiseLessThan(value, maximum);
 
-    public static bool IsFinite(Vector3 value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z);
+    public static bool IsFinite(Vector3 value) => value.IsFinite();
     public static bool IsZero(Vector3 value) => value == Vector3.Zero;
     public static bool IsPositive(Vector3 value) => value.X > 0f && value.Y > 0f && value.Z > 0f;
     public static bool HasNegativeComponent(Vector3 value) => value.X < 0f || value.Y < 0f || value.Z < 0f;
@@ -58,7 +60,7 @@ public static class NumericValidation
     public static bool IsInOpenRange(Vector3 value, Vector3 minimum, Vector3 maximum) =>
         IsComponentWiseGreaterThan(value, minimum) && IsComponentWiseLessThan(value, maximum);
 
-    public static bool IsFinite(Vector4 value) => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z) && float.IsFinite(value.W);
+    public static bool IsFinite(Vector4 value) => value.IsFinite();
     public static bool IsZero(Vector4 value) => value == Vector4.Zero;
     public static bool IsPositive(Vector4 value) => value.X > 0f && value.Y > 0f && value.Z > 0f && value.W > 0f;
     public static bool HasNegativeComponent(Vector4 value) => value.X < 0f || value.Y < 0f || value.Z < 0f || value.W < 0f;

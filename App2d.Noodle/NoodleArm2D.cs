@@ -75,7 +75,7 @@ internal sealed class NoodleArm2D
 
     public void SetTarget(Vector2 target)
     {
-        if (!float.IsFinite(target.X) || !float.IsFinite(target.Y))
+        if (!target.IsFinite())
             return;
 
         Target = target;

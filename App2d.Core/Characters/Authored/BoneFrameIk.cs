@@ -1,4 +1,5 @@
 using App2d.Core.Kinematics;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -46,7 +47,7 @@ internal static class BoneFrameIk
 
         var tip = new Vector2(frame.M31, frame.M32) + x * bone.Length;
         var actual = new Vector2(child.M31, child.M32);
-        if (!float.IsFinite(actual.X) || !float.IsFinite(actual.Y) || Vector2.Distance(tip, actual) > MathF.Max(1e-5f, length * 1e-4f))
+        if (!actual.IsFinite() || Vector2.Distance(tip, actual) > MathF.Max(1e-5f, length * 1e-4f))
             throw new InvalidDataException($"Bone constraint '{chain.Id}': the child of '{bone.Id}' must sit at its +X tip (length {bone.Length}); move the child or change the bone length.");
         return length;
     }

@@ -85,8 +85,8 @@ public static class Rotation2D
 
     private static void ValidateArc(Vector2 from, Vector2 to, float radians)
     {
-        if (!float.IsFinite(from.X) || !float.IsFinite(from.Y)) throw new ArgumentOutOfRangeException(nameof(from));
-        if (!float.IsFinite(to.X) || !float.IsFinite(to.Y)) throw new ArgumentOutOfRangeException(nameof(to));
+        if (!from.IsFinite()) throw new ArgumentOutOfRangeException(nameof(from));
+        if (!to.IsFinite()) throw new ArgumentOutOfRangeException(nameof(to));
         if (!float.IsFinite(radians)) throw new ArgumentOutOfRangeException(nameof(radians));
     }
 }

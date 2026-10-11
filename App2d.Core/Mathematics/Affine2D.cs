@@ -30,6 +30,11 @@ public sealed record Affine2D
     [JsonIgnore] public int Version { get; private set; }
     public static Affine2D Identity => new();
 
+    /// <summary>True when all seven authored channels are finite. Check Matrix.IsFinite() for the evaluated matrix.</summary>
+    [JsonIgnore]
+    public bool IsFinite => Position.IsFinite() && Scale.IsFinite() && float.IsFinite(Rotation) &&
+        float.IsFinite(ShearX) && float.IsFinite(ShearY);
+
     public float X { get => _x; set => Set(ref _x, value); }
     public float Y { get => _y; set => Set(ref _y, value); }
     public float Rotation { get => _rotation; set => Set(ref _rotation, value); }
@@ -118,8 +123,7 @@ public sealed record Affine2D
 
     public void Validate(string field)
     {
-        foreach (var value in new[] { X, Y, Rotation, ScaleX, ScaleY, ShearX, ShearY })
-            if (!float.IsFinite(value)) throw new InvalidDataException($"{field}: transform values must be finite.");
+        if (!IsFinite) throw new InvalidDataException($"{field}: transform values must be finite.");
     }
 
     /// <summary>Decomposes a matrix, including singular matrices, fixing shearX at zero.</summary>

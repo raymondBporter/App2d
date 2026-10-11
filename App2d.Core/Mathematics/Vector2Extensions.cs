@@ -13,6 +13,9 @@ public static class Vector2Extensions
 
     extension(Vector2 value)
     {
+        /// <summary>True when every component is finite, regardless of the vector's length.</summary>
+        public bool IsFinite() => float.IsFinite(value.X) && float.IsFinite(value.Y);
+
         /// <summary>Heading in radians from +X, counter-clockwise in Y-up space. Zero vectors return zero.</summary>
         public float AngleRadians => Polar2D.AngleOf(value);
 
@@ -28,7 +31,7 @@ public static class Vector2Extensions
         public float Cross(Vector2 right) => (float)value.CrossDouble(right);
 
         /// <summary>The perpendicular dot product with double intermediates for geometric predicates.</summary>
-        public double CrossDouble(Vector2 right) => Vector2Extensions.CrossDouble(value.X, value.Y, right.X, right.Y);
+        public double CrossDouble(Vector2 right) => CrossDouble(value.X, value.Y, right.X, right.Y);
 
         /// <summary>Twice the signed area of triangle value, B, C; positive for a counter-clockwise turn.</summary>
         public double Orientation(Vector2 b, Vector2 c) =>
