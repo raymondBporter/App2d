@@ -1,4 +1,5 @@
 using App2d.Core.Assets;
+using App2d.Core.Geometry;
 using App2d.Core.Tiles;
 using App2d.Levels;
 
@@ -20,15 +21,18 @@ internal static class LevelBootstrap2D
     /// and must never be the only home for a hand-edited file.
     /// </summary>
     public static string CavernLevelPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "level.db");
+    public static string GiantTreesPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "giant-trees.json");
 
     public static LoadedLevel2D Load()
     {
         using var database = LevelDatabase2D.OpenRead(RequireLevelPath());
+        var tileMap = database.Load(TerrainTilesetIds);
         return new LoadedLevel2D(
-            database.Load(TerrainTilesetIds),
+            tileMap,
             database.LoadMovingPlatforms(),
             database.LoadPositionThings(),
-            WorldZoneFile2D.Load(Path.Combine(Path.GetDirectoryName(CavernLevelPath)!, "zones.json")));
+            WorldZoneFile2D.Load(Path.Combine(Path.GetDirectoryName(CavernLevelPath)!, "zones.json")),
+            GiantTreeFile2D.Load(GiantTreesPath, tileMap));
     }
 
     /// <summary>
@@ -49,4 +53,5 @@ internal sealed record LoadedLevel2D(
     EditableTileMap2D TileMap,
     IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms,
     IReadOnlyList<PositionThingRecord2D> PositionThings,
-    System.Collections.Immutable.ImmutableArray<Contracts.World.WorldZone2D> Zones);
+    System.Collections.Immutable.ImmutableArray<Contracts.World.WorldZone2D> Zones,
+    System.Collections.Immutable.ImmutableArray<GiantTree2D> GiantTrees);

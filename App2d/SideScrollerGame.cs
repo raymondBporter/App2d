@@ -15,6 +15,7 @@ using App2d.Editor;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
+using App2d.Levels;
 using App2d.Persistence;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World;
@@ -86,6 +87,7 @@ public sealed class SideScrollerGame : Game2D
                 ?? throw new InvalidDataException("Player spell tuning is missing."),
             AuthoredCharacters = _authored,
             Zones = loadedLevel.Zones,
+            GiantTrees = loadedLevel.GiantTrees,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
         });
         _session = _simulation.Session;
@@ -111,6 +113,13 @@ public sealed class SideScrollerGame : Game2D
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ThingsChanged += things =>
             _simulation.Level.ReloadMovingPlatforms([.. things.Select(ThingTypeRegistry2D.ToRuntime)]);
+
+        DeveloperConsole.RegisterCommand("reload_trees", "Reload giant-trees.json: positions and dimensions are in tiles; ranges are [min, max].", _ =>
+        {
+            var trees = GiantTreeFile2D.Load(LevelBootstrap2D.GiantTreesPath, tileMap);
+            _simulation.Level.ReloadGiantTrees(trees);
+            return ConsoleCommandResult.From($"Loaded {trees.Length} giant trees with {trees.Sum(tree => tree.Branches.Length)} branch platforms.");
+        });
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored));

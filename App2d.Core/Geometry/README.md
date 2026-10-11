@@ -16,6 +16,18 @@ Value types: `Rect2D` (the only axis-aligned box; `Unbounded` covers the plane),
 (anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `Interval1D`, `Line2D`, `Ray2D`,
 `RayHit2D`, `IGeometry2D`.
 
+`GiantTree2D(root, settings, seed)` creates immutable, seeded tree-level geometry. `GiantTreeSettings2D`
+uses world units; `Branches` gives exact flat-topped platform bounds. `GiantTreeVisual2D` adds bark, moss,
+and foliage using a separate random stream. Changing foliage never moves a platform. The trunk is scenery;
+the side-scroller makes each branch a static one-way platform that survives root-chunk unloading.
+
+The cavern grove is authored in `Assets/Static/levels/cavern/giant-trees.json`. That file uses **tiles**
+(currently 32 world units): ranges such as `branchLengthTiles: [4, 12]` mean random lengths beyond the trunk.
+Each tree has `xTiles`, `heightTiles`, `trunkWidthTiles`, and a stable `seed`. Omit `rootYTiles` to plant it on
+the contiguous ground column; supply it to choose an exact base row. Edit the file and run `reload_trees`
+in the developer console to rebuild visuals and collision. An empty `trees` list removes the grove.
+`--giant-tree-study <output-directory>` renders an overview and checks a real player standing on a branch.
+
 Operations, one static class per question, all taking raw parameters:
 
 | Class | Question |

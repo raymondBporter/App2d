@@ -19,6 +19,15 @@ public sealed class VegetationPresentation2D
     private ImmutableHashSet<GrassCell2D>? _cuts;
     private ImmutableArray<TerrainChunkState2D> _terrain;
     private double _time;
+    private ImmutableArray<GiantTree2D> _giantTrees = [];
+    private GiantTreeVisual2D[] _giantTreeVisuals = [];
+
+    public void SetGiantTrees(ImmutableArray<GiantTree2D> trees)
+    {
+        if (_giantTrees == trees) return;
+        _giantTrees = trees;
+        _giantTreeVisuals = [.. trees.Select(tree => new GiantTreeVisual2D(tree))];
+    }
 
     public void SetTerrain(ImmutableArray<TerrainChunkState2D> terrain)
     {
@@ -148,6 +157,7 @@ public sealed class VegetationPresentation2D
     public void DrawTrees(Renderer2D renderer, Rect2D visible)
     {
         var wind = Wind();
+        foreach (var tree in _giantTreeVisuals) tree.Render(renderer, visible, wind);
         foreach (var chunk in _chunks.Values)
         {
             foreach (var tree in chunk.Trees)

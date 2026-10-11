@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "branchLengthTiles": [4, 12],
+  "branchGapTiles": [2, 3],
+  "branchThicknessTiles": 0.75,
+  "foliageRadiusTiles": [1.75, 3.5],
+  "trees": [
+    { "xTiles": 23, "heightTiles": 48, "trunkWidthTiles": 6, "seed": 3107 },
+    { "xTiles": 47, "heightTiles": 55, "trunkWidthTiles": 7, "seed": 8821 },
+    { "xTiles": 71, "heightTiles": 43, "trunkWidthTiles": 5.5, "seed": 4219 },
+    { "xTiles": 108, "heightTiles": 58, "trunkWidthTiles": 8, "seed": 6503 }
+  ]
+}

@@ -84,6 +84,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     private void ApplyContent(LevelContent2D content)
     {
+        _vegetation.SetGiantTrees(content.GiantTrees);
         var platforms = content.MovingPlatforms.Select(p => p.Id).ToHashSet();
         foreach (var id in _platforms.Keys.Where(id => !platforms.Contains(id)).ToArray())
         {
