@@ -8,19 +8,19 @@ public sealed class Arc2DTests
     [Fact]
     public void ArcDistanceUsesTheCircleInteriorAndFiniteSweepEndpoints()
     {
-        ICurve2D quarter = new Arc2D(Vector2.Zero, 2, 0, MathF.PI / 2);
+        Arc2D quarter = new Arc2D(Vector2.Zero, 2, 0, MathF.PI / 2);
         Assert.Equal(1, quarter.Distance(new(3 / MathF.Sqrt(2), 3 / MathF.Sqrt(2))), 5);
         Assert.Equal(MathF.Sqrt(5), quarter.Distance(new(-1, 0)), 5);
 
-        ICurve2D clockwise = new Arc2D(Vector2.Zero, 2, 0, -MathF.PI / 2);
+        Arc2D clockwise = new Arc2D(Vector2.Zero, 2, 0, -MathF.PI / 2);
         Assert.Equal(1, clockwise.Distance(new(0, -3)), 5);
         Assert.Equal(MathF.Sqrt(13), clockwise.Distance(new(0, 3)), 5);
 
-        ICurve2D full = new Arc2D(Vector2.Zero, 2, 0, MathF.Tau);
+        Arc2D full = new Arc2D(Vector2.Zero, 2, 0, MathF.Tau);
         Assert.Equal(1, full.Distance(new(-3, 0)), 5);
         Assert.Equal(2, full.Distance(Vector2.Zero), 5);
 
-        ICurve2D wrapped = new Arc2D(Vector2.Zero, 2, 3 * MathF.PI / 4, MathF.PI);
+        Arc2D wrapped = new Arc2D(Vector2.Zero, 2, 3 * MathF.PI / 4, MathF.PI);
         Assert.Equal(1, wrapped.Distance(new(-3, 0)), 5);
         Assert.Equal(1, wrapped.Distance(new(0, -3)), 5);
 

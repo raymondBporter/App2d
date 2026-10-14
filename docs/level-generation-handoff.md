@@ -18,7 +18,7 @@ can already describe multiple maps per zone.
 
 Preserve these behaviors when improving it:
 
-- Normal game launch needs no arguments and opens the assigned generated map.
+- Normal game launch needs no arguments and opens the upstream map (`main`); F2 selects the assigned generated map.
 - Generation is an explicit authoring action; normal launch never regenerates.
 - Output is ordinary editable terrain and things, not a runtime seed function.
 - Rerolling preserves previous databases and edits, then changes the assignment.
@@ -67,7 +67,7 @@ The layout currently sets:
 
 ```json
 {
-  "startMapId": "sandbox-a",
+  "startMapId": "main",
   "startAtArrival": true
 }
 ```

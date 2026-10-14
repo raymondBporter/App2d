@@ -8,6 +8,9 @@ namespace App2d.Core.Shapes;
 /// </summary>
 public interface IShape2D : IGeometry2D
 {
+    /// <summary>The stable shape kind; built-in shapes use <see cref="ShapeKinds2D"/> IDs.</summary>
+    string Kind { get; }
+
     /// <summary>The local-space area; infinite shapes report positive infinity.</summary>
     float Area { get; }
 }

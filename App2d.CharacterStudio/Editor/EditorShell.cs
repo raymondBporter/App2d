@@ -41,31 +41,35 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
 
     public void Draw()
     {
-        Ui.Scale = gui.UiScale; var scale = Ui.Scale;
-        var io = ImGui.GetIO();
-        ImGui.SetNextWindowPos(Vector2.Zero); ImGui.SetNextWindowSize(io.DisplaySize);
-        ImGui.Begin("Character editor", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
-        TopBar();
-        Shortcuts(io);
-        ImGui.Separator();
         var view = View;
-        var available = ImGui.GetContentRegionAvail(); var status = 26 * scale;
-        // Side panels and the timeline keep their design size where there is room, but never crowd out the viewport.
-        var timeline = MathF.Min(view.TimelineHeight * scale, available.Y * .34f);
-        var left = MathF.Min(250 * scale, available.X * .2f); var right = MathF.Min(330 * scale, available.X * .25f);
-        var body = available.Y - timeline - status - 2 * ImGui.GetStyle().ItemSpacing.Y;
-        ImGui.BeginChild("left", new(left, body));
-        ImGui.BeginChild("browser", new(0, body * .5f), ImGuiChildFlags.Borders); _browser.Draw(); ImGui.EndChild();
-        ImGui.BeginChild("outline", Vector2.Zero, ImGuiChildFlags.Borders); if (Test.Active) Test.RosterPanel(); else view.Outline(); ImGui.EndChild();
-        ImGui.EndChild(); ImGui.SameLine();
-        ImGui.BeginChild("stage", new(Math.Max(200, available.X - left - right - 2 * ImGui.GetStyle().ItemSpacing.X), body), ImGuiChildFlags.Borders, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        if (Test.Active) Test.Stage(ImGui.GetContentRegionAvail(), LiveTest); else Stage(view);
-        ImGui.EndChild(); ImGui.SameLine();
-        ImGui.BeginChild("inspector", new(right, body), ImGuiChildFlags.Borders); if (Test.Active) Test.Inspector(); else view.Inspector(); ImGui.EndChild();
-        ImGui.BeginChild("timeline", new(0, timeline), ImGuiChildFlags.Borders); if (Test.Active) Test.Timeline(); else view.Timeline(); ImGui.EndChild();
-        StatusLine();
-        _browser.DrawDialogs();
-        ImGui.End();
+        Ui.Root("Character editor", () =>
+        {
+            TopBar();
+            Shortcuts(ImGui.GetIO());
+            ImGui.Separator();
+            var scale = Ui.Scale;
+            var available = ImGui.GetContentRegionAvail(); var status = 26 * scale;
+            // Side panels and the timeline keep their design size where there is room, but never crowd out the viewport.
+            var timeline = MathF.Min(view.TimelineHeight * scale, available.Y * .34f);
+            var left = MathF.Min(250 * scale, available.X * .2f); var right = MathF.Min(330 * scale, available.X * .25f);
+            var body = available.Y - timeline - status - 2 * ImGui.GetStyle().ItemSpacing.Y;
+
+            Ui.Row(
+                () => Ui.Panel("left", size: new(left, body), border: false, content: () =>
+                {
+                    Ui.Panel("browser", _browser.Draw, size: new(0, body * .5f));
+                    Ui.Panel("outline", () => { if (Test.Active) Test.RosterPanel(); else view.Outline(); });
+                }),
+                () => Ui.Panel("stage", size: new(Math.Max(200, available.X - left - right - 2 * ImGui.GetStyle().ItemSpacing.X), body),
+                    flags: ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse,
+                    content: () => { if (Test.Active) Test.Stage(ImGui.GetContentRegionAvail(), LiveTest); else Stage(view); }),
+                () => Ui.Panel("inspector", size: new(right, body),
+                    content: () => { if (Test.Active) Test.Inspector(); else view.Inspector(); }));
+
+            Ui.Panel("timeline", size: new(0, timeline), content: () => { if (Test.Active) Test.Timeline(); else view.Timeline(); });
+            StatusLine();
+            _browser.DrawDialogs();
+        });
         // A widget or drag in progress keeps its transaction open; the moment nothing is active, the step is committed.
         if (!ImGui.IsAnyItemActive()) Session.CommitAll();
     }

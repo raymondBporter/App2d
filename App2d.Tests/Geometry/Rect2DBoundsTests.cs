@@ -29,7 +29,7 @@ public sealed class Rect2DBoundsTests
         Assert.Equal(new Rect2D(new(3, 4), new(3, 4)), Rect2D.FromPoints(points.AsSpan(0, 1)));
         Assert.Equal(new Rect2D(new(-2, -4), new(10, 7)),
             bounds.Union(new Rect2D(new(8, -4), new(10, 3))));
-        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2D.FromPoints(ReadOnlySpan<Vector2>.Empty));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Rect2D.FromPoints([]));
     }
 
     [Fact]
@@ -160,6 +160,7 @@ public sealed class Rect2DBoundsTests
 
     private sealed class CountedConvex : IConvexShape2D
     {
+        public string Kind => "counted-convex";
         public int SupportCalls { get; private set; }
         public float Area => 24;
         public bool ContainsPoint(Vector2 point) => Containment2D.Rectangle(point, new(-2, -1), new(4, 3));
@@ -172,6 +173,7 @@ public sealed class Rect2DBoundsTests
 
     private sealed class UnknownShape : IShape2D
     {
+        public string Kind => "unknown";
         public float Area => 0;
         public bool ContainsPoint(Vector2 point) => false;
     }

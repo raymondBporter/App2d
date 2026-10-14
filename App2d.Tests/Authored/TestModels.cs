@@ -80,4 +80,11 @@ internal static class TestModels
             throw new DirectoryNotFoundException("Character assets not found.");
         }
     }
+
+    public static void CopyModelTemplates(string root)
+    {
+        var target = Path.Combine(root, "templates"); Directory.CreateDirectory(target);
+        foreach (var file in Directory.EnumerateFiles(Path.Combine(AuthoredRoot, "templates"), "*.json"))
+            File.Copy(file, Path.Combine(target, Path.GetFileName(file)));
+    }
 }

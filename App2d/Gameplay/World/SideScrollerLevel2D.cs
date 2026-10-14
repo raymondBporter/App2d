@@ -40,7 +40,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         IChunkedTileMap2D tileMap,
         IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null,
         IReadOnlyList<WorldThingSpec2D>? worldThings = null,
-        IEnumerable<WorldZone2D>? zones = null)
+        IEnumerable<WorldZone2D>? zones = null,
+        IEnumerable<GiantTree2D>? giantTrees = null)
     {
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
@@ -51,6 +52,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         _worldThingSpecs = worldThings ?? [];
         TileMap = tileMap;
         Zones = zones is null ? [] : [.. zones];
+        GiantTrees = giantTrees is null ? [] : ValidateTrees(giantTrees);
 
         // Only an editable map can change under us. A read-only map never raises the event.
         if (tileMap is IChangingTileMap2D editable)
@@ -148,6 +150,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
         CreateMovingPlatformsFromSpecs();
+        CreateGiantTreeBranches();
         CreateSavePoints();
     }
 
@@ -169,7 +172,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                 [.. _movingPlatforms.Select(p => p.CaptureDefinition())],
                 [.. _savePoints.Select(p => p.CapturePlacement())],
                 GoalThing?.Position)
-            { Zones = Zones };
+            { Zones = Zones, GiantTrees = GiantTrees };
         }
         return _content;
     }
@@ -310,6 +313,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         if (TileMap is IChangingTileMap2D editable) editable.ChunkChanged -= OnMapChanged;
         foreach (var platform in _movingPlatforms) platform.Dispose();
         _movingPlatforms.Clear();
+        RemoveGiantTreeBranches();
         _environment?.Streamer.Dispose();
         foreach (var enemy in EnemySystem.Combatants)
         {

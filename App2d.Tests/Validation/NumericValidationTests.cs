@@ -1,4 +1,5 @@
 using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -43,6 +44,7 @@ public sealed class NumericValidationTests
     {
         foreach (var vector in new Vector2[] { new(bad, 1), new(1, bad) })
         {
+            Assert.False(vector.IsFinite());
             Assert.False(NumericValidation.IsFinite(vector));
             Assert.False(NumericValidation.IsFiniteAndNonZero(vector));
             Assert.False(NumericValidation.IsFiniteAndPositive(vector));
@@ -53,15 +55,58 @@ public sealed class NumericValidationTests
         }
         foreach (var vector in new Vector3[] { new(bad, 1, 1), new(1, bad, 1), new(1, 1, bad) })
         {
+            Assert.False(vector.IsFinite());
             Assert.False(NumericValidation.IsFinite(vector));
             Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrZero(vector));
             Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrNotPositive(vector));
         }
         foreach (var vector in new Vector4[] { new(bad, 1, 1, 1), new(1, bad, 1, 1), new(1, 1, bad, 1), new(1, 1, 1, bad) })
         {
+            Assert.False(vector.IsFinite());
             Assert.False(NumericValidation.IsFinite(vector));
             Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrNegative(vector));
             Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrZero(vector));
+        }
+    }
+
+    [Fact]
+    public void FinitenessAllowsZeroAndLargeComponentsEvenWhenMagnitudeOrDeterminantOverflows()
+    {
+        Assert.True(Vector2.Zero.IsFinite());
+        Assert.True(Vector3.Zero.IsFinite());
+        Assert.True(Vector4.Zero.IsFinite());
+        Assert.True(new Vector2(float.MaxValue).IsFinite());
+        Assert.True(new Vector3(float.MaxValue).IsFinite());
+        Assert.True(new Vector4(float.MaxValue).IsFinite());
+        Assert.False(float.IsFinite(new Vector2(float.MaxValue).Length()));
+
+        var singular = new Matrix3x2();
+        var large = Matrix3x2.CreateScale(float.MaxValue);
+        Assert.True(singular.IsFinite());
+        Assert.True(large.IsFinite());
+        Assert.False(float.IsFinite(large.GetDeterminant()));
+        ArgGuard.ThrowIfNotFinite(singular);
+        ArgGuard.ThrowIfNotFinite(large);
+    }
+
+    [Theory]
+    [InlineData(float.NaN)]
+    [InlineData(float.PositiveInfinity)]
+    [InlineData(float.NegativeInfinity)]
+    public void MatrixGuardChecksAllEntriesAndReportsTheCallersParameter(float bad)
+    {
+        foreach (var localToWorld in new Matrix3x2[]
+        {
+            new(bad, 0, 0, 1, 0, 0), new(1, bad, 0, 1, 0, 0),
+            new(1, 0, bad, 1, 0, 0), new(1, 0, 0, bad, 0, 0),
+            new(1, 0, 0, 1, bad, 0), new(1, 0, 0, 1, 0, bad)
+        })
+        {
+            Assert.False(localToWorld.IsFinite());
+            Assert.False(NumericValidation.IsFinite(localToWorld));
+            var error = Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFinite(localToWorld));
+            Assert.Equal(nameof(localToWorld), error.ParamName);
+            Assert.Equal(localToWorld, Assert.IsType<Matrix3x2>(error.ActualValue));
         }
     }
 

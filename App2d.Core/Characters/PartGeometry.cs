@@ -36,16 +36,22 @@ public static class PartGeometry
         if (part.Kind == PuppetPartKinds.Polygon)
             return Polygon([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]);
         if (part.Kind == PuppetPartKinds.Box)
+        {
             return RoundedRectangleShapeDefinition2D.FromSize(new(part.Width, part.Height),
                 Math.Min(part.Width, part.Height) * .125f);
+        }
+
         if (part.Kind == PuppetPartKinds.Trapezoid)
+        {
             return Polygon([new Vector2(-.5f, -.5f), new Vector2(.5f, -.5f),
                 new Vector2(.35f, .5f), new Vector2(-.35f, .5f)]);
+        }
+
         throw new InvalidDataException($"Unknown editor geometry preset '{part.Kind}'.");
     }
 
     private static SimplePolygonShapeDefinition2D Polygon(IEnumerable<Vector2> vertices) =>
-        new() { Vertices = [.. vertices.Select(Point2D.From)] };
+        new() { Vertices = [.. vertices] };
 
     public static IReadOnlyList<PuppetPoint> CutoutPoints(PuppetPart part) =>
         ((SimplePolygonShapeDefinition2D)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToArray();
@@ -180,13 +186,15 @@ public static class PartGeometry
         if (part.Geometry is ShapeDefinition2D typed)
         {
             var shape = ShapeOf(typed);
-            var count = WorldShape2D.OutlineVertexCount(shape, 48);
+            var count = shape.GetOutlineVertCount(48);
             if (count == 0) throw new NotSupportedException($"A {typed.Kind} has no drawable outline.");
-            var outline = new Vector2[count];
-            WorldShape2D.WriteOutline(shape, outline, 48);
+            Span<Vector2> buffer = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
+            var outline = shape.GetOutlineVerts(buffer, 48);
             var typedFrame = FrameOf(part, world, angle, transform);
             var scale = ShapeScale(part, shape);
-            return [.. outline.Select(vertex => typedFrame.At(vertex * scale))];
+            var result = new List<Vector3>(count);
+            foreach (var vertex in outline) result.Add(typedFrame.At(vertex * scale));
+            return result;
         }
         throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");
     }

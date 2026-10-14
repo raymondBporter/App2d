@@ -40,12 +40,6 @@ internal static class TileEditorView2D
         }
     }
 
-    public static void DrawUI(Renderer2D renderer, TileEditor2D editor, TextureCache2D textures)
-    {
-        if (editor.IsActive && editor.Mode == LevelEditorMode2D.Tiles)
-            TileEditorMenu2D.Draw(renderer, editor, textures);
-    }
-
     private static void DrawThings(Renderer2D renderer, TileEditor2D editor)
     {
         var pathColor = new XnaColor(130, 180, 210, 170);
@@ -108,7 +102,9 @@ internal static class TileEditorView2D
     {
         if (!visible.TryIntersect(mapBounds, out var clipped) ||
             !clipped.TryGetPositiveSize(out _))
+        {
             return;
+        }
 
         var cells = grid.GetCellRange(clipped);
         for (var x = cells.Minimum.X; x <= cells.Maximum.X; x++)

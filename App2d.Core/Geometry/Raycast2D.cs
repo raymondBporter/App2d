@@ -146,7 +146,7 @@ public static class Raycast2D
     /// <returns>True when some parameter in [0, maxDistance] lies inside the rectangle.</returns>
     public static bool IntersectsRectangle(Vector2 origin, Vector2 direction, Vector2 min, Vector2 max, float maxDistance)
     {
-        if (!float.IsFinite(min.X) || !float.IsFinite(min.Y) || !float.IsFinite(max.X) || !float.IsFinite(max.Y)) return true;
+        if (!min.IsFinite() || !max.IsFinite()) return true;
         var minimum = 0f;
         var maximum = maxDistance;
         return ClipAxis(origin.X, direction.X, min.X, max.X, ref minimum, ref maximum) && ClipAxis(origin.Y, direction.Y, min.Y, max.Y, ref minimum, ref maximum);

@@ -23,7 +23,7 @@ public sealed partial class Renderer2D
         RequireFrame();
         ArgGuard.ThrowIfNull(shape);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
-        ValidateTransform(localToWorld);
+        ArgGuard.ThrowIfNotFinite(localToWorld);
         var bounds = ShapeBounds2D.Calculate(shape);
         var matrix = localToWorld * _camera.WorldToDeviceMatrix;
         DrawShapeCore(shape, matrix, bounds, fillColor, outlineColor, screenStrokeWidth);
@@ -63,7 +63,7 @@ public sealed partial class Renderer2D
         RequireFrame();
         ArgGuard.ThrowIfNull(mesh);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
-        ValidateTransform(localToWorld);
+        ArgGuard.ThrowIfNotFinite(localToWorld);
         SelectBatch(null, null);
         var matrix = localToWorld * _camera.WorldToDeviceMatrix;
         var vertices = mesh.Vertices;
@@ -192,13 +192,4 @@ public sealed partial class Renderer2D
             throw new ArgumentOutOfRangeException(nameof(cap));
     }
 
-    private static void ValidateTransform(Matrix3x2 transform)
-    {
-        if (!float.IsFinite(transform.M11) || !float.IsFinite(transform.M12) ||
-            !float.IsFinite(transform.M21) || !float.IsFinite(transform.M22) ||
-            !float.IsFinite(transform.M31) || !float.IsFinite(transform.M32))
-        {
-            throw new ArgumentException("The transform must be finite.", nameof(transform));
-        }
-    }
 }

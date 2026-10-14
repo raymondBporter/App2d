@@ -1,4 +1,5 @@
 using App2d.Core.Curves;
+using App2d.Core.IO;
 using App2d.Core.Shapes;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -32,7 +33,8 @@ public abstract record GeometryDefinition2D
     {
         WriteIndented = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        AllowOutOfOrderMetadataProperties = true
+        AllowOutOfOrderMetadataProperties = true,
+        Converters = { new Vector2JsonConverter() }
     };
 
     public string ToGeometryJson() => JsonSerializer.Serialize<GeometryDefinition2D>(this, JsonOptions);

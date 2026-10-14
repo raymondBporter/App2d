@@ -4,7 +4,7 @@ A world groups independently saved tile maps into named zones. Maps share world 
 
 ## Level playground
 
-The checked-in world contains **Central hub**, **Combat Grounds** (zone ID `sandbox-a`), **Sandbox B**, and the **Original playground**. Combat Grounds is assigned a generated map and is the default arrival destination. The hub and Sandbox B remain editable canvases. The original terrain remains in `level.db`. See [zone generation](level-generation.md) to tune and regenerate Combat Grounds.
+The checked-in world contains **Central hub**, **Combat Grounds** (zone ID `sandbox-a`), **Sandbox B**, and the **Original playground**. The Original playground uses upstream's `level.db` and is the default arrival destination. Combat Grounds retains its assigned generated map. The hub and Sandbox B remain editable canvases. See [zone generation](level-generation.md) to tune and regenerate Combat Grounds.
 
 During play, press **F2** to open the level picker. Click a map, or use **Up / Down** and **Enter**, to travel there. Press **F2** again to close without traveling. The game pauses while the picker is open. Choose **Central hub** from anywhere to return. Escape retains its existing quit-game behavior.
 

@@ -7,6 +7,9 @@ namespace App2d.Core.Shapes;
 /// <summary>A filled convex polygon in local space, given in perimeter order in either winding.</summary>
 public sealed class ConvexPolygon2D : IConvexShape2D
 {
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.ConvexPolygon;
+
     private const float Epsilon = 0.0001f;
     private readonly Vector2[] _vertices;
 

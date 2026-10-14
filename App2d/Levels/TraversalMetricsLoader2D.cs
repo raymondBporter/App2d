@@ -54,9 +54,9 @@ public static class TraversalMetricsLoader2D
             manifest.StandingCollider.Size.Width,
             manifest.StandingCollider.Size.Height);
 
-        if (!IsPositive(canvasSize) ||
-            !IsPositive(visualSize) ||
-            !IsPositive(standingSize))
+        if (!NumericValidation.IsFiniteAndPositive(canvasSize) ||
+            !NumericValidation.IsFiniteAndPositive(visualSize) ||
+            !NumericValidation.IsFiniteAndPositive(standingSize))
         {
             throw new InvalidDataException($"Player canvas, visual, and collider sizes must be positive: {path}");
         }
@@ -80,12 +80,6 @@ public static class TraversalMetricsLoader2D
             throw new InvalidDataException($"Player collider center offset must be finite: {path}");
         }
     }
-
-    private static bool IsPositive(Vector2 value) =>
-        float.IsFinite(value.X) &&
-        float.IsFinite(value.Y) &&
-        value.X > 0f &&
-        value.Y > 0f;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance",

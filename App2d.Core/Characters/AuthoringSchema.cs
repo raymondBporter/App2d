@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -51,9 +52,11 @@ public static class AuthoredJson
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
+            AllowOutOfOrderMetadataProperties = true,
             WriteIndented = true,
             UnmappedMemberHandling = strict ? JsonUnmappedMemberHandling.Disallow : JsonUnmappedMemberHandling.Skip,
-            TypeInfoResolver = resolver
+            TypeInfoResolver = resolver,
+            Converters = { new Vector2JsonConverter() }
         };
     }
     private static void OmitDefaults(JsonTypeInfo info, bool compactExtrusions)

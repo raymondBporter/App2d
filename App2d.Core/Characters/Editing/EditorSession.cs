@@ -499,17 +499,27 @@ public sealed class EditorSession
         });
     }, $"Equipped '{propId}' on '{entityId}'. Save all to keep the appearance and its binding.");
 
-    /// <summary>A new base model from the shared template catalog. Creature templates include unsaved starter clips.</summary>
+    /// <summary>A blank model or an independent bundle from a JSON template. All references and destination IDs are checked before adding drafts.</summary>
     public bool NewModel(string id, string name, string template) => Attempt(() =>
     {
-        var starter = CharacterTemplates.Get(template);
-        var model = starter.Model(id, name); var clips = starter.Clips(model);
-        if (clips.Any(c => Assets.Exists(c.Id))) throw new InvalidDataException("A starter animation id is already used; choose another model id.");
-        Assets.Create(model);
-        foreach (var clip in clips) Assets.Create(clip);
+        var bundle = template == "empty" ? new ModelTemplateInstance(ModelAuthoring.Empty(id, name), [], null)
+            : Assets.ModelTemplates.TryGetValue(template, out var recipe)
+                ? recipe.Instantiate(id, name, source => Assets.Model(source)?.Asset, source => Assets.Clip(source)?.Asset)
+                : BuiltInTemplate(template, id, name);
+        foreach (var destination in bundle.Animations.Select(c => c.Id).Prepend(bundle.Model.Id))
+            if (Assets.Exists(destination)) throw new InvalidDataException($"The id '{destination}' is already used; choose another model id.");
+        Assets.Create(bundle.Model);
+        foreach (var clip in bundle.Animations) Assets.Create(clip);
         Open(id); EditRig = template == "empty";
-        if (starter.Preview is { } preview) SetClip(id + "-" + preview);
+        if (bundle.PreviewAnimation is { } preview) SetClip(preview);
     }, $"Created model '{id}'.");
+
+    private static ModelTemplateInstance BuiltInTemplate(string template, string id, string name)
+    {
+        var starter = CharacterTemplates.Get(template);
+        var model = starter.Model(id, name);
+        return new(model, starter.Clips(model), starter.Preview is { } preview ? id + "-" + preview : null);
+    }
 
     /// <summary>A new variant of a base, optionally starting from one of its build presets.</summary>
     public bool NewVariant(string id, string name, string baseId, string? preset = null) => Attempt(() =>

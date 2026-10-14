@@ -1,0 +1,19 @@
+{
+  "format": "app2d-model-template",
+  "version": 1,
+  "id": "triceratops",
+  "name": "Triceratops",
+  "description": "A four-legged rig with editable frill, horns, cutout artwork and eight starter animations.",
+  "model": "triceratops",
+  "animations": {
+    "idle": "triceratops-idle",
+    "walk": "triceratops-walk",
+    "run": "triceratops-run",
+    "scrape": "triceratops-scrape",
+    "head-down": "triceratops-head-down",
+    "rush": "triceratops-rush",
+    "brake": "triceratops-brake",
+    "recover": "triceratops-recover"
+  },
+  "previewAnimation": "idle"
+}

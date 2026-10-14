@@ -355,14 +355,14 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         {
             case RectangleShapeDefinition2D rectangle:
                 {
-                    var centre = (rectangle.Min.Vector + rectangle.Max.Vector) / 2; var size = rectangle.Max.Vector - rectangle.Min.Vector;
+                    var centre = (rectangle.Min + rectangle.Max) / 2; var size = rectangle.Max - rectangle.Min;
                     if (Ui.Drag2("Centre", ref centre)) Drag(RectangleShapeDefinition2D.FromSize(size, centre));
                     if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100)) Drag(RectangleShapeDefinition2D.FromSize(Vector2.Max(size, new(.01f)), centre));
                     break;
                 }
             case RoundedRectangleShapeDefinition2D rounded:
                 {
-                    var centre = (rounded.Min.Vector + rounded.Max.Vector) / 2; var size = rounded.Max.Vector - rounded.Min.Vector;
+                    var centre = (rounded.Min + rounded.Max) / 2; var size = rounded.Max - rounded.Min;
                     if (Ui.Drag2("Centre", ref centre)) Drag(RoundedRectangleShapeDefinition2D.FromSize(size, rounded.Radius, centre));
                     if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
                     {
@@ -376,45 +376,45 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                 }
             case CircleShapeDefinition2D circle:
                 {
-                    var centre = circle.Center.Vector; var radius = circle.Radius;
-                    if (Ui.Drag2("Centre", ref centre)) Drag(circle with { Center = Point2D.From(centre) });
+                    var centre = circle.Center; var radius = circle.Radius;
+                    if (Ui.Drag2("Centre", ref centre)) Drag(circle with { Center = centre });
                     if (Ui.Drag("Radius", ref radius, .005f, .005f, 50)) Drag(circle with { Radius = Math.Max(.005f, radius) });
                     break;
                 }
             case CapsuleShapeDefinition2D capsule:
                 {
-                    var start = capsule.Start.Vector; var end = capsule.End.Vector; var radius = capsule.Radius;
-                    if (Ui.Drag2("Start", ref start)) Drag(capsule with { Start = Point2D.From(start) });
-                    if (Ui.Drag2("End", ref end)) Drag(capsule with { End = Point2D.From(end) });
+                    var start = capsule.Start; var end = capsule.End; var radius = capsule.Radius;
+                    if (Ui.Drag2("Start", ref start)) Drag(capsule with { Start = start });
+                    if (Ui.Drag2("End", ref end)) Drag(capsule with { End = end });
                     if (Ui.Drag("Radius", ref radius, .005f, .005f, 50)) Drag(capsule with { Radius = Math.Max(.005f, radius) });
                     break;
                 }
             case EllipseShapeDefinition2D ellipse:
                 {
-                    var centre = ellipse.Center.Vector; var radii = ellipse.Radii.Vector;
-                    if (Ui.Drag2("Centre", ref centre)) Drag(ellipse with { Center = Point2D.From(centre) });
-                    if (Ui.Drag2("Radii", ref radii, .005f, .005f, 50)) Drag(ellipse with { Radii = Point2D.From(Vector2.Max(radii, new(.005f))) });
+                    var centre = ellipse.Center; var radii = ellipse.Radii;
+                    if (Ui.Drag2("Centre", ref centre)) Drag(ellipse with { Center = centre });
+                    if (Ui.Drag2("Radii", ref radii, .005f, .005f, 50)) Drag(ellipse with { Radii = Vector2.Max(radii, new(.005f)) });
                     break;
                 }
             case TriangleShapeDefinition2D triangle:
                 {
-                    var a = triangle.A.Vector; var b = triangle.B.Vector; var c = triangle.C.Vector;
-                    if (Ui.Drag2("A", ref a)) Drag(triangle with { A = Point2D.From(a) });
-                    if (Ui.Drag2("B", ref b)) Drag(triangle with { B = Point2D.From(b) });
-                    if (Ui.Drag2("C", ref c)) Drag(triangle with { C = Point2D.From(c) });
+                    var a = triangle.A; var b = triangle.B; var c = triangle.C;
+                    if (Ui.Drag2("A", ref a)) Drag(triangle with { A = a });
+                    if (Ui.Drag2("B", ref b)) Drag(triangle with { B = b });
+                    if (Ui.Drag2("C", ref c)) Drag(triangle with { C = c });
                     break;
                 }
             case ConvexPolygonShapeDefinition2D polygon:
                 {
                     for (var i = 0; i < polygon.Vertices.Count; i++)
                     {
-                        var vertex = polygon.Vertices[i].Vector;
-                        if (Ui.Drag2($"Vertex {i + 1}", ref vertex)) { var vertices = polygon.Vertices.ToList(); vertices[i] = Point2D.From(vertex); Drag(polygon with { Vertices = vertices }); }
+                        var vertex = polygon.Vertices[i];
+                        if (Ui.Drag2($"Vertex {i + 1}", ref vertex)) { var vertices = polygon.Vertices.ToList(); vertices[i] = vertex; Drag(polygon with { Vertices = vertices }); }
                     }
                     if (ImGui.SmallButton("Add vertex"))
                     {
-                        var midpoint = (polygon.Vertices[^1].Vector + polygon.Vertices[0].Vector) / 2;
-                        session.Edit(document, () => set(polygon with { Vertices = [.. polygon.Vertices, Point2D.From(midpoint)] }));
+                        var midpoint = (polygon.Vertices[^1] + polygon.Vertices[0]) / 2;
+                        session.Edit(document, () => set(polygon with { Vertices = [.. polygon.Vertices, midpoint] }));
                     }
                     if (polygon.Vertices.Count > 3) { ImGui.SameLine(); if (ImGui.SmallButton("Remove last")) session.Edit(document, () => set(polygon with { Vertices = [.. polygon.Vertices.Take(polygon.Vertices.Count - 1)] })); }
                     Ui.Help("Vertices go around the perimeter and must stay convex.");

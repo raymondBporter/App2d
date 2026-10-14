@@ -5,11 +5,7 @@ public sealed class Collider2D
 {
     private ColliderMobility2D _mobility;
 
-    internal Collider2D(
-        CollisionSystem2D system,
-        int id,
-        SpatialObject2D worldObject,
-        ColliderMobility2D mobility)
+    internal Collider2D(CollisionSystem2D system, int id, SpatialObject2D worldObject, ColliderMobility2D mobility)
     {
         System = system;
         Id = id;
@@ -47,9 +43,7 @@ public sealed class Collider2D
         (CollisionMask & other.CollisionLayer) != 0u &&
         (other.CollisionMask & CollisionLayer) != 0u;
 
-    internal void Detach() =>
-        WorldObject.Transform.Changed -= HandleTransformChanged;
+    internal void Detach() => WorldObject.Transform.Changed -= HandleTransformChanged;
 
-    private void HandleTransformChanged() =>
-        System.OnTransformChanged(this);
+    private void HandleTransformChanged() => System.OnTransformChanged(this);
 }

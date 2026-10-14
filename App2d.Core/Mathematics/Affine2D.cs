@@ -30,6 +30,11 @@ public sealed record Affine2D
     [JsonIgnore] public int Version { get; private set; }
     public static Affine2D Identity => new();
 
+    /// <summary>True when all seven authored channels are finite. Check Matrix.IsFinite() for the evaluated matrix.</summary>
+    [JsonIgnore]
+    public bool IsFinite => Position.IsFinite() && Scale.IsFinite() && float.IsFinite(Rotation) &&
+        float.IsFinite(ShearX) && float.IsFinite(ShearY);
+
     public float X { get => _x; set => Set(ref _x, value); }
     public float Y { get => _y; set => Set(ref _y, value); }
     public float Rotation { get => _rotation; set => Set(ref _rotation, value); }
@@ -40,7 +45,8 @@ public sealed record Affine2D
     /// <summary>Additional angle of the local +Y axis.</summary>
     public float ShearY { get => _shearY; set => Set(ref _shearY, value); }
 
-    [JsonIgnore] public Vector2 Position
+    [JsonIgnore]
+    public Vector2 Position
     {
         get => new(X, Y);
         set
@@ -50,7 +56,8 @@ public sealed record Affine2D
         }
     }
 
-    [JsonIgnore] public Vector2 Scale
+    [JsonIgnore]
+    public Vector2 Scale
     {
         get => new(ScaleX, ScaleY);
         set
@@ -61,7 +68,8 @@ public sealed record Affine2D
     }
 
     /// <summary>Cached matrix. Reading it never changes the transform's logical value or version.</summary>
-    [JsonIgnore] public Matrix3x2 Matrix
+    [JsonIgnore]
+    public Matrix3x2 Matrix
     {
         get
         {
@@ -115,8 +123,7 @@ public sealed record Affine2D
 
     public void Validate(string field)
     {
-        foreach (var value in new[] { X, Y, Rotation, ScaleX, ScaleY, ShearX, ShearY })
-            if (!float.IsFinite(value)) throw new InvalidDataException($"{field}: transform values must be finite.");
+        if (!IsFinite) throw new InvalidDataException($"{field}: transform values must be finite.");
     }
 
     /// <summary>Decomposes a matrix, including singular matrices, fixing shearX at zero.</summary>
@@ -133,12 +140,17 @@ public sealed record Affine2D
         var rotation = MathF.Atan2(matrix.M12, matrix.M11);
         transform = new()
         {
-            X = matrix.M31, Y = matrix.M32, Rotation = rotation, ScaleX = (float)scaleX, ScaleY = (float)scaleY,
-            ShearY = MathF.Atan2(-matrix.M21, matrix.M22) - rotation
+            X = matrix.M31,
+            Y = matrix.M32,
+            Rotation = rotation,
+            ScaleX = (float)scaleX,
+            ScaleY = (float)scaleY,
+            ShearY = MathF.Atan2(-matrix.M21, matrix.M22) - rotation,
+            // Keep the supplied map exactly until a channel is edited. Decomposition has float roundoff;
+            // rebuilding a rank-one matrix could otherwise turn it into a nearly singular invertible one.
+            _matrix = matrix
         };
-        // Keep the supplied map exactly until a channel is edited. Decomposition has float roundoff;
-        // rebuilding a rank-one matrix could otherwise turn it into a nearly singular invertible one.
-        transform._matrix = matrix; transform._matrixVersion = transform.Version;
+        transform._matrixVersion = transform.Version;
         return true;
     }
 

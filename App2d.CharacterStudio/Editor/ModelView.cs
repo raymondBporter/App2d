@@ -102,9 +102,9 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             var children = structure.Controls.Where(c => c.Parent == control.Id).ToArray();
             var flags = ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.DefaultOpen | ImGuiTreeNodeFlags.SpanAvailWidth | (children.Length == 0 ? ImGuiTreeNodeFlags.Leaf : 0)
                 | (session.Selection.Control == control.Id ? ImGuiTreeNodeFlags.Selected : 0);
-            var ik = structure.Chains.FirstOrDefault(c => c.Joint == control.Id || c.End == control.Id);
+            var ik = structure.IkChains.FirstOrDefault(c => c.Joint == control.Id || c.End == control.Id || c.Solver == ModelChain.BoneSolver && c.Root == control.Id);
             var label = control.Length > 0 ? $"{control.Id}  (bone {control.Length:0.##})" : control.Id;
-            var open = ImGui.TreeNodeEx(control.Id, flags, label + (ik is null ? "" : ik.End == control.Id ? "  (IK end)" : "  (IK bend)"));
+            var open = ImGui.TreeNodeEx(control.Id, flags, label + (ik is null ? "" : ik.End == control.Id ? "  (IK end)" : ik.Root == control.Id ? "  (IK rotation)" : "  (IK bend)"));
             if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) Select(control: control.Id);
             if (open) { foreach (var child in children) Node(child); ImGui.TreePop(); }
         }
@@ -130,17 +130,20 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             var pointEnd = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control);
             var pointJoint = structure.Controls.FirstOrDefault(c => c.Id == pointEnd?.Parent);
             var pointRoot = structure.Controls.FirstOrDefault(c => c.Id == pointJoint?.Parent);
-            if (Ui.Button("Make IK chain", pointEnd is { Length: 0, Transform: null } && pointJoint is { Length: 0, Transform: null } && pointRoot is { Length: 0, Transform: null }))
+            var pointChain = pointEnd is { Length: 0, Transform: null } && pointJoint is { Length: 0, Transform: null } && pointRoot is { Length: 0, Transform: null };
+            var boneChain = pointEnd is not null && pointJoint is { Length: > 0 } && pointRoot is { Length: > 0 };
+            if (Ui.Button("Make IK constraint", pointChain || boneChain))
             {
-                Structural("add an IK chain", () =>
-                Select(chain: ModelAuthoring.AddChain(model.Asset, session.Selection.Control!).Id));
+                Structural("add an IK constraint", () => Select(chain: (pointChain
+                    ? ModelAuthoring.AddChain(model.Asset, session.Selection.Control!)
+                    : ModelAuthoring.AddBoneIk(model.Asset, session.Selection.Control!)).Id));
             }
 
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip("The current two-bone IK solver uses point controls. Bone-frame IK needs its own constraint solver.");
+            if (ImGui.IsItemHovered()) ImGui.SetTooltip("Select an endpoint with a parent and grandparent. Bone children must sit at their parent's +X tip; point chains retain their existing behavior.");
         }
-        Ui.Header("IK chains");
-        foreach (var chain in structure.Chains) if (ImGui.Selectable($"{chain.Id}  ({chain.Root} > {chain.Joint} > {chain.End})", session.Selection.Chain == chain.Id)) Select(chain: chain.Id);
-        if (structure.Chains.Count == 0) Ui.Help("None.");
+        Ui.Header("IK constraints");
+        foreach (var chain in structure.IkChains) if (ImGui.Selectable($"{chain.Id}  ({chain.Solver}: {chain.Root} > {chain.Joint} > {chain.End})", session.Selection.Chain == chain.Id)) Select(chain: chain.Id);
+        if (!structure.IkChains.Any()) Ui.Help("None.");
         Ui.Header("Measures");
         foreach (var measure in structure.Measures) ImGui.TextUnformatted($"{measure.Id}: {Resolved?.Measure(measure.Id) ?? 0:F3}  ({string.Join(" > ", measure.Path)})");
         if (structure.Measures.Count == 0) Ui.Help("None: every channel scales in model units.");
@@ -213,11 +216,11 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             Ui.Header((control.Length > 0 ? "Bone " : "Control ") + control.Id);
             var rest = control.Rest.Layered;
             if (control.Transform is not null && Resolved is { } resolved) rest = LayeredPoint2D.From(resolved.Rest[id]);
-            if (Ui.LayeredPoint(control.Length > 0 ? "Origin" : "Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
+            if (CharacterUi.LayeredPoint(control.Length > 0 ? "Origin" : "Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(document.Asset, id, rest.ToVector3(), session.MoveChildren));
             if (control.Length > 0)
             {
                 var length = control.Length;
-                if (Ui.Drag("Bone length", ref length, .01f, .01f, 100)) session.Change(document, () => document.Asset.Controls.First(c => c.Id == id).Length = length);
+                if (Ui.Drag("Bone length", ref length, .01f, .01f, 100)) session.Change(document, () => ModelAuthoring.ResizeBone(document.Asset, id, length));
                 var degrees = control.RestAngle * 180f / MathF.PI;
                 if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
                     session.Change(document, () => ModelAuthoring.RotateRestBone(document.Asset, id, degrees * MathF.PI / 180f));
@@ -228,8 +231,11 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 Ui.Header("Local affine transform");
                 void Number(string label, float value, Action<Affine2D, float> set, float min = -100, float max = 100)
                 {
-                    if (Ui.Drag(label, ref value, .01f, min, max)) session.Change(document, () =>
+                    if (Ui.Drag(label, ref value, .01f, min, max))
+                    {
+                        session.Change(document, () =>
                     { set(document.Asset.Controls.First(c => c.Id == id).Transform!, value); ModelAuthoring.SyncAffineRest(document.Asset); });
+                    }
                 }
                 Number("Local X", transform.X, (t, v) => t.X = v);
                 Number("Local Y", transform.Y, (t, v) => t.Y = v);
@@ -248,19 +254,27 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             if (ImGui.Button("Delete control")) Structural($"delete '{id}'", () => { ModelAuthoring.RemoveControl(document.Asset, id); session.Selection.Clear(); });
             Ui.Help("Deleting removes shapes attached to it. Children, chains and measures must be changed first.");
         }
-        if (session.Selection.Chain is { } chainId && model.Chains.FirstOrDefault(c => c.Id == chainId) is { } chain)
+        if (session.Selection.Chain is { } chainId && model.IkChains.FirstOrDefault(c => c.Id == chainId) is { } chain)
         {
-            Ui.Header("IK chain " + chain.Id);
+            Ui.Header("IK constraint " + chain.Id);
             ImGui.TextUnformatted($"{chain.Root} > {chain.Joint} > {chain.End}");
-            if (ImGui.Button("Flip bend")) session.Edit(document, () => document.Asset.Chains.First(c => c.Id == chainId).Bend *= -1);
-            var frames = model.Controls.Select(c => c.Id).Where(c => !model.Chains.Any(k => k.Joint == c || k.End == c)).Prepend(CharacterModel.Locomotion);
-            if (Ui.Combo("Target frame", chain.Frame, frames) is { } frame) Structural($"key '{chainId}' in '{frame}'", () => document.Asset.Chains.First(c => c.Id == chainId).Frame = frame);
+            ImGui.TextDisabled($"Solver: {chain.Solver}");
+            if (ImGui.Button("Flip bend")) session.Edit(document, () => document.Asset.IkChains.First(c => c.Id == chainId).Bend *= -1);
+            bool FreeFrame(ModelControl c)
+            {
+                for (ModelControl? node = c; node is not null; node = model.Controls.FirstOrDefault(p => p.Id == node.Parent))
+                    if (model.IkChains.Any(k => k.Joint == node.Id || k.End == node.Id || k.Solver == ModelChain.BoneSolver && k.Root == node.Id)) return false;
+                return true;
+            }
+            var frames = model.Controls.Where(FreeFrame).Select(c => c.Id).Prepend(CharacterModel.Locomotion);
+            if (Ui.Combo("Target frame", chain.Frame, frames) is { } frame) Structural($"key '{chainId}' in '{frame}'", () => document.Asset.IkChains.First(c => c.Id == chainId).Frame = frame);
             if (Ui.Combo("Target scales with", chain.Scale, model.Measures.Select(m => m.Id).Prepend(CharacterModel.Unit)) is { } scale)
-                Structural($"scale '{chainId}' by '{scale}'", () => document.Asset.Chains.First(c => c.Id == chainId).Scale = scale);
+                Structural($"scale '{chainId}' by '{scale}'", () => document.Asset.IkChains.First(c => c.Id == chainId).Scale = scale);
             if (!model.Measures.Any(m => m.Path.SequenceEqual([chain.Root, chain.Joint, chain.End])) && ImGui.Button("Add reach measure"))
                 Structural($"add measure '{chainId}-reach'", () => ModelAuthoring.AddMeasure(document.Asset, ModelAuthoring.UniqueId(chainId + "-reach", document.Asset.Measures.Select(m => m.Id)), [chain.Root, chain.Joint, chain.End]));
             if (ImGui.Button("Remove chain")) Structural($"remove chain '{chainId}'", () => { ModelAuthoring.RemoveChain(document.Asset, chainId); session.Selection.Clear(); });
-            Ui.Help("Feet usually key in the locomotion frame so they can plant; hands in a shoulder or chest frame.");
+            Ui.Help("The locomotion frame supports contact pins. A free control frame makes the target follow that control.");
+            if (chain.Solver == ModelChain.BoneSolver) Ui.Help("Bone IK turns both segments and their attachments. Uniform scale and reflection are supported; shear and nonuniform segment frames are not.");
         }
         if (session.Selection.Part is { } partId && model.Parts.FirstOrDefault(p => p.Id == partId) is { } part)
         {
@@ -385,8 +399,11 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
             if (overrides is null && part.Geometry is RoundedRectangleShapeDefinition2D rounded)
+            {
                 Float("Corner radius", rounded.Radius, 0, MathF.Min(part.Width, part.Height) / 2f, false,
                     PartGeometry.SetRoundedRectangleRadius, _ => { });
+            }
+
             if (overrides is null && part.Geometry is SimplePolygonShapeDefinition2D polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
             {
                 ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
@@ -441,7 +458,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 Ui.Help("Paint follows the body's shape and motion. Coordinates are relative to its width and height. Use the body fill as the fabric color.");
                 void Paint(Action<List<PartPaint>> edit)
                 {
-                    var patches = (part.Paint ?? []).Select(p => new PartPaint { Material = p.Material, Points = [.. p.Points] }).ToList();
+                    var patches = (part.Paint ?? []).ConvertAll(p => new PartPaint { Material = p.Material, Points = [.. p.Points] });
                     edit(patches);
                     try { PartPaint.Check(patches); change(p => p.Paint = patches); }
                     catch (InvalidDataException) { /* Keep the last valid convex patch during a drag. */ }
@@ -479,7 +496,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (overrides is null)
         {
             var layer = new CharacterLayer2D(part.Depth);
-            if (Ui.CharacterLayer("Shape layer offset", ref layer, -2, 2, offset: true)) change(p => p.Depth = layer.Order);
+            if (CharacterUi.CharacterLayer("Shape layer offset", ref layer, -2, 2, offset: true)) change(p => p.Depth = layer.Order);
             Ui.Help("Offsets the shape from its attached control's layer.");
         }
         if (!Marked("Visibility", overrides?.Hidden is not null, o => o.Hidden = null))
@@ -536,7 +553,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             else
             {
                 var rest = LayeredPoint2D.From(resolved.Rest[control]);
-                if (Ui.LayeredPoint("Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, control, rest.ToVector3(), session.MoveChildren));
+                if (CharacterUi.LayeredPoint("Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, control, rest.ToVector3(), session.MoveChildren));
             }
             var children = session.MoveChildren; if (ImGui.Checkbox("Move children with it", ref children)) session.MoveChildren = children;
         }
@@ -703,7 +720,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             ModelAuthoring.RotateRestBone(document.Asset, id, MathF.Atan2(delta.Y, delta.X));
             var bone = document.Asset.Controls.First(c => c.Id == id);
             var unit = bone.Transform is null ? 1 : Vector2.TransformNormal(Vector2.UnitX, ResolvedModel.From(document.Asset).RestTransforms[id]).Length();
-            if (unit > 1e-6f) bone.Length = delta.Length() / unit;
+            if (unit > 1e-6f) ModelAuthoring.ResizeBone(document.Asset, id, delta.Length() / unit);
         });
     }
 

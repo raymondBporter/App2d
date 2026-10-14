@@ -50,9 +50,9 @@ public sealed class QuadrupedTests
             Kind = "polygon",
             Width = 1,
             Height = 1,
-            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }]
+            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }],
+            Material = new() { Fill = "#fff8e7", Outline = new() }
         };
-        part.Material = new() { Fill = "#fff8e7", Outline = new() };
         PartGeometry.SetPolygon(part, points);
         part.Validate(_ => true);
         Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
@@ -85,13 +85,15 @@ public sealed class QuadrupedTests
         var root = Path.Combine(Path.GetTempPath(), "quadruped-" + Guid.NewGuid().ToString("N"));
         try
         {
-            Directory.CreateDirectory(root); var session = new EditorSession(AuthoringWorkspace.Open(root));
+            QuadrupedTemplate.Write(root); TestModels.CopyModelTemplates(root);
+            var session = new EditorSession(AuthoringWorkspace.Open(root));
             Assert.True(session.NewModel("dino", "Dino", "triceratops"), session.Message);
             Assert.Equal("dino-idle", session.ClipId); Assert.False(session.EditRig);
-            Assert.Equal(8, session.Assets.Clips.Count());
-            Assert.All(session.Assets.Clips, c => Assert.True(c.IsNew));
+            var created = session.Assets.Clips.Where(c => c.Asset.Model == "dino").ToArray();
+            Assert.Equal(8, created.Length);
+            Assert.All(created, c => Assert.True(c.IsNew));
             session.SaveAll(); Assert.False(session.MessageIsError, session.Message);
-            var catalog = AuthoredCatalog.Load(root); Assert.Equal(8, catalog.Animations.Count);
+            var catalog = AuthoredCatalog.Load(root); Assert.Equal(8, catalog.Animations.Values.Count(c => c.Model == "dino"));
             Assert.NotNull(catalog.Resolve("dino"));
         }
         finally { Directory.Delete(root, true); }

@@ -10,6 +10,9 @@ namespace App2d.Core.Shapes;
 /// </summary>
 public sealed class HalfSpace2D : IShape2D
 {
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.HalfSpace;
+
     /// <summary>Creates a half-space; the normal is normalized and the offset rescaled to match.</summary>
     /// <param name="outwardNormal">A finite, nonzero normal pointing toward free space.</param>
     /// <param name="offset">The finite signed boundary offset along <paramref name="outwardNormal"/>, in its original length units.</param>

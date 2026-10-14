@@ -19,7 +19,7 @@ public static class PolygonGeometry2D
         var winding = 0;
         for (var i = 0; i < vertices.Length; i++)
         {
-            var cross = CrossProduct2D.Orientation(vertices[i], vertices[(i + 1) % vertices.Length], vertices[(i + 2) % vertices.Length]);
+            var cross = vertices[i].Orientation(vertices[(i + 1) % vertices.Length], vertices[(i + 2) % vertices.Length]);
             if (Math.Abs(cross) <= collinearEpsilon) continue;
             var turn = Math.Sign(cross);
             if (winding != 0 && winding != turn) return false;
@@ -46,7 +46,7 @@ public static class PolygonGeometry2D
         var hull = new List<Vector2>(points.Length * 2);
         foreach (var point in points)
         {
-            while (hull.Count >= 2 && CrossProduct2D.Orientation(hull[^2], hull[^1], point) <= 0d) hull.RemoveAt(hull.Count - 1);
+            while (hull.Count >= 2 && hull[^2].Orientation(hull[^1], point) <= 0d) hull.RemoveAt(hull.Count - 1);
             hull.Add(point);
         }
 
@@ -54,7 +54,7 @@ public static class PolygonGeometry2D
         for (var index = points.Length - 2; index >= 0; index--)
         {
             var point = points[index];
-            while (hull.Count > lowerCount && CrossProduct2D.Orientation(hull[^2], hull[^1], point) <= 0d) hull.RemoveAt(hull.Count - 1);
+            while (hull.Count > lowerCount && hull[^2].Orientation(hull[^1], point) <= 0d) hull.RemoveAt(hull.Count - 1);
             hull.Add(point);
         }
 
@@ -69,7 +69,7 @@ public static class PolygonGeometry2D
     public static double SignedAreaTwiceDouble(ReadOnlySpan<Vector2> vertices)
     {
         var signedAreaTwice = 0d;
-        for (var i = 0; i < vertices.Length; i++) signedAreaTwice += CrossProduct2D.Of(vertices[i], vertices[(i + 1) % vertices.Length]);
+        for (var i = 0; i < vertices.Length; i++) signedAreaTwice += vertices[i].CrossDouble(vertices[(i + 1) % vertices.Length]);
         return signedAreaTwice;
     }
 

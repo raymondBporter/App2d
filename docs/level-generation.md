@@ -2,9 +2,10 @@
 
 ## Normal world workflow
 
-Launch normally, with no arguments. The shipped world starts at **Combat Grounds**,
-the generated map assigned to zone `sandbox-a`. F2 still travels to the hub,
-Sandbox B, and the original playground. F1 edits the selected map.
+Launch normally, with no arguments. The shipped world starts at the upstream
+map in `level.db` (the **Original playground**, map ID `main`). F2 travels to
+**Combat Grounds**, the generated map assigned to zone `sandbox-a`, the hub,
+and Sandbox B. F1 edits the selected map.
 
 `Assets/Static/levels/cavern/world.json` owns the layout and configuration:
 world → zones → assigned maps → generated sections. The map's `generation`

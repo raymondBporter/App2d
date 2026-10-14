@@ -232,9 +232,12 @@ public sealed partial class Renderer2D : IDisposable
             var vertices = mesh.Vertices;
             var indices = mesh.Indices;
             for (var i = 0; i < indices.Length; i += 3)
+            {
                 Triangle(MaterialVertex(vertices[indices[i]], matrix, bounds, shader),
                     MaterialVertex(vertices[indices[i + 1]], matrix, bounds, shader),
                     MaterialVertex(vertices[indices[i + 2]], matrix, bounds, shader));
+            }
+
             return;
         }
         if (shape is ConvexPolygon2D polygon) { FillPolygon(polygon.Vertices, matrix, bounds, shader); return; }

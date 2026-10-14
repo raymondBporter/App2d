@@ -7,6 +7,9 @@ namespace App2d.Core.Shapes;
 /// <summary>A filled rectangle, axis-aligned in local space; the owning pose may rotate it in world space.</summary>
 public class Rectangle2D : IConvexShape2D, IRect2D
 {
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.Rectangle;
+
     /// <summary>Creates a rectangle from ordered corners with positive extents.</summary>
     /// <param name="min">The finite lower-left corner.</param>
     /// <param name="max">The finite upper-right corner, component-wise greater than <paramref name="min"/>.</param>

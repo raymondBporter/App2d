@@ -21,6 +21,8 @@ namespace App2d.Tests.Gameplay.Enemies;
 /// <summary>Authored entities in the real game: spawning, the shared final pose and combat.</summary>
 public sealed class AuthoredEntityEnemyTests
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { IncludeFields = true };
+
     [Theory]
     [InlineData(-1, -1, false)]
     [InlineData(-1, 1, false)]
@@ -140,7 +142,7 @@ public sealed class AuthoredEntityEnemyTests
             var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D { MoveX = i < 60 ? .3f : 0 }));
             var guard = frame.Enemies[0];
             return JsonSerializer.Serialize(new { frame.Tick, Health = game.Player.Health.Current, guard.Position, guard.ActionId, guard.ActionSeconds, Points = guard.AuthoredPose!.Local.Points.Values.ToArray() },
-                new JsonSerializerOptions { IncludeFields = true });
+                JsonOptions);
         })];
         var first = Run(); var damaged = game.Player.Health.Current;
         Assert.Contains(first, json => json.Contains("\"ActionId\":\"attack\""));
@@ -204,7 +206,7 @@ public sealed class AuthoredEntityEnemyTests
         { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
         Assert.Equal("cinder-gunner", Assert.Single(game.Session.CaptureEnemies()).TypeId);
         for (var i = 0; i < 60; i++) game.Session.Advance();
-        string[] Run() => [.. Enumerable.Range(0, 240).Select(_ => JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.Bolts.Select(b => b.Position).ToArray())).ToArray(), new JsonSerializerOptions { IncludeFields = true })
+        string[] Run() => [.. Enumerable.Range(0, 240).Select(_ => JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.Bolts.Select(b => b.Position).ToArray())).ToArray(), JsonOptions)
             + (game.Session.Advance() is var frame ? "" : ""))];
         var first = Run();
         Assert.Contains(first, json => json.Contains("\"X\"") && json.Contains("[{"));

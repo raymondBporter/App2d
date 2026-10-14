@@ -9,8 +9,7 @@ namespace App2d.Core.Shapes;
 /// Distance and signed distance for shapes and placed spatial objects, built on <see cref="Distance2D"/>.
 /// Signed distance is positive when separated, zero at contact and negative inside or overlapping;
 /// for two convex solids its magnitude is the shortest translation needed to reach contact.
-/// Point and circle queries against ellipses are exact. Every other ellipse pairing uses the polygonized
-/// perimeter of <see cref="Ellipse2D.CollisionSegments"/> segments, which slightly underestimates the curve.
+/// Finite convex pairs share the support-based query used by collision contacts. Curves are not polygonized.
 /// </summary>
 public static class ShapeDistance2D
 {
@@ -93,18 +92,9 @@ public static class ShapeDistance2D
         if (second is SimplePolygon2D) throw Unsupported(second);
         if (first is HalfSpace2D firstPlane && second is IConvexShape2D secondConvex) return SignedDistanceToPlane(secondConvex, secondPose, firstPlane, firstPose);
         if (second is HalfSpace2D secondPlane && first is IConvexShape2D firstConvex) return SignedDistanceToPlane(firstConvex, firstPose, secondPlane, secondPose);
-        if (first is Circle2D circle && second is Ellipse2D ellipse) return SignedDistanceCircleToEllipse(circle, firstPose, ellipse, secondPose);
-        if (first is Ellipse2D otherEllipse && second is Circle2D otherCircle) return SignedDistanceCircleToEllipse(otherCircle, secondPose, otherEllipse, firstPose);
-
-        var firstCount = WorldShape2D.ConvexCoreVertexCount(first);
-        var secondCount = WorldShape2D.ConvexCoreVertexCount(second);
-        if (firstCount == 0) throw Unsupported(first);
-        if (secondCount == 0) throw Unsupported(second);
-        Span<Vector2> firstVertices = firstCount <= 64 ? stackalloc Vector2[firstCount] : new Vector2[firstCount];
-        Span<Vector2> secondVertices = secondCount <= 64 ? stackalloc Vector2[secondCount] : new Vector2[secondCount];
-        WorldShape2D.WriteWorldConvexCore(first, firstPose, firstVertices, out var firstRadius);
-        WorldShape2D.WriteWorldConvexCore(second, secondPose, secondVertices, out var secondRadius);
-        return Distance2D.SignedDistanceBetweenConvexPolygons(firstVertices, secondVertices, firstRadius, secondRadius);
+        if (first is not IConvexShape2D convexFirst) throw Unsupported(first);
+        if (second is not IConvexShape2D convexSecond) throw Unsupported(second);
+        return ShapeConvexQuery2D.SignedDistance(convexFirst, firstPose, convexSecond, secondPose);
     }
 
     /// <summary>World-unit distance between two posed filled shapes. Composites take the minimum over their parts.</summary>
@@ -126,6 +116,8 @@ public static class ShapeDistance2D
             return distance;
         }
         if (second is CompositeShape2D) return Distance(second, secondPose, first, firstPose);
+        if (first is IConvexShape2D convexFirst && second is IConvexShape2D convexSecond)
+            return ShapeConvexQuery2D.Distance(convexFirst, firstPose, convexSecond, secondPose);
         return Math.Max(0f, SignedDistance(first, firstPose, second, secondPose));
     }
 
@@ -207,13 +199,6 @@ public static class ShapeDistance2D
         var (normal, offset) = WorldShape2D.HalfSpace(plane, planePose);
         var deepest = pose.TransformPoint(shape.GetSupportPoint(-pose.TransposeTransformDirection(normal)));
         return Distance2D.SignedDistanceToHalfSpace(deepest, normal, offset);
-    }
-
-    private static float SignedDistanceCircleToEllipse(Circle2D circle, Similarity2D circlePose, Ellipse2D ellipse, Similarity2D ellipsePose)
-    {
-        var (center, radius) = WorldShape2D.Circle(circle, circlePose);
-        var local = Distance2D.SignedDistanceToEllipse(ellipsePose.InverseTransformPoint(center), ellipse.Center, ellipse.Radii);
-        return local * ellipsePose.Scale - radius;
     }
 
     private static NotSupportedException Unsupported(IShape2D shape) => new($"Signed distance does not support {shape.GetType().Name} in this query. Composite unions support unsigned Distance only.");

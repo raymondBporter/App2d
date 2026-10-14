@@ -33,7 +33,7 @@ public static class QuadrupedTemplate
             var p = Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, "polygon"); PartGeometry.SetPolygon(p, points); return p;
         }
         void SetOutlineWidth(PuppetPart part, float width) => part.Material = part.RenderMaterial with
-            { Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = width } };
+        { Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = width } };
         const string skin = "#79bdb0", shade = "#527f78", horn = "#f6e4bb";
         Cutout("tail", "tail", .85f, .52f, -.35f, .03f, .02f, skin,
             new(.5f, -.25f), new(-.2f, -.17f), new(-.5f, .32f), new(-.12f, .12f), new(.5f, .45f));

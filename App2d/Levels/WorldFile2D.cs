@@ -40,6 +40,10 @@ public sealed class WorldAsset2D : IDisposable
     public IReadOnlyList<WorldMapAsset2D> Maps { get; }
     public ImmutableArray<WorldZone2D> Zones { get; }
     public bool StartAtArrival { get; init; }
+    public ImmutableArray<GiantTree2D> GiantTrees => LoadGiantTrees();
+    public ImmutableArray<GiantTree2D> LoadGiantTrees() => [.. Maps
+        .Where(m => Path.GetFileName(m.DatabasePath) == "level.db")
+        .SelectMany(m => GiantTreeFile2D.Load(Path.Combine(Path.GetDirectoryName(m.DatabasePath)!, "giant-trees.json"), m.TileMap))];
     public WorldTileMap2D TileMap { get; }
     public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms => Maps.SelectMany(m =>
         m.MovingPlatforms.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) })).ToArray();

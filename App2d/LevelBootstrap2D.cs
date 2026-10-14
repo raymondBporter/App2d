@@ -1,4 +1,5 @@
 using App2d.Core.Assets;
+using App2d.Core.Geometry;
 using App2d.Core.Tiles;
 using App2d.Levels;
 
@@ -21,6 +22,7 @@ internal static class LevelBootstrap2D
     /// </summary>
     public static string CavernLevelPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "level.db");
     public static string WorldManifestPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "world.json");
+    public static string GiantTreesPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "giant-trees.json");
 
     public static WorldAsset2D Load() => LoadManifest(WorldManifestPath);
 

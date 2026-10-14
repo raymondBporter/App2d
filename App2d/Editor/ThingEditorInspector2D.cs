@@ -1,196 +1,83 @@
+using App2d.EditorUi;
 using App2d.Levels;
 using App2d.Things;
+using ImGuiNET;
 
 namespace App2d.Editor;
 
-internal sealed class ThingEditorInspector2D : UserControl
+/// <summary>Thing inspector view and draft state. Persistence and undo remain in TileEditor2D.</summary>
+internal sealed class ThingEditorInspector2D(TileEditor2D editor)
 {
-    private readonly TileEditor2D _editor;
-    private readonly ComboBox _type = new();
-    private readonly ListBox _definitions = new();
-    private readonly PropertyGrid _properties = new();
-    private readonly Label _selection = new();
-    private readonly Button _place = new();
-    private readonly Button _deleteThing = new();
-    private readonly Button _undo = new();
-    private readonly Button _apply = new();
-    private readonly Button _cancel = new();
-    private bool _refreshing;
-    private long? _editingDefinitionId;
-    private long? _editingThingId;
-    private string? _editingTypeKey;
+    private readonly TileEditor2D _editor = editor;
+    private readonly PropertyInspector _inspector = new();
+    private object? _properties;
+    private string _selection = "Select or create a definition";
+    private string _typeKey = ThingTypeRegistry2D.All[0].TypeKey;
+    private long? _editingDefinitionId, _editingThingId;
+    private string? _editingTypeKey, _error;
     private bool _isNewDefinition;
 
-    public ThingEditorInspector2D(TileEditor2D editor)
+    public void Draw()
     {
-        _editor = editor;
-        Visible = false;
-        BackColor = Color.FromArgb(17, 24, 37);
-        ForeColor = Color.FromArgb(244, 247, 252);
-        Padding = new Padding(12);
-
-        var header = new Label
+        var deleteRequested = false;
+        Ui.Section("Definitions", () =>
         {
-            Dock = DockStyle.Top,
-            Height = 36,
-            Text = "THINGS",
-            ForeColor = ForeColor,
-            Font = new Font(Font, FontStyle.Bold),
-            TextAlign = ContentAlignment.MiddleLeft
-        };
-        var back = MakeButton("Tiles");
-        back.Dock = DockStyle.Top;
-        back.Click += (_, _) => _editor.SelectMode(LevelEditorMode2D.Tiles);
-
-        _type.Dock = DockStyle.Top;
-        _type.Height = 32;
-        _type.DropDownStyle = ComboBoxStyle.DropDownList;
-        _type.DisplayMember = nameof(TypeItem.Label);
-        foreach (var descriptor in ThingTypeRegistry2D.All)
-            _type.Items.Add(new TypeItem(descriptor));
-        _type.SelectedIndex = 0;
-
-        _definitions.Dock = DockStyle.Top;
-        _definitions.Height = 150;
-        _definitions.DisplayMember = nameof(DefinitionItem.Label);
-        _definitions.SelectedIndexChanged += OnDefinitionSelected;
-
-        var definitionButtons = MakeRow();
-        var createDefinition = MakeButton("New definition");
-        var deleteDefinition = MakeButton("Delete definition");
-        createDefinition.Click += (_, _) => BeginNewDefinition();
-        deleteDefinition.Click += (_, _) => DeleteDefinition();
-        definitionButtons.Controls.Add(createDefinition);
-        definitionButtons.Controls.Add(deleteDefinition);
-
-        var placementButtons = MakeRow();
-        _place.Text = "Place";
-        StyleButton(_place);
-        _deleteThing.Text = "Delete thing";
-        StyleButton(_deleteThing);
-        _undo.Text = "Undo";
-        StyleButton(_undo);
-        _place.Click += (_, _) => _editor.BeginThingPlacement();
-        _deleteThing.Click += (_, _) => DeleteThing();
-        _undo.Click += (_, _) => _editor.UndoThingEdit();
-        placementButtons.Controls.Add(_place);
-        placementButtons.Controls.Add(_deleteThing);
-        placementButtons.Controls.Add(_undo);
-
-        _selection.Dock = DockStyle.Top;
-        _selection.Height = 32;
-        _selection.ForeColor = Color.FromArgb(160, 174, 196);
-        _selection.TextAlign = ContentAlignment.MiddleLeft;
-
-        _properties.Dock = DockStyle.Fill;
-        _properties.HelpVisible = true;
-        _properties.ToolbarVisible = false;
-        _properties.PropertySort = PropertySort.Categorized;
-
-        var commitButtons = MakeRow();
-        _apply.Text = "Apply";
-        StyleButton(_apply);
-        _cancel.Text = "Cancel";
-        StyleButton(_cancel);
-        _apply.Click += (_, _) => Apply();
-        _cancel.Click += (_, _) => CancelEdit();
-        commitButtons.Controls.Add(_apply);
-        commitButtons.Controls.Add(_cancel);
-
-        Controls.Add(_properties);
-        Controls.Add(commitButtons);
-        Controls.Add(_selection);
-        Controls.Add(placementButtons);
-        Controls.Add(_definitions);
-        Controls.Add(definitionButtons);
-        Controls.Add(_type);
-        Controls.Add(back);
-        Controls.Add(header);
-        UpdateButtons();
+            ImGui.TextUnformatted("Definition"); ImGui.SetNextItemWidth(-1);
+            if (ImGui.BeginCombo("##definition", _isNewDefinition ? "New draft" : _editor.SelectedDefinition?.Name ?? "Choose a definition"))
+            {
+                foreach (var definition in _editor.ThingDefinitions)
+                    if (ImGui.Selectable($"{definition.Name} [{ThingTypeRegistry2D.Require(definition.TypeKey).DisplayName}]##{definition.DefinitionId}",
+                        definition.DefinitionId == _editor.SelectedDefinitionId))
+                    {
+                        _editor.SelectDefinition(definition.DefinitionId); ShowDefinitionCore(definition);
+                    }
+                ImGui.EndCombo();
+            }
+            if (_isNewDefinition && Ui.Combo("New type", _typeKey, ThingTypeRegistry2D.All.Select(t => t.TypeKey),
+                key => ThingTypeRegistry2D.Require(key).DisplayName) is { } type)
+            { _typeKey = type; BeginNewDefinition(); }
+            Ui.Row(
+                () => Ui.Button("New definition", BeginNewDefinition),
+                () => Ui.Button("Delete definition", DeleteDefinition, _editor.SelectedDefinitionId is not null));
+        });
+        Ui.Section("Placement", () => Ui.Row(
+            () => Ui.Button(_editor.IsPlacingThing ? "Placing…" : "Place", _editor.BeginThingPlacement, _editor.SelectedDefinitionId is not null),
+            () => Ui.Button("Delete thing", () => deleteRequested = true, _editor.HasSelectedThing),
+            () => Ui.Button("Undo", _editor.UndoThingEdit, _editor.CanUndoThingEdit)));
+        Ui.Help(_selection);
+        Ui.Panel("properties", () => _inspector.Draw(_properties),
+            size: new(0, MathF.Max(70 * Ui.Scale, ImGui.GetContentRegionAvail().Y - ImGui.GetFrameHeightWithSpacing() - 28 * Ui.Scale)));
+        Ui.Row(
+            () => Ui.Button("Apply", Apply, _properties is not null),
+            () => Ui.Button("Cancel", CancelEdit, _properties is not null));
+        if (_error is { } error) Ui.Problem(error);
+        if (deleteRequested) ImGui.OpenPopup("delete-thing");
+        if (ImGui.BeginPopupModal("delete-thing", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            Ui.Help($"Delete {_editor.SelectedThing?.Name ?? _editor.SelectedPositionThing?.Name ?? "this thing"}?");
+            Ui.Row(
+                () => Ui.Button("Delete", () => { _editor.DeleteSelectedThing(); ImGui.CloseCurrentPopup(); }),
+                () => Ui.Button("Keep", ImGui.CloseCurrentPopup));
+            ImGui.EndPopup();
+        }
     }
 
     public void RefreshFromEditor()
     {
-        _refreshing = true;
-        try
-        {
-            var selectedDefinitionId = _editor.SelectedDefinitionId;
-            _definitions.Items.Clear();
-            foreach (var definition in _editor.ThingDefinitions)
-            {
-                var item = new DefinitionItem(definition);
-                _definitions.Items.Add(item);
-                if (definition.DefinitionId == selectedDefinitionId)
-                    _definitions.SelectedItem = item;
-            }
-
-            if (_editor.SelectedThing is { } movingPlatform)
-                ShowThingCore(movingPlatform);
-            else if (_editor.SelectedPositionThing is { } positionThing)
-                ShowPositionThingCore(positionThing);
-            else if (!_isNewDefinition && _editor.SelectedDefinition is { } definition)
-                ShowDefinitionCore(definition);
-            else if (!_isNewDefinition)
-                ClearProperties();
-        }
-        finally
-        {
-            _refreshing = false;
-            UpdateButtons();
-        }
+        if (_editor.SelectedThing is { } moving) ShowThingCore(moving);
+        else if (_editor.SelectedPositionThing is { } position) ShowPositionThingCore(position);
+        else if (!_isNewDefinition && _editor.SelectedDefinition is { } definition) ShowDefinitionCore(definition);
+        else if (!_isNewDefinition) ClearProperties();
     }
+    public void ShowThing(MovingPlatformThingRecord2D thing) => ShowThingCore(thing);
+    public void ShowPositionThing(PositionThingRecord2D thing) => ShowPositionThingCore(thing);
 
-    public void ShowThing(MovingPlatformThingRecord2D thing)
+    internal void BeginNewDefinition()
     {
-        _refreshing = true;
-        try
-        {
-            ShowThingCore(thing);
-        }
-        finally
-        {
-            _refreshing = false;
-            UpdateButtons();
-        }
-    }
-
-    public void ShowPositionThing(PositionThingRecord2D thing)
-    {
-        _refreshing = true;
-        try
-        {
-            ShowPositionThingCore(thing);
-        }
-        finally
-        {
-            _refreshing = false;
-            UpdateButtons();
-        }
-    }
-
-    private void BeginNewDefinition()
-    {
-        if (_type.SelectedItem is not TypeItem type)
-            return;
-        _isNewDefinition = true;
-        _editingDefinitionId = null;
-        _editingThingId = null;
-        _editingTypeKey = type.Descriptor.TypeKey;
-        _selection.Text = $"New {type.Descriptor.DisplayName} definition";
-        _properties.SelectedObject = type.Descriptor.IsMovingPlatform
-            ? new MovingPlatformDefinitionProperties2D()
-            : new PositionThingDefinitionProperties2D { Name = type.Descriptor.DisplayName };
-        UpdateButtons();
-    }
-
-    private void OnDefinitionSelected(object? sender, EventArgs e)
-    {
-        if (_refreshing || _definitions.SelectedItem is not DefinitionItem item)
-            return;
-        _isNewDefinition = false;
-        _editor.SelectDefinition(item.Record.DefinitionId);
-        ShowDefinitionCore(item.Record);
-        UpdateButtons();
+        var descriptor = ThingTypeRegistry2D.Require(_typeKey);
+        _isNewDefinition = true; _editingDefinitionId = null; _editingThingId = null; _editingTypeKey = _typeKey;
+        _selection = $"New {descriptor.DisplayName} definition";
+        _properties = descriptor.IsMovingPlatform ? new MovingPlatformDefinitionProperties2D() : new PositionThingDefinitionProperties2D { Name = descriptor.DisplayName };
     }
 
     private void ShowDefinitionCore(ThingDefinitionRecord2D definition)
@@ -200,16 +87,16 @@ internal sealed class ThingEditorInspector2D : UserControl
         _editingThingId = null;
         _editingTypeKey = definition.TypeKey;
         var descriptor = ThingTypeRegistry2D.Require(definition.TypeKey);
-        _selection.Text = $"Definition: {definition.Name}";
+        _selection = $"Definition: {definition.Name}";
         if (descriptor.IsMovingPlatform)
         {
             var moving = _editor.MovingPlatformDefinitions.Single(
                 item => item.DefinitionId == definition.DefinitionId);
-            _properties.SelectedObject = MovingPlatformDefinitionProperties2D.From(moving);
+            _properties = MovingPlatformDefinitionProperties2D.From(moving);
         }
         else
         {
-            _properties.SelectedObject = PositionThingDefinitionProperties2D.From(definition);
+            _properties = PositionThingDefinitionProperties2D.From(definition);
         }
     }
 
@@ -219,8 +106,8 @@ internal sealed class ThingEditorInspector2D : UserControl
         _editingDefinitionId = null;
         _editingThingId = thing.ThingId;
         _editingTypeKey = ThingTypeRegistry2D.MovingPlatform.TypeKey;
-        _selection.Text = $"Thing {thing.ThingId}: {thing.Name ?? thing.DefinitionName}";
-        _properties.SelectedObject = MovingPlatformInstanceProperties2D.From(thing);
+        _selection = $"Thing {thing.ThingId}: {thing.Name ?? thing.DefinitionName}";
+        _properties = MovingPlatformInstanceProperties2D.From(thing);
     }
 
     private void ShowPositionThingCore(PositionThingRecord2D thing)
@@ -229,129 +116,42 @@ internal sealed class ThingEditorInspector2D : UserControl
         _editingDefinitionId = null;
         _editingThingId = thing.ThingId;
         _editingTypeKey = thing.TypeKey;
-        _selection.Text = $"Thing {thing.ThingId}: {thing.Name ?? thing.DefinitionName}";
-        _properties.SelectedObject = PositionThingInstanceProperties2D.From(thing);
+        _selection = $"Thing {thing.ThingId}: {thing.Name ?? thing.DefinitionName}";
+        _properties = PositionThingInstanceProperties2D.From(thing);
     }
 
     private void Apply()
     {
+        if (!_inspector.Commit(_properties)) return;
         try
         {
-            _properties.Refresh();
-            switch (_properties.SelectedObject)
+            switch (_properties)
             {
                 case MovingPlatformDefinitionProperties2D definition:
-                    var movingDefinitionId = _isNewDefinition ? null : _editingDefinitionId;
-                    _isNewDefinition = false;
-                    _editor.ApplyDefinition(movingDefinitionId, definition);
-                    break;
-                case PositionThingDefinitionProperties2D definition when _editingTypeKey is { } typeKey:
-                    var positionDefinitionId = _isNewDefinition ? null : _editingDefinitionId;
-                    _isNewDefinition = false;
-                    _editor.ApplyPositionDefinition(positionDefinitionId, typeKey, definition);
-                    break;
-                case MovingPlatformInstanceProperties2D thing when _editingThingId is { } movingThingId:
-                    _editor.ApplyThing(movingThingId, thing);
-                    break;
-                case PositionThingInstanceProperties2D thing when _editingThingId is { } positionThingId:
-                    _editor.ApplyPositionThing(positionThingId, thing);
-                    break;
+                    _editor.ApplyDefinition(_isNewDefinition ? null : _editingDefinitionId, definition); break;
+                case PositionThingDefinitionProperties2D definition when _editingTypeKey is { } type:
+                    _editor.ApplyPositionDefinition(_isNewDefinition ? null : _editingDefinitionId, type, definition); break;
+                case MovingPlatformInstanceProperties2D thing when _editingThingId is { } id:
+                    _editor.ApplyThing(id, thing); break;
+                case PositionThingInstanceProperties2D thing when _editingThingId is { } id:
+                    _editor.ApplyPositionThing(id, thing); break;
             }
-            RefreshFromEditor();
+            _isNewDefinition = false; _error = null; RefreshFromEditor();
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
-        {
-            MessageBox.Show(this, exception.Message, "Cannot apply properties", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
+        { _error = exception.Message; }
     }
-
-    private void CancelEdit()
-    {
-        _isNewDefinition = false;
-        RefreshFromEditor();
-    }
-
+    private void CancelEdit() { _isNewDefinition = false; _error = null; RefreshFromEditor(); }
     private void DeleteDefinition()
     {
-        if (_editor.SelectedDefinitionId is not { } definitionId)
-            return;
-        try
-        {
-            _editor.DeleteDefinition(definitionId);
-        }
+        if (_editor.SelectedDefinitionId is not { } id) return;
+        try { _editor.DeleteDefinition(id); _error = null; }
         catch (Exception exception) when (exception is InvalidOperationException or Microsoft.Data.Sqlite.SqliteException)
-        {
-            MessageBox.Show(this, "This definition is still used by a placed thing.", "Cannot delete definition", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+        { _error = "This definition is still used by a placed thing."; }
     }
-
-    private void DeleteThing()
-    {
-        if (!_editor.HasSelectedThing || _editor.SelectedThingId is not { } thingId)
-            return;
-        var name = _editor.SelectedThing?.Name ?? _editor.SelectedPositionThing?.Name ?? $"thing {thingId}";
-        var result = MessageBox.Show(
-            this,
-            $"Delete {name}?",
-            "Delete thing",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-        if (result == DialogResult.Yes)
-            _editor.DeleteSelectedThing();
-    }
-
     private void ClearProperties()
     {
-        _editingDefinitionId = null;
-        _editingThingId = null;
-        _editingTypeKey = null;
-        _selection.Text = "Select or create a definition";
-        _properties.SelectedObject = null;
-    }
-
-    private void UpdateButtons()
-    {
-        _place.Enabled = _editor.SelectedDefinitionId is not null;
-        _place.Text = _editor.IsPlacingThing ? "Placing…" : "Place";
-        _deleteThing.Enabled = _editor.HasSelectedThing;
-        _undo.Enabled = _editor.CanUndoThingEdit;
-        _apply.Enabled = _properties.SelectedObject is not null;
-        _cancel.Enabled = _properties.SelectedObject is not null;
-    }
-
-    private static FlowLayoutPanel MakeRow() => new()
-    {
-        Dock = DockStyle.Top,
-        Height = 42,
-        FlowDirection = FlowDirection.LeftToRight,
-        WrapContents = false,
-        Padding = new Padding(0, 4, 0, 4)
-    };
-
-    private static Button MakeButton(string text)
-    {
-        var button = new Button { Text = text };
-        StyleButton(button);
-        return button;
-    }
-
-    private static void StyleButton(Button button)
-    {
-        button.AutoSize = true;
-        button.Height = 32;
-        button.FlatStyle = FlatStyle.Flat;
-        button.BackColor = Color.FromArgb(35, 47, 66);
-        button.ForeColor = Color.White;
-        button.FlatAppearance.BorderColor = Color.FromArgb(62, 77, 99);
-    }
-
-    private sealed record TypeItem(ThingTypeDescriptor2D Descriptor)
-    {
-        public string Label => Descriptor.DisplayName;
-    }
-
-    private sealed record DefinitionItem(ThingDefinitionRecord2D Record)
-    {
-        public string Label => $"{Record.Name}  —  {ThingTypeRegistry2D.Require(Record.TypeKey).DisplayName}";
+        _editingDefinitionId = null; _editingThingId = null; _editingTypeKey = null;
+        _selection = "Select or create a definition"; _properties = null;
     }
 }

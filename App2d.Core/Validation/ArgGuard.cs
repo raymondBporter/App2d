@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Validation;
@@ -14,6 +15,13 @@ public static partial class ArgGuard
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (value is null) ThrowNullException(paramName);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNan<T>([NotNull] T value,
+    [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : struct, INumber<T>
+    {
+        if (T.IsNaN(value)) ThrowNaNException(paramName);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

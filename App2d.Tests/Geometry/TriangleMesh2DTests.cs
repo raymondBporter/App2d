@@ -30,7 +30,7 @@ public sealed class TriangleMesh2DTests
         for (var i = 0; i < mesh.TriangleCount; i++)
         {
             var (a, b, c) = mesh.TriangleAt(i);
-            Assert.Equal(reverse ? -1 : 1, Math.Sign(CrossProduct2D.Orientation(a, b, c)));
+            Assert.Equal(reverse ? -1 : 1, Math.Sign(a.Orientation(b, c)));
         }
     }
 
@@ -67,10 +67,10 @@ public sealed class TriangleMesh2DTests
     public void CrossProductsShareOneDoublePrecisionOrientation()
     {
         var a = new Vector2(1, 2); var b = new Vector2(4, 2); var c = new Vector2(1, 5);
-        Assert.Equal(9d, CrossProduct2D.Orientation(a, b, c));
-        Assert.Equal(9d, CrossProduct2D.Of(b - a, c - a));
+        Assert.Equal(9d, a.Orientation(b, c));
+        Assert.Equal(9d, (b - a).CrossDouble(c - a));
         Assert.Equal(9f, (b - a).Cross(c - a));
-        Assert.Equal(-9d, CrossProduct2D.Orientation(a, c, b));
+        Assert.Equal(-9d, a.Orientation(c, b));
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class TriangleMesh2DTests
         Vector2[] clip = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
         if (reverse) Array.Reverse(clip);
         Vector3[] subject = [new(-1, .5f, 0), new(2, .5f, 3), new(2, 1.5f, 3), new(-1, 1.5f, 0)];
-        var clipped = PolygonClipping2D.ClipConvexXY(subject, clip.Select(p => new Vector3(p, 0)).ToArray());
+        var clipped = PolygonClipping2D.ClipConvexXY(subject, [.. clip.Select(p => new Vector3(p, 0))]);
         Assert.NotEmpty(clipped);
         Assert.All(clipped, point =>
         {

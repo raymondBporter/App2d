@@ -159,7 +159,7 @@ public sealed class MotionClip
             Require(track?.Keys is not null, $"{owner}: incomplete color timeline.");
             AuthoredAsset.RequireId(track.Slot, $"{owner} color slot");
             Require(track.Kind is SlotColorTrack2D.Rgba or SlotColorTrack2D.Rgb or SlotColorTrack2D.Alpha, $"{owner}: unknown color timeline kind.");
-            foreach (var component in track.Kind == SlotColorTrack2D.Alpha ? new[] { 3 } : track.Kind == SlotColorTrack2D.Rgb ? new[] { 0, 1, 2 } : new[] { 0, 1, 2, 3 })
+            foreach (var component in track.Kind == SlotColorTrack2D.Alpha ? new[] { 3 } : track.Kind == SlotColorTrack2D.Rgb ? [0, 1, 2] : [0, 1, 2, 3])
                 Require(colorChannels.Add((track.Slot, component)), $"{owner}: overlapping color timelines for slot '{track.Slot}'.");
             Require(track.Keys.Count <= 4096, $"{owner}: too many color keys.");
             var previous = -1f;
@@ -264,7 +264,7 @@ public sealed class MotionClip
         var basis = model.Base;
         Require(Model == basis.Id, $"{owner} is for model '{Model}', not '{basis.Id}'.");
         Require(!exactRevision || StructureRevision == basis.StructureRevision, $"{owner} was authored against structure revision {StructureRevision} of '{Model}'; the model is at revision {basis.StructureRevision}.");
-        var solved = basis.Chains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
+        var solved = model.Chains.Values.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
         void Scale(string scale, string field)
         {
             if (scale == CharacterModel.Unit) return;
@@ -299,12 +299,16 @@ public sealed class MotionClip
             {
                 Require(model.Controls.TryGetValue(track.Target, out var control), $"{field}: unknown control.");
                 Require(!solved.Contains(track.Target), $"{field}: this control is solved by IK; key its chain's target instead.");
+                Require(track.Kind != RotateKind || !model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == track.Target), $"{field}: this bone's rotation is solved by IK; key its constraint target instead.");
                 if (track.Kind is ScaleKind or ShearKind)
                 {
                     Require(control.Transform is not null, $"{field}: scale and shear require an affine bone.");
                     Require(track.Scale is null or CharacterModel.Unit, $"{field}: scale and shear cannot use proportion measurements.");
                 }
-                else Scale(track.Scale ?? control.Scale, field);
+                else
+                {
+                    Scale(track.Scale ?? control.Scale, field);
+                }
             }
         }
         foreach (var contact in Contacts)

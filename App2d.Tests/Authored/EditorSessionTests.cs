@@ -10,7 +10,11 @@ public sealed class EditorSessionTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"editor-{Guid.NewGuid():N}");
 
-    public EditorSessionTests() => PersonTemplate.WriteStudies(_root);
+    public EditorSessionTests()
+    {
+        PersonTemplate.WriteStudies(_root);
+        TestModels.CopyModelTemplates(_root);
+    }
     public void Dispose() => Directory.Delete(_root, true);
 
     private EditorSession Session()

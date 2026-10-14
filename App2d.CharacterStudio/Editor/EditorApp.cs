@@ -56,7 +56,7 @@ internal sealed class EditorApp : Game
             catch (Exception ex) when (ex is IOException or JsonException) { }
         }
 
-        _gui = new(this, scale); _renderer = new(GraphicsDevice);
+        _gui = new(GraphicsDevice, new MonoGameImGuiPlatform(this), scale); _renderer = new(GraphicsDevice);
         var root = _authoredRoot;
         if (_smokePath is not null) { _smoke = new(_smokePath); root = _smoke.PrepareWorkspace(_authoredRoot); }
         var assets = AuthoringWorkspace.Open(root);

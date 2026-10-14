@@ -28,8 +28,14 @@ public sealed class SpineAtlas2D
                     if (!_regions.TryAdd(line, region)) throw new InvalidDataException($"Duplicate atlas region '{line}'; indexed sequences are not supported.");
                 }
             }
-            else if (region is not null) region.Values[line[..colon].Trim()] = line[(colon + 1)..].Trim();
-            else if (line[..colon].Trim() == "pma") pma = line[(colon + 1)..].Trim() == "true";
+            else if (region is not null)
+            {
+                region.Values[line[..colon].Trim()] = line[(colon + 1)..].Trim();
+            }
+            else if (line[..colon].Trim() == "pma")
+            {
+                pma = line[(colon + 1)..].Trim() == "true";
+            }
         }
     }
 
@@ -37,7 +43,7 @@ public sealed class SpineAtlas2D
     {
         if (!_regions.TryGetValue(name, out var region)) throw new InvalidDataException($"Atlas has no region '{name}'.");
         int[] Values(string key, int[] fallback) => region.Values.TryGetValue(key, out var value)
-            ? value.Split(',').Select(s => int.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture)).ToArray() : fallback;
+            ? [.. value.Split(',').Select(s => int.Parse(s.Trim(), System.Globalization.CultureInfo.InvariantCulture))] : fallback;
         var xy = Values("xy", [0, 0]); var size = Values("size", [0, 0]);
         if (xy.Length != 2 || size.Length != 2) throw new InvalidDataException($"Invalid atlas position or size for '{name}'.");
         var bounds = Values("bounds", [xy[0], xy[1], size[0], size[1]]);
@@ -50,11 +56,17 @@ public sealed class SpineAtlas2D
         using var image = page.Clone(rect, PixelFormat.Format32bppArgb);
         image.RotateFlip(rotation switch { 90 => RotateFlipType.Rotate90FlipNone, 180 => RotateFlipType.Rotate180FlipNone, 270 => RotateFlipType.Rotate270FlipNone, _ => RotateFlipType.RotateNoneFlipNone });
         if (region.Premultiplied)
-            for (var y = 0; y < image.Height; y++) for (var x = 0; x < image.Width; x++)
+        {
+            for (var y = 0; y < image.Height; y++)
+            {
+                for (var x = 0; x < image.Width; x++)
             {
                 var c = image.GetPixel(x, y); if (c.A == 0) continue;
                 image.SetPixel(x, y, Color.FromArgb(c.A, Math.Min(255, c.R * 255 / c.A), Math.Min(255, c.G * 255 / c.A), Math.Min(255, c.B * 255 / c.A)));
             }
+            }
+        }
+
         var orig = Values("orig", [image.Width, image.Height]); var offset = Values("offset", [0, 0]);
         if (orig.Length != 2 || offset.Length != 2) throw new InvalidDataException($"Invalid atlas original size or offset for '{name}'.");
         var offsets = Values("offsets", [offset[0], offset[1], orig[0], orig[1]]);

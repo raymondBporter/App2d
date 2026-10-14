@@ -60,7 +60,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
         };
 
         var level = new SideScrollerLevel2D(traversal, definition.TileMap,
-            definition.MovingPlatforms, definition.WorldThings, definition.Zones);
+            definition.MovingPlatforms, definition.WorldThings, definition.Zones, definition.GiantTrees);
         var respawn = ResolveRespawn(level, definition);
         level.CreateSimulation(collision, physics, ids,
             SideScrollerLayers2D.World, SideScrollerLayers2D.Player, SideScrollerLayers2D.Enemy);

@@ -97,7 +97,8 @@ public sealed class GeometryDefinition2DTests
     {
         var prop = new PropAsset
         {
-            Id = "test-prop", Name = "Test prop",
+            Id = "test-prop",
+            Name = "Test prop",
             Shapes =
             [
                 new PropShape { Geometry = new PolylineCurveDefinition2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }, Depths = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },

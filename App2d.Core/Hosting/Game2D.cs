@@ -34,7 +34,7 @@ public abstract class Game2D : IDisposable
     public DeveloperConsole DeveloperConsole { get; } = new();
     public virtual string WindowTitle => "App2d";
     protected virtual XnaColor BackgroundColor => new(24, 27, 36);
-    internal virtual Control? OverlayControl => null;
+    public virtual IGameToolUi2D? ToolUi => null;
 
     public virtual void Initialize() { }
     public abstract void Update(FrameTime time, InputState input);

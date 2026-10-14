@@ -9,7 +9,7 @@ namespace App2d.Diagnostics;
 /// <summary>Renders real game assets and the tile palette without opening a play/edit session.</summary>
 internal static class RenderingSmoke2D
 {
-    public static void Run(string outputDirectory, bool facesOnly = false, bool vegetationOnly = false, bool contactOnly = false, bool timingOnly = false, bool platformOnly = false, IReadOnlyList<string>? tilesetPairs = null, bool spellsOnly = false)
+    public static void Run(string outputDirectory, bool facesOnly = false, bool vegetationOnly = false, bool contactOnly = false, bool timingOnly = false, bool platformOnly = false, IReadOnlyList<string>? tilesetPairs = null, bool spellsOnly = false, bool giantTreesOnly = false, bool editorOnly = false)
     {
         Directory.CreateDirectory(outputDirectory);
         using var window = new Form { ClientSize = new Size(1280, 720) };
@@ -24,6 +24,12 @@ internal static class RenderingSmoke2D
                 PresentationInterval = PresentInterval.Immediate
             });
         if (facesOnly) { FaceRenderingSmoke2D.Run(device, outputDirectory); return; }
+        if (giantTreesOnly)
+        {
+            using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
+            GiantTreeStudy2D.Run(device, textures, outputDirectory);
+            return;
+        }
         if (spellsOnly)
         {
             using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
@@ -60,12 +66,8 @@ internal static class RenderingSmoke2D
         }
         using var game = new SideScrollerGame();
         game.Initialize();
+        if (editorOnly) { MapEditorUiSmoke2D.Run(device, game, outputDirectory); return; }
         using var renderer = new Renderer2D(game.Camera, device);
-        using var loaded = LevelBootstrap2D.Load();
-        using var editor = new TileEditor2D(loaded.Maps[0].TileMap,
-            () => throw new InvalidOperationException("Rendering smoke checks never open a level for writing."),
-            game.Camera);
-        editor.ConfigureMaps(loaded.Maps);
 
         foreach (var (width, height) in new[] { (1280, 720), (960, 640) })
         {
@@ -92,13 +94,8 @@ internal static class RenderingSmoke2D
             renderer.EndFrame();
             Save(target, $"game-{width}x{height}.png");
 
-            device.SetRenderTarget(target);
-            renderer.BeginFrame(width, height, default);
-            game.RenderFrame(renderer, default);
-            TileEditorMenu2D.Draw(renderer, editor, game.Textures);
-            renderer.EndFrame();
-            Save(target, $"editor-{width}x{height}.png");
         }
+        MapEditorUiSmoke2D.Run(device, game, outputDirectory);
         GunRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
         EnemyRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
         AuthoredRenderingSmoke2D.Run(device, game.Textures, outputDirectory);

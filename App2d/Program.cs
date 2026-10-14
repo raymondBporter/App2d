@@ -43,6 +43,18 @@ if (args is ["--create-map", var mapPath, var width, var height, var originX, va
 
 ApplicationConfiguration.Initialize();
 
+if (args is ["--smoke-editor-ui", var editorDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(editorDirectory, editorOnly: true);
+    return;
+}
+
+if (args is ["--giant-tree-study", var giantTreeDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(giantTreeDirectory, giantTreesOnly: true);
+    return;
+}
+
 if (args is ["--spell-study", var spellDirectory])
 {
     App2d.Diagnostics.RenderingSmoke2D.Run(spellDirectory, spellsOnly: true);

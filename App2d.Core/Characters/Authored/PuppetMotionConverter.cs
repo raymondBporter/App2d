@@ -11,7 +11,9 @@ public static class PuppetMotionConverter
     public static MotionClip Convert(PuppetDefinition puppet, PuppetMotion motion, CharacterModel model, string id, string name, string travelScale)
     {
         var resolved = ResolvedModel.From(model);
-        var solved = model.Chains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
+        if (model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
+            throw new InvalidDataException("Prototype point motion cannot infer bone-frame rotations. Convert onto a point rig or author the bone constraint's target in Animate.");
+        var solved = model.IkChains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
         foreach (var control in model.Controls.Where(c => !solved.Contains(c.Id)))
         {
             for (var parent = control.Parent; parent is not null; parent = resolved.Controls[parent].Parent)
@@ -47,7 +49,7 @@ public static class PuppetMotionConverter
                 var parentRest = control.Parent is null ? Vector3.Zero : Rest(control.Parent);
                 Add(MotionClip.TranslateKind, control.Id, key.Time, World(control.Id) - parentWorld - (Rest(control.Id) - parentRest));
             }
-            foreach (var chain in model.Chains)
+            foreach (var chain in model.IkChains)
             {
                 var inLocomotion = chain.Frame == CharacterModel.Locomotion;
                 var frameWorld = inLocomotion ? locomotion : World(chain.Frame);
@@ -60,7 +62,7 @@ public static class PuppetMotionConverter
         var start = clip.Travel.Keys.Count > 0 ? clip.Travel.Keys[0].X : 0;
         foreach (var contact in motion.Contacts)
         {
-            var chain = model.Chains.Single(c => c.End == contact.End);
+            var chain = model.IkChains.Single(c => c.End == contact.End);
             clip.Contacts.Add(new() { Chain = chain.Id, Start = contact.Start, Finish = contact.Finish, Target = PuppetPoint.From(contact.Target.XYZ - new Vector3(start, 0, 0) - Rest(chain.End)) });
         }
         clip.Validate(resolved); return clip;

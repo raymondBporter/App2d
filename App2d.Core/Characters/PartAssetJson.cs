@@ -19,8 +19,10 @@ internal static class PartAssetJson
         {
             if (part.ValueKind != JsonValueKind.Object) continue;
             foreach (var field in part.EnumerateObject())
+            {
                 if (OldPartFields.Contains(field.Name))
                     throw new JsonException($"Part field '{field.Name}' is from the old drawing format; use geometry and material.");
+            }
         }
     }
 

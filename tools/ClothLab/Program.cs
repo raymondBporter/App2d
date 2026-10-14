@@ -28,7 +28,7 @@ object Export(PuppetDefinition definition)
         face = FaceExpressions.Get(definition.Parts.Single(p => p.Id == "head").Face)
     };
 }
-var json = JsonSerializer.Serialize(new { walk = Export(PuppetTemplates.StepStudy()), run = Export(PuppetTemplates.RunStudy()) }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+var json = JsonSerializer.Serialize(new { walk = Export(PuppetTemplates.StepStudy()), run = Export(PuppetTemplates.RunStudy()) }, JsonSerializerOptions.Web);
 var fragment = File.ReadAllText(Path.Combine(source, "cape.template.html"))
     .Replace("/*__PUPPET_DATA__*/", json)
     .Replace("/*__CAPE_SIMULATION__*/", File.ReadAllText(Path.Combine(source, "cape-simulation.js")));

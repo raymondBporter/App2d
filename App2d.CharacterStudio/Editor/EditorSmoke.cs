@@ -148,7 +148,7 @@ internal sealed class EditorSmoke(string output)
                 {
                     var part = doc.Asset.Parts.Single(p => p.Id == "frill");
                     var polygon = (SimplePolygonShapeDefinition2D)part.Geometry!;
-                    var vertices = polygon.Vertices.Select(point => new PuppetPoint(point.X, point.Y)).ToList();
+                    var vertices = polygon.Vertices.ConvertAll(point => new PuppetPoint(point.X, point.Y));
                     vertices[0] = new(-.32f, -.46f);
                     PartGeometry.SetPolygon(part, vertices);
                 }), s);
@@ -234,6 +234,49 @@ internal sealed class EditorSmoke(string output)
                     "slot color, attachment, and draw order keys survive Spine and save/reopen");
                 Record(clip.Tracks.Any(t => t.Kind == MotionClip.ScaleKind) && clip.Tracks.Any(t => t.Kind == MotionClip.ShearKind),
                     "scale and shear keys survive Spine and save/reopen");
+            }),
+            ("34-bone-ik-rest", shell =>
+            {
+                var s = shell.Session; Check(s.NewModel("linkage", "Bone IK linkage", "empty"), s);
+                var document = s.SubjectModel!;
+                Check(s.Edit(document, () =>
+                {
+                    var model = document.Asset;
+                    ModelAuthoring.AddBone(model, null, "beam"); ModelAuthoring.AddBone(model, "beam", "hinge"); ModelAuthoring.AddBone(model, "hinge", "tool");
+                    ModelAuthoring.AddBoneIk(model, "tool"); ModelAuthoring.ResizeBone(model, "beam", .8f); ModelAuthoring.ResizeBone(model, "hinge", .65f);
+                    foreach (var (bone, color) in new[] { ("beam", "#e3ac47"), ("hinge", "#57b0b2"), ("tool", "#cf727b") })
+                    {
+                        var part = ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, bone);
+                        part.Material = part.Material! with { Fill = color };
+                    }
+                }), s);
+                s.SetMode(Workspace.Model); s.EditRig = true; s.Selection.Chain = "tool-chain"; shell.Viewport.Fit(s.Evaluate("linkage"));
+                Record(document.Asset.Chains.Count == 0 && document.Asset.Constraints.Count == 1, "a machine rig declares bone IK as a typed constraint");
+            }),
+            ("35-bone-ik-target", shell =>
+            {
+                var s = shell.Session; Check(s.NewClip("linkage-move", "Linkage move", 1), s);
+                var model = s.Assets.Resolve("linkage")!; var clip = s.ClipDocument!;
+                Check(s.Edit(clip, () =>
+                {
+                    ClipAuthoring.Pose(model, clip.Asset, PoseEvaluator.Rest(model), 0, "tool", new(.75f, .65f, 0));
+                    ClipAuthoring.SetKey(clip.Asset, new(MotionClip.TargetKind, "tool-chain"), 1, new(-.55f, -.2f, 0));
+                }), s);
+                s.EditRig = s.ShowRest = false; s.SetMode(Workspace.Animate); s.Selection.Control = "tool"; s.Seek(.25f);
+                shell.Viewport.Fit(s.Evaluate("linkage"));
+                var pose = s.Scene()[0].Pose;
+                Record(pose.Chains.Single().Reached && MathF.Abs(pose.Angles["beam"]) > .1f, "keyed bone IK rotates its attachment frames in the viewport");
+            }),
+            ("36-bone-ik-contact-reopened", shell =>
+            {
+                var s = shell.Session; var subject = s.Evaluate("linkage")!; var clip = s.ClipDocument!;
+                var target = subject.Pose.World("tool");
+                Check(s.Edit(clip, () => ClipAuthoring.Plant(subject.Model, clip.Asset, subject.Pose, "tool-chain", .25f, .5f)), s);
+                s.SaveAll(); s.Seek(.5f);
+                var reopened = AuthoredCatalog.Load(s.Assets.Root);
+                Record(reopened.Errors.Count == 0, "bone constraints and contact clips save and reopen without resource errors");
+                var pose = PoseEvaluator.Sample(reopened.Resolve("linkage"), reopened.Animations["linkage-move"], .5f);
+                Record(pose.Contacts.Count == 1 && Vector3.Distance(pose.World("tool"), target) < 1e-4f, "the reopened bone rig holds its contact target");
             }),
         ];
         return workspace;

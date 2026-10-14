@@ -37,17 +37,17 @@ public sealed record PropShape
         if (Geometry is ShapeDefinition2D definition)
         {
             var shape = definition.Build();
-            var count = WorldShape2D.OutlineVertexCount(shape, 48);
+            var count = shape.GetOutlineVertCount(48);
             if (count == 0) throw new InvalidDataException($"A {definition.Kind} cannot be used as prop art.");
             xy = new Vector2[count];
-            WorldShape2D.WriteOutline(shape, xy, 48);
+            shape.GetOutlineVerts(xy, 48);
         }
         else
         {
             xy = Geometry switch
             {
-                LineCurveDefinition2D line => [line.Start.Vector, line.End.Vector],
-                PolylineCurveDefinition2D polyline => [.. polyline.Points.Select(point => point.Vector)],
+                LineCurveDefinition2D line => [line.Start, line.End],
+                PolylineCurveDefinition2D polyline => [.. polyline.Points],
                 CurveDefinition2D curve => Sample(curve),
                 _ => throw new InvalidDataException("A prop needs shape or curve geometry.")
             };
@@ -172,16 +172,24 @@ public sealed class PropAsset
         {
             if (group.Value.ValueKind != JsonValueKind.Array ||
                 !group.Name.Equals("shapes", StringComparison.OrdinalIgnoreCase) &&
-                !group.Name.Equals("solids", StringComparison.OrdinalIgnoreCase)) continue;
+                !group.Name.Equals("solids", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             foreach (var item in group.Value.EnumerateArray())
             {
                 if (item.ValueKind != JsonValueKind.Object) continue;
                 foreach (var field in item.EnumerateObject())
+                {
                     if (field.Name.Equals("kind", StringComparison.OrdinalIgnoreCase) ||
                         field.Name.Equals("points", StringComparison.OrdinalIgnoreCase) ||
                         field.Name.Equals("fill", StringComparison.OrdinalIgnoreCase) ||
                         field.Name.Equals("outlined", StringComparison.OrdinalIgnoreCase))
+                    {
                         throw new JsonException($"Prop field '{field.Name}' is from the old drawing format; use geometry and material.");
+                    }
+                }
             }
         }
     }

@@ -26,15 +26,17 @@ public sealed class WorldFileTests : IDisposable
             new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
 
     [Fact]
-    public void ShippedPlaygroundStartsInGeneratedCombatZoneWithDistinctMapIdentities()
+    public void ShippedPlaygroundStartsInUpstreamMapAndRetainsGeneratedCombatZone()
     {
         using var world = WorldFile2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "world.json"),
             ["ink-medieval-ground", "ink-medieval-wall", "ink-prehistoric-ground", "ink-prehistoric-wall",
              "ink-wasteland-ground", "ink-wasteland-wall"]);
-        Assert.Equal("sandbox-a", world.Maps[0].Id);
-        Assert.Equal("Combat Grounds", world.Maps[0].Name);
+        Assert.Equal("main", world.Maps[0].Id);
+        Assert.Equal("level.db", Path.GetFileName(world.Maps[0].DatabasePath));
         Assert.True(world.StartAtArrival);
-        Assert.Contains(world.Maps[0].PositionThings, t => t.TypeKey == "rock-thrower");
+        Assert.Contains(world.Maps.Single(m => m.Id == "sandbox-a").PositionThings, t => t.TypeKey == "rock-thrower");
+        Assert.Contains(world.Maps[0].PositionThings, t => t.Enabled && t.TypeKey == "player-spawn");
+        Assert.NotEmpty(world.GiantTrees);
         Assert.Equal(4, world.Maps.Count);
         Assert.Equal(4, world.Maps.Select(m => m.Identity).Distinct().Count());
         Assert.Equal("player-spawn", world.PositionThings.First(t => t.Enabled).TypeKey);

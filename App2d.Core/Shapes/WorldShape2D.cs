@@ -39,7 +39,7 @@ public static class WorldShape2D
 
     /// <summary>The number of vertices <see cref="WritePerimeter"/> produces for a shape.</summary>
     /// <param name="shape">Any shape.</param>
-    /// <returns>4 for rectangles, 3 for triangles, the vertex count for convex polygons, <see cref="Ellipse2D.CollisionSegments"/> for ellipses, and 0 for shapes with no polygonal perimeter.</returns>
+    /// <returns>The perimeter vertex count, using drawing samples for round boundaries.</returns>
     public static int PerimeterVertexCount(IShape2D shape) => shape switch
     {
         Rectangle2D => 4,
@@ -47,7 +47,7 @@ public static class WorldShape2D
         Triangle2D => 3,
         ConvexPolygon2D polygon => polygon.Vertices.Length,
         SimplePolygon2D polygon => polygon.Vertices.Length,
-        Ellipse2D => Ellipse2D.CollisionSegments,
+        Ellipse2D => Ellipse2D.DefaultOutlineSegments,
         _ => 0
     };
 
@@ -65,7 +65,7 @@ public static class WorldShape2D
             case Triangle2D triangle: triangle.WriteVertices(vertices); return 3;
             case ConvexPolygon2D polygon: polygon.Vertices.CopyTo(vertices); return polygon.Vertices.Length;
             case SimplePolygon2D polygon: polygon.Vertices.CopyTo(vertices); return polygon.Vertices.Length;
-            case Ellipse2D ellipse: return ellipse.WriteVertices(vertices[..Ellipse2D.CollisionSegments]);
+            case Ellipse2D ellipse: return ellipse.WriteVertices(vertices[..Ellipse2D.DefaultOutlineSegments]);
             default: return 0;
         }
     }
@@ -82,22 +82,15 @@ public static class WorldShape2D
         return count;
     }
 
-    /// <summary>The number of vertices <see cref="WriteWorldConvexCore"/> produces: 1 for circles, 2 for capsules, the perimeter count otherwise.</summary>
+    /// <summary>The number of vertices <see cref="WriteWorldConvexCore"/> produces. Only exact polygonal cores are supported.</summary>
     /// <param name="shape">Any shape.</param>
     /// <returns>The core vertex count, or 0 for shapes without a convex core.</returns>
-    public static int ConvexCoreVertexCount(IShape2D shape) => shape switch
-    {
-        Circle2D => 1,
-        Capsule2D => 2,
-        RoundedRectangle2D rounded when rounded.CoreMin == rounded.CoreMax => 1,
-        RoundedRectangle2D rounded when rounded.CoreMin.X == rounded.CoreMax.X || rounded.CoreMin.Y == rounded.CoreMax.Y => 2,
-        RoundedRectangle2D => 4,
-        _ => PerimeterVertexCount(shape)
-    };
+    public static int ConvexCoreVertexCount(IShape2D shape) => shape.GetVertCount();
 
     /// <summary>
     /// Writes the world-space convex core of a shape: a point plus radius for circles, a segment plus radius for capsules,
-    /// and the perimeter with zero radius for polygonal shapes. This is the form <see cref="Distance2D.SignedDistanceBetweenConvexPolygons"/> takes.
+    /// and the perimeter with zero radius for polygonal shapes. Ellipses have no polygonal core and return zero. This is the form
+    /// <see cref="Distance2D.SignedDistanceBetweenConvexPolygons"/> takes; <see cref="ShapeVertices2D.GetVerts"/> exposes only exact local cores.
     /// </summary>
     /// <param name="shape">Any shape.</param>
     /// <param name="pose">The local-to-world similarity.</param>
@@ -106,32 +99,11 @@ public static class WorldShape2D
     /// <returns>The number of vertices written, or 0 for shapes without a convex core.</returns>
     public static int WriteWorldConvexCore(IShape2D shape, Similarity2D pose, Span<Vector2> vertices, out float radius)
     {
-        int count;
-        switch (shape)
-        {
-            case Circle2D circle:
-                vertices[0] = circle.Center;
-                radius = circle.Radius;
-                count = 1;
-                break;
-            case Capsule2D capsule:
-                vertices[0] = capsule.Start;
-                vertices[1] = capsule.End;
-                radius = capsule.Radius;
-                count = 2;
-                break;
-            case RoundedRectangle2D rounded:
-                radius = rounded.Radius;
-                count = ConvexCoreVertexCount(rounded);
-                if (count == 1) vertices[0] = rounded.CoreMin;
-                else if (count == 2) { vertices[0] = rounded.CoreMin; vertices[1] = rounded.CoreMax; }
-                else VertexGenerator2D.WriteRectangle(vertices, rounded.CoreMin, rounded.CoreMax);
-                break;
-            default:
-                radius = 0f;
-                count = WritePerimeter(shape, vertices);
-                break;
-        }
+        var count = ConvexCoreVertexCount(shape);
+        radius = 0f;
+        if (count == 0) return 0;
+        shape.GetVerts(vertices, out radius);
+
         for (var i = 0; i < count; i++) vertices[i] = pose.TransformPoint(vertices[i]);
         radius *= pose.Scale;
         return count;

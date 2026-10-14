@@ -88,7 +88,7 @@ internal sealed partial class ProofRenders
             });
             report.Add(Check(model, item));
         }
-        File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, ManifestJsonOptions));
         File.WriteAllLines(Path.Combine(_smokePath, "checks.txt"), report);
         target.Dispose();
         return false;

@@ -30,6 +30,8 @@ internal sealed class TileEditor2D : IDisposable
     private Vector2 _panAnchorDevice;
     private Vector2 _panAnchorFocus;
     private bool _isPanning;
+    private bool _toggleRequested;
+    public bool IsPointerOverUi { get; internal set; }
     private Vector2 _lastMouseDevice;
     private int _lastPaintedX;
     private int _lastPaintedY;
@@ -147,7 +149,7 @@ internal sealed class TileEditor2D : IDisposable
 
     public bool TryGetHoveredTile(out int x, out int y)
     {
-        if (Mode != LevelEditorMode2D.Tiles || TileEditorMenu2D.Contains(_camera.ViewportSize, _lastMouseDevice))
+        if (Mode != LevelEditorMode2D.Tiles || IsPointerOverUi)
         {
             x = 0;
             y = 0;
@@ -168,8 +170,9 @@ internal sealed class TileEditor2D : IDisposable
 
     public void Update(InputState input)
     {
-        if (input.Keyboard.WasPressed(Keys.F1))
+        if (_toggleRequested || input.Keyboard.WasPressed(Keys.F1))
         {
+            _toggleRequested = false;
             IsActive = !IsActive;
             if (IsActive)
                 BeginEditingSession();
@@ -185,7 +188,7 @@ internal sealed class TileEditor2D : IDisposable
         _lastMouseDevice = input.Mouse.PositionDevice;
         if (Mode == LevelEditorMode2D.Things)
         {
-            UpdateCamera(input, isPointerOverMenu: false);
+            UpdateCamera(input, isPointerOverMenu: IsPointerOverUi);
             UpdateThings(input);
             if (input.Keyboard.IsControlDown && input.Keyboard.WasPressed(Keys.Z))
                 UndoThingEdit();
@@ -193,13 +196,7 @@ internal sealed class TileEditor2D : IDisposable
             return;
         }
 
-        var isPointerOverMenu = TileEditorMenu2D.Contains(_camera.ViewportSize, _lastMouseDevice);
-        if (isPointerOverMenu && input.Mouse.WasPressed(MouseButtons.Left))
-        {
-            EndStrokeIfActive();
-            TileEditorMenu2D.TrySelect(this, _camera.ViewportSize, _lastMouseDevice);
-        }
-
+        var isPointerOverMenu = IsPointerOverUi;
         UpdateCamera(input, isPointerOverMenu);
         UpdatePainting(input, isPointerOverMenu);
 
@@ -207,10 +204,14 @@ internal sealed class TileEditor2D : IDisposable
         // throws if called mid-stroke, so ignore the request rather than let it crash the
         // editor; the in-progress stroke is left untouched either way.
         if (input.Keyboard.IsControlDown && input.Keyboard.WasPressed(Keys.Z) && !_session.IsStrokeActive)
-            CommitChunks(_session.Undo());
+            UndoTiles();
 
         _camera.Position = _cameraFocus;
     }
+
+    internal void RequestToggle() => _toggleRequested = true;
+
+    internal void UndoTiles() { if (!_session.IsStrokeActive) CommitChunks(_session.Undo()); }
 
     internal void SelectTileset(int index)
     {
@@ -227,12 +228,7 @@ internal sealed class TileEditor2D : IDisposable
         CommitThingDrag();
         Mode = mode;
         _isPlacingThing = false;
-        InspectorView.Visible = IsActive && mode == LevelEditorMode2D.Things;
-        if (InspectorView.Visible)
-        {
-            InspectorView.BringToFront();
-            InspectorView.RefreshFromEditor();
-        }
+        InspectorView.RefreshFromEditor();
     }
 
     internal void SelectDefinition(long definitionId)
@@ -693,7 +689,6 @@ internal sealed class TileEditor2D : IDisposable
         // runtime visuals coincide even if a platform was midway through its path
         // when editing began.
         ReloadThings(notifyRuntime: true);
-        InspectorView.Visible = Mode == LevelEditorMode2D.Things;
     }
 
     /// <summary>
@@ -709,7 +704,6 @@ internal sealed class TileEditor2D : IDisposable
         CommitThingDrag();
         _isPanning = false;
         _isPlacingThing = false;
-        InspectorView.Visible = false;
         _camera.Position = _savedCameraPosition;
         _camera.Zoom = _savedCameraZoom;
         _database?.Dispose();
@@ -735,7 +729,6 @@ internal sealed class TileEditor2D : IDisposable
         EndStrokeIfActive();
         CommitThingDrag();
         _database?.Dispose();
-        InspectorView.Dispose();
     }
 
     private enum ThingDragHandle2D

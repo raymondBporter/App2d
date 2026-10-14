@@ -30,8 +30,8 @@ public sealed class ShapeDefinitionAuthoringTests
     {
         var tall = RectangleShapeDefinition2D.FromSize(new(1, 3));
         var capsule = Assert.IsType<CapsuleShapeDefinition2D>(tall.WithKind(ShapeKinds2D.Capsule));
-        Assert.Equal(new Vector2(0, -1), capsule.Start.Vector);
-        Assert.Equal(new Vector2(0, 1), capsule.End.Vector);
+        Assert.Equal(new Vector2(0, -1), capsule.Start);
+        Assert.Equal(new Vector2(0, 1), capsule.End);
         Assert.Equal(.5f, capsule.Radius);
         Assert.Equal(1f, Assert.IsType<CircleShapeDefinition2D>(tall.WithKind(ShapeKinds2D.Circle)).Radius * 2);
         Assert.Throws<ArgumentException>(() => tall.WithKind("blob"));

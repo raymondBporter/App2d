@@ -8,6 +8,8 @@ public sealed class InputState
     private readonly XboxControllerInput2D _gamepadInput = new();
     private bool _isSuppressed;
     private bool _isWindowActive = true;
+    public bool IsKeyboardCapturedByUi { get; private set; }
+    public bool IsMouseCapturedByUi { get; private set; }
 
     public KeyboardState2D Keyboard { get; } = new();
     public MouseState2D Mouse { get; } = new();
@@ -39,7 +41,7 @@ public sealed class InputState
             Mouse.SetClientPosition(new Vector2(e.X, e.Y));
             SetMouseButton(e.Button, false);
         };
-        surface.MouseWheel += (_, e) => { if (!IsSuppressed) Mouse.AddWheelDelta(e.Delta); };
+        surface.MouseWheel += (_, e) => { if (!IsSuppressed && !IsMouseCapturedByUi) Mouse.AddWheelDelta(e.Delta); };
     }
 
     internal void SetDeviceMapping(Size clientSize, int deviceWidth, int deviceHeight) =>
@@ -72,6 +74,15 @@ public sealed class InputState
         CancelButtons();
     }
 
+    /// <summary>Cancel only the devices captured by the tool UI, before a simulation tick can consume their transitions.</summary>
+    internal void SetToolCapture(bool keyboard, bool mouse)
+    {
+        if (keyboard && !IsKeyboardCapturedByUi) Keyboard.CancelHeld();
+        if (mouse && !IsMouseCapturedByUi) Mouse.CancelHeld();
+        IsKeyboardCapturedByUi = keyboard;
+        IsMouseCapturedByUi = mouse;
+    }
+
     internal void CancelButtons()
     {
         Keyboard.CancelHeld();
@@ -80,8 +91,8 @@ public sealed class InputState
         Gamepad = default;
     }
 
-    internal void SetKey(Keys key, bool isDown) => Keyboard.SetKey(key, isDown, IsSuppressed);
-    internal void SetMouseButton(MouseButtons button, bool isDown) => Mouse.SetButton(button, isDown, IsSuppressed);
+    internal void SetKey(Keys key, bool isDown) => Keyboard.SetKey(key, isDown, IsSuppressed || IsKeyboardCapturedByUi);
+    internal void SetMouseButton(MouseButtons button, bool isDown) => Mouse.SetButton(button, isDown, IsSuppressed || IsMouseCapturedByUi);
 
     // Test seam: device transitions can be injected without native hardware.
     internal void SetGamepad(GamepadState2D state) => Gamepad = IsSuppressed ? default : state;

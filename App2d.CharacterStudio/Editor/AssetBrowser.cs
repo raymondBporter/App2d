@@ -14,7 +14,7 @@ namespace App2d.CharacterStudio.Editor;
 /// </summary>
 internal sealed partial class AssetBrowser(EditorSession session)
 {
-    private enum Create { None, Model, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip, ImportSpine }
+    private enum Create { None, Model, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip, ImportSpine }
     private string _modelTemplate = "empty";
     private string _spineImages = "";
     private string _appearanceTemplate = "hair";
@@ -42,6 +42,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
             foreach (var template in CharacterTemplates.All)
                 if (ImGui.MenuItem("Model: " + template.Name + " template"))
                 { _modelTemplate = template.Id; Start(Create.Model, "", "New " + template.Name.ToLowerInvariant()); }
+            if (ImGui.MenuItem("Model: empty")) Start(Create.EmptyModel, "", "New model");
+            foreach (var template in session.Assets.ModelTemplates.Values.OrderBy(t => t.Name, StringComparer.Ordinal))
+                if (ImGui.MenuItem($"Model: {template.Name} template##{template.Id}")) Start(Create.TemplateModel, template.Id, "New " + template.Name);
             var basis = session.Assets.BaseOf(session.SubjectId ?? "");
             if (ImGui.MenuItem("Variant...", "", false, session.Assets.Models.Any())) Start(Create.Variant, basis ?? session.Assets.Models.First().Id, "New variant");
             if (ImGui.MenuItem("Animation for " + (session.SubjectId ?? "subject") + "...", "", false, session.SubjectId is not null)) Start(Create.Animation, session.SubjectId!, "New animation");
@@ -220,6 +223,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
             Create.Appearance => "New hair or clothing",
             Create.DuplicateAppearance => "Duplicate appearance " + _source,
             Create.Model => "New model from " + CharacterTemplates.Get(_modelTemplate).Name,
+            Create.EmptyModel => "New model from Empty",
+            Create.TemplateModel => "New model from " + session.Assets.ModelTemplates[_source].Name,
             Create.Variant => "New variant",
             Create.DuplicateVariant => "Duplicate variant " + _source,
             Create.Independent => "Independent model from " + _source,
@@ -238,6 +243,11 @@ internal sealed partial class AssetBrowser(EditorSession session)
         {
             case Create.Model:
                 Ui.Help(CharacterTemplates.Get(_modelTemplate).Description + " Save all keeps the model and any starter animations together.");
+                break;
+            case Create.TemplateModel:
+                var recipe = session.Assets.ModelTemplates[_source];
+                if (recipe.Description.Length > 0) Ui.Help(recipe.Description);
+                Ui.Help($"Copies {recipe.Model} and {recipe.Animations.Count} animation(s) into independent drafts. Save all to keep the bundle.");
                 break;
             case Create.Appearance:
                 if (Ui.Combo("Starting shape", _appearanceTemplate, AppearanceAuthoring.Templates) is { } artTemplate) _appearanceTemplate = artTemplate;
@@ -291,6 +301,8 @@ internal sealed partial class AssetBrowser(EditorSession session)
         Create.Appearance => session.NewAppearance(_id, _name, _appearanceTemplate),
         Create.DuplicateAppearance => session.DuplicateAppearance(_source, _id, _name),
         Create.Model => session.NewModel(_id, _name, _modelTemplate),
+        Create.EmptyModel => session.NewModel(_id, _name, "empty"),
+        Create.TemplateModel => session.NewModel(_id, _name, _source),
         Create.Variant => session.NewVariant(_id, _name, _source, _preset.Length == 0 ? null : _preset),
         Create.DuplicateVariant => session.DuplicateVariant(_source, _id, _name),
         Create.Independent => session.MakeIndependent(_source, _id, _name),

@@ -15,6 +15,7 @@ using App2d.Editor;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
+using App2d.Levels;
 using App2d.Persistence;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World;
@@ -42,6 +43,7 @@ public sealed class SideScrollerGame : Game2D
     private bool _showZones;
     private bool _isControllerConnected;
     private readonly TileEditor2D _editor;
+    private readonly MapEditorUi2D _editorUi;
     private readonly PlayerSaveStore2D _saveStore;
     private readonly ViewportTerrainSource2D _terrainSource;
     private readonly App2d.Levels.WorldAsset2D _loadedWorld;
@@ -95,6 +97,7 @@ public sealed class SideScrollerGame : Game2D
                 ?? throw new InvalidDataException("Player spell tuning is missing."),
             AuthoredCharacters = _authored,
             Zones = loadedLevel.Zones,
+            GiantTrees = loadedLevel.GiantTrees,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),
         });
         _session = _simulation.Session;
@@ -117,6 +120,7 @@ public sealed class SideScrollerGame : Game2D
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => App2d.Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
         _resources.Get<App2d.Levels.WorldAsset2D>("level/cavern", "editor");
+        _editorUi = new(_editor, Textures);
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ConfigureMaps(loadedLevel.Maps);
         _editor.ThingsChanged += things =>
@@ -124,6 +128,13 @@ public sealed class SideScrollerGame : Game2D
             loadedLevel.Maps[_editor.SelectedMapIndex].MovingPlatforms = things.ToArray();
             _simulation.Level.ReloadMovingPlatforms([.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)]);
         };
+
+        DeveloperConsole.RegisterCommand("reload_trees", "Reload giant-trees.json: positions and dimensions are in tiles; ranges are [min, max].", _ =>
+        {
+            var trees = loadedLevel.LoadGiantTrees();
+            _simulation.Level.ReloadGiantTrees(trees);
+            return ConsoleCommandResult.From($"Loaded {trees.Length} giant trees with {trees.Sum(tree => tree.Branches.Length)} branch platforms.");
+        });
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored));
@@ -167,7 +178,7 @@ public sealed class SideScrollerGame : Game2D
     public override string WindowTitle =>
         $"App2d Side Scroller | PAD: {(_isControllerConnected ? "XBOX" : "OFF")} | GEAR: {_client.WeaponName} | HP: {_client.State.Person.HitPoints}/{_client.State.Person.MaximumHitPoints} | enemies: {_simulation.Combat.DefeatedEnemies}/{_simulation.Level.EnemySystem.Count} | chunks: {_simulation.Level.ActiveChunkCount}/{SideScrollerLevel2D.MaximumActiveChunkCount} | colliders: {_simulation.Level.LoadedColliderCount} | broad pairs: {_simulation.Physics.LastCandidatePairCount}{(_client.State.ReachedGoal ? " | GOAL! BRO!" : string.Empty)}";
 
-    internal override Control? OverlayControl => _editor.InspectorView;
+    public override IGameToolUi2D? ToolUi => _editorUi;
     protected override XnaColor BackgroundColor => new(103, 196, 235);
 
     public override void Update(FrameTime time, InputState input)
@@ -260,7 +271,6 @@ public sealed class SideScrollerGame : Game2D
     public override void RenderUI(Renderer2D renderer, FrameTime time)
     {
         _client.DrawUI(renderer);
-        TileEditorView2D.DrawUI(renderer, _editor, Textures);
         if (!_editor.IsActive) _levelPicker.Draw(renderer);
         base.RenderUI(renderer, time);
     }
@@ -279,6 +289,7 @@ public sealed class SideScrollerGame : Game2D
         _simulation.Dispose();
         _client.Dispose();
         _editor.Dispose();
+        _editorUi.Dispose();
         _music.Dispose();
         _resources.Dispose();
         base.Dispose();

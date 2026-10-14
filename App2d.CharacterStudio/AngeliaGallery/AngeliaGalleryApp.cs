@@ -44,7 +44,7 @@ internal sealed class AngeliaGalleryApp : Game
 
     protected override void LoadContent()
     {
-        _renderer = new(GraphicsDevice); _gui = new(this);
+        _renderer = new(GraphicsDevice); _gui = new(GraphicsDevice, new MonoGameImGuiPlatform(this));
         var catalog = AuthoredCatalog.Load(Path.Combine(_assetRoot, "authored"));
         if (catalog.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
         _model = catalog.Resolve("person");

@@ -4,10 +4,11 @@ All types remain in `App2d.Core`. Numeric rules are independent of throwing, so 
 
 | File | Responsibility |
 | --- | --- |
-| `NumericValidation.cs` | Boolean predicates for numeric scalars and `Vector2`, `Vector3`, `Vector4` |
+| `NumericValidation.cs` | Boolean predicates for numeric scalars, vectors, and matrix finiteness |
 | `ArgGuard.cs` | Null, text, collection and custom argument checks |
 | `ArgGuard.Scalars.cs` | Generic numeric guards for `int`, `long`, `float`, `double`, `decimal`, and other `INumber<T>` types |
 | `ArgGuard.Vectors.cs` | Vector overloads with explicit component-wise comparisons |
+| `ArgGuard.Matrices.cs` | `Matrix3x2` finiteness guard |
 | `ArgGuard.Exceptions.cs` | Shared throw helpers, messages and fresh exception factories |
 | `ArgGuard.Compatibility.cs` | Forwarding aliases for previous spellings |
 | `StateGuard.cs` | Invalid engine state, reported as `InvalidOperationException` |
@@ -25,6 +26,7 @@ ArgGuard.ThrowIfNotFiniteOrZero(direction);
 ArgGuard.ThrowIfNotFiniteOrLessThanOrEqual(maximum, minimum);
 ArgGuard.ThrowIfNotFiniteOrNotInOpenRange(fraction, 0f, 1f);
 ArgGuard.ThrowIfNotFiniteOrNotComponentWiseLessThan(min, max);
+ArgGuard.ThrowIfNotFinite(localToWorld); // Checks all six Matrix3x2 entries.
 
 // Reuse the rule without throwing, or give a domain-specific explanation.
 bool validSize = NumericValidation.IsFiniteAndPositive(size);
@@ -40,6 +42,9 @@ ArgGuard.ThrowIf(!id.IsValid, "An entity ID is required.", nameof(id));
 Basic guards check the named condition. `ThrowIfLessThan(value, minimum)` throws when `value < minimum`; it does not mean “require less than.” `ThrowIfNotPositive` requires strictly greater than zero. `ThrowIfZero` requires a nonzero value. Signed negative zero counts as zero and remains valid for nonnegative checks.
 
 Use `ThrowIfNotFiniteOr...` for finite floating-point inputs. Each finite variant rejects NaN and either infinity. Comparisons validate both operands; range guards also validate finite, ordered bounds, reporting the bound's own parameter name when it is invalid. Closed ranges include both endpoints; open ranges exclude them. A closed range may collapse to one value.
+
+Vector and matrix finiteness predicates delegate to the `IsFinite()` extensions in `App2d.Core.Mathematics`.
+The matrix guard accepts finite singular matrices and reports the caller's parameter name and rejected matrix.
 
 Plain relational operators follow normal floating-point rules: for example, `NaN < limit` is false, and positive infinity is positive. A plain comparison is not a finiteness check. Existing callers that previously got implicit finite checks from `ThrowIfNotPositive`, comparison or range guards have been migrated to the explicit finite variants. `ThrowIfNegativeOrNotFinite` and `ThrowIfNotPositiveFiniteValue` remain forwarding aliases with their previous finite policy.
 

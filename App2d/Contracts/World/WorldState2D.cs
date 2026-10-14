@@ -28,6 +28,8 @@ public sealed record LevelContent2D(
     public static LevelContent2D Empty { get; } = new(0, [], [], [], null);
     /// <summary>Whole-level regions, available even when their terrain chunks are unloaded.</summary>
     public ImmutableArray<WorldZone2D> Zones { get; init; } = [];
+    /// <summary>Whole trees shared by simulation and presentation, independent of root-chunk streaming.</summary>
+    public ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
 }
 
 /// <summary>Per-tick dynamic world observation, not a physics restore point.</summary>

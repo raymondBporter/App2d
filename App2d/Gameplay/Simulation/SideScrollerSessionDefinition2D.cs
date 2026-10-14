@@ -1,6 +1,7 @@
 using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.World;
@@ -33,6 +34,7 @@ public sealed record SideScrollerSessionDefinition2D(
     public AuthoredCatalog? AuthoredCharacters { get; init; }
     /// <summary>Rectangular regions shared by simulation and presentation consumers.</summary>
     public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; init; } = [];
+    public System.Collections.Immutable.ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
     public int PlayerMaximumHealth { get; init; } = 5;
     public SpellTuning2D Spells { get; init; } = new();
     /// <summary>Resume point; ignored when it names a missing checkpoint or invalid health.</summary>
@@ -46,6 +48,7 @@ public sealed record SideScrollerSessionDefinition2D(
         ArgGuard.ThrowIfNull(TileMap);
         ArgGuard.ThrowIfNull(MovingPlatforms);
         ArgGuard.ThrowIfNull(WorldThings);
+        ArgGuard.ThrowIf(GiantTrees.IsDefault || GiantTrees.Any(tree => tree is null), "Trees must be initialized and non-null.", nameof(GiantTrees));
         if (Zones.IsDefault || Zones.Any(z => z is null) || Zones.Select(z => z.Id).Distinct(StringComparer.Ordinal).Count() != Zones.Length)
             throw new ArgumentException("Zones must be initialized and have unique IDs.", nameof(Zones));
         ArgGuard.ThrowIfNotPositive(PlayerMaximumHealth);
