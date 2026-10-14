@@ -3,6 +3,11 @@ using System.Numerics;
 
 namespace App2d.Core.Tiles;
 
+public interface IChangingTileMap2D : IChunkedTileMap2D
+{
+    event Action<TileChunk2D>? ChunkChanged;
+}
+
 public interface ISolidTileMap2D
 {
     int Width { get; }

@@ -34,7 +34,8 @@ public static class EntityAssetUpgrade
             var width = Float(movement, "width") ?? .55f;
             var height = Float(movement, "height") ?? 1.9f;
             var offsetX = Float(movement, "offsetX") ?? 0f;
-            Replace(movement, ["width", "height", "offsetX"], Rectangle(new(offsetX - width / 2f, 0f), new(offsetX + width / 2f, height)));
+            var offsetY = Float(movement, "offsetY") ?? 0f;
+            Replace(movement, ["width", "height", "offsetX", "offsetY"], Rectangle(new(offsetX - width / 2f, offsetY), new(offsetX + width / 2f, offsetY + height)));
         }
         if (Object(root, "guard") is { } guard)
             Replace(guard, ["width", "height"], CenteredRectangle(Float(guard, "width") ?? .9f, Float(guard, "height") ?? 1.4f));

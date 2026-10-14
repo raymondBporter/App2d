@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "zones": [
+    {
+      "id": "beat-01",
+      "name": "1: arrival",
+      "minX": 32768,
+      "minY": -384,
+      "maxX": 34048,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-02",
+      "name": "2: introduce-melee",
+      "minX": 34048,
+      "minY": -384,
+      "maxX": 35328,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-03",
+      "name": "3: traversal",
+      "minX": 35328,
+      "minY": -384,
+      "maxX": 36608,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-04",
+      "name": "4: introduce-ranged",
+      "minX": 36608,
+      "minY": -384,
+      "maxX": 37888,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-05",
+      "name": "5: release",
+      "minX": 37888,
+      "minY": -384,
+      "maxX": 39168,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-06",
+      "name": "6: combined-fight",
+      "minX": 39168,
+      "minY": -384,
+      "maxX": 40448,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-07",
+      "name": "7: traversal",
+      "minX": 40448,
+      "minY": -384,
+      "maxX": 41728,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-08",
+      "name": "8: combined-fight",
+      "minX": 41728,
+      "minY": -384,
+      "maxX": 43008,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-09",
+      "name": "9: release",
+      "minX": 43008,
+      "minY": -384,
+      "maxX": 44288,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-10",
+      "name": "10: combined-fight",
+      "minX": 44288,
+      "minY": -384,
+      "maxX": 45568,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-11",
+      "name": "11: climax",
+      "minX": 45568,
+      "minY": -384,
+      "maxX": 46848,
+      "maxY": 1664,
+      "priority": 0
+    },
+    {
+      "id": "beat-12",
+      "name": "12: exit",
+      "minX": 46848,
+      "minY": -384,
+      "maxX": 48128,
+      "maxY": 1664,
+      "priority": 0
+    }
+  ]
+}

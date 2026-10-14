@@ -26,6 +26,7 @@ public sealed class EnemyPresentation2D(
 {
     private readonly Dictionary<EntityId2D, View> _views = [];
     private readonly HashSet<EntityId2D> _presentIds = [];
+    private readonly List<EnemyEvent2D> _eventBuffer = [];
     private ImmutableArray<EnemyState2D> _states = [];
     private long _tick;
     private float _secondsSinceState;
@@ -41,18 +42,7 @@ public sealed class EnemyPresentation2D(
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         _secondsSinceState += deltaSeconds;
-        var states = _states.Select(s => !s.IsEnabled ? s : s with
-        {
-            AttackElapsedSeconds = s.AttackElapsedSeconds + _secondsSinceState,
-            ActionSeconds = s.ActionSeconds + (s.Kind == EnemyKind2D.Authored ? 0 : _secondsSinceState),
-            Person = s.Person with
-            {
-                LandingSpeedThisFrame = 0f,
-                InvulnerabilitySeconds = Math.Max(0f, s.Person.InvulnerabilitySeconds - _secondsSinceState),
-                Action = s.Person.Action with { ElapsedSeconds = s.Person.Action.ElapsedSeconds + _secondsSinceState }
-            }
-        }).ToImmutableArray();
-        RenderStates(states, [], deltaSeconds, _tick + (long)(_secondsSinceState * 120f));
+        RenderStates(_states, [], deltaSeconds, _tick + (long)(_secondsSinceState * 120f), extrapolate: true);
     }
 
     public void Update(ImmutableArray<EnemyState2D> states,
@@ -65,11 +55,13 @@ public sealed class EnemyPresentation2D(
         RenderStates(_states, events, dt, tick);
     }
 
-    private void RenderStates(ImmutableArray<EnemyState2D> states, IEnumerable<EnemyEvent2D> events, float dt, long tick)
+    private void RenderStates(ImmutableArray<EnemyState2D> states, IEnumerable<EnemyEvent2D> events, float dt, long tick, bool extrapolate = false)
     {
-        states = _hitstop.Sample(states);
-        var occurrences = events.ToLookup(e => e.EntityId);
-        foreach (var occurrence in occurrences.SelectMany(group => group))
+        _hitstop.Prune(states);
+        _eventBuffer.Clear();
+        foreach (var occurrence in events) _eventBuffer.Add(occurrence);
+        var occurrences = _eventBuffer.Count == 0 ? null : _eventBuffer.ToLookup(e => e.EntityId);
+        foreach (var occurrence in _eventBuffer)
         {
             if (occurrence is HammerStarted2D)
             {
@@ -91,6 +83,9 @@ public sealed class EnemyPresentation2D(
                     "rock-impact" => SoundEffect2D.HammerImpact,
                     "charge-scrape" or "charge-stop" => SoundEffect2D.PlayerLandHard,
                     "charge-rush" => SoundEffect2D.HammerWindup,
+                    "pterosaur-screech" => SoundEffect2D.HammerWindup,
+                    "pterosaur-rush" or "pterosaur-reset" => SoundEffect2D.SwordSwing,
+                    "pterosaur-brake" or "flight-stop" => SoundEffect2D.PlayerLandHard,
                     "shield-block" => SoundEffect2D.HammerImpact,
                     "shield-pullback" => SoundEffect2D.HammerWindup,
                     "shield-bash" => SoundEffect2D.SwordSwing,
@@ -102,8 +97,22 @@ public sealed class EnemyPresentation2D(
         _presentIds.Clear();
         if (!states.IsDefault)
         {
-            foreach (var state in states)
+            foreach (var observed in states)
             {
+                var state = observed;
+                if (extrapolate && state.IsEnabled)
+                    state = state with
+                    {
+                        AttackElapsedSeconds = state.AttackElapsedSeconds + _secondsSinceState,
+                        ActionSeconds = state.ActionSeconds + (state.Kind == EnemyKind2D.Authored ? 0 : _secondsSinceState),
+                        Person = state.Person with
+                        {
+                            LandingSpeedThisFrame = 0f,
+                            InvulnerabilitySeconds = Math.Max(0f, state.Person.InvulnerabilitySeconds - _secondsSinceState),
+                            Action = state.Person.Action with { ElapsedSeconds = state.Person.Action.ElapsedSeconds + _secondsSinceState }
+                        }
+                    };
+                state = _hitstop.SampleState(state);
                 _presentIds.Add(state.Id);
                 if (!_views.TryGetValue(state.Id, out var view))
                 {
@@ -117,11 +126,12 @@ public sealed class EnemyPresentation2D(
                         };
                     _views.Add(state.Id, view);
                 }
-                view.Update(state, occurrences[state.Id], state.IsEnabled ? dt : 0f, tick);
+                view.Update(state, occurrences?[state.Id] ?? Array.Empty<EnemyEvent2D>(), state.IsEnabled ? dt : 0f, tick);
             }
         }
-        foreach (var id in _views.Keys.Where(id => !_presentIds.Contains(id)).ToArray())
+        foreach (var id in _views.Keys)
         {
+            if (_presentIds.Contains(id)) continue;
             _views[id].Dispose();
             _views.Remove(id);
         }

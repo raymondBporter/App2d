@@ -1,0 +1,128 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "pterosaur-low-recovery",
+  "name": "Pterosaur \u00B7 low-recovery",
+  "model": "pterosaur",
+  "structureRevision": 1,
+  "loop": true,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "near-shoulder",
+      "keys": [
+        {
+          "angle": 0.28
+        },
+        {
+          "time": 0.5,
+          "angle": 0.12
+        },
+        {
+          "time": 1,
+          "angle": 0.28
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-shoulder",
+      "keys": [
+        {
+          "angle": -0.28
+        },
+        {
+          "time": 0.5,
+          "angle": -0.12
+        },
+        {
+          "time": 1,
+          "angle": -0.28
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-bend",
+      "keys": [
+        {},
+        {
+          "time": 0.5,
+          "angle": -0.08
+        },
+        {
+          "time": 1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-bend",
+      "keys": [
+        {},
+        {
+          "time": 0.5,
+          "angle": 0.08
+        },
+        {
+          "time": 1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "body",
+      "keys": [
+        {},
+        {
+          "time": 0.5,
+          "angle": -0.02
+        },
+        {
+          "time": 1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-leg",
+      "keys": [
+        {
+          "angle": 0.1
+        },
+        {
+          "time": 0.5,
+          "angle": 0.15
+        },
+        {
+          "time": 1,
+          "angle": 0.1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-leg",
+      "keys": [
+        {
+          "angle": 0.1
+        },
+        {
+          "time": 0.5,
+          "angle": 0.15
+        },
+        {
+          "time": 1,
+          "angle": 0.1
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [],
+  "faces": []
+}

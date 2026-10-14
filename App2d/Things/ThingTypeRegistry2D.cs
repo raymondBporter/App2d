@@ -47,6 +47,9 @@ internal static class ThingTypeRegistry2D
     public static ThingTypeDescriptor2D ShieldDefender { get; } =
         new("shield-defender", "Shell-shield defender", WorldThingKind2D.ShieldDefender, new XnaColor(145, 162, 118));
 
+    public static ThingTypeDescriptor2D Pterosaur { get; } =
+        new("pterosaur", "Pterosaur", WorldThingKind2D.Pterosaur, new XnaColor(181, 110, 139));
+
     public static ThingTypeDescriptor2D Rival { get; } =
         new("rival", "Cinder", WorldThingKind2D.Rival, new XnaColor(240, 210, 110));
 
@@ -72,6 +75,7 @@ internal static class ThingTypeRegistry2D
             RockThrower,
             BabyTriceratops,
             ShieldDefender,
+            Pterosaur,
             Rival,
             GreenDinosaur,
             TumbleProp

@@ -1,0 +1,117 @@
+{
+  "format": "app2d-entity",
+  "version": 2,
+  "id": "flying-pterosaur",
+  "name": "Pterosaur",
+  "model": "pterosaur",
+  "motionSet": "standard",
+  "roles": {
+    "hit": "pterosaur-hit",
+    "death": "pterosaur-death"
+  },
+  "health": 4,
+  "mass": 0.8,
+  "movement": {
+    "shape": {
+      "kind": "rectangle",
+      "min": {
+        "x": -0.425,
+        "y": 0.4
+      },
+      "max": {
+        "x": 0.425,
+        "y": 1.0
+      }
+    }
+  },
+  "hurt": {
+    "layout": "body",
+    "regions": {}
+  },
+  "equipment": [],
+  "controller": {
+    "kind": "flying",
+    "range": 3.2,
+    "cooldown": 0.8,
+    "flight": {
+      "hoverHeight": 3.2,
+      "speed": 3,
+      "diveSpeed": 10,
+      "lowSpeed": 0.8
+    }
+  },
+  "actions": [
+    {
+      "id": "attack",
+      "clip": "pterosaur-swoop",
+      "hits": [
+        {
+          "id": "beak",
+          "socket": "head-art",
+          "offsetX": 0.15,
+          "damage": 2,
+          "sound": "hit",
+          "start": {
+            "marker": "rush"
+          },
+          "finish": {
+            "marker": "brake"
+          },
+          "shape": {
+            "kind": "rectangle",
+            "min": {
+              "x": -0.325,
+              "y": -0.25
+            },
+            "max": {
+              "x": 0.325,
+              "y": 0.25
+            }
+          }
+        }
+      ],
+      "events": [
+        {
+          "id": "screech",
+          "at": {
+            "marker": "screech"
+          },
+          "sound": "pterosaur-screech"
+        },
+        {
+          "id": "commit",
+          "at": {
+            "marker": "commit"
+          }
+        },
+        {
+          "id": "rush",
+          "at": {
+            "marker": "rush"
+          },
+          "sound": "pterosaur-rush"
+        },
+        {
+          "id": "brake",
+          "at": {
+            "marker": "brake"
+          },
+          "sound": "pterosaur-brake"
+        },
+        {
+          "id": "low",
+          "at": {
+            "marker": "low"
+          }
+        },
+        {
+          "id": "reset",
+          "at": {
+            "marker": "reset"
+          },
+          "sound": "pterosaur-reset"
+        }
+      ]
+    }
+  ]
+}

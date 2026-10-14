@@ -96,6 +96,31 @@ dotnet run --project App2d.CharacterStudio -- --smoke-quadrupeds artifacts/quadr
 This renders pose samples and both facings through the game drawing path. `--write-quadrupeds <authored-dir>`
 explicitly regenerates the two starter models and their clips, overwriting edits to those files.
 
+## Pterosaur and attached cutout points
+
+**New > Model: Pterosaur template** creates a winged starter and six unsaved pose clips: hover, fold, dive, brake,
+low-recovery and reset. **Save all** keeps the bundle. The shipped `pterosaur` model is also in the browser.
+Both membranes use normal shoulder/bend/tip controls; the lower beak uses a jaw control. In Animate, pose these controls
+with the ordinary handles and rotation channels. The fold clip has `screech` and `commit` markers for later action bindings.
+Flight paths, target commitment, hit windows and the low-pass gameplay guarantee belong to Entity/controller work.
+
+In a base model's **Edit cutout silhouette**, each point has **Follow** and optional **Point toward** choices. The default
+follows the whole part. Selecting a control makes that point follow its frame, preserving its drawn rest position;
+without Point toward it follows translation only. Numeric coordinates describe the rest drawing. Gold handles work
+while previewing a pose by inversing the same transform. Insert/remove keeps attachments aligned with their points.
+Detach points before deleting their controls or changing the cutout into a primitive. Variants inherit the attachments.
+
+Surface paint follows membrane deformation through the same rest triangles as the fill. Neither paint nor picking
+retriangulates the folded screen silhouette. Ordinary rigid cutouts and clothing retain their existing authoring path.
+The design boundary and acceptance criteria are recorded in [Creature-driven editor design](character-editor-replacement.md#creature-driven-editor-design-2026-10-01).
+
+```powershell
+dotnet run --project App2d.CharacterStudio -- --smoke-pterosaur artifacts/pterosaur-review
+```
+
+This renders all six poses and both facings. `--write-pterosaur <authored-dir>` explicitly regenerates the starter model
+and clips, overwriting edits to those files.
+
 ## Human proportions
 
 Humans use legs at 80% of the original study length. This is baked into the shared Person rest pose;

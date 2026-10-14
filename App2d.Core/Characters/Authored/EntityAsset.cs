@@ -88,9 +88,18 @@ public sealed record EntityActionDef
 }
 
 /// <summary>The controller and its supported configuration. Speeds are model units per second.</summary>
+public sealed record FlightDef
+{
+    public float HoverHeight { get; set; } = 3.2f;
+    public float Speed { get; set; } = 3;
+    public float DiveSpeed { get; set; } = 10;
+    public float LowSpeed { get; set; } = .8f;
+}
+
 public sealed record ControllerConfig
 {
     public string Kind { get; set; } = EntityControllers.Walker;
+    public FlightDef? Flight { get; set; }
     public float WalkSpeed { get; set; } = 1.5f;
     /// <summary>Speed while the run input is held; the run role plays when assigned. Zero never runs.</summary>
     public float RunSpeed { get; set; }
@@ -217,6 +226,14 @@ public sealed class EntityAsset
         new Limit(0, 30).Check(Controller.ChargeEndSeconds, $"{owner} controller.chargeEndSeconds");
         new Limit(.01f, 10).Check(Controller.BrakeSeconds, $"{owner} controller.brakeSeconds");
         Require(Controller.ChargeSpeed == 0 || Controller.ChargeEndSeconds > Controller.ChargeStartSeconds, $"{owner}: charge end must follow charge start.");
+        Require((Controller.Kind == EntityControllers.Flying) == (Controller.Flight is not null), $"{owner}: flying controller requires flight settings; ground controllers cannot use them.");
+        if (Controller.Flight is { } flight)
+        {
+            new Limit(.5f, 20).Check(flight.HoverHeight, $"{owner} flight.hoverHeight");
+            new Limit(.1f, 30).Check(flight.Speed, $"{owner} flight.speed");
+            new Limit(.1f, 30).Check(flight.DiveSpeed, $"{owner} flight.diveSpeed");
+            new Limit(0, 10).Check(flight.LowSpeed, $"{owner} flight.lowSpeed");
+        }
         new Limit(1, 10000).Check(Health, $"{owner} health"); new Limit(.1f, 100).Check(Mass, $"{owner} mass");
         CheckShape(Movement.Shape, $"{owner} movement.shape");
         if (Hurt.Layout is not null) AuthoredAsset.RequireId(Hurt.Layout, $"{owner} hurt.layout");
@@ -313,16 +330,8 @@ public sealed record ControllerSpec(string Id, IReadOnlyList<string> RequiredRol
 /// </summary>
 public static class EntityControllers
 {
-    public const string Walker = "walker";
-    public const string Platformer = "platformer";
-    public const string Stationary = "stationary";
-    public const string Traversal = "traversal";
-    public const string Attack = "attack";
-    public const string Jump = "jump";
-    public const string Hit = "hit";
-    public const string Death = "death";
-    public const string Shoot = "shoot";
-    public const string WallShot = "wall-shot";
+    public const string Walker = "walker", Platformer = "platformer", Stationary = "stationary", Flying = "flying", Traversal = "traversal";
+    public const string Attack = "attack", Jump = "jump", Hit = "hit", Death = "death", Shoot = "shoot", WallShot = "wall-shot";
     /// <summary>A second swing played while the weapon is still out from the first.</summary>
     public const string FollowUp = "follow-up";
     public const string Idle = "idle";
@@ -338,6 +347,7 @@ public static class EntityControllers
     {
         [Walker] = new(Walker, [Idle, Walk], [Attack], Moves: true, Jumps: false),
         [Platformer] = new(Platformer, [Idle, Walk], [Attack, Jump], Moves: true, Jumps: true),
+        [Flying] = new(Flying, [Idle], [Attack], Moves: true, Jumps: false),
         [Stationary] = new(Stationary, [Idle], [Attack], Moves: false, Jumps: false),
         // The game's traversal player: Person2D owns movement and jumping; the entity supplies the actions' timing and geometry.
         [Traversal] = new(Traversal, [Idle, Walk], [Attack, FollowUp, Shoot, WallShot], Moves: true, Jumps: false),

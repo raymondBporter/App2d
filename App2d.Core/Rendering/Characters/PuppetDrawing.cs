@@ -13,7 +13,7 @@ public sealed class PuppetDrawing
     public CharacterMesh Mesh { get; } = new();
     public List<CharacterDrawBatch2D> Batches { get; } = [];
     public string TextureRoot { get; private set; } = Environment.CurrentDirectory;
-    public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World);
+    public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World, rest: id => definition.Controls.First(c => c.Id == id).Rest.XYZ);
     /// <summary>
     /// Faces come from the pose's evaluated expressions, never from the parts' stored defaults. <paramref name="face"/>, when
     /// given, replaces the drawn expression with a gameplay-blended face on every part that shows one; a clip that hides the
@@ -24,7 +24,7 @@ public sealed class PuppetDrawing
         TextureRoot = model.TextureRoot;
         var managed = model.Base.Skins.SelectMany(s => s.Attachments.Values).SelectMany(a => a.Values).ToHashSet(StringComparer.Ordinal);
         Build(model.Base.Ink, model.Base.LineWidth, model.Parts.Where(p => !managed.Contains(p.Id)), pose.World,
-            part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, id => pose.Angles[id], id => pose.Bones[id]);
+            part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
         for (var i = 0; i < pose.Slots.Count; i++)
         {
             var slot = pose.Slots[i]; if (slot.Part is not { Hidden: false } part) continue;
@@ -84,7 +84,7 @@ public sealed class PuppetDrawing
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
-    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null)
+    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
     {
         Mesh.Clear(); Batches.Clear(); var ink = ColorExtensions.FromHexRgb(inkColor);
         foreach (var part in parts)
@@ -114,16 +114,20 @@ public sealed class PuppetDrawing
                 if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
                 continue;
             }
-            var contour = PartGeometry.Contour(part, world, angle, transform);
+            var contour = PartGeometry.Contour(part, world, angle, transform, rest, restTransform);
+            var triangles = part.Geometry is SimplePolygonShapeDefinition2D ? TriangleMesh2D.TriangulateSimplePolygon(PartGeometry.CutoutPoints(part).Select(p => p.XY), 1e-8) : null;
             var frame = PartGeometry.FrameOf(part, world, angle, transform);
             if (material.Fill is { } shapeFill)
             {
                 var fillColor = ColorExtensions.FromHexRgb(shapeFill);
-                if (part.Geometry is ShapeDefinition2D typed && PartGeometry.ShapeOf(typed) is SimplePolygon2D polygon)
-                    Mesh.Add(polygon.Mesh, vertex => frame.At(new(vertex.X * part.Width, vertex.Y * part.Height)), fillColor);
+                if (triangles is not null)
+                {
+                    for (var i = 0; i < triangles.Indices.Length; i += 3)
+                        Mesh.Triangle(contour[triangles.Indices[i]], contour[triangles.Indices[i + 1]], contour[triangles.Indices[i + 2]], fillColor);
+                }
                 else Mesh.Polygon(contour, fillColor, null, 0);
             }
-            PartPainting.Add(Mesh, part, frame, contour);
+            PartPainting.Add(Mesh, part, frame, contour, triangles);
             if (outline is not null && outlineWidth > 0)
                 Mesh.Polygon(contour, null, outlineColor, outlineWidth);
             if (face != "none")

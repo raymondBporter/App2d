@@ -19,6 +19,29 @@ namespace App2d.Tests.Gameplay.Simulation;
 public sealed class WeaponSessionTests
 {
     [Fact]
+    public void PlaygroundTravelResetsActionsAndRespawnAndDoesNotReachAnUnrelatedGoal()
+    {
+        using var game = new Fixture();
+        game.Fire();
+        game.Session.SetPaused(true);
+        var destination = new Vector2(9500, 500);
+        game.Session.TravelForPlaytesting(destination);
+        Assert.NotEqual(destination, game.Player.Position);
+        game.Session.SetPaused(false);
+        var frame = game.Step();
+        Assert.Equal(destination, frame.Players[0].Person.Position);
+        Assert.Equal(destination, Assert.Single(frame.Events.OfType<Respawned2D>()).Position);
+        Assert.Empty(frame.Players[0].Weapons.Projectiles);
+        Assert.Null(frame.Players[0].CheckpointId);
+        Assert.False(frame.Players[0].ReachedGoal);
+        Assert.Empty(game.Step().Events.OfType<Respawned2D>());
+        game.Player.Reset(new(0, -11000));
+        Assert.Equal(destination, Assert.Single(game.Step().Events.OfType<Respawned2D>()).Position);
+        Assert.Throws<ArgumentOutOfRangeException>(() => game.Session.TravelForPlaytesting(new(float.NaN, 0)));
+        Assert.Throws<ArgumentOutOfRangeException>(() => game.Session.TravelForPlaytesting(new(20000, 0)));
+    }
+
+    [Fact]
     public void SnapshotPreservesShotPhaseAfterRecovery()
     {
         using var game = new Fixture();

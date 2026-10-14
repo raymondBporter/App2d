@@ -53,6 +53,9 @@ public static class PartGeometry
     private static SimplePolygonShapeDefinition2D Polygon(IEnumerable<Vector2> vertices) =>
         new() { Vertices = [.. vertices] };
 
+    public static IReadOnlyList<PuppetPoint> CutoutPoints(PuppetPart part) =>
+        ((SimplePolygonShapeDefinition2D)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToArray();
+
     public static void SetPolygon(PuppetPart part, IReadOnlyList<PuppetPoint> points)
     {
         CheckCutout(points);
@@ -141,8 +144,11 @@ public static class PartGeometry
         return new(a + new Vector3(new Vector2(up.Y, -up.X) * part.OffsetX + up * part.OffsetY, 0), new(up.Y, -up.X), up, part.Depth);
     }
 
+    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, rest: rest, angle: null);
+    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, rest: rest, angle: null);
+
     /// <summary>The closed outline of an ellipse, rounded box, trapezoid or cutout, or a stroke's two endpoints.</summary>
-    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null)
+    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
     {
         if (part.Geometry is CurveDefinition2D curve)
         {
@@ -158,6 +164,24 @@ public static class PartGeometry
                 result.Add(new Vector3(new Vector2(a.X, a.Y) + across * p.X + along * p.Y, a.Z + (b.Z - a.Z) * p.Y + part.Depth));
             }
             return result;
+        }
+        var frame = FrameOf(part, world, angle, transform);
+        if (part.Geometry is SimplePolygonShapeDefinition2D && part.Bindings is { Count: > 0 })
+        {
+            var cutout = CutoutPoints(part).Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
+            if (rest is null) throw new InvalidOperationException("A bound cutout needs the model's rest pose.");
+            var artRest = FrameOf(part, rest, transform: restTransform);
+            foreach (var binding in part.Bindings)
+            {
+                var point = CutoutPoints(part)[binding.Point];
+                var drawnRest = artRest.At(new(point.X * part.Width, point.Y * part.Height));
+                var bindRest = BindingFrame(binding, rest); var bindNow = BindingFrame(binding, world);
+                var offset = drawnRest - bindRest.Origin;
+                var local = new Vector2(Vector2.Dot(new(offset.X, offset.Y), bindRest.Right), Vector2.Dot(new(offset.X, offset.Y), bindRest.Up));
+                // Preserve the part's depth relative to the bound control, including animated control depth.
+                cutout[binding.Point] = bindNow.At(local) + new Vector3(0, 0, offset.Z);
+            }
+            return cutout;
         }
         if (part.Geometry is ShapeDefinition2D typed)
         {
@@ -179,7 +203,7 @@ public static class PartGeometry
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null)
+    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
     {
         var p = new Vector2(point.X, point.Y);
         if (part.Geometry is CurveDefinition2D curve)
@@ -195,6 +219,33 @@ public static class PartGeometry
             var distance = CurveOf(curve).Distance(local) * MathF.Sqrt(lengthSquared);
             return distance / MathF.Max(part.Width, .06f);
         }
+        if (part.Geometry is SimplePolygonShapeDefinition2D && part.Bindings is { Count: > 0 })
+        {
+            var points = Contour(part, world, angle, transform, rest, restTransform);
+            // Folded outlines may overlap. Pick the same rest-topology triangles that are filled, not an even/odd hole.
+            if (part.Bindings is { Count: > 0 })
+            {
+                var mesh = TriangleMesh2D.TriangulateSimplePolygon(CutoutPoints(part).Select(v => v.XY), 1e-8);
+                float Cross(Vector2 a, Vector2 b, Vector2 q) => (b.X - a.X) * (q.Y - a.Y) - (b.Y - a.Y) * (q.X - a.X);
+                for (var i = 0; i < mesh.Indices.Length; i += 3)
+                {
+                    var a = new Vector2(points[mesh.Indices[i]].X, points[mesh.Indices[i]].Y);
+                    var b = new Vector2(points[mesh.Indices[i + 1]].X, points[mesh.Indices[i + 1]].Y);
+                    var c = new Vector2(points[mesh.Indices[i + 2]].X, points[mesh.Indices[i + 2]].Y);
+                    if (MathF.Abs(Cross(a, b, c)) < 1e-8f) continue;
+                    var ab = Cross(a, b, p); var bc = Cross(b, c, p); var ca = Cross(c, a, p);
+                    if (ab >= -1e-7f && bc >= -1e-7f && ca >= -1e-7f || ab <= 1e-7f && bc <= 1e-7f && ca <= 1e-7f) return .5f;
+                }
+            }
+            var inside = false; var nearest = float.MaxValue;
+            for (var i = 0; i < points.Count; i++)
+            {
+                var a = new Vector2(points[i].X, points[i].Y); var b = new Vector2(points[(i + 1) % points.Count].X, points[(i + 1) % points.Count].Y);
+                nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, a, b, 1e-10f));
+                if ((a.Y > p.Y) != (b.Y > p.Y) && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X) inside = !inside;
+            }
+            return nearest < 1e-6f ? 1 : inside && part.Bindings is not { Count: > 0 } ? .5f : 1 + nearest / MathF.Max(part.Width, part.Height);
+        }
         if (part.Geometry is ShapeDefinition2D typed)
         {
             var typedFrame = FrameOf(part, world, angle, transform);
@@ -208,4 +259,33 @@ public static class PartGeometry
         }
         throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");
     }
+
+    /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
+    public static PuppetPoint ArtworkPoint(PuppetPart part, int index, Vector3 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Matrix3x2>? restTransform = null)
+    {
+        var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
+        var art = binding is null ? FrameOf(part, world, angle, transform) : FrameOf(part, rest, transform: restTransform);
+        if (binding is not null)
+        {
+            var now = BindingFrame(binding, world); var before = BindingFrame(binding, rest);
+            var offset = target - now.Origin;
+            target = before.At(new(Vector2.Dot(new(offset.X, offset.Y), now.Right), Vector2.Dot(new(offset.X, offset.Y), now.Up)));
+        }
+        var delta = target - art.Origin;
+        var axes = new Matrix3x2(art.Right.X, art.Right.Y, art.Up.X, art.Up.Y, 0, 0);
+        if (!Matrix3x2.Invert(axes, out var inverse)) throw new InvalidOperationException("Cannot edit a cutout through a collapsed frame.");
+        var local = Vector2.TransformNormal(new(delta.X, delta.Y), inverse);
+        return new(local.X / part.Width, local.Y / part.Height);
+    }
+
+    private static Frame BindingFrame(PartPointBinding binding, Func<string, Vector3> world)
+    {
+        var origin = world(binding.Control);
+        var direction = binding.Toward is { } toward ? world(toward) - origin : Vector3.UnitY;
+        var up = new Vector2(direction.X, direction.Y);
+        up = up.LengthSquared() > 1e-10f ? Vector2.Normalize(up) : Vector2.UnitY;
+        return new(origin, new(up.Y, -up.X), up, 0);
+    }
+
+
 }

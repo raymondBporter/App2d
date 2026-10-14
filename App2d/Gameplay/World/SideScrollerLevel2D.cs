@@ -55,26 +55,13 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         GiantTrees = giantTrees is null ? [] : ValidateTrees(giantTrees);
 
         // Only an editable map can change under us. A read-only map never raises the event.
-        if (tileMap is EditableTileMap2D editable)
+        if (tileMap is IChangingTileMap2D editable)
             editable.ChunkChanged += OnMapChanged;
 
         StateGuard.ThrowIf(
             tileMap.TileSize != _tileSize,
             $"The loaded map's tile size ({tileMap.TileSize}) does not match " +
             $"the traversal metrics' tile size ({_tileSize}).");
-        StateGuard.ThrowIf(
-            tileMap.Width != WorldWidthTiles,
-            $"The loaded map's width ({tileMap.Width}) does not match " +
-            $"the expected world width ({WorldWidthTiles}).");
-        StateGuard.ThrowIf(
-            tileMap.Height != WorldHeightTiles,
-            $"The loaded map's height ({tileMap.Height}) does not match " +
-            $"the expected world height ({WorldHeightTiles}).");
-        StateGuard.ThrowIf(
-            tileMap.Origin != WorldOrigin,
-            $"The loaded map's origin ({tileMap.Origin}) does not match " +
-            $"the expected world origin ({WorldOrigin}).");
-
         var authoredSpawn = _worldThingSpecs.FirstOrDefault(
             thing => thing.Enabled && thing.Kind == WorldThingKind2D.PlayerSpawn);
         if (authoredSpawn is not null)
@@ -85,7 +72,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         {
             // An empty authored layer must still boot into the editor. This is a safety
             // fallback, not persisted example content; placing a player-spawn replaces it.
-            const int fallbackSpawnTileX = 4;
+            var fallbackSpawnTileX = Math.Min(4, TileMap.Width - 1);
             SpawnPoint = new Vector2(
                 TileCenterX(fallbackSpawnTileX),
                 TileMap.Origin.Y + TileGroundHeights2D.AtColumn(TileMap, fallbackSpawnTileX) * _tileSize +
@@ -323,7 +310,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        if (TileMap is EditableTileMap2D editable) editable.ChunkChanged -= OnMapChanged;
+        if (TileMap is IChangingTileMap2D editable) editable.ChunkChanged -= OnMapChanged;
         foreach (var platform in _movingPlatforms) platform.Dispose();
         _movingPlatforms.Clear();
         RemoveGiantTreeBranches();

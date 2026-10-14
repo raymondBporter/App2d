@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "zones": [
+    {
+      "id": "hub",
+      "name": "Central hub",
+      "priority": 0,
+      "maps": [
+        {
+          "id": "hub",
+          "name": "Central hub",
+          "identity": 1,
+          "file": "hub.db"
+        }
+      ]
+    },
+    {
+      "id": "sandbox-a",
+      "name": "Combat Grounds",
+      "priority": 0,
+      "maps": [
+        {
+          "id": "sandbox-a",
+          "name": "Combat Grounds",
+          "identity": 2,
+          "file": "generated/map-2/seed-12345-98701aa8fea649b9bb5fda0b7a80ad11/level.db",
+          "generation": {
+            "originX": 32768,
+            "originY": -384,
+            "settings": {
+              "seed": 12345,
+              "beats": 12,
+              "difficulty": 0.3,
+              "exploration": 0.2,
+              "jumpRiseTiles": 3,
+              "tilesetIndex": 2,
+              "meleeEnemies": [
+                "club-caveman",
+                "shield-defender",
+                "baby-triceratops"
+              ],
+              "rangedEnemies": [
+                "rock-thrower"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "sandbox-b",
+      "name": "Sandbox B",
+      "priority": 0,
+      "maps": [
+        {
+          "id": "sandbox-b",
+          "name": "Sandbox B",
+          "identity": 3,
+          "file": "sandbox-b.db"
+        }
+      ]
+    },
+    {
+      "id": "cavern-world",
+      "name": "Original playground",
+      "priority": -1,
+      "maps": [
+        {
+          "id": "main",
+          "name": "Original playground",
+          "identity": 0,
+          "file": "level.db"
+        }
+      ]
+    }
+  ],
+  "startMapId": "main",
+  "startAtArrival": true
+}

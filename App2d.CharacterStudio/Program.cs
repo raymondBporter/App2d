@@ -6,7 +6,7 @@ namespace App2d.CharacterStudio;
 
 internal static class Program
 {
-    private const string Usage = "Usage: App2d.CharacterStudio [--export-spine model-or-variant json-path | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --angelia-gallery [output-directory]]";
+    private const string Usage = "Usage: App2d.CharacterStudio [--write-pterosaur authored-directory | --smoke-pterosaur output-directory | --export-spine model-or-variant json-path | --write-quadrupeds authored-directory | --smoke-quadrupeds output-directory | --smoke-editor output-directory | --smoke-editor-surface output-directory | --smoke-motion output-directory | --smoke-entities output-directory | --smoke-weapons output-directory | --smoke-wardrobe output-directory | --review-moves output-directory | --swing-lab output-directory | --convert-studies authored-directory | --write-player-moves authored-directory | --write-weapons authored-directory | --write-wardrobe authored-directory | --replace-wardrobe-art authored-directory | --angelia-gallery [output-directory]]";
 
     [STAThread]
     private static int Main(string[] args)
@@ -16,6 +16,7 @@ internal static class Program
         {
             switch (args)
             {
+                case ["--write-pterosaur", var flyingRoot]: PterosaurTemplate.Write(Path.GetFullPath(flyingRoot)); return 0;
                 case ["--smoke-editor-surface", var surfaceOutput]:
                     Editor.EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput)); return 0;
                 case ["--export-spine", var subject, var spinePath]:
@@ -42,9 +43,9 @@ internal static class Program
                         using var gallery = new AngeliaGallery.AngeliaGalleryApp(FindAssets(), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
                         gallery.Run(); return 0;
                     }
-                case ["--smoke-quadrupeds" or "--smoke-motion" or "--smoke-entities" or "--review-moves" or "--smoke-weapons" or "--smoke-wardrobe" or "--swing-lab", var output]:
+                case ["--smoke-pterosaur" or "--smoke-quadrupeds" or "--smoke-motion" or "--smoke-entities" or "--review-moves" or "--smoke-weapons" or "--smoke-wardrobe" or "--swing-lab", var output]:
                     {
-                        var mode = args[0] switch { "--smoke-quadrupeds" => ProofRenders.Mode.Quadrupeds, "--smoke-motion" => ProofRenders.Mode.Motion, "--smoke-entities" => ProofRenders.Mode.Entities, "--smoke-weapons" => ProofRenders.Mode.Weapons, "--smoke-wardrobe" => ProofRenders.Mode.Wardrobe, "--swing-lab" => ProofRenders.Mode.SwingLab, _ => ProofRenders.Mode.MoveReview };
+                        var mode = args[0] switch { "--smoke-pterosaur" => ProofRenders.Mode.Pterosaur, "--smoke-quadrupeds" => ProofRenders.Mode.Quadrupeds, "--smoke-motion" => ProofRenders.Mode.Motion, "--smoke-entities" => ProofRenders.Mode.Entities, "--smoke-weapons" => ProofRenders.Mode.Weapons, "--smoke-wardrobe" => ProofRenders.Mode.Wardrobe, "--swing-lab" => ProofRenders.Mode.SwingLab, _ => ProofRenders.Mode.MoveReview };
                         using var proofs = new ProofRenders(FindAssets(), Path.GetFullPath(output), mode);
                         proofs.Run(); return 0;
                     }

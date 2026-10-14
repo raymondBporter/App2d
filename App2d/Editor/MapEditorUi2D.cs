@@ -34,6 +34,7 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
         var width = Ui.Sidebar("Map editor", () =>
         {
             Ui.Header("Map editor");
+            Ui.Button(editor.MapLabel + " [next map]", () => editor.CycleMap(1));
             Ui.Row(
                 () => Ui.Button("Tiles", () => editor.SelectMode(LevelEditorMode2D.Tiles)),
                 () => Ui.Button("Things", () => editor.SelectMode(LevelEditorMode2D.Things)),

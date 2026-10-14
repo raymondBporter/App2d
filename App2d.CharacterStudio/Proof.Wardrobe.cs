@@ -164,6 +164,7 @@ internal sealed partial class ProofRenders
                 using var file = File.Create(Path.Combine(folder, $"frame-{frame:D4}.png")); animationTarget.SaveAsPng(file, 640, 480);
             }
         }
+        RenderPterosaurGameplay(catalog);
         return false;
     }
 }

@@ -49,7 +49,8 @@ internal static class TilesetRenderingSmoke2D
     public static void RunLevel(GraphicsDevice device, TextureCache2D textures, string directory)
     {
         Directory.CreateDirectory(directory);
-        var map = LevelBootstrap2D.Load().TileMap;
+        using var loaded = LevelBootstrap2D.Load();
+        var map = loaded.TileMap;
         using var level = new SideScrollerLevel2D(TraversalMetricsLoader2D.Load(textures.ContentRoot), map);
         var collision = new CollisionSystem2D();
         level.CreateSimulation(collision, new PhysicsWorld2D(collision), new EntityIdAllocator2D(), 1u, 2u, 4u);

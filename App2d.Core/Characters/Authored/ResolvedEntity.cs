@@ -148,6 +148,20 @@ public sealed class ResolvedEntity
             var recovery = action.Recovery is { } recoveryId ? Clip(recoveryId, field + " recovery") : null;
             actions[action.Id] = new(action.Id, clip, source, hits, events) { Mask = mask, BlendIn = action.BlendIn, BlendOut = action.BlendOut, Projectile = action.Projectile, Next = action.Next, Recovery = recovery };
         }
+        if (asset.Controller.Flight is not null)
+        {
+            if (!actions.TryGetValue(EntityControllers.Attack, out var swoop))
+                throw new InvalidDataException($"{owner}: flying controller needs an attack action.");
+            float previous = -1;
+            foreach (var phase in new[] { "commit", "rush", "brake", "low", "reset" })
+            {
+                var moment = swoop.Events.SingleOrDefault(e => e.Event.Id == phase)
+                    ?? throw new InvalidDataException($"{owner}: flight attack needs '{phase}' event.");
+                if (moment.Seconds <= previous || moment.Seconds >= swoop.Clip.Duration)
+                    throw new InvalidDataException($"{owner}: flight phases must be ordered commit, rush, brake, low, reset before action end.");
+                previous = moment.Seconds;
+            }
+        }
         entity.Actions = actions;
 
         var hurt = new List<HurtShape>();

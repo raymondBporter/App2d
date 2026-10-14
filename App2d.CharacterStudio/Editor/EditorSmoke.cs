@@ -164,6 +164,26 @@ internal sealed class EditorSmoke(string output)
                 Record(s.Scene()[0].Pose.Chains.Count == 4, "quadruped IK reaches the animation viewport");
             }),
             ("28-quadruped-head-down", shell => { var s = shell.Session; s.SetClip("review-triceratops-head-down"); s.Seek(.55f); }),
+            ("34-pterosaur-model", shell =>
+            {
+                var s = shell.Session; s.SetMode(Workspace.Model); s.ShowRest = true;
+                Check(s.NewModel("review-pterosaur", "Pterosaur review", "pterosaur"), s);
+                s.Selection.Part = "near-wing"; shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
+                var doc = s.SubjectModel!; var before = doc.Serialize();
+                Check(s.Edit(doc, () => ModelAuthoring.InsertCutoutPoint(doc.Asset.Parts.Single(p => p.Id == "near-wing"), 2)), s);
+                s.Undo(); Record(doc.Serialize() == before, "bound outline insertion undoes with its attachments");
+                s.Redo(); s.SaveAll();
+                var reopened = AuthoredCatalog.Load(s.Assets.Root);
+                Record(reopened.Models["review-pterosaur"].Parts.Single(p => p.Id == "near-wing").Bindings!.Count == 7, "wing attachments and clips reopen together");
+            }),
+            ("35-pterosaur-rig", shell => { var s = shell.Session; s.EditRig = true; s.Selection.Control = "near-tip"; }),
+            ("36-pterosaur-fold", shell =>
+            {
+                var s = shell.Session; s.EditRig = s.ShowRest = false; s.SetMode(Workspace.Animate); s.SetClip("review-pterosaur-fold"); s.Seek(.48f);
+                s.Selection.Control = "near-tip"; shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
+                Record(s.Scene()[0].Clip!.Tracks.All(t => t.Kind is "rotate" or "translate"), "membranes animate through ordinary control channels");
+            }),
+            ("37-pterosaur-recovery", shell => { var s = shell.Session; s.SetClip("review-pterosaur-low-recovery"); s.Seek(.25f); }),
             ("29-spine-export", shell =>
             {
                 var s = shell.Session; s.Open("tripod"); s.SetClip("tripod-walk"); s.Seek(.25f);

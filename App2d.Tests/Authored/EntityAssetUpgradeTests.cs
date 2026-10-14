@@ -18,6 +18,14 @@ public sealed class EntityAssetUpgradeTests
         """;
 
     [Fact]
+    public void VersionOneMovementPreservesVerticalOffset()
+    {
+        var json = Version1.Replace("\"offsetX\":0.25", "\"offsetX\":0.25,\"offsetY\":0.4");
+        var entity = AuthoredAsset.Parse<EntityAsset>(EntityAssetUpgrade.ToCurrent(json), "entity");
+        Near(new Rect2D(new(-.25f, .4f), new(.75f, 2.4f)), ShapeBounds2D.Calculate(entity.Movement.Shape.Build()));
+    }
+
+    [Fact]
     public void VersionOneGeometryBecomesShapeDefinitions()
     {
         var upgraded = EntityAssetUpgrade.ToCurrent(Version1);

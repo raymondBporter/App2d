@@ -1,0 +1,139 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "pterosaur-brake",
+  "name": "Pterosaur \u00B7 brake",
+  "model": "pterosaur",
+  "structureRevision": 1,
+  "duration": 0.32,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "near-shoulder",
+      "keys": [
+        {
+          "angle": -0.15
+        },
+        {
+          "time": 0.16,
+          "angle": 0.1
+        },
+        {
+          "time": 0.32,
+          "angle": 0.28
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-shoulder",
+      "keys": [
+        {
+          "angle": 1.3
+        },
+        {
+          "time": 0.16,
+          "angle": 0.4
+        },
+        {
+          "time": 0.32,
+          "angle": -0.28
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-bend",
+      "keys": [
+        {
+          "angle": -1.1
+        },
+        {
+          "time": 0.16,
+          "angle": -0.3
+        },
+        {
+          "time": 0.32
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-bend",
+      "keys": [
+        {
+          "angle": 0.1
+        },
+        {
+          "time": 0.16,
+          "angle": 0.05
+        },
+        {
+          "time": 0.32
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "body",
+      "keys": [
+        {
+          "angle": -0.65
+        },
+        {
+          "time": 0.16,
+          "angle": -0.12
+        },
+        {
+          "time": 0.32
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-leg",
+      "keys": [
+        {
+          "angle": 0.6
+        },
+        {
+          "time": 0.16,
+          "angle": 0.3
+        },
+        {
+          "time": 0.32,
+          "angle": 0.1
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-leg",
+      "keys": [
+        {
+          "angle": 0.6
+        },
+        {
+          "time": 0.16,
+          "angle": 0.3
+        },
+        {
+          "time": 0.32,
+          "angle": 0.1
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [
+    {
+      "id": "open",
+      "time": 0.16
+    }
+  ],
+  "faces": []
+}

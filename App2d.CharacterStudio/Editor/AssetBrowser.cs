@@ -14,7 +14,8 @@ namespace App2d.CharacterStudio.Editor;
 /// </summary>
 internal sealed partial class AssetBrowser(EditorSession session)
 {
-    private enum Create { None, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip, ImportSpine }
+    private enum Create { None, Model, EmptyModel, TemplateModel, Variant, DuplicateVariant, Independent, Animation, DuplicateAnimation, Entity, DuplicateEntity, Appearance, DuplicateAppearance, ImportPuppet, ImportClip, ImportSpine }
+    private string _modelTemplate = "empty";
     private string _spineImages = "";
     private string _appearanceTemplate = "hair";
     private static readonly string[] Filters = ["All", "Models", "Variants", "Animations", "Entities", "Props", "Sources"];
@@ -38,6 +39,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (ImGui.BeginPopup("new-asset"))
         {
             if (ImGui.MenuItem("Appearance: hair / clothing...")) Start(Create.Appearance, "", "New appearance");
+            foreach (var template in CharacterTemplates.All)
+                if (ImGui.MenuItem("Model: " + template.Name + " template"))
+                { _modelTemplate = template.Id; Start(Create.Model, "", "New " + template.Name.ToLowerInvariant()); }
             if (ImGui.MenuItem("Model: empty")) Start(Create.EmptyModel, "", "New model");
             foreach (var template in session.Assets.ModelTemplates.Values.OrderBy(t => t.Name, StringComparer.Ordinal))
                 if (ImGui.MenuItem($"Model: {template.Name} template##{template.Id}")) Start(Create.TemplateModel, template.Id, "New " + template.Name);
@@ -218,6 +222,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
         {
             Create.Appearance => "New hair or clothing",
             Create.DuplicateAppearance => "Duplicate appearance " + _source,
+            Create.Model => "New model from " + CharacterTemplates.Get(_modelTemplate).Name,
             Create.EmptyModel => "New model from Empty",
             Create.TemplateModel => "New model from " + session.Assets.ModelTemplates[_source].Name,
             Create.Variant => "New variant",
@@ -236,6 +241,9 @@ internal sealed partial class AssetBrowser(EditorSession session)
         if (Ui.Text("ID (file name and stable reference)", ref _id, 64)) _idEdited = true;
         switch (_create)
         {
+            case Create.Model:
+                Ui.Help(CharacterTemplates.Get(_modelTemplate).Description + " Save all keeps the model and any starter animations together.");
+                break;
             case Create.TemplateModel:
                 var recipe = session.Assets.ModelTemplates[_source];
                 if (recipe.Description.Length > 0) Ui.Help(recipe.Description);
@@ -292,6 +300,7 @@ internal sealed partial class AssetBrowser(EditorSession session)
     {
         Create.Appearance => session.NewAppearance(_id, _name, _appearanceTemplate),
         Create.DuplicateAppearance => session.DuplicateAppearance(_source, _id, _name),
+        Create.Model => session.NewModel(_id, _name, _modelTemplate),
         Create.EmptyModel => session.NewModel(_id, _name, "empty"),
         Create.TemplateModel => session.NewModel(_id, _name, _source),
         Create.Variant => session.NewVariant(_id, _name, _source, _preset.Length == 0 ? null : _preset),

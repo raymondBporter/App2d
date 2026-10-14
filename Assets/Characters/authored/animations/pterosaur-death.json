@@ -1,0 +1,104 @@
+{
+  "format": "app2d-clip",
+  "version": 1,
+  "id": "pterosaur-death",
+  "name": "Pterosaur / death",
+  "model": "pterosaur",
+  "structureRevision": 1,
+  "duration": 0.8,
+  "reference": {},
+  "travel": {
+    "keys": []
+  },
+  "tracks": [
+    {
+      "kind": "rotate",
+      "target": "body",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": 1.8
+        },
+        {
+          "time": 0.8,
+          "angle": 1.8
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-shoulder",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": -0.8
+        },
+        {
+          "time": 0.8,
+          "angle": -0.8
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-shoulder",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": 0.8
+        },
+        {
+          "time": 0.8,
+          "angle": 0.8
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "near-bend",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": -0.5
+        },
+        {
+          "time": 0.8,
+          "angle": -0.5
+        }
+      ]
+    },
+    {
+      "kind": "rotate",
+      "target": "far-bend",
+      "keys": [
+        {
+          "time": 0
+        },
+        {
+          "time": 0.24,
+          "angle": 0.5
+        },
+        {
+          "time": 0.8,
+          "angle": 0.5
+        }
+      ]
+    }
+  ],
+  "contacts": [],
+  "markers": [],
+  "faces": [],
+  "loop": false
+}

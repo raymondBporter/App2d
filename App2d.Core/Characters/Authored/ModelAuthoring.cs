@@ -90,6 +90,8 @@ public static class ModelAuthoring
         if (model.Controls.FirstOrDefault(c => c.Parent == id) is { } child) throw new InvalidOperationException($"{owner}: '{id}' still has child '{child.Id}'.");
         if (model.IkChains.FirstOrDefault(c => c.Root == id || c.Joint == id || c.End == id || c.Frame == id) is { } chain) throw new InvalidOperationException($"{owner}: chain '{chain.Id}' uses '{id}'.");
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
+        if (model.Parts.FirstOrDefault(p => p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true) is { } bound)
+            throw new InvalidOperationException($"{owner}: cutout '{bound.Id}' uses '{id}'; detach its points first.");
         if (model.Slots.FirstOrDefault(s => s.Bone == id) is { } slot) throw new InvalidOperationException($"{owner}: slot '{slot.Id}' uses '{id}'. Move or remove the slot first.");
         var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);
@@ -179,6 +181,8 @@ public static class ModelAuthoring
     {
         EntityVocabulary.Require(kind, PuppetPartKinds.All, "part.kind");
         var part = model.Parts.First(p => p.Id == id);
+        if (kind != PuppetPartKinds.Polygon && part.Bindings is { Count: > 0 })
+            throw new InvalidOperationException("Detach cutout points before changing to a rigid primitive.");
         if (PuppetPartKinds.IsStroke(kind) && (part.B is null || part.B == part.A))
         {
             part.B = model.Controls.FirstOrDefault(control => control.Parent == part.A)?.Id
@@ -192,6 +196,24 @@ public static class ModelAuthoring
         if (part.Geometry is ShapeDefinition2D && part.Material is { Fill: null, Outline: null })
             part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Validate();
+    }
+
+    /// <summary>Edits the perimeter and remaps attachments in the same transaction. New points inherit their preceding attachment.</summary>
+    public static void InsertCutoutPoint(PuppetPart part, int after)
+    {
+        var points = new List<PuppetPoint>(PartGeometry.CutoutPoints(part));
+        points.Insert(after + 1, PuppetPoint.Lerp(points[after], points[(after + 1) % points.Count], .5f));
+        PartGeometry.CheckCutout(points);
+        var bindings = (part.Bindings ?? []).Select(b => b with { Point = b.Point > after ? b.Point + 1 : b.Point }).ToList();
+        if (part.Bindings?.FirstOrDefault(b => b.Point == after) is { } source) bindings.Add(source with { Point = after + 1 });
+        PartGeometry.SetPolygon(part, points); part.Bindings = bindings.Count > 0 ? bindings : null;
+    }
+
+    public static void RemoveCutoutPoint(PuppetPart part, int index)
+    {
+        var points = new List<PuppetPoint>(PartGeometry.CutoutPoints(part)); points.RemoveAt(index); PartGeometry.CheckCutout(points);
+        PartGeometry.SetPolygon(part, points);
+        part.Bindings = part.Bindings?.Where(b => b.Point != index).Select(b => b with { Point = b.Point > index ? b.Point - 1 : b.Point }).ToList();
     }
 
     public static void RemovePart(CharacterModel model, string id)

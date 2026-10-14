@@ -1,11 +1,12 @@
 # Prehistoric enemy roster — brainstorm
 
 Working design proposals. The [club caveman](club-caveman.md) now has a playable
-first pass, as does the [rock thrower](rock-thrower.md); the other behaviors remain
-proposals. Their repeatable production process is in [Enemy workflow](enemy-workflow.md).
-The club caveman and rock
-thrower reference sheets are the user's preferred visual anchors. All additional
-enemies below are candidates, not approved designs.
+first pass, as do the [rock thrower](rock-thrower.md), [shell defender](shield-defender.md),
+and [baby triceratops](baby-triceratops.md). Their repeatable production process is
+in [Enemy workflow](enemy-workflow.md). The club caveman and rock thrower reference
+sheets are the user's preferred visual anchors. Reference sheets now cover five
+of the six roles. Additional behavior ideas remain
+provisional; reference art and playable implementation are tracked separately.
 
 ## Reference shelf
 
@@ -13,10 +14,10 @@ enemies below are candidates, not approved designs.
 | --- | --- | --- | --- |
 | Club caveman | Pursuer | Playable authored first pass | [Sheet](../Assets/Sources/characters/prehistoric/club-caveman/reference.png) |
 | Rock thrower | Ranged attacker | Playable authored first pass | [Sheet](../Assets/Sources/characters/prehistoric/rock-thrower/reference.png) |
-| Shell-shield caveman | Defender | [Playable authored first pass](shield-defender.md) | Editable caveman rig and shell mesh |
-| Baby triceratops | Charger | [Playable authored first pass](baby-triceratops.md) | Existing editable quadruped art |
+| Shell-shield caveman | Defender | [Playable authored first pass](shield-defender.md) | [Sheet](../Assets/Sources/characters/prehistoric/shell-defender/reference.png) |
+| Baby triceratops | Charger | [Playable authored first pass](baby-triceratops.md) | [Sheet](../Assets/Sources/characters/prehistoric/baby-triceratops/reference.png) |
 | Tar spitter | Area controller | Proposed | Needs concept sheet |
-| Pterosaur | Flying harasser | Proposed | Needs concept sheet |
+| Pterosaur | Flying harasser | [Placeholder first pass; two level placements](pterosaur.md) | [Sheet](../Assets/Sources/characters/prehistoric/pterosaur/reference.png) |
 
 The curated sheets live under `Assets/Sources/characters/prehistoric/<enemy-id>`.
 Generation experiments remain in `output/imagegen`; promote a chosen version here
@@ -83,9 +84,10 @@ before stacking extra types or increasing health.
 
 ## Next concept sheets
 
-Suggested first pair: **shell-shield caveman** and **baby triceratops**. They add
-protection and committed movement, which the existing two sheets do not cover.
-Follow with tar spitter and pterosaur after testing room space and melee reach.
+**Tar spitter is the remaining concept sheet.** Club caveman, rock thrower,
+shell defender, baby triceratops, and pterosaur now have curated sheets in the
+source shelf. For tar spitter, show throat inflation, blob release, a marked
+landing point, the puddle footprint, and the opening between spits.
 
 For each sheet request: large neutral design, side view, alert, locomotion,
 anticipation, attack, missed attack/recovery, and hit reaction. Show the protected

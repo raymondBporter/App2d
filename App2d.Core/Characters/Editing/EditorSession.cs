@@ -505,7 +505,7 @@ public sealed class EditorSession
         var bundle = template == "empty" ? new ModelTemplateInstance(ModelAuthoring.Empty(id, name), [], null)
             : Assets.ModelTemplates.TryGetValue(template, out var recipe)
                 ? recipe.Instantiate(id, name, source => Assets.Model(source)?.Asset, source => Assets.Clip(source)?.Asset)
-                : throw new InvalidDataException($"Unknown model template '{template}'. Add a recipe under templates and reopen the workspace.");
+                : BuiltInTemplate(template, id, name);
         foreach (var destination in bundle.Animations.Select(c => c.Id).Prepend(bundle.Model.Id))
             if (Assets.Exists(destination)) throw new InvalidDataException($"The id '{destination}' is already used; choose another model id.");
         Assets.Create(bundle.Model);
@@ -513,6 +513,13 @@ public sealed class EditorSession
         Open(id); EditRig = template == "empty";
         if (bundle.PreviewAnimation is { } preview) SetClip(preview);
     }, $"Created model '{id}'.");
+
+    private static ModelTemplateInstance BuiltInTemplate(string template, string id, string name)
+    {
+        var starter = CharacterTemplates.Get(template);
+        var model = starter.Model(id, name);
+        return new(model, starter.Clips(model), starter.Preview is { } preview ? id + "-" + preview : null);
+    }
 
     /// <summary>A new variant of a base, optionally starting from one of its build presets.</summary>
     public bool NewVariant(string id, string name, string baseId, string? preset = null) => Attempt(() =>
