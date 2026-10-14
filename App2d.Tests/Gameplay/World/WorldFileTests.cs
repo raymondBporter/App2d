@@ -26,6 +26,46 @@ public sealed class WorldFileTests : IDisposable
             new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
 
     [Fact]
+    public void ShippedPlaygroundStartsInGeneratedCombatZoneWithDistinctMapIdentities()
+    {
+        using var world = WorldFile2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "world.json"),
+            ["ink-medieval-ground", "ink-medieval-wall", "ink-prehistoric-ground", "ink-prehistoric-wall",
+             "ink-wasteland-ground", "ink-wasteland-wall"]);
+        Assert.Equal("sandbox-a", world.Maps[0].Id);
+        Assert.Equal("Combat Grounds", world.Maps[0].Name);
+        Assert.True(world.StartAtArrival);
+        Assert.Contains(world.Maps[0].PositionThings, t => t.TypeKey == "rock-thrower");
+        Assert.Equal(4, world.Maps.Count);
+        Assert.Equal(4, world.Maps.Select(m => m.Identity).Distinct().Count());
+        Assert.Equal("player-spawn", world.PositionThings.First(t => t.Enabled).TypeKey);
+    }
+
+    [Fact]
+    public void PlaygroundCreatesIndependentMapsAndKeepsOriginalIdentity()
+    {
+        Directory.CreateDirectory(_root);
+        using (var db = LevelDatabase2D.Open(Path.Combine(_root, "level.db")))
+        {
+            var map = new EditableTileMap2D(8, 8, 32, 32);
+            map.SetTileKind(2, 3, TileKind2D.Solid);
+            db.Save(map, 0);
+        }
+        PlaygroundMaps2D.Create(_root, ["a", "b", "c", "d", "e"]);
+        using var world = WorldFile2D.Load(Manifest);
+        Assert.Equal(4, world.Maps.Count);
+        Assert.Equal("hub", world.Maps[0].Id);
+        Assert.Equal(0, world.Maps.Single(m => m.Id == "main").Identity);
+        foreach (var map in world.Maps.Take(3))
+        {
+            Assert.True(map.TileMap.IsSolid(4, 19));
+            Assert.False(map.TileMap.IsSolid(4, 20));
+            Assert.Equal(new Vector2(map.TileMap.Origin.X + 512, 160), PlaygroundMaps2D.Arrival(map, 128, 2));
+        }
+        Assert.True(world.Maps.Single(m => m.Id == "main").TileMap.IsSolid(2, 3));
+        Assert.Throws<IOException>(() => PlaygroundMaps2D.Create(_root, ["a"]));
+    }
+
+    [Fact]
     public void MapFilesKeepIndependentEditsAndStableWorldThingIds()
     {
         CreateMap("left.db", -256);

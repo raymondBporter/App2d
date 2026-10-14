@@ -1,0 +1,208 @@
+{
+  "settings": {
+    "seed": 12345,
+    "beats": 12,
+    "difficulty": 0.3,
+    "exploration": 0.2,
+    "jumpRiseTiles": 3,
+    "tilesetIndex": 2,
+    "meleeEnemies": [
+      "club-caveman",
+      "shield-defender",
+      "baby-triceratops"
+    ],
+    "rangedEnemies": [
+      "rock-thrower"
+    ]
+  },
+  "beats": [
+    {
+      "index": 0,
+      "recipe": "arrival",
+      "startTile": 0,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 1,
+      "recipe": "introduce-melee",
+      "startTile": 40,
+      "widthTiles": 40,
+      "hasOverlook": true
+    },
+    {
+      "index": 2,
+      "recipe": "traversal",
+      "startTile": 80,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 3,
+      "recipe": "introduce-ranged",
+      "startTile": 120,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 4,
+      "recipe": "release",
+      "startTile": 160,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 5,
+      "recipe": "combined-fight",
+      "startTile": 200,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 6,
+      "recipe": "traversal",
+      "startTile": 240,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 7,
+      "recipe": "combined-fight",
+      "startTile": 280,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 8,
+      "recipe": "release",
+      "startTile": 320,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 9,
+      "recipe": "combined-fight",
+      "startTile": 360,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 10,
+      "recipe": "climax",
+      "startTile": 400,
+      "widthTiles": 40,
+      "hasOverlook": false
+    },
+    {
+      "index": 11,
+      "recipe": "exit",
+      "startTile": 440,
+      "widthTiles": 40,
+      "hasOverlook": false
+    }
+  ],
+  "placements": [
+    {
+      "typeKey": "player-spawn",
+      "name": "Arrival",
+      "x": 32944,
+      "y": 80
+    },
+    {
+      "typeKey": "save-point",
+      "name": "Arrival checkpoint",
+      "x": 33040,
+      "y": 64
+    },
+    {
+      "typeKey": "club-caveman",
+      "name": "2: introduce-melee",
+      "x": 34544,
+      "y": 96
+    },
+    {
+      "typeKey": "club-caveman",
+      "name": "Overlook guard 2",
+      "x": 34864,
+      "y": 384
+    },
+    {
+      "typeKey": "save-point",
+      "name": "Optional overlook 2",
+      "x": 35024,
+      "y": 352
+    },
+    {
+      "typeKey": "rock-thrower",
+      "name": "4: introduce-ranged",
+      "x": 37104,
+      "y": 96
+    },
+    {
+      "typeKey": "save-point",
+      "name": "Checkpoint 5",
+      "x": 38544,
+      "y": 64
+    },
+    {
+      "typeKey": "baby-triceratops",
+      "name": "6: combined-fight",
+      "x": 39664,
+      "y": 96
+    },
+    {
+      "typeKey": "rock-thrower",
+      "name": "6: combined-fight",
+      "x": 39856,
+      "y": 192
+    },
+    {
+      "typeKey": "baby-triceratops",
+      "name": "8: combined-fight",
+      "x": 42224,
+      "y": 96
+    },
+    {
+      "typeKey": "rock-thrower",
+      "name": "8: combined-fight",
+      "x": 42416,
+      "y": 192
+    },
+    {
+      "typeKey": "save-point",
+      "name": "Checkpoint 9",
+      "x": 43664,
+      "y": 64
+    },
+    {
+      "typeKey": "baby-triceratops",
+      "name": "10: combined-fight",
+      "x": 44784,
+      "y": 96
+    },
+    {
+      "typeKey": "rock-thrower",
+      "name": "10: combined-fight",
+      "x": 44976,
+      "y": 192
+    },
+    {
+      "typeKey": "shield-defender",
+      "name": "11: climax",
+      "x": 46064,
+      "y": 96
+    },
+    {
+      "typeKey": "rock-thrower",
+      "name": "11: climax",
+      "x": 46256,
+      "y": 192
+    },
+    {
+      "typeKey": "goal",
+      "name": "Level exit",
+      "x": 47952,
+      "y": 64
+    }
+  ]
+}

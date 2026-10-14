@@ -44,8 +44,10 @@ public sealed class SideScrollerGame : Game2D
     private readonly TileEditor2D _editor;
     private readonly PlayerSaveStore2D _saveStore;
     private readonly ViewportTerrainSource2D _terrainSource;
+    private readonly App2d.Levels.WorldAsset2D _loadedWorld;
+    private readonly LevelPicker2D _levelPicker;
 
-    public SideScrollerGame()
+    public SideScrollerGame(string? worldManifest = null)
     {
         _resources.Register("characters/authored", LoadAuthored, AssetPaths.Current.AuthoredCharacters);
         _authored = _resources.GetLoad<AuthoredCatalog>("characters/authored", "simulation");
@@ -64,12 +66,19 @@ public sealed class SideScrollerGame : Game2D
         DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
             "Set sound-effect volume from 0 (muted) to 1 (full volume).");
 
-        _resources.Register("level/cavern", LevelBootstrap2D.Load, LevelBootstrap2D.CavernLevelPath);
+        _resources.Register("level/cavern", () => worldManifest is null ? LevelBootstrap2D.Load() : LevelBootstrap2D.LoadWorld(worldManifest),
+            worldManifest ?? LevelBootstrap2D.CavernLevelPath);
         var loadedLevel = _resources.GetLoad<App2d.Levels.WorldAsset2D>("level/cavern", "simulation");
+        _loadedWorld = loadedLevel;
+        _levelPicker = new(loadedLevel.Maps);
         var tileMap = loadedLevel.TileMap;
         _terrainSource = new ViewportTerrainSource2D(tileMap);
-        _saveStore = PlayerSaveStore2D.CreateDefault();
-        var loadedSave = _saveStore.TryLoad();
+        _saveStore = worldManifest is null ?
+            loadedLevel.StartAtArrival ? new PlayerSaveStore2D(PlayerSaveStore2D.CreateDefault().Path + ".playground") : PlayerSaveStore2D.CreateDefault() :
+            new PlayerSaveStore2D(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(worldManifest))!, "player-save.json"));
+        // Explicit world launches are playtests: always begin at the map's arrival.
+        // The local store still records checkpoints for deaths during this session.
+        var loadedSave = worldManifest is null && !loadedLevel.StartAtArrival ? _saveStore.TryLoad() : null;
 
         // The one construction recipe for the simulation; the host only adds I/O and presentation.
         _simulation = SideScrollerSimulation2D.Create(new SideScrollerSessionDefinition2D(
@@ -164,8 +173,31 @@ public sealed class SideScrollerGame : Game2D
     public override void Update(FrameTime time, InputState input)
     {
         _isControllerConnected = input.Gamepad.IsConnected;
+        if (!_editor.IsActive)
+        {
+            var wasOpen = _levelPicker.IsOpen;
+            if (_levelPicker.Update(input) is { } destination)
+                _session.TravelForPlaytesting(App2d.Levels.PlaygroundMaps2D.Arrival(
+                    _loadedWorld.Maps[destination], Traversal.PlayerColliderSize.Y, Traversal.GroundProbeDistance));
+            if (wasOpen != _levelPicker.IsOpen) input.CancelButtons();
+            if (_levelPicker.IsOpen)
+            {
+                _session.SetPaused(true);
+                _client.Suspend();
+                return;
+            }
+        }
         var wasEditing = _editor.IsActive;
         _editor.Update(input);
+        if (!wasEditing && _editor.IsActive)
+        {
+            var position = _client.State.Person.Position;
+            var index = _loadedWorld.Maps.ToList().FindIndex(m =>
+                position.X >= m.TileMap.WorldBounds.Min.X && position.X < m.TileMap.WorldBounds.Max.X &&
+                position.Y >= m.TileMap.WorldBounds.Min.Y && position.Y < m.TileMap.WorldBounds.Max.Y);
+            if (index >= 0 && index != _editor.SelectedMapIndex)
+                _editor.CycleMap(index - _editor.SelectedMapIndex);
+        }
         if (wasEditing != _editor.IsActive) input.CancelButtons();
         _session.SetPaused(_editor.IsActive);
         if (_editor.IsActive)
@@ -188,7 +220,7 @@ public sealed class SideScrollerGame : Game2D
     {
         _musicDirector.Update(_client.Content, _client.State.Person.Position, time.DeltaSeconds);
         _client.UpdateFeedback(time.DeltaSeconds);
-        if (!_editor.IsActive) _client.AdvancePresentation(time.DeltaSeconds);
+        if (!_editor.IsActive && !_levelPicker.IsOpen) _client.AdvancePresentation(time.DeltaSeconds);
         _client.WorldSounds.Update();
     }
 
@@ -229,6 +261,7 @@ public sealed class SideScrollerGame : Game2D
     {
         _client.DrawUI(renderer);
         TileEditorView2D.DrawUI(renderer, _editor, Textures);
+        if (!_editor.IsActive) _levelPicker.Draw(renderer);
         base.RenderUI(renderer, time);
     }
 

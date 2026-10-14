@@ -2,6 +2,22 @@
 
 A world groups independently saved tile maps into named zones. Maps share world coordinates: put their edges next to one another to build a continuous world. Editing selects one map; gameplay sees their combined terrain and objects through the existing chunk streamer.
 
+## Level playground
+
+The checked-in world contains **Central hub**, **Combat Grounds** (zone ID `sandbox-a`), **Sandbox B**, and the **Original playground**. Combat Grounds is assigned a generated map and is the default arrival destination. The hub and Sandbox B remain editable canvases. The original terrain remains in `level.db`. See [zone generation](level-generation.md) to tune and regenerate Combat Grounds.
+
+During play, press **F2** to open the level picker. Click a map, or use **Up / Down** and **Enter**, to travel there. Press **F2** again to close without traveling. The game pauses while the picker is open. Choose **Central hub** from anywhere to return. Escape retains its existing quit-game behavior.
+
+Travel uses the destination map's first enabled `player-spawn` thing, or the existing ground-column fallback if it has none. It restores health, clears attacks and velocity, and makes that arrival your temporary respawn point. It does not write a checkpoint save. `startMapId` selects the initial map; `startAtArrival: true` starts there without loading an old checkpoint. The shipped playground enables this setting. With it disabled, a valid saved checkpoint takes precedence.
+
+Press **F1** after arriving to edit that map. **Page Up / Page Down** switches maps in the editor; F1 returns to the player's current location. To play another map after editing it, leave the editor and select it with F2. Terrain edits apply immediately; moving an arrival marker currently requires restarting, like other position-object edits.
+
+To add a destination, create a database with the command below and register it in `world.json`; the picker lists every map automatically after a restart. Rename its `name` to change the picker label. Keep IDs and identities stable. No portal layout is required.
+
+The starter files can be created in another directory containing `level.db` with `dotnet run --project App2d -- --create-playground <directory>`. This refuses to replace any existing hub, sandbox, or manifest file. Normal startup never regenerates these maps.
+
+## Map files
+
 The game reads `Assets/Static/levels/cavern/world.json` when present. Without it, the existing `level.db` and `zones.json` still load as before. No existing terrain is migrated automatically.
 
 Create a blank map database with the game stopped (width/height are tiles; origins are world units):

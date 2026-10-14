@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "zones": [
+    {
+      "id": "generated",
+      "name": "Generated 12345",
+      "priority": -1,
+      "maps": [
+        {
+          "id": "generated",
+          "name": "Combat draft 12345",
+          "identity": 1,
+          "file": "level.db",
+          "generation": null
+        }
+      ]
+    }
+  ],
+  "startMapId": null,
+  "startAtArrival": false
+}

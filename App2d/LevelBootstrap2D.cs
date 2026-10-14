@@ -20,18 +20,27 @@ internal static class LevelBootstrap2D
     /// and must never be the only home for a hand-edited file.
     /// </summary>
     public static string CavernLevelPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "level.db");
+    public static string WorldManifestPath { get; } = Path.Combine(AssetPaths.Current.Levels, LevelId, "world.json");
 
-    public static WorldAsset2D Load()
+    public static WorldAsset2D Load() => LoadManifest(WorldManifestPath);
+
+    public static WorldAsset2D LoadWorld(string manifest)
     {
-        var directory = Path.GetDirectoryName(CavernLevelPath)!;
-        var manifest = Path.Combine(directory, "world.json");
+        if (!File.Exists(manifest)) throw new FileNotFoundException("World manifest is missing.", manifest);
+        return LoadManifest(manifest);
+    }
+
+    private static WorldAsset2D LoadManifest(string manifest)
+    {
+        var directory = Path.GetDirectoryName(Path.GetFullPath(manifest))!;
         if (File.Exists(manifest))
         {
             using var world = WorldFile2D.Load(manifest, TerrainTilesetIds);
             // Existing biome/audio regions remain available inside authored map containers.
             var regionIds = world.Zones.Select(z => z.Id).ToHashSet(StringComparer.Ordinal);
             var regions = WorldZoneFile2D.Load(Path.Combine(directory, "zones.json"));
-            return new(world.Maps, [.. world.Zones, .. regions.Where(z => !regionIds.Contains(z.Id))]);
+            return new(world.Maps, [.. world.Zones, .. regions.Where(z => !regionIds.Contains(z.Id))])
+                { StartAtArrival = world.StartAtArrival };
         }
         return new WorldAsset2D(
             [WorldFile2D.LoadMap(RequireLevelPath(), "cavern", "Cavern", "cavern", 0, TerrainTilesetIds)],

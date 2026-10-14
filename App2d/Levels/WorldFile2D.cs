@@ -39,6 +39,7 @@ public sealed class WorldAsset2D : IDisposable
     }
     public IReadOnlyList<WorldMapAsset2D> Maps { get; }
     public ImmutableArray<WorldZone2D> Zones { get; }
+    public bool StartAtArrival { get; init; }
     public WorldTileMap2D TileMap { get; }
     public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms => Maps.SelectMany(m =>
         m.MovingPlatforms.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) })).ToArray();
@@ -95,7 +96,15 @@ public static class WorldFile2D
                 }
                 zones.Add(new(zone.Id, zone.Name, new Rect2D(min, max), zone.Priority));
             }
-            return new(maps.AsReadOnly(), zones.ToImmutable());
+            if (file.StartMapId is not null)
+            {
+                var index = maps.FindIndex(m => m.Id == file.StartMapId);
+                if (index < 0) throw new InvalidDataException($"Start map '{file.StartMapId}' does not exist.");
+                var start = maps[index];
+                maps.RemoveAt(index);
+                maps.Insert(0, start);
+            }
+            return new(maps.AsReadOnly(), zones.ToImmutable()) { StartAtArrival = file.StartAtArrival };
         }
         catch (Exception e) when (e is JsonException or ArgumentException or OverflowException)
         {
@@ -117,7 +126,15 @@ public static class WorldFile2D
         return result;
     }
 
-    public sealed record WorldDocument(int Version, IReadOnlyList<ZoneDocument> Zones);
+    public sealed record WorldDocument(int Version, IReadOnlyList<ZoneDocument> Zones)
+    {
+        public string? StartMapId { get; init; }
+        public bool StartAtArrival { get; init; }
+    }
     public sealed record ZoneDocument(string Id, string Name, int Priority, IReadOnlyList<MapDocument> Maps);
-    public sealed record MapDocument(string Id, string Name, [property: JsonRequired] int Identity, string File);
+    public sealed record MapDocument(string Id, string Name, [property: JsonRequired] int Identity, string File)
+    {
+        public ZoneGeneration2D? Generation { get; init; }
+    }
+    public sealed record ZoneGeneration2D(float OriginX, float OriginY, CombatLevelSettings2D Settings);
 }

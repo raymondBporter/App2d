@@ -32,6 +32,19 @@ public sealed partial class SideScrollerSession2D : IDisposable
     private bool _disposed;
     private long _eventSequence;
     private bool _advancing;
+    private Vector2? _pendingPlaygroundTravel;
+
+    /// <summary>Offline level-playground command, applied at the next simulation tick.</summary>
+    public void TravelForPlaytesting(Vector2 destination)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        StateGuard.ThrowIf(_advancing, "Travel requires a completed simulation tick.");
+        ArgGuard.ThrowIfNotFinite(destination);
+        if (destination.X < _world.Bounds.Min.X || destination.X >= _world.Bounds.Max.X ||
+            destination.Y < _world.Bounds.Min.Y || destination.Y >= _world.Bounds.Max.Y)
+            throw new ArgumentOutOfRangeException(nameof(destination));
+        _pendingPlaygroundTravel = destination;
+    }
 
     public SideScrollerSession2D(PhysicsWorld2D physics, Person2D player,
         ISessionPlayerActions2D actions, ISideScrollerSessionWorld2D world,
@@ -132,6 +145,17 @@ public sealed partial class SideScrollerSession2D : IDisposable
                 participant.LastCommand = input.Command;
             }
             _events.Clear();
+            if (_pendingPlaygroundTravel is { } destination)
+            {
+                _pendingPlaygroundTravel = null;
+                var player = _players[0];
+                player.Respawn = new(destination, player.Person.Health.Maximum);
+                player.LastCommand = default;
+                player.MoveX = 0;
+                player.GoalEligible = destination.X < _world.GoalX;
+                _world.SetActiveSavePoint(null);
+                Respawn(player);
+            }
             Step();
             foreach (var occurrence in _world.DrainEnemyEvents())
                 _events.Add(new EnemyOccurred2D(new SessionEventStamp2D(Tick, ++_eventSequence, occurrence.EntityId), occurrence));
@@ -197,7 +221,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
 
             if (player.Person.Position.Y < _world.Bounds.Min.Y - 260f)
                 Respawn(player);
-            if (!player.ReachedGoal && player.Person.Position.X >= _world.GoalX)
+            if (player.GoalEligible && !player.ReachedGoal && player.Person.Position.X >= _world.GoalX)
             {
                 player.ReachedGoal = true;
                 _events.Add(new GoalReached2D(Stamp(player)));
@@ -270,6 +294,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
         public float RestartSeconds { get; set; }
         public float MoveX { get; set; }
         public bool ReachedGoal { get; set; }
+        public bool GoalEligible { get; set; } = true;
         public long LastInputSequence { get; set; }
         public PersonCommand2D LastCommand { get; set; }
         /// <summary>Within-tick scratch: whether this tick began inside the death restart delay.</summary>

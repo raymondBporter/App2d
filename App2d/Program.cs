@@ -1,6 +1,27 @@
 using App2d;
 using App2d.Core.Hosting;
 
+if (args is ["--generate-zone", var zoneId])
+{
+    var map = App2d.Levels.ZoneLevelGenerator2D.Regenerate(LevelBootstrap2D.WorldManifestPath, zoneId, LevelBootstrap2D.TerrainTilesetIds);
+    Console.WriteLine($"Assigned generated map: {map}");
+    return;
+}
+
+if (args is ["--generate-level", var generatedDirectory, var settingsPath])
+{
+    var settings = App2d.Levels.CombatLevelGenerator2D.LoadSettings(settingsPath);
+    var manifest = App2d.Levels.CombatLevelGenerator2D.Create(generatedDirectory, settings, LevelBootstrap2D.TerrainTilesetIds);
+    Console.WriteLine($"Generated world: {manifest}");
+    return;
+}
+
+if (args is ["--create-playground", var playgroundDirectory])
+{
+    App2d.Levels.PlaygroundMaps2D.Create(playgroundDirectory, LevelBootstrap2D.TerrainTilesetIds);
+    return;
+}
+
 if (args.SequenceEqual(["--migrate-level"]))
 {
     using var database = LevelBootstrap2D.OpenForEditing();
@@ -71,5 +92,6 @@ if (args is ["--vegetation-smoke", var vegetationDirectory])
     return;
 }
 
-using var host = new GameHost(new SideScrollerGame());
+var selectedWorld = args is ["--world", var worldPath] ? Path.GetFullPath(worldPath) : null;
+using var host = new GameHost(new SideScrollerGame(selectedWorld));
 host.Run();
