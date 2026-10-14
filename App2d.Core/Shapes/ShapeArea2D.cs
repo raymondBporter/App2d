@@ -60,7 +60,10 @@ public static class ShapeArea2D
             {
                 var count = shape.GetOutlineVertCount(outlineSegments);
                 vertices = new Vector2[count > 0 ? count : outlineSegments];
-                if (count > 0) shape.GetOutlineVerts(vertices, outlineSegments);
+                if (count > 0)
+                {
+                    shape.GetOutlineVerts(vertices, outlineSegments);
+                }
                 else
                 {
                     for (var j = 0; j < vertices.Length; j++)

@@ -67,7 +67,10 @@ public sealed class ImGuiHost : IDisposable
         style.ScaleAllSizes(scale);
         var io = ImGui.GetIO(); io.Fonts.Clear(); io.FontGlobalScale = 1;
         var fontPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Fonts), "segoeui.ttf");
-        if (File.Exists(fontPath)) io.Fonts.AddFontFromFileTTF(fontPath, 17 * scale);
+        if (File.Exists(fontPath))
+        {
+            io.Fonts.AddFontFromFileTTF(fontPath, 17 * scale);
+        }
         else { io.Fonts.AddFontDefault(); io.FontGlobalScale = 17 * scale / 13; }
         _renderer.RebuildFont();
     }

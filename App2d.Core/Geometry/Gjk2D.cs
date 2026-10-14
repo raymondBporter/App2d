@@ -95,8 +95,7 @@ public static partial class Gjk2D
             var delta = a - b;
             var distance = (float)Math.Sqrt(Dot(delta, delta));
             var normal = distance > 0f ? delta / distance : fallback;
-            Span<Vertex> witness = stackalloc Vertex[1];
-            witness[0] = new Vertex { First = a, Second = b, Difference = delta, Weight = 1d };
+            Span<Vertex> witness = [new Vertex { First = a, Second = b, Difference = delta, Weight = 1d }];
             result = Result(witness, distance, normal, first, second, origin, 0d);
             return true;
         }
@@ -127,8 +126,10 @@ public static partial class Gjk2D
             var distance = Math.Sqrt(Dot(closest, closest));
             var tolerance = RelativeTolerance * Math.Max(scale, 1e-20);
             if (count == 3 || distance <= tolerance * .01d)
+            {
                 return penetration ? Penetration(first, second, simplex[..count], origin, scale)
                     : Result(simplex[..count], 0f, Vector2.UnitX, first, second, origin, 0d);
+            }
 
             var direction = -closest / (float)distance;
             var vertex = Support(first, second, direction, origin);
@@ -265,7 +266,7 @@ public static partial class Gjk2D
         var edgeDistance = 0d;
         var edgeNormal = Vector2.UnitX;
         var gap = 0d;
-        for (;;)
+        for (; ; )
         {
             edgeDistance = double.PositiveInfinity;
             for (var i = 0; i < count; i++)
@@ -297,8 +298,7 @@ public static partial class Gjk2D
         }
 
         var end = (edgeIndex + 1) % count;
-        Span<Vertex> witnesses = stackalloc Vertex[2];
-        witnesses[0] = polygon[edgeIndex]; witnesses[1] = polygon[end];
+        Span<Vertex> witnesses = [polygon[edgeIndex], polygon[end]];
         SetEdgeWeights(witnesses, 0, 1);
         return Result(witnesses, -(float)edgeDistance, -edgeNormal, first, second, origin, gap);
     }

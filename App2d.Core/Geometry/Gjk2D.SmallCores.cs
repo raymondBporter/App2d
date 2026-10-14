@@ -32,8 +32,7 @@ public static partial class Gjk2D
         var (bStart, bEnd) = SupportFace(b, normal);
         var translation = normal * -signedDistance;
         var closest = ClosestPoint2D.BetweenSegments(aStart + translation, aEnd + translation, bStart, bEnd);
-        Span<Vertex> witness = stackalloc Vertex[1];
-        witness[0] = new Vertex { First = closest.First - translation, Second = closest.Second, Weight = 1d };
+        Span<Vertex> witness = [new Vertex { First = closest.First - translation, Second = closest.Second, Weight = 1d }];
         result = Result(witness, signedDistance, normal, first, second, origin, 0d);
         return true;
     }

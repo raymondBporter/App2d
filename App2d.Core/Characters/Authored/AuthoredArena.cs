@@ -84,7 +84,7 @@ public sealed class AuthoredArena
             {
                 foreach (var target in Actors)
                 {
-                    if (target == attacker || !target.Alive || (target.Index == 0) == (attacker.Index == 0)) continue;
+                    if (target == attacker || !target.Alive || target.Index == 0 == (attacker.Index == 0)) continue;
                     if (!target.Hurt.Any(h => h.Overlaps(region, Vector2.Zero, Vector2.Zero))) continue;
                     if (!attacker.Ledger.TryHit(attacker.Animator.ActionSequence, hit.Window.Id, target.Index)) continue;
                     Hits.Add(new(Tick, attacker.Index, target.Index, hit.Window.Id, hit.Window.Damage));
@@ -103,7 +103,7 @@ public sealed class AuthoredArena
             var bolt = Bolts[i];
             bolt = bolt with { Position = bolt.Position + bolt.Velocity * StepSeconds, Lifetime = bolt.Lifetime - StepSeconds };
             var box = new EntityRegion("bolt", bolt.Shape, Similarity2D.FromTranslation(bolt.Position));
-            var target = Actors.FirstOrDefault(t => t.Alive && (t.Index == 0) != (bolt.Owner == 0) && t.Hurt.Any(h => h.Overlaps(box, Vector2.Zero, Vector2.Zero)));
+            var target = Actors.FirstOrDefault(t => t.Alive && t.Index == 0 != (bolt.Owner == 0) && t.Hurt.Any(h => h.Overlaps(box, Vector2.Zero, Vector2.Zero)));
             if (target is not null) { Hits.Add(new(Tick, bolt.Owner, target.Index, "bolt", bolt.Damage)); Damage(target, bolt.Damage); }
             if (target is not null || bolt.Lifetime <= 0 || bolt.Position.Y < 0 || MathF.Abs(bolt.Position.X) > HalfWidth + 2) Bolts.RemoveAt(i);
             else Bolts[i] = bolt;

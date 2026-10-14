@@ -523,7 +523,7 @@ public sealed class EditorSession
         {
             var rule = BuildRules.For(basis.Asset) ?? throw new InvalidDataException($"'{baseId}' exposes no build presets.");
             var values = (rule.Presets.FirstOrDefault(p => p.Id == preset) ?? throw new InvalidDataException($"No preset '{preset}'.")).Values;
-            foreach (var (value, amount) in values) if (amount != (rule.Values.First(v => v.Id == value).Default)) variant.Build[value] = amount;
+            foreach (var (value, amount) in values) if (amount != rule.Values.First(v => v.Id == value).Default) variant.Build[value] = amount;
         }
         Assets.Create(variant); Open(id);
     }, $"Created variant '{id}'.");

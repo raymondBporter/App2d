@@ -13,7 +13,7 @@
 ## Geometry
 
 Value types: `Rect2D` (the only axis-aligned box; `Unbounded` covers the plane), `IRect2D` + `Rect2DExtensions`
-(anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `Interval1D`, `Line2D`, `Ray2D`,
+(anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `Interval<T>`, `Line2D`, `Ray2D`,
 `RayHit2D`, `IGeometry2D`.
 
 `GiantTree2D(root, settings, seed)` creates immutable, seeded tree-level geometry. `GiantTreeSettings2D`

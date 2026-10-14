@@ -23,7 +23,8 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
     private string _notice = "SplineMan turns from a three-quarter idle into a clear side profile while moving.";
 
     public RigidCharacterHost() : base("SplineBRO — Reusable Side-Scroller Rig", new Size(1280, 800),
-        new Camera2D { Position = new Vector2(0, -66), Zoom = 1.15f }) { }
+        new Camera2D { Position = new Vector2(0, -66), Zoom = 1.15f })
+    { }
 
     protected override void UpdateScene(FrameTime time, bool keyboardCaptured)
     {
@@ -62,8 +63,11 @@ internal sealed partial class RigidCharacterHost : NoodleToolHost
         if (ImGui.IsKeyPressed(ImGuiKey.F1, false)) HandleCommand(Keys.F1);
         if (_authoring && ImGui.GetIO().KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.S, false)) HandleCommand(Keys.S, true);
         if (!keyboardCaptured)
+        {
             foreach (var (imGuiKey, command) in Shortcuts)
                 if (command is not Keys.F1 and not Keys.S && ImGui.IsKeyPressed(imGuiKey, false)) HandleCommand(command, ImGui.GetIO().KeyCtrl);
+        }
+
         if (mouseCaptured || !ImGui.IsMouseDown(ImGuiMouseButton.Left)) _draggingControl = false;
         if (mouseCaptured) return;
         if (_authoring && ImGui.IsMouseClicked(ImGuiMouseButton.Left))

@@ -476,7 +476,9 @@ public sealed class ShapeArea2DTests
                     intervals.Add((ellipse.Center.Y - half, ellipse.Center.Y + half));
                 }
                 else if (part is Rectangle2D rectangle && x > rectangle.Min.X && x < rectangle.Max.X)
+                {
                     intervals.Add((rectangle.Min.Y, rectangle.Max.Y));
+                }
                 else if (part is Capsule2D capsule)
                 {
                     if (x <= Math.Min(capsule.Start.X, capsule.End.X) - (double)capsule.Radius || x >= Math.Max(capsule.Start.X, capsule.End.X) + (double)capsule.Radius) continue;

@@ -106,7 +106,7 @@ public static class ClosestPoint2D
             var zx = px / a;
             var zy = py / b;
             var normalizedSquared = zx * zx + zy * zy;
-            var ratioSquared = (a / b) * (a / b);
+            var ratioSquared = a / b * (a / b);
             var numerator = ratioSquared * zx;
             // Shift Eberly's root by +1 so points very close to the major axis do not lose the minor term
             // through cancellation in s + 1. The bracket remains positive even for subnormal coordinates.
@@ -114,7 +114,7 @@ public static class ClosestPoint2D
             var lower = zy;
             var largest = Math.Max(numerator, zy);
             var smallest = Math.Min(numerator, zy);
-            var upper = normalizedSquared < 1d ? 1d : largest * Math.Sqrt(1d + (smallest / largest) * (smallest / largest));
+            var upper = normalizedSquared < 1d ? 1d : largest * Math.Sqrt(1d + smallest / largest * (smallest / largest));
             var root = 1d;
             if (normalizedSquared != 1d)
             {

@@ -55,18 +55,26 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
             var body = available.Y - timeline - status - 2 * ImGui.GetStyle().ItemSpacing.Y;
 
             Ui.Row(
-                () => Ui.Panel("left", size: new(left, body), border: false, content: () =>
+                () => Ui.Panel("left", content: () =>
                 {
                     Ui.Panel("browser", _browser.Draw, size: new(0, body * .5f));
                     Ui.Panel("outline", () => { if (Test.Active) Test.RosterPanel(); else view.Outline(); });
-                }),
-                () => Ui.Panel("stage", size: new(Math.Max(200, available.X - left - right - 2 * ImGui.GetStyle().ItemSpacing.X), body),
-                    flags: ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse,
-                    content: () => { if (Test.Active) Test.Stage(ImGui.GetContentRegionAvail(), LiveTest); else Stage(view); }),
-                () => Ui.Panel("inspector", size: new(right, body),
-                    content: () => { if (Test.Active) Test.Inspector(); else view.Inspector(); }));
+                }, size: new(left, body), border: false),
+                () => Ui.Panel("stage", content: () =>
+                {
+                    if (Test.Active)
+                        Test.Stage(ImGui.GetContentRegionAvail(), LiveTest);
+                    else
+                        Stage(view);
+                }, size: new(Math.Max(200, available.X - left - right - 2 * ImGui.GetStyle().ItemSpacing.X), body), flags: ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse),
+                () => Ui.Panel("inspector", content: () =>
+                {
+                    if (Test.Active)
+                        Test.Inspector();
+                    else view.Inspector();
+                }, size: new(right, body)));
 
-            Ui.Panel("timeline", size: new(0, timeline), content: () => { if (Test.Active) Test.Timeline(); else view.Timeline(); });
+            Ui.Panel("timeline", content: () => { if (Test.Active) Test.Timeline(); else view.Timeline(); }, size: new(0, timeline));
             StatusLine();
             _browser.DrawDialogs();
         });

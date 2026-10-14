@@ -44,7 +44,7 @@ public sealed class CurveMotion2D : IKinematicMotion2D
     {
         ArgGuard.ThrowIf(!double.IsFinite(seconds) || seconds < 0d,
             "Time must be finite and non-negative.", nameof(seconds));
-        return (seconds % PeriodSeconds) / PeriodSeconds;
+        return seconds % PeriodSeconds / PeriodSeconds;
     }
 
     private static float CheckedProgress(double progress)

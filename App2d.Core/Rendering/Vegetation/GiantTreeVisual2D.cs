@@ -11,14 +11,13 @@ public sealed class GiantTreeVisual2D
 {
     private static readonly XnaColor Ink = new(37, 46, 32);
     private static readonly XnaColor Bark = new(108, 78, 49);
-    private readonly GiantTree2D _tree;
     private readonly List<Crown> _crowns = [];
     private readonly List<Vector2[]> _bark = [];
     private readonly List<Vector2[]> _moss = [];
 
     public GiantTreeVisual2D(GiantTree2D tree)
     {
-        _tree = tree;
+        Tree = tree;
         var random = new Random(tree.Seed ^ 0x51ed2701);
         var settings = tree.Settings;
         foreach (var branch in tree.Branches)
@@ -57,11 +56,11 @@ public sealed class GiantTreeVisual2D
             _crowns.Add(new(center, radii, random.NextFloat(MathF.Tau), random.NextSingle()));
     }
 
-    public GiantTree2D Tree => _tree;
+    public GiantTree2D Tree { get; }
 
     public void Render(Renderer2D renderer, Rect2D visible, VegetationWind2D wind)
     {
-        if (!visible.Intersects(_tree.Bounds)) return;
+        if (!visible.Intersects(Tree.Bounds)) return;
         Span<Vector2> leaves = stackalloc Vector2[14];
         foreach (var crown in _crowns)
         {
@@ -75,14 +74,16 @@ public sealed class GiantTreeVisual2D
             renderer.DrawWorldConvexPolygon(leaves, XnaColor.Lerp(new(64, 122, 64), new(113, 157, 79), crown.Shade));
         }
 
-        var root = _tree.Root;
-        var width = _tree.Settings.TrunkWidth;
-        var height = _tree.Settings.Height;
-        Span<Vector2> wood = stackalloc Vector2[4];
-        wood[0] = root + new Vector2(-width * 0.5f, 0);
-        wood[1] = root + new Vector2(width * 0.5f, 0);
-        wood[2] = root + new Vector2(width * 0.38f, height);
-        wood[3] = root + new Vector2(-width * 0.38f, height);
+        var root = Tree.Root;
+        var width = Tree.Settings.TrunkWidth;
+        var height = Tree.Settings.Height;
+        Span<Vector2> wood =
+        [
+            root + new Vector2(-width * 0.5f, 0),
+            root + new Vector2(width * 0.5f, 0),
+            root + new Vector2(width * 0.38f, height),
+            root + new Vector2(-width * 0.38f, height),
+        ];
         renderer.DrawWorldConvexPolygon(wood, Bark);
         renderer.DrawWorldSegment(wood[0], wood[3], Ink, 2f);
         renderer.DrawWorldSegment(wood[1], wood[2], Ink, 2f);
@@ -91,10 +92,12 @@ public sealed class GiantTreeVisual2D
         wood[2] = root + new Vector2(-width * 0.06f, height);
         renderer.DrawWorldConvexPolygon(wood, new XnaColor(136, 99, 59));
         foreach (var bark in _bark)
+        {
             if (visible.Top >= bark[0].Y && visible.Bottom <= bark[2].Y)
                 renderer.DrawWorldConvexPolygon(bark, new XnaColor(82, 61, 43));
+        }
 
-        foreach (var branch in _tree.Branches)
+        foreach (var branch in Tree.Branches)
         {
             var b = branch.Bounds;
             if (!visible.Intersects(b)) continue;
@@ -108,8 +111,10 @@ public sealed class GiantTreeVisual2D
             renderer.DrawWorldSegment(new(b.Left + 2f, b.Top - 3f), new(b.Right - 2f, b.Top - 3f), new XnaColor(161, 120, 65), 1.5f);
         }
         foreach (var moss in _moss)
+        {
             if (visible.Contains(moss[0]) || visible.Contains(moss[2]))
                 renderer.DrawWorldConvexPolygon(moss, new XnaColor(101, 147, 57));
+        }
 
         Span<Vector2> flare = stackalloc Vector2[3];
         for (var side = -1; side <= 1; side += 2)

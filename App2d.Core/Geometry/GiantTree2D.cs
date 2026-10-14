@@ -10,10 +10,10 @@ public sealed record GiantTreeSettings2D
 {
     public float Height { get; init; } = 1_600f;
     public float TrunkWidth { get; init; } = 192f;
-    public Interval1D BranchLength { get; init; } = new(128f, 384f);
-    public Interval1D BranchGap { get; init; } = new(64f, 96f);
+    public Interval<float> BranchLength { get; init; } = new(128f, 384f);
+    public Interval<float> BranchGap { get; init; } = new(64f, 96f);
     public float BranchThickness { get; init; } = 24f;
-    public Interval1D FoliageRadius { get; init; } = new(56f, 112f);
+    public Interval<float> FoliageRadius { get; init; } = new(56f, 112f);
 
     public void Validate()
     {
@@ -28,7 +28,7 @@ public sealed record GiantTreeSettings2D
         ArgGuard.ThrowIf((double)Height / BranchGap.Min > 256, "Use wider branch spacing; a tree supports at most 256 branch levels.", nameof(BranchGap));
     }
 
-    private static void ValidateRange(Interval1D range, string name)
+    private static void ValidateRange(Interval<float> range, string name)
     {
         ArgGuard.ThrowIfNotFiniteOrNotPositive(range.Min, name);
         ArgGuard.ThrowIfNotFiniteOrLessThan(range.Max, range.Min, name);
@@ -92,5 +92,5 @@ public sealed class GiantTree2D
     public Rect2D Bounds { get; }
     public ImmutableArray<GiantTreeBranch2D> Branches { get; }
 
-    private static float Sample(Interval1D range, Random random) => random.NextFloat(range.Min, range.Max);
+    private static float Sample(Interval<float> range, Random random) => random.NextFloat(range.Min, range.Max);
 }

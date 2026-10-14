@@ -29,20 +29,20 @@ public static partial class Distance2D
     /// <param name="first">The first interval.</param>
     /// <param name="second">The second interval.</param>
     /// <returns>The nonnegative gap.</returns>
-    public static float Distance(Interval1D first, Interval1D second) => Math.Max(0f, SignedDistance(first, second));
+    public static float Distance(Interval<float> first, Interval<float> second) => Math.Max(0f, SignedDistance(first, second));
 
     /// <summary>The signed gap between two intervals: positive when apart, negative by the overlap depth.</summary>
     /// <param name="first">The first interval.</param>
     /// <param name="second">The second interval.</param>
     /// <returns>The gap, or the negated minimum overlap.</returns>
-    public static float SignedDistance(Interval1D first, Interval1D second) => SignedDistance(first, second, out _);
+    public static float SignedDistance(Interval<float> first, Interval<float> second) => SignedDistance(first, second, out _);
 
     /// <summary>The signed gap between two intervals and the direction that separates them fastest.</summary>
     /// <param name="first">The interval to move.</param>
     /// <param name="second">The interval to move out of.</param>
     /// <param name="direction">+1 or -1: the direction to move the first interval out of the second.</param>
     /// <returns>The gap, or the negated minimum overlap.</returns>
-    public static float SignedDistance(Interval1D first, Interval1D second, out float direction)
+    public static float SignedDistance(Interval<float> first, Interval<float> second, out float direction)
     {
         var pushPositive = second.Max - first.Min;
         var pushNegative = first.Max - second.Min;
@@ -269,8 +269,8 @@ public static partial class Distance2D
     /// <returns>The gap when separated, or the negated minimum escape translation when overlapping.</returns>
     public static float SignedDistance(Rect2D first, Rect2D second)
     {
-        var x = SignedDistance(new Interval1D(first.Min.X, first.Max.X), new Interval1D(second.Min.X, second.Max.X));
-        var y = SignedDistance(new Interval1D(first.Min.Y, first.Max.Y), new Interval1D(second.Min.Y, second.Max.Y));
+        var x = SignedDistance(new Interval<float>(first.Min.X, first.Max.X), new Interval<float>(second.Min.X, second.Max.X));
+        var y = SignedDistance(new Interval<float>(first.Min.Y, first.Max.Y), new Interval<float>(second.Min.Y, second.Max.Y));
         return x > 0f || y > 0f ? new Vector2(Math.Max(0f, x), Math.Max(0f, y)).Length() : Math.Max(x, y);
     }
 

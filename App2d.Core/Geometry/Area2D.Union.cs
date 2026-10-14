@@ -13,7 +13,7 @@ public static partial class Area2D
     {
         var origin = parts[0].Origin;
         foreach (var part in parts) part.Shift(origin);
-        var covered = new List<Interval>();
+        var covered = new List<Interval<double>>();
         var angles = new List<double>();
         var area = 0d;
         var compensation = 0d;
@@ -58,12 +58,12 @@ public static partial class Area2D
         {
             var adjusted = value - compensation;
             var sum = area + adjusted;
-            compensation = (sum - area) - adjusted;
+            compensation = sum - area - adjusted;
             area = sum;
         }
     }
 
-    private static void CoverCircle(UnionPart circle, UnionPart other, bool preferOther, List<Interval> covered)
+    private static void CoverCircle(UnionPart circle, UnionPart other, bool preferOther, List<Interval<double>> covered)
     {
         var delta = other.Center - circle.Center;
         var distance = Math.Sqrt(delta.Dot(delta));
@@ -86,7 +86,7 @@ public static partial class Area2D
         if (end > Math.Tau) covered.Add(new(0d, end - Math.Tau));
     }
 
-    private static void CoverCurveWithCurve(UnionPart curve, UnionPart other, bool preferOther, List<Interval> covered, List<double> angles)
+    private static void CoverCurveWithCurve(UnionPart curve, UnionPart other, bool preferOther, List<Interval<double>> covered, List<double> angles)
     {
         var offset = other.NormalizeRelative(curve.Center - other.Center);
         // Treat a displacement below conic evaluation precision as a coincident boundary.
@@ -121,7 +121,7 @@ public static partial class Area2D
         CoverArcsInside(curve, other, covered, angles);
     }
 
-    private static void CoverCurveWithPolygon(UnionPart curve, UnionPart polygon, List<Interval> covered, List<double> angles)
+    private static void CoverCurveWithPolygon(UnionPart curve, UnionPart polygon, List<Interval<double>> covered, List<double> angles)
     {
         angles.Clear();
         angles.Add(0d);
@@ -153,7 +153,7 @@ public static partial class Area2D
         CoverArcsInside(curve, polygon, covered, angles);
     }
 
-    private static void CoverArcsInside(UnionPart curve, UnionPart other, List<Interval> covered, List<double> angles)
+    private static void CoverArcsInside(UnionPart curve, UnionPart other, List<Interval<double>> covered, List<double> angles)
     {
         angles.Sort();
         for (var i = 1; i < angles.Count; i++)
@@ -166,7 +166,7 @@ public static partial class Area2D
         }
     }
 
-    private static void CoverSegmentWithCurve(Point start, Point direction, UnionPart curve, List<Interval> covered)
+    private static void CoverSegmentWithCurve(Point start, Point direction, UnionPart curve, List<Interval<double>> covered)
     {
         if (CurveRoots(start, direction, curve, out var low, out var high))
             AddInterval(covered, Math.Max(0d, low), Math.Min(1d, high));
@@ -189,7 +189,7 @@ public static partial class Area2D
         return true;
     }
 
-    private static void CoverSegmentWithPolygon(Point start, Point direction, UnionPart polygon, bool preferOther, List<Interval> covered)
+    private static void CoverSegmentWithPolygon(Point start, Point direction, UnionPart polygon, bool preferOther, List<Interval<double>> covered)
     {
         var low = 0d;
         var high = 1d;
@@ -207,30 +207,37 @@ public static partial class Area2D
                 // internal to the union, so both owners remove their shared interval.
                 if (side == 0d && edge.Dot(direction) > 0d && !preferOther) return;
             }
-            else if (slope > 0d) low = Math.Max(low, -side / slope);
-            else high = Math.Min(high, -side / slope);
+            else if (slope > 0d)
+            {
+                low = Math.Max(low, -side / slope);
+            }
+            else
+            {
+                high = Math.Min(high, -side / slope);
+            }
+
             if (low >= high) return;
         }
         AddInterval(covered, low, high);
     }
 
-    private static void AddInterval(List<Interval> covered, double low, double high)
+    private static void AddInterval(List<Interval<double>> covered, double low, double high)
     {
         if (low < high) covered.Add(new(low, high));
     }
 
-    private static double ExposedLength(List<Interval> covered, double end) =>
+    private static double ExposedLength(List<Interval<double>> covered, double end) =>
         IntegrateExposed(covered, end, static (low, high) => high - low);
 
-    private static double IntegrateExposed(List<Interval> covered, double end, Func<double, double, double> integrate)
+    private static double IntegrateExposed(List<Interval<double>> covered, double end, Func<double, double, double> integrate)
     {
-        covered.Sort(static (a, b) => a.Low.CompareTo(b.Low));
+        covered.Sort(static (a, b) => a.Min.CompareTo(b.Min));
         var position = 0d;
         var result = 0d;
         foreach (var interval in covered)
         {
-            if (interval.Low > position) result += integrate(position, interval.Low);
-            position = Math.Max(position, interval.High);
+            if (interval.Min > position) result += integrate(position, interval.Min);
+            position = Math.Max(position, interval.Max);
         }
         if (position < end) result += integrate(position, end);
         return result;
@@ -253,8 +260,6 @@ public static partial class Area2D
         angle %= Math.Tau;
         return angle < 0d ? angle + Math.Tau : angle;
     }
-
-    private readonly record struct Interval(double Low, double High);
 
     internal readonly record struct Point(double X, double Y)
     {

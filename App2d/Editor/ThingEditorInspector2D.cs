@@ -26,11 +26,14 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
             if (ImGui.BeginCombo("##definition", _isNewDefinition ? "New draft" : _editor.SelectedDefinition?.Name ?? "Choose a definition"))
             {
                 foreach (var definition in _editor.ThingDefinitions)
+                {
                     if (ImGui.Selectable($"{definition.Name} [{ThingTypeRegistry2D.Require(definition.TypeKey).DisplayName}]##{definition.DefinitionId}",
                         definition.DefinitionId == _editor.SelectedDefinitionId))
                     {
                         _editor.SelectDefinition(definition.DefinitionId); ShowDefinitionCore(definition);
                     }
+                }
+
                 ImGui.EndCombo();
             }
             if (_isNewDefinition && Ui.Combo("New type", _typeKey, ThingTypeRegistry2D.All.Select(t => t.TypeKey),

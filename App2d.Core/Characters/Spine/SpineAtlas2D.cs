@@ -60,10 +60,10 @@ public sealed class SpineAtlas2D
             for (var y = 0; y < image.Height; y++)
             {
                 for (var x = 0; x < image.Width; x++)
-            {
-                var c = image.GetPixel(x, y); if (c.A == 0) continue;
-                image.SetPixel(x, y, Color.FromArgb(c.A, Math.Min(255, c.R * 255 / c.A), Math.Min(255, c.G * 255 / c.A), Math.Min(255, c.B * 255 / c.A)));
-            }
+                {
+                    var c = image.GetPixel(x, y); if (c.A == 0) continue;
+                    image.SetPixel(x, y, Color.FromArgb(c.A, Math.Min(255, c.R * 255 / c.A), Math.Min(255, c.G * 255 / c.A), Math.Min(255, c.B * 255 / c.A)));
+                }
             }
         }
 

@@ -200,7 +200,7 @@ public static class ModelAuthoring
         foreach (var skin in model.Skins)
         {
             foreach (var entries in skin.Attachments.Values)
-            foreach (var key in entries.Where(p => p.Value == id).Select(p => p.Key).ToList()) entries.Remove(key);
+                foreach (var key in entries.Where(p => p.Value == id).Select(p => p.Key).ToList()) entries.Remove(key);
         }
     }
 

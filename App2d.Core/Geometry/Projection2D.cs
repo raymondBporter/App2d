@@ -11,7 +11,7 @@ public static class Projection2D
     /// <param name="axis">The projection axis; length scales the result.</param>
     /// <param name="offset">A translation applied to every vertex before projecting, avoiding a transformed copy.</param>
     /// <returns>The [min, max] range of the dot products.</returns>
-    public static Interval1D Polygon(ReadOnlySpan<Vector2> vertices, Vector2 axis, Vector2 offset = default)
+    public static Interval<float> Polygon(ReadOnlySpan<Vector2> vertices, Vector2 axis, Vector2 offset = default)
     {
         ArgGuard.ThrowIfTooShort(vertices, 1);
         var min = Vector2.Dot(vertices[0] + offset, axis);
@@ -30,7 +30,7 @@ public static class Projection2D
     /// <param name="axis">The projection axis; length scales the result.</param>
     /// <param name="offset">A translation applied to every vertex before projecting.</param>
     /// <returns>The [min, max] range of the dot products.</returns>
-    public static Interval1D Polygon(IReadOnlyList<Vector2> vertices, Vector2 axis, Vector2 offset = default)
+    public static Interval<float> Polygon(IReadOnlyList<Vector2> vertices, Vector2 axis, Vector2 offset = default)
     {
         ArgGuard.ThrowIfNull(vertices);
         ArgGuard.ThrowIf(vertices.Count == 0, "At least one vertex is required.", nameof(vertices));
@@ -50,7 +50,7 @@ public static class Projection2D
     /// <param name="radius">The circle radius.</param>
     /// <param name="axis">The projection axis; length scales the result.</param>
     /// <returns>The center projection extended by radius * axis length on both sides.</returns>
-    public static Interval1D Circle(Vector2 center, float radius, Vector2 axis)
+    public static Interval<float> Circle(Vector2 center, float radius, Vector2 axis)
     {
         var centerProjection = Vector2.Dot(center, axis);
         var extent = radius * axis.Length();
@@ -62,7 +62,7 @@ public static class Projection2D
     /// <param name="radii">The half-extents along X and Y.</param>
     /// <param name="axis">The projection axis; length scales the result.</param>
     /// <returns>The center projection extended by the length of radii * axis on both sides.</returns>
-    public static Interval1D Ellipse(Vector2 center, Vector2 radii, Vector2 axis)
+    public static Interval<float> Ellipse(Vector2 center, Vector2 radii, Vector2 axis)
     {
         var centerProjection = Vector2.Dot(center, axis);
         var extent = (radii * axis).Length();
@@ -75,7 +75,7 @@ public static class Projection2D
     /// <param name="radius">The capsule radius.</param>
     /// <param name="axis">The projection axis; length scales the result.</param>
     /// <returns>The spine projection extended by radius * axis length on both sides.</returns>
-    public static Interval1D Capsule(Vector2 start, Vector2 end, float radius, Vector2 axis)
+    public static Interval<float> Capsule(Vector2 start, Vector2 end, float radius, Vector2 axis)
     {
         var a = Vector2.Dot(start, axis);
         var b = Vector2.Dot(end, axis);

@@ -19,7 +19,8 @@ internal static class EditorSurfaceSmoke
             new PresentationParameters
             {
                 DeviceWindowHandle = surface.Handle,
-                BackBufferWidth = 1600, BackBufferHeight = 940,
+                BackBufferWidth = 1600,
+                BackBufferHeight = 940,
                 DepthStencilFormat = DepthFormat.Depth24,
                 PresentationInterval = PresentInterval.Immediate
             });
@@ -41,7 +42,8 @@ internal static class EditorSurfaceSmoke
             device.Reset(new PresentationParameters
             {
                 DeviceWindowHandle = surface.Handle,
-                BackBufferWidth = width, BackBufferHeight = height,
+                BackBufferWidth = width,
+                BackBufferHeight = height,
                 DepthStencilFormat = DepthFormat.Depth24,
                 PresentationInterval = PresentInterval.Immediate
             });

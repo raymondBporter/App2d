@@ -19,14 +19,21 @@ internal sealed partial class RigidCharacterHost
                 () => Ui.Button("Reset (R)", () => HandleCommand(Keys.R)));
             Ui.Help(CurrentAnimationLabel);
         });
-        if (_authoring) DrawAuthoringPanel();
-        else Ui.Section("Play", () =>
+        if (_authoring)
         {
-            Ui.Row(() => Ui.Button("Jump", () => HandleCommand(Keys.Space)),
-                () => Ui.Button("Attack", () => HandleCommand(Keys.J)), () => Ui.Button("Hit", () => HandleCommand(Keys.H)));
-            Ui.Help("A/D or arrows move. Space jumps. J attacks. H plays hit. V swaps art.");
-            Ui.Help($"Feet: L {(_demo.LeftFootPlanted ? "planted" : "swing")} / R {(_demo.RightFootPlanted ? "planted" : "swing")}");
-        });
+            DrawAuthoringPanel();
+        }
+        else
+        {
+            Ui.Section("Play", () =>
+                {
+                    Ui.Row(() => Ui.Button("Jump", () => HandleCommand(Keys.Space)),
+                        () => Ui.Button("Attack", () => HandleCommand(Keys.J)), () => Ui.Button("Hit", () => HandleCommand(Keys.H)));
+                    Ui.Help("A/D or arrows move. Space jumps. J attacks. H plays hit. V swaps art.");
+                    Ui.Help($"Feet: L {(_demo.LeftFootPlanted ? "planted" : "swing")} / R {(_demo.RightFootPlanted ? "planted" : "swing")}");
+                });
+        }
+
         Ui.Section("Status", () => Ui.Help(_notice));
         Ui.Help("Wheel zooms. Escape closes.");
     }

@@ -51,7 +51,7 @@ public sealed class Gjk2DTests
         Assert.Equal(0f, Gjk2D.Query(new(repeated, .5f), new(touching, .5f)).SignedDistance);
         Assert.True(Gjk2D.Intersects(new(repeated, .5f), new(touching, .5f)));
         Assert.Equal(0f, Gjk2D.Query(new(point), new(point)).SignedDistance);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new ConvexProxy2D(Array.Empty<Vector2>()));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new ConvexProxy2D([]));
         Assert.Throws<ArgumentOutOfRangeException>(() => new ConvexProxy2D(new Vector2[1], -1f));
     }
 
@@ -203,8 +203,11 @@ public sealed class Gjk2DTests
         if (separation <= 0f) return separation;
         var squared = float.PositiveInfinity;
         for (var i = 0; i < first.Length; i++)
+        {
             for (var j = 0; j < second.Length; j++)
                 squared = Math.Min(squared, Distance2D.DistanceSquaredBetweenSegments(first[i], first[(i + 1) % first.Length], second[j], second[(j + 1) % second.Length]));
+        }
+
         return MathF.Sqrt(squared);
     }
 

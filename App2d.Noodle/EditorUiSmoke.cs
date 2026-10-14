@@ -9,8 +9,14 @@ internal static class EditorUiSmoke
         Directory.CreateDirectory(outputDirectory);
         using var window = new Form { ClientSize = new Size(1380, 840) };
         using var device = new GraphicsDevice(GraphicsAdapter.DefaultAdapter, GraphicsProfile.HiDef,
-            new PresentationParameters { DeviceWindowHandle = window.Handle, BackBufferWidth = 1380, BackBufferHeight = 840,
-                DepthStencilFormat = DepthFormat.Depth24, PresentationInterval = PresentInterval.Immediate });
+            new PresentationParameters
+            {
+                DeviceWindowHandle = window.Handle,
+                BackBufferWidth = 1380,
+                BackBufferHeight = 840,
+                DepthStencilFormat = DepthFormat.Depth24,
+                PresentationInterval = PresentInterval.Immediate
+            });
         using var bones = new BoneEditorHost();
         using var prototype = new NoodleEditorHost();
         using var rigid = new RigidCharacterHost();

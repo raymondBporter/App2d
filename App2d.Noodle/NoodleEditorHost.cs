@@ -14,7 +14,8 @@ internal sealed partial class NoodleEditorHost : NoodleToolHost
     private bool _showWeights;
 
     public NoodleEditorHost() : base("NoodleBRO — Full Body 2D Rig Lab", new Size(1180, 760),
-        new Camera2D { Position = new Vector2(125, -55), Zoom = .85f }) { }
+        new Camera2D { Position = new Vector2(125, -55), Zoom = .85f })
+    { }
 
     protected override void DrawScene(Renderer2D renderer, FrameTime time)
     {

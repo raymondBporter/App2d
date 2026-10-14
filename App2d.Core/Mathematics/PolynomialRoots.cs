@@ -90,7 +90,10 @@ public static class PolynomialRoots
             if (middle == low || middle == high) return middle;
             var value = Evaluate(coefficients, middle, detectRepeatedRoot: false);
             if (value == 0d) return middle;
-            if (OppositeSigns(lowValue, value)) high = middle;
+            if (OppositeSigns(lowValue, value))
+            {
+                high = middle;
+            }
             else
             {
                 low = middle;

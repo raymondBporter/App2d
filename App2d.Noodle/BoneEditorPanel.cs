@@ -41,7 +41,9 @@ internal sealed class BoneEditorPanel
                 ImGui.PopID();
             }
         }, size: new Vector2(0, MathF.Min(150 * Ui.Scale, ImGui.GetIO().DisplaySize.Y * .22f)), border: true), defaultOpen: true);
-        if (SelectedItem is RigShape2D) Ui.Section("Attachment", () =>
+        if (SelectedItem is RigShape2D)
+        {
+            Ui.Section("Attachment", () =>
         {
             // Names may be edited or duplicated; IDs identify the actual destination bone.
             ImGui.TextUnformatted("Bone"); ImGui.SetNextItemWidth(-1);
@@ -58,7 +60,12 @@ internal sealed class BoneEditorPanel
             Ui.Button("Attach shape", AttachSelectedShape);
             ImGui.SameLine(); Ui.Button("Delete", DeleteSelected);
         });
-        else Ui.Button("Delete bone", DeleteSelected, SelectedItem is RigBone2D);
+        }
+        else
+        {
+            Ui.Button("Delete bone", DeleteSelected, SelectedItem is RigBone2D);
+        }
+
         Ui.Panel("properties", () => { if (_properties.Draw(SelectedItem)) NormalizeName(); },
             size: new(0, MathF.Max(70 * Ui.Scale, ImGui.GetContentRegionAvail().Y - 115 * Ui.Scale)));
         if (_error is { } error) Ui.Problem(error);

@@ -13,9 +13,9 @@ public sealed class GiantTree2DTests
         var copy = new GiantTree2D(first.Root, settings, first.Seed);
         var leafy = new GiantTree2D(first.Root, settings with { FoliageRadius = new(100, 200) }, first.Seed);
         var different = new GiantTree2D(first.Root, settings, 8821);
-        Assert.Equal(first.Branches.ToArray(), copy.Branches.ToArray());
-        Assert.Equal(first.Branches.ToArray(), leafy.Branches.ToArray());
-        Assert.NotEqual(first.Branches.ToArray(), different.Branches.ToArray());
+        Assert.Equal([.. first.Branches], [.. copy.Branches]);
+        Assert.Equal([.. first.Branches], [.. leafy.Branches]);
+        Assert.NotEqual([.. first.Branches], [.. different.Branches]);
     }
 
     [Theory]

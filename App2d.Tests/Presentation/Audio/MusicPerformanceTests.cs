@@ -21,9 +21,9 @@ public sealed class MusicPerformanceTests(ITestOutputHelper output)
             new("a", "A", new(Vector2.Zero, new(10,10))), new("b", "B", new(new(10,0),new(20,10)))]
         };
         var director = new WorldMusicDirector2D(soundtrack, static (_, _) => { });
-        for (var i = 0; i < 1000; i++) director.Update(content, new((i / 4 % 2) * 10 + 1, 1), .5f);
+        for (var i = 0; i < 1000; i++) director.Update(content, new(i / 4 % 2 * 10 + 1, 1), .5f);
         var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 10000; i++) director.Update(content, new((i / 4 % 2) * 10 + 1, 1), .5f);
+        for (var i = 0; i < 10000; i++) director.Update(content, new(i / 4 % 2 * 10 + 1, 1), .5f);
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         output.WriteLine($"10,000 zone updates including transitions: {allocated} bytes allocated.");
         Assert.Equal(0, allocated);

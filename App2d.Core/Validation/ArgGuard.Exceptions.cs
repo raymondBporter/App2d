@@ -94,12 +94,11 @@ public static partial class ArgGuard
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static void ThrowNaNException<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) =>
-    throw CreateOutOfRange(value, $"Value must be be a valid number", paramName);
+    throw CreateOutOfRange(value, "Value must be be a valid number", paramName);
 
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]
     public static void ThrowNullException(string? paramName = null) => throw CreateNull(paramName);
-
 
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]

@@ -13,6 +13,10 @@
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
     <ProjectReference Include="..\App2d.EditorUi\App2d.EditorUi.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+    <PackageReference Include="Philips.CodeAnalysis.DuplicateCodeAnalyzer" Version="2.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -29,20 +33,14 @@
 
   <!-- Refresh pulled resources and bootstrap a missing Debug tree on normal builds. -->
   <Target Name="SyncStaticAssets" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">
-    <Copy SourceFiles="@(StaticAsset)"
-          DestinationFiles="@(StaticAsset->'..\Assets\Runtime\%(RecursiveDir)%(Filename)%(Extension)')"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(StaticAsset)" DestinationFiles="@(StaticAsset->'..\Assets\Runtime\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
   </Target>
 
-  <Target Name="ResetReleaseAssetsOutput"
-          AfterTargets="GetCopyToOutputDirectoryItems"
-          Condition="'$(DesignTimeBuild)' != 'true' and '$(Configuration)' != 'Debug'">
+  <Target Name="ResetReleaseAssetsOutput" AfterTargets="GetCopyToOutputDirectoryItems" Condition="'$(DesignTimeBuild)' != 'true' and '$(Configuration)' != 'Debug'">
     <RemoveDir Directories="$(OutDir)Assets" />
   </Target>
 
-  <Target Name="ResetPublishedAssetsOutput"
-          BeforeTargets="PrepareForPublish"
-          Condition="'$(DesignTimeBuild)' != 'true' and '$(PublishDir)' != ''">
+  <Target Name="ResetPublishedAssetsOutput" BeforeTargets="PrepareForPublish" Condition="'$(DesignTimeBuild)' != 'true' and '$(PublishDir)' != ''">
     <RemoveDir Directories="$(PublishDir)Assets" />
   </Target>
 

@@ -3,21 +3,21 @@ using System.Numerics;
 
 namespace App2d.Tests.Geometry;
 
-public sealed class Interval1DTests
+public sealed class IntervalTests
 {
     [Fact]
     public void LengthContainmentAndOverlapIncludeTheEnds()
     {
-        var interval = new Interval1D(-1, 3);
+        var interval = new Interval<float>(-1, 3);
         Assert.Equal(4, interval.Length);
         Assert.True(interval.Contains(-1));
         Assert.True(interval.Contains(3));
         Assert.False(interval.Contains(3.01f));
         Assert.True(interval.Overlaps(new(3, 5)));
-        Assert.True(new Interval1D(3, 5).Overlaps(interval));
+        Assert.True(new Interval<float>(3, 5).Overlaps(interval));
         Assert.False(interval.Overlaps(new(3.01f, 5)));
         Assert.True(interval.Overlaps(new(0, 0)));
-        Assert.Equal(0, new Interval1D(2, 2).Length);
+        Assert.Equal(0, new Interval<float>(2, 2).Length);
     }
 
     [Fact]

@@ -57,13 +57,13 @@ public sealed class Distance2DTests
     [Fact]
     public void IntervalContainmentNeedsEscapeDepthNotJustIntersectionLength()
     {
-        var inner = new Interval1D(-1, 1);
-        var outer = new Interval1D(-5, 5);
+        var inner = new Interval<float>(-1, 1);
+        var outer = new Interval<float>(-5, 5);
         Assert.Equal(-6f, Distance2D.SignedDistance(inner, outer, out var direction));
         Assert.Equal(-1f, direction);
         Assert.Equal(-6f, Distance2D.SignedDistance(outer, inner));
-        Assert.Equal(0f, Distance2D.SignedDistance(inner, new Interval1D(1, 3)));
-        Assert.Equal(2f, Distance2D.Distance(inner, new Interval1D(3, 5)));
+        Assert.Equal(0f, Distance2D.SignedDistance(inner, new Interval<float>(1, 3)));
+        Assert.Equal(2f, Distance2D.Distance(inner, new Interval<float>(3, 5)));
     }
 
     [Fact]

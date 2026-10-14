@@ -183,7 +183,7 @@ public sealed class EditorUiTests
             io.Fonts.GetTexDataAsRGBA32(out nint _, out _, out _, out _);
         }
 
-        public void Draw(Action content, IImGuiPlatform? platform = null)
+        public void Draw(Action content, WinFormsImGuiPlatform? platform = null)
         {
             ImGui.SetCurrentContext(_context);
             platform?.UpdateInput(ImGui.GetIO());

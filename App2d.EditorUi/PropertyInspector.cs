@@ -19,6 +19,7 @@ public sealed class PropertyInspector
         if (model is null) return false;
         var changed = false;
         foreach (var group in Properties(model).GroupBy(p => p.Category).OrderBy(g => g.Key))
+        {
             Ui.Section(group.Key, () =>
             {
                 foreach (var property in group.OrderBy(p => p.DisplayName))
@@ -29,6 +30,8 @@ public sealed class PropertyInspector
                     if (property.Description.Length > 0 && ImGui.IsItemHovered()) ImGui.SetTooltip(property.Description);
                 }
             });
+        }
+
         if (Error is { } error) Ui.Problem(error);
         return changed;
     }

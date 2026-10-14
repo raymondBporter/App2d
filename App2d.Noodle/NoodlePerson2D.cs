@@ -60,7 +60,7 @@ internal sealed class NoodlePerson2D
 
     public NoodleArm2D TargetLimb => _limbs[_selectedLimbIndex].Limb;
     public string SelectedControlName => _limbs[_selectedLimbIndex].Name;
-    public string[] ControlNames => _limbs.Select(limb => limb.Name).ToArray();
+    public string[] ControlNames => [.. _limbs.Select(limb => limb.Name)];
     public void SelectControl(string name)
     {
         var index = Array.FindIndex(_limbs, limb => limb.Name == name);

@@ -25,7 +25,8 @@ public sealed class GiantTreeLevel2DTests
         var branch = tree.Branches[0];
         var spawn = new Vector2(branch.Bounds.Center.X, branch.Bounds.Top + 48);
         using var game = SideScrollerSimulation2D.Create(new(Traversal(), Map(), [],
-            [new(1, WorldThingKind2D.PlayerSpawn, "Branch", true, spawn)]) { GiantTrees = [tree] });
+            [new(1, WorldThingKind2D.PlayerSpawn, "Branch", true, spawn)])
+        { GiantTrees = [tree] });
         for (var i = 0; i < 90; i++) Step(default);
         Assert.True(game.Player.IsGrounded);
         Assert.Equal(branch.Bounds.Top, game.Player.WorldObject.WorldBounds.Bottom, 2);

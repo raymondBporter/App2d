@@ -55,10 +55,10 @@ public static class GiantTreeFile2D
         }
     }
 
-    private static Interval1D WorldRange(float[]? values, float tileSize, string name)
+    private static Interval<float> WorldRange(float[]? values, float tileSize, string name)
     {
         if (values is not { Length: 2 }) throw new InvalidDataException($"{name} must be [minimum, maximum].");
-        var range = new Interval1D(values[0] * tileSize, values[1] * tileSize);
+        var range = new Interval<float>(values[0] * tileSize, values[1] * tileSize);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(range.Min, name);
         ArgGuard.ThrowIfNotFiniteOrLessThan(range.Max, range.Min, name);
         return range;

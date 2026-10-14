@@ -33,7 +33,7 @@ public readonly record struct ConstraintLimit1D
             ArgGuard.ThrowOutOfRange(minimum, "The minimum must be finite or negative infinity.");
 
         ArgGuard.ThrowIfNan(maximum, nameof(minimum));
-        if (maximum == float.NegativeInfinity) 
+        if (maximum == float.NegativeInfinity)
             ArgGuard.ThrowOutOfRange(maximum, "The maximum must be finite or positive infinity.");
 
         ArgGuard.ThrowIf(minimum > maximum, "The minimum limit cannot exceed the maximum limit.");
