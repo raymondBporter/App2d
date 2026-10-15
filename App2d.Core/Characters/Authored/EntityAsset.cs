@@ -3,6 +3,7 @@ using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
+using SharpDX.DirectWrite;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -11,14 +12,8 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>A moment in an action: a clip marker when named, otherwise a normalized time over the clip's duration.</summary>
 public sealed record ActionTime
 {
-    public string? Marker
-    {
-        get; set;
-    }
-    public float At
-    {
-        get; set;
-    }
+    public string? Marker { get; set; }
+    public float At { get; set; }
 }
 
 /// <summary>
@@ -31,35 +26,17 @@ public sealed record HitWindow
     public string Id { get; set; } = "hit";
     public ActionTime Start { get; set; } = new();
     public ActionTime Finish { get; set; } = new() { At = 1 };
-    public string? Socket
-    {
-        get; set;
-    }
-    public string? Prop
-    {
-        get; set;
-    }
+    public string? Socket { get; set; }
+    public string? Prop { get; set; }
     public string Point { get; set; } = PropAsset.TipPoint;
-    public float Along
-    {
-        get; set;
-    }
-    public float OffsetX
-    {
-        get; set;
-    }
-    public float OffsetY
-    {
-        get; set;
-    }
+    public float Along { get; set; }
+    public float OffsetX { get; set; }
+    public float OffsetY { get; set; }
     /// <summary>The region in the anchor frame; any convex shape definition.</summary>
     public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.3f, .3f);
     public int Damage { get; set; } = 1;
     /// <summary>Played where the hit lands; null plays the game's default impact.</summary>
-    public string? Sound
-    {
-        get; set;
-    }
+    public string? Sound { get; set; }
 }
 
 /// <summary>
@@ -74,15 +51,9 @@ public sealed record ProjectileDef
     public int Damage { get; set; } = 1;
     public float Lifetime { get; set; } = 3;
     /// <summary>Downward acceleration in model units/s²; zero preserves straight shots.</summary>
-    public float Gravity
-    {
-        get; set;
-    }
+    public float Gravity { get; set; }
     /// <summary>When positive, solve an arc to the target sampled when the attack starts.</summary>
-    public float FlightSeconds
-    {
-        get; set;
-    }
+    public float FlightSeconds { get; set; }
 }
 
 /// <summary>A gameplay event bound to an action moment. The controller interprets Id (for example "launch"); Sound, when set, plays.</summary>
@@ -90,10 +61,7 @@ public sealed record ActionEvent
 {
     public string Id { get; set; } = "";
     public ActionTime At { get; set; } = new();
-    public string? Sound
-    {
-        get; set;
-    }
+    public string? Sound { get; set; }
 }
 
 /// <summary>
@@ -105,46 +73,22 @@ public sealed record ActionEvent
 public sealed record EntityActionDef
 {
     public string Id { get; set; } = "";
-    public string? Role
-    {
-        get; set;
-    }
-    public string? Clip
-    {
-        get; set;
-    }
-    public string? Mask
-    {
-        get; set;
-    }
-    public float BlendIn
-    {
-        get; set;
-    }
-    public float BlendOut
-    {
-        get; set;
-    }
+    public string? Role { get; set; }
+    public string? Clip { get; set; }
+    public string? Mask { get; set; }
+    public float BlendIn { get; set; }
+    public float BlendOut { get; set; }
     /// <summary>What a "fire" event launches. Required with one, meaningless without.</summary>
-    public ProjectileDef? Projectile
-    {
-        get; set;
-    }
+    public ProjectileDef? Projectile { get; set; }
     public List<HitWindow> Hits { get; set; } = [];
     public List<ActionEvent> Events { get; set; } = [];
     /// <summary>
     /// A combo: the action another press plays while this one runs (buffered to its end) or its <see cref="Recovery"/> still
     /// holds the weapon out. An action reached this way needs no support from the controller of its own.
     /// </summary>
-    public string? Next
-    {
-        get; set;
-    }
+    public string? Next { get; set; }
     /// <summary>The clip played when the action ends and nothing else takes over, such as putting the weapon away.</summary>
-    public string? Recovery
-    {
-        get; set;
-    }
+    public string? Recovery { get; set; }
 }
 
 /// <summary>The controller and its supported configuration. Speeds are model units per second.</summary>
@@ -159,20 +103,11 @@ public sealed record FlightDef
 public sealed record ControllerConfig
 {
     public string Kind { get; set; } = EntityControllers.Walker;
-    public FlightDef? Flight
-    {
-        get; set;
-    }
+    public FlightDef? Flight { get; set; }
     public float WalkSpeed { get; set; } = 1.5f;
     /// <summary>Speed while the run input is held; the run role plays when assigned. Zero never runs.</summary>
-    public float RunSpeed
-    {
-        get; set;
-    }
-    public float JumpSpeed
-    {
-        get; set;
-    }
+    public float RunSpeed { get; set; }
+    public float JumpSpeed { get; set; }
     /// <summary>AI: attack within this horizontal distance.</summary>
     public float Range { get; set; } = 1.5f;
     public float Cooldown { get; set; } = 1;
@@ -181,24 +116,12 @@ public sealed record ControllerConfig
         get; set;
     }
     public float VerticalRange { get; set; } = 2;
-    public float RetreatRange
-    {
-        get; set;
-    }
+    public float RetreatRange { get; set; }
     public float RetreatSeconds { get; set; } = .35f;
     public float RetreatPause { get; set; } = .65f;
-    public float ChargeSpeed
-    {
-        get; set;
-    }
-    public float ChargeStartSeconds
-    {
-        get; set;
-    }
-    public float ChargeEndSeconds
-    {
-        get; set;
-    }
+    public float ChargeSpeed { get; set; }
+    public float ChargeStartSeconds { get; set; }
+    public float ChargeEndSeconds { get; set; }
     public float BrakeSeconds { get; set; } = .3f;
 }
 
@@ -217,23 +140,14 @@ public sealed record MovementDef
 
 public sealed record HurtOverride
 {
-    public bool Disabled
-    {
-        get; set;
-    }
-    public float? Pad
-    {
-        get; set;
-    }
+    public bool Disabled { get; set; }
+    public float? Pad { get; set; }
 }
 
 /// <summary>The model's hurt layout this entity uses, with explicit per-region overrides.</summary>
 public sealed record HurtSelection
 {
-    public string? Layout
-    {
-        get; set;
-    }
+    public string? Layout { get; set; }
     public Dictionary<string, HurtOverride> Regions { get; set; } = [];
 }
 
@@ -283,7 +197,7 @@ public sealed class EntityAsset
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static EntityAsset FromJson(string json)
     {
-        var entity = AuthoredAsset.Parse<EntityAsset>(EntityAssetUpgrade.ToCurrent(json), "entity");
+        var entity = AuthoredAsset.Parse<EntityAsset>(json, "entity");
         entity.Validate();
         return entity;
     }
@@ -500,8 +414,17 @@ public sealed record ControllerSpec(string Id, IReadOnlyList<string> RequiredRol
 /// </summary>
 public static class EntityControllers
 {
-    public const string Walker = "walker", Platformer = "platformer", Stationary = "stationary", Flying = "flying", Traversal = "traversal";
-    public const string Attack = "attack", Jump = "jump", Hit = "hit", Death = "death", Shoot = "shoot", WallShot = "wall-shot";
+    public const string Walker = "walker";
+    public const string Platformer = "platformer";
+    public const string Stationary = "stationary";
+    public const string Flying = "flying";
+    public const string Traversal = "traversal";
+    public const string Attack = "attack";
+    public const string Jump = "jump";
+    public const string Hit = "hit";
+    public const string Death = "death";
+    public const string Shoot = "shoot";
+    public const string WallShot = "wall-shot";
     /// <summary>A second swing played while the weapon is still out from the first.</summary>
     public const string FollowUp = "follow-up";
     public const string Idle = "idle";

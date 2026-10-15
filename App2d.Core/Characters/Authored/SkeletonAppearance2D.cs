@@ -78,14 +78,8 @@ public sealed record AnimationEvent2D
 /// <summary>Cubic curve with normalized time controls. Value controls may overshoot, including between equal endpoints.</summary>
 public sealed record KeyCurve2D
 {
-    public float X1
-    {
-        get; set;
-    }
-    public float Y1
-    {
-        get; set;
-    }
+    public float X1 { get; set; }
+    public float Y1 { get; set; }
     public float X2 { get; set; } = 1;
     public float Y2 { get; set; } = 1;
     /// <summary>When true, Y1/Y2 are channel values; otherwise they are fractions of the endpoint difference.</summary>

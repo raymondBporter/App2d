@@ -23,14 +23,8 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
     private double _accumulator;
     private int _logged;
 
-    public bool Active
-    {
-        get; private set;
-    }
-    public bool Paused
-    {
-        get; set;
-    }
+    public bool Active { get; private set; }
+    public bool Paused { get; set; }
     public bool Overlays { get; set; } = true;
     public List<string> Roster { get; } = [StarterContent.Player, StarterContent.SpearGuard, StarterContent.StalkerPest, "cinder-gunner"];
     public IReadOnlyList<string> Problems { get; private set; } = [];

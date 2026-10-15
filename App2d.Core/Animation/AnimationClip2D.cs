@@ -34,10 +34,7 @@ public sealed class AnimationClip2D<TFrame>
         IsLooping = isLooping;
     }
 
-    public AnimationClip2D(
-        IEnumerable<TFrame> frames,
-        IEnumerable<float> frameDurations,
-        bool isLooping = true)
+    public AnimationClip2D(IEnumerable<TFrame> frames, IEnumerable<float> frameDurations, bool isLooping = true)
     {
         ArgGuard.ThrowIfNull(frames);
         ArgGuard.ThrowIfNull(frameDurations);
@@ -46,17 +43,13 @@ public sealed class AnimationClip2D<TFrame>
         _frameDurations = [.. frameDurations];
         ArgGuard.ThrowIfTooShort(_frames.AsSpan(), 1, nameof(frames));
         ArgGuard.ThrowIfContainsNull(_frames.AsSpan(), nameof(frames));
-        ArgGuard.ThrowIf(_frameDurations.Length != _frames.Length,
-            "Frame durations must contain exactly one value for every frame.", nameof(frameDurations));
+        ArgGuard.ThrowIf(_frameDurations.Length != _frames.Length, "Frame durations must contain exactly one value for every frame.", nameof(frameDurations));
         for (var index = 0; index < _frameDurations.Length; index++)
         {
             var duration = _frameDurations[index];
             if (!NumericValidation.IsFiniteAndPositive(duration))
             {
-                ArgGuard.ThrowOutOfRange(
-                    duration,
-                    $"Frame duration at index {index} must be positive and finite.",
-                    nameof(frameDurations));
+                ArgGuard.ThrowOutOfRange(duration, $"Frame duration at index {index} must be positive and finite.", nameof(frameDurations));
             }
         }
 
@@ -72,26 +65,14 @@ public sealed class AnimationClip2D<TFrame>
     public IReadOnlyList<TFrame> Frames => _frames;
     public int FrameCount => _frames.Length;
     public bool HasUniformFrameDuration => UniformFrameDuration is not null;
-    public float? UniformFramesPerSecond
-    {
-        get;
-    }
-    public float? UniformFrameDuration
-    {
-        get;
-    }
+    public float? UniformFramesPerSecond { get; }
+    public float? UniformFrameDuration { get; }
     public float FramesPerSecond => UniformFramesPerSecond ??
         throw StateGuard.Create("This animation clip uses per-frame durations.");
     public float FrameDuration => UniformFrameDuration ??
         throw StateGuard.Create("This animation clip uses per-frame durations.");
-    public float Duration
-    {
-        get;
-    }
-    public bool IsLooping
-    {
-        get;
-    }
+    public float Duration { get; }
+    public bool IsLooping { get; }
 
     public TFrame this[int index] => _frames[index];
 
