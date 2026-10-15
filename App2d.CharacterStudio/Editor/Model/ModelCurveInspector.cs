@@ -11,6 +11,15 @@ internal static class ModelCurveInspector
     public static void Draw(PuppetPart part, IReadOnlyList<string> controls, Action<Action<PuppetPart>> change)
     {
         if (part.Geometry is not CurveDefinition2D curve) return;
+        if (ImGui.CollapsingHeader("Normal wave"))
+        {
+            var amplitude = part.WaveAmplitude; var cycles = part.WaveCycles;
+            if (Ui.Drag("Bump height", ref amplitude, .001f, -.5f, .5f)) change(p => p.WaveAmplitude = amplitude);
+            if (Ui.Drag("Bumps along curve", ref cycles, .05f, .1f, 16)) change(p => p.WaveCycles = cycles);
+            if (Ui.Combo("Wave travel control", part.WavePhaseControl ?? "(none)", controls.Prepend("(none)")) is { } phase)
+                change(p => p.WavePhaseControl = phase == "(none)" ? null : phase);
+            Ui.Help("Bumps follow the curve normal. Animate the travel control along the curve's endpoint span to move them. Negative height bends to the other side.");
+        }
         var kind = curve switch
         {
             LineCurveDefinition2D => "Line",

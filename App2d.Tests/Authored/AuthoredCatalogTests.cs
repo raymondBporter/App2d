@@ -16,7 +16,7 @@ public sealed class AuthoredCatalogTests
         Assert.Equal(
         [
             "baby-triceratops-brake", "baby-triceratops-charge", "baby-triceratops-death", "baby-triceratops-head-down", "baby-triceratops-hit", "baby-triceratops-idle", "baby-triceratops-recover", "baby-triceratops-run", "baby-triceratops-rush", "baby-triceratops-scrape", "baby-triceratops-walk",
-            "club-caveman-slam", "curve-face-smile",
+            "club-caveman-slam", "curve-face-angry", "curve-face-blink", "curve-face-crossed-eyes", "curve-face-expressions", "curve-face-hair-wave", "curve-face-smile", "curve-face-surprised", "curve-face-wink", "curve-face-worried",
             "person-death", "person-hammer-slam", "person-heavy-walk", "person-hit", "person-idle", "person-jump", "person-pistol-shot", "person-run", "person-thrust", "person-walk",
             "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-climb-off", "player-climb-on", "player-dash", "player-death", "player-fall",
             "player-gun-aim", "player-gun-charge", "player-gun-shot", "player-gun-wall-shot", "player-heal-gather", "player-hit", "player-idle", "player-jump", "player-land",

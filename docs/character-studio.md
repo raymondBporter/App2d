@@ -10,6 +10,8 @@ the referenced model and animations into independent drafts. Add a recipe and it
 no C# menu entry is needed. Person includes seven starter clips, Quadruped and Triceratops eight each, and Stalker five.
 Use **Save all** to save the created bundle. Existing model, clip and entity files are unaffected by template creation.
 
+For a small curve animation example, choose **New → Model: Curve face template** and press Play on **Expressions — play me**. Its separate clips show smile, blink, wink, angry, worried, surprised and crossed eyes; Hair wave shows moving bumps along a curve's normal. In Model, select a curve part and use **Edit curve handles** or **Normal wave**. In Animate, the named controls use the same translation and scale keys as the rest of the rig. Create a fresh template instance to get all nine clips and the added controls.
+
 ## Run
 
 ```powershell

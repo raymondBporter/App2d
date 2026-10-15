@@ -114,6 +114,11 @@ public sealed record PuppetPart
     public List<PartPaint>? Paint { get; set; }
     /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
     public List<PartPointBinding>? Bindings { get; set; }
+    /// <summary>Optional sine bumps along a curve's normal, in units of its endpoint span. Negative bends to the other side.</summary>
+    public float WaveAmplitude { get; set; }
+    public float WaveCycles { get; set; } = 1;
+    /// <summary>Moving this control along the endpoint span moves the wave by the same distance.</summary>
+    public string? WavePhaseControl { get; set; }
     public string Face { get; set; } = "none";
     public float FaceX { get; set; }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
@@ -142,6 +147,10 @@ public sealed record PuppetPart
         var linkedStroke = Geometry is CurveDefinition2D;
         if (linkedStroke && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
         if (linkedStroke && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
+        new Limit(-1, 1).Check(WaveAmplitude, "part.waveAmplitude");
+        new Limit(.1f, 16).Check(WaveCycles, "part.waveCycles");
+        if ((WaveAmplitude != 0 || WavePhaseControl is not null) && !linkedStroke) throw new InvalidDataException("Normal waves require a curve.");
+        if (WavePhaseControl is not null && !isControl(WavePhaseControl)) throw new InvalidDataException("Unknown wave phase control: " + WavePhaseControl);
         new Limit(-1000, 1000).Check(Angle, "part.angle");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
@@ -316,7 +325,7 @@ public sealed class PuppetDefinition
     {
         Controls.RemoveAll(c => c.Id == id); Bones.RemoveAll(b => b.From == id || b.To == id);
         Chains.RemoveAll(c => c.Root == id || c.Joint == id || c.End == id);
-        Parts.RemoveAll(p => p.A == id || p.B == id || p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true);
+        Parts.RemoveAll(p => p.A == id || p.B == id || p.WavePhaseControl == id || p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true);
         foreach (var motion in Motions)
         {
             foreach (var key in motion.Keys) key.Points.Remove(id);

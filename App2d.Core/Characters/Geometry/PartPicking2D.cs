@@ -24,7 +24,7 @@ public static class PartPicking2D
         var p = new Vector2(point.X, point.Y);
         if (part.Geometry is CurveDefinition2D curve)
         {
-            if (part.Bindings is { Count: > 0 })
+            if (part.Bindings is { Count: > 0 } || part.WaveAmplitude != 0)
             {
                 var path = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
                 var nearest = float.PositiveInfinity;

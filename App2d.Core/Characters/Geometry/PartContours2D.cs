@@ -1,9 +1,7 @@
 using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Builders;
-using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Mathematics;
-using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -17,25 +15,10 @@ public static class PartContours2D
 
     public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, angle: null, rest: rest);
 
-    /// <summary>The closed outline of an ellipse, rounded box, trapezoid or cutout, or a stroke's two endpoints.</summary>
+    /// <summary>A shape's closed outline or a curve's sampled open stroke.</summary>
     public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
     {
-        if (part.Geometry is CurveDefinition2D curve)
-        {
-            if (part.Bindings is { Count: > 0 }) return PartCurves2D.BoundContour(part, curve, world, rest);
-            var a = world(part.A);
-            var b = world(part.B!);
-            var curveFrame = Frame2D.FromYAxis(a.XY, b.XY - a.XY);
-            var result = new List<Vector3>();
-            var geometry = GeometryDefinitionCache2D.CurveOf(curve);
-            var count = geometry switch { LineSegmentCurve2D => 2, PolylineCurve2D polyline => polyline.Points.Length, _ => 33 };
-            for (var i = 0; i < count; i++)
-            {
-                var p = geometry.Evaluate((float)i / (count - 1));
-                result.Add(new Vector3(curveFrame.TransformPoint(p), a.Z + (b.Z - a.Z) * p.Y + part.Depth));
-            }
-            return result;
-        }
+        if (part.Geometry is CurveDefinition2D) return PartCurves2D.Contour(part, world, rest);
         var frame = PartAttachment2D.FrameOf(part, world, angle, transform);
         if (part.Geometry is SimplePolygon2D.Builder && part.Bindings is { Count: > 0 })
         {

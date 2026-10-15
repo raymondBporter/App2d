@@ -97,8 +97,17 @@ internal static class EditorSurfaceSmoke
             session.Open(slotClip); session.Selection.Select(slot: "paint"); session.Seek(0);
             shell.Viewport.Fit(session.Scene().FirstOrDefault());
             Capture("animation-slot");
+            foreach (var (role, at) in new[] { ("smile", 1.5f), ("blink", 1f), ("wink", 1f), ("angry", 1f), ("worried", 1f), ("surprised", 1f), ("crossed-eyes", 1f), ("hair-wave", .375f) })
+            {
+                session.Open("curve-face-" + role); session.ShowRest = session.EditRig = false;
+                session.SetMode(Workspace.Model);
+                session.Selection.Clear(); session.Seek(at); shell.Viewport.Fit(session.Scene().FirstOrDefault());
+                Capture("curve-face-" + role);
+            }
+            session.Open("curve-face"); session.Selection.Select(part: "hair");
+            Capture("curve-face-hair-inspector");
         }
-        Console.WriteLine("Animation settings, controls, weapon and slot inspectors, and model views rendered at two sizes and scales.");
+        Console.WriteLine("Animation settings, controls, weapon and slot inspectors, model views and curve facial studies rendered at two sizes and scales.");
     }
 
     private static string CreateSlotPreview(AuthoringWorkspace assets)

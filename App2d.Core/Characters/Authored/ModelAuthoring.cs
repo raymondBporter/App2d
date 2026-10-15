@@ -94,6 +94,8 @@ public static class ModelAuthoring
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
         if (model.Parts.FirstOrDefault(p => p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true) is { } bound)
             throw new InvalidOperationException($"{owner}: part '{bound.Id}' uses '{id}'; detach its points first.");
+        if (model.Parts.FirstOrDefault(p => p.WavePhaseControl == id) is { } wave)
+            throw new InvalidOperationException($"{owner}: part '{wave.Id}' uses '{id}'; detach its wave control first.");
         if (model.Slots.FirstOrDefault(s => s.Bone == id) is { } slot) throw new InvalidOperationException($"{owner}: slot '{slot.Id}' uses '{id}'. Move or remove the slot first.");
         var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);

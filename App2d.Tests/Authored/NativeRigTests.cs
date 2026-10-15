@@ -14,7 +14,8 @@ public sealed class NativeRigTests
     {
         var model = new CharacterModel
         {
-            Id = "wheel", Name = "Wheel",
+            Id = "wheel",
+            Name = "Wheel",
             Controls =
             [
                 new() { Id = "wheel-root", Name = "Wheel Root", Transform = new()
@@ -33,12 +34,19 @@ public sealed class NativeRigTests
             ]
         };
         foreach (var (id, bone) in new[] { ("default-red", "wheel-root"), ("default-blue", "spoke-tip"), ("gold-finish-red", "wheel-root") })
+        {
             model.Parts.Add(new()
             {
-                Id = id, A = bone, Frame = bone, Width = .16f, Height = .2f,
+                Id = id,
+                A = bone,
+                Frame = bone,
+                Width = .16f,
+                Height = .2f,
                 Geometry = new Rectangle2D.Builder { Min = new(-.5f, -.5f), Max = new(.5f, .5f) },
                 Material = new() { Texture = "images/" + id + ".png" }
             });
+        }
+
         var clip = ClipAuthoring.New(ResolvedModel.From(model), "wheel-turn", "Turn", loop: false);
         clip.Tracks =
         [

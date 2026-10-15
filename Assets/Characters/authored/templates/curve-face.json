@@ -3,8 +3,18 @@
   "version": 1,
   "id": "curve-face",
   "name": "Curve face",
-  "description": "A head with a Bézier mouth attached to three ordinary controls. Edit the handles and animate the controls to change its expression.",
+  "description": "Editable curve eyes, brows and mouth: smile, blink, wink, angry, worried, surprised, crossed eyes and traveling hair bumps. Play Expressions for a tour.",
   "model": "curve-face",
-  "animations": { "smile": "curve-face-smile" },
-  "previewAnimation": "smile"
+  "animations": {
+    "smile": "curve-face-smile",
+    "blink": "curve-face-blink",
+    "wink": "curve-face-wink",
+    "angry": "curve-face-angry",
+    "worried": "curve-face-worried",
+    "surprised": "curve-face-surprised",
+    "crossed-eyes": "curve-face-crossed-eyes",
+    "hair-wave": "curve-face-hair-wave",
+    "expressions": "curve-face-expressions"
+  },
+  "previewAnimation": "expressions"
 }
