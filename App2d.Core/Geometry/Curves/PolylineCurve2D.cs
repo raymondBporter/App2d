@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -40,7 +41,7 @@ public sealed class PolylineCurve2D : ICurve2D
 
     private (int Index, float Fraction) Segment(float amount)
     {
-        var progress = Math.Clamp(amount, 0f, 1f) * (_points.Length - 1);
+        var progress = Clamping.Clamp01(amount) * (_points.Length - 1);
         var index = Math.Min(_points.Length - 2, (int)progress);
         return (index, progress - index);
     }

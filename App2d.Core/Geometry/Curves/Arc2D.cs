@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -28,7 +29,7 @@ public readonly record struct Arc2D : ICurve2D
 
     public Vector2 Evaluate(float amount)
     {
-        amount = Math.Clamp(amount, 0f, 1f);
+        amount = Clamping.Clamp01(amount);
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
         return new((float)(Center.X + Radius * Math.Cos(angle)),
             (float)(Center.Y + Radius * Math.Sin(angle)));
@@ -36,7 +37,7 @@ public readonly record struct Arc2D : ICurve2D
 
     public Vector2 EvaluateDerivative(float amount)
     {
-        amount = Math.Clamp(amount, 0f, 1f);
+        amount = Clamping.Clamp01(amount);
         var angle = (double)StartAngleRadians + (double)SweepAngleRadians * amount;
         var speed = (double)Radius * SweepAngleRadians;
         return new((float)(-speed * Math.Sin(angle)), (float)(speed * Math.Cos(angle)));

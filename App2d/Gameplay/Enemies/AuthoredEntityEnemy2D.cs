@@ -216,7 +216,8 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         // In the air nothing is held from one step to the next, so the feet plant afresh where they land. The platform
         // carried the body before _rootBefore was taken, so the distance walked is already the body's own.
         var ground = initial ? null : GroundSupport2D.Velocity(_physics.LastContacts, Body, CanStandOn);
-        var root = Root; var grounded = MathF.Abs(Body.LinearVelocity.Y - (ground?.Y ?? 0)) < 1;
+        var root = Root;
+        var grounded = MathF.Abs(Body.LinearVelocity.Y - (ground?.Y ?? 0)) < 1;
         var airborne = _flight is not null || !initial && !grounded;
         if (airborne) _animator.Lift();
         else if (ground is { } carry && carry != Vector2.Zero) _animator.Carry(new Vector3(carry * dt / Scale, 0));
@@ -271,7 +272,9 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             var acceleration = new Vector2(0, -bolt.Gravity);
             var distance = bolt.Velocity * _dt + acceleration * (_dt * _dt / 2);
             var steps = Math.Max(1, (int)MathF.Ceiling(distance.Length() / 4));
-            var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(bolt.Size)); var position = bolt.Position; var hit = false;
+            var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(bolt.Size));
+            var position = bolt.Position;
+            var hit = false;
             for (var step = 1; step <= steps; step++)
             {
                 var t = _dt * step / steps;

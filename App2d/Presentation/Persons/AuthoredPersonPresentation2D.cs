@@ -96,7 +96,8 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         var facing = s.Facing < 0 ? -1 : 1;
         var pose = _hold.Evaluate(Director.Moves.Model, frame.Clip, Math.Max(0, frame.Seconds), frame.Repeat, Feet(s) / _worldUnitsPerModelUnit, facing, new() { Overlay = frame.Overlay }, frame.Planted);
         Pose = pose;
-        var model = Director.Moves.Model; var sockets = model.Base.Sockets;
+        var model = Director.Moves.Model;
+        var sockets = model.Base.Sockets;
         _shader.Pose = pose.Local; _shader.Facing = facing; _shader.Face = _face.Pose;
         var seconds = (float)Math.Min(frame.PropSeconds, frame.PropClip.Duration);
         _shader.Props = [.. PersonLoadout.Dressed(frame.PropClip, seconds, frame.Gear, Director.Moves.Hero).Select(w => (Director.Moves.Props[w.Prop], sockets.First(k => k.Id == w.Socket)))];
@@ -114,7 +115,8 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         var moves = Director.Moves;
         var clip = frame.PropClip;
         if (frame.Gear != PersonGear.Sword || !PersonLoadout.SwordInHand(clip, seconds)) { _swoosh.Record((float)_clock, default, default, false); return; }
-        var sword = moves.Props[PersonLoadout.Sword]; var socket = moves.Model.Base.Sockets.First(k => k.Id == PersonLoadout.SwordSocket);
+        var sword = moves.Props[PersonLoadout.Sword];
+        var socket = moves.Model.Base.Sockets.First(k => k.Id == PersonLoadout.SwordSocket);
         if (!_backhands.TryGetValue(clip, out var backhand)) _backhands[clip] = backhand = PersonLoadout.Backhand(moves.Model, clip, sword, socket);
         _swoosh.Sweep = backhand ? 1 : -1; _swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary;
         var (guard, tip) = PersonLoadout.Blade(pose, sword, socket);

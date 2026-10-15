@@ -98,7 +98,8 @@ internal sealed partial class ProofRenders
     {
         var clips = catalog.Animations;
         ReviewItem Of(string id, string scene = "ground", bool gun = false, string note = "") => new(id, clips[id].Name, clips[id], scene, gun, note);
-        var run = catalog.Animations["person-run"]; var walk = catalog.Animations["person-walk"];
+        var run = catalog.Animations["person-run"];
+        var walk = catalog.Animations["person-walk"];
         var combo = Sequence(.1f, clips[SwingLab.SideCutClip], clips[SwingLab.BackhandClip], clips[SwingLab.ForehandClip], clips[SwingLab.PutAwayClip]);
         return
         [

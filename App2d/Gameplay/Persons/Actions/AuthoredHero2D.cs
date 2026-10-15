@@ -50,7 +50,8 @@ public sealed class AuthoredHero2D
     /// </summary>
     internal MeleeAttackProfile2D Profile(string? id)
     {
-        var swing = Swing(id); var hit = swing.Hits[0];
+        var swing = Swing(id);
+        var hit = swing.Hits[0];
         var centre = ToWorld(new(hit.Window.OffsetX, hit.Window.OffsetY));
         return new(swing.Clip.Duration, hit.Start, hit.Finish, swing.Clip.Duration, centre.X, centre.Y) { Shape = _shapes[swing.Id] };
     }

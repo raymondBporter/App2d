@@ -12,6 +12,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Matrix3x2Extensions` | `IsFinite()` entry query and transpose direction transform |
 | `Rotation2D` | Rotate vectors or points about a pivot, solve a pivot from two endpoints and a turn, and interpolate an endpoint arc |
 | `Interpolation` | Value blending, optional progress-map application, and inverse lerp |
+| `Clamping` | Generic `Clamp(value, minimum, maximum)` and `Clamp01(value)` scalar helpers |
 | `Progress` | Clamped smoothstep families, their inverses, and unclamped maps with analytic derivatives |
 | `Easing` | Analytic easing maps and power families, including intentional back/elastic overshoot |
 | `ProgressMap` / `IProgressMap` | A sampled progress function and derivative for velocity |
@@ -35,6 +36,9 @@ Normalize time, shape the progress, then interpolate the value:
 var phase = Interpolation.InverseLerp(startTime, endTime, time);
 var value = Interpolation.Lerp(start, end, phase, Easing.Smooth);
 ```
+
+`Clamping.Clamp` and `Clamp01` work with numeric types such as int, float, and double, preserving the type's
+standard clamping behavior.
 
 `Progress.SmoothStep`, `SmootherStep`, and `SmoothestStep` clamp inputs to [0,1]. Easing maps do not clamp inputs
 or outputs; back/elastic maps can overshoot. The `*StepUnclamped<T>` polynomials share float/double arithmetic

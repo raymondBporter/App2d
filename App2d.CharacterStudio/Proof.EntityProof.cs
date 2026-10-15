@@ -58,7 +58,8 @@ internal sealed partial class ProofRenders
             var label = side > 0 ? "guard-faces-left" : "guard-faces-right";
             var arena = new AuthoredArena([catalog.Entities["player"], catalog.Entities["spear-guard"]]);
             arena.Teleport(0, new(0, 0)); arena.Teleport(1, new(2.05f * side, 0));
-            var guard = arena.Actors[1]; var hit = guard.Entity.Actions["attack"].Hits[0];
+            var guard = arena.Actors[1];
+            var hit = guard.Entity.Actions["attack"].Hits[0];
             Until(arena, _ => guard.Animator.Action == "attack" && guard.Animator.ActionTime >= .24);
             Capture($"{label}-1-anticipation", arena, side, "thrust anticipation: no attack region");
             Until(arena, _ => guard.Animator.ActionTime >= hit.Start + .03);

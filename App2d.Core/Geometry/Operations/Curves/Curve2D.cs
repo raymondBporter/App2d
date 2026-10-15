@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -14,7 +15,7 @@ public static class Curve2D
     public static Vector2 Tangent(ICurve2D curve, float amount)
     {
         ArgGuard.ThrowIfNull(curve);
-        amount = Math.Clamp(amount, 0f, 1f);
+        amount = Clamping.Clamp01(amount);
         var derivative = curve.EvaluateDerivative(amount);
         if (derivative.LengthSquared() <= DerivativeEpsilon * DerivativeEpsilon)
         {

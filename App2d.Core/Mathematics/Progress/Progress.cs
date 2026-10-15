@@ -7,16 +7,14 @@ public static class Progress
 {
     private const int InverseIterations = 48;
 
-    public static float Clamp01(float value) => Math.Clamp(value, 0f, 1f);
-
     /// <summary>Cubic smoothstep, clamped to [0,1], with zero first derivative at both ends.</summary>
-    public static float SmoothStep(float value) => (float)SmoothStepMap.Sample(Clamp01(value));
+    public static float SmoothStep(float value) => (float)SmoothStepMap.Sample(Clamping.Clamp01(value));
 
     /// <summary>Quintic smootherstep, clamped to [0,1], with zero first and second derivatives at both ends.</summary>
-    public static float SmootherStep(float value) => (float)SmootherStepMap.Sample(Clamp01(value));
+    public static float SmootherStep(float value) => (float)SmootherStepMap.Sample(Clamping.Clamp01(value));
 
     /// <summary>Septic smoothstep, clamped to [0,1], with zero first through third derivatives at both ends.</summary>
-    public static float SmoothestStep(float value) => (float)SmoothestStepMap.Sample(Clamp01(value));
+    public static float SmoothestStep(float value) => (float)SmoothestStepMap.Sample(Clamping.Clamp01(value));
 
     /// <summary>Unclamped cubic smoothstep packaged with its derivative.</summary>
     public static ProgressMap SmoothStepMap { get; } = new(
@@ -47,7 +45,7 @@ public static class Progress
     /// <summary>Analytic inverse of the cubic smoothstep on [0,1].</summary>
     public static float InverseSmoothStep(float value)
     {
-        value = Clamp01(value);
+        value = Clamping.Clamp01(value);
         return (float)(0.5d - Math.Sin(Math.Asin(1d - 2d * value) / 3d));
     }
 
@@ -56,7 +54,7 @@ public static class Progress
 
     private static float InvertMonotonicStep(float value, ProgressMap step)
     {
-        value = Clamp01(value);
+        value = Clamping.Clamp01(value);
         if (value is 0f or 1f) return value;
         var lower = 0d;
         var upper = 1d;

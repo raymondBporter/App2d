@@ -37,7 +37,9 @@ internal sealed partial class ProofRenders
         List<(float Start, float Finish, Vector2[] Hull)> ShapesOf(MotionClip clip) =>
             shapes.TryGetValue(clip, out var found) ? found : shapes[clip] = HitShapes(model, clip, props, sockets);
         var target = new RenderTarget2D(GraphicsDevice, ReviewWidth, ReviewHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        var drawing = new PuppetDrawing(); var scenery = new CharacterMesh(8192); var trail = new CharacterMesh(8192);
+        var drawing = new PuppetDrawing();
+        var scenery = new CharacterMesh(8192); 
+        var trail = new CharacterMesh(8192);
         var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .45f, ReviewHeight * LabGround), LabPpu);
         void Frame(string path, MotionClip clip, float seconds, Dictionary<string, PropAsset> worn, BladeSwoosh? swoosh, bool shape, float clock = 0)
         {
@@ -73,11 +75,13 @@ internal sealed partial class ProofRenders
             target.SaveAsPng(stream, ReviewWidth, ReviewHeight);
         }
 
-        var manifest = new List<object>(); var report = new List<string>();
+        var manifest = new List<object>(); 
+        var report = new List<string>();
         var variants = SwingLab.Variants(model, game).ToList();
         foreach (var variant in variants)
         {
-            var duration = variant.Duration; var count = (int)MathF.Round(duration * LabFps) + 1;
+            var duration = variant.Duration;
+            var count = (int)MathF.Round(duration * LabFps) + 1;
             (MotionClip Clip, float Local) At(float t)
             {
                 var (clip, start) = variant.Timeline.Last(s => s.Start <= t + 1e-4f);
@@ -148,11 +152,14 @@ internal sealed partial class ProofRenders
         var peak = window.MaxBy(i => speed[i]);
         var after = Math.Min(times.Length - 1, peak + (int)(2 * frame * rate));
         var brake = speed[peak] > 0 ? 1 - speed[after] / speed[peak] : 0;
-        var reversals = 0; var lastTurn = 0;
+        var reversals = 0;
+        var lastTurn = 0;
         for (var k = 2; k < window.Length; k++)
         {
             if (tips[window[k]] is not { } c || tips[window[k - 1]] is not { } b || tips[window[k - 2]] is not { } a) continue;
-            var d0 = b - a; var d1 = c - b; var cross = d0.X * d1.Y - d0.Y * d1.X;
+            var d0 = b - a; 
+            var d1 = c - b;
+            var cross = d0.X * d1.Y - d0.Y * d1.X;
             if (MathF.Abs(cross) < 1e-6f) continue;
             var turn = MathF.Sign(cross); if (lastTurn != 0 && turn != lastTurn) reversals++; lastTurn = turn;
         }
@@ -162,15 +169,18 @@ internal sealed partial class ProofRenders
             .Where(t => PersonLoadout.SwordInHand(clip, t) && t >= swoosh - 1e-4f && t <= lastRecover + 6 * frame).ToArray();
         var grips = gripTimes.Select(t =>
         {
-            var p = PoseEvaluator.Sample(model, clip, t); var (Guard, Tip) = LabBlade(model, clip, t, props, sockets)!.Value;
-            var forearm = p.Points["right-hand"] - p.Points["right-elbow"]; var along = Tip - Guard;
+            var p = PoseEvaluator.Sample(model, clip, t); 
+            var (Guard, Tip) = LabBlade(model, clip, t, props, sockets)!.Value;
+            var forearm = p.Points["right-hand"] - p.Points["right-elbow"];
+            var along = Tip - Guard;
             return MathF.Abs(MathF.IEEERemainder(MathF.Atan2(along.Y, along.X) - MathF.Atan2(forearm.Y, forearm.X), MathF.Tau)) * 180 / MathF.PI;
         }).ToArray();
         // All out: the elbow's bend (0 = locked straight) at contact and in the held follow-through.
         float Bend(float t)
         {
             var p = PoseEvaluator.Sample(model, clip, MathF.Min(clip.Duration, t));
-            var upper = p.Points["right-elbow"] - p.Points["right-shoulder"]; var fore = p.Points["right-hand"] - p.Points["right-elbow"];
+            var upper = p.Points["right-elbow"] - p.Points["right-shoulder"]; 
+            var fore = p.Points["right-hand"] - p.Points["right-elbow"];
             return MathF.Acos(Math.Clamp(Vector3.Dot(Vector3.Normalize(upper), Vector3.Normalize(fore)), -1, 1)) * 180 / MathF.PI;
         }
         // Reach: the first hit shape's extent from the feet (x forward, y up).

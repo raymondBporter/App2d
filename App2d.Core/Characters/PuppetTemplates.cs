@@ -69,13 +69,16 @@ public static class PuppetTemplates
         var rightTrack = puppet.Controls.Single(c => c.Id == "right-foot").Rest;
         for (var i = 0; i <= 16; i++)
         {
-            var phase = i / 16f; var time = phase * motion.Duration; var travel = stride * phase;
+            var phase = i / 16f;
+            var time = phase * motion.Duration;
+            var travel = stride * phase;
             var pose = PuppetPose.Rest(puppet);
             // Rise over the planted foot enough to nearly extend its knee at
             // mid-stance, retaining a little flex rather than locking the joint.
             var bob = .036f * MathF.Pow(MathF.Sin(phase * MathF.Tau), 2);
             pose.Position = new(travel, -.025f + bob, 0);
-            var leftSwing = Math.Clamp(phase * 2, 0, 1); var rightSwing = Math.Clamp(phase * 2 - 1, 0, 1);
+            var leftSwing = Math.Clamp(phase * 2, 0, 1);
+            var rightSwing = Math.Clamp(phase * 2 - 1, 0, 1);
             var leftWorldX = -.125f + stride * Progress.SmoothStepUnclamped(leftSwing);
             var rightWorldX = .125f + stride * Progress.SmoothStepUnclamped(rightSwing);
             var leftLift = .12f * MathF.Pow(MathF.Sin(leftSwing * MathF.PI), 2);
@@ -118,7 +121,8 @@ public static class PuppetTemplates
             var i = 0; while (i < times.Length - 2 && t > times[i + 1]) i++;
             Vector2 Tangent(int k) => k == 0 ? startTangent : k == times.Length - 1 ? endTangent
                 : (values[k + 1] - values[k - 1]) / (times[k + 1] - times[k - 1]);
-            var span = times[i + 1] - times[i]; var u = Math.Clamp((t - times[i]) / span, 0, 1);
+            var span = times[i + 1] - times[i];
+            var u = Math.Clamp((t - times[i]) / span, 0, 1);
             float u2 = u * u, u3 = u2 * u;
             return (2 * u3 - 3 * u2 + 1) * values[i] + (u3 - 2 * u2 + u) * span * Tangent(i)
                 + (-2 * u3 + 3 * u2) * values[i + 1] + (u3 - u2) * span * Tangent(i + 1);
@@ -143,7 +147,8 @@ public static class PuppetTemplates
         const int keyCount = 36;
         for (var i = 0; i <= keyCount; i++)
         {
-            var phase = i / (float)keyCount; var step = Wrap(phase * 2);
+            var phase = i / (float)keyCount;
+            var step = Wrap(phase * 2);
             var hipHeight = Hips(step);
             var pose = PuppetPose.Rest(puppet);
             pose.Position = new(travel * phase, hipHeight - 1, 0);

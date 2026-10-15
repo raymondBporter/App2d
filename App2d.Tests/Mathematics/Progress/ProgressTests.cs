@@ -1,3 +1,5 @@
+using App2d.Core.Mathematics;
+
 namespace App2d.Tests.Mathematics.Progress;
 
 public sealed class ProgressTests
@@ -10,7 +12,7 @@ public sealed class ProgressTests
     [InlineData(2f, 1f)]
     public void StepFunctionsClampAndKeepEndpoints(float input, float expected)
     {
-        Assert.Equal(expected, App2d.Core.Mathematics.Progress.Progress.Clamp01(input), 6);
+        Assert.Equal(expected, Clamping.Clamp01(input), 6);
         Assert.Equal(expected, App2d.Core.Mathematics.Progress.Progress.SmoothStep(input), 6);
         Assert.Equal(expected, App2d.Core.Mathematics.Progress.Progress.SmootherStep(input), 6);
         Assert.Equal(expected, App2d.Core.Mathematics.Progress.Progress.SmoothestStep(input), 6);

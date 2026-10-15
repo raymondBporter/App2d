@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Collections.ObjectModel;
 using System.Numerics;
@@ -43,17 +44,17 @@ public sealed class BSpline2D : ICurve2D
     public ReadOnlyCollection<Vector2> ControlPoints { get; }
 
     public Vector2 Evaluate(float amount) =>
-        EvaluateDeBoor(_controlPoints, _knots, Degree, Math.Clamp(amount, 0f, 1f));
+        EvaluateDeBoor(_controlPoints, _knots, Degree, Clamping.Clamp01(amount));
 
     public Vector2 EvaluateDerivative(float amount) =>
         EvaluateDeBoor(
             _derivativeControlPoints,
             _derivativeKnots,
             Degree - 1,
-            Math.Clamp(amount, 0f, 1f));
+            Clamping.Clamp01(amount));
 
     public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this,
-        Math.Clamp((_controlPoints.Length - Degree) * 32, 64, 1024));
+        Clamping.Clamp((_controlPoints.Length - Degree) * 32, 64, 1024));
 
     private static float[] CreateClampedUniformKnots(int controlPointCount, int degree)
     {

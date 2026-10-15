@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Primitives;
@@ -32,7 +33,7 @@ public static class IntervalMath<T> where T : INumber<T>
 
     /// <summary>Clamps a value to the closed interval.</summary>
     public static T Clamp<TInterval>(TInterval interval, T value) where TInterval : IInterval<T> =>
-        T.Clamp(value, interval.Min, interval.Max);
+        Clamping.Clamp(value, interval.Min, interval.Max);
 
     /// <summary>
     /// Finds the shared interval. Touching endpoints produce a zero-length intersection.

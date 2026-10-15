@@ -43,7 +43,7 @@ public static class ClosestPoint2D
         var segment = end - start;
         var lengthSquared = segment.LengthSquared();
         if (lengthSquared <= float.Epsilon) return start;
-        var t = Math.Clamp(Vector2.Dot(point - start, segment) / lengthSquared, 0f, 1f);
+        var t = Clamping.Clamp01(Vector2.Dot(point - start, segment) / lengthSquared);
         return start + segment * t;
     }
 
@@ -190,12 +190,12 @@ public static class ClosestPoint2D
         else if (firstLengthSquared <= float.Epsilon)
         {
             firstParameter = 0f;
-            secondParameter = Math.Clamp(Vector2.Dot(secondDirection, startDelta) / secondLengthSquared, 0f, 1f);
+            secondParameter = Clamping.Clamp01(Vector2.Dot(secondDirection, startDelta) / secondLengthSquared);
         }
         else if (secondLengthSquared <= float.Epsilon)
         {
             secondParameter = 0f;
-            firstParameter = Math.Clamp(-Vector2.Dot(firstDirection, startDelta) / firstLengthSquared, 0f, 1f);
+            firstParameter = Clamping.Clamp01(-Vector2.Dot(firstDirection, startDelta) / firstLengthSquared);
         }
         else
         {
@@ -205,18 +205,18 @@ public static class ClosestPoint2D
             // In 2D the closest points of two non-parallel lines is their crossing; cross products keep precision near parallel.
             var determinant = firstDirection.CrossDouble(secondDirection);
             var numerator = secondDirection.CrossDouble(startDelta);
-            firstParameter = determinant != 0d ? (float)Math.Clamp(numerator / determinant, 0d, 1d) : 0f;
+            firstParameter = determinant != 0d ? (float)Clamping.Clamp01(numerator / determinant) : 0f;
 
             var secondNumerator = directionsDot * firstParameter + secondDotDelta;
             if (secondNumerator < 0f)
             {
                 secondParameter = 0f;
-                firstParameter = Math.Clamp(-firstDotDelta / firstLengthSquared, 0f, 1f);
+                firstParameter = Clamping.Clamp01(-firstDotDelta / firstLengthSquared);
             }
             else if (secondNumerator > secondLengthSquared)
             {
                 secondParameter = 1f;
-                firstParameter = Math.Clamp((directionsDot - firstDotDelta) / firstLengthSquared, 0f, 1f);
+                firstParameter = Clamping.Clamp01((directionsDot - firstDotDelta) / firstLengthSquared);
             }
             else
             {

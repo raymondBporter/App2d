@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -20,13 +21,13 @@ public sealed class NormalOffsetCurve2D : ICurve2D
         _offset = offset;
     }
 
-    public Vector2 Evaluate(float amount) => EvaluateCore(Math.Clamp(amount, 0f, 1f));
+    public Vector2 Evaluate(float amount) => EvaluateCore(Clamping.Clamp01(amount));
 
     public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this, 128);
 
     public Vector2 EvaluateDerivative(float amount)
     {
-        amount = Math.Clamp(amount, 0f, 1f);
+        amount = Clamping.Clamp01(amount);
         var lower = MathF.Max(0f, amount - DerivativeSampleDistance);
         var upper = MathF.Min(1f, amount + DerivativeSampleDistance);
         return upper == lower

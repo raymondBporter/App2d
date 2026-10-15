@@ -32,7 +32,8 @@ internal sealed partial class ProofRenders
         if (_smokeIndex >= ProofClips.Length * ProofFrames) { WriteMotionProofReport(); return false; }
         var catalog = ProofCatalog();
         _proofTarget ??= new(GraphicsDevice, ProofWidth, ProofHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        var clipId = ProofClips[_smokeIndex / ProofFrames]; var frame = _smokeIndex % ProofFrames;
+        var clipId = ProofClips[_smokeIndex / ProofFrames]; 
+        var frame = _smokeIndex % ProofFrames;
         var clip = catalog.Animations[clipId]; var seconds = frame * clip.Duration / ProofFrames;
         var panel = ProofWidth / ProofSubjects.Length;
         const int band = ProofHeight - ProofPanelHeight;

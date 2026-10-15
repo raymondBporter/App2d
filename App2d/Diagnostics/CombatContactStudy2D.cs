@@ -54,7 +54,8 @@ internal static class CombatContactStudy2D
             var timing = HitstopTimingStudy2D.CreateVariants();
             var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5000, 2), new SolidColorShader(new Color(70, 88, 93)));
             ground.Transform.Position = new(-250, 0); scene.Add(ground);
-            var hits = 0; var firstHit = -1L;
+            var hits = 0; 
+            var firstHit = -1L;
             for (var step = 0; step < 180; step++)
             {
                 var tick = game.Session.Tick + 1;

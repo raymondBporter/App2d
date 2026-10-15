@@ -43,7 +43,8 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
             if (editor.Mode == LevelEditorMode2D.Tiles) TileEditorMenu2D.Draw(editor, textures, TextureId);
             else editor.InspectorView.Draw();
         }, width: 360);
-        var io = ImGui.GetIO(); var pointer = io.MousePos;
+        var io = ImGui.GetIO();
+        var pointer = io.MousePos;
         editor.IsPointerOverUi = _gui.WantCaptureMouse ||
             (pointer.X >= io.DisplaySize.X - width && pointer.X < io.DisplaySize.X && pointer.Y >= 0 && pointer.Y < io.DisplaySize.Y);
         if (ImGui.IsKeyPressed(ImGuiKey.F1, false)) { editor.RequestToggle(); _shortcutCaptured = true; }

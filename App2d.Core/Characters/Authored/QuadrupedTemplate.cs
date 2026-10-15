@@ -40,9 +40,13 @@ public static class QuadrupedTemplate
             new(.5f, -.25f), new(-.2f, -.17f), new(-.5f, .32f), new(-.12f, .12f), new(.5f, .45f));
         foreach (var chain in m.Chains)
         {
-            var far = chain.Id.StartsWith("far", StringComparison.Ordinal); var color = far ? shade : skin;
-            var root = m.Controls.First(c => c.Id == chain.Root).Rest; var joint = m.Controls.First(c => c.Id == chain.Joint).Rest; var foot = m.Controls.First(c => c.Id == chain.End).Rest;
-            var upper = Vector2.Distance(root.XY, joint.XY); var lower = Vector2.Distance(joint.XY, foot.XY);
+            var far = chain.Id.StartsWith("far", StringComparison.Ordinal);
+            var color = far ? shade : skin;
+            var root = m.Controls.First(c => c.Id == chain.Root).Rest;
+            var joint = m.Controls.First(c => c.Id == chain.Joint).Rest; 
+            var foot = m.Controls.First(c => c.Id == chain.End).Rest;
+            var upper = Vector2.Distance(root.XY, joint.XY); 
+            var lower = Vector2.Distance(joint.XY, foot.XY);
             Shape(chain.Id + "-upper", chain.Root, chain.Joint, .25f, upper + .19f, 0, upper / 2, 0, color);
             Shape(chain.Id + "-lower", chain.Joint, chain.End, .23f, lower + .15f, 0, lower / 2, -.005f, color);
             var p = Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, "polygon");
@@ -85,7 +89,8 @@ public static class QuadrupedTemplate
 
     public static IReadOnlyList<MotionClip> Clips(CharacterModel model)
     {
-        var resolved = ResolvedModel.From(model); var clips = new List<MotionClip>();
+        var resolved = ResolvedModel.From(model);
+        var clips = new List<MotionClip>();
         MotionClip Clip(string role, float duration, bool loop)
         {
             var c = ClipAuthoring.New(resolved, model.Id + "-" + role, model.Name + " · " + role, duration, loop); clips.Add(c); return c;
@@ -104,7 +109,8 @@ public static class QuadrupedTemplate
         Rotate(idle, "head", 0, -.025f, 0); Rotate(idle, "tail", 0, .12f, 0);
         foreach (var (role, duration, stride, lift) in new[] { ("walk", 1.2f, .30f, .13f), ("run", .65f, .42f, .19f), ("rush", .48f, .46f, .15f) })
         {
-            var c = Clip(role, duration, true); const float stance = .6f; var distance = stride / stance;
+            var c = Clip(role, duration, true); const float stance = .6f;
+            var distance = stride / stance;
             c.Travel.Keys = [new(), new() { Time = duration, X = distance }];
             foreach (var chain in model.Chains)
             {
@@ -112,7 +118,8 @@ public static class QuadrupedTemplate
                 var times = Enumerable.Range(0, 25).Select(i => i / 24f).Concat([(1 - phase) % 1, (stance - phase + 1) % 1]).Append(1f).Distinct().Order().ToArray();
                 foreach (var t in times)
                 {
-                    var p = (t + phase) % 1; var swing = Math.Clamp((p - stance) / (1 - stance), 0, 1);
+                    var p = (t + phase) % 1;
+                    var swing = Math.Clamp((p - stance) / (1 - stance), 0, 1);
                     var x = p < stance ? stride * .5f - distance * p : -stride * .5f + stride * swing;
                     Key(c, "target", chain.Id, t * duration, x, p < stance ? 0 : lift * MathF.Sin(swing * MathF.PI));
                 }

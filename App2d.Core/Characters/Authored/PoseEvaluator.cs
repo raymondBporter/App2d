@@ -89,7 +89,8 @@ public static class PoseEvaluator
         {
             var (track, at, source) = Read(fromOverlay, kind, target);
             if (track is null) return default;
-            var (value, _) = Interpolate(track, at); var scale = track.Scale ?? defaultScale;
+            var (value, _) = Interpolate(track, at);
+            var scale = track.Scale ?? defaultScale;
             var ratio = scale == CharacterModel.Unit ? 1 : model.Measure(scale) / source.Reference[scale];
             var delta = new Vector3(value.X * ratio, value.Y * ratio, value.Z);
             if (!input.ReverseHorizontalMotion || kind == MotionClip.ScaleKind) return delta;
@@ -150,7 +151,8 @@ public static class PoseEvaluator
             var masked = Masked(contact.Chain);
             if (masked && weight >= 1) continue;
             if (!(time >= contact.Start && (time < contact.Finish || time == clip.Duration && contact.Finish == clip.Duration))) continue;
-            var chain = model.Chains[contact.Chain]; var ratio = Ratio(chain.Scale);
+            var chain = model.Chains[contact.Chain];
+            var ratio = Ratio(chain.Scale);
             var target = cycleOrigin + model.Rest[chain.End] + new Vector3(contact.Target.X * ratio * (input.ReverseHorizontalMotion ? -1 : 1), contact.Target.Y * ratio, contact.Target.Z);
             // A masked chain fading in leaves its base contact gradually; it is neither held nor reported as planted.
             if (masked) { constraints.Apply(new RigContactPin(chain.Id, target, weight)); continue; }
@@ -169,7 +171,8 @@ public static class PoseEvaluator
         }
         foreach (var control in model.Order)
         {
-            var frame = pose.Bones[control.Id]; var point = pose.Points[control.Id];
+            var frame = pose.Bones[control.Id];
+            var point = pose.Points[control.Id];
             frame.M31 = point.X; frame.M32 = point.Y; pose.Bones[control.Id] = frame;
         }
         SkeletonAppearance2D.Evaluate(model, clip, time, input.Skin, pose);
@@ -187,7 +190,8 @@ public static class PoseEvaluator
     {
         var keys = clip.Travel.Keys; if (keys.Count == 0) return Vector2.Zero;
         var ratio = clip.Travel.Scale == CharacterModel.Unit ? 1 : model.Measure(clip.Travel.Scale) / clip.Reference[clip.Travel.Scale];
-        var (end, _) = Interpolate(keys, clip.Duration); var (start, _) = Interpolate(keys, 0);
+        var (end, _) = Interpolate(keys, clip.Duration);
+        var (start, _) = Interpolate(keys, 0);
         return new Vector2(end.X - start.X, end.Y - start.Y) * ratio;
     }
 
@@ -209,7 +213,9 @@ public static class PoseEvaluator
         {
             if (time > keys[i].Time) continue;
             if (time == keys[i].Time) return Of(keys[i]);
-            var a = keys[i - 1]; var b = keys[i]; var phase = (time - a.Time) / (b.Time - a.Time);
+            var a = keys[i - 1]; 
+            var b = keys[i];
+            var phase = (time - a.Time) / (b.Time - a.Time);
             float At(float start, float end, KeyCurve2D? curve) => a.Ease == ClipEase.Step ? start : curve?.Evaluate(phase, start, end)
                 ?? start + (end - start) * ClipEase.Apply(a.Ease, phase);
             return (new(At(a.X, b.X, rotate ? null : a.Curve), At(a.Y, b.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),

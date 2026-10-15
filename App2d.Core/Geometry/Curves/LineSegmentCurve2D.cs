@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -16,7 +17,7 @@ public readonly record struct LineSegmentCurve2D : ICurve2D
 
     public Vector2 Start { get; }
     public Vector2 End { get; }
-    public Vector2 Evaluate(float amount) => Vector2.Lerp(Start, End, Math.Clamp(amount, 0f, 1f));
+    public Vector2 Evaluate(float amount) => Vector2.Lerp(Start, End, Clamping.Clamp01(amount));
     public Vector2 EvaluateDerivative(float amount) => End - Start;
     public float Distance(Vector2 point) => Distance2D.DistanceToSegment(point, Start, End);
 }

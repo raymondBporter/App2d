@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -23,14 +24,14 @@ public readonly record struct QuadraticBezier2D : ICurve2D
 
     public Vector2 Evaluate(float amount)
     {
-        amount = Math.Clamp(amount, 0f, 1f);
+        amount = Clamping.Clamp01(amount);
         var inverse = 1f - amount;
         return inverse * inverse * Start + 2f * inverse * amount * Control + amount * amount * End;
     }
 
     public Vector2 EvaluateDerivative(float amount)
     {
-        amount = Math.Clamp(amount, 0f, 1f);
+        amount = Clamping.Clamp01(amount);
         return 2f * ((1f - amount) * (Control - Start) + amount * (End - Control));
     }
 

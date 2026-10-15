@@ -70,7 +70,8 @@ internal static class AuthoredRenderingSmoke2D
                 using var player = new AuthoredPersonPresentation2D(scene, moves, traversal);
                 player.Equip(gear);
                 if (!state.IsAlive) player.PlayDeath();
-                var position = new Vector2(0, 38); var steps = (int)(seconds * 120);
+                var position = new Vector2(0, 38);
+                var steps = (int)(seconds * 120);
                 for (var i = 0; i < steps; i++)
                 {
                     position.X += state.LinearVelocity.X / 120; // vertical motion stays out of the fixed camera; the state still reports it
@@ -116,7 +117,9 @@ internal static class AuthoredRenderingSmoke2D
             {
                 var states = ids.Select((id, i) =>
                 {
-                    var entity = authored.Entities[id]; var animator = new EntityAnimator(entity); var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-400 + i * 90), 0);
+                    var entity = authored.Entities[id];
+                    var animator = new EntityAnimator(entity); 
+                    var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-400 + i * 90), 0);
                     // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
                     if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }
                     else if (action is not null && animator.TryStart(action))

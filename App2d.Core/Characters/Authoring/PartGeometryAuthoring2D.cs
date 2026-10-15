@@ -107,7 +107,8 @@ public static class PartGeometryAuthoring2D
         var art = binding is null ? PartAttachment2D.FrameOf(part, world, angle, transform) : PartAttachment2D.FrameOf(part, rest, transform: restTransform);
         if (binding is not null)
         {
-            var now = PartAttachment2D.BindingFrame(binding, world); var before = PartAttachment2D.BindingFrame(binding, rest);
+            var now = PartAttachment2D.BindingFrame(binding, world); 
+            var before = PartAttachment2D.BindingFrame(binding, rest);
             target = before.At(now.Coordinates.ToLocal(new(target.X, target.Y)));
         }
         if (!art.Coordinates.TryToLocal(new(target.X, target.Y), out var local))

@@ -64,7 +64,8 @@ public static class SpineExport2D
             setup[control.Id] = local;
             bones.Add(Bone(names[control.Id], control.Parent is null ? rootName : names[control.Parent], local, control.Length, pixelsPerUnit));
         }
-        var images = new Dictionary<string, byte[]>(StringComparer.Ordinal); var atlas = new StringBuilder();
+        var images = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        var atlas = new StringBuilder();
         void AddImage(string path, byte[] bytes)
         {
             images.Add("images/" + path + ".png", bytes);
@@ -73,7 +74,10 @@ public static class SpineExport2D
                 .AppendLine(path).AppendLine($"bounds: 0, 0, {bitmap.Width}, {bitmap.Height}").AppendLine();
         }
         var restPose = PoseEvaluator.Rest(model);
-        var slots = new JsonArray(); var skins = new JsonArray(); var parts = new List<PartBone>(); var slotNames = new Dictionary<string, string>();
+        var slots = new JsonArray(); 
+        var skins = new JsonArray();
+        var parts = new List<PartBone>();
+        var slotNames = new Dictionary<string, string>();
         var nativeImages = model.Base.Slots.Count > 0;
         if (nativeImages)
         {
@@ -145,7 +149,8 @@ public static class SpineExport2D
         var exact = model.Order.All(c => c.Transform is not null) && model.Chains.Count == 0 && clips.All(c => c.Contacts.Count == 0);
         foreach (var clip in clips)
         {
-            var animation = new JsonObject(); var timelines = new JsonObject(); animation["bones"] = timelines;
+            var animation = new JsonObject(); 
+            var timelines = new JsonObject(); animation["bones"] = timelines;
             var motion = new JsonObject { ["translate"] = new JsonArray() };
             if (rootName is not null) timelines[rootName] = motion;
             if (exact)
@@ -165,7 +170,8 @@ public static class SpineExport2D
             }
             else
             {
-                var times = SampleTimes(clip, samplesPerSecond); var previous = new Dictionary<string, float>();
+                var times = SampleTimes(clip, samplesPerSecond);
+                var previous = new Dictionary<string, float>();
                 foreach (var time in times)
                 {
                     var pose = PoseEvaluator.Sample(model, clip, time);
@@ -215,7 +221,8 @@ public static class SpineExport2D
             }
 
             if (slotTimelines.Count > 0) animation["slots"] = slotTimelines;
-            var drawOrder = new JsonArray(); var initial = slots.Select(s => s!["name"]!.GetValue<string>()).ToArray();
+            var drawOrder = new JsonArray();
+            var initial = slots.Select(s => s!["name"]!.GetValue<string>()).ToArray();
             if (nativeImages)
             {
                 foreach (var key in clip.DrawOrder) drawOrder.Add(Order(key.Time, initial, [.. key.Slots.Select(s => slotNames[s])]));
@@ -225,7 +232,8 @@ public static class SpineExport2D
                 var last = initial;
                 foreach (var time in SampleTimes(clip, samplesPerSecond))
                 {
-                    var pose = PoseEvaluator.Sample(model, clip, time); var order = parts.OrderByDescending(p => Depth(p.Part, pose)).Select(p => p.Part.Id).ToArray();
+                    var pose = PoseEvaluator.Sample(model, clip, time);
+                    var order = parts.OrderByDescending(p => Depth(p.Part, pose)).Select(p => p.Part.Id).ToArray();
                     if (!order.SequenceEqual(last)) { drawOrder.Add(Order(time, initial, order)); last = order; }
                 }
             }
@@ -290,7 +298,9 @@ public static class SpineExport2D
     {
         if (part.Geometry is App2d.Core.Geometry.Authoring.CurveDefinition2D)
         {
-            var a = pose.World(part.A); var b = pose.World(part.B!); var along = new Vector2(b.X - a.X, b.Y - a.Y);
+            var a = pose.World(part.A); 
+            var b = pose.World(part.B!);
+            var along = new Vector2(b.X - a.X, b.Y - a.Y);
             var right = along.LengthSquared() > 1e-12f ? new Vector2(along.Y, -along.X) / along.Length() : Vector2.UnitX;
             return new(right.X, right.Y, along.X / strokeLength, along.Y / strokeLength, a.X, a.Y);
         }
@@ -314,7 +324,9 @@ public static class SpineExport2D
     }
     private static JsonArray Track(List<ClipKey> keys, string kind, float ppu)
     {
-        var result = new JsonArray(); var rotate = kind == MotionClip.RotateKind; var scale = kind == MotionClip.ScaleKind;
+        var result = new JsonArray();
+        var rotate = kind == MotionClip.RotateKind;
+        var scale = kind == MotionClip.ScaleKind;
         var multiplier = kind == MotionClip.TranslateKind ? ppu : kind is MotionClip.RotateKind or MotionClip.ShearKind ? Degrees : 1;
         float X(ClipKey k) => (rotate ? k.Angle : k.X) * multiplier + (scale ? 1 : 0);
         float Y(ClipKey k) => k.Y * multiplier + (scale ? 1 : 0);
@@ -355,7 +367,8 @@ public static class SpineExport2D
         var result = new JsonArray();
         for (var i = 0; i < keys.Count; i++)
         {
-            var key = keys[i]; var node = new JsonObject { ["time"] = key.Time };
+            var key = keys[i]; 
+            var node = new JsonObject { ["time"] = key.Time };
             if (track.Kind == SlotColorTrack2D.Alpha) node["value"] = key.A;
             else node["color"] = SlotColorTrack2D.FormatColor(key.Value)[..(track.Kind == SlotColorTrack2D.Rgb ? 6 : 8)];
             if (key.Ease == ClipEase.Step)
@@ -364,10 +377,13 @@ public static class SpineExport2D
             }
             else if (i + 1 < keys.Count && (key.Ease == ClipEase.Smooth || key.CurveR is not null || key.CurveG is not null || key.CurveB is not null || key.CurveA is not null))
             {
-                var next = keys[i + 1]; var controls = new JsonArray();
+                var next = keys[i + 1];
+                var controls = new JsonArray();
                 void Add(KeyCurve2D? curve, float start, float end)
                 {
-                    var c = curve ?? DefaultCurve(key.Ease); var (first, second) = c.Controls(start, end); var dt = next.Time - key.Time;
+                    var c = curve ?? DefaultCurve(key.Ease); 
+                    var (first, second) = c.Controls(start, end);
+                    var dt = next.Time - key.Time;
                     controls.Add(key.Time + c.X1 * dt); controls.Add(first); controls.Add(key.Time + c.X2 * dt); controls.Add(second);
                 }
                 if (track.Kind != SlotColorTrack2D.Alpha)
@@ -395,7 +411,8 @@ public static class SpineExport2D
         var points = vertices.Select(v => Vector2.Transform(new(v.Position.X, v.Position.Y), inverse)).ToArray();
         var min = new Vector2(points.Min(p => p.X), points.Min(p => p.Y)) - new Vector2(2 / ppu);
         var max = new Vector2(points.Max(p => p.X), points.Max(p => p.Y)) + new Vector2(2 / ppu);
-        var width = (int)MathF.Ceiling((max.X - min.X) * ppu); var height = (int)MathF.Ceiling((max.Y - min.Y) * ppu);
+        var width = (int)MathF.Ceiling((max.X - min.X) * ppu); 
+        var height = (int)MathF.Ceiling((max.Y - min.Y) * ppu);
         if (width <= 0 || height <= 0 || width > 4096 || height > 4096) throw new InvalidDataException($"Part '{part.Id}' export image exceeds 4096 pixels; lower export resolution.");
         max = min + new Vector2(width / ppu, height / ppu);
         using var large = new Bitmap(width * 2, height * 2, PixelFormat.Format32bppArgb);
