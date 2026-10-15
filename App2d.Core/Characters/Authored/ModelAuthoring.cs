@@ -203,8 +203,8 @@ public static class ModelAuthoring
     /// <summary>Edits the perimeter and remaps attachments in the same transaction. New points inherit their preceding attachment.</summary>
     public static void InsertCutoutPoint(PuppetPart part, int after)
     {
-        var points = new List<PuppetPoint>(PartContours2D.CutoutPoints(part));
-        points.Insert(after + 1, PuppetPoint.Lerp(points[after], points[(after + 1) % points.Count], .5f));
+        var points = new List<Vector2>(PartContours2D.CutoutPoints(part));
+        points.Insert(after + 1, Vector2.Lerp(points[after], points[(after + 1) % points.Count], .5f));
         PartGeometryAuthoring2D.CheckCutout(points);
         var bindings = (part.Bindings ?? []).ConvertAll(b => b with { Point = b.Point > after ? b.Point + 1 : b.Point });
         if (part.Bindings?.FirstOrDefault(b => b.Point == after) is { } source) bindings.Add(source with { Point = after + 1 });
@@ -213,7 +213,7 @@ public static class ModelAuthoring
 
     public static void RemoveCutoutPoint(PuppetPart part, int index)
     {
-        var points = new List<PuppetPoint>(PartContours2D.CutoutPoints(part)); points.RemoveAt(index); PartGeometryAuthoring2D.CheckCutout(points);
+        var points = new List<Vector2>(PartContours2D.CutoutPoints(part)); points.RemoveAt(index); PartGeometryAuthoring2D.CheckCutout(points);
         PartGeometryAuthoring2D.SetPolygon(part, points);
         part.Bindings = part.Bindings?.Where(b => b.Point != index).Select(b => b with { Point = b.Point > index ? b.Point - 1 : b.Point }).ToList();
     }

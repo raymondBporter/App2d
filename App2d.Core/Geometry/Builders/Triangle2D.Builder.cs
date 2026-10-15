@@ -19,7 +19,7 @@ public sealed partial class Triangle2D
         private double SignedAreaTwice()
         {
             ArgGuard.ThrowIfNotFinite(A, "a"); ArgGuard.ThrowIfNotFinite(B, "b"); ArgGuard.ThrowIfNotFinite(C, "c");
-            var twice = A.Orientation(B, C);
+            var twice = new Vector2d(A).Orientation(new(B), new(C));
             if (twice == 0d) throw new ArgumentException("Triangle vertices must not be collinear.", "c");
             ArgGuard.ThrowIfNotFiniteOrNotPositive((float)(Math.Abs(twice) * .5), "area");
             return twice;

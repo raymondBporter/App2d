@@ -47,9 +47,11 @@ public sealed partial class Triangle2D : IConvexShape2D
     public bool ContainsPoint(Vector2 localPoint)
     {
         ArgGuard.ThrowIfNotFinite(localPoint);
-        var first = A.Orientation(B, localPoint);
-        var second = B.Orientation(C, localPoint);
-        var third = C.Orientation(A, localPoint);
+        var point = new Vector2d(localPoint);
+        var a = new Vector2d(A); var b = new Vector2d(B); var c = new Vector2d(C);
+        var first = a.Orientation(b, point);
+        var second = b.Orientation(c, point);
+        var third = c.Orientation(a, point);
         return _counterClockwise
             ? first >= -EdgeTolerance && second >= -EdgeTolerance && third >= -EdgeTolerance
             : first <= EdgeTolerance && second <= EdgeTolerance && third <= EdgeTolerance;

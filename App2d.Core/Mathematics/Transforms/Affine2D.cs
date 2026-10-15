@@ -101,7 +101,7 @@ public sealed record Affine2D
         var matrix = Matrix;
         if (!matrix.IsFinite()) return false;
         // Double products keep finite large/small scales from overflowing/underflowing the determinant.
-        var det = (double)matrix.M11 * matrix.M22 - (double)matrix.M12 * matrix.M21;
+        var det = new Vector2d(matrix.M11, matrix.M12).Cross(new(matrix.M21, matrix.M22));
         if (det == 0) return false;
         var result = new Matrix3x2((float)(matrix.M22 / det), (float)(-matrix.M12 / det),
             (float)(-matrix.M21 / det), (float)(matrix.M11 / det),

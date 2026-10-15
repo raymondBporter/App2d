@@ -1,5 +1,6 @@
 using App2d.CharacterStudio.PlayerMoves;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -38,7 +39,7 @@ internal sealed partial class ProofRenders
             shapes.TryGetValue(clip, out var found) ? found : shapes[clip] = HitShapes(model, clip, props, sockets);
         var target = new RenderTarget2D(GraphicsDevice, ReviewWidth, ReviewHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         var drawing = new PuppetDrawing();
-        var scenery = new CharacterMesh(8192); 
+        var scenery = new CharacterMesh(8192);
         var trail = new CharacterMesh(8192);
         var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .45f, ReviewHeight * LabGround), LabPpu);
         void Frame(string path, MotionClip clip, float seconds, Dictionary<string, PropAsset> worn, BladeSwoosh? swoosh, bool shape, float clock = 0)
@@ -75,7 +76,7 @@ internal sealed partial class ProofRenders
             target.SaveAsPng(stream, ReviewWidth, ReviewHeight);
         }
 
-        var manifest = new List<object>(); 
+        var manifest = new List<object>();
         var report = new List<string>();
         var variants = SwingLab.Variants(model, game).ToList();
         foreach (var variant in variants)
@@ -157,9 +158,9 @@ internal sealed partial class ProofRenders
         for (var k = 2; k < window.Length; k++)
         {
             if (tips[window[k]] is not { } c || tips[window[k - 1]] is not { } b || tips[window[k - 2]] is not { } a) continue;
-            var d0 = b - a; 
+            var d0 = b - a;
             var d1 = c - b;
-            var cross = d0.X * d1.Y - d0.Y * d1.X;
+            var cross = d0.XY.Cross(d1.XY);
             if (MathF.Abs(cross) < 1e-6f) continue;
             var turn = MathF.Sign(cross); if (lastTurn != 0 && turn != lastTurn) reversals++; lastTurn = turn;
         }
@@ -169,7 +170,7 @@ internal sealed partial class ProofRenders
             .Where(t => PersonLoadout.SwordInHand(clip, t) && t >= swoosh - 1e-4f && t <= lastRecover + 6 * frame).ToArray();
         var grips = gripTimes.Select(t =>
         {
-            var p = PoseEvaluator.Sample(model, clip, t); 
+            var p = PoseEvaluator.Sample(model, clip, t);
             var (Guard, Tip) = LabBlade(model, clip, t, props, sockets)!.Value;
             var forearm = p.Points["right-hand"] - p.Points["right-elbow"];
             var along = Tip - Guard;
@@ -179,7 +180,7 @@ internal sealed partial class ProofRenders
         float Bend(float t)
         {
             var p = PoseEvaluator.Sample(model, clip, MathF.Min(clip.Duration, t));
-            var upper = p.Points["right-elbow"] - p.Points["right-shoulder"]; 
+            var upper = p.Points["right-elbow"] - p.Points["right-shoulder"];
             var fore = p.Points["right-hand"] - p.Points["right-elbow"];
             return MathF.Acos(Math.Clamp(Vector3.Dot(Vector3.Normalize(upper), Vector3.Normalize(fore)), -1, 1)) * 180 / MathF.PI;
         }
@@ -203,7 +204,6 @@ internal sealed partial class ProofRenders
 
     private static bool Crosses(Vector2 a, Vector2 b, Vector2 c, Vector2 d)
     {
-        static float Side(Vector2 p, Vector2 q, Vector2 r) => (q.X - p.X) * (r.Y - p.Y) - (q.Y - p.Y) * (r.X - p.X);
-        return Side(a, b, c) * Side(a, b, d) < 0 && Side(c, d, a) * Side(c, d, b) < 0;
+        return a.Orientation(b, c) * a.Orientation(b, d) < 0 && c.Orientation(d, a) * c.Orientation(d, b) < 0;
     }
 }

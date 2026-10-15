@@ -51,7 +51,8 @@ public sealed record PuppetChain
 public sealed record PartPaint
 {
     public RenderMaterialDefinition2D? Material { get; set; }
-    public List<PuppetPoint> Points { get; set; } = [];
+    [JsonConverter(typeof(PartPaintPointsJsonConverter))]
+    public List<Vector2> Points { get; set; } = [];
 
     public static void Check(IReadOnlyList<PartPaint>? paint)
     {
@@ -68,9 +69,9 @@ public sealed record PartPaint
             for (var i = 0; i < patch.Points.Count; i++)
             {
                 var point = patch.Points[i];
-                point.Check("paint.point");
-                if (point.Z != 0) throw new InvalidDataException("Paint coordinates are XY only.");
-                vertices[i] = point.XY;
+                new Limit(-10000, 10000).Check(point.X, "paint.point.x");
+                new Limit(-10000, 10000).Check(point.Y, "paint.point.y");
+                vertices[i] = point;
             }
             if (!PolygonGeometry2D.IsConvexPerimeter(vertices, 1e-8d))
                 throw new InvalidDataException("Paint patches must be convex and have area.");

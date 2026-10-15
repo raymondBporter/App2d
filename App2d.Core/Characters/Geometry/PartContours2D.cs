@@ -2,6 +2,8 @@ using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Builders;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -10,8 +12,8 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>Character part outlines, including curves and cutouts deformed by control bindings.</summary>
 public static class PartContours2D
 {
-    public static IReadOnlyList<PuppetPoint> CutoutPoints(PuppetPart part) =>
-        [.. ((SimplePolygon2D.Builder)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y))];
+    public static IReadOnlyList<Vector2> CutoutPoints(PuppetPart part) =>
+        ((SimplePolygon2D.Builder)part.Geometry!).Vertices;
 
     public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, angle: null, rest: rest);
 
@@ -20,16 +22,16 @@ public static class PartContours2D
     {
         if (part.Geometry is CurveDefinition2D curve)
         {
-            var a = world(part.A); var b = world(part.B!);
-            var across = new Vector2(b.Y - a.Y, a.X - b.X);
-            var along = new Vector2(b.X - a.X, b.Y - a.Y);
+            var a = world(part.A);
+            var b = world(part.B!);
+            var curveFrame = Frame2D.FromYAxis(a.XY, b.XY - a.XY);
             var result = new List<Vector3>();
             var geometry = GeometryDefinitionCache2D.CurveOf(curve);
             var count = geometry switch { LineSegmentCurve2D => 2, PolylineCurve2D polyline => polyline.Points.Length, _ => 33 };
             for (var i = 0; i < count; i++)
             {
                 var p = geometry.Evaluate((float)i / (count - 1));
-                result.Add(new Vector3(new Vector2(a.X, a.Y) + across * p.X + along * p.Y, a.Z + (b.Z - a.Z) * p.Y + part.Depth));
+                result.Add(new Vector3(curveFrame.TransformPoint(p), a.Z + (b.Z - a.Z) * p.Y + part.Depth));
             }
             return result;
         }

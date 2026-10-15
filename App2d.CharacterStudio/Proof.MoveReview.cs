@@ -47,7 +47,8 @@ internal sealed partial class ProofRenders
         var props = catalog.Props;
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
         var target = new RenderTarget2D(GraphicsDevice, ReviewWidth, ReviewHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        var drawing = new PuppetDrawing(); var scenery = new CharacterMesh(8192);
+        var drawing = new PuppetDrawing();
+        var scenery = new CharacterMesh(8192);
         var items = ReviewItems(catalog);
         var manifest = new List<object>(); var report = new List<string>();
         foreach (var item in items)

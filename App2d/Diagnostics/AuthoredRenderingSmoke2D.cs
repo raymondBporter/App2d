@@ -44,7 +44,8 @@ internal static class AuthoredRenderingSmoke2D
         var hero = new Gameplay.Persons.Actions.AuthoredHero2D(authored.Entities[Gameplay.Persons.Actions.AuthoredHero2D.EntityId], traversal.PlayerColliderSize);
         var standing = new Contracts.Persons.PersonState2D { HitPoints = 5, MaximumHitPoints = 5, IsGrounded = true };
         // Each sword case stops just past its strike, where the hit box is live.
-        var cut = hero.Attack; var backhand = hero.Swing(cut.Next);
+        var cut = hero.Attack;
+        var backhand = hero.Swing(cut.Next);
         var melee = new Contracts.Persons.PersonActionState2D(Contracts.Simulation.PlayerAttackKind2D.Melee, 0, cut.Clip.Duration, cut.Id);
         var shot = new Contracts.Persons.PersonActionState2D(Contracts.Simulation.PlayerAttackKind2D.Shot, 0, .2f);
         var cases = new (string Name, Contracts.Persons.Actions.EquipmentKind2D Gear, Contracts.Persons.PersonState2D State, float Seconds, bool ActionClock)[]
@@ -118,7 +119,7 @@ internal static class AuthoredRenderingSmoke2D
                 var states = ids.Select((id, i) =>
                 {
                     var entity = authored.Entities[id];
-                    var animator = new EntityAnimator(entity); 
+                    var animator = new EntityAnimator(entity);
                     var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-400 + i * 90), 0);
                     // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
                     if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }

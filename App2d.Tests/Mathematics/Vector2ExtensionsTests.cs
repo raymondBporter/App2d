@@ -21,4 +21,15 @@ public sealed class Vector2ExtensionsTests
         Assert.Equal(0f, Vector2.Dot(value, value.PerpCcw));
         Assert.Equal(25f, value.Cross(value.PerpCcw));
     }
+
+    [Fact]
+    public void FloatAndDoubleCrossProductsKeepTheirOwnPrecision()
+    {
+        var first = new Vector2(16_777_216, 16_777_215);
+        var second = new Vector2(16_777_215, 16_777_214);
+
+        // Float products round to the same value; double products preserve the negative turn.
+        Assert.Equal(0f, first.Cross(second));
+        Assert.Equal(-1d, new Vector2d(first).Cross(new(second)));
+    }
 }

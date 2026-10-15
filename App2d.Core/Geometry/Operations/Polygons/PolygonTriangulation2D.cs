@@ -30,11 +30,12 @@ public static class PolygonTriangulation2D
                 var a = remaining[(i + remaining.Count - 1) % remaining.Count];
                 var b = remaining[i];
                 var c = remaining[(i + 1) % remaining.Count];
-                if (winding * points[a].Orientation(points[b], points[c]) <= tolerance) continue;
+                var first = new Vector2d(points[a]); var second = new Vector2d(points[b]); var third = new Vector2d(points[c]);
+                if (winding * first.Orientation(second, third) <= tolerance) continue;
                 if (remaining.Any(j => j != a && j != b && j != c &&
-                    winding * points[a].Orientation(points[b], points[j]) >= -tolerance &&
-                    winding * points[b].Orientation(points[c], points[j]) >= -tolerance &&
-                    winding * points[c].Orientation(points[a], points[j]) >= -tolerance))
+                    winding * first.Orientation(second, new(points[j])) >= -tolerance &&
+                    winding * second.Orientation(third, new(points[j])) >= -tolerance &&
+                    winding * third.Orientation(first, new(points[j])) >= -tolerance))
                 {
                     continue;
                 }
@@ -46,7 +47,7 @@ public static class PolygonTriangulation2D
             }
             ArgGuard.ThrowIf(!found, "The polygon must be simple and have nondegenerate ears.", nameof(perimeter));
         }
-        ArgGuard.ThrowIf(winding * points[remaining[0]].Orientation(points[remaining[1]], points[remaining[2]]) <= tolerance,
+        ArgGuard.ThrowIf(winding * new Vector2d(points[remaining[0]]).Orientation(new(points[remaining[1]]), new(points[remaining[2]])) <= tolerance,
             "The polygon has a degenerate final triangle.", nameof(perimeter));
         indices.AddRange(remaining);
         return new TriangleMesh2D(points, indices);

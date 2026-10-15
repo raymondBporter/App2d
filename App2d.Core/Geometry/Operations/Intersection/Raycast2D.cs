@@ -277,11 +277,11 @@ public static class Raycast2D
         {
             var start = vertices[i];
             var edge = vertices[(i + 1) % vertices.Length] - start;
-            var denominator = direction.X * edge.Y - direction.Y * edge.X;
+            var denominator = direction.Cross(edge);
             if (MathF.Abs(denominator) < Epsilon) continue;
             var offset = start - origin;
-            var distance = (offset.X * edge.Y - offset.Y * edge.X) / denominator;
-            var fraction = (offset.X * direction.Y - offset.Y * direction.X) / denominator;
+            var distance = offset.Cross(edge) / denominator;
+            var fraction = offset.Cross(direction) / denominator;
             if (distance < 0 || distance > maxDistance || fraction < 0 || fraction > 1 || found && distance >= hit.Distance) continue;
             var normal = Vector2.Normalize(new Vector2(edge.Y, -edge.X) * winding);
             hit = new RayHit2D(origin + direction * distance, normal, distance);

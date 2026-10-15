@@ -220,7 +220,7 @@ public sealed class BladeSwoosh
         if (planar)
         {
             var d0 = a.XY; var d1 = b.XY;
-            var turn = MathF.Atan2(d0.X * d1.Y - d0.Y * d1.X, Vector2.Dot(d0, d1));
+            var turn = MathF.Atan2(d0.Cross(d1), Vector2.Dot(d0, d1));
             var (expected, limit) = previous.Turn != 0 && previous.Planar ? (MathF.Sign(previous.Turn), 2.6f) : (Math.Sign(sweep), MathF.PI / 2);
             if (expected != 0 && MathF.Sign(turn) != expected && MathF.Abs(turn) > limit) turn -= MathF.Sign(turn) * MathF.Tau;
             return (turn, Vector3.UnitZ);

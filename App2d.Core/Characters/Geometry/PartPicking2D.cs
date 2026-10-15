@@ -3,6 +3,8 @@ using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Builders;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -23,13 +25,11 @@ public static class PartPicking2D
         if (part.Geometry is CurveDefinition2D curve)
         {
             var a = world(part.A); var b = world(part.B!);
-            var origin = new Vector2(a.X, a.Y);
-            var along = new Vector2(b.X - a.X, b.Y - a.Y);
+            var along = b.XY - a.XY;
             var lengthSquared = along.LengthSquared();
-            if (lengthSquared < 1e-10f) return Vector2.Distance(p, origin) / MathF.Max(part.Width, .06f);
-            var across = new Vector2(along.Y, -along.X);
-            var delta = p - origin;
-            var local = new Vector2(Vector2.Dot(delta, across), Vector2.Dot(delta, along)) / lengthSquared;
+            if (lengthSquared < 1e-10f) return Vector2.Distance(p, a.XY) / MathF.Max(part.Width, .06f);
+            var coordinates = Frame2D.FromYAxis(a.XY, along);
+            if (!coordinates.TryToLocal(p, out var local)) return float.PositiveInfinity;
             var distance = GeometryDefinitionCache2D.CurveOf(curve).Distance(local) * MathF.Sqrt(lengthSquared);
             return distance / MathF.Max(part.Width, .06f);
         }
@@ -39,15 +39,14 @@ public static class PartPicking2D
             // Folded outlines may overlap. Pick the same rest-topology triangles that are filled, not an even/odd hole.
             if (part.Bindings is { Count: > 0 })
             {
-                var mesh = PolygonTriangulation2D.Triangulate(PartContours2D.CutoutPoints(part).Select(v => v.XY), 1e-8);
-                float Cross(Vector2 a, Vector2 b, Vector2 q) => (b.X - a.X) * (q.Y - a.Y) - (b.Y - a.Y) * (q.X - a.X);
+                var mesh = PolygonTriangulation2D.Triangulate(PartContours2D.CutoutPoints(part), 1e-8);
                 for (var i = 0; i < mesh.Indices.Length; i += 3)
                 {
                     var a = new Vector2(points[mesh.Indices[i]].X, points[mesh.Indices[i]].Y);
                     var b = new Vector2(points[mesh.Indices[i + 1]].X, points[mesh.Indices[i + 1]].Y);
                     var c = new Vector2(points[mesh.Indices[i + 2]].X, points[mesh.Indices[i + 2]].Y);
-                    if (MathF.Abs(Cross(a, b, c)) < 1e-8f) continue;
-                    var ab = Cross(a, b, p); var bc = Cross(b, c, p); var ca = Cross(c, a, p);
+                    if (MathF.Abs(a.Orientation(b, c)) < 1e-8f) continue;
+                    var ab = a.Orientation(b, p); var bc = b.Orientation(c, p); var ca = c.Orientation(a, p);
                     if (ab >= -1e-7f && bc >= -1e-7f && ca >= -1e-7f || ab <= 1e-7f && bc <= 1e-7f && ca <= 1e-7f) return .5f;
                 }
             }

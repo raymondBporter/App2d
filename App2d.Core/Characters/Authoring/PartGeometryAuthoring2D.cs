@@ -40,10 +40,10 @@ public static class PartGeometryAuthoring2D
     private static SimplePolygon2D.Builder Polygon(IEnumerable<Vector2> vertices) =>
         new() { Vertices = [.. vertices] };
 
-    public static void SetPolygon(PuppetPart part, IReadOnlyList<PuppetPoint> points)
+    public static void SetPolygon(PuppetPart part, IReadOnlyList<Vector2> points)
     {
         CheckCutout(points);
-        part.Geometry = Polygon(points.Select(point => point.XY));
+        part.Geometry = Polygon(points);
         part.Kind = PuppetPartKinds.Polygon;
     }
 
@@ -88,30 +88,30 @@ public static class PartGeometryAuthoring2D
                 break;
         }
     }
-    public static void CheckCutout(IReadOnlyList<PuppetPoint>? points)
+    public static void CheckCutout(IReadOnlyList<Vector2>? points)
     {
         if (points is not { Count: >= 3 and <= 64 }) throw new InvalidDataException("A cutout needs 3 to 64 perimeter points.");
         foreach (var point in points)
         {
-            point.Check("cutout.point");
-            if (point.Z != 0) throw new InvalidDataException("Cutout coordinates are XY only.");
+            new Limit(-10000, 10000).Check(point.X, "cutout.point.x");
+            new Limit(-10000, 10000).Check(point.Y, "cutout.point.y");
         }
-        try { PolygonTriangulation2D.Triangulate(points.Select(p => p.XY), 1e-8); }
+        try { PolygonTriangulation2D.Triangulate(points, 1e-8); }
         catch (ArgumentException ex) { throw new InvalidDataException("Cutout must be a simple polygon with area: " + ex.Message, ex); }
     }
 
     /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
-    public static PuppetPoint ArtworkPoint(PuppetPart part, int index, Vector3 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Matrix3x2>? restTransform = null)
+    public static Vector2 ArtworkPoint(PuppetPart part, int index, Vector2 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Matrix3x2>? restTransform = null)
     {
         var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
         var art = binding is null ? PartAttachment2D.FrameOf(part, world, angle, transform) : PartAttachment2D.FrameOf(part, rest, transform: restTransform);
         if (binding is not null)
         {
-            var now = PartAttachment2D.BindingFrame(binding, world); 
+            var now = PartAttachment2D.BindingFrame(binding, world);
             var before = PartAttachment2D.BindingFrame(binding, rest);
-            target = before.At(now.Coordinates.ToLocal(new(target.X, target.Y)));
+            target = before.Coordinates.TransformPoint(now.Coordinates.ToLocal(target));
         }
-        if (!art.Coordinates.TryToLocal(new(target.X, target.Y), out var local))
+        if (!art.Coordinates.TryToLocal(target, out var local))
             throw new InvalidOperationException("Cannot edit a cutout through a collapsed frame.");
         return new(local.X / part.Width, local.Y / part.Height);
     }

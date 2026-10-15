@@ -26,6 +26,9 @@ public readonly record struct Vector2d(double X, double Y)
     /// <summary>The perpendicular dot product; positive for a counter-clockwise turn in Y-up coordinates.</summary>
     public double Cross(Vector2d other) => X * other.Y - Y * other.X;
 
+    /// <summary>Twice the signed triangle area; positive for a counter-clockwise turn in Y-up coordinates.</summary>
+    public double Orientation(Vector2d b, Vector2d c) => (b - this).Cross(c - this);
+
     public Vector2d PerpCcw => new(-Y, X);
     public Vector2d PerpCw => new(Y, -X);
     public bool IsFinite() => double.IsFinite(X) && double.IsFinite(Y);

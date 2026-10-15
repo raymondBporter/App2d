@@ -65,13 +65,30 @@ public sealed class TriangleMesh2DTests
     }
 
     [Fact]
-    public void CrossProductsShareOneDoublePrecisionOrientation()
+    public void FloatAndDoubleCrossProductsShareTheSameSignConvention()
     {
         var a = new Vector2(1, 2); var b = new Vector2(4, 2); var c = new Vector2(1, 5);
-        Assert.Equal(9d, a.Orientation(b, c));
-        Assert.Equal(9d, (b - a).CrossDouble(c - a));
+        Assert.Equal(9f, a.Orientation(b, c));
+        Assert.Equal(9d, new Vector2d(b - a).Cross(new(c - a)));
         Assert.Equal(9f, (b - a).Cross(c - a));
-        Assert.Equal(-9d, a.Orientation(c, b));
+        Assert.Equal(-9f, a.Orientation(c, b));
+        Assert.Equal(9d, new Vector2d(a).Orientation(new(b), new(c)));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void NearlyCollinearTrianglesRetainTheirAreaAndHull(bool reverse)
+    {
+        Vector2[] points = [Vector2.Zero, new(16_777_216, 16_777_215), new(16_777_215, 16_777_214)];
+        if (reverse) Array.Reverse(points);
+
+        var mesh = PolygonTriangulation2D.Triangulate(points);
+        var hull = PolygonGeometry2D.ConvexHull(points);
+
+        Assert.Equal(.5f, mesh.Area);
+        Assert.Equal(3, hull.Length);
+        Assert.Equal(1d, PolygonGeometry2D.SignedAreaTwiceDouble(hull));
     }
 
     [Fact]

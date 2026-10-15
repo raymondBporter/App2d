@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>Painted torso materials, a solid hide wrap, and socket-mounted hair. No new rig or gameplay geometry.</summary>
@@ -69,7 +71,7 @@ public static class PersonWardrobe
         PartPaint SpotPaint(float x, float y, float rx, float ry) => new()
         {
             Material = new() { Fill = "#765033" },
-            Points = [.. Enumerable.Range(0, 7).Select(i => new PuppetPoint(x + MathF.Cos(i * MathF.Tau / 7) * rx, y + MathF.Sin(i * MathF.Tau / 7) * ry))],
+            Points = [.. Enumerable.Range(0, 7).Select(i => new Vector2(x + MathF.Cos(i * MathF.Tau / 7) * rx, y + MathF.Sin(i * MathF.Tau / 7) * ry))],
         };
         return
         [

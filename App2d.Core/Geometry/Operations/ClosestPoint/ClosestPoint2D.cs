@@ -203,8 +203,8 @@ public static class ClosestPoint2D
             var directionsDot = Vector2.Dot(firstDirection, secondDirection);
             var secondDotDelta = Vector2.Dot(secondDirection, startDelta);
             // In 2D the closest points of two non-parallel lines is their crossing; cross products keep precision near parallel.
-            var determinant = firstDirection.CrossDouble(secondDirection);
-            var numerator = secondDirection.CrossDouble(startDelta);
+            var determinant = new Vector2d(firstDirection).Cross(new(secondDirection));
+            var numerator = new Vector2d(secondDirection).Cross(new(startDelta));
             firstParameter = determinant != 0d ? (float)Clamping.Clamp01(numerator / determinant) : 0f;
 
             var secondNumerator = directionsDot * firstParameter + secondDotDelta;

@@ -1,6 +1,7 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.IO;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
 using System.Drawing.Drawing2D;
@@ -74,7 +75,7 @@ public static class SpineExport2D
                 .AppendLine(path).AppendLine($"bounds: 0, 0, {bitmap.Width}, {bitmap.Height}").AppendLine();
         }
         var restPose = PoseEvaluator.Rest(model);
-        var slots = new JsonArray(); 
+        var slots = new JsonArray();
         var skins = new JsonArray();
         var parts = new List<PartBone>();
         var slotNames = new Dictionary<string, string>();
@@ -127,7 +128,7 @@ public static class SpineExport2D
             {
                 if (part.Material?.Texture is not null) throw new InvalidDataException($"Image part '{part.Id}' needs a slot and skin before Spine export.");
                 var helper = Unique("app2d-part-" + part.Id, used); used.Add(helper);
-                var length = part.B is { } end ? Vector2.Distance(restPose.World(part.A).XY(), restPose.World(end).XY()) : 1;
+                var length = part.B is { } end ? Vector2.Distance(restPose.World(part.A).XY, restPose.World(end).XY) : 1;
                 var frame = PartFrame(part, restPose, MathF.Max(length, .0001f));
                 var local = Affine2D.FromMatrix(Relative(frame, restPose.Bones[part.A]));
                 bones.Add(Bone(helper, names[part.A], local, 0, pixelsPerUnit));
@@ -149,7 +150,7 @@ public static class SpineExport2D
         var exact = model.Order.All(c => c.Transform is not null) && model.Chains.Count == 0 && clips.All(c => c.Contacts.Count == 0);
         foreach (var clip in clips)
         {
-            var animation = new JsonObject(); 
+            var animation = new JsonObject();
             var timelines = new JsonObject(); animation["bones"] = timelines;
             var motion = new JsonObject { ["translate"] = new JsonArray() };
             if (rootName is not null) timelines[rootName] = motion;
@@ -298,11 +299,11 @@ public static class SpineExport2D
     {
         if (part.Geometry is App2d.Core.Geometry.Authoring.CurveDefinition2D)
         {
-            var a = pose.World(part.A); 
+            var a = pose.World(part.A);
             var b = pose.World(part.B!);
-            var along = new Vector2(b.X - a.X, b.Y - a.Y);
-            var right = along.LengthSquared() > 1e-12f ? new Vector2(along.Y, -along.X) / along.Length() : Vector2.UnitX;
-            return new(right.X, right.Y, along.X / strokeLength, along.Y / strokeLength, a.X, a.Y);
+            var along = b.XY - a.XY;
+            var right = along.LengthSquared() > 1e-12f ? along.PerpCw / along.Length() : Vector2.UnitX;
+            return new Frame2D(a.XY, right, along / strokeLength).Matrix;
         }
         var frame = PartAttachment2D.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
         return frame.Coordinates.Matrix;
@@ -367,7 +368,7 @@ public static class SpineExport2D
         var result = new JsonArray();
         for (var i = 0; i < keys.Count; i++)
         {
-            var key = keys[i]; 
+            var key = keys[i];
             var node = new JsonObject { ["time"] = key.Time };
             if (track.Kind == SlotColorTrack2D.Alpha) node["value"] = key.A;
             else node["color"] = SlotColorTrack2D.FormatColor(key.Value)[..(track.Kind == SlotColorTrack2D.Rgb ? 6 : 8)];
@@ -381,7 +382,7 @@ public static class SpineExport2D
                 var controls = new JsonArray();
                 void Add(KeyCurve2D? curve, float start, float end)
                 {
-                    var c = curve ?? DefaultCurve(key.Ease); 
+                    var c = curve ?? DefaultCurve(key.Ease);
                     var (first, second) = c.Controls(start, end);
                     var dt = next.Time - key.Time;
                     controls.Add(key.Time + c.X1 * dt); controls.Add(first); controls.Add(key.Time + c.X2 * dt); controls.Add(second);
@@ -411,7 +412,7 @@ public static class SpineExport2D
         var points = vertices.Select(v => Vector2.Transform(new(v.Position.X, v.Position.Y), inverse)).ToArray();
         var min = new Vector2(points.Min(p => p.X), points.Min(p => p.Y)) - new Vector2(2 / ppu);
         var max = new Vector2(points.Max(p => p.X), points.Max(p => p.Y)) + new Vector2(2 / ppu);
-        var width = (int)MathF.Ceiling((max.X - min.X) * ppu); 
+        var width = (int)MathF.Ceiling((max.X - min.X) * ppu);
         var height = (int)MathF.Ceiling((max.Y - min.Y) * ppu);
         if (width <= 0 || height <= 0 || width > 4096 || height > 4096) throw new InvalidDataException($"Part '{part.Id}' export image exceeds 4096 pixels; lower export resolution.");
         max = min + new Vector2(width / ppu, height / ppu);
@@ -431,5 +432,4 @@ public static class SpineExport2D
         using var stream = new MemoryStream(); bitmap.Save(stream, ImageFormat.Png);
         return new(stream.ToArray(), (min + max) / 2, max - min);
     }
-    private static Vector2 XY(this Vector3 value) => new(value.X, value.Y);
 }

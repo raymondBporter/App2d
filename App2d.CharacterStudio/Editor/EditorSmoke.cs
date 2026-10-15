@@ -149,7 +149,7 @@ internal sealed class EditorSmoke(string output)
                 {
                     var part = doc.Asset.Parts.Single(p => p.Id == "frill");
                     var polygon = (SimplePolygon2D.Builder)part.Geometry!;
-                    var vertices = polygon.Vertices.ConvertAll(point => new PuppetPoint(point.X, point.Y));
+                    var vertices = new List<Vector2>(polygon.Vertices);
                     vertices[0] = new(-.32f, -.46f);
                     PartGeometryAuthoring2D.SetPolygon(part, vertices);
                 }), s);

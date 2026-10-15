@@ -37,7 +37,7 @@ public readonly record struct Similarity2D
     public bool IsFinite => XAxis.IsFinite() && YAxis.IsFinite() && Translation.IsFinite() && float.IsFinite(Scale);
 
     /// <summary>True when the pose flips handedness, such as a character mirrored to face the other way.</summary>
-    public bool IsMirrored => XAxis.CrossDouble(YAxis) < 0d;
+    public bool IsMirrored => new Vector2d(XAxis).Cross(new(YAxis)) < 0d;
 
     /// <summary>A pose with unit scale and no rotation, placed at a finite position.</summary>
     /// <param name="translation">Where the local origin lands.</param>

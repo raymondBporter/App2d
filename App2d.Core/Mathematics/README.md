@@ -128,10 +128,21 @@ Angles are radians, increasing counter-clockwise from +X in Y-up coordinates.
 In a screen coordinate system where Y points down, convert the Y component explicitly
 when you want the same visual convention. Angles are not degrees.
 
-`Vector2.Cross(right)` returns a float for existing callers. `Vector2.CrossDouble(right)` uses
-the same determinant and returns a double. `a.Orientation(b, c)` computes
-`cross(b - a, c - a)` after widening the coordinates to double, so geometric predicates
-do not lose precision in the subtraction.
+`u.Cross(v)` is the two-vector determinant (also called the perpendicular dot product).
+`a.Orientation(b, c)` computes `cross(b - a, c - a)`: twice the signed triangle area,
+positive for a counter-clockwise turn in Y-up coordinates. Divide by two for signed area.
+Both use the vector's coordinate type: `Vector2` uses float arithmetic, and `Vector2d` uses double.
+For geometric predicates, widen the points before subtracting so float rounding does not lose the turn:
+
+```csharp
+float cross = u.Cross(v);
+float turn = a.Orientation(b, c);
+double preciseCross = new Vector2d(u).Cross(new(v));
+double preciseTurn = new Vector2d(a).Orientation(new(b), new(c));
+```
+
+Hulls, triangulation, clipping, and polygon winding retain double precision for near-collinear or large inputs.
+Character drawing and editor calculations use float arithmetic where they already did so.
 
 `AngleOf` / `AngleRadians` return an angle in [-PI, PI]. A zero vector has no
 direction; the shared convention returns zero, including for signed-zero components.

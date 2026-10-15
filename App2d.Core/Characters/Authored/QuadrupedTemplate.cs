@@ -29,7 +29,7 @@ public static class QuadrupedTemplate
             var p = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Kind = kind };
             m.Parts.Add(p); return p;
         }
-        PuppetPart Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params PuppetPoint[] points)
+        PuppetPart Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
         {
             var p = Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, "polygon"); PartGeometryAuthoring2D.SetPolygon(p, points); return p;
         }
@@ -43,9 +43,9 @@ public static class QuadrupedTemplate
             var far = chain.Id.StartsWith("far", StringComparison.Ordinal);
             var color = far ? shade : skin;
             var root = m.Controls.First(c => c.Id == chain.Root).Rest;
-            var joint = m.Controls.First(c => c.Id == chain.Joint).Rest; 
+            var joint = m.Controls.First(c => c.Id == chain.Joint).Rest;
             var foot = m.Controls.First(c => c.Id == chain.End).Rest;
-            var upper = Vector2.Distance(root.XY, joint.XY); 
+            var upper = Vector2.Distance(root.XY, joint.XY);
             var lower = Vector2.Distance(joint.XY, foot.XY);
             Shape(chain.Id + "-upper", chain.Root, chain.Joint, .25f, upper + .19f, 0, upper / 2, 0, color);
             Shape(chain.Id + "-lower", chain.Joint, chain.End, .23f, lower + .15f, 0, lower / 2, -.005f, color);
@@ -84,7 +84,7 @@ public static class QuadrupedTemplate
     private static PartPaint Spot(float x, float y, float rx, float ry) => new()
     {
         Material = new() { Fill = "#397783" },
-        Points = [.. Enumerable.Range(0, 12).Select(i => new PuppetPoint(x + rx * MathF.Cos(i * MathF.Tau / 12), y + ry * MathF.Sin(i * MathF.Tau / 12)))]
+        Points = [.. Enumerable.Range(0, 12).Select(i => new Vector2(x + rx * MathF.Cos(i * MathF.Tau / 12), y + ry * MathF.Sin(i * MathF.Tau / 12)))]
     };
 
     public static IReadOnlyList<MotionClip> Clips(CharacterModel model)

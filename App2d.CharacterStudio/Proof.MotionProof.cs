@@ -32,9 +32,10 @@ internal sealed partial class ProofRenders
         if (_smokeIndex >= ProofClips.Length * ProofFrames) { WriteMotionProofReport(); return false; }
         var catalog = ProofCatalog();
         _proofTarget ??= new(GraphicsDevice, ProofWidth, ProofHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        var clipId = ProofClips[_smokeIndex / ProofFrames]; 
+        var clipId = ProofClips[_smokeIndex / ProofFrames];
         var frame = _smokeIndex % ProofFrames;
-        var clip = catalog.Animations[clipId]; var seconds = frame * clip.Duration / ProofFrames;
+        var clip = catalog.Animations[clipId];
+        var seconds = frame * clip.Duration / ProofFrames;
         var panel = ProofWidth / ProofSubjects.Length;
         const int band = ProofHeight - ProofPanelHeight;
         GraphicsDevice.SetRenderTarget(_proofTarget); GraphicsDevice.Clear(new Color(237, 238, 226));
@@ -64,13 +65,16 @@ internal sealed partial class ProofRenders
 
     private void BuildProofGround(EvaluatedPose pose, float centerX, float ppu)
     {
-        _proofGround.Clear(); var ink = new Color(154, 169, 158); var pixel = 1 / ppu;
+        _proofGround.Clear();
+        var ink = new Color(154, 169, 158);
+        var pixel = 1 / ppu;
         _proofGround.Line(new(centerX - 20, 0, 7), new(centerX + 20, 0, 7), pixel, ink);
         var first = (int)MathF.Floor((centerX - 6) * 4);
         for (var x = first; x <= first + 48; x++) _proofGround.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
         foreach (var contact in pose.Contacts)
         {
-            var color = contact.Residual < .005f ? new Color(36, 140, 104) : new Color(240, 106, 50); var p = contact.Target with { Z = 6.9f };
+            var color = contact.Residual < .005f ? new Color(36, 140, 104) : new Color(240, 106, 50);
+            var p = contact.Target with { Z = 6.9f };
             _proofGround.Line(p - new Vector3(8 * pixel, 0, 0), p + new Vector3(8 * pixel, 0, 0), 2 * pixel, color);
             _proofGround.Line(p - new Vector3(0, 8 * pixel, 0), p + new Vector3(0, 8 * pixel, 0), 2 * pixel, color);
         }
@@ -84,7 +88,8 @@ internal sealed partial class ProofRenders
         {
             foreach (var subject in ProofSubjects)
             {
-                var model = catalog.Resolve(subject); var clip = catalog.Animations[clipId];
+                var model = catalog.Resolve(subject);
+                var clip = catalog.Animations[clipId];
                 var poses = Enumerable.Range(0, 481).Select(i => PoseEvaluator.Sample(model, clip, i * clip.Duration / 240.0, repeat: true)).ToArray();
                 var stride = PoseEvaluator.Sample(model, clip, clip.Duration, repeat: true).Locomotion.X - poses[0].Locomotion.X;
                 var contact = poses.SelectMany(p => p.Contacts).Select(c => c.Residual).DefaultIfEmpty().Max();

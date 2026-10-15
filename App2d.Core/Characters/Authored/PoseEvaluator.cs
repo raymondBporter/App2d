@@ -213,7 +213,7 @@ public static class PoseEvaluator
         {
             if (time > keys[i].Time) continue;
             if (time == keys[i].Time) return Of(keys[i]);
-            var a = keys[i - 1]; 
+            var a = keys[i - 1];
             var b = keys[i];
             var phase = (time - a.Time) / (b.Time - a.Time);
             float At(float start, float end, KeyCurve2D? curve) => a.Ease == ClipEase.Step ? start : curve?.Evaluate(phase, start, end)

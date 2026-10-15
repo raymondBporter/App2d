@@ -3,6 +3,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
@@ -23,18 +24,22 @@ internal sealed class ModelCutoutEditor(EditorSession session)
         {
             ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
             Ui.Help("Draw the rest silhouette here. Each point can follow the part frame or a named control; Point toward follows that control frame's rotation. Animate the controls, not the outline.");
-            var vertices = polygon.Vertices.ConvertAll(point => new PuppetPoint(point.X, point.Y));
+            var vertices = polygon.Vertices;
             var controls = session.SubjectModel!.Asset.Controls.Select(c => c.Id).ToArray();
-            void Cutout(Action<List<PuppetPoint>> edit)
+            void Cutout(Action<List<Vector2>> edit)
             {
-                var points = new List<PuppetPoint>(vertices); edit(points);
+                var points = new List<Vector2>(vertices); edit(points);
                 try { PartGeometryAuthoring2D.CheckCutout(points); change(p => PartGeometryAuthoring2D.SetPolygon(p, points)); }
                 catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
             }
             for (var i = 0; i < vertices.Count; i++)
             {
-                var index = i; var xy = vertices[i].XY; ImGui.PushID("cutout-" + i);
-                if (Ui.Drag2("Point " + (i + 1), ref xy, .005f, -2, 2)) Cutout(p => p[index] = new(xy.X, xy.Y));
+                var index = i;
+                var xy = vertices[i];
+                ImGui.PushID("cutout-" + i);
+                if (Ui.Drag2("Point " + (i + 1), ref xy, .005f, -2, 2))
+                    Cutout(p => p[index] = xy);
+
                 var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
                 void Attach(string? control, string? toward)
                 {
@@ -58,22 +63,42 @@ internal sealed class ModelCutoutEditor(EditorSession session)
     public void Drag(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
         var contour = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
-        var points = ((SimplePolygon2D.Builder)part.Geometry!).Vertices.ConvertAll(p => new PuppetPoint(p.X, p.Y));
+        var points = PartContours2D.CutoutPoints(part);
         for (var i = 0; i < points.Count; i++)
         {
             var at = frame.Screen(contour[i]);
             frame.Draw.AddCircleFilled(at, 4.5f * Ui.Scale, Ui.Color(232, 169, 55));
             if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(at, ViewportFrame.Mouse) < 9 * Ui.Scale)
-            { _cutoutDrag = i; session.BeginDrag(); }
+            {
+                _cutoutDrag = i;
+                session.BeginDrag();
+            }
         }
         if (_cutoutDrag < 0) return;
-        if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _cutoutDrag = -1; session.EndDrag(); return; }
+        if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
+        {
+            _cutoutDrag = -1;
+            session.EndDrag();
+            return;
+        }
         if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || session.SubjectModel is not { } document) return;
-        var edited = new List<PuppetPoint>(points);
-        try { edited[_cutoutDrag] = PartGeometryAuthoring2D.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse), pose.World, id => model.Rest[id], id => pose.Angles[id], id => pose.Bones[id], id => model.RestTransforms[id]); }
-        catch (InvalidOperationException) { return; }
-        try { PartGeometryAuthoring2D.CheckCutout(edited); }
-        catch (InvalidDataException) { return; }
+        var edited = new List<Vector2>(points);
+        try
+        {
+            edited[_cutoutDrag] = PartGeometryAuthoring2D.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse).XY, pose.World, id => model.Rest[id], id => pose.Angles[id], id => pose.Bones[id], id => model.RestTransforms[id]);
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+        try
+        {
+            PartGeometryAuthoring2D.CheckCutout(edited);
+        }
+        catch (InvalidDataException)
+        {
+            return;
+        }
         session.Change(document, () => PartGeometryAuthoring2D.SetPolygon(document.Asset.Parts.First(p => p.Id == part.Id), edited));
     }
 }

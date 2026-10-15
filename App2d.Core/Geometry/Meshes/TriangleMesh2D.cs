@@ -27,7 +27,7 @@ public sealed class TriangleMesh2D
         var area = 0d;
         for (var i = 0; i < _indices.Length; i += 3)
         {
-            var twice = _vertices[_indices[i]].Orientation(_vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
+            var twice = new Vector2d(_vertices[_indices[i]]).Orientation(new(_vertices[_indices[i + 1]]), new(_vertices[_indices[i + 2]]));
             ArgGuard.ThrowIf(twice == 0, "Triangle vertices must not be collinear.", nameof(indices));
             area += Math.Abs(twice) / 2;
         }
@@ -57,13 +57,15 @@ public sealed class TriangleMesh2D
         ArgGuard.ThrowIf(!double.IsFinite(edgeTolerance) || edgeTolerance < 0,
             "Edge tolerance must be finite and nonnegative.", nameof(edgeTolerance));
         if (edgeTolerance == 0 && !Bounds.Contains(point)) return false;
+        var query = new Vector2d(point);
         for (var i = 0; i < TriangleCount; i++)
         {
-            var (a, b, c) = TriangleAt(i);
+            var triangle = TriangleAt(i);
+            var a = new Vector2d(triangle.A); var b = new Vector2d(triangle.B); var c = new Vector2d(triangle.C);
             var sign = Math.Sign(a.Orientation(b, c));
-            if (sign * a.Orientation(b, point) >= -edgeTolerance &&
-                sign * b.Orientation(c, point) >= -edgeTolerance &&
-                sign * c.Orientation(a, point) >= -edgeTolerance)
+            if (sign * a.Orientation(b, query) >= -edgeTolerance &&
+                sign * b.Orientation(c, query) >= -edgeTolerance &&
+                sign * c.Orientation(a, query) >= -edgeTolerance)
             {
                 return true;
             }

@@ -80,7 +80,7 @@ public static class PolygonClipping2D
         ArgGuard.ThrowIfNull(clip);
         ArgGuard.ThrowIf(clip.Count < 3, "The clipping polygon needs at least three vertices.", nameof(clip));
         var twiceArea = 0d;
-        for (var i = 0; i < clip.Count; i++) twiceArea += xy(clip[i]).CrossDouble(xy(clip[(i + 1) % clip.Count]));
+        for (var i = 0; i < clip.Count; i++) twiceArea += new Vector2d(xy(clip[i])).Cross(new(xy(clip[(i + 1) % clip.Count])));
         ArgGuard.ThrowIf(twiceArea == 0, "The clipping polygon needs nonzero area.", nameof(clip));
         var winding = Math.Sign(twiceArea);
         var points = subject.ToList();
@@ -89,12 +89,13 @@ public static class PolygonClipping2D
             var a = xy(clip[edge]);
             var b = xy(clip[(edge + 1) % clip.Count]);
             if (Vector2.DistanceSquared(a, b) < 1e-12f) continue;
+            var first = new Vector2d(a); var second = new Vector2d(b);
             var clipped = new List<T>();
             var previous = points[^1];
-            var before = winding * a.Orientation(b, xy(previous));
+            var before = winding * first.Orientation(second, new(xy(previous)));
             foreach (var current in points)
             {
-                var after = winding * a.Orientation(b, xy(current));
+                var after = winding * first.Orientation(second, new(xy(current)));
                 if ((before >= 0) != (after >= 0)) clipped.Add(lerp(previous, current, (float)(before / (before - after))));
                 if (after >= 0) clipped.Add(current);
                 previous = current;

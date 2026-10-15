@@ -116,7 +116,7 @@ public sealed class PuppetDrawing
                 continue;
             }
             var contour = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
-            var triangles = part.Geometry is SimplePolygon2D.Builder ? PolygonTriangulation2D.Triangulate(PartContours2D.CutoutPoints(part).Select(p => p.XY), 1e-8) : null;
+            var triangles = part.Geometry is SimplePolygon2D.Builder ? PolygonTriangulation2D.Triangulate(PartContours2D.CutoutPoints(part), 1e-8) : null;
             var frame = PartAttachment2D.FrameOf(part, world, angle, transform);
             if (material.Fill is { } shapeFill)
             {

@@ -1,6 +1,8 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using ImGuiNET;
 using System.Numerics;
 
@@ -19,11 +21,25 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
     {
         Ui.Header("Hair and clothing");
         Ui.Help("New > Appearance creates a reusable asset. Right-click an asset to duplicate it.");
-        if (Ui.Combo("Appearance", session.PreviewProp, session.Assets.Props.Where(p => p.Asset.Usage != "prop").Select(p => p.Id)) is { } id) session.Open(id);
-        if (session.AppearanceDocument is not { } doc || doc.Asset.Usage == "prop") return;
-        if (_asset != doc.Id) { _asset = doc.Id; _piece = 0; _drag = -1; }
+        if (Ui.Combo("Appearance", session.PreviewProp, session.Assets.Props.Where(p => p.Asset.Usage != "prop").Select(p => p.Id)) is { } id)
+            session.Open(id);
+
+        if (session.AppearanceDocument is not { } doc || doc.Asset.Usage == "prop")
+            return;
+
+        if (_asset != doc.Id)
+        {
+            _asset = doc.Id;
+            _piece = 0;
+            _drag = -1;
+        }
+
         for (var i = 0; i < doc.Asset.Solids.Count; i++)
-            if (ImGui.Selectable($"Piece {i + 1}", i == _piece)) _piece = i;
+        {
+            if (ImGui.Selectable($"Piece {i + 1}", i == _piece))
+                _piece = i;
+        }
+
         if (ImGui.Button("Add piece"))
         {
             session.Edit(doc, () =>
@@ -164,11 +180,19 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         var origin = ActorPose.PropPoint(socket, doc.Asset, points[_drag]);
         var x = ActorPose.PropPoint(socket, doc.Asset, points[_drag] with { X = points[_drag].X + 1 }) - origin;
         var y = ActorPose.PropPoint(socket, doc.Asset, points[_drag] with { Y = points[_drag].Y + 1 }) - origin;
-        var det = x.X * y.Y - x.Y * y.X;
-        if (MathF.Abs(det) < 1e-6f) return;
-        var delta = frame.World(ViewportFrame.Mouse, origin.Z) - origin;
+        var coordinates = new Frame2D(origin.XY, x.XY, y.XY);
+        if (MathF.Abs(coordinates.Matrix.GetDeterminant()) < 1e-6f ||
+            !coordinates.TryToLocal(frame.World(ViewportFrame.Mouse, origin.Z).XY, out var delta))
+        {
+            return;
+        }
+
         var edited = points.ToArray();
-        edited[_drag] = points[_drag] with { X = points[_drag].X + (delta.X * y.Y - delta.Y * y.X) / det, Y = points[_drag].Y + (x.X * delta.Y - x.Y * delta.X) / det };
+        edited[_drag] = points[_drag] with
+        {
+            X = points[_drag].X + delta.X,
+            Y = points[_drag].Y + delta.Y
+        };
         Cut(doc, edited, doc.Asset.Solids[_piece].Thickness);
     }
 }

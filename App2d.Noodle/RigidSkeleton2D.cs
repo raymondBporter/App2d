@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
 using System.Numerics;
@@ -25,9 +26,10 @@ internal static class StandardBones2D
     public const string HeadTopSocket = "head_top";
 }
 
-internal readonly record struct BoneSegment2D(Vector2 Start, Vector2 End)
+internal readonly record struct BoneSegment2D(Vector2 Start, Vector2 End) : ISegment<BoneSegment2D, Vector2>
 {
-    public float Length => Vector2.Distance(Start, End);
+    public static BoneSegment2D Create(Vector2 start, Vector2 end) => new(start, end);
+    public float Length => SegmentMath2D.Length(this);
     public float Angle => (End - Start).AngleRadians;
 }
 

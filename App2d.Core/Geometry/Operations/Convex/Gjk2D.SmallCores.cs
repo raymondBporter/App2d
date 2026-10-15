@@ -45,7 +45,7 @@ public static partial class Gjk2D
         var winding = 0;
         for (var i = 0; i < vertices.Length; i++)
         {
-            var turn = (vertices[(i + 1) % vertices.Length] - vertices[i]).CrossDouble(vertices[(i + 2) % vertices.Length] - vertices[(i + 1) % vertices.Length]);
+            var turn = new Vector2d(vertices[(i + 1) % vertices.Length] - vertices[i]).Cross(new(vertices[(i + 2) % vertices.Length] - vertices[(i + 1) % vertices.Length]));
             if (turn == 0d) continue;
             var sign = Math.Sign(turn);
             if (winding != 0 && sign != winding) return false;

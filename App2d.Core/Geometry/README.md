@@ -25,6 +25,11 @@ For queries where C# cannot infer the scalar from arguments, name it once: `Inte
 or `IntervalMath<float>.TryIntersect(limits, authoredLimit, out var shared)`.
 Rectangles expose `XInterval` and `YInterval` while retaining their existing vector storage.
 
+`ISegment<TSelf, TPoint>` supplies `Start`/`End` and a static abstract `Create` factory.
+`LineSegmentCurve2D` and Noodle's bone segment implement it with `Vector2` endpoints.
+`SegmentMath2D` adds `segment.Length()`, clamped `segment.PointAt(amount)`, and `segment.Reversed()`.
+Reversing calls the concrete type's factory and returns that same type.
+
 `GiantTree2D(root, settings, seed)` creates immutable, seeded tree-level geometry. `GiantTreeSettings2D`
 uses world units; `Branches` gives exact flat-topped platform bounds. `GiantTreeVisual2D` adds bark, moss,
 and foliage using a separate random stream. Changing foliage never moves a platform. The trunk is scenery;

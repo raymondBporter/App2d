@@ -206,10 +206,10 @@ public static partial class Gjk2D
         var acC = -Dot(a, ac);
         var bcB = Dot(c, bc);
         var bcC = -Dot(b, bc);
-        var area = ab.CrossDouble(ac);
-        var triangleA = area * b.CrossDouble(c);
-        var triangleB = area * c.CrossDouble(a);
-        var triangleC = area * a.CrossDouble(b);
+        var area = new Vector2d(ab).Cross(new(ac));
+        var triangleA = area * new Vector2d(b).Cross(new(c));
+        var triangleB = area * new Vector2d(c).Cross(new(a));
+        var triangleC = area * new Vector2d(a).Cross(new(b));
         if (abB <= 0d && acC <= 0d) { count = 1; s[0].Weight = 1d; }
         else if (abA > 0d && abB > 0d && triangleC <= 0d)
         {
@@ -328,13 +328,13 @@ public static partial class Gjk2D
         var count = 0;
         for (var i = 0; i < unique; i++)
         {
-            while (count >= 2 && (hull[count - 1].Difference - hull[count - 2].Difference).CrossDouble(seeds[i].Difference - hull[count - 1].Difference) <= 0d) count--;
+            while (count >= 2 && new Vector2d(hull[count - 1].Difference - hull[count - 2].Difference).Cross(new(seeds[i].Difference - hull[count - 1].Difference)) <= 0d) count--;
             hull[count++] = seeds[i];
         }
         var lower = count;
         for (var i = unique - 2; i >= 0; i--)
         {
-            while (count > lower && (hull[count - 1].Difference - hull[count - 2].Difference).CrossDouble(seeds[i].Difference - hull[count - 1].Difference) <= 0d) count--;
+            while (count > lower && new Vector2d(hull[count - 1].Difference - hull[count - 2].Difference).Cross(new(seeds[i].Difference - hull[count - 1].Difference)) <= 0d) count--;
             hull[count++] = seeds[i];
         }
         return count - 1;

@@ -28,7 +28,7 @@ public static class PterosaurTemplate
             part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
             model.Parts.Add(part); return part;
         }
-        PuppetPart Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params PuppetPoint[] points)
+        PuppetPart Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
         {
             var part = Shape(key, a, a + "-up", w, h, x, y, depth, fill, PuppetPartKinds.Polygon); PartGeometryAuthoring2D.SetPolygon(part, points); return part;
         }

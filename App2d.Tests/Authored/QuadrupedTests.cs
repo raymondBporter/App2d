@@ -45,7 +45,7 @@ public sealed class QuadrupedTests
     [Fact]
     public void ConcaveCutoutPickingAndPaintRespectTheNotch()
     {
-        List<PuppetPoint> points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)];
+        List<Vector2> points = [new(0, 0), new(1, 0), new(1, .3f), new(.3f, .3f), new(.3f, 1), new(0, 1)];
         var part = new PuppetPart
         {
             A = "body",
@@ -59,7 +59,7 @@ public sealed class QuadrupedTests
         part.Validate(_ => true);
         Assert.True(PartPicking2D.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
         Assert.True(PartPicking2D.Distance(part, _ => Vector3.Zero, new(.8f, .8f, 0)) > 1);
-        var mesh = PolygonTriangulation2D.Triangulate(points.Select(p => p.XY)); Assert.Equal(.51f, mesh.Area, 5);
+        var mesh = PolygonTriangulation2D.Triangulate(points); Assert.Equal(.51f, mesh.Area, 5);
         var drawing = new PuppetDrawing(); drawing.Build("#000000", 0, [part], _ => Vector3.Zero);
         foreach (var vertex in drawing.Mesh.Vertices)
             Assert.True(vertex.Position.X <= .30001f || vertex.Position.Y <= .30001f, "Fill or paint spills across the notch.");

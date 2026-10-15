@@ -62,9 +62,10 @@ public static class Containment2D
     public static bool ConvexPolygon(Vector2 point, ReadOnlySpan<Vector2> vertices, float collinearEpsilon = 0.0001f)
     {
         var winding = 0;
+        var query = new Vector2d(point);
         for (var i = 0; i < vertices.Length; i++)
         {
-            var cross = vertices[i].Orientation(vertices[(i + 1) % vertices.Length], point);
+            var cross = new Vector2d(vertices[i]).Orientation(new(vertices[(i + 1) % vertices.Length]), query);
             if (Math.Abs(cross) <= collinearEpsilon) continue;
             var turn = Math.Sign(cross);
             if (winding == 0) winding = turn;

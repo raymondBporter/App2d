@@ -74,8 +74,8 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                         if (Ui.ColorHex("Color", ref color)) Paint(p => p[index].Material = p[index].Material! with { Fill = color });
                         for (var j = 0; j < patch.Points.Count; j++)
                         {
-                            var point = j; var xy = patch.Points[j].XY;
-                            if (Ui.Drag2("Point " + (j + 1), ref xy, .005f, -2, 2)) Paint(p => p[index].Points[point] = new(xy.X, xy.Y));
+                            var point = j; var xy = patch.Points[j];
+                            if (Ui.Drag2("Point " + (j + 1), ref xy, .005f, -2, 2)) Paint(p => p[index].Points[point] = xy);
                         }
                         if (ImGui.SmallButton("Delete patch")) Paint(p => p.RemoveAt(index));
                         ImGui.TreePop();

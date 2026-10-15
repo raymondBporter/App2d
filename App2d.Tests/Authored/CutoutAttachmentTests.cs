@@ -3,6 +3,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -38,8 +39,8 @@ public sealed class CutoutAttachmentTests
         Assert.True(Vector3.Distance(new(2, 0, .3f), bound[1]) < 1e-5f);
         Assert.True(Vector3.Distance(new(1, 0, .3f), bound[2]) < 1e-5f);
         Assert.Equal(rigid[0], bound[0]);
-        var original = PartGeometryAuthoring2D.ArtworkPoint(part, 2, bound[2], pose.World, id => resolved.Rest[id]);
-        Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[2].XY, original.XY) < 1e-5f);
+        var original = PartGeometryAuthoring2D.ArtworkPoint(part, 2, bound[2].XY, pose.World, id => resolved.Rest[id]);
+        Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[2], original) < 1e-5f);
     }
 
     [Fact]
@@ -96,9 +97,29 @@ public sealed class CutoutAttachmentTests
         var contour = PartContours2D.Contour(part, World, transform: _ => current, rest: Rest, restTransform: _ => rest);
         for (var i = 0; i < contour.Count; i++)
         {
-            var point = PartGeometryAuthoring2D.ArtworkPoint(part, i, contour[i], World, Rest, transform: _ => current, restTransform: _ => rest);
-            Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[i].XY, point.XY) < 1e-5f);
+            var point = PartGeometryAuthoring2D.ArtworkPoint(part, i, contour[i].XY, World, Rest, transform: _ => current, restTransform: _ => rest);
+            Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[i], point) < 1e-5f);
         }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PaintKeepsThePartsLayerAndInterpolatesBoundControlDepth(bool bound)
+    {
+        var model = Model(); var part = model.Parts[0];
+        part.Depth = .1f;
+        if (!bound) part.Bindings = null;
+        var resolved = ResolvedModel.From(model);
+        var clip = ClipAuthoring.New(resolved, "layer-change", "Layer change");
+        ClipAuthoring.SetKey(clip, new("translate", "tip"), 0, new(0, 0, .5f));
+        var drawing = new PuppetDrawing();
+        drawing.Build(resolved, PoseEvaluator.Sample(resolved, clip, 0));
+
+        var painted = drawing.Mesh.Vertices.ToArray().Where(v => v.Color.R == 255 && v.Color.G == 0 && v.Color.B == 0).ToArray();
+        Assert.NotEmpty(painted);
+        Assert.All(painted, vertex => Assert.Equal(
+            .1f + (bound ? .5f * vertex.Position.X : 0) - .00001f, vertex.Position.Z, 5));
     }
 
     [Theory]

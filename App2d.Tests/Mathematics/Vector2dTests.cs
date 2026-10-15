@@ -18,6 +18,17 @@ public sealed class Vector2dTests
     }
 
     [Fact]
+    public void OrientationPreservesDifferencesWhenPointsAreWidenedBeforeSubtracting()
+    {
+        var a = new Vector2(16_777_216, 0);
+        var b = new Vector2(-1, 1);
+        var c = new Vector2(0, 1);
+
+        Assert.Equal(0f, a.Orientation(b, c));
+        Assert.Equal(-1d, new Vector2d(a).Orientation(new(b), new(c)));
+    }
+
+    [Fact]
     public void DotCrossAndPerpendicularsUseTheSameOrientationAsVector2()
     {
         var vector = new Vector2d(3, 4);

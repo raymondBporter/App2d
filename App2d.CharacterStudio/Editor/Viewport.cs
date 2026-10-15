@@ -1,6 +1,8 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,6 +18,8 @@ internal sealed record SubjectView(Subject Subject, Vector3 Offset);
 /// <summary>One frame of the viewport as the workspace views see it: where things are on screen and what the mouse is doing.</summary>
 internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, Vector2 size, Vector2 anchor, float ppu, IReadOnlyList<SubjectView> subjects, bool hovered)
 {
+    private readonly Frame2D _coordinates = new(origin + anchor, new(ppu, 0), new(0, -ppu));
+
     public ImDrawListPtr Draw { get; } = draw;
     public Vector2 Origin { get; } = origin;
     public Vector2 Size { get; } = size;
@@ -28,15 +32,14 @@ internal sealed class ViewportFrame(ImDrawListPtr draw, Vector2 origin, Vector2 
     public Vector2 Screen(Vector3 world, int subject = 0)
     {
         var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        return Origin + anchor + new Vector2(world.X + offset.X, -(world.Y + offset.Y)) * Ppu;
+        return _coordinates.TransformPoint(world.XY + offset.XY);
     }
 
     /// <summary>The world position under a screen point, in a subject's own space, keeping <paramref name="z"/>.</summary>
     public Vector3 World(Vector2 screen, float z = 0, int subject = 0)
     {
         var offset = subject < Subjects.Count ? Subjects[subject].Offset : Vector3.Zero;
-        var local = (screen - Origin - anchor) / Ppu;
-        return new(local.X - offset.X, -local.Y - offset.Y, z);
+        return new(_coordinates.ToLocal(screen) - offset.XY, z);
     }
 }
 
