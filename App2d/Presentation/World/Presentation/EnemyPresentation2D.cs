@@ -189,7 +189,7 @@ public sealed class EnemyPresentation2D(
         {
             _entity = entity;
             _scene = scene; _bolts = new(scene); _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
-            _visual = new(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
+            _visual = new(AxisAlignedRectangle2D.Builder.CreateFromSize(12, 12, new(0, 2)), _shader) { ZIndex = 1 };
             _visual.Transform.Scale = new(GameWorldUnits2D.WorldUnitsPerAuthoredUnit);
             scene.Add(_visual);
         }
@@ -315,7 +315,7 @@ public sealed class EnemyPresentation2D(
         {
             _scene = scene;
             var shape = CompositeShape2D.Builder.Create([
-                Rectangle2D.Builder.CreateFromSize(new Vector2(72f, 18f)),
+                Rectangle2D.Builder.CreateFromSize(72f, 18f),
                 Circle2D.Builder.Create(16f, new Vector2(-42f, 0f)),
                 Circle2D.Builder.Create(16f, new Vector2(42f, 0f))]);
             _visual = new WorldObject2D(shape, new SolidColorShader(new XnaColor(0xFF, 0x9A, 0x3B))) { ZIndex = 1 };

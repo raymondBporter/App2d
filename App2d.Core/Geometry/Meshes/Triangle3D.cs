@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -21,39 +22,27 @@ public readonly record struct Triangle3D
     public Vector3 C { get; }
 
     /// <summary>Magnitude of (B - A) cross (C - A), computed with double intermediates.</summary>
-    public double DoubleArea
-    {
-        get
-        {
-            var (x, y, z) = CrossEdges();
-            return Math.Sqrt(x * x + y * y + z * z);
-        }
-    }
+    public double DoubleArea => CrossEdges().Length();
 
     public double Area => DoubleArea * 0.5d;
 
     /// <summary>Returns false and zero for a collinear triangle; never returns a NaN normal.</summary>
     public bool TryGetUnitNormal(out Vector3 normal)
     {
-        var (x, y, z) = CrossEdges();
-        var length = Math.Sqrt(x * x + y * y + z * z);
+        var cross = CrossEdges();
+        var length = cross.Length();
         if (!(length > 0d) || !double.IsFinite(length))
         {
             normal = Vector3.Zero;
             return false;
         }
-        normal = new((float)(x / length), (float)(y / length), (float)(z / length));
+        normal = (cross / length).ToVector3();
         return true;
     }
 
-    private (double X, double Y, double Z) CrossEdges()
+    private Vector3d CrossEdges()
     {
-        var ux = (double)B.X - A.X;
-        var uy = (double)B.Y - A.Y;
-        var uz = (double)B.Z - A.Z;
-        var vx = (double)C.X - A.X;
-        var vy = (double)C.Y - A.Y;
-        var vz = (double)C.Z - A.Z;
-        return (uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx);
+        var origin = A.ToVector3d();
+        return (B.ToVector3d() - origin).Cross(C.ToVector3d() - origin);
     }
 }

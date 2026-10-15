@@ -86,7 +86,7 @@ public sealed class RockThrowerTests
             Assert.Single(enemy.CaptureState().Bolts);
             if (wall)
             {
-                var obstacle = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(1, 300)));
+                var obstacle = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1, 300));
                 obstacle.Transform.Position = new(100, 100);
                 physics.AddBody(obstacle, BodyMotionType2D.Static).CollisionLayer = 1;
             }
@@ -107,7 +107,7 @@ public sealed class RockThrowerTests
     public void ClosePlayerGetsOneShortRetreatThenAPauseThenAThrow()
     {
         var (enemy, physics, player) = Create();
-        var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(500, 20)));
+        var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(500, 20));
         floor.Transform.Position = new(0, -10);
         physics.AddBody(floor, BodyMotionType2D.Static).CollisionLayer = 1;
         player.WorldObject.Transform.Position = new(60, 26);

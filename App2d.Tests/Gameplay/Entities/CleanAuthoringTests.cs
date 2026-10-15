@@ -87,7 +87,7 @@ public sealed class CleanAuthoringTests : IDisposable
         Assert.True(s.Edit(entity, () =>
         {
             entity.Asset.Controller.Range = .5f;
-            entity.Asset.Actions.Single().Hits.Add(new() { Id = "bite", Socket = "mouth", Shape = Rectangle2D.Builder.FromSize(new(.4f, .3f)), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
+            entity.Asset.Actions.Single().Hits.Add(new() { Id = "bite", Socket = "mouth", Shape = Rectangle2D.Builder.FromSize(.4f, .3f), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
         }), s.Message);
         s.SaveAll();
         Assert.False(s.Assets.DirtyDocuments.Any(), s.Message);

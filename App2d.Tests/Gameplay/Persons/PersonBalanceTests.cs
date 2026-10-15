@@ -129,7 +129,7 @@ public sealed class PersonBalanceTests
 
     private PhysicsBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
-        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(right - left, 32f)));
+        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(right - left, 32f));
         spatial.Transform.Position = new Vector2((left + right) / 2f, -16f);
         var body = _physics.AddBody(spatial, motion);
         body.CollisionLayer = 1u;

@@ -70,7 +70,7 @@ public static class PolygonClipping2D
     /// <returns>The clipped perimeter with interpolated Z, possibly empty.</returns>
     public static List<Vector3> ClipConvexXY(IReadOnlyList<Vector3> subject, IReadOnlyList<Vector3> clip) => Clip(subject, clip, static point => new Vector2(point.X, point.Y), static (a, b, t) => Vector3.Lerp(a, b, t));
 
-    private static double SignedSide(Vector2 point, Vector2 normal, float offset) => (double)point.X * normal.X + (double)point.Y * normal.Y - offset;
+    private static double SignedSide(Vector2 point, Vector2 normal, float offset) => point.ToVector2d().Dot(normal.ToVector2d()) - offset;
 
     private static List<T> Clip<T>(IReadOnlyList<T> subject, IReadOnlyList<T> clip, Func<T, Vector2> xy, Func<T, T, float, T> lerp)
     {

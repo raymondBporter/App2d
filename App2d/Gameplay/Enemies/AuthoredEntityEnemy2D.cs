@@ -160,7 +160,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
     private float RecoveryAltitude(Vector2 target)
     {
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4)));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 4));
         for (var down = 0; down <= 800; down += 4)
         {
             probe.Transform.Position = target - new Vector2(0, down);
@@ -188,7 +188,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var bounds = WorldObject.WorldBounds;
         var x = WorldObject.Transform.Position.X + direction *
             (_movement.Width * Scale / 2 + (speed ?? Entity.Asset.Controller.WalkSpeed) * Scale * dt + 3);
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4, 8)));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 8));
         probe.Transform.Position = new(x, bounds.Min.Y - 3);
         if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0) return false;
         probe.Transform.Position = new(x, bounds.Min.Y + 8);
@@ -247,7 +247,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         var start = new Vector2(WorldObject.Transform.Position.X, muzzle.Y);
         var steps = Math.Max(1, (int)MathF.Ceiling(Vector2.Distance(start, muzzle) / 2));
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4)));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 4));
         for (var i = 0; i <= steps; i++)
         {
             probe.Transform.Position = Vector2.Lerp(start, muzzle, i / (float)steps);

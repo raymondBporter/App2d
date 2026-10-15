@@ -25,7 +25,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         _basePosition = placement.BasePosition;
 
         var baseStone = new WorldObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(58f, 14f)),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(58f, 14f),
             new LinearGradientShader(new XnaColor(68, 77, 96), new XnaColor(31, 38, 54)))
         {
             ZIndex = 1

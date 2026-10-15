@@ -13,7 +13,7 @@ public readonly record struct Channel(string Kind, string Target)
 /// Graphics-free clip edits. Pose edits are the inverse of <see cref="PoseEvaluator"/>: a desired world position becomes a
 /// delta in the channel's frame and reference units, so the same key reads correctly on every build.
 /// </summary>
-public static class ClipAuthoring
+public static partial class ClipAuthoring
 {
     /// <summary>Keys closer than this are the same key.</summary>
     public const float SameTime = 1e-4f;
@@ -230,16 +230,6 @@ public static class ClipAuthoring
         var copy = curve is null ? null : curve with { };
         if (copy is not null && key.Ease == ClipEase.Step) key.Ease = ClipEase.Linear;
         if (component == 0) key.Curve = copy; else if (component == 1) key.CurveY = copy; else key.CurveZ = copy;
-    }
-
-    public static void SetColorKey(MotionClip clip, string slot, string kind, float time, Vector4 value)
-    {
-        var track = clip.Colors.FirstOrDefault(t => t.Slot == slot && t.Kind == kind);
-        if (track is null) clip.Colors.Add(track = new() { Slot = slot, Kind = kind });
-        var key = new SlotColorKey2D { Time = time, R = value.X, G = value.Y, B = value.Z, A = value.W };
-        if (track.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } previous)
-        { key.Ease = previous.Ease; key.CurveR = previous.CurveR; key.CurveG = previous.CurveG; key.CurveB = previous.CurveB; key.CurveA = previous.CurveA; }
-        Put(track.Keys, key, k => k.Time);
     }
 
     /// <summary>Changes the duration, scaling every key, contact, marker and face time with it.</summary>

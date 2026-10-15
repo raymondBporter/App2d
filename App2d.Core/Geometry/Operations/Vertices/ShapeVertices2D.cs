@@ -19,8 +19,8 @@ public static class ShapeVertices2D
         {
             Circle2D => 1,
             Capsule2D => 2,
-            RoundedRectangle2D rounded when rounded.CoreMin == rounded.CoreMax => 1,
-            RoundedRectangle2D rounded when rounded.CoreMin.X == rounded.CoreMax.X || rounded.CoreMin.Y == rounded.CoreMax.Y => 2,
+            RoundedRectangle2D rounded when rounded.InnerRect.Min == rounded.InnerRect.Max => 1,
+            RoundedRectangle2D rounded when rounded.InnerRect.Min.X == rounded.InnerRect.Max.X || rounded.InnerRect.Min.Y == rounded.InnerRect.Max.Y => 2,
             RoundedRectangle2D => 4,
             Rectangle2D => 4,
             Triangle2D => 3,
@@ -59,12 +59,12 @@ public static class ShapeVertices2D
                 radius = rounded.Radius;
                 if (count == 1)
                 {
-                    vertices[0] = rounded.CoreMin;
+                    vertices[0] = rounded.InnerRect.Min;
                 }
-                else if (count == 2) { vertices[0] = rounded.CoreMin; vertices[1] = rounded.CoreMax; }
+                else if (count == 2) { vertices[0] = rounded.InnerRect.Min; vertices[1] = rounded.InnerRect.Max; }
                 else
                 {
-                    VertexGenerator2D.WriteRectangle(vertices, rounded.CoreMin, rounded.CoreMax);
+                    VertexGenerator2D.WriteRectangle(vertices, rounded.InnerRect.Min, rounded.InnerRect.Max);
                 }
 
                 break;
@@ -127,7 +127,7 @@ public static class ShapeVertices2D
                 VertexGenerator2D.WriteCapsule(vertices, capsule.Start, capsule.End, capsule.Radius, roundSegments / 2);
                 break;
             case RoundedRectangle2D rounded:
-                VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.Min, rounded.Max, rounded.Radius);
+                VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius);
                 break;
             case Rectangle2D rectangle:
                 rectangle.WriteCorners(vertices);

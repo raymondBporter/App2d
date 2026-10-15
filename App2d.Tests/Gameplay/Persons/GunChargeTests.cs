@@ -178,7 +178,7 @@ public sealed class GunChargeTests
     {
         using var game = new Fixture();
         var wall = game.Physics.AddBody(new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4f, 100f))), BodyMotionType2D.Static);
+            AxisAlignedRectangle2D.Builder.CreateFromSize(4f, 100f)), BodyMotionType2D.Static);
         wall.WorldObject.Transform.Position = new Vector2(30f, 0f);
         wall.CollisionLayer = 1;
         game.Step(Press);
@@ -194,7 +194,7 @@ public sealed class GunChargeTests
     {
         using var game = new Fixture();
         var wall = game.Physics.AddBody(new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4f, 100f))), BodyMotionType2D.Static);
+            AxisAlignedRectangle2D.Builder.CreateFromSize(4f, 100f)), BodyMotionType2D.Static);
         wall.WorldObject.Transform.Position = new Vector2(300f, 0f);
         wall.CollisionLayer = 1;
         game.Step(Press);
@@ -228,7 +228,7 @@ public sealed class GunChargeTests
             Person = new(EntityId2D.Create(), collision, Physics, metrics,
                 spawn, 2, 1, CombatFaction2D.Player, tileMap: map);
             Ground = Physics.AddBody(new SpatialObject2D(
-                AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(1000f, 20f))), BodyMotionType2D.Static);
+                AxisAlignedRectangle2D.Builder.CreateFromSize(1000f, 20f)), BodyMotionType2D.Static);
             Ground.WorldObject.Transform.Position = new Vector2(0, Person.WorldObject.WorldBounds.Bottom - 10f);
             Ground.CollisionLayer = 1;
             Ground.CollisionMask = 2;

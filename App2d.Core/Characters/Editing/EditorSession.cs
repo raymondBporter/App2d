@@ -14,18 +14,20 @@ public sealed class Selection
     public string? Control { get; set; }
     public string? Part { get; set; }
     public string? Chain { get; set; }
+    /// <summary>Animation workspace: the appearance slot being keyed.</summary>
+    public string? Slot { get; set; }
     /// <summary>A selected key time on the timeline.</summary>
     public float? Key { get; set; }
     /// <summary>Entity workspace: the action, and the hit window inside it, being edited.</summary>
     public string? Action { get; set; }
     public string? Hit { get; set; }
-    /// <summary>Selects one model target and clears the previous selection.</summary>
-    public void Select(string? control = null, string? part = null, string? chain = null)
+    /// <summary>Selects one workspace target and clears the previous selection.</summary>
+    public void Select(string? control = null, string? part = null, string? chain = null, string? slot = null)
     {
-        Clear(); Control = control; Part = part; Chain = chain;
+        Clear(); Control = control; Part = part; Chain = chain; Slot = slot;
     }
 
-    public void Clear() { Control = Part = Chain = Action = Hit = null; Key = null; }
+    public void Clear() { Control = Part = Chain = Slot = Action = Hit = null; Key = null; }
 }
 
 /// <summary>A model or variant evaluated for display. <see cref="Clip"/> is null when it shows rest. <see cref="Entity"/>, when set, draws its equipment too.</summary>

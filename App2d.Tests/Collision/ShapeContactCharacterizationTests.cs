@@ -20,7 +20,7 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void RectangleVsHalfSpaceReportsUpNormalAndDepth()
     {
-        var box = At(Rectangle2D.Builder.CreateFromSize(new Vector2(10f, 10f)), new Vector2(0f, -3f));
+        var box = At(Rectangle2D.Builder.CreateFromSize(10f, 10f), new Vector2(0f, -3f));
         var ground = At(HalfSpace2D.Builder.Create(Vector2.UnitY, 0f), Vector2.Zero);
 
         Assert.True(Provider.TryGetContact(box, ground, out var contact));
@@ -71,7 +71,7 @@ public sealed class ShapeContactCharacterizationTests
     {
         var capsule = At(Capsule2D.Builder.Create(new Vector2(-1f, -2f), new Vector2(-1f, 2f), 1f), Vector2.Zero);
         capsule.Transform.Scale = new Vector2(-1f, 1f); // player facing flip
-        var wall = At(Rectangle2D.Builder.CreateFromSize(new Vector2(2f, 10f)), new Vector2(2.5f, 0f));
+        var wall = At(Rectangle2D.Builder.CreateFromSize(2f, 10f), new Vector2(2.5f, 0f));
 
         Assert.True(Provider.TryGetContact(capsule, wall, out var contact));
         Assert.True(contact.PenetrationDepth > 0.4f);
@@ -101,8 +101,8 @@ public sealed class ShapeContactCharacterizationTests
     [Fact]
     public void RotatedRectangleVsRectangleFindsMtv()
     {
-        var first = At(Rectangle2D.Builder.CreateFromSize(new Vector2(4f, 4f)), Vector2.Zero);
-        var second = At(Rectangle2D.Builder.CreateFromSize(new Vector2(4f, 4f)), new Vector2(3.5f, 0f), MathF.PI / 4f);
+        var first = At(Rectangle2D.Builder.CreateFromSize(4f, 4f), Vector2.Zero);
+        var second = At(Rectangle2D.Builder.CreateFromSize(4f, 4f), new Vector2(3.5f, 0f), MathF.PI / 4f);
 
         Assert.True(Provider.TryGetContact(first, second, out var contact));
         Assert.True(contact.PenetrationDepth > 0f);

@@ -47,7 +47,7 @@ public sealed class CollisionQueries2DTests
     [Fact]
     public void RaycastHitsARotatedRectangle()
     {
-        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(4f, 4f)));
+        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(4f, 4f));
         box.Transform.Position = new Vector2(10f, 0f);
         box.Transform.Rotation = MathF.PI / 4f;
 

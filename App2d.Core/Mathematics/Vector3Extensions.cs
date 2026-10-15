@@ -7,6 +7,9 @@ public static class Vector3Extensions
 {
     extension(Vector3 value)
     {
+        /// <summary>Widens all coordinates before double-precision arithmetic, including subtraction.</summary>
+        public Vector3d ToVector3d() => new(value);
+
         /// <summary>True when every component is finite, regardless of the vector's length.</summary>
         public bool IsFinite() => float.IsFinite(value.X) && float.IsFinite(value.Y) && float.IsFinite(value.Z);
 

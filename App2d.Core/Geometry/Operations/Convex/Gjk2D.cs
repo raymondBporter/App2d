@@ -172,17 +172,13 @@ public static partial class Gjk2D
         return new Vertex { First = a, Second = b, Difference = a - b };
     }
 
-    private static double Dot(Vector2 a, Vector2 b) => (double)a.X * b.X + (double)a.Y * b.Y;
+    private static double Dot(Vector2 a, Vector2 b) => a.ToVector2d().Dot(b.ToVector2d());
 
     private static Vector2 Closest(ReadOnlySpan<Vertex> vertices, int count)
     {
-        double x = 0d, y = 0d;
-        for (var i = 0; i < count; i++)
-        {
-            x += vertices[i].Weight * vertices[i].Difference.X;
-            y += vertices[i].Weight * vertices[i].Difference.Y;
-        }
-        return new((float)x, (float)y);
+        var closest = Vector2d.Zero;
+        for (var i = 0; i < count; i++) closest += vertices[i].Difference.ToVector2d() * vertices[i].Weight;
+        return closest.ToVector2();
     }
 
     private static void Reduce(Span<Vertex> s, ref int count)
@@ -345,14 +341,15 @@ public static partial class Gjk2D
     private static ConvexQueryResult2D Result(ReadOnlySpan<Vertex> vertices, float coreDistance, Vector2 normal,
         ConvexProxy2D first, ConvexProxy2D second, Vector2 origin, double error)
     {
-        double ax = 0d, ay = 0d, bx = 0d, by = 0d;
+        var a = Vector2d.Zero;
+        var b = Vector2d.Zero;
         foreach (var vertex in vertices)
         {
-            ax += vertex.Weight * vertex.First.X; ay += vertex.Weight * vertex.First.Y;
-            bx += vertex.Weight * vertex.Second.X; by += vertex.Weight * vertex.Second.Y;
+            a += vertex.First.ToVector2d() * vertex.Weight;
+            b += vertex.Second.ToVector2d() * vertex.Weight;
         }
-        var pointA = new Vector2((float)ax, (float)ay) - normal * first.Radius + origin;
-        var pointB = new Vector2((float)bx, (float)by) + normal * second.Radius + origin;
+        var pointA = a.ToVector2() - normal * first.Radius + origin;
+        var pointB = b.ToVector2() + normal * second.Radius + origin;
         return new(coreDistance - first.Radius - second.Radius, normal, pointA, pointB, (float)error);
     }
 }

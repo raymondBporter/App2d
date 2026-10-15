@@ -55,7 +55,7 @@ public abstract record ShapeBuilder2D : GeometryDefinition2D
         Capsule2D capsule => new Capsule2D.Builder { Start = capsule.Start, End = capsule.End, Radius = capsule.Radius },
         AxisAlignedRectangle2D rectangle => new Rectangle2D.Builder { Min = rectangle.Min, Max = rectangle.Max, AxisAligned = true },
         Rectangle2D rectangle => new Rectangle2D.Builder { Min = rectangle.Min, Max = rectangle.Max },
-        RoundedRectangle2D rectangle => new RoundedRectangle2D.Builder { Min = rectangle.Min, Max = rectangle.Max, Radius = rectangle.Radius },
+        RoundedRectangle2D rectangle => new RoundedRectangle2D.Builder { Min = rectangle.OuterRect.Min, Max = rectangle.OuterRect.Max, Radius = rectangle.Radius },
         Triangle2D triangle => new Triangle2D.Builder { A = triangle.A, B = triangle.B, C = triangle.C },
         ConvexPolygon2D polygon => new ConvexPolygon2D.Builder { Vertices = [.. polygon.Vertices] },
         SimplePolygon2D polygon => new SimplePolygon2D.Builder { Vertices = [.. polygon.Vertices] },

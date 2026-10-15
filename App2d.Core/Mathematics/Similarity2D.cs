@@ -77,7 +77,7 @@ public readonly record struct Similarity2D
         var xLength = xAxis.Length();
         var yLength = yAxis.Length();
         var largest = Math.Max(xLength, yLength);
-        var dot = (double)xAxis.X * yAxis.X + (double)xAxis.Y * yAxis.Y;
+        var dot = xAxis.ToVector2d().Dot(yAxis.ToVector2d());
         if (!matrix.IsFinite() || !float.IsFinite(largest) || largest <= float.Epsilon ||
             MathF.Abs(xLength - yLength) > largest * 0.001f || Math.Abs(dot) > (double)xLength * yLength * 0.001)
         {

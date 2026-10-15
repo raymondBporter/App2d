@@ -10,6 +10,10 @@ public sealed partial class AxisAlignedRectangle2D
     {
         internal static AxisAlignedRectangle2D CreateValidated(Vector2 min, Vector2 max) => new(min, max);
         public static AxisAlignedRectangle2D Create(Vector2 min, Vector2 max) => (AxisAlignedRectangle2D)new Rectangle2D.Builder { Min = min, Max = max, AxisAligned = true }.Build();
+        public static Rectangle2D.Builder FromSize(float width, float height, Vector2 center = default) => FromSize(new Vector2(width, height), center);
+        public static AxisAlignedRectangle2D Create(float width, float height, Vector2 center = default) => (AxisAlignedRectangle2D)FromSize(width, height, center).Build();
+        public static AxisAlignedRectangle2D CreateFromSize(float width, float height, Vector2 center = default) => Create(width, height, center);
+
         public static Rectangle2D.Builder FromSize(Vector2 size, Vector2 center = default) => Rectangle2D.Builder.FromSize(size, center) with { AxisAligned = true };
         public static Rectangle2D.Builder FromDimensions(Size2D size, Vector2 center = default) => Rectangle2D.Builder.FromDimensions(size, center) with { AxisAligned = true };
         public static Rectangle2D.Builder FromMinAndSize(Vector2 min, Size2D size) => Rectangle2D.Builder.FromMinAndSize(min, size) with { AxisAligned = true };

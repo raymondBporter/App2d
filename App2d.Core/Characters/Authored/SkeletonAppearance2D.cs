@@ -78,6 +78,18 @@ public sealed record KeyCurve2D
     public (float First, float Second) Controls(float start, float end) => Absolute ? (Y1, Y2)
         : (start + Y1 * (end - start), start + Y2 * (end - start));
 
+    /// <summary>Converts value controls without changing the curve. Equal endpoints cannot normalize an overshoot.</summary>
+    public bool TryConvertValueControls(bool absolute, float start, float end, out KeyCurve2D converted)
+    {
+        var (first, second) = Controls(start, end);
+        converted = this;
+        if (absolute) converted = this with { Absolute = true, Y1 = first, Y2 = second };
+        else if (start != end) converted = this with { Absolute = false, Y1 = (first - start) / (end - start), Y2 = (second - start) / (end - start) };
+        else if (first == start && second == start) converted = this with { Absolute = false, Y1 = 0, Y2 = 1 };
+        else return false;
+        return true;
+    }
+
     /// <summary>The same curve restricted to a time interval, with time controls normalized to the new segment.</summary>
     public KeyCurve2D Slice(float from, float to, float start, float end)
     {

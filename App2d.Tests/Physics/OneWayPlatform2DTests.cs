@@ -130,7 +130,7 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         world.Gravity = new Vector2(0f, -100f);
-        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(32f, 8f)));
+        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(32f, 8f));
         var surface = world.AddBody(surfaceObject, BodyMotionType2D.Kinematic);
         surface.OneWaySurfaceNormal = Vector2.UnitY;
         surface.TransfersContactMotion = true;
@@ -155,7 +155,7 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         var normal = Vector2.Normalize(new Vector2(-1f, 1f));
-        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(8f, 32f)));
+        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(8f, 32f));
         surfaceObject.Transform.Rotation = MathF.PI / 4f;
         var surface = world.AddBody(surfaceObject, BodyMotionType2D.Static);
         surface.OneWaySurfaceNormal = normal;

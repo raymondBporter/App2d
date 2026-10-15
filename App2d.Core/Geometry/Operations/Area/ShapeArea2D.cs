@@ -54,7 +54,7 @@ public static class ShapeArea2D
             {
                 var perCorner = checked(outlineSegments + 3) / 4;
                 vertices = new Vector2[checked(4 * (perCorner + 1))];
-                VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.Min, rounded.Max, rounded.Radius, perCorner);
+                VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius, perCorner);
             }
             else
             {
@@ -87,9 +87,9 @@ public static class ShapeArea2D
         boundaries.Add(new(start, capsule.Radius));
         if (start == end) return;
 
-        var origin = new Area2D.Point(start);
-        var spine = new Area2D.Point(end) - origin;
-        var normal = new Area2D.Point(-spine.Y, spine.X) * (capsule.Radius / Math.Sqrt(spine.Dot(spine)));
+        var origin = start.ToVector2d();
+        var spine = end.ToVector2d() - origin;
+        var normal = spine.PerpCcw * (capsule.Radius / spine.Length());
         // A capsule is exactly the union of this rectangle and the two endpoint disks.
         // Store the rectangle relative to its start; translation happens inside the shared integral.
         boundaries.Add(new([normal * -1d, spine - normal, spine + normal, normal], origin));

@@ -28,6 +28,10 @@ public partial class Rectangle2D
         public static Rectangle2D Create(Vector2 min, Vector2 max) => new Builder { Min = min, Max = max }.Build();
 
         internal static void ValidateBounds(Vector2 min, Vector2 max) => ArgGuard.ThrowIfNotFiniteOrNotComponentWiseLessThan(min, max);
+        public static Builder FromSize(float width, float height, Vector2 center = default) => FromSize(new Vector2(width, height), center);
+        public static Rectangle2D Create(float width, float height, Vector2 center = default) => FromSize(width, height, center).Build();
+        public static Rectangle2D CreateFromSize(float width, float height, Vector2 center = default) => Create(width, height, center);
+
         public static Builder FromSize(Vector2 size, Vector2 center = default)
         {
             ArgGuard.ThrowIfNotFiniteOrNotPositive(size);

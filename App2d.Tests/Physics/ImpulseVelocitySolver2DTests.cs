@@ -11,14 +11,14 @@ public sealed class ImpulseVelocitySolver2DTests
 {
     private static PhysicsBody2D DynamicBody(PhysicsWorld2D world, Vector2 position)
     {
-        var worldObject = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(2f, 2f)));
+        var worldObject = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2f, 2f));
         worldObject.Transform.Position = position;
         return world.AddBody(worldObject, BodyMotionType2D.Dynamic);
     }
 
     private static PhysicsBody2D StaticGround(PhysicsWorld2D world)
     {
-        var worldObject = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(100f, 2f), new Vector2(0f, -1f)));
+        var worldObject = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(100f, 2f, new Vector2(0f, -1f)));
         return world.AddBody(worldObject, BodyMotionType2D.Static);
     }
 

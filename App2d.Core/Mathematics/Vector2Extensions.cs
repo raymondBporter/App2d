@@ -9,10 +9,13 @@ public static class Vector2Extensions
 
     /// <summary>The perpendicular dot product of two vectors given as double components.</summary>
     public static double CrossDouble(double firstX, double firstY, double secondX, double secondY) =>
-        firstX * secondY - firstY * secondX;
+        new Vector2d(firstX, firstY).Cross(new(secondX, secondY));
 
     extension(Vector2 value)
     {
+        /// <summary>Widens both coordinates before double-precision arithmetic, including subtraction.</summary>
+        public Vector2d ToVector2d() => new(value);
+
         /// <summary>True when every component is finite, regardless of the vector's length.</summary>
         public bool IsFinite() => float.IsFinite(value.X) && float.IsFinite(value.Y);
 
@@ -31,11 +34,11 @@ public static class Vector2Extensions
         public float Cross(Vector2 right) => (float)value.CrossDouble(right);
 
         /// <summary>The perpendicular dot product with double intermediates for geometric predicates.</summary>
-        public double CrossDouble(Vector2 right) => CrossDouble(value.X, value.Y, right.X, right.Y);
+        public double CrossDouble(Vector2 right) => value.ToVector2d().Cross(right.ToVector2d());
 
         /// <summary>Twice the signed area of triangle value, B, C; positive for a counter-clockwise turn.</summary>
         public double Orientation(Vector2 b, Vector2 c) =>
-            Vector2Extensions.CrossDouble((double)b.X - value.X, (double)b.Y - value.Y, (double)c.X - value.X, (double)c.Y - value.Y);
+            (b.ToVector2d() - value.ToVector2d()).Cross(c.ToVector2d() - value.ToVector2d());
 
         /// <summary>Rotates 90° counter-clockwise (in +Y-up orientation).</summary>
         public Vector2 PerpCcw => new(-value.Y, value.X);

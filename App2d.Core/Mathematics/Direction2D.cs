@@ -13,8 +13,8 @@ public readonly record struct Direction2D
     {
         ArgGuard.ThrowIfNotFiniteOrZero(vector);
         // Float squares can overflow or underflow for valid input vectors.
-        var length = Math.Sqrt((double)vector.X * vector.X + (double)vector.Y * vector.Y);
-        Vector = new((float)(vector.X / length), (float)(vector.Y / length));
+        var wide = vector.ToVector2d();
+        Vector = (wide / wide.Length()).ToVector2();
     }
 
     public Vector2 Vector { get; }
@@ -54,13 +54,11 @@ public readonly record struct Direction2D
     {
         ArgGuard.ThrowIfNotFinite(from);
         ArgGuard.ThrowIfNotFinite(to);
-        var x = (double)to.X - from.X;
-        var y = (double)to.Y - from.Y;
-        if (x == 0d && y == 0d)
+        var delta = to.ToVector2d() - from.ToVector2d();
+        if (delta == Vector2d.Zero)
             throw new ArgumentOutOfRangeException(nameof(to), "The two points must differ.");
 
-        var length = Math.Sqrt(x * x + y * y);
-        return new(new Vector2((float)(x / length), (float)(y / length)));
+        return new((delta / delta.Length()).ToVector2());
     }
 
     internal void Validate() => ArgGuard.ThrowIfNotFiniteOrZero(Vector);

@@ -114,7 +114,7 @@ public sealed class SessionClient2DTests
             };
             Person = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, Vector2.Zero,
                 2, 1, CombatFaction2D.Player);
-            var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(10000f, 20f)));
+            var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10000f, 20f));
             floor.Transform.Position = new Vector2(0f, Person.WorldObject.WorldBounds.Bottom - 10f);
             physics.AddBody(floor, BodyMotionType2D.Static).CollisionLayer = 1;
             Person.AttachActions(Actions);

@@ -59,9 +59,8 @@ public readonly record struct Line2D : IGeometry2D
         Validate();
         ArgGuard.ThrowIfNotFinite(test);
         ArgGuard.ThrowIfNegativeOrNotFinite(tolerance);
-        var x = (double)test.X - Origin.X;
-        var y = (double)test.Y - Origin.Y;
-        var determinant = x * Direction.Y - Direction.X * y;
+        var delta = test.ToVector2d() - Origin.ToVector2d();
+        var determinant = delta.Cross(Direction.ToVector2d());
         return determinant > tolerance ? 1 : determinant < -tolerance ? -1 : 0;
     }
 

@@ -51,13 +51,12 @@ public static class Raycast2D
     /// <returns>True when the ray reaches the ellipse.</returns>
     public static bool TryEllipse(Vector2 origin, Vector2 direction, Vector2 center, Vector2 radii, float maxDistance, out RayHit2D hit)
     {
-        var ox = (double)(origin.X - center.X) / radii.X;
-        var oy = (double)(origin.Y - center.Y) / radii.Y;
-        var dx = (double)direction.X / radii.X;
-        var dy = (double)direction.Y / radii.Y;
-        var a = dx * dx + dy * dy;
-        var b = 2d * (ox * dx + oy * dy);
-        var c = ox * ox + oy * oy - 1d;
+        var relative = origin.ToVector2d() - center.ToVector2d();
+        var offset = new Vector2d(relative.X / radii.X, relative.Y / radii.Y);
+        var axis = new Vector2d((double)direction.X / radii.X, (double)direction.Y / radii.Y);
+        var a = axis.LengthSquared();
+        var b = 2d * offset.Dot(axis);
+        var c = offset.LengthSquared() - 1d;
         var discriminant = b * b - 4d * a * c;
         if (a == 0d || discriminant < 0d) return Miss(out hit);
         var root = Math.Sqrt(discriminant);
@@ -65,12 +64,12 @@ public static class Raycast2D
         var second = (-b + root) / (2d * a);
         var distance = first >= 0d ? first : second;
         if (distance < 0d || distance > maxDistance) return Miss(out hit);
-        var nx = (ox + dx * distance) / radii.X;
-        var ny = (oy + dy * distance) / radii.Y;
-        var normalLength = Math.Sqrt(nx * nx + ny * ny);
+        var boundary = offset + axis * distance;
+        var normal = new Vector2d(boundary.X / radii.X, boundary.Y / radii.Y);
+        var normalLength = normal.Length();
         if (normalLength == 0d) return Miss(out hit);
-        var point = origin + direction * (float)distance;
-        hit = new(point, new((float)(nx / normalLength), (float)(ny / normalLength)), (float)distance);
+        var point = (origin.ToVector2d() + direction.ToVector2d() * distance).ToVector2();
+        hit = new(point, (normal / normalLength).ToVector2(), (float)distance);
         return true;
     }
 

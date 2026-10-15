@@ -1,8 +1,10 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Shapes;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
+using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterStudio.Editor;
@@ -33,6 +35,7 @@ internal static class EditorSurfaceSmoke
         var assets = AuthoringWorkspace.Open(authoredRoot);
         var sources = SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(authoredRoot))!);
         var session = new EditorSession(assets, sources);
+        var slotClip = CreateSlotPreview(assets);
         using var shell = new EditorShell(session, new Viewport(device, gui, renderer), new ArenaTest(assets, device, gui, renderer), gui);
         session.Open("person-walk"); session.Pin("tall-thin"); session.Pin("short-broad"); session.Seek(.3f);
         if (session.ActiveDocument is null) throw new InvalidOperationException(session.Message);
@@ -80,7 +83,38 @@ internal static class EditorSurfaceSmoke
                 session.Selection.Select(part: cutoutModel.Asset.Parts.First(p => p.Geometry is SimplePolygon2D.Builder).Id);
                 Capture("model-cutout");
             }
+
+            session.Open("person-walk"); session.Selection.Select(control: "chest"); session.Seek(0);
+            Capture("animation-control");
+            if (assets.Props.FirstOrDefault(p => p.Asset.Usage == "prop") is { } prop &&
+                session.Scene().FirstOrDefault()?.Model.Base.Sockets.FirstOrDefault() is { } socket)
+            {
+                session.PreviewProp = prop.Id; session.PreviewSocket = socket.Id;
+                session.PreviewWeapon = session.EditWeapon = true; session.Selection.Clear();
+                Capture("animation-weapon");
+            }
+            session.PreviewWeapon = session.EditWeapon = false;
+            session.Open(slotClip); session.Selection.Select(slot: "paint"); session.Seek(0);
+            shell.Viewport.Fit(session.Scene().FirstOrDefault());
+            Capture("animation-slot");
         }
-        Console.WriteLine("The animation and model editor views rendered on a hidden WinForms surface at two sizes and scales.");
+        Console.WriteLine("Animation settings, controls, weapon and slot inspectors, and model views rendered at two sizes and scales.");
+    }
+
+    private static string CreateSlotPreview(AuthoringWorkspace assets)
+    {
+        var model = ModelAuthoring.Empty("surface-slots", "Slot preview");
+        var bone = ModelAuthoring.AddBone(model, null, "root");
+        ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, bone.Id);
+        // An unattached slot exercises its inspector without requiring an external image fixture.
+        model.Slots = [new() { Id = "paint", Bone = bone.Id }];
+        assets.Create(model);
+        var clip = ClipAuthoring.New(ResolvedModel.From(model), "surface-slot-clip", "Slot animation");
+        ClipAuthoring.SetAttachmentKey(clip, "paint", 0, null);
+        ClipAuthoring.SetColorKey(clip, "paint", SlotColorTrack2D.Rgba, 0, new(.3f, .6f, .8f, 1));
+        ClipAuthoring.SetColorKey(clip, "paint", SlotColorTrack2D.Rgba, 1, Vector4.One);
+        ClipAuthoring.SetColorCurve(clip, "paint", SlotColorTrack2D.Rgba, 0, 0, new() { X1 = .2f, X2 = .8f });
+        assets.Create(clip);
+        return clip.Id;
     }
 }

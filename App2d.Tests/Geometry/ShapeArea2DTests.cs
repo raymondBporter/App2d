@@ -110,7 +110,7 @@ public sealed class ShapeArea2DTests
             {
                 var center = new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
                 parts[i] = i % 2 == 0 ? Circle2D.Builder.Create(.3f + (float)random.NextDouble(), center)
-                    : Rectangle2D.Builder.CreateFromSize(new Vector2(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble()), center);
+                    : Rectangle2D.Builder.CreateFromSize(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble(), center);
             }
             var expected = CrossSectionArea(parts);
             Assert.InRange(Math.Abs(ShapeArea2D.Union(parts) - expected), 0d, .002d);
@@ -234,7 +234,7 @@ public sealed class ShapeArea2DTests
                 {
                     0 => Ellipse2D.Builder.Create(new(.1f + (float)random.NextDouble() * 2, .1f + (float)random.NextDouble() * 2), center),
                     1 => Circle2D.Builder.Create(.3f + (float)random.NextDouble(), center),
-                    _ => Rectangle2D.Builder.CreateFromSize(new Vector2(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble()), center)
+                    _ => Rectangle2D.Builder.CreateFromSize(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble(), center)
                 };
             }
             Check(parts);
@@ -359,7 +359,7 @@ public sealed class ShapeArea2DTests
                     0 or 1 => Capsule2D.Builder.Create(center, center + new Vector2((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2), .15f + (float)random.NextDouble() * .75f),
                     2 => Circle2D.Builder.Create(.3f + (float)random.NextDouble(), center),
                     3 => Ellipse2D.Builder.Create(new(.2f + (float)random.NextDouble() * 2, .2f + (float)random.NextDouble() * 2), center),
-                    _ => Rectangle2D.Builder.CreateFromSize(new Vector2(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble()), center)
+                    _ => Rectangle2D.Builder.CreateFromSize(.5f + (float)random.NextDouble(), .5f + (float)random.NextDouble(), center)
                 };
             }
             var expected = CrossSectionArea(parts);

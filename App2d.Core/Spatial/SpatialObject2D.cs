@@ -29,7 +29,8 @@ public class SpatialObject2D(IShape2D shape)
             if (_worldBoundsVersion == Transform.Version)
                 return _worldBounds;
 
-            _worldBounds = LocalBounds.TransformedBy(Transform.Matrix);
+            _worldBounds = ShapeBounds2D.TryCalculateTransformed(Shape, Transform.Matrix, out var bounds)
+                ? bounds : LocalBounds.TransformedBy(Transform.Matrix);
             _worldBoundsVersion = Transform.Version;
             return _worldBounds;
         }

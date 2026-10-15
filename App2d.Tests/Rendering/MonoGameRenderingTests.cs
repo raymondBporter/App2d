@@ -53,7 +53,7 @@ public sealed class MonoGameRenderingTests
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
-        Assert.Equal(Rect2D.Unbounded, item.LocalBounds);
+        Assert.Equal(new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity, 0)), item.LocalBounds);
         Assert.Equal(XnaColor.Blue, pixels[80 * 128 + 64]);
         Assert.Equal(XnaColor.Transparent, pixels[48 * 128 + 64]);
     }
@@ -96,7 +96,7 @@ public sealed class MonoGameRenderingTests
         var sprite = new SpriteShader2D(texture, TextureFilter.Point) { FlipX = flipX, FlipY = flipY };
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64)), sprite));
+        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64), sprite));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
         XnaColor[] expected = [XnaColor.Red, XnaColor.Lime, XnaColor.Blue, XnaColor.Yellow];
@@ -133,7 +133,7 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64)),
+        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64),
             new TextureShader2D(texture, new Vector2(32), filterMode: TextureFilter.Point)));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
@@ -150,7 +150,7 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64)),
+        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64),
             new TextureShader2D(texture, new Vector2(64), filterMode: TextureFilter.Point, imageOrigin: new Vector2(-32, 32))));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
@@ -166,10 +166,10 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var scene = new Scene2D
         {
-            new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64)),
+            new WorldObject2D(Rectangle2D.Builder.CreateFromSize(64, 64),
             new SolidColorShader(XnaColor.Lime))
             { ZIndex = 1 },
-            new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(96)),
+            new WorldObject2D(Rectangle2D.Builder.CreateFromSize(96, 96),
             new LinearGradientShader(XnaColor.Red, XnaColor.Blue))
         };
         renderer.BeginFrame(128, 128, default);

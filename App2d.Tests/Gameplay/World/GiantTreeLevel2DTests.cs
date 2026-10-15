@@ -51,7 +51,7 @@ public sealed class GiantTreeLevel2DTests
         using var level = new SideScrollerLevel2D(Traversal(), Map(), giantTrees: [tree]);
         level.CreateSimulation(collision, physics, new EntityIdAllocator2D(), 1, 2, 4);
         var branch = tree.Branches[0].Bounds;
-        var actor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(20, 40)));
+        var actor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(20, 40));
         actor.Transform.Position = new(branch.Center.X, branch.Bottom - 30);
         var body = physics.AddBody(actor, BodyMotionType2D.Dynamic);
         body.CollisionLayer = 2;

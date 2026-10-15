@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -49,6 +50,9 @@ public sealed partial class CompositeShape2D : IShape2D
     /// Otherwise it is union area: analytic for circles, ellipses, capsules and polygons, approximate for polygonized curves.
     /// </summary>
     public float Area { get; }
+
+    /// <inheritdoc/>
+    public float Diameter => ShapeDiameter2D.Calculate(this);
 
     /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint)

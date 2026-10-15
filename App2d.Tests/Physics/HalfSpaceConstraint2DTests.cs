@@ -15,7 +15,7 @@ public sealed class HalfSpaceConstraint2DTests
         wall.Transform.Scale = new(2);
         wall.Transform.Rotation = MathF.PI / 2;
         wall.Transform.Position = new(3, 5);
-        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2)));
+        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2, 2));
         box.Transform.Scale = new(-2, 2);
         box.Transform.Position = new(3, 8);
 

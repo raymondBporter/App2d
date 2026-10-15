@@ -31,7 +31,7 @@ public sealed record HitWindow
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     /// <summary>The region in the anchor frame; any convex shape definition.</summary>
-    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(new(.3f, .3f));
+    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.3f, .3f);
     public int Damage { get; set; } = 1;
     /// <summary>Played where the hit lands; null plays the game's default impact.</summary>
     public string? Sound { get; set; }
@@ -45,7 +45,7 @@ public sealed record ProjectileDef
 {
     public float Speed { get; set; } = 8;
     /// <summary>The bolt's shape around its position; its bounds size the bolt in flight.</summary>
-    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(new(.16f, .08f));
+    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.16f, .08f);
     public int Damage { get; set; } = 1;
     public float Lifetime { get; set; } = 3;
     /// <summary>Downward acceleration in model units/s²; zero preserves straight shots.</summary>
@@ -130,7 +130,7 @@ public sealed record MovementDef
     /// <param name="height">The finite, positive height.</param>
     /// <param name="offsetX">How far the box centre sits ahead of the feet.</param>
     /// <returns>A rectangle definition from the feet up to the height.</returns>
-    public static Rectangle2D.Builder Box(float width, float height, float offsetX = 0) => Rectangle2D.Builder.FromSize(new(width, height), new(offsetX, height / 2));
+    public static Rectangle2D.Builder Box(float width, float height, float offsetX = 0) => Rectangle2D.Builder.FromSize(width, height, new(offsetX, height / 2));
 }
 
 public sealed record HurtOverride
@@ -157,7 +157,7 @@ public sealed record GuardDef
 {
     public string Prop { get; set; } = "";
     /// <summary>The shield region in the prop's anchor frame.</summary>
-    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(new(.9f, 1.4f));
+    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(.9f, 1.4f);
 }
 
 /// <summary>

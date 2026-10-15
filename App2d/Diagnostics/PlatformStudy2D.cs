@@ -49,7 +49,7 @@ internal static class PlatformStudy2D
             var scene = new Scene2D();
             using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(authored), traversal);
             using var enemies = new EnemyPresentation2D(scene, textures, traversal, new Silent());
-            var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(5000, 2)), new SolidColorShader(new Color(70, 88, 93)));
+            var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5000, 2), new SolidColorShader(new Color(70, 88, 93)));
             scene.Add(ground);
             var platform = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(spec.Size), new SolidColorShader(new Color(37, 210, 190)));
             scene.Add(platform);

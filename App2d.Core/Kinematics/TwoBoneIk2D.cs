@@ -27,11 +27,11 @@ public static class TwoBoneIk2D
         ArgGuard.ThrowIfZero(bendDirection);
         var fallback = zeroTargetDirection ?? Vector2.UnitX;
         ArgGuard.ThrowIfNotFinite(fallback);
-        var fallbackLength = Math.Sqrt((double)fallback.X * fallback.X + (double)fallback.Y * fallback.Y);
+        var fallbackLength = fallback.ToVector2d().Length();
         if (fallbackLength == 0) throw new ArgumentOutOfRangeException(nameof(zeroTargetDirection), "A fallback direction must be nonzero.");
-        var dx = (double)target.X - root.X; var dy = (double)target.Y - root.Y;
-        var distance = Math.Sqrt(dx * dx + dy * dy);
-        var x = distance > 0 ? dx / distance : fallback.X / fallbackLength; var y = distance > 0 ? dy / distance : fallback.Y / fallbackLength;
+        var delta = target.ToVector2d() - root.ToVector2d();
+        var distance = delta.Length();
+        var direction = distance > 0 ? delta / distance : fallback.ToVector2d() / fallbackLength;
         var first = (double)firstLength; var second = (double)secondLength;
         var minimum = Math.Abs(first - second); var maximum = first + second;
         var reach = Math.Clamp(distance, minimum, maximum);
@@ -43,8 +43,8 @@ public static class TwoBoneIk2D
         // Equal segments can fold onto their origin. The perpendicular fallback fixes the otherwise free bend direction.
         var along = reach == 0 ? 0 : ((first - second) * (first + second) + reach * reach) / (2 * reach);
         var height = Math.Sqrt(Math.Max(0, first * first - along * along)) * Math.Sign(bendDirection);
-        var joint = new Vector2((float)(root.X + x * along - y * height), (float)(root.Y + y * along + x * height));
-        var end = new Vector2((float)(root.X + x * reach), (float)(root.Y + y * reach));
+        var joint = (root.ToVector2d() + direction * along + direction.PerpCcw * height).ToVector2();
+        var end = (root.ToVector2d() + direction * reach).ToVector2();
         ArgGuard.ThrowIfNotFinite(joint); ArgGuard.ThrowIfNotFinite(end);
         return new(root, joint, end, (joint - root).AngleRadians, (end - joint).AngleRadians, Math.Abs(distance - reach) <= .01);
     }

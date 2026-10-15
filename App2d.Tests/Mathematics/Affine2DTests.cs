@@ -124,7 +124,7 @@ public sealed class Affine2DTests
     [Fact]
     public void ChannelEditsInvalidateSceneBoundsAndCollisionPose()
     {
-        var placed = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2)));
+        var placed = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2, 2));
         var bounds = placed.WorldBounds; _ = placed.CollisionPose;
         placed.Transform.X = 3;
         Assert.NotEqual(bounds, placed.WorldBounds); Assert.Equal(new(3, 0), placed.CollisionPose.Translation);

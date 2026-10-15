@@ -42,17 +42,15 @@ public static class Rotation2D
             return false;
         }
         var cotHalf = Math.Cos(half) / sinHalf;
-        var dx = (double)to.X - from.X;
-        var dy = (double)to.Y - from.Y;
-        var x = ((double)from.X + to.X - cotHalf * dy) * 0.5d;
-        var y = ((double)from.Y + to.Y + cotHalf * dx) * 0.5d;
-        if (!double.IsFinite(x) || !double.IsFinite(y) ||
-            Math.Abs(x) > float.MaxValue || Math.Abs(y) > float.MaxValue)
+        var start = from.ToVector2d();
+        var end = to.ToVector2d();
+        var center = (start + end + (end - start).PerpCcw * cotHalf) * 0.5d;
+        if (!center.IsFinite() || Math.Abs(center.X) > float.MaxValue || Math.Abs(center.Y) > float.MaxValue)
         {
             pivot = default;
             return false;
         }
-        pivot = new((float)x, (float)y);
+        pivot = center.ToVector2();
         return true;
     }
 
@@ -77,10 +75,9 @@ public static class Rotation2D
         var (sinPhase, cosPhase) = Math.SinCos(phase);
         var real = scale * cosPhase;
         var imaginary = scale * sinPhase;
-        var dx = (double)to.X - from.X;
-        var dy = (double)to.Y - from.Y;
-        return new((float)(from.X + real * dx - imaginary * dy),
-            (float)(from.Y + imaginary * dx + real * dy));
+        var delta = to.ToVector2d() - from.ToVector2d();
+        return new Vector2d(from.X + real * delta.X - imaginary * delta.Y,
+            from.Y + imaginary * delta.X + real * delta.Y).ToVector2();
     }
 
     private static void ValidateArc(Vector2 from, Vector2 to, float radians)

@@ -24,6 +24,17 @@ public sealed class TriangleMeshAnalysis3DTests
     }
 
     [Fact]
+    public void FeatureEdgesNormalizeExtremeViewDirections()
+    {
+        Vector3[] vertices = [Vector3.Zero, Vector3.UnitX, Vector3.UnitY];
+        var mesh = new TriangleMeshAnalysis3D(vertices, [0, 1, 2]);
+        var expected = mesh.FeatureEdges(Vector3.UnitZ, .7f).ToArray();
+        Assert.Equal(expected, mesh.FeatureEdges(new(0, 0, float.Epsilon), .7f));
+        Assert.Equal(expected, mesh.FeatureEdges(new(0, 0, float.MaxValue), .7f));
+        Assert.Empty(mesh.FeatureEdges(new(0, 0, -float.MaxValue), .7f));
+    }
+
+    [Fact]
     public void SharedEdgeBecomesACreaseOrSilhouetteWhenAppropriate()
     {
         Vector3[] vertices = [new(0, 0, 0), new(1, 0, 0), new(0, 1, 0), new(0, 0, 1)];

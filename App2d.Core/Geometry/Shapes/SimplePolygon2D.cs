@@ -21,6 +21,9 @@ public sealed partial class SimplePolygon2D : IShape2D
 
     public ReadOnlySpan<Vector2> Vertices => _vertices;
     public float Area => Mesh.Area;
+
+    /// <inheritdoc/>
+    public float Diameter => Diameter2D.Polygon(_vertices);
     public bool ContainsPoint(Vector2 point) => Mesh.ContainsPoint(point);
 
     internal TriangleMesh2D Mesh { get; }

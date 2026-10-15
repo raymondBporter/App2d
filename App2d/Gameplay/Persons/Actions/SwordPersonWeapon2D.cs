@@ -23,7 +23,7 @@ internal sealed partial class SwordPersonWeapon2D(
         EquipmentKind2D.Sword,
         ids.Allocate(),
         ownerBody,
-        authored?.Shape() ?? AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(56f, 72f)),
+        authored?.Shape() ?? AxisAlignedRectangle2D.Builder.CreateFromSize(56f, 72f),
         authored?.Profile(null) ?? new MeleeAttackProfile2D(
             durationSeconds: 0.35f,
             damageStartSeconds: 0.10f,
@@ -79,7 +79,7 @@ internal sealed partial class SwordPersonWeapon2D(
         Action<WeaponEvent2D> emit,
         Func<Rect2D, bool>? spikeOverlap) : MeleePersonWeapon2D(
             EquipmentKind2D.Sword, sourceId, body,
-            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(64f, 48f)),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(64f, 48f),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.25f,
                 // Strike immediately; the slash flash spans the first two poses at 24 fps.

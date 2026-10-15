@@ -6,14 +6,15 @@ using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor;
 
-internal sealed partial class AnimateView
+/// <summary>Attachment preview controls, weapon asset inspector, and rotation handles share one drag state.</summary>
+internal sealed class AnimationWeaponEditor(EditorSession session)
 {
     private string? _weaponDrag;
     private float _weaponPointerAngle;
     private Vector3 _weaponStart;
     private float _objScale = 1;
 
-    private void WeaponOutline(Subject primary)
+    public void DrawOutline(Subject primary)
     {
         if (primary.Model.Base.Sockets.Count == 0) return;
         Ui.Header("Attachment preview");
@@ -28,7 +29,7 @@ internal sealed partial class AnimateView
         Ui.Help("Preview only. Equipment in Entity determines what is carried in game.");
     }
 
-    private void WeaponInspector(AssetDocument<MotionClip> document, Subject subject)
+    public void DrawInspector(AssetDocument<MotionClip> document, Subject subject)
     {
         if (session.WeaponFor(subject.Model) is not { } weapon) { Ui.Help("Enable a weapon preview and select its socket."); return; }
         var time = session.Transport.Time; var channel = new Channel(MotionClip.OrientKind, weapon.Socket.Id);
@@ -102,7 +103,7 @@ internal sealed partial class AnimateView
         if (ImGui.Button("Save weapon")) session.Save(document);
     }
 
-    private bool WeaponOverlay(ViewportFrame frame, Subject subject)
+    public bool DrawOverlay(ViewportFrame frame, Subject subject)
     {
         if (session.WeaponFor(subject.Model) is not { } weapon) return false;
         var socket = new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket);

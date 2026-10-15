@@ -23,7 +23,7 @@ public static class PartGeometryAuthoring2D
             return Polygon([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]);
         if (part.Kind == PuppetPartKinds.Box)
         {
-            return RoundedRectangle2D.Builder.FromSize(new(part.Width, part.Height),
+            return RoundedRectangle2D.Builder.FromSize(part.Width, part.Height,
                 Math.Min(part.Width, part.Height) * .125f);
         }
 
@@ -49,14 +49,14 @@ public static class PartGeometryAuthoring2D
     public static void ResizeRoundedRectangle(PuppetPart part, float width, float height)
     {
         if (part.Geometry is not RoundedRectangle2D.Builder rounded) return;
-        part.Geometry = RoundedRectangle2D.Builder.FromSize(new(width, height),
+        part.Geometry = RoundedRectangle2D.Builder.FromSize(width, height,
             MathF.Min(rounded.Radius, MathF.Min(width, height) / 2f));
     }
 
     public static void SetRoundedRectangleRadius(PuppetPart part, float radius)
     {
         if (part.Geometry is not RoundedRectangle2D.Builder) return;
-        part.Geometry = RoundedRectangle2D.Builder.FromSize(new(part.Width, part.Height), radius);
+        part.Geometry = RoundedRectangle2D.Builder.FromSize(part.Width, part.Height, radius);
     }
 
     /// <summary>Derives editor controls from typed geometry without changing the saved silhouette.</summary>

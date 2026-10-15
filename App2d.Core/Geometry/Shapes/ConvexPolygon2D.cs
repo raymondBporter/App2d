@@ -28,6 +28,9 @@ public sealed partial class ConvexPolygon2D : IConvexShape2D
     public float Area { get; }
 
     /// <inheritdoc/>
+    public float Diameter => Diameter2D.Polygon(_vertices);
+
+    /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint) => Containment2D.ConvexPolygon(localPoint, _vertices, Epsilon);
 
     /// <inheritdoc/>

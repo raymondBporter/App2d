@@ -362,7 +362,7 @@ public sealed class Person2DTests
         physics.Gravity = new Vector2(0f, -1_200f);
         var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var groundObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(600f, 20f)));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(600f, 20f));
         groundObject.Transform.Position = new Vector2(0f, -10f);
         var ground = physics.AddBody(groundObject, BodyMotionType2D.Static);
         ground.CollisionLayer = WorldLayer;
@@ -430,7 +430,7 @@ public sealed class Person2DTests
         float gap = 1f)
     {
         var wallObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(20f, 200f)));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(20f, 200f));
         wallObject.Transform.Position = new Vector2(
             person.WorldObject.WorldBounds.Right + 10f + gap,
             0f);
@@ -445,7 +445,7 @@ public sealed class Person2DTests
         Person2D person)
     {
         var groundObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(200f, 20f)));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(200f, 20f));
         groundObject.Transform.Position = new Vector2(
             person.Position.X,
             person.WorldObject.WorldBounds.Bottom - 10f);

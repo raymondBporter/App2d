@@ -12,21 +12,22 @@ public sealed partial class RoundedRectangle2D : IConvexShape2D
 
     private RoundedRectangle2D(Vector2 min, Vector2 max, float radius)
     {
-        Min = min;
-        Max = max;
+        OuterRect = new(min, max);
         Radius = radius;
     }
 
-    public Vector2 Min { get; }
-    public Vector2 Max { get; }
+    /// <summary>The outer axis-aligned rectangle containing the rounded shape.</summary>
+    public Rect2D OuterRect { get; }
+    /// <summary>The inset rectangle expanded by Radius to form the rounded shape. It may collapse to a segment or point.</summary>
+    public Rect2D InnerRect => new(Min + new Vector2(Radius), Max - new Vector2(Radius));
+    public Vector2 Min => OuterRect.Min;
+    public Vector2 Max => OuterRect.Max;
     public float Radius { get; }
-    public Vector2 CoreMin => Min + new Vector2(Radius);
-    public Vector2 CoreMax => Max - new Vector2(Radius);
     public float Area => Area2D.RoundedRectangle(Min, Max, Radius);
-    public bool ContainsPoint(Vector2 point) =>
-        Distance2D.SignedDistanceToRectangle(point, CoreMin, CoreMax) <= Radius;
-    public Vector2 GetSupportPoint(Vector2 direction) =>
-        SupportPoint2D.Circle(direction, SupportPoint2D.Rectangle(direction, CoreMin, CoreMax), Radius);
 
+    /// <inheritdoc/>
+    public float Diameter => Diameter2D.RoundedRectangle(InnerRect.Min, InnerRect.Max, Radius);
+    public bool ContainsPoint(Vector2 point) => Distance2D.SignedDistanceToRectangle(point, InnerRect.Min, InnerRect.Max) <= Radius;
+    public Vector2 GetSupportPoint(Vector2 direction) => SupportPoint2D.Circle(direction, SupportPoint2D.Rectangle(direction, InnerRect.Min, InnerRect.Max), Radius);
 
 }

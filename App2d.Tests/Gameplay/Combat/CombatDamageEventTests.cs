@@ -56,7 +56,7 @@ public sealed class CombatDamageEventTests
     public void DamageFactIdentifiesTheTargetAndImpactPosition(int damage, bool killed)
     {
         var physics = new PhysicsWorld2D();
-        var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(30f)));
+        var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(30f, 30f));
         shape.Transform.Position = new(600f, 200f);
         var body = physics.AddBody(shape, BodyMotionType2D.Dynamic);
         body.CollisionLayer = 2;

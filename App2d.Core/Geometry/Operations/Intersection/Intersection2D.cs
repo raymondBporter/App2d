@@ -181,19 +181,20 @@ public static class Intersection2D
     {
         ArgGuard.ThrowIfNotFiniteOrZero(firstDirection);
         ArgGuard.ThrowIfNotFiniteOrZero(secondDirection);
-        var dx = (double)secondOrigin.X - firstOrigin.X;
-        var dy = (double)secondOrigin.Y - firstOrigin.Y;
-        var determinant = firstDirection.CrossDouble(secondDirection);
-        var firstNumerator = Vector2Extensions.CrossDouble(dx, dy, secondDirection.X, secondDirection.Y);
-        var secondNumerator = Vector2Extensions.CrossDouble(dx, dy, firstDirection.X, firstDirection.Y);
+        var delta = secondOrigin.ToVector2d() - firstOrigin.ToVector2d();
+        var firstAxis = firstDirection.ToVector2d();
+        var secondAxis = secondDirection.ToVector2d();
+        var determinant = firstAxis.Cross(secondAxis);
+        var firstNumerator = delta.Cross(secondAxis);
+        var secondNumerator = delta.Cross(firstAxis);
         if (determinant != 0)
             return (!firstIsRay || firstNumerator / determinant >= 0) && (!secondIsRay || secondNumerator / determinant >= 0);
 
         if (secondNumerator != 0) return false; // Parallel, distinct supporting lines.
         if (!firstIsRay || !secondIsRay) return true;
         // Collinear rays overlap if they face the same way or face toward one another.
-        var sameDirection = (double)firstDirection.X * secondDirection.X + (double)firstDirection.Y * secondDirection.Y > 0;
-        return sameDirection || dx * firstDirection.X + dy * firstDirection.Y >= 0;
+        var sameDirection = firstAxis.Dot(secondAxis) > 0;
+        return sameDirection || delta.Dot(firstAxis) >= 0;
     }
 
     private static bool UpdateSlab(float start, float delta, float minimum, float maximum, Vector2 minimumNormal, Vector2 maximumNormal, ref float entryTime, ref float exitTime, ref Vector2 entryNormal)

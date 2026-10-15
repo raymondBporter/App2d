@@ -63,7 +63,7 @@ internal static class TileEditorView2D
             var isSelected = editor.SelectedThingId == thing.ThingId;
             var color = isSelected ? selectedColor : thing.Enabled ? pathColor : disabledColor;
             renderer.DrawWorldSegment(start, end, color, isSelected ? 3f : 2f);
-            renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(new Vector2(thing.Width, thing.Height), start),
+            renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(thing.Width, thing.Height, start),
                 outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
             if (isSelected)
             {
@@ -75,7 +75,7 @@ internal static class TileEditorView2D
 
         if (editor.TryGetPlacementPreview(out var definition, out var position))
         {
-            renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(new Vector2(definition.Width, definition.Height), position),
+            renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(definition.Width, definition.Height, position),
                 outlineColor: new XnaColor(105, 245, 180, 220), screenStrokeWidth: 3f);
             renderer.DrawWorldSegment(position, position + new Vector2(editor.TileSize * 3f, 0f),
                 new XnaColor(105, 245, 180, 180), 2f);

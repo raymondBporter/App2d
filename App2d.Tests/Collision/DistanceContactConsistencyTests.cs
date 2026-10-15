@@ -14,7 +14,7 @@ public sealed class DistanceContactConsistencyTests
     {
         IShape2D circle = Circle2D.Builder.Create(1.3f, new(.2f, -.1f));
         IShape2D capsule = Capsule2D.Builder.Create(new(-1.5f, -.2f), new(1, .4f), .6f);
-        IShape2D rectangle = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 3));
+        IShape2D rectangle = Rectangle2D.Builder.CreateFromSize(2, 3);
         IShape2D polygon = ConvexPolygon2D.Builder.Create([new(-1, -1), new(2, -1), new(.5f, 2)]);
         IShape2D triangle = Triangle2D.Builder.Create(new(-1, -1), new(2, -1), new(.5f, 2));
         IShape2D halfSpace = HalfSpace2D.Builder.Create(Vector2.UnitY, .3f);

@@ -365,7 +365,7 @@ internal sealed class EditorSmoke(string output)
             entity.Asset.Equipment.Add(new() { Prop = "spear", Socket = "right-grip" });
             var attack = entity.Asset.Actions.Single(a => a.Id == "attack");
             attack.Role = null; attack.Clip = "person-thrust"; attack.Mask = StarterContent.Upper; attack.BlendIn = .08f; attack.BlendOut = .12f;
-            attack.Hits.Add(new() { Id = "spear-tip", Prop = "spear", Along = -.14f, Shape = Rectangle2D.Builder.FromSize(new(.42f, .26f)), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
+            attack.Hits.Add(new() { Id = "spear-tip", Prop = "spear", Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
             attack.Events.Add(new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" });
         }), s);
         Record(s.Assets.Problems(entity).Count == 0, "the skirmisher compiles: " + string.Join("; ", s.Assets.Problems(entity)));

@@ -27,9 +27,9 @@ public sealed class ShapeVertices2DTests
         nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
         nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
         nameof(RoundedRectangle2D) => RoundedRectangle2D.Builder.Create(new(-2, -1), new(2, 1), .5f),
-        "VerticalCapsule" => RoundedRectangle2D.Builder.CreateFromSize(new(2, 4), 1, new(1, 2)),
-        "HorizontalCapsule" => RoundedRectangle2D.Builder.CreateFromSize(new(4, 2), 1, new(1, 2)),
-        "CollapsedCircle" => RoundedRectangle2D.Builder.CreateFromSize(new(2, 2), 1, new(1, 2)),
+        "VerticalCapsule" => RoundedRectangle2D.Builder.CreateFromSize(2, 4, 1, new(1, 2)),
+        "HorizontalCapsule" => RoundedRectangle2D.Builder.CreateFromSize(4, 2, 1, new(1, 2)),
+        "CollapsedCircle" => RoundedRectangle2D.Builder.CreateFromSize(2, 2, 1, new(1, 2)),
         nameof(Triangle2D) => Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(1, 3)),
         nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
         _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
@@ -76,10 +76,10 @@ public sealed class ShapeVertices2DTests
         Assert.Equal(.5f, radius);
         Assert.Equal([new(-1.5f, -.5f), new(1.5f, -.5f), new(1.5f, .5f), new(-1.5f, .5f)], core.ToArray());
 
-        var capsule = RoundedRectangle2D.Builder.CreateFromSize(new(4, 2), 1);
+        var capsule = RoundedRectangle2D.Builder.CreateFromSize(4, 2, 1);
         Assert.Equal([new(-1, 0), new(1, 0)], capsule.GetVerts(buffer, out radius).ToArray());
         Assert.Equal(1f, radius);
-        var circle = RoundedRectangle2D.Builder.CreateFromSize(new(2, 2), 1, new(3, 4));
+        var circle = RoundedRectangle2D.Builder.CreateFromSize(2, 2, 1, new(3, 4));
         Assert.Equal([new(3, 4)], circle.GetVerts(buffer, out radius).ToArray());
         Assert.Equal(1f, radius);
     }
@@ -134,7 +134,7 @@ public sealed class ShapeVertices2DTests
     [Fact]
     public void ShortBuffersAndInvalidSamplingAreRejectedBeforeWriting()
     {
-        var rectangle = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2));
+        var rectangle = Rectangle2D.Builder.CreateFromSize(2, 2);
         var shortBuffer = Enumerable.Repeat(new Vector2(123), 3).ToArray();
         Assert.Throws<ArgumentOutOfRangeException>(() => rectangle.GetVerts(shortBuffer, out _));
         Assert.All(shortBuffer, point => Assert.Equal(new Vector2(123), point));

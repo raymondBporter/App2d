@@ -34,6 +34,9 @@ public sealed partial class Capsule2D : IConvexShape2D
     public float Area => Area2D.Capsule(Start, End, Radius);
 
     /// <inheritdoc/>
+    public float Diameter => Diameter2D.Capsule(Start, End, Radius);
+
+    /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint) => Containment2D.Capsule(localPoint, Start, End, Radius);
 
     /// <inheritdoc/>

@@ -34,8 +34,11 @@ internal sealed class EditorShell(EditorSession session, Viewport viewport, Aren
         new AppearanceView(session)
     ];
 
-    public EditorSession Session { get; } = session; public Viewport Viewport { get; } = viewport;     /// <summary>The arena test. Shell state: entering and leaving it never changes the session's documents or selection.</summary>
-    public ArenaTest Test { get; } = test;     /// <summary>False while a smoke run drives the arena itself.</summary>
+    public EditorSession Session { get; } = session;
+    public Viewport Viewport { get; } = viewport;
+    /// <summary>The arena test. Shell state: entering and leaving it never changes the session's documents or selection.</summary>
+    public ArenaTest Test { get; } = test;
+    /// <summary>False while a smoke run drives the arena itself.</summary>
     public bool LiveTest { get; set; } = true;
     private IWorkspaceView View => _views.First(v => v.Mode == Session.Mode);
 

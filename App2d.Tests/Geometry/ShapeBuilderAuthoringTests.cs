@@ -18,7 +18,7 @@ public sealed class ShapeBuilderAuthoringTests
     [InlineData(ShapeKinds2D.Composite)]
     public void ReauthoringFitsTheNewKindInsideTheOriginalBoundsAroundTheSameCentre(string kind)
     {
-        var source = Rectangle2D.Builder.FromSize(new(4, 2), new(1, 1));
+        var source = Rectangle2D.Builder.FromSize(4, 2, new(1, 1));
         var converted = source.WithKind(kind);
         Assert.Equal(kind, converted.Kind);
         var bounds = ShapeBounds2D.Calculate(converted.Build());
@@ -30,7 +30,7 @@ public sealed class ShapeBuilderAuthoringTests
     [Fact]
     public void TallBoxesBecomeVerticalCapsulesAndUnknownOrUnboundedSourcesAreRejected()
     {
-        var tall = Rectangle2D.Builder.FromSize(new(1, 3));
+        var tall = Rectangle2D.Builder.FromSize(1, 3);
         var capsule = Assert.IsType<Capsule2D.Builder>(tall.WithKind(ShapeKinds2D.Capsule));
         Assert.Equal(new Vector2(0, -1), capsule.Start);
         Assert.Equal(new Vector2(0, 1), capsule.End);
@@ -43,7 +43,7 @@ public sealed class ShapeBuilderAuthoringTests
     [Fact]
     public void KindIsWrittenOnceAndTheAxisAlignedFlagOnlyWhenSet()
     {
-        var plain = Rectangle2D.Builder.FromSize(new(1, 1)).ToJson();
+        var plain = Rectangle2D.Builder.FromSize(1, 1).ToJson();
         Assert.Equal(1, plain.Split("\"kind\"").Length - 1);
         Assert.DoesNotContain("axisAligned", plain);
         var aligned = ShapeBuilder2D.FromShape(AxisAlignedRectangle2D.Builder.Create(new(0, 0), new(1, 1))).ToJson();

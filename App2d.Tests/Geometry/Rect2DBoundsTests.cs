@@ -105,35 +105,38 @@ public sealed class Rect2DBoundsTests
     }
 
     [Fact]
-    public void RotatedCircleBoundsRemainConservativeUntilShapeSpecificWorldBoundsAreAdded()
+    public void RotatingACircleKeepsItsWorldBoundsTight()
     {
         var circle = Circle2D.Builder.Create(2, new(1, -3));
         var item = new SpatialObject2D(circle);
         item.Transform.Rotation = MathF.PI / 4;
         item.Transform.Position = new(10, 20);
         var world = item.WorldBounds;
-        Assert.True(world.Size.X > 4f);
+        Assert.InRange(MathF.Abs(world.Size.X - 4f), 0, .00001f);
+        Assert.InRange(MathF.Abs(world.Size.Y - 4f), 0, .00001f);
         for (var i = 0; i < 64; i++)
         {
             var point = VertexGenerator2D.PointOnEllipse(circle.Center, new(circle.Radius), i * MathF.Tau / 64);
-            Assert.True(world.Contains(Vector2.Transform(point, item.Transform.Matrix)));
+            Assert.InRange(world.DistanceTo(Vector2.Transform(point, item.Transform.Matrix)), 0, .00001f);
         }
     }
 
     [Fact]
-    public void HalfSpacesStayUnboundedThroughAllTransformPaths()
+    public void AxisAlignedHalfSpacesRetainTheirBoundaryThroughTranslationAndScale()
     {
         var item = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2.UnitY, 0));
-        Assert.Equal(Rect2D.Unbounded, item.LocalBounds);
-        Assert.Equal(Rect2D.Unbounded, item.WorldBounds);
+        var local = new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity, 0));
+        Assert.Equal(local, item.LocalBounds);
+        Assert.Equal(local, item.WorldBounds);
         item.Transform.Position = new(100, -25);
-        Assert.Equal(Rect2D.Unbounded, item.WorldBounds);
+        Assert.Equal(new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity, -25)), item.WorldBounds);
         item.Transform.Scale = new(-2, 3);
-        Assert.Equal(Rect2D.Unbounded, item.WorldBounds);
+        Assert.Equal(new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity, -25)), item.WorldBounds);
         item.Transform.Rotation = .7f;
         Assert.Equal(Rect2D.Unbounded, item.WorldBounds);
+        // A box transform remains conservative; the shape-aware path above retains the half-space itself.
         Assert.Equal(Rect2D.Unbounded, item.LocalBounds.TransformedBy(Matrix3x2.CreateScale(0f)));
-        Assert.Equal(Rect2D.Unbounded, item.LocalBounds.TranslatedBy(new(5, 5)));
+        Assert.Equal(new Rect2D(new(float.NegativeInfinity), new(float.PositiveInfinity, 5)), item.LocalBounds.TranslatedBy(new(5, 5)));
     }
 
     [Fact]

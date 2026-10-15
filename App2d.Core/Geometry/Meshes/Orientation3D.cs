@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -15,10 +16,7 @@ public static class Orientation3D
             handedness = 0;
             return false;
         }
-        var x = (double)along.Y * across.Z - (double)along.Z * across.Y;
-        var y = (double)along.Z * across.X - (double)along.X * across.Z;
-        var z = (double)along.X * across.Y - (double)along.Y * across.X;
-        var volume = x * normal.X + y * normal.Y + z * normal.Z;
+        var volume = along.ToVector3d().Cross(across.ToVector3d()).Dot(normal.ToVector3d());
         handedness = Math.Sign(volume);
         return handedness != 0;
     }

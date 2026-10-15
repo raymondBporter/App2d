@@ -30,6 +30,9 @@ public sealed partial class Circle2D : IConvexShape2D
     public float Area => Area2D.Circle(Radius);
 
     /// <inheritdoc/>
+    public float Diameter => Diameter2D.Circle(Radius);
+
+    /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint) => Containment2D.Circle(localPoint, Center, Radius);
 
     /// <inheritdoc/>

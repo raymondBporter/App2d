@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -39,6 +40,9 @@ public sealed partial class Triangle2D : IConvexShape2D
     public float Area { get; }
 
     /// <inheritdoc/>
+    public float Diameter => Diameter2D.Triangle(A, B, C);
+
+    /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint)
     {
         ArgGuard.ThrowIfNotFinite(localPoint);
@@ -54,11 +58,12 @@ public sealed partial class Triangle2D : IConvexShape2D
     public Vector2 GetSupportPoint(Vector2 localDirection)
     {
         ArgGuard.ThrowIfNotFinite(localDirection);
+        var direction = localDirection.ToVector2d();
         var best = A;
-        var projection = Dot(A, localDirection);
-        var next = Dot(B, localDirection);
+        var projection = A.ToVector2d().Dot(direction);
+        var next = B.ToVector2d().Dot(direction);
         if (next > projection) { best = B; projection = next; }
-        if (Dot(C, localDirection) > projection) best = C;
+        if (C.ToVector2d().Dot(direction) > projection) best = C;
         return best;
     }
 
@@ -71,6 +76,4 @@ public sealed partial class Triangle2D : IConvexShape2D
         vertices[1] = B;
         vertices[2] = C;
     }
-
-    private static double Dot(Vector2 first, Vector2 second) => (double)first.X * second.X + (double)first.Y * second.Y;
 }

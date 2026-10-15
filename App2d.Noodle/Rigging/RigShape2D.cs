@@ -80,8 +80,8 @@ internal sealed class RigRectangleShape2D(int id, string name, RigBone2D bone) :
     private float MaximumRadius => MathF.Min(Width, Height) / 2f;
 
     internal override IShape2D CreateGeometry() => CornerRadius > 0f
-        ? RoundedRectangle2D.Builder.CreateFromSize(new Vector2(Width, Height), CornerRadius)
-        : Rectangle2D.Builder.CreateFromSize(new Vector2(Width, Height));
+        ? RoundedRectangle2D.Builder.CreateFromSize(Width, Height, CornerRadius)
+        : Rectangle2D.Builder.CreateFromSize(Width, Height);
 
     private static float Positive(float value) => float.IsFinite(value) && value > 1f ? value : 1f;
 }

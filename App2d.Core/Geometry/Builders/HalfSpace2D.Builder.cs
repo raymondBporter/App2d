@@ -23,8 +23,12 @@ public sealed partial class HalfSpace2D
         public override HalfSpace2D Build()
         {
             Validate();
-            var normalLength = Normal.Length();
-            return new HalfSpace2D(Normal / normalLength, Offset / normalLength);
+            var wideNormal = Normal.ToVector2d();
+            var normalLength = wideNormal.Length();
+            var normal = (wideNormal / normalLength).ToVector2();
+            var offset = (float)(Offset / normalLength);
+            ArgGuard.ThrowIfNotFinite(offset, "offset");
+            return new HalfSpace2D(normal, offset);
         }
         public static HalfSpace2D Create(Vector2 outwardNormal, float offset) => new Builder { Normal = outwardNormal, Offset = offset }.Build();
 
@@ -32,8 +36,9 @@ public sealed partial class HalfSpace2D
         {
             ArgGuard.ThrowIfNotFinite(pointOnBoundary);
             ArgGuard.ThrowIfNotFiniteOrZero(outwardNormal);
-            var normal = Vector2.Normalize(outwardNormal);
-            return new() { Normal = normal, Offset = Vector2.Dot(pointOnBoundary, normal) };
+            var wideNormal = outwardNormal.ToVector2d();
+            var normal = (wideNormal / wideNormal.Length()).ToVector2();
+            return new() { Normal = normal, Offset = (float)pointOnBoundary.ToVector2d().Dot(normal.ToVector2d()) };
         }
         public static HalfSpace2D CreateFromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal) => FromPoint(pointOnBoundary, outwardNormal).Build();
     }

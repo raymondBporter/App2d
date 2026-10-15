@@ -66,7 +66,7 @@ public static partial class Area2D
     private static void CoverCircle(UnionPart circle, UnionPart other, bool preferOther, List<Interval<double>> covered)
     {
         var delta = other.Center - circle.Center;
-        var distance = Math.Sqrt(delta.Dot(delta));
+        var distance = delta.Length();
         if (circle.Radius == other.Radius && distance <= ConicCoincidenceTolerance * circle.Radius)
         {
             if (preferOther) covered.Add(new(0d, Math.Tau));
@@ -166,18 +166,18 @@ public static partial class Area2D
         }
     }
 
-    private static void CoverSegmentWithCurve(Point start, Point direction, UnionPart curve, List<Interval<double>> covered)
+    private static void CoverSegmentWithCurve(Vector2d start, Vector2d direction, UnionPart curve, List<Interval<double>> covered)
     {
         if (CurveRoots(start, direction, curve, out var low, out var high))
             AddInterval(covered, Math.Max(0d, low), Math.Min(1d, high));
     }
 
-    private static bool CurveRoots(Point start, Point direction, UnionPart curve, out double low, out double high)
+    private static bool CurveRoots(Vector2d start, Vector2d direction, UnionPart curve, out double low, out double high)
     {
         low = high = 0d;
         var relative = curve.NormalizeRelative(start);
         direction = new(direction.X / curve.Radii.X, direction.Y / curve.Radii.Y);
-        var lengthSquared = direction.Dot(direction);
+        var lengthSquared = direction.LengthSquared();
         if (lengthSquared == 0d) return false;
         var cross = relative.Cross(direction);
         var remaining = 1d - cross * cross / lengthSquared;
@@ -189,7 +189,7 @@ public static partial class Area2D
         return true;
     }
 
-    private static void CoverSegmentWithPolygon(Point start, Point direction, UnionPart polygon, bool preferOther, List<Interval<double>> covered)
+    private static void CoverSegmentWithPolygon(Vector2d start, Vector2d direction, UnionPart polygon, bool preferOther, List<Interval<double>> covered)
     {
         var low = 0d;
         var high = 1d;
@@ -261,29 +261,19 @@ public static partial class Area2D
         return angle < 0d ? angle + Math.Tau : angle;
     }
 
-    internal readonly record struct Point(double X, double Y)
-    {
-        internal Point(Vector2 value) : this(value.X, value.Y) { }
-        public static Point operator +(Point a, Point b) => new(a.X + b.X, a.Y + b.Y);
-        public static Point operator -(Point a, Point b) => new(a.X - b.X, a.Y - b.Y);
-        public static Point operator *(Point a, double scale) => new(a.X * scale, a.Y * scale);
-        internal double Dot(Point other) => X * other.X + Y * other.Y;
-        internal double Cross(Point other) => Vector2Extensions.CrossDouble(X, Y, other.X, other.Y);
-    }
-
     internal sealed class UnionPart
     {
-        internal Point Center { get; private set; }
-        internal Point Radii { get; }
+        internal Vector2d Center { get; private set; }
+        internal Vector2d Radii { get; }
         internal double Radius => Radii.X;
-        internal Point[] Vertices { get; }
-        internal Point Origin => IsCurve ? Center : _vertexOrigin;
+        internal Vector2d[] Vertices { get; }
+        internal Vector2d Origin => IsCurve ? Center : _vertexOrigin;
         internal bool IsCurve => Radii.X > 0d;
         internal bool IsCircle => IsCurve && Radii.X == Radii.Y;
-        private readonly Point _min;
-        private readonly Point _max;
+        private readonly Vector2d _min;
+        private readonly Vector2d _max;
         private readonly bool _hasArea;
-        private Point _vertexOrigin;
+        private Vector2d _vertexOrigin;
 
         internal UnionPart(Vector2 center, float radius) : this(center, new Vector2(radius)) { }
 
@@ -297,9 +287,9 @@ public static partial class Area2D
             _max = Radii;
         }
 
-        internal UnionPart(ReadOnlySpan<Vector2> vertices) : this(ToPoints(vertices), new Point(vertices[0])) { }
+        internal UnionPart(ReadOnlySpan<Vector2> vertices) : this(ToPoints(vertices), new Vector2d(vertices[0])) { }
 
-        internal UnionPart(Point[] vertices, Point origin = default)
+        internal UnionPart(Vector2d[] vertices, Vector2d origin = default)
         {
             Vertices = vertices;
             _vertexOrigin = origin;
@@ -317,7 +307,7 @@ public static partial class Area2D
             _hasArea = areaTwice != 0d;
         }
 
-        internal void Shift(Point origin)
+        internal void Shift(Vector2d origin)
         {
             if (IsCurve) Center -= origin;
             else _vertexOrigin -= origin;
@@ -331,13 +321,13 @@ public static partial class Area2D
                 _min.Y < offset.Y + other._max.Y && _max.Y > offset.Y + other._min.Y;
         }
 
-        internal bool ContainsInterior(Point point)
+        internal bool ContainsInterior(Vector2d point)
         {
             if (!_hasArea) return false;
             if (IsCurve)
             {
                 var normalized = NormalizeRelative(point);
-                return normalized.Dot(normalized) < 1d;
+                return normalized.LengthSquared() < 1d;
             }
             for (var i = 0; i < Vertices.Length; i++)
             {
@@ -347,19 +337,19 @@ public static partial class Area2D
             return true;
         }
 
-        internal Point NormalizeRelative(Point point) => new(point.X / Radii.X, point.Y / Radii.Y);
+        internal Vector2d NormalizeRelative(Vector2d point) => new(point.X / Radii.X, point.Y / Radii.Y);
 
-        internal Point PointAt(double angle)
+        internal Vector2d PointAt(double angle)
         {
             var (sin, cos) = EndpointSinCos(angle);
-            return new Point(Radii.X * cos, Radii.Y * sin);
+            return new Vector2d(Radii.X * cos, Radii.Y * sin);
         }
 
-        private static Point[] ToPoints(ReadOnlySpan<Vector2> vertices)
+        private static Vector2d[] ToPoints(ReadOnlySpan<Vector2> vertices)
         {
-            var points = new Point[vertices.Length];
-            var origin = new Point(vertices[0]);
-            for (var i = 0; i < points.Length; i++) points[i] = new Point(vertices[i]) - origin;
+            var points = new Vector2d[vertices.Length];
+            var origin = new Vector2d(vertices[0]);
+            for (var i = 0; i < points.Length; i++) points[i] = new Vector2d(vertices[i]) - origin;
             return points;
         }
     }

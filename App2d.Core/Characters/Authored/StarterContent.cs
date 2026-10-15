@@ -336,7 +336,7 @@ public static class StarterContent
     {
         Id = EntityControllers.Attack,
         Clip = "person-thrust",
-        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(new(.42f, .26f)) }],
+        Hits = [new() { Id = "spear-tip", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Prop = Spear, Point = PropAsset.TipPoint, Along = -.14f, Shape = Rectangle2D.Builder.FromSize(.42f, .26f) }],
         Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
     };
 
@@ -383,7 +383,7 @@ public static class StarterContent
             new()
             {
                 Id = EntityControllers.Attack, Clip = "stalker-lunge",
-                Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Socket = "stinger", Shape = Rectangle2D.Builder.FromSize(new(.3f, .3f)) }],
+                Hits = [new() { Id = "sting", Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" }, Socket = "stinger", Shape = Rectangle2D.Builder.FromSize(.3f, .3f) }],
                 Events = [new() { Id = "bite", At = new() { Marker = "strike" }, Sound = "bite" }],
             },
         ],

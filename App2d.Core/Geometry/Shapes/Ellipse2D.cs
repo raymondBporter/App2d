@@ -36,6 +36,9 @@ public sealed partial class Ellipse2D : IConvexShape2D
     public float Area => Area2D.Ellipse(Radii);
 
     /// <inheritdoc/>
+    public float Diameter => Diameter2D.Ellipse(Radii);
+
+    /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint) => Containment2D.Ellipse(localPoint, Center, Radii);
 
     /// <inheritdoc/>

@@ -57,7 +57,7 @@ public readonly record struct Polar2D
     public static Polar2D FromCartesian(Vector2 value)
     {
         ArgGuard.ThrowIfNotFinite(value);
-        var radius = (float)Math.Sqrt((double)value.X * value.X + (double)value.Y * value.Y);
+        var radius = (float)value.ToVector2d().Length();
         ArgGuard.ThrowIfNotFinite(radius, nameof(value));
         return new(radius, AngleOf(value));
     }

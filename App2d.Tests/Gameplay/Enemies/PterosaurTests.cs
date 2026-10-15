@@ -23,7 +23,7 @@ public sealed class PterosaurTests
     {
         Assert.Empty(Catalog.Errors);
         var physics = new PhysicsWorld2D { Gravity = new(0, -1200) };
-        var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(2000, 20)));
+        var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(2000, 20));
         floor.Transform.Position = new(0, -10); physics.AddBody(floor, BodyMotionType2D.Static).CollisionLayer = 1;
         var enemy = new AuthoredEntityEnemy2D(EntityId2D.Create(), Catalog.Entities["flying-pterosaur"], physics, new(-facing * 96, 154), 1, 4);
         enemy.SetSimulationEnabled(true);
@@ -82,7 +82,7 @@ public sealed class PterosaurTests
         // Broad wings do not make the body invulnerable; a grounded-height sword reaches the low pass.
         var registry = new CombatantRegistry2D(); registry.Register(enemy); registry.Register(player);
         var combat = new CombatSystem2D(physics.CollisionSystem, registry);
-        var sword = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(70, 50)));
+        var sword = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(70, 50));
         sword.Transform.Position = new(enemy.WorldObject.Transform.Position.X, 30);
         Assert.True(combat.ResolveAttack(sword, player.Id, 1, CombatFaction2D.Player, 4, 1, _ => Vector2.Zero));
         Assert.Equal(3, enemy.Health.Current); Assert.False(enemy.CaptureState().IsAttacking);
@@ -118,7 +118,7 @@ public sealed class PterosaurTests
     public void ANewObstacleStopsTheCommittedDiveWithoutDamageThroughTerrain()
     {
         var (enemy, physics, player) = Create(); Tick(enemy, physics, player.Position, 58);
-        var wall = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(12, 240)));
+        var wall = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(12, 240));
         wall.Transform.Position = new(-40, 120); physics.AddBody(wall, BodyMotionType2D.Static).CollisionLayer = 1;
         for (var i = 0; i < 200; i++) { Tick(enemy, physics, player.Position); enemy.TryResolvePlayerHit(player); }
         Assert.True(enemy.WorldObject.Transform.Position.X < -45);

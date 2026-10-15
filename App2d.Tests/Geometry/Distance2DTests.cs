@@ -17,7 +17,7 @@ public sealed class Distance2DTests
         IShape2D[] shapes =
         [
             Circle2D.Builder.Create(2), Capsule2D.Builder.Create(new(0, -1), new(0, 1), 2),
-            Rectangle2D.Builder.CreateFromSize(new Vector2(4, 6)),
+            Rectangle2D.Builder.CreateFromSize(4, 6),
             ConvexPolygon2D.Builder.Create([new(-2, -3), new(2, -3), new(2, 3), new(-2, 3)]),
             HalfSpace2D.Builder.Create(Vector2.UnitX, 2)
         ];
@@ -96,11 +96,11 @@ public sealed class Distance2DTests
     [Fact]
     public void PolygonPairsHandleCornerGapsContainmentAndContact()
     {
-        var box = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2));
+        var box = Rectangle2D.Builder.CreateFromSize(2, 2);
         var diagonal = ConvexPolygon2D.Builder.Create([new(4, 5), new(6, 5), new(6, 7), new(4, 7)]);
         AssertPair(box, diagonal, 5);
-        AssertPair(box, Rectangle2D.Builder.CreateFromSize(new Vector2(10, 10)), -6);
-        AssertPair(box, Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2), new(2, 0)), 0);
+        AssertPair(box, Rectangle2D.Builder.CreateFromSize(10, 10), -6);
+        AssertPair(box, Rectangle2D.Builder.CreateFromSize(2, 2, new(2, 0)), 0);
         var diamond = ConvexPolygon2D.Builder.Create([new(0, -3), new(3, 0), new(0, 3), new(-3, 0)]);
         AssertPair(box, diamond, -5 / MathF.Sqrt(2));
     }
@@ -108,7 +108,7 @@ public sealed class Distance2DTests
     [Fact]
     public void CirclePolygonPairsHandleInsideAndOutsideCenters()
     {
-        var box = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2));
+        var box = Rectangle2D.Builder.CreateFromSize(2, 2);
         AssertPair(Circle2D.Builder.Create(.5f), box, -1.5f);
         AssertPair(Circle2D.Builder.Create(2, new(4, 5)), box, 3);
         AssertPair(Circle2D.Builder.Create(1, new(2, 0)), box, 0);
@@ -131,7 +131,7 @@ public sealed class Distance2DTests
     [Fact]
     public void CapsulePolygonPairsUseBothEndCapsAndInteriorPenetration()
     {
-        var box = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2));
+        var box = Rectangle2D.Builder.CreateFromSize(2, 2);
         AssertPair(Capsule2D.Builder.Create(new(-2, 0), new(2, 0), 1), box, -2);
         AssertPair(Capsule2D.Builder.Create(new(4, 5), new(4, 7), 1), box, 4);
     }
@@ -155,13 +155,13 @@ public sealed class Distance2DTests
         AssertPair(Circle2D.Builder.Create(1, new(0, 5)), floor, 2);
         AssertPair(Circle2D.Builder.Create(1), floor, -3);
         AssertPair(Capsule2D.Builder.Create(new(0, 3), new(0, 5), 1), floor, 0);
-        AssertPair(Rectangle2D.Builder.CreateFromSize(new Vector2(2, 4)), floor, -4);
+        AssertPair(Rectangle2D.Builder.CreateFromSize(2, 4), floor, -4);
     }
 
     [Fact]
     public void SpatialQueriesRespectRotationReflectionScaleAndWorldUnits()
     {
-        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(2, 4)));
+        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(2, 4));
         box.Transform.Scale = new(-2, 2);
         box.Transform.Rotation = MathF.PI / 2;
         box.Transform.Position = new(10, 20); // world extents x=6..14, y=18..22

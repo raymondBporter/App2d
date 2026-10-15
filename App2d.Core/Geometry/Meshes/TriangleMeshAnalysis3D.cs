@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -77,10 +78,8 @@ public sealed class TriangleMeshAnalysis3D
         ArgGuard.ThrowIf(!float.IsFinite(creaseCosine) || creaseCosine < -1f || creaseCosine > 1f,
             "Crease cosine must be between -1 and 1.", nameof(creaseCosine));
         ArgGuard.ThrowIfNotFiniteOrNegative(frontFacingThreshold);
-        var length = Math.Sqrt((double)viewDirection.X * viewDirection.X +
-            (double)viewDirection.Y * viewDirection.Y + (double)viewDirection.Z * viewDirection.Z);
-        var view = new Vector3((float)(viewDirection.X / length),
-            (float)(viewDirection.Y / length), (float)(viewDirection.Z / length));
+        var wideView = viewDirection.ToVector3d();
+        var view = (wideView / wideView.Length()).ToVector3();
 
         foreach (var (edge, faces) in _edgeFaces)
         {

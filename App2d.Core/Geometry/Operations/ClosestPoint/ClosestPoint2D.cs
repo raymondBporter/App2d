@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.Core.Geometry;
@@ -19,8 +20,7 @@ public static class ClosestPoint2D
     /// <returns>The perpendicular foot of the point on the line.</returns>
     public static Vector2 OnLine(Vector2 point, Vector2 origin, Vector2 direction)
     {
-        var (x, y) = LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: false);
-        return new((float)x, (float)y);
+        return LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: false).ToVector2();
     }
 
     /// <summary>The closest point on a forward ray, clamped at its origin.</summary>
@@ -30,8 +30,7 @@ public static class ClosestPoint2D
     /// <returns>The nearest point on the ray.</returns>
     public static Vector2 OnRay(Vector2 point, Vector2 origin, Vector2 direction)
     {
-        var (x, y) = LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: true);
-        return new((float)x, (float)y);
+        return LinearGeometry2D.ClosestPoint(point, origin, direction, forwardOnly: true).ToVector2();
     }
 
     /// <summary>The closest point on a segment, including its endpoints. A point-like segment returns its start.</summary>
@@ -77,13 +76,12 @@ public static class ClosestPoint2D
     /// <returns>The nearest point on the ellipse boundary.</returns>
     public static Vector2 OnEllipsePerimeter(Vector2 point, Vector2 center, Vector2 radii)
     {
-        var dx = (double)point.X - center.X;
-        var dy = (double)point.Y - center.Y;
+        var delta = point.ToVector2d() - center.ToVector2d();
         var swapped = radii.X < radii.Y;
         var a = (double)(swapped ? radii.Y : radii.X);
         var b = (double)(swapped ? radii.X : radii.Y);
-        var px = Math.Abs(swapped ? dy : dx);
-        var py = Math.Abs(swapped ? dx : dy);
+        var px = Math.Abs(swapped ? delta.Y : delta.X);
+        var py = Math.Abs(swapped ? delta.X : delta.Y);
         double x, y;
         // 2D specialization of Geometric Tools DistPointHyperellipsoid, version 8.0.2025.05.10.
         // Copyright (c) 1998-2026 David Eberly, Boost Software License 1.0; see THIRD-PARTY-NOTICES.md.
@@ -135,7 +133,7 @@ public static class ClosestPoint2D
         }
         var boundaryX = swapped ? y : x;
         var boundaryY = swapped ? x : y;
-        return new((float)(center.X + (dx < 0d ? -boundaryX : boundaryX)), (float)(center.Y + (dy < 0d ? -boundaryY : boundaryY)));
+        return new((float)(center.X + (delta.X < 0d ? -boundaryX : boundaryX)), (float)(center.Y + (delta.Y < 0d ? -boundaryY : boundaryY)));
     }
 
     /// <summary>The closest point on the perimeter of a polygon given in perimeter order, and the edge it lies on.</summary>
@@ -205,8 +203,8 @@ public static class ClosestPoint2D
             var directionsDot = Vector2.Dot(firstDirection, secondDirection);
             var secondDotDelta = Vector2.Dot(secondDirection, startDelta);
             // In 2D the closest points of two non-parallel lines is their crossing; cross products keep precision near parallel.
-            var determinant = (double)firstDirection.X * secondDirection.Y - (double)firstDirection.Y * secondDirection.X;
-            var numerator = (double)secondDirection.X * startDelta.Y - (double)secondDirection.Y * startDelta.X;
+            var determinant = firstDirection.CrossDouble(secondDirection);
+            var numerator = secondDirection.CrossDouble(startDelta);
             firstParameter = determinant != 0d ? (float)Math.Clamp(numerator / determinant, 0d, 1d) : 0f;
 
             var secondNumerator = directionsDot * firstParameter + secondDotDelta;

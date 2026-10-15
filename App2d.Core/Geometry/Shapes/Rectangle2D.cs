@@ -29,6 +29,9 @@ public partial class Rectangle2D : IConvexShape2D, IRect2D
     public float Area => Area2D.Rectangle(Min, Max);
 
     /// <inheritdoc/>
+    public float Diameter => Diameter2D.Rectangle(Min, Max);
+
+    /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint) => Containment2D.Rectangle(localPoint, Min, Max);
 
     /// <inheritdoc/>
@@ -37,10 +40,5 @@ public partial class Rectangle2D : IConvexShape2D, IRect2D
     /// <summary>Writes the four local-space corners counter-clockwise from Min.</summary>
     /// <param name="corners">A buffer of at least four entries.</param>
     public void WriteCorners(Span<Vector2> corners) => VertexGenerator2D.WriteRectangle(corners, Min, Max);
-
-
-
-
-
 
 }

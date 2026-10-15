@@ -30,6 +30,32 @@ public sealed class Triangle3DTests
     }
 
     [Fact]
+    public void DistantVerticesAreWidenedBeforeSubtractingEdges()
+    {
+        var triangle = new Triangle3D(new(-float.MaxValue, 0, 0),
+            new(float.MaxValue, 0, 0), new(-float.MaxValue, 1, 1));
+        Assert.Equal(2 * Math.Sqrt(2) * float.MaxValue, triangle.DoubleArea, 1e24);
+        Assert.True(triangle.TryGetUnitNormal(out var normal));
+        Assert.Equal(0, normal.X);
+        Assert.Equal(-1 / MathF.Sqrt(2), normal.Y);
+        Assert.Equal(1 / MathF.Sqrt(2), normal.Z);
+    }
+
+    [Theory]
+    [InlineData(float.Epsilon)]
+    [InlineData(float.MaxValue)]
+    public void HandednessHandlesExtremeBasisLengths(float scale)
+    {
+        var along = new Vector3(scale, 0, 0);
+        var across = new Vector3(0, scale, 0);
+        var normal = new Vector3(0, 0, scale);
+        Assert.True(Orientation3D.TryGetHandedness(along, across, normal, out var right));
+        Assert.Equal(1, right);
+        Assert.True(Orientation3D.TryGetHandedness(along, across, -normal, out var left));
+        Assert.Equal(-1, left);
+    }
+
+    [Fact]
     public void DegenerateTriangleReturnsNoNormal()
     {
         var triangle = new Triangle3D(Vector3.Zero, Vector3.One, new(2, 2, 2));

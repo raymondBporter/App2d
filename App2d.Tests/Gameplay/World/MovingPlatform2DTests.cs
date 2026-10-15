@@ -42,7 +42,7 @@ public sealed class MovingPlatform2DTests
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
         var platform = CreatePlatform(physics, new Vector2(20f, 0f), speed: 10f);
-        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(10f)));
+        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
         rider.Restitution = 0f;
@@ -68,7 +68,7 @@ public sealed class MovingPlatform2DTests
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
         var platform = CreatePlatform(physics, new Vector2(20f, 0f), speed: 10f);
-        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(10f)));
+        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
         rider.Restitution = 0f;
@@ -93,7 +93,7 @@ public sealed class MovingPlatform2DTests
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
         var platform = CreatePlatform(physics, new Vector2(0f, 20f), speed: 10f);
-        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(10f)));
+        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
         rider.Restitution = 0f;
@@ -118,7 +118,7 @@ public sealed class MovingPlatform2DTests
             new Vector2(0f, 20f),
             speed: 10f);
         var riderObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(10f)));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
         rider.Restitution = 0f;

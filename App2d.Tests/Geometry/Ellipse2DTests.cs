@@ -57,6 +57,20 @@ public sealed class Ellipse2DTests
     }
 
     [Fact]
+    public void RaycastKeepsExtremeCoordinatesInDoubleUntilProducingTheHit()
+    {
+        var origin = new Vector2(-float.MaxValue, 0);
+        var direction = new Vector2(float.MaxValue, 0);
+        var center = new Vector2(float.MaxValue, 0);
+        var radii = new Vector2(float.MaxValue / 2, 1);
+        Assert.True(Raycast2D.TryEllipse(origin, direction, center, radii, 2, out var hit));
+        Assert.Equal(1.5f, hit.Distance);
+        Assert.Equal(new Vector2(float.MaxValue / 2, 0), hit.Point);
+        Assert.Equal(-Vector2.UnitX, hit.Normal);
+        Assert.False(Raycast2D.TryEllipse(origin, direction, center, radii, 1, out _));
+    }
+
+    [Fact]
     public void PointAndShapeDistancesIncludeEllipse()
     {
         var ellipse = Ellipse2D.Builder.Create(new(2, 1));
@@ -82,7 +96,7 @@ public sealed class Ellipse2DTests
     {
         nameof(Circle2D) => Circle2D.Builder.Create(.75f),
         nameof(Capsule2D) => Capsule2D.Builder.Create(new(0, -.5f), new(0, .5f), .5f),
-        nameof(Rectangle2D) => Rectangle2D.Builder.CreateFromSize(new Vector2(1, 1)),
+        nameof(Rectangle2D) => Rectangle2D.Builder.CreateFromSize(1, 1),
         nameof(Triangle2D) => Triangle2D.Builder.Create(new(-.5f, -.5f), new(.5f, -.5f), new(0, .5f)),
         nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f)]),
         nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(.75f, .5f)),

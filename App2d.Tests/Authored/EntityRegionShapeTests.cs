@@ -106,7 +106,7 @@ public sealed class EntityRegionShapeTests
     [Fact]
     public void PlacedRegionsRotateMirrorAndScaleThroughTheirPose()
     {
-        var region = new EntityRegion("r", Rectangle2D.Builder.CreateFromSize(new Vector2(2, 1)), Similarity2D.FromAxis(new(5, 5), Vector2.UnitY));
+        var region = new EntityRegion("r", Rectangle2D.Builder.CreateFromSize(2, 1), Similarity2D.FromAxis(new(5, 5), Vector2.UnitY));
         Assert.Equal(new Rect2D(new(4.5f, 4), new(5.5f, 6)), region.Bounds);
         var probe = new SpatialObject2D(Circle2D.Builder.Create(.05f));
         probe.Transform.Position = new(5, 5.9f);

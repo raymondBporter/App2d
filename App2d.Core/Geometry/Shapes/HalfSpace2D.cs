@@ -6,7 +6,7 @@ namespace App2d.Core.Shapes;
 
 /// <summary>
 /// The solid side of an infinite line: every point with dot(point, <see cref="Normal"/>) &lt;= <see cref="Offset"/>.
-/// The normal points toward free space. Area and bounds are infinite.
+/// The normal points toward free space. Area and diameter are infinite; axis-aligned bounds retain the boundary edge.
 /// </summary>
 public sealed partial class HalfSpace2D : IShape2D
 {
@@ -30,6 +30,9 @@ public sealed partial class HalfSpace2D : IShape2D
 
     /// <inheritdoc/>
     public float Area => float.PositiveInfinity;
+
+    /// <inheritdoc/>
+    public float Diameter => float.PositiveInfinity;
 
     /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint) => Containment2D.HalfSpace(localPoint, Normal, Offset);
