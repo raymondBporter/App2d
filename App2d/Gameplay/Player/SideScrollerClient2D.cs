@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Player;
@@ -259,7 +260,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         if (!_jumpSound.IsPlaying) return;
         if (!State.Person.IsSustainingJump) { EndJumpSound(); return; }
         var power = State.Person.JumpPower;
-        _jumpSound.SetVolumeScale(float.Lerp(0.3f, 1f, power * power * (3f - 2f * power)), 0.015f);
+        _jumpSound.SetVolumeScale(float.Lerp(0.3f, 1f, Progress.SmoothStepUnclamped(power)), 0.015f);
     }
 
     private void EndJumpSound()

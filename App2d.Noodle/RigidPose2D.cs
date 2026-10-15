@@ -105,7 +105,7 @@ internal sealed class PoseClip2D
             if (time > after.Time)
                 continue;
             var before = _frames[index - 1];
-            var amount = Interpolation.SmoothStep((time - before.Time) / (after.Time - before.Time));
+            var amount = Progress.SmoothStep((time - before.Time) / (after.Time - before.Time));
             return RigidPose2D.Lerp(before.Pose, after.Pose, amount);
         }
 

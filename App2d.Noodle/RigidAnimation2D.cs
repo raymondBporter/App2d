@@ -176,7 +176,7 @@ internal sealed class ProceduralLocomotion2D
         if (!foot.Swinging)
             return;
         var amount = Math.Clamp(phase / swingFraction, 0f, 1f);
-        var smooth = Interpolation.SmoothStep(amount);
+        var smooth = Progress.SmoothStep(amount);
         foot.Target = Vector2.Lerp(foot.Start, foot.Goal, smooth);
         foot.Target.Y += MathF.Sin(amount * MathF.PI) * float.Lerp(20f, 43f, speedAmount);
     }

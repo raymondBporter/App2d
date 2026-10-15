@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -26,6 +27,6 @@ public sealed class SoundFalloff2D
         ArgGuard.ThrowIfNotFinite(listener);
         var distance = Vector2.Distance(source, listener);
         var t = Math.Clamp((distance - InnerRadius) / (OuterRadius - InnerRadius), 0f, 1f);
-        return 1f - t * t * (3f - 2f * t);
+        return 1f - Progress.SmoothStepUnclamped(t);
     }
 }

@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Geometry.Builders;
 using App2d.Core.Geometry.Authoring;
 using System.Diagnostics.CodeAnalysis;
@@ -31,7 +32,7 @@ public static class ClipEase
 {
     public const string Linear = "linear", Smooth = "smooth", Step = "step";
     public static readonly IReadOnlyList<string> All = [Linear, Smooth, Step];
-    public static float Apply(string ease, float u) => ease switch { Smooth => u * u * (3 - 2 * u), Step => 0, _ => u };
+    public static float Apply(string ease, float u) => ease switch { Smooth => Progress.SmoothStepUnclamped(u), Step => 0, _ => u };
 }
 
 /// <summary>A named visual moment, such as a footstep or a strike. Gameplay binds events to markers; the clip owns only the time.</summary>

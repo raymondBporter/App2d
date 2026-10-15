@@ -147,7 +147,7 @@ internal sealed class NoodleArm2D
         {
             var distance = totalLength * section / _sectionCount;
             var restCenter = Shoulder + new Vector2(distance, 0f);
-            var lowerWeight = Interpolation.SmoothStep(
+            var lowerWeight = Progress.SmoothStep(
                 (distance - (UpperLength - blendRadius)) / (blendRadius * 2f));
             var upperPoint = Vector2.Transform(restCenter, upperSkin);
             var lowerPoint = Vector2.Transform(restCenter, lowerSkin);

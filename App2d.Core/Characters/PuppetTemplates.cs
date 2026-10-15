@@ -73,10 +73,9 @@ public static class PuppetTemplates
             // mid-stance, retaining a little flex rather than locking the joint.
             var bob = .036f * MathF.Pow(MathF.Sin(phase * MathF.Tau), 2);
             pose.Position = new(travel, -.025f + bob, 0);
-            float Smooth(float t) => t * t * (3 - 2 * t);
             var leftSwing = Math.Clamp(phase * 2, 0, 1); var rightSwing = Math.Clamp(phase * 2 - 1, 0, 1);
-            var leftWorldX = -.125f + stride * Smooth(leftSwing);
-            var rightWorldX = .125f + stride * Smooth(rightSwing);
+            var leftWorldX = -.125f + stride * Progress.SmoothStepUnclamped(leftSwing);
+            var rightWorldX = .125f + stride * Progress.SmoothStepUnclamped(rightSwing);
             var leftLift = .12f * MathF.Pow(MathF.Sin(leftSwing * MathF.PI), 2);
             var rightLift = .12f * MathF.Pow(MathF.Sin(rightSwing * MathF.PI), 2);
             pose.Points["left-foot"] = new(leftWorldX - travel + leftTrack.X, ground + leftLift - pose.Position.Y, leftTrack.Z);

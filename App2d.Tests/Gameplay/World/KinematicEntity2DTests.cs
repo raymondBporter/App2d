@@ -47,19 +47,23 @@ public sealed class KinematicEntity2DTests
         Assert.Equal(new Vector2(4f, 0f), motion.Velocity(5d));
     }
 
-    [Fact]
-    public void EasedPingPongCurveHasContinuousPositionAndZeroTurnaroundSpeed()
+    [Theory]
+    [InlineData("smooth", 1.5625f)]
+    [InlineData("smoother", 1.03515625f)]
+    [InlineData("smoothest", .70556640625f)]
+    public void EasedPingPongCurveHasContinuousPositionAndZeroTurnaroundSpeed(string kind, float quarterPosition)
     {
+        var easing = kind switch { "smoother" => Easing.Smoother, "smoothest" => Easing.Smoothest, _ => Easing.Smooth };
         var motion = new CurveMotion2D(
             new LineSegmentCurve2D(Vector2.Zero, new Vector2(10f, 0f)),
             2d,
-            ProgressMaps.Compose(ProgressMaps.PingPong, Easing.Smooth));
+            ProgressMaps.Compose(ProgressMaps.PingPong, easing));
 
         Assert.Equal(Vector2.Zero, motion.Position(0d));
         Assert.Equal(new Vector2(10f, 0f), motion.Position(1d));
         Assert.Equal(Vector2.Zero, motion.Position(2d));
         Assert.Equal(Vector2.Zero, motion.Position(4d));
-        Assert.Equal(new Vector2(1.5625f, 0f), motion.Position(0.25d));
+        Assert.Equal(new Vector2(quarterPosition, 0f), motion.Position(0.25d));
         Assert.Equal(Vector2.Zero, motion.Velocity(1d));
         Assert.Equal(Vector2.Zero, motion.Velocity(2d));
         Assert.Equal(motion.Position(0.4d), motion.Position(4.4d), new Vector2Tolerance(0.0001f));

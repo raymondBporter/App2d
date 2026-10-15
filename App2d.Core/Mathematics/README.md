@@ -11,7 +11,11 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Vector4Extensions` | `IsFinite()` component query |
 | `Matrix3x2Extensions` | `IsFinite()` entry query and transpose direction transform |
 | `Rotation2D` | Rotate vectors or points about a pivot, solve a pivot from two endpoints and a turn, and interpolate an endpoint arc |
-| `Interpolation` | Progress mappings, lerp, and inverse lerp |
+| `Interpolation` | Value blending, optional progress-map application, and inverse lerp |
+| `Progress` | Clamped smoothstep families, their inverses, and unclamped maps with analytic derivatives |
+| `Easing` | Analytic easing maps and power families, including intentional back/elastic overshoot |
+| `ProgressMap` / `IProgressMap` | A sampled progress function and derivative for velocity |
+| `ProgressMaps` | Loop, ping-pong, easing transformations, and map composition using the chain rule |
 | `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
 | `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
 | `Affine2D` | Editable translation, rotation, independent axis scales and shear; shared by scene objects and authored rigs |
@@ -21,6 +25,41 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 polynomial degree. Bounds are inclusive; repeated roots appear once. Nonzero constants have no roots, while
 the identically zero polynomial is rejected. Coefficients and bounds must be finite. The bounded derivative
 solver uses double arithmetic, so roots that cannot be distinguished within evaluation precision may merge.
+
+Progress mapping files live in `Progress/`; affine, similarity, frame, rotation, and matrix helpers live in
+`Transforms/`. Their namespace remains `App2d.Core.Mathematics`.
+
+Normalize time, shape the progress, then interpolate the value:
+
+```csharp
+var phase = Interpolation.InverseLerp(startTime, endTime, time);
+var value = Interpolation.Lerp(start, end, phase, Easing.Smooth);
+```
+
+`Progress.SmoothStep`, `SmootherStep`, and `SmoothestStep` clamp inputs to [0,1]. Easing maps do not clamp inputs
+or outputs; back/elastic maps can overshoot. The `*StepUnclamped<T>` polynomials share float/double arithmetic
+without forcing float callers to change precision. `ClipEase` retains its saved names and held-step behavior.
+`Progress.SmoothStepMap`, `SmootherStepMap`, and `SmoothestStepMap` package each unclamped polynomial with
+its analytic derivative; `Easing.Smooth`, `Smoother`, and `Smoothest` are aliases for those same maps.
+Every built-in easing has an analytic derivative. `Easing.EaseInPower(n)`, `EaseOutPower(n)`, and
+`EaseInOutPower(n)` support any positive integer degree; 1 is linear, and the named Quad/Cubic/Quart/Quint
+maps use degrees 2/3/4/5. Degree 0 is excluded because a constant cannot map both normalized endpoints.
+`ProgressMaps.EaseOut(map)` reflects both axes; `EaseInOut(map)` fits the curve into each half. Both
+carry the derivative through the chain rule, so custom maps can reuse the same transformations.
+Use `new ProgressMap(sample, derivative)` for an exact derivative, or explicitly choose
+`ProgressMap.FromFunction(sample)` for numerical differences. There are no implicit delegate conversions.
+
+```csharp
+var curve = Easing.EaseInOutPower(6);
+double progress = curve.Sample(phase);
+double velocityScale = curve.Derivative(phase);
+```
+
+Circular easings return positive infinity at their vertical tangents. Expo and elastic easings preserve
+their exact endpoint snaps and return NaN derivatives where those snaps introduce discontinuities
+(ease-in at 0, ease-out at 1, in/out at both endpoints). Bounce uses the selected polynomial branch's
+slope at a corner, as ping-pong uses its returning slope at the turnaround. Consumers that require
+finite velocities, such as `CurveMotion2D`, reject nonfinite slopes; smoothstep maps avoid these singularities.
 
 ## Transforms
 

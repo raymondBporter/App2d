@@ -116,7 +116,7 @@ public sealed class BladeSwoosh
         var length = _distance[^1];
         if (length < 1e-3f) return;
 
-        var alpha = 1 - Interpolation.SmoothStep(Interpolation.InverseLerpClamped(.55f, 1f, clear));
+        var alpha = 1 - Progress.SmoothStep(Interpolation.InverseLerpClamped(.55f, 1f, clear));
         var fill = ColorExtensions.FromHexRgb(style.Fill).WithAlpha(alpha);
         float Split(float u) => style.SplitPosition - Gap(style, u) / 2;
         float InnerEdge(float u) => style.SplitPosition + Gap(style, u) / 2;
