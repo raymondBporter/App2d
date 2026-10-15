@@ -321,6 +321,46 @@ public static class ModelAuthoring
         }
     }
 
+    /// <summary>Stores edited part fields as explicit variant overrides, preserving its other overrides.</summary>
+    public static void EditPartOverride(ModelVariant variant, PuppetPart resolved, Action<PuppetPart> change)
+    {
+        var edited = resolved with { }; change(edited);
+        var o = variant.Parts.GetValueOrDefault(resolved.Id) ?? new();
+        if (edited.Width != resolved.Width) o.Width = edited.Width;
+        if (edited.Height != resolved.Height) o.Height = edited.Height;
+        if (edited.OffsetX != resolved.OffsetX) o.OffsetX = edited.OffsetX;
+        if (edited.OffsetY != resolved.OffsetY) o.OffsetY = edited.OffsetY;
+        if (edited.RenderMaterial.Fill != resolved.RenderMaterial.Fill)
+            o.Material = (o.Material ?? new RenderMaterialDefinition2D()) with { Fill = edited.RenderMaterial.Fill };
+        if (edited.RenderMaterial.Outline?.Width != resolved.RenderMaterial.Outline?.Width)
+        {
+            var material = o.Material ?? new RenderMaterialDefinition2D();
+            o.Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Width = edited.RenderMaterial.Outline?.Width } };
+        }
+        if (edited.RenderMaterial.Outline?.Color != resolved.RenderMaterial.Outline?.Color)
+        {
+            var material = o.Material ?? new RenderMaterialDefinition2D();
+            o.Material = material with { Outline = (material.Outline ?? new RenderOutlineDefinition2D()) with { Color = edited.RenderMaterial.Outline?.Color } };
+        }
+        if (edited.Paint != resolved.Paint) o.Paint = edited.Paint;
+        if (edited.Face != resolved.Face) o.Face = edited.Face;
+        if (edited.FaceX != resolved.FaceX) o.FaceX = edited.FaceX;
+        if (edited.Hidden != resolved.Hidden) o.Hidden = edited.Hidden;
+        variant.Parts[resolved.Id] = o;
+    }
+
+    /// <summary>Turns and resizes a rest bone to put its tip at a model-space position.</summary>
+    public static void MoveBoneTip(CharacterModel model, string id, Vector2 position)
+    {
+        var origin = ResolvedModel.From(model).Rest[id];
+        var delta = position - new Vector2(origin.X, origin.Y);
+        if (delta.LengthSquared() < .0001f) return;
+        RotateRestBone(model, id, MathF.Atan2(delta.Y, delta.X));
+        var bone = Control(model, id);
+        var unit = bone.Transform is null ? 1 : Vector2.TransformNormal(Vector2.UnitX, ResolvedModel.From(model).RestTransforms[id]).Length();
+        if (unit > 1e-6f) ResizeBone(model, id, delta.Length() / unit);
+    }
+
     private static IEnumerable<ModelControl> Subtree(IReadOnlyList<ModelControl> controls, string id)
     {
         var members = new HashSet<string>(StringComparer.Ordinal) { id };

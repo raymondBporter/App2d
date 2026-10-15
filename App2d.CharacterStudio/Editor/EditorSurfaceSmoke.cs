@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Shapes;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
@@ -49,17 +50,37 @@ internal static class EditorSurfaceSmoke
             });
             gui.UserScale = scale;
             using var target = new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, DepthFormat.None);
-            for (var frame = 0; frame < 4; frame++)
+            void Capture(string name)
             {
-                gui.Begin(1f / 60);
-                shell.Draw();
-                device.SetRenderTarget(target);
-                device.Clear(new Color(19, 23, 29)); gui.Render();
-                device.SetRenderTarget(null);
+                for (var frame = 0; frame < 4; frame++)
+                {
+                    gui.Begin(1f / 60);
+                    shell.Draw();
+                    device.SetRenderTarget(target);
+                    device.Clear(new Color(19, 23, 29)); gui.Render();
+                    device.SetRenderTarget(null);
+                }
+                using var file = File.Create(Path.Combine(outputDirectory, $"{name}-{width}x{height}.png"));
+                target.SaveAsPng(file, width, height);
             }
-            using var file = File.Create(Path.Combine(outputDirectory, $"character-editor-surface-{width}x{height}.png"));
-            target.SaveAsPng(file, width, height);
+
+            session.Open("person-walk"); session.EditRig = false; session.Seek(.3f);
+            Capture("character-editor-surface");
+            session.Open("person"); session.Selection.Select(part: "body");
+            Capture("model-base-part");
+            session.EditRig = true; session.Selection.Select(control: "chest");
+            Capture("model-base-rig");
+            session.Open("tall-thin"); session.EditRig = false; session.Selection.Select(part: "body");
+            Capture("model-variant-part");
+
+            var cutoutModel = assets.Models.FirstOrDefault(m => m.Asset.Parts.Any(p => p.Geometry is SimplePolygon2D.Builder));
+            if (cutoutModel is not null)
+            {
+                session.Open(cutoutModel.Id);
+                session.Selection.Select(part: cutoutModel.Asset.Parts.First(p => p.Geometry is SimplePolygon2D.Builder).Id);
+                Capture("model-cutout");
+            }
         }
-        Console.WriteLine("The character editor rendered on a WinForms surface at two sizes and scales without MonoGame.Game.");
+        Console.WriteLine("The animation and model editor views rendered on a hidden WinForms surface at two sizes and scales.");
     }
 }

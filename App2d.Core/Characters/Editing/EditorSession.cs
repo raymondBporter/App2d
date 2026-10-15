@@ -19,6 +19,12 @@ public sealed class Selection
     /// <summary>Entity workspace: the action, and the hit window inside it, being edited.</summary>
     public string? Action { get; set; }
     public string? Hit { get; set; }
+    /// <summary>Selects one model target and clears the previous selection.</summary>
+    public void Select(string? control = null, string? part = null, string? chain = null)
+    {
+        Clear(); Control = control; Part = part; Chain = chain;
+    }
+
     public void Clear() { Control = Part = Chain = Action = Hit = null; Key = null; }
 }
 
