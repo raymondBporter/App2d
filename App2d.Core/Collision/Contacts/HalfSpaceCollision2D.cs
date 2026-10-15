@@ -12,22 +12,14 @@ public static class HalfSpaceCollision2D
         var convexShape = ArgGuard.RequireType<IConvexShape2D>(convexObject.Shape, "The constrained object must have a finite convex shape.", nameof(convexObject));
         var halfSpace = ArgGuard.RequireType<HalfSpace2D>(halfSpaceObject.Shape, "The constraint object must contain a HalfSpace2D.", nameof(halfSpaceObject));
 
-        if (!ShapeCollision2D.TryGetConvexHalfSpacePenetration(convexShape, convexObject.CollisionPose, halfSpace, halfSpaceObject.CollisionPose, out var worldNormal, out var penetration, out _))
+        var query = ShapeHalfSpaceQuery2D.Query(convexShape, convexObject.CollisionPose, halfSpace, halfSpaceObject.CollisionPose);
+        if (!(query.SignedDistance < 0f))
         {
             contact = default;
             return false;
         }
 
-        contact = new HalfSpaceContact2D(worldNormal, penetration);
-        return true;
-    }
-
-    public static bool ConstrainOutside(SpatialObject2D convexObject, SpatialObject2D halfSpaceObject, out HalfSpaceContact2D contact)
-    {
-        if (!TryGetContact(convexObject, halfSpaceObject, out contact))
-            return false;
-
-        convexObject.Transform.Position += contact.MinimumTranslationVector;
+        contact = new HalfSpaceContact2D(query.Normal, -query.SignedDistance);
         return true;
     }
 }

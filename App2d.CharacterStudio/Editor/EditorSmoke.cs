@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -147,10 +148,10 @@ internal sealed class EditorSmoke(string output)
                 Check(s.Edit(doc, () =>
                 {
                     var part = doc.Asset.Parts.Single(p => p.Id == "frill");
-                    var polygon = (SimplePolygonShapeDefinition2D)part.Geometry!;
+                    var polygon = (SimplePolygon2D.Builder)part.Geometry!;
                     var vertices = polygon.Vertices.ConvertAll(point => new PuppetPoint(point.X, point.Y));
                     vertices[0] = new(-.32f, -.46f);
-                    PartGeometry.SetPolygon(part, vertices);
+                    PartGeometryAuthoring2D.SetPolygon(part, vertices);
                 }), s);
                 s.Undo(); Record(before == doc.Serialize(), "cutout silhouette edit undoes exactly");
                 s.Redo(); s.SaveAll();
@@ -364,7 +365,7 @@ internal sealed class EditorSmoke(string output)
             entity.Asset.Equipment.Add(new() { Prop = "spear", Socket = "right-grip" });
             var attack = entity.Asset.Actions.Single(a => a.Id == "attack");
             attack.Role = null; attack.Clip = "person-thrust"; attack.Mask = StarterContent.Upper; attack.BlendIn = .08f; attack.BlendOut = .12f;
-            attack.Hits.Add(new() { Id = "spear-tip", Prop = "spear", Along = -.14f, Shape = RectangleShapeDefinition2D.FromSize(new(.42f, .26f)), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
+            attack.Hits.Add(new() { Id = "spear-tip", Prop = "spear", Along = -.14f, Shape = Rectangle2D.Builder.FromSize(new(.42f, .26f)), Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } });
             attack.Events.Add(new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" });
         }), s);
         Record(s.Assets.Problems(entity).Count == 0, "the skirmisher compiles: " + string.Join("; ", s.Assets.Problems(entity)));

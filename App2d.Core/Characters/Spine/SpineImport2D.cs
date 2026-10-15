@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using App2d.Core.IO;
@@ -130,7 +131,7 @@ public static partial class SpineImport2D
                         ScaleX = Number(value, "scaleX", 1),
                         ScaleY = Number(value, "scaleY", 1),
                         Face = "none",
-                        Geometry = RectangleShapeDefinition2D.FromSize(new(1, 1)),
+                        Geometry = Rectangle2D.Builder.FromSize(new(1, 1)),
                         Material = new() { Texture = texture, Fill = "#ffffff", Tint = Text(value, "color", "ffffffff") }
                     });
                     attachments.Add(attachment.Key, partId);

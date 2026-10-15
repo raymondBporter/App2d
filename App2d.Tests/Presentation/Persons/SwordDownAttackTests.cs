@@ -240,7 +240,7 @@ public sealed class SwordDownAttackTests
             if (grounded)
             {
                 var floor = Physics.AddBody(new SpatialObject2D(
-                    AxisAlignedRectangle2D.FromSize(new Vector2(500f, 20f))), BodyMotionType2D.Static);
+                    AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(500f, 20f))), BodyMotionType2D.Static);
                 floor.WorldObject.Transform.Position = new(0f, Person.WorldObject.WorldBounds.Bottom - 10f);
                 floor.CollisionLayer = 1;
                 floor.CollisionMask = 2;
@@ -279,7 +279,7 @@ public sealed class SwordDownAttackTests
 
         public void AddContactEnemy(Vector2 position)
         {
-            var spatial = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(24f, 40f)));
+            var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(24f, 40f)));
             spatial.Transform.Position = position;
             var body = Physics.AddBody(spatial, BodyMotionType2D.Static);
             body.CollisionLayer = 4;

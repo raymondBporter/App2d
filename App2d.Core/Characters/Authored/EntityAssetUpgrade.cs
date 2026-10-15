@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -7,7 +9,7 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>
 /// Brings older entity files up to <see cref="EntityAsset.CurrentVersion"/> in memory before parsing, so files saved by
 /// earlier studio builds still open. Version 1 stored hit, movement, projectile and guard geometry as width/height pairs;
-/// version 2 stores a <see cref="Shapes.ShapeDefinition2D"/> for each.
+/// version 2 stores a <see cref="Shapes.ShapeBuilder2D"/> for each.
 /// </summary>
 public static class EntityAssetUpgrade
 {

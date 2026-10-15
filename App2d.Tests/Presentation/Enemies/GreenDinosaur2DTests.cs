@@ -19,7 +19,7 @@ public sealed class GreenDinosaur2DTests
         var scene = new Scene2D();
         var physics = new PhysicsWorld2D();
         var spatialObject = new SpatialObject2D(
-            new Capsule2D(new Vector2(0f, -14f), new Vector2(0f, 14f), 17f));
+            Capsule2D.Builder.Create(new Vector2(0f, -14f), new Vector2(0f, 14f), 17f));
         var body = physics.AddBody(spatialObject, BodyMotionType2D.Dynamic);
         var enemy = new PatrolEnemy2D(EntityId2D.Create(),
             spatialObject,

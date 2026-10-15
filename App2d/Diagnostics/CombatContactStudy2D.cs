@@ -53,7 +53,7 @@ internal static class CombatContactStudy2D
             using var enemies = new EnemyPresentation2D(scene, textures, traversal, new Silent());
             using var contacts = new CombatContactPresentation2D(scene);
             var timing = HitstopTimingStudy2D.CreateVariants();
-            var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(5000, 2)), new SolidColorShader(new Color(70, 88, 93)));
+            var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(5000, 2)), new SolidColorShader(new Color(70, 88, 93)));
             ground.Transform.Position = new(-250, 0); scene.Add(ground);
             var hits = 0; var firstHit = -1L;
             for (var step = 0; step < 180; step++)

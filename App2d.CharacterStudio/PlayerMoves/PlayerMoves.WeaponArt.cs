@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
@@ -43,7 +44,7 @@ internal static partial class PlayerMoves
             Tip = new(1.02f, .03f),
             LineWidth = .02f,
             // A narrow, round-ended stroke keeps the grip as simple as the character's hand.
-            Shapes = [new() { Geometry = new App2d.Core.Curves.LineCurveDefinition2D { Start = new(-.055f, 0), End = new(.025f, 0) }, Width = .006f, Material = new() { Fill = Leather, Outline = new() } }],
+            Shapes = [new() { Geometry = new App2d.Core.Geometry.Authoring.LineCurveDefinition2D { Start = new(-.055f, 0), End = new(.025f, 0) }, Width = .006f, Material = new() { Fill = Leather, Outline = new() } }],
             Solids =
         [
             Block(DarkSteel, .035f, .065f, -.11f, .11f, .06f, .01f),

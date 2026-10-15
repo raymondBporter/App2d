@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Shapes;
@@ -35,9 +36,9 @@ internal static class RigAuthoredBridgeChecks2D
         Compare(rig, resolved, PoseEvaluator.Rest(resolved));
         if (!resolved.Parts.Single(p => p.Id == $"part-{capsule.Id}").Hidden)
             throw new InvalidOperationException("Collision-only geometry should not be drawn.");
-        if (resolved.Parts.Single(p => p.Id == $"part-{rectangle.Id}").Geometry is not RoundedRectangleShapeDefinition2D)
+        if (resolved.Parts.Single(p => p.Id == $"part-{rectangle.Id}").Geometry is not RoundedRectangle2D.Builder)
             throw new InvalidOperationException("Noodle's corner radius should export as a rounded rectangle.");
-        if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Geometry is not ConvexPolygonShapeDefinition2D { Vertices.Count: 5 })
+        if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Geometry is not ConvexPolygon2D.Builder { Vertices.Count: 5 })
             throw new InvalidOperationException("Polygon vertices were lost.");
 
         // A rotate track on a bone origin must carry all child bones and attachments with it.
@@ -97,7 +98,7 @@ internal static class RigAuthoredBridgeChecks2D
                 Matrix3x2.CreateRotation(MathF.PI / 180f * shape.AngleDegrees) * frame);
             var id = $"part-{shape.Id}";
             var part = model.Parts.Single(p => p.Id == id);
-            var authored = PartGeometry.FrameOf(part, pose.World, control => pose.Angles[control]);
+            var authored = PartAttachment2D.FrameOf(part, pose.World, control => pose.Angles[control]);
             Near(center, authored.Origin, id);
             if (Vector2.Distance(authored.Up, up) > 1e-4f)
                 throw new InvalidOperationException($"{id} orientation differs from the Noodle attachment.");

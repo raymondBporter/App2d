@@ -211,7 +211,7 @@ public sealed class PlayerSpellTests
         {
             Player = new(_ids.Allocate(), Physics.CollisionSystem, Physics, _metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player, 30);
             _registry.Register(Player);
-            Floor = Physics.AddBody(new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(1000, 20))), BodyMotionType2D.Static);
+            Floor = Physics.AddBody(new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(1000, 20))), BodyMotionType2D.Static);
             Floor.WorldObject.Transform.Position = new(0, Player.WorldObject.WorldBounds.Bottom - 10);
             Floor.CollisionLayer = 1; Floor.CollisionMask = 2;
             var combat = new CombatSystem2D(Physics.CollisionSystem, _registry);

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
@@ -198,7 +199,7 @@ internal static partial class PlayerMoves
                     {
                         Id = "hammer-head",
                         Prop = "hammer",
-                        Shape = RectangleShapeDefinition2D.FromSize(new(1.2f, 1f)),
+                        Shape = Rectangle2D.Builder.FromSize(new(1.2f, 1f)),
                         Damage = 5,
                         Sound = "heavy",
                         Start = new()
@@ -296,7 +297,7 @@ internal static partial class PlayerMoves
                 Projectile = new()
                 {
                     Speed = 8,
-                    Shape = RectangleShapeDefinition2D.FromSize(new(.3f, .12f)),
+                    Shape = Rectangle2D.Builder.FromSize(new(.3f, .12f)),
                     Damage = 2,
                     Lifetime = 3
                 },
@@ -308,7 +309,7 @@ internal static partial class PlayerMoves
     private static ProjectileDef PlayerBolt => new()
     {
         Speed = 31,
-        Shape = RectangleShapeDefinition2D.FromSize(new(.75f, .25f)),
+        Shape = Rectangle2D.Builder.FromSize(new(.75f, .25f)),
         Damage = 2,
         Lifetime = 1.5f
     };
@@ -387,7 +388,7 @@ internal static partial class PlayerMoves
             Clip = clip,
             Next = next,
             Recovery = recovery,
-            Hits = [new() { Id = "blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Shape = RectangleShapeDefinition2D.FromSize(new(R(max.X - min.X), R(max.Y - min.Y))), Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
+            Hits = [new() { Id = "blade", OffsetX = R((min.X + max.X) / 2), OffsetY = R((min.Y + max.Y) / 2), Shape = Rectangle2D.Builder.FromSize(new(R(max.X - min.X), R(max.Y - min.Y))), Damage = 2, Start = new() { Marker = "strike" }, Finish = new() { Marker = "recover" } }],
             Events = [new() { Id = "swing", At = new() { Marker = "strike" }, Sound = "swing" }],
         };
     }

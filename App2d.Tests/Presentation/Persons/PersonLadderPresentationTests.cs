@@ -96,7 +96,7 @@ public sealed class PersonLadderPresentationTests
 
     private PhysicsBody2D AddSolid(Vector2 center, Vector2 size)
     {
-        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(size));
+        var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size));
         spatial.Transform.Position = center;
         var body = _physics.AddBody(spatial, BodyMotionType2D.Static);
         body.CollisionLayer = 1u;

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Validation;
 namespace App2d.Core.Constraints;
 
@@ -24,7 +25,7 @@ public readonly record struct ConstraintLimitEvaluation1D(
 /// Optional lower and upper bounds for one scalar constraint coordinate.
 /// Negative/positive infinity represent disabled lower/upper limits.
 /// </summary>
-public readonly record struct ConstraintLimit1D
+public readonly record struct ConstraintLimit1D : IInterval<float>
 {
     public ConstraintLimit1D(float minimum, float maximum)
     {
@@ -44,6 +45,8 @@ public readonly record struct ConstraintLimit1D
 
     public float Minimum { get; }
     public float Maximum { get; }
+    float IInterval<float>.Min => Minimum;
+    float IInterval<float>.Max => Maximum;
     public bool HasMinimum => !float.IsNegativeInfinity(Minimum);
     public bool HasMaximum => !float.IsPositiveInfinity(Maximum);
     public bool IsFree => !HasMinimum && !HasMaximum;
@@ -78,7 +81,7 @@ public readonly record struct ConstraintLimit1D
     public float Clamp(float coordinate)
     {
         ArgGuard.ThrowIfNotFinite(coordinate);
-        return Math.Clamp(coordinate, Minimum, Maximum);
+        return IntervalMath<float>.Clamp(this, coordinate);
     }
 
     /// <summary>
@@ -90,7 +93,7 @@ public readonly record struct ConstraintLimit1D
     {
         ArgGuard.ThrowIfNotFinite(coordinate);
         ArgGuard.ThrowIfNotFiniteOrNegative(activationTolerance);
-        var target = Math.Clamp(coordinate, Minimum, Maximum);
+        var target = IntervalMath<float>.Clamp(this, coordinate);
         var state = ConstraintLimitState1D.Inactive;
         if (IsLocked)
             state = ConstraintLimitState1D.Locked;

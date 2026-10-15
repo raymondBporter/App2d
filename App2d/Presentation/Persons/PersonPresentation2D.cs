@@ -105,7 +105,7 @@ public sealed class PersonPresentation2D : IDisposable
         _animation.Play(_idleAnimation);
         _spriteShader = new SpriteShader2D(_animation.CurrentFrame);
         _visual = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(traversal.PlayerVisualSize),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(traversal.PlayerVisualSize),
             _spriteShader)
         {
             ZIndex = 1

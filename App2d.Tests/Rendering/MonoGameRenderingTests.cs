@@ -20,7 +20,7 @@ public sealed class MonoGameRenderingTests
     {
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
-        var triangle = new Triangle2D(new(-16, -12), new(16, -12), new(0, 16));
+        var triangle = Triangle2D.Builder.Create(new(-16, -12), new(16, -12), new(0, 16));
         var item = new WorldObject2D(triangle, new SolidColorShader(XnaColor.Lime));
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
@@ -42,7 +42,7 @@ public sealed class MonoGameRenderingTests
         using var texture = CreateTexture();
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
-        var halfSpace = new HalfSpace2D(Vector2.UnitY, 0);
+        var halfSpace = HalfSpace2D.Builder.Create(Vector2.UnitY, 0);
         var item = new WorldObject2D(halfSpace, new SolidColorShader(XnaColor.Blue));
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
@@ -65,8 +65,8 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.Draw(new WorldObject2D(new Circle2D(12, new(-30, 20)), new SolidColorShader(XnaColor.Lime)));
-        renderer.Draw(new WorldObject2D(new Capsule2D(new(10, 20), new(35, 20), 8), new SolidColorShader(XnaColor.Blue)));
+        renderer.Draw(new WorldObject2D(Circle2D.Builder.Create(12, new(-30, 20)), new SolidColorShader(XnaColor.Lime)));
+        renderer.Draw(new WorldObject2D(Capsule2D.Builder.Create(new(10, 20), new(35, 20), 8), new SolidColorShader(XnaColor.Blue)));
         renderer.DrawScreenRoundedRectangle(new(10, 95, 60, 120), 10, XnaColor.Red);
         renderer.DrawWorldCircle(new(0, -10), 8, XnaColor.White);
         renderer.EndFrame();
@@ -96,7 +96,7 @@ public sealed class MonoGameRenderingTests
         var sprite = new SpriteShader2D(texture, TextureFilter.Point) { FlipX = flipX, FlipY = flipY };
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.Draw(new WorldObject2D(Rectangle2D.FromSize(new Vector2(64)), sprite));
+        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64)), sprite));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
         XnaColor[] expected = [XnaColor.Red, XnaColor.Lime, XnaColor.Blue, XnaColor.Yellow];
@@ -133,7 +133,7 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.Draw(new WorldObject2D(Rectangle2D.FromSize(new Vector2(64)),
+        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64)),
             new TextureShader2D(texture, new Vector2(32), filterMode: TextureFilter.Point)));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
@@ -150,7 +150,7 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.Draw(new WorldObject2D(Rectangle2D.FromSize(new Vector2(64)),
+        renderer.Draw(new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64)),
             new TextureShader2D(texture, new Vector2(64), filterMode: TextureFilter.Point, imageOrigin: new Vector2(-32, 32))));
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
@@ -166,10 +166,10 @@ public sealed class MonoGameRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         var scene = new Scene2D
         {
-            new WorldObject2D(Rectangle2D.FromSize(new Vector2(64)),
+            new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64)),
             new SolidColorShader(XnaColor.Lime))
             { ZIndex = 1 },
-            new WorldObject2D(Rectangle2D.FromSize(new Vector2(96)),
+            new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(96)),
             new LinearGradientShader(XnaColor.Red, XnaColor.Blue))
         };
         renderer.BeginFrame(128, 128, default);

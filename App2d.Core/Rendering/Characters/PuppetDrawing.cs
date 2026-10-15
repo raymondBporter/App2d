@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Meshes;
@@ -29,7 +31,7 @@ public sealed class PuppetDrawing
         {
             var slot = pose.Slots[i]; if (slot.Part is not { Hidden: false } part) continue;
             if (part.Material?.Texture is null) throw new InvalidDataException("Slot attachments currently require image materials.");
-            var frame = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
+            var frame = PartAttachment2D.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
             AddImage(part, frame, SlotColorTrack2D.FormatColor(slot.Color), slot.Slot.Blend, -i * .001f);
         }
     }
@@ -63,7 +65,7 @@ public sealed class PuppetDrawing
                 if (material.Fill is { } fill)
                 {
                     var fillColor = ColorExtensions.FromHexRgb(fill);
-                    var triangles = TriangleMesh2D.TriangulateSimplePolygon(shape.Points.Select(point => point.XY), 1e-8);
+                    var triangles = PolygonTriangulation2D.Triangulate(shape.Points.Select(point => point.XY), 1e-8);
                     var indices = triangles.Indices;
                     for (var i = 0; i < indices.Length; i += 3)
                         Mesh.Triangle(points[indices[i]], points[indices[i + 1]], points[indices[i + 2]], fillColor);
@@ -92,7 +94,7 @@ public sealed class PuppetDrawing
             if (part.Hidden) continue;
             if (part.Material?.Texture is not null)
             {
-                AddImage(part, PartGeometry.FrameOf(part, world, angle, transform), "ffffffff", "normal", null);
+                AddImage(part, PartAttachment2D.FrameOf(part, world, angle, transform), "ffffffff", "normal", null);
                 continue;
             }
             var start = Mesh.Count;
@@ -103,7 +105,7 @@ public sealed class PuppetDrawing
             var face = expression?.Invoke(part) ?? part.Face;
             if (part.Geometry is CurveDefinition2D)
             {
-                var path = PartGeometry.Contour(part, world);
+                var path = PartContours2D.Contour(part, world);
                 var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink;
                 for (var i = 1; i < path.Count; i++)
                 {
@@ -114,9 +116,9 @@ public sealed class PuppetDrawing
                 if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
                 continue;
             }
-            var contour = PartGeometry.Contour(part, world, angle, transform, rest, restTransform);
-            var triangles = part.Geometry is SimplePolygonShapeDefinition2D ? TriangleMesh2D.TriangulateSimplePolygon(PartGeometry.CutoutPoints(part).Select(p => p.XY), 1e-8) : null;
-            var frame = PartGeometry.FrameOf(part, world, angle, transform);
+            var contour = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
+            var triangles = part.Geometry is SimplePolygon2D.Builder ? PolygonTriangulation2D.Triangulate(PartContours2D.CutoutPoints(part).Select(p => p.XY), 1e-8) : null;
+            var frame = PartAttachment2D.FrameOf(part, world, angle, transform);
             if (material.Fill is { } shapeFill)
             {
                 var fillColor = ColorExtensions.FromHexRgb(shapeFill);
@@ -139,7 +141,7 @@ public sealed class PuppetDrawing
         }
     }
 
-    private void AddImage(PuppetPart part, PartGeometry.Frame frame, string tint, string blend, float? depth)
+    private void AddImage(PuppetPart part, PartFrame2D frame, string tint, string blend, float? depth)
     {
         var material = part.RenderMaterial;
         static Microsoft.Xna.Framework.Color Color(string value)

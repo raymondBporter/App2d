@@ -20,7 +20,7 @@ internal sealed partial class ProofRenders
         using var batch = new SpriteBatch(GraphicsDevice);
         using var pixel = new Texture2D(GraphicsDevice, 1, 1); pixel.SetData(new[] { Color.White });
         var physics = new PhysicsWorld2D { Gravity = new(0, -1200) };
-        var ground = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(2000, 20)));
+        var ground = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(2000, 20)));
         ground.Transform.Position = new(0, -10); physics.AddBody(ground, BodyMotionType2D.Static).CollisionLayer = 1;
         var enemy = new AuthoredEntityEnemy2D(EntityId2D.Create(), catalog.Entities["flying-pterosaur"], physics, new(-96, 154), 1, 4);
         enemy.SetSimulationEnabled(true);

@@ -1,3 +1,4 @@
+using App2d.Gameplay.World.Vegetation;
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Core.Physics;
@@ -39,7 +40,7 @@ public sealed partial class SideScrollerLevel2D
         {
             foreach (var branch in tree.Branches)
             {
-                var platform = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(branch.Bounds.Size));
+                var platform = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(branch.Bounds.Size));
                 platform.Transform.Position = branch.Bounds.Center;
                 var body = environment.Physics.AddBody(platform, BodyMotionType2D.Static);
                 body.CollisionLayer = environment.WorldLayer;

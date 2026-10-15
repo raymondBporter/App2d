@@ -1,0 +1,74 @@
+using App2d.Core.Geometry;
+using App2d.Core.Mathematics;
+using App2d.Core.Validation;
+using System.Numerics;
+
+namespace App2d.Core.Meshes;
+
+/// <summary>An indexed set of filled triangles in XY, independent of rendering and authoring.</summary>
+public sealed class TriangleMesh2D
+{
+    private readonly Vector2[] _vertices;
+    private readonly int[] _indices;
+
+    public TriangleMesh2D(IEnumerable<Vector2> vertices, IEnumerable<int> indices)
+    {
+        ArgGuard.ThrowIfNull(vertices);
+        ArgGuard.ThrowIfNull(indices);
+        _vertices = [.. vertices];
+        _indices = [.. indices];
+        ArgGuard.ThrowIf(_vertices.Length < 3, "A triangle mesh needs at least three vertices.", nameof(vertices));
+        ArgGuard.ThrowIf(_indices.Length == 0 || _indices.Length % 3 != 0,
+            "Triangle indices must form complete triples.", nameof(indices));
+        foreach (var vertex in _vertices) ArgGuard.ThrowIfNotFinite(vertex, nameof(vertices));
+        foreach (var index in _indices)
+            ArgGuard.ThrowIf(index < 0 || index >= _vertices.Length, "Triangle index is outside the vertices.", nameof(indices));
+
+        var area = 0d;
+        for (var i = 0; i < _indices.Length; i += 3)
+        {
+            var twice = _vertices[_indices[i]].Orientation(_vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
+            ArgGuard.ThrowIf(twice == 0, "Triangle vertices must not be collinear.", nameof(indices));
+            area += Math.Abs(twice) / 2;
+        }
+        ArgGuard.ThrowIf(area > float.MaxValue, "Triangle mesh area is too large.", nameof(vertices));
+        Area = (float)area;
+        Bounds = Rect2D.FromPoints(_vertices);
+    }
+
+    public ReadOnlySpan<Vector2> Vertices => _vertices;
+    public ReadOnlySpan<int> Indices => _indices;
+    public int TriangleCount => _indices.Length / 3;
+    /// <summary>The sum of triangle areas; overlaps are counted once per triangle.</summary>
+    public float Area { get; }
+    public Rect2D Bounds { get; }
+
+    public (Vector2 A, Vector2 B, Vector2 C) TriangleAt(int index)
+    {
+        if ((uint)index >= (uint)TriangleCount) throw new ArgumentOutOfRangeException(nameof(index));
+        var i = index * 3;
+        return (_vertices[_indices[i]], _vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
+    }
+
+    /// <summary>Contains a point when it lies in any triangle, including an edge.</summary>
+    public bool ContainsPoint(Vector2 point, double edgeTolerance = 0)
+    {
+        ArgGuard.ThrowIfNotFinite(point);
+        ArgGuard.ThrowIf(!double.IsFinite(edgeTolerance) || edgeTolerance < 0,
+            "Edge tolerance must be finite and nonnegative.", nameof(edgeTolerance));
+        if (edgeTolerance == 0 && !Bounds.Contains(point)) return false;
+        for (var i = 0; i < TriangleCount; i++)
+        {
+            var (a, b, c) = TriangleAt(i);
+            var sign = Math.Sign(a.Orientation(b, c));
+            if (sign * a.Orientation(b, point) >= -edgeTolerance &&
+                sign * b.Orientation(c, point) >= -edgeTolerance &&
+                sign * c.Orientation(a, point) >= -edgeTolerance)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+}

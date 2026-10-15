@@ -24,15 +24,15 @@ public sealed class ShapeRenderingTests
 
     private static IShape2D CreateShape(string shapeName) => shapeName switch
     {
-        nameof(Rectangle2D) => new Rectangle2D(new(-16, -12), new(16, 12)),
-        nameof(Circle2D) => new Circle2D(16),
-        nameof(Ellipse2D) => new Ellipse2D(new(20, 12)),
-        nameof(Capsule2D) => new Capsule2D(new(-10, 0), new(10, 0), 8),
-        nameof(Triangle2D) => new Triangle2D(new(-16, -14), new(16, -14), new(0, 18)),
-        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(-15, -12), new(15, -12), new(18, 10), new(-18, 10)]),
-        nameof(CompositeShape2D) => new CompositeShape2D([
-            new Rectangle2D(new(-16, -12), new(5, 12)),
-            new Rectangle2D(new(-5, -12), new(16, 12)),
+        nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-16, -12), new(16, 12)),
+        nameof(Circle2D) => Circle2D.Builder.Create(16),
+        nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(20, 12)),
+        nameof(Capsule2D) => Capsule2D.Builder.Create(new(-10, 0), new(10, 0), 8),
+        nameof(Triangle2D) => Triangle2D.Builder.Create(new(-16, -14), new(16, -14), new(0, 18)),
+        nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(-15, -12), new(15, -12), new(18, 10), new(-18, 10)]),
+        nameof(CompositeShape2D) => CompositeShape2D.Builder.Create([
+            Rectangle2D.Builder.Create(new(-16, -12), new(5, 12)),
+            Rectangle2D.Builder.Create(new(-5, -12), new(16, 12)),
         ]),
         _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
     };
@@ -62,7 +62,7 @@ public sealed class ShapeRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.DrawShape(new Rectangle2D(new(-10, -10), new(10, 10)),
+        renderer.DrawShape(Rectangle2D.Builder.Create(new(-10, -10), new(10, 10)),
             Matrix3x2.CreateTranslation(20, 0), outlineColor: XnaColor.White, screenStrokeWidth: 4);
         renderer.EndFrame();
 
@@ -97,7 +97,7 @@ public sealed class ShapeRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.DrawShape(new HalfSpace2D(Vector2.UnitY, 0), XnaColor.Blue, XnaColor.White);
+        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2.UnitY, 0), XnaColor.Blue, XnaColor.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
@@ -115,7 +115,7 @@ public sealed class ShapeRenderingTests
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        renderer.DrawShape(new HalfSpace2D(Vector2.UnitX, offset), XnaColor.Blue, XnaColor.White);
+        renderer.DrawShape(HalfSpace2D.Builder.Create(Vector2.UnitX, offset), XnaColor.Blue, XnaColor.White);
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();

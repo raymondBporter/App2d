@@ -69,7 +69,7 @@ public sealed class PersonJumpPowerTests
     private static void AddGround(PhysicsWorld2D physics)
     {
         var groundObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.FromSize(new Vector2(600f, 20f)));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(600f, 20f)));
         groundObject.Transform.Position = new Vector2(0f, -10f);
         var ground = physics.AddBody(groundObject, BodyMotionType2D.Static);
         ground.CollisionLayer = WorldLayer;

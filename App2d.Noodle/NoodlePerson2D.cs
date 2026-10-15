@@ -49,13 +49,13 @@ internal sealed class NoodlePerson2D
             new("right foot", _rightLeg)
         ];
 
-        _torso = Create(new Capsule2D(new Vector2(0f, -49f), new Vector2(0f, 47f), 45f), new(0f, 8f));
-        _pelvis = Create(new Capsule2D(new Vector2(-18f, 0f), new Vector2(18f, 0f), 34f), new(0f, -57f));
-        _neck = Create(new Capsule2D(new Vector2(0f, -11f), new Vector2(0f, 15f), 18f), new(0f, 93f));
-        _head = Create(new Circle2D(47f), new(0f, 151f));
+        _torso = Create(Capsule2D.Builder.Create(new Vector2(0f, -49f), new Vector2(0f, 47f), 45f), new(0f, 8f));
+        _pelvis = Create(Capsule2D.Builder.Create(new Vector2(-18f, 0f), new Vector2(18f, 0f), 34f), new(0f, -57f));
+        _neck = Create(Capsule2D.Builder.Create(new Vector2(0f, -11f), new Vector2(0f, 15f), 18f), new(0f, 93f));
+        _head = Create(Circle2D.Builder.Create(47f), new(0f, 151f));
         var faceShader = new SolidColorShader(FaceColor);
-        _leftEye = Create(new Circle2D(5f), new(-15f, 159f), faceShader);
-        _rightEye = Create(new Circle2D(5f), new(15f, 159f), faceShader);
+        _leftEye = Create(Circle2D.Builder.Create(5f), new(-15f, 159f), faceShader);
+        _rightEye = Create(Circle2D.Builder.Create(5f), new(15f, 159f), faceShader);
     }
 
     public NoodleArm2D TargetLimb => _limbs[_selectedLimbIndex].Limb;

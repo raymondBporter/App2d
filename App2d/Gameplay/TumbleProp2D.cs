@@ -28,10 +28,10 @@ internal sealed partial class TumbleProp2D : IEnemyActor2D, ICombatant2D
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNotFinite(position);
 
-        var shape = new CompositeShape2D([
-            Rectangle2D.FromSize(new Vector2(72f, 18f)),
-            new Circle2D(16f, new Vector2(-42f, 0f)),
-            new Circle2D(16f, new Vector2(42f, 0f))]);
+        var shape = CompositeShape2D.Builder.Create([
+            Rectangle2D.Builder.CreateFromSize(new Vector2(72f, 18f)),
+            Circle2D.Builder.Create(16f, new Vector2(-42f, 0f)),
+            Circle2D.Builder.Create(16f, new Vector2(42f, 0f))]);
         var visual = new SpatialObject2D(shape);
         visual.Transform.Position = position;
         WorldObject = visual;

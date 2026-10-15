@@ -22,16 +22,16 @@ public sealed class ShapeVertices2DTests
 
     private static IConvexShape2D CreateShape(string shapeName) => shapeName switch
     {
-        nameof(Circle2D) => new Circle2D(1.5f, new(1, 2)),
-        nameof(Capsule2D) => new Capsule2D(new(-2, 1), new(3, 2), .3f),
-        nameof(Rectangle2D) => new Rectangle2D(new(-1, -2), new(3, 1)),
-        nameof(AxisAlignedRectangle2D) => new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)),
-        nameof(RoundedRectangle2D) => new RoundedRectangle2D(new(-2, -1), new(2, 1), .5f),
-        "VerticalCapsule" => RoundedRectangle2D.FromSize(new(2, 4), 1, new(1, 2)),
-        "HorizontalCapsule" => RoundedRectangle2D.FromSize(new(4, 2), 1, new(1, 2)),
-        "CollapsedCircle" => RoundedRectangle2D.FromSize(new(2, 2), 1, new(1, 2)),
-        nameof(Triangle2D) => new Triangle2D(new(0, 0), new(2, 0), new(1, 3)),
-        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
+        nameof(Circle2D) => Circle2D.Builder.Create(1.5f, new(1, 2)),
+        nameof(Capsule2D) => Capsule2D.Builder.Create(new(-2, 1), new(3, 2), .3f),
+        nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
+        nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
+        nameof(RoundedRectangle2D) => RoundedRectangle2D.Builder.Create(new(-2, -1), new(2, 1), .5f),
+        "VerticalCapsule" => RoundedRectangle2D.Builder.CreateFromSize(new(2, 4), 1, new(1, 2)),
+        "HorizontalCapsule" => RoundedRectangle2D.Builder.CreateFromSize(new(4, 2), 1, new(1, 2)),
+        "CollapsedCircle" => RoundedRectangle2D.Builder.CreateFromSize(new(2, 2), 1, new(1, 2)),
+        nameof(Triangle2D) => Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(1, 3)),
+        nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
         _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
     };
 
@@ -62,7 +62,7 @@ public sealed class ShapeVertices2DTests
         var local = shape.GetVerts(localBuffer, out var localRadius);
         var pose = Similarity2D.FromAxis(new(7, -3), new(1, 2), mirror: true, scale: 2.5f);
         Span<Vector2> world = stackalloc Vector2[local.Length];
-        Assert.Equal(local.Length, WorldShape2D.WriteWorldConvexCore(shape, pose, world, out var worldRadius));
+        Assert.Equal(local.Length, ShapeTransforms2D.WriteWorldConvexCore(shape, pose, world, out var worldRadius));
         Assert.Equal(localRadius * pose.Scale, worldRadius);
         for (var i = 0; i < local.Length; i++) Assert.Equal(pose.TransformPoint(local[i]), world[i]);
     }
@@ -71,15 +71,15 @@ public sealed class ShapeVertices2DTests
     public void RoundedRectanglesReturnInsetCornersOrACollapsedSegmentOrPoint()
     {
         Span<Vector2> buffer = stackalloc Vector2[4];
-        var rounded = new RoundedRectangle2D(new(-2, -1), new(2, 1), .5f);
+        var rounded = RoundedRectangle2D.Builder.Create(new(-2, -1), new(2, 1), .5f);
         var core = rounded.GetVerts(buffer, out var radius);
         Assert.Equal(.5f, radius);
         Assert.Equal([new(-1.5f, -.5f), new(1.5f, -.5f), new(1.5f, .5f), new(-1.5f, .5f)], core.ToArray());
 
-        var capsule = RoundedRectangle2D.FromSize(new(4, 2), 1);
+        var capsule = RoundedRectangle2D.Builder.CreateFromSize(new(4, 2), 1);
         Assert.Equal([new(-1, 0), new(1, 0)], capsule.GetVerts(buffer, out radius).ToArray());
         Assert.Equal(1f, radius);
-        var circle = RoundedRectangle2D.FromSize(new(2, 2), 1, new(3, 4));
+        var circle = RoundedRectangle2D.Builder.CreateFromSize(new(2, 2), 1, new(3, 4));
         Assert.Equal([new(3, 4)], circle.GetVerts(buffer, out radius).ToArray());
         Assert.Equal(1f, radius);
     }
@@ -90,7 +90,7 @@ public sealed class ShapeVertices2DTests
         Span<Vector2> buffer = stackalloc Vector2[40];
         var sentinel = new Vector2(123, 456);
         buffer.Fill(sentinel);
-        var circle = new Circle2D(2, new(1, 3));
+        var circle = Circle2D.Builder.Create(2, new(1, 3));
         var core = circle.GetVerts(buffer, out var radius);
         Assert.Equal(1, core.Length);
         Assert.Equal(2f, radius);
@@ -110,10 +110,10 @@ public sealed class ShapeVertices2DTests
     {
         IShape2D[] shapes =
         [
-            new Ellipse2D(new(2, 1)),
-            new SimplePolygon2D([new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)]),
-            new CompositeShape2D([new Circle2D(1)]),
-            new HalfSpace2D(Vector2.UnitY, 0)
+            Ellipse2D.Builder.Create(new(2, 1)),
+            SimplePolygon2D.Builder.Create([new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)]),
+            CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1)]),
+            HalfSpace2D.Builder.Create(Vector2.UnitY, 0)
         ];
         foreach (var shape in shapes)
         {
@@ -123,8 +123,8 @@ public sealed class ShapeVertices2DTests
         var ellipse = shapes[0];
         Span<Vector2> buffer = stackalloc Vector2[64];
         Assert.Equal(24, ellipse.GetOutlineVerts(buffer, 24).Length);
-        Assert.Equal(0, WorldShape2D.ConvexCoreVertexCount(ellipse));
-        Assert.Equal(0, WorldShape2D.WriteWorldConvexCore(ellipse, Similarity2D.Identity, buffer, out var radius));
+        Assert.Equal(0, ellipse.GetVertCount());
+        Assert.Equal(0, ShapeTransforms2D.WriteWorldConvexCore(ellipse, Similarity2D.Identity, buffer, out var radius));
         Assert.Equal(0f, radius);
         Assert.Equal(6, shapes[1].GetOutlineVerts(buffer).Length);
         Assert.Throws<NotSupportedException>(() => shapes[2].GetOutlineVerts(new Vector2[64]));
@@ -134,7 +134,7 @@ public sealed class ShapeVertices2DTests
     [Fact]
     public void ShortBuffersAndInvalidSamplingAreRejectedBeforeWriting()
     {
-        var rectangle = Rectangle2D.FromSize(new Vector2(2, 2));
+        var rectangle = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2));
         var shortBuffer = Enumerable.Repeat(new Vector2(123), 3).ToArray();
         Assert.Throws<ArgumentOutOfRangeException>(() => rectangle.GetVerts(shortBuffer, out _));
         Assert.All(shortBuffer, point => Assert.Equal(new Vector2(123), point));

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -36,7 +37,7 @@ public sealed class RenderMaterialDefinition2DTests
             Face = "none",
             Width = 1,
             Height = 1,
-            Geometry = RectangleShapeDefinition2D.FromSize(Vector2.One),
+            Geometry = Rectangle2D.Builder.FromSize(Vector2.One),
             Material = new()
             {
                 Fill = "#123456",
@@ -70,7 +71,7 @@ public sealed class RenderMaterialDefinition2DTests
             [
                 new PropShape
                 {
-                    Geometry = new SimplePolygonShapeDefinition2D { Vertices = [new(0, 0), new(1, 0), new(0, 1)] },
+                    Geometry = new SimplePolygon2D.Builder { Vertices = [new(0, 0), new(1, 0), new(0, 1)] },
                     Material = new() { Fill = "#224466", Outline = new() { Color = "#ffeeaa", Width = .03f } }
                 }
             ]

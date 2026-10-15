@@ -1,3 +1,4 @@
+using App2d.Gameplay.World.Vegetation;
 using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core;

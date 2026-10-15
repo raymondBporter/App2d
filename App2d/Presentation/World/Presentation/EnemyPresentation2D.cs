@@ -161,8 +161,8 @@ public sealed class EnemyPresentation2D(
             {
                 var rock = state.Bolts[_bolts.Count].Gravity > 0;
                 App2d.Core.Shapes.IShape2D shape = rock
-                    ? new ConvexPolygon2D([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
-                    : AxisAlignedRectangle2D.FromSize(Vector2.One);
+                    ? ConvexPolygon2D.Builder.Create([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
+                    : AxisAlignedRectangle2D.Builder.CreateFromSize(Vector2.One);
                 var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new XnaColor(133, 139, 134) : XnaColor.OrangeRed)) { ZIndex = 2 };
                 _bolts.Add(bolt); scene.Add(bolt);
             }
@@ -189,7 +189,7 @@ public sealed class EnemyPresentation2D(
         {
             _entity = entity;
             _scene = scene; _bolts = new(scene); _shader = new(entity.Model) { Props = [.. entity.Equipment.Select(e => (e.Prop, e.Socket))] };
-            _visual = new(AxisAlignedRectangle2D.FromSize(new Vector2(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
+            _visual = new(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(12, 12), new(0, 2)), _shader) { ZIndex = 1 };
             _visual.Transform.Scale = new(GameWorldUnits2D.WorldUnitsPerAuthoredUnit);
             scene.Add(_visual);
         }
@@ -236,7 +236,7 @@ public sealed class EnemyPresentation2D(
                 _attack = CharacterAnimationAssets2D.LoadClip(textures, asset, "hammer-attack");
             _animation.Play(_walk);
             _shader = new SpriteShader2D(_animation.CurrentFrame);
-            _visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(size), _shader);
+            _visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size), _shader);
             scene.Add(_visual);
         }
 
@@ -279,7 +279,7 @@ public sealed class EnemyPresentation2D(
             _person = new PersonPresentation2D(scene, textures, traversal);
             _person.Equip(EquipmentKind2D.Unarmed);
             if (!isAlive) _person.PlayDeath();
-            _marker = new WorldObject2D(new Circle2D(8f), new SolidColorShader(new XnaColor(255, 46, 166))) { ZIndex = 3 };
+            _marker = new WorldObject2D(Circle2D.Builder.Create(8f), new SolidColorShader(new XnaColor(255, 46, 166))) { ZIndex = 3 };
             scene.Add(_marker);
         }
 
@@ -314,10 +314,10 @@ public sealed class EnemyPresentation2D(
         public PropView(Scene2D scene)
         {
             _scene = scene;
-            var shape = new CompositeShape2D([
-                Rectangle2D.FromSize(new Vector2(72f, 18f)),
-                new Circle2D(16f, new Vector2(-42f, 0f)),
-                new Circle2D(16f, new Vector2(42f, 0f))]);
+            var shape = CompositeShape2D.Builder.Create([
+                Rectangle2D.Builder.CreateFromSize(new Vector2(72f, 18f)),
+                Circle2D.Builder.Create(16f, new Vector2(-42f, 0f)),
+                Circle2D.Builder.Create(16f, new Vector2(42f, 0f))]);
             _visual = new WorldObject2D(shape, new SolidColorShader(new XnaColor(0xFF, 0x9A, 0x3B))) { ZIndex = 1 };
             scene.Add(_visual);
         }

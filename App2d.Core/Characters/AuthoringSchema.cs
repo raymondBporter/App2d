@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
 using App2d.Core.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -17,11 +18,11 @@ public static class EntityVocabulary
 }
 
 /// <summary>An authored value's accepted range. The soft range is the editor's suggested slider span; files may hold any value within the hard range.</summary>
-public readonly record struct Limit(float Min, float Max, float SoftMin, float SoftMax)
+public readonly record struct Limit(float Min, float Max, float SoftMin, float SoftMax) : IInterval<float>
 {
     public Limit(float min, float max) : this(min, max, min, max) { }
     public Limit Soft(float min, float max) => this with { SoftMin = min, SoftMax = max };
-    public float Clamp(float value) => Math.Clamp(value, Min, Max);
+    public float Clamp(float value) => IntervalMath<float>.Clamp(this, value);
     public void Check(float value, string field)
     {
         if (!float.IsFinite(value) || value < Min || value > Max)

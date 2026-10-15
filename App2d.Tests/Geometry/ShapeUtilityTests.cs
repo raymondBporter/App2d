@@ -20,13 +20,13 @@ public sealed class ShapeUtilityTests
 
     private static IConvexShape2D CreateShape(string shapeName) => shapeName switch
     {
-        nameof(Circle2D) => new Circle2D(1.5f, new(1, 2)),
-        nameof(Ellipse2D) => new Ellipse2D(new(2, 1), new(-1, .5f)),
-        nameof(Capsule2D) => new Capsule2D(new(-1, 0), new(1, .5f), .3f),
-        nameof(Rectangle2D) => new Rectangle2D(new(-1, -2), new(3, 1)),
-        nameof(AxisAlignedRectangle2D) => new AxisAlignedRectangle2D(new(-1, -2), new(3, 1)),
-        nameof(Triangle2D) => new Triangle2D(new(0, 0), new(2, 0), new(1, 3)),
-        nameof(ConvexPolygon2D) => new ConvexPolygon2D([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
+        nameof(Circle2D) => Circle2D.Builder.Create(1.5f, new(1, 2)),
+        nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(2, 1), new(-1, .5f)),
+        nameof(Capsule2D) => Capsule2D.Builder.Create(new(-1, 0), new(1, .5f), .3f),
+        nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
+        nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
+        nameof(Triangle2D) => Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(1, 3)),
+        nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
         _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
     };
 
@@ -35,13 +35,13 @@ public sealed class ShapeUtilityTests
     public void ScalingKeepsTheTypeAndScalesEveryOutlinePointAboutTheOrigin(string shapeName)
     {
         var shape = CreateShape(shapeName);
-        var scaled = WorldShape2D.Scaled(shape, 2.5f);
+        var scaled = ShapeTransforms2D.Scaled(shape, 2.5f);
         Assert.IsType(shape.GetType(), scaled);
         Assert.Equal(shape.Area * 2.5f * 2.5f, scaled.Area, 3);
         var original = Outline(shape);
         var doubled = Outline(scaled);
         for (var i = 0; i < original.Length; i++) Assert.True(Vector2.Distance(original[i] * 2.5f, doubled[i]) < 1e-4f);
-        Assert.Throws<ArgumentOutOfRangeException>(() => WorldShape2D.Scaled(shape, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ShapeTransforms2D.Scaled(shape, 0));
     }
 
     [Theory]
@@ -50,7 +50,7 @@ public sealed class ShapeUtilityTests
     {
         var shape = CreateShape(shapeName);
         var outline = Outline(shape);
-        Assert.Equal(WorldShape2D.OutlineVertexCount(shape, 24), outline.Length);
+        Assert.Equal(shape.GetOutlineVertCount(24), outline.Length);
         var (center, radius) = ShapeBounds2D.CalculateBoundingCircle(shape);
         var bounds = ShapeBounds2D.Calculate(shape);
         foreach (var point in outline)
@@ -65,27 +65,27 @@ public sealed class ShapeUtilityTests
     [Fact]
     public void BoundingCirclesAreExactForRoundShapesAndBoxDiagonals()
     {
-        Assert.Equal((new Vector2(1, 2), 1.5f), ShapeBounds2D.CalculateBoundingCircle(new Circle2D(1.5f, new(1, 2))));
-        Assert.Equal((new Vector2(0, 0), MathF.Sqrt(2)), ShapeBounds2D.CalculateBoundingCircle(Rectangle2D.FromSize(new Vector2(2, 2))));
-        Assert.Equal((new Vector2(0, 0), 1.5f), ShapeBounds2D.CalculateBoundingCircle(new Capsule2D(new(-1, 0), new(1, 0), .5f)));
-        Assert.Equal((new Vector2(0, 0), 2f), ShapeBounds2D.CalculateBoundingCircle(new Ellipse2D(new(2, 1))));
-        var (Center, Radius) = ShapeBounds2D.CalculateBoundingCircle(new CompositeShape2D([new Circle2D(1, new(-3, 0)), new Circle2D(1, new(3, 0))]));
+        Assert.Equal((new Vector2(1, 2), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Circle2D.Builder.Create(1.5f, new(1, 2))));
+        Assert.Equal((new Vector2(0, 0), MathF.Sqrt(2)), ShapeBounds2D.CalculateBoundingCircle(Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2))));
+        Assert.Equal((new Vector2(0, 0), 1.5f), ShapeBounds2D.CalculateBoundingCircle(Capsule2D.Builder.Create(new(-1, 0), new(1, 0), .5f)));
+        Assert.Equal((new Vector2(0, 0), 2f), ShapeBounds2D.CalculateBoundingCircle(Ellipse2D.Builder.Create(new(2, 1))));
+        var (Center, Radius) = ShapeBounds2D.CalculateBoundingCircle(CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-3, 0)), Circle2D.Builder.Create(1, new(3, 0))]));
         Assert.Equal(Vector2.Zero, Center);
         Assert.Equal(4f, Radius, 5);
-        Assert.Equal(float.PositiveInfinity, ShapeBounds2D.CalculateBoundingCircle(new HalfSpace2D(Vector2.UnitY, 0)).Radius);
+        Assert.Equal(float.PositiveInfinity, ShapeBounds2D.CalculateBoundingCircle(HalfSpace2D.Builder.Create(Vector2.UnitY, 0)).Radius);
     }
 
     [Fact]
     public void BoundingCircleStaysValidWhenTheObjectRotates()
     {
-        var box = new SpatialObject2D(new Rectangle2D(new(-3, -1), new(3, 1)));
+        var box = new SpatialObject2D(Rectangle2D.Builder.Create(new(-3, -1), new(3, 1)));
         var (center, radius) = ShapeBounds2D.CalculateBoundingCircle(box.Shape);
         Span<Vector2> corners = stackalloc Vector2[4];
         for (var i = 0; i < 12; i++)
         {
             box.Transform.Rotation = i * MathF.Tau / 12;
             var worldCenter = Vector2.Transform(center, box.Transform.Matrix);
-            WorldShape2D.WriteWorldPerimeter(box.Shape, box.CollisionPose, corners);
+            ShapeTransforms2D.WriteWorldOutline(box.Shape, box.CollisionPose, corners);
             foreach (var corner in corners) Assert.True(Vector2.Distance(corner, worldCenter) <= radius + 1e-4f);
         }
     }

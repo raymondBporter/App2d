@@ -1,0 +1,48 @@
+using App2d.Core.Geometry;
+using App2d.Core.Validation;
+using System.Numerics;
+
+namespace App2d.Core.Shapes;
+
+/// <summary>
+/// A filled axis-aligned ellipse in local space; the owning pose can rotate it in world space.
+/// Containment, support, bounds and ray casts are analytic. Point distance uses a bracketed root solve;
+/// convex contacts and pair distances use the analytic support mapping without perimeter sampling.
+/// </summary>
+public sealed partial class Ellipse2D : IConvexShape2D
+{
+    /// <inheritdoc/>
+    public string Kind => ShapeKinds2D.Ellipse;
+
+    /// <summary>Default samples for callers requesting a drawable perimeter; collision queries do not use these.</summary>
+    public const int DefaultOutlineSegments = 64;
+
+    /// <summary>Creates an ellipse.</summary>
+    /// <param name="radii">The finite, positive half-extents along X and Y.</param>
+    /// <param name="center">The finite local center.</param>
+    private Ellipse2D(Vector2 radii, Vector2 center = default)
+    {
+        Radii = radii;
+        Center = center;
+    }
+
+    /// <summary>The half-extents along X and Y.</summary>
+    public Vector2 Radii { get; }
+
+    /// <summary>The local center.</summary>
+    public Vector2 Center { get; }
+
+    /// <inheritdoc/>
+    public float Area => Area2D.Ellipse(Radii);
+
+    /// <inheritdoc/>
+    public bool ContainsPoint(Vector2 localPoint) => Containment2D.Ellipse(localPoint, Center, Radii);
+
+    /// <inheritdoc/>
+    public Vector2 GetSupportPoint(Vector2 localDirection) => SupportPoint2D.Ellipse(localDirection, Center, Radii);
+
+    /// <summary>Writes a counter-clockwise perimeter; the buffer length chooses the segment count.</summary>
+    /// <param name="vertices">A buffer of at least three entries; every entry is written.</param>
+    /// <returns>The number of vertices written.</returns>
+    public int WriteVertices(Span<Vector2> vertices) => VertexGenerator2D.WriteEllipse(vertices, Center, Radii);
+}

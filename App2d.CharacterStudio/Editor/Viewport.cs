@@ -85,7 +85,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private static IEnumerable<Vector3> DrawingPoints(ResolvedModel model)
     {
         var pose = PoseEvaluator.Rest(model);
-        return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartGeometry.Contour(p, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]))
+        return model.Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]))
             .Concat(model.Rest.Values)
             .Concat(model.Order.Where(c => c.Length > 0).Select(c =>
             {

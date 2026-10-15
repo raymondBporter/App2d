@@ -35,10 +35,9 @@ internal static class RigDocumentRenderer2D
             color = new XnaColor(CollisionColor.R, CollisionColor.G, CollisionColor.B, (byte)60);
 
         var item = new WorldObject2D(geometry, new SolidColorShader(color));
-        var boneTransform = RigDocument2D.GetWorldTransform(shape.AttachedBone);
-        item.Transform.Position = Vector2.Transform(new Vector2(shape.LocalX, shape.LocalY), boneTransform);
-        item.Transform.Rotation = new Vector2(boneTransform.M11, boneTransform.M12).AngleRadians +
-            MathF.PI / 180f * shape.AngleDegrees;
+        var boneFrame = RigDocument2D.GetWorldFrame(shape.AttachedBone);
+        item.Transform.Position = boneFrame.TransformPoint(new(shape.LocalX, shape.LocalY));
+        item.Transform.Rotation = boneFrame.XAxis.AngleRadians + MathF.PI / 180f * shape.AngleDegrees;
         renderer.Draw(item);
 
         if (shape.Purpose != RigShapePurpose.Visual)

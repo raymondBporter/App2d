@@ -14,7 +14,7 @@ public sealed class PhysicsCollisionSystem2DTests
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision);
         var body = physics.AddBody(
-            new SpatialObject2D(new Circle2D(5f)),
+            new SpatialObject2D(Circle2D.Builder.Create(5f)),
             BodyMotionType2D.Dynamic);
 
         Assert.Same(body.Collider, Assert.Single(collision.Colliders));
@@ -35,9 +35,9 @@ public sealed class PhysicsCollisionSystem2DTests
             VelocityIterations = 1
         };
         physics.AddBody(
-            new SpatialObject2D(new Circle2D(10f)),
+            new SpatialObject2D(Circle2D.Builder.Create(10f)),
             BodyMotionType2D.Static);
-        var dynamicObject = new SpatialObject2D(new Circle2D(10f));
+        var dynamicObject = new SpatialObject2D(Circle2D.Builder.Create(10f));
         dynamicObject.Transform.Position = new Vector2(15f, 0f);
         physics.AddBody(dynamicObject, BodyMotionType2D.Dynamic);
 

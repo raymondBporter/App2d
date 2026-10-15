@@ -9,7 +9,7 @@ namespace App2d.Core.Rendering.Characters;
 /// <summary>Paint lives in rest artwork coordinates and follows the same triangles as fill, including folding membranes.</summary>
 internal static class PartPainting
 {
-    public static void Add(CharacterMesh mesh, PuppetPart part, PartGeometry.Frame frame, IReadOnlyList<Vector3> contour, TriangleMesh2D? triangles)
+    public static void Add(CharacterMesh mesh, PuppetPart part, PartFrame2D frame, IReadOnlyList<Vector3> contour, TriangleMesh2D? triangles)
     {
         if (part.Paint is null) return;
         for (var layer = 0; layer < part.Paint.Count; layer++)
@@ -26,7 +26,7 @@ internal static class PartPainting
             for (var i = 0; i < triangles.Indices.Length; i += 3)
             {
                 var ia = triangles.Indices[i]; var ib = triangles.Indices[i + 1]; var ic = triangles.Indices[i + 2];
-                var a = PartGeometry.CutoutPoints(part)[ia].XY; var b = PartGeometry.CutoutPoints(part)[ib].XY; var c = PartGeometry.CutoutPoints(part)[ic].XY;
+                var a = PartContours2D.CutoutPoints(part)[ia].XY; var b = PartContours2D.CutoutPoints(part)[ib].XY; var c = PartContours2D.CutoutPoints(part)[ic].XY;
                 var clipped = PolygonClipping2D.ClipConvexXY(paint, new[] { new Vector3(a, 0), new Vector3(b, 0), new Vector3(c, 0) });
                 var ab = b - a; var ac = c - a; var determinant = ab.X * ac.Y - ab.Y * ac.X;
                 Vector3 Place(Vector3 point)

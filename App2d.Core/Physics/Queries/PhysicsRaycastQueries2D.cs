@@ -1,3 +1,4 @@
+using App2d.Core.Spatial;
 using App2d.Core.Collision.Queries;
 using App2d.Core.Geometry;
 using App2d.Core.Validation;
@@ -21,7 +22,7 @@ public static class PhysicsRaycastQueries2D
             foreach (var body in world.Bodies)
             {
                 if (!ShouldQuery(body, layerMask, includeSensors, filter) ||
-                    !RayIntersection2D.TryIntersect(
+                    !SpatialRaycast2D.TryIntersect(
                         ray,
                         body.WorldObject,
                         nearestDistance,
@@ -51,7 +52,7 @@ public static class PhysicsRaycastQueries2D
             foreach (var body in world.Bodies)
             {
                 if (!ShouldQuery(body, layerMask, includeSensors, filter) ||
-                    !RayIntersection2D.TryIntersect(ray, body.WorldObject, maxDistance, out var geometry))
+                    !SpatialRaycast2D.TryIntersect(ray, body.WorldObject, maxDistance, out var geometry))
                 {
                     continue;
                 }

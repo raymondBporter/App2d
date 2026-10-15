@@ -49,7 +49,7 @@ public sealed class AuthoredEntityEnemyTests
         var guard = Assert.IsType<AuthoredEntityEnemy2D>(game.Level.EnemySystem.Combatants[0]);
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
         var bounds = head.Scaled(GameWorldUnits2D.WorldUnitsPerAuthoredUnit).Bounds;
-        var hit = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4)));
+        var hit = new Core.SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4)));
         hit.Transform.Position = bounds.Center;
         var facts = new List<CombatDamage2D>(); game.Combat.DamageResolved += facts.Add;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy,
@@ -157,7 +157,7 @@ public sealed class AuthoredEntityEnemyTests
         var head = EntityCollision.Hurt(guard.Entity, guard.Pose).Single(r => r.Id == "head");
         var center = head.Bounds.Center * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
         Assert.True(center.Y > guard.WorldObject.WorldBounds.Max.Y - 30, "the head region comes from the pose, not the movement box");
-        var hit = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(2)));
+        var hit = new Core.SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(2)));
         hit.Transform.Position = center;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 900, CombatFaction2D.Player, SideScrollerLayers2D.Enemy, 1, _ => Vector2.Zero));
         Assert.Equal(guard.Entity.Asset.Health - 1, guard.Health.Current);
@@ -175,7 +175,7 @@ public sealed class AuthoredEntityEnemyTests
         var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(150, 40), 2, 1, CombatFaction2D.Player, 30);
         if (wall)
         {
-            var shape = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(5, 400))); shape.Transform.Position = new(95, 40);
+            var shape = new Core.SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(5, 400))); shape.Transform.Position = new(95, 40);
             var body = physics.AddBody(shape, BodyMotionType2D.Static); body.CollisionLayer = 1; body.CollisionMask = 6;
         }
         var sawBolt = false;
@@ -332,12 +332,12 @@ public sealed class AuthoredEntityEnemyTests
     public void CavemanStopsAtLedgesAndWalls(bool wall)
     {
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var ground = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(wall ? 500 : 14, 20)));
+        var ground = new Core.SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(wall ? 500 : 14, 20)));
         ground.Transform.Position = new(0, -10);
         physics.AddBody(ground, BodyMotionType2D.Static).CollisionLayer = 1;
         if (wall)
         {
-            var obstacle = new Core.SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(20, 120)));
+            var obstacle = new Core.SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(20, 120)));
             obstacle.Transform.Position = new(20, 60);
             physics.AddBody(obstacle, BodyMotionType2D.Static).CollisionLayer = 1;
         }

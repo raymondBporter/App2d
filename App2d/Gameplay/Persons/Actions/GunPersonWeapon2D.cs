@@ -68,12 +68,12 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         ArgGuard.ThrowIfNotFinite(muzzleOffset);
         _muzzleOffset = muzzleOffset;
         _authoredMuzzle = muzzle;
-        _barrelPath = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(
+        _barrelPath = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(
             new Vector2(_muzzleOffset.X + BoltWidth, 4f)));
         for (var index = 0; index < 16; index++)
         {
             _bullets.Add(new Projectile2D(new SpatialObject2D(
-                AxisAlignedRectangle2D.FromSize(_shot.Size))));
+                AxisAlignedRectangle2D.Builder.CreateFromSize(_shot.Size))));
         }
     }
 
@@ -159,7 +159,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         // Never spawn a projectile beyond a thin wall intersecting the barrel.
         var owner = _ownerBody.WorldObject.Transform.Position;
         var offset = muzzle - owner;
-        var barrel = _authoredMuzzle is null ? _barrelPath : new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(Math.Abs(offset.X) + BoltWidth, 4)));
+        var barrel = _authoredMuzzle is null ? _barrelPath : new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(Math.Abs(offset.X) + BoltWidth, 4)));
         barrel.Transform.Position = owner + new Vector2(_authoredMuzzle is null ? _direction * (_muzzleOffset.X + BoltWidth) * .5f : offset.X * .5f, offset.Y);
         if (_collision.Overlap(barrel, _overlaps, _worldLayer, includeSensors: false) > 0)
         {

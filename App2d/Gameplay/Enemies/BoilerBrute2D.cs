@@ -48,7 +48,7 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         ArgGuard.ThrowIfNotFinite(position);
 
         var collider = new SpatialObject2D(
-            AxisAlignedRectangle2D.FromSize(new Vector2(68f, 98f)));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(68f, 98f)));
         collider.Transform.Position = position;
 
         var body = physics.AddBody(collider, BodyMotionType2D.Dynamic);
@@ -67,7 +67,7 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             health: 8);
 
         _hammerHitbox = new SpatialObject2D(
-            AxisAlignedRectangle2D.FromSize(HammerHitboxSize));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(HammerHitboxSize));
         SyncHitbox();
     }
 

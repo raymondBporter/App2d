@@ -53,7 +53,7 @@ public sealed partial class Person2D : ICombatant2D
         ArgGuard.ThrowIf(!id.IsValid, "A person requires a valid entity ID.", nameof(id));
         Id = id;
 
-        WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(
+        WorldObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(
             traversal.PlayerColliderSize,
             new Vector2(traversal.PlayerColliderCenterOffsetX, 0f)));
         WorldObject.Transform.Position = spawnPoint;

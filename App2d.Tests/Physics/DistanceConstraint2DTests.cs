@@ -71,9 +71,9 @@ public sealed class DistanceConstraint2DTests
     private static (PhysicsBody2D First, PhysicsBody2D Second) CreateBodies(float firstX, float secondX)
     {
         var world = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var firstObject = new SpatialObject2D(new Circle2D(0.5f));
+        var firstObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
         firstObject.Transform.Position = new Vector2(firstX, 0f);
-        var secondObject = new SpatialObject2D(new Circle2D(0.5f));
+        var secondObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
         secondObject.Transform.Position = new Vector2(secondX, 0f);
         return (
             world.AddBody(firstObject, BodyMotionType2D.Static),

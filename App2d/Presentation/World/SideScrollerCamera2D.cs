@@ -200,14 +200,14 @@ public sealed class SideScrollerCamera2D
         for (var i = 0; i < 8; i++)
         {
             var width = 150f + i % 3 * 45f;
-            AddParallax(scene, new Capsule2D(new Vector2(-width / 2f, 0f), new Vector2(width / 2f, 0f), 38f), cloudShader, new Vector2(-850f + i * 470f, 210f + i % 3 * 95f), 0.08f, repeatWidth: 3_760f);
+            AddParallax(scene, Capsule2D.Builder.Create(new Vector2(-width / 2f, 0f), new Vector2(width / 2f, 0f), 38f), cloudShader, new Vector2(-850f + i * 470f, 210f + i % 3 * 95f), 0.08f, repeatWidth: 3_760f);
         }
 
         for (var i = 0; i < 12; i++)
         {
             var width = 520f + i % 3 * 90f;
             var height = 360f + i % 4 * 55f;
-            var mountain = new ConvexPolygon2D(
+            var mountain = ConvexPolygon2D.Builder.Create(
             [
                 new Vector2(-width / 2f, 0f),
                 new Vector2(0f, height),
@@ -218,7 +218,7 @@ public sealed class SideScrollerCamera2D
 
         for (var i = 0; i < 13; i++)
         {
-            AddParallax(scene, new Circle2D(185f + i % 3 * 24f), nearHillShader, new Vector2(-1_000f + i * 510f, -525f), 0.42f, new Vector2(1.9f, 1f), repeatWidth: 6_630f);
+            AddParallax(scene, Circle2D.Builder.Create(185f + i % 3 * 24f), nearHillShader, new Vector2(-1_000f + i * 510f, -525f), 0.42f, new Vector2(1.9f, 1f), repeatWidth: 6_630f);
         }
     }
 

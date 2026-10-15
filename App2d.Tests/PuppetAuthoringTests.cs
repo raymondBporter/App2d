@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
@@ -12,15 +13,15 @@ public sealed class PuppetAuthoringTests
     public void TrapezoidTapersTowardItsUpperControlAndPickingFollowsTheTaper()
     {
         var part = new PuppetPart { Kind = "trapezoid", A = "base", B = "top", Width = 2, Height = 2 };
-        part.Geometry = PartGeometry.FromPreset(part);
+        part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
         // Local up points right in this pose, so the narrow end is at world X = 1.
         static Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
-        var contour = PartGeometry.Contour(part, World);
+        var contour = PartContours2D.Contour(part, World);
         Assert.Equal(.7f, contour.Where(p => p.X > .999f).Max(p => MathF.Abs(p.Y)), 5);
         Assert.Equal(1, contour.Where(p => p.X < -.999f).Max(p => MathF.Abs(p.Y)), 5);
-        Assert.True(PartGeometry.Distance(part, World, new(.9f, .9f, 0)) > 1);
-        Assert.True(PartGeometry.Distance(part, World, new(.9f, .6f, 0)) < 1);
-        Assert.True(PartGeometry.Distance(part with { Geometry = RectangleShapeDefinition2D.FromSize(Vector2.One) }, World, new(.9f, .9f, 0)) < 1);
+        Assert.True(PartPicking2D.Distance(part, World, new(.9f, .9f, 0)) > 1);
+        Assert.True(PartPicking2D.Distance(part, World, new(.9f, .6f, 0)) < 1);
+        Assert.True(PartPicking2D.Distance(part with { Geometry = Rectangle2D.Builder.FromSize(Vector2.One) }, World, new(.9f, .9f, 0)) < 1);
     }
 
     [Fact]
@@ -31,7 +32,7 @@ public sealed class PuppetAuthoringTests
         var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, "trapezoid", "hips");
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
         Assert.Equal("box", restored.Parts.Single(p => p.Id == box.Id).Kind);
-        Assert.Equal(4, Assert.IsType<SimplePolygonShapeDefinition2D>(restored.Parts.Single(p => p.Id == trapezoid.Id).Geometry).Vertices.Count);
+        Assert.Equal(4, Assert.IsType<SimplePolygon2D.Builder>(restored.Parts.Single(p => p.Id == trapezoid.Id).Geometry).Vertices.Count);
         Assert.Equal("polygon", restored.Parts.Single(p => p.Id == "body").Kind);
     }
 

@@ -59,8 +59,8 @@ internal sealed class NoodleArm2D
         _upperEdge = new Vector2[sectionCount + 1];
         _lowerEdge = new Vector2[sectionCount + 1];
         _lowerWeights = new float[sectionCount + 1];
-        _shoulderCap = new WorldObject2D(new Circle2D(radius), _skinShader);
-        _wristCap = new WorldObject2D(new Circle2D(radius * 0.72f), _skinShader);
+        _shoulderCap = new WorldObject2D(Circle2D.Builder.Create(radius), _skinShader);
+        _wristCap = new WorldObject2D(Circle2D.Builder.Create(radius * 0.72f), _skinShader);
         Target = DefaultTarget;
         RebuildSkin();
     }

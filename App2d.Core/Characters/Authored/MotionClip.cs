@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -319,6 +321,6 @@ public sealed class MotionClip
             Require(chain.Scale == Travel.Scale, $"{field}: the chain's scale '{chain.Scale}' must match the travel scale '{Travel.Scale}'.");
         }
         foreach (var face in Faces)
-            Require(model.Parts.Any(p => p.Id == face.Part && p.Geometry is App2d.Core.Shapes.ShapeDefinition2D), $"{owner} face track '{face.Part}': the model has no such shape part.");
+            Require(model.Parts.Any(p => p.Id == face.Part && p.Geometry is App2d.Core.Geometry.Builders.ShapeBuilder2D), $"{owner} face track '{face.Part}': the model has no such shape part.");
     }
 }

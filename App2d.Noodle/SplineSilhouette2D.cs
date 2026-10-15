@@ -140,7 +140,7 @@ internal static class SplineSilhouette2D
         {
             if (Vector2.DistanceSquared(_points[^1], _start) <= 0.0001f)
                 _points.RemoveAt(_points.Count - 1);
-            return new ConvexPolygon2D(PolygonGeometry2D.ConvexHull(_points));
+            return ConvexPolygon2D.Builder.Create(PolygonGeometry2D.ConvexHull(_points));
         }
     }
 }

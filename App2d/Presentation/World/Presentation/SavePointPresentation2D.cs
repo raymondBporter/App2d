@@ -25,7 +25,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         _basePosition = placement.BasePosition;
 
         var baseStone = new WorldObject2D(
-            AxisAlignedRectangle2D.FromSize(new Vector2(58f, 14f)),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(58f, 14f)),
             new LinearGradientShader(new XnaColor(68, 77, 96), new XnaColor(31, 38, 54)))
         {
             ZIndex = 1
@@ -34,7 +34,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         Add(baseStone);
 
         var pedestal = new WorldObject2D(
-            new ConvexPolygon2D(
+            ConvexPolygon2D.Builder.Create(
             [
                 new Vector2(-20f, 0f),
                 new Vector2(20f, 0f),
@@ -49,7 +49,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         Add(pedestal);
 
         _glow = new WorldObject2D(
-            new Circle2D(31f),
+            Circle2D.Builder.Create(31f),
             new SolidColorShader(new XnaColor(93, 224, 255, 38)))
         {
             IsVisible = false,
@@ -59,7 +59,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         Add(_glow);
 
         _orb = new WorldObject2D(
-            new ConvexPolygon2D(
+            ConvexPolygon2D.Builder.Create(
             [
                 new Vector2(0f, 24f),
                 new Vector2(18f, 0f),

@@ -1,3 +1,4 @@
+using App2d.Core.Spatial;
 using App2d.Core;
 using App2d.Core.Geometry;
 using App2d.Core.Shapes;
@@ -15,10 +16,10 @@ public sealed class Distance2DTests
     {
         IShape2D[] shapes =
         [
-            new Circle2D(2), new Capsule2D(new(0, -1), new(0, 1), 2),
-            Rectangle2D.FromSize(new Vector2(4, 6)),
-            new ConvexPolygon2D([new(-2, -3), new(2, -3), new(2, 3), new(-2, 3)]),
-            new HalfSpace2D(Vector2.UnitX, 2)
+            Circle2D.Builder.Create(2), Capsule2D.Builder.Create(new(0, -1), new(0, 1), 2),
+            Rectangle2D.Builder.CreateFromSize(new Vector2(4, 6)),
+            ConvexPolygon2D.Builder.Create([new(-2, -3), new(2, -3), new(2, 3), new(-2, 3)]),
+            HalfSpace2D.Builder.Create(Vector2.UnitX, 2)
         ];
         var point = new Vector2(x, 0);
         foreach (var shape in shapes)
@@ -88,51 +89,51 @@ public sealed class Distance2DTests
     [InlineData(6, 3)]
     public void CirclePairsIncludeCoincidentCentersAndTouching(float x, float expected)
     {
-        AssertPair(new Circle2D(1), new Circle2D(2, new(x, 0)), expected);
+        AssertPair(Circle2D.Builder.Create(1), Circle2D.Builder.Create(2, new(x, 0)), expected);
         Assert.Equal(expected, Distance2D.SignedDistanceBetweenCircles(default, 1, new(x, 0), 2));
     }
 
     [Fact]
     public void PolygonPairsHandleCornerGapsContainmentAndContact()
     {
-        var box = Rectangle2D.FromSize(new Vector2(2, 2));
-        var diagonal = new ConvexPolygon2D([new(4, 5), new(6, 5), new(6, 7), new(4, 7)]);
+        var box = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2));
+        var diagonal = ConvexPolygon2D.Builder.Create([new(4, 5), new(6, 5), new(6, 7), new(4, 7)]);
         AssertPair(box, diagonal, 5);
-        AssertPair(box, Rectangle2D.FromSize(new Vector2(10, 10)), -6);
-        AssertPair(box, Rectangle2D.FromSize(new Vector2(2, 2), new(2, 0)), 0);
-        var diamond = new ConvexPolygon2D([new(0, -3), new(3, 0), new(0, 3), new(-3, 0)]);
+        AssertPair(box, Rectangle2D.Builder.CreateFromSize(new Vector2(10, 10)), -6);
+        AssertPair(box, Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2), new(2, 0)), 0);
+        var diamond = ConvexPolygon2D.Builder.Create([new(0, -3), new(3, 0), new(0, 3), new(-3, 0)]);
         AssertPair(box, diamond, -5 / MathF.Sqrt(2));
     }
 
     [Fact]
     public void CirclePolygonPairsHandleInsideAndOutsideCenters()
     {
-        var box = Rectangle2D.FromSize(new Vector2(2, 2));
-        AssertPair(new Circle2D(.5f), box, -1.5f);
-        AssertPair(new Circle2D(2, new(4, 5)), box, 3);
-        AssertPair(new Circle2D(1, new(2, 0)), box, 0);
-        AssertPair(new Circle2D(2, new(2, 0)), box, -1);
+        var box = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2));
+        AssertPair(Circle2D.Builder.Create(.5f), box, -1.5f);
+        AssertPair(Circle2D.Builder.Create(2, new(4, 5)), box, 3);
+        AssertPair(Circle2D.Builder.Create(1, new(2, 0)), box, 0);
+        AssertPair(Circle2D.Builder.Create(2, new(2, 0)), box, -1);
     }
 
     [Fact]
     public void CrossingCapsulesNeedMoreThanTheirCombinedRadiiToEscape()
     {
-        var horizontal = new Capsule2D(new(-2, 0), new(2, 0), 1);
-        var vertical = new Capsule2D(new(0, -2), new(0, 2), 1);
+        var horizontal = Capsule2D.Builder.Create(new(-2, 0), new(2, 0), 1);
+        var vertical = Capsule2D.Builder.Create(new(0, -2), new(0, 2), 1);
         AssertPair(horizontal, vertical, -4);
         Assert.Equal(-4f, Distance2D.SignedDistanceBetweenCapsules(horizontal.Start, horizontal.End, 1, vertical.Start, vertical.End, 1));
-        AssertPair(horizontal, new Capsule2D(new(-2, 1.5f), new(2, 1.5f), 1), -.5f);
-        AssertPair(horizontal, new Capsule2D(new(5, 0), new(7, 0), 1), 1);
-        AssertPair(new Capsule2D(default, default, 1), new Capsule2D(new(5, 0), new(5, 0), 1), 3);
-        AssertPair(new Circle2D(1), horizontal, -2);
+        AssertPair(horizontal, Capsule2D.Builder.Create(new(-2, 1.5f), new(2, 1.5f), 1), -.5f);
+        AssertPair(horizontal, Capsule2D.Builder.Create(new(5, 0), new(7, 0), 1), 1);
+        AssertPair(Capsule2D.Builder.Create(default, default, 1), Capsule2D.Builder.Create(new(5, 0), new(5, 0), 1), 3);
+        AssertPair(Circle2D.Builder.Create(1), horizontal, -2);
     }
 
     [Fact]
     public void CapsulePolygonPairsUseBothEndCapsAndInteriorPenetration()
     {
-        var box = Rectangle2D.FromSize(new Vector2(2, 2));
-        AssertPair(new Capsule2D(new(-2, 0), new(2, 0), 1), box, -2);
-        AssertPair(new Capsule2D(new(4, 5), new(4, 7), 1), box, 4);
+        var box = Rectangle2D.Builder.CreateFromSize(new Vector2(2, 2));
+        AssertPair(Capsule2D.Builder.Create(new(-2, 0), new(2, 0), 1), box, -2);
+        AssertPair(Capsule2D.Builder.Create(new(4, 5), new(4, 7), 1), box, 4);
     }
 
     [Fact]
@@ -150,60 +151,60 @@ public sealed class Distance2DTests
     [Fact]
     public void HalfSpaceQueriesMeasureTheDeepestPoint()
     {
-        var floor = new HalfSpace2D(new(0, 2), 4); // boundary y = 2
-        AssertPair(new Circle2D(1, new(0, 5)), floor, 2);
-        AssertPair(new Circle2D(1), floor, -3);
-        AssertPair(new Capsule2D(new(0, 3), new(0, 5), 1), floor, 0);
-        AssertPair(Rectangle2D.FromSize(new Vector2(2, 4)), floor, -4);
+        var floor = HalfSpace2D.Builder.Create(new(0, 2), 4); // boundary y = 2
+        AssertPair(Circle2D.Builder.Create(1, new(0, 5)), floor, 2);
+        AssertPair(Circle2D.Builder.Create(1), floor, -3);
+        AssertPair(Capsule2D.Builder.Create(new(0, 3), new(0, 5), 1), floor, 0);
+        AssertPair(Rectangle2D.Builder.CreateFromSize(new Vector2(2, 4)), floor, -4);
     }
 
     [Fact]
     public void SpatialQueriesRespectRotationReflectionScaleAndWorldUnits()
     {
-        var box = new SpatialObject2D(Rectangle2D.FromSize(new Vector2(2, 4)));
+        var box = new SpatialObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(2, 4)));
         box.Transform.Scale = new(-2, 2);
         box.Transform.Rotation = MathF.PI / 2;
         box.Transform.Position = new(10, 20); // world extents x=6..14, y=18..22
-        var circle = new SpatialObject2D(new Circle2D(1));
+        var circle = new SpatialObject2D(Circle2D.Builder.Create(1));
         circle.Transform.Scale = new(2);
         circle.Transform.Position = new(19, 22);
-        Assert.Equal(3f, ShapeDistance2D.SignedDistance(box, circle), 4);
-        Assert.Equal(3f, ShapeDistance2D.SignedDistance(circle, box), 4);
-        Assert.Equal(3f, ShapeDistance2D.Distance(box, circle), 4);
-        Assert.Equal(-2f, ShapeDistance2D.SignedDistance(new Vector2(10, 20), box), 4);
-        Assert.Equal(5f, ShapeDistance2D.SignedDistance(new Vector2(17, 26), box), 4);
+        Assert.Equal(3f, SpatialDistance2D.SignedDistance(box, circle), 4);
+        Assert.Equal(3f, SpatialDistance2D.SignedDistance(circle, box), 4);
+        Assert.Equal(3f, SpatialDistance2D.Distance(box, circle), 4);
+        Assert.Equal(-2f, SpatialDistance2D.SignedDistance(new Vector2(10, 20), box), 4);
+        Assert.Equal(5f, SpatialDistance2D.SignedDistance(new Vector2(17, 26), box), 4);
         Assert.Equal(3f, ShapeDistance2D.SignedDistance(box.Shape, box.CollisionPose, circle.Shape, circle.CollisionPose), 4);
         circle.Transform.Position = new(15, 22);
-        Assert.Equal(-1f, ShapeDistance2D.SignedDistance(box, circle), 4); // pose cache refreshes
+        Assert.Equal(-1f, SpatialDistance2D.SignedDistance(box, circle), 4); // pose cache refreshes
         box.Transform.Scale = new(2, 1);
-        Assert.Throws<InvalidOperationException>(() => ShapeDistance2D.Distance(box, circle));
+        Assert.Throws<InvalidOperationException>(() => SpatialDistance2D.Distance(box, circle));
     }
 
     [Fact]
     public void TransformedHalfSpaceUsesItsWorldBoundary()
     {
-        var wall = new SpatialObject2D(new HalfSpace2D(Vector2.UnitX, 1));
+        var wall = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2.UnitX, 1));
         wall.Transform.Scale = new(2);
         wall.Transform.Rotation = MathF.PI / 2;
         wall.Transform.Position = new(3, 5); // boundary y = 7
-        var circle = new SpatialObject2D(new Circle2D(1));
+        var circle = new SpatialObject2D(Circle2D.Builder.Create(1));
         circle.Transform.Position = new(3, 10);
-        Assert.Equal(2f, ShapeDistance2D.SignedDistance(circle, wall), 4);
-        Assert.Equal(2f, ShapeDistance2D.SignedDistance(wall, circle), 4);
+        Assert.Equal(2f, SpatialDistance2D.SignedDistance(circle, wall), 4);
+        Assert.Equal(2f, SpatialDistance2D.SignedDistance(wall, circle), 4);
     }
 
     [Fact]
     public void CompositeUnsignedDistancePreservesGapsButSignedQueriesFailExplicitly()
     {
-        var union = new CompositeShape2D([new Circle2D(1, new(-3, 0)), new Circle2D(1, new(3, 0))]);
+        var union = CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-3, 0)), Circle2D.Builder.Create(1, new(3, 0))]);
         Assert.Equal(2f, ShapeDistance2D.Distance(Vector2.Zero, union));
         Assert.Equal(0f, ShapeDistance2D.Distance(new Vector2(3, 0), union));
-        Assert.Equal(1f, ShapeDistance2D.Distance(union, new Circle2D(1)));
-        Assert.Equal(1f, ShapeDistance2D.Distance(new Circle2D(1), union));
+        Assert.Equal(1f, ShapeDistance2D.Distance(union, Circle2D.Builder.Create(1)));
+        Assert.Equal(1f, ShapeDistance2D.Distance(Circle2D.Builder.Create(1), union));
         Assert.Equal(0f, ShapeDistance2D.Distance(union, union));
         Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(Vector2.Zero, union));
-        Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(union, new Circle2D(1)));
-        Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(new HalfSpace2D(Vector2.UnitY, 0), new HalfSpace2D(-Vector2.UnitY, 0)));
+        Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(union, Circle2D.Builder.Create(1)));
+        Assert.Throws<NotSupportedException>(() => ShapeDistance2D.SignedDistance(HalfSpace2D.Builder.Create(Vector2.UnitY, 0), HalfSpace2D.Builder.Create(-Vector2.UnitY, 0)));
     }
 
     [Fact]

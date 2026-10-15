@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Mathematics;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -78,7 +79,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 session.Edit(boneDocument, () =>
                 {
                     var capsule = ModelAuthoring.AddPartToBone(boneDocument.Asset, PuppetPartKinds.Box, anchor);
-                    PartGeometry.SetRoundedRectangleRadius(capsule, capsule.Height / 2f);
+                    PartGeometryAuthoring2D.SetRoundedRectangleRadius(capsule, capsule.Height / 2f);
                     Select(part: capsule.Id);
                 });
             }
@@ -392,19 +393,19 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
             ImGui.SetNextItemWidth(-1);
             if (ImGui.SliderFloat("##" + label, ref value, min, max, "%.3f")) change(p => set(p, value));
         }
-        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => { if (overrides is null) PartGeometry.ResizeRoundedRectangle(p, v, p.Height); p.Width = v; }, o => o.Width = null);
+        Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => { if (overrides is null) PartGeometryAuthoring2D.ResizeRoundedRectangle(p, v, p.Height); p.Width = v; }, o => o.Width = null);
         if (!PuppetPartKinds.IsStroke(part.Kind))
         {
-            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => { if (overrides is null) PartGeometry.ResizeRoundedRectangle(p, p.Width, v); p.Height = v; }, o => o.Height = null);
+            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => { if (overrides is null) PartGeometryAuthoring2D.ResizeRoundedRectangle(p, p.Width, v); p.Height = v; }, o => o.Height = null);
             Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
             Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
-            if (overrides is null && part.Geometry is RoundedRectangleShapeDefinition2D rounded)
+            if (overrides is null && part.Geometry is RoundedRectangle2D.Builder rounded)
             {
                 Float("Corner radius", rounded.Radius, 0, MathF.Min(part.Width, part.Height) / 2f, false,
-                    PartGeometry.SetRoundedRectangleRadius, _ => { });
+                    PartGeometryAuthoring2D.SetRoundedRectangleRadius, _ => { });
             }
 
-            if (overrides is null && part.Geometry is SimplePolygonShapeDefinition2D polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
+            if (overrides is null && part.Geometry is SimplePolygon2D.Builder polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
             {
                 ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
                 Ui.Help("Draw the rest silhouette here. Each point can follow the part frame or a named control; Point toward follows that control frame's rotation. Animate the controls, not the outline.");
@@ -412,7 +413,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
                 void Cutout(Action<List<PuppetPoint>> edit)
                 {
                     var points = new List<PuppetPoint>(vertices); edit(points);
-                    try { PartGeometry.CheckCutout(points); change(p => PartGeometry.SetPolygon(p, points)); }
+                    try { PartGeometryAuthoring2D.CheckCutout(points); change(p => PartGeometryAuthoring2D.SetPolygon(p, points)); }
                     catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
                 }
                 for (var i = 0; i < vertices.Count; i++)
@@ -641,7 +642,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (session.Selection.Part is { } selectedPart && model.Parts.FirstOrDefault(p => p.Id == selectedPart) is { } part)
         {
             Outline(frame, part, pose, model);
-            if (_editCutout && part.Geometry is SimplePolygonShapeDefinition2D && Base is not null)
+            if (_editCutout && part.Geometry is SimplePolygon2D.Builder && Base is not null)
             {
                 DragCutout(frame, part, pose, model); return;
             }
@@ -649,7 +650,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
             var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!).ToArray();
-            var hit = visibleParts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartGeometry.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id])))
+            var hit = visibleParts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartPicking2D.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id])))
                 .Where(h => h.Score <= 1).OrderBy(h => h.Score).FirstOrDefault();
             if (hit.Part is not null) Select(part: hit.Part.Id); else session.Selection.Clear();
         }
@@ -658,8 +659,8 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
     private void DragCutout(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
-        var contour = PartGeometry.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
-        var points = ((SimplePolygonShapeDefinition2D)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToList();
+        var contour = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
+        var points = ((SimplePolygon2D.Builder)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToList();
         for (var i = 0; i < points.Count; i++)
         {
             var at = frame.Screen(contour[i]);
@@ -671,11 +672,11 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left)) { _cutoutDrag = -1; session.EndDrag(); return; }
         if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || Base is not { } document) return;
         var edited = new List<PuppetPoint>(points);
-        try { edited[_cutoutDrag] = PartGeometry.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse), pose.World, id => model.Rest[id], id => pose.Angles[id], id => pose.Bones[id], id => model.RestTransforms[id]); }
+        try { edited[_cutoutDrag] = PartGeometryAuthoring2D.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse), pose.World, id => model.Rest[id], id => pose.Angles[id], id => pose.Bones[id], id => model.RestTransforms[id]); }
         catch (InvalidOperationException) { return; }
-        try { PartGeometry.CheckCutout(edited); }
+        try { PartGeometryAuthoring2D.CheckCutout(edited); }
         catch (InvalidDataException) { return; }
-        session.Change(document, () => PartGeometry.SetPolygon(document.Asset.Parts.First(p => p.Id == part.Id), edited));
+        session.Change(document, () => PartGeometryAuthoring2D.SetPolygon(document.Asset.Parts.First(p => p.Id == part.Id), edited));
     }
 
     private void DragControls(ViewportFrame frame, ResolvedModel model, EvaluatedPose pose)
@@ -726,7 +727,7 @@ internal sealed class ModelView(EditorSession session, Viewport viewport) : IWor
 
     private static void Outline(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
-        var outline = PartGeometry.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]).Select(p => frame.Screen(p)).ToArray();
+        var outline = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]).Select(p => frame.Screen(p)).ToArray();
         for (var i = 0; i < outline.Length; i++) frame.Draw.AddLine(outline[i], outline[(i + 1) % outline.Length], Ui.Color(232, 169, 55), 2);
     }
 

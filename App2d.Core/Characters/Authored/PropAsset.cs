@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Meshes;
 using App2d.Core.Geometry;
 using App2d.Core.Curves;
@@ -25,7 +27,7 @@ public sealed record PropShape
     public RenderMaterialDefinition2D RenderMaterial => Material
         ?? throw new InvalidDataException("A prop shape needs a material.");
 
-    [JsonIgnore] public bool IsFilled => Geometry is ShapeDefinition2D;
+    [JsonIgnore] public bool IsFilled => Geometry is ShapeBuilder2D;
 
     public GeometryDefinition2D Definition() => Geometry
         ?? throw new InvalidDataException("A prop shape needs typed geometry.");
@@ -34,7 +36,7 @@ public sealed record PropShape
     {
         if (Geometry is null) return;
         Vector2[] xy;
-        if (Geometry is ShapeDefinition2D definition)
+        if (Geometry is ShapeBuilder2D definition)
         {
             var shape = definition.Build();
             var count = shape.GetOutlineVertCount(48);
@@ -238,8 +240,8 @@ public sealed class PropAsset
             var shape = Shapes[i]; var field = $"{owner} shapes[{i}]";
             Require(shape?.Points is not null, $"{field}: incomplete shape.");
             if (shape.Geometry is not null && shape.Points.Count == 0) shape.RestorePoints();
-            Require(shape.Geometry is ShapeDefinition2D or CurveDefinition2D, $"{field}: typed geometry is required.");
-            if (shape.Geometry is ShapeDefinition2D typedShape) _ = typedShape.Build();
+            Require(shape.Geometry is ShapeBuilder2D or CurveDefinition2D, $"{field}: typed geometry is required.");
+            if (shape.Geometry is ShapeBuilder2D typedShape) _ = typedShape.Build();
             if (shape.Geometry is CurveDefinition2D typedCurve) _ = typedCurve.Build();
             Require(shape.IsFilled ? shape.Points.Count >= 3 : shape.Points.Count >= 2, $"{field}: a stroke needs two points and a polygon three.");
             foreach (var point in shape.Points) point.Check(field + " point");

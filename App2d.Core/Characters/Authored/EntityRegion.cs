@@ -58,8 +58,8 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <returns>The outline vertices in perimeter order.</returns>
     public Vector2[] Outline(int roundSegments = 24)
     {
-        var vertices = new Vector2[WorldShape2D.OutlineVertexCount(Shape, roundSegments)];
-        WorldShape2D.WriteOutline(Shape, vertices, roundSegments);
+        var vertices = new Vector2[Shape.GetOutlineVertCount(roundSegments)];
+        Shape.GetOutlineVerts(vertices, roundSegments);
         for (var i = 0; i < vertices.Length; i++) vertices[i] = Pose.TransformPoint(vertices[i]);
         return vertices;
     }
@@ -78,14 +78,14 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <param name="center">The box center.</param>
     /// <param name="size">The finite, positive width and height.</param>
     /// <returns>A rectangle region.</returns>
-    public static EntityRegion Box(string id, Vector2 center, Vector2 size) => new(id, Rectangle2D.FromSize(size, center));
+    public static EntityRegion Box(string id, Vector2 center, Vector2 size) => new(id, Rectangle2D.Builder.CreateFromSize(size, center));
 
     /// <summary>A circular region in the actor's XY space.</summary>
     /// <param name="id">The region name.</param>
     /// <param name="center">The circle center.</param>
     /// <param name="radius">The finite, positive radius.</param>
     /// <returns>A circle region.</returns>
-    public static EntityRegion Circle(string id, Vector2 center, float radius) => new(id, new Circle2D(radius, center));
+    public static EntityRegion Circle(string id, Vector2 center, float radius) => new(id, Circle2D.Builder.Create(radius, center));
 
     /// <summary>A capsule region in the actor's XY space; the endpoints may coincide.</summary>
     /// <param name="id">The region name.</param>
@@ -93,5 +93,5 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <param name="end">The other spine endpoint.</param>
     /// <param name="radius">The finite, positive radius.</param>
     /// <returns>A capsule region.</returns>
-    public static EntityRegion Capsule(string id, Vector2 start, Vector2 end, float radius) => new(id, new Capsule2D(start, end, radius));
+    public static EntityRegion Capsule(string id, Vector2 start, Vector2 end, float radius) => new(id, Capsule2D.Builder.Create(start, end, radius));
 }

@@ -24,12 +24,12 @@ public static class PterosaurTemplate
         PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, string kind = PuppetPartKinds.Ellipse)
         {
             var part = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Kind = kind };
-            part.Geometry = PartGeometry.FromPreset(part);
+            part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
             model.Parts.Add(part); return part;
         }
         PuppetPart Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params PuppetPoint[] points)
         {
-            var part = Shape(key, a, a + "-up", w, h, x, y, depth, fill, PuppetPartKinds.Polygon); PartGeometry.SetPolygon(part, points); return part;
+            var part = Shape(key, a, a + "-up", w, h, x, y, depth, fill, PuppetPartKinds.Polygon); PartGeometryAuthoring2D.SetPolygon(part, points); return part;
         }
         foreach (var (side, sign, depth, fill) in new[] { ("far", 1f, .12f, "#9e5f7e"), ("near", -1f, -.02f, "#b56e8b") })
         {

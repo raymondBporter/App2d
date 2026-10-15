@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry;
 using App2d.Core.IO;
 using App2d.Core.Curves;
@@ -126,12 +128,12 @@ public sealed record PuppetPart
         if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
         if (Frame is not null && !isControl(Frame)) throw new InvalidDataException("Unknown part frame: " + Frame);
         if (Frame is not null && B is not null) throw new InvalidDataException("A part uses either a bone frame or a toward control.");
-        if (Geometry is not ShapeDefinition2D and not CurveDefinition2D)
+        if (Geometry is not ShapeBuilder2D and not CurveDefinition2D)
             throw new InvalidDataException("A part needs a shape or curve definition.");
-        if (Geometry is ShapeDefinition2D shape)
+        if (Geometry is ShapeBuilder2D shape)
         {
             var built = shape.Build();
-            if (WorldShape2D.OutlineVertexCount(built, 48) == 0)
+            if (built.GetOutlineVertCount(48) == 0)
                 throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
         }
         if (Geometry is CurveDefinition2D curve) _ = curve.Build();
@@ -148,11 +150,11 @@ public sealed record PuppetPart
         PartPaint.Check(Paint);
         if (Bindings is { Count: > 0 })
         {
-            if (Geometry is not SimplePolygonShapeDefinition2D) throw new InvalidDataException("Point attachments require a cutout.");
+            if (Geometry is not SimplePolygon2D.Builder) throw new InvalidDataException("Point attachments require a cutout.");
             var seen = new HashSet<int>();
             foreach (var binding in Bindings)
             {
-                if (binding is null || binding.Point < 0 || binding.Point >= PartGeometry.CutoutPoints(this).Count || !seen.Add(binding.Point))
+                if (binding is null || binding.Point < 0 || binding.Point >= PartContours2D.CutoutPoints(this).Count || !seen.Add(binding.Point))
                     throw new InvalidDataException("Cutout attachments need unique valid point indices.");
                 if (!isControl(binding.Control) || binding.Toward is not null && !isControl(binding.Toward))
                     throw new InvalidDataException("Unknown cutout attachment control.");

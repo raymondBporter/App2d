@@ -30,7 +30,7 @@ public static class QuadrupedTemplate
         }
         PuppetPart Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params PuppetPoint[] points)
         {
-            var p = Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, "polygon"); PartGeometry.SetPolygon(p, points); return p;
+            var p = Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, "polygon"); PartGeometryAuthoring2D.SetPolygon(p, points); return p;
         }
         void SetOutlineWidth(PuppetPart part, float width) => part.Material = part.RenderMaterial with
         { Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = width } };
@@ -45,7 +45,7 @@ public static class QuadrupedTemplate
             Shape(chain.Id + "-upper", chain.Root, chain.Joint, .25f, upper + .19f, 0, upper / 2, 0, color);
             Shape(chain.Id + "-lower", chain.Joint, chain.End, .23f, lower + .15f, 0, lower / 2, -.005f, color);
             var p = Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, "polygon");
-            PartGeometry.SetPolygon(p, [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)]);
+            PartGeometryAuthoring2D.SetPolygon(p, [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)]);
             for (var i = 0; i < 3; i++) SetOutlineWidth(Shape(chain.Id + "-toe-" + i, chain.End, null, .045f, .065f, -.08f + i * .085f, -.055f, -.025f, horn), .012f);
         }
         var body = Shape("body", "body", "body-up", 1.92f, .90f, -.05f, .04f, 0, skin);
@@ -72,7 +72,7 @@ public static class QuadrupedTemplate
         m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.Chains.Select(c => c.Id)] }];
         m.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .35f }] }];
         m.MotionSets = [new() { Id = "standard", Name = "Quadruped", Roles = new() { ["idle"] = id + "-idle", ["walk"] = id + "-walk", ["run"] = id + "-run", ["scrape"] = id + "-scrape", ["head-down"] = id + "-head-down", ["rush"] = id + "-rush", ["brake"] = id + "-brake", ["recover"] = id + "-recover" } }];
-        foreach (var part in m.Parts) part.Geometry ??= PartGeometry.FromPreset(part);
+        foreach (var part in m.Parts) part.Geometry ??= PartGeometryAuthoring2D.FromPreset(part);
         m.Validate(); return m;
     }
 

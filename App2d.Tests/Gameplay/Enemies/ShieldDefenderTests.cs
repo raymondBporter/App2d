@@ -39,7 +39,7 @@ public sealed class ShieldDefenderTests
     }
     private static SpatialObject2D Box(Vector2 position, float size = 4)
     {
-        var box = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(size)));
+        var box = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(size)));
         box.Transform.Position = position; return box;
     }
     private static void Tick(AuthoredEntityEnemy2D enemy, Vector2 target, int ticks)

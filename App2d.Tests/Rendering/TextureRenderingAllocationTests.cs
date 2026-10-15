@@ -16,7 +16,7 @@ public sealed class TextureRenderingAllocationTests(ITestOutputHelper output)
     public void WarmTextureDrawDoesNotAllocateManagedMemory()
     {
         using var texture = Texture2D.Load(TestAssets.GetPath("Runtime", "ui", "hud", "weapons", "sword.png"));
-        var worldObject = new WorldObject2D(Rectangle2D.FromSize(new Vector2(64f, 64f)),
+        var worldObject = new WorldObject2D(Rectangle2D.Builder.CreateFromSize(new Vector2(64f, 64f)),
             new SpriteShader2D(texture, TextureFilter.Point));
         using var graphics = new GraphicsTestContext();
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);

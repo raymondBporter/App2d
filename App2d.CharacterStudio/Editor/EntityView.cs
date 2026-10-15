@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Geometry;
@@ -346,42 +348,42 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
     private static readonly string[] EditableShapeKinds = [ShapeKinds2D.Rectangle, ShapeKinds2D.RoundedRectangle, ShapeKinds2D.Circle, ShapeKinds2D.Capsule, ShapeKinds2D.Ellipse, ShapeKinds2D.Triangle, ShapeKinds2D.ConvexPolygon];
 
     /// <summary>Kind and geometry fields for one shape definition. Kind changes are discrete edits; drags are continuous changes.</summary>
-    private void ShapeFields(AssetDocument<EntityAsset> document, ShapeDefinition2D shape, Action<ShapeDefinition2D> set)
+    private void ShapeFields(AssetDocument<EntityAsset> document, ShapeBuilder2D shape, Action<ShapeBuilder2D> set)
     {
         IEnumerable<string> kinds = EditableShapeKinds.Contains(shape.Kind) ? EditableShapeKinds : EditableShapeKinds.Append(shape.Kind);
         if (Ui.Combo("Shape", shape.Kind, kinds) is { } kind) session.Edit(document, () => set(shape.WithKind(kind)));
-        void Drag(ShapeDefinition2D changed) => session.Change(document, () => set(changed));
+        void Drag(ShapeBuilder2D changed) => session.Change(document, () => set(changed));
         switch (shape)
         {
-            case RectangleShapeDefinition2D rectangle:
+            case Rectangle2D.Builder rectangle:
                 {
                     var centre = (rectangle.Min + rectangle.Max) / 2; var size = rectangle.Max - rectangle.Min;
-                    if (Ui.Drag2("Centre", ref centre)) Drag(RectangleShapeDefinition2D.FromSize(size, centre));
-                    if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100)) Drag(RectangleShapeDefinition2D.FromSize(Vector2.Max(size, new(.01f)), centre));
+                    if (Ui.Drag2("Centre", ref centre)) Drag(Rectangle2D.Builder.FromSize(size, centre));
+                    if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100)) Drag(Rectangle2D.Builder.FromSize(Vector2.Max(size, new(.01f)), centre));
                     break;
                 }
-            case RoundedRectangleShapeDefinition2D rounded:
+            case RoundedRectangle2D.Builder rounded:
                 {
                     var centre = (rounded.Min + rounded.Max) / 2; var size = rounded.Max - rounded.Min;
-                    if (Ui.Drag2("Centre", ref centre)) Drag(RoundedRectangleShapeDefinition2D.FromSize(size, rounded.Radius, centre));
+                    if (Ui.Drag2("Centre", ref centre)) Drag(RoundedRectangle2D.Builder.FromSize(size, rounded.Radius, centre));
                     if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
                     {
                         size = Vector2.Max(size, new(.01f));
-                        Drag(RoundedRectangleShapeDefinition2D.FromSize(size, MathF.Min(rounded.Radius, MathF.Min(size.X, size.Y) / 2f), centre));
+                        Drag(RoundedRectangle2D.Builder.FromSize(size, MathF.Min(rounded.Radius, MathF.Min(size.X, size.Y) / 2f), centre));
                     }
                     var radius = rounded.Radius;
                     if (Ui.Drag("Corner radius", ref radius, .005f, 0, MathF.Min(size.X, size.Y) / 2f))
                         Drag(rounded with { Radius = Math.Clamp(radius, 0, MathF.Min(size.X, size.Y) / 2f) });
                     break;
                 }
-            case CircleShapeDefinition2D circle:
+            case Circle2D.Builder circle:
                 {
                     var centre = circle.Center; var radius = circle.Radius;
                     if (Ui.Drag2("Centre", ref centre)) Drag(circle with { Center = centre });
                     if (Ui.Drag("Radius", ref radius, .005f, .005f, 50)) Drag(circle with { Radius = Math.Max(.005f, radius) });
                     break;
                 }
-            case CapsuleShapeDefinition2D capsule:
+            case Capsule2D.Builder capsule:
                 {
                     var start = capsule.Start; var end = capsule.End; var radius = capsule.Radius;
                     if (Ui.Drag2("Start", ref start)) Drag(capsule with { Start = start });
@@ -389,14 +391,14 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                     if (Ui.Drag("Radius", ref radius, .005f, .005f, 50)) Drag(capsule with { Radius = Math.Max(.005f, radius) });
                     break;
                 }
-            case EllipseShapeDefinition2D ellipse:
+            case Ellipse2D.Builder ellipse:
                 {
                     var centre = ellipse.Center; var radii = ellipse.Radii;
                     if (Ui.Drag2("Centre", ref centre)) Drag(ellipse with { Center = centre });
                     if (Ui.Drag2("Radii", ref radii, .005f, .005f, 50)) Drag(ellipse with { Radii = Vector2.Max(radii, new(.005f)) });
                     break;
                 }
-            case TriangleShapeDefinition2D triangle:
+            case Triangle2D.Builder triangle:
                 {
                     var a = triangle.A; var b = triangle.B; var c = triangle.C;
                     if (Ui.Drag2("A", ref a)) Drag(triangle with { A = a });
@@ -404,7 +406,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
                     if (Ui.Drag2("C", ref c)) Drag(triangle with { C = c });
                     break;
                 }
-            case ConvexPolygonShapeDefinition2D polygon:
+            case ConvexPolygon2D.Builder polygon:
                 {
                     for (var i = 0; i < polygon.Vertices.Count; i++)
                     {

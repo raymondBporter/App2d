@@ -36,7 +36,7 @@ internal static class GunRenderingSmoke2D
         var metrics = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var ids = new EntityIdAllocator2D();
         var person = new Person2D(ids.Allocate(), collision, physics, metrics, Vector2.Zero, 2, 1, CombatFaction2D.Player);
-        var floor = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(800f, 20f)),
+        var floor = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(800f, 20f)),
             new SolidColorShader(new XnaColor(54, 74, 85)));
         floor.Transform.Position = new Vector2(0, person.WorldObject.WorldBounds.Bottom - 10f);
         scene.Add(floor);
@@ -83,7 +83,7 @@ internal static class GunRenderingSmoke2D
             camera.Position = new Vector2(facing * 60f, 0f);
             Save($"gun-recoil-{facing}.png", "RECOIL");
 
-            var wall = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(8f, 70f)),
+            var wall = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(8f, 70f)),
                 new SolidColorShader(new XnaColor(54, 74, 85)));
             wall.Transform.Position = new Vector2(facing * 170f, 7f);
             scene.Add(wall);

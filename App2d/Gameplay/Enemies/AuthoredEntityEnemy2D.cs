@@ -54,7 +54,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         Id = id; Entity = entity; _animator = new(entity); _collision = physics.CollisionSystem; _physics = physics; _worldLayer = worldLayer;
         _flight = entity.Asset.Controller.Flight is { } flight ? new(flight) : null;
         _movement = ShapeBounds2D.Calculate(entity.MovementShape);
-        WorldObject = new(AxisAlignedRectangle2D.FromSize(_movement.Size * Scale));
+        WorldObject = new(AxisAlignedRectangle2D.Builder.CreateFromSize(_movement.Size * Scale));
         WorldObject.Transform.Position = position;
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Dynamic);
         Body.EntityId = id; Body.CollisionLayer = enemyLayer; Body.CollisionMask = worldLayer; Body.Restitution = 0; Body.GravityScale = _flight is null ? 1 : 0;
@@ -160,7 +160,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
 
     private float RecoveryAltitude(Vector2 target)
     {
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4)));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4)));
         for (var down = 0; down <= 800; down += 4)
         {
             probe.Transform.Position = target - new Vector2(0, down);
@@ -173,7 +173,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     private bool CanFly(Vector2 displacement)
     {
         var steps = Math.Max(1, (int)MathF.Ceiling(displacement.Length() / 4));
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(_movement.Size * Scale));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(_movement.Size * Scale));
         for (var i = 1; i <= steps; i++)
         {
             probe.Transform.Position = WorldObject.Transform.Position + displacement * (i / (float)steps);
@@ -188,7 +188,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var bounds = WorldObject.WorldBounds;
         var x = WorldObject.Transform.Position.X + direction *
             (_movement.Width * Scale / 2 + (speed ?? Entity.Asset.Controller.WalkSpeed) * Scale * dt + 3);
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4, 8)));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4, 8)));
         probe.Transform.Position = new(x, bounds.Min.Y - 3);
         if (_collision.Overlap(probe, _overlaps, _worldLayer, includeSensors: false) == 0) return false;
         probe.Transform.Position = new(x, bounds.Min.Y + 8);
@@ -247,7 +247,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
     {
         var start = new Vector2(WorldObject.Transform.Position.X, muzzle.Y);
         var steps = Math.Max(1, (int)MathF.Ceiling(Vector2.Distance(start, muzzle) / 2));
-        var probe = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4)));
+        var probe = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4)));
         for (var i = 0; i <= steps; i++)
         {
             probe.Transform.Position = Vector2.Lerp(start, muzzle, i / (float)steps);
@@ -269,7 +269,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
             var acceleration = new Vector2(0, -bolt.Gravity);
             var distance = bolt.Velocity * _dt + acceleration * (_dt * _dt / 2);
             var steps = Math.Max(1, (int)MathF.Ceiling(distance.Length() / 4));
-            var shape = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(bolt.Size)); var position = bolt.Position; var hit = false;
+            var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(bolt.Size)); var position = bolt.Position; var hit = false;
             for (var step = 1; step <= steps; step++)
             {
                 var t = _dt * step / steps;

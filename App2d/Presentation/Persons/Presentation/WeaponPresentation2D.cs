@@ -154,7 +154,7 @@ public sealed class WeaponPresentation2D : IDisposable
 
     private WorldObject2D CreateVisual(Texture2D texture, Vector2 size)
     {
-        var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(size), new SpriteShader2D(texture))
+        var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size), new SpriteShader2D(texture))
         { IsVisible = false, ZIndex = 2 };
         _scene.Add(visual);
         return visual;

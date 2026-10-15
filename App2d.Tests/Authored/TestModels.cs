@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Curves;
@@ -31,7 +32,7 @@ internal static class TestModels
         Measures = [new() { Id = "leg", Path = ["hip", "knee", "foot"] }, new() { Id = "arm", Path = ["shoulder", "elbow", "hand"] }],
         Parts =
         [
-            new() { Id = "torso", A = "hip", B = "shoulder", Geometry = RoundedRectangleShapeDefinition2D.FromSize(new(.4f, .4f), .05f), Material = new() { Fill = "#fff8e7", Outline = new() } },
+            new() { Id = "torso", A = "hip", B = "shoulder", Geometry = RoundedRectangle2D.Builder.FromSize(new(.4f, .4f), .05f), Material = new() { Fill = "#fff8e7", Outline = new() } },
             new() { Id = "upper-arm", A = "shoulder", B = "elbow", Geometry = new LineCurveDefinition2D { Start = new(0, 0), End = new(0, 1) }, Material = new() },
         ],
     };

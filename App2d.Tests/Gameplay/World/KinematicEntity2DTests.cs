@@ -16,7 +16,7 @@ public sealed class KinematicEntity2DTests
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var motion = new OrbitMotion();
         using var entity = new KinematicEntity2D(EntityId2D.Create(), physics,
-            new Circle2D(2f), motion, collisionLayer: 1, collisionMask: uint.MaxValue);
+            Circle2D.Builder.Create(2f), motion, collisionLayer: 1, collisionMask: uint.MaxValue);
 
         Assert.Equal(BodyMotionType2D.Kinematic, entity.Body.MotionType);
         Assert.Equal(new Vector2(10f, 0f), entity.WorldObject.Transform.Position);

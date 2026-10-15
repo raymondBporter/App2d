@@ -38,18 +38,18 @@ public sealed class Rect2DBoundsTests
         var expected = new Rect2D(new(-2, -3), new(4, 5));
         IShape2D[] shapes =
         [
-            new Rectangle2D(expected.Min, expected.Max),
-            new AxisAlignedRectangle2D(expected.Min, expected.Max),
-            new Capsule2D(new(1, 0), new(1, 2), 3),
-            new ConvexPolygon2D([new(-2, -3), new(4, -3), new(1, 5)]),
-            new CompositeShape2D([new Circle2D(1, new(-1, -2)), new Rectangle2D(new(1, 2), new(4, 5))]),
+            Rectangle2D.Builder.Create(expected.Min, expected.Max),
+            AxisAlignedRectangle2D.Builder.Create(expected.Min, expected.Max),
+            Capsule2D.Builder.Create(new(1, 0), new(1, 2), 3),
+            ConvexPolygon2D.Builder.Create([new(-2, -3), new(4, -3), new(1, 5)]),
+            CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-1, -2)), Rectangle2D.Builder.Create(new(1, 2), new(4, 5))]),
         ];
         foreach (var shape in shapes)
         {
             Assert.Equal(expected, ShapeBounds2D.Calculate(shape));
             Assert.Equal(expected, new SpatialObject2D(shape).LocalBounds);
         }
-        Assert.Equal(new Rect2D(new(-1, 0), new(5, 6)), ShapeBounds2D.Calculate(new Circle2D(3, new(2, 3))));
+        Assert.Equal(new Rect2D(new(-1, 0), new(5, 6)), ShapeBounds2D.Calculate(Circle2D.Builder.Create(3, new(2, 3))));
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public sealed class Rect2DBoundsTests
     [Fact]
     public void RotatedCircleBoundsRemainConservativeUntilShapeSpecificWorldBoundsAreAdded()
     {
-        var circle = new Circle2D(2, new(1, -3));
+        var circle = Circle2D.Builder.Create(2, new(1, -3));
         var item = new SpatialObject2D(circle);
         item.Transform.Rotation = MathF.PI / 4;
         item.Transform.Position = new(10, 20);
@@ -123,7 +123,7 @@ public sealed class Rect2DBoundsTests
     [Fact]
     public void HalfSpacesStayUnboundedThroughAllTransformPaths()
     {
-        var item = new SpatialObject2D(new HalfSpace2D(Vector2.UnitY, 0));
+        var item = new SpatialObject2D(HalfSpace2D.Builder.Create(Vector2.UnitY, 0));
         Assert.Equal(Rect2D.Unbounded, item.LocalBounds);
         Assert.Equal(Rect2D.Unbounded, item.WorldBounds);
         item.Transform.Position = new(100, -25);

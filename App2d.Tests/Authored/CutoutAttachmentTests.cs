@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Shapes;
 using App2d.Core.Characters.Authored;
@@ -14,7 +15,7 @@ public sealed class CutoutAttachmentTests
         Id = "membrane", Name = "Membrane",
         Controls = [new() { Id = "root" }, new() { Id = "tip", Rest = new(1, 0, .2f) }, new() { Id = "direction", Parent = "tip", Rest = new(1, 1, .2f) }],
         Parts = [new() { Id = "membrane", Kind = PuppetPartKinds.Polygon, A = "root", Width = 1, Height = 1,
-            Geometry = new SimplePolygonShapeDefinition2D { Vertices = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] },
+            Geometry = new SimplePolygon2D.Builder { Vertices = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] },
             Material = new() { Fill = "#fff8e7", Outline = new() },
             Bindings = [new() { Point = 1, Control = "tip", Toward = "direction" }, new() { Point = 2, Control = "tip", Toward = "direction" }],
             Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(.6f, .2f), new(.9f, .2f), new(.9f, .8f), new(.6f, .8f)] }] }]
@@ -25,18 +26,18 @@ public sealed class CutoutAttachmentTests
     {
         var model = Model(); var resolved = ResolvedModel.From(model); var part = model.Parts[0];
         var rest = PoseEvaluator.Rest(resolved);
-        var bound = PartGeometry.Contour(part, rest.World, id => resolved.Rest[id]);
-        var rigid = PartGeometry.Contour(part with { Bindings = null }, rest.World);
+        var bound = PartContours2D.Contour(part, rest.World, id => resolved.Rest[id]);
+        var rigid = PartContours2D.Contour(part with { Bindings = null }, rest.World);
         Assert.Equal(rigid, bound);
         var clip = ClipAuthoring.New(resolved, "fold", "Fold");
         ClipAuthoring.SetKey(clip, new("translate", "tip"), 0, new(1, 0, .3f));
         ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3.Zero, MathF.PI / 2);
-        var pose = PoseEvaluator.Sample(resolved, clip, 0); bound = PartGeometry.Contour(part, pose.World, id => resolved.Rest[id]);
+        var pose = PoseEvaluator.Sample(resolved, clip, 0); bound = PartContours2D.Contour(part, pose.World, id => resolved.Rest[id]);
         Assert.True(Vector3.Distance(new(2, 0, .3f), bound[1]) < 1e-5f);
         Assert.True(Vector3.Distance(new(1, 0, .3f), bound[2]) < 1e-5f);
         Assert.Equal(rigid[0], bound[0]);
-        var original = PartGeometry.ArtworkPoint(part, 2, bound[2], pose.World, id => resolved.Rest[id]);
-        Assert.True(Vector2.Distance(PartGeometry.CutoutPoints(part)[2].XY, original.XY) < 1e-5f);
+        var original = PartGeometryAuthoring2D.ArtworkPoint(part, 2, bound[2], pose.World, id => resolved.Rest[id]);
+        Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[2].XY, original.XY) < 1e-5f);
     }
 
     [Fact]
@@ -48,8 +49,8 @@ public sealed class CutoutAttachmentTests
         var pose = PoseEvaluator.Sample(resolved, clip, 0); var drawing = new PuppetDrawing(); drawing.Build(resolved, pose);
         Assert.True(drawing.Mesh.Count > 0);
         foreach (var vertex in drawing.Mesh.Vertices) Assert.True(float.IsFinite(vertex.Position.X));
-        Assert.True(PartGeometry.Distance(part, pose.World, new(-.25f, .5f, 0), id => resolved.Rest[id]) <= 1);
-        Assert.True(PartGeometry.Distance(part, pose.World, new(.75f, .5f, 0), id => resolved.Rest[id]) > 1);
+        Assert.True(PartPicking2D.Distance(part, pose.World, new(-.25f, .5f, 0), id => resolved.Rest[id]) <= 1);
+        Assert.True(PartPicking2D.Distance(part, pose.World, new(.75f, .5f, 0), id => resolved.Rest[id]) > 1);
         // Paint follows the reflected membrane rather than remaining in the old artwork rectangle.
         foreach (var vertex in drawing.Mesh.Vertices)
             if (vertex.Color.R == 255 && vertex.Color.G == 0) Assert.InRange(vertex.Position.X, -.46f, -.29f);
@@ -63,7 +64,7 @@ public sealed class CutoutAttachmentTests
         ClipAuthoring.SetKey(clip, new("translate", "tip"), 0, new(-.75f, .75f, 0));
         ClipAuthoring.SetKey(clip, new("rotate", "tip"), 0, Vector3.Zero, MathF.PI);
         var pose = PoseEvaluator.Sample(resolved, clip, 0);
-        Assert.True(PartGeometry.Distance(part, pose.World, new(.12f, .5f, 0), id => resolved.Rest[id]) <= 1);
+        Assert.True(PartPicking2D.Distance(part, pose.World, new(.12f, .5f, 0), id => resolved.Rest[id]) <= 1);
     }
 
     [Fact]
@@ -90,11 +91,11 @@ public sealed class CutoutAttachmentTests
         var current = Matrix3x2.CreateScale(-.8f, 1.3f) * Matrix3x2.CreateRotation(-.6f);
         Vector3 World(string id) => id switch { "tip" => new(2, 0, 0), "direction" => new(2, 1, 0), _ => Vector3.Zero };
         Vector3 Rest(string id) => id switch { "tip" => new(1, 0, 0), "direction" => new(1, 1, 0), _ => Vector3.Zero };
-        var contour = PartGeometry.Contour(part, World, transform: _ => current, rest: Rest, restTransform: _ => rest);
+        var contour = PartContours2D.Contour(part, World, transform: _ => current, rest: Rest, restTransform: _ => rest);
         for (var i = 0; i < contour.Count; i++)
         {
-            var point = PartGeometry.ArtworkPoint(part, i, contour[i], World, Rest, transform: _ => current, restTransform: _ => rest);
-            Assert.True(Vector2.Distance(PartGeometry.CutoutPoints(part)[i].XY, point.XY) < 1e-5f);
+            var point = PartGeometryAuthoring2D.ArtworkPoint(part, i, contour[i], World, Rest, transform: _ => current, restTransform: _ => rest);
+            Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[i].XY, point.XY) < 1e-5f);
         }
     }
 
@@ -143,7 +144,7 @@ public sealed class CutoutAttachmentTests
         float Span(MotionClip clip, float time)
         {
             var pose = PoseEvaluator.Sample(resolved, clip, time);
-            var points = model.Parts.Where(p => p.Id.EndsWith("-wing")).SelectMany(p => PartGeometry.Contour(p, pose.World, id => resolved.Rest[id])).ToList();
+            var points = model.Parts.Where(p => p.Id.EndsWith("-wing")).SelectMany(p => PartContours2D.Contour(p, pose.World, id => resolved.Rest[id])).ToList();
             return points.Max(p => p.X) - points.Min(p => p.X);
         }
         var hover = clips.Single(c => c.Id.EndsWith("-hover")); var fold = clips.Single(c => c.Id.EndsWith("-fold"));

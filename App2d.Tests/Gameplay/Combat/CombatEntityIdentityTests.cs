@@ -140,7 +140,7 @@ public sealed class CombatEntityIdentityTests
 
     private PatrolEnemy2D CreateEnemy()
     {
-        var shape = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(30f)));
+        var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(30f)));
         var body = _physics.AddBody(shape, BodyMotionType2D.Dynamic);
         body.CollisionLayer = EnemyLayer;
         return new PatrolEnemy2D(EntityId2D.Create(), shape, body, -100f, 100f, 10f, 10);

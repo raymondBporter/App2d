@@ -1,3 +1,4 @@
+using App2d.Core.Spatial;
 using App2d.Core;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Collision.Queries;
@@ -10,8 +11,8 @@ namespace App2d.Tests.Geometry;
 public sealed class Triangle2DTests
 {
     private static Triangle2D RightTriangle(bool reversed = false) => reversed
-        ? new(new(0, 0), new(0, 3), new(4, 0))
-        : new(new(0, 0), new(4, 0), new(0, 3));
+        ? Triangle2D.Builder.Create(new(0, 0), new(0, 3), new(4, 0))
+        : Triangle2D.Builder.Create(new(0, 0), new(4, 0), new(0, 3));
 
     [Theory]
     [InlineData(false)]
@@ -50,11 +51,11 @@ public sealed class Triangle2DTests
     [Fact]
     public void InvalidOrDegenerateTrianglesAreRejected()
     {
-        Assert.Throws<ArgumentException>(() => new Triangle2D(default, Vector2.One, new(2, 2)));
-        Assert.Throws<ArgumentException>(() => new Triangle2D(default, default, Vector2.UnitX));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(new(float.NaN, 0), Vector2.UnitX, Vector2.UnitY));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(default, new(float.PositiveInfinity, 0), Vector2.UnitY));
-        Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(default, new(float.MaxValue, 0), new(0, float.MaxValue)));
+        Assert.Throws<ArgumentException>(() => Triangle2D.Builder.Create(default, Vector2.One, new(2, 2)));
+        Assert.Throws<ArgumentException>(() => Triangle2D.Builder.Create(default, default, Vector2.UnitX));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(new(float.NaN, 0), Vector2.UnitX, Vector2.UnitY));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.PositiveInfinity, 0), Vector2.UnitY));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Triangle2D.Builder.Create(default, new(float.MaxValue, 0), new(0, float.MaxValue)));
         Assert.Throws<ArgumentOutOfRangeException>(() => RightTriangle().ContainsPoint(new(float.NaN, 0)));
         Assert.Throws<ArgumentOutOfRangeException>(() => RightTriangle().GetSupportPoint(new(float.NaN, 0)));
     }
@@ -65,17 +66,17 @@ public sealed class Triangle2DTests
     public void RaycastsHitTransformedTrianglesAndRespectTheNearestSurface(bool reversed)
     {
         var local = reversed
-            ? new Triangle2D(new(0, -1), new(0, 1), new(2, -1))
-            : new Triangle2D(new(0, -1), new(2, -1), new(0, 1));
+            ? Triangle2D.Builder.Create(new(0, -1), new(0, 1), new(2, -1))
+            : Triangle2D.Builder.Create(new(0, -1), new(2, -1), new(0, 1));
         var item = new SpatialObject2D(local);
         item.Transform.Position = new(10, 0);
-        Assert.True(RayIntersection2D.TryIntersect(new Ray2D(default, Vector2.UnitX), item, 20, out var hit));
+        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2.UnitX), item, 20, out var hit));
         Assert.Equal(10f, hit.Distance, 5);
         Assert.Equal(new Vector2(10, 0), hit.Point);
         Assert.Equal(-Vector2.UnitX, hit.Normal);
-        Assert.False(RayIntersection2D.TryIntersect(new Ray2D(default, Vector2.UnitX), item, 9, out _));
+        Assert.False(SpatialRaycast2D.TryIntersect(new Ray2D(default, Vector2.UnitX), item, 9, out _));
         item.Transform.Rotation = MathF.PI / 2;
-        Assert.True(RayIntersection2D.TryIntersect(new Ray2D(new(10, -5), Vector2.UnitY), item, 20, out _));
+        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(10, -5), Vector2.UnitY), item, 20, out _));
     }
 
     [Fact]
@@ -84,13 +85,13 @@ public sealed class Triangle2DTests
         var triangle = new SpatialObject2D(RightTriangle());
         IShape2D[] others =
         [
-            new Circle2D(.4f, new(1, 1)),
-            new Capsule2D(new(.5f, .5f), new(2, .5f), .3f),
-            new Rectangle2D(new(.5f, .5f), new(2, 1.5f)),
-            new Triangle2D(new(.5f, .5f), new(2, .5f), new(.5f, 2)),
-            new ConvexPolygon2D([new(.5f, .5f), new(2, .5f), new(2, 1.5f), new(.5f, 1.5f)]),
-            new HalfSpace2D(Vector2.UnitY, 1),
-            new CompositeShape2D([new Circle2D(.4f, new(1, 1)), new Circle2D(.4f, new(10, 10))]),
+            Circle2D.Builder.Create(.4f, new(1, 1)),
+            Capsule2D.Builder.Create(new(.5f, .5f), new(2, .5f), .3f),
+            Rectangle2D.Builder.Create(new(.5f, .5f), new(2, 1.5f)),
+            Triangle2D.Builder.Create(new(.5f, .5f), new(2, .5f), new(.5f, 2)),
+            ConvexPolygon2D.Builder.Create([new(.5f, .5f), new(2, .5f), new(2, 1.5f), new(.5f, 1.5f)]),
+            HalfSpace2D.Builder.Create(Vector2.UnitY, 1),
+            CompositeShape2D.Builder.Create([Circle2D.Builder.Create(.4f, new(1, 1)), Circle2D.Builder.Create(.4f, new(10, 10))]),
         ];
         foreach (var shape in others)
         {

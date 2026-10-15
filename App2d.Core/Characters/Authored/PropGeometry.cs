@@ -33,7 +33,7 @@ public static class PropGeometry
         var area = PolygonGeometry2D.SignedAreaTwiceDouble([.. points.Select(p => p.XY)]);
         if (area < 0) points.Reverse();
         TriangleMesh2D triangles;
-        try { triangles = TriangleMesh2D.TriangulateSimplePolygon(points.Select(p => p.XY), 1e-8); }
+        try { triangles = PolygonTriangulation2D.Triangulate(points.Select(p => p.XY), 1e-8); }
         catch (ArgumentException ex) { throw new InvalidDataException("The prop outline must be simple and have nonzero area.", ex); }
         var n = points.Count; var mesh = new PropSolid { Material = new() { Fill = fill, Outline = new() }, Outline = [.. points], Thickness = thickness };
         mesh.Vertices.AddRange(points.Select(p => p with { Z = p.Z - thickness / 2 }));

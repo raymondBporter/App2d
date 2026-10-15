@@ -54,7 +54,7 @@ public sealed class RigConstraintTests
         var local = Rotation2D.Apply(new(.2f, .3f), .3f);
         TestModels.Near(new(1 + local.X, 1 + local.Y, .5f), pose.World("payload"));
         var part = model.Parts[0];
-        var frame = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
+        var frame = PartAttachment2D.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
         TestModels.Near(new(0, .5f, 0), frame.Origin);
         var socket = new ActorPose(pose, Vector2.Zero, 1).Socket(model.Sockets[0]);
         var offset = Rotation2D.Apply(new(.2f, 0), .3f);

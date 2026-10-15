@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -36,11 +37,12 @@ internal sealed class RigDocument2D
         return shape;
     }
 
-    public static Matrix3x2 GetWorldTransform(RigBone2D bone)
+    public static Matrix3x2 GetWorldTransform(RigBone2D bone) => GetWorldFrame(bone).Matrix;
+
+    public static Frame2D GetWorldFrame(RigBone2D bone)
     {
-        var local = Matrix3x2.CreateRotation(MathF.PI / 180f * bone.AngleDegrees) *
-            Matrix3x2.CreateTranslation(bone.LocalX, bone.LocalY);
-        return bone.Parent is null ? local : local * GetWorldTransform(bone.Parent);
+        var local = Frame2D.FromRotation(MathF.PI / 180f * bone.AngleDegrees, new(bone.LocalX, bone.LocalY));
+        return bone.Parent is null ? local : local.Then(GetWorldFrame(bone.Parent));
     }
 
     public bool Remove(object item)

@@ -29,7 +29,7 @@ public static class PuppetTemplates
         puppet.Parts.Add(new() { Id = "head", Kind = PuppetPartKinds.Ellipse, A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
         foreach (var part in puppet.Parts)
         {
-            part.Geometry = PartGeometry.FromPreset(part);
+            part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
             part.Material ??= PuppetPartKinds.IsStroke(part.Kind) ? new RenderMaterialDefinition2D()
                 : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         }

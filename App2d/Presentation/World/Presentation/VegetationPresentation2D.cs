@@ -1,3 +1,5 @@
+using App2d.Presentation.World.Vegetation;
+using App2d.Gameplay.World.Vegetation;
 using App2d.Contracts.World;
 using App2d.Core.Geometry;
 using App2d.Core.Mathematics;

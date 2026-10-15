@@ -21,7 +21,7 @@ public sealed class BabyTriceratopsTests
     {
         Assert.True(Catalog.Errors.Count == 0, string.Join("\n", Catalog.Errors));
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
-        var floor = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(floorWidth, 20)));
+        var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(floorWidth, 20)));
         floor.Transform.Position = new(0, -10);
         physics.AddBody(floor, BodyMotionType2D.Static).CollisionLayer = 1;
         var enemy = new AuthoredEntityEnemy2D(EntityId2D.Create(), Catalog.Entities["baby-triceratops"], physics, new(0, 19), 1, 4);
@@ -85,7 +85,7 @@ public sealed class BabyTriceratopsTests
         var (enemy, physics, player) = Create(floorWidth: wall ? 1000 : 80);
         if (wall)
         {
-            var obstacle = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(12, 120)));
+            var obstacle = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(12, 120)));
             obstacle.Transform.Position = new(80, 60);
             physics.AddBody(obstacle, BodyMotionType2D.Static).CollisionLayer = 1;
         }

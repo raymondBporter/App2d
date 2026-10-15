@@ -30,7 +30,7 @@ public sealed class AuthoredHero2D
         {
             if (swing.Hits is not [{ Window: { Socket: null, Prop: null } } hit])
                 throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window, fixed to the actor (no socket or prop): the player's sword hit is a box on the player.");
-            _shapes[swing.Id] = WorldShape2D.Scaled(hit.Shape, WorldUnitsPerModelUnit);
+            _shapes[swing.Id] = ShapeTransforms2D.Scaled(hit.Shape, WorldUnitsPerModelUnit);
         }
     }
 

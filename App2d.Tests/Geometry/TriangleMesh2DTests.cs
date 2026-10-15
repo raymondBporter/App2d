@@ -19,7 +19,7 @@ public sealed class TriangleMesh2DTests
     public void EarClippingPreservesAConcaveOutlineInEitherWinding(bool reverse)
     {
         var points = reverse ? [.. Notched.Reverse()] : Notched;
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(points);
+        var mesh = PolygonTriangulation2D.Triangulate(points);
         Assert.Equal(4, mesh.TriangleCount);
         Assert.Equal(3f, mesh.Area, 5);
         Assert.Equal(new Vector2(0, 0), mesh.Bounds.Min);
@@ -40,14 +40,14 @@ public sealed class TriangleMesh2DTests
         Assert.Throws<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 1]));
         Assert.Throws<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 1, 9]));
         Assert.Throws<ArgumentException>(() => new TriangleMesh2D(Notched, [0, 0, 1]));
-        Assert.Throws<ArgumentException>(() => TriangleMesh2D.TriangulateSimplePolygon(
+        Assert.Throws<ArgumentException>(() => PolygonTriangulation2D.Triangulate(
             [new Vector2(0, 0), new Vector2(1, 1), new Vector2(0, 1), new Vector2(1, 0)]));
     }
 
     [Fact]
     public void TinyValidPolygonsDoNotDependOnAWorldScaleEpsilon()
     {
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(
+        var mesh = PolygonTriangulation2D.Triangulate(
             [new Vector2(0, 0), new Vector2(1e-5f, 0), new Vector2(1e-5f, 1e-5f), new Vector2(0, 1e-5f)]);
         Assert.InRange(mesh.Area, .9e-10f, 1.1e-10f);
         Assert.True(mesh.ContainsPoint(new(5e-6f, 5e-6f)));
@@ -57,7 +57,7 @@ public sealed class TriangleMesh2DTests
     [Fact]
     public void EdgeToleranceCanIncludeAPointJustOutsideTheMeshBounds()
     {
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(
+        var mesh = PolygonTriangulation2D.Triangulate(
             [new Vector2(0, 0), new Vector2(1, 0), new Vector2(0, 1)]);
         Assert.False(mesh.ContainsPoint(new(1.0001f, 0)));
         Assert.True(mesh.ContainsPoint(new(1.0001f, 0), .001));
@@ -76,11 +76,11 @@ public sealed class TriangleMesh2DTests
     [Fact]
     public void ConcaveMeshTrianglesWorkAsACompositeCollisionShape()
     {
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(Notched);
+        var mesh = PolygonTriangulation2D.Triangulate(Notched);
         var shape = mesh.ToCompositeShape();
         var world = new SpatialObject2D(shape);
-        var solidPoint = new SpatialObject2D(new Circle2D(.1f, new(.5f, 1.5f)));
-        var notch = new SpatialObject2D(new Circle2D(.1f, new(1.5f, 1.5f)));
+        var solidPoint = new SpatialObject2D(Circle2D.Builder.Create(.1f, new(.5f, 1.5f)));
+        var notch = new SpatialObject2D(Circle2D.Builder.Create(.1f, new(1.5f, 1.5f)));
 
         Assert.Equal(mesh.Area, shape.Area, 5);
         Assert.True(ShapeCollision2D.TryGetContact(world, solidPoint, out _));

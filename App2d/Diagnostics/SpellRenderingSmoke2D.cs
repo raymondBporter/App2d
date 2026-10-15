@@ -43,11 +43,11 @@ internal static class SpellRenderingSmoke2D
             CombatFaction2D.Player, new CombatSystem2D(collision, registry), hero: hero,
             muzzle: facing => hero.Muzzle(facing, person.IsWallGripping), health: person.Health);
         person.AttachActions(arsenal);
-        var floor = physics.AddBody(new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(1000, 20))), BodyMotionType2D.Static);
+        var floor = physics.AddBody(new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(1000, 20))), BodyMotionType2D.Static);
         floor.WorldObject.Transform.Position = new(0, person.WorldObject.WorldBounds.Bottom - 10);
         floor.CollisionLayer = 1; floor.CollisionMask = 2;
         var scene = new Scene2D();
-        var ground = new WorldObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(1000, 20)), new SolidColorShader(new Color(44, 64, 79)));
+        var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(1000, 20)), new SolidColorShader(new Color(44, 64, 79)));
         ground.Transform.Position = floor.WorldObject.Transform.Position; scene.Add(ground);
         var audio = new SilentSounds();
         using var player = new AuthoredPersonPresentation2D(scene, moves, metrics);

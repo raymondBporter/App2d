@@ -76,7 +76,7 @@ public sealed class GameRenderPassTests
         public void AttachWorld(PhysicsWorld2D world) => AttachPhysicsWorld(world);
 
         public TestGame() => Scene.Add(new WorldObject2D(
-            Rectangle2D.FromSize(new Vector2(512)), new SolidColorShader(XnaColor.Red)));
+            Rectangle2D.Builder.CreateFromSize(new Vector2(512)), new SolidColorShader(XnaColor.Red)));
 
         public override void Update(FrameTime time, InputState input) { }
 

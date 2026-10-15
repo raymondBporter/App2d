@@ -35,7 +35,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
         _punch = new Attack(
             ids.Allocate(),
             UnarmedAttackKind2D.Punch,
-            AxisAlignedRectangle2D.FromSize(new Vector2(48f, 48f)),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(48f, 48f)),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.28f,
                 damageStartSeconds: 0.07f,
@@ -48,7 +48,7 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
         _kick = new Attack(
             ids.Allocate(),
             UnarmedAttackKind2D.Kick,
-            AxisAlignedRectangle2D.FromSize(new Vector2(66f, 42f)),
+            AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(66f, 42f)),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.42f,
                 damageStartSeconds: 0.14f,

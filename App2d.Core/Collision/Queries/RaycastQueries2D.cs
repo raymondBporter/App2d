@@ -1,3 +1,4 @@
+using App2d.Core.Spatial;
 using App2d.Core.Geometry;
 using App2d.Core.Validation;
 
@@ -23,7 +24,7 @@ public static class RaycastQueries2D
         foreach (var worldObject in worldObjects)
         {
             if (filter is not null && !filter(worldObject) ||
-                !RayIntersection2D.TryIntersect(
+                !SpatialRaycast2D.TryIntersect(
                     ray,
                     worldObject,
                     nearestDistance,
@@ -58,7 +59,7 @@ public static class RaycastQueries2D
         foreach (var worldObject in worldObjects)
         {
             if (filter is not null && !filter(worldObject) ||
-                !RayIntersection2D.TryIntersect(
+                !SpatialRaycast2D.TryIntersect(
                     ray,
                     worldObject,
                     maxDistance,

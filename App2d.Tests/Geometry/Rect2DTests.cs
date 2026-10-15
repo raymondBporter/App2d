@@ -15,10 +15,10 @@ public sealed class Rect2DTests
         var size = new Size2D(6f, 10f);
         Assert.Equal(Sample, Rect2D.FromSize(size, new(-1f, 3f)));
         Assert.Equal(Sample, Rect2D.FromMinAndSize(Sample.Min, size));
-        Assert.Equal(Sample, Rectangle2D.FromSize(size, new(-1f, 3f)).ToRect());
-        Assert.Equal(Sample, Rectangle2D.FromMinAndSize(Sample.Min, size).ToRect());
-        Assert.Equal(Sample, AxisAlignedRectangle2D.FromSize(size, new(-1f, 3f)).ToRect());
-        Assert.Equal(Sample, AxisAlignedRectangle2D.FromMinAndSize(Sample.Min, size).ToRect());
+        Assert.Equal(Sample, Rectangle2D.Builder.CreateFromSize(size, new(-1f, 3f)).ToRect());
+        Assert.Equal(Sample, Rectangle2D.Builder.CreateFromMinAndSize(Sample.Min, size).ToRect());
+        Assert.Equal(Sample, AxisAlignedRectangle2D.Builder.CreateFromSize(size, new(-1f, 3f)).ToRect());
+        Assert.Equal(Sample, AxisAlignedRectangle2D.Builder.CreateFromMinAndSize(Sample.Min, size).ToRect());
         Assert.True(Sample.TryGetPositiveSize(out var measured));
         Assert.Equal(size, measured);
         Assert.False(default(Rect2D).TryGetPositiveSize(out _));
@@ -70,8 +70,8 @@ public sealed class Rect2DTests
     public void BoundsAndBothRectangleShapesAdoptTheContractInTheirOwnCoordinateSpace()
     {
         var bounds = new Rect2D(Sample.Min, Sample.Max);
-        var shape = new Rectangle2D(Sample.Min, Sample.Max);
-        var axisAligned = new AxisAlignedRectangle2D(Sample.Min, Sample.Max);
+        var shape = Rectangle2D.Builder.Create(Sample.Min, Sample.Max);
+        var axisAligned = AxisAlignedRectangle2D.Builder.Create(Sample.Min, Sample.Max);
         Assert.Equal(6, bounds.Width);
         Assert.Equal(10, shape.Height);
         Assert.Equal(new Vector2(2, 8), axisAligned.TopRight);

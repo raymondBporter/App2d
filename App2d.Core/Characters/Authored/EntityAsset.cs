@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry;
 using App2d.Core.Shapes;
 using System.Diagnostics.CodeAnalysis;
@@ -29,7 +31,7 @@ public sealed record HitWindow
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     /// <summary>The region in the anchor frame; any convex shape definition.</summary>
-    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.3f, .3f));
+    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(new(.3f, .3f));
     public int Damage { get; set; } = 1;
     /// <summary>Played where the hit lands; null plays the game's default impact.</summary>
     public string? Sound { get; set; }
@@ -43,7 +45,7 @@ public sealed record ProjectileDef
 {
     public float Speed { get; set; } = 8;
     /// <summary>The bolt's shape around its position; its bounds size the bolt in flight.</summary>
-    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.16f, .08f));
+    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(new(.16f, .08f));
     public int Damage { get; set; } = 1;
     public float Lifetime { get; set; } = 3;
     /// <summary>Downward acceleration in model units/s²; zero preserves straight shots.</summary>
@@ -121,14 +123,14 @@ public sealed record ControllerConfig
 /// <summary>The stable body-local movement shape: feet at the origin, +X toward facing. Animation never changes it.</summary>
 public sealed record MovementDef
 {
-    public ShapeDefinition2D Shape { get; set; } = Box(.55f, 1.9f);
+    public ShapeBuilder2D Shape { get; set; } = Box(.55f, 1.9f);
 
     /// <summary>A rectangle standing on the feet, offset sideways toward facing.</summary>
     /// <param name="width">The finite, positive width.</param>
     /// <param name="height">The finite, positive height.</param>
     /// <param name="offsetX">How far the box centre sits ahead of the feet.</param>
     /// <returns>A rectangle definition from the feet up to the height.</returns>
-    public static RectangleShapeDefinition2D Box(float width, float height, float offsetX = 0) => RectangleShapeDefinition2D.FromSize(new(width, height), new(offsetX, height / 2));
+    public static Rectangle2D.Builder Box(float width, float height, float offsetX = 0) => Rectangle2D.Builder.FromSize(new(width, height), new(offsetX, height / 2));
 }
 
 public sealed record HurtOverride
@@ -155,7 +157,7 @@ public sealed record GuardDef
 {
     public string Prop { get; set; } = "";
     /// <summary>The shield region in the prop's anchor frame.</summary>
-    public ShapeDefinition2D Shape { get; set; } = RectangleShapeDefinition2D.FromSize(new(.9f, 1.4f));
+    public ShapeBuilder2D Shape { get; set; } = Rectangle2D.Builder.FromSize(new(.9f, 1.4f));
 }
 
 /// <summary>
@@ -191,7 +193,7 @@ public sealed class EntityAsset
     private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
 
     /// <summary>A convex shape definition that builds and fits the authored limits: extents between .01 and the size limit, centre within 100 units.</summary>
-    private static void CheckShape(ShapeDefinition2D? shape, string field, float sizeLimit = 100)
+    private static void CheckShape(ShapeBuilder2D? shape, string field, float sizeLimit = 100)
     {
         Require(shape is not null, $"{field}: a shape is required.");
         IShape2D built;

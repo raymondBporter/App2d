@@ -192,7 +192,7 @@ internal sealed class SideScrollerTerrainTileset2D
 
     private static WorldObject2D CreateVisual(Vector2 size, Vector2 position, IShader2D shader)
     {
-        var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(size), shader);
+        var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size), shader);
         visual.Transform.Position = position;
         return visual;
     }

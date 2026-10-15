@@ -94,8 +94,8 @@ public sealed class Gjk2DTests
         var random = new Random(9872);
         for (var iteration = 0; iteration < 80; iteration++)
         {
-            var first = new Ellipse2D(new(.4f + 3f * (float)random.NextDouble(), .4f + 3f * (float)random.NextDouble()));
-            var second = new Ellipse2D(new(.4f + 3f * (float)random.NextDouble(), .4f + 3f * (float)random.NextDouble()));
+            var first = Ellipse2D.Builder.Create(new(.4f + 3f * (float)random.NextDouble(), .4f + 3f * (float)random.NextDouble()));
+            var second = Ellipse2D.Builder.Create(new(.4f + 3f * (float)random.NextDouble(), .4f + 3f * (float)random.NextDouble()));
             var firstPose = Similarity2D.FromAxis(Vector2.Zero, Direction(random), mirror: iteration % 2 == 0, scale: .8f);
             var secondPose = Similarity2D.FromAxis(new((float)random.NextDouble() * 8f - 4f, (float)random.NextDouble() * 8f - 4f), Direction(random), scale: 1.2f);
             var query = ShapeConvexQuery2D.Query(first, firstPose, second, secondPose);
@@ -123,11 +123,11 @@ public sealed class Gjk2DTests
     [Fact]
     public void ThinContactBetweenOldEllipseSamplesIsDetected()
     {
-        var first = new Ellipse2D(new(3, 1));
+        var first = Ellipse2D.Builder.Create(new(3, 1));
         var angle = MathF.PI / 64;
         var boundary = new Vector2(3f * MathF.Cos(angle), MathF.Sin(angle));
         var normal = Vector2.Normalize(boundary / new Vector2(9, 1));
-        var second = new Ellipse2D(new(.0001f));
+        var second = Ellipse2D.Builder.Create(new(.0001f));
         var pose = Similarity2D.FromTranslation(boundary + normal * .00005f);
         var query = ShapeConvexQuery2D.Query(first, Similarity2D.Identity, second, pose);
         Assert.InRange(query.SignedDistance, -.000052f, -.000048f);
@@ -137,7 +137,7 @@ public sealed class Gjk2DTests
     public void CustomConvexSupportNeedsNoPerimeterRegistration()
     {
         var custom = new CustomDisk();
-        var circle = new Circle2D(.5f);
+        var circle = Circle2D.Builder.Create(.5f);
         var pose = Similarity2D.FromTranslation(new(1.2f, 0));
         var query = ShapeConvexQuery2D.Query(custom, Similarity2D.Identity, circle, pose);
         Assert.InRange(query.SignedDistance, -.30001f, -.29999f);

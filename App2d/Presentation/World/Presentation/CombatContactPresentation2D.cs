@@ -15,7 +15,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
     private const int MaximumBursts = 32;
     private static readonly float[] Angles = [-1.05f, -.45f, .12f, .72f, 2.7f];
     private static readonly float[] Lengths = [10, 17, 20, 12, 9];
-    private static readonly ConvexPolygon2D Shard = new([new(-.5f, 0), new(0, -.5f), new(.5f, 0), new(0, .5f)]);
+    private static readonly ConvexPolygon2D Shard = ConvexPolygon2D.Builder.Create([new(-.5f, 0), new(0, -.5f), new(.5f, 0), new(0, .5f)]);
 
     public bool Enabled { get; set; } = true;
 

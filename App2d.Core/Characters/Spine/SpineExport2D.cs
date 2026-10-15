@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using App2d.Core.IO;
@@ -288,14 +289,14 @@ public static class SpineExport2D
     }
     private static Matrix3x2 PartFrame(PuppetPart part, EvaluatedPose pose, float strokeLength)
     {
-        if (part.Geometry is App2d.Core.Curves.CurveDefinition2D)
+        if (part.Geometry is App2d.Core.Geometry.Authoring.CurveDefinition2D)
         {
             var a = pose.World(part.A); var b = pose.World(part.B!); var along = new Vector2(b.X - a.X, b.Y - a.Y);
             var right = along.LengthSquared() > 1e-12f ? new Vector2(along.Y, -along.X) / along.Length() : Vector2.UnitX;
             return new(right.X, right.Y, along.X / strokeLength, along.Y / strokeLength, a.X, a.Y);
         }
-        var frame = PartGeometry.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
-        return new(frame.Right.X, frame.Right.Y, frame.Up.X, frame.Up.Y, frame.Origin.X, frame.Origin.Y);
+        var frame = PartAttachment2D.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
+        return frame.Coordinates.Matrix;
     }
     private static float Depth(PuppetPart part, EvaluatedPose pose) => part.Depth + (pose.World(part.A).Z + (part.B is null ? pose.World(part.A).Z : pose.World(part.B).Z)) / 2;
     private static float[] SampleTimes(MotionClip clip, int fps) => [.. Enumerable.Range(0, (int)MathF.Ceiling(clip.Duration * fps) + 1).Select(i => MathF.Min(clip.Duration, (float)i / fps))

@@ -30,7 +30,7 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2.Zero, new Vector2(32f, 8f));
-        var actorObject = new SpatialObject2D(new Circle2D(5f));
+        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
         actorObject.Transform.Position = new Vector2(-18f, 8.5f);
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
@@ -48,7 +48,7 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2.Zero, new Vector2(32f, 8f));
-        var actorObject = new SpatialObject2D(new Circle2D(5f));
+        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
         actorObject.Transform.Position = new Vector2(0f, 10f);
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
@@ -66,7 +66,7 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         AddOneWayPlatform(world, Vector2.Zero, new Vector2(32f, 8f));
-        var actorObject = new SpatialObject2D(new Circle2D(5f));
+        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(5f));
         actorObject.Transform.Position = new Vector2(0f, -10f);
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
@@ -130,7 +130,7 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         world.Gravity = new Vector2(0f, -100f);
-        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(32f, 8f)));
+        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(32f, 8f)));
         var surface = world.AddBody(surfaceObject, BodyMotionType2D.Kinematic);
         surface.OneWaySurfaceNormal = Vector2.UnitY;
         surface.TransfersContactMotion = true;
@@ -155,12 +155,12 @@ public sealed class OneWayPlatform2DTests
     {
         var world = CreateWorld();
         var normal = Vector2.Normalize(new Vector2(-1f, 1f));
-        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(8f, 32f)));
+        var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(8f, 32f)));
         surfaceObject.Transform.Rotation = MathF.PI / 4f;
         var surface = world.AddBody(surfaceObject, BodyMotionType2D.Static);
         surface.OneWaySurfaceNormal = normal;
         surface.Restitution = 0f;
-        var actorObject = new SpatialObject2D(new Circle2D(2f));
+        var actorObject = new SpatialObject2D(Circle2D.Builder.Create(2f));
         actorObject.Transform.Position = normal * 20f;
         var actor = world.AddBody(actorObject, BodyMotionType2D.Dynamic);
         actor.Restitution = 0f;
@@ -187,7 +187,7 @@ public sealed class OneWayPlatform2DTests
         Vector2 size)
     {
         var platformObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.FromSize(size));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(size));
         platformObject.Transform.Position = position;
         var platform = world.AddBody(
             platformObject,
@@ -203,7 +203,7 @@ public sealed class OneWayPlatform2DTests
         Vector2 size)
     {
         var actorObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.FromSize(size));
+            AxisAlignedRectangle2D.Builder.CreateFromSize(size));
         actorObject.Transform.Position = position;
         var actor = world.AddBody(
             actorObject,

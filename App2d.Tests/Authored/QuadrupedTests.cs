@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -53,15 +54,15 @@ public sealed class QuadrupedTests
             Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }],
             Material = new() { Fill = "#fff8e7", Outline = new() }
         };
-        PartGeometry.SetPolygon(part, points);
+        PartGeometryAuthoring2D.SetPolygon(part, points);
         part.Validate(_ => true);
-        Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
-        Assert.True(PartGeometry.Distance(part, _ => Vector3.Zero, new(.8f, .8f, 0)) > 1);
-        var mesh = TriangleMesh2D.TriangulateSimplePolygon(points.Select(p => p.XY)); Assert.Equal(.51f, mesh.Area, 5);
+        Assert.True(PartPicking2D.Distance(part, _ => Vector3.Zero, new(.15f, .8f, 0)) <= 1);
+        Assert.True(PartPicking2D.Distance(part, _ => Vector3.Zero, new(.8f, .8f, 0)) > 1);
+        var mesh = PolygonTriangulation2D.Triangulate(points.Select(p => p.XY)); Assert.Equal(.51f, mesh.Area, 5);
         var drawing = new PuppetDrawing(); drawing.Build("#000000", 0, [part], _ => Vector3.Zero);
         foreach (var vertex in drawing.Mesh.Vertices)
             Assert.True(vertex.Position.X <= .30001f || vertex.Position.Y <= .30001f, "Fill or paint spills across the notch.");
-        Assert.Throws<InvalidDataException>(() => PartGeometry.SetPolygon(part, [new(0, 0), new(1, 1), new(0, 1), new(1, 0)]));
+        Assert.Throws<InvalidDataException>(() => PartGeometryAuthoring2D.SetPolygon(part, [new(0, 0), new(1, 1), new(0, 1), new(1, 0)]));
     }
 
     [Fact]

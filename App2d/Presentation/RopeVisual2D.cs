@@ -33,7 +33,7 @@ public sealed class RopeVisual2D
         for (var i = 0; i < linkCount; i++)
         {
             var link = new WorldObject2D(
-                new Capsule2D(Vector2.Zero, new Vector2(linkBaseLength, 0f), thickness),
+                Capsule2D.Builder.Create(Vector2.Zero, new Vector2(linkBaseLength, 0f), thickness),
                 shader)
             {
                 IsVisible = false

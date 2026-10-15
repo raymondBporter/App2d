@@ -12,9 +12,9 @@ public sealed class CompositeShapeTests
     private static readonly ShapeCollisionContactProvider2D Provider = new();
 
     // An L: vertical bar plus horizontal foot. The notch is the empty upper-right.
-    private static CompositeShape2D LShape() => new([
-        new Rectangle2D(new Vector2(-2f, -2f), new Vector2(0f, 2f)),
-        new Rectangle2D(new Vector2(0f, -2f), new Vector2(2f, 0f))]);
+    private static CompositeShape2D LShape() => CompositeShape2D.Builder.Create([
+        Rectangle2D.Builder.Create(new Vector2(-2f, -2f), new Vector2(0f, 2f)),
+        Rectangle2D.Builder.Create(new Vector2(0f, -2f), new Vector2(2f, 0f))]);
 
     private static SpatialObject2D At(IShape2D shape, Vector2 position)
     {
@@ -29,7 +29,7 @@ public sealed class CompositeShapeTests
         // A small circle sitting fully inside the L's notch must NOT collide —
         // a convex-hull treatment would wrongly report contact here.
         var l = At(LShape(), Vector2.Zero);
-        var circle = At(new Circle2D(0.5f), new Vector2(1.2f, 1.2f));
+        var circle = At(Circle2D.Builder.Create(0.5f), new Vector2(1.2f, 1.2f));
 
         Assert.False(Provider.TryGetContact(circle, l, out _));
     }
@@ -38,7 +38,7 @@ public sealed class CompositeShapeTests
     public void FootOfTheLCollides()
     {
         var l = At(LShape(), Vector2.Zero);
-        var circle = At(new Circle2D(0.5f), new Vector2(1.2f, -0.3f));
+        var circle = At(Circle2D.Builder.Create(0.5f), new Vector2(1.2f, -0.3f));
 
         Assert.True(Provider.TryGetContact(circle, l, out var contact));
         Assert.True(contact.PenetrationDepth > 0f);
@@ -57,9 +57,9 @@ public sealed class CompositeShapeTests
     [Fact]
     public void RaycastHitsTheNearestPart()
     {
-        var dumbbell = At(new CompositeShape2D([
-            new Circle2D(1f, new Vector2(-3f, 0f)),
-            new Circle2D(1f, new Vector2(3f, 0f))]), new Vector2(10f, 0f));
+        var dumbbell = At(CompositeShape2D.Builder.Create([
+            Circle2D.Builder.Create(1f, new Vector2(-3f, 0f)),
+            Circle2D.Builder.Create(1f, new Vector2(3f, 0f))]), new Vector2(10f, 0f));
 
         var found = new[] { dumbbell }.Raycast(new Ray2D(Vector2.Zero, Vector2.UnitX), 20f, out var hit);
 

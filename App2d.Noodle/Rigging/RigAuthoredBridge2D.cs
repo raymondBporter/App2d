@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Shapes;
@@ -63,14 +65,14 @@ internal static class RigAuthoredBridge2D
             Hidden = shape.Purpose == RigShapePurpose.Collision,
             Width = 1,
             Height = 1,
-            Geometry = ShapeDefinition2D.FromShape(WorldShape2D.Scaled((IConvexShape2D)shape.CreateGeometry(), UnitsPerPixel))
+            Geometry = ShapeBuilder2D.FromShape(ShapeTransforms2D.Scaled((IConvexShape2D)shape.CreateGeometry(), UnitsPerPixel))
         };
-        if (part.Geometry is RoundedRectangleShapeDefinition2D rounded)
+        if (part.Geometry is RoundedRectangle2D.Builder rounded)
         {
             part.Width = rounded.Max.X - rounded.Min.X;
             part.Height = rounded.Max.Y - rounded.Min.Y;
         }
-        PartGeometry.RestoreEditorFields(part);
+        PartGeometryAuthoring2D.RestoreEditorFields(part);
         return part;
     }
 }

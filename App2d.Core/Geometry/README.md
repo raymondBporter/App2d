@@ -16,6 +16,15 @@ Value types: `Rect2D` (the only axis-aligned box; `Unbounded` covers the plane),
 (anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `Interval<T>`, `Line2D`, `Ray2D`,
 `RayHit2D`, `IGeometry2D`.
 
+`IInterval<T>` supplies ordered scalar `Min`/`Max` endpoints. `Interval<T>`, authored `Limit` values
+and physics `ConstraintLimit1D` share `IntervalMath<T>` operations without converting structs to interfaces.
+The contract is closed and permits infinite endpoints; it does not impose domain-specific validation.
+`Length` is an endpoint difference, including for integer ranges; it is not an inclusive element count.
+Arguments enable convenient calls such as `limits.Contains(3f)` and `limits.Overlaps(new Interval<float>(2, 5))`.
+For queries where C# cannot infer the scalar from arguments, name it once: `IntervalMath<float>.Length(limits)`
+or `IntervalMath<float>.TryIntersect(limits, authoredLimit, out var shared)`.
+Rectangles expose `XInterval` and `YInterval` while retaining their existing vector storage.
+
 `GiantTree2D(root, settings, seed)` creates immutable, seeded tree-level geometry. `GiantTreeSettings2D`
 uses world units; `Branches` gives exact flat-topped platform bounds. `GiantTreeVisual2D` adds bark, moss,
 and foliage using a separate random stream. Changing foliage never moves a platform. The trunk is scenery;

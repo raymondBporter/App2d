@@ -154,7 +154,7 @@ public sealed class PersonFallTests
     {
         var collision = new CollisionSystem2D();
         var physics = new PhysicsWorld2D(collision) { Gravity = new(0, -Metrics.Gravity), MaxSubstepSeconds = Dt };
-        var floor = new SpatialObject2D(AxisAlignedRectangle2D.FromSize(new Vector2(4096, 32)));
+        var floor = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(4096, 32)));
         floor.Transform.Position = new(0, -16);
         var ground = physics.AddBody(floor, BodyMotionType2D.Static);
         ground.CollisionLayer = 1; ground.CollisionMask = 2;

@@ -87,7 +87,7 @@ public sealed class MeleeAttack2DTests
         new(
             EntityId2D.Create(),
             new SpatialObject2D(
-                AxisAlignedRectangle2D.FromSize(new Vector2(56f, 72f))),
+                AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(56f, 72f))),
             new MeleeAttackProfile2D(
                 durationSeconds: 0.35f,
                 damageStartSeconds: 0.10f,

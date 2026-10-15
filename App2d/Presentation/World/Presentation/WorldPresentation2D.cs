@@ -101,7 +101,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
             if (view is not null) scene.Remove(view.Visual);
             var color = platform.ColorArgb;
-            var visual = new WorldObject2D(AxisAlignedRectangle2D.FromSize(platform.Size),
+            var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(platform.Size),
                 new SolidColorShader(new XnaColor((byte)(color >> 16), (byte)(color >> 8), (byte)color, (byte)(color >> 24))));
             scene.Add(visual);
             _platforms[platform.Id] = new PlatformView(visual, platform.Size, color);
@@ -175,10 +175,10 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     private void CreateGoal(Vector2 position)
     {
-        var pole = new WorldObject2D(new Capsule2D(Vector2.Zero, new Vector2(0f, 190f), 5f),
+        var pole = new WorldObject2D(Capsule2D.Builder.Create(Vector2.Zero, new Vector2(0f, 190f), 5f),
             new SolidColorShader(new XnaColor(238, 242, 232)));
         pole.Transform.Position = position;
-        var flag = new WorldObject2D(new ConvexPolygon2D([
+        var flag = new WorldObject2D(ConvexPolygon2D.Builder.Create([
             Vector2.Zero, new Vector2(92f, -30f), new Vector2(0f, -60f)]),
             new SolidColorShader(new XnaColor(255, 79, 120)));
         flag.Transform.Position = position + new Vector2(0f, 185f);

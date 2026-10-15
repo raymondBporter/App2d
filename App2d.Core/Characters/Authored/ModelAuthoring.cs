@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -155,7 +157,7 @@ public static class ModelAuthoring
     {
         var part = new PuppetPart { Id = UniqueId(kind, model.Parts.Select(p => p.Id)), Kind = kind, A = a, B = b, Face = "none" };
         if (PuppetPartKinds.IsStroke(kind)) part.Width = model.LineWidth;
-        part.Geometry = PartGeometry.FromPreset(part);
+        part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
         part.Material = PuppetPartKinds.IsStroke(kind) ? new RenderMaterialDefinition2D()
             : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Parts.Add(part); model.Validate(); return part;
@@ -171,7 +173,7 @@ public static class ModelAuthoring
         part.Frame = boneId;
         part.OffsetX = bone.Length / 2;
         if (kind == PuppetPartKinds.Box) { part.Width = bone.Length; part.Height = .2f; }
-        part.Geometry = PartGeometry.FromPreset(part);
+        part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
         model.Validate();
         return part;
     }
@@ -192,8 +194,8 @@ public static class ModelAuthoring
 
         if (PuppetPartKinds.IsStroke(kind)) part.Frame = null;
         part.Kind = kind;
-        part.Geometry = PartGeometry.FromPreset(part);
-        if (part.Geometry is ShapeDefinition2D && part.Material is { Fill: null, Outline: null })
+        part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
+        if (part.Geometry is ShapeBuilder2D && part.Material is { Fill: null, Outline: null })
             part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Validate();
     }
@@ -201,18 +203,18 @@ public static class ModelAuthoring
     /// <summary>Edits the perimeter and remaps attachments in the same transaction. New points inherit their preceding attachment.</summary>
     public static void InsertCutoutPoint(PuppetPart part, int after)
     {
-        var points = new List<PuppetPoint>(PartGeometry.CutoutPoints(part));
+        var points = new List<PuppetPoint>(PartContours2D.CutoutPoints(part));
         points.Insert(after + 1, PuppetPoint.Lerp(points[after], points[(after + 1) % points.Count], .5f));
-        PartGeometry.CheckCutout(points);
+        PartGeometryAuthoring2D.CheckCutout(points);
         var bindings = (part.Bindings ?? []).Select(b => b with { Point = b.Point > after ? b.Point + 1 : b.Point }).ToList();
         if (part.Bindings?.FirstOrDefault(b => b.Point == after) is { } source) bindings.Add(source with { Point = after + 1 });
-        PartGeometry.SetPolygon(part, points); part.Bindings = bindings.Count > 0 ? bindings : null;
+        PartGeometryAuthoring2D.SetPolygon(part, points); part.Bindings = bindings.Count > 0 ? bindings : null;
     }
 
     public static void RemoveCutoutPoint(PuppetPart part, int index)
     {
-        var points = new List<PuppetPoint>(PartGeometry.CutoutPoints(part)); points.RemoveAt(index); PartGeometry.CheckCutout(points);
-        PartGeometry.SetPolygon(part, points);
+        var points = new List<PuppetPoint>(PartContours2D.CutoutPoints(part)); points.RemoveAt(index); PartGeometryAuthoring2D.CheckCutout(points);
+        PartGeometryAuthoring2D.SetPolygon(part, points);
         part.Bindings = part.Bindings?.Where(b => b.Point != index).Select(b => b with { Point = b.Point > index ? b.Point - 1 : b.Point }).ToList();
     }
 

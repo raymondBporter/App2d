@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Meshes;
 using System.Numerics;
 
@@ -8,7 +9,7 @@ public sealed class TriangleMeshBuilder3DTests
     [Fact]
     public void IndexedTwoDimensionalMeshCanBePlacedAndColoredInThreeDimensions()
     {
-        var source = TriangleMesh2D.TriangulateSimplePolygon(
+        var source = PolygonTriangulation2D.Triangulate(
             [new(0f, 0f), new(2f, 0f), new(2f, 2f), new(1f, 1f), new(0f, 2f)]);
         var builder = new TriangleMeshBuilder3D<(Vector3 Position, int Material), int>(
             (point, material, _) => (point, material), initialCapacity: 3);

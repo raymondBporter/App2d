@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Curves;
 using App2d.Core.Geometry;
@@ -14,7 +16,7 @@ public sealed class Vector2JsonConverterTests
     public static TheoryData<string> AuthoringOptions =>
     [
         nameof(GeometryDefinition2D),
-        nameof(ShapeDefinition2D),
+        nameof(ShapeBuilder2D),
         nameof(CurveDefinition2D),
         nameof(AuthoredJson.Options),
         nameof(AuthoredJson.Tolerant),
@@ -24,7 +26,7 @@ public sealed class Vector2JsonConverterTests
     private static JsonSerializerOptions GetOptions(string optionsName) => optionsName switch
     {
         nameof(GeometryDefinition2D) => GeometryDefinition2D.JsonOptions,
-        nameof(ShapeDefinition2D) => ShapeDefinition2D.JsonOptions,
+        nameof(ShapeBuilder2D) => ShapeBuilder2D.JsonOptions,
         nameof(CurveDefinition2D) => CurveDefinition2D.JsonOptions,
         nameof(AuthoredJson.Options) => AuthoredJson.Options,
         nameof(AuthoredJson.Tolerant) => AuthoredJson.Tolerant,

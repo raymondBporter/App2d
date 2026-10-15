@@ -167,7 +167,7 @@ internal sealed class RigidPuppetRenderer2D
             var nominalLength = GetNominalLength(asset.Bone);
             IShape2D shape = asset.Shape switch
             {
-                RigidPartShape2D.Circle => new Circle2D(asset.Radius),
+                RigidPartShape2D.Circle => Circle2D.Builder.Create(asset.Radius),
                 RigidPartShape2D.SplineLimb => SplineSilhouette2D.CreateLimb(
                     nominalLength,
                     asset.Radius,
@@ -175,7 +175,7 @@ internal sealed class RigidPuppetRenderer2D
                     asset.JointOverlap),
                 RigidPartShape2D.SplineTorso => SplineSilhouette2D.CreateTorso(nominalLength),
                 RigidPartShape2D.SplineHead => SplineSilhouette2D.CreateHead(asset.Radius),
-                _ => new Capsule2D(
+                _ => Capsule2D.Builder.Create(
                     new Vector2(-asset.JointOverlap, 0f),
                     new Vector2(nominalLength + asset.JointOverlap, 0f),
                     asset.Radius)

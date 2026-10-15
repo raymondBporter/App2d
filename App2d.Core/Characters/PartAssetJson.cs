@@ -33,7 +33,7 @@ internal static class PartAssetJson
         for (var i = 0; i < parts.Count; i++)
         {
             var entry = entries[i]!.AsObject();
-            entry["geometry"] = JsonNode.Parse(PartGeometry.Definition(parts[i]).ToGeometryJson());
+            entry["geometry"] = JsonNode.Parse(PartGeometryAuthoring2D.Definition(parts[i]).ToGeometryJson());
             entry["material"] = JsonSerializer.SerializeToNode(parts[i].RenderMaterial, options);
         }
         return root.ToJsonString(options);
@@ -42,6 +42,6 @@ internal static class PartAssetJson
     public static void Restore(IEnumerable<PuppetPart> parts)
     {
         foreach (var part in parts)
-            if (part.Geometry is not null) PartGeometry.RestoreEditorFields(part);
+            if (part.Geometry is not null) PartGeometryAuthoring2D.RestoreEditorFields(part);
     }
 }
