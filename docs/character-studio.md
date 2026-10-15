@@ -10,9 +10,6 @@ the referenced model and animations into independent drafts. Add a recipe and it
 no C# menu entry is needed. Person includes seven starter clips, Quadruped and Triceratops eight each, and Stalker five.
 Use **Save all** to save the created bundle. Existing model, clip and entity files are unaffected by template creation.
 
-**Export Spine** and **New > Import Spine 4.2 JSON** provide an initial bone/slot/skin/image interchange path.
-See [Spine 4.2 interchange](spine-interchange.md) for the editor workflow, supported timelines, and conversion limits.
-
 ## Run
 
 ```powershell

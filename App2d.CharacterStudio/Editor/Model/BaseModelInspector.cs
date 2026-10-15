@@ -143,13 +143,22 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                     if (ImGui.BeginCombo("##clip", assigned is null ? "(unassigned)" : session.Assets.Clip(assigned)?.Name ?? assigned + " (missing)"))
                     {
                         if (ImGui.Selectable("(unassigned)", assigned is null)) session.AssignRole(model.Id, set.Id, role, null);
-                        foreach (var clip in clips) if (ImGui.Selectable(clip.Name + "##" + clip.Id, clip.Id == assigned)) session.AssignRole(model.Id, set.Id, role, clip.Id);
+                        foreach (var clip in clips)
+                        {
+                            if (ImGui.Selectable(clip.Name + "##" + clip.Id, clip.Id == assigned))
+                                session.AssignRole(model.Id, set.Id, role, clip.Id);
+                        }
+
                         ImGui.EndCombo();
                     }
                     ImGui.PopID();
                 }
                 if (users.Length > 0) ImGui.TextDisabled("Selected by " + string.Join(", ", users.Select(u => u.Name)));
-                if (ImGui.SmallButton("Copy to new set")) { var id = ModelAuthoring.UniqueId(set.Id + "-copy", model.MotionSets.Select(s => s.Id)); session.NewMotionSet(model.Id, id, set.Name + " copy", set.Id); }
+                if (ImGui.SmallButton("Copy to new set"))
+                {
+                    var id = ModelAuthoring.UniqueId(set.Id + "-copy", model.MotionSets.Select(s => s.Id)); 
+                    session.NewMotionSet(model.Id, id, set.Name + " copy", set.Id); 
+                }
                 ImGui.SameLine(); if (ImGui.SmallButton("Remove set")) session.RemoveMotionSet(model.Id, set.Id);
                 ImGui.TreePop();
             }

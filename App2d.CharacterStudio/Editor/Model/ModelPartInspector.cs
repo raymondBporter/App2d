@@ -27,6 +27,8 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
             if (ImGui.SliderFloat("##" + label, ref value, min, max, "%.3f")) change(p => set(p, value));
         }
         Float(PuppetPartKinds.IsStroke(part.Kind) ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) => { if (overrides is null) PartGeometryAuthoring2D.ResizeRoundedRectangle(p, v, p.Height); p.Width = v; }, o => o.Width = null);
+        if (overrides is null && Structure is { } structure)
+            ModelCurveInspector.Draw(part, structure.Controls.Select(c => c.Id).ToArray(), change);
         if (!PuppetPartKinds.IsStroke(part.Kind))
         {
             Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) => { if (overrides is null) PartGeometryAuthoring2D.ResizeRoundedRectangle(p, p.Width, v); p.Height = v; }, o => o.Height = null);

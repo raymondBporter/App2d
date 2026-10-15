@@ -93,7 +93,7 @@ public static class ModelAuthoring
         if (model.IkChains.FirstOrDefault(c => c.Root == id || c.Joint == id || c.End == id || c.Frame == id) is { } chain) throw new InvalidOperationException($"{owner}: chain '{chain.Id}' uses '{id}'.");
         if (model.Measures.FirstOrDefault(m => m.Path.Contains(id)) is { } measure) throw new InvalidOperationException($"{owner}: measure '{measure.Id}' uses '{id}'.");
         if (model.Parts.FirstOrDefault(p => p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true) is { } bound)
-            throw new InvalidOperationException($"{owner}: cutout '{bound.Id}' uses '{id}'; detach its points first.");
+            throw new InvalidOperationException($"{owner}: part '{bound.Id}' uses '{id}'; detach its points first.");
         if (model.Slots.FirstOrDefault(s => s.Bone == id) is { } slot) throw new InvalidOperationException($"{owner}: slot '{slot.Id}' uses '{id}'. Move or remove the slot first.");
         var parts = model.Parts.Where(p => p.A == id || p.B == id || p.Frame == id).ToList();
         model.Parts.RemoveAll(parts.Contains); model.Controls.RemoveAll(c => c.Id == id);
@@ -183,8 +183,8 @@ public static class ModelAuthoring
     {
         EntityVocabulary.Require(kind, PuppetPartKinds.All, "part.kind");
         var part = model.Parts.First(p => p.Id == id);
-        if (kind != PuppetPartKinds.Polygon && part.Bindings is { Count: > 0 })
-            throw new InvalidOperationException("Detach cutout points before changing to a rigid primitive.");
+        if (part.Bindings is { Count: > 0 })
+            throw new InvalidOperationException("Detach point bindings before replacing the geometry.");
         if (PuppetPartKinds.IsStroke(kind) && (part.B is null || part.B == part.A))
         {
             part.B = model.Controls.FirstOrDefault(control => control.Parent == part.A)?.Id

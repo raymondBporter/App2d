@@ -104,7 +104,7 @@ public sealed class PuppetDrawing
             var face = expression?.Invoke(part) ?? part.Face;
             if (part.Geometry is CurveDefinition2D)
             {
-                var path = PartContours2D.Contour(part, world);
+                var path = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
                 var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink;
                 for (var i = 1; i < path.Count; i++)
                 {

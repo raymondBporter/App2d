@@ -47,4 +47,12 @@ public static class PartAttachment2D
         up = up.LengthSquared() > 1e-10f ? Vector2.Normalize(up) : Vector2.UnitY;
         return new(Frame2D.FromYAxis(origin.XY, up), origin.Z, 0);
     }
+
+    internal static Vector3 BoundPoint(PartPointBinding binding, Vector3 drawnRest, Func<string, Vector3> world, Func<string, Vector3> rest)
+    {
+        var before = BindingFrame(binding, rest);
+        var now = BindingFrame(binding, world);
+        var local = before.Coordinates.ToLocal(drawnRest.XY);
+        return now.At(local) + new Vector3(0, 0, drawnRest.Z - before.OriginZ);
+    }
 }

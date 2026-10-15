@@ -22,6 +22,7 @@ public static class PartContours2D
     {
         if (part.Geometry is CurveDefinition2D curve)
         {
+            if (part.Bindings is { Count: > 0 }) return PartCurves2D.BoundContour(part, curve, world, rest);
             var a = world(part.A);
             var b = world(part.B!);
             var curveFrame = Frame2D.FromYAxis(a.XY, b.XY - a.XY);
@@ -45,11 +46,8 @@ public static class PartContours2D
             {
                 var point = CutoutPoints(part)[binding.Point];
                 var drawnRest = artRest.At(new(point.X * part.Width, point.Y * part.Height));
-                var bindRest = PartAttachment2D.BindingFrame(binding, rest); var bindNow = PartAttachment2D.BindingFrame(binding, world);
-                var offset = drawnRest - bindRest.Origin;
-                var local = bindRest.Coordinates.ToLocal(new(drawnRest.X, drawnRest.Y));
                 // Preserve the part's depth relative to the bound control, including animated control depth.
-                cutout[binding.Point] = bindNow.At(local) + new Vector3(0, 0, offset.Z);
+                cutout[binding.Point] = PartAttachment2D.BoundPoint(binding, drawnRest, world, rest);
             }
             return cutout;
         }

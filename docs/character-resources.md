@@ -101,6 +101,10 @@ Point-library retargeting and prototype motion conversion do not infer bone rota
 
 ## One reusable rig, several ways to drive it
 
+Quadratic and cubic Bézier parts now accept the same `bindings` as cutouts. Their point indices are start, handle(s), end: 0/1/2 for a quadratic and 0/1/2/3 for a cubic. Each bound point preserves its drawing offset from a named control's rest frame; `toward` optionally rotates that offset. Unbound points keep following the ordinary two-endpoint curve frame. Curve XY and character layer order use the same Bézier weights. No face names or expression channels are needed.
+
+Choose **New → Model: Curve face template** for a small example. Its mouth has three controls parented to the head, and its Smile clip contains ordinary translation tracks. Select the mouth in rig editing, expand **Edit curve handles**, and use **Follow** to change attachments. New strokes can be changed from Line to Quadratic or Cubic Bézier there; detach point bindings before replacing their geometry. The existing human face presets are still available.
+
 A joint should not need to become a different object type when switching from keyed motion to IK or physics. Separate the stable structure, what draws on it, and what drives it:
 
 | Resource / component | Responsibility |
@@ -158,7 +162,7 @@ The bone bridge exports neither animation nor constraints/physics. Collision-onl
 
 Preserve stable IDs, motion reference measures, coordinate conventions, interpolation/easing, contact endpoints, draw order and action timing. Load-time adapters should not rewrite source assets. Any later on-disk conversion should target a copy first, report unsupported data, and pass save/reopen plus pose/region/render comparisons before replacing originals.
 
-Useful existing validation includes authored catalog/pose/entity tests, bone and Spine/slot tests, `App2d.Noodle --check`, and Studio's editor/motion/entity/weapon/wardrobe smoke modes. Automated pose parity complements image comparisons: neither alone covers both contact/gameplay behavior and occlusion.
+Useful existing validation includes authored catalog/pose/entity tests, bone and slot tests, `App2d.Noodle --check`, and Studio's editor/motion/entity/weapon/wardrobe smoke modes. Automated pose parity complements image comparisons: neither alone covers both contact/gameplay behavior and occlusion.
 
 ## Validation of the template migration
 

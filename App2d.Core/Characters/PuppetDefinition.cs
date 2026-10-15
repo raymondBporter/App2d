@@ -79,7 +79,7 @@ public sealed record PartPaint
     }
 }
 
-/// <summary>One cutout perimeter point follows a control frame; its rest offset is derived from the drawing.</summary>
+/// <summary>One cutout point or Bézier handle follows a control frame; its rest offset is derived from the drawing.</summary>
 public sealed record PartPointBinding
 {
     public int Point { get; set; }
@@ -152,14 +152,19 @@ public sealed record PuppetPart
         PartPaint.Check(Paint);
         if (Bindings is { Count: > 0 })
         {
-            if (Geometry is not SimplePolygon2D.Builder) throw new InvalidDataException("Point attachments require a cutout.");
+            var pointCount = Geometry switch
+            {
+                SimplePolygon2D.Builder polygon => polygon.Vertices.Count,
+                CurveDefinition2D bezier => PartCurves2D.ControlPoints(bezier).Count,
+                _ => throw new InvalidDataException("Point attachments require a cutout or Bézier curve.")
+            };
             var seen = new HashSet<int>();
             foreach (var binding in Bindings)
             {
-                if (binding is null || binding.Point < 0 || binding.Point >= PartContours2D.CutoutPoints(this).Count || !seen.Add(binding.Point))
-                    throw new InvalidDataException("Cutout attachments need unique valid point indices.");
+                if (binding is null || binding.Point < 0 || binding.Point >= pointCount || !seen.Add(binding.Point))
+                    throw new InvalidDataException("Point attachments need unique valid point indices.");
                 if (!isControl(binding.Control) || binding.Toward is not null && !isControl(binding.Toward))
-                    throw new InvalidDataException("Unknown cutout attachment control.");
+                    throw new InvalidDataException("Unknown point attachment control.");
                 if (binding.Control == binding.Toward) throw new InvalidDataException("An attachment must point toward a different control.");
             }
         }

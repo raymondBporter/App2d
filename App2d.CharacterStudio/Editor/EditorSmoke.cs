@@ -185,20 +185,12 @@ internal sealed class EditorSmoke(string output)
                 Record(s.Scene()[0].Clip!.Tracks.All(t => t.Kind is "rotate" or "translate"), "membranes animate through ordinary control channels");
             }),
             ("37-pterosaur-recovery", shell => { var s = shell.Session; s.SetClip("review-pterosaur-low-recovery"); s.Seek(.25f); }),
-            ("29-spine-export", shell =>
+            ("30-native-image-slots", shell =>
             {
-                var s = shell.Session; s.Open("tripod"); s.SetClip("tripod-walk"); s.Seek(.25f);
-                Check(s.ExportSpine(Path.Combine(output, "spine", "tripod.json")), s);
-                Record(File.Exists(Path.Combine(output, "spine", "tripod.app2d.json")), "Spine export preserves a native backup");
-            }),
-            ("30-spine-import", shell =>
-            {
-                var s = shell.Session;
-                Check(s.ImportSpine(Path.Combine(output, "spine", "tripod.json"), "spine-tripod", "Spine tripod"), s);
-                s.ShowRest = false; s.SetMode(Workspace.Animate); s.SetClip("spine-tripod-tripod-walk"); s.Seek(.25f);
+                var s = shell.Session; BuildImageRig(s);
+                s.ShowRest = false; s.SetMode(Workspace.Animate); s.Seek(.25f);
                 shell.Viewport.Fit(s.Evaluate(s.SubjectId!));
-                Record(s.Scene()[0].Pose.Slots.Count > 0 && s.SubjectModel!.Asset.Parts.All(p => p.Material?.Texture is not null), "Spine image slots reach the viewport");
-                s.SaveAll(); Record(AuthoredCatalog.Load(s.Assets.Root).Models.ContainsKey("spine-tripod"), "imported Spine rig saves through the ordinary workspace");
+                Record(s.Scene()[0].Pose.Slots.Count == 2 && s.SubjectModel!.Asset.Parts.All(p => p.Material?.Texture is not null), "native image slots reach the viewport");
             }),
             ("31-slot-tint-and-curves", shell =>
             {
@@ -227,14 +219,12 @@ internal sealed class EditorSmoke(string output)
             }),
             ("33-slot-timelines-round-trip", shell =>
             {
-                var s = shell.Session; var path = Path.Combine(output, "tinted-spine", "tripod.json");
-                Check(s.ExportSpine(path), s); Check(s.ImportSpine(path, "tint-returned", "Tint returned"), s);
-                s.SetClip("tint-returned-tripod-walk"); s.Seek(.25f); s.SaveAll();
-                var reopened = AuthoringWorkspace.Open(s.Assets.Root); var clip = reopened.Clip("tint-returned-tripod-walk")!.Asset;
+                var s = shell.Session; s.SaveAll();
+                var reopened = AuthoringWorkspace.Open(s.Assets.Root); var clip = reopened.Clip("image-rig-motion")!.Asset;
                 Record(clip.Colors.Count == 1 && clip.Attachments.Count > 0 && clip.DrawOrder.Count > 0,
-                    "slot color, attachment, and draw order keys survive Spine and save/reopen");
+                    "slot color, attachment, and draw order keys survive native save/reopen");
                 Record(clip.Tracks.Any(t => t.Kind == MotionClip.ScaleKind) && clip.Tracks.Any(t => t.Kind == MotionClip.ShearKind),
-                    "scale and shear keys survive Spine and save/reopen");
+                    "scale and shear keys survive native save/reopen");
             }),
             ("34-bone-ik-rest", shell =>
             {
@@ -281,6 +271,33 @@ internal sealed class EditorSmoke(string output)
             }),
         ];
         return workspace;
+    }
+
+    private void BuildImageRig(EditorSession s)
+    {
+        const string texture = "images/image-rig/white.png";
+        var path = Path.Combine(s.Assets.Root, texture); Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        using (var image = new Bitmap(16, 16))
+        {
+            using (var graphics = System.Drawing.Graphics.FromImage(image)) graphics.Clear(System.Drawing.Color.White);
+            image.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+        }
+        Check(s.NewModel("image-rig", "Image rig", "empty"), s);
+        var document = s.SubjectModel!;
+        Check(s.Edit(document, () =>
+        {
+            var model = document.Asset;
+            ModelAuthoring.AddBone(model, null, "root");
+            foreach (var (id, color, offset) in new[] { ("back", "#e3ac47", -.15f), ("front", "#57b0b2", .15f) })
+            {
+                var part = ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, "root");
+                part.Material = new() { Texture = texture, Fill = color }; part.OffsetY = offset;
+                model.Slots.Add(new() { Id = id, Bone = "root", Attachment = "art" });
+                if (model.Skins.Count == 0) model.Skins.Add(new());
+                model.Skins[0].Attachments[id] = new() { ["art"] = part.Id };
+            }
+        }), s);
+        Check(s.NewClip("image-rig-motion", "Image rig motion", 1), s);
     }
 
     private void BuildTripod(EditorSession s)

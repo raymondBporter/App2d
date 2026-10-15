@@ -457,30 +457,6 @@ public sealed class EditorSession
 
     // ---- New assets ----------------------------------------------------------------------------------------------
 
-    public bool ExportSpine(string path) => Attempt(() =>
-    {
-        var model = Assets.Resolve(SubjectId) ?? throw new InvalidDataException("Open a model or variant first.");
-        var clips = Assets.ClipsFor(model.Id).Select(c => c.Asset).ToArray();
-        Characters.Spine.SpineExport2D.Build(model, clips).Save(path);
-    }, "Exported Spine 4.2 JSON, images, atlas and native backup. See the adjacent conversion notes.");
-
-    public bool ImportSpine(string path, string id, string name, string? imagesDirectory = null) => Attempt(() =>
-    {
-        var result = Characters.Spine.SpineImport2D.Load(path, id, name, imagesDirectory);
-        if (Assets.Exists(id) || result.Animations.Any(c => Assets.Exists(c.Id))) throw new InvalidDataException("An imported asset id is already used. Choose a different model id.");
-        foreach (var (image, bytes) in result.Images)
-        {
-            var target = IO.FilePaths.ResolveUnderRoot(Assets.Root, image);
-            if (File.Exists(target)) throw new InvalidDataException($"Imported image already exists: {image}. Choose a different model id.");
-        }
-        foreach (var (image, bytes) in result.Images)
-        {
-            var target = IO.FilePaths.ResolveUnderRoot(Assets.Root, image); Directory.CreateDirectory(Path.GetDirectoryName(target)!); File.WriteAllBytes(target, bytes);
-        }
-        Assets.Create(result.Model); foreach (var clip in result.Animations) Assets.Create(clip);
-        Open(id); EditRig = false; Skin = result.Model.Skins.FirstOrDefault()?.Id;
-    }, "Imported Spine 4.2 as new editable drafts. Save all to keep the model and animations.");
-
     public bool NewAppearance(string id, string name, string template) => Attempt(() =>
     {
         var model = Assets.Resolve(SubjectId);

@@ -1,0 +1,71 @@
+{
+  "format": "app2d-model",
+  "version": 4,
+  "id": "curve-face",
+  "name": "Curve face",
+  "structureRevision": 1,
+  "lineWidth": 0.025,
+  "controls": [
+    { "id": "head", "rest": { "x": 0, "y": 1 } },
+    { "id": "mouth-left", "parent": "head", "rest": { "x": -0.23, "y": 0.8 } },
+    { "id": "mouth-bend", "parent": "head", "rest": { "x": 0, "y": 0.8 } },
+    { "id": "mouth-right", "parent": "head", "rest": { "x": 0.23, "y": 0.8 } }
+  ],
+  "parts": [
+    {
+      "id": "head",
+      "a": "head",
+      "frame": "head",
+      "width": 1,
+      "height": 1.1,
+      "geometry": { "kind": "ellipse", "center": { "x": 0, "y": 0 }, "radii": { "x": 0.5, "y": 0.5 } },
+      "material": { "fill": "#efdcc9", "outline": {} }
+    },
+    {
+      "id": "left-eye",
+      "a": "head",
+      "frame": "head",
+      "offsetX": -0.18,
+      "offsetY": 0.13,
+      "width": 0.055,
+      "height": 0.09,
+      "depth": -0.01,
+      "geometry": { "kind": "ellipse", "center": { "x": 0, "y": 0 }, "radii": { "x": 0.5, "y": 0.5 } },
+      "material": { "fill": "#222b32" }
+    },
+    {
+      "id": "right-eye",
+      "a": "head",
+      "frame": "head",
+      "offsetX": 0.18,
+      "offsetY": 0.13,
+      "width": 0.055,
+      "height": 0.09,
+      "depth": -0.01,
+      "geometry": { "kind": "ellipse", "center": { "x": 0, "y": 0 }, "radii": { "x": 0.5, "y": 0.5 } },
+      "material": { "fill": "#222b32" }
+    },
+    {
+      "id": "mouth",
+      "a": "mouth-left",
+      "b": "mouth-right",
+      "width": 0.025,
+      "depth": -0.01,
+      "geometry": {
+        "kind": "quadratic-bezier",
+        "start": { "x": 0, "y": 0 },
+        "control": { "x": 0, "y": 0.5 },
+        "end": { "x": 0, "y": 1 }
+      },
+      "bindings": [
+        { "point": 0, "control": "mouth-left" },
+        { "point": 1, "control": "mouth-bend" },
+        { "point": 2, "control": "mouth-right" }
+      ],
+      "material": { "fill": "#222b32" }
+    }
+  ],
+  "motionSets": [
+    { "id": "expressions", "name": "Expressions", "roles": { "smile": "curve-face-smile" } }
+  ]
+}

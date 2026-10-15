@@ -12,6 +12,7 @@ public sealed class ModelTemplateTests : IDisposable
 
     [Theory]
     [InlineData("person", 7)]
+    [InlineData("curve-face", 1)]
     [InlineData("quadruped", 8)]
     [InlineData("triceratops", 8)]
     [InlineData("stalker", 5)]

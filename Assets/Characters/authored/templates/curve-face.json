@@ -1,0 +1,10 @@
+{
+  "format": "app2d-model-template",
+  "version": 1,
+  "id": "curve-face",
+  "name": "Curve face",
+  "description": "A head with a Bézier mouth attached to three ordinary controls. Edit the handles and animate the controls to change its expression.",
+  "model": "curve-face",
+  "animations": { "smile": "curve-face-smile" },
+  "previewAnimation": "smile"
+}

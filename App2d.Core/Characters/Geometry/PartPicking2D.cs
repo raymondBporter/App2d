@@ -24,6 +24,14 @@ public static class PartPicking2D
         var p = new Vector2(point.X, point.Y);
         if (part.Geometry is CurveDefinition2D curve)
         {
+            if (part.Bindings is { Count: > 0 })
+            {
+                var path = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
+                var nearest = float.PositiveInfinity;
+                for (var i = 1; i < path.Count; i++)
+                    nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, path[i - 1].XY, path[i].XY));
+                return nearest / MathF.Max(part.Width, .06f);
+            }
             var a = world(part.A); var b = world(part.B!);
             var along = b.XY - a.XY;
             var lengthSquared = along.LengthSquared();

@@ -16,7 +16,7 @@ public sealed class AuthoredCatalogTests
         Assert.Equal(
         [
             "baby-triceratops-brake", "baby-triceratops-charge", "baby-triceratops-death", "baby-triceratops-head-down", "baby-triceratops-hit", "baby-triceratops-idle", "baby-triceratops-recover", "baby-triceratops-run", "baby-triceratops-rush", "baby-triceratops-scrape", "baby-triceratops-walk",
-            "club-caveman-slam",
+            "club-caveman-slam", "curve-face-smile",
             "person-death", "person-hammer-slam", "person-heavy-walk", "person-hit", "person-idle", "person-jump", "person-pistol-shot", "person-run", "person-thrust", "person-walk",
             "player-balance-backward", "player-balance-forward", "player-celebrate", "player-climb", "player-climb-off", "player-climb-on", "player-dash", "player-death", "player-fall",
             "player-gun-aim", "player-gun-charge", "player-gun-shot", "player-gun-wall-shot", "player-heal-gather", "player-hit", "player-idle", "player-jump", "player-land",
@@ -49,7 +49,7 @@ public sealed class AuthoredCatalogTests
         { "animations/person-walk.json", "\"chain\": \"[^\"]*\"", "\"chain\": null" },
     };
 
-    private static readonly string[] expected = ["baby-triceratops-rig", "person", "pterosaur", "quadruped", "stalker", "triceratops"];
+    private static readonly string[] expected = ["baby-triceratops-rig", "curve-face", "person", "pterosaur", "quadruped", "stalker", "triceratops"];
 
     [Theory, MemberData(nameof(NullReferences))]
     public void ANullReferenceInAHandEditedFileIsReportedAgainstThatFile(string file, string pattern, string replacement)

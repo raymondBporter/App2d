@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Authoring;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor.Model;
@@ -33,7 +34,9 @@ internal static class ModelOverlay
     public static void DrawPart(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
         var outline = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]).Select(p => frame.Screen(p)).ToArray();
-        for (var i = 0; i < outline.Length; i++) frame.Draw.AddLine(outline[i], outline[(i + 1) % outline.Length], Ui.Color(232, 169, 55), 2);
+        for (var i = 1; i < outline.Length; i++) frame.Draw.AddLine(outline[i - 1], outline[i], Ui.Color(232, 169, 55), 2);
+        if (part.Geometry is not CurveDefinition2D && outline.Length > 1)
+            frame.Draw.AddLine(outline[^1], outline[0], Ui.Color(232, 169, 55), 2);
     }
 
     public static Vector3 BoneTip(ModelControl control, EvaluatedPose pose)

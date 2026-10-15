@@ -181,7 +181,8 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
             };
             if (stride > 0)
             {
-                var duration = moves[_key].Duration; var matched = covered / stride * duration; var limit = MaxCadence * dt;
+                var duration = moves[_key].Duration;
+                var matched = covered / stride * duration; var limit = MaxCadence * dt;
                 _outpaced = matched > limit + 1e-9; _cycle += Math.Min(matched, limit);
             }
         }
