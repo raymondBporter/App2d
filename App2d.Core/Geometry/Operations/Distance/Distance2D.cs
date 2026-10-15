@@ -1,3 +1,6 @@
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Containment;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Validation;
 using System.Numerics;
 

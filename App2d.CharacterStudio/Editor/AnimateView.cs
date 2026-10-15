@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Editor.Animation;
 using App2d.Core.Characters.Editing;
 
 namespace App2d.CharacterStudio.Editor;

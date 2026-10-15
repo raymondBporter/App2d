@@ -1,4 +1,4 @@
-using App2d.Core;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Persons;
 
 namespace App2d.Gameplay.Enemies;

@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>Where a ray first enters a primitive.</summary>
 /// <param name="Point">The hit point, origin + direction * Distance.</param>

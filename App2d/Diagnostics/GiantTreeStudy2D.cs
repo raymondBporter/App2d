@@ -2,7 +2,7 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Assets;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Gameplay.Simulation;

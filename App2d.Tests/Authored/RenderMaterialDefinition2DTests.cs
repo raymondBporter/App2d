@@ -1,12 +1,10 @@
-using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Shapes;
-using App2d.Core.Geometry;
-using App2d.Core.Curves;
+using App2d.Core.Geometry.Authoring;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
+using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json;
 
@@ -21,7 +19,9 @@ public sealed class RenderMaterialDefinition2DTests
         var oldJson = JsonSerializer.Serialize(model, AuthoredJson.Options);
         var migrated = CharacterModel.FromJson(oldJson).ToJson();
         using var document = JsonDocument.Parse(migrated);
-        var body = document.RootElement.GetProperty("parts").EnumerateArray()
+        var body = document.RootElement
+            .GetProperty("parts")
+            .EnumerateArray()
             .Single(part => part.GetProperty("id").GetString() == "body");
         Assert.False(body.TryGetProperty("fill", out _));
         Assert.Equal("#d8e9db", body.GetProperty("material").GetProperty("fill").GetString());

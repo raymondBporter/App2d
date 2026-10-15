@@ -1,6 +1,6 @@
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
-using App2d.Core;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;

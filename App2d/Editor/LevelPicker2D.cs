@@ -27,12 +27,15 @@ internal sealed class LevelPicker2D(IReadOnlyList<WorldMapAsset2D> maps)
         if (input.Keyboard.WasPressed(Keys.Up)) _selected = (_selected + maps.Count - 1) % maps.Count;
         var chosen = input.Keyboard.WasPressed(Keys.Enter);
         for (var row = 0; row < Math.Min(PageSize, maps.Count - First); row++)
+        {
             if (input.Mouse.WasPressed(MouseButtons.Left) && Row(row).Contains(_mouse.X, _mouse.Y))
             {
                 _selected = First + row;
                 chosen = true;
                 break;
             }
+        }
+
         if (!chosen) return null;
         IsOpen = false;
         return _selected;

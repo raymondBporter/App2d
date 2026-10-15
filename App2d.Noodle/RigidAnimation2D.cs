@@ -1,4 +1,4 @@
-using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using System.Numerics;
 using System.Text.Json;
 

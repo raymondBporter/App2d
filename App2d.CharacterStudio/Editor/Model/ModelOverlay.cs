@@ -1,8 +1,9 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Draws rig handles and the selected part outline without changing editor state.</summary>
 internal static class ModelOverlay

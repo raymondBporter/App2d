@@ -1,7 +1,11 @@
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Containment;
+using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// Shared rectangle properties and queries for any <see cref="IRect2D"/>. Generic receivers keep value-type

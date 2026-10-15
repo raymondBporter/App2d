@@ -1,6 +1,4 @@
 using App2d.Core.Assets;
-using App2d.Core.Geometry;
-using App2d.Core.Tiles;
 using App2d.Levels;
 
 namespace App2d;
@@ -42,7 +40,7 @@ internal static class LevelBootstrap2D
             var regionIds = world.Zones.Select(z => z.Id).ToHashSet(StringComparer.Ordinal);
             var regions = WorldZoneFile2D.Load(Path.Combine(directory, "zones.json"));
             return new(world.Maps, [.. world.Zones, .. regions.Where(z => !regionIds.Contains(z.Id))])
-                { StartAtArrival = world.StartAtArrival };
+            { StartAtArrival = world.StartAtArrival };
         }
         return new WorldAsset2D(
             [WorldFile2D.LoadMap(RequireLevelPath(), "cavern", "Cavern", "cavern", 0, TerrainTilesetIds)],

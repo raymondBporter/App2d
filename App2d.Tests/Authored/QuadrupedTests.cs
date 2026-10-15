@@ -1,8 +1,9 @@
-using App2d.Core.Geometry;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Meshes;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
 

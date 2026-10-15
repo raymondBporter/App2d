@@ -1,7 +1,8 @@
+using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A cubic Bezier curve with normalized parameter range [0, 1].</summary>
 public readonly record struct CubicBezier2D : ICurve2D

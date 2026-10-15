@@ -142,13 +142,13 @@ public sealed class EnemyPresentationTests
         System.Collections.Immutable.ImmutableArray<EnemyState2D> states = [state];
         for (var i = 0; i < 1000; i++)
         {
-            view.ApplyState(states, Array.Empty<EnemyEvent2D>(), i);
+            view.ApplyState(states, [], i);
             view.Advance(1f / 240f);
         }
         var before = GC.GetAllocatedBytesForCurrentThread();
         for (var i = 0; i < 1000; i++)
         {
-            view.ApplyState(states, Array.Empty<EnemyEvent2D>(), i);
+            view.ApplyState(states, [], i);
             view.Advance(1f / 240f);
         }
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;

@@ -1,7 +1,7 @@
 using App2d.Core.Mathematics;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.ClosestPoint;
 
 /// <summary>The closest points of two segments and their parameters along each segment.</summary>
 /// <param name="First">The closest point on the first segment.</param>

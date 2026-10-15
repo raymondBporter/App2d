@@ -2,7 +2,7 @@ using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Diameter;
 
 /// <summary>Maximum distances between points of raw, filled primitives. Intermediates use double precision.</summary>
 public static class Diameter2D
@@ -30,8 +30,11 @@ public static class Diameter2D
         ArgGuard.ThrowIfTooShort(vertices, 1);
         var squared = 0d;
         for (var i = 0; i < vertices.Length; i++)
+        {
             for (var j = i + 1; j < vertices.Length; j++)
                 squared = Math.Max(squared, Vector2d.DistanceSquared(vertices[i].ToVector2d(), vertices[j].ToVector2d()));
+        }
+
         return (float)Math.Sqrt(squared);
     }
 }

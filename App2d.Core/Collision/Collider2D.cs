@@ -1,3 +1,4 @@
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 namespace App2d.Core.Collision;
 

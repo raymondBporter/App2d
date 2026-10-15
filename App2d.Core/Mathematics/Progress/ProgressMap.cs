@@ -1,4 +1,4 @@
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Progress;
 
 /// <summary>A progress function and its derivative. Neither inputs nor outputs are implicitly clamped.</summary>
 public sealed class ProgressMap : IProgressMap

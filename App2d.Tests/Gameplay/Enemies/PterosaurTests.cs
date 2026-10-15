@@ -4,15 +4,15 @@ using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
+using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Core.Tiles;
 using System.Numerics;
-using Xunit;
 
 namespace App2d.Tests.Gameplay.Enemies;
 
@@ -136,7 +136,7 @@ public sealed class PterosaurTests
             using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
                 [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
                  new(2, WorldThingKind2D.Pterosaur, null, true, new(-464, 154))])
-                { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
+            { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
             Assert.Equal("flying-pterosaur", Assert.Single(game.Session.CaptureEnemies()).TypeId);
             var states = Enumerable.Range(0, 505).Select(_ =>
             {

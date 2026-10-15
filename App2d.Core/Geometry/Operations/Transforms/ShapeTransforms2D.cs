@@ -1,9 +1,11 @@
-using App2d.Core.Geometry;
-using App2d.Core.Mathematics;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Operations.Transforms;
 
 /// <summary>Transforms local shape parameters and vertex buffers, or creates uniformly scaled shape copies.</summary>
 public static class ShapeTransforms2D

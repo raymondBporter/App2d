@@ -2,7 +2,7 @@ using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.ClosestPoint;
 
 /// <summary>Double-precision arithmetic shared by the public line and ray closest-point and distance queries.</summary>
 internal static class LinearGeometry2D

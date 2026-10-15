@@ -1,9 +1,9 @@
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics;
-using App2d.Core.Meshes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Polygons;
 
 /// <summary>Triangulates simple polygon perimeters into indexed mesh data.</summary>
 public static class PolygonTriangulation2D

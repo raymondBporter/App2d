@@ -14,13 +14,17 @@ internal sealed partial class ProofRenders
         using var target = new RenderTarget2D(GraphicsDevice, 1440, 1080, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(247, 241, 221));
         var roles = new[] { "hover", "fold", "dive", "brake", "low-recovery", "reset" };
-        for (var row = 0; row < roles.Length; row++) for (var column = 0; column < 4; column++)
+        for (var row = 0; row < roles.Length; row++)
         {
-            var clip = catalog.Animations["pterosaur-" + roles[row]];
-            var pose = PoseEvaluator.Sample(model, clip, clip.Duration * column / 3f);
-            drawing.Build(model, pose);
-            _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(column * 360 + 180, row * 180 + 180), 75), Matrix.Identity);
+            for (var column = 0; column < 4; column++)
+            {
+                var clip = catalog.Animations["pterosaur-" + roles[row]];
+                var pose = PoseEvaluator.Sample(model, clip, clip.Duration * column / 3f);
+                drawing.Build(model, pose);
+                _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(column * 360 + 180, row * 180 + 180), 75), Matrix.Identity);
+            }
         }
+
         GraphicsDevice.SetRenderTarget(null);
         using (var output = File.Create(Path.Combine(_smokePath, "pterosaur-poses.png"))) target.SaveAsPng(output, target.Width, target.Height);
         GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(247, 241, 221));

@@ -1,8 +1,9 @@
+using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// An infinite line through <see cref="Origin"/> in both directions along a unit <see cref="Direction"/>.

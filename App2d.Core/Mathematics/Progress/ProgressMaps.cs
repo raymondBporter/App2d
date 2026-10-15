@@ -1,6 +1,6 @@
 using App2d.Core.Validation;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Progress;
 
 /// <summary>Reusable phase maps, easing transformations, and composition using the chain rule.</summary>
 public static class ProgressMaps

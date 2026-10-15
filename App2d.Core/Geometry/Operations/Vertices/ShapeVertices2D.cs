@@ -1,8 +1,9 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Operations.Vertices;
 
 /// <summary>Local convex cores and drawing outlines in caller-owned buffers. These helpers do not allocate.</summary>
 public static class ShapeVertices2D

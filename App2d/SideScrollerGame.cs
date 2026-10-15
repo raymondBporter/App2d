@@ -4,18 +4,17 @@ using App2d.Core;
 using App2d.Core.Assets;
 using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Hosting;
 using App2d.Core.Input;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Rendering.Vegetation;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Editor;
 using App2d.Gameplay.Player;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Persistence;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World;
@@ -125,7 +124,7 @@ public sealed class SideScrollerGame : Game2D
         _editor.ConfigureMaps(loadedLevel.Maps);
         _editor.ThingsChanged += things =>
         {
-            loadedLevel.Maps[_editor.SelectedMapIndex].MovingPlatforms = things.ToArray();
+            loadedLevel.Maps[_editor.SelectedMapIndex].MovingPlatforms = [.. things];
             _simulation.Level.ReloadMovingPlatforms([.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)]);
         };
 
@@ -188,8 +187,11 @@ public sealed class SideScrollerGame : Game2D
         {
             var wasOpen = _levelPicker.IsOpen;
             if (_levelPicker.Update(input) is { } destination)
+            {
                 _session.TravelForPlaytesting(App2d.Levels.PlaygroundMaps2D.Arrival(
                     _loadedWorld.Maps[destination], Traversal.PlayerColliderSize.Y, Traversal.GroundProbeDistance));
+            }
+
             if (wasOpen != _levelPicker.IsOpen) input.CancelButtons();
             if (_levelPicker.IsOpen)
             {

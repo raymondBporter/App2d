@@ -1,10 +1,10 @@
-using App2d.Presentation.World.Vegetation;
-using App2d.Gameplay.World.Vegetation;
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using App2d.Core.Rendering.Vegetation;
 using App2d.Core.Tiles;
+using App2d.Gameplay.World.Vegetation;
+using App2d.Presentation.World.Vegetation;
 using App2d.Rendering;
 using System.Collections.Immutable;
 using System.Numerics;

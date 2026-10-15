@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>An immutable affine coordinate frame. Axes may be scaled, reflected, sheared or collapsed.</summary>
 public readonly record struct Frame2D

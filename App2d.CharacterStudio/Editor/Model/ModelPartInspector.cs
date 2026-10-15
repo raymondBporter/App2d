@@ -1,10 +1,11 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Shapes;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Shape and appearance fields shared by base parts and variant overrides.</summary>
 internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEditor cutout)

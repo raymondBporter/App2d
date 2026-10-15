@@ -1,7 +1,7 @@
-using App2d.Gameplay.World.Vegetation;
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
+using App2d.Gameplay.World.Vegetation;
 using System.Collections.Immutable;
 using System.Numerics;
 using System.Text.Json;
@@ -46,10 +46,10 @@ public sealed class WorldAsset2D : IDisposable
         .Where(m => Path.GetFileName(m.DatabasePath) == "level.db")
         .SelectMany(m => GiantTreeFile2D.Load(Path.Combine(Path.GetDirectoryName(m.DatabasePath)!, "giant-trees.json"), m.TileMap))];
     public WorldTileMap2D TileMap { get; }
-    public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms => Maps.SelectMany(m =>
-        m.MovingPlatforms.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) })).ToArray();
-    public IReadOnlyList<PositionThingRecord2D> PositionThings => Maps.SelectMany(m =>
-        m.PositionThings.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) })).ToArray();
+    public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms => [.. Maps.SelectMany(m =>
+        m.MovingPlatforms.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
+    public IReadOnlyList<PositionThingRecord2D> PositionThings => [.. Maps.SelectMany(m =>
+        m.PositionThings.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
     public void Dispose() => TileMap.Dispose();
 }
 
@@ -82,18 +82,27 @@ public static class WorldFile2D
             {
                 if (zone is null || string.IsNullOrWhiteSpace(zone.Id) || string.IsNullOrWhiteSpace(zone.Name) ||
                     !zoneIds.Add(zone.Id) || zone.Maps is null || zone.Maps.Count == 0)
+                {
                     throw new InvalidDataException("Zones need unique IDs, names, and at least one map.");
+                }
+
                 var min = new Vector2(float.PositiveInfinity);
                 var max = new Vector2(float.NegativeInfinity);
                 foreach (var map in zone.Maps)
                 {
                     if (map is null || string.IsNullOrWhiteSpace(map.Id) || string.IsNullOrWhiteSpace(map.Name) ||
                         string.IsNullOrWhiteSpace(map.File) || !mapIds.Add(map.Id) || map.Identity < 0 || !identities.Add(map.Identity))
+                    {
                         throw new InvalidDataException("Maps need unique IDs, nonnegative identities, names and file paths.");
+                    }
+
                     var databasePath = Path.GetFullPath(Path.Combine(root, map.File));
                     if (Path.IsPathRooted(map.File) || !databasePath.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
                         !paths.Add(databasePath))
+                    {
                         throw new InvalidDataException("Map files must be unique relative paths within the world directory.");
+                    }
+
                     var loaded = LoadMap(databasePath, map.Id, map.Name, zone.Id, map.Identity, legacyTilesets);
                     maps.Add(loaded);
                     min = Vector2.Min(min, loaded.TileMap.WorldBounds.Min);
@@ -123,8 +132,13 @@ public static class WorldFile2D
         using var database = LevelDatabase2D.OpenRead(path);
         var result = new WorldMapAsset2D
         {
-            Id = id, Name = name, ZoneId = zoneId, Identity = identity, DatabasePath = path,
-            TileMap = database.Load(legacyTilesets), MovingPlatforms = database.LoadMovingPlatforms(),
+            Id = id,
+            Name = name,
+            ZoneId = zoneId,
+            Identity = identity,
+            DatabasePath = path,
+            TileMap = database.Load(legacyTilesets),
+            MovingPlatforms = database.LoadMovingPlatforms(),
             PositionThings = database.LoadPositionThings()
         };
         foreach (var thing in result.PositionThings) _ = result.WorldThingId(thing.ThingId);

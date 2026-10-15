@@ -5,7 +5,6 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Core.Geometry;
 using App2d.Core.Physics;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
@@ -42,7 +41,10 @@ public sealed partial class SideScrollerSession2D : IDisposable
         ArgGuard.ThrowIfNotFinite(destination);
         if (destination.X < _world.Bounds.Min.X || destination.X >= _world.Bounds.Max.X ||
             destination.Y < _world.Bounds.Min.Y || destination.Y >= _world.Bounds.Max.Y)
+        {
             throw new ArgumentOutOfRangeException(nameof(destination));
+        }
+
         _pendingPlaygroundTravel = destination;
     }
 

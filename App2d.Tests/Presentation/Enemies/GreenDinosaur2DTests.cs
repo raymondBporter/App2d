@@ -3,6 +3,7 @@ using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Enemies;
 using App2d.Levels;
 using App2d.Presentation.Audio;

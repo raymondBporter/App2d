@@ -1,7 +1,10 @@
-using App2d.Core.Spatial;
-using App2d.Core;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;

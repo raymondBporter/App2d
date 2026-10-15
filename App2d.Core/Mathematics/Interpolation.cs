@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -41,5 +42,5 @@ public static class Interpolation
     /// <summary>Unclamped progress from start to end. A zero-length range returns zero.</summary>
     public static float InverseLerp(float start, float end, float value) => start == end ? 0f : (value - start) / (end - start);
 
-    public static float InverseLerpClamped(float start, float end, float value) => Progress.Clamp01(InverseLerp(start, end, value));
+    public static float InverseLerpClamped(float start, float end, float value) => App2d.Core.Mathematics.Progress.Progress.Clamp01(InverseLerp(start, end, value));
 }

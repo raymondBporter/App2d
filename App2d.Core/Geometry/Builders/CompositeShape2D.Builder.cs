@@ -1,8 +1,7 @@
-using App2d.Core.Geometry;
 using App2d.Core.Geometry.Builders;
-using App2d.Core.Mathematics;
+using App2d.Core.Geometry.Operations.Area;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Validation;
-using System.Numerics;
 using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
@@ -19,11 +18,11 @@ public sealed partial class CompositeShape2D
         private static ConvexShapeBuilder2D ConvexPart(ShapeBuilder2D part) =>
             ArgGuard.RequireNotNull(part, "parts") as ConvexShapeBuilder2D
             ?? throw new InvalidOperationException("Composite parts must be convex.");
-        private IConvexShape2D[] BuildParts() => ArgGuard.RequireNotNull(Parts, "parts").Select(part => ConvexPart(part).Build()).ToArray();
+        private IConvexShape2D[] BuildParts() => [.. ArgGuard.RequireNotNull(Parts, "parts").Select(part => ConvexPart(part).Build())];
         private static void ValidateParts(IConvexShape2D[] parts, int areaOutlineSegments)
         {
-            ArgGuard.ThrowIfTooShort(parts, 1, "parts");
-            ArgGuard.ThrowIfContainsNull(parts, "parts");
+            ArgGuard.ThrowIfTooShort(parts, 1, nameof(parts));
+            ArgGuard.ThrowIfContainsNull(parts, nameof(parts));
             ArgGuard.ThrowIf(areaOutlineSegments < 3, "Curved outlines need at least three samples.", nameof(areaOutlineSegments));
         }
         public override void Validate()

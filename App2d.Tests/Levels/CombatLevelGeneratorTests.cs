@@ -1,6 +1,4 @@
-using App2d.Core.Tiles;
 using App2d.Levels;
-using Xunit;
 
 namespace App2d.Tests.Levels;
 
@@ -20,10 +18,10 @@ public sealed class CombatLevelGeneratorTests
             p.Name, true, new(p.X, p.Y))).ToArray();
         using var simulation = App2d.Gameplay.Simulation.SideScrollerSimulation2D.Create(new(
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), draft.Map, [], things)
-            { AuthoredCharacters = catalog });
+        { AuthoredCharacters = catalog });
         Assert.Equal(things.Count(t => t.Kind is not (App2d.Gameplay.World.WorldThingKind2D.PlayerSpawn or
             App2d.Gameplay.World.WorldThingKind2D.SavePoint or App2d.Gameplay.World.WorldThingKind2D.Goal)),
-            simulation.Level.EnemySystem.Combatants.Count());
+            simulation.Level.EnemySystem.Combatants.Count);
         for (var tick = 0; tick < 240; tick++) simulation.Session.Advance();
         Assert.True(simulation.Player.IsAlive);
         Assert.True(float.IsFinite(simulation.Player.Position.Y));
@@ -40,8 +38,11 @@ public sealed class CombatLevelGeneratorTests
         Assert.Equal(first.Beats, repeated.Beats);
         Assert.Equal(first.Placements, repeated.Placements);
         for (var x = 0; x < first.Map.Width; x++)
+        {
             for (var y = 0; y < first.Map.Height; y++)
                 Assert.Equal(first.Map.GetTile(x, y), repeated.Map.GetTile(x, y));
+        }
+
         Assert.False(first.Placements.SequenceEqual(rerolled.Placements));
         foreach (var beat in first.Beats.Where(b => b.Recipe == "combined-fight"))
         {
@@ -78,7 +79,7 @@ public sealed class CombatLevelGeneratorTests
         for (var seed = 0; seed < 20; seed++)
         {
             var draft = CombatLevelGenerator2D.Generate(new()
-                { Seed = seed, Difficulty = 1, Exploration = 1, JumpRiseTiles = 4 }, Tilesets);
+            { Seed = seed, Difficulty = 1, Exploration = 1, JumpRiseTiles = 4 }, Tilesets);
             foreach (var placement in draft.Placements)
             {
                 var x = (int)((placement.X - draft.Map.Origin.X) / draft.Map.TileSize);

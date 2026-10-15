@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// Shared closed-range operations. Generic interval parameters keep structs unboxed.

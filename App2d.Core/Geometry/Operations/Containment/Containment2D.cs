@@ -1,7 +1,8 @@
+using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Containment;
 
 /// <summary>
 /// Point containment for raw primitives, boundaries included. Inputs are finite, radii are nonnegative,

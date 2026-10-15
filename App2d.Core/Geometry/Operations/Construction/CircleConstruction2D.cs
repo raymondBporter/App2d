@@ -2,7 +2,7 @@ using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Construction;
 
 /// <summary>Circle construction from geometric constraints without creating a shape.</summary>
 public static class CircleConstruction2D

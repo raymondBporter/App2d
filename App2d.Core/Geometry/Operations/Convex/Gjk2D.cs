@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: MIT
 // The C# support proxies, double-precision calculations and 2D EPA extension are App2d adaptations.
 // See THIRD-PARTY-NOTICES.md for the original license and source.
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Mathematics;
 using System.Numerics;
 

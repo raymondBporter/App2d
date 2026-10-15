@@ -1,6 +1,10 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Operations.Diameter;
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Spatial;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>
 /// A filled shape in its own coordinate space. Shapes must remain immutable while attached to a <see cref="SpatialObject2D"/>.

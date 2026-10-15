@@ -1,11 +1,13 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Shapes;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Edits cutout vertices and bindings, and groups each viewport drag into one undo step.</summary>
 internal sealed class ModelCutoutEditor(EditorSession session)
@@ -21,7 +23,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
         {
             ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
             Ui.Help("Draw the rest silhouette here. Each point can follow the part frame or a named control; Point toward follows that control frame's rotation. Animate the controls, not the outline.");
-            var vertices = polygon.Vertices.Select(point => new PuppetPoint(point.X, point.Y)).ToList();
+            var vertices = polygon.Vertices.ConvertAll(point => new PuppetPoint(point.X, point.Y));
             var controls = session.SubjectModel!.Asset.Controls.Select(c => c.Id).ToArray();
             void Cutout(Action<List<PuppetPoint>> edit)
             {
@@ -56,7 +58,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
     public void Drag(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
         var contour = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
-        var points = ((SimplePolygon2D.Builder)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToList();
+        var points = ((SimplePolygon2D.Builder)part.Geometry!).Vertices.ConvertAll(p => new PuppetPoint(p.X, p.Y));
         for (var i = 0; i < points.Count; i++)
         {
             var at = frame.Screen(contour[i]);

@@ -1,7 +1,8 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
@@ -39,7 +40,7 @@ public sealed class AuthoredEntityGameTests
         Assert.True(first.X > 20, $"hit box ahead of the player: {first}");
         Tick(2);
         Assert.True(Box() is { } later && Vector2.Distance(first, later) < .01f, $"the box stays put on the player: {first} then {Box()}");
-        Assert.True(Vector2.Distance(new Core.SpatialObject2D(hero.Shape()).LocalBounds.Size, game.Arsenal.GetActiveAttackHitboxes().First().WorldBounds.Size) < .01f, "the box is the entity's size");
+        Assert.True(Vector2.Distance(new SpatialObject2D(hero.Shape()).LocalBounds.Size, game.Arsenal.GetActiveAttackHitboxes().First().WorldBounds.Size) < .01f, "the box is the entity's size");
         // Pressing again during a swing queues the next one in the combo; it starts as the last ends.
         game.Arsenal.UsePrimary(1);
         Tick((int)MathF.Ceiling(cut.Duration * 120));

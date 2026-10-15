@@ -1,5 +1,6 @@
 using App2d.Core;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Gameplay.Persons.Actions;
 using System.Numerics;
 

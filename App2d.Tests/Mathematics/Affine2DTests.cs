@@ -1,6 +1,7 @@
-using App2d.Core;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 using System.Text.Json;
 

@@ -3,9 +3,10 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Persons;
 using App2d.Levels;
@@ -77,7 +78,6 @@ public sealed class PersonLadderTests
         var initialY = _person.Position.Y;
 
         Step(climb: 1f);
-
         Assert.True(_person.IsClimbingLadder);
         var remaining = MathF.Abs(_person.WorldObject.WorldBounds.Center.X - 144f);
         Assert.InRange(remaining, 0.1f, MathF.Abs(offset) - 0.1f);

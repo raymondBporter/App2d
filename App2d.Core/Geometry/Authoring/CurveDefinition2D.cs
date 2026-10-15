@@ -1,5 +1,4 @@
-using App2d.Core.Curves;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;

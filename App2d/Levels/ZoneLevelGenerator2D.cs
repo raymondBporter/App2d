@@ -33,7 +33,7 @@ public static class ZoneLevelGenerator2D
         var updatedMap = map with { File = relative + "/level.db" };
         var updated = world with
         {
-            Zones = world.Zones.Select(z => z.Id == zoneId ? z with { Maps = [updatedMap] } : z).ToArray()
+            Zones = [.. world.Zones.Select(z => z.Id == zoneId ? z with { Maps = [updatedMap] } : z)]
         };
         var json = JsonSerializer.Serialize(updated, Options);
         var candidate = Path.Combine(root, $".world-{Guid.NewGuid():N}.json");

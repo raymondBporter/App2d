@@ -1,5 +1,4 @@
 using App2d.Core.IO;
-using System.Drawing;
 using System.Drawing.Imaging;
 
 namespace App2d.Core.Characters.Spine;

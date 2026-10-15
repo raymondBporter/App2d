@@ -1,9 +1,9 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Shapes;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Coordinates model overlays, part picking, and the active viewport drag tool.</summary>
 internal sealed class ModelViewport(EditorSession session, Viewport viewport, ModelCutoutEditor cutout)
@@ -30,10 +30,14 @@ internal sealed class ModelViewport(EditorSession session, Viewport viewport, Mo
         }
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!).ToArray();
-            var hit = visibleParts.Where(p => !p.Hidden).Select(p => (Part: p, Score: PartPicking2D.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id])))
-                .Where(h => h.Score <= 1).OrderBy(h => h.Score).FirstOrDefault();
-            if (hit.Part is not null) session.Selection.Select(part: hit.Part.Id); else session.Selection.Clear();
+            var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : [.. pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!)];
+            var (Part, Score) = visibleParts
+                .Where(p => !p.Hidden)
+                .Select(p => (Part: p, Score: PartPicking2D.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id])))
+                .Where(h => h.Score <= 1)
+                .OrderBy(h => h.Score)
+                .FirstOrDefault();
+            if (Part is not null) session.Selection.Select(part: Part.Id); else session.Selection.Clear();
         }
         if (frame.Hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) viewport.Fit(primary.Subject);
     }

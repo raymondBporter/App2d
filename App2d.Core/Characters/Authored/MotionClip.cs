@@ -1,6 +1,4 @@
-using App2d.Core.Mathematics;
-using App2d.Core.Geometry.Builders;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Mathematics.Progress;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 

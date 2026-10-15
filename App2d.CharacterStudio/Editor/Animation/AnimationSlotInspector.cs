@@ -2,7 +2,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Selected slot attachment, draw order, tint, and outgoing tint curves.</summary>
 internal sealed class AnimationSlotInspector(EditorSession session)

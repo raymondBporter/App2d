@@ -1,5 +1,7 @@
-using App2d.Core.Geometry;
-using App2d.Core.Meshes;
+using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Operations.Conversion;
+using App2d.Core.Geometry.Operations.Diameter;
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Shapes;

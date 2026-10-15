@@ -1,9 +1,12 @@
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
-using App2d.Core.Geometry;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Operations.Diameter;
 
 /// <summary>Diameters of filled shapes: sup |a - b| over every pair of points in the shape.</summary>
 public static class ShapeDiameter2D
@@ -57,8 +60,11 @@ public static class ShapeDiameter2D
         var secondVertices = second.GetVerts(secondBuffer, out var secondRadius);
         var squared = 0d;
         foreach (var start in firstVertices)
+        {
             foreach (var end in secondVertices)
                 squared = Math.Max(squared, Vector2d.DistanceSquared(start.ToVector2d(), end.ToVector2d()));
+        }
+
         return (float)(Math.Sqrt(squared) + firstRadius + secondRadius);
     }
 

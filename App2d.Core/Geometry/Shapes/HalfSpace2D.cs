@@ -1,5 +1,5 @@
-using App2d.Core.Geometry;
-using App2d.Core.Validation;
+using App2d.Core.Geometry.Operations.Containment;
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Shapes;
@@ -14,8 +14,8 @@ public sealed partial class HalfSpace2D : IShape2D
     public string Kind => ShapeKinds2D.HalfSpace;
 
     /// <summary>Creates a half-space; the normal is normalized and the offset rescaled to match.</summary>
-    /// <param name="outwardNormal">A finite, nonzero normal pointing toward free space.</param>
-    /// <param name="offset">The finite signed boundary offset along <paramref name="outwardNormal"/>, in its original length units.</param>
+    /// <param name="normal">A finite, nonzero normal pointing toward free space.</param>
+    /// <param name="offset">The finite signed boundary offset along <paramref name="normal"/>, in its original length units.</param>
     private HalfSpace2D(Vector2 normal, float offset)
     {
         Normal = normal;
@@ -36,6 +36,5 @@ public sealed partial class HalfSpace2D : IShape2D
 
     /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint) => Containment2D.HalfSpace(localPoint, Normal, Offset);
-
 
 }

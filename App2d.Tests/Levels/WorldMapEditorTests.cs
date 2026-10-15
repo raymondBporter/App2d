@@ -1,10 +1,8 @@
+using App2d.Core.Input;
+using App2d.Core.Rendering;
 using App2d.Editor;
 using App2d.Levels;
-using App2d.Core.Rendering;
-using App2d.Core.Input;
-using App2d.Core.Tiles;
 using Microsoft.Data.Sqlite;
-using System.Numerics;
 
 namespace App2d.Tests.Levels;
 
@@ -62,11 +60,14 @@ public sealed class WorldMapEditorTests
         finally
         {
             foreach (var path in Directory.EnumerateFiles(root, "*.db"))
+            {
                 foreach (var mode in new[] { SqliteOpenMode.ReadOnly, SqliteOpenMode.ReadWriteCreate })
                 {
                     using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = mode }.ToString());
                     SqliteConnection.ClearPool(connection);
                 }
+            }
+
             Directory.Delete(root, true);
         }
     }

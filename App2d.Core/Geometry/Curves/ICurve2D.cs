@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A two-dimensional parametric curve evaluated over normalized progress [0, 1].</summary>
 public interface ICurve2D

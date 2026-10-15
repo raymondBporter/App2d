@@ -1,9 +1,10 @@
 using App2d.Contracts.World;
 using App2d.Core;
-using App2d.Core.Geometry;
-using App2d.Core.Mathematics;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 

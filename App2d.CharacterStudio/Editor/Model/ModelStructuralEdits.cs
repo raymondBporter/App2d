@@ -2,7 +2,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Confirms structural changes when other assets depend on the model being edited.</summary>
 internal sealed class ModelStructuralEdits(EditorSession session)

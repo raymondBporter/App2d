@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.ComponentModel;

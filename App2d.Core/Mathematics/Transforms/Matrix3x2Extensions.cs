@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Transforms;
 
 public static class Matrix3x2Extensions
 {

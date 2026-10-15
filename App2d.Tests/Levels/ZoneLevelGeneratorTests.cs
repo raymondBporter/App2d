@@ -1,7 +1,6 @@
 using App2d.Core.Tiles;
 using App2d.Levels;
 using System.Text.Json;
-using Xunit;
 
 namespace App2d.Tests.Levels;
 
@@ -27,7 +26,7 @@ public sealed class ZoneLevelGeneratorTests
             var document = new WorldFile2D.WorldDocument(1,
                 [new("other", "Other", 0, [new("other", "Other", 3, "other.db")]),
                  new("combat-zone", "Combat", 0, [generatedMap])])
-                { StartMapId = "combat", StartAtArrival = true };
+            { StartMapId = "combat", StartAtArrival = true };
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             void Write(WorldFile2D.WorldDocument value) => File.WriteAllText(path, JsonSerializer.Serialize(value, options));
             Write(document);
@@ -54,7 +53,7 @@ public sealed class ZoneLevelGeneratorTests
             var current = JsonSerializer.Deserialize<WorldFile2D.WorldDocument>(File.ReadAllText(path), options)!;
             var combat = current.Zones.Single(z => z.Id == "combat-zone");
             var badMap = combat.Maps[0] with { Generation = generatedMap.Generation! with { OriginX = 16384 } };
-            Write(current with { Zones = current.Zones.Select(z => z.Id == combat.Id ? z with { Maps = [badMap] } : z).ToArray() });
+            Write(current with { Zones = [.. current.Zones.Select(z => z.Id == combat.Id ? z with { Maps = [badMap] } : z)] });
             var before = File.ReadAllText(path);
             Assert.Throws<InvalidDataException>(() => ZoneLevelGenerator2D.Regenerate(path, "combat-zone", tilesets));
             Assert.Equal(before, File.ReadAllText(path));

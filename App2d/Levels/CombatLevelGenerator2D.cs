@@ -50,7 +50,10 @@ public static class CombatLevelGenerator2D
             !float.IsFinite(settings.Difficulty) || settings.Difficulty is < 0 or > 1 ||
             !float.IsFinite(settings.Exploration) || settings.Exploration is < 0 or > 1 ||
             settings.TilesetIndex >= tilesets.Count)
+        {
             throw new ArgumentException("Use 6–60 beats, 1–4 jump-rise tiles, difficulty/exploration in [0,1], and an existing tileset.", nameof(settings));
+        }
+
         ValidateRoster(settings.MeleeEnemies, MeleeTypes);
         ValidateRoster(settings.RangedEnemies, RangedTypes);
 
@@ -134,8 +137,10 @@ public static class CombatLevelGenerator2D
         void Fill(int x, int width, int bottom, int height)
         {
             for (var column = x; column < x + width; column++)
+            {
                 for (var row = bottom; row < bottom + height; row++)
                     map.SetTile(column, row, new(TileKind2D.Solid | TileKind2D.Grippable, settings.TilesetIndex));
+            }
         }
         void Platform(int x, int width, int row)
         {
@@ -173,12 +178,20 @@ public static class CombatLevelGenerator2D
         Write("world.json", new WorldFile2D.WorldDocument(1,
             [new("generated", $"Generated {settings.Seed}", -1,
                 [new("generated", $"Combat draft {settings.Seed}", 1, "level.db")])]));
-        Write("zones.json", new { version = 1, zones = draft.Beats.Select(b => new
+        Write("zones.json", new
         {
-            id = $"beat-{b.Index + 1:D2}", name = $"{b.Index + 1}: {b.Recipe}",
-            minX = draft.Map.Origin.X + b.StartTile * TileSize, minY = draft.Map.WorldBounds.Min.Y,
-            maxX = draft.Map.Origin.X + (b.StartTile + b.WidthTiles) * TileSize, maxY = draft.Map.WorldBounds.Max.Y, priority = 0
-        }) });
+            version = 1,
+            zones = draft.Beats.Select(b => new
+            {
+                id = $"beat-{b.Index + 1:D2}",
+                name = $"{b.Index + 1}: {b.Recipe}",
+                minX = draft.Map.Origin.X + b.StartTile * TileSize,
+                minY = draft.Map.WorldBounds.Min.Y,
+                maxX = draft.Map.Origin.X + (b.StartTile + b.WidthTiles) * TileSize,
+                maxY = draft.Map.WorldBounds.Max.Y,
+                priority = 0
+            })
+        });
         Write("generation.json", new { settings, beats = draft.Beats, placements = draft.Placements });
         return manifest;
 

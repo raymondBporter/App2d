@@ -1,4 +1,4 @@
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Shapes;
 
 namespace App2d.Core.Geometry.Builders;
 

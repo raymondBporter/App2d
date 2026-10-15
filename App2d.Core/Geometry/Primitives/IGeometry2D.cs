@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// Geometry in its own coordinate space, including unbounded lines and rays.

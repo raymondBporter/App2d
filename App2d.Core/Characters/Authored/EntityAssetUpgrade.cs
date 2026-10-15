@@ -1,5 +1,3 @@
-using App2d.Core.Geometry.Builders;
-using App2d.Core.Geometry.Authoring;
 using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;

@@ -1,9 +1,9 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Meshes;
+namespace App2d.Core.Geometry.Meshes;
 
 /// <summary>An indexed set of filled triangles in XY, independent of rendering and authoring.</summary>
 public sealed class TriangleMesh2D

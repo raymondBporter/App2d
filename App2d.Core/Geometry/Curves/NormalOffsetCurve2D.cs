@@ -1,7 +1,9 @@
+using App2d.Core.Geometry.Operations.Curves;
+using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>Offsets another curve along its local normal by a caller-provided profile.</summary>
 public sealed class NormalOffsetCurve2D : ICurve2D

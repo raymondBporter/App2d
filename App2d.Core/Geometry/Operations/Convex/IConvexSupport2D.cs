@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Convex;
 
 /// <summary>A finite convex set described by its exact support mapping.</summary>
 public interface IConvexSupport2D

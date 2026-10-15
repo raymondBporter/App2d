@@ -3,7 +3,7 @@ using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Picks and drags control origins and bone tips in the model viewport.</summary>
 internal sealed class ModelControlDrag(EditorSession session)

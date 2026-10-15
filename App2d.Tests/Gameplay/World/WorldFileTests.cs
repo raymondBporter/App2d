@@ -1,9 +1,8 @@
-using App2d.Levels;
 using App2d.Core.Tiles;
+using App2d.Levels;
 using Microsoft.Data.Sqlite;
 using System.Numerics;
 using System.Text.Json;
-using Xunit;
 
 namespace App2d.Tests.Gameplay.World;
 
@@ -111,11 +110,14 @@ public sealed class WorldFileTests : IDisposable
         // Only this test's unique temporary databases are released and removed.
         if (!Directory.Exists(_root)) return;
         foreach (var file in Directory.EnumerateFiles(_root, "*.db"))
+        {
             foreach (var mode in new[] { SqliteOpenMode.ReadOnly, SqliteOpenMode.ReadWriteCreate })
             {
                 using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = file, Mode = mode }.ToString());
                 SqliteConnection.ClearPool(connection);
             }
+        }
+
         Directory.Delete(_root, true);
     }
 }

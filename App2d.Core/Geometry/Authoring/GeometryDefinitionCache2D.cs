@@ -1,6 +1,6 @@
 using App2d.Core.Geometry.Builders;
-using App2d.Core.Curves;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Geometry.Authoring;

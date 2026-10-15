@@ -1,4 +1,4 @@
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>Stable kind IDs used by authored shape JSON and shape editors.</summary>
 public static class ShapeKinds2D

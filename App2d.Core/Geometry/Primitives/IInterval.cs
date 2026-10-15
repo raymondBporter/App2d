@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// A closed [Min, Max] scalar range. Endpoints are ordered and never NaN; infinities are allowed.

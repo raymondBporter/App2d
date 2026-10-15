@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>
 /// Rotation + uniform scale + optional mirror + translation: the exact family of transforms 2D collision supports.

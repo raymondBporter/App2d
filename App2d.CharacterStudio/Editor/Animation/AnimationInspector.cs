@@ -3,7 +3,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Animation settings, keying, selected control or slot, faces, and markers from top to bottom.</summary>
 internal sealed class AnimationInspector(EditorSession session, AnimationViewport viewport, AnimationWeaponEditor weapons)
@@ -99,7 +99,7 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
     private void Faces(AssetDocument<MotionClip> document, Subject? primary)
     {
         if (primary is null) return;
-        var parts = primary.Model.Parts.Where(p => p.Geometry is App2d.Core.Geometry.Builders.ShapeBuilder2D && p.Face != "none").ToArray();
+        var parts = primary.Model.Parts.Where(p => p.Geometry is Core.Geometry.Builders.ShapeBuilder2D && p.Face != "none").ToArray();
         if (parts.Length == 0) return;
         Ui.Header("Face");
         var time = session.Transport.Time;

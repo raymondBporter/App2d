@@ -1,8 +1,9 @@
+using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Validation;
 using System.Collections.ObjectModel;
 using System.Numerics;
 
-namespace App2d.Core.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>
 /// A clamped uniform B-spline. Cubic is the default; lower degrees are useful

@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Core.Geometry;

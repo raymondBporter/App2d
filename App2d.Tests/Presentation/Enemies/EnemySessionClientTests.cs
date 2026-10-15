@@ -2,7 +2,7 @@ using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Simulation;
 using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;

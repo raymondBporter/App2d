@@ -1,4 +1,5 @@
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using App2d.Rendering;
 using System.Numerics;

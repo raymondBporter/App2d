@@ -1,6 +1,5 @@
 using App2d.Core.Assets;
 using App2d.Core.Rendering.Textures;
-using App2d.Editor;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 

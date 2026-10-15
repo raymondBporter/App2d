@@ -1,7 +1,7 @@
-using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
 using System.Reflection;
 
-namespace App2d.Tests.Mathematics;
+namespace App2d.Tests.Mathematics.Progress;
 
 public sealed class EasingTests
 {

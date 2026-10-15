@@ -3,7 +3,7 @@ using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Transport, ruler, pose rows, contact intervals, appearance rows, and playhead in display order.</summary>
 internal sealed class AnimationTimeline(EditorSession session)

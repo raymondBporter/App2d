@@ -1,6 +1,6 @@
 using App2d.Contracts.Player;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;

@@ -1,5 +1,6 @@
-using App2d.Core.Geometry;
-using App2d.Core.Validation;
+using App2d.Core.Geometry.Operations.Area;
+using App2d.Core.Geometry.Operations.Diameter;
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Shapes;

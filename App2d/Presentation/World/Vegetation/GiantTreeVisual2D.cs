@@ -1,7 +1,8 @@
-using App2d.Gameplay.World.Vegetation;
-using App2d.Core.Rendering.Vegetation;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
+using App2d.Core.Rendering.Vegetation;
+using App2d.Gameplay.World.Vegetation;
 using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;

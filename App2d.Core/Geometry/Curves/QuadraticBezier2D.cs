@@ -1,7 +1,8 @@
+using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A quadratic Bezier curve over normalized progress [0, 1].</summary>
 public readonly record struct QuadraticBezier2D : ICurve2D

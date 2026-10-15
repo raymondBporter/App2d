@@ -1,6 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Constraints;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -108,7 +108,9 @@ public sealed class IIntervalTests
         {
             if (authored.Contains(3f) && IntervalMath<float>.Overlaps(authored, physics) &&
                 IntervalMath<float>.TryIntersect(authored, physics, out var shared) && shared.Length == 4f)
+            {
                 matches++;
+            }
         }
         return matches;
     }

@@ -1,4 +1,4 @@
-using App2d.Core.Meshes;
+using App2d.Core.Geometry.Meshes;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;

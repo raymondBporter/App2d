@@ -1,8 +1,9 @@
+using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// An origin and a unit direction, extending forward without limit. Distances are in input units.

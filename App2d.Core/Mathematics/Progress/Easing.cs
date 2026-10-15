@@ -1,4 +1,4 @@
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Progress;
 
 /// <summary>
 /// Easing maps with analytic derivatives. Inputs are not clamped; back and elastic maps intentionally overshoot.
@@ -13,9 +13,9 @@ public static class Easing
     private static readonly double Log2 = Math.Log(2d);
 
     public static readonly ProgressMap Linear = new(x => x, _ => 1d);
-    public static readonly ProgressMap Smooth = Progress.SmoothStepMap;
-    public static readonly ProgressMap Smoother = Progress.SmootherStepMap;
-    public static readonly ProgressMap Smoothest = Progress.SmoothestStepMap;
+    public static readonly ProgressMap Smooth = App2d.Core.Mathematics.Progress.Progress.SmoothStepMap;
+    public static readonly ProgressMap Smoother = App2d.Core.Mathematics.Progress.Progress.SmootherStepMap;
+    public static readonly ProgressMap Smoothest = App2d.Core.Mathematics.Progress.Progress.SmoothestStepMap;
 
     public static readonly ProgressMap EaseInQuad = EaseInPower(2);
     public static readonly ProgressMap EaseOutQuad = ProgressMaps.EaseOut(EaseInQuad);

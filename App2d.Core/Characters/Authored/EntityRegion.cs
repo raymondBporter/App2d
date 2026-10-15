@@ -1,6 +1,11 @@
-using App2d.Core.Geometry;
-using App2d.Core.Mathematics;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 

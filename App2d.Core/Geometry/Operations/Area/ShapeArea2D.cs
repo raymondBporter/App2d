@@ -1,10 +1,13 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Operations.Area;
 
 /// <summary>Union area of finite convex parts in one coordinate space.</summary>
 public static class ShapeArea2D

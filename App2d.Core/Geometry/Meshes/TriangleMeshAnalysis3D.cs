@@ -1,8 +1,9 @@
 using App2d.Core.Mathematics;
+using App2d.Core.Meshes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Meshes;
+namespace App2d.Core.Geometry.Meshes;
 
 /// <summary>An undirected edge between two vertex indices, stored in ascending order.</summary>
 public readonly record struct IndexedEdge3D

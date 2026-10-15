@@ -1,10 +1,11 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Lists drawing parts and rig structure, and issues commands for the selected model.</summary>
 internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits structural)

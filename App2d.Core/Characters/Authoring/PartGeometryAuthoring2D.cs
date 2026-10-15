@@ -1,10 +1,11 @@
-using App2d.Core.Geometry.Builders;
-using App2d.Core.Geometry;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Authoring;
 
 /// <summary>Shape presets, cutout validation, geometry edits and editor controls for character parts.</summary>
 public static class PartGeometryAuthoring2D

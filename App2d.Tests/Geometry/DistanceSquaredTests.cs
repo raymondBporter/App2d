@@ -1,4 +1,6 @@
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using System.Numerics;
 

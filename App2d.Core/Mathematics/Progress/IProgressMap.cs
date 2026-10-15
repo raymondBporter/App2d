@@ -1,4 +1,4 @@
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Progress;
 
 /// <summary>
 /// Maps normalized phase to interpolation or path progress, with a derivative for velocity.

@@ -1,5 +1,5 @@
 using App2d.Contracts.World;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Rendering.Vegetation;
 using App2d.Core.Tiles;
 using App2d.Presentation.World.Presentation;

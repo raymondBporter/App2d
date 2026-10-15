@@ -1,9 +1,8 @@
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.IO;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
-using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Numerics;

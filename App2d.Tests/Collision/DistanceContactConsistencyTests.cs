@@ -1,8 +1,8 @@
-using App2d.Core.Spatial;
-using App2d.Core;
 using App2d.Core.Collision.Contacts;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using System.Numerics;
 
 namespace App2d.Tests.Collision;

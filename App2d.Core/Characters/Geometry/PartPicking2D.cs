@@ -1,16 +1,17 @@
-using App2d.Core.Geometry.Builders;
-using App2d.Core.Curves;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Geometry;
 
 /// <summary>Normalized character-part picking scores using the same attachment and cutout outlines as drawing.</summary>
 public static class PartPicking2D
 {
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, rest: rest, angle: null);
+    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, angle: null, rest: rest);
 
     /// <summary>
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance

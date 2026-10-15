@@ -1,5 +1,7 @@
-using App2d.Core;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -60,13 +62,15 @@ public sealed class ShapeBoundsPrecisionTests
         IShape2D[] shapes = [Circle2D.Builder.Create(2, new(1, -3)), Ellipse2D.Builder.Create(new(3, 1), new(-2, 4))];
         Matrix3x2[] matrices = [Matrix3x2.CreateRotation(.7f), new(2, .5f, -.6f, -3, 10, -20), new(0, 0, 0, 2, 3, 4)];
         foreach (var shape in shapes)
-        foreach (var matrix in matrices)
         {
-            var bounds = ShapeBounds2D.CalculateTransformed(shape, matrix);
-            var points = new Vector2[1024];
-            shape.GetOutlineVerts(points, points.Length);
-            foreach (var point in points)
-                Assert.InRange(bounds.DistanceTo(Vector2.Transform(point, matrix)), 0, .00002f);
+            foreach (var matrix in matrices)
+            {
+                var bounds = ShapeBounds2D.CalculateTransformed(shape, matrix);
+                var points = new Vector2[1024];
+                shape.GetOutlineVerts(points, points.Length);
+                foreach (var point in points)
+                    Assert.InRange(bounds.DistanceTo(Vector2.Transform(point, matrix)), 0, .00002f);
+            }
         }
     }
 

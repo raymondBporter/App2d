@@ -2,7 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json.Serialization;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>
 /// Editable affine transform: translation, rotation, independent axis scales and shear. Angles are radians.

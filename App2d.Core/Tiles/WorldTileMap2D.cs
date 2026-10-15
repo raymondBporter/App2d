@@ -1,4 +1,4 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Core.Tiles;
@@ -18,7 +18,7 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         ChunkSize = sources[0].ChunkSize;
         Origin = sources.Select(m => m.Origin).Aggregate(Vector2.Min);
         var max = sources.Select(m => m.WorldBounds.Max).Aggregate(Vector2.Max);
-        _tilesets = sources.SelectMany(m => m.TilesetIds).Distinct(StringComparer.Ordinal).ToArray();
+        _tilesets = [.. sources.SelectMany(m => m.TilesetIds).Distinct(StringComparer.Ordinal)];
         if (_tilesets.Length > TileCell2D.MaximumTilesetCount)
             throw new ArgumentException("The world supports at most 16 distinct tilesets.", nameof(maps));
         _entries = new Entry[sources.Length];
@@ -29,15 +29,23 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
             if (map.TileSize != TileSize || map.ChunkSize != ChunkSize ||
                 !float.IsFinite(offset.X) || !float.IsFinite(offset.Y) ||
                 offset.X != MathF.Floor(offset.X) || offset.Y != MathF.Floor(offset.Y))
+            {
                 throw new ArgumentException("World maps must share tile/chunk sizes and align to the same tile grid.", nameof(maps));
+            }
+
             for (var j = 0; j < i; j++)
+            {
                 if (map.WorldBounds.Min.X < sources[j].WorldBounds.Max.X && map.WorldBounds.Max.X > sources[j].WorldBounds.Min.X &&
                     map.WorldBounds.Min.Y < sources[j].WorldBounds.Max.Y && map.WorldBounds.Max.Y > sources[j].WorldBounds.Min.Y)
+                {
                     throw new ArgumentException("World maps cannot overlap.", nameof(maps));
+                }
+            }
+
             var x = checked((int)offset.X);
             var y = checked((int)offset.Y);
             _entries[i] = new(map, x, y,
-                map.TilesetIds.Select(id => checked((byte)Array.IndexOf(_tilesets, id))).ToArray(),
+                [.. map.TilesetIds.Select(id => checked((byte)Array.IndexOf(_tilesets, id)))],
                 chunk => Invalidate(map, x, y, chunk));
         }
         Width = checked((int)((max.X - Origin.X) / TileSize));
@@ -59,8 +67,11 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
     private Entry? Find(int x, int y)
     {
         foreach (var entry in _entries)
+        {
             if (x >= entry.X && y >= entry.Y && x - entry.X < entry.Map.Width && y - entry.Y < entry.Map.Height)
                 return entry;
+        }
+
         return null;
     }
     public TileKind2D GetTileKind(int x, int y) => Find(x, y) is { } e ? e.Map.GetTileKind(x - e.X, y - e.Y) : TileKind2D.Empty;
@@ -79,9 +90,9 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         var cells = new List<TileCellRectangle2D>();
         TileRectangleMesher2D.Mesh(Math.Min(ChunkSize, Width - x), Math.Min(ChunkSize, Height - y),
             (cx, cy) => GetTileKind(x + cx, y + cy), cells);
-        return cells.Select(c => new TileCollisionRectangle2D(new(
+        return [.. cells.Select(c => new TileCollisionRectangle2D(new(
             Origin + new Vector2(x + c.X, y + c.Y) * TileSize,
-            Origin + new Vector2(x + c.X + c.Width, y + c.Y + c.Height) * TileSize), c.Kind)).ToArray();
+            Origin + new Vector2(x + c.X + c.Width, y + c.Y + c.Height) * TileSize), c.Kind))];
     }
 
     private void Invalidate(EditableTileMap2D map, int x, int y, TileChunk2D chunk)

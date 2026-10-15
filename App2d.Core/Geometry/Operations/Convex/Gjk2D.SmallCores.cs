@@ -1,3 +1,5 @@
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Mathematics;
 using System.Numerics;
 

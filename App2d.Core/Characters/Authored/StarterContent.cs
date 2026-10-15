@@ -1,4 +1,3 @@
-using App2d.Core.Geometry.Authoring;
 using App2d.Core.Shapes;
 
 namespace App2d.Core.Characters.Authored;

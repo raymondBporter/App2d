@@ -1,7 +1,6 @@
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Mathematics;
 using App2d.Core.Characters.Authored;
 using App2d.Core.IO;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json.Nodes;

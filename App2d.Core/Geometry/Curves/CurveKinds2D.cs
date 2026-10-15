@@ -1,4 +1,4 @@
-namespace App2d.Core.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>Stable kind IDs used by authored curve JSON and future curve editors.</summary>
 public static class CurveKinds2D

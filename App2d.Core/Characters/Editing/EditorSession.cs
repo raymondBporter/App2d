@@ -1,6 +1,6 @@
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Editing;
@@ -228,7 +228,8 @@ public sealed class EditorSession
     {
         var model = Assets.Resolve(subjectId);
         if (model is null) return null;
-        var clip = ClipFor(subjectId); var input = new PoseInput(Expression) { Skin = model.Base.Skins.Any(s => s.Id == Skin) ? Skin : null };
+        var clip = ClipFor(subjectId);
+        var input = new PoseInput(Expression) { Skin = model.Base.Skins.Any(s => s.Id == Skin) ? Skin : null };
         var pose = clip is null ? PoseEvaluator.Rest(model, input)
             : PoseEvaluator.Sample(model, clip, Transport.Playing ? Transport.Seconds(clip) : Transport.Time, repeat: Transport.Repeats(clip), input);
         return new(subjectId, model, pose, clip);

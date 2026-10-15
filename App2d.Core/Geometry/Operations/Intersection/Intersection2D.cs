@@ -1,8 +1,11 @@
+using App2d.Core.Geometry.Operations.Containment;
+using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Intersection;
 
 /// <summary>Where a swept circle first touches a rectangle.</summary>
 /// <param name="Time">The fraction of the sweep at first contact, in [0, 1]; zero when already touching at the start.</param>

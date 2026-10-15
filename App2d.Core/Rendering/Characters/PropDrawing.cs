@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Meshes;
 using System.Numerics;
 

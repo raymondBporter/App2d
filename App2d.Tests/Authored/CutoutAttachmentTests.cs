@@ -1,9 +1,10 @@
-using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
-using App2d.Core.Shapes;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Rendering.Characters;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -12,7 +13,8 @@ public sealed class CutoutAttachmentTests
 {
     private static CharacterModel Model() => new()
     {
-        Id = "membrane", Name = "Membrane",
+        Id = "membrane",
+        Name = "Membrane",
         Controls = [new() { Id = "root" }, new() { Id = "tip", Rest = new(1, 0, .2f) }, new() { Id = "direction", Parent = "tip", Rest = new(1, 1, .2f) }],
         Parts = [new() { Id = "membrane", Kind = PuppetPartKinds.Polygon, A = "root", Width = 1, Height = 1,
             Geometry = new SimplePolygon2D.Builder { Vertices = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] },

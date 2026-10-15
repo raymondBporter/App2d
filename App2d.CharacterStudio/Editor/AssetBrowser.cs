@@ -40,8 +40,11 @@ internal sealed partial class AssetBrowser(EditorSession session)
         {
             if (ImGui.MenuItem("Appearance: hair / clothing...")) Start(Create.Appearance, "", "New appearance");
             foreach (var template in CharacterTemplates.All)
+            {
                 if (ImGui.MenuItem("Model: " + template.Name + " template"))
                 { _modelTemplate = template.Id; Start(Create.Model, "", "New " + template.Name.ToLowerInvariant()); }
+            }
+
             if (ImGui.MenuItem("Model: empty")) Start(Create.EmptyModel, "", "New model");
             foreach (var template in session.Assets.ModelTemplates.Values.OrderBy(t => t.Name, StringComparer.Ordinal))
                 if (ImGui.MenuItem($"Model: {template.Name} template##{template.Id}")) Start(Create.TemplateModel, template.Id, "New " + template.Name);

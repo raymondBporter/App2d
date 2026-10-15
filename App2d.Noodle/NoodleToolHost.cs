@@ -3,7 +3,6 @@ using App2d.Core.Rendering;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
-using System.Numerics;
 
 namespace App2d.Noodle;
 

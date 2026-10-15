@@ -1,10 +1,10 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Edits a base model, its selected rig element or part, and its motion-set assignments.</summary>
 internal sealed class BaseModelInspector(EditorSession session, ModelStructuralEdits structural, ModelPartInspector parts)

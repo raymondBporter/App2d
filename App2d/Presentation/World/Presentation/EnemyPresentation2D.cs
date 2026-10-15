@@ -6,6 +6,7 @@ using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Animation;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Rendering.Textures;
@@ -59,7 +60,7 @@ public sealed class EnemyPresentation2D(
     {
         _hitstop.Prune(states);
         _eventBuffer.Clear();
-        foreach (var occurrence in events) _eventBuffer.Add(occurrence);
+        _eventBuffer.AddRange(events);
         var occurrences = _eventBuffer.Count == 0 ? null : _eventBuffer.ToLookup(e => e.EntityId);
         foreach (var occurrence in _eventBuffer)
         {
@@ -101,6 +102,7 @@ public sealed class EnemyPresentation2D(
             {
                 var state = observed;
                 if (extrapolate && state.IsEnabled)
+                {
                     state = state with
                     {
                         AttackElapsedSeconds = state.AttackElapsedSeconds + _secondsSinceState,
@@ -112,6 +114,8 @@ public sealed class EnemyPresentation2D(
                             Action = state.Person.Action with { ElapsedSeconds = state.Person.Action.ElapsedSeconds + _secondsSinceState }
                         }
                     };
+                }
+
                 state = _hitstop.SampleState(state);
                 _presentIds.Add(state.Id);
                 if (!_views.TryGetValue(state.Id, out var view))
@@ -126,7 +130,7 @@ public sealed class EnemyPresentation2D(
                         };
                     _views.Add(state.Id, view);
                 }
-                view.Update(state, occurrences?[state.Id] ?? Array.Empty<EnemyEvent2D>(), state.IsEnabled ? dt : 0f, tick);
+                view.Update(state, occurrences?[state.Id] ?? [], state.IsEnabled ? dt : 0f, tick);
             }
         }
         foreach (var id in _views.Keys)
@@ -160,7 +164,7 @@ public sealed class EnemyPresentation2D(
             while (_bolts.Count < count)
             {
                 var rock = state.Bolts[_bolts.Count].Gravity > 0;
-                App2d.Core.Shapes.IShape2D shape = rock
+                IShape2D shape = rock
                     ? ConvexPolygon2D.Builder.Create([new(-.5f, -.15f), new(-.2f, -.5f), new(.35f, -.4f), new(.5f, .1f), new(.2f, .5f), new(-.35f, .4f)])
                     : AxisAlignedRectangle2D.Builder.CreateFromSize(Vector2.One);
                 var bolt = new WorldObject2D(shape, new SolidColorShader(rock ? new XnaColor(133, 139, 134) : XnaColor.OrangeRed)) { ZIndex = 2 };

@@ -21,7 +21,7 @@ public static partial class ClipAuthoring
     /// <summary>Moves a slot through the held order, starting from setup order before the first key.</summary>
     public static bool MoveSlot(MotionClip clip, IReadOnlyList<SkeletonSlot2D> slots, string slot, float time, int delta)
     {
-        var order = (clip.DrawOrder.LastOrDefault(k => k.Time <= time)?.Slots ?? slots.Select(s => s.Id).ToList()).ToList();
+        var order = (clip.DrawOrder.LastOrDefault(k => k.Time <= time)?.Slots ?? [.. slots.Select(s => s.Id)]).ToList();
         var index = order.IndexOf(slot);
         var next = (long)index + delta;
         if (index < 0 || next < 0 || next >= order.Count) return false;

@@ -1,7 +1,8 @@
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Geometry;
 
 /// <summary>A shared XY coordinate frame placed at a character's base Z and drawing depth.</summary>
 public readonly record struct PartFrame2D(Frame2D Coordinates, float OriginZ, float Depth)

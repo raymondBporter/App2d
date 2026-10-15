@@ -1,4 +1,6 @@
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Progress;
+using App2d.Core.Mathematics.Transforms;
 using Color = Microsoft.Xna.Framework.Color;
 using Quaternion = System.Numerics.Quaternion;
 using Vector2 = System.Numerics.Vector2;

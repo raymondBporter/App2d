@@ -6,8 +6,8 @@ namespace App2d.Tests.Geometry;
 
 public sealed class ShapeBuilderValidationTests
 {
-    public static TheoryData<ShapeBuilder2D> InvalidBuilders => new()
-    {
+    public static TheoryData<ShapeBuilder2D> InvalidBuilders =>
+    [
         new Circle2D.Builder { Center = Vector2.Zero, Radius = 0 },
         new Ellipse2D.Builder { Center = Vector2.Zero, Radii = new(0, 1) },
         new Capsule2D.Builder { Start = Vector2.Zero, End = Vector2.One, Radius = -1 },
@@ -18,7 +18,7 @@ public sealed class ShapeBuilderValidationTests
         new SimplePolygon2D.Builder { Vertices = [Vector2.Zero, Vector2.One, new(2, 2)] },
         new HalfSpace2D.Builder { Normal = Vector2.Zero, Offset = 0 },
         new CompositeShape2D.Builder { Parts = [] },
-    };
+    ];
 
     [Theory]
     [MemberData(nameof(InvalidBuilders))]

@@ -32,7 +32,9 @@ public sealed class ModelEditingTests
         var model = TestModels.Creature();
         var variant = new ModelVariant
         {
-            Id = "custom", Name = "Custom", Base = model.Id,
+            Id = "custom",
+            Name = "Custom",
+            Base = model.Id,
             Parts = { ["torso"] = new() { Hidden = true, Material = new() { Fill = "#654321" } } }
         };
         PuppetPart Part() => ResolvedModel.From(model, variant).Parts.First(p => p.Id == "torso");

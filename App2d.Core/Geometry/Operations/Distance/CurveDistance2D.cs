@@ -1,8 +1,8 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Curves;
+namespace App2d.Core.Geometry.Operations.Distance;
 
 /// <summary>Point distance queries for finite curves. Smooth curves without an analytic query use a sampled polyline.</summary>
 public static class CurveDistance2D

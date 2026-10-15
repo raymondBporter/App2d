@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Progress;
 
 /// <summary>Clamped progress shaping, its inverses, and unclamped maps with analytic derivatives.</summary>
 public static class Progress

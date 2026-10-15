@@ -1,5 +1,5 @@
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Spatial;
-using App2d.Core.Geometry;
 using App2d.Core.Validation;
 
 namespace App2d.Core.Collision.Queries;

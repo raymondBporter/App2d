@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Builders;
-using App2d.Core.Curves;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.IO;
 using App2d.Core.Shapes;
 using System.Text.Json;

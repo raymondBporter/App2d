@@ -1,8 +1,11 @@
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Operations.Intersection;
 
 /// <summary>Local-space ray queries over shape parameters, independent of spatial objects and collision systems.</summary>
 public static class ShapeRaycast2D

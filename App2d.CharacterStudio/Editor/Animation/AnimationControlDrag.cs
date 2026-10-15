@@ -3,7 +3,7 @@ using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Pointer picking and grab offsets; EditorSession performs pose edits and autokey transactions.</summary>
 internal sealed class AnimationControlDrag(EditorSession session, Viewport viewport)

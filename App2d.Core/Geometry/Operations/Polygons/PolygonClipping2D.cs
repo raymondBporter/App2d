@@ -1,8 +1,10 @@
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Polygons;
 
 /// <summary>Sutherland-Hodgman clipping against half-spaces and convex polygons in either winding.</summary>
 public static class PolygonClipping2D

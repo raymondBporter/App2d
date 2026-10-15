@@ -1,6 +1,4 @@
-using App2d.Core.Mathematics;
-
-namespace App2d.Tests.Mathematics;
+namespace App2d.Tests.Mathematics.Progress;
 
 public sealed class ProgressTests
 {
@@ -12,18 +10,18 @@ public sealed class ProgressTests
     [InlineData(2f, 1f)]
     public void StepFunctionsClampAndKeepEndpoints(float input, float expected)
     {
-        Assert.Equal(expected, Progress.Clamp01(input), 6);
-        Assert.Equal(expected, Progress.SmoothStep(input), 6);
-        Assert.Equal(expected, Progress.SmootherStep(input), 6);
-        Assert.Equal(expected, Progress.SmoothestStep(input), 6);
+        Assert.Equal(expected, App2d.Core.Mathematics.Progress.Progress.Clamp01(input), 6);
+        Assert.Equal(expected, App2d.Core.Mathematics.Progress.Progress.SmoothStep(input), 6);
+        Assert.Equal(expected, App2d.Core.Mathematics.Progress.Progress.SmootherStep(input), 6);
+        Assert.Equal(expected, App2d.Core.Mathematics.Progress.Progress.SmoothestStep(input), 6);
     }
 
     [Fact]
     public void HigherOrdersFlattenProgressNearEndpoints()
     {
         const float progress = 0.1f;
-        Assert.True(Progress.SmootherStep(progress) < Progress.SmoothStep(progress));
-        Assert.True(Progress.SmoothestStep(progress) < Progress.SmootherStep(progress));
+        Assert.True(App2d.Core.Mathematics.Progress.Progress.SmootherStep(progress) < App2d.Core.Mathematics.Progress.Progress.SmoothStep(progress));
+        Assert.True(App2d.Core.Mathematics.Progress.Progress.SmoothestStep(progress) < App2d.Core.Mathematics.Progress.Progress.SmootherStep(progress));
     }
 
     [Theory]
@@ -38,17 +36,17 @@ public sealed class ProgressTests
     [InlineData(1f)]
     public void StepInversesRoundTrip(float progress)
     {
-        AssertInverse(progress, Progress.SmoothStep, Progress.InverseSmoothStep);
-        AssertInverse(progress, Progress.SmootherStep, Progress.InverseSmootherStep);
-        AssertInverse(progress, Progress.SmoothestStep, Progress.InverseSmoothestStep);
+        AssertInverse(progress, App2d.Core.Mathematics.Progress.Progress.SmoothStep, App2d.Core.Mathematics.Progress.Progress.InverseSmoothStep);
+        AssertInverse(progress, App2d.Core.Mathematics.Progress.Progress.SmootherStep, App2d.Core.Mathematics.Progress.Progress.InverseSmootherStep);
+        AssertInverse(progress, App2d.Core.Mathematics.Progress.Progress.SmoothestStep, App2d.Core.Mathematics.Progress.Progress.InverseSmoothestStep);
     }
 
     [Fact]
     public void StepFunctionsAreMonotonic()
     {
-        AssertMonotonic(Progress.SmoothStep);
-        AssertMonotonic(Progress.SmootherStep);
-        AssertMonotonic(Progress.SmoothestStep);
+        AssertMonotonic(App2d.Core.Mathematics.Progress.Progress.SmoothStep);
+        AssertMonotonic(App2d.Core.Mathematics.Progress.Progress.SmootherStep);
+        AssertMonotonic(App2d.Core.Mathematics.Progress.Progress.SmoothestStep);
     }
 
     private static void AssertMonotonic(Func<float, float> step)

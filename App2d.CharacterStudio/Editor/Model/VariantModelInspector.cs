@@ -3,7 +3,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Model;
 
 /// <summary>Edits variant build values, explicit overrides, and saved looks.</summary>
 internal sealed class VariantModelInspector(EditorSession session, ModelPartInspector parts)

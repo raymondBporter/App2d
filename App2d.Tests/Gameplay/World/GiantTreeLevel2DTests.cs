@@ -1,15 +1,16 @@
-using App2d.Gameplay.World.Vegetation;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Player;
 using App2d.Contracts.Simulation;
 using App2d.Core;
 using App2d.Core.Collision;
-using App2d.Core.Geometry;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
+using App2d.Gameplay.World.Vegetation;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;

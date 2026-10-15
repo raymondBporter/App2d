@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authoring;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -77,7 +78,7 @@ public static class PterosaurTemplate
         void Wings(MotionClip c, float[] near, float[] far, float[] fold, float[]? farFold = null)
         {
             Rotate(c, "near-shoulder", near); Rotate(c, "far-shoulder", far);
-            Rotate(c, "near-bend", fold); Rotate(c, "far-bend", farFold ?? fold.Select(a => -a).ToArray());
+            Rotate(c, "near-bend", fold); Rotate(c, "far-bend", farFold ?? [.. fold.Select(a => -a)]);
         }
         var hover = Clip("hover", 1, true); Wings(hover, [-.22f, .28f, -.22f], [.22f, -.28f, .22f], [0, -.1f, 0]);
         ClipAuthoring.SetKey(hover, new("translate", "body"), 0, Vector3.Zero);

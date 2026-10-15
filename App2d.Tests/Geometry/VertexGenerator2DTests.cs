@@ -1,4 +1,6 @@
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Operations.Vertices;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;

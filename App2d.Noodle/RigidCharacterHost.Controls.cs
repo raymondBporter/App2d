@@ -1,5 +1,3 @@
-using System.Numerics;
-
 namespace App2d.Noodle;
 
 internal sealed partial class RigidCharacterHost

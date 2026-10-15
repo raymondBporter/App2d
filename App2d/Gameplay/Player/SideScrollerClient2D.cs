@@ -1,4 +1,3 @@
-using App2d.Core.Mathematics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Player;
@@ -6,6 +5,7 @@ using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Input;
+using App2d.Core.Mathematics.Progress;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Rendering.Vegetation;

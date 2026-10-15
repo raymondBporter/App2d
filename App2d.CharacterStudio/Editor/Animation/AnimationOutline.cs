@@ -2,7 +2,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using ImGuiNET;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Preview build, attachment preview, control channels, and slots in their on-screen order.</summary>
 internal sealed class AnimationOutline(EditorSession session, AnimationWeaponEditor weapons)

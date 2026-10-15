@@ -1,14 +1,12 @@
-using App2d.Core.Geometry.Builders;
 using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Meshes;
-using App2d.Core.Geometry;
-using App2d.Core.Curves;
-using App2d.Core.Shapes;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 

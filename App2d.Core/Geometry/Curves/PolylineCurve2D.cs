@@ -1,8 +1,7 @@
 using App2d.Core.Validation;
-using App2d.Core.Geometry;
 using System.Numerics;
 
-namespace App2d.Core.Curves;
+namespace App2d.Core.Geometry.Curves;
 
 /// <summary>An open polyline parameterized uniformly across its segments.</summary>
 public sealed class PolylineCurve2D : ICurve2D

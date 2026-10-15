@@ -1,7 +1,8 @@
-using App2d.Core.Geometry.Authoring;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Curves;
+using App2d.Core.Characters.Authoring;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Authoring;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;

@@ -1,8 +1,10 @@
-using App2d.Core;
-using App2d.Core.Geometry;
-using App2d.Core.Meshes;
+using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Operations.Intersection;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
-using App2d.Core.Shapes;
+using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;

@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
-using App2d.Core.Geometry;
-using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -69,6 +68,5 @@ public abstract record ShapeBuilder2D : GeometryDefinition2D
         null => throw new ArgumentNullException(nameof(shape)),
         _ => throw new NotSupportedException($"No shape definition exists for {shape.GetType().Name}.")
     };
-
 
 }

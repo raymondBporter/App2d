@@ -15,7 +15,6 @@ using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Diagnostics;

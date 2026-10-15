@@ -1,9 +1,8 @@
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Geometry;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Meshes;
-using App2d.Core.Curves;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -127,7 +126,10 @@ public sealed class PuppetDrawing
                     for (var i = 0; i < triangles.Indices.Length; i += 3)
                         Mesh.Triangle(contour[triangles.Indices[i]], contour[triangles.Indices[i + 1]], contour[triangles.Indices[i + 2]], fillColor);
                 }
-                else Mesh.Polygon(contour, fillColor, null, 0);
+                else
+                {
+                    Mesh.Polygon(contour, fillColor, null, 0);
+                }
             }
             PartPainting.Add(Mesh, part, frame, contour, triangles);
             if (outline is not null && outlineWidth > 0)

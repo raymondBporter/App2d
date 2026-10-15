@@ -1,8 +1,8 @@
-using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Convex;
 
 /// <summary>
 /// A convex core with an optional round radius and a similarity pose. A core can be caller-owned vertices

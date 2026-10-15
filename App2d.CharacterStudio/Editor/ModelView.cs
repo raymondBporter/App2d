@@ -1,3 +1,4 @@
+using App2d.CharacterStudio.Editor.Model;
 using App2d.Core.Characters.Editing;
 
 namespace App2d.CharacterStudio.Editor;
@@ -31,8 +32,14 @@ internal sealed class ModelView : IWorkspaceView
 
     public void Inspector()
     {
-        if (_session.SubjectVariant is { } variant) _variantInspector.Draw(variant);
-        else if (_session.SubjectModel is { } model) _baseInspector.Draw(model);
+        if (_session.SubjectVariant is { } variant)
+        {
+            _variantInspector.Draw(variant);
+        }
+        else if (_session.SubjectModel is { } model)
+        {
+            _baseInspector.Draw(model);
+        }
         else { Ui.Help("Open a model or variant from the browser, or create one with New."); return; }
 
         foreach (var problem in _session.ActiveDocument is { } document ? _session.Assets.Problems(document) : []) Ui.Problem(problem);

@@ -1,6 +1,8 @@
-using App2d.Core.Meshes;
+using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Operations.Conversion;
 
 /// <summary>Explicit bridges from mesh data to runtime shapes.</summary>
 public static class ShapeConversions2D

@@ -9,9 +9,9 @@ public sealed class InterpolationTests
     public void LerpCanComposeWithAProgressMapping()
     {
         Assert.Equal(12.5f, Interpolation.Lerp(10f, 20f, 0.25f), 6);
-        Assert.Equal(11.5625f, Interpolation.Lerp(10f, 20f, 0.25f, Progress.SmoothStep), 6);
+        Assert.Equal(11.5625f, Interpolation.Lerp(10f, 20f, 0.25f, App2d.Core.Mathematics.Progress.Progress.SmoothStep), 6);
 
-        var vector = Interpolation.Lerp(Vector2.Zero, new Vector2(8f, -4f), 0.5f, Progress.SmootherStep);
+        var vector = Interpolation.Lerp(Vector2.Zero, new Vector2(8f, -4f), 0.5f, App2d.Core.Mathematics.Progress.Progress.SmootherStep);
         Assert.Equal(new Vector2(4f, -2f), vector);
     }
 

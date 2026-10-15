@@ -1,6 +1,8 @@
 using App2d.Core.Geometry;
-using App2d.Core.Mathematics;
-using App2d.Core.Validation;
+using App2d.Core.Geometry.Operations.Containment;
+using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Operations.Diameter;
+using App2d.Core.Geometry.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Shapes;
@@ -37,6 +39,4 @@ public sealed partial class Circle2D : IConvexShape2D
 
     /// <inheritdoc/>
     public Vector2 GetSupportPoint(Vector2 localDirection) => SupportPoint2D.Circle(localDirection, Center, Radius);
-
-
 }

@@ -3,7 +3,7 @@ using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Cubic-curve controls shared by motion and tint inspectors; authoring code owns curve conversion.</summary>
 internal static class AnimationCurveEditor

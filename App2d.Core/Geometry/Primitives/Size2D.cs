@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using System.Numerics;
 using System.Text.Json.Serialization;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>A finite, strictly positive width and height. The default value is invalid.</summary>
 public readonly record struct Size2D

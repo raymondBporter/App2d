@@ -1,18 +1,19 @@
-using App2d.Core.Geometry.Builders;
-using App2d.Core.Curves;
 using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Characters;
+namespace App2d.Core.Characters.Geometry;
 
 /// <summary>Character part outlines, including curves and cutouts deformed by control bindings.</summary>
 public static class PartContours2D
 {
     public static IReadOnlyList<PuppetPoint> CutoutPoints(PuppetPart part) =>
-        ((SimplePolygon2D.Builder)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y)).ToArray();
+        [.. ((SimplePolygon2D.Builder)part.Geometry!).Vertices.Select(p => new PuppetPoint(p.X, p.Y))];
 
-    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, rest: rest, angle: null);
+    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, angle: null, rest: rest);
 
     /// <summary>The closed outline of an ellipse, rounded box, trapezoid or cutout, or a stroke's two endpoints.</summary>
     public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)

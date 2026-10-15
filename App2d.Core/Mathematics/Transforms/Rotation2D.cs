@@ -1,7 +1,7 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Mathematics;
+namespace App2d.Core.Mathematics.Transforms;
 
 /// <summary>Rotation in the XY plane, in radians, without constructing a transform or shape.</summary>
 public static class Rotation2D

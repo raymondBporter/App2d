@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authoring;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;

@@ -1,5 +1,9 @@
 using App2d.Core.Geometry;
-using App2d.Core.Mathematics;
+using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -124,7 +128,7 @@ public sealed class Gjk2DTests
     public void ThinContactBetweenOldEllipseSamplesIsDetected()
     {
         var first = Ellipse2D.Builder.Create(new(3, 1));
-        var angle = MathF.PI / 64;
+        const float angle = MathF.PI / 64;
         var boundary = new Vector2(3f * MathF.Cos(angle), MathF.Sin(angle));
         var normal = Vector2.Normalize(boundary / new Vector2(9, 1));
         var second = Ellipse2D.Builder.Create(new(.0001f));

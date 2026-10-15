@@ -1,7 +1,7 @@
+using App2d.Core.Characters.Authoring;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Builders;
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Mathematics;
-using App2d.Core.Shapes;
+using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -206,7 +206,7 @@ public static class ModelAuthoring
         var points = new List<PuppetPoint>(PartContours2D.CutoutPoints(part));
         points.Insert(after + 1, PuppetPoint.Lerp(points[after], points[(after + 1) % points.Count], .5f));
         PartGeometryAuthoring2D.CheckCutout(points);
-        var bindings = (part.Bindings ?? []).Select(b => b with { Point = b.Point > after ? b.Point + 1 : b.Point }).ToList();
+        var bindings = (part.Bindings ?? []).ConvertAll(b => b with { Point = b.Point > after ? b.Point + 1 : b.Point });
         if (part.Bindings?.FirstOrDefault(b => b.Point == after) is { } source) bindings.Add(source with { Point = after + 1 });
         PartGeometryAuthoring2D.SetPolygon(part, points); part.Bindings = bindings.Count > 0 ? bindings : null;
     }

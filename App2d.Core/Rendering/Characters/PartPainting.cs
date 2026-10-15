@@ -1,7 +1,7 @@
 using App2d.Core.Characters;
-using App2d.Core.Geometry;
-using App2d.Core.Meshes;
-using App2d.Core.Shapes;
+using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Operations.Polygons;
 using System.Numerics;
 
 namespace App2d.Core.Rendering.Characters;
@@ -18,9 +18,9 @@ internal static class PartPainting
             var bias = new Vector3(0, 0, .00001f * (layer + 1));
             if (triangles is null)
             {
-                var points = patch.Points.Select(p => frame.At(new(p.X * part.Width, p.Y * part.Height))).ToList();
+                var points = patch.Points.ConvertAll(p => frame.At(new(p.X * part.Width, p.Y * part.Height)));
                 var clipped = PolygonClipping2D.ClipConvexXY(points, contour);
-                mesh.Polygon(clipped.Select(p => p - bias).ToArray(), color, null, 0); continue;
+                mesh.Polygon([.. clipped.Select(p => p - bias)], color, null, 0); continue;
             }
             var paint = patch.Points.Select(p => p.XYZ).ToArray();
             for (var i = 0; i < triangles.Indices.Length; i += 3)
@@ -35,7 +35,7 @@ internal static class PartPainting
                     var u = (d.X * ac.Y - d.Y * ac.X) / determinant; var v = (ab.X * d.Y - ab.Y * d.X) / determinant;
                     return contour[ia] * (1 - u - v) + contour[ib] * u + contour[ic] * v - bias;
                 }
-                mesh.Polygon(clipped.Select(Place).ToArray(), color, null, 0);
+                mesh.Polygon([.. clipped.Select(Place)], color, null, 0);
             }
         }
     }

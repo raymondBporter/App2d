@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using System.Numerics;
 using System.Text.Json.Serialization;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Primitives;
 
 /// <summary>
 /// An axis-aligned rectangle holding only Min and Max, independent of the shape hierarchy.

@@ -1,7 +1,10 @@
+using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Intersection;
 
 /// <summary>
 /// First-hit ray casts against raw primitives in one coordinate space. Directions need not be unit length:

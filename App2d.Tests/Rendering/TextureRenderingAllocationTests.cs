@@ -3,7 +3,6 @@ using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
 using Xunit.Abstractions;
 using Texture2D = App2d.Core.Rendering.Textures.Texture2D;
 

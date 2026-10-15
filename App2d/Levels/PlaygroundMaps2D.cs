@@ -8,7 +8,7 @@ namespace App2d.Levels;
 public static class PlaygroundMaps2D
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
-        { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
+    { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
     public static Vector2 Arrival(WorldMapAsset2D map, float playerHeight, float groundProbe)
     {
         var spawn = map.PositionThings.FirstOrDefault(t => t.Enabled && t.TypeKey == "player-spawn");
@@ -42,8 +42,11 @@ public static class PlaygroundMaps2D
         {
             var map = new EditableTileMap2D(width, 96, 32, 32, new(x, -640), tilesets);
             for (var column = 0; column < width; column++)
+            {
                 for (var row = 0; row < 20; row++)
                     map.SetTile(column, row, new(TileKind2D.Solid | TileKind2D.Grippable, tileset));
+            }
+
             var path = Path.Combine(directory, file);
             using (File.Open(path, FileMode.CreateNew, FileAccess.Write)) { }
             using var db = LevelDatabase2D.Open(path);

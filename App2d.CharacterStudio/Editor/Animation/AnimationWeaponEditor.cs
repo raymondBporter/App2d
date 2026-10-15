@@ -4,7 +4,7 @@ using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Attachment preview controls, weapon asset inspector, and rotation handles share one drag state.</summary>
 internal sealed class AnimationWeaponEditor(EditorSession session)

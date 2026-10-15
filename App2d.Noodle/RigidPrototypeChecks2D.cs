@@ -1,6 +1,6 @@
-using App2d.Core.Curves;
-using App2d.Core.Geometry;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Noodle;

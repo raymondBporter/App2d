@@ -4,7 +4,7 @@ using App2d.Core.Characters.Editing;
 using ImGuiNET;
 using System.Numerics;
 
-namespace App2d.CharacterStudio.Editor;
+namespace App2d.CharacterStudio.Editor.Animation;
 
 /// <summary>Selected control values, transform channels, outgoing curves, and planted contacts.</summary>
 internal sealed class AnimationControlInspector(EditorSession session)

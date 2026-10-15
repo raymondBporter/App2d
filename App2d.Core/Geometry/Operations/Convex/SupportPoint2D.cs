@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Convex;
 
 /// <summary>
 /// Farthest points of raw convex primitives in a direction. A zero direction returns a representative point.
