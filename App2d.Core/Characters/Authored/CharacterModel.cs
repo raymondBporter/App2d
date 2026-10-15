@@ -147,7 +147,6 @@ public sealed class CharacterModel
         PartAssetJson.RequireTypedJson(json);
         var model = AuthoredAsset.Parse<CharacterModel>(json, "model");
         if (model.Version is 2 or 3) model.Version = CurrentVersion;
-        PartAssetJson.Restore(model.Parts);
         return model;
     }
     public static CharacterModel FromJson(string json) { var model = FromDraftJson(json); model.Validate(); return model; }

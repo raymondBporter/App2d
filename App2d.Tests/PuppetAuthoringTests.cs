@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
-using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -13,8 +14,7 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void TrapezoidTapersTowardItsUpperControlAndPickingFollowsTheTaper()
     {
-        var part = new PuppetPart { Kind = "trapezoid", A = "base", B = "top", Width = 2, Height = 2 };
-        part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
+        var part = new PuppetPart { Geometry = new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }, A = "base", B = "top", Width = 2, Height = 2 };
         // Local up points right in this pose, so the narrow end is at world X = 1.
         static Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
         var contour = PartContours2D.Contour(part, World);
@@ -29,35 +29,35 @@ public sealed class PuppetAuthoringTests
     public void EditorCanAddRoundedBoxesAndFourVertexTrapezoids()
     {
         var model = Core.Characters.Authored.PersonTemplate.Model();
-        var box = Core.Characters.Authored.ModelAuthoring.AddPart(model, "box", "hips");
-        var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, "trapezoid", "hips");
+        var box = Core.Characters.Authored.ModelAuthoring.AddPart(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "hips");
+        var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }, "hips");
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
-        Assert.Equal("box", restored.Parts.Single(p => p.Id == box.Id).Kind);
+        Assert.IsType<RoundedRectangle2D.Builder>(restored.Parts.Single(p => p.Id == box.Id).Geometry);
         Assert.Equal(4, Assert.IsType<SimplePolygon2D.Builder>(restored.Parts.Single(p => p.Id == trapezoid.Id).Geometry).Vertices.Count);
-        Assert.Equal("polygon", restored.Parts.Single(p => p.Id == "body").Kind);
+        Assert.IsType<SimplePolygon2D.Builder>(restored.Parts.Single(p => p.Id == "body").Geometry);
     }
 
     [Fact]
-    public void ChangingPartKindKeepsItsIdentityAndSuppliesAStrokeEndpoint()
+    public void ChangingGeometryKeepsItsIdentityAndSuppliesACurveEndpoint()
     {
         var model = Core.Characters.Authored.ModelAuthoring.Empty("test", "Test");
         Core.Characters.Authored.ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
         Core.Characters.Authored.ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
-        var part = Core.Characters.Authored.ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "root");
+        var part = Core.Characters.Authored.ModelAuthoring.AddPart(model, GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), "root");
         var id = part.Id;
 
-        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Stroke);
+        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, id, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY });
         Assert.Equal(id, part.Id);
-        Assert.Equal(PuppetPartKinds.Stroke, part.Kind);
+        Assert.IsType<LineCurveDefinition2D>(part.Geometry);
         Assert.Equal("tip", part.B);
 
-        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, id, PuppetPartKinds.Trapezoid);
+        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, id, new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] });
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
-        Assert.Equal(PuppetPartKinds.Polygon, restored.Parts.Single().Kind);
+        Assert.IsType<SimplePolygon2D.Builder>(restored.Parts.Single().Geometry);
         Assert.Equal(id, restored.Parts.Single().Id);
 
-        var stroke = Core.Characters.Authored.ModelAuthoring.AddPart(model, PuppetPartKinds.Stroke, "root", "tip");
-        Core.Characters.Authored.ModelAuthoring.SetPartKind(model, stroke.Id, PuppetPartKinds.Box);
+        var stroke = Core.Characters.Authored.ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, "root", "tip");
+        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, stroke.Id, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f));
         Assert.NotNull(stroke.RenderMaterial.Fill);
         Assert.NotNull(stroke.RenderMaterial.Outline);
     }

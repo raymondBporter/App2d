@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -40,6 +41,8 @@ public sealed partial class RoundedRectangle2D
             var rectangle = Rectangle2D.Builder.FromSize(size, center);
             return new() { Min = rectangle.Min, Max = rectangle.Max, Radius = radius };
         }
+        /// <summary>Resizes around the existing center, keeping the corner radius within the new sides.</summary>
+        public Builder WithSize(Vector2 size) => FromSize(size, MathF.Min(Radius, MathF.Min(size.X, size.Y) / 2), new Rect2D(Min, Max).Center);
         public static RoundedRectangle2D CreateFromSize(Vector2 size, float radius, Vector2 center = default) => FromSize(size, radius, center).Build();
     }
 }

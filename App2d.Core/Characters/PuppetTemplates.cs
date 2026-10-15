@@ -1,6 +1,8 @@
-using App2d.Core.Characters.Authoring;
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters;
@@ -14,7 +16,7 @@ public static class PuppetTemplates
         void Bone(string from, string to, bool visible = true)
         {
             puppet.Bones.Add(new() { From = from, To = to });
-            if (visible) puppet.Parts.Add(new() { Id = from + "-" + to, Kind = PuppetPartKinds.Stroke, A = from, B = to, Width = .045f });
+            if (visible) puppet.Parts.Add(new() { Id = from + "-" + to, Geometry = new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, A = from, B = to, Width = .045f });
         }
         Control("hips", 0, 1); Control("chest", 0, 1.65f); Control("head", 0, 2.03f);
         Bone("hips", "chest", false); Bone("chest", "head");
@@ -27,12 +29,11 @@ public static class PuppetTemplates
             puppet.Chains.Add(new() { Root = side + "-shoulder", Joint = side + "-elbow", End = side + "-hand", Bend = -1 });
             puppet.Chains.Add(new() { Root = side + "-hip", Joint = side + "-knee", End = side + "-foot", Bend = 1 });
         }
-        puppet.Parts.Add(new() { Id = "body", Kind = PuppetPartKinds.Trapezoid, A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Material = new() { Fill = "#d8e9db", Outline = new() } });
-        puppet.Parts.Add(new() { Id = "head", Kind = PuppetPartKinds.Ellipse, A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
+        puppet.Parts.Add(new() { Id = "body", Geometry = new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }, A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Material = new() { Fill = "#d8e9db", Outline = new() } });
+        puppet.Parts.Add(new() { Id = "head", Geometry = GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
         foreach (var part in puppet.Parts)
         {
-            part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
-            part.Material ??= PuppetPartKinds.IsStroke(part.Kind) ? new RenderMaterialDefinition2D()
+            part.Material ??= part.Geometry is CurveDefinition2D ? new RenderMaterialDefinition2D()
                 : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         }
         puppet.Motions[0].Name = "Pose study";

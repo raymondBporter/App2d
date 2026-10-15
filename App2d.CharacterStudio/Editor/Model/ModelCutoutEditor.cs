@@ -1,6 +1,5 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
@@ -29,7 +28,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
             void Cutout(Action<List<Vector2>> edit)
             {
                 var points = new List<Vector2>(vertices); edit(points);
-                try { PartGeometryAuthoring2D.CheckCutout(points); change(p => PartGeometryAuthoring2D.SetPolygon(p, points)); }
+                try { ModelAuthoring.CheckCutout(points); change(p => ModelAuthoring.SetCutout(p, points)); }
                 catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
             }
             for (var i = 0; i < vertices.Count; i++)
@@ -75,7 +74,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
         var edited = new List<Vector2>(points);
         try
         {
-            edited[_cutoutDrag] = PartGeometryAuthoring2D.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse).XY, pose.World, id => model.Rest[id], id => pose.Angles[id], id => pose.Bones[id], id => model.RestTransforms[id]);
+            edited[_cutoutDrag] = PartAttachment2D.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse).XY, pose.World, id => model.Rest[id], id => pose.Angles[id], id => pose.Bones[id], id => model.RestTransforms[id]);
         }
         catch (InvalidOperationException)
         {
@@ -83,12 +82,12 @@ internal sealed class ModelCutoutEditor(EditorSession session)
         }
         try
         {
-            PartGeometryAuthoring2D.CheckCutout(edited);
+            ModelAuthoring.CheckCutout(edited);
         }
         catch (InvalidDataException)
         {
             return;
         }
-        session.Change(document, () => PartGeometryAuthoring2D.SetPolygon(document.Asset.Parts.First(p => p.Id == part.Id), edited));
+        session.Change(document, () => ModelAuthoring.SetCutout(document.Asset.Parts.First(p => p.Id == part.Id), edited));
     }
 }

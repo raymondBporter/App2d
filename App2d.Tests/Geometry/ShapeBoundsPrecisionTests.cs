@@ -10,6 +10,24 @@ namespace App2d.Tests.Geometry;
 public sealed class ShapeBoundsPrecisionTests
 {
     [Theory]
+    [InlineData(float.MaxValue, float.MaxValue)]
+    [InlineData(float.MaxValue / 2, float.MaxValue)]
+    [InlineData(-float.MaxValue, float.MaxValue)]
+    [InlineData(float.Epsilon, float.Epsilon)]
+    public void SharedRectangleAndCapsuleCentersKeepFiniteExtremesAndSubnormalPoints(float first, float second)
+    {
+        var a = new Vector2(first, -second); var b = new Vector2(second, -first);
+        var expected = new Vector2((float)(((double)first + second) / 2), (float)(-((double)first + second) / 2));
+        var rectangle = Rect2D.FromPoints(a, b);
+        Assert.Equal(expected, rectangle.Center);
+        Assert.Equal(expected.X, rectangle.MidX); Assert.Equal(expected.Y, rectangle.MidY);
+        var capsule = Capsule2D.Builder.Create(a, b, .5f);
+        Assert.Equal(expected, capsule.Center);
+        Assert.Equal(expected, Capsule2D.Builder.Create(b, a, .5f).Center);
+        Assert.Equal(expected, ShapeBounds2D.CalculateBoundingCircle(capsule).Center);
+    }
+
+    [Theory]
     [InlineData(1f, 0f, 3f, float.NegativeInfinity, float.NegativeInfinity, 3f, float.PositiveInfinity)]
     [InlineData(-1f, 0f, 3f, -3f, float.NegativeInfinity, float.PositiveInfinity, float.PositiveInfinity)]
     [InlineData(0f, 1f, 3f, float.NegativeInfinity, float.NegativeInfinity, float.PositiveInfinity, 3f)]

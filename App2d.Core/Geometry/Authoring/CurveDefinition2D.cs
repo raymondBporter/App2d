@@ -69,6 +69,7 @@ public abstract record CurveDefinition2D : GeometryDefinition2D
 
 public sealed record LineCurveDefinition2D : CurveDefinition2D
 {
+    [JsonIgnore] public override string Kind => CurveKinds2D.Line;
     public required Vector2 Start { get; init; }
     public required Vector2 End { get; init; }
     public override ICurve2D Build() => new LineSegmentCurve2D(Start, End);
@@ -76,12 +77,14 @@ public sealed record LineCurveDefinition2D : CurveDefinition2D
 
 public sealed record PolylineCurveDefinition2D : CurveDefinition2D
 {
+    [JsonIgnore] public override string Kind => CurveKinds2D.Polyline;
     public required List<Vector2> Points { get; init; }
     public override ICurve2D Build() => new PolylineCurve2D(Points);
 }
 
 public sealed record ArcCurveDefinition2D : CurveDefinition2D
 {
+    [JsonIgnore] public override string Kind => CurveKinds2D.Arc;
     public required Vector2 Center { get; init; }
     public required float Radius { get; init; }
     public required float StartAngleRadians { get; init; }
@@ -91,6 +94,7 @@ public sealed record ArcCurveDefinition2D : CurveDefinition2D
 
 public sealed record QuadraticBezierCurveDefinition2D : CurveDefinition2D
 {
+    [JsonIgnore] public override string Kind => CurveKinds2D.QuadraticBezier;
     public required Vector2 Start { get; init; }
     public required Vector2 Control { get; init; }
     public required Vector2 End { get; init; }
@@ -99,6 +103,7 @@ public sealed record QuadraticBezierCurveDefinition2D : CurveDefinition2D
 
 public sealed record CubicBezierCurveDefinition2D : CurveDefinition2D
 {
+    [JsonIgnore] public override string Kind => CurveKinds2D.CubicBezier;
     public required Vector2 Start { get; init; }
     public required Vector2 Control1 { get; init; }
     public required Vector2 Control2 { get; init; }
@@ -108,6 +113,7 @@ public sealed record CubicBezierCurveDefinition2D : CurveDefinition2D
 
 public sealed record BSplineCurveDefinition2D : CurveDefinition2D
 {
+    [JsonIgnore] public override string Kind => CurveKinds2D.BSpline;
     public required List<Vector2> ControlPoints { get; init; }
     public int Degree { get; init; } = 3;
     public override ICurve2D Build() => new BSpline2D(ControlPoints, Degree);

@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Shapes;
 using System.Text.Json;
 
 namespace App2d.Tests.Authored;
@@ -148,7 +149,7 @@ public sealed class ModelTemplateTests : IDisposable
         var model = ModelAuthoring.Empty("machine", "Machine");
         var root = ModelAuthoring.AddBone(model, null, "mount");
         var child = ModelAuthoring.AddBone(model, root.Id, "pendulum");
-        ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, child.Id);
+        ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), child.Id);
         model.MotionSets = [new() { Id = "cycle", Name = "Cycle", Roles = new() { ["operate"] = "source-performance" } }];
         var clip = ClipAuthoring.New(ResolvedModel.From(model), "source-performance", "Swing", 1, true);
         clip.Tracks = [new() { Kind = MotionClip.RotateKind, Target = child.Id, Keys = [new(), new() { Time = 1, Angle = .4f }] }];

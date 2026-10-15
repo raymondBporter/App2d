@@ -88,12 +88,10 @@ public sealed record PartPointBinding
     public string? Toward { get; set; }
 }
 
-/// <summary>Stroke endpoints follow controls. Other shapes attach to A; B optionally points their local +Y axis.</summary>
+/// <summary>Curve endpoints follow controls. Shapes attach to A; B optionally points their local +Y axis.</summary>
 public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
-    [JsonIgnore]
-    public string Kind { get; set; } = PuppetPartKinds.Ellipse;
     /// <summary>The shape or curve attached to this part.</summary>
     public GeometryDefinition2D? Geometry { get; set; }
     /// <summary>Authored drawing style.</summary>
@@ -144,12 +142,12 @@ public sealed record PuppetPart
                 throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
         }
         if (Geometry is CurveDefinition2D curve) _ = curve.Build();
-        var linkedStroke = Geometry is CurveDefinition2D;
-        if (linkedStroke && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
-        if (linkedStroke && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
+        var linkedCurve = Geometry is CurveDefinition2D;
+        if (linkedCurve && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
+        if (linkedCurve && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
         new Limit(-1, 1).Check(WaveAmplitude, "part.waveAmplitude");
         new Limit(.1f, 16).Check(WaveCycles, "part.waveCycles");
-        if ((WaveAmplitude != 0 || WavePhaseControl is not null) && !linkedStroke) throw new InvalidDataException("Normal waves require a curve.");
+        if ((WaveAmplitude != 0 || WavePhaseControl is not null) && !linkedCurve) throw new InvalidDataException("Normal waves require a curve.");
         if (WavePhaseControl is not null && !isControl(WavePhaseControl)) throw new InvalidDataException("Unknown wave phase control: " + WavePhaseControl);
         new Limit(-1000, 1000).Check(Angle, "part.angle");
         new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
@@ -229,7 +227,6 @@ public sealed class PuppetDefinition
     {
         PartAssetJson.RequireTypedJson(json);
         var definition = JsonSerializer.Deserialize<PuppetDefinition>(json, JsonOptions) ?? throw new InvalidDataException("Empty puppet file.");
-        PartAssetJson.Restore(definition.Parts);
         definition.Validate(); return definition;
     }
     public void Save(string path)

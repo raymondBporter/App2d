@@ -1,8 +1,8 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Authoring;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -27,12 +27,12 @@ public sealed class CharacterGeometryTests
 
     [Theory]
     [InlineData("ellipse", 48)]
-    [InlineData("box", 36)]
+    [InlineData("rounded-rectangle", 36)]
     public void ContoursAndPickingShareTheRotatedOffsetFrame(string kind, int count)
     {
         var part = new PuppetPart
         {
-            Kind = kind,
+            Geometry = kind == "ellipse" ? GeometryDefinition2D.CreateDefault(kind) : RoundedRectangle2D.Builder.FromSize(4, 2, .25f),
             A = "a",
             B = "b",
             Width = 4,
@@ -41,7 +41,6 @@ public sealed class CharacterGeometryTests
             OffsetY = 2,
             Depth = .5f
         };
-        part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
         var contour = PartContours2D.Contour(part, World);
         Assert.Equal(count, contour.Count);
         Assert.All(contour, point => Assert.Equal(3.5f, point.Z));
@@ -65,8 +64,7 @@ public sealed class CharacterGeometryTests
     [Fact]
     public void StrokePickingKeepsItsMinimumWidthAndPointLikeSegmentTolerance()
     {
-        var part = new PuppetPart { Kind = "stroke", A = "a", B = "b", Width = .01f, Depth = 2 };
-        part.Geometry = PartGeometryAuthoring2D.FromPreset(part);
+        var part = new PuppetPart { Geometry = new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, A = "a", B = "b", Width = .01f, Depth = 2 };
         static Vector3 World(string id) => id == "a" ? default : new(.000001f, 0, 3);
         Assert.Equal(1, PartPicking2D.Distance(part, World, new(0, .06f, 100)), 5);
         Assert.Equal(new Vector3(0, 0, 2), PartContours2D.Contour(part, World)[0]);

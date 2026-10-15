@@ -9,7 +9,6 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>Attachment frames and local shape scaling shared by character drawing, picking and editing.</summary>
 public static class PartAttachment2D
 {
-
     internal static Vector2 ShapeScale(PuppetPart part, IShape2D shape) => shape is RoundedRectangle2D rounded
         ? new(part.Width / (rounded.Max.X - rounded.Min.X), part.Height / (rounded.Max.Y - rounded.Min.Y))
         : new(part.Width, part.Height);
@@ -54,5 +53,21 @@ public static class PartAttachment2D
         var now = BindingFrame(binding, world);
         var local = before.Coordinates.ToLocal(drawnRest.XY);
         return now.At(local) + new Vector3(0, 0, drawnRest.Z - before.OriginZ);
+    }
+
+    /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
+    public static Vector2 ArtworkPoint(PuppetPart part, int index, Vector2 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Matrix3x2>? restTransform = null)
+    {
+        var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
+        var art = binding is null ? FrameOf(part, world, angle, transform) : FrameOf(part, rest, transform: restTransform);
+        if (binding is not null)
+        {
+            var now = BindingFrame(binding, world);
+            var before = BindingFrame(binding, rest);
+            target = before.Coordinates.TransformPoint(now.Coordinates.ToLocal(target));
+        }
+        if (!art.Coordinates.TryToLocal(target, out var local))
+            throw new InvalidOperationException("Cannot edit a cutout through a collapsed frame.");
+        return new(local.X / part.Width, local.Y / part.Height);
     }
 }

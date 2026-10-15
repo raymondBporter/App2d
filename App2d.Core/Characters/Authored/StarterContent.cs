@@ -1,4 +1,7 @@
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
+using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -263,12 +266,12 @@ public static class StarterContent
             ModelAuthoring.AddControl(model, $"hip-{i}", new(x + .15f, .4f, z), $"knee-{i}");
             ModelAuthoring.AddControl(model, $"knee-{i}", new(x, 0, z), $"foot-{i}");
             ModelAuthoring.AddChain(model, $"foot-{i}");
-            ModelAuthoring.AddPart(model, PuppetPartKinds.Stroke, $"hip-{i}", $"knee-{i}"); ModelAuthoring.AddPart(model, PuppetPartKinds.Stroke, $"knee-{i}", $"foot-{i}");
+            ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}"); ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
         }
         ModelAuthoring.AddMeasure(model, "leg", ["hip-1", "knee-1", "foot-1"]);
         foreach (var chain in model.Chains) chain.Scale = "leg";
         foreach (var control in model.Controls.Where(c => c.Id == "body" || c.Id.StartsWith("hip-", StringComparison.Ordinal))) control.Scale = "leg";
-        var shell = ModelAuthoring.AddPart(model, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" }; shell.Depth = -.05f;
+        var shell = ModelAuthoring.AddPart(model, GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" }; shell.Depth = -.05f;
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
         model.HurtLayouts = [new() { Id = "standard", Regions = [new() { Id = "shell", Controls = ["body", "hip-0", "hip-2"], Pad = .2f }, new() { Id = "legs", Controls = ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], Pad = .05f }] }];

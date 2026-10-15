@@ -3,6 +3,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -15,7 +16,7 @@ public sealed class BoneAuthoringTests
         var model = ModelAuthoring.Empty("bones", "Bones");
         var root = ModelAuthoring.AddBone(model, null, "root");
         var child = ModelAuthoring.AddBone(model, root.Id, "child");
-        var shape = ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, child.Id);
+        var shape = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), child.Id);
         shape.Angle = .15f;
         ModelAuthoring.RotateRestBone(model, root.Id, .3f);
 
@@ -57,7 +58,7 @@ public sealed class BoneAuthoringTests
         var model = ModelAuthoring.Empty("bones", "Bones");
         var bone = ModelAuthoring.AddBone(model, null, "root");
         var other = ModelAuthoring.AddBone(model, bone.Id, "child");
-        var shape = ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, bone.Id);
+        var shape = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), bone.Id);
         shape.B = other.Id;
         Assert.Throws<InvalidDataException>(model.Validate);
     }

@@ -2,7 +2,6 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Authoring;
 using ImGuiNET;
-using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor.Model;
 
@@ -19,28 +18,6 @@ internal static class ModelCurveInspector
             if (Ui.Combo("Wave travel control", part.WavePhaseControl ?? "(none)", controls.Prepend("(none)")) is { } phase)
                 change(p => p.WavePhaseControl = phase == "(none)" ? null : phase);
             Ui.Help("Bumps follow the curve normal. Animate the travel control along the curve's endpoint span to move them. Negative height bends to the other side.");
-        }
-        var kind = curve switch
-        {
-            LineCurveDefinition2D => "Line",
-            QuadraticBezierCurveDefinition2D => "Quadratic Bézier",
-            CubicBezierCurveDefinition2D => "Cubic Bézier",
-            _ => null
-        };
-        if (kind is null) return;
-        ImGui.BeginDisabled(part.Bindings is { Count: > 0 });
-        var selected = Ui.Combo("Curve", kind, ["Line", "Quadratic Bézier", "Cubic Bézier"]);
-        ImGui.EndDisabled();
-        if (selected is not null && selected != kind)
-        {
-            var geometry = curve.Build(); var start = geometry.Evaluate(0); var end = geometry.Evaluate(1);
-            change(p => p.Geometry = selected switch
-            {
-                "Quadratic Bézier" => new QuadraticBezierCurveDefinition2D { Start = start, Control = Vector2.Lerp(start, end, .5f), End = end },
-                "Cubic Bézier" => new CubicBezierCurveDefinition2D { Start = start, Control1 = Vector2.Lerp(start, end, 1f / 3), Control2 = Vector2.Lerp(start, end, 2f / 3), End = end },
-                _ => new LineCurveDefinition2D { Start = start, End = end }
-            });
-            return;
         }
         if (curve is not QuadraticBezierCurveDefinition2D and not CubicBezierCurveDefinition2D || !ImGui.CollapsingHeader("Edit curve handles")) return;
         Ui.Help("Draw the rest curve here. Follow attaches a point to a normal rig control, preserving its rest offset. Animate those controls in the animation editor.");

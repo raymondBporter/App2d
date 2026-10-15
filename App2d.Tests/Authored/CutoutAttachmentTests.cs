@@ -1,8 +1,9 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
@@ -17,7 +18,7 @@ public sealed class CutoutAttachmentTests
         Id = "membrane",
         Name = "Membrane",
         Controls = [new() { Id = "root" }, new() { Id = "tip", Rest = new(1, 0, .2f) }, new() { Id = "direction", Parent = "tip", Rest = new(1, 1, .2f) }],
-        Parts = [new() { Id = "membrane", Kind = PuppetPartKinds.Polygon, A = "root", Width = 1, Height = 1,
+        Parts = [new() { Id = "membrane", A = "root", Width = 1, Height = 1,
             Geometry = new SimplePolygon2D.Builder { Vertices = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] },
             Material = new() { Fill = "#fff8e7", Outline = new() },
             Bindings = [new() { Point = 1, Control = "tip", Toward = "direction" }, new() { Point = 2, Control = "tip", Toward = "direction" }],
@@ -39,7 +40,7 @@ public sealed class CutoutAttachmentTests
         Assert.True(Vector3.Distance(new(2, 0, .3f), bound[1]) < 1e-5f);
         Assert.True(Vector3.Distance(new(1, 0, .3f), bound[2]) < 1e-5f);
         Assert.Equal(rigid[0], bound[0]);
-        var original = PartGeometryAuthoring2D.ArtworkPoint(part, 2, bound[2].XY, pose.World, id => resolved.Rest[id]);
+        var original = PartAttachment2D.ArtworkPoint(part, 2, bound[2].XY, pose.World, id => resolved.Rest[id]);
         Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[2], original) < 1e-5f);
     }
 
@@ -79,7 +80,7 @@ public sealed class CutoutAttachmentTests
         ModelAuthoring.RemoveCutoutPoint(part, 2);
         Assert.Equal([1, 2], part.Bindings!.Select(b => b.Point).Order()); model.Validate();
         Assert.Throws<InvalidOperationException>(() => ModelAuthoring.RemoveControl(model, "direction"));
-        Assert.Contains("Detach", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.SetPartKind(model, "membrane", PuppetPartKinds.Ellipse)).Message);
+        Assert.Contains("Detach", Assert.Throws<InvalidOperationException>(() => ModelAuthoring.SetPartGeometry(model, "membrane", GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse))).Message);
     }
 
     [Theory]
@@ -97,7 +98,7 @@ public sealed class CutoutAttachmentTests
         var contour = PartContours2D.Contour(part, World, transform: _ => current, rest: Rest, restTransform: _ => rest);
         for (var i = 0; i < contour.Count; i++)
         {
-            var point = PartGeometryAuthoring2D.ArtworkPoint(part, i, contour[i].XY, World, Rest, transform: _ => current, restTransform: _ => rest);
+            var point = PartAttachment2D.ArtworkPoint(part, i, contour[i].XY, World, Rest, transform: _ => current, restTransform: _ => rest);
             Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[i], point) < 1e-5f);
         }
     }

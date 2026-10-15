@@ -3,6 +3,7 @@ using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.IO;
 using App2d.Core.Shapes;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -31,6 +32,26 @@ namespace App2d.Core.Geometry.Authoring;
 [JsonDerivedType(typeof(BSplineCurveDefinition2D), CurveKinds2D.BSpline)]
 public abstract record GeometryDefinition2D
 {
+    [JsonIgnore] public abstract string Kind { get; }
+
+    /// <summary>Geometry kinds with a drawable curve or closed outline.</summary>
+    public static IReadOnlyList<string> DrawableKinds { get; } =
+        [.. ShapeKinds2D.All.Where(kind => kind is not ShapeKinds2D.HalfSpace and not ShapeKinds2D.Composite), .. CurveKinds2D.All];
+
+    /// <summary>A small editable example of a geometry kind. Drawing clients supply placement and material.</summary>
+    public static GeometryDefinition2D CreateDefault(string kind) => kind switch
+    {
+        ShapeKinds2D.Capsule => new Capsule2D.Builder { Start = new(0, -.25f), End = new(0, .25f), Radius = .25f },
+        ShapeKinds2D.RoundedRectangle => RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f),
+        CurveKinds2D.Line => new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY },
+        CurveKinds2D.Polyline => new PolylineCurveDefinition2D { Points = [Vector2.Zero, new(.25f, .5f), Vector2.UnitY] },
+        CurveKinds2D.Arc => new ArcCurveDefinition2D { Center = new(0, .5f), Radius = .5f, StartAngleRadians = -MathF.PI / 2, SweepAngleRadians = MathF.PI },
+        CurveKinds2D.QuadraticBezier => new QuadraticBezierCurveDefinition2D { Start = Vector2.Zero, Control = new(.25f, .5f), End = Vector2.UnitY },
+        CurveKinds2D.CubicBezier => new CubicBezierCurveDefinition2D { Start = Vector2.Zero, Control1 = new(.25f, 1f / 3), Control2 = new(-.25f, 2f / 3), End = Vector2.UnitY },
+        CurveKinds2D.BSpline => new BSplineCurveDefinition2D { ControlPoints = [Vector2.Zero, new(.25f, 1f / 3), new(-.25f, 2f / 3), Vector2.UnitY] },
+        _ => new Ellipse2D.Builder { Center = Vector2.Zero, Radii = new(.5f, .5f) }.WithKind(kind)
+    };
+
     public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,

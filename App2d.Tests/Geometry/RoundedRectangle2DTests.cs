@@ -1,12 +1,12 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using System.Numerics;
@@ -58,17 +58,16 @@ public sealed class RoundedRectangle2DTests
     {
         var model = ModelAuthoring.Empty("rounded-test", "Rounded test");
         ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
-        var part = ModelAuthoring.AddPart(model, PuppetPartKinds.Box, "root");
+        var part = ModelAuthoring.AddPart(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "root");
         part.Width = 2; part.Height = 1;
-        PartGeometryAuthoring2D.ResizeRoundedRectangle(part, part.Width, part.Height);
-        PartGeometryAuthoring2D.SetRoundedRectangleRadius(part, .25f);
+        part.Geometry = ((RoundedRectangle2D.Builder)part.Geometry!).WithSize(new(part.Width, part.Height)) with { Radius = .25f };
         var before = PartContours2D.Contour(part, _ => Vector3.Zero);
 
         var json = model.ToJson();
         Assert.Contains("\"kind\": \"rounded-rectangle\"", json);
         var restored = CharacterModel.FromJson(json).Parts.Single();
         Assert.IsType<RoundedRectangle2D.Builder>(restored.Geometry);
-        Assert.Equal(PuppetPartKinds.Box, restored.Kind);
+        Assert.Equal(ShapeKinds2D.RoundedRectangle, restored.Geometry!.Kind);
         Assert.Equal(before, PartContours2D.Contour(restored, _ => Vector3.Zero));
     }
 }

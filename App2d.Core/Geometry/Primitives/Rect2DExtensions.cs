@@ -63,13 +63,13 @@ public static class Rect2DExtensions
         public float Area => Area2D.Rectangle(rectangle.Min, rectangle.Max);
 
         /// <summary>The midpoint of the rectangle; undefined for infinite bounds.</summary>
-        public Vector2 Center => (rectangle.Min + rectangle.Max) / 2f;
+        public Vector2 Center => new(rectangle.MidX, rectangle.MidY);
 
         /// <summary>The midpoint along X.</summary>
-        public float MidX => (rectangle.Min.X + rectangle.Max.X) / 2f;
+        public float MidX => (float)(((double)rectangle.Min.X + rectangle.Max.X) / 2);
 
         /// <summary>The midpoint along Y.</summary>
-        public float MidY => (rectangle.Min.Y + rectangle.Max.Y) / 2f;
+        public float MidY => (float)(((double)rectangle.Min.Y + rectangle.Max.Y) / 2);
 
         /// <summary>The (Min.X, Max.Y) corner.</summary>
         public Vector2 TopLeft => new(rectangle.Min.X, rectangle.Max.Y);

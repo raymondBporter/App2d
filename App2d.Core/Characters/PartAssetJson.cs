@@ -1,4 +1,3 @@
-using App2d.Core.Characters.Authoring;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -34,15 +33,9 @@ internal static class PartAssetJson
         for (var i = 0; i < parts.Count; i++)
         {
             var entry = entries[i]!.AsObject();
-            entry["geometry"] = JsonNode.Parse(PartGeometryAuthoring2D.Definition(parts[i]).ToGeometryJson());
+            entry["geometry"] = JsonNode.Parse((parts[i].Geometry ?? throw new InvalidDataException($"Part '{parts[i].Id}' needs geometry.")).ToGeometryJson());
             entry["material"] = JsonSerializer.SerializeToNode(parts[i].RenderMaterial, options);
         }
         return root.ToJsonString(options);
-    }
-
-    public static void Restore(IEnumerable<PuppetPart> parts)
-    {
-        foreach (var part in parts)
-            if (part.Geometry is not null) PartGeometryAuthoring2D.RestoreEditorFields(part);
     }
 }

@@ -4,6 +4,7 @@ using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
+using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json;
 
@@ -265,7 +266,7 @@ public sealed class RigConstraintTests
                 ModelAuthoring.AddBone(document.Asset, "hinge", "tool");
                 document.Asset.Groups.Add(new() { Id = "work", Targets = ["hinge", "tool"] });
                 ModelAuthoring.AddBoneIk(document.Asset, "tool");
-                ModelAuthoring.AddPartToBone(document.Asset, PuppetPartKinds.Box, "beam");
+                ModelAuthoring.AddPartToBone(document.Asset, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "beam");
             }), session.Message);
             Assert.Equal(new[] { "tool-chain" }, document.Asset.Groups.Single().Targets);
             Assert.Empty(document.Asset.Chains); Assert.Single(document.Asset.Constraints);
@@ -305,7 +306,7 @@ public sealed class RigConstraintTests
             Constraints = [new ModelChain { Id = "reach", Root = "beam", Joint = "hinge", End = "tool", Solver = ModelChain.BoneSolver }],
             Sockets = [new() { Id = "socket", Control = "tool", OffsetX = .2f }]
         };
-        ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, "beam"); model.Validate(); return model;
+        ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "beam"); model.Validate(); return model;
     }
 
     private static MotionClip Aim(ResolvedModel model, Vector3 world)

@@ -1,6 +1,5 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Authoring;
 using App2d.Core.Geometry.Builders;
 using App2d.Core.Geometry.Operations.Transforms;
 using App2d.Core.Geometry.Shapes;
@@ -74,7 +73,6 @@ internal static class RigAuthoredBridge2D
             part.Width = rounded.Max.X - rounded.Min.X;
             part.Height = rounded.Max.Y - rounded.Min.Y;
         }
-        PartGeometryAuthoring2D.RestoreEditorFields(part);
         return part;
     }
 }

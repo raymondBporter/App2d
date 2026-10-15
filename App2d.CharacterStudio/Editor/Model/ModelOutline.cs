@@ -1,7 +1,8 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Builders;
 using ImGuiNET;
 using System.Numerics;
 
@@ -32,7 +33,7 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
         foreach (var part in parts)
         {
             if (part.Hidden) ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
-            if (ImGui.Selectable($"{part.Id}  ({part.Kind}){(part.Hidden ? "  hidden" : "")}", session.Selection.Part == part.Id)) session.Selection.Select(part: part.Id);
+            if (ImGui.Selectable($"{part.Id}  ({part.Geometry!.Kind}){(part.Hidden ? "  hidden" : "")}", session.Selection.Part == part.Id)) session.Selection.Select(part: part.Id);
             if (part.Hidden) ImGui.PopStyleColor();
         }
         var selectedBone = structure.Controls.FirstOrDefault(c => c.Id == session.Selection.Control && (c.Length > 0 || c.Transform is not null));
@@ -41,30 +42,20 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
         if (ImGui.BeginPopup("add-part"))
         {
             var anchor = session.Selection.Control ?? structure.Controls[0].Id;
-            foreach (var kind in PuppetPartKinds.All)
+            foreach (var kind in GeometryDefinition2D.DrawableKinds)
             {
-                if (ImGui.MenuItem($"{kind} on {anchor}", "", false, !PuppetPartKinds.IsStroke(kind) || structure.Controls.Count > 1) && Base is { } document)
+                var geometry = GeometryDefinition2D.CreateDefault(kind);
+                if (ImGui.MenuItem($"{kind} on {anchor}", "", false, geometry is not CurveDefinition2D || structure.Controls.Count > 1) && Base is { } document)
                 {
                     session.Edit(document, () =>
                     {
                         var other = structure.Controls.FirstOrDefault(c => c.Parent == anchor)?.Id ?? structure.Controls.FirstOrDefault(c => c.Id != anchor)?.Id;
-                        session.Selection.Select(part: selectedBone is not null && !PuppetPartKinds.IsStroke(kind)
-                            ? ModelAuthoring.AddPartToBone(document.Asset, kind, anchor).Id
-                            : ModelAuthoring.AddPart(document.Asset, kind, anchor, PuppetPartKinds.IsStroke(kind) ? other : null).Id);
+                        session.Selection.Select(part: selectedBone is not null && geometry is ShapeBuilder2D shape
+                            ? ModelAuthoring.AddPartToBone(document.Asset, shape, anchor).Id
+                            : ModelAuthoring.AddPart(document.Asset, geometry, anchor, geometry is CurveDefinition2D ? other : null).Id);
                     });
                 }
-
             }
-            if (selectedBone is not null && ImGui.MenuItem($"capsule on {anchor}") && Base is { } boneDocument)
-            {
-                session.Edit(boneDocument, () =>
-                {
-                    var capsule = ModelAuthoring.AddPartToBone(boneDocument.Asset, PuppetPartKinds.Box, anchor);
-                    PartGeometryAuthoring2D.SetRoundedRectangleRadius(capsule, capsule.Height / 2f);
-                    session.Selection.Select(part: capsule.Id);
-                });
-            }
-
             ImGui.EndPopup();
         }
         if (Variant is not null) Ui.Help("Variants restyle, resize or hide parts. Adding shapes belongs to the base.");

@@ -84,13 +84,13 @@ public static class ShapeBounds2D
             case Circle2D circle: return (circle.Center, circle.Radius);
             case Ellipse2D ellipse: return (ellipse.Center, Math.Max(ellipse.Radii.X, ellipse.Radii.Y));
             case Capsule2D capsule:
-                return (Midpoint(capsule.Start, capsule.End), float.IsFinite(capsule.Diameter) ? capsule.Diameter / 2
+                return (capsule.Center, float.IsFinite(capsule.Diameter) ? capsule.Diameter / 2
                     : (float)(Vector2d.Distance(capsule.Start.ToVector2d(), capsule.End.ToVector2d()) / 2 + capsule.Radius));
             case RoundedRectangle2D rectangle:
-                return (Midpoint(rectangle.OuterRect.Min, rectangle.OuterRect.Max), float.IsFinite(rectangle.Diameter) ? rectangle.Diameter / 2
+                return (rectangle.OuterRect.Center, float.IsFinite(rectangle.Diameter) ? rectangle.Diameter / 2
                     : (float)(Vector2d.Distance(rectangle.InnerRect.Min.ToVector2d(), rectangle.InnerRect.Max.ToVector2d()) / 2 + rectangle.Radius));
             case Rectangle2D rectangle:
-                return (Midpoint(rectangle.Min, rectangle.Max), float.IsFinite(rectangle.Diameter) ? rectangle.Diameter / 2
+                return (rectangle.Center, float.IsFinite(rectangle.Diameter) ? rectangle.Diameter / 2
                     : (float)(Vector2d.Distance(rectangle.Min.ToVector2d(), rectangle.Max.ToVector2d()) / 2));
             case HalfSpace2D: return (Vector2.Zero, float.PositiveInfinity);
             case CompositeShape2D composite:
@@ -117,9 +117,6 @@ public static class ShapeBounds2D
                 }
         }
     }
-
-    private static Vector2 Midpoint(Vector2 first, Vector2 second) =>
-        ((first.ToVector2d() + second.ToVector2d()) / 2).ToVector2();
 
     private static Rect2D TransformedEllipse(Vector2 center, Vector2 radii, Matrix3x2 transform)
     {

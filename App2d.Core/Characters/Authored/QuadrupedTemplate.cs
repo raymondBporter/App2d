@@ -1,4 +1,6 @@
-using App2d.Core.Characters.Authoring;
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -24,15 +26,13 @@ public static class QuadrupedTemplate
             Control(leg + "-foot", leg + "-joint", x + .02f, .10f, z);
             m.Chains.Add(new() { Id = leg, Root = leg + "-root", Joint = leg + "-joint", End = leg + "-foot", Bend = front ? 1 : -1 });
         }
-        PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, string kind = "ellipse")
+        PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, GeometryDefinition2D? geometry = null)
         {
-            var p = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Kind = kind };
+            var p = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse) };
             m.Parts.Add(p); return p;
         }
         PuppetPart Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
-        {
-            var p = Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, "polygon"); PartGeometryAuthoring2D.SetPolygon(p, points); return p;
-        }
+            => Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, new SimplePolygon2D.Builder { Vertices = [.. points] });
         void SetOutlineWidth(PuppetPart part, float width) => part.Material = part.RenderMaterial with
         { Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = width } };
         const string skin = "#79bdb0", shade = "#527f78", horn = "#f6e4bb";
@@ -49,8 +49,7 @@ public static class QuadrupedTemplate
             var lower = Vector2.Distance(joint.XY, foot.XY);
             Shape(chain.Id + "-upper", chain.Root, chain.Joint, .25f, upper + .19f, 0, upper / 2, 0, color);
             Shape(chain.Id + "-lower", chain.Joint, chain.End, .23f, lower + .15f, 0, lower / 2, -.005f, color);
-            var p = Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, "polygon");
-            PartGeometryAuthoring2D.SetPolygon(p, [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)]);
+            Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)] });
             for (var i = 0; i < 3; i++) SetOutlineWidth(Shape(chain.Id + "-toe-" + i, chain.End, null, .045f, .065f, -.08f + i * .085f, -.055f, -.025f, horn), .012f);
         }
         var body = Shape("body", "body", "body-up", 1.92f, .90f, -.05f, .04f, 0, skin);
@@ -77,7 +76,6 @@ public static class QuadrupedTemplate
         m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.Chains.Select(c => c.Id)] }];
         m.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .35f }] }];
         m.MotionSets = [new() { Id = "standard", Name = "Quadruped", Roles = new() { ["idle"] = id + "-idle", ["walk"] = id + "-walk", ["run"] = id + "-run", ["scrape"] = id + "-scrape", ["head-down"] = id + "-head-down", ["rush"] = id + "-rush", ["brake"] = id + "-brake", ["recover"] = id + "-recover" } }];
-        foreach (var part in m.Parts) part.Geometry ??= PartGeometryAuthoring2D.FromPreset(part);
         m.Validate(); return m;
     }
 

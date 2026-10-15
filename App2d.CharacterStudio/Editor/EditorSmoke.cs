@@ -1,7 +1,8 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Characters.Authoring;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -151,7 +152,7 @@ internal sealed class EditorSmoke(string output)
                     var polygon = (SimplePolygon2D.Builder)part.Geometry!;
                     var vertices = new List<Vector2>(polygon.Vertices);
                     vertices[0] = new(-.32f, -.46f);
-                    PartGeometryAuthoring2D.SetPolygon(part, vertices);
+                    ModelAuthoring.SetCutout(part, vertices);
                 }), s);
                 s.Undo(); Record(before == doc.Serialize(), "cutout silhouette edit undoes exactly");
                 s.Redo(); s.SaveAll();
@@ -237,7 +238,7 @@ internal sealed class EditorSmoke(string output)
                     ModelAuthoring.AddBoneIk(model, "tool"); ModelAuthoring.ResizeBone(model, "beam", .8f); ModelAuthoring.ResizeBone(model, "hinge", .65f);
                     foreach (var (bone, color) in new[] { ("beam", "#e3ac47"), ("hinge", "#57b0b2"), ("tool", "#cf727b") })
                     {
-                        var part = ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, bone);
+                        var part = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), bone);
                         part.Material = part.Material! with { Fill = color };
                     }
                 }), s);
@@ -290,7 +291,7 @@ internal sealed class EditorSmoke(string output)
             ModelAuthoring.AddBone(model, null, "root");
             foreach (var (id, color, offset) in new[] { ("back", "#e3ac47", -.15f), ("front", "#57b0b2", .15f) })
             {
-                var part = ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, "root");
+                var part = ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "root");
                 part.Material = new() { Texture = texture, Fill = color }; part.OffsetY = offset;
                 model.Slots.Add(new() { Id = id, Bone = "root", Attachment = "art" });
                 if (model.Skins.Count == 0) model.Skins.Add(new());
@@ -314,11 +315,11 @@ internal sealed class EditorSmoke(string output)
                 ModelAuthoring.AddControl(model.Asset, $"hip-{i}", new(x + .15f, .4f, (i - 1) * .1f), $"knee-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"knee-{i}", new(x, 0, (i - 1) * .1f), $"foot-{i}");
                 ModelAuthoring.AddChain(model.Asset, $"foot-{i}");
-                ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Stroke, $"hip-{i}", $"knee-{i}"); ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Stroke, $"knee-{i}", $"foot-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}"); ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
             }
             ModelAuthoring.AddMeasure(model.Asset, "leg", ["hip-1", "knee-1", "foot-1"]);
             foreach (var chain in model.Asset.Chains) chain.Scale = "leg";
-            var shell = ModelAuthoring.AddPart(model.Asset, PuppetPartKinds.Ellipse, "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" };
+            var shell = ModelAuthoring.AddPart(model.Asset, GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" };
         }), s);
         Check(s.Save(model), s);
         s.EditRig = true; s.Selection.Control = "knee-1";

@@ -44,7 +44,7 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
         var resolved = Resolved;
         if (session.Selection.Part is { } partId && resolved?.Parts.FirstOrDefault(p => p.Id == partId) is { } part)
         {
-            Ui.Header($"Part {part.Id} ({part.Kind})");
+            Ui.Header($"Part {part.Id} ({part.Geometry!.Kind})");
             var overrides = variant.Parts.GetValueOrDefault(partId) ?? new();
             parts.Draw(part, overrides,
                 change => session.Change(document, () => ModelAuthoring.EditPartOverride(document.Asset, part, change)),

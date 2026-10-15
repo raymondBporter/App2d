@@ -1,11 +1,14 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -14,6 +17,30 @@ namespace App2d.Tests.Geometry;
 public sealed class GeometryDefinition2DTests
 {
     private sealed record GeometryDocument(GeometryDefinition2D Geometry);
+
+    [Fact]
+    public void DrawingEditorsUseLibraryGeometryAndOneJsonKindWithoutCharacterPresets()
+    {
+        foreach (var kind in GeometryDefinition2D.DrawableKinds)
+        {
+            var geometry = GeometryDefinition2D.CreateDefault(kind);
+            Assert.Equal(kind, geometry.Kind);
+            using var json = JsonDocument.Parse(geometry.ToGeometryJson());
+            Assert.Single(json.RootElement.EnumerateObject().Where(p => p.Name == "kind"));
+            var model = ModelAuthoring.Empty("geometry-test", "Geometry test");
+            ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
+            ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
+            var part = ModelAuthoring.AddPart(model, geometry, "root", geometry is CurveDefinition2D ? "tip" : null);
+            var saved = CharacterModel.FromJson(model.ToJson());
+            Assert.Equal(geometry.ToGeometryJson(), saved.Parts.Single().Geometry!.ToGeometryJson());
+            Assert.Equal(part.Id, saved.Parts.Single().Id);
+            using var modelJson = JsonDocument.Parse(saved.ToJson());
+            Assert.False(modelJson.RootElement.GetProperty("parts")[0].TryGetProperty("kind", out _));
+            var resolved = ResolvedModel.From(saved);
+            var drawing = new PuppetDrawing(); drawing.Build(resolved, PoseEvaluator.Rest(resolved));
+            Assert.True(drawing.Mesh.Count > 0, kind);
+        }
+    }
 
     [Fact]
     public void OneTaggedFieldRoundTripsShapesAndCurves()

@@ -3,9 +3,9 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
+using Color = Microsoft.Xna.Framework.Color;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.CharacterStudio.Editor;
 
@@ -114,7 +114,7 @@ internal static class EditorSurfaceSmoke
     {
         var model = ModelAuthoring.Empty("surface-slots", "Slot preview");
         var bone = ModelAuthoring.AddBone(model, null, "root");
-        ModelAuthoring.AddPartToBone(model, PuppetPartKinds.Box, bone.Id);
+        ModelAuthoring.AddPartToBone(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), bone.Id);
         // An unattached slot exercises its inspector without requiring an external image fixture.
         model.Slots = [new() { Id = "paint", Bone = bone.Id }];
         assets.Create(model);
