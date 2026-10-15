@@ -2,6 +2,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -28,8 +29,17 @@ public sealed class PuppetDrawing
             part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
         for (var i = 0; i < pose.Slots.Count; i++)
         {
-            var slot = pose.Slots[i]; if (slot.Part is not { Hidden: false } part) continue;
-            if (part.Material?.Texture is null) throw new InvalidDataException("Slot attachments currently require image materials.");
+            var slot = pose.Slots[i];
+            if (slot.Part is not { Hidden: false } part)
+            {
+                continue;
+            }
+
+            if (part.Material?.Texture is null)
+            {
+                throw new InvalidDataException("Slot attachments currently require image materials.");
+            }
+
             var frame = PartAttachment2D.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
             AddImage(part, frame, SlotColorTrack2D.FormatColor(slot.Color), slot.Slot.Blend, -i * .001f);
         }
@@ -43,7 +53,10 @@ public sealed class PuppetDrawing
     {
         Build(entity.Model, local);
         var placed = new ActorPose(local, Vector2.Zero, 1);
-        foreach (var equipment in entity.Equipment) AddProp(equipment.Prop, placed.Socket(equipment.Socket));
+        foreach (var equipment in entity.Equipment)
+        {
+            AddProp(equipment.Prop, placed.Socket(equipment.Socket));
+        }
     }
 
     /// <summary>Appends a prop with its grip on the given frame. Strokes get an ink outline just behind them.</summary>
@@ -65,32 +78,48 @@ public sealed class PuppetDrawing
                 {
                     var fillColor = ColorExtensions.FromHexRgb(fill);
                     var triangles = PolygonTriangulation2D.Triangulate(shape.Points.Select(point => point.XY), 1e-8);
-                    var indices = triangles.Indices;
-                    for (var i = 0; i < indices.Length; i += 3)
-                        Mesh.Triangle(points[indices[i]], points[indices[i + 1]], points[indices[i + 2]], fillColor);
+                    foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
+                    {
+                        Mesh.Triangle(points[a], points[b], points[c], fillColor);
+                    }
                 }
                 if (outline is not null && outlineWidth > 0)
+                {
                     Mesh.Polygon(points, null, outlineColor, outlineWidth);
+                }
+
                 continue;
             }
             for (var i = 1; i < points.Count; i++)
             {
                 if (outline is not null && outlineWidth > 0)
+                {
                     Mesh.Line(points[i - 1] + new Vector3(0, 0, .001f), points[i] + new Vector3(0, 0, .001f), shape.Width + outlineWidth * 2, outlineColor);
+                }
+
                 Mesh.Line(points[i - 1], points[i], shape.Width,
                     material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink);
             }
         }
-        if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
+        if (Mesh.Count > start)
+        {
+            Batches.Add(new(start, Mesh.Count - start));
+        }
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
     public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
     {
-        Mesh.Clear(); Batches.Clear(); var ink = ColorExtensions.FromHexRgb(inkColor);
+        Mesh.Clear();
+        Batches.Clear();
+        var ink = ColorExtensions.FromHexRgb(inkColor);
         foreach (var part in parts)
         {
-            if (part.Hidden) continue;
+            if (part.Hidden)
+            {
+                continue;
+            }
+
             if (part.Material?.Texture is not null)
             {
                 AddImage(part, PartAttachment2D.FrameOf(part, world, angle, transform), "ffffffff", "normal", null);
@@ -109,10 +138,17 @@ public sealed class PuppetDrawing
                 for (var i = 1; i < path.Count; i++)
                 {
                     if (outline is not null && outlineWidth > 0)
+                    {
                         Mesh.Line(path[i - 1], path[i], part.Width + outlineWidth * 2, outlineColor);
+                    }
+
                     Mesh.Line(path[i - 1], path[i], part.Width, strokeColor);
                 }
-                if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
+                if (Mesh.Count > start)
+                {
+                    Batches.Add(new(start, Mesh.Count - start));
+                }
+
                 continue;
             }
             var contour = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
@@ -123,8 +159,10 @@ public sealed class PuppetDrawing
                 var fillColor = ColorExtensions.FromHexRgb(shapeFill);
                 if (triangles is not null)
                 {
-                    for (var i = 0; i < triangles.Indices.Length; i += 3)
-                        Mesh.Triangle(contour[triangles.Indices[i]], contour[triangles.Indices[i + 1]], contour[triangles.Indices[i + 2]], fillColor);
+                    foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
+                    {
+                        Mesh.Triangle(contour[a], contour[b], contour[c], fillColor);
+                    }
                 }
                 else
                 {
@@ -133,13 +171,19 @@ public sealed class PuppetDrawing
             }
             PartPainting.Add(Mesh, part, frame, contour, triangles);
             if (outline is not null && outlineWidth > 0)
+            {
                 Mesh.Polygon(contour, null, outlineColor, outlineWidth);
+            }
+
             if (face != "none")
             {
                 FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),
                 p => frame.At(new(p.X * part.Width + part.FaceX, -p.Y * part.Height)) - new Vector3(0, 0, .002f), lineWidth * .6f, ink);
             }
-            if (Mesh.Count > start) Batches.Add(new(start, Mesh.Count - start));
+            if (Mesh.Count > start)
+            {
+                Batches.Add(new(start, Mesh.Count - start));
+            }
         }
     }
 
@@ -151,14 +195,32 @@ public sealed class PuppetDrawing
             var rgba = Convert.ToUInt32(value, 16);
             return new((byte)(rgba >> 24), (byte)(rgba >> 16), (byte)(rgba >> 8), (byte)rgba);
         }
-        var color = Color(tint); var own = Color(material.Tint ?? "ffffffff");
+        var color = Color(tint);
+        var own = Color(material.Tint ?? "ffffffff");
         var fill = material.Fill is null ? Microsoft.Xna.Framework.Color.White : ColorExtensions.FromHexRgb(material.Fill);
         color = new((byte)(color.R * own.R / 255 * fill.R / 255), (byte)(color.G * own.G / 255 * fill.G / 255),
             (byte)(color.B * own.B / 255 * fill.B / 255), (byte)(color.A * own.A / 255));
-        Vector3 At(float x, float y) { var p = frame.At(new(x * part.Width, y * part.Height)); if (depth is { } z) p.Z = z; return p; }
-        var a = At(-.5f, -.5f); var b = At(.5f, -.5f); var c = At(.5f, .5f); var d = At(-.5f, .5f); var start = Mesh.Count;
-        Mesh.Vertex(a, color, new(0, 1)); Mesh.Vertex(b, color, new(1, 1)); Mesh.Vertex(c, color, new(1, 0));
-        Mesh.Vertex(a, color, new(0, 1)); Mesh.Vertex(c, color, new(1, 0)); Mesh.Vertex(d, color, new(0, 0));
+        Vector3 At(float x, float y)
+        {
+            var p = frame.At(new(x * part.Width, y * part.Height));
+            if (depth is { } z)
+            {
+                p.Z = z;
+            }
+
+            return p;
+        }
+        var a = At(-.5f, -.5f);
+        var b = At(.5f, -.5f);
+        var c = At(.5f, .5f);
+        var d = At(-.5f, .5f);
+        var start = Mesh.Count;
+        Mesh.Vertex(a, color, new(0, 1));
+        Mesh.Vertex(b, color, new(1, 1));
+        Mesh.Vertex(c, color, new(1, 0));
+        Mesh.Vertex(a, color, new(0, 1));
+        Mesh.Vertex(c, color, new(1, 0));
+        Mesh.Vertex(d, color, new(0, 0));
         Batches.Add(new(start, 6, material.Texture, blend, WriteDepth: depth is null));
     }
 }

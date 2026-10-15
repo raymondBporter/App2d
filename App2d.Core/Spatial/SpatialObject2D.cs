@@ -28,7 +28,9 @@ public class SpatialObject2D(IShape2D shape)
         get
         {
             if (_worldBoundsVersion == Transform.Version)
+            {
                 return _worldBounds;
+            }
 
             _worldBounds = ShapeBounds2D.TryCalculateTransformed(Shape, Transform.Matrix, out var bounds)
                 ? bounds : LocalBounds.TransformedBy(Transform.Matrix);
@@ -47,7 +49,9 @@ public class SpatialObject2D(IShape2D shape)
         get
         {
             if (_collisionPoseVersion == Transform.Version)
+            {
                 return _collisionPose;
+            }
 
             StateGuard.ThrowIf(!Similarity2D.TryFromMatrix(Transform.Matrix, out _collisionPose), "Collision requires a uniform, non-zero scale and orthogonal axes on the transform.");
             _collisionPoseVersion = Transform.Version;
@@ -58,7 +62,9 @@ public class SpatialObject2D(IShape2D shape)
     public bool ContainsWorldPoint(Vector2 worldPoint)
     {
         if (!Matrix3x2.Invert(Transform.Matrix, out var worldToLocal))
+        {
             return false;
+        }
 
         return Shape.ContainsPoint(Vector2.Transform(worldPoint, worldToLocal));
     }

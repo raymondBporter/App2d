@@ -16,13 +16,28 @@ public sealed record WorldZone2D
             throw new ArgumentOutOfRangeException(nameof(bounds), "Zones need finite, positive rectangles.");
         }
 
-        Id = id; Name = name; Bounds = bounds; Priority = priority;
+        Id = id;
+        Name = name;
+        Bounds = bounds;
+        Priority = priority;
     }
 
-    public string Id { get; }
-    public string Name { get; }
-    public Rect2D Bounds { get; }
-    public int Priority { get; }
+    public string Id
+    {
+        get;
+    }
+    public string Name
+    {
+        get;
+    }
+    public Rect2D Bounds
+    {
+        get;
+    }
+    public int Priority
+    {
+        get;
+    }
 
     // Half-open bounds assign a shared edge to exactly one adjacent rectangle.
     public bool Contains(Vector2 point) => point.X >= Bounds.Min.X && point.X < Bounds.Max.X &&

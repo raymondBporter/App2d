@@ -77,8 +77,15 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
 
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
-        foreach (var hitbox in _sword.ActiveHitboxes) yield return hitbox;
-        foreach (var hitbox in _gun.ActiveHitboxes) yield return hitbox;
+        foreach (var hitbox in _sword.ActiveHitboxes)
+        {
+            yield return hitbox;
+        }
+
+        foreach (var hitbox in _gun.ActiveHitboxes)
+        {
+            yield return hitbox;
+        }
     }
 
     public IEnumerable<SpatialObject2D> GetActiveSwordHitboxes() =>

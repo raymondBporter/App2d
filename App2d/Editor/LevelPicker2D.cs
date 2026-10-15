@@ -12,19 +12,42 @@ internal sealed class LevelPicker2D(IReadOnlyList<WorldMapAsset2D> maps)
 {
     private int _selected;
     private Vector2 _mouse;
-    public bool IsOpen { get; private set; }
+    public bool IsOpen
+    {
+        get; private set;
+    }
     private const int PageSize = 5;
     private int First => _selected / PageSize * PageSize;
     private static ScreenRectangle2D Row(int row) => new(40, 140 + row * 48, 480, 182 + row * 48);
 
     public int? Update(InputState input)
     {
-        if (input.IsSuppressed) return null;
-        if (input.Keyboard.WasPressed(Keys.F2)) IsOpen = !IsOpen;
-        if (!IsOpen) return null;
+        if (input.IsSuppressed)
+        {
+            return null;
+        }
+
+        if (input.Keyboard.WasPressed(Keys.F2))
+        {
+            IsOpen = !IsOpen;
+        }
+
+        if (!IsOpen)
+        {
+            return null;
+        }
+
         _mouse = input.Mouse.PositionDevice;
-        if (input.Keyboard.WasPressed(Keys.Down)) _selected = (_selected + 1) % maps.Count;
-        if (input.Keyboard.WasPressed(Keys.Up)) _selected = (_selected + maps.Count - 1) % maps.Count;
+        if (input.Keyboard.WasPressed(Keys.Down))
+        {
+            _selected = (_selected + 1) % maps.Count;
+        }
+
+        if (input.Keyboard.WasPressed(Keys.Up))
+        {
+            _selected = (_selected + maps.Count - 1) % maps.Count;
+        }
+
         var chosen = input.Keyboard.WasPressed(Keys.Enter);
         for (var row = 0; row < Math.Min(PageSize, maps.Count - First); row++)
         {
@@ -36,7 +59,11 @@ internal sealed class LevelPicker2D(IReadOnlyList<WorldMapAsset2D> maps)
             }
         }
 
-        if (!chosen) return null;
+        if (!chosen)
+        {
+            return null;
+        }
+
         IsOpen = false;
         return _selected;
     }
@@ -44,7 +71,11 @@ internal sealed class LevelPicker2D(IReadOnlyList<WorldMapAsset2D> maps)
     public void Draw(Renderer2D renderer)
     {
         renderer.DrawScreenText("F2  Levels   |   F1  Edit", new(32, 54), XnaColor.White);
-        if (!IsOpen) return;
+        if (!IsOpen)
+        {
+            return;
+        }
+
         renderer.DrawScreenRoundedRectangle(new(24, 82, 500, 440), 12, new(20, 28, 43, 245));
         renderer.DrawScreenText("LEVEL PLAYGROUND", new(40, 104), new(255, 214, 100));
         for (var row = 0; row < Math.Min(PageSize, maps.Count - First); row++)

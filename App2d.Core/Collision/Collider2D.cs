@@ -15,29 +15,53 @@ public sealed class Collider2D
         WorldObject.Transform.Changed += HandleTransformChanged;
     }
 
-    internal CollisionSystem2D System { get; }
-    internal int QueryStamp { get; set; }
-    public int Id { get; }
-    public SpatialObject2D WorldObject { get; }
+    internal CollisionSystem2D System
+    {
+        get;
+    }
+    internal int QueryStamp
+    {
+        get; set;
+    }
+    public int Id
+    {
+        get;
+    }
+    public SpatialObject2D WorldObject
+    {
+        get;
+    }
     public ColliderMobility2D Mobility
     {
         get => _mobility;
         set
         {
             if (_mobility == value)
+            {
                 return;
+            }
+
             var previous = _mobility;
             _mobility = value;
             System.OnMobilityChanged(previous, value);
         }
     }
     public bool IsEnabled { get; set; } = true;
-    public bool IsSensor { get; set; }
+    public bool IsSensor
+    {
+        get; set;
+    }
     public uint CollisionLayer { get; set; } = 1u;
     public uint CollisionMask { get; set; } = uint.MaxValue;
     /// <summary>Owning gameplay entity, or None for unowned terrain/geometry.</summary>
-    public EntityId2D EntityId { get; set; }
-    public object? UserData { get; set; }
+    public EntityId2D EntityId
+    {
+        get; set;
+    }
+    public object? UserData
+    {
+        get; set;
+    }
 
     public bool CanCollideWith(Collider2D other) =>
         IsEnabled && other.IsEnabled &&

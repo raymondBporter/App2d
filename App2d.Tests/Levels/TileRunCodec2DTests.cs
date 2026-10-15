@@ -38,7 +38,9 @@ public sealed class TileRunCodec2DTests
     {
         var tiles = new TileKind2D[1024];
         for (var i = 0; i < tiles.Length; i++)
+        {
             tiles[i] = i % 2 == 0 ? TileKind2D.Solid : TileKind2D.Empty;
+        }
 
         var encoded = TileRunCodec2D.Encode(tiles);
 
@@ -76,7 +78,9 @@ public sealed class TileRunCodec2DTests
         // A 2x6 edge chunk, not a full 32x32 one.
         var tiles = new TileKind2D[12];
         for (var i = 0; i < tiles.Length; i++)
+        {
             tiles[i] = i < 4 ? TileKind2D.Solid : TileKind2D.Empty;
+        }
 
         AssertRoundTrips(tiles);
     }

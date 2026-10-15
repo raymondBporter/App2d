@@ -25,7 +25,11 @@ internal static class CombatContactStudy2D
     public static void Run(GraphicsDevice device, TextureCache2D textures, string directory, bool timingStudy = false)
     {
         var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
-        if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
+        if (authored.Errors.Count > 0)
+        {
+            throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
+        }
+
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var report = new List<string>();
         var camera = new Camera2D { Zoom = 1.7f, Position = new(-255, 52) };
@@ -34,11 +38,18 @@ internal static class CombatContactStudy2D
         foreach (var name in timingStudy ? new[] { "hit", "kill", "run", "reverse" } : ["miss", "hit", "kill", "run", "reverse"])
         {
             var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
-            for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+            for (var x = 0; x < 640; x++)
+            {
+                map.SetTileKind(x, 19, TileKind2D.Solid);
+            }
+
             using var game = SideScrollerSimulation2D.Create(new(traversal, map, [],
                 [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)),
                  new(2, WorldThingKind2D.Shieldback, null, true, new(name == "miss" ? -175 : -326, 42))])
-            { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
+            {
+                AuthoredCharacters = authored,
+                PlayerMaximumHealth = 30
+            });
             if (name == "kill")
             {
                 var enemy = game.Level.EnemySystem.Combatants[0];
@@ -53,7 +64,8 @@ internal static class CombatContactStudy2D
             using var contacts = new CombatContactPresentation2D(scene);
             var timing = HitstopTimingStudy2D.CreateVariants();
             var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5000, 2), new SolidColorShader(new Color(70, 88, 93)));
-            ground.Transform.Position = new(-250, 0); scene.Add(ground);
+            ground.Transform.Position = new(-250, 0);
+            scene.Add(ground);
             var hits = 0;
             var firstHit = -1L;
             for (var step = 0; step < 180; step++)
@@ -62,16 +74,35 @@ internal static class CombatContactStudy2D
                 var movement = name == "run" ? 1 : name == "reverse" && firstHit >= 0 ? -1 : 0;
                 var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick,
                     new PersonCommand2D { PrimaryHeld = step == 12, MoveX = movement }));
-                if (timingStudy) foreach (var variant in timing) variant.Observe(frame);
+                if (timingStudy)
+                {
+                    foreach (var variant in timing)
+                    {
+                        variant.Observe(frame);
+                    }
+                }
+
                 contacts.Advance(1 / 120f);
                 foreach (var e in frame.Events.OfType<CombatDamageOccurred2D>())
                 {
-                    if (e.Damage.Contact?.Kind != CombatImpactKind2D.Sword) continue;
+                    if (e.Damage.Contact?.Kind != CombatImpactKind2D.Sword)
+                    {
+                        continue;
+                    }
+
                     if (e.Damage.Contact.Value.AttackerId != game.Player.Id)
+                    {
                         throw new InvalidOperationException("Sword contact must identify its player, separately from its weapon.");
-                    hits++; firstHit = firstHit < 0 ? tick : firstHit;
+                    }
+
+                    hits++;
+                    firstHit = firstHit < 0 ? tick : firstHit;
                     contacts.Present(e.Damage);
-                    if (timingStudy) heldPlayer.PresentContact(e.Damage, game.Player.Id, tick);
+                    if (timingStudy)
+                    {
+                        heldPlayer.PresentContact(e.Damage, game.Player.Id, tick);
+                    }
+
                     report.Add($"{name}: tick {tick}, target {e.Damage.TargetId}, killed {e.Damage.WasKilled}, contact {e.Damage.Contact.Value.Position}");
                 }
                 var state = frame.Players[0];
@@ -83,12 +114,17 @@ internal static class CombatContactStudy2D
                     var live = player.Director.Frame();
                     var time = frame.Tick / 120.0;
                     history.Record(time, live);
-                    heldPlayer.Equip(state.Equipment); exaggeratedPlayer.Equip(state.Equipment);
+                    heldPlayer.Equip(state.Equipment);
+                    exaggeratedPlayer.Equip(state.Equipment);
                     heldPlayer.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive);
                     exaggeratedPlayer.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive, timing[3].SamplePlayer(history, time, live));
                 }
                 enemies.ApplyState(frame.Enemies, frame.Events.OfType<EnemyOccurred2D>().Select(e => e.Occurrence), frame.Tick);
-                if (step % 2 != 0) continue;
+                if (step % 2 != 0)
+                {
+                    continue;
+                }
+
                 foreach (var variant in timingStudy ? Enumerable.Range(0, timing.Length) : Enumerable.Range(0, 2))
                 {
                     var effects = timingStudy || variant == 0;
@@ -96,26 +132,46 @@ internal static class CombatContactStudy2D
                     heldPlayer.Enabled = timingStudy && variant == 2;
                     exaggeratedPlayer.Enabled = timingStudy && variant == 3;
                     var label = timingStudy ? timing[variant].Name : effects ? "on" : "off";
-                    if (timingStudy) enemies.ApplyState(timing[variant].Sample(frame), [], frame.Tick);
-                    contacts.Enabled = effects; contacts.Advance(0);
+                    if (timingStudy)
+                    {
+                        enemies.ApplyState(timing[variant].Sample(frame), [], frame.Tick);
+                    }
+
+                    contacts.Enabled = effects;
+                    contacts.Advance(0);
                     device.SetRenderTarget(target);
-                    renderer.BeginFrame(640, 240, default); renderer.Clear(new Color(145, 176, 190)); renderer.Draw(scene);
-                    renderer.EndFrame(); device.SetRenderTarget(null);
+                    renderer.BeginFrame(640, 240, default);
+                    renderer.Clear(new Color(145, 176, 190));
+                    renderer.Draw(scene);
+                    renderer.EndFrame();
+                    device.SetRenderTarget(null);
                     using var stream = File.Create(Path.Combine(directory, $"{name}-{label}-{step / 2:000}.png"));
                     target.SaveAsPng(stream, 640, 240);
                 }
                 contacts.Enabled = true;
             }
-            if (hits != (name == "miss" ? 0 : 1)) throw new InvalidOperationException($"{name}: expected {(name == "miss" ? 0 : 1)} confirmed hit, got {hits}.");
+            if (hits != (name == "miss" ? 0 : 1))
+            {
+                throw new InvalidOperationException($"{name}: expected {(name == "miss" ? 0 : 1)} confirmed hit, got {hits}.");
+            }
+
             if (name == "run" && game.Player.Position.X <= -368 || name == "reverse" && (game.Player.Position.X >= -368 || game.Player.Facing != -1))
+            {
                 throw new InvalidOperationException($"{name}: movement failed to continue through contact.");
+            }
+
             report.Add($"{name}: final player X {game.Player.Position.X:0.00}, facing {game.Player.Facing}");
         }
         File.WriteAllLines(Path.Combine(directory, "contact-report.txt"), report);
         File.WriteAllText(Path.Combine(directory, "index.html"), timingStudy ? HitstopTimingStudy2D.Page : Page);
     }
 
-    private sealed class Silent : ISoundEffectSink2D { public void Play(SoundEffect2D effect) { } }
+    private sealed class Silent : ISoundEffectSink2D
+    {
+        public void Play(SoundEffect2D effect)
+        {
+        }
+    }
 
     private const string Page = """
         <!doctype html><html lang="en"><meta charset="utf-8"><title>Combat contact study</title>

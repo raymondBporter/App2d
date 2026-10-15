@@ -65,26 +65,43 @@ public static class StarterContent
     /// <summary>Every Person set reacts with the same hit and death until a set needs its own.</summary>
     private static Dictionary<string, string> Reactions(Dictionary<string, string> roles)
     {
-        roles[EntityControllers.Hit] = PersonHitClip; roles[EntityControllers.Death] = PersonDeathClip; return roles;
+        roles[EntityControllers.Hit] = PersonHitClip;
+        roles[EntityControllers.Death] = PersonDeathClip;
+        return roles;
     }
 
     public static void Write(string authoredRoot, CharacterModel person)
     {
         void Save(string folder, string id, string json)
         {
-            var directory = Path.Combine(authoredRoot, folder); Directory.CreateDirectory(directory);
+            var directory = Path.Combine(authoredRoot, folder);
+            Directory.CreateDirectory(directory);
             AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
         }
         var resolved = ResolvedModel.From(person);
         var clips = new[] { PersonIdle(resolved), PersonThrust(resolved), PersonJump(resolved), PersonHit(resolved), PersonDeath(resolved) };
-        foreach (var clip in clips) { clip.Validate(resolved); Save("animations", clip.Id, clip.ToJson()); }
-        var spear = SpearProp(); Save("props", spear.Id, spear.ToJson());
+        foreach (var clip in clips)
+        {
+            clip.Validate(resolved);
+            Save("animations", clip.Id, clip.ToJson());
+        }
+        var spear = SpearProp();
+        Save("props", spear.Id, spear.ToJson());
 
-        var stalker = StalkerModel(); var stalkerResolved = ResolvedModel.From(stalker);
+        var stalker = StalkerModel();
+        var stalkerResolved = ResolvedModel.From(stalker);
         Save("models", stalker.Id, stalker.ToJson());
-        foreach (var clip in new[] { StalkerIdle(stalkerResolved), StalkerWalk(stalkerResolved), StalkerLunge(stalkerResolved), StalkerHit(stalkerResolved), StalkerDeath(stalkerResolved) }) { clip.Validate(stalkerResolved); Save("animations", clip.Id, clip.ToJson()); }
+        foreach (var clip in new[] { StalkerIdle(stalkerResolved), StalkerWalk(stalkerResolved), StalkerLunge(stalkerResolved), StalkerHit(stalkerResolved), StalkerDeath(stalkerResolved) })
+        {
+            clip.Validate(stalkerResolved);
+            Save("animations", clip.Id, clip.ToJson());
+        }
 
-        foreach (var entity in new[] { SpearGuardEntity(), PlayerEntity(), StalkerEntity() }) { entity.Validate(); Save("entities", entity.Id, entity.ToJson()); }
+        foreach (var entity in new[] { SpearGuardEntity(), PlayerEntity(), StalkerEntity() })
+        {
+            entity.Validate();
+            Save("entities", entity.Id, entity.ToJson());
+        }
     }
 
     // ---- Person clips ---------------------------------------------------------------------------------------------
@@ -98,23 +115,63 @@ public static class StarterContent
         const float Slow = 1.3f, Sink = -.05f, Bob = 1.6f, Lean = .05f, Swing = .7f;
         var clip = ClipAuthoring.Duplicate(walk, HeavyWalk, "Heavy walk");
         clip.Duration *= Slow;
-        foreach (var key in clip.Tracks.SelectMany(t => t.Keys).Concat(clip.Travel.Keys)) key.Time *= Slow;
-        foreach (var contact in clip.Contacts) { contact.Start *= Slow; contact.Finish *= Slow; }
-        foreach (var marker in clip.Markers) marker.Time *= Slow;
-        foreach (var key in clip.Faces.SelectMany(f => f.Keys)) key.Time *= Slow;
+        foreach (var key in clip.Tracks.SelectMany(t => t.Keys).Concat(clip.Travel.Keys))
+        {
+            key.Time *= Slow;
+        }
+
+        foreach (var contact in clip.Contacts)
+        {
+            contact.Start *= Slow;
+            contact.Finish *= Slow;
+        }
+        foreach (var marker in clip.Markers)
+        {
+            marker.Time *= Slow;
+        }
+
+        foreach (var key in clip.Faces.SelectMany(f => f.Keys))
+        {
+            key.Time *= Slow;
+        }
+
         ClipTrack Channel(string kind, string target)
         {
             var track = clip.Tracks.FirstOrDefault(t => t.Kind == kind && t.Target == target);
-            if (track is null) { track = new() { Kind = kind, Target = target, Keys = [new() { Time = 0 }, new() { Time = clip.Duration }] }; clip.Tracks.Add(track); }
+            if (track is null)
+            {
+                track = new()
+                {
+                    Kind = kind,
+                    Target = target,
+                    Keys = [new() { Time = 0 }, new() { Time = clip.Duration }]
+                };
+                clip.Tracks.Add(track);
+            }
             return track;
         }
-        var hips = Channel(MotionClip.TranslateKind, "hips"); var mean = hips.Keys.Average(k => k.Y);
-        foreach (var key in hips.Keys) key.Y = mean + (key.Y - mean) * Bob + Sink;
-        foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys) key.X += Lean;
+        var hips = Channel(MotionClip.TranslateKind, "hips");
+        var mean = hips.Keys.Average(k => k.Y);
+        foreach (var key in hips.Keys)
+        {
+            key.Y = mean + (key.Y - mean) * Bob + Sink;
+        }
+
+        foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys)
+        {
+            key.X += Lean;
+        }
+
         foreach (var arm in new[] { "left-arm", "right-arm" })
         {
             if (clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.TargetKind && t.Target == arm) is { } track)
-            { var center = track.Keys.Average(k => k.X); foreach (var key in track.Keys) key.X = center + (key.X - center) * Swing; }
+            {
+                var center = track.Keys.Average(k => k.X);
+                foreach (var key in track.Keys)
+                {
+                    key.X = center + (key.X - center) * Swing;
+                }
+            }
         }
 
         return clip;
@@ -134,7 +191,10 @@ public static class StarterContent
         Duration = duration,
         Loop = loop,
         Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
-        Travel = new() { Scale = "leg" },
+        Travel = new()
+        {
+            Scale = "leg"
+        },
     };
 
     /// <summary>A quiet two-second breath with both feet planted for the whole cycle.</summary>
@@ -261,21 +321,39 @@ public static class StarterContent
         ModelAuthoring.AddControl(model, null, new(0, .9f, 0), "body");
         for (var i = 0; i < 3; i++)
         {
-            var x = (i - 1) * .35f; var z = (i - 1) * .1f;
+            var x = (i - 1) * .35f;
+            var z = (i - 1) * .1f;
             ModelAuthoring.AddControl(model, "body", new(x, .8f, z), $"hip-{i}");
             ModelAuthoring.AddControl(model, $"hip-{i}", new(x + .15f, .4f, z), $"knee-{i}");
             ModelAuthoring.AddControl(model, $"knee-{i}", new(x, 0, z), $"foot-{i}");
             ModelAuthoring.AddChain(model, $"foot-{i}");
-            ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}"); ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
+            ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}");
+            ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
         }
         ModelAuthoring.AddMeasure(model, "leg", ["hip-1", "knee-1", "foot-1"]);
-        foreach (var chain in model.Chains) chain.Scale = "leg";
-        foreach (var control in model.Controls.Where(c => c.Id == "body" || c.Id.StartsWith("hip-", StringComparison.Ordinal))) control.Scale = "leg";
-        var shell = ModelAuthoring.AddPart(model, GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), "body"); shell.Width = .95f; shell.Height = .38f; shell.Material = shell.RenderMaterial with { Fill = "#c9e0b8" }; shell.Depth = -.05f;
+        foreach (var chain in model.Chains)
+        {
+            chain.Scale = "leg";
+        }
+
+        foreach (var control in model.Controls.Where(c => c.Id == "body" || c.Id.StartsWith("hip-", StringComparison.Ordinal)))
+        {
+            control.Scale = "leg";
+        }
+
+        var shell = ModelAuthoring.AddPart(model, GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), "body");
+        shell.Width = .95f;
+        shell.Height = .38f;
+        shell.Material = shell.RenderMaterial with
+        {
+            Fill = "#c9e0b8"
+        };
+        shell.Depth = -.05f;
         model.Sockets = [new() { Id = "stinger", Control = "body", OffsetX = .5f, OffsetY = -.02f }];
         model.MotionSets = [new() { Id = "standard", Name = "Standard", Roles = new() { ["idle"] = "stalker-idle", ["walk"] = "stalker-walk", ["hit"] = "stalker-hit", ["death"] = "stalker-death" } }];
         model.HurtLayouts = [new() { Id = "standard", Regions = [new() { Id = "shell", Controls = ["body", "hip-0", "hip-2"], Pad = .2f }, new() { Id = "legs", Controls = ["knee-0", "knee-1", "knee-2", "foot-0", "foot-1", "foot-2"], Pad = .05f }] }];
-        model.Validate(); return model;
+        model.Validate();
+        return model;
     }
 
     private static MotionClip StalkerIdle(ResolvedModel model)
@@ -348,10 +426,22 @@ public static class StarterContent
         Name = "Spear guard",
         Model = "tall-thin",
         MotionSet = "deliberate",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .9f, Range = 2.1f, Cooldown = 1.1f },
+        Controller = new()
+        {
+            Kind = EntityControllers.Walker,
+            WalkSpeed = .9f,
+            Range = 2.1f,
+            Cooldown = 1.1f
+        },
         Health = 3,
-        Movement = new() { Shape = MovementDef.Box(.5f, 1.866f) },
-        Hurt = new() { Layout = "standard" },
+        Movement = new()
+        {
+            Shape = MovementDef.Box(.5f, 1.866f)
+        },
+        Hurt = new()
+        {
+            Layout = "standard"
+        },
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust()],
     };
@@ -362,10 +452,31 @@ public static class StarterContent
         Name = "Player",
         Model = PersonTemplate.Id,
         MotionSet = "standard",
-        Controller = new() { Kind = EntityControllers.Platformer, WalkSpeed = 1.8f, RunSpeed = 4.2f, JumpSpeed = 7.5f, Range = 1.6f, Cooldown = .2f },
+        Controller = new()
+        {
+            Kind = EntityControllers.Platformer,
+            WalkSpeed = 1.8f,
+            RunSpeed = 4.2f,
+            JumpSpeed = 7.5f,
+            Range = 1.6f,
+            Cooldown = .2f
+        },
         Health = 5,
-        Movement = new() { Shape = MovementDef.Box(.55f, 1.705f) },
-        Hurt = new() { Layout = "standard", Regions = new() { ["legs"] = new() { Pad = .05f } } },
+        Movement = new()
+        {
+            Shape = MovementDef.Box(.55f, 1.705f)
+        },
+        Hurt = new()
+        {
+            Layout = "standard",
+            Regions = new()
+            {
+                ["legs"] = new()
+                {
+                    Pad = .05f
+                }
+            }
+        },
         Equipment = [new() { Prop = Spear, Socket = "right-grip" }],
         Actions = [Thrust(), new() { Id = EntityControllers.Jump, Role = "jump", Events = [new() { Id = EntityControllers.Launch, At = new() { Marker = "launch" } }] }],
     };
@@ -376,10 +487,22 @@ public static class StarterContent
         Name = "Stalker pest",
         Model = Stalker,
         MotionSet = "standard",
-        Controller = new() { Kind = EntityControllers.Walker, WalkSpeed = .6f, Range = 1.05f, Cooldown = 1.4f },
+        Controller = new()
+        {
+            Kind = EntityControllers.Walker,
+            WalkSpeed = .6f,
+            Range = 1.05f,
+            Cooldown = 1.4f
+        },
         Health = 2,
-        Movement = new() { Shape = MovementDef.Box(1, 1.1f) },
-        Hurt = new() { Layout = "standard" },
+        Movement = new()
+        {
+            Shape = MovementDef.Box(1, 1.1f)
+        },
+        Hurt = new()
+        {
+            Layout = "standard"
+        },
         Actions =
         [
             new()

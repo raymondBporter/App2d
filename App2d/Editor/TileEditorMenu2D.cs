@@ -21,7 +21,9 @@ internal static class TileEditorMenu2D
         Ui.Section("Tileset", () =>
         {
             if (Ui.Combo("Terrain", editor.SelectedTilesetId, editor.TilesetIds) is { } selected)
+            {
                 editor.SelectTileset(editor.TilesetIds.ToList().IndexOf(selected));
+            }
         });
         Ui.Section("Tile type", () =>
         {
@@ -29,13 +31,30 @@ internal static class TileEditorMenu2D
             {
                 foreach (var (label, kind) in TileTypes)
                 {
-                    ImGui.TableNextColumn(); ImGui.PushID(label);
+                    ImGui.TableNextColumn();
+                    ImGui.PushID(label);
                     var path = PreviewPath(textures, editor.SelectedTilesetId, kind);
                     var selected = editor.SelectedKind == kind;
-                    if (selected) ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
-                    if (ImGui.ImageButton("preview", textureId(path), new Vector2(58, 58) * Ui.Scale)) editor.SelectKind(kind);
-                    if (selected) ImGui.PopStyleColor();
-                    if (ImGui.Selectable(label, selected)) editor.SelectKind(kind);
+                    if (selected)
+                    {
+                        ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetStyle().Colors[(int)ImGuiCol.HeaderActive]);
+                    }
+
+                    if (ImGui.ImageButton("preview", textureId(path), new Vector2(58, 58) * Ui.Scale))
+                    {
+                        editor.SelectKind(kind);
+                    }
+
+                    if (selected)
+                    {
+                        ImGui.PopStyleColor();
+                    }
+
+                    if (ImGui.Selectable(label, selected))
+                    {
+                        editor.SelectKind(kind);
+                    }
+
                     ImGui.PopID();
                 }
                 ImGui.EndTable();
@@ -45,14 +64,21 @@ internal static class TileEditorMenu2D
         {
             Ui.Button("Undo tiles [Ctrl+Z]", editor.UndoTiles);
             Ui.Help("Left drag paints. Right drag erases. Middle drag pans. Scroll zooms.");
-            if (editor.TryGetHoveredTile(out var x, out var y)) ImGui.TextUnformatted($"Tile {x}, {y}");
+            if (editor.TryGetHoveredTile(out var x, out var y))
+            {
+                ImGui.TextUnformatted($"Tile {x}, {y}");
+            }
         });
     }
 
     private static string PreviewPath(TextureCache2D textures, string tileset, TileKind2D kind)
     {
         var root = Path.Combine("environments", "tilesets", tileset);
-        if (kind.IsLadder()) return LadderAssets2D.ResolvePath(textures, tileset, isTop: true);
+        if (kind.IsLadder())
+        {
+            return LadderAssets2D.ResolvePath(textures, tileset, isTop: true);
+        }
+
         var path = kind.IsGrippable() ? Path.Combine(root, "grippable.png") :
             kind.IsSpikes() ? Path.Combine(root, "hazards", "spikes", "standalone.png") :
             kind.IsOneWay() ? Path.Combine(root, "one-way", "standalone.png") : Path.Combine(root, "fill.png");

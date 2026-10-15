@@ -40,9 +40,20 @@ internal sealed class ModelView : IWorkspaceView
         {
             _baseInspector.Draw(model);
         }
-        else { Ui.Help("Open a model or variant from the browser, or create one with New."); return; }
+        else
+        {
+            Ui.Help("Open a model or variant from the browser, or create one with New.");
+            return;
+        }
 
-        foreach (var problem in _session.ActiveDocument is { } document ? _session.Assets.Problems(document) : []) Ui.Problem(problem);
-        if (_session.SubjectVariant is null && _session.SubjectModel is { } opened) References.Draw(_session, opened.Id);
+        foreach (var problem in _session.ActiveDocument is { } document ? _session.Assets.Problems(document) : [])
+        {
+            Ui.Problem(problem);
+        }
+
+        if (_session.SubjectVariant is null && _session.SubjectModel is { } opened)
+        {
+            References.Draw(_session, opened.Id);
+        }
     }
 }

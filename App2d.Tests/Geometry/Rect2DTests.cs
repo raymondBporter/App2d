@@ -204,10 +204,18 @@ public sealed class Rect2DTests
     {
         var value = new CustomValue(Sample.Min, Sample.Max);
         Span<Vector2> corners = stackalloc Vector2[4];
-        for (var i = 0; i < 100; i++) _ = Query(value, corners);
+        for (var i = 0; i < 100; i++)
+        {
+            _ = Query(value, corners);
+        }
+
         var before = GC.GetAllocatedBytesForCurrentThread();
         var total = 0f;
-        for (var i = 0; i < 1000; i++) total += Query(value, corners);
+        for (var i = 0; i < 1000; i++)
+        {
+            total += Query(value, corners);
+        }
+
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         Assert.Equal(0, allocated);
         Assert.True(total > 0);

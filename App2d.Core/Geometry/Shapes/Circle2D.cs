@@ -23,10 +23,16 @@ public sealed partial class Circle2D : IConvexShape2D
     }
 
     /// <summary>The radius.</summary>
-    public float Radius { get; }
+    public float Radius
+    {
+        get;
+    }
 
     /// <summary>The local center.</summary>
-    public Vector2 Center { get; }
+    public Vector2 Center
+    {
+        get;
+    }
 
     /// <inheritdoc/>
     public float Area => Area2D.Circle(Radius);

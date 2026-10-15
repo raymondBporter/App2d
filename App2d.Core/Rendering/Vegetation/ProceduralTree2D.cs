@@ -15,7 +15,10 @@ public sealed class ProceduralTree2D
     private readonly List<Crown> _crowns = [];
     private readonly Vector2 _root;
     private readonly float _height;
-    public Rect2D Bounds { get; }
+    public Rect2D Bounds
+    {
+        get;
+    }
 
     public ProceduralTree2D(Vector2 root, float height, int seed)
     {
@@ -37,7 +40,11 @@ public sealed class ProceduralTree2D
             _crowns.Add(new(end, radius, random.NextFloat(MathF.Tau),
                 XnaColor.Lerp(new(32, 87, 68), new(83, 145, 88), random.NextSingle())));
         }
-        if (depth == 0) return;
+        if (depth == 0)
+        {
+            return;
+        }
+
         for (var side = -1; side <= 1; side += 2)
         {
             Grow(end, angle + side * float.Lerp(0.3f, 0.65f, random.NextSingle()),

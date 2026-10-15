@@ -13,6 +13,12 @@ public sealed record PlayerSave2D
         HitPoints = hitPoints;
     }
 
-    public long SavePointId { get; }
-    public int HitPoints { get; }
+    public long SavePointId
+    {
+        get;
+    }
+    public int HitPoints
+    {
+        get;
+    }
 }

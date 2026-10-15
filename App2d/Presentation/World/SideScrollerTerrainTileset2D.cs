@@ -106,7 +106,9 @@ internal sealed class SideScrollerTerrainTileset2D
         var relativeRoot = Path.Combine("environments", "tilesets", tilesetId);
         var manifestPath = Path.Combine(textures.ContentRoot, relativeRoot, "tileset.json");
         if (!File.Exists(manifestPath))
+        {
             throw new FileNotFoundException("Tileset manifest was not found.", manifestPath);
+        }
 
         var manifest = JsonSerializer.Deserialize<TilesetManifest>(File.ReadAllText(manifestPath), JsonOptions) ??
             throw new InvalidDataException($"Tileset manifest is empty: {manifestPath}");
@@ -216,14 +218,35 @@ internal sealed class SideScrollerTerrainTileset2D
     private sealed class TilesetManifest
     {
         public string Id { get; init; } = string.Empty;
-        public float TileSize { get; init; }
-        public float SurfaceThickness { get; init; }
-        public float OuterCornerSize { get; init; }
-        public float InnerCornerSize { get; init; }
-        public float OneWayVisualHeight { get; init; }
-        public float SpikeVisualHeight { get; init; }
+        public float TileSize
+        {
+            get; init;
+        }
+        public float SurfaceThickness
+        {
+            get; init;
+        }
+        public float OuterCornerSize
+        {
+            get; init;
+        }
+        public float InnerCornerSize
+        {
+            get; init;
+        }
+        public float OneWayVisualHeight
+        {
+            get; init;
+        }
+        public float SpikeVisualHeight
+        {
+            get; init;
+        }
         /// <summary>World size of one repeat of fill.png; defaults to one tile.</summary>
-        public float FillPeriod { get; init; }
+        public float FillPeriod
+        {
+            get; init;
+        }
     }
 }
 

@@ -77,13 +77,20 @@ public sealed class PersonPresentation2D : IDisposable
     public void Advance(float deltaSeconds)
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        if (!_hasState) return;
+        if (!_hasState)
+        {
+            return;
+        }
+
         _secondsSinceState += deltaSeconds;
         var state = _latestState with
         {
             LandingSpeedThisFrame = 0f,
             InvulnerabilitySeconds = Math.Max(0f, _latestState.InvulnerabilitySeconds - _secondsSinceState),
-            Action = _latestState.Action with { ElapsedSeconds = _latestState.Action.ElapsedSeconds + _secondsSinceState }
+            Action = _latestState.Action with
+            {
+                ElapsedSeconds = _latestState.Action.ElapsedSeconds + _secondsSinceState
+            }
         };
         Update(deltaSeconds, _latestTick + (long)(_secondsSinceState * 120f), state,
             _latestMoveX, _latestShield, _latestMelee && (!_latestState.Action.IsActive || state.Action.IsActive));
@@ -128,7 +135,9 @@ public sealed class PersonPresentation2D : IDisposable
             _ => SwordCharacterId
         };
         if (string.Equals(_characterId, replacement, StringComparison.Ordinal))
+        {
             return;
+        }
 
         LoadCharacter(replacement);
         _animation.Play(_idleAnimation, restart: true);
@@ -187,12 +196,20 @@ public sealed class PersonPresentation2D : IDisposable
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         if (!person.IsAlive)
         {
-            if (!ReferenceEquals(_animation.Clip, _deathAnimation)) PlayDeath();
+            if (!ReferenceEquals(_animation.Clip, _deathAnimation))
+            {
+                PlayDeath();
+            }
+
             _observedAction = false;
             UpdateVisual(deltaSeconds, frameNumber, person.Position, person.Facing, 0f);
             return;
         }
-        if (ReferenceEquals(_animation.Clip, _deathAnimation)) Reset();
+        if (ReferenceEquals(_animation.Clip, _deathAnimation))
+        {
+            Reset();
+        }
+
         var action = person.Action;
         var shotClip = person.IsWallGripping ? _wallShotAnimation : _shotAnimation;
         // Recovery controls gameplay; the authored recoil can finish after recovery.
@@ -214,7 +231,11 @@ public sealed class PersonPresentation2D : IDisposable
             UpdateVisual(0f, frameNumber, person.Position, person.Facing, person.InvulnerabilitySeconds);
             return;
         }
-        if (_observedAction) { Reset(); _observedAction = false; }
+        if (_observedAction)
+        {
+            Reset();
+            _observedAction = false;
+        }
         if (person.IsChargingPrimary)
         {
             // The baked idle's first frame is also the gun's authored muzzle pose.
@@ -295,7 +316,10 @@ public sealed class PersonPresentation2D : IDisposable
                     ? _fallAnimation
                     : _jumpAnimation;
             if (!ReferenceEquals(_animation.Clip, locomotionClip))
+            {
                 _animation.Play(locomotionClip);
+            }
+
             _animation.PlaybackSpeed = person.IsClimbingLadder
                 ? MathF.Abs(person.LinearVelocity.Y) > 0.01f ? 1f : 0f
                 : isWalking
@@ -326,7 +350,9 @@ public sealed class PersonPresentation2D : IDisposable
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
 
         _disposed = true;
         _scene.Remove(_visual);

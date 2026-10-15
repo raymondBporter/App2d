@@ -35,7 +35,10 @@ public sealed partial class PhysicsWorld2D
         _physicsColliderPairFilter = new PhysicsColliderPairFilter(this);
     }
 
-    public Vector2 Gravity { get; set; }
+    public Vector2 Gravity
+    {
+        get; set;
+    }
     public int PositionIterations { get; set; } = 4;
     public int VelocityIterations { get; set; } = 1;
     public float MaxSubstepSeconds { get; set; } = 1f / 60f;
@@ -43,7 +46,10 @@ public sealed partial class PhysicsWorld2D
     public IPairFilter2D<PhysicsBody2D> PairFilter { get; set; } = new DefaultPhysicsPairFilter2D();
     public IPhysicsPositionSolver2D PositionSolver { get; set; } = new MassWeightedPositionSolver2D();
     public IPhysicsVelocitySolver2D VelocitySolver { get; set; } = new ImpulseVelocitySolver2D();
-    public CollisionSystem2D CollisionSystem { get; }
+    public CollisionSystem2D CollisionSystem
+    {
+        get;
+    }
     public IReadOnlyList<PhysicsBody2D> Bodies => _bodies;
     public IReadOnlyList<PhysicsContact2D> LastContacts => _lastContacts;
     public int LastCandidatePairCount => CollisionSystem.LastCandidatePairCount;
@@ -66,11 +72,17 @@ public sealed partial class PhysicsWorld2D
     {
         ArgGuard.ThrowIfNull(body);
         if (!_bodies.Remove(body))
+        {
             return false;
+        }
+
         CollisionSystem.RemoveCollider(body.Collider);
         _lastContacts.RemoveAll(c => ReferenceEquals(c.First, body) || ReferenceEquals(c.Second, body));
         foreach (var remaining in _bodies)
+        {
             remaining.RemoveIgnoredOneWayPlatformsWhere(platform => ReferenceEquals(platform, body));
+        }
+
         return true;
     }
 
@@ -78,7 +90,10 @@ public sealed partial class PhysicsWorld2D
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         if (deltaSeconds == 0f)
+        {
             return;
+        }
+
         StateGuard.ThrowIfNotPositive(MaxSubstepSeconds);
         StateGuard.ThrowIfLessThan(PositionIterations, 1);
         StateGuard.ThrowIfLessThan(VelocityIterations, 1);
@@ -96,7 +111,9 @@ public sealed partial class PhysicsWorld2D
         var substepSeconds = deltaSeconds / substepCount;
 
         for (var substep = 0; substep < substepCount; substep++)
+        {
             StepOnce(substepSeconds);
+        }
 
         _lastContacts.AddRange(_frameContacts.Contacts);
         foreach (var body in _bodies)
@@ -161,7 +178,9 @@ public sealed partial class PhysicsWorld2D
         foreach (var contact in _lastContacts)
         {
             if (contact.First == body || contact.Second == body)
+            {
                 return true;
+            }
         }
 
         return false;
@@ -170,15 +189,22 @@ public sealed partial class PhysicsWorld2D
     public bool IsTouching(PhysicsBody2D body, Vector2 direction, float minimumDot = 0.5f)
     {
         if (direction.LengthSquared() <= float.Epsilon)
+        {
             return false;
+        }
 
         direction = Vector2.Normalize(direction);
         foreach (var contact in _lastContacts)
         {
             if (contact.First == body && Vector2.Dot(contact.Geometry.Normal, direction) >= minimumDot)
+            {
                 return true;
+            }
+
             if (contact.Second == body && Vector2.Dot(-contact.Geometry.Normal, direction) >= minimumDot)
+            {
                 return true;
+            }
         }
 
         return false;
@@ -187,7 +213,9 @@ public sealed partial class PhysicsWorld2D
     private void StepOnce(float deltaSeconds)
     {
         foreach (var body in _bodies)
+        {
             Integrator.Integrate(body, Gravity, deltaSeconds);
+        }
 
         _substepContacts.Clear();
         for (var iteration = 0; iteration < PositionIterations; iteration++)
@@ -206,34 +234,46 @@ public sealed partial class PhysicsWorld2D
 
                 var contact = new PhysicsContact2D(firstBody, secondBody, pair.Contact);
                 if (!AllowsDirectionalContact(contact))
+                {
                     continue;
+                }
 
                 foundContact = true;
                 _substepContacts.Upsert(contact);
                 _frameContacts.Upsert(contact);
                 if (!firstBody.IsSensor && !secondBody.IsSensor)
+                {
                     PositionSolver.Solve(contact);
+                }
             }
 
             if (iteration % 2 == 0)
             {
                 foreach (var constraint in _constraints)
+                {
                     foundContact |= constraint.SolvePosition(deltaSeconds);
+                }
             }
             else
             {
                 for (var constraintIndex = _constraints.Count - 1; constraintIndex >= 0; constraintIndex--)
+                {
                     foundContact |= _constraints[constraintIndex].SolvePosition(deltaSeconds);
+                }
             }
 
             if (!foundContact)
+            {
                 break;
+            }
         }
 
         foreach (var contact in _substepContacts.Contacts)
         {
             if (!contact.First.IsSensor && !contact.Second.IsSensor)
+            {
                 VelocitySolver.Solve(contact);
+            }
         }
 
         for (var iteration = 0; iteration < VelocityIterations; iteration++)
@@ -241,12 +281,16 @@ public sealed partial class PhysicsWorld2D
             if (iteration % 2 == 0)
             {
                 foreach (var constraint in _constraints)
+                {
                     constraint.SolveVelocity(deltaSeconds);
+                }
             }
             else
             {
                 for (var constraintIndex = _constraints.Count - 1; constraintIndex >= 0; constraintIndex--)
+                {
                     _constraints[constraintIndex].SolveVelocity(deltaSeconds);
+                }
             }
         }
     }
@@ -278,7 +322,9 @@ public sealed partial class PhysicsWorld2D
         CollisionContact2D geometry)
     {
         if (other.IsIgnoringOneWayPlatform(surface))
+        {
             return false;
+        }
 
         // A one-way surface has no collidable corner or side. Rounded shapes
         // report diagonal normals at corners, which should pass through.
@@ -291,7 +337,9 @@ public sealed partial class PhysicsWorld2D
         var surfaceBounds = surface.WorldObject.WorldBounds;
         var otherBounds = other.WorldObject.WorldBounds;
         if (!surfaceBounds.IsFinite || !otherBounds.IsFinite)
+        {
             return false;
+        }
 
         var face = MaximumProjection(surface.WorldObject, surfaceNormal);
         if (MathF.Abs(Vector2.Dot(geometry.Point, surfaceNormal) - face) >
@@ -303,13 +351,17 @@ public sealed partial class PhysicsWorld2D
         var previousNearSide = MinimumProjection(other.WorldObject, surfaceNormal) +
             Vector2.Dot(other.PreviousPosition - other.WorldObject.Transform.Position, surfaceNormal);
         if (previousNearSide < face - surface.OneWaySlop)
+        {
             return false;
+        }
 
         var relativeMotion = Vector2.Dot(
             other.WorldObject.Transform.Position - other.PreviousPosition -
             (surface.WorldObject.Transform.Position - surface.PreviousPosition), surfaceNormal);
         if (relativeMotion > 0f)
+        {
             return false;
+        }
 
         var relativeSpeed = Vector2.Dot(other.LinearVelocity - surface.LinearVelocity, surfaceNormal);
         return relativeSpeed <= 0f;

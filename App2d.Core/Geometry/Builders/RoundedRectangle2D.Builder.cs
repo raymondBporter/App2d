@@ -13,17 +13,28 @@ public sealed partial class RoundedRectangle2D
     public sealed record Builder : ConvexShapeBuilder2D
     {
         /// <summary>The outer rectangle's minimum corner.</summary>
-        public required Vector2 Min { get; init; }
+        public required Vector2 Min
+        {
+            get; init;
+        }
         /// <summary>The outer rectangle's maximum corner.</summary>
-        public required Vector2 Max { get; init; }
-        public required float Radius { get; init; }
+        public required Vector2 Max
+        {
+            get; init;
+        }
+        public required float Radius
+        {
+            get; init;
+        }
         [JsonIgnore] public override string Kind => ShapeKinds2D.RoundedRectangle;
         public override void Validate()
         {
             Rectangle2D.Builder.ValidateBounds(Min, Max);
             ArgGuard.ThrowIfNotFiniteOrNegative(Radius, "radius");
             if (Radius > Math.Min((double)Max.X - Min.X, (double)Max.Y - Min.Y) / 2)
+            {
                 throw new ArgumentOutOfRangeException("radius", "Corner radius cannot exceed half the shorter side.");
+            }
         }
         public override RoundedRectangle2D Build()
         {
@@ -39,7 +50,12 @@ public sealed partial class RoundedRectangle2D
         public static Builder FromSize(Vector2 size, float radius, Vector2 center = default)
         {
             var rectangle = Rectangle2D.Builder.FromSize(size, center);
-            return new() { Min = rectangle.Min, Max = rectangle.Max, Radius = radius };
+            return new()
+            {
+                Min = rectangle.Min,
+                Max = rectangle.Max,
+                Radius = radius
+            };
         }
         /// <summary>Resizes around the existing center, keeping the corner radius within the new sides.</summary>
         public Builder WithSize(Vector2 size) => FromSize(size, MathF.Min(Radius, MathF.Min(size.X, size.Y) / 2), new Rect2D(Min, Max).Center);

@@ -44,22 +44,41 @@ public static partial class Gjk2D
     {
         first.Validate();
         second.Validate();
-        if (TryPointQuery(first, second, out var simple)) return simple;
+        if (TryPointQuery(first, second, out var simple))
+        {
+            return simple;
+        }
         // A fixed geometric order makes the same tied escape direction win when arguments are reversed.
-        if (Compare(first, second) <= 0) return QueryOrdered(first, second, witnesses: witnesses);
+        if (Compare(first, second) <= 0)
+        {
+            return QueryOrdered(first, second, witnesses: witnesses);
+        }
+
         var result = QueryOrdered(second, first, witnesses: witnesses);
-        return result with { Normal = -result.Normal, PointOnFirst = result.PointOnSecond, PointOnSecond = result.PointOnFirst };
+        return result with
+        {
+            Normal = -result.Normal,
+            PointOnFirst = result.PointOnSecond,
+            PointOnSecond = result.PointOnFirst
+        };
     }
 
     private static int Compare(ConvexProxy2D first, ConvexProxy2D second)
     {
         var order = Compare(first.Origin, second.Origin);
-        if (order != 0) return order;
+        if (order != 0)
+        {
+            return order;
+        }
+
         ReadOnlySpan<Vector2> directions = [Vector2.UnitX, Vector2.UnitY, -Vector2.UnitX, -Vector2.UnitY];
         foreach (var direction in directions)
         {
             order = Compare(first.Support(direction, first.Origin), second.Support(direction, first.Origin));
-            if (order != 0) return order;
+            if (order != 0)
+            {
+                return order;
+            }
         }
         return first.Radius.CompareTo(second.Radius);
     }
@@ -74,7 +93,11 @@ public static partial class Gjk2D
     {
         first.Validate();
         second.Validate();
-        if (TryPointQuery(first, second, out var simple)) return simple;
+        if (TryPointQuery(first, second, out var simple))
+        {
+            return simple;
+        }
+
         return QueryOrdered(first, second, penetration: false);
     }
 
@@ -92,7 +115,10 @@ public static partial class Gjk2D
                 var end = second.Vertex(1, origin);
                 var edge = end - b;
                 b = ClosestPoint2D.OnSegment(a, b, end);
-                if (Dot(edge, edge) > 0d) fallback = Vector2.Normalize(new(-edge.Y, edge.X));
+                if (Dot(edge, edge) > 0d)
+                {
+                    fallback = Vector2.Normalize(new(-edge.Y, edge.X));
+                }
             }
             var delta = a - b;
             var distance = (float)Math.Sqrt(Dot(delta, delta));
@@ -104,7 +130,12 @@ public static partial class Gjk2D
         if (second.VertexCount == 1 && first.VertexCount == 2)
         {
             TryPointQuery(second, first, out result);
-            result = result with { Normal = -result.Normal, PointOnFirst = result.PointOnSecond, PointOnSecond = result.PointOnFirst };
+            result = result with
+            {
+                Normal = -result.Normal,
+                PointOnFirst = result.PointOnSecond,
+                PointOnSecond = result.PointOnFirst
+            };
             return true;
         }
         result = default;
@@ -113,7 +144,11 @@ public static partial class Gjk2D
 
     private static ConvexQueryResult2D QueryOrdered(ConvexProxy2D first, ConvexProxy2D second, bool penetration = true, bool witnesses = true)
     {
-        if (penetration && TrySmallCorePenetration(first, second, witnesses, out var small)) return small;
+        if (penetration && TrySmallCorePenetration(first, second, witnesses, out var small))
+        {
+            return small;
+        }
+
         var origin = first.ReferencePoint;
         Span<Vertex> simplex = stackalloc Vertex[3];
         simplex[0] = Support(first, second, Vector2.UnitX, origin);
@@ -138,9 +173,16 @@ public static partial class Gjk2D
             scale = Math.Max(scale, Math.Sqrt(Dot(vertex.Difference, vertex.Difference)));
             error = Math.Max(0d, distance + Dot(direction, vertex.Difference));
             var duplicate = false;
-            for (var i = 0; i < count; i++) duplicate |= vertex.Difference == simplex[i].Difference;
+            for (var i = 0; i < count; i++)
+            {
+                duplicate |= vertex.Difference == simplex[i].Difference;
+            }
+
             if (duplicate || error <= tolerance)
+            {
                 return Result(simplex[..count], (float)distance, closest / (float)distance, first, second, origin, error);
+            }
+
             simplex[count++] = vertex;
         }
 
@@ -179,13 +221,21 @@ public static partial class Gjk2D
     private static Vector2 Closest(ReadOnlySpan<Vertex> vertices, int count)
     {
         var closest = Vector2d.Zero;
-        for (var i = 0; i < count; i++) closest += vertices[i].Difference.ToVector2d() * vertices[i].Weight;
+        for (var i = 0; i < count; i++)
+        {
+            closest += vertices[i].Difference.ToVector2d() * vertices[i].Weight;
+        }
+
         return closest.ToVector2();
     }
 
     private static void Reduce(Span<Vertex> s, ref int count)
     {
-        if (count == 1) { s[0].Weight = 1d; return; }
+        if (count == 1)
+        {
+            s[0].Weight = 1d;
+            return;
+        }
         var a = s[0].Difference;
         var b = s[1].Difference;
         var ab = b - a;
@@ -193,9 +243,22 @@ public static partial class Gjk2D
         var abB = -Dot(a, ab);
         if (count == 2)
         {
-            if (abB <= 0d) { count = 1; s[0].Weight = 1d; }
-            else if (abA <= 0d) { count = 1; s[0] = s[1]; s[0].Weight = 1d; }
-            else { s[0].Weight = abA / (abA + abB); s[1].Weight = abB / (abA + abB); }
+            if (abB <= 0d)
+            {
+                count = 1;
+                s[0].Weight = 1d;
+            }
+            else if (abA <= 0d)
+            {
+                count = 1;
+                s[0] = s[1];
+                s[0].Weight = 1d;
+            }
+            else
+            {
+                s[0].Weight = abA / (abA + abB);
+                s[1].Weight = abB / (abA + abB);
+            }
             return;
         }
 
@@ -210,25 +273,50 @@ public static partial class Gjk2D
         var triangleA = area * new Vector2d(b).Cross(new(c));
         var triangleB = area * new Vector2d(c).Cross(new(a));
         var triangleC = area * new Vector2d(a).Cross(new(b));
-        if (abB <= 0d && acC <= 0d) { count = 1; s[0].Weight = 1d; }
+        if (abB <= 0d && acC <= 0d)
+        {
+            count = 1;
+            s[0].Weight = 1d;
+        }
         else if (abA > 0d && abB > 0d && triangleC <= 0d)
         {
-            count = 2; s[0].Weight = abA / (abA + abB); s[1].Weight = abB / (abA + abB);
+            count = 2;
+            s[0].Weight = abA / (abA + abB);
+            s[1].Weight = abB / (abA + abB);
         }
         else if (acA > 0d && acC > 0d && triangleB <= 0d)
         {
-            count = 2; s[0].Weight = acA / (acA + acC); s[1] = s[2]; s[1].Weight = acC / (acA + acC);
+            count = 2;
+            s[0].Weight = acA / (acA + acC);
+            s[1] = s[2];
+            s[1].Weight = acC / (acA + acC);
         }
-        else if (abA <= 0d && bcC <= 0d) { count = 1; s[0] = s[1]; s[0].Weight = 1d; }
-        else if (acA <= 0d && bcB <= 0d) { count = 1; s[0] = s[2]; s[0].Weight = 1d; }
+        else if (abA <= 0d && bcC <= 0d)
+        {
+            count = 1;
+            s[0] = s[1];
+            s[0].Weight = 1d;
+        }
+        else if (acA <= 0d && bcB <= 0d)
+        {
+            count = 1;
+            s[0] = s[2];
+            s[0].Weight = 1d;
+        }
         else if (bcB > 0d && bcC > 0d && triangleA <= 0d)
         {
-            count = 2; s[0] = s[1]; s[1] = s[2]; s[0].Weight = bcB / (bcB + bcC); s[1].Weight = bcC / (bcB + bcC);
+            count = 2;
+            s[0] = s[1];
+            s[1] = s[2];
+            s[0].Weight = bcB / (bcB + bcC);
+            s[1].Weight = bcC / (bcB + bcC);
         }
         else
         {
             var sum = triangleA + triangleB + triangleC;
-            s[0].Weight = triangleA / sum; s[1].Weight = triangleB / sum; s[2].Weight = triangleC / sum;
+            s[0].Weight = triangleA / sum;
+            s[1].Weight = triangleB / sum;
+            s[2].Weight = triangleC / sum;
         }
     }
 
@@ -272,10 +360,19 @@ public static partial class Gjk2D
                 var a = polygon[i].Difference;
                 var edge = polygon[(i + 1) % count].Difference - a;
                 var length = Math.Sqrt(Dot(edge, edge));
-                if (length == 0d) continue;
+                if (length == 0d)
+                {
+                    continue;
+                }
+
                 var normal = new Vector2((float)(edge.Y / length), (float)(-edge.X / length));
                 var distance = Dot(normal, a);
-                if (distance < edgeDistance) { edgeIndex = i; edgeDistance = distance; edgeNormal = normal; }
+                if (distance < edgeDistance)
+                {
+                    edgeIndex = i;
+                    edgeDistance = distance;
+                    edgeNormal = normal;
+                }
             }
 
             var vertex = Support(first, second, edgeNormal, origin);
@@ -307,7 +404,10 @@ public static partial class Gjk2D
         var squared = Dot(edge, edge);
         var t = squared == 0d ? 0d : Math.Clamp(-Dot(vertices[start].Difference, edge) / squared, 0d, 1d);
         vertices[start].Weight = 1d - t;
-        if (end != start) vertices[end].Weight = t;
+        if (end != start)
+        {
+            vertices[end].Weight = t;
+        }
     }
 
     private static int Hull(Span<Vertex> seeds, Span<Vertex> hull)
@@ -315,26 +415,48 @@ public static partial class Gjk2D
         // At most eight seeds: insertion sort avoids delegates and heap allocations.
         for (var i = 1; i < seeds.Length; i++)
         {
-            var vertex = seeds[i]; var j = i;
+            var vertex = seeds[i];
+            var j = i;
             while (j > 0 && (seeds[j - 1].Difference.X > vertex.Difference.X ||
                 (seeds[j - 1].Difference.X == vertex.Difference.X && seeds[j - 1].Difference.Y > vertex.Difference.Y)))
-            { seeds[j] = seeds[j - 1]; j--; }
+            {
+                seeds[j] = seeds[j - 1];
+                j--;
+            }
             seeds[j] = vertex;
         }
         var unique = 0;
         for (var i = 0; i < seeds.Length; i++)
-            if (unique == 0 || seeds[i].Difference != seeds[unique - 1].Difference) seeds[unique++] = seeds[i];
-        if (unique == 1) { hull[0] = seeds[0]; return 1; }
+        {
+            if (unique == 0 || seeds[i].Difference != seeds[unique - 1].Difference)
+            {
+                seeds[unique++] = seeds[i];
+            }
+        }
+
+        if (unique == 1)
+        {
+            hull[0] = seeds[0];
+            return 1;
+        }
         var count = 0;
         for (var i = 0; i < unique; i++)
         {
-            while (count >= 2 && new Vector2d(hull[count - 1].Difference - hull[count - 2].Difference).Cross(new(seeds[i].Difference - hull[count - 1].Difference)) <= 0d) count--;
+            while (count >= 2 && new Vector2d(hull[count - 1].Difference - hull[count - 2].Difference).Cross(new(seeds[i].Difference - hull[count - 1].Difference)) <= 0d)
+            {
+                count--;
+            }
+
             hull[count++] = seeds[i];
         }
         var lower = count;
         for (var i = unique - 2; i >= 0; i--)
         {
-            while (count > lower && new Vector2d(hull[count - 1].Difference - hull[count - 2].Difference).Cross(new(seeds[i].Difference - hull[count - 1].Difference)) <= 0d) count--;
+            while (count > lower && new Vector2d(hull[count - 1].Difference - hull[count - 2].Difference).Cross(new(seeds[i].Difference - hull[count - 1].Difference)) <= 0d)
+            {
+                count--;
+            }
+
             hull[count++] = seeds[i];
         }
         return count - 1;

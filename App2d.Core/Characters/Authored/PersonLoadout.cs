@@ -3,7 +3,10 @@ using System.Numerics;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>What the Person carries: nothing, the sword on its back, or the sword on its back and a pistol in hand.</summary>
-public enum PersonGear { None, Sword, Gun }
+public enum PersonGear
+{
+    None, Sword, Gun
+}
 
 /// <summary>
 /// The player move set's prop rules, shared by the game and the move review. There is no scabbard: the sword rides the
@@ -32,7 +35,8 @@ public static class PersonLoadout
     /// <summary>Whether this clip holds the sword in hand at this time.</summary>
     public static bool SwordInHand(MotionClip clip, float seconds)
     {
-        var draw = clip.Markers.FirstOrDefault(m => m.Id == DrawMarker)?.Time; var sheathe = clip.Markers.FirstOrDefault(m => m.Id == SheatheMarker)?.Time;
+        var draw = clip.Markers.FirstOrDefault(m => m.Id == DrawMarker)?.Time;
+        var sheathe = clip.Markers.FirstOrDefault(m => m.Id == SheatheMarker)?.Time;
         return (draw is { } d ? seconds >= d : sheathe is not null) && (sheathe is not { } s || seconds < s);
     }
 
@@ -64,14 +68,23 @@ public static class PersonLoadout
     /// </summary>
     public static bool Backhand(ResolvedModel model, MotionClip clip, PropAsset sword, ModelSocket socket)
     {
-        if (clip.Markers.FirstOrDefault(m => m.Id == SwooshMarker) is not { } start) return false;
+        if (clip.Markers.FirstOrDefault(m => m.Id == SwooshMarker) is not { } start)
+        {
+            return false;
+        }
+
         var end = clip.Markers.FirstOrDefault(m => m.Id == SwooshEndMarker && m.Time > start.Time)?.Time ?? clip.Duration;
-        var yaw = 0f; Vector3? last = null;
+        var yaw = 0f;
+        Vector3? last = null;
         for (var t = start.Time; t <= end + 1e-4f; t += 1 / 240f)
         {
             var (guard, tip) = Blade(PoseEvaluator.Sample(model, clip, t), sword, socket);
             var d = Vector3.Normalize(tip - guard);
-            if (last is { } a) yaw += Vector3.Cross(a, d).Y;
+            if (last is { } a)
+            {
+                yaw += Vector3.Cross(a, d).Y;
+            }
+
             last = d;
         }
         return yaw < 0;
@@ -80,10 +93,17 @@ public static class PersonLoadout
     /// <summary>The props worn at this moment of <paramref name="clip"/>, each with the model socket it sits on.</summary>
     public static IEnumerable<(string Prop, string Socket)> Worn(MotionClip clip, float seconds, PersonGear gear)
     {
-        if (gear == PersonGear.None) yield break;
+        if (gear == PersonGear.None)
+        {
+            yield break;
+        }
+
         var back = SeenFromBehind(clip, seconds) ? BackViewSocket : BackSocket;
         yield return (Sword, gear == PersonGear.Sword && SwordInHand(clip, seconds) ? SwordSocket : back);
-        if (gear == PersonGear.Gun) yield return (Pistol, GunSocket);
+        if (gear == PersonGear.Gun)
+        {
+            yield return (Pistol, GunSocket);
+        }
     }
 
     /// <summary>Player appearance plus the carried weapons. Hair stays on even when unarmed.</summary>
@@ -96,9 +116,14 @@ public static class PersonLoadout
         else
         {
             foreach (var item in wearer.Equipment.Where(e => e.Prop.Usage is "hair" or "clothing"))
+            {
                 yield return (SeenFromBehind(clip, seconds) && item.Prop.BackView is { } back ? back : item.Prop.Id, item.Socket.Id);
+            }
         }
 
-        foreach (var item in Worn(clip, seconds, gear)) yield return item;
+        foreach (var item in Worn(clip, seconds, gear))
+        {
+            yield return item;
+        }
     }
 }

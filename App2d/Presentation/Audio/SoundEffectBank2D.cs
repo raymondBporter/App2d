@@ -67,7 +67,9 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
     {
         ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(initialVolumeScale, 0f, 1f);
         if (!_cues.TryGetValue(effect, out var cue))
+        {
             throw ArgGuard.CreateOutOfRange(effect, "Unknown sound effect.");
+        }
 
         var fullVolume = cue.Volume * Random.Shared.NextFloat(MinimumVolumeScale, MaximumVolumeScale);
         var voice = _mixer.Begin(cue.NextClip(), fullVolume * initialVolumeScale, effect == SoundEffect2D.GunCharge
@@ -82,7 +84,10 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
     {
         var clips = new AudioClip2D[stems.Length];
         for (var i = 0; i < stems.Length; i++)
+        {
             clips[i] = _mixer.Load(Path.Combine(rootPath, $"{stems[i]}.wav"));
+        }
+
         return new Cue(clips, volume);
     }
 
@@ -95,11 +100,16 @@ public sealed class SoundEffectBank2D : ISoundEffectSink2D, IDisposable
         public AudioClip2D NextClip()
         {
             if (clips.Length == 1)
+            {
                 return clips[0];
+            }
 
             var index = Random.Shared.Next(_lastIndex < 0 ? clips.Length : clips.Length - 1);
             if (_lastIndex >= 0 && index >= _lastIndex)
+            {
                 index++;
+            }
+
             _lastIndex = index;
             return clips[index];
         }

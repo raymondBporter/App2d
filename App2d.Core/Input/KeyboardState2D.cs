@@ -16,17 +16,31 @@ public sealed class KeyboardState2D
 
     internal void SetKey(Keys key, bool isDown, bool suppressed)
     {
-        if (!isDown) _blocked.Remove(key);
+        if (!isDown)
+        {
+            _blocked.Remove(key);
+        }
+
         if (suppressed)
         {
-            if (isDown) _blocked.Add(key);
+            if (isDown)
+            {
+                _blocked.Add(key);
+            }
+
             return;
         }
-        if (_blocked.Contains(key)) return;
+        if (_blocked.Contains(key))
+        {
+            return;
+        }
 
         if (isDown)
         {
-            if (_down.Add(key)) _pressed.Add(key);
+            if (_down.Add(key))
+            {
+                _pressed.Add(key);
+            }
         }
         else if (_down.Remove(key))
         {

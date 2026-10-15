@@ -39,19 +39,46 @@ internal sealed partial class RigidCharacterHost
     private void DrawAuthoringPanel() => Ui.Section("Pose", () =>
     {
         if (Ui.Combo("Control", _selectedControl.ToString(), Enum.GetNames<RigidControl2D>()) is { } control)
+        {
             _selectedControl = Enum.Parse<RigidControl2D>(control);
+        }
+
         var target = _author.Pose.GetTarget(_selectedControl);
         var torso = _author.Pose.TorsoAngle;
         var head = _author.Pose.HeadAngle;
         if (Ui.Drag2("Target", ref target, .5f, 0, 0))
-        { _author.Pose = _author.Pose.WithTarget(_selectedControl, target); _customPlayback = false; }
+        {
+            _author.Pose = _author.Pose.WithTarget(_selectedControl, target);
+            _customPlayback = false;
+        }
         if (Ui.Drag("Torso angle (radians)", ref torso, .01f, 0, 0))
-        { _author.Pose = _author.Pose with { TorsoAngle = torso }; _customPlayback = false; }
+        {
+            _author.Pose = _author.Pose with
+            {
+                TorsoAngle = torso
+            };
+            _customPlayback = false;
+        }
         if (Ui.Drag("Head angle (radians)", ref head, .01f, 0, 0))
-        { _author.Pose = _author.Pose with { HeadAngle = head }; _customPlayback = false; }
+        {
+            _author.Pose = _author.Pose with
+            {
+                HeadAngle = head
+            };
+            _customPlayback = false;
+        }
         Ui.Row(() => Ui.Button("Capture (K)", () => HandleCommand(Keys.K)),
             () => Ui.Button(_customPlayback ? "Stop" : "Play (P)", () =>
-            { if (_customPlayback) _customPlayback = false; else HandleCommand(Keys.P); }));
+            {
+                if (_customPlayback)
+                {
+                    _customPlayback = false;
+                }
+                else
+                {
+                    HandleCommand(Keys.P);
+                }
+            }));
         Ui.Row(() => Ui.Button("Save (Ctrl+S)", () => HandleCommand(Keys.S, true)),
             () => Ui.Button("Clear (Del)", () => HandleCommand(Keys.Delete)));
         Ui.Help($"{_author.Frames.Count} captured poses");

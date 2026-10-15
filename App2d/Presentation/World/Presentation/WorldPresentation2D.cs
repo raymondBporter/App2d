@@ -41,10 +41,19 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain)
     {
         ArgGuard.ThrowIf(terrain.IsDefault, "Terrain must be initialized.", nameof(terrain));
-        if (_visibleTerrain == terrain) return;
+        if (_visibleTerrain == terrain)
+        {
+            return;
+        }
         // Separate sources can assign the same revision to different chunk observations.
         if (_visibleTerrain is null)
-            foreach (var chunk in _chunks.Keys.ToArray()) RemoveChunk(chunk);
+        {
+            foreach (var chunk in _chunks.Keys.ToArray())
+            {
+                RemoveChunk(chunk);
+            }
+        }
+
         _visibleTerrain = terrain;
         ApplyTerrain(terrain);
     }
@@ -70,14 +79,23 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         foreach (var platform in state.MovingPlatforms)
         {
             if (_platforms.TryGetValue(platform.Id, out var view))
+            {
                 view.Visual.Transform.Position = platform.Position;
+            }
         }
 
         foreach (var checkpoint in _checkpoints)
         {
             var isActive = false;
             foreach (var observed in state.Checkpoints)
-                if (observed.ThingId == checkpoint.Key) { isActive = observed.IsActive; break; }
+            {
+                if (observed.ThingId == checkpoint.Key)
+                {
+                    isActive = observed.IsActive;
+                    break;
+                }
+            }
+
             checkpoint.Value.Visual.Update(dt, isActive);
         }
     }
@@ -99,7 +117,11 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
                 continue;
             }
 
-            if (view is not null) scene.Remove(view.Visual);
+            if (view is not null)
+            {
+                scene.Remove(view.Visual);
+            }
+
             var color = platform.ColorArgb;
             var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(platform.Size),
                 new SolidColorShader(new XnaColor((byte)(color >> 16), (byte)(color >> 8), (byte)color, (byte)(color >> 24))));
@@ -116,7 +138,10 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         foreach (var checkpoint in content.Checkpoints)
         {
             if (_checkpoints.TryGetValue(checkpoint.ThingId, out var view) && view.BasePosition == checkpoint.BasePosition)
+            {
                 continue;
+            }
+
             view?.Visual.Dispose();
             _checkpoints[checkpoint.ThingId] = new CheckpointView(
                 new SavePointPresentation2D(scene, checkpoint), checkpoint.BasePosition);
@@ -126,10 +151,17 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
         if (_goalPosition != content.GoalPosition)
         {
-            foreach (var visual in _goal) scene.Remove(visual);
+            foreach (var visual in _goal)
+            {
+                scene.Remove(visual);
+            }
+
             _goal.Clear();
             _goalPosition = content.GoalPosition;
-            if (content.GoalPosition is { } position) CreateGoal(position);
+            if (content.GoalPosition is { } position)
+            {
+                CreateGoal(position);
+            }
         }
     }
 
@@ -137,10 +169,18 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
     {
         _vegetation.SetTerrain(terrain);
         var chunks = terrain.Select(c => c.Chunk).ToHashSet();
-        foreach (var chunk in _chunks.Keys.Where(c => !chunks.Contains(c)).ToArray()) RemoveChunk(chunk);
+        foreach (var chunk in _chunks.Keys.Where(c => !chunks.Contains(c)).ToArray())
+        {
+            RemoveChunk(chunk);
+        }
+
         foreach (var chunk in terrain)
         {
-            if (_chunks.TryGetValue(chunk.Chunk, out var loaded) && loaded.Revision == chunk.Revision) continue;
+            if (_chunks.TryGetValue(chunk.Chunk, out var loaded) && loaded.Revision == chunk.Revision)
+            {
+                continue;
+            }
+
             RemoveChunk(chunk.Chunk);
             var catalog = chunk.TilesetIds.Select(id => GetTileset(id, chunk.TileSize)).ToArray();
             var resolver = new SideScrollerTerrainTilesetResolver2D((x, y) => catalog[chunk.GetTilesetIndex(x, y)]);
@@ -149,7 +189,9 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             foreach (var collision in chunk.Collisions)
             {
                 if (collision.Kind.IsSolid())
+                {
                     visuals.AddRange(factory.CreateSolidFill(collision.Bounds));
+                }
             }
 
             visuals.AddRange(factory.CreateSurfaceVisuals(chunk.Chunk));
@@ -169,8 +211,15 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     private void RemoveChunk(TileChunk2D chunk)
     {
-        if (!_chunks.Remove(chunk, out var view)) return;
-        foreach (var visual in view.Visuals) scene.Remove(visual);
+        if (!_chunks.Remove(chunk, out var view))
+        {
+            return;
+        }
+
+        foreach (var visual in view.Visuals)
+        {
+            scene.Remove(visual);
+        }
     }
 
     private void CreateGoal(Vector2 position)
@@ -190,10 +239,26 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     public void Dispose()
     {
-        foreach (var platform in _platforms.Values) scene.Remove(platform.Visual);
-        foreach (var checkpoint in _checkpoints.Values) checkpoint.Visual.Dispose();
-        foreach (var chunk in _chunks.Keys.ToArray()) RemoveChunk(chunk);
-        foreach (var visual in _goal) scene.Remove(visual);
+        foreach (var platform in _platforms.Values)
+        {
+            scene.Remove(platform.Visual);
+        }
+
+        foreach (var checkpoint in _checkpoints.Values)
+        {
+            checkpoint.Visual.Dispose();
+        }
+
+        foreach (var chunk in _chunks.Keys.ToArray())
+        {
+            RemoveChunk(chunk);
+        }
+
+        foreach (var visual in _goal)
+        {
+            scene.Remove(visual);
+        }
+
         _platforms.Clear();
         _checkpoints.Clear();
         _goal.Clear();

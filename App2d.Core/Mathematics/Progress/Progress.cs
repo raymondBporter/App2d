@@ -17,7 +17,10 @@ public static class Progress
     public static float SmoothestStep(float value) => (float)SmoothestStepMap.Sample(Clamping.Clamp01(value));
 
     /// <summary>Unclamped cubic smoothstep packaged with its derivative.</summary>
-    public static ProgressMap SmoothStepMap { get; } = new(
+    public static ProgressMap SmoothStepMap
+    {
+        get;
+    } = new(
         SmoothStepUnclamped,
         x => 6d * x * (1d - x));
 
@@ -26,7 +29,10 @@ public static class Progress
         value * value * (T.CreateChecked(3) - T.CreateChecked(2) * value);
 
     /// <summary>Unclamped quintic smoothstep packaged with its derivative.</summary>
-    public static ProgressMap SmootherStepMap { get; } = new(
+    public static ProgressMap SmootherStepMap
+    {
+        get;
+    } = new(
         SmootherStepUnclamped,
         x => 30d * x * x * (1d - x) * (1d - x));
 
@@ -34,7 +40,10 @@ public static class Progress
         value * value * value * (value * (value * T.CreateChecked(6) - T.CreateChecked(15)) + T.CreateChecked(10));
 
     /// <summary>Unclamped septic smoothstep packaged with its derivative.</summary>
-    public static ProgressMap SmoothestStepMap { get; } = new(
+    public static ProgressMap SmoothestStepMap
+    {
+        get;
+    } = new(
         SmoothestStepUnclamped,
         x => 140d * x * x * x * (1d - x) * (1d - x) * (1d - x));
 
@@ -55,14 +64,24 @@ public static class Progress
     private static float InvertMonotonicStep(float value, ProgressMap step)
     {
         value = Clamping.Clamp01(value);
-        if (value is 0f or 1f) return value;
+        if (value is 0f or 1f)
+        {
+            return value;
+        }
+
         var lower = 0d;
         var upper = 1d;
         for (var iteration = 0; iteration < InverseIterations; iteration++)
         {
             var middle = (lower + upper) * 0.5d;
-            if (step.Sample(middle) < value) lower = middle;
-            else upper = middle;
+            if (step.Sample(middle) < value)
+            {
+                lower = middle;
+            }
+            else
+            {
+                upper = middle;
+            }
         }
         return (float)((lower + upper) * 0.5d);
     }

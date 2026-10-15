@@ -29,7 +29,11 @@ internal sealed partial class ProofRenders
         var model = catalog.Resolve("person");
         // The lab and game share the approved cartoon sword.
         var props = PlayerMoves.PlayerMoves.Props().ToDictionary(p => p.Id);
-        foreach (var (id, art) in catalog.Props) props.TryAdd(id, art);
+        foreach (var (id, art) in catalog.Props)
+        {
+            props.TryAdd(id, art);
+        }
+
         var todaySword = props[PersonLoadout.Sword];
         props[PersonLoadout.Sword] = PlayerMoves.PlayerMoves.CartoonSwordArt();
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
@@ -48,7 +52,10 @@ internal sealed partial class ProofRenders
             drawing.Build(model, pose);
             var placed = new ActorPose(pose, Vector2.Zero, 1);
             foreach (var (prop, socket) in PersonLoadout.Dressed(clip, seconds, PersonGear.Sword, catalog.Entities["hero"]))
+            {
                 drawing.AddProp(worn[prop], placed.Socket(sockets[socket]));
+            }
+
             trail.Clear();
             if (swoosh is not null && LabBlade(model, clip, seconds, worn, sockets) is var (guard, tip))
             {
@@ -56,20 +63,30 @@ internal sealed partial class ProofRenders
                 // clip holding one swing reads its turn from the clip, as the game does.
                 var index = PersonLoadout.SwooshIndex(clip, seconds);
                 var backhand = index % 2 == 1 || index == 0 && PersonLoadout.Backhand(model, clip, worn[PersonLoadout.Sword], sockets[PersonLoadout.SwordSocket]);
-                swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary; swoosh.Sweep = backhand ? 1 : -1;
+                swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary;
+                swoosh.Sweep = backhand ? 1 : -1;
                 swoosh.Record(clock, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(clip, seconds));
                 swoosh.Build(trail);
             }
             if (shape && ShapesOf(clip).FirstOrDefault(w => seconds >= w.Start - 1e-4f && seconds < w.Finish - 1e-4f).Hull is { } hull)
             {
                 // The player's hit: one shape fixed to the player for the live window, made from everything the blade covers then.
-                var red = new Color(214, 62, 48); const float w = 2 / LabPpu;
-                for (var k = 0; k < hull.Length; k++) trail.Line(new(hull[k], -2), new(hull[(k + 1) % hull.Length], -2), w, red);
+                var red = new Color(214, 62, 48);
+                const float w = 2 / LabPpu;
+                for (var k = 0; k < hull.Length; k++)
+                {
+                    trail.Line(new(hull[k], -2), new(hull[(k + 1) % hull.Length], -2), w, red);
+                }
             }
             BuildScenery(scenery, "ground", 0, seconds);
-            GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(241, 240, 232));
+            GraphicsDevice.SetRenderTarget(target);
+            GraphicsDevice.Clear(new Color(241, 240, 232));
             _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
-            if (trail.Count > 0) _renderer.Draw(trail, projection, Matrix.Identity);
+            if (trail.Count > 0)
+            {
+                _renderer.Draw(trail, projection, Matrix.Identity);
+            }
+
             _renderer.Draw(drawing.Mesh, projection, Matrix.Identity);
             GraphicsDevice.SetRenderTarget(null);
             using var stream = File.Create(path);
@@ -90,7 +107,8 @@ internal sealed partial class ProofRenders
             }
             foreach (var mode in new[] { "plain", "swoosh", "box" })
             {
-                var folder = Path.Combine(_smokePath, "frames", variant.Id, mode); Directory.CreateDirectory(folder);
+                var folder = Path.Combine(_smokePath, "frames", variant.Id, mode);
+                Directory.CreateDirectory(folder);
                 var swoosh = mode == "plain" ? null : new BladeSwoosh();
                 for (var f = 0; f < count; f++)
                 {
@@ -102,13 +120,25 @@ internal sealed partial class ProofRenders
             var markers = variant.Timeline.SelectMany(e => e.Clip.Markers
                 .Where(k => k.Id.StartsWith("strike", StringComparison.Ordinal) || k.Id.StartsWith(PersonLoadout.SwooshMarker, StringComparison.Ordinal))
                 .Select(k => new { id = k.Id, time = e.Start + k.Time })).DistinctBy(k => (k.id, k.time)).ToList();
-            manifest.Add(new { id = variant.Id, title = variant.Title, note = variant.Note, duration, frames = count, fps = LabFps, markers });
+            manifest.Add(new
+            {
+                id = variant.Id,
+                title = variant.Title,
+                note = variant.Note,
+                duration,
+                frames = count,
+                fps = LabFps,
+                markers
+            });
             report.Add(SwingCheck(model, variant, props, sockets, ShapesOf(variant.Clip)));
         }
         // The sword under review beside today's, in the same held follow-through.
         var still = variants.Single(v => v.Id == "side-cut").Clip;
         var stillAt = still.Markers.Single(m => m.Id == "strike").Time + 6 / (float)LabFps;
-        Frame(Path.Combine(_smokePath, "sword-today.png"), still, stillAt, new(props) { [PersonLoadout.Sword] = todaySword }, null, false);
+        Frame(Path.Combine(_smokePath, "sword-today.png"), still, stillAt, new(props)
+        {
+            [PersonLoadout.Sword] = todaySword
+        }, null, false);
         Frame(Path.Combine(_smokePath, "sword-cartoon.png"), still, stillAt, props, null, false);
         File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, ManifestJsonOptions));
         File.WriteAllLines(Path.Combine(_smokePath, "checks.txt"), report);
@@ -122,10 +152,16 @@ internal sealed partial class ProofRenders
         var result = new List<(float, float, Vector2[])>();
         foreach (var suffix in Enumerable.Range(1, 8).Select(n => n == 1 ? "" : "-" + n))
         {
-            if (clip.Markers.FirstOrDefault(m => m.Id == "strike" + suffix) is not { } strike || clip.Markers.FirstOrDefault(m => m.Id == "recover" + suffix) is not { } recover) continue;
+            if (clip.Markers.FirstOrDefault(m => m.Id == "strike" + suffix) is not { } strike || clip.Markers.FirstOrDefault(m => m.Id == "recover" + suffix) is not { } recover)
+            {
+                continue;
+            }
+
             var from = clip.Markers.FirstOrDefault(m => m.Id == PersonLoadout.SwooshMarker + suffix)?.Time ?? strike.Time;
             if (SwingLab.HitRectangle(model, clip, from, strike.Time, recover.Time, t => LabBlade(model, clip, t, props, sockets)) is var (min, max))
+            {
                 result.Add((strike.Time, recover.Time, [min, new(max.X, min.Y), max, new(min.X, max.Y)]));
+            }
         }
         return result;
     }
@@ -140,11 +176,17 @@ internal sealed partial class ProofRenders
     /// </summary>
     private static string SwingCheck(ResolvedModel model, SwingLab.Variant variant, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets, List<(float Start, float Finish, Vector2[] Hull)> shapes)
     {
-        var clip = variant.Clip; const int rate = 240; const float frame = 1f / LabFps;
+        var clip = variant.Clip;
+        const int rate = 240;
+        const float frame = 1f / LabFps;
         var times = Enumerable.Range(0, (int)(clip.Duration * rate) + 1).Select(i => i / (float)rate).ToArray();
         var tips = times.Select(t => LabBlade(model, clip, t, props, sockets)?.Tip).ToArray();
         var speed = new float[times.Length];
-        for (var i = 1; i < times.Length; i++) speed[i] = tips[i] is { } b && tips[i - 1] is { } a ? Vector3.Distance(a, b) * rate : 0;
+        for (var i = 1; i < times.Length; i++)
+        {
+            speed[i] = tips[i] is { } b && tips[i - 1] is { } a ? Vector3.Distance(a, b) * rate : 0;
+        }
+
         var strike = clip.Markers.FirstOrDefault(m => m.Id == "strike")?.Time ?? 0;
         var swoosh = clip.Markers.FirstOrDefault(m => m.Id == PersonLoadout.SwooshMarker)?.Time ?? 0;
         var swooshEnd = clip.Markers.FirstOrDefault(m => m.Id == PersonLoadout.SwooshEndMarker)?.Time ?? clip.Duration;
@@ -157,12 +199,26 @@ internal sealed partial class ProofRenders
         var lastTurn = 0;
         for (var k = 2; k < window.Length; k++)
         {
-            if (tips[window[k]] is not { } c || tips[window[k - 1]] is not { } b || tips[window[k - 2]] is not { } a) continue;
+            if (tips[window[k]] is not { } c || tips[window[k - 1]] is not { } b || tips[window[k - 2]] is not { } a)
+            {
+                continue;
+            }
+
             var d0 = b - a;
             var d1 = c - b;
             var cross = d0.XY.Cross(d1.XY);
-            if (MathF.Abs(cross) < 1e-6f) continue;
-            var turn = MathF.Sign(cross); if (lastTurn != 0 && turn != lastTurn) reversals++; lastTurn = turn;
+            if (MathF.Abs(cross) < 1e-6f)
+            {
+                continue;
+            }
+
+            var turn = MathF.Sign(cross);
+            if (lastTurn != 0 && turn != lastTurn)
+            {
+                reversals++;
+            }
+
+            lastTurn = turn;
         }
         // Grip: the blade's angle across the forearm on every rendered frame with the sword in hand (0 = along the arm).
         var lastRecover = clip.Markers.Where(m => m.Id.StartsWith("recover", StringComparison.Ordinal)).Select(m => m.Time).DefaultIfEmpty(clip.Duration).Max();

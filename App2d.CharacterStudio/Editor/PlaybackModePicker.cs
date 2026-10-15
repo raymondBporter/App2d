@@ -12,7 +12,8 @@ internal static class PlaybackModePicker
     {
         var transport = session.Transport;
         var selected = transport.EndModeOverride;
-        ImGui.TextDisabled("Preview end:"); ImGui.SameLine();
+        ImGui.TextDisabled("Preview end:");
+        ImGui.SameLine();
         ImGui.SetNextItemWidth(140 * Ui.Scale);
         var label = selected switch
         {
@@ -21,7 +22,11 @@ internal static class PlaybackModePicker
             PlaybackEndMode.Loop => "Loop",
             _ => "Ping pong",
         };
-        if (!ImGui.BeginCombo("##preview-end", label)) return;
+        if (!ImGui.BeginCombo("##preview-end", label))
+        {
+            return;
+        }
+
         Choice("Clip default", null);
         Choice("Hold", PlaybackEndMode.Hold);
         Choice("Loop", PlaybackEndMode.Loop);
@@ -30,7 +35,11 @@ internal static class PlaybackModePicker
 
         void Choice(string name, PlaybackEndMode? mode)
         {
-            if (!ImGui.Selectable(name, selected == mode) || selected == mode) return;
+            if (!ImGui.Selectable(name, selected == mode) || selected == mode)
+            {
+                return;
+            }
+
             var time = transport.Time;
             transport.EndModeOverride = mode;
             session.Seek(time);

@@ -12,15 +12,30 @@ public sealed partial class Triangle2D
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
     {
-        public required Vector2 A { get; init; }
-        public required Vector2 B { get; init; }
-        public required Vector2 C { get; init; }
+        public required Vector2 A
+        {
+            get; init;
+        }
+        public required Vector2 B
+        {
+            get; init;
+        }
+        public required Vector2 C
+        {
+            get; init;
+        }
         [JsonIgnore] public override string Kind => ShapeKinds2D.Triangle;
         private double SignedAreaTwice()
         {
-            ArgGuard.ThrowIfNotFinite(A, "a"); ArgGuard.ThrowIfNotFinite(B, "b"); ArgGuard.ThrowIfNotFinite(C, "c");
+            ArgGuard.ThrowIfNotFinite(A, "a");
+            ArgGuard.ThrowIfNotFinite(B, "b");
+            ArgGuard.ThrowIfNotFinite(C, "c");
             var twice = new Vector2d(A).Orientation(new(B), new(C));
-            if (twice == 0d) throw new ArgumentException("Triangle vertices must not be collinear.", "c");
+            if (twice == 0d)
+            {
+                throw new ArgumentException("Triangle vertices must not be collinear.", "c");
+            }
+
             ArgGuard.ThrowIfNotFiniteOrNotPositive((float)(Math.Abs(twice) * .5), "area");
             return twice;
         }

@@ -28,7 +28,9 @@ public static class TileRectangleMesher2D
                 var index = y * width + x;
                 var kind = getKind(x, y);
                 if (!kind.IsCollidable() || consumed[index])
+                {
                     continue;
+                }
 
                 var rectangleWidth = 1;
                 while (x + rectangleWidth < width && !consumed[index + rectangleWidth] && getKind(x + rectangleWidth, y) == kind)
@@ -43,7 +45,9 @@ public static class TileRectangleMesher2D
                 }
 
                 for (var row = y; row < y + rectangleHeight; row++)
+                {
                     consumed.AsSpan(row * width + x, rectangleWidth).Fill(true);
+                }
 
                 results.Add(new TileCellRectangle2D(x, y, rectangleWidth, rectangleHeight, kind));
             }
@@ -56,7 +60,9 @@ public static class TileRectangleMesher2D
         for (var offset = 0; offset < width; offset++)
         {
             if (consumed[start + offset] || getKind(x + offset, y) != kind)
+            {
                 return false;
+            }
         }
 
         return true;

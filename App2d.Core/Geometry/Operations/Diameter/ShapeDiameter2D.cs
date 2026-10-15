@@ -39,7 +39,9 @@ public static class ShapeDiameter2D
         {
             diameter = MathF.Max(diameter, parts[i].Diameter);
             for (var j = i + 1; j < parts.Length; j++)
+            {
                 diameter = MathF.Max(diameter, Between(parts[i], parts[j]));
+            }
         }
         return diameter;
     }
@@ -47,13 +49,27 @@ public static class ShapeDiameter2D
     private static float Between(IConvexShape2D first, IConvexShape2D second)
     {
         if (first is Ellipse2D a && second is Ellipse2D b)
+        {
             return FarthestDistance2D.BetweenEllipses(a.Center, a.Radii, b.Center, b.Radii);
-        if (first is Ellipse2D ellipse) return FromEllipse(ellipse, second);
-        if (second is Ellipse2D otherEllipse) return FromEllipse(otherEllipse, first);
+        }
+
+        if (first is Ellipse2D ellipse)
+        {
+            return FromEllipse(ellipse, second);
+        }
+
+        if (second is Ellipse2D otherEllipse)
+        {
+            return FromEllipse(otherEllipse, first);
+        }
 
         var firstCount = first.GetVertCount();
         var secondCount = second.GetVertCount();
-        if (firstCount == 0 || secondCount == 0) return FarthestDistance2D.BetweenConvex(first, second);
+        if (firstCount == 0 || secondCount == 0)
+        {
+            return FarthestDistance2D.BetweenConvex(first, second);
+        }
+
         Span<Vector2> firstBuffer = firstCount <= 64 ? stackalloc Vector2[firstCount] : new Vector2[firstCount];
         Span<Vector2> secondBuffer = secondCount <= 64 ? stackalloc Vector2[secondCount] : new Vector2[secondCount];
         var firstVertices = first.GetVerts(firstBuffer, out var firstRadius);
@@ -62,7 +78,9 @@ public static class ShapeDiameter2D
         foreach (var start in firstVertices)
         {
             foreach (var end in secondVertices)
+            {
                 squared = Math.Max(squared, Vector2d.DistanceSquared(start.ToVector2d(), end.ToVector2d()));
+            }
         }
 
         return (float)(Math.Sqrt(squared) + firstRadius + secondRadius);
@@ -71,12 +89,19 @@ public static class ShapeDiameter2D
     private static float FromEllipse(Ellipse2D ellipse, IConvexShape2D other)
     {
         var count = other.GetVertCount();
-        if (count == 0) return FarthestDistance2D.BetweenConvex(ellipse, other);
+        if (count == 0)
+        {
+            return FarthestDistance2D.BetweenConvex(ellipse, other);
+        }
+
         Span<Vector2> buffer = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
         var vertices = other.GetVerts(buffer, out var radius);
         var distance = 0f;
         foreach (var point in vertices)
+        {
             distance = MathF.Max(distance, FarthestDistance2D.BetweenEllipses(ellipse.Center, ellipse.Radii, point, Vector2.Zero));
+        }
+
         return distance + radius;
     }
 }

@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
@@ -63,13 +64,23 @@ public static class Containment2D
     {
         var winding = 0;
         var query = new Vector2d(point);
-        for (var i = 0; i < vertices.Length; i++)
+        foreach (var (a, b) in MeshTopology.Edges(vertices.Length))
         {
-            var cross = new Vector2d(vertices[i]).Orientation(new(vertices[(i + 1) % vertices.Length]), query);
-            if (Math.Abs(cross) <= collinearEpsilon) continue;
+            var cross = new Vector2d(vertices[a]).Orientation(new(vertices[b]), query);
+            if (Math.Abs(cross) <= collinearEpsilon)
+            {
+                continue;
+            }
+
             var turn = Math.Sign(cross);
-            if (winding == 0) winding = turn;
-            else if (turn != winding) return false;
+            if (winding == 0)
+            {
+                winding = turn;
+            }
+            else if (turn != winding)
+            {
+                return false;
+            }
         }
         return true;
     }

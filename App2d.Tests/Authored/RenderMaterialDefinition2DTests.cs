@@ -41,7 +41,11 @@ public sealed class RenderMaterialDefinition2DTests
             Material = new()
             {
                 Fill = "#123456",
-                Outline = new() { Color = "#abcdef", Width = .05f }
+                Outline = new()
+                {
+                    Color = "#abcdef",
+                    Width = .05f
+                }
             }
         };
         var drawing = new PuppetDrawing();
@@ -90,9 +94,18 @@ public sealed class RenderMaterialDefinition2DTests
         Assert.Contains(ColorExtensions.FromHexRgb("#ffeeaa"), colors);
 
         var solid = PropGeometry.Extrude([new(0, 0), new(1, 0), new(0, 1)], .1f, "#224466");
-        solid.Material = solid.RenderMaterial with { Outline = solid.RenderMaterial.Outline! with { Color = "#ff8800" } };
+        solid.Material = solid.RenderMaterial with
+        {
+            Outline = solid.RenderMaterial.Outline! with
+            {
+                Color = "#ff8800"
+            }
+        };
         Assert.Equal("#ff8800", solid.Material!.Outline!.Color);
-        solid.Material = solid.RenderMaterial with { Outline = null };
+        solid.Material = solid.RenderMaterial with
+        {
+            Outline = null
+        };
         Assert.Null(solid.Material.Outline);
     }
 
@@ -103,7 +116,13 @@ public sealed class RenderMaterialDefinition2DTests
         var document = AssetDocuments.Of(model, null);
         var before = document.Serialize();
         document.Edit(() =>
-        { var part = document.Asset.Parts.Single(part => part.Id == "body"); part.Material = part.RenderMaterial with { Fill = "#123456" }; });
+        {
+            var part = document.Asset.Parts.Single(part => part.Id == "body");
+            part.Material = part.RenderMaterial with
+            {
+                Fill = "#123456"
+            };
+        });
         document.Undo();
         Assert.Equal(before, document.Serialize());
     }

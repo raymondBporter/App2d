@@ -55,7 +55,10 @@ public sealed class CurveDefinition2DTests
 
     private sealed class CurveEnvelope
     {
-        public required CurveDefinition2D Path { get; init; }
+        public required CurveDefinition2D Path
+        {
+            get; init;
+        }
     }
 
     [Fact]

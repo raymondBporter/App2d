@@ -74,7 +74,11 @@ public sealed class Rect2DBoundsTests
         item.Transform.Rotation = MathF.PI / 2;
         Near(new(new(1, -13), new(13, -1)), item.WorldBounds);
         var rotated = item.WorldBounds;
-        for (var i = 0; i < 10; i++) Assert.Equal(rotated, item.WorldBounds);
+        for (var i = 0; i < 10; i++)
+        {
+            Assert.Equal(rotated, item.WorldBounds);
+        }
+
         Assert.Equal(local, item.LocalBounds);
         Assert.Equal(4, shape.SupportCalls);
     }
@@ -93,7 +97,10 @@ public sealed class Rect2DBoundsTests
         var matrix = Matrix3x2.CreateScale(scale) * Matrix3x2.CreateTranslation(translation);
         var expected = CornerBounds(local, matrix);
         Near(expected, local.TransformedBy(matrix));
-        if (scale == Vector2.One) Near(expected, local.TranslatedBy(translation));
+        if (scale == Vector2.One)
+        {
+            Near(expected, local.TranslatedBy(translation));
+        }
     }
 
     [Theory]
@@ -105,7 +112,11 @@ public sealed class Rect2DBoundsTests
     {
         var local = new Rect2D(new(-2, -1), new(4, 3));
         var matrix = Matrix3x2.CreateScale(-2, 3) * Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation(10, -5);
-        if (shear) matrix.M21 += .6f;
+        if (shear)
+        {
+            matrix.M21 += .6f;
+        }
+
         Near(CornerBounds(local, matrix), local.TransformedBy(matrix));
     }
 
@@ -169,7 +180,10 @@ public sealed class Rect2DBoundsTests
     private sealed class CountedConvex : IConvexShape2D
     {
         public string Kind => "counted-convex";
-        public int SupportCalls { get; private set; }
+        public int SupportCalls
+        {
+            get; private set;
+        }
         public float Area => 24;
         public bool ContainsPoint(Vector2 point) => Containment2D.Rectangle(point, new(-2, -1), new(4, 3));
         public Vector2 GetSupportPoint(Vector2 direction)

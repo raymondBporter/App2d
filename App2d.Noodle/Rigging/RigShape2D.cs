@@ -29,13 +29,22 @@ internal abstract class RigShape2D(int id, string name, RigBone2D attachedBone)
     public RigBone2D AttachedBone { get; set; } = attachedBone;
 
     [Category("Attachment"), DisplayName("Local X")]
-    public float LocalX { get; set; }
+    public float LocalX
+    {
+        get; set;
+    }
 
     [Category("Attachment"), DisplayName("Local Y")]
-    public float LocalY { get; set; }
+    public float LocalY
+    {
+        get; set;
+    }
 
     [Category("Attachment"), DisplayName("Angle (degrees)")]
-    public float AngleDegrees { get; set; }
+    public float AngleDegrees
+    {
+        get; set;
+    }
 
     [Category("Rendering"), DisplayName("Color")]
     public Color Color { get; set; } = Color.FromArgb(215, 151, 111, 255);
@@ -61,14 +70,22 @@ internal sealed class RigRectangleShape2D(int id, string name, RigBone2D bone) :
     public float Width
     {
         get => _width;
-        set { _width = Positive(value); _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius); }
+        set
+        {
+            _width = Positive(value);
+            _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius);
+        }
     }
 
     [Category("Geometry")]
     public float Height
     {
         get => _height;
-        set { _height = Positive(value); _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius); }
+        set
+        {
+            _height = Positive(value);
+            _cornerRadius = MathF.Min(_cornerRadius, MaximumRadius);
+        }
     }
 
     [Category("Geometry"), DisplayName("Corner radius")]

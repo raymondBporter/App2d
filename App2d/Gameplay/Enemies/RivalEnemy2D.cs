@@ -69,7 +69,10 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
         Person.Died += () => _events.Add(new RivalDied2D(Person.Id, Person.Position));
     }
 
-    public Person2D Person { get; }
+    public Person2D Person
+    {
+        get;
+    }
     public ICombatant2D Combatant => Person;
 
     public void SetSimulationEnabled(bool isEnabled)
@@ -86,7 +89,9 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
         Person.BeginFrame(deltaSeconds);
 
         if (!_simulationEnabled || !Person.IsAlive)
+        {
             return;
+        }
 
         var command = _brain.Decide(
             Person,
@@ -99,14 +104,20 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
     public void SyncAfterPhysics()
     {
         if (!_simulationEnabled)
+        {
             return;
+        }
 
         Person.UpdateAfterPhysics(_lastDeltaSeconds);
     }
 
     public EnemyState2D CaptureState() => new(Person.Id, EnemyKind2D.Rival,
         Person.Position, Person.Body.LinearVelocity, 0f, Person.Facing, _simulationEnabled, Person.IsAlive)
-    { Person = Person.CaptureState(), MoveX = _lastMoveX, IsAttacking = _actions.IsAttackActive };
+    {
+        Person = Person.CaptureState(),
+        MoveX = _lastMoveX,
+        IsAttacking = _actions.IsAttackActive
+    };
 
     public ImmutableArray<EnemyEvent2D> DrainEvents()
     {

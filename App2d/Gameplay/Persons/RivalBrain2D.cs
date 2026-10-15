@@ -37,7 +37,9 @@ internal sealed partial class RivalBrain2D(float minimumX, float maximumX)
             MathF.Abs(offset.Y) <= 80f &&
             CanMove(person.Position.X, MathF.Sign(offset.X));
         if (dashPressed)
+        {
             _dashDelaySeconds = 2.1f;
+        }
 
         var jumpPressed =
             _jumpDelaySeconds <= 0f &&
@@ -82,16 +84,27 @@ internal sealed partial class RivalBrain2D(float minimumX, float maximumX)
     private float ChooseMovement(float positionX, float targetOffsetX)
     {
         if (positionX <= minimumX + 24f)
+        {
             return 1f;
+        }
+
         if (positionX >= maximumX - 24f)
+        {
             return -1f;
+        }
 
         var distance = MathF.Abs(targetOffsetX);
         var direction = MathF.Sign(targetOffsetX);
         if (distance > 68f)
+        {
             return direction;
+        }
+
         if (distance < 34f)
+        {
             return -direction;
+        }
+
         return 0f;
     }
 

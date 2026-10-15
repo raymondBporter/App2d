@@ -27,8 +27,13 @@ internal sealed class ModelCutoutEditor(EditorSession session)
             var controls = session.SubjectModel!.Asset.Controls.Select(c => c.Id).ToArray();
             void Cutout(Action<List<Vector2>> edit)
             {
-                var points = new List<Vector2>(vertices); edit(points);
-                try { ModelAuthoring.CheckCutout(points); change(p => ModelAuthoring.SetCutout(p, points)); }
+                var points = new List<Vector2>(vertices);
+                edit(points);
+                try
+                {
+                    ModelAuthoring.CheckCutout(points);
+                    change(p => ModelAuthoring.SetCutout(p, points));
+                }
                 catch (InvalidDataException) { /* Keep the last valid perimeter while editing. */ }
             }
             for (var i = 0; i < vertices.Count; i++)
@@ -37,13 +42,25 @@ internal sealed class ModelCutoutEditor(EditorSession session)
                 var xy = vertices[i];
                 ImGui.PushID("cutout-" + i);
                 if (Ui.Drag2("Point " + (i + 1), ref xy, .005f, -2, 2))
+                {
                     Cutout(p => p[index] = xy);
+                }
 
                 ModelPointBindingInspector.Draw(part, index, controls, change);
-                if (vertices.Count < 64 && ImGui.SmallButton("Insert after")) change(p => ModelAuthoring.InsertCutoutPoint(p, index));
+                if (vertices.Count < 64 && ImGui.SmallButton("Insert after"))
+                {
+                    change(p => ModelAuthoring.InsertCutoutPoint(p, index));
+                }
+
                 ImGui.SameLine();
                 if (vertices.Count > 3 && ImGui.SmallButton("Remove"))
-                { try { change(p => ModelAuthoring.RemoveCutoutPoint(p, index)); } catch (InvalidDataException) { } }
+                {
+                    try
+                    {
+                        change(p => ModelAuthoring.RemoveCutoutPoint(p, index));
+                    }
+                    catch (InvalidDataException) { }
+                }
                 ImGui.PopID();
             }
         }
@@ -63,14 +80,22 @@ internal sealed class ModelCutoutEditor(EditorSession session)
                 session.BeginDrag();
             }
         }
-        if (_cutoutDrag < 0) return;
+        if (_cutoutDrag < 0)
+        {
+            return;
+        }
+
         if (!ImGui.IsMouseDown(ImGuiMouseButton.Left))
         {
             _cutoutDrag = -1;
             session.EndDrag();
             return;
         }
-        if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || session.SubjectModel is not { } document) return;
+        if (_cutoutDrag >= points.Count || ImGui.GetIO().MouseDelta == Vector2.Zero || session.SubjectModel is not { } document)
+        {
+            return;
+        }
+
         var edited = new List<Vector2>(points);
         try
         {

@@ -1,5 +1,4 @@
 using App2d.Core.Mathematics;
-using App2d.Core.Meshes;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -16,8 +15,14 @@ public readonly record struct IndexedEdge3D
         B = Math.Max(first, second);
     }
 
-    public int A { get; }
-    public int B { get; }
+    public int A
+    {
+        get;
+    }
+    public int B
+    {
+        get;
+    }
 }
 
 /// <summary>Face normals and edge adjacency for an indexed 3D triangle mesh.</summary>
@@ -28,14 +33,16 @@ public sealed class TriangleMeshAnalysis3D
     private readonly Dictionary<IndexedEdge3D, List<int>> _edgeFaces = [];
 
     /// <param name="handedness">+1 for winding normals or -1 when a reflected placement reverses winding.</param>
-    public TriangleMeshAnalysis3D(IReadOnlyList<Vector3> vertices, IReadOnlyList<int> triangleIndices,
-        int handedness = 1)
+    public TriangleMeshAnalysis3D(IReadOnlyList<Vector3> vertices, IReadOnlyList<int> triangleIndices, int handedness = 1)
     {
         ArgGuard.ThrowIfNull(vertices);
         ArgGuard.ThrowIfNull(triangleIndices);
         ArgGuard.ThrowIf(triangleIndices.Count % 3 != 0, "Triangle indices must form complete triples.", nameof(triangleIndices));
         ArgGuard.ThrowIf(handedness is not (1 or -1), "Handedness must be +1 or -1.", nameof(handedness));
-        foreach (var vertex in vertices) ArgGuard.ThrowIfNotFinite(vertex, nameof(vertices));
+        foreach (var vertex in vertices)
+        {
+            ArgGuard.ThrowIfNotFinite(vertex, nameof(vertices));
+        }
 
         _faceNormals = new Vector3[triangleIndices.Count / 3];
         _validFaces = new bool[_faceNormals.Length];
@@ -48,7 +55,9 @@ public sealed class TriangleMeshAnalysis3D
             ArgGuard.ThrowIf((uint)a >= (uint)vertices.Count || (uint)b >= (uint)vertices.Count ||
                 (uint)c >= (uint)vertices.Count, "Triangle index is outside the vertices.", nameof(triangleIndices));
             if (!new Triangle3D(vertices[a], vertices[b], vertices[c]).TryGetUnitNormal(out var normal))
+            {
                 continue;
+            }
 
             _faceNormals[face] = normal * handedness;
             _validFaces[face] = true;
@@ -63,7 +72,11 @@ public sealed class TriangleMeshAnalysis3D
     /// <summary>Returns false and zero for a degenerate face.</summary>
     public bool TryGetFaceNormal(int faceIndex, out Vector3 normal)
     {
-        if ((uint)faceIndex >= (uint)_faceNormals.Length) throw new ArgumentOutOfRangeException(nameof(faceIndex));
+        if ((uint)faceIndex >= (uint)_faceNormals.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(faceIndex));
+        }
+
         normal = _faceNormals[faceIndex];
         return _validFaces[faceIndex];
     }
@@ -88,19 +101,36 @@ public sealed class TriangleMeshAnalysis3D
             var back = false;
             foreach (var face in faces)
             {
-                if (Vector3.Dot(_faceNormals[face], view) > frontFacingThreshold) front = true;
-                else back = true;
+                if (Vector3.Dot(_faceNormals[face], view) > frontFacingThreshold)
+                {
+                    front = true;
+                }
+                else
+                {
+                    back = true;
+                }
             }
-            if (!front) continue;
+            if (!front)
+            {
+                continue;
+            }
+
             var crease = faces.Count == 2 && Vector3.Dot(_faceNormals[faces[0]], _faceNormals[faces[1]]) < creaseCosine;
-            if (faces.Count == 1 || back || crease) yield return edge;
+            if (faces.Count == 1 || back || crease)
+            {
+                yield return edge;
+            }
         }
     }
 
     private void AddEdge(int first, int second, int face)
     {
         var edge = new IndexedEdge3D(first, second);
-        if (!_edgeFaces.TryGetValue(edge, out var faces)) _edgeFaces[edge] = faces = [];
+        if (!_edgeFaces.TryGetValue(edge, out var faces))
+        {
+            _edgeFaces[edge] = faces = [];
+        }
+
         faces.Add(face);
     }
 }

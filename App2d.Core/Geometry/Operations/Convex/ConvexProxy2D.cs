@@ -42,7 +42,10 @@ public readonly ref struct ConvexProxy2D
         Radius = radius * pose.Scale;
     }
 
-    internal float Radius { get; }
+    internal float Radius
+    {
+        get;
+    }
     internal Vector2 Origin => pose.Translation;
     internal Vector2 ReferencePoint => vertices.IsEmpty ? pose.Translation : pose.TransformPoint(vertices[0]);
     internal int VertexCount => vertices.Length;

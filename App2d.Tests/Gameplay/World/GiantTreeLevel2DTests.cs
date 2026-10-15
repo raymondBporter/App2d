@@ -28,12 +28,25 @@ public sealed class GiantTreeLevel2DTests
         var spawn = new Vector2(branch.Bounds.Center.X, branch.Bounds.Top + 48);
         using var game = SideScrollerSimulation2D.Create(new(Traversal(), Map(), [],
             [new(1, WorldThingKind2D.PlayerSpawn, "Branch", true, spawn)])
-        { GiantTrees = [tree] });
-        for (var i = 0; i < 90; i++) Step(default);
+        {
+            GiantTrees = [tree]
+        });
+        for (var i = 0; i < 90; i++)
+        {
+            Step(default);
+        }
+
         Assert.True(game.Player.IsGrounded);
         Assert.Equal(branch.Bounds.Top, game.Player.WorldObject.WorldBounds.Bottom, 2);
         var standingY = game.Player.WorldObject.Transform.Position.Y;
-        for (var i = 0; i < 12; i++) Step(new() { JumpHeld = true });
+        for (var i = 0; i < 12; i++)
+        {
+            Step(new()
+            {
+                JumpHeld = true
+            });
+        }
+
         Assert.True(game.Player.WorldObject.Transform.Position.Y > standingY + 30);
 
         void Step(PersonCommand2D command)
@@ -58,7 +71,11 @@ public sealed class GiantTreeLevel2DTests
         body.CollisionLayer = 2;
         body.CollisionMask = 1;
         body.LinearVelocity = new(0, 200);
-        for (var i = 0; i < 60; i++) physics.Step(1f / 120f);
+        for (var i = 0; i < 60; i++)
+        {
+            physics.Step(1f / 120f);
+        }
+
         Assert.True(actor.WorldBounds.Bottom > branch.Top);
         Assert.Equal(200, body.LinearVelocity.Y, 3);
 

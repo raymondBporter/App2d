@@ -37,7 +37,10 @@ internal sealed class SideScrollerThingSpawner2D(
         foreach (var thing in things)
         {
             if (!thing.Enabled)
+            {
                 continue;
+            }
+
             var entityId = thing.Kind switch
             {
                 WorldThingKind2D.Shieldback => "spear-guard",

@@ -42,7 +42,10 @@ public static class AtomicFile
         finally
         {
             // Cleanup must not hide the original write/replace error or report a committed save as failed.
-            try { File.Delete(temporary); }
+            try
+            {
+                File.Delete(temporary);
+            }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
         }
     }

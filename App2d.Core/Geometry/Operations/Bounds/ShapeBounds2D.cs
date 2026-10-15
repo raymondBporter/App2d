@@ -81,8 +81,10 @@ public static class ShapeBounds2D
         ArgGuard.ThrowIfNull(shape);
         switch (shape)
         {
-            case Circle2D circle: return (circle.Center, circle.Radius);
-            case Ellipse2D ellipse: return (ellipse.Center, Math.Max(ellipse.Radii.X, ellipse.Radii.Y));
+            case Circle2D circle:
+                return (circle.Center, circle.Radius);
+            case Ellipse2D ellipse:
+                return (ellipse.Center, Math.Max(ellipse.Radii.X, ellipse.Radii.Y));
             case Capsule2D capsule:
                 return (capsule.Center, float.IsFinite(capsule.Diameter) ? capsule.Diameter / 2
                     : (float)(Vector2d.Distance(capsule.Start.ToVector2d(), capsule.End.ToVector2d()) / 2 + capsule.Radius));
@@ -92,7 +94,8 @@ public static class ShapeBounds2D
             case Rectangle2D rectangle:
                 return (rectangle.Center, float.IsFinite(rectangle.Diameter) ? rectangle.Diameter / 2
                     : (float)(Vector2d.Distance(rectangle.Min.ToVector2d(), rectangle.Max.ToVector2d()) / 2));
-            case HalfSpace2D: return (Vector2.Zero, float.PositiveInfinity);
+            case HalfSpace2D:
+                return (Vector2.Zero, float.PositiveInfinity);
             case CompositeShape2D composite:
                 {
                     var center = Calculate(composite).Center;
@@ -108,11 +111,19 @@ public static class ShapeBounds2D
                 {
                     var bounds = Calculate(shape);
                     var count = shape.GetOutlineVertCount();
-                    if (count == 0) return (bounds.Center, bounds.HalfSize.Length());
+                    if (count == 0)
+                    {
+                        return (bounds.Center, bounds.HalfSize.Length());
+                    }
+
                     Span<Vector2> vertices = count <= 64 ? stackalloc Vector2[count] : new Vector2[count];
                     shape.GetOutlineVerts(vertices);
                     var radiusSquared = 0d;
-                    foreach (var vertex in vertices) radiusSquared = Math.Max(radiusSquared, Vector2d.DistanceSquared(bounds.Center.ToVector2d(), vertex.ToVector2d()));
+                    foreach (var vertex in vertices)
+                    {
+                        radiusSquared = Math.Max(radiusSquared, Vector2d.DistanceSquared(bounds.Center.ToVector2d(), vertex.ToVector2d()));
+                    }
+
                     return (bounds.Center, (float)Math.Sqrt(radiusSquared));
                 }
         }
@@ -139,11 +150,19 @@ public static class ShapeBounds2D
 
     private static (float Min, float Max) HalfSpaceAxis(HalfSpace2D halfSpace, float x, float y, float translation)
     {
-        if (x == 0 && y == 0) return (translation, translation);
+        if (x == 0 && y == 0)
+        {
+            return (translation, translation);
+        }
+
         var normal = halfSpace.Normal;
         // A linear coordinate has a finite bound on a half-space only when it is parallel to the normal.
         // Test exact parallelism: snapping a nearly aligned line to an axis would incorrectly exclude distant points.
-        if (new Vector2d(x, y).Cross(normal.ToVector2d()) != 0) return (float.NegativeInfinity, float.PositiveInfinity);
+        if (new Vector2d(x, y).Cross(normal.ToVector2d()) != 0)
+        {
+            return (float.NegativeInfinity, float.PositiveInfinity);
+        }
+
         var scale = Math.Abs(normal.X) >= Math.Abs(normal.Y) ? (double)x / normal.X : (double)y / normal.Y;
         var boundary = scale * halfSpace.Offset + translation;
         return scale > 0 ? (float.NegativeInfinity, Upper(boundary)) : (Lower(boundary), float.PositiveInfinity);
@@ -164,7 +183,11 @@ public static class ShapeBounds2D
     private static Rect2D Composite(ReadOnlySpan<IConvexShape2D> parts)
     {
         var bounds = Calculate(parts[0]);
-        foreach (var part in parts[1..]) bounds = bounds.Union(Calculate(part));
+        foreach (var part in parts[1..])
+        {
+            bounds = bounds.Union(Calculate(part));
+        }
+
         return bounds;
     }
 

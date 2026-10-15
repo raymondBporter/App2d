@@ -30,16 +30,28 @@ public static class Raycast2D
         var b = 2f * Vector2.Dot(offset, direction);
         var c = Vector2.Dot(offset, offset) - radius * radius;
         var discriminant = b * b - 4f * a * c;
-        if (a <= Epsilon || discriminant < 0f) return Miss(out hit);
+        if (a <= Epsilon || discriminant < 0f)
+        {
+            return Miss(out hit);
+        }
+
         var squareRoot = MathF.Sqrt(Math.Max(discriminant, 0f));
         var inverseDenominator = 0.5f / a;
         var first = (-b - squareRoot) * inverseDenominator;
         var second = (-b + squareRoot) * inverseDenominator;
         var distance = first >= 0f ? first : second;
-        if (distance < 0f || distance > maxDistance) return Miss(out hit);
+        if (distance < 0f || distance > maxDistance)
+        {
+            return Miss(out hit);
+        }
+
         var point = origin + direction * distance;
         var normal = point - center;
-        if (normal.LengthSquared() <= Epsilon) return Miss(out hit);
+        if (normal.LengthSquared() <= Epsilon)
+        {
+            return Miss(out hit);
+        }
+
         hit = new(point, Vector2.Normalize(normal), distance);
         return true;
     }
@@ -61,16 +73,28 @@ public static class Raycast2D
         var b = 2d * offset.Dot(axis);
         var c = offset.LengthSquared() - 1d;
         var discriminant = b * b - 4d * a * c;
-        if (a == 0d || discriminant < 0d) return Miss(out hit);
+        if (a == 0d || discriminant < 0d)
+        {
+            return Miss(out hit);
+        }
+
         var root = Math.Sqrt(discriminant);
         var first = (-b - root) / (2d * a);
         var second = (-b + root) / (2d * a);
         var distance = first >= 0d ? first : second;
-        if (distance < 0d || distance > maxDistance) return Miss(out hit);
+        if (distance < 0d || distance > maxDistance)
+        {
+            return Miss(out hit);
+        }
+
         var boundary = offset + axis * distance;
         var normal = new Vector2d(boundary.X / radii.X, boundary.Y / radii.Y);
         var normalLength = normal.Length();
-        if (normalLength == 0d) return Miss(out hit);
+        if (normalLength == 0d)
+        {
+            return Miss(out hit);
+        }
+
         var point = (origin.ToVector2d() + direction.ToVector2d() * distance).ToVector2();
         hit = new(point, (normal / normalLength).ToVector2(), (float)distance);
         return true;
@@ -99,7 +123,11 @@ public static class Raycast2D
             var directionProjection = Vector2.Dot(direction, outward);
             if (MathF.Abs(directionProjection) <= Epsilon)
             {
-                if (originSide > 0f) return Miss(out hit);
+                if (originSide > 0f)
+                {
+                    return Miss(out hit);
+                }
+
                 continue;
             }
             var distance = -originSide / directionProjection;
@@ -116,10 +144,17 @@ public static class Raycast2D
                 exitingDistance = distance;
                 exitingNormal = outward;
             }
-            if (enteringDistance > exitingDistance) return Miss(out hit);
+            if (enteringDistance > exitingDistance)
+            {
+                return Miss(out hit);
+            }
         }
         var (hitDistance, hitNormal) = enteringDistance >= 0f ? (enteringDistance, enteringNormal) : (exitingDistance, exitingNormal);
-        if (!float.IsFinite(hitDistance) || hitDistance < 0f || hitDistance > maxDistance || hitNormal.LengthSquared() <= Epsilon) return Miss(out hit);
+        if (!float.IsFinite(hitDistance) || hitDistance < 0f || hitDistance > maxDistance || hitNormal.LengthSquared() <= Epsilon)
+        {
+            return Miss(out hit);
+        }
+
         hit = new(origin + direction * hitDistance, Vector2.Normalize(hitNormal), hitDistance);
         return true;
     }
@@ -148,7 +183,11 @@ public static class Raycast2D
     /// <returns>True when some parameter in [0, maxDistance] lies inside the rectangle.</returns>
     public static bool IntersectsRectangle(Vector2 origin, Vector2 direction, Vector2 min, Vector2 max, float maxDistance)
     {
-        if (!min.IsFinite() || !max.IsFinite()) return true;
+        if (!min.IsFinite() || !max.IsFinite())
+        {
+            return true;
+        }
+
         var minimum = 0f;
         var maximum = maxDistance;
         return ClipAxis(origin.X, direction.X, min.X, max.X, ref minimum, ref maximum) && ClipAxis(origin.Y, direction.Y, min.Y, max.Y, ref minimum, ref maximum);
@@ -167,7 +206,10 @@ public static class Raycast2D
     {
         var segment = end - start;
         var segmentLength = segment.Length();
-        if (segmentLength <= Epsilon) return TryCircle(origin, direction, start, radius, maxDistance, out hit);
+        if (segmentLength <= Epsilon)
+        {
+            return TryCircle(origin, direction, start, radius, maxDistance, out hit);
+        }
 
         var tangent = segment / segmentLength;
         var perpendicular = tangent.PerpCcw;
@@ -181,7 +223,11 @@ public static class Raycast2D
 
         void Consider(float distance, Vector2 normal)
         {
-            if (distance < 0f || distance > maxDistance || distance >= bestDistance) return;
+            if (distance < 0f || distance > maxDistance || distance >= bestDistance)
+            {
+                return;
+            }
+
             bestDistance = distance;
             bestNormal = normal;
         }
@@ -190,15 +236,26 @@ public static class Raycast2D
         {
             var firstSideDistance = (radius - originAcross) / directionAcross;
             var firstSideAlong = originAlong + directionAlong * firstSideDistance;
-            if (firstSideAlong >= 0f && firstSideAlong <= segmentLength) Consider(firstSideDistance, perpendicular);
+            if (firstSideAlong >= 0f && firstSideAlong <= segmentLength)
+            {
+                Consider(firstSideDistance, perpendicular);
+            }
+
             var secondSideDistance = (-radius - originAcross) / directionAcross;
             var secondSideAlong = originAlong + directionAlong * secondSideDistance;
-            if (secondSideAlong >= 0f && secondSideAlong <= segmentLength) Consider(secondSideDistance, -perpendicular);
+            if (secondSideAlong >= 0f && secondSideAlong <= segmentLength)
+            {
+                Consider(secondSideDistance, -perpendicular);
+            }
         }
 
         ConsiderCap(0f, acceptStartCap: true);
         ConsiderCap(segmentLength, acceptStartCap: false);
-        if (!float.IsFinite(bestDistance)) return Miss(out hit);
+        if (!float.IsFinite(bestDistance))
+        {
+            return Miss(out hit);
+        }
+
         hit = new(origin + direction * bestDistance, Vector2.Normalize(bestNormal), bestDistance);
         return true;
 
@@ -209,7 +266,11 @@ public static class Raycast2D
             var b = 2f * (capOriginAlong * directionAlong + originAcross * directionAcross);
             var c = capOriginAlong * capOriginAlong + originAcross * originAcross - radius * radius;
             var discriminant = b * b - 4f * a * c;
-            if (a <= Epsilon || discriminant < 0f) return;
+            if (a <= Epsilon || discriminant < 0f)
+            {
+                return;
+            }
+
             var squareRoot = MathF.Sqrt(Math.Max(discriminant, 0f));
             var inverseDenominator = 0.5f / a;
             ConsiderCapRoot((-b - squareRoot) * inverseDenominator);
@@ -217,12 +278,23 @@ public static class Raycast2D
 
             void ConsiderCapRoot(float distance)
             {
-                if (distance < 0f || distance > maxDistance) return;
+                if (distance < 0f || distance > maxDistance)
+                {
+                    return;
+                }
+
                 var along = originAlong + directionAlong * distance;
-                if (acceptStartCap ? along > Epsilon : along < segmentLength - Epsilon) return;
+                if (acceptStartCap ? along > Epsilon : along < segmentLength - Epsilon)
+                {
+                    return;
+                }
+
                 var across = originAcross + directionAcross * distance;
                 var capNormal = tangent * (along - centerAlong) + perpendicular * across;
-                if (capNormal.LengthSquared() > Epsilon) Consider(distance, Vector2.Normalize(capNormal));
+                if (capNormal.LengthSquared() > Epsilon)
+                {
+                    Consider(distance, Vector2.Normalize(capNormal));
+                }
             }
         }
     }
@@ -238,20 +310,36 @@ public static class Raycast2D
     public static bool TryHalfSpace(Vector2 origin, Vector2 direction, Vector2 unitNormal, float offset, float maxDistance, out RayHit2D hit)
     {
         var denominator = Vector2.Dot(direction, unitNormal);
-        if (MathF.Abs(denominator) <= Epsilon) return Miss(out hit);
+        if (MathF.Abs(denominator) <= Epsilon)
+        {
+            return Miss(out hit);
+        }
+
         var distance = (offset - Vector2.Dot(origin, unitNormal)) / denominator;
-        if (distance < 0f || distance > maxDistance) return Miss(out hit);
+        if (distance < 0f || distance > maxDistance)
+        {
+            return Miss(out hit);
+        }
+
         hit = new(origin + direction * distance, unitNormal, distance);
         return true;
     }
 
     private static bool ClipAxis(float origin, float direction, float minimumBound, float maximumBound, ref float minimumDistance, ref float maximumDistance)
     {
-        if (MathF.Abs(direction) <= Epsilon) return origin >= minimumBound && origin <= maximumBound;
+        if (MathF.Abs(direction) <= Epsilon)
+        {
+            return origin >= minimumBound && origin <= maximumBound;
+        }
+
         var inverseDirection = 1f / direction;
         var first = (minimumBound - origin) * inverseDirection;
         var second = (maximumBound - origin) * inverseDirection;
-        if (first > second) (first, second) = (second, first);
+        if (first > second)
+        {
+            (first, second) = (second, first);
+        }
+
         minimumDistance = Math.Max(minimumDistance, first);
         maximumDistance = Math.Min(maximumDistance, second);
         return minimumDistance <= maximumDistance;
@@ -278,11 +366,19 @@ public static class Raycast2D
             var start = vertices[i];
             var edge = vertices[(i + 1) % vertices.Length] - start;
             var denominator = direction.Cross(edge);
-            if (MathF.Abs(denominator) < Epsilon) continue;
+            if (MathF.Abs(denominator) < Epsilon)
+            {
+                continue;
+            }
+
             var offset = start - origin;
             var distance = offset.Cross(edge) / denominator;
             var fraction = offset.Cross(direction) / denominator;
-            if (distance < 0 || distance > maxDistance || fraction < 0 || fraction > 1 || found && distance >= hit.Distance) continue;
+            if (distance < 0 || distance > maxDistance || fraction < 0 || fraction > 1 || found && distance >= hit.Distance)
+            {
+                continue;
+            }
+
             var normal = Vector2.Normalize(new Vector2(edge.Y, -edge.X) * winding);
             hit = new RayHit2D(origin + direction * distance, normal, distance);
             found = true;

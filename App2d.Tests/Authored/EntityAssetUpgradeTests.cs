@@ -42,7 +42,10 @@ public sealed class EntityAssetUpgradeTests
         var action = Assert.Single(entity.Actions);
         Near(new Rect2D(new(-.2f, -.1f), new(.2f, .1f)), ShapeBounds2D.Calculate(action.Projectile!.Shape.Build()));
         var thrust = Assert.IsType<Capsule2D>(action.Hits[0].Shape.Build());
-        Assert.Equal(-.3f, thrust.Start.X, 5); Assert.Equal(.3f, thrust.End.X, 5); Assert.Equal(0f, thrust.End.Y, 5); Assert.Equal(.1f, thrust.Radius, 5);
+        Assert.Equal(-.3f, thrust.Start.X, 5);
+        Assert.Equal(.3f, thrust.End.X, 5);
+        Assert.Equal(0f, thrust.End.Y, 5);
+        Assert.Equal(.1f, thrust.Radius, 5);
         Assert.Equal(.2f, Assert.IsType<Circle2D>(action.Hits[1].Shape.Build()).Radius, 5);
         Near(new Rect2D(new(-.25f, -.15f), new(.25f, .15f)), ShapeBounds2D.Calculate(action.Hits[2].Shape.Build()));
         Near(new Rect2D(new(-.15f, -.15f), new(.15f, .15f)), ShapeBounds2D.Calculate(action.Hits[3].Shape.Build()));

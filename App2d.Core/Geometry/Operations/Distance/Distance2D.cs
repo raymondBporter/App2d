@@ -161,7 +161,11 @@ public static partial class Distance2D
     public static float SignedDistanceToRectangle(Vector2 point, Vector2 min, Vector2 max)
     {
         var outside = Vector2.Max(Vector2.Max(min - point, point - max), Vector2.Zero);
-        if (outside != Vector2.Zero) return outside.Length();
+        if (outside != Vector2.Zero)
+        {
+            return outside.Length();
+        }
+
         return -Math.Min(Math.Min(point.X - min.X, max.X - point.X), Math.Min(point.Y - min.Y, max.Y - point.Y));
     }
 

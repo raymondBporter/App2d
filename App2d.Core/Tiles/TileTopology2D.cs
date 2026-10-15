@@ -33,17 +33,31 @@ public static class TileTopology2D
         ArgGuard.ThrowIfNull(tileMap);
 
         if (!tileMap.IsSolid(x, y))
+        {
             return TileSurface2D.None;
+        }
 
         var surfaces = TileSurface2D.None;
         if (!tileMap.IsSolid(x, y + 1))
+        {
             surfaces |= TileSurface2D.Top;
+        }
+
         if (!tileMap.IsSolid(x + 1, y))
+        {
             surfaces |= TileSurface2D.Right;
+        }
+
         if (!tileMap.IsSolid(x, y - 1))
+        {
             surfaces |= TileSurface2D.Bottom;
+        }
+
         if (!tileMap.IsSolid(x - 1, y))
+        {
             surfaces |= TileSurface2D.Left;
+        }
+
         return surfaces;
     }
 
@@ -52,7 +66,9 @@ public static class TileTopology2D
         ArgGuard.ThrowIfNull(tileMap);
 
         if (!tileMap.IsSolid(x, y))
+        {
             return TileCorner2D.None;
+        }
 
         var top = tileMap.IsSolid(x, y + 1);
         var right = tileMap.IsSolid(x + 1, y);
@@ -61,22 +77,44 @@ public static class TileTopology2D
         var corners = TileCorner2D.None;
 
         if (!top && !right)
+        {
             corners |= TileCorner2D.OuterTopRight;
+        }
+
         if (!bottom && !right)
+        {
             corners |= TileCorner2D.OuterBottomRight;
+        }
+
         if (!bottom && !left)
+        {
             corners |= TileCorner2D.OuterBottomLeft;
+        }
+
         if (!top && !left)
+        {
             corners |= TileCorner2D.OuterTopLeft;
+        }
 
         if (top && right && !tileMap.IsSolid(x + 1, y + 1))
+        {
             corners |= TileCorner2D.InnerTopRight;
+        }
+
         if (bottom && right && !tileMap.IsSolid(x + 1, y - 1))
+        {
             corners |= TileCorner2D.InnerBottomRight;
+        }
+
         if (bottom && left && !tileMap.IsSolid(x - 1, y - 1))
+        {
             corners |= TileCorner2D.InnerBottomLeft;
+        }
+
         if (top && left && !tileMap.IsSolid(x - 1, y + 1))
+        {
             corners |= TileCorner2D.InnerTopLeft;
+        }
 
         return corners;
     }

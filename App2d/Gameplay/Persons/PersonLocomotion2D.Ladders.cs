@@ -9,12 +9,18 @@ public sealed partial class PersonLocomotion2D
     private readonly IChunkedTileMap2D? _tileMap;
     private float _ladderRelatchTime;
 
-    public bool IsClimbingLadder { get; private set; }
+    public bool IsClimbingLadder
+    {
+        get; private set;
+    }
 
     public void DetachFromLadder()
     {
         if (!IsClimbingLadder)
+        {
             return;
+        }
+
         IsClimbingLadder = false;
         _ladderRelatchTime = Metrics.LadderRelatchDelay;
         _body.GravityScale = 1f;
@@ -52,7 +58,9 @@ public sealed partial class PersonLocomotion2D
             return false;
         }
         if (!IsClimbingLadder && MathF.Abs(_intent.ClimbY) < 0.01f)
+        {
             return false;
+        }
 
         // Ease the collider (including its facing-dependent offset) toward the
         // ladder, only if this step is clear. Climbing retains solid collision.
@@ -77,7 +85,10 @@ public sealed partial class PersonLocomotion2D
         // Keep the body's center at the ladder top so the climbing pose still
         // overlaps the last rung. Using the feet here lifts the whole body above it.
         if (speed > 0f && deltaSeconds > 0f)
+        {
             speed = Math.Min(speed, Math.Max(0f, (ladder.Top - bounds.Center.Y) / deltaSeconds));
+        }
+
         _body.LinearVelocity = new Vector2(0f, speed);
         _body.GravityScale = 0f;
         return true;
@@ -87,7 +98,9 @@ public sealed partial class PersonLocomotion2D
     {
         ladder = default;
         if (_tileMap is null)
+        {
             return false;
+        }
 
         var bounds = _body.WorldObject.WorldBounds;
         var size = _tileMap.TileSize;
@@ -103,17 +116,29 @@ public sealed partial class PersonLocomotion2D
         {
             var distance = MathF.Abs(origin.X + (x + 0.5f) * size - bounds.Center.X);
             if (distance >= nearestDistance)
+            {
                 continue;
+            }
+
             for (var y = firstY; y <= lastY; y++)
             {
                 if (!_tileMap.GetTileKind(x, y).IsLadder())
+                {
                     continue;
+                }
+
                 var bottom = y;
                 var top = y;
                 while (bottom > 0 && _tileMap.GetTileKind(x, bottom - 1).IsLadder())
+                {
                     bottom--;
+                }
+
                 while (top + 1 < _tileMap.Height && _tileMap.GetTileKind(x, top + 1).IsLadder())
+                {
                     top++;
+                }
+
                 ladder = new Rect2D(
                     origin + new Vector2(x, bottom) * size,
                     origin + new Vector2(x + 1, top + 1) * size);

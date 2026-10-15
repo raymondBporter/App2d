@@ -32,7 +32,11 @@ public sealed class RockThrowerTests
 
     private static void Tick(AuthoredEntityEnemy2D enemy, Vector2 target, int ticks)
     {
-        for (var i = 0; i < ticks; i++) { enemy.Update(1f / 120, target); enemy.SyncAfterPhysics(); }
+        for (var i = 0; i < ticks; i++)
+        {
+            enemy.Update(1f / 120, target);
+            enemy.SyncAfterPhysics();
+        }
     }
 
     [Theory, InlineData(-1), InlineData(1)]
@@ -71,7 +75,8 @@ public sealed class RockThrowerTests
         enemy.TakeDamage(6, Vector2.Zero);
         for (var i = 0; i < 180; i++)
         {
-            Tick(enemy, player.Position, 1); enemy.TryResolvePlayerHit(player);
+            Tick(enemy, player.Position, 1);
+            enemy.TryResolvePlayerHit(player);
         }
         Assert.Equal(28, player.Health.Current);
         Assert.Empty(enemy.CaptureState().Bolts);
@@ -97,10 +102,17 @@ public sealed class RockThrowerTests
             }
 
             enemy.TakeDamage(6, Vector2.Zero);
-            for (var i = 0; i < 400; i++) { Tick(enemy, player.Position, 1); enemy.TryResolvePlayerHit(player); }
+            for (var i = 0; i < 400; i++)
+            {
+                Tick(enemy, player.Position, 1);
+                enemy.TryResolvePlayerHit(player);
+            }
             Assert.Equal(30, player.Health.Current);
             Assert.Empty(enemy.CaptureState().Bolts);
-            if (wall) Assert.Contains(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "rock-impact");
+            if (wall)
+            {
+                Assert.Contains(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "rock-impact");
+            }
         }
     }
 
@@ -125,16 +137,31 @@ public sealed class RockThrowerTests
     public void SoloAndPairedEncountersSpawnTheirProjectiles(bool paired)
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < 640; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         var things = new List<WorldThingSpec2D>
         {
             new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
             new(2, WorldThingKind2D.RockThrower, null, true, new(-168, 40))
         };
-        if (paired) things.Add(new(3, WorldThingKind2D.ClubCaveman, null, true, new(-280, 40)));
+        if (paired)
+        {
+            things.Add(new(3, WorldThingKind2D.ClubCaveman, null, true, new(-280, 40)));
+        }
+
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], things)
-        { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
-        for (var i = 0; i < 150; i++) game.Session.Advance();
+        {
+            AuthoredCharacters = Catalog,
+            PlayerMaximumHealth = 100
+        });
+        for (var i = 0; i < 150; i++)
+        {
+            game.Session.Advance();
+        }
+
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
         {
             game.Session.Advance();

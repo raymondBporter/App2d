@@ -27,15 +27,21 @@ public static class PartCurves2D
     internal static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3>? rest)
     {
         var curve = (CurveDefinition2D)part.Geometry!;
-        var a = world(part.A); var b = world(part.B!);
+        var a = world(part.A);
+        var b = world(part.B!);
         var coordinates = Frame2D.FromYAxis(a.XY, b.XY - a.XY);
         var source = GeometryDefinitionCache2D.CurveOf(curve);
         ICurve2D? layers = null;
         if (part.Bindings is { Count: > 0 })
         {
-            if (rest is null) throw new InvalidOperationException("A bound curve needs the model's rest pose.");
+            if (rest is null)
+            {
+                throw new InvalidOperationException("A bound curve needs the model's rest pose.");
+            }
+
             var points = ControlPoints(curve);
-            var restA = rest(part.A); var restB = rest(part.B!);
+            var restA = rest(part.A);
+            var restB = rest(part.B!);
             var restCoordinates = Frame2D.FromYAxis(restA.XY, restB.XY - restA.XY);
             var placed = new Vector3[points.Count];
             for (var i = 0; i < points.Count; i++)
@@ -51,9 +57,14 @@ public static class PartCurves2D
             }
             source = WithControlPoints(curve, placed.Select(p => p.XY).ToArray()).Build();
             // Layer order follows the same Bézier weights, independently of its XY geometry.
-            layers = WithControlPoints(curve, placed.Select(p => new Vector2(p.Z, 0)).ToArray()).Build();
+            layers = WithControlPoints(curve, [.. placed.Select(p => new Vector2(p.Z, 0))]).Build();
         }
-        var count = source switch { LineSegmentCurve2D => 2, PolylineCurve2D polyline => polyline.Points.Length, _ => 33 };
+        var count = source switch
+        {
+            LineSegmentCurve2D => 2,
+            PolylineCurve2D polyline => polyline.Points.Length,
+            _ => 33
+        };
         NormalOffsetCurve2D? wave = null;
         if (part.WaveAmplitude != 0)
         {
@@ -65,7 +76,9 @@ public static class PartCurves2D
         var result = new List<Vector3>(count);
         for (var i = 0; i < count; i++)
         {
-            var t = (float)i / (count - 1); var p = source.Evaluate(t); var xy = wave?.Evaluate(t) ?? p;
+            var t = (float)i / (count - 1);
+            var p = source.Evaluate(t);
+            var xy = wave?.Evaluate(t) ?? p;
             result.Add(layers is null
                 ? new(coordinates.TransformPoint(xy), a.Z + (b.Z - a.Z) * p.Y + part.Depth)
                 : new(xy, layers.Evaluate(t).X));

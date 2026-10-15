@@ -158,15 +158,25 @@ public sealed class Grid2DTests
     {
         var geometry = new GridGeometry2D(16f);
         var bounds = new Rect2D(new(-32), new(32));
-        for (var i = 0; i < 100; i++) Visit();
+        for (var i = 0; i < 100; i++)
+        {
+            Visit();
+        }
+
         var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 1000; i++) Visit();
+        for (var i = 0; i < 1000; i++)
+        {
+            Visit();
+        }
+
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
 
         void Visit()
         {
             foreach (var cell in geometry.GetCellRange(bounds))
+            {
                 geometry.WorldToCell(geometry.GetCellCenter(cell));
+            }
         }
     }
 

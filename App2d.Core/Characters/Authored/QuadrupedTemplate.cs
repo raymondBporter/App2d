@@ -11,7 +11,12 @@ public static class QuadrupedTemplate
     public static CharacterModel Model(string id = "quadruped", string name = "Quadruped", bool triceratops = false)
     {
         var m = new CharacterModel { Id = id, Name = name, Ink = "#242a29", LineWidth = .045f };
-        void Control(string key, string? parent, float x, float y, float z = 0) => m.Controls.Add(new() { Id = key, Parent = parent, Rest = new(x, y, z) });
+        void Control(string key, string? parent, float x, float y, float z = 0) => m.Controls.Add(new()
+        {
+            Id = key,
+            Parent = parent,
+            Rest = new(x, y, z)
+        });
         Control("body", null, -.25f, .92f);
         Control("body-up", "body", -.25f, 1.42f);
         Control("head", "body", .72f, .86f);
@@ -24,17 +29,30 @@ public static class QuadrupedTemplate
             Control(leg + "-root", "body", x, .84f, z);
             Control(leg + "-joint", leg + "-root", x + (front ? -.12f : .16f), .46f, z);
             Control(leg + "-foot", leg + "-joint", x + .02f, .10f, z);
-            m.Chains.Add(new() { Id = leg, Root = leg + "-root", Joint = leg + "-joint", End = leg + "-foot", Bend = front ? 1 : -1 });
+            m.Chains.Add(new()
+            {
+                Id = leg,
+                Root = leg + "-root",
+                Joint = leg + "-joint",
+                End = leg + "-foot",
+                Bend = front ? 1 : -1
+            });
         }
         PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, GeometryDefinition2D? geometry = null)
         {
             var p = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse) };
-            m.Parts.Add(p); return p;
+            m.Parts.Add(p);
+            return p;
         }
         PuppetPart Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
             => Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, new SimplePolygon2D.Builder { Vertices = [.. points] });
         void SetOutlineWidth(PuppetPart part, float width) => part.Material = part.RenderMaterial with
-        { Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with { Width = width } };
+        {
+            Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with
+            {
+                Width = width
+            }
+        };
         const string skin = "#79bdb0", shade = "#527f78", horn = "#f6e4bb";
         Cutout("tail", "tail", .85f, .52f, -.35f, .03f, .02f, skin,
             new(.5f, -.25f), new(-.2f, -.17f), new(-.5f, .32f), new(-.12f, .12f), new(.5f, .45f));
@@ -50,7 +68,10 @@ public static class QuadrupedTemplate
             Shape(chain.Id + "-upper", chain.Root, chain.Joint, .25f, upper + .19f, 0, upper / 2, 0, color);
             Shape(chain.Id + "-lower", chain.Joint, chain.End, .23f, lower + .15f, 0, lower / 2, -.005f, color);
             Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)] });
-            for (var i = 0; i < 3; i++) SetOutlineWidth(Shape(chain.Id + "-toe-" + i, chain.End, null, .045f, .065f, -.08f + i * .085f, -.055f, -.025f, horn), .012f);
+            for (var i = 0; i < 3; i++)
+            {
+                SetOutlineWidth(Shape(chain.Id + "-toe-" + i, chain.End, null, .045f, .065f, -.08f + i * .085f, -.055f, -.025f, horn), .012f);
+            }
         }
         var body = Shape("body", "body", "body-up", 1.92f, .90f, -.05f, .04f, 0, skin);
         body.Paint = [Spot(-.24f, .15f, .09f, .19f), Spot(-.04f, .03f, .065f, .14f)];
@@ -76,12 +97,16 @@ public static class QuadrupedTemplate
         m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.Chains.Select(c => c.Id)] }];
         m.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .35f }] }];
         m.MotionSets = [new() { Id = "standard", Name = "Quadruped", Roles = new() { ["idle"] = id + "-idle", ["walk"] = id + "-walk", ["run"] = id + "-run", ["scrape"] = id + "-scrape", ["head-down"] = id + "-head-down", ["rush"] = id + "-rush", ["brake"] = id + "-brake", ["recover"] = id + "-recover" } }];
-        m.Validate(); return m;
+        m.Validate();
+        return m;
     }
 
     private static PartPaint Spot(float x, float y, float rx, float ry) => new()
     {
-        Material = new() { Fill = "#397783" },
+        Material = new()
+        {
+            Fill = "#397783"
+        },
         Points = [.. Enumerable.Range(0, 12).Select(i => new Vector2(x + rx * MathF.Cos(i * MathF.Tau / 12), y + ry * MathF.Sin(i * MathF.Tau / 12)))]
     };
 
@@ -91,23 +116,41 @@ public static class QuadrupedTemplate
         var clips = new List<MotionClip>();
         MotionClip Clip(string role, float duration, bool loop)
         {
-            var c = ClipAuthoring.New(resolved, model.Id + "-" + role, model.Name + " · " + role, duration, loop); clips.Add(c); return c;
+            var c = ClipAuthoring.New(resolved, model.Id + "-" + role, model.Name + " · " + role, duration, loop);
+            clips.Add(c);
+            return c;
         }
         void Key(MotionClip c, string kind, string target, float t, float x = 0, float y = 0, float angle = 0) => ClipAuthoring.SetKey(c, new(kind, target), t, new(x, y, 0), angle);
         void Rotate(MotionClip c, string target, params float[] angles)
         {
-            for (var i = 0; i < angles.Length; i++) Key(c, "rotate", target, c.Duration * i / (angles.Length - 1), angle: angles[i]);
+            for (var i = 0; i < angles.Length; i++)
+            {
+                Key(c, "rotate", target, c.Duration * i / (angles.Length - 1), angle: angles[i]);
+            }
         }
         void Plant(MotionClip c)
         {
-            foreach (var chain in model.Chains) c.Contacts.Add(new() { Chain = chain.Id, Start = 0, Finish = c.Duration });
+            foreach (var chain in model.Chains)
+            {
+                c.Contacts.Add(new()
+                {
+                    Chain = chain.Id,
+                    Start = 0,
+                    Finish = c.Duration
+                });
+            }
         }
-        var idle = Clip("idle", 2, true); Plant(idle);
-        Key(idle, "translate", "body", 0); Key(idle, "translate", "body", 1, y: .025f); Key(idle, "translate", "body", 2);
-        Rotate(idle, "head", 0, -.025f, 0); Rotate(idle, "tail", 0, .12f, 0);
+        var idle = Clip("idle", 2, true);
+        Plant(idle);
+        Key(idle, "translate", "body", 0);
+        Key(idle, "translate", "body", 1, y: .025f);
+        Key(idle, "translate", "body", 2);
+        Rotate(idle, "head", 0, -.025f, 0);
+        Rotate(idle, "tail", 0, .12f, 0);
         foreach (var (role, duration, stride, lift) in new[] { ("walk", 1.2f, .30f, .13f), ("run", .65f, .42f, .19f), ("rush", .48f, .46f, .15f) })
         {
-            var c = Clip(role, duration, true); const float stance = .6f;
+            var c = Clip(role, duration, true);
+            const float stance = .6f;
             var distance = stride / stance;
             c.Travel.Keys = [new(), new() { Time = duration, X = distance }];
             foreach (var chain in model.Chains)
@@ -125,27 +168,69 @@ public static class QuadrupedTemplate
                 foreach (var (start, finish) in phase == 0 ? [(0f, stance)] : new[] { (0f, stance - phase), (1 - phase, 1f) })
                 {
                     var p = (start + phase) % 1;
-                    c.Contacts.Add(new() { Chain = chain.Id, Start = start * duration, Finish = finish * duration, Target = new(stride * .5f - distance * p + distance * start, 0) });
+                    c.Contacts.Add(new()
+                    {
+                        Chain = chain.Id,
+                        Start = start * duration,
+                        Finish = finish * duration,
+                        Target = new(stride * .5f - distance * p + distance * start, 0)
+                    });
                 }
             }
-            for (var i = 0; i <= 8; i++) Key(c, "translate", "body", duration * i / 8, y: (role == "rush" ? -.055f : 0) + .025f * MathF.Sin(i * MathF.PI / 2));
+            for (var i = 0; i <= 8; i++)
+            {
+                Key(c, "translate", "body", duration * i / 8, y: (role == "rush" ? -.055f : 0) + .025f * MathF.Sin(i * MathF.PI / 2));
+            }
+
             Rotate(c, "head", role == "rush" ? -.32f : 0, role == "rush" ? -.36f : -.04f, role == "rush" ? -.32f : 0);
             Rotate(c, "tail", .05f, -.12f, .05f);
         }
-        var down = Clip("head-down", .55f, false); Plant(down); Rotate(down, "head", 0, -.40f, -.95f);
-        Key(down, "translate", "head", 0); Key(down, "translate", "head", down.Duration, y: -.18f);
+        var down = Clip("head-down", .55f, false);
+        Plant(down);
+        Rotate(down, "head", 0, -.40f, -.95f);
+        Key(down, "translate", "head", 0);
+        Key(down, "translate", "head", down.Duration, y: -.18f);
         var scrape = Clip("scrape", 1.1f, true);
-        foreach (var chain in model.Chains.Where(c => c.Id != "near-front")) scrape.Contacts.Add(new() { Chain = chain.Id, Finish = scrape.Duration });
+        foreach (var chain in model.Chains.Where(c => c.Id != "near-front"))
+        {
+            scrape.Contacts.Add(new()
+            {
+                Chain = chain.Id,
+                Finish = scrape.Duration
+            });
+        }
+
         Rotate(scrape, "head", -.12f, -.18f, -.12f);
-        Key(scrape, "target", "near-front", 0); Key(scrape, "target", "near-front", .25f, .16f, .12f); Key(scrape, "target", "near-front", .45f, .22f); Key(scrape, "target", "near-front", .78f, -.18f); Key(scrape, "target", "near-front", 1.1f);
+        Key(scrape, "target", "near-front", 0);
+        Key(scrape, "target", "near-front", .25f, .16f, .12f);
+        Key(scrape, "target", "near-front", .45f, .22f);
+        Key(scrape, "target", "near-front", .78f, -.18f);
+        Key(scrape, "target", "near-front", 1.1f);
         scrape.Markers = [new() { Id = "scrape", Time = .45f }];
-        var brake = Clip("brake", .65f, false); Rotate(brake, "head", -.32f, .10f, 0); Rotate(brake, "body", 0, .08f, 0);
-        Key(brake, "translate", "body", 0, y: -.055f); Key(brake, "translate", "body", .25f, x: .08f, y: -.1f); Key(brake, "translate", "body", .65f);
-        foreach (var chain in model.Chains) { Key(brake, "target", chain.Id, 0, .15f); Key(brake, "target", chain.Id, .3f, .22f); Key(brake, "target", chain.Id, .65f); }
+        var brake = Clip("brake", .65f, false);
+        Rotate(brake, "head", -.32f, .10f, 0);
+        Rotate(brake, "body", 0, .08f, 0);
+        Key(brake, "translate", "body", 0, y: -.055f);
+        Key(brake, "translate", "body", .25f, x: .08f, y: -.1f);
+        Key(brake, "translate", "body", .65f);
+        foreach (var chain in model.Chains)
+        {
+            Key(brake, "target", chain.Id, 0, .15f);
+            Key(brake, "target", chain.Id, .3f, .22f);
+            Key(brake, "target", chain.Id, .65f);
+        }
         brake.Markers = [new() { Id = "stop", Time = .3f }];
-        var recover = Clip("recover", 1.2f, false); Plant(recover); Rotate(recover, "head", -.95f, -.35f, 0);
-        Key(recover, "translate", "head", 0, y: -.18f); Key(recover, "translate", "head", recover.Duration); Rotate(recover, "tail", -.15f, .16f, 0);
-        foreach (var c in clips) c.Validate(resolved);
+        var recover = Clip("recover", 1.2f, false);
+        Plant(recover);
+        Rotate(recover, "head", -.95f, -.35f, 0);
+        Key(recover, "translate", "head", 0, y: -.18f);
+        Key(recover, "translate", "head", recover.Duration);
+        Rotate(recover, "tail", -.15f, .16f, 0);
+        foreach (var c in clips)
+        {
+            c.Validate(resolved);
+        }
+
         return clips;
     }
 
@@ -155,9 +240,13 @@ public static class QuadrupedTemplate
         foreach (var dinosaur in new[] { false, true })
         {
             var m = Model(dinosaur ? "triceratops" : "quadruped", dinosaur ? "Triceratops" : "Quadruped", dinosaur);
-            Directory.CreateDirectory(Path.Combine(root, "models")); m.Save(Path.Combine(root, "models", m.Id + ".json"));
+            Directory.CreateDirectory(Path.Combine(root, "models"));
+            m.Save(Path.Combine(root, "models", m.Id + ".json"));
             Directory.CreateDirectory(Path.Combine(root, "animations"));
-            foreach (var c in Clips(m)) c.Save(Path.Combine(root, "animations", c.Id + ".json"));
+            foreach (var c in Clips(m))
+            {
+                c.Save(Path.Combine(root, "animations", c.Id + ".json"));
+            }
         }
     }
 }

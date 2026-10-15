@@ -15,10 +15,12 @@ public sealed class MusicStreamTests
         var b = new FakeStem(16, f => f);
         using var stream = new MusicStream2D(Cue(), [a, b]);
         stream.Restart("explore");
-        var pre = new float[6]; stream.Read(pre);
+        var pre = new float[6];
+        stream.Read(pre);
         Assert.Equal(3, b.Position);
         stream.SetMood("combat");
-        var block = new float[14]; stream.Read(block);
+        var block = new float[14];
+        stream.Read(block);
         float[] expected = [0, 0, 1.25f, 3, 5.25f, 8, 9];
         Assert.Equal(expected, Enumerable.Range(0, 7).Select(i => block[i * 2]));
         Assert.Equal(10, stream.FramePosition);
@@ -31,7 +33,8 @@ public sealed class MusicStreamTests
     {
         using var stream = new MusicStream2D(Cue(), [new FakeStem(16, f => f), new FakeStem(16, _ => 100)]);
         stream.Restart("explore");
-        var audio = new float[38]; stream.Read(audio);
+        var audio = new float[38];
+        stream.Read(audio);
         Assert.Equal(Enumerable.Range(0, 19).Select(i => (float)(i % 16)), Enumerable.Range(0, 19).Select(i => audio[i * 2]));
         Assert.Equal(3, stream.FramePosition);
     }
@@ -40,12 +43,22 @@ public sealed class MusicStreamTests
     public void RepeatedRequestsDoNotPostponeMoodAndLatestPendingRequestWins()
     {
         using var stream = new MusicStream2D(Cue(), [new FakeStem(16, _ => 0), new FakeStem(16, _ => 1)]);
-        stream.Restart("explore"); stream.SetMood("combat");
+        stream.Restart("explore");
+        stream.SetMood("combat");
         var sample = new float[2];
-        for (var i = 0; i < 9; i++) { stream.SetMood("combat"); stream.Read(sample); }
+        for (var i = 0; i < 9; i++)
+        {
+            stream.SetMood("combat");
+            stream.Read(sample);
+        }
         Assert.Equal(1, sample[0], 5);
-        stream.SetMood("explore"); stream.SetMood("drive");
-        for (var i = 0; i < 8; i++) stream.Read(sample);
+        stream.SetMood("explore");
+        stream.SetMood("drive");
+        for (var i = 0; i < 8; i++)
+        {
+            stream.Read(sample);
+        }
+
         Assert.Equal(.5f, sample[0], 5);
     }
 
@@ -60,34 +73,61 @@ public sealed class MusicStreamTests
     [Fact]
     public void MixerCrossfadesAndCoalescesRapidPieceChangesAndRampsMute()
     {
-        var first = Cue(441000, 44100); var second = Cue(441000, 44100);
+        var first = Cue(441000, 44100);
+        var second = Cue(441000, 44100);
         using var mixer = new MusicMixer2D(new Dictionary<string, MusicCue2D> { ["a"] = first, ["b"] = second },
             cue => new(cue, [new FakeStem(441000, _ => ReferenceEquals(cue, first) ? .2f : .4f), new FakeStem(441000, _ => .1f)]));
-        mixer.Volume = 1; mixer.Select("a", "explore");
-        var seconds = new float[44100 * 2 * 3]; mixer.Read(seconds);
-        Assert.Equal(0, seconds[0]); Assert.Equal(.2f, seconds[^1], 5);
+        mixer.Volume = 1;
+        mixer.Select("a", "explore");
+        var seconds = new float[44100 * 2 * 3];
+        mixer.Read(seconds);
+        Assert.Equal(0, seconds[0]);
+        Assert.Equal(.2f, seconds[^1], 5);
         mixer.Select("b", "explore");
-        var secondOfAudio = new float[44100 * 2]; mixer.Read(secondOfAudio);
-        Assert.Equal(.2f, secondOfAudio[0], 5); Assert.InRange(secondOfAudio[^1], .299f, .301f);
-        mixer.Select("a", "explore"); mixer.Read(secondOfAudio);
+        var secondOfAudio = new float[44100 * 2];
+        mixer.Read(secondOfAudio);
+        Assert.Equal(.2f, secondOfAudio[0], 5);
+        Assert.InRange(secondOfAudio[^1], .299f, .301f);
+        mixer.Select("a", "explore");
+        mixer.Read(secondOfAudio);
         Assert.InRange(secondOfAudio[^1], .399f, .401f);
-        mixer.Read(seconds); Assert.Equal(.2f, seconds[^1], 5);
-        mixer.Volume = 0; mixer.Read(secondOfAudio);
-        Assert.Equal(.2f, secondOfAudio[0], 5); Assert.Equal(0, secondOfAudio[^1]);
+        mixer.Read(seconds);
+        Assert.Equal(.2f, seconds[^1], 5);
+        mixer.Volume = 0;
+        mixer.Read(secondOfAudio);
+        Assert.Equal(.2f, secondOfAudio[0], 5);
+        Assert.Equal(0, secondOfAudio[^1]);
         Assert.All(secondOfAudio, sample => Assert.InRange(sample, 0, .201f));
     }
 
     internal sealed class FakeStem(int frames, Func<int, float> sample) : IMusicStem2D
     {
-        public int Position { get; private set; }
-        public int Rewinds { get; private set; }
+        public int Position
+        {
+            get; private set;
+        }
+        public int Rewinds
+        {
+            get; private set;
+        }
         public int Read(float[] buffer, int offset, int count)
         {
             var take = Math.Min(frames - Position, count / 2);
-            for (var i = 0; i < take; i++) buffer[offset + i * 2] = buffer[offset + i * 2 + 1] = sample(Position + i);
-            Position += take; return take * 2;
+            for (var i = 0; i < take; i++)
+            {
+                buffer[offset + i * 2] = buffer[offset + i * 2 + 1] = sample(Position + i);
+            }
+
+            Position += take;
+            return take * 2;
         }
-        public void Rewind() { Position = 0; Rewinds++; }
-        public void Dispose() { }
+        public void Rewind()
+        {
+            Position = 0;
+            Rewinds++;
+        }
+        public void Dispose()
+        {
+        }
     }
 }

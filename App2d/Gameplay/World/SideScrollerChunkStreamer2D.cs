@@ -25,15 +25,25 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
     private long _revision;
     private ImmutableArray<TerrainChunkState2D> _states;
     /// <summary>Changes whenever the active chunk set or any chunk's data changes.</summary>
-    public long Version { get; private set; }
+    public long Version
+    {
+        get; private set;
+    }
     public ImmutableArray<TerrainChunkState2D> CaptureState()
     {
-        if (_states.IsDefault) _states = [.. _loadedChunks.Values.OrderBy(c => c.State.Chunk.Y).ThenBy(c => c.State.Chunk.X).Select(c => c.State)];
+        if (_states.IsDefault)
+        {
+            _states = [.. _loadedChunks.Values.OrderBy(c => c.State.Chunk.Y).ThenBy(c => c.State.Chunk.X).Select(c => c.State)];
+        }
+
         return _states;
     }
     public void Dispose()
     {
-        foreach (var chunk in _loadedChunks.Keys.ToArray()) Unload(chunk);
+        foreach (var chunk in _loadedChunks.Keys.ToArray())
+        {
+            Unload(chunk);
+        }
     }
 
     public IReadOnlyList<SpatialObject2D> Platforms => _platforms;
@@ -50,7 +60,9 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
     public void Invalidate(TileChunk2D chunk)
     {
         if (!_loadedChunks.ContainsKey(chunk))
+        {
             return;
+        }
 
         Unload(chunk);
         Load(chunk);
@@ -76,7 +88,9 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
         }
 
         foreach (var chunk in _unloadBuffer)
+        {
             Unload(chunk);
+        }
 
         for (var y = minimumY; y <= maximumY; y++)
         {
@@ -84,7 +98,9 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
             {
                 var chunk = new TileChunk2D(x, y);
                 if (!_loadedChunks.ContainsKey(chunk))
+                {
                     Load(chunk);
+                }
             }
         }
     }

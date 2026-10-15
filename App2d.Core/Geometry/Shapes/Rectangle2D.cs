@@ -25,10 +25,16 @@ public partial class Rectangle2D : IConvexShape2D, IRect2D
     }
 
     /// <inheritdoc/>
-    public Vector2 Min { get; }
+    public Vector2 Min
+    {
+        get;
+    }
 
     /// <inheritdoc/>
-    public Vector2 Max { get; }
+    public Vector2 Max
+    {
+        get;
+    }
 
     /// <inheritdoc/>
     public float Area => Area2D.Rectangle(Min, Max);

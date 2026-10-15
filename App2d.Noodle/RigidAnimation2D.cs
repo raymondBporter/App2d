@@ -6,7 +6,10 @@ namespace App2d.Noodle;
 
 internal static class AuthoredClips2D
 {
-    public static PoseClip2D Idle { get; } = new(
+    public static PoseClip2D Idle
+    {
+        get;
+    } = new(
         "authored idle",
         loops: true,
         new(0f, RigidPose2D.Neutral),
@@ -18,7 +21,10 @@ internal static class AuthoredClips2D
         }),
         new(1.8f, RigidPose2D.Neutral));
 
-    public static PoseClip2D SwordAttack { get; } = new(
+    public static PoseClip2D SwordAttack
+    {
+        get;
+    } = new(
         "IK-authored sword attack",
         loops: false,
         new(0f, RigidPose2D.Neutral),
@@ -45,7 +51,10 @@ internal static class AuthoredClips2D
         }),
         new(0.72f, RigidPose2D.Neutral));
 
-    public static PoseClip2D Hit { get; } = new(
+    public static PoseClip2D Hit
+    {
+        get;
+    } = new(
         "IK-authored hit reaction",
         loops: false,
         new(0f, RigidPose2D.Neutral),
@@ -78,7 +87,10 @@ internal sealed class ProceduralLocomotion2D
     private float _idleTime;
     private bool _initialized;
 
-    public float HipBob { get; private set; }
+    public float HipBob
+    {
+        get; private set;
+    }
     public bool LeftFootPlanted => !_left.Swinging;
     public bool RightFootPlanted => !_right.Swinging;
 
@@ -95,13 +107,17 @@ internal sealed class ProceduralLocomotion2D
     public RigidPose2D SampleGrounded(Vector2 hips, float groundY, float velocityX, float deltaSeconds)
     {
         if (!_initialized)
+        {
             Reset(hips, groundY);
+        }
 
         var speed = MathF.Abs(velocityX);
         _idleTime += deltaSeconds;
         var speedAmount = Math.Clamp(speed / 270f, 0f, 1f);
         if (speed > 8f)
+        {
             _phase = Wrap01(_phase + speed * deltaSeconds / float.Lerp(155f, 205f, speedAmount));
+        }
 
         var direction = MathF.Abs(velocityX) > 8f ? MathF.Sign(velocityX) : 1f;
         UpdateFoot(ref _left, Wrap01(_phase), hips, groundY, direction, speedAmount);
@@ -123,7 +139,11 @@ internal sealed class ProceduralLocomotion2D
             // The authored idle owns the upper body, but the current planted feet
             // stay in place so stopping never introduces a visible pop or slide.
             var idle = AuthoredClips2D.Idle.Sample(_idleTime);
-            pose = idle with { FootLeft = pose.FootLeft, FootRight = pose.FootRight };
+            pose = idle with
+            {
+                FootLeft = pose.FootLeft,
+                FootRight = pose.FootRight
+            };
         }
         return pose;
     }
@@ -174,7 +194,10 @@ internal sealed class ProceduralLocomotion2D
         }
 
         if (!foot.Swinging)
+        {
             return;
+        }
+
         var amount = Math.Clamp(phase / swingFraction, 0f, 1f);
         var smooth = Progress.SmoothStep(amount);
         foot.Target = Vector2.Lerp(foot.Start, foot.Goal, smooth);

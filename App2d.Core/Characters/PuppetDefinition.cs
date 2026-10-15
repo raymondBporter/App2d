@@ -23,14 +23,19 @@ public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
     public static PuppetPoint Lerp(PuppetPoint a, PuppetPoint b, float t) => From(Vector3.Lerp(a.XYZ, b.XYZ, t));
     public void Check(string field)
     {
-        new Limit(-10000, 10000).Check(X, field + ".x"); new Limit(-10000, 10000).Check(Y, field + ".y"); new Limit(-32, 32).Check(Z, field + ".z");
+        new Limit(-10000, 10000).Check(X, field + ".x");
+        new Limit(-10000, 10000).Check(Y, field + ".y");
+        new Limit(-32, 32).Check(Z, field + ".z");
     }
 }
 
 public sealed record PuppetControl
 {
     public string Id { get; set; } = "point";
-    public PuppetPoint Rest { get; set; }
+    public PuppetPoint Rest
+    {
+        get; set;
+    }
 }
 
 public sealed record PuppetBone
@@ -50,21 +55,44 @@ public sealed record PuppetChain
 /// <summary>A convex patch of color in normalized part coordinates; clipped to the part's actual silhouette.</summary>
 public sealed record PartPaint
 {
-    public RenderMaterialDefinition2D? Material { get; set; }
+    public RenderMaterialDefinition2D? Material
+    {
+        get; set;
+    }
     [JsonConverter(typeof(PartPaintPointsJsonConverter))]
     public List<Vector2> Points { get; set; } = [];
 
     public static void Check(IReadOnlyList<PartPaint>? paint)
     {
-        if (paint is null) return;
-        if (paint.Count > 64) throw new InvalidDataException("A part supports at most 64 paint patches.");
+        if (paint is null)
+        {
+            return;
+        }
+
+        if (paint.Count > 64)
+        {
+            throw new InvalidDataException("A part supports at most 64 paint patches.");
+        }
+
         Span<Vector2> xy = stackalloc Vector2[64];
         foreach (var patch in paint)
         {
-            if (patch?.Points is not { Count: >= 3 and <= 64 }) throw new InvalidDataException("Paint needs 3 to 64 polygon points.");
-            if (patch.Material?.Fill is null) throw new InvalidDataException("Paint needs a material fill.");
+            if (patch?.Points is not { Count: >= 3 and <= 64 })
+            {
+                throw new InvalidDataException("Paint needs 3 to 64 polygon points.");
+            }
+
+            if (patch.Material?.Fill is null)
+            {
+                throw new InvalidDataException("Paint needs a material fill.");
+            }
+
             patch.Material.Validate("paint.material");
-            if (patch.Material.Outline is not null) throw new InvalidDataException("Paint patch outlines are not supported.");
+            if (patch.Material.Outline is not null)
+            {
+                throw new InvalidDataException("Paint patch outlines are not supported.");
+            }
+
             var vertices = xy[..patch.Points.Count];
             for (var i = 0; i < patch.Points.Count; i++)
             {
@@ -74,7 +102,9 @@ public sealed record PartPaint
                 vertices[i] = point;
             }
             if (!PolygonGeometry2D.IsConvexPerimeter(vertices, 1e-8d))
+            {
                 throw new InvalidDataException("Paint patches must be convex and have area.");
+            }
         }
     }
 }
@@ -82,10 +112,16 @@ public sealed record PartPaint
 /// <summary>One cutout point or Bézier handle follows a control frame; its rest offset is derived from the drawing.</summary>
 public sealed record PartPointBinding
 {
-    public int Point { get; set; }
+    public int Point
+    {
+        get; set;
+    }
     public string Control { get; set; } = "";
     /// <summary>Optional control defining local +Y. Null follows translation only.</summary>
-    public string? Toward { get; set; }
+    public string? Toward
+    {
+        get; set;
+    }
 }
 
 /// <summary>Curve endpoints follow controls. Shapes attach to A; B optionally points their local +Y axis.</summary>
@@ -93,34 +129,76 @@ public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
     /// <summary>The shape or curve attached to this part.</summary>
-    public GeometryDefinition2D? Geometry { get; set; }
+    public GeometryDefinition2D? Geometry
+    {
+        get; set;
+    }
     /// <summary>Authored drawing style.</summary>
-    public RenderMaterialDefinition2D? Material { get; set; }
+    public RenderMaterialDefinition2D? Material
+    {
+        get; set;
+    }
     public string A { get; set; } = "";
-    public string? B { get; set; }
+    public string? B
+    {
+        get; set;
+    }
     /// <summary>Optional bone whose XY rotation carries this shape's local offset and direction.</summary>
-    public string? Frame { get; set; }
+    public string? Frame
+    {
+        get; set;
+    }
     /// <summary>Additional shape rotation in its bone frame, in radians.</summary>
-    public float Angle { get; set; }
+    public float Angle
+    {
+        get; set;
+    }
     public float ScaleX { get; set; } = 1;
     public float ScaleY { get; set; } = 1;
     public float Width { get; set; } = .4f;
     public float Height { get; set; } = .4f;
-    public float OffsetX { get; set; }
-    public float OffsetY { get; set; }
-    public float Depth { get; set; }
-    public List<PartPaint>? Paint { get; set; }
+    public float OffsetX
+    {
+        get; set;
+    }
+    public float OffsetY
+    {
+        get; set;
+    }
+    public float Depth
+    {
+        get; set;
+    }
+    public List<PartPaint>? Paint
+    {
+        get; set;
+    }
     /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
-    public List<PartPointBinding>? Bindings { get; set; }
+    public List<PartPointBinding>? Bindings
+    {
+        get; set;
+    }
     /// <summary>Optional sine bumps along a curve's normal, in units of its endpoint span. Negative bends to the other side.</summary>
-    public float WaveAmplitude { get; set; }
+    public float WaveAmplitude
+    {
+        get; set;
+    }
     public float WaveCycles { get; set; } = 1;
     /// <summary>Moving this control along the endpoint span moves the wave by the same distance.</summary>
-    public string? WavePhaseControl { get; set; }
+    public string? WavePhaseControl
+    {
+        get; set;
+    }
     public string Face { get; set; } = "none";
-    public float FaceX { get; set; }
+    public float FaceX
+    {
+        get; set;
+    }
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
-    public bool Hidden { get; set; }
+    public bool Hidden
+    {
+        get; set;
+    }
 
     [JsonIgnore]
     public RenderMaterialDefinition2D RenderMaterial => Material
@@ -129,33 +207,84 @@ public sealed record PuppetPart
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
     {
-        if (A is null || !isControl(A)) throw new InvalidDataException("Unknown control: " + A);
-        if (B is not null && !isControl(B)) throw new InvalidDataException("Unknown control: " + B);
-        if (Frame is not null && !isControl(Frame)) throw new InvalidDataException("Unknown part frame: " + Frame);
-        if (Frame is not null && B is not null) throw new InvalidDataException("A part uses either a bone frame or a toward control.");
+        if (A is null || !isControl(A))
+        {
+            throw new InvalidDataException("Unknown control: " + A);
+        }
+
+        if (B is not null && !isControl(B))
+        {
+            throw new InvalidDataException("Unknown control: " + B);
+        }
+
+        if (Frame is not null && !isControl(Frame))
+        {
+            throw new InvalidDataException("Unknown part frame: " + Frame);
+        }
+
+        if (Frame is not null && B is not null)
+        {
+            throw new InvalidDataException("A part uses either a bone frame or a toward control.");
+        }
+
         if (Geometry is not ShapeBuilder2D and not CurveDefinition2D)
+        {
             throw new InvalidDataException("A part needs a shape or curve definition.");
+        }
+
         if (Geometry is ShapeBuilder2D shape)
         {
             var built = shape.Build();
             if (built.GetOutlineVertCount(48) == 0)
+            {
                 throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
+            }
         }
-        if (Geometry is CurveDefinition2D curve) _ = curve.Build();
+        if (Geometry is CurveDefinition2D curve)
+        {
+            _ = curve.Build();
+        }
+
         var linkedCurve = Geometry is CurveDefinition2D;
-        if (linkedCurve && (B is null || A == B)) throw new InvalidDataException("A linked curve needs two different controls.");
-        if (linkedCurve && Frame is not null) throw new InvalidDataException("A linked curve cannot use a bone frame.");
+        if (linkedCurve && (B is null || A == B))
+        {
+            throw new InvalidDataException("A linked curve needs two different controls.");
+        }
+
+        if (linkedCurve && Frame is not null)
+        {
+            throw new InvalidDataException("A linked curve cannot use a bone frame.");
+        }
+
         new Limit(-1, 1).Check(WaveAmplitude, "part.waveAmplitude");
         new Limit(.1f, 16).Check(WaveCycles, "part.waveCycles");
-        if ((WaveAmplitude != 0 || WavePhaseControl is not null) && !linkedCurve) throw new InvalidDataException("Normal waves require a curve.");
-        if (WavePhaseControl is not null && !isControl(WavePhaseControl)) throw new InvalidDataException("Unknown wave phase control: " + WavePhaseControl);
+        if ((WaveAmplitude != 0 || WavePhaseControl is not null) && !linkedCurve)
+        {
+            throw new InvalidDataException("Normal waves require a curve.");
+        }
+
+        if (WavePhaseControl is not null && !isControl(WavePhaseControl))
+        {
+            throw new InvalidDataException("Unknown wave phase control: " + WavePhaseControl);
+        }
+
         new Limit(-1000, 1000).Check(Angle, "part.angle");
-        new Limit(.001f, 100).Check(Width, "part.width"); new Limit(.001f, 100).Check(Height, "part.height");
-        new Limit(-100, 100).Check(OffsetX, "part.offsetX"); new Limit(-100, 100).Check(OffsetY, "part.offsetY");
+        new Limit(.001f, 100).Check(Width, "part.width");
+        new Limit(.001f, 100).Check(Height, "part.height");
+        new Limit(-100, 100).Check(OffsetX, "part.offsetX");
+        new Limit(-100, 100).Check(OffsetY, "part.offsetY");
         new Limit(-16, 16).Check(Depth, "part.depth");
-        if (Material is null) throw new InvalidDataException("A part needs a material.");
+        if (Material is null)
+        {
+            throw new InvalidDataException("A part needs a material.");
+        }
+
         Material.Validate("part.material");
-        if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY)) throw new InvalidDataException("Part scale must be finite.");
+        if (!float.IsFinite(ScaleX) || !float.IsFinite(ScaleY))
+        {
+            throw new InvalidDataException("Part scale must be finite.");
+        }
+
         PartPaint.Check(Paint);
         if (Bindings is { Count: > 0 })
         {
@@ -169,21 +298,40 @@ public sealed record PuppetPart
             foreach (var binding in Bindings)
             {
                 if (binding is null || binding.Point < 0 || binding.Point >= pointCount || !seen.Add(binding.Point))
+                {
                     throw new InvalidDataException("Point attachments need unique valid point indices.");
+                }
+
                 if (!isControl(binding.Control) || binding.Toward is not null && !isControl(binding.Toward))
+                {
                     throw new InvalidDataException("Unknown point attachment control.");
-                if (binding.Control == binding.Toward) throw new InvalidDataException("An attachment must point toward a different control.");
+                }
+
+                if (binding.Control == binding.Toward)
+                {
+                    throw new InvalidDataException("An attachment must point toward a different control.");
+                }
             }
         }
-        if (Face != "none" && !FaceExpressions.Contains(Face)) throw new InvalidDataException("Unknown part expression: " + Face);
+        if (Face != "none" && !FaceExpressions.Contains(Face))
+        {
+            throw new InvalidDataException("Unknown part expression: " + Face);
+        }
+
         new Limit(-1, 1).Check(FaceX, "part.faceX");
     }
 }
 
 public sealed record PuppetKey
 {
-    public float Time { get; set; }
-    public PuppetPoint Position { get; set; }
+    public float Time
+    {
+        get; set;
+    }
+    public PuppetPoint Position
+    {
+        get; set;
+    }
     public Dictionary<string, PuppetPoint> Points { get; set; } = [];
 }
 
@@ -191,16 +339,25 @@ public sealed record PuppetKey
 public sealed record PuppetContact
 {
     public string End { get; set; } = "";
-    public float Start { get; set; }
+    public float Start
+    {
+        get; set;
+    }
     public float Finish { get; set; } = .5f;
-    public PuppetPoint Target { get; set; }
+    public PuppetPoint Target
+    {
+        get; set;
+    }
 }
 
 public sealed record PuppetMotion
 {
     public string Name { get; set; } = "New motion";
     public float Duration { get; set; } = 1;
-    public bool Loop { get; set; }
+    public bool Loop
+    {
+        get; set;
+    }
     public List<PuppetKey> Keys { get; set; } = [];
     public List<PuppetContact> Contacts { get; set; } = [];
 }
@@ -219,53 +376,80 @@ public sealed class PuppetDefinition
     public List<PuppetChain> Chains { get; set; } = [];
     public List<PuppetPart> Parts { get; set; } = [];
     public List<PuppetMotion> Motions { get; set; } = [new()];
-    public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
-    { WriteIndented = true, UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow, Converters = { new Vector2JsonConverter() } };
+    public static JsonSerializerOptions JsonOptions
+    {
+        get;
+    } = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = true,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        Converters = { new Vector2JsonConverter() }
+    };
 
     public string ToJson() => PartAssetJson.Write(this, Parts, JsonOptions);
     public static PuppetDefinition FromJson(string json)
     {
         PartAssetJson.RequireTypedJson(json);
         var definition = JsonSerializer.Deserialize<PuppetDefinition>(json, JsonOptions) ?? throw new InvalidDataException("Empty puppet file.");
-        definition.Validate(); return definition;
+        definition.Validate();
+        return definition;
     }
     public void Save(string path)
     {
-        Validate(); IO.AtomicFile.WriteAllText(path, ToJson());
+        Validate();
+        IO.AtomicFile.WriteAllText(path, ToJson());
     }
 
     public void Validate()
     {
-        void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
+        void Require([DoesNotReturnIf(false)] bool condition, string message)
+        {
+            if (!condition)
+            {
+                throw new InvalidDataException(message);
+            }
+        }
         void Number(float value, float min, float max, string field) => new Limit(min, max).Check(value, field);
         void Point(PuppetPoint point, string field) => point.Check(field);
         Require(Format == FormatId && Version == CurrentVersion, "Unsupported puppet format/version.");
         Require(!string.IsNullOrWhiteSpace(Name), "A character name is required.");
         Require(Controls is not null && Bones is not null && Chains is not null && Parts is not null && Motions is not null, "Puppet collections cannot be null.");
         Require(Controls.Count <= 256 && Parts.Count <= 512 && Motions.Count is > 0 and <= 128, "Puppet capacity exceeded or no motions defined.");
-        Limit.Color(Ink, "ink"); Number(LineWidth, .001f, 1, "lineWidth");
+        Limit.Color(Ink, "ink");
+        Number(LineWidth, .001f, 1, "lineWidth");
         var controls = new Dictionary<string, PuppetControl>(StringComparer.Ordinal);
         foreach (var control in Controls)
         {
             Require(control is not null && !string.IsNullOrWhiteSpace(control.Id), "Every control needs an ID.");
-            Require(controls.TryAdd(control.Id, control), "Duplicate control: " + control.Id); Point(control.Rest, control.Id);
+            Require(controls.TryAdd(control.Id, control), "Duplicate control: " + control.Id);
+            Point(control.Rest, control.Id);
         }
         void Reference(string? id) => Require(id is not null && controls.ContainsKey(id), "Unknown control: " + id);
         var parents = new Dictionary<string, string>();
         foreach (var bone in Bones)
         {
-            Require(bone is not null, "Null bone."); Reference(bone.From); Reference(bone.To);
+            Require(bone is not null, "Null bone.");
+            Reference(bone.From);
+            Reference(bone.To);
             Require(bone.From != bone.To && parents.TryAdd(bone.To, bone.From), "Bones must form a forest with one parent per control.");
         }
         foreach (var id in controls.Keys)
         {
-            var seen = new HashSet<string>(); var current = id;
-            while (parents.TryGetValue(current, out var parent)) { Require(seen.Add(current), "Bone cycle at " + current); current = parent; }
+            var seen = new HashSet<string>();
+            var current = id;
+            while (parents.TryGetValue(current, out var parent))
+            {
+                Require(seen.Add(current), "Bone cycle at " + current);
+                current = parent;
+            }
         }
         var solvedControls = new HashSet<string>();
         foreach (var chain in Chains)
         {
-            Require(chain is not null, "Null IK chain."); Reference(chain.Root); Reference(chain.Joint); Reference(chain.End);
+            Require(chain is not null, "Null IK chain.");
+            Reference(chain.Root);
+            Reference(chain.Joint);
+            Reference(chain.End);
             Require(chain.Bend is -1 or 1, "IK bend must be -1 or 1.");
             Require(parents.GetValueOrDefault(chain.Joint) == chain.Root && parents.GetValueOrDefault(chain.End) == chain.Joint, "IK needs two connected bones.");
             Require(solvedControls.Add(chain.Joint) && solvedControls.Add(chain.End), "IK chains cannot share solved controls.");
@@ -278,7 +462,11 @@ public sealed class PuppetDefinition
             while (true)
             {
                 Require(!solvedControls.Contains(current), "Nested IK chains are not supported yet.");
-                if (!parents.TryGetValue(current, out var parent)) break;
+                if (!parents.TryGetValue(current, out var parent))
+                {
+                    break;
+                }
+
                 current = parent;
             }
         }
@@ -292,19 +480,29 @@ public sealed class PuppetDefinition
         foreach (var motion in Motions)
         {
             Require(motion?.Keys is not null && motion.Contacts is not null, "Incomplete motion.");
-            Number(motion.Duration, .05f, 60, "motion.duration"); Require(motion.Keys.Count <= 4096, "Too many keys.");
+            Number(motion.Duration, .05f, 60, "motion.duration");
+            Require(motion.Keys.Count <= 4096, "Too many keys.");
             var previous = -1f;
             foreach (var key in motion.Keys)
             {
-                Require(key?.Points is not null, "Incomplete key."); Number(key.Time, 0, motion.Duration, "key.time");
-                Require(key.Time > previous, "Key times must be strictly increasing."); previous = key.Time; Point(key.Position, "key.position");
-                foreach (var (id, p) in key.Points) { Reference(id); Point(p, "key." + id); }
+                Require(key?.Points is not null, "Incomplete key.");
+                Number(key.Time, 0, motion.Duration, "key.time");
+                Require(key.Time > previous, "Key times must be strictly increasing.");
+                previous = key.Time;
+                Point(key.Position, "key.position");
+                foreach (var (id, p) in key.Points)
+                {
+                    Reference(id);
+                    Point(p, "key." + id);
+                }
             }
             foreach (var contact in motion.Contacts)
             {
                 Require(contact is not null && Chains.Any(c => c.End == contact.End), "Contacts need an IK end control.");
-                Number(contact.Start, 0, motion.Duration, "contact.start"); Number(contact.Finish, 0, motion.Duration, "contact.finish");
-                Require(contact.Finish > contact.Start, "Contact finish must follow its start."); Point(contact.Target, "contact.target");
+                Number(contact.Start, 0, motion.Duration, "contact.start");
+                Number(contact.Finish, 0, motion.Duration, "contact.finish");
+                Require(contact.Finish > contact.Start, "Contact finish must follow its start.");
+                Point(contact.Target, "contact.target");
             }
             foreach (var group in motion.Contacts.GroupBy(c => c.End))
             {
@@ -320,12 +518,17 @@ public sealed class PuppetDefinition
 
     public void RemoveControl(string id)
     {
-        Controls.RemoveAll(c => c.Id == id); Bones.RemoveAll(b => b.From == id || b.To == id);
+        Controls.RemoveAll(c => c.Id == id);
+        Bones.RemoveAll(b => b.From == id || b.To == id);
         Chains.RemoveAll(c => c.Root == id || c.Joint == id || c.End == id);
         Parts.RemoveAll(p => p.A == id || p.B == id || p.WavePhaseControl == id || p.Bindings?.Any(b => b.Control == id || b.Toward == id) == true);
         foreach (var motion in Motions)
         {
-            foreach (var key in motion.Keys) key.Points.Remove(id);
+            foreach (var key in motion.Keys)
+            {
+                key.Points.Remove(id);
+            }
+
             motion.Contacts.RemoveAll(c => !Chains.Any(chain => chain.End == c.End));
         }
     }

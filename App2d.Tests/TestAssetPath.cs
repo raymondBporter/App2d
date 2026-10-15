@@ -15,7 +15,9 @@ internal static class TestAssetPath
         {
             var candidate = Path.Combine(directory.FullName, "Assets", assetsSubdirectory);
             if (Directory.Exists(candidate))
+            {
                 return candidate;
+            }
         }
 
         throw new InvalidOperationException(

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -15,14 +16,26 @@ public static class PolygonGeometry2D
     /// <param name="collinearEpsilon">Turns this close to zero are treated as collinear.</param>
     public static bool IsConvexPerimeter(ReadOnlySpan<Vector2> vertices, double collinearEpsilon = 0d)
     {
-        if (vertices.Length < 3) return false;
+        if (vertices.Length < 3)
+        {
+            return false;
+        }
+
         var winding = 0;
         for (var i = 0; i < vertices.Length; i++)
         {
             var cross = new Vector2d(vertices[i]).Orientation(new(vertices[(i + 1) % vertices.Length]), new(vertices[(i + 2) % vertices.Length]));
-            if (Math.Abs(cross) <= collinearEpsilon) continue;
+            if (Math.Abs(cross) <= collinearEpsilon)
+            {
+                continue;
+            }
+
             var turn = Math.Sign(cross);
-            if (winding != 0 && winding != turn) return false;
+            if (winding != 0 && winding != turn)
+            {
+                return false;
+            }
+
             winding = turn;
         }
         return winding != 0;
@@ -46,7 +59,11 @@ public static class PolygonGeometry2D
         var hull = new List<Vector2>(points.Length * 2);
         foreach (var point in points)
         {
-            while (hull.Count >= 2 && new Vector2d(hull[^2]).Orientation(new(hull[^1]), new(point)) <= 0d) hull.RemoveAt(hull.Count - 1);
+            while (hull.Count >= 2 && new Vector2d(hull[^2]).Orientation(new(hull[^1]), new(point)) <= 0d)
+            {
+                hull.RemoveAt(hull.Count - 1);
+            }
+
             hull.Add(point);
         }
 
@@ -54,7 +71,11 @@ public static class PolygonGeometry2D
         for (var index = points.Length - 2; index >= 0; index--)
         {
             var point = points[index];
-            while (hull.Count > lowerCount && new Vector2d(hull[^2]).Orientation(new(hull[^1]), new(point)) <= 0d) hull.RemoveAt(hull.Count - 1);
+            while (hull.Count > lowerCount && new Vector2d(hull[^2]).Orientation(new(hull[^1]), new(point)) <= 0d)
+            {
+                hull.RemoveAt(hull.Count - 1);
+            }
+
             hull.Add(point);
         }
 
@@ -69,7 +90,11 @@ public static class PolygonGeometry2D
     public static double SignedAreaTwiceDouble(ReadOnlySpan<Vector2> vertices)
     {
         var signedAreaTwice = 0d;
-        for (var i = 0; i < vertices.Length; i++) signedAreaTwice += new Vector2d(vertices[i]).Cross(new(vertices[(i + 1) % vertices.Length]));
+        foreach (var (a, b) in MeshTopology.Edges(vertices.Length))
+        {
+            signedAreaTwice += new Vector2d(vertices[a]).Cross(new(vertices[b]));
+        }
+
         return signedAreaTwice;
     }
 

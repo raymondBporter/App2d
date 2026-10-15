@@ -67,11 +67,15 @@ public sealed class EnemySessionClientTests
         public ImmutableArray<EnemyState2D> CaptureEnemies() => Enemies.CaptureStates();
         public ImmutableArray<EnemyEvent2D> DrainEnemyEvents() => Enemies.DrainEvents();
         public void UpdateStreaming(Vector2 position) => Enemies.UpdateStreaming(_ => true);
-        public void UpdateMovingPlatforms(float dt) { }
+        public void UpdateMovingPlatforms(float dt)
+        {
+        }
         public void UpdateEnemies(float dt, Vector2 target) => Enemies.Update(dt, target);
         public void SyncEnemiesAfterPhysics() => Enemies.SyncAfterPhysics();
         public void ResolveDamage(Person2D player) => Enemies.TryResolvePlayerHits(player);
         public WorldThingSpec2D? UpdateSavePoints(float dt, Rect2D bounds) => null;
-        public void SetActiveSavePoint(long? id) { }
+        public void SetActiveSavePoint(long? id)
+        {
+        }
     }
 }

@@ -55,11 +55,13 @@ public sealed class AnimationPlayer2DTests
     {
         var clip = new AnimationClip2D<string>(["first", "last"], [.1f, .2f], isLooping: false);
         var player = new AnimationPlayer2D<string>();
-        player.Play(clip); player.Update(1);
+        player.Play(clip);
+        player.Update(1);
         Assert.True(player.IsFinished);
         Assert.False(player.IsPlaying);
         Assert.Equal("last", player.CurrentFrame);
-        player.Resume(); Assert.False(player.IsPlaying);
+        player.Resume();
+        Assert.False(player.IsPlaying);
         player.Play(clip);
         Assert.Equal("first", player.CurrentFrame);
         Assert.True(player.IsPlaying);

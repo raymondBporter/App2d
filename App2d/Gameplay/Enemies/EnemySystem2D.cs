@@ -49,7 +49,9 @@ public sealed partial class EnemySystem2D
         {
             var isEnabled = isChunkActive(registered.HomeChunk);
             if (registered.IsEnabled == isEnabled)
+            {
                 continue;
+            }
 
             registered.IsEnabled = isEnabled;
             registered.Actor.SetSimulationEnabled(isEnabled);
@@ -64,7 +66,9 @@ public sealed partial class EnemySystem2D
         foreach (var registered in _registeredEnemies)
         {
             if (registered.IsEnabled)
+            {
                 registered.Actor.Update(deltaSeconds, targetPosition);
+            }
         }
     }
 
@@ -73,7 +77,9 @@ public sealed partial class EnemySystem2D
         foreach (var registered in _registeredEnemies)
         {
             if (registered.IsEnabled)
+            {
                 registered.Actor.SyncAfterPhysics();
+            }
         }
     }
 
@@ -99,10 +105,14 @@ public sealed partial class EnemySystem2D
         foreach (var registered in _registeredEnemies)
         {
             if (!registered.IsEnabled || registered.AttackSource is null)
+            {
                 continue;
+            }
 
             foreach (var hitbox in registered.AttackSource.GetActiveAttackHitboxes())
+            {
                 yield return hitbox;
+            }
         }
     }
 
@@ -114,6 +124,9 @@ public sealed partial class EnemySystem2D
         public IEnemyActor2D Actor { get; } = actor;
         public IEnemyAttackSource2D? AttackSource { get; } = attackSource;
         public TileChunk2D HomeChunk { get; } = homeChunk;
-        public bool IsEnabled { get; set; }
+        public bool IsEnabled
+        {
+            get; set;
+        }
     }
 }

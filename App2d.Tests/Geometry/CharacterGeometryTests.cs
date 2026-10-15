@@ -48,7 +48,10 @@ public sealed class CharacterGeometryTests
         Assert.True(PartPicking2D.Distance(part, World, new(12, 17, 0)) <= 1.00001f);
         Assert.True(PartPicking2D.Distance(part, World, new(14, 19, 0)) > 1);
         foreach (var point in contour)
+        {
             Assert.InRange(PartPicking2D.Distance(part, World, point), 0f, 1.00001f);
+        }
+
         if (kind == "ellipse")
         {
             Assert.True(Vector3.Distance(new(12, 17, 3.5f), contour[0]) < .00001f);

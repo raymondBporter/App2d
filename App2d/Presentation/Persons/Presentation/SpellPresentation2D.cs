@@ -30,11 +30,13 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D sounds) : IDisposable
                     break;
                 case HealCompleted2D completed:
                     StopHeal();
-                    _pulse = .4f; _pulsePosition = completed.Position + new Vector2(0, 8);
+                    _pulse = .4f;
+                    _pulsePosition = completed.Position + new Vector2(0, 8);
                     sounds.PlayAt(SoundEffect2D.HealComplete, completed.Position);
                     break;
                 case HealCancelled2D cancelled:
-                    StopHeal(); _cancel = .18f;
+                    StopHeal();
+                    _cancel = .18f;
                     sounds.PlayAt(SoundEffect2D.HealCancel, cancelled.Position);
                     break;
             }
@@ -43,7 +45,11 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D sounds) : IDisposable
         {
             StopHeal();
         }
-        else if (!_healing) { _healing = true; _healVoice = sounds.BeginAt(SoundEffect2D.HealCharge, Center); }
+        else if (!_healing)
+        {
+            _healing = true;
+            _healVoice = sounds.BeginAt(SoundEffect2D.HealCharge, Center);
+        }
         _healVoice.SetPosition(Center);
     }
 
@@ -52,10 +58,15 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D sounds) : IDisposable
     public void Advance(float dt)
     {
         _clock += dt;
-        _pulse = Math.Max(0, _pulse - dt); _cancel = Math.Max(0, _cancel - dt);
+        _pulse = Math.Max(0, _pulse - dt);
+        _cancel = Math.Max(0, _cancel - dt);
         if (_healing)
         {
-            if (!_healVoice.IsPlaying) _healVoice = sounds.BeginAt(SoundEffect2D.HealCharge, Center);
+            if (!_healVoice.IsPlaying)
+            {
+                _healVoice = sounds.BeginAt(SoundEffect2D.HealCharge, Center);
+            }
+
             _healVoice.SetVolumeScale(.35f + .65f * _state.Spells.HealProgress, .02f);
         }
     }
@@ -87,7 +98,17 @@ public sealed class SpellPresentation2D(ISoundEffectSink2D sounds) : IDisposable
         }
     }
 
-    private void StopHeal() { _healVoice.Stop(.025f); _healVoice = default; _healing = false; }
-    public void Reset() { StopHeal(); _state = default; _pulse = _cancel = 0; }
+    private void StopHeal()
+    {
+        _healVoice.Stop(.025f);
+        _healVoice = default;
+        _healing = false;
+    }
+    public void Reset()
+    {
+        StopHeal();
+        _state = default;
+        _pulse = _cancel = 0;
+    }
     public void Dispose() => Reset();
 }

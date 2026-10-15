@@ -73,9 +73,14 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
         if (_punch.Action.IsVisible)
+        {
             yield return _punch.Action.WorldObject;
+        }
+
         if (_kick.Action.IsVisible)
+        {
             yield return _kick.Action.WorldObject;
+        }
     }
 
     public void BeginFrame(float deltaSeconds)
@@ -104,11 +109,16 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
     {
         var other = ReferenceEquals(requested, _punch) ? _kick : _punch;
         if (other.Action.IsInProgress)
+        {
             return facing;
+        }
 
         requested.Direction = MathF.Sign(facing);
         if (requested.Action.TryStart())
+        {
             AttackStarted?.Invoke(requested.Kind, requested.Action.DurationSeconds);
+        }
+
         return facing;
     }
 
@@ -151,7 +161,10 @@ public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
         Vector2 knockback)
     {
         public UnarmedAttackKind2D Kind { get; } = kind;
-        public MeleeAttack2D Action { get; } =
+        public MeleeAttack2D Action
+        {
+            get;
+        } =
             new(sourceId, new SpatialObject2D(hitboxShape), profile);
         public int Damage { get; } = damage;
         public Vector2 Knockback { get; } = knockback;

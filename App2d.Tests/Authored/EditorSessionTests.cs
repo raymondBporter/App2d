@@ -31,10 +31,13 @@ public sealed class EditorSessionTests : IDisposable
     [Fact]
     public void PingPongPreviewShowsTheLoopingClipsFarEndBeforeReversing()
     {
-        var session = Session(); session.Open("person-walk");
+        var session = Session();
+        session.Open("person-walk");
         var clip = session.ClipDocument!.Asset;
         session.Transport.EndModeOverride = PlaybackEndMode.PingPong;
-        session.Seek(0); session.TogglePlay(); session.Tick(clip.Duration);
+        session.Seek(0);
+        session.TogglePlay();
+        session.Tick(clip.Duration);
         Assert.Equal(clip.Duration, session.Transport.Time, 5);
         var shown = session.Evaluate("person")!;
         var end = PoseEvaluator.Sample(shown.Model, clip, clip.Duration);
@@ -84,11 +87,17 @@ public sealed class EditorSessionTests : IDisposable
     {
         var session = Session();
         Ok(session, session.NewVariant("tall-guard", "Tall guard", "person", "tall-thin"));
-        session.SetClip("person-walk"); session.TogglePlay(); session.Tick(.3f);
+        session.SetClip("person-walk");
+        session.TogglePlay();
+        session.Tick(.3f);
         var before = session.Evaluate("tall-guard")!;
         Assert.NotNull(before.Clip);
         var variant = session.SubjectVariant!;
-        for (var frame = 0; frame < 5; frame++) { session.Change(variant, () => variant.Asset.Build["legs"] = 1.2f + .04f * (frame + 1)); session.Tick(1 / 60f); }
+        for (var frame = 0; frame < 5; frame++)
+        {
+            session.Change(variant, () => variant.Asset.Build["legs"] = 1.2f + .04f * (frame + 1));
+            session.Tick(1 / 60f);
+        }
         session.CommitAll();
         Assert.True(session.Transport.Playing);
         var after = session.Evaluate("tall-guard")!;
@@ -102,13 +111,19 @@ public sealed class EditorSessionTests : IDisposable
     public void ADragOnASharedClipIsOneUndoStepAndReachesEveryDependentPreview()
     {
         var session = Session();
-        session.Open("person-walk"); Assert.Equal(Workspace.Animate, session.Mode);
-        session.Pin("tall-thin"); session.Pin("short-broad");
+        session.Open("person-walk");
+        Assert.Equal(Workspace.Animate, session.Mode);
+        session.Pin("tall-thin");
+        session.Pin("short-broad");
         session.Seek(.2f);
         var before = session.Scene().Select(s => s.Pose.World("chest")).ToArray();
         Assert.Equal(3, before.Length);
         session.BeginDrag();
-        for (var frame = 1; frame <= 6; frame++) session.DragControl("chest", before[0] + new Vector3(0, .02f * frame, 0));
+        for (var frame = 1; frame <= 6; frame++)
+        {
+            session.DragControl("chest", before[0] + new Vector3(0, .02f * frame, 0));
+        }
+
         session.EndDrag();
         var after = session.Scene().Select(s => s.Pose.World("chest")).ToArray();
         Assert.Equal(before[0].Y + .12f, after[0].Y, 3);
@@ -118,16 +133,22 @@ public sealed class EditorSessionTests : IDisposable
         session.Undo();
         Assert.False(clip.CanUndo);
         var undone = session.Scene().Select(s => s.Pose.World("chest")).ToArray();
-        for (var i = 0; i < 3; i++) TestModels.Near(before[i], undone[i], 1e-5f, $"subject {i}");
+        for (var i = 0; i < 3; i++)
+        {
+            TestModels.Near(before[i], undone[i], 1e-5f, $"subject {i}");
+        }
     }
 
     [Fact]
     public void WithAutokeyOffADragIsHeldUntilKeyPose()
     {
         var session = Session();
-        session.Open("person-walk"); session.AutoKey = false; session.Seek(.3f);
+        session.Open("person-walk");
+        session.AutoKey = false;
+        session.Seek(.3f);
         var chest = session.Evaluate("person")!.Pose.World("chest");
-        session.DragControl("chest", chest + new Vector3(0, .1f, 0)); session.EndDrag();
+        session.DragControl("chest", chest + new Vector3(0, .1f, 0));
+        session.EndDrag();
         Assert.True(session.HasPendingPose);
         Assert.False(session.ClipDocument!.Dirty);
         Assert.Equal(chest.Y + .1f, session.Evaluate("person")!.Pose.World("chest").Y, 3);
@@ -136,7 +157,8 @@ public sealed class EditorSessionTests : IDisposable
         Assert.True(session.ClipDocument.Dirty);
         Assert.Equal(chest.Y + .1f, session.Evaluate("person")!.Pose.World("chest").Y, 3);
 
-        session.DragControl("chest", chest); session.EndDrag();
+        session.DragControl("chest", chest);
+        session.EndDrag();
         session.Seek(.4f);
         Assert.False(session.HasPendingPose);
     }
@@ -145,9 +167,12 @@ public sealed class EditorSessionTests : IDisposable
     public void AVariantNeverEditsItsBase()
     {
         var session = Session();
-        session.Open("tall-thin"); session.EditRig = true;
-        var basis = session.Assets.Model("person")!; var head = session.Evaluate("tall-thin")!.Model.Rest["head"];
-        session.DragControl("head", head + new Vector3(0, .1f, 0)); session.EndDrag();
+        session.Open("tall-thin");
+        session.EditRig = true;
+        var basis = session.Assets.Model("person")!;
+        var head = session.Evaluate("tall-thin")!.Model.Rest["head"];
+        session.DragControl("head", head + new Vector3(0, .1f, 0));
+        session.EndDrag();
         Assert.False(basis.Dirty);
         Assert.Equal(head.Y + .1f, session.SubjectVariant!.Asset.Rest["head"].Y, 4);
         Assert.False(session.Edit(session.SubjectModel, () => { }));
@@ -169,9 +194,12 @@ public sealed class EditorSessionTests : IDisposable
                 ModelAuthoring.AddControl(model.Asset, $"hip-{i}", new(x + .15f, .4f, 0), $"knee-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"knee-{i}", new(x, 0, 0), $"foot-{i}");
                 ModelAuthoring.AddChain(model.Asset, $"foot-{i}");
-                ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}"); ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
             }
-            var shell = ModelAuthoring.AddPart(model.Asset, new Ellipse2D.Builder { Center = Vector2.Zero, Radii = new(.5f, .5f) }, "body"); shell.Width = .9f; shell.Height = .35f;
+            var shell = ModelAuthoring.AddPart(model.Asset, new Ellipse2D.Builder { Center = Vector2.Zero, Radii = new(.5f, .5f) }, "body");
+            shell.Width = .9f;
+            shell.Height = .35f;
         }));
         Assert.Equal(3, model.Asset.Chains.Count);
         Assert.DoesNotContain(model.Asset.Parts, p => p.Face != "none");
@@ -195,7 +223,8 @@ public sealed class EditorSessionTests : IDisposable
 
         var reopened = Session();
         var tripod = reopened.Assets.Resolve("tripod")!;
-        var walk = reopened.Assets.Clip("tripod-walk")!.Asset; walk.Validate(tripod);
+        var walk = reopened.Assets.Clip("tripod-walk")!.Asset;
+        walk.Validate(tripod);
         var mid = PoseEvaluator.Sample(tripod, walk, .25);
         Assert.True(mid.World("foot-1").Y > .05f, "the middle foot lifts");
         Assert.All(mid.Chains, c => Assert.True(c.Reached, c.Chain));
@@ -213,7 +242,11 @@ public sealed class EditorSessionTests : IDisposable
         Assert.All(session.Assets.Dependents("person").Clips, c => Assert.Empty(session.Assets.Problems(c)));
         Ok(session, session.Save(person));
         Assert.Equal(2, person.Asset.StructureRevision);
-        Assert.All(session.Assets.Dependents("person").Clips, c => { Assert.Equal(2, c.Asset.StructureRevision); Assert.True(c.Dirty); });
+        Assert.All(session.Assets.Dependents("person").Clips, c =>
+        {
+            Assert.Equal(2, c.Asset.StructureRevision);
+            Assert.True(c.Dirty);
+        });
         session.SaveAll();
         var reopened = Session();
         Assert.All(reopened.Assets.Documents, d => Assert.Empty(reopened.Assets.Problems(d)));
@@ -265,12 +298,14 @@ public sealed class EditorSessionTests : IDisposable
     {
         var session = Session();
         session.Open("person-walk");
-        var clip = session.ClipDocument!; var duration = clip.Asset.Duration;
+        var clip = session.ClipDocument!;
+        var duration = clip.Asset.Duration;
         session.Seek(duration * .9f);
         session.Change(clip, () => ClipAuthoring.Retime(clip.Asset, duration / 2));
         session.CommitAll();
         Assert.True(session.Transport.Time <= clip.Asset.Duration);
-        session.DragControl("chest", session.Evaluate("person")!.Pose.World("chest") + new Vector3(0, .05f, 0)); session.EndDrag();
+        session.DragControl("chest", session.Evaluate("person")!.Pose.World("chest") + new Vector3(0, .05f, 0));
+        session.EndDrag();
         Assert.Empty(session.Assets.Problems(clip));
     }
 
@@ -279,7 +314,8 @@ public sealed class EditorSessionTests : IDisposable
     {
         var session = Session();
         session.Open("tall-thin");
-        var variant = session.SubjectVariant!; var basis = session.Assets.Model(variant.Asset.Base)!;
+        var variant = session.SubjectVariant!;
+        var basis = session.Assets.Model(variant.Asset.Base)!;
         Ok(session, session.ApplyLook("sage"));
         Ok(session, session.SaveLook("mine", "Mine"));
         Assert.Contains(basis.Asset.Looks, l => l.Id == "mine");

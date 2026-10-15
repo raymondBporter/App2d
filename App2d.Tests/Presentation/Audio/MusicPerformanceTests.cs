@@ -21,9 +21,17 @@ public sealed class MusicPerformanceTests(ITestOutputHelper output)
             new("a", "A", new(Vector2.Zero, new(10,10))), new("b", "B", new(new(10,0),new(20,10)))]
         };
         var director = new WorldMusicDirector2D(soundtrack, static (_, _) => { });
-        for (var i = 0; i < 1000; i++) director.Update(content, new(i / 4 % 2 * 10 + 1, 1), .5f);
+        for (var i = 0; i < 1000; i++)
+        {
+            director.Update(content, new(i / 4 % 2 * 10 + 1, 1), .5f);
+        }
+
         var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 10000; i++) director.Update(content, new(i / 4 % 2 * 10 + 1, 1), .5f);
+        for (var i = 0; i < 10000; i++)
+        {
+            director.Update(content, new(i / 4 % 2 * 10 + 1, 1), .5f);
+        }
+
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         output.WriteLine($"10,000 zone updates including transitions: {allocated} bytes allocated.");
         Assert.Equal(0, allocated);
@@ -36,7 +44,11 @@ public sealed class MusicPerformanceTests(ITestOutputHelper output)
         using var mixer = new MusicMixer2D(new Dictionary<string, MusicCue2D> { ["a"] = cue, ["b"] = cue },
             c => new(c, [new MusicStreamTests.FakeStem(16384, static _ => .1f), new MusicStreamTests.FakeStem(16384, static _ => .2f)]));
         var buffer = new float[2048];
-        for (var i = 0; i < 100; i++) { mixer.Select(i % 2 == 0 ? "a" : "b", "explore"); mixer.Read(buffer); }
+        for (var i = 0; i < 100; i++)
+        {
+            mixer.Select(i % 2 == 0 ? "a" : "b", "explore");
+            mixer.Read(buffer);
+        }
         var before = GC.GetAllocatedBytesForCurrentThread();
         for (var i = 0; i < 1000; i++)
         {
@@ -59,11 +71,19 @@ public sealed class MusicPerformanceTests(ITestOutputHelper output)
         using var stream = new MusicStream2D(cue);
         var buffer = new float[2048];
         stream.Restart("combat");
-        for (var i = 0; i < 100; i++) stream.Read(buffer);
+        for (var i = 0; i < 100; i++)
+        {
+            stream.Read(buffer);
+        }
+
         const int blocks = 500;
         var before = GC.GetAllocatedBytesForCurrentThread();
         var start = Stopwatch.GetTimestamp();
-        for (var i = 0; i < blocks; i++) stream.Read(buffer);
+        for (var i = 0; i < blocks; i++)
+        {
+            stream.Read(buffer);
+        }
+
         var elapsed = Stopwatch.GetElapsedTime(start);
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         const double seconds = blocks * 1024d / MusicCue2D.SampleRate;
@@ -86,11 +106,19 @@ public sealed class MusicPerformanceTests(ITestOutputHelper output)
         try
         {
             Assert.True(entered.Wait(TimeSpan.FromSeconds(5)), "Audio read never entered the decoder.");
-            var control = Task.Run(() => { mixer.Select("a", "combat"); mixer.Volume = .25f; });
+            var control = Task.Run(() =>
+            {
+                mixer.Select("a", "combat");
+                mixer.Volume = .25f;
+            });
             await control.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.False(render.IsCompleted); // Controls completed while decoding remained blocked.
         }
-        finally { release.Set(); await render.WaitAsync(TimeSpan.FromSeconds(5)); }
+        finally
+        {
+            release.Set();
+            await render.WaitAsync(TimeSpan.FromSeconds(5));
+        }
     }
 
     private sealed class BlockingStem(ManualResetEventSlim entered, ManualResetEventSlim release) : IMusicStem2D
@@ -98,17 +126,32 @@ public sealed class MusicPerformanceTests(ITestOutputHelper output)
         public int Read(float[] buffer, int offset, int count)
         {
             entered.Set();
-            if (!release.Wait(TimeSpan.FromSeconds(15))) throw new TimeoutException("Test decoder was never released.");
-            buffer.AsSpan(offset, count).Clear(); return count;
+            if (!release.Wait(TimeSpan.FromSeconds(15)))
+            {
+                throw new TimeoutException("Test decoder was never released.");
+            }
+
+            buffer.AsSpan(offset, count).Clear();
+            return count;
         }
-        public void Rewind() { }
-        public void Dispose() { }
+        public void Rewind()
+        {
+        }
+        public void Dispose()
+        {
+        }
     }
 
     private static string FindRoot()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
-            if (Directory.Exists(Path.Combine(dir.FullName, "Assets/Static/audio/music"))) return dir.FullName;
+        {
+            if (Directory.Exists(Path.Combine(dir.FullName, "Assets/Static/audio/music")))
+            {
+                return dir.FullName;
+            }
+        }
+
         throw new DirectoryNotFoundException("Cannot locate music assets.");
     }
 }

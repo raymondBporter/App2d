@@ -8,11 +8,18 @@ namespace App2d.Levels;
 public static class PlaygroundMaps2D
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
-    { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
     public static Vector2 Arrival(WorldMapAsset2D map, float playerHeight, float groundProbe)
     {
         var spawn = map.PositionThings.FirstOrDefault(t => t.Enabled && t.TypeKey == "player-spawn");
-        if (spawn is not null) return new(spawn.X, spawn.Y);
+        if (spawn is not null)
+        {
+            return new(spawn.X, spawn.Y);
+        }
+
         var tiles = map.TileMap;
         var x = Math.Min(4, tiles.Width - 1);
         return tiles.Origin + new Vector2((x + .5f) * tiles.TileSize,
@@ -23,9 +30,15 @@ public static class PlaygroundMaps2D
     {
         var files = new[] { "hub.db", "sandbox-a.db", "sandbox-b.db", "world.json" };
         if (files.Any(f => File.Exists(Path.Combine(directory, f))))
+        {
             throw new IOException("Playground files already exist; refusing to replace authored maps.");
+        }
+
         if (!File.Exists(Path.Combine(directory, "level.db")))
+        {
             throw new FileNotFoundException("The existing level.db must be present.");
+        }
+
         CreateMap("hub.db", -4608, 96, 0);
         CreateMap("sandbox-a.db", 22016, 128, 2);
         CreateMap("sandbox-b.db", 27136, 128, 4);
@@ -44,11 +57,15 @@ public static class PlaygroundMaps2D
             for (var column = 0; column < width; column++)
             {
                 for (var row = 0; row < 20; row++)
+                {
                     map.SetTile(column, row, new(TileKind2D.Solid | TileKind2D.Grippable, tileset));
+                }
             }
 
             var path = Path.Combine(directory, file);
-            using (File.Open(path, FileMode.CreateNew, FileAccess.Write)) { }
+            using (File.Open(path, FileMode.CreateNew, FileAccess.Write))
+            {
+            }
             using var db = LevelDatabase2D.Open(path);
             db.Save(map, 0);
             var spawn = db.CreateThingDefinition("player-spawn", "Arrival");

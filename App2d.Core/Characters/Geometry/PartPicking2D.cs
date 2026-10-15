@@ -1,6 +1,7 @@
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Mathematics;
@@ -28,16 +29,28 @@ public static class PartPicking2D
             {
                 var path = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
                 var nearest = float.PositiveInfinity;
-                for (var i = 1; i < path.Count; i++)
-                    nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, path[i - 1].XY, path[i].XY));
+                foreach (var (start, end) in MeshTopology.Edges(path.Count, closed: false))
+                {
+                    nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, path[start].XY, path[end].XY));
+                }
+
                 return nearest / MathF.Max(part.Width, .06f);
             }
-            var a = world(part.A); var b = world(part.B!);
+            var a = world(part.A);
+            var b = world(part.B!);
             var along = b.XY - a.XY;
             var lengthSquared = along.LengthSquared();
-            if (lengthSquared < 1e-10f) return Vector2.Distance(p, a.XY) / MathF.Max(part.Width, .06f);
+            if (lengthSquared < 1e-10f)
+            {
+                return Vector2.Distance(p, a.XY) / MathF.Max(part.Width, .06f);
+            }
+
             var coordinates = Frame2D.FromYAxis(a.XY, along);
-            if (!coordinates.TryToLocal(p, out var local)) return float.PositiveInfinity;
+            if (!coordinates.TryToLocal(p, out var local))
+            {
+                return float.PositiveInfinity;
+            }
+
             var distance = GeometryDefinitionCache2D.CurveOf(curve).Distance(local) * MathF.Sqrt(lengthSquared);
             return distance / MathF.Max(part.Width, .06f);
         }
@@ -48,22 +61,36 @@ public static class PartPicking2D
             if (part.Bindings is { Count: > 0 })
             {
                 var mesh = PolygonTriangulation2D.Triangulate(PartContours2D.CutoutPoints(part), 1e-8);
-                for (var i = 0; i < mesh.Indices.Length; i += 3)
+                foreach (var (ia, ib, ic) in MeshTopology.Triangles(mesh.Indices))
                 {
-                    var a = new Vector2(points[mesh.Indices[i]].X, points[mesh.Indices[i]].Y);
-                    var b = new Vector2(points[mesh.Indices[i + 1]].X, points[mesh.Indices[i + 1]].Y);
-                    var c = new Vector2(points[mesh.Indices[i + 2]].X, points[mesh.Indices[i + 2]].Y);
-                    if (MathF.Abs(a.Orientation(b, c)) < 1e-8f) continue;
-                    var ab = a.Orientation(b, p); var bc = b.Orientation(c, p); var ca = c.Orientation(a, p);
-                    if (ab >= -1e-7f && bc >= -1e-7f && ca >= -1e-7f || ab <= 1e-7f && bc <= 1e-7f && ca <= 1e-7f) return .5f;
+                    var a = points[ia].XY;
+                    var b = points[ib].XY;
+                    var c = points[ic].XY;
+                    if (MathF.Abs(a.Orientation(b, c)) < 1e-8f)
+                    {
+                        continue;
+                    }
+
+                    var ab = a.Orientation(b, p);
+                    var bc = b.Orientation(c, p);
+                    var ca = c.Orientation(a, p);
+                    if (ab >= -1e-7f && bc >= -1e-7f && ca >= -1e-7f || ab <= 1e-7f && bc <= 1e-7f && ca <= 1e-7f)
+                    {
+                        return .5f;
+                    }
                 }
             }
-            var inside = false; var nearest = float.MaxValue;
-            for (var i = 0; i < points.Count; i++)
+            var inside = false;
+            var nearest = float.MaxValue;
+            foreach (var (ia, ib) in MeshTopology.Edges(points.Count))
             {
-                var a = new Vector2(points[i].X, points[i].Y); var b = new Vector2(points[(i + 1) % points.Count].X, points[(i + 1) % points.Count].Y);
+                var a = points[ia].XY;
+                var b = points[ib].XY;
                 nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, a, b, 1e-10f));
-                if ((a.Y > p.Y) != (b.Y > p.Y) && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X) inside = !inside;
+                if ((a.Y > p.Y) != (b.Y > p.Y) && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X)
+                {
+                    inside = !inside;
+                }
             }
             return nearest < 1e-6f ? 1 : inside && part.Bindings is not { Count: > 0 } ? .5f : 1 + nearest / MathF.Max(part.Width, part.Height);
         }
@@ -72,7 +99,11 @@ public static class PartPicking2D
             var typedFrame = PartAttachment2D.FrameOf(part, world, angle, transform);
             var shape = GeometryDefinitionCache2D.ShapeOf(typed);
             var scale = PartAttachment2D.ShapeScale(part, shape);
-            if (!typedFrame.Coordinates.TryToLocal(p, out var local)) return float.PositiveInfinity;
+            if (!typedFrame.Coordinates.TryToLocal(p, out var local))
+            {
+                return float.PositiveInfinity;
+            }
+
             var normalized = local / scale;
             return shape.ContainsPoint(normalized) ? .5f : 1 + ShapeDistance2D.Distance(normalized, shape);
         }

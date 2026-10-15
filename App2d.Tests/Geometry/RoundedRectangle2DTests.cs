@@ -59,8 +59,12 @@ public sealed class RoundedRectangle2DTests
         var model = ModelAuthoring.Empty("rounded-test", "Rounded test");
         ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
         var part = ModelAuthoring.AddPart(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "root");
-        part.Width = 2; part.Height = 1;
-        part.Geometry = ((RoundedRectangle2D.Builder)part.Geometry!).WithSize(new(part.Width, part.Height)) with { Radius = .25f };
+        part.Width = 2;
+        part.Height = 1;
+        part.Geometry = ((RoundedRectangle2D.Builder)part.Geometry!).WithSize(new(part.Width, part.Height)) with
+        {
+            Radius = .25f
+        };
         var before = PartContours2D.Contour(part, _ => Vector3.Zero);
 
         var json = model.ToJson();

@@ -10,9 +10,14 @@ public static class PersonTemplate
     {
         var model = StudyReference();
         var built = ResolvedModel.From(model, new PersonBuild { Legs = LegLength }.Apply(model, "style", "Style"));
-        foreach (var control in model.Controls) control.Rest = PuppetPoint.From(built.Rest[control.Id]);
+        foreach (var control in model.Controls)
+        {
+            control.Rest = PuppetPoint.From(built.Rest[control.Id]);
+        }
+
         model.Parts = [.. built.Parts];
-        model.Validate(); return model;
+        model.Validate();
+        return model;
     }
 
     /// <summary>The original prototype proportions used to convert its absolute animation keys. Playback retargets these clips to the current model through their reference measures.</summary>
@@ -53,16 +58,21 @@ public static class PersonTemplate
             Parts = [.. study.Parts.Select(p => p with { })],
         };
         StarterContent.AddPersonExtras(model);
-        model.Validate(); return model;
+        model.Validate();
+        return model;
     }
 
     /// <summary>Writes the Person model, its converted walk and run (and the heavy walk derived from it), the two reviewed builds and the starter entity content as authored assets.</summary>
     public static void WriteStudies(string authoredRoot)
     {
-        var model = Model(); var reference = StudyReference(); var walk = PuppetTemplates.StepStudy(); var run = PuppetTemplates.RunStudy();
+        var model = Model();
+        var reference = StudyReference();
+        var walk = PuppetTemplates.StepStudy();
+        var run = PuppetTemplates.RunStudy();
         void Write(string folder, string id, string json)
         {
-            var directory = Path.Combine(authoredRoot, folder); Directory.CreateDirectory(directory);
+            var directory = Path.Combine(authoredRoot, folder);
+            Directory.CreateDirectory(directory);
             AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
         }
         Write("models", model.Id, model.ToJson());

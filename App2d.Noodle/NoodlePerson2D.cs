@@ -65,7 +65,10 @@ internal sealed class NoodlePerson2D
     public void SelectControl(string name)
     {
         var index = Array.FindIndex(_limbs, limb => limb.Name == name);
-        if (index >= 0) _selectedLimbIndex = index;
+        if (index >= 0)
+        {
+            _selectedLimbIndex = index;
+        }
     }
 
     public void SelectNearestControl(Vector2 position)
@@ -77,7 +80,9 @@ internal sealed class NoodlePerson2D
             var limb = _limbs[limbIndex].Limb;
             var distanceSquared = Vector2.DistanceSquared(position, limb.Target);
             if (distanceSquared > bestDistanceSquared)
+            {
                 continue;
+            }
 
             bestDistanceSquared = distanceSquared;
             bestLimbIndex = limbIndex;
@@ -121,7 +126,9 @@ internal sealed class NoodlePerson2D
             var color = isSelected ? SelectedControlColor : AvailableControlColor;
             renderer.DrawWorldCircle(limb.Target, isSelected ? 15f : 10f, color, isSelected ? 3f : 2f);
             if (!isSelected)
+            {
                 continue;
+            }
 
             Span<Vector2> horizontal = [limb.Target - new Vector2(22f, 0f), limb.Target + new Vector2(22f, 0f)];
             Span<Vector2> vertical = [limb.Target - new Vector2(0f, 22f), limb.Target + new Vector2(0f, 22f)];

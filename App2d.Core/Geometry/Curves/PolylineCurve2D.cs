@@ -13,8 +13,15 @@ public sealed class PolylineCurve2D : ICurve2D
     {
         ArgumentNullException.ThrowIfNull(points);
         _points = [.. points];
-        if (_points.Length < 2) throw new ArgumentException("A polyline needs at least two points.", nameof(points));
-        foreach (var point in _points) ArgGuard.ThrowIfNotFinite(point, nameof(points));
+        if (_points.Length < 2)
+        {
+            throw new ArgumentException("A polyline needs at least two points.", nameof(points));
+        }
+
+        foreach (var point in _points)
+        {
+            ArgGuard.ThrowIfNotFinite(point, nameof(points));
+        }
     }
 
     public ReadOnlySpan<Vector2> Points => _points;
@@ -35,7 +42,10 @@ public sealed class PolylineCurve2D : ICurve2D
     {
         var nearestSquared = float.PositiveInfinity;
         for (var i = 1; i < _points.Length; i++)
+        {
             nearestSquared = MathF.Min(nearestSquared, Distance2D.DistanceSquaredToSegment(point, _points[i - 1], _points[i]));
+        }
+
         return MathF.Sqrt(nearestSquared);
     }
 

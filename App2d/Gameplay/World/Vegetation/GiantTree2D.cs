@@ -70,8 +70,16 @@ public sealed class GiantTree2D
         while (height < settings.Height * 0.9f)
         {
             AddBranch(side, height);
-            if (random.NextSingle() < 0.3f) AddBranch(-side, height);
-            if (random.NextSingle() < 0.65f) side = -side;
+            if (random.NextSingle() < 0.3f)
+            {
+                AddBranch(-side, height);
+            }
+
+            if (random.NextSingle() < 0.65f)
+            {
+                side = -side;
+            }
+
             height += Sample(settings.BranchGap, random);
         }
         Branches = branches.ToImmutable();
@@ -85,13 +93,31 @@ public sealed class GiantTree2D
         }
     }
 
-    public Vector2 Root { get; }
-    public int Seed { get; }
-    public GiantTreeSettings2D Settings { get; }
-    public Rect2D TrunkBounds { get; }
+    public Vector2 Root
+    {
+        get;
+    }
+    public int Seed
+    {
+        get;
+    }
+    public GiantTreeSettings2D Settings
+    {
+        get;
+    }
+    public Rect2D TrunkBounds
+    {
+        get;
+    }
     /// <summary>Includes the canopy and a margin for leaf motion, even when the root is off-screen.</summary>
-    public Rect2D Bounds { get; }
-    public ImmutableArray<GiantTreeBranch2D> Branches { get; }
+    public Rect2D Bounds
+    {
+        get;
+    }
+    public ImmutableArray<GiantTreeBranch2D> Branches
+    {
+        get;
+    }
 
     private static float Sample(Interval<float> range, Random random) => random.NextFloat(range.Min, range.Max);
 }

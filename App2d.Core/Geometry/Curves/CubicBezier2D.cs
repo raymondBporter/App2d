@@ -20,10 +20,22 @@ public readonly record struct CubicBezier2D : ICurve2D
         End = end;
     }
 
-    public Vector2 Start { get; }
-    public Vector2 Control1 { get; }
-    public Vector2 Control2 { get; }
-    public Vector2 End { get; }
+    public Vector2 Start
+    {
+        get;
+    }
+    public Vector2 Control1
+    {
+        get;
+    }
+    public Vector2 Control2
+    {
+        get;
+    }
+    public Vector2 End
+    {
+        get;
+    }
 
     public Vector2 Evaluate(float amount)
     {

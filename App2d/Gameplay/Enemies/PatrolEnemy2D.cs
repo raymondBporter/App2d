@@ -31,15 +31,36 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
         Health = new Health2D(health);
     }
 
-    public EntityId2D Id { get; }
-    public SpatialObject2D WorldObject { get; }
-    public PhysicsBody2D Body { get; }
-    public Health2D Health { get; }
+    public EntityId2D Id
+    {
+        get;
+    }
+    public SpatialObject2D WorldObject
+    {
+        get;
+    }
+    public PhysicsBody2D Body
+    {
+        get;
+    }
+    public Health2D Health
+    {
+        get;
+    }
     public CombatFaction2D Faction => CombatFaction2D.Enemy;
     public int ContactDamage => 1;
-    public float PatrolMinX { get; }
-    public float PatrolMaxX { get; }
-    public float Speed { get; }
+    public float PatrolMinX
+    {
+        get;
+    }
+    public float PatrolMaxX
+    {
+        get;
+    }
+    public float Speed
+    {
+        get;
+    }
     public float Facing => _direction;
     public bool IsStunned => _stunSeconds > 0f;
     public bool IsAlive => Health.IsAlive;
@@ -47,14 +68,18 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
     public void SetSimulationEnabled(bool isEnabled)
     {
         if (!IsAlive)
+        {
             return;
+        }
 
         Body.IsCollider = isEnabled;
         Body.MotionType = isEnabled
             ? BodyMotionType2D.Dynamic
             : BodyMotionType2D.Static;
         if (!isEnabled)
+        {
             Body.LinearVelocity = Vector2.Zero;
+        }
     }
 
     public bool TryRegisterHit(EntityId2D attackSourceId, int attackId)
@@ -73,15 +98,21 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
     public void Update(float deltaSeconds)
     {
         if (!IsAlive)
+        {
             return;
+        }
 
         _stunSeconds = Math.Max(0f, _stunSeconds - deltaSeconds);
 
         var x = WorldObject.Transform.Position.X;
         if (x <= PatrolMinX)
+        {
             _direction = 1f;
+        }
         else if (x >= PatrolMaxX)
+        {
             _direction = -1f;
+        }
 
         if (_stunSeconds <= 0f)
         {
@@ -95,7 +126,9 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
     public bool TakeDamage(int damage, Vector2 knockback)
     {
         if (!Health.Damage(damage))
+        {
             return false;
+        }
 
         if (!IsAlive)
         {

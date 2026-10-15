@@ -22,7 +22,11 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
     /// <summary>The caller delivers each session event once; a miss never creates an effect.</summary>
     public void Present(CombatDamage2D damage)
     {
-        if (damage.Contact is not { Kind: CombatImpactKind2D.Sword } contact) return;
+        if (damage.Contact is not { Kind: CombatImpactKind2D.Sword } contact)
+        {
+            return;
+        }
+
         var burst = _bursts.FirstOrDefault(b => b.Age >= b.Duration);
         if (burst is null)
         {
@@ -47,7 +51,11 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
     public void Advance(float dt)
     {
         ArgGuard.ThrowIfNegativeOrNotFinite(dt);
-        foreach (var burst in _bursts) { burst.Age += dt; Draw(burst); }
+        foreach (var burst in _bursts)
+        {
+            burst.Age += dt;
+            Draw(burst);
+        }
     }
 
     private void Draw(Burst burst)
@@ -58,7 +66,11 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
         {
             var (edge, fill) = burst.Pieces[i];
             edge.IsVisible = fill.IsVisible = live;
-            if (!live) continue;
+            if (!live)
+            {
+                continue;
+            }
+
             var angle = burst.Angle + Angles[i];
             var axis = Polar2D.Direction(angle);
             var distance = (3 + 17 * t) * burst.Size;
@@ -76,17 +88,34 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
 
     public void Reset()
     {
-        foreach (var burst in _bursts) { burst.Age = burst.Duration; Draw(burst); }
+        foreach (var burst in _bursts)
+        {
+            burst.Age = burst.Duration;
+            Draw(burst);
+        }
     }
 
     public void Dispose()
     {
         foreach (var burst in _bursts)
-            foreach (var (edge, fill) in burst.Pieces) { scene.Remove(edge); scene.Remove(fill); }
+        {
+            foreach (var (edge, fill) in burst.Pieces)
+            {
+                scene.Remove(edge);
+                scene.Remove(fill);
+            }
+        }
+
         _bursts.Clear();
     }
 
-    private sealed class Ink : IShader2D { public Color BaseColor { get; set; } }
+    private sealed class Ink : IShader2D
+    {
+        public Color BaseColor
+        {
+            get; set;
+        }
+    }
 
     private sealed class Burst
     {
@@ -100,7 +129,9 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
             {
                 var edge = new WorldObject2D(Shard, new Ink()) { ZIndex = 5, IsVisible = false };
                 var fill = new WorldObject2D(Shard, new Ink()) { ZIndex = 6, IsVisible = false };
-                scene.Add(edge); scene.Add(fill); Pieces[i] = (edge, fill);
+                scene.Add(edge);
+                scene.Add(fill);
+                Pieces[i] = (edge, fill);
             }
         }
     }

@@ -19,7 +19,9 @@ public sealed class ContactDamageSystem2D(
     {
         ArgGuard.ThrowIfNull(target);
         if (target.IsDashing || target.DownAttackBouncedThisFrame || !target.IsAlive)
+        {
             return false;
+        }
 
         _collision.Overlap(
             target.WorldObject,

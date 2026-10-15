@@ -53,7 +53,12 @@ public sealed class KinematicEntity2DTests
     [InlineData("smoothest", .70556640625f)]
     public void EasedPingPongCurveHasContinuousPositionAndZeroTurnaroundSpeed(string kind, float quarterPosition)
     {
-        var easing = kind switch { "smoother" => Easing.Smoother, "smoothest" => Easing.Smoothest, _ => Easing.Smooth };
+        var easing = kind switch
+        {
+            "smoother" => Easing.Smoother,
+            "smoothest" => Easing.Smoothest,
+            _ => Easing.Smooth
+        };
         var motion = new CurveMotion2D(
             new LineSegmentCurve2D(Vector2.Zero, new Vector2(10f, 0f)),
             2d,

@@ -28,7 +28,10 @@ public sealed partial class ConvexPolygon2D : IConvexShape2D
     public ReadOnlySpan<Vector2> Vertices => _vertices;
 
     /// <inheritdoc/>
-    public float Area { get; }
+    public float Area
+    {
+        get;
+    }
 
     /// <inheritdoc/>
     public float Diameter => Diameter2D.Polygon(_vertices);

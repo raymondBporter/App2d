@@ -76,7 +76,9 @@ public sealed class GameHost : IDisposable
     private void OnTick(object? sender, EventArgs e)
     {
         if (_consoleView.IsOpen && _surface.Focused)
+        {
             _consoleView.FocusInput();
+        }
 
         var totalTime = _clock.Elapsed.TotalSeconds;
         var elapsedSeconds = Math.Clamp(totalTime - _previousTime, 0d, MaximumFrameSeconds);
@@ -92,8 +94,15 @@ public sealed class GameHost : IDisposable
         // Painting drives the UI first, then simulation, then the world and tool UI rendering.
         _surface.Refresh();
         // Minimized surfaces do not paint, but the fixed simulation still advances.
-        if (_advancedFrameNumber != _renderFrameTime.FrameNumber) AdvanceGame();
-        if (_closeRequested) _window.Close();
+        if (_advancedFrameNumber != _renderFrameTime.FrameNumber)
+        {
+            AdvanceGame();
+        }
+
+        if (_closeRequested)
+        {
+            _window.Close();
+        }
     }
 
     private void AdvanceGame()
@@ -125,7 +134,10 @@ public sealed class GameHost : IDisposable
         {
             var title = _game.WindowTitle;
             if (!string.Equals(_window.Text, title, StringComparison.Ordinal))
+            {
                 _window.Text = title;
+            }
+
             _nextTitleUpdateTime = _renderFrameTime.TotalSeconds + 0.25d;
         }
     }
@@ -134,7 +146,11 @@ public sealed class GameHost : IDisposable
     {
         _toolUi?.BeginFrame(device, _renderFrameTime);
         _input.SetToolCapture(_toolUi?.CaptureKeyboard ?? false, _toolUi?.CaptureMouse ?? false);
-        if (_advancedFrameNumber != _renderFrameTime.FrameNumber) AdvanceGame();
+        if (_advancedFrameNumber != _renderFrameTime.FrameNumber)
+        {
+            AdvanceGame();
+        }
+
         _renderer ??= new Renderer2D(_game.Camera, device);
         _renderer.BeginFrame(width, height, _frameTime);
         try
@@ -183,7 +199,9 @@ public sealed class GameHost : IDisposable
     private void OnWindowKeyPress(object? sender, KeyPressEventArgs e)
     {
         if (_consoleView.IsOpen && _consoleView.InsertCharacter(e.KeyChar))
+        {
             e.Handled = true;
+        }
     }
 
     private void SetConsoleOpen(bool isOpen)
@@ -218,7 +236,9 @@ public sealed class GameHost : IDisposable
     public void Dispose()
     {
         if (_disposed)
+        {
             return;
+        }
 
         _disposed = true;
         _timer.Dispose();

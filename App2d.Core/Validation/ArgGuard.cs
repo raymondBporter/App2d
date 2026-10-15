@@ -14,14 +14,20 @@ public static partial class ArgGuard
     public static void ThrowIfNull<T>([NotNull] T? value,
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (value is null) ThrowNullException(paramName);
+        if (value is null)
+        {
+            ThrowNullException(paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNan<T>([NotNull] T value,
     [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : struct, INumber<T>
     {
-        if (T.IsNaN(value)) ThrowNaNException(paramName);
+        if (T.IsNaN(value))
+        {
+            ThrowNaNException(paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,7 +43,10 @@ public static partial class ArgGuard
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         ThrowIfNull(value, paramName);
-        if (string.IsNullOrWhiteSpace(value)) ThrowInvalid("Value cannot be empty or whitespace.", paramName);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            ThrowInvalid("Value cannot be empty or whitespace.", paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,7 +63,9 @@ public static partial class ArgGuard
     {
         ThrowIfNegative(minimumLength);
         if (value.Length < minimumLength)
+        {
             ThrowOutOfRange(value.Length, $"Collection must contain at least {minimumLength} items.", paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -62,14 +73,22 @@ public static partial class ArgGuard
         [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         foreach (var item in value)
-            if (item is null) ThrowInvalid("Collection cannot contain null values.", paramName);
+        {
+            if (item is null)
+            {
+                ThrowInvalid("Collection cannot contain null values.", paramName);
+            }
+        }
     }
 
     /// <summary>For domain-specific argument rules that do not fit a numeric guard.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIf([DoesNotReturnIf(true)] bool invalidCondition, string message, string? paramName = null)
     {
-        if (invalidCondition) ThrowInvalid(message, paramName);
+        if (invalidCondition)
+        {
+            ThrowInvalid(message, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

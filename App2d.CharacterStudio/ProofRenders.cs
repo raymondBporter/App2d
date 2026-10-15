@@ -13,7 +13,10 @@ internal sealed partial class ProofRenders : Game
 {
     private static readonly JsonSerializerOptions ManifestJsonOptions = new() { WriteIndented = true };
 
-    public enum Mode { Motion, Entities, MoveReview, Weapons, SwingLab, Wardrobe, Quadrupeds, Pterosaur }
+    public enum Mode
+    {
+        Motion, Entities, MoveReview, Weapons, SwingLab, Wardrobe, Quadrupeds, Pterosaur
+    }
 
     private readonly GraphicsDeviceManager _graphics;
     private readonly string _assetRoot, _smokePath;
@@ -24,7 +27,9 @@ internal sealed partial class ProofRenders : Game
     /// <param name="assetRoot">The characters folder holding <c>authored</c>.</param>
     public ProofRenders(string assetRoot, string output, Mode mode)
     {
-        _assetRoot = assetRoot; _smokePath = output; _mode = mode;
+        _assetRoot = assetRoot;
+        _smokePath = output;
+        _mode = mode;
         _graphics = new(this)
         {
             GraphicsProfile = GraphicsProfile.HiDef,
@@ -36,20 +41,42 @@ internal sealed partial class ProofRenders : Game
         Window.Title = "Character proof renders | App2d";
     }
 
-    protected override void LoadContent() { _renderer = new(GraphicsDevice); Directory.CreateDirectory(_smokePath); }
+    protected override void LoadContent()
+    {
+        _renderer = new(GraphicsDevice);
+        Directory.CreateDirectory(_smokePath);
+    }
 
     protected override void Draw(GameTime time)
     {
-        var more = _mode switch { Mode.Pterosaur => RenderPterosaurProof(), Mode.Quadrupeds => RenderQuadrupedProof(), Mode.Motion => PrepareMotionProof(), Mode.Entities => PrepareEntityProof(), Mode.Weapons => RenderWeaponProof(), Mode.Wardrobe => RenderWardrobeProof(), Mode.SwingLab => RenderSwingLab(), _ => RenderMoveReview() };
+        var more = _mode switch
+        {
+            Mode.Pterosaur => RenderPterosaurProof(),
+            Mode.Quadrupeds => RenderQuadrupedProof(),
+            Mode.Motion => PrepareMotionProof(),
+            Mode.Entities => PrepareEntityProof(),
+            Mode.Weapons => RenderWeaponProof(),
+            Mode.Wardrobe => RenderWardrobeProof(),
+            Mode.SwingLab => RenderSwingLab(),
+            _ => RenderMoveReview()
+        };
         _smokeIndex++;
         GraphicsDevice.SetRenderTarget(null);
-        if (!more) { Exit(); return; }
+        if (!more)
+        {
+            Exit();
+            return;
+        }
         base.Draw(time);
     }
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { _proofTarget?.Dispose(); _renderer?.Dispose(); }
+        if (disposing)
+        {
+            _proofTarget?.Dispose();
+            _renderer?.Dispose();
+        }
         base.Dispose(disposing);
     }
 }

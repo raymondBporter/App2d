@@ -30,7 +30,8 @@ internal sealed class AngeliaGalleryApp : Game
 
     public AngeliaGalleryApp(string assetRoot, string? snapshotDir = null)
     {
-        _assetRoot = assetRoot; _snapshotDir = snapshotDir;
+        _assetRoot = assetRoot;
+        _snapshotDir = snapshotDir;
         _graphics = new(this)
         {
             GraphicsProfile = GraphicsProfile.HiDef,
@@ -39,14 +40,21 @@ internal sealed class AngeliaGalleryApp : Game
             PreferredBackBufferWidth = 1500,
             PreferredBackBufferHeight = 900
         };
-        Window.Title = "AngeliA poses on App2d figures"; Window.AllowUserResizing = true; IsMouseVisible = true;
+        Window.Title = "AngeliA poses on App2d figures";
+        Window.AllowUserResizing = true;
+        IsMouseVisible = true;
     }
 
     protected override void LoadContent()
     {
-        _renderer = new(GraphicsDevice); _gui = new(GraphicsDevice, new MonoGameImGuiPlatform(this));
+        _renderer = new(GraphicsDevice);
+        _gui = new(GraphicsDevice, new MonoGameImGuiPlatform(this));
         var catalog = AuthoredCatalog.Load(Path.Combine(_assetRoot, "authored"));
-        if (catalog.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
+        if (catalog.Errors.Count > 0)
+        {
+            throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
+        }
+
         _model = catalog.Resolve("person");
         _rig = new(PoseEvaluator.Rest(_model).Points);
     }
@@ -78,7 +86,8 @@ internal sealed class AngeliaGalleryApp : Game
             int x = i % Columns * cellW, y = i / Columns * cellH;
             GraphicsDevice.Viewport = new(x, y, cellW, cellH);
             var projection = PointCharacterRenderer.Projection(cellW, cellH, new(cellW * .5f, cellH * .8f), ppu);
-            _ground.Clear(); _ground.Line(new(-1.2f, 0, 1), new(1.2f, 0, 1), 1.5f / ppu, new Color(154, 169, 158));
+            _ground.Clear();
+            _ground.Line(new(-1.2f, 0, 1), new(1.2f, 0, 1), 1.5f / ppu, new Color(154, 169, 158));
             _renderer.Draw(_ground, projection, Matrix.Identity, writeDepth: false);
             _renderer.Draw(_drawings[i].Mesh, projection, Matrix.Identity);
             labels.AddText(new System.Numerics.Vector2(x + 12, y + 8), 0xFF3A3A3A, name);
@@ -89,15 +98,28 @@ internal sealed class AngeliaGalleryApp : Game
         {
             GraphicsDevice.SetRenderTarget(null);
             Directory.CreateDirectory(_snapshotDir!);
-            using (var stream = File.Create(Path.Combine(_snapshotDir!, $"gallery-{frame:D3}.png"))) _snapshotTarget.SaveAsPng(stream, _snapshotTarget.Width, _snapshotTarget.Height);
-            if (++_snapshotIndex >= SnapshotFrames.Length) { Exit(); return; }
+            using (var stream = File.Create(Path.Combine(_snapshotDir!, $"gallery-{frame:D3}.png")))
+            {
+                _snapshotTarget.SaveAsPng(stream, _snapshotTarget.Width, _snapshotTarget.Height);
+            }
+
+            if (++_snapshotIndex >= SnapshotFrames.Length)
+            {
+                Exit();
+                return;
+            }
         }
         base.Draw(time);
     }
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { _snapshotTarget?.Dispose(); _renderer?.Dispose(); _gui?.Dispose(); }
+        if (disposing)
+        {
+            _snapshotTarget?.Dispose();
+            _renderer?.Dispose();
+            _gui?.Dispose();
+        }
         base.Dispose(disposing);
     }
 }

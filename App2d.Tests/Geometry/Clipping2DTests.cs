@@ -73,7 +73,10 @@ public sealed class Clipping2DTests
         var halfSpace = HalfSpace2D.Builder.Create(new(1, 1), 2);
         var count = PolygonClipping2D.ClipRectangleToHalfSpace(Rectangle, halfSpace.Normal, halfSpace.Offset, output);
         Assert.Equal(5, count);
-        foreach (var point in output[..count]) Assert.True(halfSpace.ContainsPoint(point));
+        foreach (var point in output[..count])
+        {
+            Assert.True(halfSpace.ContainsPoint(point));
+        }
     }
 
     [Fact]

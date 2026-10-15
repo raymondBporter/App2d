@@ -51,11 +51,15 @@ public sealed class DeveloperConsole
     public ConsoleCommandResult Execute(string commandLine)
     {
         if (string.IsNullOrWhiteSpace(commandLine))
+        {
             return ConsoleCommandResult.Empty;
+        }
 
         var tokens = Tokenize(commandLine);
         if (tokens.Count == 0)
+        {
             return ConsoleCommandResult.Empty;
+        }
 
         var name = tokens[0];
         if (_commands.TryGetValue(name, out var command))
@@ -78,7 +82,9 @@ public sealed class DeveloperConsole
         }
 
         if (!_variables.TryGetValue(name, out var variable))
+        {
             return ConsoleCommandResult.From($"unknown variable or command '{name}'. Type 'help' for usage.");
+        }
 
         return tokens.Count == 1
             ? ConsoleCommandResult.From(variable.DisplayValue)
@@ -97,7 +103,9 @@ public sealed class DeveloperConsole
     private ConsoleCommandResult SetVariable(string name, string value)
     {
         if (!_variables.TryGetValue(name, out var variable))
+        {
             return ConsoleCommandResult.From($"unknown variable '{name}'.");
+        }
 
         return variable.TrySet(value, out var error)
             ? ConsoleCommandResult.From(variable.DisplayValue)
@@ -118,7 +126,9 @@ public sealed class DeveloperConsole
             }
 
             if (_commands.TryGetValue(name, out var command))
+            {
                 return ConsoleCommandResult.From($"{command.Name} - {command.Description}");
+            }
 
             return ConsoleCommandResult.From($"no variable or command named '{name}'.");
         }
@@ -147,11 +157,19 @@ public sealed class DeveloperConsole
     private ConsoleCommandResult Toggle(IReadOnlyList<string> arguments)
     {
         if (arguments.Count != 1)
+        {
             return ConsoleCommandResult.From("usage: toggle <boolean-variable>");
+        }
+
         if (!_variables.TryGetValue(arguments[0], out var variable))
+        {
             return ConsoleCommandResult.From($"unknown variable '{arguments[0]}'.");
+        }
+
         if (variable.ValueType != typeof(bool))
+        {
             return ConsoleCommandResult.From($"'{variable.Name}' is not a boolean variable.");
+        }
 
         return SetVariable(variable.Name, (!(bool)variable.Value).ToString(CultureInfo.InvariantCulture));
     }
@@ -168,7 +186,10 @@ public sealed class DeveloperConsole
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
         name = name.Trim();
         if (!name.All(character => char.IsLetterOrDigit(character) || character is '_' or '.'))
+        {
             ArgGuard.ThrowInvalid(name, "Console names may only contain letters, digits, underscores, and periods.");
+        }
+
         return name;
     }
 
@@ -183,9 +204,14 @@ public sealed class DeveloperConsole
             if (quote != '\0')
             {
                 if (character == quote)
+                {
                     quote = '\0';
+                }
                 else
+                {
                     current.Append(character);
+                }
+
                 continue;
             }
 
@@ -208,7 +234,10 @@ public sealed class DeveloperConsole
         }
 
         if (current.Length > 0)
+        {
             tokens.Add(current.ToString());
+        }
+
         return tokens;
     }
 
@@ -275,7 +304,10 @@ public sealed class DeveloperConsole
         private static bool TryParseBoolean(string text, out bool value)
         {
             if (bool.TryParse(text, out value))
+            {
                 return true;
+            }
+
             if (text.Equals("on", StringComparison.OrdinalIgnoreCase) || text == "1")
             {
                 value = true;

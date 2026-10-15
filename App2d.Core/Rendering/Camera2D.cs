@@ -55,7 +55,11 @@ public sealed class Camera2D
         get;
         set
         {
-            if (value is { } height) ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
+            if (value is { } height)
+            {
+                ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
+            }
+
             field = value;
             Position = Position;
         }
@@ -106,7 +110,9 @@ public sealed class Camera2D
         ArgGuard.ThrowIfNotFinite(desiredPosition);
         ArgGuard.ThrowIfNotFiniteOrNegative(padding);
         if (WorldBounds is not { } bounds)
+        {
             return desiredPosition;
+        }
 
         var halfView = VisibleWorldBounds.Size / 2f + new Vector2(padding);
         return new Vector2(

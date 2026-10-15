@@ -20,12 +20,18 @@ public sealed partial class RoundedRectangle2D : IConvexShape2D
     }
 
     /// <summary>The outer axis-aligned rectangle containing the rounded shape.</summary>
-    public Rect2D OuterRect { get; }
+    public Rect2D OuterRect
+    {
+        get;
+    }
     /// <summary>The inset rectangle expanded by Radius to form the rounded shape. It may collapse to a segment or point.</summary>
     public Rect2D InnerRect => new(Min + new Vector2(Radius), Max - new Vector2(Radius));
     public Vector2 Min => OuterRect.Min;
     public Vector2 Max => OuterRect.Max;
-    public float Radius { get; }
+    public float Radius
+    {
+        get;
+    }
     public float Area => Area2D.RoundedRectangle(Min, Max, Radius);
 
     /// <inheritdoc/>

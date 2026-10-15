@@ -18,8 +18,14 @@ public readonly record struct Polar2D
         AngleRadians = angleRadians;
     }
 
-    public float Radius { get; }
-    public float AngleRadians { get; }
+    public float Radius
+    {
+        get;
+    }
+    public float AngleRadians
+    {
+        get;
+    }
 
     public void Deconstruct(out float radius, out float angleRadians)
     {

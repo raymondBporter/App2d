@@ -56,7 +56,10 @@ public sealed class ShapeBuilderAuthoringTests
     public void DefinitionsAreRecordsSoEditorsCanUseWithExpressions()
     {
         var circle = new Circle2D.Builder { Center = new(1, 2), Radius = 3 };
-        var moved = circle with { Center = new(5, 5) };
+        var moved = circle with
+        {
+            Center = new(5, 5)
+        };
         Assert.Equal(3f, moved.Radius);
         Assert.Equal(new Vector2(5, 5), Assert.IsType<Circle2D>(moved.Build()).Center);
         Assert.Equal(circle, new Circle2D.Builder { Center = new(1, 2), Radius = 3 });

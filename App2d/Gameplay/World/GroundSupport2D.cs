@@ -22,7 +22,9 @@ public static class GroundSupport2D
                 : contact.Second == body && -contact.Geometry.Normal.Y >= MinimumNormalY ? contact.First
                 : null;
             if (other is not null && canSupport(other) && (support is not { } best || other.LinearVelocity.Y > best.Y))
+            {
                 support = other.LinearVelocity;
+            }
         }
         return support;
     }

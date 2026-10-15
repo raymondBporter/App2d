@@ -61,7 +61,10 @@ public sealed class VegetationPatch2D
             var density = Density(position, style);
             var skip = random.NextSingle() >= density;
             if (sprigs.NextSingle() < style.SprigChance)
+            {
                 AddSprig(blades, position + style.Spacing * sprigs.NextFloat(-0.5f, 0.5f), groundY, style, sprigs);
+            }
+
             var tall = random.NextSingle() < style.TallChance;
             var layer = random.NextSingle() < style.FrontChance ? VegetationLayer2D.Front : VegetationLayer2D.Back;
             var height = tall
@@ -137,8 +140,16 @@ public sealed class VegetationPatch2D
     /// </summary>
     public static float Density(float worldX, VegetationStyle2D style)
     {
-        if (style.Coverage >= 1f) return 1f;
-        if (style.Coverage <= 0f) return 0f;
+        if (style.Coverage >= 1f)
+        {
+            return 1f;
+        }
+
+        if (style.Coverage <= 0f)
+        {
+            return 0f;
+        }
+
         var noise = 0.65f * ValueNoise(worldX / style.PatchWidth) +
             0.35f * ValueNoise(worldX / (style.PatchWidth * 0.37f) + 17.3f);
         var threshold = 1f - style.Coverage;
@@ -175,7 +186,11 @@ public sealed class VegetationPatch2D
         float? cutHeight = null,
         float cutRoughness = 0f)
     {
-        if (cutHeight is { } height) ArgGuard.ThrowIfNotFiniteOrNegative(height);
+        if (cutHeight is { } height)
+        {
+            ArgGuard.ThrowIfNotFiniteOrNegative(height);
+        }
+
         ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(cutRoughness, 0f, 1f);
 
         if (layer == VegetationLayer2D.Back)
@@ -195,29 +210,47 @@ public sealed class VegetationPatch2D
         foreach (var blade in _blades)
         {
             if (blade.Layer != layer || !IsVisible(blade.Root.X, blade.Height, visibleLeft, visibleRight))
+            {
                 continue;
+            }
 
             var end = cutHeight is { } cut ? CutWeight(blade, cut, cutRoughness) : 1f;
-            if (end <= 0f) continue;
+            if (end <= 0f)
+            {
+                continue;
+            }
+
             var points = Math.Min(SegmentCount, (int)MathF.Ceiling(end * SegmentCount));
 
             // Ink goes down first and the fill covers its inner half, so only a clean outer edge shows.
             // Left edge up, across the tip (or the cut), then the right edge down.
             var count = 0;
             for (var index = 0; index < points; index++)
+            {
                 outline[count++] = Edge(blade, index / (float)SegmentCount, wind, -1f);
+            }
+
             outline[count++] = Edge(blade, end, wind, -1f);
-            if (end < 1f) outline[count++] = Edge(blade, end, wind, 1f);
+            if (end < 1f)
+            {
+                outline[count++] = Edge(blade, end, wind, 1f);
+            }
+
             for (var index = points - 1; index >= 0; index--)
+            {
                 outline[count++] = Edge(blade, index / (float)SegmentCount, wind, 1f);
+            }
+
             renderer.DrawWorldPolyline(outline[..count], InkColor, Ink(renderer, OutlineWidth * 2f));
 
             for (var index = 0; index < points; index++)
             {
                 var section = Section(blade, index / (float)SegmentCount,
                     Math.Min((index + 1f) / SegmentCount, end), wind, 1f, blade.Color);
-                quad[0] = section.A; quad[1] = section.B;
-                quad[2] = section.C; quad[3] = section.D;
+                quad[0] = section.A;
+                quad[1] = section.B;
+                quad[2] = section.C;
+                quad[3] = section.D;
                 renderer.DrawWorldConvexPolygon(quad, section.Color);
             }
         }
@@ -235,13 +268,21 @@ public sealed class VegetationPatch2D
         foreach (var blade in _blades)
         {
             var start = CutWeight(blade, cutHeight, cutRoughness);
-            if (start >= 1f) continue;
+            if (start >= 1f)
+            {
+                continue;
+            }
+
             var sections = new List<VegetationTipPolygon2D>(SegmentCount);
             for (var index = 0; index < SegmentCount; index++)
             {
                 var from = Math.Max(start, index / (float)SegmentCount);
                 var to = (index + 1f) / SegmentCount;
-                if (from >= to) continue;
+                if (from >= to)
+                {
+                    continue;
+                }
+
                 var section = Section(blade, from, to, wind, ClippingWidthScale, _style.LightColor);
                 sections.Add(new([section.A, section.B, section.C, section.D], section.Color, null, 0f));
             }
@@ -250,7 +291,11 @@ public sealed class VegetationPatch2D
 
         foreach (var flower in _flowers)
         {
-            if (!IsSevered(flower, cutHeight)) continue;
+            if (!IsSevered(flower, cutHeight))
+            {
+                continue;
+            }
+
             var head = FlowerHead(flower, wind);
             var scale = _style.BladeWidth / 4.5f;
             for (var petal = 0; petal < 5; petal++)
@@ -267,7 +312,10 @@ public sealed class VegetationPatch2D
         var scale = _style.BladeWidth / 4.5f;
         Span<Vector2> stem = stackalloc Vector2[SegmentCount + 1];
         for (var index = 0; index <= SegmentCount; index++)
+        {
             stem[index] = FlowerPoint(flower, index / (float)SegmentCount, wind);
+        }
+
         renderer.DrawWorldPolyline(stem, InkColor, Ink(renderer, 1.9f));
         renderer.DrawWorldPolyline(stem, StemColor, Ink(renderer, 0.85f));
 
@@ -279,12 +327,17 @@ public sealed class VegetationPatch2D
         for (var index = 0; index < 2; index++)
         {
             var section = Section(leaf, index * 0.5f, (index + 1) * 0.5f, wind, 1f, leaf.Color);
-            quad[0] = section.A; quad[1] = section.B; quad[2] = section.C; quad[3] = section.D;
+            quad[0] = section.A;
+            quad[1] = section.B;
+            quad[2] = section.C;
+            quad[3] = section.D;
             renderer.DrawWorldConvexPolygon(quad, section.Color);
         }
-        outline[0] = Edge(leaf, 0f, wind, -1f); outline[1] = Edge(leaf, 0.5f, wind, -1f);
+        outline[0] = Edge(leaf, 0f, wind, -1f);
+        outline[1] = Edge(leaf, 0.5f, wind, -1f);
         outline[2] = Edge(leaf, 1f, wind, -1f);
-        outline[3] = Edge(leaf, 0.5f, wind, 1f); outline[4] = Edge(leaf, 0f, wind, 1f);
+        outline[3] = Edge(leaf, 0.5f, wind, 1f);
+        outline[4] = Edge(leaf, 0f, wind, 1f);
         renderer.DrawWorldPolyline(outline, InkColor, Ink(renderer, DetailOutlineWidth));
 
         var head = FlowerHead(flower, wind);
@@ -310,7 +363,10 @@ public sealed class VegetationPatch2D
     {
         var points = new Vector2[10];
         for (var index = 0; index < points.Length; index++)
+        {
             points[index] = center + Polar2D.ToCartesian(radius, index / (float)points.Length * MathF.Tau);
+        }
+
         return new(points, color, InkColor, DetailOutlineWidth * radius / 3.8f);
     }
 

@@ -10,7 +10,10 @@ public sealed class VegetationBladeTip2D
 {
     private readonly VegetationTipPolygon2D[] _polygons;
     private readonly Rect2D _localBounds;
-    public Vector2 ReleasePosition { get; }
+    public Vector2 ReleasePosition
+    {
+        get;
+    }
 
     internal VegetationBladeTip2D(IReadOnlyList<VegetationTipPolygon2D> polygons)
     {
@@ -32,9 +35,16 @@ public sealed class VegetationBladeTip2D
         {
             var world = points[..polygon.Points.Length];
             for (var index = 0; index < world.Length; index++)
+            {
                 world[index] = Vector2.Transform(polygon.Points[index], transform);
+            }
+
             renderer.DrawWorldConvexPolygon(world, polygon.Fill.ScaleAlpha(opacity));
-            if (polygon.Outline is not { } outline) continue;
+            if (polygon.Outline is not { } outline)
+            {
+                continue;
+            }
+
             var closed = ring[..(world.Length + 1)];
             world.CopyTo(closed);
             closed[^1] = world[0];

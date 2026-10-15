@@ -43,7 +43,10 @@ public sealed class NativeRigTests
                 Width = .16f,
                 Height = .2f,
                 Geometry = new Rectangle2D.Builder { Min = new(-.5f, -.5f), Max = new(.5f, .5f) },
-                Material = new() { Texture = "images/" + id + ".png" }
+                Material = new()
+                {
+                    Texture = "images/" + id + ".png"
+                }
             });
         }
 
@@ -66,15 +69,19 @@ public sealed class NativeRigTests
     [Fact]
     public void NativeRoundTripPreservesNamesFramesCurvesAndAppearanceTimelines()
     {
-        var (source, clips) = Scene(); var clip = clips[0];
+        var (source, clips) = Scene();
+        var clip = clips[0];
         var loaded = CharacterModel.FromJson(source.ToJson());
         var motion = MotionClip.FromJson(clip.ToJson());
-        var before = ResolvedModel.From(source); var after = ResolvedModel.From(loaded);
+        var before = ResolvedModel.From(source);
+        var after = ResolvedModel.From(loaded);
         motion.Validate(after);
-        Assert.Equal(source.ToJson(), loaded.ToJson()); Assert.Equal(clip.ToJson(), motion.ToJson());
+        Assert.Equal(source.ToJson(), loaded.ToJson());
+        Assert.Equal(clip.ToJson(), motion.ToJson());
         foreach (var time in new[] { .1f, .3f, .6f, .9f, 1f })
         {
-            var a = PoseEvaluator.Sample(before, clip, time); var b = PoseEvaluator.Sample(after, motion, time);
+            var a = PoseEvaluator.Sample(before, clip, time);
+            var b = PoseEvaluator.Sample(after, motion, time);
             foreach (var bone in source.Controls)
             {
                 TestModels.Near(a.World(bone.Id), b.World(bone.Id), 1e-6f);
@@ -92,13 +99,20 @@ public sealed class NativeRigTests
     [InlineData("rotate", .7f)]
     public void EqualEndpointCurvesKeepOvershootAfterSavingAndRetiming(string kind, float control)
     {
-        var (source, clips) = Scene(); var clip = clips[0];
+        var (source, clips) = Scene();
+        var clip = clips[0];
         clip.Tracks = [new() { Kind = kind, Target = "wheel-root", Keys =
             [new() { Curve = new() { X1 = 1f / 3, X2 = 2f / 3, Y1 = control, Y2 = control, Absolute = true } }, new() { Time = 1 }] }];
-        var motion = MotionClip.FromJson(clip.ToJson()); motion.Validate(ResolvedModel.From(source));
-        var track = motion.Tracks[0]; var sample = PoseEvaluator.Interpolate(track, .5f);
+        var motion = MotionClip.FromJson(clip.ToJson());
+        motion.Validate(ResolvedModel.From(source));
+        var track = motion.Tracks[0];
+        var sample = PoseEvaluator.Interpolate(track, .5f);
         Assert.Equal(.75f * control, kind == MotionClip.RotateKind ? sample.Angle : sample.Value.X, 5);
-        if (kind == MotionClip.RotateKind) Assert.Equal(Vector3.Zero, sample.Value);
+        if (kind == MotionClip.RotateKind)
+        {
+            Assert.Equal(Vector3.Zero, sample.Value);
+        }
+
         ClipAuthoring.Retime(motion, 2);
         Assert.Equal(sample, PoseEvaluator.Interpolate(track, 1));
     }
@@ -106,7 +120,8 @@ public sealed class NativeRigTests
     [Fact]
     public void NativeTintTimelinesKeepIndependentTimingAndReachTheDrawing()
     {
-        var (source, clips) = Scene(); var clip = clips[0];
+        var (source, clips) = Scene();
+        var clip = clips[0];
         clip.Colors =
         [
             new() { Slot = "rear-paint", Kind = SlotColorTrack2D.Rgb, SetupBeforeFirst = true, Keys =
@@ -115,17 +130,23 @@ public sealed class NativeRigTests
                 [new() { Time = .5f, A = .2f, Ease = ClipEase.Step }, new() { Time = .75f, A = .8f }] }
         ];
         var model = ResolvedModel.From(CharacterModel.FromJson(source.ToJson()));
-        var motion = MotionClip.FromJson(clip.ToJson()); motion.Validate(model);
+        var motion = MotionClip.FromJson(clip.ToJson());
+        motion.Validate(model);
         Vector4 At(float time) => PoseEvaluator.Sample(model, motion, time).Slots.Single(s => s.Slot.Id == "rear-paint").Color;
-        Assert.Equal(Vector4.One, At(.1f)); Assert.Equal(1, At(.4f).W);
-        Assert.Equal(.2f, At(.6f).W); Assert.Equal(.8f, At(.75f).W);
+        Assert.Equal(Vector4.One, At(.1f));
+        Assert.Equal(1, At(.4f).W);
+        Assert.Equal(.2f, At(.6f).W);
+        Assert.Equal(.8f, At(.75f).W);
         Assert.True(Vector4.Distance(new(.5f, .5f, 0, .2f), At(.625f)) < 1e-5f);
-        var drawing = new PuppetDrawing(); drawing.Build(model, PoseEvaluator.Sample(model, motion, .625f));
+        var drawing = new PuppetDrawing();
+        drawing.Build(model, PoseEvaluator.Sample(model, motion, .625f));
         Assert.Equal(6, drawing.Mesh.Count);
         foreach (var vertex in drawing.Mesh.Vertices)
         {
-            Assert.InRange((int)vertex.Color.R, 127, 128); Assert.InRange((int)vertex.Color.G, 127, 128);
-            Assert.Equal(0, vertex.Color.B); Assert.Equal(51, vertex.Color.A);
+            Assert.InRange((int)vertex.Color.R, 127, 128);
+            Assert.InRange((int)vertex.Color.G, 127, 128);
+            Assert.Equal(0, vertex.Color.B);
+            Assert.Equal(51, vertex.Color.A);
         }
         Assert.Equal("ffffffff", model.Base.Slots[0].Color);
     }
@@ -133,13 +154,22 @@ public sealed class NativeRigTests
     [Fact]
     public void AffineChannelsComposeReflectShearAndCollapseWithoutLosingDescendantFrames()
     {
-        var result = Scene(); var model = ResolvedModel.From(result.Model);
-        var setup = result.Model.Controls[0].Transform!;
+        var (Model, Animations) = Scene();
+        var model = ResolvedModel.From(Model);
+        var setup = Model.Controls[0].Transform!;
         var rest = PoseEvaluator.Rest(model);
         var expected = Vector2.Transform(new(.4f, .05f), setup.Matrix);
         TestModels.Near(new(expected, 0), rest.World("spoke-tip"));
-        var clip = result.Animations.Single(); var pose = PoseEvaluator.Sample(model, clip, 1);
-        var animated = setup with { Rotation = setup.Rotation + MathF.PI, ScaleX = setup.ScaleX * .5f, ScaleY = setup.ScaleY * 1.5f, ShearX = 10 * MathF.PI / 180, ShearY = setup.ShearY - 20 * MathF.PI / 180 };
+        var clip = Animations.Single();
+        var pose = PoseEvaluator.Sample(model, clip, 1);
+        var animated = setup with
+        {
+            Rotation = setup.Rotation + MathF.PI,
+            ScaleX = setup.ScaleX * .5f,
+            ScaleY = setup.ScaleY * 1.5f,
+            ShearX = 10 * MathF.PI / 180,
+            ShearY = setup.ShearY - 20 * MathF.PI / 180
+        };
         expected = Vector2.Transform(new(.7f, .25f), animated.Matrix);
         TestModels.Near(new(expected, 0), pose.World("spoke-tip"));
         clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].X = -1;
@@ -151,31 +181,43 @@ public sealed class NativeRigTests
     [Fact]
     public void SkinsFallbackAttachmentHidingOrderAndRepeatedEventsHaveIndependentMeaning()
     {
-        var result = Scene(); var model = ResolvedModel.From(result.Model); var clip = result.Animations[0];
-        var pose = PoseEvaluator.Sample(model, clip, .6, input: new() { Skin = "gold-finish" });
+        var (Model, Animations) = Scene();
+        var model = ResolvedModel.From(Model);
+        var clip = Animations[0];
+        var pose = PoseEvaluator.Sample(model, clip, .6, input: new()
+        {
+            Skin = "gold-finish"
+        });
         Assert.Equal(["front-paint", "rear-paint"], pose.Slots.Select(s => s.Slot.Id));
         Assert.Null(pose.Slots[0].Part);
         Assert.Contains("gold-finish", pose.Slots[1].Part!.Id);
-        pose = PoseEvaluator.Sample(model, clip, .9, input: new() { Skin = "gold-finish" });
+        pose = PoseEvaluator.Sample(model, clip, .9, input: new()
+        {
+            Skin = "gold-finish"
+        });
         Assert.Contains("default", pose.Slots[0].Part!.Id);
         Assert.Equal([3, 5], clip.Events.Select(e => e.Int));
         Assert.Equal("tick", clip.Events[1].Name);
-        var drawing = new PuppetDrawing(); drawing.Build(model, pose);
-        Assert.Equal(2, drawing.Batches.Count); Assert.All(drawing.Batches, b => Assert.NotNull(b.Texture));
+        var drawing = new PuppetDrawing();
+        drawing.Build(model, pose);
+        Assert.Equal(2, drawing.Batches.Count);
+        Assert.All(drawing.Batches, b => Assert.NotNull(b.Texture));
         Assert.Equal(12, drawing.Mesh.Count);
     }
 
     [Fact]
     public void AffinePoseEditingIsTheInverseOfEvaluationAndRestMovesRespectChildChoice()
     {
-        var source = Scene(); var model = ResolvedModel.From(source.Model);
-        var clip = source.Animations[0]; var pose = PoseEvaluator.Sample(model, clip, .3);
+        var (Model, Animations) = Scene();
+        var model = ResolvedModel.From(Model);
+        var clip = Animations[0];
+        var pose = PoseEvaluator.Sample(model, clip, .3);
         var desired = pose.World("spoke-tip") + new Vector3(.2f, -.15f, 0);
         ClipAuthoring.Pose(model, clip, pose, .3f, "spoke-tip", desired);
         TestModels.Near(desired, PoseEvaluator.Sample(model, clip, .3).World("spoke-tip"));
         var child = model.Rest["spoke-tip"];
-        ModelAuthoring.MoveRest(source.Model, "wheel-root", new(1, 2, 0), children: false);
-        var moved = ResolvedModel.From(source.Model);
+        ModelAuthoring.MoveRest(Model, "wheel-root", new(1, 2, 0), children: false);
+        var moved = ResolvedModel.From(Model);
         TestModels.Near(new(1, 2, 0), moved.Rest["wheel-root"]);
         TestModels.Near(child, moved.Rest["spoke-tip"]);
     }
@@ -183,13 +225,19 @@ public sealed class NativeRigTests
     [Fact]
     public void VariantsAndFlatteningPreserveAffineSetupAndPoseEditing()
     {
-        var imported = Scene();
+        var (Model, Animations) = Scene();
         var variant = new ModelVariant { Id = "moved-wheel", Name = "Moved wheel", Base = "wheel", Rest = new() { ["wheel-root"] = new(2, 3) } };
-        var model = ResolvedModel.From(imported.Model, variant); var rest = PoseEvaluator.Rest(model);
+        var model = ResolvedModel.From(Model, variant);
+        var rest = PoseEvaluator.Rest(model);
         TestModels.Near(new(2, 3, 0), rest.World("wheel-root"));
         var flat = ResolvedModel.From(ModelAuthoring.Flatten(model, "flat-wheel", "Flat wheel"));
-        foreach (var bone in model.Order) TestModels.Near(rest.World(bone.Id), PoseEvaluator.Rest(flat).World(bone.Id));
-        var clip = imported.Animations[0]; var pose = PoseEvaluator.Sample(model, clip, .3);
+        foreach (var bone in model.Order)
+        {
+            TestModels.Near(rest.World(bone.Id), PoseEvaluator.Rest(flat).World(bone.Id));
+        }
+
+        var clip = Animations[0];
+        var pose = PoseEvaluator.Sample(model, clip, .3);
         var desired = pose.World("wheel-root") + new Vector3(.2f, .3f, 0);
         ClipAuthoring.Pose(model, clip, pose, .3f, "wheel-root", desired);
         TestModels.Near(desired, PoseEvaluator.Sample(model, clip, .3).World("wheel-root"));
@@ -198,8 +246,9 @@ public sealed class NativeRigTests
     [Fact]
     public void KeyPoseBeforeATimelineStartsKeepsSetupValues()
     {
-        var source = Scene();
-        var clip = source.Animations[0]; var model = ResolvedModel.From(source.Model);
+        var (Model, Animations) = Scene();
+        var clip = Animations[0];
+        var model = ResolvedModel.From(Model);
         var expected = PoseEvaluator.Sample(model, clip, .1).World("spoke-tip");
         ClipAuthoring.KeyPose(clip, .1f);
         TestModels.Near(expected, PoseEvaluator.Sample(model, clip, .1).World("spoke-tip"));
@@ -208,7 +257,8 @@ public sealed class NativeRigTests
     [Fact]
     public void AffineReparentingKeepsWorldFrameAndVariantMovesCanLeaveChildrenBehind()
     {
-        var source = Scene(); var initial = ResolvedModel.From(source.Model);
+        var source = Scene();
+        var initial = ResolvedModel.From(source.Model);
         var oldFrame = initial.RestTransforms["spoke-tip"];
         ModelAuthoring.Reparent(source.Model, "spoke-tip", null);
         var moved = ResolvedModel.From(source.Model);
@@ -223,22 +273,35 @@ public sealed class NativeRigTests
     [Fact]
     public void PreviousNativeFormatsUpgradeWithoutChangingPointRigBehavior()
     {
-        var source = TestModels.Creature(); var node = JsonNode.Parse(source.ToJson())!; node["version"] = 2;
+        var source = TestModels.Creature();
+        var node = JsonNode.Parse(source.ToJson())!;
+        node["version"] = 2;
         var loaded = CharacterModel.FromJson(node.ToJsonString());
         Assert.Equal(CharacterModel.CurrentVersion, loaded.Version);
-        var clip = TestModels.Clip(ResolvedModel.From(source)); node = JsonNode.Parse(clip.ToJson())!; node["version"] = 1;
+        var clip = TestModels.Clip(ResolvedModel.From(source));
+        node = JsonNode.Parse(clip.ToJson())!;
+        node["version"] = 1;
         var motion = MotionClip.FromJson(node.ToJsonString());
         Assert.Equal(MotionClip.CurrentVersion, motion.Version);
-        var a = PoseEvaluator.Sample(ResolvedModel.From(source), clip, .5); var b = PoseEvaluator.Sample(ResolvedModel.From(loaded), motion, .5);
-        foreach (var control in source.Controls) TestModels.Near(a.World(control.Id), b.World(control.Id));
-        node = JsonNode.Parse(new ModelVariant { Id = "other", Name = "Other", Base = source.Id }.ToJson())!; node["version"] = 2;
+        var a = PoseEvaluator.Sample(ResolvedModel.From(source), clip, .5);
+        var b = PoseEvaluator.Sample(ResolvedModel.From(loaded), motion, .5);
+        foreach (var control in source.Controls)
+        {
+            TestModels.Near(a.World(control.Id), b.World(control.Id));
+        }
+
+        node = JsonNode.Parse(new ModelVariant { Id = "other", Name = "Other", Base = source.Id }.ToJson())!;
+        node["version"] = 2;
         Assert.Equal(ModelVariant.CurrentVersion, ModelVariant.FromJson(node.ToJsonString()).Version);
     }
 
     private static void MatrixNear(Matrix3x2 a, Matrix3x2 b)
     {
-        Assert.InRange(MathF.Abs(a.M11 - b.M11), 0, 2e-5f); Assert.InRange(MathF.Abs(a.M12 - b.M12), 0, 2e-5f);
-        Assert.InRange(MathF.Abs(a.M21 - b.M21), 0, 2e-5f); Assert.InRange(MathF.Abs(a.M22 - b.M22), 0, 2e-5f);
-        Assert.InRange(MathF.Abs(a.M31 - b.M31), 0, 2e-5f); Assert.InRange(MathF.Abs(a.M32 - b.M32), 0, 2e-5f);
+        Assert.InRange(MathF.Abs(a.M11 - b.M11), 0, 2e-5f);
+        Assert.InRange(MathF.Abs(a.M12 - b.M12), 0, 2e-5f);
+        Assert.InRange(MathF.Abs(a.M21 - b.M21), 0, 2e-5f);
+        Assert.InRange(MathF.Abs(a.M22 - b.M22), 0, 2e-5f);
+        Assert.InRange(MathF.Abs(a.M31 - b.M31), 0, 2e-5f);
+        Assert.InRange(MathF.Abs(a.M32 - b.M32), 0, 2e-5f);
     }
 }

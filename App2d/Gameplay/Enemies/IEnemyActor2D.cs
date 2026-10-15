@@ -7,7 +7,10 @@ namespace App2d.Gameplay.Enemies;
 
 public interface IEnemyActor2D
 {
-    ICombatant2D Combatant { get; }
+    ICombatant2D Combatant
+    {
+        get;
+    }
     EnemyState2D CaptureState();
     ImmutableArray<EnemyEvent2D> DrainEvents() => [];
 

@@ -12,8 +12,14 @@ internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 veloci
     public VegetationBladeTip2D Shape { get; } = shape;
     public Vector2 Position { get; private set; } = shape.ReleasePosition;
     public Vector2 Velocity { get; private set; } = velocity;
-    public float Rotation { get; private set; }
-    public float Age { get; private set; }
+    public float Rotation
+    {
+        get; private set;
+    }
+    public float Age
+    {
+        get; private set;
+    }
     public bool IsExpired => Age >= LifetimeSeconds;
     public float Opacity => Math.Clamp((LifetimeSeconds - Age) / FadeSeconds, 0f, 1f);
 
@@ -28,7 +34,10 @@ internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 veloci
         while (remaining > 0f)
         {
             var step = Math.Min(remaining, 1f / 120f);
-            var field = wind with { TotalSeconds = startTime + elapsed + step };
+            var field = wind with
+            {
+                TotalSeconds = startTime + elapsed + step
+            };
             var drift = field.Offset(Position.X, 1f, phase, 1f) * 5f;
             var flutter = MathF.Sin(Age * 13f + phase) * 34f * scale;
             var acceleration = new Vector2(drift + flutter - Velocity.X * 1.8f, -280f * scale);

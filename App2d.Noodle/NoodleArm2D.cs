@@ -66,18 +66,41 @@ internal sealed class NoodleArm2D
         RebuildSkin();
     }
 
-    public Vector2 Shoulder { get; }
-    public float UpperLength { get; }
-    public float LowerLength { get; }
-    public Vector2 Target { get; private set; }
-    public int BendDirection { get; private set; }
-    public TwoBoneIkPose2D Pose { get; private set; }
-    public Vector2 DefaultTarget { get; }
+    public Vector2 Shoulder
+    {
+        get;
+    }
+    public float UpperLength
+    {
+        get;
+    }
+    public float LowerLength
+    {
+        get;
+    }
+    public Vector2 Target
+    {
+        get; private set;
+    }
+    public int BendDirection
+    {
+        get; private set;
+    }
+    public TwoBoneIkPose2D Pose
+    {
+        get; private set;
+    }
+    public Vector2 DefaultTarget
+    {
+        get;
+    }
 
     public void SetTarget(Vector2 target)
     {
         if (!target.IsFinite())
+        {
             return;
+        }
 
         Target = target;
         RebuildSkin();
@@ -111,9 +134,13 @@ internal sealed class NoodleArm2D
             quad[3] = _upperEdge[section];
             var weight = (_lowerWeights[section] + _lowerWeights[section + 1]) * 0.5f;
             if (showWeights)
+            {
                 renderer.DrawWorldConvexPolygon(quad, XnaColor.Lerp(UpperWeightColor, LowerWeightColor, weight));
+            }
             else
+            {
                 renderer.DrawWorldConvexPolygon(quad, _skinColor);
+            }
         }
 
         renderer.Draw(_wristCap);
@@ -165,9 +192,13 @@ internal sealed class NoodleArm2D
                 _ => _centers[section + 1] - _centers[section - 1]
             };
             if (tangent.LengthSquared() <= float.Epsilon)
+            {
                 tangent = Vector2.UnitX;
+            }
             else
+            {
                 tangent = Vector2.Normalize(tangent);
+            }
 
             var normal = new Vector2(-tangent.Y, tangent.X);
             var progress = section / (float)_sectionCount;

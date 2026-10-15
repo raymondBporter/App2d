@@ -26,7 +26,9 @@ public sealed class DirtyChunkTracker2D
     {
         ArgGuard.ThrowIfNull(rebuild);
         if (_dirty.Count == 0)
+        {
             return;
+        }
 
         // Drain before rebuilding: a rebuild may mark further chunks, and those must
         // survive for the next flush rather than corrupt this iteration.
@@ -35,6 +37,8 @@ public sealed class DirtyChunkTracker2D
         _dirty.Clear();
 
         foreach (var chunk in _flushBuffer)
+        {
             rebuild(chunk);
+        }
     }
 }

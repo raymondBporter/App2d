@@ -54,7 +54,11 @@ public sealed partial class SideScrollerLevel2D
 
     private void RemoveGiantTreeBranches()
     {
-        foreach (var body in _giantTreeBranches) _environment!.Physics.RemoveBody(body);
+        foreach (var body in _giantTreeBranches)
+        {
+            _environment!.Physics.RemoveBody(body);
+        }
+
         _giantTreeBranches.Clear();
     }
 }

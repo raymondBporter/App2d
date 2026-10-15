@@ -10,10 +10,22 @@ public interface IChangingTileMap2D : IChunkedTileMap2D
 
 public interface ISolidTileMap2D
 {
-    int Width { get; }
-    int Height { get; }
-    float TileSize { get; }
-    Vector2 Origin { get; }
+    int Width
+    {
+        get;
+    }
+    int Height
+    {
+        get;
+    }
+    float TileSize
+    {
+        get;
+    }
+    Vector2 Origin
+    {
+        get;
+    }
 
     bool IsSolid(int x, int y);
 }
@@ -24,11 +36,26 @@ public interface ISolidTileMap2D
 /// </summary>
 public interface IChunkedTileMap2D : ISolidTileMap2D
 {
-    int ChunkSize { get; }
-    int ChunkColumns { get; }
-    int ChunkRows { get; }
-    Rect2D WorldBounds { get; }
-    IReadOnlyList<string> TilesetIds { get; }
+    int ChunkSize
+    {
+        get;
+    }
+    int ChunkColumns
+    {
+        get;
+    }
+    int ChunkRows
+    {
+        get;
+    }
+    Rect2D WorldBounds
+    {
+        get;
+    }
+    IReadOnlyList<string> TilesetIds
+    {
+        get;
+    }
 
     TileKind2D GetTileKind(int x, int y);
     byte GetTilesetIndex(int x, int y);

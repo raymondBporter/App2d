@@ -21,7 +21,10 @@ public sealed class PlayerSaveStore2D
         Path = System.IO.Path.GetFullPath(path);
     }
 
-    public string Path { get; }
+    public string Path
+    {
+        get;
+    }
 
     public static PlayerSaveStore2D CreateDefault() => new(UserDataLocations.ForCurrentUser().PlayerSave);
 
@@ -30,7 +33,9 @@ public sealed class PlayerSaveStore2D
         try
         {
             if (!File.Exists(Path))
+            {
                 return null;
+            }
 
             var json = File.ReadAllText(Path);
             return JsonSerializer.Deserialize<PlayerSave2D>(json, JsonOptions);

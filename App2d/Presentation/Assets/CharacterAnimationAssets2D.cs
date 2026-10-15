@@ -78,10 +78,14 @@ internal static class CharacterAnimationAssets2D
         lock (ManifestLock)
         {
             if (Manifests.TryGetValue(manifestPath, out var cached))
+            {
                 return cached;
+            }
 
             if (!File.Exists(manifestPath))
+            {
                 throw new FileNotFoundException("Character manifest was not found.", manifestPath);
+            }
 
             var manifest = JsonSerializer.Deserialize<CharacterManifest>(File.ReadAllText(manifestPath), JsonOptions) ??
                 throw new InvalidDataException($"Character manifest is empty: {manifestPath}");
@@ -99,7 +103,9 @@ internal static class CharacterAnimationAssets2D
                 $"Manifest ID '{manifest.Id}' must match its folder '{characterId}': {manifestPath}");
         }
         if (manifest.Animations.Count == 0)
+        {
             throw new InvalidDataException($"Character has no animations: {manifestPath}");
+        }
 
         foreach (var (animationId, animation) in manifest.Animations)
         {
@@ -165,10 +171,25 @@ internal static class CharacterAnimationAssets2D
         Justification = "System.Text.Json creates manifest objects through reflection.")]
     private sealed class AnimationManifest
     {
-        public float? FramesPerSecond { get; init; }
-        public float? DurationSeconds { get; init; }
-        public bool Loop { get; init; }
-        public float? CanvasWidth { get; init; }
-        public Dictionary<string, float>? RootXByFacing { get; init; }
+        public float? FramesPerSecond
+        {
+            get; init;
+        }
+        public float? DurationSeconds
+        {
+            get; init;
+        }
+        public bool Loop
+        {
+            get; init;
+        }
+        public float? CanvasWidth
+        {
+            get; init;
+        }
+        public Dictionary<string, float>? RootXByFacing
+        {
+            get; init;
+        }
     }
 }

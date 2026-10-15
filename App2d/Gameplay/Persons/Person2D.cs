@@ -78,16 +78,40 @@ public sealed partial class Person2D : ICombatant2D
         };
     }
 
-    public EntityId2D Id { get; }
-    public SpatialObject2D WorldObject { get; }
-    public PhysicsBody2D Body { get; }
-    public Health2D Health { get; }
-    public CombatFaction2D Faction { get; }
+    public EntityId2D Id
+    {
+        get;
+    }
+    public SpatialObject2D WorldObject
+    {
+        get;
+    }
+    public PhysicsBody2D Body
+    {
+        get;
+    }
+    public Health2D Health
+    {
+        get;
+    }
+    public CombatFaction2D Faction
+    {
+        get;
+    }
     public Vector2 Position => WorldObject.Transform.Position;
     public float Facing { get; private set; } = 1f;
-    public float InvulnerabilitySeconds { get; private set; }
-    public float LandingSpeedThisFrame { get; private set; }
-    public bool DownAttackBouncedThisFrame { get; private set; }
+    public float InvulnerabilitySeconds
+    {
+        get; private set;
+    }
+    public float LandingSpeedThisFrame
+    {
+        get; private set;
+    }
+    public bool DownAttackBouncedThisFrame
+    {
+        get; private set;
+    }
     public bool IsGrounded => _motor.IsGrounded;
     public int BalanceDirection => IsAlive && _simulationEnabled ? _motor.BalanceDirection : 0;
     public bool IsWallGripping => _motor.IsWallGripping;
@@ -144,7 +168,9 @@ public sealed partial class Person2D : ICombatant2D
         var previous = _previousCommand;
         _previousCommand = command;
         if (!_simulationEnabled || !IsAlive)
+        {
             return;
+        }
 
         var intent = PersonMovementIntent2D.Derive(command, previous);
         var primaryPressed = command.PrimaryHeld && !previous.PrimaryHeld;
@@ -152,7 +178,10 @@ public sealed partial class Person2D : ICombatant2D
         var secondaryPressed = command.SecondaryHeld && !previous.SecondaryHeld;
 
         if (MathF.Abs(command.MoveX) > 0.01f)
+        {
             Face(command.MoveX);
+        }
+
         var previousWallDirection = _motor.IsWallGripping ? _motor.WallDirection : 0f;
         _motor.UpdateBeforePhysics(intent, Facing, deltaSeconds);
         var canHeal = IsGrounded && !IsDashing && !IsClimbingLadder && !IsWallGripping &&
@@ -177,20 +206,26 @@ public sealed partial class Person2D : ICombatant2D
                     : _actions.UsePrimary(attackFacing));
             }
             if (secondaryPressed)
+            {
                 Face(_actions.UseSecondary(attackFacing));
+            }
         }
         if (_actions?.IsChargingPrimary == true)
         {
             var wallDirection = _motor.IsWallGripping ? _motor.WallDirection : previousWallDirection;
             if (wallDirection != 0f)
+            {
                 Face(-wallDirection);
+            }
         }
     }
 
     public void UpdateAfterPhysics(float deltaSeconds)
     {
         if (!_simulationEnabled)
+        {
             return;
+        }
 
         if (!IsAlive)
         {
@@ -201,9 +236,15 @@ public sealed partial class Person2D : ICombatant2D
         _motor.UpdateAfterPhysics(deltaSeconds);
         // Held toward the wall to grip it, but drawn (and fighting) with the back to it.
         if (IsWallGripping)
+        {
             Face(-_motor.WallDirection);
+        }
+
         if (!IsGrounded || IsDashing || IsClimbingLadder || IsWallGripping)
+        {
             _actions?.CancelHealing();
+        }
+
         _actions?.UpdateAfterPhysics(deltaSeconds, Facing);
         if (_actions?.ConsumeDownAttackBounce() == true)
         {
@@ -216,7 +257,9 @@ public sealed partial class Person2D : ICombatant2D
     public void Face(float direction)
     {
         if (MathF.Abs(direction) <= 0.01f)
+        {
             return;
+        }
 
         Facing = MathF.Sign(direction);
         var scale = WorldObject.Transform.Scale;
@@ -241,7 +284,9 @@ public sealed partial class Person2D : ICombatant2D
         ArgGuard.ThrowIfNotPositive(damage);
         ArgGuard.ThrowIfNotFinite(knockback);
         if (IsDashing || InvulnerabilitySeconds > 0f || !IsAlive)
+        {
             return false;
+        }
 
         Health.Damage(damage);
         _actions?.InterruptPrimary();
@@ -272,7 +317,10 @@ public sealed partial class Person2D : ICombatant2D
 
         float direction = MathF.Sign(Position.X - sourceX);
         if (direction == 0f)
+        {
             direction = -Facing;
+        }
+
         return TakeDamage(
             damage,
             new Vector2(direction * horizontalKnockback, verticalKnockback));
@@ -299,9 +347,14 @@ public sealed partial class Person2D : ICombatant2D
         DownAttackBouncedThisFrame = false;
         ArgGuard.ThrowIfNotFinite(spawnPoint);
         if (hitPoints is { } savedHitPoints)
+        {
             Health.Reset(savedHitPoints);
+        }
         else
+        {
             Health.Reset();
+        }
+
         WorldObject.Transform.Position = spawnPoint;
         Body.IsCollider = _simulationEnabled;
         Body.MotionType = _simulationEnabled
@@ -330,7 +383,9 @@ public sealed partial class Person2D : ICombatant2D
 
         _footstepSeconds -= deltaSeconds;
         if (_footstepSeconds > 0f)
+        {
             return;
+        }
 
         Footstep?.Invoke();
         var speedRatio = Math.Clamp(

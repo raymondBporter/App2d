@@ -20,9 +20,26 @@ public sealed class Texture2D : IDisposable
         _pixels = pixels;
     }
 
-    public string SourcePath { get; }
-    public int Width { get { ThrowIfDisposed(); return _width; } }
-    public int Height { get { ThrowIfDisposed(); return _height; } }
+    public string SourcePath
+    {
+        get;
+    }
+    public int Width
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _width;
+        }
+    }
+    public int Height
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _height;
+        }
+    }
     public bool IsDisposed => _pixels is null;
     internal XnaColor[] Pixels => _pixels ?? throw new ObjectDisposedException(nameof(Texture2D));
     internal event Action<Texture2D>? Disposed;
@@ -33,7 +50,10 @@ public sealed class Texture2D : IDisposable
         ArgGuard.ThrowIfNullOrWhiteSpace(path);
         var fullPath = Path.GetFullPath(path);
         if (!File.Exists(fullPath))
+        {
             throw new FileNotFoundException("Texture file was not found.", fullPath);
+        }
+
         try
         {
             using var source = new Bitmap(fullPath);
@@ -57,18 +77,27 @@ public sealed class Texture2D : IDisposable
             {
                 Marshal.Copy(data.Scan0 + y * data.Stride, row, 0, row.Length);
                 for (var x = 0; x < bitmap.Width; x++)
+                {
                     pixels[y * bitmap.Width + x] = new XnaColor(row[x * 4 + 2], row[x * 4 + 1], row[x * 4], row[x * 4 + 3]);
+                }
             }
             return new Texture2D(sourceName, bitmap.Width, bitmap.Height, pixels);
         }
-        finally { bitmap.UnlockBits(data); }
+        finally
+        {
+            bitmap.UnlockBits(data);
+        }
     }
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsDisposed, this);
 
     public void Dispose()
     {
-        if (IsDisposed) return;
+        if (IsDisposed)
+        {
+            return;
+        }
+
         _pixels = null;
         Disposed?.Invoke(this);
         Disposed = null;

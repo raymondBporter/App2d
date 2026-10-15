@@ -10,9 +10,15 @@ public sealed class AnimationPlayer2D<TFrame>
 {
     private readonly PlaybackClock _clock = new();
 
-    public AnimationClip2D<TFrame>? Clip { get; private set; }
+    public AnimationClip2D<TFrame>? Clip
+    {
+        get; private set;
+    }
     public float ElapsedSeconds => (float)_clock.TimeSeconds;
-    public int CurrentFrameIndex { get; private set; }
+    public int CurrentFrameIndex
+    {
+        get; private set;
+    }
     public bool IsPlaying => _clock.IsPlaying;
     public bool IsFinished => _clock.IsComplete;
 
@@ -34,7 +40,9 @@ public sealed class AnimationPlayer2D<TFrame>
         var mode = endMode ?? (clip.IsLooping ? PlaybackEndMode.Loop : PlaybackEndMode.Hold);
 
         if (ReferenceEquals(Clip, clip) && !restart && IsPlaying && _clock.EndMode == mode)
+        {
             return;
+        }
 
         _clock.Configure(clip.Duration, mode);
         Clip = clip;
@@ -47,14 +55,18 @@ public sealed class AnimationPlayer2D<TFrame>
     public void Resume()
     {
         if (Clip is not null && !IsFinished)
+        {
             _clock.Play();
+        }
     }
 
     public void Stop(bool resetToFirstFrame = true)
     {
         _clock.Stop(resetToFirstFrame);
         if (!resetToFirstFrame)
+        {
             return;
+        }
 
         CurrentFrameIndex = 0;
     }
@@ -63,7 +75,9 @@ public sealed class AnimationPlayer2D<TFrame>
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         if (!IsPlaying || Clip is null || deltaSeconds == 0f || PlaybackSpeed == 0f)
+        {
             return;
+        }
 
         _clock.Advance(deltaSeconds);
         CurrentFrameIndex = Clip.GetFrameIndexAtTime(ElapsedSeconds);

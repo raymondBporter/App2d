@@ -30,25 +30,43 @@ internal sealed class MovingPlatformDefinitionProperties2D
 internal sealed class MovingPlatformInstanceProperties2D
 {
     [Category("Thing"), DisplayName("Name"), Description("Optional name for this placed instance.")]
-    public string? Name { get; set; }
+    public string? Name
+    {
+        get; set;
+    }
 
     [Category("Thing"), DisplayName("Enabled")]
     public bool Enabled { get; set; } = true;
 
     [Category("Transform"), DisplayName("Position X")]
-    public float PositionX { get; set; }
+    public float PositionX
+    {
+        get; set;
+    }
 
     [Category("Transform"), DisplayName("Position Y")]
-    public float PositionY { get; set; }
+    public float PositionY
+    {
+        get; set;
+    }
 
     [Category("Ping-pong motor"), DisplayName("Travel X")]
-    public float TravelX { get; set; }
+    public float TravelX
+    {
+        get; set;
+    }
 
     [Category("Ping-pong motor"), DisplayName("Travel Y")]
-    public float TravelY { get; set; }
+    public float TravelY
+    {
+        get; set;
+    }
 
     [Category("Ping-pong motor"), DisplayName("Speed")]
-    public float Speed { get; set; }
+    public float Speed
+    {
+        get; set;
+    }
 
     public static MovingPlatformInstanceProperties2D From(MovingPlatformThingRecord2D record) =>
         new()
@@ -69,22 +87,34 @@ internal sealed class PositionThingDefinitionProperties2D
     public string Name { get; set; } = "New definition";
 
     public static PositionThingDefinitionProperties2D From(ThingDefinitionRecord2D record) =>
-        new() { Name = record.Name };
+        new()
+        {
+            Name = record.Name
+        };
 }
 
 internal sealed class PositionThingInstanceProperties2D
 {
     [Category("Thing"), DisplayName("Name"), Description("Optional name for this placed instance.")]
-    public string? Name { get; set; }
+    public string? Name
+    {
+        get; set;
+    }
 
     [Category("Thing"), DisplayName("Enabled")]
     public bool Enabled { get; set; } = true;
 
     [Category("Transform"), DisplayName("Position X")]
-    public float PositionX { get; set; }
+    public float PositionX
+    {
+        get; set;
+    }
 
     [Category("Transform"), DisplayName("Position Y")]
-    public float PositionY { get; set; }
+    public float PositionY
+    {
+        get; set;
+    }
 
     public static PositionThingInstanceProperties2D From(PositionThingRecord2D record) =>
         new()

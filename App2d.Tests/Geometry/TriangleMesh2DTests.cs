@@ -67,7 +67,9 @@ public sealed class TriangleMesh2DTests
     [Fact]
     public void FloatAndDoubleCrossProductsShareTheSameSignConvention()
     {
-        var a = new Vector2(1, 2); var b = new Vector2(4, 2); var c = new Vector2(1, 5);
+        var a = new Vector2(1, 2);
+        var b = new Vector2(4, 2);
+        var c = new Vector2(1, 5);
         Assert.Equal(9f, a.Orientation(b, c));
         Assert.Equal(9d, new Vector2d(b - a).Cross(new(c - a)));
         Assert.Equal(9f, (b - a).Cross(c - a));
@@ -81,7 +83,10 @@ public sealed class TriangleMesh2DTests
     public void NearlyCollinearTrianglesRetainTheirAreaAndHull(bool reverse)
     {
         Vector2[] points = [Vector2.Zero, new(16_777_216, 16_777_215), new(16_777_215, 16_777_214)];
-        if (reverse) Array.Reverse(points);
+        if (reverse)
+        {
+            Array.Reverse(points);
+        }
 
         var mesh = PolygonTriangulation2D.Triangulate(points);
         var hull = PolygonGeometry2D.ConvexHull(points);
@@ -111,7 +116,11 @@ public sealed class TriangleMesh2DTests
     public void ConvexClippingHandlesEitherWindingAndInterpolatesDepth(bool reverse)
     {
         Vector2[] clip = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
-        if (reverse) Array.Reverse(clip);
+        if (reverse)
+        {
+            Array.Reverse(clip);
+        }
+
         Vector3[] subject = [new(-1, .5f, 0), new(2, .5f, 3), new(2, 1.5f, 3), new(-1, 1.5f, 0)];
         var clipped = PolygonClipping2D.ClipConvexXY(subject, [.. clip.Select(p => new Vector3(p, 0))]);
         Assert.NotEmpty(clipped);

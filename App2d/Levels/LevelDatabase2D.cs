@@ -27,7 +27,9 @@ public sealed partial class LevelDatabase2D : IDisposable
         ArgGuard.ThrowIfNullOrWhiteSpace(path);
         var directory = Path.GetDirectoryName(Path.GetFullPath(path));
         if (!string.IsNullOrEmpty(directory))
+        {
             Directory.CreateDirectory(directory);
+        }
 
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
@@ -112,7 +114,9 @@ public sealed partial class LevelDatabase2D : IDisposable
         for (var cy = 0; cy < map.ChunkRows; cy++)
         {
             for (var cx = 0; cx < map.ChunkColumns; cx++)
+            {
                 WriteChunk(map, new TileChunk2D(cx, cy), buffer);
+            }
         }
 
         transaction.Commit();
@@ -136,7 +140,10 @@ public sealed partial class LevelDatabase2D : IDisposable
         using var transaction = _connection.BeginTransaction();
         WriteTilesetCatalog(map.TilesetIds);
         foreach (var chunk in chunks)
+        {
             WriteChunk(map, chunk, buffer);
+        }
+
         transaction.Commit();
     }
 
@@ -236,7 +243,10 @@ public sealed partial class LevelDatabase2D : IDisposable
         foreach (var tile in tiles)
         {
             if (tile.Kind == TileKind2D.Empty)
+            {
                 continue;
+            }
+
             isEmpty = false;
             break;
         }
@@ -282,7 +292,9 @@ public sealed partial class LevelDatabase2D : IDisposable
     {
         WriteMeta("tileset_count", tilesetIds.Count);
         for (var index = 0; index < tilesetIds.Count; index++)
+        {
             WriteMeta($"tileset_{index}", tilesetIds[index]);
+        }
     }
 
     private string[]? ReadTilesetCatalog()
@@ -290,15 +302,22 @@ public sealed partial class LevelDatabase2D : IDisposable
         using var countCommand = _connection.CreateCommand();
         countCommand.CommandText = "SELECT value FROM meta WHERE key = 'tileset_count';";
         if (countCommand.ExecuteScalar() is not string countText)
+        {
             return null;
+        }
 
         var count = int.Parse(countText, CultureInfo.InvariantCulture);
         if (count <= 0 || count > TileCell2D.MaximumTilesetCount)
+        {
             throw new InvalidDataException($"Level tileset count {count} is outside the supported range.");
+        }
 
         var ids = new string[count];
         for (var index = 0; index < count; index++)
+        {
             ids[index] = RequireMeta($"tileset_{index}");
+        }
+
         return ids;
     }
 

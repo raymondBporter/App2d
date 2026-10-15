@@ -29,7 +29,10 @@ internal static class AuthoredRenderingSmoke2D
         RunEntities(device, view, scene, renderer, target, directory);
         RunPlayer(device, textures, renderer, target, directory);
         view.ApplyState([], [], 62);
-        if (scene.Any()) throw new InvalidOperationException("Authored entity views leaked scene objects.");
+        if (scene.Any())
+        {
+            throw new InvalidOperationException("Authored entity views leaked scene objects.");
+        }
     }
 
     /// <summary>
@@ -70,21 +73,43 @@ internal static class AuthoredRenderingSmoke2D
                 var scene = new Scene2D();
                 using var player = new AuthoredPersonPresentation2D(scene, moves, traversal);
                 player.Equip(gear);
-                if (!state.IsAlive) player.PlayDeath();
+                if (!state.IsAlive)
+                {
+                    player.PlayDeath();
+                }
+
                 var position = new Vector2(0, 38);
                 var steps = (int)(seconds * 120);
                 for (var i = 0; i < steps; i++)
                 {
                     position.X += state.LinearVelocity.X / 120; // vertical motion stays out of the fixed camera; the state still reports it
-                    var current = state with { Position = position, Facing = facing };
-                    if (actionClock) current = current with { Action = current.Action with { ElapsedSeconds = i / 120f } };
-                    player.ApplyState(current, i + 1, 0, false, false); player.Advance(1 / 120f);
+                    var current = state with
+                    {
+                        Position = position,
+                        Facing = facing
+                    };
+                    if (actionClock)
+                    {
+                        current = current with
+                        {
+                            Action = current.Action with
+                            {
+                                ElapsedSeconds = i / 120f
+                            }
+                        };
+                    }
+
+                    player.ApplyState(current, i + 1, 0, false, false);
+                    player.Advance(1 / 120f);
                 }
                 var camera = new Camera2D { Zoom = 3, Position = new(position.X, 60) };
                 using var close = new Renderer2D(camera, device);
-                device.SetRenderTarget(target); close.BeginFrame(1400, 500, default); close.Clear(new Color(145, 176, 190));
+                device.SetRenderTarget(target);
+                close.BeginFrame(1400, 500, default);
+                close.Clear(new Color(145, 176, 190));
                 var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(2000, 2), new SolidColorShader(Color.DarkSlateGray));
-                ground.Transform.Position = new(position.X, 0); close.Draw(ground);
+                ground.Transform.Position = new(position.X, 0);
+                close.Draw(ground);
                 close.Draw(scene);
                 // Gameplay geometry over the drawing: the sword's hit box while it is live, and where a shot leaves the pistol.
                 var elapsed = (steps - 1) / 120f;
@@ -93,15 +118,20 @@ internal static class AuthoredRenderingSmoke2D
                 {
                     var hit = swing.Hits[0].Window;
                     var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color(235, 60, 50, 110)));
-                    box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2); close.Draw(box);
+                    box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2);
+                    close.Draw(box);
                 }
                 if (name == "gun-run-shot")
                 {
-                    var dot = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(3, 3), new SolidColorShader(new Color(240, 200, 40))); dot.Transform.Position = position + hero.Muzzle(facing, false); close.Draw(dot);
+                    var dot = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(3, 3), new SolidColorShader(new Color(240, 200, 40)));
+                    dot.Transform.Position = position + hero.Muzzle(facing, false);
+                    close.Draw(dot);
                 }
                 close.DrawScreenLabel($"PLAYER: {name.ToUpperInvariant()} ({player.Director.Key})", new(24, 24));
-                close.EndFrame(); device.SetRenderTarget(null);
-                using var stream = File.Create(Path.Combine(directory, $"player-{name}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
+                close.EndFrame();
+                device.SetRenderTarget(null);
+                using var stream = File.Create(Path.Combine(directory, $"player-{name}-{(facing > 0 ? "right" : "left")}.png"));
+                target.SaveAsPng(stream, target.Width, target.Height);
             }
         }
     }
@@ -110,7 +140,11 @@ internal static class AuthoredRenderingSmoke2D
     private static void RunEntities(GraphicsDevice device, EnemyPresentation2D view, Scene2D scene, Renderer2D renderer, RenderTarget2D target, string directory)
     {
         var authored = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
-        if (authored.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
+        if (authored.Errors.Count > 0)
+        {
+            throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
+        }
+
         var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute", "club-caveman", "rock-thrower", "baby-triceratops", "shield-defender", "flying-pterosaur" };
         foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("charge-rush", "attack", 1.25f), ("charge-brake", "attack", 2.05f), ("flight-dive", "attack", .9f), ("flight-low", "attack", 1.9f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })
         {
@@ -122,15 +156,28 @@ internal static class AuthoredRenderingSmoke2D
                     var animator = new EntityAnimator(entity);
                     var feet = new Vector2(GameWorldUnits2D.WorldToAuthored(-400 + i * 90), 0);
                     // Reactions are roles the controller plays, not actions: step them as the enemy runtime does.
-                    if (action is EntityControllers.Hit or EntityControllers.Death) { animator.Play(action); for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, action, 0, false, []); }
+                    if (action is EntityControllers.Hit or EntityControllers.Death)
+                    {
+                        animator.Play(action);
+                        for (var t = 0f; t < seconds; t += 1 / 120f)
+                        {
+                            animator.Step(1 / 120f, feet, facing, action, 0, false, []);
+                        }
+                    }
                     else if (action is not null && animator.TryStart(action))
                     {
-                        for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
+                        for (var t = 0f; t < seconds; t += 1 / 120f)
+                        {
+                            animator.Step(1 / 120f, feet, facing, "idle", 0, false, []);
+                        }
                     }
                     else
                     {
                         var role = entity.Clip(phase) is null ? EntityControllers.Idle : phase;
-                        for (var t = 0f; t < seconds; t += 1 / 120f) animator.Step(1 / 120f, feet, facing, role, role == "walk" ? .012f : 0, false, []);
+                        for (var t = 0f; t < seconds; t += 1 / 120f)
+                        {
+                            animator.Step(1 / 120f, feet, facing, role, role == "walk" ? .012f : 0, false, []);
+                        }
                     }
 
                     return new EnemyState2D(new EntityId2D(100 + i), EnemyKind2D.Authored, GameWorldUnits2D.AuthoredToWorld(feet), Vector2.Zero, 0, facing, true, true)
@@ -145,15 +192,23 @@ internal static class AuthoredRenderingSmoke2D
                     };
                 }).ToImmutableArray();
                 view.ApplyState(states, [], 70);
-                device.SetRenderTarget(target); renderer.BeginFrame(1400, 500, default); renderer.Clear(new Color(145, 176, 190));
+                device.SetRenderTarget(target);
+                renderer.BeginFrame(1400, 500, default);
+                renderer.Clear(new Color(145, 176, 190));
                 renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1200, 2), new SolidColorShader(Color.DarkSlateGray)));
                 renderer.Draw(scene);
                 renderer.DrawScreenLabel("AUTHORED ENEMIES / EQUIPMENT, CHARGE AND PROJECTILE POSES", new(24, 24));
                 renderer.EndFrame();
                 device.SetRenderTarget(null);
-                using var stream = File.Create(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png")); target.SaveAsPng(stream, target.Width, target.Height);
+                using var stream = File.Create(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png"));
+                target.SaveAsPng(stream, target.Width, target.Height);
             }
         }
     }
-    private sealed class Silent : ISoundEffectSink2D { public void Play(SoundEffect2D effect) { } }
+    private sealed class Silent : ISoundEffectSink2D
+    {
+        public void Play(SoundEffect2D effect)
+        {
+        }
+    }
 }

@@ -21,15 +21,27 @@ internal sealed partial class ProofRenders
 
     private AuthoredCatalog ProofCatalog()
     {
-        if (_proofCatalog is not null) return _proofCatalog;
+        if (_proofCatalog is not null)
+        {
+            return _proofCatalog;
+        }
+
         var catalog = AuthoredCatalog.Load(Path.Combine(_assetRoot, "authored"));
-        if (catalog.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
+        if (catalog.Errors.Count > 0)
+        {
+            throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
+        }
+
         return _proofCatalog = catalog;
     }
 
     private bool PrepareMotionProof()
     {
-        if (_smokeIndex >= ProofClips.Length * ProofFrames) { WriteMotionProofReport(); return false; }
+        if (_smokeIndex >= ProofClips.Length * ProofFrames)
+        {
+            WriteMotionProofReport();
+            return false;
+        }
         var catalog = ProofCatalog();
         _proofTarget ??= new(GraphicsDevice, ProofWidth, ProofHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         var clipId = ProofClips[_smokeIndex / ProofFrames];
@@ -38,7 +50,8 @@ internal sealed partial class ProofRenders
         var seconds = frame * clip.Duration / ProofFrames;
         var panel = ProofWidth / ProofSubjects.Length;
         const int band = ProofHeight - ProofPanelHeight;
-        GraphicsDevice.SetRenderTarget(_proofTarget); GraphicsDevice.Clear(new Color(237, 238, 226));
+        GraphicsDevice.SetRenderTarget(_proofTarget);
+        GraphicsDevice.Clear(new Color(237, 238, 226));
         for (var i = 0; i < ProofSubjects.Length; i++)
         {
             var model = catalog.Resolve(ProofSubjects[i]);
@@ -70,11 +83,18 @@ internal sealed partial class ProofRenders
         var pixel = 1 / ppu;
         _proofGround.Line(new(centerX - 20, 0, 7), new(centerX + 20, 0, 7), pixel, ink);
         var first = (int)MathF.Floor((centerX - 6) * 4);
-        for (var x = first; x <= first + 48; x++) _proofGround.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
+        for (var x = first; x <= first + 48; x++)
+        {
+            _proofGround.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
+        }
+
         foreach (var contact in pose.Contacts)
         {
             var color = contact.Residual < .005f ? new Color(36, 140, 104) : new Color(240, 106, 50);
-            var p = contact.Target with { Z = 6.9f };
+            var p = contact.Target with
+            {
+                Z = 6.9f
+            };
             _proofGround.Line(p - new Vector3(8 * pixel, 0, 0), p + new Vector3(8 * pixel, 0, 0), 2 * pixel, color);
             _proofGround.Line(p - new Vector3(0, 8 * pixel, 0), p + new Vector3(0, 8 * pixel, 0), 2 * pixel, color);
         }

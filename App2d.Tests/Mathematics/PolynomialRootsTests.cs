@@ -94,6 +94,9 @@ public sealed class PolynomialRootsTests
         Span<double> roots = stackalloc double[4];
         var count = PolynomialRoots.FindRealRoots(coefficients, minimum, maximum, roots);
         Assert.Equal(expected.Length, count);
-        for (var i = 0; i < count; i++) Assert.InRange(Math.Abs(roots[i] - expected[i]), 0, tolerance);
+        for (var i = 0; i < count; i++)
+        {
+            Assert.InRange(Math.Abs(roots[i] - expected[i]), 0, tolerance);
+        }
     }
 }

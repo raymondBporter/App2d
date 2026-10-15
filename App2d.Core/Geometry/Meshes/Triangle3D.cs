@@ -2,7 +2,7 @@ using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Core.Meshes;
+namespace App2d.Core.Geometry.Meshes;
 
 /// <summary>Three finite 3D points with winding-defined area and normal.</summary>
 public readonly record struct Triangle3D
@@ -17,9 +17,18 @@ public readonly record struct Triangle3D
         C = c;
     }
 
-    public Vector3 A { get; }
-    public Vector3 B { get; }
-    public Vector3 C { get; }
+    public Vector3 A
+    {
+        get;
+    }
+    public Vector3 B
+    {
+        get;
+    }
+    public Vector3 C
+    {
+        get;
+    }
 
     /// <summary>Magnitude of (B - A) cross (C - A), computed with double intermediates.</summary>
     public double DoubleArea => CrossEdges().Length();

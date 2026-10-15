@@ -17,7 +17,10 @@ public readonly record struct FacePose(
 
 public static class FaceExpressions
 {
-    public static IReadOnlyList<string> Names { get; } = Array.AsReadOnly(
+    public static IReadOnlyList<string> Names
+    {
+        get;
+    } = Array.AsReadOnly(
     [
         "relaxed",
         "happy",
@@ -64,6 +67,8 @@ public static class FaceExpressions
     {
         var phase = seconds % 3.7;
         return phase < 3.54 || pose.CrossEyes ? pose : pose with
-        { Eyes = pose.Eyes * (float)Math.Abs((phase - 3.62) / .08) };
+        {
+            Eyes = pose.Eyes * (float)Math.Abs((phase - 3.62) / .08)
+        };
     }
 }

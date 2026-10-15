@@ -85,25 +85,41 @@ internal sealed class PoseClip2D
         _frames = frames;
     }
 
-    public string Name { get; }
-    public bool Loops { get; }
+    public string Name
+    {
+        get;
+    }
+    public bool Loops
+    {
+        get;
+    }
     public float Duration => _frames[^1].Time;
     public IReadOnlyList<PoseKeyframe2D> Frames => _frames;
 
     public RigidPose2D Sample(float time)
     {
         if (_frames.Length == 1 || Duration <= 0f)
+        {
             return _frames[0].Pose;
+        }
+
         if (Loops)
+        {
             time -= MathF.Floor(time / Duration) * Duration;
+        }
         else
+        {
             time = Math.Clamp(time, 0f, Duration);
+        }
 
         for (var index = 1; index < _frames.Length; index++)
         {
             var after = _frames[index];
             if (time > after.Time)
+            {
                 continue;
+            }
+
             var before = _frames[index - 1];
             var amount = Progress.SmoothStep((time - before.Time) / (after.Time - before.Time));
             return RigidPose2D.Lerp(before.Pose, after.Pose, amount);

@@ -21,14 +21,19 @@ internal static class MapEditorUiSmoke2D
         using var ui = new MapEditorUi2D(editor, game.Textures);
         ui.Attach(surface);
         var input = new InputState();
-        editor.RequestToggle(); editor.Update(input);
+        editor.RequestToggle();
+        editor.Update(input);
         using var renderer = new Renderer2D(game.Camera, device);
         var width = device.PresentationParameters.BackBufferWidth;
         var height = device.PresentationParameters.BackBufferHeight;
         using var target = new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, DepthFormat.Depth24);
         Draw("map-tiles");
         editor.SelectMode(LevelEditorMode2D.Things);
-        if (editor.ThingDefinitions.Count > 0) editor.SelectDefinition(editor.ThingDefinitions[0].DefinitionId);
+        if (editor.ThingDefinitions.Count > 0)
+        {
+            editor.SelectDefinition(editor.ThingDefinitions[0].DefinitionId);
+        }
+
         editor.InspectorView.RefreshFromEditor();
         Draw("map-things");
         editor.InspectorView.BeginNewDefinition();
@@ -42,12 +47,14 @@ internal static class MapEditorUiSmoke2D
                 var time = new FrameTime(1f / 60, frame / 60d, frame);
                 ui.BeginFrame(device, time);
                 input.SetToolCapture(ui.CaptureKeyboard, ui.CaptureMouse);
-                editor.Update(input); input.EndFrame();
+                editor.Update(input);
+                input.EndFrame();
                 device.SetRenderTarget(target);
                 renderer.BeginFrame(width, height, time);
                 game.RenderFrame(renderer, time);
                 TileEditorView2D.DrawWorldDebug(renderer, editor);
-                renderer.EndFrame(); ui.Render();
+                renderer.EndFrame();
+                ui.Render();
                 device.SetRenderTarget(null);
             }
             using var stream = File.Create(Path.Combine(outputDirectory, name + ".png"));

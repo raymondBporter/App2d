@@ -19,7 +19,10 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
         Axis = axis;
     }
 
-    public SweepAxis2D Axis { get; set; }
+    public SweepAxis2D Axis
+    {
+        get; set;
+    }
 
     public void CollectPairs(IReadOnlyList<T> items, IPairFilter2D<T> pairFilter, List<BroadPhasePair2D<T>> pairs)
     {
@@ -38,14 +41,21 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
             {
                 var candidate = _proxies[candidateIndex];
                 if (candidate.PrimaryMinimum > current.PrimaryMaximum)
+                {
                     break;
+                }
+
                 if (!OverlapsSecondaryAxis(current, candidate))
+                {
                     continue;
+                }
 
                 var first = current.Ordinal < candidate.Ordinal ? current.Item : candidate.Item;
                 var second = current.Ordinal < candidate.Ordinal ? candidate.Item : current.Item;
                 if (pairFilter.ShouldTest(first, second))
+                {
                     pairs.Add(new BroadPhasePair2D<T>(first, second));
+                }
             }
         }
     }
@@ -75,7 +85,9 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
     {
         var comparison = first.PrimaryMinimum.CompareTo(second.PrimaryMinimum);
         if (comparison != 0)
+        {
             return comparison;
+        }
 
         comparison = first.PrimaryMaximum.CompareTo(second.PrimaryMaximum);
         return comparison != 0

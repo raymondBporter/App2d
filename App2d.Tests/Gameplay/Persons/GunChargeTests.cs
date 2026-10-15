@@ -33,7 +33,11 @@ public sealed class GunChargeTests
         var start = game.Person.Position;
         game.Step(Press);
         Assert.Equal(0f, game.Person.Body.LinearVelocity.X);
-        for (var i = 1; i < 71; i++) game.Step(Hold);
+        for (var i = 1; i < 71; i++)
+        {
+            game.Step(Hold);
+        }
+
         Assert.True(game.Arsenal.IsChargingPrimary);
         Assert.Empty(game.Arsenal.GetActiveAttackHitboxes());
         Assert.Equal(start.X, game.Person.Position.X);
@@ -46,7 +50,11 @@ public sealed class GunChargeTests
         var shotX = bolt.Transform.Position.X;
         game.Step(Hold);
         Assert.True((bolt.Transform.Position.X - shotX) * facing > 0f);
-        for (var i = 0; i < 100; i++) game.Step(Hold);
+        for (var i = 0; i < 100; i++)
+        {
+            game.Step(Hold);
+        }
+
         Assert.Equal(1, game.Shots);
         game.Step(default);
         game.Step(Press);
@@ -63,21 +71,42 @@ public sealed class GunChargeTests
     {
         using var game = new Fixture();
         game.Step(Press);
-        for (var i = 0; i < 35; i++) game.Step(Hold);
+        for (var i = 0; i < 35; i++)
+        {
+            game.Step(Hold);
+        }
+
         Assert.True(game.Arsenal.IsChargingPrimary);
         var command = Hold;
         switch (cause)
         {
-            case "release": command = Release; break;
-            case "dash": command = Hold with { DashHeld = true }; break;
-            case "hit": Assert.True(game.Person.TakeDamage(1, new Vector2(-100f, 100f))); break;
-            case "reset": game.Person.Reset(Vector2.Zero); break;
-            case "disable": game.Person.SetSimulationEnabled(false); break;
+            case "release":
+                command = Release;
+                break;
+            case "dash":
+                command = Hold with
+                {
+                    DashHeld = true
+                };
+                break;
+            case "hit":
+                Assert.True(game.Person.TakeDamage(1, new Vector2(-100f, 100f)));
+                break;
+            case "reset":
+                game.Person.Reset(Vector2.Zero);
+                break;
+            case "disable":
+                game.Person.SetSimulationEnabled(false);
+                break;
         }
         game.Step(command);
         Assert.False(game.Arsenal.IsChargingPrimary);
         // Keep the button in its post-interruption state: a released button stays released.
-        for (var i = 0; i < 90; i++) game.Step(cause == "release" ? Release : Hold);
+        for (var i = 0; i < 90; i++)
+        {
+            game.Step(cause == "release" ? Release : Hold);
+        }
+
         Assert.Equal(0, game.Shots);
         Assert.Empty(game.Arsenal.GetActiveAttackHitboxes());
         Assert.Single(game.Events.OfType<ChargeCancelled2D>());
@@ -94,7 +123,11 @@ public sealed class GunChargeTests
         Assert.True(game.Arsenal.IsChargingPrimary);
         game.Ground.IsCollider = false;
         game.Physics.Gravity = new Vector2(0f, -100f);
-        for (var i = 0; i < 90; i++) game.Step(Hold);
+        for (var i = 0; i < 90; i++)
+        {
+            game.Step(Hold);
+        }
+
         Assert.False(game.Person.IsGrounded);
         Assert.True(game.Person.Position.Y < 0f);
         Assert.Equal(1, game.Shots);
@@ -108,9 +141,20 @@ public sealed class GunChargeTests
     {
         using var game = new Fixture();
         game.Step(Press);
-        for (var i = 1; i < 71; i++) game.Step(Hold);
-        if (takeDamage) Assert.True(game.Person.TakeDamage(1, Vector2.Zero));
-        else game.Step(default); // No physical release event: e.g. console/focus loss.
+        for (var i = 1; i < 71; i++)
+        {
+            game.Step(Hold);
+        }
+
+        if (takeDamage)
+        {
+            Assert.True(game.Person.TakeDamage(1, Vector2.Zero));
+        }
+        else
+        {
+            game.Step(default); // No physical release event: e.g. console/focus loss.
+        }
+
         game.Step(Release);
         Assert.False(game.Arsenal.IsChargingPrimary);
         Assert.Equal(0, game.Shots);
@@ -133,7 +177,11 @@ public sealed class GunChargeTests
         {
             game.Step(Press);
             baseline.Step(default);
-            for (var i = 1; i < 30; i++) { game.Step(Hold); baseline.Step(default); }
+            for (var i = 1; i < 30; i++)
+            {
+                game.Step(Hold);
+                baseline.Step(default);
+            }
         }
         var movement = kind switch
         {
@@ -148,15 +196,26 @@ public sealed class GunChargeTests
         {
             // One-tick pulses become presses; only the jump stays held.
             var intent = i == 0 ? movement : movement with
-            { DashHeld = false, DownHeld = false, JumpHeld = kind == "jump" };
-            game.Step(intent with { CastHeld = true });
+            {
+                DashHeld = false,
+                DownHeld = false,
+                JumpHeld = kind == "jump"
+            };
+            game.Step(intent with
+            {
+                CastHeld = true
+            });
             baseline.Step(intent);
             Assert.Equal((chargeFirst ? 30 : 0) + i + 1 < 72, game.Arsenal.IsChargingPrimary);
             Assert.Equal(baseline.Person.Position, game.Person.Position);
             Assert.Equal(baseline.Person.Body.LinearVelocity, game.Person.Body.LinearVelocity);
         }
         Assert.NotEqual(start, game.Person.Position);
-        if (kind == "climb") Assert.True(game.Person.IsClimbingLadder);
+        if (kind == "climb")
+        {
+            Assert.True(game.Person.IsClimbingLadder);
+        }
+
         Assert.Equal(1, game.Shots);
     }
 
@@ -165,8 +224,15 @@ public sealed class GunChargeTests
     {
         using var game = new Fixture();
         game.Step(Press);
-        for (var i = 1; i < 71; i++) game.Step(Hold);
-        game.Step(Hold with { MoveX = -1 });
+        for (var i = 1; i < 71; i++)
+        {
+            game.Step(Hold);
+        }
+
+        game.Step(Hold with
+        {
+            MoveX = -1
+        });
         var bullet = Assert.Single(game.Arsenal.GetActiveAttackHitboxes());
         Assert.True(bullet.Transform.Position.X < game.Person.Position.X);
         var shotX = bullet.Transform.Position.X;
@@ -183,7 +249,11 @@ public sealed class GunChargeTests
         wall.WorldObject.Transform.Position = new Vector2(30f, 0f);
         wall.CollisionLayer = 1;
         game.Step(Press);
-        for (var i = 1; i < 72; i++) game.Step(Hold);
+        for (var i = 1; i < 72; i++)
+        {
+            game.Step(Hold);
+        }
+
         game.Step(Release);
         Assert.Equal(1, game.Shots);
         Assert.Empty(game.Arsenal.GetActiveAttackHitboxes());
@@ -199,7 +269,10 @@ public sealed class GunChargeTests
         wall.WorldObject.Transform.Position = new Vector2(300f, 0f);
         wall.CollisionLayer = 1;
         game.Step(Press);
-        for (var i = 1; i < 110; i++) game.Step(Hold);
+        for (var i = 1; i < 110; i++)
+        {
+            game.Step(Hold);
+        }
 
         var impact = Assert.Single(game.Events.OfType<ProjectileImpact2D>());
         Assert.InRange(impact.Position.X, 280f, 310f);
@@ -210,21 +283,45 @@ public sealed class GunChargeTests
 
     private sealed class Fixture : IDisposable
     {
-        public PhysicsWorld2D Physics { get; }
-        public PhysicsBody2D Ground { get; }
-        public Person2D Person { get; }
-        public PersonArsenal2D Arsenal { get; }
+        public PhysicsWorld2D Physics
+        {
+            get;
+        }
+        public PhysicsBody2D Ground
+        {
+            get;
+        }
+        public Person2D Person
+        {
+            get;
+        }
+        public PersonArsenal2D Arsenal
+        {
+            get;
+        }
         public List<WeaponEvent2D> Events { get; } = [];
-        public int Shots { get; private set; }
+        public int Shots
+        {
+            get; private set;
+        }
 
         public Fixture(bool ladder = false)
         {
             var collision = new CollisionSystem2D();
-            Physics = new(collision) { Gravity = Vector2.Zero };
+            Physics = new(collision)
+            {
+                Gravity = Vector2.Zero
+            };
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
             var map = new EditableTileMap2D(16, 64, 32f, 8);
             if (ladder)
-                for (var y = 0; y < 20; y++) map.SetTileKind(0, y, TileKind2D.Ladder);
+            {
+                for (var y = 0; y < 20; y++)
+                {
+                    map.SetTileKind(0, y, TileKind2D.Ladder);
+                }
+            }
+
             var spawn = ladder ? new Vector2(16f - metrics.PlayerColliderCenterOffsetX, 28f) : Vector2.Zero;
             Person = new(EntityId2D.Create(), collision, Physics, metrics,
                 spawn, 2, 1, CombatFaction2D.Player, tileMap: map);
@@ -235,7 +332,11 @@ public sealed class GunChargeTests
             Ground.CollisionMask = 2;
             Arsenal = new(new EntityIdAllocator2D(), Person.Body, metrics.GunMuzzleOffset, collision, 1, 4,
                 CombatFaction2D.Player, new CombatSystem2D(collision, new CombatantRegistry2D()),
-                health: Person.Health, spells: new() { ShotChargeSeconds = .6f, ShotRecoverySeconds = .06f });
+                health: Person.Health, spells: new()
+                {
+                    ShotChargeSeconds = .6f,
+                    ShotRecoverySeconds = .06f
+                });
             Arsenal.WeaponOccurred += Events.Add;
             Person.AttachActions(Arsenal);
             Arsenal.ShotStarted += () => Shots++;
@@ -250,7 +351,9 @@ public sealed class GunChargeTests
             Person.UpdateAfterPhysics(dt);
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+        }
     }
 
 }

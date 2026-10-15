@@ -381,7 +381,11 @@ public sealed class ShapeArea2DTests
         Assert.Equal(16 + 2 * MathF.PI, CompositeShape2D.Builder.Create(parts).Area, 5);
         var restored = Assert.IsType<CompositeShape2D>(ShapeBuilder2D.FromJson(ShapeBuilder2D.FromShape(composite).ToJson()).Build());
         Assert.Equal(2, restored.Parts.Length);
-        foreach (var part in restored.Parts) Assert.IsType<Capsule2D>(part);
+        foreach (var part in restored.Parts)
+        {
+            Assert.IsType<Capsule2D>(part);
+        }
+
         Assert.Equal(3, restored.AreaOutlineSegments);
         Assert.False(restored.IncludeOverlap);
         Assert.Equal(composite.Area, restored.Area);
@@ -424,7 +428,11 @@ public sealed class ShapeArea2DTests
         var shape = new CountingCircle();
         var composite = CompositeShape2D.Builder.Create([shape, Circle2D.Builder.Create(.1f)], includeOverlap: false);
         Assert.Equal(64, shape.SupportReads);
-        for (var i = 0; i < 100; i++) Assert.True(composite.Area > 3);
+        for (var i = 0; i < 100; i++)
+        {
+            Assert.True(composite.Area > 3);
+        }
+
         Assert.Equal(64, shape.SupportReads);
         Assert.Equal(MathF.PI, ShapeArea2D.Union([new PointShape(), Circle2D.Builder.Create(1)]), 5);
         Assert.Throws<ArgumentException>(() => CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1)], areaOutlineSegments: 2));
@@ -433,8 +441,16 @@ public sealed class ShapeArea2DTests
 
     private static double CircleLens(double a, double b, double distance)
     {
-        if (distance >= a + b) return 0d;
-        if (distance <= Math.Abs(a - b)) return Math.PI * Math.Min(a, b) * Math.Min(a, b);
+        if (distance >= a + b)
+        {
+            return 0d;
+        }
+
+        if (distance <= Math.Abs(a - b))
+        {
+            return Math.PI * Math.Min(a, b) * Math.Min(a, b);
+        }
+
         var triangle = Math.Sqrt((-distance + a + b) * (distance + a - b) * (distance - a + b) * (distance + a + b));
         return a * a * Math.Acos((distance * distance + a * a - b * b) / (2 * distance * a))
             + b * b * Math.Acos((distance * distance + b * b - a * a) / (2 * distance * b)) - triangle / 2;
@@ -445,8 +461,16 @@ public sealed class ShapeArea2DTests
         var angle = (float)random.NextDouble() * MathF.Tau;
         var transform = Matrix3x2.CreateRotation(angle) * Matrix3x2.CreateTranslation((float)random.NextDouble() * 4 - 2, (float)random.NextDouble() * 4 - 2);
         Vector2[] points = [new(-1, -.7f), new(1, -.7f), new(1, .7f), new(-1, .7f)];
-        for (var i = 0; i < points.Length; i++) points[i] = Vector2.Transform(points[i], transform);
-        if (random.Next(2) == 0) Array.Reverse(points);
+        for (var i = 0; i < points.Length; i++)
+        {
+            points[i] = Vector2.Transform(points[i], transform);
+        }
+
+        if (random.Next(2) == 0)
+        {
+            Array.Reverse(points);
+        }
+
         return ConvexPolygon2D.Builder.Create(points);
     }
 
@@ -468,7 +492,11 @@ public sealed class ShapeArea2DTests
                 if (part is Circle2D circle)
                 {
                     var squared = (double)circle.Radius * circle.Radius - (x - circle.Center.X) * (x - circle.Center.X);
-                    if (squared <= 0d) continue;
+                    if (squared <= 0d)
+                    {
+                        continue;
+                    }
+
                     var half = Math.Sqrt(squared);
                     intervals.Add((circle.Center.Y - half, circle.Center.Y + half));
                 }
@@ -476,7 +504,11 @@ public sealed class ShapeArea2DTests
                 {
                     var normalizedX = (x - ellipse.Center.X) / ellipse.Radii.X;
                     var squared = 1d - normalizedX * normalizedX;
-                    if (squared <= 0d) continue;
+                    if (squared <= 0d)
+                    {
+                        continue;
+                    }
+
                     var half = ellipse.Radii.Y * Math.Sqrt(squared);
                     intervals.Add((ellipse.Center.Y - half, ellipse.Center.Y + half));
                 }
@@ -486,7 +518,11 @@ public sealed class ShapeArea2DTests
                 }
                 else if (part is Capsule2D capsule)
                 {
-                    if (x <= Math.Min(capsule.Start.X, capsule.End.X) - (double)capsule.Radius || x >= Math.Max(capsule.Start.X, capsule.End.X) + (double)capsule.Radius) continue;
+                    if (x <= Math.Min(capsule.Start.X, capsule.End.X) - (double)capsule.Radius || x >= Math.Max(capsule.Start.X, capsule.End.X) + (double)capsule.Radius)
+                    {
+                        continue;
+                    }
+
                     var dx = (double)capsule.End.X - capsule.Start.X;
                     var dy = (double)capsule.End.Y - capsule.Start.Y;
                     var parameter = dx == 0d ? .5d : Math.Clamp((x - capsule.Start.X) / dx, 0d, 1d);
@@ -500,11 +536,24 @@ public sealed class ShapeArea2DTests
                     for (var step = 0; step < 32; step++)
                     {
                         var lowMiddle = (lowOutside + lowInside) * .5d;
-                        if (CapsuleContains(capsule, x, lowMiddle)) lowInside = lowMiddle;
-                        else lowOutside = lowMiddle;
+                        if (CapsuleContains(capsule, x, lowMiddle))
+                        {
+                            lowInside = lowMiddle;
+                        }
+                        else
+                        {
+                            lowOutside = lowMiddle;
+                        }
+
                         var highMiddle = (highInside + highOutside) * .5d;
-                        if (CapsuleContains(capsule, x, highMiddle)) highInside = highMiddle;
-                        else highOutside = highMiddle;
+                        if (CapsuleContains(capsule, x, highMiddle))
+                        {
+                            highInside = highMiddle;
+                        }
+                        else
+                        {
+                            highOutside = highMiddle;
+                        }
                     }
                     intervals.Add((lowInside, highInside));
                 }
@@ -535,7 +584,10 @@ public sealed class ShapeArea2DTests
     {
         public string Kind => "CountingCircle";
         public float Area => MathF.PI;
-        public int SupportReads { get; private set; }
+        public int SupportReads
+        {
+            get; private set;
+        }
         public bool ContainsPoint(Vector2 point) => point.LengthSquared() <= 1;
         public Vector2 GetSupportPoint(Vector2 direction)
         {

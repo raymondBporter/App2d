@@ -15,7 +15,9 @@ internal sealed class AnimationViewport(EditorSession session, Viewport viewport
     public void Draw(ViewportFrame frame)
     {
         if (frame.Primary is not { } view || session.ClipDocument is not { } document)
+        {
             return;
+        }
 
         var subject = view.Subject;
         var model = subject.Model;
@@ -28,12 +30,15 @@ internal sealed class AnimationViewport(EditorSession session, Viewport viewport
         }
         if (Onion && !session.Transport.Playing && subject.Clip is { } shown)
         {
-            var times = ClipAuthoring.KeyTimes(shown); var now = session.Transport.Time;
+            var times = ClipAuthoring.KeyTimes(shown);
+            var now = session.Transport.Time;
             foreach (var time in new[] { times.LastOrDefault(t => t < now - .001f, -1), times.FirstOrDefault(t => t > now + .001f, -1) }.Where(t => t >= 0))
             {
                 var ghost = PoseEvaluator.Sample(model, shown, time);
                 foreach (var control in model.Order.Where(c => c.Parent is not null))
+                {
                     draw.AddLine(frame.Screen(ghost.World(control.Parent!)), frame.Screen(ghost.World(control.Id)), Ui.Color(135, 128, 83, 110), 2);
+                }
             }
         }
 
@@ -50,7 +55,10 @@ internal sealed class AnimationViewport(EditorSession session, Viewport viewport
                 draw.AddLine(points[control.Parent!], points[control.Id], Ui.Color(240, 106, 50, 150), 1.5f);
             }
 
-            foreach (var p in points.Values) draw.AddCircleFilled(p, 3 * Ui.Scale, Ui.Color(240, 106, 50, 200));
+            foreach (var p in points.Values)
+            {
+                draw.AddCircleFilled(p, 3 * Ui.Scale, Ui.Color(240, 106, 50, 200));
+            }
         }
         foreach (var control in model.Order)
         {
@@ -88,7 +96,10 @@ internal sealed class AnimationViewport(EditorSession session, Viewport viewport
 
     private IEnumerable<(string Control, Vector3 Point)> SourcePoints(Subject subject, MotionClip clip)
     {
-        try { return _source.Sample(subject, clip, session.Transport.Time); }
+        try
+        {
+            return _source.Sample(subject, clip, session.Transport.Time);
+        }
         catch (Exception ex) when (AuthoringWorkspace.IsAssetError(ex) || ex is IOException)
         {
             session.Report("Source unavailable: " + ex.Message, true);

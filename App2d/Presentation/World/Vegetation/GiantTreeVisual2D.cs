@@ -59,15 +59,26 @@ public sealed class GiantTreeVisual2D
             _crowns.Add(new(center, radii, random.NextFloat(MathF.Tau), random.NextSingle()));
     }
 
-    public GiantTree2D Tree { get; }
+    public GiantTree2D Tree
+    {
+        get;
+    }
 
     public void Render(Renderer2D renderer, Rect2D visible, VegetationWind2D wind)
     {
-        if (!visible.Intersects(Tree.Bounds)) return;
+        if (!visible.Intersects(Tree.Bounds))
+        {
+            return;
+        }
+
         Span<Vector2> leaves = stackalloc Vector2[14];
         foreach (var crown in _crowns)
         {
-            if (!visible.Intersects(Rect2D.FromSize(crown.Radii * 2f + new Vector2(12f), crown.Center))) continue;
+            if (!visible.Intersects(Rect2D.FromSize(crown.Radii * 2f + new Vector2(12f), crown.Center)))
+            {
+                continue;
+            }
+
             var center = crown.Center + new Vector2(wind.Offset(crown.Center.X, 1f, crown.Phase, 0.1f), 0);
             WriteLeaves(center, crown.Radii, crown.Phase, leaves);
             renderer.DrawWorldConvexPolygon(leaves, Ink);
@@ -97,13 +108,19 @@ public sealed class GiantTreeVisual2D
         foreach (var bark in _bark)
         {
             if (visible.Top >= bark[0].Y && visible.Bottom <= bark[2].Y)
+            {
                 renderer.DrawWorldConvexPolygon(bark, new XnaColor(82, 61, 43));
+            }
         }
 
         foreach (var branch in Tree.Branches)
         {
             var b = branch.Bounds;
-            if (!visible.Intersects(b)) continue;
+            if (!visible.Intersects(b))
+            {
+                continue;
+            }
+
             wood[0] = new(b.Left, b.Top);
             wood[1] = new(b.Right, b.Top);
             wood[2] = new(b.Right, branch.Side > 0 ? b.Top - b.Height * 0.35f : b.Bottom);
@@ -116,7 +133,9 @@ public sealed class GiantTreeVisual2D
         foreach (var moss in _moss)
         {
             if (visible.Contains(moss[0]) || visible.Contains(moss[2]))
+            {
                 renderer.DrawWorldConvexPolygon(moss, new XnaColor(101, 147, 57));
+            }
         }
 
         Span<Vector2> flare = stackalloc Vector2[3];

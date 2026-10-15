@@ -16,20 +16,36 @@ public static class WorldZoneFile2D
 
     public static ImmutableArray<WorldZone2D> Load(string path)
     {
-        if (!File.Exists(path)) return [];
+        if (!File.Exists(path))
+        {
+            return [];
+        }
+
         try
         {
             var file = JsonSerializer.Deserialize<ZoneFile>(File.ReadAllText(path), Options)
                 ?? throw new InvalidDataException("Zone document is null.");
-            if (file.Version != 1 || file.Zones is null) throw new InvalidDataException("Expected zone format version 1.");
+            if (file.Version != 1 || file.Zones is null)
+            {
+                throw new InvalidDataException("Expected zone format version 1.");
+            }
+
             var ids = new HashSet<string>(StringComparer.Ordinal);
             var zones = ImmutableArray.CreateBuilder<WorldZone2D>(file.Zones.Length);
             foreach (var entry in file.Zones)
             {
-                if (entry is null) throw new InvalidDataException("A zone entry cannot be null.");
+                if (entry is null)
+                {
+                    throw new InvalidDataException("A zone entry cannot be null.");
+                }
+
                 var zone = new WorldZone2D(entry.Id, entry.Name,
                     new(new(entry.MinX, entry.MinY), new(entry.MaxX, entry.MaxY)), entry.Priority);
-                if (!ids.Add(zone.Id)) throw new InvalidDataException($"Duplicate zone ID '{zone.Id}'.");
+                if (!ids.Add(zone.Id))
+                {
+                    throw new InvalidDataException($"Duplicate zone ID '{zone.Id}'.");
+                }
+
                 zones.Add(zone);
             }
             return zones.MoveToImmutable();

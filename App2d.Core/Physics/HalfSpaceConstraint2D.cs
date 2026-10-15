@@ -9,7 +9,9 @@ public static class HalfSpaceConstraint2D
     public static bool ConstrainOutside(SpatialObject2D convexObject, SpatialObject2D halfSpaceObject, out HalfSpaceContact2D contact)
     {
         if (!HalfSpaceCollision2D.TryGetContact(convexObject, halfSpaceObject, out contact))
+        {
             return false;
+        }
 
         convexObject.Transform.Position += contact.MinimumTranslationVector;
         return true;

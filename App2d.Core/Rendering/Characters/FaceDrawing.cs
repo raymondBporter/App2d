@@ -16,7 +16,10 @@ public static class FaceDrawing
         {
             Span<Vector2> points = stackalloc Vector2[13];
             Curve2D.Sample(new QuadraticBezier2D(a, control, b), points);
-            for (var i = 1; i < points.Length; i++) Line(points[i - 1], points[i], weight);
+            for (var i = 1; i < points.Length; i++)
+            {
+                Line(points[i - 1], points[i], weight);
+            }
         }
         void Oval(Vector2 center, float rx, float ry, Color? fill = null, float depth = 0)
         {
@@ -25,7 +28,8 @@ public static class FaceDrawing
         }
         foreach (var side in new[] { -1f, 1f })
         {
-            var x = side * .205f; var y = -.12f + side * pose.Asymmetry * .025f;
+            var x = side * .205f;
+            var y = -.12f + side * pose.Asymmetry * .025f;
             var open = MathF.Max(0, pose.Eyes + side * pose.Asymmetry * .15f);
             if (pose.CrossEyes)
             {
@@ -55,13 +59,19 @@ public static class FaceDrawing
             if (brows > .02f)
             {
                 var browY = -.29f - pose.BrowLift * .06f + side * pose.Asymmetry * .045f;
-                var halfBrow = .095f * brows; var tilt = side * pose.BrowTilt * .065f * brows;
+                var halfBrow = .095f * brows;
+                var tilt = side * pose.BrowTilt * .065f * brows;
                 Line(new(x - halfBrow, browY + tilt), new(x + halfBrow, browY - tilt), weight: 1.2f * brows);
             }
         }
         var half = .2f * pose.MouthWidth;
         if (pose.MouthOpen > .08f)
+        {
             Oval(new(0, .21f), half, .025f + pose.MouthOpen * .13f);
-        else Curve(new(-half, .2f + pose.Asymmetry * .035f), new(0, .2f + pose.Smile * .19f), new(half, .2f - pose.Asymmetry * .035f), 1.15f);
+        }
+        else
+        {
+            Curve(new(-half, .2f + pose.Asymmetry * .035f), new(0, .2f + pose.Smile * .19f), new(half, .2f - pose.Asymmetry * .035f), 1.15f);
+        }
     }
 }

@@ -26,7 +26,9 @@ public sealed class WorldObject2D(IShape2D shape, IShader2D shader) : SpatialObj
         set
         {
             if (_zIndex == value)
+            {
                 return;
+            }
 
             _zIndex = value;
             ZIndexChanged?.Invoke();

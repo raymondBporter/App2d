@@ -22,11 +22,15 @@ public sealed class HumanProportionsTests
         Assert.Equal(original.Measure("torso"), actual.Measure("torso"), 5);
         foreach (var part in new[] { "head", "body" })
         {
-            var before = original.Parts.Single(p => p.Id == part); var after = actual.Parts.Single(p => p.Id == part);
-            Assert.Equal(before.Width, after.Width); Assert.Equal(before.Height, after.Height);
+            var before = original.Parts.Single(p => p.Id == part);
+            var after = actual.Parts.Single(p => p.Id == part);
+            Assert.Equal(before.Width, after.Width);
+            Assert.Equal(before.Height, after.Height);
         }
         foreach (var control in PersonTemplate.Model().Controls)
+        {
             TestModels.Near(control.Rest.XYZ, Catalog.Resolve("person").Rest[control.Id]);
+        }
     }
 
     [Theory, InlineData("person-walk"), InlineData("person-run"), InlineData("person-heavy-walk")]
@@ -42,7 +46,10 @@ public sealed class HumanProportionsTests
             {
                 var pose = PoseEvaluator.Sample(model, clip, i * clip.Duration / 120.0, repeat: true);
                 foreach (var chain in pose.Chains.Where(c => c.Chain.EndsWith("-leg")))
+                {
                     Assert.True(chain.Reached, $"{id}/{clipId}/{chain.Chain} at frame {i}: {chain.Residual}");
+                }
+
                 Assert.All(pose.Contacts, c => Assert.InRange(c.Residual, 0, 1e-4f));
             }
             foreach (var contact in clip.Contacts)

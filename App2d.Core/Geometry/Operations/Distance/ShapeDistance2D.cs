@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
@@ -54,9 +55,17 @@ public static class ShapeDistance2D
     public static float Distance(Vector2 point, IShape2D shape)
     {
         ArgGuard.ThrowIfNull(shape);
-        if (shape is not CompositeShape2D composite) return Math.Max(0f, SignedDistance(point, shape));
+        if (shape is not CompositeShape2D composite)
+        {
+            return Math.Max(0f, SignedDistance(point, shape));
+        }
+
         var distance = float.PositiveInfinity;
-        foreach (var part in composite.Parts) distance = Math.Min(distance, Distance(point, part));
+        foreach (var part in composite.Parts)
+        {
+            distance = Math.Min(distance, Distance(point, part));
+        }
+
         return distance;
     }
 
@@ -92,12 +101,36 @@ public static class ShapeDistance2D
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
-        if (first is SimplePolygon2D) throw Unsupported(first);
-        if (second is SimplePolygon2D) throw Unsupported(second);
-        if (first is HalfSpace2D firstPlane && second is IConvexShape2D secondConvex) return ShapeHalfSpaceQuery2D.Query(secondConvex, secondPose, firstPlane, firstPose).SignedDistance;
-        if (second is HalfSpace2D secondPlane && first is IConvexShape2D firstConvex) return ShapeHalfSpaceQuery2D.Query(firstConvex, firstPose, secondPlane, secondPose).SignedDistance;
-        if (first is not IConvexShape2D convexFirst) throw Unsupported(first);
-        if (second is not IConvexShape2D convexSecond) throw Unsupported(second);
+        if (first is SimplePolygon2D)
+        {
+            throw Unsupported(first);
+        }
+
+        if (second is SimplePolygon2D)
+        {
+            throw Unsupported(second);
+        }
+
+        if (first is HalfSpace2D firstPlane && second is IConvexShape2D secondConvex)
+        {
+            return ShapeHalfSpaceQuery2D.Query(secondConvex, secondPose, firstPlane, firstPose).SignedDistance;
+        }
+
+        if (second is HalfSpace2D secondPlane && first is IConvexShape2D firstConvex)
+        {
+            return ShapeHalfSpaceQuery2D.Query(firstConvex, firstPose, secondPlane, secondPose).SignedDistance;
+        }
+
+        if (first is not IConvexShape2D convexFirst)
+        {
+            throw Unsupported(first);
+        }
+
+        if (second is not IConvexShape2D convexSecond)
+        {
+            throw Unsupported(second);
+        }
+
         return ShapeConvexQuery2D.SignedDistance(convexFirst, firstPose, convexSecond, secondPose);
     }
 
@@ -111,17 +144,36 @@ public static class ShapeDistance2D
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
-        if (first is SimplePolygon2D firstPolygon) return Distance(firstPolygon.ConvexPieces, firstPose, second, secondPose);
-        if (second is SimplePolygon2D secondPolygon) return Distance(first, firstPose, secondPolygon.ConvexPieces, secondPose);
+        if (first is SimplePolygon2D firstPolygon)
+        {
+            return Distance(firstPolygon.ConvexPieces, firstPose, second, secondPose);
+        }
+
+        if (second is SimplePolygon2D secondPolygon)
+        {
+            return Distance(first, firstPose, secondPolygon.ConvexPieces, secondPose);
+        }
+
         if (first is CompositeShape2D composite)
         {
             var distance = float.PositiveInfinity;
-            foreach (var part in composite.Parts) distance = Math.Min(distance, Distance(part, firstPose, second, secondPose));
+            foreach (var part in composite.Parts)
+            {
+                distance = Math.Min(distance, Distance(part, firstPose, second, secondPose));
+            }
+
             return distance;
         }
-        if (second is CompositeShape2D) return Distance(second, secondPose, first, firstPose);
+        if (second is CompositeShape2D)
+        {
+            return Distance(second, secondPose, first, firstPose);
+        }
+
         if (first is IConvexShape2D convexFirst && second is IConvexShape2D convexSecond)
+        {
             return ShapeConvexQuery2D.Distance(convexFirst, firstPose, convexSecond, secondPose);
+        }
+
         return Math.Max(0f, SignedDistance(first, firstPose, second, secondPose));
     }
 
@@ -137,8 +189,11 @@ public static class ShapeDistance2D
     {
         var vertices = polygon.Vertices;
         var distance = float.PositiveInfinity;
-        for (var i = 0; i < vertices.Length; i++)
-            distance = Math.Min(distance, Distance2D.DistanceToSegment(point, vertices[i], vertices[(i + 1) % vertices.Length]));
+        foreach (var (a, b) in MeshTopology.Edges(vertices.Length))
+        {
+            distance = Math.Min(distance, Distance2D.DistanceToSegment(point, vertices[a], vertices[b]));
+        }
+
         return polygon.ContainsPoint(point) ? -distance : distance;
     }
 

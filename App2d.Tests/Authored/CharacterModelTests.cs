@@ -17,7 +17,10 @@ public sealed class CharacterModelTests
         var layered = control.Rest.Layered;
         Assert.Equal(new Vector2(.25f, 1.5f), layered.Position);
         Assert.Equal(-.14338458f, layered.Layer.Order);
-        control.Rest = PuppetPoint.From(layered with { Position = new(.5f, 1.5f) });
+        control.Rest = PuppetPoint.From(layered with
+        {
+            Position = new(.5f, 1.5f)
+        });
 
         var json = model.ToJson();
         Assert.Contains("\"z\": -0.14338458", json);
@@ -28,7 +31,8 @@ public sealed class CharacterModelTests
     [Fact]
     public void JsonRoundTripIsExactAndRejectsMisspelledFields()
     {
-        var model = TestModels.Creature(); model.Validate();
+        var model = TestModels.Creature();
+        model.Validate();
         var json = model.ToJson();
         Assert.Equal(json, CharacterModel.FromJson(json).ToJson());
         Assert.Contains("\"frame\": \"shoulder\"", json);
@@ -57,16 +61,42 @@ public sealed class CharacterModelTests
         ModelControl Control(string id) => model.Controls.Single(c => c.Id == id);
         switch (edit)
         {
-            case "cycle": Control("body").Parent = "foot"; break;
-            case "unknown-parent": Control("hip").Parent = "tail"; break;
-            case "joint-not-child": Control("knee").Parent = "body"; break;
-            case "shared-solve": model.Chains.Add(new() { Id = "leg2", Root = "hip", Joint = "knee", End = "foot" }); break;
-            case "frame-solved": model.Chains[1].Frame = "hand"; break;
-            case "unknown-scale": Control("body").Scale = "tail"; break;
-            case "reserved-id": Control("body").Id = "locomotion"; break;
-            case "bad-id": model.Measures[0].Id = "Leg Length"; break;
-            case "short-bone": Control("knee").Rest = new(0, 1.001f); break;
-            case "part-control": model.Parts[0].A = "tail"; break;
+            case "cycle":
+                Control("body").Parent = "foot";
+                break;
+            case "unknown-parent":
+                Control("hip").Parent = "tail";
+                break;
+            case "joint-not-child":
+                Control("knee").Parent = "body";
+                break;
+            case "shared-solve":
+                model.Chains.Add(new()
+                {
+                    Id = "leg2",
+                    Root = "hip",
+                    Joint = "knee",
+                    End = "foot"
+                });
+                break;
+            case "frame-solved":
+                model.Chains[1].Frame = "hand";
+                break;
+            case "unknown-scale":
+                Control("body").Scale = "tail";
+                break;
+            case "reserved-id":
+                Control("body").Id = "locomotion";
+                break;
+            case "bad-id":
+                model.Measures[0].Id = "Leg Length";
+                break;
+            case "short-bone":
+                Control("knee").Rest = new(0, 1.001f);
+                break;
+            case "part-control":
+                model.Parts[0].A = "tail";
+                break;
         }
         var error = Assert.Throws<InvalidDataException>(model.Validate);
         Assert.Contains(fragment, error.Message, StringComparison.OrdinalIgnoreCase);
@@ -78,10 +108,14 @@ public sealed class CharacterModelTests
         var path = Path.Combine(Path.GetTempPath(), $"model-{Guid.NewGuid():N}.json");
         try
         {
-            var model = TestModels.Creature(); model.Save(path);
+            var model = TestModels.Creature();
+            model.Save(path);
             Assert.False(File.Exists(path + ".tmp"));
             Assert.Equal(model.ToJson(), CharacterModel.Load(path).ToJson());
         }
-        finally { File.Delete(path); }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 }

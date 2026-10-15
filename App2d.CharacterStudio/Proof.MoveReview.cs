@@ -50,11 +50,14 @@ internal sealed partial class ProofRenders
         var drawing = new PuppetDrawing();
         var scenery = new CharacterMesh(8192);
         var items = ReviewItems(catalog);
-        var manifest = new List<object>(); var report = new List<string>();
+        var manifest = new List<object>();
+        var report = new List<string>();
         foreach (var item in items)
         {
-            var folder = Path.Combine(_smokePath, "frames", item.Id); Directory.CreateDirectory(folder);
-            var clip = item.Clip; var count = Math.Max(2, (int)MathF.Round(item.Duration * ReviewFps) + (item.Loop ? 0 : 1));
+            var folder = Path.Combine(_smokePath, "frames", item.Id);
+            Directory.CreateDirectory(folder);
+            var clip = item.Clip;
+            var count = Math.Max(2, (int)MathF.Round(item.Duration * ReviewFps) + (item.Loop ? 0 : 1));
             for (var f = 0; f < count; f++)
             {
                 var seconds = Math.Min(item.Duration, f / (float)ReviewFps);
@@ -64,10 +67,14 @@ internal sealed partial class ProofRenders
                 drawing.Build(model, pose);
                 var placed = new ActorPose(pose, Vector2.Zero, 1);
                 foreach (var (prop, socket) in PersonLoadout.Dressed(upper?.Clip ?? clip, upper?.Seconds ?? seconds, item.Gun ? PersonGear.Gun : PersonGear.Sword, catalog.Entities["hero"]))
+                {
                     drawing.AddProp(props[prop], placed.Socket(sockets[socket]));
+                }
+
                 var centerX = pose.Locomotion.X + item.ViewX;
                 BuildScenery(scenery, item.Scene, centerX, seconds);
-                GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(241, 240, 232));
+                GraphicsDevice.SetRenderTarget(target);
+                GraphicsDevice.Clear(new Color(241, 240, 232));
                 var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .5f - centerX * ReviewPpu, ReviewHeight * .84f), ReviewPpu);
                 _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
                 _renderer.Draw(drawing.Mesh, projection, Matrix.Identity);
@@ -131,8 +138,20 @@ internal sealed partial class ProofRenders
     private static Func<float, (MotionClip, float)?> Sequence(float start, params MotionClip[] clips) => seconds =>
     {
         var t = seconds - start;
-        if (t < 0) return null;
-        foreach (var clip in clips) { if (t < clip.Duration) return (clip, t); t -= clip.Duration; }
+        if (t < 0)
+        {
+            return null;
+        }
+
+        foreach (var clip in clips)
+        {
+            if (t < clip.Duration)
+            {
+                return (clip, t);
+            }
+
+            t -= clip.Duration;
+        }
         return null;
     };
 
@@ -151,8 +170,15 @@ internal sealed partial class ProofRenders
                 foreach (var key in keys)
                 {
                     var time = key.Time + n * every;
-                    if (time > limit + 1e-5f || result.Count > 0 && time <= result[^1].Time + 1e-5f) continue;
-                    result.Add((shift?.Invoke(key, n) ?? key) with { Time = MathF.Min(time, limit) });
+                    if (time > limit + 1e-5f || result.Count > 0 && time <= result[^1].Time + 1e-5f)
+                    {
+                        continue;
+                    }
+
+                    result.Add((shift?.Invoke(key, n) ?? key) with
+                    {
+                        Time = MathF.Min(time, limit)
+                    });
                 }
             }
 
@@ -187,55 +213,89 @@ internal sealed partial class ProofRenders
 
     private static void BuildScenery(CharacterMesh mesh, string scene, float centerX, float seconds)
     {
-        mesh.Clear(); var ink = new Color(150, 162, 152); var faint = new Color(196, 204, 194);
+        mesh.Clear();
+        var ink = new Color(150, 162, 152);
+        var faint = new Color(196, 204, 194);
         const float pixel = 1 / ReviewPpu;
         void Line(float x0, float y0, float x1, float y1, float width, Color color) => mesh.Line(new(x0, y0, 7), new(x1, y1, 7), width * pixel, color);
         switch (scene)
         {
-            case "air": break;
-            case "ledge-ahead": Line(centerX - 3, 0, .16f, 0, 2, ink); Line(.16f, 0, .16f, -2, 2, ink); break;
-            case "ledge-behind": Line(-.14f, 0, centerX + 3, 0, 2, ink); Line(-.14f, 0, -.14f, -2, 2, ink); break;
+            case "air":
+                break;
+            case "ledge-ahead":
+                Line(centerX - 3, 0, .16f, 0, 2, ink);
+                Line(.16f, 0, .16f, -2, 2, ink);
+                break;
+            case "ledge-behind":
+                Line(-.14f, 0, centerX + 3, 0, 2, ink);
+                Line(-.14f, 0, -.14f, -2, 2, ink);
+                break;
             default:
                 Line(centerX - 3, 0, centerX + 3, 0, 2, ink);
                 var first = (int)MathF.Floor((centerX - 2) * 4);
-                for (var x = first; x <= first + 16; x++) Line(x * .25f, 0, x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 1, ink);
+                for (var x = first; x <= first + 16; x++)
+                {
+                    Line(x * .25f, 0, x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 1, ink);
+                }
+
                 break;
         }
-        if (scene == "wall") { Line(-.3f, -1, -.3f, 3, 3, ink); for (var y = -1f; y < 3; y += .2f) Line(-.3f, y, -.42f, y - .12f, 1, faint); }
+        if (scene == "wall")
+        {
+            Line(-.3f, -1, -.3f, 3, 3, ink);
+            for (var y = -1f; y < 3; y += .2f)
+            {
+                Line(-.3f, y, -.42f, y - .12f, 1, faint);
+            }
+        }
         if (scene == "ladder")
         {
-            const float left = -.36f, right = .36f, spacing = .275f; var scroll = -(seconds * 1.375f % spacing);
-            Line(left, -1, left, 3.2f, 3, faint); Line(right, -1, right, 3.2f, 3, faint);
-            for (var y = -1f + scroll; y < 3.2f; y += spacing) Line(left, y, right, y, 3, faint);
+            const float left = -.36f, right = .36f, spacing = .275f;
+            var scroll = -(seconds * 1.375f % spacing);
+            Line(left, -1, left, 3.2f, 3, faint);
+            Line(right, -1, right, 3.2f, 3, faint);
+            for (var y = -1f + scroll; y < 3.2f; y += spacing)
+            {
+                Line(left, y, right, y, 3, faint);
+            }
         }
     }
 
     /// <summary>Mechanical checks only: planted feet, limbs reaching, loop seams and the shared hip/shoulder turn. Art judgment is the reviewer's.</summary>
     private static string Check(ResolvedModel model, ReviewItem item)
     {
-        var clip = item.Clip; var samples = Math.Max(2, (int)(clip.Duration * 240));
-        float contact = 0, turnSum = 0, swing = 0; var overreach = 0;
+        var clip = item.Clip;
+        var samples = Math.Max(2, (int)(clip.Duration * 240));
+        float contact = 0, turnSum = 0, swing = 0;
+        var overreach = 0;
         static float Yaw(EvaluatedPose p, string left, string right, string frame)
         {
             var d = PoseEvaluator.RotateXY(p.Points[right] - p.Points[left], -p.Angles[frame]);
             return MathF.Atan2(d.Z, d.X);
         }
         var rest = PoseEvaluator.Rest(model);
-        var restShoulders = Yaw(rest, "left-shoulder", "right-shoulder", "chest"); var restHips = Yaw(rest, "left-hip", "right-hip", "hips");
+        var restShoulders = Yaw(rest, "left-shoulder", "right-shoulder", "chest");
+        var restHips = Yaw(rest, "left-hip", "right-hip", "hips");
         for (var i = 0; i <= samples; i++)
         {
             var pose = PoseEvaluator.Sample(model, clip, i * clip.Duration / samples);
             contact = pose.Contacts.Select(c => c.Residual).Append(contact).Max();
-            if (pose.Chains.Any(c => !c.Reached && c.Residual > .005f)) overreach++;
+            if (pose.Chains.Any(c => !c.Reached && c.Residual > .005f))
+            {
+                overreach++;
+            }
+
             var shoulders = Yaw(pose, "left-shoulder", "right-shoulder", "chest") - restShoulders;
             var hips = Yaw(pose, "left-hip", "right-hip", "hips") - restHips;
             var offset = MathF.IEEERemainder(shoulders - hips, MathF.Tau); // back views sit on the +-180 degree seam
-            turnSum += offset; swing = MathF.Max(swing, MathF.Abs(offset));
+            turnSum += offset;
+            swing = MathF.Max(swing, MathF.Abs(offset));
         }
         var seam = 0f;
         if (clip.Loop)
         {
-            var a = PoseEvaluator.Sample(model, clip, 0); var b = PoseEvaluator.Sample(model, clip, clip.Duration);
+            var a = PoseEvaluator.Sample(model, clip, 0);
+            var b = PoseEvaluator.Sample(model, clip, clip.Duration);
             seam = a.Points.Keys.Max(k => Vector3.Distance(a.Points[k] - a.Locomotion, b.Points[k] - b.Locomotion));
         }
         return $"{item.Id}: contact residual {contact:F4}, frames overreaching {overreach}/{samples + 1}, shared turn offset (mean) {turnSum / (samples + 1) * 180 / MathF.PI:F2} deg, peak counter-rotation {swing * 180 / MathF.PI:F1} deg" +

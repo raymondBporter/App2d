@@ -22,11 +22,16 @@ public static class ShapeRaycast2D
         ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
         switch (shape)
         {
-            case Circle2D circle: return Raycast2D.TryCircle(origin, direction, circle.Center, circle.Radius, maxDistance, out hit);
-            case Ellipse2D ellipse: return Raycast2D.TryEllipse(origin, direction, ellipse.Center, ellipse.Radii, maxDistance, out hit);
-            case Capsule2D capsule: return Raycast2D.TryCapsule(origin, direction, capsule.Start, capsule.End, capsule.Radius, maxDistance, out hit);
-            case HalfSpace2D halfSpace: return Raycast2D.TryHalfSpace(origin, direction, halfSpace.Normal, halfSpace.Offset, maxDistance, out hit);
-            case SimplePolygon2D polygon: return Raycast2D.TrySimplePolygon(origin, direction, polygon.Vertices, maxDistance, out hit);
+            case Circle2D circle:
+                return Raycast2D.TryCircle(origin, direction, circle.Center, circle.Radius, maxDistance, out hit);
+            case Ellipse2D ellipse:
+                return Raycast2D.TryEllipse(origin, direction, ellipse.Center, ellipse.Radii, maxDistance, out hit);
+            case Capsule2D capsule:
+                return Raycast2D.TryCapsule(origin, direction, capsule.Start, capsule.End, capsule.Radius, maxDistance, out hit);
+            case HalfSpace2D halfSpace:
+                return Raycast2D.TryHalfSpace(origin, direction, halfSpace.Normal, halfSpace.Offset, maxDistance, out hit);
+            case SimplePolygon2D polygon:
+                return Raycast2D.TrySimplePolygon(origin, direction, polygon.Vertices, maxDistance, out hit);
             case CompositeShape2D composite:
                 hit = default;
                 var found = false;

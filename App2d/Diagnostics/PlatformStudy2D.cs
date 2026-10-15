@@ -42,10 +42,22 @@ internal static class PlatformStudy2D
         foreach (var (name, focus, spec, withEnemy) in scenarios)
         {
             var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
-            for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+            for (var x = 0; x < 640; x++)
+            {
+                map.SetTileKind(x, 19, TileKind2D.Solid);
+            }
+
             var things = new List<WorldThingSpec2D> { new(1, WorldThingKind2D.PlayerSpawn, null, true, withEnemy ? new(-600, 40) : spec.Position + new Vector2(0, 90)) };
-            if (withEnemy) things.Add(new(2, WorldThingKind2D.Shieldback, null, true, spec.Position + new Vector2(0, 110)));
-            using var game = SideScrollerSimulation2D.Create(new(traversal, map, [spec], things) { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
+            if (withEnemy)
+            {
+                things.Add(new(2, WorldThingKind2D.Shieldback, null, true, spec.Position + new Vector2(0, 110)));
+            }
+
+            using var game = SideScrollerSimulation2D.Create(new(traversal, map, [spec], things)
+            {
+                AuthoredCharacters = authored,
+                PlayerMaximumHealth = 30
+            });
             var scene = new Scene2D();
             using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(authored), traversal);
             using var enemies = new EnemyPresentation2D(scene, textures, traversal, new Silent());
@@ -63,15 +75,27 @@ internal static class PlatformStudy2D
                 player.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive);
                 enemies.ApplyState(frame.Enemies, [], frame.Tick);
                 platform.Transform.Position = frame.World.MovingPlatforms[0].Position;
-                if (step % 4 != 0) continue;
+                if (step % 4 != 0)
+                {
+                    continue;
+                }
+
                 device.SetRenderTarget(target);
-                renderer.BeginFrame(400, 300, default); renderer.Clear(new Color(145, 176, 190)); renderer.Draw(scene);
-                renderer.EndFrame(); device.SetRenderTarget(null);
+                renderer.BeginFrame(400, 300, default);
+                renderer.Clear(new Color(145, 176, 190));
+                renderer.Draw(scene);
+                renderer.EndFrame();
+                device.SetRenderTarget(null);
                 using var stream = File.Create(Path.Combine(directory, $"{name}-{step / 4:000}.png"));
                 target.SaveAsPng(stream, 400, 300);
             }
         }
     }
 
-    private sealed class Silent : ISoundEffectSink2D { public void Play(SoundEffect2D effect) { } }
+    private sealed class Silent : ISoundEffectSink2D
+    {
+        public void Play(SoundEffect2D effect)
+        {
+        }
+    }
 }

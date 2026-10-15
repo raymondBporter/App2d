@@ -10,7 +10,11 @@ public static class Rotation2D
 
     public static Vector2 Apply(Vector2 value, float radians)
     {
-        if (radians == 0f) return value;
+        if (radians == 0f)
+        {
+            return value;
+        }
+
         var (sin, cos) = MathF.SinCos(radians);
         return new(value.X * cos - value.Y * sin, value.X * sin + value.Y * cos);
     }
@@ -63,11 +67,22 @@ public static class Rotation2D
     {
         ValidateArc(from, to, radians);
         ArgGuard.ThrowIfNotFinite(fraction);
-        if (fraction <= 0f) return from;
-        if (fraction >= 1f) return to;
+        if (fraction <= 0f)
+        {
+            return from;
+        }
+
+        if (fraction >= 1f)
+        {
+            return to;
+        }
+
         var half = (double)radians * 0.5d;
         var sinHalf = Math.Sin(half);
-        if (Math.Abs(sinHalf) < MinimumHalfAngleSine) return Vector2.Lerp(from, to, fraction);
+        if (Math.Abs(sinHalf) < MinimumHalfAngleSine)
+        {
+            return Vector2.Lerp(from, to, fraction);
+        }
 
         // (1 - exp(i*fraction*angle)) / (1 - exp(i*angle)) applied to the endpoint displacement.
         var scale = Math.Sin(fraction * half) / sinHalf;
@@ -82,8 +97,19 @@ public static class Rotation2D
 
     private static void ValidateArc(Vector2 from, Vector2 to, float radians)
     {
-        if (!from.IsFinite()) throw new ArgumentOutOfRangeException(nameof(from));
-        if (!to.IsFinite()) throw new ArgumentOutOfRangeException(nameof(to));
-        if (!float.IsFinite(radians)) throw new ArgumentOutOfRangeException(nameof(radians));
+        if (!from.IsFinite())
+        {
+            throw new ArgumentOutOfRangeException(nameof(from));
+        }
+
+        if (!to.IsFinite())
+        {
+            throw new ArgumentOutOfRangeException(nameof(to));
+        }
+
+        if (!float.IsFinite(radians))
+        {
+            throw new ArgumentOutOfRangeException(nameof(radians));
+        }
     }
 }

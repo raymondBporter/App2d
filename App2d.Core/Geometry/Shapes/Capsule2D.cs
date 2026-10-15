@@ -26,16 +26,25 @@ public sealed partial class Capsule2D : IConvexShape2D
     }
 
     /// <summary>The spine start.</summary>
-    public Vector2 Start { get; }
+    public Vector2 Start
+    {
+        get;
+    }
 
     /// <summary>The spine end.</summary>
-    public Vector2 End { get; }
+    public Vector2 End
+    {
+        get;
+    }
 
     /// <summary>The center of the capsule's spine, in either endpoint order.</summary>
     public Vector2 Center => Rect2D.FromPoints(Start, End).Center;
 
     /// <summary>The radius around the spine.</summary>
-    public float Radius { get; }
+    public float Radius
+    {
+        get;
+    }
 
     /// <inheritdoc/>
     public float Area => Area2D.Capsule(Start, End, Radius);

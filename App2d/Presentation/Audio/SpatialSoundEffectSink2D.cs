@@ -20,7 +20,9 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         var attenuation = falloff.Evaluate(position, _listenerPosition());
         // Inaudible one-shots must not evict audible sounds from the mixer pool.
         if (attenuation > 0f)
+        {
             _ = BeginSpatial(effect, position, 1f, falloff, attenuation);
+        }
     }
 
     public SoundEffectVoice2D BeginAt(
@@ -41,9 +43,13 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         {
             var voice = _voices[i];
             if (voice.IsPlaying)
+            {
                 voice.Update(listener);
+            }
             else
+            {
                 _voices.RemoveAt(i);
+            }
         }
     }
 
@@ -51,7 +57,10 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
     {
         var playback = _sounds.Begin(effect, volumeScale * attenuation);
         if (!playback.IsPlaying)
+        {
             return playback;
+        }
+
         var voice = new SpatialVoice(playback, position, volumeScale, falloff, attenuation);
         _voices.Add(voice);
         return new SoundEffectVoice2D(voice);
@@ -77,7 +86,10 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         public void SetVolumeScale(float volumeScale, float rampSeconds)
         {
             if (_stopping)
+            {
                 return;
+            }
+
             _volumeScale = volumeScale;
             playback.SetVolumeScale(_volumeScale * _attenuation, rampSeconds);
         }
@@ -85,10 +97,16 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         public void Update(Vector2 listener)
         {
             if (_stopping)
+            {
                 return;
+            }
+
             var next = falloff.Evaluate(_position, listener);
             if (next == _attenuation)
+            {
                 return;
+            }
+
             _attenuation = next;
             playback.SetVolumeScale(_volumeScale * _attenuation, VolumeRampSeconds);
         }

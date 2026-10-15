@@ -47,7 +47,10 @@ internal sealed class RigidPartSet2D(
     public XnaColor Accent { get; } = accent;
     public RigidPartStyle2D Style { get; } = style;
 
-    public static IReadOnlyList<RigidPartSet2D> PrototypeSets { get; } =
+    public static IReadOnlyList<RigidPartSet2D> PrototypeSets
+    {
+        get;
+    } =
     [
         CreateSplineMan(),
         Create("PLUM KNIGHT", new XnaColor(149, 103, 244), new XnaColor(112, 72, 207), new XnaColor(238, 181, 123)),
@@ -132,7 +135,10 @@ internal sealed class RigidPuppetRenderer2D
         set
         {
             if (ReferenceEquals(_partSet, value))
+            {
                 return;
+            }
+
             _partSet = value;
             RebuildParts();
         }
@@ -153,7 +159,9 @@ internal sealed class RigidPuppetRenderer2D
             instance.Object.Transform.Scale = GetViewScale(instance.Asset, sideViewAmount);
             renderer.Draw(instance.Object);
             if (_partSet.Style == RigidPartStyle2D.SplineMan)
+            {
                 renderer.DrawShapeOutline(instance.Object, new XnaColor(24, 32, 52, 225), 2f);
+            }
         }
 
         DrawAttachments(renderer, pose, totalSeconds);
@@ -252,10 +260,14 @@ internal sealed class RigidPuppetRenderer2D
     private Vector2 GetViewScale(RigidPartAsset2D asset, float sideViewAmount)
     {
         if (_partSet.Style != RigidPartStyle2D.SplineMan)
+        {
             return Vector2.One;
+        }
 
         if (asset.Shape == RigidPartShape2D.SplineHead)
+        {
             return new Vector2(float.Lerp(1f, 0.88f, sideViewAmount), 1f);
+        }
 
         var transverseScale = asset.Shape switch
         {

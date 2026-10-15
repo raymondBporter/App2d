@@ -13,7 +13,9 @@ public sealed partial class GreenDinosaur2D(PatrolEnemy2D enemy) : IEnemyActor2D
     public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.GreenDinosaur,
         Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, Enemy.Facing,
         _simulationEnabled, Enemy.IsAlive)
-    { MoveSpeed = Enemy.Speed };
+    {
+        MoveSpeed = Enemy.Speed
+    };
 
     public void SetSimulationEnabled(bool isEnabled)
     {
@@ -25,8 +27,13 @@ public sealed partial class GreenDinosaur2D(PatrolEnemy2D enemy) : IEnemyActor2D
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         ArgGuard.ThrowIfNotFinite(targetPosition);
-        if (_simulationEnabled) Enemy.Update(deltaSeconds);
+        if (_simulationEnabled)
+        {
+            Enemy.Update(deltaSeconds);
+        }
     }
 
-    public void SyncAfterPhysics() { }
+    public void SyncAfterPhysics()
+    {
+    }
 }

@@ -20,12 +20,26 @@ public sealed class AuthoredEntityGameTests
     {
         var authored = AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < 640; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
-        { AuthoredCharacters = authored, PlayerMaximumHealth = 30 });
+        {
+            AuthoredCharacters = authored,
+            PlayerMaximumHealth = 30
+        });
         var hero = new AuthoredHero2D(authored.Entities["hero"], game.Player.Body.WorldObject.LocalBounds.Size);
         var cut = hero.Attack.Clip;
-        void Tick(int ticks) { for (var i = 0; i < ticks; i++) { var tick = game.Session.Tick + 1; game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D())); } }
+        void Tick(int ticks)
+        {
+            for (var i = 0; i < ticks; i++)
+            {
+                var tick = game.Session.Tick + 1;
+                game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D()));
+            }
+        }
         string? Swing() => game.Arsenal.CaptureActionState().Swing;
         game.Arsenal.UsePrimary(1);
         // The gameplay swing lasts exactly as long as the drawn side cut, and damages only between its strike and recover markers.

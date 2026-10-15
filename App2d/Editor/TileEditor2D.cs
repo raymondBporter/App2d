@@ -31,7 +31,10 @@ internal sealed class TileEditor2D : IDisposable
     private Vector2 _panAnchorFocus;
     private bool _isPanning;
     private bool _toggleRequested;
-    public bool IsPointerOverUi { get; internal set; }
+    public bool IsPointerOverUi
+    {
+        get; internal set;
+    }
     private Vector2 _lastMouseDevice;
     private int _lastPaintedX;
     private int _lastPaintedY;
@@ -67,14 +70,20 @@ internal sealed class TileEditor2D : IDisposable
     private IReadOnlyList<WorldMapAsset2D> _maps = [];
     private readonly Dictionary<int, TileEditSession2D> _mapSessions = [];
     private readonly Dictionary<int, Stack<Action<LevelDatabase2D>>> _mapThingUndo = [];
-    public int SelectedMapIndex { get; private set; }
+    public int SelectedMapIndex
+    {
+        get; private set;
+    }
     public string MapLabel => _maps.Count == 0 ? "Tile editor" : $"{_maps[SelectedMapIndex].ZoneId} / {_maps[SelectedMapIndex].Name}";
     public int MapCount => _maps.Count;
 
     internal void ConfigureMaps(IReadOnlyList<WorldMapAsset2D> maps)
     {
         if (IsActive || maps.Count == 0 || !ReferenceEquals(maps[0].TileMap, _map))
+        {
             throw new InvalidOperationException("Configure maps before editing, with the current map first.");
+        }
+
         _maps = maps;
         _mapSessions[0] = _session;
         _mapThingUndo[0] = _thingUndo;
@@ -82,7 +91,11 @@ internal sealed class TileEditor2D : IDisposable
 
     internal void CycleMap(int direction)
     {
-        if (!IsActive || _maps.Count < 2) return;
+        if (!IsActive || _maps.Count < 2)
+        {
+            return;
+        }
+
         var next = (SelectedMapIndex + direction + _maps.Count) % _maps.Count;
         EndStrokeIfActive();
         CommitThingDrag();
@@ -95,9 +108,15 @@ internal sealed class TileEditor2D : IDisposable
         _map = asset.TileMap;
         _openDatabase = () => LevelDatabase2D.Open(asset.DatabasePath);
         if (!_mapSessions.TryGetValue(next, out _session!))
+        {
             _mapSessions[next] = _session = new TileEditSession2D(_map);
+        }
+
         if (!_mapThingUndo.TryGetValue(next, out _thingUndo!))
+        {
             _mapThingUndo[next] = _thingUndo = [];
+        }
+
         SelectedTilesetIndex = 0;
         SelectedThingId = null;
         SelectedDefinitionId = null;
@@ -107,10 +126,22 @@ internal sealed class TileEditor2D : IDisposable
         _camera.Position = _cameraFocus;
         ReloadThings(notifyRuntime: false);
     }
-    public bool IsActive { get; private set; }
-    public LevelEditorMode2D Mode { get; private set; }
-    public TileKind2D SelectedKind { get; private set; }
-    public byte SelectedTilesetIndex { get; private set; }
+    public bool IsActive
+    {
+        get; private set;
+    }
+    public LevelEditorMode2D Mode
+    {
+        get; private set;
+    }
+    public TileKind2D SelectedKind
+    {
+        get; private set;
+    }
+    public byte SelectedTilesetIndex
+    {
+        get; private set;
+    }
     public string SelectedTilesetId => _map.TilesetIds[SelectedTilesetIndex];
     public IReadOnlyList<string> TilesetIds => _map.TilesetIds;
     public Vector2 MouseDevicePosition => _lastMouseDevice;
@@ -122,13 +153,22 @@ internal sealed class TileEditor2D : IDisposable
     public Vector2 VisibleDeviceSize => _camera.ViewportSize;
     public float Zoom => _camera.Zoom;
     public float PixelsToWorldUnits(float pixels) => _camera.PixelsToWorldUnits(pixels);
-    public ThingEditorInspector2D InspectorView { get; }
+    public ThingEditorInspector2D InspectorView
+    {
+        get;
+    }
     public IReadOnlyList<MovingPlatformDefinitionRecord2D> MovingPlatformDefinitions => _movingPlatformDefinitions;
     public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatformThings => _movingPlatformThings;
     public IReadOnlyList<ThingDefinitionRecord2D> ThingDefinitions => _thingDefinitions;
     public IReadOnlyList<PositionThingRecord2D> PositionThings => _positionThings;
-    public long? SelectedDefinitionId { get; private set; }
-    public long? SelectedThingId { get; private set; }
+    public long? SelectedDefinitionId
+    {
+        get; private set;
+    }
+    public long? SelectedThingId
+    {
+        get; private set;
+    }
     public MovingPlatformThingRecord2D? SelectedThing =>
         SelectedThingId is { } thingId
             ? _movingPlatformThings.SingleOrDefault(item => item.ThingId == thingId)
@@ -175,23 +215,40 @@ internal sealed class TileEditor2D : IDisposable
             _toggleRequested = false;
             IsActive = !IsActive;
             if (IsActive)
+            {
                 BeginEditingSession();
+            }
             else
+            {
                 EndEditingSession();
+            }
         }
 
         if (!IsActive)
+        {
             return;
+        }
 
-        if (input.Keyboard.WasPressed(Keys.PageDown)) CycleMap(1);
-        if (input.Keyboard.WasPressed(Keys.PageUp)) CycleMap(-1);
+        if (input.Keyboard.WasPressed(Keys.PageDown))
+        {
+            CycleMap(1);
+        }
+
+        if (input.Keyboard.WasPressed(Keys.PageUp))
+        {
+            CycleMap(-1);
+        }
+
         _lastMouseDevice = input.Mouse.PositionDevice;
         if (Mode == LevelEditorMode2D.Things)
         {
             UpdateCamera(input, isPointerOverMenu: IsPointerOverUi);
             UpdateThings(input);
             if (input.Keyboard.IsControlDown && input.Keyboard.WasPressed(Keys.Z))
+            {
                 UndoThingEdit();
+            }
+
             _camera.Position = _cameraFocus;
             return;
         }
@@ -204,19 +261,30 @@ internal sealed class TileEditor2D : IDisposable
         // throws if called mid-stroke, so ignore the request rather than let it crash the
         // editor; the in-progress stroke is left untouched either way.
         if (input.Keyboard.IsControlDown && input.Keyboard.WasPressed(Keys.Z) && !_session.IsStrokeActive)
+        {
             UndoTiles();
+        }
 
         _camera.Position = _cameraFocus;
     }
 
     internal void RequestToggle() => _toggleRequested = true;
 
-    internal void UndoTiles() { if (!_session.IsStrokeActive) CommitChunks(_session.Undo()); }
+    internal void UndoTiles()
+    {
+        if (!_session.IsStrokeActive)
+        {
+            CommitChunks(_session.Undo());
+        }
+    }
 
     internal void SelectTileset(int index)
     {
         if (index < 0 || index >= _map.TilesetIds.Count)
+        {
             ArgGuard.ThrowOutOfRange(index, "Tileset selection must exist in the map catalog.");
+        }
+
         SelectedTilesetIndex = (byte)index;
     }
 
@@ -292,7 +360,10 @@ internal sealed class TileEditor2D : IDisposable
     {
         RequireDatabase().DeleteThingDefinition(definitionId);
         if (SelectedDefinitionId == definitionId)
+        {
             SelectedDefinitionId = null;
+        }
+
         ReloadThings(notifyRuntime: false);
     }
 
@@ -338,7 +409,10 @@ internal sealed class TileEditor2D : IDisposable
     internal void DeleteSelectedThing()
     {
         if (SelectedThingId is not { } thingId)
+        {
             return;
+        }
+
         if (SelectedThing is { } movingPlatform)
         {
             var deleted = RequireDatabase().DeleteMovingPlatform(movingPlatform.ThingId);
@@ -358,10 +432,16 @@ internal sealed class TileEditor2D : IDisposable
         definition = null!;
         position = default;
         if (!IsActive || Mode != LevelEditorMode2D.Things || !_isPlacingThing || SelectedDefinitionId is not { } definitionId)
+        {
             return false;
+        }
+
         definition = _movingPlatformDefinitions.SingleOrDefault(item => item.DefinitionId == definitionId)!;
         if (definition is null)
+        {
             return false;
+        }
+
         position = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
         return true;
     }
@@ -371,9 +451,15 @@ internal sealed class TileEditor2D : IDisposable
         definition = null!;
         position = default;
         if (!IsActive || Mode != LevelEditorMode2D.Things || !_isPlacingThing || SelectedDefinition is not { } selected)
+        {
             return false;
+        }
+
         if (ThingTypeRegistry2D.Require(selected.TypeKey).WorldKind is null)
+        {
             return false;
+        }
+
         definition = selected;
         position = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
         return true;
@@ -382,7 +468,9 @@ internal sealed class TileEditor2D : IDisposable
     private void UpdateCamera(InputState input, bool isPointerOverMenu)
     {
         if (input.Mouse.WasReleased(MouseButtons.Middle))
+        {
             _isPanning = false;
+        }
 
         if (isPointerOverMenu)
         {
@@ -441,9 +529,13 @@ internal sealed class TileEditor2D : IDisposable
                 ? new TileCell2D(TileKind2D.Empty, 0)
                 : new TileCell2D(SelectedKind, SelectedTilesetIndex);
             if (_hasLastPainted)
+            {
                 _session.PaintLine(_lastPaintedX, _lastPaintedY, x, y, tile);
+            }
             else
+            {
                 _session.Paint(x, y, tile);
+            }
 
             _lastPaintedX = x;
             _lastPaintedY = y;
@@ -456,7 +548,9 @@ internal sealed class TileEditor2D : IDisposable
         // IsStrokeActive stays true forever, painting stops working, and Ctrl+Z is silently
         // swallowed by the "no undo mid-stroke" guard.
         if (_session.IsStrokeActive && !isPainting && !isErasing)
+        {
             EndStrokeIfActive();
+        }
     }
 
     private void UpdateThings(InputState input)
@@ -475,19 +569,28 @@ internal sealed class TileEditor2D : IDisposable
         }
 
         if (input.Mouse.WasPressed(MouseButtons.Left))
+        {
             BeginThingSelectionOrDrag();
+        }
 
         if (_thingDragHandle != ThingDragHandle2D.None && input.Mouse.IsDown(MouseButtons.Left))
+        {
             UpdateThingDrag();
+        }
 
         if (_thingDragHandle != ThingDragHandle2D.None && !input.Mouse.IsDown(MouseButtons.Left))
+        {
             CommitThingDrag();
+        }
     }
 
     private void PlaceThing()
     {
         if (SelectedDefinition is not { } definition)
+        {
             return;
+        }
+
         var position = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
         var descriptor = ThingTypeRegistry2D.Require(definition.TypeKey);
         if (descriptor.IsMovingPlatform)
@@ -581,10 +684,16 @@ internal sealed class TileEditor2D : IDisposable
     private void UpdateThingDrag()
     {
         if (SelectedThingId is not { } thingId)
+        {
             return;
+        }
+
         var index = _movingPlatformThings.FindIndex(item => item.ThingId == thingId);
         if (index < 0)
+        {
             return;
+        }
+
         var current = _movingPlatformThings[index];
         var pointer = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
         var updated = _thingDragHandle switch
@@ -604,19 +713,28 @@ internal sealed class TileEditor2D : IDisposable
             _ => current
         };
         if (updated.TravelX == 0f && updated.TravelY == 0f)
+        {
             return;
+        }
+
         _movingPlatformThings[index] = updated;
     }
 
     private void CommitThingDrag()
     {
         if (_thingDragHandle == ThingDragHandle2D.None || _thingDragOriginal is not { } original)
+        {
             return;
+        }
+
         _thingDragHandle = ThingDragHandle2D.None;
         _thingDragOriginal = null;
         var current = SelectedThing;
         if (current is null || current == original)
+        {
             return;
+        }
+
         RequireDatabase().UpdateMovingPlatform(current);
         _thingUndo.Push(database => database.UpdateMovingPlatform(original));
         ReloadThings(notifyRuntime: true);
@@ -626,7 +744,10 @@ internal sealed class TileEditor2D : IDisposable
     {
         CommitThingDrag();
         if (_thingUndo.Count == 0)
+        {
             return;
+        }
+
         _thingUndo.Pop()(RequireDatabase());
         SelectedThingId = null;
         ReloadThings(notifyRuntime: true);
@@ -640,7 +761,10 @@ internal sealed class TileEditor2D : IDisposable
         _thingDefinitions.Clear();
         _thingDefinitions.AddRange(database.LoadThingDefinitions());
         foreach (var definition in _thingDefinitions)
+        {
             _ = ThingTypeRegistry2D.Require(definition.TypeKey);
+        }
+
         _movingPlatformDefinitions.Clear();
         _movingPlatformDefinitions.AddRange(database.LoadMovingPlatformDefinitions());
         _movingPlatformThings.Clear();
@@ -649,7 +773,10 @@ internal sealed class TileEditor2D : IDisposable
         _positionThings.AddRange(database.LoadPositionThings().Where(
             thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null));
         if (SelectedDefinitionId is { } definitionId && _thingDefinitions.All(item => item.DefinitionId != definitionId))
+        {
             SelectedDefinitionId = null;
+        }
+
         if (SelectedThingId is { } thingId &&
             _movingPlatformThings.All(item => item.ThingId != thingId) &&
             _positionThings.All(item => item.ThingId != thingId))
@@ -659,7 +786,9 @@ internal sealed class TileEditor2D : IDisposable
 
         InspectorView.RefreshFromEditor();
         if (notifyRuntime)
+        {
             ThingsChanged?.Invoke(_movingPlatformThings);
+        }
     }
 
     private LevelDatabase2D RequireDatabase() =>
@@ -668,7 +797,9 @@ internal sealed class TileEditor2D : IDisposable
     private void EndStrokeIfActive()
     {
         if (!_session.IsStrokeActive)
+        {
             return;
+        }
 
         CommitChunks(_session.EndStroke());
         _hasLastPainted = false;
@@ -714,7 +845,9 @@ internal sealed class TileEditor2D : IDisposable
     private void CommitChunks(IReadOnlyCollection<TileChunk2D> chunks)
     {
         if (chunks.Count == 0)
+        {
             return;
+        }
 
         StateGuard.RequireNotNull(_database, "A stroke committed with no open editing database.")
             .SaveChunks(_map, chunks.ToArray());

@@ -11,7 +11,9 @@ public static class StateGuard
         [CallerArgumentExpression(nameof(value))] string? memberName = null)
     {
         if (!NumericValidation.IsFiniteAndPositive(value))
+        {
             ThrowCore($"{memberName} must be positive and finite.");
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -21,21 +23,28 @@ public static class StateGuard
         [CallerArgumentExpression(nameof(value))] string? memberName = null)
     {
         if (NumericValidation.IsLessThan(value, minimum))
+        {
             ThrowCore($"{memberName} must be at least {minimum}.");
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIf(bool invalidCondition, string message)
     {
         if (invalidCondition)
+        {
             ThrowCore(message);
+        }
     }
 
     public static T RequireNotNull<T>([NotNull] T? value, string message)
         where T : class
     {
         if (value is null)
+        {
             ThrowCore(message);
+        }
+
         return value;
     }
 

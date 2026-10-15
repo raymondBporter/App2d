@@ -18,9 +18,18 @@ public readonly record struct QuadraticBezier2D : ICurve2D
         End = end;
     }
 
-    public Vector2 Start { get; }
-    public Vector2 Control { get; }
-    public Vector2 End { get; }
+    public Vector2 Start
+    {
+        get;
+    }
+    public Vector2 Control
+    {
+        get;
+    }
+    public Vector2 End
+    {
+        get;
+    }
 
     public Vector2 Evaluate(float amount)
     {

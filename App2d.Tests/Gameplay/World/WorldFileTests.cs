@@ -83,7 +83,10 @@ public sealed class WorldFileTests : IDisposable
         var rightId = world.PositionThings[1].ThingId;
         world.Maps[1].TileMap.SetTileKind(0, 0, TileKind2D.Solid);
         using (var db = LevelDatabase2D.Open(world.Maps[1].DatabasePath))
+        {
             db.SaveChunk(world.Maps[1].TileMap, new(0, 0));
+        }
+
         Write(right, left);
         using var reloaded = WorldFile2D.Load(Manifest);
         Assert.Equal(rightId, reloaded.PositionThings[0].ThingId);
@@ -108,7 +111,11 @@ public sealed class WorldFileTests : IDisposable
     public void Dispose()
     {
         // Only this test's unique temporary databases are released and removed.
-        if (!Directory.Exists(_root)) return;
+        if (!Directory.Exists(_root))
+        {
+            return;
+        }
+
         foreach (var file in Directory.EnumerateFiles(_root, "*.db"))
         {
             foreach (var mode in new[] { SqliteOpenMode.ReadOnly, SqliteOpenMode.ReadWriteCreate })

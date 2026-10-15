@@ -7,7 +7,10 @@ public sealed record CharacterTemplate(string Id, string Name, string Descriptio
 /// <summary>The editor discovers all model starters here; adding a creature needs no species branch in the editor.</summary>
 public static class CharacterTemplates
 {
-    public static IReadOnlyList<CharacterTemplate> All { get; } =
+    public static IReadOnlyList<CharacterTemplate> All
+    {
+        get;
+    } =
     [
         new("empty", "Empty", "Start with an empty rig and add controls and artwork.", ModelAuthoring.Empty, _ => []),
         new("person", "Person", "Independent person base with the shared human build controls.", ModelAuthoring.FromPerson, _ => []),

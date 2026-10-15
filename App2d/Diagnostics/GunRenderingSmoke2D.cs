@@ -46,7 +46,11 @@ internal static class GunRenderingSmoke2D
         var sounds = new SilentSounds();
         var arsenal = new PersonArsenal2D(ids, person.Body, metrics.GunMuzzleOffset, collision, 1, 4,
             CombatFaction2D.Player, new CombatSystem2D(collision, new CombatantRegistry2D()),
-            health: person.Health, spells: new() { ShotChargeSeconds = .6f, ShotRecoverySeconds = .06f });
+            health: person.Health, spells: new()
+            {
+                ShotChargeSeconds = .6f,
+                ShotRecoverySeconds = .06f
+            });
         using var weaponPresentation = new WeaponPresentation2D(scene, textures, sounds);
         var weaponEvents = new List<WeaponEvent2D>();
         arsenal.WeaponOccurred += weaponEvents.Add;
@@ -68,18 +72,37 @@ internal static class GunRenderingSmoke2D
             weaponPresentation.Reset();
             weaponEvents.Clear();
             Step(default);
-            for (var frame = 0; frame < 36; frame++) Step(hold);
+            for (var frame = 0; frame < 36; frame++)
+            {
+                Step(hold);
+            }
+
             Save($"gun-charge-{facing}.png", "CHARGING / 0.30s");
-            for (var frame = 36; frame < 72; frame++) Step(hold);
+            for (var frame = 36; frame < 72; frame++)
+            {
+                Step(hold);
+            }
+
             if (!arsenal.GetActiveAttackHitboxes().Any())
+            {
                 throw new InvalidOperationException("The gun did not fire automatically at full charge.");
+            }
+
             Save($"gun-fire-{facing}.png", "FIRED / CHARGE COMPLETE");
-            for (var frame = 0; frame < 4; frame++) Step(hold);
+            for (var frame = 0; frame < 4; frame++)
+            {
+                Step(hold);
+            }
+
             Save($"gun-trail-{facing}.png", "FLIGHT / THIN GHOST TRAIL");
             camera.Zoom = 1f;
             Save($"gun-trail-scale1-{facing}.png", "FLIGHT / 1x SCALE");
             camera.Zoom = 4f;
-            for (var frame = 0; frame < 4; frame++) Step(hold);
+            for (var frame = 0; frame < 4; frame++)
+            {
+                Step(hold);
+            }
+
             camera.Position = new Vector2(facing * 60f, 0f);
             Save($"gun-recoil-{facing}.png", "RECOIL");
 
@@ -89,13 +112,27 @@ internal static class GunRenderingSmoke2D
             scene.Add(wall);
             var wallBody = physics.AddBody(wall, BodyMotionType2D.Static);
             wallBody.CollisionLayer = 1;
-            for (var frame = 0; frame < 2; frame++) Step(hold);
+            for (var frame = 0; frame < 2; frame++)
+            {
+                Step(hold);
+            }
+
             if (arsenal.GetActiveAttackHitboxes().Any())
+            {
                 throw new InvalidOperationException("The gun smoke projectile failed to hit the wall.");
+            }
+
             Save($"gun-trail-impact-{facing}.png", "IMPACT / TRAIL STOPS IN PLACE");
-            for (var frame = 0; frame < 8; frame++) Step(hold);
+            for (var frame = 0; frame < 8; frame++)
+            {
+                Step(hold);
+            }
+
             if (scene.Any(item => item.ZIndex == 2 && item.IsVisible))
+            {
                 throw new InvalidOperationException("A gun effect remained visible after the impact fade.");
+            }
+
             Save($"gun-trail-cleared-{facing}.png", "IMPACT / TRAIL CLEARED");
             wallBody.IsCollider = false;
             scene.Remove(wall);
@@ -129,6 +166,8 @@ internal static class GunRenderingSmoke2D
 
     private sealed class SilentSounds : ISoundEffectSink2D
     {
-        public void Play(SoundEffect2D effect) { }
+        public void Play(SoundEffect2D effect)
+        {
+        }
     }
 }

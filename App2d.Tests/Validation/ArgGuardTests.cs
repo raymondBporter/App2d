@@ -150,9 +150,17 @@ public sealed class ArgGuardTests
     [Fact]
     public void SuccessfulNumericGuardsDoNotAllocate()
     {
-        for (var i = 0; i < 100; i++) Check();
+        for (var i = 0; i < 100; i++)
+        {
+            Check();
+        }
+
         var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 1000; i++) Check();
+        for (var i = 0; i < 1000; i++)
+        {
+            Check();
+        }
+
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
 
         static void Check()

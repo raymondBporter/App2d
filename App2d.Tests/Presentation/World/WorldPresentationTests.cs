@@ -29,7 +29,10 @@ public sealed class WorldPresentationTests
         var visuals = scene.ToArray();
         Assert.NotEmpty(visuals);
         view.ApplyState(LevelContent2D.Empty, WorldState2D.Empty);
-        view.ApplyState(LevelContent2D.Empty with { Revision = 2 }, WorldState2D.Empty);
+        view.ApplyState(LevelContent2D.Empty with
+        {
+            Revision = 2
+        }, WorldState2D.Empty);
         view.SetVisibleTerrain(visible);
         Assert.Equal(visuals, [.. scene]);
         view.SetVisibleTerrain([]);

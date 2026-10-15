@@ -24,7 +24,10 @@ public sealed class SideScrollerSession2DTests
         var original = game.Session.CapturePlayers()[0];
         var first = game.Step(Command(move: 1f));
         var position = first.Players[0].Person.Position;
-        for (var i = 0; i < 20; i++) game.Step(Command(move: 1f));
+        for (var i = 0; i < 20; i++)
+        {
+            game.Step(Command(move: 1f));
+        }
 
         Assert.Equal(21, game.Session.Tick);
         Assert.Equal(21, game.World.PlatformUpdates);
@@ -46,8 +49,16 @@ public sealed class SideScrollerSession2DTests
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Sequence = 0 }));
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Command = Command(float.NaN) }));
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with
-        { Command = Command() with { ClimbY = float.PositiveInfinity } }));
-        Assert.False(game.Session.TryValidateInput(valid with { Tick = 2 }, out var rejection));
+        {
+            Command = Command() with
+            {
+                ClimbY = float.PositiveInfinity
+            }
+        }));
+        Assert.False(game.Session.TryValidateInput(valid with
+        {
+            Tick = 2
+        }, out var rejection));
         Assert.Equal(InputRejection2D.WrongTick, rejection);
         Assert.True(game.Session.TryValidateInput(valid, out rejection));
         Assert.Equal(InputRejection2D.None, rejection);
@@ -71,7 +82,13 @@ public sealed class SideScrollerSession2DTests
                 attack: tick == 50);
             var a = first.Step(command);
             var b = second.Step(command);
-            Assert.Equal(a.Players[0] with { Person = a.Players[0].Person with { Id = b.Players[0].Person.Id } }, b.Players[0]);
+            Assert.Equal(a.Players[0] with
+            {
+                Person = a.Players[0].Person with
+                {
+                    Id = b.Players[0].Person.Id
+                }
+            }, b.Players[0]);
             Assert.Equal(a.Events.Select(e => e.GetType()), b.Events.Select(e => e.GetType()));
             Assert.Equal(a.Events.Select(e => (e.Stamp.Tick, e.Stamp.Sequence)),
                 b.Events.Select(e => (e.Stamp.Tick, e.Stamp.Sequence)));
@@ -131,7 +148,11 @@ public sealed class SideScrollerSession2DTests
         {
             var frame = game.Step();
             repeatedDeaths += frame.Events.OfType<Died2D>().Count();
-            if (frame.Events.Any(e => e is Respawned2D)) { respawnFrame = frame; break; }
+            if (frame.Events.Any(e => e is Respawned2D))
+            {
+                respawnFrame = frame;
+                break;
+            }
         }
         Assert.NotNull(respawnFrame);
         Assert.Equal(0, repeatedDeaths);
@@ -152,20 +173,35 @@ public sealed class SideScrollerSession2DTests
         var jump = game.Step(Command(jump: true, held: true));
         Assert.Single(jump.Events.OfType<JumpStarted2D>());
         var landings = new List<Landed2D>();
-        for (var i = 0; i < 240; i++) landings.AddRange(game.Step().Events.OfType<Landed2D>());
+        for (var i = 0; i < 240; i++)
+        {
+            landings.AddRange(game.Step().Events.OfType<Landed2D>());
+        }
+
         Assert.Single(landings);
         Assert.True(landings[0].ImpactSpeed > 0f);
     }
 
     private static PersonCommand2D Command(float move = 0f, bool jump = false, bool held = false, bool attack = false) =>
-        new() { MoveX = move, JumpHeld = jump || held, PrimaryHeld = attack };
+        new()
+        {
+            MoveX = move,
+            JumpHeld = jump || held,
+            PrimaryHeld = attack
+        };
 
     private sealed class Fixture : IDisposable
     {
-        public Person2D Person { get; }
+        public Person2D Person
+        {
+            get;
+        }
         public TestActions Actions { get; } = new();
         public TestWorld World { get; } = new();
-        public SideScrollerSession2D Session { get; }
+        public SideScrollerSession2D Session
+        {
+            get;
+        }
         public Fixture()
         {
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
@@ -192,18 +228,45 @@ public sealed class SideScrollerSession2DTests
     {
         public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
         public float GoalX { get; set; } = 9000f;
-        public int PlatformUpdates { get; private set; }
-        public int EnemyUpdates { get; private set; }
-        public float LastDelta { get; private set; }
-        public int DamageNextStep { get; set; }
-        public WorldThingSpec2D? PendingCheckpoint { get; set; }
-        public void UpdateStreaming(Vector2 focus) { }
-        public void UpdateMovingPlatforms(float dt) { PlatformUpdates++; LastDelta = dt; }
+        public int PlatformUpdates
+        {
+            get; private set;
+        }
+        public int EnemyUpdates
+        {
+            get; private set;
+        }
+        public float LastDelta
+        {
+            get; private set;
+        }
+        public int DamageNextStep
+        {
+            get; set;
+        }
+        public WorldThingSpec2D? PendingCheckpoint
+        {
+            get; set;
+        }
+        public void UpdateStreaming(Vector2 focus)
+        {
+        }
+        public void UpdateMovingPlatforms(float dt)
+        {
+            PlatformUpdates++;
+            LastDelta = dt;
+        }
         public void UpdateEnemies(float dt, Vector2 target) => EnemyUpdates++;
-        public void SyncEnemiesAfterPhysics() { }
+        public void SyncEnemiesAfterPhysics()
+        {
+        }
         public void ResolveDamage(Person2D player)
         {
-            if (DamageNextStep <= 0) return;
+            if (DamageNextStep <= 0)
+            {
+                return;
+            }
+
             player.TakeDamage(DamageNextStep, Vector2.Zero);
             DamageNextStep = 0;
         }
@@ -213,7 +276,9 @@ public sealed class SideScrollerSession2DTests
             PendingCheckpoint = null;
             return checkpoint;
         }
-        public void SetActiveSavePoint(long? id) { }
+        public void SetActiveSavePoint(long? id)
+        {
+        }
     }
 
     private sealed class TestActions : ISessionPlayerActions2D
@@ -222,21 +287,31 @@ public sealed class SideScrollerSession2DTests
         public event Action<WeaponEvent2D>? WeaponOccurred { add { } remove { } }
         public EquipmentKind2D Equipment => EquipmentKind2D.Unarmed;
         public bool IsMeleeAttackActive => false;
-        public int BeginFrames { get; private set; }
-        public int Interruptions { get; private set; }
+        public int BeginFrames
+        {
+            get; private set;
+        }
+        public int Interruptions
+        {
+            get; private set;
+        }
         public event Action<UnarmedAttackKind2D, float>? UnarmedAttackStarted;
         public event Action<float>? MeleeAttackStarted { add { } remove { } }
         public event Action<float>? DownAttackStarted { add { } remove { } }
         public event Action? ShotStarted { add { } remove { } }
         public void InterruptPrimary() => Interruptions++;
         public void BeginFrame(float dt) => BeginFrames++;
-        public void UpdateAfterPhysics(float dt, float facing) { }
+        public void UpdateAfterPhysics(float dt, float facing)
+        {
+        }
         public float UsePrimary(float facing)
         {
             UnarmedAttackStarted?.Invoke(UnarmedAttackKind2D.Punch, 0.28f);
             return facing;
         }
         public float UseSecondary(float facing) => facing;
-        public void Reset() { }
+        public void Reset()
+        {
+        }
     }
 }

@@ -58,7 +58,9 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
         // Only an editable map can change under us. A read-only map never raises the event.
         if (tileMap is IChangingTileMap2D editable)
+        {
             editable.ChunkChanged += OnMapChanged;
+        }
 
         StateGuard.ThrowIf(
             tileMap.TileSize != _tileSize,
@@ -87,12 +89,30 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         GoalGroundY = GoalThing?.Position.Y ?? TileMap.Origin.Y;
     }
 
-    public IChunkedTileMap2D TileMap { get; }
-    public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; }
-    public Vector2 SpawnPoint { get; }
-    public float GoalX { get; }
-    public float GoalGroundY { get; }
-    public WorldThingSpec2D? GoalThing { get; }
+    public IChunkedTileMap2D TileMap
+    {
+        get;
+    }
+    public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones
+    {
+        get;
+    }
+    public Vector2 SpawnPoint
+    {
+        get;
+    }
+    public float GoalX
+    {
+        get;
+    }
+    public float GoalGroundY
+    {
+        get;
+    }
+    public WorldThingSpec2D? GoalThing
+    {
+        get;
+    }
     public IReadOnlyList<WorldThingSpec2D> SavePointThings => [.. _worldThingSpecs.Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)];
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
     public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;
@@ -123,14 +143,18 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         foreach (var cell in cells)
         {
             if (!TileMap.GetTileKind(cell.X, cell.Y).IsSpikes())
+            {
                 continue;
+            }
 
             var tileMin = TileMap.GridGeometry.GetCellBounds(cell).Min;
             var spikeBounds = new Rect2D(
                 tileMin + new Vector2(horizontalInset, 0f),
                 tileMin + new Vector2(_tileSize - horizontalInset, _tileSize * 0.9f));
             if (!actorBounds.Intersects(spikeBounds))
+            {
                 continue;
+            }
 
             sourceX = tileMin.X + _tileSize / 2f;
             return true;
@@ -160,7 +184,9 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public WorldState2D CaptureWorld() => new(
         [.. _movingPlatforms.Select(p => p.CaptureState())],
         [.. _savePoints.Select(p => p.CaptureState())])
-    { CutGrass = _cutGrass };
+    {
+        CutGrass = _cutGrass
+    };
 
     /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
     public LevelContent2D CaptureContent()
@@ -174,7 +200,10 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                 [.. _movingPlatforms.Select(p => p.CaptureDefinition())],
                 [.. _savePoints.Select(p => p.CapturePlacement())],
                 GoalThing?.Position)
-            { Zones = Zones, GiantTrees = GiantTrees };
+            {
+                Zones = Zones,
+                GiantTrees = GiantTrees
+            };
         }
         return _content;
     }
@@ -185,7 +214,9 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         foreach (var savePoint in _savePoints)
         {
             if (savePoint.Update(deltaSeconds, playerBounds))
+            {
                 return savePoint.Spec;
+            }
         }
 
         return null;
@@ -194,14 +225,18 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public void SetActiveSavePoint(long? thingId)
     {
         foreach (var savePoint in _savePoints)
+        {
             savePoint.SetActive(savePoint.Spec.ThingId == thingId);
+        }
     }
 
     public void UpdateMovingPlatforms(float deltaSeconds)
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         foreach (var platform in _movingPlatforms)
+        {
             platform.Update(deltaSeconds);
+        }
     }
 
     public void ReloadMovingPlatforms(IReadOnlyList<MovingPlatformSpec2D> specs)
@@ -209,7 +244,10 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         ArgGuard.ThrowIfNull(specs);
         _definitionRevision++;
         foreach (var platform in _movingPlatforms)
+        {
             platform.Dispose();
+        }
+
         _movingPlatforms.Clear();
         _movingPlatformSpecs = specs;
         CreateMovingPlatformsFromSpecs();
@@ -222,7 +260,10 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         var previousVersion = environment.Streamer.Version;
         environment.Streamer.Update(focus);
         if (environment.Streamer.Version != previousVersion)
+        {
             ForgetUnloadedGrass(environment.Streamer);
+        }
+
         EnemySystem.UpdateStreaming(environment.Streamer.IsChunkActive);
     }
 
@@ -232,7 +273,9 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public void FlushDirtyChunks()
     {
         if (_dirtyChunks.IsEmpty)
+        {
             return;
+        }
 
         var environment = RequireEnvironment();
         _dirtyChunks.Flush(environment.Streamer.Invalidate);
@@ -273,7 +316,10 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         foreach (var spec in _movingPlatformSpecs)
         {
             if (!spec.Enabled)
+            {
                 continue;
+            }
+
             _movingPlatforms.Add(new MovingPlatform2D(
                 environment.Ids.Allocate(),
                 environment.Physics,
@@ -310,10 +356,22 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
-        if (TileMap is IChangingTileMap2D editable) editable.ChunkChanged -= OnMapChanged;
-        foreach (var platform in _movingPlatforms) platform.Dispose();
+        if (TileMap is IChangingTileMap2D editable)
+        {
+            editable.ChunkChanged -= OnMapChanged;
+        }
+
+        foreach (var platform in _movingPlatforms)
+        {
+            platform.Dispose();
+        }
+
         _movingPlatforms.Clear();
         RemoveGiantTreeBranches();
         _environment?.Streamer.Dispose();

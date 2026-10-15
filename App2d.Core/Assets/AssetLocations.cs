@@ -46,7 +46,11 @@ public sealed class AssetLocations(string runtime, string authored, string chara
     public static string FindCharacterLibrary(string baseDirectory, string workingDirectory)
     {
         var packaged = FilePaths.ResolveUnderRoot(baseDirectory, "Assets/Characters");
-        if (Directory.Exists(Path.Combine(packaged, "authored"))) return packaged;
+        if (Directory.Exists(Path.Combine(packaged, "authored")))
+        {
+            return packaged;
+        }
+
         var authored = FindAncestorDirectory(workingDirectory, "Assets/Characters/authored");
         return authored is not null ? Path.GetDirectoryName(authored)! :
             throw new DirectoryNotFoundException("Assets/Characters/authored was not found beside the executable or above the working directory.");
@@ -58,7 +62,10 @@ public sealed class AssetLocations(string runtime, string authored, string chara
         for (var directory = new DirectoryInfo(Path.GetFullPath(start)); directory is not null; directory = directory.Parent)
         {
             var candidate = FilePaths.ResolveUnderRoot(directory.FullName, relativePath);
-            if (Directory.Exists(candidate)) return candidate;
+            if (Directory.Exists(candidate))
+            {
+                return candidate;
+            }
         }
         return null;
     }

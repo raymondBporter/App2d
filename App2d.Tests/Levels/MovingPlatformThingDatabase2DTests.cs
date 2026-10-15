@@ -146,7 +146,9 @@ public sealed class MovingPlatformThingDatabase2DTests : IDisposable
         var path = NewPath();
         long definitionId;
         using (var database = LevelDatabase2D.Open(path))
+        {
             definitionId = database.CreateMovingPlatformDefinition("Lift", 64f, 12f, -1).DefinitionId;
+        }
 
         Execute(path, $"DELETE FROM rectangle_shapes WHERE definition_id = {definitionId};");
 
@@ -178,7 +180,9 @@ public sealed class MovingPlatformThingDatabase2DTests : IDisposable
         var map = new EditableTileMap2D(8, 4, 32f, 4);
         map.SetTileKind(3, 2, TileKind2D.Spikes);
         using (var database = LevelDatabase2D.Open(path))
+        {
             database.Save(map, 17UL);
+        }
 
         Execute(path, """
             DROP TABLE ping_pong_motors;
@@ -233,7 +237,10 @@ public sealed class MovingPlatformThingDatabase2DTests : IDisposable
     {
         SqliteConnection.ClearAllPools();
         if (!Directory.Exists(_directory))
+        {
             return;
+        }
+
         for (var attempt = 1; ; attempt++)
         {
             try

@@ -61,7 +61,10 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private string? _fittedFor;
 
     public float Zoom { get; set; } = 1;
-    public Vector2 Pan { get; set; }
+    public Vector2 Pan
+    {
+        get; set;
+    }
     /// <summary>Keep the primary subject's travel centred while it moves.</summary>
     public bool Follow { get; set; } = true;
     /// <summary>Also show the scene at game size: enlarged authoring views alone are a poor readability test.</summary>
@@ -73,7 +76,10 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         Pan = default;
         _fittedFor = subject?.Id;
 
-        if (subject is null) return;
+        if (subject is null)
+        {
+            return;
+        }
 
         var points = DrawingPoints(subject.Model).ToArray();
         var (min, max) = (MathF.Min(0, points.Min(p => p.Y)), MathF.Max(1, points.Max(p => p.Y)));
@@ -100,8 +106,13 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
 
     public ViewportFrame Draw(Vector2 available, IReadOnlyList<Subject> scene, EditorSession session)
     {
-        if (scene.Count > 0 && _fittedFor != scene[0].Id) Fit(scene[0]);
-        var width = Math.Max(1, (int)available.X); var height = Math.Max(1, (int)available.Y);
+        if (scene.Count > 0 && _fittedFor != scene[0].Id)
+        {
+            Fit(scene[0]);
+        }
+
+        var width = Math.Max(1, (int)available.X);
+        var height = Math.Max(1, (int)available.Y);
         Ensure(ref _target, ref _targetId, width, height);
 
         var spacing = scene.Select(s => DrawingPoints(s.Model).Select(p => p.X)).Select(xs => xs.Max() - xs.Min()).DefaultIfEmpty(0).Max() + 1.1f;
@@ -111,7 +122,11 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
         var centerX = _centerX + followX + (views.Length - 1) * spacing / 2;
         var anchor = new Vector2(width / 2f - centerX * ppu, height / 2f + _centerY * ppu) + Pan;
 
-        while (_drawings.Count < views.Length) _drawings.Add(new());
+        while (_drawings.Count < views.Length)
+        {
+            _drawings.Add(new());
+        }
+
         for (var i = 0; i < views.Length; i++)
         {
             var subject = views[i].Subject;
@@ -125,33 +140,55 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
                 if (session.Mode == Workspace.Appearance && session.Entity is { } wearer && wearer.Model.Id == subject.Model.Id)
                 {
                     foreach (var item in wearer.Equipment.Where(e => e.Prop.Id != session.PreviewProp))
+                    {
                         _drawings[i].AddProp(item.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(item.Socket));
+                    }
                 }
 
                 if (session.Mode is Workspace.Animate or Workspace.Appearance && session.WeaponFor(subject.Model) is { } weapon)
+                {
                     _drawings[i].AddProp(weapon.Prop, new ActorPose(subject.Pose, Vector2.Zero, 1).Socket(weapon.Socket));
+                }
             }
         }
         Render(_target!, width, height, anchor, ppu, views, centerX);
 
-        var start = ImGui.GetCursorScreenPos(); var size = new Vector2(width, height);
+        var start = ImGui.GetCursorScreenPos();
+        var size = new Vector2(width, height);
         ImGui.InvisibleButton("viewport", size, ImGuiButtonFlags.MouseButtonLeft | ImGuiButtonFlags.MouseButtonRight | ImGuiButtonFlags.MouseButtonMiddle);
         var hovered = ImGui.IsItemHovered();
-        var draw = ImGui.GetWindowDrawList(); draw.AddImage(_targetId, start, start + size);
-        if (GameSize && views.Length > 0) DrawInset(draw, start, size, views, centerX);
+        var draw = ImGui.GetWindowDrawList();
+        draw.AddImage(_targetId, start, start + size);
+        if (GameSize && views.Length > 0)
+        {
+            DrawInset(draw, start, size, views, centerX);
+        }
+
         if (hovered)
         {
             var io = ImGui.GetIO();
-            if (io.MouseWheel != 0) Zoom = Math.Clamp(Zoom * MathF.Pow(1.1f, io.MouseWheel), .1f, 10);
-            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle)) Pan += io.MouseDelta;
+            if (io.MouseWheel != 0)
+            {
+                Zoom = Math.Clamp(Zoom * MathF.Pow(1.1f, io.MouseWheel), .1f, 10);
+            }
+
+            if (ImGui.IsMouseDragging(ImGuiMouseButton.Middle))
+            {
+                Pan += io.MouseDelta;
+            }
         }
         return new(draw, start, size, anchor, ppu, views, hovered);
     }
 
     private void DrawInset(ImDrawListPtr draw, Vector2 start, Vector2 size, SubjectView[] views, float centerX)
     {
-        var width = (int)MathF.Min(size.X * .45f, 520 * Ui.Scale); var height = (int)MathF.Min(size.Y * .28f, 150 * Ui.Scale);
-        if (width < 40 || height < 40) return;
+        var width = (int)MathF.Min(size.X * .45f, 520 * Ui.Scale);
+        var height = (int)MathF.Min(size.Y * .28f, 150 * Ui.Scale);
+        if (width < 40 || height < 40)
+        {
+            return;
+        }
+
         Ensure(ref _inset, ref _insetId, width, height);
         Render(_inset!, width, height, new(width / 2f - centerX * GamePpu, height * .85f), GamePpu, views, centerX);
         var min = start + size - new Vector2(width + 8, height + 8);
@@ -162,29 +199,52 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
 
     private void Render(RenderTarget2D target, int width, int height, Vector2 anchor, float ppu, SubjectView[] views, float centerX)
     {
-        device.SetRenderTarget(target); device.Clear(new Color(237, 238, 226));
+        device.SetRenderTarget(target);
+        device.Clear(new Color(237, 238, 226));
         var projection = PointCharacterRenderer.Projection(width, height, anchor, ppu);
         BuildGround(centerX, width / ppu, ppu);
         renderer.Draw(_ground, projection, Matrix.Identity, writeDepth: false);
-        for (var i = 0; i < views.Length; i++) renderer.Draw(_drawings[i], projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
+        for (var i = 0; i < views.Length; i++)
+        {
+            renderer.Draw(_drawings[i], projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
+        }
+
         device.SetRenderTarget(null);
     }
 
     private void BuildGround(float centerX, float span, float ppu)
     {
-        _ground.Clear(); var ink = new Color(154, 169, 158); var pixel = 1 / ppu;
+        _ground.Clear();
+        var ink = new Color(154, 169, 158);
+        var pixel = 1 / ppu;
         _ground.Line(new(centerX - span, 0, 7), new(centerX + span, 0, 7), pixel, ink);
-        var first = (int)MathF.Floor((centerX - span / 2 - 1) * 4); var last = (int)MathF.Ceiling((centerX + span / 2 + 1) * 4);
-        for (var x = first; x <= last && x - first < 2000; x++) _ground.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
+        var first = (int)MathF.Floor((centerX - span / 2 - 1) * 4);
+        var last = (int)MathF.Ceiling((centerX + span / 2 + 1) * 4);
+        for (var x = first; x <= last && x - first < 2000; x++)
+        {
+            _ground.Line(new(x * .25f, 0, 7), new(x * .25f, -(x % 4 == 0 ? 9 : 4) * pixel, 7), pixel, ink);
+        }
     }
 
     private void Ensure(ref RenderTarget2D? target, ref nint id, int width, int height)
     {
-        if (target is not null && target.Width == width && target.Height == height) return;
-        if (target is not null) { gui.Unregister(id); target.Dispose(); }
+        if (target is not null && target.Width == width && target.Height == height)
+        {
+            return;
+        }
+
+        if (target is not null)
+        {
+            gui.Unregister(id);
+            target.Dispose();
+        }
         target = new(device, width, height, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
         id = gui.Register(target);
     }
 
-    public void Dispose() { _target?.Dispose(); _inset?.Dispose(); }
+    public void Dispose()
+    {
+        _target?.Dispose();
+        _inset?.Dispose();
+    }
 }

@@ -33,13 +33,24 @@ public static class PolynomialRoots
         }
         ArgGuard.ThrowIf(scale == 0d, "The zero polynomial has infinitely many roots.", nameof(coefficients));
         var degree = coefficients.Length - 1;
-        while (degree > 0 && coefficients[degree] == 0d) degree--;
+        while (degree > 0 && coefficients[degree] == 0d)
+        {
+            degree--;
+        }
+
         ArgGuard.ThrowIf(degree > 4, "The degree must be at most four.", nameof(coefficients));
         ArgGuard.ThrowIf(roots.Length < degree, "The root buffer must hold at least the polynomial degree.", nameof(roots));
-        if (degree == 0) return 0;
+        if (degree == 0)
+        {
+            return 0;
+        }
 
         Span<double> normalized = stackalloc double[degree + 1];
-        for (var i = 0; i <= degree; i++) normalized[i] = coefficients[i] / scale;
+        for (var i = 0; i <= degree; i++)
+        {
+            normalized[i] = coefficients[i] / scale;
+        }
+
         return Find(normalized, minimum, maximum, roots);
     }
 
@@ -49,20 +60,34 @@ public static class PolynomialRoots
         if (degree == 1)
         {
             var root = -coefficients[0] / coefficients[1];
-            if (root < minimum || root > maximum || !double.IsFinite(root)) return 0;
+            if (root < minimum || root > maximum || !double.IsFinite(root))
+            {
+                return 0;
+            }
+
             roots[0] = root;
             return 1;
         }
 
         Span<double> derivative = stackalloc double[degree];
-        for (var i = 1; i <= degree; i++) derivative[i - 1] = coefficients[i] * i;
+        for (var i = 1; i <= degree; i++)
+        {
+            derivative[i - 1] = coefficients[i] * i;
+        }
+
         Span<double> critical = stackalloc double[degree - 1];
         var criticalCount = Find(derivative, minimum, maximum, critical);
         Span<double> partition = stackalloc double[degree + 1];
         var partitionCount = 1;
         partition[0] = minimum;
         for (var i = 0; i < criticalCount; i++)
-            if (critical[i] > minimum && critical[i] < maximum) partition[partitionCount++] = critical[i];
+        {
+            if (critical[i] > minimum && critical[i] < maximum)
+            {
+                partition[partitionCount++] = critical[i];
+            }
+        }
+
         partition[partitionCount++] = maximum;
 
         var count = 0;
@@ -72,12 +97,24 @@ public static class PolynomialRoots
         {
             var high = partition[i];
             var highValue = Evaluate(coefficients, high, detectRepeatedRoot: true);
-            if (lowValue == 0d) Append(roots, ref count, low);
-            if (OppositeSigns(lowValue, highValue)) Append(roots, ref count, Bisect(coefficients, low, high, lowValue));
+            if (lowValue == 0d)
+            {
+                Append(roots, ref count, low);
+            }
+
+            if (OppositeSigns(lowValue, highValue))
+            {
+                Append(roots, ref count, Bisect(coefficients, low, high, lowValue));
+            }
+
             low = high;
             lowValue = highValue;
         }
-        if (lowValue == 0d) Append(roots, ref count, low);
+        if (lowValue == 0d)
+        {
+            Append(roots, ref count, low);
+        }
+
         return count;
     }
 
@@ -87,9 +124,17 @@ public static class PolynomialRoots
         for (var i = 0; i < 2048; i++)
         {
             var middle = .5d * low + .5d * high;
-            if (middle == low || middle == high) return middle;
+            if (middle == low || middle == high)
+            {
+                return middle;
+            }
+
             var value = Evaluate(coefficients, middle, detectRepeatedRoot: false);
-            if (value == 0d) return middle;
+            if (value == 0d)
+            {
+                return middle;
+            }
+
             if (OppositeSigns(lowValue, value))
             {
                 high = middle;
@@ -117,7 +162,11 @@ public static class PolynomialRoots
             magnitude = magnitude * Math.Abs(argument) + Math.Abs(coefficient);
         }
         // At large x, evaluate p(x)/x^degree to keep sign tests finite.
-        if (reciprocal && x < 0d && (degree & 1) != 0) result = -result;
+        if (reciprocal && x < 0d && (degree & 1) != 0)
+        {
+            result = -result;
+        }
+
         return detectRepeatedRoot && Math.Abs(result) <= EvaluationTolerance * magnitude ? 0d : result;
     }
 
@@ -125,6 +174,9 @@ public static class PolynomialRoots
 
     private static void Append(Span<double> roots, ref int count, double root)
     {
-        if (count == 0 || root != roots[count - 1]) roots[count++] = root;
+        if (count == 0 || root != roots[count - 1])
+        {
+            roots[count++] = root;
+        }
     }
 }

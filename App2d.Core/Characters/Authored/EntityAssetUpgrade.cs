@@ -18,11 +18,25 @@ public static class EntityAssetUpgrade
     public static string ToCurrent(string json)
     {
         JsonObject root;
-        try { root = JsonNode.Parse(json) as JsonObject ?? throw new InvalidDataException("Empty entity file."); }
-        catch (JsonException error) { throw new InvalidDataException("The entity file is not valid JSON.", error); }
+        try
+        {
+            root = JsonNode.Parse(json) as JsonObject ?? throw new InvalidDataException("Empty entity file.");
+        }
+        catch (JsonException error)
+        {
+            throw new InvalidDataException("The entity file is not valid JSON.", error);
+        }
         var version = Int(root, "version") ?? 1;
-        if (version >= EntityAsset.CurrentVersion) return json;
-        if (version == 1) UpgradeFrom1(root);
+        if (version >= EntityAsset.CurrentVersion)
+        {
+            return json;
+        }
+
+        if (version == 1)
+        {
+            UpgradeFrom1(root);
+        }
+
         root[Key(root, "version") ?? "version"] = EntityAsset.CurrentVersion;
         return root.ToJsonString();
     }
@@ -38,14 +52,24 @@ public static class EntityAssetUpgrade
             Replace(movement, ["width", "height", "offsetX", "offsetY"], Rectangle(new(offsetX - width / 2f, offsetY), new(offsetX + width / 2f, offsetY + height)));
         }
         if (Object(root, "guard") is { } guard)
+        {
             Replace(guard, ["width", "height"], CenteredRectangle(Float(guard, "width") ?? .9f, Float(guard, "height") ?? 1.4f));
+        }
+
         if (Array(root, "actions") is { } actions)
         {
             foreach (var action in actions.OfType<JsonObject>())
             {
                 if (Object(action, "projectile") is { } projectile)
+                {
                     Replace(projectile, ["width", "height"], CenteredRectangle(Float(projectile, "width") ?? .16f, Float(projectile, "height") ?? .08f));
-                if (Array(action, "hits") is not { } hits) continue;
+                }
+
+                if (Array(action, "hits") is not { } hits)
+                {
+                    continue;
+                }
+
                 foreach (var hit in hits.OfType<JsonObject>())
                 {
                     var width = Float(hit, "width") ?? .3f;
@@ -69,7 +93,13 @@ public static class EntityAssetUpgrade
     private static JsonObject Capsule(float length, float diameter)
     {
         var reach = MathF.Max(length - diameter, 0f) / 2f;
-        return new() { ["kind"] = "capsule", ["start"] = Point(new(-reach, 0f)), ["end"] = Point(new(reach, 0f)), ["radius"] = MathF.Round(diameter / 2f, 5) };
+        return new()
+        {
+            ["kind"] = "capsule",
+            ["start"] = Point(new(-reach, 0f)),
+            ["end"] = Point(new(reach, 0f)),
+            ["radius"] = MathF.Round(diameter / 2f, 5)
+        };
     }
 
     // Old files held short decimals; halving and offsetting them in float leaves noise such as -0.90000004, so coordinates are rounded.
@@ -78,7 +108,13 @@ public static class EntityAssetUpgrade
     private static void Replace(JsonObject owner, string[] oldKeys, JsonObject shape)
     {
         foreach (var name in oldKeys)
-            if (Key(owner, name) is { } key) owner.Remove(key);
+        {
+            if (Key(owner, name) is { } key)
+            {
+                owner.Remove(key);
+            }
+        }
+
         owner["shape"] = shape;
     }
 

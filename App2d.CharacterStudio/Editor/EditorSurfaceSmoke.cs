@@ -37,8 +37,14 @@ internal static class EditorSurfaceSmoke
         var session = new EditorSession(assets, sources);
         var slotClip = CreateSlotPreview(assets);
         using var shell = new EditorShell(session, new Viewport(device, gui, renderer), new ArenaTest(assets, device, gui, renderer), gui);
-        session.Open("person-walk"); session.Pin("tall-thin"); session.Pin("short-broad"); session.Seek(.3f);
-        if (session.ActiveDocument is null) throw new InvalidOperationException(session.Message);
+        session.Open("person-walk");
+        session.Pin("tall-thin");
+        session.Pin("short-broad");
+        session.Seek(.3f);
+        if (session.ActiveDocument is null)
+        {
+            throw new InvalidOperationException(session.Message);
+        }
 
         foreach (var (width, height, scale) in new[] { (1600, 940, 1f), (1200, 800, 1.25f) })
         {
@@ -60,20 +66,27 @@ internal static class EditorSurfaceSmoke
                     gui.Begin(1f / 60);
                     shell.Draw();
                     device.SetRenderTarget(target);
-                    device.Clear(new Color(19, 23, 29)); gui.Render();
+                    device.Clear(new Color(19, 23, 29));
+                    gui.Render();
                     device.SetRenderTarget(null);
                 }
                 using var file = File.Create(Path.Combine(outputDirectory, $"{name}-{width}x{height}.png"));
                 target.SaveAsPng(file, width, height);
             }
 
-            session.Open("person-walk"); session.EditRig = false; session.Seek(.3f);
+            session.Open("person-walk");
+            session.EditRig = false;
+            session.Seek(.3f);
             Capture("character-editor-surface");
-            session.Open("person"); session.Selection.Select(part: "body");
+            session.Open("person");
+            session.Selection.Select(part: "body");
             Capture("model-base-part");
-            session.EditRig = true; session.Selection.Select(control: "chest");
+            session.EditRig = true;
+            session.Selection.Select(control: "chest");
             Capture("model-base-rig");
-            session.Open("tall-thin"); session.EditRig = false; session.Selection.Select(part: "body");
+            session.Open("tall-thin");
+            session.EditRig = false;
+            session.Selection.Select(part: "body");
             Capture("model-variant-part");
 
             var cutoutModel = assets.Models.FirstOrDefault(m => m.Asset.Parts.Any(p => p.Geometry is SimplePolygon2D.Builder));
@@ -84,27 +97,37 @@ internal static class EditorSurfaceSmoke
                 Capture("model-cutout");
             }
 
-            session.Open("person-walk"); session.Selection.Select(control: "chest"); session.Seek(0);
+            session.Open("person-walk");
+            session.Selection.Select(control: "chest");
+            session.Seek(0);
             Capture("animation-control");
             if (assets.Props.FirstOrDefault(p => p.Asset.Usage == "prop") is { } prop &&
                 session.Scene().FirstOrDefault()?.Model.Base.Sockets.FirstOrDefault() is { } socket)
             {
-                session.PreviewProp = prop.Id; session.PreviewSocket = socket.Id;
-                session.PreviewWeapon = session.EditWeapon = true; session.Selection.Clear();
+                session.PreviewProp = prop.Id;
+                session.PreviewSocket = socket.Id;
+                session.PreviewWeapon = session.EditWeapon = true;
+                session.Selection.Clear();
                 Capture("animation-weapon");
             }
             session.PreviewWeapon = session.EditWeapon = false;
-            session.Open(slotClip); session.Selection.Select(slot: "paint"); session.Seek(0);
+            session.Open(slotClip);
+            session.Selection.Select(slot: "paint");
+            session.Seek(0);
             shell.Viewport.Fit(session.Scene().FirstOrDefault());
             Capture("animation-slot");
             foreach (var (role, at) in new[] { ("smile", 1.5f), ("blink", 1f), ("wink", 1f), ("angry", 1f), ("worried", 1f), ("surprised", 1f), ("crossed-eyes", 1f), ("hair-wave", .375f) })
             {
-                session.Open("curve-face-" + role); session.ShowRest = session.EditRig = false;
+                session.Open("curve-face-" + role);
+                session.ShowRest = session.EditRig = false;
                 session.SetMode(Workspace.Model);
-                session.Selection.Clear(); session.Seek(at); shell.Viewport.Fit(session.Scene().FirstOrDefault());
+                session.Selection.Clear();
+                session.Seek(at);
+                shell.Viewport.Fit(session.Scene().FirstOrDefault());
                 Capture("curve-face-" + role);
             }
-            session.Open("curve-face"); session.Selection.Select(part: "hair");
+            session.Open("curve-face");
+            session.Selection.Select(part: "hair");
             Capture("curve-face-hair-inspector");
         }
         Console.WriteLine("Animation settings, controls, weapon and slot inspectors, model views and curve facial studies rendered at two sizes and scales.");
@@ -122,7 +145,11 @@ internal static class EditorSurfaceSmoke
         ClipAuthoring.SetAttachmentKey(clip, "paint", 0, null);
         ClipAuthoring.SetColorKey(clip, "paint", SlotColorTrack2D.Rgba, 0, new(.3f, .6f, .8f, 1));
         ClipAuthoring.SetColorKey(clip, "paint", SlotColorTrack2D.Rgba, 1, Vector4.One);
-        ClipAuthoring.SetColorCurve(clip, "paint", SlotColorTrack2D.Rgba, 0, 0, new() { X1 = .2f, X2 = .8f });
+        ClipAuthoring.SetColorCurve(clip, "paint", SlotColorTrack2D.Rgba, 0, 0, new()
+        {
+            X1 = .2f,
+            X2 = .8f
+        });
         assets.Create(clip);
         return clip.Id;
     }

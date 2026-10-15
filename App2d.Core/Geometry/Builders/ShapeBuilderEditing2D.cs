@@ -19,9 +19,17 @@ public static class ShapeBuilderEditing2D
     /// <exception cref="InvalidOperationException">This definition has no finite bounds to fit.</exception>
     public static ShapeBuilder2D WithKind(this ShapeBuilder2D definition, string kind)
     {
-        if (kind == definition.Kind) return definition;
+        if (kind == definition.Kind)
+        {
+            return definition;
+        }
+
         var bounds = ShapeBounds2D.Calculate(definition.Build());
-        if (!bounds.IsFinite) throw new InvalidOperationException($"A {definition.Kind} has no finite bounds to re-author from.");
+        if (!bounds.IsFinite)
+        {
+            throw new InvalidOperationException($"A {definition.Kind} has no finite bounds to re-author from.");
+        }
+
         var center = bounds.Center;
         var size = bounds.Size;
         var reach = MathF.Abs(size.X - size.Y) / 2f;

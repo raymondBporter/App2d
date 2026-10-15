@@ -19,7 +19,14 @@ public sealed class ModelEditingTests
         Assert.Equal(before, model.ToJson());
         Assert.Null(variant.Parts[part.Id].Height);
         Assert.Null(variant.Parts[part.Id].Material);
-        model.Parts.First(p => p.Id == part.Id).Material = new() { Fill = "#123456", Outline = new() { Width = .08f } };
+        model.Parts.First(p => p.Id == part.Id).Material = new()
+        {
+            Fill = "#123456",
+            Outline = new()
+            {
+                Width = .08f
+            }
+        };
         var updated = ResolvedModel.From(model, variant).Parts.First(p => p.Id == part.Id);
         Assert.Equal(.6f, updated.Width);
         Assert.Equal("#123456", updated.RenderMaterial.Fill);
@@ -40,7 +47,13 @@ public sealed class ModelEditingTests
         PuppetPart Part() => ResolvedModel.From(model, variant).Parts.First(p => p.Id == "torso");
 
         ModelAuthoring.EditPartOverride(variant, Part(), edited =>
-            edited.Material = edited.RenderMaterial with { Outline = edited.RenderMaterial.Outline! with { Width = .09f } });
+            edited.Material = edited.RenderMaterial with
+            {
+                Outline = edited.RenderMaterial.Outline! with
+                {
+                    Width = .09f
+                }
+            });
         ModelAuthoring.EditPartOverride(variant, Part(), edited => edited.OffsetX = .2f);
 
         var stored = variant.Parts["torso"];
@@ -64,7 +77,14 @@ public sealed class ModelEditingTests
     {
         var model = ModelAuthoring.Empty("bones", "Bones");
         var parent = ModelAuthoring.AddBone(model, null, "root");
-        parent.Transform = new() { X = 3, Y = -2, Rotation = .3f, ScaleX = scaleX, ScaleY = scaleY };
+        parent.Transform = new()
+        {
+            X = 3,
+            Y = -2,
+            Rotation = .3f,
+            ScaleX = scaleX,
+            ScaleY = scaleY
+        };
         var child = ModelAuthoring.AddBone(model, parent.Id, "child");
         var origin = ResolvedModel.From(model).Rest[child.Id];
         var target = new Vector2(origin.X + 1.2f, origin.Y + .8f);

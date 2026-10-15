@@ -76,7 +76,9 @@ public sealed class VertexGenerator2DTests
         Assert.Equal(new Vector2(99), points[18]);
         Assert.True(PolygonGeometry2D.SignedAreaTwice(points[..count]) > 0);
         foreach (var point in points[..count])
+        {
             Assert.Equal(2, Distance2D.DistanceToSegment(point, start, end), 5);
+        }
     }
 
     [Fact]
@@ -94,7 +96,11 @@ public sealed class VertexGenerator2DTests
         Span<Vector2> points = stackalloc Vector2[64];
         Generate(points);
         var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 100; i++) Generate(points);
+        for (var i = 0; i < 100; i++)
+        {
+            Generate(points);
+        }
+
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
 
         static void Generate(Span<Vector2> buffer)

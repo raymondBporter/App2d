@@ -26,21 +26,49 @@ public sealed class EntityAnimator
 
     public EntityAnimator(ResolvedEntity entity)
     {
-        Entity = entity; Role = EntityControllers.Idle;
-        Pose = new(PoseEvaluator.Sample(entity.Model, entity.Clip(Role), 0, true, new() { InPlace = true }), Vector2.Zero, 1);
+        Entity = entity;
+        Role = EntityControllers.Idle;
+        Pose = new(PoseEvaluator.Sample(entity.Model, entity.Clip(Role), 0, true, new()
+        {
+            InPlace = true
+        }), Vector2.Zero, 1);
     }
 
-    public ResolvedEntity Entity { get; }
-    public string Role { get; private set; }
-    public double RoleTime { get; private set; }
-    public string? Action { get; private set; }
-    public double ActionTime { get; private set; }
+    public ResolvedEntity Entity
+    {
+        get;
+    }
+    public string Role
+    {
+        get; private set;
+    }
+    public double RoleTime
+    {
+        get; private set;
+    }
+    public string? Action
+    {
+        get; private set;
+    }
+    public double ActionTime
+    {
+        get; private set;
+    }
     /// <summary>The action time before the latest step, for window tests that must not miss a window skipped in one step.</summary>
-    public double PreviousActionTime { get; private set; }
+    public double PreviousActionTime
+    {
+        get; private set;
+    }
     /// <summary>Increments on every action start; hit deduplication keys on it.</summary>
-    public int ActionSequence { get; private set; }
+    public int ActionSequence
+    {
+        get; private set;
+    }
     public int Facing { get; private set; } = 1;
-    public ActorPose Pose { get; private set; }
+    public ActorPose Pose
+    {
+        get; private set;
+    }
     public IReadOnlyDictionary<string, Vector3> Anchors => _hold.Anchors;
     public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
     public bool ActionComplete => Current is { } action && ActionTime >= action.Clip.Duration;
@@ -51,18 +79,37 @@ public sealed class EntityAnimator
     /// <summary>Starts an enabled action. Unsupported or disabled actions are rejected, never replaced by idle.</summary>
     public bool TryStart(string action)
     {
-        if (!Entity.Enabled(action)) return false;
-        Action = action; ActionTime = PreviousActionTime = 0; ActionSequence++; _fresh = true;
-        if (Current!.Mask is null) _hold.Clear();
+        if (!Entity.Enabled(action))
+        {
+            return false;
+        }
+
+        Action = action;
+        ActionTime = PreviousActionTime = 0;
+        ActionSequence++;
+        _fresh = true;
+        if (Current!.Mask is null)
+        {
+            _hold.Clear();
+        }
+
         return true;
     }
 
     /// <summary>Ends the playing action (finished or interrupted) and returns to locomotion with fresh contacts.</summary>
     public void EndAction()
     {
-        if (Current is not { } action) return;
+        if (Current is not { } action)
+        {
+            return;
+        }
+
         Action = null;
-        if (action.Mask is null) { _hold.Clear(); RoleTime = 0; }
+        if (action.Mask is null)
+        {
+            _hold.Clear();
+            RoleTime = 0;
+        }
     }
 
     /// <summary>
@@ -71,8 +118,16 @@ public sealed class EntityAnimator
     /// </summary>
     public void Play(string role, bool reverseHorizontalMotion = false)
     {
-        if (Entity.Clip(role) is null) throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role.");
-        Action = null; Role = role; RoleTime = 0; _hold.Clear(); _reverseRoleMotion = reverseHorizontalMotion;
+        if (Entity.Clip(role) is null)
+        {
+            throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role.");
+        }
+
+        Action = null;
+        Role = role;
+        RoleTime = 0;
+        _hold.Clear();
+        _reverseRoleMotion = reverseHorizontalMotion;
     }
 
     /// <summary>The ground under the actor moved by <paramref name="delta"/> (model units): planted contacts ride with it.</summary>
@@ -84,7 +139,11 @@ public sealed class EntityAnimator
     /// <summary>A teleport or respawn: drop the action, the phase and every anchor.</summary>
     public void Reset(string role = EntityControllers.Idle)
     {
-        Action = null; ActionTime = PreviousActionTime = RoleTime = 0; Role = role; _hold.Clear(); _reverseRoleMotion = false;
+        Action = null;
+        ActionTime = PreviousActionTime = RoleTime = 0;
+        Role = role;
+        _hold.Clear();
+        _reverseRoleMotion = false;
     }
 
     /// <summary>
@@ -94,30 +153,50 @@ public sealed class EntityAnimator
     /// </summary>
     public void Step(float dt, Vector2 position, int facing, string role, float groundDistance, bool hold, List<AnimationEvent> events, string? expression = null)
     {
-        if (facing is not (1 or -1)) ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
+        if (facing is not (1 or -1))
+        {
+            ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
+        }
+
         Facing = facing;
         if (Current is { } action)
         {
             PreviousActionTime = ActionTime;
-            var from = ActionTime; var to = Math.Min(action.Clip.Duration, ActionTime + dt);
+            var from = ActionTime;
+            var to = Math.Min(action.Clip.Duration, ActionTime + dt);
             Cross(action.Clip, from, to, false, _fresh, events, action.Id);
             foreach (var cue in action.Events)
-                if (Crosses(cue.Seconds, from, to, _fresh)) events.Add(new(AnimationEvent.EventKind, cue.Event.Id, cue.Event.Sound, action.Id, ActionSequence));
-            ActionTime = to; _fresh = false;
+            {
+                if (Crosses(cue.Seconds, from, to, _fresh))
+                {
+                    events.Add(new(AnimationEvent.EventKind, cue.Event.Id, cue.Event.Sound, action.Id, ActionSequence));
+                }
+            }
+
+            ActionTime = to;
+            _fresh = false;
         }
         if (Locomoting)
         {
             if (role != Role)
             {
-                if (Entity.Clip(role) is null) throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role; the controller must choose an assigned role or hold.");
-                Role = role; RoleTime = 0; _hold.Clear(); _reverseRoleMotion = false;
+                if (Entity.Clip(role) is null)
+                {
+                    throw new InvalidOperationException($"Entity '{Entity.Id}' has no '{role}' role; the controller must choose an assigned role or hold.");
+                }
+
+                Role = role;
+                RoleTime = 0;
+                _hold.Clear();
+                _reverseRoleMotion = false;
             }
             var clip = Entity.Clip(Role)!;
             if (!hold)
             {
                 var stride = MathF.Abs(PoseEvaluator.CycleTravel(Entity.Model, clip).X);
                 var advance = clip.Loop && stride > 1e-4f ? groundDistance / stride * clip.Duration : dt;
-                var from = RoleTime; var to = RoleTime + advance;
+                var from = RoleTime;
+                var to = RoleTime + advance;
                 Cross(clip, from, to, clip.Loop, from == 0, events, null);
                 RoleTime = clip.Loop ? to : Math.Min(to, clip.Duration);
             }
@@ -133,7 +212,11 @@ public sealed class EntityAnimator
             var clip = Entity.Clip(Role);
             var overlay = action is null ? null : new PoseLayer(action.Clip, ActionTime, action.Mask!, action.Weight(ActionTime));
             Pose = _hold.Evaluate(Entity.Model, clip, RoleTime, clip?.Loop == true, position, Facing,
-                new(expression) { Overlay = overlay, ReverseHorizontalMotion = _reverseRoleMotion });
+                new(expression)
+                {
+                    Overlay = overlay,
+                    ReverseHorizontalMotion = _reverseRoleMotion
+                });
             return;
         }
         Pose = _hold.Evaluate(Entity.Model, action.Clip, ActionTime, false, position, Facing, new(expression));
@@ -142,9 +225,18 @@ public sealed class EntityAnimator
     /// <summary>Hit windows active at any moment of the latest step, including one that opened and closed inside it.</summary>
     public IEnumerable<ResolvedHit> ActiveHits()
     {
-        if (Current is not { } action) yield break;
+        if (Current is not { } action)
+        {
+            yield break;
+        }
+
         foreach (var hit in action.Hits)
-            if (PreviousActionTime < hit.Finish && ActionTime >= hit.Start) yield return hit;
+        {
+            if (PreviousActionTime < hit.Finish && ActionTime >= hit.Start)
+            {
+                yield return hit;
+            }
+        }
     }
 
     private static bool Crosses(float time, double from, double to, bool inclusiveStart) => (time > from || inclusiveStart && time == from) && time <= to;
@@ -152,15 +244,33 @@ public sealed class EntityAnimator
     /// <summary>Markers in (from, to], or [from, to] on a fresh start; looping clips dispatch every cycle crossed. No advance, no events.</summary>
     private void Cross(MotionClip clip, double from, double to, bool loop, bool inclusiveStart, List<AnimationEvent> events, string? action)
     {
-        if (clip.Markers.Count == 0 || to <= from) return;
-        if (!loop) { foreach (var marker in clip.Markers) if (Crosses(marker.Time, from, to, inclusiveStart)) Add(marker.Id); return; }
+        if (clip.Markers.Count == 0 || to <= from)
+        {
+            return;
+        }
+
+        if (!loop)
+        {
+            foreach (var marker in clip.Markers)
+            {
+                if (Crosses(marker.Time, from, to, inclusiveStart))
+                {
+                    Add(marker.Id);
+                }
+            }
+
+            return;
+        }
         var duration = clip.Duration;
         for (var cycle = Math.Floor(from / duration); cycle * duration <= to; cycle++)
         {
             foreach (var marker in clip.Markers)
             {
                 var time = cycle * duration + marker.Time;
-                if ((time > from || inclusiveStart && time == from) && time <= to) Add(marker.Id);
+                if ((time > from || inclusiveStart && time == from) && time <= to)
+                {
+                    Add(marker.Id);
+                }
             }
         }
 
@@ -187,27 +297,65 @@ public sealed class ContactHold
     /// <summary>Moves every held anchor by <paramref name="delta"/>: the ground they stand on moved, as a platform does.</summary>
     public void Shift(Vector3 delta)
     {
-        foreach (var chain in _anchors.Keys.ToList()) _anchors[chain] += delta;
+        foreach (var chain in _anchors.Keys.ToList())
+        {
+            _anchors[chain] += delta;
+        }
     }
 
     /// <summary>Samples in place at <paramref name="position"/> (the feet origin) and returns the placed final pose.</summary>
     /// <remarks>With <paramref name="hold"/> false every anchor is released and contacts follow the clip.</remarks>
     public ActorPose Evaluate(ResolvedModel model, MotionClip? clip, double seconds, bool repeat, Vector2 position, int facing, PoseInput input, bool hold = true)
     {
-        if (facing is not (1 or -1)) ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
-        if (facing != _facing) { _facing = facing; _anchors.Clear(); }
+        if (facing is not (1 or -1))
+        {
+            ArgGuard.ThrowOutOfRange(facing, "Facing must be -1 or 1.");
+        }
+
+        if (facing != _facing)
+        {
+            _facing = facing;
+            _anchors.Clear();
+        }
         var placed = new ActorPose(new EvaluatedPose(), position, facing);
         _held.Clear();
         Vector3 Hold(string chain, Vector3 authored)
         {
             _held.Add(chain);
-            if (_anchors.TryGetValue(chain, out var anchor)) return placed.ToLocal(anchor);
-            _anchors[chain] = placed.Place(authored); return authored;
+            if (_anchors.TryGetValue(chain, out var anchor))
+            {
+                return placed.ToLocal(anchor);
+            }
+
+            _anchors[chain] = placed.Place(authored);
+            return authored;
         }
-        if (!hold) { _anchors.Clear(); return placed with { Local = PoseEvaluator.Sample(model, clip, seconds, repeat, input with { InPlace = true, Contact = null }) }; }
-        var local = PoseEvaluator.Sample(model, clip, seconds, repeat, input with { InPlace = true, Contact = Hold });
-        foreach (var chain in _anchors.Keys.Where(c => !_held.Contains(c)).ToList()) _anchors.Remove(chain);
-        return placed with { Local = local };
+        if (!hold)
+        {
+            _anchors.Clear();
+            return placed with
+            {
+                Local = PoseEvaluator.Sample(model, clip, seconds, repeat, input with
+                {
+                    InPlace = true,
+                    Contact = null
+                })
+            };
+        }
+        var local = PoseEvaluator.Sample(model, clip, seconds, repeat, input with
+        {
+            InPlace = true,
+            Contact = Hold
+        });
+        foreach (var chain in _anchors.Keys.Where(c => !_held.Contains(c)).ToList())
+        {
+            _anchors.Remove(chain);
+        }
+
+        return placed with
+        {
+            Local = local
+        };
     }
 }
 

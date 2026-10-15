@@ -37,7 +37,8 @@ public sealed class AuthoredEntityEnemyTests
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
         enemy.SetSimulationEnabled(true);
-        enemy.Update(0, new(facing * 400, 42)); enemy.SyncAfterPhysics();
+        enemy.Update(0, new(facing * 400, 42));
+        enemy.SyncAfterPhysics();
         var before = enemy.Pose.World("hips").X;
         Assert.True(enemy.TakeDamage(kill ? enemy.Health.Current : 1, new(direction * 200, 0)));
         Assert.Equal(facing, enemy.Pose.Facing);
@@ -53,7 +54,8 @@ public sealed class AuthoredEntityEnemyTests
         var bounds = head.Scaled(GameWorldUnits2D.WorldUnitsPerAuthoredUnit).Bounds;
         var hit = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(4, 4));
         hit.Transform.Position = bounds.Center;
-        var facts = new List<CombatDamage2D>(); game.Combat.DamageResolved += facts.Add;
+        var facts = new List<CombatDamage2D>();
+        game.Combat.DamageResolved += facts.Add;
         Assert.True(game.Combat.ResolveAttack(hit, game.Player.Id, 42, CombatFaction2D.Player, SideScrollerLayers2D.Enemy,
             1, _ => new(200, 100), impactKind: CombatImpactKind2D.Sword, impactDirection: Vector2.UnitX));
         var contact = Assert.Single(facts).Contact!.Value;
@@ -75,9 +77,14 @@ public sealed class AuthoredEntityEnemyTests
         var (still, _) = Ride(new(0, -1e-4f));
         var (feet, trail) = Ride(new(x, y));
         foreach (var (foot, height) in feet)
+        {
             Assert.True(MathF.Abs(height - still[foot]) < .005f, $"{foot} stands {height:F3} above the platform, {still[foot]:F3} when it is still");
+        }
+
         foreach (var (foot, offset) in trail)
+        {
             Assert.True(MathF.Abs(offset) < .5f, $"{foot} trails the hips by {offset:F3}");
+        }
     }
 
     /// <summary>Each foot's height above a moving platform, and its horizontal offset from the hips, after dropping onto it and riding.</summary>
@@ -98,7 +105,8 @@ public sealed class AuthoredEntityEnemyTests
             enemy.SyncAfterPhysics();
         }
         Assert.Equal(EntityControllers.Idle, enemy.CaptureState().ActionId);
-        var ground = platform.WorldObject.WorldBounds.Top / GameWorldUnits2D.WorldUnitsPerAuthoredUnit; var hips = enemy.Pose.World("hips").X;
+        var ground = platform.WorldObject.WorldBounds.Top / GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
+        var hips = enemy.Pose.World("hips").X;
         string[] feet = ["left-foot", "right-foot"];
         return (feet.ToDictionary(f => f, f => enemy.Pose.World(f).Y - ground), feet.ToDictionary(f => f, f => enemy.Pose.World(f).X - hips));
     }
@@ -110,13 +118,20 @@ public sealed class AuthoredEntityEnemyTests
     private static SideScrollerSimulation2D Game()
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < 640; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         return SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
         [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)),
          new(2, WorldThingKind2D.Shieldback, null, true, new(-290, 42)),
          new(3, WorldThingKind2D.BoilerBrute, null, true, new(-80, 42)),
          new(5, WorldThingKind2D.GreenDinosaur, null, true, new(210, 42))])
-        { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
+        {
+            AuthoredCharacters = Authored,
+            PlayerMaximumHealth = 30
+        });
     }
 
     [Fact]
@@ -137,7 +152,11 @@ public sealed class AuthoredEntityEnemyTests
     public void TheGuardThrustsAtThePlayer()
     {
         using var game = Game();
-        for (var i = 0; i < 30; i++) game.Session.Advance();
+        for (var i = 0; i < 30; i++)
+        {
+            game.Session.Advance();
+        }
+
         string[] Run() => [.. Enumerable.Range(0, 480).Select(i =>
         {
             var tick = game.Session.Tick + 1;
@@ -146,7 +165,8 @@ public sealed class AuthoredEntityEnemyTests
             return JsonSerializer.Serialize(new { frame.Tick, Health = game.Player.Health.Current, guard.Position, guard.ActionId, guard.ActionSeconds, Points = guard.AuthoredPose!.Local.Points.Values.ToArray() },
                 JsonOptions);
         })];
-        var first = Run(); var damaged = game.Player.Health.Current;
+        var first = Run();
+        var damaged = game.Player.Health.Current;
         Assert.Contains(first, json => json.Contains("\"ActionId\":\"attack\""));
         Assert.True(damaged < 30, "the spear reached the player");
     }
@@ -177,13 +197,18 @@ public sealed class AuthoredEntityEnemyTests
         var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(150, 40), 2, 1, CombatFaction2D.Player, 30);
         if (wall)
         {
-            var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5, 400)); shape.Transform.Position = new(95, 40);
-            var body = physics.AddBody(shape, BodyMotionType2D.Static); body.CollisionLayer = 1; body.CollisionMask = 6;
+            var shape = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(5, 400));
+            shape.Transform.Position = new(95, 40);
+            var body = physics.AddBody(shape, BodyMotionType2D.Static);
+            body.CollisionLayer = 1;
+            body.CollisionMask = 6;
         }
         var sawBolt = false;
         for (var i = 0; i < 360; i++)
         {
-            gunner.Update(1f / 120, player.Position); gunner.SyncAfterPhysics(); gunner.TryResolvePlayerHit(player);
+            gunner.Update(1f / 120, player.Position);
+            gunner.SyncAfterPhysics();
+            gunner.TryResolvePlayerHit(player);
             var bolts = gunner.CaptureState().Bolts;
             if (bolts.Length > 0 && !sawBolt)
             {
@@ -195,19 +220,37 @@ public sealed class AuthoredEntityEnemyTests
             }
         }
         Assert.True(sawBolt);
-        if (wall) Assert.Equal(30, player.Health.Current); else Assert.True(player.Health.Current < 30);
+        if (wall)
+        {
+            Assert.Equal(30, player.Health.Current);
+        }
+        else
+        {
+            Assert.True(player.Health.Current < 30);
+        }
     }
 
     [Fact]
     public void RivalPlacementsSpawnTheGunnerAndItsBolts()
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < 640; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
         [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)), new(4, WorldThingKind2D.Rival, null, true, new(-200, 42))])
-        { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
+        {
+            AuthoredCharacters = Authored,
+            PlayerMaximumHealth = 30
+        });
         Assert.Equal("cinder-gunner", Assert.Single(game.Session.CaptureEnemies()).TypeId);
-        for (var i = 0; i < 60; i++) game.Session.Advance();
+        for (var i = 0; i < 60; i++)
+        {
+            game.Session.Advance();
+        }
+
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ => JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.Bolts.Select(b => b.Position).ToArray())).ToArray(), JsonOptions)
             + (game.Session.Advance() is var frame ? "" : ""))];
         var first = Run();
@@ -222,12 +265,19 @@ public sealed class AuthoredEntityEnemyTests
         var maul = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["maul-brute"], physics, new(0, 36), 1, 4);
         maul.SetSimulationEnabled(true);
         var player = new Person2D(Core.EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(40, 40), 2, 1, CombatFaction2D.Player, 30);
-        var slam = maul.Entity.Actions["attack"]; var landedAt = -1.0; var cues = new List<string>();
+        var slam = maul.Entity.Actions["attack"];
+        var landedAt = -1.0;
+        var cues = new List<string>();
         for (var i = 0; i < 400 && landedAt < 0; i++)
         {
-            maul.Update(1f / 120, player.Position); maul.SyncAfterPhysics(); maul.TryResolvePlayerHit(player);
+            maul.Update(1f / 120, player.Position);
+            maul.SyncAfterPhysics();
+            maul.TryResolvePlayerHit(player);
             cues.AddRange(maul.DrainEvents().OfType<EntityCue2D>().Select(c => c.Cue));
-            if (player.Health.Current < 30) landedAt = maul.CaptureState().AttackElapsedSeconds;
+            if (player.Health.Current < 30)
+            {
+                landedAt = maul.CaptureState().AttackElapsedSeconds;
+            }
         }
         Assert.Equal(25, player.Health.Current);
         Assert.InRange(landedAt, slam.Hits[0].Start, slam.Hits[0].Finish + 1 / 120f);
@@ -245,17 +295,20 @@ public sealed class AuthoredEntityEnemyTests
             var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
             var guard = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
             guard.SetSimulationEnabled(true);
-            var target = new Vector2(side * 80, 42); var sawHitbox = false;
+            var target = new Vector2(side * 80, 42);
+            var sawHitbox = false;
             for (var i = 0; i < 240; i++)
             {
-                guard.Update(1f / 120, target); guard.SyncAfterPhysics();
+                guard.Update(1f / 120, target);
+                guard.SyncAfterPhysics();
                 foreach (var box in guard.GetActiveAttackHitboxes())
                 {
                     sawHitbox = true;
                     var spear = guard.Entity.Equipment[0];
                     var tip = ActorPose.PropPoint(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Tip) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
                     var bounds = box.WorldBounds;
-                    Assert.InRange(tip.X, bounds.Min.X, bounds.Max.X); Assert.InRange(tip.Y, bounds.Min.Y, bounds.Max.Y);
+                    Assert.InRange(tip.X, bounds.Min.X, bounds.Max.X);
+                    Assert.InRange(tip.Y, bounds.Min.Y, bounds.Max.Y);
                     Assert.Equal(side, Math.Sign(bounds.Center.X - guard.WorldObject.Transform.Position.X));
                 }
             }
@@ -270,16 +323,22 @@ public sealed class AuthoredEntityEnemyTests
         var guard = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics, new(0, 42), 1, 4);
         guard.SetSimulationEnabled(true);
         var target = new Vector2(400, 42);
-        guard.Update(1f / 120, target); guard.SyncAfterPhysics();
+        guard.Update(1f / 120, target);
+        guard.SyncAfterPhysics();
         Assert.True(guard.TakeDamage(1, new(-200, 0)));
         var stagger = guard.Entity.Clip(EntityControllers.Hit)!.Duration;
         for (var t = 0f; t < stagger - .05f; t += 1f / 120)
         {
-            guard.Update(1f / 120, target); guard.SyncAfterPhysics();
+            guard.Update(1f / 120, target);
+            guard.SyncAfterPhysics();
             Assert.Equal(-200, guard.Body.LinearVelocity.X);
             Assert.Equal(EntityControllers.Hit, guard.CaptureState().ActionId);
         }
-        for (var i = 0; i < 30; i++) { guard.Update(1f / 120, target); guard.SyncAfterPhysics(); }
+        for (var i = 0; i < 30; i++)
+        {
+            guard.Update(1f / 120, target);
+            guard.SyncAfterPhysics();
+        }
         Assert.True(guard.Body.LinearVelocity.X > 0, "after the stagger it walks toward the target again");
         Assert.Equal(EntityControllers.Walk, guard.CaptureState().ActionId);
     }
@@ -292,7 +351,8 @@ public sealed class AuthoredEntityEnemyTests
         enemy.SetSimulationEnabled(true);
         for (var i = 0; i < 60; i++)
         {
-            enemy.Update(1f / 120, new(i < 1 ? 40 : -40, 42)); enemy.SyncAfterPhysics();
+            enemy.Update(1f / 120, new(i < 1 ? 40 : -40, 42));
+            enemy.SyncAfterPhysics();
         }
         Assert.Equal("attack", enemy.CaptureState().ActionId);
         Assert.Equal(1, enemy.Pose.Facing);
@@ -302,7 +362,11 @@ public sealed class AuthoredEntityEnemyTests
         Assert.Equal("hit", enemy.CaptureState().ActionId);
         Assert.Empty(enemy.GetActiveAttackHitboxes());
         Assert.Equal(6, enemy.Health.Current);
-        for (var i = 0; i < 80; i++) { enemy.Update(1f / 120, new(-40, 42)); enemy.SyncAfterPhysics(); }
+        for (var i = 0; i < 80; i++)
+        {
+            enemy.Update(1f / 120, new(-40, 42));
+            enemy.SyncAfterPhysics();
+        }
         Assert.DoesNotContain(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "heavy");
     }
 
@@ -310,13 +374,24 @@ public sealed class AuthoredEntityEnemyTests
     public void CavemanPlacementPursuesOnTerrain()
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < 640; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
              new(2, WorldThingKind2D.ClubCaveman, null, true, new(-200, 40))])
-        { AuthoredCharacters = Authored, PlayerMaximumHealth = 30 });
+        {
+            AuthoredCharacters = Authored,
+            PlayerMaximumHealth = 30
+        });
         Assert.Equal("club-caveman", Assert.Single(game.Session.CaptureEnemies()).TypeId);
-        for (var i = 0; i < 60; i++) game.Session.Advance();
+        for (var i = 0; i < 60; i++)
+        {
+            game.Session.Advance();
+        }
+
         Assert.True(Assert.Single(game.Session.CaptureEnemies()).Position.X < -200);
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
         {
@@ -345,7 +420,8 @@ public sealed class AuthoredEntityEnemyTests
         }
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["club-caveman"], physics, new(0, 40.2f), 1, 4);
         enemy.SetSimulationEnabled(true);
-        enemy.Update(1f / 120, new(300, 26)); enemy.SyncAfterPhysics();
+        enemy.Update(1f / 120, new(300, 26));
+        enemy.SyncAfterPhysics();
         Assert.Equal(0, enemy.Body.LinearVelocity.X);
     }
 
@@ -363,13 +439,20 @@ public sealed class AuthoredEntityEnemyTests
             var boxes = new List<Rect2D>();
             for (var i = 0; i < 200; i++)
             {
-                if (dodge && i == 60) player.WorldObject.Transform.Position += new Vector2(facing * 100, 0);
-                enemy.Update(1f / 120, player.Position); enemy.SyncAfterPhysics();
+                if (dodge && i == 60)
+                {
+                    player.WorldObject.Transform.Position += new Vector2(facing * 100, 0);
+                }
+
+                enemy.Update(1f / 120, player.Position);
+                enemy.SyncAfterPhysics();
                 boxes.AddRange(enemy.GetActiveAttackHitboxes().Select(b => b.WorldBounds));
                 var before = player.Health.Current;
                 enemy.TryResolvePlayerHit(player);
                 if (before != player.Health.Current)
+                {
                     Assert.InRange(enemy.CaptureState().AttackElapsedSeconds, .78f, .95f);
+                }
             }
             Assert.True(player.Health.Current == (dodge ? 30 : 27), $"Health {player.Health.Current}; player {player.WorldObject.WorldBounds}; first strike {boxes.FirstOrDefault()}");
         }
@@ -381,15 +464,21 @@ public sealed class AuthoredEntityEnemyTests
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities[id], physics, new(0, 42), 1, 4);
         enemy.SetSimulationEnabled(true);
-        enemy.Update(1f / 120, new(400, 42)); enemy.SyncAfterPhysics();
+        enemy.Update(1f / 120, new(400, 42));
+        enemy.SyncAfterPhysics();
         Assert.True(enemy.TakeDamage(enemy.Health.Current, Vector2.Zero));
         var death = enemy.Entity.Clip(EntityControllers.Death)!;
-        for (var i = 0; i < (int)(death.Duration * 120) + 60; i++) { enemy.Update(1f / 120, new(400, 42)); enemy.SyncAfterPhysics(); }
+        for (var i = 0; i < (int)(death.Duration * 120) + 60; i++)
+        {
+            enemy.Update(1f / 120, new(400, 42));
+            enemy.SyncAfterPhysics();
+        }
         var state = enemy.CaptureState();
         Assert.Equal(EntityControllers.Death, state.ActionId);
         Assert.Equal(death.Duration, state.ActionSeconds, 3);
         var held = enemy.Pose.Local.Points.Values.ToArray();
-        enemy.Update(1f / 120, new(400, 42)); enemy.SyncAfterPhysics();
+        enemy.Update(1f / 120, new(400, 42));
+        enemy.SyncAfterPhysics();
         Assert.Equal(held, enemy.Pose.Local.Points.Values.ToArray());
     }
 }

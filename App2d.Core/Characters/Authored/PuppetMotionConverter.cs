@@ -12,12 +12,20 @@ public static class PuppetMotionConverter
     {
         var resolved = ResolvedModel.From(model);
         if (model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
+        {
             throw new InvalidDataException("Prototype point motion cannot infer bone-frame rotations. Convert onto a point rig or author the bone constraint's target in Animate.");
+        }
+
         var solved = model.IkChains.SelectMany(c => new[] { c.Joint, c.End }).ToHashSet(StringComparer.Ordinal);
         foreach (var control in model.Controls.Where(c => !solved.Contains(c.Id)))
         {
             for (var parent = control.Parent; parent is not null; parent = resolved.Controls[parent].Parent)
-                if (solved.Contains(parent)) throw new InvalidDataException($"Control '{control.Id}' hangs from IK-solved '{parent}'; conversion does not support that yet.");
+            {
+                if (solved.Contains(parent))
+                {
+                    throw new InvalidDataException($"Control '{control.Id}' hangs from IK-solved '{parent}'; conversion does not support that yet.");
+                }
+            }
         }
 
         Vector3 Rest(string control) => resolved.Rest[control];
@@ -35,14 +43,33 @@ public static class PuppetMotionConverter
         var tracks = new Dictionary<(string, string), ClipTrack>();
         void Add(string kind, string target, float time, Vector3 delta)
         {
-            if (!tracks.TryGetValue((kind, target), out var track)) tracks[(kind, target)] = track = new() { Kind = kind, Target = target };
-            track.Keys.Add(new() { Time = time, X = delta.X, Y = delta.Y, Z = delta.Z });
+            if (!tracks.TryGetValue((kind, target), out var track))
+            {
+                tracks[(kind, target)] = track = new()
+                {
+                    Kind = kind,
+                    Target = target
+                };
+            }
+
+            track.Keys.Add(new()
+            {
+                Time = time,
+                X = delta.X,
+                Y = delta.Y,
+                Z = delta.Z
+            });
         }
         foreach (var key in motion.Keys)
         {
-            var position = key.Position.XYZ; var locomotion = new Vector3(position.X, 0, 0);
+            var position = key.Position.XYZ;
+            var locomotion = new Vector3(position.X, 0, 0);
             Vector3 World(string control) => (key.Points.TryGetValue(control, out var p) ? p.XYZ : Rest(control)) + position;
-            clip.Travel.Keys.Add(new() { Time = key.Time, X = position.X });
+            clip.Travel.Keys.Add(new()
+            {
+                Time = key.Time,
+                X = position.X
+            });
             foreach (var control in model.Controls.Where(c => !solved.Contains(c.Id)))
             {
                 var parentWorld = control.Parent is null ? locomotion : World(control.Parent);
@@ -63,8 +90,15 @@ public static class PuppetMotionConverter
         foreach (var contact in motion.Contacts)
         {
             var chain = model.IkChains.Single(c => c.End == contact.End);
-            clip.Contacts.Add(new() { Chain = chain.Id, Start = contact.Start, Finish = contact.Finish, Target = PuppetPoint.From(contact.Target.XYZ - new Vector3(start, 0, 0) - Rest(chain.End)) });
+            clip.Contacts.Add(new()
+            {
+                Chain = chain.Id,
+                Start = contact.Start,
+                Finish = contact.Finish,
+                Target = PuppetPoint.From(contact.Target.XYZ - new Vector3(start, 0, 0) - Rest(chain.End))
+            });
         }
-        clip.Validate(resolved); return clip;
+        clip.Validate(resolved);
+        return clip;
     }
 }

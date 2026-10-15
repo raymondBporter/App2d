@@ -15,21 +15,28 @@ public sealed class PersonWardrobeTests
         // A square with the upper-right quarter removed. Fan triangulation would fill the notch.
         PuppetPoint[] outline = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)];
         var solid = PropGeometry.Extrude(reverse ? outline.Reverse() : outline, .02f, "#aaaaaa");
-        var area = 0f; var edges = new Dictionary<(int, int), int>();
+        var area = 0f;
+        var edges = new Dictionary<(int, int), int>();
         for (var i = 0; i < solid.Triangles.Count; i += 3)
         {
-            var a = solid.Triangles[i]; var b = solid.Triangles[i + 1]; var c = solid.Triangles[i + 2];
-            var pa = solid.Vertices[a].XYZ; var pb = solid.Vertices[b].XYZ; var pc = solid.Vertices[c].XYZ;
+            var a = solid.Triangles[i];
+            var b = solid.Triangles[i + 1];
+            var c = solid.Triangles[i + 2];
+            var pa = solid.Vertices[a].XYZ;
+            var pb = solid.Vertices[b].XYZ;
+            var pc = solid.Vertices[c].XYZ;
             if (pa.Z < 0 && pb.Z < 0 && pc.Z < 0)
             {
-                var cross = Vector3.Cross(pb - pa, pc - pa); Assert.True(cross.Z < 0);
+                var cross = Vector3.Cross(pb - pa, pc - pa);
+                Assert.True(cross.Z < 0);
                 area += -cross.Z / 2;
                 var center = (pa + pb + pc) / 3;
                 Assert.False(center.X > 1 && center.Y > 1);
             }
             foreach (var (u, v) in new[] { (a, b), (b, c), (c, a) })
             {
-                var edge = u < v ? (u, v) : (v, u); edges[edge] = edges.GetValueOrDefault(edge) + 1;
+                var edge = u < v ? (u, v) : (v, u);
+                edges[edge] = edges.GetValueOrDefault(edge) + 1;
             }
         }
         Assert.Equal(3, area, 5);
@@ -59,15 +66,18 @@ public sealed class PersonWardrobeTests
     [Fact]
     public void GarmentsFollowTheActualTorsoDuringTheHammerSlamInBothFacings()
     {
-        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot); Assert.Empty(catalog.Errors);
-        var entity = catalog.Entities["maul-brute"]; var clip = catalog.Animations["person-hammer-slam"];
+        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
+        Assert.Empty(catalog.Errors);
+        var entity = catalog.Entities["maul-brute"];
+        var clip = catalog.Animations["person-hammer-slam"];
         var socket = entity.Sockets[PersonWardrobe.BodySocket];
         foreach (var facing in new[] { -1, 1 })
         {
             foreach (var at in new[] { 0, .55, .78, 1.1 })
             {
                 var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, at), Vector2.Zero, facing);
-                var expected = pose.World("chest") - pose.World("hips"); expected.Z = 0;
+                var expected = pose.World("chest") - pose.World("hips");
+                expected.Z = 0;
                 TestModels.Near(Vector3.Normalize(expected), pose.Socket(socket).Across3);
                 TestModels.Near(pose.World("hips"), pose.Socket(socket).Origin);
             }
@@ -77,7 +87,8 @@ public sealed class PersonWardrobeTests
     [Fact]
     public void PackagedWardrobeCompilesAndDrawsWithExistingEnemyActions()
     {
-        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot); Assert.Empty(catalog.Errors);
+        var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
+        Assert.Empty(catalog.Errors);
         var drawing = new PuppetDrawing();
         foreach (var id in new[] { "maul-brute", "cinder-gunner" })
         {
@@ -93,7 +104,10 @@ public sealed class PersonWardrobeTests
                 }
             }
         }
-        foreach (var prop in PersonWardrobe.Props()) prop.Validate();
+        foreach (var prop in PersonWardrobe.Props())
+        {
+            prop.Validate();
+        }
     }
 
     [Fact]
@@ -108,7 +122,8 @@ public sealed class PersonWardrobeTests
             Geometry = new App2d.Core.Shapes.Ellipse2D.Builder { Center = new(0, 0), Radii = new(.5f, .5f) },
             Material = new() { Fill = "#fff8e7", Outline = new() { Width = 0 } },
         };
-        var drawing = new PuppetDrawing(); drawing.Build("#000000", .04f, [part], _ => Vector3.Zero);
+        var drawing = new PuppetDrawing();
+        drawing.Build("#000000", .04f, [part], _ => Vector3.Zero);
         var red = drawing.Mesh.Vertices.ToArray().Where(v => v.Color.R == 255 && v.Color.G == 0).ToArray();
         Assert.NotEmpty(red);
         foreach (var vertex in red)

@@ -16,11 +16,13 @@ public sealed class ShapeBoundsPrecisionTests
     [InlineData(float.Epsilon, float.Epsilon)]
     public void SharedRectangleAndCapsuleCentersKeepFiniteExtremesAndSubnormalPoints(float first, float second)
     {
-        var a = new Vector2(first, -second); var b = new Vector2(second, -first);
+        var a = new Vector2(first, -second);
+        var b = new Vector2(second, -first);
         var expected = new Vector2((float)(((double)first + second) / 2), (float)(-((double)first + second) / 2));
         var rectangle = Rect2D.FromPoints(a, b);
         Assert.Equal(expected, rectangle.Center);
-        Assert.Equal(expected.X, rectangle.MidX); Assert.Equal(expected.Y, rectangle.MidY);
+        Assert.Equal(expected.X, rectangle.MidX);
+        Assert.Equal(expected.Y, rectangle.MidY);
         var capsule = Capsule2D.Builder.Create(a, b, .5f);
         Assert.Equal(expected, capsule.Center);
         Assert.Equal(expected, Capsule2D.Builder.Create(b, a, .5f).Center);
@@ -87,7 +89,9 @@ public sealed class ShapeBoundsPrecisionTests
                 var points = new Vector2[1024];
                 shape.GetOutlineVerts(points, points.Length);
                 foreach (var point in points)
+                {
                     Assert.InRange(bounds.DistanceTo(Vector2.Transform(point, matrix)), 0, .00002f);
+                }
             }
         }
     }

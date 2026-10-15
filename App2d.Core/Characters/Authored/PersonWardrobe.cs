@@ -70,7 +70,10 @@ public static class PersonWardrobe
     {
         PartPaint SpotPaint(float x, float y, float rx, float ry) => new()
         {
-            Material = new() { Fill = "#765033" },
+            Material = new()
+            {
+                Fill = "#765033"
+            },
             Points = [.. Enumerable.Range(0, 7).Select(i => new Vector2(x + MathF.Cos(i * MathF.Tau / 7) * rx, y + MathF.Sin(i * MathF.Tau / 7) * ry))],
         };
         return
@@ -87,9 +90,13 @@ public static class PersonWardrobe
     {
         Patch(art, fill, z, [.. Enumerable.Range(0, 7).Select(i =>
         {
-            var angle = i * MathF.Tau / 7; return (x + MathF.Cos(angle) * radius * .8f, y + MathF.Sin(angle) * radius);
+            var angle = i * MathF.Tau / 7;
+return (x + MathF.Cos(angle) * radius * .8f, y + MathF.Sin(angle) * radius);
         })], thickness: thickness);
-        art.Solids[^1].Material = art.Solids[^1].RenderMaterial with { Outline = null };
+        art.Solids[^1].Material = art.Solids[^1].RenderMaterial with
+        {
+            Outline = null
+        };
     }
 
     private static PropAsset Hair(string id, string name, float scale, string color, bool wild)
@@ -97,9 +104,13 @@ public static class PersonWardrobe
         var art = Art(id, name);
         // Behind the head: a short nape or the caveman's wider side tufts.
         if (wild)
+        {
             Patch(art, color, -.095f, [(-.29f, .20f), (-.37f, .06f), (-.31f, .06f), (-.39f, -.09f), (-.31f, -.06f), (-.32f, -.23f), (-.21f, -.17f), (.23f, -.18f), (.34f, -.23f), (.31f, -.05f), (.38f, -.10f), (.32f, .13f), (.23f, .27f)], scale, scale);
+        }
         else
+        {
             Patch(art, color, -.095f, [(-.25f, .18f), (-.28f, .03f), (-.25f, -.14f), (-.19f, -.17f), (-.19f, .19f)], scale, scale);
+        }
         // Front silhouette: unequal chunky tufts, with a high fringe to leave the brows clear.
         Patch(art, color, -.15f,
             [(-.27f, .10f), (-.30f, .24f), (-.23f, .23f), (-.29f, .32f), (-.15f, .30f), (-.15f, .40f), (-.06f, .34f), (.035f, .43f), (.045f, .34f), (.19f, .38f), (.15f, .31f), (.28f, .30f), (.23f, .25f), (.29f, .19f), (.17f, .18f), (.07f, .24f), (-.015f, .19f), (-.11f, .22f), (-.18f, .12f), (-.22f, .025f)], scale, scale * (wild ? 1.13f : .87f));
@@ -120,12 +131,19 @@ public static class PersonWardrobe
     {
         var modelPath = Path.Combine(root, "models", "person.json");
         var model = CharacterModel.Load(modelPath);
-        foreach (var socket in Sockets()) { model.Sockets.RemoveAll(s => s.Id == socket.Id); model.Sockets.Add(socket); }
+        foreach (var socket in Sockets())
+        {
+            model.Sockets.RemoveAll(s => s.Id == socket.Id);
+            model.Sockets.Add(socket);
+        }
         model.Save(modelPath);
         foreach (var prop in Props())
         {
             var path = Path.Combine(root, "props", prop.Id + ".json");
-            if (replaceExistingProps || !File.Exists(path)) prop.Save(path);
+            if (replaceExistingProps || !File.Exists(path))
+            {
+                prop.Save(path);
+            }
         }
         foreach (var id in new[] { "hero", "maul-brute", "cinder-gunner" })
         {
@@ -134,7 +152,11 @@ public static class PersonWardrobe
             // The old floating shirt is now the body's material.
             entity.Equipment.RemoveAll(e => e.Prop is "brute-tunic" or "cinder-tunic");
             var clothes = id == "hero" ? [new EquipmentBinding { Prop = ShortHair, Socket = HeadSocket }] : Caveman(id == "maul-brute" ? "brute" : "cinder").ToArray();
-            foreach (var item in clothes) { entity.Equipment.RemoveAll(e => e.Prop == item.Prop); entity.Equipment.Add(item); }
+            foreach (var item in clothes)
+            {
+                entity.Equipment.RemoveAll(e => e.Prop == item.Prop);
+                entity.Equipment.Add(item);
+            }
             entity.Save(path);
         }
         foreach (var id in new[] { "brute", "cinder" })
@@ -143,7 +165,10 @@ public static class PersonWardrobe
             var variant = ModelVariant.FromJson(File.ReadAllText(path));
             variant.Parts["body"] = variant.Parts["body"] with
             {
-                Material = new() { Fill = id == "brute" ? variant.Parts["head"].Material?.Fill : "#b97549" },
+                Material = new()
+                {
+                    Fill = id == "brute" ? variant.Parts["head"].Material?.Fill : "#b97549"
+                },
                 Paint = id == "brute" ? [] : TunicPaint(variant.Parts["head"].Material!.Fill!),
             };
             variant.Save(path);

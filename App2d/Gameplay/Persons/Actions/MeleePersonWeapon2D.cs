@@ -46,7 +46,9 @@ internal abstract partial class MeleePersonWeapon2D(
         get
         {
             if (_attack.IsVisible)
+            {
                 yield return _attack.WorldObject;
+            }
         }
     }
 
@@ -54,7 +56,10 @@ internal abstract partial class MeleePersonWeapon2D(
     {
         var direction = MathF.Sign(facing);
         if (_attack.IsInProgress)
+        {
             _bufferedAttackDirection = direction;
+        }
+
         if (authored is not null)
         {
             _nextSwing = authored.Chain(_swing, _attack.IsInProgress ? 0 : _sinceSwing);
@@ -105,7 +110,13 @@ internal abstract partial class MeleePersonWeapon2D(
 
     protected Vector2 OwnerPosition => _ownerBody.WorldObject.Transform.Position;
     protected void ReportImpact(Vector2 position) => _publish(new SwordImpact2D(position));
-    protected virtual void OnHit() { }
+    protected virtual void OnHit()
+    {
+    }
 
-    private void NotifyAttackStarted() { _swing = _nextSwing; _attackStarted(_attack.DurationSeconds); }
+    private void NotifyAttackStarted()
+    {
+        _swing = _nextSwing;
+        _attackStarted(_attack.DurationSeconds);
+    }
 }

@@ -11,8 +11,14 @@ public sealed partial class Ellipse2D
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
     {
-        public required Vector2 Center { get; init; }
-        public required Vector2 Radii { get; init; }
+        public required Vector2 Center
+        {
+            get; init;
+        }
+        public required Vector2 Radii
+        {
+            get; init;
+        }
         [JsonIgnore] public override string Kind => ShapeKinds2D.Ellipse;
         public override void Validate()
         {

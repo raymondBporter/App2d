@@ -49,7 +49,11 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
         ArgGuard.ThrowIfNull(other);
         ArgGuard.ThrowIfNotFinite(position);
         var pose = Pose.Translated(position);
-        if (!ShapeBounds2D.Calculate(Shape).TransformedBy(pose.ToMatrix()).Intersects(other.WorldBounds)) return false;
+        if (!ShapeBounds2D.Calculate(Shape).TransformedBy(pose.ToMatrix()).Intersects(other.WorldBounds))
+        {
+            return false;
+        }
+
         return ShapeDistance2D.Distance(Shape, pose, other.Shape, other.CollisionPose) == 0f;
     }
 
@@ -65,7 +69,11 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     {
         var vertices = new Vector2[Shape.GetOutlineVertCount(roundSegments)];
         Shape.GetOutlineVerts(vertices, roundSegments);
-        for (var i = 0; i < vertices.Length; i++) vertices[i] = Pose.TransformPoint(vertices[i]);
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            vertices[i] = Pose.TransformPoint(vertices[i]);
+        }
+
         return vertices;
     }
 

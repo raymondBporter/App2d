@@ -35,7 +35,10 @@ public sealed class EllipseDistanceTests
             var distance = Vector2.Distance(point, closest);
             var sampled = float.PositiveInfinity;
             for (var i = 0; i < 8192; i++)
+            {
                 sampled = MathF.Min(sampled, Vector2.Distance(point, VertexGenerator2D.PointOnEllipse(center, radii, i * MathF.Tau / 8192)));
+            }
+
             var scale = MathF.Max(a, b);
             Assert.True(distance <= sampled + 1e-4f * scale, $"Point {point}: iterative {distance} is worse than sampled {sampled}.");
             Assert.True(distance >= sampled - MathF.Max(1e-3f * scale, 4e-6f * scale * scale), $"Point {point}: iterative {distance} is unrealistically better than sampled {sampled}.");
@@ -79,7 +82,11 @@ public sealed class EllipseDistanceTests
             Assert.Equal(signed, SpatialDistance2D.SignedDistance(ellipse, circle), 5);
             var hit = ShapeCollision2D.TryGetContact(circle, ellipse, out var contact);
             Assert.Equal(signed < 0f, hit);
-            if (!hit) continue;
+            if (!hit)
+            {
+                continue;
+            }
+
             contacts++;
             Assert.Equal(-signed, contact.PenetrationDepth, 4);
             Assert.True(ShapeCollision2D.TryGetContact(ellipse, circle, out var reverse));

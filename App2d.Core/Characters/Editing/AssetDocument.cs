@@ -3,7 +3,10 @@ using App2d.Core.Characters.Authored;
 namespace App2d.Core.Characters.Editing;
 
 /// <summary>Ordered so saving everything writes what others depend on first.</summary>
-public enum AssetKind { Model, Variant, Animation, Prop, Entity }
+public enum AssetKind
+{
+    Model, Variant, Animation, Prop, Entity
+}
 
 public static class AssetKinds
 {
@@ -38,11 +41,20 @@ public abstract class AssetDocument(AssetKind kind, string id, string? path, str
     private string? _before;
 
     public AssetKind Kind { get; } = kind;     /// <summary>Stable for the document's life. Renaming an ID is a new asset.</summary>
-    public string Id { get; } = id; public string? Path { get; private set; } = path; public abstract string Name { get; }
+    public string Id { get; } = id; public string? Path { get; private set; } = path; public abstract string Name
+    {
+        get;
+    }
     public bool IsNew => Path is null;
-    public bool Dirty { get; private set; }
+    public bool Dirty
+    {
+        get; private set;
+    }
     /// <summary>Increments on every change, so caches keyed on it rebuild only when the asset changed.</summary>
-    public int Version { get; private set; }
+    public int Version
+    {
+        get; private set;
+    }
     public bool CanUndo => _undo.Count > 0 || _before is not null;
     public bool CanRedo => _redo.Count > 0;
     /// <summary>When the step <see cref="Undo"/> would revert was made, comparable across documents; an open transaction is newest.</summary>
@@ -56,45 +68,91 @@ public abstract class AssetDocument(AssetKind kind, string id, string? path, str
     /// <summary>Applies a continuous change, such as one frame of a drag. It joins the open transaction.</summary>
     public void Change(Action change)
     {
-        _before ??= Serialize(); change(); Touch();
+        _before ??= Serialize();
+        change();
+        Touch();
     }
 
     /// <summary>Applies a discrete change as its own undo step. If it throws, the document returns to its prior state and the exception propagates.</summary>
     public void Edit(Action change)
     {
-        Commit(); var before = Serialize();
-        try { change(); }
-        catch { Restore(before); Version++; throw; }
-        _before = before; Touch(); Commit();
+        Commit();
+        var before = Serialize();
+        try
+        {
+            change();
+        }
+        catch
+        {
+            Restore(before);
+            Version++;
+            throw;
+        }
+        _before = before;
+        Touch();
+        Commit();
     }
 
     /// <summary>Closes the open transaction. An edit that changed nothing leaves no undo step.</summary>
     public void Commit()
     {
-        if (_before is null) return;
+        if (_before is null)
+        {
+            return;
+        }
+
         var now = Serialize();
-        if (now != _before) { _undo.Push((_before, ++s_sequence)); _redo.Clear(); }
-        _before = null; Dirty = now != saved;
+        if (now != _before)
+        {
+            _undo.Push((_before, ++s_sequence));
+            _redo.Clear();
+        }
+        _before = null;
+        Dirty = now != saved;
     }
 
     public void Undo()
     {
         Commit();
-        if (!_undo.TryPop(out var step)) return;
-        _redo.Push((Serialize(), ++s_sequence)); Restore(step.Json); Touch(); Dirty = step.Json != saved;
+        if (!_undo.TryPop(out var step))
+        {
+            return;
+        }
+
+        _redo.Push((Serialize(), ++s_sequence));
+        Restore(step.Json);
+        Touch();
+        Dirty = step.Json != saved;
     }
 
     public void Redo()
     {
         Commit();
-        if (!_redo.TryPop(out var step)) return;
-        _undo.Push((Serialize(), ++s_sequence)); Restore(step.Json); Touch(); Dirty = step.Json != saved;
+        if (!_redo.TryPop(out var step))
+        {
+            return;
+        }
+
+        _undo.Push((Serialize(), ++s_sequence));
+        Restore(step.Json);
+        Touch();
+        Dirty = step.Json != saved;
     }
 
     /// <summary>Records that the current state was written to <paramref name="path"/>.</summary>
-    public void MarkSaved(string path) { Commit(); Path = path; saved = Serialize(); Dirty = false; }
+    public void MarkSaved(string path)
+    {
+        Commit();
+        Path = path;
+        saved = Serialize();
+        Dirty = false;
+    }
 
-    private void Touch() { Version++; Dirty = true; }
+    private void Touch()
+    {
+        Version++;
+        Dirty = true;
+    }
 }
 
 public sealed class AssetDocument<T> : AssetDocument where T : class
@@ -114,7 +172,10 @@ public sealed class AssetDocument<T> : AssetDocument where T : class
     }
 
     /// <summary>The current draft. Undo replaces the instance, so views read it each frame rather than keeping it.</summary>
-    public T Asset { get; private set; }
+    public T Asset
+    {
+        get; private set;
+    }
     public override string Name => _name(Asset);
     public override string Serialize() => _serialize(Asset);
     // Drafts may be semantically invalid while being repaired, so restoring parses without validating.

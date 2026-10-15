@@ -19,7 +19,11 @@ public sealed class WeaponPresentationTests
         using var view = new WeaponPresentation2D(scene, textures, sounds);
         view.ApplyState(WeaponState2D.Empty, EquipmentKind2D.Gun, [new GunFired2D(Vector2.Zero)]);
         Assert.Contains(scene, item => item.IsVisible);
-        for (var i = 0; i < 10; i++) view.ApplyState(WeaponState2D.Empty, EquipmentKind2D.Gun, []);
+        for (var i = 0; i < 10; i++)
+        {
+            view.ApplyState(WeaponState2D.Empty, EquipmentKind2D.Gun, []);
+        }
+
         Assert.Contains(scene, item => item.IsVisible);
         view.Advance(0.2f);
         Assert.DoesNotContain(scene, item => item.IsVisible);
@@ -38,7 +42,10 @@ public sealed class WeaponPresentationTests
         var voice = Assert.Single(sounds.Voices);
         Assert.True(voice.IsPlaying);
         Assert.Equal(charging.MuzzlePosition, voice.Position);
-        view.Update(charging with { MuzzlePosition = new Vector2(80f, 5f) }, EquipmentKind2D.Gun, [], 0.01f);
+        view.Update(charging with
+        {
+            MuzzlePosition = new Vector2(80f, 5f)
+        }, EquipmentKind2D.Gun, [], 0.01f);
         Assert.Single(sounds.Voices);
         Assert.Equal(new Vector2(80f, 5f), voice.Position);
         view.Suspend();
@@ -61,11 +68,21 @@ public sealed class WeaponPresentationTests
         var state = new WeaponState2D(false, 0f, Vector2.Zero, [first]);
         view.Update(state, EquipmentKind2D.Gun, [], 0f);
         Assert.Equal(2, scene.Count(item => item.IsVisible)); // Bolt and trail.
-        var second = first with { Id = EntityId2D.Create(), Position = new Vector2(20f, 0f) };
-        view.Update(state with { Projectiles = [second] }, EquipmentKind2D.Gun, [new ProjectileImpact2D(first.Position, first.Id)], 0.01f);
+        var second = first with
+        {
+            Id = EntityId2D.Create(),
+            Position = new Vector2(20f, 0f)
+        };
+        view.Update(state with
+        {
+            Projectiles = [second]
+        }, EquipmentKind2D.Gun, [new ProjectileImpact2D(first.Position, first.Id)], 0.01f);
         Assert.Equal(3, scene.Count(item => item.IsVisible)); // New bolt/trail plus fading old trail.
         Assert.Single(scene, item => item.IsVisible && ((SpriteShader2D)item.Shader).Texture == boltTexture);
-        view.Update(state with { Projectiles = [second] }, EquipmentKind2D.Gun, [], 0.06f);
+        view.Update(state with
+        {
+            Projectiles = [second]
+        }, EquipmentKind2D.Gun, [], 0.06f);
         Assert.Equal(2, scene.Count(item => item.IsVisible));
         view.Update(WeaponState2D.Empty, EquipmentKind2D.Gun, [new GunFired2D(Vector2.Zero),
             new ProjectileImpact2D(new Vector2(40f, 0f), EntityId2D.Create())], 0.01f);
@@ -95,9 +112,14 @@ public sealed class WeaponPresentationTests
     private sealed class Voice : ISoundEffectVoice2D
     {
         public bool IsPlaying { get; private set; } = true;
-        public Vector2 Position { get; private set; }
+        public Vector2 Position
+        {
+            get; private set;
+        }
         public void SetPosition(Vector2 position) => Position = position;
-        public void SetVolumeScale(float volume, float seconds) { }
+        public void SetVolumeScale(float volume, float seconds)
+        {
+        }
         public void Stop(float seconds) => IsPlaying = false;
     }
 }

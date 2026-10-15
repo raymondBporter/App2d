@@ -204,12 +204,18 @@ public sealed class Gjk2DTests
     private static float PolygonDistance(ReadOnlySpan<Vector2> first, ReadOnlySpan<Vector2> second)
     {
         var separation = Math.Max(Axes(first, first, second), Axes(second, first, second));
-        if (separation <= 0f) return separation;
+        if (separation <= 0f)
+        {
+            return separation;
+        }
+
         var squared = float.PositiveInfinity;
         for (var i = 0; i < first.Length; i++)
         {
             for (var j = 0; j < second.Length; j++)
+            {
                 squared = Math.Min(squared, Distance2D.DistanceSquaredBetweenSegments(first[i], first[(i + 1) % first.Length], second[j], second[(j + 1) % second.Length]));
+            }
         }
 
         return MathF.Sqrt(squared);

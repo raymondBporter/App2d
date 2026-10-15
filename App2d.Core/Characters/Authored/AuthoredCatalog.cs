@@ -31,12 +31,20 @@ public sealed class AuthoredCatalog
         catalog.Scan(root, "models", CharacterModel.FromJson, catalog._models, m => m.Id);
         catalog.Scan(root, "variants", ModelVariant.FromJson, catalog._variants, v => v.Id);
         catalog.Scan(root, "animations", MotionClip.FromJson, catalog._animations, a => a.Id);
-        foreach (var id in catalog._variants.Keys) catalog.Check(id, () => catalog.Resolve(id));
+        foreach (var id in catalog._variants.Keys)
+        {
+            catalog.Check(id, () => catalog.Resolve(id));
+        }
+
         foreach (var clip in catalog._animations.Values)
         {
             catalog.Check(clip.Id, () =>
             {
-                if (!catalog._models.ContainsKey(clip.Model)) throw new InvalidDataException($"Clip '{clip.Id}' references missing model '{clip.Model}'.");
+                if (!catalog._models.ContainsKey(clip.Model))
+                {
+                    throw new InvalidDataException($"Clip '{clip.Id}' references missing model '{clip.Model}'.");
+                }
+
                 clip.Validate(catalog.Resolve(clip.Model));
             });
         }
@@ -44,19 +52,39 @@ public sealed class AuthoredCatalog
         catalog.Scan(root, "props", PropAsset.FromJson, catalog._props, p => p.Id);
         catalog.Scan(root, "entities", EntityAsset.FromJson, catalog._entityAssets, e => e.Id);
         foreach (var entity in catalog._entityAssets.Values)
+        {
             catalog.Check(entity.Id, () => catalog._entities[entity.Id] = ResolvedEntity.Compile(entity, catalog.Resolve, catalog._animations.GetValueOrDefault, catalog._props.GetValueOrDefault));
+        }
+
         return catalog;
     }
 
     /// <summary>Resolves a base model or variant by ID. Compiled once and shared.</summary>
     public ResolvedModel Resolve(string id)
     {
-        if (_resolved.TryGetValue(id, out var cached)) return cached;
+        if (_resolved.TryGetValue(id, out var cached))
+        {
+            return cached;
+        }
+
         ResolvedModel resolved;
-        if (_models.TryGetValue(id, out var model)) resolved = ResolvedModel.From(model);
-        else if (!_variants.TryGetValue(id, out var variant)) throw new KeyNotFoundException($"No model or variant '{id}'.");
-        else if (!_models.TryGetValue(variant.Base, out model)) throw new InvalidDataException($"Variant '{id}' references missing base model '{variant.Base}'.");
-        else resolved = ResolvedModel.From(model, variant);
+        if (_models.TryGetValue(id, out var model))
+        {
+            resolved = ResolvedModel.From(model);
+        }
+        else if (!_variants.TryGetValue(id, out var variant))
+        {
+            throw new KeyNotFoundException($"No model or variant '{id}'.");
+        }
+        else if (!_models.TryGetValue(variant.Base, out model))
+        {
+            throw new InvalidDataException($"Variant '{id}' references missing base model '{variant.Base}'.");
+        }
+        else
+        {
+            resolved = ResolvedModel.From(model, variant);
+        }
+
         resolved.TextureRoot = _textureRoot;
         return _resolved[id] = resolved;
     }
@@ -64,23 +92,42 @@ public sealed class AuthoredCatalog
     private void Scan<T>(string root, string folder, Func<string, T> parse, Dictionary<string, T> into, Func<T, string> id)
     {
         var directory = Path.Combine(root, folder);
-        if (!Directory.Exists(directory)) return;
+        if (!Directory.Exists(directory))
+        {
+            return;
+        }
+
         foreach (var path in Directory.EnumerateFiles(directory, "*.json").Order(StringComparer.Ordinal))
         {
             try
             {
-                var asset = parse(File.ReadAllText(path)); var key = id(asset);
-                if (_paths.TryGetValue(key, out var other)) { Errors.Add($"{path}: id '{key}' is already used by {other}."); continue; }
-                _paths[key] = path; into[key] = asset;
+                var asset = parse(File.ReadAllText(path));
+                var key = id(asset);
+                if (_paths.TryGetValue(key, out var other))
+                {
+                    Errors.Add($"{path}: id '{key}' is already used by {other}.");
+                    continue;
+                }
+                _paths[key] = path;
+                into[key] = asset;
             }
-            catch (Exception ex) when (IsFileError(ex)) { Errors.Add($"{path}: {ex.Message}"); }
+            catch (Exception ex) when (IsFileError(ex))
+            {
+                Errors.Add($"{path}: {ex.Message}");
+            }
         }
     }
 
     private void Check(string id, Action action)
     {
-        try { action(); }
-        catch (Exception ex) when (IsFileError(ex)) { Errors.Add($"{_paths[id]}: {ex.Message}"); }
+        try
+        {
+            action();
+        }
+        catch (Exception ex) when (IsFileError(ex))
+        {
+            Errors.Add($"{_paths[id]}: {ex.Message}");
+        }
     }
 
     /// <summary>Anything a malformed or unreadable file can raise. One bad file is reported against its path, never fatal to the scan.</summary>

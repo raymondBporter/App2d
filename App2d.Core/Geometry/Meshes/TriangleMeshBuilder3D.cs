@@ -26,10 +26,19 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     public ReadOnlySpan<TVertex> Vertices => _vertices.AsSpan(0, Count);
     /// <summary>Returns the backing array for APIs that submit a contiguous vertex range.</summary>
     public TVertex[] GetBuffer() => _vertices;
-    public int Count { get; private set; }
+    public int Count
+    {
+        get; private set;
+    }
     public int TriangleCount => Count / 3;
-    public Vector3 Min { get; private set; }
-    public Vector3 Max { get; private set; }
+    public Vector3 Min
+    {
+        get; private set;
+    }
+    public Vector3 Max
+    {
+        get; private set;
+    }
 
     public void Clear()
     {
@@ -61,7 +70,11 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     {
         ArgGuard.ThrowIfNotFinite(center);
         ArgGuard.ThrowIfNotFiniteOrNegative(radius);
-        if (radius == 0f) return;
+        if (radius == 0f)
+        {
+            return;
+        }
+
         var segments = dome ? 48 : 12;
         var rings = dome ? 8 : 1;
         Vector3 At(int ring, int index)
@@ -77,7 +90,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
             {
                 Triangle(At(ring - 1, index), At(ring, index), At(ring, index + 1), material);
                 if (ring > 1)
+                {
                     Triangle(At(ring - 1, index), At(ring, index + 1), At(ring - 1, index + 1), material);
+                }
             }
         }
     }
@@ -105,7 +120,11 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         ArgGuard.ThrowIfNotFinite(start);
         ArgGuard.ThrowIfNotFinite(end);
         ArgGuard.ThrowIfNotFiniteOrNegative(width);
-        if (width == 0f) return;
+        if (width == 0f)
+        {
+            return;
+        }
+
         var direction = new Vector2(end.X - start.X, end.Y - start.Y);
         var length = direction.Length();
         var radius = width / 2f;
@@ -119,12 +138,14 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         Disk(end, radius, material);
     }
 
-    /// <summary>Fills a convex or star-shaped perimeter from its first vertex.</summary>
+    /// <summary>Fills a perimeter visible from its first vertex using a triangle fan.</summary>
     public void TriangleFan(IReadOnlyList<Vector3> perimeter, TMaterial material)
     {
         ArgGuard.ThrowIfNull(perimeter);
-        for (var index = 1; index < perimeter.Count - 1; index++)
-            Triangle(perimeter[0], perimeter[index], perimeter[index + 1], material);
+        foreach (var (a, b, c) in MeshTopology.TriangleFan(perimeter.Count))
+        {
+            Triangle(perimeter[a], perimeter[b], perimeter[c], material);
+        }
     }
 
     /// <summary>A polyline with width changing linearly along its distance.</summary>
@@ -132,17 +153,24 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     {
         ArgGuard.ThrowIfNull(points);
         ArgGuard.ThrowIfNotFiniteOrNegative(startWidth);
-        if (endWidth is { } end) ArgGuard.ThrowIfNotFiniteOrNegative(end);
-        var total = 0f;
-        for (var index = 1; index < points.Count; index++)
-            total += Vector3.Distance(points[index - 1], points[index]);
-        var distance = 0f;
-        for (var index = 1; index < points.Count; index++)
+        if (endWidth is { } end)
         {
-            var step = Vector3.Distance(points[index - 1], points[index]);
+            ArgGuard.ThrowIfNotFiniteOrNegative(end);
+        }
+
+        var total = 0f;
+        foreach (var (a, b) in MeshTopology.Edges(points.Count, closed: false))
+        {
+            total += Vector3.Distance(points[a], points[b]);
+        }
+
+        var distance = 0f;
+        foreach (var (a, b) in MeshTopology.Edges(points.Count, closed: false))
+        {
+            var step = Vector3.Distance(points[a], points[b]);
             var width = startWidth + ((endWidth ?? startWidth) - startWidth) *
                 (distance + step * .5f) / MathF.Max(total, 1e-8f);
-            Line(points[index - 1], points[index], width, material);
+            Line(points[a], points[b], width, material);
             distance += step;
         }
     }
@@ -161,7 +189,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
             {
                 Triangle(At((ring - 1) / 5f, index), At(ring / 5f, index), At(ring / 5f, index + 1), material);
                 if (ring > 1)
+                {
                     Triangle(At((ring - 1) / 5f, index), At(ring / 5f, index + 1), At((ring - 1) / 5f, index + 1), material);
+                }
             }
         }
     }
@@ -171,17 +201,22 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     {
         ArgGuard.ThrowIfNull(mesh);
         ArgGuard.ThrowIfNull(place);
-        for (var index = 0; index < mesh.TriangleCount; index++)
+        foreach (var (a, b, c) in mesh.Triangles)
         {
-            var (a, b, c) = mesh.TriangleAt(index);
             Triangle(place(a), place(b), place(c), material);
         }
     }
 
     private void EnsureCapacity(int required)
     {
-        if (required > MaximumVertexCount) throw new InvalidOperationException("Triangle mesh capacity exceeded.");
+        if (required > MaximumVertexCount)
+        {
+            throw new InvalidOperationException("Triangle mesh capacity exceeded.");
+        }
+
         if (required > _vertices.Length)
+        {
             Array.Resize(ref _vertices, Math.Min(MaximumVertexCount, Math.Max(required, _vertices.Length * 2)));
+        }
     }
 }

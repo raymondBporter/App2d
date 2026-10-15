@@ -37,7 +37,11 @@ public sealed class ReactionTimeCurveTests
             previous = sample;
         }
         Assert.Equal(slow, curve.Speed(hold > 0 ? hold / 2 : seconds / 2), 5);
-        if (hold > 0) Assert.Equal(hold * slow, curve.Sample(hold), 5);
+        if (hold > 0)
+        {
+            Assert.Equal(hold * slow, curve.Sample(hold), 5);
+        }
+
         Assert.Equal(peak, curve.Speed(hold + seconds + curve.RecoverySeconds / 2), 5);
         Assert.Equal(curve.Duration, curve.Sample(curve.Duration));
         Assert.Equal(1, curve.Speed(curve.Duration));

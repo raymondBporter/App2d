@@ -105,8 +105,16 @@ public sealed class EasingTests
     {
         var sampleCalls = 0;
         var derivativeCalls = 0;
-        var source = new ProgressMap(x => { sampleCalls++; return x * x * x; },
-            x => { derivativeCalls++; return 3d * x * x; });
+        var source = new ProgressMap(x =>
+        {
+            sampleCalls++;
+            return x * x * x;
+        },
+            x =>
+            {
+                derivativeCalls++;
+                return 3d * x * x;
+            });
         var easeOut = ProgressMaps.EaseOut(source);
         var easeInOut = ProgressMaps.EaseInOut(source);
 

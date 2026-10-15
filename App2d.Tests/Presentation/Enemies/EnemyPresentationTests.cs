@@ -22,14 +22,25 @@ public sealed class EnemyPresentationTests
         var pose = new Core.Characters.Authored.ActorPose(
             App2d.Core.Characters.Authored.PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2.Zero, 1);
         using var textures = new TextureCache2D(TestAssetPath.Root);
-        var scene = new Scene2D(); var sounds = new RecordingSounds();
+        var scene = new Scene2D();
+        var sounds = new RecordingSounds();
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, Vector2.Zero, Vector2.Zero, 0, 1, true, true)
-        { TypeId = entity.Id, AuthoredEntity = entity, AuthoredPose = pose, ActionId = "attack", ActionSeconds = 1 };
+        {
+            TypeId = entity.Id,
+            AuthoredEntity = entity,
+            AuthoredPose = pose,
+            ActionId = "attack",
+            ActionSeconds = 1
+        };
         view.ApplyState([state], [], 1);
         var shader = Assert.IsType<AuthoredCharacterShader>(Assert.Single(scene).Shader);
         Assert.Contains(shader.Props, p => p.Prop.Id == "throwing-rock");
-        state = state with { ActionSeconds = 1.2f, Bolts = [new(new(70, 80), new(100, 120), new(14.4f), 3) { Gravity = 600 }] };
+        state = state with
+        {
+            ActionSeconds = 1.2f,
+            Bolts = [new(new(70, 80), new(100, 120), new(14.4f), 3) { Gravity = 600 }]
+        };
         view.ApplyState([state], [new EntityCue2D(state.Id, Vector2.Zero, "rock-throw")], 2);
         Assert.DoesNotContain(shader.Props, p => p.Prop.Id == "throwing-rock");
         Assert.Contains(scene, o => o.Shape is Core.Shapes.ConvexPolygon2D);
@@ -49,7 +60,11 @@ public sealed class EnemyPresentationTests
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.BoilerBrute,
             Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
-        { IsAttacking = true, AttackElapsedSeconds = 0.15f, AttackDurationSeconds = 0.8f };
+        {
+            IsAttacking = true,
+            AttackElapsedSeconds = 0.15f,
+            AttackDurationSeconds = 0.8f
+        };
         view.ApplyState([state], [new HammerStarted2D(state.Id, state.Position)], 500);
         var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
         Assert.Same(textures.Load("characters/boiler-brute/animations/hammer-attack/frame-0002.png"), shader.Texture);
@@ -71,7 +86,13 @@ public sealed class EnemyPresentationTests
         var state = new EnemyState2D(id, EnemyKind2D.Rival, Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
         {
             Person = default(Contracts.Persons.PersonState2D) with
-            { Id = id, Facing = 1f, HitPoints = 12, MaximumHitPoints = 12, IsGrounded = true }
+            {
+                Id = id,
+                Facing = 1f,
+                HitPoints = 12,
+                MaximumHitPoints = 12,
+                IsGrounded = true
+            }
         };
         view.Update([state], [], 0f, 1);
         Assert.Equal(2, scene.Count());
@@ -89,7 +110,12 @@ public sealed class EnemyPresentationTests
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.BoilerBrute,
             new Vector2(100f, 0f), Vector2.Zero, 0f, -1f, true, true)
-        { MoveSpeed = 62f, IsAttacking = true, AttackElapsedSeconds = 0.55f, AttackDurationSeconds = 0.8f };
+        {
+            MoveSpeed = 62f,
+            IsAttacking = true,
+            AttackElapsedSeconds = 0.55f,
+            AttackDurationSeconds = 0.8f
+        };
         var position = new Vector2(38f, -10f);
         view.Update([state], [new HammerStruck2D(state.Id, position)], 3f, 1);
         var visual = Assert.Single(scene);

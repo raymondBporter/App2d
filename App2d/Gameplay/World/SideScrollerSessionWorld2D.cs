@@ -32,7 +32,9 @@ public sealed class SideScrollerSessionWorld2D(
         if (player.IsAlive && player.Actions is PersonArsenal2D arsenal)
         {
             foreach (var hitbox in arsenal.GetActiveSwordHitboxes())
+            {
                 level.CutGrass(hitbox.WorldBounds);
+            }
         }
 
         _ = level.EnemySystem.TryResolvePlayerHits(player);

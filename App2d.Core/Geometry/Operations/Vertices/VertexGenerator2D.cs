@@ -27,7 +27,11 @@ public static class VertexGenerator2D
         ArgGuard.ThrowIfTooShort(vertices, 3);
         ArgGuard.ThrowIfNotFinite(center);
         ArgGuard.ThrowIfNotFiniteOrNegative(radii);
-        for (var i = 0; i < vertices.Length; i++) vertices[i] = PointOnEllipse(center, radii, i * MathF.Tau / vertices.Length);
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            vertices[i] = PointOnEllipse(center, radii, i * MathF.Tau / vertices.Length);
+        }
+
         return vertices.Length;
     }
 
@@ -52,7 +56,11 @@ public static class VertexGenerator2D
         ArgGuard.ThrowIfNotFiniteOrNegative(radii);
         ArgGuard.ThrowIfNotFinite(startAngle);
         ArgGuard.ThrowIfNotFinite(sweepAngle);
-        for (var i = 0; i < vertices.Length; i++) vertices[i] = PointOnEllipse(center, radii, startAngle + i * sweepAngle / (vertices.Length - 1));
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            vertices[i] = PointOnEllipse(center, radii, startAngle + i * sweepAngle / (vertices.Length - 1));
+        }
+
         return vertices.Length;
     }
 

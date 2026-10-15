@@ -16,40 +16,76 @@ internal static class Program
         {
             switch (args)
             {
-                case ["--write-pterosaur", var flyingRoot]: PterosaurTemplate.Write(Path.GetFullPath(flyingRoot)); return 0;
+                case ["--write-pterosaur", var flyingRoot]:
+                    PterosaurTemplate.Write(Path.GetFullPath(flyingRoot));
+                    return 0;
                 case ["--smoke-editor-surface", var surfaceOutput]:
-                    Editor.EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput)); return 0;
-                case ["--write-quadrupeds", var quadRoot]: QuadrupedTemplate.Write(Path.GetFullPath(quadRoot)); return 0;
-                case ["--convert-studies", var output]: PersonTemplate.WriteStudies(Path.GetFullPath(output)); return 0;
-                case ["--write-player-moves", var moves]: PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves)); return 0;
-                case ["--write-spells", var spells]: PlayerMoves.PlayerMoves.WriteSpells(Path.GetFullPath(spells)); return 0;
-                case ["--write-weapons", var root]: PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root)); return 0;
-                case ["--write-wardrobe", var root]: PersonWardrobe.Write(Path.GetFullPath(root)); return 0;
-                case ["--replace-wardrobe-art", var root]: PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true); return 0;
+                    Editor.EditorSurfaceSmoke.Run(Path.Combine(FindAssets(preferSource: true), "authored"), Path.GetFullPath(surfaceOutput));
+                    return 0;
+                case ["--write-quadrupeds", var quadRoot]:
+                    QuadrupedTemplate.Write(Path.GetFullPath(quadRoot));
+                    return 0;
+                case ["--convert-studies", var output]:
+                    PersonTemplate.WriteStudies(Path.GetFullPath(output));
+                    return 0;
+                case ["--write-player-moves", var moves]:
+                    PlayerMoves.PlayerMoves.Write(Path.GetFullPath(moves));
+                    return 0;
+                case ["--write-spells", var spells]:
+                    PlayerMoves.PlayerMoves.WriteSpells(Path.GetFullPath(spells));
+                    return 0;
+                case ["--write-weapons", var root]:
+                    PlayerMoves.PlayerMoves.WriteWeapons(Path.GetFullPath(root));
+                    return 0;
+                case ["--write-wardrobe", var root]:
+                    PersonWardrobe.Write(Path.GetFullPath(root));
+                    return 0;
+                case ["--replace-wardrobe-art", var root]:
+                    PersonWardrobe.Write(Path.GetFullPath(root), replaceExistingProps: true);
+                    return 0;
                 case [] or ["--editor"] or ["--smoke-editor", _]:
                     {
                         using var editor = new Editor.EditorApp(Path.Combine(FindAssets(preferSource: true), "authored"), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
-                        editor.Run(); return 0;
+                        editor.Run();
+                        return 0;
                     }
                 case ["--angelia-gallery"] or ["--angelia-gallery", _]:
                     {
                         using var gallery = new AngeliaGallery.AngeliaGalleryApp(FindAssets(), args.Length == 2 ? Path.GetFullPath(args[1]) : null);
-                        gallery.Run(); return 0;
+                        gallery.Run();
+                        return 0;
                     }
                 case ["--smoke-pterosaur" or "--smoke-quadrupeds" or "--smoke-motion" or "--smoke-entities" or "--review-moves" or "--smoke-weapons" or "--smoke-wardrobe" or "--swing-lab", var output]:
                     {
-                        var mode = args[0] switch { "--smoke-pterosaur" => ProofRenders.Mode.Pterosaur, "--smoke-quadrupeds" => ProofRenders.Mode.Quadrupeds, "--smoke-motion" => ProofRenders.Mode.Motion, "--smoke-entities" => ProofRenders.Mode.Entities, "--smoke-weapons" => ProofRenders.Mode.Weapons, "--smoke-wardrobe" => ProofRenders.Mode.Wardrobe, "--swing-lab" => ProofRenders.Mode.SwingLab, _ => ProofRenders.Mode.MoveReview };
+                        var mode = args[0] switch
+                        {
+                            "--smoke-pterosaur" => ProofRenders.Mode.Pterosaur,
+                            "--smoke-quadrupeds" => ProofRenders.Mode.Quadrupeds,
+                            "--smoke-motion" => ProofRenders.Mode.Motion,
+                            "--smoke-entities" => ProofRenders.Mode.Entities,
+                            "--smoke-weapons" => ProofRenders.Mode.Weapons,
+                            "--smoke-wardrobe" => ProofRenders.Mode.Wardrobe,
+                            "--swing-lab" => ProofRenders.Mode.SwingLab,
+                            _ => ProofRenders.Mode.MoveReview
+                        };
                         using var proofs = new ProofRenders(FindAssets(), Path.GetFullPath(output), mode);
-                        proofs.Run(); return 0;
+                        proofs.Run();
+                        return 0;
                     }
-                default: throw ArgGuard.CreateInvalid(Usage);
+                default:
+                    throw ArgGuard.CreateInvalid(Usage);
             }
         }
         catch (Exception ex)
         {
-            var log = Path.Combine(AppContext.BaseDirectory, "character-studio-error.log"); File.WriteAllText(log, ex.ToString());
+            var log = Path.Combine(AppContext.BaseDirectory, "character-studio-error.log");
+            File.WriteAllText(log, ex.ToString());
             Console.Error.WriteLine(ex);
-            if (args.Length == 0) MessageBox.Show(ex.Message + "\n\nDetails: " + log, "Character Studio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (args.Length == 0)
+            {
+                MessageBox.Show(ex.Message + "\n\nDetails: " + log, "Character Studio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
             return 1;
         }
     }
@@ -65,7 +101,10 @@ internal static class Program
             for (var folder = new DirectoryInfo(Environment.CurrentDirectory); folder is not null; folder = folder.Parent)
             {
                 var root = Path.Combine(folder.FullName, "Assets", "Characters");
-                if (Directory.Exists(Path.Combine(root, "authored"))) return root;
+                if (Directory.Exists(Path.Combine(root, "authored")))
+                {
+                    return root;
+                }
             }
         }
 

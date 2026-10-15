@@ -65,7 +65,10 @@ public sealed class PersonJumpPowerTests
         bool pressed,
         bool held,
         bool released = false) =>
-        new() { JumpHeld = (pressed || held) && !released };
+        new()
+        {
+            JumpHeld = (pressed || held) && !released
+        };
 
     private static void AddGround(PhysicsWorld2D physics)
     {

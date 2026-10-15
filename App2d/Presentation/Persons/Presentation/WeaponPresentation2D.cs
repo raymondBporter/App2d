@@ -76,7 +76,9 @@ public sealed class WeaponPresentation2D : IDisposable
         {
             switch (occurrence)
             {
-                case ChargeStarted2D started: StartCharge(started.Position); break;
+                case ChargeStarted2D started:
+                    StartCharge(started.Position);
+                    break;
                 case ChargeCancelled2D cancelled:
                     StopCharge();
                     _cancelProgress = cancelled.Progress;
@@ -102,7 +104,11 @@ public sealed class WeaponPresentation2D : IDisposable
         // Ongoing effects follow state, including after pause or a newly attached view.
         if (state.IsCharging)
         {
-            if (!_charging) StartCharge(state.MuzzlePosition);
+            if (!_charging)
+            {
+                StartCharge(state.MuzzlePosition);
+            }
+
             _chargeVoice.SetPosition(state.MuzzlePosition);
             _chargeAnimation.Update(deltaSeconds);
             ((SpriteShader2D)_glow.Shader).Texture = _chargeAnimation.CurrentFrame;
@@ -121,14 +127,28 @@ public sealed class WeaponPresentation2D : IDisposable
 
         _activeIds.Clear();
         if (!state.Projectiles.IsDefault)
-            foreach (var projectile in state.Projectiles) _activeIds.Add(projectile.Id);
+        {
+            foreach (var projectile in state.Projectiles)
+            {
+                _activeIds.Add(projectile.Id);
+            }
+        }
+
         foreach (var bolt in _bolts)
         {
-            if (_activeIds.Contains(bolt.Id)) continue;
+            if (_activeIds.Contains(bolt.Id))
+            {
+                continue;
+            }
+
             bolt.Visual.IsVisible = false;
             bolt.Trail.Fade(deltaSeconds);
         }
-        if (state.Projectiles.IsDefault) return;
+        if (state.Projectiles.IsDefault)
+        {
+            return;
+        }
+
         foreach (var projectile in state.Projectiles)
         {
             var bolt = _bolts.Find(b => b.Id == projectile.Id);
@@ -155,7 +175,10 @@ public sealed class WeaponPresentation2D : IDisposable
     private WorldObject2D CreateVisual(Texture2D texture, Vector2 size)
     {
         var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size), new SpriteShader2D(texture))
-        { IsVisible = false, ZIndex = 2 };
+        {
+            IsVisible = false,
+            ZIndex = 2
+        };
         _scene.Add(visual);
         return visual;
     }
@@ -210,7 +233,10 @@ public sealed class WeaponPresentation2D : IDisposable
 
     private sealed class BoltVisual(WorldObject2D visual, GunBoltTrail2D trail)
     {
-        public EntityId2D Id { get; set; }
+        public EntityId2D Id
+        {
+            get; set;
+        }
         public WorldObject2D Visual { get; } = visual;
         public GunBoltTrail2D Trail { get; } = trail;
     }

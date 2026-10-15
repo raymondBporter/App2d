@@ -33,7 +33,9 @@ public sealed class ResourceManager2D : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         ArgumentNullException.ThrowIfNull(loader);
         if (!_entries.TryAdd(key, new Entry(typeof(T), () => loader(), source, ownsResource)))
+        {
             throw new ArgumentException($"Resource '{key}' is already registered.", nameof(key));
+        }
     }
 
     /// <summary>Preload a registered resource without retrieving it.</summary>
@@ -48,7 +50,10 @@ public sealed class ResourceManager2D : IDisposable
         if (entry.Value is null)
         {
             if (entry.IsLoading)
+            {
                 throw new InvalidOperationException($"Resource '{key}' is already loading.");
+            }
+
             entry.IsLoading = true;
             try
             {
@@ -60,7 +65,11 @@ public sealed class ResourceManager2D : IDisposable
                 entry.IsLoading = false;
             }
         }
-        if (owner is not null) entry.Owners.Add(owner);
+        if (owner is not null)
+        {
+            entry.Owners.Add(owner);
+        }
+
         return (T)entry.Value;
     }
 
@@ -70,8 +79,15 @@ public sealed class ResourceManager2D : IDisposable
         var entry = Require<T>(key);
         ValidateOwner(owner);
         if (entry.Value is null)
+        {
             throw new InvalidOperationException($"Resource '{key}' has not been loaded.");
-        if (owner is not null) entry.Owners.Add(owner);
+        }
+
+        if (owner is not null)
+        {
+            entry.Owners.Add(owner);
+        }
+
         return (T)entry.Value;
     }
 
@@ -80,7 +96,10 @@ public sealed class ResourceManager2D : IDisposable
     {
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(owner);
-        foreach (var entry in _entries.Values) entry.Owners.Remove(owner);
+        foreach (var entry in _entries.Values)
+        {
+            entry.Owners.Remove(owner);
+        }
     }
 
     /// <summary>Remove a definition and release its loaded value if this manager owns it.</summary>
@@ -88,7 +107,11 @@ public sealed class ResourceManager2D : IDisposable
     {
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
-        if (!_entries.Remove(key, out var entry)) return false;
+        if (!_entries.Remove(key, out var entry))
+        {
+            return false;
+        }
+
         Release(entry);
         return true;
     }
@@ -97,7 +120,11 @@ public sealed class ResourceManager2D : IDisposable
     public void Clear()
     {
         ThrowIfDisposed();
-        foreach (var entry in _entries.Values.Reverse()) Release(entry);
+        foreach (var entry in _entries.Values.Reverse())
+        {
+            Release(entry);
+        }
+
         _entries.Clear();
     }
 
@@ -112,7 +139,11 @@ public sealed class ResourceManager2D : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         Clear();
         _disposed = true;
         GC.SuppressFinalize(this);
@@ -123,7 +154,10 @@ public sealed class ResourceManager2D : IDisposable
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         if (!_entries.TryGetValue(key, out var entry))
+        {
             throw new KeyNotFoundException($"Resource '{key}' is not registered.");
+        }
+
         if (entry.Type != typeof(T))
         {
             throw new InvalidOperationException(
@@ -135,13 +169,19 @@ public sealed class ResourceManager2D : IDisposable
 
     private static void ValidateOwner(string? owner)
     {
-        if (owner is not null) ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        if (owner is not null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(owner);
+        }
     }
 
     private static void Release(Entry entry)
     {
         if (entry.OwnsResource && entry.Value is IDisposable disposable)
+        {
             disposable.Dispose();
+        }
+
         entry.Value = null;
         entry.Owners.Clear();
     }
@@ -155,7 +195,13 @@ public sealed class ResourceManager2D : IDisposable
         public string? Source { get; } = source;
         public bool OwnsResource { get; } = ownsResource;
         public HashSet<string> Owners { get; } = new(StringComparer.Ordinal);
-        public object? Value { get; set; }
-        public bool IsLoading { get; set; }
+        public object? Value
+        {
+            get; set;
+        }
+        public bool IsLoading
+        {
+            get; set;
+        }
     }
 }

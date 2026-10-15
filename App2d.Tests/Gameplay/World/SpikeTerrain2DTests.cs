@@ -19,7 +19,9 @@ public sealed class SpikeTerrain2DTests : IDisposable
     public void Dispose()
     {
         if (!Directory.Exists(_directory))
+        {
             return;
+        }
 
         // Mirrors App2d.Tests/Levels/LevelDatabase2DTests.cs: Microsoft.Data.Sqlite pools
         // native handles, so clear the pool before deleting the temp copy.
@@ -97,7 +99,9 @@ public sealed class SpikeTerrain2DTests : IDisposable
             for (var y = 0; y < level.TileMap.Height; y++)
             {
                 if (level.TileMap.GetTileKind(x, y).IsSpikes())
+                {
                     spikes.Add((x, y));
+                }
             }
         }
 
@@ -111,7 +115,9 @@ public sealed class SpikeTerrain2DTests : IDisposable
             for (var y = 0; y < level.TileMap.Height; y++)
             {
                 if (!level.TileMap.GetTileKind(x, y).IsSpikes())
+                {
                     return (x, y);
+                }
             }
         }
 

@@ -14,7 +14,9 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
         var firstInverseInertia = first.EffectiveInverseInertia;
         var secondInverseInertia = second.EffectiveInverseInertia;
         if (firstInverseMass + secondInverseMass + firstInverseInertia + secondInverseInertia <= 0f)
+        {
             return;
+        }
 
         var normal = contact.Geometry.Normal;
         // Centers of mass are approximated by the transform positions.
@@ -24,7 +26,9 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
         var relativeVelocity = PointVelocity(first, firstArm) - PointVelocity(second, secondArm);
         var normalSpeed = Vector2.Dot(relativeVelocity, normal);
         if (normalSpeed >= 0f)
+        {
             return;
+        }
 
         var firstArmCrossNormal = firstArm.Cross(normal);
         var secondArmCrossNormal = secondArm.Cross(normal);
@@ -32,7 +36,9 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
             firstInverseInertia * firstArmCrossNormal * firstArmCrossNormal +
             secondInverseInertia * secondArmCrossNormal * secondArmCrossNormal;
         if (normalEffectiveMass <= 0f)
+        {
             return;
+        }
 
         var restitution = Math.Min(first.Restitution, second.Restitution);
         var normalImpulse = -(1f + restitution) * normalSpeed / normalEffectiveMass;
@@ -40,7 +46,9 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
 
         var friction = MathF.Sqrt(first.Friction * second.Friction);
         if (friction <= 0f)
+        {
             return;
+        }
 
         var tangent = normal.PerpCcw;
         relativeVelocity = PointVelocity(first, firstArm) - PointVelocity(second, secondArm);
@@ -51,7 +59,9 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
             firstInverseInertia * firstArmCrossTangent * firstArmCrossTangent +
             secondInverseInertia * secondArmCrossTangent * secondArmCrossTangent;
         if (tangentEffectiveMass <= 0f)
+        {
             return;
+        }
 
         var tangentImpulse = Math.Clamp(-tangentSpeed / tangentEffectiveMass, -friction * normalImpulse, friction * normalImpulse);
         Apply(first, second, firstArm, secondArm, tangent * tangentImpulse);

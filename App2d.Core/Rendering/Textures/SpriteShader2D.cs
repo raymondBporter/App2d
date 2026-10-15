@@ -14,7 +14,13 @@ public sealed class SpriteShader2D(Texture2D texture, TextureFilter filterMode =
     } = ArgGuard.RequireNotNull(texture);
 
     public TextureFilter FilterMode { get; } = filterMode;
-    public bool FlipX { get; set; }
-    public bool FlipY { get; set; }
+    public bool FlipX
+    {
+        get; set;
+    }
+    public bool FlipY
+    {
+        get; set;
+    }
     public XnaColor BaseColor => XnaColor.White;
 }

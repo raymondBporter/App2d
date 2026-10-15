@@ -72,14 +72,26 @@ public sealed class AnimationClip2D<TFrame>
     public IReadOnlyList<TFrame> Frames => _frames;
     public int FrameCount => _frames.Length;
     public bool HasUniformFrameDuration => UniformFrameDuration is not null;
-    public float? UniformFramesPerSecond { get; }
-    public float? UniformFrameDuration { get; }
+    public float? UniformFramesPerSecond
+    {
+        get;
+    }
+    public float? UniformFrameDuration
+    {
+        get;
+    }
     public float FramesPerSecond => UniformFramesPerSecond ??
         throw StateGuard.Create("This animation clip uses per-frame durations.");
     public float FrameDuration => UniformFrameDuration ??
         throw StateGuard.Create("This animation clip uses per-frame durations.");
-    public float Duration { get; }
-    public bool IsLooping { get; }
+    public float Duration
+    {
+        get;
+    }
+    public bool IsLooping
+    {
+        get;
+    }
 
     public TFrame this[int index] => _frames[index];
 
@@ -89,7 +101,9 @@ public sealed class AnimationClip2D<TFrame>
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(elapsedSeconds);
         if (elapsedSeconds >= Duration)
+        {
             return FrameCount - 1;
+        }
 
         var low = 0;
         var high = _frameEndTimes.Length - 1;
@@ -97,9 +111,13 @@ public sealed class AnimationClip2D<TFrame>
         {
             var middle = low + (high - low) / 2;
             if (elapsedSeconds < _frameEndTimes[middle])
+            {
                 high = middle;
+            }
             else
+            {
                 low = middle + 1;
+            }
         }
         return low;
     }

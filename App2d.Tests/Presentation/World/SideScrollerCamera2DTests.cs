@@ -44,7 +44,9 @@ public sealed class SideScrollerCamera2DTests
         Assert.InRange(Vector2.Distance(camera.Position, restingPosition), 0.1f, 6f);
 
         for (var frame = 0; frame < 180; frame++)
+        {
             controller.Update(Vector2.Zero, Vector2.Zero, isGrounded: true, 1f / 60f);
+        }
 
         Assert.InRange(Vector2.Distance(camera.Position, restingPosition), 0f, 0.001f);
     }
@@ -109,7 +111,10 @@ public sealed class SideScrollerCamera2DTests
         Assert.Equal(restingY, camera.Position.Y);
 
         for (var frame = 0; frame < 120; frame++)
+        {
             controller.Update(new Vector2(0f, -300f), new Vector2(0f, -400f), false, 1f / 60f);
+        }
+
         Assert.True(camera.Position.Y < restingY);
     }
 
@@ -118,11 +123,17 @@ public sealed class SideScrollerCamera2DTests
     {
         var (controller, camera) = CreateCamera();
         for (var frame = 0; frame < 120; frame++)
+        {
             controller.Update(Vector2.Zero, new Vector2(600f, 0f), true, 1f / 60f);
+        }
+
         Assert.True(camera.Position.X > 0f);
 
         for (var frame = 0; frame < 120; frame++)
+        {
             controller.Update(Vector2.Zero, new Vector2(-600f, 0f), true, 1f / 60f);
+        }
+
         Assert.True(camera.Position.X < 0f);
     }
 

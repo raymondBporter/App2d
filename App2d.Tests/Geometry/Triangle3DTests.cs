@@ -1,4 +1,4 @@
-using App2d.Core.Meshes;
+using App2d.Core.Geometry.Meshes;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;

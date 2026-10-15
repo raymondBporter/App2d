@@ -4,22 +4,35 @@ namespace App2d.Core.Physics.Filtering;
 
 public sealed class DefaultPhysicsPairFilter2D : IPairFilter2D<PhysicsBody2D>
 {
-    public bool TestStaticStatic { get; set; }
-    public bool TestStaticKinematic { get; set; }
+    public bool TestStaticStatic
+    {
+        get; set;
+    }
+    public bool TestStaticKinematic
+    {
+        get; set;
+    }
     public bool TestStaticDynamic { get; set; } = true;
-    public bool TestKinematicKinematic { get; set; }
+    public bool TestKinematicKinematic
+    {
+        get; set;
+    }
     public bool TestKinematicDynamic { get; set; } = true;
     public bool TestDynamicDynamic { get; set; } = true;
 
     public bool ShouldTest(PhysicsBody2D first, PhysicsBody2D second)
     {
         if (!first.CanCollideWith(second))
+        {
             return false;
+        }
 
         var firstMotion = first.MotionType;
         var secondMotion = second.MotionType;
         if (firstMotion > secondMotion)
+        {
             (firstMotion, secondMotion) = (secondMotion, firstMotion);
+        }
 
         return (firstMotion, secondMotion) switch
         {

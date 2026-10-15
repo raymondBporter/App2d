@@ -126,7 +126,10 @@ public sealed partial class LevelDatabase2D
         command.Parameters.AddWithValue("$definition_id", record.DefinitionId);
         command.Parameters.AddWithValue("$type_key", record.TypeKey);
         StateGuard.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing definition {record.DefinitionId} of type '{record.TypeKey}' does not exist.");
-        return record with { Name = record.Name.Trim() };
+        return record with
+        {
+            Name = record.Name.Trim()
+        };
     }
 
     public void DeleteThingDefinition(long definitionId)
@@ -206,7 +209,11 @@ public sealed partial class LevelDatabase2D
             StateGuard.ThrowIf(transform.ExecuteNonQuery() != 1, $"Thing {record.ThingId} is missing transforms.");
         }
         transaction.Commit();
-        return record with { DefinitionName = definition.Name, Name = NormalizeOptionalName(record.Name) };
+        return record with
+        {
+            DefinitionName = definition.Name,
+            Name = NormalizeOptionalName(record.Name)
+        };
     }
 
     public PositionThingRecord2D DeletePositionThing(long thingId)
@@ -382,7 +389,10 @@ public sealed partial class LevelDatabase2D
             StateGuard.ThrowIf(art.ExecuteNonQuery() != 1, $"Moving-platform definition {record.DefinitionId} is missing solid_color_art.");
         }
         transaction.Commit();
-        return record with { Name = record.Name.Trim() };
+        return record with
+        {
+            Name = record.Name.Trim()
+        };
     }
 
     public void DeleteMovingPlatformDefinition(long definitionId)

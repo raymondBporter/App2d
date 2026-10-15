@@ -11,7 +11,13 @@ public sealed class GiantTreeFile2DTests
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin);
         for (var x = 0; x < map.Width; x++)
-            for (var y = 0; y < 12; y++) map.SetTileKind(x, y, TileKind2D.Solid);
+        {
+            for (var y = 0; y < 12; y++)
+            {
+                map.SetTileKind(x, y, TileKind2D.Solid);
+            }
+        }
+
         var path = Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "giant-trees.json");
         var trees = GiantTreeFile2D.Load(path, map);
         Assert.Equal(4, trees.Length);
@@ -36,6 +42,9 @@ public sealed class GiantTreeFile2DTests
             var error = Assert.Throws<InvalidDataException>(() => GiantTreeFile2D.Load(path, map));
             Assert.Contains(path, error.Message);
         }
-        finally { File.Delete(path); }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 }

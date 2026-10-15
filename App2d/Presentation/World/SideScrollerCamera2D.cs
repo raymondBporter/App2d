@@ -42,7 +42,10 @@ public sealed class SideScrollerCamera2D
         ArgGuard.ThrowIfNull(scene);
         _camera = ArgGuard.RequireNotNull(camera);
         if (!levelBounds.IsFinite)
+        {
             ArgGuard.ThrowOutOfRange(levelBounds, "Value must be finite.");
+        }
+
         _camera.WorldBounds = levelBounds;
         _camera.Zoom = 1.35f;
         Reset(initialPlayerPosition);
@@ -53,10 +56,14 @@ public sealed class SideScrollerCamera2D
     public void Update(Vector2 playerPosition, Vector2 playerVelocity, bool isGrounded, float deltaSeconds)
     {
         if (deltaSeconds <= 0f)
+        {
             return;
+        }
 
         if (isGrounded)
+        {
             _lastGroundedPlayerY = playerPosition.Y;
+        }
 
         var halfView = _camera.VisibleWorldBounds.Size / 2f;
         UpdateLookAhead(playerVelocity.X, halfView.X, deltaSeconds);
@@ -89,7 +96,9 @@ public sealed class SideScrollerCamera2D
         _shakeStrength = MathF.Min(MaximumShakeStrength, MathF.Max(_shakeStrength, strength));
         _shakeTime = 0f;
         if (stabilizeVerticalFollow)
+        {
             _verticalFollowSuppression = 1f;
+        }
     }
 
     public void Reset(Vector2 playerPosition)
@@ -109,7 +118,9 @@ public sealed class SideScrollerCamera2D
     private Vector2 UpdateShake(float deltaSeconds)
     {
         if (_shakeStrength <= 0f)
+        {
             return Vector2.Zero;
+        }
 
         _shakeTime += deltaSeconds;
         _shakeStrength = Damp(_shakeStrength, 0f, ShakeDecayRate, deltaSeconds);
@@ -139,9 +150,13 @@ public sealed class SideScrollerCamera2D
     private void UpdateVerticalFraming(float verticalVelocity, bool isGrounded, float deltaSeconds)
     {
         if (isGrounded || verticalVelocity >= FallResetVelocity)
+        {
             _fallDuration = 0f;
+        }
         else if (verticalVelocity <= FallActivationVelocity)
+        {
             _fallDuration += deltaSeconds;
+        }
 
         var isSustainedFall = !isGrounded && _fallDuration >= FallActivationDelay;
         var target = isSustainedFall ? 1f : 0f;
@@ -171,16 +186,24 @@ public sealed class SideScrollerCamera2D
     {
         var offset = focus - cameraCenter;
         if (offset > halfSize)
+        {
             return focus - halfSize;
+        }
+
         if (offset < -halfSize)
+        {
             return focus + halfSize;
+        }
+
         return cameraCenter;
     }
 
     private static float CatchUpRate(float distance, float halfViewExtent, float normalRate, float maximumRate)
     {
         if (halfViewExtent <= 0f)
+        {
             return maximumRate;
+        }
 
         var urgency = Math.Clamp(distance / (halfViewExtent * 0.7f), 0f, 1f);
         return float.Lerp(normalRate, maximumRate, urgency);

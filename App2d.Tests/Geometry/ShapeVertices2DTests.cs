@@ -50,7 +50,11 @@ public sealed class ShapeVertices2DTests
             var angle = i * MathF.Tau / 32;
             var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * 3;
             var projection = float.NegativeInfinity;
-            foreach (var vertex in core) projection = MathF.Max(projection, Vector2.Dot(vertex, direction));
+            foreach (var vertex in core)
+            {
+                projection = MathF.Max(projection, Vector2.Dot(vertex, direction));
+            }
+
             projection += radius * direction.Length();
             Assert.InRange(MathF.Abs(projection - Vector2.Dot(shape.GetSupportPoint(direction), direction)), 0, 1e-4f);
         }
@@ -67,7 +71,10 @@ public sealed class ShapeVertices2DTests
         Span<Vector2> world = stackalloc Vector2[local.Length];
         Assert.Equal(local.Length, ShapeTransforms2D.WriteWorldConvexCore(shape, pose, world, out var worldRadius));
         Assert.Equal(localRadius * pose.Scale, worldRadius);
-        for (var i = 0; i < local.Length; i++) Assert.Equal(pose.TransformPoint(local[i]), world[i]);
+        for (var i = 0; i < local.Length; i++)
+        {
+            Assert.Equal(pose.TransformPoint(local[i]), world[i]);
+        }
     }
 
     [Fact]
@@ -105,7 +112,10 @@ public sealed class ShapeVertices2DTests
         var outline = circle.GetOutlineVerts(buffer, 24);
         Assert.Equal(24, outline.Length);
         Assert.Equal(sentinel, buffer[24]);
-        foreach (var point in outline) Assert.Equal(circle.Radius, Vector2.Distance(circle.Center, point), 5);
+        foreach (var point in outline)
+        {
+            Assert.Equal(circle.Radius, Vector2.Distance(circle.Center, point), 5);
+        }
     }
 
     [Fact]

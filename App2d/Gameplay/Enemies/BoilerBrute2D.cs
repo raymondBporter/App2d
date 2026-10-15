@@ -72,7 +72,10 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         SyncHitbox();
     }
 
-    public PatrolEnemy2D Enemy { get; }
+    public PatrolEnemy2D Enemy
+    {
+        get;
+    }
     public ICombatant2D Combatant => Enemy;
     public bool IsHammerActive =>
         _simulationEnabled &&
@@ -91,7 +94,11 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         ArgGuard.ThrowIfNotFinite(targetPosition);
 
-        if (!_simulationEnabled || !Enemy.IsAlive) return;
+        if (!_simulationEnabled || !Enemy.IsAlive)
+        {
+            return;
+        }
+
         Enemy.Update(deltaSeconds);
 
         _attackCooldownSeconds = Math.Max(
@@ -99,7 +106,9 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             _attackCooldownSeconds - deltaSeconds);
 
         if (_isAttacking && Enemy.IsStunned)
+        {
             FinishAttack(0.45f);
+        }
 
         if (_isAttacking)
         {
@@ -146,19 +155,25 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     public IEnumerable<SpatialObject2D> GetActiveAttackHitboxes()
     {
         if (IsHammerActive)
+        {
             yield return _hammerHitbox;
+        }
     }
 
     public void SyncAfterPhysics()
     {
         if (_simulationEnabled && Enemy.IsAlive)
+        {
             SyncHitbox();
+        }
     }
 
     private bool CanAttack(Vector2 targetPosition)
     {
         if (_attackCooldownSeconds > 0f || Enemy.IsStunned)
+        {
             return false;
+        }
 
         var offset = targetPosition - Enemy.WorldObject.Transform.Position;
         return MathF.Abs(offset.X) <= AttackRangeX &&
@@ -169,7 +184,9 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     {
         var targetOffsetX = targetPosition.X - Enemy.WorldObject.Transform.Position.X;
         if (MathF.Abs(targetOffsetX) > 0.01f)
+        {
             _facing = MathF.Sign(targetOffsetX);
+        }
 
         _isAttacking = true;
         _hammerConnected = false;
@@ -195,7 +212,10 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
             _events.Add(new HammerStruck2D(Enemy.Id,
                 Enemy.WorldObject.Transform.Position + new Vector2(_facing * 62f, -10f)));
         }
-        if (_attackElapsedSeconds >= AttackDurationSeconds) FinishAttack(AttackCooldownSeconds);
+        if (_attackElapsedSeconds >= AttackDurationSeconds)
+        {
+            FinishAttack(AttackCooldownSeconds);
+        }
     }
 
     public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.BoilerBrute,

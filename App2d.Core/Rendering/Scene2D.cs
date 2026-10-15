@@ -10,7 +10,9 @@ public sealed class Scene2D : IEnumerable<WorldObject2D>
     public void Add(WorldObject2D worldObject)
     {
         if (!_objects.Contains(worldObject))
+        {
             worldObject.ZIndexChanged += InvalidateDrawOrder;
+        }
 
         _objects.Add(worldObject);
         InvalidateDrawOrder();
@@ -19,10 +21,14 @@ public sealed class Scene2D : IEnumerable<WorldObject2D>
     public bool Remove(WorldObject2D worldObject)
     {
         if (!_objects.Remove(worldObject))
+        {
             return false;
+        }
 
         if (!_objects.Contains(worldObject))
+        {
             worldObject.ZIndexChanged -= InvalidateDrawOrder;
+        }
 
         InvalidateDrawOrder();
         return true;

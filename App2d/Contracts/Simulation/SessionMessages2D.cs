@@ -68,9 +68,19 @@ public static class PlayerStateCollections2D
 {
     public static PlayerState2D? FindPlayer(this ImmutableArray<PlayerState2D> players, EntityId2D id)
     {
-        if (players.IsDefault) return null;
+        if (players.IsDefault)
+        {
+            return null;
+        }
+
         foreach (var player in players)
-            if (player.Id == id) return player;
+        {
+            if (player.Id == id)
+            {
+                return player;
+            }
+        }
+
         return null;
     }
 }
@@ -89,7 +99,10 @@ public sealed record Respawned2D(SessionEventStamp2D Stamp, Vector2 Position) : 
 public sealed record GoalReached2D(SessionEventStamp2D Stamp) : SessionEvent2D(Stamp);
 public sealed record CheckpointActivated2D(
     SessionEventStamp2D Stamp, long CheckpointId, int HitPoints, Vector2 Position) : SessionEvent2D(Stamp);
-public enum PlayerAttackKind2D { Melee, Downward, Shot, Punch, Kick }
+public enum PlayerAttackKind2D
+{
+    Melee, Downward, Shot, Punch, Kick
+}
 public sealed record AttackStarted2D(
     SessionEventStamp2D Stamp, PlayerAttackKind2D Kind,
     float DurationSeconds, bool IsWallGripping) : SessionEvent2D(Stamp);

@@ -22,7 +22,11 @@ public sealed class SessionClient2DTests
     public void AttachAtNonzeroTickAndSendInputsWithoutWaitingForResponses()
     {
         using var game = new Fixture();
-        for (var i = 0; i < 50; i++) game.Step();
+        for (var i = 0; i < 50; i++)
+        {
+            game.Step();
+        }
+
         var snapshot = game.Session.CaptureSnapshot();
         var client = new SessionClient2D(snapshot, game.Person.Id);
         var inputs = Enumerable.Range(0, 3).Select(_ => client.CreateInput(default)).ToArray();
@@ -50,10 +54,18 @@ public sealed class SessionClient2DTests
         var frame = game.Step();
         Assert.Throws<InvalidOperationException>(() => client.Apply(frame with { Tick = frame.Tick + 1 }));
         Assert.Throws<InvalidOperationException>(() => client.Apply(frame with
-        { Players = [frame.Players[0] with { LastInputSequence = 0 }] }));
-        Assert.False(client.TryApply(frame with { Tick = frame.Tick + 1 }, out var rejection));
+        {
+            Players = [frame.Players[0] with { LastInputSequence = 0 }]
+        }));
+        Assert.False(client.TryApply(frame with
+        {
+            Tick = frame.Tick + 1
+        }, out var rejection));
         Assert.Equal(FrameRejection2D.Gap, rejection);
-        Assert.False(client.TryApply(frame with { Players = [] }, out rejection));
+        Assert.False(client.TryApply(frame with
+        {
+            Players = []
+        }, out rejection));
         Assert.Equal(FrameRejection2D.MissingPlayer, rejection);
         SessionFrame2D[] incompleteFrames = [frame with { World = null! }, frame with { Content = null! }];
         foreach (var incomplete in incompleteFrames)
@@ -97,14 +109,25 @@ public sealed class SessionClient2DTests
     }
 
     private static PersonCommand2D Command(float move = 0f, bool jump = false, bool held = false, bool attack = false) =>
-        new() { MoveX = move, JumpHeld = jump || held, PrimaryHeld = attack };
+        new()
+        {
+            MoveX = move,
+            JumpHeld = jump || held,
+            PrimaryHeld = attack
+        };
 
     private sealed class Fixture : IDisposable
     {
-        public Person2D Person { get; }
+        public Person2D Person
+        {
+            get;
+        }
         public TestActions Actions { get; } = new();
         public TestWorld World { get; } = new();
-        public SideScrollerSession2D Session { get; }
+        public SideScrollerSession2D Session
+        {
+            get;
+        }
         public Fixture()
         {
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
@@ -131,18 +154,45 @@ public sealed class SessionClient2DTests
     {
         public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
         public float GoalX { get; set; } = 9000f;
-        public int PlatformUpdates { get; private set; }
-        public int EnemyUpdates { get; private set; }
-        public float LastDelta { get; private set; }
-        public int DamageNextStep { get; set; }
-        public WorldThingSpec2D? PendingCheckpoint { get; set; }
-        public void UpdateStreaming(Vector2 focus) { }
-        public void UpdateMovingPlatforms(float dt) { PlatformUpdates++; LastDelta = dt; }
+        public int PlatformUpdates
+        {
+            get; private set;
+        }
+        public int EnemyUpdates
+        {
+            get; private set;
+        }
+        public float LastDelta
+        {
+            get; private set;
+        }
+        public int DamageNextStep
+        {
+            get; set;
+        }
+        public WorldThingSpec2D? PendingCheckpoint
+        {
+            get; set;
+        }
+        public void UpdateStreaming(Vector2 focus)
+        {
+        }
+        public void UpdateMovingPlatforms(float dt)
+        {
+            PlatformUpdates++;
+            LastDelta = dt;
+        }
         public void UpdateEnemies(float dt, Vector2 target) => EnemyUpdates++;
-        public void SyncEnemiesAfterPhysics() { }
+        public void SyncEnemiesAfterPhysics()
+        {
+        }
         public void ResolveDamage(Person2D player)
         {
-            if (DamageNextStep <= 0) return;
+            if (DamageNextStep <= 0)
+            {
+                return;
+            }
+
             player.TakeDamage(DamageNextStep, Vector2.Zero);
             DamageNextStep = 0;
         }
@@ -152,7 +202,9 @@ public sealed class SessionClient2DTests
             PendingCheckpoint = null;
             return checkpoint;
         }
-        public void SetActiveSavePoint(long? id) { }
+        public void SetActiveSavePoint(long? id)
+        {
+        }
     }
 
     private sealed class TestActions : ISessionPlayerActions2D
@@ -161,21 +213,31 @@ public sealed class SessionClient2DTests
         public event Action<WeaponEvent2D>? WeaponOccurred { add { } remove { } }
         public EquipmentKind2D Equipment => EquipmentKind2D.Unarmed;
         public bool IsMeleeAttackActive => false;
-        public int BeginFrames { get; private set; }
-        public int Interruptions { get; private set; }
+        public int BeginFrames
+        {
+            get; private set;
+        }
+        public int Interruptions
+        {
+            get; private set;
+        }
         public event Action<UnarmedAttackKind2D, float>? UnarmedAttackStarted;
         public event Action<float>? MeleeAttackStarted { add { } remove { } }
         public event Action<float>? DownAttackStarted { add { } remove { } }
         public event Action? ShotStarted { add { } remove { } }
         public void InterruptPrimary() => Interruptions++;
         public void BeginFrame(float dt) => BeginFrames++;
-        public void UpdateAfterPhysics(float dt, float facing) { }
+        public void UpdateAfterPhysics(float dt, float facing)
+        {
+        }
         public float UsePrimary(float facing)
         {
             UnarmedAttackStarted?.Invoke(UnarmedAttackKind2D.Punch, 0.28f);
             return facing;
         }
         public float UseSecondary(float facing) => facing;
-        public void Reset() { }
+        public void Reset()
+        {
+        }
     }
 }

@@ -13,7 +13,10 @@ public sealed partial class SideScrollerLevel2D
     public void CutGrass(Rect2D strike)
     {
         if (!strike.IsFinite || strike.Size.X < 0f || strike.Size.Y < 0f)
+        {
             ArgGuard.ThrowOutOfRange(strike, "Grass cutting bounds must be finite and ordered.");
+        }
+
         var streamer = RequireEnvironment().Streamer;
         var firstX = Math.Clamp((int)MathF.Floor((strike.Min.X - TileMap.Origin.X) / _tileSize), 0, TileMap.Width - 1);
         var lastX = Math.Clamp((int)MathF.Floor((strike.Max.X - TileMap.Origin.X) / _tileSize), 0, TileMap.Width - 1);
@@ -44,7 +47,9 @@ public sealed partial class SideScrollerLevel2D
         foreach (var cell in _cutGrass)
         {
             if (!streamer.IsChunkActive(new(cell.X / TileMap.ChunkSize, cell.Y / TileMap.ChunkSize)))
+            {
                 _cutGrass = _cutGrass.Remove(cell);
+            }
         }
     }
 }

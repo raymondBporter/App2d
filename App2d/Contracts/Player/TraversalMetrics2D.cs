@@ -29,10 +29,22 @@ public sealed class TraversalMetrics2D
     }
 
     public float TileSize { get; init; } = DesignUnit * 4f;
-    public Vector2 PlayerColliderSize { get; private init; }
-    public float PlayerColliderCenterOffsetX { get; private init; }
-    public Vector2 PlayerVisualSize { get; private init; }
-    public float PlayerSpriteFootYFraction { get; private init; }
+    public Vector2 PlayerColliderSize
+    {
+        get; private init;
+    }
+    public float PlayerColliderCenterOffsetX
+    {
+        get; private init;
+    }
+    public Vector2 PlayerVisualSize
+    {
+        get; private init;
+    }
+    public float PlayerSpriteFootYFraction
+    {
+        get; private init;
+    }
     public Vector2 PlayerVisualOffset => new(
         0f,
         PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) -
@@ -74,14 +86,24 @@ public sealed class TraversalMetrics2D
     /// </summary>
     public float AdvanceVerticalSpeed(float velocityY, float downwardGravity, float seconds)
     {
-        if (seconds <= 0f || downwardGravity <= 0f) return velocityY;
+        if (seconds <= 0f || downwardGravity <= 0f)
+        {
+            return velocityY;
+        }
+
         var speed = -velocityY;
         var start = MaximumFallSpeed * FallDragStartFraction;
         if (speed + downwardGravity * seconds <= start)
+        {
             return velocityY - downwardGravity * seconds;
+        }
+
         var band = MaximumFallSpeed - start;
         if (speed > MaximumFallSpeed)
+        {
             return -(MaximumFallSpeed + (speed - MaximumFallSpeed) * MathF.Exp(-seconds / 0.5f));
+        }
+
         if (speed < start)
         {
             var ordinarySeconds = Math.Min(seconds, (start - speed) / downwardGravity);
@@ -197,7 +219,9 @@ public sealed class TraversalMetrics2D
             }
 
             if (elapsed > fixedDeltaSeconds && position.Y <= 0f)
+            {
                 return new JumpProfile2D(apexHeight, timeToApex, elapsed, position.X);
+            }
         }
 
         throw StateGuard.Create("Jump simulation did not return to its starting height.");
@@ -221,9 +245,14 @@ public sealed class TraversalMetrics2D
             position += velocity * fixedDeltaSeconds;
 
             if (step % 2 == 1)
+            {
                 points.Add(position);
+            }
+
             if (step > 0 && position.Y <= 0f)
+            {
                 break;
+            }
         }
 
         return [.. points];
@@ -232,7 +261,10 @@ public sealed class TraversalMetrics2D
     private static float MoveTowards(float current, float target, float maxDelta)
     {
         if (MathF.Abs(target - current) <= maxDelta)
+        {
             return target;
+        }
+
         return current + MathF.Sign(target - current) * maxDelta;
     }
 

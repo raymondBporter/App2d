@@ -81,17 +81,38 @@ internal sealed class SideScrollerClient2D : IDisposable
     public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);
     public void DrawGrass(Renderer2D renderer, VegetationLayer2D layer) =>
         _world.DrawGrass(renderer, _camera.VisibleWorldBounds, layer);
-    public bool ShowTraversalDebug { get; set; }
-    public BallisticsDebug2D Ballistics { get; }
-    public SpatialSoundEffectSink2D WorldSounds { get; }
+    public bool ShowTraversalDebug
+    {
+        get; set;
+    }
+    public BallisticsDebug2D Ballistics
+    {
+        get;
+    }
+    public SpatialSoundEffectSink2D WorldSounds
+    {
+        get;
+    }
     public event Action<CheckpointActivated2D>? CheckpointActivated;
 
     public PlayerInput2D CaptureInput(InputState input)
     {
         var debug = PlayerDebugInput2D.Capture(input);
-        if (debug.ToggleTraversal) ShowTraversalDebug = !ShowTraversalDebug;
-        if (debug.FireBallistics) Ballistics.Launch(State.Person.Position, State.Person.Facing);
-        if (debug.ClearBallistics) Ballistics.Clear();
+        if (debug.ToggleTraversal)
+        {
+            ShowTraversalDebug = !ShowTraversalDebug;
+        }
+
+        if (debug.FireBallistics)
+        {
+            Ballistics.Launch(State.Person.Position, State.Person.Facing);
+        }
+
+        if (debug.ClearBallistics)
+        {
+            Ballistics.Clear();
+        }
+
         _shieldPose = debug.ShieldPose;
         var command = _input.Capture(input);
         return _endpoint.CreateInput(command);
@@ -99,7 +120,11 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public void Apply(SessionFrame2D frame)
     {
-        if (!_endpoint.Apply(frame)) return;
+        if (!_endpoint.Apply(frame))
+        {
+            return;
+        }
+
         _world.ApplyState(frame.Content, frame.World);
         _weapons.ApplyState(State.Weapons, State.Equipment,
             frame.Events.OfType<WeaponOccurred2D>().Where(e => e.Stamp.EntityId == _endpoint.PlayerId).Select(e => e.Occurrence));
@@ -116,7 +141,9 @@ internal sealed class SideScrollerClient2D : IDisposable
                 _presentation.PresentContact(confirmed.Damage, _endpoint.PlayerId, frame.Tick);
                 _enemies.PresentContact(confirmed.Damage);
                 if (confirmed.Damage.Contact is { Kind: CombatImpactKind2D.Sword } contact)
+                {
                     WorldSounds.PlayAt(SoundEffect2D.SwordHit, contact.Position);
+                }
             }
             switch (occurrence)
             {
@@ -140,7 +167,9 @@ internal sealed class SideScrollerClient2D : IDisposable
                         _cameraController.Shake(float.Lerp(1f, 1.75f, impact), stabilizeVerticalFollow: true);
                     }
                     break;
-                case Footstep2D when isMine: _sounds.Play(SoundEffect2D.PlayerFootstep); break;
+                case Footstep2D when isMine:
+                    _sounds.Play(SoundEffect2D.PlayerFootstep);
+                    break;
                 case Damaged2D when isMine:
                     _sounds.Play(SoundEffect2D.PlayerHurt);
                     _presentation.PlayHit();
@@ -160,9 +189,16 @@ internal sealed class SideScrollerClient2D : IDisposable
                     _contacts.Reset();
                     _enemies.ResetContact();
                     break;
-                case GoalReached2D when isMine: _sounds.Play(SoundEffect2D.GoalReached); _presentation.PlayCelebrate(); break;
-                case CheckpointActivated2D checkpoint when isMine: CheckpointActivated?.Invoke(checkpoint); break;
-                case AttackStarted2D attack when isMine: PresentAttack(attack); break;
+                case GoalReached2D when isMine:
+                    _sounds.Play(SoundEffect2D.GoalReached);
+                    _presentation.PlayCelebrate();
+                    break;
+                case CheckpointActivated2D checkpoint when isMine:
+                    CheckpointActivated?.Invoke(checkpoint);
+                    break;
+                case AttackStarted2D attack when isMine:
+                    PresentAttack(attack);
+                    break;
             }
         }
 
@@ -175,7 +211,9 @@ internal sealed class SideScrollerClient2D : IDisposable
     {
         _presentation.ResetContact();
         if (attack.Kind is PlayerAttackKind2D.Melee or PlayerAttackKind2D.Downward)
+        {
             _sounds.Play(SoundEffect2D.SwordSwing);
+        }
     }
 
     private void ApplyPlayerState()
@@ -200,7 +238,8 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public void RefreshEditorWorld(ImmutableArray<EnemyState2D> enemies, LevelContent2D content, WorldState2D world)
     {
-        _enemies.ResetContact(); _presentation.ResetContact();
+        _enemies.ResetContact();
+        _presentation.ResetContact();
         _world.ApplyState(content, world);
         _enemies.ApplyState(enemies, [], _endpoint.Tick);
     }
@@ -221,7 +260,8 @@ internal sealed class SideScrollerClient2D : IDisposable
         _weapons.Suspend();
         _spells.Reset();
         _contacts.Reset();
-        _enemies.ResetContact(); _presentation.ResetContact();
+        _enemies.ResetContact();
+        _presentation.ResetContact();
         _input.Reset();
     }
 
@@ -241,7 +281,11 @@ internal sealed class SideScrollerClient2D : IDisposable
 
     public void DrawWorldDebug(Renderer2D renderer)
     {
-        if (ShowTraversalDebug) _traversalDebug.DrawWorldDebug(renderer, State.Person.Position, State.Person.Facing);
+        if (ShowTraversalDebug)
+        {
+            _traversalDebug.DrawWorldDebug(renderer, State.Person.Position, State.Person.Facing);
+        }
+
         Ballistics.DrawWorldDebug(renderer);
     }
 
@@ -250,15 +294,30 @@ internal sealed class SideScrollerClient2D : IDisposable
         PlayerHud2D.Draw(renderer, State.Person.HitPoints, State.Person.MaximumHitPoints,
             _weapons.HudTexture, State.Person.Spells, State.Weapons.IsCharging);
         if (_saveFeedbackSeconds > 0f)
+        {
             renderer.DrawScreenLabel(_lastSaveSucceeded ? "SAVED" : "SAVE FAILED", new Vector2(24f, 198f));
-        if (ShowTraversalDebug) _traversalDebug.DrawUI(renderer);
+        }
+
+        if (ShowTraversalDebug)
+        {
+            _traversalDebug.DrawUI(renderer);
+        }
+
         Ballistics.DrawUI(renderer);
     }
 
     private void UpdateJumpSound()
     {
-        if (!_jumpSound.IsPlaying) return;
-        if (!State.Person.IsSustainingJump) { EndJumpSound(); return; }
+        if (!_jumpSound.IsPlaying)
+        {
+            return;
+        }
+
+        if (!State.Person.IsSustainingJump)
+        {
+            EndJumpSound();
+            return;
+        }
         var power = State.Person.JumpPower;
         _jumpSound.SetVolumeScale(float.Lerp(0.3f, 1f, Progress.SmoothStepUnclamped(power)), 0.015f);
     }

@@ -17,8 +17,14 @@ public sealed class BladeSwooshTests
     private static CharacterMesh Swing(int sweep, params (float Time, float Degrees, bool On)[] frames)
     {
         var swoosh = new BladeSwoosh { Style = SwooshStyle.Primary with { InkWidth = 0 }, Sweep = sweep };
-        foreach (var (time, degrees, on) in frames) { var (g, t) = At(degrees); swoosh.Record(time, g, t, on); }
-        var mesh = new CharacterMesh(); swoosh.Build(mesh); return mesh;
+        foreach (var (time, degrees, on) in frames)
+        {
+            var (g, t) = At(degrees);
+            swoosh.Record(time, g, t, on);
+        }
+        var mesh = new CharacterMesh();
+        swoosh.Build(mesh);
+        return mesh;
     }
 
     [Fact]
@@ -62,9 +68,18 @@ public sealed class BladeSwooshTests
         // the camera (-Z). In the screen plane that is back, a short stub, forward: the trail must stay near the guard's
         // height rather than sweep a half circle over the top or underneath.
         var swoosh = new BladeSwoosh { Style = SwooshStyle.Primary with { InkWidth = 0 } };
-        static (Vector3, Vector3) Yaw(float degrees) { var (s, c) = MathF.SinCos(degrees * MathF.PI / 180); return (Vector3.Zero, new(c * .9f, 0, -s * .9f)); }
-        foreach (var (time, degrees) in new[] { (0f, 180f), (1 / 60f, 90f), (2 / 60f, 0f) }) { var (g, t) = Yaw(degrees); swoosh.Record(time, g, t, true); }
-        var mesh = new CharacterMesh(); swoosh.Build(mesh);
+        static (Vector3, Vector3) Yaw(float degrees)
+        {
+            var (s, c) = MathF.SinCos(degrees * MathF.PI / 180);
+            return (Vector3.Zero, new(c * .9f, 0, -s * .9f));
+        }
+        foreach (var (time, degrees) in new[] { (0f, 180f), (1 / 60f, 90f), (2 / 60f, 0f) })
+        {
+            var (g, t) = Yaw(degrees);
+            swoosh.Record(time, g, t, true);
+        }
+        var mesh = new CharacterMesh();
+        swoosh.Build(mesh);
         Assert.True(mesh.Count > 0);
         Assert.All(mesh.Vertices.ToArray(), v => Assert.InRange(v.Position.Y, -.01f, .01f));
         Assert.Contains(mesh.Vertices.ToArray(), v => v.Position.Z < -.8f);

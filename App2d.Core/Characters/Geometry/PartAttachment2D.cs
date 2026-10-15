@@ -31,7 +31,8 @@ public static class PartAttachment2D
                 parent.TransformPoint(new(part.OffsetX, part.OffsetY)));
             return new(attachment, origin.Z, part.Depth);
         }
-        var a = world(part.A); var b = part.B is { } end ? world(end) : a + Vector3.UnitY;
+        var a = world(part.A);
+        var b = part.B is { } end ? world(end) : a + Vector3.UnitY;
         var direction = new Vector2(b.X - a.X, b.Y - a.Y);
         var up = direction.LengthSquared() > 1e-10f ? Vector2.Normalize(direction) : Vector2.UnitY;
         var frame = Frame2D.FromYAxis(a.XY, up);
@@ -67,7 +68,10 @@ public static class PartAttachment2D
             target = before.Coordinates.TransformPoint(now.Coordinates.ToLocal(target));
         }
         if (!art.Coordinates.TryToLocal(target, out var local))
+        {
             throw new InvalidOperationException("Cannot edit a cutout through a collapsed frame.");
+        }
+
         return new(local.X / part.Width, local.Y / part.Height);
     }
 }

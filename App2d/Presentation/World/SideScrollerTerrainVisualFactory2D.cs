@@ -29,18 +29,24 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
             foreach (var active in activeRuns.ToArray())
             {
                 if (rowRuns.Contains(active.Key))
+                {
                     continue;
+                }
 
                 AddFillVisual(visuals, active.Key, active.Value, y);
                 activeRuns.Remove(active.Key);
             }
 
             foreach (var run in rowRuns)
+            {
                 activeRuns.TryAdd(run, y);
+            }
         }
 
         foreach (var active in activeRuns)
+        {
             AddFillVisual(visuals, active.Key, active.Value, endY);
+        }
 
         return visuals;
     }
@@ -107,19 +113,32 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
 
                 var surfaces = _tileMap.GetExposedSurfaces(x, y);
                 if (surfaces == TileSurface2D.None)
+                {
                     continue;
+                }
 
                 var tileset = _tilesets.GetTileset(x, y);
                 var tileBounds = GetTileBounds(x, y);
                 var grippable = kind.IsGrippable();
                 if (surfaces.HasFlag(TileSurface2D.Top))
+                {
                     AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Top));
+                }
+
                 if (surfaces.HasFlag(TileSurface2D.Right))
+                {
                     AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Right, grippable));
+                }
+
                 if (surfaces.HasFlag(TileSurface2D.Bottom))
+                {
                     AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Bottom));
+                }
+
                 if (surfaces.HasFlag(TileSurface2D.Left))
+                {
                     AddVisual(visuals, tileset.CreateSurface(tileBounds, TileSurface2D.Left, grippable));
+                }
             }
         }
 
@@ -129,7 +148,9 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
             {
                 var corners = _tileMap.GetCorners(x, y);
                 if (corners == TileCorner2D.None)
+                {
                     continue;
+                }
 
                 AddCornerVisuals(visuals, x, y, GetTileBounds(x, y), corners);
             }
@@ -142,22 +163,44 @@ internal sealed class SideScrollerTerrainVisualFactory2D(Scene2D scene, IChunked
     {
         var tileset = _tilesets.GetTileset(tileX, tileY);
         if (corners.HasFlag(TileCorner2D.OuterTopRight))
+        {
             AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.OuterTopRight));
+        }
+
         if (corners.HasFlag(TileCorner2D.OuterBottomRight))
+        {
             AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.OuterBottomRight));
+        }
+
         if (corners.HasFlag(TileCorner2D.OuterBottomLeft))
+        {
             AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.OuterBottomLeft));
+        }
+
         if (corners.HasFlag(TileCorner2D.OuterTopLeft))
+        {
             AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.OuterTopLeft));
+        }
 
         if (corners.HasFlag(TileCorner2D.InnerTopRight))
+        {
             AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.InnerTopRight));
+        }
+
         if (corners.HasFlag(TileCorner2D.InnerBottomRight))
+        {
             AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.InnerBottomRight));
+        }
+
         if (corners.HasFlag(TileCorner2D.InnerBottomLeft))
+        {
             AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.InnerBottomLeft));
+        }
+
         if (corners.HasFlag(TileCorner2D.InnerTopLeft))
+        {
             AddVisual(visuals, tileset.CreateCorner(tileBounds, TileCorner2D.InnerTopLeft));
+        }
     }
 
     private void AddVisual(List<WorldObject2D> visuals, WorldObject2D visual)

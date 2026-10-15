@@ -85,7 +85,10 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
     public override PersonActionState2D CaptureActionState() => _secondsSinceShot is { } elapsed
         ? new(App2d.Contracts.Simulation.PlayerAttackKind2D.Shot, elapsed, RecoverySeconds) : default;
 
-    public bool IsCharging { get; private set; }
+    public bool IsCharging
+    {
+        get; private set;
+    }
     public float ChargeProgress => Math.Clamp(_chargeTime / ChargeSeconds, 0f, 1f);
     public override IEnumerable<SpatialObject2D> ActiveHitboxes
     {
@@ -94,7 +97,9 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
             foreach (var bullet in _bullets)
             {
                 if (bullet.IsActive)
+                {
                     yield return bullet.WorldObject;
+                }
             }
         }
     }
@@ -102,19 +107,30 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
     public void SetInput(bool held, bool canCharge)
     {
         if (!held)
+        {
             _needsRelease = false;
+        }
+
         _canCharge = held && canCharge;
         if (!_canCharge)
+        {
             CancelCharge();
+        }
     }
 
     public override float Use(float facing)
     {
         if (_needsRelease)
+        {
             return facing;
+        }
+
         _needsRelease = true;
         if (!_canCharge || _recoverySeconds > 0f)
+        {
             return facing;
+        }
+
         _direction = facing;
         _chargeTime = 0f;
         IsCharging = true;
@@ -125,22 +141,36 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
 
     public override void BeginFrame(float deltaSeconds)
     {
-        if (_secondsSinceShot.HasValue) _secondsSinceShot += deltaSeconds;
+        if (_secondsSinceShot.HasValue)
+        {
+            _secondsSinceShot += deltaSeconds;
+        }
+
         _recoverySeconds = Math.Max(0f, _recoverySeconds - deltaSeconds);
     }
 
     public override void UpdateAfterPhysics(float deltaSeconds, float facing)
     {
-        if (IsCharging) _direction = facing;
+        if (IsCharging)
+        {
+            _direction = facing;
+        }
+
         foreach (var projectile in _bullets)
         {
             projectile.Update(deltaSeconds);
-            if (projectile.IsActive) ResolveHit(projectile);
+            if (projectile.IsActive)
+            {
+                ResolveHit(projectile);
+            }
         }
         if (IsCharging)
         {
             _chargeTime += deltaSeconds;
-            if (_chargeTime + 0.000001f >= ChargeSeconds) Fire();
+            if (_chargeTime + 0.000001f >= ChargeSeconds)
+            {
+                Fire();
+            }
         }
     }
 
@@ -149,7 +179,11 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
 
     private void Fire()
     {
-        if (_spendEnergy is not null && !_spendEnergy()) { CancelCharge(); return; }
+        if (_spendEnergy is not null && !_spendEnergy())
+        {
+            CancelCharge();
+            return;
+        }
         IsCharging = false;
         _chargeTime = 0f;
         var muzzle = MuzzlePosition;
@@ -170,7 +204,11 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         foreach (var projectile in _bullets)
         {
             // Availability is simulation state; a fading client trail cannot delay a shot.
-            if (projectile.IsActive) continue;
+            if (projectile.IsActive)
+            {
+                continue;
+            }
+
             projectile.Launch(muzzle + new Vector2(_direction * BoltWidth * 0.5f, 0f),
                 new Vector2(_direction * _shot.Speed, 0f), lifetime: _shot.Lifetime, origin: muzzle, id: _projectileIds.Next());
             ResolveHit(projectile);
@@ -200,7 +238,10 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
     {
         _canCharge = false;
         if (!IsCharging)
+        {
             return;
+        }
+
         var progress = ChargeProgress;
         IsCharging = false;
         _chargeTime = 0f;
@@ -213,6 +254,9 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         _recoverySeconds = 0f;
         _secondsSinceShot = null;
         _needsRelease = true;
-        foreach (var projectile in _bullets) projectile.Deactivate();
+        foreach (var projectile in _bullets)
+        {
+            projectile.Deactivate();
+        }
     }
 }

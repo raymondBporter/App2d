@@ -10,7 +10,11 @@ public sealed class SourceMotionPreview(SourceLibraries sources)
 
     public IEnumerable<(string Control, Vector3 Point)> Sample(Subject subject, MotionClip clip, float time)
     {
-        if (clip.Source is not { Kind: AssetSource.Library, Points: { } points } source) return [];
+        if (clip.Source is not { Kind: AssetSource.Library, Points: { } points } source)
+        {
+            return [];
+        }
+
         if (_cached is not { } cached || cached.Clip != clip || cached.Source != source || cached.Model != subject.Model)
         {
             var library = sources.Get(source.File);

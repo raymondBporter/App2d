@@ -12,10 +12,15 @@ internal static class PartPainting
 {
     public static void Add(CharacterMesh mesh, PuppetPart part, PartFrame2D frame, IReadOnlyList<Vector3> contour, TriangleMesh2D? triangles)
     {
-        if (part.Paint is null) return;
+        if (part.Paint is null)
+        {
+            return;
+        }
+
         for (var layer = 0; layer < part.Paint.Count; layer++)
         {
-            var patch = part.Paint[layer]; var color = ColorExtensions.FromHexRgb(patch.Material!.Fill!);
+            var patch = part.Paint[layer];
+            var color = ColorExtensions.FromHexRgb(patch.Material!.Fill!);
             var bias = .00001f * (layer + 1);
             if (triangles is null)
             {
@@ -23,18 +28,23 @@ internal static class PartPainting
                 var outline = contour.Select(p => p.XY).ToArray();
                 var clipped = PolygonClipping2D.ClipConvex(points, outline);
                 var z = frame.OriginZ + frame.Depth - bias;
-                mesh.Polygon([.. clipped.Select(p => new Vector3(p, z))], color, null, 0); continue;
+                mesh.Polygon([.. clipped.Select(p => new Vector3(p, z))], color, null, 0);
+                continue;
             }
-            for (var i = 0; i < triangles.Indices.Length; i += 3)
+            foreach (var (ia, ib, ic) in MeshTopology.Triangles(triangles.Indices))
             {
-                var ia = triangles.Indices[i]; var ib = triangles.Indices[i + 1]; var ic = triangles.Indices[i + 2];
-                var a = triangles.Vertices[ia]; var b = triangles.Vertices[ib]; var c = triangles.Vertices[ic];
-                var clipped = PolygonClipping2D.ClipConvex(patch.Points, new[] { a, b, c });
-                var ab = b - a; var ac = c - a; var determinant = ab.Cross(ac);
+                var a = triangles.Vertices[ia];
+                var b = triangles.Vertices[ib];
+                var c = triangles.Vertices[ic];
+                var clipped = PolygonClipping2D.ClipConvex(patch.Points, [a, b, c]);
+                var ab = b - a;
+                var ac = c - a;
+                var determinant = ab.Cross(ac);
                 Vector3 Place(Vector2 point)
                 {
                     var d = point - a;
-                    var u = d.Cross(ac) / determinant; var v = ab.Cross(d) / determinant;
+                    var u = d.Cross(ac) / determinant;
+                    var v = ab.Cross(d) / determinant;
                     return contour[ia] * (1 - u - v) + contour[ib] * u + contour[ic] * v - new Vector3(0, 0, bias);
                 }
                 mesh.Polygon([.. clipped.Select(Place)], color, null, 0);

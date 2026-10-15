@@ -16,13 +16,19 @@ internal static class FaceRenderingSmoke2D
     public static void Run(GraphicsDevice device, string directory)
     {
         var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
-        if (catalog.Errors.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
+        if (catalog.Errors.Count > 0)
+        {
+            throw new InvalidDataException(string.Join(Environment.NewLine, catalog.Errors));
+        }
+
         var person = catalog.Resolve(PersonTemplate.Id);
         var drawing = new PuppetDrawing();
         using var renderer = new PointCharacterRenderer(device);
         using var labels = new Renderer2D(new Camera2D(), device);
         using var target = new RenderTarget2D(device, 1280, 1160, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        device.SetRenderTarget(target); labels.BeginFrame(1280, 1160, default); labels.Clear(new Color(230, 234, 227));
+        device.SetRenderTarget(target);
+        labels.BeginFrame(1280, 1160, default);
+        labels.Clear(new Color(230, 234, 227));
         for (var i = 0; i < FaceExpressions.Names.Count; i++)
         {
             var pose = PoseEvaluator.Rest(person, new(FaceExpressions.Names[i]));
@@ -33,8 +39,13 @@ internal static class FaceRenderingSmoke2D
             renderer.Draw(drawing.Mesh, projection, Matrix.CreateTranslation(-head.X, -head.Y, 0));
         }
         device.Viewport = new Viewport(0, 0, 1280, 1160);
-        for (var i = 0; i < FaceExpressions.Names.Count; i++) labels.DrawScreenLabel(FaceExpressions.Names[i].ToUpperInvariant(), new(i % 4 * 320 + 65, i / 4 * 290 + 232));
-        labels.EndFrame(); device.SetRenderTarget(null);
+        for (var i = 0; i < FaceExpressions.Names.Count; i++)
+        {
+            labels.DrawScreenLabel(FaceExpressions.Names[i].ToUpperInvariant(), new(i % 4 * 320 + 65, i / 4 * 290 + 232));
+        }
+
+        labels.EndFrame();
+        device.SetRenderTarget(null);
         using var stream = File.Create(Path.Combine(directory, "faces-expressions.png"));
         target.SaveAsPng(stream, target.Width, target.Height);
     }

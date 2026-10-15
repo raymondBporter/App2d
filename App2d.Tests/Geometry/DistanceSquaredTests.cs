@@ -21,7 +21,11 @@ public sealed class DistanceSquaredTests
             var otherStart = Random();
             var otherEnd = Random();
             var direction = new Vector2(random.NextFloat(-2f, 2f), random.NextFloat(-2f, 2f));
-            if (direction.LengthSquared() < .01f) direction = Vector2.UnitX;
+            if (direction.LengthSquared() < .01f)
+            {
+                direction = Vector2.UnitX;
+            }
+
             var rectangle = Rect2D.FromPoints(start, end);
 
             Near(Distance2D.Distance(point, start), Distance2D.DistanceSquared(point, start));

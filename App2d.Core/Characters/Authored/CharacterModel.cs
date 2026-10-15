@@ -9,15 +9,33 @@ namespace App2d.Core.Characters.Authored;
 public sealed record ModelControl
 {
     public string Id { get; set; } = "";
-    public string? Parent { get; set; }
-    public string? Name { get; set; }
+    public string? Parent
+    {
+        get; set;
+    }
+    public string? Name
+    {
+        get; set;
+    }
     /// <summary>Explicit parent-local affine setup pose. Null keeps the existing model-space point-control convention.</summary>
-    public Affine2D? Transform { get; set; }
-    public PuppetPoint Rest { get; set; }
+    public Affine2D? Transform
+    {
+        get; set;
+    }
+    public PuppetPoint Rest
+    {
+        get; set;
+    }
     /// <summary>World XY direction of this bone in rest, in radians. Zero preserves legacy point controls.</summary>
-    public float RestAngle { get; set; }
+    public float RestAngle
+    {
+        get; set;
+    }
     /// <summary>Bone length along local +X. Zero is an ordinary point control.</summary>
-    public float Length { get; set; }
+    public float Length
+    {
+        get; set;
+    }
     public string Scale { get; set; } = CharacterModel.Unit;
 }
 
@@ -58,13 +76,31 @@ public sealed record ModelSocket
     public string Id { get; set; } = "";
     public string Control { get; set; } = "";
     /// <summary>The control whose rotation orients the socket. Null uses Control's own; locomotion keeps the screen axes.</summary>
-    public string? Frame { get; set; }
+    public string? Frame
+    {
+        get; set;
+    }
     /// <summary>When set, local +Y points from Control to this control in XY. Useful for clothing following a torso segment.</summary>
-    public string? Toward { get; set; }
-    public float OffsetX { get; set; }
-    public float OffsetY { get; set; }
-    public float OffsetZ { get; set; }
-    public float Angle { get; set; }
+    public string? Toward
+    {
+        get; set;
+    }
+    public float OffsetX
+    {
+        get; set;
+    }
+    public float OffsetY
+    {
+        get; set;
+    }
+    public float OffsetZ
+    {
+        get; set;
+    }
+    public float Angle
+    {
+        get; set;
+    }
 }
 
 /// <summary>Role-to-animation assignments, such as idle → person-idle. Sets may share clips; there is no set inheritance.</summary>
@@ -122,7 +158,10 @@ public sealed class CharacterModel
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .045f;
     /// <summary>The explicit build rule behind this model's exposed build values, such as "person". Null exposes none.</summary>
-    public string? Build { get; set; }
+    public string? Build
+    {
+        get; set;
+    }
     public List<ModelControl> Controls { get; set; } = [];
     /// <summary>Legacy point IK definitions, evaluated first without changing their historical semantics.</summary>
     public List<ModelChain> Chains { get; set; } = [];
@@ -139,21 +178,43 @@ public sealed class CharacterModel
     public List<ControlGroup> Groups { get; set; } = [];
     public List<LookPreset> Looks { get; set; } = [];
     /// <summary>The prototype puppet this model was converted from, if any.</summary>
-    public AssetSource? Source { get; set; }
+    public AssetSource? Source
+    {
+        get; set;
+    }
 
     public string ToJson() => PartAssetJson.Write(this, Parts, AuthoredJson.Options);
     internal static CharacterModel FromDraftJson(string json)
     {
         PartAssetJson.RequireTypedJson(json);
         var model = AuthoredAsset.Parse<CharacterModel>(json, "model");
-        if (model.Version is 2 or 3) model.Version = CurrentVersion;
+        if (model.Version is 2 or 3)
+        {
+            model.Version = CurrentVersion;
+        }
+
         return model;
     }
-    public static CharacterModel FromJson(string json) { var model = FromDraftJson(json); model.Validate(); return model; }
+    public static CharacterModel FromJson(string json)
+    {
+        var model = FromDraftJson(json);
+        model.Validate();
+        return model;
+    }
     public static CharacterModel Load(string path) => FromJson(File.ReadAllText(path));
-    public void Save(string path) { Validate(); AuthoredAsset.Write(path, ToJson()); }
+    public void Save(string path)
+    {
+        Validate();
+        AuthoredAsset.Write(path, ToJson());
+    }
 
-    private static void Require([DoesNotReturnIf(false)] bool condition, string message) { if (!condition) throw new InvalidDataException(message); }
+    private static void Require([DoesNotReturnIf(false)] bool condition, string message)
+    {
+        if (!condition)
+        {
+            throw new InvalidDataException(message);
+        }
+    }
 
     public void Validate()
     {
@@ -166,7 +227,8 @@ public sealed class CharacterModel
         Require(Controls.Count <= 256 && Chains.Count + Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
         Require(Chains.All(c => c?.Solver == ModelChain.PointSolver), $"{owner}: legacy chains require the point solver; declare bone IK in constraints.");
-        Limit.Color(Ink, "ink"); new Limit(.001f, 1).Check(LineWidth, "lineWidth");
+        Limit.Color(Ink, "ink");
+        new Limit(.001f, 1).Check(LineWidth, "lineWidth");
         Source?.Validate(owner);
 
         var controls = new Dictionary<string, ModelControl>(StringComparer.Ordinal);
@@ -182,12 +244,17 @@ public sealed class CharacterModel
             new Limit(0, 100).Check(control.Length, $"{owner} control '{control.Id}' length");
         }
         foreach (var control in Controls)
+        {
             Require(control.Parent is null || control.Parent != control.Id && controls.ContainsKey(control.Parent), $"{owner}: control '{control.Id}' has unknown parent '{control.Parent}'.");
+        }
+
         foreach (var control in Controls)
         {
             var seen = new HashSet<string>(StringComparer.Ordinal);
             for (var current = control; current.Parent is not null; current = controls[current.Parent])
+            {
                 Require(seen.Add(current.Id), $"{owner}: parent cycle at '{control.Id}'.");
+            }
         }
 
         // Hand-edited files may hold a null where an ID belongs; treat it as unknown rather than letting a lookup throw.
@@ -200,9 +267,13 @@ public sealed class CharacterModel
             Require(measure.Id != Unit && scales.Add(measure.Id), $"{owner}: duplicate or reserved measure '{measure.Id}'.");
             Require(measure.Path.Count >= 2 && measure.Path.All(Known), $"{owner}: measure '{measure.Id}' needs a path of at least two known controls.");
         }
-        foreach (var control in Controls) Require(scales.Contains(control.Scale), $"{owner}: control '{control.Id}' uses unknown scale '{control.Scale}'.");
+        foreach (var control in Controls)
+        {
+            Require(scales.Contains(control.Scale), $"{owner}: control '{control.Id}' uses unknown scale '{control.Scale}'.");
+        }
 
-        var chainIds = new HashSet<string>(StringComparer.Ordinal); var solved = new HashSet<string>(StringComparer.Ordinal);
+        var chainIds = new HashSet<string>(StringComparer.Ordinal);
+        var solved = new HashSet<string>(StringComparer.Ordinal);
         foreach (var chain in IkChains)
         {
             Require(chain is not null, $"{owner}: null chain.");
@@ -226,7 +297,13 @@ public sealed class CharacterModel
             Require(scales.Contains(chain.Scale), $"{owner}: chain '{chain.Id}' uses unknown scale '{chain.Scale}'.");
             Require(chain.Frame == Locomotion || Known(chain.Frame), $"{owner}: chain '{chain.Id}' frame '{chain.Frame}' is not a control or '{Locomotion}'.");
         }
-        IEnumerable<string> SelfAndAncestors(string id) { for (string? current = id; current is not null; current = controls[current].Parent) yield return current; }
+        IEnumerable<string> SelfAndAncestors(string id)
+        {
+            for (string? current = id; current is not null; current = controls[current].Parent)
+            {
+                yield return current;
+            }
+        }
         var writes = IkChains.SelectMany(c => (c.Solver == ModelChain.BoneSolver ? new[] { c.Root } : [c.Joint, c.End]).Select(id => (Chain: c, Id: id))).ToArray();
         foreach (var chain in IkChains)
         {
@@ -251,7 +328,8 @@ public sealed class CharacterModel
             Require(sockets.Add(socket.Id), $"{owner}: duplicate socket '{socket.Id}'.");
             Require(Known(socket.Control) && (socket.Frame is null or Locomotion || Known(socket.Frame)), $"{owner}: socket '{socket.Id}' references an unknown control.");
             Require(socket.Toward is null || Known(socket.Toward) && socket.Toward != socket.Control, $"{owner}: socket '{socket.Id}' needs a different known toward control.");
-            new Limit(-100, 100).Check(socket.OffsetX, $"{owner} socket '{socket.Id}' offsetX"); new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
+            new Limit(-100, 100).Check(socket.OffsetX, $"{owner} socket '{socket.Id}' offsetX");
+            new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
             new Limit(-100, 100).Check(socket.OffsetZ, $"{owner} socket '{socket.Id}' offsetZ");
             new Limit(-10, 10).Check(socket.Angle, $"{owner} socket '{socket.Id}' angle");
         }
@@ -262,7 +340,11 @@ public sealed class CharacterModel
             AuthoredAsset.RequireId(set.Id, $"{owner} motion set id");
             Require(sets.Add(set.Id), $"{owner}: duplicate motion set '{set.Id}'.");
             Require(!string.IsNullOrWhiteSpace(set.Name), $"{owner} motion set '{set.Id}': a name is required.");
-            foreach (var (role, clip) in set.Roles) { AuthoredAsset.RequireId(role, $"{owner} motion set '{set.Id}' role"); AuthoredAsset.RequireId(clip, $"{owner} motion set '{set.Id}' role '{role}' clip"); }
+            foreach (var (role, clip) in set.Roles)
+            {
+                AuthoredAsset.RequireId(role, $"{owner} motion set '{set.Id}' role");
+                AuthoredAsset.RequireId(clip, $"{owner} motion set '{set.Id}' role '{role}' clip");
+            }
         }
         var layouts = new HashSet<string>(StringComparer.Ordinal);
         foreach (var layout in HurtLayouts)
@@ -309,7 +391,10 @@ public sealed class CharacterModel
         }
         CheckGeometry(this, Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal), owner);
         SkeletonAppearance2D.Validate(this);
-        if (Build is not null) BuildRules.Get(Build).Check(this);
+        if (Build is not null)
+        {
+            BuildRules.Get(Build).Check(this);
+        }
     }
 
     /// <summary>Checks lengths that depend on rest geometry, so a variant's overrides are held to the same rules as its base.</summary>
@@ -317,8 +402,13 @@ public sealed class CharacterModel
     {
         float Length(string a, string b) => Vector2.Distance(new(rest[a].X, rest[a].Y), new(rest[b].X, rest[b].Y));
         foreach (var chain in model.IkChains.Where(c => c.Solver == ModelChain.PointSolver))
+        {
             Require(Length(chain.Root, chain.Joint) >= .01f && Length(chain.Joint, chain.End) >= .01f, $"{owner}: chain '{chain.Id}' needs segment lengths of at least 0.01.");
+        }
+
         foreach (var measure in model.Measures)
+        {
             Require(measure.Path.Zip(measure.Path.Skip(1)).Sum(p => Length(p.First, p.Second)) >= .001f, $"{owner}: measure '{measure.Id}' has no length.");
+        }
     }
 }

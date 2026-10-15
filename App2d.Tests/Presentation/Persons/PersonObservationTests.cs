@@ -30,7 +30,10 @@ public sealed class PersonObservationTests
         using var view = new PersonPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root));
         var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
         var alive = Alive;
-        view.ApplyState(alive with { HitPoints = 0 }, 500, 0f, false, false);
+        view.ApplyState(alive with
+        {
+            HitPoints = 0
+        }, 500, 0f, false, false);
         Assert.Same(textures.Load("characters/player-sword/animations/death/frame-0001.png"), shader.Texture);
         view.Advance(0.12f);
         Assert.NotSame(textures.Load("characters/player-sword/animations/death/frame-0001.png"), shader.Texture);
@@ -56,7 +59,10 @@ public sealed class PersonObservationTests
         expected.Play(clip);
         expected.PlaybackSpeed = clip.Duration / 0.4f;
         expected.Update(0.16f);
-        var state = Alive with { Action = new(kind, 0.16f, 0.4f) };
+        var state = Alive with
+        {
+            Action = new(kind, 0.16f, 0.4f)
+        };
         view.ApplyState(state, 500, 0f, false, true);
         Assert.Same(expected.CurrentFrame, shader.Texture);
         view.Advance(0.1f);
@@ -79,7 +85,10 @@ public sealed class PersonObservationTests
         using var view = new PersonPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root));
         view.Equip(EquipmentKind2D.Gun);
         var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
-        view.ApplyState(Alive with { Action = new(PlayerAttackKind2D.Shot, 0.10f, 0.06f) }, 500, 0f, false, false);
+        view.ApplyState(Alive with
+        {
+            Action = new(PlayerAttackKind2D.Shot, 0.10f, 0.06f)
+        }, 500, 0f, false, false);
         Assert.True(view.IsPlayingShot);
         Assert.Contains(shader.Texture, CharacterAnimationAssets2D.LoadClip(textures, "player-gun", "magic-shot").Frames);
         view.Advance(0.10f);

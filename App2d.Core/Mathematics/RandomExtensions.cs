@@ -9,7 +9,9 @@ public static class RandomExtensions
         ArgumentNullException.ThrowIfNull(random);
         ArgumentOutOfRangeException.ThrowIfNegative(maximum);
         if (!float.IsFinite(maximum))
+        {
             throw new ArgumentOutOfRangeException(nameof(maximum), "Maximum must be finite.");
+        }
 
         return random.NextSingle() * maximum;
     }
@@ -19,9 +21,14 @@ public static class RandomExtensions
     {
         ArgumentNullException.ThrowIfNull(random);
         if (!float.IsFinite(minimum))
+        {
             throw new ArgumentOutOfRangeException(nameof(minimum), "Minimum must be finite.");
+        }
+
         if (!float.IsFinite(maximum) || maximum < minimum || !float.IsFinite(maximum - minimum))
+        {
             throw new ArgumentOutOfRangeException(nameof(maximum), "Maximum must be finite and at least minimum, with a finite range.");
+        }
 
         return minimum + random.NextSingle() * (maximum - minimum);
     }

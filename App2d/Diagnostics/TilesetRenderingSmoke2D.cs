@@ -112,7 +112,9 @@ internal static class TilesetRenderingSmoke2D
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         using var game = SideScrollerSimulation2D.Create(new(traversal, map, [],
             [new(1, WorldThingKind2D.PlayerSpawn, "Start", true, new(origin.X + (Left + 2.4f) * 32f, groundTop + 8f))])
-        { AuthoredCharacters = catalog });
+        {
+            AuthoredCharacters = catalog
+        });
         var scene = new Scene2D();
         using var world = new WorldPresentation2D(scene, textures);
         using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
@@ -121,7 +123,11 @@ internal static class TilesetRenderingSmoke2D
         var camera = new Camera2D { Zoom = 1.35f, Position = center };
         using var renderer = new Renderer2D(camera, device);
         using var target = new RenderTarget2D(device, 1280, 720, false, SurfaceFormat.Color, DepthFormat.None);
-        for (var i = 0; i < 60; i++) Step();
+        for (var i = 0; i < 60; i++)
+        {
+            Step();
+        }
+
         Save($"{groundId}+{wallId}.png");
         camera.Zoom = 2.7f;
         camera.Position = new(origin.X + (Left + 6f) * 32f, origin.Y + (Bottom + 3.5f) * 32f);

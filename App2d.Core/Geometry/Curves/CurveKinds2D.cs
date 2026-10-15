@@ -10,6 +10,9 @@ public static class CurveKinds2D
     public const string CubicBezier = "cubic-bezier";
     public const string BSpline = "b-spline";
 
-    public static IReadOnlyList<string> All { get; } =
+    public static IReadOnlyList<string> All
+    {
+        get;
+    } =
         [Line, Polyline, Arc, QuadraticBezier, CubicBezier, BSpline];
 }

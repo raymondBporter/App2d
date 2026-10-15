@@ -45,14 +45,32 @@ public sealed partial class MovingPlatform2D : IDisposable
         Body.TransfersContactMotion = true;
     }
 
-    public EntityId2D Id { get; }
-    public long ThingId { get; }
-    public Size2D Size { get; }
-    public uint ColorArgb { get; }
+    public EntityId2D Id
+    {
+        get;
+    }
+    public long ThingId
+    {
+        get;
+    }
+    public Size2D Size
+    {
+        get;
+    }
+    public uint ColorArgb
+    {
+        get;
+    }
     public MovingPlatformDefinition2D CaptureDefinition() => new(Id, ThingId, Size, ColorArgb);
     public MovingPlatformState2D CaptureState() => new(Id, WorldObject.Transform.Position);
-    public SpatialObject2D WorldObject { get; }
-    public PhysicsBody2D Body { get; }
+    public SpatialObject2D WorldObject
+    {
+        get;
+    }
+    public PhysicsBody2D Body
+    {
+        get;
+    }
     public Vector2 Start => _motion.Start;
     public Vector2 End => _motion.End;
 

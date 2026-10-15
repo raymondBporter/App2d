@@ -38,7 +38,11 @@ public sealed partial class Renderer2D
         RequireFrame();
         ArgGuard.ThrowIfNull(item);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
-        if (IsCulled(item)) return;
+        if (IsCulled(item))
+        {
+            return;
+        }
+
         var matrix = item.Transform.Matrix * _camera.WorldToDeviceMatrix;
         DrawShapeCore(item.Shape, matrix, item.LocalBounds, fillColor, outlineColor, screenStrokeWidth);
     }
@@ -48,9 +52,14 @@ public sealed partial class Renderer2D
     {
         SelectBatch(null, null);
         if (fillColor is { } fill)
+        {
             FillShape(shape, matrix, bounds.IsFinite ? bounds : GetVisibleLocalBounds(matrix), new SolidColorShader(fill));
+        }
+
         if (outlineColor is { } outline)
+        {
             OutlineShape(shape, matrix, outline, width);
+        }
     }
 
     /// <summary>Draws an indexed triangle mesh. The outline follows edges used by exactly one triangle.</summary>
@@ -69,28 +78,34 @@ public sealed partial class Renderer2D
         SelectBatch(null, null);
         var matrix = localToWorld * _camera.WorldToDeviceMatrix;
         var vertices = mesh.Vertices;
-        var indices = mesh.Indices;
         if (fillColor is { } fill)
         {
-            for (var i = 0; i < indices.Length; i += 3)
+            foreach (var (a, b, c) in mesh.Triangles)
             {
-                Triangle(Vertex(Vector2.Transform(vertices[indices[i]], matrix), fill),
-                    Vertex(Vector2.Transform(vertices[indices[i + 1]], matrix), fill),
-                    Vertex(Vector2.Transform(vertices[indices[i + 2]], matrix), fill));
+                Triangle(Vertex(Vector2.Transform(a, matrix), fill),
+                    Vertex(Vector2.Transform(b, matrix), fill),
+                    Vertex(Vector2.Transform(c, matrix), fill));
             }
         }
-        if (outlineColor is not { } outline) return;
+        if (outlineColor is not { } outline)
+        {
+            return;
+        }
 
         var edgeCounts = new Dictionary<(int, int), int>();
-        for (var i = 0; i < indices.Length; i += 3)
+        foreach (var (a, b, c) in MeshTopology.Triangles(mesh.Indices))
         {
-            CountEdge(indices[i], indices[i + 1]);
-            CountEdge(indices[i + 1], indices[i + 2]);
-            CountEdge(indices[i + 2], indices[i]);
+            CountEdge(a, b);
+            CountEdge(b, c);
+            CountEdge(c, a);
         }
         foreach (var (edge, count) in edgeCounts)
         {
-            if (count != 1) continue;
+            if (count != 1)
+            {
+                continue;
+            }
+
             Line(Vector2.Transform(vertices[edge.Item1], matrix), Vector2.Transform(vertices[edge.Item2], matrix),
                 outline, screenStrokeWidth);
         }
@@ -120,11 +135,19 @@ public sealed partial class Renderer2D
     public void DrawWorldLine(Line2D line, XnaColor color, float screenStrokeWidth = 2f)
     {
         RequireFrame();
-        if (!line.IsValid) throw new ArgumentException("The line needs a valid direction.", nameof(line));
+        if (!line.IsValid)
+        {
+            throw new ArgumentException("The line needs a valid direction.", nameof(line));
+        }
+
         ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
         var deviceLine = new Line2D(_camera.WorldToDevice(line.Origin),
             Vector2.TransformNormal(line.Direction, _camera.WorldToDeviceMatrix));
-        if (!deviceLine.TryClipToRectangle(PaddedDeviceBounds(screenStrokeWidth), out var start, out var end)) return;
+        if (!deviceLine.TryClipToRectangle(PaddedDeviceBounds(screenStrokeWidth), out var start, out var end))
+        {
+            return;
+        }
+
         SelectBatch(null, null);
         Line(start, end, color, screenStrokeWidth);
     }
@@ -134,14 +157,22 @@ public sealed partial class Renderer2D
         LineCap2D originCap = LineCap2D.Butt)
     {
         RequireFrame();
-        if (!ray.IsValid) throw new ArgumentException("The ray needs a valid direction.", nameof(ray));
+        if (!ray.IsValid)
+        {
+            throw new ArgumentException("The ray needs a valid direction.", nameof(ray));
+        }
+
         ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
         ValidateLineCap(originCap);
         var deviceOrigin = _camera.WorldToDevice(ray.Origin);
         var bounds = PaddedDeviceBounds(screenStrokeWidth);
         var deviceRay = new Ray2D(deviceOrigin,
             Vector2.TransformNormal(ray.Direction, _camera.WorldToDeviceMatrix));
-        if (!deviceRay.TryClipToRectangle(bounds, out var start, out var end)) return;
+        if (!deviceRay.TryClipToRectangle(bounds, out var start, out var end))
+        {
+            return;
+        }
+
         SelectBatch(null, null);
         Line(start, end, color, screenStrokeWidth, bounds.Contains(deviceOrigin) ? originCap : LineCap2D.Butt);
     }
@@ -184,14 +215,22 @@ public sealed partial class Renderer2D
     private static void ValidateShapeStyle(XnaColor? fillColor, XnaColor? outlineColor, float width)
     {
         if (fillColor is null && outlineColor is null)
+        {
             throw new ArgumentException("Provide a fill color, an outline color, or both.", nameof(fillColor));
-        if (outlineColor is not null) ArgGuard.ThrowIfNotFiniteOrNotPositive(width);
+        }
+
+        if (outlineColor is not null)
+        {
+            ArgGuard.ThrowIfNotFiniteOrNotPositive(width);
+        }
     }
 
     private static void ValidateLineCap(LineCap2D cap)
     {
         if (cap is < LineCap2D.Butt or > LineCap2D.Round)
+        {
             throw new ArgumentOutOfRangeException(nameof(cap));
+        }
     }
 
 }

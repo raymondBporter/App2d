@@ -7,10 +7,18 @@ public interface IPersonActionSet2D
     PersonActionState2D CaptureActionState() => default;
     bool IsChargingPrimary => false;
     SpellState2D CaptureSpellState() => default;
-    void SetSpellInput(bool castHeld, bool castPressed, bool healHeld, bool canHeal, bool canCast, float facing) { }
-    void CancelHealing() { }
-    void SetPrimaryInput(bool held, bool canCharge, bool released = false) { }
-    void InterruptPrimary() { }
+    void SetSpellInput(bool castHeld, bool castPressed, bool healHeld, bool canHeal, bool canCast, float facing)
+    {
+    }
+    void CancelHealing()
+    {
+    }
+    void SetPrimaryInput(bool held, bool canCharge, bool released = false)
+    {
+    }
+    void InterruptPrimary()
+    {
+    }
     bool ConsumeDownAttackBounce() => false;
     void BeginFrame(float deltaSeconds);
     void UpdateAfterPhysics(float deltaSeconds, float facing);

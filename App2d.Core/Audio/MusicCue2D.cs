@@ -8,16 +8,35 @@ public sealed class MusicCue2D
 {
     private static readonly JsonSerializerOptions Options = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
     public const int SampleRate = 44_100;
-    public string Title { get; }
-    public long LoopFrames { get; }
-    public int BarFrames { get; }
-    public ImmutableArray<string> StemPaths { get; }
-    public ImmutableDictionary<string, ImmutableArray<float>> Moods { get; }
+    public string Title
+    {
+        get;
+    }
+    public long LoopFrames
+    {
+        get;
+    }
+    public int BarFrames
+    {
+        get;
+    }
+    public ImmutableArray<string> StemPaths
+    {
+        get;
+    }
+    public ImmutableDictionary<string, ImmutableArray<float>> Moods
+    {
+        get;
+    }
 
     internal MusicCue2D(string title, long loopFrames, int barFrames, ImmutableArray<string> paths,
         ImmutableDictionary<string, ImmutableArray<float>> moods)
     {
-        Title = title; LoopFrames = loopFrames; BarFrames = barFrames; StemPaths = paths; Moods = moods;
+        Title = title;
+        LoopFrames = loopFrames;
+        BarFrames = barFrames;
+        StemPaths = paths;
+        Moods = moods;
     }
 
     public static MusicCue2D Load(string manifestPath)
@@ -35,7 +54,10 @@ public sealed class MusicCue2D
         var bar = SampleRate * 60d / data.Bpm * data.BeatsPerBar;
         var barFrames = checked((int)Math.Round(bar));
         if (Math.Abs(bar - barFrames) > .0001 || data.LoopEndFrame % barFrames != 0)
+        {
             throw new InvalidDataException("Music bars and loops must align to whole sample frames.");
+        }
+
         var directory = Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
         var ids = new HashSet<string>(StringComparer.Ordinal);
         var paths = ImmutableArray.CreateBuilder<string>(data.Stems.Length);
@@ -49,7 +71,11 @@ public sealed class MusicCue2D
             }
 
             var path = Path.Combine(directory, stem.File);
-            if (!File.Exists(path)) throw new FileNotFoundException("Music stem is missing.", path);
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException("Music stem is missing.", path);
+            }
+
             paths.Add(path);
         }
         var moods = ImmutableDictionary.CreateBuilder<string, ImmutableArray<float>>(StringComparer.Ordinal);

@@ -39,7 +39,9 @@ public static class TileRunCodec2D
     public static void Decode(ReadOnlySpan<byte> encoded, Span<TileKind2D> tiles)
     {
         if (encoded.Length % 2 != 0)
+        {
             ArgGuard.ThrowInvalid("Encoded tile runs must be whole [kind][count] pairs.", nameof(encoded));
+        }
 
         var written = 0;
         for (var pair = 0; pair < encoded.Length; pair += 2)
@@ -47,15 +49,22 @@ public static class TileRunCodec2D
             var kind = (TileKind2D)encoded[pair];
             int count = encoded[pair + 1];
             if (count == 0)
+            {
                 ArgGuard.ThrowInvalid("Encoded tile runs must have a positive count.", nameof(encoded));
+            }
+
             if (written + count > tiles.Length)
+            {
                 ArgGuard.ThrowOutOfRange(count, "Encoded tile runs overflow the destination.");
+            }
 
             tiles.Slice(written, count).Fill(kind);
             written += count;
         }
 
         if (written != tiles.Length)
+        {
             ArgGuard.ThrowOutOfRange(written, "Encoded tile runs do not fill the destination.");
+        }
     }
 }

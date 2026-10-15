@@ -11,7 +11,9 @@ public sealed class CompositeCollisionContactProvider2D(params IEnumerable<IColl
         foreach (var provider in providers)
         {
             if (provider.TryGetContact(first, second, out contact))
+            {
                 return true;
+            }
         }
 
         contact = default;

@@ -12,14 +12,28 @@ public sealed class PersonMoveSetTests
     [Fact]
     public void AnUpperBodyOverlayOwnsItsChannelsAndLeavesTheLegsToTheBase()
     {
-        var walk = Catalog.Animations["person-walk"]; var shot = Catalog.Animations["player-gun-shot"];
+        var walk = Catalog.Animations["person-walk"];
+        var shot = Catalog.Animations["player-gun-shot"];
         var layer = new PoseLayer(shot, .1, PersonLoadout.UpperBody);
-        var layered = PoseEvaluator.Sample(Person, walk, .3, true, new() { InPlace = true, Overlay = layer });
-        var legs = PoseEvaluator.Sample(Person, walk, .3, true, new() { InPlace = true });
-        var arms = PoseEvaluator.Sample(Person, shot, .1, false, new() { InPlace = true });
+        var layered = PoseEvaluator.Sample(Person, walk, .3, true, new()
+        {
+            InPlace = true,
+            Overlay = layer
+        });
+        var legs = PoseEvaluator.Sample(Person, walk, .3, true, new()
+        {
+            InPlace = true
+        });
+        var arms = PoseEvaluator.Sample(Person, shot, .1, false, new()
+        {
+            InPlace = true
+        });
         // Legs come from the walk exactly; the shot's hand sits where the shot puts it relative to its shoulder.
         foreach (var control in new[] { "hips", "left-foot", "right-foot", "left-knee", "right-knee" })
+        {
             TestModels.Near(legs.World(control), layered.World(control), 1e-5f, control);
+        }
+
         TestModels.Near(arms.World("right-hand") - arms.World("right-shoulder"), layered.World("right-hand") - layered.World("right-shoulder"), 1e-4f, "right hand");
         Assert.NotEqual(legs.World("right-hand"), layered.World("right-hand"));
     }
@@ -29,7 +43,11 @@ public sealed class PersonMoveSetTests
     {
         var walk = Catalog.Animations["person-walk"];
         var empty = new MotionClip { Id = "empty", Name = "Empty", Model = "person", Reference = new() { ["arm"] = 1 } };
-        var layered = PoseEvaluator.Sample(Person, walk, .3, true, new() { InPlace = true, Overlay = new(empty, 0, new HashSet<string> { "left-arm" }) });
+        var layered = PoseEvaluator.Sample(Person, walk, .3, true, new()
+        {
+            InPlace = true,
+            Overlay = new(empty, 0, new HashSet<string> { "left-arm" })
+        });
         var rest = Person.Rest["left-hand"] - Person.Rest["left-shoulder"];
         TestModels.Near(rest, layered.World("left-hand") - layered.World("left-shoulder"), 1e-4f, "left hand at rest from its shoulder");
     }
@@ -37,7 +55,9 @@ public sealed class PersonMoveSetTests
     [Fact]
     public void TheSwordIsInHandOnlyBetweenDrawAndSheathe()
     {
-        var draw = Catalog.Animations["player-sword-side-cut"]; var sheathe = Catalog.Animations["player-sword-sheathe"]; var idle = Catalog.Animations["player-idle"];
+        var draw = Catalog.Animations["player-sword-side-cut"];
+        var sheathe = Catalog.Animations["player-sword-sheathe"];
+        var idle = Catalog.Animations["player-idle"];
         static string SwordAt(MotionClip clip, float t, PersonGear gear = PersonGear.Sword)
         {
             var worn = PersonLoadout.Worn(clip, t, gear).ToArray();
@@ -62,7 +82,10 @@ public sealed class PersonMoveSetTests
             var clip = Catalog.Animations[id];
             var keys = clip.Tracks.Single(t => t.Kind == MotionClip.RotateKind && t.Target == "right-shoulder").Keys;
             for (var i = 1; i < keys.Count; i++)
+            {
                 Assert.InRange(MathF.Abs(keys[i].Angle - keys[i - 1].Angle), 0, MathF.PI);
+            }
+
             var time = clip.Markers.Single(m => m.Id == PersonLoadout.SheatheMarker).Time;
             var pose = new ActorPose(PoseEvaluator.Sample(Person, clip, time), Vector2.Zero, 1);
             var hand = pose.Socket(Person.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket));
@@ -70,7 +93,8 @@ public sealed class PersonMoveSetTests
             var sword = Catalog.Props[PersonLoadout.Sword];
             foreach (var point in new PuppetPoint[] { new(0, 0, 0), new(sword.Tip.X, 0, 0) })
             {
-                var a = ActorPose.PropPoint(hand, sword, point); var b = ActorPose.PropPoint(back, sword, point);
+                var a = ActorPose.PropPoint(hand, sword, point);
+                var b = ActorPose.PropPoint(back, sword, point);
                 Assert.InRange(Vector2.Distance(new(a.X, a.Y), new(b.X, b.Y)), 0, .01f);
             }
         }
@@ -79,17 +103,22 @@ public sealed class PersonMoveSetTests
     [Fact]
     public void BackViewMarkersMoveTheSwordAcrossTheBack()
     {
-        var on = Catalog.Animations["player-climb-on"]; var climb = Catalog.Animations["player-climb"]; var off = Catalog.Animations["player-climb-off"];
-        Assert.False(PersonLoadout.SeenFromBehind(on, 0)); Assert.True(PersonLoadout.SeenFromBehind(on, .2f));
+        var on = Catalog.Animations["player-climb-on"];
+        var climb = Catalog.Animations["player-climb"];
+        var off = Catalog.Animations["player-climb-off"];
+        Assert.False(PersonLoadout.SeenFromBehind(on, 0));
+        Assert.True(PersonLoadout.SeenFromBehind(on, .2f));
         Assert.True(PersonLoadout.SeenFromBehind(climb, .5f));
-        Assert.True(PersonLoadout.SeenFromBehind(off, .1f)); Assert.False(PersonLoadout.SeenFromBehind(off, .25f));
+        Assert.True(PersonLoadout.SeenFromBehind(off, .1f));
+        Assert.False(PersonLoadout.SeenFromBehind(off, .25f));
         Assert.Equal((PersonLoadout.Sword, PersonLoadout.BackViewSocket), Assert.Single(PersonLoadout.Worn(climb, .5f, PersonGear.Sword)));
     }
 
     [Fact]
     public void ContactHoldKeepsAPlantedFootWhileTheBodyMoves()
     {
-        var idle = Catalog.Animations["player-idle"]; var hold = new ContactHold();
+        var idle = Catalog.Animations["player-idle"];
+        var hold = new ContactHold();
         var first = hold.Evaluate(Person, idle, 0, true, Vector2.Zero, 1, default);
         var foot = first.World("left-foot");
         var later = hold.Evaluate(Person, idle, .5, true, new(.03f, 0), 1, default);
@@ -102,7 +131,8 @@ public sealed class PersonMoveSetTests
     public void ContactHoldCarriesPlantedFeetWithTheGround()
     {
         // A descending platform: the body drops with it, and held feet must drop too rather than stay at the old height.
-        var idle = Catalog.Animations["player-idle"]; var hold = new ContactHold();
+        var idle = Catalog.Animations["player-idle"];
+        var hold = new ContactHold();
         var foot = hold.Evaluate(Person, idle, 0, true, Vector2.Zero, 1, default).World("left-foot");
         var drop = new Vector3(.2f, -.4f, 0);
         hold.Shift(drop);

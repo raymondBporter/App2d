@@ -32,7 +32,9 @@ public static class Diameter2D
         for (var i = 0; i < vertices.Length; i++)
         {
             for (var j = i + 1; j < vertices.Length; j++)
+            {
                 squared = Math.Max(squared, Vector2d.DistanceSquared(vertices[i].ToVector2d(), vertices[j].ToVector2d()));
+            }
         }
 
         return (float)Math.Sqrt(squared);

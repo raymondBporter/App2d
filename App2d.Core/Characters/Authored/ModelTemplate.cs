@@ -17,31 +17,57 @@ public sealed class ModelTemplate
     public string Model { get; set; } = "";
     public Dictionary<string, string> Animations { get; set; } = [];
     /// <summary>A key in Animations to preview after creation. Null opens the rest pose.</summary>
-    public string? PreviewAnimation { get; set; }
+    public string? PreviewAnimation
+    {
+        get; set;
+    }
 
     public static ModelTemplate FromJson(string json)
     {
         var template = AuthoredAsset.Parse<ModelTemplate>(json, "model template");
-        template.Validate(); return template;
+        template.Validate();
+        return template;
     }
 
     public void Validate()
     {
         var owner = $"Model template '{Id}'";
-        if (Format != FormatId || Version != 1) throw new InvalidDataException($"{owner}: unsupported format/version.");
-        AuthoredAsset.RequireId(Id, "template id"); AuthoredAsset.RequireId(Model, $"{owner} model");
-        if (Id == "empty") throw new InvalidDataException($"{owner}: 'empty' is reserved for a blank model.");
-        if (string.IsNullOrWhiteSpace(Name) || Description is null) throw new InvalidDataException($"{owner}: a name and non-null description are required.");
-        if (Animations is null || Animations.Count > 256) throw new InvalidDataException($"{owner}: invalid animations collection.");
+        if (Format != FormatId || Version != 1)
+        {
+            throw new InvalidDataException($"{owner}: unsupported format/version.");
+        }
+
+        AuthoredAsset.RequireId(Id, "template id");
+        AuthoredAsset.RequireId(Model, $"{owner} model");
+        if (Id == "empty")
+        {
+            throw new InvalidDataException($"{owner}: 'empty' is reserved for a blank model.");
+        }
+
+        if (string.IsNullOrWhiteSpace(Name) || Description is null)
+        {
+            throw new InvalidDataException($"{owner}: a name and non-null description are required.");
+        }
+
+        if (Animations is null || Animations.Count > 256)
+        {
+            throw new InvalidDataException($"{owner}: invalid animations collection.");
+        }
+
         var sources = new HashSet<string>(StringComparer.Ordinal);
         foreach (var (suffix, source) in Animations)
         {
             AuthoredAsset.RequireId(suffix, $"{owner} animation suffix");
             AuthoredAsset.RequireId(source, $"{owner} animation '{suffix}'");
-            if (!sources.Add(source)) throw new InvalidDataException($"{owner}: animation '{source}' is included more than once.");
+            if (!sources.Add(source))
+            {
+                throw new InvalidDataException($"{owner}: animation '{source}' is included more than once.");
+            }
         }
         if (PreviewAnimation is not null && !Animations.ContainsKey(PreviewAnimation))
+        {
             throw new InvalidDataException($"{owner}: previewAnimation '{PreviewAnimation}' is not an animation suffix.");
+        }
     }
 
     /// <summary>Prepares and validates the whole bundle before the workspace adds any documents. Source objects stay untouched.</summary>
@@ -53,7 +79,9 @@ public sealed class ModelTemplate
         var source = modelOf(Model) ?? throw new InvalidDataException($"{owner}: missing source model '{Model}'.");
         var resolved = ResolvedModel.From(source);
         var model = CharacterModel.FromJson(source.ToJson());
-        model.Id = id; model.Name = name; model.StructureRevision = 1;
+        model.Id = id;
+        model.Name = name;
+        model.StructureRevision = 1;
         var remap = Animations.ToDictionary(a => a.Value, a => id + "-" + a.Key, StringComparer.Ordinal);
         var clips = new List<MotionClip>();
         foreach (var sourceId in Animations.Values)
@@ -62,8 +90,10 @@ public sealed class ModelTemplate
             // Match the editor's draft rules; the new bundle gets one consistent revision after compatibility is checked.
             original.Validate(resolved, exactRevision: false);
             var clip = MotionClip.FromJson(original.ToJson());
-            clip.Id = remap[sourceId]; clip.Name = name + " / " + original.Name;
-            clip.Model = id; clip.StructureRevision = model.StructureRevision;
+            clip.Id = remap[sourceId];
+            clip.Name = name + " / " + original.Name;
+            clip.Model = id;
+            clip.StructureRevision = model.StructureRevision;
             clips.Add(clip);
         }
         foreach (var set in model.MotionSets)
@@ -77,7 +107,11 @@ public sealed class ModelTemplate
         }
         model.Validate();
         var instance = ResolvedModel.From(model);
-        foreach (var clip in clips) clip.Validate(instance);
+        foreach (var clip in clips)
+        {
+            clip.Validate(instance);
+        }
+
         return new(model, clips, PreviewAnimation is null ? null : id + "-" + PreviewAnimation);
     }
 }
@@ -95,13 +129,20 @@ public sealed class ModelTemplateCatalog
     {
         var catalog = new ModelTemplateCatalog();
         var directory = Path.Combine(authoredRoot, "templates");
-        if (!Directory.Exists(directory)) return catalog;
+        if (!Directory.Exists(directory))
+        {
+            return catalog;
+        }
+
         foreach (var path in Directory.EnumerateFiles(directory, "*.json").Order(StringComparer.Ordinal))
         {
             try
             {
                 var template = ModelTemplate.FromJson(File.ReadAllText(path));
-                if (!catalog._entries.TryAdd(template.Id, template)) throw new InvalidDataException($"Duplicate template id '{template.Id}'.");
+                if (!catalog._entries.TryAdd(template.Id, template))
+                {
+                    throw new InvalidDataException($"Duplicate template id '{template.Id}'.");
+                }
             }
             catch (Exception error) when (error is InvalidDataException or JsonException or IOException or UnauthorizedAccessException or ArgumentException)
             {

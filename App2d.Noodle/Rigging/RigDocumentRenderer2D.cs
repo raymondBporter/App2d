@@ -16,9 +16,14 @@ internal static class RigDocumentRenderer2D
     public static void Render(Renderer2D renderer, RigDocument2D document, object? selection)
     {
         foreach (var shape in document.Shapes)
+        {
             DrawShape(renderer, document, shape, ReferenceEquals(shape, selection));
+        }
+
         foreach (var bone in document.Bones)
+        {
             DrawBone(renderer, document, bone, ReferenceEquals(bone, selection));
+        }
     }
 
     private static void DrawShape(
@@ -32,7 +37,9 @@ internal static class RigDocumentRenderer2D
         var color = XnaColor.FromNonPremultiplied(
             drawingColor.R, drawingColor.G, drawingColor.B, drawingColor.A);
         if (shape.Purpose == RigShapePurpose.Collision)
+        {
             color = new XnaColor(CollisionColor.R, CollisionColor.G, CollisionColor.B, (byte)60);
+        }
 
         var item = new WorldObject2D(geometry, new SolidColorShader(color));
         var boneFrame = RigDocument2D.GetWorldFrame(shape.AttachedBone);
@@ -41,9 +48,14 @@ internal static class RigDocumentRenderer2D
         renderer.Draw(item);
 
         if (shape.Purpose != RigShapePurpose.Visual)
+        {
             renderer.DrawShapeOutline(item, CollisionColor, 2f);
+        }
+
         if (isSelected)
+        {
             renderer.DrawShapeOutline(item, SelectedColor, 4f);
+        }
     }
 
     private static void DrawBone(

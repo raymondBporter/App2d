@@ -49,7 +49,10 @@ public sealed class WorldZoneTests
             File.WriteAllText(path, "{\"version\":1,\"zones\":[" + entry.Replace("\"maxX\":10", "\"maxX\":0") + "]}");
             Assert.Throws<InvalidDataException>(() => WorldZoneFile2D.Load(path));
         }
-        finally { File.Delete(path); }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 
     [Fact]

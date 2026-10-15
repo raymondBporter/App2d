@@ -95,10 +95,17 @@ public static class Intersection2D
             for (var i = 0; i < perimeter.Count; i++)
             {
                 var axis = (perimeter[(i + 1) % perimeter.Count] - perimeter[i]).PerpCcw;
-                if (axis.LengthSquared() < 1e-12f) continue;
+                if (axis.LengthSquared() < 1e-12f)
+                {
+                    continue;
+                }
+
                 var a = Projection2D.Polygon(first, axis, firstOffset);
                 var b = Projection2D.Polygon(second, axis, secondOffset);
-                if (a.Max < b.Min || b.Max < a.Min) return true;
+                if (a.Max < b.Min || b.Max < a.Min)
+                {
+                    return true;
+                }
             }
             return false;
         }
@@ -153,7 +160,11 @@ public static class Intersection2D
 
     private static bool TryClipLinearToRectangle<TRect>(Vector2 origin, Vector2 direction, bool valid, bool forwardOnly, TRect rectangle, out Vector2 start, out Vector2 end) where TRect : IRect2D
     {
-        if (!valid) throw new ArgumentException("The line or ray needs a valid direction.", nameof(direction));
+        if (!valid)
+        {
+            throw new ArgumentException("The line or ray needs a valid direction.", nameof(direction));
+        }
+
         ArgGuard.ThrowIfNull(rectangle);
         ArgGuard.ThrowIf(!rectangle.IsFinite || rectangle.Min.X > rectangle.Max.X || rectangle.Min.Y > rectangle.Max.Y, "Rectangle bounds must be finite and ordered.", nameof(rectangle));
 
@@ -172,7 +183,11 @@ public static class Intersection2D
 
     private static bool ClipAxis(double origin, double direction, double low, double high, ref double min, ref double max)
     {
-        if (direction == 0d) return origin >= low && origin <= high;
+        if (direction == 0d)
+        {
+            return origin >= low && origin <= high;
+        }
+
         var first = (low - origin) / direction;
         var second = (high - origin) / direction;
         min = Math.Max(min, Math.Min(first, second));
@@ -191,10 +206,19 @@ public static class Intersection2D
         var firstNumerator = delta.Cross(secondAxis);
         var secondNumerator = delta.Cross(firstAxis);
         if (determinant != 0)
+        {
             return (!firstIsRay || firstNumerator / determinant >= 0) && (!secondIsRay || secondNumerator / determinant >= 0);
+        }
 
-        if (secondNumerator != 0) return false; // Parallel, distinct supporting lines.
-        if (!firstIsRay || !secondIsRay) return true;
+        if (secondNumerator != 0)
+        {
+            return false; // Parallel, distinct supporting lines.
+        }
+
+        if (!firstIsRay || !secondIsRay)
+        {
+            return true;
+        }
         // Collinear rays overlap if they face the same way or face toward one another.
         var sameDirection = firstAxis.Dot(secondAxis) > 0;
         return sameDirection || delta.Dot(firstAxis) >= 0;
@@ -202,7 +226,11 @@ public static class Intersection2D
 
     private static bool UpdateSlab(float start, float delta, float minimum, float maximum, Vector2 minimumNormal, Vector2 maximumNormal, ref float entryTime, ref float exitTime, ref Vector2 entryNormal)
     {
-        if (MathF.Abs(delta) <= SweepParallelEpsilon) return start >= minimum && start <= maximum;
+        if (MathF.Abs(delta) <= SweepParallelEpsilon)
+        {
+            return start >= minimum && start <= maximum;
+        }
+
         var firstTime = (minimum - start) / delta;
         var secondTime = (maximum - start) / delta;
         var firstNormal = minimumNormal;
@@ -234,7 +262,11 @@ public static class Intersection2D
             nearestDistance = point.Y - minimum.Y;
             nearestNormal = -Vector2.UnitY;
         }
-        if (maximum.Y - point.Y < nearestDistance) nearestNormal = Vector2.UnitY;
+        if (maximum.Y - point.Y < nearestDistance)
+        {
+            nearestNormal = Vector2.UnitY;
+        }
+
         return nearestNormal;
     }
 }

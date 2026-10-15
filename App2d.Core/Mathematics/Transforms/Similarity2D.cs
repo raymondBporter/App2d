@@ -22,16 +22,28 @@ public readonly record struct Similarity2D
     public static Similarity2D Identity { get; } = new(Vector2.UnitX, Vector2.UnitY, Vector2.Zero, 1f);
 
     /// <summary>The image of local +X, of length <see cref="Scale"/>.</summary>
-    public Vector2 XAxis { get; }
+    public Vector2 XAxis
+    {
+        get;
+    }
 
     /// <summary>The image of local +Y, of length <see cref="Scale"/>.</summary>
-    public Vector2 YAxis { get; }
+    public Vector2 YAxis
+    {
+        get;
+    }
 
     /// <summary>Where the local origin lands.</summary>
-    public Vector2 Translation { get; }
+    public Vector2 Translation
+    {
+        get;
+    }
 
     /// <summary>The uniform scale factor.</summary>
-    public float Scale { get; }
+    public float Scale
+    {
+        get;
+    }
 
     /// <summary>True when both axes, translation and scale are finite. This does not require a nonzero scale.</summary>
     public bool IsFinite => XAxis.IsFinite() && YAxis.IsFinite() && Translation.IsFinite() && float.IsFinite(Scale);
@@ -116,7 +128,12 @@ public readonly record struct Similarity2D
     {
         var mirrored = IsMirrored;
         var forward = mirrored ? -XAxis : XAxis;
-        return new() { Position = Translation, Rotation = MathF.Atan2(forward.Y, forward.X), Scale = new(mirrored ? -Scale : Scale, Scale) };
+        return new()
+        {
+            Position = Translation,
+            Rotation = MathF.Atan2(forward.Y, forward.X),
+            Scale = new(mirrored ? -Scale : Scale, Scale)
+        };
     }
 
     /// <summary>Maps a local point into world space.</summary>

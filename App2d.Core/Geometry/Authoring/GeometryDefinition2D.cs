@@ -32,10 +32,17 @@ namespace App2d.Core.Geometry.Authoring;
 [JsonDerivedType(typeof(BSplineCurveDefinition2D), CurveKinds2D.BSpline)]
 public abstract record GeometryDefinition2D
 {
-    [JsonIgnore] public abstract string Kind { get; }
+    [JsonIgnore]
+    public abstract string Kind
+    {
+        get;
+    }
 
     /// <summary>Geometry kinds with a drawable curve or closed outline.</summary>
-    public static IReadOnlyList<string> DrawableKinds { get; } =
+    public static IReadOnlyList<string> DrawableKinds
+    {
+        get;
+    } =
         [.. ShapeKinds2D.All.Where(kind => kind is not ShapeKinds2D.HalfSpace and not ShapeKinds2D.Composite), .. CurveKinds2D.All];
 
     /// <summary>A small editable example of a geometry kind. Drawing clients supply placement and material.</summary>
@@ -52,7 +59,10 @@ public abstract record GeometryDefinition2D
         _ => new Ellipse2D.Builder { Center = Vector2.Zero, Radii = new(.5f, .5f) }.WithKind(kind)
     };
 
-    public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
+    public static JsonSerializerOptions JsonOptions
+    {
+        get;
+    } = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,

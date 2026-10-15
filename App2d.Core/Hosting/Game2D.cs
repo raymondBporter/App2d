@@ -29,7 +29,10 @@ public abstract class Game2D : IDisposable
     }
 
     public Camera2D Camera { get; } = new();
-    public PhysicsWorld2D? PhysicsWorld { get; private set; }
+    public PhysicsWorld2D? PhysicsWorld
+    {
+        get; private set;
+    }
     public Scene2D Scene { get; } = [];
     public TextureCache2D Textures { get; } = new(AssetPaths.Current.Runtime);
     public DeveloperConsole DeveloperConsole { get; } = new();
@@ -37,15 +40,23 @@ public abstract class Game2D : IDisposable
     protected virtual XnaColor BackgroundColor => new(24, 27, 36);
     public virtual IGameToolUi2D? ToolUi => null;
 
-    public virtual void Initialize() { }
+    public virtual void Initialize()
+    {
+    }
     public abstract void Update(FrameTime time, InputState input);
-    public virtual void AdvancePresentation(FrameTime time) { }
+    public virtual void AdvancePresentation(FrameTime time)
+    {
+    }
 
     /// <summary>Called between BeginFrame and EndFrame. Game graphics, then world debug, then UI.</summary>
     public void RenderFrame(Renderer2D renderer, FrameTime time)
     {
         renderer.Clear(_drawGraphics ? BackgroundColor : new XnaColor(24, 27, 36));
-        if (_drawGraphics) Render(renderer);
+        if (_drawGraphics)
+        {
+            Render(renderer);
+        }
+
         RenderWorldDebug(renderer);
         RenderUI(renderer, time);
     }
@@ -63,7 +74,10 @@ public abstract class Game2D : IDisposable
     {
         ArgGuard.ThrowIfNull(physicsWorld);
         if (PhysicsWorld is not null && !ReferenceEquals(PhysicsWorld, physicsWorld))
+        {
             throw new InvalidOperationException("A game can attach only one physics world.");
+        }
+
         PhysicsWorld = physicsWorld;
     }
 
@@ -71,13 +85,18 @@ public abstract class Game2D : IDisposable
     {
         ArgGuard.ThrowIfNull(provider);
         if (!_debugAttackShapeProviders.Contains(provider))
+        {
             _debugAttackShapeProviders.Add(provider);
+        }
     }
 
     /// <summary>World-space diagnostics over the game. Call base to include the grid and collision toggles.</summary>
     public virtual void RenderWorldDebug(Renderer2D renderer)
     {
-        if (_drawGrid) renderer.DrawGrid();
+        if (_drawGrid)
+        {
+            renderer.DrawGrid();
+        }
 
         if (_drawCollisionShapes)
         {
@@ -88,7 +107,9 @@ public abstract class Game2D : IDisposable
                 foreach (var body in physicsWorld.Bodies)
                 {
                     if (body.IsCollider)
+                    {
                         renderer.DrawShapeOverlay(body.WorldObject, fillColor, outlineColor, 2f);
+                    }
                 }
             }
 
@@ -97,7 +118,9 @@ public abstract class Game2D : IDisposable
             foreach (var provider in _debugAttackShapeProviders)
             {
                 foreach (var attackShape in provider())
+                {
                     renderer.DrawShapeOverlay(attackShape, attackFillColor, attackOutlineColor, 2f);
+                }
             }
         }
     }
@@ -106,7 +129,9 @@ public abstract class Game2D : IDisposable
     public virtual void RenderUI(Renderer2D renderer, FrameTime time)
     {
         if (!_drawFps)
+        {
             return;
+        }
 
         if (time.DeltaSeconds > 0f)
         {
@@ -116,7 +141,9 @@ public abstract class Game2D : IDisposable
         }
 
         if (_smoothedFrameSeconds <= 0f)
+        {
             return;
+        }
 
         var text = $"{1f / _smoothedFrameSeconds:0.0} FPS   {_smoothedFrameSeconds * 1000f:0.0} ms";
         renderer.DrawScreenLabel(

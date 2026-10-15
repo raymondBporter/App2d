@@ -40,7 +40,9 @@ public sealed class ViewportTerrainSource2DTests
                 var min = map.Origin + new Vector2(x, y) * map.ChunkSize * map.TileSize;
                 var bounds = new Rect2D(min, min + new Vector2(map.ChunkSize * map.TileSize));
                 if (bounds.Intersects(camera.VisibleWorldBounds))
+                {
                     Assert.Contains(terrain, c => c.Chunk == new TileChunk2D(x, y));
+                }
             }
         }
     }

@@ -12,8 +12,14 @@ public sealed partial class HalfSpace2D
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ShapeBuilder2D
     {
-        public required Vector2 Normal { get; init; }
-        public required float Offset { get; init; }
+        public required Vector2 Normal
+        {
+            get; init;
+        }
+        public required float Offset
+        {
+            get; init;
+        }
         [JsonIgnore] public override string Kind => ShapeKinds2D.HalfSpace;
         public override void Validate()
         {
@@ -38,7 +44,11 @@ public sealed partial class HalfSpace2D
             ArgGuard.ThrowIfNotFiniteOrZero(outwardNormal);
             var wideNormal = outwardNormal.ToVector2d();
             var normal = (wideNormal / wideNormal.Length()).ToVector2();
-            return new() { Normal = normal, Offset = (float)pointOnBoundary.ToVector2d().Dot(normal.ToVector2d()) };
+            return new()
+            {
+                Normal = normal,
+                Offset = (float)pointOnBoundary.ToVector2d().Dot(normal.ToVector2d())
+            };
         }
         public static HalfSpace2D CreateFromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal) => FromPoint(pointOnBoundary, outwardNormal).Build();
     }

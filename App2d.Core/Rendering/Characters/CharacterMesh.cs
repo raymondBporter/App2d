@@ -30,13 +30,17 @@ public sealed class CharacterMesh(int initialCapacity = 32768)
 
     public void Polygon(IReadOnlyList<Vector3> points, Color? fill, Color? ink, float width)
     {
-        if (fill is { } color) _geometry.TriangleFan(points, color);
+        if (fill is { } color)
+        {
+            _geometry.TriangleFan(points, color);
+        }
+
         if (ink is { } outline)
         {
-            for (var index = 0; index < points.Count; index++)
+            foreach (var (a, b) in MeshTopology.Edges(points.Count))
             {
-                _geometry.Line(points[index] - new Vector3(0f, 0f, .0005f),
-                    points[(index + 1) % points.Count] - new Vector3(0f, 0f, .0005f), width, outline);
+                _geometry.Line(points[a] - new Vector3(0f, 0f, .0005f),
+                    points[b] - new Vector3(0f, 0f, .0005f), width, outline);
             }
         }
     }

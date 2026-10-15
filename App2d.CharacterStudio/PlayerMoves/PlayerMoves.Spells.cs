@@ -23,9 +23,15 @@ internal static partial class PlayerMoves
         var person = CharacterModel.FromJson(File.ReadAllText(Path.Combine(root, "models", "person.json")));
         var reference = CharacterModel.FromJson(person.ToJson());
         var study = PersonTemplate.StudyReference();
-        foreach (var control in reference.Controls) control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
+        foreach (var control in reference.Controls)
+        {
+            control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
+        }
+
         var model = ResolvedModel.From(reference);
         foreach (var clip in new[] { GunCharge(model), HealGather(model) })
+        {
             clip.Save(Path.Combine(root, "animations", clip.Id + ".json"));
+        }
     }
 }

@@ -36,7 +36,10 @@ public sealed class PersonLadderPresentationTests
             VelocityIterations = 2
         };
         for (var y = 1; y <= 20; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Ladder);
+        }
+
         _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
             new Vector2(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
             2u, 1u, CombatFaction2D.Player, tileMap: _map);
@@ -89,7 +92,12 @@ public sealed class PersonLadderPresentationTests
         {
             _person.BeginFrame(Dt);
             _person.ApplyCommand(new PersonCommand2D
-            { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash }, Dt);
+            {
+                MoveX = move,
+                ClimbY = climb,
+                JumpHeld = jump || jumpOff,
+                DashHeld = dash
+            }, Dt);
             _physics.Step(Dt);
             _person.UpdateAfterPhysics(Dt);
         }

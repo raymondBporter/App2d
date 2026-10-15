@@ -17,7 +17,10 @@ public readonly record struct EntityId2D
         Value = value;
     }
 
-    public long Value { get; }
+    public long Value
+    {
+        get;
+    }
     public bool IsValid => Value > 0;
     public static EntityId2D None => default;
 

@@ -10,8 +10,14 @@ namespace App2d.Core.Geometry.Primitives;
 public interface IRect2D
 {
     /// <summary>The lower-left corner.</summary>
-    Vector2 Min { get; }
+    Vector2 Min
+    {
+        get;
+    }
 
     /// <summary>The upper-right corner.</summary>
-    Vector2 Max { get; }
+    Vector2 Max
+    {
+        get;
+    }
 }

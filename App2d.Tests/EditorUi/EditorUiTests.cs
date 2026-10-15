@@ -97,7 +97,8 @@ public sealed class EditorUiTests
         using var surface = new InputSurface();
         using var platform = new WinFormsImGuiPlatform(surface);
         surface.GainFocus();
-        surface.PressMouse(); surface.ReleaseMouse();
+        surface.PressMouse();
+        surface.ReleaseMouse();
         context.Draw(() => Assert.True(ImGui.IsMouseClicked(ImGuiMouseButton.Left)), platform);
         context.Draw(() => Assert.True(ImGui.IsMouseReleased(ImGuiMouseButton.Left)), platform);
     }
@@ -109,13 +110,22 @@ public sealed class EditorUiTests
         using var surface = new InputSurface();
         using var platform = new WinFormsImGuiPlatform(surface);
         surface.GainFocus();
-        surface.PressKey(Keys.A | Keys.Control); surface.PressMouse();
+        surface.PressKey(Keys.A | Keys.Control);
+        surface.PressMouse();
         // ImGui can spread keyboard and mouse transitions over consecutive frames.
         context.Draw(() => { }, platform);
-        context.Draw(() => { Assert.True(ImGui.GetIO().KeyCtrl); Assert.True(ImGui.IsMouseDown(ImGuiMouseButton.Left)); }, platform);
+        context.Draw(() =>
+        {
+            Assert.True(ImGui.GetIO().KeyCtrl);
+            Assert.True(ImGui.IsMouseDown(ImGuiMouseButton.Left));
+        }, platform);
         surface.LoseFocus();
         context.Draw(() => { }, platform);
-        context.Draw(() => { Assert.False(ImGui.GetIO().KeyCtrl); Assert.False(ImGui.IsMouseDown(ImGuiMouseButton.Left)); }, platform);
+        context.Draw(() =>
+        {
+            Assert.False(ImGui.GetIO().KeyCtrl);
+            Assert.False(ImGui.IsMouseDown(ImGuiMouseButton.Left));
+        }, platform);
     }
 
     [Fact]
@@ -124,7 +134,11 @@ public sealed class EditorUiTests
         using var context = new UiContext();
         var model = new ValidatedTextModel();
         var inspector = new PropertyInspector();
-        context.Draw(() => { ImGui.SetKeyboardFocusHere(); inspector.Draw(model); });
+        context.Draw(() =>
+        {
+            ImGui.SetKeyboardFocusHere();
+            inspector.Draw(model);
+        });
         context.Draw(() => inspector.Draw(model));
 
         ReplaceText("bad");
@@ -140,9 +154,11 @@ public sealed class EditorUiTests
         void ReplaceText(string text)
         {
             var io = ImGui.GetIO();
-            io.AddKeyEvent(ImGuiKey.ModCtrl, true); io.AddKeyEvent(ImGuiKey.A, true);
+            io.AddKeyEvent(ImGuiKey.ModCtrl, true);
+            io.AddKeyEvent(ImGuiKey.A, true);
             context.Draw(() => inspector.Draw(model));
-            io.AddKeyEvent(ImGuiKey.A, false); io.AddKeyEvent(ImGuiKey.ModCtrl, false);
+            io.AddKeyEvent(ImGuiKey.A, false);
+            io.AddKeyEvent(ImGuiKey.ModCtrl, false);
             context.Draw(() => inspector.Draw(model));
             io.AddInputCharactersUTF8(text);
             context.Draw(() => inspector.Draw(model));
@@ -156,7 +172,15 @@ public sealed class EditorUiTests
         public string Value
         {
             get => _value;
-            set { if (value == "bad") throw new FormatException("Invalid value"); _value = value; }
+            set
+            {
+                if (value == "bad")
+                {
+                    throw new FormatException("Invalid value");
+                }
+
+                _value = value;
+            }
         }
     }
 
@@ -178,7 +202,8 @@ public sealed class EditorUiTests
         {
             ImGui.SetCurrentContext(_context);
             var io = ImGui.GetIO();
-            io.DisplaySize = new(800, 600); io.DeltaTime = 1f / 60;
+            io.DisplaySize = new(800, 600);
+            io.DeltaTime = 1f / 60;
             io.Fonts.AddFontDefault();
             io.Fonts.GetTexDataAsRGBA32(out nint _, out _, out _, out _);
         }

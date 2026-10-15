@@ -21,19 +21,31 @@ public static class GiantTreeFile2D
     public static ImmutableArray<GiantTree2D> Load(string path, IChunkedTileMap2D map)
     {
         ArgGuard.ThrowIfNull(map);
-        if (!File.Exists(path)) return [];
+        if (!File.Exists(path))
+        {
+            return [];
+        }
+
         try
         {
             var file = JsonSerializer.Deserialize<TreeFile>(File.ReadAllText(path), Options)
                 ?? throw new InvalidDataException("Tree document is null.");
-            if (file.Version != 1 || file.Trees is null) throw new InvalidDataException("Expected tree format version 1.");
+            if (file.Version != 1 || file.Trees is null)
+            {
+                throw new InvalidDataException("Expected tree format version 1.");
+            }
+
             var length = WorldRange(file.BranchLengthTiles, map.TileSize, "branchLengthTiles");
             var gap = WorldRange(file.BranchGapTiles, map.TileSize, "branchGapTiles");
             var foliage = WorldRange(file.FoliageRadiusTiles, map.TileSize, "foliageRadiusTiles");
             var trees = ImmutableArray.CreateBuilder<GiantTree2D>(file.Trees.Length);
             foreach (var entry in file.Trees)
             {
-                if (entry is null) throw new InvalidDataException("A tree entry cannot be null.");
+                if (entry is null)
+                {
+                    throw new InvalidDataException("A tree entry cannot be null.");
+                }
+
                 ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(entry.XTiles, 0f, map.Width - 1f, "xTiles");
                 var ground = entry.RootYTiles ?? TileGroundHeights2D.AtColumn(map, (int)entry.XTiles);
                 ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(ground, 0f, map.Height, "rootYTiles");
@@ -58,7 +70,11 @@ public static class GiantTreeFile2D
 
     private static Interval<float> WorldRange(float[]? values, float tileSize, string name)
     {
-        if (values is not { Length: 2 }) throw new InvalidDataException($"{name} must be [minimum, maximum].");
+        if (values is not { Length: 2 })
+        {
+            throw new InvalidDataException($"{name} must be [minimum, maximum].");
+        }
+
         var range = new Interval<float>(values[0] * tileSize, values[1] * tileSize);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(range.Min, name);
         ArgGuard.ThrowIfNotFiniteOrLessThan(range.Max, range.Min, name);

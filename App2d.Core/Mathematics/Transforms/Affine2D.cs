@@ -15,19 +15,30 @@ public sealed record Affine2D
     private Matrix3x2 _matrix = Matrix3x2.Identity;
     private int _matrixVersion = -1;
 
-    public Affine2D() { }
+    public Affine2D()
+    {
+    }
 
     // A value copy owns its cache and notifications; it never inherits another owner's subscriptions.
     private Affine2D(Affine2D other)
     {
-        _x = other._x; _y = other._y; _rotation = other._rotation;
-        _scaleX = other._scaleX; _scaleY = other._scaleY;
-        _shearX = other._shearX; _shearY = other._shearY;
-        _matrix = other.Matrix; _matrixVersion = Version;
+        _x = other._x;
+        _y = other._y;
+        _rotation = other._rotation;
+        _scaleX = other._scaleX;
+        _scaleY = other._scaleY;
+        _shearX = other._shearX;
+        _shearY = other._shearY;
+        _matrix = other.Matrix;
+        _matrixVersion = Version;
     }
 
     public event Action? Changed;
-    [JsonIgnore] public int Version { get; private set; }
+    [JsonIgnore]
+    public int Version
+    {
+        get; private set;
+    }
     public static Affine2D Identity => new();
 
     /// <summary>True when all seven authored channels are finite. Check Matrix.IsFinite() for the evaluated matrix.</summary>
@@ -35,15 +46,36 @@ public sealed record Affine2D
     public bool IsFinite => Position.IsFinite() && Scale.IsFinite() && float.IsFinite(Rotation) &&
         float.IsFinite(ShearX) && float.IsFinite(ShearY);
 
-    public float X { get => _x; set => Set(ref _x, value); }
-    public float Y { get => _y; set => Set(ref _y, value); }
-    public float Rotation { get => _rotation; set => Set(ref _rotation, value); }
-    public float ScaleX { get => _scaleX; set => Set(ref _scaleX, value); }
-    public float ScaleY { get => _scaleY; set => Set(ref _scaleY, value); }
+    public float X
+    {
+        get => _x; set => Set(ref _x, value);
+    }
+    public float Y
+    {
+        get => _y; set => Set(ref _y, value);
+    }
+    public float Rotation
+    {
+        get => _rotation; set => Set(ref _rotation, value);
+    }
+    public float ScaleX
+    {
+        get => _scaleX; set => Set(ref _scaleX, value);
+    }
+    public float ScaleY
+    {
+        get => _scaleY; set => Set(ref _scaleY, value);
+    }
     /// <summary>Additional angle of the local +X axis.</summary>
-    public float ShearX { get => _shearX; set => Set(ref _shearX, value); }
+    public float ShearX
+    {
+        get => _shearX; set => Set(ref _shearX, value);
+    }
     /// <summary>Additional angle of the local +Y axis.</summary>
-    public float ShearY { get => _shearY; set => Set(ref _shearY, value); }
+    public float ShearY
+    {
+        get => _shearY; set => Set(ref _shearY, value);
+    }
 
     [JsonIgnore]
     public Vector2 Position
@@ -51,8 +83,14 @@ public sealed record Affine2D
         get => new(X, Y);
         set
         {
-            if (_x.Equals(value.X) && _y.Equals(value.Y)) return;
-            _x = value.X; _y = value.Y; NotifyChanged();
+            if (_x.Equals(value.X) && _y.Equals(value.Y))
+            {
+                return;
+            }
+
+            _x = value.X;
+            _y = value.Y;
+            NotifyChanged();
         }
     }
 
@@ -62,8 +100,14 @@ public sealed record Affine2D
         get => new(ScaleX, ScaleY);
         set
         {
-            if (_scaleX.Equals(value.X) && _scaleY.Equals(value.Y)) return;
-            _scaleX = value.X; _scaleY = value.Y; NotifyChanged();
+            if (_scaleX.Equals(value.X) && _scaleY.Equals(value.Y))
+            {
+                return;
+            }
+
+            _scaleX = value.X;
+            _scaleY = value.Y;
+            NotifyChanged();
         }
     }
 
@@ -73,7 +117,11 @@ public sealed record Affine2D
     {
         get
         {
-            if (_matrixVersion == Version) return _matrix;
+            if (_matrixVersion == Version)
+            {
+                return _matrix;
+            }
+
             _matrix = ShearX == 0 && ShearY == 0
                 ? Matrix3x2.CreateScale(Scale) * Matrix3x2.CreateRotation(Rotation) * Matrix3x2.CreateTranslation(Position)
                 : new(MathF.Cos(Rotation + ShearX) * ScaleX, MathF.Sin(Rotation + ShearX) * ScaleX,
@@ -99,10 +147,17 @@ public sealed record Affine2D
     {
         inverse = null;
         var matrix = Matrix;
-        if (!matrix.IsFinite()) return false;
+        if (!matrix.IsFinite())
+        {
+            return false;
+        }
         // Double products keep finite large/small scales from overflowing/underflowing the determinant.
         var det = new Vector2d(matrix.M11, matrix.M12).Cross(new(matrix.M21, matrix.M22));
-        if (det == 0) return false;
+        if (det == 0)
+        {
+            return false;
+        }
+
         var result = new Matrix3x2((float)(matrix.M22 / det), (float)(-matrix.M12 / det),
             (float)(-matrix.M21 / det), (float)(matrix.M11 / det),
             (float)(((double)matrix.M21 * matrix.M32 - (double)matrix.M22 * matrix.M31) / det),
@@ -114,16 +169,27 @@ public sealed record Affine2D
     public void CopyFrom(Affine2D other)
     {
         ArgumentNullException.ThrowIfNull(other);
-        if (Equals(other)) return;
-        _x = other._x; _y = other._y; _rotation = other._rotation;
-        _scaleX = other._scaleX; _scaleY = other._scaleY;
-        _shearX = other._shearX; _shearY = other._shearY;
+        if (Equals(other))
+        {
+            return;
+        }
+
+        _x = other._x;
+        _y = other._y;
+        _rotation = other._rotation;
+        _scaleX = other._scaleX;
+        _scaleY = other._scaleY;
+        _shearX = other._shearX;
+        _shearY = other._shearY;
         NotifyChanged(other.Matrix);
     }
 
     public void Validate(string field)
     {
-        if (!IsFinite) throw new InvalidDataException($"{field}: transform values must be finite.");
+        if (!IsFinite)
+        {
+            throw new InvalidDataException($"{field}: transform values must be finite.");
+        }
     }
 
     /// <summary>Decomposes a matrix, including singular matrices, fixing shearX at zero.</summary>
@@ -133,10 +199,18 @@ public sealed record Affine2D
     public static bool TryFromMatrix(Matrix3x2 matrix, [NotNullWhen(true)] out Affine2D? transform)
     {
         transform = null;
-        if (!matrix.IsFinite()) return false;
+        if (!matrix.IsFinite())
+        {
+            return false;
+        }
+
         var scaleX = Math.Sqrt((double)matrix.M11 * matrix.M11 + (double)matrix.M12 * matrix.M12);
         var scaleY = Math.Sqrt((double)matrix.M21 * matrix.M21 + (double)matrix.M22 * matrix.M22);
-        if (scaleX > float.MaxValue || scaleY > float.MaxValue) return false;
+        if (scaleX > float.MaxValue || scaleY > float.MaxValue)
+        {
+            return false;
+        }
+
         var rotation = MathF.Atan2(matrix.M12, matrix.M11);
         transform = new()
         {
@@ -162,13 +236,22 @@ public sealed record Affine2D
 
     private void Set(ref float channel, float value)
     {
-        if (channel.Equals(value)) return;
-        channel = value; NotifyChanged();
+        if (channel.Equals(value))
+        {
+            return;
+        }
+
+        channel = value;
+        NotifyChanged();
     }
     private void NotifyChanged(Matrix3x2? matrix = null)
     {
         Version++;
-        if (matrix is { } value) { _matrix = value; _matrixVersion = Version; }
+        if (matrix is { } value)
+        {
+            _matrix = value;
+            _matrixVersion = Version;
+        }
         Changed?.Invoke();
     }
 }

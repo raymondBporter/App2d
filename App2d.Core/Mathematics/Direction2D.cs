@@ -17,27 +17,46 @@ public readonly record struct Direction2D
         Vector = (wide / wide.Length()).ToVector2();
     }
 
-    public Vector2 Vector { get; }
+    public Vector2 Vector
+    {
+        get;
+    }
     public bool IsValid => Vector != Vector2.Zero;
 
     public float AngleRadians
     {
-        get { Validate(); return Polar2D.AngleOf(Vector); }
+        get
+        {
+            Validate();
+            return Polar2D.AngleOf(Vector);
+        }
     }
 
     public Direction2D PerpCcw
     {
-        get { Validate(); return new(new(-Vector.Y, Vector.X)); }
+        get
+        {
+            Validate();
+            return new(new(-Vector.Y, Vector.X));
+        }
     }
 
     public Direction2D PerpCw
     {
-        get { Validate(); return new(new(Vector.Y, -Vector.X)); }
+        get
+        {
+            Validate();
+            return new(new(Vector.Y, -Vector.X));
+        }
     }
 
     public Direction2D Reversed
     {
-        get { Validate(); return new(-Vector); }
+        get
+        {
+            Validate();
+            return new(-Vector);
+        }
     }
 
     public Vector2 ScaledBy(float distance)
@@ -56,7 +75,9 @@ public readonly record struct Direction2D
         ArgGuard.ThrowIfNotFinite(to);
         var delta = to.ToVector2d() - from.ToVector2d();
         if (delta == Vector2d.Zero)
+        {
             throw new ArgumentOutOfRangeException(nameof(to), "The two points must differ.");
+        }
 
         return new((delta / delta.Length()).ToVector2());
     }

@@ -11,7 +11,10 @@ public sealed partial class CompositeShape2D
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ShapeBuilder2D
     {
-        public required List<ShapeBuilder2D> Parts { get; init; }
+        public required List<ShapeBuilder2D> Parts
+        {
+            get; init;
+        }
         public bool IncludeOverlap { get; init; } = true;
         public int AreaOutlineSegments { get; init; } = ShapeArea2D.DefaultOutlineSegments;
         [JsonIgnore] public override string Kind => ShapeKinds2D.Composite;
@@ -29,7 +32,10 @@ public sealed partial class CompositeShape2D
         {
             ArgGuard.ThrowIfTooShort<ShapeBuilder2D>(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(ArgGuard.RequireNotNull(Parts, "parts")), 1, "parts");
             ArgGuard.ThrowIf(AreaOutlineSegments < 3, "Curved outlines need at least three samples.", "areaOutlineSegments");
-            foreach (var part in Parts) ConvexPart(part).Validate();
+            foreach (var part in Parts)
+            {
+                ConvexPart(part).Validate();
+            }
         }
         public override CompositeShape2D Build()
         {

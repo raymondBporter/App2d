@@ -10,9 +10,12 @@ internal sealed partial class ProofRenders
 {
     private bool RenderPterosaurProof()
     {
-        var catalog = ProofCatalog(); var model = catalog.Resolve("pterosaur"); var drawing = new PuppetDrawing();
+        var catalog = ProofCatalog();
+        var model = catalog.Resolve("pterosaur");
+        var drawing = new PuppetDrawing();
         using var target = new RenderTarget2D(GraphicsDevice, 1440, 1080, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(247, 241, 221));
+        GraphicsDevice.SetRenderTarget(target);
+        GraphicsDevice.Clear(new Color(247, 241, 221));
         var roles = new[] { "hover", "fold", "dive", "brake", "low-recovery", "reset" };
         for (var row = 0; row < roles.Length; row++)
         {
@@ -26,15 +29,24 @@ internal sealed partial class ProofRenders
         }
 
         GraphicsDevice.SetRenderTarget(null);
-        using (var output = File.Create(Path.Combine(_smokePath, "pterosaur-poses.png"))) target.SaveAsPng(output, target.Width, target.Height);
-        GraphicsDevice.SetRenderTarget(target); GraphicsDevice.Clear(new Color(247, 241, 221));
+        using (var output = File.Create(Path.Combine(_smokePath, "pterosaur-poses.png")))
+        {
+            target.SaveAsPng(output, target.Width, target.Height);
+        }
+
+        GraphicsDevice.SetRenderTarget(target);
+        GraphicsDevice.Clear(new Color(247, 241, 221));
         for (var row = 0; row < 2; row++)
         {
             drawing.Build(model, PoseEvaluator.Sample(model, catalog.Animations["pterosaur-hover"], .25f));
             _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(720, row * 540 + 460), 220), Matrix.CreateScale(row == 0 ? 1 : -1, 1, 1));
         }
         GraphicsDevice.SetRenderTarget(null);
-        using (var output = File.Create(Path.Combine(_smokePath, "pterosaur-silhouette.png"))) target.SaveAsPng(output, target.Width, target.Height);
+        using (var output = File.Create(Path.Combine(_smokePath, "pterosaur-silhouette.png")))
+        {
+            target.SaveAsPng(output, target.Width, target.Height);
+        }
+
         File.WriteAllText(Path.Combine(_smokePath, "pterosaur.txt"), "Rows: hover, fold, dive, brake, low-recovery, reset. Columns: 0, 1/3, 2/3, end. Artwork and poses only; entity/controller owns the flight path and attack windows.\n");
         return false;
     }

@@ -49,16 +49,27 @@ internal static class EnemyRenderingSmoke2D
         renderer.EndFrame();
         device.SetRenderTarget(null);
         using (var stream = File.Create(Path.Combine(directory, "enemy-client-views.png")))
+        {
             target.SaveAsPng(stream, 1100, 450);
+        }
+
         view.Update([.. states.Select(s => s with { IsEnabled = false })], [], 0f, 1);
         if (scene.Any(item => item.IsVisible))
+        {
             throw new InvalidOperationException("A streamed-out enemy left its visual visible.");
+        }
+
         view.Update([], [], 0f, 2);
-        if (scene.Any()) throw new InvalidOperationException("Removed enemy views left scene objects behind.");
+        if (scene.Any())
+        {
+            throw new InvalidOperationException("Removed enemy views left scene objects behind.");
+        }
     }
 
     private sealed class SilentSounds : ISoundEffectSink2D
     {
-        public void Play(SoundEffect2D effect) { }
+        public void Play(SoundEffect2D effect)
+        {
+        }
     }
 }

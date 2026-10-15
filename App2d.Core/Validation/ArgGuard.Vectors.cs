@@ -8,50 +8,73 @@ public static partial class ArgGuard
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFinite(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFinite(value)) ThrowNotFiniteException(value, paramName);
+        if (!NumericValidation.IsFinite(value))
+        {
+            ThrowNotFiniteException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfZero(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (NumericValidation.IsZero(value)) ThrowZeroException(value, paramName);
+        if (NumericValidation.IsZero(value))
+        {
+            ThrowZeroException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotPositive(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsPositive(value)) ThrowNotPositiveException(value, paramName);
+        if (!NumericValidation.IsPositive(value))
+        {
+            ThrowNotPositiveException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNegative(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (NumericValidation.HasNegativeComponent(value)) ThrowNegativeException(value, paramName);
+        if (NumericValidation.HasNegativeComponent(value))
+        {
+            ThrowNegativeException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrZero(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndNonZero(value)) ThrowNotFiniteOrZeroException(value, paramName);
+        if (!NumericValidation.IsFiniteAndNonZero(value))
+        {
+            ThrowNotFiniteOrZeroException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrNotPositive(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndPositive(value)) ThrowNotFiniteOrNotPositiveException(value, paramName);
+        if (!NumericValidation.IsFiniteAndPositive(value))
+        {
+            ThrowNotFiniteOrNotPositiveException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrNegative(Vector2 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndNonNegative(value)) ThrowNotFiniteOrNegativeException(value, paramName);
+        if (!NumericValidation.IsFiniteAndNonNegative(value))
+        {
+            ThrowNotFiniteOrNegativeException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotComponentWiseLessThan(Vector2 value, Vector2 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseLessThan(value, limit))
+        {
             ThrowNotComponentWiseLessThanException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -67,7 +90,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseLessThanOrEqual(Vector2 value, Vector2 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseLessThanOrEqual(value, limit))
+        {
             ThrowNotComponentWiseLessThanOrEqualException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,7 +108,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseGreaterThan(Vector2 value, Vector2 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseGreaterThan(value, limit))
+        {
             ThrowNotComponentWiseGreaterThanException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -99,7 +126,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseGreaterThanOrEqual(Vector2 value, Vector2 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseGreaterThanOrEqual(value, limit))
+        {
             ThrowNotComponentWiseGreaterThanOrEqualException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -115,7 +144,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotInClosedRange(Vector2 value, Vector2 minimum, Vector2 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsInClosedRange(value, minimum, maximum))
+        {
             ThrowNotInClosedRangeException(value, minimum, maximum, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -135,7 +166,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotInOpenRange(Vector2 value, Vector2 minimum, Vector2 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsInOpenRange(value, minimum, maximum))
+        {
             ThrowNotInOpenRangeException(value, minimum, maximum, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -161,50 +194,73 @@ public static partial class ArgGuard
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFinite(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFinite(value)) ThrowNotFiniteException(value, paramName);
+        if (!NumericValidation.IsFinite(value))
+        {
+            ThrowNotFiniteException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfZero(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (NumericValidation.IsZero(value)) ThrowZeroException(value, paramName);
+        if (NumericValidation.IsZero(value))
+        {
+            ThrowZeroException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotPositive(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsPositive(value)) ThrowNotPositiveException(value, paramName);
+        if (!NumericValidation.IsPositive(value))
+        {
+            ThrowNotPositiveException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNegative(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (NumericValidation.HasNegativeComponent(value)) ThrowNegativeException(value, paramName);
+        if (NumericValidation.HasNegativeComponent(value))
+        {
+            ThrowNegativeException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrZero(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndNonZero(value)) ThrowNotFiniteOrZeroException(value, paramName);
+        if (!NumericValidation.IsFiniteAndNonZero(value))
+        {
+            ThrowNotFiniteOrZeroException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrNotPositive(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndPositive(value)) ThrowNotFiniteOrNotPositiveException(value, paramName);
+        if (!NumericValidation.IsFiniteAndPositive(value))
+        {
+            ThrowNotFiniteOrNotPositiveException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrNegative(Vector3 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndNonNegative(value)) ThrowNotFiniteOrNegativeException(value, paramName);
+        if (!NumericValidation.IsFiniteAndNonNegative(value))
+        {
+            ThrowNotFiniteOrNegativeException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotComponentWiseLessThan(Vector3 value, Vector3 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseLessThan(value, limit))
+        {
             ThrowNotComponentWiseLessThanException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -220,7 +276,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseLessThanOrEqual(Vector3 value, Vector3 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseLessThanOrEqual(value, limit))
+        {
             ThrowNotComponentWiseLessThanOrEqualException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -236,7 +294,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseGreaterThan(Vector3 value, Vector3 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseGreaterThan(value, limit))
+        {
             ThrowNotComponentWiseGreaterThanException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -252,7 +312,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseGreaterThanOrEqual(Vector3 value, Vector3 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseGreaterThanOrEqual(value, limit))
+        {
             ThrowNotComponentWiseGreaterThanOrEqualException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -268,7 +330,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotInClosedRange(Vector3 value, Vector3 minimum, Vector3 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsInClosedRange(value, minimum, maximum))
+        {
             ThrowNotInClosedRangeException(value, minimum, maximum, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -288,7 +352,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotInOpenRange(Vector3 value, Vector3 minimum, Vector3 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsInOpenRange(value, minimum, maximum))
+        {
             ThrowNotInOpenRangeException(value, minimum, maximum, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -314,50 +380,73 @@ public static partial class ArgGuard
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFinite(Vector4 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFinite(value)) ThrowNotFiniteException(value, paramName);
+        if (!NumericValidation.IsFinite(value))
+        {
+            ThrowNotFiniteException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfZero(Vector4 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (NumericValidation.IsZero(value)) ThrowZeroException(value, paramName);
+        if (NumericValidation.IsZero(value))
+        {
+            ThrowZeroException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotPositive(Vector4 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsPositive(value)) ThrowNotPositiveException(value, paramName);
+        if (!NumericValidation.IsPositive(value))
+        {
+            ThrowNotPositiveException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNegative(Vector4 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (NumericValidation.HasNegativeComponent(value)) ThrowNegativeException(value, paramName);
+        if (NumericValidation.HasNegativeComponent(value))
+        {
+            ThrowNegativeException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrZero(Vector4 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndNonZero(value)) ThrowNotFiniteOrZeroException(value, paramName);
+        if (!NumericValidation.IsFiniteAndNonZero(value))
+        {
+            ThrowNotFiniteOrZeroException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrNotPositive(Vector4 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndPositive(value)) ThrowNotFiniteOrNotPositiveException(value, paramName);
+        if (!NumericValidation.IsFiniteAndPositive(value))
+        {
+            ThrowNotFiniteOrNotPositiveException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotFiniteOrNegative(Vector4 value, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
-        if (!NumericValidation.IsFiniteAndNonNegative(value)) ThrowNotFiniteOrNegativeException(value, paramName);
+        if (!NumericValidation.IsFiniteAndNonNegative(value))
+        {
+            ThrowNotFiniteOrNegativeException(value, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfNotComponentWiseLessThan(Vector4 value, Vector4 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseLessThan(value, limit))
+        {
             ThrowNotComponentWiseLessThanException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -373,7 +462,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseLessThanOrEqual(Vector4 value, Vector4 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseLessThanOrEqual(value, limit))
+        {
             ThrowNotComponentWiseLessThanOrEqualException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -389,7 +480,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseGreaterThan(Vector4 value, Vector4 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseGreaterThan(value, limit))
+        {
             ThrowNotComponentWiseGreaterThanException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -405,7 +498,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotComponentWiseGreaterThanOrEqual(Vector4 value, Vector4 limit, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsComponentWiseGreaterThanOrEqual(value, limit))
+        {
             ThrowNotComponentWiseGreaterThanOrEqualException(value, limit, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -421,7 +516,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotInClosedRange(Vector4 value, Vector4 minimum, Vector4 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsInClosedRange(value, minimum, maximum))
+        {
             ThrowNotInClosedRangeException(value, minimum, maximum, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -441,7 +538,9 @@ public static partial class ArgGuard
     public static void ThrowIfNotInOpenRange(Vector4 value, Vector4 minimum, Vector4 maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null)
     {
         if (!NumericValidation.IsInOpenRange(value, minimum, maximum))
+        {
             ThrowNotInOpenRangeException(value, minimum, maximum, paramName);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -103,7 +103,12 @@ public sealed class AnimationEditingTests
     public void ContactRangeEditsStayInsideTheClip()
     {
         var (_, clip) = Scene();
-        clip.Contacts.Add(new() { Chain = "leg", Start = .2f, Finish = .4f });
+        clip.Contacts.Add(new()
+        {
+            Chain = "leg",
+            Start = .2f,
+            Finish = .4f
+        });
         ClipAuthoring.SetContactRange(clip, 0, new(-1, 2));
         Assert.Equal(0, clip.Contacts[0].Start);
         Assert.Equal(clip.Duration, clip.Contacts[0].Finish);
@@ -136,10 +141,25 @@ public sealed class AnimationEditingTests
         ClipAuthoring.SetSteadyTravel(clip, 3);
         switch (kind)
         {
-            case "curve": clip.Travel.Keys[0].Curve = new() { Y1 = .5f }; break;
-            case "ease": clip.Travel.Keys[0].Ease = ClipEase.Smooth; break;
-            case "depth": clip.Travel.Keys[1].Z = 1; break;
-            case "extra-key": clip.Travel.Keys.Insert(1, new() { Time = .5f, X = 1 }); break;
+            case "curve":
+                clip.Travel.Keys[0].Curve = new()
+                {
+                    Y1 = .5f
+                };
+                break;
+            case "ease":
+                clip.Travel.Keys[0].Ease = ClipEase.Smooth;
+                break;
+            case "depth":
+                clip.Travel.Keys[1].Z = 1;
+                break;
+            case "extra-key":
+                clip.Travel.Keys.Insert(1, new()
+                {
+                    Time = .5f,
+                    X = 1
+                });
+                break;
         }
         var before = clip.ToJson();
         Assert.False(ClipAuthoring.TryGetSteadyTravel(clip, out _));
@@ -188,10 +208,17 @@ public sealed class AnimationEditingTests
         var model = ResolvedModel.From(source);
         var preview = new SourceMotionPreview(sources);
         var first = preview.Sample(new(model.Base.Id, model, PoseEvaluator.Rest(model), clip), clip, 0).ToDictionary(p => p.Control, p => p.Point);
-        foreach (var control in source.Controls) control.Rest = PuppetPoint.From(control.Rest.XYZ + new Vector3(3, 0, 0));
+        foreach (var control in source.Controls)
+        {
+            control.Rest = PuppetPoint.From(control.Rest.XYZ + new Vector3(3, 0, 0));
+        }
+
         var moved = ResolvedModel.From(source);
         var second = preview.Sample(new(moved.Base.Id, moved, PoseEvaluator.Rest(moved), clip), clip, 0).ToDictionary(p => p.Control, p => p.Point);
         Assert.NotEmpty(first);
-        foreach (var (control, point) in first) TestModels.Near(point + new Vector3(3, 0, 0), second[control]);
+        foreach (var (control, point) in first)
+        {
+            TestModels.Near(point + new Vector3(3, 0, 0), second[control]);
+        }
     }
 }

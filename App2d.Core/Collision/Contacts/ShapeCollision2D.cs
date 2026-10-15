@@ -33,15 +33,40 @@ public static partial class ShapeCollision2D
 
     private static CollisionResult Dispatch(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose)
     {
-        if (first is SimplePolygon2D polygon) return CompositeAgainst(polygon.ConvexPieces, firstPose, second, secondPose);
-        if (second is SimplePolygon2D otherPolygon) return CompositeAgainst(otherPolygon.ConvexPieces, secondPose, first, firstPose).Flipped();
-        if (first is CompositeShape2D composite) return CompositeAgainst(composite, firstPose, second, secondPose);
-        if (second is CompositeShape2D otherComposite) return CompositeAgainst(otherComposite, secondPose, first, firstPose).Flipped();
+        if (first is SimplePolygon2D polygon)
+        {
+            return CompositeAgainst(polygon.ConvexPieces, firstPose, second, secondPose);
+        }
+
+        if (second is SimplePolygon2D otherPolygon)
+        {
+            return CompositeAgainst(otherPolygon.ConvexPieces, secondPose, first, firstPose).Flipped();
+        }
+
+        if (first is CompositeShape2D composite)
+        {
+            return CompositeAgainst(composite, firstPose, second, secondPose);
+        }
+
+        if (second is CompositeShape2D otherComposite)
+        {
+            return CompositeAgainst(otherComposite, secondPose, first, firstPose).Flipped();
+        }
+
         if (first is HalfSpace2D firstPlane && second is IConvexShape2D secondConvex)
+        {
             return ConvexVsHalfSpace(secondConvex, secondPose, firstPlane, firstPose).Flipped();
+        }
+
         if (second is HalfSpace2D secondPlane && first is IConvexShape2D firstConvex)
+        {
             return ConvexVsHalfSpace(firstConvex, firstPose, secondPlane, secondPose);
-        if (first is not IConvexShape2D convexFirst || second is not IConvexShape2D convexSecond) return CollisionResult.None;
+        }
+
+        if (first is not IConvexShape2D convexFirst || second is not IConvexShape2D convexSecond)
+        {
+            return CollisionResult.None;
+        }
 
         var query = ShapeConvexQuery2D.Query(convexFirst, firstPose, convexSecond, secondPose);
         return query.SignedDistance < 0f

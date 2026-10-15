@@ -22,30 +22,45 @@ public static class TwoBoneIk2D
     /// </summary>
     public static TwoBoneIkPose2D SolveExact(Vector2 root, Vector2 target, float firstLength, float secondLength, int bendDirection, Vector2? zeroTargetDirection = null)
     {
-        ArgGuard.ThrowIfNotFinite(root); ArgGuard.ThrowIfNotFinite(target);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(firstLength); ArgGuard.ThrowIfNotFiniteOrNotPositive(secondLength);
+        ArgGuard.ThrowIfNotFinite(root);
+        ArgGuard.ThrowIfNotFinite(target);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(firstLength);
+        ArgGuard.ThrowIfNotFiniteOrNotPositive(secondLength);
         ArgGuard.ThrowIfZero(bendDirection);
         var fallback = zeroTargetDirection ?? Vector2.UnitX;
         ArgGuard.ThrowIfNotFinite(fallback);
         var fallbackLength = fallback.ToVector2d().Length();
-        if (fallbackLength == 0) throw new ArgumentOutOfRangeException(nameof(zeroTargetDirection), "A fallback direction must be nonzero.");
+        if (fallbackLength == 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(zeroTargetDirection), "A fallback direction must be nonzero.");
+        }
+
         var delta = target.ToVector2d() - root.ToVector2d();
         var distance = delta.Length();
         var direction = distance > 0 ? delta / distance : fallback.ToVector2d() / fallbackLength;
-        var first = (double)firstLength; var second = (double)secondLength;
-        var minimum = Math.Abs(first - second); var maximum = first + second;
+        var first = (double)firstLength;
+        var second = (double)secondLength;
+        var minimum = Math.Abs(first - second);
+        var maximum = first + second;
         var reach = Math.Clamp(distance, minimum, maximum);
         // Float-authored rotations can put a straight tip a fraction of an ulp inside the circle. Without snapping,
         // the square root amplifies that noise into a visible bend. Bound the tolerance by the shorter segment too.
         var roundoff = Math.Min(maximum * 2e-7, Math.Min(first, second) * 1e-5);
-        if (Math.Abs(distance - maximum) <= roundoff) reach = maximum;
-        else if (Math.Abs(distance - minimum) <= roundoff) reach = minimum;
+        if (Math.Abs(distance - maximum) <= roundoff)
+        {
+            reach = maximum;
+        }
+        else if (Math.Abs(distance - minimum) <= roundoff)
+        {
+            reach = minimum;
+        }
         // Equal segments can fold onto their origin. The perpendicular fallback fixes the otherwise free bend direction.
         var along = reach == 0 ? 0 : ((first - second) * (first + second) + reach * reach) / (2 * reach);
         var height = Math.Sqrt(Math.Max(0, first * first - along * along)) * Math.Sign(bendDirection);
         var joint = (root.ToVector2d() + direction * along + direction.PerpCcw * height).ToVector2();
         var end = (root.ToVector2d() + direction * reach).ToVector2();
-        ArgGuard.ThrowIfNotFinite(joint); ArgGuard.ThrowIfNotFinite(end);
+        ArgGuard.ThrowIfNotFinite(joint);
+        ArgGuard.ThrowIfNotFinite(end);
         return new(root, joint, end, (joint - root).AngleRadians, (end - joint).AngleRadians, Math.Abs(distance - reach) <= .01);
     }
 

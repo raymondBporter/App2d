@@ -22,7 +22,11 @@ internal static class RenderingSmoke2D
                 IsFullScreen = false,
                 PresentationInterval = PresentInterval.Immediate
             });
-        if (facesOnly) { FaceRenderingSmoke2D.Run(device, outputDirectory); return; }
+        if (facesOnly)
+        {
+            FaceRenderingSmoke2D.Run(device, outputDirectory);
+            return;
+        }
         if (giantTreesOnly)
         {
             using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
@@ -39,9 +43,15 @@ internal static class RenderingSmoke2D
         {
             using var textures = new TextureCache2D(AssetPaths.Current.Runtime);
             if (tilesetPairs is ["level"])
+            {
                 TilesetRenderingSmoke2D.RunLevel(device, textures, outputDirectory);
+            }
+
             for (var i = 0; i + 1 < tilesetPairs.Count; i += 2)
+            {
                 TilesetRenderingSmoke2D.Run(device, textures, outputDirectory, tilesetPairs[i], tilesetPairs[i + 1]);
+            }
+
             return;
         }
         if (platformOnly)
@@ -65,7 +75,11 @@ internal static class RenderingSmoke2D
         }
         using var game = new SideScrollerGame();
         game.Initialize();
-        if (editorOnly) { MapEditorUiSmoke2D.Run(device, game, outputDirectory); return; }
+        if (editorOnly)
+        {
+            MapEditorUiSmoke2D.Run(device, game, outputDirectory);
+            return;
+        }
         using var renderer = new Renderer2D(game.Camera, device);
 
         foreach (var (width, height) in new[] { (1280, 720), (960, 640) })

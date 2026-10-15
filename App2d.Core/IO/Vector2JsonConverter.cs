@@ -12,22 +12,49 @@ public sealed class Vector2JsonConverter : JsonConverter<Vector2>
 {
     public override Vector2 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType != JsonTokenType.StartObject) throw new JsonException("Expected an X/Y coordinate object.");
+        if (reader.TokenType != JsonTokenType.StartObject)
+        {
+            throw new JsonException("Expected an X/Y coordinate object.");
+        }
+
         var xName = options.PropertyNamingPolicy?.ConvertName(nameof(Vector2.X)) ?? nameof(Vector2.X);
         var yName = options.PropertyNamingPolicy?.ConvertName(nameof(Vector2.Y)) ?? nameof(Vector2.Y);
         var comparison = options.PropertyNameCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
         var vector = Vector2.Zero;
         while (reader.Read())
         {
-            if (reader.TokenType == JsonTokenType.EndObject) return vector;
-            if (reader.TokenType != JsonTokenType.PropertyName) throw new JsonException("Expected a coordinate name.");
+            if (reader.TokenType == JsonTokenType.EndObject)
+            {
+                return vector;
+            }
+
+            if (reader.TokenType != JsonTokenType.PropertyName)
+            {
+                throw new JsonException("Expected a coordinate name.");
+            }
+
             var name = reader.GetString();
-            if (!reader.Read()) throw new JsonException("Missing coordinate value.");
-            if (string.Equals(name, xName, comparison)) vector.X = JsonSerializer.Deserialize<float>(ref reader, options);
-            else if (string.Equals(name, yName, comparison)) vector.Y = JsonSerializer.Deserialize<float>(ref reader, options);
+            if (!reader.Read())
+            {
+                throw new JsonException("Missing coordinate value.");
+            }
+
+            if (string.Equals(name, xName, comparison))
+            {
+                vector.X = JsonSerializer.Deserialize<float>(ref reader, options);
+            }
+            else if (string.Equals(name, yName, comparison))
+            {
+                vector.Y = JsonSerializer.Deserialize<float>(ref reader, options);
+            }
             else if (options.UnmappedMemberHandling == JsonUnmappedMemberHandling.Disallow)
+            {
                 throw new JsonException($"Unknown coordinate '{name}'.");
-            else reader.Skip();
+            }
+            else
+            {
+                reader.Skip();
+            }
         }
         throw new JsonException("Incomplete coordinate object.");
     }

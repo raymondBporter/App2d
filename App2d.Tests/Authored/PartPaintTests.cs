@@ -49,7 +49,7 @@ public sealed class PartPaintTests
 
         var saved = JsonSerializer.Serialize(patch, options);
         using var document = JsonDocument.Parse(saved);
-        Assert.Equal(new[] { "x", "y" }, document.RootElement.GetProperty("points")[0].EnumerateObject().Select(p => p.Name));
+        Assert.Equal(["x", "y"], document.RootElement.GetProperty("points")[0].EnumerateObject().Select(p => p.Name));
         Assert.Equal(patch.Points, JsonSerializer.Deserialize<PartPaint>(saved, options)!.Points);
     }
 }

@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Operations.Vertices;
@@ -68,7 +69,10 @@ public sealed partial class Renderer2D : IDisposable
         _batchSampler = null;
         // Trim only after submission, so a queued batch never references an evicted texture.
         while (_textureBytes > TextureMemoryBudget2D.GpuResourceCacheBytes && _recentTextures.First is { } oldest)
+        {
             ReleaseTexture(oldest.Value);
+        }
+
         _frameActive = false;
     }
 
@@ -84,20 +88,32 @@ public sealed partial class Renderer2D : IDisposable
 
     public void Draw(Scene2D scene)
     {
-        foreach (var item in scene.GetDrawOrder()) Draw(item);
+        foreach (var item in scene.GetDrawOrder())
+        {
+            Draw(item);
+        }
     }
 
     /// <summary>Draws only the objects whose z-index falls in the inclusive range, so other passes can interleave.</summary>
     public void Draw(Scene2D scene, int minimumZIndex, int maximumZIndex)
     {
         foreach (var item in scene.GetDrawOrder())
-            if (item.ZIndex >= minimumZIndex && item.ZIndex <= maximumZIndex) Draw(item);
+        {
+            if (item.ZIndex >= minimumZIndex && item.ZIndex <= maximumZIndex)
+            {
+                Draw(item);
+            }
+        }
     }
 
     public void Draw(WorldObject2D worldObject)
     {
         RequireFrame();
-        if (!worldObject.IsVisible || IsCulled(worldObject)) return;
+        if (!worldObject.IsVisible || IsCulled(worldObject))
+        {
+            return;
+        }
+
         if (worldObject.Shader is AuthoredCharacterShader authored)
         {
             Flush();
@@ -107,7 +123,10 @@ public sealed partial class Renderer2D : IDisposable
         var matrix = worldObject.Transform.Matrix * _camera.WorldToDeviceMatrix;
         var bounds = worldObject.LocalBounds.IsFinite ? worldObject.LocalBounds : GetVisibleLocalBounds(matrix);
         if (worldObject.Shader is SpriteShader2D)
+        {
             StateGuard.ThrowIf(!worldObject.LocalBounds.IsFinite, "Sprites require finite local bounds.");
+        }
+
         SelectMaterial(worldObject.Shader);
         FillShape(worldObject.Shape, matrix, bounds, worldObject.Shader);
     }
@@ -138,10 +157,17 @@ public sealed partial class Renderer2D : IDisposable
             {
                 var pixels = texture.CopyPixels();
                 for (var i = 0; i < pixels.Length; i++)
+                {
                     pixels[i] = XnaColor.FromNonPremultiplied(pixels[i].R, pixels[i].G, pixels[i].B, pixels[i].A);
+                }
+
                 gpu.SetData(pixels);
             }
-            catch { gpu.Dispose(); throw; }
+            catch
+            {
+                gpu.Dispose();
+                throw;
+            }
             resident = new Residency(gpu, _recentTextures.AddLast(texture), (long)texture.Width * texture.Height * 4);
             _textures.Add(texture, resident);
             texture.Disposed += ReleaseTexture;
@@ -162,7 +188,11 @@ public sealed partial class Renderer2D : IDisposable
 
     private void SelectBatch(GpuTexture? texture, SamplerState? sampler)
     {
-        if (_batchTexture == texture && _batchSampler == sampler) return;
+        if (_batchTexture == texture && _batchSampler == sampler)
+        {
+            return;
+        }
+
         Flush();
         _batchTexture = texture;
         _batchSampler = sampler;
@@ -170,7 +200,11 @@ public sealed partial class Renderer2D : IDisposable
 
     private void Flush()
     {
-        if (_vertexCount == 0) return;
+        if (_vertexCount == 0)
+        {
+            return;
+        }
+
         _device.BlendState = BlendState.AlphaBlend;
         _device.DepthStencilState = DepthStencilState.None;
         _device.RasterizerState = RasterizerState.CullNone;
@@ -179,7 +213,11 @@ public sealed partial class Renderer2D : IDisposable
         foreach (var pass in _effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            if (_batchSampler is not null) _device.SamplerStates[0] = _batchSampler;
+            if (_batchSampler is not null)
+            {
+                _device.SamplerStates[0] = _batchSampler;
+            }
+
             _device.DrawUserPrimitives(PrimitiveType.TriangleList, _vertices, 0, _vertexCount / 3);
         }
         _vertexCount = 0;
@@ -187,7 +225,11 @@ public sealed partial class Renderer2D : IDisposable
 
     private void Triangle(VertexPositionColorTexture a, VertexPositionColorTexture b, VertexPositionColorTexture c)
     {
-        if (_vertexCount + 3 > _vertices.Length) Flush();
+        if (_vertexCount + 3 > _vertices.Length)
+        {
+            Flush();
+        }
+
         _vertices[_vertexCount++] = a;
         _vertices[_vertexCount++] = b;
         _vertices[_vertexCount++] = c;
@@ -204,8 +246,16 @@ public sealed partial class Renderer2D : IDisposable
         {
             case SpriteShader2D sprite:
                 uv = (local - bounds.Min) / bounds.Size;
-                if (sprite.FlipX) uv.X = 1f - uv.X;
-                if (!sprite.FlipY) uv.Y = 1f - uv.Y;
+                if (sprite.FlipX)
+                {
+                    uv.X = 1f - uv.X;
+                }
+
+                if (!sprite.FlipY)
+                {
+                    uv.Y = 1f - uv.Y;
+                }
+
                 break;
             case TextureShader2D tile:
                 // Preserve local-origin tiling; unlike sprites, tiled images use positive local Y.
@@ -220,32 +270,39 @@ public sealed partial class Renderer2D : IDisposable
     private void FillPolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
     {
         var first = MaterialVertex(points[0], matrix, bounds, shader);
-        for (var index = 1; index < points.Length - 1; index++)
-            Triangle(first, MaterialVertex(points[index], matrix, bounds, shader), MaterialVertex(points[index + 1], matrix, bounds, shader));
+        foreach (var (_, b, c) in MeshTopology.TriangleFan(points.Length))
+        {
+            Triangle(first, MaterialVertex(points[b], matrix, bounds, shader), MaterialVertex(points[c], matrix, bounds, shader));
+        }
     }
 
     private void FillShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
     {
         if (shape is CompositeShape2D composite)
         {
-            foreach (var part in composite.Parts) FillShape(part, matrix, bounds, shader);
-            return;
-        }
-        if (shape is SimplePolygon2D simplePolygon)
-        {
-            var mesh = simplePolygon.Mesh;
-            var vertices = mesh.Vertices;
-            var indices = mesh.Indices;
-            for (var i = 0; i < indices.Length; i += 3)
+            foreach (var part in composite.Parts)
             {
-                Triangle(MaterialVertex(vertices[indices[i]], matrix, bounds, shader),
-                    MaterialVertex(vertices[indices[i + 1]], matrix, bounds, shader),
-                    MaterialVertex(vertices[indices[i + 2]], matrix, bounds, shader));
+                FillShape(part, matrix, bounds, shader);
             }
 
             return;
         }
-        if (shape is ConvexPolygon2D polygon) { FillPolygon(polygon.Vertices, matrix, bounds, shader); return; }
+        if (shape is SimplePolygon2D simplePolygon)
+        {
+            foreach (var (a, b, c) in simplePolygon.Mesh.Triangles)
+            {
+                Triangle(MaterialVertex(a, matrix, bounds, shader),
+                    MaterialVertex(b, matrix, bounds, shader),
+                    MaterialVertex(c, matrix, bounds, shader));
+            }
+
+            return;
+        }
+        if (shape is ConvexPolygon2D polygon)
+        {
+            FillPolygon(polygon.Vertices, matrix, bounds, shader);
+            return;
+        }
         if (shape is Triangle2D triangle)
         {
             Triangle(MaterialVertex(triangle.A, matrix, bounds, shader),
@@ -255,7 +312,10 @@ public sealed partial class Renderer2D : IDisposable
         }
         Span<Vector2> points = stackalloc Vector2[260];
         var count = GetShapePoints(shape, matrix, points);
-        if (count >= 3) FillPolygon(points[..count], matrix, bounds, shader);
+        if (count >= 3)
+        {
+            FillPolygon(points[..count], matrix, bounds, shader);
+        }
     }
 
     private int GetShapePoints(IShape2D shape, Matrix3x2 matrix, Span<Vector2> points)
@@ -293,7 +353,11 @@ public sealed partial class Renderer2D : IDisposable
         RequireFrame();
         ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         ArgGuard.ThrowIfNotFiniteOrNegative(strokeWidth);
-        if (bounds.Width <= 0 || bounds.Height <= 0) return;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
         SelectBatch(null, null);
         Span<Vector2> points = stackalloc Vector2[36];
         var count = VertexGenerator2D.WriteRoundedRectangle(points,
@@ -306,7 +370,9 @@ public sealed partial class Renderer2D : IDisposable
         {
             var center = Vertex(new Vector2(bounds.MidX, bounds.MidY), color);
             for (var i = 0; i < count; i++)
+            {
                 Triangle(center, Vertex(points[i], color), Vertex(points[(i + 1) % count], color));
+            }
         }
     }
 
@@ -326,7 +392,12 @@ public sealed partial class Renderer2D : IDisposable
         var cursor = baseline - new Vector2(4, _font.Ascent + 4);
         foreach (var character in text)
         {
-            if (character == '\n') { cursor.X = baseline.X - 4; cursor.Y += _font.LineHeight; continue; }
+            if (character == '\n')
+            {
+                cursor.X = baseline.X - 4;
+                cursor.Y += _font.LineHeight;
+                continue;
+            }
             var glyph = _font.GetGlyph(character);
             TexturedQuad(new(cursor.X, cursor.Y, cursor.X + glyph.Bounds.Width, cursor.Y + glyph.Bounds.Height),
                 glyph.Bounds, _font.Texture.Width, _font.Texture.Height, color);
@@ -348,7 +419,9 @@ public sealed partial class Renderer2D : IDisposable
         RequireFrame();
         ArgGuard.ThrowIfTooShort(points, 3);
         foreach (var point in points)
+        {
             ArgGuard.ThrowIfNotFinite(point, nameof(points));
+        }
 
         SelectBatch(null, null);
         var matrix = _camera.WorldToDeviceMatrix;
@@ -390,7 +463,11 @@ public sealed partial class Renderer2D : IDisposable
         RequireFrame();
         ArgGuard.ThrowIfNotFiniteOrNotPositive(strokeWidth);
         ValidateLineCap(cap);
-        foreach (var point in points) ArgGuard.ThrowIfNotFinite(point, nameof(points));
+        foreach (var point in points)
+        {
+            ArgGuard.ThrowIfNotFinite(point, nameof(points));
+        }
+
         SelectBatch(null, null);
         for (var i = 1; i < points.Length; i++)
         {
@@ -430,11 +507,23 @@ public sealed partial class Renderer2D : IDisposable
     {
         if (shape is CompositeShape2D composite)
         {
-            foreach (var part in composite.Parts) OutlineShape(part, matrix, color, width);
+            foreach (var part in composite.Parts)
+            {
+                OutlineShape(part, matrix, color, width);
+            }
+
             return;
         }
-        if (shape is ConvexPolygon2D polygon) { StrokePolygon(polygon.Vertices, matrix, color, width); return; }
-        if (shape is SimplePolygon2D simplePolygon) { StrokePolygon(simplePolygon.Vertices, matrix, color, width); return; }
+        if (shape is ConvexPolygon2D polygon)
+        {
+            StrokePolygon(polygon.Vertices, matrix, color, width);
+            return;
+        }
+        if (shape is SimplePolygon2D simplePolygon)
+        {
+            StrokePolygon(simplePolygon.Vertices, matrix, color, width);
+            return;
+        }
         if (shape is Triangle2D triangle)
         {
             Span<Vector2> vertices = stackalloc Vector2[3];
@@ -447,7 +536,10 @@ public sealed partial class Renderer2D : IDisposable
             var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
             var boundary = new Line2D(halfSpace.Normal * halfSpace.Offset, tangent);
             if (boundary.TryClipToRectangle(GetVisibleLocalBounds(matrix), out var start, out var end))
+            {
                 Line(Vector2.Transform(start, matrix), Vector2.Transform(end, matrix), color, width);
+            }
+
             return;
         }
         Span<Vector2> points = stackalloc Vector2[260];
@@ -457,8 +549,10 @@ public sealed partial class Renderer2D : IDisposable
 
     private void StrokePolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, XnaColor color, float width)
     {
-        for (var i = 0; i < points.Length; i++)
-            Line(Vector2.Transform(points[i], matrix), Vector2.Transform(points[(i + 1) % points.Length], matrix), color, width);
+        foreach (var (a, b) in MeshTopology.Edges(points.Length))
+        {
+            Line(Vector2.Transform(points[a], matrix), Vector2.Transform(points[b], matrix), color, width);
+        }
     }
 
     private void Line(Vector2 start, Vector2 end, XnaColor color, float width,
@@ -485,22 +579,41 @@ public sealed partial class Renderer2D : IDisposable
         }
         var unit = Vector2.Normalize(axis);
         var normal = new Vector2(-unit.Y, unit.X) * width * 0.5f;
-        if (startCap == LineCap2D.Square) start -= unit * width * 0.5f;
-        if (endCap == LineCap2D.Square) end += unit * width * 0.5f;
+        if (startCap == LineCap2D.Square)
+        {
+            start -= unit * width * 0.5f;
+        }
+
+        if (endCap == LineCap2D.Square)
+        {
+            end += unit * width * 0.5f;
+        }
+
         var a = Vertex(start + normal, color);
         var b = Vertex(end + normal, color);
         var c = Vertex(end - normal, color);
         var d = Vertex(start - normal, color);
         Triangle(a, b, c);
         Triangle(a, c, d);
-        if (startCap == LineCap2D.Round) FillRoundCap(start, -unit, width * 0.5f, color);
-        if (endCap == LineCap2D.Round) FillRoundCap(end, unit, width * 0.5f, color);
+        if (startCap == LineCap2D.Round)
+        {
+            FillRoundCap(start, -unit, width * 0.5f, color);
+        }
+
+        if (endCap == LineCap2D.Round)
+        {
+            FillRoundCap(end, unit, width * 0.5f, color);
+        }
     }
 
     private bool IsCulled(SpatialObject2D item) => item.WorldBounds.IsFinite && !item.WorldBounds.Intersects(_visibleWorldBounds);
     private Rect2D GetVisibleLocalBounds(Matrix3x2 matrix)
     {
-        if (!Matrix3x2.Invert(matrix, out var inverse)) StateGuard.Throw("Cannot render a shape with a singular transform.");
+        if (!Matrix3x2.Invert(matrix, out var inverse))
+        {
+            StateGuard.Throw("Cannot render a shape with a singular transform.");
+        }
+
         return new Rect2D(Vector2.Zero, _camera.ViewportSize).TransformedBy(inverse);
     }
     private void RequireFrame()
@@ -511,7 +624,11 @@ public sealed partial class Renderer2D : IDisposable
 
     private void ReleaseTexture(Texture2D texture)
     {
-        if (!_textures.Remove(texture, out var resident)) return;
+        if (!_textures.Remove(texture, out var resident))
+        {
+            return;
+        }
+
         if (_batchTexture == resident.Texture)
         {
             Flush();
@@ -525,12 +642,24 @@ public sealed partial class Renderer2D : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         DisposeCharacters();
         _vertexCount = 0;
         _batchTexture = null;
-        while (_recentTextures.First is { } node) ReleaseTexture(node.Value);
-        foreach (var sampler in _samplers.Values) sampler.Dispose();
+        while (_recentTextures.First is { } node)
+        {
+            ReleaseTexture(node.Value);
+        }
+
+        foreach (var sampler in _samplers.Values)
+        {
+            sampler.Dispose();
+        }
+
         _font.Dispose();
         _effect.Dispose();
         _disposed = true;

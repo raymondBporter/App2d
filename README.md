@@ -181,6 +181,15 @@ map objects are picked up on the next run.
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
 
+`Geometry/Meshes/MeshTopology` provides allocation-free `foreach` views:
+`Triangles(indices)` reads index triples, `TriangleFan(vertexCount)` supplies
+first-vertex fan indices, and `Edges(vertexCount, closed)` supplies directed perimeter
+or polyline edges. `TriangleMesh2D.Triangles` and `MeshTopology.IndexedTriangles<T>`
+resolve index triples to vertex values. Span views borrow their buffers without
+copying; do not change the buffers or resize their owning lists during enumeration.
+Fewer than three fan vertices produce no faces. A fan requires the perimeter to be
+visible from its first vertex; concave outlines still use `PolygonTriangulation2D`.
+
 Every shape implements local-space point containment. `SpatialObject2D` owns only a
 shape and transform and applies the inverse transform for point queries. Physics bodies
 reference this render-agnostic type. `WorldObject2D` adds shader, visibility, and draw
@@ -710,6 +719,21 @@ Sword and gun-shot one-shots take priority over locomotion and remain synchroniz
 their gameplay timing. The character artwork is rendered by a separate visual object
 that follows the smaller physics collider, keeping transparent frame padding out of
 collision calculations.
+
+## Code formatting
+
+The existing `.editorconfig` keeps statements on separate lines and requires braces
+around control-flow bodies. It does not impose a line-width limit. Apply these rules
+with the formatter included in the .NET SDK:
+
+```powershell
+dotnet format style App2d.slnx --diagnostics IDE0011 --severity warn
+dotnet format whitespace App2d.slnx
+```
+
+Add `--verify-no-changes` to both commands to check formatting without editing files.
+For the standalone cape study, use `tools/ClothLab/ClothLab.csproj` in place of
+`App2d.slnx`.
 
 ## Graphics verification
 

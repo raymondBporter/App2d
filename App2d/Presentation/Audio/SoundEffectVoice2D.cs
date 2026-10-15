@@ -29,9 +29,13 @@ public readonly record struct SoundEffectVoice2D
         ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volumeScale, 0f, 1f);
         ArgGuard.ThrowIfNotFiniteOrNegative(rampSeconds);
         if (_voice is not null)
+        {
             _voice.SetVolumeScale(volumeScale, rampSeconds);
+        }
         else
+        {
             _audioVoice.SetVolume(_fullVolume * volumeScale, rampSeconds);
+        }
     }
 
     /// <summary>Moves a spatial voice's source; non-spatial voices ignore this.</summary>
@@ -45,16 +49,25 @@ public readonly record struct SoundEffectVoice2D
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(fadeOutSeconds);
         if (_voice is not null)
+        {
             _voice.Stop(fadeOutSeconds);
+        }
         else
+        {
             _audioVoice.Stop(fadeOutSeconds);
+        }
     }
 }
 
 internal interface ISoundEffectVoice2D
 {
-    bool IsPlaying { get; }
+    bool IsPlaying
+    {
+        get;
+    }
     void SetVolumeScale(float volumeScale, float rampSeconds);
     void Stop(float fadeOutSeconds);
-    void SetPosition(Vector2 position) { }
+    void SetPosition(Vector2 position)
+    {
+    }
 }

@@ -25,9 +25,15 @@ public static class ShapeArea2D
         ArgGuard.ThrowIfTooShort(parts, 1);
         ArgGuard.ThrowIfContainsNull(parts);
         ArgGuard.ThrowIf(outlineSegments < 3, "Curved outlines need at least three samples.", nameof(outlineSegments));
-        if (parts.Length == 1) return parts[0].Area;
+        if (parts.Length == 1)
+        {
+            return parts[0].Area;
+        }
+
         if (parts.Length == 2 && parts[0] is IRect2D first && parts[1] is IRect2D second)
+        {
             return Area2D.RectangleUnion(first.Min, first.Max, second.Min, second.Max);
+        }
 
         var boundaries = new List<Area2D.UnionPart>(parts.Length);
         foreach (var shape in parts)
@@ -86,9 +92,16 @@ public static class ShapeArea2D
         var start = capsule.Start;
         var end = capsule.End;
         // Reversed spines describe the same capsule; canonical order makes their rectangle boundaries identical.
-        if (start.X > end.X || start.X == end.X && start.Y > end.Y) (start, end) = (end, start);
+        if (start.X > end.X || start.X == end.X && start.Y > end.Y)
+        {
+            (start, end) = (end, start);
+        }
+
         boundaries.Add(new(start, capsule.Radius));
-        if (start == end) return;
+        if (start == end)
+        {
+            return;
+        }
 
         var origin = start.ToVector2d();
         var spine = end.ToVector2d() - origin;

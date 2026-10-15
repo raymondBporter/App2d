@@ -13,12 +13,26 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
 
     public void Draw(AssetDocument<ModelVariant> document)
     {
-        var variant = document.Asset; var basis = session.Assets.Model(variant.Base);
+        var variant = document.Asset;
+        var basis = session.Assets.Model(variant.Base);
         Ui.Header("Variant");
-        var name = variant.Name; if (Ui.Text("Name", ref name, 100) && name.Trim().Length > 0) session.Change(document, () => document.Asset.Name = name);
+        var name = variant.Name;
+        if (Ui.Text("Name", ref name, 100) && name.Trim().Length > 0)
+        {
+            session.Change(document, () => document.Asset.Name = name);
+        }
+
         ImGui.TextUnformatted("Base: " + (basis?.Name ?? variant.Base + " (missing)"));
-        ImGui.SameLine(); if (Ui.Button("Open base", basis is not null)) session.Open(variant.Base);
-        if (basis is null) return;
+        ImGui.SameLine();
+        if (Ui.Button("Open base", basis is not null))
+        {
+            session.Open(variant.Base);
+        }
+
+        if (basis is null)
+        {
+            return;
+        }
 
         if (BuildRules.For(basis.Asset) is { } rule)
         {
@@ -26,17 +40,37 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
             foreach (var preset in rule.Presets)
             {
                 if (ImGui.SmallButton(preset.Name))
-                    session.Edit(document, () => { document.Asset.Build.Clear(); foreach (var (id, value) in preset.Values) if (value != rule.Values.First(v => v.Id == id).Default) document.Asset.Build[id] = value; });
+                {
+                    session.Edit(document, () =>
+                    {
+                        document.Asset.Build.Clear();
+                        foreach (var (id, value) in preset.Values)
+                        {
+                            if (value != rule.Values.First(v => v.Id == id).Default)
+                            {
+                                document.Asset.Build[id] = value;
+                            }
+                        }
+                    });
+                }
+
                 ImGui.SameLine();
             }
             ImGui.NewLine();
             foreach (var value in rule.Values)
             {
                 var overridden = variant.Build.TryGetValue(value.Id, out var amount);
-                if (Ui.OverrideLabel(value.Name, overridden)) { session.Edit(document, () => document.Asset.Build.Remove(value.Id)); continue; }
-                amount = overridden ? amount : value.Default; ImGui.SetNextItemWidth(-1);
+                if (Ui.OverrideLabel(value.Name, overridden))
+                {
+                    session.Edit(document, () => document.Asset.Build.Remove(value.Id));
+                    continue;
+                }
+                amount = overridden ? amount : value.Default;
+                ImGui.SetNextItemWidth(-1);
                 if (ImGui.SliderFloat("##build-" + value.Id, ref amount, value.Range.SoftMin, value.Range.SoftMax, "%.2fx", ImGuiSliderFlags.AlwaysClamp))
+                {
                     session.Change(document, () => document.Asset.Build[value.Id] = amount);
+                }
             }
             Ui.Help("Build values reshape the base's rest pose; animations keep playing and rescale with the measures they use.");
         }
@@ -48,7 +82,15 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
             var overrides = variant.Parts.GetValueOrDefault(partId) ?? new();
             parts.Draw(part, overrides,
                 change => session.Change(document, () => ModelAuthoring.EditPartOverride(document.Asset, part, change)),
-                clear => session.Edit(document, () => { var o = document.Asset.Parts[partId]; clear(o); if (o.IsEmpty) document.Asset.Parts.Remove(partId); }));
+                clear => session.Edit(document, () =>
+                {
+                    var o = document.Asset.Parts[partId];
+                    clear(o);
+                    if (o.IsEmpty)
+                    {
+                        document.Asset.Parts.Remove(partId);
+                    }
+                }));
         }
         if (session.Selection.Control is { } control && resolved is not null)
         {
@@ -61,29 +103,53 @@ internal sealed class VariantModelInspector(EditorSession session, ModelPartInsp
             else
             {
                 var rest = LayeredPoint2D.From(resolved.Rest[control]);
-                if (CharacterUi.LayeredPoint("Rest", ref rest)) session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, control, rest.ToVector3(), session.MoveChildren));
+                if (CharacterUi.LayeredPoint("Rest", ref rest))
+                {
+                    session.Change(document, () => ModelAuthoring.MoveRest(resolved, document.Asset, control, rest.ToVector3(), session.MoveChildren));
+                }
             }
-            var children = session.MoveChildren; if (ImGui.Checkbox("Move children with it", ref children)) session.MoveChildren = children;
+            var children = session.MoveChildren;
+            if (ImGui.Checkbox("Move children with it", ref children))
+            {
+                session.MoveChildren = children;
+            }
         }
         Ui.Header("Look");
         foreach (var look in basis.Asset.Looks)
         {
-            if (ImGui.SmallButton(look.Name + "##look-" + look.Id)) session.ApplyLook(look.Id);
-            if (ImGui.IsItemHovered()) ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Material?.Fill, p.Value.Face, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")));
+            if (ImGui.SmallButton(look.Name + "##look-" + look.Id))
+            {
+                session.ApplyLook(look.Id);
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip(string.Join("\n", look.Parts.Select(p => $"{p.Key}: {string.Join(", ", new[] { p.Value.Material?.Fill, p.Value.Face, p.Value.Hidden is { } h ? (h ? "hidden" : "shown") : null }.OfType<string>())}")));
+            }
+
             ImGui.SameLine();
         }
         ImGui.NewLine();
-        ImGui.SetNextItemWidth(140 * Ui.Scale); ImGui.InputTextWithHint("##look-name", "look name", ref _lookName, 60); ImGui.SameLine();
+        ImGui.SetNextItemWidth(140 * Ui.Scale);
+        ImGui.InputTextWithHint("##look-name", "look name", ref _lookName, 60);
+        ImGui.SameLine();
         if (Ui.Button("Save look to base", _lookName.Trim().Length > 0))
         {
             var id = new string([.. _lookName.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : '-')]).Trim('-');
-            if (session.SaveLook(id.Length > 0 ? id : "look", _lookName.Trim())) _lookName = "";
+            if (session.SaveLook(id.Length > 0 ? id : "look", _lookName.Trim()))
+            {
+                _lookName = "";
+            }
         }
         Ui.Help("Applying a look writes colors and faces as this variant's overrides. Saving one edits the base, which then needs saving.");
 
         Ui.Header("Overrides");
         ImGui.TextDisabled($"{variant.Build.Count} build value(s), {variant.Rest.Count} rest position(s), {variant.Parts.Count} part(s).");
-        if (Ui.Button("Reset all rest positions", variant.Rest.Count > 0)) session.Edit(document, () => document.Asset.Rest.Clear());
+        if (Ui.Button("Reset all rest positions", variant.Rest.Count > 0))
+        {
+            session.Edit(document, () => document.Asset.Rest.Clear());
+        }
+
         Ui.Help("Unoverridden values follow the base. Structural edits need the base: use Open base.");
         References.Draw(session, document.Id);
     }

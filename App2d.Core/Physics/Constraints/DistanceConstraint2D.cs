@@ -30,8 +30,14 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         Limits = limits;
     }
 
-    public PhysicsBody2D First { get; }
-    public PhysicsBody2D Second { get; }
+    public PhysicsBody2D First
+    {
+        get;
+    }
+    public PhysicsBody2D Second
+    {
+        get;
+    }
     public bool IsEnabled { get; set; } = true;
     public ConstraintLimit1D Limits
     {
@@ -39,7 +45,10 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         set
         {
             if (value.HasMinimum && value.Minimum < 0f || value.HasMaximum && value.Maximum < 0f)
+            {
                 ArgGuard.ThrowOutOfRange(value, "Distance limits cannot be negative.");
+            }
+
             _limits = value;
         }
     }
@@ -79,11 +88,15 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
     public void SolveVelocity(float deltaSeconds)
     {
         if (!IsEnabled)
+        {
             return;
+        }
 
         var inverseMassSum = First.InverseMass + Second.InverseMass;
         if (inverseMassSum <= 0f)
+        {
             return;
+        }
 
         var evaluation = ConstraintMath2D.EvaluateDistance(
             First.WorldObject.Transform.Position,
@@ -101,7 +114,9 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
             _ => false
         };
         if (!shouldCorrect)
+        {
             return;
+        }
 
         var correctionImpulse = evaluation.Direction * (relativeSpeed * VelocityStrength / inverseMassSum);
         First.LinearVelocity += correctionImpulse * First.InverseMass;
@@ -111,11 +126,15 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
     public bool SolvePosition(float deltaSeconds)
     {
         if (!IsEnabled)
+        {
             return false;
+        }
 
         var inverseMassSum = First.InverseMass + Second.InverseMass;
         if (inverseMassSum <= 0f)
+        {
             return false;
+        }
 
         var evaluation = ConstraintMath2D.EvaluateDistance(
             First.WorldObject.Transform.Position,
@@ -123,7 +142,9 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
             Limits,
             PositionTolerance);
         if (MathF.Abs(evaluation.Limit.Error) <= PositionTolerance)
+        {
             return false;
+        }
 
         var correction = evaluation.Direction * (evaluation.Limit.Error * PositionStrength / inverseMassSum);
         First.WorldObject.Transform.Position += correction * First.InverseMass;

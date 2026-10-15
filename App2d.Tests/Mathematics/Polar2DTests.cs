@@ -85,10 +85,18 @@ public sealed class Polar2DTests
     [Fact]
     public void RepeatedConversionsDoNotAllocate()
     {
-        for (var i = 0; i < 100; i++) Convert(i);
+        for (var i = 0; i < 100; i++)
+        {
+            Convert(i);
+        }
+
         var before = GC.GetAllocatedBytesForCurrentThread();
         var sum = 0f;
-        for (var i = 0; i < 1000; i++) sum += Convert(i);
+        for (var i = 0; i < 1000; i++)
+        {
+            sum += Convert(i);
+        }
+
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         Assert.True(float.IsFinite(sum));
         Assert.Equal(0, allocated);

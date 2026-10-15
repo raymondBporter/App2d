@@ -37,7 +37,8 @@ public sealed class GeometryDefinition2DTests
             using var modelJson = JsonDocument.Parse(saved.ToJson());
             Assert.False(modelJson.RootElement.GetProperty("parts")[0].TryGetProperty("kind", out _));
             var resolved = ResolvedModel.From(saved);
-            var drawing = new PuppetDrawing(); drawing.Build(resolved, PoseEvaluator.Rest(resolved));
+            var drawing = new PuppetDrawing();
+            drawing.Build(resolved, PoseEvaluator.Rest(resolved));
             Assert.True(drawing.Mesh.Count > 0, kind);
         }
     }

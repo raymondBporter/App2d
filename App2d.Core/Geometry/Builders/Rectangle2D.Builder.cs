@@ -12,9 +12,19 @@ public partial class Rectangle2D
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
     {
-        public required Vector2 Min { get; init; }
-        public required Vector2 Max { get; init; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)] public bool AxisAligned { get; init; }
+        public required Vector2 Min
+        {
+            get; init;
+        }
+        public required Vector2 Max
+        {
+            get; init;
+        }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool AxisAligned
+        {
+            get; init;
+        }
         [JsonIgnore] public override string Kind => ShapeKinds2D.Rectangle;
         public override void Validate()
         {
@@ -36,7 +46,11 @@ public partial class Rectangle2D
         {
             ArgGuard.ThrowIfNotFiniteOrNotPositive(size);
             ArgGuard.ThrowIfNotFinite(center);
-            return new() { Min = center - size / 2f, Max = center + size / 2f };
+            return new()
+            {
+                Min = center - size / 2f,
+                Max = center + size / 2f
+            };
         }
         public static Builder FromDimensions(Size2D size, Vector2 center = default)
         {
@@ -47,7 +61,11 @@ public partial class Rectangle2D
         {
             ArgGuard.ThrowIfNotFinite(min);
             ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
-            return new() { Min = min, Max = min + size.ToVector2() };
+            return new()
+            {
+                Min = min,
+                Max = min + size.ToVector2()
+            };
         }
         public static Rectangle2D CreateFromSize(Vector2 size, Vector2 center = default) => FromSize(size, center).Build();
         public static Rectangle2D CreateFromSize(Size2D size, Vector2 center = default) => FromDimensions(size, center).Build();

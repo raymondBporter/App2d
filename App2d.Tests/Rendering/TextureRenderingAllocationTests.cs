@@ -21,7 +21,11 @@ public sealed class TextureRenderingAllocationTests(ITestOutputHelper output)
         using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
         // Prime MonoGame's dynamic vertex buffer at the measured batch size as well as the texture.
         renderer.BeginFrame(128, 128, default);
-        for (var iteration = 0; iteration < 1_000; iteration++) renderer.Draw(worldObject);
+        for (var iteration = 0; iteration < 1_000; iteration++)
+        {
+            renderer.Draw(worldObject);
+        }
+
         renderer.EndFrame();
 
         // Since the test projects merged into one process, a single warm pass occasionally reports exactly 5,904
@@ -36,7 +40,11 @@ public sealed class TextureRenderingAllocationTests(ITestOutputHelper output)
             renderer.BeginFrame(128, 128, default);
             var gen0 = GC.CollectionCount(0);
             var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var iteration = 0; iteration < 1_000; iteration++) renderer.Draw(worldObject);
+            for (var iteration = 0; iteration < 1_000; iteration++)
+            {
+                renderer.Draw(worldObject);
+            }
+
             renderer.EndFrame();
             measurements[attempt] = GC.GetAllocatedBytesForCurrentThread() - before;
             gcs[attempt] = GC.CollectionCount(0) - gen0;

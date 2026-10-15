@@ -26,7 +26,11 @@ public sealed class ShapeRaycast2DTests
     public void ConcavePolygonRaysReachTheNotchBoundaryInEitherWinding(bool reverse)
     {
         Vector2[] perimeter = [new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)];
-        if (reverse) Array.Reverse(perimeter);
+        if (reverse)
+        {
+            Array.Reverse(perimeter);
+        }
+
         Assert.True(Raycast2D.TrySimplePolygon(new(2, 2), -Vector2.UnitX, perimeter, 10, out var raw));
         Assert.True(ShapeRaycast2D.TryIntersect(new(2, 2), -Vector2.UnitX, SimplePolygon2D.Builder.Create(perimeter), 10, out var shape));
         Assert.Equal(new Vector2(1, 2), raw.Point);

@@ -209,7 +209,11 @@ public static class Rect2DExtensions
         /// <returns>The axis-aligned box around the transformed corners.</returns>
         public Rect2D TransformedBy(Matrix3x2 transform)
         {
-            if (!rectangle.IsFinite) return Rect2D.Unbounded;
+            if (!rectangle.IsFinite)
+            {
+                return Rect2D.Unbounded;
+            }
+
             if (transform.M12 == 0f && transform.M21 == 0f)
             {
                 var scale = new Vector2(transform.M11, transform.M22);
@@ -219,7 +223,11 @@ public static class Rect2DExtensions
             }
             Span<Vector2> corners = stackalloc Vector2[4];
             rectangle.WriteCorners(corners);
-            for (var i = 0; i < corners.Length; i++) corners[i] = Vector2.Transform(corners[i], transform);
+            for (var i = 0; i < corners.Length; i++)
+            {
+                corners[i] = Vector2.Transform(corners[i], transform);
+            }
+
             return Rect2D.FromPoints(corners);
         }
 

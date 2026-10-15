@@ -12,8 +12,13 @@ internal sealed class ModelViewport(EditorSession session, Viewport viewport, Mo
 
     public void Draw(ViewportFrame frame)
     {
-        if (frame.Primary is not { } primary) return;
-        var pose = primary.Subject.Pose; var model = primary.Subject.Model;
+        if (frame.Primary is not { } primary)
+        {
+            return;
+        }
+
+        var pose = primary.Subject.Pose;
+        var model = primary.Subject.Model;
         if (session.EditRig)
         {
             ModelOverlay.DrawRig(frame, model, pose, session.Selection.Control);
@@ -25,7 +30,8 @@ internal sealed class ModelViewport(EditorSession session, Viewport viewport, Mo
             ModelOverlay.DrawPart(frame, part, pose, model);
             if (cutout.DragEnabled && part.Geometry is SimplePolygon2D.Builder && session.SubjectModel is not null)
             {
-                cutout.Drag(frame, part, pose, model); return;
+                cutout.Drag(frame, part, pose, model);
+                return;
             }
         }
         if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left))
@@ -37,8 +43,18 @@ internal sealed class ModelViewport(EditorSession session, Viewport viewport, Mo
                 .Where(h => h.Score <= 1)
                 .OrderBy(h => h.Score)
                 .FirstOrDefault();
-            if (Part is not null) session.Selection.Select(part: Part.Id); else session.Selection.Clear();
+            if (Part is not null)
+            {
+                session.Selection.Select(part: Part.Id);
+            }
+            else
+            {
+                session.Selection.Clear();
+            }
         }
-        if (frame.Hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) viewport.Fit(primary.Subject);
+        if (frame.Hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+        {
+            viewport.Fit(primary.Subject);
+        }
     }
 }

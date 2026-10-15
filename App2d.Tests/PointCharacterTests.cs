@@ -18,7 +18,9 @@ public sealed class PointCharacterTests
             label = "Test",
             anatomy = "test",
             pointNames = new[] { "root" },
-            drawing = new { },
+            drawing = new
+            {
+            },
             dataSha256 = Convert.ToHexString(SHA256.HashData(data)),
             clips = new Dictionary<string, object>
             {
@@ -31,7 +33,13 @@ public sealed class PointCharacterTests
                     sampleCount = 3,
                     byteOffset = offset,
                     byteLength = 18,
-                    encoding = new { type = "uint16-le", layout = "sample,point,xyz", origin = new[] { -5f, 10f, 100f }, step = .5f }
+                    encoding = new
+                    {
+                        type = "uint16-le",
+                        layout = "sample,point,xyz",
+                        origin = new[] { -5f, 10f, 100f },
+                        step = .5f
+                    }
                 }
             }
         };
@@ -40,18 +48,27 @@ public sealed class PointCharacterTests
     [Fact]
     public void UsesActualAdaptiveTimesAndPerAxisOrigins()
     {
-        var clip = Library().Clips["motion"]; Span<Vector3> pose = stackalloc Vector3[1];
-        clip.Sample(.125, pose); Assert.Equal(new Vector3(-2.5f, 17.5f, 112.5f), pose[0]);
-        clip.Sample(.625, pose); Assert.Equal(new Vector3(5, 25, 120), pose[0]);
+        var clip = Library().Clips["motion"];
+        Span<Vector3> pose = stackalloc Vector3[1];
+        clip.Sample(.125, pose);
+        Assert.Equal(new Vector3(-2.5f, 17.5f, 112.5f), pose[0]);
+        clip.Sample(.625, pose);
+        Assert.Equal(new Vector3(5, 25, 120), pose[0]);
     }
     [Fact]
     public void LoopWrapAndExplicitEndpointHoldAreDifferentOperations()
     {
-        var clip = Library().Clips["motion"]; Span<Vector3> pose = stackalloc Vector3[1];
-        clip.Sample(1, pose); Assert.Equal(clip.Read(0, 0), pose[0]);
-        clip.Sample(1, pose, holdEnd: true); Assert.Equal(clip.Read(2, 0), pose[0]);
-        clip.Sample(-.375, pose); Assert.Equal(new Vector3(5, 25, 120), pose[0]);
-        var once = Library(false).Clips["motion"]; once.Sample(100, pose); Assert.Equal(once.Read(2, 0), pose[0]);
+        var clip = Library().Clips["motion"];
+        Span<Vector3> pose = stackalloc Vector3[1];
+        clip.Sample(1, pose);
+        Assert.Equal(clip.Read(0, 0), pose[0]);
+        clip.Sample(1, pose, holdEnd: true);
+        Assert.Equal(clip.Read(2, 0), pose[0]);
+        clip.Sample(-.375, pose);
+        Assert.Equal(new Vector3(5, 25, 120), pose[0]);
+        var once = Library(false).Clips["motion"];
+        once.Sample(100, pose);
+        Assert.Equal(once.Read(2, 0), pose[0]);
     }
     [Fact]
     public void EndpointHoldUsesStoredPoseWhenFinalTimestampHasRoundingDrift()
@@ -60,9 +77,12 @@ public sealed class PointCharacterTests
         {
             var clip = Library(loop, [0, 1 - 1e-10, 1 + 1e-10]).Clips["motion"];
             var pose = new Vector3[1];
-            clip.Sample(1, pose, holdEnd: true); Assert.Equal(clip.Read(2, 0), pose[0]);
-            clip.Sample(100, pose, holdEnd: true); Assert.Equal(clip.Read(2, 0), pose[0]);
-            clip.Sample(1, pose); Assert.Equal(clip.Read(loop ? 0 : 2, 0), pose[0]);
+            clip.Sample(1, pose, holdEnd: true);
+            Assert.Equal(clip.Read(2, 0), pose[0]);
+            clip.Sample(100, pose, holdEnd: true);
+            Assert.Equal(clip.Read(2, 0), pose[0]);
+            clip.Sample(1, pose);
+            Assert.Equal(clip.Read(loop ? 0 : 2, 0), pose[0]);
         }
     }
     [Fact]
@@ -77,10 +97,19 @@ public sealed class PointCharacterTests
     [Fact]
     public void SamplingDoesNotAllocateDecodedClipsOrPerFrameArrays()
     {
-        var clip = Library().Clips["motion"]; var pose = new Vector3[1];
-        for (var i = 0; i < 100; i++) clip.Sample(.3, pose);
+        var clip = Library().Clips["motion"];
+        var pose = new Vector3[1];
+        for (var i = 0; i < 100; i++)
+        {
+            clip.Sample(.3, pose);
+        }
+
         var before = GC.GetAllocatedBytesForCurrentThread();
-        for (var i = 0; i < 1000; i++) clip.Sample(i * .013, pose);
+        for (var i = 0; i < 1000; i++)
+        {
+            clip.Sample(i * .013, pose);
+        }
+
         Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
     }
 }

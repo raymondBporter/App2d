@@ -16,7 +16,11 @@ public static class PolygonTriangulation2D
             "Tolerance must be finite and nonnegative.", nameof(tolerance));
         Vector2[] points = [.. perimeter];
         ArgGuard.ThrowIf(points.Length < 3, "A polygon needs at least three vertices.", nameof(perimeter));
-        foreach (var point in points) ArgGuard.ThrowIfNotFinite(point, nameof(perimeter));
+        foreach (var point in points)
+        {
+            ArgGuard.ThrowIfNotFinite(point, nameof(perimeter));
+        }
+
         var twiceArea = PolygonGeometry2D.SignedAreaTwiceDouble(points);
         ArgGuard.ThrowIf(Math.Abs(twiceArea) <= tolerance, "The polygon needs nonzero area.", nameof(perimeter));
         var winding = Math.Sign(twiceArea);
@@ -30,8 +34,14 @@ public static class PolygonTriangulation2D
                 var a = remaining[(i + remaining.Count - 1) % remaining.Count];
                 var b = remaining[i];
                 var c = remaining[(i + 1) % remaining.Count];
-                var first = new Vector2d(points[a]); var second = new Vector2d(points[b]); var third = new Vector2d(points[c]);
-                if (winding * first.Orientation(second, third) <= tolerance) continue;
+                var first = new Vector2d(points[a]);
+                var second = new Vector2d(points[b]);
+                var third = new Vector2d(points[c]);
+                if (winding * first.Orientation(second, third) <= tolerance)
+                {
+                    continue;
+                }
+
                 if (remaining.Any(j => j != a && j != b && j != c &&
                     winding * first.Orientation(second, new(points[j])) >= -tolerance &&
                     winding * second.Orientation(third, new(points[j])) >= -tolerance &&

@@ -18,8 +18,14 @@ public sealed class SoundFalloff2D
         OuterRadius = outerRadius;
     }
 
-    public float InnerRadius { get; }
-    public float OuterRadius { get; }
+    public float InnerRadius
+    {
+        get;
+    }
+    public float OuterRadius
+    {
+        get;
+    }
 
     public float Evaluate(Vector2 source, Vector2 listener)
     {

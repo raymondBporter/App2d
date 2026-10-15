@@ -29,13 +29,22 @@ public static class AppearanceAuthoring
         art.Ink = ink;
         art.LineWidth = lineWidth;
         art.BackView = null;
-        if (source is null) art.Solids.Add(PropGeometry.Extrude([new(-.15f, 0), new(.15f, 0), new(.15f, .3f), new(-.15f, .3f)], .02f, "#b97549"));
-        art.Validate(); return art;
+        if (source is null)
+        {
+            art.Solids.Add(PropGeometry.Extrude([new(-.15f, 0), new(.15f, 0), new(.15f, .3f), new(-.15f, .3f)], .02f, "#b97549"));
+        }
+
+        art.Validate();
+        return art;
     }
 
     public static PropAsset Duplicate(PropAsset source, string id, string name)
     {
-        var copy = PropAsset.FromJson(source.ToJson()); copy.Id = id; copy.Name = name; copy.Validate(); return copy;
+        var copy = PropAsset.FromJson(source.ToJson());
+        copy.Id = id;
+        copy.Name = name;
+        copy.Validate();
+        return copy;
     }
 
     /// <summary>Build and validate before replacing anything, so an invalid outline leaves the last good drawing intact.</summary>

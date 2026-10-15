@@ -7,9 +7,17 @@ internal sealed partial class NoodleEditorHost
         Ui.Header("Noodle / IK lab");
         Ui.Section("IK control", () =>
         {
-            if (Ui.Combo("Selected", _person.SelectedControlName, _person.ControlNames) is { } selected) _person.SelectControl(selected);
+            if (Ui.Combo("Selected", _person.SelectedControlName, _person.ControlNames) is { } selected)
+            {
+                _person.SelectControl(selected);
+            }
+
             var target = _person.TargetLimb.Target;
-            if (Ui.Drag2("Target", ref target, .5f, 0, 0)) _person.TargetLimb.SetTarget(target);
+            if (Ui.Drag2("Target", ref target, .5f, 0, 0))
+            {
+                _person.TargetLimb.SetTarget(target);
+            }
+
             Ui.Button("Flip joint (Space)", () => _person.TargetLimb.FlipBend());
             Ui.Help(_person.TargetLimb.Pose.ReachesTarget ? "Target reached" : "Target clamped to limb reach");
         });

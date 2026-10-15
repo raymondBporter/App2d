@@ -29,16 +29,28 @@ public sealed partial class Triangle2D : IConvexShape2D
     }
 
     /// <summary>The first vertex.</summary>
-    public Vector2 A { get; }
+    public Vector2 A
+    {
+        get;
+    }
 
     /// <summary>The second vertex.</summary>
-    public Vector2 B { get; }
+    public Vector2 B
+    {
+        get;
+    }
 
     /// <summary>The third vertex.</summary>
-    public Vector2 C { get; }
+    public Vector2 C
+    {
+        get;
+    }
 
     /// <inheritdoc/>
-    public float Area { get; }
+    public float Area
+    {
+        get;
+    }
 
     /// <inheritdoc/>
     public float Diameter => Diameter2D.Triangle(A, B, C);
@@ -48,7 +60,9 @@ public sealed partial class Triangle2D : IConvexShape2D
     {
         ArgGuard.ThrowIfNotFinite(localPoint);
         var point = new Vector2d(localPoint);
-        var a = new Vector2d(A); var b = new Vector2d(B); var c = new Vector2d(C);
+        var a = new Vector2d(A);
+        var b = new Vector2d(B);
+        var c = new Vector2d(C);
         var first = a.Orientation(b, point);
         var second = b.Orientation(c, point);
         var third = c.Orientation(a, point);
@@ -65,8 +79,16 @@ public sealed partial class Triangle2D : IConvexShape2D
         var best = A;
         var projection = A.ToVector2d().Dot(direction);
         var next = B.ToVector2d().Dot(direction);
-        if (next > projection) { best = B; projection = next; }
-        if (C.ToVector2d().Dot(direction) > projection) best = C;
+        if (next > projection)
+        {
+            best = B;
+            projection = next;
+        }
+        if (C.ToVector2d().Dot(direction) > projection)
+        {
+            best = C;
+        }
+
         return best;
     }
 

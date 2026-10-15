@@ -23,10 +23,19 @@ internal sealed class RigidCharacterDemo2D
         Pose = RigidPose2D.Neutral;
     }
 
-    public Vector2 Hips { get; private set; }
+    public Vector2 Hips
+    {
+        get; private set;
+    }
     public Vector2 DisplayHips => Hips + new Vector2(0f, _hipBob);
-    public Vector2 Velocity { get; private set; }
-    public RigidPose2D Pose { get; private set; }
+    public Vector2 Velocity
+    {
+        get; private set;
+    }
+    public RigidPose2D Pose
+    {
+        get; private set;
+    }
     public int Facing { get; private set; } = 1;
     public bool IsGrounded { get; private set; } = true;
     public float SideViewAmount { get; private set; } = IdleSideViewAmount;
@@ -38,14 +47,19 @@ internal sealed class RigidCharacterDemo2D
     {
         _animationTime += deltaSeconds;
         if (movement != 0)
+        {
             Facing = movement;
+        }
 
         var desiredVelocityX = movement * RunSpeed;
         var acceleration = IsGrounded ? 1550f : 720f;
         var velocityX = MoveTowards(Velocity.X, desiredVelocityX, acceleration * deltaSeconds);
         var velocityY = Velocity.Y;
         if (!IsGrounded)
+        {
             velocityY -= Gravity * deltaSeconds;
+        }
+
         Velocity = new Vector2(velocityX, velocityY);
         Hips += Velocity * deltaSeconds;
 
@@ -100,7 +114,10 @@ internal sealed class RigidCharacterDemo2D
     public void Jump()
     {
         if (!IsGrounded)
+        {
             return;
+        }
+
         IsGrounded = false;
         Velocity = new Vector2(Velocity.X, 505f);
         _activeClip = null;
@@ -129,7 +146,9 @@ internal sealed class RigidCharacterDemo2D
         _activeClip = clip;
         _clipTime = 0f;
         if (IsGrounded)
+        {
             Velocity = new Vector2(0f, Velocity.Y);
+        }
     }
 
     private static RigidPose2D ApplyJointCurves(RigidPose2D pose, float time, bool grounded)

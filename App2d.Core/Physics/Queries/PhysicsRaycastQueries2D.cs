@@ -46,7 +46,9 @@ public static class PhysicsRaycastQueries2D
             ray.Validate();
             ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
             if (hits.IsEmpty)
+            {
                 return 0;
+            }
 
             var hitCount = 0;
             foreach (var body in world.Bodies)
@@ -77,9 +79,14 @@ public static class PhysicsRaycastQueries2D
         where T : class
     {
         if (hitCount == hits.Length && candidate.Distance >= hits[^1].Distance)
+        {
             return;
+        }
+
         if (hitCount < hits.Length)
+        {
             hitCount++;
+        }
 
         var insertionIndex = hitCount - 1;
         while (insertionIndex > 0 && candidate.Distance < hits[insertionIndex - 1].Distance)

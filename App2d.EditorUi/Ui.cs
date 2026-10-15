@@ -15,14 +15,24 @@ public static class Ui
     public static void Window(string id, Action content, ImGuiWindowFlags flags = ImGuiWindowFlags.None)
     {
         var visible = ImGui.Begin(id, flags);
-        try { if (visible) content(); }
-        finally { ImGui.End(); }
+        try
+        {
+            if (visible)
+            {
+                content();
+            }
+        }
+        finally
+        {
+            ImGui.End();
+        }
     }
 
     /// <summary>A fixed root window covering the host's drawing surface.</summary>
     public static void Root(string id, Action content)
     {
-        ImGui.SetNextWindowPos(Vector2.Zero); ImGui.SetNextWindowSize(ImGui.GetIO().DisplaySize);
+        ImGui.SetNextWindowPos(Vector2.Zero);
+        ImGui.SetNextWindowSize(ImGui.GetIO().DisplaySize);
         Window(id, content, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
     }
 
@@ -44,11 +54,22 @@ public static class Ui
         var visible = ImGui.BeginChild(id, size, border ? ImGuiChildFlags.Borders : ImGuiChildFlags.None, flags);
         try
         {
-            if (!visible) return;
-            if (header is not null) { header(); ImGui.Separator(); }
+            if (!visible)
+            {
+                return;
+            }
+
+            if (header is not null)
+            {
+                header();
+                ImGui.Separator();
+            }
             content();
         }
-        finally { ImGui.EndChild(); }
+        finally
+        {
+            ImGui.EndChild();
+        }
     }
 
     /// <summary>Places each child callback beside the previous one. A callback may draw a widget or a whole panel.</summary>
@@ -59,63 +80,132 @@ public static class Ui
         {
             for (var i = 0; i < children.Length; i++)
             {
-                if (i > 0) ImGui.SameLine();
+                if (i > 0)
+                {
+                    ImGui.SameLine();
+                }
+
                 children[i]();
             }
         }
-        finally { ImGui.EndGroup(); }
+        finally
+        {
+            ImGui.EndGroup();
+        }
     }
 
     /// <summary>A titled vertical group. Its ID scopes repeated field labels independently from other sections.</summary>
     public static void Section(string title, Action content, string? id = null)
     {
         ImGui.PushID(id ?? title);
-        try { Header(title); content(); }
-        finally { ImGui.PopID(); }
+        try
+        {
+            Header(title);
+            content();
+        }
+        finally
+        {
+            ImGui.PopID();
+        }
     }
 
     public static void CollapsibleSection(string title, Action content, bool defaultOpen = false)
     {
         ImGui.PushID(title);
-        try { if (ImGui.CollapsingHeader(title, defaultOpen ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None)) content(); }
-        finally { ImGui.PopID(); }
+        try
+        {
+            if (ImGui.CollapsingHeader(title, defaultOpen ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None))
+            {
+                content();
+            }
+        }
+        finally
+        {
+            ImGui.PopID();
+        }
     }
 
-    public static void Header(string text) { ImGui.Spacing(); ImGui.TextColored(Accent, text.ToUpperInvariant()); }
-    public static void Help(string text) { ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]); ImGui.TextWrapped(text); ImGui.PopStyleColor(); }
-    public static void Problem(string text) { ImGui.PushStyleColor(ImGuiCol.Text, Warning); ImGui.TextWrapped(text); ImGui.PopStyleColor(); }
+    public static void Header(string text)
+    {
+        ImGui.Spacing();
+        ImGui.TextColored(Accent, text.ToUpperInvariant());
+    }
+    public static void Help(string text)
+    {
+        ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetStyle().Colors[(int)ImGuiCol.TextDisabled]);
+        ImGui.TextWrapped(text);
+        ImGui.PopStyleColor();
+    }
+    public static void Problem(string text)
+    {
+        ImGui.PushStyleColor(ImGuiCol.Text, Warning);
+        ImGui.TextWrapped(text);
+        ImGui.PopStyleColor();
+    }
 
-    private static void Label(string label) { ImGui.TextUnformatted(label); ImGui.SetNextItemWidth(-1); }
+    private static void Label(string label)
+    {
+        ImGui.TextUnformatted(label);
+        ImGui.SetNextItemWidth(-1);
+    }
 
     public static bool Slider(string label, ref float value, float min, float max, string format = "%.3f")
-    { Label(label); return ImGui.SliderFloat("##" + label, ref value, min, max, format, ImGuiSliderFlags.AlwaysClamp); }
+    {
+        Label(label);
+        return ImGui.SliderFloat("##" + label, ref value, min, max, format, ImGuiSliderFlags.AlwaysClamp);
+    }
 
     public static bool Drag(string label, ref float value, float speed = .005f, float min = -100, float max = 100, string format = "%.3f")
-    { Label(label); return ImGui.DragFloat("##" + label, ref value, speed, min, max, format); }
+    {
+        Label(label);
+        return ImGui.DragFloat("##" + label, ref value, speed, min, max, format);
+    }
 
     public static bool Drag2(string label, ref Vector2 value, float speed = .005f, float min = -100, float max = 100)
-    { Label(label); return ImGui.DragFloat2("##" + label, ref value, speed, min, max, "%.3f"); }
+    {
+        Label(label);
+        return ImGui.DragFloat2("##" + label, ref value, speed, min, max, "%.3f");
+    }
 
     public static bool Drag3(string label, ref Vector3 value, float speed = .005f, float min = -100, float max = 100)
-    { Label(label); return ImGui.DragFloat3("##" + label, ref value, speed, min, max, "%.3f"); }
+    {
+        Label(label);
+        return ImGui.DragFloat3("##" + label, ref value, speed, min, max, "%.3f");
+    }
 
     public static bool Text(string label, ref string value, uint length = 80)
-    { Label(label); return ImGui.InputText("##" + label, ref value, length); }
+    {
+        Label(label);
+        return ImGui.InputText("##" + label, ref value, length);
+    }
 
     public static bool ColorHex(string label, ref string hex)
     {
         var value = new Vector3(Convert.ToInt32(hex[1..3], 16), Convert.ToInt32(hex[3..5], 16), Convert.ToInt32(hex[5..7], 16)) / 255;
-        if (!ImGui.ColorEdit3(label, ref value, ImGuiColorEditFlags.NoInputs)) return false;
-        hex = $"#{(int)MathF.Round(value.X * 255):x2}{(int)MathF.Round(value.Y * 255):x2}{(int)MathF.Round(value.Z * 255):x2}"; return true;
+        if (!ImGui.ColorEdit3(label, ref value, ImGuiColorEditFlags.NoInputs))
+        {
+            return false;
+        }
+
+        hex = $"#{(int)MathF.Round(value.X * 255):x2}{(int)MathF.Round(value.Y * 255):x2}{(int)MathF.Round(value.Z * 255):x2}";
+        return true;
     }
 
     /// <summary>A full-width combo; returns the chosen option when it changes.</summary>
     public static string? Combo(string label, string current, IEnumerable<string> options, Func<string, string>? display = null)
     {
-        Label(label); string? chosen = null;
+        Label(label);
+        string? chosen = null;
         if (ImGui.BeginCombo("##" + label, display?.Invoke(current) ?? current))
         {
-            foreach (var option in options) if (ImGui.Selectable(display?.Invoke(option) ?? option, option == current) && option != current) chosen = option;
+            foreach (var option in options)
+            {
+                if (ImGui.Selectable(display?.Invoke(option) ?? option, option == current) && option != current)
+                {
+                    chosen = option;
+                }
+            }
+
             ImGui.EndCombo();
         }
         return chosen;
@@ -127,8 +217,14 @@ public static class Ui
     /// </summary>
     public static bool OverrideMarker(bool overridden, string id)
     {
-        if (!overridden) return false;
-        ImGui.SameLine(); ImGui.TextColored(Override, "overridden"); ImGui.SameLine();
+        if (!overridden)
+        {
+            return false;
+        }
+
+        ImGui.SameLine();
+        ImGui.TextColored(Override, "overridden");
+        ImGui.SameLine();
         return ImGui.SmallButton("Reset to base##" + id);
     }
 
@@ -141,12 +237,18 @@ public static class Ui
 
     public static bool Button(string label, bool enabled = true)
     {
-        ImGui.BeginDisabled(!enabled); var pressed = ImGui.Button(label); ImGui.EndDisabled(); return pressed;
+        ImGui.BeginDisabled(!enabled);
+        var pressed = ImGui.Button(label);
+        ImGui.EndDisabled();
+        return pressed;
     }
 
     public static void Button(string label, Action onClick, bool enabled = true)
     {
-        if (Button(label, enabled)) onClick();
+        if (Button(label, enabled))
+        {
+            onClick();
+        }
     }
 }
 

@@ -15,7 +15,10 @@ public static partial class ShapeCollision2D
         foreach (var part in composite.Parts)
         {
             var result = Dispatch(part, compositePose, other, otherPose);
-            if (result.HasContact && (!best.HasContact || result.Contact.PenetrationDepth > best.Contact.PenetrationDepth)) best = result;
+            if (result.HasContact && (!best.HasContact || result.Contact.PenetrationDepth > best.Contact.PenetrationDepth))
+            {
+                best = result;
+            }
         }
         return best;
     }

@@ -27,7 +27,14 @@ public static class FarthestDistance2D
         {
             var left = low + (high - low) / 3;
             var right = high - (high - low) / 3;
-            if (At(left) < At(right)) low = left; else high = right;
+            if (At(left) < At(right))
+            {
+                low = left;
+            }
+            else
+            {
+                high = right;
+            }
         }
         return (float)Math.Max(Math.Max(At(0), At(1)), At((low + high) / 2));
     }
@@ -59,7 +66,10 @@ public static class FarthestDistance2D
             // A farthest vector pointing into this interval is within half its angle of an endpoint normal.
             // Its projection there cannot exceed that endpoint's support value.
             var upper = Math.Max(0, Math.Max(start.Projection, end.Projection)) / Math.Cos((end.Angle - start.Angle) / 2);
-            if (upper > best * (1 + 2e-6)) intervals.Enqueue((start, end), -upper);
+            if (upper > best * (1 + 2e-6))
+            {
+                intervals.Enqueue((start, end), -upper);
+            }
         }
 
         var previous = Sample(0);
@@ -71,7 +81,11 @@ public static class FarthestDistance2D
         }
         while (intervals.TryDequeue(out var interval, out var priority))
         {
-            if (-priority <= best * (1 + 2e-6)) break;
+            if (-priority <= best * (1 + 2e-6))
+            {
+                break;
+            }
+
             var middle = Sample((interval.Start.Angle + interval.End.Angle) / 2);
             Enqueue(interval.Start, middle);
             Enqueue(middle, interval.End);

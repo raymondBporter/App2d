@@ -11,7 +11,10 @@ public sealed class ToolInputCaptureTests
         input.SetKey(Keys.Space, true);
         input.SetMouseButton(MouseButtons.Left, true);
         input.Mouse.AddWheelDelta(120);
-        input.SetGamepad(new(default, GamepadButton2D.A, GamepadButton2D.A, default) { IsConnected = true });
+        input.SetGamepad(new(default, GamepadButton2D.A, GamepadButton2D.A, default)
+        {
+            IsConnected = true
+        });
 
         input.SetToolCapture(keyboard: false, mouse: true);
 
@@ -35,7 +38,8 @@ public sealed class ToolInputCaptureTests
         input.SetToolCapture(keyboard: false, mouse: false);
         input.SetKey(Keys.D, true);
         Assert.False(input.Keyboard.IsDown(Keys.D));
-        input.SetKey(Keys.D, false); input.SetKey(Keys.D, true);
+        input.SetKey(Keys.D, false);
+        input.SetKey(Keys.D, true);
         Assert.True(input.Keyboard.WasPressed(Keys.D));
     }
 
@@ -47,7 +51,8 @@ public sealed class ToolInputCaptureTests
         input.SetMouseButton(MouseButtons.Left, true);
         input.SetToolCapture(keyboard: false, mouse: false);
         Assert.False(input.Mouse.IsDown(MouseButtons.Left));
-        input.SetMouseButton(MouseButtons.Left, false); input.SetMouseButton(MouseButtons.Left, true);
+        input.SetMouseButton(MouseButtons.Left, false);
+        input.SetMouseButton(MouseButtons.Left, true);
         Assert.True(input.Mouse.WasPressed(MouseButtons.Left));
     }
 }

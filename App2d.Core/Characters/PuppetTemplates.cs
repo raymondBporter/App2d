@@ -12,38 +12,104 @@ public static class PuppetTemplates
     public static PuppetDefinition StickFigure()
     {
         var puppet = new PuppetDefinition { Name = "Scribble knight" };
-        void Control(string id, float x, float y, float z = 0) => puppet.Controls.Add(new() { Id = id, Rest = new(x, y, z) });
+        void Control(string id, float x, float y, float z = 0) => puppet.Controls.Add(new()
+        {
+            Id = id,
+            Rest = new(x, y, z)
+        });
         void Bone(string from, string to, bool visible = true)
         {
-            puppet.Bones.Add(new() { From = from, To = to });
-            if (visible) puppet.Parts.Add(new() { Id = from + "-" + to, Geometry = new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, A = from, B = to, Width = .045f });
+            puppet.Bones.Add(new()
+            {
+                From = from,
+                To = to
+            });
+            if (visible)
+            {
+                puppet.Parts.Add(new()
+                {
+                    Id = from + "-" + to,
+                    Geometry = new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY },
+                    A = from,
+                    B = to,
+                    Width = .045f
+                });
+            }
         }
-        Control("hips", 0, 1); Control("chest", 0, 1.65f); Control("head", 0, 2.03f);
-        Bone("hips", "chest", false); Bone("chest", "head");
+        Control("hips", 0, 1);
+        Control("chest", 0, 1.65f);
+        Control("head", 0, 2.03f);
+        Bone("hips", "chest", false);
+        Bone("chest", "head");
         foreach (var (side, x, z) in new[] { ("left", -.13f, .08f), ("right", .13f, -.08f) })
         {
-            Control(side + "-shoulder", x, 1.57f, z); Control(side + "-elbow", x * 2, 1.25f, z); Control(side + "-hand", x * 2.5f, .92f, z);
-            Control(side + "-hip", x, 1, z); Control(side + "-knee", x + .09f, .51f, z); Control(side + "-foot", x, .025f, z);
-            Bone("chest", side + "-shoulder", false); Bone(side + "-shoulder", side + "-elbow"); Bone(side + "-elbow", side + "-hand");
-            Bone("hips", side + "-hip", false); Bone(side + "-hip", side + "-knee"); Bone(side + "-knee", side + "-foot");
-            puppet.Chains.Add(new() { Root = side + "-shoulder", Joint = side + "-elbow", End = side + "-hand", Bend = -1 });
-            puppet.Chains.Add(new() { Root = side + "-hip", Joint = side + "-knee", End = side + "-foot", Bend = 1 });
+            Control(side + "-shoulder", x, 1.57f, z);
+            Control(side + "-elbow", x * 2, 1.25f, z);
+            Control(side + "-hand", x * 2.5f, .92f, z);
+            Control(side + "-hip", x, 1, z);
+            Control(side + "-knee", x + .09f, .51f, z);
+            Control(side + "-foot", x, .025f, z);
+            Bone("chest", side + "-shoulder", false);
+            Bone(side + "-shoulder", side + "-elbow");
+            Bone(side + "-elbow", side + "-hand");
+            Bone("hips", side + "-hip", false);
+            Bone(side + "-hip", side + "-knee");
+            Bone(side + "-knee", side + "-foot");
+            puppet.Chains.Add(new()
+            {
+                Root = side + "-shoulder",
+                Joint = side + "-elbow",
+                End = side + "-hand",
+                Bend = -1
+            });
+            puppet.Chains.Add(new()
+            {
+                Root = side + "-hip",
+                Joint = side + "-knee",
+                End = side + "-foot",
+                Bend = 1
+            });
         }
-        puppet.Parts.Add(new() { Id = "body", Geometry = new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }, A = "hips", B = "chest", Width = .45f, Height = .68f, OffsetY = .32f, Material = new() { Fill = "#d8e9db", Outline = new() } });
-        puppet.Parts.Add(new() { Id = "head", Geometry = GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), A = "head", Width = .58f, Height = .58f, Face = "relaxed", Depth = -.12f });
+        puppet.Parts.Add(new()
+        {
+            Id = "body",
+            Geometry = new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] },
+            A = "hips",
+            B = "chest",
+            Width = .45f,
+            Height = .68f,
+            OffsetY = .32f,
+            Material = new()
+            {
+                Fill = "#d8e9db",
+                Outline = new()
+            }
+        });
+        puppet.Parts.Add(new()
+        {
+            Id = "head",
+            Geometry = GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse),
+            A = "head",
+            Width = .58f,
+            Height = .58f,
+            Face = "relaxed",
+            Depth = -.12f
+        });
         foreach (var part in puppet.Parts)
         {
             part.Material ??= part.Geometry is CurveDefinition2D ? new RenderMaterialDefinition2D()
                 : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         }
         puppet.Motions[0].Name = "Pose study";
-        puppet.Validate(); return puppet;
+        puppet.Validate();
+        return puppet;
     }
 
     /// <summary>A repeating right-facing walk, slightly turned toward the viewer, with explicit world-space contacts.</summary>
     public static PuppetDefinition StepStudy()
     {
-        var puppet = StickFigure(); puppet.Name = "Walk loop study";
+        var puppet = StickFigure();
+        puppet.Name = "Walk loop study";
         // Begin in right-facing profile: the shoulder and hip axes run into/out of the
         // screen. Rotate that cross-section 30 degrees toward the viewer, with
         // both sockets slightly behind the torso's anatomical centerline.
@@ -59,12 +125,20 @@ public static class PuppetTemplates
             var hipDepth = sign * hipHalfSpan * MathF.Cos(yaw);
             void Rest(string suffix, float px, float py, float depth) => puppet.Controls.Single(c => c.Id == side + suffix).Rest = new(px, py, depth);
             Rest("-shoulder", shoulderX, 1.57f, shoulderDepth);
-            Rest("-elbow", shoulderX + .05f, 1.25f, shoulderDepth); Rest("-hand", shoulderX + .03f, .92f, shoulderDepth);
-            Rest("-hip", hipX, 1, hipDepth); Rest("-knee", hipX + .09f, .51f, hipDepth); Rest("-foot", hipX, .025f, hipDepth);
+            Rest("-elbow", shoulderX + .05f, 1.25f, shoulderDepth);
+            Rest("-hand", shoulderX + .03f, .92f, shoulderDepth);
+            Rest("-hip", hipX, 1, hipDepth);
+            Rest("-knee", hipX + .09f, .51f, hipDepth);
+            Rest("-foot", hipX, .025f, hipDepth);
         }
         puppet.Parts.Single(p => p.Id == "body").Width = .36f;
-        var head = puppet.Parts.Single(p => p.Id == "head"); head.Width = .56f; head.FaceX = .065f;
-        var motion = puppet.Motions[0]; motion.Name = "Walk right"; motion.Duration = 1.2f; motion.Loop = true;
+        var head = puppet.Parts.Single(p => p.Id == "head");
+        head.Width = .56f;
+        head.FaceX = .065f;
+        var motion = puppet.Motions[0];
+        motion.Name = "Walk right";
+        motion.Duration = 1.2f;
+        motion.Loop = true;
         const float stride = .5f, ground = .025f;
         var leftTrack = puppet.Controls.Single(c => c.Id == "left-foot").Rest;
         var rightTrack = puppet.Controls.Single(c => c.Id == "right-foot").Rest;
@@ -97,9 +171,22 @@ public static class PuppetTemplates
         // Store an exact repeated local pose, including the hands, at the seam.
         motion.Keys[^1].Points = new(motion.Keys[0].Points);
         motion.Keys[^1].Position = new(stride, motion.Keys[0].Position.Y, 0);
-        motion.Contacts.Add(new() { End = "right-foot", Start = 0, Finish = .6f, Target = new(.125f + rightTrack.X, ground, rightTrack.Z) });
-        motion.Contacts.Add(new() { End = "left-foot", Start = .6f, Finish = 1.2f, Target = new(.375f + leftTrack.X, ground, leftTrack.Z) });
-        puppet.Validate(); return puppet;
+        motion.Contacts.Add(new()
+        {
+            End = "right-foot",
+            Start = 0,
+            Finish = .6f,
+            Target = new(.125f + rightTrack.X, ground, rightTrack.Z)
+        });
+        motion.Contacts.Add(new()
+        {
+            End = "left-foot",
+            Start = .6f,
+            Finish = 1.2f,
+            Target = new(.375f + leftTrack.X, ground, leftTrack.Z)
+        });
+        puppet.Validate();
+        return puppet;
     }
 
     /// <summary>
@@ -108,10 +195,15 @@ public static class PuppetTemplates
     /// </summary>
     public static PuppetDefinition RunStudy()
     {
-        var puppet = StepStudy(); puppet.Name = "Run loop study";
+        var puppet = StepStudy();
+        puppet.Name = "Run loop study";
         puppet.Parts.Single(p => p.Id == "head").Face = "determined";
-        var motion = puppet.Motions[0]; motion.Name = "Run right"; motion.Duration = .72f; motion.Loop = true;
-        motion.Keys.Clear(); motion.Contacts.Clear();
+        var motion = puppet.Motions[0];
+        motion.Name = "Run right";
+        motion.Duration = .72f;
+        motion.Loop = true;
+        motion.Keys.Clear();
+        motion.Contacts.Clear();
         var rest = PuppetPose.Rest(puppet);
         // Travel per cycle, planted fraction, strike distance ahead of the hips and ground height.
         const float travel = 1.6f, stance = .3f, strike = .18f, ground = .025f;
@@ -119,7 +211,12 @@ public static class PuppetTemplates
         // Cubic Hermite through keyed values; interior tangents are Catmull-Rom.
         static Vector2 Curve(float t, float[] times, Vector2[] values, Vector2 startTangent, Vector2 endTangent)
         {
-            var i = 0; while (i < times.Length - 2 && t > times[i + 1]) i++;
+            var i = 0;
+            while (i < times.Length - 2 && t > times[i + 1])
+            {
+                i++;
+            }
+
             Vector2 Tangent(int k) => k == 0 ? startTangent : k == times.Length - 1 ? endTangent
                 : (values[k + 1] - values[k - 1]) / (times[k + 1] - times[k - 1]);
             var span = times[i + 1] - times[i];
@@ -164,7 +261,10 @@ public static class PuppetTemplates
                 var foot = Foot(legPhase);
                 // The pelvis turns with the forward leg while the shoulders counter-rotate with the arms.
                 var hip = rest.Points[side + "-hip"];
-                pose.Points[side + "-hip"] = hip with { X = hip.X + .08f * foot.X };
+                pose.Points[side + "-hip"] = hip with
+                {
+                    X = hip.X + .08f * foot.X
+                };
                 var track = rest.Points[side + "-foot"];
                 pose.Points[side + "-foot"] = new(foot.X + track.X, ground + foot.Y - pose.Position.Y, track.Z);
                 var swing = MathF.Cos(armAngle);
@@ -178,8 +278,21 @@ public static class PuppetTemplates
         }
         motion.Keys[^1].Points = new(motion.Keys[0].Points);
         motion.Keys[^1].Position = new(travel, motion.Keys[0].Position.Y, 0);
-        motion.Contacts.Add(new() { End = "right-foot", Start = 0, Finish = stance * motion.Duration, Target = new(strike + rest.Points["right-foot"].X, ground, rest.Points["right-foot"].Z) });
-        motion.Contacts.Add(new() { End = "left-foot", Start = .5f * motion.Duration, Finish = (.5f + stance) * motion.Duration, Target = new(strike + travel / 2 + rest.Points["left-foot"].X, ground, rest.Points["left-foot"].Z) });
-        puppet.Validate(); return puppet;
+        motion.Contacts.Add(new()
+        {
+            End = "right-foot",
+            Start = 0,
+            Finish = stance * motion.Duration,
+            Target = new(strike + rest.Points["right-foot"].X, ground, rest.Points["right-foot"].Z)
+        });
+        motion.Contacts.Add(new()
+        {
+            End = "left-foot",
+            Start = .5f * motion.Duration,
+            Finish = (.5f + stance) * motion.Duration,
+            Target = new(strike + travel / 2 + rest.Points["left-foot"].X, ground, rest.Points["left-foot"].Z)
+        });
+        puppet.Validate();
+        return puppet;
     }
 }

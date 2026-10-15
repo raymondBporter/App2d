@@ -88,7 +88,9 @@ public sealed class ShapeDiameterTests
         Assert.Equal(2f, triangle.Diameter, 5);
         Assert.True(radius > triangle.Diameter / 2);
         foreach (var point in new[] { triangle.A, triangle.B, triangle.C })
+        {
             Assert.InRange(Vector2.Distance(point, center), 0, radius + .00001f);
+        }
     }
 
     [Fact]

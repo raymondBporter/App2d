@@ -37,7 +37,11 @@ public static class ColorExtensions
     public static Color FromHexRgb(string hex)
     {
         ArgGuard.ThrowIfNull(hex);
-        if (hex.Length != 7 || hex[0] != '#') throw new FormatException("Expected a #RRGGBB color.");
+        if (hex.Length != 7 || hex[0] != '#')
+        {
+            throw new FormatException("Expected a #RRGGBB color.");
+        }
+
         return new(
             byte.Parse(hex.AsSpan(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
             byte.Parse(hex.AsSpan(3, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),

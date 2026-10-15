@@ -13,12 +13,24 @@ namespace App2d.Presentation.Simulation;
 public sealed class SessionClient2D
 {
     private long _nextInputSequence;
-    public EntityId2D PlayerId { get; }
-    public long InputTick { get; private set; }
+    public EntityId2D PlayerId
+    {
+        get;
+    }
+    public long InputTick
+    {
+        get; private set;
+    }
     public long Tick => Snapshot.Tick;
     public long LastInputSequence => State.LastInputSequence;
-    public SessionSnapshot2D Snapshot { get; private set; }
-    public PlayerState2D State { get; private set; }
+    public SessionSnapshot2D Snapshot
+    {
+        get; private set;
+    }
+    public PlayerState2D State
+    {
+        get; private set;
+    }
 
     public SessionClient2D(SessionSnapshot2D snapshot, EntityId2D playerId)
     {
@@ -67,7 +79,9 @@ public sealed class SessionClient2D
             : player.Value.LastInputSequence < LastInputSequence ? FrameRejection2D.AcknowledgementMovedBackwards
             : FrameRejection2D.None;
         if (rejection != FrameRejection2D.None)
+        {
             return false;
+        }
 
         Snapshot = new(frame.Tick, frame.Players, frame.Content, frame.World, frame.Enemies);
         State = player!.Value;
@@ -79,8 +93,16 @@ public sealed class SessionClient2D
     /// <summary>Local delivery: stale frames return false, anything else rejected is a programming error.</summary>
     public bool Apply(SessionFrame2D frame)
     {
-        if (TryApply(frame, out var rejection)) return true;
-        if (rejection == FrameRejection2D.Stale) return false;
+        if (TryApply(frame, out var rejection))
+        {
+            return true;
+        }
+
+        if (rejection == FrameRejection2D.Stale)
+        {
+            return false;
+        }
+
         throw new InvalidOperationException($"The frame was rejected: {rejection}.");
     }
 }

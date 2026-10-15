@@ -31,10 +31,16 @@ public sealed partial class Ellipse2D : IConvexShape2D
     }
 
     /// <summary>The half-extents along X and Y.</summary>
-    public Vector2 Radii { get; }
+    public Vector2 Radii
+    {
+        get;
+    }
 
     /// <summary>The local center.</summary>
-    public Vector2 Center { get; }
+    public Vector2 Center
+    {
+        get;
+    }
 
     /// <inheritdoc/>
     public float Area => Area2D.Ellipse(Radii);

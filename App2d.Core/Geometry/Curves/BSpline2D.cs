@@ -31,7 +31,9 @@ public sealed class BSpline2D : ICurve2D
         }
 
         foreach (var point in _controlPoints)
+        {
             ArgGuard.ThrowIfNotFinite(point, nameof(controlPoints));
+        }
 
         Degree = degree;
         ControlPoints = Array.AsReadOnly(_controlPoints);
@@ -40,8 +42,14 @@ public sealed class BSpline2D : ICurve2D
         _derivativeKnots = _knots[1..^1];
     }
 
-    public int Degree { get; }
-    public ReadOnlyCollection<Vector2> ControlPoints { get; }
+    public int Degree
+    {
+        get;
+    }
+    public ReadOnlyCollection<Vector2> ControlPoints
+    {
+        get;
+    }
 
     public Vector2 Evaluate(float amount) =>
         EvaluateDeBoor(_controlPoints, _knots, Degree, Clamping.Clamp01(amount));
@@ -61,9 +69,15 @@ public sealed class BSpline2D : ICurve2D
         var knots = new float[controlPointCount + degree + 1];
         var spanCount = controlPointCount - degree;
         for (var index = degree + 1; index < controlPointCount; index++)
+        {
             knots[index] = (index - degree) / (float)spanCount;
+        }
+
         for (var index = controlPointCount; index < knots.Length; index++)
+        {
             knots[index] = 1f;
+        }
+
         return knots;
     }
 
@@ -89,13 +103,17 @@ public sealed class BSpline2D : ICurve2D
     {
         var span = degree;
         while (span < controlPoints.Length - 1 && amount >= knots[span + 1])
+        {
             span++;
+        }
 
         var values = degree <= 15
             ? stackalloc Vector2[degree + 1]
             : new Vector2[degree + 1];
         for (var index = 0; index <= degree; index++)
+        {
             values[index] = controlPoints[span - degree + index];
+        }
 
         for (var level = 1; level <= degree; level++)
         {

@@ -80,7 +80,11 @@ public sealed class WorldStateTests
             new SideScrollerSessionWorld2D(level, new ContactDamageSystem2D(physics.CollisionSystem, 4, registry)), new RespawnState2D(spawn, 5), combat);
         var initial = session.CaptureWorld();
         var initialContent = session.CaptureContent();
-        for (var i = 0; i < 10; i++) Step();
+        for (var i = 0; i < 10; i++)
+        {
+            Step();
+        }
+
         player.WorldObject.Transform.Position = checkpoint;
         var entered = Step();
         Assert.Single(entered.Events.OfType<CheckpointActivated2D>());

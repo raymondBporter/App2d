@@ -62,7 +62,8 @@ internal static class SwingLab
     {
         public static Vector3 Direction(float yaw, float dip)
         {
-            var (sy, cy) = MathF.SinCos(yaw * MathF.PI / 180); var (sd, cd) = MathF.SinCos(dip * MathF.PI / 180);
+            var (sy, cy) = MathF.SinCos(yaw * MathF.PI / 180);
+            var (sd, cd) = MathF.SinCos(dip * MathF.PI / 180);
             return new(cy * cd, -sd, -sy * cd);
         }
     }
@@ -88,34 +89,56 @@ internal static class SwingLab
         /// the long way between keys) plus a depth tilt.
         /// </summary>
         /// <summary>Continues side keys from a blade angle keyed by other means, so the first one turns the short way from it.</summary>
-        public Swing SeedBlade(float angle) { _lastBlade = angle; return this; }
+        public Swing SeedBlade(float angle)
+        {
+            _lastBlade = angle;
+            return this;
+        }
 
         public float ContinueBlade(float angle)
         {
-            if (!float.IsNaN(_lastBlade)) angle = _lastBlade + MathF.IEEERemainder(angle - _lastBlade, MathF.Tau);
+            if (!float.IsNaN(_lastBlade))
+            {
+                angle = _lastBlade + MathF.IEEERemainder(angle - _lastBlade, MathF.Tau);
+            }
+
             return _lastBlade = angle;
         }
 
         public Swing SidePose(float time, Side p, string ease = ClipEase.Linear)
         {
-            var arm = Side.Direction(p.Arm, p.ArmDip) * _arm; var blade = Side.Direction(p.Blade, p.BladeDip);
+            var arm = Side.Direction(p.Arm, p.ArmDip) * _arm;
+            var blade = Side.Direction(p.Blade, p.BladeDip);
             var angle = ContinueBlade(new Vector2(blade.X, blade.Y).AngleRadians);
             var tilt = MathF.Asin(Math.Clamp(-blade.Z, -1, 1)) * 180 / MathF.PI;
             Builder.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(Builder.Model, p.Yaw).RightHand(arm.X, arm.Y).LeftHand(p.OffX, p.OffY).Blade(angle), ease);
-            _orient.Add((time, p.Twist, tilt)); return this;
+            _orient.Add((time, p.Twist, tilt));
+            return this;
         }
 
         /// <summary>A depth tilt at a key the swing poses by other means (the draw).</summary>
-        public Swing Tilt(float time, float tilt) { _orient.Add((time, 0, Depth ? tilt : 0)); return this; }
+        public Swing Tilt(float time, float tilt)
+        {
+            _orient.Add((time, 0, Depth ? tilt : 0));
+            return this;
+        }
         public Swing Pose(float time, Arc p, string ease = ClipEase.Linear)
         {
-            Builder.Pose(time, p.Radius >= Straight ? p with { Radius = _arm } : p, ease); _orient.Add((time, 0, Depth ? p.Tilt : 0)); return this;
+            Builder.Pose(time, p.Radius >= Straight ? p with
+            {
+                Radius = _arm
+            } : p, ease);
+            _orient.Add((time, 0, Depth ? p.Tilt : 0));
+            return this;
         }
         public MotionClip Build()
         {
             var clip = Builder.Build();
             foreach (var (time, twist, tilt) in _orient)
+            {
                 ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, PersonLoadout.SwordSocket), time, new Vector3(twist, tilt, 0) * (MathF.PI / 180));
+            }
+
             clip.Validate(Builder.Model);
             return clip;
         }
@@ -139,7 +162,11 @@ internal static class SwingLab
         s.Builder.Key(start, k => k.Hips(-.03f, -.04f).Chest(.1f).Head(.02f).Shoulders(s.Builder.Model, 90).RightHandAt(hilt.X, hilt.Y).LeftHand(.12f, -.52f).Blade(sheathed), ClipEase.Linear);
         s.Builder.Key(start + F, k => k.Hips(-.03f, -.05f).Chest(.03f).Head(.02f).Shoulders(s.Builder.Model, 125).RightHandAt(-.42f, 2.06f).LeftHand(.16f, -.46f).Blade(sheathed - .15f), ClipEase.Linear);
         s.Tilt(start, 0).Tilt(start + F, 0);
-        if (travel > 1) s.Pose(start + 2 * F, Over);
+        if (travel > 1)
+        {
+            s.Pose(start + 2 * F, Over);
+        }
+
         var contact = start + (1 + travel) * F;
         s.Pose(contact, Contact).Pose(contact + 2 * F, Past, ClipEase.Smooth).Pose(contact + 6 * F, Held, ClipEase.Smooth);
         s.Builder.Marker(PersonLoadout.DrawMarker, start + F).Marker(PersonLoadout.SwooshMarker, start + F).Marker(PersonLoadout.SwooshEndMarker, contact + F)
@@ -170,7 +197,11 @@ internal static class SwingLab
         s.Builder.Key(start + F, k => k.Hips(-.03f, -.05f).Chest(.03f).Head(.02f).Shoulders(s.Builder.Model, 100).RightHandAt(-.42f, 2.06f).LeftHand(.16f, -.46f).Blade(sheathed - .15f), ClipEase.Linear);
         s.Tilt(start, 0).Tilt(start + F, 0).SeedBlade(sheathed - .15f);
         s.SidePose(start + 2 * F, Wind);
-        if (across) s.SidePose(start + 3 * F, Across);
+        if (across)
+        {
+            s.SidePose(start + 3 * F, Across);
+        }
+
         var contact = start + (across ? 4 : 3) * F;
         s.SidePose(contact, Cut).SidePose(contact + 2 * F, Through, ClipEase.Smooth).SidePose(contact + 6 * F, SideHeld, ClipEase.Smooth);
         s.Builder.Marker(PersonLoadout.DrawMarker, start + F).Marker(PersonLoadout.SwooshMarker, start + 2 * F).Marker(PersonLoadout.SwooshEndMarker, contact + F)
@@ -205,8 +236,13 @@ internal static class SwingLab
         var wound = new Side(110, 150, .02f, 0, -.08f, .08f, 25, -.2f, -.46f, -35, -40, 40);
         var cut = new Side(0, 25, -.3f, .06f, -.13f, .18f, 60, .05f, -.46f, 48, -22, 75);
         var through = new Side(-12, -20, -.35f, .05f, -.16f, .18f, 90, .12f, -.46f, 60, -10, 55);
-        var contact = previous + Cadence; var start = contact - 2 * F;
-        s.SidePose(previous + 7 * F, SideHeld, ClipEase.Smooth).SidePose(contact - 6 * F, raised, ClipEase.Smooth).SidePose(start, raised with { Arm = 40, ArmDip = -58 })
+        var contact = previous + Cadence;
+        var start = contact - 2 * F;
+        s.SidePose(previous + 7 * F, SideHeld, ClipEase.Smooth).SidePose(contact - 6 * F, raised, ClipEase.Smooth).SidePose(start, raised with
+        {
+            Arm = 40,
+            ArmDip = -58
+        })
             .SidePose(start + F, wound).SidePose(contact, cut)
             .SidePose(contact + 2 * F, through, ClipEase.Smooth).SidePose(contact + 6 * F, BackHeld, ClipEase.Smooth);
         Mark(s, n, start + F, contact);
@@ -221,7 +257,10 @@ internal static class SwingLab
     private static float Forehand(Swing s, float previous, int n)
     {
         var contact = previous + Cadence;
-        s.SidePose(previous + 7 * F, BackHeld, ClipEase.Smooth).SidePose(contact - 6 * F, Wind with { Twist = 10 }, ClipEase.Smooth).SidePose(contact - 3 * F, Wind)
+        s.SidePose(previous + 7 * F, BackHeld, ClipEase.Smooth).SidePose(contact - 6 * F, Wind with
+        {
+            Twist = 10
+        }, ClipEase.Smooth).SidePose(contact - 3 * F, Wind)
             .SidePose(contact - 2 * F, Wind).SidePose(contact - F, Across).SidePose(contact, Cut)
             .SidePose(contact + 2 * F, Through, ClipEase.Smooth).SidePose(contact + 6 * F, SideHeld, ClipEase.Smooth);
         Mark(s, n, contact - 2 * F, contact);
@@ -238,7 +277,11 @@ internal static class SwingLab
     private static (float Settled, Side Held) Combo(Swing s, int swings)
     {
         var contact = SideCut(s, Lead, false) - 6 * F;
-        for (var n = 2; n <= swings; n++) contact = n % 2 == 0 ? Backhand(s, contact, n) : Forehand(s, contact, n);
+        for (var n = 2; n <= swings; n++)
+        {
+            contact = n % 2 == 0 ? Backhand(s, contact, n) : Forehand(s, contact, n);
+        }
+
         return (contact + 6 * F, swings % 2 == 0 ? BackHeld : SideHeld);
     }
 
@@ -267,7 +310,10 @@ internal static class SwingLab
         return t + .3f + Tail;
     }
 
-    public enum Kind { OverTheTop, Side, SideAcross, SideCombo }
+    public enum Kind
+    {
+        OverTheTop, Side, SideAcross, SideCombo
+    }
 
     /// <summary>A whole card: idle, the swing (and for a combo the backhand), a short hold, put the sword back, idle.</summary>
     private static MotionClip Cycle(ResolvedModel m, string id, Kind kind)
@@ -276,7 +322,8 @@ internal static class SwingLab
         float Author(Swing s)
         {
             var (_, sheathed) = PlayerMoves.Hilt(PlayerMoves.StanceX, PlayerMoves.StanceY, -.03f);
-            Idle(s, 0, sheathed); Idle(s, Lead - F, sheathed);
+            Idle(s, 0, sheathed);
+            Idle(s, Lead - F, sheathed);
             return kind switch
             {
                 Kind.OverTheTop => PutAway(s, DrawCut(s, Lead, 2), t => s.Pose(t, Held, ClipEase.Smooth)),
@@ -304,17 +351,23 @@ internal static class SwingLab
     /// </summary>
     public static IEnumerable<MotionClip> GameClips(ResolvedModel m)
     {
-        var combo = Cycle(m, "lab-combo", Kind.SideCombo); var side = Cycle(m, "lab-side-cut", Kind.Side);
+        var combo = Cycle(m, "lab-combo", Kind.SideCombo);
+        var side = Cycle(m, "lab-side-cut", Kind.Side);
         static float Cut(int n) => Lead + 3 * F + (n - 1) * Cadence + 7 * F;
         MotionClip Swing(float from, float to, string id, string name, int n)
         {
             var clip = ClipAuthoring.Excerpt(combo, from, to, id, name);
             if (n > 1)
             {
-                foreach (var marker in clip.Markers) marker.Id = marker.Id.Replace(Nth(n), "");
+                foreach (var marker in clip.Markers)
+                {
+                    marker.Id = marker.Id.Replace(Nth(n), "");
+                }
+
                 ClipAuthoring.SetMarker(clip, PersonLoadout.DrawMarker, 0);
             }
-            clip.Validate(m); return clip;
+            clip.Validate(m);
+            return clip;
         }
         yield return Swing(Lead, Cut(1), SideCutClip, "Sword draw and side cut", 1);
         yield return Swing(Cut(1), Cut(2), BackhandClip, "Sword backhand", 2);
@@ -347,12 +400,18 @@ internal static class SwingLab
                 {
                     var p = Vector3.Lerp(guard, tip, k / 8f);
                     if (p.X > Front)
+                    {
                         points.Add(new(p.X, p.Y));
+                    }
                 }
             }
         }
 
-        if (points.Count < 2) return null;
+        if (points.Count < 2)
+        {
+            return null;
+        }
+
         var shoulders = PoseEvaluator.Sample(model, clip, strike).Points["right-shoulder"].Y;
         return (new(points.Min(p => p.X), points.Min(p => p.Y)), new(points.Max(p => p.X), MathF.Min(shoulders, points.Max(p => p.Y))));
     }
@@ -361,13 +420,19 @@ internal static class SwingLab
     {
         // The game's own clips back to back, as a mashed button chains them: the check that the cut-up combo still plays as reviewed.
         var chain = new[] { SideCutClip, BackhandClip, ForehandClip, BackhandClip, PutAwayBackhandClip }.Select(id => game[id]).ToList();
-        var timeline = new List<(MotionClip, float)> { (game["player-idle"], 0) }; var at = Lead;
-        foreach (var clip in chain) { timeline.Add((clip, at)); at += clip.Duration; }
+        var timeline = new List<(MotionClip, float)> { (game["player-idle"], 0) };
+        var at = Lead;
+        foreach (var clip in chain)
+        {
+            timeline.Add((clip, at));
+            at += clip.Duration;
+        }
         timeline.Add((game["player-idle"], at));
         yield return new("in-game", "In the game: the combo", "The game's clips in a row as a mashed button chains them: side cut, backhand, forehand, backhand, put away. It should play as the combo card does.", chain[0], timeline, at + Tail);
         Variant Of(string id, string title, string note, Kind kind)
         {
-            var clip = Cycle(m, "lab-" + id, kind); return new(id, title, note, clip, [(clip, 0)], clip.Duration);
+            var clip = Cycle(m, "lab-" + id, kind);
+            return new(id, title, note, clip, [(clip, 0)], clip.Duration);
         }
         yield return Of("over-the-top", "Round 4: over the top", "Last round's draw-cut with depth, for comparison: it comes down over the top.", Kind.OverTheTop);
         yield return Of("side-cut", "Side cut", "The draw from the back, then wound back on the far side and across the front at shoulder height; contact 50 ms after the hilt, arm straight, following through toward the camera where the blade narrows. A short hold, then the sword goes back.", Kind.Side);

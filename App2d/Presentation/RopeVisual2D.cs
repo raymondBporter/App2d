@@ -46,13 +46,17 @@ public sealed class RopeVisual2D
     public void Show()
     {
         foreach (var link in _links)
+        {
             link.IsVisible = true;
+        }
     }
 
     public void Hide()
     {
         foreach (var link in _links)
+        {
             link.IsVisible = false;
+        }
     }
 
     // Slack is how much unused rope length there is; more slack draws a deeper sag.

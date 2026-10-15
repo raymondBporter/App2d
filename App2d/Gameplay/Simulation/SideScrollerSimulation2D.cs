@@ -26,20 +26,58 @@ public sealed class SideScrollerSimulation2D : IDisposable
         SideScrollerLevel2D level, Person2D player, PersonArsenal2D arsenal,
         SideScrollerSession2D session)
     {
-        Definition = definition; Ids = ids; Collision = collision; Physics = physics; Combatants = combatants;
-        Combat = combat; Level = level; Player = player; Arsenal = arsenal; Session = session;
+        Definition = definition;
+        Ids = ids;
+        Collision = collision;
+        Physics = physics;
+        Combatants = combatants;
+        Combat = combat;
+        Level = level;
+        Player = player;
+        Arsenal = arsenal;
+        Session = session;
     }
 
-    public SideScrollerSessionDefinition2D Definition { get; }
-    public EntityIdAllocator2D Ids { get; }
-    public CollisionSystem2D Collision { get; }
-    public PhysicsWorld2D Physics { get; }
-    public CombatantRegistry2D Combatants { get; }
-    public CombatSystem2D Combat { get; }
-    public SideScrollerLevel2D Level { get; }
-    public Person2D Player { get; }
-    public PersonArsenal2D Arsenal { get; }
-    public SideScrollerSession2D Session { get; }
+    public SideScrollerSessionDefinition2D Definition
+    {
+        get;
+    }
+    public EntityIdAllocator2D Ids
+    {
+        get;
+    }
+    public CollisionSystem2D Collision
+    {
+        get;
+    }
+    public PhysicsWorld2D Physics
+    {
+        get;
+    }
+    public CombatantRegistry2D Combatants
+    {
+        get;
+    }
+    public CombatSystem2D Combat
+    {
+        get;
+    }
+    public SideScrollerLevel2D Level
+    {
+        get;
+    }
+    public Person2D Player
+    {
+        get;
+    }
+    public PersonArsenal2D Arsenal
+    {
+        get;
+    }
+    public SideScrollerSession2D Session
+    {
+        get;
+    }
 
     public static SideScrollerSimulation2D Create(SideScrollerSessionDefinition2D definition)
     {
@@ -102,7 +140,11 @@ public sealed class SideScrollerSimulation2D : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
+        if (_disposed)
+        {
+            return;
+        }
+
         _disposed = true;
         Session.Dispose();
         Level.Dispose();

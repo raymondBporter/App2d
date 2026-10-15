@@ -23,7 +23,11 @@ internal static class GiantTreeStudy2D
     public static void Run(GraphicsDevice device, TextureCache2D textures, string directory)
     {
         var loaded = LevelBootstrap2D.Load();
-        if (loaded.GiantTrees.IsEmpty) throw new InvalidOperationException("Place a tree in giant-trees.json first.");
+        if (loaded.GiantTrees.IsEmpty)
+        {
+            throw new InvalidOperationException("Place a tree in giant-trees.json first.");
+        }
+
         var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var tree = loaded.GiantTrees[0];
@@ -33,7 +37,10 @@ internal static class GiantTreeStudy2D
         var spawn = new Vector2((edge + tip) * 0.5f, branch.Bounds.Top + traversal.PlayerColliderSize.Y * 0.5f + 12f);
         using var game = SideScrollerSimulation2D.Create(new(traversal, loaded.TileMap, [],
             [new(1, WorldThingKind2D.PlayerSpawn, "Tree study", true, spawn)])
-        { AuthoredCharacters = catalog, GiantTrees = loaded.GiantTrees });
+        {
+            AuthoredCharacters = catalog,
+            GiantTrees = loaded.GiantTrees
+        });
         var scene = new Scene2D();
         using var world = new WorldPresentation2D(scene, textures);
         using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
@@ -52,7 +59,9 @@ internal static class GiantTreeStudy2D
             player.Advance(1f / 120f);
         }
         if (!game.Player.IsGrounded || Math.Abs(game.Player.WorldObject.WorldBounds.Bottom - branch.Bounds.Top) > 1)
+        {
             throw new InvalidOperationException("The player did not settle on the generated branch.");
+        }
 
         var bounds = new Rect2D(new(loaded.GiantTrees.Min(t => t.Bounds.Left), loaded.GiantTrees.Min(t => t.Bounds.Bottom)),
             new(loaded.GiantTrees.Max(t => t.Bounds.Right), loaded.GiantTrees.Max(t => t.Bounds.Top)));

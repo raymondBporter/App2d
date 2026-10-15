@@ -46,13 +46,19 @@ public sealed class SideScrollerSimulation2DTests
     [Fact]
     public void SavedProgressResumesAtItsCheckpointOnlyWhenItStillExists()
     {
-        using var resumed = SideScrollerSimulation2D.Create(Definition() with { SavedProgress = new(2, 3) });
+        using var resumed = SideScrollerSimulation2D.Create(Definition() with
+        {
+            SavedProgress = new(2, 3)
+        });
         var player = resumed.Session.CapturePlayers()[0];
         Assert.Equal(2, player.CheckpointId);
         Assert.Equal(3, player.Person.HitPoints);
         Assert.Equal(Checkpoint, player.Person.Position);
 
-        using var fresh = SideScrollerSimulation2D.Create(Definition() with { SavedProgress = new(99, 3) });
+        using var fresh = SideScrollerSimulation2D.Create(Definition() with
+        {
+            SavedProgress = new(99, 3)
+        });
         var freshPlayer = fresh.Session.CapturePlayers()[0];
         Assert.Null(freshPlayer.CheckpointId);
         Assert.Equal(fresh.Definition.PlayerMaximumHealth, freshPlayer.Person.HitPoints);
@@ -66,7 +72,11 @@ public sealed class SideScrollerSimulation2DTests
     {
         var map = new EditableTileMap2D(SideScrollerLevel2D.WorldWidthTiles, SideScrollerLevel2D.WorldHeightTiles,
             32f, SideScrollerLevel2D.ChunkSizeTiles, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < map.Width; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < map.Width; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         WorldThingSpec2D[] things =
         [
             new(1, WorldThingKind2D.PlayerSpawn, null, true, Spawn),

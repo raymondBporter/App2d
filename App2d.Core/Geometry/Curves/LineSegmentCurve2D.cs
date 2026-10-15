@@ -15,8 +15,14 @@ public readonly record struct LineSegmentCurve2D : ICurve2D, ISegment<LineSegmen
         End = end;
     }
 
-    public Vector2 Start { get; }
-    public Vector2 End { get; }
+    public Vector2 Start
+    {
+        get;
+    }
+    public Vector2 End
+    {
+        get;
+    }
     public static LineSegmentCurve2D Create(Vector2 start, Vector2 end) => new(start, end);
     public Vector2 Evaluate(float amount) => this.PointAt(amount);
     public Vector2 EvaluateDerivative(float amount) => End - Start;

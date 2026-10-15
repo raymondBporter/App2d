@@ -7,7 +7,9 @@ namespace App2d.Core.Characters;
 /// <summary>Reads older paint coordinates with Z=0; writes only the two artwork coordinates.</summary>
 internal sealed class PartPaintPointsJsonConverter : JsonConverter<List<Vector2>>
 {
-    public PartPaintPointsJsonConverter() { }
+    public PartPaintPointsJsonConverter()
+    {
+    }
 
     public override List<Vector2> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
@@ -16,7 +18,11 @@ internal sealed class PartPaintPointsJsonConverter : JsonConverter<List<Vector2>
         var points = new List<Vector2>(stored.Count);
         foreach (var point in stored)
         {
-            if (point.Z != 0) throw new JsonException("Paint coordinates are XY only.");
+            if (point.Z != 0)
+            {
+                throw new JsonException("Paint coordinates are XY only.");
+            }
+
             points.Add(point.XY);
         }
         return points;

@@ -96,7 +96,11 @@ internal static class RigidPrototypeChecks2D
     private static void CheckPoseInterpolation()
     {
         var start = RigidPose2D.Neutral;
-        var end = start with { HandRight = new Vector2(160f, 100f), TorsoAngle = 0.2f };
+        var end = start with
+        {
+            HandRight = new Vector2(160f, 100f),
+            TorsoAngle = 0.2f
+        };
         var clip = new PoseClip2D("check", false, new(0f, start), new(1f, end));
         var middle = clip.Sample(0.5f);
         RequireClose(middle.HandRight.X, (start.HandRight.X + end.HandRight.X) * 0.5f, "pose midpoint");
@@ -122,12 +126,16 @@ internal static class RigidPrototypeChecks2D
     private static void RequireClose(float actual, float expected, string label)
     {
         if (MathF.Abs(actual - expected) > 0.02f)
+        {
             throw new InvalidOperationException($"{label}: expected {expected}, got {actual}.");
+        }
     }
 
     private static void Require(bool condition, string message)
     {
         if (!condition)
+        {
             throw new InvalidOperationException(message);
+        }
     }
 }

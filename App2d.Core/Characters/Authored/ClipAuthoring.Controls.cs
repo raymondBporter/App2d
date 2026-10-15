@@ -7,18 +7,37 @@ public static partial class ClipAuthoring
     /// <summary>The channels edited together when posing or selecting a control's keys.</summary>
     public static IReadOnlyCollection<Channel> ChannelsForControl(ResolvedModel model, string control)
     {
-        if (ChannelFor(model, control) is not { } channel) return [];
-        if (channel.Kind != MotionClip.TranslateKind) return [channel];
+        if (ChannelFor(model, control) is not { } channel)
+        {
+            return [];
+        }
+
+        if (channel.Kind != MotionClip.TranslateKind)
+        {
+            return [channel];
+        }
+
         if (model.Chains.Values.Any(c => c.Solver == ModelChain.BoneSolver && c.Root == control))
+        {
             return [channel, new(MotionClip.ScaleKind, control)];
+        }
+
         return [channel, new(MotionClip.RotateKind, control), new(MotionClip.ScaleKind, control), new(MotionClip.ShearKind, control)];
     }
 
     /// <summary>Keys one vector component while preserving the other sampled components and existing easing.</summary>
     public static void SetComponentKey(MotionClip clip, Channel channel, float time, int component, float value)
     {
-        if (component is < 0 or > 2) throw new ArgumentOutOfRangeException(nameof(component));
-        if (channel.Kind == MotionClip.RotateKind) throw new ArgumentException("Rotation keys use a scalar angle.", nameof(channel));
+        if (component is < 0 or > 2)
+        {
+            throw new ArgumentOutOfRangeException(nameof(component));
+        }
+
+        if (channel.Kind == MotionClip.RotateKind)
+        {
+            throw new ArgumentException("Rotation keys use a scalar angle.", nameof(channel));
+        }
+
         var delta = Value(clip, channel, time).Value;
         delta[component] = value;
         SetKey(clip, channel, time, delta);
@@ -36,8 +55,16 @@ public static partial class ClipAuthoring
     /// <summary>Sets the distance of a steady travel cycle; rejects a curve that the simple control cannot represent.</summary>
     public static void SetSteadyTravel(MotionClip clip, float distance)
     {
-        if (!float.IsFinite(distance)) throw new ArgumentOutOfRangeException(nameof(distance));
-        if (!TryGetSteadyTravel(clip, out _)) throw new InvalidOperationException("This travel curve is not a steady cycle.");
+        if (!float.IsFinite(distance))
+        {
+            throw new ArgumentOutOfRangeException(nameof(distance));
+        }
+
+        if (!TryGetSteadyTravel(clip, out _))
+        {
+            throw new InvalidOperationException("This travel curve is not a steady cycle.");
+        }
+
         clip.Travel.Keys = distance == 0 ? [] : [new() { Time = 0 }, new() { Time = clip.Duration, X = distance }];
     }
 

@@ -24,13 +24,24 @@ public sealed class MonoGameRenderingTests
         var item = new WorldObject2D(triangle, new SolidColorShader(XnaColor.Lime));
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        if (overlay) renderer.DrawShapeOverlay(item, XnaColor.Lime, XnaColor.White);
-        else renderer.Draw(item);
+        if (overlay)
+        {
+            renderer.DrawShapeOverlay(item, XnaColor.Lime, XnaColor.White);
+        }
+        else
+        {
+            renderer.Draw(item);
+        }
+
         renderer.EndFrame();
 
         var pixels = graphics.ReadPixels();
         Assert.Equal(XnaColor.Lime, pixels[64 * 128 + 64]);
-        if (overlay) Assert.Equal(XnaColor.White, pixels[76 * 128 + 64]);
+        if (overlay)
+        {
+            Assert.Equal(XnaColor.White, pixels[76 * 128 + 64]);
+        }
+
         Assert.Equal(XnaColor.Transparent, pixels[84 * 128 + 64]);
     }
 
@@ -46,8 +57,15 @@ public sealed class MonoGameRenderingTests
         var item = new WorldObject2D(halfSpace, new SolidColorShader(XnaColor.Blue));
         renderer.BeginFrame(128, 128, default);
         renderer.Clear(XnaColor.Transparent);
-        if (overlay) renderer.DrawShapeOverlay(item, XnaColor.Blue, XnaColor.White);
-        else renderer.Draw(item);
+        if (overlay)
+        {
+            renderer.DrawShapeOverlay(item, XnaColor.Blue, XnaColor.White);
+        }
+        else
+        {
+            renderer.Draw(item);
+        }
+
         Assert.Throws<InvalidOperationException>(() =>
             renderer.Draw(new WorldObject2D(halfSpace, new SpriteShader2D(texture, TextureFilter.Point))));
         renderer.EndFrame();
@@ -103,7 +121,9 @@ public sealed class MonoGameRenderingTests
         for (var y = 0; y < 2; y++)
         {
             for (var x = 0; x < 2; x++)
+            {
                 Assert.Equal(expected[(flipY ? 1 - y : y) * 2 + (flipX ? 1 - x : x)], pixels[(48 + 32 * y) * 128 + 48 + 32 * x]);
+            }
         }
     }
 
@@ -216,6 +236,9 @@ public sealed class MonoGameRenderingTests
             bitmap.Save(path, System.Drawing.Imaging.ImageFormat.Png);
             return Texture2D.Load(path);
         }
-        finally { File.Delete(path); }
+        finally
+        {
+            File.Delete(path);
+        }
     }
 }

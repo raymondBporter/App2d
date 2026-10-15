@@ -18,7 +18,11 @@ internal static class LinearGeometry2D
         var delta = point.ToVector2d() - origin.ToVector2d();
         var axis = direction.ToVector2d();
         var parameter = delta.Dot(axis) / axis.LengthSquared();
-        if (forwardOnly) parameter = Math.Max(0, parameter);
+        if (forwardOnly)
+        {
+            parameter = Math.Max(0, parameter);
+        }
+
         return origin.ToVector2d() + axis * parameter;
     }
 
@@ -30,7 +34,11 @@ internal static class LinearGeometry2D
         ArgGuard.ThrowIfNotFiniteOrZero(direction);
         var delta = point.ToVector2d() - origin.ToVector2d();
         var axis = direction.ToVector2d();
-        if (forwardOnly && delta.Dot(axis) < 0) return delta.LengthSquared();
+        if (forwardOnly && delta.Dot(axis) < 0)
+        {
+            return delta.LengthSquared();
+        }
+
         var cross = delta.Cross(axis);
         return cross * cross / axis.LengthSquared();
     }

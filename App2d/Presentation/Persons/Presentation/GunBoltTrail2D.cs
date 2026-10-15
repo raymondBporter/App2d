@@ -28,7 +28,10 @@ internal sealed class GunBoltTrail2D : IDisposable
         _fadeTextures = fadeTextures;
         _shader = new SpriteShader2D(fadeTextures[0]);
         _visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1f, 4f), _shader)
-        { IsVisible = false, ZIndex = 2 };
+        {
+            IsVisible = false,
+            ZIndex = 2
+        };
         scene.Add(_visual);
     }
 

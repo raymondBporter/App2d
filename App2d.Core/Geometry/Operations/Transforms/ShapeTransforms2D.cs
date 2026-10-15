@@ -42,9 +42,17 @@ public static class ShapeTransforms2D
     public static int WriteWorldOutline(IShape2D shape, Similarity2D pose, Span<Vector2> vertices, int roundSegments = Ellipse2D.DefaultOutlineSegments)
     {
         var count = shape.GetOutlineVertCount(roundSegments);
-        if (count == 0) return 0;
+        if (count == 0)
+        {
+            return 0;
+        }
+
         shape.GetOutlineVerts(vertices, roundSegments);
-        for (var i = 0; i < count; i++) vertices[i] = pose.TransformPoint(vertices[i]);
+        for (var i = 0; i < count; i++)
+        {
+            vertices[i] = pose.TransformPoint(vertices[i]);
+        }
+
         return count;
     }
 
@@ -62,10 +70,18 @@ public static class ShapeTransforms2D
     {
         var count = shape.GetVertCount();
         radius = 0f;
-        if (count == 0) return 0;
+        if (count == 0)
+        {
+            return 0;
+        }
+
         shape.GetVerts(vertices, out radius);
 
-        for (var i = 0; i < count; i++) vertices[i] = pose.TransformPoint(vertices[i]);
+        for (var i = 0; i < count; i++)
+        {
+            vertices[i] = pose.TransformPoint(vertices[i]);
+        }
+
         radius *= pose.Scale;
         return count;
     }
@@ -96,7 +112,11 @@ public static class ShapeTransforms2D
     private static ConvexPolygon2D ScaledPolygon(ConvexPolygon2D polygon, float scale)
     {
         var vertices = polygon.Vertices.ToArray();
-        for (var i = 0; i < vertices.Length; i++) vertices[i] *= scale;
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            vertices[i] *= scale;
+        }
+
         return ConvexPolygon2D.Builder.Create(vertices);
     }
 }

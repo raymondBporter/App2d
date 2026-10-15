@@ -16,7 +16,10 @@ public readonly record struct Frame2D
         : this(new Matrix3x2(xAxis.X, xAxis.Y, yAxis.X, yAxis.Y, origin.X, origin.Y)) { }
 
     public static Frame2D Identity { get; } = new(Matrix3x2.Identity);
-    public Matrix3x2 Matrix { get; }
+    public Matrix3x2 Matrix
+    {
+        get;
+    }
     public Vector2 Origin => new(Matrix.M31, Matrix.M32);
     public Vector2 XAxis => new(Matrix.M11, Matrix.M12);
     public Vector2 YAxis => new(Matrix.M21, Matrix.M22);
@@ -25,7 +28,11 @@ public readonly record struct Frame2D
 
     public static Frame2D FromRotation(float radians, Vector2 origin = default)
     {
-        if (radians == 0f) return new(origin, Vector2.UnitX, Vector2.UnitY);
+        if (radians == 0f)
+        {
+            return new(origin, Vector2.UnitX, Vector2.UnitY);
+        }
+
         var (sin, cos) = MathF.SinCos(radians);
         return new(new Matrix3x2(cos, sin, -sin, cos, origin.X, origin.Y));
     }

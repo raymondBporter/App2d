@@ -15,7 +15,8 @@ internal sealed partial class NoodleEditorHost : NoodleToolHost
 
     public NoodleEditorHost() : base("NoodleBRO — Full Body 2D Rig Lab", new Size(1180, 760),
         new Camera2D { Position = new Vector2(125, -55), Zoom = .85f })
-    { }
+    {
+    }
 
     protected override void DrawScene(Renderer2D renderer, FrameTime time)
     {
@@ -36,18 +37,58 @@ internal sealed partial class NoodleEditorHost : NoodleToolHost
     {
         if (!keyboardCaptured)
         {
-            if (ImGui.IsKeyPressed(ImGuiKey.Space, false)) _person.TargetLimb.FlipBend();
-            if (ImGui.IsKeyPressed(ImGuiKey.W, false)) _showWeights = !_showWeights;
-            if (ImGui.IsKeyPressed(ImGuiKey.R, false)) Reset();
-            if (ImGui.IsKeyPressed(ImGuiKey.Escape, false)) Close();
+            if (ImGui.IsKeyPressed(ImGuiKey.Space, false))
+            {
+                _person.TargetLimb.FlipBend();
+            }
+
+            if (ImGui.IsKeyPressed(ImGuiKey.W, false))
+            {
+                _showWeights = !_showWeights;
+            }
+
+            if (ImGui.IsKeyPressed(ImGuiKey.R, false))
+            {
+                Reset();
+            }
+
+            if (ImGui.IsKeyPressed(ImGuiKey.Escape, false))
+            {
+                Close();
+            }
         }
-        if (mouseCaptured || !ImGui.IsMouseDown(ImGuiMouseButton.Left)) _draggingTarget = false;
-        if (mouseCaptured) return;
+        if (mouseCaptured || !ImGui.IsMouseDown(ImGuiMouseButton.Left))
+        {
+            _draggingTarget = false;
+        }
+
+        if (mouseCaptured)
+        {
+            return;
+        }
+
         var world = Camera.DeviceToWorld(ImGui.GetIO().MousePos);
-        if (ImGui.IsMouseClicked(ImGuiMouseButton.Right)) _person.SelectNearestControl(world);
-        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left)) _draggingTarget = true;
-        if (_draggingTarget) _person.TargetLimb.SetTarget(world);
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Right))
+        {
+            _person.SelectNearestControl(world);
+        }
+
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
+        {
+            _draggingTarget = true;
+        }
+
+        if (_draggingTarget)
+        {
+            _person.TargetLimb.SetTarget(world);
+        }
+
         ZoomAtPointer();
     }
-    private void Reset() { _person.Reset(); Camera.Position = new Vector2(125, -55); Camera.Zoom = .85f; }
+    private void Reset()
+    {
+        _person.Reset();
+        Camera.Position = new Vector2(125, -55);
+        Camera.Zoom = .85f;
+    }
 }

@@ -11,8 +11,14 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
     private MusicSelection2D? _candidate;
     private float _candidateSeconds;
     private string _pieceOverride = "auto", _moodOverride = "auto";
-    public WorldZone2D? CurrentZone { get; private set; }
-    public MusicSelection2D? CurrentSelection { get; private set; }
+    public WorldZone2D? CurrentZone
+    {
+        get; private set;
+    }
+    public MusicSelection2D? CurrentSelection
+    {
+        get; private set;
+    }
 
     public string PieceOverride
     {
@@ -20,8 +26,15 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
         set
         {
             if (value != "auto" && !soundtrack.Cues.ContainsKey(value))
+            {
                 throw new ArgumentException("Use auto, or a cue ID from music_status.");
-            if (value != "auto" && _moodOverride != "auto") soundtrack.Validate(new(value, _moodOverride));
+            }
+
+            if (value != "auto" && _moodOverride != "auto")
+            {
+                soundtrack.Validate(new(value, _moodOverride));
+            }
+
             _pieceOverride = value;
         }
     }
@@ -31,7 +44,10 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
         set
         {
             if (value != "auto" && soundtrack.Cues.Values.Any(c => !c.Moods.ContainsKey(value)))
+            {
                 throw new ArgumentException("Use auto, explore, drive or combat.");
+            }
+
             _moodOverride = value;
         }
     }
@@ -53,7 +69,11 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
         {
             _candidateSeconds += deltaSeconds;
         }
-        if (desired == CurrentSelection || (CurrentSelection is not null && _candidateSeconds < ZoneDwellSeconds)) return;
+        if (desired == CurrentSelection || (CurrentSelection is not null && _candidateSeconds < ZoneDwellSeconds))
+        {
+            return;
+        }
+
         soundtrack.Validate(desired);
         select(desired.Piece, desired.Mood);
         CurrentSelection = desired;

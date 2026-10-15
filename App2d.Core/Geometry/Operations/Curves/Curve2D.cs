@@ -48,11 +48,17 @@ public static class Curve2D
     /// <summary>Samples both endpoints into caller-owned storage without allocating.</summary>
     public static void Sample<TCurve>(TCurve curve, Span<Vector2> points) where TCurve : ICurve2D
     {
-        if (curve is null) throw new ArgumentNullException(nameof(curve));
+        if (curve is null)
+        {
+            throw new ArgumentNullException(nameof(curve));
+        }
+
         ArgGuard.ThrowIfTooShort(points, 2);
         var segmentCount = points.Length - 1;
         for (var index = 0; index < points.Length; index++)
+        {
             points[index] = curve.Evaluate(index / (float)segmentCount);
+        }
     }
 
     /// <summary>A unit-height Gaussian profile centered at <paramref name="center"/>.</summary>

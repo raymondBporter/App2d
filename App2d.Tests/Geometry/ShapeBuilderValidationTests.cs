@@ -47,13 +47,18 @@ public sealed class ShapeBuilderValidationTests
     [Fact]
     public void CircumcircleFactoryPassesThroughAllThreePointsInEitherOrder()
     {
-        var a = new Vector2(0, 0); var b = new Vector2(2, 0); var c = new Vector2(0, 2);
+        var a = new Vector2(0, 0);
+        var b = new Vector2(2, 0);
+        var c = new Vector2(0, 2);
         var circle = Circle2D.Builder.CreateFromPoints(a, b, c);
         var reversed = Circle2D.Builder.FromPoints(a, c, b).Build();
         Assert.Equal(Vector2.One, circle.Center);
         Assert.Equal(circle.Center, reversed.Center);
         foreach (var point in new[] { a, b, c })
+        {
             Assert.InRange(MathF.Abs(Vector2.Distance(point, circle.Center) - circle.Radius), 0, .000001f);
+        }
+
         Assert.Throws<ArgumentException>(() => Circle2D.Builder.CreateFromPoints(Vector2.Zero, Vector2.One, new(2, 2)));
     }
 }

@@ -51,6 +51,8 @@ public sealed class GreenDinosaur2DTests
     }
     private sealed class SilentSounds : ISoundEffectSink2D
     {
-        public void Play(SoundEffect2D effect) { }
+        public void Play(SoundEffect2D effect)
+        {
+        }
     }
 }

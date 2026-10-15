@@ -37,7 +37,10 @@ public sealed class TileMap2D : ISolidTileMap2D
         get
         {
             if (_collisionRectanglesDirty)
+            {
                 RebuildCollisionRectangles();
+            }
+
             return _collisionRectangles;
         }
     }
@@ -56,7 +59,9 @@ public sealed class TileMap2D : ISolidTileMap2D
         ArgGuard.ThrowIfNotPositive(height);
 
         if (!GridSize.Contains(x, y) || width > Width - x || height > Height - y)
+        {
             ArgGuard.ThrowOutOfRange(width, "Fill rectangle must stay inside the tilemap.");
+        }
 
         for (var row = y; row < y + height; row++)
         {

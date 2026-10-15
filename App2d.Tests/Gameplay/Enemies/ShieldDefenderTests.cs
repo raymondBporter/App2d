@@ -27,9 +27,12 @@ public sealed class ShieldDefenderTests
         var physics = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var enemy = new AuthoredEntityEnemy2D(EntityId2D.Create(), Catalog.Entities["shield-defender"], physics, new(0, 40), 1, 4);
         enemy.SetSimulationEnabled(true);
-        enemy.Update(0, new(facing * 400, 26)); enemy.SyncAfterPhysics();
+        enemy.Update(0, new(facing * 400, 26));
+        enemy.SyncAfterPhysics();
         var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, TraversalMetricsLoader2D.Load(TestAssetPath.Root), new(facing * 90, 26), 2, 1, CombatFaction2D.Player, 30);
-        var registry = new CombatantRegistry2D(); registry.Register(enemy); registry.Register(player);
+        var registry = new CombatantRegistry2D();
+        registry.Register(enemy);
+        registry.Register(player);
         return (enemy, player, new CombatSystem2D(physics.CollisionSystem, registry));
     }
     private static Rect2D Shell(AuthoredEntityEnemy2D enemy)
@@ -41,11 +44,16 @@ public sealed class ShieldDefenderTests
     private static SpatialObject2D Box(Vector2 position, float size = 4)
     {
         var box = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(new Vector2(size)));
-        box.Transform.Position = position; return box;
+        box.Transform.Position = position;
+        return box;
     }
     private static void Tick(AuthoredEntityEnemy2D enemy, Vector2 target, int ticks)
     {
-        for (var i = 0; i < ticks; i++) { enemy.Update(1f / 120, target); enemy.SyncAfterPhysics(); }
+        for (var i = 0; i < ticks; i++)
+        {
+            enemy.Update(1f / 120, target);
+            enemy.SyncAfterPhysics();
+        }
     }
 
     [Theory, InlineData(-1), InlineData(1)]
@@ -55,10 +63,13 @@ public sealed class ShieldDefenderTests
         var shield = Shell(enemy);
         var box = Box(new(shield.Center.X + facing * 12, shield.Center.Y));
         Assert.False(enemy.OverlapsHurt(box.WorldBounds));
-        var damageFacts = new List<CombatDamage2D>(); combat.DamageResolved += damageFacts.Add;
+        var damageFacts = new List<CombatDamage2D>();
+        combat.DamageResolved += damageFacts.Add;
         bool Strike() => combat.ResolveAttack(box, player.Id, 1, CombatFaction2D.Player, 4, 2, _ => new(-facing * 200, 0));
-        Assert.True(Strike()); Assert.False(Strike());
-        Assert.Equal(8, enemy.Health.Current); Assert.Empty(damageFacts);
+        Assert.True(Strike());
+        Assert.False(Strike());
+        Assert.Equal(8, enemy.Health.Current);
+        Assert.Empty(damageFacts);
         Assert.Single(enemy.DrainEvents().OfType<EntityCue2D>(), e => e.Cue == "shield-block");
     }
 
@@ -109,7 +120,8 @@ public sealed class ShieldDefenderTests
         Tick(enemy, player.Position, ticks);
         Assert.True(enemy.CaptureState().IsAttacking);
         Assert.True(combat.ResolveAttack(Box(new(0, 35), 30), player.Id, 5, CombatFaction2D.Player, 4, 2, _ => new(-100, 0)));
-        Assert.Equal(6, enemy.Health.Current); Assert.Equal("hit", enemy.CaptureState().ActionId);
+        Assert.Equal(6, enemy.Health.Current);
+        Assert.Equal("hit", enemy.CaptureState().ActionId);
         Assert.Empty(enemy.GetActiveAttackHitboxes());
     }
 
@@ -122,8 +134,12 @@ public sealed class ShieldDefenderTests
         {
             Tick(enemy, i < 1 ? player.Position : new(-facing * 40, 26), 1);
             Assert.Equal(facing, enemy.Pose.Facing);
-            var before = player.Health.Current; enemy.TryResolvePlayerHit(player);
-            if (before != player.Health.Current) Assert.InRange(enemy.CaptureState().ActionSeconds, .55f, .7f);
+            var before = player.Health.Current;
+            enemy.TryResolvePlayerHit(player);
+            if (before != player.Health.Current)
+            {
+                Assert.InRange(enemy.CaptureState().ActionSeconds, .55f, .7f);
+            }
         }
         Assert.Equal(28, player.Health.Current);
         Assert.Empty(enemy.GetActiveAttackHitboxes());
@@ -133,16 +149,28 @@ public sealed class ShieldDefenderTests
     public void PlacementAndBashRunInTheRealTerrainSimulation()
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        for (var x = 0; x < 640; x++) map.SetTileKind(x, 19, TileKind2D.Solid);
+        for (var x = 0; x < 640; x++)
+        {
+            map.SetTileKind(x, 19, TileKind2D.Solid);
+        }
+
         using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
              new(2, WorldThingKind2D.ShieldDefender, null, true, new(-218, 40))])
-        { AuthoredCharacters = Catalog, PlayerMaximumHealth = 100 });
+        {
+            AuthoredCharacters = Catalog,
+            PlayerMaximumHealth = 100
+        });
         Assert.Equal("shield-defender", Assert.Single(game.Session.CaptureEnemies()).TypeId);
-        for (var i = 0; i < 150; i++) game.Session.Advance();
+        for (var i = 0; i < 150; i++)
+        {
+            game.Session.Advance();
+        }
+
         string[] Run() => [.. Enumerable.Range(0, 400).Select(_ =>
         {
-            game.Session.Advance(); var state = Assert.Single(game.Session.CaptureEnemies());
+            game.Session.Advance();
+var state = Assert.Single(game.Session.CaptureEnemies());
             return $"{state.Position};{state.ActionId};{state.ActionSeconds};{game.Player.Health.Current}";
         })];
         Run();

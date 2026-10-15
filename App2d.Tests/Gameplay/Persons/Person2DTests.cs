@@ -459,12 +459,21 @@ public sealed class Person2DTests
         float moveX,
         bool jumpPressed,
         bool jumpHeld) =>
-        new() { MoveX = moveX, JumpHeld = jumpPressed || jumpHeld };
+        new()
+        {
+            MoveX = moveX,
+            JumpHeld = jumpPressed || jumpHeld
+        };
 
     private static PersonCommand2D WallGripCommand(
         bool useWeapon,
         bool castSpell) =>
-        new() { MoveX = 1f, PrimaryHeld = useWeapon && !castSpell, CastHeld = useWeapon && castSpell };
+        new()
+        {
+            MoveX = 1f,
+            PrimaryHeld = useWeapon && !castSpell,
+            CastHeld = useWeapon && castSpell
+        };
 
     private static PhysicsWorld2D CreatePhysics(CollisionSystem2D collision) =>
         new(collision)

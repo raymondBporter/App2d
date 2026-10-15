@@ -75,7 +75,10 @@ internal sealed class SavePointPresentation2D : IDisposable
         SetActive(false);
     }
 
-    public bool IsActive { get; private set; }
+    public bool IsActive
+    {
+        get; private set;
+    }
 
     public void Update(float deltaSeconds, bool isActive)
     {
@@ -99,15 +102,29 @@ internal sealed class SavePointPresentation2D : IDisposable
     public void SetActive(bool active)
     {
         if (IsActive == active)
+        {
             return;
+        }
 
         IsActive = active;
         _glow.IsVisible = active;
         _orb.Shader = active ? ActiveOrbShader() : InactiveOrbShader();
     }
 
-    private void Add(WorldObject2D visual) { _scene.Add(visual); _visuals.Add(visual); }
-    public void Dispose() { foreach (var visual in _visuals) _scene.Remove(visual); _visuals.Clear(); }
+    private void Add(WorldObject2D visual)
+    {
+        _scene.Add(visual);
+        _visuals.Add(visual);
+    }
+    public void Dispose()
+    {
+        foreach (var visual in _visuals)
+        {
+            _scene.Remove(visual);
+        }
+
+        _visuals.Clear();
+    }
 
     private static LinearGradientShader ActiveOrbShader() =>
         new(new XnaColor(245, 255, 255), new XnaColor(44, 193, 255));

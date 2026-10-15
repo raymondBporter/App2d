@@ -192,7 +192,11 @@ public sealed class SideScrollerGame : Game2D
                     _loadedWorld.Maps[destination], Traversal.PlayerColliderSize.Y, Traversal.GroundProbeDistance));
             }
 
-            if (wasOpen != _levelPicker.IsOpen) input.CancelButtons();
+            if (wasOpen != _levelPicker.IsOpen)
+            {
+                input.CancelButtons();
+            }
+
             if (_levelPicker.IsOpen)
             {
                 _session.SetPaused(true);
@@ -209,9 +213,15 @@ public sealed class SideScrollerGame : Game2D
                 position.X >= m.TileMap.WorldBounds.Min.X && position.X < m.TileMap.WorldBounds.Max.X &&
                 position.Y >= m.TileMap.WorldBounds.Min.Y && position.Y < m.TileMap.WorldBounds.Max.Y);
             if (index >= 0 && index != _editor.SelectedMapIndex)
+            {
                 _editor.CycleMap(index - _editor.SelectedMapIndex);
+            }
         }
-        if (wasEditing != _editor.IsActive) input.CancelButtons();
+        if (wasEditing != _editor.IsActive)
+        {
+            input.CancelButtons();
+        }
+
         _session.SetPaused(_editor.IsActive);
         if (_editor.IsActive)
         {
@@ -233,7 +243,11 @@ public sealed class SideScrollerGame : Game2D
     {
         _musicDirector.Update(_client.Content, _client.State.Person.Position, time.DeltaSeconds);
         _client.UpdateFeedback(time.DeltaSeconds);
-        if (!_editor.IsActive && !_levelPicker.IsOpen) _client.AdvancePresentation(time.DeltaSeconds);
+        if (!_editor.IsActive && !_levelPicker.IsOpen)
+        {
+            _client.AdvancePresentation(time.DeltaSeconds);
+        }
+
         _client.WorldSounds.Update();
     }
 
@@ -263,7 +277,11 @@ public sealed class SideScrollerGame : Game2D
             foreach (var zone in _client.Content.Zones)
             {
                 var b = zone.Bounds;
-                if (!b.Intersects(Camera.VisibleWorldBounds)) continue;
+                if (!b.Intersects(Camera.VisibleWorldBounds))
+                {
+                    continue;
+                }
+
                 Span<Vector2> outline = [b.Min, new(b.Max.X, b.Min.Y), b.Max, new(b.Min.X, b.Max.Y), b.Min];
                 renderer.DrawWorldPolyline(outline, zone.Id == _musicDirector.CurrentZone?.Id ? XnaColor.Gold : XnaColor.Cyan, 2f);
             }
@@ -273,7 +291,11 @@ public sealed class SideScrollerGame : Game2D
     public override void RenderUI(Renderer2D renderer, FrameTime time)
     {
         _client.DrawUI(renderer);
-        if (!_editor.IsActive) _levelPicker.Draw(renderer);
+        if (!_editor.IsActive)
+        {
+            _levelPicker.Draw(renderer);
+        }
+
         base.RenderUI(renderer, time);
     }
 
@@ -281,7 +303,11 @@ public sealed class SideScrollerGame : Game2D
     private static AuthoredCatalog LoadAuthored()
     {
         var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
-        if (catalog.Errors.Count > 0) throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
+        if (catalog.Errors.Count > 0)
+        {
+            throw new InvalidDataException("Authored character assets have errors:" + Environment.NewLine + string.Join(Environment.NewLine, catalog.Errors));
+        }
+
         return catalog;
     }
 

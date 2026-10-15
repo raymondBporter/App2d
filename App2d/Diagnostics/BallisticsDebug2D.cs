@@ -21,23 +21,41 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
     public float SpeedTilesPerSecond
     {
         get => _speed;
-        set { ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0.1f, 100f); _speed = value; }
+        set
+        {
+            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0.1f, 100f);
+            _speed = value;
+        }
     }
 
     public float AngleDegrees
     {
         get => _angle;
-        set { ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 1f, 90f); _angle = value; }
+        set
+        {
+            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 1f, 90f);
+            _angle = value;
+        }
     }
 
     public float ReferenceGravityTilesPerSecondSquared
     {
         get => _referenceGravity;
-        set { ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0.1f, 200f); _referenceGravity = value; }
+        set
+        {
+            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0.1f, 200f);
+            _referenceGravity = value;
+        }
     }
 
-    public Shot? Reference { get; private set; }
-    public Shot? World { get; private set; }
+    public Shot? Reference
+    {
+        get; private set;
+    }
+    public Shot? World
+    {
+        get; private set;
+    }
     public float ElapsedSeconds => _elapsed;
 
     public void Launch(Vector2 origin, float facing)
@@ -63,12 +81,18 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
     {
         ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         if (Reference is { } reference && World is { } world)
+        {
             _elapsed = Math.Min(_elapsed + deltaSeconds, Math.Max(reference.FlightSeconds, world.FlightSeconds));
+        }
     }
 
     public void DrawWorldDebug(Renderer2D renderer)
     {
-        if (Reference is not { } reference || World is not { } world) return;
+        if (Reference is not { } reference || World is not { } world)
+        {
+            return;
+        }
+
         var referenceColor = new XnaColor(255, 220, 65);
         var worldColor = new XnaColor(255, 100, 180);
         DrawShot(renderer, reference, referenceColor);
@@ -77,7 +101,11 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 
     public void DrawUI(Renderer2D renderer)
     {
-        if (Reference is not { } reference || World is not { } world) return;
+        if (Reference is not { } reference || World is not { } world)
+        {
+            return;
+        }
+
         var speed = reference.Velocity.Length() / _traversal.TileSize;
         var angle = MathF.Atan2(reference.Velocity.Y, MathF.Abs(reference.Velocity.X)) * 180f / MathF.PI;
         renderer.DrawScreenLabel(
@@ -97,7 +125,10 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         var elapsed = Math.Min(_elapsed, shot.FlightSeconds);
         Span<Vector2> trail = stackalloc Vector2[97];
         for (var i = 0; i < trail.Length; i++)
+        {
             trail[i] = shot.PositionAt(elapsed * i / (trail.Length - 1));
+        }
+
         renderer.DrawWorldPolyline(trail, color, 2f);
         renderer.DrawWorldCircle(trail[^1], _traversal.TileSize * 0.12f, color, 3f);
 

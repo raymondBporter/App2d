@@ -16,8 +16,14 @@ public readonly record struct Size2D
         Height = height;
     }
 
-    public float Width { get; }
-    public float Height { get; }
+    public float Width
+    {
+        get;
+    }
+    public float Height
+    {
+        get;
+    }
     public bool IsValid => float.IsFinite(Width) && Width > 0f && float.IsFinite(Height) && Height > 0f;
 
     public Vector2 ToVector2() => new(Width, Height);

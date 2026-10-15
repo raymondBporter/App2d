@@ -9,7 +9,10 @@ namespace App2d;
 internal static class LevelBootstrap2D
 {
     private const string LevelId = "cavern";
-    public static IReadOnlyList<string> TerrainTilesetIds { get; } =
+    public static IReadOnlyList<string> TerrainTilesetIds
+    {
+        get;
+    } =
         ["ink-medieval-ground", "ink-medieval-wall", "ink-prehistoric-ground", "ink-prehistoric-wall",
          "ink-wasteland-ground", "ink-wasteland-wall"];
 
@@ -26,7 +29,11 @@ internal static class LevelBootstrap2D
 
     public static WorldAsset2D LoadWorld(string manifest)
     {
-        if (!File.Exists(manifest)) throw new FileNotFoundException("World manifest is missing.", manifest);
+        if (!File.Exists(manifest))
+        {
+            throw new FileNotFoundException("World manifest is missing.", manifest);
+        }
+
         return LoadManifest(manifest);
     }
 
@@ -40,7 +47,9 @@ internal static class LevelBootstrap2D
             var regionIds = world.Zones.Select(z => z.Id).ToHashSet(StringComparer.Ordinal);
             var regions = WorldZoneFile2D.Load(Path.Combine(directory, "zones.json"));
             return new(world.Maps, [.. world.Zones, .. regions.Where(z => !regionIds.Contains(z.Id))])
-            { StartAtArrival = world.StartAtArrival };
+            {
+                StartAtArrival = world.StartAtArrival
+            };
         }
         return new WorldAsset2D(
             [WorldFile2D.LoadMap(RequireLevelPath(), "cavern", "Cavern", "cavern", 0, TerrainTilesetIds)],

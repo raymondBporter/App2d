@@ -30,11 +30,20 @@ public static class ShapeConvexQuery2D
     private static ConvexQueryResult2D Query(IConvexShape2D first, Similarity2D firstPose, IConvexShape2D second, Similarity2D secondPose, bool penetration, bool witnesses = true)
     {
         // The point-to-ellipse solver is both cheaper and more accurate than EPA for this common pair.
-        if (first is Circle2D circle && second is Ellipse2D ellipse) return CircleEllipse(circle, firstPose, ellipse, secondPose);
+        if (first is Circle2D circle && second is Ellipse2D ellipse)
+        {
+            return CircleEllipse(circle, firstPose, ellipse, secondPose);
+        }
+
         if (first is Ellipse2D otherEllipse && second is Circle2D otherCircle)
         {
             var result = CircleEllipse(otherCircle, secondPose, otherEllipse, firstPose);
-            return result with { Normal = -result.Normal, PointOnFirst = result.PointOnSecond, PointOnSecond = result.PointOnFirst };
+            return result with
+            {
+                Normal = -result.Normal,
+                PointOnFirst = result.PointOnSecond,
+                PointOnSecond = result.PointOnFirst
+            };
         }
 
         // Polygon vertices already live in an immutable buffer; borrow it instead of copying large polygons.
@@ -44,8 +53,16 @@ public static class ShapeConvexQuery2D
         Span<Vector2> secondVertices = secondCount <= 64 ? stackalloc Vector2[secondCount] : new Vector2[secondCount];
         var firstRadius = 0f;
         var secondRadius = 0f;
-        if (firstCount > 0) first.GetVerts(firstVertices, out firstRadius);
-        if (secondCount > 0) second.GetVerts(secondVertices, out secondRadius);
+        if (firstCount > 0)
+        {
+            first.GetVerts(firstVertices, out firstRadius);
+        }
+
+        if (secondCount > 0)
+        {
+            second.GetVerts(secondVertices, out secondRadius);
+        }
+
         var firstProxy = first is ConvexPolygon2D firstPolygon ? new ConvexProxy2D(firstPolygon.Vertices, firstPose)
             : firstCount > 0 ? new ConvexProxy2D(firstVertices, firstPose, firstRadius) : new ConvexProxy2D(first, firstPose);
         var secondProxy = second is ConvexPolygon2D secondPolygon ? new ConvexProxy2D(secondPolygon.Vertices, secondPose)

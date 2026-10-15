@@ -13,7 +13,10 @@ public sealed class MouseState2D
     private Vector2 _clientToDeviceScale = Vector2.One;
 
     public Vector2 PositionDevice => _clientPosition * _clientToDeviceScale;
-    public float WheelDelta { get; private set; }
+    public float WheelDelta
+    {
+        get; private set;
+    }
     public bool IsDown(MouseButtons button) => _down.Contains(button);
     public bool WasPressed(MouseButtons button) => _pressed.Contains(button);
     public bool WasReleased(MouseButtons button) => _released.Contains(button);
@@ -31,17 +34,31 @@ public sealed class MouseState2D
 
     internal void SetButton(MouseButtons button, bool isDown, bool suppressed)
     {
-        if (!isDown) _blocked.Remove(button);
+        if (!isDown)
+        {
+            _blocked.Remove(button);
+        }
+
         if (suppressed)
         {
-            if (isDown) _blocked.Add(button);
+            if (isDown)
+            {
+                _blocked.Add(button);
+            }
+
             return;
         }
-        if (_blocked.Contains(button)) return;
+        if (_blocked.Contains(button))
+        {
+            return;
+        }
 
         if (isDown)
         {
-            if (_down.Add(button)) _pressed.Add(button);
+            if (_down.Add(button))
+            {
+                _pressed.Add(button);
+            }
         }
         else if (_down.Remove(button))
         {

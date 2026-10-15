@@ -33,7 +33,10 @@ public sealed class PersonLadderTests
             VelocityIterations = 2
         };
         for (var y = 1; y <= 20; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Ladder);
+        }
+
         _person = new Person2D(EntityId2D.Create(), collision, _physics, _metrics,
             new Vector2(144f - _metrics.PlayerColliderCenterOffsetX, 32f + _metrics.PlayerColliderSize.Y / 2f),
             2u, 1u, CombatFaction2D.Player, tileMap: _map);
@@ -132,7 +135,10 @@ public sealed class PersonLadderTests
     public void OverlappingGrabRangesChooseNearestLadder()
     {
         for (var y = 1; y <= 20; y++)
+        {
             _map.SetTileKind(5, y, TileKind2D.Ladder);
+        }
+
         _person.WorldObject.Transform.Position += new Vector2(22f, 0f);
 
         Step(climb: 1f, frames: 30);
@@ -250,7 +256,9 @@ public sealed class PersonLadderTests
         Assert.True(_person.IsClimbingLadder);
         Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);
         for (var y = 1; y < firstLadderRow; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Empty);
+        }
 
         Step(climb: -1f, frames: 240);
 
@@ -300,7 +308,10 @@ public sealed class PersonLadderTests
     {
         Step(climb: 1f, frames: 180);
         for (var y = 1; y < 8; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Empty);
+        }
+
         Step(climb: -1f, frames: 90);
         Assert.False(_person.IsClimbingLadder);
         Assert.Equal(1f, _person.Body.GravityScale);
@@ -311,7 +322,10 @@ public sealed class PersonLadderTests
     {
         Step(climb: 1f, frames: 60);
         for (var y = 1; y <= 20; y++)
+        {
             _map.SetTileKind(4, y, TileKind2D.Empty);
+        }
+
         Step(frames: 30);
         Assert.False(_person.IsClimbingLadder);
         Assert.Equal(1f, _person.Body.GravityScale);
@@ -349,7 +363,13 @@ public sealed class PersonLadderTests
         {
             _person.BeginFrame(Dt);
             _person.ApplyCommand(new PersonCommand2D
-            { MoveX = move, ClimbY = climb, JumpHeld = jump || jumpOff, DashHeld = dash, DownHeld = down }, Dt);
+            {
+                MoveX = move,
+                ClimbY = climb,
+                JumpHeld = jump || jumpOff,
+                DashHeld = dash,
+                DownHeld = down
+            }, Dt);
             _physics.Step(Dt);
             _person.UpdateAfterPhysics(Dt);
         }

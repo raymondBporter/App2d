@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
@@ -42,7 +43,11 @@ public static class ClosestPoint2D
     {
         var segment = end - start;
         var lengthSquared = segment.LengthSquared();
-        if (lengthSquared <= float.Epsilon) return start;
+        if (lengthSquared <= float.Epsilon)
+        {
+            return start;
+        }
+
         var t = Clamping.Clamp01(Vector2.Dot(point - start, segment) / lengthSquared);
         return start + segment * t;
     }
@@ -95,10 +100,22 @@ public static class ClosestPoint2D
                 x = a * ratio;
                 y = b * Math.Sqrt(Math.Max(0d, 1d - ratio * ratio));
             }
-            else if (px == 0d) { x = 0d; y = b; }
-            else { x = a; y = 0d; }
+            else if (px == 0d)
+            {
+                x = 0d;
+                y = b;
+            }
+            else
+            {
+                x = a;
+                y = 0d;
+            }
         }
-        else if (px == 0d) { x = 0d; y = b; }
+        else if (px == 0d)
+        {
+            x = 0d;
+            y = b;
+        }
         else
         {
             var zx = px / a;
@@ -119,13 +136,26 @@ public static class ClosestPoint2D
                 for (var i = 0; i < 2048; i++)
                 {
                     root = (lower + upper) * .5d;
-                    if (root == lower || root == upper) break;
+                    if (root == lower || root == upper)
+                    {
+                        break;
+                    }
+
                     var rx = numerator / (root + denominator);
                     var ry = zy / root;
                     var residual = rx * rx + ry * ry - 1d;
-                    if (residual > 0d) lower = root;
-                    else if (residual < 0d) upper = root;
-                    else break;
+                    if (residual > 0d)
+                    {
+                        lower = root;
+                    }
+                    else if (residual < 0d)
+                    {
+                        upper = root;
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
             }
             x = ratioSquared * px / (root + denominator);
@@ -146,15 +176,15 @@ public static class ClosestPoint2D
         var closest = vertices[0];
         var bestDistanceSquared = float.PositiveInfinity;
         edgeIndex = 0;
-        for (var i = 0; i < vertices.Length; i++)
+        foreach (var (a, b) in MeshTopology.Edges(vertices.Length))
         {
-            var candidate = OnSegment(point, vertices[i], vertices[(i + 1) % vertices.Length]);
+            var candidate = OnSegment(point, vertices[a], vertices[b]);
             var distanceSquared = Vector2.DistanceSquared(point, candidate);
             if (distanceSquared < bestDistanceSquared)
             {
                 closest = candidate;
                 bestDistanceSquared = distanceSquared;
-                edgeIndex = i;
+                edgeIndex = a;
             }
         }
         return closest;

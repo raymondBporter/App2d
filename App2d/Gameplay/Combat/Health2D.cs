@@ -12,14 +12,24 @@ public sealed class Health2D
         Current = maximum;
     }
 
-    public int Maximum { get; }
-    public int Current { get; private set; }
+    public int Maximum
+    {
+        get;
+    }
+    public int Current
+    {
+        get; private set;
+    }
     public bool IsAlive => Current > 0;
 
     public int Heal(int amount)
     {
         ArgGuard.ThrowIfNotPositive(amount);
-        if (!IsAlive) return 0;
+        if (!IsAlive)
+        {
+            return 0;
+        }
+
         var restored = Math.Min(amount, Maximum - Current);
         Current += restored;
         return restored;
@@ -29,7 +39,9 @@ public sealed class Health2D
     {
         ArgGuard.ThrowIfNotPositive(amount);
         if (!IsAlive)
+        {
             return false;
+        }
 
         Current = Math.Max(0, Current - amount);
         return true;

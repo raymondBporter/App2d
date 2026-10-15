@@ -74,7 +74,10 @@ public sealed class ShapeBuilder2DTests
 
     private sealed class ShapeEnvelope
     {
-        public required ShapeBuilder2D Hit { get; init; }
+        public required ShapeBuilder2D Hit
+        {
+            get; init;
+        }
     }
 
     [Fact]

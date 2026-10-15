@@ -16,11 +16,18 @@ internal static class RigAuthoredBridgeChecks2D
 
         var rig = new RigDocument2D();
         var root = rig.AddBone(name: "root");
-        root.LocalX = 12; root.LocalY = -8; root.AngleDegrees = 25; root.Length = 40;
+        root.LocalX = 12;
+        root.LocalY = -8;
+        root.AngleDegrees = 25;
+        root.Length = 40;
         var child = rig.AddBone(root, "child");
-        child.LocalX = 31; child.LocalY = 6; child.AngleDegrees = -35; child.Length = 24;
+        child.LocalX = 31;
+        child.LocalY = 6;
+        child.AngleDegrees = -35;
+        child.Length = 24;
         var circle = (RigCircleShape2D)rig.AddShape("Circle", root);
-        circle.LocalX = 10; circle.LocalY = 4;
+        circle.LocalX = 10;
+        circle.LocalY = 4;
         var rectangle = (RigRectangleShape2D)rig.AddShape("Rectangle", child);
         rectangle.AngleDegrees = 17;
         rectangle.CornerRadius = 8;
@@ -32,14 +39,25 @@ internal static class RigAuthoredBridgeChecks2D
         var model = RigAuthoredBridge2D.Export(rig, "check-rig", "Check rig");
         var resolved = ResolvedModel.From(CharacterModel.FromJson(model.ToJson()));
         if (resolved.Controls.Count != rig.Bones.Count)
+        {
             throw new InvalidOperationException("The exported rig should need one control per bone.");
+        }
+
         Compare(rig, resolved, PoseEvaluator.Rest(resolved));
         if (!resolved.Parts.Single(p => p.Id == $"part-{capsule.Id}").Hidden)
+        {
             throw new InvalidOperationException("Collision-only geometry should not be drawn.");
+        }
+
         if (resolved.Parts.Single(p => p.Id == $"part-{rectangle.Id}").Geometry is not RoundedRectangle2D.Builder)
+        {
             throw new InvalidOperationException("Noodle's corner radius should export as a rounded rectangle.");
+        }
+
         if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Geometry is not ConvexPolygon2D.Builder { Vertices.Count: 5 })
+        {
             throw new InvalidOperationException("Polygon vertices were lost.");
+        }
 
         // A rotate track on a bone origin must carry all child bones and attachments with it.
         var clip = new MotionClip { Id = "check-rotation", Name = "Rotation", Model = model.Id };
@@ -65,12 +83,24 @@ internal static class RigAuthoredBridgeChecks2D
     private static void CheckSharedBoneIk()
     {
         var rig = new RigDocument2D();
-        var root = rig.AddBone(name: "beam"); root.Length = 60;
-        var joint = rig.AddBone(root, "hinge"); joint.LocalX = 60; joint.LocalY = 0; joint.AngleDegrees = 0; joint.Length = 40;
-        var end = rig.AddBone(joint, "tool"); end.LocalX = 40; end.LocalY = 0; end.AngleDegrees = 0; end.Length = 10;
-        rig.AddShape("Rectangle", root); rig.AddShape("Capsule", joint); rig.AddShape("Circle", end);
+        var root = rig.AddBone(name: "beam");
+        root.Length = 60;
+        var joint = rig.AddBone(root, "hinge");
+        joint.LocalX = 60;
+        joint.LocalY = 0;
+        joint.AngleDegrees = 0;
+        joint.Length = 40;
+        var end = rig.AddBone(joint, "tool");
+        end.LocalX = 40;
+        end.LocalY = 0;
+        end.AngleDegrees = 0;
+        end.Length = 10;
+        rig.AddShape("Rectangle", root);
+        rig.AddShape("Capsule", joint);
+        rig.AddShape("Circle", end);
         var model = RigAuthoredBridge2D.Export(rig, "ik-bridge", "IK bridge");
-        var constraint = ModelAuthoring.AddBoneIk(model, RigAuthoredBridge2D.BoneControl(end)); constraint.Bend = -1;
+        var constraint = ModelAuthoring.AddBoneIk(model, RigAuthoredBridge2D.BoneControl(end));
+        constraint.Bend = -1;
         var resolved = ResolvedModel.From(CharacterModel.FromJson(model.ToJson()));
         var clip = ClipAuthoring.New(resolved, "ik-bridge-aim", "Aim");
         ClipAuthoring.Pose(resolved, clip, PoseEvaluator.Rest(resolved), 0, constraint.End, new(.6f, .4f, 0));
@@ -101,7 +131,9 @@ internal static class RigAuthoredBridgeChecks2D
             var authored = PartAttachment2D.FrameOf(part, pose.World, control => pose.Angles[control]);
             Near(center, authored.Origin, id);
             if (Vector2.Distance(authored.Up, up) > 1e-4f)
+            {
                 throw new InvalidOperationException($"{id} orientation differs from the Noodle attachment.");
+            }
         }
     }
 
@@ -109,6 +141,8 @@ internal static class RigAuthoredBridgeChecks2D
     {
         var expected = pixels * RigAuthoredBridge2D.UnitsPerPixel;
         if (Vector2.Distance(expected, new Vector2(authored.X, authored.Y)) > 1e-4f)
+        {
             throw new InvalidOperationException($"{id}: expected {expected}, got {authored}.");
+        }
     }
 }

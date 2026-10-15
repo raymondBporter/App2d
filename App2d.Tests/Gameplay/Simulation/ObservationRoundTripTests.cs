@@ -42,7 +42,9 @@ public sealed class ObservationRoundTripTests
         var content = new LevelContent2D(3, [terrain], [new(new EntityId2D(103), 40, new(90f, 12f), 0xffaabbcc)],
             [new(42, position)], new(300f, 0f));
         var world = new WorldState2D([new(new EntityId2D(103), position)], [new(42, true)])
-        { CutGrass = [new(3, 1), new(5, 2)] };
+        {
+            CutGrass = [new(3, 1), new(5, 2)]
+        };
         ImmutableArray<EnemyState2D> enemies =
         [
             new(enemyId, EnemyKind2D.Rival, position, new(5f, 1f), 0.2f, -1f, true, true)
@@ -54,7 +56,13 @@ public sealed class ObservationRoundTripTests
         var options = CreateOptions();
         var restored = RoundTrip(snapshot, options);
         Assert.Equal(player.Person, restored.Players[0].Person);
-        Assert.Equal(player with { Weapons = default }, restored.Players[0] with { Weapons = default });
+        Assert.Equal(player with
+        {
+            Weapons = default
+        }, restored.Players[0] with
+        {
+            Weapons = default
+        });
         Assert.Equal([.. player.Weapons.Projectiles], [.. restored.Players[0].Weapons.Projectiles]);
         Assert.Equal(enemies.ToArray(), restored.Enemies.ToArray());
         Assert.Equal([.. world.MovingPlatforms], [.. restored.World.MovingPlatforms]);
@@ -121,10 +129,16 @@ public sealed class ObservationRoundTripTests
         var resolver = new DefaultJsonTypeInfoResolver();
         resolver.Modifiers.Add(info =>
         {
-            if (info.Type != typeof(SessionEvent2D) && info.Type != typeof(EnemyEvent2D) && info.Type != typeof(WeaponEvent2D)) return;
+            if (info.Type != typeof(SessionEvent2D) && info.Type != typeof(EnemyEvent2D) && info.Type != typeof(WeaponEvent2D))
+            {
+                return;
+            }
+
             info.PolymorphismOptions = new JsonPolymorphismOptions();
             foreach (var type in info.Type.Assembly.GetTypes().Where(t => !t.IsAbstract && info.Type.IsAssignableFrom(t)))
+            {
                 info.PolymorphismOptions.DerivedTypes.Add(new JsonDerivedType(type, type.Name));
+            }
         });
         var options = new JsonSerializerOptions { IncludeFields = true, TypeInfoResolver = resolver };
         options.Converters.Add(new EntityIdConverter());

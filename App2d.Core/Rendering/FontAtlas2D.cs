@@ -8,9 +8,18 @@ internal sealed class FontAtlas2D : IDisposable
 {
     private const int Cell = 48;
     private readonly Dictionary<char, Glyph> _glyphs = [];
-    public Texture2D Texture { get; }
-    public float Ascent { get; }
-    public float LineHeight { get; }
+    public Texture2D Texture
+    {
+        get;
+    }
+    public float Ascent
+    {
+        get;
+    }
+    public float LineHeight
+    {
+        get;
+    }
 
     public FontAtlas2D()
     {
@@ -45,7 +54,11 @@ internal sealed class FontAtlas2D : IDisposable
         var maximum = 0f;
         foreach (var character in text)
         {
-            if (character == '\n') { maximum = Math.Max(maximum, width); width = 0f; }
+            if (character == '\n')
+            {
+                maximum = Math.Max(maximum, width);
+                width = 0f;
+            }
             else
             {
                 width += GetGlyph(character).Advance;

@@ -59,7 +59,10 @@ public static class PlayerHud2D
         }
 
         renderer.DrawScreenRoundedRectangle(barBounds, 6f, accentColor, 3f);
-        if (maximumHealth > 20) renderer.DrawScreenText($"{currentHealth}/{maximumHealth}", new Vector2(barLeft + 88, top + 33), XnaColor.White);
+        if (maximumHealth > 20)
+        {
+            renderer.DrawScreenText($"{currentHealth}/{maximumHealth}", new Vector2(barLeft + 88, top + 33), XnaColor.White);
+        }
 
         const float weaponTop = top + panelHeight + 10f;
         var weaponBounds = ScreenRectangle2D.FromTopLeftAndSize(new(left, weaponTop), new Size2D(70f, 70f));
@@ -74,7 +77,11 @@ public static class PlayerHud2D
             const float energyLeft = left + 12;
             renderer.DrawScreenRoundedRectangle(new(energyLeft, weaponTop + 30, left + 338, weaponTop + 43), 4, emptyHealthColor);
             var fill = 326f * spells.Energy / spells.MaximumEnergy;
-            if (fill > 0) renderer.DrawScreenRoundedRectangle(new(energyLeft, weaponTop + 30, energyLeft + fill, weaponTop + 43), 4, accentColor);
+            if (fill > 0)
+            {
+                renderer.DrawScreenRoundedRectangle(new(energyLeft, weaponTop + 30, energyLeft + fill, weaponTop + 43), 4, accentColor);
+            }
+
             renderer.DrawScreenText("Y / Q  SHOT", new(left + 12, weaponTop + 66), spells.Energy >= spells.ShotCost ? XnaColor.White : XnaColor.Gray);
             renderer.DrawScreenText("B / R  HEAL", new(left + 182, weaponTop + 66), spells.Energy >= spells.HealCost && currentHealth < maximumHealth ? XnaColor.White : XnaColor.Gray);
             var progress = charging ? spells.ChargeProgress : spells.IsHealing ? spells.HealProgress : 0;

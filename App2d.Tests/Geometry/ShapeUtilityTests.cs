@@ -45,7 +45,11 @@ public sealed class ShapeUtilityTests
         Assert.Equal(shape.Area * 2.5f * 2.5f, scaled.Area, 3);
         var original = Outline(shape);
         var doubled = Outline(scaled);
-        for (var i = 0; i < original.Length; i++) Assert.True(Vector2.Distance(original[i] * 2.5f, doubled[i]) < 1e-4f);
+        for (var i = 0; i < original.Length; i++)
+        {
+            Assert.True(Vector2.Distance(original[i] * 2.5f, doubled[i]) < 1e-4f);
+        }
+
         Assert.Throws<ArgumentOutOfRangeException>(() => ShapeTransforms2D.Scaled(shape, 0));
     }
 
@@ -91,7 +95,10 @@ public sealed class ShapeUtilityTests
             box.Transform.Rotation = i * MathF.Tau / 12;
             var worldCenter = Vector2.Transform(center, box.Transform.Matrix);
             ShapeTransforms2D.WriteWorldOutline(box.Shape, box.CollisionPose, corners);
-            foreach (var corner in corners) Assert.True(Vector2.Distance(corner, worldCenter) <= radius + 1e-4f);
+            foreach (var corner in corners)
+            {
+                Assert.True(Vector2.Distance(corner, worldCenter) <= radius + 1e-4f);
+            }
         }
     }
 

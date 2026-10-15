@@ -79,10 +79,18 @@ public sealed class BladeSwoosh
     /// quarter turn in its first recorded step has no earlier step to follow, so without this it takes the shorter way
     /// round, which can be underneath instead of over the top. Mirror it with the actor's facing.
     /// </summary>
-    public int Sweep { get; set; }
+    public int Sweep
+    {
+        get; set;
+    }
     public bool IsVisible => _history.Count > 1 && (_swinging || _now < _end + Style.ClearSeconds);
 
-    public void Reset() { _history.Clear(); _swinging = false; _now = _end = _start = 0; }
+    public void Reset()
+    {
+        _history.Clear();
+        _swinging = false;
+        _now = _end = _start = 0;
+    }
 
     /// <summary>Records the blade at <paramref name="time"/>. A new swing (<paramref name="swinging"/> turning on) starts a fresh trail.</summary>
     public void Record(float time, Vector3 guard, Vector3 tip, bool swinging)
@@ -90,33 +98,68 @@ public sealed class BladeSwoosh
         _now = time;
         if (swinging)
         {
-            if (!_swinging) { _history.Clear(); _start = time; _swinging = true; }
-            if (_history.Count > 0 && time <= _history[^1].Time) _history.RemoveAt(_history.Count - 1);
+            if (!_swinging)
+            {
+                _history.Clear();
+                _start = time;
+                _swinging = true;
+            }
+            if (_history.Count > 0 && time <= _history[^1].Time)
+            {
+                _history.RemoveAt(_history.Count - 1);
+            }
+
             var (turn, axis) = _history.Count > 0 ? Turn(_history[^1], guard, tip, Sweep) : (0, Vector3.UnitZ);
             _history.Add(new(time, guard, tip, turn, axis));
             var oldest = time - Style.HistorySeconds;
-            while (_history.Count > 2 && _history[1].Time <= oldest) _history.RemoveAt(0);
+            while (_history.Count > 2 && _history[1].Time <= oldest)
+            {
+                _history.RemoveAt(0);
+            }
         }
-        else if (_swinging) { _swinging = false; _end = _history.Count > 0 ? _history[^1].Time : time; }
+        else if (_swinging)
+        {
+            _swinging = false;
+            _end = _history.Count > 0 ? _history[^1].Time : time;
+        }
     }
 
     /// <summary>Appends the trail's triangles to <paramref name="mesh"/>. Draw it before the character so the blade and body sit on top.</summary>
     public void Build(CharacterMesh mesh)
     {
-        if (!IsVisible) return;
+        if (!IsVisible)
+        {
+            return;
+        }
+
         var style = Style;
         var head = _swinging ? _history[^1].Time : _end;
         var reach = MathF.Max(_start, head - style.HistorySeconds);
         var clear = _swinging ? 0 : Math.Clamp((_now - _end) / style.ClearSeconds, 0, 1);
         var tail = reach + (head - reach) * clear;
-        if (head - tail < 1e-4f) return;
+        if (head - tail < 1e-4f)
+        {
+            return;
+        }
 
         Sections(tail, head);
-        if (_sections.Count < 2) return;
-        _distance.Clear(); _distance.Add(0);
-        for (var i = 1; i < _sections.Count; i++) _distance.Add(_distance[^1] + Vector3.Distance(_sections[i - 1].Tip, _sections[i].Tip));
+        if (_sections.Count < 2)
+        {
+            return;
+        }
+
+        _distance.Clear();
+        _distance.Add(0);
+        for (var i = 1; i < _sections.Count; i++)
+        {
+            _distance.Add(_distance[^1] + Vector3.Distance(_sections[i - 1].Tip, _sections[i].Tip));
+        }
+
         var length = _distance[^1];
-        if (length < 1e-3f) return;
+        if (length < 1e-3f)
+        {
+            return;
+        }
 
         var alpha = 1 - Progress.SmoothStep(Interpolation.InverseLerpClamped(.55f, 1f, clear));
         var fill = ColorExtensions.FromHexRgb(style.Fill).WithAlpha(alpha);
@@ -124,16 +167,24 @@ public sealed class BladeSwoosh
         float InnerEdge(float u) => style.SplitPosition + Gap(style, u) / 2;
         for (var i = 1; i < _sections.Count; i++)
         {
-            var u0 = _distance[i - 1] / length; var u1 = _distance[i] / length;
+            var u0 = _distance[i - 1] / length;
+            var u1 = _distance[i] / length;
             // Main band: the whole sheet past the split, the outer tongue inside it.
             Band(mesh, i, u0, u1, _ => 0, u => u >= style.SplitDepth ? 1 : Split(u), fill);
             // Inner tongue: starts at a point part-way along the split and widens until it closes with the outer tongue.
             if (u0 < style.SplitDepth)
+            {
                 Band(mesh, i, u0, MathF.Min(u1, style.SplitDepth), InnerEdge, u => InnerEdge(u) + (1 - InnerEdge(u)) * Inner(style, u), fill);
+            }
         }
         if (style.InkWidth > 0)
         {
-            _edge.Clear(); foreach (var s in _sections) _edge.Add(s.Tip - new Vector3(0, 0, .0005f));
+            _edge.Clear();
+            foreach (var s in _sections)
+            {
+                _edge.Add(s.Tip - new Vector3(0, 0, .0005f));
+            }
+
             mesh.Path(_edge, ColorExtensions.FromHexRgb(style.Ink).WithAlpha(alpha), 0, style.InkWidth);
         }
     }
@@ -144,9 +195,15 @@ public sealed class BladeSwoosh
     /// </summary>
     private void Band(CharacterMesh mesh, int i, float u0, float u1, Func<float, float> near, Func<float, float> far, Color color)
     {
-        if (u1 <= u0) return;
-        var a = _sections[i - 1]; var b = _sections[i];
-        var ua = _distance[i - 1] / _distance[^1]; var ub = _distance[i] / _distance[^1];
+        if (u1 <= u0)
+        {
+            return;
+        }
+
+        var a = _sections[i - 1];
+        var b = _sections[i];
+        var ua = _distance[i - 1] / _distance[^1];
+        var ub = _distance[i] / _distance[^1];
         // A band can end mid-step (the inner tongue closing): stand in a section interpolated to its end.
         var end = u1 < ub - 1e-6f ? Lerp(a, b, (u1 - ua) / MathF.Max(1e-6f, ub - ua)) : b;
         (Vector3 Near, Vector3 Far) Edge(Section s, float u)
@@ -155,8 +212,10 @@ public sealed class BladeSwoosh
             var inner = s.Tip + (s.Guard - s.Tip) * width;
             return (Vector3.Lerp(s.Tip, inner, near(u)), Vector3.Lerp(s.Tip, inner, far(u)));
         }
-        var (n0, f0) = Edge(a, u0); var (n1, f1) = Edge(end, u1);
-        mesh.Triangle(n0, f0, n1, color); mesh.Triangle(f0, f1, n1, color);
+        var (n0, f0) = Edge(a, u0);
+        var (n1, f1) = Edge(end, u1);
+        mesh.Triangle(n0, f0, n1, color);
+        mesh.Triangle(f0, f1, n1, color);
     }
 
     private static float Gap(SwooshStyle style, float u) => u >= style.SplitDepth ? 0 : style.SplitWidth * (1 - u / style.SplitDepth);
@@ -172,35 +231,59 @@ public sealed class BladeSwoosh
         _sections.Clear();
         for (var i = 1; i < _history.Count; i++)
         {
-            var a = _history[i - 1]; var b = _history[i];
-            if (b.Time <= tail || a.Time >= head) continue;
+            var a = _history[i - 1];
+            var b = _history[i];
+            if (b.Time <= tail || a.Time >= head)
+            {
+                continue;
+            }
+
             var steps = Math.Clamp((int)MathF.Ceiling(ArcLength(a, b) / Style.Spacing), 1, 64);
             for (var k = 0; k <= steps; k++)
             {
                 var time = a.Time + (b.Time - a.Time) * k / steps;
-                if (time < tail - 1e-6f || time > head + 1e-6f) continue;
-                if (_sections.Count > 0 && time <= _sections[^1].Time + 1e-6f) continue;
+                if (time < tail - 1e-6f || time > head + 1e-6f)
+                {
+                    continue;
+                }
+
+                if (_sections.Count > 0 && time <= _sections[^1].Time + 1e-6f)
+                {
+                    continue;
+                }
+
                 _sections.Add(Rotate(a, b, (time - a.Time) / (b.Time - a.Time)));
             }
         }
         // Pin the ends exactly on the tail and head times.
         if (_history.Count > 1)
         {
-            var first = Find(tail); if (first is { } f && (_sections.Count == 0 || _sections[0].Time > tail + 1e-6f)) _sections.Insert(0, f);
+            var first = Find(tail);
+            if (first is { } f && (_sections.Count == 0 || _sections[0].Time > tail + 1e-6f))
+            {
+                _sections.Insert(0, f);
+            }
         }
     }
 
     private Section? Find(float time)
     {
         for (var i = 1; i < _history.Count; i++)
-            if (_history[i].Time >= time) return Rotate(_history[i - 1], _history[i], (time - _history[i - 1].Time) / MathF.Max(1e-6f, _history[i].Time - _history[i - 1].Time));
+        {
+            if (_history[i].Time >= time)
+            {
+                return Rotate(_history[i - 1], _history[i], (time - _history[i - 1].Time) / MathF.Max(1e-6f, _history[i].Time - _history[i - 1].Time));
+            }
+        }
+
         return null;
     }
 
     private static float ArcLength(Blade a, Blade b)
     {
         var turn = b.Turn;
-        var chord = Vector3.Distance(a.Tip, b.Tip); var half = MathF.Abs(turn) / 2;
+        var chord = Vector3.Distance(a.Tip, b.Tip);
+        var half = MathF.Abs(turn) / 2;
         return half < 5e-4f ? chord : chord * half / MathF.Sin(half);
     }
 
@@ -213,21 +296,35 @@ public sealed class BladeSwoosh
     /// </summary>
     private static (float Turn, Vector3 Axis) Turn(Blade previous, Vector3 guard, Vector3 tip, int sweep)
     {
-        var a = previous.Tip - previous.Guard; var b = tip - guard;
-        if (a.LengthSquared() < 1e-12f || b.LengthSquared() < 1e-12f) return (0, Vector3.UnitZ);
+        var a = previous.Tip - previous.Guard;
+        var b = tip - guard;
+        if (a.LengthSquared() < 1e-12f || b.LengthSquared() < 1e-12f)
+        {
+            return (0, Vector3.UnitZ);
+        }
+
         var cross = Vector3.Cross(Vector3.Normalize(a), Vector3.Normalize(b));
         var planar = cross.LengthSquared() < 1e-10f || MathF.Abs(cross.Z) > .97f * cross.Length();
         if (planar)
         {
-            var d0 = a.XY; var d1 = b.XY;
+            var d0 = a.XY;
+            var d1 = b.XY;
             var turn = MathF.Atan2(d0.Cross(d1), Vector2.Dot(d0, d1));
             var (expected, limit) = previous.Turn != 0 && previous.Planar ? (MathF.Sign(previous.Turn), 2.6f) : (Math.Sign(sweep), MathF.PI / 2);
-            if (expected != 0 && MathF.Sign(turn) != expected && MathF.Abs(turn) > limit) turn -= MathF.Sign(turn) * MathF.Tau;
+            if (expected != 0 && MathF.Sign(turn) != expected && MathF.Abs(turn) > limit)
+            {
+                turn -= MathF.Sign(turn) * MathF.Tau;
+            }
+
             return (turn, Vector3.UnitZ);
         }
         var axis = Vector3.Normalize(cross);
         var angle = MathF.Atan2(cross.Length(), Vector3.Dot(Vector3.Normalize(a), Vector3.Normalize(b)));
-        if (previous.Turn != 0 && !previous.Planar && Vector3.Dot(axis, previous.Axis) < 0 && angle > 2.6f) (axis, angle) = (-axis, MathF.Tau - angle);
+        if (previous.Turn != 0 && !previous.Planar && Vector3.Dot(axis, previous.Axis) < 0 && angle > 2.6f)
+        {
+            (axis, angle) = (-axis, MathF.Tau - angle);
+        }
+
         return (angle, axis);
     }
 
@@ -239,13 +336,16 @@ public sealed class BladeSwoosh
         if (!b.Planar)
         {
             // Through depth: the guard moves straight between the two, the blade turns about the step's axis.
-            var along = a.Tip - a.Guard; var length = float.Lerp(along.Length(), (b.Tip - b.Guard).Length(), u);
+            var along = a.Tip - a.Guard;
+            var length = float.Lerp(along.Length(), (b.Tip - b.Guard).Length(), u);
             var direction = Vector3.Transform(Vector3.Normalize(along), Quaternion.CreateFromAxisAngle(b.Axis, b.Turn * u));
             var at = Vector3.Lerp(a.Guard, b.Guard, u);
             return new(time, at, at + direction * length);
         }
-        var z = float.Lerp(a.Guard.Z, b.Guard.Z, u); var tipZ = float.Lerp(a.Tip.Z, b.Tip.Z, u);
-        var d0 = (a.Tip - a.Guard).XY; var d1 = (b.Tip - b.Guard).XY;
+        var z = float.Lerp(a.Guard.Z, b.Guard.Z, u);
+        var tipZ = float.Lerp(a.Tip.Z, b.Tip.Z, u);
+        var d0 = (a.Tip - a.Guard).XY;
+        var d1 = (b.Tip - b.Guard).XY;
         var flatLength = float.Lerp(d0.Length(), d1.Length(), u);
         var turn = b.Turn;
         var guard = Rotation2D.InterpolateArc(a.Guard.XY, b.Guard.XY, turn, u);

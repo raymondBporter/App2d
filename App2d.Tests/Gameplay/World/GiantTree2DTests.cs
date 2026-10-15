@@ -12,7 +12,10 @@ public sealed class GiantTree2DTests
         var settings = new GiantTreeSettings2D();
         var first = new GiantTree2D(new(300, -256), settings, 3107);
         var copy = new GiantTree2D(first.Root, settings, first.Seed);
-        var leafy = new GiantTree2D(first.Root, settings with { FoliageRadius = new(100, 200) }, first.Seed);
+        var leafy = new GiantTree2D(first.Root, settings with
+        {
+            FoliageRadius = new(100, 200)
+        }, first.Seed);
         var different = new GiantTree2D(first.Root, settings, 8821);
         Assert.Equal([.. first.Branches], [.. copy.Branches]);
         Assert.Equal([.. first.Branches], [.. leafy.Branches]);

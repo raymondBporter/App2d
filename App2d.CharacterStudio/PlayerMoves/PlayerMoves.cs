@@ -104,28 +104,49 @@ internal static partial class PlayerMoves
     {
         var modelPath = Path.Combine(authoredRoot, "models", "person.json");
         var person = CharacterModel.FromJson(File.ReadAllText(modelPath));
-        foreach (var socket in Sockets()) { person.Sockets.RemoveAll(s => s.Id == socket.Id); person.Sockets.Add(socket); }
+        foreach (var socket in Sockets())
+        {
+            person.Sockets.RemoveAll(s => s.Id == socket.Id);
+            person.Sockets.Add(socket);
+        }
         person.Save(modelPath);
         // These absolute pose studies were authored at the original proportions. Keep their
         // reference measures so playback retargets the legs, including after regeneration.
         var reference = CharacterModel.FromJson(person.ToJson());
         var study = PersonTemplate.StudyReference();
-        foreach (var control in reference.Controls) control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
+        foreach (var control in reference.Controls)
+        {
+            control.Rest = study.Controls.Single(c => c.Id == control.Id).Rest;
+        }
+
         var model = ResolvedModel.From(reference);
-        foreach (var prop in Props()) prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
+        foreach (var prop in Props())
+        {
+            prop.Save(Path.Combine(authoredRoot, "props", prop.Id + ".json"));
+        }
+
         var clips = Clips(model).Select(WeaponMotion).ToDictionary(c => c.Id);
-        foreach (var clip in clips.Values) clip.Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
+        foreach (var clip in clips.Values)
+        {
+            clip.Save(Path.Combine(authoredRoot, "animations", clip.Id + ".json"));
+        }
+
         Directory.CreateDirectory(Path.Combine(authoredRoot, "entities"));
-        var hero = Hero(ResolvedModel.From(person), clips); hero.Save(Path.Combine(authoredRoot, "entities", hero.Id + ".json"));
+        var hero = Hero(ResolvedModel.From(person), clips);
+        hero.Save(Path.Combine(authoredRoot, "entities", hero.Id + ".json"));
         // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
         WeaponMotion(PistolShot(model)).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
-        var cinder = CinderVariant(); cinder.Save(Path.Combine(authoredRoot, "variants", cinder.Id + ".json"));
-        var gunner = CinderGunner(ResolvedModel.From(person, cinder)); gunner.Save(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"));
+        var cinder = CinderVariant();
+        cinder.Save(Path.Combine(authoredRoot, "variants", cinder.Id + ".json"));
+        var gunner = CinderGunner(ResolvedModel.From(person, cinder));
+        gunner.Save(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"));
         // The maul: a broad brute on the Heavy set with a one-handed hammer and a slow overhead slam.
         HammerProp().Save(Path.Combine(authoredRoot, "props", "hammer.json"));
         WeaponMotion(HammerSlam(model)).Save(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"));
-        var brute = BruteVariant(); brute.Save(Path.Combine(authoredRoot, "variants", brute.Id + ".json"));
-        var maul = MaulBrute(ResolvedModel.From(person, brute)); maul.Save(Path.Combine(authoredRoot, "entities", maul.Id + ".json"));
+        var brute = BruteVariant();
+        brute.Save(Path.Combine(authoredRoot, "variants", brute.Id + ".json"));
+        var maul = MaulBrute(ResolvedModel.From(person, brute));
+        maul.Save(Path.Combine(authoredRoot, "entities", maul.Id + ".json"));
         PersonWardrobe.Write(authoredRoot);
     }
 
@@ -152,8 +173,21 @@ internal static partial class PlayerMoves
     public static ModelVariant BruteVariant()
     {
         var variant = new PersonBuild { Legs = .95f, Torso = 1.05f, Arms = 1.1f, Width = 1.45f, Head = .95f }.Apply(PersonTemplate.Model(), "brute", "Brute");
-        variant.Parts["body"] = new() { Material = new() { Fill = "#8a7564" } };
-        variant.Parts["head"] = new() { Material = new() { Fill = "#ead6c1" }, Face = "angry" };
+        variant.Parts["body"] = new()
+        {
+            Material = new()
+            {
+                Fill = "#8a7564"
+            }
+        };
+        variant.Parts["head"] = new()
+        {
+            Material = new()
+            {
+                Fill = "#ead6c1"
+            },
+            Face = "angry"
+        };
         return variant;
     }
 
@@ -248,8 +282,21 @@ internal static partial class PlayerMoves
     public static ModelVariant CinderVariant()
     {
         var variant = new PersonBuild { Legs = .9f, Torso = .95f, Arms = .95f, Width = 1.05f, Head = 1.05f }.Apply(PersonTemplate.Model(), "cinder", "Cinder");
-        variant.Parts["body"] = new() { Material = new() { Fill = "#e0784c" } };
-        variant.Parts["head"] = new() { Material = new() { Fill = "#f3dcc6" }, Face = "smug" };
+        variant.Parts["body"] = new()
+        {
+            Material = new()
+            {
+                Fill = "#e0784c"
+            }
+        };
+        variant.Parts["head"] = new()
+        {
+            Material = new()
+            {
+                Fill = "#f3dcc6"
+            },
+            Face = "smug"
+        };
         return variant;
     }
 
@@ -269,7 +316,10 @@ internal static partial class PlayerMoves
         },
         Health = 7,
         Movement = EntityAuthoring.FitMovement(model),
-        Hurt = new() { Layout = "standard" },
+        Hurt = new()
+        {
+            Layout = "standard"
+        },
         Equipment =
         [
             new()
@@ -342,8 +392,14 @@ internal static partial class PlayerMoves
             Cooldown = 0
         },
         Health = 30,
-        Movement = new() { Shape = MovementDef.Box(.55f, 1.705f) },
-        Hurt = new() { Layout = "standard" },
+        Movement = new()
+        {
+            Shape = MovementDef.Box(.55f, 1.705f)
+        },
+        Hurt = new()
+        {
+            Layout = "standard"
+        },
         Equipment =
         [
             new()
@@ -376,8 +432,10 @@ internal static partial class PlayerMoves
     /// </summary>
     private static EntityActionDef Swing(ResolvedModel model, IReadOnlyDictionary<string, MotionClip> clips, string id, string clip, string next, string recovery)
     {
-        var swing = clips[clip]; float At(string marker) => swing.Markers.Single(m => m.Id == marker).Time;
-        var socket = model.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket); var sword = SwordProp();
+        var swing = clips[clip];
+        float At(string marker) => swing.Markers.Single(m => m.Id == marker).Time;
+        var socket = model.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket);
+        var sword = SwordProp();
         var (min, max) = SwingLab.HitRectangle(model, swing, At(PersonLoadout.SwooshMarker), At("strike"), At("recover"), t => SwingLab.Blade(model, swing, t, sword, socket))
             ?? throw new InvalidOperationException($"'{clip}': the blade never gets in front of the player.");
         static float R(float v) => MathF.Round(v, 3);
@@ -470,10 +528,15 @@ internal static partial class PlayerMoves
     private static (Vector2 LeftShoulder, Vector2 RightShoulder, Vector2 LeftHip, Vector2 RightHip) Girdles(ResolvedModel m, float degrees)
     {
         const float shoulderHalf = .18f, hipHalf = .12f, setback = -.025f;
-        var a = degrees * MathF.PI / 180; var axis = Polar2D.Direction(a);
+        var a = degrees * MathF.PI / 180;
+        var axis = Polar2D.Direction(a);
         // The shoulders sit slightly behind the torso's centerline, along the facing direction (the axis turned back 90).
         var mid = axis.PerpCw * setback;
-        Vector2 Delta(string id, Vector2 at) { var rest = m.Rest[id]; return new(at.X - rest.X, at.Y - rest.Z); }
+        Vector2 Delta(string id, Vector2 at)
+        {
+            var rest = m.Rest[id];
+            return new(at.X - rest.X, at.Y - rest.Z);
+        }
         return (Delta("left-shoulder", mid - axis * shoulderHalf), Delta("right-shoulder", mid + axis * shoulderHalf),
             Delta("left-hip", -axis * hipHalf), Delta("right-hip", axis * hipHalf));
     }
@@ -518,12 +581,14 @@ internal static partial class PlayerMoves
         float[] angles = [60, 84, 108, 132, 156, 180];
         for (var i = 0; i < angles.Length; i++)
         {
-            var degrees = angles[i]; var away = Math.Clamp((degrees - 100) / 60, 0, 1);
+            var degrees = angles[i];
+            var away = Math.Clamp((degrees - 100) / 60, 0, 1);
             b.Key(T(i * .03f), k => k.Turned(m, degrees, away), ClipEase.Linear);
         }
         for (var step = 1; step <= 5; step++)
         {
-            var a = (-90 + 22.5f * step) * MathF.PI / 180; var (sin, cos) = MathF.SinCos(a);
+            var a = (-90 + 22.5f * step) * MathF.PI / 180;
+            var (sin, cos) = MathF.SinCos(a);
             b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(.64f * cos, .64f * sin).RightHand(-.64f * cos, .64f * sin), ClipEase.Linear);
         }
         return b
@@ -553,7 +618,10 @@ internal static partial class PlayerMoves
     {
         var b = New(m, "player-climb", "Climb", .8f, true);
         foreach (var t in new[] { 0f, .8f })
+        {
             b.Key(t, k => k.Turned(m, 180, 1).Hips(0, -.1f).Head(0).LeftHandAt(Rail, RungHigh).RightHandAt(-Rail, RungLow).LeftFoot(.1f, StepLow).RightFoot(-.1f, StepHigh), ClipEase.Linear);
+        }
+
         return b
             .Key(.2f, k => k.Hips(0, -.08f).LeftHandAt(Rail, (RungHigh + RungLow) / 2).RightHandAt(-Rail - .08f, 1.8f).LeftFoot(.16f, .38f).RightFoot(-.1f, (StepHigh + StepLow) / 2), ClipEase.Linear)
             .Key(.4f, k => k.Hips(0, -.1f).LeftHandAt(Rail, RungLow).RightHandAt(-Rail, RungHigh).LeftFoot(.1f, StepHigh).RightFoot(-.1f, StepLow), ClipEase.Linear)
@@ -575,7 +643,10 @@ internal static partial class PlayerMoves
         // Per the user's sketch: hips and one foot against the wall, torso leaning out in a diagonal, head up and out,
         // the near arm reaching straight back to the wall at shoulder height, the far arm and leg dangling free.
         foreach (var t in new[] { 0f, 1.2f })
+        {
             b.Key(t, k => k.Hips(-.08f, -.1f).Chest(-.5f).Head(.3f).LeftHandAt(-.75f, 2.5f).RightHand(.2f, -.5f).LeftFoot(-.4f, .06f).RightFoot(.0f, .2f));
+        }
+
         return b
             .Key(.6f, k => k.Hips(-.08f, -.115f).Chest(-.48f).Head(.28f).LeftHandAt(-.75f, 2.48f).RightHand(.24f, -.46f).LeftFoot(-.4f, .05f).RightFoot(.02f, .18f))
             .Face(0, "strained")
@@ -585,10 +656,12 @@ internal static partial class PlayerMoves
     /// <summary>Windmill: the hands trace circles around their shoulders, opposite in phase, while the chest tips.</summary>
     private static MoveBuilder Windmill(MoveBuilder b, float direction, float lean, float wobble)
     {
-        const int steps = 8; const float radius = .42f;
+        const int steps = 8;
+        const float radius = .42f;
         for (var i = 0; i <= steps; i++)
         {
-            var t = b.Duration * i / steps; var phase = MathF.Tau * i / steps * direction;
+            var t = b.Duration * i / steps;
+            var phase = MathF.Tau * i / steps * direction;
             var left = Polar2D.ToCartesian(radius, phase + .4f);
             var right = Polar2D.ToCartesian(radius, phase + .4f + MathF.PI);
             var tip = lean + wobble * MathF.Sin(MathF.Tau * i / steps);

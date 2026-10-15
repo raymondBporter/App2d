@@ -31,11 +31,15 @@ public readonly record struct ConstraintLimit1D : IInterval<float>
     {
         ArgGuard.ThrowIfNan(minimum, nameof(minimum));
         if (minimum == float.PositiveInfinity)
+        {
             ArgGuard.ThrowOutOfRange(minimum, "The minimum must be finite or negative infinity.");
+        }
 
         ArgGuard.ThrowIfNan(maximum, nameof(minimum));
         if (maximum == float.NegativeInfinity)
+        {
             ArgGuard.ThrowOutOfRange(maximum, "The maximum must be finite or positive infinity.");
+        }
 
         ArgGuard.ThrowIf(minimum > maximum, "The minimum limit cannot exceed the maximum limit.");
 
@@ -43,8 +47,14 @@ public readonly record struct ConstraintLimit1D : IInterval<float>
         Maximum = maximum;
     }
 
-    public float Minimum { get; }
-    public float Maximum { get; }
+    public float Minimum
+    {
+        get;
+    }
+    public float Maximum
+    {
+        get;
+    }
     float IInterval<float>.Min => Minimum;
     float IInterval<float>.Max => Maximum;
     public bool HasMinimum => !float.IsNegativeInfinity(Minimum);
@@ -96,11 +106,17 @@ public readonly record struct ConstraintLimit1D : IInterval<float>
         var target = IntervalMath<float>.Clamp(this, coordinate);
         var state = ConstraintLimitState1D.Inactive;
         if (IsLocked)
+        {
             state = ConstraintLimitState1D.Locked;
+        }
         else if (HasMinimum && coordinate <= Minimum + activationTolerance)
+        {
             state = ConstraintLimitState1D.Lower;
+        }
         else if (HasMaximum && coordinate >= Maximum - activationTolerance)
+        {
             state = ConstraintLimitState1D.Upper;
+        }
 
         return new ConstraintLimitEvaluation1D(coordinate, target, coordinate - target, state);
     }

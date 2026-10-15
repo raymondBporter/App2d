@@ -42,7 +42,11 @@ public static class ShapeVertices2D
     public static ReadOnlySpan<Vector2> GetVerts(this IShape2D shape, Span<Vector2> vertices, out float radius)
     {
         var count = shape.GetVertCount();
-        if (count == 0) throw new NotSupportedException($"A {shape.Kind} has no exact finite polygonal convex core.");
+        if (count == 0)
+        {
+            throw new NotSupportedException($"A {shape.Kind} has no exact finite polygonal convex core.");
+        }
+
         ArgGuard.ThrowIfTooShort<Vector2>(vertices, count);
         radius = 0f;
         switch (shape)
@@ -62,7 +66,11 @@ public static class ShapeVertices2D
                 {
                     vertices[0] = rounded.InnerRect.Min;
                 }
-                else if (count == 2) { vertices[0] = rounded.InnerRect.Min; vertices[1] = rounded.InnerRect.Max; }
+                else if (count == 2)
+                {
+                    vertices[0] = rounded.InnerRect.Min;
+                    vertices[1] = rounded.InnerRect.Max;
+                }
                 else
                 {
                     VertexGenerator2D.WriteRectangle(vertices, rounded.InnerRect.Min, rounded.InnerRect.Max);
@@ -114,7 +122,11 @@ public static class ShapeVertices2D
     public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Span<Vector2> vertices, int roundSegments = 32)
     {
         var count = shape.GetOutlineVertCount(roundSegments);
-        if (count == 0) throw new NotSupportedException($"A {shape.Kind} has no single finite outline.");
+        if (count == 0)
+        {
+            throw new NotSupportedException($"A {shape.Kind} has no single finite outline.");
+        }
+
         ArgGuard.ThrowIfTooShort<Vector2>(vertices, count);
         switch (shape)
         {

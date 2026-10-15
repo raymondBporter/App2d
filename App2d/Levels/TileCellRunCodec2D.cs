@@ -19,7 +19,10 @@ internal static class TileCellRunCodec2D
             var tile = tiles[index];
             var count = 1;
             while (index + count < tiles.Length && tiles[index + count] == tile && count < byte.MaxValue)
+            {
                 count++;
+            }
+
             encoded.Add(tile.Packed);
             encoded.Add((byte)count);
             index += count;
@@ -30,21 +33,31 @@ internal static class TileCellRunCodec2D
     public static void Decode(ReadOnlySpan<byte> encoded, Span<TileCell2D> tiles)
     {
         if (encoded.Length % 2 != 0)
+        {
             ArgGuard.ThrowInvalid("Encoded tile runs must be whole [cell][count] pairs.", nameof(encoded));
+        }
 
         var written = 0;
         for (var pair = 0; pair < encoded.Length; pair += 2)
         {
             var count = encoded[pair + 1];
             if (count == 0)
+            {
                 ArgGuard.ThrowInvalid("Encoded tile runs must have a positive count.", nameof(encoded));
+            }
+
             if (written + count > tiles.Length)
+            {
                 ArgGuard.ThrowOutOfRange(count, "Encoded tile runs overflow the destination.");
+            }
+
             tiles.Slice(written, count).Fill(new TileCell2D(encoded[pair]));
             written += count;
         }
 
         if (written != tiles.Length)
+        {
             ArgGuard.ThrowOutOfRange(written, "Encoded tile runs do not fill the destination.");
+        }
     }
 }

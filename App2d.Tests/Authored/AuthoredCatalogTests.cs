@@ -34,7 +34,9 @@ public sealed class AuthoredCatalogTests
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })
+        {
             Assert.Contains("\"structureRevision\": 1", File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, file)));
+        }
     }
 
     public static TheoryData<string, string, string> NullReferences => new()
@@ -58,14 +60,18 @@ public sealed class AuthoredCatalogTests
         try
         {
             PersonTemplate.WriteStudies(root);
-            var path = Path.Combine(root, file); var json = File.ReadAllText(path);
+            var path = Path.Combine(root, file);
+            var json = File.ReadAllText(path);
             var edited = new Regex(pattern).Replace(json, replacement, 1);
             Assert.NotEqual(json, edited);
             File.WriteAllText(path, edited);
             var catalog = AuthoredCatalog.Load(root);
             Assert.Contains(catalog.Errors, e => e.Contains(Path.GetFileName(file)));
         }
-        finally { Directory.Delete(root, true); }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
     }
 
     [Theory, InlineData("person-walk"), InlineData("person-run")]
@@ -83,7 +89,8 @@ public sealed class AuthoredCatalogTests
         try
         {
             PersonTemplate.WriteStudies(root);
-            var orphan = PersonBuild.TallThin.Apply(PersonTemplate.Model(), "orphan", "Orphan"); orphan.Base = "hound";
+            var orphan = PersonBuild.TallThin.Apply(PersonTemplate.Model(), "orphan", "Orphan");
+            orphan.Base = "hound";
             File.WriteAllText(Path.Combine(root, "variants", "orphan.json"), orphan.ToJson());
             File.WriteAllText(Path.Combine(root, "variants", "copy.json"), File.ReadAllText(Path.Combine(root, "variants", "tall-thin.json")));
             File.WriteAllText(Path.Combine(root, "animations", "typo.json"), File.ReadAllText(Path.Combine(root, "animations", "person-walk.json")).Replace("\"tracks\":", "\"trakcs\":"));
@@ -94,6 +101,9 @@ public sealed class AuthoredCatalogTests
             Assert.Contains("person-walk", catalog.Animations.Keys);
             Assert.Throws<InvalidDataException>(() => catalog.Resolve("orphan"));
         }
-        finally { Directory.Delete(root, true); }
+        finally
+        {
+            Directory.Delete(root, true);
+        }
     }
 }

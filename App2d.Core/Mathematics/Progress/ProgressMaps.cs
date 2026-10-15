@@ -8,7 +8,10 @@ public static class ProgressMaps
     public static ProgressMap Loop => Easing.Linear;
 
     /// <summary>0 to 1 and back to 0 in one cycle.</summary>
-    public static ProgressMap PingPong { get; } = new(
+    public static ProgressMap PingPong
+    {
+        get;
+    } = new(
         phase => phase <= 0.5d ? 2d * phase : 2d * (1d - phase),
         phase => phase < 0.5d ? 2d : -2d);
 

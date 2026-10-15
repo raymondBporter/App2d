@@ -21,7 +21,11 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
     public bool CaptureKeyboard => editor.IsActive && (_shortcutCaptured || _gui?.WantCaptureKeyboard == true);
     public bool IsEditingText => editor.IsActive && _gui?.WantTextInput == true;
     public ImGuiHost Gui => _gui ?? throw new InvalidOperationException("The map UI has not begun a frame.");
-    public void Attach(Control surface) { _surface = surface; _platform = new(surface); }
+    public void Attach(Control surface)
+    {
+        _surface = surface;
+        _platform = new(surface);
+    }
 
     public void BeginFrame(GraphicsDevice device, FrameTime time)
     {
@@ -30,7 +34,11 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
         _gui.Begin(time.DeltaSeconds);
         _shortcutCaptured = false;
         editor.IsPointerOverUi = false;
-        if (!editor.IsActive) return;
+        if (!editor.IsActive)
+        {
+            return;
+        }
+
         var width = Ui.Sidebar("Map editor", () =>
         {
             Ui.Header("Map editor");
@@ -40,18 +48,35 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
                 () => Ui.Button("Things", () => editor.SelectMode(LevelEditorMode2D.Things)),
                 () => Ui.Button("Play [F1]", editor.RequestToggle));
             ImGui.Separator();
-            if (editor.Mode == LevelEditorMode2D.Tiles) TileEditorMenu2D.Draw(editor, textures, TextureId);
-            else editor.InspectorView.Draw();
+            if (editor.Mode == LevelEditorMode2D.Tiles)
+            {
+                TileEditorMenu2D.Draw(editor, textures, TextureId);
+            }
+            else
+            {
+                editor.InspectorView.Draw();
+            }
         }, width: 360);
         var io = ImGui.GetIO();
         var pointer = io.MousePos;
         editor.IsPointerOverUi = _gui.WantCaptureMouse ||
             (pointer.X >= io.DisplaySize.X - width && pointer.X < io.DisplaySize.X && pointer.Y >= 0 && pointer.Y < io.DisplaySize.Y);
-        if (ImGui.IsKeyPressed(ImGuiKey.F1, false)) { editor.RequestToggle(); _shortcutCaptured = true; }
+        if (ImGui.IsKeyPressed(ImGuiKey.F1, false))
+        {
+            editor.RequestToggle();
+            _shortcutCaptured = true;
+        }
         if (!io.WantTextInput && io.KeyCtrl && ImGui.IsKeyPressed(ImGuiKey.Z))
         {
             _shortcutCaptured = true;
-            if (editor.Mode == LevelEditorMode2D.Tiles) editor.UndoTiles(); else editor.UndoThingEdit();
+            if (editor.Mode == LevelEditorMode2D.Tiles)
+            {
+                editor.UndoTiles();
+            }
+            else
+            {
+                editor.UndoThingEdit();
+            }
         }
     }
     private nint TextureId(string path)
@@ -69,9 +94,18 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
     public void Render() => _gui?.Render();
     public void ReleaseDevice()
     {
-        _gui?.Dispose(); _gui = null; _platform?.Dispose(); _platform = null; _textureIds.Clear();
-        foreach (var preview in _previews) preview.Dispose();
-        _previews.Clear(); _device = null;
+        _gui?.Dispose();
+        _gui = null;
+        _platform?.Dispose();
+        _platform = null;
+        _textureIds.Clear();
+        foreach (var preview in _previews)
+        {
+            preview.Dispose();
+        }
+
+        _previews.Clear();
+        _device = null;
     }
     public void Dispose() => ReleaseDevice();
 }

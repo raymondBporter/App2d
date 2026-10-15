@@ -20,14 +20,20 @@ public sealed class TriangleMesh2D
         ArgGuard.ThrowIf(_vertices.Length < 3, "A triangle mesh needs at least three vertices.", nameof(vertices));
         ArgGuard.ThrowIf(_indices.Length == 0 || _indices.Length % 3 != 0,
             "Triangle indices must form complete triples.", nameof(indices));
-        foreach (var vertex in _vertices) ArgGuard.ThrowIfNotFinite(vertex, nameof(vertices));
+        foreach (var vertex in _vertices)
+        {
+            ArgGuard.ThrowIfNotFinite(vertex, nameof(vertices));
+        }
+
         foreach (var index in _indices)
+        {
             ArgGuard.ThrowIf(index < 0 || index >= _vertices.Length, "Triangle index is outside the vertices.", nameof(indices));
+        }
 
         var area = 0d;
-        for (var i = 0; i < _indices.Length; i += 3)
+        foreach (var (a, b, c) in Triangles)
         {
-            var twice = new Vector2d(_vertices[_indices[i]]).Orientation(new(_vertices[_indices[i + 1]]), new(_vertices[_indices[i + 2]]));
+            var twice = new Vector2d(a).Orientation(new(b), new(c));
             ArgGuard.ThrowIf(twice == 0, "Triangle vertices must not be collinear.", nameof(indices));
             area += Math.Abs(twice) / 2;
         }
@@ -38,14 +44,26 @@ public sealed class TriangleMesh2D
 
     public ReadOnlySpan<Vector2> Vertices => _vertices;
     public ReadOnlySpan<int> Indices => _indices;
+    /// <summary>A borrowed, allocation-free view of the mesh's vertex triples in index-buffer order.</summary>
+    public IndexedTriangleEnumerable<Vector2> Triangles => MeshTopology.IndexedTriangles<Vector2>(_vertices, _indices);
     public int TriangleCount => _indices.Length / 3;
     /// <summary>The sum of triangle areas; overlaps are counted once per triangle.</summary>
-    public float Area { get; }
-    public Rect2D Bounds { get; }
+    public float Area
+    {
+        get;
+    }
+    public Rect2D Bounds
+    {
+        get;
+    }
 
     public (Vector2 A, Vector2 B, Vector2 C) TriangleAt(int index)
     {
-        if ((uint)index >= (uint)TriangleCount) throw new ArgumentOutOfRangeException(nameof(index));
+        if ((uint)index >= (uint)TriangleCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+
         var i = index * 3;
         return (_vertices[_indices[i]], _vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
     }
@@ -56,12 +74,17 @@ public sealed class TriangleMesh2D
         ArgGuard.ThrowIfNotFinite(point);
         ArgGuard.ThrowIf(!double.IsFinite(edgeTolerance) || edgeTolerance < 0,
             "Edge tolerance must be finite and nonnegative.", nameof(edgeTolerance));
-        if (edgeTolerance == 0 && !Bounds.Contains(point)) return false;
-        var query = new Vector2d(point);
-        for (var i = 0; i < TriangleCount; i++)
+        if (edgeTolerance == 0 && !Bounds.Contains(point))
         {
-            var triangle = TriangleAt(i);
-            var a = new Vector2d(triangle.A); var b = new Vector2d(triangle.B); var c = new Vector2d(triangle.C);
+            return false;
+        }
+
+        var query = new Vector2d(point);
+        foreach (var triangle in Triangles)
+        {
+            var a = new Vector2d(triangle.A);
+            var b = new Vector2d(triangle.B);
+            var c = new Vector2d(triangle.C);
             var sign = Math.Sign(a.Orientation(b, c));
             if (sign * a.Orientation(b, query) >= -edgeTolerance &&
                 sign * b.Orientation(c, query) >= -edgeTolerance &&

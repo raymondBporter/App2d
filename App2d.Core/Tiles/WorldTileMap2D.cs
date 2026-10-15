@@ -13,14 +13,21 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
     public WorldTileMap2D(IEnumerable<EditableTileMap2D> maps)
     {
         var sources = maps.ToArray();
-        if (sources.Length == 0) throw new ArgumentException("A world needs at least one map.", nameof(maps));
+        if (sources.Length == 0)
+        {
+            throw new ArgumentException("A world needs at least one map.", nameof(maps));
+        }
+
         TileSize = sources[0].TileSize;
         ChunkSize = sources[0].ChunkSize;
         Origin = sources.Select(m => m.Origin).Aggregate(Vector2.Min);
         var max = sources.Select(m => m.WorldBounds.Max).Aggregate(Vector2.Max);
         _tilesets = [.. sources.SelectMany(m => m.TilesetIds).Distinct(StringComparer.Ordinal)];
         if (_tilesets.Length > TileCell2D.MaximumTilesetCount)
+        {
             throw new ArgumentException("The world supports at most 16 distinct tilesets.", nameof(maps));
+        }
+
         _entries = new Entry[sources.Length];
         for (var i = 0; i < sources.Length; i++)
         {
@@ -50,16 +57,34 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         }
         Width = checked((int)((max.X - Origin.X) / TileSize));
         Height = checked((int)((max.Y - Origin.Y) / TileSize));
-        foreach (var entry in _entries) entry.Map.ChunkChanged += entry.Changed;
+        foreach (var entry in _entries)
+        {
+            entry.Map.ChunkChanged += entry.Changed;
+        }
     }
 
-    public int Width { get; }
-    public int Height { get; }
-    public int ChunkSize { get; }
+    public int Width
+    {
+        get;
+    }
+    public int Height
+    {
+        get;
+    }
+    public int ChunkSize
+    {
+        get;
+    }
     public int ChunkColumns => (Width - 1) / ChunkSize + 1;
     public int ChunkRows => (Height - 1) / ChunkSize + 1;
-    public float TileSize { get; }
-    public Vector2 Origin { get; }
+    public float TileSize
+    {
+        get;
+    }
+    public Vector2 Origin
+    {
+        get;
+    }
     public Rect2D WorldBounds => new(Origin, Origin + new Vector2(Width, Height) * TileSize);
     public IReadOnlyList<string> TilesetIds => _tilesets;
     public event Action<TileChunk2D>? ChunkChanged;
@@ -69,7 +94,9 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         foreach (var entry in _entries)
         {
             if (x >= entry.X && y >= entry.Y && x - entry.X < entry.Map.Width && y - entry.Y < entry.Map.Height)
+            {
                 return entry;
+            }
         }
 
         return null;
@@ -84,7 +111,10 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
     public IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(TileChunk2D chunk)
     {
         if (chunk.X < 0 || chunk.Y < 0 || chunk.X >= ChunkColumns || chunk.Y >= ChunkRows)
+        {
             throw new ArgumentOutOfRangeException(nameof(chunk));
+        }
+
         var x = chunk.X * ChunkSize;
         var y = chunk.Y * ChunkSize;
         var cells = new List<TileCellRectangle2D>();
@@ -103,11 +133,19 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         var maxX = Math.Min(Width - 1, x + Math.Min(map.Width, (chunk.X + 1) * ChunkSize)) / ChunkSize;
         var maxY = Math.Min(Height - 1, y + Math.Min(map.Height, (chunk.Y + 1) * ChunkSize)) / ChunkSize;
         for (var cy = minY; cy <= maxY; cy++)
-            for (var cx = minX; cx <= maxX; cx++) ChunkChanged?.Invoke(new(cx, cy));
+        {
+            for (var cx = minX; cx <= maxX; cx++)
+            {
+                ChunkChanged?.Invoke(new(cx, cy));
+            }
+        }
     }
 
     public void Dispose()
     {
-        foreach (var entry in _entries) entry.Map.ChunkChanged -= entry.Changed;
+        foreach (var entry in _entries)
+        {
+            entry.Map.ChunkChanged -= entry.Changed;
+        }
     }
 }

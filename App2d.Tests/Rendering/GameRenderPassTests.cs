@@ -78,7 +78,9 @@ public sealed class GameRenderPassTests
         public TestGame() => Scene.Add(new WorldObject2D(
             Rectangle2D.Builder.CreateFromSize(512, 512), new SolidColorShader(XnaColor.Red)));
 
-        public override void Update(FrameTime time, InputState input) { }
+        public override void Update(FrameTime time, InputState input)
+        {
+        }
 
         public override void Render(Renderer2D renderer)
         {

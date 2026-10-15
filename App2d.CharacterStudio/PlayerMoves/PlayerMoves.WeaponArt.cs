@@ -70,7 +70,11 @@ internal static partial class PlayerMoves
             ],
         };
         // The broad front of the scabbard covers the blade on the shared back socket.
-        foreach (var solid in prop.Solids) solid.Vertices = [.. solid.Vertices.Select(p => p with { Z = p.Z - .022f })];
+        foreach (var solid in prop.Solids)
+        {
+            solid.Vertices = [.. solid.Vertices.Select(p => p with { Z = p.Z - .022f })];
+        }
+
         return prop;
     }
 

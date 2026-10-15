@@ -33,7 +33,11 @@ public sealed partial class CompositeShape2D : IShape2D
         }
 
         var area = _parts[0].Area;
-        foreach (var part in _parts.AsSpan(1)) area += part.Area;
+        foreach (var part in _parts.AsSpan(1))
+        {
+            area += part.Area;
+        }
+
         Area = area;
     }
 
@@ -41,16 +45,25 @@ public sealed partial class CompositeShape2D : IShape2D
     public ReadOnlySpan<IConvexShape2D> Parts => _parts;
 
     /// <summary>Whether <see cref="Area"/> sums part areas, including duplicate coverage.</summary>
-    public bool IncludeOverlap { get; }
+    public bool IncludeOverlap
+    {
+        get;
+    }
 
     /// <summary>The sample count used for polygonized curves when calculating union area.</summary>
-    public int AreaOutlineSegments { get; }
+    public int AreaOutlineSegments
+    {
+        get;
+    }
 
     /// <summary>
     /// Cached at construction. With <see cref="IncludeOverlap"/>, this is the sum of part areas and an upper bound.
     /// Otherwise it is union area: analytic for circles, ellipses, capsules and polygons, approximate for polygonized curves.
     /// </summary>
-    public float Area { get; }
+    public float Area
+    {
+        get;
+    }
 
     /// <inheritdoc/>
     public float Diameter => ShapeDiameter2D.Calculate(this);
@@ -60,7 +73,10 @@ public sealed partial class CompositeShape2D : IShape2D
     {
         foreach (var part in _parts)
         {
-            if (part.ContainsPoint(localPoint)) return true;
+            if (part.ContainsPoint(localPoint))
+            {
+                return true;
+            }
         }
         return false;
     }

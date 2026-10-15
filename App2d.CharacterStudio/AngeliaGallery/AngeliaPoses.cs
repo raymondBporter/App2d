@@ -46,7 +46,10 @@ internal static class AngeliaPoses
     private static AngeliaPose Idle(int f)
     {
         var e = InOutCirc(PingPong(f % 96 * 2f / 96, 1));
-        return new() { ChestDrop = e * A };
+        return new()
+        {
+            ChestDrop = e * A
+        };
     }
 
     // PoseAnimation_Walk: 16-step lookup tables.
@@ -158,7 +161,11 @@ internal static class AngeliaPoses
     {
         var a = f % 64 / 16f;
         var e = InOutCirc(a / 4);
-        if (a >= 2) e = 1 - e;
+        if (a >= 2)
+        {
+            e = 1 - e;
+        }
+
         return new()
         {
             HipY = .5f,
@@ -206,8 +213,16 @@ internal static class AngeliaPoses
         var rate = Math.Max(560 / climbSpeed / 8, 1);
         var a = f % (rate * 10 - 1) / rate;
         var d = (a + 1) % 10;
-        if (a >= 5) a = 8 - a;
-        if (d >= 5) d = 8 - d;
+        if (a >= 5)
+        {
+            a = 8 - a;
+        }
+
+        if (d >= 5)
+        {
+            d = 8 - d;
+        }
+
         a = Math.Clamp(a, 0, 4);
         var pose = new AngeliaPose
         {
@@ -218,8 +233,10 @@ internal static class AngeliaPoses
             LegUL = Math.Clamp(35 * a, 0, 60),
             LegUR = Math.Clamp(-35 * (3 - a), -60, 0),
         };
-        pose.ArmLL = 180 - pose.ArmUL; pose.ArmLR = -180 - pose.ArmUR;
-        pose.LegLL = -pose.LegUL - 5; pose.LegLR = -pose.LegUR + 5;
+        pose.ArmLL = 180 - pose.ArmUL;
+        pose.ArmLR = -180 - pose.ArmUR;
+        pose.LegLL = -pose.LegUL - 5;
+        pose.LegLR = -pose.LegUR + 5;
         return pose;
     }
 
@@ -276,7 +293,8 @@ internal static class AngeliaPoses
             LegUL = 25 + 15 * k,
             LegUR = 25 - 15 * k,
         };
-        pose.LegLL = 85 - pose.LegUL; pose.LegLR = 85 - pose.LegUR;
+        pose.LegLL = 85 - pose.LegUL;
+        pose.LegLR = 85 - pose.LegUR;
         return pose;
     }
 
@@ -305,7 +323,17 @@ internal static class AngeliaPoses
     private static AngeliaPose Sleep(int f)
     {
         var alt = f % 120 >= 60;
-        return new() { HipY = .12f, WholeRot = -90, ChestDrop = alt ? A / 3 : 0, ArmUL = 0, ArmUR = 10, LegUL = 0, LegUR = 5, LegLR = -5 };
+        return new()
+        {
+            HipY = .12f,
+            WholeRot = -90,
+            ChestDrop = alt ? A / 3 : 0,
+            ArmUL = 0,
+            ArmUR = 10,
+            LegUL = 0,
+            LegUR = 5,
+            LegLR = -5
+        };
     }
 
     // PoseAnimation_Sit (Platformer): thighs forward, shins hanging.
@@ -331,16 +359,20 @@ internal sealed class AngeliaRig
     {
         _rest = new(rest);
         float Dist(string a, string b) => Vector3.Distance(rest[a], rest[b]);
-        _torso = Dist("hips", "chest"); _neck = Dist("chest", "head");
-        _upperArm = Dist("left-shoulder", "left-elbow"); _lowerArm = Dist("left-elbow", "left-hand");
-        _upperLeg = Dist("left-hip", "left-knee"); _lowerLeg = Dist("left-knee", "left-foot");
+        _torso = Dist("hips", "chest");
+        _neck = Dist("chest", "head");
+        _upperArm = Dist("left-shoulder", "left-elbow");
+        _lowerArm = Dist("left-elbow", "left-hand");
+        _upperLeg = Dist("left-hip", "left-knee");
+        _lowerLeg = Dist("left-knee", "left-foot");
         _legLength = rest["hips"].Y - rest["left-foot"].Y;
     }
 
     /// <summary>Clockwise rotation, matching AngeliA's sign.</summary>
     private static Vector2 Rot(Vector2 v, float degrees)
     {
-        var r = degrees * MathF.PI / 180; var (s, c) = MathF.SinCos(r);
+        var r = degrees * MathF.PI / 180;
+        var (s, c) = MathF.SinCos(r);
         return new(v.X * c + v.Y * s, -v.X * s + v.Y * c);
     }
 
@@ -355,7 +387,9 @@ internal sealed class AngeliaRig
         var head = chest + Rot(Vector2.UnitY, p.BodyRot + p.HeadRot) * _neck;
         var restChest = _rest["chest"];
 
-        Set(points, "hips", hips); Set(points, "chest", chest); Set(points, "head", head);
+        Set(points, "hips", hips);
+        Set(points, "chest", chest);
+        Set(points, "head", head);
         Arm("left", p.ArmUL, p.ArmLL, p.ArmScaleL);
         Arm("right", p.ArmUR, p.ArmLR, p.ArmScaleR);
         Leg("left", p.LegUL, p.LegLL, p.LowerLegScaleL, p.LegXL);
@@ -365,7 +399,8 @@ internal sealed class AngeliaRig
         {
             foreach (var id in points.Keys.ToList())
             {
-                var v = points[id]; var local = Rot(new Vector2(v.X, v.Y) - hips, p.WholeRot) + hips;
+                var v = points[id];
+                var local = Rot(new Vector2(v.X, v.Y) - hips, p.WholeRot) + hips;
                 points[id] = new(local.X, local.Y, v.Z);
             }
         }
@@ -376,7 +411,9 @@ internal sealed class AngeliaRig
             var shoulder = chest + Rot(new Vector2(restShoulder.X - restChest.X, restShoulder.Y - restChest.Y), p.BodyRot);
             var elbow = shoulder + Limb(p.BodyRot + upper) * _upperArm * scale;
             var hand = elbow + Limb(p.BodyRot + upper + lower) * _lowerArm * scale;
-            Set(points, $"{side}-shoulder", shoulder); Set(points, $"{side}-elbow", elbow); Set(points, $"{side}-hand", hand);
+            Set(points, $"{side}-shoulder", shoulder);
+            Set(points, $"{side}-elbow", elbow);
+            Set(points, $"{side}-hand", hand);
         }
 
         void Leg(string side, float upper, float lower, float lowerScale, float shiftX)
@@ -388,7 +425,8 @@ internal sealed class AngeliaRig
             {
                 // Two-bone solve with the knee forward (+X): both feet under the hip, on the ground.
                 foot = new(hip.X, 0);
-                var toFoot = foot - hip; var d = Math.Clamp(toFoot.Length(), .01f, _upperLeg + _lowerLeg - .001f);
+                var toFoot = foot - hip;
+                var d = Math.Clamp(toFoot.Length(), .01f, _upperLeg + _lowerLeg - .001f);
                 var cos = (_upperLeg * _upperLeg + d * d - _lowerLeg * _lowerLeg) / (2 * _upperLeg * d);
                 var bend = MathF.Acos(Math.Clamp(cos, -1, 1)) * 180 / MathF.PI;
                 knee = hip + Rot(Vector2.Normalize(toFoot), -bend) * _upperLeg;
@@ -398,7 +436,9 @@ internal sealed class AngeliaRig
                 knee = hip + Limb(upper) * _upperLeg;
                 foot = knee + Limb(upper + lower) * _lowerLeg * lowerScale;
             }
-            Set(points, $"{side}-hip", hip); Set(points, $"{side}-knee", knee); Set(points, $"{side}-foot", foot);
+            Set(points, $"{side}-hip", hip);
+            Set(points, $"{side}-knee", knee);
+            Set(points, $"{side}-foot", foot);
         }
     }
 

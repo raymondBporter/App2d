@@ -24,22 +24,38 @@ public sealed class AuthoredHero2D
     public AuthoredHero2D(ResolvedEntity entity, Vector2 colliderSize)
     {
         Entity = entity;
-        if (entity.Controller.Id != EntityControllers.Traversal) throw new InvalidDataException($"Entity '{entity.Id}' must use the '{EntityControllers.Traversal}' controller to drive the game's player.");
+        if (entity.Controller.Id != EntityControllers.Traversal)
+        {
+            throw new InvalidDataException($"Entity '{entity.Id}' must use the '{EntityControllers.Traversal}' controller to drive the game's player.");
+        }
+
         Attack = entity.Actions.GetValueOrDefault(EntityControllers.Attack) ?? throw new InvalidDataException($"Entity '{entity.Id}' has no attack action.");
         WorldUnitsPerModelUnit = colliderSize.Y / entity.Model.DrawnHeight();
         _halfHeight = colliderSize.Y / 2;
         for (var swing = Attack; swing is not null && !_shapes.ContainsKey(swing.Id); swing = swing.Next is { } next ? entity.Actions[next] : null)
         {
             if (swing.Hits is not [{ Window: { Socket: null, Prop: null } } hit])
+            {
                 throw new InvalidDataException($"Entity '{entity.Id}' action '{swing.Id}' needs exactly one hit window, fixed to the actor (no socket or prop): the player's sword hit is a box on the player.");
+            }
+
             _shapes[swing.Id] = ShapeTransforms2D.Scaled(hit.Shape, WorldUnitsPerModelUnit);
         }
     }
 
-    public ResolvedEntity Entity { get; }
-    public ResolvedAction Attack { get; }
+    public ResolvedEntity Entity
+    {
+        get;
+    }
+    public ResolvedAction Attack
+    {
+        get;
+    }
     public ResolvedAction Swing(string? id) => id is null ? Attack : Entity.Actions[id];
-    public float WorldUnitsPerModelUnit { get; }
+    public float WorldUnitsPerModelUnit
+    {
+        get;
+    }
 
     public IShape2D Shape(string? swing = null) => _shapes[Swing(swing).Id];
     public int Damage(string? swing = null) => Swing(swing).Hits[0].Window.Damage;
@@ -53,7 +69,10 @@ public sealed class AuthoredHero2D
         var swing = Swing(id);
         var hit = swing.Hits[0];
         var centre = ToWorld(new(hit.Window.OffsetX, hit.Window.OffsetY));
-        return new(swing.Clip.Duration, hit.Start, hit.Finish, swing.Clip.Duration, centre.X, centre.Y) { Shape = _shapes[swing.Id] };
+        return new(swing.Clip.Duration, hit.Start, hit.Finish, swing.Clip.Duration, centre.X, centre.Y)
+        {
+            Shape = _shapes[swing.Id]
+        };
     }
 
     /// <summary>
@@ -62,7 +81,11 @@ public sealed class AuthoredHero2D
     /// </summary>
     public string Chain(string? last, float sinceEnd)
     {
-        if (last is null || Swing(last).Next is not { } next) return Attack.Id;
+        if (last is null || Swing(last).Next is not { } next)
+        {
+            return Attack.Id;
+        }
+
         var recovery = Swing(last).Recovery;
         var window = recovery is null ? 0 : recovery.Markers.FirstOrDefault(m => m.Id == PersonLoadout.SheatheMarker)?.Time ?? recovery.Duration;
         return sinceEnd <= window ? next : Attack.Id;
@@ -85,7 +108,10 @@ public sealed class AuthoredHero2D
     }
 
     private ActorPose Pose(MotionClip clip, float seconds, float facing) =>
-        new(PoseEvaluator.Sample(Entity.Model, clip, Math.Clamp(seconds, 0, clip.Duration), input: new() { InPlace = true }), Vector2.Zero, facing < 0 ? -1 : 1);
+        new(PoseEvaluator.Sample(Entity.Model, clip, Math.Clamp(seconds, 0, clip.Duration), input: new()
+        {
+            InPlace = true
+        }), Vector2.Zero, facing < 0 ? -1 : 1);
 
     private Vector2 ToWorld(Vector2 units) => units * WorldUnitsPerModelUnit - new Vector2(0, _halfHeight);
 }

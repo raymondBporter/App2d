@@ -17,7 +17,9 @@ public static class TraversalMetricsLoader2D
 
         var path = Path.Combine(contentRoot, "characters", "player-geometry.json");
         if (!File.Exists(path))
+        {
             throw new FileNotFoundException("Player geometry manifest was not found.", path);
+        }
 
         var manifest = JsonSerializer.Deserialize<PlayerGeometryManifest>(File.ReadAllText(path), JsonOptions)
             ?? throw new InvalidDataException($"Player geometry manifest is empty: {path}");
@@ -87,22 +89,37 @@ public static class TraversalMetricsLoader2D
         Justification = "System.Text.Json creates manifest objects through reflection.")]
     private sealed class PlayerGeometryManifest
     {
-        public int SchemaVersion { get; init; }
+        public int SchemaVersion
+        {
+            get; init;
+        }
         public SizeManifest CanvasSizePixels { get; init; } = new();
         public SizeManifest VisualSize { get; init; } = new();
-        public float FootAnchorYFraction { get; init; }
+        public float FootAnchorYFraction
+        {
+            get; init;
+        }
         public ColliderManifest StandingCollider { get; init; } = new();
     }
 
     private sealed class ColliderManifest
     {
         public SizeManifest Size { get; init; } = new();
-        public float CenterOffsetX { get; init; }
+        public float CenterOffsetX
+        {
+            get; init;
+        }
     }
 
     private sealed class SizeManifest
     {
-        public float Width { get; init; }
-        public float Height { get; init; }
+        public float Width
+        {
+            get; init;
+        }
+        public float Height
+        {
+            get; init;
+        }
     }
 }

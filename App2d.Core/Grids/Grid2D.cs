@@ -27,14 +27,23 @@ public sealed class Grid2D<T>
         _values = new T[size.CellCount];
     }
 
-    public GridSize2D Size { get; }
-    public GridGeometry2D Geometry { get; }
+    public GridSize2D Size
+    {
+        get;
+    }
+    public GridGeometry2D Geometry
+    {
+        get;
+    }
     public int Width => Size.Width;
     public int Height => Size.Height;
     public int Count => Size.CellCount;
     public Size2D CellSize => Geometry.CellSize;
     public Vector2 Origin => Geometry.Origin;
-    public Rect2D WorldBounds { get; }
+    public Rect2D WorldBounds
+    {
+        get;
+    }
 
     public ref T this[int x, int y] => ref _values[Size.GetIndex(x, y)];
     public ref T this[GridCell2D cell] => ref _values[Size.GetIndex(cell)];
@@ -51,7 +60,11 @@ public sealed class Grid2D<T>
     public void Clear() => _values.AsSpan().Clear();
     public Rect2D GetCellBounds(GridCell2D cell)
     {
-        if (!Size.Contains(cell)) ArgGuard.ThrowOutOfRange(cell, "Cell must be inside the grid.");
+        if (!Size.Contains(cell))
+        {
+            ArgGuard.ThrowOutOfRange(cell, "Cell must be inside the grid.");
+        }
+
         return Geometry.GetCellBounds(cell);
     }
     public GridCellRange2D GetCellRange<TRect>(TRect bounds) where TRect : IRect2D => Geometry.GetCellRange(bounds, Size);

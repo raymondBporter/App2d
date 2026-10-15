@@ -84,7 +84,9 @@ internal sealed class DeveloperConsoleView : UserControl
     public void FocusInput()
     {
         if (!IsOpen)
+        {
             return;
+        }
 
         ActiveControl = _input;
         _input.Select();
@@ -132,7 +134,9 @@ internal sealed class DeveloperConsoleView : UserControl
         }
 
         if (char.IsControl(character))
+        {
             return false;
+        }
 
         _input.SelectedText = character.ToString();
         return true;
@@ -155,7 +159,9 @@ internal sealed class DeveloperConsoleView : UserControl
             foreach (Control control in Controls)
             {
                 if (control is Label label)
+                {
                     label.Font.Dispose();
+                }
             }
         }
         base.Dispose(disposing);
@@ -178,24 +184,36 @@ internal sealed class DeveloperConsoleView : UserControl
         var commandLine = _input.Text.Trim();
         _input.Clear();
         if (commandLine.Length == 0)
+        {
             return;
+        }
 
         if (_history.Count == 0 || !string.Equals(_history[^1], commandLine, StringComparison.Ordinal))
+        {
             _history.Add(commandLine);
+        }
+
         _historyIndex = _history.Count;
         AppendLine($"> {commandLine}", Color.FromArgb(125, 225, 180));
 
         var result = _console.Execute(commandLine);
         if (result.ClearOutput)
+        {
             _output.Clear();
+        }
+
         foreach (var line in result.Lines)
+        {
             AppendLine(line);
+        }
     }
 
     private void MoveHistory(int offset)
     {
         if (_history.Count == 0)
+        {
             return;
+        }
 
         _historyIndex = Math.Clamp(_historyIndex + offset, 0, _history.Count);
         _input.Text = _historyIndex < _history.Count ? _history[_historyIndex] : string.Empty;

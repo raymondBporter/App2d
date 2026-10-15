@@ -17,15 +17,27 @@ public sealed class PoseEvaluatorTests
     public void AnEmptyClipReproducesRest()
     {
         var pose = Sample(TestModels.Clip(Model), .3);
-        foreach (var (id, rest) in Model.Rest) TestModels.Near(rest, pose.World(id), 1e-4f, id);
-        Assert.All(pose.Chains, c => { Assert.True(c.Reached); Assert.InRange(c.Residual, 0, 1e-4f); });
+        foreach (var (id, rest) in Model.Rest)
+        {
+            TestModels.Near(rest, pose.World(id), 1e-4f, id);
+        }
+
+        Assert.All(pose.Chains, c =>
+        {
+            Assert.True(c.Reached);
+            Assert.InRange(c.Residual, 0, 1e-4f);
+        });
     }
 
     [Fact]
     public void TranslationMovesChildrenAndFrameTargetsButNotLocomotionTargets()
     {
         var clip = TestModels.Clip(Model);
-        clip.Tracks.Add(new() { Target = "body", Keys = [new() { Y = -.2f }] });
+        clip.Tracks.Add(new()
+        {
+            Target = "body",
+            Keys = [new() { Y = -.2f }]
+        });
         var pose = Sample(clip, 0);
         TestModels.Near(new(0, .8f, 0), pose.World("body"));
         TestModels.Near(new(0, 1.3f, 0), pose.World("shoulder"));
@@ -37,7 +49,12 @@ public sealed class PoseEvaluatorTests
     public void RotationIsInheritedByChildOffsetsAndFrames()
     {
         var clip = TestModels.Clip(Model);
-        clip.Tracks.Add(new() { Kind = MotionClip.RotateKind, Target = "body", Keys = [new() { Angle = MathF.PI / 2 }] });
+        clip.Tracks.Add(new()
+        {
+            Kind = MotionClip.RotateKind,
+            Target = "body",
+            Keys = [new() { Angle = MathF.PI / 2 }]
+        });
         var pose = Sample(clip, 0);
         TestModels.Near(new(-.5f, 1, 0), pose.World("shoulder"));
         TestModels.Near(new(-.5f, 1.8f, 0), pose.World("hand"));
@@ -50,7 +67,12 @@ public sealed class PoseEvaluatorTests
         var variant = new ModelVariant { Id = "long-arm", Name = "Long arm", Base = "creature", Rest = { ["elbow"] = new(.6f, 1.2f), ["hand"] = new(1.2f, 1.5f) } };
         var longArm = ResolvedModel.From(TestModels.Creature(), variant);
         var clip = TestModels.Clip(Model);   // reference measures are the base's
-        clip.Tracks.Add(new() { Kind = MotionClip.TargetKind, Target = "arm", Keys = [new() { Y = .1f, Z = .3f }] });
+        clip.Tracks.Add(new()
+        {
+            Kind = MotionClip.TargetKind,
+            Target = "arm",
+            Keys = [new() { Y = .1f, Z = .3f }]
+        });
         var pose = Sample(clip, 0, model: longArm);
         TestModels.Near(new(1.2f, 1.65f, .3f), pose.World("hand"));
         Assert.Equal(longArm.Length("shoulder", "elbow"), Vector2.Distance(XY(pose.World("shoulder")), XY(pose.World("elbow"))), 4);
@@ -60,7 +82,11 @@ public sealed class PoseEvaluatorTests
     public void TravelLoopsAccumulateAndOneShotsClamp()
     {
         var clip = TestModels.Clip(Model);
-        clip.Travel = new() { Scale = "leg", Keys = [new() { Time = 0 }, new() { Time = 1, X = .4f }] };
+        clip.Travel = new()
+        {
+            Scale = "leg",
+            Keys = [new() { Time = 0 }, new() { Time = 1, X = .4f }]
+        };
         Assert.Equal(.9f, Sample(clip, 2.25, repeat: true).Locomotion.X, 4);
         Assert.Equal(.4f, Sample(clip, 2.25).Locomotion.X, 4);
         clip.Loop = false;
@@ -71,8 +97,17 @@ public sealed class PoseEvaluatorTests
     public void ContactsHoldAWorldTargetOverAHalfOpenInterval()
     {
         var clip = TestModels.Clip(Model);
-        clip.Travel = new() { Scale = "leg", Keys = [new() { Time = 0 }, new() { Time = 1, X = .4f }] };
-        clip.Contacts.Add(new() { Chain = "leg", Start = 0, Finish = .5f });
+        clip.Travel = new()
+        {
+            Scale = "leg",
+            Keys = [new() { Time = 0 }, new() { Time = 1, X = .4f }]
+        };
+        clip.Contacts.Add(new()
+        {
+            Chain = "leg",
+            Start = 0,
+            Finish = .5f
+        });
         var planted = Sample(clip, .25);
         TestModels.Near(Vector3.Zero, planted.World("foot"), 1e-4f, "planted while travelling");
         Assert.Single(planted.Contacts);
@@ -85,8 +120,16 @@ public sealed class PoseEvaluatorTests
     [Fact]
     public void AHeldEndpointIncludesAContactThatFinishesThere()
     {
-        var clip = TestModels.Clip(Model); clip.Loop = false; clip.Travel.Scale = "leg";
-        clip.Contacts.Add(new() { Chain = "leg", Start = .5f, Finish = 1, Target = new(.1f, 0) });
+        var clip = TestModels.Clip(Model);
+        clip.Loop = false;
+        clip.Travel.Scale = "leg";
+        clip.Contacts.Add(new()
+        {
+            Chain = "leg",
+            Start = .5f,
+            Finish = 1,
+            Target = new(.1f, 0)
+        });
         Assert.Single(Sample(clip, 1).Contacts);
         Assert.Single(Sample(clip, 5).Contacts);
         clip.Loop = true;
@@ -97,10 +140,16 @@ public sealed class PoseEvaluatorTests
     public void AnUnreachableTargetKeepsLengthsAndReportsTheShortfall()
     {
         var clip = TestModels.Clip(Model);
-        clip.Tracks.Add(new() { Kind = MotionClip.TargetKind, Target = "leg", Keys = [new() { Y = -5 }] });
+        clip.Tracks.Add(new()
+        {
+            Kind = MotionClip.TargetKind,
+            Target = "leg",
+            Keys = [new() { Y = -5 }]
+        });
         var pose = Sample(clip, 0);
         var leg = pose.Chains.Single(c => c.Chain == "leg");
-        Assert.False(leg.Reached); Assert.InRange(leg.Residual, 4.9f, 5.1f); // target is 6 below the hip; the leg reaches ~1.02
+        Assert.False(leg.Reached);
+        Assert.InRange(leg.Residual, 4.9f, 5.1f); // target is 6 below the hip; the leg reaches ~1.02
         Assert.Equal(Model.Length("hip", "knee"), Vector2.Distance(XY(pose.World("hip")), XY(pose.World("knee"))), 4);
         Assert.Equal(Model.Length("knee", "foot"), Vector2.Distance(XY(pose.World("knee")), XY(pose.World("foot"))), 4);
     }

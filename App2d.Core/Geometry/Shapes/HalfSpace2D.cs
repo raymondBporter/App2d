@@ -23,10 +23,16 @@ public sealed partial class HalfSpace2D : IShape2D
     }
 
     /// <summary>The unit normal pointing toward free space.</summary>
-    public Vector2 Normal { get; }
+    public Vector2 Normal
+    {
+        get;
+    }
 
     /// <summary>The signed boundary offset along <see cref="Normal"/>.</summary>
-    public float Offset { get; }
+    public float Offset
+    {
+        get;
+    }
 
     /// <inheritdoc/>
     public float Area => float.PositiveInfinity;

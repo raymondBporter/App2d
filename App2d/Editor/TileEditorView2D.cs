@@ -20,7 +20,9 @@ internal static class TileEditorView2D
     public static void DrawWorldDebug(Renderer2D renderer, TileEditor2D editor)
     {
         if (!editor.IsActive)
+        {
             return;
+        }
 
         DrawGrid(renderer, editor.VisibleWorldBounds, editor.MapBounds, editor.GridGeometry);
 

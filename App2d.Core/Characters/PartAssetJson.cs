@@ -14,14 +14,24 @@ internal static class PartAssetJson
         using var document = JsonDocument.Parse(json);
         var parts = document.RootElement.EnumerateObject().FirstOrDefault(property =>
             property.Name.Equals("parts", StringComparison.OrdinalIgnoreCase)).Value;
-        if (parts.ValueKind != JsonValueKind.Array) return;
+        if (parts.ValueKind != JsonValueKind.Array)
+        {
+            return;
+        }
+
         foreach (var part in parts.EnumerateArray())
         {
-            if (part.ValueKind != JsonValueKind.Object) continue;
+            if (part.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
             foreach (var field in part.EnumerateObject())
             {
                 if (OldPartFields.Contains(field.Name))
+                {
                     throw new JsonException($"Part field '{field.Name}' is from the old drawing format; use geometry and material.");
+                }
             }
         }
     }

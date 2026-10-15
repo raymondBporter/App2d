@@ -19,7 +19,10 @@ public sealed class SourceImportTests
         var model = ResolvedModel.From(result.Model);
         clip.Validate(model);
         AssertMatchesPrototype(puppet, model, clip);
-        Assert.Equal(new AssetSource { Kind = AssetSource.Puppet, File = "studies/" + which + ".puppet.json", Motion = puppet.Motions[0].Name }, clip.Source! with { Points = null });
+        Assert.Equal(new AssetSource { Kind = AssetSource.Puppet, File = "studies/" + which + ".puppet.json", Motion = puppet.Motions[0].Name }, clip.Source! with
+        {
+            Points = null
+        });
         Assert.Equal(AssetSource.Puppet, result.Model.Source!.Kind);
     }
 
@@ -42,10 +45,29 @@ public sealed class SourceImportTests
     {
         var puppet = PuppetTemplates.StickFigure();
         puppet.Controls.Single(c => c.Id == "head").Id = "Big Head";
-        foreach (var bone in puppet.Bones.Where(b => b.To == "head")) bone.To = "Big Head";
-        foreach (var part in puppet.Parts) { if (part.A == "head") part.A = "Big Head"; if (part.B == "head") part.B = "Big Head"; }
+        foreach (var bone in puppet.Bones.Where(b => b.To == "head"))
+        {
+            bone.To = "Big Head";
+        }
+
+        foreach (var part in puppet.Parts)
+        {
+            if (part.A == "head")
+            {
+                part.A = "Big Head";
+            }
+
+            if (part.B == "head")
+            {
+                part.B = "Big Head";
+            }
+        }
         puppet.Motions[0].Name = "Pose Study!";
-        puppet.Motions.Add(new() { Name = "Pose Study!", Duration = .5f });
+        puppet.Motions.Add(new()
+        {
+            Name = "Pose Study!",
+            Duration = .5f
+        });
         puppet.Validate();
         var result = PuppetImport.Convert(puppet, "knight", "Knight", "knight.puppet.json", ["knight-pose-study"]);
         Assert.Contains(result.Model.Controls, c => c.Id == "big-head" && c.Parent == "chest");
@@ -57,17 +79,23 @@ public sealed class SourceImportTests
     [Fact]
     public void TheReferenceFrameOfALibraryClipIsTheModelsRest()
     {
-        var model = PersonTemplate.Model(); var library = PersonLibrary.Value;
+        var model = PersonTemplate.Model();
+        var library = PersonLibrary.Value;
         var clip = LibraryImport.Convert(library, "idle", model, LibraryImport.DefaultMapping(model, library), "imported-idle", "Idle");
         var resolved = ResolvedModel.From(model);
-        var rest = PoseEvaluator.Rest(resolved); var first = PoseEvaluator.Sample(resolved, clip, 0);
-        foreach (var control in model.Controls) Near(rest.World(control.Id), first.World(control.Id), 1e-4f, control.Id);
+        var rest = PoseEvaluator.Rest(resolved);
+        var first = PoseEvaluator.Sample(resolved, clip, 0);
+        foreach (var control in model.Controls)
+        {
+            Near(rest.World(control.Id), first.World(control.Id), 1e-4f, control.Id);
+        }
     }
 
     [Fact]
     public void ALibraryWalkMovesTheModelWithItsOwnLimbLengths()
     {
-        var model = PersonTemplate.Model(); var library = PersonLibrary.Value;
+        var model = PersonTemplate.Model();
+        var library = PersonLibrary.Value;
         var mapping = LibraryImport.DefaultMapping(model, library);
         var clip = LibraryImport.Convert(library, "walk", model, mapping, "imported-walk", "Walk");
         var resolved = ResolvedModel.From(model);
@@ -78,7 +106,8 @@ public sealed class SourceImportTests
         Assert.DoesNotContain(clip.Tracks, t => t.Target is "left-knee" or "right-knee" or "left-elbow" or "right-elbow");
         var foot = clip.Tracks.Single(t => t is { Kind: MotionClip.TargetKind, Target: "right-leg" });
         Assert.True(foot.Keys.Max(k => k.X) - foot.Keys.Min(k => k.X) > .3f, "the feet should stride");
-        var thigh = resolved.Length("right-hip", "right-knee"); var shin = resolved.Length("right-knee", "right-foot");
+        var thigh = resolved.Length("right-hip", "right-knee");
+        var shin = resolved.Length("right-knee", "right-foot");
         for (var i = 0; i <= 20; i++)
         {
             var pose = PoseEvaluator.Sample(resolved, clip, i * clip.Duration / 20);
@@ -86,14 +115,18 @@ public sealed class SourceImportTests
             Assert.Equal(thigh, Flat("right-hip", "right-knee"), 3);
             Assert.Equal(shin, Flat("right-knee", "right-foot"), 3);
         }
-        Assert.Equal(new AssetSource { Kind = AssetSource.Library, File = "person", Motion = "walk", Rest = "idle" }, clip.Source! with { Points = null });
+        Assert.Equal(new AssetSource { Kind = AssetSource.Library, File = "person", Motion = "walk", Rest = "idle" }, clip.Source! with
+        {
+            Points = null
+        });
         Assert.Equal(mapping["hips"], clip.Source!.Points!["hips"]);
     }
 
     [Fact]
     public void TheDefaultPersonMappingPairsLimbsByDepth()
     {
-        var model = PersonTemplate.Model(); var library = PersonLibrary.Value;
+        var model = PersonTemplate.Model();
+        var library = PersonLibrary.Value;
         var mapping = LibraryImport.DefaultMapping(model, library);
         var reference = new LibraryImport.Sampler(library, "idle", mapping).At(0);
         // The model's right side is the far side (larger Z); the mapped source points must agree.
@@ -105,7 +138,8 @@ public sealed class SourceImportTests
     [Fact]
     public void ImportedClipsRoundTripWithTheirSource()
     {
-        var model = PersonTemplate.Model(); var library = PersonLibrary.Value;
+        var model = PersonTemplate.Model();
+        var library = PersonLibrary.Value;
         var clip = LibraryImport.Convert(library, "jump", model, LibraryImport.DefaultMapping(model, library), "imported-jump", "Jump");
         var copy = MotionClip.FromJson(clip.ToJson());
         Assert.Equal(clip.ToJson(), copy.ToJson());
@@ -116,7 +150,8 @@ public sealed class SourceImportTests
     [Fact]
     public void ABadMappingIsReportedByName()
     {
-        var model = PersonTemplate.Model(); var library = PersonLibrary.Value;
+        var model = PersonTemplate.Model();
+        var library = PersonLibrary.Value;
         var missingPoint = Assert.Throws<InvalidDataException>(() => LibraryImport.Convert(library, "walk", model, new Dictionary<string, List<string>> { ["hips"] = ["tail"] }, "x", "X"));
         Assert.Contains("'tail'", missingPoint.Message);
         var missingControl = Assert.Throws<InvalidDataException>(() => LibraryImport.Convert(library, "walk", model, new Dictionary<string, List<string>> { ["wing"] = ["head"] }, "x", "X"));

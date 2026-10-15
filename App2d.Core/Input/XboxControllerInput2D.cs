@@ -30,7 +30,11 @@ internal sealed class XboxControllerInput2D
         // Separate thresholds prevent repeated presses around the trigger's activation point.
         _rightTriggerDown = rightTrigger >= (_rightTriggerDown ? 25 : 40);
         var buttons = (GamepadButton2D)physicalButtons;
-        if (_rightTriggerDown) buttons |= GamepadButton2D.RightTrigger;
+        if (_rightTriggerDown)
+        {
+            buttons |= GamepadButton2D.RightTrigger;
+        }
+
         if (_needsBaseline)
         {
             // Reconnect/resume must not turn an already held button into a fresh action.
@@ -69,7 +73,11 @@ internal sealed class XboxControllerInput2D
         Reset();
         for (uint index = 0; index < 4; index++)
         {
-            if (XInputGetState(index, out var state) != 0) continue;
+            if (XInputGetState(index, out var state) != 0)
+            {
+                continue;
+            }
+
             _controllerIndex = (int)index;
             gamepad = state.Gamepad;
             return true;

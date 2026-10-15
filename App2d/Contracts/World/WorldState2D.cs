@@ -50,20 +50,50 @@ public sealed record WorldState2D(
 public sealed class TerrainChunkState2D : IChunkedTileMap2D
 {
     /// <summary>Row-major packed cells, including a one-cell halo on every side.</summary>
-    public ImmutableArray<byte> Cells { get; }
-    public TileChunk2D Chunk { get; }
-    public long Revision { get; }
-    public int Width { get; }
-    public int Height { get; }
-    public int ChunkSize { get; }
-    public float TileSize { get; }
-    public Vector2 Origin { get; }
+    public ImmutableArray<byte> Cells
+    {
+        get;
+    }
+    public TileChunk2D Chunk
+    {
+        get;
+    }
+    public long Revision
+    {
+        get;
+    }
+    public int Width
+    {
+        get;
+    }
+    public int Height
+    {
+        get;
+    }
+    public int ChunkSize
+    {
+        get;
+    }
+    public float TileSize
+    {
+        get;
+    }
+    public Vector2 Origin
+    {
+        get;
+    }
     public int ChunkColumns => (Width + ChunkSize - 1) / ChunkSize;
     public int ChunkRows => (Height + ChunkSize - 1) / ChunkSize;
     public Rect2D WorldBounds => new(Origin, Origin + new Vector2(Width, Height) * TileSize);
-    public ImmutableArray<string> TilesetIds { get; }
+    public ImmutableArray<string> TilesetIds
+    {
+        get;
+    }
     IReadOnlyList<string> IChunkedTileMap2D.TilesetIds => TilesetIds;
-    public ImmutableArray<TileCollisionRectangle2D> Collisions { get; }
+    public ImmutableArray<TileCollisionRectangle2D> Collisions
+    {
+        get;
+    }
 
     public TerrainChunkState2D(TileChunk2D chunk, long revision, int width, int height,
         int chunkSize, float tileSize, Vector2 origin, ImmutableArray<string> tilesetIds,
@@ -76,7 +106,10 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
         ArgGuard.ThrowIfNotFinite(origin);
         ArgGuard.ThrowIfNegative(revision);
         if (chunk.X < 0 || chunk.Y < 0 || chunk.X > (width - 1) / chunkSize || chunk.Y > (height - 1) / chunkSize)
+        {
             ArgGuard.ThrowOutOfRange(chunk, "Chunk coordinates must lie within the map.");
+        }
+
         var cellCount = checked((chunkSize + 2) * (chunkSize + 2));
         ArgGuard.ThrowIf(cells.IsDefault || cells.Length != cellCount,
             "Cells must include the complete chunk and its one-cell halo.", nameof(cells));
