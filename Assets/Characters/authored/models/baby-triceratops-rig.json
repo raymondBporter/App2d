@@ -1431,10 +1431,7 @@
       "regions": [
         {
           "id": "body",
-          "controls": [
-            "body",
-            "head"
-          ],
+          "controls": ["body", "head"],
           "pad": 0.245
         }
       ]
@@ -1443,19 +1440,11 @@
   "groups": [
     {
       "id": "head",
-      "targets": [
-        "head",
-        "head-up"
-      ]
+      "targets": ["head", "head-up"]
     },
     {
       "id": "legs",
-      "targets": [
-        "far-hind",
-        "far-front",
-        "near-hind",
-        "near-front"
-      ]
+      "targets": ["far-hind", "far-front", "near-hind", "near-front"]
     }
   ],
   "looks": []

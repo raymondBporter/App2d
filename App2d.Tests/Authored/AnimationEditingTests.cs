@@ -62,9 +62,9 @@ public sealed class AnimationEditingTests
         ClipAuthoring.SetColorKey(clip, "middle", SlotColorTrack2D.Alpha, 0, new(1, 1, 1, .2f));
         ClipAuthoring.SetColorKey(clip, "middle", SlotColorTrack2D.Alpha, 1, new(1, 1, 1, .8f));
         ClipAuthoring.SetColorEase(clip, "middle", SlotColorTrack2D.Rgb, 0, ClipEase.Step);
-        var curve = new KeyCurve2D { X1 = 1f / 3, X2 = 2f / 3, Y1 = 1f / 3, Y2 = 2f / 3 };
+        var curve = new KeyCurve2D { Control1 = new(1f / 3, 1f / 3), Control2 = new(2f / 3, 2f / 3) };
         ClipAuthoring.SetColorCurve(clip, "middle", SlotColorTrack2D.Rgb, 0, 0, curve);
-        curve.Y1 = 99;
+        curve.Control1 = curve.Control1 with { Y = 99 };
         var slot = model.Base.Slots[1];
         Assert.InRange(Vector4.Distance(new(.5f, .3f, .5f, .5f), SlotColorTrack2D.Evaluate(clip, slot, .5f)), 0, 1e-5f);
         ClipAuthoring.SetColorEase(clip, "middle", SlotColorTrack2D.Rgb, 0, ClipEase.Step);
@@ -144,20 +144,20 @@ public sealed class AnimationEditingTests
             case "curve":
                 clip.Travel.Keys[0].Curve = new()
                 {
-                    Y1 = .5f
+                    Control1 = new(0, .5f)
                 };
                 break;
             case "ease":
                 clip.Travel.Keys[0].Ease = ClipEase.Smooth;
                 break;
             case "depth":
-                clip.Travel.Keys[1].Z = 1;
+                clip.Travel.Keys[1].Value = clip.Travel.Keys[1].Value with { Z = 1 };
                 break;
             case "extra-key":
                 clip.Travel.Keys.Insert(1, new()
                 {
                     Time = .5f,
-                    X = 1
+                    Value = new(1, 0, 0)
                 });
                 break;
         }
@@ -170,7 +170,7 @@ public sealed class AnimationEditingTests
     [Fact]
     public void CurveUnitConversionPreservesSamplesAndRefusesUnrepresentableEqualEndpoints()
     {
-        var curve = new KeyCurve2D { X1 = .2f, X2 = .8f, Y1 = -.5f, Y2 = 1.5f };
+        var curve = new KeyCurve2D { Control1 = new(.2f, -.5f), Control2 = new(.8f, 1.5f) };
         Assert.True(curve.TryConvertValueControls(true, 2, 5, out var absolute));
         Assert.True(absolute.TryConvertValueControls(false, 2, 5, out var restored));
         foreach (var time in new[] { .1f, .3f, .5f, .8f })
@@ -178,9 +178,9 @@ public sealed class AnimationEditingTests
             Assert.Equal(curve.Evaluate(time, 2, 5), absolute.Evaluate(time, 2, 5), 5);
             Assert.Equal(curve.Evaluate(time, 2, 5), restored.Evaluate(time, 2, 5), 5);
         }
-        var overshoot = new KeyCurve2D { Absolute = true, Y1 = 3, Y2 = 3 };
+        var overshoot = new KeyCurve2D { Absolute = true, Control1 = new(0, 3), Control2 = new(1, 3) };
         Assert.False(overshoot.TryConvertValueControls(false, 2, 2, out _));
-        Assert.True(new KeyCurve2D { Absolute = true, Y1 = 2, Y2 = 2 }.TryConvertValueControls(false, 2, 2, out _));
+        Assert.True(new KeyCurve2D { Absolute = true, Control1 = new(0, 2), Control2 = new(1, 2) }.TryConvertValueControls(false, 2, 2, out _));
     }
 
     [Fact]

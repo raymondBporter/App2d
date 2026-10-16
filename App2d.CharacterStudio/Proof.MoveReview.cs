@@ -185,7 +185,7 @@ internal sealed partial class ProofRenders
 
             return result;
         }
-        var stride = legs.Travel.Keys.Count > 0 ? legs.Travel.Keys[^1].X - legs.Travel.Keys[0].X : 0;
+        var stride = legs.Travel.Keys.Count > 0 ? legs.Travel.Keys[^1].Value.X - legs.Travel.Keys[0].Value.X : 0;
         var upper = UpperTargets.ToHashSet();
         var fires = (int)MathF.Ceiling(duration / period);
         return new MotionClip
@@ -197,7 +197,11 @@ internal sealed partial class ProofRenders
             Duration = duration,
             Loop = true,
             Reference = legs.Reference,
-            Travel = new() { Scale = legs.Travel.Scale, Keys = Repeat(legs.Travel.Keys, legs.Duration, cycles, duration, (k, n) => k with { X = k.X + n * stride }) },
+            Travel = new()
+            {
+                Scale = legs.Travel.Scale,
+                Keys = Repeat(legs.Travel.Keys, legs.Duration, cycles, duration, (k, n) => k with { Value = k.Value with { X = k.Value.X + n * stride } })
+            },
             Tracks =
             [
                 .. legs.Tracks.Where(t => !upper.Contains(t.Target)).Select(t => t with { Keys = Repeat(t.Keys, legs.Duration, cycles, duration) }),

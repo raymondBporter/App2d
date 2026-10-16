@@ -201,26 +201,15 @@
   "measures": [
     {
       "id": "leg",
-      "path": [
-        "right-hip",
-        "right-knee",
-        "right-foot"
-      ]
+      "path": ["right-hip", "right-knee", "right-foot"]
     },
     {
       "id": "arm",
-      "path": [
-        "right-shoulder",
-        "right-elbow",
-        "right-hand"
-      ]
+      "path": ["right-shoulder", "right-elbow", "right-hand"]
     },
     {
       "id": "torso",
-      "path": [
-        "hips",
-        "chest"
-      ]
+      "path": ["hips", "chest"]
     }
   ],
   "parts": [
@@ -668,19 +657,12 @@
       "regions": [
         {
           "id": "body",
-          "controls": [
-            "hips",
-            "chest",
-            "left-shoulder",
-            "right-shoulder"
-          ],
+          "controls": ["hips", "chest", "left-shoulder", "right-shoulder"],
           "pad": 0.14
         },
         {
           "id": "head",
-          "controls": [
-            "head"
-          ],
+          "controls": ["head"],
           "pad": 0.3
         },
         {

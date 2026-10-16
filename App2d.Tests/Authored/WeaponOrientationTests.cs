@@ -201,7 +201,7 @@ public sealed class WeaponOrientationTests
             session.Redo();
             Assert.True(session.Save(session.ClipDocument), session.Message);
             var reopened = AuthoringWorkspace.Open(root).Clip("person-thrust")!;
-            Assert.Equal(.7f, reopened.Asset.Tracks.Single(t => t.Kind == MotionClip.OrientKind).Keys.Single().X);
+            Assert.Equal(.7f, reopened.Asset.Tracks.Single(t => t.Kind == MotionClip.OrientKind).Keys.Single().Value.X);
             session.PoseWeapon(new(1.2f, 0, 0));
             session.Seek(.4f);
             Assert.False(session.HasPendingPose);

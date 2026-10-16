@@ -151,25 +151,25 @@ public static class StarterContent
             return track;
         }
         var hips = Channel(MotionClip.TranslateKind, "hips");
-        var mean = hips.Keys.Average(k => k.Y);
+        var mean = hips.Keys.Average(k => k.Value.Y);
         foreach (var key in hips.Keys)
         {
-            key.Y = mean + (key.Y - mean) * Bob + Sink;
+            key.Value = key.Value with { Y = mean + (key.Value.Y - mean) * Bob + Sink };
         }
 
         foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys)
         {
-            key.X += Lean;
+            key.Value = key.Value with { X = key.Value.X + (Lean) };
         }
 
         foreach (var arm in new[] { "left-arm", "right-arm" })
         {
             if (clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.TargetKind && t.Target == arm) is { } track)
             {
-                var center = track.Keys.Average(k => k.X);
+                var center = track.Keys.Average(k => k.Value.X);
                 foreach (var key in track.Keys)
                 {
-                    key.X = center + (key.X - center) * Swing;
+                    key.Value = key.Value with { X = center + (key.Value.X - center) * Swing };
                 }
             }
         }
@@ -177,7 +177,7 @@ public static class StarterContent
         return clip;
     }
 
-    private static ClipKey K(float time, float x = 0, float y = 0, string ease = ClipEase.Smooth) => new() { Time = time, X = x, Y = y, Ease = ease };
+    private static ClipKey K(float time, float x = 0, float y = 0, string ease = ClipEase.Smooth) => new() { Time = time, Value = new(x, y, 0), Ease = ease };
     private static ClipKey R(float time, float angle, string ease = ClipEase.Smooth) => new() { Time = time, Angle = angle, Ease = ease };
     private static ClipTrack Track(string kind, string target, params ClipKey[] keys) => new() { Kind = kind, Target = target, Keys = [.. keys] };
     private static ClipContact Plant(string chain, float start, float finish, float x = 0) => new() { Chain = chain, Start = start, Finish = finish, Target = new(x) };
@@ -251,7 +251,7 @@ public static class StarterContent
             Track(MotionClip.TargetKind, "right-arm",
                 K(0, -0.05f, 0.06f, ClipEase.Linear), K(1 / 60f, -0.14f, 0.18f, ClipEase.Linear), K(0.075f, -0.14f, 0.18f, ClipEase.Smooth), K(0.4f, 0.15f, 0.25f, ClipEase.Smooth), K(1.1f, -0.05f, 0, ClipEase.Smooth)),
             Track(MotionClip.OrientKind, "right-grip",
-                new ClipKey { Time = 0, Z = 0, Ease = ClipEase.Linear }, new ClipKey { Time = 0.075f, Z = 0, Ease = ClipEase.Smooth }, new ClipKey { Time = 0.75f, Z = -1.47f, Ease = ClipEase.Smooth }, new ClipKey { Time = 1.1f, Z = -1.5f, Ease = ClipEase.Linear }),
+                new ClipKey { Time = 0, Value = new(0, 0, 0), Ease = ClipEase.Linear }, new ClipKey { Time = 0.075f, Value = new(0, 0, 0), Ease = ClipEase.Smooth }, new ClipKey { Time = 0.75f, Value = new(0, 0, -1.47f), Ease = ClipEase.Smooth }, new ClipKey { Time = 1.1f, Value = new(0, 0, -1.5f), Ease = ClipEase.Linear }),
         ];
         clip.Contacts = [Plant("left-leg", 0, 1.1f), Plant("right-leg", 0, 1.1f)];
         clip.Markers = [new() { Id = "impact", Time = .75f }];
@@ -368,7 +368,7 @@ public static class StarterContent
     private static MotionClip StalkerWalk(ResolvedModel model)
     {
         var clip = Clip(model, "stalker-walk", "Stalker walk", 1, true);
-        clip.Travel.Keys = [new() { Time = 0 }, new() { Time = 1, X = .6f }];
+        clip.Travel.Keys = [new() { Time = 0 }, new() { Time = 1, Value = new(.6f, 0, 0) }];
         static ClipKey L(float t, float x, float y = 0) => K(t, x, y, ClipEase.Linear);
         var outer = new[] { L(0, .15f), L(.5f, -.15f), L(.75f, 0, .12f), L(1, .15f) };
         clip.Tracks =

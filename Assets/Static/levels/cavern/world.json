@@ -34,14 +34,8 @@
               "exploration": 0.2,
               "jumpRiseTiles": 3,
               "tilesetIndex": 2,
-              "meleeEnemies": [
-                "club-caveman",
-                "shield-defender",
-                "baby-triceratops"
-              ],
-              "rangedEnemies": [
-                "rock-thrower"
-              ]
+              "meleeEnemies": ["club-caveman", "shield-defender", "baby-triceratops"],
+              "rangedEnemies": ["rock-thrower"]
             }
           }
         }

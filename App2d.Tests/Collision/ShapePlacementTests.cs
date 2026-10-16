@@ -1,5 +1,4 @@
 using App2d.Core.Collision.Contacts;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;

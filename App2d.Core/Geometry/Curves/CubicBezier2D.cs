@@ -37,6 +37,10 @@ public readonly record struct CubicBezier2D : ICurve2D
         get;
     }
 
+    /// <summary>Creates a cubic from endpoints and tangents with respect to its normalized parameter.</summary>
+    public static CubicBezier2D FromHermite(Vector2 start, Vector2 end, Vector2 startTangent, Vector2 endTangent) =>
+        new(start, start + startTangent / 3f, end - endTangent / 3f, end);
+
     public Vector2 Evaluate(float amount)
     {
         amount = Clamping.Clamp01(amount);

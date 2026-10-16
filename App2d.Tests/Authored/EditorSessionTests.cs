@@ -207,7 +207,7 @@ public sealed class EditorSessionTests : IDisposable
 
         Ok(session, session.NewClip("tripod-walk", "Tripod walk", 1));
         var clip = session.ClipDocument!;
-        Ok(session, session.Edit(clip, () => clip.Asset.Travel.Keys = [new() { Time = 0 }, new() { Time = 1, X = .6f }]));
+        Ok(session, session.Edit(clip, () => clip.Asset.Travel.Keys = [new() { Time = 0 }, new() { Time = 1, Value = new(.6f, 0, 0) }]));
         foreach (var (time, lift) in new[] { (0f, 0f), (.25f, .12f), (.5f, 0f), (.75f, .12f), (1f, 0f) })
         {
             session.Seek(time);

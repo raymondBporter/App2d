@@ -93,8 +93,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
         _travel.Add(new()
         {
             Time = time,
-            X = x,
-            Y = y,
+            Value = new(x, y, 0),
             Ease = ClipEase.Linear
         });
         return this;
@@ -171,8 +170,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
                 var local = Rotation2D.ApplyXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
                 Set(MotionClip.TargetKind, chainId, time, new()
                 {
-                    X = local.X,
-                    Y = local.Y,
+                    Value = new(local.X, local.Y, 0),
                     Ease = ease
                 });
             }
@@ -190,7 +188,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             Blades([.. _grips.Select(g =>
             {
                 var pose = PoseEvaluator.Sample(model, clip, g.Time);
-var forearm = pose.Points[arm.End] - pose.Points[arm.Joint];
+                var forearm = pose.Points[arm.End] - pose.Points[arm.Joint];
                 return (g.Time, new Vector2(forearm.X, forearm.Y).AngleRadians + g.Wrist, g.Ease);
             })]);
             Emit();
@@ -223,7 +221,7 @@ var forearm = pose.Points[arm.End] - pose.Points[arm.Joint];
 /// <summary>One key pose. Positions are actor-space deltas or absolutes as named; angles are radians, positive counter-clockwise.</summary>
 internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
 {
-    private ClipKey K(float x = 0, float y = 0, float z = 0) => new() { X = x, Y = y, Z = z, Ease = ease };
+    private ClipKey K(float x = 0, float y = 0, float z = 0) => new() { Value = new(x, y, z), Ease = ease };
     private ClipKey R(float angle) => new() { Angle = angle, Ease = ease };
 
     /// <summary>Pelvis offset from rest (hips rest at y = 1) and its turn, which the whole body inherits.</summary>

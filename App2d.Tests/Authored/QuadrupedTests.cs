@@ -41,7 +41,7 @@ public sealed class QuadrupedTests
         var b = PoseEvaluator.Sample(resolved, clip, .4f);
         Assert.True(Vector3.Distance(a.World("near-front-foot"), b.World("near-front-foot")) < .001f);
         var next = PoseEvaluator.Sample(resolved, clip, clip.Duration + .2f, repeat: true);
-        Assert.True(Vector3.Distance(next.World("near-front-foot") - a.World("near-front-foot"), new(clip.Travel.Keys[^1].X, 0, 0)) < .001f);
+        Assert.True(Vector3.Distance(next.World("near-front-foot") - a.World("near-front-foot"), new(clip.Travel.Keys[^1].Value.X, 0, 0)) < .001f);
     }
 
     [Fact]

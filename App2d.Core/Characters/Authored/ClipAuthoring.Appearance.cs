@@ -65,7 +65,7 @@ public static partial class ClipAuthoring
             });
         }
 
-        var key = new SlotColorKey2D { Time = time, R = value.X, G = value.Y, B = value.Z, A = value.W };
+        var key = new SlotColorKey2D { Time = time, Value = value };
 
         if (track.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } previous)
         {

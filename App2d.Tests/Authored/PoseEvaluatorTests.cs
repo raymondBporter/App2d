@@ -36,7 +36,7 @@ public sealed class PoseEvaluatorTests
         clip.Tracks.Add(new()
         {
             Target = "body",
-            Keys = [new() { Y = -.2f }]
+            Keys = [new() { Value = new(0, -.2f, 0) }]
         });
         var pose = Sample(clip, 0);
         TestModels.Near(new(0, .8f, 0), pose.World("body"));
@@ -71,7 +71,7 @@ public sealed class PoseEvaluatorTests
         {
             Kind = MotionClip.TargetKind,
             Target = "arm",
-            Keys = [new() { Y = .1f, Z = .3f }]
+            Keys = [new() { Value = new(0, .1f, .3f) }]
         });
         var pose = Sample(clip, 0, model: longArm);
         TestModels.Near(new(1.2f, 1.65f, .3f), pose.World("hand"));
@@ -85,7 +85,7 @@ public sealed class PoseEvaluatorTests
         clip.Travel = new()
         {
             Scale = "leg",
-            Keys = [new() { Time = 0 }, new() { Time = 1, X = .4f }]
+            Keys = [new() { Time = 0 }, new() { Time = 1, Value = new(.4f, 0, 0) }]
         };
         Assert.Equal(.9f, Sample(clip, 2.25, repeat: true).Locomotion.X, 4);
         Assert.Equal(.4f, Sample(clip, 2.25).Locomotion.X, 4);
@@ -100,7 +100,7 @@ public sealed class PoseEvaluatorTests
         clip.Travel = new()
         {
             Scale = "leg",
-            Keys = [new() { Time = 0 }, new() { Time = 1, X = .4f }]
+            Keys = [new() { Time = 0 }, new() { Time = 1, Value = new(.4f, 0, 0) }]
         };
         clip.Contacts.Add(new()
         {
@@ -144,7 +144,7 @@ public sealed class PoseEvaluatorTests
         {
             Kind = MotionClip.TargetKind,
             Target = "leg",
-            Keys = [new() { Y = -5 }]
+            Keys = [new() { Value = new(0, -5, 0) }]
         });
         var pose = Sample(clip, 0);
         var leg = pose.Chains.Single(c => c.Chain == "leg");

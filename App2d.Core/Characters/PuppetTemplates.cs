@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Mathematics.Transforms;
@@ -221,9 +222,7 @@ public static class PuppetTemplates
                 : (values[k + 1] - values[k - 1]) / (times[k + 1] - times[k - 1]);
             var span = times[i + 1] - times[i];
             var u = Math.Clamp((t - times[i]) / span, 0, 1);
-            float u2 = u * u, u3 = u2 * u;
-            return (2 * u3 - 3 * u2 + 1) * values[i] + (u3 - 2 * u2 + u) * span * Tangent(i)
-                + (-2 * u3 + 3 * u2) * values[i + 1] + (u3 - u2) * span * Tangent(i + 1);
+            return CubicBezier2D.FromHermite(values[i], values[i + 1], span * Tangent(i), span * Tangent(i + 1)).Evaluate(u);
         }
         static float Wrap(float value) => value - MathF.Floor(value);
 

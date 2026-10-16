@@ -92,6 +92,13 @@ var middle = mouth.Slice(.25f, .75f);
 each result maps its own parameter range to [0, 1]. A slice with equal endpoints is a constant point curve.
 The methods return value types without allocating arrays.
 
+For any `ICurve2D`, import `App2d.Core.Geometry.Operations.Curves` to use the same `Split(t)` and
+`Slice(from, to)` extension names. Their `CurveSlice2D<TCurve>` results retain the original curve and remap
+its parameter without resampling the path. Derivatives include the parameter scale; collapsed intervals have
+zero derivative. Distance queries use a polyline approximation of the restricted path. Concrete cubic calls
+keep returning concrete `CubicBezier2D` pieces. `CubicBezier2D.FromHermite` converts endpoint tangents with
+respect to normalized progress into the same shared cubic representation.
+
 `FindParametersAtX(x, parameters)` writes all intersections into a span of at least three doubles, sorted in [0, 1].
 It includes tangencies and endpoints and uses the shared `PolynomialRoots` solver. A curve lying entirely on that X
 has infinitely many matches and throws. `ParameterAtX(x)` is the convenience query when exactly one result is expected;
@@ -101,6 +108,12 @@ Animation's `KeyCurve2D.ToCurve(start, end)` represents a segment as a cubic in 
 Its X controls guarantee a unique time lookup. Its `Slice` first converts time bounds to Bezier parameters, then
 uses the same subdivision as drawing curves. Relative/absolute value handles remain authored data; absolute handles
 can move away from and return to equal endpoint values. The existing keyframe JSON fields are unchanged.
+
+`KeyCurve2D.Split(time, start, end)` returns the two time segments; `Slice(from, to, start, end)` extracts one
+interval. Both use sampled values for the new key endpoints. Handles are stored as two `Vector2` values;
+motion keys store `Vector3`, and tint keys store `Vector4`. `AuthoredJson` maps these vectors to the existing
+scalar file fields, including their sparse defaults. `KeyframeSampling` owns the shared ordered-key lookup,
+and `ClipEase.Interpolate` owns the shared scalar interpolation policy. Component timing curves stay independent.
 
 ## Shapes
 

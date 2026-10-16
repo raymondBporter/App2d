@@ -1,3 +1,4 @@
+using App2d.Core.Animation;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -253,38 +254,13 @@ public static class PoseEvaluator
     /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>
     public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false)
     {
-        if (keys.Count == 0)
-        {
-            return default;
-        }
-
-        static (Vector3, float) Of(ClipKey k) => (new(k.X, k.Y, k.Z), k.Angle);
-        if (time <= keys[0].Time)
-        {
-            return Of(keys[0]);
-        }
-
-        for (var i = 1; i < keys.Count; i++)
-        {
-            if (time > keys[i].Time)
-            {
-                continue;
-            }
-
-            if (time == keys[i].Time)
-            {
-                return Of(keys[i]);
-            }
-
-            var a = keys[i - 1];
-            var b = keys[i];
-            var phase = (time - a.Time) / (b.Time - a.Time);
-            float At(float start, float end, KeyCurve2D? curve) => a.Ease == ClipEase.Step ? start : curve?.Evaluate(phase, start, end)
-                ?? start + (end - start) * ClipEase.Apply(a.Ease, phase);
-            return (new(At(a.X, b.X, rotate ? null : a.Curve), At(a.Y, b.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
-                At(a.Z, b.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))), At(a.Angle, b.Angle, rotate ? a.Curve : null));
-        }
-        return Of(keys[^1]);
+        if (!KeyframeSampling.TrySegment(keys, time, out var a, out var b, out var phase)) return default;
+        if (ReferenceEquals(a, b)) return (a.Value, a.Angle);
+        float At(float start, float end, KeyCurve2D? curve) => ClipEase.Interpolate(start, end, phase, a.Ease, curve);
+        return (new(At(a.Value.X, b.Value.X, rotate ? null : a.Curve),
+            At(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
+            At(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
+            At(a.Angle, b.Angle, rotate ? a.Curve : null));
     }
 
     public static (Vector3 Value, float Angle) Interpolate(ClipTrack track, float time) =>

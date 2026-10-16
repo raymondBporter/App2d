@@ -146,8 +146,8 @@ internal static class EditorSurfaceSmoke
         ClipAuthoring.SetColorKey(clip, "paint", SlotColorTrack2D.Rgba, 1, Vector4.One);
         ClipAuthoring.SetColorCurve(clip, "paint", SlotColorTrack2D.Rgba, 0, 0, new()
         {
-            X1 = .2f,
-            X2 = .8f
+            Control1 = new(.2f, 0),
+            Control2 = new(.8f, 1)
         });
         assets.Create(clip);
         return clip.Id;

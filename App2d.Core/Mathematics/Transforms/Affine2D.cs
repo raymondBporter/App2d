@@ -50,7 +50,7 @@ public sealed record Affine2D
     }
     public float Y
     {
-        get => _y; 
+        get => _y;
         set => Set(ref _y, value);
     }
     public float Rotation
@@ -65,13 +65,13 @@ public sealed record Affine2D
     }
     public float ScaleY
     {
-        get => _scaleY; 
+        get => _scaleY;
         set => Set(ref _scaleY, value);
     }
     /// <summary>Additional angle of the local +X axis.</summary>
     public float ShearX
     {
-        get => _shearX; 
+        get => _shearX;
         set => Set(ref _shearX, value);
     }
     /// <summary>Additional angle of the local +Y axis.</summary>

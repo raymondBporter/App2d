@@ -12,8 +12,15 @@
       "kind": "translate",
       "target": "hair-wave",
       "keys": [
-        { "time": 0, "ease": "linear" },
-        { "time": 1.5, "x": 0.168, "ease": "linear" }
+        {
+          "time": 0,
+          "ease": "linear"
+        },
+        {
+          "time": 1.5,
+          "x": 0.168,
+          "ease": "linear"
+        }
       ]
     }
   ]

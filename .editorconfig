@@ -9,3 +9,11 @@ dotnet_diagnostic.RCS1123.severity = none
 # Duplicate code findings remain visible as warnings.
 dotnet_diagnostic.PH2071.severity = warning
 dotnet_code_quality.PH2071.token_count=200
+
+[*.json]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true

@@ -45,9 +45,9 @@ public static partial class ClipAuthoring
     public static bool TryGetSteadyTravel(MotionClip clip, out float distance)
     {
         var keys = clip.Travel.Keys;
-        distance = keys.Count == 2 ? keys[1].X : 0;
-        return keys.Count == 0 || keys.Count == 2 && keys[0] is { Time: 0, X: 0, Y: 0, Z: 0, Ease: ClipEase.Linear, Curve: null, CurveY: null, CurveZ: null }
-            && MathF.Abs(keys[1].Time - clip.Duration) < SameTime && keys[1].Y == 0 && keys[1].Z == 0;
+        distance = keys.Count == 2 ? keys[1].Value.X : 0;
+        return keys.Count == 0 || keys.Count == 2 && keys[0] is { Time: 0, Value.X: 0, Value.Y: 0, Value.Z: 0, Ease: ClipEase.Linear, Curve: null, CurveY: null, CurveZ: null }
+            && MathF.Abs(keys[1].Time - clip.Duration) < SameTime && keys[1].Value.Y == 0 && keys[1].Value.Z == 0;
     }
 
     /// <summary>Sets the distance of a steady travel cycle; rejects a curve that the simple control cannot represent.</summary>
@@ -60,7 +60,7 @@ public static partial class ClipAuthoring
             throw new InvalidOperationException("This travel curve is not a steady cycle.");
         }
 
-        clip.Travel.Keys = distance == 0 ? [] : [new() { Time = 0 }, new() { Time = clip.Duration, X = distance }];
+        clip.Travel.Keys = distance == 0 ? [] : [new() { Time = 0 }, new() { Time = clip.Duration, Value = new(distance, 0, 0) }];
     }
 
     /// <summary>Sets a contact's interval within the clip, keeping at least a hundredth of a second.</summary>

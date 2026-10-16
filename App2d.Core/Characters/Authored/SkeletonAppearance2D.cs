@@ -7,9 +7,9 @@ namespace App2d.Core.Characters.Authored;
 public sealed record SkeletonSlot2D
 {
     public string Id { get; set; } = "";
-    public string? Name    {        get; set;    }
+    public string? Name { get; set; }
     public string Bone { get; set; } = "";
-    public string? Attachment    {        get; set;    }
+    public string? Attachment { get; set; }
     public string Color { get; set; } = "ffffffff";
     public string Blend { get; set; } = "normal";
 }
@@ -18,7 +18,7 @@ public sealed record SkeletonSlot2D
 public sealed record SkeletonSkin2D
 {
     public string Id { get; set; } = "default";
-    public string? Name    {        get; set;    }
+    public string? Name { get; set; }
     public Dictionary<string, Dictionary<string, string>> Attachments { get; set; } = [];
 }
 

@@ -25,7 +25,7 @@ public sealed class RigConstraintTests
         clip.Travel = new()
         {
             Scale = "leg",
-            Keys = [new(), new() { Time = 1, X = .15f }]
+            Keys = [new(), new() { Time = 1, Value = new(.15f, 0, 0) }]
         };
         clip.Tracks = [new() { Kind = MotionClip.RotateKind, Target = "body", Keys = [new() { Angle = .13f }] }];
         clip.Contacts = [new() { Chain = "leg", Start = .2f, Finish = .7f, Target = new(.03f, .01f, .1f) }];
@@ -135,7 +135,7 @@ public sealed class RigConstraintTests
     {
         var resolved = ResolvedModel.From(Machine());
         var clip = Aim(resolved, new(1, 1, .2f));
-        clip.Travel.Keys = [new(), new() { Time = 1, X = .2f }];
+        clip.Travel.Keys = [new(), new() { Time = 1, Value = new(.2f, 0, 0) }];
         clip.Contacts = [new() { Chain = "reach", Start = .1f, Finish = 1, Target = new(-1, 1) }];
         clip.Loop = false;
         clip.Validate(resolved);

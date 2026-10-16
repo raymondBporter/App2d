@@ -32,7 +32,7 @@ internal static class AnimationCurveEditor
             {
                 var component = axis;
                 var curve = axis == 0 ? key.Curve : axis == 1 ? key.CurveY : key.CurveZ;
-                float Value(ClipKey k) => channel.Kind == MotionClip.RotateKind ? k.Angle : component == 0 ? k.X : component == 1 ? k.Y : k.Z;
+                float Value(ClipKey k) => channel.Kind == MotionClip.RotateKind ? k.Angle : component == 0 ? k.Value.X : component == 1 ? k.Value.Y : k.Value.Z;
                 Draw($"{channel.Kind} {(channel.Kind == MotionClip.RotateKind ? "angle" : "XYZ"[axis])} curve",
                     curve, key.Ease, Value(key), Value(next), changed =>
                         session.Change(document, () => ClipAuthoring.SetCurve(document.Asset, channel, time, component, changed)));
@@ -51,13 +51,7 @@ internal static class AnimationCurveEditor
         {
             if (ImGui.SmallButton("Add cubic curve"))
             {
-                set(new()
-                {
-                    X1 = 1f / 3,
-                    X2 = 2f / 3,
-                    Y1 = ease == ClipEase.Smooth ? 0 : 1f / 3,
-                    Y2 = ease == ClipEase.Smooth ? 1 : 2f / 3
-                });
+                set(KeyCurve2D.FromEase(ease == ClipEase.Step ? ClipEase.Linear : ease));
             }
         }
         else
@@ -70,23 +64,23 @@ internal static class AnimationCurveEditor
                     set(converted);
                 }
             }
-            var x = new Vector2(curve.X1, curve.X2);
+            var x = new Vector2(curve.Control1.X, curve.Control2.X);
             if (Ui.Drag2("Time controls (0–1)", ref x, .005f, 0, 1))
             {
                 set(curve with
                 {
-                    X1 = Clamping.Clamp01(x.X),
-                    X2 = Clamping.Clamp01(x.Y)
+                    Control1 = curve.Control1 with { X = Clamping.Clamp01(x.X) },
+                    Control2 = curve.Control2 with { X = Clamping.Clamp01(x.Y) }
                 });
             }
 
-            var y = new Vector2(curve.Y1, curve.Y2);
+            var y = new Vector2(curve.Control1.Y, curve.Control2.Y);
             if (Ui.Drag2(absolute ? "Value controls" : "Value controls (fractions)", ref y, .005f, 0, 0))
             {
                 set(curve with
                 {
-                    Y1 = y.X,
-                    Y2 = y.Y
+                    Control1 = curve.Control1 with { Y = y.X },
+                    Control2 = curve.Control2 with { Y = y.Y }
                 });
             }
 

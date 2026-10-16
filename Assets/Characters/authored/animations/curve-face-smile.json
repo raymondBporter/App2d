@@ -12,27 +12,59 @@
       "kind": "translate",
       "target": "mouth-bend",
       "keys": [
-        { "time": 0, "ease": "smooth" },
-        { "time": 1.5, "y": -0.3, "ease": "smooth" },
-        { "time": 3, "ease": "smooth" }
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.5,
+          "y": -0.3,
+          "ease": "smooth"
+        },
+        {
+          "time": 3,
+          "ease": "smooth"
+        }
       ]
     },
     {
       "kind": "translate",
       "target": "mouth-left",
       "keys": [
-        { "time": 0, "ease": "smooth" },
-        { "time": 1.5, "x": -0.025, "y": 0.04, "ease": "smooth" },
-        { "time": 3, "ease": "smooth" }
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.5,
+          "x": -0.025,
+          "y": 0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 3,
+          "ease": "smooth"
+        }
       ]
     },
     {
       "kind": "translate",
       "target": "mouth-right",
       "keys": [
-        { "time": 0, "ease": "smooth" },
-        { "time": 1.5, "x": 0.025, "y": 0.04, "ease": "smooth" },
-        { "time": 3, "ease": "smooth" }
+        {
+          "time": 0,
+          "ease": "smooth"
+        },
+        {
+          "time": 1.5,
+          "x": 0.025,
+          "y": 0.04,
+          "ease": "smooth"
+        },
+        {
+          "time": 3,
+          "ease": "smooth"
+        }
       ]
     }
   ]

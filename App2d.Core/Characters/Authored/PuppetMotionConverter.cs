@@ -55,9 +55,7 @@ public static class PuppetMotionConverter
             track.Keys.Add(new()
             {
                 Time = time,
-                X = delta.X,
-                Y = delta.Y,
-                Z = delta.Z
+                Value = new(delta.X, delta.Y, delta.Z)
             });
         }
         foreach (var key in motion.Keys)
@@ -68,7 +66,7 @@ public static class PuppetMotionConverter
             clip.Travel.Keys.Add(new()
             {
                 Time = key.Time,
-                X = position.X
+                Value = new(position.X, 0, 0)
             });
             foreach (var control in model.Controls.Where(c => !solved.Contains(c.Id)))
             {
@@ -85,8 +83,8 @@ public static class PuppetMotionConverter
             }
         }
         const float epsilon = 1e-5f; // below this a track is float noise from subtracting absolute positions
-        clip.Tracks = [.. tracks.Values.Where(t => t.Keys.Any(k => MathF.Abs(k.X) > epsilon || MathF.Abs(k.Y) > epsilon || MathF.Abs(k.Z) > epsilon))];
-        var start = clip.Travel.Keys.Count > 0 ? clip.Travel.Keys[0].X : 0;
+        clip.Tracks = [.. tracks.Values.Where(t => t.Keys.Any(k => MathF.Abs(k.Value.X) > epsilon || MathF.Abs(k.Value.Y) > epsilon || MathF.Abs(k.Value.Z) > epsilon))];
+        var start = clip.Travel.Keys.Count > 0 ? clip.Travel.Keys[0].Value.X : 0;
         foreach (var contact in motion.Contacts)
         {
             var chain = model.IkChains.Single(c => c.End == contact.End);

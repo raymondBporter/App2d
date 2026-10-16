@@ -7,7 +7,7 @@
       "anatomy": "person",
       "path": "person/library.json",
       "clipCount": 662,
-      "bytes": 17189712
+      "bytes": 108847204
     },
     {
       "id": "quadruped",
@@ -15,7 +15,7 @@
       "anatomy": "hound",
       "path": "quadruped/library.json",
       "clipCount": 21,
-      "bytes": 7342512
+      "bytes": 27095694
     },
     {
       "id": "blob",
@@ -23,7 +23,7 @@
       "anatomy": "monster",
       "path": "blob/library.json",
       "clipCount": 9,
-      "bytes": 633600
+      "bytes": 2381839
     },
     {
       "id": "flying",
@@ -31,7 +31,7 @@
       "anatomy": "monster",
       "path": "flying/library.json",
       "clipCount": 8,
-      "bytes": 3726912
+      "bytes": 13772645
     },
     {
       "id": "frog",
@@ -39,7 +39,7 @@
       "anatomy": "inventory",
       "path": "frog/library.json",
       "clipCount": 4,
-      "bytes": 193536
+      "bytes": 1493398
     },
     {
       "id": "rat",
@@ -47,7 +47,7 @@
       "anatomy": "inventory",
       "path": "rat/library.json",
       "clipCount": 6,
-      "bytes": 231768
+      "bytes": 1817731
     },
     {
       "id": "snake",
@@ -55,7 +55,7 @@
       "anatomy": "inventory",
       "path": "snake/library.json",
       "clipCount": 5,
-      "bytes": 83742
+      "bytes": 641825
     },
     {
       "id": "spider",
@@ -63,7 +63,7 @@
       "anatomy": "inventory",
       "path": "spider/library.json",
       "clipCount": 5,
-      "bytes": 287934
+      "bytes": 2219914
     },
     {
       "id": "wasp",
@@ -71,7 +71,7 @@
       "anatomy": "inventory",
       "path": "wasp/library.json",
       "clipCount": 3,
-      "bytes": 306582
+      "bytes": 2301266
     },
     {
       "id": "apatosaurus",
@@ -79,7 +79,7 @@
       "anatomy": "inventory",
       "path": "apatosaurus/library.json",
       "clipCount": 6,
-      "bytes": 443088
+      "bytes": 3490968
     },
     {
       "id": "parasaurolophus",
@@ -87,7 +87,7 @@
       "anatomy": "inventory",
       "path": "parasaurolophus/library.json",
       "clipCount": 6,
-      "bytes": 215424
+      "bytes": 1679878
     },
     {
       "id": "stegosaurus",
@@ -95,7 +95,7 @@
       "anatomy": "inventory",
       "path": "stegosaurus/library.json",
       "clipCount": 6,
-      "bytes": 350676
+      "bytes": 2733444
     },
     {
       "id": "trex",
@@ -103,7 +103,7 @@
       "anatomy": "inventory",
       "path": "trex/library.json",
       "clipCount": 6,
-      "bytes": 246336
+      "bytes": 1909690
     },
     {
       "id": "triceratops",
@@ -111,7 +111,7 @@
       "anatomy": "inventory",
       "path": "triceratops/library.json",
       "clipCount": 6,
-      "bytes": 327828
+      "bytes": 2536549
     },
     {
       "id": "velociraptor",
@@ -119,7 +119,7 @@
       "anatomy": "inventory",
       "path": "velociraptor/library.json",
       "clipCount": 6,
-      "bytes": 239616
+      "bytes": 1866053
     }
   ]
 }

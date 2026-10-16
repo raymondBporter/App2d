@@ -25,26 +25,11 @@ public sealed class ReactionTimeCurve2D
             : (1 - minimumSpeed) * slowdownSeconds / (recoveryPeak - 1);
     }
 
-    public float MinimumSpeed
-    {
-        get;
-    }
-    public float SlowdownSeconds
-    {
-        get;
-    }
-    public float RecoveryPeak
-    {
-        get;
-    }
-    public float RecoverySeconds
-    {
-        get;
-    }
-    public float HoldSeconds
-    {
-        get;
-    }
+    public float MinimumSpeed { get; }
+    public float SlowdownSeconds { get; }
+    public float RecoveryPeak { get; }
+    public float RecoverySeconds { get; }
+    public float HoldSeconds { get; }
     public float Duration => HoldSeconds + SlowdownSeconds + RecoverySeconds;
 
     public double Sample(double elapsed)

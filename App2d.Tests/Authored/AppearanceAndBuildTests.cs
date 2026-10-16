@@ -78,7 +78,7 @@ public sealed class AppearanceAndBuildTests
             Model = "person",
             Duration = 1,
             Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value),
-            Tracks = [new() { Kind = MotionClip.TargetKind, Target = "left-arm", Keys = [new() { X = -.2f, Y = .9f }, new() { Time = .5f, X = -.2f, Y = .9f, Bend = bend }] }],
+            Tracks = [new() { Kind = MotionClip.TargetKind, Target = "left-arm", Keys = [new() { Value = new(-.2f, .9f, 0) }, new() { Time = .5f, Value = new(-.2f, .9f, 0), Bend = bend }] }],
         };
         float ElbowSide(MotionClip clip, double seconds)
         {
@@ -124,7 +124,7 @@ public sealed class AppearanceAndBuildTests
     [Theory, InlineData(ClipEase.Linear, .5f), InlineData(ClipEase.Smooth, .5f), InlineData(ClipEase.Step, 0)]
     public void KeysEaseTowardTheNextKey(string ease, float middle)
     {
-        var keys = new List<ClipKey> { new() { Time = 0, Y = 0, Ease = ease }, new() { Time = 1, Y = 1 } };
+        var keys = new List<ClipKey> { new() { Time = 0, Value = new(0, 0, 0), Ease = ease }, new() { Time = 1, Value = new(0, 1, 0) } };
         Assert.Equal(middle, PoseEvaluator.Interpolate(keys, .5f).Value.Y, 4);
         Assert.Equal(1, PoseEvaluator.Interpolate(keys, 1).Value.Y, 4);
         if (ease == ClipEase.Smooth)

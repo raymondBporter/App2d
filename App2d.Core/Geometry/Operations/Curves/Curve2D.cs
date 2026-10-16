@@ -11,6 +11,17 @@ public static class Curve2D
     private const float DerivativeEpsilon = 0.000001f;
     private const float FallbackSampleDistance = 0.001f;
 
+    /// <summary>Restricts any curve to an ordered interval of its parameter, preserving its evaluation exactly.</summary>
+    public static CurveSlice2D<TCurve> Slice<TCurve>(this TCurve curve, float from, float to) where TCurve : ICurve2D =>
+        new(curve, from, to);
+
+    /// <summary>Returns the left and right parameter intervals. Concrete curves may provide their own typed subdivision.</summary>
+    public static (CurveSlice2D<TCurve> Left, CurveSlice2D<TCurve> Right) Split<TCurve>(this TCurve curve, float amount) where TCurve : ICurve2D
+    {
+        ArgGuard.InRange(amount, 0f, 1f);
+        return (new(curve, 0f, amount), new(curve, amount, 1f));
+    }
+
     /// <summary>Returns a unit tangent, or zero when the curve is locally degenerate.</summary>
     public static Vector2 Tangent(ICurve2D curve, float amount)
     {

@@ -131,11 +131,7 @@
   "measures": [
     {
       "id": "leg",
-      "path": [
-        "hip-1",
-        "knee-1",
-        "foot-1"
-      ]
+      "path": ["hip-1", "knee-1", "foot-1"]
     }
   ],
   "parts": [
@@ -298,11 +294,7 @@
       "regions": [
         {
           "id": "shell",
-          "controls": [
-            "body",
-            "hip-0",
-            "hip-2"
-          ],
+          "controls": ["body", "hip-0", "hip-2"],
           "pad": 0.2
         },
         {

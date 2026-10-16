@@ -13,13 +13,13 @@ public sealed class MotionClipTests
         clip.Travel = new()
         {
             Scale = "leg",
-            Keys = [new() { Time = 0 }, new() { Time = 1, X = .4f }]
+            Keys = [new() { Time = 0 }, new() { Time = 1, Value = new(.4f, 0, 0) }]
         };
         clip.Tracks.Add(new()
         {
             Kind = MotionClip.TranslateKind,
             Target = "body",
-            Keys = [new() { Time = 0 }, new() { Time = .5f, Y = -.1f }]
+            Keys = [new() { Time = 0 }, new() { Time = .5f, Value = new(0, -.1f, 0) }]
         });
         clip.Tracks.Add(new()
         {
@@ -31,7 +31,7 @@ public sealed class MotionClipTests
         {
             Kind = MotionClip.TargetKind,
             Target = "arm",
-            Keys = [new() { Time = 0, X = .1f }]
+            Keys = [new() { Time = 0, Value = new(.1f, 0, 0) }]
         });
         clip.Contacts.Add(new()
         {
@@ -85,7 +85,7 @@ public sealed class MotionClipTests
                 clip.Tracks.Add(new()
                 {
                     Target = "knee",
-                    Keys = [new() { X = .1f }]
+                    Keys = [new() { Value = new(.1f, 0, 0) }]
                 });
                 break;
             case "unknown-chain":
@@ -116,7 +116,7 @@ public sealed class MotionClipTests
                 });
                 break;
             case "rotate-shape":
-                clip.Tracks[1].Keys[0].X = 1;
+                clip.Tracks[1].Keys[0].Value = clip.Tracks[1].Keys[0].Value with { X = 1 };
                 break;
             case "translate-shape":
                 clip.Tracks[0].Keys[0].Angle = 1;

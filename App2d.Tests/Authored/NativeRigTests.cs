@@ -52,10 +52,10 @@ public sealed class NativeRigTests
         clip.Tracks =
         [
             new() { Kind = MotionClip.RotateKind, Target = "wheel-root", Keys =
-                [new() { Curve = new() { X1 = .2f, X2 = .8f, Y1 = float.DegreesToRadians(40), Y2 = float.DegreesToRadians(140), Absolute = true } }, new() { Time = 1, Angle = MathF.PI }] },
-            new() { Kind = MotionClip.ScaleKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, X = -.5f, Y = .5f }] },
-            new() { Kind = MotionClip.ShearKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, X = MathF.PI / 18, Y = -MathF.PI / 9 }] },
-            new() { Kind = MotionClip.TranslateKind, Target = "spoke-tip", SetupBeforeFirst = true, Keys = [new() { Time = .25f, X = .2f, Y = .1f }, new() { Time = 1, X = .3f, Y = .2f }] }
+                [new() { Curve = new() { Control1 = new(.2f, float.DegreesToRadians(40)), Control2 = new(.8f, float.DegreesToRadians(140)), Absolute = true } }, new() { Time = 1, Angle = MathF.PI }] },
+            new() { Kind = MotionClip.ScaleKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, Value = new(-.5f, .5f, 0)}] },
+            new() { Kind = MotionClip.ShearKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, Value = new(MathF.PI / 18, -MathF.PI / 9, 0)}] },
+            new() { Kind = MotionClip.TranslateKind, Target = "spoke-tip", SetupBeforeFirst = true, Keys = [new() { Time = .25f, Value = new(.2f, .1f, 0)}, new() { Time = 1, Value = new(.3f, .2f, 0)}] }
         ];
         clip.Attachments = [new() { Slot = "front-paint", Keys = [new() { Time = .5f }, new() { Time = .8f, Attachment = "blue" }] }];
         clip.DrawOrder = [new() { Time = .4f, Slots = ["front-paint", "rear-paint"] }];
@@ -100,7 +100,7 @@ public sealed class NativeRigTests
         var (source, clips) = Scene();
         var clip = clips[0];
         clip.Tracks = [new() { Kind = kind, Target = "wheel-root", Keys =
-            [new() { Curve = new() { X1 = 1f / 3, X2 = 2f / 3, Y1 = control, Y2 = control, Absolute = true } }, new() { Time = 1 }] }];
+            [new() { Curve = new() { Control1 = new(1f / 3, control), Control2 = new(2f / 3, control), Absolute = true } }, new() { Time = 1 }] }];
         var motion = MotionClip.FromJson(clip.ToJson());
         motion.Validate(ResolvedModel.From(source));
         var track = motion.Tracks[0];
@@ -123,9 +123,9 @@ public sealed class NativeRigTests
         clip.Colors =
         [
             new() { Slot = "rear-paint", Kind = SlotColorTrack2D.Rgb, SetupBeforeFirst = true, Keys =
-                [new() { Time = .25f, R = 1, G = 0, B = 0 }, new() { Time = 1, R = 0, G = 1, B = 0 }] },
+                [new() { Time = .25f, Value = new(1, 0, 0, 1)}, new() { Time = 1, Value = new(0, 1, 0, 1)}] },
             new() { Slot = "rear-paint", Kind = SlotColorTrack2D.Alpha, SetupBeforeFirst = true, Keys =
-                [new() { Time = .5f, A = .2f, Ease = ClipEase.Step }, new() { Time = .75f, A = .8f }] }
+                [new() { Time = .5f, Value = new(1, 1, 1, .2f), Ease = ClipEase.Step }, new() { Time = .75f, Value = new(1, 1, 1, .8f) }] }
         ];
         var model = ResolvedModel.From(CharacterModel.FromJson(source.ToJson()));
         var motion = MotionClip.FromJson(clip.ToJson());
@@ -170,7 +170,7 @@ public sealed class NativeRigTests
         };
         expected = Vector2.Transform(new(.7f, .25f), animated.Matrix);
         TestModels.Near(new(expected, 0), pose.World("spoke-tip"));
-        clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].X = -1;
+        clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].Value = clip.Tracks.Single(t => t.Kind == MotionClip.ScaleKind).Keys[^1].Value with { X = -1 };
         var collapsed = PoseEvaluator.Sample(model, clip, 1);
         Assert.Equal(0, collapsed.Bones["wheel-root"].GetDeterminant(), 5);
         Assert.True(float.IsFinite(collapsed.World("spoke-tip").X));

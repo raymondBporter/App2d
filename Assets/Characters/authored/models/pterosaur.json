@@ -870,10 +870,7 @@
       "regions": [
         {
           "id": "body",
-          "controls": [
-            "body",
-            "head"
-          ],
+          "controls": ["body", "head"],
           "pad": 0.16
         }
       ]

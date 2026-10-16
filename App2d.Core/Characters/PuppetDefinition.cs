@@ -32,10 +32,7 @@ public readonly record struct PuppetPoint(float X = 0, float Y = 0, float Z = 0)
 public sealed record PuppetControl
 {
     public string Id { get; set; } = "point";
-    public PuppetPoint Rest
-    {
-        get; set;
-    }
+    public PuppetPoint Rest { get; set; }
 }
 
 public sealed record PuppetBone
@@ -55,10 +52,7 @@ public sealed record PuppetChain
 /// <summary>A convex patch of color in normalized part coordinates; clipped to the part's actual silhouette.</summary>
 public sealed record PartPaint
 {
-    public RenderMaterialDefinition2D? Material
-    {
-        get; set;
-    }
+    public RenderMaterialDefinition2D? Material { get; set; }
     public List<Vector2> Points { get; set; } = [];
 
     public static void Check(IReadOnlyList<PartPaint>? paint)
@@ -111,16 +105,10 @@ public sealed record PartPaint
 /// <summary>One cutout point or Bézier handle follows a control frame; its rest offset is derived from the drawing.</summary>
 public sealed record PartPointBinding
 {
-    public int Point
-    {
-        get; set;
-    }
+    public int Point { get; set; }
     public string Control { get; set; } = "";
     /// <summary>Optional control defining local +Y. Null follows translation only.</summary>
-    public string? Toward
-    {
-        get; set;
-    }
+    public string? Toward { get; set; }
 }
 
 /// <summary>Curve endpoints follow controls. Shapes attach to A; B optionally points their local +Y axis.</summary>
@@ -128,80 +116,40 @@ public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
     /// <summary>The shape or curve attached to this part.</summary>
-    public GeometryDefinition2D? Geometry
-    {
-        get; set;
-    }
+    public GeometryDefinition2D? Geometry { get; set; }
     /// <summary>Authored drawing style.</summary>
-    public RenderMaterialDefinition2D? Material
-    {
-        get; set;
-    }
+    public RenderMaterialDefinition2D? Material { get; set; }
     public string A { get; set; } = "";
-    public string? B
-    {
-        get; set;
-    }
+    public string? B { get; set; }
+
     /// <summary>Optional bone whose XY rotation carries this shape's local offset and direction.</summary>
-    public string? Frame
-    {
-        get; set;
-    }
+    public string? Frame { get; set; }
     /// <summary>Additional shape rotation in its bone frame, in radians.</summary>
-    public float Angle
-    {
-        get; set;
-    }
+    public float Angle { get; set; }
     public float ScaleX { get; set; } = 1;
     public float ScaleY { get; set; } = 1;
     public float Width { get; set; } = .4f;
     public float Height { get; set; } = .4f;
-    public float OffsetX
-    {
-        get; set;
-    }
-    public float OffsetY
-    {
-        get; set;
-    }
-    public float Depth
-    {
-        get; set;
-    }
-    public List<PartPaint>? Paint
-    {
-        get; set;
-    }
+    public float OffsetX { get; set; }
+    public float OffsetY { get; set; }
+    public float Depth { get; set; }
+    public List<PartPaint>? Paint { get; set; }
+
     /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
-    public List<PartPointBinding>? Bindings
-    {
-        get; set;
-    }
+    public List<PartPointBinding>? Bindings { get; set; }
     /// <summary>Optional sine bumps along a curve's normal, in units of its endpoint span. Negative bends to the other side.</summary>
-    public float WaveAmplitude
-    {
-        get; set;
-    }
+    public float WaveAmplitude { get; set; }
     public float WaveCycles { get; set; } = 1;
     /// <summary>Moving this control along the endpoint span moves the wave by the same distance.</summary>
-    public string? WavePhaseControl
-    {
-        get; set;
-    }
+    public string? WavePhaseControl { get; set; }
     public string Face { get; set; } = "none";
-    public float FaceX
-    {
-        get; set;
-    }
+    public float FaceX { get; set; }
+
     /// <summary>Hidden parts keep their controls and animation; only drawing skips them.</summary>
-    public bool Hidden
-    {
-        get; set;
-    }
+    public bool Hidden { get; set; }
 
     [JsonIgnore]
-    public RenderMaterialDefinition2D RenderMaterial => Material
-        ?? throw new InvalidDataException($"Part '{Id}' needs a material.");
+    public RenderMaterialDefinition2D RenderMaterial => Material ?? throw new InvalidDataException($"Part '{Id}' needs a material.");
 
     /// <summary>Checks this part against the controls it may attach to. Shared by the prototype puppet and authored models.</summary>
     public void Validate(Func<string, bool> isControl)
@@ -210,27 +158,22 @@ public sealed record PuppetPart
         {
             throw new InvalidDataException("Unknown control: " + A);
         }
-
         if (B is not null && !isControl(B))
         {
             throw new InvalidDataException("Unknown control: " + B);
         }
-
         if (Frame is not null && !isControl(Frame))
         {
             throw new InvalidDataException("Unknown part frame: " + Frame);
         }
-
         if (Frame is not null && B is not null)
         {
             throw new InvalidDataException("A part uses either a bone frame or a toward control.");
         }
-
         if (Geometry is not ShapeBuilder2D and not CurveDefinition2D)
         {
             throw new InvalidDataException("A part needs a shape or curve definition.");
         }
-
         if (Geometry is ShapeBuilder2D shape)
         {
             var built = shape.Build();
@@ -323,14 +266,8 @@ public sealed record PuppetPart
 
 public sealed record PuppetKey
 {
-    public float Time
-    {
-        get; set;
-    }
-    public PuppetPoint Position
-    {
-        get; set;
-    }
+    public float Time { get; set; }
+    public PuppetPoint Position { get; set; }
     public Dictionary<string, PuppetPoint> Points { get; set; } = [];
 }
 
@@ -338,25 +275,16 @@ public sealed record PuppetKey
 public sealed record PuppetContact
 {
     public string End { get; set; } = "";
-    public float Start
-    {
-        get; set;
-    }
+    public float Start { get; set; }
     public float Finish { get; set; } = .5f;
-    public PuppetPoint Target
-    {
-        get; set;
-    }
+    public PuppetPoint Target { get; set; }
 }
 
 public sealed record PuppetMotion
 {
     public string Name { get; set; } = "New motion";
     public float Duration { get; set; } = 1;
-    public bool Loop
-    {
-        get; set;
-    }
+    public bool Loop { get; set; }
     public List<PuppetKey> Keys { get; set; } = [];
     public List<PuppetContact> Contacts { get; set; } = [];
 }
@@ -375,10 +303,7 @@ public sealed class PuppetDefinition
     public List<PuppetChain> Chains { get; set; } = [];
     public List<PuppetPart> Parts { get; set; } = [];
     public List<PuppetMotion> Motions { get; set; } = [new()];
-    public static JsonSerializerOptions JsonOptions
-    {
-        get;
-    } = new(JsonSerializerDefaults.Web)
+    public static JsonSerializerOptions JsonOptions { get; } = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,

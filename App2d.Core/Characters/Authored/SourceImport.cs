@@ -326,14 +326,12 @@ public static class LibraryImport
                     track.Keys.Add(new()
                     {
                         Time = time,
-                        X = d.X,
-                        Y = d.Y,
-                        Z = d.Z
+                        Value = new(d.X, d.Y, d.Z)
                     });
                 }
             }
         }
-        clip.Tracks = [.. tracks.Where(t => t.Keys.Any(k => MathF.Abs(k.X) > Epsilon || MathF.Abs(k.Y) > Epsilon || MathF.Abs(k.Z) > Epsilon))];
+        clip.Tracks = [.. tracks.Where(t => t.Keys.Any(k => MathF.Abs(k.Value.X) > Epsilon || MathF.Abs(k.Value.Y) > Epsilon || MathF.Abs(k.Value.Z) > Epsilon))];
         clip.Validate(resolved);
         return clip;
     }

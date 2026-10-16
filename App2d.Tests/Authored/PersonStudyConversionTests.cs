@@ -25,10 +25,10 @@ public sealed class PersonStudyConversionTests
         Assert.DoesNotContain(clip.Tracks, t => t.Target.EndsWith("-knee") || t.Target.EndsWith("-elbow") || t.Target.EndsWith("-foot") || t.Target.EndsWith("-hand"));
         Assert.Contains(clip.Tracks, t => t is { Kind: MotionClip.TargetKind, Target: "left-leg" });
         Assert.Contains(clip.Tracks, t => t is { Kind: MotionClip.TranslateKind, Target: "hips" });
-        Assert.DoesNotContain(clip.Tracks, t => t.Keys.All(k => k.X == 0 && k.Y == 0 && k.Z == 0));
+        Assert.DoesNotContain(clip.Tracks, t => t.Keys.All(k => k.Value.X == 0 && k.Value.Y == 0 && k.Value.Z == 0));
         Assert.DoesNotContain(clip.Tracks, t => t.Target == "head"); // the walk never moves the head; float noise must not become a track
         Assert.Equal(["left-leg", "right-leg"], clip.Contacts.Select(c => c.Chain).Order());
-        Assert.Equal(.5f, clip.Travel.Keys[^1].X, 5);
+        Assert.Equal(.5f, clip.Travel.Keys[^1].Value.X, 5);
     }
 
     [Fact]

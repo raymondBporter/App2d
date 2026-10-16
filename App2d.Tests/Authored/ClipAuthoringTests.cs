@@ -79,7 +79,7 @@ public sealed class ClipAuthoringTests
         clip.Travel = new()
         {
             Scale = "leg",
-            Keys = [new() { Time = 0, X = 0 }, new() { Time = 1, X = .5f }]
+            Keys = [new() { Time = 0, Value = new(0, 0, 0) }, new() { Time = 1, Value = new(.5f, 0, 0) }]
         };
         var contact = ClipAuthoring.Plant(Model, clip, PoseEvaluator.Sample(Model, clip, .2), "leg", .2f, .4f);
         Assert.Equal(.6f, contact.Finish, 4);

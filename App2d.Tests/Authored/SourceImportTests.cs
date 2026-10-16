@@ -105,7 +105,7 @@ public sealed class SourceImportTests
         Assert.Empty(clip.Contacts);
         Assert.DoesNotContain(clip.Tracks, t => t.Target is "left-knee" or "right-knee" or "left-elbow" or "right-elbow");
         var foot = clip.Tracks.Single(t => t is { Kind: MotionClip.TargetKind, Target: "right-leg" });
-        Assert.True(foot.Keys.Max(k => k.X) - foot.Keys.Min(k => k.X) > .3f, "the feet should stride");
+        Assert.True(foot.Keys.Max(k => k.Value.X) - foot.Keys.Min(k => k.Value.X) > .3f, "the feet should stride");
         var thigh = resolved.Length("right-hip", "right-knee");
         var shin = resolved.Length("right-knee", "right-foot");
         for (var i = 0; i <= 20; i++)

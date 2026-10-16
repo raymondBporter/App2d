@@ -3,16 +3,30 @@ namespace App2d.Core.Characters;
 
 /// <summary>Small, rig-independent facial pose. Feature coordinates use X right, Y down.</summary>
 public readonly record struct FacePose(
-    float Eyes = 1, float BrowTilt = 0, float BrowLift = 0, float Smile = 0,
-    float MouthOpen = 0, float MouthWidth = 1, float Gaze = 0,
-    float Asymmetry = 0, bool CrossEyes = false, float Brows = 0, float WideEyes = 0)
+    float Eyes = 1,
+    float BrowTilt = 0,
+    float BrowLift = 0,
+    float Smile = 0,
+    float MouthOpen = 0,
+    float MouthWidth = 1,
+    float Gaze = 0,
+    float Asymmetry = 0,
+    bool CrossEyes = false,
+    float Brows = 0,
+    float WideEyes = 0)
 {
     public static FacePose Blend(FacePose a, FacePose b, float t) => new(
-        float.Lerp(a.Eyes, b.Eyes, t), float.Lerp(a.BrowTilt, b.BrowTilt, t),
-        float.Lerp(a.BrowLift, b.BrowLift, t), float.Lerp(a.Smile, b.Smile, t),
-        float.Lerp(a.MouthOpen, b.MouthOpen, t), float.Lerp(a.MouthWidth, b.MouthWidth, t),
-        float.Lerp(a.Gaze, b.Gaze, t), float.Lerp(a.Asymmetry, b.Asymmetry, t),
-        b.CrossEyes, float.Lerp(a.Brows, b.Brows, t), float.Lerp(a.WideEyes, b.WideEyes, t));
+        float.Lerp(a.Eyes, b.Eyes, t),
+        float.Lerp(a.BrowTilt, b.BrowTilt, t),
+        float.Lerp(a.BrowLift, b.BrowLift, t),
+        float.Lerp(a.Smile, b.Smile, t),
+        float.Lerp(a.MouthOpen, b.MouthOpen, t),
+        float.Lerp(a.MouthWidth, b.MouthWidth, t),
+        float.Lerp(a.Gaze, b.Gaze, t),
+        float.Lerp(a.Asymmetry, b.Asymmetry, t),
+        b.CrossEyes,
+        float.Lerp(a.Brows, b.Brows, t),
+        float.Lerp(a.WideEyes, b.WideEyes, t));
 }
 
 public static class FaceExpressions

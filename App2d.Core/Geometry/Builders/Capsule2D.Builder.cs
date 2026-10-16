@@ -11,18 +11,9 @@ public sealed partial class Capsule2D
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
     {
-        public required Vector2 Start
-        {
-            get; init;
-        }
-        public required Vector2 End
-        {
-            get; init;
-        }
-        public required float Radius
-        {
-            get; init;
-        }
+        public required Vector2 Start { get; init; }
+        public required Vector2 End { get; init; }
+        public required float Radius { get; init; }
         [JsonIgnore] public override string Kind => ShapeKinds2D.Capsule;
         public override void Validate()
         {

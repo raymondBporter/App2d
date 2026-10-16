@@ -12,14 +12,8 @@ public sealed partial class Circle2D
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
     {
-        public required Vector2 Center
-        {
-            get; init;
-        }
-        public required float Radius
-        {
-            get; init;
-        }
+        public required Vector2 Center { get; init; }
+        public required float Radius { get; init; }
         [JsonIgnore] public override string Kind => ShapeKinds2D.Circle;
         public override void Validate()
         {

@@ -152,7 +152,7 @@ public static class QuadrupedTemplate
             var c = Clip(role, duration, true);
             const float stance = .6f;
             var distance = stride / stance;
-            c.Travel.Keys = [new(), new() { Time = duration, X = distance }];
+            c.Travel.Keys = [new(), new() { Time = duration, Value = new(distance, 0, 0) }];
             foreach (var chain in model.Chains)
             {
                 var phase = chain.Id is "near-front" or "far-hind" ? 0f : .5f;

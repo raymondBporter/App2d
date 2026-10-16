@@ -1,16 +1,17 @@
+using App2d.Core.Animation;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>A keyed value at a time. Translate, target and travel keys use X/Y/Z; rotate keys use Angle (radians).</summary>
-public sealed record ClipKey
+public sealed record ClipKey : ITimedKey
 {
     public float Time { get; set; }
-    public float X { get; set; }
-    public float Y { get; set; }
-    public float Z { get; set; }
+    public Vector3 Value { get; set; }
     public float Angle { get; set; }
     /// <summary>How the value moves from this key to the next: see <see cref="ClipEase"/>.</summary>
     public string Ease { get; set; } = ClipEase.Linear;
@@ -31,6 +32,8 @@ public static class ClipEase
     public const string Linear = "linear", Smooth = "smooth", Step = "step";
     public static readonly IReadOnlyList<string> All = [Linear, Smooth, Step];
     public static float Apply(string ease, float u) => ease switch { Smooth => Progress.SmoothStepUnclamped(u), Step => 0, _ => u };
+    public static float Interpolate(float start, float end, float phase, string ease, KeyCurve2D? curve) =>
+        ease == Step ? start : curve?.Evaluate(phase, start, end) ?? Interpolation.Lerp(start, end, Apply(ease, phase));
 }
 
 /// <summary>A named visual moment, such as a footstep or a strike. Gameplay binds events to markers; the clip owns only the time.</summary>
@@ -120,10 +123,8 @@ public sealed class MotionClip
     public string Model { get; set; } = "";
     public int StructureRevision { get; set; } = 1;
     public float Duration { get; set; } = 1;
-    public bool Loop
-    {
-        get; set;
-    }
+    public bool Loop { get; set; }
+
     /// <summary>Measure lengths the clip was authored against, so a base edit never silently reinterprets authored units.</summary>
     public Dictionary<string, float> Reference { get; set; } = [];
     public ClipTravel Travel { get; set; } = new();
@@ -136,10 +137,7 @@ public sealed class MotionClip
     public List<DrawOrderKey2D> DrawOrder { get; set; } = [];
     public List<AnimationEvent2D> Events { get; set; } = [];
     /// <summary>The imported motion this clip was converted from, if any. Null for clips authored here.</summary>
-    public AssetSource? Source
-    {
-        get; set;
-    }
+    public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static MotionClip FromJson(string json)
@@ -219,7 +217,7 @@ public sealed class MotionClip
                 new Limit(0, Duration).Check(key.Time, $"{owner} color key time");
                 Require(key.Time > previous, $"{owner}: color key times must be strictly increasing.");
                 previous = key.Time;
-                foreach (var value in new[] { key.R, key.G, key.B, key.A })
+                foreach (var value in new[] { key.Value.X, key.Value.Y, key.Value.Z, key.Value.W })
                 {
                     new Limit(0, 1).Check(value, $"{owner} color component");
                 }
@@ -254,7 +252,7 @@ public sealed class MotionClip
             AuthoredAsset.RequireId(measure, $"{owner} reference");
             new Limit(.001f, 1000).Check(length, $"{owner} reference.{measure}");
         }
-        CheckKeys(Travel.Keys, $"{owner} travel", k => k.Z == 0 && k.Angle == 0, "travel keys use x and y only");
+        CheckKeys(Travel.Keys, $"{owner} travel", k => k.Value.Z == 0 && k.Angle == 0, "travel keys use x and y only");
         var seen = new HashSet<(string, string)>();
         foreach (var track in Tracks)
         {
@@ -264,7 +262,7 @@ public sealed class MotionClip
             Require(track.Keys.All(k => k is null || k.Bend is null || track.Kind == TargetKind && k.Bend is 1 or -1), $"{owner} {track.Kind} track '{track.Target}': bend is 1 or -1, on target keys only.");
             var rotate = track.Kind == RotateKind;
             CheckKeys(track.Keys, $"{owner} {track.Kind} track '{track.Target}'",
-                rotate ? k => k.X == 0 && k.Y == 0 && k.Z == 0 : k => k.Angle == 0, rotate ? "rotate keys use angle only" : "keys use x, y and z only");
+                rotate ? k => k.Value.X == 0 && k.Value.Y == 0 && k.Value.Z == 0 : k => k.Angle == 0, rotate ? "rotate keys use angle only" : "keys use x, y and z only");
         }
         foreach (var contact in Contacts)
         {
@@ -320,7 +318,7 @@ public sealed class MotionClip
             new Limit(0, Duration).Check(key.Time, field + " key time");
             Require(key.Time > previous, $"{field}: key times must be strictly increasing.");
             previous = key.Time;
-            foreach (var value in new[] { key.X, key.Y, key.Z, key.Angle })
+            foreach (var value in new[] { key.Value.X, key.Value.Y, key.Value.Z, key.Angle })
             {
                 new Limit(-1000, 1000).Check(value, field + " key value");
             }

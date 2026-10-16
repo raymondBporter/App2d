@@ -87,7 +87,7 @@ public static partial class ClipAuthoring
         }
 
         var rotate = channel.Kind == MotionClip.RotateKind;
-        var key = new ClipKey { Time = time, X = rotate ? 0 : value.X, Y = rotate ? 0 : value.Y, Z = rotate ? 0 : value.Z, Angle = rotate ? angle : 0 };
+        var key = new ClipKey { Time = time, Value = rotate ? Vector3.Zero : value, Angle = rotate ? angle : 0 };
         if (track.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime) is { } existing)
         {
             key.Ease = existing.Ease;
@@ -224,7 +224,7 @@ public static partial class ClipAuthoring
         if (clip.Travel.Keys.Count > 0)
         {
             var (value, _) = PoseEvaluator.Interpolate(clip.Travel.Keys, time);
-            Put(clip.Travel.Keys, new ClipKey { Time = time, X = value.X, Y = value.Y }, k => k.Time);
+            Put(clip.Travel.Keys, new ClipKey { Time = time, Value = value with { Z = 0 } }, k => k.Time);
         }
     }
 
@@ -451,13 +451,7 @@ public static partial class ClipAuthoring
                 return curve;
             }
 
-            curve ??= ease == ClipEase.Smooth ? new()
-            {
-                X1 = 1f / 3,
-                X2 = 2f / 3,
-                Y1 = 0,
-                Y2 = 1
-            } : null;
+            curve ??= ease == ClipEase.Smooth ? KeyCurve2D.FromEase(ease) : null;
             return curve?.Slice(Math.Clamp((a - startTime) / (endTime - startTime), 0, 1), Math.Clamp((b - startTime) / (endTime - startTime), 0, 1), start, end);
         }
         List<ClipKey> Cut(List<ClipKey> keys, bool setupBeforeFirst = false, bool rotate = false)
@@ -482,9 +476,7 @@ public static partial class ClipAuthoring
                 return new()
                 {
                     Time = time,
-                    X = value.X,
-                    Y = value.Y,
-                    Z = value.Z,
+                    Value = value,
                     Angle = angle,
                     Ease = before?.Ease ?? ClipEase.Linear
                 };
@@ -506,9 +498,9 @@ public static partial class ClipAuthoring
                 }
                 var start = keys[index];
                 var end = keys[index + 1];
-                a.Curve = Segment(start.Curve, start.Ease, start.Time, end.Time, a.Time, b.Time, rotate ? start.Angle : start.X, rotate ? end.Angle : end.X);
-                a.CurveY = Segment(start.CurveY ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, a.Time, b.Time, start.Y, end.Y);
-                a.CurveZ = Segment(start.CurveZ ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, a.Time, b.Time, start.Z, end.Z);
+                a.Curve = Segment(start.Curve, start.Ease, start.Time, end.Time, a.Time, b.Time, rotate ? start.Angle : start.Value.X, rotate ? end.Angle : end.Value.X);
+                a.CurveY = Segment(start.CurveY ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.Y, end.Value.Y);
+                a.CurveZ = Segment(start.CurveZ ?? (start.Curve?.Absolute == true ? null : start.Curve), start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.Z, end.Value.Z);
             }
             return [.. cut.Select(k => k with { Time = MathF.Min(copy.Duration, MathF.Max(0, k.Time - from)) })];
         }
@@ -567,10 +559,7 @@ public static partial class ClipAuthoring
                 return new()
                 {
                     Time = at,
-                    R = value.X,
-                    G = value.Y,
-                    B = value.Z,
-                    A = value.W,
+                    Value = value,
                     Ease = keys.LastOrDefault(k => k.Time < at)?.Ease ?? ClipEase.Linear
                 };
             }
@@ -589,10 +578,10 @@ public static partial class ClipAuthoring
                 }
                 var start = keys[index];
                 var end = keys[index + 1];
-                a.CurveR = Segment(start.CurveR, start.Ease, start.Time, end.Time, a.Time, b.Time, start.R, end.R);
-                a.CurveG = Segment(start.CurveG, start.Ease, start.Time, end.Time, a.Time, b.Time, start.G, end.G);
-                a.CurveB = Segment(start.CurveB, start.Ease, start.Time, end.Time, a.Time, b.Time, start.B, end.B);
-                a.CurveA = Segment(start.CurveA, start.Ease, start.Time, end.Time, a.Time, b.Time, start.A, end.A);
+                a.CurveR = Segment(start.CurveR, start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.X, end.Value.X);
+                a.CurveG = Segment(start.CurveG, start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.Y, end.Value.Y);
+                a.CurveB = Segment(start.CurveB, start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.Z, end.Value.Z);
+                a.CurveA = Segment(start.CurveA, start.Ease, start.Time, end.Time, a.Time, b.Time, start.Value.W, end.Value.W);
             }
             track.Keys = [.. cut.Select(k => k with { Time = Math.Clamp(k.Time - from, 0, copy.Duration) })];
         }

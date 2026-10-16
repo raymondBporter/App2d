@@ -8,7 +8,6 @@ import hashlib
 import json
 import math
 from pathlib import Path
-import struct
 
 import bpy
 from mathutils import Vector
@@ -88,7 +87,7 @@ def main():
             raise ValueError('Nonfinite wolf pose')
         return result
 
-    clips, data = {}, bytearray()
+    clips, points = {}, {}
     for key, entry in cfg['clips'].items():
         # Clear transforms before changing actions so unkeyed channels cannot leak.
         for bone in rig.pose.bones:
@@ -112,7 +111,8 @@ def main():
                                    for j in range(0, len(actual), 3)))
         seam = max(math.dist(frames[0][j:j + 3], frames[-1][j:j + 3])
                    for j in range(0, len(names) * 3, 3))
-        packed = b''.join(struct.pack('<' + 'f' * len(frame), *frame) for frame in frames)
+        points['tomek_wolf_' + key] = {name: [frame[i * 3:i * 3 + 3] for frame in frames]
+                                     for i, name in enumerate(names)}
         warnings = []
         if entry['loop'] and seam > .02:
             warnings.append(f'Source loop seam: {seam:.6f} units; no loop repair applied.')
@@ -124,11 +124,8 @@ def main():
             label='Wolf / ' + key.capitalize(), category='Tomek wolf', source='tomek_wolf',
             sourceAction=entry['action'], suggestedRole=entry['role'], loop=entry['loop'],
             duration=duration, sourceFrames=[start, end], sourceFps=fps,
-            sampleCount=len(frames), times=[i * duration / count for i in range(count + 1)],
-            byteOffset=len(data), byteLength=len(packed),
-            encoding=dict(type='float32-le', layout='sample,point,xyz', origin=[0, 0, 0], step=1),
+            times=[i * duration / count for i in range(count + 1)],
             loopSeam=seam, midpointError=error, warnings=warnings)
-        data.extend(packed)
         print(f'{key}: {duration:.3f}s, {len(frames)} samples, seam {seam:.6f}, midpoint {error:.6f}', flush=True)
 
     provenance = {k: cfg[k] for k in ('sourceUrl', 'downloadUrl', 'author', 'license', 'sourceSha256')}
@@ -140,10 +137,22 @@ def main():
                              'Donor has no ear bones; ear guides follow head-local rest offsets.',
                              'Jaw/nose animation is not represented by the Hound drawing.'])
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / 'points.bin').write_bytes(data)
-    (OUT / 'library.json').write_text(json.dumps(dict(version=1, format='app2d-point-library',
+    # Keep each XYZ vector on one line for manual inspection and edits.
+    points_dir = OUT / 'points'
+    points_dir.mkdir(exist_ok=True)
+    for clip, tracks in points.items():
+        lines = ['{']
+        for name, positions in tracks.items():
+            lines.append('  ' + json.dumps(name) + ': [')
+            lines.extend('    [' + ', '.join(format(v, '.9g') for v in xyz) + '],' for xyz in positions)
+            lines[-1] = lines[-1].rstrip(',')
+            lines.append('  ],')
+        lines[-1] = lines[-1].rstrip(',')
+        lines.append('}')
+        (points_dir / (clip + '.json')).write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    (OUT / 'library.json').write_text(json.dumps(dict(version=2, format='app2d-point-library',
         id='quadruped', label='Quadruped', anatomy='hound', pointNames=names, drawing={},
-        clips=clips, dataSha256=digest(data), provenance=provenance), separators=(',', ':')))
+        clips=clips, provenance=provenance), indent=2) + '\n', encoding='utf-8')
 
 
 if __name__ == '__main__':

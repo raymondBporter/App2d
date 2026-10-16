@@ -1,10 +1,22 @@
 {
   "version": 1,
   "cues": ["crown-of-embers", "copper-circuit"],
-  "default": { "piece": "crown-of-embers", "mood": "drive" },
+  "default": {
+    "piece": "crown-of-embers",
+    "mood": "drive"
+  },
   "zones": {
-    "prehistoric": { "piece": "crown-of-embers", "mood": "explore" },
-    "medieval": { "piece": "crown-of-embers", "mood": "combat" },
-    "wasteland": { "piece": "copper-circuit", "mood": "drive" }
+    "prehistoric": {
+      "piece": "crown-of-embers",
+      "mood": "explore"
+    },
+    "medieval": {
+      "piece": "crown-of-embers",
+      "mood": "combat"
+    },
+    "wasteland": {
+      "piece": "copper-circuit",
+      "mood": "drive"
+    }
   }
 }

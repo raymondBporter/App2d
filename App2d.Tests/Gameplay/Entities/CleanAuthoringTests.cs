@@ -84,7 +84,7 @@ public sealed class CleanAuthoringTests : IDisposable
         Pose(s, 1, "body", 0);
         Assert.True(s.NewClip("beetle-walk", "Beetle walk", .8f), s.Message);
         var walk = s.ClipDocument!;
-        Assert.True(s.Edit(walk, () => walk.Asset.Travel.Keys = [new() { Time = 0 }, new() { Time = .8f, X = .5f }]), s.Message);
+        Assert.True(s.Edit(walk, () => walk.Asset.Travel.Keys = [new() { Time = 0 }, new() { Time = .8f, Value = new(.5f, 0, 0) }]), s.Message);
         foreach (var (time, lift) in new[] { (0f, 0f), (.2f, .08f), (.4f, 0f), (.6f, .08f), (.8f, 0f) })
         {
             s.Seek(time);

@@ -10,11 +10,7 @@
   "sourceFps": 24,
   "sampleHz": 240,
   "scale": 5.016461747560743,
-  "origin": [
-    -2.1242757482164074e-17,
-    0.23261776566505432,
-    0.008833235129714012
-  ],
+  "origin": [-2.1242757482164074e-17, 0.23261776566505432, 0.008833235129714012],
   "rootMotion": "retained",
   "notes": [
     "Donor landmarks uniformly scaled to the Hound standing back height.",
@@ -31,12 +27,8 @@
       "suggestedRole": "Idle",
       "loop": true,
       "duration": 1,
-      "sourceFrames": [
-        0,
-        24
-      ],
+      "sourceFrames": [0, 24],
       "sourceFps": 24,
-      "sampleCount": 241,
       "times": [
         0,
         0.004166666666666667,
@@ -280,18 +272,6 @@
         0.9958333333333333,
         1
       ],
-      "byteOffset": 0,
-      "byteLength": 219792,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 0,
       "midpointError": 0.000006727936160636275,
       "warnings": []
@@ -304,12 +284,8 @@
       "suggestedRole": "Walk",
       "loop": true,
       "duration": 1,
-      "sourceFrames": [
-        0,
-        24
-      ],
+      "sourceFrames": [0, 24],
       "sourceFps": 24,
-      "sampleCount": 241,
       "times": [
         0,
         0.004166666666666667,
@@ -553,18 +529,6 @@
         0.9958333333333333,
         1
       ],
-      "byteOffset": 219792,
-      "byteLength": 219792,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 0,
       "midpointError": 0.0001556878370348775,
       "warnings": []
@@ -577,12 +541,8 @@
       "suggestedRole": "Run",
       "loop": true,
       "duration": 1,
-      "sourceFrames": [
-        0,
-        24
-      ],
+      "sourceFrames": [0, 24],
       "sourceFps": 24,
-      "sampleCount": 241,
       "times": [
         0,
         0.004166666666666667,
@@ -826,18 +786,6 @@
         0.9958333333333333,
         1
       ],
-      "byteOffset": 439584,
-      "byteLength": 219792,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 0,
       "midpointError": 0.0003489238239568779,
       "warnings": []
@@ -850,12 +798,8 @@
       "suggestedRole": "Jump",
       "loop": false,
       "duration": 1,
-      "sourceFrames": [
-        0,
-        24
-      ],
+      "sourceFrames": [0, 24],
       "sourceFps": 24,
-      "sampleCount": 241,
       "times": [
         0,
         0.004166666666666667,
@@ -1099,18 +1043,6 @@
         0.9958333333333333,
         1
       ],
-      "byteOffset": 659376,
-      "byteLength": 219792,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 2.092272674864087,
       "midpointError": 0.00046313295091867653,
       "warnings": []
@@ -1123,12 +1055,8 @@
       "suggestedRole": "Fall",
       "loop": true,
       "duration": 1,
-      "sourceFrames": [
-        0,
-        24
-      ],
+      "sourceFrames": [0, 24],
       "sourceFps": 24,
-      "sampleCount": 241,
       "times": [
         0,
         0.004166666666666667,
@@ -1372,23 +1300,9 @@
         0.9958333333333333,
         1
       ],
-      "byteOffset": 879168,
-      "byteLength": 219792,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 0,
       "midpointError": 0.000025819761411381896,
-      "warnings": [
-        "Source Fly is an airborne cycle; map to Fall only where appropriate."
-      ]
+      "warnings": ["Source Fly is an airborne cycle; map to Fall only where appropriate."]
     },
     "tomek_wolf_land": {
       "label": "Wolf / Land",
@@ -1398,12 +1312,8 @@
       "suggestedRole": "Land",
       "loop": false,
       "duration": 1,
-      "sourceFrames": [
-        0,
-        24
-      ],
+      "sourceFrames": [0, 24],
       "sourceFps": 24,
-      "sampleCount": 241,
       "times": [
         0,
         0.004166666666666667,
@@ -1647,18 +1557,6 @@
         0.9958333333333333,
         1
       ],
-      "byteOffset": 1098960,
-      "byteLength": 219792,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 1.8155235566794337,
       "midpointError": 0.00023771435325576536,
       "warnings": []
@@ -1671,12 +1569,8 @@
       "suggestedRole": "Cry",
       "loop": false,
       "duration": 1.5,
-      "sourceFrames": [
-        0,
-        36
-      ],
+      "sourceFrames": [0, 36],
       "sourceFps": 24,
-      "sampleCount": 361,
       "times": [
         0,
         0.004166666666666667,
@@ -2040,18 +1934,6 @@
         1.4958333333333333,
         1.5
       ],
-      "byteOffset": 1318752,
-      "byteLength": 329232,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 0,
       "midpointError": 0.00011135772055245293,
       "warnings": []
@@ -2064,12 +1946,8 @@
       "suggestedRole": "Attack",
       "loop": false,
       "duration": 1,
-      "sourceFrames": [
-        0,
-        24
-      ],
+      "sourceFrames": [0, 24],
       "sourceFps": 24,
-      "sampleCount": 241,
       "times": [
         0,
         0.004166666666666667,
@@ -2313,23 +2191,9 @@
         0.9958333333333333,
         1
       ],
-      "byteOffset": 1647984,
-      "byteLength": 219792,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 0,
       "midpointError": 0.001192986410818233,
-      "warnings": [
-        "Source midpoint error: 0.001193 units."
-      ]
+      "warnings": ["Source midpoint error: 0.001193 units."]
     },
     "tomek_wolf_die": {
       "label": "Wolf / Die",
@@ -2339,12 +2203,8 @@
       "suggestedRole": "Death",
       "loop": false,
       "duration": 4.125,
-      "sourceFrames": [
-        0,
-        99
-      ],
+      "sourceFrames": [0, 99],
       "sourceFps": 24,
-      "sampleCount": 991,
       "times": [
         0,
         0.004166666666666667,
@@ -3338,18 +3198,6 @@
         4.120833333333334,
         4.125
       ],
-      "byteOffset": 1867776,
-      "byteLength": 903792,
-      "encoding": {
-        "type": "float32-le",
-        "layout": "sample,point,xyz",
-        "origin": [
-          0,
-          0,
-          0
-        ],
-        "step": 1
-      },
       "loopSeam": 2.503952228280164,
       "midpointError": 0.00007294347778207055,
       "warnings": []

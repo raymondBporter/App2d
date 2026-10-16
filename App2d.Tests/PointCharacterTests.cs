@@ -1,27 +1,24 @@
 using App2d.Core.Characters;
 using System.Numerics;
-using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace App2d.Tests;
 
 public sealed class PointCharacterTests
 {
-    private static PointLibrary Library(bool loop = true, double[]? times = null, int offset = 0, byte[]? dataOverride = null)
+    private static PointLibrary Library(bool loop = true, double[]? times = null, string? pointsJson = null, string[]? names = null)
     {
-        byte[] data = [0, 0, 10, 0, 20, 0, 10, 0, 20, 0, 30, 0, 30, 0, 40, 0, 50, 0];
         var spec = new
         {
-            version = 1,
+            version = 2,
             format = "app2d-point-library",
             id = "test",
             label = "Test",
             anatomy = "test",
-            pointNames = new[] { "root" },
+            pointNames = names ?? ["root"],
             drawing = new
             {
             },
-            dataSha256 = Convert.ToHexString(SHA256.HashData(data)),
             clips = new Dictionary<string, object>
             {
                 ["motion"] = new
@@ -29,24 +26,16 @@ public sealed class PointCharacterTests
                     label = "Motion",
                     loop,
                     duration = 1.0,
-                    times = times ?? [0, .25, 1],
-                    sampleCount = 3,
-                    byteOffset = offset,
-                    byteLength = 18,
-                    encoding = new
-                    {
-                        type = "uint16-le",
-                        layout = "sample,point,xyz",
-                        origin = new[] { -5f, 10f, 100f },
-                        step = .5f
-                    }
+                    times = times ?? [0, .25, 1]
                 }
             }
         };
-        return new(JsonSerializer.Serialize(spec), dataOverride ?? data);
+        return new(JsonSerializer.Serialize(spec), _ => pointsJson ?? """
+            {"root":[[-5,15,110],[0,20,115],[10,30,125]]}
+            """);
     }
     [Fact]
-    public void UsesActualAdaptiveTimesAndPerAxisOrigins()
+    public void UsesActualAdaptiveTimesAndPlainXyzCoordinates()
     {
         var clip = Library().Clips["motion"];
         Span<Vector3> pose = stackalloc Vector3[1];
@@ -86,16 +75,65 @@ public sealed class PointCharacterTests
         }
     }
     [Fact]
-    public void RejectsCorruptDataAndInvalidSampleRanges()
+    public void RejectsInvalidTimingAndSampleArguments()
     {
         Assert.Throws<InvalidDataException>(() => Library(times: [0, 0, 1]));
         Assert.Throws<InvalidDataException>(() => Library(times: [0, .25, .9]));
-        Assert.Throws<InvalidDataException>(() => Library(offset: 1));
-        Assert.Throws<InvalidDataException>(() => Library(dataOverride: new byte[18]));
         Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Sample(double.NaN, new Vector3[1]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Read(3, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() => Library().Clips["motion"].Read(0, 1));
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("{\"wrong\":[[1,2,3],[4,5,6],[7,8,9]]}")]
+    [InlineData("{\"root\":[[1,2,3],[4,5,6]]}")]
+    [InlineData("{\"root\":[[1,2],[4,5,6],[7,8,9]]}")]
+    [InlineData("{\"root\":[[1,2,3,4],[4,5,6],[7,8,9]]}")]
+    [InlineData("{\"root\":[[1e100,2,3],[4,5,6],[7,8,9]]}")]
+    [InlineData("{\"root\":[[null,2,3],[4,5,6],[7,8,9]]}")]
+    [InlineData("{\"root\":[[1,2,3],[4,5,6],[7,8,9]],\"extra\":[]}")]
+    public void RejectsMissingMismatchedOrInvalidPoints(string pointsJson)
+    {
+        Assert.Throws<InvalidDataException>(() => Library(pointsJson: pointsJson));
+    }
+
+    [Fact]
+    public void NamedTracksIgnoreJsonPropertyOrderAndCoordinatesCanBeEditedDirectly()
+    {
+        const string points = """
+            {
+              "hand":[[1,2,3],[4,5,6],[7,8,9]],
+              "root":[[-5,15,110],[0,20,115],[10,30,125]]
+            }
+            """;
+        var original = Library(pointsJson: points, names: ["root", "hand"]).Clips["motion"];
+        Assert.Equal(new Vector3(1, 2, 3), original.Read(0, 1));
+        Assert.Equal(new Vector3(-5, 15, 110), original.Read(0, 0));
+        var edited = Library(pointsJson: points.Replace("[1,2,3]", "[11,22,33]"), names: ["root", "hand"]).Clips["motion"];
+        Assert.Equal(new Vector3(11, 22, 33), edited.Read(0, 1));
+        Assert.Equal(original.Read(0, 0), edited.Read(0, 0));
+    }
+
+    [Fact]
+    public void EveryCatalogLibraryLoadsFromJsonWithMatchingClipsAndPointTracks()
+    {
+        var catalogPath = TestAssets.GetPath("Characters", "catalog.json");
+        using var catalog = JsonDocument.Parse(File.ReadAllText(catalogPath));
+        foreach (var entry in catalog.RootElement.GetProperty("libraries").EnumerateArray())
+        {
+            var library = PointLibrary.Load(Path.Combine(Path.GetDirectoryName(catalogPath)!, entry.GetProperty("path").GetString()!));
+            Assert.Equal(entry.GetProperty("clipCount").GetInt32(), library.Clips.Count);
+            foreach (var clip in library.Clips.Values)
+            {
+                var pose = new Vector3[library.PointNames.Count];
+                clip.Sample(clip.Duration / 2, pose);
+                Assert.All(pose, p => Assert.True(float.IsFinite(p.X) && float.IsFinite(p.Y) && float.IsFinite(p.Z)));
+            }
+        }
     }
     [Fact]
-    public void SamplingDoesNotAllocateDecodedClipsOrPerFrameArrays()
+    public void SamplingDoesNotAllocatePerFrameArrays()
     {
         var clip = Library().Clips["motion"];
         var pose = new Vector3[1];

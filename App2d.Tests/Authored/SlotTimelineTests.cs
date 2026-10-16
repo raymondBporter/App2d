@@ -65,7 +65,7 @@ public sealed class SlotTimelineTests
                 clip.Colors[0].Slot = "missing";
                 break;
             case "invalid-value":
-                clip.Colors[0].Keys[0].R = float.NaN;
+                clip.Colors[0].Keys[0].Value = clip.Colors[0].Keys[0].Value with { X = float.NaN };
                 break;
             case "invalid-time":
                 clip.Colors[0].Keys.Add(new()
@@ -76,7 +76,7 @@ public sealed class SlotTimelineTests
             case "invalid-curve":
                 clip.Colors[0].Keys[0].CurveA = new()
                 {
-                    X1 = -1
+                    Control1 = new(-1, 0)
                 };
                 break;
             case "duplicate-component":
@@ -108,9 +108,9 @@ public sealed class SlotTimelineTests
     {
         var (model, clip) = Scene();
         clip.Tracks = [new() { Target = "body", Scale = CharacterModel.Unit, Keys = [
-            new() { Curve = new() { X1 = .15f, X2 = .8f, Y1 = 1, Y2 = -1, Absolute = true } }, new() { Time = 1 } ] }];
+            new() { Curve = new() { Control1 = new(.15f, 1), Control2 = new(.8f, -1), Absolute = true } }, new() { Time = 1 } ] }];
         clip.Colors = [new() { Slot = "paint", Keys = [
-            new() { R = 0, CurveR = new() { X1 = .15f, X2 = .8f, Y1 = 1, Y2 = 1, Absolute = true } }, new() { Time = 1, R = 0 } ] }];
+            new() { Value = new(0, 1, 1, 1), CurveR = new() { Control1 = new(.15f, 1), Control2 = new(.8f, 1), Absolute = true } }, new() { Time = 1, Value = new(0, 1, 1, 1) } ] }];
         clip.Attachments = [new() { Slot = "paint", Keys = [new() { Time = .1f, Attachment = null }, new() { Time = .6f, Attachment = "art" }] }];
         clip.DrawOrder = [new() { Time = .1f, Slots = ["paint"] }];
         clip.Events = [new() { Time = .1f, Name = "outside" }, new() { Time = .4f, Name = "inside" }];
@@ -138,17 +138,13 @@ public sealed class SlotTimelineTests
         ClipAuthoring.SetKey(clip, channel, 1, new(2, 4, 0));
         ClipAuthoring.SetCurve(clip, channel, 0, 0, new()
         {
-            X1 = 1f / 3,
-            X2 = 2f / 3,
-            Y1 = 0,
-            Y2 = 0
+            Control1 = new(1f / 3, 0),
+            Control2 = new(2f / 3, 0)
         });
         ClipAuthoring.SetCurve(clip, channel, 0, 2, new()
         {
-            X1 = 1f / 3,
-            X2 = 2f / 3,
-            Y1 = 1,
-            Y2 = 1,
+            Control1 = new(1f / 3, 1),
+            Control2 = new(2f / 3, 1),
             Absolute = true
         });
         var value = ClipAuthoring.Value(clip, channel, .5f).Value;

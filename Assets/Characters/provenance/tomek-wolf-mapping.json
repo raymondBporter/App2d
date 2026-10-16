@@ -10,15 +10,51 @@
   "sampleHz": 240,
   "standingBackHeight": 1.984,
   "clips": {
-    "idle": {"action": "wolf_idle", "loop": true, "role": "Idle"},
-    "walk": {"action": "wolf_walk", "loop": true, "role": "Walk"},
-    "run": {"action": "wolf_run", "loop": true, "role": "Run"},
-    "jump": {"action": "wolf_jump", "loop": false, "role": "Jump"},
-    "fly": {"action": "wolf_fly", "loop": true, "role": "Fall"},
-    "land": {"action": "wolf_land", "loop": false, "role": "Land"},
-    "cry": {"action": "wolf_cry", "loop": false, "role": "Cry"},
-    "attack": {"action": "wolf_attack01", "loop": false, "role": "Attack"},
-    "die": {"action": "wolf_die", "loop": false, "role": "Death"}
+    "idle": {
+      "action": "wolf_idle",
+      "loop": true,
+      "role": "Idle"
+    },
+    "walk": {
+      "action": "wolf_walk",
+      "loop": true,
+      "role": "Walk"
+    },
+    "run": {
+      "action": "wolf_run",
+      "loop": true,
+      "role": "Run"
+    },
+    "jump": {
+      "action": "wolf_jump",
+      "loop": false,
+      "role": "Jump"
+    },
+    "fly": {
+      "action": "wolf_fly",
+      "loop": true,
+      "role": "Fall"
+    },
+    "land": {
+      "action": "wolf_land",
+      "loop": false,
+      "role": "Land"
+    },
+    "cry": {
+      "action": "wolf_cry",
+      "loop": false,
+      "role": "Cry"
+    },
+    "attack": {
+      "action": "wolf_attack01",
+      "loop": false,
+      "role": "Attack"
+    },
+    "die": {
+      "action": "wolf_die",
+      "loop": false,
+      "role": "Death"
+    }
   },
   "segments": {
     "Back": ["Bone", 0, 0.25],
@@ -48,12 +84,30 @@
     "IKBackLeg.R": ["Bone.021", 0, 0.5],
     "FFB.R": ["Bone.021", 0.5, 1]
   },
-  "tailChain": ["Bone.001", "Bone.002", "Bone.003", "Bone.004", "Bone.005"],
+  "tailChain": [
+    "Bone.001",
+    "Bone.002",
+    "Bone.003",
+    "Bone.004",
+    "Bone.005"
+  ],
   "tailSegments": 8,
   "ears": {
-    "Ear1.L": [[0.045, -0.35, 0.56], [0.055, -0.35, 0.59]],
-    "Ear4.L": [[0.055, -0.35, 0.59], [0.065, -0.35, 0.62]],
-    "Ear1.R": [[-0.045, -0.35, 0.56], [-0.055, -0.35, 0.59]],
-    "Ear4.R": [[-0.055, -0.35, 0.59], [-0.065, -0.35, 0.62]]
+    "Ear1.L": [
+      [0.045, -0.35, 0.56],
+      [0.055, -0.35, 0.59]
+    ],
+    "Ear4.L": [
+      [0.055, -0.35, 0.59],
+      [0.065, -0.35, 0.62]
+    ],
+    "Ear1.R": [
+      [-0.045, -0.35, 0.56],
+      [-0.055, -0.35, 0.59]
+    ],
+    "Ear4.R": [
+      [-0.055, -0.35, 0.59],
+      [-0.065, -0.35, 0.62]
+    ]
   }
 }
