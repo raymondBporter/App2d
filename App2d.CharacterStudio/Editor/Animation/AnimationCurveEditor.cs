@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Mathematics;
 using ImGuiNET;
 using System.Numerics;
 
@@ -74,8 +75,8 @@ internal static class AnimationCurveEditor
             {
                 set(curve with
                 {
-                    X1 = Math.Clamp(x.X, 0, 1),
-                    X2 = Math.Clamp(x.Y, 0, 1)
+                    X1 = Clamping.Clamp01(x.X),
+                    X2 = Clamping.Clamp01(x.Y)
                 });
             }
 

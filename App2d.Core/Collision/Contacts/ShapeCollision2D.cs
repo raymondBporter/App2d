@@ -1,8 +1,10 @@
 using App2d.Core.Geometry.Operations.Convex;
+using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
+using App2d.Core.Validation;
 
 namespace App2d.Core.Collision.Contacts;
 
@@ -18,11 +20,21 @@ public static partial class ShapeCollision2D
     /// <param name="contact">The deepest contact, with the normal pointing from the second object toward the first.</param>
     /// <returns>True when the objects penetrate; touching produces no contact.</returns>
     public static bool TryGetContact(SpatialObject2D first, SpatialObject2D second, out CollisionContact2D contact)
+        => TryGetContact(first.Shape, first.CollisionPose, second.Shape, second.CollisionPose, out contact);
+
+    /// <summary>Finds the deepest penetrating contact directly from shapes and their placements, without registering objects.</summary>
+    public static bool TryGetContact(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose, out CollisionContact2D contact)
     {
-        var result = Dispatch(first.Shape, first.CollisionPose, second.Shape, second.CollisionPose);
+        ArgGuard.ThrowIfNull(first);
+        ArgGuard.ThrowIfNull(second);
+        var result = Dispatch(first, firstPose, second, secondPose);
         contact = result.Contact;
         return result.HasContact;
     }
+
+    /// <summary>Tests filled shapes in a common space. Touching counts as overlap; no contact details or object wrappers are needed.</summary>
+    public static bool Overlaps(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose) =>
+        ShapeDistance2D.Distance(first, firstPose, second, secondPose) == 0f;
 
     private readonly record struct CollisionResult(bool HasContact, CollisionContact2D Contact)
     {

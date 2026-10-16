@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -664,7 +665,7 @@ public static partial class ClipAuthoring
 
     private static Vector3 Delta(Vector3 world, Vector3 framePoint, float frameAngle, Vector3 restOffset, float ratio)
     {
-        var local = PoseEvaluator.RotateXY(world - framePoint, -frameAngle) - restOffset;
+        var local = Rotation2D.ApplyXY(world - framePoint, -frameAngle) - restOffset;
         return new(local.X / ratio, local.Y / ratio, local.Z);
     }
 

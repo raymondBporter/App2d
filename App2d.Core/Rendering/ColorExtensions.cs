@@ -1,5 +1,4 @@
 using App2d.Core.Validation;
-using System.Globalization;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Core.Rendering;
@@ -34,17 +33,11 @@ public static class ColorExtensions
     }
 
     /// <summary>Parses an opaque #RRGGBB color.</summary>
-    public static Color FromHexRgb(string hex)
-    {
-        ArgGuard.ThrowIfNull(hex);
-        if (hex.Length != 7 || hex[0] != '#')
-        {
-            throw new FormatException("Expected a #RRGGBB color.");
-        }
+    public static Color FromHexRgb(string hex) => ColorRgba32.ParseRgb(hex).ToColor();
 
-        return new(
-            byte.Parse(hex.AsSpan(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-            byte.Parse(hex.AsSpan(3, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-            byte.Parse(hex.AsSpan(5, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture));
-    }
+    /// <summary>Parses eight RGBA hexadecimal digits.</summary>
+    public static Color FromHexRgba(string hex) => ColorRgba32.ParseRgba(hex).ToColor();
+
+    /// <summary>Adapts straight byte channels to MonoGame without changing their values.</summary>
+    public static Color ToColor(this ColorRgba32 color) => new(color.R, color.G, color.B, color.A);
 }

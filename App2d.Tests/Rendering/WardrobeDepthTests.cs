@@ -39,8 +39,8 @@ public sealed class WardrobeDepthTests
         target.GetData(pixels);
         var elbow = pose.World("left-elbow");
         var hand = pose.World("left-hand");
-        var y0 = Vector3.Dot(elbow - frame.Origin, frame.Across3);
-        var y1 = Vector3.Dot(hand - frame.Origin, frame.Across3);
+        var y0 = Vector3.Dot(elbow - frame.Origin, frame.YAxis);
+        var y1 = Vector3.Dot(hand - frame.Origin, frame.YAxis);
         var torso = PersonBuild.From(entity.Model.Variant!.Build).Torso;
         foreach (var height in new[] { .032f, .052f, .075f })
         {

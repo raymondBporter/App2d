@@ -1,5 +1,6 @@
 using App2d.CharacterStudio.PlayerMoves;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -270,7 +271,7 @@ internal sealed partial class ProofRenders
         var overreach = 0;
         static float Yaw(EvaluatedPose p, string left, string right, string frame)
         {
-            var d = PoseEvaluator.RotateXY(p.Points[right] - p.Points[left], -p.Angles[frame]);
+            var d = Rotation2D.ApplyXY(p.Points[right] - p.Points[left], -p.Angles[frame]);
             return MathF.Atan2(d.Z, d.X);
         }
         var rest = PoseEvaluator.Rest(model);

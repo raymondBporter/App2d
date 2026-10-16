@@ -1,5 +1,5 @@
+using App2d.Core.Collision.Contacts;
 using App2d.Core.Geometry.Operations.Bounds;
-using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
@@ -27,7 +27,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     public EntityRegion(string id, IConvexShape2D shape) : this(id, shape, Similarity2D.Identity) { }
 
     /// <summary>The axis-aligned box around the placed region.</summary>
-    public Rect2D Bounds => ShapeBounds2D.Calculate(Shape).TransformedBy(Pose.ToMatrix());
+    public Rect2D Bounds => ShapeBounds2D.CalculateTransformed(Shape, Pose.ToMatrix());
 
     /// <summary>Tests two regions after translating each into a common space. Touching counts as overlap.</summary>
     /// <param name="other">The other region.</param>
@@ -37,7 +37,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     public bool Overlaps(EntityRegion other, Vector2 position = default, Vector2 otherPosition = default)
     {
         ArgGuard.ThrowIfNull(other);
-        return ShapeDistance2D.SignedDistance(Shape, Pose.Translated(position), other.Shape, other.Pose.Translated(otherPosition)) <= 0f;
+        return ShapeCollision2D.Overlaps(Shape, Pose.Translated(position), other.Shape, other.Pose.Translated(otherPosition));
     }
 
     /// <summary>Tests the region against a placed physics shape without requesting contact details.</summary>
@@ -47,14 +47,13 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     public bool Overlaps(SpatialObject2D other, Vector2 position = default)
     {
         ArgGuard.ThrowIfNull(other);
-        ArgGuard.ThrowIfNotFinite(position);
         var pose = Pose.Translated(position);
-        if (!ShapeBounds2D.Calculate(Shape).TransformedBy(pose.ToMatrix()).Intersects(other.WorldBounds))
+        if (!ShapeBounds2D.CalculateTransformed(Shape, pose.ToMatrix()).Intersects(other.WorldBounds))
         {
             return false;
         }
 
-        return ShapeDistance2D.Distance(Shape, pose, other.Shape, other.CollisionPose) == 0f;
+        return ShapeCollision2D.Overlaps(Shape, pose, other.Shape, other.CollisionPose);
     }
 
     /// <summary>The same region scaled uniformly about the actor origin, for example from authored units into world units.</summary>
@@ -65,17 +64,7 @@ public sealed record EntityRegion(string Id, IConvexShape2D Shape, Similarity2D 
     /// <summary>A drawable perimeter of the placed region in the actor's XY space.</summary>
     /// <param name="roundSegments">Samples around a circle; a capsule uses half per cap.</param>
     /// <returns>The outline vertices in perimeter order.</returns>
-    public Vector2[] Outline(int roundSegments = 24)
-    {
-        var vertices = new Vector2[Shape.GetOutlineVertCount(roundSegments)];
-        Shape.GetOutlineVerts(vertices, roundSegments);
-        for (var i = 0; i < vertices.Length; i++)
-        {
-            vertices[i] = Pose.TransformPoint(vertices[i]);
-        }
-
-        return vertices;
-    }
+    public Vector2[] Outline(int roundSegments = 24) => Shape.Outline(Pose, roundSegments);
 
     /// <summary>A placed object carrying this region's shape and pose, for queries that want a spatial object.</summary>
     /// <returns>A new spatial object whose transform reproduces <see cref="Pose"/>.</returns>

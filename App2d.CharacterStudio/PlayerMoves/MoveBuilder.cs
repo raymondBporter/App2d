@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
 
@@ -167,7 +168,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
                 var shoulder = pose.Points[chain.Frame];
                 var frameAngle = pose.Angles[chain.Frame];
                 var goal = absolute ? new Vector3(offset, shoulder.Z) : shoulder + new Vector3(offset, 0);
-                var local = PoseEvaluator.RotateXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
+                var local = Rotation2D.ApplyXY(goal - shoulder, -frameAngle) - (model.Rest[chain.End] - model.Rest[chain.Frame]);
                 Set(MotionClip.TargetKind, chainId, time, new()
                 {
                     X = local.X,
@@ -259,7 +260,7 @@ internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
     private Vector2 Swing(string parent, string child, float turn)
     {
         var offset = owner.Model.Rest[child] - owner.Model.Rest[parent];
-        var turned = PoseEvaluator.RotateXY(offset, turn);
+        var turned = Rotation2D.ApplyXY(offset, turn);
         return new(turned.X - offset.X, turned.Y - offset.Y);
     }
     /// <summary>A foot at an actor-space position in the locomotion frame (ground is y = 0.025 for a flat sole).</summary>

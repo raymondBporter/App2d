@@ -27,6 +27,15 @@ The engine is grouped by responsibility:
   `Similarity2D` — the validated rotation + uniform scale + mirror + translation pose
   that collision consumes. The namespace uses `Mathematics` rather than `Math` so it
   never shadows `System.Math`.
+- `Frame2D` and `Frame3D` describe affine coordinate systems with explicit axes, an
+  origin, composition, and point/direction transforms. Sockets return `Frame3D`;
+  callers project an axis or point with `.XY` when entering 2D gameplay.
+- Geometry supplies `Rect2D.FromPoints(points).InflatedBy(padding)` and shape outlines
+  placed by `Similarity2D`, with span overloads for reusable buffers. Collision can
+  query `(shapeA, poseA, shapeB, poseB)` directly through `ShapeCollision2D.Overlaps`
+  or `TryGetContact`; no registered spatial objects are required.
+- `ColorRgba32` holds straight RGBA byte channels, parses RGB/RGBA hex, and converts
+  to normalized `Vector4` for float color math. `ColorExtensions` adapts it to MonoGame.
 - `App2d.Core/Rendering` contains the renderer, shader abstractions, and the `GraphicsSurface2D` WinForms host surface.
 - `App2d.Core` presents guards, mathematics, animation, geometry, collision, physics, and the
   render-agnostic `SpatialObject2D`. `App2d.Core/Tiles` presents the tile maps and mesher.

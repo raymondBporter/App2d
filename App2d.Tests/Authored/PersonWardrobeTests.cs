@@ -58,8 +58,8 @@ public sealed class PersonWardrobeTests
         var entity = catalog.Entities["maul-brute"];
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, catalog.Animations["person-death"], .6f), Vector2.Zero, 1);
         var socket = pose.Socket(entity.Sockets[PersonWardrobe.HeadSocket]);
-        TestModels.Near(Vector3.UnitX, socket.Along3);
-        TestModels.Near(Vector3.UnitY, socket.Across3);
+        TestModels.Near(Vector3.UnitX, socket.XAxis);
+        TestModels.Near(Vector3.UnitY, socket.YAxis);
         TestModels.Near(pose.World("head"), socket.Origin);
     }
 
@@ -78,7 +78,7 @@ public sealed class PersonWardrobeTests
                 var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, at), Vector2.Zero, facing);
                 var expected = pose.World("chest") - pose.World("hips");
                 expected.Z = 0;
-                TestModels.Near(Vector3.Normalize(expected), pose.Socket(socket).Across3);
+                TestModels.Near(Vector3.Normalize(expected), pose.Socket(socket).YAxis);
                 TestModels.Near(pose.World("hips"), pose.Socket(socket).Origin);
             }
         }

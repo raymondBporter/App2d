@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Meshes;
+using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
@@ -10,9 +11,9 @@ internal static class PropDrawing
 {
     private static readonly Vector3 LightDirection = Vector3.Normalize(new(-.3f, .5f, -1));
 
-    public static void Add(CharacterMesh mesh, PropAsset prop, SocketFrame frame)
+    public static void Add(CharacterMesh mesh, PropAsset prop, Frame3D frame)
     {
-        if (!Orientation3D.TryGetHandedness(frame.Along3, frame.Across3, frame.Normal3, out var handedness))
+        if (!Orientation3D.TryGetHandedness(frame.XAxis, frame.YAxis, frame.ZAxis, out var handedness))
         {
             return;
         }

@@ -1,3 +1,4 @@
+using App2d.Core.Rendering;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -261,7 +262,7 @@ internal static class SkeletonAppearance2D
     }
     public static void Color(string color)
     {
-        if (color is null || color.Length != 8 || !uint.TryParse(color, System.Globalization.NumberStyles.HexNumber, null, out _))
+        if (!ColorRgba32.TryParseRgba(color.AsSpan(), out _))
         {
             throw new InvalidDataException("Slot colors must be eight RGBA hexadecimal digits.");
         }

@@ -152,7 +152,7 @@ public static class PoseEvaluator
             var parentRestAngle = control.Parent is null ? 0 : model.Controls[control.Parent].RestAngle;
             var parentRest = control.Parent is null ? Vector3.Zero : model.Rest[control.Parent];
             var offset = model.Rest[control.Id] - parentRest + Delta(MotionClip.TranslateKind, control.Id, control.Scale);
-            pose.Points[control.Id] = parentPoint + RotateXY(offset, parentAngle - parentRestAngle);
+            pose.Points[control.Id] = parentPoint + Rotation2D.ApplyXY(offset, parentAngle - parentRestAngle);
             angles[control.Id] = parentAngle + control.RestAngle - parentRestAngle + Angle(control.Id);
             pose.Bones[control.Id] = Matrix3x2.CreateRotation(angles[control.Id]) * Matrix3x2.CreateTranslation(pose.Points[control.Id].X, pose.Points[control.Id].Y);
         }
@@ -287,7 +287,6 @@ public static class PoseEvaluator
         return Of(keys[^1]);
     }
 
-    public static Vector3 RotateXY(Vector3 v, float angle) => Rotation2D.ApplyXY(v, angle);
     public static (Vector3 Value, float Angle) Interpolate(ClipTrack track, float time) =>
         track.SetupBeforeFirst && track.Keys.Count > 0 && time < track.Keys[0].Time ? default : Interpolate(track.Keys, time, track.Kind == MotionClip.RotateKind);
 }

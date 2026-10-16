@@ -145,6 +145,30 @@ public sealed class ShapeVertices2DTests
     }
 
     [Fact]
+    public void PlacedOutlinesTransformTheWrittenSpanAndLeaveExtraStorageUntouched()
+    {
+        var capsule = Capsule2D.Builder.Create(new(-2, 1), new(3, 2), .3f);
+        Span<Vector2> local = stackalloc Vector2[capsule.GetOutlineVertCount(24)];
+        capsule.GetOutlineVerts(local, 24);
+        Span<Vector2> buffer = stackalloc Vector2[40];
+        var sentinel = new Vector2(123, 456);
+        buffer.Fill(sentinel);
+        var pose = Similarity2D.FromAxis(new(7, -3), new(1, 2), mirror: true, scale: 2.5f);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var outline = capsule.GetOutlineVerts(pose, buffer, 24);
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+        Assert.Equal(local.Length, outline.Length);
+        for (var i = 0; i < outline.Length; i++)
+        {
+            Assert.Equal(pose.TransformPoint(local[i]), outline[i]);
+        }
+        Assert.Equal(sentinel, buffer[outline.Length]);
+        Assert.Equal(outline.ToArray(), capsule.Outline(pose, 24));
+        buffer[0] = sentinel;
+        Assert.Equal(sentinel, outline[0]);
+    }
+
+    [Fact]
     public void ShortBuffersAndInvalidSamplingAreRejectedBeforeWriting()
     {
         var rectangle = Rectangle2D.Builder.CreateFromSize(2, 2);

@@ -192,10 +192,7 @@ internal sealed partial class ProofRenders
                     var velocity = (new Vector3(3.8f, .65f, origin.Z) - origin) / flight + new Vector3(0, shot.Gravity * flight / 2, 0);
                     var elapsed = at - release;
                     var centre = origin + velocity * elapsed - new Vector3(0, shot.Gravity * elapsed * elapsed / 2, 0);
-                    var socket = placed.Socket(rock.Socket) with
-                    {
-                        Origin = centre + new Vector3(rock.Prop.Grip.X, rock.Prop.Grip.Y, rock.Prop.Grip.Z)
-                    };
+                    var socket = placed.Socket(rock.Socket).WithOrigin(centre + rock.Prop.Grip.XYZ);
                     drawing.AddProp(rock.Prop, socket);
                 }
                 var charging = subject.Asset.Controller.ChargeSpeed > 0;

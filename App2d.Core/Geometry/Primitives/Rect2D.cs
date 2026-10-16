@@ -97,6 +97,39 @@ public readonly record struct Rect2D : IRect2D
         return new(min, max);
     }
 
+    /// <summary>The bounding box of a nonempty point sequence, read once without copying it.</summary>
+    public static Rect2D FromPoints(IEnumerable<Vector2> points)
+    {
+        ArgGuard.ThrowIfNull(points);
+        using var enumerator = points.GetEnumerator();
+        ArgGuard.ThrowIf(!enumerator.MoveNext(), "At least one point is required.", nameof(points));
+        var min = enumerator.Current;
+        var max = min;
+        while (enumerator.MoveNext())
+        {
+            min = Vector2.Min(min, enumerator.Current);
+            max = Vector2.Max(max, enumerator.Current);
+        }
+        return new(min, max);
+    }
+
+    /// <summary>Bounds of projected items. A static selector and explicit state avoid iterator and closure allocations.</summary>
+    public static Rect2D FromPoints<T, TState>(IReadOnlyList<T> items, TState state, Func<T, TState, Vector2> pointOf)
+    {
+        ArgGuard.ThrowIfNull(items);
+        ArgGuard.ThrowIfNull(pointOf);
+        ArgGuard.ThrowIf(items.Count == 0, "At least one point is required.", nameof(items));
+        var min = pointOf(items[0], state);
+        var max = min;
+        for (var i = 1; i < items.Count; i++)
+        {
+            var point = pointOf(items[i], state);
+            min = Vector2.Min(min, point);
+            max = Vector2.Max(max, point);
+        }
+        return new(min, max);
+    }
+
     /// <summary>The bounding box of a circle.</summary>
     /// <param name="center">The finite circle center.</param>
     /// <param name="radius">The finite, nonnegative radius.</param>

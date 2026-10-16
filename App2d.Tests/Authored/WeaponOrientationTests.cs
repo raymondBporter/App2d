@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Mathematics;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
 
@@ -50,10 +51,10 @@ public sealed class WeaponOrientationTests
         clip.Validate(model);
         var turned = new ActorPose(PoseEvaluator.Sample(model, clip, 0), Vector2.Zero, 1).Socket(socket);
         TestModels.Near(rest.Origin, turned.Origin, 1e-6f);
-        TestModels.Near(rest.Along3, turned.Along3, 1e-6f);
-        Assert.InRange(MathF.Abs(turned.Across3.Z), .999f, 1.001f);
-        Assert.InRange(turned.Across.Length(), 0, 1e-6f);
-        Assert.InRange(Vector3.Distance(turned.At(2, 0), turned.Origin), 1.999f, 2.001f);
+        TestModels.Near(rest.XAxis, turned.XAxis, 1e-6f);
+        Assert.InRange(MathF.Abs(turned.YAxis.Z), .999f, 1.001f);
+        Assert.InRange(turned.YAxis.XY.Length(), 0, 1e-6f);
+        Assert.InRange(Vector3.Distance(turned.TransformPoint(new(2, 0, 0)), turned.Origin), 1.999f, 2.001f);
     }
 
     [Fact]
@@ -73,7 +74,7 @@ public sealed class WeaponOrientationTests
             TestModels.Near(new(8 - r.X, r.Y, r.Z), l, 1e-5f);
             Assert.InRange(Vector3.Distance(r, right.Origin) - Vector3.Distance(p.XYZ, prop.Grip.XYZ) * 2, -1e-5f, 1e-5f);
         }
-        Assert.True(right.Axis.Length() < .9f);
+        Assert.True(right.XAxis.XY.Length() < .9f);
     }
 
     [Fact]

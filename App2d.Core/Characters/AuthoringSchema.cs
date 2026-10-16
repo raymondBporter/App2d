@@ -1,6 +1,7 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.IO;
+using App2d.Core.Rendering;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
@@ -34,7 +35,7 @@ public readonly record struct Limit(float Min, float Max, float SoftMin, float S
     }
     public static void Color(string? value, string field)
     {
-        if (value is null || value.Length != 7 || value[0] != '#' || !uint.TryParse(value.AsSpan(1), System.Globalization.NumberStyles.HexNumber, null, out _))
+        if (!ColorRgba32.TryParseRgb(value.AsSpan(), out _))
         {
             throw new InvalidDataException($"{field} must be a #rrggbb color; found '{value}'.");
         }

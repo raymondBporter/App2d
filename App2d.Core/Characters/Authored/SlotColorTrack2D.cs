@@ -1,3 +1,4 @@
+using App2d.Core.Rendering;
 using System.Numerics;
 using System.Text.Json.Serialization;
 
@@ -45,7 +46,8 @@ public sealed record SlotColorTrack2D
 
     public static Vector4 Evaluate(MotionClip clip, SkeletonSlot2D slot, float time)
     {
-        var value = ParseColor(slot.Color);
+        SkeletonAppearance2D.Color(slot.Color);
+        var value = ColorRgba32.ParseRgba(slot.Color).ToVector4();
         foreach (var track in clip.Colors.Where(t => t.Slot == slot.Id))
         {
             if (track.Keys.Count == 0 || track.SetupBeforeFirst && time < track.Keys[0].Time)
@@ -102,15 +104,4 @@ public sealed record SlotColorTrack2D
         return keys[^1].Value;
     }
 
-    public static Vector4 ParseColor(string color)
-    {
-        SkeletonAppearance2D.Color(color);
-        var rgba = Convert.ToUInt32(color, 16);
-        return new Vector4((byte)(rgba >> 24), (byte)(rgba >> 16), (byte)(rgba >> 8), (byte)rgba) / 255;
-    }
-    public static string FormatColor(Vector4 value)
-    {
-        value = Vector4.Clamp(value, Vector4.Zero, Vector4.One);
-        return $"{(byte)MathF.Round(value.X * 255):x2}{(byte)MathF.Round(value.Y * 255):x2}{(byte)MathF.Round(value.Z * 255):x2}{(byte)MathF.Round(value.W * 255):x2}";
-    }
 }

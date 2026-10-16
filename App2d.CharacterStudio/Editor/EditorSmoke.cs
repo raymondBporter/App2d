@@ -201,7 +201,7 @@ s.CommitAll();
                 var s = shell.Session;
 s.PoseWeapon(new(MathF.PI / 2, 0, 0));
 s.CommitAll();
-                Record(MathF.Abs(new ActorPose(s.Scene()[0].Pose, Vector2.Zero, 1).Socket(s.Scene()[0].Model.Base.Sockets.First(x => x.Id == PersonLoadout.SwordSocket)).Across3.Z) > .99f, "edge-on blade has real depth");
+                Record(MathF.Abs(new ActorPose(s.Scene()[0].Pose, Vector2.Zero, 1).Socket(s.Scene()[0].Model.Base.Sockets.First(x => x.Id == PersonLoadout.SwordSocket)).YAxis.Z) > .99f, "edge-on blade has real depth");
             }),
             ("24-appearance-editor", shell =>
             {

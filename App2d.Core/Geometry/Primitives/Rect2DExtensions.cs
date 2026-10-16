@@ -172,6 +172,11 @@ public static class Rect2DExtensions
             return new(rectangle.Min + offset, rectangle.Max + offset);
         }
 
+        /// <summary>Expands all four sides by the same nonnegative finite amount.</summary>
+        /// <param name="amount">The amount added on each side.</param>
+        /// <returns>The inflated rectangle.</returns>
+        public Rect2D InflatedBy(float amount) => rectangle.InflatedBy(amount, amount);
+
         /// <summary>Expands both sides of each axis by nonnegative finite amounts.</summary>
         /// <param name="x">The amount added to the left and right.</param>
         /// <param name="y">The amount added to the bottom and top.</param>

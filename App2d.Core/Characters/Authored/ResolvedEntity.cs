@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
@@ -308,15 +309,6 @@ public sealed class ResolvedEntity
     }
 }
 
-/// <summary>A socket's rigid 3D frame, including actor reflection. Axis/Across expose its XY projection for gameplay.</summary>
-public readonly record struct SocketFrame(Vector3 Origin, Vector3 Along3, Vector3 Across3, Vector3 Normal3)
-{
-    public SocketFrame(Vector3 origin, Vector2 axis, Vector2 across) : this(origin, new(axis, 0), new(across, 0), Vector3.UnitZ) { }
-    public Vector2 Axis => new(Along3.X, Along3.Y);
-    public Vector2 Across => new(Across3.X, Across3.Y);
-    public Vector3 At(float along, float across, float depth = 0) => Origin + Along3 * along + Across3 * across + Normal3 * depth;
-}
-
 /// <summary>
 /// The final pose placed in the world: the evaluated pose in actor-local units (facing +X, feet origin) plus the actor's
 /// position and facing. Rendering draws <see cref="Local"/> through a mirrored matrix; collision and props use
@@ -343,23 +335,19 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
         return angle;
     }
 
-    public SocketFrame Socket(ModelSocket socket)
+    public Frame3D Socket(ModelSocket socket)
     {
         var angle = SocketBaseAngle(socket);
-        var origin = Local.Points[socket.Control] + PoseEvaluator.RotateXY(new(socket.OffsetX, socket.OffsetY, socket.OffsetZ), angle);
+        var origin = Local.Points[socket.Control] + Rotation2D.ApplyXY(new(socket.OffsetX, socket.OffsetY, socket.OffsetZ), angle);
         var orientation = Local.SocketAngles.GetValueOrDefault(socket.Id);
-        var rotation = Matrix4x4.CreateRotationX(orientation.X) * Matrix4x4.CreateRotationY(orientation.Y) * Matrix4x4.CreateRotationZ(angle + socket.Angle + orientation.Z);
-        Vector3 Direction(Vector3 v)
-        {
-            var d = Vector3.TransformNormal(v, rotation);
-            return new(d.X * Facing, d.Y, d.Z);
-        }
-        return new(Place(origin), Direction(Vector3.UnitX), Direction(Vector3.UnitY), Direction(Vector3.UnitZ));
+        var local = Frame3D.FromRotation(new(orientation.X, orientation.Y, angle + socket.Angle + orientation.Z), origin);
+        var actor = new Frame3D(new(Position, 0), new(Facing, 0, 0), Vector3.UnitY, Vector3.UnitZ);
+        return local.Then(actor);
     }
 
     /// <summary>A prop's local point in the world, with its grip on the socket. The one transform art, hits and muzzles share.</summary>
-    public static Vector3 PropPoint(SocketFrame frame, PropAsset prop, PuppetPoint local) =>
-        frame.At((local.X - prop.Grip.X) * prop.Scale, (local.Y - prop.Grip.Y) * prop.Scale, (local.Z - prop.Grip.Z) * prop.Scale);
+    public static Vector3 PropPoint(Frame3D frame, PropAsset prop, PuppetPoint local) =>
+        frame.TransformPoint((local.XYZ - prop.Grip.XYZ) * prop.Scale);
 }
 
 /// <summary>Movement, hurt and attack regions from one placed final pose. Graphics-free.</summary>
@@ -377,19 +365,11 @@ public static class EntityCollision
         var regions = new List<EntityRegion>(entity.Hurt.Count);
         foreach (var shape in entity.Hurt)
         {
-            var min = new Vector2(float.PositiveInfinity);
-            var max = new Vector2(float.NegativeInfinity);
-            foreach (var control in shape.Controls)
-            {
-                var xy = pose.World(control).XY;
-                min = Vector2.Min(min, xy);
-                max = Vector2.Max(max, xy);
-            }
-            min -= new Vector2(shape.Pad);
-            max += new Vector2(shape.Pad);
-            var size = max - min;
+            var bounds = Rect2D.FromPoints(shape.Controls, pose, static (control, actor) => actor.World(control).XY).InflatedBy(shape.Pad);
             // Controls on one line with no pad enclose no area: a hairline capsule keeps them hittable without a degenerate box.
-            regions.Add(size.X > 0 && size.Y > 0 ? EntityRegion.Box(shape.Id, (min + max) / 2, size) : EntityRegion.Capsule(shape.Id, min, max, DegenerateHurtRadius));
+            regions.Add(bounds.Width > 0 && bounds.Height > 0
+                ? EntityRegion.Box(shape.Id, bounds.Center, bounds.Size)
+                : EntityRegion.Capsule(shape.Id, bounds.Min, bounds.Max, DegenerateHurtRadius));
         }
         return regions;
     }
@@ -398,11 +378,11 @@ public static class EntityCollision
     /// The frame a hit window is anchored to: a socket, an equipped prop's named point with the prop's orientation, or with
     /// neither the actor itself (its offset from the feet, the axis along its facing).
     /// </summary>
-    public static SocketFrame Anchor(ResolvedEntity entity, ActorPose pose, HitWindow hit)
+    public static Frame3D Anchor(ResolvedEntity entity, ActorPose pose, HitWindow hit)
     {
         if (hit.Socket is null && hit.Prop is null)
         {
-            return new(pose.Place(new(hit.OffsetX, hit.OffsetY, 0)), new Vector2(pose.Facing, 0), Vector2.UnitY);
+            return new(pose.Place(new(hit.OffsetX, hit.OffsetY, 0)), new(pose.Facing, 0, 0), Vector3.UnitY, Vector3.UnitZ);
         }
 
         if (hit.Socket is not null)
@@ -412,10 +392,7 @@ public static class EntityCollision
 
         var equipment = entity.Equipment.First(e => e.Prop.Id == hit.Prop);
         var frame = pose.Socket(equipment.Socket);
-        return frame with
-        {
-            Origin = ActorPose.PropPoint(frame, equipment.Prop, equipment.Prop.Point(hit.Point)!.Value)
-        };
+        return frame.WithOrigin(ActorPose.PropPoint(frame, equipment.Prop, equipment.Prop.Point(hit.Point)!.Value));
     }
 
     /// <summary>Where a shot leaves: the first equipped prop with a muzzle, and its unit axis in world XY (facing included).</summary>
@@ -424,7 +401,8 @@ public static class EntityCollision
         var gun = entity.Equipment.FirstOrDefault(e => e.Prop.Muzzle is not null) ?? throw new InvalidOperationException($"Entity '{entity.Id}' equips no prop with a muzzle.");
         var frame = pose.Socket(gun.Socket);
         // Gameplay stays in XY; foreshortening must not change projectile speed. A head-on barrel has no XY aim.
-        var axis = frame.Axis.LengthSquared() > 1e-8f ? Vector2.Normalize(frame.Axis) : new Vector2(pose.Facing, 0);
+        var projected = frame.XAxis.XY;
+        var axis = projected.LengthSquared() > 1e-8f ? Vector2.Normalize(projected) : new Vector2(pose.Facing, 0);
         return (ActorPose.PropPoint(frame, gun.Prop, gun.Prop.Muzzle!.Value), axis);
     }
 
@@ -435,8 +413,9 @@ public static class EntityCollision
     public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit)
     {
         var frame = Anchor(entity, pose, hit.Window);
-        var axis = frame.Axis.LengthSquared() > 1e-8f ? Vector2.Normalize(frame.Axis) : new Vector2(pose.Facing, 0);
-        var mirror = new Vector2d(axis).Cross(new(frame.Across)) < 0d;
-        return new(hit.Window.Id, hit.Shape, Similarity2D.FromAxis(frame.At(hit.Window.Along, 0).XY, axis, mirror));
+        var projected = frame.XAxis.XY;
+        var axis = projected.LengthSquared() > 1e-8f ? Vector2.Normalize(projected) : new Vector2(pose.Facing, 0);
+        var mirror = new Vector2d(axis).Cross(new(frame.YAxis.XY)) < 0d;
+        return new(hit.Window.Id, hit.Shape, Similarity2D.FromAxis(frame.TransformPoint(new(hit.Window.Along, 0, 0)).XY, axis, mirror));
     }
 }

@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -41,7 +42,7 @@ public sealed class PuppetDrawing
             }
 
             var frame = PartAttachment2D.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
-            AddImage(part, frame, SlotColorTrack2D.FormatColor(slot.Color), slot.Slot.Blend, -i * .001f);
+            AddImage(part, frame, ColorRgba32.FromVector4(slot.Color).ToColor(), slot.Slot.Blend, -i * .001f);
         }
     }
 
@@ -60,7 +61,7 @@ public sealed class PuppetDrawing
     }
 
     /// <summary>Appends a prop with its grip on the given frame. Strokes get an ink outline just behind them.</summary>
-    public void AddProp(PropAsset prop, SocketFrame frame)
+    public void AddProp(PropAsset prop, Frame3D frame)
     {
         var start = Mesh.Count;
         PropDrawing.Add(Mesh, prop, frame);
@@ -122,7 +123,7 @@ public sealed class PuppetDrawing
 
             if (part.Material?.Texture is not null)
             {
-                AddImage(part, PartAttachment2D.FrameOf(part, world, angle, transform), "ffffffff", "normal", null);
+                AddImage(part, PartAttachment2D.FrameOf(part, world, angle, transform), Microsoft.Xna.Framework.Color.White, "normal", null);
                 continue;
             }
             var start = Mesh.Count;
@@ -187,16 +188,10 @@ public sealed class PuppetDrawing
         }
     }
 
-    private void AddImage(PuppetPart part, PartFrame2D frame, string tint, string blend, float? depth)
+    private void AddImage(PuppetPart part, PartFrame2D frame, Microsoft.Xna.Framework.Color color, string blend, float? depth)
     {
         var material = part.RenderMaterial;
-        static Microsoft.Xna.Framework.Color Color(string value)
-        {
-            var rgba = Convert.ToUInt32(value, 16);
-            return new((byte)(rgba >> 24), (byte)(rgba >> 16), (byte)(rgba >> 8), (byte)rgba);
-        }
-        var color = Color(tint);
-        var own = Color(material.Tint ?? "ffffffff");
+        var own = ColorExtensions.FromHexRgba(material.Tint ?? "ffffffff");
         var fill = material.Fill is null ? Microsoft.Xna.Framework.Color.White : ColorExtensions.FromHexRgb(material.Fill);
         color = new((byte)(color.R * own.R / 255 * fill.R / 255), (byte)(color.G * own.G / 255 * fill.G / 255),
             (byte)(color.B * own.B / 255 * fill.B / 255), (byte)(color.A * own.A / 255));

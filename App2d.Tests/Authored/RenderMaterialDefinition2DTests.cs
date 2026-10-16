@@ -1,3 +1,4 @@
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -88,7 +89,7 @@ public sealed class RenderMaterialDefinition2DTests
         Assert.Equal(json, PropAsset.FromJson(json).ToJson());
 
         var drawing = new PuppetDrawing();
-        drawing.AddProp(prop, new SocketFrame(Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
+        drawing.AddProp(prop, new Frame3D(Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ));
         var colors = drawing.Mesh.Vertices.ToArray().Select(vertex => vertex.Color).ToArray();
         Assert.Contains(ColorExtensions.FromHexRgb("#224466"), colors);
         Assert.Contains(ColorExtensions.FromHexRgb("#ffeeaa"), colors);

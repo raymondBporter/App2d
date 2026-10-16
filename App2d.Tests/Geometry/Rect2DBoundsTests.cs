@@ -4,6 +4,7 @@ using App2d.Core.Geometry.Operations.Convex;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using System.Numerics;
@@ -12,6 +13,35 @@ namespace App2d.Tests.Geometry;
 
 public sealed class Rect2DBoundsTests
 {
+    [Fact]
+    public void EnumerableBoundsReadProjectedPointsOnceAndUniformInflationExpandsEverySide()
+    {
+        Vector2[] points = [new(3, 4), new(-2, 7), new(5, -1)];
+        var visits = 0;
+        var bounds = Rect2D.FromPoints(points.Select(point => { visits++; return point; })).InflatedBy(.5f);
+        Assert.Equal(points.Length, visits);
+        Assert.Equal(new Rect2D(new(-2.5f, -1.5f), new(5.5f, 7.5f)), bounds);
+        Assert.Throws<ArgumentException>(() => Rect2D.FromPoints(Enumerable.Empty<Vector2>()));
+    }
+
+    [Fact]
+    public void ProjectedBoundsAcceptExplicitStateWithoutAllocatingTemporaryPoints()
+    {
+        IReadOnlyList<Vector2> points = new Vector2[] { new(3, 4), new(-2, 7), new(5, -1) };
+        var pose = Frame2D.FromRotation(.7f, new(5, 2));
+        var expected = Rect2D.FromPoints(points.Select(pose.TransformPoint));
+        Rect2D Measure() => Rect2D.FromPoints(points, pose, static (point, frame) => frame.TransformPoint(point));
+        Assert.Equal(expected, Measure());
+        for (var i = 0; i < 100; i++)
+        {
+            Measure();
+        }
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        var actual = Measure();
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+        Assert.Equal(expected, actual);
+    }
+
     [Fact]
     public void RawPrimitiveBoundsIncludeOffsetsAndReversedCapsuleEndpoints()
     {

@@ -1,13 +1,33 @@
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Operations.Vertices;
 
-/// <summary>Local convex cores and drawing outlines in caller-owned buffers. These helpers do not allocate.</summary>
+/// <summary>Local convex cores and drawing outlines. Span overloads write into caller-owned buffers without allocating.</summary>
 public static class ShapeVertices2D
 {
+    /// <summary>Samples a placed outline into the caller's buffer without allocating or registering a spatial object.</summary>
+    public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Similarity2D pose, Span<Vector2> vertices, int roundSegments = 32)
+    {
+        var outline = shape.GetOutlineVerts(vertices, roundSegments);
+        for (var i = 0; i < outline.Length; i++)
+        {
+            vertices[i] = pose.TransformPoint(outline[i]);
+        }
+        return vertices[..outline.Length];
+    }
+
+    /// <summary>Allocates a drawable outline of a placed shape. Use the span overload when supplying reusable storage.</summary>
+    public static Vector2[] Outline(this IShape2D shape, Similarity2D pose, int roundSegments = 32)
+    {
+        var vertices = new Vector2[shape.GetOutlineVertCount(roundSegments)];
+        shape.GetOutlineVerts(pose, vertices, roundSegments);
+        return vertices;
+    }
+
     /// <summary>
     /// The exact core vertex count: one point for circles, two endpoints for capsules, inset corners for rounded
     /// rectangles, and perimeter vertices for triangles, rectangles and convex polygons.

@@ -1,3 +1,4 @@
+using App2d.Core.Rendering;
 using ImGuiNET;
 using System.Numerics;
 
@@ -181,13 +182,14 @@ public static class Ui
 
     public static bool ColorHex(string label, ref string hex)
     {
-        var value = new Vector3(Convert.ToInt32(hex[1..3], 16), Convert.ToInt32(hex[3..5], 16), Convert.ToInt32(hex[5..7], 16)) / 255;
+        var color = ColorRgba32.ParseRgb(hex);
+        var value = new Vector3(color.R, color.G, color.B) / 255;
         if (!ImGui.ColorEdit3(label, ref value, ImGuiColorEditFlags.NoInputs))
         {
             return false;
         }
 
-        hex = $"#{(int)MathF.Round(value.X * 255):x2}{(int)MathF.Round(value.Y * 255):x2}{(int)MathF.Round(value.Z * 255):x2}";
+        hex = ColorRgba32.FromVector4(new(value, 1)).ToHexRgb();
         return true;
     }
 

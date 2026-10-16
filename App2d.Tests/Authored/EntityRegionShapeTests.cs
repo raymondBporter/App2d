@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
@@ -80,10 +81,10 @@ public sealed class EntityRegionShapeTests
         var capsule = Assert.IsType<Capsule2D>(region.Shape);
         var frame = EntityCollision.Anchor(entity, pose, hit.Window);
         var worldAxis = region.Pose.TransformPoint(capsule.End) - region.Pose.TransformPoint(capsule.Start);
-        Assert.True(Vector2.Dot(worldAxis, frame.Axis) > 0);
+        Assert.True(Vector2.Dot(worldAxis, frame.XAxis.XY) > 0);
         Assert.Equal(.6f, worldAxis.Length(), 3);
         Assert.Equal(.1f, capsule.Radius, 3);
-        Assert.True(Vector2.Dot(region.Pose.YAxis, frame.Across) >= 0, "the frame keeps its across direction when the actor is mirrored");
+        Assert.True(Vector2.Dot(region.Pose.YAxis, frame.YAxis.XY) >= 0, "the frame keeps its across direction when the actor is mirrored");
     }
 
     [Fact]
