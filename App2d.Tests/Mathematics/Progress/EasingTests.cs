@@ -5,6 +5,25 @@ namespace App2d.Tests.Mathematics.Progress;
 
 public sealed class EasingTests
 {
+    [Fact]
+    public void SharedEasingsPreserveTheAngeliaPortFormulasIncludingBackOvershoot()
+    {
+        for (var i = 0; i <= 2048; i++)
+        {
+            var x = i / 2048f;
+            var circular = x < .5f ? (1 - MathF.Sqrt(1 - 4 * x * x)) / 2
+                : (MathF.Sqrt(1 - MathF.Pow(-2 * x + 2, 2)) + 1) / 2;
+            const float c2 = 1.70158f * 1.525f;
+            var back = x < .5f ? MathF.Pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2) / 2
+                : (MathF.Pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
+            Assert.InRange(Math.Abs(circular - Easing.EaseInOutCirc.Sample(x)), 0, 2e-6);
+            Assert.InRange(Math.Abs(back - Easing.EaseInOutBack.Sample(x)), 0, 2e-6);
+            Assert.InRange(Math.Abs(x * x * x - Easing.EaseInCubic.Sample(x)), 0, 2e-6);
+        }
+        Assert.True(Easing.EaseInOutBack.Sample(.2) < 0);
+        Assert.True(Easing.EaseInOutBack.Sample(.8) > 1);
+    }
+
     public static IEnumerable<object[]> NamedEasings => typeof(Easing)
         .GetFields(BindingFlags.Public | BindingFlags.Static)
         .Where(member => member.FieldType == typeof(ProgressMap))

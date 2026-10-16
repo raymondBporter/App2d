@@ -1,4 +1,6 @@
+using App2d.Core.Mathematics.Progress;
 using System.Numerics;
+using static App2d.Core.Mathematics.Interpolation;
 
 namespace App2d.CharacterStudio.AngeliaGallery;
 
@@ -31,21 +33,12 @@ internal static class AngeliaPoses
         ("Sleep", Sleep), ("Sit", Sit),
     ];
 
-    private static float Lerp(float a, float b, float t) => a + (b - a) * t;
     private static float Repeat(float t, float length) => t - MathF.Floor(t / length) * length;
     private static float PingPong(float t, float length) => length - MathF.Abs(Repeat(t, length * 2) - length);
-    private static float InOutCirc(float x) => x < .5f ? (1 - MathF.Sqrt(1 - 4 * x * x)) / 2 : (MathF.Sqrt(1 - MathF.Pow(-2 * x + 2, 2)) + 1) / 2;
-    private static float InCubic(float x) => x * x * x;
-    private static float InOutBack(float x)
-    {
-        const float c2 = 1.70158f * 1.525f;
-        return x < .5f ? MathF.Pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2) / 2 : (MathF.Pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2;
-    }
-
     // PoseAnimation_Idle: breathing — the chest sinks and rises, no rotations.
     private static AngeliaPose Idle(int f)
     {
-        var e = InOutCirc(PingPong(f % 96 * 2f / 96, 1));
+        var e = (float)Easing.EaseInOutCirc.Sample(PingPong(f % 96 * 2f / 96, 1));
         return new()
         {
             ChestDrop = e * A
@@ -91,7 +84,7 @@ internal static class AngeliaPoses
         var t = Repeat(f * runSpeed / 57 / 16, 1);
         float p = PingPong(2 * t, 1), q = 1 - p;
         float pAlt = PingPong(2 * Repeat(t - .3f, 1), 1), qAlt = 1 - pAlt;
-        var easeD = InCubic(2 * t % 1);
+        var easeD = (float)Easing.EaseInCubic.Sample(2 * t % 1);
         var lean = Math.Clamp(dx, -42, 42) * 2 / 3;
         var shift = Lerp(0, A * .9f, p);
         return new()
@@ -107,8 +100,8 @@ internal static class AngeliaPoses
             LegXR = -shift,
             LegUL = Lerp(55, -65, p) + lean / 3,
             LegUR = Lerp(55, -65, q) + lean / 3,
-            LegLL = Lerp(90, 0, InOutBack(pAlt)),
-            LegLR = Lerp(90, 0, InOutBack(qAlt)),
+            LegLL = Lerp(90, 0, (float)Easing.EaseInOutBack.Sample(pAlt)),
+            LegLR = Lerp(90, 0, (float)Easing.EaseInOutBack.Sample(qAlt)),
         };
     }
 
@@ -160,7 +153,7 @@ internal static class AngeliaPoses
     private static AngeliaPose SquatIdle(int f)
     {
         var a = f % 64 / 16f;
-        var e = InOutCirc(a / 4);
+        var e = (float)Easing.EaseInOutCirc.Sample(a / 4);
         if (a >= 2)
         {
             e = 1 - e;

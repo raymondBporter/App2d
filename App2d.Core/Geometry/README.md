@@ -76,6 +76,32 @@ var ground = Line2D.Horizontal(0);
 if (Raycast2D.TryCircle(origin, direction, center, radius, 100, out var rayHit)) { /* rayHit.Point, .Normal, .Distance */ }
 ```
 
+## Curves
+
+`ICurve2D` evaluates a geometric path and its derivative at a normalized parameter. It does not own a clock:
+animation can pass eased progress to `Evaluate`, or move the curve's control points to change a face or contour.
+
+```csharp
+var mouth = new CubicBezier2D(start, firstHandle, secondHandle, end);
+var point = mouth.Evaluate((float)Easing.EaseInOutSine.Sample(phase));
+var (left, right) = mouth.Split(.5f);
+var middle = mouth.Slice(.25f, .75f);
+```
+
+`Split` and `Slice` use Bezier parameters, not distance or elapsed time. Subdivision preserves the original path;
+each result maps its own parameter range to [0, 1]. A slice with equal endpoints is a constant point curve.
+The methods return value types without allocating arrays.
+
+`FindParametersAtX(x, parameters)` writes all intersections into a span of at least three doubles, sorted in [0, 1].
+It includes tangencies and endpoints and uses the shared `PolynomialRoots` solver. A curve lying entirely on that X
+has infinitely many matches and throws. `ParameterAtX(x)` is the convenience query when exactly one result is expected;
+it throws for missing or ambiguous results.
+
+Animation's `KeyCurve2D.ToCurve(start, end)` represents a segment as a cubic in `(normalized time, channel value)`.
+Its X controls guarantee a unique time lookup. Its `Slice` first converts time bounds to Bezier parameters, then
+uses the same subdivision as drawing curves. Relative/absolute value handles remain authored data; absolute handles
+can move away from and return to equal endpoint values. The existing keyframe JSON fields are unchanged.
+
 ## Shapes
 
 `IShape2D` classes delegate their `Area`, `ContainsPoint` and `GetSupportPoint` to the raw operations and keep no
