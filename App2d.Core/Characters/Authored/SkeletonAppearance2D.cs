@@ -6,15 +6,9 @@ namespace App2d.Core.Characters.Authored;
 public sealed record SkeletonSlot2D
 {
     public string Id { get; set; } = "";
-    public string? Name
-    {
-        get; set;
-    }
+    public string? Name    {        get; set;    }
     public string Bone { get; set; } = "";
-    public string? Attachment
-    {
-        get; set;
-    }
+    public string? Attachment    {        get; set;    }
     public string Color { get; set; } = "ffffffff";
     public string Blend { get; set; } = "normal";
 }
@@ -23,56 +17,35 @@ public sealed record SkeletonSlot2D
 public sealed record SkeletonSkin2D
 {
     public string Id { get; set; } = "default";
-    public string? Name
-    {
-        get; set;
-    }
+    public string? Name    {        get; set;    }
     public Dictionary<string, Dictionary<string, string>> Attachments { get; set; } = [];
 }
 
 public sealed record SlotAttachmentKey2D
 {
-    public float Time
-    {
-        get; set;
-    }
-    public string? Attachment
-    {
-        get; set;
-    }
+    public float Time { get; set; }
+    public string? Attachment { get; set; }
 }
+
 public sealed record SlotAttachmentTrack2D
 {
     public string Slot { get; set; } = "";
     public List<SlotAttachmentKey2D> Keys { get; set; } = [];
 }
+
 public sealed record DrawOrderKey2D
 {
-    public float Time
-    {
-        get; set;
-    }
+    public float Time { get; set; }
     public List<string> Slots { get; set; } = [];
 }
+
 public sealed record AnimationEvent2D
 {
     public string Name { get; set; } = "";
-    public float Time
-    {
-        get; set;
-    }
-    public int Int
-    {
-        get; set;
-    }
-    public float Float
-    {
-        get; set;
-    }
-    public string? String
-    {
-        get; set;
-    }
+    public float Time { get; set; }
+    public int Int { get; set; }
+    public float Float { get; set; }
+    public string? String { get; set; }
 }
 
 /// <summary>Cubic curve with normalized time controls. Value controls may overshoot, including between equal endpoints.</summary>
@@ -116,8 +89,7 @@ public sealed record KeyCurve2D
         var (a, b) = Controls(start, end);
         return Cubic(Parameter(time), start, a, b, end);
     }
-    public (float First, float Second) Controls(float start, float end) => Absolute ? (Y1, Y2)
-        : (start + Y1 * (end - start), start + Y2 * (end - start));
+    public (float First, float Second) Controls(float start, float end) => Absolute ? (Y1, Y2) : (start + Y1 * (end - start), start + Y2 * (end - start));
 
     /// <summary>Converts value controls without changing the curve. Equal endpoints cannot normalize an overshoot.</summary>
     public bool TryConvertValueControls(bool absolute, float start, float end, out KeyCurve2D converted)

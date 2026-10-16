@@ -35,10 +35,7 @@ public sealed record Affine2D
 
     public event Action? Changed;
     [JsonIgnore]
-    public int Version
-    {
-        get; private set;
-    }
+    public int Version { get; private set; }
     public static Affine2D Identity => new();
 
     /// <summary>True when all seven authored channels are finite. Check Matrix.IsFinite() for the evaluated matrix.</summary>
@@ -48,33 +45,40 @@ public sealed record Affine2D
 
     public float X
     {
-        get => _x; set => Set(ref _x, value);
+        get => _x;
+        set => Set(ref _x, value);
     }
     public float Y
     {
-        get => _y; set => Set(ref _y, value);
+        get => _y; 
+        set => Set(ref _y, value);
     }
     public float Rotation
     {
-        get => _rotation; set => Set(ref _rotation, value);
+        get => _rotation;
+        set => Set(ref _rotation, value);
     }
     public float ScaleX
     {
-        get => _scaleX; set => Set(ref _scaleX, value);
+        get => _scaleX;
+        set => Set(ref _scaleX, value);
     }
     public float ScaleY
     {
-        get => _scaleY; set => Set(ref _scaleY, value);
+        get => _scaleY; 
+        set => Set(ref _scaleY, value);
     }
     /// <summary>Additional angle of the local +X axis.</summary>
     public float ShearX
     {
-        get => _shearX; set => Set(ref _shearX, value);
+        get => _shearX; 
+        set => Set(ref _shearX, value);
     }
     /// <summary>Additional angle of the local +Y axis.</summary>
     public float ShearY
     {
-        get => _shearY; set => Set(ref _shearY, value);
+        get => _shearY;
+        set => Set(ref _shearY, value);
     }
 
     [JsonIgnore]

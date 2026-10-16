@@ -34,41 +34,17 @@ public sealed class EntityAnimator
         }), Vector2.Zero, 1);
     }
 
-    public ResolvedEntity Entity
-    {
-        get;
-    }
-    public string Role
-    {
-        get; private set;
-    }
-    public double RoleTime
-    {
-        get; private set;
-    }
-    public string? Action
-    {
-        get; private set;
-    }
-    public double ActionTime
-    {
-        get; private set;
-    }
+    public ResolvedEntity Entity { get; }
+    public string Role { get; private set; }
+    public double RoleTime { get; private set; }
+    public string? Action { get; private set; }
+    public double ActionTime { get; private set; }
     /// <summary>The action time before the latest step, for window tests that must not miss a window skipped in one step.</summary>
-    public double PreviousActionTime
-    {
-        get; private set;
-    }
+    public double PreviousActionTime { get; private set; }
     /// <summary>Increments on every action start; hit deduplication keys on it.</summary>
-    public int ActionSequence
-    {
-        get; private set;
-    }
+    public int ActionSequence { get; private set; }
     public int Facing { get; private set; } = 1;
-    public ActorPose Pose
-    {
-        get; private set;
-    }
+    public ActorPose Pose { get; private set; }
     public IReadOnlyDictionary<string, Vector3> Anchors => _hold.Anchors;
     public ResolvedAction? Current => Action is null ? null : Entity.Actions[Action];
     public bool ActionComplete => Current is { } action && ActionTime >= action.Clip.Duration;

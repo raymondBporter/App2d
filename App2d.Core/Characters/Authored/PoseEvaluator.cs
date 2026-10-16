@@ -15,28 +15,13 @@ public sealed record ContactResult(string Chain, Vector3 Target, float Residual)
 /// </summary>
 public readonly record struct PoseInput(string? Expression = null)
 {
-    public bool InPlace
-    {
-        get; init;
-    }
-    public Func<string, Vector3, Vector3>? Contact
-    {
-        get; init;
-    }
+    public bool InPlace { get; init; }
+    public Func<string, Vector3, Vector3>? Contact { get; init; }
     /// <summary>A masked override: its clip owns every channel whose target is in the mask. The base clip keeps the rest.</summary>
-    public PoseLayer? Overlay
-    {
-        get; init;
-    }
+    public PoseLayer? Overlay { get; init; }
     /// <summary>Reverse authored horizontal offsets and rotation, without turning the actor's rest pose.</summary>
-    public bool ReverseHorizontalMotion
-    {
-        get; init;
-    }
-    public string? Skin
-    {
-        get; init;
-    }
+    public bool ReverseHorizontalMotion { get; init; }
+    public string? Skin { get; init; }
 }
 
 /// <summary>
@@ -60,10 +45,7 @@ public sealed class EvaluatedPose
     /// <summary>The expression each visible face-bearing part shows: gameplay input, then the clip's face channel, then the model default.</summary>
     public Dictionary<string, string> Expressions { get; } = new(StringComparer.Ordinal);
     /// <summary>The locomotion frame's origin at this sample.</summary>
-    public Vector3 Locomotion
-    {
-        get; set;
-    }
+    public Vector3 Locomotion { get; set; }
     public List<ChainResult> Chains { get; } = [];
     public List<ContactResult> Contacts { get; } = [];
     public Vector3 World(string id) => Points[id];

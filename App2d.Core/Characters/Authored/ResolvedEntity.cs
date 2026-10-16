@@ -18,32 +18,14 @@ public sealed record ResolvedEvent(ActionEvent Event, float Seconds);
 /// <summary>An enabled action. <see cref="Mask"/>, when set, names the targets it owns over locomotion.</summary>
 public sealed record ResolvedAction(string Id, MotionClip Clip, string Source, IReadOnlyList<ResolvedHit> Hits, IReadOnlyList<ResolvedEvent> Events)
 {
-    public IReadOnlySet<string>? Mask
-    {
-        get; init;
-    }
-    public ProjectileDef? Projectile
-    {
-        get; init;
-    }
-    public float BlendIn
-    {
-        get; init;
-    }
-    public float BlendOut
-    {
-        get; init;
-    }
+    public IReadOnlySet<string>? Mask { get; init; }
+    public ProjectileDef? Projectile { get; init; }
+    public float BlendIn { get; init; }
+    public float BlendOut { get; init; }
     /// <summary>The action a further press chains to (see <see cref="EntityActionDef.Next"/>).</summary>
-    public string? Next
-    {
-        get; init;
-    }
+    public string? Next { get; init; }
     /// <summary>The clip played once the action ends, when nothing else takes over.</summary>
-    public MotionClip? Recovery
-    {
-        get; init;
-    }
+    public MotionClip? Recovery { get; init; }
 
     /// <summary>The masked layer's weight at a time in the action: a linear fade in, then out over the clip's end. One without a mask.</summary>
     public float Weight(double seconds)
@@ -84,25 +66,13 @@ public sealed class ResolvedEntity
         MovementShape = (IConvexShape2D)asset.Movement.Shape.Build();
     }
 
-    public EntityAsset Asset
-    {
-        get;
-    }
+    public EntityAsset Asset { get; }
     /// <summary>The movement shape built once: feet at the origin, +X toward facing.</summary>
-    public IConvexShape2D MovementShape
-    {
-        get;
-    }
+    public IConvexShape2D MovementShape { get; }
     public string Id => Asset.Id;
     public string Name => Asset.Name;
-    public ResolvedModel Model
-    {
-        get;
-    }
-    public ControllerSpec Controller
-    {
-        get;
-    }
+    public ResolvedModel Model { get; }
+    public ControllerSpec Controller { get; }
     public IReadOnlyDictionary<string, RoleClip> Roles { get; private set; } = new Dictionary<string, RoleClip>();
     public IReadOnlyDictionary<string, ResolvedAction> Actions { get; private set; } = new Dictionary<string, ResolvedAction>();
     public IReadOnlyList<ResolvedEquipment> Equipment { get; private set; } = [];
@@ -378,8 +348,7 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
         var angle = SocketBaseAngle(socket);
         var origin = Local.Points[socket.Control] + PoseEvaluator.RotateXY(new(socket.OffsetX, socket.OffsetY, socket.OffsetZ), angle);
         var orientation = Local.SocketAngles.GetValueOrDefault(socket.Id);
-        var rotation = Matrix4x4.CreateRotationX(orientation.X) * Matrix4x4.CreateRotationY(orientation.Y)
-            * Matrix4x4.CreateRotationZ(angle + socket.Angle + orientation.Z);
+        var rotation = Matrix4x4.CreateRotationX(orientation.X) * Matrix4x4.CreateRotationY(orientation.Y) * Matrix4x4.CreateRotationZ(angle + socket.Angle + orientation.Z);
         Vector3 Direction(Vector3 v)
         {
             var d = Vector3.TransformNormal(v, rotation);

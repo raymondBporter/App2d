@@ -9,33 +9,15 @@ namespace App2d.Core.Characters.Authored;
 public sealed record ModelControl
 {
     public string Id { get; set; } = "";
-    public string? Parent
-    {
-        get; set;
-    }
-    public string? Name
-    {
-        get; set;
-    }
+    public string? Parent { get; set; }
+    public string? Name { get; set; }
     /// <summary>Explicit parent-local affine setup pose. Null keeps the existing model-space point-control convention.</summary>
-    public Affine2D? Transform
-    {
-        get; set;
-    }
-    public PuppetPoint Rest
-    {
-        get; set;
-    }
+    public Affine2D? Transform { get; set; }
+    public PuppetPoint Rest { get; set; }
     /// <summary>World XY direction of this bone in rest, in radians. Zero preserves the point-control convention.</summary>
-    public float RestAngle
-    {
-        get; set;
-    }
+    public float RestAngle { get; set; }
     /// <summary>Bone length along local +X. Zero is an ordinary point control.</summary>
-    public float Length
-    {
-        get; set;
-    }
+    public float Length { get; set; }
     public string Scale { get; set; } = CharacterModel.Unit;
 }
 
@@ -76,31 +58,13 @@ public sealed record ModelSocket
     public string Id { get; set; } = "";
     public string Control { get; set; } = "";
     /// <summary>The control whose rotation orients the socket. Null uses Control's own; locomotion keeps the screen axes.</summary>
-    public string? Frame
-    {
-        get; set;
-    }
+    public string? Frame { get; set; }
     /// <summary>When set, local +Y points from Control to this control in XY. Useful for clothing following a torso segment.</summary>
-    public string? Toward
-    {
-        get; set;
-    }
-    public float OffsetX
-    {
-        get; set;
-    }
-    public float OffsetY
-    {
-        get; set;
-    }
-    public float OffsetZ
-    {
-        get; set;
-    }
-    public float Angle
-    {
-        get; set;
-    }
+    public string? Toward { get; set; }
+    public float OffsetX { get; set; }
+    public float OffsetY { get; set; }
+    public float OffsetZ { get; set; }
+    public float Angle { get; set; }
 }
 
 /// <summary>Role-to-animation assignments, such as idle → person-idle. Sets may share clips; there is no set inheritance.</summary>

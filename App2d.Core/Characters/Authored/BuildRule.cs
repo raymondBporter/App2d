@@ -15,20 +15,13 @@ public sealed record BuildPreset(string Id, string Name, IReadOnlyDictionary<str
 /// </summary>
 public interface IBuildRule
 {
-    string Id
-    {
-        get;
-    }
-    IReadOnlyList<BuildValue> Values
-    {
-        get;
-    }
-    IReadOnlyList<BuildPreset> Presets
-    {
-        get;
-    }
+    string Id { get; }
+    IReadOnlyList<BuildValue> Values { get; }
+    IReadOnlyList<BuildPreset> Presets { get; }
+
     /// <summary>Throws when the model lacks a control or part the rule's geometry needs.</summary>
     void Check(CharacterModel model);
+
     /// <summary>Rewrites rest positions and parts in place. Missing values take their defaults.</summary>
     void Apply(CharacterModel model, IReadOnlyDictionary<string, float> values, Dictionary<string, Vector3> rest, List<PuppetPart> parts);
 }

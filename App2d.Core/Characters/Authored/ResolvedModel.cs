@@ -76,58 +76,23 @@ public sealed class ResolvedModel
         Measures = model.Measures.ToDictionary(m => m.Id, m => m.Path.Zip(m.Path.Skip(1)).Sum(p => Length(p.First, p.Second)), StringComparer.Ordinal);
     }
 
-    public CharacterModel Base
-    {
-        get;
-    }
-    public ModelVariant? Variant
-    {
-        get;
-    }
+    public CharacterModel Base { get; }
+    public ModelVariant? Variant { get; }
     public string Id => Variant?.Id ?? Base.Id;
-    public IReadOnlyDictionary<string, Vector3> Rest
-    {
-        get;
-    }
-    public IReadOnlyDictionary<string, Matrix3x2> RestTransforms
-    {
-        get;
-    }
-    public IReadOnlyDictionary<string, Affine2D> SetupTransforms
-    {
-        get;
-    }
+    public IReadOnlyDictionary<string, Vector3> Rest { get; }
+    public IReadOnlyDictionary<string, Matrix3x2> RestTransforms { get; }
+    public IReadOnlyDictionary<string, Affine2D> SetupTransforms { get; }
     public string TextureRoot { get; set; } = Environment.CurrentDirectory;
-    public IReadOnlyList<PuppetPart> Parts
-    {
-        get;
-    }
-    public IReadOnlyDictionary<string, float> Measures
-    {
-        get;
-    }
+    public IReadOnlyList<PuppetPart> Parts { get; }
+    public IReadOnlyDictionary<string, float> Measures { get; }
+
     /// <summary>Controls ordered so every parent precedes its children.</summary>
-    public IReadOnlyList<ModelControl> Order
-    {
-        get;
-    }
-    public IReadOnlyDictionary<string, ModelControl> Controls
-    {
-        get;
-    }
-    public IReadOnlyDictionary<string, ModelChain> Chains
-    {
-        get;
-    }
+    public IReadOnlyList<ModelControl> Order { get; }
+    public IReadOnlyDictionary<string, ModelControl> Controls { get; }
+    public IReadOnlyDictionary<string, ModelChain> Chains { get; }
     /// <summary>Point chains, followed by typed IK constraints, each in document order.</summary>
-    public IReadOnlyList<ModelChain> IkConstraints
-    {
-        get;
-    }
-    public IReadOnlyDictionary<string, IReadOnlyList<string>> Children
-    {
-        get;
-    }
+    public IReadOnlyList<ModelChain> IkConstraints { get; }
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> Children { get; }
 
     /// <summary>The top of the rest pose's visible shapes above the feet: the height a drawn size is fitted to.</summary>
     public float DrawnHeight()

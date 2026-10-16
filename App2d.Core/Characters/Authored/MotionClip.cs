@@ -7,49 +7,22 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>A keyed value at a time. Translate, target and travel keys use X/Y/Z; rotate keys use Angle (radians).</summary>
 public sealed record ClipKey
 {
-    public float Time
-    {
-        get; set;
-    }
-    public float X
-    {
-        get; set;
-    }
-    public float Y
-    {
-        get; set;
-    }
-    public float Z
-    {
-        get; set;
-    }
-    public float Angle
-    {
-        get; set;
-    }
+    public float Time { get; set; }
+    public float X { get; set; }
+    public float Y { get; set; }
+    public float Z { get; set; }
+    public float Angle { get; set; }
     /// <summary>How the value moves from this key to the next: see <see cref="ClipEase"/>.</summary>
     public string Ease { get; set; } = ClipEase.Linear;
-    public KeyCurve2D? Curve
-    {
-        get; set;
-    }
-    public KeyCurve2D? CurveY
-    {
-        get; set;
-    }
-    public KeyCurve2D? CurveZ
-    {
-        get; set;
-    }
+    public KeyCurve2D? Curve { get; set; }
+    public KeyCurve2D? CurveY { get; set; }
+    public KeyCurve2D? CurveZ { get; set; }
     /// <summary>
     /// Target keys only: which side the chain's joint bends to (1 or -1) from this key until the next key that sets one,
     /// such as an elbow or knee mirrored for a back view. Flip it where the limb passes straight so the change never
     /// shows. Null keeps the current side; before any key sets one, the chain's own bend applies.
     /// </summary>
-    public int? Bend
-    {
-        get; set;
-    }
+    public int? Bend { get; set; }
 }
 
 /// <summary>Per-key easing. Linear is the default; step holds the value until the next key.</summary>

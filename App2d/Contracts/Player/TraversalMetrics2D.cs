@@ -11,9 +11,7 @@ public sealed class TraversalMetrics2D
     {
     }
 
-    public static TraversalMetrics2D FromGeometry(
-        Vector2 visualSize, float footAnchorYFraction,
-        Vector2 standingColliderSize, float colliderCenterOffsetX)
+    public static TraversalMetrics2D FromGeometry(Vector2 visualSize, float footAnchorYFraction, Vector2 standingColliderSize, float colliderCenterOffsetX)
     {
         ArgGuard.ThrowIfNotFiniteOrNotPositive(visualSize);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(standingColliderSize);
@@ -29,31 +27,15 @@ public sealed class TraversalMetrics2D
     }
 
     public float TileSize { get; init; } = DesignUnit * 4f;
-    public Vector2 PlayerColliderSize
-    {
-        get; private init;
-    }
-    public float PlayerColliderCenterOffsetX
-    {
-        get; private init;
-    }
-    public Vector2 PlayerVisualSize
-    {
-        get; private init;
-    }
-    public float PlayerSpriteFootYFraction
-    {
-        get; private init;
-    }
-    public Vector2 PlayerVisualOffset => new(
-        0f,
-        PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) -
-        PlayerColliderSize.Y * 0.5f);
+    public Vector2 PlayerColliderSize { get; private init; }
+    public float PlayerColliderCenterOffsetX { get; private init; }
+    public Vector2 PlayerVisualSize { get; private init; }
+    public float PlayerSpriteFootYFraction { get; private init; }
+    public Vector2 PlayerVisualOffset => new(0f, PlayerVisualSize.Y * (PlayerSpriteFootYFraction - 0.5f) - PlayerColliderSize.Y * 0.5f);
+
     // Authored pistol socket (418, 206) in the 512px standing frame.
     // Load this configuration once; weapon simulation receives only the world offset.
-    public Vector2 GunMuzzleOffset => new(
-        (418f / 512f - 0.5f) * PlayerVisualSize.X,
-        (PlayerSpriteFootYFraction - 206f / 512f) * PlayerVisualSize.Y - PlayerColliderSize.Y * 0.5f);
+    public Vector2 GunMuzzleOffset => new((418f / 512f - 0.5f) * PlayerVisualSize.X, (PlayerSpriteFootYFraction - 206f / 512f) * PlayerVisualSize.Y - PlayerColliderSize.Y * 0.5f);
     public float RunSpeed { get; init; } = 430f;
     public float LadderClimbSpeed { get; init; } = 180f;
     public float LadderGrabGrace { get; init; } = DesignUnit;
@@ -137,10 +119,8 @@ public sealed class TraversalMetrics2D
     public float DashDuration { get; init; } = 0.16f;
     public float DashCooldown { get; init; } = 0.35f;
 
-    public int StandingPassageTiles =>
-        (int)MathF.Ceiling(PlayerColliderSize.Y / TileSize);
-    public float StandingClearance =>
-        StandingPassageTiles * TileSize - PlayerColliderSize.Y;
+    public int StandingPassageTiles => (int)MathF.Ceiling(PlayerColliderSize.Y / TileSize);
+    public float StandingClearance => StandingPassageTiles * TileSize - PlayerColliderSize.Y;
     public int ReliableJumpRiseTiles { get; init; } = 4;
 
     public void ValidateScaleContract()
@@ -166,30 +146,17 @@ public sealed class TraversalMetrics2D
         ArgGuard.ThrowIfNotFiniteOrNotPositive(DashDuration);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(DashCooldown);
         ArgGuard.ThrowIfNotFiniteOrNotPositive(MaximumFallSpeed);
-        StateGuard.ThrowIf(!float.IsFinite(FallDragStartFraction) || FallDragStartFraction <= 0f || FallDragStartFraction >= 0.95f,
-            "Fall drag must begin between zero and the hard-landing speed fraction (0.95).");
-        StateGuard.ThrowIf(
-            !NumericValidation.IsInOpenRange(BalanceOverhangFraction, 0f, 0.5f),
-            "The balance overhang must be a fraction between zero and one half.");
-
+        StateGuard.ThrowIf(!float.IsFinite(FallDragStartFraction) || FallDragStartFraction <= 0f || FallDragStartFraction >= 0.95f, "Fall drag must begin between zero and the hard-landing speed fraction (0.95).");
+        StateGuard.ThrowIf(!NumericValidation.IsInOpenRange(BalanceOverhangFraction, 0f, 0.5f), "The balance overhang must be a fraction between zero and one half.");
         StateGuard.ThrowIf(AirJumpSpeedMultiplier >= 1f, "The air-jump speed multiplier must be less than one.");
-        StateGuard.ThrowIf(
-            !NumericValidation.IsInOpenRange(PlayerSpriteFootYFraction, 0f, 1f),
-            "The player sprite foot anchor must be a fraction between zero and one.");
-
-        StateGuard.ThrowIf(
-            !IsDesignUnitMultiple(TileSize) ||
-            !IsHalfDesignUnitMultiple(PlayerColliderSize.Y),
+        StateGuard.ThrowIf(!NumericValidation.IsInOpenRange(PlayerSpriteFootYFraction, 0f, 1f), "The player sprite foot anchor must be a fraction between zero and one.");
+        StateGuard.ThrowIf(!IsDesignUnitMultiple(TileSize) || !IsHalfDesignUnitMultiple(PlayerColliderSize.Y),
             $"Tile and player collider heights must use half increments of the {DesignUnit:0}-unit design grid.");
         StateGuard.ThrowIf(StandingClearance < DesignUnit, $"The minimum whole-tile standing passage must leave at least {DesignUnit:0} units of clearance.");
-
         ArgGuard.ThrowIfNotFiniteOrNotPositive(ReliableJumpRiseTiles);
         var requiredJumpHeight = TileSize * ReliableJumpRiseTiles + DesignUnit;
         var standingJump = MeasureJump(0f);
-        StateGuard.ThrowIf(
-            standingJump.ApexHeight < requiredJumpHeight,
-            $"A held jump must clear {ReliableJumpRiseTiles} tiles plus " +
-            $"{DesignUnit:0} units of margin.");
+        StateGuard.ThrowIf(standingJump.ApexHeight < requiredJumpHeight, $"A held jump must clear {ReliableJumpRiseTiles} tiles plus {DesignUnit:0} units of margin.");
     }
 
     public JumpProfile2D MeasureJump(float initialHorizontalSpeed, float fixedDeltaSeconds = 1f / 120f)
@@ -274,8 +241,7 @@ public sealed class TraversalMetrics2D
         return MathF.Abs(increments - MathF.Round(increments)) < 0.001f;
     }
 
-    private static bool IsHalfDesignUnitMultiple(float value) =>
-        IsDesignUnitMultiple(value * 2f);
+    private static bool IsHalfDesignUnitMultiple(float value) => IsDesignUnitMultiple(value * 2f);
 }
 
 public readonly record struct JumpProfile2D(float ApexHeight, float TimeToApex, float Airtime, float HorizontalDistance);
