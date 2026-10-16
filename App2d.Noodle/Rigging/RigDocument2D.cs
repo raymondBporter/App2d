@@ -44,7 +44,7 @@ internal sealed class RigDocument2D
 
     public static Frame2D GetWorldFrame(RigBone2D bone)
     {
-        var local = Frame2D.FromRotation(MathF.PI / 180f * bone.AngleDegrees, new(bone.LocalX, bone.LocalY));
+        var local = Frame2D.FromRotation(float.DegreesToRadians(bone.AngleDegrees), new(bone.LocalX, bone.LocalY));
         return bone.Parent is null ? local : local.Then(GetWorldFrame(bone.Parent));
     }
 

@@ -57,7 +57,7 @@ internal static class RigAuthoredBridge2D
             Frame = bone,
             OffsetX = shape.LocalX * UnitsPerPixel,
             OffsetY = shape.LocalY * UnitsPerPixel,
-            Angle = MathF.PI / 180f * shape.AngleDegrees,
+            Angle = float.DegreesToRadians(shape.AngleDegrees),
             Material = new RenderMaterialDefinition2D
             {
                 Fill = $"#{shape.Color.R:x2}{shape.Color.G:x2}{shape.Color.B:x2}",

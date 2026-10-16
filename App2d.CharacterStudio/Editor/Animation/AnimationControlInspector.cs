@@ -37,10 +37,10 @@ internal sealed class AnimationControlInspector(EditorSession session)
             if (!boneIk)
             {
                 var rotate = new Channel(MotionClip.RotateKind, control);
-                var degrees = ClipAuthoring.Value(clip, rotate, time).Angle * 180 / MathF.PI;
+                var degrees = float.RadiansToDegrees(ClipAuthoring.Value(clip, rotate, time).Angle);
                 if (Ui.Drag("Rotation (degrees, turns children)", ref degrees, .5f, -720, 720))
                 {
-                    session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, degrees * MathF.PI / 180));
+                    session.Change(document, () => ClipAuthoring.SetKey(document.Asset, rotate, time, default, float.DegreesToRadians(degrees)));
                 }
             }
             else
@@ -66,12 +66,12 @@ internal sealed class AnimationControlInspector(EditorSession session)
                     var value = (axis == 0 ? delta.X : delta.Y) + (kind == MotionClip.ScaleKind ? 1 : 0);
                     if (kind == MotionClip.ShearKind)
                     {
-                        value *= 180 / MathF.PI;
+                        value = float.RadiansToDegrees(value);
                     }
 
                     if (Ui.Drag(label, ref value, .01f, -100, 100))
                     {
-                        var keyed = kind == MotionClip.ScaleKind ? value - 1 : value * MathF.PI / 180;
+                        var keyed = kind == MotionClip.ScaleKind ? value - 1 : float.DegreesToRadians(value);
                         session.Change(document, () => ClipAuthoring.SetComponentKey(document.Asset, channel, time, axis, keyed));
                     }
                 }

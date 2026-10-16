@@ -99,7 +99,7 @@ public sealed class PersonVariantMotionTests
         {
             var a = Vector2.Normalize(XY(pose.World(chain.Root) - pose.World(chain.Joint)));
             var b = Vector2.Normalize(XY(pose.World(chain.End) - pose.World(chain.Joint)));
-            return MathF.Acos(Math.Clamp(Vector2.Dot(a, b), -1, 1)) * 180 / MathF.PI;
+            return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector2.Dot(a, b), -1, 1)));
         }
         foreach (var build in new[] { "tall", "short" })
         {

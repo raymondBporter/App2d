@@ -230,7 +230,7 @@ internal sealed partial class ProofRenders
             var (Guard, Tip) = LabBlade(model, clip, t, props, sockets)!.Value;
             var forearm = p.Points["right-hand"] - p.Points["right-elbow"];
             var along = Tip - Guard;
-            return MathF.Abs(MathF.IEEERemainder(MathF.Atan2(along.Y, along.X) - MathF.Atan2(forearm.Y, forearm.X), MathF.Tau)) * 180 / MathF.PI;
+            return float.RadiansToDegrees(MathF.Abs(MathF.IEEERemainder(MathF.Atan2(along.Y, along.X) - MathF.Atan2(forearm.Y, forearm.X), MathF.Tau)));
         }).ToArray();
         // All out: the elbow's bend (0 = locked straight) at contact and in the held follow-through.
         float Bend(float t)
@@ -238,7 +238,7 @@ internal sealed partial class ProofRenders
             var p = PoseEvaluator.Sample(model, clip, MathF.Min(clip.Duration, t));
             var upper = p.Points["right-elbow"] - p.Points["right-shoulder"];
             var fore = p.Points["right-hand"] - p.Points["right-elbow"];
-            return MathF.Acos(Math.Clamp(Vector3.Dot(Vector3.Normalize(upper), Vector3.Normalize(fore)), -1, 1)) * 180 / MathF.PI;
+            return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector3.Dot(Vector3.Normalize(upper), Vector3.Normalize(fore)), -1, 1)));
         }
         // Reach: the first hit shape's extent from the feet (x forward, y up).
         var shape = shapes.FirstOrDefault().Hull;

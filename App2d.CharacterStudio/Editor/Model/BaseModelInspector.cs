@@ -71,11 +71,11 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                         () => ModelAuthoring.ResizeBone(document.Asset, id, length));
                 }
 
-                var degrees = control.RestAngle * 180f / MathF.PI;
+                var degrees = float.RadiansToDegrees(control.RestAngle);
                 if (Ui.Drag("Rest angle (degrees)", ref degrees, 1f, -360, 360))
                 {
                     session.Change(document,
-                        () => ModelAuthoring.RotateRestBone(document.Asset, id, degrees * MathF.PI / 180f));
+                        () => ModelAuthoring.RotateRestBone(document.Asset, id, float.DegreesToRadians(degrees)));
                 }
 
                 Ui.Help("The bone starts at this control and points along its local +X axis. Its children and attached shapes follow rotation.");
@@ -96,11 +96,11 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                 }
                 Number("Local X", transform.X, (t, v) => t.X = v);
                 Number("Local Y", transform.Y, (t, v) => t.Y = v);
-                Number("Local rotation (degrees)", transform.Rotation * 180 / MathF.PI, (t, v) => t.Rotation = v * MathF.PI / 180, -720, 720);
+                Number("Local rotation (degrees)", float.RadiansToDegrees(transform.Rotation), (t, v) => t.Rotation = float.DegreesToRadians(v), -720, 720);
                 Number("Scale X", transform.ScaleX, (t, v) => t.ScaleX = v);
                 Number("Scale Y", transform.ScaleY, (t, v) => t.ScaleY = v);
-                Number("Shear X (degrees)", transform.ShearX * 180 / MathF.PI, (t, v) => t.ShearX = v * MathF.PI / 180, -720, 720);
-                Number("Shear Y (degrees)", transform.ShearY * 180 / MathF.PI, (t, v) => t.ShearY = v * MathF.PI / 180, -720, 720);
+                Number("Shear X (degrees)", float.RadiansToDegrees(transform.ShearX), (t, v) => t.ShearX = float.DegreesToRadians(v), -720, 720);
+                Number("Shear Y (degrees)", float.RadiansToDegrees(transform.ShearY), (t, v) => t.ShearY = float.DegreesToRadians(v), -720, 720);
             }
 
             var children = session.MoveChildren;
@@ -255,10 +255,10 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
             if (part.Frame is not null)
             {
-                var degrees = part.Angle * 180f / MathF.PI;
+                var degrees = float.RadiansToDegrees(part.Angle);
                 if (Ui.Drag("Shape angle (degrees)", ref degrees, 1f, -360, 360))
                 {
-                    session.Change(document, () => Part(document, partId).Angle = degrees * MathF.PI / 180f);
+                    session.Change(document, () => Part(document, partId).Angle = float.DegreesToRadians(degrees));
                 }
                 if (part.Material?.Texture is { } texture)
                 {

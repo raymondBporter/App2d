@@ -299,7 +299,7 @@ internal sealed partial class ProofRenders
             var b = PoseEvaluator.Sample(model, clip, clip.Duration);
             seam = a.Points.Keys.Max(k => Vector3.Distance(a.Points[k] - a.Locomotion, b.Points[k] - b.Locomotion));
         }
-        return $"{item.Id}: contact residual {contact:F4}, frames overreaching {overreach}/{samples + 1}, shared turn offset (mean) {turnSum / (samples + 1) * 180 / MathF.PI:F2} deg, peak counter-rotation {swing * 180 / MathF.PI:F1} deg" +
+        return $"{item.Id}: contact residual {contact:F4}, frames overreaching {overreach}/{samples + 1}, shared turn offset (mean) {float.RadiansToDegrees(turnSum / (samples + 1)):F2} deg, peak counter-rotation {float.RadiansToDegrees(swing):F1} deg" +
             (clip.Loop ? $", loop seam {seam:F4}" : "");
     }
 }

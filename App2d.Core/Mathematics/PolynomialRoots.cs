@@ -69,6 +69,11 @@ public static class PolynomialRoots
             return 1;
         }
 
+        if (degree == 2)
+        {
+            return FindQuadratic(coefficients, minimum, maximum, roots);
+        }
+
         Span<double> derivative = stackalloc double[degree];
         for (var i = 1; i <= degree; i++)
         {
@@ -116,6 +121,83 @@ public static class PolynomialRoots
         }
 
         return count;
+    }
+
+    private static int FindQuadratic(ReadOnlySpan<double> coefficients, double minimum, double maximum, Span<double> roots)
+    {
+        // Derivative equations have their own scale, independent of the original cubic or quartic.
+        var scale = Math.Max(Math.Abs(coefficients[0]), Math.Max(Math.Abs(coefficients[1]), Math.Abs(coefficients[2])));
+        if (scale == 0d)
+        {
+            return 0;
+        }
+        var a = coefficients[2] / scale;
+        var b = coefficients[1] / scale;
+        var c = coefficients[0] / scale;
+        if (a == 0d)
+        {
+            return b == 0d ? 0 : Find(coefficients[..2], minimum, maximum, roots);
+        }
+
+        double first;
+        double second;
+        if (c == 0d)
+        {
+            // Factoring x avoids both division by zero and underflow of b*b for tiny nonzero roots.
+            first = 0d;
+            second = -b / a;
+        }
+        else
+        {
+            var product = 4d * a * c;
+            var productError = Math.FusedMultiplyAdd(4d * a, c, -product);
+            var discriminant = Math.FusedMultiplyAdd(b, b, -product) - productError;
+            var vertex = -.5d * b / a;
+            // Keep the numerical solver's repeated-root convention near a tangent.
+            if (Math.Abs(discriminant) <= EvaluationTolerance * (3d * b * b + Math.Abs(product)) &&
+                double.IsFinite(vertex) && Evaluate(coefficients, vertex, detectRepeatedRoot: true) == 0d)
+            {
+                first = second = vertex;
+            }
+            else
+            {
+                if (discriminant < 0d)
+                {
+                    return 0;
+                }
+                // Choose the sign that adds magnitudes; c/q recovers the root cancellation would lose.
+                var q = -.5d * (b + Math.CopySign(Math.Sqrt(discriminant), b));
+                first = q / a;
+                second = c / q;
+            }
+        }
+        if (first > second)
+        {
+            (first, second) = (second, first);
+        }
+        var count = 0;
+        AppendQuadraticRoot(coefficients, first, minimum, maximum, roots, ref count);
+        AppendQuadraticRoot(coefficients, second, minimum, maximum, roots, ref count);
+        return count;
+    }
+
+    private static void AppendQuadraticRoot(ReadOnlySpan<double> coefficients, double root, double minimum, double maximum, Span<double> roots, ref int count)
+    {
+        if (!double.IsFinite(root))
+        {
+            return;
+        }
+        if (root < minimum || root > maximum)
+        {
+            var boundary = root < minimum ? minimum : maximum;
+            if (Math.Abs(root - boundary) > EvaluationTolerance * Math.Max(Math.Abs(root), Math.Abs(boundary)) ||
+                Evaluate(coefficients, boundary, detectRepeatedRoot: true) != 0d)
+            {
+                return;
+            }
+            root = boundary;
+        }
+        Append(roots, ref count, root);
     }
 
     private static double Bisect(ReadOnlySpan<double> coefficients, double low, double high, double lowValue)

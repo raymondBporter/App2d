@@ -52,7 +52,7 @@ public sealed class NativeRigTests
         clip.Tracks =
         [
             new() { Kind = MotionClip.RotateKind, Target = "wheel-root", Keys =
-                [new() { Curve = new() { X1 = .2f, X2 = .8f, Y1 = 40 * MathF.PI / 180, Y2 = 140 * MathF.PI / 180, Absolute = true } }, new() { Time = 1, Angle = MathF.PI }] },
+                [new() { Curve = new() { X1 = .2f, X2 = .8f, Y1 = float.DegreesToRadians(40), Y2 = float.DegreesToRadians(140), Absolute = true } }, new() { Time = 1, Angle = MathF.PI }] },
             new() { Kind = MotionClip.ScaleKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, X = -.5f, Y = .5f }] },
             new() { Kind = MotionClip.ShearKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, X = MathF.PI / 18, Y = -MathF.PI / 9 }] },
             new() { Kind = MotionClip.TranslateKind, Target = "spoke-tip", SetupBeforeFirst = true, Keys = [new() { Time = .25f, X = .2f, Y = .1f }, new() { Time = 1, X = .3f, Y = .2f }] }
@@ -165,8 +165,8 @@ public sealed class NativeRigTests
             Rotation = setup.Rotation + MathF.PI,
             ScaleX = setup.ScaleX * .5f,
             ScaleY = setup.ScaleY * 1.5f,
-            ShearX = 10 * MathF.PI / 180,
-            ShearY = setup.ShearY - 20 * MathF.PI / 180
+            ShearX = float.DegreesToRadians(10),
+            ShearY = setup.ShearY - float.DegreesToRadians(20)
         };
         expected = Vector2.Transform(new(.7f, .25f), animated.Matrix);
         TestModels.Near(new(expected, 0), pose.World("spoke-tip"));

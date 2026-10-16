@@ -62,8 +62,8 @@ internal static class SwingLab
     {
         public static Vector3 Direction(float yaw, float dip)
         {
-            var (sy, cy) = MathF.SinCos(yaw * MathF.PI / 180);
-            var (sd, cd) = MathF.SinCos(dip * MathF.PI / 180);
+            var (sy, cy) = MathF.SinCos(float.DegreesToRadians(yaw));
+            var (sd, cd) = MathF.SinCos(float.DegreesToRadians(dip));
             return new(cy * cd, -sd, -sy * cd);
         }
     }
@@ -110,7 +110,7 @@ internal static class SwingLab
             var arm = Side.Direction(p.Arm, p.ArmDip) * _arm;
             var blade = Side.Direction(p.Blade, p.BladeDip);
             var angle = ContinueBlade(new Vector2(blade.X, blade.Y).AngleRadians);
-            var tilt = MathF.Asin(Math.Clamp(-blade.Z, -1, 1)) * 180 / MathF.PI;
+            var tilt = float.RadiansToDegrees(MathF.Asin(Math.Clamp(-blade.Z, -1, 1)));
             Builder.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(Builder.Model, p.Yaw).RightHand(arm.X, arm.Y).LeftHand(p.OffX, p.OffY).Blade(angle), ease);
             _orient.Add((time, p.Twist, tilt));
             return this;
@@ -136,7 +136,7 @@ internal static class SwingLab
             var clip = Builder.Build();
             foreach (var (time, twist, tilt) in _orient)
             {
-                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, PersonLoadout.SwordSocket), time, new Vector3(twist, tilt, 0) * (MathF.PI / 180));
+                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, PersonLoadout.SwordSocket), time, new Vector3(twist, tilt, 0).DegreesToRadians());
             }
 
             clip.Validate(Builder.Model);

@@ -63,7 +63,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         ArgGuard.ThrowIfNotFinite(origin);
         ArgGuard.ThrowIfNotFiniteOrZero(facing);
 
-        var angle = _angle * MathF.PI / 180f;
+        var angle = float.DegreesToRadians(_angle);
         var velocity = _speed * _traversal.TileSize * new Vector2(
             MathF.Cos(angle) * MathF.Sign(facing), MathF.Sin(angle));
         Reference = new Shot(origin, velocity, _referenceGravity * _traversal.TileSize);
@@ -107,7 +107,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         }
 
         var speed = reference.Velocity.Length() / _traversal.TileSize;
-        var angle = MathF.Atan2(reference.Velocity.Y, MathF.Abs(reference.Velocity.X)) * 180f / MathF.PI;
+        var angle = float.RadiansToDegrees(MathF.Atan2(reference.Velocity.Y, MathF.Abs(reference.Velocity.X)));
         renderer.DrawScreenLabel(
             $"F4 FIRE / F6 CLEAR | BALLISTICS {speed:0.0} tiles/s @ {angle:0} deg | 1 tile = 1 m (reference only)",
             new Vector2(24f, 220f));

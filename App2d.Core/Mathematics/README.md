@@ -7,7 +7,7 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Direction2D` | Finite unit vector with angle, perpendicular, reversal and signed scaling helpers |
 | `Polar2D` | Radius/angle value and direct polar/Cartesian conversions |
 | `Vector2Extensions` | `IsFinite()`, `AngleRadians`, `ToPolar()`, `Rotate()`, `RotateAround()`, cross products, three-point orientation, and perpendicular vectors |
-| `Vector3Extensions` | `IsFinite()` and `XY`, `XZ`, and `YZ` coordinate-plane projections |
+| `Vector3Extensions` | `IsFinite()`, componentwise `DegreesToRadians()` / `RadiansToDegrees()`, and `XY`, `XZ`, and `YZ` coordinate-plane projections |
 | `Vector4Extensions` | `IsFinite()` component query |
 | `Matrix3x2Extensions` | `IsFinite()` entry query and transpose direction transform |
 | `Rotation2D` | Rotate vectors or points about a pivot, solve a pivot from two endpoints and a turn, and interpolate an endpoint arc |
@@ -24,8 +24,13 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 `PolynomialRoots.FindRealRoots(coefficients, minimum, maximum, roots)` accepts coefficients in ascending order
 (`c0 + c1*x + ...`), writes sorted distinct roots, and returns their count. The output span needs at least the
 polynomial degree. Bounds are inclusive; repeated roots appear once. Nonzero constants have no roots, while
-the identically zero polynomial is rejected. Coefficients and bounds must be finite. The bounded derivative
-solver uses double arithmetic, so roots that cannot be distinguished within evaluation precision may merge.
+the identically zero polynomial is rejected. Coefficients and bounds must be finite. Linear and quadratic equations
+use direct formulas; the quadratic path avoids cancellation when the roots have very different magnitudes.
+Cubics and quartics use derivative isolation and bisection with double arithmetic. Roots that cannot be distinguished
+within evaluation precision may merge.
+
+For scalar angles, use .NET's `float.DegreesToRadians(value)` / `float.RadiansToDegrees(value)`
+(or the `double` equivalents). `Vector3` extensions convert every component with the same operations.
 
 Progress mapping files live in `Progress/`; affine, similarity, frame, rotation, and matrix helpers live in
 `Transforms/`. Their namespace remains `App2d.Core.Mathematics`.

@@ -364,7 +364,7 @@ internal sealed class AngeliaRig
     /// <summary>Clockwise rotation, matching AngeliA's sign.</summary>
     private static Vector2 Rot(Vector2 v, float degrees)
     {
-        var r = degrees * MathF.PI / 180;
+        var r = float.DegreesToRadians(degrees);
         var (s, c) = MathF.SinCos(r);
         return new(v.X * c + v.Y * s, -v.X * s + v.Y * c);
     }
@@ -421,7 +421,7 @@ internal sealed class AngeliaRig
                 var toFoot = foot - hip;
                 var d = Math.Clamp(toFoot.Length(), .01f, _upperLeg + _lowerLeg - .001f);
                 var cos = (_upperLeg * _upperLeg + d * d - _lowerLeg * _lowerLeg) / (2 * _upperLeg * d);
-                var bend = MathF.Acos(Math.Clamp(cos, -1, 1)) * 180 / MathF.PI;
+                var bend = float.RadiansToDegrees(MathF.Acos(Math.Clamp(cos, -1, 1)));
                 knee = hip + Rot(Vector2.Normalize(toFoot), -bend) * _upperLeg;
             }
             else

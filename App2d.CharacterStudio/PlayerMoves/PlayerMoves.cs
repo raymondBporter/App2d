@@ -528,7 +528,7 @@ internal static partial class PlayerMoves
     private static (Vector2 LeftShoulder, Vector2 RightShoulder, Vector2 LeftHip, Vector2 RightHip) Girdles(ResolvedModel m, float degrees)
     {
         const float shoulderHalf = .18f, hipHalf = .12f, setback = -.025f;
-        var a = degrees * MathF.PI / 180;
+        var a = float.DegreesToRadians(degrees);
         var axis = Polar2D.Direction(a);
         // The shoulders sit slightly behind the torso's centerline, along the facing direction (the axis turned back 90).
         var mid = axis.PerpCw * setback;
@@ -587,7 +587,7 @@ internal static partial class PlayerMoves
         }
         for (var step = 1; step <= 5; step++)
         {
-            var a = (-90 + 22.5f * step) * MathF.PI / 180;
+            var a = float.DegreesToRadians(-90 + 22.5f * step);
             var (sin, cos) = MathF.SinCos(a);
             b.Key(T(.15f + step * .07f / 6), k => k.LeftHand(.64f * cos, .64f * sin).RightHand(-.64f * cos, .64f * sin), ClipEase.Linear);
         }

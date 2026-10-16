@@ -74,8 +74,8 @@ internal static class RigAuthoredBridgeChecks2D
             Keys = [new ClipKey { Time = 0 }, new ClipKey { Time = 1, Angle = -.2f }]
         });
         clip.Validate(resolved);
-        root.AngleDegrees += .4f * 180 / MathF.PI;
-        child.AngleDegrees -= .2f * 180 / MathF.PI;
+        root.AngleDegrees += float.RadiansToDegrees(.4f);
+        child.AngleDegrees -= float.RadiansToDegrees(.2f);
         Compare(rig, resolved, PoseEvaluator.Sample(resolved, clip, 1));
         CheckSharedBoneIk();
     }
@@ -125,7 +125,7 @@ internal static class RigAuthoredBridgeChecks2D
             var frame = RigDocument2D.GetWorldTransform(shape.AttachedBone);
             var center = Vector2.Transform(new Vector2(shape.LocalX, shape.LocalY), frame);
             var up = Vector2.TransformNormal(Vector2.UnitY,
-                Matrix3x2.CreateRotation(MathF.PI / 180f * shape.AngleDegrees) * frame);
+                Matrix3x2.CreateRotation(float.DegreesToRadians(shape.AngleDegrees)) * frame);
             var id = $"part-{shape.Id}";
             var part = model.Parts.Single(p => p.Id == id);
             var authored = PartAttachment2D.FrameOf(part, pose.World, control => pose.Angles[control]);

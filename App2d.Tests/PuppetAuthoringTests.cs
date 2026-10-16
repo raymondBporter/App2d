@@ -125,7 +125,7 @@ public sealed class PuppetAuthoringTests
             {
                 var thigh = Vector3.Normalize(pose.Points[side + "-hip"] - pose.Points[side + "-knee"]);
                 var shin = Vector3.Normalize(pose.Points[side + "-foot"] - pose.Points[side + "-knee"]);
-                return MathF.Acos(Math.Clamp(Vector3.Dot(thigh, shin), -1, 1)) * 180 / MathF.PI;
+                return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector3.Dot(thigh, shin), -1, 1)));
             }
             Assert.InRange(KneeAngle(support), 165, 178);
             Assert.InRange(KneeAngle(swing), 90, 145);

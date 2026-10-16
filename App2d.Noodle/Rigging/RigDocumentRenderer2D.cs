@@ -44,7 +44,7 @@ internal static class RigDocumentRenderer2D
         var item = new WorldObject2D(geometry, new SolidColorShader(color));
         var boneFrame = RigDocument2D.GetWorldFrame(shape.AttachedBone);
         item.Transform.Position = boneFrame.TransformPoint(new(shape.LocalX, shape.LocalY));
-        item.Transform.Rotation = boneFrame.XAxis.AngleRadians + MathF.PI / 180f * shape.AngleDegrees;
+        item.Transform.Rotation = boneFrame.XAxis.AngleRadians + float.DegreesToRadians(shape.AngleDegrees);
         renderer.Draw(item);
 
         if (shape.Purpose != RigShapePurpose.Visual)

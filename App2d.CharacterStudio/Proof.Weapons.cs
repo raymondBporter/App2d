@@ -24,7 +24,7 @@ internal sealed partial class ProofRenders
             {
                 drawing.Mesh.Clear();
                 var (twist, tilt) = angles[column];
-                var rotation = Matrix4x4.CreateRotationX(twist * MathF.PI / 180) * Matrix4x4.CreateRotationY(tilt * MathF.PI / 180);
+                var rotation = Matrix4x4.CreateRotationX(float.DegreesToRadians(twist)) * Matrix4x4.CreateRotationY(float.DegreesToRadians(tilt));
                 drawing.AddProp(catalog.Props[props[row]], new(Vector3.Zero, Vector3.Transform(Vector3.UnitX, rotation), Vector3.Transform(Vector3.UnitY, rotation), Vector3.Transform(Vector3.UnitZ, rotation)));
                 _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(1200, 750, new(column * 200 + 65, row * 150 + 75), 90), Matrix.Identity);
             }

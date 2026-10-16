@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Mathematics;
 using ImGuiNET;
 using System.Numerics;
 
@@ -70,13 +71,13 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
             session.AutoKey = autokey;
         }
 
-        var degrees = angles * (180 / MathF.PI);
+        var degrees = angles.RadiansToDegrees();
         var changed = Ui.Drag("Turn (degrees)", ref degrees.Z, .5f, -2880, 2880, "%.1f");
         changed |= Ui.Drag("Tilt (degrees)", ref degrees.Y, .5f, -180, 180, "%.1f");
         changed |= Ui.Drag("Twist (degrees)", ref degrees.X, .5f, -2880, 2880, "%.1f");
         if (changed)
         {
-            session.PoseWeapon(degrees * (MathF.PI / 180));
+            session.PoseWeapon(degrees.DegreesToRadians());
         }
 
         if (ImGui.Button("Broadside"))

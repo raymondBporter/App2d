@@ -14,7 +14,7 @@ public sealed class Polar2DTests
     [InlineData(450, 0, 1)]
     public void DirectionsFollowYUpCounterClockwiseConvention(float degrees, float x, float y)
     {
-        var radians = degrees * MathF.PI / 180f;
+        var radians = float.DegreesToRadians(degrees);
         AssertClose(new(x, y), Polar2D.Direction(radians));
         AssertClose(new Vector2(x, y) * 7f, Polar2D.ToCartesian(7, radians));
     }

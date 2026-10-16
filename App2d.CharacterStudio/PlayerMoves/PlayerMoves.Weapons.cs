@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Mathematics;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.PlayerMoves;
@@ -13,7 +14,7 @@ internal static partial class PlayerMoves
             clip.Tracks.RemoveAll(t => t.Kind == MotionClip.OrientKind && t.Target == socket);
             foreach (var (time, twist, tilt) in keys)
             {
-                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, socket), time, new Vector3(twist, tilt, 0) * (MathF.PI / 180));
+                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, socket), time, new Vector3(twist, tilt, 0).DegreesToRadians());
             }
         }
         switch (clip.Id)
