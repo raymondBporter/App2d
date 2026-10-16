@@ -118,14 +118,14 @@ public sealed class ArgGuardTests
     }
 
     [Fact]
-    public void RayLimitsStillAllowInfinityAndCompatibilityAliasesRemainFinite()
+    public void RayLimitsAllowInfinityAndFiniteGuardsRejectIt()
     {
         ArgGuard.ThrowIfNegativeOrNaN(float.PositiveInfinity);
         ArgGuard.ThrowIfNegativeOrNaN(0f);
         Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNegativeOrNaN(float.NaN));
         Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNegativeOrNaN(float.NegativeInfinity));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNegativeOrNotFinite(float.PositiveInfinity));
-        Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotPositiveFiniteValue(float.PositiveInfinity));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrNegative(float.PositiveInfinity));
+        Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.ThrowIfNotFiniteOrNotPositive(float.PositiveInfinity));
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public sealed class ArgGuardTests
         Assert.Throws<ArgumentNullException>(() => ArgGuard.RequireNotNull(text));
         Assert.Throws<ArgumentNullException>(() => ArgGuard.RequireNotNullOrWhiteSpace(text));
         text = " ";
-        Assert.Equal(nameof(text), Assert.Throws<ArgumentException>(() => ArgGuard.RequireNotNullOrWhitespace(text)).ParamName);
+        Assert.Equal(nameof(text), Assert.Throws<ArgumentException>(() => ArgGuard.RequireNotNullOrWhiteSpace(text)).ParamName);
         text = "valid";
         ArgGuard.ThrowIfNullOrWhiteSpace(text);
         Assert.Equal(5, text.Length); // The guard preserves nullable flow analysis.

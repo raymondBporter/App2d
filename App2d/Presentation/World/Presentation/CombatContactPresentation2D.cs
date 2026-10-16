@@ -50,7 +50,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
 
     public void Advance(float dt)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(dt);
+        ArgGuard.ThrowIfNotFiniteOrNegative(dt);
         foreach (var burst in _bursts)
         {
             burst.Age += dt;

@@ -48,14 +48,9 @@ public readonly record struct Ray2D : IGeometry2D
     public Vector2 PointAt(float t)
     {
         Validate();
-        ArgGuard.ThrowIfNegativeOrNotFinite(t);
+        ArgGuard.ThrowIfNotFiniteOrNegative(t);
         return Origin + Direction * t;
     }
-
-    /// <summary>Alias for <see cref="PointAt"/>.</summary>
-    /// <param name="distance">A finite, nonnegative distance from the origin.</param>
-    /// <returns>The point at that distance.</returns>
-    public Vector2 GetPoint(float distance) => PointAt(distance);
 
     /// <summary>The closest point on the ray to a point, clamped at the origin.</summary>
     /// <param name="point">The finite query point.</param>
@@ -78,7 +73,7 @@ public readonly record struct Ray2D : IGeometry2D
     /// <returns>True when the point lies within the tolerance of the ray.</returns>
     public bool ContainsPoint(Vector2 point, float tolerance)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(tolerance);
+        ArgGuard.ThrowIfNotFiniteOrNegative(tolerance);
         return LinearGeometry2D.Distance(point, Origin, Direction, forwardOnly: true) <= tolerance;
     }
 

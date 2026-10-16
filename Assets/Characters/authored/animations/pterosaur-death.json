@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "pterosaur-death",
   "name": "Pterosaur / death",
   "model": "pterosaur",
@@ -15,9 +15,7 @@
       "kind": "rotate",
       "target": "body",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.24,
           "angle": 1.8
@@ -32,9 +30,7 @@
       "kind": "rotate",
       "target": "near-shoulder",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.24,
           "angle": -0.8
@@ -49,9 +45,7 @@
       "kind": "rotate",
       "target": "far-shoulder",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.24,
           "angle": 0.8
@@ -66,9 +60,7 @@
       "kind": "rotate",
       "target": "near-bend",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.24,
           "angle": -0.5
@@ -83,9 +75,7 @@
       "kind": "rotate",
       "target": "far-bend",
       "keys": [
-        {
-          "time": 0
-        },
+        {},
         {
           "time": 0.24,
           "angle": 0.5
@@ -100,5 +90,8 @@
   "contacts": [],
   "markers": [],
   "faces": [],
-  "loop": false
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

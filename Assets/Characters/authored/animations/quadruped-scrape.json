@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "quadruped-scrape",
   "name": "Quadruped \u00B7 scrape",
   "model": "quadruped",
@@ -73,5 +73,9 @@
       "time": 0.45
     }
   ],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

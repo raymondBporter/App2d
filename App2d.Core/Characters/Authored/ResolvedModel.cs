@@ -119,7 +119,7 @@ public sealed class ResolvedModel
     {
         get;
     }
-    /// <summary>Legacy point chains, followed by typed IK constraints, each in document order.</summary>
+    /// <summary>Point chains, followed by typed IK constraints, each in document order.</summary>
     public IReadOnlyList<ModelChain> IkConstraints
     {
         get;

@@ -13,19 +13,19 @@ namespace App2d.Tests.Authored;
 public sealed class RenderMaterialDefinition2DTests
 {
     [Fact]
-    public void ModelWritesMaterialsAndLegacyAppearanceStillLoads()
+    public void ModelWritesAndReadsTypedMaterials()
     {
         var model = PersonTemplate.Model();
-        var oldJson = JsonSerializer.Serialize(model, AuthoredJson.Options);
-        var migrated = CharacterModel.FromJson(oldJson).ToJson();
-        using var document = JsonDocument.Parse(migrated);
+        var json = JsonSerializer.Serialize(model, AuthoredJson.Options);
+        var restored = CharacterModel.FromJson(json).ToJson();
+        using var document = JsonDocument.Parse(restored);
         var body = document.RootElement
             .GetProperty("parts")
             .EnumerateArray()
             .Single(part => part.GetProperty("id").GetString() == "body");
         Assert.False(body.TryGetProperty("fill", out _));
         Assert.Equal("#d8e9db", body.GetProperty("material").GetProperty("fill").GetString());
-        Assert.Equal(migrated, CharacterModel.FromJson(migrated).ToJson());
+        Assert.Equal(restored, CharacterModel.FromJson(restored).ToJson());
     }
 
     [Fact]

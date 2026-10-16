@@ -5,6 +5,7 @@ using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.World.Vegetation;
 using System.Collections.Immutable;
+using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
@@ -45,7 +46,7 @@ public sealed partial class SideScrollerLevel2D
                 var body = environment.Physics.AddBody(platform, BodyMotionType2D.Static);
                 body.CollisionLayer = environment.WorldLayer;
                 body.CollisionMask = environment.PlayerLayer | environment.EnemyLayer;
-                body.IsOneWayPlatform = true;
+                body.OneWaySurfaceNormal = Vector2.UnitY;
                 body.Restitution = 0;
                 _giantTreeBranches.Add(body);
             }

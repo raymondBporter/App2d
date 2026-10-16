@@ -10,7 +10,6 @@ All types remain in `App2d.Core`. Numeric rules are independent of throwing, so 
 | `ArgGuard.Vectors.cs` | Vector overloads with explicit component-wise comparisons |
 | `ArgGuard.Matrices.cs` | `Matrix3x2` finiteness guard |
 | `ArgGuard.Exceptions.cs` | Shared throw helpers, messages and fresh exception factories |
-| `ArgGuard.Compatibility.cs` | Forwarding aliases for previous spellings |
 | `StateGuard.cs` | Invalid engine state, reported as `InvalidOperationException` |
 
 ```csharp
@@ -46,7 +45,7 @@ Use `ThrowIfNotFiniteOr...` for finite floating-point inputs. Each finite varian
 Vector and matrix finiteness predicates delegate to the `IsFinite()` extensions in `App2d.Core.Mathematics`.
 The matrix guard accepts finite singular matrices and reports the caller's parameter name and rejected matrix.
 
-Plain relational operators follow normal floating-point rules: for example, `NaN < limit` is false, and positive infinity is positive. A plain comparison is not a finiteness check. Existing callers that previously got implicit finite checks from `ThrowIfNotPositive`, comparison or range guards have been migrated to the explicit finite variants. `ThrowIfNegativeOrNotFinite` and `ThrowIfNotPositiveFiniteValue` remain forwarding aliases with their previous finite policy.
+Plain relational operators follow normal floating-point rules: for example, `NaN < limit` is false, and positive infinity is positive. A plain comparison is not a finiteness check. Use the explicit finite variants wherever infinity or NaN is invalid.
 
 Ray lengths intentionally allow positive infinity: use `ThrowIfNegativeOrNaN`. Unbounded rectangle and constraint sentinels likewise keep their specific policies; do not replace these with a finite-only guard.
 

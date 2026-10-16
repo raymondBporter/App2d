@@ -309,7 +309,7 @@ Bodies support static, kinematic, and dynamic motion; linear/angular velocity; f
 torque, and impulses; mass and inertia; gravity scaling; restitution; sensors; and
 collision layers/masks. A body can set `OneWaySurfaceNormal` to the outward normal
 of its blocking face (`+Y` for a floor, `+X` for a wall). Contacts from other faces
-or from bodies passing through are ignored. `IsOneWayPlatform` is a `+Y` shorthand.
+or from bodies passing through are ignored. Use `Vector2.UnitY` for a one-way floor.
 Accumulated forces clear after a public step. The latest contacts remain available
 through `LastContacts`, `IsTouching(body)`, and directional `IsTouching(body, direction)`.
 

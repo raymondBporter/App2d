@@ -191,7 +191,6 @@ public sealed class PropAsset
     internal string ToSnapshotJson() => JsonSerializer.Serialize(this, AuthoredJson.SnapshotOptions);
     internal static PropAsset FromDraftJson(string json)
     {
-        RequireTypedJson(json);
         var prop = AuthoredAsset.Parse<PropAsset>(json, "prop");
         if (prop.Shapes is not null)
         {
@@ -230,38 +229,6 @@ public sealed class PropAsset
         return prop;
     }
 
-    private static void RequireTypedJson(string json)
-    {
-        using var document = JsonDocument.Parse(json);
-        foreach (var group in document.RootElement.EnumerateObject())
-        {
-            if (group.Value.ValueKind != JsonValueKind.Array ||
-                !group.Name.Equals("shapes", StringComparison.OrdinalIgnoreCase) &&
-                !group.Name.Equals("solids", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            foreach (var item in group.Value.EnumerateArray())
-            {
-                if (item.ValueKind != JsonValueKind.Object)
-                {
-                    continue;
-                }
-
-                foreach (var field in item.EnumerateObject())
-                {
-                    if (field.Name.Equals("kind", StringComparison.OrdinalIgnoreCase) ||
-                        field.Name.Equals("points", StringComparison.OrdinalIgnoreCase) ||
-                        field.Name.Equals("fill", StringComparison.OrdinalIgnoreCase) ||
-                        field.Name.Equals("outlined", StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new JsonException($"Prop field '{field.Name}' is from the old drawing format; use geometry and material.");
-                    }
-                }
-            }
-        }
-    }
     public void Save(string path)
     {
         Validate();

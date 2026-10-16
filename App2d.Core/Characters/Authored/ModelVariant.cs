@@ -125,11 +125,6 @@ public sealed class ModelVariant
     public static ModelVariant FromJson(string json)
     {
         var variant = AuthoredAsset.Parse<ModelVariant>(json, "variant");
-        if (variant.Version == 2)
-        {
-            variant.Version = CurrentVersion;
-        }
-
         variant.Validate();
         return variant;
     }

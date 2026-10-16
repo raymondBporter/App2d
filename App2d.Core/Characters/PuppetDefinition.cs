@@ -59,7 +59,6 @@ public sealed record PartPaint
     {
         get; set;
     }
-    [JsonConverter(typeof(PartPaintPointsJsonConverter))]
     public List<Vector2> Points { get; set; } = [];
 
     public static void Check(IReadOnlyList<PartPaint>? paint)
@@ -389,7 +388,6 @@ public sealed class PuppetDefinition
     public string ToJson() => PartAssetJson.Write(this, Parts, JsonOptions);
     public static PuppetDefinition FromJson(string json)
     {
-        PartAssetJson.RequireTypedJson(json);
         var definition = JsonSerializer.Deserialize<PuppetDefinition>(json, JsonOptions) ?? throw new InvalidDataException("Empty puppet file.");
         definition.Validate();
         return definition;

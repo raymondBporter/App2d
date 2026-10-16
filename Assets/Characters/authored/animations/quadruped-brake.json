@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "quadruped-brake",
   "name": "Quadruped \u00B7 brake",
   "model": "quadruped",
@@ -129,5 +129,9 @@
       "time": 0.3
     }
   ],
-  "faces": []
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

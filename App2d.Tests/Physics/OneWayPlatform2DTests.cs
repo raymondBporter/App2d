@@ -192,7 +192,7 @@ public sealed class OneWayPlatform2DTests
         var platform = world.AddBody(
             platformObject,
             BodyMotionType2D.Static);
-        platform.IsOneWayPlatform = true;
+        platform.OneWaySurfaceNormal = Vector2.UnitY;
         platform.Restitution = 0f;
         return platform;
     }

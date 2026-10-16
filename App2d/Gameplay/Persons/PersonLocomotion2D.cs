@@ -486,7 +486,7 @@ public sealed partial class PersonLocomotion2D
             if (collider.UserData is not PhysicsBody2D other ||
                 ReferenceEquals(other, _body) ||
                 other.MotionType == BodyMotionType2D.Dynamic ||
-                other.IsOneWayPlatform ||
+                other.OneWaySurfaceNormal == Vector2.UnitY ||
                 !other.IsWallGrippable ||
                 other.IsSensor ||
                 !_body.CanCollideWith(other))
@@ -634,7 +634,7 @@ public sealed partial class PersonLocomotion2D
                 continue;
             }
 
-            if (!other.IsOneWayPlatform)
+            if (other.OneWaySurfaceNormal != Vector2.UnitY)
             {
                 return false;
             }
@@ -850,7 +850,7 @@ public sealed partial class PersonLocomotion2D
                 }
 
                 if (ReferenceEquals(other, _body) ||
-                    other.IsOneWayPlatform ||
+                    other.OneWaySurfaceNormal == Vector2.UnitY ||
                     other.IsSensor ||
                     !_body.CanCollideWith(other))
                 {

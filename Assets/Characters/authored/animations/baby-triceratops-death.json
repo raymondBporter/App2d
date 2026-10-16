@@ -1,6 +1,6 @@
 {
   "format": "app2d-clip",
-  "version": 1,
+  "version": 3,
   "id": "baby-triceratops-death",
   "name": "Baby triceratops / death",
   "model": "baby-triceratops-rig",
@@ -16,44 +16,46 @@
       "target": "body",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
           "time": 0.32,
-          "ease": "smooth",
-          "angle": 0.12
+          "angle": 0.12,
+          "ease": "smooth"
         },
         {
           "time": 0.8,
-          "ease": "smooth",
-          "angle": 0.12
+          "angle": 0.12,
+          "ease": "smooth"
         }
       ]
     },
     {
-      "kind": "translate",
       "target": "body",
       "keys": [
         {
-          "time": 0,
           "ease": "smooth"
         },
         {
           "time": 0.32,
-          "ease": "smooth",
           "x": -0.08,
-          "y": -0.35
+          "y": -0.35,
+          "ease": "smooth"
         },
         {
           "time": 0.8,
-          "ease": "smooth",
           "x": -0.08,
-          "y": -0.35
+          "y": -0.35,
+          "ease": "smooth"
         }
       ]
     }
   ],
   "contacts": [],
-  "markers": []
+  "markers": [],
+  "faces": [],
+  "attachments": [],
+  "colors": [],
+  "drawOrder": [],
+  "events": []
 }

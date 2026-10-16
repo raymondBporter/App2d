@@ -6,7 +6,7 @@ Keep the existing authored pipeline and make its remaining assumptions explicit.
 
 ## What exists
 
-Before these changes, `Assets/Characters/authored` contained 5 models, 7 variants, 73 animations, 26 props and 10 entities. All five shipped models use point controls and IK chains. Their version 2 files are unchanged; the loader now adapts versions 2 and 3 to version 4 in memory. The affine/bone and image-slot paths are also implemented and tested, but none of those five models uses them.
+The authored library uses model format 4, clip format 3, variant format 3, entity format 2, prop format 2 and template format 1. The 2026-10-15 cleanup converted the 95 older model, clip and variant files once and removed automatic format upgrades. Paint coordinates are XY only. Point controls and IK chains remain native rig features alongside explicit bone frames and image slots.
 
 | Concern | Current implementation | Remaining boundary |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ This change does not replace the old content-generation commands. `PersonTemplat
 
 ## Second migration: typed IK and contact evaluation
 
-Model format **4** adds `constraints`. Formats 2 and 3 upgrade in memory when loaded. Saving a document writes the current format; loading does not rewrite files. The existing `chains` collection remains supported for point IK, and old animation `target` tracks and `contacts` keep their IDs and meanings. Recipes copy the new constraints along with their clips.
+Model format **4** includes `constraints`. Loading requires the current format, and saving writes it. The `chains` collection supplies point IK; animation `target` tracks and `contacts` keep their IDs and meanings. Recipes copy constraints along with their clips.
 
 For example, this complete minimal model is a machine linkage with two rigid segments and an endpoint:
 

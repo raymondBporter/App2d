@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 2,
+  "version": 3,
   "id": "brute",
   "name": "Brute",
   "base": "person",

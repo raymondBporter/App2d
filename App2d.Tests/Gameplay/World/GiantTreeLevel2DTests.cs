@@ -109,7 +109,7 @@ public sealed class GiantTreeLevel2DTests
             Assert.InRange(Vector2.Distance(expected.Min, actual.Min), 0, 0.001f);
             Assert.InRange(Vector2.Distance(expected.Max, actual.Max), 0, 0.001f);
         }
-        Assert.All(level.GiantTreeBranches, body => Assert.True(body.IsOneWayPlatform));
+        Assert.All(level.GiantTreeBranches, body => Assert.Equal(Vector2.UnitY, body.OneWaySurfaceNormal));
         level.ReloadGiantTrees([]);
         Assert.Empty(physics.Bodies);
         Assert.Empty(level.CaptureContent().GiantTrees);

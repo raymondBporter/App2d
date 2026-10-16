@@ -54,7 +54,7 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
 
     public void Update(LevelContent2D content, Vector2 playerPosition, float deltaSeconds)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(deltaSeconds);
+        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
         CurrentZone = WorldZone2D.FindAt(content.Zones.AsSpan(), playerPosition);
         var authored = soundtrack.ForZone(CurrentZone);
         var desired = new MusicSelection2D(

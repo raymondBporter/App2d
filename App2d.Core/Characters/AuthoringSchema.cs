@@ -55,7 +55,18 @@ public static class AuthoredJson
     private static JsonSerializerOptions Create(bool strict, bool compactExtrusions)
     {
         var resolver = new DefaultJsonTypeInfoResolver();
-        resolver.Modifiers.Add(info => OmitDefaults(info, compactExtrusions));
+        resolver.Modifiers.Add(info =>
+        {
+            // Runtime-only members are outside the file schema, including when checking unknown input fields.
+            for (var i = info.Properties.Count - 1; i >= 0; i--)
+            {
+                if (info.Properties[i].Get is null && info.Properties[i].Set is null)
+                {
+                    info.Properties.RemoveAt(i);
+                }
+            }
+            OmitDefaults(info, compactExtrusions);
+        });
         return new()
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

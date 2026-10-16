@@ -36,14 +36,11 @@ public sealed class SlotTimelineTests
         Assert.Equal(clip.ToJson(), restored.ToJson());
     }
 
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    public void OlderClipsUpgradeWithoutInventingAppearanceKeys(int version)
+    [Fact]
+    public void CurrentClipsCanOmitOptionalAppearanceKeys()
     {
         var (_, clip) = Scene();
         var json = JsonNode.Parse(clip.ToJson())!;
-        json["version"] = version;
         json.AsObject().Remove("colors");
         var restored = MotionClip.FromJson(json.ToJsonString());
         Assert.Equal(MotionClip.CurrentVersion, restored.Version);

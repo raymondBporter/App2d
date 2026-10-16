@@ -268,29 +268,39 @@ public sealed class NativeRigTests
         TestModels.Near(initial.Rest["spoke-tip"], PoseEvaluator.Rest(ResolvedModel.From(source.Model, variant)).World("spoke-tip"));
     }
 
-    [Fact]
-    public void PreviousNativeFormatsUpgradeWithoutChangingPointRigBehavior()
+    [Theory]
+    [InlineData("model", 2)]
+    [InlineData("model", 3)]
+    [InlineData("clip", 1)]
+    [InlineData("clip", 2)]
+    [InlineData("variant", 2)]
+    public void PreviousNativeFormatsAreRejected(string kind, int version)
     {
         var source = TestModels.Creature();
-        var node = JsonNode.Parse(source.ToJson())!;
-        node["version"] = 2;
-        var loaded = CharacterModel.FromJson(node.ToJsonString());
-        Assert.Equal(CharacterModel.CurrentVersion, loaded.Version);
-        var clip = TestModels.Clip(ResolvedModel.From(source));
-        node = JsonNode.Parse(clip.ToJson())!;
-        node["version"] = 1;
-        var motion = MotionClip.FromJson(node.ToJsonString());
-        Assert.Equal(MotionClip.CurrentVersion, motion.Version);
-        var a = PoseEvaluator.Sample(ResolvedModel.From(source), clip, .5);
-        var b = PoseEvaluator.Sample(ResolvedModel.From(loaded), motion, .5);
-        foreach (var control in source.Controls)
+        var json = kind switch
         {
-            TestModels.Near(a.World(control.Id), b.World(control.Id));
-        }
-
-        node = JsonNode.Parse(new ModelVariant { Id = "other", Name = "Other", Base = source.Id }.ToJson())!;
-        node["version"] = 2;
-        Assert.Equal(ModelVariant.CurrentVersion, ModelVariant.FromJson(node.ToJsonString()).Version);
+            "model" => source.ToJson(),
+            "clip" => TestModels.Clip(ResolvedModel.From(source)).ToJson(),
+            _ => new ModelVariant { Id = "other", Name = "Other", Base = source.Id }.ToJson()
+        };
+        var node = JsonNode.Parse(json)!;
+        node["version"] = version;
+        var error = Assert.Throws<InvalidDataException>(() =>
+        {
+            switch (kind)
+            {
+                case "model":
+                    CharacterModel.FromJson(node.ToJsonString());
+                    break;
+                case "clip":
+                    MotionClip.FromJson(node.ToJsonString());
+                    break;
+                default:
+                    ModelVariant.FromJson(node.ToJsonString());
+                    break;
+            }
+        });
+        Assert.Contains("unsupported format/version", error.Message);
     }
 
     private static void MatrixNear(Matrix3x2 a, Matrix3x2 b)

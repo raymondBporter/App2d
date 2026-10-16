@@ -303,7 +303,7 @@ public sealed class RigConstraintTests
     }
 
     [Fact]
-    public void SchemaIsStrictAndLegacyVersionsUpgradeWithoutCreatingConstraints()
+    public void ConstraintSchemaIsStrictAndPreservesTypedDefinitions()
     {
         var json = Machine().ToJson();
         Assert.Contains("\"kind\": \"two-bone-ik\"", json);
@@ -313,14 +313,6 @@ public sealed class RigConstraintTests
         Assert.Equal("reach", CharacterModel.FromJson(reordered).Constraints.Single().Id);
         Assert.Throws<JsonException>(() => CharacterModel.FromJson(json.Replace("two-bone-ik", "unknown-solver")));
         Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(json.Replace("\"solver\": \"bone\"", "\"solver\": \"mystery\"")));
-        foreach (var version in new[] { 2, 3 })
-        {
-            var old = TestModels.Creature().ToJson().Replace($"\"version\": {CharacterModel.CurrentVersion}", $"\"version\": {version}");
-            var loaded = CharacterModel.FromJson(old);
-            Assert.Equal(CharacterModel.CurrentVersion, loaded.Version);
-            Assert.Empty(loaded.Constraints);
-            Assert.Equal(2, loaded.Chains.Count);
-        }
         var duplicate = TestModels.Creature();
         duplicate.Constraints.Add(duplicate.Chains[0] with
         {

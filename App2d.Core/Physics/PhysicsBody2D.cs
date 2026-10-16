@@ -129,12 +129,6 @@ public sealed partial class PhysicsBody2D
         }
     }
 
-    /// <summary>Compatibility shorthand for a one-way floor facing +Y.</summary>
-    public bool IsOneWayPlatform
-    {
-        get => _oneWaySurfaceNormal == Vector2.UnitY;
-        set => OneWaySurfaceNormal = value ? Vector2.UnitY : null;
-    }
     /// <summary>
     /// When kinematic, transfer this body's tangential step displacement and
     /// supporting normal velocity to dynamic bodies from the previous contact step.

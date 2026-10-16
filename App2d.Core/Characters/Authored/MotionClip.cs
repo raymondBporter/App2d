@@ -172,11 +172,6 @@ public sealed class MotionClip
     public static MotionClip FromJson(string json)
     {
         var clip = AuthoredAsset.Parse<MotionClip>(json, "clip");
-        if (clip.Version is 1 or 2)
-        {
-            clip.Version = CurrentVersion;
-        }
-
         clip.Validate();
         return clip;
     }

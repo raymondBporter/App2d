@@ -69,7 +69,7 @@ public sealed class PersonBalanceTests
     [InlineData(BodyMotionType2D.Kinematic, true)]
     public void SupportsSolidAndOneWayPlatformEdges(BodyMotionType2D motion, bool oneWay)
     {
-        AddLedge(-1, motion: motion).IsOneWayPlatform = oneWay;
+        AddLedge(-1, motion: motion).OneWaySurfaceNormal = oneWay ? Vector2.UnitY : null;
         Step();
         Assert.Equal(-1, _person.BalanceDirection);
     }
@@ -78,7 +78,7 @@ public sealed class PersonBalanceTests
     public void IgnoredOneWayPlatformDoesNotSupportBalance()
     {
         var platform = AddLedge(1);
-        platform.IsOneWayPlatform = true;
+        platform.OneWaySurfaceNormal = Vector2.UnitY;
         Step();
         Assert.Equal(1, _person.BalanceDirection);
         Step(drop: true);

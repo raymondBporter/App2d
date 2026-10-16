@@ -50,7 +50,7 @@ public static class SpatialRaycast2D
             return false;
         }
 
-        hit = new RayHit2D(ray.GetPoint(localHit.Distance), Vector2.Normalize(worldNormal), localHit.Distance);
+        hit = new RayHit2D(ray.PointAt(localHit.Distance), Vector2.Normalize(worldNormal), localHit.Distance);
         return true;
     }
 

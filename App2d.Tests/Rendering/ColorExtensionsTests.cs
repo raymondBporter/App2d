@@ -34,7 +34,7 @@ public sealed class ColorExtensionsTests
     }
 
     [Fact]
-    public void HexRgbParsingIsReusableOutsideCharacterJson()
+    public void HexRgbParsingRejectsMalformedColors()
     {
         Assert.Equal(new Color(0x12, 0xAB, 0xEF), ColorExtensions.FromHexRgb("#12abEF"));
         Assert.Throws<FormatException>(() => ColorExtensions.FromHexRgb("12abEF"));

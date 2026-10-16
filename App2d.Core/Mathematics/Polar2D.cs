@@ -12,7 +12,7 @@ public readonly record struct Polar2D
 {
     public Polar2D(float radius, float angleRadians)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(radius);
+        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
         ArgGuard.ThrowIfNotFinite(angleRadians);
         Radius = radius;
         AngleRadians = angleRadians;

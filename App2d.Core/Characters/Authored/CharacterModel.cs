@@ -26,7 +26,7 @@ public sealed record ModelControl
     {
         get; set;
     }
-    /// <summary>World XY direction of this bone in rest, in radians. Zero preserves legacy point controls.</summary>
+    /// <summary>World XY direction of this bone in rest, in radians. Zero preserves the point-control convention.</summary>
     public float RestAngle
     {
         get; set;
@@ -47,7 +47,7 @@ public abstract record RigConstraint
     public string Id { get; set; } = "";
 }
 
-/// <summary>A two-bone IK constraint. Legacy chains use the point solver; explicit bones opt into frame propagation.</summary>
+/// <summary>A two-bone IK constraint. Point controls use the point solver; explicit bones opt into frame propagation.</summary>
 public sealed record ModelChain : RigConstraint
 {
     public const string PointSolver = "point", BoneSolver = "bone";
@@ -163,10 +163,10 @@ public sealed class CharacterModel
         get; set;
     }
     public List<ModelControl> Controls { get; set; } = [];
-    /// <summary>Legacy point IK definitions, evaluated first without changing their historical semantics.</summary>
+    /// <summary>Point IK definitions, evaluated before the typed constraints.</summary>
     public List<ModelChain> Chains { get; set; } = [];
     public List<RigConstraint> Constraints { get; set; } = [];
-    /// <summary>The compatibility view used by authoring, animation and runtime. IDs are unique across both collections.</summary>
+    /// <summary>All IK definitions used by authoring, animation and runtime. IDs are unique across both collections.</summary>
     [JsonIgnore] public IEnumerable<ModelChain> IkChains => Chains.Concat(Constraints.OfType<ModelChain>());
     public List<ModelMeasure> Measures { get; set; } = [];
     public List<PuppetPart> Parts { get; set; } = [];
@@ -184,17 +184,7 @@ public sealed class CharacterModel
     }
 
     public string ToJson() => PartAssetJson.Write(this, Parts, AuthoredJson.Options);
-    internal static CharacterModel FromDraftJson(string json)
-    {
-        PartAssetJson.RequireTypedJson(json);
-        var model = AuthoredAsset.Parse<CharacterModel>(json, "model");
-        if (model.Version is 2 or 3)
-        {
-            model.Version = CurrentVersion;
-        }
-
-        return model;
-    }
+    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(json, "model");
     public static CharacterModel FromJson(string json)
     {
         var model = FromDraftJson(json);
@@ -226,7 +216,7 @@ public sealed class CharacterModel
         Require(Controls is not null && Chains is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Chains.Count + Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
-        Require(Chains.All(c => c?.Solver == ModelChain.PointSolver), $"{owner}: legacy chains require the point solver; declare bone IK in constraints.");
+        Require(Chains.All(c => c?.Solver == ModelChain.PointSolver), $"{owner}: point chains require the point solver; declare bone IK in constraints.");
         Limit.Color(Ink, "ink");
         new Limit(.001f, 1).Check(LineWidth, "lineWidth");
         Source?.Validate(owner);

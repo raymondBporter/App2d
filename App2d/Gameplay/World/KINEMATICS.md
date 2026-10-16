@@ -53,7 +53,7 @@ reaches 1.5 times that speed at mid-leg. Existing level and editor records still
 describe a straight travel vector and speed; other curves can be used in code.
 
 Physics bodies can set `OneWaySurfaceNormal` to the outward normal of their only
-blocking face. `IsOneWayPlatform` remains a `+Y` shorthand. Kinematic entities
+blocking face. Use `Vector2.UnitY` for a one-way floor. Kinematic entities
 start with zero restitution, so a resting body is not bounced by their motion.
 Friction still defaults to zero. `TransfersContactMotion` uses the previous step's
 contact to carry a dynamic body along a kinematic surface and match its supporting

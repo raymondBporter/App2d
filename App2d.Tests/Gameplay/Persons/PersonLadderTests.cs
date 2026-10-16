@@ -251,7 +251,7 @@ public sealed class PersonLadderTests
     public void DescendingOntoOneWayFloorStopsAndStands(int firstLadderRow)
     {
         var platform = AddSolid(new Vector2(144f, 208f), new Vector2(96f, 32f));
-        platform.IsOneWayPlatform = true;
+        platform.OneWaySurfaceNormal = Vector2.UnitY;
         Step(climb: 1f, frames: 200);
         Assert.True(_person.IsClimbingLadder);
         Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);

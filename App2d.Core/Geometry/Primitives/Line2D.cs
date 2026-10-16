@@ -52,11 +52,6 @@ public readonly record struct Line2D : IGeometry2D
         return Origin + Direction * t;
     }
 
-    /// <summary>Alias for <see cref="PointAt"/>.</summary>
-    /// <param name="distance">A finite signed distance along the line.</param>
-    /// <returns>The point at that distance.</returns>
-    public Vector2 GetPoint(float distance) => PointAt(distance);
-
     /// <summary>Classifies which side of the line a point lies on.</summary>
     /// <param name="test">The finite point to classify.</param>
     /// <param name="tolerance">A nonnegative distance in input units within which the point counts as on the line.</param>
@@ -65,7 +60,7 @@ public readonly record struct Line2D : IGeometry2D
     {
         Validate();
         ArgGuard.ThrowIfNotFinite(test);
-        ArgGuard.ThrowIfNegativeOrNotFinite(tolerance);
+        ArgGuard.ThrowIfNotFiniteOrNegative(tolerance);
         var delta = test.ToVector2d() - Origin.ToVector2d();
         var determinant = delta.Cross(Direction.ToVector2d());
         return determinant > tolerance ? 1 : determinant < -tolerance ? -1 : 0;
@@ -92,7 +87,7 @@ public readonly record struct Line2D : IGeometry2D
     /// <returns>True when the point lies within the tolerance of the line.</returns>
     public bool ContainsPoint(Vector2 point, float tolerance)
     {
-        ArgGuard.ThrowIfNegativeOrNotFinite(tolerance);
+        ArgGuard.ThrowIfNotFiniteOrNegative(tolerance);
         return LinearGeometry2D.Distance(point, Origin, Direction, forwardOnly: false) <= tolerance;
     }
 

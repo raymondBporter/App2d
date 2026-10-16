@@ -172,7 +172,7 @@ public sealed class GunChargeTests
     {
         using var game = new Fixture(ladder: kind == "climb");
         using var baseline = new Fixture(ladder: kind == "climb");
-        game.Ground.IsOneWayPlatform = baseline.Ground.IsOneWayPlatform = kind == "drop";
+        game.Ground.OneWaySurfaceNormal = baseline.Ground.OneWaySurfaceNormal = kind == "drop" ? Vector2.UnitY : null;
         if (chargeFirst)
         {
             game.Step(Press);

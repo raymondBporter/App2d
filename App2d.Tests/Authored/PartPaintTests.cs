@@ -25,11 +25,13 @@ public sealed class PartPaintTests
             [new() { Material = new() { Fill = "#ffffff" }, Points = [new(0, 0), new(1, 0), new(2, 0)] }]));
     }
 
-    [Fact]
-    public void RejectsPaintWithDepth()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    public void RejectsThreeDimensionalPaintCoordinates(int depth)
     {
-        const string json = """
-            {"material":{"fill":"#ffffff"},"points":[{"x":0,"y":0},{"x":1,"y":0,"z":1},{"x":0,"y":1}]}
+        var json = $$"""
+            {"material":{"fill":"#ffffff"},"points":[{"x":0,"y":0},{"x":1,"y":0,"z":{{depth}}},{"x":0,"y":1}]}
             """;
         Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<PartPaint>(json, AuthoredJson.Options));
     }
@@ -37,10 +39,10 @@ public sealed class PartPaintTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public void OlderZeroDepthPaintLoadsAndSavesAsTwoDimensionalPoints(bool puppet)
+    public void TwoDimensionalPaintRoundTrips(bool puppet)
     {
         const string json = """
-            {"material":{"fill":"#ffffff"},"points":[{"x":0,"y":0,"z":0},{"x":1,"y":0,"z":0},{"x":0,"y":1,"z":0}]}
+            {"material":{"fill":"#ffffff"},"points":[{"x":0,"y":0},{"x":1,"y":0},{"x":0,"y":1}]}
             """;
         var options = puppet ? PuppetDefinition.JsonOptions : AuthoredJson.Options;
         var patch = JsonSerializer.Deserialize<PartPaint>(json, options)!;

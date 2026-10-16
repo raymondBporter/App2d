@@ -128,7 +128,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
             body.Restitution = 0f;
             body.CollisionLayer = worldLayer;
             body.CollisionMask = actorMask;
-            body.IsOneWayPlatform = isOneWay;
+            body.OneWaySurfaceNormal = isOneWay ? Vector2.UnitY : null;
             body.IsWallGrippable = collision.Kind.IsGrippable();
             colliders.Add(new ChunkCollider(platform, body));
         }
