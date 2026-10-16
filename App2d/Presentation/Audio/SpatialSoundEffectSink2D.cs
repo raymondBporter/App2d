@@ -28,7 +28,7 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
     public SoundEffectVoice2D BeginAt(
         SoundEffect2D effect, Vector2 position, float initialVolumeScale = 1f)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(initialVolumeScale, 0f, 1f);
+        ArgGuard.InRange(initialVolumeScale, 0f, 1f);
         var falloff = GetFalloff(effect);
         // Controllable voices keep their timeline even when initially out of range.
         return BeginSpatial(effect, position, initialVolumeScale, falloff,
@@ -38,7 +38,7 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
     public void Update()
     {
         var listener = _listenerPosition();
-        ArgGuard.ThrowIfNotFinite(listener);
+        ArgGuard.Finite(listener);
         for (var i = _voices.Count - 1; i >= 0; i--)
         {
             var voice = _voices[i];

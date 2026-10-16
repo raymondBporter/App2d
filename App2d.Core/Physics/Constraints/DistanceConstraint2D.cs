@@ -59,7 +59,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _positionStrength;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0f, 1f, nameof(PositionStrength));
+            ArgGuard.InRange(value, 0f, 1f, nameof(PositionStrength));
             _positionStrength = value;
         }
     }
@@ -70,7 +70,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _velocityStrength;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0f, 1f, nameof(VelocityStrength));
+            ArgGuard.InRange(value, 0f, 1f, nameof(VelocityStrength));
             _velocityStrength = value;
         }
     }
@@ -80,7 +80,7 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         get => _positionTolerance;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(PositionTolerance));
+            ArgGuard.NonNegative(value, nameof(PositionTolerance));
             _positionTolerance = value;
         }
     }

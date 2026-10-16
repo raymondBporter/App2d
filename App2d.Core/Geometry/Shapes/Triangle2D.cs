@@ -58,7 +58,7 @@ public sealed partial class Triangle2D : IConvexShape2D
     /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint)
     {
-        ArgGuard.ThrowIfNotFinite(localPoint);
+        ArgGuard.Finite(localPoint);
         var point = new Vector2d(localPoint);
         var a = new Vector2d(A);
         var b = new Vector2d(B);
@@ -74,7 +74,7 @@ public sealed partial class Triangle2D : IConvexShape2D
     /// <inheritdoc/>
     public Vector2 GetSupportPoint(Vector2 localDirection)
     {
-        ArgGuard.ThrowIfNotFinite(localDirection);
+        ArgGuard.Finite(localDirection);
         var direction = localDirection.ToVector2d();
         var best = A;
         var projection = A.ToVector2d().Dot(direction);

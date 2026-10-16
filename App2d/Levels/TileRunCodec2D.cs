@@ -13,7 +13,7 @@ public static class TileRunCodec2D
 
     public static byte[] Encode(ReadOnlySpan<TileKind2D> tiles)
     {
-        ArgGuard.ThrowIfNotPositive(tiles.Length);
+        ArgGuard.Positive(tiles.Length);
 
         var encoded = new List<byte>(16);
         var index = 0;

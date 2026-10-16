@@ -10,9 +10,9 @@ public static class CircleConstruction2D
     /// <summary>The circumcircle through three finite non-collinear points.</summary>
     public static (Vector2 Center, float Radius) ThroughPoints(Vector2 a, Vector2 b, Vector2 c)
     {
-        ArgGuard.ThrowIfNotFinite(a);
-        ArgGuard.ThrowIfNotFinite(b);
-        ArgGuard.ThrowIfNotFinite(c);
+        ArgGuard.Finite(a);
+        ArgGuard.Finite(b);
+        ArgGuard.Finite(c);
         var origin = a.ToVector2d();
         var u = b.ToVector2d() - origin;
         var v = c.ToVector2d() - origin;
@@ -25,8 +25,8 @@ public static class CircleConstruction2D
         var offset = (v.LengthSquared() * u - u.LengthSquared() * v).PerpCcw / (2 * cross);
         var center = (origin + offset).ToVector2();
         var radius = (float)offset.Length();
-        ArgGuard.ThrowIfNotFinite(center);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(radius);
+        ArgGuard.Finite(center);
+        ArgGuard.Positive(radius);
         return (center, radius);
     }
 }

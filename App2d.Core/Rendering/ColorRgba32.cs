@@ -12,7 +12,7 @@ public readonly record struct ColorRgba32(byte R, byte G, byte B, byte A = 255)
     /// <summary>Clamps normalized channels and rounds them to the nearest byte.</summary>
     public static ColorRgba32 FromVector4(Vector4 color)
     {
-        ArgGuard.ThrowIfNotFinite(color);
+        ArgGuard.Finite(color);
         color = Vector4.Clamp(color, Vector4.Zero, Vector4.One);
         return new((byte)MathF.Round(color.X * 255), (byte)MathF.Round(color.Y * 255),
             (byte)MathF.Round(color.Z * 255), (byte)MathF.Round(color.W * 255));

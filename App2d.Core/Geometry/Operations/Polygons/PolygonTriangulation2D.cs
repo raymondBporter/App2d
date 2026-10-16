@@ -12,13 +12,12 @@ public static class PolygonTriangulation2D
     public static TriangleMesh2D Triangulate(IEnumerable<Vector2> perimeter, double tolerance = 0)
     {
         ArgGuard.ThrowIfNull(perimeter);
-        ArgGuard.ThrowIf(!double.IsFinite(tolerance) || tolerance < 0,
-            "Tolerance must be finite and nonnegative.", nameof(tolerance));
+        ArgGuard.NonNegative(tolerance);
         Vector2[] points = [.. perimeter];
         ArgGuard.ThrowIf(points.Length < 3, "A polygon needs at least three vertices.", nameof(perimeter));
         foreach (var point in points)
         {
-            ArgGuard.ThrowIfNotFinite(point, nameof(perimeter));
+            ArgGuard.Finite(point, nameof(perimeter));
         }
 
         var twiceArea = PolygonGeometry2D.SignedAreaTwiceDouble(points);

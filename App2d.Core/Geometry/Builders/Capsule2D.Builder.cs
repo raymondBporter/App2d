@@ -26,9 +26,9 @@ public sealed partial class Capsule2D
         [JsonIgnore] public override string Kind => ShapeKinds2D.Capsule;
         public override void Validate()
         {
-            ArgGuard.ThrowIfNotFinite(Start, "start");
-            ArgGuard.ThrowIfNotFinite(End, "end");
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(Radius, "radius");
+            ArgGuard.Finite(Start, "start");
+            ArgGuard.Finite(End, "end");
+            ArgGuard.Positive(Radius, "radius");
         }
         public override Capsule2D Build()
         {

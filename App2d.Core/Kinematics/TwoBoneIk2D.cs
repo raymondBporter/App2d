@@ -22,13 +22,13 @@ public static class TwoBoneIk2D
     /// </summary>
     public static TwoBoneIkPose2D SolveExact(Vector2 root, Vector2 target, float firstLength, float secondLength, int bendDirection, Vector2? zeroTargetDirection = null)
     {
-        ArgGuard.ThrowIfNotFinite(root);
-        ArgGuard.ThrowIfNotFinite(target);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(firstLength);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(secondLength);
-        ArgGuard.ThrowIfZero(bendDirection);
+        ArgGuard.Finite(root);
+        ArgGuard.Finite(target);
+        ArgGuard.Positive(firstLength);
+        ArgGuard.Positive(secondLength);
+        ArgGuard.NonZero(bendDirection);
         var fallback = zeroTargetDirection ?? Vector2.UnitX;
-        ArgGuard.ThrowIfNotFinite(fallback);
+        ArgGuard.Finite(fallback);
         var fallbackLength = fallback.ToVector2d().Length();
         if (fallbackLength == 0)
         {
@@ -59,8 +59,8 @@ public static class TwoBoneIk2D
         var height = Math.Sqrt(Math.Max(0, first * first - along * along)) * Math.Sign(bendDirection);
         var joint = (root.ToVector2d() + direction * along + direction.PerpCcw * height).ToVector2();
         var end = (root.ToVector2d() + direction * reach).ToVector2();
-        ArgGuard.ThrowIfNotFinite(joint);
-        ArgGuard.ThrowIfNotFinite(end);
+        ArgGuard.Finite(joint);
+        ArgGuard.Finite(end);
         return new(root, joint, end, (joint - root).AngleRadians, (end - joint).AngleRadians, Math.Abs(distance - reach) <= .01);
     }
 
@@ -71,11 +71,11 @@ public static class TwoBoneIk2D
         float secondLength,
         int bendDirection)
     {
-        ArgGuard.ThrowIfNotFinite(root);
-        ArgGuard.ThrowIfNotFinite(target);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(firstLength);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(secondLength);
-        ArgGuard.ThrowIfZero(bendDirection);
+        ArgGuard.Finite(root);
+        ArgGuard.Finite(target);
+        ArgGuard.Positive(firstLength);
+        ArgGuard.Positive(secondLength);
+        ArgGuard.NonZero(bendDirection);
 
         var toTarget = target - root;
         var targetDistance = toTarget.Length();

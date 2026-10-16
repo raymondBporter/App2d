@@ -19,7 +19,7 @@ public static class ShapeRaycast2D
     public static bool TryIntersect(Vector2 origin, Vector2 direction, IShape2D shape, float maxDistance, out RayHit2D hit)
     {
         ArgGuard.ThrowIfNull(shape);
-        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
+        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
         switch (shape)
         {
             case Circle2D circle:

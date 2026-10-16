@@ -25,7 +25,7 @@ public sealed partial class RoundedRectangle2D
         public override void Validate()
         {
             Rectangle2D.Builder.ValidateBounds(Min, Max);
-            ArgGuard.ThrowIfNotFiniteOrNegative(Radius, "radius");
+            ArgGuard.NonNegative(Radius, "radius");
             if (Radius > Math.Min((double)Max.X - Min.X, (double)Max.Y - Min.Y) / 2)
             {
                 throw new ArgumentOutOfRangeException("radius", "Corner radius cannot exceed half the shorter side.");

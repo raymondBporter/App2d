@@ -20,7 +20,7 @@ public sealed class PolylineCurve2D : ICurve2D
 
         foreach (var point in _points)
         {
-            ArgGuard.ThrowIfNotFinite(point, nameof(points));
+            ArgGuard.Finite(point, nameof(points));
         }
     }
 

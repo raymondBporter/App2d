@@ -23,8 +23,8 @@ public sealed partial class HalfSpace2D
         [JsonIgnore] public override string Kind => ShapeKinds2D.HalfSpace;
         public override void Validate()
         {
-            ArgGuard.ThrowIfNotFiniteOrZero(Normal, "outwardNormal");
-            ArgGuard.ThrowIfNotFinite(Offset, "offset");
+            ArgGuard.NonZero(Normal, "outwardNormal");
+            ArgGuard.Finite(Offset, "offset");
         }
         public override HalfSpace2D Build()
         {
@@ -33,15 +33,15 @@ public sealed partial class HalfSpace2D
             var normalLength = wideNormal.Length();
             var normal = (wideNormal / normalLength).ToVector2();
             var offset = (float)(Offset / normalLength);
-            ArgGuard.ThrowIfNotFinite(offset, "offset");
+            ArgGuard.Finite(offset, "offset");
             return new HalfSpace2D(normal, offset);
         }
         public static HalfSpace2D Create(Vector2 outwardNormal, float offset) => new Builder { Normal = outwardNormal, Offset = offset }.Build();
 
         public static Builder FromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal)
         {
-            ArgGuard.ThrowIfNotFinite(pointOnBoundary);
-            ArgGuard.ThrowIfNotFiniteOrZero(outwardNormal);
+            ArgGuard.Finite(pointOnBoundary);
+            ArgGuard.NonZero(outwardNormal);
             var wideNormal = outwardNormal.ToVector2d();
             var normal = (wideNormal / wideNormal.Length()).ToVector2();
             return new()

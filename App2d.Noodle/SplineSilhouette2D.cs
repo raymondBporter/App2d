@@ -22,10 +22,10 @@ internal static class SplineSilhouette2D
         float tipRadius,
         float overlap)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(length);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(rootRadius);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tipRadius);
-        ArgGuard.ThrowIfNotFiniteOrNegative(overlap);
+        ArgGuard.Positive(length);
+        ArgGuard.Positive(rootRadius);
+        ArgGuard.Positive(tipRadius);
+        ArgGuard.NonNegative(overlap);
 
         var startX = -overlap;
         var endX = length + overlap;
@@ -48,7 +48,7 @@ internal static class SplineSilhouette2D
 
     public static ConvexPolygon2D CreateTorso(float length)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(length);
+        ArgGuard.Positive(length);
         const float startX = -8f;
         var endX = length + 9f;
         const float hipRadius = 27f;

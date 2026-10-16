@@ -26,7 +26,7 @@ public sealed class KinematicEntity2D : IDisposable
         Motion = ArgGuard.RequireNotNull(motion);
         WorldObject = new SpatialObject2D(ArgGuard.RequireNotNull(shape));
         var start = motion.Position(0d);
-        ArgGuard.ThrowIfNotFinite(start);
+        ArgGuard.Finite(start);
         WorldObject.Transform.Position = start;
         Body = physics.AddBody(WorldObject, BodyMotionType2D.Kinematic);
         Body.EntityId = id;
@@ -62,7 +62,7 @@ public sealed class KinematicEntity2D : IDisposable
     public Vector2 Update(float deltaSeconds)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         if (deltaSeconds == 0f)
         {
             Body.LinearVelocity = Vector2.Zero;
@@ -72,20 +72,19 @@ public sealed class KinematicEntity2D : IDisposable
         var nextTime = TimeSeconds + deltaSeconds;
         var target = Motion.Position(nextTime);
         var pathVelocity = Motion.Velocity(nextTime);
-        ArgGuard.ThrowIfNotFinite(target);
-        ArgGuard.ThrowIfNotFinite(pathVelocity);
+        ArgGuard.Finite(target);
+        ArgGuard.Finite(pathVelocity);
         var displacement = target - WorldObject.Transform.Position;
-        ArgGuard.ThrowIfNotFinite(displacement);
+        ArgGuard.Finite(displacement);
         Body.LinearVelocity = displacement / deltaSeconds;
-        ArgGuard.ThrowIfNotFinite(Body.LinearVelocity);
+        ArgGuard.Finite(Body.LinearVelocity);
         TimeSeconds = nextTime;
         return displacement;
     }
 
     internal void RestoreTime(double seconds)
     {
-        ArgGuard.ThrowIf(!double.IsFinite(seconds) || seconds < 0d,
-            "Time must be finite and non-negative.", nameof(seconds));
+        ArgGuard.NonNegative(seconds);
         TimeSeconds = seconds;
     }
 

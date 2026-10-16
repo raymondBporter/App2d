@@ -22,13 +22,13 @@ public static class PolynomialRoots
     public static int FindRealRoots(ReadOnlySpan<double> coefficients, double minimum, double maximum, Span<double> roots)
     {
         ArgGuard.ThrowIfTooShort(coefficients, 1);
-        ArgGuard.ThrowIfNotFinite(minimum);
-        ArgGuard.ThrowIfNotFinite(maximum);
+        ArgGuard.Finite(minimum);
+        ArgGuard.Finite(maximum);
         ArgGuard.ThrowIf(maximum < minimum, "The interval must be ordered.", nameof(maximum));
         var scale = 0d;
         foreach (var coefficient in coefficients)
         {
-            ArgGuard.ThrowIfNotFinite(coefficient, nameof(coefficients));
+            ArgGuard.Finite(coefficient, nameof(coefficients));
             scale = Math.Max(scale, Math.Abs(coefficient));
         }
         ArgGuard.ThrowIf(scale == 0d, "The zero polynomial has infinitely many roots.", nameof(coefficients));

@@ -49,8 +49,8 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 
     public void Vertex(Vector3 point, TMaterial material, Vector2 uv = default)
     {
-        ArgGuard.ThrowIfNotFinite(point);
-        ArgGuard.ThrowIfNotFinite(uv);
+        ArgGuard.Finite(point);
+        ArgGuard.Finite(uv);
         EnsureCapacity(Count + 1);
         _vertices[Count++] = _vertexFactory(point, material, uv);
         Min = Vector3.Min(Min, point);
@@ -68,8 +68,8 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>A flat disk or a depth-rounded dome, centered in XY.</summary>
     public void Disk(Vector3 center, float radius, TMaterial material, bool dome = false)
     {
-        ArgGuard.ThrowIfNotFinite(center);
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
+        ArgGuard.Finite(center);
+        ArgGuard.NonNegative(radius);
         if (radius == 0f)
         {
             return;
@@ -101,8 +101,8 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     public void Ellipse(Vector2 center, Vector2 radii, Func<Vector2, Vector3> place,
         TMaterial material, int segments = 24)
     {
-        ArgGuard.ThrowIfNotFinite(center);
-        ArgGuard.ThrowIfNotFiniteOrNegative(radii);
+        ArgGuard.Finite(center);
+        ArgGuard.NonNegative(radii);
         ArgGuard.ThrowIfNull(place);
         ArgGuard.ThrowIf(segments < 3, "An ellipse needs at least three segments.", nameof(segments));
         var placedCenter = place(center);
@@ -117,9 +117,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>A constant-width segment with round caps, measured in XY.</summary>
     public void Line(Vector3 start, Vector3 end, float width, TMaterial material)
     {
-        ArgGuard.ThrowIfNotFinite(start);
-        ArgGuard.ThrowIfNotFinite(end);
-        ArgGuard.ThrowIfNotFiniteOrNegative(width);
+        ArgGuard.Finite(start);
+        ArgGuard.Finite(end);
+        ArgGuard.NonNegative(width);
         if (width == 0f)
         {
             return;
@@ -152,10 +152,10 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     public void Path(IReadOnlyList<Vector3> points, TMaterial material, float startWidth, float? endWidth = null)
     {
         ArgGuard.ThrowIfNull(points);
-        ArgGuard.ThrowIfNotFiniteOrNegative(startWidth);
+        ArgGuard.NonNegative(startWidth);
         if (endWidth is { } end)
         {
-            ArgGuard.ThrowIfNotFiniteOrNegative(end);
+            ArgGuard.NonNegative(end);
         }
 
         var total = 0f;
@@ -178,9 +178,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     /// <summary>Rounds a center-to-contour sheet into negative Z; the contour is an open sequence.</summary>
     public void Shell(Vector3 center, IReadOnlyList<Vector3> contour, float depth, TMaterial material)
     {
-        ArgGuard.ThrowIfNotFinite(center);
+        ArgGuard.Finite(center);
         ArgGuard.ThrowIfNull(contour);
-        ArgGuard.ThrowIfNotFiniteOrNegative(depth);
+        ArgGuard.NonNegative(depth);
         Vector3 At(float radius, int index) => Vector3.Lerp(center, contour[index], radius) -
             new Vector3(0f, 0f, depth * MathF.Sqrt(MathF.Max(0f, 1f - radius * radius)));
         for (var ring = 1; ring <= 5; ring++)

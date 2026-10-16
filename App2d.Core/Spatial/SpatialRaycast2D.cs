@@ -23,7 +23,7 @@ public static class SpatialRaycast2D
     {
         ArgGuard.ThrowIfNull(worldObject);
         ray.Validate();
-        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
+        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
 
         var worldBounds = worldObject.WorldBounds;
         if (worldBounds.IsFinite && !IntersectsBounds(ray, worldBounds, maxDistance))
@@ -62,7 +62,7 @@ public static class SpatialRaycast2D
     public static bool IntersectsBounds(Ray2D ray, Rect2D bounds, float maxDistance)
     {
         ray.Validate();
-        ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
+        ArgGuard.NonNegative(maxDistance, allowInfinity: true);
         return Raycast2D.IntersectsRectangle(ray.Origin, ray.Direction, bounds.Min, bounds.Max, maxDistance);
     }
 

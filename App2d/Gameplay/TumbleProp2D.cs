@@ -27,7 +27,7 @@ internal sealed partial class TumbleProp2D : IEnemyActor2D, ICombatant2D
         ArgGuard.ThrowIf(!id.IsValid, "A prop requires a valid entity ID.", nameof(id));
         Id = id;
         ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNotFinite(position);
+        ArgGuard.Finite(position);
 
         var shape = CompositeShape2D.Builder.Create([
             Rectangle2D.Builder.CreateFromSize(72f, 18f),

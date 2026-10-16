@@ -6,43 +6,32 @@ namespace App2d.Core.Validation;
 public static class StateGuard
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotPositive(
-        float value,
-        [CallerArgumentExpression(nameof(value))] string? memberName = null)
-    {
-        if (!NumericValidation.IsFiniteAndPositive(value))
-        {
-            ThrowCore($"{memberName} must be positive and finite.");
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfLessThan(
-        int value,
-        int minimum,
-        [CallerArgumentExpression(nameof(value))] string? memberName = null)
-    {
-        if (NumericValidation.IsLessThan(value, minimum))
-        {
-            ThrowCore($"{memberName} must be at least {minimum}.");
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIf(bool invalidCondition, string message)
+    public static void ThrowIf([DoesNotReturnIf(true)] bool invalidCondition, string? message = null,
+        [CallerArgumentExpression(nameof(invalidCondition))] string? expression = null)
     {
         if (invalidCondition)
         {
-            ThrowCore(message);
+            ThrowCore(message ?? $"Condition must be false: {expression}.");
         }
     }
 
-    public static T RequireNotNull<T>([NotNull] T? value, string message)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfNot([DoesNotReturnIf(false)] bool condition, string? message = null,
+        [CallerArgumentExpression(nameof(condition))] string? expression = null)
+    {
+        if (!condition)
+        {
+            ThrowCore(message ?? $"Condition must be true: {expression}.");
+        }
+    }
+
+    public static T RequireNotNull<T>([NotNull] T? value, string? message = null,
+        [CallerArgumentExpression(nameof(value))] string? expression = null)
         where T : class
     {
         if (value is null)
         {
-            ThrowCore(message);
+            ThrowCore(message ?? $"{expression} must not be null.");
         }
 
         return value;

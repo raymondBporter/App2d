@@ -46,7 +46,7 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
     {
         _collision = ArgGuard.RequireNotNull(collision);
         ArgGuard.ThrowIfNull(physics);
-        ArgGuard.ThrowIfNotFinite(position);
+        ArgGuard.Finite(position);
 
         var collider = new SpatialObject2D(
             AxisAlignedRectangle2D.Builder.CreateFromSize(68f, 98f));
@@ -91,8 +91,8 @@ public sealed partial class BoilerBrute2D : IEnemyActor2D, IEnemyAttackSource2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        ArgGuard.ThrowIfNotFinite(targetPosition);
+        ArgGuard.NonNegative(deltaSeconds);
+        ArgGuard.Finite(targetPosition);
 
         if (!_simulationEnabled || !Enemy.IsAlive)
         {

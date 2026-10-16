@@ -117,7 +117,9 @@ public sealed class CubicBezierOperationsTests
     [Fact]
     public void InvalidParametersAndShortBuffersAreRejectedBeforeWriting()
     {
-        Assert.Throws<ArgumentException>(() => Example.Split(-.1f));
+        var error = Assert.Throws<ArgumentOutOfRangeException>(() => Example.Split(-.1f));
+        Assert.Equal("amount", error.ParamName);
+        Assert.Equal(-.1f, error.ActualValue);
         Assert.Throws<ArgumentOutOfRangeException>(() => Example.Split(float.NaN));
         Assert.Throws<ArgumentException>(() => Example.Slice(.7f, .2f));
         Assert.Throws<ArgumentException>(() => Example.Slice(0, 1.1f));

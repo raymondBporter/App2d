@@ -46,9 +46,9 @@ public static class GiantTreeFile2D
                     throw new InvalidDataException("A tree entry cannot be null.");
                 }
 
-                ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(entry.XTiles, 0f, map.Width - 1f, "xTiles");
+                ArgGuard.InRange(entry.XTiles, 0f, map.Width - 1f, "xTiles");
                 var ground = entry.RootYTiles ?? TileGroundHeights2D.AtColumn(map, (int)entry.XTiles);
-                ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(ground, 0f, map.Height, "rootYTiles");
+                ArgGuard.InRange(ground, 0f, map.Height, "rootYTiles");
                 var root = map.Origin + new Vector2(entry.XTiles, ground) * map.TileSize;
                 trees.Add(new(root, new()
                 {
@@ -76,8 +76,8 @@ public static class GiantTreeFile2D
         }
 
         var range = new Interval<float>(values[0] * tileSize, values[1] * tileSize);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(range.Min, name);
-        ArgGuard.ThrowIfNotFiniteOrLessThan(range.Max, range.Min, name);
+        ArgGuard.Positive(range.Min, name);
+        ArgGuard.AtLeast(range.Max, range.Min, name);
         return range;
     }
 

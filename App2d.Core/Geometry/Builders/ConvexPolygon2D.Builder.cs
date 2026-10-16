@@ -33,7 +33,7 @@ public sealed partial class ConvexPolygon2D
                 var current = vertices[i];
                 var next = vertices[(i + 1) % vertices.Length];
 
-                ArgGuard.ThrowIfNotFinite(current, nameof(vertices));
+                ArgGuard.Finite(current, nameof(vertices));
                 if (Vector2.DistanceSquared(current, next) <= Epsilon * Epsilon)
                 {
                     ArgGuard.ThrowInvalid("Adjacent polygon vertices must be distinct.", nameof(vertices));

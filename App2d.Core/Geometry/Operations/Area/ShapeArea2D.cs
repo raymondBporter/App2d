@@ -78,7 +78,7 @@ public static class ShapeArea2D
                     for (var j = 0; j < vertices.Length; j++)
                     {
                         vertices[j] = shape.GetSupportPoint(Polar2D.Direction(MathF.Tau * j / vertices.Length));
-                        ArgGuard.ThrowIfNotFinite(vertices[j], nameof(parts));
+                        ArgGuard.Finite(vertices[j], nameof(parts));
                     }
                 }
             }

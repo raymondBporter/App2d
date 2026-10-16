@@ -29,13 +29,13 @@ public readonly record struct ConstraintLimit1D : IInterval<float>
 {
     public ConstraintLimit1D(float minimum, float maximum)
     {
-        ArgGuard.ThrowIfNan(minimum, nameof(minimum));
+        ArgGuard.Number(minimum, nameof(minimum));
         if (minimum == float.PositiveInfinity)
         {
             ArgGuard.ThrowOutOfRange(minimum, "The minimum must be finite or negative infinity.");
         }
 
-        ArgGuard.ThrowIfNan(maximum, nameof(minimum));
+        ArgGuard.Number(maximum);
         if (maximum == float.NegativeInfinity)
         {
             ArgGuard.ThrowOutOfRange(maximum, "The maximum must be finite or positive infinity.");
@@ -65,32 +65,32 @@ public readonly record struct ConstraintLimit1D : IInterval<float>
     public static ConstraintLimit1D Free { get; } = new(float.NegativeInfinity, float.PositiveInfinity);
     public static ConstraintLimit1D AtLeast(float minimum)
     {
-        ArgGuard.ThrowIfNotFinite(minimum);
+        ArgGuard.Finite(minimum);
         return new ConstraintLimit1D(minimum, float.PositiveInfinity);
     }
 
     public static ConstraintLimit1D AtMost(float maximum)
     {
-        ArgGuard.ThrowIfNotFinite(maximum);
+        ArgGuard.Finite(maximum);
         return new ConstraintLimit1D(float.NegativeInfinity, maximum);
     }
 
     public static ConstraintLimit1D Between(float minimum, float maximum)
     {
-        ArgGuard.ThrowIfNotFinite(minimum);
-        ArgGuard.ThrowIfNotFinite(maximum);
+        ArgGuard.Finite(minimum);
+        ArgGuard.Finite(maximum);
         return new ConstraintLimit1D(minimum, maximum);
     }
 
     public static ConstraintLimit1D Locked(float value)
     {
-        ArgGuard.ThrowIfNotFinite(value);
+        ArgGuard.Finite(value);
         return new ConstraintLimit1D(value, value);
     }
 
     public float Clamp(float coordinate)
     {
-        ArgGuard.ThrowIfNotFinite(coordinate);
+        ArgGuard.Finite(coordinate);
         return IntervalMath<float>.Clamp(this, coordinate);
     }
 
@@ -101,8 +101,8 @@ public readonly record struct ConstraintLimit1D : IInterval<float>
     /// </summary>
     public ConstraintLimitEvaluation1D Evaluate(float coordinate, float activationTolerance = 0f)
     {
-        ArgGuard.ThrowIfNotFinite(coordinate);
-        ArgGuard.ThrowIfNotFiniteOrNegative(activationTolerance);
+        ArgGuard.Finite(coordinate);
+        ArgGuard.NonNegative(activationTolerance);
         var target = IntervalMath<float>.Clamp(this, coordinate);
         var state = ConstraintLimitState1D.Inactive;
         if (IsLocked)

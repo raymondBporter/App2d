@@ -25,8 +25,8 @@ public sealed partial class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        ArgGuard.ThrowIfNotFinite(targetPosition);
+        ArgGuard.NonNegative(deltaSeconds);
+        ArgGuard.Finite(targetPosition);
         if (_simulationEnabled)
         {
             Enemy.Update(deltaSeconds);

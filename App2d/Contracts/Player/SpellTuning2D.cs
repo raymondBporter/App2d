@@ -17,16 +17,15 @@ public sealed record SpellTuning2D
 
     public SpellTuning2D Validate()
     {
-        ArgGuard.ThrowIfNotPositive(MaximumEnergy);
-        ArgGuard.ThrowIfNotInClosedRange(StartingEnergy, 0, MaximumEnergy);
-        ArgGuard.ThrowIfNotFiniteOrNegative(EnergyPerSecond);
-        ArgGuard.ThrowIfNotInClosedRange(ShotCost, 1, MaximumEnergy);
-        ArgGuard.ThrowIfNotInClosedRange(HealCost, 1, MaximumEnergy);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(ShotChargeSeconds);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(ShotRecoverySeconds);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(HealSeconds);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(HealFraction);
-        ArgGuard.ThrowIf(HealFraction > 1, "Healing fraction cannot exceed one.");
+        ArgGuard.Positive(MaximumEnergy);
+        ArgGuard.InRange(StartingEnergy, 0, MaximumEnergy);
+        ArgGuard.NonNegative(EnergyPerSecond);
+        ArgGuard.InRange(ShotCost, 1, MaximumEnergy);
+        ArgGuard.InRange(HealCost, 1, MaximumEnergy);
+        ArgGuard.Positive(ShotChargeSeconds);
+        ArgGuard.Positive(ShotRecoverySeconds);
+        ArgGuard.Positive(HealSeconds);
+        ArgGuard.InRange(HealFraction, 0f, 1f, bounds: RangeBounds.OpenClosed);
         return this;
     }
 }

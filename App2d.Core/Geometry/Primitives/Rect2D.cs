@@ -46,8 +46,8 @@ public readonly record struct Rect2D : IRect2D
     /// <returns>The rectangle spanning half the size on each side of the center.</returns>
     public static Rect2D FromSize(Vector2 size, Vector2 center = default)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(size);
-        ArgGuard.ThrowIfNotFinite(center);
+        ArgGuard.NonNegative(size);
+        ArgGuard.Finite(center);
         var halfSize = size / 2f;
         return new(center - halfSize, center + halfSize);
     }
@@ -62,10 +62,10 @@ public readonly record struct Rect2D : IRect2D
     /// <summary>Creates a rectangle from its minimum corner and positive size.</summary>
     public static Rect2D FromMinAndSize(Vector2 min, Size2D size)
     {
-        ArgGuard.ThrowIfNotFinite(min);
+        ArgGuard.Finite(min);
         ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
         var max = min + size.ToVector2();
-        ArgGuard.ThrowIfNotFinite(max);
+        ArgGuard.Finite(max);
         return new(min, max);
     }
 
@@ -75,8 +75,8 @@ public readonly record struct Rect2D : IRect2D
     /// <returns>The smallest rectangle containing both points.</returns>
     public static Rect2D FromPoints(Vector2 first, Vector2 second)
     {
-        ArgGuard.ThrowIfNotFinite(first);
-        ArgGuard.ThrowIfNotFinite(second);
+        ArgGuard.Finite(first);
+        ArgGuard.Finite(second);
         return new(Vector2.Min(first, second), Vector2.Max(first, second));
     }
 
@@ -136,8 +136,8 @@ public readonly record struct Rect2D : IRect2D
     /// <returns>The square of side 2 * radius around the center.</returns>
     public static Rect2D FromCircle(Vector2 center, float radius)
     {
-        ArgGuard.ThrowIfNotFinite(center);
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
+        ArgGuard.Finite(center);
+        ArgGuard.NonNegative(radius);
         var extent = new Vector2(radius);
         return new(center - extent, center + extent);
     }
@@ -149,9 +149,9 @@ public readonly record struct Rect2D : IRect2D
     /// <returns>The box around the spine expanded by the radius on every side.</returns>
     public static Rect2D FromCapsule(Vector2 start, Vector2 end, float radius)
     {
-        ArgGuard.ThrowIfNotFinite(start);
-        ArgGuard.ThrowIfNotFinite(end);
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
+        ArgGuard.Finite(start);
+        ArgGuard.Finite(end);
+        ArgGuard.NonNegative(radius);
         var extent = new Vector2(radius);
         return new(Vector2.Min(start, end) - extent, Vector2.Max(start, end) + extent);
     }

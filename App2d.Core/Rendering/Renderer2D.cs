@@ -52,8 +52,8 @@ public sealed partial class Renderer2D : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(_frameActive, "EndFrame must be called before beginning another frame.");
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
         _camera.SetViewport(width, height);
         _visibleWorldBounds = _camera.VisibleWorldBounds;
         _device.Viewport = new Viewport(0, 0, width, height);
@@ -351,8 +351,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawScreenRoundedRectangle(ScreenRectangle2D bounds, float radius, XnaColor color, float strokeWidth = 0f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
-        ArgGuard.ThrowIfNotFiniteOrNegative(strokeWidth);
+        ArgGuard.NonNegative(radius);
+        ArgGuard.NonNegative(strokeWidth);
         if (bounds.Width <= 0 || bounds.Height <= 0)
         {
             return;
@@ -420,7 +420,7 @@ public sealed partial class Renderer2D : IDisposable
         ArgGuard.ThrowIfTooShort(points, 3);
         foreach (var point in points)
         {
-            ArgGuard.ThrowIfNotFinite(point, nameof(points));
+            ArgGuard.Finite(point, nameof(points));
         }
 
         SelectBatch(null, null);
@@ -448,8 +448,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawWorldCircle(Vector2 center, float radius, XnaColor color, float strokeWidth = 2f)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(strokeWidth);
+        ArgGuard.NonNegative(radius);
+        ArgGuard.Positive(strokeWidth);
         SelectBatch(null, null);
         Span<Vector2> points = stackalloc Vector2[128];
         var segments = CurveSegments(radius, _camera.WorldToDeviceMatrix);
@@ -461,11 +461,11 @@ public sealed partial class Renderer2D : IDisposable
         LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(strokeWidth);
+        ArgGuard.Positive(strokeWidth);
         ValidateLineCap(cap);
         foreach (var point in points)
         {
-            ArgGuard.ThrowIfNotFinite(point, nameof(points));
+            ArgGuard.Finite(point, nameof(points));
         }
 
         SelectBatch(null, null);
@@ -480,8 +480,8 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(spacing);
-        ArgGuard.ThrowIfNotPositive(majorLineEvery);
+        ArgGuard.Positive(spacing);
+        ArgGuard.Positive(majorLineEvery);
         SelectBatch(null, null);
         var visible = _camera.VisibleWorldBounds;
         for (var x = (int)MathF.Floor(visible.Left / spacing); x <= (int)MathF.Ceiling(visible.Right / spacing); x++)

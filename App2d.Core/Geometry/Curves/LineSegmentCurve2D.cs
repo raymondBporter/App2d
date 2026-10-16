@@ -9,8 +9,8 @@ public readonly record struct LineSegmentCurve2D : ICurve2D, ISegment<LineSegmen
 {
     public LineSegmentCurve2D(Vector2 start, Vector2 end)
     {
-        ArgGuard.ThrowIfNotFinite(start);
-        ArgGuard.ThrowIfNotFinite(end);
+        ArgGuard.Finite(start);
+        ArgGuard.Finite(end);
         Start = start;
         End = end;
     }

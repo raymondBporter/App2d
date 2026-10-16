@@ -60,11 +60,11 @@ public sealed record SideScrollerSessionDefinition2D(
             throw new ArgumentException("Zones must be initialized and have unique IDs.", nameof(Zones));
         }
 
-        ArgGuard.ThrowIfNotPositive(PlayerMaximumHealth);
+        ArgGuard.Positive(PlayerMaximumHealth);
         ArgGuard.ThrowIfNull(Spells);
         Spells.Validate();
-        ArgGuard.ThrowIfNotPositive(PositionIterations);
-        ArgGuard.ThrowIfNotPositive(VelocityIterations);
+        ArgGuard.Positive(PositionIterations);
+        ArgGuard.Positive(VelocityIterations);
         return this;
     }
 }

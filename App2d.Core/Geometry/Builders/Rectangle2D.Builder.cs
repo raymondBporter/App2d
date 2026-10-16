@@ -31,14 +31,14 @@ public partial class Rectangle2D
         }
 
         public static Rectangle2D Create(Vector2 min, Vector2 max) => new Builder { Min = min, Max = max }.Build();
-        internal static void ValidateBounds(Vector2 min, Vector2 max) => ArgGuard.ThrowIfNotFiniteOrNotComponentWiseLessThan(min, max);
+        internal static void ValidateBounds(Vector2 min, Vector2 max) => ArgGuard.LessThan(min, max);
         public static Builder FromSize(float width, float height, Vector2 center = default) => FromSize(new Vector2(width, height), center);
         public static Rectangle2D Create(float width, float height, Vector2 center = default) => FromSize(width, height, center).Build();
         public static Rectangle2D CreateFromSize(float width, float height, Vector2 center = default) => Create(width, height, center);
         public static Builder FromSize(Vector2 size, Vector2 center = default)
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(size);
-            ArgGuard.ThrowIfNotFinite(center);
+            ArgGuard.Positive(size);
+            ArgGuard.Finite(center);
             return new() { Min = center - size / 2f, Max = center + size / 2f };
         }
 
@@ -50,7 +50,7 @@ public partial class Rectangle2D
 
         public static Builder FromMinAndSize(Vector2 min, Size2D size)
         {
-            ArgGuard.ThrowIfNotFinite(min);
+            ArgGuard.Finite(min);
             ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
             return new()
             {

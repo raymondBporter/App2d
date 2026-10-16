@@ -39,8 +39,8 @@ public static class PolygonClipping2D
     /// <returns>The number of vertices written.</returns>
     public static int ClipConvexToHalfSpace(ReadOnlySpan<Vector2> subject, Vector2 unitNormal, float offset, Span<Vector2> output)
     {
-        ArgGuard.ThrowIfNotFiniteOrZero(unitNormal);
-        ArgGuard.ThrowIfNotFinite(offset);
+        ArgGuard.NonZero(unitNormal);
+        ArgGuard.Finite(offset);
         if (subject.IsEmpty)
         {
             return 0;
@@ -50,7 +50,7 @@ public static class PolygonClipping2D
         ArgGuard.ThrowIf(subject.Overlaps(output), "Input and output must not overlap.", nameof(output));
         foreach (var point in subject)
         {
-            ArgGuard.ThrowIfNotFinite(point, nameof(subject));
+            ArgGuard.Finite(point, nameof(subject));
         }
 
         var count = 0;

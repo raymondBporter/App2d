@@ -30,7 +30,7 @@ public sealed class PuppetPose
 
     public static PuppetPose Sample(PuppetDefinition definition, PuppetMotion motion, double seconds, bool repeat = false)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(seconds);
+        ArgGuard.NonNegative(seconds);
         var pose = Rest(definition);
         var cycles = repeat && motion.Loop ? Math.Floor(seconds / motion.Duration) : 0;
         var time = (float)(cycles > 0 ? seconds % motion.Duration : Math.Min(seconds, motion.Duration));

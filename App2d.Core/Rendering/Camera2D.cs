@@ -26,7 +26,7 @@ public sealed class Camera2D
         get;
         set
         {
-            ArgGuard.ThrowIfNotFinite(value);
+            ArgGuard.Finite(value);
             field = value;
             Position = Position;
         }
@@ -57,7 +57,7 @@ public sealed class Camera2D
         {
             if (value is { } height)
             {
-                ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
+                ArgGuard.Positive(height);
             }
 
             field = value;
@@ -76,7 +76,7 @@ public sealed class Camera2D
         get;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
+            ArgGuard.Positive(value);
             field = Math.Clamp(value, MinZoom, MaxZoom);
             Position = Position;
         }
@@ -107,8 +107,8 @@ public sealed class Camera2D
     /// <summary>Constrain a desired center, with optional room for render effects such as shake.</summary>
     public Vector2 ClampToWorld(Vector2 desiredPosition, float padding = 0f)
     {
-        ArgGuard.ThrowIfNotFinite(desiredPosition);
-        ArgGuard.ThrowIfNotFiniteOrNegative(padding);
+        ArgGuard.Finite(desiredPosition);
+        ArgGuard.NonNegative(padding);
         if (WorldBounds is not { } bounds)
         {
             return desiredPosition;

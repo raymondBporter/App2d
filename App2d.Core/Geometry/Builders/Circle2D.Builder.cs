@@ -23,8 +23,8 @@ public sealed partial class Circle2D
         [JsonIgnore] public override string Kind => ShapeKinds2D.Circle;
         public override void Validate()
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(Radius, "radius");
-            ArgGuard.ThrowIfNotFinite(Center, "center");
+            ArgGuard.Positive(Radius, "radius");
+            ArgGuard.Finite(Center, "center");
         }
         public override Circle2D Build()
         {

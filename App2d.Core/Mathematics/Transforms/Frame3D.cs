@@ -8,10 +8,10 @@ public readonly record struct Frame3D
 {
     public Frame3D(Vector3 origin, Vector3 xAxis, Vector3 yAxis, Vector3 zAxis)
     {
-        ArgGuard.ThrowIfNotFinite(origin);
-        ArgGuard.ThrowIfNotFinite(xAxis);
-        ArgGuard.ThrowIfNotFinite(yAxis);
-        ArgGuard.ThrowIfNotFinite(zAxis);
+        ArgGuard.Finite(origin);
+        ArgGuard.Finite(xAxis);
+        ArgGuard.Finite(yAxis);
+        ArgGuard.Finite(zAxis);
         Origin = origin;
         XAxis = xAxis;
         YAxis = yAxis;
@@ -41,7 +41,7 @@ public readonly record struct Frame3D
     /// <summary>Rotates about local X, then Y, then Z, in radians, before placing the origin.</summary>
     public static Frame3D FromRotation(Vector3 radians, Vector3 origin = default)
     {
-        ArgGuard.ThrowIfNotFinite(radians);
+        ArgGuard.Finite(radians);
         var matrix = Matrix4x4.CreateRotationX(radians.X) * Matrix4x4.CreateRotationY(radians.Y) * Matrix4x4.CreateRotationZ(radians.Z);
         matrix.Translation = origin;
         return new(matrix);

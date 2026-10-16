@@ -11,21 +11,10 @@ public sealed class ReactionTimeCurve2D
 {
     public ReactionTimeCurve2D(float minimumSpeed, float slowdownSeconds, float recoveryPeak, float holdSeconds = 0)
     {
-        if (!float.IsFinite(minimumSpeed) || minimumSpeed < 0 || minimumSpeed > 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(minimumSpeed));
-        }
-
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(slowdownSeconds);
-        if (!float.IsFinite(recoveryPeak) || recoveryPeak <= 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(recoveryPeak));
-        }
-
-        if (!float.IsFinite(holdSeconds) || holdSeconds < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(holdSeconds));
-        }
+        ArgGuard.InRange(minimumSpeed, 0f, 1f);
+        ArgGuard.Positive(slowdownSeconds);
+        ArgGuard.GreaterThan(recoveryPeak, 1f);
+        ArgGuard.NonNegative(holdSeconds);
 
         MinimumSpeed = minimumSpeed;
         SlowdownSeconds = slowdownSeconds;
@@ -60,10 +49,7 @@ public sealed class ReactionTimeCurve2D
 
     public double Sample(double elapsed)
     {
-        if (!double.IsFinite(elapsed) || elapsed < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(elapsed));
-        }
+        ArgGuard.NonNegative(elapsed);
 
         if (elapsed >= Duration || MinimumSpeed == 1)
         {

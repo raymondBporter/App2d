@@ -67,7 +67,7 @@ public sealed class WeaponPresentation2D : IDisposable
     public void Update(WeaponState2D state, EquipmentKind2D equipment,
         IEnumerable<WeaponEvent2D> occurrences, float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         _state = state;
         _equipment = equipment;
         _flashSeconds = Math.Max(0f, _flashSeconds - deltaSeconds);

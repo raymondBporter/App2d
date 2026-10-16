@@ -70,9 +70,9 @@ internal sealed partial class MeleeAttack2D(
     /// </summary>
     public bool Update(float deltaSeconds, Vector2 ownerPosition, float facing)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        ArgGuard.ThrowIfNotFinite(ownerPosition);
-        ArgGuard.ThrowIfNotFinite(facing);
+        ArgGuard.NonNegative(deltaSeconds);
+        ArgGuard.Finite(ownerPosition);
+        ArgGuard.Finite(facing);
 
         _inputBufferSeconds = Math.Max(0f, _inputBufferSeconds - deltaSeconds);
         IsDamageActive = false;
@@ -153,18 +153,18 @@ internal readonly record struct MeleeAttackProfile2D
         float forwardOffset,
         float verticalOffset = 0f)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(durationSeconds);
-        ArgGuard.ThrowIfNotFiniteOrNegative(damageStartSeconds);
-        ArgGuard.ThrowIfNotFiniteOrGreaterThanOrEqual(
+        ArgGuard.Positive(durationSeconds);
+        ArgGuard.NonNegative(damageStartSeconds);
+        ArgGuard.LessThan(
             damageStartSeconds,
             durationSeconds);
-        ArgGuard.ThrowIfNotFiniteOrLessThanOrEqual(
+        ArgGuard.GreaterThan(
             damageEndSeconds,
             damageStartSeconds);
-        ArgGuard.ThrowIfGreaterThan(damageEndSeconds, durationSeconds);
-        ArgGuard.ThrowIfNotFiniteOrNegative(inputBufferSeconds);
-        ArgGuard.ThrowIfNotFinite(forwardOffset);
-        ArgGuard.ThrowIfNotFinite(verticalOffset);
+        ArgGuard.AtMost(damageEndSeconds, durationSeconds);
+        ArgGuard.NonNegative(inputBufferSeconds);
+        ArgGuard.Finite(forwardOffset);
+        ArgGuard.Finite(verticalOffset);
 
         DurationSeconds = durationSeconds;
         DamageStartSeconds = damageStartSeconds;

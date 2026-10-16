@@ -23,11 +23,11 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
         Vector2 origin = default,
         IReadOnlyList<string>? tilesetIds = null)
     {
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
-        ArgGuard.ThrowIfNotPositive(chunkSize);
-        ArgGuard.ThrowIfNotFinite(origin);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
+        ArgGuard.Positive(tileSize);
+        ArgGuard.Positive(chunkSize);
+        ArgGuard.Finite(origin);
 
         ChunkSize = chunkSize;
         _tiles = new(width, height, tileSize, origin);

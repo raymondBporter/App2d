@@ -10,8 +10,8 @@ public readonly record struct Size2D
     [JsonConstructor]
     public Size2D(float width, float height)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(width);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
         Width = width;
         Height = height;
     }

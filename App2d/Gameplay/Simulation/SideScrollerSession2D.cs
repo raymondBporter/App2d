@@ -38,7 +38,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(_advancing, "Travel requires a completed simulation tick.");
-        ArgGuard.ThrowIfNotFinite(destination);
+        ArgGuard.Finite(destination);
         if (destination.X < _world.Bounds.Min.X || destination.X >= _world.Bounds.Max.X ||
             destination.Y < _world.Bounds.Min.Y || destination.Y >= _world.Bounds.Max.Y)
         {
@@ -57,8 +57,8 @@ public sealed partial class SideScrollerSession2D : IDisposable
         _world = ArgGuard.RequireNotNull(world);
         ArgGuard.ThrowIfNull(player);
         ArgGuard.ThrowIfNull(actions);
-        ArgGuard.ThrowIfNotFinite(respawn.Position);
-        ArgGuard.ThrowIfNotInClosedRange(respawn.HitPoints, 1, player.Health.Maximum, nameof(respawn));
+        ArgGuard.Finite(respawn.Position);
+        ArgGuard.InRange(respawn.HitPoints, 1, player.Health.Maximum, nameof(respawn));
         StateGuard.ThrowIf(!physics.Bodies.Contains(player.Body), "The player must belong to the session's physics world.");
         StateGuard.ThrowIf(!ReferenceEquals(player.Actions, actions), "The session actions must be attached to the player.");
 

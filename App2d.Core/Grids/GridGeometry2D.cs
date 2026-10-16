@@ -18,7 +18,7 @@ public readonly record struct GridGeometry2D
     public GridGeometry2D(Size2D cellSize, Vector2 origin = default)
     {
         ArgGuard.ThrowIf(!cellSize.IsValid, "Cell size must have positive finite dimensions.", nameof(cellSize));
-        ArgGuard.ThrowIfNotFinite(origin);
+        ArgGuard.Finite(origin);
         CellSize = cellSize;
         Origin = origin;
     }
@@ -67,7 +67,7 @@ public readonly record struct GridGeometry2D
     public GridCell2D WorldToCellClamped(Vector2 position, GridSize2D size)
     {
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
-        ArgGuard.ThrowIfNotFinite(position);
+        ArgGuard.Finite(position);
         ArgGuard.ThrowIf(size.IsEmpty, "Cannot clamp to an empty grid.", nameof(size));
         return new(
             (int)Math.Clamp(Math.Floor(((double)position.X - Origin.X) / CellSize.Width), 0, size.Width - 1),
@@ -83,7 +83,7 @@ public readonly record struct GridGeometry2D
     public Vector2 SnapToNearestCorner(Vector2 position)
     {
         StateGuard.ThrowIf(!IsValid, "Grid geometry must be initialized with a positive finite cell size.");
-        ArgGuard.ThrowIfNotFinite(position);
+        ArgGuard.Finite(position);
         return Corner(
             Math.Round(((double)position.X - Origin.X) / CellSize.Width),
             Math.Round(((double)position.Y - Origin.Y) / CellSize.Height));
@@ -149,7 +149,7 @@ public readonly record struct GridGeometry2D
             ArgGuard.ThrowIfNull(bounds);
         }
 
-        ArgGuard.ThrowIfNotFiniteOrNotComponentWiseGreaterThanOrEqual(bounds.Max, bounds.Min, nameof(bounds), nameof(bounds));
+        ArgGuard.AtLeast(bounds.Max, bounds.Min, nameof(bounds), nameof(bounds));
         var world = GetBounds(size);
         if (size.IsEmpty || !world.TryIntersect(bounds, out var clipped))
         {

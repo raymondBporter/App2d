@@ -11,7 +11,7 @@ public readonly record struct Direction2D
 {
     public Direction2D(Vector2 vector)
     {
-        ArgGuard.ThrowIfNotFiniteOrZero(vector);
+        ArgGuard.NonZero(vector);
         // Float squares can overflow or underflow for valid input vectors.
         var wide = vector.ToVector2d();
         Vector = (wide / wide.Length()).ToVector2();
@@ -62,7 +62,7 @@ public readonly record struct Direction2D
     public Vector2 ScaledBy(float distance)
     {
         Validate();
-        ArgGuard.ThrowIfNotFinite(distance);
+        ArgGuard.Finite(distance);
         return Vector * distance;
     }
 
@@ -71,8 +71,8 @@ public readonly record struct Direction2D
     /// <summary>Unit direction from one finite point toward another, without float subtraction overflow.</summary>
     public static Direction2D FromPoints(Vector2 from, Vector2 to)
     {
-        ArgGuard.ThrowIfNotFinite(from);
-        ArgGuard.ThrowIfNotFinite(to);
+        ArgGuard.Finite(from);
+        ArgGuard.Finite(to);
         var delta = to.ToVector2d() - from.ToVector2d();
         if (delta == Vector2d.Zero)
         {
@@ -82,5 +82,5 @@ public readonly record struct Direction2D
         return new((delta / delta.Length()).ToVector2());
     }
 
-    internal void Validate() => ArgGuard.ThrowIfNotFiniteOrZero(Vector);
+    internal void Validate() => ArgGuard.NonZero(Vector);
 }

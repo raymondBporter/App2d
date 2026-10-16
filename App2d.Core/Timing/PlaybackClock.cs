@@ -96,7 +96,7 @@ public sealed class PlaybackClock
         get => _speed;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNegative(value);
+            ArgGuard.NonNegative(value);
             _speed = value;
         }
     }
@@ -106,7 +106,7 @@ public sealed class PlaybackClock
     {
         if (durationSeconds is { } duration)
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(duration);
+            ArgGuard.Positive(duration);
         }
 
         if (!Enum.IsDefined(endMode))
@@ -165,7 +165,7 @@ public sealed class PlaybackClock
     /// <summary>Seeks within the first trip and discards completed cycles. The exact end remains sampleable.</summary>
     public void Seek(double seconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(seconds);
+        ArgGuard.NonNegative(seconds);
         _elapsedSeconds = DurationSeconds is { } duration ? Math.Min(seconds, duration) : seconds;
         _seekedToEnd = DurationSeconds is { } end && seconds >= end;
         IsComplete = false;
@@ -173,7 +173,7 @@ public sealed class PlaybackClock
 
     public void Advance(double deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         if (!IsPlaying || deltaSeconds == 0 || Speed == 0)
         {
             return;

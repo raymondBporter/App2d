@@ -41,7 +41,7 @@ public sealed class EnemyPresentation2D(
 
     public void Advance(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         _secondsSinceState += deltaSeconds;
         RenderStates(_states, [], deltaSeconds, _tick + (long)(_secondsSinceState * 120f), extrapolate: true);
     }
@@ -49,7 +49,7 @@ public sealed class EnemyPresentation2D(
     public void Update(ImmutableArray<EnemyState2D> states,
         IEnumerable<EnemyEvent2D> events, float dt, long tick)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(dt);
+        ArgGuard.NonNegative(dt);
         _states = states.IsDefault ? [] : states;
         _tick = tick;
         _secondsSinceState = 0f;
@@ -303,7 +303,7 @@ public sealed class EnemyPresentation2D(
             if (state.IsAttacking && _attack is not null)
             {
                 // Fit authored poses to authoritative attack time. Changing art cannot change damage timing.
-                StateGuard.ThrowIf(!float.IsFinite(state.AttackDurationSeconds) || state.AttackDurationSeconds <= 0f,
+                StateGuard.ThrowIfNot(NumericValidation.IsPositive(state.AttackDurationSeconds),
                     "An attacking enemy needs a positive attack duration in its state.");
                 var progress = Math.Clamp(state.AttackElapsedSeconds / state.AttackDurationSeconds, 0f, 1f);
                 _shader.Texture = _attack[_attack.GetFrameIndexAtTime(progress * _attack.Duration)];

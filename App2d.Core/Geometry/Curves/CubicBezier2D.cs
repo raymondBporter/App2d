@@ -10,10 +10,10 @@ public readonly record struct CubicBezier2D : ICurve2D
 {
     public CubicBezier2D(Vector2 start, Vector2 control1, Vector2 control2, Vector2 end)
     {
-        ArgGuard.ThrowIfNotFinite(start);
-        ArgGuard.ThrowIfNotFinite(control1);
-        ArgGuard.ThrowIfNotFinite(control2);
-        ArgGuard.ThrowIfNotFinite(end);
+        ArgGuard.Finite(start);
+        ArgGuard.Finite(control1);
+        ArgGuard.Finite(control2);
+        ArgGuard.Finite(end);
         Start = start;
         Control1 = control1;
         Control2 = control2;
@@ -59,8 +59,7 @@ public readonly record struct CubicBezier2D : ICurve2D
     /// <summary>Splits at a finite parameter in [0, 1], preserving the exact curve on each side.</summary>
     public (CubicBezier2D Left, CubicBezier2D Right) Split(float amount)
     {
-        ArgGuard.ThrowIfNotFinite(amount);
-        ArgGuard.ThrowIf(amount < 0 || amount > 1, "The split parameter must be in [0, 1].", nameof(amount));
+        ArgGuard.InRange(amount, 0f, 1f);
         var a = Vector2.Lerp(Start, Control1, amount);
         var b = Vector2.Lerp(Control1, Control2, amount);
         var c = Vector2.Lerp(Control2, End, amount);
@@ -94,7 +93,7 @@ public readonly record struct CubicBezier2D : ICurve2D
     /// <exception cref="InvalidOperationException">The entire curve has this X coordinate, so infinitely many parameters match.</exception>
     public int FindParametersAtX(float x, Span<double> parameters)
     {
-        ArgGuard.ThrowIfNotFinite(x);
+        ArgGuard.Finite(x);
         ArgGuard.ThrowIfTooShort<double>(parameters, 3);
         var start = (double)Start.X;
         var first = (double)Control1.X - start;
@@ -112,7 +111,7 @@ public readonly record struct CubicBezier2D : ICurve2D
     /// <exception cref="InvalidOperationException">There is no intersection, or more than one parameter matches.</exception>
     public float ParameterAtX(float x)
     {
-        ArgGuard.ThrowIfNotFinite(x);
+        ArgGuard.Finite(x);
         var width = (double)End.X - Start.X;
         if (width != 0)
         {

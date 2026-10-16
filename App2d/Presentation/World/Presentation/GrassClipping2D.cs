@@ -25,7 +25,7 @@ internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 veloci
 
     public void Advance(float dt, VegetationWind2D wind)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(dt);
+        ArgGuard.NonNegative(dt);
         var targetAge = Math.Min(LifetimeSeconds, Age + dt);
         var remaining = targetAge - Age;
         var startTime = wind.TotalSeconds - dt;

@@ -10,9 +10,9 @@ public readonly record struct QuadraticBezier2D : ICurve2D
 {
     public QuadraticBezier2D(Vector2 start, Vector2 control, Vector2 end)
     {
-        ArgGuard.ThrowIfNotFinite(start);
-        ArgGuard.ThrowIfNotFinite(control);
-        ArgGuard.ThrowIfNotFinite(end);
+        ArgGuard.Finite(start);
+        ArgGuard.Finite(control);
+        ArgGuard.Finite(end);
         Start = start;
         Control = control;
         End = end;

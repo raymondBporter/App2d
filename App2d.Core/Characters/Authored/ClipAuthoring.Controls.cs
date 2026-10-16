@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -28,10 +29,7 @@ public static partial class ClipAuthoring
     /// <summary>Keys one vector component while preserving the other sampled components and existing easing.</summary>
     public static void SetComponentKey(MotionClip clip, Channel channel, float time, int component, float value)
     {
-        if (component is < 0 or > 2)
-        {
-            throw new ArgumentOutOfRangeException(nameof(component));
-        }
+        ArgGuard.InRange(component, 0, 2);
 
         if (channel.Kind == MotionClip.RotateKind)
         {
@@ -55,10 +53,7 @@ public static partial class ClipAuthoring
     /// <summary>Sets the distance of a steady travel cycle; rejects a curve that the simple control cannot represent.</summary>
     public static void SetSteadyTravel(MotionClip clip, float distance)
     {
-        if (!float.IsFinite(distance))
-        {
-            throw new ArgumentOutOfRangeException(nameof(distance));
-        }
+        ArgGuard.Finite(distance);
 
         if (!TryGetSteadyTravel(clip, out _))
         {

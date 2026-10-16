@@ -9,7 +9,7 @@ public static class ColorExtensions
     /// <summary>Replaces alpha with a normalized value, preserving RGB.</summary>
     public static Color WithAlpha(this Color color, float alpha)
     {
-        ArgGuard.ThrowIfNotFinite(alpha);
+        ArgGuard.Finite(alpha);
         color.A = (byte)MathF.Round(Math.Clamp(alpha, 0f, 1f) * 255f);
         return color;
     }
@@ -17,7 +17,7 @@ public static class ColorExtensions
     /// <summary>Scales the existing alpha by a normalized opacity, preserving RGB.</summary>
     public static Color ScaleAlpha(this Color color, float opacity)
     {
-        ArgGuard.ThrowIfNotFinite(opacity);
+        ArgGuard.Finite(opacity);
         color.A = (byte)(color.A * Math.Clamp(opacity, 0f, 1f));
         return color;
     }
@@ -25,7 +25,7 @@ public static class ColorExtensions
     /// <summary>Scales RGB channels, preserving alpha. Results are clamped to byte range and truncated.</summary>
     public static Color ScaleRgb(this Color color, float factor)
     {
-        ArgGuard.ThrowIfNotFinite(factor);
+        ArgGuard.Finite(factor);
         color.R = (byte)Math.Clamp(color.R * factor, 0f, 255f);
         color.G = (byte)Math.Clamp(color.G * factor, 0f, 255f);
         color.B = (byte)Math.Clamp(color.B * factor, 0f, 255f);

@@ -12,9 +12,9 @@ internal static class LinearGeometry2D
     /// <summary>The closest point on a line or forward ray, in double precision.</summary>
     internal static Vector2d ClosestPoint(Vector2 point, Vector2 origin, Vector2 direction, bool forwardOnly)
     {
-        ArgGuard.ThrowIfNotFinite(point);
-        ArgGuard.ThrowIfNotFinite(origin);
-        ArgGuard.ThrowIfNotFiniteOrZero(direction);
+        ArgGuard.Finite(point);
+        ArgGuard.Finite(origin);
+        ArgGuard.NonZero(direction);
         var delta = point.ToVector2d() - origin.ToVector2d();
         var axis = direction.ToVector2d();
         var parameter = delta.Dot(axis) / axis.LengthSquared();
@@ -29,9 +29,9 @@ internal static class LinearGeometry2D
     /// <summary>The squared distance to a line or forward ray, in double precision.</summary>
     internal static double DistanceSquared(Vector2 point, Vector2 origin, Vector2 direction, bool forwardOnly)
     {
-        ArgGuard.ThrowIfNotFinite(point);
-        ArgGuard.ThrowIfNotFinite(origin);
-        ArgGuard.ThrowIfNotFiniteOrZero(direction);
+        ArgGuard.Finite(point);
+        ArgGuard.Finite(origin);
+        ArgGuard.NonZero(direction);
         var delta = point.ToVector2d() - origin.ToVector2d();
         var axis = direction.ToVector2d();
         if (forwardOnly && delta.Dot(axis) < 0)

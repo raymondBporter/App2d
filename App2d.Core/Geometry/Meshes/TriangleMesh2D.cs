@@ -22,12 +22,12 @@ public sealed class TriangleMesh2D
             "Triangle indices must form complete triples.", nameof(indices));
         foreach (var vertex in _vertices)
         {
-            ArgGuard.ThrowIfNotFinite(vertex, nameof(vertices));
+            ArgGuard.Finite(vertex, nameof(vertices));
         }
 
         foreach (var index in _indices)
         {
-            ArgGuard.ThrowIf(index < 0 || index >= _vertices.Length, "Triangle index is outside the vertices.", nameof(indices));
+            ArgGuard.Index(index, _vertices.Length, nameof(indices));
         }
 
         var area = 0d;
@@ -59,10 +59,7 @@ public sealed class TriangleMesh2D
 
     public (Vector2 A, Vector2 B, Vector2 C) TriangleAt(int index)
     {
-        if ((uint)index >= (uint)TriangleCount)
-        {
-            throw new ArgumentOutOfRangeException(nameof(index));
-        }
+        ArgGuard.Index(index, TriangleCount);
 
         var i = index * 3;
         return (_vertices[_indices[i]], _vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
@@ -71,8 +68,8 @@ public sealed class TriangleMesh2D
     /// <summary>Contains a point when it lies in any triangle, including an edge.</summary>
     public bool ContainsPoint(Vector2 point, double edgeTolerance = 0)
     {
-        ArgGuard.ThrowIfNotFinite(point);
-        ArgGuard.ThrowIf(!double.IsFinite(edgeTolerance) || edgeTolerance < 0, "Edge tolerance must be finite and nonnegative.", nameof(edgeTolerance));
+        ArgGuard.Finite(point);
+        ArgGuard.NonNegative(edgeTolerance);
         if (edgeTolerance == 0 && !Bounds.Contains(point))
         {
             return false;

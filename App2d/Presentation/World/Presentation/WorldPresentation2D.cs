@@ -63,7 +63,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     public void Update(LevelContent2D content, WorldState2D state, float dt)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(dt);
+        ArgGuard.NonNegative(dt);
         ArgGuard.ThrowIfNull(content);
         ArgGuard.ThrowIfNull(state);
         _state = state;

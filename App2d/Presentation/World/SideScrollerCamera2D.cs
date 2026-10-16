@@ -92,7 +92,7 @@ public sealed class SideScrollerCamera2D
 
     public void Shake(float strength, bool stabilizeVerticalFollow = false)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(strength);
+        ArgGuard.Positive(strength);
         _shakeStrength = MathF.Min(MaximumShakeStrength, MathF.Max(_shakeStrength, strength));
         _shakeTime = 0f;
         if (stabilizeVerticalFollow)

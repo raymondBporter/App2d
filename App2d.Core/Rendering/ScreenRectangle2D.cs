@@ -23,12 +23,12 @@ public readonly record struct ScreenRectangle2D(float Left, float Top, float Rig
     /// <summary>Creates a screen rectangle from its top-left pixel position and positive size.</summary>
     public static ScreenRectangle2D FromTopLeftAndSize(Vector2 topLeft, Size2D size)
     {
-        ArgGuard.ThrowIfNotFinite(topLeft);
+        ArgGuard.Finite(topLeft);
         ArgGuard.ThrowIf(!size.IsValid, "Size must have positive finite dimensions.", nameof(size));
         var right = topLeft.X + size.Width;
         var bottom = topLeft.Y + size.Height;
-        ArgGuard.ThrowIfNotFinite(right);
-        ArgGuard.ThrowIfNotFinite(bottom);
+        ArgGuard.Finite(right);
+        ArgGuard.Finite(bottom);
         return new(topLeft.X, topLeft.Y, right, bottom);
     }
     public float MidX => (Left + Right) * 0.5f;

@@ -89,7 +89,7 @@ public sealed partial class PhysicsBody2D
         get => _friction;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(Friction));
+            ArgGuard.NonNegative(value, nameof(Friction));
             _friction = value;
         }
     }
@@ -114,12 +114,11 @@ public sealed partial class PhysicsBody2D
         {
             if (value is { } normal)
             {
-                ArgGuard.ThrowIfNotFinite(normal);
+                ArgGuard.Finite(normal);
                 var length = normal.Length();
-                ArgGuard.ThrowIf(!float.IsFinite(length) || length <= 0f,
-                    "A one-way surface normal must have finite, non-zero length.", nameof(OneWaySurfaceNormal));
+                ArgGuard.Positive(length, nameof(OneWaySurfaceNormal));
                 normal /= length;
-                ArgGuard.ThrowIfNotFinite(normal);
+                ArgGuard.Finite(normal);
                 _oneWaySurfaceNormal = normal;
             }
             else
@@ -163,7 +162,7 @@ public sealed partial class PhysicsBody2D
         get => _oneWaySlop;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNegative(value, nameof(OneWaySlop));
+            ArgGuard.NonNegative(value, nameof(OneWaySlop));
             _oneWaySlop = value;
         }
     }
@@ -173,7 +172,7 @@ public sealed partial class PhysicsBody2D
         get => _mass;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(value, nameof(Mass));
+            ArgGuard.Positive(value, nameof(Mass));
             _mass = value;
         }
     }
@@ -183,7 +182,7 @@ public sealed partial class PhysicsBody2D
         get => _momentOfInertia;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(value, nameof(MomentOfInertia));
+            ArgGuard.Positive(value, nameof(MomentOfInertia));
             _momentOfInertia = value;
         }
     }

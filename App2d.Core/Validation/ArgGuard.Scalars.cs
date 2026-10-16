@@ -5,199 +5,93 @@ namespace App2d.Core.Validation;
 
 public static partial class ArgGuard
 {
-    public static T RequireFinitePositive<T>(T value,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Number<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T> =>
+        !T.IsNaN(value) ? value : throw CreateOutOfRange(value, "Value must not be NaN.", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Finite<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T> =>
+        NumericValidation.IsFinite(value) ? value : throw CreateOutOfRange(value, "Value must be finite.", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Positive<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T> =>
+        NumericValidation.IsPositive(value) ? value : throw CreateOutOfRange(value, "Value must be finite and positive (> 0).", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T NonZero<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T> =>
+        NumericValidation.IsNonZero(value) ? value : throw CreateOutOfRange(value, "Value must be finite and nonzero.", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T NonNegative<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null, bool allowInfinity = false) where T : INumber<T> =>
+        (allowInfinity ? value >= T.Zero : NumericValidation.IsNonNegative(value))
+            ? value : throw CreateOutOfRange(value, allowInfinity
+                ? "Value must be nonnegative (>= 0) and not NaN."
+                : "Value must be finite and nonnegative (>= 0).", paramName);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T AtLeast<T>(T value, T minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+        [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null) where T : INumber<T>
     {
-        ThrowIfNotFiniteOrNotPositive(value, paramName);
-        return value;
+        Finite(value, paramName);
+        Finite(minimum, minimumParamName);
+        return value >= minimum ? value : throw CreateOutOfRange(value, $"Value must be at least {minimum}.", paramName);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFinite<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
+    public static T GreaterThan<T>(T value, T minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+        [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null) where T : INumber<T>
     {
-        if (!NumericValidation.IsFinite(value))
-        {
-            ThrowNotFiniteException(value, paramName);
-        }
+        Finite(value, paramName);
+        Finite(minimum, minimumParamName);
+        return value > minimum ? value : throw CreateOutOfRange(value, $"Value must be greater than {minimum}.", paramName);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfZero<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
+    public static T AtMost<T>(T value, T maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+        [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null) where T : INumber<T>
     {
-        if (NumericValidation.IsZero(value))
-        {
-            ThrowZeroException(value, paramName);
-        }
+        Finite(value, paramName);
+        Finite(maximum, maximumParamName);
+        return value <= maximum ? value : throw CreateOutOfRange(value, $"Value must be at most {maximum}.", paramName);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotPositive<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
+    public static T LessThan<T>(T value, T maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+        [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null) where T : INumber<T>
     {
-        if (!NumericValidation.IsPositive(value))
-        {
-            ThrowNotPositiveException(value, paramName);
-        }
+        Finite(value, paramName);
+        Finite(maximum, maximumParamName);
+        return value < maximum ? value : throw CreateOutOfRange(value, $"Value must be less than {maximum}.", paramName);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNegative<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (NumericValidation.IsNegative(value))
-        {
-            ThrowNegativeException(value, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrZero<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (!NumericValidation.IsFiniteAndNonZero(value))
-        {
-            ThrowNotFiniteOrZeroException(value, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrNotPositive<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (!NumericValidation.IsFiniteAndPositive(value))
-        {
-            ThrowNotFiniteOrNotPositiveException(value, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrNegative<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (!NumericValidation.IsFiniteAndNonNegative(value))
-        {
-            ThrowNotFiniteOrNegativeException(value, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNegativeOrNaN<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (T.IsNaN(value) || NumericValidation.IsNegative(value))
-        {
-            ThrowOutOfRange(value, "Value must be non-negative and not NaN.", paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfLessThan<T>(T value, T minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (NumericValidation.IsLessThan(value, minimum))
-        {
-            ThrowLessThanException(value, minimum, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrLessThan<T>(T value, T minimum,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null, [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null) where T : INumber<T>
-    {
-        ThrowIfNotFinite(value, paramName);
-        ThrowIfNotFinite(minimum, minimumParamName);
-        ThrowIfLessThan(value, minimum, paramName);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfLessThanOrEqual<T>(T value, T minimum, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (NumericValidation.IsLessThanOrEqual(value, minimum))
-        {
-            ThrowLessThanOrEqualException(value, minimum, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrLessThanOrEqual<T>(T value, T minimum,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null, [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null) where T : INumber<T>
-    {
-        ThrowIfNotFinite(value, paramName);
-        ThrowIfNotFinite(minimum, minimumParamName);
-        ThrowIfLessThanOrEqual(value, minimum, paramName);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfGreaterThan<T>(T value, T maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (NumericValidation.IsGreaterThan(value, maximum))
-        {
-            ThrowGreaterThanException(value, maximum, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrGreaterThan<T>(T value, T maximum,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null, [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null) where T : INumber<T>
-    {
-        ThrowIfNotFinite(value, paramName);
-        ThrowIfNotFinite(maximum, maximumParamName);
-        ThrowIfGreaterThan(value, maximum, paramName);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfGreaterThanOrEqual<T>(T value, T upperExclusive, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (NumericValidation.IsGreaterThanOrEqual(value, upperExclusive))
-        {
-            ThrowGreaterThanOrEqualException(value, upperExclusive, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrGreaterThanOrEqual<T>(T value, T upperExclusive,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null, [CallerArgumentExpression(nameof(upperExclusive))] string? upperExclusiveParamName = null) where T : INumber<T>
-    {
-        ThrowIfNotFinite(value, paramName);
-        ThrowIfNotFinite(upperExclusive, upperExclusiveParamName);
-        ThrowIfGreaterThanOrEqual(value, upperExclusive, paramName);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotInClosedRange<T>(T value, T minimum, T maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
-    {
-        if (!NumericValidation.IsInClosedRange(value, minimum, maximum))
-        {
-            ThrowNotInClosedRangeException(value, minimum, maximum, paramName);
-        }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrNotInClosedRange<T>(T value, T minimum, T maximum,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null,
+    public static T InRange<T>(T value, T minimum, T maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+        RangeBounds bounds = RangeBounds.Closed,
         [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null,
         [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null) where T : INumber<T>
     {
-        ThrowIfNotFinite(value, paramName);
-        ThrowIfNotFinite(minimum, minimumParamName);
-        ThrowIfNotFinite(maximum, maximumParamName);
-        ThrowIfLessThan(maximum, minimum, maximumParamName);
-        ThrowIfNotInClosedRange(value, minimum, maximum, paramName);
+        ValidateRangeBounds(bounds);
+        Number(minimum, minimumParamName);
+        Number(maximum, maximumParamName);
+        if (!(bounds == RangeBounds.Closed ? minimum <= maximum : minimum < maximum))
+            ThrowOutOfRange(maximum, "Bounds must be ordered and describe a nonempty range.", maximumParamName);
+        return NumericValidation.IsInRange(value, minimum, maximum, bounds)
+            ? value : throw CreateRangeException(value, minimum, maximum, bounds, paramName);
     }
 
+    /// <summary>Requires an index in [0, count), including when the collection is empty.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotInOpenRange<T>(T value, T minimum, T maximum, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : INumber<T>
+    public static int Index(int value, int count, [CallerArgumentExpression(nameof(value))] string? paramName = null,
+        [CallerArgumentExpression(nameof(count))] string? countParamName = null)
     {
-        if (!NumericValidation.IsInOpenRange(value, minimum, maximum))
-        {
-            ThrowNotInOpenRangeException(value, minimum, maximum, paramName);
-        }
+        NonNegative(count, countParamName);
+        return (uint)value < (uint)count ? value
+            : throw CreateRangeException(value, 0, count, RangeBounds.ClosedOpen, paramName);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ThrowIfNotFiniteOrNotInOpenRange<T>(T value, T minimum, T maximum,
-        [CallerArgumentExpression(nameof(value))] string? paramName = null,
-        [CallerArgumentExpression(nameof(minimum))] string? minimumParamName = null,
-        [CallerArgumentExpression(nameof(maximum))] string? maximumParamName = null) where T : INumber<T>
+    private static void ValidateRangeBounds(RangeBounds bounds)
     {
-        ThrowIfNotFinite(value, paramName);
-        ThrowIfNotFinite(minimum, minimumParamName);
-        ThrowIfNotFinite(maximum, maximumParamName);
-        ThrowIfLessThanOrEqual(maximum, minimum, maximumParamName);
-        ThrowIfNotInOpenRange(value, minimum, maximum, paramName);
+        if (bounds is < RangeBounds.Closed or > RangeBounds.OpenClosed)
+            ThrowOutOfRange(bounds, "Unknown range endpoints.");
     }
-
 }

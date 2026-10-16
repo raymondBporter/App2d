@@ -66,7 +66,7 @@ public static class Rotation2D
     public static Vector2 InterpolateArc(Vector2 from, Vector2 to, float radians, float fraction)
     {
         ValidateArc(from, to, radians);
-        ArgGuard.ThrowIfNotFinite(fraction);
+        ArgGuard.Finite(fraction);
         if (fraction <= 0f)
         {
             return from;
@@ -97,19 +97,8 @@ public static class Rotation2D
 
     private static void ValidateArc(Vector2 from, Vector2 to, float radians)
     {
-        if (!from.IsFinite())
-        {
-            throw new ArgumentOutOfRangeException(nameof(from));
-        }
-
-        if (!to.IsFinite())
-        {
-            throw new ArgumentOutOfRangeException(nameof(to));
-        }
-
-        if (!float.IsFinite(radians))
-        {
-            throw new ArgumentOutOfRangeException(nameof(radians));
-        }
+        ArgGuard.Finite(from);
+        ArgGuard.Finite(to);
+        ArgGuard.Finite(radians);
     }
 }

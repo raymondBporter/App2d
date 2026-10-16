@@ -9,10 +9,10 @@ public readonly record struct Arc2D : ICurve2D
 {
     public Arc2D(Vector2 center, float radius, float startAngleRadians, float sweepAngleRadians)
     {
-        ArgGuard.ThrowIfNotFinite(center);
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
-        ArgGuard.ThrowIfNotFinite(startAngleRadians);
-        ArgGuard.ThrowIfNotFinite(sweepAngleRadians);
+        ArgGuard.Finite(center);
+        ArgGuard.NonNegative(radius);
+        ArgGuard.Finite(startAngleRadians);
+        ArgGuard.Finite(sweepAngleRadians);
         Center = center;
         Radius = radius;
         StartAngleRadians = startAngleRadians;

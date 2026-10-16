@@ -41,8 +41,8 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(combat);
-        ArgGuard.ThrowIfNotFinite(position);
-        ArgGuard.ThrowIfNotFiniteOrGreaterThanOrEqual(minimumX, maximumX);
+        ArgGuard.Finite(position);
+        ArgGuard.LessThan(minimumX, maximumX);
         Person = new Person2D(
             ids.Allocate(),
             collision,
@@ -83,8 +83,8 @@ public sealed partial class RivalEnemy2D : IEnemyActor2D
 
     public void Update(float deltaSeconds, Vector2 targetPosition)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
-        ArgGuard.ThrowIfNotFinite(targetPosition);
+        ArgGuard.NonNegative(deltaSeconds);
+        ArgGuard.Finite(targetPosition);
         _lastDeltaSeconds = deltaSeconds;
         Person.BeginFrame(deltaSeconds);
 

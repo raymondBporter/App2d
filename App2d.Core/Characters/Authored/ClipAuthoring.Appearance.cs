@@ -1,3 +1,4 @@
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -95,10 +96,7 @@ public static partial class ClipAuthoring
     /// <summary>Sets one outgoing tint curve without changing the other components.</summary>
     public static void SetColorCurve(MotionClip clip, string slot, string kind, float time, int component, KeyCurve2D? curve)
     {
-        if (component is < 0 or > 3)
-        {
-            throw new ArgumentOutOfRangeException(nameof(component));
-        }
+        ArgGuard.InRange(component, 0, 3);
 
         curve?.Validate();
         var key = ColorKey(clip, slot, kind, time);

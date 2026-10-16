@@ -44,8 +44,8 @@ public sealed class VegetationPatch2D
         VegetationStyle2D style,
         int seed)
     {
-        ArgGuard.ThrowIfNotFiniteOrLessThanOrEqual(endX, startX);
-        ArgGuard.ThrowIfNotFinite(groundY);
+        ArgGuard.GreaterThan(endX, startX);
+        ArgGuard.Finite(groundY);
         style.Validate();
 
         _style = style;
@@ -188,10 +188,10 @@ public sealed class VegetationPatch2D
     {
         if (cutHeight is { } height)
         {
-            ArgGuard.ThrowIfNotFiniteOrNegative(height);
+            ArgGuard.NonNegative(height);
         }
 
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(cutRoughness, 0f, 1f);
+        ArgGuard.InRange(cutRoughness, 0f, 1f);
 
         if (layer == VegetationLayer2D.Back)
         {
@@ -263,8 +263,8 @@ public sealed class VegetationPatch2D
     public IEnumerable<VegetationBladeTip2D> CreateClippings(float cutHeight, VegetationWind2D wind,
         float cutRoughness = 0f)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(cutHeight);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(cutRoughness, 0f, 1f);
+        ArgGuard.NonNegative(cutHeight);
+        ArgGuard.InRange(cutRoughness, 0f, 1f);
         foreach (var blade in _blades)
         {
             var start = CutWeight(blade, cutHeight, cutRoughness);
@@ -452,17 +452,17 @@ public readonly record struct VegetationStyle2D(
 {
     internal void Validate()
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(MinimumHeight);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(BladeWidth);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(Spacing);
-        ArgGuard.ThrowIfNotFiniteOrLessThan(MaximumHeight, MinimumHeight);
-        ArgGuard.ThrowIfNotFiniteOrLessThan(TallHeight, MaximumHeight);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(TallChance, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(FrontChance, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(FlowerChance, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(Coverage, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(PatchWidth);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(SprigChance, 0f, 1f);
+        ArgGuard.Positive(MinimumHeight);
+        ArgGuard.Positive(BladeWidth);
+        ArgGuard.Positive(Spacing);
+        ArgGuard.AtLeast(MaximumHeight, MinimumHeight);
+        ArgGuard.AtLeast(TallHeight, MaximumHeight);
+        ArgGuard.InRange(TallChance, 0f, 1f);
+        ArgGuard.InRange(FrontChance, 0f, 1f);
+        ArgGuard.InRange(FlowerChance, 0f, 1f);
+        ArgGuard.InRange(Coverage, 0f, 1f);
+        ArgGuard.Positive(PatchWidth);
+        ArgGuard.InRange(SprigChance, 0f, 1f);
     }
 }
 

@@ -15,8 +15,8 @@ public static class TileRectangleMesher2D
     /// </summary>
     public static void Mesh(int width, int height, KindAt getKind, List<TileCellRectangle2D> results)
     {
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
         ArgGuard.ThrowIfNull(getKind);
         ArgGuard.ThrowIfNull(results);
 

@@ -123,7 +123,7 @@ public static class Intersection2D
     /// <returns>True when the swept circle touches the rectangle.</returns>
     public static bool TrySweptCircleRectangle<TRect>(Vector2 start, Vector2 end, float radius, TRect rectangle, out SweptCircleHit2D hit) where TRect : IRect2D
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
+        ArgGuard.NonNegative(radius);
         if (!rectangle.IsFinite)
         {
             hit = default;
@@ -197,8 +197,8 @@ public static class Intersection2D
 
     private static bool Intersects(Vector2 firstOrigin, Vector2 firstDirection, bool firstIsRay, Vector2 secondOrigin, Vector2 secondDirection, bool secondIsRay)
     {
-        ArgGuard.ThrowIfNotFiniteOrZero(firstDirection);
-        ArgGuard.ThrowIfNotFiniteOrZero(secondDirection);
+        ArgGuard.NonZero(firstDirection);
+        ArgGuard.NonZero(secondDirection);
         var delta = secondOrigin.ToVector2d() - firstOrigin.ToVector2d();
         var firstAxis = firstDirection.ToVector2d();
         var secondAxis = secondDirection.ToVector2d();

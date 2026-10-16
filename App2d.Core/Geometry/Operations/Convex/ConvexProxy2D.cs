@@ -22,8 +22,8 @@ public readonly ref struct ConvexProxy2D
     public ConvexProxy2D(ReadOnlySpan<Vector2> vertices, Similarity2D pose, float radius = 0f)
     {
         ArgGuard.ThrowIfTooShort(vertices, 1);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(pose.Scale);
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
+        ArgGuard.Positive(pose.Scale);
+        ArgGuard.NonNegative(radius);
         this.vertices = vertices;
         this.pose = pose;
         support = null;
@@ -34,8 +34,8 @@ public readonly ref struct ConvexProxy2D
     public ConvexProxy2D(IConvexSupport2D support, Similarity2D pose, float radius = 0f)
     {
         ArgGuard.ThrowIfNull(support);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(pose.Scale);
-        ArgGuard.ThrowIfNotFiniteOrNegative(radius);
+        ArgGuard.Positive(pose.Scale);
+        ArgGuard.NonNegative(radius);
         this.support = support;
         this.pose = pose;
         vertices = default;

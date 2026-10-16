@@ -19,8 +19,8 @@ public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
     {
         ArgGuard.ThrowIf(!id.IsValid, "An enemy requires a valid entity ID.", nameof(id));
         Id = id;
-        ArgGuard.ThrowIfNotFiniteOrGreaterThanOrEqual(patrolMinX, patrolMaxX);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(speed);
+        ArgGuard.LessThan(patrolMinX, patrolMaxX);
+        ArgGuard.Positive(speed);
 
         WorldObject = worldObject;
         Body = body;

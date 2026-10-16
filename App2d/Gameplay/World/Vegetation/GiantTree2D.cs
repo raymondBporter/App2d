@@ -18,9 +18,9 @@ public sealed record GiantTreeSettings2D
 
     public void Validate()
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(Height);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(TrunkWidth);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(BranchThickness);
+        ArgGuard.Positive(Height);
+        ArgGuard.Positive(TrunkWidth);
+        ArgGuard.Positive(BranchThickness);
         ValidateRange(BranchLength, nameof(BranchLength));
         ValidateRange(BranchGap, nameof(BranchGap));
         ValidateRange(FoliageRadius, nameof(FoliageRadius));
@@ -31,9 +31,9 @@ public sealed record GiantTreeSettings2D
 
     private static void ValidateRange(Interval<float> range, string name)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(range.Min, name);
-        ArgGuard.ThrowIfNotFiniteOrLessThan(range.Max, range.Min, name);
-        ArgGuard.ThrowIfNotFinite(range.Length, name);
+        ArgGuard.Positive(range.Min, name);
+        ArgGuard.AtLeast(range.Max, range.Min, name);
+        ArgGuard.Finite(range.Length, name);
     }
 }
 
@@ -48,7 +48,7 @@ public sealed class GiantTree2D
 {
     public GiantTree2D(Vector2 root, GiantTreeSettings2D settings, int seed)
     {
-        ArgGuard.ThrowIfNotFinite(root);
+        ArgGuard.Finite(root);
         ArgGuard.ThrowIfNull(settings);
         settings.Validate();
         Root = root;

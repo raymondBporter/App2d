@@ -12,7 +12,7 @@ internal sealed class AxisProjector2D
 
     public AxisProjector2D(Vector2 axis, float minimumTranslation, float maximumTranslation)
     {
-        ArgGuard.ThrowIfNotFiniteOrZero(axis);
+        ArgGuard.NonZero(axis);
         Axis = Vector2.Normalize(axis);
         Limits = ConstraintLimit1D.Between(minimumTranslation, maximumTranslation);
     }

@@ -66,7 +66,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
         _combat = ArgGuard.RequireNotNull(combat);
         _shotStarted = ArgGuard.RequireNotNull(shotStarted);
         _publish = ArgGuard.RequireNotNull(publish);
-        ArgGuard.ThrowIfNotFinite(muzzleOffset);
+        ArgGuard.Finite(muzzleOffset);
         _muzzleOffset = muzzleOffset;
         _authoredMuzzle = muzzle;
         _barrelPath = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(

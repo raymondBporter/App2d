@@ -48,7 +48,7 @@ public sealed partial class CollisionSystem2D
         get => _grid.CellSize.Width;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(value);
+            ArgGuard.Positive(value);
             if (CellSize == value)
             {
                 return;

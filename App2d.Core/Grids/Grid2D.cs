@@ -52,7 +52,7 @@ public sealed class Grid2D<T>
     public Span<T> AsSpan() => _values;
     public Span<T> GetRowSpan(int y)
     {
-        ArgGuard.ThrowIfNotInClosedRange(y, 0, Height - 1);
+        ArgGuard.InRange(y, 0, Height - 1);
         return _values.AsSpan(y * Width, Width);
     }
 

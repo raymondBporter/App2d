@@ -25,7 +25,7 @@ public sealed partial class Renderer2D
         RequireFrame();
         ArgGuard.ThrowIfNull(shape);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
-        ArgGuard.ThrowIfNotFinite(localToWorld);
+        ArgGuard.Finite(localToWorld);
         var bounds = ShapeBounds2D.Calculate(shape);
         var matrix = localToWorld * _camera.WorldToDeviceMatrix;
         DrawShapeCore(shape, matrix, bounds, fillColor, outlineColor, screenStrokeWidth);
@@ -74,7 +74,7 @@ public sealed partial class Renderer2D
         RequireFrame();
         ArgGuard.ThrowIfNull(mesh);
         ValidateShapeStyle(fillColor, outlineColor, screenStrokeWidth);
-        ArgGuard.ThrowIfNotFinite(localToWorld);
+        ArgGuard.Finite(localToWorld);
         SelectBatch(null, null);
         var matrix = localToWorld * _camera.WorldToDeviceMatrix;
         var vertices = mesh.Vertices;
@@ -123,9 +123,9 @@ public sealed partial class Renderer2D
         float screenStrokeWidth = 2f, LineCap2D cap = LineCap2D.Butt)
     {
         RequireFrame();
-        ArgGuard.ThrowIfNotFinite(start);
-        ArgGuard.ThrowIfNotFinite(end);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
+        ArgGuard.Finite(start);
+        ArgGuard.Finite(end);
+        ArgGuard.Positive(screenStrokeWidth);
         ValidateLineCap(cap);
         SelectBatch(null, null);
         Line(_camera.WorldToDevice(start), _camera.WorldToDevice(end), color, screenStrokeWidth, cap, cap);
@@ -140,7 +140,7 @@ public sealed partial class Renderer2D
             throw new ArgumentException("The line needs a valid direction.", nameof(line));
         }
 
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
+        ArgGuard.Positive(screenStrokeWidth);
         var deviceLine = new Line2D(_camera.WorldToDevice(line.Origin),
             Vector2.TransformNormal(line.Direction, _camera.WorldToDeviceMatrix));
         if (!deviceLine.TryClipToRectangle(PaddedDeviceBounds(screenStrokeWidth), out var start, out var end))
@@ -162,7 +162,7 @@ public sealed partial class Renderer2D
             throw new ArgumentException("The ray needs a valid direction.", nameof(ray));
         }
 
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(screenStrokeWidth);
+        ArgGuard.Positive(screenStrokeWidth);
         ValidateLineCap(originCap);
         var deviceOrigin = _camera.WorldToDevice(ray.Origin);
         var bounds = PaddedDeviceBounds(screenStrokeWidth);
@@ -221,7 +221,7 @@ public sealed partial class Renderer2D
 
         if (outlineColor is not null)
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(width);
+            ArgGuard.Positive(width);
         }
     }
 

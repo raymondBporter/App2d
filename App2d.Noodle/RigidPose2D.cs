@@ -73,7 +73,7 @@ internal sealed class PoseClip2D
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
         ArgGuard.ThrowIf(frames.Length == 0, "A pose clip needs at least one keyframe.", nameof(frames));
-        ArgGuard.ThrowIf(frames[0].Time != 0f || frames.Any(frame => !NumericValidation.IsFiniteAndNonNegative(frame.Time)),
+        ArgGuard.ThrowIf(frames[0].Time != 0f || frames.Any(frame => !NumericValidation.IsNonNegative(frame.Time)),
             "Pose times must be finite, non-negative, and begin at zero.", nameof(frames));
         for (var index = 1; index < frames.Length; index++)
         {

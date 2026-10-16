@@ -14,7 +14,7 @@ public static class PhysicsRaycastQueries2D
         {
             ArgGuard.ThrowIfNull(world);
             ray.Validate();
-            ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
+            ArgGuard.NonNegative(maxDistance, allowInfinity: true);
 
             var found = false;
             var nearestDistance = maxDistance;
@@ -44,7 +44,7 @@ public static class PhysicsRaycastQueries2D
         {
             ArgGuard.ThrowIfNull(world);
             ray.Validate();
-            ArgGuard.ThrowIfNegativeOrNaN(maxDistance);
+            ArgGuard.NonNegative(maxDistance, allowInfinity: true);
             if (hits.IsEmpty)
             {
                 return 0;

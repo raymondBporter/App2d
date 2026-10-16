@@ -8,8 +8,8 @@ public readonly record struct GridCellRange2D
 
     public GridCellRange2D(GridCell2D minimum, GridCell2D maximum)
     {
-        ArgGuard.ThrowIfLessThan(maximum.X, minimum.X, nameof(maximum));
-        ArgGuard.ThrowIfLessThan(maximum.Y, minimum.Y, nameof(maximum));
+        ArgGuard.AtLeast(maximum.X, minimum.X, nameof(maximum));
+        ArgGuard.AtLeast(maximum.Y, minimum.Y, nameof(maximum));
         var width = (long)maximum.X - minimum.X + 1;
         var height = (long)maximum.Y - minimum.Y + 1;
         if (width > long.MaxValue / height)

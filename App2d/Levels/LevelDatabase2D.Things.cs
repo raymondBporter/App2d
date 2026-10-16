@@ -579,26 +579,26 @@ public sealed partial class LevelDatabase2D
     private static void ValidateDefinition(string name, float width, float height)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(width);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(height);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
     }
 
     private static void ValidateThing(float x, float y, float rotation, float travelX, float travelY, float speed)
     {
-        ArgGuard.ThrowIfNotFinite(x);
-        ArgGuard.ThrowIfNotFinite(y);
-        ArgGuard.ThrowIfNotFinite(rotation);
-        ArgGuard.ThrowIfNotFinite(travelX);
-        ArgGuard.ThrowIfNotFinite(travelY);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(speed);
+        ArgGuard.Finite(x);
+        ArgGuard.Finite(y);
+        ArgGuard.Finite(rotation);
+        ArgGuard.Finite(travelX);
+        ArgGuard.Finite(travelY);
+        ArgGuard.Positive(speed);
         StateGuard.ThrowIf(travelX == 0f && travelY == 0f, "A moving platform needs non-zero travel.");
     }
 
     private static void ValidateTransform(float x, float y, float rotation)
     {
-        ArgGuard.ThrowIfNotFinite(x);
-        ArgGuard.ThrowIfNotFinite(y);
-        ArgGuard.ThrowIfNotFinite(rotation);
+        ArgGuard.Finite(x);
+        ArgGuard.Finite(y);
+        ArgGuard.Finite(rotation);
     }
 
     private static string? NormalizeOptionalName(string? name) =>

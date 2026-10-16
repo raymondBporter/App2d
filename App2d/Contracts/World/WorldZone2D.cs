@@ -11,7 +11,7 @@ public sealed record WorldZone2D
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(id);
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
-        if (!bounds.IsFinite || !NumericValidation.IsFiniteAndPositive(bounds.Size))
+        if (!bounds.IsFinite || !NumericValidation.IsPositive(bounds.Size))
         {
             throw new ArgumentOutOfRangeException(nameof(bounds), "Zones need finite, positive rectangles.");
         }
@@ -46,7 +46,7 @@ public sealed record WorldZone2D
     /// <summary>Highest priority wins; equal priorities use ordinal ID, independent of file order.</summary>
     public static WorldZone2D? FindAt(ReadOnlySpan<WorldZone2D> zones, Vector2 point)
     {
-        ArgGuard.ThrowIfNotFinite(point);
+        ArgGuard.Finite(point);
         WorldZone2D? result = null;
         foreach (var zone in zones)
         {

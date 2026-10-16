@@ -1,3 +1,5 @@
+using App2d.Core.Validation;
+
 namespace App2d.Core.Mathematics;
 
 /// <summary>Float ranges drawn from a caller-owned <see cref="Random"/> instance.</summary>
@@ -7,11 +9,7 @@ public static class RandomExtensions
     public static float NextFloat(this Random random, float maximum)
     {
         ArgumentNullException.ThrowIfNull(random);
-        ArgumentOutOfRangeException.ThrowIfNegative(maximum);
-        if (!float.IsFinite(maximum))
-        {
-            throw new ArgumentOutOfRangeException(nameof(maximum), "Maximum must be finite.");
-        }
+        ArgGuard.NonNegative(maximum);
 
         return random.NextSingle() * maximum;
     }
@@ -20,10 +18,7 @@ public static class RandomExtensions
     public static float NextFloat(this Random random, float minimum, float maximum)
     {
         ArgumentNullException.ThrowIfNull(random);
-        if (!float.IsFinite(minimum))
-        {
-            throw new ArgumentOutOfRangeException(nameof(minimum), "Minimum must be finite.");
-        }
+        ArgGuard.Finite(minimum);
 
         if (!float.IsFinite(maximum) || maximum < minimum || !float.IsFinite(maximum - minimum))
         {

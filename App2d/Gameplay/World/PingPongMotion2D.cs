@@ -12,15 +12,14 @@ public sealed class PingPongMotion2D : IKinematicMotion2D
 
     public PingPongMotion2D(Vector2 start, Vector2 travel, float speed, IProgressMap? easing = null)
     {
-        ArgGuard.ThrowIfNotFinite(start);
-        ArgGuard.ThrowIfNotFinite(travel);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(speed);
+        ArgGuard.Finite(start);
+        ArgGuard.Finite(travel);
+        ArgGuard.Positive(speed);
         var length = travel.Length();
-        ArgGuard.ThrowIf(!float.IsFinite(length) || length <= 0f,
-            "Travel must have a finite, non-zero length.", nameof(travel));
+        ArgGuard.Positive(length, nameof(travel));
         Start = start;
         End = start + travel;
-        ArgGuard.ThrowIfNotFinite(End);
+        ArgGuard.Finite(End);
         easing ??= Easing.Linear;
         ArgGuard.ThrowIf(Math.Abs(easing.Sample(0d)) > 0.000001d ||
             Math.Abs(easing.Sample(1d) - 1d) > 0.000001d,

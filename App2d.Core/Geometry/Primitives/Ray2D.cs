@@ -18,7 +18,7 @@ public readonly record struct Ray2D : IGeometry2D
 
     private Ray2D(Vector2 origin, Direction2D direction)
     {
-        ArgGuard.ThrowIfNotFinite(origin);
+        ArgGuard.Finite(origin);
         direction.Validate();
         Origin = origin;
         UnitDirection = direction;
@@ -48,7 +48,7 @@ public readonly record struct Ray2D : IGeometry2D
     public Vector2 PointAt(float t)
     {
         Validate();
-        ArgGuard.ThrowIfNotFiniteOrNegative(t);
+        ArgGuard.NonNegative(t);
         return Origin + Direction * t;
     }
 
@@ -73,7 +73,7 @@ public readonly record struct Ray2D : IGeometry2D
     /// <returns>True when the point lies within the tolerance of the ray.</returns>
     public bool ContainsPoint(Vector2 point, float tolerance)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(tolerance);
+        ArgGuard.NonNegative(tolerance);
         return LinearGeometry2D.Distance(point, Origin, Direction, forwardOnly: true) <= tolerance;
     }
 

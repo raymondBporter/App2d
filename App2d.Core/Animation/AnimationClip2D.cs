@@ -18,7 +18,7 @@ public sealed class AnimationClip2D<TFrame>
         bool isLooping = true)
     {
         ArgGuard.ThrowIfNull(frames);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(framesPerSecond);
+        ArgGuard.Positive(framesPerSecond);
 
         _frames = [.. frames];
         ArgGuard.ThrowIfTooShort(_frames.AsSpan(), 1, nameof(frames));
@@ -47,7 +47,7 @@ public sealed class AnimationClip2D<TFrame>
         for (var index = 0; index < _frameDurations.Length; index++)
         {
             var duration = _frameDurations[index];
-            if (!NumericValidation.IsFiniteAndPositive(duration))
+            if (!NumericValidation.IsPositive(duration))
             {
                 ArgGuard.ThrowOutOfRange(duration, $"Frame duration at index {index} must be positive and finite.", nameof(frameDurations));
             }
@@ -80,7 +80,7 @@ public sealed class AnimationClip2D<TFrame>
 
     public int GetFrameIndexAtTime(float elapsedSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(elapsedSeconds);
+        ArgGuard.NonNegative(elapsedSeconds);
         if (elapsedSeconds >= Duration)
         {
             return FrameCount - 1;
@@ -112,7 +112,7 @@ public sealed class AnimationClip2D<TFrame>
         for (var index = 0; index < durations.Length; index++)
         {
             elapsed += durations[index];
-            ArgGuard.ThrowIfNotFiniteOrGreaterThanOrEqual(
+            ArgGuard.LessThan(
                 (float)elapsed,
                 float.MaxValue,
                 nameof(durations));

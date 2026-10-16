@@ -27,9 +27,9 @@ public static class ConstraintMath2D
         float activationTolerance = 0f,
         Vector2 fallbackDirection = default)
     {
-        ArgGuard.ThrowIfNotFinite(first);
-        ArgGuard.ThrowIfNotFinite(second);
-        ArgGuard.ThrowIfNotFinite(fallbackDirection);
+        ArgGuard.Finite(first);
+        ArgGuard.Finite(second);
+        ArgGuard.Finite(fallbackDirection);
         ValidateDistanceLimits(limits);
 
         var delta = second - first;
@@ -72,9 +72,9 @@ public static class ConstraintMath2D
         ConstraintLimit1D translationLimits,
         float activationTolerance = 0f)
     {
-        ArgGuard.ThrowIfNotFinite(anchor);
-        ArgGuard.ThrowIfNotFinite(requestedPoint);
-        ArgGuard.ThrowIfNotFiniteOrZero(axis);
+        ArgGuard.Finite(anchor);
+        ArgGuard.Finite(requestedPoint);
+        ArgGuard.NonZero(axis);
         axis = Vector2.Normalize(axis);
         var translation = Vector2.Dot(requestedPoint - anchor, axis);
         var limit = translationLimits.Evaluate(translation, activationTolerance);
@@ -103,10 +103,10 @@ public static class ConstraintMath2D
         ConstraintLimit1D angleLimits,
         float fallbackAngle = 0f)
     {
-        ArgGuard.ThrowIfNotFinite(anchor);
-        ArgGuard.ThrowIfNotFinite(requestedPoint);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(radius);
-        ArgGuard.ThrowIfNotFinite(fallbackAngle);
+        ArgGuard.Finite(anchor);
+        ArgGuard.Finite(requestedPoint);
+        ArgGuard.Positive(radius);
+        ArgGuard.Finite(fallbackAngle);
         var delta = requestedPoint - anchor;
         var angle = delta.LengthSquared() > MinimumDirectionLengthSquared
             ? delta.AngleRadians

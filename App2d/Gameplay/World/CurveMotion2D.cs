@@ -12,14 +12,12 @@ public sealed class CurveMotion2D : IKinematicMotion2D
     {
         Curve = ArgGuard.RequireNotNull(curve);
         Progress = ArgGuard.RequireNotNull(progress);
-        ArgGuard.ThrowIf(!double.IsFinite(periodSeconds) || periodSeconds <= 0d,
-            "Period must be finite and positive.", nameof(periodSeconds));
-        PeriodSeconds = periodSeconds;
+        PeriodSeconds = ArgGuard.Positive(periodSeconds);
 
         var beginning = Curve.Evaluate(CheckedProgress(Progress.Sample(0d)));
         var ending = Curve.Evaluate(CheckedProgress(Progress.Sample(1d)));
-        ArgGuard.ThrowIfNotFinite(beginning);
-        ArgGuard.ThrowIfNotFinite(ending);
+        ArgGuard.Finite(beginning);
+        ArgGuard.Finite(ending);
         var tolerance = 0.001f + MathF.Max(beginning.Length(), ending.Length()) * 0.000001f;
         ArgGuard.ThrowIf(Vector2.Distance(beginning, ending) > tolerance,
             "A repeating motion must return to its starting position.", nameof(progress));
@@ -45,21 +43,19 @@ public sealed class CurveMotion2D : IKinematicMotion2D
         var phase = Phase(seconds);
         var progress = CheckedProgress(Progress.Sample(phase));
         var derivative = Progress.Derivative(phase);
-        ArgGuard.ThrowIf(!double.IsFinite(derivative), "Progress derivative must be finite.", nameof(Progress));
+        ArgGuard.Finite(derivative, nameof(Progress));
         return Curve.EvaluateDerivative(progress) * (float)(derivative / PeriodSeconds);
     }
 
     private double Phase(double seconds)
     {
-        ArgGuard.ThrowIf(!double.IsFinite(seconds) || seconds < 0d,
-            "Time must be finite and non-negative.", nameof(seconds));
+        ArgGuard.NonNegative(seconds);
         return seconds % PeriodSeconds / PeriodSeconds;
     }
 
     private static float CheckedProgress(double progress)
     {
-        ArgGuard.ThrowIf(!double.IsFinite(progress) || progress < 0d || progress > 1d,
-            "Progress must be finite and in [0, 1].", nameof(progress));
+        ArgGuard.InRange(progress, 0d, 1d);
         return (float)progress;
     }
 }

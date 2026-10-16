@@ -6,6 +6,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
+using App2d.Core.Validation;
 using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
@@ -29,10 +30,7 @@ internal static class AuthoredRenderingSmoke2D
         RunEntities(device, view, scene, renderer, target, directory);
         RunPlayer(device, textures, renderer, target, directory);
         view.ApplyState([], [], 62);
-        if (scene.Any())
-        {
-            throw new InvalidOperationException("Authored entity views leaked scene objects.");
-        }
+        StateGuard.ThrowIfNot(!scene.Any());
     }
 
     /// <summary>

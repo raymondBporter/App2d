@@ -39,7 +39,7 @@ public static class Curve2D
     public static Vector2[] Sample(ICurve2D curve, int segmentCount)
     {
         ArgGuard.ThrowIfNull(curve);
-        ArgGuard.ThrowIfNotPositive(segmentCount);
+        ArgGuard.Positive(segmentCount);
         var points = new Vector2[segmentCount + 1];
         Sample(curve, points);
         return points;
@@ -64,9 +64,9 @@ public static class Curve2D
     /// <summary>A unit-height Gaussian profile centered at <paramref name="center"/>.</summary>
     public static float Gaussian(float amount, float center, float sigma)
     {
-        ArgGuard.ThrowIfNotFinite(amount);
-        ArgGuard.ThrowIfNotFinite(center);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(sigma);
+        ArgGuard.Finite(amount);
+        ArgGuard.Finite(center);
+        ArgGuard.Positive(sigma);
         var distance = amount - center;
         return MathF.Exp(-(distance * distance) / (2f * sigma * sigma));
     }

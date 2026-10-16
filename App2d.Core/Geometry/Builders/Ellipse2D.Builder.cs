@@ -22,8 +22,8 @@ public sealed partial class Ellipse2D
         [JsonIgnore] public override string Kind => ShapeKinds2D.Ellipse;
         public override void Validate()
         {
-            ArgGuard.ThrowIfNotFiniteOrNotPositive(Radii, "radii");
-            ArgGuard.ThrowIfNotFinite(Center, "center");
+            ArgGuard.Positive(Radii, "radii");
+            ArgGuard.Finite(Center, "center");
         }
         public override Ellipse2D Build()
         {

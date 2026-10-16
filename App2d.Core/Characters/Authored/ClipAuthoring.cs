@@ -347,10 +347,7 @@ public static partial class ClipAuthoring
 
     public static void SetCurve(MotionClip clip, Channel channel, float time, int component, KeyCurve2D? curve)
     {
-        if (component is < 0 or > 2)
-        {
-            throw new ArgumentOutOfRangeException(nameof(component));
-        }
+        ArgGuard.InRange(component, 0, 2);
 
         curve?.Validate();
         var key = Track(clip, channel)?.Keys.FirstOrDefault(k => MathF.Abs(k.Time - time) < SameTime)

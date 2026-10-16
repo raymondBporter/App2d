@@ -82,7 +82,7 @@ internal sealed class SavePointPresentation2D : IDisposable
 
     public void Update(float deltaSeconds, bool isActive)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         SetActive(isActive);
         _animationSeconds += deltaSeconds;
 

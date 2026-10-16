@@ -99,12 +99,12 @@ public sealed class TerrainChunkState2D : IChunkedTileMap2D
         int chunkSize, float tileSize, Vector2 origin, ImmutableArray<string> tilesetIds,
         ImmutableArray<TileCollisionRectangle2D> collisions, ImmutableArray<byte> cells)
     {
-        ArgGuard.ThrowIfNotPositive(width);
-        ArgGuard.ThrowIfNotPositive(height);
-        ArgGuard.ThrowIfNotPositive(chunkSize);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
-        ArgGuard.ThrowIfNotFinite(origin);
-        ArgGuard.ThrowIfNegative(revision);
+        ArgGuard.Positive(width);
+        ArgGuard.Positive(height);
+        ArgGuard.Positive(chunkSize);
+        ArgGuard.Positive(tileSize);
+        ArgGuard.Finite(origin);
+        ArgGuard.NonNegative(revision);
         if (chunk.X < 0 || chunk.Y < 0 || chunk.X > (width - 1) / chunkSize || chunk.Y > (height - 1) / chunkSize)
         {
             ArgGuard.ThrowOutOfRange(chunk, "Chunk coordinates must lie within the map.");

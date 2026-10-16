@@ -21,7 +21,7 @@ public sealed class AudioMixer2D : IDisposable
 
     public AudioMixer2D(int maxConcurrentVoices = DefaultMaxConcurrentVoices)
     {
-        ArgGuard.ThrowIfNotPositive(maxConcurrentVoices);
+        ArgGuard.Positive(maxConcurrentVoices);
         _mixer = new VoiceMixer(maxConcurrentVoices);
         _masterVolume = new VolumeSampleProvider(_mixer);
         _output = new WaveOut();
@@ -37,7 +37,7 @@ public sealed class AudioMixer2D : IDisposable
         get => _masterVolume.Volume;
         set
         {
-            ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(value, 0f, 1f);
+            ArgGuard.InRange(value, 0f, 1f);
             _masterVolume.Volume = value;
         }
     }
@@ -52,8 +52,8 @@ public sealed class AudioMixer2D : IDisposable
     public void Play(AudioClip2D clip, float volume = 1f, float playbackRate = 1f)
     {
         ArgGuard.ThrowIfNull(clip);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volume, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(playbackRate, 0.5f, 2f);
+        ArgGuard.InRange(volume, 0f, 1f);
+        ArgGuard.InRange(playbackRate, 0.5f, 2f);
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (volume == 0f)
         {
@@ -69,8 +69,8 @@ public sealed class AudioMixer2D : IDisposable
         float playbackRate = 1f)
     {
         ArgGuard.ThrowIfNull(clip);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(volume, 0f, 1f);
-        ArgGuard.ThrowIfNotFiniteOrNotInClosedRange(playbackRate, 0.5f, 2f);
+        ArgGuard.InRange(volume, 0f, 1f);
+        ArgGuard.InRange(playbackRate, 0.5f, 2f);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
         var sequence = _mixer.Play(clip, volume, playbackRate);

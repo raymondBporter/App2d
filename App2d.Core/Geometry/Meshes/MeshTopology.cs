@@ -17,7 +17,7 @@ public static class MeshTopology
     /// <remarks>This describes a fan, not general polygon triangulation. The perimeter must be visible from vertex zero.</remarks>
     public static TriangleEnumerable TriangleFan(int vertexCount)
     {
-        ArgGuard.ThrowIfNegative(vertexCount);
+        ArgGuard.NonNegative(vertexCount);
         return new(default, Math.Max(0, vertexCount - 2), fan: true);
     }
 
@@ -25,7 +25,7 @@ public static class MeshTopology
     /// <remarks>An empty sequence has no edges; a closed one-vertex sequence has the self-edge (0, 0).</remarks>
     public static EdgeEnumerable Edges(int vertexCount, bool closed = true)
     {
-        ArgGuard.ThrowIfNegative(vertexCount);
+        ArgGuard.NonNegative(vertexCount);
         return new(vertexCount, closed);
     }
 

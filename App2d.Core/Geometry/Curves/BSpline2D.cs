@@ -20,7 +20,7 @@ public sealed class BSpline2D : ICurve2D
     public BSpline2D(IEnumerable<Vector2> controlPoints, int degree = 3)
     {
         ArgGuard.ThrowIfNull(controlPoints);
-        ArgGuard.ThrowIfNotPositive(degree);
+        ArgGuard.Positive(degree);
 
         _controlPoints = [.. controlPoints];
         if (_controlPoints.Length <= degree)
@@ -32,7 +32,7 @@ public sealed class BSpline2D : ICurve2D
 
         foreach (var point in _controlPoints)
         {
-            ArgGuard.ThrowIfNotFinite(point, nameof(controlPoints));
+            ArgGuard.Finite(point, nameof(controlPoints));
         }
 
         Degree = degree;

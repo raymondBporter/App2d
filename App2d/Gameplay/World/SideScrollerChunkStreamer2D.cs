@@ -70,7 +70,7 @@ internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics
 
     public void Update(Vector2 focus)
     {
-        ArgGuard.ThrowIfNotFinite(focus);
+        ArgGuard.Finite(focus);
         var center = _tileMap.WorldToChunk(focus);
         var minimumX = Math.Max(0, center.X - HorizontalChunkRadius);
         var maximumX = Math.Min(_tileMap.ChunkColumns - 1, center.X + HorizontalChunkRadius);

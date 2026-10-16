@@ -213,7 +213,7 @@ public sealed class PointClip
 
     public void Sample(double seconds, Span<Vector3> output, bool holdEnd = false)
     {
-        ArgGuard.ThrowIfNotFinite(seconds);
+        ArgGuard.Finite(seconds);
         ArgGuard.ThrowIf(output.Length != PointCount, "Wrong pose size.", nameof(output));
         var t = Loop && !holdEnd ? ((seconds % Duration) + Duration) % Duration : Math.Clamp(seconds, 0, Duration);
         if (t == 0 || ((!Loop || holdEnd) && seconds >= Duration))
@@ -249,8 +249,8 @@ public sealed class PointClip
 
     public Vector3 Read(int sample, int point)
     {
-        ArgGuard.ThrowIfNotInClosedRange(sample, 0, SampleCount - 1);
-        ArgGuard.ThrowIfNotInClosedRange(point, 0, PointCount - 1);
+        ArgGuard.Index(sample, SampleCount);
+        ArgGuard.Index(point, PointCount);
         var offset = _offset + (sample * PointCount + point) * 3 * _coordinateBytes;
         var span = _data.AsSpan(offset, 3 * _coordinateBytes);
         return _coordinateBytes == 4

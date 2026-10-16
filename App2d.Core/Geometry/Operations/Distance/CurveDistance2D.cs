@@ -19,7 +19,7 @@ public static class CurveDistance2D
     public static float SampledDistance<TCurve>(Vector2 point, TCurve curve, int segmentCount) where TCurve : ICurve2D
     {
         ArgGuard.ThrowIfNull(curve);
-        ArgGuard.ThrowIfNotPositive(segmentCount);
+        ArgGuard.Positive(segmentCount);
         var previous = curve.Evaluate(0f);
         var nearestSquared = float.PositiveInfinity;
         for (var i = 1; i <= segmentCount; i++)

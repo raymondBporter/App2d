@@ -88,15 +88,15 @@ public sealed partial class PhysicsWorld2D
 
     public void Step(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         if (deltaSeconds == 0f)
         {
             return;
         }
 
-        StateGuard.ThrowIfNotPositive(MaxSubstepSeconds);
-        StateGuard.ThrowIfLessThan(PositionIterations, 1);
-        StateGuard.ThrowIfLessThan(VelocityIterations, 1);
+        StateGuard.ThrowIfNot(NumericValidation.IsPositive(MaxSubstepSeconds));
+        StateGuard.ThrowIfNot(PositionIterations >= 1);
+        StateGuard.ThrowIfNot(VelocityIterations >= 1);
 
         TransferContactMotion(deltaSeconds);
         foreach (var body in _bodies)

@@ -56,9 +56,9 @@ public static class TraversalMetricsLoader2D
             manifest.StandingCollider.Size.Width,
             manifest.StandingCollider.Size.Height);
 
-        if (!NumericValidation.IsFiniteAndPositive(canvasSize) ||
-            !NumericValidation.IsFiniteAndPositive(visualSize) ||
-            !NumericValidation.IsFiniteAndPositive(standingSize))
+        if (!NumericValidation.IsPositive(canvasSize) ||
+            !NumericValidation.IsPositive(visualSize) ||
+            !NumericValidation.IsPositive(standingSize))
         {
             throw new InvalidDataException($"Player canvas, visual, and collider sizes must be positive: {path}");
         }

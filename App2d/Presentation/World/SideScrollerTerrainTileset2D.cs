@@ -65,11 +65,11 @@ internal sealed class SideScrollerTerrainTileset2D
         _oneWayVisualHeight = manifest.OneWayVisualHeight;
         _spikeVisualHeight = manifest.SpikeVisualHeight > 0f ? manifest.SpikeVisualHeight : manifest.OneWayVisualHeight;
         _fillPeriod = manifest.FillPeriod > 0f ? manifest.FillPeriod : tileSize;
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(_surfaceThickness);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(_outerCornerSize);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(_innerCornerSize);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(_oneWayVisualHeight);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(_spikeVisualHeight);
+        ArgGuard.Positive(_surfaceThickness);
+        ArgGuard.Positive(_outerCornerSize);
+        ArgGuard.Positive(_innerCornerSize);
+        ArgGuard.Positive(_oneWayVisualHeight);
+        ArgGuard.Positive(_spikeVisualHeight);
 
         _fill = textures.Load(Path.Combine(relativeRoot, "fill.png"));
         var horizontal = new Vector2(tileSize, _surfaceThickness);
@@ -102,7 +102,7 @@ internal sealed class SideScrollerTerrainTileset2D
     {
         ArgGuard.ThrowIfNull(textures);
         AssetId2D.Validate(tilesetId);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(tileSize);
+        ArgGuard.Positive(tileSize);
         var relativeRoot = Path.Combine("environments", "tilesets", tilesetId);
         var manifestPath = Path.Combine(textures.ContentRoot, relativeRoot, "tileset.json");
         if (!File.Exists(manifestPath))

@@ -94,7 +94,7 @@ public static class ShapeTransforms2D
     public static IConvexShape2D Scaled(IConvexShape2D shape, float scale)
     {
         ArgGuard.ThrowIfNull(shape);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(scale);
+        ArgGuard.Positive(scale);
         return shape switch
         {
             Circle2D circle => Circle2D.Builder.Create(circle.Radius * scale, circle.Center * scale),

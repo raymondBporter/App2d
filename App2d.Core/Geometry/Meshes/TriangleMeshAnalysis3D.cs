@@ -41,7 +41,7 @@ public sealed class TriangleMeshAnalysis3D
         ArgGuard.ThrowIf(handedness is not (1 or -1), "Handedness must be +1 or -1.", nameof(handedness));
         foreach (var vertex in vertices)
         {
-            ArgGuard.ThrowIfNotFinite(vertex, nameof(vertices));
+            ArgGuard.Finite(vertex, nameof(vertices));
         }
 
         _faceNormals = new Vector3[triangleIndices.Count / 3];
@@ -72,10 +72,7 @@ public sealed class TriangleMeshAnalysis3D
     /// <summary>Returns false and zero for a degenerate face.</summary>
     public bool TryGetFaceNormal(int faceIndex, out Vector3 normal)
     {
-        if ((uint)faceIndex >= (uint)_faceNormals.Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(faceIndex));
-        }
+        ArgGuard.Index(faceIndex, _faceNormals.Length);
 
         normal = _faceNormals[faceIndex];
         return _validFaces[faceIndex];
@@ -88,10 +85,9 @@ public sealed class TriangleMeshAnalysis3D
     public IEnumerable<IndexedEdge3D> FeatureEdges(Vector3 viewDirection, float creaseCosine,
         float frontFacingThreshold = 0f)
     {
-        ArgGuard.ThrowIfNotFiniteOrZero(viewDirection);
-        ArgGuard.ThrowIf(!float.IsFinite(creaseCosine) || creaseCosine < -1f || creaseCosine > 1f,
-            "Crease cosine must be between -1 and 1.", nameof(creaseCosine));
-        ArgGuard.ThrowIfNotFiniteOrNegative(frontFacingThreshold);
+        ArgGuard.NonZero(viewDirection);
+        ArgGuard.InRange(creaseCosine, -1f, 1f);
+        ArgGuard.NonNegative(frontFacingThreshold);
         var wideView = viewDirection.ToVector3d();
         var view = (wideView / wideView.Length()).ToVector3();
 

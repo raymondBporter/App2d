@@ -49,7 +49,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         ArgGuard.ThrowIfNull(tileMap);
         _traversal = traversal;
         _tileSize = traversal.TileSize;
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(_tileSize);
+        ArgGuard.Positive(_tileSize);
         _movingPlatformSpecs = movingPlatforms ?? [];
         _worldThingSpecs = worldThings ?? [];
         TileMap = tileMap;
@@ -210,7 +210,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public WorldThingSpec2D? UpdateSavePoints(float deltaSeconds, Rect2D playerBounds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         foreach (var savePoint in _savePoints)
         {
             if (savePoint.Update(deltaSeconds, playerBounds))
@@ -232,7 +232,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public void UpdateMovingPlatforms(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         foreach (var platform in _movingPlatforms)
         {
             platform.Update(deltaSeconds);
@@ -255,7 +255,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     public void UpdateStreaming(Vector2 focus)
     {
-        ArgGuard.ThrowIfNotFinite(focus);
+        ArgGuard.Finite(focus);
         var environment = RequireEnvironment();
         var previousVersion = environment.Streamer.Version;
         environment.Streamer.Update(focus);

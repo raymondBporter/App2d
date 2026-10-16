@@ -76,7 +76,7 @@ public sealed class PersonPresentation2D : IDisposable
 
     public void Advance(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         if (!_hasState)
         {
             return;
@@ -193,7 +193,7 @@ public sealed class PersonPresentation2D : IDisposable
         bool isShieldBlocking,
         bool isMeleeAttackActive)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         if (!person.IsAlive)
         {
             if (!ReferenceEquals(_animation.Clip, _deathAnimation))
@@ -455,7 +455,7 @@ public sealed class PersonPresentation2D : IDisposable
         AnimationClip2D<Texture2D> animation,
         float durationSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(durationSeconds);
+        ArgGuard.Positive(durationSeconds);
         _animation.Play(animation, restart: true);
         _animation.PlaybackSpeed = animation.Duration / durationSeconds;
     }

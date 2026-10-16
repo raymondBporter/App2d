@@ -17,10 +17,7 @@ public readonly record struct FacePose(
 
 public static class FaceExpressions
 {
-    public static IReadOnlyList<string> Names
-    {
-        get;
-    } = Array.AsReadOnly(
+    public static IReadOnlyList<string> Names { get; } = Array.AsReadOnly(
     [
         "relaxed",
         "happy",

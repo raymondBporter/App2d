@@ -14,7 +14,7 @@ public sealed class EntityIdSequence2D
     public EntityIdSequence2D(EntityIdAllocator2D ids, int capacity)
     {
         ArgGuard.ThrowIfNull(ids);
-        ArgGuard.ThrowIfNotPositive(capacity);
+        ArgGuard.Positive(capacity);
         _rangeStart = ids.ReserveRange(capacity);
         _capacity = capacity;
     }
@@ -32,7 +32,7 @@ public sealed class EntityIdSequence2D
 
     public void Restore(int position)
     {
-        ArgGuard.ThrowIfNotInClosedRange(position, 0, _capacity);
+        ArgGuard.InRange(position, 0, _capacity);
         Position = position;
     }
 }

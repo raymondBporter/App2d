@@ -48,9 +48,9 @@ public sealed partial class Person2D : ICombatant2D
         ArgGuard.ThrowIfNull(collision);
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.ThrowIfNull(traversal);
-        ArgGuard.ThrowIfNotFinite(spawnPoint);
-        ArgGuard.ThrowIfNotPositive(maximumHealth);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(mass);
+        ArgGuard.Finite(spawnPoint);
+        ArgGuard.Positive(maximumHealth);
+        ArgGuard.Positive(mass);
         ArgGuard.ThrowIf(!id.IsValid, "A person requires a valid entity ID.", nameof(id));
         Id = id;
 
@@ -142,7 +142,7 @@ public sealed partial class Person2D : ICombatant2D
 
     public void BeginFrame(float deltaSeconds)
     {
-        ArgGuard.ThrowIfNotFiniteOrNegative(deltaSeconds);
+        ArgGuard.NonNegative(deltaSeconds);
         LandingSpeedThisFrame = 0f;
         DownAttackBouncedThisFrame = false;
         InvulnerabilitySeconds = Math.Max(0f, InvulnerabilitySeconds - deltaSeconds);
@@ -281,8 +281,8 @@ public sealed partial class Person2D : ICombatant2D
 
     public bool TakeDamage(int damage, Vector2 knockback)
     {
-        ArgGuard.ThrowIfNotPositive(damage);
-        ArgGuard.ThrowIfNotFinite(knockback);
+        ArgGuard.Positive(damage);
+        ArgGuard.Finite(knockback);
         if (IsDashing || InvulnerabilitySeconds > 0f || !IsAlive)
         {
             return false;
@@ -310,10 +310,10 @@ public sealed partial class Person2D : ICombatant2D
         float horizontalKnockback = DefaultDamageKnockbackX,
         float verticalKnockback = DefaultDamageKnockbackY)
     {
-        ArgGuard.ThrowIfNotPositive(damage);
-        ArgGuard.ThrowIfNotFinite(sourceX);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(horizontalKnockback);
-        ArgGuard.ThrowIfNotFiniteOrNotPositive(verticalKnockback);
+        ArgGuard.Positive(damage);
+        ArgGuard.Finite(sourceX);
+        ArgGuard.Positive(horizontalKnockback);
+        ArgGuard.Positive(verticalKnockback);
 
         float direction = MathF.Sign(Position.X - sourceX);
         if (direction == 0f)
@@ -345,7 +345,7 @@ public sealed partial class Person2D : ICombatant2D
     public void Reset(Vector2 spawnPoint, int? hitPoints = null)
     {
         DownAttackBouncedThisFrame = false;
-        ArgGuard.ThrowIfNotFinite(spawnPoint);
+        ArgGuard.Finite(spawnPoint);
         if (hitPoints is { } savedHitPoints)
         {
             Health.Reset(savedHitPoints);
