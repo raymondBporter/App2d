@@ -28,12 +28,6 @@ public sealed partial class SimplePolygon2D : IShape2D
     public float Diameter => Diameter2D.Polygon(_vertices);
     public bool ContainsPoint(Vector2 point) => Mesh.ContainsPoint(point);
 
-    internal TriangleMesh2D Mesh
-    {
-        get;
-    }
-    internal CompositeShape2D ConvexPieces
-    {
-        get;
-    }
+    internal TriangleMesh2D Mesh { get; }
+    internal CompositeShape2D ConvexPieces { get; }
 }

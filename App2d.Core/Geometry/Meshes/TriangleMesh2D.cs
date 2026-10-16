@@ -72,8 +72,7 @@ public sealed class TriangleMesh2D
     public bool ContainsPoint(Vector2 point, double edgeTolerance = 0)
     {
         ArgGuard.ThrowIfNotFinite(point);
-        ArgGuard.ThrowIf(!double.IsFinite(edgeTolerance) || edgeTolerance < 0,
-            "Edge tolerance must be finite and nonnegative.", nameof(edgeTolerance));
+        ArgGuard.ThrowIf(!double.IsFinite(edgeTolerance) || edgeTolerance < 0, "Edge tolerance must be finite and nonnegative.", nameof(edgeTolerance));
         if (edgeTolerance == 0 && !Bounds.Contains(point))
         {
             return false;

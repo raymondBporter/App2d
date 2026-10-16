@@ -25,10 +25,7 @@ public abstract record ShapeBuilder2D : GeometryDefinition2D
 {
     /// <summary>The kind tag this definition serializes under; one of <see cref="ShapeKinds2D"/>.</summary>
     [JsonIgnore]
-    public abstract override string Kind
-    {
-        get;
-    }
+    public abstract override string Kind { get; }
 
     /// <summary>Creates the runtime shape, validating its geometry.</summary>
     /// <returns>A new immutable shape.</returns>
