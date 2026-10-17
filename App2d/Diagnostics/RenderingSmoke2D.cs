@@ -100,13 +100,14 @@ internal static class RenderingSmoke2D
             renderer.EndFrame();
             device.Present();
 
-            using var target = new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-            device.SetRenderTarget(target);
-            renderer.BeginFrame(width, height, default);
-            game.RenderFrame(renderer, default);
-            renderer.EndFrame();
-            Save(target, $"game-{width}x{height}.png");
-
+            using var target = RenderCapture2D.CreateTarget(device, width, height);
+            using (device.UseRenderTarget(target))
+            {
+                renderer.BeginFrame(width, height, default);
+                game.RenderFrame(renderer, default);
+                renderer.EndFrame();
+            }
+            target.SavePng(Path.Combine(outputDirectory, $"game-{width}x{height}.png"));
         }
         MapEditorUiSmoke2D.Run(device, game, outputDirectory);
         GunRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
@@ -114,12 +115,5 @@ internal static class RenderingSmoke2D
         AuthoredRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
         VegetationRenderingSmoke2D.Run(device, game.Textures, outputDirectory);
         Console.WriteLine($"MonoGame rendering smoke checks completed: {Path.GetFullPath(outputDirectory)}");
-
-        void Save(RenderTarget2D target, string name)
-        {
-            device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(outputDirectory, name));
-            target.SaveAsPng(stream, target.Width, target.Height);
-        }
     }
 }

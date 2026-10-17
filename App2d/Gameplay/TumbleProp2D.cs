@@ -49,22 +49,10 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
         Health = new Health2D(1_000_000);
     }
 
-    public EntityId2D Id
-    {
-        get;
-    }
-    public SpatialObject2D WorldObject
-    {
-        get;
-    }
-    public PhysicsBody2D Body
-    {
-        get;
-    }
-    public Health2D Health
-    {
-        get;
-    }
+    public EntityId2D Id { get; }
+    public SpatialObject2D WorldObject { get; }
+    public PhysicsBody2D Body { get; }
+    public Health2D Health { get; }
     public CombatFaction2D Faction => CombatFaction2D.Neutral;
     public bool IsAlive => true;
     public ICombatant2D Combatant => this;

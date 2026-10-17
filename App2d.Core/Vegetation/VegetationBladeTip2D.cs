@@ -47,8 +47,7 @@ public sealed class VegetationBladeTip2D
             var closed = ring[..(world.Length + 1)];
             world.CopyTo(closed);
             closed[^1] = world[0];
-            renderer.DrawWorldPolyline(closed, outline.ScaleAlpha(opacity),
-                Math.Max(1f, polygon.OutlineWidth * renderer.PixelsPerWorldUnit));
+            renderer.DrawWorldThickPolyline(closed, polygon.OutlineWidth, outline.ScaleAlpha(opacity));
         }
     }
 }

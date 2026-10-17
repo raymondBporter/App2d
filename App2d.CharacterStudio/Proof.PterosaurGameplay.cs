@@ -5,6 +5,7 @@ using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Gameplay.Enemies;
+using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
@@ -15,7 +16,7 @@ internal sealed partial class ProofRenders
 {
     private void RenderPterosaurGameplay(AuthoredCatalog catalog)
     {
-        using var target = new RenderTarget2D(GraphicsDevice, 900, 500, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
+        using var target = RenderCapture2D.CreateTarget(GraphicsDevice, 900, 500);
         using var batch = new SpriteBatch(GraphicsDevice);
         using var pixel = new Texture2D(GraphicsDevice, 1, 1);
         pixel.SetData([Color.White]);
@@ -37,20 +38,18 @@ internal sealed partial class ProofRenders
                 physics.Step(1f / 120);
                 enemy.SyncAfterPhysics();
             }
-            GraphicsDevice.SetRenderTarget(target);
-            GraphicsDevice.Clear(new Color(241, 236, 223));
-            batch.Begin();
-            batch.Draw(pixel, new Microsoft.Xna.Framework.Rectangle(0, 450, 900, 3), new Color(98, 105, 92));
-            // A standing player collider shows attack reach and the sampled target without adding another animation.
-            batch.Draw(pixel, new Microsoft.Xna.Framework.Rectangle(430, 372, 40, 78), new Color(195, 195, 182));
-            batch.End();
             drawing.Build(enemy.Entity, enemy.Pose.Local);
             var root = enemy.Pose.Position;
-            _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(900, 500,
-                new(450 + root.X * 40 * zoom, 450 - root.Y * 40 * zoom), (int)(40 * zoom)), Matrix.CreateScale(enemy.Pose.Facing, 1, 1));
-            GraphicsDevice.SetRenderTarget(null);
-            using var file = File.Create(Path.Combine(folder, $"frame-{frame:D4}.png"));
-            target.SaveAsPng(file, 900, 500);
+            target.SavePng(Path.Combine(folder, $"frame-{frame:D4}.png"), new Color(241, 236, 223), () =>
+            {
+                batch.Begin();
+                batch.Draw(pixel, new Microsoft.Xna.Framework.Rectangle(0, 450, 900, 3), new Color(98, 105, 92));
+                // A standing player collider shows attack reach and the sampled target without adding another animation.
+                batch.Draw(pixel, new Microsoft.Xna.Framework.Rectangle(430, 372, 40, 78), new Color(195, 195, 182));
+                batch.End();
+                _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(900, 500,
+                    new(450 + root.X * 40 * zoom, 450 - root.Y * 40 * zoom), (int)(40 * zoom)), Matrix.CreateScale(enemy.Pose.Facing, 1, 1));
+            });
         }
     }
 }

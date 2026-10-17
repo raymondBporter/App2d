@@ -26,7 +26,7 @@ internal static class AuthoredRenderingSmoke2D
         var scene = new Scene2D();
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(textures.ContentRoot), new Silent());
         using var renderer = new Renderer2D(new Camera2D { Zoom = 1.6f, Position = new(20, 42) }, device);
-        using var target = new RenderTarget2D(device, 1400, 500, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
+        using var target = RenderCapture2D.CreateTarget(device, 1400, 500);
         RunEntities(device, view, scene, renderer, target, directory);
         RunPlayer(device, textures, renderer, target, directory);
         view.ApplyState([], [], 62);
@@ -102,34 +102,34 @@ internal static class AuthoredRenderingSmoke2D
                 }
                 var camera = new Camera2D { Zoom = 3, Position = new(position.X, 60) };
                 using var close = new Renderer2D(camera, device);
-                device.SetRenderTarget(target);
-                close.BeginFrame(1400, 500, default);
-                close.Clear(new Color(145, 176, 190));
-                var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(2000, 2), new SolidColorShader(Color.DarkSlateGray));
-                ground.Transform.Position = new(position.X, 0);
-                close.Draw(ground);
-                close.Draw(scene);
-                // Gameplay geometry over the drawing: the sword's hit box while it is live, and where a shot leaves the pistol.
-                var elapsed = (steps - 1) / 120f;
-                if (name.StartsWith("sword-") && hero.Swing(state.Action.Swing) is { } swing
-                    && elapsed >= swing.Hits[0].Start && elapsed < swing.Hits[0].Finish)
+                using (device.UseRenderTarget(target))
                 {
-                    var hit = swing.Hits[0].Window;
-                    var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color(235, 60, 50, 110)));
-                    box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2);
-                    close.Draw(box);
+                    close.BeginFrame(1400, 500, default);
+                    close.Clear(new Color(145, 176, 190));
+                    var ground = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(2000, 2), new SolidColorShader(Color.DarkSlateGray));
+                    ground.Transform.Position = new(position.X, 0);
+                    close.Draw(ground);
+                    close.Draw(scene);
+                    // Gameplay geometry over the drawing: the sword's hit box while it is live, and where a shot leaves the pistol.
+                    var elapsed = (steps - 1) / 120f;
+                    if (name.StartsWith("sword-") && hero.Swing(state.Action.Swing) is { } swing
+                        && elapsed >= swing.Hits[0].Start && elapsed < swing.Hits[0].Finish)
+                    {
+                        var hit = swing.Hits[0].Window;
+                        var box = new WorldObject2D(hero.Shape(swing.Id), new SolidColorShader(new Color(235, 60, 50, 110)));
+                        box.Transform.Position = position + new Vector2(hit.OffsetX * facing, hit.OffsetY) * hero.WorldUnitsPerModelUnit - new Vector2(0, traversal.PlayerColliderSize.Y / 2);
+                        close.Draw(box);
+                    }
+                    if (name == "gun-run-shot")
+                    {
+                        var dot = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(3, 3), new SolidColorShader(new Color(240, 200, 40)));
+                        dot.Transform.Position = position + hero.Muzzle(facing, false);
+                        close.Draw(dot);
+                    }
+                    close.DrawScreenLabel($"PLAYER: {name.ToUpperInvariant()} ({player.Director.Key})", new(24, 24));
+                    close.EndFrame();
                 }
-                if (name == "gun-run-shot")
-                {
-                    var dot = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(3, 3), new SolidColorShader(new Color(240, 200, 40)));
-                    dot.Transform.Position = position + hero.Muzzle(facing, false);
-                    close.Draw(dot);
-                }
-                close.DrawScreenLabel($"PLAYER: {name.ToUpperInvariant()} ({player.Director.Key})", new(24, 24));
-                close.EndFrame();
-                device.SetRenderTarget(null);
-                using var stream = File.Create(Path.Combine(directory, $"player-{name}-{(facing > 0 ? "right" : "left")}.png"));
-                target.SaveAsPng(stream, target.Width, target.Height);
+                target.SavePng(Path.Combine(directory, $"player-{name}-{(facing > 0 ? "right" : "left")}.png"));
             }
         }
     }
@@ -190,16 +190,14 @@ internal static class AuthoredRenderingSmoke2D
                     };
                 }).ToImmutableArray();
                 view.ApplyState(states, [], 70);
-                device.SetRenderTarget(target);
-                renderer.BeginFrame(1400, 500, default);
-                renderer.Clear(new Color(145, 176, 190));
-                renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1200, 2), new SolidColorShader(Color.DarkSlateGray)));
-                renderer.Draw(scene);
-                renderer.DrawScreenLabel("AUTHORED ENEMIES / EQUIPMENT, CHARGE AND PROJECTILE POSES", new(24, 24));
-                renderer.EndFrame();
-                device.SetRenderTarget(null);
-                using var stream = File.Create(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png"));
-                target.SaveAsPng(stream, target.Width, target.Height);
+                target.SavePng(Path.Combine(directory, $"entity-{phase}-{(facing > 0 ? "right" : "left")}.png"), new Color(145, 176, 190), () =>
+                {
+                    renderer.BeginFrame(1400, 500, default);
+                    renderer.Draw(new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(1200, 2), new SolidColorShader(Color.DarkSlateGray)));
+                    renderer.Draw(scene);
+                    renderer.DrawScreenLabel("AUTHORED ENEMIES / EQUIPMENT, CHARGE AND PROJECTILE POSES", new(24, 24));
+                    renderer.EndFrame();
+                });
             }
         }
     }

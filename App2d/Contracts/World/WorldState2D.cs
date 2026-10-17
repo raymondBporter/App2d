@@ -34,9 +34,7 @@ public sealed record LevelContent2D(
 }
 
 /// <summary>Per-tick dynamic world observation, not a physics restore point.</summary>
-public sealed record WorldState2D(
-    ImmutableArray<MovingPlatformState2D> MovingPlatforms,
-    ImmutableArray<CheckpointState2D> Checkpoints)
+public sealed record WorldState2D(ImmutableArray<MovingPlatformState2D> MovingPlatforms, ImmutableArray<CheckpointState2D> Checkpoints)
 {
     /// <summary>Cuts in active simulation chunks; forgotten on unload and included in attach snapshots.</summary>
     public ImmutableHashSet<GrassCell2D> CutGrass { get; init; } = [];
@@ -50,50 +48,20 @@ public sealed record WorldState2D(
 public sealed class TerrainChunkState2D : IChunkedTileMap2D
 {
     /// <summary>Row-major packed cells, including a one-cell halo on every side.</summary>
-    public ImmutableArray<byte> Cells
-    {
-        get;
-    }
-    public TileChunk2D Chunk
-    {
-        get;
-    }
-    public long Revision
-    {
-        get;
-    }
-    public int Width
-    {
-        get;
-    }
-    public int Height
-    {
-        get;
-    }
-    public int ChunkSize
-    {
-        get;
-    }
-    public float TileSize
-    {
-        get;
-    }
-    public Vector2 Origin
-    {
-        get;
-    }
+    public ImmutableArray<byte> Cells { get; }
+    public TileChunk2D Chunk { get; }
+    public long Revision { get; }
+    public int Width { get; }
+    public int Height { get; }
+    public int ChunkSize { get; }
+    public float TileSize { get; }
+    public Vector2 Origin { get; }
     public int ChunkColumns => (Width + ChunkSize - 1) / ChunkSize;
     public int ChunkRows => (Height + ChunkSize - 1) / ChunkSize;
     public Rect2D WorldBounds => new(Origin, Origin + new Vector2(Width, Height) * TileSize);
-    public ImmutableArray<string> TilesetIds
-    {
-        get;
-    }
+    public ImmutableArray<string> TilesetIds { get; }
     IReadOnlyList<string> IChunkedTileMap2D.TilesetIds => TilesetIds;
-    public ImmutableArray<TileCollisionRectangle2D> Collisions
-    {
-        get;
-    }
+    public ImmutableArray<TileCollisionRectangle2D> Collisions { get; }
 
     public TerrainChunkState2D(TileChunk2D chunk, long revision, int width, int height,
         int chunkSize, float tileSize, Vector2 origin, ImmutableArray<string> tilesetIds,

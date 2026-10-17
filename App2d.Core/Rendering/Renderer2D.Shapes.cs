@@ -105,6 +105,28 @@ public sealed partial class Renderer2D
         Line(_camera.WorldToDevice(start), _camera.WorldToDevice(end), color, screenStrokeWidth, cap, cap);
     }
 
+    /// <summary>Draws a segment with width specified in world units, scaling with camera zoom.</summary>
+    public void DrawWorldThickSegment(Vector2 start, Vector2 end, float worldWidth, XnaColor color,
+        LineCap2D cap = LineCap2D.Butt) =>
+        DrawWorldThickSegment(start, end, worldWidth, worldWidth, color, cap, cap);
+
+    /// <summary>Draws a tapered segment with start and end widths specified in world units, scaling with camera zoom.</summary>
+    public void DrawWorldThickSegment(Vector2 start, Vector2 end, float startWorldWidth, float endWorldWidth,
+        XnaColor color, LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
+    {
+        RequireFrame();
+        ArgGuard.Finite(start);
+        ArgGuard.Finite(end);
+        ArgGuard.Positive(startWorldWidth);
+        ArgGuard.Positive(endWorldWidth);
+        ValidateLineCap(startCap);
+        ValidateLineCap(endCap);
+        SelectBatch(null, null);
+        var ppu = _camera.PixelsPerWorldUnit;
+        Line(_camera.WorldToDevice(start), _camera.WorldToDevice(end), color,
+            Math.Max(1f, startWorldWidth * ppu), Math.Max(1f, endWorldWidth * ppu), startCap, endCap);
+    }
+
     /// <summary>Draws the visible part of an infinite world-space line.</summary>
     public void DrawWorldLine(Line2D line, XnaColor color, float screenStrokeWidth = 2f)
     {

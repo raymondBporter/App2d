@@ -34,7 +34,7 @@ internal static class CombatContactStudy2D
         var report = new List<string>();
         var camera = new Camera2D { Zoom = 1.7f, Position = new(-255, 52) };
         using var renderer = new Renderer2D(camera, device);
-        using var target = new RenderTarget2D(device, 640, 240, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
+        using var target = RenderCapture2D.CreateTarget(device, 640, 240);
         foreach (var name in timingStudy ? new[] { "hit", "kill", "run", "reverse" } : ["miss", "hit", "kill", "run", "reverse"])
         {
             var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["ink-medieval-ground"]);
@@ -139,14 +139,12 @@ internal static class CombatContactStudy2D
 
                     contacts.Enabled = effects;
                     contacts.Advance(0);
-                    device.SetRenderTarget(target);
-                    renderer.BeginFrame(640, 240, default);
-                    renderer.Clear(new Color(145, 176, 190));
-                    renderer.Draw(scene);
-                    renderer.EndFrame();
-                    device.SetRenderTarget(null);
-                    using var stream = File.Create(Path.Combine(directory, $"{name}-{label}-{step / 2:000}.png"));
-                    target.SaveAsPng(stream, 640, 240);
+                    target.SavePng(Path.Combine(directory, $"{name}-{label}-{step / 2:000}.png"), new Color(145, 176, 190), () =>
+                    {
+                        renderer.BeginFrame(640, 240, default);
+                        renderer.Draw(scene);
+                        renderer.EndFrame();
+                    });
                 }
                 contacts.Enabled = true;
             }

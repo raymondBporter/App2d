@@ -58,7 +58,7 @@ internal static class SpellRenderingSmoke2D
         using var weapons = new WeaponPresentation2D(scene, textures, audio);
         using var spells = new SpellPresentation2D(audio);
         using var renderer = new Renderer2D(new Camera2D { Zoom = 4, Position = new(0, 15) }, device);
-        using var target = new RenderTarget2D(device, 1100, 650);
+        using var target = RenderCapture2D.CreateTarget(device, 1100, 650, DepthFormat.None, 0);
         var events = new List<WeaponEvent2D>();
         arsenal.WeaponOccurred += events.Add;
         long tick = 0;
@@ -159,17 +159,15 @@ internal static class SpellRenderingSmoke2D
         }
         void Save(string name, string caption)
         {
-            device.SetRenderTarget(target);
-            renderer.BeginFrame(1100, 650, default);
-            renderer.Clear(new Color(108, 133, 149));
-            renderer.Draw(scene);
-            spells.Draw(renderer);
-            PlayerHud2D.Draw(renderer, person.Health.Current, person.Health.Maximum, weapons.HudTexture, person.CaptureState().Spells, arsenal.IsChargingPrimary);
-            renderer.DrawScreenLabel(caption, new(24, 590));
-            renderer.EndFrame();
-            device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(output, name));
-            target.SaveAsPng(stream, 1100, 650);
+            target.SavePng(Path.Combine(output, name), new Color(108, 133, 149), () =>
+            {
+                renderer.BeginFrame(1100, 650, default);
+                renderer.Draw(scene);
+                spells.Draw(renderer);
+                PlayerHud2D.Draw(renderer, person.Health.Current, person.Health.Maximum, weapons.HudTexture, person.CaptureState().Spells, arsenal.IsChargingPrimary);
+                renderer.DrawScreenLabel(caption, new(24, 590));
+                renderer.EndFrame();
+            });
         }
     }
 

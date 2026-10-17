@@ -48,14 +48,8 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
         }
     }
 
-    public Shot? Reference
-    {
-        get; private set;
-    }
-    public Shot? World
-    {
-        get; private set;
-    }
+    public Shot? Reference { get; private set; }
+    public Shot? World { get; private set; }
     public float ElapsedSeconds => _elapsed;
 
     public void Launch(Vector2 origin, float facing)

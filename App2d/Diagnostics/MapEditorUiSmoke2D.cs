@@ -26,7 +26,7 @@ internal static class MapEditorUiSmoke2D
         using var renderer = new Renderer2D(game.Camera, device);
         var width = device.PresentationParameters.BackBufferWidth;
         var height = device.PresentationParameters.BackBufferHeight;
-        using var target = new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, DepthFormat.Depth24);
+        using var target = RenderCapture2D.CreateTarget(device, width, height, DepthFormat.Depth24, 0);
         Draw("map-tiles");
         editor.SelectMode(LevelEditorMode2D.Things);
         if (editor.ThingDefinitions.Count > 0)
@@ -49,16 +49,16 @@ internal static class MapEditorUiSmoke2D
                 input.SetToolCapture(ui.CaptureKeyboard, ui.CaptureMouse);
                 editor.Update(input);
                 input.EndFrame();
-                device.SetRenderTarget(target);
-                renderer.BeginFrame(width, height, time);
-                game.RenderFrame(renderer, time);
-                TileEditorView2D.DrawWorldDebug(renderer, editor);
-                renderer.EndFrame();
-                ui.Render();
-                device.SetRenderTarget(null);
+                using (device.UseRenderTarget(target))
+                {
+                    renderer.BeginFrame(width, height, time);
+                    game.RenderFrame(renderer, time);
+                    TileEditorView2D.DrawWorldDebug(renderer, editor);
+                    renderer.EndFrame();
+                    ui.Render();
+                }
             }
-            using var stream = File.Create(Path.Combine(outputDirectory, name + ".png"));
-            target.SaveAsPng(stream, width, height);
+            target.SavePng(Path.Combine(outputDirectory, name + ".png"));
         }
     }
 }

@@ -4,6 +4,7 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
+using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
@@ -63,20 +64,19 @@ internal static class EditorSurfaceSmoke
                 PresentationInterval = PresentInterval.Immediate
             });
             gui.UserScale = scale;
-            using var target = new RenderTarget2D(device, width, height, false, SurfaceFormat.Color, DepthFormat.None);
+            using var target = RenderCapture2D.CreateTarget(device, width, height, DepthFormat.None, 0);
             void Capture(string name)
             {
                 for (var frame = 0; frame < 4; frame++)
                 {
                     gui.Begin(1f / 60);
                     shell.Draw();
-                    device.SetRenderTarget(target);
-                    device.Clear(new Color(19, 23, 29));
-                    gui.Render();
-                    device.SetRenderTarget(null);
+                    using (device.UseRenderTarget(target, new Color(19, 23, 29)))
+                    {
+                        gui.Render();
+                    }
                 }
-                using var file = File.Create(Path.Combine(outputDirectory, $"{name}-{width}x{height}.png"));
-                target.SaveAsPng(file, width, height);
+                target.SavePng(Path.Combine(outputDirectory, $"{name}-{width}x{height}.png"));
             }
 
             session.Open("person-walk");

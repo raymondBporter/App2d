@@ -58,7 +58,7 @@ internal static class TilesetRenderingSmoke2D
         using var world = new WorldPresentation2D(scene, textures);
         var camera = new Camera2D { Zoom = 1f };
         using var renderer = new Renderer2D(camera, device);
-        using var target = new RenderTarget2D(device, 1280, 720, false, SurfaceFormat.Color, DepthFormat.None);
+        using var target = RenderCapture2D.CreateTarget(device, 1280, 720, DepthFormat.None, 0);
         var step = 1280f / camera.Zoom;
         var index = 0;
         for (var x = map.Origin.X + step / 2f; x < map.WorldBounds.Max.X; x += step, index++)
@@ -66,18 +66,16 @@ internal static class TilesetRenderingSmoke2D
             camera.Position = new(x, map.Origin.Y + 18f * 32f);
             level.UpdateStreaming(camera.Position);
             world.Update(level.CaptureContent(), level.CaptureWorld(), 1f / 120f);
-            device.SetRenderTarget(target);
-            renderer.BeginFrame(1280, 720, default);
-            renderer.Clear(new Color(170, 208, 226));
-            world.DrawTrees(renderer, camera.VisibleWorldBounds);
-            renderer.Draw(scene, int.MinValue, 0);
-            world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
-            renderer.Draw(scene, 1, int.MaxValue);
-            world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
-            renderer.EndFrame();
-            device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(directory, $"level-{index:00}.png"));
-            target.SaveAsPng(stream, 1280, 720);
+            target.SavePng(Path.Combine(directory, $"level-{index:00}.png"), new Color(170, 208, 226), () =>
+            {
+                renderer.BeginFrame(1280, 720, default);
+                world.DrawTrees(renderer, camera.VisibleWorldBounds);
+                renderer.Draw(scene, int.MinValue, 0);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
+                renderer.Draw(scene, 1, int.MaxValue);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
+                renderer.EndFrame();
+            });
         }
         Console.WriteLine($"Level strip written: {index} views in {Path.GetFullPath(directory)}");
     }
@@ -122,7 +120,7 @@ internal static class TilesetRenderingSmoke2D
         // Zoom 1.35 shows world pixels at the size the game camera gives them on a 1080p screen.
         var camera = new Camera2D { Zoom = 1.35f, Position = center };
         using var renderer = new Renderer2D(camera, device);
-        using var target = new RenderTarget2D(device, 1280, 720, false, SurfaceFormat.Color, DepthFormat.None);
+        using var target = RenderCapture2D.CreateTarget(device, 1280, 720, DepthFormat.None, 0);
         for (var i = 0; i < 60; i++)
         {
             Step();
@@ -149,18 +147,16 @@ internal static class TilesetRenderingSmoke2D
 
         void Save(string name)
         {
-            device.SetRenderTarget(target);
-            renderer.BeginFrame(1280, 720, default);
-            renderer.Clear(new Color(170, 208, 226));
-            world.DrawTrees(renderer, camera.VisibleWorldBounds);
-            renderer.Draw(scene, int.MinValue, 0);
-            world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
-            renderer.Draw(scene, 1, int.MaxValue);
-            world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
-            renderer.EndFrame();
-            device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(directory, name));
-            target.SaveAsPng(stream, 1280, 720);
+            target.SavePng(Path.Combine(directory, name), new Color(170, 208, 226), () =>
+            {
+                renderer.BeginFrame(1280, 720, default);
+                world.DrawTrees(renderer, camera.VisibleWorldBounds);
+                renderer.Draw(scene, int.MinValue, 0);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
+                renderer.Draw(scene, 1, int.MaxValue);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
+                renderer.EndFrame();
+            });
         }
     }
 }

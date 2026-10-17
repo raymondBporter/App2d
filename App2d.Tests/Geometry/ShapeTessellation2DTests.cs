@@ -126,6 +126,17 @@ public sealed class ShapeTessellation2DTests
         Assert.Equal(new Vector2(99), buffer[count]);
     }
 
+    [Fact]
+    public void TaperedSegmentsProduceTrapezoidPackedTriangles()
+    {
+        Span<Vector2> buffer = stackalloc Vector2[StrokeTessellation2D.MaximumSegmentVertices];
+        var count = StrokeTessellation2D.WriteSegment(buffer, Vector2.Zero, new(10, 0), startWidth: 2, endWidth: 4, LineCap2D.Butt, LineCap2D.Butt);
+        Assert.Equal(6, count);
+        var area = 0d;
+        foreach (var triangle in MeshTopology.TriangleList<Vector2>(buffer[..count])) area += triangle.GetArea();
+        Assert.InRange(area, 29.99, 30.01);
+    }
+
     [Theory]
     [InlineData(LineCap2D.Butt, 0)]
     [InlineData(LineCap2D.Square, 6)]

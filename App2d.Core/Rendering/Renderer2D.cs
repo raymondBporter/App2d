@@ -376,10 +376,20 @@ public sealed partial class Renderer2D : IDisposable
     }
 
     /// <summary>Draws a transient convex world-space polygon without creating a scene object.</summary>
-    public void DrawWorldConvexPolygon(ReadOnlySpan<Vector2> points, XnaColor color)
+    public void DrawWorldConvexPolygon(ReadOnlySpan<Vector2> points, XnaColor color) =>
+        DrawWorldConvexPolygon(points, color, null, 0f);
+
+    /// <summary>Draws a transient convex world-space polygon with optional fill and outline in world units.</summary>
+    public void DrawWorldConvexPolygon(ReadOnlySpan<Vector2> points, XnaColor? fillColor,
+        XnaColor? outlineColor = null, float worldStrokeWidth = 0f)
     {
         RequireFrame();
         ArgGuard.ThrowIfTooShort(points, 3);
+        if (fillColor is null && outlineColor is null)
+        {
+            throw new ArgumentException("Provide a fill color, an outline color, or both.", nameof(fillColor));
+        }
+
         foreach (var point in points)
         {
             ArgGuard.Finite(point, nameof(points));
@@ -387,12 +397,25 @@ public sealed partial class Renderer2D : IDisposable
 
         SelectBatch(null, null);
         var matrix = _camera.WorldToDeviceMatrix;
-        foreach (var triangle in MeshTopology.TriangleFan<Vector2>(points))
+        if (fillColor is { } fill)
         {
-            Triangle(
-                Vertex(Vector2.Transform(triangle.A, matrix), color),
-                Vertex(Vector2.Transform(triangle.B, matrix), color),
-                Vertex(Vector2.Transform(triangle.C, matrix), color));
+            foreach (var triangle in MeshTopology.TriangleFan<Vector2>(points))
+            {
+                Triangle(
+                    Vertex(Vector2.Transform(triangle.A, matrix), fill),
+                    Vertex(Vector2.Transform(triangle.B, matrix), fill),
+                    Vertex(Vector2.Transform(triangle.C, matrix), fill));
+            }
+        }
+
+        if (outlineColor is { } outline && worldStrokeWidth > 0f)
+        {
+            var screenWidth = Math.Max(1f, worldStrokeWidth * _camera.PixelsPerWorldUnit);
+            for (var i = 0; i < points.Length; i++)
+            {
+                var next = (i + 1) % points.Length;
+                Line(Vector2.Transform(points[i], matrix), Vector2.Transform(points[next], matrix), outline, screenWidth);
+            }
         }
     }
 
@@ -418,6 +441,15 @@ public sealed partial class Renderer2D : IDisposable
         StrokePolygon(points[..segments], _camera.WorldToDeviceMatrix, color, strokeWidth);
     }
 
+    /// <summary>Draws a world circle with stroke width specified in world units, scaling with camera zoom.</summary>
+    public void DrawWorldThickCircle(Vector2 center, float radius, XnaColor color, float worldStrokeWidth)
+    {
+        RequireFrame();
+        ArgGuard.Positive(worldStrokeWidth);
+        var screenWidth = Math.Max(1f, worldStrokeWidth * _camera.PixelsPerWorldUnit);
+        DrawWorldCircle(center, radius, color, screenWidth);
+    }
+
     public void DrawWorldPolyline(ReadOnlySpan<Vector2> points, XnaColor color, float strokeWidth = 2f,
         LineCap2D cap = LineCap2D.Butt)
     {
@@ -436,6 +468,17 @@ public sealed partial class Renderer2D : IDisposable
                 i == 1 ? cap : LineCap2D.Butt,
                 i == points.Length - 1 ? cap : LineCap2D.Butt);
         }
+    }
+
+    /// <summary>Draws a polyline with stroke width specified in world units, scaling with camera zoom.</summary>
+    public void DrawWorldThickPolyline(ReadOnlySpan<Vector2> points, float worldStrokeWidth, XnaColor color,
+        LineCap2D cap = LineCap2D.Butt)
+    {
+        RequireFrame();
+        ArgGuard.Positive(worldStrokeWidth);
+        ValidateLineCap(cap);
+        var screenWidth = Math.Max(1f, worldStrokeWidth * _camera.PixelsPerWorldUnit);
+        DrawWorldPolyline(points, color, screenWidth, cap);
     }
 
     public void DrawGrid(float spacing = 50f, int majorLineEvery = 5)
@@ -492,10 +535,14 @@ public sealed partial class Renderer2D : IDisposable
     }
 
     private void Line(Vector2 start, Vector2 end, XnaColor color, float width,
+        LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt) =>
+        Line(start, end, color, width, width, startCap, endCap);
+
+    private void Line(Vector2 start, Vector2 end, XnaColor color, float startWidth, float endWidth,
         LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
     {
         Span<Vector2> vertices = stackalloc Vector2[StrokeTessellation2D.MaximumSegmentVertices];
-        var count = StrokeTessellation2D.WriteSegment(vertices, start, end, width, startCap, endCap);
+        var count = StrokeTessellation2D.WriteSegment(vertices, start, end, startWidth, endWidth, startCap, endCap);
         foreach (var triangle in MeshTopology.TriangleList<Vector2>(vertices[..count]))
         {
             Triangle(Vertex(triangle.A, color), Vertex(triangle.B, color), Vertex(triangle.C, color));

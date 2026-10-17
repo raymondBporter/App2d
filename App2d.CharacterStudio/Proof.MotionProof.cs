@@ -1,6 +1,7 @@
 using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering.Characters;
+using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
@@ -44,36 +45,35 @@ internal sealed partial class ProofRenders
             return false;
         }
         var catalog = ProofCatalog();
-        _proofTarget ??= new(GraphicsDevice, ProofWidth, ProofHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
+        _proofTarget ??= RenderCapture2D.CreateTarget(GraphicsDevice, ProofWidth, ProofHeight);
         var clipId = ProofClips[_smokeIndex / ProofFrames];
         var frame = _smokeIndex % ProofFrames;
         var clip = catalog.Animations[clipId];
         var seconds = frame * clip.Duration / ProofFrames;
         var panel = ProofWidth / ProofSubjects.Length;
         const int band = ProofHeight - ProofPanelHeight;
-        GraphicsDevice.SetRenderTarget(_proofTarget);
-        GraphicsDevice.Clear(new Color(237, 238, 226));
-        for (var i = 0; i < ProofSubjects.Length; i++)
+        using (GraphicsDevice.UseRenderTarget(_proofTarget, new Color(237, 238, 226)))
         {
-            var model = catalog.Resolve(ProofSubjects[i]);
-            var pose = PoseEvaluator.Sample(model, clip, seconds);
-            _proofDrawings[i].Build(model, pose);
-            // Close-up: the view follows this subject's travel, so ground ticks scroll past a planted foot.
-            GraphicsDevice.Viewport = new(i * panel, 0, panel, ProofPanelHeight);
-            var close = PointCharacterRenderer.Projection(panel, ProofPanelHeight, new(panel * .5f - pose.Locomotion.X * ProofPpu, ProofPanelHeight * .92f), ProofPpu);
-            BuildProofGround(pose, pose.Locomotion.X, ProofPpu);
-            _renderer.Draw(_proofGround, close, Matrix.Identity, writeDepth: false);
-            _renderer.Draw(_proofDrawings[i].Mesh, close, Matrix.Identity);
-            // Game scale: a fixed camera at arena size, so travel and readability show at player size.
-            GraphicsDevice.Viewport = new(0, ProofPanelHeight, ProofWidth, band);
-            var game = PointCharacterRenderer.Projection(ProofWidth, band, new(ProofWidth * .12f + i * 11 * GamePpu, band * .85f), GamePpu);
-            BuildProofGround(pose, 5, GamePpu);
-            _renderer.Draw(_proofGround, game, Matrix.Identity, writeDepth: false);
-            _renderer.Draw(_proofDrawings[i].Mesh, game, Matrix.Identity);
+            for (var i = 0; i < ProofSubjects.Length; i++)
+            {
+                var model = catalog.Resolve(ProofSubjects[i]);
+                var pose = PoseEvaluator.Sample(model, clip, seconds);
+                _proofDrawings[i].Build(model, pose);
+                // Close-up: the view follows this subject's travel, so ground ticks scroll past a planted foot.
+                GraphicsDevice.Viewport = new(i * panel, 0, panel, ProofPanelHeight);
+                var close = PointCharacterRenderer.Projection(panel, ProofPanelHeight, new(panel * .5f - pose.Locomotion.X * ProofPpu, ProofPanelHeight * .92f), ProofPpu);
+                BuildProofGround(pose, pose.Locomotion.X, ProofPpu);
+                _renderer.Draw(_proofGround, close, Matrix.Identity, writeDepth: false);
+                _renderer.Draw(_proofDrawings[i].Mesh, close, Matrix.Identity);
+                // Game scale: a fixed camera at arena size, so travel and readability show at player size.
+                GraphicsDevice.Viewport = new(0, ProofPanelHeight, ProofWidth, band);
+                var game = PointCharacterRenderer.Projection(ProofWidth, band, new(ProofWidth * .12f + i * 11 * GamePpu, band * .85f), GamePpu);
+                BuildProofGround(pose, 5, GamePpu);
+                _renderer.Draw(_proofGround, game, Matrix.Identity, writeDepth: false);
+                _renderer.Draw(_proofDrawings[i].Mesh, game, Matrix.Identity);
+            }
         }
-        GraphicsDevice.SetRenderTarget(null);
-        using var stream = File.Create(Path.Combine(_smokePath, $"{clipId}-{frame:D2}.png"));
-        _proofTarget.SaveAsPng(stream, ProofWidth, ProofHeight);
+        _proofTarget.SavePng(Path.Combine(_smokePath, $"{clipId}-{frame:D2}.png"));
         return true;
     }
 

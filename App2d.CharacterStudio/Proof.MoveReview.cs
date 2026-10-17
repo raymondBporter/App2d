@@ -3,7 +3,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
-using Microsoft.Xna.Framework.Graphics;
+using App2d.Rendering;
 using System.Numerics;
 using System.Text.Json;
 using Color = Microsoft.Xna.Framework.Color;
@@ -48,7 +48,7 @@ internal sealed partial class ProofRenders
         var model = catalog.Resolve("person");
         var props = catalog.Props;
         var sockets = model.Base.Sockets.ToDictionary(s => s.Id);
-        var target = new RenderTarget2D(GraphicsDevice, ReviewWidth, ReviewHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
+        using var target = RenderCapture2D.CreateTarget(GraphicsDevice, ReviewWidth, ReviewHeight);
         var drawing = new PuppetDrawing();
         var scenery = new CharacterMesh(8192);
         var items = ReviewItems(catalog);
@@ -75,14 +75,12 @@ internal sealed partial class ProofRenders
 
                 var centerX = pose.Locomotion.X + item.ViewX;
                 BuildScenery(scenery, item.Scene, centerX, seconds);
-                GraphicsDevice.SetRenderTarget(target);
-                GraphicsDevice.Clear(new Color(241, 240, 232));
                 var projection = PointCharacterRenderer.Projection(ReviewWidth, ReviewHeight, new(ReviewWidth * .5f - centerX * ReviewPpu, ReviewHeight * .84f), ReviewPpu);
-                _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
-                _renderer.Draw(drawing.Mesh, projection, Matrix.Identity);
-                GraphicsDevice.SetRenderTarget(null);
-                using var stream = File.Create(Path.Combine(folder, $"{f:D3}.png"));
-                target.SaveAsPng(stream, ReviewWidth, ReviewHeight);
+                target.SavePng(Path.Combine(folder, $"{f:D3}.png"), new Color(241, 240, 232), () =>
+                {
+                    _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
+                    _renderer.Draw(drawing.Mesh, projection, Matrix.Identity);
+                });
             }
             manifest.Add(new
             {
@@ -100,7 +98,6 @@ internal sealed partial class ProofRenders
         }
         File.WriteAllText(Path.Combine(_smokePath, "manifest.json"), JsonSerializer.Serialize(manifest, ManifestJsonOptions));
         File.WriteAllLines(Path.Combine(_smokePath, "checks.txt"), report);
-        target.Dispose();
         return false;
     }
 

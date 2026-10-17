@@ -40,18 +40,14 @@ internal static class EnemyRenderingSmoke2D
         ];
         view.Update(states, [new RivalAttackStarted2D(rivalId, new(220f, 0f), UnarmedAttackKind2D.Kick, 0.42f)], 0.18f, 1);
         using var renderer = new Renderer2D(new Camera2D { Zoom = 1.35f, Position = new(20f, 25f) }, device);
-        using var target = new RenderTarget2D(device, 1100, 450);
-        device.SetRenderTarget(target);
-        renderer.BeginFrame(1100, 450, default);
-        renderer.Clear(new XnaColor(145, 176, 190));
-        renderer.Draw(scene);
-        renderer.DrawScreenLabel("CLIENT ENEMY VIEWS / HAMMER IMPACT + RIVAL KICK", new Vector2(24f, 24f));
-        renderer.EndFrame();
-        device.SetRenderTarget(null);
-        using (var stream = File.Create(Path.Combine(directory, "enemy-client-views.png")))
+        using var target = RenderCapture2D.CreateTarget(device, 1100, 450, DepthFormat.None, 0);
+        target.SavePng(Path.Combine(directory, "enemy-client-views.png"), new XnaColor(145, 176, 190), () =>
         {
-            target.SaveAsPng(stream, 1100, 450);
-        }
+            renderer.BeginFrame(1100, 450, default);
+            renderer.Draw(scene);
+            renderer.DrawScreenLabel("CLIENT ENEMY VIEWS / HAMMER IMPACT + RIVAL KICK", new Vector2(24f, 24f));
+            renderer.EndFrame();
+        });
 
         view.Update([.. states.Select(s => s with { IsEnabled = false })], [], 0f, 1);
         if (scene.Any(item => item.IsVisible))

@@ -13,11 +13,17 @@ public static class StrokeTessellation2D
 
     /// <summary>Writes triangle-list vertices. A collapsed butt stroke is empty; square/round strokes become a square/disk.</summary>
     public static int WriteSegment(Span<Vector2> vertices, Vector2 start, Vector2 end, float width,
+        LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt, int capSegments = DefaultCapSegments) =>
+        WriteSegment(vertices, start, end, width, width, startCap, endCap, capSegments);
+
+    /// <summary>Writes triangle-list vertices for a uniform or tapered segment. A collapsed butt stroke is empty; square/round strokes become a square/disk.</summary>
+    public static int WriteSegment(Span<Vector2> vertices, Vector2 start, Vector2 end, float startWidth, float endWidth,
         LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt, int capSegments = DefaultCapSegments)
     {
         ArgGuard.Finite(start);
         ArgGuard.Finite(end);
-        ArgGuard.Positive(width);
+        ArgGuard.Positive(startWidth);
+        ArgGuard.Positive(endWidth);
         ArgGuard.Positive(capSegments);
         ValidateCap(startCap);
         ValidateCap(endCap);
@@ -28,30 +34,34 @@ public static class StrokeTessellation2D
                 : startCap == LineCap2D.Square || endCap == LineCap2D.Square ? 6 : 0
             : checked(6 + (startCap == LineCap2D.Round ? capSegments * 3 : 0) + (endCap == LineCap2D.Round ? capSegments * 3 : 0));
         ArgGuard.ThrowIfTooShort(vertices, count);
-        var radius = width * .5f;
+        var startRadius = startWidth * .5f;
+        var endRadius = endWidth * .5f;
         if (collapsed)
         {
+            var maxRadius = MathF.Max(startRadius, endRadius);
             if (startCap == LineCap2D.Round || endCap == LineCap2D.Round)
-                WriteDisk(vertices, start, radius, checked(capSegments * 2));
+                WriteDisk(vertices, start, maxRadius, checked(capSegments * 2));
             else if (count != 0)
-                WriteQuad(vertices, start + new Vector2(-radius, -radius), start + new Vector2(radius, -radius),
-                    start + new Vector2(radius, radius), start + new Vector2(-radius, radius));
+                WriteQuad(vertices, start + new Vector2(-maxRadius, -maxRadius), start + new Vector2(maxRadius, -maxRadius),
+                    start + new Vector2(maxRadius, maxRadius), start + new Vector2(-maxRadius, maxRadius));
             return count;
         }
 
         var unit = Vector2.Normalize(axis);
-        var normal = new Vector2(-unit.Y, unit.X) * radius;
-        if (startCap == LineCap2D.Square) start -= unit * radius;
-        if (endCap == LineCap2D.Square) end += unit * radius;
-        WriteQuad(vertices, start + normal, end + normal, end - normal, start - normal);
+        var perp = new Vector2(-unit.Y, unit.X);
+        var startNormal = perp * startRadius;
+        var endNormal = perp * endRadius;
+        if (startCap == LineCap2D.Square) start -= unit * startRadius;
+        if (endCap == LineCap2D.Square) end += unit * endRadius;
+        WriteQuad(vertices, start + startNormal, end + endNormal, end - endNormal, start - startNormal);
         var written = 6;
         if (startCap == LineCap2D.Round)
         {
-            WriteRoundCap(vertices[written..], start, -unit, radius, capSegments);
+            WriteRoundCap(vertices[written..], start, -unit, startRadius, capSegments);
             written += capSegments * 3;
         }
         if (endCap == LineCap2D.Round)
-            WriteRoundCap(vertices[written..], end, unit, radius, capSegments);
+            WriteRoundCap(vertices[written..], end, unit, endRadius, capSegments);
         return count;
     }
 

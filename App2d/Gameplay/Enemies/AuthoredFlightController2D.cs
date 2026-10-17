@@ -10,10 +10,7 @@ internal sealed class AuthoredFlightController2D(FlightDef config)
     private Vector2 _home, _dive;
     private float _lowY;
     private bool _committed;
-    public bool Ready
-    {
-        get; private set;
-    }
+    public bool Ready { get; private set; }
     public void Begin(Vector2 position)
     {
         _home = position;

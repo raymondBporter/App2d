@@ -3,7 +3,7 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
 using App2d.Core.Rendering.Characters;
-using Microsoft.Xna.Framework.Graphics;
+using App2d.Rendering;
 using System.Numerics;
 using System.Text.Json;
 using Color = Microsoft.Xna.Framework.Color;
@@ -42,7 +42,7 @@ internal sealed partial class ProofRenders
         var shapes = new Dictionary<MotionClip, List<(float Start, float Finish, Vector2[] Hull)>>();
         List<(float Start, float Finish, Vector2[] Hull)> ShapesOf(MotionClip clip) =>
             shapes.TryGetValue(clip, out var found) ? found : shapes[clip] = HitShapes(model, clip, props, sockets);
-        var target = new RenderTarget2D(GraphicsDevice, ReviewWidth, ReviewHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
+        using var target = RenderCapture2D.CreateTarget(GraphicsDevice, ReviewWidth, ReviewHeight);
         var drawing = new PuppetDrawing();
         var scenery = new CharacterMesh(8192);
         var trail = new CharacterMesh(8192);
@@ -80,18 +80,16 @@ internal sealed partial class ProofRenders
                 }
             }
             BuildScenery(scenery, "ground", 0, seconds);
-            GraphicsDevice.SetRenderTarget(target);
-            GraphicsDevice.Clear(new Color(241, 240, 232));
-            _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
-            if (trail.Count > 0)
+            target.SavePng(path, new Color(241, 240, 232), () =>
             {
-                _renderer.Draw(trail, projection, Matrix.Identity);
-            }
+                _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
+                if (trail.Count > 0)
+                {
+                    _renderer.Draw(trail, projection, Matrix.Identity);
+                }
 
-            _renderer.Draw(drawing.Mesh, projection, Matrix.Identity);
-            GraphicsDevice.SetRenderTarget(null);
-            using var stream = File.Create(path);
-            target.SaveAsPng(stream, ReviewWidth, ReviewHeight);
+                _renderer.Draw(drawing.Mesh, projection, Matrix.Identity);
+            });
         }
 
         var manifest = new List<object>();

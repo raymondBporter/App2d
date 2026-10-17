@@ -241,7 +241,7 @@ public sealed class VegetationPatch2D
                 outline[count++] = Edge(blade, index / (float)SegmentCount, wind, 1f);
             }
 
-            renderer.DrawWorldPolyline(outline[..count], InkColor, Ink(renderer, OutlineWidth * 2f));
+            renderer.DrawWorldThickPolyline(outline[..count], Ink(OutlineWidth * 2f), InkColor);
 
             for (var index = 0; index < points; index++)
             {
@@ -316,8 +316,8 @@ public sealed class VegetationPatch2D
             stem[index] = FlowerPoint(flower, index / (float)SegmentCount, wind);
         }
 
-        renderer.DrawWorldPolyline(stem, InkColor, Ink(renderer, 1.9f));
-        renderer.DrawWorldPolyline(stem, StemColor, Ink(renderer, 0.85f));
+        renderer.DrawWorldThickPolyline(stem, Ink(1.9f), InkColor);
+        renderer.DrawWorldThickPolyline(stem, Ink(0.85f), StemColor);
 
         var leafRoot = FlowerPoint(flower, 0.35f, wind);
         var leaf = new Blade(leafRoot, 8f * scale, 4f * scale, 6f * scale, flower.Phase, 0.3f, _style.LightColor,
@@ -338,7 +338,7 @@ public sealed class VegetationPatch2D
         outline[2] = Edge(leaf, 1f, wind, -1f);
         outline[3] = Edge(leaf, 0.5f, wind, 1f);
         outline[4] = Edge(leaf, 0f, wind, 1f);
-        renderer.DrawWorldPolyline(outline, InkColor, Ink(renderer, DetailOutlineWidth));
+        renderer.DrawWorldThickPolyline(outline, Ink(DetailOutlineWidth), InkColor);
 
         var head = FlowerHead(flower, wind);
         for (var petal = 0; petal < 5; petal++)
@@ -353,11 +353,11 @@ public sealed class VegetationPatch2D
     {
         var disc = Disc(center, radius, color);
         renderer.DrawWorldConvexPolygon(disc.Points, disc.Fill);
-        renderer.DrawWorldCircle(center, radius, InkColor, Ink(renderer, DetailOutlineWidth));
+        renderer.DrawWorldThickCircle(center, radius, InkColor, Ink(DetailOutlineWidth));
     }
 
-    private float Ink(Renderer2D renderer, float width) =>
-        Math.Max(1f, width * _style.BladeWidth / 4.5f * renderer.PixelsPerWorldUnit);
+    /// <summary>An ink width scaled to this patch's blade size, in world units.</summary>
+    private float Ink(float width) => width * _style.BladeWidth / 4.5f;
 
     private static VegetationTipPolygon2D Disc(Vector2 center, float radius, XnaColor color)
     {

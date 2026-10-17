@@ -60,7 +60,7 @@ internal static class GunRenderingSmoke2D
         arsenal.ShotStarted += () => presentation.PlayShot(false);
         var camera = new Camera2D { Zoom = 4f };
         using var renderer = new Renderer2D(camera, device);
-        using var target = new RenderTarget2D(device, width, height);
+        using var target = RenderCapture2D.CreateTarget(device, width, height, DepthFormat.None, 0);
         var hold = new PersonCommand2D(0f, 0f, false, false, false, PrimaryHeld: false, false, CastHeld: true);
 
         foreach (var facing in new[] { 1f, -1f })
@@ -151,16 +151,14 @@ internal static class GunRenderingSmoke2D
 
         void Save(string name, string caption)
         {
-            device.SetRenderTarget(target);
-            renderer.BeginFrame(width, height, default);
-            renderer.Clear(new XnaColor(145, 176, 190));
-            renderer.Draw(scene);
-            PlayerHud2D.Draw(renderer, 5, 5, weaponPresentation.HudTexture);
-            renderer.DrawScreenLabel(caption, new Vector2(24f, 540f));
-            renderer.EndFrame();
-            device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(outputDirectory, name));
-            target.SaveAsPng(stream, width, height);
+            target.SavePng(Path.Combine(outputDirectory, name), new XnaColor(145, 176, 190), () =>
+            {
+                renderer.BeginFrame(width, height, default);
+                renderer.Draw(scene);
+                PlayerHud2D.Draw(renderer, 5, 5, weaponPresentation.HudTexture);
+                renderer.DrawScreenLabel(caption, new Vector2(24f, 540f));
+                renderer.EndFrame();
+            });
         }
     }
 

@@ -12,14 +12,8 @@ public sealed class Health2D
         Current = maximum;
     }
 
-    public int Maximum
-    {
-        get;
-    }
-    public int Current
-    {
-        get; private set;
-    }
+    public int Maximum { get; }
+    public int Current { get; private set; }
     public bool IsAlive => Current > 0;
 
     public int Heal(int amount)

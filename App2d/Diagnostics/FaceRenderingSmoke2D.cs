@@ -27,28 +27,25 @@ internal static class FaceRenderingSmoke2D
         var drawing = new PuppetDrawing();
         using var renderer = new PointCharacterRenderer(device);
         using var labels = new Renderer2D(new Camera2D(), device);
-        using var target = new RenderTarget2D(device, 1280, 1160, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        device.SetRenderTarget(target);
-        labels.BeginFrame(1280, 1160, default);
-        labels.Clear(new Color(230, 234, 227));
-        for (var i = 0; i < FaceExpressions.Names.Count; i++)
+        RenderCapture2D.SavePng(device, 1280, 1160, Path.Combine(directory, "faces-expressions.png"), new Color(230, 234, 227), () =>
         {
-            var pose = PoseEvaluator.Rest(person, new(FaceExpressions.Names[i]));
-            drawing.Build(person, pose);
-            var head = pose.World("head");
-            device.Viewport = new Viewport(i % 4 * 320, i / 4 * 290, 320, 225);
-            var projection = PointCharacterRenderer.Projection(320, 225, new(160, 112), 260);
-            renderer.Draw(drawing.Mesh, projection, Matrix.CreateTranslation(-head.X, -head.Y, 0));
-        }
-        device.Viewport = new Viewport(0, 0, 1280, 1160);
-        for (var i = 0; i < FaceExpressions.Names.Count; i++)
-        {
-            labels.DrawScreenLabel(FaceExpressions.Names[i].ToUpperInvariant(), new(i % 4 * 320 + 65, i / 4 * 290 + 232));
-        }
+            labels.BeginFrame(1280, 1160, default);
+            for (var i = 0; i < FaceExpressions.Names.Count; i++)
+            {
+                var pose = PoseEvaluator.Rest(person, new(FaceExpressions.Names[i]));
+                drawing.Build(person, pose);
+                var head = pose.World("head");
+                device.Viewport = new Viewport(i % 4 * 320, i / 4 * 290, 320, 225);
+                var projection = PointCharacterRenderer.Projection(320, 225, new(160, 112), 260);
+                renderer.Draw(drawing.Mesh, projection, Matrix.CreateTranslation(-head.X, -head.Y, 0));
+            }
+            device.Viewport = new Viewport(0, 0, 1280, 1160);
+            for (var i = 0; i < FaceExpressions.Names.Count; i++)
+            {
+                labels.DrawScreenLabel(FaceExpressions.Names[i].ToUpperInvariant(), new(i % 4 * 320 + 65, i / 4 * 290 + 232));
+            }
 
-        labels.EndFrame();
-        device.SetRenderTarget(null);
-        using var stream = File.Create(Path.Combine(directory, "faces-expressions.png"));
-        target.SaveAsPng(stream, target.Width, target.Height);
+            labels.EndFrame();
+        });
     }
 }

@@ -31,7 +31,7 @@ internal static class PlatformStudy2D
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
         var camera = new Camera2D { Zoom = 2.2f };
         using var renderer = new Renderer2D(camera, device);
-        using var target = new RenderTarget2D(device, 400, 300, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
+        using var target = RenderCapture2D.CreateTarget(device, 400, 300);
         var scenarios = new (string Name, Vector2 Focus, MovingPlatformSpec2D Platform, bool Enemy)[]
         {
             ("player-sinking", new(-300, 70), new(10, null, true, new(-300, 90), new(0, -80), new(120, 12), 70, 0xFF25D2BE), false),
@@ -80,14 +80,12 @@ internal static class PlatformStudy2D
                     continue;
                 }
 
-                device.SetRenderTarget(target);
-                renderer.BeginFrame(400, 300, default);
-                renderer.Clear(new Color(145, 176, 190));
-                renderer.Draw(scene);
-                renderer.EndFrame();
-                device.SetRenderTarget(null);
-                using var stream = File.Create(Path.Combine(directory, $"{name}-{step / 4:000}.png"));
-                target.SaveAsPng(stream, 400, 300);
+                target.SavePng(Path.Combine(directory, $"{name}-{step / 4:000}.png"), new Color(145, 176, 190), () =>
+                {
+                    renderer.BeginFrame(400, 300, default);
+                    renderer.Draw(scene);
+                    renderer.EndFrame();
+                });
             }
         }
     }

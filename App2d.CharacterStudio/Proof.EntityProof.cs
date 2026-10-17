@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering.Characters;
+using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
 
@@ -26,22 +27,20 @@ internal sealed partial class ProofRenders
             File.WriteAllLines(Path.Combine(_smokePath, "entity-proof.txt"), _entityReport);
             return false;
         }
-        _proofTarget ??= new(GraphicsDevice, EntityWidth, EntityHeight, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
-        _arenaDrawing ??= new(GraphicsDevice, _renderer);
+        _proofTarget ??= RenderCapture2D.CreateTarget(GraphicsDevice, EntityWidth, EntityHeight);
+        var arena = _arenaDrawing ??= new(GraphicsDevice, _renderer);
         var (name, centerX, actors) = _entityFrames[_smokeIndex];
-        GraphicsDevice.SetRenderTarget(_proofTarget);
-        GraphicsDevice.Clear(new Color(237, 238, 226));
-        foreach (var (viewport, ppu, anchorY) in new[] { (
-            new Viewport(0, 0, EntityWidth, EntityPanelHeight), EntityPpu, EntityPanelHeight * .9f),
-            (new Viewport(0, EntityPanelHeight, EntityWidth, EntityHeight - EntityPanelHeight), EntityGamePpu, (EntityHeight - EntityPanelHeight) * .85f) })
+        _proofTarget.SavePng(Path.Combine(_smokePath, name + ".png"), new Color(237, 238, 226), () =>
         {
-            GraphicsDevice.Viewport = viewport;
-            var projection = PointCharacterRenderer.Projection(viewport.Width, viewport.Height, new(viewport.Width * .5f - centerX * ppu, anchorY), ppu);
-            _arenaDrawing.Draw(actors, projection, ppu, centerX, ppu == EntityPpu);
-        }
-        GraphicsDevice.SetRenderTarget(null);
-        using var stream = File.Create(Path.Combine(_smokePath, name + ".png"));
-        _proofTarget.SaveAsPng(stream, EntityWidth, EntityHeight);
+            foreach (var (viewport, ppu, anchorY) in new[] { (
+                new Viewport(0, 0, EntityWidth, EntityPanelHeight), EntityPpu, EntityPanelHeight * .9f),
+                (new Viewport(0, EntityPanelHeight, EntityWidth, EntityHeight - EntityPanelHeight), EntityGamePpu, (EntityHeight - EntityPanelHeight) * .85f) })
+            {
+                GraphicsDevice.Viewport = viewport;
+                var projection = PointCharacterRenderer.Projection(viewport.Width, viewport.Height, new(viewport.Width * .5f - centerX * ppu, anchorY), ppu);
+                arena.Draw(actors, projection, ppu, centerX, ppu == EntityPpu);
+            }
+        });
         return true;
     }
 

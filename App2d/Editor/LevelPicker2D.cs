@@ -12,10 +12,7 @@ internal sealed class LevelPicker2D(IReadOnlyList<WorldMapAsset2D> maps)
 {
     private int _selected;
     private Vector2 _mouse;
-    public bool IsOpen
-    {
-        get; private set;
-    }
+    public bool IsOpen { get; private set; }
     private const int PageSize = 5;
     private int First => _selected / PageSize * PageSize;
     private static ScreenRectangle2D Row(int row) => new(40, 140 + row * 48, 480, 182 + row * 48);

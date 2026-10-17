@@ -14,10 +14,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
     private readonly List<CollisionOverlap2D> _overlaps = [];
 
     public CombatantRegistry2D Combatants { get; } = ArgGuard.RequireNotNull(combatants);
-    public int DefeatedEnemies
-    {
-        get; private set;
-    }
+    public int DefeatedEnemies { get; private set; }
     public event Action<CombatDamage2D>? DamageResolved;
 
     public bool ResolveAttack(
@@ -126,8 +123,7 @@ public sealed class CombatSystem2D(CollisionSystem2D collision, CombatantRegistr
         return false;
     }
 
-    private ICombatant2D? GetCombatant(Collider2D collider) =>
-        Combatants.Find(collider.EntityId);
+    private ICombatant2D? GetCombatant(Collider2D collider) => Combatants.Find(collider.EntityId);
 
     private IEnumerable<ICombatant2D> Candidates(SpatialObject2D hitbox, uint targetLayer)
     {

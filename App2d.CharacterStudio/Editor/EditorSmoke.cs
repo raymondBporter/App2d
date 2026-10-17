@@ -5,6 +5,7 @@ using App2d.Core.Characters.Editing;
 using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
+using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
@@ -737,8 +738,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
             return;
         }
 
-        using var stream = File.Create(Path.Combine(output, _pendingName + ".png"));
-        frame.SaveAsPng(stream, frame.Width, frame.Height);
+        frame.SavePng(Path.Combine(output, _pendingName + ".png"));
         _report.Add("frame " + _pendingName);
         _pendingName = null;
     }

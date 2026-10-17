@@ -70,10 +70,7 @@ internal sealed class TileEditor2D : IDisposable
     private IReadOnlyList<WorldMapAsset2D> _maps = [];
     private readonly Dictionary<int, TileEditSession2D> _mapSessions = [];
     private readonly Dictionary<int, Stack<Action<LevelDatabase2D>>> _mapThingUndo = [];
-    public int SelectedMapIndex
-    {
-        get; private set;
-    }
+    public int SelectedMapIndex { get; private set; }
     public string MapLabel => _maps.Count == 0 ? "Tile editor" : $"{_maps[SelectedMapIndex].ZoneId} / {_maps[SelectedMapIndex].Name}";
     public int MapCount => _maps.Count;
 
@@ -126,22 +123,10 @@ internal sealed class TileEditor2D : IDisposable
         _camera.Position = _cameraFocus;
         ReloadThings(notifyRuntime: false);
     }
-    public bool IsActive
-    {
-        get; private set;
-    }
-    public LevelEditorMode2D Mode
-    {
-        get; private set;
-    }
-    public TileKind2D SelectedKind
-    {
-        get; private set;
-    }
-    public byte SelectedTilesetIndex
-    {
-        get; private set;
-    }
+    public bool IsActive { get; private set; }
+    public LevelEditorMode2D Mode { get; private set; }
+    public TileKind2D SelectedKind { get; private set; }
+    public byte SelectedTilesetIndex { get; private set; }
     public string SelectedTilesetId => _map.TilesetIds[SelectedTilesetIndex];
     public IReadOnlyList<string> TilesetIds => _map.TilesetIds;
     public Vector2 MouseDevicePosition => _lastMouseDevice;
@@ -153,22 +138,13 @@ internal sealed class TileEditor2D : IDisposable
     public Vector2 VisibleDeviceSize => _camera.ViewportSize;
     public float Zoom => _camera.Zoom;
     public float PixelsToWorldUnits(float pixels) => _camera.PixelsToWorldUnits(pixels);
-    public ThingEditorInspector2D InspectorView
-    {
-        get;
-    }
+    public ThingEditorInspector2D InspectorView { get; }
     public IReadOnlyList<MovingPlatformDefinitionRecord2D> MovingPlatformDefinitions => _movingPlatformDefinitions;
     public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatformThings => _movingPlatformThings;
     public IReadOnlyList<ThingDefinitionRecord2D> ThingDefinitions => _thingDefinitions;
     public IReadOnlyList<PositionThingRecord2D> PositionThings => _positionThings;
-    public long? SelectedDefinitionId
-    {
-        get; private set;
-    }
-    public long? SelectedThingId
-    {
-        get; private set;
-    }
+    public long? SelectedDefinitionId { get; private set; }
+    public long? SelectedThingId { get; private set; }
     public MovingPlatformThingRecord2D? SelectedThing =>
         SelectedThingId is { } thingId
             ? _movingPlatformThings.SingleOrDefault(item => item.ThingId == thingId)
@@ -301,9 +277,7 @@ internal sealed class TileEditor2D : IDisposable
 
     internal void SelectDefinition(long definitionId)
     {
-        StateGuard.ThrowIf(
-            _thingDefinitions.All(item => item.DefinitionId != definitionId),
-            $"Thing definition {definitionId} is not loaded.");
+        StateGuard.ThrowIf(_thingDefinitions.All(item => item.DefinitionId != definitionId), $"Thing definition {definitionId} is not loaded.");
         SelectedDefinitionId = definitionId;
         SelectedThingId = null;
         _isPlacingThing = false;

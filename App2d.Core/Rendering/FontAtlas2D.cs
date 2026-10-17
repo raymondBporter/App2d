@@ -8,18 +8,9 @@ internal sealed class FontAtlas2D : IDisposable
 {
     private const int Cell = 48;
     private readonly Dictionary<char, Glyph> _glyphs = [];
-    public Texture2D Texture
-    {
-        get;
-    }
-    public float Ascent
-    {
-        get;
-    }
-    public float LineHeight
-    {
-        get;
-    }
+    public Texture2D Texture { get; }
+    public float Ascent { get; }
+    public float LineHeight { get; }
 
     public FontAtlas2D()
     {

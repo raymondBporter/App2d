@@ -1,3 +1,4 @@
+using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace App2d.Noodle;
@@ -31,15 +32,15 @@ internal static class EditorUiSmoke
 
         void Render(NoodleToolHost host, string name)
         {
-            using var target = new RenderTarget2D(device, 1380, 840, false, SurfaceFormat.Color, DepthFormat.Depth24);
+            using var target = RenderCapture2D.CreateTarget(device, 1380, 840, DepthFormat.Depth24, 0);
             for (var frame = 0; frame < 4; frame++)
             {
-                device.SetRenderTarget(target);
-                host.RenderStudy(device, 1380, 840);
-                device.SetRenderTarget(null);
+                using (device.UseRenderTarget(target))
+                {
+                    host.RenderStudy(device, 1380, 840);
+                }
             }
-            using var stream = File.Create(Path.Combine(outputDirectory, name + ".png"));
-            target.SaveAsPng(stream, target.Width, target.Height);
+            target.SavePng(Path.Combine(outputDirectory, name + ".png"));
         }
     }
 }

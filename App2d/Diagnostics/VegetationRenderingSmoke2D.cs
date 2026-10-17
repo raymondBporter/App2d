@@ -42,7 +42,7 @@ internal static class VegetationRenderingSmoke2D
         using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
         var camera = new Camera2D { Zoom = 2.2f, Position = new(-260f, 98f) };
         using var renderer = new Renderer2D(camera, device);
-        using var target = new RenderTarget2D(device, 1280, 720, false, SurfaceFormat.Color, DepthFormat.None);
+        using var target = RenderCapture2D.CreateTarget(device, 1280, 720, DepthFormat.None, 0);
         for (var i = 0; i < 90; i++)
         {
             Step(default);
@@ -86,18 +86,16 @@ internal static class VegetationRenderingSmoke2D
 
         void Save(string name)
         {
-            device.SetRenderTarget(target);
-            renderer.BeginFrame(1280, 720, default);
-            renderer.Clear(new Color(103, 196, 235));
-            world.DrawTrees(renderer, camera.VisibleWorldBounds);
-            renderer.Draw(scene, int.MinValue, 0);
-            world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
-            renderer.Draw(scene, 1, int.MaxValue);
-            world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
-            renderer.EndFrame();
-            device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(directory, name));
-            target.SaveAsPng(stream, 1280, 720);
+            target.SavePng(Path.Combine(directory, name), new Color(103, 196, 235), () =>
+            {
+                renderer.BeginFrame(1280, 720, default);
+                world.DrawTrees(renderer, camera.VisibleWorldBounds);
+                renderer.Draw(scene, int.MinValue, 0);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
+                renderer.Draw(scene, 1, int.MaxValue);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
+                renderer.EndFrame();
+            });
         }
     }
 }

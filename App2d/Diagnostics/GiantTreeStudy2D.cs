@@ -48,7 +48,7 @@ internal static class GiantTreeStudy2D
         using var terrain = new ViewportTerrainSource2D(loaded.TileMap);
         var camera = new Camera2D();
         using var renderer = new Renderer2D(camera, device);
-        using var target = new RenderTarget2D(device, 1280, 720, false, SurfaceFormat.Color, DepthFormat.None);
+        using var target = RenderCapture2D.CreateTarget(device, 1280, 720, DepthFormat.None, 0);
         for (var i = 0; i < 120; i++)
         {
             var tick = game.Session.Tick + 1;
@@ -76,20 +76,18 @@ internal static class GiantTreeStudy2D
         {
             camera.Zoom = zoom;
             camera.Position = focus;
-            device.SetRenderTarget(target);
-            renderer.BeginFrame(1280, 720, default);
-            world.SetVisibleTerrain(terrain.Capture(camera.VisibleWorldBounds));
-            renderer.Clear(new Color(172, 204, 180));
-            world.DrawTrees(renderer, camera.VisibleWorldBounds);
-            renderer.Draw(scene, int.MinValue, 0);
-            world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
-            renderer.Draw(scene, 1, int.MaxValue);
-            world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
-            renderer.DrawScreenLabel(caption, new(24, 20));
-            renderer.EndFrame();
-            device.SetRenderTarget(null);
-            using var stream = File.Create(Path.Combine(directory, name));
-            target.SaveAsPng(stream, 1280, 720);
+            target.SavePng(Path.Combine(directory, name), new Color(172, 204, 180), () =>
+            {
+                renderer.BeginFrame(1280, 720, default);
+                world.SetVisibleTerrain(terrain.Capture(camera.VisibleWorldBounds));
+                world.DrawTrees(renderer, camera.VisibleWorldBounds);
+                renderer.Draw(scene, int.MinValue, 0);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
+                renderer.Draw(scene, 1, int.MaxValue);
+                world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Front);
+                renderer.DrawScreenLabel(caption, new(24, 20));
+                renderer.EndFrame();
+            });
         }
     }
 }

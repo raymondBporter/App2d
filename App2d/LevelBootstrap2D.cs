@@ -9,12 +9,15 @@ namespace App2d;
 internal static class LevelBootstrap2D
 {
     private const string LevelId = "cavern";
-    public static IReadOnlyList<string> TerrainTilesetIds
-    {
-        get;
-    } =
-        ["ink-medieval-ground", "ink-medieval-wall", "ink-prehistoric-ground", "ink-prehistoric-wall",
-         "ink-wasteland-ground", "ink-wasteland-wall"];
+    public static IReadOnlyList<string> TerrainTilesetIds { get; } =
+    [
+        "ink-medieval-ground",
+        "ink-medieval-wall",
+        "ink-prehistoric-ground",
+        "ink-prehistoric-wall",
+        "ink-wasteland-ground",
+        "ink-wasteland-wall"
+    ];
 
     /// <summary>
     /// Levels are durable authored content, so they live under <c>Assets/Static</c> and are

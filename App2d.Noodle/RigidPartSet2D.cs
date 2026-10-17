@@ -200,7 +200,7 @@ internal sealed class RigidPuppetRenderer2D
         var swordDirection = Polar2D.Direction(swordAngle);
         var swordStart = hand.Position - swordDirection * 10f;
         var swordEnd = swordStart + swordDirection * 112f;
-        DrawThickSegment(renderer, swordStart, swordEnd, 6f, new XnaColor(219, 230, 241));
+        renderer.DrawWorldThickSegment(swordStart, swordEnd, 12f, new XnaColor(219, 230, 241));
         var guard = swordDirection.PerpCcw;
         Span<Vector2> guardLine = [hand.Position - guard * 19f, hand.Position + guard * 19f];
         renderer.DrawWorldPolyline(guardLine, _partSet.Accent, 7f);
@@ -275,14 +275,6 @@ internal sealed class RigidPuppetRenderer2D
             _ => float.Lerp(1f, 0.92f, sideViewAmount)
         };
         return new Vector2(1f, transverseScale);
-    }
-
-    private static void DrawThickSegment(Renderer2D renderer, Vector2 start, Vector2 end, float halfWidth, XnaColor color)
-    {
-        var direction = Vector2.Normalize(end - start);
-        var normal = direction.PerpCcw * halfWidth;
-        Span<Vector2> polygon = [start - normal, end - normal, end + normal, start + normal];
-        renderer.DrawWorldConvexPolygon(polygon, color);
     }
 
     private static float GetNominalLength(string bone) => bone switch
