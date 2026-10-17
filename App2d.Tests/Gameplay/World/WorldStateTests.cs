@@ -1,6 +1,7 @@
 using App2d.Contracts.Combat;
 using App2d.Contracts.Simulation;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Tiles;
@@ -71,7 +72,7 @@ public sealed class WorldStateTests
         ];
         using var level = new SideScrollerLevel2D(metrics, map, [Platform()], things);
         level.CreateSimulation(physics.CollisionSystem, physics, new EntityIdAllocator2D(), 1, 2, 4);
-        level.CreateAuthoredWorldThings(combat);
+        level.CreateAuthoredWorldThings(combat, AuthoredCatalog.Load(TestAssetPath.AuthoredRoot));
         var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, spawn, 2, 1, CombatFaction2D.Player, tileMap: map);
         registry.Register(player);
         var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), player.Body, metrics.GunMuzzleOffset, physics.CollisionSystem, 1, 4, CombatFaction2D.Player, combat);

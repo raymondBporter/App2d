@@ -1,5 +1,6 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
@@ -36,7 +37,14 @@ public sealed class SideScrollerSimulation2DTests
             var b = client.Session.Advance(input);
             Assert.Equal(a.Players.ToArray(), b.Players.ToArray());
             Assert.Equal(a.Events.ToArray(), b.Events.ToArray());
-            Assert.Equal(a.Enemies.ToArray(), b.Enemies.ToArray());
+            Assert.Equal(a.Enemies.Length, b.Enemies.Length);
+            foreach (var (left, right) in a.Enemies.Zip(b.Enemies))
+            {
+                Assert.Equal(left with { AuthoredEntity = null, AuthoredPose = null, Bolts = default }, right with { AuthoredEntity = null, AuthoredPose = null, Bolts = default });
+                Assert.Equal(left.Bolts.ToArray(), right.Bolts.ToArray());
+                Assert.Equal(left.AuthoredPose?.Local.Points.OrderBy(p => p.Key), right.AuthoredPose?.Local.Points.OrderBy(p => p.Key));
+                Assert.Equal(left.AuthoredPose?.Local.Angles.OrderBy(p => p.Key), right.AuthoredPose?.Local.Angles.OrderBy(p => p.Key));
+            }
             Assert.Equal([.. a.World.MovingPlatforms], [.. b.World.MovingPlatforms]);
             Assert.Equal([.. a.World.Checkpoints], [.. b.World.Checkpoints]);
         }
@@ -89,6 +97,9 @@ public sealed class SideScrollerSimulation2DTests
         ];
         MovingPlatformSpec2D[] platforms =
             [new(41, "Lift", true, new Vector2(-200f, 100f), new Vector2(96f, 0f), new Size2D(80f, 14f), 48f, 0xFF25D2BEu)];
-        return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms, things);
+        return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms, things)
+        {
+            AuthoredCharacters = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot)
+        };
     }
 }

@@ -148,6 +148,18 @@ public sealed class AuthoredEntityEnemyTests
         Assert.Same(Authored.Entities["spear-guard"], states[0].AuthoredEntity);
     }
 
+    [Theory]
+    [InlineData(WorldThingKind2D.BoilerBrute, "maul-brute")]
+    [InlineData(WorldThingKind2D.GreenDinosaur, "stalker-pest")]
+    public void MigratedPlacementsRequireTheirAuthoredEntity(WorldThingKind2D kind, string entityId)
+    {
+        var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
+        var definition = new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+            [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)), new(2, kind, null, true, new(0, 42))]);
+        var error = Assert.Throws<InvalidDataException>(() => { using var game = SideScrollerSimulation2D.Create(definition); });
+        Assert.Contains(entityId, error.Message);
+    }
+
     [Fact]
     public void TheGuardThrustsAtThePlayer()
     {
@@ -282,6 +294,10 @@ public sealed class AuthoredEntityEnemyTests
         Assert.Equal(25, player.Health.Current);
         Assert.InRange(landedAt, slam.Hits[0].Start, slam.Hits[0].Finish + 1 / 120f);
         Assert.Contains("heavy", cues);
+
+        player.Reset(new(40, 40));
+        maul.TryResolvePlayerHit(player);
+        Assert.Equal(30, player.Health.Current); // Resetting the target cannot allow a second hit in the same swing.
 
         maul.TakeDamage(1, new(300, 0));
         Assert.Equal(100, maul.Body.LinearVelocity.X, 3); // mass 3 divides knockback

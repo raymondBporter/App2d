@@ -13,7 +13,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
-/// <summary>Constructs code-configured actors at authored world-space positions.</summary>
+/// <summary>Constructs authored enemies and the remaining code-defined actors at world-space placements.</summary>
 internal sealed class SideScrollerThingSpawner2D(
     CollisionSystem2D collision,
     PhysicsWorld2D physics,
@@ -62,6 +62,8 @@ internal sealed class SideScrollerThingSpawner2D(
             switch (thing.Kind)
             {
                 case WorldThingKind2D.ClubCaveman:
+                case WorldThingKind2D.BoilerBrute:
+                case WorldThingKind2D.GreenDinosaur:
                 case WorldThingKind2D.RockThrower:
                 case WorldThingKind2D.BabyTriceratops:
                 case WorldThingKind2D.Pterosaur:
@@ -69,17 +71,6 @@ internal sealed class SideScrollerThingSpawner2D(
                     throw new InvalidDataException($"{thing.Kind} requires its authored entity '{entityId}'.");
                 case WorldThingKind2D.Shieldback:
                     Register(CreateShieldback(thing.Position));
-                    break;
-                case WorldThingKind2D.BoilerBrute:
-                    Register(new BoilerBrute2D(
-                        ids.Allocate(),
-                        collision,
-                        physics,
-                        thing.Position,
-                        thing.Position.X - tileSize * 2f,
-                        thing.Position.X + tileSize * 2f,
-                        worldLayer,
-                        enemyLayer));
                     break;
                 case WorldThingKind2D.Rival:
                     Register(new RivalEnemy2D(
@@ -94,9 +85,6 @@ internal sealed class SideScrollerThingSpawner2D(
                         worldLayer,
                         playerLayer,
                         enemyLayer));
-                    break;
-                case WorldThingKind2D.GreenDinosaur:
-                    Register(CreateGreenDinosaur(thing.Position));
                     break;
                 case WorldThingKind2D.TumbleProp:
                     Register(new TumbleProp2D(
@@ -139,27 +127,5 @@ internal sealed class SideScrollerThingSpawner2D(
             speed: 118f,
             health: 3);
         return new Shieldback2D(enemy);
-    }
-
-    private GreenDinosaur2D CreateGreenDinosaur(
-        Vector2 position)
-    {
-        var spatialObject = new SpatialObject2D(
-            Capsule2D.Builder.Create(new Vector2(0f, -14f), new Vector2(0f, 14f), 17f));
-        spatialObject.Transform.Position = position;
-        var body = physics.AddBody(spatialObject, BodyMotionType2D.Dynamic);
-        body.Restitution = 0f;
-        body.Mass = 1.4f;
-        body.CollisionLayer = enemyLayer;
-        body.CollisionMask = worldLayer;
-        var enemy = new PatrolEnemy2D(
-            ids.Allocate(),
-            spatialObject,
-            body,
-            position.X - tileSize * 2f,
-            position.X + tileSize * 2f,
-            speed: 82f,
-            health: 4);
-        return new GreenDinosaur2D(enemy);
     }
 }

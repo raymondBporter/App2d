@@ -111,10 +111,7 @@ public sealed class CombatContactPresentation2D(Scene2D scene) : IDisposable
 
     private sealed class Ink : IShader2D
     {
-        public Color BaseColor
-        {
-            get; set;
-        }
+        public Color BaseColor { get; set; }
     }
 
     private sealed class Burst

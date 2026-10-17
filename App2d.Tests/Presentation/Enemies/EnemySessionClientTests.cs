@@ -2,6 +2,7 @@ using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Simulation;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Tiles;
@@ -30,7 +31,8 @@ public sealed class EnemySessionClientTests
         var arsenal = new PersonArsenal2D(new EntityIdAllocator2D(), player.Body, metrics.GunMuzzleOffset, physics.CollisionSystem,
             1, 4, CombatFaction2D.Player, combat);
         player.AttachActions(arsenal);
-        var brute = new BoilerBrute2D(EntityId2D.Create(), physics.CollisionSystem, physics, new Vector2(80f, 0f), -100f, 100f, 1, 4);
+        var authored = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
+        var brute = new AuthoredEntityEnemy2D(EntityId2D.Create(), authored.Entities["maul-brute"], physics, new Vector2(40f, 0f), 1, 4);
         var world = new EnemyWorld();
         world.Enemies.Register(brute, new TileChunk2D(0, 0));
         using var session = new SideScrollerSession2D(physics, player, arsenal, world, new RespawnState2D(Vector2.Zero, 5), combat);
@@ -46,15 +48,14 @@ public sealed class EnemySessionClientTests
             Assert.All(frame.Events.OfType<EnemyOccurred2D>(), e =>
             {
                 Assert.Equal(frame.Tick, e.Stamp.Tick);
-                Assert.Equal(brute.Enemy.Id, e.Stamp.EntityId);
+                Assert.Equal(brute.Id, e.Stamp.EntityId);
             });
             events.AddRange(frame.Events.OfType<EnemyOccurred2D>());
         }
-        Assert.Single(events, e => e.Occurrence is HammerStarted2D);
-        Assert.Single(events, e => e.Occurrence is HammerStruck2D);
+        Assert.Contains(events, e => e.Occurrence is EntityCue2D { Cue: "heavy" });
         Assert.Empty(world.DrainEnemyEvents());
         var original = Assert.Single(first!.Enemies);
-        brute.Enemy.WorldObject.Transform.Position = new Vector2(999f, 100f);
+        brute.WorldObject.Transform.Position = new Vector2(999f, 100f);
         Assert.Equal(original, Assert.Single(first.Enemies));
         Assert.NotEqual(original.Position, Assert.Single(session.CaptureEnemies()).Position);
     }

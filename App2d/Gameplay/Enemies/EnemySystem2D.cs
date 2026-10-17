@@ -10,20 +10,17 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
-public sealed partial class EnemySystem2D
+public sealed class EnemySystem2D
 {
     private readonly List<RegisteredEnemy> _registeredEnemies = [];
     private readonly List<ICombatant2D> _combatants = [];
 
     public IReadOnlyList<ICombatant2D> Combatants => _combatants;
-    public int Count => _combatants.Count(
-        combatant => combatant.Faction == CombatFaction2D.Enemy);
+    public int Count => _combatants.Count(combatant => combatant.Faction == CombatFaction2D.Enemy);
 
-    public ImmutableArray<EnemyState2D> CaptureStates() =>
-        [.. _registeredEnemies.Select(e => e.Actor.CaptureState())];
+    public ImmutableArray<EnemyState2D> CaptureStates() => [.. _registeredEnemies.Select(e => e.Actor.CaptureState())];
 
-    public ImmutableArray<EnemyEvent2D> DrainEvents() =>
-        [.. _registeredEnemies.SelectMany(e => e.Actor.DrainEvents())];
+    public ImmutableArray<EnemyEvent2D> DrainEvents() => [.. _registeredEnemies.SelectMany(e => e.Actor.DrainEvents())];
 
     public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
     {
@@ -112,17 +109,11 @@ public sealed partial class EnemySystem2D
         }
     }
 
-    private sealed class RegisteredEnemy(
-        IEnemyActor2D actor,
-        IEnemyAttackSource2D? attackSource,
-        TileChunk2D homeChunk)
+    private sealed class RegisteredEnemy(IEnemyActor2D actor, IEnemyAttackSource2D? attackSource, TileChunk2D homeChunk)
     {
         public IEnemyActor2D Actor { get; } = actor;
         public IEnemyAttackSource2D? AttackSource { get; } = attackSource;
         public TileChunk2D HomeChunk { get; } = homeChunk;
-        public bool IsEnabled
-        {
-            get; set;
-        }
+        public bool IsEnabled { get; set; }
     }
 }

@@ -9,10 +9,7 @@ namespace App2d.Gameplay.Persons.Actions;
 /// <summary>
 /// A timed melee overlap placed directly in front of its owner.
 /// </summary>
-internal sealed partial class MeleeAttack2D(
-    EntityId2D sourceId,
-    SpatialObject2D worldObject,
-    MeleeAttackProfile2D profile)
+internal sealed class MeleeAttack2D(EntityId2D sourceId, SpatialObject2D worldObject, MeleeAttackProfile2D profile)
 {
     private float _elapsedSeconds;
     private float _inputBufferSeconds;
@@ -20,10 +17,7 @@ internal sealed partial class MeleeAttack2D(
     /// <summary>The timing of the current swing.</summary>
     public MeleeAttackProfile2D Profile { get; private set; } = profile;
     /// <summary>A timing for the next swing to start, taken up when it starts (immediately or from the input buffer).</summary>
-    public MeleeAttackProfile2D? NextProfile
-    {
-        get; set;
-    }
+    public MeleeAttackProfile2D? NextProfile { get; set; }
 
     /// <summary>The hit box; a profile with its own <see cref="MeleeAttackProfile2D.Shape"/> swaps it in when its swing starts.</summary>
     public SpatialObject2D WorldObject { get; private set; } = worldObject;
@@ -34,20 +28,11 @@ internal sealed partial class MeleeAttack2D(
         get;
     } = sourceId.IsValid ? sourceId
         : throw ArgGuard.CreateInvalid("A melee attack requires a valid source ID.", nameof(sourceId));
-    public int AttackId
-    {
-        get; private set;
-    }
+    public int AttackId { get; private set; }
     public float DurationSeconds => Profile.DurationSeconds;
     public float ElapsedSeconds => _elapsedSeconds;
-    public bool IsInProgress
-    {
-        get; private set;
-    }
-    public bool IsDamageActive
-    {
-        get; private set;
-    }
+    public bool IsInProgress { get; private set; }
+    public bool IsDamageActive { get; private set; }
     public bool IsVisible => IsDamageActive;
 
     /// <summary>
@@ -80,12 +65,8 @@ internal sealed partial class MeleeAttack2D(
         if (IsInProgress)
         {
             var previousElapsedSeconds = _elapsedSeconds;
-            _elapsedSeconds = Math.Min(
-                Profile.DurationSeconds,
-                _elapsedSeconds + deltaSeconds);
-            IsDamageActive =
-                previousElapsedSeconds < Profile.DamageEndSeconds &&
-                _elapsedSeconds >= Profile.DamageStartSeconds;
+            _elapsedSeconds = Math.Min(Profile.DurationSeconds, _elapsedSeconds + deltaSeconds);
+            IsDamageActive = previousElapsedSeconds < Profile.DamageEndSeconds && _elapsedSeconds >= Profile.DamageStartSeconds;
 
             PositionHitbox(ownerPosition, facing);
             if (_elapsedSeconds >= Profile.DurationSeconds)
@@ -137,30 +118,19 @@ internal sealed partial class MeleeAttack2D(
 
     private void PositionHitbox(Vector2 ownerPosition, float facing)
     {
-        WorldObject.Transform.Position = ownerPosition +
-            new Vector2(facing * Profile.ForwardOffset, Profile.VerticalOffset);
+        WorldObject.Transform.Position = ownerPosition + new Vector2(facing * Profile.ForwardOffset, Profile.VerticalOffset);
         WorldObject.Transform.Rotation = 0f;
     }
 }
 
 internal readonly record struct MeleeAttackProfile2D
 {
-    public MeleeAttackProfile2D(
-        float durationSeconds,
-        float damageStartSeconds,
-        float damageEndSeconds,
-        float inputBufferSeconds,
-        float forwardOffset,
-        float verticalOffset = 0f)
+    public MeleeAttackProfile2D(float durationSeconds, float damageStartSeconds, float damageEndSeconds, float inputBufferSeconds, float forwardOffset, float verticalOffset = 0f)
     {
         ArgGuard.Positive(durationSeconds);
         ArgGuard.NonNegative(damageStartSeconds);
-        ArgGuard.LessThan(
-            damageStartSeconds,
-            durationSeconds);
-        ArgGuard.GreaterThan(
-            damageEndSeconds,
-            damageStartSeconds);
+        ArgGuard.LessThan(damageStartSeconds, durationSeconds);
+        ArgGuard.GreaterThan(damageEndSeconds, damageStartSeconds);
         ArgGuard.AtMost(damageEndSeconds, durationSeconds);
         ArgGuard.NonNegative(inputBufferSeconds);
         ArgGuard.Finite(forwardOffset);
@@ -174,33 +144,12 @@ internal readonly record struct MeleeAttackProfile2D
         VerticalOffset = verticalOffset;
     }
 
-    public float DurationSeconds
-    {
-        get;
-    }
-    public float DamageStartSeconds
-    {
-        get;
-    }
-    public float DamageEndSeconds
-    {
-        get;
-    }
-    public float InputBufferSeconds
-    {
-        get;
-    }
-    public float ForwardOffset
-    {
-        get;
-    }
-    public float VerticalOffset
-    {
-        get;
-    }
+    public float DurationSeconds { get; }
+    public float DamageStartSeconds { get; }
+    public float DamageEndSeconds { get; }
+    public float InputBufferSeconds { get; }
+    public float ForwardOffset { get; }
+    public float VerticalOffset { get; }
     /// <summary>The swing's own hit box, when it differs from the attack's.</summary>
-    public IShape2D? Shape
-    {
-        get; init;
-    }
+    public IShape2D? Shape { get; init; }
 }

@@ -69,25 +69,13 @@ public sealed class PersonMoves
         Props = props;
     }
 
-    public ResolvedModel Model
-    {
-        get;
-    }
+    public ResolvedModel Model { get; }
     /// <summary>The player's authored entity: its sword swings, and the recovery clip after each, are its actions' clips.</summary>
-    public ResolvedEntity Hero
-    {
-        get;
-    }
+    public ResolvedEntity Hero { get; }
     /// <summary>The action a sword swing plays: the one gameplay named, or the attack.</summary>
     public ResolvedAction Swing(string? action) => Hero.Actions[action ?? EntityControllers.Attack];
-    public IReadOnlyDictionary<string, MotionClip> Clips
-    {
-        get;
-    }
-    public IReadOnlyDictionary<string, PropAsset> Props
-    {
-        get;
-    }
+    public IReadOnlyDictionary<string, MotionClip> Clips { get; }
+    public IReadOnlyDictionary<string, PropAsset> Props { get; }
     public MotionClip this[string id] => Clips[id];
 
     public static PersonMoves From(AuthoredCatalog catalog, string model = PersonTemplate.Id)
@@ -176,14 +164,8 @@ public sealed class PersonAnimationDirector(PersonMoves moves, float worldUnitsP
     private double _recoveryStart;
 
     public PersonMoves Moves => moves;
-    public float HardLandingSpeed
-    {
-        get; init;
-    }
-    public EquipmentKind2D Equipment
-    {
-        get; set;
-    }
+    public float HardLandingSpeed { get; init; }
+    public EquipmentKind2D Equipment { get; set; }
     public string Key => _key;
 
     public void PlayHit()

@@ -48,9 +48,13 @@ public sealed partial class SideScrollerSession2D : IDisposable
         _pendingPlaygroundTravel = destination;
     }
 
-    public SideScrollerSession2D(PhysicsWorld2D physics, Person2D player,
-        ISessionPlayerActions2D actions, ISideScrollerSessionWorld2D world,
-        RespawnState2D respawn, CombatSystem2D? combat = null)
+    public SideScrollerSession2D(
+        PhysicsWorld2D physics,
+        Person2D player,
+        ISessionPlayerActions2D actions,
+        ISideScrollerSessionWorld2D world,
+        RespawnState2D respawn,
+        CombatSystem2D? combat = null)
     {
         _physics = ArgGuard.RequireNotNull(physics);
         _combat = combat;
@@ -73,14 +77,8 @@ public sealed partial class SideScrollerSession2D : IDisposable
         participant.Subscribe(this);
     }
 
-    public long Tick
-    {
-        get; private set;
-    }
-    public bool IsPaused
-    {
-        get; private set;
-    }
+    public long Tick { get; private set; }
+    public bool IsPaused { get; private set; }
     public ImmutableArray<EntityId2D> PlayerIds => [.. _players.Select(p => p.Person.Id)];
 
     public LevelContent2D CaptureContent() => _world.CaptureContent();
@@ -255,8 +253,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
                 player.Person.Health.Reset();
                 player.Respawn = new RespawnState2D(checkpoint.Position, player.Person.Health.Current, checkpoint.ThingId);
                 _world.SetActiveSavePoint(checkpoint.ThingId);
-                _events.Add(new CheckpointActivated2D(Stamp(player), checkpoint.ThingId,
-                    player.Person.Health.Current, player.Person.Position));
+                _events.Add(new CheckpointActivated2D(Stamp(player), checkpoint.ThingId, player.Person.Health.Current, player.Person.Position));
             }
 
             if (player.Person.Position.Y < _world.Bounds.Min.Y - 260f)
@@ -358,36 +355,17 @@ public sealed partial class SideScrollerSession2D : IDisposable
         public Person2D Person { get; } = person;
         public ISessionPlayerActions2D Actions { get; } = actions;
         public RespawnState2D Respawn { get; set; } = respawn;
-        public float RestartSeconds
-        {
-            get; set;
-        }
-        public float MoveX
-        {
-            get; set;
-        }
-        public bool ReachedGoal
-        {
-            get; set;
-        }
+        public float RestartSeconds { get; set; }
+        public float MoveX { get; set; }
+        public bool ReachedGoal { get; set; }
         public bool GoalEligible { get; set; } = true;
-        public long LastInputSequence
-        {
-            get; set;
-        }
-        public PersonCommand2D LastCommand
-        {
-            get; set;
-        }
+        public long LastInputSequence { get; set; }
+        public PersonCommand2D LastCommand { get; set; }
         /// <summary>Within-tick scratch: whether this tick began inside the death restart delay.</summary>
-        public bool WasRestarting
-        {
-            get; set;
-        }
+        public bool WasRestarting { get; set; }
 
-        public PlayerState2D CaptureState() => new(Person.CaptureState(), LastInputSequence, MoveX,
-            Actions.Equipment, Actions.IsMeleeAttackActive,
-            RestartSeconds, Respawn.CheckpointId, ReachedGoal, Actions.CaptureWeaponState());
+        public PlayerState2D CaptureState() =>
+            new(Person.CaptureState(), LastInputSequence, MoveX, Actions.Equipment, Actions.IsMeleeAttackActive, RestartSeconds, Respawn.CheckpointId, ReachedGoal, Actions.CaptureWeaponState());
 
         public void Subscribe(SideScrollerSession2D session)
         {
@@ -400,8 +378,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
             void onMelee(float duration) => Attack(PlayerAttackKind2D.Melee, duration);
             void onDownward(float duration) => Attack(PlayerAttackKind2D.Downward, duration);
             void onShot() => Attack(PlayerAttackKind2D.Shot, 0f);
-            void onUnarmed(UnarmedAttackKind2D kind, float duration) =>
-                Attack(kind == UnarmedAttackKind2D.Punch ? PlayerAttackKind2D.Punch : PlayerAttackKind2D.Kick, duration);
+            void onUnarmed(UnarmedAttackKind2D kind, float duration) => Attack(kind == UnarmedAttackKind2D.Punch ? PlayerAttackKind2D.Punch : PlayerAttackKind2D.Kick, duration);
 
             Person.JumpStarted += onJump;
             _unsubscribe.Add(() => Person.JumpStarted -= onJump);

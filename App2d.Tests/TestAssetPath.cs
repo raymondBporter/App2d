@@ -6,6 +6,7 @@ internal static class TestAssetPath
 
     /// <summary>The durable, hand-authored assets root (as opposed to the disposable <see cref="Root"/>).</summary>
     public static string StaticRoot { get; } = Find("Static");
+    public static string AuthoredRoot { get; } = Path.GetFullPath(Path.Combine(Root, "..", "Characters", "authored"));
 
     private static string Find(string assetsSubdirectory)
     {
