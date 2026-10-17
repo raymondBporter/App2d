@@ -264,38 +264,38 @@
       },
       "material": {
         "fill": "#9e5f7e",
-        "outline": {}
+        "outline": {},
+        "paint": [
+          {
+            "material": {
+              "fill": "#80506d"
+            },
+            "points": [
+              {
+                "x": 0.15,
+                "y": 0.15
+              },
+              {
+                "x": 0.18,
+                "y": 0.15
+              },
+              {
+                "x": 0.53,
+                "y": 0.59
+              },
+              {
+                "x": 0.48,
+                "y": 0.6
+              }
+            ]
+          }
+        ]
       },
       "a": "body",
       "b": "body-up",
       "width": 1,
       "height": 1,
       "depth": 0.12,
-      "paint": [
-        {
-          "material": {
-            "fill": "#80506d"
-          },
-          "points": [
-            {
-              "x": 0.15,
-              "y": 0.15
-            },
-            {
-              "x": 0.18,
-              "y": 0.15
-            },
-            {
-              "x": 0.53,
-              "y": 0.59
-            },
-            {
-              "x": 0.48,
-              "y": 0.6
-            }
-          ]
-        }
-      ],
       "bindings": [
         {
           "control": "far-shoulder"
@@ -450,38 +450,38 @@
       },
       "material": {
         "fill": "#b56e8b",
-        "outline": {}
+        "outline": {},
+        "paint": [
+          {
+            "material": {
+              "fill": "#80506d"
+            },
+            "points": [
+              {
+                "x": -0.15,
+                "y": 0.15
+              },
+              {
+                "x": -0.18,
+                "y": 0.15
+              },
+              {
+                "x": -0.53,
+                "y": 0.59
+              },
+              {
+                "x": -0.48,
+                "y": 0.6
+              }
+            ]
+          }
+        ]
       },
       "a": "body",
       "b": "body-up",
       "width": 1,
       "height": 1,
       "depth": -0.02,
-      "paint": [
-        {
-          "material": {
-            "fill": "#80506d"
-          },
-          "points": [
-            {
-              "x": -0.15,
-              "y": 0.15
-            },
-            {
-              "x": -0.18,
-              "y": 0.15
-            },
-            {
-              "x": -0.53,
-              "y": 0.59
-            },
-            {
-              "x": -0.48,
-              "y": 0.6
-            }
-          ]
-        }
-      ],
       "bindings": [
         {
           "control": "near-shoulder"
@@ -870,7 +870,10 @@
       "regions": [
         {
           "id": "body",
-          "controls": ["body", "head"],
+          "controls": [
+            "body",
+            "head"
+          ],
           "pad": 0.16
         }
       ]

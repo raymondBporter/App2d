@@ -134,6 +134,8 @@ public sealed class CharacterModel
     [JsonIgnore] public IEnumerable<ModelChain> IkChains => Chains.Concat(Constraints.OfType<ModelChain>());
     public List<ModelMeasure> Measures { get; set; } = [];
     public List<PuppetPart> Parts { get; set; } = [];
+    /// <summary>Shared surfaces selected by parts and variants through material.asset.</summary>
+    public Dictionary<string, RenderMaterialDefinition2D> Materials { get; set; } = [];
     public List<SkeletonSlot2D> Slots { get; set; } = [];
     public List<SkeletonSkin2D> Skins { get; set; } = [];
     public List<ModelSocket> Sockets { get; set; } = [];
@@ -177,6 +179,13 @@ public sealed class CharacterModel
         AuthoredAsset.RequireId(Id, "model id");
         Require(!string.IsNullOrWhiteSpace(Name), $"{owner}: a name is required.");
         Require(StructureRevision >= 1, $"{owner}: structureRevision must be at least 1.");
+        Require(Materials is not null, $"{owner}: null materials.");
+        foreach (var (id, material) in Materials)
+        {
+            AuthoredAsset.RequireId(id, $"{owner} material id");
+            Require(material is not null, $"{owner}: null material '{id}'.");
+            material.Resolve(Materials);
+        }
         Require(Controls is not null && Chains is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Chains.Count + Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
@@ -273,6 +282,7 @@ public sealed class CharacterModel
             AuthoredAsset.RequireId(part.Id, $"{owner} part id");
             Require(parts.Add(part.Id), $"{owner}: duplicate part '{part.Id}'.");
             part.Validate(Known);
+            part.RenderMaterial.Resolve(Materials);
         }
         var sockets = new HashSet<string>(StringComparer.Ordinal);
         foreach (var socket in Sockets)
@@ -341,6 +351,7 @@ public sealed class CharacterModel
             {
                 Require(parts.Contains(part), $"{owner} look '{look.Id}': no part '{part}'.");
                 PartOverride.Check(change, $"{owner} look '{look.Id}' parts.{part}");
+                change.Material?.Resolve(Materials);
             }
         }
         CheckGeometry(this, Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal), owner);

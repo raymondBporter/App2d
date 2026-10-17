@@ -21,16 +21,6 @@ public static class ModelAuthoring
         return model;
     }
 
-    /// <summary>The Person template under a new ID: a separate base, not a variant.</summary>
-    public static CharacterModel FromPerson(string id, string name)
-    {
-        var model = PersonTemplate.Model();
-        model.Id = id;
-        model.Name = name;
-        model.Validate();
-        return model;
-    }
-
     /// <summary>Flattens a resolved variant into a new independent base. Its clips must be checked or converted explicitly.</summary>
     public static CharacterModel Flatten(ResolvedModel resolved, string id, string name)
     {
@@ -595,9 +585,13 @@ public static class ModelAuthoring
                 }
             };
         }
-        if (edited.Paint != resolved.Paint)
+        if (edited.RenderMaterial.Asset != resolved.RenderMaterial.Asset)
         {
-            o.Paint = edited.Paint;
+            o.Material = edited.RenderMaterial;
+        }
+        else if (edited.RenderMaterial.Paint != resolved.RenderMaterial.Paint)
+        {
+            o.Material = (o.Material ?? new RenderMaterialDefinition2D()) with { Paint = edited.RenderMaterial.Paint };
         }
 
         if (edited.Face != resolved.Face)

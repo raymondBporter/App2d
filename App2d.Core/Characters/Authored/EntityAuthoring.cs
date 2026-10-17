@@ -181,7 +181,7 @@ public static class EntityAuthoring
         var parts = new Dictionary<string, PartOverride>(StringComparer.Ordinal);
         foreach (var (part, change) in variant.Parts)
         {
-            var look = new PartOverride { Material = change.Material, Paint = change.Paint, Face = change.Face, FaceX = change.FaceX, Hidden = change.Hidden };
+            var look = new PartOverride { Material = change.Material, Face = change.Face, FaceX = change.FaceX, Hidden = change.Hidden };
             if (!look.IsEmpty)
             {
                 parts[part] = look;

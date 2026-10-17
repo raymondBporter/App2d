@@ -74,7 +74,7 @@ public static class QuadrupedTemplate
             }
         }
         var body = Shape("body", "body", "body-up", 1.92f, .90f, -.05f, .04f, 0, skin);
-        body.Paint = [Spot(-.24f, .15f, .09f, .19f), Spot(-.04f, .03f, .065f, .14f)];
+        body.Material = body.RenderMaterial with { Paint = [Spot(-.24f, .15f, .09f, .19f), Spot(-.04f, .03f, .065f, .14f)] };
         if (triceratops)
         {
             Cutout("head", "head", .97f, .68f, .12f, -.02f, -.24f, skin,

@@ -15,9 +15,9 @@
   "parts": {
     "body": {
       "material": {
-        "fill": "#f3dcc6"
-      },
-      "paint": []
+        "fill": "#f3dcc6",
+        "paint": []
+      }
     },
     "head": {
       "material": {

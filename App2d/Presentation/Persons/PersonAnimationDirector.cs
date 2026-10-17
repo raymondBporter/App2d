@@ -121,7 +121,7 @@ public sealed class PersonMoves
             }
         }
 
-        foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket, PersonWardrobe.HeadSocket })
+        foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket, PersonLoadout.HeadSocket })
         {
             if (resolved.Base.Sockets.All(s => s.Id != socket))
             {

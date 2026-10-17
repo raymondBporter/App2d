@@ -79,6 +79,9 @@ public sealed record EntityPreview(ResolvedEntity Entity, ActorPose Pose, float 
 /// </summary>
 public sealed class EditorSession
 {
+    /// <summary>Optional seed factories for workspaces without source assets. Authored resources take priority.</summary>
+    public Func<string, string, string, ModelTemplateInstance>? SeedModel { get; init; }
+    public Func<string, PropAsset?>? SeedAppearance { get; init; }
     private MotionClip? _pending;
     private (string Clip, int Version, float Time) _pendingFor;
     private bool _dragging;
@@ -221,7 +224,7 @@ public sealed class EditorSession
                 {
                     Mode = Workspace.Appearance;
                     PreviewProp = prop.Id;
-                    PreviewSocket = prop.Asset.Attachment ?? PersonWardrobe.HeadSocket;
+                    PreviewSocket = prop.Asset.Attachment ?? PersonLoadout.HeadSocket;
                     PreviewWeapon = true;
                     Selection.Clear();
                     break;
@@ -251,7 +254,7 @@ public sealed class EditorSession
             if (art is not null)
             {
                 PreviewProp = art.Id;
-                PreviewSocket = art.Asset.Attachment ?? PersonWardrobe.HeadSocket;
+                PreviewSocket = art.Asset.Attachment ?? PersonLoadout.HeadSocket;
             }
         }
         if (mode == Workspace.Animate && ClipId is null)
@@ -791,7 +794,7 @@ public sealed class EditorSession
     {
         var model = Assets.Resolve(SubjectId);
         Assets.Create(AppearanceAuthoring.New(id, name, template, model?.Base.Ink ?? "#222b32", model?.Base.LineWidth ?? .045f,
-            source => Assets.Prop(source)?.Asset));
+            source => Assets.Prop(source)?.Asset ?? SeedAppearance?.Invoke(source)));
         Open(id);
     }, $"Created appearance '{id}'. Edit the outline, then equip it on an entity and save all.");
 
@@ -829,7 +832,7 @@ public sealed class EditorSession
         var bundle = template == "empty" ? new ModelTemplateInstance(ModelAuthoring.Empty(id, name), [], null)
             : Assets.ModelTemplates.TryGetValue(template, out var recipe)
                 ? recipe.Instantiate(id, name, source => Assets.Model(source)?.Asset, source => Assets.Clip(source)?.Asset)
-                : BuiltInTemplate(template, id, name);
+                : SeedModel?.Invoke(template, id, name) ?? throw new InvalidDataException($"Unknown model template '{template}'.");
         foreach (var destination in bundle.Animations.Select(c => c.Id).Prepend(bundle.Model.Id))
         {
             if (Assets.Exists(destination))
@@ -851,13 +854,6 @@ public sealed class EditorSession
             SetClip(preview);
         }
     }, $"Created model '{id}'.");
-
-    private static ModelTemplateInstance BuiltInTemplate(string template, string id, string name)
-    {
-        var starter = CharacterTemplates.Get(template);
-        var model = starter.Model(id, name);
-        return new(model, starter.Clips(model), starter.Preview is { } preview ? id + "-" + preview : null);
-    }
 
     /// <summary>A new variant of a base, optionally starting from one of its build presets.</summary>
     public bool NewVariant(string id, string name, string baseId, string? preset = null) => Attempt(() =>

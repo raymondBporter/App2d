@@ -136,15 +136,13 @@ internal static partial class PlayerMoves
         hero.Save(Path.Combine(authoredRoot, "entities", hero.Id + ".json"));
         // The cinder gunner: an enemy person on the same base, shooting the player's pistol with a deliberate raise and fire.
         WeaponMotion(PistolShot(model)).Save(Path.Combine(authoredRoot, "animations", "person-pistol-shot.json"));
-        var cinder = CinderVariant();
-        cinder.Save(Path.Combine(authoredRoot, "variants", cinder.Id + ".json"));
+        var cinder = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "cinder.json")));
         var gunner = CinderGunner(ResolvedModel.From(person, cinder));
         gunner.Save(Path.Combine(authoredRoot, "entities", gunner.Id + ".json"));
         // The maul: a broad brute on the Heavy set with a one-handed hammer and a slow overhead slam.
         HammerProp().Save(Path.Combine(authoredRoot, "props", "hammer.json"));
         WeaponMotion(HammerSlam(model)).Save(Path.Combine(authoredRoot, "animations", "person-hammer-slam.json"));
-        var brute = BruteVariant();
-        brute.Save(Path.Combine(authoredRoot, "variants", brute.Id + ".json"));
+        var brute = ModelVariant.FromJson(File.ReadAllText(Path.Combine(authoredRoot, "variants", "brute.json")));
         var maul = MaulBrute(ResolvedModel.From(person, brute));
         maul.Save(Path.Combine(authoredRoot, "entities", maul.Id + ".json"));
         PersonWardrobe.Write(authoredRoot);
@@ -168,28 +166,6 @@ internal static partial class PlayerMoves
         .Marker("windup", .1f).Marker("strike", .78f).Marker("recover", .95f)
         .Face(0, "focused").Face(.5f, "determined").Face(.78f, "angry")
         .Build();
-
-    /// <summary>Broad and heavy-armed, in iron colours: the boiler brute placement's look.</summary>
-    public static ModelVariant BruteVariant()
-    {
-        var variant = new PersonBuild { Legs = .95f, Torso = 1.05f, Arms = 1.1f, Width = 1.45f, Head = .95f }.Apply(PersonTemplate.Model(), "brute", "Brute");
-        variant.Parts["body"] = new()
-        {
-            Material = new()
-            {
-                Fill = "#8a7564"
-            }
-        };
-        variant.Parts["head"] = new()
-        {
-            Material = new()
-            {
-                Fill = "#ead6c1"
-            },
-            Face = "angry"
-        };
-        return variant;
-    }
 
     /// <summary>Heavy motion, heavy hits: walks in slowly and slams for 5 when the player is within 1.3 units. Knockback barely moves it.</summary>
     public static EntityAsset MaulBrute(ResolvedModel model) => new()
@@ -277,28 +253,6 @@ internal static partial class PlayerMoves
         .Marker("fire", .6f)
         .Face(0, "focused").Face(.6f, "determined").Face(.85f, "focused")
         .Build();
-
-    /// <summary>Slight and quick, in hot colors: the cinder placement's look.</summary>
-    public static ModelVariant CinderVariant()
-    {
-        var variant = new PersonBuild { Legs = .9f, Torso = .95f, Arms = .95f, Width = 1.05f, Head = 1.05f }.Apply(PersonTemplate.Model(), "cinder", "Cinder");
-        variant.Parts["body"] = new()
-        {
-            Material = new()
-            {
-                Fill = "#e0784c"
-            }
-        };
-        variant.Parts["head"] = new()
-        {
-            Material = new()
-            {
-                Fill = "#f3dcc6"
-            },
-            Face = "smug"
-        };
-        return variant;
-    }
 
     /// <summary>Keeps its distance and shoots: walks in to 4.5 units, then fires an 8 unit/s bolt from the pistol's muzzle.</summary>
     public static EntityAsset CinderGunner(ResolvedModel model) => new()

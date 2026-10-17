@@ -26,10 +26,6 @@ public sealed record PartOverride
     {
         get; set;
     }
-    public List<PartPaint>? Paint
-    {
-        get; set;
-    }
     /// <summary>Default expression; "none" removes the face.</summary>
     public string? Face
     {
@@ -45,9 +41,9 @@ public sealed record PartOverride
     }
     [JsonIgnore]
     public bool IsEmpty => Width is null && Height is null && OffsetX is null && OffsetY is null &&
-        Material?.Fill is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&
+        Material?.Asset is null && Material?.Paint is null && Material?.Fill is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&
         Material?.Texture is null && Material?.Tint is null &&
-        Paint is null && Face is null && FaceX is null && Hidden is null;
+        Face is null && FaceX is null && Hidden is null;
 
     /// <summary>Range and vocabulary checks shared by variants and look presets.</summary>
     public static void Check(PartOverride? part, string field)
@@ -78,7 +74,6 @@ public sealed record PartOverride
         }
 
         part.Material?.Validate(field + ".material");
-        PartPaint.Check(part.Paint);
         if (part.Face is not null && part.Face != "none" && !FaceExpressions.Contains(part.Face))
         {
             throw new InvalidDataException($"{field}.face: unknown expression '{part.Face}'.");
@@ -98,7 +93,6 @@ public sealed record PartOverride
         OffsetX = over.OffsetX ?? OffsetX,
         OffsetY = over.OffsetY ?? OffsetY,
         Material = Material is null ? over.Material : Material.WithOverride(over.Material),
-        Paint = over.Paint ?? Paint,
         Face = over.Face ?? Face,
         FaceX = over.FaceX ?? FaceX,
         Hidden = over.Hidden ?? Hidden,

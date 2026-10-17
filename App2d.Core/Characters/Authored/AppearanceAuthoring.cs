@@ -9,7 +9,7 @@ public static class AppearanceAuthoring
     {
         var source = template switch
         {
-            "hair" => PersonWardrobe.ShortHair,
+            "hair" => PersonLoadout.ShortHair,
             "beard" => "brute-beard",
             "skirt" => "cinder-hide-wrap",
             "blank" => null,
@@ -19,10 +19,10 @@ public static class AppearanceAuthoring
             ? new PropAsset
             {
                 Usage = "clothing",
-                Attachment = PersonWardrobe.BodySocket,
+                Attachment = PersonLoadout.BodySocket,
                 Tip = default
             }
-            : PropAsset.FromJson((findTemplate?.Invoke(source) ?? PersonWardrobe.Props().Single(p => p.Id == source)).ToJson());
+            : PropAsset.FromJson((findTemplate?.Invoke(source) ?? throw new InvalidDataException($"Appearance template '{source}' was not found.")).ToJson());
 
         art.Id = id;
         art.Name = name;

@@ -1,13 +1,10 @@
-using System.Numerics;
+using static App2d.Core.Characters.Authored.PersonLoadout;
 
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>Painted torso materials, a solid hide wrap, and socket-mounted hair. No new rig or gameplay geometry.</summary>
 public static class PersonWardrobe
 {
-    public const string HeadSocket = "head-art", BodySocket = "body-art";
-    public const string ShortHair = "hair-short", ShortHairBack = "hair-short-back";
-
     public static IEnumerable<ModelSocket> Sockets() =>
     [
         // The current head/face drawing stays in screen axes even when the torso leans.
@@ -29,7 +26,28 @@ public static class PersonWardrobe
         yield return shortHair;
         var back = Art(ShortHairBack, "Short tousled hair / back");
         Patch(back, "#654334", -.15f,
-            [(-.27f, .10f), (-.30f, .21f), (-.23f, .20f), (-.29f, .28f), (-.15f, .26f), (-.15f, .35f), (-.06f, .30f), (.035f, .37f), (.045f, .30f), (.19f, .33f), (.15f, .27f), (.28f, .26f), (.23f, .22f), (.29f, .16f), (.28f, -.08f), (.22f, -.19f), (.11f, -.25f), (-.12f, -.24f), (-.23f, -.17f), (-.28f, -.06f)]);
+        [
+            (-.27f, .10f),
+            (-.30f, .21f),
+            (-.23f, .20f),
+            (-.29f, .28f),
+            (-.15f, .26f),
+            (-.15f, .35f),
+            (-.06f, .30f),
+            (.035f, .37f),
+            (.045f, .30f),
+            (.19f, .33f),
+            (.15f, .27f),
+            (.28f, .26f),
+            (.23f, .22f),
+            (.29f, .16f),
+            (.28f, -.08f),
+            (.22f, -.19f),
+            (.11f, -.25f),
+            (-.12f, -.24f),
+            (-.23f, -.17f),
+            (-.28f, -.06f)
+        ]);
         yield return back;
         foreach (var (id, width, torso, head, hide, hair) in new[]
         {
@@ -42,7 +60,17 @@ public static class PersonWardrobe
             var layers = PersonWardrobeDepths.From(ResolvedModel.From(person, build.Apply(person, "wardrobe-fit", "Wardrobe fit")));
             var wrap = Art(id + "-hide-wrap", id == "brute" ? "Ochre ragged hide wrap" : "Russet ragged hide wrap");
             Patch(wrap, hide, layers.WrapCenter,
-                [(-.18f, .08f), (.18f, .08f), (.205f, -.075f), (.125f, -.05f), (.075f, -.115f), (.01f, -.065f), (-.055f, -.11f), (-.115f, -.05f), (-.20f, -.075f)], width, torso, layers.WrapThickness);
+            [
+                (-.18f, .08f), 
+                (.18f, .08f), 
+                (.205f, -.075f), 
+                (.125f, -.05f),
+                (.075f, -.115f),
+                (.01f, -.065f), 
+                (-.055f, -.11f), 
+                (-.115f, -.05f), 
+                (-.20f, -.075f)
+            ], width, torso, layers.WrapThickness);
             Patch(wrap, "#705039", layers.DetailCenter, [(-.185f, .085f), (.185f, .085f), (.19f, .025f), (-.19f, .025f)], width, torso, layers.DetailThickness);
             Spot(wrap, -.105f * width, -.015f * torso, .019f, "#765033", layers.DetailCenter, layers.DetailThickness);
             Spot(wrap, .09f * width, -.02f * torso, .022f, "#765033", layers.DetailCenter, layers.DetailThickness);
@@ -66,32 +94,12 @@ public static class PersonWardrobe
     private static void Patch(PropAsset art, string fill, float z, (float X, float Y)[] points, float sx = 1, float sy = 1, float thickness = .008f)
         => art.Solids.Add(PropGeometry.Extrude(points.Select(p => new PuppetPoint(p.X * sx, p.Y * sy, z)), thickness, fill));
 
-    private static List<PartPaint> TunicPaint(string skin)
-    {
-        PartPaint SpotPaint(float x, float y, float rx, float ry) => new()
-        {
-            Material = new()
-            {
-                Fill = "#765033"
-            },
-            Points = [.. Enumerable.Range(0, 7).Select(i => new Vector2(x + MathF.Cos(i * MathF.Tau / 7) * rx, y + MathF.Sin(i * MathF.Tau / 7) * ry))],
-        };
-        return
-        [
-            // Exposed shoulder/neckline, clipped to the same rounded torso contour as the fabric.
-            new() { Material = new() { Fill = skin }, Points = [new(-.35f,.65f), new(.8f,.65f), new(.8f,-.04f)] },
-            SpotPaint(-.25f, .20f, .085f, .055f),
-            SpotPaint(.18f, -.07f, .10f, .065f),
-            SpotPaint(-.23f, -.30f, .07f, .045f),
-        ];
-    }
-
     private static void Spot(PropAsset art, float x, float y, float radius, string fill, float z, float thickness)
     {
         Patch(art, fill, z, [.. Enumerable.Range(0, 7).Select(i =>
         {
             var angle = i * MathF.Tau / 7;
-return (x + MathF.Cos(angle) * radius * .8f, y + MathF.Sin(angle) * radius);
+            return (x + MathF.Cos(angle) * radius * .8f, y + MathF.Sin(angle) * radius);
         })], thickness: thickness);
         art.Solids[^1].Material = art.Solids[^1].RenderMaterial with
         {
@@ -113,7 +121,28 @@ return (x + MathF.Cos(angle) * radius * .8f, y + MathF.Sin(angle) * radius);
         }
         // Front silhouette: unequal chunky tufts, with a high fringe to leave the brows clear.
         Patch(art, color, -.15f,
-            [(-.27f, .10f), (-.30f, .24f), (-.23f, .23f), (-.29f, .32f), (-.15f, .30f), (-.15f, .40f), (-.06f, .34f), (.035f, .43f), (.045f, .34f), (.19f, .38f), (.15f, .31f), (.28f, .30f), (.23f, .25f), (.29f, .19f), (.17f, .18f), (.07f, .24f), (-.015f, .19f), (-.11f, .22f), (-.18f, .12f), (-.22f, .025f)], scale, scale * (wild ? 1.13f : .87f));
+        [
+            (-.27f, .10f), 
+            (-.30f, .24f),
+            (-.23f, .23f), 
+            (-.29f, .32f), 
+            (-.15f, .30f),
+            (-.15f, .40f), 
+            (-.06f, .34f),
+            (.035f, .43f),
+            (.045f, .34f), 
+            (.19f, .38f),
+            (.15f, .31f), 
+            (.28f, .30f), 
+            (.23f, .25f), 
+            (.29f, .19f),
+            (.17f, .18f), 
+            (.07f, .24f),
+            (-.015f, .19f),
+            (-.11f, .22f),
+            (-.18f, .12f), 
+            (-.22f, .025f)
+        ], scale, scale * (wild ? 1.13f : .87f));
         return art;
     }
 
@@ -158,20 +187,6 @@ return (x + MathF.Cos(angle) * radius * .8f, y + MathF.Sin(angle) * radius);
                 entity.Equipment.Add(item);
             }
             entity.Save(path);
-        }
-        foreach (var id in new[] { "brute", "cinder" })
-        {
-            var path = Path.Combine(root, "variants", id + ".json");
-            var variant = ModelVariant.FromJson(File.ReadAllText(path));
-            variant.Parts["body"] = variant.Parts["body"] with
-            {
-                Material = new()
-                {
-                    Fill = id == "brute" ? variant.Parts["head"].Material?.Fill : "#b97549"
-                },
-                Paint = id == "brute" ? [] : TunicPaint(variant.Parts["head"].Material!.Fill!),
-            };
-            variant.Save(path);
         }
     }
 }

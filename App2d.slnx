@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="App2d.Core/App2d.Core.csproj" />
+  <Project Path="App2d.CharacterSeeds/App2d.CharacterSeeds.csproj" />
   <Project Path="App2d.EditorUi/App2d.EditorUi.csproj" />
   <Project Path="App2d/App2d.csproj" />
   <Project Path="App2d.Tests/App2d.Tests.csproj" />

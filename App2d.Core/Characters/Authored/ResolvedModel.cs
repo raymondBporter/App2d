@@ -145,6 +145,10 @@ public sealed class ResolvedModel
             }
             CharacterModel.CheckGeometry(model, rest, owner);
         }
+        for (var i = 0; i < parts.Count; i++)
+        {
+            parts[i] = parts[i] with { Material = parts[i].RenderMaterial.Resolve(model.Materials) };
+        }
         return new(model, variant, rest, parts);
     }
 
@@ -157,7 +161,6 @@ public sealed class ResolvedModel
             OffsetX = change.OffsetX ?? part.OffsetX,
             OffsetY = change.OffsetY ?? part.OffsetY,
             Material = part.RenderMaterial.WithOverride(change.Material),
-            Paint = change.Paint ?? part.Paint,
             Face = change.Face ?? part.Face,
             FaceX = change.FaceX ?? part.FaceX,
             Hidden = change.Hidden ?? part.Hidden,

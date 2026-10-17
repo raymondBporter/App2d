@@ -2,12 +2,14 @@
 
 A small MonoGame/XNA 2D engine and the side-scroller built on it.
 
-The solution has five projects. `App2d.Core` is the engine: mathematics, geometry,
+The solution has seven projects. `App2d.Core` is the engine: mathematics, geometry,
 collision, physics, tiles, rendering, audio, authored characters, and the WinForms game
 host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
 level storage, the editor, and diagnostics. `App2d.Tests` holds every test.
 `App2d.CharacterStudio` is the character editor and `App2d.Noodle` holds the rig
-experiments; both build on `App2d.Core`. `tools/ClothLab` is a small cape study.
+experiments; both build on `App2d.Core`. `App2d.EditorUi` supplies shared editor UI.
+`App2d.CharacterSeeds` holds the retained character generators in one library that
+Studio and the game can call. `tools/ClothLab` is a small cape study.
 Everything targets `net10.0-windows10.0.19041.0`.
 
 Within the game project, `Contracts` owns commands, immutable observations/events, and

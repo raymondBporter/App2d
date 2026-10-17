@@ -219,7 +219,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Check(s.DuplicateAppearance("brute-hide-wrap", "test-wrap", "Custom hide wrap"), s);
                 var doc = s.AppearanceDocument!;
                 Check(s.Edit(doc, () => doc.Asset.Solids[0].Material = doc.Asset.Solids[0].RenderMaterial with { Fill = "#ac7243" }), s);
-                Check(s.EquipAppearance("maul-brute", doc.Id, PersonWardrobe.BodySocket), s);
+                Check(s.EquipAppearance("maul-brute", doc.Id, PersonLoadout.BodySocket), s);
                 Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.Equipment.RemoveAll(e => e.Prop == "brute-hide-wrap")), s);
                 s.SaveAll();
                 var reopened = AuthoredCatalog.Load(s.Assets.Root);

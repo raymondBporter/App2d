@@ -80,6 +80,10 @@ public sealed record PartPaint
                 throw new InvalidDataException("Paint needs a material fill.");
             }
 
+            if (patch.Material.Asset is not null || patch.Material.Paint is not null)
+            {
+                throw new InvalidDataException("A paint layer needs a plain material fill.");
+            }
             patch.Material.Validate("paint.material");
             if (patch.Material.Outline is not null)
             {
@@ -133,7 +137,6 @@ public sealed record PuppetPart
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public float Depth { get; set; }
-    public List<PartPaint>? Paint { get; set; }
 
     /// <summary>Optional per-point attachments. Unbound points keep the part's ordinary rigid frame.</summary>
     public List<PartPointBinding>? Bindings { get; set; }
@@ -227,7 +230,6 @@ public sealed record PuppetPart
             throw new InvalidDataException("Part scale must be finite.");
         }
 
-        PartPaint.Check(Paint);
         if (Bindings is { Count: > 0 })
         {
             var pointCount = Geometry switch

@@ -14,6 +14,81 @@ namespace App2d.Tests.Authored;
 public sealed class RenderMaterialDefinition2DTests
 {
     [Fact]
+    public void NamedSurfacesInheritFieldsAndSharePaintWhileAllowingAnExplicitClear()
+    {
+        var model = CharacterModel.Load(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
+        var shared = model.Materials["spotted-hide"];
+        var material = new RenderMaterialDefinition2D { Asset = "spotted-hide", Fill = "#123456" };
+        var resolved = material.Resolve(model.Materials);
+        Assert.Same(shared.Paint, resolved.Paint);
+        Assert.Equal("#123456", resolved.Fill);
+        Assert.Equal("spotted-hide", resolved.Asset);
+        Assert.Null(material.Paint);
+        Assert.Empty((material with { Paint = [] }).Resolve(model.Materials).Paint!);
+
+        var different = resolved.WithOverride(new() { Asset = "plain" });
+        Assert.Equal("plain", different.Asset);
+        Assert.Null(different.Paint);
+        Assert.Null(different.Fill);
+    }
+
+    [Fact]
+    public void NamedSurfacesRejectMissingReferencesAndCycles()
+    {
+        var model = PersonTemplate.Model();
+        model.Parts.Single(p => p.Id == "body").Material = new() { Asset = "missing" };
+        Assert.Contains("Unknown material 'missing'", Assert.Throws<InvalidDataException>(model.Validate).Message);
+        model.Materials["missing"] = new() { Asset = "other" };
+        model.Materials["other"] = new() { Asset = "missing" };
+        Assert.Contains("cycle", Assert.Throws<InvalidDataException>(model.Validate).Message);
+    }
+
+    [Theory]
+    [InlineData("cinder")]
+    [InlineData("club-caveman-build")]
+    [InlineData("shield-defender-build")]
+    public void SharedSpottedMaterialDrawsExactlyLikeInlinePaint(string id)
+    {
+        var model = CharacterModel.Load(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
+        var variant = ModelVariant.FromJson(File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "variants", id + ".json")));
+        var resolved = ResolvedModel.From(model, variant);
+        var body = resolved.Parts.Single(p => p.Id == "body");
+        Assert.Same(model.Materials["spotted-hide"].Paint, body.RenderMaterial.Paint);
+        Assert.NotNull(body.RenderMaterial.Outline);
+        Assert.Null(variant.Parts["body"].Material!.Paint);
+        Assert.DoesNotContain("\"points\"", variant.ToJson());
+        var inline = ModelVariant.FromJson(variant.ToJson());
+        inline.Parts["body"].Material = body.RenderMaterial with { Asset = null };
+        var expanded = ResolvedModel.From(model, inline);
+        var clip = MotionClip.FromJson(File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "animations", "person-death.json")));
+        foreach (var time in new[] { 0, .6f })
+        {
+            var sharedDrawing = new PuppetDrawing();
+            var inlineDrawing = new PuppetDrawing();
+            sharedDrawing.Build(resolved, PoseEvaluator.Sample(resolved, clip, time));
+            inlineDrawing.Build(expanded, PoseEvaluator.Sample(expanded, clip, time));
+            Assert.Equal(inlineDrawing.Mesh.Vertices.ToArray(), sharedDrawing.Mesh.Vertices.ToArray());
+        }
+    }
+
+    [Fact]
+    public void VariantMaterialSelectionAndPaintClearSurviveSerialization()
+    {
+        var model = CharacterModel.Load(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
+        var variant = new ModelVariant { Id = "surface-test", Name = "Surface test", Base = model.Id };
+        ModelAuthoring.EditPartOverride(variant, ResolvedModel.From(model).Parts.Single(p => p.Id == "body"),
+            p => p.Material = new() { Asset = "spotted-hide" });
+        var body = ResolvedModel.From(model, variant).Parts.Single(p => p.Id == "body");
+        ModelAuthoring.EditPartOverride(variant, body, p => p.Material = p.RenderMaterial with { Fill = "#123456", Paint = [] });
+        variant = ModelVariant.FromJson(variant.ToJson());
+        body = ResolvedModel.From(model, variant).Parts.Single(p => p.Id == "body");
+        Assert.Equal("spotted-hide", variant.Parts["body"].Material!.Asset);
+        Assert.Equal("#123456", body.RenderMaterial.Fill);
+        Assert.Empty(body.RenderMaterial.Paint!);
+        Assert.NotEmpty(model.Materials["spotted-hide"].Paint!);
+    }
+
+    [Fact]
     public void ModelWritesAndReadsTypedMaterials()
     {
         var model = PersonTemplate.Model();

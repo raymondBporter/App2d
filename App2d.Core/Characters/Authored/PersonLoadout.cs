@@ -16,6 +16,8 @@ public enum PersonGear
 /// </summary>
 public static class PersonLoadout
 {
+    public const string HeadSocket = "head-art", BodySocket = "body-art";
+    public const string ShortHair = "hair-short", ShortHairBack = "hair-short-back";
     public const string BackSocket = "back", BackViewSocket = "back-view", SwordSocket = "sword-hand", GunSocket = "gun-hand";
     public const string BackViewMarker = "view-back", ProfileViewMarker = "view-profile", DrawMarker = "sword-draw", SheatheMarker = "sword-sheathe";
     /// <summary>
@@ -111,7 +113,7 @@ public static class PersonLoadout
     {
         if (wearer is null)
         {
-            yield return (SeenFromBehind(clip, seconds) ? PersonWardrobe.ShortHairBack : PersonWardrobe.ShortHair, PersonWardrobe.HeadSocket);
+            yield return (SeenFromBehind(clip, seconds) ? PersonLoadout.ShortHairBack : PersonLoadout.ShortHair, PersonLoadout.HeadSocket);
         }
         else
         {

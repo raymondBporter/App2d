@@ -8,6 +8,18 @@ namespace App2d.Tests.Authored;
 
 public sealed class ModelTemplateTests : IDisposable
 {
+    [Fact]
+    public void AuthoredResourcesTakePriorityOverSeedFactories()
+    {
+        var session = new EditorSession(AuthoringWorkspace.Open(TestModels.AuthoredRoot))
+        {
+            SeedModel = (_, _, _) => throw new InvalidOperationException("Should use the authored model template."),
+            SeedAppearance = _ => throw new InvalidOperationException("Should use the authored appearance.")
+        };
+        Assert.True(session.NewModel("resource-person", "Resource person", "person"), session.Message);
+        Assert.True(session.NewAppearance("resource-hair", "Resource hair", "hair"), session.Message);
+    }
+
     private readonly string _root = Path.Combine(Path.GetTempPath(), "model-templates-" + Guid.NewGuid().ToString("N"));
     public void Dispose()
     {

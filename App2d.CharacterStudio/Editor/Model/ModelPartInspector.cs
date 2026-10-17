@@ -15,6 +15,31 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
 
     public void Draw(PuppetPart part, PartOverride? overrides, Action<Action<PuppetPart>> change, Action<Action<PartOverride>>? reset = null)
     {
+        var structure = Structure;
+        var materialAsset = part.RenderMaterial.Asset;
+        var sharedPaint = false;
+        if (structure is not null)
+        {
+            var authoredMaterial = overrides is null ? part.RenderMaterial : structure.Parts.First(p => p.Id == part.Id).RenderMaterial.WithOverride(overrides.Material);
+            sharedPaint = authoredMaterial.Asset is not null && authoredMaterial.Paint is null;
+            part = part with { Material = part.RenderMaterial.Resolve(structure.Materials) };
+            var defaultMaterial = overrides is null ? "(inline)" : "(base)";
+            if (Ui.Combo("Material", materialAsset ?? defaultMaterial, structure.Materials.Keys.Order(StringComparer.Ordinal).Prepend(defaultMaterial)) is { } selected)
+            {
+                if (selected != defaultMaterial) change(p => p.Material = new() { Asset = selected });
+                else if (overrides is null) change(p => p.Material = part.RenderMaterial with { Asset = null });
+                else if (overrides.Material is not null) reset!(o => o.Material = null);
+                return;
+            }
+            if (materialAsset is null && ImGui.SmallButton("Share material"))
+            {
+                var id = ModelAuthoring.UniqueId(part.Id + "-surface", structure.Materials.Keys);
+                var surface = part.RenderMaterial;
+                if (session.Edit(session.Assets.Model(structure.Id), () => structure.Materials.Add(id, surface)))
+                    change(p => p.Material = new() { Asset = id });
+                return;
+            }
+        }
         bool Marked(string label, bool overridden, Action<PartOverride> clear)
         {
             if (overrides is null)
@@ -50,7 +75,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
             }
             p.Width = v;
         }, o => o.Width = null);
-        if (overrides is null && Structure is { } structure)
+        if (overrides is null && structure is not null)
         {
             ModelCurveInspector.Draw(part, structure.Controls.Select(c => c.Id).ToArray(), change);
         }
@@ -106,22 +131,29 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
 
             if (part.RenderMaterial.Outline?.Color is not null && ImGui.SmallButton("Use model ink"))
             {
-                change(p => p.Material = p.RenderMaterial with { Outline = p.RenderMaterial.Outline! with { Color = null } });
+                change(p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new()) with { Color = null } });
             }
         }
         if (part.Geometry is ShapeBuilder2D)
         {
-            if (!Marked("Surface paint", overrides?.Paint is not null, o => o.Paint = null) && ImGui.CollapsingHeader("Edit surface paint"))
+            if (!Marked("Surface paint", overrides?.Material?.Paint is not null, o => o.Material = o.Material! with { Paint = null }) && ImGui.CollapsingHeader("Edit surface paint"))
             {
-                Ui.Help("Paint follows the body's shape and motion. Coordinates are relative to its width and height. Use the body fill as the fabric color.");
+                Ui.Help(sharedPaint ? $"Editing shared material '{materialAsset}'. Paint changes reach every user; fill remains a local override." : "Paint belongs to this material and follows the body's shape and motion.");
                 void Paint(Action<List<PartPaint>> edit)
                 {
-                    var patches = (part.Paint ?? []).ConvertAll(p => new PartPaint { Material = p.Material, Points = [.. p.Points] });
+                    var patches = (part.RenderMaterial.Paint ?? []).ConvertAll(p => new PartPaint { Material = p.Material, Points = [.. p.Points] });
                     edit(patches);
                     try
                     {
                         PartPaint.Check(patches);
-                        change(p => p.Paint = patches);
+                        if (sharedPaint && materialAsset is { } id && structure is not null)
+                        {
+                            session.Change(session.Assets.Model(structure.Id), () => structure.Materials[id] = structure.Materials[id] with { Paint = patches });
+                        }
+                        else
+                        {
+                            change(p => p.Material = p.RenderMaterial with { Paint = patches });
+                        }
                     }
                     catch (InvalidDataException) { /* Keep the last valid convex patch during a drag. */ }
                 }
@@ -130,10 +162,10 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                     Paint(p => p.Add(new() { Material = new() { Fill = "#754222" }, Points = [new(-.1f, -.1f), new(.1f, -.1f), new(.1f, .1f), new(-.1f, .1f)] }));
                 }
 
-                for (var i = 0; i < (part.Paint?.Count ?? 0); i++)
+                for (var i = 0; i < (part.RenderMaterial.Paint?.Count ?? 0); i++)
                 {
                     var index = i;
-                    var patch = part.Paint![i];
+                    var patch = part.RenderMaterial.Paint![i];
                     ImGui.PushID("paint-" + i);
                     if (ImGui.TreeNode("Patch " + (i + 1)))
                     {

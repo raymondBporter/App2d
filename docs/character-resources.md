@@ -8,6 +8,8 @@ Keep the existing authored pipeline and make its remaining assumptions explicit.
 
 The authored library uses model format 4, clip format 3, variant format 3, entity format 2, prop format 2 and template format 1. The 2026-10-15 cleanup converted the 95 older model, clip and variant files once and removed automatic format upgrades. Paint coordinates are XY only. Point controls and IK chains remain native rig features alongside explicit bone frames and image slots.
 
+Surface paint belongs to `RenderMaterialDefinition2D`, alongside fill, outline, texture and tint. A model's `materials` dictionary holds shared definitions; a part or variant selects one with `"material": { "asset": "spotted-hide", "fill": "#b97549" }`. Inline fields override the named definition. Omitted `paint` inherits; `"paint": []` clears it. Paint stays in normalized shape coordinates and uses the existing clipping and deformation path. Character Studio's Material selector changes the reference, while edits under Surface paint update the shared definition for every user. Definitions are scoped to their model; no separate material catalog or hair/clothing class is needed.
+
 | Concern | Current implementation | Remaining boundary |
 | --- | --- | --- |
 | Resource lookup | `AuthoredCatalog` scans folders and resolves IDs from JSON contents. | Specific game profiles still enumerate clip and equipment IDs in code. A folder or format identifier is a valid schema convention; a particular character's filenames should be content. |
@@ -24,6 +26,8 @@ Important code entry points:
 - [Model and IK validation](../App2d.Core/Characters/Authored/CharacterModel.cs), [pose evaluation](../App2d.Core/Characters/Authored/PoseEvaluator.cs), [contact anchors](../App2d.Core/Characters/Authored/EntityAnimator.cs).
 - [Drawing and the image-only slot restriction](../App2d.Core/Rendering/Characters/PuppetDrawing.cs), [orthographic renderer](../App2d.Core/Rendering/Characters/PointCharacterRenderer.cs), [world submission](../App2d.Core/Rendering/Renderer2D.Characters.cs).
 - [Hardcoded Person proportions](../App2d.Core/Characters/Authored/PersonBuild.cs), [loadout](../App2d.Core/Characters/Authored/PersonLoadout.cs), [player clip bindings](../App2d/Presentation/Persons/PersonAnimationDirector.cs).
+
+Character seed generators live together in the `App2d.CharacterSeeds` library: prototype puppets, Person and creature templates, starter content, wardrobe art, fallback templates, player pose scripts, weapon art, spell clips and swing studies. It depends on Core; Studio, the game and tests reference it. Existing namespaces and generation commands are preserved. Core's editor session accepts optional seed factories, supplied by Studio, while authored models and appearance resources take priority. Runtime attachment IDs stay in `PersonLoadout`. The authored JSON remains under `Assets/Characters/authored`; this reorganization does not regenerate it.
 
 Names such as `left-arm`, `hips` and `sword-hand` are useful inside a human template. A general evaluator should only resolve references supplied by that template. Optional semantic bindings can map a humanoid tool's “left hand” role to an arbitrary control ID. A closed solver identifier such as `two-bone-ik` is also appropriate: JSON selects a tested implementation and supplies its parameters. Moving every literal into a constants class would not address the dependency problem.
 

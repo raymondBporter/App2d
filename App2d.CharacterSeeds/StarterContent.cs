@@ -18,7 +18,7 @@ public static class StarterContent
     /// <summary>Sockets, motion sets, hurt layout, control groups and looks the Person template carries. None of them change structure.</summary>
     public static void AddPersonExtras(CharacterModel model)
     {
-        // back, back-view, sword-hand and gun-hand belong to the player move set (App2d.CharacterStudio/PlayerMoves); keep them in step.
+        // back, back-view, sword-hand and gun-hand belong to the player move set (App2d.CharacterSeeds/PlayerMoves); keep them in step.
         model.Sockets =
         [
             new() { Id = "right-grip", Control = "right-hand", Frame = "chest", Angle = .12f }, new() { Id = "left-grip", Control = "left-hand", Frame = "chest", Angle = .12f },

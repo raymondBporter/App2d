@@ -6,7 +6,7 @@ public static class PersonTemplate
     public const string Id = "person";
     public const float LegLength = .8f;
 
-    public static CharacterModel Model()
+    public static CharacterModel Model(string id = Id, string name = "Person")
     {
         var model = StudyReference();
         var built = ResolvedModel.From(model, new PersonBuild { Legs = LegLength }.Apply(model, "style", "Style"));
@@ -16,6 +16,8 @@ public static class PersonTemplate
         }
 
         model.Parts = [.. built.Parts];
+        model.Id = id;
+        model.Name = name;
         model.Validate();
         return model;
     }
@@ -66,6 +68,8 @@ public static class PersonTemplate
     public static void WriteStudies(string authoredRoot)
     {
         var model = Model();
+        var modelPath = Path.Combine(authoredRoot, "models", model.Id + ".json");
+        if (File.Exists(modelPath)) model.Materials = CharacterModel.Load(modelPath).Materials;
         var reference = StudyReference();
         var walk = PuppetTemplates.StepStudy();
         var run = PuppetTemplates.RunStudy();

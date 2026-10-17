@@ -56,7 +56,7 @@ public static class PterosaurTemplate
                 new() { Point = 4, Control = side + "-tip" },
                 new() { Point = 5, Control = side + "-bend" },
             ];
-            wing.Paint = [new() { Material = new() { Fill = "#80506d" }, Points = [new(sign * .15f, .15f), new(sign * .18f, .15f), new(sign * .53f, .59f), new(sign * .48f, .60f)] }];
+            wing.Material = wing.RenderMaterial with { Paint = [new() { Material = new() { Fill = "#80506d" }, Points = [new(sign * .15f, .15f), new(sign * .18f, .15f), new(sign * .53f, .59f), new(sign * .48f, .60f)] }] };
             Shape(side + "-leg", side + "-leg", side + "-foot", .025f, .1f, 0, 0, depth, model.Ink, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY });
             for (var i = 0; i < 3; i++)
             {

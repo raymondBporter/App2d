@@ -12,14 +12,14 @@ internal static class PartPainting
 {
     public static void Add(CharacterMesh mesh, PuppetPart part, PartFrame2D frame, IReadOnlyList<Vector3> contour, TriangleMesh2D? triangles)
     {
-        if (part.Paint is null)
+        if (part.RenderMaterial.Paint is not { } paint)
         {
             return;
         }
 
-        for (var layer = 0; layer < part.Paint.Count; layer++)
+        for (var layer = 0; layer < paint.Count; layer++)
         {
-            var patch = part.Paint[layer];
+            var patch = paint[layer];
             var color = ColorExtensions.FromHexRgb(patch.Material!.Fill!);
             var bias = .00001f * (layer + 1);
             if (triangles is null)

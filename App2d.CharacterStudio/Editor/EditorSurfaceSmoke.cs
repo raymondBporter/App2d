@@ -33,7 +33,11 @@ internal static class EditorSurfaceSmoke
         using var renderer = new PointCharacterRenderer(device);
         var assets = AuthoringWorkspace.Open(authoredRoot);
         var sources = SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(authoredRoot))!);
-        var session = new EditorSession(assets, sources);
+        var session = new EditorSession(assets, sources)
+        {
+            SeedModel = CharacterTemplates.Instantiate,
+            SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
+        };
         var slotClip = CreateSlotPreview(assets);
         using var shell = new EditorShell(session, new Viewport(device, gui, renderer), new ArenaTest(assets, device, gui, renderer), gui);
         session.Open("person-walk");

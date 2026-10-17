@@ -10,7 +10,9 @@ public sealed class HumanProportionsTests
     public void EveryHumanHasEightyPercentLegsAndKeepsItsUpperBody(string id)
     {
         var actual = Catalog.Resolve(id);
-        var original = ResolvedModel.From(PersonTemplate.StudyReference(), actual.Variant);
+        var reference = PersonTemplate.StudyReference();
+        reference.Materials = actual.Base.Materials;
+        var original = ResolvedModel.From(reference, actual.Variant);
         foreach (var side in new[] { "left", "right" })
         {
             Assert.Equal(original.Length(side + "-hip", side + "-knee") * .8f, actual.Length(side + "-hip", side + "-knee"), 5);
@@ -40,7 +42,9 @@ public sealed class HumanProportionsTests
         foreach (var id in new[] { "person", "tall-thin", "short-broad", "brute", "cinder" })
         {
             var model = Catalog.Resolve(id);
-            var original = ResolvedModel.From(PersonTemplate.StudyReference(), model.Variant);
+            var reference = PersonTemplate.StudyReference();
+            reference.Materials = model.Base.Materials;
+            var original = ResolvedModel.From(reference, model.Variant);
             Assert.Equal(PoseEvaluator.CycleTravel(original, clip).X * .8f, PoseEvaluator.CycleTravel(model, clip).X, 5);
             for (var i = 0; i <= 240; i++)
             {

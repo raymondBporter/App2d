@@ -1,4 +1,5 @@
 using App2d.Core.Assets;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
@@ -74,7 +75,11 @@ internal sealed class EditorApp : Game
         var assets = AuthoringWorkspace.Open(root);
         // Sources come from the real characters folder, also during a smoke run on a scratch copy of the authored assets.
         var sources = Core.Characters.Authored.SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(_authoredRoot))!);
-        _shell = new(new EditorSession(assets, sources), new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui);
+        _shell = new(new EditorSession(assets, sources)
+        {
+            SeedModel = CharacterTemplates.Instantiate,
+            SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
+        }, new Viewport(GraphicsDevice, _gui, _renderer), new ArenaTest(assets, GraphicsDevice, _gui, _renderer), _gui);
         if (_smokePath is null)
         {
             _form = Control.FromHandle(Window.Handle)?.FindForm();

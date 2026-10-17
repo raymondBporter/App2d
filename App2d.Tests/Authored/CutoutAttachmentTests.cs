@@ -19,9 +19,9 @@ public sealed class CutoutAttachmentTests
         Controls = [new() { Id = "root" }, new() { Id = "tip", Rest = new(1, 0, .2f) }, new() { Id = "direction", Parent = "tip", Rest = new(1, 1, .2f) }],
         Parts = [new() { Id = "membrane", A = "root", Width = 1, Height = 1,
             Geometry = new SimplePolygon2D.Builder { Vertices = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] },
-            Material = new() { Fill = "#fff8e7", Outline = new() },
-            Bindings = [new() { Point = 1, Control = "tip", Toward = "direction" }, new() { Point = 2, Control = "tip", Toward = "direction" }],
-            Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(.6f, .2f), new(.9f, .2f), new(.9f, .8f), new(.6f, .8f)] }] }]
+            Material = new() { Fill = "#fff8e7", Outline = new(),
+                Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(.6f, .2f), new(.9f, .2f), new(.9f, .8f), new(.6f, .8f)] }] },
+            Bindings = [new() { Point = 1, Control = "tip", Toward = "direction" }, new() { Point = 2, Control = "tip", Toward = "direction" }] }]
     };
 
     [Fact]
@@ -200,7 +200,11 @@ public sealed class CutoutAttachmentTests
         try
         {
             Directory.CreateDirectory(root);
-            var session = new EditorSession(AuthoringWorkspace.Open(root));
+            var session = new EditorSession(AuthoringWorkspace.Open(root))
+            {
+                SeedModel = CharacterTemplates.Instantiate,
+                SeedAppearance = id => PersonWardrobe.Props().FirstOrDefault(p => p.Id == id)
+            };
             foreach (var template in CharacterTemplates.All)
             {
                 var id = "test-" + template.Id;
@@ -208,6 +212,8 @@ public sealed class CutoutAttachmentTests
                 var model = session.Assets.Model(id)!.Asset;
                 Assert.Equal(model.ToJson(), CharacterModel.FromJson(model.ToJson()).ToJson());
             }
+            Assert.True(session.NewAppearance("test-hair", "Hair", "hair"), session.Message);
+            Assert.NotEmpty(session.AppearanceDocument!.Asset.Solids);
             session.SaveAll();
             Assert.False(session.MessageIsError, session.Message);
             Assert.Empty(AuthoredCatalog.Load(root).Errors);

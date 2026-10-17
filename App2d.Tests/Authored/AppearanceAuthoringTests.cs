@@ -18,6 +18,37 @@ public sealed class AppearanceAuthoringTests : IDisposable
     public void Dispose() => Directory.Delete(_root, true);
 
     [Fact]
+    public void SharedMaterialEditReachesOtherVariantsAndSupportsUndoAndReopen()
+    {
+        var session = new EditorSession(AuthoringWorkspace.Open(_root));
+        session.Open("cinder");
+        var document = session.Assets.Model("person")!;
+        var before = document.Serialize();
+        string? PatchColor(string id) => session.Assets.Resolve(id)!.Parts.Single(p => p.Id == "body").RenderMaterial.Paint![1].Material!.Fill;
+        var original = PatchColor("club-caveman-build");
+        Assert.True(session.Edit(document, () =>
+        {
+            var material = document.Asset.Materials["spotted-hide"];
+            var patches = material.Paint!.ToList();
+            patches[1] = patches[1] with { Material = patches[1].Material! with { Fill = "#123456" } };
+            document.Asset.Materials["spotted-hide"] = material with { Paint = patches };
+        }), session.Message);
+        Assert.Equal("#123456", PatchColor("club-caveman-build"));
+        Assert.Equal("#123456", PatchColor("cinder"));
+        Assert.False(session.SubjectVariant!.Dirty);
+        session.Undo();
+        Assert.Equal(before, document.Serialize());
+        Assert.Equal(original, PatchColor("club-caveman-build"));
+        session.Redo();
+        session.SaveAll();
+        Assert.False(session.MessageIsError, session.Message);
+        var reopened = AuthoringWorkspace.Open(_root);
+        Assert.Empty(reopened.LoadErrors);
+        Assert.Equal("#123456", reopened.Resolve("shield-defender-build")!.Parts.Single(p => p.Id == "body").RenderMaterial.Paint![1].Material!.Fill);
+        Assert.DoesNotContain("\"points\"", File.ReadAllText(Path.Combine(_root, "variants", "cinder.json")));
+    }
+
+    [Fact]
     public void NewHairEditsUndoEquipAndReopenInThePlayerLoadout()
     {
         var s = new EditorSession(AuthoringWorkspace.Open(_root));
@@ -34,12 +65,12 @@ public sealed class AppearanceAuthoringTests : IDisposable
         Assert.Equal(before, doc.Asset.ToJson());
         s.Redo();
         Assert.Equal(.02f, doc.Asset.Solids[1].Thickness);
-        Assert.True(s.EquipAppearance("hero", doc.Id, PersonWardrobe.HeadSocket), s.Message);
+        Assert.True(s.EquipAppearance("hero", doc.Id, PersonLoadout.HeadSocket), s.Message);
         s.Undo();
         Assert.DoesNotContain(s.EntityDocument!.Asset.Equipment, e => e.Prop == doc.Id);
         s.Redo();
         Assert.Contains(s.EntityDocument!.Asset.Equipment, e => e.Prop == doc.Id);
-        s.Edit(s.EntityDocument, () => s.EntityDocument.Asset.Equipment.RemoveAll(e => e.Prop == PersonWardrobe.ShortHair));
+        s.Edit(s.EntityDocument, () => s.EntityDocument.Asset.Equipment.RemoveAll(e => e.Prop == PersonLoadout.ShortHair));
         s.SaveAll();
         Assert.False(s.MessageIsError, s.Message);
         Assert.DoesNotContain("\"vertices\"", File.ReadAllText(Path.Combine(_root, "props", "custom-hair.json")));
@@ -47,7 +78,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
         Assert.Empty(catalog.Errors);
         var clip = catalog.Animations["player-idle"];
         var equipped = PersonLoadout.Dressed(clip, 0, PersonGear.None, catalog.Entities["hero"]).ToArray();
-        Assert.Equal(("custom-hair", PersonWardrobe.HeadSocket), Assert.Single(equipped));
+        Assert.Equal(("custom-hair", PersonLoadout.HeadSocket), Assert.Single(equipped));
         Assert.NotNull(catalog.Props[doc.Id].Solids[1].Outline);
         Assert.Equal(.02f, catalog.Props[doc.Id].Solids[1].Thickness);
     }
@@ -55,7 +86,8 @@ public sealed class AppearanceAuthoringTests : IDisposable
     [Fact]
     public void DuplicateKeepsIndependentGeometryAndBadOutlineLeavesItIntact()
     {
-        var original = AppearanceAuthoring.New("original", "Original", "skirt", "#222b32", .045f);
+        var original = AppearanceAuthoring.New("original", "Original", "skirt", "#222b32", .045f,
+            id => PersonWardrobe.Props().Single(p => p.Id == id));
         var copy = AppearanceAuthoring.Duplicate(original, "copy", "Copy");
         copy.Solids[0].Outline![0] = new(4, 4);
         Assert.NotEqual(original.Solids[0].Outline![0], copy.Solids[0].Outline![0]);
@@ -67,7 +99,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
     [Fact]
     public void HairOutlineJsonRebuildsItsMeshAndKeepsMeshOnlyProps()
     {
-        var hair = PersonWardrobe.Props().Single(p => p.Id == PersonWardrobe.ShortHair);
+        var hair = PersonWardrobe.Props().Single(p => p.Id == PersonLoadout.ShortHair);
         var json = hair.ToJson();
         Assert.Contains("\"outline\"", json);
         Assert.DoesNotContain("\"vertices\"", json);
@@ -90,7 +122,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
     [Fact]
     public void EditedHairJsonSurvivesWardrobeSeedingAndSuppliesNewHairTemplate()
     {
-        var path = Path.Combine(_root, "props", PersonWardrobe.ShortHair + ".json");
+        var path = Path.Combine(_root, "props", PersonLoadout.ShortHair + ".json");
         var original = File.ReadAllText(path);
         Assert.DoesNotContain("\"vertices\"", original);
         var edited = original.Replace("#654334", "#123456", StringComparison.Ordinal);
