@@ -53,8 +53,12 @@ public sealed class QuadrupedTests
             A = "body",
             Width = 1,
             Height = 1,
-            Material = new() { Fill = "#fff8e7", Outline = new(),
-                Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }] }
+            Material = new()
+            {
+                Fill = "#fff8e7",
+                Outline = new(),
+                Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)] }]
+            }
         };
         ModelAuthoring.SetCutout(part, points);
         part.Validate(_ => true);

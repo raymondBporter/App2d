@@ -119,8 +119,12 @@ public sealed class PersonWardrobeTests
             Width = 2,
             Height = 1,
             Geometry = new App2d.Core.Shapes.Ellipse2D.Builder { Center = new(0, 0), Radii = new(.5f, .5f) },
-            Material = new() { Fill = "#fff8e7", Outline = new() { Width = 0 },
-                Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(-2, -2), new(2, -2), new(2, 2), new(-2, 2)] }] },
+            Material = new()
+            {
+                Fill = "#fff8e7",
+                Outline = new() { Width = 0 },
+                Paint = [new() { Material = new() { Fill = "#ff0000" }, Points = [new(-2, -2), new(2, -2), new(2, 2), new(-2, 2)] }]
+            },
         };
         var drawing = new PuppetDrawing();
         drawing.Build("#000000", .04f, [part], _ => Vector3.Zero);

@@ -29,17 +29,17 @@ public sealed record RenderMaterialDefinition2D
     /// <summary>Apply supplied appearance fields; selecting a different named material replaces the surface.</summary>
     public RenderMaterialDefinition2D WithOverride(RenderMaterialDefinition2D? value) => value is null ? this
         : value.Asset is not null && value.Asset != Asset ? value : this with
-    {
-        Paint = value.Paint ?? Paint,
-        Fill = value.Fill ?? Fill,
-        Texture = value.Texture ?? Texture,
-        Tint = value.Tint ?? Tint,
-        Outline = value.Outline is null ? Outline : (Outline ?? new RenderOutlineDefinition2D()) with
         {
-            Color = value.Outline.Color ?? Outline?.Color,
-            Width = value.Outline.Width ?? Outline?.Width,
-        },
-    };
+            Paint = value.Paint ?? Paint,
+            Fill = value.Fill ?? Fill,
+            Texture = value.Texture ?? Texture,
+            Tint = value.Tint ?? Tint,
+            Outline = value.Outline is null ? Outline : (Outline ?? new RenderOutlineDefinition2D()) with
+            {
+                Color = value.Outline.Color ?? Outline?.Color,
+                Width = value.Outline.Width ?? Outline?.Width,
+            },
+        };
 
     /// <summary>Resolve shared surface data without changing the authored reference or copying its paint.</summary>
     public RenderMaterialDefinition2D Resolve(IReadOnlyDictionary<string, RenderMaterialDefinition2D> materials)

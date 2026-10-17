@@ -61,14 +61,14 @@ public static class PersonWardrobe
             var wrap = Art(id + "-hide-wrap", id == "brute" ? "Ochre ragged hide wrap" : "Russet ragged hide wrap");
             Patch(wrap, hide, layers.WrapCenter,
             [
-                (-.18f, .08f), 
-                (.18f, .08f), 
-                (.205f, -.075f), 
+                (-.18f, .08f),
+                (.18f, .08f),
+                (.205f, -.075f),
                 (.125f, -.05f),
                 (.075f, -.115f),
-                (.01f, -.065f), 
-                (-.055f, -.11f), 
-                (-.115f, -.05f), 
+                (.01f, -.065f),
+                (-.055f, -.11f),
+                (-.115f, -.05f),
                 (-.20f, -.075f)
             ], width, torso, layers.WrapThickness);
             Patch(wrap, "#705039", layers.DetailCenter, [(-.185f, .085f), (.185f, .085f), (.19f, .025f), (-.19f, .025f)], width, torso, layers.DetailThickness);
@@ -122,25 +122,25 @@ public static class PersonWardrobe
         // Front silhouette: unequal chunky tufts, with a high fringe to leave the brows clear.
         Patch(art, color, -.15f,
         [
-            (-.27f, .10f), 
+            (-.27f, .10f),
             (-.30f, .24f),
-            (-.23f, .23f), 
-            (-.29f, .32f), 
+            (-.23f, .23f),
+            (-.29f, .32f),
             (-.15f, .30f),
-            (-.15f, .40f), 
+            (-.15f, .40f),
             (-.06f, .34f),
             (.035f, .43f),
-            (.045f, .34f), 
+            (.045f, .34f),
             (.19f, .38f),
-            (.15f, .31f), 
-            (.28f, .30f), 
-            (.23f, .25f), 
+            (.15f, .31f),
+            (.28f, .30f),
+            (.23f, .25f),
             (.29f, .19f),
-            (.17f, .18f), 
+            (.17f, .18f),
             (.07f, .24f),
             (-.015f, .19f),
             (-.11f, .22f),
-            (-.18f, .12f), 
+            (-.18f, .12f),
             (-.22f, .025f)
         ], scale, scale * (wild ? 1.13f : .87f));
         return art;
@@ -151,7 +151,30 @@ public static class PersonWardrobe
         var art = Art(id, name);
         // The concave top leaves the animated mouth visible; the bottom is an irregular fan of locks.
         Patch(art, color, -.16f,
-            [(-.255f, .015f), (-.18f, -.055f), (-.105f, -.10f), (-.08f, -.18f), (.20f, -.18f), (.22f, -.08f), (.27f, -.045f), (.32f, -.13f), (.28f, -.17f), (.34f, -.29f), (.24f, -.25f), (.24f, -.39f), (.15f, -.35f), (.08f, -.49f), (.015f, -.40f), (-.075f, -.46f), (-.105f, -.36f), (-.215f, -.38f), (-.20f, -.27f), (-.30f, -.30f), (-.26f, -.19f), (-.315f, -.18f)], head, head * length);
+        [
+            (-.255f, .015f),
+            (-.18f, -.055f),
+            (-.105f, -.10f),
+            (-.08f, -.18f),
+            (.20f, -.18f),
+            (.22f, -.08f),
+            (.27f, -.045f),
+            (.32f, -.13f),
+            (.28f, -.17f),
+            (.34f, -.29f),
+            (.24f, -.25f),
+            (.24f, -.39f),
+            (.15f, -.35f),
+            (.08f, -.49f),
+            (.015f, -.40f),
+            (-.075f, -.46f),
+            (-.105f, -.36f),
+            (-.215f, -.38f),
+            (-.20f, -.27f),
+            (-.30f, -.30f),
+            (-.26f, -.19f),
+            (-.315f, -.18f)
+        ], head, head * length);
         return art;
     }
 
