@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace App2d.Core.Rendering.Characters;
 
-/// <summary>GPU submission only. Caller owns targets, clearing, camera and actor ordering.</summary>
+/// <summary>GPU submission only. Caller owns targets, colour clearing, camera and actor ordering; <see cref="DrawActor"/> owns an actor's depth layer.</summary>
 public sealed class PointCharacterRenderer : IDisposable
 {
     private readonly GraphicsDevice _device;
@@ -37,15 +37,42 @@ public sealed class PointCharacterRenderer : IDisposable
         };
     }
 
-    public static Matrix Projection(int width, int height, System.Numerics.Vector2 anchor, float pixelsPerUnit)
+    /// <summary>Device pixels (y down) to clip space, keeping puppet depth: model z from -64 (nearest) to 64 maps to 0..1.</summary>
+    public static Matrix DeviceProjection(int width, int height)
     {
-        var projection = Matrix.CreateOrthographicOffCenter(-anchor.X / pixelsPerUnit, (width - anchor.X) / pixelsPerUnit,
-            -(height - anchor.Y) / pixelsPerUnit, anchor.Y / pixelsPerUnit, -64, 64);
+        var projection = Matrix.CreateOrthographicOffCenter(0, width, height, 0, -64, 64);
         // Exported Z grows away from the fixed camera. XNA's orthographic helper uses the opposite convention.
         projection.M33 = 1f / 128;
         projection.M43 = .5f;
         return projection;
     }
+
+    /// <summary>Model units (y up) to device pixels: the model origin lands on the anchor; depth is left in model units.</summary>
+    public static Matrix View(System.Numerics.Vector2 anchor, float pixelsPerUnit) => Matrix.CreateScale(pixelsPerUnit, -pixelsPerUnit, 1) * Matrix.CreateTranslation(anchor.X, anchor.Y, 0);
+
+    /// <summary>A fixed camera on a target of the given size: <see cref="View"/> over <see cref="DeviceProjection"/>.</summary>
+    public static Matrix Projection(int width, int height, System.Numerics.Vector2 anchor, float pixelsPerUnit) => View(anchor, pixelsPerUnit) * DeviceProjection(width, height);
+
+    /// <summary>Starts a new depth layer: later draws no longer test against anything drawn before.</summary>
+    public void ClearDepth()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _device.Clear(ClearOptions.DepthBuffer, Microsoft.Xna.Framework.Color.Transparent, 1, 0);
+    }
+
+    /// <summary>Draws one actor layered against itself only: a new depth layer, the swoosh (if any) behind, then the puppet.</summary>
+    public void DrawActor(PuppetDrawing drawing, Matrix projection, Matrix world, CharacterMesh? swoosh = null)
+    {
+        ArgumentNullException.ThrowIfNull(drawing);
+        ClearDepth();
+        if (swoosh is { Count: > 0 })
+        {
+            Draw(swoosh, projection, world);
+        }
+
+        Draw(drawing, projection, world);
+    }
+
     public void Draw(PuppetDrawing drawing, Matrix projection, Matrix world)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

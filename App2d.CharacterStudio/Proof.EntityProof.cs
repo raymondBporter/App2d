@@ -28,7 +28,7 @@ internal sealed partial class ProofRenders
             return false;
         }
         _proofTarget ??= RenderCapture2D.CreateTarget(GraphicsDevice, EntityWidth, EntityHeight);
-        var arena = _arenaDrawing ??= new(GraphicsDevice, _renderer);
+        var arena = _arenaDrawing ??= new(_renderer);
         var (name, centerX, actors) = _entityFrames[_smokeIndex];
         _proofTarget.SavePng(Path.Combine(_smokePath, name + ".png"), new Color(237, 238, 226), () =>
         {

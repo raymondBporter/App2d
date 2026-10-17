@@ -27,7 +27,7 @@ internal sealed partial class ProofRenders
                         InPlace = true
                     });
                     drawing.Build(model, pose);
-                    _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(column * 360 + 180, row * 120 + 112), 55), Matrix.Identity);
+                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(target.Width, target.Height, new(column * 360 + 180, row * 120 + 112), 55), Matrix.Identity);
                 }
             }
         });
@@ -37,7 +37,7 @@ internal sealed partial class ProofRenders
             for (var row = 0; row < 2; row++)
             {
                 drawing.Build(model, PoseEvaluator.Rest(model));
-                _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(720, row * 480 + 420), 200), Matrix.CreateScale(row == 0 ? 1 : -1, 1, 1));
+                _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(target.Width, target.Height, new(720, row * 480 + 420), 200), Matrix.CreateScale(row == 0 ? 1 : -1, 1, 1));
             }
         });
 

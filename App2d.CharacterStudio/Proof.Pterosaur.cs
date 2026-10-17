@@ -24,7 +24,7 @@ internal sealed partial class ProofRenders
                     var clip = catalog.Animations["pterosaur-" + roles[row]];
                     var pose = PoseEvaluator.Sample(model, clip, clip.Duration * column / 3f);
                     drawing.Build(model, pose);
-                    _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(column * 360 + 180, row * 180 + 180), 75), Matrix.Identity);
+                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(target.Width, target.Height, new(column * 360 + 180, row * 180 + 180), 75), Matrix.Identity);
                 }
             }
         });
@@ -34,7 +34,7 @@ internal sealed partial class ProofRenders
             for (var row = 0; row < 2; row++)
             {
                 drawing.Build(model, PoseEvaluator.Sample(model, catalog.Animations["pterosaur-hover"], .25f));
-                _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(target.Width, target.Height, new(720, row * 540 + 460), 220), Matrix.CreateScale(row == 0 ? 1 : -1, 1, 1));
+                _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(target.Width, target.Height, new(720, row * 540 + 460), 220), Matrix.CreateScale(row == 0 ? 1 : -1, 1, 1));
             }
         });
 

@@ -83,12 +83,7 @@ internal sealed partial class ProofRenders
             target.SavePng(path, new Color(241, 240, 232), () =>
             {
                 _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
-                if (trail.Count > 0)
-                {
-                    _renderer.Draw(trail, projection, Matrix.Identity);
-                }
-
-                _renderer.Draw(drawing.Mesh, projection, Matrix.Identity);
+                _renderer.DrawActor(drawing, projection, Matrix.Identity, trail);
             });
         }
 

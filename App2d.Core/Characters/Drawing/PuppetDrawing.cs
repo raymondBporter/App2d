@@ -18,6 +18,14 @@ public sealed class PuppetDrawing
     public CharacterMesh Mesh { get; } = new();
     public List<CharacterDrawBatch2D> Batches { get; } = [];
     public string TextureRoot { get; private set; } = Environment.CurrentDirectory;
+
+    /// <summary>Empties the mesh and its batches, for a drawing assembled from props alone.</summary>
+    public void Clear()
+    {
+        Mesh.Clear();
+        Batches.Clear();
+    }
+
     public void Build(PuppetDefinition definition, PuppetPose pose) => Build(definition.Ink, definition.LineWidth, definition.Parts, pose.World, rest: id => definition.Controls.First(c => c.Id == id).Rest.XYZ);
     /// <summary>
     /// Faces come from the pose's evaluated expressions, never from the parts' stored defaults. <paramref name="face"/>, when
@@ -113,8 +121,7 @@ public sealed class PuppetDrawing
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
     public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
     {
-        Mesh.Clear();
-        Batches.Clear();
+        Clear();
         var ink = ColorExtensions.FromHexRgb(inkColor);
         foreach (var part in parts)
         {

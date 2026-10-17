@@ -64,13 +64,13 @@ internal sealed partial class ProofRenders
                 var close = PointCharacterRenderer.Projection(panel, ProofPanelHeight, new(panel * .5f - pose.Locomotion.X * ProofPpu, ProofPanelHeight * .92f), ProofPpu);
                 BuildProofGround(pose, pose.Locomotion.X, ProofPpu);
                 _renderer.Draw(_proofGround, close, Matrix.Identity, writeDepth: false);
-                _renderer.Draw(_proofDrawings[i].Mesh, close, Matrix.Identity);
+                _renderer.DrawActor(_proofDrawings[i], close, Matrix.Identity);
                 // Game scale: a fixed camera at arena size, so travel and readability show at player size.
                 GraphicsDevice.Viewport = new(0, ProofPanelHeight, ProofWidth, band);
                 var game = PointCharacterRenderer.Projection(ProofWidth, band, new(ProofWidth * .12f + i * 11 * GamePpu, band * .85f), GamePpu);
                 BuildProofGround(pose, 5, GamePpu);
                 _renderer.Draw(_proofGround, game, Matrix.Identity, writeDepth: false);
-                _renderer.Draw(_proofDrawings[i].Mesh, game, Matrix.Identity);
+                _renderer.DrawActor(_proofDrawings[i], game, Matrix.Identity);
             }
         }
         _proofTarget.SavePng(Path.Combine(_smokePath, $"{clipId}-{frame:D2}.png"));

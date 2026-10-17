@@ -4,6 +4,7 @@ using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
+using App2d.Rendering;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -199,17 +200,14 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
 
     private void Render(RenderTarget2D target, int width, int height, Vector2 anchor, float ppu, SubjectView[] views, float centerX)
     {
-        device.SetRenderTarget(target);
-        device.Clear(new Color(237, 238, 226));
+        using var bound = device.UseRenderTarget(target, new Color(237, 238, 226));
         var projection = PointCharacterRenderer.Projection(width, height, anchor, ppu);
         BuildGround(centerX, width / ppu, ppu);
         renderer.Draw(_ground, projection, Matrix.Identity, writeDepth: false);
         for (var i = 0; i < views.Length; i++)
         {
-            renderer.Draw(_drawings[i], projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
+            renderer.DrawActor(_drawings[i], projection, Matrix.CreateTranslation(views[i].Offset.X, views[i].Offset.Y, 0));
         }
-
-        device.SetRenderTarget(null);
     }
 
     private void BuildGround(float centerX, float span, float ppu)

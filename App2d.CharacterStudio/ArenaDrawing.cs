@@ -1,7 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
-using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
@@ -23,7 +22,7 @@ internal sealed record ArenaActorFrame(ResolvedEntity Entity, ActorPose Pose, En
 /// Draws arena actors from their final poses, with collision overlays: movement boxes grey, hurt regions blue, active attack
 /// regions red, prop tips yellow and held contact anchors green. Shared by the entity smoke and the editor's Test mode.
 /// </summary>
-internal sealed class ArenaDrawing(GraphicsDevice device, PointCharacterRenderer renderer)
+internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 {
     private readonly PuppetDrawing _drawing = new();
     private readonly CharacterMesh _overlay = new(16384);
@@ -35,15 +34,14 @@ internal sealed class ArenaDrawing(GraphicsDevice device, PointCharacterRenderer
         foreach (var actor in actors)
         {
             _drawing.Build(actor.Entity, actor.Pose.Local);
-            device.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1, 0);
-            renderer.Draw(_drawing.Mesh, projection, Matrix.CreateScale(actor.Pose.Facing, 1, 1) * Matrix.CreateTranslation(actor.Pose.Position.X, actor.Pose.Position.Y, 0));
+            renderer.DrawActor(_drawing, projection, Matrix.CreateScale(actor.Pose.Facing, 1, 1) * Matrix.CreateTranslation(actor.Pose.Position.X, actor.Pose.Position.Y, 0));
         }
         if (!overlays)
         {
             return;
         }
         // Overlays again in front, so hit geometry reads over the figures.
-        device.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1, 0);
+        renderer.ClearDepth();
         renderer.Draw(_overlay, projection, Matrix.Identity, writeDepth: false);
     }
 

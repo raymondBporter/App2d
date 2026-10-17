@@ -2,6 +2,7 @@ using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Rendering.Characters;
+using App2d.Rendering;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
@@ -16,7 +17,7 @@ namespace App2d.CharacterStudio.Editor;
 /// </summary>
 internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device, ImGuiHost gui, PointCharacterRenderer renderer) : IDisposable
 {
-    private readonly ArenaDrawing _drawing = new(device, renderer);
+    private readonly ArenaDrawing _drawing = new(renderer);
     private readonly List<string> _log = [];
     private IReadOnlyList<ResolvedEntity> _available = [];
     private RenderTarget2D? _target;
@@ -144,19 +145,19 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
                 gui.Unregister(_targetId);
                 _target.Dispose();
             }
-            _target = new(device, width, height, false, SurfaceFormat.Color, DepthFormat.Depth24, 4, RenderTargetUsage.DiscardContents);
+            _target = RenderCapture2D.CreateTarget(device, width, height);
             _targetId = gui.Register(_target);
         }
-        device.SetRenderTarget(_target);
-        device.Clear(new Color(237, 238, 226));
-        if (Arena is not null)
+        using (device.UseRenderTarget(_target, new Color(237, 238, 226)))
         {
-            var ppu = MathF.Min(height / 4.2f, width / 11f);
-            var centerX = Arena.Player.Position.X;
-            var projection = PointCharacterRenderer.Projection(width, height, new(width / 2f - centerX * ppu, height * .86f), ppu);
-            _drawing.Draw(ArenaActorFrame.Capture(Arena), projection, ppu, centerX, Overlays);
+            if (Arena is not null)
+            {
+                var ppu = MathF.Min(height / 4.2f, width / 11f);
+                var centerX = Arena.Player.Position.X;
+                var projection = PointCharacterRenderer.Projection(width, height, new(width / 2f - centerX * ppu, height * .86f), ppu);
+                _drawing.Draw(ArenaActorFrame.Capture(Arena), projection, ppu, centerX, Overlays);
+            }
         }
-        device.SetRenderTarget(null);
         var start = ImGui.GetCursorScreenPos();
         ImGui.InvisibleButton("arena", new(width, height));
         ImGui.GetWindowDrawList().AddImage(_targetId, start, start + new Vector2(width, height));

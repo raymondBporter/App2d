@@ -79,7 +79,7 @@ internal sealed partial class ProofRenders
                 target.SavePng(Path.Combine(folder, $"{f:D3}.png"), new Color(241, 240, 232), () =>
                 {
                     _renderer.Draw(scenery, projection, Matrix.Identity, writeDepth: false);
-                    _renderer.Draw(drawing.Mesh, projection, Matrix.Identity);
+                    _renderer.DrawActor(drawing, projection, Matrix.Identity);
                 });
             }
             manifest.Add(new

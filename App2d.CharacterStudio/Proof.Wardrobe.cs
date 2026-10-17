@@ -1,7 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering.Characters;
 using App2d.Rendering;
-using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
@@ -53,8 +52,7 @@ internal sealed partial class ProofRenders
                     // Large right/left views plus an actual game-size pair along the bottom.
                     foreach (var (x, y, ppu, facing) in new[] { (150, 650, 215, 1), (365, 650, 130, -1), (195, 865, 48, 1), (305, 865, 48, -1) })
                     {
-                        GraphicsDevice.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1, 0);
-                        _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(width, height, new(column * 500 + x, y), ppu), Matrix.CreateScale(facing, 1, 1));
+                        _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(width, height, new(column * 500 + x, y), ppu), Matrix.CreateScale(facing, 1, 1));
                     }
                 }
             }
@@ -80,8 +78,7 @@ internal sealed partial class ProofRenders
                 drawing.Build(caveman, pose);
                 foreach (var (ppu, y, facing) in new[] { (125, 380, 1), (48, 440, -1) })
                 {
-                    GraphicsDevice.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1, 0);
-                    _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(width, height,
+                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(width, height,
                         new(160 + i % 4 * 360, y + i / 4 * 460), ppu), Matrix.CreateScale(facing, 1, 1));
                 }
             }
@@ -113,8 +110,7 @@ internal sealed partial class ProofRenders
 
                 foreach (var (ppu, y, facing) in new[] { (125, 380, 1), (48, 440, -1) })
                 {
-                    GraphicsDevice.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1, 0);
-                    _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(width, height,
+                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(width, height,
                         new(160 + i % 4 * 360, y + i / 4 * 460), ppu), Matrix.CreateScale(facing, 1, 1));
                 }
             }
@@ -139,8 +135,7 @@ internal sealed partial class ProofRenders
                 }));
                 foreach (var (ppu, y, facing) in new[] { (125, 340, 1), (40, 430, -1) })
                 {
-                    GraphicsDevice.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1, 0);
-                    _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(width, height,
+                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(width, height,
                         new(180 + i % 4 * 360, y + i / 4 * 460), ppu), Matrix.CreateScale(facing, 1, 1));
                 }
             }
@@ -192,7 +187,7 @@ internal sealed partial class ProofRenders
                 var brakeSeconds = Math.Clamp(at - finish, 0, config.BrakeSeconds);
                 var travelled = charging ? config.ChargeSpeed * (rushSeconds + brakeSeconds - brakeSeconds * brakeSeconds / (2 * config.BrakeSeconds)) : 0;
                 animationTarget.SavePng(Path.Combine(folder, $"frame-{frame:D4}.png"), new Color(241, 236, 223), () =>
-                    _renderer.Draw(drawing.Mesh, PointCharacterRenderer.Projection(640, 480,
+                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(640, 480,
                         new(charging ? 100 + travelled * 65 : 160, 430), charging ? 65 : 125), Matrix.Identity));
             }
         }

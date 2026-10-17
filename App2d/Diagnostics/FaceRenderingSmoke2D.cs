@@ -37,7 +37,7 @@ internal static class FaceRenderingSmoke2D
                 var head = pose.World("head");
                 device.Viewport = new Viewport(i % 4 * 320, i / 4 * 290, 320, 225);
                 var projection = PointCharacterRenderer.Projection(320, 225, new(160, 112), 260);
-                renderer.Draw(drawing.Mesh, projection, Matrix.CreateTranslation(-head.X, -head.Y, 0));
+                renderer.DrawActor(drawing, projection, Matrix.CreateTranslation(-head.X, -head.Y, 0));
             }
             device.Viewport = new Viewport(0, 0, 1280, 1160);
             for (var i = 0; i < FaceExpressions.Names.Count; i++)

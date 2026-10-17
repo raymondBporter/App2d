@@ -3,8 +3,6 @@ using App2d.Core.Characters.Drawing;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Color = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Rendering;
 
@@ -32,20 +30,15 @@ public sealed partial class Renderer2D
 
         var m = visual.Transform.Matrix * _camera.WorldToDeviceMatrix;
         var world = Matrix.CreateScale(shader.Facing, 1, 1) * ToXnaMatrix(m);
-        var projection = Matrix.CreateOrthographicOffCenter(0, _device.Viewport.Width, _device.Viewport.Height, 0, -64, 64);
-        projection.M33 = 1f / 128;
-        projection.M43 = .5f;
-        _device.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1, 0);
-        if (shader.Swoosh is { IsVisible: true } swoosh)
+        var projection = PointCharacterRenderer.DeviceProjection(_device.Viewport.Width, _device.Viewport.Height);
+        CharacterMesh? swoosh = null;
+        if (shader.Swoosh is { IsVisible: true } visible)
         {
             (_swooshMesh ??= new(4096)).Clear();
-            swoosh.Build(_swooshMesh);
-            if (_swooshMesh.Count > 0)
-            {
-                _characterRenderer.Draw(_swooshMesh, projection, world);
-            }
+            visible.Build(_swooshMesh);
+            swoosh = _swooshMesh;
         }
-        _characterRenderer.Draw(_authoredDrawing, projection, world);
+        _characterRenderer.DrawActor(_authoredDrawing, projection, world, swoosh);
     }
 
     private void DisposeCharacters()
