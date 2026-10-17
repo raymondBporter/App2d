@@ -64,15 +64,7 @@ public sealed class EnemyPresentation2D(
         var occurrences = _eventBuffer.Count == 0 ? null : _eventBuffer.ToLookup(e => e.EntityId);
         foreach (var occurrence in _eventBuffer)
         {
-            if (occurrence is HammerStarted2D)
-            {
-                sounds.PlayAt(SoundEffect2D.HammerWindup, occurrence.Position);
-            }
-            else if (occurrence is HammerStruck2D)
-            {
-                sounds.PlayAt(SoundEffect2D.HammerImpact, occurrence.Position);
-            }
-            else if (occurrence is EntityCue2D cue)
+            if (occurrence is EntityCue2D cue)
             {
                 sounds.PlayAt(cue.Cue switch
                 {
@@ -131,9 +123,10 @@ public sealed class EnemyPresentation2D(
                     view = state.AuthoredEntity is { } entity ? new AuthoredPoseView(scene, entity)
                         : state.Kind switch
                         {
+                            EnemyKind2D.Shieldback => new ShieldbackView(scene, textures),
                             EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
                             EnemyKind2D.TumbleProp => new PropView(scene),
-                            _ => new AnimatedView(scene, textures, state.Kind)
+                            _ => throw ArgGuard.CreateInvalid("An authored enemy needs its resolved entity.", nameof(states))
                         };
                     _views.Add(state.Id, view);
                 }
@@ -256,70 +249,35 @@ public sealed class EnemyPresentation2D(
         }
     }
 
-    private sealed class AnimatedView : View
+    private sealed class ShieldbackView : View
     {
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
         private readonly SpriteShader2D _shader;
-        private readonly AnimationClip2D<Texture2D> _walk;
-        private readonly AnimationClip2D<Texture2D>? _attack;
         private readonly AnimationPlayer2D<Texture2D> _animation = new();
-        private readonly Vector2 _offset;
-        private bool _wasAttacking;
 
-        public AnimatedView(Scene2D scene, TextureCache2D textures, EnemyKind2D kind)
+        public ShieldbackView(Scene2D scene, TextureCache2D textures)
         {
             _scene = scene;
-            var (asset, size, offset) = kind switch
-            {
-                EnemyKind2D.Shieldback => ("shieldback", new Vector2(144f, 108f), new Vector2(0f, 10f)),
-                EnemyKind2D.GreenDinosaur => ("green-dinosaur", new Vector2(112f), new Vector2(0f, 24f)),
-                EnemyKind2D.BoilerBrute => ("boiler-brute", new Vector2(196f), new Vector2(0f, 32f)),
-                _ => throw ArgGuard.CreateOutOfRange(kind, "Unknown enemy kind.")
-            };
-            _offset = offset;
-            _walk = CharacterAnimationAssets2D.LoadClip(textures, asset, "walk");
-            if (kind == EnemyKind2D.BoilerBrute)
-            {
-                _attack = CharacterAnimationAssets2D.LoadClip(textures, asset, "hammer-attack");
-            }
-
-            _animation.Play(_walk);
+            _animation.Play(CharacterAnimationAssets2D.LoadClip(textures, "shieldback", "walk"));
             _shader = new SpriteShader2D(_animation.CurrentFrame);
-            _visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size), _shader);
+            _visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(144f, 108f), _shader);
             scene.Add(_visual);
         }
 
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)
         {
             _visual.IsVisible = state.IsEnabled && state.IsAlive;
-            _visual.Transform.Position = state.Position + _offset;
+            _visual.Transform.Position = state.Position + new Vector2(0f, 10f);
             _shader.FlipX = state.Facing < 0f;
             if (!_visual.IsVisible)
             {
                 return;
             }
 
-            if (state.IsAttacking && _attack is not null)
-            {
-                // Fit authored poses to authoritative attack time. Changing art cannot change damage timing.
-                StateGuard.ThrowIfNot(NumericValidation.IsPositive(state.AttackDurationSeconds),
-                    "An attacking enemy needs a positive attack duration in its state.");
-                var progress = Math.Clamp(state.AttackElapsedSeconds / state.AttackDurationSeconds, 0f, 1f);
-                _shader.Texture = _attack[_attack.GetFrameIndexAtTime(progress * _attack.Duration)];
-            }
-            else
-            {
-                if (_wasAttacking)
-                {
-                    _animation.Play(_walk, restart: true);
-                }
-
-                _animation.PlaybackSpeed = Math.Clamp(MathF.Abs(state.Velocity.X) / MathF.Max(1f, state.MoveSpeed), 0.65f, 1.15f);
-                _animation.Update(dt);
-                _shader.Texture = _animation.CurrentFrame;
-            }
-            _wasAttacking = state.IsAttacking;
+            _animation.PlaybackSpeed = Math.Clamp(MathF.Abs(state.Velocity.X) / MathF.Max(1f, state.MoveSpeed), 0.65f, 1.15f);
+            _animation.Update(dt);
+            _shader.Texture = _animation.CurrentFrame;
         }
 
         public override void Dispose() => _scene.Remove(_visual);

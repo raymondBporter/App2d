@@ -1,7 +1,10 @@
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
+using App2d.Contracts.World;
 using App2d.Core;
+using App2d.Core.Assets;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Levels;
@@ -23,13 +26,13 @@ internal static class EnemyRenderingSmoke2D
         var scene = new Scene2D();
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(textures.ContentRoot), new SilentSounds());
+        var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var rivalId = EntityId2D.Create();
         ImmutableArray<EnemyState2D> states =
         [
             new(EntityId2D.Create(), EnemyKind2D.Shieldback, new(-280f, 0f), new(118f, 0f), 0f, 1f, true, true) { MoveSpeed = 118f },
-            new(EntityId2D.Create(), EnemyKind2D.GreenDinosaur, new(-130f, 0f), new(-82f, 0f), 0f, -1f, true, true) { MoveSpeed = 82f },
-            new(EntityId2D.Create(), EnemyKind2D.BoilerBrute, new(35f, 0f), Vector2.Zero, 0f, 1f, true, true)
-                { MoveSpeed = 62f, IsAttacking = true, AttackElapsedSeconds = 0.55f, AttackDurationSeconds = 0.8f },
+            Observe("stalker-pest", new(-130f, 0f), -1, null, .18f),
+            Observe("maul-brute", new(35f, 0f), 1, "attack", .55f),
             new(rivalId, EnemyKind2D.Rival, new(220f, 0f), Vector2.Zero, 0f, -1f, true, true)
             {
                 IsAttacking = true,
@@ -59,6 +62,22 @@ internal static class EnemyRenderingSmoke2D
         if (scene.Any())
         {
             throw new InvalidOperationException("Removed enemy views left scene objects behind.");
+        }
+
+        EnemyState2D Observe(string entityId, Vector2 position, int facing, string? actionId, float seconds)
+        {
+            var entity = catalog.Entities[entityId];
+            var clip = actionId is null ? entity.Clip(EntityControllers.Walk) : entity.Actions[actionId].Clip;
+            return new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, position, Vector2.Zero, 0, facing, true, true)
+            {
+                TypeId = entityId,
+                AuthoredEntity = entity,
+                AuthoredPose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, seconds, actionId is null),
+                    GameWorldUnits2D.WorldToAuthored(position), facing),
+                ActionId = actionId ?? EntityControllers.Walk,
+                ActionSeconds = seconds,
+                IsAttacking = actionId is not null
+            };
         }
     }
 

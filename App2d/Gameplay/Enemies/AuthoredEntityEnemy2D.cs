@@ -19,12 +19,12 @@ using System.Numerics;
 namespace App2d.Gameplay.Enemies;
 
 /// <summary>
-/// An enemy compiled from an authored entity, in the real terrain/streaming/rollback simulation. Its
+/// An enemy compiled from an authored entity, in the terrain and streaming simulation. Its
 /// <see cref="EntityAnimator"/> produces the one final pose per tick: hurt and attack regions are derived from it here,
 /// and the presentation draws that same pose from <see cref="EnemyState2D.AuthoredPose"/> rather than re-sampling.
 /// Movement belongs to the physics body; gait phase follows the ground distance the body actually covered. An action's
 /// "fire" event launches its projectile from the equipped prop's muzzle, unless terrain crosses the barrel; bolts sweep in
-/// small steps so thin walls stop them, and they are part of the rollback snapshot.
+/// small steps so thin walls stop them, and their current values are included in enemy observations.
 /// </summary>
 public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D, ICombatant2D, IAuthoredHurt2D, ICombatGuard2D
 {

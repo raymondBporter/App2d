@@ -8,6 +8,11 @@
 The session advances the simulation at a fixed rate and hands immutable frames to the
 presentation. This document describes that flow.
 
+There is no gameplay state-restore or rollback API. `SessionSnapshot2D` is the current
+observation used to initialize presentation, not a restorable simulation checkpoint.
+`PersonFrameHistory2D` holds recent animation samples for hitstop; it does not rewind
+physics or gameplay. Projectile identity sequences advance only forward.
+
 ## Session design decisions
 
 These decisions shape how the session is built and advanced:

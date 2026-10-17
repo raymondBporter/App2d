@@ -49,8 +49,7 @@ public sealed class ObservationRoundTripTests
         [
             new(enemyId, EnemyKind2D.Rival, position, new(5f, 1f), 0.2f, -1f, true, true)
                 { Person = person with { Id = enemyId }, IsAttacking = true, AttackElapsedSeconds = 0.12f, MoveX = -1f },
-            new(new EntityId2D(104), EnemyKind2D.BoilerBrute, position, Vector2.Zero, 0f, 1f, true, true)
-                { IsAttacking = true, AttackElapsedSeconds = 0.12f, AttackDurationSeconds = 0.8f }
+            new(new EntityId2D(104), EnemyKind2D.TumbleProp, position, Vector2.Zero, 0.4f, 1f, true, true)
         ];
         var snapshot = new SessionSnapshot2D(500, [player], content, world, enemies);
         var options = CreateOptions();
@@ -94,7 +93,7 @@ public sealed class ObservationRoundTripTests
             new CombatDamageOccurred2D(stamp, new(enemyId, CombatFaction2D.Enemy, position, true)
                 { Contact = new CombatContact2D(new(777), 17, position + Vector2.UnitX, -Vector2.UnitX, CombatImpactKind2D.Sword) { AttackerId = playerId } })
         };
-        EnemyEvent2D[] enemyEvents = [new HammerStarted2D(enemyId, position), new HammerStruck2D(enemyId, position),
+        EnemyEvent2D[] enemyEvents = [new EntityCue2D(enemyId, position, "heavy"),
             new RivalAttackStarted2D(enemyId, position, UnarmedAttackKind2D.Kick, 0.3f),
             new RivalDamaged2D(enemyId, position), new RivalDied2D(enemyId, position)];
         WeaponEvent2D[] weaponEvents = [new ChargeStarted2D(position), new ChargeCancelled2D(position, 0.5f),

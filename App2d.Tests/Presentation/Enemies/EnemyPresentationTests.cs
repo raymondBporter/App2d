@@ -1,5 +1,7 @@
 using App2d.Contracts.Enemies;
+using App2d.Contracts.World;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
@@ -14,11 +16,12 @@ namespace App2d.Tests.Presentation.Enemies;
 
 public sealed class EnemyPresentationTests
 {
+    private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot);
+
     [Fact]
     public void ThrowerReleasesHeldStoneRendersRockAndCleansUpOnStreaming()
     {
-        var catalog = Core.Characters.Authored.AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
-        var entity = catalog.Entities["rock-thrower"];
+        var entity = Catalog.Entities["rock-thrower"];
         var pose = new Core.Characters.Authored.ActorPose(
             Core.Characters.Authored.PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2.Zero, 1);
         using var textures = new TextureCache2D(TestAssetPath.Root);
@@ -52,27 +55,23 @@ public sealed class EnemyPresentationTests
     }
 
     [Fact]
-    public void HammerAdvancesBetweenMessagesWithoutReplayingSound()
+    public void AuthoredAttackKeepsTheSimulationPoseBetweenUpdatesWithoutReplayingSound()
     {
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
         var sounds = new RecordingSounds();
         using var view = new EnemyPresentation2D(scene, textures, TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
-        var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.BoilerBrute,
-            Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
-        {
-            IsAttacking = true,
-            AttackElapsedSeconds = 0.15f,
-            AttackDurationSeconds = 0.8f
-        };
-        view.ApplyState([state], [new HammerStarted2D(state.Id, state.Position)], 500);
-        var shader = Assert.IsType<SpriteShader2D>(Assert.Single(scene).Shader);
-        Assert.Same(textures.Load("characters/boiler-brute/animations/hammer-attack/frame-0002.png"), shader.Texture);
+        var state = AuthoredAttack("maul-brute", .15f);
+        view.ApplyState([state], [new EntityCue2D(state.Id, state.Position, "heavy")], 500);
+        var shader = Assert.IsType<AuthoredCharacterShader>(Assert.Single(scene).Shader);
+        Assert.Same(state.AuthoredPose!.Local, shader.Pose);
         view.Advance(0.2f);
-        Assert.Same(textures.Load("characters/boiler-brute/animations/hammer-attack/frame-0004.png"), shader.Texture);
-        view.ApplyState([state with { AttackDurationSeconds = 0.4f }], [], 501);
-        Assert.Same(textures.Load("characters/boiler-brute/animations/hammer-attack/frame-0004.png"), shader.Texture);
-        Assert.Single(sounds.Played);
+        Assert.Same(state.AuthoredPose.Local, shader.Pose);
+        var next = AuthoredAttack("maul-brute", .35f) with { Id = state.Id };
+        view.ApplyState([next], [], 501);
+        Assert.Same(next.AuthoredPose!.Local, shader.Pose);
+        Assert.NotSame(state.AuthoredPose.Local, shader.Pose);
+        Assert.Equal((SoundEffect2D.HammerImpact, state.Position), Assert.Single(sounds.Played));
     }
 
     [Fact]
@@ -100,28 +99,24 @@ public sealed class EnemyPresentationTests
         Assert.Empty(scene);
     }
 
-    [Fact]
-    public void HammerPoseUsesSnapshotTimeAndDisabledOrRemovedActorsLeaveNoVisuals()
+    [Theory]
+    [InlineData("maul-brute")]
+    [InlineData("stalker-pest")]
+    public void AuthoredEnemiesUseTheirFinalPoseAndCleanUpOnStreamingOrRemoval(string entityId)
     {
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
         var sounds = new RecordingSounds();
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), sounds);
-        var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.BoilerBrute,
-            new Vector2(100f, 0f), Vector2.Zero, 0f, -1f, true, true)
-        {
-            MoveSpeed = 62f,
-            IsAttacking = true,
-            AttackElapsedSeconds = 0.55f,
-            AttackDurationSeconds = 0.8f
-        };
+        var state = AuthoredAttack(entityId, .55f, new Vector2(100f, 0f), -1);
         var position = new Vector2(38f, -10f);
-        view.Update([state], [new HammerStruck2D(state.Id, position)], 3f, 1);
+        view.Update([state], [new EntityCue2D(state.Id, position, "heavy")], 3f, 1);
         var visual = Assert.Single(scene);
-        var shader = Assert.IsType<SpriteShader2D>(visual.Shader);
-        Assert.Same(textures.Load("characters/boiler-brute/animations/hammer-attack/frame-0006.png"), shader.Texture);
-        Assert.True(shader.FlipX);
+        var shader = Assert.IsType<AuthoredCharacterShader>(visual.Shader);
+        Assert.Same(state.AuthoredPose!.Local, shader.Pose);
+        Assert.Equal(state.Position, visual.Transform.Position);
+        Assert.Equal(-1, shader.Facing);
         Assert.Equal((SoundEffect2D.HammerImpact, position), Assert.Single(sounds.Played));
         view.Update([state with { IsEnabled = false }], [], 0f, 1);
         Assert.False(visual.IsVisible);
@@ -129,6 +124,28 @@ public sealed class EnemyPresentationTests
         Assert.True(visual.IsVisible);
         Assert.Single(sounds.Played);
         view.Update([], [], 0f, 3);
+        Assert.Empty(scene);
+    }
+
+    [Fact]
+    public void ShieldbackStillSupportsTheSpriteFallbackAndCleansUpItsView()
+    {
+        using var textures = new TextureCache2D(TestAssetPath.Root);
+        var scene = new Scene2D();
+        using var view = new EnemyPresentation2D(scene, textures,
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
+        var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Shieldback,
+            new Vector2(100f, 0f), new Vector2(118f, 0f), 0f, -1f, true, true) { MoveSpeed = 118f };
+
+        view.ApplyState([state], [], 1);
+        var visual = Assert.Single(scene);
+        var shader = Assert.IsType<SpriteShader2D>(visual.Shader);
+        Assert.Same(textures.Load("characters/shieldback/animations/walk/frame-0001.png"), shader.Texture);
+        Assert.True(shader.FlipX);
+        Assert.Equal(new Vector2(100f, 10f), visual.Transform.Position);
+        view.ApplyState([state with { IsEnabled = false }], [], 2);
+        Assert.False(visual.IsVisible);
+        view.ApplyState([], [], 3);
         Assert.Empty(scene);
     }
 
@@ -180,6 +197,21 @@ public sealed class EnemyPresentationTests
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         Assert.Equal(0, allocated);
         Assert.Equal(state, states[0]);
+    }
+
+    private static EnemyState2D AuthoredAttack(string entityId, float seconds, Vector2 position = default, int facing = 1)
+    {
+        var entity = Catalog.Entities[entityId];
+        return new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Authored, position, Vector2.Zero, 0, facing, true, true)
+        {
+            TypeId = entityId,
+            AuthoredEntity = entity,
+            AuthoredPose = new ActorPose(PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, seconds, false),
+                GameWorldUnits2D.WorldToAuthored(position), facing),
+            ActionId = "attack",
+            ActionSeconds = seconds,
+            IsAttacking = true
+        };
     }
 
     private sealed class RecordingSounds : ISoundEffectSink2D

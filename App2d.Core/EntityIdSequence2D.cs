@@ -3,8 +3,8 @@ using App2d.Core.Validation;
 namespace App2d.Core;
 
 /// <summary>
-/// A creation sequence over a range reserved from a session allocator. Rollback restores
-/// its position so replay reproduces the same IDs without touching the allocator.
+/// A forward-only creation sequence over a range reserved from a session allocator.
+/// Each projectile receives a fresh identity without changing other allocation ranges.
 /// </summary>
 public sealed class EntityIdSequence2D
 {
@@ -25,11 +25,5 @@ public sealed class EntityIdSequence2D
     {
         StateGuard.ThrowIf(Position == _capacity, "The entity creation sequence is exhausted.");
         return new EntityId2D(_rangeStart + Position++);
-    }
-
-    public void Restore(int position)
-    {
-        ArgGuard.InRange(position, 0, _capacity);
-        Position = position;
     }
 }

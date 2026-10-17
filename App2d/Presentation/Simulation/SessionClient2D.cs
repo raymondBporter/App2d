@@ -6,9 +6,8 @@ using App2d.Core.Validation;
 namespace App2d.Presentation.Simulation;
 
 /// <summary>
-/// Value-only endpoint for one player with separate sent-input and received-state clocks.
-/// Frames must arrive contiguous and in order; a transport that cannot guarantee that
-/// re-attaches from a snapshot instead of forcing frames through here.
+/// Holds one player's presentation observation and creates local input commands.
+/// Applies consecutive session frames once so old events cannot repeat.
 /// </summary>
 public sealed class SessionClient2D
 {

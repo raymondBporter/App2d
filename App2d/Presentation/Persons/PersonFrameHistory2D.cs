@@ -1,6 +1,6 @@
 namespace App2d.Presentation.Persons;
 
-/// <summary>A short presentation history for sampling animation across clip boundaries without rewinding the actor's position.</summary>
+/// <summary>Recent animation samples used by hitstop to hold weapon poses across clip transitions.</summary>
 public sealed class PersonFrameHistory2D
 {
     private readonly List<(double Time, PersonFrame Frame)> _frames = [];

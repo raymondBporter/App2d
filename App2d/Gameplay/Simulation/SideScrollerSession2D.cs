@@ -15,7 +15,7 @@ using System.Numerics;
 namespace App2d.Gameplay.Simulation;
 
 /// <summary>
-/// Authoritative session. Owns stepping and progression for its participants, but has
+/// Fixed-step gameplay session. Owns stepping and progression for its participants, but has
 /// no input devices, renderer, audio playback or save-file access. It is the one place
 /// the local game advances gameplay.
 /// </summary>
@@ -109,8 +109,8 @@ public sealed class SideScrollerSession2D : IDisposable
     }
 
     /// <summary>
-    /// Checks one input against the current tick without changing state. A transport
-    /// should call this and drop rejected inputs; <see cref="Advance"/> throws on them.
+    /// Checks one input against the current tick without changing state.
+    /// <see cref="Advance"/> throws when an input fails validation.
     /// </summary>
     public bool TryValidateInput(PlayerInput2D input, out InputRejection2D rejection)
     {
@@ -125,8 +125,7 @@ public sealed class SideScrollerSession2D : IDisposable
 
     /// <summary>
     /// Advances exactly one fixed tick. Each input applies to its player for this tick;
-    /// a player without an input this tick repeats its previous command, so a missing
-    /// packet degrades to "hold what you were doing" rather than stalling the session.
+    /// a player without a new input this tick continues its previous command.
     /// </summary>
     public SessionFrame2D Advance(params ReadOnlySpan<PlayerInput2D> inputs)
     {
