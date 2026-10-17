@@ -81,10 +81,7 @@ public sealed class BladeSwoosh
     /// quarter turn in its first recorded step has no earlier step to follow, so without this it takes the shorter way
     /// round, which can be underneath instead of over the top. Mirror it with the actor's facing.
     /// </summary>
-    public int Sweep
-    {
-        get; set;
-    }
+    public int Sweep { get; set; }
     public bool IsVisible => _history.Count > 1 && (_swinging || _now < _end + Style.ClearSeconds);
 
     public void Reset()

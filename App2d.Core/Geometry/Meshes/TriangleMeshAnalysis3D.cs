@@ -15,14 +15,8 @@ public readonly record struct IndexedEdge3D
         B = Math.Max(first, second);
     }
 
-    public int A
-    {
-        get;
-    }
-    public int B
-    {
-        get;
-    }
+    public int A { get; }
+    public int B { get; }
 }
 
 /// <summary>Face normals and edge adjacency for an indexed 3D triangle mesh.</summary>

@@ -6,10 +6,7 @@ namespace App2d.Noodle;
 
 internal static class AuthoredClips2D
 {
-    public static PoseClip2D Idle
-    {
-        get;
-    } = new(
+    public static PoseClip2D Idle { get; } = new(
         "authored idle",
         loops: true,
         new(0f, RigidPose2D.Neutral),
@@ -21,10 +18,7 @@ internal static class AuthoredClips2D
         }),
         new(1.8f, RigidPose2D.Neutral));
 
-    public static PoseClip2D SwordAttack
-    {
-        get;
-    } = new(
+    public static PoseClip2D SwordAttack { get; } = new(
         "IK-authored sword attack",
         loops: false,
         new(0f, RigidPose2D.Neutral),
@@ -51,10 +45,7 @@ internal static class AuthoredClips2D
         }),
         new(0.72f, RigidPose2D.Neutral));
 
-    public static PoseClip2D Hit
-    {
-        get;
-    } = new(
+    public static PoseClip2D Hit { get; } = new(
         "IK-authored hit reaction",
         loops: false,
         new(0f, RigidPose2D.Neutral),
@@ -87,10 +78,7 @@ internal sealed class ProceduralLocomotion2D
     private float _idleTime;
     private bool _initialized;
 
-    public float HipBob
-    {
-        get; private set;
-    }
+    public float HipBob { get; private set; }
     public bool LeftFootPlanted => !_left.Swinging;
     public bool RightFootPlanted => !_right.Swinging;
 

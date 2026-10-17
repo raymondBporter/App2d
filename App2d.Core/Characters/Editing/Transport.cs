@@ -19,10 +19,7 @@ public sealed class Transport
         get => (float)_clock.Speed; set => _clock.Speed = value;
     }
     /// <summary>Optional editor preview behavior; null uses the clip's loop setting.</summary>
-    public PlaybackEndMode? EndModeOverride
-    {
-        get; set;
-    }
+    public PlaybackEndMode? EndModeOverride { get; set; }
 
     public PlaybackEndMode EndMode(MotionClip clip) => EndModeOverride ?? (clip.Loop ? PlaybackEndMode.Loop : PlaybackEndMode.Hold);
     private void Configure(MotionClip clip) => _clock.Configure(clip.Duration, EndMode(clip));

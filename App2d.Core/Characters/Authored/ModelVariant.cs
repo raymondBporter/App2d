@@ -6,39 +6,15 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>A part value a variant replaces. Null keeps the base value, which then follows base edits.</summary>
 public sealed record PartOverride
 {
-    public float? ScaleX
-    {
-        get; set;
-    }
-    public float? ScaleY
-    {
-        get; set;
-    }
-    public float? OffsetX
-    {
-        get; set;
-    }
-    public float? OffsetY
-    {
-        get; set;
-    }
-    public RenderMaterialDefinition2D? Material
-    {
-        get; set;
-    }
+    public float? ScaleX { get; set; }
+    public float? ScaleY { get; set; }
+    public float? OffsetX { get; set; }
+    public float? OffsetY { get; set; }
+    public RenderMaterialDefinition2D? Material { get; set; }
     /// <summary>Default expression; "none" removes the face.</summary>
-    public string? Face
-    {
-        get; set;
-    }
-    public float? FaceX
-    {
-        get; set;
-    }
-    public bool? Hidden
-    {
-        get; set;
-    }
+    public string? Face { get; set; }
+    public float? FaceX { get; set; }
+    public bool? Hidden { get; set; }
     [JsonIgnore]
     public bool IsEmpty => ScaleX is null && ScaleY is null && OffsetX is null && OffsetY is null &&
         Material?.Asset is null && Material?.Paint is null && Material?.Fill is null && Material?.StrokeWidth is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&

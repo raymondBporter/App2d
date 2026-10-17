@@ -78,18 +78,12 @@ public sealed record PersonBuild
              Humanoid.LeftFoot, Humanoid.LeftHip, Humanoid.LeftKnee, Humanoid.LeftShoulder, Humanoid.LeftElbow, Humanoid.LeftHand,
              Humanoid.RightFoot, Humanoid.RightHip, Humanoid.RightKnee, Humanoid.RightShoulder, Humanoid.RightElbow, Humanoid.RightHand];
         public string Id => RuleId;
-        public IReadOnlyList<BuildValue> Values
-        {
-            get;
-        } =
+        public IReadOnlyList<BuildValue> Values { get; } =
         [
             new("legs", "Leg length", Range.Soft(.7f, 1.4f)), new("torso", "Torso length", Range.Soft(.7f, 1.4f)),
             new("arms", "Arm length", Range.Soft(.7f, 1.4f)), new("width", "Width", Range.Soft(.6f, 1.6f)), new("head", "Head size", Range.Soft(.7f, 1.4f)),
         ];
-        public IReadOnlyList<BuildPreset> Presets
-        {
-            get;
-        } =
+        public IReadOnlyList<BuildPreset> Presets { get; } =
         [
             new("standard", "Standard", new PersonBuild().Values()),
             new("tall-thin", "Tall / thin", TallThin.Values()),

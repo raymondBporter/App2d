@@ -10,10 +10,7 @@ public sealed record PuppetContactResult(string End, Vector3 Target, float Error
 public sealed class PuppetPose
 {
     public Dictionary<string, Vector3> Points { get; } = [];
-    public Vector3 Position
-    {
-        get; set;
-    }
+    public Vector3 Position { get; set; }
     public List<PuppetContactResult> Contacts { get; } = [];
     public Vector3 World(string id) => Points[id] + Position;
 

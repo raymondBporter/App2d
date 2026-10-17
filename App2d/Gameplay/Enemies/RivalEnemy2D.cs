@@ -69,10 +69,7 @@ public sealed class RivalEnemy2D : IEnemyActor2D
         Person.Died += () => _events.Add(new RivalDied2D(Person.Id, Person.Position));
     }
 
-    public Person2D Person
-    {
-        get;
-    }
+    public Person2D Person { get; }
     public ICombatant2D Combatant => Person;
 
     public void SetSimulationEnabled(bool isEnabled)

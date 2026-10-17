@@ -138,14 +138,8 @@ public sealed class WeaponSessionTests
         public TraversalMetrics2D Metrics { get; } = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         public PhysicsWorld2D Physics { get; } = new() { Gravity = Vector2.Zero };
         public CombatantRegistry2D Registry { get; } = new();
-        public Person2D Player
-        {
-            get;
-        }
-        public SideScrollerSession2D Session
-        {
-            get;
-        }
+        public Person2D Player { get; }
+        public SideScrollerSession2D Session { get; }
 
         public Fixture()
         {

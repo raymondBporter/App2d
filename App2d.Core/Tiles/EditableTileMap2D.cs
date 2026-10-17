@@ -42,24 +42,15 @@ public sealed class EditableTileMap2D : IChangingTileMap2D
     public int Width => _tiles.Width;
     public int Height => _tiles.Height;
     public float TileSize => _tiles.CellSize.Width;
-    public int ChunkSize
-    {
-        get;
-    }
+    public int ChunkSize { get; }
     public Vector2 Origin => _tiles.Origin;
     public int ChunkColumns => ChunkGridSize.Width;
     public int ChunkRows => ChunkGridSize.Height;
     public Rect2D WorldBounds => _tiles.WorldBounds;
     public GridSize2D GridSize => _tiles.Size;
     public GridGeometry2D GridGeometry => _tiles.Geometry;
-    public GridSize2D ChunkGridSize
-    {
-        get;
-    }
-    public GridGeometry2D ChunkGridGeometry
-    {
-        get;
-    }
+    public GridSize2D ChunkGridSize { get; }
+    public GridGeometry2D ChunkGridGeometry { get; }
     public IReadOnlyList<string> TilesetIds => _tilesetIds;
 
     public TileKind2D GetTileKind(int x, int y) => GridSize.Contains(x, y)

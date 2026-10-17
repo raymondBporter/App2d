@@ -15,37 +15,16 @@ public enum Workspace
 /// <summary>What the author has picked. Session state, never saved into assets.</summary>
 public sealed class Selection
 {
-    public string? Control
-    {
-        get; set;
-    }
-    public string? Part
-    {
-        get; set;
-    }
-    public string? Chain
-    {
-        get; set;
-    }
+    public string? Control { get; set; }
+    public string? Part { get; set; }
+    public string? Chain { get; set; }
     /// <summary>Animation workspace: the appearance slot being keyed.</summary>
-    public string? Slot
-    {
-        get; set;
-    }
+    public string? Slot { get; set; }
     /// <summary>A selected key time on the timeline.</summary>
-    public float? Key
-    {
-        get; set;
-    }
+    public float? Key { get; set; }
     /// <summary>Entity workspace: the action, and the hit window inside it, being edited.</summary>
-    public string? Action
-    {
-        get; set;
-    }
-    public string? Hit
-    {
-        get; set;
-    }
+    public string? Action { get; set; }
+    public string? Hit { get; set; }
     /// <summary>Selects one workspace target and clears the previous selection.</summary>
     public void Select(string? control = null, string? part = null, string? chain = null, string? slot = null)
     {
@@ -99,61 +78,31 @@ public sealed class EditorSession
         }
     }
 
-    public AuthoringWorkspace Assets
-    {
-        get;
-    }
+    public AuthoringWorkspace Assets { get; }
     /// <summary>Read-only imported motion, the source for explicit conversions.</summary>
-    public SourceLibraries Sources
-    {
-        get;
-    }
+    public SourceLibraries Sources { get; }
     public Transport Transport { get; } = new();
     public Selection Selection { get; } = new();
-    public Workspace Mode
-    {
-        get; private set;
-    }
+    public Workspace Mode { get; private set; }
     /// <summary>The model or variant shown; edited in Model, used as the preview build in Animate.</summary>
-    public string? SubjectId
-    {
-        get; private set;
-    }
+    public string? SubjectId { get; private set; }
     /// <summary>The clip animated in Animate and previewed in Model.</summary>
-    public string? ClipId
-    {
-        get; private set;
-    }
+    public string? ClipId { get; private set; }
     /// <summary>The entity edited in Entity.</summary>
-    public string? EntityId
-    {
-        get; private set;
-    }
+    public string? EntityId { get; private set; }
     /// <summary>Entity workspace: the locomotion role previewed, and under a masked action the role it layers over.</summary>
     public string PreviewRole { get; private set; } = EntityControllers.Idle;
     /// <summary>Entity workspace: the action previewed, or null to preview <see cref="PreviewRole"/>.</summary>
-    public string? PreviewAction
-    {
-        get; private set;
-    }
+    public string? PreviewAction { get; private set; }
     /// <summary>Further models or variants drawn beside the subject at the same world scale and phase.</summary>
     public List<string> Compare { get; } = [];
     public bool AutoKey { get; set; } = true;
     /// <summary>Animate-only equipment preview; never changes an entity's loadout.</summary>
     public string PreviewProp { get; set; } = "";
     public string PreviewSocket { get; set; } = "";
-    public bool PreviewWeapon
-    {
-        get; set;
-    }
-    public bool EditWeapon
-    {
-        get; set;
-    }
-    public string? Skin
-    {
-        get; set;
-    }
+    public bool PreviewWeapon { get; set; }
+    public bool EditWeapon { get; set; }
+    public string? Skin { get; set; }
     public AssetDocument<PropAsset>? AppearanceDocument => Assets.Prop(PreviewProp);
 
     public (PropAsset Prop, ModelSocket Socket)? WeaponFor(ResolvedModel model)
@@ -168,24 +117,12 @@ public sealed class EditorSession
     }
     public bool MoveChildren { get; set; } = true;
     /// <summary>Model workspace: control handles and IK setup instead of drawing-part selection. Shows rest.</summary>
-    public bool EditRig
-    {
-        get; set;
-    }
-    public bool ShowRest
-    {
-        get; set;
-    }
+    public bool EditRig { get; set; }
+    public bool ShowRest { get; set; }
     /// <summary>A gameplay expression override, as the game would supply it.</summary>
-    public string? Expression
-    {
-        get; set;
-    }
+    public string? Expression { get; set; }
     public string Message { get; private set; } = "";
-    public bool MessageIsError
-    {
-        get; private set;
-    }
+    public bool MessageIsError { get; private set; }
 
     public AssetDocument? ActiveDocument => Mode switch { Workspace.Model => Assets.Find(SubjectId), Workspace.Animate => Assets.Find(ClipId), Workspace.Appearance => AppearanceDocument, _ => Assets.Find(EntityId) };
     public AssetDocument<EntityAsset>? EntityDocument => Assets.Entity(EntityId);

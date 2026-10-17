@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
 using App2d.Core.Shapes;
 using System.Numerics;
 using System.Text.Json.Nodes;
@@ -39,7 +40,7 @@ public sealed class NativeRigTests
                 Frame = bone,
                 ScaleX = .16f,
                 ScaleY = .2f,
-                Geometry = new Rectangle2D { Min = new(-.5f, -.5f), Max = new(.5f, .5f) },
+                Geometry = new Rectangle2D { Min = new(-.5f, -.5f), Max = new(.5f, .5f) }.Validated(),
                 Material = new()
                 {
                     Texture = "images/" + id + ".png"
@@ -140,8 +141,8 @@ public sealed class NativeRigTests
         Assert.Equal(6, drawing.Mesh.Count);
         foreach (var vertex in drawing.Mesh.Vertices)
         {
-            Assert.InRange((int)vertex.Color.R, 127, 128);
-            Assert.InRange((int)vertex.Color.G, 127, 128);
+            Assert.InRange(vertex.Color.R, 127, 128);
+            Assert.InRange(vertex.Color.G, 127, 128);
             Assert.Equal(0, vertex.Color.B);
             Assert.Equal(51, vertex.Color.A);
         }

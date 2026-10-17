@@ -18,22 +18,10 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         End = end;
     }
 
-    public Vector2 Start
-    {
-        get; init;
-    }
-    public Vector2 Control1
-    {
-        get; init;
-    }
-    public Vector2 Control2
-    {
-        get; init;
-    }
-    public Vector2 End
-    {
-        get; init;
-    }
+    public Vector2 Start { get; init; }
+    public Vector2 Control1 { get; init; }
+    public Vector2 Control2 { get; init; }
+    public Vector2 End { get; init; }
 
     /// <summary>Creates a cubic from endpoints and tangents with respect to its normalized parameter.</summary>
     public static CubicBezier2D FromHermite(Vector2 start, Vector2 end, Vector2 startTangent, Vector2 endTangent) =>
@@ -98,7 +86,7 @@ public readonly partial record struct CubicBezier2D : ICurve2D
         ArgGuard.Finite(x);
         ArgGuard.ThrowIfTooShort<double>(parameters, 3);
         var start = (double)Start.X;
-        var first = (double)Control1.X - start;
+        var first = Control1.X - start;
         var second = (double)Control2.X - Control1.X;
         var third = (double)End.X - Control2.X;
         if (start == x && first == 0 && second == 0 && third == 0)

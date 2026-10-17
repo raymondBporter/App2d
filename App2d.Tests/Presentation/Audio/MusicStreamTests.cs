@@ -102,14 +102,8 @@ public sealed class MusicStreamTests
 
     internal sealed class FakeStem(int frames, Func<int, float> sample) : IMusicStem2D
     {
-        public int Position
-        {
-            get; private set;
-        }
-        public int Rewinds
-        {
-            get; private set;
-        }
+        public int Position { get; private set; }
+        public int Rewinds { get; private set; }
         public int Read(float[] buffer, int offset, int count)
         {
             var take = Math.Min(frames - Position, count / 2);

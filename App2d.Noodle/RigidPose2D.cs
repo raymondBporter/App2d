@@ -85,14 +85,8 @@ internal sealed class PoseClip2D
         _frames = frames;
     }
 
-    public string Name
-    {
-        get;
-    }
-    public bool Loops
-    {
-        get;
-    }
+    public string Name { get; }
+    public bool Loops { get; }
     public float Duration => _frames[^1].Time;
     public IReadOnlyList<PoseKeyframe2D> Frames => _frames;
 

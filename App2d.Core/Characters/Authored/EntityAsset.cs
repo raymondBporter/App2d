@@ -110,10 +110,7 @@ public sealed record ControllerConfig
     /// <summary>AI: attack within this horizontal distance.</summary>
     public float Range { get; set; } = 1.5f;
     public float Cooldown { get; set; } = 1;
-    public bool RespectTerrain
-    {
-        get; set;
-    }
+    public bool RespectTerrain { get; set; }
     public float VerticalRange { get; set; } = 2;
     public float RetreatRange { get; set; }
     public float RetreatSeconds { get; set; } = .35f;
@@ -178,10 +175,7 @@ public sealed class EntityAsset
     public string Name { get; set; } = "";
     public string Model { get; set; } = "";
     public string MotionSet { get; set; } = "";
-    public GuardDef? Guard
-    {
-        get; set;
-    }
+    public GuardDef? Guard { get; set; }
     /// <summary>Role assignments that win over the selected motion set.</summary>
     public Dictionary<string, string> Roles { get; set; } = [];
     public ControllerConfig Controller { get; set; } = new();
@@ -447,5 +441,7 @@ public static class EntityControllers
 
     public static IReadOnlyCollection<ControllerSpec> All => Specs.Values;
     public static ControllerSpec Get(string? kind, string field) =>
-        kind is not null && Specs.TryGetValue(kind, out var spec) ? spec : throw new InvalidDataException($"{field}: unknown controller '{kind}' (known: {string.Join(", ", Specs.Keys)}).");
+        kind is not null && Specs.TryGetValue(kind, out var spec)
+        ? spec
+        : throw new InvalidDataException($"{field}: unknown controller '{kind}' (known: {string.Join(", ", Specs.Keys)}).");
 }

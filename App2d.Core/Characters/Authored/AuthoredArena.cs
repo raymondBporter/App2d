@@ -33,48 +33,18 @@ public sealed class AuthoredArena
             Health = entity.Asset.Health;
             Animator.Step(0, position, facing, EntityControllers.Idle, 0, false, []);
         }
-        public int Index
-        {
-            get;
-        }
-        public ResolvedEntity Entity
-        {
-            get;
-        }
-        public EntityAnimator Animator
-        {
-            get;
-        }
+        public int Index { get; }
+        public ResolvedEntity Entity { get; }
+        public EntityAnimator Animator { get; }
         public HitLedger Ledger { get; } = new();
-        public Vector2 Position
-        {
-            get; internal set;
-        }
-        public Vector2 Velocity
-        {
-            get; internal set;
-        }
-        public int Facing
-        {
-            get; internal set;
-        }
-        public int Health
-        {
-            get; internal set;
-        }
+        public Vector2 Position { get; internal set; }
+        public Vector2 Velocity { get; internal set; }
+        public int Facing { get; internal set; }
+        public int Health { get; internal set; }
         public bool Grounded { get; internal set; } = true;
-        public bool Launched
-        {
-            get; internal set;
-        }
-        public float Cooldown
-        {
-            get; internal set;
-        }
-        public float HurtTime
-        {
-            get; internal set;
-        }
+        public bool Launched { get; internal set; }
+        public float Cooldown { get; internal set; }
+        public float HurtTime { get; internal set; }
         public EntityReaction Reaction { get; } = new();
         public bool Alive => Health > 0;
         public ActorPose Pose => Animator.Pose;
@@ -99,10 +69,7 @@ public sealed class AuthoredArena
 
     public List<Actor> Actors { get; } = [];
     public Actor Player => Actors[0];
-    public long Tick
-    {
-        get; private set;
-    }
+    public long Tick { get; private set; }
     public List<ArenaEvent> Events { get; } = [];
     public List<ArenaHit> Hits { get; } = [];
     public List<ArenaBolt> Bolts { get; } = [];

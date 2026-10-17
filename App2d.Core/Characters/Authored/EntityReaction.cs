@@ -10,10 +10,7 @@ public sealed class EntityReaction
 {
     public const float DefaultStaggerSeconds = .3f;
 
-    public float Stagger
-    {
-        get; private set;
-    }
+    public float Stagger { get; private set; }
     public bool Staggered => Stagger > 0;
 
     public void Hit(EntityAnimator animator, int incomingDirection = 0)

@@ -31,10 +31,7 @@ internal sealed class TileEditor2D : IDisposable
     private Vector2 _panAnchorFocus;
     private bool _isPanning;
     private bool _toggleRequested;
-    public bool IsPointerOverUi
-    {
-        get; internal set;
-    }
+    public bool IsPointerOverUi { get; internal set; }
     private Vector2 _lastMouseDevice;
     private int _lastPaintedX;
     private int _lastPaintedY;

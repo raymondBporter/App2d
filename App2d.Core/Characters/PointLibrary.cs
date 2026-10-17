@@ -7,30 +7,12 @@ namespace App2d.Core.Characters;
 /// <summary>Shared motion loaded from editable JSON. Sampling interpolates stored poses without allocating.</summary>
 public sealed class PointLibrary
 {
-    public string Id
-    {
-        get;
-    }
-    public string Label
-    {
-        get;
-    }
-    public string Anatomy
-    {
-        get;
-    }
-    public IReadOnlyList<string> PointNames
-    {
-        get;
-    }
-    public IReadOnlyDictionary<string, PointClip> Clips
-    {
-        get;
-    }
-    public JsonElement Drawing
-    {
-        get;
-    }
+    public string Id { get; }
+    public string Label { get; }
+    public string Anatomy { get; }
+    public IReadOnlyList<string> PointNames { get; }
+    public IReadOnlyDictionary<string, PointClip> Clips { get; }
+    public JsonElement Drawing { get; }
     public static PointLibrary Load(string manifestPath) => new(
         File.ReadAllText(manifestPath), id => File.ReadAllText(Path.Combine(Path.GetDirectoryName(manifestPath)!, "points", id + ".json")));
 
@@ -78,51 +60,18 @@ public sealed class PointClip
 {
     private readonly Vector3[] _points;
     private readonly double[] _times;
-    public string Id
-    {
-        get;
-    }
-    public string Label
-    {
-        get;
-    }
-    public string Category
-    {
-        get;
-    }
-    public string Source
-    {
-        get;
-    }
-    public bool Loop
-    {
-        get;
-    }
-    public bool Placeholder
-    {
-        get;
-    }
-    public double Duration
-    {
-        get;
-    }
-    public int PointCount
-    {
-        get;
-    }
+    public string Id { get; }
+    public string Label { get; }
+    public string Category { get; }
+    public string Source { get; }
+    public bool Loop { get; }
+    public bool Placeholder { get; }
+    public double Duration { get; }
+    public int PointCount { get; }
     public int SampleCount => _times.Length;
-    public IReadOnlyList<double> Times
-    {
-        get;
-    }
-    public IReadOnlyList<string> Warnings
-    {
-        get;
-    }
-    public JsonElement Metadata
-    {
-        get;
-    }
+    public IReadOnlyList<double> Times { get; }
+    public IReadOnlyList<string> Warnings { get; }
+    public JsonElement Metadata { get; }
 
     internal PointClip(string id, JsonElement spec, IReadOnlyList<string> pointNames, JsonElement samples)
     {

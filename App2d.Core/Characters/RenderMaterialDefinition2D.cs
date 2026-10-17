@@ -8,25 +8,13 @@ public sealed record RenderMaterialDefinition2D
     /// <summary>Surface artwork in normalized shape coordinates; null inherits, an empty list clears it.</summary>
     public List<PartPaint>? Paint { get; init; }
     /// <summary>Solid fill for a shape, or the center color of a thick curve. A null curve fill uses the asset's ink.</summary>
-    public string? Fill
-    {
-        get; init;
-    }
+    public string? Fill { get; init; }
     /// <summary>Curve thickness in world units. Null inherits the owning asset's line width.</summary>
     public float? StrokeWidth { get; init; }
-    public RenderOutlineDefinition2D? Outline
-    {
-        get; init;
-    }
+    public RenderOutlineDefinition2D? Outline { get; init; }
     /// <summary>Image path relative to the authored asset root.</summary>
-    public string? Texture
-    {
-        get; init;
-    }
-    public string? Tint
-    {
-        get; init;
-    }
+    public string? Texture { get; init; }
+    public string? Tint { get; init; }
 
     /// <summary>Apply supplied appearance fields; selecting a different named material replaces the surface.</summary>
     public RenderMaterialDefinition2D WithOverride(RenderMaterialDefinition2D? value) => value is null ? this
@@ -89,14 +77,8 @@ public sealed record RenderMaterialDefinition2D
 /// <summary>World-unit outline style. Null color or width inherits the owning model or prop's ink setting.</summary>
 public sealed record RenderOutlineDefinition2D
 {
-    public string? Color
-    {
-        get; init;
-    }
-    public float? Width
-    {
-        get; init;
-    }
+    public string? Color { get; init; }
+    public float? Width { get; init; }
 
     public void Validate(string field)
     {

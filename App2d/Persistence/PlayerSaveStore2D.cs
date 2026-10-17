@@ -21,10 +21,7 @@ public sealed class PlayerSaveStore2D
         Path = System.IO.Path.GetFullPath(path);
     }
 
-    public string Path
-    {
-        get;
-    }
+    public string Path { get; }
 
     public static PlayerSaveStore2D CreateDefault() => new(UserDataLocations.ForCurrentUser().PlayerSave);
 

@@ -210,10 +210,7 @@ public sealed class Rect2DBoundsTests
     private sealed class CountedConvex : IConvexShape2D
     {
         public string Kind => "counted-convex";
-        public int SupportCalls
-        {
-            get; private set;
-        }
+        public int SupportCalls { get; private set; }
         public float Area => 24;
         public bool ContainsPoint(Vector2 point) => Containment2D.Rectangle(point, new(-2, -1), new(4, 3));
         public Vector2 GetSupportPoint(Vector2 direction)

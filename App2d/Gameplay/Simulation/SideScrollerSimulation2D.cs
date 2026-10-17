@@ -38,46 +38,16 @@ public sealed class SideScrollerSimulation2D : IDisposable
         Session = session;
     }
 
-    public SideScrollerSessionDefinition2D Definition
-    {
-        get;
-    }
-    public EntityIdAllocator2D Ids
-    {
-        get;
-    }
-    public CollisionSystem2D Collision
-    {
-        get;
-    }
-    public PhysicsWorld2D Physics
-    {
-        get;
-    }
-    public CombatantRegistry2D Combatants
-    {
-        get;
-    }
-    public CombatSystem2D Combat
-    {
-        get;
-    }
-    public SideScrollerLevel2D Level
-    {
-        get;
-    }
-    public Person2D Player
-    {
-        get;
-    }
-    public PersonArsenal2D Arsenal
-    {
-        get;
-    }
-    public SideScrollerSession2D Session
-    {
-        get;
-    }
+    public SideScrollerSessionDefinition2D Definition { get; }
+    public EntityIdAllocator2D Ids { get; }
+    public CollisionSystem2D Collision { get; }
+    public PhysicsWorld2D Physics { get; }
+    public CombatantRegistry2D Combatants { get; }
+    public CombatSystem2D Combat { get; }
+    public SideScrollerLevel2D Level { get; }
+    public Person2D Player { get; }
+    public PersonArsenal2D Arsenal { get; }
+    public SideScrollerSession2D Session { get; }
 
     public static SideScrollerSimulation2D Create(SideScrollerSessionDefinition2D definition)
     {

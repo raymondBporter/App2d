@@ -85,7 +85,7 @@ public sealed class EditorUiTests
         {
             var characters = ImGui.GetIO().InputQueueCharacters;
             Assert.Equal(1, characters.Size);
-            Assert.Equal((ushort)'é', characters[0]);
+            Assert.Equal('é', characters[0]);
         }, platform);
         second.Draw(() => Assert.Equal(0, ImGui.GetIO().InputQueueCharacters.Size));
     }

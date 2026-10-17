@@ -25,16 +25,10 @@ public readonly partial record struct Rectangle2D : IConvexShape2D, IRect2D
     }
 
     /// <inheritdoc/>
-    public Vector2 Min
-    {
-        get; init;
-    }
+    public Vector2 Min { get; init; }
 
     /// <inheritdoc/>
-    public Vector2 Max
-    {
-        get; init;
-    }
+    public Vector2 Max { get; init; }
 
     /// <inheritdoc/>
     public float Area => Area2D.Rectangle(Min, Max);

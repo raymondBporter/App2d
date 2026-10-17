@@ -23,18 +23,9 @@ public sealed class CurveMotion2D : IKinematicMotion2D
             "A repeating motion must return to its starting position.", nameof(progress));
     }
 
-    public ICurve2D Curve
-    {
-        get;
-    }
-    public IProgressMap Progress
-    {
-        get;
-    }
-    public double PeriodSeconds
-    {
-        get;
-    }
+    public ICurve2D Curve { get; }
+    public IProgressMap Progress { get; }
+    public double PeriodSeconds { get; }
 
     public Vector2 Position(double seconds) => Curve.Evaluate(CheckedProgress(Progress.Sample(Phase(seconds))));
 

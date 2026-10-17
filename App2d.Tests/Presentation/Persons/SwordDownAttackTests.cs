@@ -259,46 +259,16 @@ public sealed class SwordDownAttackTests
         private readonly TextureCache2D _textures = new(TestAssetPath.Root);
         private readonly TraversalMetrics2D _metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         private readonly PersonPresentation2D _presentation;
-        public PhysicsWorld2D Physics
-        {
-            get;
-        }
-        public Person2D Person
-        {
-            get;
-        }
-        public PersonArsenal2D Arsenal
-        {
-            get;
-        }
-        public SpriteShader2D Shader
-        {
-            get;
-        }
-        public EditableTileMap2D TileMap
-        {
-            get;
-        }
-        public SideScrollerLevel2D Level
-        {
-            get;
-        }
-        public ContactDamageSystem2D ContactDamage
-        {
-            get;
-        }
-        public int DownAttacks
-        {
-            get; private set;
-        }
-        public int NormalAttacks
-        {
-            get; private set;
-        }
-        public float AttackDuration
-        {
-            get; private set;
-        }
+        public PhysicsWorld2D Physics { get; }
+        public Person2D Person { get; }
+        public PersonArsenal2D Arsenal { get; }
+        public SpriteShader2D Shader { get; }
+        public EditableTileMap2D TileMap { get; }
+        public SideScrollerLevel2D Level { get; }
+        public ContactDamageSystem2D ContactDamage { get; }
+        public int DownAttacks { get; private set; }
+        public int NormalAttacks { get; private set; }
+        public float AttackDuration { get; private set; }
 
         public Fixture(bool grounded = false)
         {

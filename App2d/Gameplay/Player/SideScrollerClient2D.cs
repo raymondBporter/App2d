@@ -81,18 +81,9 @@ internal sealed class SideScrollerClient2D : IDisposable
     public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);
     public void DrawGrass(Renderer2D renderer, VegetationLayer2D layer) =>
         _world.DrawGrass(renderer, _camera.VisibleWorldBounds, layer);
-    public bool ShowTraversalDebug
-    {
-        get; set;
-    }
-    public BallisticsDebug2D Ballistics
-    {
-        get;
-    }
-    public SpatialSoundEffectSink2D WorldSounds
-    {
-        get;
-    }
+    public bool ShowTraversalDebug { get; set; }
+    public BallisticsDebug2D Ballistics { get; }
+    public SpatialSoundEffectSink2D WorldSounds { get; }
     public event Action<CheckpointActivated2D>? CheckpointActivated;
 
     public PlayerInput2D CaptureInput(InputState input)

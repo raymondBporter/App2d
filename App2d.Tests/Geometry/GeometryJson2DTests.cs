@@ -48,12 +48,12 @@ public sealed class GeometryJson2DTests
     {
         IGeometryValue2D[] definitions =
         [
-            new Circle2D { Center = new(1, 2), Radius = 3 },
+            new Circle2D { Center = new(1, 2), Radius = 3 }.Validated(),
             Rectangle2D.Builder.FromSize(2, 3),
             AxisAlignedRectangle2D.Builder.FromSize(2, 3),
-            new SimplePolygon2D { Vertices = [new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)] },
-            new LineSegmentCurve2D { Start = new(1, 2), End = new(3, 4) },
-            new PolylineCurve2D { Points = [new(0, 0), new(1, 2), new(2, 0)] }
+            new SimplePolygon2D { Vertices = [new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)] }.Validated(),
+            new LineSegmentCurve2D { Start = new(1, 2), End = new(3, 4) }.Validated(),
+            new PolylineCurve2D { Points = [new(0, 0), new(1, 2), new(2, 0)] }.Validated()
         ];
 
         foreach (var definition in definitions)
@@ -99,8 +99,8 @@ public sealed class GeometryJson2DTests
     [Fact]
     public void ExistingShapeAndCurveJsonCanBeReadThroughTheSharedRoot()
     {
-        var shape = new Capsule2D { Start = new(0, 0), End = new(1, 0), Radius = .5f };
-        var curve = new Arc2D { Center = new(0, 0), Radius = 2, StartAngleRadians = 0, SweepAngleRadians = 1 };
+        var shape = new Capsule2D { Start = new(0, 0), End = new(1, 0), Radius = .5f }.Validated();
+        var curve = new Arc2D { Center = new(0, 0), Radius = 2, StartAngleRadians = 0, SweepAngleRadians = 1 }.Validated();
 
         Assert.IsType<Capsule2D>(GeometryJson2D.FromJson(shape.ToJson()));
         Assert.IsType<Arc2D>(GeometryJson2D.FromJson(curve.ToJson()));
@@ -132,8 +132,8 @@ public sealed class GeometryJson2DTests
             Name = "Test prop",
             Shapes =
             [
-                new PropShape { Geometry = new PolylineCurve2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }, Depths = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },
-                new PropShape { Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }, Material = new() { Fill = "#c8b18a", Outline = new() } }
+                new PropShape { Geometry = new PolylineCurve2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }.Validated(), Depths = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },
+                new PropShape { Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }.Validated(), Material = new() { Fill = "#c8b18a", Outline = new() } }
             ]
         };
         var typed = prop.ToJson();

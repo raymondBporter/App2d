@@ -13,10 +13,7 @@ public sealed class MouseState2D
     private Vector2 _clientToDeviceScale = Vector2.One;
 
     public Vector2 PositionDevice => _clientPosition * _clientToDeviceScale;
-    public float WheelDelta
-    {
-        get; private set;
-    }
+    public float WheelDelta { get; private set; }
     public bool IsDown(MouseButtons button) => _down.Contains(button);
     public bool WasPressed(MouseButtons button) => _pressed.Contains(button);
     public bool WasReleased(MouseButtons button) => _released.Contains(button);

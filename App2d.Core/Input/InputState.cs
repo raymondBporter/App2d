@@ -8,21 +8,12 @@ public sealed class InputState
     private readonly XboxControllerInput2D _gamepadInput = new();
     private bool _isSuppressed;
     private bool _isWindowActive = true;
-    public bool IsKeyboardCapturedByUi
-    {
-        get; private set;
-    }
-    public bool IsMouseCapturedByUi
-    {
-        get; private set;
-    }
+    public bool IsKeyboardCapturedByUi { get; private set; }
+    public bool IsMouseCapturedByUi { get; private set; }
 
     public KeyboardState2D Keyboard { get; } = new();
     public MouseState2D Mouse { get; } = new();
-    public GamepadState2D Gamepad
-    {
-        get; private set;
-    }
+    public GamepadState2D Gamepad { get; private set; }
     public bool IsSuppressed => _isSuppressed || !_isWindowActive;
 
     internal void Attach(Form window, Control surface)

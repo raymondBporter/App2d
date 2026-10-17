@@ -17,20 +17,11 @@ namespace App2d.Core.Characters.Authored;
 public sealed record PropShape
 {
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IGeometryValue2D? Geometry
-    {
-        get; set;
-    }
+    public IGeometryValue2D? Geometry { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public RenderMaterialDefinition2D? Material
-    {
-        get; set;
-    }
+    public RenderMaterialDefinition2D? Material { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<float>? Depths
-    {
-        get; set;
-    }
+    public List<float>? Depths { get; set; }
     /// <summary>Drawing vertices derived from Geometry and Depths; excluded from authored JSON.</summary>
     [JsonIgnore] public List<PuppetPoint> Points { get; set; } = [];
     [JsonIgnore]
@@ -90,22 +81,13 @@ public sealed record PropSolid
     public List<PuppetPoint> Vertices { get; set; } = [];
     public List<int> Triangles { get; set; } = [];
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public RenderMaterialDefinition2D? Material
-    {
-        get; set;
-    }
+    public RenderMaterialDefinition2D? Material { get; set; }
     [JsonIgnore]
     public RenderMaterialDefinition2D RenderMaterial => Material
         ?? throw new InvalidDataException("A prop solid needs a material.");
     /// <summary>Editable source for an extruded cutout. The indexed runtime mesh is rebuilt from it when loaded.</summary>
-    public List<PuppetPoint>? Outline
-    {
-        get; set;
-    }
-    public float Thickness
-    {
-        get; set;
-    }
+    public List<PuppetPoint>? Outline { get; set; }
+    public float Thickness { get; set; }
 }
 
 /// <summary>
@@ -123,30 +105,15 @@ public sealed class PropAsset
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
     public string Usage { get; set; } = "prop";
-    public string? Attachment
-    {
-        get; set;
-    }
-    public string? BackView
-    {
-        get; set;
-    }
+    public string? Attachment { get; set; }
+    public string? BackView { get; set; }
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .035f;
     public float Scale { get; set; } = 1;
-    public PuppetPoint Grip
-    {
-        get; set;
-    }
+    public PuppetPoint Grip { get; set; }
     public PuppetPoint Tip { get; set; } = new(1, 0);
-    public PuppetPoint? SecondGrip
-    {
-        get; set;
-    }
-    public PuppetPoint? Muzzle
-    {
-        get; set;
-    }
+    public PuppetPoint? SecondGrip { get; set; }
+    public PuppetPoint? Muzzle { get; set; }
     public List<PropShape> Shapes { get; set; } = [];
     public List<PropSolid> Solids { get; set; } = [];
 

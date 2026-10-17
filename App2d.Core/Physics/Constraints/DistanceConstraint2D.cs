@@ -30,14 +30,8 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         Limits = limits;
     }
 
-    public PhysicsBody2D First
-    {
-        get;
-    }
-    public PhysicsBody2D Second
-    {
-        get;
-    }
+    public PhysicsBody2D First { get; }
+    public PhysicsBody2D Second { get; }
     public bool IsEnabled { get; set; } = true;
     public ConstraintLimit1D Limits
     {

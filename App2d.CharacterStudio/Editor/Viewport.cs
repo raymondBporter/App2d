@@ -62,10 +62,7 @@ internal sealed class Viewport(GraphicsDevice device, ImGuiHost gui, PointCharac
     private string? _fittedFor;
 
     public float Zoom { get; set; } = 1;
-    public Vector2 Pan
-    {
-        get; set;
-    }
+    public Vector2 Pan { get; set; }
     /// <summary>Keep the primary subject's travel centred while it moves.</summary>
     public bool Follow { get; set; } = true;
     /// <summary>Also show the scene at game size: enlarged authoring views alone are a poor readability test.</summary>

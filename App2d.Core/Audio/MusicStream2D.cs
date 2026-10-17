@@ -17,14 +17,8 @@ internal sealed class MusicStream2D : IDisposable
     private long _pendingAt = -1;
     private long _absoluteFrame;
     private int _rampRemaining;
-    public string? RequestedMood
-    {
-        get; private set;
-    }
-    public long FramePosition
-    {
-        get; private set;
-    }
+    public string? RequestedMood { get; private set; }
+    public long FramePosition { get; private set; }
 
     public MusicStream2D(MusicCue2D cue) : this(cue, Open(cue)) { }
 

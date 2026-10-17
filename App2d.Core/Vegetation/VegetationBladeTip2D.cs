@@ -12,10 +12,7 @@ public sealed class VegetationBladeTip2D
 {
     private readonly VegetationTipPolygon2D[] _polygons;
     private readonly Rect2D _localBounds;
-    public Vector2 ReleasePosition
-    {
-        get;
-    }
+    public Vector2 ReleasePosition { get; }
 
     internal VegetationBladeTip2D(IReadOnlyList<VegetationTipPolygon2D> polygons)
     {

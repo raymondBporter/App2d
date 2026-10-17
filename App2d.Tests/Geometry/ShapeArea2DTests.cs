@@ -584,10 +584,7 @@ public sealed class ShapeArea2DTests
     {
         public string Kind => "CountingCircle";
         public float Area => MathF.PI;
-        public int SupportReads
-        {
-            get; private set;
-        }
+        public int SupportReads { get; private set; }
         public bool ContainsPoint(Vector2 point) => point.LengthSquared() <= 1;
         public Vector2 GetSupportPoint(Vector2 direction)
         {

@@ -78,40 +78,16 @@ public sealed class Person2D : ICombatant2D
         };
     }
 
-    public EntityId2D Id
-    {
-        get;
-    }
-    public SpatialObject2D WorldObject
-    {
-        get;
-    }
-    public PhysicsBody2D Body
-    {
-        get;
-    }
-    public Health2D Health
-    {
-        get;
-    }
-    public CombatFaction2D Faction
-    {
-        get;
-    }
+    public EntityId2D Id { get; }
+    public SpatialObject2D WorldObject { get; }
+    public PhysicsBody2D Body { get; }
+    public Health2D Health { get; }
+    public CombatFaction2D Faction { get; }
     public Vector2 Position => WorldObject.Transform.Position;
     public float Facing { get; private set; } = 1f;
-    public float InvulnerabilitySeconds
-    {
-        get; private set;
-    }
-    public float LandingSpeedThisFrame
-    {
-        get; private set;
-    }
-    public bool DownAttackBouncedThisFrame
-    {
-        get; private set;
-    }
+    public float InvulnerabilitySeconds { get; private set; }
+    public float LandingSpeedThisFrame { get; private set; }
+    public bool DownAttackBouncedThisFrame { get; private set; }
     public bool IsGrounded => _motor.IsGrounded;
     public int BalanceDirection => IsAlive && _simulationEnabled ? _motor.BalanceDirection : 0;
     public bool IsWallGripping => _motor.IsWallGripping;

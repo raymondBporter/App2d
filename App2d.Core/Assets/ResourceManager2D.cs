@@ -195,13 +195,7 @@ public sealed class ResourceManager2D : IDisposable
         public string? Source { get; } = source;
         public bool OwnsResource { get; } = ownsResource;
         public HashSet<string> Owners { get; } = new(StringComparer.Ordinal);
-        public object? Value
-        {
-            get; set;
-        }
-        public bool IsLoading
-        {
-            get; set;
-        }
+        public object? Value { get; set; }
+        public bool IsLoading { get; set; }
     }
 }

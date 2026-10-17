@@ -143,8 +143,34 @@ internal static class AuthoredRenderingSmoke2D
             throw new InvalidDataException(string.Join(Environment.NewLine, authored.Errors));
         }
 
-        var ids = new[] { "spear-guard", "stalker-pest", "player", "cinder-gunner", "maul-brute", "club-caveman", "rock-thrower", "baby-triceratops", "shield-defender", "flying-pterosaur" };
-        foreach (var (phase, action, seconds) in new[] { ("idle", (string?)null, .5f), ("walk", null, .4f), ("anticipation", "attack", .25f), ("active", "attack", .45f), ("fire", "attack", .63f), ("recovery", "attack", .75f), ("slam-peak", "attack", .7f), ("slam-strike", "attack", .82f), ("charge-rush", "attack", 1.25f), ("charge-brake", "attack", 2.05f), ("flight-dive", "attack", .9f), ("flight-low", "attack", 1.9f), ("hit", EntityControllers.Hit, .06f), ("dead", EntityControllers.Death, 2f) })
+        var ids = new[]
+        {
+            "spear-guard",
+            "stalker-pest",
+            "player",
+            "cinder-gunner",
+            "maul-brute",
+            "club-caveman",
+            "rock-thrower",
+            "baby-triceratops",
+            "shield-defender",
+            "flying-pterosaur"
+        };
+        foreach (var (phase, action, seconds) in new[] {
+            ("idle", null, .5f),
+            ("walk", null, .4f),
+            ("anticipation", "attack", .25f),
+            ("active", "attack", .45f),
+            ("fire", "attack", .63f),
+            ("recovery", "attack", .75f),
+            ("slam-peak", "attack", .7f),
+            ("slam-strike", "attack", .82f),
+            ("charge-rush", "attack", 1.25f),
+            ("charge-brake", "attack", 2.05f),
+            ("flight-dive", "attack", .9f),
+            ("flight-low", "attack", 1.9f),
+            ("hit", EntityControllers.Hit, .06f),
+            ("dead", EntityControllers.Death, 2f) })
         {
             foreach (var facing in new[] { 1, -1 })
             {

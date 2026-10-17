@@ -51,26 +51,14 @@ public sealed partial class PersonLocomotion2D
         _tileMap = tileMap;
     }
 
-    public TraversalMetrics2D Metrics
-    {
-        get;
-    }
+    public TraversalMetrics2D Metrics { get; }
     public event Action? JumpStarted;
     public event Action<float>? Landed;
-    public bool IsGrounded
-    {
-        get; private set;
-    }
+    public bool IsGrounded { get; private set; }
     /// <summary>The velocity of the ground under the person (a moving platform's), or zero when airborne.</summary>
     public Vector2 GroundVelocity => IsGrounded ? GetGroundSupportVelocity() : Vector2.Zero;
-    public bool IsWallGripping
-    {
-        get; private set;
-    }
-    public bool IsDashing
-    {
-        get; private set;
-    }
+    public bool IsWallGripping { get; private set; }
+    public bool IsDashing { get; private set; }
     /// <summary>The unsupported edge in world space: -1 left, +1 right, or 0.</summary>
     public int BalanceDirection => GetBalanceDirection();
     public float WallDirection => _wallDirection;

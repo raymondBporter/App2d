@@ -26,25 +26,16 @@ public readonly partial record struct Capsule2D : IConvexShape2D
     }
 
     /// <summary>The spine start.</summary>
-    public Vector2 Start
-    {
-        get; init;
-    }
+    public Vector2 Start { get; init; }
 
     /// <summary>The spine end.</summary>
-    public Vector2 End
-    {
-        get; init;
-    }
+    public Vector2 End { get; init; }
 
     /// <summary>The center of the capsule's spine, in either endpoint order.</summary>
     public Vector2 Center => Rect2D.FromPoints(Start, End).Center;
 
     /// <summary>The radius around the spine.</summary>
-    public float Radius
-    {
-        get; init;
-    }
+    public float Radius { get; init; }
 
     /// <inheritdoc/>
     public float Area => Area2D.Capsule(Start, End, Radius);

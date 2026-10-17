@@ -177,7 +177,7 @@ internal sealed class DeveloperConsoleView : UserControl
     }
 
     private void OnConsolePaneMouseDown(object? sender, MouseEventArgs e) =>
-        BeginInvoke((Action)FocusInput);
+        BeginInvoke(FocusInput);
 
     private void RunInput()
     {

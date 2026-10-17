@@ -59,10 +59,7 @@ public sealed class GiantTreeVisual2D
             _crowns.Add(new(center, radii, random.NextFloat(MathF.Tau), random.NextSingle()));
     }
 
-    public GiantTree2D Tree
-    {
-        get;
-    }
+    public GiantTree2D Tree { get; }
 
     public void Render(Renderer2D renderer, Rect2D visible, VegetationWind2D wind)
     {

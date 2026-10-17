@@ -161,10 +161,7 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
         Vector2 knockback)
     {
         public UnarmedAttackKind2D Kind { get; } = kind;
-        public MeleeAttack2D Action
-        {
-            get;
-        } =
+        public MeleeAttack2D Action { get; } =
             new(sourceId, new SpatialObject2D(hitboxShape), profile);
         public int Damage { get; } = damage;
         public Vector2 Knockback { get; } = knockback;

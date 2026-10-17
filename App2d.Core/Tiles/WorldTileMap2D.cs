@@ -64,28 +64,13 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
         }
     }
 
-    public int Width
-    {
-        get;
-    }
-    public int Height
-    {
-        get;
-    }
-    public int ChunkSize
-    {
-        get;
-    }
+    public int Width { get; }
+    public int Height { get; }
+    public int ChunkSize { get; }
     public int ChunkColumns => (Width - 1) / ChunkSize + 1;
     public int ChunkRows => (Height - 1) / ChunkSize + 1;
-    public float TileSize
-    {
-        get;
-    }
-    public Vector2 Origin
-    {
-        get;
-    }
+    public float TileSize { get; }
+    public Vector2 Origin { get; }
     public Rect2D WorldBounds => new(Origin, Origin + new Vector2(Width, Height) * TileSize);
     public IReadOnlyList<string> TilesetIds => _tilesets;
     public event Action<TileChunk2D>? ChunkChanged;

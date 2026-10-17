@@ -257,22 +257,10 @@ public sealed class PlayerSpellTests
         private readonly List<Person2D> _targets = [];
         private readonly TraversalMetrics2D _metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         public PhysicsWorld2D Physics { get; } = new() { Gravity = Vector2.Zero };
-        public Person2D Player
-        {
-            get;
-        }
-        public PersonArsenal2D Arsenal
-        {
-            get;
-        }
-        public SideScrollerSession2D Session
-        {
-            get;
-        }
-        public PhysicsBody2D Floor
-        {
-            get;
-        }
+        public Person2D Player { get; }
+        public PersonArsenal2D Arsenal { get; }
+        public SideScrollerSession2D Session { get; }
+        public PhysicsBody2D Floor { get; }
         public List<WeaponEvent2D> Events { get; } = [];
         public SpellState2D Spells => Player.CaptureState().Spells;
 

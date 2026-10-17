@@ -8,14 +8,8 @@ public sealed class GraphicsCollection;
 internal sealed class GraphicsTestContext : IDisposable
 {
     private readonly Form _window = new() { ClientSize = new Size(128, 128) };
-    public GraphicsDevice Device
-    {
-        get;
-    }
-    public RenderTarget2D Target
-    {
-        get;
-    }
+    public GraphicsDevice Device { get; }
+    public RenderTarget2D Target { get; }
 
     public GraphicsTestContext()
     {

@@ -12,38 +12,14 @@ namespace App2d.Levels;
 /// <summary>A map's durable identity and independently editable database.</summary>
 public sealed class WorldMapAsset2D
 {
-    public required string Id
-    {
-        get; init;
-    }
-    public required string Name
-    {
-        get; init;
-    }
-    public required string ZoneId
-    {
-        get; init;
-    }
-    public required string DatabasePath
-    {
-        get; init;
-    }
-    public required int Identity
-    {
-        get; init;
-    }
-    public required EditableTileMap2D TileMap
-    {
-        get; init;
-    }
-    public required IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms
-    {
-        get; set;
-    }
-    public required IReadOnlyList<PositionThingRecord2D> PositionThings
-    {
-        get; init;
-    }
+    public required string Id { get; init; }
+    public required string Name { get; init; }
+    public required string ZoneId { get; init; }
+    public required string DatabasePath { get; init; }
+    public required int Identity { get; init; }
+    public required EditableTileMap2D TileMap { get; init; }
+    public required IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms { get; set; }
+    public required IReadOnlyList<PositionThingRecord2D> PositionThings { get; init; }
 
     // Stable across manifest reordering; namespace zero preserves existing save-point IDs.
     public long WorldThingId(long localId)

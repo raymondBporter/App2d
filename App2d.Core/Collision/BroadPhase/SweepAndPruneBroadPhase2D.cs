@@ -19,10 +19,7 @@ public sealed class SweepAndPruneBroadPhase2D<T> : IBroadPhase2D<T>
         Axis = axis;
     }
 
-    public SweepAxis2D Axis
-    {
-        get; set;
-    }
+    public SweepAxis2D Axis { get; set; }
 
     public void CollectPairs(IReadOnlyList<T> items, IPairFilter2D<T> pairFilter, List<BroadPhasePair2D<T>> pairs)
     {

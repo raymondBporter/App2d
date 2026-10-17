@@ -12,14 +12,8 @@ internal sealed class GrassClipping2D(VegetationBladeTip2D shape, Vector2 veloci
     public VegetationBladeTip2D Shape { get; } = shape;
     public Vector2 Position { get; private set; } = shape.ReleasePosition;
     public Vector2 Velocity { get; private set; } = velocity;
-    public float Rotation
-    {
-        get; private set;
-    }
-    public float Age
-    {
-        get; private set;
-    }
+    public float Rotation { get; private set; }
+    public float Age { get; private set; }
     public bool IsExpired => Age >= LifetimeSeconds;
     public float Opacity => Math.Clamp((LifetimeSeconds - Age) / FadeSeconds, 0f, 1f);
 

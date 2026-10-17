@@ -28,10 +28,7 @@ public sealed class AuthoringWorkspace
 
     private AuthoringWorkspace(string root) => Root = root;
 
-    public string Root
-    {
-        get;
-    }
+    public string Root { get; }
     /// <summary>Files that could not be read at all. Semantic problems are reported per document by <see cref="Problems"/>.</summary>
     public IReadOnlyList<string> LoadErrors { get; private set; } = [];
     public IEnumerable<AssetDocument> Documents => _documents.Values;

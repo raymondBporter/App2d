@@ -365,19 +365,10 @@ public static partial class Area2D
 
     internal sealed class UnionPart
     {
-        internal Vector2d Center
-        {
-            get; private set;
-        }
-        internal Vector2d Radii
-        {
-            get;
-        }
+        internal Vector2d Center { get; private set; }
+        internal Vector2d Radii { get; }
         internal double Radius => Radii.X;
-        internal Vector2d[] Vertices
-        {
-            get;
-        }
+        internal Vector2d[] Vertices { get; }
         internal Vector2d Origin => IsCurve ? Center : _vertexOrigin;
         internal bool IsCurve => Radii.X > 0d;
         internal bool IsCircle => IsCurve && Radii.X == Radii.Y;

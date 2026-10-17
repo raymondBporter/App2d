@@ -112,10 +112,7 @@ public sealed class WeaponPresentationTests
     private sealed class Voice : ISoundEffectVoice2D
     {
         public bool IsPlaying { get; private set; } = true;
-        public Vector2 Position
-        {
-            get; private set;
-        }
+        public Vector2 Position { get; private set; }
         public void SetPosition(Vector2 position) => Position = position;
         public void SetVolumeScale(float volume, float seconds)
         {

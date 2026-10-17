@@ -9,24 +9,15 @@ public readonly record struct GridSize2D
         ArgGuard.NonNegative(width);
         ArgGuard.NonNegative(height);
         var count = (long)width * height;
-        ArgGuard.AtMost(count, (long)int.MaxValue);
+        ArgGuard.AtMost(count, int.MaxValue);
         Width = width;
         Height = height;
         CellCount = (int)count;
     }
 
-    public int Width
-    {
-        get;
-    }
-    public int Height
-    {
-        get;
-    }
-    public int CellCount
-    {
-        get;
-    }
+    public int Width { get; }
+    public int Height { get; }
+    public int CellCount { get; }
     public bool IsEmpty => CellCount == 0;
     public GridCellRange2D Cells => IsEmpty ? default : new(default, new(Width - 1, Height - 1));
 

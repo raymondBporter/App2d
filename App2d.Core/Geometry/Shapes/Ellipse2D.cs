@@ -31,16 +31,10 @@ public readonly partial record struct Ellipse2D : IConvexShape2D
     }
 
     /// <summary>The half-extents along X and Y.</summary>
-    public Vector2 Radii
-    {
-        get; init;
-    }
+    public Vector2 Radii { get; init; }
 
     /// <summary>The local center.</summary>
-    public Vector2 Center
-    {
-        get; init;
-    }
+    public Vector2 Center { get; init; }
 
     /// <inheritdoc/>
     public float Area => Area2D.Ellipse(Radii);

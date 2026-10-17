@@ -118,16 +118,10 @@ public sealed class SessionClient2DTests
 
     private sealed class Fixture : IDisposable
     {
-        public Person2D Person
-        {
-            get;
-        }
+        public Person2D Person { get; }
         public TestActions Actions { get; } = new();
         public TestWorld World { get; } = new();
-        public SideScrollerSession2D Session
-        {
-            get;
-        }
+        public SideScrollerSession2D Session { get; }
         public Fixture()
         {
             var metrics = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
@@ -154,26 +148,11 @@ public sealed class SessionClient2DTests
     {
         public Rect2D Bounds => new(new Vector2(-10000f), new Vector2(10000f));
         public float GoalX { get; set; } = 9000f;
-        public int PlatformUpdates
-        {
-            get; private set;
-        }
-        public int EnemyUpdates
-        {
-            get; private set;
-        }
-        public float LastDelta
-        {
-            get; private set;
-        }
-        public int DamageNextStep
-        {
-            get; set;
-        }
-        public WorldThingSpec2D? PendingCheckpoint
-        {
-            get; set;
-        }
+        public int PlatformUpdates { get; private set; }
+        public int EnemyUpdates { get; private set; }
+        public float LastDelta { get; private set; }
+        public int DamageNextStep { get; set; }
+        public WorldThingSpec2D? PendingCheckpoint { get; set; }
         public void UpdateStreaming(Vector2 focus)
         {
         }
@@ -213,14 +192,8 @@ public sealed class SessionClient2DTests
         public event Action<WeaponEvent2D>? WeaponOccurred { add { } remove { } }
         public EquipmentKind2D Equipment => EquipmentKind2D.Unarmed;
         public bool IsMeleeAttackActive => false;
-        public int BeginFrames
-        {
-            get; private set;
-        }
-        public int Interruptions
-        {
-            get; private set;
-        }
+        public int BeginFrames { get; private set; }
+        public int Interruptions { get; private set; }
         public event Action<UnarmedAttackKind2D, float>? UnarmedAttackStarted;
         public event Action<float>? MeleeAttackStarted { add { } remove { } }
         public event Action<float>? DownAttackStarted { add { } remove { } }

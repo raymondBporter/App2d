@@ -2,10 +2,7 @@ namespace App2d.Core.Physics;
 
 public interface IPhysicsConstraint2D
 {
-    bool IsEnabled
-    {
-        get;
-    }
+    bool IsEnabled { get; }
 
     void SolveVelocity(float deltaSeconds);
 

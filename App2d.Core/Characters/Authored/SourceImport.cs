@@ -17,18 +17,9 @@ public sealed record AssetSource
     public const string Puppet = "puppet", Library = "library";
     public string Kind { get; set; } = "";
     public string File { get; set; } = "";
-    public string? Motion
-    {
-        get; set;
-    }
-    public string? Rest
-    {
-        get; set;
-    }
-    public Dictionary<string, List<string>>? Points
-    {
-        get; set;
-    }
+    public string? Motion { get; set; }
+    public string? Rest { get; set; }
+    public Dictionary<string, List<string>>? Points { get; set; }
 
     public void Validate(string owner)
     {
@@ -223,10 +214,7 @@ public static class LibraryImport
             var index = library.PointNames.Select((n, i) => (n, i)).ToDictionary(p => p.n, p => p.i, StringComparer.Ordinal);
             _indices = points.ToDictionary(p => p.Key, p => p.Value.Select(n => index.TryGetValue(n, out var i) ? i : throw new InvalidDataException($"Library '{library.Id}' has no point '{n}' (mapped to '{p.Key}').")).ToArray(), StringComparer.Ordinal);
         }
-        public PointClip Clip
-        {
-            get;
-        }
+        public PointClip Clip { get; }
         public IReadOnlyDictionary<string, Vector3> At(double seconds)
         {
             Clip.Sample(seconds, _raw, holdEnd: true);
@@ -373,14 +361,8 @@ public sealed class SourceLibraries
         Root = root;
         Entries = entries;
     }
-    public string Root
-    {
-        get;
-    }
-    public IReadOnlyList<Entry> Entries
-    {
-        get;
-    }
+    public string Root { get; }
+    public IReadOnlyList<Entry> Entries { get; }
 
     /// <summary>Reads <c>catalog.json</c> under the characters root. A missing catalog means no sources, not an error.</summary>
     public static SourceLibraries Open(string charactersRoot)

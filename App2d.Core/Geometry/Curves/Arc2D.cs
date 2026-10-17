@@ -16,22 +16,10 @@ public readonly partial record struct Arc2D : ICurve2D
         SweepAngleRadians = sweepAngleRadians;
     }
 
-    public Vector2 Center
-    {
-        get; init;
-    }
-    public float Radius
-    {
-        get; init;
-    }
-    public float StartAngleRadians
-    {
-        get; init;
-    }
-    public float SweepAngleRadians
-    {
-        get; init;
-    }
+    public Vector2 Center { get; init; }
+    public float Radius { get; init; }
+    public float StartAngleRadians { get; init; }
+    public float SweepAngleRadians { get; init; }
     public double Length => (double)Radius * Math.Abs(SweepAngleRadians);
     public Vector2 Start => Evaluate(0f);
     public Vector2 End => Evaluate(1f);

@@ -27,10 +27,7 @@ public static class EntityAuthoring
         EntityControllers.Attack
     ];
 
-    public static IReadOnlyList<EntityTemplate> Templates
-    {
-        get;
-    } =
+    public static IReadOnlyList<EntityTemplate> Templates { get; } =
     [
         new(Guard, "Guard", "Walks toward targets and attacks in range. The attack plays the 'attack' role until you choose its clip."),
         new(Platformer, "Platformer", "Walks, runs and jumps; the jump leaves the ground on a 'launch' event."),

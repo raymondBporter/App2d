@@ -13,24 +13,12 @@ namespace App2d.Presentation.Simulation;
 public sealed class SessionClient2D
 {
     private long _nextInputSequence;
-    public EntityId2D PlayerId
-    {
-        get;
-    }
-    public long InputTick
-    {
-        get; private set;
-    }
+    public EntityId2D PlayerId { get; }
+    public long InputTick { get; private set; }
     public long Tick => Snapshot.Tick;
     public long LastInputSequence => State.LastInputSequence;
-    public SessionSnapshot2D Snapshot
-    {
-        get; private set;
-    }
-    public PlayerState2D State
-    {
-        get; private set;
-    }
+    public SessionSnapshot2D Snapshot { get; private set; }
+    public PlayerState2D State { get; private set; }
 
     public SessionClient2D(SessionSnapshot2D snapshot, EntityId2D playerId)
     {

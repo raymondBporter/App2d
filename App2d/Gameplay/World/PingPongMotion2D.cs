@@ -29,14 +29,8 @@ public sealed class PingPongMotion2D : IKinematicMotion2D
             2d * length / speed, progress);
     }
 
-    public Vector2 Start
-    {
-        get;
-    }
-    public Vector2 End
-    {
-        get;
-    }
+    public Vector2 Start { get; }
+    public Vector2 End { get; }
 
     public Vector2 Position(double seconds) => _motion.Position(seconds);
     public Vector2 Velocity(double seconds) => _motion.Velocity(seconds);

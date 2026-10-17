@@ -29,10 +29,7 @@ public abstract class Game2D : IDisposable
     }
 
     public Camera2D Camera { get; } = new();
-    public PhysicsWorld2D? PhysicsWorld
-    {
-        get; private set;
-    }
+    public PhysicsWorld2D? PhysicsWorld { get; private set; }
     public Scene2D Scene { get; } = [];
     public TextureCache2D Textures { get; } = new(AssetPaths.Current.Runtime);
     public DeveloperConsole DeveloperConsole { get; } = new();

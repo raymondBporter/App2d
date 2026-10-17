@@ -8,14 +8,8 @@ public interface ISessionPlayerActions2D : IPersonActionSet2D
 {
     WeaponState2D CaptureWeaponState();
     event Action<WeaponEvent2D>? WeaponOccurred;
-    EquipmentKind2D Equipment
-    {
-        get;
-    }
-    bool IsMeleeAttackActive
-    {
-        get;
-    }
+    EquipmentKind2D Equipment { get; }
+    bool IsMeleeAttackActive { get; }
     event Action<float>? MeleeAttackStarted;
     event Action<float>? DownAttackStarted;
     event Action? ShotStarted;

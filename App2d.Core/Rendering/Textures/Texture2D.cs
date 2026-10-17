@@ -20,10 +20,7 @@ public sealed class Texture2D : IDisposable
         _pixels = pixels;
     }
 
-    public string SourcePath
-    {
-        get;
-    }
+    public string SourcePath { get; }
     public int Width
     {
         get

@@ -40,19 +40,13 @@ public static class ClipEase
 public sealed record ClipMarker
 {
     public string Id { get; set; } = "";
-    public float Time
-    {
-        get; set;
-    }
+    public float Time { get; set; }
 }
 
 /// <summary>An expression held from this time until the next key; "none" draws no face.</summary>
 public sealed record ClipFaceKey
 {
-    public float Time
-    {
-        get; set;
-    }
+    public float Time { get; set; }
     public string Expression { get; set; } = "relaxed";
 }
 
@@ -73,16 +67,10 @@ public sealed record ClipTrack
     public string Kind { get; set; } = MotionClip.TranslateKind;
     public string Target { get; set; } = "";
     /// <summary>Overrides the control's or chain's default measure. Null uses the model default.</summary>
-    public string? Scale
-    {
-        get; set;
-    }
+    public string? Scale { get; set; }
     public List<ClipKey> Keys { get; set; } = [];
     /// <summary>Imported timelines use the setup value before their first key.</summary>
-    public bool SetupBeforeFirst
-    {
-        get; set;
-    }
+    public bool SetupBeforeFirst { get; set; }
 }
 
 /// <summary>The locomotion frame's travel in authored preview. The controller owns travel in gameplay.</summary>
@@ -96,15 +84,9 @@ public sealed record ClipTravel
 public sealed record ClipContact
 {
     public string Chain { get; set; } = "";
-    public float Start
-    {
-        get; set;
-    }
+    public float Start { get; set; }
     public float Finish { get; set; } = .5f;
-    public PuppetPoint Target
-    {
-        get; set;
-    }
+    public PuppetPoint Target { get; set; }
 }
 
 /// <summary>A named animation compatible with one model revision. Owns motion and appearance timelines, not proportions or gameplay.</summary>

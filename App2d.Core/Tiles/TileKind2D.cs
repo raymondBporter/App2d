@@ -60,10 +60,7 @@ public readonly record struct TileCell2D
 
     public TileCell2D(byte packed) => Packed = packed;
 
-    public byte Packed
-    {
-        get;
-    }
+    public byte Packed { get; }
     public TileKind2D Kind => (TileKind2D)(Packed & KindMask);
     public byte TilesetIndex => (byte)(Packed >> 4);
 }

@@ -2,6 +2,7 @@ using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
@@ -172,7 +173,7 @@ public sealed class RenderMaterialDefinition2DTests
             [
                 new PropShape
                 {
-                    Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(1, 0), new(0, 1)] },
+                    Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(1, 0), new(0, 1)] }.Validated(),
                     Material = new() { Fill = "#224466", Outline = new() { Color = "#ffeeaa", Width = .03f } }
                 }
             ]
@@ -233,7 +234,7 @@ public sealed class RenderMaterialDefinition2DTests
             Name = "Undo prop",
             Shapes = [new()
             {
-                Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(1, 0) },
+                Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(1, 0) }.Validated(),
                 Depths = [.1f, .2f], Material = new() { Fill = "#224466", Outline = new() }
             }]
         };

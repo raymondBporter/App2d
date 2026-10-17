@@ -58,7 +58,7 @@ public sealed class ShapeSerialization2DTests
     [Fact]
     public void ScalarShapesHaveValueEqualityAndTypedBuildersMatchPolymorphicBuilders()
     {
-        var builder = new Circle2D { Center = new(1, 2), Radius = 3 };
+        var builder = new Circle2D { Center = new(1, 2), Radius = 3 }.Validated();
         Circle2D circle = builder.Validated();
         IShape2D shapeBuilder = builder;
         IConvexShape2D convexBuilder = builder;
@@ -103,16 +103,13 @@ public sealed class ShapeSerialization2DTests
 
     private sealed class ShapeEnvelope
     {
-        public required IShape2D Hit
-        {
-            get; init;
-        }
+        public required IShape2D Hit { get; init; }
     }
 
     [Fact]
     public void GeometryWorksInsideExistingAuthoredJsonOptions()
     {
-        var envelope = new ShapeEnvelope { Hit = new Capsule2D { Start = new(0, 0), End = new(2, 0), Radius = .5f } };
+        var envelope = new ShapeEnvelope { Hit = new Capsule2D { Start = new(0, 0), End = new(2, 0), Radius = .5f }.Validated() };
         var json = JsonSerializer.Serialize(envelope, AuthoredJson.Options);
         Assert.Contains("\"kind\": \"capsule\"", json);
         Assert.Contains("\"radius\": 0.5", json);

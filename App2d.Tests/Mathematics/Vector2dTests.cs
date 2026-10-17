@@ -12,7 +12,7 @@ public sealed class Vector2dTests
         var second = new Vector2(-1, 4);
         var difference = first.ToVector2d() - second.ToVector2d();
         Assert.Equal(new Vector2d(16777217, -1), difference);
-        Assert.NotEqual((double)(first - second).X, difference.X);
+        Assert.NotEqual((first - second).X, difference.X);
         Assert.Equal(first.ToVector2d(), difference + second.ToVector2d());
         Assert.Equal(new Vector2(16777216, -1), difference.ToVector2());
     }
@@ -55,7 +55,7 @@ public sealed class Vector2dTests
         Assert.Equal(0, a.Cross(a));
 
         var tiny = new Vector2(float.Epsilon, 0).ToVector2d();
-        Assert.Equal((double)float.Epsilon, Vector2d.Distance(Vector2d.Zero, tiny));
+        Assert.Equal(float.Epsilon, Vector2d.Distance(Vector2d.Zero, tiny));
         Assert.True(tiny.LengthSquared() > 0);
     }
 

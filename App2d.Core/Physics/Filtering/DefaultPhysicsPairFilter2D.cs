@@ -4,19 +4,10 @@ namespace App2d.Core.Physics.Filtering;
 
 public sealed class DefaultPhysicsPairFilter2D : IPairFilter2D<PhysicsBody2D>
 {
-    public bool TestStaticStatic
-    {
-        get; set;
-    }
-    public bool TestStaticKinematic
-    {
-        get; set;
-    }
+    public bool TestStaticStatic { get; set; }
+    public bool TestStaticKinematic { get; set; }
     public bool TestStaticDynamic { get; set; } = true;
-    public bool TestKinematicKinematic
-    {
-        get; set;
-    }
+    public bool TestKinematicKinematic { get; set; }
     public bool TestKinematicDynamic { get; set; } = true;
     public bool TestDynamicDynamic { get; set; } = true;
 

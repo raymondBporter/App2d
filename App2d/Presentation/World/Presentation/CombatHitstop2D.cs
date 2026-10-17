@@ -157,10 +157,7 @@ public sealed class EnemyContactHold2D(ReactionTimeCurve2D curve)
     {
         public string Role { get; } = role;
         public float Direction { get; } = direction;
-        public bool? Reverse
-        {
-            get; set;
-        }
+        public bool? Reverse { get; set; }
         public ContactHold Hold { get; } = new();
     }
 }

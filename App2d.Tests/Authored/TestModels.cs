@@ -1,5 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -32,7 +33,7 @@ internal static class TestModels
         Parts =
         [
             new() { Id = "torso", A = "hip", B = "shoulder", Geometry = RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), Material = new() { Fill = "#fff8e7", Outline = new() } },
-            new() { Id = "upper-arm", A = "shoulder", B = "elbow", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }, Material = new() },
+            new() { Id = "upper-arm", A = "shoulder", B = "elbow", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() },
         ],
     };
 

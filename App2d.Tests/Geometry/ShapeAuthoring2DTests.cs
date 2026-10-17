@@ -42,7 +42,7 @@ public sealed class ShapeAuthoring2DTests
         Assert.Equal(.5f, capsule.Radius);
         Assert.Equal(1f, Assert.IsType<Circle2D>(tall.WithKind(ShapeKinds2D.Circle)).Radius * 2);
         Assert.Throws<ArgumentException>(() => tall.WithKind("blob"));
-        Assert.Throws<InvalidOperationException>(() => new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.WithKind(ShapeKinds2D.Circle));
+        Assert.Throws<InvalidOperationException>(() => new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated().WithKind(ShapeKinds2D.Circle));
     }
 
     [Fact]
@@ -81,14 +81,14 @@ public sealed class ShapeAuthoring2DTests
     [Fact]
     public void ValuesAreRecordsSoEditorsCanUseWithExpressions()
     {
-        var circle = new Circle2D { Center = new(1, 2), Radius = 3 };
+        var circle = new Circle2D { Center = new(1, 2), Radius = 3 }.Validated();
         var moved = circle with
         {
             Center = new(5, 5)
         };
         Assert.Equal(3f, moved.Radius);
         Assert.Equal(new Vector2(5, 5), Assert.IsType<Circle2D>(moved.Validated()).Center);
-        Assert.Equal(circle, new Circle2D { Center = new(1, 2), Radius = 3 });
+        Assert.Equal(circle, new Circle2D { Center = new(1, 2), Radius = 3 }.Validated());
         Assert.NotEqual(circle, moved);
     }
 }

@@ -19,12 +19,7 @@ public readonly record struct CheckpointState2D(long ThingId, bool IsActive);
 /// platform definitions, checkpoint placements, and the goal. Successive ticks share one
 /// instance; <see cref="Revision"/> lets a receiver skip content it already holds.
 /// </summary>
-public sealed record LevelContent2D(
-    long Revision,
-    ImmutableArray<TerrainChunkState2D> Terrain,
-    ImmutableArray<MovingPlatformDefinition2D> MovingPlatforms,
-    ImmutableArray<CheckpointPlacement2D> Checkpoints,
-    Vector2? GoalPosition)
+public sealed record LevelContent2D(long Revision, ImmutableArray<TerrainChunkState2D> Terrain, ImmutableArray<MovingPlatformDefinition2D> MovingPlatforms, ImmutableArray<CheckpointPlacement2D> Checkpoints, Vector2? GoalPosition)
 {
     public static LevelContent2D Empty { get; } = new(0, [], [], [], null);
     /// <summary>Whole-level regions, available even when their terrain chunks are unloaded.</summary>

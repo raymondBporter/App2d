@@ -1,6 +1,7 @@
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
@@ -15,7 +16,7 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void TrapezoidTapersTowardItsUpperControlAndPickingFollowsTheTaper()
     {
-        var part = new PuppetPart { Geometry = new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }, A = "base", B = "top", ScaleX = 2, ScaleY = 2 };
+        var part = new PuppetPart { Geometry = new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated(), A = "base", B = "top", ScaleX = 2, ScaleY = 2 };
         // Local up points right in this pose, so the narrow end is at world X = 1.
         static Vector3 World(string id) => id == "base" ? Vector3.Zero : Vector3.UnitX;
         var contour = PartContours2D.Contour(part, World);
@@ -34,7 +35,7 @@ public sealed class PuppetAuthoringTests
     {
         var model = PersonTemplate.Model();
         var box = Core.Characters.Authored.ModelAuthoring.AddPart(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "hips");
-        var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }, "hips");
+        var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated(), "hips");
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
         Assert.IsType<RoundedRectangle2D>(restored.Parts.Single(p => p.Id == box.Id).Geometry);
         Assert.Equal(4, Assert.IsType<SimplePolygon2D>(restored.Parts.Single(p => p.Id == trapezoid.Id).Geometry).Vertices.Length);

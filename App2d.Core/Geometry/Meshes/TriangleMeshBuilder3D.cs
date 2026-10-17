@@ -28,19 +28,10 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     public long Version { get; private set; }
     /// <summary>Returns the backing array for submission. Callers must not modify it.</summary>
     public TVertex[] GetBuffer() => _vertices;
-    public int Count
-    {
-        get; private set;
-    }
+    public int Count { get; private set; }
     public int TriangleCount => Count / 3;
-    public Vector3 Min
-    {
-        get; private set;
-    }
-    public Vector3 Max
-    {
-        get; private set;
-    }
+    public Vector3 Min { get; private set; }
+    public Vector3 Max { get; private set; }
 
     public void Clear()
     {

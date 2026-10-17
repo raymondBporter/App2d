@@ -17,10 +17,7 @@ public sealed class ModelTemplate
     public string Model { get; set; } = "";
     public Dictionary<string, string> Animations { get; set; } = [];
     /// <summary>A key in Animations to preview after creation. Null opens the rest pose.</summary>
-    public string? PreviewAnimation
-    {
-        get; set;
-    }
+    public string? PreviewAnimation { get; set; }
 
     public static ModelTemplate FromJson(string json)
     {

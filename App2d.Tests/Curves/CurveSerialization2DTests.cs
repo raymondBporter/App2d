@@ -58,10 +58,7 @@ public sealed class CurveSerialization2DTests
 
     private sealed class CurveEnvelope
     {
-        public required ICurve2D Path
-        {
-            get; init;
-        }
+        public required ICurve2D Path { get; init; }
     }
 
     [Fact]
@@ -69,7 +66,7 @@ public sealed class CurveSerialization2DTests
     {
         var envelope = new CurveEnvelope
         {
-            Path = new LineSegmentCurve2D { Start = new(1, 2), End = new(3, 4) }
+            Path = new LineSegmentCurve2D { Start = new(1, 2), End = new(3, 4) }.Validated()
         };
         var json = JsonSerializer.Serialize(envelope, AuthoredJson.Options);
         Assert.Contains("\"kind\": \"line\"", json);
@@ -96,21 +93,21 @@ public sealed class CurveSerialization2DTests
 
     public static TheoryData<ICurve2D> InvalidValues =>
     [
-        new LineSegmentCurve2D { Start = new(float.NaN, 0), End = Vector2.One },
-        new LineSegmentCurve2D { Start = Vector2.Zero, End = new(0, float.PositiveInfinity) },
-        new PolylineCurve2D { Points = null! },
-        new PolylineCurve2D { Points = [Vector2.Zero] },
-        new PolylineCurve2D { Points = [Vector2.Zero, new(float.NaN, 1)] },
-        new Arc2D { Center = Vector2.Zero, Radius = -1, StartAngleRadians = 0, SweepAngleRadians = 1 },
-        new Arc2D { Center = new(float.NaN, 0), Radius = 1, StartAngleRadians = 0, SweepAngleRadians = 1 },
-        new Arc2D { Center = Vector2.Zero, Radius = 1, StartAngleRadians = float.NaN, SweepAngleRadians = 1 },
-        new Arc2D { Center = Vector2.Zero, Radius = 1, StartAngleRadians = 0, SweepAngleRadians = float.PositiveInfinity },
-        new QuadraticBezier2D { Start = Vector2.Zero, Control = new(float.NaN, 0), End = Vector2.One },
-        new CubicBezier2D { Start = Vector2.Zero, Control1 = Vector2.UnitY, Control2 = new(float.NaN, 0), End = Vector2.One },
-        new BSpline2D { ControlPoints = null! },
-        new BSpline2D { ControlPoints = [Vector2.Zero, Vector2.One], Degree = 0 },
-        new BSpline2D { ControlPoints = [Vector2.Zero, Vector2.One], Degree = 2 },
-        new BSpline2D { ControlPoints = [Vector2.Zero, new(float.NaN, 0)], Degree = 1 }
+        new LineSegmentCurve2D { Start = new(float.NaN, 0), End = Vector2.One }.Validated(),
+        new LineSegmentCurve2D { Start = Vector2.Zero, End = new(0, float.PositiveInfinity) }.Validated(),
+        new PolylineCurve2D { Points = null! }.Validated(),
+        new PolylineCurve2D { Points = [Vector2.Zero] }.Validated(),
+        new PolylineCurve2D { Points = [Vector2.Zero, new(float.NaN, 1)] }.Validated(),
+        new Arc2D { Center = Vector2.Zero, Radius = -1, StartAngleRadians = 0, SweepAngleRadians = 1 }.Validated(),
+        new Arc2D { Center = new(float.NaN, 0), Radius = 1, StartAngleRadians = 0, SweepAngleRadians = 1 }.Validated(),
+        new Arc2D { Center = Vector2.Zero, Radius = 1, StartAngleRadians = float.NaN, SweepAngleRadians = 1 }.Validated(),
+        new Arc2D { Center = Vector2.Zero, Radius = 1, StartAngleRadians = 0, SweepAngleRadians = float.PositiveInfinity }.Validated(),
+        new QuadraticBezier2D { Start = Vector2.Zero, Control = new(float.NaN, 0), End = Vector2.One }.Validated(),
+        new CubicBezier2D { Start = Vector2.Zero, Control1 = Vector2.UnitY, Control2 = new(float.NaN, 0), End = Vector2.One }.Validated(),
+        new BSpline2D { ControlPoints = null! }.Validated(),
+        new BSpline2D { ControlPoints = [Vector2.Zero, Vector2.One], Degree = 0 }.Validated(),
+        new BSpline2D { ControlPoints = [Vector2.Zero, Vector2.One], Degree = 2 }.Validated(),
+        new BSpline2D { ControlPoints = [Vector2.Zero, new(float.NaN, 0)], Degree = 1 }.Validated()
     ];
 
     [Theory]

@@ -31,20 +31,14 @@ public sealed record SideScrollerSessionDefinition2D(
     IReadOnlyList<WorldThingSpec2D> WorldThings)
 {
     /// <summary>Authored entities; placements they cover spawn from these, otherwise the built-in sprite enemies.</summary>
-    public AuthoredCatalog? AuthoredCharacters
-    {
-        get; init;
-    }
+    public AuthoredCatalog? AuthoredCharacters { get; init; }
     /// <summary>Rectangular regions shared by simulation and presentation consumers.</summary>
     public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; init; } = [];
     public System.Collections.Immutable.ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
     public int PlayerMaximumHealth { get; init; } = 5;
     public SpellTuning2D Spells { get; init; } = new();
     /// <summary>Resume point; ignored when it names a missing checkpoint or invalid health.</summary>
-    public SavedProgress2D? SavedProgress
-    {
-        get; init;
-    }
+    public SavedProgress2D? SavedProgress { get; init; }
     public int PositionIterations { get; init; } = 3;
     public int VelocityIterations { get; init; } = 2;
 

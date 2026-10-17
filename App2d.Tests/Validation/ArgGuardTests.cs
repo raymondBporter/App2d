@@ -165,12 +165,12 @@ public sealed class ArgGuardTests
             if (valid)
             {
                 Assert.Equal(value, ArgGuard.InRange(value, 0, 2, bounds: bounds));
-                Assert.Equal((double)value, ArgGuard.InRange((double)value, 0d, 2d, bounds: bounds));
+                Assert.Equal(value, ArgGuard.InRange(value, 0d, 2d, bounds: bounds));
             }
             else
             {
                 Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.InRange(value, 0, 2, bounds: bounds));
-                Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.InRange((double)value, 0d, 2d, bounds: bounds));
+                Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.InRange(value, 0d, 2d, bounds: bounds));
             }
         }
     }

@@ -15,10 +15,7 @@ internal sealed class BoneEditorPanel
         _document = document;
         Select(document.Bones.FirstOrDefault());
     }
-    public object? SelectedItem
-    {
-        get; private set;
-    }
+    public object? SelectedItem { get; private set; }
     public void Select(object? item)
     {
         SelectedItem = item;

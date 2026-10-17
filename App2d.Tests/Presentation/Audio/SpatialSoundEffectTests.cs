@@ -163,10 +163,7 @@ public sealed class SpatialSoundEffectTests
 
     private sealed class LegacySink : ISoundEffectSink2D
     {
-        public int Count
-        {
-            get; private set;
-        }
+        public int Count { get; private set; }
         public void Play(SoundEffect2D effect) => Count++;
     }
 
@@ -186,22 +183,10 @@ public sealed class SpatialSoundEffectTests
     private sealed class RecordingVoice : ISoundEffectVoice2D
     {
         public bool IsPlaying { get; set; } = true;
-        public float Volume
-        {
-            get; set;
-        }
-        public float LastRamp
-        {
-            get; private set;
-        }
-        public float StopFade
-        {
-            get; private set;
-        }
-        public int VolumeChanges
-        {
-            get; private set;
-        }
+        public float Volume { get; set; }
+        public float LastRamp { get; private set; }
+        public float StopFade { get; private set; }
+        public int VolumeChanges { get; private set; }
         public void SetVolumeScale(float volumeScale, float rampSeconds)
         {
             Volume = volumeScale;

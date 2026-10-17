@@ -19,22 +19,13 @@ internal sealed class RigBone2D(int id, string name, RigBone2D? parent)
     public RigBone2D? Parent { get; } = parent;
 
     [Category("Transform"), DisplayName("Local X")]
-    public float LocalX
-    {
-        get; set;
-    }
+    public float LocalX { get; set; }
 
     [Category("Transform"), DisplayName("Local Y")]
-    public float LocalY
-    {
-        get; set;
-    }
+    public float LocalY { get; set; }
 
     [Category("Transform"), DisplayName("Angle (degrees)")]
-    public float AngleDegrees
-    {
-        get; set;
-    }
+    public float AngleDegrees { get; set; }
 
     [Category("Bone"), DisplayName("Length")]
     public float Length

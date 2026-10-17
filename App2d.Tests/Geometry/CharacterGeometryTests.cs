@@ -2,6 +2,7 @@ using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Serialization;
@@ -92,7 +93,7 @@ public sealed class CharacterGeometryTests
             A = "a",
             B = "b",
             Material = new() { StrokeWidth = .2f },
-            Geometry = new LineSegmentCurve2D { Start = new(.5f, 0), End = new(.5f, 1) }
+            Geometry = new LineSegmentCurve2D { Start = new(.5f, 0), End = new(.5f, 1) }.Validated()
         };
         static Vector3 World(string id) => id == "a" ? new(2, 3, 0) : new(2, 5, 0);
         Assert.Equal(0, PartPicking2D.Distance(part, World, new(3, 4, 0)), 5);
@@ -142,7 +143,7 @@ public sealed class CharacterGeometryTests
     [Fact]
     public void StrokePickingKeepsItsMinimumWidthAndPointLikeSegmentTolerance()
     {
-        var part = new PuppetPart { Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }, A = "a", B = "b", Material = new() { StrokeWidth = .01f }, Depth = 2 };
+        var part = new PuppetPart { Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), A = "a", B = "b", Material = new() { StrokeWidth = .01f }, Depth = 2 };
         static Vector3 World(string id) => id == "a" ? default : new(.000001f, 0, 3);
         Assert.Equal(1, PartPicking2D.Distance(part, World, new(0, .06f, 100)), 5);
         Assert.Equal(new Vector3(0, 0, 2), PartContours2D.Contour(part, World)[0]);

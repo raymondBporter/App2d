@@ -16,18 +16,9 @@ public sealed class WorldSoundtrack2D
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
     };
-    public ImmutableDictionary<string, MusicCue2D> Cues
-    {
-        get;
-    }
-    public MusicSelection2D Default
-    {
-        get;
-    }
-    public ImmutableDictionary<string, MusicSelection2D> Zones
-    {
-        get;
-    }
+    public ImmutableDictionary<string, MusicCue2D> Cues { get; }
+    public MusicSelection2D Default { get; }
+    public ImmutableDictionary<string, MusicSelection2D> Zones { get; }
 
     public WorldSoundtrack2D(IReadOnlyDictionary<string, MusicCue2D> cues, MusicSelection2D fallback,
         IReadOnlyDictionary<string, MusicSelection2D> zones)

@@ -17,14 +17,8 @@ internal sealed class AxisProjector2D
         Limits = ConstraintLimit1D.Between(minimumTranslation, maximumTranslation);
     }
 
-    public Vector2 Axis
-    {
-        get;
-    }
-    public ConstraintLimit1D Limits
-    {
-        get;
-    }
+    public Vector2 Axis { get; }
+    public ConstraintLimit1D Limits { get; }
     public float MinimumTranslation => Limits.Minimum;
     public float MaximumTranslation => Limits.Maximum;
 

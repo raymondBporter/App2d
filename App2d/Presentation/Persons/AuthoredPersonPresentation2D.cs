@@ -68,14 +68,8 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
         scene.Add(_visual);
     }
 
-    public PersonAnimationDirector Director
-    {
-        get;
-    }
-    public ActorPose? Pose
-    {
-        get; private set;
-    }
+    public PersonAnimationDirector Director { get; }
+    public ActorPose? Pose { get; private set; }
 
     /// <summary>The top of the rest pose's drawn shapes above the feet.</summary>
     public static float RestHeight(ResolvedModel model) => model.DrawnHeight();

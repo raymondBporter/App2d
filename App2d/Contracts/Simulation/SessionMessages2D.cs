@@ -9,8 +9,7 @@ using System.Numerics;
 
 namespace App2d.Contracts.Simulation;
 
-public readonly record struct PlayerInput2D(
-    EntityId2D EntityId, long Tick, long Sequence, PersonCommand2D Command);
+public readonly record struct PlayerInput2D(EntityId2D EntityId, long Tick, long Sequence, PersonCommand2D Command);
 
 /// <summary>Why a session refused an input. The session state is unchanged after a rejection.</summary>
 public enum InputRejection2D

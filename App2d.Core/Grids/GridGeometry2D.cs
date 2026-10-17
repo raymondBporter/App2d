@@ -23,14 +23,8 @@ public readonly record struct GridGeometry2D
         Origin = origin;
     }
 
-    public Size2D CellSize
-    {
-        get;
-    }
-    public Vector2 Origin
-    {
-        get;
-    }
+    public Size2D CellSize { get; }
+    public Vector2 Origin { get; }
     public bool IsValid => CellSize.IsValid && NumericValidation.IsFinite(Origin);
 
     public GridCell2D WorldToCell(Vector2 position)
@@ -77,7 +71,7 @@ public readonly record struct GridGeometry2D
     public Rect2D GetCellBounds(GridCell2D cell) => new(
         Corner(cell.X, cell.Y), Corner((double)cell.X + 1, (double)cell.Y + 1));
 
-    public Vector2 GetCellCenter(GridCell2D cell) => Corner((double)cell.X + .5, (double)cell.Y + .5);
+    public Vector2 GetCellCenter(GridCell2D cell) => Corner(cell.X + .5, cell.Y + .5);
 
     /// <summary>Snaps a finite world point to its nearest cell corner. Halfway ties round to an even grid index.</summary>
     public Vector2 SnapToNearestCorner(Vector2 position)

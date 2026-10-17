@@ -14,14 +14,8 @@ public readonly partial record struct LineSegmentCurve2D : ICurve2D, ISegment<Li
         End = end;
     }
 
-    public Vector2 Start
-    {
-        get; init;
-    }
-    public Vector2 End
-    {
-        get; init;
-    }
+    public Vector2 Start { get; init; }
+    public Vector2 End { get; init; }
     public static LineSegmentCurve2D Create(Vector2 start, Vector2 end) => Builder.Create(start, end);
     public Vector2 Evaluate(float amount) => this.PointAt(amount);
     public Vector2 EvaluateDerivative(float amount) => End - Start;

@@ -25,10 +25,7 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
     private long _revision;
     private ImmutableArray<TerrainChunkState2D> _states;
     /// <summary>Changes whenever the active chunk set or any chunk's data changes.</summary>
-    public long Version
-    {
-        get; private set;
-    }
+    public long Version { get; private set; }
     public ImmutableArray<TerrainChunkState2D> CaptureState()
     {
         if (_states.IsDefault)

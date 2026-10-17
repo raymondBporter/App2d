@@ -9,19 +9,13 @@ namespace App2d.CharacterStudio.Editor;
 /// <summary>What each workspace contributes to the shared layout. The shell owns the frame; a view fills its regions.</summary>
 internal interface IWorkspaceView
 {
-    Workspace Mode
-    {
-        get;
-    }
+    Workspace Mode { get; }
     /// <summary>The structure tree under the asset browser.</summary>
     void Outline();
     void Inspector();
     /// <summary>Handles, overlays and viewport input for the evaluated scene.</summary>
     void Overlay(ViewportFrame frame);
-    float TimelineHeight
-    {
-        get;
-    }
+    float TimelineHeight { get; }
     void Timeline();
 }
 

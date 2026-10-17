@@ -61,10 +61,7 @@ public readonly record struct SoundEffectVoice2D
 
 internal interface ISoundEffectVoice2D
 {
-    bool IsPlaying
-    {
-        get;
-    }
+    bool IsPlaying { get; }
     void SetVolumeScale(float volumeScale, float rampSeconds);
     void Stop(float fadeOutSeconds);
     void SetPosition(Vector2 position)

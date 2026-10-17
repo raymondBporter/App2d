@@ -7,10 +7,7 @@ namespace App2d.Core.Rendering;
 /// <summary>Material data evaluated by the MonoGame renderer in object space.</summary>
 public interface IShader2D
 {
-    XnaColor BaseColor
-    {
-        get;
-    }
+    XnaColor BaseColor { get; }
     XnaColor GetVertexColor(Vector2 position, Rect2D bounds) => BaseColor;
 }
 

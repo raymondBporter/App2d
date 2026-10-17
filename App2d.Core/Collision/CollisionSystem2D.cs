@@ -30,18 +30,9 @@ public sealed class CollisionSystem2D
     public IReadOnlyList<Collider2D> Colliders => _colliders;
     public IPairFilter2D<Collider2D> PairFilter { get; set; } = new DefaultColliderPairFilter2D();
     public ICollisionContactProvider2D ContactProvider { get; set; } = new ShapeCollisionContactProvider2D();
-    public int LastCandidatePairCount
-    {
-        get; private set;
-    }
-    public int LastNarrowPhaseTestCount
-    {
-        get; private set;
-    }
-    public int LastBoundsQueryCandidateCount
-    {
-        get; private set;
-    }
+    public int LastCandidatePairCount { get; private set; }
+    public int LastNarrowPhaseTestCount { get; private set; }
+    public int LastBoundsQueryCandidateCount { get; private set; }
 
     public float CellSize
     {
@@ -382,10 +373,7 @@ public sealed class CollisionSystem2D
     private sealed class CombinedPairFilter : IPairFilter2D<Collider2D>
     {
         public IPairFilter2D<Collider2D> Primary { get; set; } = new DefaultColliderPairFilter2D();
-        public IPairFilter2D<Collider2D>? Additional
-        {
-            get; set;
-        }
+        public IPairFilter2D<Collider2D>? Additional { get; set; }
 
         public bool ShouldTest(Collider2D first, Collider2D second) => Primary.ShouldTest(first, second) && (Additional?.ShouldTest(first, second) != false);
     }

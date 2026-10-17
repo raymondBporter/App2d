@@ -29,14 +29,8 @@ public sealed class PhysicsBody2D
         PreviousRotation = worldObject.Transform.Rotation;
     }
 
-    public SpatialObject2D WorldObject
-    {
-        get;
-    }
-    public Collider2D Collider
-    {
-        get;
-    }
+    public SpatialObject2D WorldObject { get; }
+    public Collider2D Collider { get; }
     public BodyMotionType2D MotionType
     {
         get => _motionType;
@@ -46,40 +40,19 @@ public sealed class PhysicsBody2D
             Collider.Mobility = ToColliderMobility(value);
         }
     }
-    public Vector2 LinearVelocity
-    {
-        get; set;
-    }
-    public float AngularVelocity
-    {
-        get; set;
-    }
+    public Vector2 LinearVelocity { get; set; }
+    public float AngularVelocity { get; set; }
 
     /// <summary>
     /// When true (the default) contacts never impart spin; the body only
     /// rotates when gameplay sets AngularVelocity or applies torque directly.
     /// </summary>
     public bool FreezeRotation { get; set; } = true;
-    public Vector2 AccumulatedForce
-    {
-        get; private set;
-    }
-    public float AccumulatedTorque
-    {
-        get; private set;
-    }
-    public Vector2 PreviousPosition
-    {
-        get; internal set;
-    }
-    public float PreviousRotation
-    {
-        get; internal set;
-    }
-    internal Vector2 LastStepLinearVelocity
-    {
-        get; set;
-    }
+    public Vector2 AccumulatedForce { get; private set; }
+    public float AccumulatedTorque { get; private set; }
+    public Vector2 PreviousPosition { get; internal set; }
+    public float PreviousRotation { get; internal set; }
+    internal Vector2 LastStepLinearVelocity { get; set; }
     public float GravityScale { get; set; } = 1f;
     public float Restitution { get; set; } = 0.5f;
 
@@ -132,14 +105,8 @@ public sealed class PhysicsBody2D
     /// When kinematic, transfer this body's tangential step displacement and
     /// supporting normal velocity to dynamic bodies from the previous contact step.
     /// </summary>
-    public bool TransfersContactMotion
-    {
-        get; set;
-    }
-    public bool IsWallGrippable
-    {
-        get; set;
-    }
+    public bool TransfersContactMotion { get; set; }
+    public bool IsWallGrippable { get; set; }
     public uint CollisionLayer
     {
         get => Collider.CollisionLayer;

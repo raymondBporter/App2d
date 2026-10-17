@@ -30,22 +30,13 @@ public readonly partial record struct Triangle2D : IConvexShape2D, ITriangle<Tri
     }
 
     /// <summary>The first vertex.</summary>
-    public Vector2 A
-    {
-        get; init;
-    }
+    public Vector2 A { get; init; }
 
     /// <summary>The second vertex.</summary>
-    public Vector2 B
-    {
-        get; init;
-    }
+    public Vector2 B { get; init; }
 
     /// <summary>The third vertex.</summary>
-    public Vector2 C
-    {
-        get; init;
-    }
+    public Vector2 C { get; init; }
 
     /// <inheritdoc/>
     public float Area => (float)(Math.Abs(new Vector2d(A).Orientation(new(B), new(C))) * .5);

@@ -14,10 +14,7 @@ namespace App2d.Core.Geometry.Shapes;
 public interface IShape2D : IGeometry2D, IGeometryValue2D
 {
     /// <summary>The local-space area; infinite shapes report positive infinity.</summary>
-    float Area
-    {
-        get;
-    }
+    float Area { get; }
 
     /// <summary>The local-space supremum of |a - b| for points in this shape. Unbounded shapes report positive infinity.</summary>
     float Diameter => ShapeDiameter2D.Calculate(this);

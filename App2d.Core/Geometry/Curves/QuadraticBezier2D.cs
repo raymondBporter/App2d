@@ -16,18 +16,9 @@ public readonly partial record struct QuadraticBezier2D : ICurve2D
         End = end;
     }
 
-    public Vector2 Start
-    {
-        get; init;
-    }
-    public Vector2 Control
-    {
-        get; init;
-    }
-    public Vector2 End
-    {
-        get; init;
-    }
+    public Vector2 Start { get; init; }
+    public Vector2 Control { get; init; }
+    public Vector2 End { get; init; }
 
     public Vector2 Evaluate(float amount)
     {

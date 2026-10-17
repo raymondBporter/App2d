@@ -16,10 +16,7 @@ internal sealed class DistanceProjector2D
 
     public string Name => Limits.IsLocked ? "DISTANCE / ROD" : "DISTANCE RANGE";
     public string Equation => Limits.IsLocked ? "r = L" : "min <= r <= max";
-    public ConstraintLimit1D Limits
-    {
-        get;
-    }
+    public ConstraintLimit1D Limits { get; }
     public float MinimumDistance => Limits.Minimum;
     public float MaximumDistance => Limits.Maximum;
 

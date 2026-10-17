@@ -11,14 +11,8 @@ public sealed class WorldMusicDirector2D(WorldSoundtrack2D soundtrack, Action<st
     private MusicSelection2D? _candidate;
     private float _candidateSeconds;
     private string _pieceOverride = "auto", _moodOverride = "auto";
-    public WorldZone2D? CurrentZone
-    {
-        get; private set;
-    }
-    public MusicSelection2D? CurrentSelection
-    {
-        get; private set;
-    }
+    public WorldZone2D? CurrentZone { get; private set; }
+    public MusicSelection2D? CurrentSelection { get; private set; }
 
     public string PieceOverride
     {

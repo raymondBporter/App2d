@@ -23,19 +23,10 @@ internal sealed class RigidCharacterDemo2D
         Pose = RigidPose2D.Neutral;
     }
 
-    public Vector2 Hips
-    {
-        get; private set;
-    }
+    public Vector2 Hips { get; private set; }
     public Vector2 DisplayHips => Hips + new Vector2(0f, _hipBob);
-    public Vector2 Velocity
-    {
-        get; private set;
-    }
-    public RigidPose2D Pose
-    {
-        get; private set;
-    }
+    public Vector2 Velocity { get; private set; }
+    public RigidPose2D Pose { get; private set; }
     public int Facing { get; private set; } = 1;
     public bool IsGrounded { get; private set; } = true;
     public float SideViewAmount { get; private set; } = IdleSideViewAmount;

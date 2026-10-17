@@ -233,10 +233,7 @@ public sealed class WeaponPresentation2D : IDisposable
 
     private sealed class BoltVisual(WorldObject2D visual, GunBoltTrail2D trail)
     {
-        public EntityId2D Id
-        {
-            get; set;
-        }
+        public EntityId2D Id { get; set; }
         public WorldObject2D Visual { get; } = visual;
         public GunBoltTrail2D Trail { get; } = trail;
     }

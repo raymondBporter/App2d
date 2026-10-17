@@ -212,7 +212,7 @@ public sealed class GameHost : IDisposable
             _consoleView.Open();
             // The toggle originates from the game surface. Move focus after that
             // key event has fully unwound so the surface cannot reclaim it.
-            _window.BeginInvoke((Action)_consoleView.FocusInput);
+            _window.BeginInvoke(_consoleView.FocusInput);
         }
         else
         {

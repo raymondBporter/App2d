@@ -29,16 +29,10 @@ public readonly record struct Rect2D : IRect2D
     }
 
     /// <summary>The lower-left corner.</summary>
-    public Vector2 Min
-    {
-        get;
-    }
+    public Vector2 Min { get; }
 
     /// <summary>The upper-right corner.</summary>
-    public Vector2 Max
-    {
-        get;
-    }
+    public Vector2 Max { get; }
 
     /// <summary>Creates a rectangle of a given size around a center.</summary>
     /// <param name="size">Finite, nonnegative width and height.</param>

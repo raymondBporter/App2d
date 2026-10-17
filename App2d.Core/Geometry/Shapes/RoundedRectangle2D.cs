@@ -26,10 +26,7 @@ public readonly partial record struct RoundedRectangle2D : IConvexShape2D
     public Rect2D InnerRect => new(Min + new Vector2(Radius), Max - new Vector2(Radius));
     public Vector2 Min { get; init; }
     public Vector2 Max { get; init; }
-    public float Radius
-    {
-        get; init;
-    }
+    public float Radius { get; init; }
     public float Area => Area2D.RoundedRectangle(Min, Max, Radius);
 
     /// <inheritdoc/>

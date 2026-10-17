@@ -74,10 +74,7 @@ internal sealed class SavePointPresentation2D : IDisposable
         SetActive(false);
     }
 
-    public bool IsActive
-    {
-        get; private set;
-    }
+    public bool IsActive { get; private set; }
 
     public void Update(float deltaSeconds, bool isActive)
     {

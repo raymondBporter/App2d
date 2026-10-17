@@ -8,26 +8,11 @@ public sealed class MusicCue2D
 {
     private static readonly JsonSerializerOptions Options = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
     public const int SampleRate = 44_100;
-    public string Title
-    {
-        get;
-    }
-    public long LoopFrames
-    {
-        get;
-    }
-    public int BarFrames
-    {
-        get;
-    }
-    public ImmutableArray<string> StemPaths
-    {
-        get;
-    }
-    public ImmutableDictionary<string, ImmutableArray<float>> Moods
-    {
-        get;
-    }
+    public string Title { get; }
+    public long LoopFrames { get; }
+    public int BarFrames { get; }
+    public ImmutableArray<string> StemPaths { get; }
+    public ImmutableDictionary<string, ImmutableArray<float>> Moods { get; }
 
     internal MusicCue2D(string title, long loopFrames, int barFrames, ImmutableArray<string> paths,
         ImmutableDictionary<string, ImmutableArray<float>> moods)

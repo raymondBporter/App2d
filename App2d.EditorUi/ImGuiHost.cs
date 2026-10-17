@@ -17,15 +17,9 @@ public sealed class ImGuiHost : IDisposable
     private readonly ImGuiStyle _baseStyle;
     private bool _disposed;
 
-    public float UiScale
-    {
-        get; private set;
-    }
+    public float UiScale { get; private set; }
     public float DpiScale => _platform.DpiScale;
-    public float UserScale
-    {
-        get; set;
-    }
+    public float UserScale { get; set; }
     public bool WantCaptureMouse
     {
         get

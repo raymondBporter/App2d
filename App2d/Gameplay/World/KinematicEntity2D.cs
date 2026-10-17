@@ -35,26 +35,11 @@ public sealed class KinematicEntity2D : IDisposable
         Body.CollisionMask = collisionMask;
     }
 
-    public EntityId2D Id
-    {
-        get;
-    }
-    public IKinematicMotion2D Motion
-    {
-        get;
-    }
-    public SpatialObject2D WorldObject
-    {
-        get;
-    }
-    public PhysicsBody2D Body
-    {
-        get;
-    }
-    public double TimeSeconds
-    {
-        get; private set;
-    }
+    public EntityId2D Id { get; }
+    public IKinematicMotion2D Motion { get; }
+    public SpatialObject2D WorldObject { get; }
+    public PhysicsBody2D Body { get; }
+    public double TimeSeconds { get; private set; }
     /// <summary>Instantaneous path velocity; the physics body's velocity is the step-average displacement.</summary>
     public Vector2 MotionVelocity => Motion.Velocity(TimeSeconds);
 

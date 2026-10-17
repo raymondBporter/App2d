@@ -18,14 +18,8 @@ internal sealed class SavePoint2D
         Spec = spec;
         _basePosition = spec.Position - new Vector2(0f, respawnGroundOffset);
     }
-    public WorldThingSpec2D Spec
-    {
-        get;
-    }
-    public bool IsActive
-    {
-        get; private set;
-    }
+    public WorldThingSpec2D Spec { get; }
+    public bool IsActive { get; private set; }
     public CheckpointPlacement2D CapturePlacement() => new(Spec.ThingId, _basePosition);
     public CheckpointState2D CaptureState() => new(Spec.ThingId, IsActive);
     public bool Update(float deltaSeconds, Rect2D playerBounds)

@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -26,8 +27,8 @@ public sealed class CurveAttachmentTests
             {
                 Id = "stroke", A = "start", B = "end", Depth = -.01f,
                 Geometry = cubic
-                    ? new CubicBezier2D { Start = Vector2.Zero, Control1 = new(-.5f, 1f / 3), Control2 = new(-.5f, 2f / 3), End = Vector2.UnitY }
-                    : new QuadraticBezier2D { Start = Vector2.Zero, Control = new(-.5f, .5f), End = Vector2.UnitY },
+                    ? new CubicBezier2D { Start = Vector2.Zero, Control1 = new(-.5f, 1f / 3), Control2 = new(-.5f, 2f / 3), End = Vector2.UnitY }.Validated()
+                    : new QuadraticBezier2D { Start = Vector2.Zero, Control = new(-.5f, .5f), End = Vector2.UnitY }.Validated(),
                 Material = new() { Fill = "#ff0000", StrokeWidth = .02f },
                 Bindings = cubic
                     ? [new() { Point = 0, Control = "start" }, new() { Point = 1, Control = "bend" }, new() { Point = 2, Control = "bend2" }, new() { Point = 3, Control = "end" }]
@@ -137,7 +138,7 @@ public sealed class CurveAttachmentTests
                 part.Bindings![1].Toward = "bend";
                 break;
             case "unsupported-curve":
-                part.Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY };
+                part.Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated();
                 break;
         }
         Assert.Throws<InvalidDataException>(model.Validate);
@@ -175,7 +176,7 @@ public sealed class CurveAttachmentTests
     {
         var model = Model();
         var part = model.Parts[0];
-        part.Geometry = new QuadraticBezier2D { Start = Vector2.Zero, Control = new(0, .5f), End = Vector2.UnitY };
+        part.Geometry = new QuadraticBezier2D { Start = Vector2.Zero, Control = new(0, .5f), End = Vector2.UnitY }.Validated();
         model.Controls.Single(c => c.Id == "bend").Rest = new(1, 0, .2f);
         if (!bound)
         {
@@ -243,7 +244,7 @@ public sealed class CurveAttachmentTests
                 break;
             case "shape":
                 part.Bindings = null;
-                part.Geometry = new Ellipse2D { Center = Vector2.Zero, Radii = new(.5f, .5f) };
+                part.Geometry = new Ellipse2D { Center = Vector2.Zero, Radii = new(.5f, .5f) }.Validated();
                 break;
         }
         Assert.Throws<InvalidDataException>(model.Validate);

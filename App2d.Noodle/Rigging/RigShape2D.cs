@@ -29,22 +29,13 @@ internal abstract class RigShape2D(int id, string name, RigBone2D attachedBone)
     public RigBone2D AttachedBone { get; set; } = attachedBone;
 
     [Category("Attachment"), DisplayName("Local X")]
-    public float LocalX
-    {
-        get; set;
-    }
+    public float LocalX { get; set; }
 
     [Category("Attachment"), DisplayName("Local Y")]
-    public float LocalY
-    {
-        get; set;
-    }
+    public float LocalY { get; set; }
 
     [Category("Attachment"), DisplayName("Angle (degrees)")]
-    public float AngleDegrees
-    {
-        get; set;
-    }
+    public float AngleDegrees { get; set; }
 
     [Category("Rendering"), DisplayName("Color")]
     public Color Color { get; set; } = Color.FromArgb(215, 151, 111, 255);

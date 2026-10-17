@@ -30,10 +30,7 @@ internal sealed class ArenaTest(AuthoringWorkspace assets, GraphicsDevice device
     public bool Overlays { get; set; } = true;
     public List<string> Roster { get; } = [StarterContent.Player, StarterContent.SpearGuard, StarterContent.StalkerPest, "cinder-gunner"];
     public IReadOnlyList<string> Problems { get; private set; } = [];
-    public AuthoredArena? Arena
-    {
-        get; private set;
-    }
+    public AuthoredArena? Arena { get; private set; }
 
     /// <summary>Takes a snapshot of the drafts and starts the arena with the roster's entities that compiled.</summary>
     public void Start()

@@ -10,15 +10,9 @@ public sealed class AnimationPlayer2D<TFrame>
 {
     private readonly PlaybackClock _clock = new();
 
-    public AnimationClip2D<TFrame>? Clip
-    {
-        get; private set;
-    }
+    public AnimationClip2D<TFrame>? Clip { get; private set; }
     public float ElapsedSeconds => (float)_clock.TimeSeconds;
-    public int CurrentFrameIndex
-    {
-        get; private set;
-    }
+    public int CurrentFrameIndex { get; private set; }
     public bool IsPlaying => _clock.IsPlaying;
     public bool IsFinished => _clock.IsComplete;
 

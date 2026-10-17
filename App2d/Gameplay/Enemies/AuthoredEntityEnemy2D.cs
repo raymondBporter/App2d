@@ -75,26 +75,11 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         Evaluate(0, true);
     }
 
-    public ResolvedEntity Entity
-    {
-        get;
-    }
-    public EntityId2D Id
-    {
-        get;
-    }
-    public SpatialObject2D WorldObject
-    {
-        get;
-    }
-    public PhysicsBody2D Body
-    {
-        get;
-    }
-    public Health2D Health
-    {
-        get;
-    }
+    public ResolvedEntity Entity { get; }
+    public EntityId2D Id { get; }
+    public SpatialObject2D WorldObject { get; }
+    public PhysicsBody2D Body { get; }
+    public Health2D Health { get; }
     public CombatFaction2D Faction => CombatFaction2D.Enemy;
     public bool IsAlive => Health.IsAlive;
     public ICombatant2D Combatant => this;

@@ -12,10 +12,7 @@ public sealed class TileEditSession2D(EditableTileMap2D map)
     private readonly List<TileEdit2D> _currentStroke = [];
     private readonly List<TileEdit2D[]> _undoStack = [];
 
-    public bool IsStrokeActive
-    {
-        get; private set;
-    }
+    public bool IsStrokeActive { get; private set; }
     public int UndoCount => _undoStack.Count;
 
     public void BeginStroke()

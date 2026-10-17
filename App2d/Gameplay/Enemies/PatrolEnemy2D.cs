@@ -31,36 +31,15 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
         Health = new Health2D(health);
     }
 
-    public EntityId2D Id
-    {
-        get;
-    }
-    public SpatialObject2D WorldObject
-    {
-        get;
-    }
-    public PhysicsBody2D Body
-    {
-        get;
-    }
-    public Health2D Health
-    {
-        get;
-    }
+    public EntityId2D Id { get; }
+    public SpatialObject2D WorldObject { get; }
+    public PhysicsBody2D Body { get; }
+    public Health2D Health { get; }
     public CombatFaction2D Faction => CombatFaction2D.Enemy;
     public int ContactDamage => 1;
-    public float PatrolMinX
-    {
-        get;
-    }
-    public float PatrolMaxX
-    {
-        get;
-    }
-    public float Speed
-    {
-        get;
-    }
+    public float PatrolMinX { get; }
+    public float PatrolMaxX { get; }
+    public float Speed { get; }
     public float Facing => _direction;
     public bool IsStunned => _stunSeconds > 0f;
     public bool IsAlive => Health.IsAlive;

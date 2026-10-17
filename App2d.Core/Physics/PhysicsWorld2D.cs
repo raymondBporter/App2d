@@ -35,10 +35,7 @@ public sealed class PhysicsWorld2D
         _physicsColliderPairFilter = new PhysicsColliderPairFilter(this);
     }
 
-    public Vector2 Gravity
-    {
-        get; set;
-    }
+    public Vector2 Gravity { get; set; }
     public int PositionIterations { get; set; } = 4;
     public int VelocityIterations { get; set; } = 1;
     public float MaxSubstepSeconds { get; set; } = 1f / 60f;
@@ -46,10 +43,7 @@ public sealed class PhysicsWorld2D
     public IPairFilter2D<PhysicsBody2D> PairFilter { get; set; } = new DefaultPhysicsPairFilter2D();
     public IPhysicsPositionSolver2D PositionSolver { get; set; } = new MassWeightedPositionSolver2D();
     public IPhysicsVelocitySolver2D VelocitySolver { get; set; } = new ImpulseVelocitySolver2D();
-    public CollisionSystem2D CollisionSystem
-    {
-        get;
-    }
+    public CollisionSystem2D CollisionSystem { get; }
     public IReadOnlyList<PhysicsBody2D> Bodies => _bodies;
     public IReadOnlyList<PhysicsContact2D> LastContacts => _lastContacts;
     public int LastCandidatePairCount => CollisionSystem.LastCandidatePairCount;

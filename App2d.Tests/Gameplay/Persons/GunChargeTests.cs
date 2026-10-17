@@ -283,27 +283,12 @@ public sealed class GunChargeTests
 
     private sealed class Fixture : IDisposable
     {
-        public PhysicsWorld2D Physics
-        {
-            get;
-        }
-        public PhysicsBody2D Ground
-        {
-            get;
-        }
-        public Person2D Person
-        {
-            get;
-        }
-        public PersonArsenal2D Arsenal
-        {
-            get;
-        }
+        public PhysicsWorld2D Physics { get; }
+        public PhysicsBody2D Ground { get; }
+        public Person2D Person { get; }
+        public PersonArsenal2D Arsenal { get; }
         public List<WeaponEvent2D> Events { get; } = [];
-        public int Shots
-        {
-            get; private set;
-        }
+        public int Shots { get; private set; }
 
         public Fixture(bool ladder = false)
         {

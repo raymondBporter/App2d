@@ -17,14 +17,8 @@ internal sealed class PolarLinkProjector2D
         AngleLimits = ConstraintLimit1D.Between(minimumAngle, maximumAngle);
     }
 
-    public float Length
-    {
-        get;
-    }
-    public ConstraintLimit1D AngleLimits
-    {
-        get;
-    }
+    public float Length { get; }
+    public ConstraintLimit1D AngleLimits { get; }
     public float MinimumAngle => AngleLimits.Minimum;
     public float MaximumAngle => AngleLimits.Maximum;
 

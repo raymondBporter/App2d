@@ -6,22 +6,10 @@ namespace App2d.Core.Input;
 public readonly record struct GamepadState2D(
     Vector2 LeftStick, GamepadButton2D Down, GamepadButton2D Pressed, GamepadButton2D Released)
 {
-    public bool IsConnected
-    {
-        get; init;
-    }
-    public Vector2 RightStick
-    {
-        get; init;
-    }
-    public float LeftTrigger
-    {
-        get; init;
-    }
-    public float RightTrigger
-    {
-        get; init;
-    }
+    public bool IsConnected { get; init; }
+    public Vector2 RightStick { get; init; }
+    public float LeftTrigger { get; init; }
+    public float RightTrigger { get; init; }
 
     public bool IsDown(GamepadButton2D button) => (Down & button) != 0;
     public bool WasPressed(GamepadButton2D button) => (Pressed & button) != 0;

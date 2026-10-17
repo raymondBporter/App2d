@@ -47,10 +47,7 @@ internal sealed class RigidPartSet2D(
     public XnaColor Accent { get; } = accent;
     public RigidPartStyle2D Style { get; } = style;
 
-    public static IReadOnlyList<RigidPartSet2D> PrototypeSets
-    {
-        get;
-    } =
+    public static IReadOnlyList<RigidPartSet2D> PrototypeSets { get; } =
     [
         CreateSplineMan(),
         Create("PLUM KNIGHT", new XnaColor(149, 103, 244), new XnaColor(112, 72, 207), new XnaColor(238, 181, 123)),

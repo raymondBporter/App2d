@@ -17,10 +17,7 @@ public readonly record struct Direction2D
         Vector = (wide / wide.Length()).ToVector2();
     }
 
-    public Vector2 Vector
-    {
-        get;
-    }
+    public Vector2 Vector { get; }
     public bool IsValid => Vector != Vector2.Zero;
 
     public float AngleRadians

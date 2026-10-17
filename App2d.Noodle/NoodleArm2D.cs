@@ -66,34 +66,13 @@ internal sealed class NoodleArm2D
         RebuildSkin();
     }
 
-    public Vector2 Shoulder
-    {
-        get;
-    }
-    public float UpperLength
-    {
-        get;
-    }
-    public float LowerLength
-    {
-        get;
-    }
-    public Vector2 Target
-    {
-        get; private set;
-    }
-    public int BendDirection
-    {
-        get; private set;
-    }
-    public TwoBoneIkPose2D Pose
-    {
-        get; private set;
-    }
-    public Vector2 DefaultTarget
-    {
-        get;
-    }
+    public Vector2 Shoulder { get; }
+    public float UpperLength { get; }
+    public float LowerLength { get; }
+    public Vector2 Target { get; private set; }
+    public int BendDirection { get; private set; }
+    public TwoBoneIkPose2D Pose { get; private set; }
+    public Vector2 DefaultTarget { get; }
 
     public void SetTarget(Vector2 target)
     {

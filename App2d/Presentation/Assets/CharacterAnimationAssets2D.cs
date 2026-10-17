@@ -171,25 +171,10 @@ internal static class CharacterAnimationAssets2D
         Justification = "System.Text.Json creates manifest objects through reflection.")]
     private sealed class AnimationManifest
     {
-        public float? FramesPerSecond
-        {
-            get; init;
-        }
-        public float? DurationSeconds
-        {
-            get; init;
-        }
-        public bool Loop
-        {
-            get; init;
-        }
-        public float? CanvasWidth
-        {
-            get; init;
-        }
-        public Dictionary<string, float>? RootXByFacing
-        {
-            get; init;
-        }
+        public float? FramesPerSecond { get; init; }
+        public float? DurationSeconds { get; init; }
+        public bool Loop { get; init; }
+        public float? CanvasWidth { get; init; }
+        public Dictionary<string, float>? RootXByFacing { get; init; }
     }
 }

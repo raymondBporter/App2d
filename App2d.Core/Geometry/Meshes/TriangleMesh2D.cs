@@ -52,14 +52,8 @@ public sealed class TriangleMesh2D
     public SegmentVertexEnumerable<Segment<Vector2>, Vector2> BoundarySegments => MeshTopology.IndexedSegments<Vector2>(_vertices, BoundaryEdges);
     public int TriangleCount => _indices.Length / 3;
     /// <summary>The sum of triangle areas; overlaps are counted once per triangle.</summary>
-    public float Area
-    {
-        get;
-    }
-    public Rect2D Bounds
-    {
-        get;
-    }
+    public float Area { get; }
+    public Rect2D Bounds { get; }
 
     public Triangle<Vector2> TriangleAt(int index)
     {

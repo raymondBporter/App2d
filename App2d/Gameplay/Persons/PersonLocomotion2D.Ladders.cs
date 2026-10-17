@@ -9,10 +9,7 @@ public sealed partial class PersonLocomotion2D
     private readonly IChunkedTileMap2D? _tileMap;
     private float _ladderRelatchTime;
 
-    public bool IsClimbingLadder
-    {
-        get; private set;
-    }
+    public bool IsClimbingLadder { get; private set; }
 
     public void DetachFromLadder()
     {

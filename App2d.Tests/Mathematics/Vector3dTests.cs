@@ -12,7 +12,7 @@ public sealed class Vector3dTests
         var second = new Vector3(-1, 4, 1);
         var difference = first.ToVector3d() - second.ToVector3d();
         Assert.Equal(new Vector3d(16777217, -1, -16777217), difference);
-        Assert.NotEqual((double)(first - second).X, difference.X);
+        Assert.NotEqual((first - second).X, difference.X);
         Assert.Equal(first.ToVector3d(), difference + second.ToVector3d());
         Assert.Equal(new Vector3(16777216, -1, -16777216), difference.ToVector3());
     }
@@ -46,7 +46,7 @@ public sealed class Vector3dTests
         Assert.True(double.IsFinite(Vector3d.DistanceSquared(a, -a)));
 
         var tiny = new Vector3(0, 0, float.Epsilon).ToVector3d();
-        Assert.Equal((double)float.Epsilon, Vector3d.Distance(Vector3d.Zero, tiny));
+        Assert.Equal(float.Epsilon, Vector3d.Distance(Vector3d.Zero, tiny));
         Assert.True(tiny.LengthSquared() > 0);
     }
 

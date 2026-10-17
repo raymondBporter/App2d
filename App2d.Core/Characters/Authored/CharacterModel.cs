@@ -123,10 +123,7 @@ public sealed class CharacterModel
     public string Ink { get; set; } = "#222b32";
     public float LineWidth { get; set; } = .045f;
     /// <summary>The explicit build rule behind this model's exposed build values, such as "person". Null exposes none.</summary>
-    public string? Build
-    {
-        get; set;
-    }
+    public string? Build { get; set; }
     public List<ModelControl> Controls { get; set; } = [];
     /// <summary>Point IK definitions, evaluated before the typed constraints.</summary>
     public List<ModelChain> Chains { get; set; } = [];
@@ -145,10 +142,7 @@ public sealed class CharacterModel
     public List<ControlGroup> Groups { get; set; } = [];
     public List<LookPreset> Looks { get; set; } = [];
     /// <summary>The prototype puppet this model was converted from, if any.</summary>
-    public AssetSource? Source
-    {
-        get; set;
-    }
+    public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(json, "model");

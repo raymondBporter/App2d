@@ -102,8 +102,7 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 
         var speed = reference.Velocity.Length() / _traversal.TileSize;
         var angle = float.RadiansToDegrees(MathF.Atan2(reference.Velocity.Y, MathF.Abs(reference.Velocity.X)));
-        renderer.DrawScreenLabel(
-            $"F4 FIRE / F6 CLEAR | BALLISTICS {speed:0.0} tiles/s @ {angle:0} deg | 1 tile = 1 m (reference only)",
+        renderer.DrawScreenLabel($"F4 FIRE / F6 CLEAR | BALLISTICS {speed:0.0} tiles/s @ {angle:0} deg | 1 tile = 1 m (reference only)",
             new Vector2(24f, 220f));
         renderer.DrawScreenLabel(Describe("YELLOW reference", reference), new Vector2(24f, 260f));
         renderer.DrawScreenLabel(Describe("PINK world", world), new Vector2(24f, 300f));
@@ -141,7 +140,6 @@ internal sealed class BallisticsDebug2D(TraversalMetrics2D traversal)
 
         // Exact constant-acceleration trajectory: no integration error, drag, fall cap,
         // inherited player velocity, apex assistance, or collision response.
-        public Vector2 PositionAt(float seconds) =>
-            Origin + Velocity * seconds - new Vector2(0f, 0.5f * Gravity * seconds * seconds);
+        public Vector2 PositionAt(float seconds) => Origin + Velocity * seconds - new Vector2(0f, 0.5f * Gravity * seconds * seconds);
     }
 }

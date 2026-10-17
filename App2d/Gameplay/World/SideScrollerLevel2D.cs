@@ -89,30 +89,12 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         GoalGroundY = GoalThing?.Position.Y ?? TileMap.Origin.Y;
     }
 
-    public IChunkedTileMap2D TileMap
-    {
-        get;
-    }
-    public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones
-    {
-        get;
-    }
-    public Vector2 SpawnPoint
-    {
-        get;
-    }
-    public float GoalX
-    {
-        get;
-    }
-    public float GoalGroundY
-    {
-        get;
-    }
-    public WorldThingSpec2D? GoalThing
-    {
-        get;
-    }
+    public IChunkedTileMap2D TileMap { get; }
+    public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; }
+    public Vector2 SpawnPoint { get; }
+    public float GoalX { get; }
+    public float GoalGroundY { get; }
+    public WorldThingSpec2D? GoalThing { get; }
     public IReadOnlyList<WorldThingSpec2D> SavePointThings => [.. _worldThingSpecs.Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)];
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
     public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;

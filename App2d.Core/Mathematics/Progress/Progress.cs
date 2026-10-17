@@ -17,10 +17,7 @@ public static class Progress
     public static float SmoothestStep(float value) => (float)SmoothestStepMap.Sample(Clamping.Clamp01(value));
 
     /// <summary>Unclamped cubic smoothstep packaged with its derivative.</summary>
-    public static ProgressMap SmoothStepMap
-    {
-        get;
-    } = new(
+    public static ProgressMap SmoothStepMap { get; } = new(
         SmoothStepUnclamped,
         x => 6d * x * (1d - x));
 
@@ -29,10 +26,7 @@ public static class Progress
         value * value * (T.CreateChecked(3) - T.CreateChecked(2) * value);
 
     /// <summary>Unclamped quintic smoothstep packaged with its derivative.</summary>
-    public static ProgressMap SmootherStepMap
-    {
-        get;
-    } = new(
+    public static ProgressMap SmootherStepMap { get; } = new(
         SmootherStepUnclamped,
         x => 30d * x * x * (1d - x) * (1d - x));
 
@@ -40,10 +34,7 @@ public static class Progress
         value * value * value * (value * (value * T.CreateChecked(6) - T.CreateChecked(15)) + T.CreateChecked(10));
 
     /// <summary>Unclamped septic smoothstep packaged with its derivative.</summary>
-    public static ProgressMap SmoothestStepMap
-    {
-        get;
-    } = new(
+    public static ProgressMap SmoothestStepMap { get; } = new(
         SmoothestStepUnclamped,
         x => 140d * x * x * x * (1d - x) * (1d - x) * (1d - x));
 

@@ -25,19 +25,13 @@ public readonly record struct Ray2D : IGeometry2D
     }
 
     /// <summary>The start of the ray.</summary>
-    public Vector2 Origin
-    {
-        get;
-    }
+    public Vector2 Origin { get; }
 
     /// <summary>The unit direction as a vector.</summary>
     public Vector2 Direction => UnitDirection.Vector;
 
     /// <summary>The validated unit direction.</summary>
-    public Direction2D UnitDirection
-    {
-        get;
-    }
+    public Direction2D UnitDirection { get; }
 
     /// <summary>False for the default value, which has no direction.</summary>
     public bool IsValid => UnitDirection.IsValid;
