@@ -1,7 +1,9 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using static App2d.Core.Characters.Authored.PersonLoadout;
 using static App2d.Core.Characters.Humanoid;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterSeeds;
 
 /// <summary>Painted torso materials, a solid hide wrap, and socket-mounted hair. No new rig or gameplay geometry.</summary>
 public static class PersonWardrobe

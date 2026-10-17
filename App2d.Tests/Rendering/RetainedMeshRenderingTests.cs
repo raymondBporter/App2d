@@ -1,5 +1,4 @@
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;

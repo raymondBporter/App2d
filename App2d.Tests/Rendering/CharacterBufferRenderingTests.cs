@@ -89,7 +89,7 @@ public sealed class CharacterBufferRenderingTests
         using var target = new RenderTarget2D(graphics.Device, 128, 128, false, SurfaceFormat.Color, DepthFormat.Depth24);
         graphics.Device.SetRenderTarget(target);
         using var texture = new Texture2D(graphics.Device, 1, 1);
-        texture.SetData(new[] { new Color(255, 0, 0, 128) });
+        texture.SetData([new Color(255, 0, 0, 128)]);
         using var renderer = new PointCharacterRenderer(graphics.Device);
         var mesh = new CharacterMesh(3);
         // Near opaque green, then farther textured red: depth read must keep the near triangle.

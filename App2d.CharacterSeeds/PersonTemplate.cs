@@ -1,4 +1,7 @@
-namespace App2d.Core.Characters.Authored;
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
+
+namespace App2d.CharacterSeeds;
 
 /// <summary>The Person starting template, with the shared short-legged proportions. A template, not an engine category.</summary>
 public static class PersonTemplate

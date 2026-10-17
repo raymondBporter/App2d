@@ -1,4 +1,4 @@
-using App2d.Core.Characters;
+using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Authored;

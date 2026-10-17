@@ -1,9 +1,3 @@
-using System.Collections.Immutable;
-using System.Composition;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using App2d.Analyzers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
@@ -12,13 +6,18 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Operations;
 using Microsoft.CodeAnalysis.Simplification;
+using System.Collections.Immutable;
+using System.Composition;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace App2d.Analyzers.CodeFixes;
 
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(UseShapeBuilderCodeFixProvider)), Shared]
 public sealed class UseShapeBuilderCodeFixProvider : CodeFixProvider
 {
-    public override ImmutableArray<string> FixableDiagnosticIds => ImmutableArray.Create(ShapeConstructionAnalyzer.DiagnosticId);
+    public override ImmutableArray<string> FixableDiagnosticIds => [ShapeConstructionAnalyzer.DiagnosticId];
 
     public override FixAllProvider GetFixAllProvider() => WellKnownFixAllProviders.BatchFixer;
 

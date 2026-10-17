@@ -136,7 +136,7 @@ public sealed class BabyTriceratopsTests
         string[] Run() => [.. Enumerable.Range(0, 240).Select(_ =>
         {
             game.Session.Advance();
-var state = Assert.Single(game.Session.CaptureEnemies());
+            var state = Assert.Single(game.Session.CaptureEnemies());
             return $"{state.Position};{state.Velocity};{state.ActionId};{state.ActionSeconds};{game.Player.Health.Current}";
         })];
         Run();

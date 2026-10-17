@@ -1,4 +1,6 @@
-namespace App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Authored;
+
+namespace App2d.CharacterSeeds;
 
 /// <summary>A starting document bundle. Templates are authoring conveniences, never runtime character categories.</summary>
 public sealed record CharacterTemplate(string Id, string Name, string Description, Func<string, string, CharacterModel> Model, Func<CharacterModel, IReadOnlyList<MotionClip>> Clips, string? Preview = null);

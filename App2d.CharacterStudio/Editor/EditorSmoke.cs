@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -423,7 +424,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         return workspace;
     }
 
-    private void BuildImageRig(EditorSession s)
+    private static void BuildImageRig(EditorSession s)
     {
         const string texture = "images/image-rig/white.png";
         var path = Path.Combine(s.Assets.Root, texture);

@@ -1,9 +1,11 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterSeeds;
 
 /// <summary>Four planted IK feet and independently posed head/tail, with editable cutout artwork.</summary>
 public static class QuadrupedTemplate
@@ -96,7 +98,20 @@ public static class QuadrupedTemplate
         m.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
         m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.Chains.Select(c => c.Id)] }];
         m.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .35f }] }];
-        m.MotionSets = [new() { Id = "standard", Name = "Quadruped", Roles = new() { ["idle"] = id + "-idle", ["walk"] = id + "-walk", ["run"] = id + "-run", ["scrape"] = id + "-scrape", ["head-down"] = id + "-head-down", ["rush"] = id + "-rush", ["brake"] = id + "-brake", ["recover"] = id + "-recover" } }];
+        m.MotionSets = [new()
+        {
+            Id = "standard",
+            Name = "Quadruped",
+            Roles = new()
+            {
+                ["idle"] = id + "-idle",
+                ["walk"] = id + "-walk",
+                ["run"] = id + "-run",
+                ["scrape"] = id + "-scrape",
+                ["head-down"] = id + "-head-down",
+                ["rush"] = id + "-rush",
+                ["brake"] = id + "-brake",
+                ["recover"] = id + "-recover" } }];
         m.Validate();
         return m;
     }

@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
@@ -125,7 +126,8 @@ public sealed class PersonVariantMotionTests
         var before = builds.Select(m => PoseEvaluator.Sample(m, clip, 0).World("hips").Y).ToArray();
         clip.Tracks.Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" }).Keys[0].Value = clip.Tracks
             .Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" })
-            .Keys[0].Value with { Y = clip.Tracks.Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" }).Keys[0].Value.Y + (.1f) };
+            .Keys[0].Value with
+        { Y = clip.Tracks.Single(t => t is { Kind: MotionClip.TranslateKind, Target: "hips" }).Keys[0].Value.Y + (.1f) };
         var after = builds.Select(m => PoseEvaluator.Sample(m, clip, 0).World("hips").Y).ToArray();
         Assert.Equal(.1f * PersonTemplate.LegLength, after[0] - before[0], 4);
         Assert.Equal(.1f * PersonTemplate.LegLength * PersonBuild.TallThin.Legs, after[1] - before[1], 4);

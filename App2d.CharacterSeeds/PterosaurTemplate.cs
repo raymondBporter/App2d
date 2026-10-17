@@ -1,9 +1,11 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterSeeds;
 
 /// <summary>A flying starter built entirely from ordinary controls, cutouts, point attachments and motion clips.</summary>
 public static class PterosaurTemplate

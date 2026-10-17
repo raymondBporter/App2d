@@ -135,9 +135,10 @@ public sealed class PointCharacterRenderer : IDisposable
         {
             // Geometric growth avoids reallocating the GPU buffer as a pose grows slightly.
             var capacity = (int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)mesh.Count);
-            buffers = new MeshBuffers(new DynamicVertexBuffer(_device,
-                VertexPositionColorTexture.VertexDeclaration, capacity, BufferUsage.WriteOnly));
-            buffers.Version = mesh.Version - 1;
+            buffers = new MeshBuffers(new DynamicVertexBuffer(_device, VertexPositionColorTexture.VertexDeclaration, capacity, BufferUsage.WriteOnly))
+            {
+                Version = mesh.Version - 1
+            };
             _meshes.Add(mesh, buffers);
         }
         if (buffers.Version != mesh.Version)

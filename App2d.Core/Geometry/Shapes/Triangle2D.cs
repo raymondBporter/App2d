@@ -1,6 +1,6 @@
 using App2d.Core.Geometry.Operations.Diameter;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;

@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Authoring;
@@ -31,7 +32,7 @@ public sealed class PuppetAuthoringTests
     [Fact]
     public void EditorCanAddRoundedBoxesAndFourVertexTrapezoids()
     {
-        var model = Core.Characters.Authored.PersonTemplate.Model();
+        var model = PersonTemplate.Model();
         var box = Core.Characters.Authored.ModelAuthoring.AddPart(model, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "hips");
         var trapezoid = Core.Characters.Authored.ModelAuthoring.AddPart(model, new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }, "hips");
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());

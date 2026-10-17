@@ -55,7 +55,7 @@ public static class PartCurves2D
                 var drawnRest = new Vector3(restCoordinates.TransformPoint(p), restA.Z + (restB.Z - restA.Z) * p.Y + part.Depth);
                 placed[binding.Point] = PartAttachment2D.BoundPoint(binding, drawnRest, world, rest);
             }
-            source = WithControlPoints(curve, placed.Select(p => p.XY).ToArray()).Build();
+            source = WithControlPoints(curve, [.. placed.Select(p => p.XY)]).Build();
             // Layer order follows the same Bézier weights, independently of its XY geometry.
             layers = WithControlPoints(curve, [.. placed.Select(p => new Vector2(p.Z, 0))]).Build();
         }

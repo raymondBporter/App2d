@@ -1,7 +1,7 @@
-using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
+using System.Collections.Immutable;
 
 namespace App2d.Analyzers;
 
@@ -20,7 +20,7 @@ public sealed class ShapeConstructionAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         description: "Shape constructors bypass builder validation. Use the shape's Builder.Create factory instead.");
 
-    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => ImmutableArray.Create(Rule);
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics => [Rule];
 
     public override void Initialize(AnalysisContext context)
     {

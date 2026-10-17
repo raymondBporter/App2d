@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using App2d.Analyzers.CodeFixes;
 using App2d.Core.Shapes;
 using Microsoft.CodeAnalysis;
@@ -7,6 +6,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using System.Collections.Immutable;
 using Xunit;
 
 namespace App2d.Analyzers.Tests;
@@ -20,8 +20,8 @@ public sealed class ShapeConstructionTests
             .Append(typeof(Circle2D).Assembly.Location).Distinct()
             .Select(path => MetadataReference.CreateFromFile(path))];
 
-    public static TheoryData<string> Constructors => new()
-    {
+    public static TheoryData<string> Constructors =>
+    [
         "new Circle2D(2)",
         "new Ellipse2D(new Vector2(2, 1))",
         "new Capsule2D(Vector2.Zero, Vector2.One, 2)",
@@ -33,7 +33,7 @@ public sealed class ShapeConstructionTests
         "new SimplePolygon2D([Vector2.Zero, Vector2.UnitX, Vector2.UnitY])",
         "new HalfSpace2D(Vector2.UnitY, 2)",
         "new CompositeShape2D([Circle2D.Builder.Create(2)])"
-    };
+    ];
 
     [Theory]
     [MemberData(nameof(Constructors))]
@@ -241,7 +241,7 @@ public sealed class ShapeConstructionTests
             ShapeConstructionAnalyzer.DiagnosticId, provider.FixableDiagnosticIds,
             new DocumentDiagnostics(diagnostics), CancellationToken.None);
         var action = await provider.GetFixAllProvider().GetFixAsync(context);
-        var fixedDocument = await ApplyAsync(Assert.IsAssignableFrom<CodeAction>(action), document.Id);
+        var fixedDocument = await ApplyAsync(Assert.IsType<CodeAction>(action, false), document.Id);
         Assert.Empty(await AnalyzeAsync(fixedDocument));
         Assert.Equal(2, (await fixedDocument.GetTextAsync()).ToString().Split(".Builder.Create(").Length - 1);
     }
@@ -264,7 +264,7 @@ public sealed class ShapeConstructionTests
             ShapeConstructionAnalyzer.DiagnosticId, provider.FixableDiagnosticIds,
             new DocumentDiagnostics(diagnostics), CancellationToken.None);
         var action = await provider.GetFixAllProvider().GetFixAsync(context);
-        var fixedDocument = await ApplyAsync(Assert.IsAssignableFrom<CodeAction>(action), document.Id);
+        var fixedDocument = await ApplyAsync(Assert.IsType<CodeAction>(action, false), document.Id);
         var root = (CompilationUnitSyntax)(await fixedDocument.GetSyntaxRootAsync())!;
         Assert.Single(root.Usings, directive => directive.Name?.ToString() == "App2d.Core.Shapes");
         Assert.All(root.DescendantNodes().OfType<InvocationExpressionSyntax>(), call => Assert.Equal("Circle2D.Builder.Create", call.Expression.ToString()));

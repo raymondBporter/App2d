@@ -65,30 +65,25 @@ public sealed class WorldAsset2D : IDisposable
         Zones = zones;
         TileMap = new WorldTileMap2D(maps.Select(m => m.TileMap));
     }
-    public IReadOnlyList<WorldMapAsset2D> Maps
-    {
-        get;
-    }
-    public ImmutableArray<WorldZone2D> Zones
-    {
-        get;
-    }
-    public bool StartAtArrival
-    {
-        get; init;
-    }
+
+    public IReadOnlyList<WorldMapAsset2D> Maps { get; }
+
+    public ImmutableArray<WorldZone2D> Zones { get; }
+
+    public bool StartAtArrival { get; init; }
+
     public ImmutableArray<GiantTree2D> GiantTrees => LoadGiantTrees();
-    public ImmutableArray<GiantTree2D> LoadGiantTrees() => [.. Maps
+
+    public ImmutableArray<GiantTree2D> LoadGiantTrees() =>
+    [
+        .. Maps
         .Where(m => Path.GetFileName(m.DatabasePath) == "level.db")
-        .SelectMany(m => GiantTreeFile2D.Load(Path.Combine(Path.GetDirectoryName(m.DatabasePath)!, "giant-trees.json"), m.TileMap))];
-    public WorldTileMap2D TileMap
-    {
-        get;
-    }
-    public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms => [.. Maps.SelectMany(m =>
-        m.MovingPlatforms.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
-    public IReadOnlyList<PositionThingRecord2D> PositionThings => [.. Maps.SelectMany(m =>
-        m.PositionThings.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
+        .SelectMany(m => GiantTreeFile2D.Load(Path.Combine(Path.GetDirectoryName(m.DatabasePath)!, "giant-trees.json"), m.TileMap))
+    ];
+
+    public WorldTileMap2D TileMap { get; }
+    public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms => [.. Maps.SelectMany(m => m.MovingPlatforms.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
+    public IReadOnlyList<PositionThingRecord2D> PositionThings => [.. Maps.SelectMany(m => m.PositionThings.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
     public void Dispose() => TileMap.Dispose();
 }
 
@@ -200,22 +195,15 @@ public static class WorldFile2D
 
     public sealed record WorldDocument(int Version, IReadOnlyList<ZoneDocument> Zones)
     {
-        public string? StartMapId
-        {
-            get; init;
-        }
-        public bool StartAtArrival
-        {
-            get; init;
-        }
+        public string? StartMapId { get; init; }
+        public bool StartAtArrival { get; init; }
     }
     public sealed record ZoneDocument(string Id, string Name, int Priority, IReadOnlyList<MapDocument> Maps);
+
     public sealed record MapDocument(string Id, string Name, [property: JsonRequired] int Identity, string File)
     {
-        public ZoneGeneration2D? Generation
-        {
-            get; init;
-        }
+        public ZoneGeneration2D? Generation { get; init; }
     }
+
     public sealed record ZoneGeneration2D(float OriginX, float OriginY, CombatLevelSettings2D Settings);
 }

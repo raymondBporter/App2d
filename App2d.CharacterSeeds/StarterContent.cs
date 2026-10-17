@@ -1,9 +1,11 @@
+using App2d.Core.Characters;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Characters.Authored;
+namespace App2d.CharacterSeeds;
 
 /// <summary>
 /// The phase 3 starter content, written as ordinary authored assets: Person idle/thrust/jump clips, a spear, a stalker
@@ -159,7 +161,7 @@ public static class StarterContent
 
         foreach (var key in Channel(MotionClip.TranslateKind, Humanoid.Chest).Keys)
         {
-            key.Value = key.Value with { X = key.Value.X + (Lean) };
+            key.Value = key.Value with { X = key.Value.X + Lean };
         }
 
         foreach (var arm in new[] { Humanoid.LeftArm, Humanoid.RightArm })

@@ -263,8 +263,18 @@ public sealed class AuthoredEntityEnemyTests
             game.Session.Advance();
         }
 
-        string[] Run() => [.. Enumerable.Range(0, 240).Select(_ => JsonSerializer.Serialize(game.Session.CaptureEnemies().Select(e => (e.Position, e.Bolts.Select(b => b.Position).ToArray())).ToArray(), JsonOptions)
-            + (game.Session.Advance() is var frame ? "" : ""))];
+        string[] Run() =>
+        [
+            .. Enumerable
+            .Range(0, 240)
+            .Select(_ => JsonSerializer.Serialize(game.Session
+                                        .CaptureEnemies()
+                                        .Select(e => (e.Position, e.Bolts.Select(b => b.Position).ToArray()))
+                                        .ToArray(),
+                                        JsonOptions)
+                                        + (game.Session.Advance() is var frame ? "" : "") // this does nothing??
+                )
+        ];
         var first = Run();
         Assert.Contains(first, json => json.Contains("\"X\"") && json.Contains("[{"));
         Assert.True(game.Player.Health.Current < 30, "the gunner's shots land");
