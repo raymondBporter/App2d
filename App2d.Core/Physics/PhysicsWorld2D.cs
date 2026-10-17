@@ -12,7 +12,7 @@ using System.Numerics;
 
 namespace App2d.Core.Physics;
 
-public sealed partial class PhysicsWorld2D
+public sealed class PhysicsWorld2D
 {
     private readonly List<PhysicsBody2D> _bodies = [];
     private readonly List<PhysicsContact2D> _lastContacts = [];

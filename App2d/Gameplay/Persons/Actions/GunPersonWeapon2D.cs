@@ -13,7 +13,7 @@ using System.Numerics;
 namespace App2d.Gameplay.Persons.Actions;
 
 /// <summary>Hold to charge one shot, fired automatically as soon as charging completes.</summary>
-internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
+internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
 {
     private readonly float ChargeSeconds;
     private readonly float RecoverySeconds;
@@ -85,10 +85,7 @@ internal sealed partial class GunPersonWeapon2D : PersonWeapon2DBase
     public override PersonActionState2D CaptureActionState() => _secondsSinceShot is { } elapsed
         ? new(App2d.Contracts.Simulation.PlayerAttackKind2D.Shot, elapsed, RecoverySeconds) : default;
 
-    public bool IsCharging
-    {
-        get; private set;
-    }
+    public bool IsCharging { get; private set; }
     public float ChargeProgress => Math.Clamp(_chargeTime / ChargeSeconds, 0f, 1f);
     public override IEnumerable<SpatialObject2D> ActiveHitboxes
     {

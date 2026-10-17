@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
-public sealed partial class ConvexPolygon2D
+public readonly partial record struct ConvexPolygon2D
 {
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
@@ -18,7 +18,9 @@ public sealed partial class ConvexPolygon2D
         }
         [JsonIgnore] public override string Kind => ShapeKinds2D.ConvexPolygon;
         public override void Validate() => ValidateVertices(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(ArgGuard.RequireNotNull(Vertices, "vertices")));
-        public override ConvexPolygon2D Build()
+        protected override IConvexShape2D BuildShape() => Build();
+
+        public new ConvexPolygon2D Build()
         {
             Vector2[] vertices = [.. ArgGuard.RequireNotNull(Vertices, "vertices")];
             ValidateVertices(vertices);

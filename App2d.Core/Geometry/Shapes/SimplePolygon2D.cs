@@ -2,17 +2,22 @@ using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Conversion;
 using App2d.Core.Geometry.Operations.Diameter;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Operations.Polygons;
 using System.Numerics;
 
 namespace App2d.Core.Shapes;
 
 /// <summary>A filled simple polygon, including concave outlines, in either winding.</summary>
-public sealed partial class SimplePolygon2D : IShape2D
+public readonly partial record struct SimplePolygon2D : IShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.SimplePolygon;
 
     private readonly Vector2[] _vertices;
+
+    /// <summary>Creates a polygon snapshot. Prefer Builder.Create for construction.</summary>
+    public SimplePolygon2D(Vector2[] vertices)
+        : this((Vector2[])vertices.Clone(), PolygonTriangulation2D.Triangulate(vertices, 1e-8)) { }
 
     private SimplePolygon2D(Vector2[] vertices, TriangleMesh2D mesh)
     {

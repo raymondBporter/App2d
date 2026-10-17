@@ -100,7 +100,7 @@ public sealed class ShapeBoundsPrecisionTests
     public void ScalarBuildersKeepCentersValidationAndAxisAlignedIntent()
     {
         var center = new Vector2(10, -5);
-        var rectangle = Rectangle2D.Builder.FromSize(4, 2, center).Build();
+        var rectangle = Assert.IsType<Rectangle2D>(Rectangle2D.Builder.FromSize(4, 2, center).Build());
         Assert.Equal(new Rect2D(new(8, -6), new(12, -4)), ShapeBounds2D.Calculate(rectangle));
         Assert.IsType<AxisAlignedRectangle2D>(AxisAlignedRectangle2D.Builder.FromSize(4, 2, center).Build());
         Assert.Equal(rectangle.Min, AxisAlignedRectangle2D.Builder.Create(4, 2, center).Min);

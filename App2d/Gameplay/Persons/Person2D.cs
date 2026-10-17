@@ -18,7 +18,7 @@ namespace App2d.Gameplay.Persons;
 /// Shared humanoid simulation. Input, AI, rendering, audio, respawning, and
 /// encounter policy live outside this type.
 /// </summary>
-public sealed partial class Person2D : ICombatant2D
+public sealed class Person2D : ICombatant2D
 {
     private const float FootstepSpeedThreshold = 65f;
     private const float FootstepIntervalSeconds = 0.29f;

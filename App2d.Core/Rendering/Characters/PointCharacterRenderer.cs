@@ -35,10 +35,10 @@ public sealed class PointCharacterRenderer : IDisposable
             Texture2D? texture = null;
             if (batch.Texture is { } path)
             {
-                var full = App2d.Core.IO.FilePaths.ResolveUnderRoot(drawing.TextureRoot, path);
+                var full = IO.FilePaths.ResolveUnderRoot(drawing.TextureRoot, path);
                 if (!_images.TryGetValue(full, out texture))
                 {
-                    using var decoded = App2d.Core.Rendering.Textures.Texture2D.Load(full);
+                    using var decoded = Textures.Texture2D.Load(full);
                     texture = new(_device, decoded.Width, decoded.Height);
                     try
                     {

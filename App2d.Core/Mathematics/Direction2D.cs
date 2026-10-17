@@ -74,12 +74,9 @@ public readonly record struct Direction2D
         ArgGuard.Finite(from);
         ArgGuard.Finite(to);
         var delta = to.ToVector2d() - from.ToVector2d();
-        if (delta == Vector2d.Zero)
-        {
-            throw new ArgumentOutOfRangeException(nameof(to), "The two points must differ.");
-        }
+        var length = ArgGuard.NonZero(delta.Length(), nameof(to));
 
-        return new((delta / delta.Length()).ToVector2());
+        return new((delta / length).ToVector2());
     }
 
     internal void Validate() => ArgGuard.NonZero(Vector);

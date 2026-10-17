@@ -13,7 +13,7 @@ using System.Numerics;
 namespace App2d.Gameplay.Persons.Actions;
 
 /// <summary>Weapon-free punch and kick actions shared by human and AI persons.</summary>
-public sealed partial class UnarmedPersonActions2D : IPersonActionSet2D
+public sealed class UnarmedPersonActions2D : IPersonActionSet2D
 {
     private readonly CombatSystem2D _combat;
     private readonly PhysicsBody2D _ownerBody;

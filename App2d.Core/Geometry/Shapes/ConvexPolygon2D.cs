@@ -8,7 +8,7 @@ using System.Numerics;
 namespace App2d.Core.Shapes;
 
 /// <summary>A filled convex polygon in local space, given in perimeter order in either winding.</summary>
-public sealed partial class ConvexPolygon2D : IConvexShape2D
+public readonly partial record struct ConvexPolygon2D : IConvexShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.ConvexPolygon;
@@ -18,9 +18,9 @@ public sealed partial class ConvexPolygon2D : IConvexShape2D
 
     /// <summary>Creates a convex polygon and copies its vertices.</summary>
     /// <param name="vertices">At least three finite vertices in perimeter order, with distinct neighbors and consistent turning.</param>
-    private ConvexPolygon2D(Vector2[] vertices)
+    public ConvexPolygon2D(Vector2[] vertices)
     {
-        _vertices = vertices;
+        _vertices = (Vector2[])vertices.Clone();
         Area = Area2D.Polygon(_vertices);
     }
 

@@ -214,7 +214,7 @@ public sealed class ArgGuardTests
     [Fact]
     public void CustomConditionsCaptureExpressionsAndAllowMessageOverrides()
     {
-        var count = 0;
+        const int count = 0;
         var stateError = Assert.Throws<InvalidOperationException>(() => StateGuard.ThrowIfNot(count > 0));
         Assert.Contains("count > 0", stateError.Message);
         Assert.Contains("count == 0", Assert.Throws<InvalidOperationException>(() => StateGuard.ThrowIf(count == 0)).Message);
@@ -227,7 +227,7 @@ public sealed class ArgGuardTests
         StateGuard.ThrowIfNot(count == 0);
         Assert.Equal(0, ArgGuard.Index(0, 1));
         Assert.Equal(int.MaxValue - 1, ArgGuard.Index(int.MaxValue - 1, int.MaxValue));
-        var invalidCount = -1;
+        const int invalidCount = -1;
         Assert.Equal(nameof(invalidCount), Assert.Throws<ArgumentOutOfRangeException>(() => ArgGuard.Index(0, invalidCount)).ParamName);
     }
 

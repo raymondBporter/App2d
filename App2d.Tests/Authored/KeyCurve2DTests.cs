@@ -85,7 +85,7 @@ public sealed class KeyCurve2DTests
         var key = new KeyCurve2D { Control1 = new(.2f, 2), Control2 = new(.8f, -1), Absolute = true };
         var json = JsonSerializer.Serialize(key, AuthoredJson.Options);
         using var document = JsonDocument.Parse(json);
-        Assert.Equal(new[] { "absolute", "x1", "x2", "y1", "y2" }, document.RootElement.EnumerateObject().Select(p => p.Name).Order());
+        Assert.Equal(["absolute", "x1", "x2", "y1", "y2"], document.RootElement.EnumerateObject().Select(p => p.Name).Order());
         Assert.Equal(key, JsonSerializer.Deserialize<KeyCurve2D>(json, AuthoredJson.Options));
         Assert.Equal(new KeyCurve2D(), JsonSerializer.Deserialize<KeyCurve2D>("{}", AuthoredJson.Options));
     }

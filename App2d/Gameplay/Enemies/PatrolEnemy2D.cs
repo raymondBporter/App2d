@@ -8,7 +8,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
-public sealed partial class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
+public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 {
     private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
     private float _direction = 1f;

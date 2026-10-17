@@ -15,10 +15,7 @@ public sealed class EntityIdAllocator2D
     }
 
     /// <summary>The value the next allocation returns.</summary>
-    public long Next
-    {
-        get; private set;
-    }
+    public long Next { get; private set; }
 
     public EntityId2D Allocate()
     {

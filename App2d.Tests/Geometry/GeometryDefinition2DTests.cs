@@ -85,10 +85,10 @@ public sealed class GeometryDefinition2DTests
         Assert.Equal(1.5f, ShapeDistance2D.Distance(new System.Numerics.Vector2(2.5f, 2.5f), polygon), 5);
         Assert.Equal(0f, ShapeDistance2D.Distance(new System.Numerics.Vector2(.5f, 2.5f), polygon), 5);
         Assert.True(ShapeDistance2D.Distance(polygon, Circle2D.Builder.Create(.25f, new(2.5f, 2.5f))) > 1f);
-        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(.5f, .5f), System.Numerics.Vector2.UnitX),
+        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(.5f, .5f), Vector2.UnitX),
             new SpatialObject2D(polygon), 10, out var exit));
         Assert.Equal(2.5f, exit.Distance, 5);
-        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(2, 2), -System.Numerics.Vector2.UnitX),
+        Assert.True(SpatialRaycast2D.TryIntersect(new Ray2D(new(2, 2), -Vector2.UnitX),
             new SpatialObject2D(polygon), 10, out var notch));
         Assert.Equal(1f, notch.Distance, 5);
     }

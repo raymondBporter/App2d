@@ -9,8 +9,8 @@ public sealed class CombatLevelGeneratorTests
     [Fact]
     public void GeneratedDraftRunsWithActualAuthoredEnemiesWithoutGraphics()
     {
-        var assets = App2d.Core.Assets.AssetLocations.ForGame(AppContext.BaseDirectory, true);
-        var catalog = App2d.Core.Characters.Authored.AuthoredCatalog.Load(assets.AuthoredCharacters);
+        var assets = Core.Assets.AssetLocations.ForGame(AppContext.BaseDirectory, true);
+        var catalog = Core.Characters.Authored.AuthoredCatalog.Load(assets.AuthoredCharacters);
         Assert.Empty(catalog.Errors);
         var draft = CombatLevelGenerator2D.Generate(new()
         {
@@ -149,8 +149,8 @@ public sealed class CombatLevelGeneratorTests
     [Fact]
     public void RejectsInvalidSettingsBeforeCreatingOutput()
     {
-        Assert.Throws<ArgumentException>(() => CombatLevelGenerator2D.Generate(new() { Difficulty = float.NaN }, Tilesets));
-        Assert.Throws<ArgumentException>(() => CombatLevelGenerator2D.Generate(new() { JumpRiseTiles = 5 }, Tilesets));
+        Assert.Throws<ArgumentOutOfRangeException>(() => CombatLevelGenerator2D.Generate(new() { Difficulty = float.NaN }, Tilesets));
+        Assert.Throws<ArgumentOutOfRangeException>(() => CombatLevelGenerator2D.Generate(new() { JumpRiseTiles = 5 }, Tilesets));
         Assert.Throws<ArgumentException>(() => CombatLevelGenerator2D.Generate(new() { MeleeEnemies = ["goal"] }, Tilesets));
     }
 }

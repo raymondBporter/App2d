@@ -1,3 +1,5 @@
+using App2d.Core.Validation;
+
 namespace App2d.Core.Mathematics.Progress;
 
 /// <summary>
@@ -13,9 +15,9 @@ public static class Easing
     private static readonly double Log2 = Math.Log(2d);
 
     public static readonly ProgressMap Linear = new(x => x, _ => 1d);
-    public static readonly ProgressMap Smooth = App2d.Core.Mathematics.Progress.Progress.SmoothStepMap;
-    public static readonly ProgressMap Smoother = App2d.Core.Mathematics.Progress.Progress.SmootherStepMap;
-    public static readonly ProgressMap Smoothest = App2d.Core.Mathematics.Progress.Progress.SmoothestStepMap;
+    public static readonly ProgressMap Smooth = Progress.SmoothStepMap;
+    public static readonly ProgressMap Smoother = Progress.SmootherStepMap;
+    public static readonly ProgressMap Smoothest = Progress.SmoothestStepMap;
 
     public static readonly ProgressMap EaseInQuad = EaseInPower(2);
     public static readonly ProgressMap EaseOutQuad = ProgressMaps.EaseOut(EaseInQuad);
@@ -63,7 +65,7 @@ public static class Easing
     /// <summary>x raised to a positive integer power, paired with n * x^(n-1). Power 1 is linear.</summary>
     public static ProgressMap EaseInPower(int power)
     {
-        ArgumentOutOfRangeException.ThrowIfLessThan(power, 1);
+        ArgGuard.Positive(power);
         return power == 1 ? Linear : new(
             x => Math.Pow(x, power),
             x => power * Math.Pow(x, power - 1));

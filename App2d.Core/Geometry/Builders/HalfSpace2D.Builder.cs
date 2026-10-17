@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
-public sealed partial class HalfSpace2D
+public readonly partial record struct HalfSpace2D
 {
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ShapeBuilder2D
@@ -26,7 +26,9 @@ public sealed partial class HalfSpace2D
             ArgGuard.NonZero(Normal, "outwardNormal");
             ArgGuard.Finite(Offset, "offset");
         }
-        public override HalfSpace2D Build()
+        protected override IShape2D BuildShape() => Build();
+
+        public new HalfSpace2D Build()
         {
             Validate();
             var wideNormal = Normal.ToVector2d();

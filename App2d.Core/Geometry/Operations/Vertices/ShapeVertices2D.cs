@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
@@ -43,7 +44,7 @@ public static class ShapeVertices2D
             RoundedRectangle2D rounded when rounded.InnerRect.Min == rounded.InnerRect.Max => 1,
             RoundedRectangle2D rounded when rounded.InnerRect.Min.X == rounded.InnerRect.Max.X || rounded.InnerRect.Min.Y == rounded.InnerRect.Max.Y => 2,
             RoundedRectangle2D => 4,
-            Rectangle2D => 4,
+            Rectangle2D or AxisAlignedRectangle2D => 4,
             Triangle2D => 3,
             ConvexPolygon2D polygon => polygon.Vertices.Length,
             _ => 0
@@ -97,8 +98,8 @@ public static class ShapeVertices2D
                 }
 
                 break;
-            case Rectangle2D rectangle:
-                rectangle.WriteCorners(vertices);
+            case IRect2D rectangle:
+                VertexGenerator2D.WriteRectangle(vertices, rectangle.Min, rectangle.Max);
                 break;
             case Triangle2D triangle:
                 triangle.WriteVertices(vertices);
@@ -125,7 +126,7 @@ public static class ShapeVertices2D
             Circle2D or Ellipse2D => roundSegments,
             Capsule2D => 2 * (roundSegments / 2 + 1),
             RoundedRectangle2D => 36,
-            Rectangle2D => 4,
+            Rectangle2D or AxisAlignedRectangle2D => 4,
             Triangle2D => 3,
             ConvexPolygon2D polygon => polygon.Vertices.Length,
             SimplePolygon2D polygon => polygon.Vertices.Length,
@@ -162,8 +163,8 @@ public static class ShapeVertices2D
             case RoundedRectangle2D rounded:
                 VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius);
                 break;
-            case Rectangle2D rectangle:
-                rectangle.WriteCorners(vertices);
+            case IRect2D rectangle:
+                VertexGenerator2D.WriteRectangle(vertices, rectangle.Min, rectangle.Max);
                 break;
             case Triangle2D triangle:
                 triangle.WriteVertices(vertices);

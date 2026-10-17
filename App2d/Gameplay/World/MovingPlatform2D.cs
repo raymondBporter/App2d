@@ -10,7 +10,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
-public sealed partial class MovingPlatform2D : IDisposable
+public sealed class MovingPlatform2D : IDisposable
 {
     private readonly PingPongMotion2D _motion;
     private readonly KinematicEntity2D _kinematic;

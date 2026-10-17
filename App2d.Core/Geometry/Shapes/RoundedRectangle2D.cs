@@ -8,12 +8,12 @@ using System.Numerics;
 namespace App2d.Core.Shapes;
 
 /// <summary>A rectangle with circular corners: its inset rectangle expanded by <see cref="Radius"/>.</summary>
-public sealed partial class RoundedRectangle2D : IConvexShape2D
+public readonly partial record struct RoundedRectangle2D : IConvexShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.RoundedRectangle;
 
-    private RoundedRectangle2D(Vector2 min, Vector2 max, float radius)
+    public RoundedRectangle2D(Vector2 min, Vector2 max, float radius)
     {
         OuterRect = new(min, max);
         Radius = radius;

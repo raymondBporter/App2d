@@ -46,7 +46,7 @@ public sealed class KeyframeSamplingTests
         Assert.Equal(new Vector4(.2f, 1, .8f, 1), color.Value);
         json = JsonSerializer.Serialize(color, AuthoredJson.Options);
         using var tint = JsonDocument.Parse(json);
-        Assert.Equal(new[] { "r", "b" }, tint.RootElement.EnumerateObject().Select(property => property.Name));
+        Assert.Equal(["r", "b"], tint.RootElement.EnumerateObject().Select(property => property.Name));
         Assert.Equal(color, JsonSerializer.Deserialize<SlotColorKey2D>(json, AuthoredJson.Options));
     }
 

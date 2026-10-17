@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Enemies;
 
-public sealed partial class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
+public sealed class Shieldback2D(PatrolEnemy2D enemy) : IEnemyActor2D
 {
     private bool _simulationEnabled = true;
     public PatrolEnemy2D Enemy { get; } = ArgGuard.RequireNotNull(enemy);

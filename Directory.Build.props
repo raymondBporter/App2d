@@ -1,0 +1,7 @@
+<Project>
+  <!-- Analyzer references are build/editor tools, never runtime references. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'App2d.Analyzers' and '$(MSBuildProjectName)' != 'App2d.Analyzers.CodeFixes' and '$(MSBuildProjectName)' != 'App2d.Analyzers.Tests'">
+    <ProjectReference Include="$(MSBuildThisFileDirectory)App2d.Analyzers/App2d.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)App2d.Analyzers.CodeFixes/App2d.Analyzers.CodeFixes.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

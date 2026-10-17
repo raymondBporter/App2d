@@ -1,4 +1,3 @@
-using App2d.Core.Characters;
 using System.Numerics;
 using static App2d.Core.Characters.Humanoid;
 
@@ -28,7 +27,7 @@ public static class PersonLoadout
 
     public const string Sword = "sword", Sheath = "sheath", Pistol = "pistol";
     /// <summary>The upper-body group: channels an arms-only overlay (a gun shot) owns over any legs. The Person model carries it as its "upper" control group.</summary>
-    public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { Humanoid.Chest, Humanoid.Head, Humanoid.LeftShoulder, Humanoid.RightShoulder, Humanoid.LeftArm, Humanoid.RightArm };
+    public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { Chest, Head, LeftShoulder, RightShoulder, LeftArm, RightArm };
     public static readonly IReadOnlySet<string> SwordUpperBody = new HashSet<string>(UpperBody, StringComparer.Ordinal) { SwordSocket };
 
     public static bool SeenFromBehind(MotionClip clip, float seconds) =>
@@ -113,7 +112,7 @@ public static class PersonLoadout
     {
         if (wearer is null)
         {
-            yield return (SeenFromBehind(clip, seconds) ? PersonLoadout.ShortHairBack : PersonLoadout.ShortHair, Humanoid.HeadSocket);
+            yield return (SeenFromBehind(clip, seconds) ? ShortHairBack : ShortHair, HeadSocket);
         }
         else
         {

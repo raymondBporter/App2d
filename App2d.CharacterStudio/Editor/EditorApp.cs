@@ -74,7 +74,7 @@ internal sealed class EditorApp : Game
         }
         var assets = AuthoringWorkspace.Open(root);
         // Sources come from the real characters folder, also during a smoke run on a scratch copy of the authored assets.
-        var sources = Core.Characters.Authored.SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(_authoredRoot))!);
+        var sources = SourceLibraries.Open(Path.GetDirectoryName(Path.GetFullPath(_authoredRoot))!);
         _shell = new(new EditorSession(assets, sources)
         {
             SeedModel = CharacterTemplates.Instantiate,

@@ -20,11 +20,8 @@ public static class RandomExtensions
         ArgumentNullException.ThrowIfNull(random);
         ArgGuard.Finite(minimum);
 
-        if (!float.IsFinite(maximum) || maximum < minimum || !float.IsFinite(maximum - minimum))
-        {
-            throw new ArgumentOutOfRangeException(nameof(maximum), "Maximum must be finite and at least minimum, with a finite range.");
-        }
+        var range = ArgGuard.NonNegative(maximum - minimum, nameof(maximum));
 
-        return minimum + random.NextSingle() * (maximum - minimum);
+        return minimum + random.NextSingle() * range;
     }
 }

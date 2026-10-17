@@ -21,6 +21,7 @@ public sealed class ShapeBuilder2DTests
         { nameof(AxisAlignedRectangle2D), ShapeKinds2D.Rectangle },
         { nameof(Triangle2D), ShapeKinds2D.Triangle },
         { nameof(ConvexPolygon2D), ShapeKinds2D.ConvexPolygon },
+        { nameof(SimplePolygon2D), ShapeKinds2D.SimplePolygon },
         { nameof(HalfSpace2D), ShapeKinds2D.HalfSpace },
         { nameof(CompositeShape2D), ShapeKinds2D.Composite }
     };
@@ -35,10 +36,36 @@ public sealed class ShapeBuilder2DTests
         nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-1, -2), new(3, 1)),
         nameof(Triangle2D) => Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(1, 3)),
         nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(0, 0), new(2, 0), new(3, 1), new(1, 2)]),
+        nameof(SimplePolygon2D) => SimplePolygon2D.Builder.Create([new(0, 0), new(3, 0), new(1, 1), new(0, 3)]),
         nameof(HalfSpace2D) => HalfSpace2D.Builder.Create(new(1, 1), 2),
         nameof(CompositeShape2D) => CompositeShape2D.Builder.Create([Circle2D.Builder.Create(1, new(-3, 0)), Rectangle2D.Builder.Create(new(1, -1), new(4, 1))]),
         _ => throw new ArgumentOutOfRangeException(nameof(shapeName), shapeName, null)
     };
+
+    [Theory]
+    [MemberData(nameof(BuiltInShapes))]
+    public void RuntimeShapesAreReadonlyValuesAndBuildersKeepTheirRuntimeType(string shapeName, string kind)
+    {
+        var shape = CreateShape(shapeName);
+        var type = shape.GetType();
+        Assert.True(type.IsValueType);
+        Assert.True(type.IsDefined(typeof(System.Runtime.CompilerServices.IsReadOnlyAttribute), inherit: false));
+        Assert.Equal(kind, shape.Kind);
+        Assert.Equal(type, ShapeBuilder2D.FromShape(shape).Build().GetType());
+    }
+
+    [Fact]
+    public void ScalarShapesHaveValueEqualityAndTypedBuildersMatchPolymorphicBuilders()
+    {
+        var builder = new Circle2D.Builder { Center = new(1, 2), Radius = 3 };
+        Circle2D circle = builder.Build();
+        ShapeBuilder2D shapeBuilder = builder;
+        ConvexShapeBuilder2D convexBuilder = builder;
+        Assert.Equal(circle, Circle2D.Builder.Create(3, new(1, 2)));
+        Assert.True(circle == Assert.IsType<Circle2D>(shapeBuilder.Build()));
+        Assert.True(circle == Assert.IsType<Circle2D>(convexBuilder.Build()));
+        Assert.NotEqual(circle, Circle2D.Builder.Create(4, new(1, 2)));
+    }
 
     [Theory]
     [MemberData(nameof(BuiltInShapes))]

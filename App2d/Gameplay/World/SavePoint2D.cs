@@ -6,7 +6,7 @@ using System.Numerics;
 namespace App2d.Gameplay.World;
 
 /// <summary>Checkpoint entry and activation state for the current campaign player.</summary>
-internal sealed partial class SavePoint2D
+internal sealed class SavePoint2D
 {
     private readonly Vector2 _basePosition;
     private bool _playerWasInside;

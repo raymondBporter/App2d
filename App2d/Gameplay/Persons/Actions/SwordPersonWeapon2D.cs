@@ -11,7 +11,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-internal sealed partial class SwordPersonWeapon2D(
+internal sealed class SwordPersonWeapon2D(
     EntityIdAllocator2D ids,
     PhysicsBody2D ownerBody,
     CombatFaction2D ownerFaction,

@@ -90,7 +90,7 @@ public sealed class PolynomialRootsTests
         AssertRoots([6, -5, 1], 2 + 1e-8, 3 - 1e-8, []);
         AssertRoots([6, -5, 1], 2, 3 - 1e-8, [2]);
         AssertRoots([6, -5, 1], 2 + 1e-8, 3, [3]);
-        Span<double> roots = stackalloc double[] { 99, 99, 99 };
+        Span<double> roots = [99, 99, 99];
         Assert.Equal(1, PolynomialRoots.FindRealRoots([1, -2, 1], 0, 2, roots));
         Assert.Equal(1d, roots[0]);
         Assert.Equal(99d, roots[1]);

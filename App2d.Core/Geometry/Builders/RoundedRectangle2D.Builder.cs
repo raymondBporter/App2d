@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
-public sealed partial class RoundedRectangle2D
+public readonly partial record struct RoundedRectangle2D
 {
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
@@ -25,14 +25,12 @@ public sealed partial class RoundedRectangle2D
         public override void Validate()
         {
             Rectangle2D.Builder.ValidateBounds(Min, Max);
-            ArgGuard.NonNegative(Radius, "radius");
-            if (Radius > Math.Min((double)Max.X - Min.X, (double)Max.Y - Min.Y) / 2)
-            {
-                throw new ArgumentOutOfRangeException("radius", "Corner radius cannot exceed half the shorter side.");
-            }
+            ArgGuard.InRange((double)Radius, 0, Math.Min((double)Max.X - Min.X, (double)Max.Y - Min.Y) / 2, "radius");
         }
 
-        public override RoundedRectangle2D Build()
+        protected override IConvexShape2D BuildShape() => Build();
+
+        public new RoundedRectangle2D Build()
         {
             Validate();
             return new RoundedRectangle2D(Min, Max, Radius);

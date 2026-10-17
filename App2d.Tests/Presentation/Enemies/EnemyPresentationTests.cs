@@ -17,10 +17,10 @@ public sealed class EnemyPresentationTests
     [Fact]
     public void ThrowerReleasesHeldStoneRendersRockAndCleansUpOnStreaming()
     {
-        var catalog = App2d.Core.Characters.Authored.AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
+        var catalog = Core.Characters.Authored.AuthoredCatalog.Load(Path.GetFullPath(Path.Combine(TestAssetPath.Root, "..", "Characters", "authored")));
         var entity = catalog.Entities["rock-thrower"];
         var pose = new Core.Characters.Authored.ActorPose(
-            App2d.Core.Characters.Authored.PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2.Zero, 1);
+            Core.Characters.Authored.PoseEvaluator.Sample(entity.Model, entity.Actions["attack"].Clip, 1, false), Vector2.Zero, 1);
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
         var sounds = new RecordingSounds();

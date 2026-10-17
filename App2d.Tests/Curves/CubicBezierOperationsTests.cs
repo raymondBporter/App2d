@@ -57,7 +57,7 @@ public sealed class CubicBezierOperationsTests
     {
         // X(u) = 3 * (u - 1/4) * (u - 1/2) * (u - 3/4).
         var curve = new CubicBezier2D(new(-.28125f, 0), new(.40625f, 1), new(-.40625f, 2), new(.28125f, 3));
-        Span<double> parameters = stackalloc double[] { 99, 99, 99, 99 };
+        Span<double> parameters = [99, 99, 99, 99];
         Assert.Equal(3, curve.FindParametersAtX(0, parameters));
         Assert.Equal(.25, parameters[0], 12);
         Assert.Equal(.5, parameters[1], 12);
@@ -126,7 +126,7 @@ public sealed class CubicBezierOperationsTests
         Assert.Throws<ArgumentException>(() => Example.Slice(float.NaN, 1));
         var buffer = new double[] { 99, 99 };
         Assert.Throws<ArgumentOutOfRangeException>(() => Example.FindParametersAtX(0, buffer));
-        Assert.Equal(new double[] { 99, 99 }, buffer);
+        Assert.Equal([99, 99], buffer);
         Assert.Throws<ArgumentOutOfRangeException>(() => Example.ParameterAtX(float.PositiveInfinity));
     }
 

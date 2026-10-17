@@ -4,7 +4,6 @@ using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
-using static App2d.Core.Characters.Humanoid;
 
 namespace App2d.CharacterStudio.PlayerMoves;
 

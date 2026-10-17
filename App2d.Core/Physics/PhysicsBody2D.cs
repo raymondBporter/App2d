@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace App2d.Core.Physics;
 
-public sealed partial class PhysicsBody2D
+public sealed class PhysicsBody2D
 {
     private HashSet<PhysicsBody2D>? _ignoredOneWayPlatforms;
     private float _mass = 1f;

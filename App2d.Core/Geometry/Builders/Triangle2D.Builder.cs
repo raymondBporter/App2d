@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
-public sealed partial class Triangle2D
+public readonly partial record struct Triangle2D
 {
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
@@ -40,7 +40,9 @@ public sealed partial class Triangle2D
             return twice;
         }
         public override void Validate() => SignedAreaTwice();
-        public override Triangle2D Build() => new(A, B, C, SignedAreaTwice());
+        protected override IConvexShape2D BuildShape() => Build();
+
+        public new Triangle2D Build() => new(A, B, C, SignedAreaTwice());
         public static Triangle2D Create(Vector2 a, Vector2 b, Vector2 c) => new Builder { A = a, B = b, C = c }.Build();
     }
 }

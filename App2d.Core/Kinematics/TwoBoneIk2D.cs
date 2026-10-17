@@ -27,13 +27,8 @@ public static class TwoBoneIk2D
         ArgGuard.Positive(firstLength);
         ArgGuard.Positive(secondLength);
         ArgGuard.NonZero(bendDirection);
-        var fallback = zeroTargetDirection ?? Vector2.UnitX;
-        ArgGuard.Finite(fallback);
+        var fallback = ArgGuard.NonZero(zeroTargetDirection ?? Vector2.UnitX, nameof(zeroTargetDirection));
         var fallbackLength = fallback.ToVector2d().Length();
-        if (fallbackLength == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(zeroTargetDirection), "A fallback direction must be nonzero.");
-        }
 
         var delta = target.ToVector2d() - root.ToVector2d();
         var distance = delta.Length();

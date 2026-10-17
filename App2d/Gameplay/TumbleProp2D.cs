@@ -14,7 +14,7 @@ namespace App2d.Gameplay;
 /// <summary>
 /// An indestructible composite dumbbell that tumbles when hit.
 /// </summary>
-internal sealed partial class TumbleProp2D : IEnemyActor2D, ICombatant2D
+internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
 {
     private const float HitVelocityScale = 0.8f;
     private const float HitAngularKick = 4.5f;

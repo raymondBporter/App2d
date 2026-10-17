@@ -27,7 +27,7 @@ public sealed class Rect2DBoundsTests
     [Fact]
     public void ProjectedBoundsAcceptExplicitStateWithoutAllocatingTemporaryPoints()
     {
-        IReadOnlyList<Vector2> points = new Vector2[] { new(3, 4), new(-2, 7), new(5, -1) };
+        IReadOnlyList<Vector2> points = [new(3, 4), new(-2, 7), new(5, -1)];
         var pose = Frame2D.FromRotation(.7f, new(5, 2));
         var expected = Rect2D.FromPoints(points.Select(pose.TransformPoint));
         Rect2D Measure() => Rect2D.FromPoints(points, pose, static (point, frame) => frame.TransformPoint(point));

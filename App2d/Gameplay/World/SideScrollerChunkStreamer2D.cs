@@ -10,7 +10,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.World;
 
-internal sealed partial class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunkedTileMap2D tileMap, uint worldLayer, uint actorMask) : IDisposable
+internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunkedTileMap2D tileMap, uint worldLayer, uint actorMask) : IDisposable
 {
     private const int HorizontalChunkRadius = 2;
     private const int VerticalChunkRadius = 1;

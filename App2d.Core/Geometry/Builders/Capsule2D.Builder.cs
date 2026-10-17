@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
-public sealed partial class Capsule2D
+public readonly partial record struct Capsule2D
 {
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
@@ -21,7 +21,9 @@ public sealed partial class Capsule2D
             ArgGuard.Finite(End, "end");
             ArgGuard.Positive(Radius, "radius");
         }
-        public override Capsule2D Build()
+        protected override IConvexShape2D BuildShape() => Build();
+
+        public new Capsule2D Build()
         {
             Validate();
             return new Capsule2D(Start, End, Radius);

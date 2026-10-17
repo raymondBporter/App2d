@@ -7,7 +7,7 @@ using System.Numerics;
 namespace App2d.Core.Shapes;
 
 /// <summary>A filled triangle in local space. Either perimeter winding is accepted; collinear vertices are rejected.</summary>
-public sealed partial class Triangle2D : IConvexShape2D
+public readonly partial record struct Triangle2D : IConvexShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.Triangle;
@@ -19,6 +19,9 @@ public sealed partial class Triangle2D : IConvexShape2D
     /// <param name="a">The first vertex.</param>
     /// <param name="b">The second vertex.</param>
     /// <param name="c">The third vertex.</param>
+    public Triangle2D(Vector2 a, Vector2 b, Vector2 c)
+        : this(a, b, c, new Vector2d(a).Orientation(new(b), new(c))) { }
+
     private Triangle2D(Vector2 a, Vector2 b, Vector2 c, double signedAreaTwice)
     {
         A = a;

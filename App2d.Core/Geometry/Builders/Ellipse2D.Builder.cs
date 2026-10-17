@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
-public sealed partial class Ellipse2D
+public readonly partial record struct Ellipse2D
 {
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
@@ -25,7 +25,9 @@ public sealed partial class Ellipse2D
             ArgGuard.Positive(Radii, "radii");
             ArgGuard.Finite(Center, "center");
         }
-        public override Ellipse2D Build()
+        protected override IConvexShape2D BuildShape() => Build();
+
+        public new Ellipse2D Build()
         {
             Validate();
             return new Ellipse2D(Radii, Center);

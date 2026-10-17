@@ -10,7 +10,7 @@ using System.Numerics;
 namespace App2d.Core.Shapes;
 
 /// <summary>A filled rectangle, axis-aligned in local space; the owning pose may rotate it in world space.</summary>
-public partial class Rectangle2D : IConvexShape2D, IRect2D
+public readonly partial record struct Rectangle2D : IConvexShape2D, IRect2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.Rectangle;
@@ -18,7 +18,7 @@ public partial class Rectangle2D : IConvexShape2D, IRect2D
     /// <summary>Creates a rectangle from ordered corners with positive extents.</summary>
     /// <param name="min">The finite lower-left corner.</param>
     /// <param name="max">The finite upper-right corner, component-wise greater than <paramref name="min"/>.</param>
-    private protected Rectangle2D(Vector2 min, Vector2 max)
+    public Rectangle2D(Vector2 min, Vector2 max)
     {
         Min = min;
         Max = max;

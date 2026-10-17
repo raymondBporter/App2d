@@ -107,7 +107,7 @@ public readonly record struct CubicBezier2D : ICurve2D
         {
             throw new InvalidOperationException("Every parameter on this curve has the requested X coordinate.");
         }
-        Span<double> coefficients = stackalloc double[] { start - x, 3 * first, 3 * (second - first), third - 2 * second + first };
+        Span<double> coefficients = [start - x, 3 * first, 3 * (second - first), third - 2 * second + first];
         return PolynomialRoots.FindRealRoots(coefficients, 0, 1, parameters);
     }
 

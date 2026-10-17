@@ -23,10 +23,7 @@ internal sealed class MeleeAttack2D(EntityId2D sourceId, SpatialObject2D worldOb
     public SpatialObject2D WorldObject { get; private set; } = worldObject;
     // Identity belongs to this action source, not its owner: punch and kick
     // can have the same attack sequence number without suppressing each other.
-    public EntityId2D SourceId
-    {
-        get;
-    } = sourceId.IsValid ? sourceId
+    public EntityId2D SourceId { get; } = sourceId.IsValid ? sourceId
         : throw ArgGuard.CreateInvalid("A melee attack requires a valid source ID.", nameof(sourceId));
     public int AttackId { get; private set; }
     public float DurationSeconds => Profile.DurationSeconds;

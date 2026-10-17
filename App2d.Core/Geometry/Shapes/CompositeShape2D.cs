@@ -9,7 +9,7 @@ namespace App2d.Core.Shapes;
 /// A non-convex shape assembled from convex parts positioned in this shape's local space.
 /// Collision, distance and ray casts resolve per part, never against the convex hull, so notches stay empty.
 /// </summary>
-public sealed partial class CompositeShape2D : IShape2D
+public readonly partial record struct CompositeShape2D : IShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.Composite;
@@ -20,9 +20,9 @@ public sealed partial class CompositeShape2D : IShape2D
     /// <param name="parts">At least one convex part in this shape's local space.</param>
     /// <param name="includeOverlap">True sums part areas; false counts overlapping regions once.</param>
     /// <param name="areaOutlineSegments">Samples for polygonized curves when overlap is counted once. Circles, ellipses and capsules stay analytic.</param>
-    private CompositeShape2D(IConvexShape2D[] parts, bool includeOverlap, int areaOutlineSegments)
+    public CompositeShape2D(IConvexShape2D[] parts, bool includeOverlap = true, int areaOutlineSegments = ShapeArea2D.DefaultOutlineSegments)
     {
-        _parts = parts;
+        _parts = (IConvexShape2D[])parts.Clone();
         IncludeOverlap = includeOverlap;
         AreaOutlineSegments = areaOutlineSegments;
 

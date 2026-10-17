@@ -322,7 +322,7 @@ public sealed partial class Renderer2D : IDisposable
     {
         switch (shape)
         {
-            case Rectangle2D rectangle:
+            case IRect2D rectangle:
                 return VertexGenerator2D.WriteRectangle(points, rectangle.Min, rectangle.Max);
             case RoundedRectangle2D rounded:
                 return VertexGenerator2D.WriteRoundedRectangle(points, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius);

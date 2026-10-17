@@ -8,7 +8,7 @@ using System.Numerics;
 namespace App2d.Core.Shapes;
 
 /// <summary>A filled circle in local space.</summary>
-public sealed partial class Circle2D : IConvexShape2D
+public readonly partial record struct Circle2D : IConvexShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.Circle;
@@ -16,7 +16,7 @@ public sealed partial class Circle2D : IConvexShape2D
     /// <summary>Creates a circle.</summary>
     /// <param name="radius">The finite, positive radius.</param>
     /// <param name="center">The finite local center.</param>
-    private Circle2D(float radius, Vector2 center = default)
+    public Circle2D(float radius, Vector2 center = default)
     {
         Radius = radius;
         Center = center;

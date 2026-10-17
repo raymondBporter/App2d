@@ -1,5 +1,3 @@
-using App2d.Core.Characters;
-
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>The Person starting template, with the shared short-legged proportions. A template, not an engine category.</summary>

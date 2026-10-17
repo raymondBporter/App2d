@@ -1,4 +1,3 @@
-using App2d.Core.Characters;
 using static App2d.Core.Characters.Authored.PersonLoadout;
 using static App2d.Core.Characters.Humanoid;
 
@@ -10,8 +9,8 @@ public static class PersonWardrobe
     public static IEnumerable<ModelSocket> Sockets() =>
     [
         // The current head/face drawing stays in screen axes even when the torso leans.
-        new() { Id = HeadSocket, Control = Humanoid.Head, Frame = CharacterModel.Locomotion },
-        new() { Id = BodySocket, Control = Humanoid.Hips, Frame = Humanoid.Hips, Toward = Humanoid.Chest },
+        new() { Id = HeadSocket, Control = Head, Frame = CharacterModel.Locomotion },
+        new() { Id = BodySocket, Control = Hips, Frame = Hips, Toward = Chest },
     ];
 
     public static IEnumerable<EquipmentBinding> Caveman(string build) =>

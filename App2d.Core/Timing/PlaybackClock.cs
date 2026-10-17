@@ -5,7 +5,9 @@ namespace App2d.Core.Timing;
 /// <summary>What a finite playback clock does on reaching its end. Duration is one trip for PingPong.</summary>
 public enum PlaybackEndMode
 {
-    Hold, Loop, PingPong
+    Hold,
+    Loop,
+    PingPong
 }
 
 /// <summary>
@@ -21,22 +23,10 @@ public sealed class PlaybackClock
     public PlaybackClock(double? durationSeconds = null, PlaybackEndMode endMode = PlaybackEndMode.Hold) =>
         Configure(durationSeconds, endMode);
 
-    public double? DurationSeconds
-    {
-        get; private set;
-    }
-    public PlaybackEndMode EndMode
-    {
-        get; private set;
-    }
-    public bool IsPlaying
-    {
-        get; private set;
-    }
-    public bool IsComplete
-    {
-        get; private set;
-    }
+    public double? DurationSeconds { get; private set; }
+    public PlaybackEndMode EndMode { get; private set; }
+    public bool IsPlaying { get; private set; }
+    public bool IsComplete { get; private set; }
 
     /// <summary>Time advanced since the last seek or reset, including completed loops.</summary>
     public double ElapsedSeconds => _elapsedSeconds;
@@ -179,13 +169,7 @@ public sealed class PlaybackClock
             return;
         }
 
-        var amount = deltaSeconds * Speed;
-        if (!double.IsFinite(amount) || !double.IsFinite(_elapsedSeconds + amount))
-        {
-            throw new ArgumentOutOfRangeException(nameof(deltaSeconds), "Playback time is too large.");
-        }
-
-        _elapsedSeconds += amount;
+        _elapsedSeconds = ArgGuard.Finite(_elapsedSeconds + deltaSeconds * Speed, nameof(deltaSeconds));
         _seekedToEnd = false;
         if (EndMode == PlaybackEndMode.Hold && DurationSeconds is { } duration && _elapsedSeconds >= duration)
         {

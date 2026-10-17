@@ -25,9 +25,7 @@ public sealed class EnemySystem2D
     public void Register(IEnemyActor2D actor, TileChunk2D homeChunk)
     {
         ArgGuard.ThrowIfNull(actor);
-        StateGuard.ThrowIf(
-            _combatants.Any(item => item.Id == actor.Combatant.Id),
-            "The enemy combatant is already registered.");
+        StateGuard.ThrowIf(_combatants.Any(item => item.Id == actor.Combatant.Id), "The enemy combatant is already registered.");
 
         actor.SetSimulationEnabled(false);
         _registeredEnemies.Add(new RegisteredEnemy(actor, actor as IEnemyAttackSource2D, homeChunk));

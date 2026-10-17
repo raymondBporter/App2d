@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Tiles;
@@ -110,10 +111,8 @@ public sealed class WorldTileMap2D : IChangingTileMap2D, IDisposable
 
     public IReadOnlyList<TileCollisionRectangle2D> BuildCollisionRectangles(TileChunk2D chunk)
     {
-        if (chunk.X < 0 || chunk.Y < 0 || chunk.X >= ChunkColumns || chunk.Y >= ChunkRows)
-        {
-            throw new ArgumentOutOfRangeException(nameof(chunk));
-        }
+        ArgGuard.Index(chunk.X, ChunkColumns, nameof(chunk));
+        ArgGuard.Index(chunk.Y, ChunkRows, nameof(chunk));
 
         var x = chunk.X * ChunkSize;
         var y = chunk.Y * ChunkSize;

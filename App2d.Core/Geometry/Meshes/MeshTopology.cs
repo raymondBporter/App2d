@@ -46,10 +46,7 @@ public static class MeshTopology
             _fan = fan;
         }
 
-        public int Count
-        {
-            get;
-        }
+        public int Count { get; }
         public Enumerator GetEnumerator() => new(_indices, Count, _fan);
 
         public ref struct Enumerator
@@ -66,10 +63,7 @@ public static class MeshTopology
                 _fan = fan;
             }
 
-            public (int A, int B, int C) Current
-            {
-                get; private set;
-            }
+            public (int A, int B, int C) Current { get; private set; }
 
             public bool MoveNext()
             {
@@ -104,10 +98,7 @@ public static class MeshTopology
             Count = closed ? vertexCount : Math.Max(0, vertexCount - 1);
         }
 
-        public int Count
-        {
-            get;
-        }
+        public int Count { get; }
         public Enumerator GetEnumerator() => new(_vertexCount, Count);
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1815",
@@ -124,10 +115,7 @@ public static class MeshTopology
                 _count = count;
             }
 
-            public (int A, int B) Current
-            {
-                get; private set;
-            }
+            public (int A, int B) Current { get; private set; }
 
             public bool MoveNext()
             {

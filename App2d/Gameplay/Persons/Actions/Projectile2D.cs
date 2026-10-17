@@ -5,7 +5,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-public sealed partial class Projectile2D(SpatialObject2D worldObject)
+public sealed class Projectile2D(SpatialObject2D worldObject)
 {
     public SpatialObject2D WorldObject { get; } = worldObject;
     public EntityId2D Id

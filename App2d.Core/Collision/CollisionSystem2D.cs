@@ -7,7 +7,7 @@ using App2d.Core.Validation;
 
 namespace App2d.Core.Collision;
 
-public sealed partial class CollisionSystem2D
+public sealed class CollisionSystem2D
 {
     private const int MaximumCellsPerCollider = 4_096;
     private const int MaximumRetainedCells = 1_024;

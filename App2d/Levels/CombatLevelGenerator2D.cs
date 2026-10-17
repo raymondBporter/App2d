@@ -1,4 +1,5 @@
 using App2d.Core.Tiles;
+using App2d.Core.Validation;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -46,13 +47,11 @@ public static class CombatLevelGenerator2D
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(tilesets);
-        if (settings.Beats is < 6 or > 60 || settings.JumpRiseTiles is < 1 or > 4 ||
-            !float.IsFinite(settings.Difficulty) || settings.Difficulty is < 0 or > 1 ||
-            !float.IsFinite(settings.Exploration) || settings.Exploration is < 0 or > 1 ||
-            settings.TilesetIndex >= tilesets.Count)
-        {
-            throw new ArgumentException("Use 6–60 beats, 1–4 jump-rise tiles, difficulty/exploration in [0,1], and an existing tileset.", nameof(settings));
-        }
+        ArgGuard.InRange(settings.Beats, 6, 60);
+        ArgGuard.InRange(settings.JumpRiseTiles, 1, 4);
+        ArgGuard.InRange(settings.Difficulty, 0f, 1f);
+        ArgGuard.InRange(settings.Exploration, 0f, 1f);
+        ArgGuard.Index(settings.TilesetIndex, tilesets.Count);
 
         ValidateRoster(settings.MeleeEnemies, MeleeTypes);
         ValidateRoster(settings.RangedEnemies, RangedTypes);

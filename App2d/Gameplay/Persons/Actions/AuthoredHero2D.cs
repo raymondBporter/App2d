@@ -43,19 +43,10 @@ public sealed class AuthoredHero2D
         }
     }
 
-    public ResolvedEntity Entity
-    {
-        get;
-    }
-    public ResolvedAction Attack
-    {
-        get;
-    }
+    public ResolvedEntity Entity { get; }
+    public ResolvedAction Attack { get; }
     public ResolvedAction Swing(string? id) => id is null ? Attack : Entity.Actions[id];
-    public float WorldUnitsPerModelUnit
-    {
-        get;
-    }
+    public float WorldUnitsPerModelUnit { get; }
 
     public IShape2D Shape(string? swing = null) => _shapes[Swing(swing).Id];
     public int Damage(string? swing = null) => Swing(swing).Hits[0].Window.Damage;

@@ -13,7 +13,7 @@ namespace App2d.Core.Shapes;
 /// Containment, support, bounds and ray casts are analytic. Point distance uses a bracketed root solve;
 /// convex contacts and pair distances use the analytic support mapping without perimeter sampling.
 /// </summary>
-public sealed partial class Ellipse2D : IConvexShape2D
+public readonly partial record struct Ellipse2D : IConvexShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.Ellipse;
@@ -24,7 +24,7 @@ public sealed partial class Ellipse2D : IConvexShape2D
     /// <summary>Creates an ellipse.</summary>
     /// <param name="radii">The finite, positive half-extents along X and Y.</param>
     /// <param name="center">The finite local center.</param>
-    private Ellipse2D(Vector2 radii, Vector2 center = default)
+    public Ellipse2D(Vector2 radii, Vector2 center = default)
     {
         Radii = radii;
         Center = center;

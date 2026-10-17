@@ -11,9 +11,9 @@ public sealed class ProgressMapTests
     [Fact]
     public void ClampedProgressAndExtrapolatingEasingKeepDistinctDomains()
     {
-        Assert.Equal(1, App2d.Core.Mathematics.Progress.Progress.SmoothStep(2));
+        Assert.Equal(1, Core.Mathematics.Progress.Progress.SmoothStep(2));
         Assert.Equal(-4, Easing.Smooth.Sample(2));
-        Assert.Equal(0, App2d.Core.Mathematics.Progress.Progress.SmoothStep(-1));
+        Assert.Equal(0, Core.Mathematics.Progress.Progress.SmoothStep(-1));
         Assert.Equal(5, Easing.Smooth.Sample(-1));
     }
 
@@ -24,8 +24,8 @@ public sealed class ProgressMapTests
         {
             var single = i / 1000f;
             var wide = i / 1000d;
-            Assert.Equal(single * single * (3f - 2f * single), App2d.Core.Mathematics.Progress.Progress.SmoothStepUnclamped(single));
-            Assert.Equal(wide * wide * (3d - 2d * wide), App2d.Core.Mathematics.Progress.Progress.SmoothStepUnclamped(wide));
+            Assert.Equal(single * single * (3f - 2f * single), Core.Mathematics.Progress.Progress.SmoothStepUnclamped(single));
+            Assert.Equal(wide * wide * (3d - 2d * wide), Core.Mathematics.Progress.Progress.SmoothStepUnclamped(wide));
         }
     }
 
@@ -50,9 +50,9 @@ public sealed class ProgressMapTests
     [Fact]
     public void SmoothFamiliesHaveExactEndpointVelocitiesAndKnownCenterSlopes()
     {
-        Assert.Same(App2d.Core.Mathematics.Progress.Progress.SmoothStepMap, Easing.Smooth);
-        Assert.Same(App2d.Core.Mathematics.Progress.Progress.SmootherStepMap, Easing.Smoother);
-        Assert.Same(App2d.Core.Mathematics.Progress.Progress.SmoothestStepMap, Easing.Smoothest);
+        Assert.Same(Core.Mathematics.Progress.Progress.SmoothStepMap, Easing.Smooth);
+        Assert.Same(Core.Mathematics.Progress.Progress.SmootherStepMap, Easing.Smoother);
+        Assert.Same(Core.Mathematics.Progress.Progress.SmoothestStepMap, Easing.Smoothest);
         foreach (var (map, slope) in new[] { (Easing.Smooth, 1.5d), (Easing.Smoother, 1.875d), (Easing.Smoothest, 2.1875d) })
         {
             Assert.Equal(0, map.Derivative(0));

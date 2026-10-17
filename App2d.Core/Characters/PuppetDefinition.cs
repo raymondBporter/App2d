@@ -322,7 +322,7 @@ public sealed class PuppetDefinition
     public void Save(string path)
     {
         Validate();
-        IO.AtomicFile.WriteAllText(path, ToJson());
+        AtomicFile.WriteAllText(path, ToJson());
     }
 
     public void Validate()

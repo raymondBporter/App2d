@@ -1,7 +1,7 @@
-using App2d.Core.Characters;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using System.Numerics;
 

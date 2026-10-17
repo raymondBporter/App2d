@@ -1,4 +1,3 @@
-using App2d.Core.Characters;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>Editable appearance assets use the existing prop file format, attachments, undo, and runtime meshes.</summary>

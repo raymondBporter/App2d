@@ -14,7 +14,7 @@ using System.Numerics;
 namespace App2d.Gameplay.Enemies;
 
 /// <summary>A hostile person: shared simulation and actions, AI commands.</summary>
-public sealed partial class RivalEnemy2D : IEnemyActor2D
+public sealed class RivalEnemy2D : IEnemyActor2D
 {
     private readonly List<EnemyEvent2D> _events = [];
     private readonly UnarmedPersonActions2D _actions;

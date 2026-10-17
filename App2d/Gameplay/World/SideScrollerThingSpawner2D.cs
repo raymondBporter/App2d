@@ -27,9 +27,7 @@ internal sealed class SideScrollerThingSpawner2D(
     uint playerLayer,
     uint enemyLayer)
 {
-    public void Create(
-        IReadOnlyList<WorldThingSpec2D> things,
-        CombatSystem2D combat, AuthoredCatalog? authored = null)
+    public void Create(IReadOnlyList<WorldThingSpec2D> things, CombatSystem2D combat, AuthoredCatalog? authored = null)
     {
         ArgGuard.ThrowIfNull(things);
         ArgGuard.ThrowIfNull(combat);
@@ -110,8 +108,7 @@ internal sealed class SideScrollerThingSpawner2D(
 
     private Shieldback2D CreateShieldback(Vector2 position)
     {
-        var spatialObject = new SpatialObject2D(
-            Capsule2D.Builder.Create(new Vector2(-19f, 0f), new Vector2(19f, 0f), 22f));
+        var spatialObject = new SpatialObject2D(Capsule2D.Builder.Create(new Vector2(-19f, 0f), new Vector2(19f, 0f), 22f));
         spatialObject.Transform.Position = position;
         var body = physics.AddBody(spatialObject, BodyMotionType2D.Dynamic);
         body.Restitution = 0f;

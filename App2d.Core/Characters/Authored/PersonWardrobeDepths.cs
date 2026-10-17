@@ -1,5 +1,3 @@
-using App2d.Core.Characters;
-
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>

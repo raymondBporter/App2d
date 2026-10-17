@@ -1,6 +1,7 @@
 using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -40,10 +41,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
 
     public void Apply(RigContactPin pin)
     {
-        if (!float.IsFinite(pin.Release) || pin.Release is < 0 or > 1)
-        {
-            throw new ArgumentOutOfRangeException(nameof(pin), "Contact release must be between 0 and 1.");
-        }
+        ArgGuard.InRange(pin.Release, 0f, 1f, nameof(pin));
 
         if (!_targets.TryGetValue(pin.Constraint, out var goal))
         {

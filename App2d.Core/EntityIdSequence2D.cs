@@ -19,10 +19,7 @@ public sealed class EntityIdSequence2D
         _capacity = capacity;
     }
 
-    public int Position
-    {
-        get; private set;
-    }
+    public int Position { get; private set; }
 
     public EntityId2D Next()
     {

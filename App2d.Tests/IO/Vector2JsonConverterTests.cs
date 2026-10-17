@@ -23,8 +23,8 @@ public sealed class Vector2JsonConverterTests
     private static JsonSerializerOptions GetOptions(string optionsName) => optionsName switch
     {
         nameof(GeometryDefinition2D) => GeometryDefinition2D.JsonOptions,
-        nameof(ShapeBuilder2D) => ShapeBuilder2D.JsonOptions,
-        nameof(CurveDefinition2D) => CurveDefinition2D.JsonOptions,
+        nameof(ShapeBuilder2D) => GeometryDefinition2D.JsonOptions,
+        nameof(CurveDefinition2D) => GeometryDefinition2D.JsonOptions,
         nameof(AuthoredJson.Options) => AuthoredJson.Options,
         nameof(AuthoredJson.Tolerant) => AuthoredJson.Tolerant,
         nameof(PuppetDefinition) => PuppetDefinition.JsonOptions,

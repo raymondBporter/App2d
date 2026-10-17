@@ -19,7 +19,7 @@ namespace App2d.Gameplay.Simulation;
 /// no input devices, renderer, audio playback or save-file access. It is the one place
 /// the local game advances gameplay.
 /// </summary>
-public sealed partial class SideScrollerSession2D : IDisposable
+public sealed class SideScrollerSession2D : IDisposable
 {
     public const float FixedDeltaSeconds = 1f / 120f;
     private const float DeathRestartDelaySeconds = 1.1f;
@@ -38,12 +38,7 @@ public sealed partial class SideScrollerSession2D : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(_advancing, "Travel requires a completed simulation tick.");
-        ArgGuard.Finite(destination);
-        if (destination.X < _world.Bounds.Min.X || destination.X >= _world.Bounds.Max.X ||
-            destination.Y < _world.Bounds.Min.Y || destination.Y >= _world.Bounds.Max.Y)
-        {
-            throw new ArgumentOutOfRangeException(nameof(destination));
-        }
+        ArgGuard.InRange(destination, _world.Bounds.Min, _world.Bounds.Max, bounds: RangeBounds.ClosedOpen);
 
         _pendingPlaygroundTravel = destination;
     }

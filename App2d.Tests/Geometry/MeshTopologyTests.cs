@@ -22,7 +22,7 @@ public sealed class MeshTopologyTests
     [Fact]
     public void IndexViewBorrowsStackMemoryAndCanBeEnumeratedAgain()
     {
-        Span<int> indices = stackalloc int[] { 0, 1, 2 };
+        Span<int> indices = [0, 1, 2];
         var triangles = MeshTopology.Triangles(indices);
         indices[0] = 7;
         for (var pass = 0; pass < 2; pass++)
@@ -75,8 +75,8 @@ public sealed class MeshTopologyTests
     [Fact]
     public void VertexTriplesFollowIndicesWithoutCopyingTheBuffers()
     {
-        Span<Vector2> vertices = stackalloc Vector2[] { Vector2.Zero, Vector2.UnitX, Vector2.UnitY, Vector2.One };
-        Span<int> indices = stackalloc int[] { 3, 0, 2 };
+        Span<Vector2> vertices = [Vector2.Zero, Vector2.UnitX, Vector2.UnitY, Vector2.One];
+        Span<int> indices = [3, 0, 2];
         var triangles = MeshTopology.IndexedTriangles<Vector2>(vertices, indices);
         vertices[3] = new(7, 8);
         indices[1] = 1;
@@ -101,22 +101,10 @@ public sealed class MeshTopologyTests
     [Fact]
     public void InvalidTopologyIsRejectedWithoutTruncatingATrailingFace()
     {
-        Assert.Throws<ArgumentException>(() =>
-        {
-            MeshTopology.Triangles([0, 1]);
-        });
-        Assert.Throws<ArgumentException>(() =>
-        {
-            MeshTopology.Triangles([0, 1, 2, 3]);
-        });
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-        {
-            MeshTopology.TriangleFan(-1);
-        });
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-        {
-            MeshTopology.Edges(-1);
-        });
+        Assert.Throws<ArgumentException>(() => MeshTopology.Triangles([0, 1]));
+        Assert.Throws<ArgumentException>(() => MeshTopology.Triangles([0, 1, 2, 3]));
+        Assert.Throws<ArgumentOutOfRangeException>(() => MeshTopology.TriangleFan(-1));
+        Assert.Throws<ArgumentOutOfRangeException>(() => MeshTopology.Edges(-1));
     }
 
     [Theory]

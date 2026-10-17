@@ -9,7 +9,7 @@ using System.Numerics;
 namespace App2d.Core.Shapes;
 
 /// <summary>A filled capsule in local space: every point within <see cref="Radius"/> of the spine segment.</summary>
-public sealed partial class Capsule2D : IConvexShape2D
+public readonly partial record struct Capsule2D : IConvexShape2D
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.Capsule;
@@ -18,7 +18,7 @@ public sealed partial class Capsule2D : IConvexShape2D
     /// <param name="start">The finite spine start; may equal <paramref name="end"/> for a circle.</param>
     /// <param name="end">The finite spine end.</param>
     /// <param name="radius">The finite, positive radius.</param>
-    private Capsule2D(Vector2 start, Vector2 end, float radius)
+    public Capsule2D(Vector2 start, Vector2 end, float radius)
     {
         Start = start;
         End = end;

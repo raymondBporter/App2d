@@ -29,7 +29,11 @@ public abstract record ShapeBuilder2D : GeometryDefinition2D
 
     /// <summary>Creates the runtime shape, validating its geometry.</summary>
     /// <returns>A new immutable shape.</returns>
-    public abstract IShape2D Build();
+    public IShape2D Build() => BuildShape();
+
+    // Value types cannot be covariant override return types. Concrete builders expose
+    // typed Build methods, while this hook supports polymorphic/serialized builders.
+    protected abstract IShape2D BuildShape();
 
     /// <summary>Validates this editable builder without creating a runtime shape.</summary>
     public abstract void Validate();

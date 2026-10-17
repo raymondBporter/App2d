@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
-public sealed partial class Circle2D
+public readonly partial record struct Circle2D
 {
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ConvexShapeBuilder2D
@@ -20,7 +20,9 @@ public sealed partial class Circle2D
             ArgGuard.Positive(Radius, "radius");
             ArgGuard.Finite(Center, "center");
         }
-        public override Circle2D Build()
+        protected override IConvexShape2D BuildShape() => Build();
+
+        public new Circle2D Build()
         {
             Validate();
             return new Circle2D(Radius, Center);

@@ -21,6 +21,7 @@ public static class ShapeDiameter2D
             Ellipse2D ellipse => ellipse.Diameter,
             Capsule2D capsule => capsule.Diameter,
             Rectangle2D rectangle => rectangle.Diameter,
+            AxisAlignedRectangle2D rectangle => rectangle.Diameter,
             RoundedRectangle2D rounded => rounded.Diameter,
             Triangle2D triangle => triangle.Diameter,
             ConvexPolygon2D polygon => polygon.Diameter,

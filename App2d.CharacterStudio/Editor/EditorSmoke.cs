@@ -430,9 +430,9 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         using (var image = new Bitmap(16, 16))
         {
-            using (var graphics = System.Drawing.Graphics.FromImage(image))
+            using (var graphics = Graphics.FromImage(image))
             {
-                graphics.Clear(System.Drawing.Color.White);
+                graphics.Clear(Color.White);
             }
 
             image.Save(path, System.Drawing.Imaging.ImageFormat.Png);

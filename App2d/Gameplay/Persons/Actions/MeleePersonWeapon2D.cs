@@ -11,7 +11,7 @@ using System.Numerics;
 
 namespace App2d.Gameplay.Persons.Actions;
 
-internal abstract partial class MeleePersonWeapon2D(
+internal abstract class MeleePersonWeapon2D(
     EquipmentKind2D kind,
     EntityId2D attackSourceId,
     PhysicsBody2D ownerBody,

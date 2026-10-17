@@ -27,7 +27,7 @@ public readonly ref struct IndexedTriangleEnumerable<T>
             _triangles = triangles;
         }
 
-        public (T A, T B, T C) Current
+        public readonly (T A, T B, T C) Current
         {
             get
             {

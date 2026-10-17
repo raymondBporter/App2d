@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
-public sealed partial class CompositeShape2D
+public readonly partial record struct CompositeShape2D
 {
     /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
     public sealed record Builder : ShapeBuilder2D
@@ -35,7 +35,9 @@ public sealed partial class CompositeShape2D
                 ConvexPart(part).Validate();
             }
         }
-        public override CompositeShape2D Build()
+        protected override IShape2D BuildShape() => Build();
+
+        public new CompositeShape2D Build()
         {
             var parts = BuildParts();
             ValidateParts(parts, AreaOutlineSegments);

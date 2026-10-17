@@ -147,7 +147,8 @@ public sealed class ShapeVertices2DTests
     [Fact]
     public void PlacedOutlinesTransformTheWrittenSpanAndLeaveExtraStorageUntouched()
     {
-        var capsule = Capsule2D.Builder.Create(new(-2, 1), new(3, 2), .3f);
+        // Runtime objects retain an IShape2D. Box the value once, before measuring outline work.
+        IShape2D capsule = Capsule2D.Builder.Create(new(-2, 1), new(3, 2), .3f);
         Span<Vector2> local = stackalloc Vector2[capsule.GetOutlineVertCount(24)];
         capsule.GetOutlineVerts(local, 24);
         Span<Vector2> buffer = stackalloc Vector2[40];

@@ -117,7 +117,7 @@ public sealed class SideScrollerGame : Game2D
         }, "Camera zoom (0.05 to 20; default 1.35). Larger values zoom in.");
 
         // Only editor mode opens a writable database handle.
-        _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => App2d.Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
+        _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
         _resources.Get<App2d.Levels.WorldAsset2D>("level/cavern", "editor");
         _editorUi = new(_editor, Textures);
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
@@ -188,7 +188,7 @@ public sealed class SideScrollerGame : Game2D
             var wasOpen = _levelPicker.IsOpen;
             if (_levelPicker.Update(input) is { } destination)
             {
-                _session.TravelForPlaytesting(App2d.Levels.PlaygroundMaps2D.Arrival(
+                _session.TravelForPlaytesting(Levels.PlaygroundMaps2D.Arrival(
                     _loadedWorld.Maps[destination], Traversal.PlayerColliderSize.Y, Traversal.GroundProbeDistance));
             }
 
