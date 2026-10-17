@@ -44,6 +44,14 @@
     {
       "prop": "cinder-beard",
       "socket": "head-art"
+    },
+    {
+      "prop": "sandal-left",
+      "socket": "left-foot-art"
+    },
+    {
+      "prop": "sandal-right",
+      "socket": "right-foot-art"
     }
   ],
   "actions": [

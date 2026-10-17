@@ -164,11 +164,21 @@ public static class LibraryImport
         {
             foreach (var (control, points) in new (string, string[])[]
             {
-                ("hips", ["leg_l_0", "leg_r_0"]), ("chest", ["arm_l_0", "arm_r_0"]), ("head", ["head"]),
-                ("right-shoulder", ["arm_l_0"]), ("right-elbow", ["arm_l_1"]), ("right-hand", ["arm_l_2"]),
-                ("left-shoulder", ["arm_r_0"]), ("left-elbow", ["arm_r_1"]), ("left-hand", ["arm_r_2"]),
-                ("right-hip", ["leg_l_0"]), ("right-knee", ["leg_l_1"]), ("right-foot", ["leg_l_2"]),
-                ("left-hip", ["leg_r_0"]), ("left-knee", ["leg_r_1"]), ("left-foot", ["leg_r_2"]),
+                ("hips", ["leg_l_0", "leg_r_0"]),
+                ("chest", ["arm_l_0", "arm_r_0"]),
+                ("head", ["head"]),
+                ("right-shoulder", ["arm_l_0"]),
+                ("right-elbow", ["arm_l_1"]),
+                ("right-hand", ["arm_l_2"]),
+                ("left-shoulder", ["arm_r_0"]),
+                ("left-elbow", ["arm_r_1"]),
+                ("left-hand", ["arm_r_2"]),
+                ("right-hip", ["leg_l_0"]),
+                ("right-knee", ["leg_l_1"]),
+                ("right-foot", ["leg_l_2"]),
+                ("left-hip", ["leg_r_0"]),
+                ("left-knee", ["leg_r_1"]),
+                ("left-foot", ["leg_r_2"]),
             })
             {
                 if (model.Controls.Any(c => c.Id == control) && points.All(names.Contains))

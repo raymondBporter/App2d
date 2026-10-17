@@ -1,11 +1,13 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Geometry;
+using App2d.Core.Shapes;
 using static App2d.Core.Characters.Authored.PersonLoadout;
 using static App2d.Core.Characters.Humanoid;
 
 namespace App2d.CharacterSeeds;
 
-/// <summary>Painted torso materials, a solid hide wrap, and socket-mounted hair. No new rig or gameplay geometry.</summary>
+/// <summary>Humanoid hand/foot art, painted torso materials and socket-mounted wardrobe. Uses the existing rig.</summary>
 public static class PersonWardrobe
 {
     public static IEnumerable<ModelSocket> Sockets() =>
@@ -13,17 +15,61 @@ public static class PersonWardrobe
         // The current head/face drawing stays in screen axes even when the torso leans.
         new() { Id = HeadSocket, Control = Head, Frame = CharacterModel.Locomotion },
         new() { Id = BodySocket, Control = Hips, Frame = Hips, Toward = Chest },
+        new() { Id = LeftHandSocket, Control = LeftHand, Toward = LeftElbow },
+        new() { Id = RightHandSocket, Control = RightHand, Toward = RightElbow },
+        new() { Id = LeftFootSocket, Control = LeftFoot, Toward = LeftKnee },
+        new() { Id = RightFootSocket, Control = RightFoot, Toward = RightKnee },
     ];
+
+    /// <summary>Visible extremities on the existing controls. Adding artwork does not change animation structure.</summary>
+    public static void AddBodyParts(CharacterModel model)
+    {
+        var head = model.Parts.FindIndex(p => p.Id == Head);
+        var headMaterial = model.Parts[head].RenderMaterial;
+        if (model.Materials.TryAdd("skin", new() { Fill = headMaterial.Resolve(model.Materials).Fill ?? "#fff8e7", Outline = new() }) && headMaterial.Asset is null)
+        {
+            model.Parts[head] = model.Parts[head] with
+            {
+                Material = model.Parts[head].RenderMaterial with { Asset = "skin", Fill = null }
+            };
+        }
+        foreach (var (control, toward, hand) in new[]
+        {
+            (LeftHand, LeftElbow, true), (RightHand, RightElbow, true),
+            (LeftFoot, LeftKnee, false), (RightFoot, RightKnee, false)
+        })
+        {
+            if (model.Parts.Any(p => p.Id == control)) continue;
+            model.Parts.Add(new()
+            {
+                Id = control, A = control, B = toward, Depth = -.004f,
+                Geometry = new Ellipse2D
+                {
+                    Center = hand ? new(0, -.014f) : new(.044f, 0),
+                    Radii = hand ? new(.043f, .055f) : new(.088f, .024f)
+                }.Validated(),
+                Material = new() { Asset = "skin", Outline = new() { Width = .012f } }
+            });
+        }
+    }
 
     public static IEnumerable<EquipmentBinding> Caveman(string build) =>
     [
         new() { Prop = build + "-hide-wrap", Socket = BodySocket },
         new() { Prop = build + "-hair", Socket = HeadSocket },
         new() { Prop = build + "-beard", Socket = HeadSocket },
+        .. Footwear(build == "brute" ? "boot" : "sandal"),
+    ];
+
+    public static IEnumerable<EquipmentBinding> Footwear(string style) =>
+    [
+        new() { Prop = style + "-left", Socket = LeftFootSocket },
+        new() { Prop = style + "-right", Socket = RightFootSocket },
     ];
 
     public static IEnumerable<PropAsset> Props()
     {
+        foreach (var prop in FootwearProps()) yield return prop;
         var shortHair = Hair(ShortHair, "Short tousled hair", 1, "#654334", false);
         shortHair.BackView = ShortHairBack;
         yield return shortHair;
@@ -80,6 +126,43 @@ public static class PersonWardrobe
             yield return wrap;
             yield return Hair(id + "-hair", id + " / wild hair", head, hair, true);
             yield return Beard(id + "-beard", id + " / caveman beard", head, hair, id == "brute" ? 1.15f : .92f);
+        }
+    }
+
+    private static IEnumerable<PropAsset> FootwearProps()
+    {
+        foreach (var side in new[] { "left", "right" })
+        {
+            var socket = side == "left" ? LeftFootSocket : RightFootSocket;
+            PropAsset Shoe(string style, string name) => new()
+            {
+                Id = style + "-" + side, Name = name + " / " + side,
+                Usage = "clothing", Attachment = socket, Tip = default,
+                LineWidth = .045f
+            };
+            var sandal = Shoe("sandal", "Leather sandal");
+            Patch(sandal, "#68432e", 0,
+                [(-.053f, -.023f), (.135f, -.023f), (.15f, -.012f), (.146f, .004f), (-.05f, .004f)], thickness: .06f);
+            // The bare foot remains visible between the two leather straps.
+            Patch(sandal, "#bc8853", -.038f,
+                [(-.037f, .003f), (-.015f, .003f), (.009f, .072f), (-.014f, .078f)], thickness: .009f);
+            Patch(sandal, "#bc8853", -.038f,
+                [(.054f, .003f), (.079f, .003f), (.06f, .038f), (.037f, .033f)], thickness: .009f);
+            foreach (var solid in sandal.Solids)
+                solid.Material = solid.RenderMaterial with { Outline = new() { Width = .008f } };
+            yield return sandal;
+
+            var boot = Shoe("boot", "Short leather boot");
+            Patch(boot, "#754c38", 0,
+                [(-.058f, -.023f), (.145f, -.023f), (.153f, -.006f), (.145f, .027f),
+                 (.11f, .045f), (.047f, .055f), (.043f, .165f), (-.05f, .165f)], thickness: .08f);
+            Patch(boot, "#3d302b", -.048f,
+                [(-.06f, -.024f), (.147f, -.024f), (.153f, -.009f), (-.06f, -.009f)], thickness: .008f);
+            Patch(boot, "#b98a59", -.048f,
+                [(-.052f, .135f), (.045f, .135f), (.045f, .163f), (-.052f, .163f)], thickness: .008f);
+            foreach (var solid in boot.Solids)
+                solid.Material = solid.RenderMaterial with { Outline = new() { Width = .01f } };
+            yield return boot;
         }
     }
 
@@ -186,6 +269,7 @@ public static class PersonWardrobe
     {
         var modelPath = Path.Combine(root, "models", "person.json");
         var model = CharacterModel.Load(modelPath);
+        AddBodyParts(model);
         foreach (var socket in Sockets())
         {
             model.Sockets.RemoveAll(s => s.Id == socket.Id);

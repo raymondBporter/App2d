@@ -46,6 +46,10 @@ public static class Humanoid
     // Attachment sockets.
     public const string HeadSocket = "head-art";
     public const string BodySocket = "body-art";
+    public const string LeftHandSocket = "left-hand-art";
+    public const string RightHandSocket = "right-hand-art";
+    public const string LeftFootSocket = "left-foot-art";
+    public const string RightFootSocket = "right-foot-art";
     public const string LeftGripSocket = "left-grip";
     public const string RightGripSocket = "right-grip";
     public const string BackSocket = "back";

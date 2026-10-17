@@ -45,6 +45,14 @@
     {
       "prop": "brute-beard",
       "socket": "head-art"
+    },
+    {
+      "prop": "boot-left",
+      "socket": "left-foot-art"
+    },
+    {
+      "prop": "boot-right",
+      "socket": "right-foot-art"
     }
   ],
   "actions": [

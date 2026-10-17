@@ -570,8 +570,8 @@
         }
       },
       "material": {
-        "fill": "#fff8e7",
-        "outline": {}
+        "outline": {},
+        "asset": "skin"
       },
       "a": "head",
       "depth": -0.12,
@@ -579,6 +579,98 @@
       "faceX": 0.065,
       "scaleX": 0.56,
       "scaleY": 0.58
+    },
+    {
+      "id": "left-hand",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": -0.014
+        },
+        "radii": {
+          "x": 0.043,
+          "y": 0.055
+        }
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "left-hand",
+      "b": "left-elbow",
+      "depth": -0.004
+    },
+    {
+      "id": "right-hand",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0,
+          "y": -0.014
+        },
+        "radii": {
+          "x": 0.043,
+          "y": 0.055
+        }
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "right-hand",
+      "b": "right-elbow",
+      "depth": -0.004
+    },
+    {
+      "id": "left-foot",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0.044,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.088,
+          "y": 0.024
+        }
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "left-foot",
+      "b": "left-knee",
+      "depth": -0.004
+    },
+    {
+      "id": "right-foot",
+      "geometry": {
+        "kind": "ellipse",
+        "center": {
+          "x": 0.044,
+          "y": 0
+        },
+        "radii": {
+          "x": 0.088,
+          "y": 0.024
+        }
+      },
+      "material": {
+        "asset": "skin",
+        "outline": {
+          "width": 0.012
+        }
+      },
+      "a": "right-foot",
+      "b": "right-knee",
+      "depth": -0.004
     }
   ],
   "slots": [],
@@ -634,6 +726,26 @@
       "control": "hips",
       "frame": "hips",
       "toward": "chest"
+    },
+    {
+      "id": "left-hand-art",
+      "control": "left-hand",
+      "toward": "left-elbow"
+    },
+    {
+      "id": "right-hand-art",
+      "control": "right-hand",
+      "toward": "right-elbow"
+    },
+    {
+      "id": "left-foot-art",
+      "control": "left-foot",
+      "toward": "left-knee"
+    },
+    {
+      "id": "right-foot-art",
+      "control": "right-foot",
+      "toward": "right-knee"
     }
   ],
   "motionSets": [
@@ -921,6 +1033,10 @@
           ]
         }
       ],
+      "outline": {}
+    },
+    "skin": {
+      "fill": "#fff8e7",
       "outline": {}
     }
   }

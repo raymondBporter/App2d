@@ -18,7 +18,9 @@ public static class PersonTemplate
             control.Rest = PuppetPoint.From(built.Rest[control.Id]);
         }
 
-        model.Parts = [.. built.Parts];
+        // Keep authored material references; the resolved drawing also contains inherited colors.
+        for (var i = 0; i < model.Parts.Count; i++)
+            model.Parts[i] = built.Parts[i] with { Material = model.Parts[i].Material };
         model.Id = id;
         model.Name = name;
         model.Validate();
@@ -71,6 +73,7 @@ public static class PersonTemplate
             Parts = [.. study.Parts.Select(p => p with { })],
         };
         StarterContent.AddPersonExtras(model);
+        PersonWardrobe.AddBodyParts(model);
         model.Validate();
         return model;
     }
@@ -80,7 +83,11 @@ public static class PersonTemplate
     {
         var model = Model();
         var modelPath = Path.Combine(authoredRoot, "models", model.Id + ".json");
-        if (File.Exists(modelPath)) model.Materials = CharacterModel.Load(modelPath).Materials;
+        if (File.Exists(modelPath))
+        {
+            foreach (var (id, material) in CharacterModel.Load(modelPath).Materials)
+                model.Materials[id] = material;
+        }
         var reference = StudyReference();
         var walk = PuppetTemplates.StepStudy();
         var run = PuppetTemplates.RunStudy();

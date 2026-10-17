@@ -3,7 +3,7 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>Editable appearance assets use the existing prop file format, attachments, undo, and runtime meshes.</summary>
 public static class AppearanceAuthoring
 {
-    public static readonly string[] Templates = ["hair", "beard", "skirt", "blank"];
+    public static readonly string[] Templates = ["hair", "beard", "skirt", "sandal", "boot", "blank"];
 
     public static PropAsset New(string id, string name, string template, string ink, float lineWidth, Func<string, PropAsset?>? findTemplate = null)
     {
@@ -12,6 +12,8 @@ public static class AppearanceAuthoring
             "hair" => PersonLoadout.ShortHair,
             "beard" => "brute-beard",
             "skirt" => "cinder-hide-wrap",
+            "sandal" => "sandal-left",
+            "boot" => "boot-left",
             "blank" => null,
             _ => throw new InvalidDataException("Unknown appearance template.")
         };

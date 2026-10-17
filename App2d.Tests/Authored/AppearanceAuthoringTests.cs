@@ -98,6 +98,30 @@ public sealed class AppearanceAuthoringTests : IDisposable
         Assert.Equal(before, original.ToJson());
     }
 
+    [Theory]
+    [InlineData("sandal")]
+    [InlineData("boot")]
+    public void FootwearTemplatesEquipBothFeetAndSurviveUndoSaveAndThePlayerLoadout(string template)
+    {
+        var session = new EditorSession(AuthoringWorkspace.Open(_root));
+        session.Open("hero");
+        Assert.True(session.NewAppearance("custom-left", "Custom left shoe", template), session.Message);
+        Assert.Equal(Humanoid.LeftFootSocket, session.AppearanceDocument!.Asset.Attachment);
+        Assert.True(session.EquipAppearance("hero", "custom-left", Humanoid.LeftFootSocket), session.Message);
+        Assert.True(session.DuplicateAppearance("custom-left", "custom-right", "Custom right shoe"), session.Message);
+        Assert.True(session.EquipAppearance("hero", "custom-right", Humanoid.RightFootSocket), session.Message);
+        session.Undo();
+        Assert.DoesNotContain(session.EntityDocument!.Asset.Equipment, e => e.Prop == "custom-right");
+        session.Redo();
+        session.SaveAll();
+        Assert.False(session.MessageIsError, session.Message);
+        var catalog = AuthoredCatalog.Load(_root);
+        Assert.Empty(catalog.Errors);
+        var worn = PersonLoadout.Dressed(catalog.Animations["player-idle"], 0, PersonGear.None, catalog.Entities["hero"]).ToArray();
+        Assert.Contains(("custom-left", Humanoid.LeftFootSocket), worn);
+        Assert.Contains(("custom-right", Humanoid.RightFootSocket), worn);
+    }
+
     [Fact]
     public void HairOutlineJsonRebuildsItsMeshAndKeepsMeshOnlyProps()
     {

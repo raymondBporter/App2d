@@ -24,6 +24,26 @@
         "fill": "#ead6c1"
       },
       "face": "angry"
+    },
+    "left-hand": {
+      "material": {
+        "fill": "#ead6c1"
+      }
+    },
+    "right-hand": {
+      "material": {
+        "fill": "#ead6c1"
+      }
+    },
+    "left-foot": {
+      "material": {
+        "fill": "#ead6c1"
+      }
+    },
+    "right-foot": {
+      "material": {
+        "fill": "#ead6c1"
+      }
     }
   }
 }

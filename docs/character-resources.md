@@ -33,6 +33,28 @@ Character seed generators live together in the `App2d.CharacterSeeds` library: p
 
 [`Humanoid`](../App2d.Core/Characters/Humanoid.cs) is the built-in humanoid vocabulary: plain string constants for controls, drawing parts, IK chains, groups, reference measures and attachment sockets. For example, `Humanoid.LeftHand`, `Humanoid.LeftForearm` and `Humanoid.HeadSocket` keep those roles explicit. The current humanoid has sockets and no image slots. The generic rig and evaluator continue to accept arbitrary IDs from resources; other anatomies define their own names. `PersonLoadout` retains the weapon, hair and animation marker IDs.
 
+The shared `person` model now draws hands and bare feet on its existing controls. Its `skin` material supplies their
+default color and the head's; variants with custom skin colors override the four extremity parts too. No controls or
+animation structure changed. `left-hand-art` / `right-hand-art` follow the hand-to-elbow frame for gloves or cuffs;
+`left-foot-art` / `right-foot-art` follow the foot-to-knee frame for footwear. Local +Y points up the limb, and +X points
+toward the toes at rest. Both frames follow the evaluated pose, depth and character facing.
+
+Footwear uses ordinary editable clothing props, with material and outline data in
+`props/sandal-left.json`, `sandal-right.json`, `boot-left.json` and `boot-right.json`.
+Cinder wears sandals and the maul brute wears short boots. To change a pair, replace the two foot equipment entries:
+
+```json
+{ "prop": "boot-left", "socket": "left-foot-art" },
+{ "prop": "boot-right", "socket": "right-foot-art" }
+```
+
+Studio's **New > Appearance > sandal / boot** starts an editable left shoe. Duplicate it for the right foot and equip
+each on its own socket; **Entity > Equipment** removes the old pair. Equipment prop IDs remain unique per entity,
+so left and right shoes are separate assets sharing the same initial drawing. Hair, garments, footwear and weapons
+remain independent equipment choices, while body surface changes use the existing materials. They can reuse one
+model, animation set and controller; a combination needs no new C# enemy class. Weapon artwork alone does not change
+an entity's attack clips, hit windows or damage rules.
+
 BoilerBrute and GreenDinosaur world placements use the authored `maul-brute` and `stalker-pest` entities through `AuthoredEntityEnemy2D`. Their old gameplay classes, sprite views and hammer-specific messages are removed; missing authored entities produce an error. Presentation uses the same authored final pose and `EntityCue2D` events as other authored enemies. The placement IDs remain compatible with saved maps. Shieldback and Rival still have code-defined fallbacks when their authored entities are absent; those paths remain supported.
 
 Passive physics props load from `physics-props/*.json` into `AuthoredCatalog.PhysicsProps`. The first is

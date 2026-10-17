@@ -24,6 +24,26 @@
         "fill": "#f3dcc6"
       },
       "face": "smug"
+    },
+    "left-hand": {
+      "material": {
+        "fill": "#f3dcc6"
+      }
+    },
+    "right-hand": {
+      "material": {
+        "fill": "#f3dcc6"
+      }
+    },
+    "left-foot": {
+      "material": {
+        "fill": "#f3dcc6"
+      }
+    },
+    "right-foot": {
+      "material": {
+        "fill": "#f3dcc6"
+      }
     }
   }
 }
