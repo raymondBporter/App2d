@@ -35,6 +35,18 @@ Character seed generators live together in the `App2d.CharacterSeeds` library: p
 
 BoilerBrute and GreenDinosaur world placements use the authored `maul-brute` and `stalker-pest` entities through `AuthoredEntityEnemy2D`. Their old gameplay classes, sprite views and hammer-specific messages are removed; missing authored entities produce an error. Presentation uses the same authored final pose and `EntityCue2D` events as other authored enemies. The placement IDs remain compatible with saved maps. Shieldback and Rival still have code-defined fallbacks when their authored entities are absent; those paths remain supported.
 
+Passive physics props load from `physics-props/*.json` into `AuthoredCatalog.PhysicsProps`. The first is
+[`dumbbell.json`](../Assets/Characters/authored/physics-props/dumbbell.json): its `shape` is a composite of one rectangle and two circles,
+shared by collision and presentation. Geometry uses the existing tagged shape JSON directly. Composite `parts` must be nonempty
+and convex; their coordinates, and all physics-prop settings, use game world units rather than character model units.
+
+`body` holds plain `PhysicsBodySettings2D` data: motion type, mass, moment of inertia, rotation locking, gravity scale,
+friction and restitution. Settings validate before `CreateBody` registers the live body and collider in `PhysicsWorld2D`.
+The spawning world supplies identity and collision layers. `fill` is a solid `#RRGGBB` color; `hitVelocityScale` and
+`hitAngularKick` configure the response to a registered strike. Physics props are currently passive and indestructible.
+They need no character model, skeleton or animation. Existing `tumble-prop` map placements spawn the catalog's `dumbbell`
+through the shared `PhysicsProp2D` runtime; the old dumbbell-specific class and duplicated drawing shape are removed.
+
 ## First migration: resource-backed model templates
 
 Studio now reads `Assets/Characters/authored/templates/*.json`. Recipes reference existing authored resource IDs, so there is no second copy of the geometry or animation keys. The New menu is populated from these files. Person, Quadruped, Triceratops and Stalker are included; Empty remains a built-in blank document.

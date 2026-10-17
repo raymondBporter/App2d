@@ -12,7 +12,7 @@ public enum EnemyKind2D
     // Keep the surviving observation values stable when removing obsolete kinds.
     Shieldback = 0,
     Rival = 3,
-    TumbleProp = 4,
+    PhysicsProp = 4,
     Authored = 5
 }
 
@@ -33,6 +33,7 @@ public readonly record struct EnemyState2D(EntityId2D Id, EnemyKind2D Kind, Vect
     /// <summary>For enemies compiled from authored entities: the shared compiled entity and this tick's final pose, drawn as is.</summary>
     public ResolvedEntity? AuthoredEntity { get; init; }
     public ActorPose? AuthoredPose { get; init; }
+    public PhysicsPropAsset? PhysicsProp { get; init; }
 }
 
 public readonly record struct EntityBoltState2D(Vector2 Position, Vector2 Velocity, Vector2 Size, float Lifetime)

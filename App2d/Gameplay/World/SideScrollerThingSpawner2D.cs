@@ -85,8 +85,11 @@ internal sealed class SideScrollerThingSpawner2D(
                         enemyLayer));
                     break;
                 case WorldThingKind2D.TumbleProp:
-                    Register(new TumbleProp2D(
+                    var prop = authored?.PhysicsProps.GetValueOrDefault("dumbbell")
+                        ?? throw new InvalidDataException("TumbleProp requires its authored physics prop 'dumbbell'.");
+                    Register(new PhysicsProp2D(
                         ids.Allocate(),
+                        prop,
                         physics,
                         thing.Position,
                         worldLayer,

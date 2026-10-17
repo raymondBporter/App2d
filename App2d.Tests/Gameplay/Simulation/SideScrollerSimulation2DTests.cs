@@ -40,7 +40,9 @@ public sealed class SideScrollerSimulation2DTests
             Assert.Equal(a.Enemies.Length, b.Enemies.Length);
             foreach (var (left, right) in a.Enemies.Zip(b.Enemies))
             {
-                Assert.Equal(left with { AuthoredEntity = null, AuthoredPose = null, Bolts = default }, right with { AuthoredEntity = null, AuthoredPose = null, Bolts = default });
+                Assert.Equal(left with { AuthoredEntity = null, AuthoredPose = null, PhysicsProp = null, Bolts = default },
+                    right with { AuthoredEntity = null, AuthoredPose = null, PhysicsProp = null, Bolts = default });
+                Assert.Equal(left.PhysicsProp?.ToJson(), right.PhysicsProp?.ToJson());
                 Assert.Equal([.. left.Bolts], [.. right.Bolts]);
                 Assert.Equal(left.AuthoredPose?.Local.Points.OrderBy(p => p.Key), right.AuthoredPose?.Local.Points.OrderBy(p => p.Key));
                 Assert.Equal(left.AuthoredPose?.Local.Angles.OrderBy(p => p.Key), right.AuthoredPose?.Local.Angles.OrderBy(p => p.Key));

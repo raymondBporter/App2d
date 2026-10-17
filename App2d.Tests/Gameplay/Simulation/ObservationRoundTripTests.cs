@@ -49,7 +49,7 @@ public sealed class ObservationRoundTripTests
         [
             new(enemyId, EnemyKind2D.Rival, position, new(5f, 1f), 0.2f, -1f, true, true)
                 { Person = person with { Id = enemyId }, IsAttacking = true, AttackElapsedSeconds = 0.12f, MoveX = -1f },
-            new(new EntityId2D(104), EnemyKind2D.TumbleProp, position, Vector2.Zero, 0.4f, 1f, true, true)
+            new(new EntityId2D(104), EnemyKind2D.PhysicsProp, position, Vector2.Zero, 0.4f, 1f, true, true)
         ];
         var snapshot = new SessionSnapshot2D(500, [player], content, world, enemies);
         var options = CreateOptions();

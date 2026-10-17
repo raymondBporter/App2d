@@ -31,6 +31,7 @@ public sealed class AuthoredCatalogTests
             "hair-short", "hair-short-back", "hammer", "pistol", "rock-thrower-bag", "rock-thrower-beard", "rock-thrower-hair", "rock-thrower-hide-wrap",
             "scavenged-shell", "sheath", "shield-defender-beard", "shield-defender-hair", "shield-defender-hide-wrap", "spear", "sword", "throwing-rock", "wooden-club"], catalog.Props.Keys.Order());
         Assert.Equal(["baby-triceratops", "cinder-gunner", "club-caveman", "flying-pterosaur", "hero", "maul-brute", "player", "rock-thrower", "shield-defender", "spear-guard", "stalker-pest"], catalog.Entities.Keys.Order());
+        Assert.Equal(["dumbbell"], catalog.PhysicsProps.Keys.Order());
         Assert.Same(catalog.Resolve("tall-thin"), catalog.Resolve("tall-thin"));
         // The compatibility contract is visible in every file, even at its default value.
         foreach (var file in new[] { "models/person.json", "animations/person-walk.json", "animations/person-run.json" })

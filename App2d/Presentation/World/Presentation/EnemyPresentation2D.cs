@@ -125,7 +125,8 @@ public sealed class EnemyPresentation2D(
                         {
                             EnemyKind2D.Shieldback => new ShieldbackView(scene, textures),
                             EnemyKind2D.Rival => new RivalView(scene, textures, traversal, state.IsAlive),
-                            EnemyKind2D.TumbleProp => new PropView(scene),
+                            EnemyKind2D.PhysicsProp => new PropView(scene, state.PhysicsProp
+                                ?? throw ArgGuard.CreateInvalid("A physics prop needs its authored asset.", nameof(states))),
                             _ => throw ArgGuard.CreateInvalid("An authored enemy needs its resolved entity.", nameof(states))
                         };
                     _views.Add(state.Id, view);
@@ -337,14 +338,10 @@ public sealed class EnemyPresentation2D(
     {
         private readonly Scene2D _scene;
         private readonly WorldObject2D _visual;
-        public PropView(Scene2D scene)
+        public PropView(Scene2D scene, PhysicsPropAsset asset)
         {
             _scene = scene;
-            var shape = CompositeShape2D.Builder.Create([
-                Rectangle2D.Builder.CreateFromSize(72f, 18f),
-                Circle2D.Builder.Create(16f, new Vector2(-42f, 0f)),
-                Circle2D.Builder.Create(16f, new Vector2(42f, 0f))]);
-            _visual = new WorldObject2D(shape, new SolidColorShader(new XnaColor(0xFF, 0x9A, 0x3B))) { ZIndex = 1 };
+            _visual = new WorldObject2D(asset.Shape, new SolidColorShader(ColorExtensions.FromHexRgb(asset.Fill))) { ZIndex = 1 };
             scene.Add(_visual);
         }
         public override void Update(EnemyState2D state, IEnumerable<EnemyEvent2D> events, float dt, long tick)

@@ -1,55 +1,46 @@
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Core;
+using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
-using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
 using System.Numerics;
 
-namespace App2d.Gameplay;
+namespace App2d.Gameplay.World;
 
 /// <summary>
-/// An indestructible composite dumbbell that tumbles when hit.
+/// A passive physics prop loaded from the authored catalog; rendering uses the same shape asset.
 /// </summary>
-internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
+internal sealed class PhysicsProp2D : IEnemyActor2D, ICombatant2D
 {
-    private const float HitVelocityScale = 0.8f;
-    private const float HitAngularKick = 4.5f;
-
     private bool _simulationEnabled = true;
     private readonly Dictionary<EntityId2D, int> _lastAttackIds = [];
 
-    public TumbleProp2D(EntityId2D id, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint enemyLayer)
+    public PhysicsProp2D(EntityId2D id, PhysicsPropAsset asset, PhysicsWorld2D physics, Vector2 position, uint worldLayer, uint propLayer)
     {
         ArgGuard.ThrowIf(!id.IsValid, "A prop requires a valid entity ID.", nameof(id));
         Id = id;
+        Asset = ArgGuard.RequireNotNull(asset);
+        asset.Validate();
         ArgGuard.ThrowIfNull(physics);
         ArgGuard.Finite(position);
 
-        var shape = CompositeShape2D.Builder.Create([
-            Rectangle2D.Builder.CreateFromSize(72f, 18f),
-            Circle2D.Builder.Create(16f, new Vector2(-42f, 0f)),
-            Circle2D.Builder.Create(16f, new Vector2(42f, 0f))]);
-        var visual = new SpatialObject2D(shape);
+        var visual = new SpatialObject2D(asset.Shape);
         visual.Transform.Position = position;
         WorldObject = visual;
 
-        Body = physics.AddBody(visual, BodyMotionType2D.Dynamic);
+        Body = asset.Body.CreateBody(physics, visual);
         Body.EntityId = Id;
-        Body.Mass = 2f;
-        Body.MomentOfInertia = 1_800f;
-        Body.FreezeRotation = false;
-        Body.Friction = 0.4f;
-        Body.Restitution = 0.15f;
-        Body.CollisionLayer = enemyLayer;
+        Body.CollisionLayer = propLayer;
         Body.CollisionMask = worldLayer;
         Health = new Health2D(1_000_000);
     }
 
     public EntityId2D Id { get; }
+    public PhysicsPropAsset Asset { get; }
     public SpatialObject2D WorldObject { get; }
     public PhysicsBody2D Body { get; }
     public Health2D Health { get; }
@@ -57,14 +48,18 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
     public bool IsAlive => true;
     public ICombatant2D Combatant => this;
 
-    public EnemyState2D CaptureState() => new(Id, EnemyKind2D.TumbleProp, WorldObject.Transform.Position,
-        Body.LinearVelocity, WorldObject.Transform.Rotation, 1f, _simulationEnabled, true);
+    public EnemyState2D CaptureState() => new(Id, EnemyKind2D.PhysicsProp, WorldObject.Transform.Position,
+        Body.LinearVelocity, WorldObject.Transform.Rotation, 1f, _simulationEnabled, true)
+    {
+        TypeId = Asset.Id,
+        PhysicsProp = Asset
+    };
 
     public void SetSimulationEnabled(bool isEnabled)
     {
         _simulationEnabled = isEnabled;
         Body.IsCollider = isEnabled;
-        Body.MotionType = isEnabled ? BodyMotionType2D.Dynamic : BodyMotionType2D.Static;
+        Body.MotionType = isEnabled ? Asset.Body.MotionType : BodyMotionType2D.Static;
         if (!isEnabled)
         {
             Body.LinearVelocity = Vector2.Zero;
@@ -94,8 +89,8 @@ internal sealed class TumbleProp2D : IEnemyActor2D, ICombatant2D
 
     public bool TakeDamage(int damage, Vector2 knockback)
     {
-        Body.LinearVelocity += knockback * HitVelocityScale;
-        Body.AngularVelocity += -MathF.Sign(knockback.X) * HitAngularKick;
+        Body.LinearVelocity += knockback * Asset.HitVelocityScale;
+        Body.AngularVelocity += -MathF.Sign(knockback.X) * Asset.HitAngularKick;
         return true;
     }
 }

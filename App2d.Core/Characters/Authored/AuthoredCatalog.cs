@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;
 
-/// <summary>Every authored character asset under one root, found by scanning its folders. IDs come from file contents; errors are collected per file, not thrown.</summary>
+/// <summary>Authored characters and physics props under one root, found by scanning their folders. IDs come from file contents; errors are collected per file, not thrown.</summary>
 public sealed class AuthoredCatalog
 {
     private readonly Dictionary<string, CharacterModel> _models = new(StringComparer.Ordinal);
@@ -13,6 +13,7 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, PropAsset> _props = new(StringComparer.Ordinal);
     private readonly Dictionary<string, EntityAsset> _entityAssets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, PhysicsPropAsset> _physicsProps = new(StringComparer.Ordinal);
     private string _textureRoot = Environment.CurrentDirectory;
     public IReadOnlyDictionary<string, CharacterModel> Models => _models;
     public IReadOnlyDictionary<string, ModelVariant> Variants => _variants;
@@ -21,6 +22,7 @@ public sealed class AuthoredCatalog
     /// <summary>Entity files that parsed. Only those in <see cref="Entities"/> compiled and may be played.</summary>
     public IReadOnlyDictionary<string, EntityAsset> EntityAssets => _entityAssets;
     public IReadOnlyDictionary<string, ResolvedEntity> Entities => _entities;
+    public IReadOnlyDictionary<string, PhysicsPropAsset> PhysicsProps => _physicsProps;
     public List<string> Errors { get; } = [];
     /// <summary>The file an asset was loaded from.</summary>
     public string PathOf(string id) => _paths[id];
@@ -50,6 +52,7 @@ public sealed class AuthoredCatalog
         }
 
         catalog.Scan(root, "props", PropAsset.FromJson, catalog._props, p => p.Id);
+        catalog.Scan(root, "physics-props", PhysicsPropAsset.FromJson, catalog._physicsProps, p => p.Id);
         catalog.Scan(root, "entities", EntityAsset.FromJson, catalog._entityAssets, e => e.Id);
         foreach (var entity in catalog._entityAssets.Values)
         {
