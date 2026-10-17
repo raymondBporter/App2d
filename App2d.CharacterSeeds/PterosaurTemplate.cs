@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -37,14 +39,20 @@ public static class PterosaurTemplate
                 Control(side + "-toe-" + i, side + "-foot", sign * .09f + (i - 1) * .045f, .27f + (i == 1 ? -.015f : 0), z);
             }
         }
-        PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, GeometryDefinition2D? geometry = null)
+        PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IShape2D? geometry = null)
         {
-            var part = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse) };
+            var part = new PuppetPart { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
             model.Parts.Add(part);
             return part;
         }
+        void Stroke(string key, string a, string b, float width, float depth) => model.Parts.Add(new()
+        {
+            Id = key, A = a, B = b, Depth = depth,
+            Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
+            Material = new() { Fill = model.Ink, StrokeWidth = width, Outline = new() },
+        });
         PuppetPart Cutout(string key, string a, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
-            => Shape(key, a, a + "-up", w, h, x, y, depth, fill, new SimplePolygon2D.Builder { Vertices = [.. points] });
+            => Shape(key, a, a + "-up", w, h, x, y, depth, fill, new SimplePolygon2D { Vertices = [.. points] }.Validated());
         foreach (var (side, sign, depth, fill) in new[] { ("far", 1f, .12f, "#9e5f7e"), ("near", -1f, -.02f, "#b56e8b") })
         {
             var wing = Cutout(side + "-wing", "body", 1, 1, 0, 0, depth, fill,
@@ -59,10 +67,10 @@ public static class PterosaurTemplate
                 new() { Point = 5, Control = side + "-bend" },
             ];
             wing.Material = wing.RenderMaterial with { Paint = [new() { Material = new() { Fill = "#80506d" }, Points = [new(sign * .15f, .15f), new(sign * .18f, .15f), new(sign * .53f, .59f), new(sign * .48f, .60f)] }] };
-            Shape(side + "-leg", side + "-leg", side + "-foot", .025f, .1f, 0, 0, depth, model.Ink, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY });
+            Stroke(side + "-leg", side + "-leg", side + "-foot", .025f, depth);
             for (var i = 0; i < 3; i++)
             {
-                Shape(side + "-toe-" + i, side + "-foot", side + "-toe-" + i, .021f, .1f, 0, 0, depth, model.Ink, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY });
+                Stroke(side + "-toe-" + i, side + "-foot", side + "-toe-" + i, .021f, depth);
             }
         }
         Cutout("tail", "body", .30f, .15f, -.27f, -.05f, -.04f, "#805473", new(-.5f, -.5f), new(.5f, -.25f), new(.5f, .5f));

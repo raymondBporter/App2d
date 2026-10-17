@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.IO;
@@ -120,7 +122,7 @@ public sealed record PuppetPart
 {
     public string Id { get; set; } = "part";
     /// <summary>The shape or curve attached to this part.</summary>
-    public GeometryDefinition2D? Geometry { get; set; }
+    public IGeometryValue2D? Geometry { get; set; }
     /// <summary>Authored drawing style.</summary>
     public RenderMaterialDefinition2D? Material { get; set; }
     public string A { get; set; } = "";
@@ -130,10 +132,9 @@ public sealed record PuppetPart
     public string? Frame { get; set; }
     /// <summary>Additional shape rotation in its bone frame, in radians.</summary>
     public float Angle { get; set; }
+    /// <summary>Local geometry scale, applied before its attachment frame for every shape or curve.</summary>
     public float ScaleX { get; set; } = 1;
     public float ScaleY { get; set; } = 1;
-    public float Width { get; set; } = .4f;
-    public float Height { get; set; } = .4f;
     public float OffsetX { get; set; }
     public float OffsetY { get; set; }
     public float Depth { get; set; }
@@ -173,24 +174,24 @@ public sealed record PuppetPart
         {
             throw new InvalidDataException("A part uses either a bone frame or a toward control.");
         }
-        if (Geometry is not ShapeBuilder2D and not CurveDefinition2D)
+        if (Geometry is not IShape2D and not ICurve2D)
         {
-            throw new InvalidDataException("A part needs a shape or curve definition.");
+            throw new InvalidDataException("A part needs a shape or curve.");
         }
-        if (Geometry is ShapeBuilder2D shape)
+        if (Geometry is IShape2D shape)
         {
-            var built = shape.Build();
+            var built = shape.Validated();
             if (built.GetOutlineVertCount(48) == 0)
             {
                 throw new InvalidDataException($"A {shape.Kind} cannot be drawn as a part.");
             }
         }
-        if (Geometry is CurveDefinition2D curve)
+        if (Geometry is ICurve2D curve)
         {
-            _ = curve.Build();
+            _ = curve.Validated();
         }
 
-        var linkedCurve = Geometry is CurveDefinition2D;
+        var linkedCurve = Geometry is ICurve2D;
         if (linkedCurve && (B is null || A == B))
         {
             throw new InvalidDataException("A linked curve needs two different controls.");
@@ -214,8 +215,6 @@ public sealed record PuppetPart
         }
 
         new Limit(-1000, 1000).Check(Angle, "part.angle");
-        new Limit(.001f, 100).Check(Width, "part.width");
-        new Limit(.001f, 100).Check(Height, "part.height");
         new Limit(-100, 100).Check(OffsetX, "part.offsetX");
         new Limit(-100, 100).Check(OffsetY, "part.offsetY");
         new Limit(-16, 16).Check(Depth, "part.depth");
@@ -234,8 +233,8 @@ public sealed record PuppetPart
         {
             var pointCount = Geometry switch
             {
-                SimplePolygon2D.Builder polygon => polygon.Vertices.Count,
-                CurveDefinition2D bezier => PartCurves2D.ControlPoints(bezier).Count,
+                SimplePolygon2D polygon => polygon.Vertices.Length,
+                ICurve2D bezier => PartCurves2D.ControlPoints(bezier).Count,
                 _ => throw new InvalidDataException("Point attachments require a cutout or Bézier curve.")
             };
             var seen = new HashSet<int>();
@@ -294,7 +293,7 @@ public sealed record PuppetMotion
 public sealed class PuppetDefinition
 {
     public const string FormatId = "app2d-puppet";
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Name { get; set; } = "New character";
@@ -312,7 +311,7 @@ public sealed class PuppetDefinition
         Converters = { new Vector2JsonConverter() }
     };
 
-    public string ToJson() => PartAssetJson.Write(this, Parts, JsonOptions);
+    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
     public static PuppetDefinition FromJson(string json)
     {
         var definition = JsonSerializer.Deserialize<PuppetDefinition>(json, JsonOptions) ?? throw new InvalidDataException("Empty puppet file.");

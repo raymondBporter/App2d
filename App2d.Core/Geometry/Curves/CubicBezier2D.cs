@@ -6,14 +6,12 @@ using System.Numerics;
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A cubic Bezier curve with normalized parameter range [0, 1].</summary>
-public readonly record struct CubicBezier2D : ICurve2D
+public readonly partial record struct CubicBezier2D : ICurve2D
 {
+    public string Kind => CurveKinds2D.CubicBezier;
+
     public CubicBezier2D(Vector2 start, Vector2 control1, Vector2 control2, Vector2 end)
     {
-        ArgGuard.Finite(start);
-        ArgGuard.Finite(control1);
-        ArgGuard.Finite(control2);
-        ArgGuard.Finite(end);
         Start = start;
         Control1 = control1;
         Control2 = control2;
@@ -22,24 +20,24 @@ public readonly record struct CubicBezier2D : ICurve2D
 
     public Vector2 Start
     {
-        get;
+        get; init;
     }
     public Vector2 Control1
     {
-        get;
+        get; init;
     }
     public Vector2 Control2
     {
-        get;
+        get; init;
     }
     public Vector2 End
     {
-        get;
+        get; init;
     }
 
     /// <summary>Creates a cubic from endpoints and tangents with respect to its normalized parameter.</summary>
     public static CubicBezier2D FromHermite(Vector2 start, Vector2 end, Vector2 startTangent, Vector2 endTangent) =>
-        new(start, start + startTangent / 3f, end - endTangent / 3f, end);
+        Builder.Create(start, start + startTangent / 3f, end - endTangent / 3f, end);
 
     public Vector2 Evaluate(float amount)
     {
@@ -128,7 +126,7 @@ public readonly record struct CubicBezier2D : ICurve2D
                 if (target is 0 or 1)
                 {
                     return (float)target;
-                }
+    }
                 var a = 1 + 3 * (first - second);
                 var b = 3 * (second - 2 * first);
                 var c = 3 * first;

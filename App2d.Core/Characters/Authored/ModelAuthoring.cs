@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
@@ -250,15 +252,10 @@ public static class ModelAuthoring
         model.Validate();
     }
 
-    public static PuppetPart AddPart(CharacterModel model, GeometryDefinition2D geometry, string a, string? b = null)
+    public static PuppetPart AddPart(CharacterModel model, IGeometryValue2D geometry, string a, string? b = null)
     {
         var part = new PuppetPart { Id = UniqueId(geometry.Kind, model.Parts.Select(p => p.Id)), Geometry = geometry, A = a, B = b };
-        if (geometry is CurveDefinition2D)
-        {
-            part.Width = model.LineWidth;
-        }
-
-        part.Material = geometry is CurveDefinition2D ? new RenderMaterialDefinition2D()
+        part.Material = geometry is ICurve2D ? new RenderMaterialDefinition2D()
             : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         model.Parts.Add(part);
         model.Validate();
@@ -266,7 +263,7 @@ public static class ModelAuthoring
     }
 
     /// <summary>Creates a drawing part centered on a bone and carried by its local XY frame.</summary>
-    public static PuppetPart AddPartToBone(CharacterModel model, ShapeBuilder2D geometry, string boneId)
+    public static PuppetPart AddPartToBone(CharacterModel model, IShape2D geometry, string boneId)
     {
         var bone = Control(model, boneId);
         if (bone.Length <= 0)
@@ -277,18 +274,16 @@ public static class ModelAuthoring
         var part = AddPart(model, geometry, boneId);
         part.Frame = boneId;
         part.OffsetX = bone.Length / 2;
-        if (geometry is RoundedRectangle2D.Builder rounded)
+        if (geometry is RoundedRectangle2D rounded)
         {
-            part.Width = bone.Length;
-            part.Height = .2f;
-            part.Geometry = rounded.WithSize(new(part.Width, part.Height));
+            part.Geometry = rounded.WithSize(new(bone.Length, .2f));
         }
         model.Validate();
         return part;
     }
 
     /// <summary>Replaces the drawing geometry while keeping its identity, placement and material.</summary>
-    public static void SetPartGeometry(CharacterModel model, string id, GeometryDefinition2D geometry)
+    public static void SetPartGeometry(CharacterModel model, string id, IGeometryValue2D geometry)
     {
         var part = model.Parts.First(p => p.Id == id);
         if (part.Bindings is { Count: > 0 })
@@ -296,14 +291,14 @@ public static class ModelAuthoring
             throw new InvalidOperationException("Detach point bindings before replacing the geometry.");
         }
 
-        if (geometry is CurveDefinition2D && (part.B is null || part.B == part.A))
+        if (geometry is ICurve2D && (part.B is null || part.B == part.A))
         {
             part.B = model.Controls.FirstOrDefault(control => control.Parent == part.A)?.Id
                 ?? model.Controls.FirstOrDefault(control => control.Id != part.A)?.Id
                 ?? throw new InvalidOperationException("A curve needs a second control.");
         }
 
-        if (geometry is CurveDefinition2D)
+        if (geometry is ICurve2D)
         {
             part.Frame = null;
         }
@@ -313,7 +308,7 @@ public static class ModelAuthoring
             part.WavePhaseControl = null;
         }
         part.Geometry = geometry;
-        if (part.Geometry is ShapeBuilder2D && part.Material is { Fill: null, Outline: null })
+        if (part.Geometry is IShape2D && part.Material is { Fill: null, Outline: null })
         {
             part.Material = new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         }
@@ -324,7 +319,7 @@ public static class ModelAuthoring
     public static void SetCutout(PuppetPart part, IReadOnlyList<Vector2> points)
     {
         CheckCutout(points);
-        part.Geometry = new SimplePolygon2D.Builder { Vertices = [.. points] };
+        part.Geometry = new SimplePolygon2D { Vertices = [.. points] }.Validated();
     }
 
     public static void CheckCutout(IReadOnlyList<Vector2>? points)
@@ -535,14 +530,14 @@ public static class ModelAuthoring
         };
         change(edited);
         var o = variant.Parts.GetValueOrDefault(resolved.Id) ?? new();
-        if (edited.Width != resolved.Width)
+        if (edited.ScaleX != resolved.ScaleX)
         {
-            o.Width = edited.Width;
+            o.ScaleX = edited.ScaleX;
         }
 
-        if (edited.Height != resolved.Height)
+        if (edited.ScaleY != resolved.ScaleY)
         {
-            o.Height = edited.Height;
+            o.ScaleY = edited.ScaleY;
         }
 
         if (edited.OffsetX != resolved.OffsetX)
@@ -561,6 +556,11 @@ public static class ModelAuthoring
             {
                 Fill = edited.RenderMaterial.Fill
             };
+        }
+
+        if (edited.RenderMaterial.StrokeWidth != resolved.RenderMaterial.StrokeWidth)
+        {
+            o.Material = (o.Material ?? new RenderMaterialDefinition2D()) with { StrokeWidth = edited.RenderMaterial.StrokeWidth };
         }
 
         if (edited.RenderMaterial.Outline?.Width != resolved.RenderMaterial.Outline?.Width)

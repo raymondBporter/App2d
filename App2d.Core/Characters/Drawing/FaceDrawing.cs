@@ -1,5 +1,8 @@
-using App2d.Core.Characters;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Characters;
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
@@ -16,7 +19,7 @@ public static class FaceDrawing
         void Curve(Vector2 a, Vector2 control, Vector2 b, float weight = 1)
         {
             Span<Vector2> points = stackalloc Vector2[13];
-            Curve2D.Sample(new QuadraticBezier2D(a, control, b), points);
+            Curve2D.Sample(QuadraticBezier2D.Builder.Create(a, control, b), points);
             for (var i = 1; i < points.Length; i++)
             {
                 Line(points[i - 1], points[i], weight);

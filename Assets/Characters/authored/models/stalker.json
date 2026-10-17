@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 4,
+  "version": 5,
   "id": "stalker",
   "name": "Stalker",
   "structureRevision": 1,
@@ -131,7 +131,11 @@
   "measures": [
     {
       "id": "leg",
-      "path": ["hip-1", "knee-1", "foot-1"]
+      "path": [
+        "hip-1",
+        "knee-1",
+        "foot-1"
+      ]
     }
   ],
   "parts": [
@@ -148,10 +152,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "hip-0",
-      "b": "knee-0",
-      "width": 0.045
+      "b": "knee-0"
     },
     {
       "id": "stroke-2",
@@ -166,10 +171,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "knee-0",
-      "b": "foot-0",
-      "width": 0.045
+      "b": "foot-0"
     },
     {
       "id": "stroke-3",
@@ -184,10 +190,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "hip-1",
-      "b": "knee-1",
-      "width": 0.045
+      "b": "knee-1"
     },
     {
       "id": "stroke-4",
@@ -202,10 +209,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "knee-1",
-      "b": "foot-1",
-      "width": 0.045
+      "b": "foot-1"
     },
     {
       "id": "stroke-5",
@@ -220,10 +228,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "hip-2",
-      "b": "knee-2",
-      "width": 0.045
+      "b": "knee-2"
     },
     {
       "id": "stroke-6",
@@ -238,10 +247,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "knee-2",
-      "b": "foot-2",
-      "width": 0.045
+      "b": "foot-2"
     },
     {
       "id": "ellipse",
@@ -261,9 +271,9 @@
         "outline": {}
       },
       "a": "body",
-      "width": 0.95,
-      "height": 0.38,
-      "depth": -0.05
+      "depth": -0.05,
+      "scaleX": 0.95,
+      "scaleY": 0.38
     }
   ],
   "slots": [],
@@ -294,7 +304,11 @@
       "regions": [
         {
           "id": "shell",
-          "controls": ["body", "hip-0", "hip-2"],
+          "controls": [
+            "body",
+            "hip-0",
+            "hip-2"
+          ],
           "pad": 0.2
         },
         {

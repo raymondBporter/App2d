@@ -1,63 +1,31 @@
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
-using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
+[System.Text.Json.Serialization.JsonConverter(typeof(GeometryJsonConverterFactory))]
 public readonly partial record struct RoundedRectangle2D
 {
-    /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
-    public sealed record Builder : ConvexShapeBuilder2D
+    public void Validate()
     {
-        /// <summary>The outer rectangle's minimum corner.</summary>
-        public required Vector2 Min { get; init; }
+        Rectangle2D.ValidateBounds(Min, Max);
+        ArgGuard.InRange((double)Radius, 0, Math.Min((double)Max.X - Min.X, (double)Max.Y - Min.Y) / 2, "radius");
+    }
 
-        /// <summary>The outer rectangle's maximum corner.</summary>
-        public required Vector2 Max { get; init; }
+    public RoundedRectangle2D WithSize(Vector2 size) => Builder.FromSize(size, MathF.Min(Radius, MathF.Min(size.X, size.Y) / 2), (Min + Max) / 2);
 
-        public required float Radius { get; init; }
-
-        [JsonIgnore] public override string Kind => ShapeKinds2D.RoundedRectangle;
-
-        public override void Validate()
-        {
-            Rectangle2D.Builder.ValidateBounds(Min, Max);
-            ArgGuard.InRange((double)Radius, 0, Math.Min((double)Max.X - Min.X, (double)Max.Y - Min.Y) / 2, "radius");
-        }
-
-        protected override IConvexShape2D BuildShape() => Build();
-
-        public new RoundedRectangle2D Build()
-        {
-            Validate();
-            return new RoundedRectangle2D(Min, Max, Radius);
-        }
-
-        public static RoundedRectangle2D Create(Vector2 min, Vector2 max, float radius) => new Builder { Min = min, Max = max, Radius = radius }.Build();
-
-        public static Builder FromSize(float width, float height, float radius, Vector2 center = default) => FromSize(new Vector2(width, height), radius, center);
-
-        public static RoundedRectangle2D Create(float width, float height, float radius, Vector2 center = default) => FromSize(width, height, radius, center).Build();
-
+    /// <summary>Stateless validated construction.</summary>
+    public static class Builder
+    {
+        public static RoundedRectangle2D Create(Vector2 min, Vector2 max, float radius) => new RoundedRectangle2D(min, max, radius).Validated();
+        public static RoundedRectangle2D FromSize(float width, float height, float radius, Vector2 center = default) => FromSize(new Vector2(width, height), radius, center);
+        public static RoundedRectangle2D Create(float width, float height, float radius, Vector2 center = default) => FromSize(width, height, radius, center);
         public static RoundedRectangle2D CreateFromSize(float width, float height, float radius, Vector2 center = default) => Create(width, height, radius, center);
-
-        public static Builder FromSize(Vector2 size, float radius, Vector2 center = default)
-        {
-            var rectangle = Rectangle2D.Builder.FromSize(size, center);
-            return new()
-            {
-                Min = rectangle.Min,
-                Max = rectangle.Max,
-                Radius = radius
-            };
-        }
-
-        /// <summary>Resizes around the existing center, keeping the corner radius within the new sides.</summary>
-        public Builder WithSize(Vector2 size) => FromSize(size, MathF.Min(Radius, MathF.Min(size.X, size.Y) / 2), new Rect2D(Min, Max).Center);
-
-        public static RoundedRectangle2D CreateFromSize(Vector2 size, float radius, Vector2 center = default) => FromSize(size, radius, center).Build();
+        public static RoundedRectangle2D FromSize(Vector2 size, float radius, Vector2 center = default) => Create(center - size / 2, center + size / 2, radius);
+        public static RoundedRectangle2D CreateFromSize(Vector2 size, float radius, Vector2 center = default) => FromSize(size, radius, center);
     }
 }

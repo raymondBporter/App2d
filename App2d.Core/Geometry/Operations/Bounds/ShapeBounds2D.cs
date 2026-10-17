@@ -180,7 +180,7 @@ public static class ShapeBounds2D
         return result < value ? MathF.BitIncrement(result) : result;
     }
 
-    private static Rect2D Composite(ReadOnlySpan<IConvexShape2D> parts)
+    private static Rect2D Composite(ReadOnlySpan<IShape2D> parts)
     {
         var bounds = Calculate(parts[0]);
         foreach (var part in parts[1..])

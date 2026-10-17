@@ -1,4 +1,6 @@
 using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Operations.Conversion;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -36,6 +38,21 @@ public static class PolygonTriangulationCache2D
         }
     }
 
+    public static CompositeShape2D GetConvexPieces(IReadOnlyList<Vector2> perimeter, double tolerance = 0)
+    {
+        var mesh = Get(perimeter, tolerance);
+        var entry = Entries.GetValue(perimeter, static _ => new());
+        lock (entry)
+        {
+            if (!ReferenceEquals(entry.PiecesMesh, mesh))
+            {
+                entry.Pieces = mesh.ToCompositeShape();
+                entry.PiecesMesh = mesh;
+            }
+            return entry.Pieces;
+        }
+    }
+
     private static bool Matches<TPoint>(IReadOnlyList<TPoint> perimeter, ReadOnlySpan<Vector2> snapshot, Func<TPoint, Vector2> xy)
     {
         if (perimeter.Count != snapshot.Length) return false;
@@ -47,6 +64,8 @@ public static class PolygonTriangulationCache2D
     private sealed class Entry
     {
         public TriangleMesh2D? Mesh;
+        public TriangleMesh2D? PiecesMesh;
+        public CompositeShape2D Pieces;
         public double Tolerance;
     }
 }

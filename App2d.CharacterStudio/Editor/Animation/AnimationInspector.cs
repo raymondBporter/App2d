@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -165,7 +169,7 @@ internal sealed class AnimationInspector(EditorSession session, AnimationViewpor
             return;
         }
 
-        var parts = primary.Model.Parts.Where(p => p.Geometry is Core.Geometry.Builders.ShapeBuilder2D && p.Face != "none").ToArray();
+        var parts = primary.Model.Parts.Where(p => p.Geometry is Core.Geometry.Shapes.IShape2D && p.Face != "none").ToArray();
         if (parts.Length == 0)
         {
             return;

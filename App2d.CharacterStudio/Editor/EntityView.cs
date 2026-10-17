@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using ImGuiNET;
@@ -707,10 +709,10 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
     }
 
-    private static readonly string[] EditableShapeKinds = [ShapeKinds2D.Rectangle, ShapeKinds2D.RoundedRectangle, ShapeKinds2D.Circle, ShapeKinds2D.Capsule, ShapeKinds2D.Ellipse, ShapeKinds2D.Triangle, ShapeKinds2D.ConvexPolygon];
+    private static readonly string[] EditableShapeKinds = [ShapeKinds2D.Rectangle, ShapeKinds2D.AxisAlignedRectangle, ShapeKinds2D.RoundedRectangle, ShapeKinds2D.Circle, ShapeKinds2D.Capsule, ShapeKinds2D.Ellipse, ShapeKinds2D.Triangle, ShapeKinds2D.ConvexPolygon];
 
     /// <summary>Kind and geometry fields for one shape definition. Kind changes are discrete edits; drags are continuous changes.</summary>
-    private void ShapeFields(AssetDocument<EntityAsset> document, ShapeBuilder2D shape, Action<ShapeBuilder2D> set)
+    private void ShapeFields(AssetDocument<EntityAsset> document, IShape2D shape, Action<IShape2D> set)
     {
         IEnumerable<string> kinds = EditableShapeKinds.Contains(shape.Kind) ? EditableShapeKinds : EditableShapeKinds.Append(shape.Kind);
         if (Ui.Combo("Shape", shape.Kind, kinds) is { } kind)
@@ -718,191 +720,8 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
             session.Edit(document, () => set(shape.WithKind(kind)));
         }
 
-        void Drag(ShapeBuilder2D changed) => session.Change(document, () => set(changed));
-        switch (shape)
-        {
-            case Rectangle2D.Builder rectangle:
-                {
-                    var centre = (rectangle.Min + rectangle.Max) / 2;
-                    var size = rectangle.Max - rectangle.Min;
-                    if (Ui.Drag2("Centre", ref centre))
-                    {
-                        Drag(Rectangle2D.Builder.FromSize(size, centre));
-                    }
-
-                    if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
-                    {
-                        Drag(Rectangle2D.Builder.FromSize(Vector2.Max(size, new(.01f)), centre));
-                    }
-
-                    break;
-                }
-            case RoundedRectangle2D.Builder rounded:
-                {
-                    var centre = (rounded.Min + rounded.Max) / 2;
-                    var size = rounded.Max - rounded.Min;
-                    if (Ui.Drag2("Centre", ref centre))
-                    {
-                        Drag(RoundedRectangle2D.Builder.FromSize(size, rounded.Radius, centre));
-                    }
-
-                    if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
-                    {
-                        size = Vector2.Max(size, new(.01f));
-                        Drag(RoundedRectangle2D.Builder.FromSize(size, MathF.Min(rounded.Radius, MathF.Min(size.X, size.Y) / 2f), centre));
-                    }
-                    var radius = rounded.Radius;
-                    if (Ui.Drag("Corner radius", ref radius, .005f, 0, MathF.Min(size.X, size.Y) / 2f))
-                    {
-                        Drag(rounded with
-                        {
-                            Radius = Math.Clamp(radius, 0, MathF.Min(size.X, size.Y) / 2f)
-                        });
-                    }
-
-                    break;
-                }
-            case Circle2D.Builder circle:
-                {
-                    var centre = circle.Center;
-                    var radius = circle.Radius;
-                    if (Ui.Drag2("Centre", ref centre))
-                    {
-                        Drag(circle with
-                        {
-                            Center = centre
-                        });
-                    }
-
-                    if (Ui.Drag("Radius", ref radius, .005f, .005f, 50))
-                    {
-                        Drag(circle with
-                        {
-                            Radius = Math.Max(.005f, radius)
-                        });
-                    }
-
-                    break;
-                }
-            case Capsule2D.Builder capsule:
-                {
-                    var start = capsule.Start;
-                    var end = capsule.End;
-                    var radius = capsule.Radius;
-                    if (Ui.Drag2("Start", ref start))
-                    {
-                        Drag(capsule with
-                        {
-                            Start = start
-                        });
-                    }
-
-                    if (Ui.Drag2("End", ref end))
-                    {
-                        Drag(capsule with
-                        {
-                            End = end
-                        });
-                    }
-
-                    if (Ui.Drag("Radius", ref radius, .005f, .005f, 50))
-                    {
-                        Drag(capsule with
-                        {
-                            Radius = Math.Max(.005f, radius)
-                        });
-                    }
-
-                    break;
-                }
-            case Ellipse2D.Builder ellipse:
-                {
-                    var centre = ellipse.Center;
-                    var radii = ellipse.Radii;
-                    if (Ui.Drag2("Centre", ref centre))
-                    {
-                        Drag(ellipse with
-                        {
-                            Center = centre
-                        });
-                    }
-
-                    if (Ui.Drag2("Radii", ref radii, .005f, .005f, 50))
-                    {
-                        Drag(ellipse with
-                        {
-                            Radii = Vector2.Max(radii, new(.005f))
-                        });
-                    }
-
-                    break;
-                }
-            case Triangle2D.Builder triangle:
-                {
-                    var a = triangle.A;
-                    var b = triangle.B;
-                    var c = triangle.C;
-                    if (Ui.Drag2("A", ref a))
-                    {
-                        Drag(triangle with
-                        {
-                            A = a
-                        });
-                    }
-
-                    if (Ui.Drag2("B", ref b))
-                    {
-                        Drag(triangle with
-                        {
-                            B = b
-                        });
-                    }
-
-                    if (Ui.Drag2("C", ref c))
-                    {
-                        Drag(triangle with
-                        {
-                            C = c
-                        });
-                    }
-
-                    break;
-                }
-            case ConvexPolygon2D.Builder polygon:
-                {
-                    for (var i = 0; i < polygon.Vertices.Count; i++)
-                    {
-                        var vertex = polygon.Vertices[i];
-                        if (Ui.Drag2($"Vertex {i + 1}", ref vertex))
-                        {
-                            var vertices = polygon.Vertices.ToList();
-                            vertices[i] = vertex;
-                            Drag(polygon with
-                            {
-                                Vertices = vertices
-                            });
-                        }
-                    }
-                    if (ImGui.SmallButton("Add vertex"))
-                    {
-                        var midpoint = (polygon.Vertices[^1] + polygon.Vertices[0]) / 2;
-                        session.Edit(document, () => set(polygon with { Vertices = [.. polygon.Vertices, midpoint] }));
-                    }
-                    if (polygon.Vertices.Count > 3)
-                    {
-                        ImGui.SameLine();
-                        if (ImGui.SmallButton("Remove last"))
-                        {
-                            session.Edit(document, () => set(polygon with { Vertices = [.. polygon.Vertices.Take(polygon.Vertices.Count - 1)] }));
-                        }
-                    }
-                    Ui.Help("Vertices go around the perimeter and must stay convex.");
-                    break;
-                }
-            default:
-                Ui.Help("Edit this shape kind in the file.");
-                break;
-        }
+        ShapeInspector.Draw(shape, changed => session.Change(document, () => set(changed)),
+            changed => session.Edit(document, () => set(changed)));
     }
 
     /// <summary>A moment: a clip marker, or a normalized time over the clip. Markers keep hits on the visual moment when the clip is retimed.</summary>

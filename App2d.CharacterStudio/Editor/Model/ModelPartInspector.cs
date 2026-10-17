@@ -1,8 +1,10 @@
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Shapes;
 using ImGuiNET;
 
@@ -67,45 +69,29 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 change(p => set(p, value));
             }
         }
-        Float(part.Geometry is CurveDefinition2D ? "Thickness" : "Width", part.Width, .005f, 2, overrides?.Width is not null, (p, v) =>
+        if (overrides is null && part.Geometry is IShape2D shape && shape is not SimplePolygon2D)
         {
-            if (overrides is null && p.Geometry is RoundedRectangle2D.Builder rounded)
-            {
-                p.Geometry = rounded.WithSize(new(v, p.Height));
-            }
-            p.Width = v;
-        }, o => o.Width = null);
-        if (overrides is null && structure is not null)
-        {
-            ModelCurveInspector.Draw(part, structure.Controls.Select(c => c.Id).ToArray(), change);
+            ShapeInspector.Draw(shape, geometry => change(p => p.Geometry = geometry));
         }
-
-        if (part.Geometry is not CurveDefinition2D)
+        Float("Scale X", part.ScaleX, -4, 4, overrides?.ScaleX is not null, (p, v) => p.ScaleX = v, o => o.ScaleX = null);
+        Float("Scale Y", part.ScaleY, -4, 4, overrides?.ScaleY is not null, (p, v) => p.ScaleY = v, o => o.ScaleY = null);
+        Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
+        Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
+        if (part.Geometry is ICurve2D)
         {
-            Float("Height", part.Height, .005f, 2, overrides?.Height is not null, (p, v) =>
-            {
-                if (overrides is null && p.Geometry is RoundedRectangle2D.Builder rounded)
-                {
-                    p.Geometry = rounded.WithSize(new(p.Width, v));
-                }
-                p.Height = v;
-            }, o => o.Height = null);
-            Float("Offset X", part.OffsetX, -2, 2, overrides?.OffsetX is not null, (p, v) => p.OffsetX = v, o => o.OffsetX = null);
-            Float("Offset Y", part.OffsetY, -2, 2, overrides?.OffsetY is not null, (p, v) => p.OffsetY = v, o => o.OffsetY = null);
-            if (overrides is null && part.Geometry is RoundedRectangle2D.Builder rounded)
-            {
-                Float("Corner radius", rounded.Radius, 0, MathF.Min(part.Width, part.Height) / 2f, false,
-                    (p, v) => p.Geometry = rounded with { Radius = v }, _ => { });
-            }
-
-            if (overrides is null)
-            {
-                cutout.Inspector(part, change);
-            }
+            Float("Stroke width", part.RenderMaterial.StrokeWidth ?? Structure?.LineWidth ?? .045f, .005f, 2, overrides?.Material?.StrokeWidth is not null,
+                (p, v) => p.Material = p.RenderMaterial with { StrokeWidth = v },
+                o => o.Material = o.Material is null ? null : o.Material with { StrokeWidth = null });
+            if (overrides is null && structure is not null)
+                ModelCurveInspector.Draw(part, structure.Controls.Select(c => c.Id).ToArray(), change);
+        }
+        else if (overrides is null)
+        {
+            cutout.Inspector(part, change);
         }
         if (!Marked("Fill", overrides?.Material?.Fill is not null, o => o.Material = o.Material is null ? null : o.Material with { Fill = null }))
         {
-            var fill = part.RenderMaterial.Fill ?? (part.Geometry is CurveDefinition2D ? Structure?.Ink ?? "#222b32" : "#fff8e7");
+            var fill = part.RenderMaterial.Fill ?? (part.Geometry is ICurve2D ? Structure?.Ink ?? "#222b32" : "#fff8e7");
             if (Ui.ColorHex("##fill", ref fill))
             {
                 change(p => p.Material = p.RenderMaterial with { Fill = fill });
@@ -134,7 +120,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 change(p => p.Material = p.RenderMaterial with { Outline = (p.RenderMaterial.Outline ?? new()) with { Color = null } });
             }
         }
-        if (part.Geometry is ShapeBuilder2D)
+        if (part.Geometry is IShape2D)
         {
             if (!Marked("Surface paint", overrides?.Material?.Paint is not null, o => o.Material = o.Material! with { Paint = null }) && ImGui.CollapsingHeader("Edit surface paint"))
             {

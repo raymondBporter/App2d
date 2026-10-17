@@ -1,8 +1,11 @@
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
@@ -14,6 +17,27 @@ namespace App2d.Tests.Authored;
 
 public sealed class RenderMaterialDefinition2DTests
 {
+    [Fact]
+    public void StrokeWidthInheritsFromNamedMaterialAndSurvivesVariantEditing()
+    {
+        var model = TestModels.Creature();
+        model.Materials["stroke"] = new() { StrokeWidth = .12f, Fill = "#123456" };
+        model.Parts.Single(p => p.Id == "upper-arm").Material = new() { Asset = "stroke" };
+        var part = ResolvedModel.From(model).Parts.Single(p => p.Id == "upper-arm");
+        Assert.Equal(.12f, part.RenderMaterial.StrokeWidth);
+        var variant = new ModelVariant { Id = "thick", Name = "Thick", Base = model.Id };
+        ModelAuthoring.EditPartOverride(variant, part, p => p.Material = p.RenderMaterial with { StrokeWidth = .3f });
+        Assert.False(variant.Parts[part.Id].IsEmpty);
+        var restored = ModelVariant.FromJson(variant.ToJson());
+        var changed = ResolvedModel.From(model, restored).Parts.Single(p => p.Id == part.Id);
+        Assert.Equal(.3f, changed.RenderMaterial.StrokeWidth);
+        Assert.Equal(part.Geometry, changed.Geometry);
+        Assert.Equal(part.ScaleX, changed.ScaleX);
+        Assert.Equal(part.ScaleY, changed.ScaleY);
+        restored.Parts[part.Id].Material = new() { StrokeWidth = null };
+        Assert.Equal(.12f, ResolvedModel.From(model, restored).Parts.Single(p => p.Id == part.Id).RenderMaterial.StrokeWidth);
+    }
+
     [Fact]
     public void NamedSurfacesInheritFieldsAndSharePaintWhileAllowingAnExplicitClear()
     {
@@ -112,8 +136,8 @@ public sealed class RenderMaterialDefinition2DTests
         {
             A = "root",
             Face = "none",
-            Width = 1,
-            Height = 1,
+            ScaleX = 1,
+            ScaleY = 1,
             Geometry = Rectangle2D.Builder.FromSize(Vector2.One),
             Material = new()
             {
@@ -152,7 +176,7 @@ public sealed class RenderMaterialDefinition2DTests
             [
                 new PropShape
                 {
-                    Geometry = new SimplePolygon2D.Builder { Vertices = [new(0, 0), new(1, 0), new(0, 1)] },
+                    Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(1, 0), new(0, 1)] },
                     Material = new() { Fill = "#224466", Outline = new() { Color = "#ffeeaa", Width = .03f } }
                 }
             ]
@@ -213,13 +237,13 @@ public sealed class RenderMaterialDefinition2DTests
             Name = "Undo prop",
             Shapes = [new()
             {
-                Geometry = new LineCurveDefinition2D { Start = new(0, 0), End = new(1, 0) },
+                Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(1, 0) },
                 Depths = [.1f, .2f], Material = new() { Fill = "#224466", Outline = new() }
             }]
         };
         prop.Validate();
         var document = AssetDocuments.Of(prop, null);
-        document.Edit(() => document.Asset.Shapes[0].Width = .2f);
+        document.Edit(() => document.Asset.Shapes[0].Material = document.Asset.Shapes[0].RenderMaterial with { StrokeWidth = .2f });
         document.Undo();
         Assert.Equal([.1f, .2f], document.Asset.Shapes[0].Points.Select(p => p.Z));
     }

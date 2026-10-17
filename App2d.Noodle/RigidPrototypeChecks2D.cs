@@ -1,3 +1,6 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
@@ -31,7 +34,7 @@ internal static class RigidPrototypeChecks2D
 
         var start = new Vector2(1f, 2f);
         var end = new Vector2(9f, -3f);
-        var curve = new CubicBezier2D(start, new(3f, 8f), new(7f, 5f), end);
+        var curve = CubicBezier2D.Builder.Create(start, new(3f, 8f), new(7f, 5f), end);
         var atStart = curve.Evaluate(0f);
         var atEnd = curve.Evaluate(1f);
         Require(Vector2.DistanceSquared(start, atStart) < 0.0001f, "Cubic evaluation must preserve its start point.");

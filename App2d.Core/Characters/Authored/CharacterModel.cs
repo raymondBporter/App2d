@@ -2,6 +2,7 @@ using App2d.Core.Mathematics.Transforms;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -112,7 +113,7 @@ public sealed record LookPreset
 public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
-    public const int CurrentVersion = 4;
+    public const int CurrentVersion = 5;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -149,7 +150,7 @@ public sealed class CharacterModel
         get; set;
     }
 
-    public string ToJson() => PartAssetJson.Write(this, Parts, AuthoredJson.Options);
+    public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(json, "model");
     public static CharacterModel FromJson(string json)
     {

@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
@@ -49,12 +53,12 @@ internal static class RigAuthoredBridgeChecks2D
             throw new InvalidOperationException("Collision-only geometry should not be drawn.");
         }
 
-        if (resolved.Parts.Single(p => p.Id == $"part-{rectangle.Id}").Geometry is not RoundedRectangle2D.Builder)
+        if (resolved.Parts.Single(p => p.Id == $"part-{rectangle.Id}").Geometry is not RoundedRectangle2D)
         {
             throw new InvalidOperationException("Noodle's corner radius should export as a rounded rectangle.");
         }
 
-        if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Geometry is not ConvexPolygon2D.Builder { Vertices.Count: 5 })
+        if (resolved.Parts.Single(p => p.Id == $"part-{polygon.Id}").Geometry is not ConvexPolygon2D { Vertices.Length: 5 })
         {
             throw new InvalidOperationException("Polygon vertices were lost.");
         }

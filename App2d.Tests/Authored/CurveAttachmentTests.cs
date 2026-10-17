@@ -1,6 +1,9 @@
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -25,11 +28,11 @@ public sealed class CurveAttachmentTests
             ],
             Parts = [new()
             {
-                Id = "stroke", A = "start", B = "end", Width = .02f, Depth = -.01f,
+                Id = "stroke", A = "start", B = "end", Depth = -.01f,
                 Geometry = cubic
-                    ? new CubicBezierCurveDefinition2D { Start = Vector2.Zero, Control1 = new(-.5f, 1f / 3), Control2 = new(-.5f, 2f / 3), End = Vector2.UnitY }
-                    : new QuadraticBezierCurveDefinition2D { Start = Vector2.Zero, Control = new(-.5f, .5f), End = Vector2.UnitY },
-                Material = new() { Fill = "#ff0000" },
+                    ? new CubicBezier2D { Start = Vector2.Zero, Control1 = new(-.5f, 1f / 3), Control2 = new(-.5f, 2f / 3), End = Vector2.UnitY }
+                    : new QuadraticBezier2D { Start = Vector2.Zero, Control = new(-.5f, .5f), End = Vector2.UnitY },
+                Material = new() { Fill = "#ff0000", StrokeWidth = .02f },
                 Bindings = cubic
                     ? [new() { Point = 0, Control = "start" }, new() { Point = 1, Control = "bend" }, new() { Point = 2, Control = "bend2" }, new() { Point = 3, Control = "end" }]
                     : [new() { Point = 0, Control = "start" }, new() { Point = 1, Control = "bend" }, new() { Point = 2, Control = "end" }]
@@ -138,7 +141,7 @@ public sealed class CurveAttachmentTests
                 part.Bindings![1].Toward = "bend";
                 break;
             case "unsupported-curve":
-                part.Geometry = new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY };
+                part.Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY };
                 break;
         }
         Assert.Throws<InvalidDataException>(model.Validate);
@@ -176,7 +179,7 @@ public sealed class CurveAttachmentTests
     {
         var model = Model();
         var part = model.Parts[0];
-        part.Geometry = new QuadraticBezierCurveDefinition2D { Start = Vector2.Zero, Control = new(0, .5f), End = Vector2.UnitY };
+        part.Geometry = new QuadraticBezier2D { Start = Vector2.Zero, Control = new(0, .5f), End = Vector2.UnitY };
         model.Controls.Single(c => c.Id == "bend").Rest = new(1, 0, .2f);
         if (!bound)
         {
@@ -244,7 +247,7 @@ public sealed class CurveAttachmentTests
                 break;
             case "shape":
                 part.Bindings = null;
-                part.Geometry = new Ellipse2D.Builder { Center = Vector2.Zero, Radii = new(.5f, .5f) };
+                part.Geometry = new Ellipse2D { Center = Vector2.Zero, Radii = new(.5f, .5f) };
                 break;
         }
         Assert.Throws<InvalidDataException>(model.Validate);

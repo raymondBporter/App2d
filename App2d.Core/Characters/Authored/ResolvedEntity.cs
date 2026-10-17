@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
@@ -13,7 +14,7 @@ public sealed record RoleClip(string Role, MotionClip Clip, string Source);
 public sealed record ResolvedHit(HitWindow Window, float Start, float Finish)
 {
     /// <summary>The window's convex shape in its anchor frame.</summary>
-    public IConvexShape2D Shape { get; } = (IConvexShape2D)Window.Shape.Build();
+    public IConvexShape2D Shape { get; } = (IConvexShape2D)Window.Shape.Validated();
 }
 public sealed record ResolvedEvent(ActionEvent Event, float Seconds);
 /// <summary>An enabled action. <see cref="Mask"/>, when set, names the targets it owns over locomotion.</summary>
@@ -64,7 +65,7 @@ public sealed class ResolvedEntity
         Asset = asset;
         Model = model;
         Controller = controller;
-        MovementShape = (IConvexShape2D)asset.Movement.Shape.Build();
+        MovementShape = (IConvexShape2D)asset.Movement.Shape.Validated();
     }
 
     public EntityAsset Asset { get; }

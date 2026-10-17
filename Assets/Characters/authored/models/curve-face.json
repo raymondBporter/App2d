@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 4,
+  "version": 5,
   "id": "curve-face",
   "name": "Curve face",
   "structureRevision": 2,
@@ -243,8 +243,6 @@
       "id": "head",
       "a": "head",
       "frame": "head",
-      "width": 1,
-      "height": 1.1,
       "geometry": {
         "kind": "ellipse",
         "center": {
@@ -259,13 +257,13 @@
       "material": {
         "fill": "#efdcc9",
         "outline": {}
-      }
+      },
+      "scaleY": 1.1
     },
     {
       "id": "mouth",
       "a": "mouth-left",
       "b": "mouth-right",
-      "width": 0.025,
       "depth": -0.012,
       "geometry": {
         "kind": "quadratic-bezier",
@@ -297,14 +295,14 @@
         }
       ],
       "material": {
-        "fill": "#222b32"
+        "fill": "#222b32",
+        "strokeWidth": 0.025
       }
     },
     {
       "id": "mouth-upper",
       "a": "mouth-left",
       "b": "mouth-right",
-      "width": 0.025,
       "depth": -0.012,
       "geometry": {
         "kind": "quadratic-bezier",
@@ -336,15 +334,14 @@
         }
       ],
       "material": {
-        "fill": "#222b32"
+        "fill": "#222b32",
+        "strokeWidth": 0.025
       }
     },
     {
       "id": "left-pupil",
       "a": "left-eye",
       "frame": "left-eye",
-      "width": 0.027,
-      "height": 0.06,
       "depth": -0.016,
       "geometry": {
         "kind": "ellipse",
@@ -359,13 +356,14 @@
       },
       "material": {
         "fill": "#222b32"
-      }
+      },
+      "scaleX": 0.027,
+      "scaleY": 0.06
     },
     {
       "id": "left-eye-upper",
       "a": "left-eye-upper-left",
       "b": "left-eye-upper-right",
-      "width": 0.014,
       "depth": -0.012,
       "geometry": {
         "kind": "quadratic-bezier",
@@ -397,14 +395,14 @@
         }
       ],
       "material": {
-        "fill": "#222b32"
+        "fill": "#222b32",
+        "strokeWidth": 0.014
       }
     },
     {
       "id": "left-eye-lower",
       "a": "left-eye-lower-left",
       "b": "left-eye-lower-right",
-      "width": 0.014,
       "depth": -0.012,
       "geometry": {
         "kind": "quadratic-bezier",
@@ -436,14 +434,14 @@
         }
       ],
       "material": {
-        "fill": "#222b32"
+        "fill": "#222b32",
+        "strokeWidth": 0.014
       }
     },
     {
       "id": "left-brow",
       "a": "left-brow-left",
       "b": "left-brow-right",
-      "width": 0.021,
       "depth": -0.012,
       "geometry": {
         "kind": "quadratic-bezier",
@@ -475,15 +473,14 @@
         }
       ],
       "material": {
-        "fill": "#222b32"
+        "fill": "#222b32",
+        "strokeWidth": 0.021
       }
     },
     {
       "id": "right-pupil",
       "a": "right-eye",
       "frame": "right-eye",
-      "width": 0.027,
-      "height": 0.06,
       "depth": -0.016,
       "geometry": {
         "kind": "ellipse",
@@ -498,13 +495,14 @@
       },
       "material": {
         "fill": "#222b32"
-      }
+      },
+      "scaleX": 0.027,
+      "scaleY": 0.06
     },
     {
       "id": "right-eye-upper",
       "a": "right-eye-upper-left",
       "b": "right-eye-upper-right",
-      "width": 0.014,
       "depth": -0.012,
       "geometry": {
         "kind": "quadratic-bezier",
@@ -536,14 +534,14 @@
         }
       ],
       "material": {
-        "fill": "#222b32"
+        "fill": "#222b32",
+        "strokeWidth": 0.014
       }
     },
     {
       "id": "right-eye-lower",
       "a": "right-eye-lower-left",
       "b": "right-eye-lower-right",
-      "width": 0.014,
       "depth": -0.012,
       "geometry": {
         "kind": "quadratic-bezier",
@@ -575,14 +573,14 @@
         }
       ],
       "material": {
-        "fill": "#222b32"
+        "fill": "#222b32",
+        "strokeWidth": 0.014
       }
     },
     {
       "id": "right-brow",
       "a": "right-brow-left",
       "b": "right-brow-right",
-      "width": 0.021,
       "depth": -0.012,
       "geometry": {
         "kind": "quadratic-bezier",
@@ -614,14 +612,14 @@
         }
       ],
       "material": {
-        "fill": "#222b32"
+        "fill": "#222b32",
+        "strokeWidth": 0.021
       }
     },
     {
       "id": "hair",
       "a": "hair-left",
       "b": "hair-right",
-      "width": 0.065,
       "depth": -0.008,
       "waveAmplitude": 0.045,
       "waveCycles": 5,
@@ -646,7 +644,8 @@
         }
       },
       "material": {
-        "fill": "#4b2f2b"
+        "fill": "#4b2f2b",
+        "strokeWidth": 0.065
       }
     }
   ],
@@ -699,7 +698,9 @@
     },
     {
       "id": "hair",
-      "targets": ["hair-wave"]
+      "targets": [
+        "hair-wave"
+      ]
     }
   ]
 }

@@ -1,7 +1,10 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
@@ -71,7 +74,7 @@ public sealed class ShapeBoundsPrecisionTests
         Assert.Equal(new Rect2D(new(4, float.NegativeInfinity), new(float.PositiveInfinity)), ShapeBounds2D.CalculateTransformed(halfSpace, mirror));
         var collapse = new Matrix3x2(0, 0, 0, 2, 10, 20);
         Assert.Equal(new Rect2D(new(10, float.NegativeInfinity), new(10, float.PositiveInfinity)), ShapeBounds2D.CalculateTransformed(halfSpace, collapse));
-        var diagonal = HalfSpace2D.Builder.FromPoint(new(0, 2), new(1, 1)).Build();
+        var diagonal = HalfSpace2D.Builder.FromPoint(new(0, 2), new(1, 1)).Validated();
         var shear = new Matrix3x2(1, 1, 1, -1, 0, 0);
         Assert.Equal(new Rect2D(new(float.NegativeInfinity), new(2, float.PositiveInfinity)), ShapeBounds2D.CalculateTransformed(diagonal, shear));
     }
@@ -100,9 +103,9 @@ public sealed class ShapeBoundsPrecisionTests
     public void ScalarBuildersKeepCentersValidationAndAxisAlignedIntent()
     {
         var center = new Vector2(10, -5);
-        var rectangle = Assert.IsType<Rectangle2D>(Rectangle2D.Builder.FromSize(4, 2, center).Build());
+        var rectangle = Assert.IsType<Rectangle2D>(Rectangle2D.Builder.FromSize(4, 2, center).Validated());
         Assert.Equal(new Rect2D(new(8, -6), new(12, -4)), ShapeBounds2D.Calculate(rectangle));
-        Assert.IsType<AxisAlignedRectangle2D>(AxisAlignedRectangle2D.Builder.FromSize(4, 2, center).Build());
+        Assert.IsType<AxisAlignedRectangle2D>(AxisAlignedRectangle2D.Builder.FromSize(4, 2, center).Validated());
         Assert.Equal(rectangle.Min, AxisAlignedRectangle2D.Builder.Create(4, 2, center).Min);
         Assert.Equal(rectangle.Max, RoundedRectangle2D.Builder.Create(4, 2, .5f, center).OuterRect.Max);
         Assert.Throws<ArgumentOutOfRangeException>(() => Rectangle2D.Builder.Create(0, 2));

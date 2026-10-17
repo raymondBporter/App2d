@@ -1,3 +1,6 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Primitives;
 using System.Numerics;
@@ -29,16 +32,16 @@ public sealed class SegmentMath2DTests
         Assert.Equal(5f, reversed.Length());
         Assert.Equal(new Vector2(2.5f, 4), reversed.PointAt(.5f));
 
-        var line = new LineSegmentCurve2D(segment.Start, segment.End);
+        var line = LineSegmentCurve2D.Builder.Create(segment.Start, segment.End);
         LineSegmentCurve2D reversedLine = line.Reversed();
-        Assert.Equal(new LineSegmentCurve2D(line.End, line.Start), reversedLine);
+        Assert.Equal(LineSegmentCurve2D.Builder.Create(line.End, line.Start), reversedLine);
     }
 
     [Fact]
     public void CollapsedSegmentsHaveZeroLengthAndSampleTheirEndpoint()
     {
         var point = new Vector2(2, 3);
-        var segment = new LineSegmentCurve2D(point, point);
+        var segment = LineSegmentCurve2D.Builder.Create(point, point);
 
         Assert.Equal(0f, segment.Length());
         Assert.Equal(point, segment.PointAt(.5f));

@@ -1,4 +1,6 @@
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
@@ -10,27 +12,27 @@ namespace App2d.Core.Characters.Geometry;
 public static class PartCurves2D
 {
     /// <summary>Point indices follow curve order: start, handle(s), end.</summary>
-    public static IReadOnlyList<Vector2> ControlPoints(CurveDefinition2D curve) => curve switch
+    public static IReadOnlyList<Vector2> ControlPoints(ICurve2D curve) => curve switch
     {
-        QuadraticBezierCurveDefinition2D q => [q.Start, q.Control, q.End],
-        CubicBezierCurveDefinition2D c => [c.Start, c.Control1, c.Control2, c.End],
+        QuadraticBezier2D q => [q.Start, q.Control, q.End],
+        CubicBezier2D c => [c.Start, c.Control1, c.Control2, c.End],
         _ => throw new InvalidDataException("Curve point attachments require a quadratic or cubic Bézier.")
     };
 
-    public static CurveDefinition2D WithControlPoints(CurveDefinition2D curve, IReadOnlyList<Vector2> points) => curve switch
+    public static ICurve2D WithControlPoints(ICurve2D curve, IReadOnlyList<Vector2> points) => curve switch
     {
-        QuadraticBezierCurveDefinition2D q when points.Count == 3 => q with { Start = points[0], Control = points[1], End = points[2] },
-        CubicBezierCurveDefinition2D c when points.Count == 4 => c with { Start = points[0], Control1 = points[1], Control2 = points[2], End = points[3] },
+        QuadraticBezier2D q when points.Count == 3 => q with { Start = points[0], Control = points[1], End = points[2] },
+        CubicBezier2D c when points.Count == 4 => c with { Start = points[0], Control1 = points[1], Control2 = points[2], End = points[3] },
         _ => throw new InvalidDataException("Bézier point count must match its curve definition.")
     };
 
     internal static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3>? rest)
     {
-        var curve = (CurveDefinition2D)part.Geometry!;
+        var curve = (ICurve2D)part.Geometry!;
         var a = world(part.A);
         var b = world(part.B!);
-        var coordinates = Frame2D.FromYAxis(a.XY, b.XY - a.XY);
-        var source = GeometryDefinitionCache2D.CurveOf(curve);
+        var coordinates = PartAttachment2D.FrameOf(part, world).Coordinates;
+        var source = curve;
         ICurve2D? layers = null;
         if (part.Bindings is { Count: > 0 })
         {
@@ -42,7 +44,7 @@ public static class PartCurves2D
             var points = ControlPoints(curve);
             var restA = rest(part.A);
             var restB = rest(part.B!);
-            var restCoordinates = Frame2D.FromYAxis(restA.XY, restB.XY - restA.XY);
+            var restCoordinates = PartAttachment2D.FrameOf(part, rest).Coordinates;
             var placed = new Vector3[points.Count];
             for (var i = 0; i < points.Count; i++)
             {
@@ -55,9 +57,9 @@ public static class PartCurves2D
                 var drawnRest = new Vector3(restCoordinates.TransformPoint(p), restA.Z + (restB.Z - restA.Z) * p.Y + part.Depth);
                 placed[binding.Point] = PartAttachment2D.BoundPoint(binding, drawnRest, world, rest);
             }
-            source = WithControlPoints(curve, [.. placed.Select(p => p.XY)]).Build();
+            source = WithControlPoints(curve, [.. placed.Select(p => p.XY)]).Validated();
             // Layer order follows the same Bézier weights, independently of its XY geometry.
-            layers = WithControlPoints(curve, [.. placed.Select(p => new Vector2(p.Z, 0))]).Build();
+            layers = WithControlPoints(curve, [.. placed.Select(p => new Vector2(p.Z, 0))]).Validated();
         }
         var count = source switch
         {

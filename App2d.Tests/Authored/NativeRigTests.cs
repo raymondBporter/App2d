@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
@@ -38,9 +42,9 @@ public sealed class NativeRigTests
                 Id = id,
                 A = bone,
                 Frame = bone,
-                Width = .16f,
-                Height = .2f,
-                Geometry = new Rectangle2D.Builder { Min = new(-.5f, -.5f), Max = new(.5f, .5f) },
+                ScaleX = .16f,
+                ScaleY = .2f,
+                Geometry = new Rectangle2D { Min = new(-.5f, -.5f), Max = new(.5f, .5f) },
                 Material = new()
                 {
                     Texture = "images/" + id + ".png"

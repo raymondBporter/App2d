@@ -1,7 +1,9 @@
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using ImGuiNET;
 using System.Numerics;
 
@@ -76,17 +78,17 @@ internal sealed class ModelOutline(EditorSession session, ModelStructuralEdits s
         if (ImGui.BeginPopup("add-part"))
         {
             var anchor = session.Selection.Control ?? structure.Controls[0].Id;
-            foreach (var kind in GeometryDefinition2D.DrawableKinds)
+            foreach (var kind in GeometryJson2D.DrawableKinds)
             {
-                var geometry = GeometryDefinition2D.CreateDefault(kind);
-                if (ImGui.MenuItem($"{kind} on {anchor}", "", false, geometry is not CurveDefinition2D || structure.Controls.Count > 1) && Base is { } document)
+                var geometry = GeometryJson2D.CreateDefault(kind);
+                if (ImGui.MenuItem($"{kind} on {anchor}", "", false, geometry is not ICurve2D || structure.Controls.Count > 1) && Base is { } document)
                 {
                     session.Edit(document, () =>
                     {
                         var other = structure.Controls.FirstOrDefault(c => c.Parent == anchor)?.Id ?? structure.Controls.FirstOrDefault(c => c.Id != anchor)?.Id;
-                        session.Selection.Select(part: selectedBone is not null && geometry is ShapeBuilder2D shape
+                        session.Selection.Select(part: selectedBone is not null && geometry is IShape2D shape
                             ? ModelAuthoring.AddPartToBone(document.Asset, shape, anchor).Id
-                            : ModelAuthoring.AddPart(document.Asset, geometry, anchor, geometry is CurveDefinition2D ? other : null).Id);
+                            : ModelAuthoring.AddPart(document.Asset, geometry, anchor, geometry is ICurve2D ? other : null).Id);
                     });
                 }
             }

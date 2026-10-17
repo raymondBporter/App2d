@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
@@ -19,11 +23,11 @@ internal sealed class ModelCutoutEditor(EditorSession session)
 
     public void Inspector(PuppetPart part, Action<Action<PuppetPart>> change)
     {
-        if (part.Geometry is SimplePolygon2D.Builder polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
+        if (part.Geometry is SimplePolygon2D polygon && ImGui.CollapsingHeader("Edit cutout silhouette"))
         {
             ImGui.Checkbox("Drag silhouette points in viewport", ref _editCutout);
             Ui.Help("Draw the rest silhouette here. Each point can follow the part frame or a named control; Point toward follows that control frame's rotation. Animate the controls, not the outline.");
-            var vertices = polygon.Vertices;
+            var vertices = PartContours2D.CutoutPoints(part);
             var controls = session.SubjectModel!.Asset.Controls.Select(c => c.Id).ToArray();
             void Cutout(Action<List<Vector2>> edit)
             {

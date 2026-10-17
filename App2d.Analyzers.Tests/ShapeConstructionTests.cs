@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Analyzers.CodeFixes;
 using App2d.Core.Shapes;
 using Microsoft.CodeAnalysis;
@@ -13,7 +17,7 @@ namespace App2d.Analyzers.Tests;
 
 public sealed class ShapeConstructionTests
 {
-    private const string Imports = "using System.Numerics; using App2d.Core.Shapes; ";
+    private const string Imports = "using System.Numerics; using App2d.Core.Shapes; using App2d.Core.Geometry.Curves; ";
 
     private static readonly ImmutableArray<MetadataReference> References =
         [.. ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!).Split(Path.PathSeparator)
@@ -32,7 +36,13 @@ public sealed class ShapeConstructionTests
         "new ConvexPolygon2D([Vector2.Zero, Vector2.UnitX, Vector2.UnitY])",
         "new SimplePolygon2D([Vector2.Zero, Vector2.UnitX, Vector2.UnitY])",
         "new HalfSpace2D(Vector2.UnitY, 2)",
-        "new CompositeShape2D([Circle2D.Builder.Create(2)])"
+        "new CompositeShape2D([Circle2D.Builder.Create(2)])",
+        "new LineSegmentCurve2D(Vector2.Zero, Vector2.One)",
+        "new PolylineCurve2D([Vector2.Zero, Vector2.One])",
+        "new Arc2D(Vector2.Zero, 2, 0, 1)",
+        "new QuadraticBezier2D(Vector2.Zero, Vector2.UnitY, Vector2.One)",
+        "new CubicBezier2D(Vector2.Zero, Vector2.UnitY, Vector2.UnitX, Vector2.One)",
+        "new BSpline2D([Vector2.Zero, Vector2.UnitY, Vector2.UnitX, Vector2.One])"
     ];
 
     [Theory]
@@ -61,6 +71,8 @@ public sealed class ShapeConstructionTests
     [InlineData("Circle2D Make() => new global::App2d.Core.Shapes.Circle2D(2);", "Circle2D Make() => Circle2D.Builder.Create(2);")]
     [InlineData("Circle2D Make() => new Disk(2);", "Circle2D Make() => Circle2D.Builder.Create(2);")]
     [InlineData("HalfSpace2D Make() => new HalfSpace2D(offset: 2, outwardNormal: Vector2.UnitY);", "HalfSpace2D Make() => HalfSpace2D.Builder.Create(offset: 2, outwardNormal: Vector2.UnitY);")]
+    [InlineData("Arc2D Make() => new(Vector2.Zero, 2, 0, 1);", "Arc2D Make() => Arc2D.Builder.Create(Vector2.Zero, 2, 0, 1);")]
+    [InlineData("BSpline2D Make() => new BSpline2D(degree: 1, controlPoints: new[] { Next(), Vector2.One });", "BSpline2D Make() => BSpline2D.Builder.Create(degree: 1, controlPoints: new[] { Next(), Vector2.One });")]
     public async Task FixPreservesArgumentsAndSupportsTargetTypingAndAliases(string member, string expected)
     {
         using var workspace = new AdhocWorkspace();
@@ -78,13 +90,33 @@ public sealed class ShapeConstructionTests
 
     [Theory]
     [InlineData("new Circle2D()")]
-    [InlineData("new Circle2D(2) { }")]
     public async Task ReportsButDoesNotOfferAnInvalidFactoryReplacement(string expression)
     {
         using var workspace = new AdhocWorkspace();
         var document = CreateDocument(workspace, Imports + "class Example { object Make() => " + expression + "; }");
         var diagnostic = Assert.Single(await AnalyzeAsync(document));
         Assert.Empty(await GetFixesAsync(document, diagnostic));
+    }
+
+    [Theory]
+    [InlineData("new Circle2D { Center = Vector2.Zero, Radius = 2 }")]
+    [InlineData("new Circle2D(2) { }")]
+    public async Task InitializerFixValidatesTheGeometryWithoutIntroducingBuilderState(string expression)
+    {
+        using var workspace = new AdhocWorkspace();
+        var document = CreateDocument(workspace, Imports + "class Example { object Make() => " + expression + "; }");
+        var diagnostic = Assert.Single(await AnalyzeAsync(document));
+        var fixedDocument = await ApplyAsync(Assert.Single(await GetFixesAsync(document, diagnostic)), document.Id);
+        Assert.Contains("Validated(", (await fixedDocument.GetTextAsync()).ToString());
+        Assert.Empty(await AnalyzeAsync(fixedDocument));
+    }
+
+    [Fact]
+    public async Task ExplicitValidationOfAValueIsAValidConstructionBoundary()
+    {
+        using var workspace = new AdhocWorkspace();
+        var document = CreateDocument(workspace, Imports + "using App2d.Core.Geometry; class Example { object Make() => new Circle2D(2).Validated(); }");
+        Assert.Empty(await AnalyzeAsync(document));
     }
 
     [Theory]
@@ -191,7 +223,8 @@ public sealed class ShapeConstructionTests
             class Example
             {
                 object Make() => Circle2D.Builder.Create(2);
-                object Data() => new Circle2D.Builder { Center = Vector2.Zero, Radius = 2 };
+                object Data() => Circle2D.Builder.Create(2, Vector2.Zero);
+                object CurveData() => Arc2D.Builder.Create(Vector2.Zero, 2, 0, 1);
                 object Other() => new Other.Circle2D();
             }
             namespace Other { public struct Circle2D { } }

@@ -8,19 +8,23 @@ namespace App2d.Core.Shapes;
 /// <summary>A rectangle whose owner intends to keep its world axes aligned.</summary>
 public readonly partial record struct AxisAlignedRectangle2D : IConvexShape2D, IRect2D
 {
-    private readonly Rectangle2D _rectangle;
-
     public AxisAlignedRectangle2D(Vector2 min, Vector2 max)
     {
-        _rectangle = Rectangle2D.Builder.Create(min, max);
+        Min = min;
+        Max = max;
     }
 
-    public string Kind => _rectangle.Kind;
-    public Vector2 Min => _rectangle.Min;
-    public Vector2 Max => _rectangle.Max;
-    public float Area => _rectangle.Area;
-    public float Diameter => _rectangle.Diameter;
-    public bool ContainsPoint(Vector2 localPoint) => _rectangle.ContainsPoint(localPoint);
-    public Vector2 GetSupportPoint(Vector2 localDirection) => _rectangle.GetSupportPoint(localDirection);
+    // Delegating queries does not construct validated geometry.
+#pragma warning disable APP2D001
+    private Rectangle2D Rectangle => new(Min, Max);
+#pragma warning restore APP2D001
+
+    public string Kind => ShapeKinds2D.AxisAlignedRectangle;
+    public Vector2 Min { get; init; }
+    public Vector2 Max { get; init; }
+    public float Area => Rectangle.Area;
+    public float Diameter => Rectangle.Diameter;
+    public bool ContainsPoint(Vector2 localPoint) => Rectangle.ContainsPoint(localPoint);
+    public Vector2 GetSupportPoint(Vector2 localDirection) => Rectangle.GetSupportPoint(localDirection);
     public void WriteCorners(Span<Vector2> corners) => VertexGenerator2D.WriteRectangle(corners, Min, Max);
 }

@@ -15,22 +15,20 @@ public readonly partial record struct RoundedRectangle2D : IConvexShape2D
 
     public RoundedRectangle2D(Vector2 min, Vector2 max, float radius)
     {
-        OuterRect = new(min, max);
+        Min = min;
+        Max = max;
         Radius = radius;
     }
 
     /// <summary>The outer axis-aligned rectangle containing the rounded shape.</summary>
-    public Rect2D OuterRect
-    {
-        get;
-    }
+    public Rect2D OuterRect => new(Min, Max);
     /// <summary>The inset rectangle expanded by Radius to form the rounded shape. It may collapse to a segment or point.</summary>
     public Rect2D InnerRect => new(Min + new Vector2(Radius), Max - new Vector2(Radius));
-    public Vector2 Min => OuterRect.Min;
-    public Vector2 Max => OuterRect.Max;
+    public Vector2 Min { get; init; }
+    public Vector2 Max { get; init; }
     public float Radius
     {
-        get;
+        get; init;
     }
     public float Area => Area2D.RoundedRectangle(Min, Max, Radius);
 

@@ -1,3 +1,6 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Geometry.Operations.Distance;
@@ -10,12 +13,12 @@ public sealed class Curve2DTests
     [Fact]
     public void LineAndPolylineDistanceUseTheirFiniteSegments()
     {
-        LineSegmentCurve2D line = new LineSegmentCurve2D(new(0, 0), new(2, 0));
+        LineSegmentCurve2D line = LineSegmentCurve2D.Builder.Create(new(0, 0), new(2, 0));
         Assert.Equal(3, line.Distance(new(1, 3)), 5);
         Assert.Equal(MathF.Sqrt(10), CurveDistance2D.Distance(new(3, 3), line), 5);
         Assert.Equal(0, line.Distance(new(1, 0)), 5);
 
-        PolylineCurve2D polyline = new PolylineCurve2D([new(0, 0), new(2, 0), new(2, 2)]);
+        PolylineCurve2D polyline = PolylineCurve2D.Builder.Create([new(0, 0), new(2, 0), new(2, 2)]);
         Assert.Equal(1, polyline.Distance(new(1, 1)), 5);
         Assert.Equal(1, polyline.Distance(new(3, 1)), 5);
         Assert.Equal(MathF.Sqrt(2), polyline.Distance(new(3, 3)), 5);
@@ -24,14 +27,14 @@ public sealed class Curve2DTests
     [Fact]
     public void SmoothCurveDistancesIncludeTheInteriorAndEndpoints()
     {
-        QuadraticBezier2D quadratic = new QuadraticBezier2D(new(0, 0), new(1, 1), new(2, 0));
+        QuadraticBezier2D quadratic = QuadraticBezier2D.Builder.Create(new(0, 0), new(1, 1), new(2, 0));
         Assert.InRange(quadratic.Distance(new(1, 1)), .49f, .51f);
 
-        CubicBezier2D cubic = new CubicBezier2D(new(0, 0), new(1, 0), new(2, 0), new(3, 0));
+        CubicBezier2D cubic = CubicBezier2D.Builder.Create(new(0, 0), new(1, 0), new(2, 0), new(3, 0));
         Assert.Equal(2, cubic.Distance(new(1, 2)), 4);
         Assert.Equal(1, cubic.Distance(new(4, 0)), 4);
 
-        BSpline2D spline = new BSpline2D([new(0, 0), new(1, 0), new(2, 0)], degree: 1);
+        BSpline2D spline = BSpline2D.Builder.Create([new(0, 0), new(1, 0), new(2, 0)], degree: 1);
         Assert.Equal(1, spline.Distance(new(1, 1)), 4);
 
         NormalOffsetCurve2D offset = new NormalOffsetCurve2D(cubic, amount => 1);
@@ -41,7 +44,7 @@ public sealed class Curve2DTests
     [Fact]
     public void QuadraticBezierSamplesTheFaceArcIntoCallerStorage()
     {
-        var curve = new QuadraticBezier2D(new(0f, 0f), new(1f, 2f), new(2f, 0f));
+        var curve = QuadraticBezier2D.Builder.Create(new(0f, 0f), new(1f, 2f), new(2f, 0f));
         Span<Vector2> points = stackalloc Vector2[5];
         Curve2D.Sample(curve, points);
 
@@ -55,7 +58,7 @@ public sealed class Curve2DTests
     [Fact]
     public void CubicBezierPreservesEndpointsAndHasAnalyticDerivative()
     {
-        var curve = new CubicBezier2D(
+        var curve = CubicBezier2D.Builder.Create(
             new Vector2(1f, 2f),
             new Vector2(3f, 8f),
             new Vector2(7f, 5f),
@@ -78,7 +81,7 @@ public sealed class Curve2DTests
             new(60f, 20f),
             new(80f, 0f)
         ];
-        var curve = new BSpline2D(controlPoints);
+        var curve = BSpline2D.Builder.Create(controlPoints);
 
         Assert.Equal(controlPoints[0], curve.Evaluate(0f));
         Assert.Equal(controlPoints[^1], curve.Evaluate(1f));
@@ -88,7 +91,7 @@ public sealed class Curve2DTests
     [Fact]
     public void LinearBSplineInterpolatesItsControlPolygon()
     {
-        var curve = new BSpline2D(
+        var curve = BSpline2D.Builder.Create(
             [new Vector2(0f, 0f), new Vector2(10f, 10f), new Vector2(20f, 0f)],
             degree: 1);
 
@@ -101,7 +104,7 @@ public sealed class Curve2DTests
     [Fact]
     public void GaussianNormalOffsetCreatesALocalBump()
     {
-        var baseline = new CubicBezier2D(
+        var baseline = CubicBezier2D.Builder.Create(
             new Vector2(0f, 0f),
             new Vector2(3f, 0f),
             new Vector2(7f, 0f),
@@ -118,7 +121,7 @@ public sealed class Curve2DTests
     [Fact]
     public void CurveSamplingIncludesBothEndpoints()
     {
-        var curve = new CubicBezier2D(Vector2.Zero, Vector2.UnitX, new(2f, 0f), new(3f, 0f));
+        var curve = CubicBezier2D.Builder.Create(Vector2.Zero, Vector2.UnitX, new(2f, 0f), new(3f, 0f));
         var samples = Curve2D.Sample(curve, segmentCount: 3);
 
         Assert.Equal(4, samples.Length);

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
@@ -317,7 +318,7 @@ public sealed class AuthoredArena
             if (e is { Kind: AnimationEvent.EventKind, Id: EntityControllers.Fire } && animator.Current?.Projectile is { } shot)
             {
                 var (muzzle, axis) = EntityCollision.Muzzle(actor.Entity, actor.Pose);
-                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, (IConvexShape2D)shot.Shape.Build(), shot.Lifetime, shot.Damage));
+                Bolts.Add(new(actor.Index, new(muzzle.X, muzzle.Y), axis * shot.Speed, (IConvexShape2D)shot.Shape.Validated(), shot.Lifetime, shot.Damage));
             }
         }
         if (animator.ActionComplete && animator.Action != EntityControllers.Jump)

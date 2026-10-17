@@ -1,49 +1,40 @@
 using App2d.Core.Mathematics;
-using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>An open polyline parameterized uniformly across its segments.</summary>
-public sealed class PolylineCurve2D : ICurve2D
+public readonly partial record struct PolylineCurve2D : ICurve2D
 {
-    private readonly Vector2[] _points;
+    public string Kind => CurveKinds2D.Polyline;
+
+    private readonly Vector2[]? _points;
 
     public PolylineCurve2D(IEnumerable<Vector2> points)
     {
-        ArgumentNullException.ThrowIfNull(points);
-        _points = [.. points];
-        if (_points.Length < 2)
-        {
-            throw new ArgumentException("A polyline needs at least two points.", nameof(points));
-        }
-
-        foreach (var point in _points)
-        {
-            ArgGuard.Finite(point, nameof(points));
-        }
+        _points = points?.ToArray();
     }
 
-    public ReadOnlySpan<Vector2> Points => _points;
+    public ReadOnlySpan<Vector2> Points { get => _points; init => _points = value.ToArray(); }
 
     public Vector2 Evaluate(float amount)
     {
         var (index, fraction) = Segment(amount);
-        return Vector2.Lerp(_points[index], _points[index + 1], fraction);
+        return Vector2.Lerp(Points[index], Points[index + 1], fraction);
     }
 
     public Vector2 EvaluateDerivative(float amount)
     {
         var (index, _) = Segment(amount);
-        return (_points[index + 1] - _points[index]) * (_points.Length - 1);
+        return (Points[index + 1] - Points[index]) * (Points.Length - 1);
     }
 
     public float Distance(Vector2 point)
     {
         var nearestSquared = float.PositiveInfinity;
-        for (var i = 1; i < _points.Length; i++)
+        for (var i = 1; i < Points.Length; i++)
         {
-            nearestSquared = MathF.Min(nearestSquared, Distance2D.DistanceSquaredToSegment(point, _points[i - 1], _points[i]));
+            nearestSquared = MathF.Min(nearestSquared, Distance2D.DistanceSquaredToSegment(point, Points[i - 1], Points[i]));
         }
 
         return MathF.Sqrt(nearestSquared);
@@ -51,8 +42,8 @@ public sealed class PolylineCurve2D : ICurve2D
 
     private (int Index, float Fraction) Segment(float amount)
     {
-        var progress = Clamping.Clamp01(amount) * (_points.Length - 1);
-        var index = Math.Min(_points.Length - 2, (int)progress);
+        var progress = Clamping.Clamp01(amount) * (Points.Length - 1);
+        var index = Math.Min(Points.Length - 2, (int)progress);
         return (index, progress - index);
     }
 }

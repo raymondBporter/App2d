@@ -263,7 +263,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         Ok(session, session.SaveLook("fern", "Fern"));
         Assert.True(person.Dirty);
         Assert.Equal("#88aa66", person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Material?.Fill);
-        Assert.Null(person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].Width); // looks carry appearance, never sizes
+        Assert.Null(person.Asset.Looks.Single(l => l.Id == "fern").Parts["body"].ScaleX); // looks carry appearance, never sizes
         Assert.Equal("#d8e9db", person.Asset.Parts.Single(p => p.Id == "body").RenderMaterial.Fill); // the base's own parts are untouched
     }
 

@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 4,
+  "version": 5,
   "id": "quadruped",
   "name": "Quadruped",
   "structureRevision": 1,
@@ -250,11 +250,11 @@
       },
       "a": "tail",
       "b": "tail-up",
-      "width": 0.85,
-      "height": 0.52,
       "offsetX": -0.35,
       "offsetY": 0.03,
-      "depth": 0.02
+      "depth": 0.02,
+      "scaleX": 0.85,
+      "scaleY": 0.52
     },
     {
       "id": "far-hind-upper",
@@ -275,9 +275,9 @@
       },
       "a": "far-hind-root",
       "b": "far-hind-joint",
-      "width": 0.25,
-      "height": 0.60231054,
-      "offsetY": 0.20615526
+      "offsetY": 0.20615526,
+      "scaleX": 0.25,
+      "scaleY": 0.60231054
     },
     {
       "id": "far-hind-lower",
@@ -298,10 +298,10 @@
       },
       "a": "far-hind-joint",
       "b": "far-hind-foot",
-      "width": 0.23,
-      "height": 0.5362642,
       "offsetY": 0.19313207,
-      "depth": -0.005
+      "depth": -0.005,
+      "scaleX": 0.23,
+      "scaleY": 0.5362642
     },
     {
       "id": "far-hind-paw",
@@ -339,11 +339,11 @@
         "outline": {}
       },
       "a": "far-hind-foot",
-      "width": 0.36,
-      "height": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
-      "depth": -0.015
+      "depth": -0.015,
+      "scaleX": 0.36,
+      "scaleY": 0.22
     },
     {
       "id": "far-hind-toe-0",
@@ -365,11 +365,11 @@
         }
       },
       "a": "far-hind-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": -0.08,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "far-hind-toe-1",
@@ -391,11 +391,11 @@
         }
       },
       "a": "far-hind-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "far-hind-toe-2",
@@ -417,11 +417,11 @@
         }
       },
       "a": "far-hind-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": 0.09,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "far-front-upper",
@@ -442,9 +442,9 @@
       },
       "a": "far-front-root",
       "b": "far-front-joint",
-      "width": 0.25,
-      "height": 0.58849716,
-      "offsetY": 0.19924857
+      "offsetY": 0.19924857,
+      "scaleX": 0.25,
+      "scaleY": 0.58849716
     },
     {
       "id": "far-front-lower",
@@ -465,10 +465,10 @@
       },
       "a": "far-front-joint",
       "b": "far-front-foot",
-      "width": 0.23,
-      "height": 0.5362642,
       "offsetY": 0.19313209,
-      "depth": -0.005
+      "depth": -0.005,
+      "scaleX": 0.23,
+      "scaleY": 0.5362642
     },
     {
       "id": "far-front-paw",
@@ -506,11 +506,11 @@
         "outline": {}
       },
       "a": "far-front-foot",
-      "width": 0.36,
-      "height": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
-      "depth": -0.015
+      "depth": -0.015,
+      "scaleX": 0.36,
+      "scaleY": 0.22
     },
     {
       "id": "far-front-toe-0",
@@ -532,11 +532,11 @@
         }
       },
       "a": "far-front-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": -0.08,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "far-front-toe-1",
@@ -558,11 +558,11 @@
         }
       },
       "a": "far-front-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "far-front-toe-2",
@@ -584,11 +584,11 @@
         }
       },
       "a": "far-front-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": 0.09,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "near-hind-upper",
@@ -609,9 +609,9 @@
       },
       "a": "near-hind-root",
       "b": "near-hind-joint",
-      "width": 0.25,
-      "height": 0.60231054,
-      "offsetY": 0.20615527
+      "offsetY": 0.20615527,
+      "scaleX": 0.25,
+      "scaleY": 0.60231054
     },
     {
       "id": "near-hind-lower",
@@ -632,10 +632,10 @@
       },
       "a": "near-hind-joint",
       "b": "near-hind-foot",
-      "width": 0.23,
-      "height": 0.5362642,
       "offsetY": 0.19313209,
-      "depth": -0.005
+      "depth": -0.005,
+      "scaleX": 0.23,
+      "scaleY": 0.5362642
     },
     {
       "id": "near-hind-paw",
@@ -673,11 +673,11 @@
         "outline": {}
       },
       "a": "near-hind-foot",
-      "width": 0.36,
-      "height": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
-      "depth": -0.015
+      "depth": -0.015,
+      "scaleX": 0.36,
+      "scaleY": 0.22
     },
     {
       "id": "near-hind-toe-0",
@@ -699,11 +699,11 @@
         }
       },
       "a": "near-hind-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": -0.08,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "near-hind-toe-1",
@@ -725,11 +725,11 @@
         }
       },
       "a": "near-hind-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "near-hind-toe-2",
@@ -751,11 +751,11 @@
         }
       },
       "a": "near-hind-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": 0.09,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "near-front-upper",
@@ -776,9 +776,9 @@
       },
       "a": "near-front-root",
       "b": "near-front-joint",
-      "width": 0.25,
-      "height": 0.58849716,
-      "offsetY": 0.19924857
+      "offsetY": 0.19924857,
+      "scaleX": 0.25,
+      "scaleY": 0.58849716
     },
     {
       "id": "near-front-lower",
@@ -799,10 +799,10 @@
       },
       "a": "near-front-joint",
       "b": "near-front-foot",
-      "width": 0.23,
-      "height": 0.5362642,
       "offsetY": 0.19313207,
-      "depth": -0.005
+      "depth": -0.005,
+      "scaleX": 0.23,
+      "scaleY": 0.5362642
     },
     {
       "id": "near-front-paw",
@@ -840,11 +840,11 @@
         "outline": {}
       },
       "a": "near-front-foot",
-      "width": 0.36,
-      "height": 0.22,
       "offsetX": 0.015,
       "offsetY": -0.005,
-      "depth": -0.015
+      "depth": -0.015,
+      "scaleX": 0.36,
+      "scaleY": 0.22
     },
     {
       "id": "near-front-toe-0",
@@ -866,11 +866,11 @@
         }
       },
       "a": "near-front-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": -0.08,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "near-front-toe-1",
@@ -892,11 +892,11 @@
         }
       },
       "a": "near-front-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": 0.0050000027,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "near-front-toe-2",
@@ -918,11 +918,11 @@
         }
       },
       "a": "near-front-foot",
-      "width": 0.045,
-      "height": 0.065,
       "offsetX": 0.09,
       "offsetY": -0.055,
-      "depth": -0.025
+      "depth": -0.025,
+      "scaleX": 0.045,
+      "scaleY": 0.065
     },
     {
       "id": "body",
@@ -1055,10 +1055,10 @@
       },
       "a": "body",
       "b": "body-up",
-      "width": 1.92,
-      "height": 0.9,
       "offsetX": -0.05,
-      "offsetY": 0.04
+      "offsetY": 0.04,
+      "scaleX": 1.92,
+      "scaleY": 0.9
     },
     {
       "id": "head",
@@ -1079,11 +1079,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.74,
-      "height": 0.58,
       "offsetX": 0.13,
       "offsetY": 0.02,
-      "depth": -0.24
+      "depth": -0.24,
+      "scaleX": 0.74,
+      "scaleY": 0.58
     },
     {
       "id": "eye",
@@ -1106,11 +1106,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.09,
-      "height": 0.12,
       "offsetX": 0.34,
       "offsetY": 0.01,
-      "depth": -0.31
+      "depth": -0.31,
+      "scaleX": 0.09,
+      "scaleY": 0.12
     },
     {
       "id": "brow",
@@ -1143,11 +1143,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.16,
-      "height": 0.09,
       "offsetX": 0.33,
       "offsetY": 0.11,
-      "depth": -0.31
+      "depth": -0.31,
+      "scaleX": 0.16,
+      "scaleY": 0.09
     },
     {
       "id": "mouth",
@@ -1188,11 +1188,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.23,
-      "height": 0.08,
       "offsetX": 0.35,
       "offsetY": -0.17,
-      "depth": -0.31
+      "depth": -0.31,
+      "scaleX": 0.23,
+      "scaleY": 0.08
     }
   ],
   "slots": [],

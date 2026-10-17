@@ -12,6 +12,8 @@ public sealed record RenderMaterialDefinition2D
     {
         get; init;
     }
+    /// <summary>Curve thickness in world units. Null inherits the owning asset's line width.</summary>
+    public float? StrokeWidth { get; init; }
     public RenderOutlineDefinition2D? Outline
     {
         get; init;
@@ -32,6 +34,7 @@ public sealed record RenderMaterialDefinition2D
         {
             Paint = value.Paint ?? Paint,
             Fill = value.Fill ?? Fill,
+            StrokeWidth = value.StrokeWidth ?? StrokeWidth,
             Texture = value.Texture ?? Texture,
             Tint = value.Tint ?? Tint,
             Outline = value.Outline is null ? Outline : (Outline ?? new RenderOutlineDefinition2D()) with
@@ -67,6 +70,10 @@ public sealed record RenderMaterialDefinition2D
         }
 
         Outline?.Validate(field + ".outline");
+        if (StrokeWidth is { } strokeWidth)
+        {
+            new Limit(.001f, 100).Check(strokeWidth, field + ".strokeWidth");
+        }
         if (Tint is not null)
         {
             Authored.SkeletonAppearance2D.Color(Tint);

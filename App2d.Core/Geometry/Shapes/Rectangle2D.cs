@@ -27,13 +27,13 @@ public readonly partial record struct Rectangle2D : IConvexShape2D, IRect2D
     /// <inheritdoc/>
     public Vector2 Min
     {
-        get;
+        get; init;
     }
 
     /// <inheritdoc/>
     public Vector2 Max
     {
-        get;
+        get; init;
     }
 
     /// <inheritdoc/>

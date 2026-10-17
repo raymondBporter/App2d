@@ -52,8 +52,8 @@ public sealed class QuadrupedTests
         var part = new PuppetPart
         {
             A = "body",
-            Width = 1,
-            Height = 1,
+            ScaleX = 1,
+            ScaleY = 1,
             Material = new()
             {
                 Fill = "#fff8e7",

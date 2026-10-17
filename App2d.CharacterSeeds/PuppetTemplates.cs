@@ -1,5 +1,6 @@
 using App2d.Core.Characters;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Progress;
@@ -31,10 +32,10 @@ public static class PuppetTemplates
                 puppet.Parts.Add(new()
                 {
                     Id = from + "-" + to,
-                    Geometry = new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY },
+                    Geometry = new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(),
                     A = from,
                     B = to,
-                    Width = .045f
+                    Material = new() { StrokeWidth = .045f }
                 });
             }
         }
@@ -79,11 +80,11 @@ public static class PuppetTemplates
         puppet.Parts.Add(new()
         {
             Id = Humanoid.Body,
-            Geometry = new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] },
+            Geometry = new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated(),
             A = Humanoid.Hips,
             B = Humanoid.Chest,
-            Width = .45f,
-            Height = .68f,
+            ScaleX = .45f,
+            ScaleY = .68f,
             OffsetY = .32f,
             Material = new()
             {
@@ -94,16 +95,16 @@ public static class PuppetTemplates
         puppet.Parts.Add(new()
         {
             Id = Humanoid.Head,
-            Geometry = GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse),
+            Geometry = GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse),
             A = Humanoid.Head,
-            Width = .58f,
-            Height = .58f,
+            ScaleX = .58f,
+            ScaleY = .58f,
             Face = "relaxed",
             Depth = -.12f
         });
         foreach (var part in puppet.Parts)
         {
-            part.Material ??= part.Geometry is CurveDefinition2D ? new RenderMaterialDefinition2D()
+            part.Material ??= part.Geometry is ICurve2D ? new RenderMaterialDefinition2D()
                 : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
         }
         puppet.Motions[0].Name = "Pose study";
@@ -141,9 +142,9 @@ public static class PuppetTemplates
             Rest(kneeId, hipX + .09f, .51f, hipDepth);
             Rest(footId, hipX, .025f, hipDepth);
         }
-        puppet.Parts.Single(p => p.Id == Humanoid.Body).Width = .36f;
+        puppet.Parts.Single(p => p.Id == Humanoid.Body).ScaleX = .36f;
         var head = puppet.Parts.Single(p => p.Id == Humanoid.Head);
-        head.Width = .56f;
+        head.ScaleX = .56f;
         head.FaceX = .065f;
         var motion = puppet.Motions[0];
         motion.Name = "Walk right";

@@ -1,8 +1,10 @@
+using App2d.Core.Geometry.Curves;
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Rendering;
@@ -242,8 +244,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Check(s.Edit(doc, () =>
                 {
                     var part = doc.Asset.Parts.Single(p => p.Id == "frill");
-                    var polygon = (SimplePolygon2D.Builder)part.Geometry!;
-                    var vertices = new List<Vector2>(polygon.Vertices);
+                    var polygon = (SimplePolygon2D)part.Geometry!;
+                    var vertices = new List<Vector2>(polygon.Vertices.ToArray());
                     vertices[0] = new(-.32f, -.46f);
                     ModelAuthoring.SetCutout(part, vertices);
                 }), s);
@@ -488,8 +490,8 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 ModelAuthoring.AddControl(model.Asset, $"hip-{i}", new(x + .15f, .4f, (i - 1) * .1f), $"knee-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"knee-{i}", new(x, 0, (i - 1) * .1f), $"foot-{i}");
                 ModelAuthoring.AddChain(model.Asset, $"foot-{i}");
-                ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}");
-                ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"hip-{i}", $"knee-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
             }
             ModelAuthoring.AddMeasure(model.Asset, "leg", ["hip-1", "knee-1", "foot-1"]);
             foreach (var chain in model.Asset.Chains)
@@ -497,9 +499,9 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 chain.Scale = "leg";
             }
 
-            var shell = ModelAuthoring.AddPart(model.Asset, GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), "body");
-            shell.Width = .95f;
-            shell.Height = .38f;
+            var shell = ModelAuthoring.AddPart(model.Asset, GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse), "body");
+            shell.ScaleX = .95f;
+            shell.ScaleY = .38f;
             shell.Material = shell.RenderMaterial with
             {
                 Fill = "#c9e0b8"

@@ -1,5 +1,8 @@
-using App2d.Core;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
+using App2d.Core;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
@@ -60,7 +63,7 @@ public sealed class KinematicEntity2DTests
             _ => Easing.Smooth
         };
         var motion = new CurveMotion2D(
-            new LineSegmentCurve2D(Vector2.Zero, new Vector2(10f, 0f)),
+            LineSegmentCurve2D.Builder.Create(Vector2.Zero, new Vector2(10f, 0f)),
             2d,
             ProgressMaps.Compose(ProgressMaps.PingPong, easing));
 
@@ -77,7 +80,7 @@ public sealed class KinematicEntity2DTests
     [Fact]
     public void ClosedArcCanLoopWithoutChangingTheMotionDriver()
     {
-        var motion = new CurveMotion2D(new Arc2D(Vector2.Zero, 10f, 0f, 2f * MathF.PI),
+        var motion = new CurveMotion2D(Arc2D.Builder.Create(Vector2.Zero, 10f, 0f, 2f * MathF.PI),
             4d, ProgressMaps.Loop);
 
         Assert.Equal(new Vector2(10f, 0f), motion.Position(0d), new Vector2Tolerance(0.0001f));
@@ -90,7 +93,7 @@ public sealed class KinematicEntity2DTests
     [Fact]
     public void OpenCurveCannotWrapToItsStartWithoutPingPong()
     {
-        var line = new LineSegmentCurve2D(Vector2.Zero, new Vector2(10f, 0f));
+        var line = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new Vector2(10f, 0f));
         Assert.Throws<ArgumentException>(() => new CurveMotion2D(line, 4d, ProgressMaps.Loop));
     }
 

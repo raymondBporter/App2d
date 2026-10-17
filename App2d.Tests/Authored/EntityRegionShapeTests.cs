@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
@@ -50,16 +54,16 @@ public sealed class EntityRegionShapeTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var asset = EntityAsset.FromJson(catalog.Entities["hero"].Asset.ToJson());
         var window = asset.Actions.SelectMany(action => action.Hits).First();
-        window.Shape = new Circle2D.Builder { Center = new(0, 0), Radius = .2f };
+        window.Shape = new Circle2D { Center = new(0, 0), Radius = .2f };
         var restored = EntityAsset.FromJson(asset.ToJson());
         var entity = ResolvedEntity.Compile(restored, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
         var hit = entity.Actions.Values.SelectMany(action => action.Hits).First(h => h.Window.Id == window.Id);
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, entity.Actions.Values.First(action => action.Hits.Contains(hit)).Clip, hit.Start), new(3, 0), 1);
         Assert.IsType<Circle2D>(EntityCollision.Attack(entity, pose, hit).Shape);
 
-        window.Shape = new Circle2D.Builder { Center = new(0, 0), Radius = 0 };
+        window.Shape = new Circle2D { Center = new(0, 0), Radius = 0 };
         Assert.Contains("shape", Assert.Throws<InvalidDataException>(asset.Validate).Message);
-        window.Shape = new HalfSpace2D.Builder { Normal = new(0, 1), Offset = 0 };
+        window.Shape = new HalfSpace2D { Normal = new(0, 1), Offset = 0 };
         Assert.Contains("convex", Assert.Throws<InvalidDataException>(asset.Validate).Message);
         Assert.Throws<JsonException>(() => EntityAsset.FromJson(restored.ToJson().Replace("\"kind\": \"circle\"", "\"kind\": \"blob\"")));
     }
@@ -72,7 +76,7 @@ public sealed class EntityRegionShapeTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var asset = EntityAsset.FromJson(catalog.Entities["spear-guard"].Asset.ToJson());
         var window = asset.Actions.SelectMany(action => action.Hits).First();
-        window.Shape = new Capsule2D.Builder { Start = new(-.3f, 0), End = new(.3f, 0), Radius = .1f };
+        window.Shape = new Capsule2D { Start = new(-.3f, 0), End = new(.3f, 0), Radius = .1f };
         var entity = ResolvedEntity.Compile(asset, catalog.Resolve, catalog.Animations.GetValueOrDefault, catalog.Props.GetValueOrDefault);
         var attack = entity.Actions["attack"];
         var hit = attack.Hits.First(h => h.Window.Id == window.Id);

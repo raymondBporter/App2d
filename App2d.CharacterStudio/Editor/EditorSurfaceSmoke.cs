@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -94,11 +98,11 @@ internal static class EditorSurfaceSmoke
             session.Selection.Select(part: Humanoid.Body);
             Capture("model-variant-part");
 
-            var cutoutModel = assets.Models.FirstOrDefault(m => m.Asset.Parts.Any(p => p.Geometry is SimplePolygon2D.Builder));
+            var cutoutModel = assets.Models.FirstOrDefault(m => m.Asset.Parts.Any(p => p.Geometry is SimplePolygon2D));
             if (cutoutModel is not null)
             {
                 session.Open(cutoutModel.Id);
-                session.Selection.Select(part: cutoutModel.Asset.Parts.First(p => p.Geometry is SimplePolygon2D.Builder).Id);
+                session.Selection.Select(part: cutoutModel.Asset.Parts.First(p => p.Geometry is SimplePolygon2D).Id);
                 Capture("model-cutout");
             }
 

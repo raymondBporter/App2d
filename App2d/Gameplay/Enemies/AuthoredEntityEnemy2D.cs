@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
@@ -354,7 +358,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         var velocity = shot.FlightSeconds > 0
             ? (_attackTarget - muzzle) / shot.FlightSeconds + new Vector2(0, gravity * shot.FlightSeconds / 2)
             : axis * shot.Speed * Scale;
-        _bolts.Add(new(muzzle, velocity, ShapeBounds2D.Calculate(shot.Shape.Build()).Size * Scale, shot.Lifetime)
+        _bolts.Add(new(muzzle, velocity, ShapeBounds2D.Calculate(shot.Shape.Validated()).Size * Scale, shot.Lifetime)
         {
             Gravity = gravity
         });

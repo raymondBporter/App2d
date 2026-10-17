@@ -90,13 +90,14 @@ public static class PropGeometry
             }
             else
             {
+                var strokeWidth = shape.RenderMaterial.StrokeWidth ?? prop.LineWidth;
                 for (var i = 1; i < points.Count; i++)
                 {
                     var a = points[i - 1];
                     var b = points[i];
                     var d = Vector2.Normalize(b.XY - a.XY);
-                    var off = new Vector3(-d.Y, d.X, 0) * shape.Width / 2;
-                    prop.Solids.Add(Solid([PuppetPoint.From(a.XYZ - off), PuppetPoint.From(b.XYZ - off), PuppetPoint.From(b.XYZ + off), PuppetPoint.From(a.XYZ + off)], shape.Width * .85f));
+                    var off = new Vector3(-d.Y, d.X, 0) * strokeWidth / 2;
+                    prop.Solids.Add(Solid([PuppetPoint.From(a.XYZ - off), PuppetPoint.From(b.XYZ - off), PuppetPoint.From(b.XYZ + off), PuppetPoint.From(a.XYZ + off)], strokeWidth * .85f));
                 }
             }
         }

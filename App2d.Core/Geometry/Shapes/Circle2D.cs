@@ -25,13 +25,13 @@ public readonly partial record struct Circle2D : IConvexShape2D
     /// <summary>The radius.</summary>
     public float Radius
     {
-        get;
+        get; init;
     }
 
     /// <summary>The local center.</summary>
     public Vector2 Center
     {
-        get;
+        get; init;
     }
 
     /// <inheritdoc/>

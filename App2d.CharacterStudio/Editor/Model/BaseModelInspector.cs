@@ -1,7 +1,9 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
@@ -199,16 +201,11 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
 
             var controls = model.Controls.Select(c => c.Id).ToArray();
 
-            if (Ui.Combo("Geometry", part.Geometry.Kind, GeometryDefinition2D.DrawableKinds.Where(kind => controls.Length > 1 || !CurveKinds2D.All.Contains(kind))) is { } kind)
+            if (Ui.Combo("Geometry", part.Geometry.Kind, GeometryJson2D.DrawableKinds.Where(kind => controls.Length > 1 || !CurveKinds2D.All.Contains(kind))) is { } kind)
             {
                 session.Edit(document, () =>
                 {
-                    var geometry = GeometryDefinition2D.CreateDefault(kind);
-                    if (geometry is RoundedRectangle2D.Builder rounded)
-                    {
-                        geometry = rounded.WithSize(new(part.Width, part.Height));
-                    }
-
+                    var geometry = GeometryJson2D.CreateDefault(kind);
                     ModelAuthoring.SetPartGeometry(document.Asset, partId, geometry);
                 });
                 return;
@@ -223,7 +220,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                 });
             }
 
-            if (part.Geometry is not CurveDefinition2D && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
+            if (part.Geometry is not ICurve2D && Ui.Combo("Bone frame", part.Frame ?? "(none)", controls.Where(id => model.Controls.Any(c => c.Id == id && (c.Length > 0 || c.Transform is not null))).Prepend("(none)")) is { } bone)
             {
                 session.Edit(document, () =>
                 {
@@ -238,7 +235,7 @@ internal sealed class BaseModelInspector(EditorSession session, ModelStructuralE
                 });
             }
 
-            if (Ui.Combo(part.Geometry is CurveDefinition2D ? "End" : "Point toward", part.B ?? "(none)", part.Geometry is CurveDefinition2D ? controls : controls.Prepend("(none)")) is { } b)
+            if (Ui.Combo(part.Geometry is ICurve2D ? "End" : "Point toward", part.B ?? "(none)", part.Geometry is ICurve2D ? controls : controls.Prepend("(none)")) is { } b)
             {
                 session.Edit(document, () =>
                 {

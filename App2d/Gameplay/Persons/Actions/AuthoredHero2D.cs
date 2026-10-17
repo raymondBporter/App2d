@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Transforms;
@@ -84,7 +85,7 @@ public sealed class AuthoredHero2D
 
     /// <summary>The player's bolt from the shoot action's projectile, in world units.</summary>
     internal GunPersonWeapon2D.Shot? Shot => Entity.Actions.GetValueOrDefault(EntityControllers.Shoot)?.Projectile is { } p
-        ? new(ShapeBounds2D.Calculate(p.Shape.Build()).Size * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, p.Damage) : null;
+        ? new(ShapeBounds2D.Calculate(p.Shape.Validated()).Size * WorldUnitsPerModelUnit, p.Speed * WorldUnitsPerModelUnit, p.Lifetime, p.Damage) : null;
 
     /// <summary>Where a shot leaves the pistol: the muzzle at the shoot (or wall-shot) action's fire event.</summary>
     public Vector2 Muzzle(float facing, bool wallGrip)

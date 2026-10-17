@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 4,
+  "version": 5,
   "id": "pterosaur",
   "name": "Pterosaur",
   "structureRevision": 1,
@@ -293,8 +293,6 @@
       },
       "a": "body",
       "b": "body-up",
-      "width": 1,
-      "height": 1,
       "depth": 0.12,
       "bindings": [
         {
@@ -340,12 +338,11 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.025
       },
       "a": "far-leg",
       "b": "far-foot",
-      "width": 0.025,
-      "height": 0.1,
       "depth": 0.12
     },
     {
@@ -363,12 +360,11 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.021
       },
       "a": "far-foot",
       "b": "far-toe-0",
-      "width": 0.021,
-      "height": 0.1,
       "depth": 0.12
     },
     {
@@ -386,12 +382,11 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.021
       },
       "a": "far-foot",
       "b": "far-toe-1",
-      "width": 0.021,
-      "height": 0.1,
       "depth": 0.12
     },
     {
@@ -409,12 +404,11 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.021
       },
       "a": "far-foot",
       "b": "far-toe-2",
-      "width": 0.021,
-      "height": 0.1,
       "depth": 0.12
     },
     {
@@ -479,8 +473,6 @@
       },
       "a": "body",
       "b": "body-up",
-      "width": 1,
-      "height": 1,
       "depth": -0.02,
       "bindings": [
         {
@@ -526,12 +518,11 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.025
       },
       "a": "near-leg",
       "b": "near-foot",
-      "width": 0.025,
-      "height": 0.1,
       "depth": -0.02
     },
     {
@@ -549,12 +540,11 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.021
       },
       "a": "near-foot",
       "b": "near-toe-0",
-      "width": 0.021,
-      "height": 0.1,
       "depth": -0.02
     },
     {
@@ -572,12 +562,11 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.021
       },
       "a": "near-foot",
       "b": "near-toe-1",
-      "width": 0.021,
-      "height": 0.1,
       "depth": -0.02
     },
     {
@@ -595,12 +584,11 @@
       },
       "material": {
         "fill": "#302632",
-        "outline": {}
+        "outline": {},
+        "strokeWidth": 0.021
       },
       "a": "near-foot",
       "b": "near-toe-2",
-      "width": 0.021,
-      "height": 0.1,
       "depth": -0.02
     },
     {
@@ -628,11 +616,11 @@
       },
       "a": "body",
       "b": "body-up",
-      "width": 0.3,
-      "height": 0.15,
       "offsetX": -0.27,
       "offsetY": -0.05,
-      "depth": -0.04
+      "depth": -0.04,
+      "scaleX": 0.3,
+      "scaleY": 0.15
     },
     {
       "id": "body",
@@ -653,10 +641,10 @@
       },
       "a": "body",
       "b": "body-up",
-      "width": 0.45,
-      "height": 0.38,
       "offsetY": -0.01,
-      "depth": -0.07
+      "depth": -0.07,
+      "scaleX": 0.45,
+      "scaleY": 0.38
     },
     {
       "id": "crest",
@@ -683,11 +671,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.18,
-      "height": 0.3,
       "offsetX": -0.075,
       "offsetY": 0.19,
-      "depth": -0.15
+      "depth": -0.15,
+      "scaleX": 0.18,
+      "scaleY": 0.3
     },
     {
       "id": "head",
@@ -708,11 +696,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.33,
-      "height": 0.29,
       "offsetX": 0.015,
       "offsetY": 0.015,
-      "depth": -0.16
+      "depth": -0.16,
+      "scaleX": 0.33,
+      "scaleY": 0.29
     },
     {
       "id": "beak",
@@ -739,11 +727,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.35,
-      "height": 0.23,
       "offsetX": 0.3,
       "offsetY": -0.015,
-      "depth": -0.17
+      "depth": -0.17,
+      "scaleX": 0.35,
+      "scaleY": 0.23
     },
     {
       "id": "lower-beak",
@@ -770,11 +758,11 @@
       },
       "a": "jaw",
       "b": "jaw-up",
-      "width": 0.26,
-      "height": 0.075,
       "offsetX": 0.1,
       "offsetY": -0.025,
-      "depth": -0.18
+      "depth": -0.18,
+      "scaleX": 0.26,
+      "scaleY": 0.075
     },
     {
       "id": "eye",
@@ -794,11 +782,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.048,
-      "height": 0.069,
       "offsetX": 0.079,
       "offsetY": 0.019,
-      "depth": -0.19
+      "depth": -0.19,
+      "scaleX": 0.048,
+      "scaleY": 0.069
     },
     {
       "id": "brow",
@@ -828,11 +816,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.1,
-      "height": 0.035,
       "offsetX": 0.075,
       "offsetY": 0.092,
-      "depth": -0.19
+      "depth": -0.19,
+      "scaleX": 0.1,
+      "scaleY": 0.035
     }
   ],
   "slots": [],

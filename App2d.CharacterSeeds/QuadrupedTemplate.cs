@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -40,14 +42,14 @@ public static class QuadrupedTemplate
                 Bend = front ? 1 : -1
             });
         }
-        PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, GeometryDefinition2D? geometry = null)
+        PuppetPart Shape(string key, string a, string? b, float w, float h, float x, float y, float depth, string fill, IGeometryValue2D? geometry = null)
         {
-            var p = new PuppetPart { Id = key, A = a, B = b, Width = w, Height = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse) };
+            var p = new PuppetPart { Id = key, A = a, B = b, ScaleX = w, ScaleY = h, OffsetX = x, OffsetY = y, Depth = depth, Material = new() { Fill = fill, Outline = new() }, Geometry = geometry ?? GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse) };
             m.Parts.Add(p);
             return p;
         }
         PuppetPart Cutout(string key, string anchor, float w, float h, float x, float y, float depth, string fill, params Vector2[] points)
-            => Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, new SimplePolygon2D.Builder { Vertices = [.. points] });
+            => Shape(key, anchor, anchor + "-up", w, h, x, y, depth, fill, new SimplePolygon2D { Vertices = [.. points] }.Validated());
         void SetOutlineWidth(PuppetPart part, float width) => part.Material = part.RenderMaterial with
         {
             Outline = (part.RenderMaterial.Outline ?? new RenderOutlineDefinition2D()) with
@@ -69,7 +71,7 @@ public static class QuadrupedTemplate
             var lower = Vector2.Distance(joint.XY, foot.XY);
             Shape(chain.Id + "-upper", chain.Root, chain.Joint, .25f, upper + .19f, 0, upper / 2, 0, color);
             Shape(chain.Id + "-lower", chain.Joint, chain.End, .23f, lower + .15f, 0, lower / 2, -.005f, color);
-            Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)] });
+            Shape(chain.Id + "-paw", chain.End, null, .36f, .22f, .015f, -.005f, -.015f, color, new SimplePolygon2D { Vertices = [new(-.5f, -.4f), new(.47f, -.4f), new(.5f, -.02f), new(.24f, .45f), new(-.25f, .5f), new(-.47f, .12f)] }.Validated());
             for (var i = 0; i < 3; i++)
             {
                 SetOutlineWidth(Shape(chain.Id + "-toe-" + i, chain.End, null, .045f, .065f, -.08f + i * .085f, -.055f, -.025f, horn), .012f);

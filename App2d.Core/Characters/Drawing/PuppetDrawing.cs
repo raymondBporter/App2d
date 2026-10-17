@@ -1,7 +1,12 @@
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Mathematics.Transforms;
@@ -105,10 +110,10 @@ public sealed class PuppetDrawing
             {
                 if (outline is not null && outlineWidth > 0)
                 {
-                    Mesh.Line(points[i - 1] + new Vector3(0, 0, .001f), points[i] + new Vector3(0, 0, .001f), shape.Width + outlineWidth * 2, outlineColor);
+                    Mesh.Line(points[i - 1] + new Vector3(0, 0, .001f), points[i] + new Vector3(0, 0, .001f), (material.StrokeWidth ?? prop.LineWidth) + outlineWidth * 2, outlineColor);
                 }
 
-                Mesh.Line(points[i - 1], points[i], shape.Width,
+                Mesh.Line(points[i - 1], points[i], material.StrokeWidth ?? prop.LineWidth,
                     material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink);
             }
         }
@@ -141,7 +146,7 @@ public sealed class PuppetDrawing
             var outlineWidth = outline?.Width ?? lineWidth;
             var outlineColor = outline?.Color is { } color ? ColorExtensions.FromHexRgb(color) : ink;
             var face = expression?.Invoke(part) ?? part.Face;
-            if (part.Geometry is CurveDefinition2D)
+            if (part.Geometry is ICurve2D)
             {
                 var path = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
                 var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink;
@@ -149,10 +154,10 @@ public sealed class PuppetDrawing
                 {
                     if (outline is not null && outlineWidth > 0)
                     {
-                        Mesh.Line(path[i - 1], path[i], part.Width + outlineWidth * 2, outlineColor);
+                        Mesh.Line(path[i - 1], path[i], (material.StrokeWidth ?? lineWidth) + outlineWidth * 2, outlineColor);
                     }
 
-                    Mesh.Line(path[i - 1], path[i], part.Width, strokeColor);
+                    Mesh.Line(path[i - 1], path[i], material.StrokeWidth ?? lineWidth, strokeColor);
                 }
                 if (Mesh.Count > start)
                 {
@@ -162,7 +167,7 @@ public sealed class PuppetDrawing
                 continue;
             }
             var contour = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
-            var triangles = part.Geometry is SimplePolygon2D.Builder ? PolygonTriangulationCache2D.Get(PartContours2D.CutoutPoints(part), 1e-8) : null;
+            var triangles = part.Geometry is SimplePolygon2D ? PolygonTriangulationCache2D.Get(PartContours2D.CutoutPoints(part), 1e-8) : null;
             var frame = PartAttachment2D.FrameOf(part, world, angle, transform);
             if (material.Fill is { } shapeFill)
             {
@@ -187,8 +192,10 @@ public sealed class PuppetDrawing
 
             if (face != "none")
             {
+                var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
                 FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),
-                p => frame.At(new(p.X * part.Width + part.FaceX, -p.Y * part.Height)) - new Vector3(0, 0, .002f), lineWidth * .6f, ink);
+                p => frame.At(bounds.Center + new Vector2(p.X * bounds.Width, -p.Y * bounds.Height))
+                    + new Vector3(frame.Coordinates.XAxis * (part.FaceX / MathF.Max(frame.Coordinates.XAxis.Length(), 1e-10f)), -.002f), lineWidth * .6f, ink);
             }
             if (Mesh.Count > start)
             {
@@ -202,11 +209,12 @@ public sealed class PuppetDrawing
         var material = part.RenderMaterial;
         var own = ColorExtensions.FromHexRgba(material.Tint ?? "ffffffff");
         var fill = material.Fill is null ? Microsoft.Xna.Framework.Color.White : ColorExtensions.FromHexRgb(material.Fill);
+        var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
         color = new((byte)(color.R * own.R / 255 * fill.R / 255), (byte)(color.G * own.G / 255 * fill.G / 255),
             (byte)(color.B * own.B / 255 * fill.B / 255), (byte)(color.A * own.A / 255));
         Vector3 At(float x, float y)
         {
-            var p = frame.At(new(x * part.Width, y * part.Height));
+            var p = frame.At(bounds.Center + new Vector2(x * bounds.Width, y * bounds.Height));
             if (depth is { } z)
             {
                 p.Z = z;

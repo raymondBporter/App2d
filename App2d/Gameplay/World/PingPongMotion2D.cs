@@ -1,3 +1,6 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
@@ -25,7 +28,7 @@ public sealed class PingPongMotion2D : IKinematicMotion2D
             Math.Abs(easing.Sample(1d) - 1d) > 0.000001d,
             "Easing must map the endpoints to 0 and 1.", nameof(easing));
         var progress = ProgressMaps.Compose(ProgressMaps.PingPong, easing);
-        _motion = new CurveMotion2D(new LineSegmentCurve2D(Start, End),
+        _motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Start, End),
             2d * length / speed, progress);
     }
 

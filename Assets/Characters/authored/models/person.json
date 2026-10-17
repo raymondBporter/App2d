@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 4,
+  "version": 5,
   "id": "person",
   "name": "Person",
   "structureRevision": 1,
@@ -201,15 +201,26 @@
   "measures": [
     {
       "id": "leg",
-      "path": ["right-hip", "right-knee", "right-foot"]
+      "path": [
+        "right-hip",
+        "right-knee",
+        "right-foot"
+      ]
     },
     {
       "id": "arm",
-      "path": ["right-shoulder", "right-elbow", "right-hand"]
+      "path": [
+        "right-shoulder",
+        "right-elbow",
+        "right-hand"
+      ]
     },
     {
       "id": "torso",
-      "path": ["hips", "chest"]
+      "path": [
+        "hips",
+        "chest"
+      ]
     }
   ],
   "parts": [
@@ -226,10 +237,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "chest",
-      "b": "head",
-      "width": 0.045
+      "b": "head"
     },
     {
       "id": "left-shoulder-left-elbow",
@@ -244,10 +256,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "left-shoulder",
-      "b": "left-elbow",
-      "width": 0.045
+      "b": "left-elbow"
     },
     {
       "id": "left-elbow-left-hand",
@@ -262,10 +275,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "left-elbow",
-      "b": "left-hand",
-      "width": 0.045
+      "b": "left-hand"
     },
     {
       "id": "left-hip-left-knee",
@@ -280,10 +294,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "left-hip",
-      "b": "left-knee",
-      "width": 0.045
+      "b": "left-knee"
     },
     {
       "id": "left-knee-left-foot",
@@ -298,10 +313,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "left-knee",
-      "b": "left-foot",
-      "width": 0.045
+      "b": "left-foot"
     },
     {
       "id": "right-shoulder-right-elbow",
@@ -316,10 +332,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "right-shoulder",
-      "b": "right-elbow",
-      "width": 0.045
+      "b": "right-elbow"
     },
     {
       "id": "right-elbow-right-hand",
@@ -334,10 +351,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "right-elbow",
-      "b": "right-hand",
-      "width": 0.045
+      "b": "right-hand"
     },
     {
       "id": "right-hip-right-knee",
@@ -352,10 +370,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "right-hip",
-      "b": "right-knee",
-      "width": 0.045
+      "b": "right-knee"
     },
     {
       "id": "right-knee-right-foot",
@@ -370,10 +389,11 @@
           "y": 1
         }
       },
-      "material": {},
+      "material": {
+        "strokeWidth": 0.045
+      },
       "a": "right-knee",
-      "b": "right-foot",
-      "width": 0.045
+      "b": "right-foot"
     },
     {
       "id": "body",
@@ -532,9 +552,9 @@
       },
       "a": "hips",
       "b": "chest",
-      "width": 0.36,
-      "height": 0.68,
-      "offsetY": 0.32
+      "offsetY": 0.32,
+      "scaleX": 0.36,
+      "scaleY": 0.68
     },
     {
       "id": "head",
@@ -554,11 +574,11 @@
         "outline": {}
       },
       "a": "head",
-      "width": 0.56,
-      "height": 0.58,
       "depth": -0.12,
       "face": "relaxed",
-      "faceX": 0.065
+      "faceX": 0.065,
+      "scaleX": 0.56,
+      "scaleY": 0.58
     }
   ],
   "slots": [],
@@ -657,12 +677,19 @@
       "regions": [
         {
           "id": "body",
-          "controls": ["hips", "chest", "left-shoulder", "right-shoulder"],
+          "controls": [
+            "hips",
+            "chest",
+            "left-shoulder",
+            "right-shoulder"
+          ],
           "pad": 0.14
         },
         {
           "id": "head",
-          "controls": ["head"],
+          "controls": [
+            "head"
+          ],
           "pad": 0.3
         },
         {

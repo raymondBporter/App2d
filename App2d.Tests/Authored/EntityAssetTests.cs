@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Shapes;
 
@@ -15,7 +16,7 @@ public sealed class EntityAssetTests
         {
             var entity = EntityAsset.FromJson(File.ReadAllText(path));
             Assert.Equal(EntityAsset.CurrentVersion, entity.Version);
-            Assert.IsType<IConvexShape2D>(entity.Movement.Shape.Build(), exactMatch: false);
+            Assert.IsType<IConvexShape2D>(entity.Movement.Shape.Validated(), exactMatch: false);
         }
     }
 

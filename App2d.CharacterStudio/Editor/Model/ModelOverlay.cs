@@ -1,7 +1,10 @@
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using System.Numerics;
 
 namespace App2d.CharacterStudio.Editor.Model;
@@ -47,7 +50,7 @@ internal static class ModelOverlay
             frame.Draw.AddLine(outline[i - 1], outline[i], Ui.Color(232, 169, 55), 2);
         }
 
-        if (part.Geometry is not CurveDefinition2D && outline.Length > 1)
+        if (part.Geometry is not ICurve2D && outline.Length > 1)
         {
             frame.Draw.AddLine(outline[^1], outline[0], Ui.Color(232, 169, 55), 2);
         }

@@ -1,7 +1,6 @@
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Mathematics;
-using App2d.Core.Validation;
-using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Curves;
@@ -10,59 +9,51 @@ namespace App2d.Core.Geometry.Curves;
 /// A clamped uniform B-spline. Cubic is the default; lower degrees are useful
 /// for polylines and higher degrees are supported when enough control points exist.
 /// </summary>
-public sealed class BSpline2D : ICurve2D
+public readonly partial record struct BSpline2D : ICurve2D
 {
-    private readonly Vector2[] _controlPoints;
-    private readonly float[] _knots;
-    private readonly Vector2[] _derivativeControlPoints;
-    private readonly float[] _derivativeKnots;
+    public string Kind => CurveKinds2D.BSpline;
+
+    private readonly Vector2[]? _controlPoints;
+    private static readonly ConditionalWeakTable<Vector2[], Dictionary<int, Prepared>> PreparedCurves = new();
 
     public BSpline2D(IEnumerable<Vector2> controlPoints, int degree = 3)
     {
-        ArgGuard.ThrowIfNull(controlPoints);
-        ArgGuard.Positive(degree);
-
-        _controlPoints = [.. controlPoints];
-        if (_controlPoints.Length <= degree)
-        {
-            throw ArgGuard.CreateInvalid(
-                $"A degree-{degree} B-spline needs at least {degree + 1} control points.",
-                nameof(controlPoints));
-        }
-
-        foreach (var point in _controlPoints)
-        {
-            ArgGuard.Finite(point, nameof(controlPoints));
-        }
-
+        _controlPoints = controlPoints?.ToArray();
         Degree = degree;
-        ControlPoints = Array.AsReadOnly(_controlPoints);
-        _knots = CreateClampedUniformKnots(_controlPoints.Length, degree);
-        _derivativeControlPoints = CreateDerivativeControlPoints(_controlPoints, _knots, degree);
-        _derivativeKnots = _knots[1..^1];
     }
 
-    public int Degree
+    public int Degree { get; init; } = 3;
+    public BSpline2D() { }
+    public ReadOnlySpan<Vector2> ControlPoints { get => _controlPoints; init => _controlPoints = value.ToArray(); }
+
+    private Prepared Data
     {
-        get;
+        get
+        {
+            var entries = PreparedCurves.GetValue(_controlPoints!, static _ => new());
+            lock (entries)
+            {
+                if (!entries.TryGetValue(Degree, out var data))
+                {
+                    Validate();
+                    var knots = CreateClampedUniformKnots(_controlPoints!.Length, Degree);
+                    data = new(knots, CreateDerivativeControlPoints(_controlPoints, knots, Degree), knots[1..^1]);
+                    entries[Degree] = data;
+                }
+                return data;
+            }
+        }
     }
-    public ReadOnlyCollection<Vector2> ControlPoints
+    private sealed record Prepared(float[] Knots, Vector2[] DerivativePoints, float[] DerivativeKnots);
+
+    public Vector2 Evaluate(float amount) => EvaluateDeBoor(_controlPoints, Data.Knots, Degree, Clamping.Clamp01(amount));
+    public Vector2 EvaluateDerivative(float amount)
     {
-        get;
+        var data = Data;
+        return EvaluateDeBoor(data.DerivativePoints, data.DerivativeKnots, Degree - 1, Clamping.Clamp01(amount));
     }
-
-    public Vector2 Evaluate(float amount) =>
-        EvaluateDeBoor(_controlPoints, _knots, Degree, Clamping.Clamp01(amount));
-
-    public Vector2 EvaluateDerivative(float amount) =>
-        EvaluateDeBoor(
-            _derivativeControlPoints,
-            _derivativeKnots,
-            Degree - 1,
-            Clamping.Clamp01(amount));
-
     public float Distance(Vector2 point) => CurveDistance2D.SampledDistance(point, this,
-        Clamping.Clamp((_controlPoints.Length - Degree) * 32, 64, 1024));
+        Clamping.Clamp((ControlPoints.Length - Degree) * 32, 64, 1024));
 
     private static float[] CreateClampedUniformKnots(int controlPointCount, int degree)
     {

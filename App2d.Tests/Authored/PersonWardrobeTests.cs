@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -117,9 +121,9 @@ public sealed class PersonWardrobeTests
         var part = new PuppetPart
         {
             A = "origin",
-            Width = 2,
-            Height = 1,
-            Geometry = new App2d.Core.Shapes.Ellipse2D.Builder { Center = new(0, 0), Radii = new(.5f, .5f) },
+            ScaleX = 2,
+            ScaleY = 1,
+            Geometry = new App2d.Core.Shapes.Ellipse2D { Center = new(0, 0), Radii = new(.5f, .5f) },
             Material = new()
             {
                 Fill = "#fff8e7",
@@ -138,7 +142,7 @@ public sealed class PersonWardrobeTests
             Assert.InRange(p.Z, -.0001f, 0);
         }
         // Resizing the body also resizes the paint, without changing a clothing socket or prop scale.
-        drawing.Build("#000000", .04f, [part with { Width = 4 }], _ => Vector3.Zero);
+        drawing.Build("#000000", .04f, [part with { ScaleX = 4 }], _ => Vector3.Zero);
         Assert.InRange(drawing.Mesh.Max.X, 1.999f, 2.001f);
     }
 

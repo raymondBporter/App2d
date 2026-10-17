@@ -82,7 +82,7 @@ if (Raycast2D.TryCircle(origin, direction, center, radius, 100, out var rayHit))
 animation can pass eased progress to `Evaluate`, or move the curve's control points to change a face or contour.
 
 ```csharp
-var mouth = new CubicBezier2D(start, firstHandle, secondHandle, end);
+var mouth = CubicBezier2D.Builder.Create(start, firstHandle, secondHandle, end);
 var point = mouth.Evaluate((float)Easing.EaseInOutSine.Sample(phase));
 var (left, right) = mouth.Split(.5f);
 var middle = mouth.Slice(.25f, .75f);
@@ -132,8 +132,8 @@ bounds cache. The switch tables map a shape to raw parameters once:
 `TriangleMesh2D` is a mesh, not a shape; `ToCompositeShape()` bridges to collision. `CompositeShape2D` is the
 non-convex shape and always resolves per part.
 
-Composite area is cached at construction. The default sums part areas, including overlap; use
-`new CompositeShape2D(parts, includeOverlap: false)` to count the covered region once. `ShapeArea2D.Union(parts)`
+Composite area queries sum part areas by default, including overlap; use
+`CompositeShape2D.Builder.Create(parts, includeOverlap: false)` to count the covered region once. `ShapeArea2D.Union(parts)`
 also calculates that area directly. Circles, ellipses and capsules stay analytic, and rectangles, triangles and convex polygons use
 their exact edges. The shared boundary integral keeps only exposed edges and conic arcs, handling multiple
 overlaps, disconnected regions and holes. Two axis-aligned rectangles use a direct formula.
@@ -152,10 +152,28 @@ Rounded rectangles use inscribed polygon outlines; `areaOutlineSegments` (defaul
 including custom convex shapes sampled through their support mapping. This sampling affects area only.
 The area mode and sample count survive shape-definition JSON round trips; older definitions retain summed area.
 
-`ShapeDefinition2D` is the editable, JSON-tagged form of every built-in shape, mirroring `CurveDefinition2D`:
-`FromShape(shape).ToJson()` writes it, `FromJson(json).Build()` reads it back through the validating constructors,
-and `ShapeKinds2D` lists the kind tags, also available as `IShape2D.Kind` on runtime shapes. Both definition families
-use `System.Numerics.Vector2` directly. `IO.Vector2JsonConverter` is registered in geometry and character authoring
+Built-in shapes and serializable curves are readonly record structs. Their constructors only store source parameters
+and snapshot collection inputs; they can represent invalid geometry. `geometry.Validate()` checks that same value.
+The nested `Builder` types are static factories with no instance properties or fields: `Builder.Create(...)`
+constructs a value, validates it, and returns it. Half-space factories also normalize the normal and offset.
+Analyzer `APP2D001` warns on unchecked construction and offers a factory fix, or explicit `Validated()` for an object
+initializer. An intentional unvalidated draft can suppress that warning while editing and validate later.
+
+The geometry value is also the JSON data. `geometry.ToJson()` writes its kind and source fields;
+`GeometryJson2D.FromJson(json)`, `ShapeFromJson(json)`, and `CurveFromJson(json)` read the actual values without
+geometric validation. `JsonSerializer.Deserialize<Circle2D>(json, GeometryJson2D.JsonOptions)` also reads a circle
+directly. Missing required members, unknown kinds, and unknown JSON properties remain deserialization errors.
+Fields accepting either shapes or curves use `IGeometryValue2D`; shape-only and curve-only fields use `IShape2D`
+and `ICurve2D`. Editors change these same values with `with` expressions, including collection snapshots.
+There is no definition hierarchy, stateful builder hierarchy, or builder-to-runtime conversion cache.
+
+Polygon triangulation, convex pieces, spline knots and derivatives, and composite union area are derived query data.
+They are calculated on demand and cached against immutable source snapshots. Source changes through `with` use
+the new parameters instead of stale constructor caches. Computed properties such as area, diameter, and arc endpoints
+are excluded from the JSON schema. `ShapeKinds2D` and `CurveKinds2D` list the kind tags.
+`Rectangle2D` uses `"kind": "rectangle"`; `AxisAlignedRectangle2D` uses `"kind": "axis-aligned-rectangle"`.
+The kind alone selects the rectangle type, including inside composite parts; there is no `axisAligned` flag.
+Geometry values use `System.Numerics.Vector2` directly. `IO.Vector2JsonConverter` is registered in geometry and character authoring
 settings and preserves the existing `{ "x": ..., "y": ... }` coordinate format. It can also be registered in other
 `JsonSerializerOptions.Converters` collections.
 

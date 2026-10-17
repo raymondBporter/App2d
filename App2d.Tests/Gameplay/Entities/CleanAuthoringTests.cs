@@ -1,6 +1,9 @@
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Shapes;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Enemies;
@@ -47,8 +50,8 @@ public sealed class CleanAuthoringTests : IDisposable
                 ModelAuthoring.AddControl(m, $"{leg}-hip", new(x + .1f, .26f, z), $"{leg}-knee");
                 ModelAuthoring.AddControl(m, $"{leg}-knee", new(x, 0, z), $"{leg}-foot");
                 ModelAuthoring.AddChain(m, $"{leg}-foot");
-                ModelAuthoring.AddPart(m, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"{leg}-hip", $"{leg}-knee");
-                ModelAuthoring.AddPart(m, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"{leg}-knee", $"{leg}-foot");
+                ModelAuthoring.AddPart(m, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"{leg}-hip", $"{leg}-knee");
+                ModelAuthoring.AddPart(m, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"{leg}-knee", $"{leg}-foot");
             }
             ModelAuthoring.AddMeasure(m, "leg", ["front-hip", "front-knee", "front-foot"]);
             foreach (var chain in m.Chains)
@@ -56,9 +59,9 @@ public sealed class CleanAuthoringTests : IDisposable
                 chain.Scale = "leg";
             }
 
-            var shell = ModelAuthoring.AddPart(m, new Ellipse2D.Builder { Center = Vector2.Zero, Radii = new(.5f, .5f) }, "body");
-            shell.Width = .8f;
-            shell.Height = .4f;
+            var shell = ModelAuthoring.AddPart(m, new Ellipse2D { Center = Vector2.Zero, Radii = new(.5f, .5f) }, "body");
+            shell.ScaleX = .8f;
+            shell.ScaleY = .4f;
             shell.Material = shell.RenderMaterial with
             {
                 Fill = "#9ec27a"

@@ -1,3 +1,6 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Shapes;
@@ -127,7 +130,7 @@ internal static class SplineSilhouette2D
 
         public void CurveTo(Vector2 control1, Vector2 control2, Vector2 end)
         {
-            var curve = new CubicBezier2D(_current, control1, control2, end);
+            var curve = CubicBezier2D.Builder.Create(_current, control1, control2, end);
             for (var sample = 1; sample <= SamplesPerCurve; sample++)
             {
                 var amount = sample / (float)SamplesPerCurve;

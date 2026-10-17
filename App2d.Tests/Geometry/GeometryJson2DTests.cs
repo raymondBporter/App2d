@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Shapes;
 using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Distance;
@@ -14,25 +16,25 @@ using System.Text.Json.Nodes;
 
 namespace App2d.Tests.Geometry;
 
-public sealed class GeometryDefinition2DTests
+public sealed class GeometryJson2DTests
 {
-    private sealed record GeometryDocument(GeometryDefinition2D Geometry);
+    private sealed record GeometryDocument(IGeometryValue2D Geometry);
 
     [Fact]
     public void DrawingEditorsUseLibraryGeometryAndOneJsonKindWithoutCharacterPresets()
     {
-        foreach (var kind in GeometryDefinition2D.DrawableKinds)
+        foreach (var kind in GeometryJson2D.DrawableKinds)
         {
-            var geometry = GeometryDefinition2D.CreateDefault(kind);
+            var geometry = GeometryJson2D.CreateDefault(kind);
             Assert.Equal(kind, geometry.Kind);
-            using var json = JsonDocument.Parse(geometry.ToGeometryJson());
-            Assert.Single(json.RootElement.EnumerateObject().Where(p => p.Name == "kind"));
+            using var json = JsonDocument.Parse(geometry.ToJson());
+            Assert.Single(json.RootElement.EnumerateObject(), p => p.Name == "kind");
             var model = ModelAuthoring.Empty("geometry-test", "Geometry test");
             ModelAuthoring.AddControl(model, null, Vector3.Zero, "root");
             ModelAuthoring.AddControl(model, "root", Vector3.UnitY, "tip");
-            var part = ModelAuthoring.AddPart(model, geometry, "root", geometry is CurveDefinition2D ? "tip" : null);
+            var part = ModelAuthoring.AddPart(model, geometry, "root", geometry is ICurve2D ? "tip" : null);
             var saved = CharacterModel.FromJson(model.ToJson());
-            Assert.Equal(geometry.ToGeometryJson(), saved.Parts.Single().Geometry!.ToGeometryJson());
+            Assert.Equal(geometry.ToJson(), saved.Parts.Single().Geometry!.ToJson());
             Assert.Equal(part.Id, saved.Parts.Single().Id);
             using var modelJson = JsonDocument.Parse(saved.ToJson());
             Assert.False(modelJson.RootElement.GetProperty("parts")[0].TryGetProperty("kind", out _));
@@ -46,30 +48,32 @@ public sealed class GeometryDefinition2DTests
     [Fact]
     public void OneTaggedFieldRoundTripsShapesAndCurves()
     {
-        GeometryDefinition2D[] definitions =
+        IGeometryValue2D[] definitions =
         [
-            new Circle2D.Builder { Center = new(1, 2), Radius = 3 },
-            new SimplePolygon2D.Builder { Vertices = [new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)] },
-            new LineCurveDefinition2D { Start = new(1, 2), End = new(3, 4) },
-            new PolylineCurveDefinition2D { Points = [new(0, 0), new(1, 2), new(2, 0)] }
+            new Circle2D { Center = new(1, 2), Radius = 3 },
+            Rectangle2D.Builder.FromSize(2, 3),
+            AxisAlignedRectangle2D.Builder.FromSize(2, 3),
+            new SimplePolygon2D { Vertices = [new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)] },
+            new LineSegmentCurve2D { Start = new(1, 2), End = new(3, 4) },
+            new PolylineCurve2D { Points = [new(0, 0), new(1, 2), new(2, 0)] }
         ];
 
         foreach (var definition in definitions)
         {
-            var json = JsonSerializer.Serialize(new GeometryDocument(definition), GeometryDefinition2D.JsonOptions);
-            var restored = JsonSerializer.Deserialize<GeometryDocument>(json, GeometryDefinition2D.JsonOptions);
-            Assert.Equal(definition.ToGeometryJson(), restored?.Geometry.ToGeometryJson());
-            Assert.Equal(definition.ToGeometryJson(), GeometryDefinition2D.FromJson(definition.ToGeometryJson()).ToGeometryJson());
+            var json = JsonSerializer.Serialize(new GeometryDocument(definition), GeometryJson2D.JsonOptions);
+            var restored = JsonSerializer.Deserialize<GeometryDocument>(json, GeometryJson2D.JsonOptions);
+            Assert.Equal(definition.ToJson(), restored?.Geometry.ToJson());
+            Assert.Equal(definition.ToJson(), GeometryJson2D.FromJson(definition.ToJson()).ToJson());
         }
     }
 
     [Fact]
     public void PolylinePreservesEachAuthoredPoint()
     {
-        var curve = new PolylineCurve2D([new(0, 0), new(1, 2), new(2, 0)]);
+        var curve = PolylineCurve2D.Builder.Create([new(0, 0), new(1, 2), new(2, 0)]);
         Assert.Equal(new System.Numerics.Vector2(1, 2), curve.Evaluate(.5f));
         Assert.Equal(new System.Numerics.Vector2(2, 0), curve.Evaluate(1));
-        Assert.IsType<PolylineCurveDefinition2D>(CurveDefinition2D.FromCurve(curve));
+        Assert.IsType<PolylineCurve2D>(curve);
     }
 
     [Fact]
@@ -97,11 +101,11 @@ public sealed class GeometryDefinition2DTests
     [Fact]
     public void ExistingShapeAndCurveJsonCanBeReadThroughTheSharedRoot()
     {
-        var shape = new Capsule2D.Builder { Start = new(0, 0), End = new(1, 0), Radius = .5f };
-        var curve = new ArcCurveDefinition2D { Center = new(0, 0), Radius = 2, StartAngleRadians = 0, SweepAngleRadians = 1 };
+        var shape = new Capsule2D { Start = new(0, 0), End = new(1, 0), Radius = .5f };
+        var curve = new Arc2D { Center = new(0, 0), Radius = 2, StartAngleRadians = 0, SweepAngleRadians = 1 };
 
-        Assert.IsType<Capsule2D.Builder>(GeometryDefinition2D.FromJson(shape.ToJson()));
-        Assert.IsType<ArcCurveDefinition2D>(GeometryDefinition2D.FromJson(curve.ToJson()));
+        Assert.IsType<Capsule2D>(GeometryJson2D.FromJson(shape.ToJson()));
+        Assert.IsType<Arc2D>(GeometryJson2D.FromJson(curve.ToJson()));
     }
 
     [Fact]
@@ -112,7 +116,7 @@ public sealed class GeometryDefinition2DTests
         Assert.Contains("\"geometry\"", typed);
         Assert.DoesNotContain("\"editorKind\"", typed);
         Assert.Equal(typed, CharacterModel.FromJson(typed).ToJson());
-        Assert.IsType<SimplePolygon2D.Builder>(CharacterModel.FromJson(typed).Parts.Single(part => part.Id == "body").Geometry);
+        Assert.IsType<SimplePolygon2D>(CharacterModel.FromJson(typed).Parts.Single(part => part.Id == "body").Geometry);
         var missing = JsonNode.Parse(typed)!.AsObject();
         missing["parts"]![0]!.AsObject().Remove("geometry");
         Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(missing.ToJsonString()));
@@ -130,8 +134,8 @@ public sealed class GeometryDefinition2DTests
             Name = "Test prop",
             Shapes =
             [
-                new PropShape { Geometry = new PolylineCurveDefinition2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }, Depths = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },
-                new PropShape { Geometry = new SimplePolygon2D.Builder { Vertices = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }, Material = new() { Fill = "#c8b18a", Outline = new() } }
+                new PropShape { Geometry = new PolylineCurve2D { Points = [new(0, 0), new(.5f, 1), new(1, 0)] }, Depths = [.1f, .2f, .3f], Material = new() { Fill = "#c8b18a", Outline = new() } },
+                new PropShape { Geometry = new SimplePolygon2D { Vertices = [new(0, 0), new(2, 0), new(2, 1), new(1, 1), new(1, 2), new(0, 2)] }, Material = new() { Fill = "#c8b18a", Outline = new() } }
             ]
         };
         var typed = prop.ToJson();
@@ -140,8 +144,8 @@ public sealed class GeometryDefinition2DTests
         var restored = PropAsset.FromJson(typed);
         Assert.Equal(typed, restored.ToJson());
         Assert.Equal([.1f, .2f, .3f], restored.Shapes[0].Points.Select(point => point.Z));
-        Assert.IsType<PolylineCurveDefinition2D>(restored.Shapes[0].Geometry);
-        Assert.IsType<SimplePolygon2D.Builder>(restored.Shapes[1].Geometry);
+        Assert.IsType<PolylineCurve2D>(restored.Shapes[0].Geometry);
+        Assert.IsType<SimplePolygon2D>(restored.Shapes[1].Geometry);
         var oldField = JsonNode.Parse(typed)!.AsObject();
         oldField["shapes"]![0]!["points"] = new JsonArray();
         Assert.Throws<JsonException>(() => PropAsset.FromJson(oldField.ToJsonString()));

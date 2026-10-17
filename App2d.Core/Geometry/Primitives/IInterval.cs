@@ -10,14 +10,8 @@ namespace App2d.Core.Geometry.Primitives;
 public interface IInterval<T> where T : INumber<T>
 {
     /// <summary>The smallest value in the range.</summary>
-    T Min
-    {
-        get;
-    }
+    T Min { get; }
 
     /// <summary>The largest value in the range.</summary>
-    T Max
-    {
-        get;
-    }
+    T Max { get; }
 }

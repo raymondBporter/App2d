@@ -2,82 +2,55 @@ using App2d.Core.Geometry.Operations.Area;
 using App2d.Core.Geometry.Operations.Diameter;
 using App2d.Core.Geometry.Shapes;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Shapes;
 
-/// <summary>
-/// A non-convex shape assembled from convex parts positioned in this shape's local space.
-/// Collision, distance and ray casts resolve per part, never against the convex hull, so notches stay empty.
-/// </summary>
+/// <summary>Source geometry for a union of convex parts. Construction only snapshots its input.</summary>
 public readonly partial record struct CompositeShape2D : IShape2D
 {
-    /// <inheritdoc/>
+    private readonly IShape2D[]? _parts;
+    private static readonly ConditionalWeakTable<IShape2D[], Dictionary<int, float>> UnionAreas = new();
     public string Kind => ShapeKinds2D.Composite;
 
-    private readonly IConvexShape2D[] _parts;
-
-    /// <summary>Creates a composite and copies its part list.</summary>
-    /// <param name="parts">At least one convex part in this shape's local space.</param>
-    /// <param name="includeOverlap">True sums part areas; false counts overlapping regions once.</param>
-    /// <param name="areaOutlineSegments">Samples for polygonized curves when overlap is counted once. Circles, ellipses and capsules stay analytic.</param>
-    public CompositeShape2D(IConvexShape2D[] parts, bool includeOverlap = true, int areaOutlineSegments = ShapeArea2D.DefaultOutlineSegments)
+    public CompositeShape2D(IShape2D[] parts, bool includeOverlap = true, int areaOutlineSegments = ShapeArea2D.DefaultOutlineSegments)
     {
-        _parts = (IConvexShape2D[])parts.Clone();
+        _parts = parts?.ToArray();
         IncludeOverlap = includeOverlap;
         AreaOutlineSegments = areaOutlineSegments;
-
-        if (!includeOverlap)
-        {
-            Area = ShapeArea2D.Union(_parts, areaOutlineSegments);
-            return;
-        }
-
-        var area = _parts[0].Area;
-        foreach (var part in _parts.AsSpan(1))
-        {
-            area += part.Area;
-        }
-
-        Area = area;
     }
 
-    /// <summary>The convex parts.</summary>
-    public ReadOnlySpan<IConvexShape2D> Parts => _parts;
+    public ReadOnlySpan<IShape2D> Parts { get => _parts; init => _parts = value.ToArray(); }
+    public bool IncludeOverlap { get; init; } = true;
+    public int AreaOutlineSegments { get; init; } = ShapeArea2D.DefaultOutlineSegments;
+    public CompositeShape2D() { }
 
-    /// <summary>Whether <see cref="Area"/> sums part areas, including duplicate coverage.</summary>
-    public bool IncludeOverlap
-    {
-        get;
-    }
-
-    /// <summary>The sample count used for polygonized curves when calculating union area.</summary>
-    public int AreaOutlineSegments
-    {
-        get;
-    }
-
-    /// <summary>
-    /// Cached at construction. With <see cref="IncludeOverlap"/>, this is the sum of part areas and an upper bound.
-    /// Otherwise it is union area: analytic for circles, ellipses, capsules and polygons, approximate for polygonized curves.
-    /// </summary>
     public float Area
     {
-        get;
-    }
-
-    /// <inheritdoc/>
-    public float Diameter => ShapeDiameter2D.Calculate(this);
-
-    /// <inheritdoc/>
-    public bool ContainsPoint(Vector2 localPoint)
-    {
-        foreach (var part in _parts)
+        get
         {
-            if (part.ContainsPoint(localPoint))
+            if (IncludeOverlap)
             {
-                return true;
+                var area = 0f;
+                foreach (var part in Parts) area += part.Area;
+                return area;
+            }
+            var areas = UnionAreas.GetValue(_parts!, static _ => new());
+            lock (areas)
+            {
+                if (!areas.TryGetValue(AreaOutlineSegments, out var area))
+                {
+                    area = ShapeArea2D.Union(_parts!.Cast<IConvexShape2D>().ToArray(), AreaOutlineSegments);
+                    areas[AreaOutlineSegments] = area;
+                }
+                return area;
             }
         }
+    }
+    public float Diameter => ShapeDiameter2D.Calculate(this);
+    public bool ContainsPoint(Vector2 point)
+    {
+        foreach (var part in Parts) if (part.ContainsPoint(point)) return true;
         return false;
     }
 }

@@ -1,3 +1,6 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using System.Numerics;
 
@@ -5,7 +8,7 @@ namespace App2d.Tests.Curves;
 
 public sealed class CubicBezierOperationsTests
 {
-    private static CubicBezier2D Example => new(new(1, 2), new(-3, 8), new(7, -5), new(9, 3));
+    private static CubicBezier2D Example => CubicBezier2D.Builder.Create(new(1, 2), new(-3, 8), new(7, -5), new(9, 3));
 
     [Theory]
     [InlineData(0f)]
@@ -56,7 +59,7 @@ public sealed class CubicBezierOperationsTests
     public void XLookupReturnsAllThreeCrossingsInOrderWithoutTouchingUnusedStorage()
     {
         // X(u) = 3 * (u - 1/4) * (u - 1/2) * (u - 3/4).
-        var curve = new CubicBezier2D(new(-.28125f, 0), new(.40625f, 1), new(-.40625f, 2), new(.28125f, 3));
+        var curve = CubicBezier2D.Builder.Create(new(-.28125f, 0), new(.40625f, 1), new(-.40625f, 2), new(.28125f, 3));
         Span<double> parameters = [99, 99, 99, 99];
         Assert.Equal(3, curve.FindParametersAtX(0, parameters));
         Assert.Equal(.25, parameters[0], 12);
@@ -70,12 +73,12 @@ public sealed class CubicBezierOperationsTests
     public void XLookupIncludesTangenciesEndpointsAndFlatTimeTangents()
     {
         // X(u) = 3 * (u - 1/2)^2 * (u - 1).
-        var tangent = new CubicBezier2D(new(-.75f, 0), new(.5f, 1), new(-.25f, 2), new(0, 3));
+        var tangent = CubicBezier2D.Builder.Create(new(-.75f, 0), new(.5f, 1), new(-.25f, 2), new(0, 3));
         Span<double> parameters = stackalloc double[3];
         Assert.Equal(2, tangent.FindParametersAtX(0, parameters));
         Assert.Equal(.5, parameters[0], 12);
         Assert.Equal(1d, parameters[1]);
-        var flat = new CubicBezier2D(Vector2.Zero, new(1, 1), new(0, 2), new(1, 3));
+        var flat = CubicBezier2D.Builder.Create(Vector2.Zero, new(1, 1), new(0, 2), new(1, 3));
         Assert.Equal(.5f, flat.ParameterAtX(.5f));
         Assert.Equal(0f, flat.ParameterAtX(0));
         Assert.Equal(1f, flat.ParameterAtX(1));
@@ -84,12 +87,12 @@ public sealed class CubicBezierOperationsTests
     [Fact]
     public void XLookupHandlesDecreasingLinearAndConstantCoordinates()
     {
-        var decreasing = new CubicBezier2D(new(3, 0), new(2, 1), new(1, 2), new(0, 3));
+        var decreasing = CubicBezier2D.Builder.Create(new(3, 0), new(2, 1), new(1, 2), new(0, 3));
         Assert.Equal(.25f, decreasing.ParameterAtX(2.25f));
         Span<double> parameters = stackalloc double[3];
         Assert.Equal(0, decreasing.FindParametersAtX(4, parameters));
         Assert.Throws<InvalidOperationException>(() => decreasing.ParameterAtX(4));
-        var vertical = new CubicBezier2D(new(2, 0), new(2, 1), new(2, 2), new(2, 3));
+        var vertical = CubicBezier2D.Builder.Create(new(2, 0), new(2, 1), new(2, 2), new(2, 3));
         Assert.Equal(0, vertical.FindParametersAtX(3, parameters));
         Assert.Throws<InvalidOperationException>(() => vertical.FindParametersAtX(2, new double[3]));
     }
@@ -101,7 +104,7 @@ public sealed class CubicBezierOperationsTests
         Span<double> parameters = stackalloc double[3];
         for (var i = 0; i < 100; i++)
         {
-            var curve = new CubicBezier2D(Vector2.Zero, new(random.NextSingle(), 1), new(random.NextSingle(), -1), Vector2.One);
+            var curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(random.NextSingle(), 1), new(random.NextSingle(), -1), Vector2.One);
             for (var j = 0; j <= 20; j++)
             {
                 var x = j / 20f;
@@ -109,7 +112,7 @@ public sealed class CubicBezierOperationsTests
                 Assert.InRange(Math.Abs(curve.ParameterAtX(x) - parameters[0]), 0, 1e-7);
             }
         }
-        var veryFlat = new CubicBezier2D(Vector2.Zero, Vector2.Zero, Vector2.Zero, new(float.MaxValue, 1));
+        var veryFlat = CubicBezier2D.Builder.Create(Vector2.Zero, Vector2.Zero, Vector2.Zero, new(float.MaxValue, 1));
         Assert.Equal(1, veryFlat.FindParametersAtX(float.Epsilon, parameters));
         Assert.InRange(Math.Abs(veryFlat.ParameterAtX(float.Epsilon) / parameters[0] - 1), 0, 1e-6);
     }
@@ -133,7 +136,7 @@ public sealed class CubicBezierOperationsTests
     [Fact]
     public void SplittingSlicingAndXLookupDoNotAllocate()
     {
-        var curve = new CubicBezier2D(Vector2.Zero, new(.15f, 2), new(.8f, -1), Vector2.One);
+        var curve = CubicBezier2D.Builder.Create(Vector2.Zero, new(.15f, 2), new(.8f, -1), Vector2.One);
         for (var i = 0; i < 100; i++)
         {
             curve.Split(.3f);

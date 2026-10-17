@@ -28,13 +28,13 @@ public readonly partial record struct Capsule2D : IConvexShape2D
     /// <summary>The spine start.</summary>
     public Vector2 Start
     {
-        get;
+        get; init;
     }
 
     /// <summary>The spine end.</summary>
     public Vector2 End
     {
-        get;
+        get; init;
     }
 
     /// <summary>The center of the capsule's spine, in either endpoint order.</summary>
@@ -43,7 +43,7 @@ public readonly partial record struct Capsule2D : IConvexShape2D
     /// <summary>The radius around the spine.</summary>
     public float Radius
     {
-        get;
+        get; init;
     }
 
     /// <inheritdoc/>

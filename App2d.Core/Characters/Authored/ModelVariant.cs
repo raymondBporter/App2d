@@ -6,11 +6,11 @@ namespace App2d.Core.Characters.Authored;
 /// <summary>A part value a variant replaces. Null keeps the base value, which then follows base edits.</summary>
 public sealed record PartOverride
 {
-    public float? Width
+    public float? ScaleX
     {
         get; set;
     }
-    public float? Height
+    public float? ScaleY
     {
         get; set;
     }
@@ -40,8 +40,8 @@ public sealed record PartOverride
         get; set;
     }
     [JsonIgnore]
-    public bool IsEmpty => Width is null && Height is null && OffsetX is null && OffsetY is null &&
-        Material?.Asset is null && Material?.Paint is null && Material?.Fill is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&
+    public bool IsEmpty => ScaleX is null && ScaleY is null && OffsetX is null && OffsetY is null &&
+        Material?.Asset is null && Material?.Paint is null && Material?.Fill is null && Material?.StrokeWidth is null && Material?.Outline?.Width is null && Material?.Outline?.Color is null &&
         Material?.Texture is null && Material?.Tint is null &&
         Face is null && FaceX is null && Hidden is null;
 
@@ -53,14 +53,14 @@ public sealed record PartOverride
             throw new InvalidDataException($"{field}: null override.");
         }
 
-        if (part.Width is { } width)
+        if (part.ScaleX is { } scaleX && !float.IsFinite(scaleX))
         {
-            new Limit(.001f, 100).Check(width, field + ".width");
+            throw new InvalidDataException(field + ".scaleX must be finite.");
         }
 
-        if (part.Height is { } height)
+        if (part.ScaleY is { } scaleY && !float.IsFinite(scaleY))
         {
-            new Limit(.001f, 100).Check(height, field + ".height");
+            throw new InvalidDataException(field + ".scaleY must be finite.");
         }
 
         if (part.OffsetX is { } x)
@@ -88,8 +88,8 @@ public sealed record PartOverride
     /// <summary>This override with <paramref name="over"/>'s set fields written on top.</summary>
     public PartOverride Merge(PartOverride over) => new()
     {
-        Width = over.Width ?? Width,
-        Height = over.Height ?? Height,
+        ScaleX = over.ScaleX ?? ScaleX,
+        ScaleY = over.ScaleY ?? ScaleY,
         OffsetX = over.OffsetX ?? OffsetX,
         OffsetY = over.OffsetY ?? OffsetY,
         Material = Material is null ? over.Material : Material.WithOverride(over.Material),
@@ -103,7 +103,7 @@ public sealed record PartOverride
 public sealed class ModelVariant
 {
     public const string FormatId = "app2d-variant";
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";

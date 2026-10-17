@@ -1,3 +1,6 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
 using System.Numerics;
@@ -8,11 +11,11 @@ public sealed class CurveSubdivisionTests
 {
     private static ICurve2D[] Curves =>
     [
-        new LineSegmentCurve2D(new(1, 2), new(7, -3)),
-        new QuadraticBezier2D(new(1, 2), new(-2, 8), new(7, -3)),
-        new CubicBezier2D(new(1, 2), new(-2, 8), new(5, -6), new(7, -3)),
-        new Arc2D(new(1, 2), 3, .2f, -4f),
-        new PolylineCurve2D([new(0, 0), new(2, 5), new(4, 1), new(8, 3)])
+        LineSegmentCurve2D.Builder.Create(new(1, 2), new(7, -3)),
+        QuadraticBezier2D.Builder.Create(new(1, 2), new(-2, 8), new(7, -3)),
+        CubicBezier2D.Builder.Create(new(1, 2), new(-2, 8), new(5, -6), new(7, -3)),
+        Arc2D.Builder.Create(new(1, 2), 3, .2f, -4f),
+        PolylineCurve2D.Builder.Create([new(0, 0), new(2, 5), new(4, 1), new(8, 3)])
     ];
 
     [Theory]
@@ -56,7 +59,7 @@ public sealed class CurveSubdivisionTests
     [Fact]
     public void NestedSlicesComposeAndDistanceUsesOnlyTheRestrictedGeometry()
     {
-        var line = new LineSegmentCurve2D(Vector2.Zero, new(10, 0));
+        var line = LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(10, 0));
         var piece = line.Slice(.4f, .6f);
         Assert.Equal(4f, piece.Distance(Vector2.Zero), 5);
         Assert.Equal(2f, line.Slice(.5f, .5f).Distance(new(5, 2)), 5);

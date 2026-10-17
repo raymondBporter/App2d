@@ -27,8 +27,8 @@ public sealed class HumanProportionsTests
         {
             var before = original.Parts.Single(p => p.Id == part);
             var after = actual.Parts.Single(p => p.Id == part);
-            Assert.Equal(before.Width, after.Width);
-            Assert.Equal(before.Height, after.Height);
+            Assert.Equal(before.ScaleX, after.ScaleX);
+            Assert.Equal(before.ScaleY, after.ScaleY);
         }
         foreach (var control in PersonTemplate.Model().Controls)
         {

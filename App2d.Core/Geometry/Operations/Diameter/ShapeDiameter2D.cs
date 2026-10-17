@@ -33,7 +33,7 @@ public static class ShapeDiameter2D
         };
     }
 
-    private static float Composite(ReadOnlySpan<IConvexShape2D> parts)
+    private static float Composite(ReadOnlySpan<IShape2D> parts)
     {
         var diameter = 0f;
         for (var i = 0; i < parts.Length; i++)
@@ -41,7 +41,7 @@ public static class ShapeDiameter2D
             diameter = MathF.Max(diameter, parts[i].Diameter);
             for (var j = i + 1; j < parts.Length; j++)
             {
-                diameter = MathF.Max(diameter, Between(parts[i], parts[j]));
+                diameter = MathF.Max(diameter, Between((IConvexShape2D)parts[i], (IConvexShape2D)parts[j]));
             }
         }
         return diameter;

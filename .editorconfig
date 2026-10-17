@@ -1,6 +1,6 @@
 ﻿[*.cs]
 
-# Construct runtime shapes through their validating builders.
+# Construct runtime shapes and curves through their validating builders.
 dotnet_diagnostic.APP2D001.severity = warning
 
 # IDE0048: Add parentheses for clarity

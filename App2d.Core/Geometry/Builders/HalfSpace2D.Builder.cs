@@ -1,57 +1,40 @@
-using App2d.Core.Geometry.Builders;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
-using System.Text.Json.Serialization;
 
 namespace App2d.Core.Shapes;
 
+[System.Text.Json.Serialization.JsonConverter(typeof(GeometryJsonConverterFactory))]
 public readonly partial record struct HalfSpace2D
 {
-    /// <summary>Editable construction data; Build validates before creating an immutable shape.</summary>
-    public sealed record Builder : ShapeBuilder2D
+    public void Validate()
     {
-        public required Vector2 Normal
-        {
-            get; init;
-        }
-        public required float Offset
-        {
-            get; init;
-        }
-        [JsonIgnore] public override string Kind => ShapeKinds2D.HalfSpace;
-        public override void Validate()
-        {
-            ArgGuard.NonZero(Normal, "outwardNormal");
-            ArgGuard.Finite(Offset, "offset");
-        }
-        protected override IShape2D BuildShape() => Build();
+        ArgGuard.NonZero(Normal, "outwardNormal");
+        ArgGuard.Finite(Offset, "offset");
+        ArgGuard.ThrowIf(Math.Abs(Normal.ToVector2d().Length() - 1) > 1e-6, "The half-space normal must be normalized; use Builder.Create.", "outwardNormal");
+    }
 
-        public new HalfSpace2D Build()
+    public static class Builder
+    {
+        public static HalfSpace2D Create(Vector2 outwardNormal, float offset)
         {
-            Validate();
-            var wideNormal = Normal.ToVector2d();
-            var normalLength = wideNormal.Length();
-            var normal = (wideNormal / normalLength).ToVector2();
-            var offset = (float)(Offset / normalLength);
-            ArgGuard.Finite(offset, "offset");
-            return new HalfSpace2D(normal, offset);
+            ArgGuard.NonZero(outwardNormal);
+            ArgGuard.Finite(offset);
+            var wide = outwardNormal.ToVector2d();
+            var length = wide.Length();
+            return new HalfSpace2D((wide / length).ToVector2(), (float)(offset / length)).Validated();
         }
-        public static HalfSpace2D Create(Vector2 outwardNormal, float offset) => new Builder { Normal = outwardNormal, Offset = offset }.Build();
 
-        public static Builder FromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal)
+        public static HalfSpace2D FromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal)
         {
             ArgGuard.Finite(pointOnBoundary);
             ArgGuard.NonZero(outwardNormal);
-            var wideNormal = outwardNormal.ToVector2d();
-            var normal = (wideNormal / wideNormal.Length()).ToVector2();
-            return new()
-            {
-                Normal = normal,
-                Offset = (float)pointOnBoundary.ToVector2d().Dot(normal.ToVector2d())
-            };
+            var wide = outwardNormal.ToVector2d();
+            var normal = (wide / wide.Length()).ToVector2();
+            return Create(normal, (float)pointOnBoundary.ToVector2d().Dot(normal.ToVector2d()));
         }
-        public static HalfSpace2D CreateFromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal) => FromPoint(pointOnBoundary, outwardNormal).Build();
+        public static HalfSpace2D CreateFromPoint(Vector2 pointOnBoundary, Vector2 outwardNormal) => FromPoint(pointOnBoundary, outwardNormal);
     }
 }

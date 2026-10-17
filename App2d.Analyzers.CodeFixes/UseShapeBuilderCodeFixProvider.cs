@@ -28,13 +28,30 @@ public sealed class UseShapeBuilderCodeFixProvider : CodeFixProvider
         var creation = root?.FindNode(context.Span, getInnermostNodeForTie: true)
             .FirstAncestorOrSelf<BaseObjectCreationExpressionSyntax>();
         if (creation is null || model?.GetOperation(creation, context.CancellationToken) is not IObjectCreationOperation operation ||
-            operation.Type is not INamedTypeSymbol shape || !ShapeSymbols.IsBuiltInShape(shape, model.Compilation) ||
-            creation.ArgumentList is null || creation.Initializer is not null)
+            operation.Type is not INamedTypeSymbol shape || !GeometrySymbols.IsBuiltInGeometry(shape, model.Compilation) ||
+            creation.ArgumentList is null && creation.Initializer is null)
         {
             return;
         }
 
+        if (creation.Initializer is not null)
+        {
+            var validator = model.Compilation.GetTypeByMetadataName("App2d.Core.Geometry.GeometryValidation2D");
+            if (validator is null) return;
+            var validatorReference = (ExpressionSyntax)SyntaxGenerator.GetGenerator(context.Document).TypeExpression(validator)
+                .WithAdditionalAnnotations(Simplifier.Annotation, Simplifier.AddImportsAnnotation);
+            var target = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression,
+                validatorReference, SyntaxFactory.IdentifierName("Validated"));
+            var candidate = SyntaxFactory.InvocationExpression(target,
+                SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(creation.WithoutTrivia()))));
+            context.RegisterCodeFix(CodeAction.Create("Validate the constructed geometry",
+                token => ReplaceAsync(context.Document, creation, candidate, token),
+                equivalenceKey: ShapeConstructionAnalyzer.DiagnosticId), context.Diagnostics);
+            return;
+        }
+
         // Retaining the original argument list preserves named arguments, comments, and evaluation order.
+        if (creation.ArgumentList is null) return;
         var builder = shape.GetTypeMembers("Builder").SingleOrDefault();
         if (builder is null)
         {

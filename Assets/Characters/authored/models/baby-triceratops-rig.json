@@ -1,6 +1,6 @@
 {
   "format": "app2d-model",
-  "version": 4,
+  "version": 5,
   "id": "baby-triceratops-rig",
   "name": "Baby triceratops",
   "structureRevision": 1,
@@ -250,11 +250,11 @@
       },
       "a": "tail",
       "b": "tail-up",
-      "width": 0.595,
-      "height": 0.364,
       "offsetX": -0.245,
       "offsetY": 0.021,
-      "depth": 0.014
+      "depth": 0.014,
+      "scaleX": 0.595,
+      "scaleY": 0.364
     },
     {
       "id": "far-hind-upper",
@@ -275,9 +275,9 @@
       },
       "a": "far-hind-root",
       "b": "far-hind-joint",
-      "width": 0.175,
-      "height": 0.4216174,
-      "offsetY": 0.14430869
+      "offsetY": 0.14430869,
+      "scaleX": 0.175,
+      "scaleY": 0.4216174
     },
     {
       "id": "far-hind-lower",
@@ -298,10 +298,10 @@
       },
       "a": "far-hind-joint",
       "b": "far-hind-foot",
-      "width": 0.161,
-      "height": 0.37538493,
       "offsetY": 0.13519245,
-      "depth": -0.0035
+      "depth": -0.0035,
+      "scaleX": 0.161,
+      "scaleY": 0.37538493
     },
     {
       "id": "far-hind-paw",
@@ -339,11 +339,11 @@
         "outline": {}
       },
       "a": "far-hind-foot",
-      "width": 0.252,
-      "height": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105
+      "depth": -0.0105,
+      "scaleX": 0.252,
+      "scaleY": 0.154
     },
     {
       "id": "far-hind-toe-0",
@@ -365,11 +365,11 @@
         }
       },
       "a": "far-hind-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "far-hind-toe-1",
@@ -391,11 +391,11 @@
         }
       },
       "a": "far-hind-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "far-hind-toe-2",
@@ -417,11 +417,11 @@
         }
       },
       "a": "far-hind-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "far-front-upper",
@@ -442,9 +442,9 @@
       },
       "a": "far-front-root",
       "b": "far-front-joint",
-      "width": 0.175,
-      "height": 0.41194803,
-      "offsetY": 0.139474
+      "offsetY": 0.139474,
+      "scaleX": 0.175,
+      "scaleY": 0.41194803
     },
     {
       "id": "far-front-lower",
@@ -465,10 +465,10 @@
       },
       "a": "far-front-joint",
       "b": "far-front-foot",
-      "width": 0.161,
-      "height": 0.37538493,
       "offsetY": 0.13519247,
-      "depth": -0.0035
+      "depth": -0.0035,
+      "scaleX": 0.161,
+      "scaleY": 0.37538493
     },
     {
       "id": "far-front-paw",
@@ -506,11 +506,11 @@
         "outline": {}
       },
       "a": "far-front-foot",
-      "width": 0.252,
-      "height": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105
+      "depth": -0.0105,
+      "scaleX": 0.252,
+      "scaleY": 0.154
     },
     {
       "id": "far-front-toe-0",
@@ -532,11 +532,11 @@
         }
       },
       "a": "far-front-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "far-front-toe-1",
@@ -558,11 +558,11 @@
         }
       },
       "a": "far-front-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "far-front-toe-2",
@@ -584,11 +584,11 @@
         }
       },
       "a": "far-front-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "near-hind-upper",
@@ -609,9 +609,9 @@
       },
       "a": "near-hind-root",
       "b": "near-hind-joint",
-      "width": 0.175,
-      "height": 0.4216174,
-      "offsetY": 0.14430869
+      "offsetY": 0.14430869,
+      "scaleX": 0.175,
+      "scaleY": 0.4216174
     },
     {
       "id": "near-hind-lower",
@@ -632,10 +632,10 @@
       },
       "a": "near-hind-joint",
       "b": "near-hind-foot",
-      "width": 0.161,
-      "height": 0.37538493,
       "offsetY": 0.13519247,
-      "depth": -0.0035
+      "depth": -0.0035,
+      "scaleX": 0.161,
+      "scaleY": 0.37538493
     },
     {
       "id": "near-hind-paw",
@@ -673,11 +673,11 @@
         "outline": {}
       },
       "a": "near-hind-foot",
-      "width": 0.252,
-      "height": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105
+      "depth": -0.0105,
+      "scaleX": 0.252,
+      "scaleY": 0.154
     },
     {
       "id": "near-hind-toe-0",
@@ -699,11 +699,11 @@
         }
       },
       "a": "near-hind-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "near-hind-toe-1",
@@ -725,11 +725,11 @@
         }
       },
       "a": "near-hind-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "near-hind-toe-2",
@@ -751,11 +751,11 @@
         }
       },
       "a": "near-hind-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "near-front-upper",
@@ -776,9 +776,9 @@
       },
       "a": "near-front-root",
       "b": "near-front-joint",
-      "width": 0.175,
-      "height": 0.41194803,
-      "offsetY": 0.139474
+      "offsetY": 0.139474,
+      "scaleX": 0.175,
+      "scaleY": 0.41194803
     },
     {
       "id": "near-front-lower",
@@ -799,10 +799,10 @@
       },
       "a": "near-front-joint",
       "b": "near-front-foot",
-      "width": 0.161,
-      "height": 0.37538493,
       "offsetY": 0.13519245,
-      "depth": -0.0035
+      "depth": -0.0035,
+      "scaleX": 0.161,
+      "scaleY": 0.37538493
     },
     {
       "id": "near-front-paw",
@@ -840,11 +840,11 @@
         "outline": {}
       },
       "a": "near-front-foot",
-      "width": 0.252,
-      "height": 0.154,
       "offsetX": 0.0105,
       "offsetY": -0.0035,
-      "depth": -0.0105
+      "depth": -0.0105,
+      "scaleX": 0.252,
+      "scaleY": 0.154
     },
     {
       "id": "near-front-toe-0",
@@ -866,11 +866,11 @@
         }
       },
       "a": "near-front-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": -0.056,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "near-front-toe-1",
@@ -892,11 +892,11 @@
         }
       },
       "a": "near-front-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": 0.003500002,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "near-front-toe-2",
@@ -918,11 +918,11 @@
         }
       },
       "a": "near-front-foot",
-      "width": 0.0315,
-      "height": 0.0455,
       "offsetX": 0.063,
       "offsetY": -0.0385,
-      "depth": -0.0175
+      "depth": -0.0175,
+      "scaleX": 0.0315,
+      "scaleY": 0.0455
     },
     {
       "id": "body",
@@ -1055,10 +1055,10 @@
       },
       "a": "body",
       "b": "body-up",
-      "width": 1.344,
-      "height": 0.63,
       "offsetX": -0.035,
-      "offsetY": 0.028
+      "offsetY": 0.028,
+      "scaleX": 1.344,
+      "scaleY": 0.63
     },
     {
       "id": "head",
@@ -1105,11 +1105,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.679,
-      "height": 0.476,
       "offsetX": 0.084,
       "offsetY": -0.014,
-      "depth": -0.168
+      "depth": -0.168,
+      "scaleX": 0.679,
+      "scaleY": 0.476
     },
     {
       "id": "frill",
@@ -1180,11 +1180,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.616,
-      "height": 0.966,
       "offsetX": -0.154,
       "offsetY": 0.245,
-      "depth": -0.182
+      "depth": -0.182,
+      "scaleX": 0.616,
+      "scaleY": 0.966
     },
     {
       "id": "far-brow-horn",
@@ -1211,11 +1211,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.1736,
-      "height": 0.2016,
       "offsetX": 0.175,
       "offsetY": 0.329,
-      "depth": -0.1785
+      "depth": -0.1785,
+      "scaleX": 0.1736,
+      "scaleY": 0.2016
     },
     {
       "id": "near-brow-horn",
@@ -1246,11 +1246,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.2016,
-      "height": 0.2072,
       "offsetX": 0.035,
       "offsetY": 0.336,
-      "depth": -0.203
+      "depth": -0.203,
+      "scaleX": 0.2016,
+      "scaleY": 0.2072
     },
     {
       "id": "nose-horn",
@@ -1277,11 +1277,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.1232,
-      "height": 0.14,
       "offsetX": 0.378,
       "offsetY": 0.14,
-      "depth": -0.203
+      "depth": -0.203,
+      "scaleX": 0.1232,
+      "scaleY": 0.14
     },
     {
       "id": "eye",
@@ -1304,11 +1304,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.0756,
-      "height": 0.1008,
       "offsetX": 0.238,
       "offsetY": 0.007,
-      "depth": -0.217
+      "depth": -0.217,
+      "scaleX": 0.0756,
+      "scaleY": 0.1008
     },
     {
       "id": "brow",
@@ -1341,11 +1341,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.112,
-      "height": 0.063,
       "offsetX": 0.231,
       "offsetY": 0.077,
-      "depth": -0.217
+      "depth": -0.217,
+      "scaleX": 0.112,
+      "scaleY": 0.063
     },
     {
       "id": "mouth",
@@ -1386,11 +1386,11 @@
       },
       "a": "head",
       "b": "head-up",
-      "width": 0.161,
-      "height": 0.056,
       "offsetX": 0.245,
       "offsetY": -0.119,
-      "depth": -0.217
+      "depth": -0.217,
+      "scaleX": 0.161,
+      "scaleY": 0.056
     }
   ],
   "slots": [],

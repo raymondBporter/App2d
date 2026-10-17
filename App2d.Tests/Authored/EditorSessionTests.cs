@@ -1,7 +1,10 @@
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Shapes;
 using App2d.Core.Timing;
 using System.Numerics;
@@ -195,12 +198,12 @@ public sealed class EditorSessionTests : IDisposable
                 ModelAuthoring.AddControl(model.Asset, $"hip-{i}", new(x + .15f, .4f, 0), $"knee-{i}");
                 ModelAuthoring.AddControl(model.Asset, $"knee-{i}", new(x, 0, 0), $"foot-{i}");
                 ModelAuthoring.AddChain(model.Asset, $"foot-{i}");
-                ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}");
-                ModelAuthoring.AddPart(model.Asset, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}");
+                ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
             }
-            var shell = ModelAuthoring.AddPart(model.Asset, new Ellipse2D.Builder { Center = Vector2.Zero, Radii = new(.5f, .5f) }, "body");
-            shell.Width = .9f;
-            shell.Height = .35f;
+            var shell = ModelAuthoring.AddPart(model.Asset, new Ellipse2D { Center = Vector2.Zero, Radii = new(.5f, .5f) }, "body");
+            shell.ScaleX = .9f;
+            shell.ScaleY = .35f;
         }));
         Assert.Equal(3, model.Asset.Chains.Count);
         Assert.DoesNotContain(model.Asset.Parts, p => p.Face != "none");

@@ -156,8 +156,8 @@ public sealed class ResolvedModel
     {
         var result = part with
         {
-            Width = change.Width ?? part.Width,
-            Height = change.Height ?? part.Height,
+            ScaleX = change.ScaleX ?? part.ScaleX,
+            ScaleY = change.ScaleY ?? part.ScaleY,
             OffsetX = change.OffsetX ?? part.OffsetX,
             OffsetY = change.OffsetY ?? part.OffsetY,
             Material = part.RenderMaterial.WithOverride(change.Material),

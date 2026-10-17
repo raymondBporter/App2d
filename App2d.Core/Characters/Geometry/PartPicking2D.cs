@@ -1,6 +1,7 @@
+using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Authoring;
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.Polygons;
@@ -21,12 +22,13 @@ public static class PartPicking2D
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
+    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null, float lineWidth = .045f)
     {
         var p = new Vector2(point.X, point.Y);
-        if (part.Geometry is CurveDefinition2D curve)
+        if (part.Geometry is ICurve2D curve)
         {
-            if (part.Bindings is { Count: > 0 } || part.WaveAmplitude != 0)
+            var pickWidth = MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
+            if (part.Bindings is { Count: > 0 } || part.WaveAmplitude != 0 || part.ScaleX != part.ScaleY)
             {
                 var path = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
                 var nearest = float.PositiveInfinity;
@@ -35,7 +37,7 @@ public static class PartPicking2D
                     nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, path[start].XY, path[end].XY));
                 }
 
-                return nearest / MathF.Max(part.Width, .06f);
+                return nearest / pickWidth;
             }
             var a = world(part.A);
             var b = world(part.B!);
@@ -43,19 +45,19 @@ public static class PartPicking2D
             var lengthSquared = along.LengthSquared();
             if (lengthSquared < 1e-10f)
             {
-                return Vector2.Distance(p, a.XY) / MathF.Max(part.Width, .06f);
+                return Vector2.Distance(p, a.XY) / pickWidth;
             }
 
-            var coordinates = Frame2D.FromYAxis(a.XY, along);
+            var coordinates = PartAttachment2D.FrameOf(part, world).Coordinates;
             if (!coordinates.TryToLocal(p, out var local))
             {
                 return float.PositiveInfinity;
             }
 
-            var distance = GeometryDefinitionCache2D.CurveOf(curve).Distance(local) * MathF.Sqrt(lengthSquared);
-            return distance / MathF.Max(part.Width, .06f);
+            var distance = curve.Distance(local) * coordinates.YAxis.Length();
+            return distance / pickWidth;
         }
-        if (part.Geometry is SimplePolygon2D.Builder && part.Bindings is { Count: > 0 })
+        if (part.Geometry is SimplePolygon2D && part.Bindings is { Count: > 0 })
         {
             var points = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
             // Folded outlines may overlap. Pick the same rest-topology triangles that are filled, not an even/odd hole.
@@ -78,32 +80,25 @@ public static class PartPicking2D
                     }
                 }
             }
-            var inside = false;
             var nearest = float.MaxValue;
             foreach (var (ia, ib) in MeshTopology.Edges(points.Count))
             {
                 var a = points[ia].XY;
                 var b = points[ib].XY;
                 nearest = MathF.Min(nearest, Distance2D.DistanceToSegment(p, a, b, 1e-10f));
-                if ((a.Y > p.Y) != (b.Y > p.Y) && p.X < (b.X - a.X) * (p.Y - a.Y) / (b.Y - a.Y) + a.X)
-                {
-                    inside = !inside;
-                }
             }
-            return nearest < 1e-6f ? 1 : inside && part.Bindings is not { Count: > 0 } ? .5f : 1 + nearest / MathF.Max(part.Width, part.Height);
+            return nearest < 1e-6f ? 1 : 1 + nearest;
         }
-        if (part.Geometry is ShapeBuilder2D typed)
+        if (part.Geometry is IShape2D typed)
         {
             var typedFrame = PartAttachment2D.FrameOf(part, world, angle, transform);
-            var shape = GeometryDefinitionCache2D.ShapeOf(typed);
-            var scale = PartAttachment2D.ShapeScale(part, shape);
+            var shape = typed;
             if (!typedFrame.Coordinates.TryToLocal(p, out var local))
             {
                 return float.PositiveInfinity;
             }
 
-            var normalized = local / scale;
-            return shape.ContainsPoint(normalized) ? .5f : 1 + ShapeDistance2D.Distance(normalized, shape);
+            return shape.ContainsPoint(local) ? .5f : 1 + ShapeDistance2D.Distance(local, shape);
         }
         throw new InvalidDataException($"Part '{part.Id}' needs typed geometry.");
     }

@@ -1,3 +1,6 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
@@ -42,7 +45,7 @@ public sealed record KeyCurve2D
     public CubicBezier2D ToCurve(float start, float end)
     {
         var (first, second) = Controls(start, end);
-        return new(new(0, start), new(Control1.X, first), new(Control2.X, second), new(1, end));
+        return CubicBezier2D.Builder.Create(new(0, start), new(Control1.X, first), new(Control2.X, second), new(1, end));
     }
 
     public (float First, float Second) Controls(float start, float end) => Absolute ? (Control1.Y, Control2.Y)

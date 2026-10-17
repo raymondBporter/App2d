@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Shapes;
@@ -28,7 +32,7 @@ internal sealed class ModelViewport(EditorSession session, Viewport viewport, Mo
         if (session.Selection.Part is { } selectedPart && model.Parts.FirstOrDefault(p => p.Id == selectedPart) is { } part)
         {
             ModelOverlay.DrawPart(frame, part, pose, model);
-            if (cutout.DragEnabled && part.Geometry is SimplePolygon2D.Builder && session.SubjectModel is not null)
+            if (cutout.DragEnabled && part.Geometry is SimplePolygon2D && session.SubjectModel is not null)
             {
                 cutout.Drag(frame, part, pose, model);
                 return;
@@ -39,7 +43,7 @@ internal sealed class ModelViewport(EditorSession session, Viewport viewport, Mo
             var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : [.. pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!)];
             var (Part, Score) = visibleParts
                 .Where(p => !p.Hidden)
-                .Select(p => (Part: p, Score: PartPicking2D.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id])))
+                .Select(p => (Part: p, Score: PartPicking2D.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id], model.Base.LineWidth)))
                 .Where(h => h.Score <= 1)
                 .OrderBy(h => h.Score)
                 .FirstOrDefault();

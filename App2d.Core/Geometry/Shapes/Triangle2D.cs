@@ -16,54 +16,46 @@ public readonly partial record struct Triangle2D : IConvexShape2D, ITriangle<Tri
     static Triangle2D ITriangle<Triangle2D, Vector2>.Create(Vector2 a, Vector2 b, Vector2 c) => Builder.Create(a, b, c);
 
     private const double EdgeTolerance = 0.0001;
-    private readonly bool _counterClockwise;
+    private bool CounterClockwise => new Vector2d(A).Orientation(new(B), new(C)) > 0;
 
     /// <summary>Creates a triangle from three finite, non-collinear vertices.</summary>
     /// <param name="a">The first vertex.</param>
     /// <param name="b">The second vertex.</param>
     /// <param name="c">The third vertex.</param>
     public Triangle2D(Vector2 a, Vector2 b, Vector2 c)
-        : this(a, b, c, new Vector2d(a).Orientation(new(b), new(c))) { }
-
-    private Triangle2D(Vector2 a, Vector2 b, Vector2 c, double signedAreaTwice)
     {
         A = a;
         B = b;
         C = c;
-        Area = (float)(Math.Abs(signedAreaTwice) * .5);
-        _counterClockwise = signedAreaTwice > 0d;
     }
 
     /// <summary>The first vertex.</summary>
     public Vector2 A
     {
-        get;
+        get; init;
     }
 
     /// <summary>The second vertex.</summary>
     public Vector2 B
     {
-        get;
+        get; init;
     }
 
     /// <summary>The third vertex.</summary>
     public Vector2 C
     {
-        get;
+        get; init;
     }
 
     /// <inheritdoc/>
-    public float Area
-    {
-        get;
-    }
+    public float Area => (float)(Math.Abs(new Vector2d(A).Orientation(new(B), new(C))) * .5);
 
     /// <inheritdoc/>
     public float Diameter => Diameter2D.Triangle(A, B, C);
 
     /// <inheritdoc/>
     public bool ContainsPoint(Vector2 localPoint) =>
-        TriangleMath2D.Contains(this, localPoint, EdgeTolerance, _counterClockwise ? 1 : -1);
+        TriangleMath2D.Contains(this, localPoint, EdgeTolerance, CounterClockwise ? 1 : -1);
 
     /// <inheritdoc/>
     public Vector2 GetSupportPoint(Vector2 localDirection)

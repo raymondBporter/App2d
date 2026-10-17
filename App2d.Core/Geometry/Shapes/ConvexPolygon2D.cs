@@ -14,24 +14,20 @@ public readonly partial record struct ConvexPolygon2D : IConvexShape2D
     public string Kind => ShapeKinds2D.ConvexPolygon;
 
     private const float Epsilon = 0.0001f;
-    private readonly Vector2[] _vertices;
+    private readonly Vector2[]? _vertices;
 
     /// <summary>Creates a convex polygon and copies its vertices.</summary>
     /// <param name="vertices">At least three finite vertices in perimeter order, with distinct neighbors and consistent turning.</param>
     public ConvexPolygon2D(Vector2[] vertices)
     {
-        _vertices = (Vector2[])vertices.Clone();
-        Area = Area2D.Polygon(_vertices);
+        _vertices = vertices?.ToArray();
     }
 
     /// <summary>The perimeter vertices.</summary>
-    public ReadOnlySpan<Vector2> Vertices => _vertices;
+    public ReadOnlySpan<Vector2> Vertices { get => _vertices; init => _vertices = value.ToArray(); }
 
     /// <inheritdoc/>
-    public float Area
-    {
-        get;
-    }
+    public float Area => Area2D.Polygon(_vertices);
 
     /// <inheritdoc/>
     public float Diameter => Diameter2D.Polygon(_vertices);

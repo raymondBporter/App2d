@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
@@ -329,8 +331,8 @@ public static class StarterContent
             ModelAuthoring.AddControl(model, $"hip-{i}", new(x + .15f, .4f, z), $"knee-{i}");
             ModelAuthoring.AddControl(model, $"knee-{i}", new(x, 0, z), $"foot-{i}");
             ModelAuthoring.AddChain(model, $"foot-{i}");
-            ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"hip-{i}", $"knee-{i}");
-            ModelAuthoring.AddPart(model, new LineCurveDefinition2D { Start = Vector2.Zero, End = Vector2.UnitY }, $"knee-{i}", $"foot-{i}");
+            ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"hip-{i}", $"knee-{i}");
+            ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
         }
         ModelAuthoring.AddMeasure(model, "leg", ["hip-1", "knee-1", "foot-1"]);
         foreach (var chain in model.Chains)
@@ -343,9 +345,9 @@ public static class StarterContent
             control.Scale = "leg";
         }
 
-        var shell = ModelAuthoring.AddPart(model, GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse), "body");
-        shell.Width = .95f;
-        shell.Height = .38f;
+        var shell = ModelAuthoring.AddPart(model, GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse), "body");
+        shell.ScaleX = .95f;
+        shell.ScaleY = .38f;
         shell.Material = shell.RenderMaterial with
         {
             Fill = "#c9e0b8"

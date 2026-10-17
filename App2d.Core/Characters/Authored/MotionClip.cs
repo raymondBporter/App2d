@@ -1,3 +1,7 @@
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Animation;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
@@ -411,7 +415,7 @@ public sealed class MotionClip
         }
         foreach (var face in Faces)
         {
-            Require(model.Parts.Any(p => p.Id == face.Part && p.Geometry is App2d.Core.Geometry.Builders.ShapeBuilder2D), $"{owner} face track '{face.Part}': the model has no such shape part.");
+            Require(model.Parts.Any(p => p.Id == face.Part && p.Geometry is App2d.Core.Geometry.Shapes.IShape2D), $"{owner} face track '{face.Part}': the model has no such shape part.");
         }
     }
 }

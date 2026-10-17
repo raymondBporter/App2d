@@ -1,6 +1,9 @@
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Geometry.Authoring;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using ImGuiNET;
 
 namespace App2d.CharacterStudio.Editor.Model;
@@ -9,7 +12,7 @@ internal static class ModelCurveInspector
 {
     public static void Draw(PuppetPart part, IReadOnlyList<string> controls, Action<Action<PuppetPart>> change)
     {
-        if (part.Geometry is not CurveDefinition2D curve)
+        if (part.Geometry is not ICurve2D curve)
         {
             return;
         }
@@ -35,7 +38,7 @@ internal static class ModelCurveInspector
 
             Ui.Help("Bumps follow the curve normal. Animate the travel control along the curve's endpoint span to move them. Negative height bends to the other side.");
         }
-        if (curve is not QuadraticBezierCurveDefinition2D and not CubicBezierCurveDefinition2D || !ImGui.CollapsingHeader("Edit curve handles"))
+        if (curve is not QuadraticBezier2D and not CubicBezier2D || !ImGui.CollapsingHeader("Edit curve handles"))
         {
             return;
         }

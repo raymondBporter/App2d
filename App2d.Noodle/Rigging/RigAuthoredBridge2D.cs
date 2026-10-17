@@ -1,6 +1,8 @@
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Operations.Transforms;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
@@ -64,14 +66,14 @@ internal static class RigAuthoredBridge2D
                 Outline = new() { Width = 0 }
             },
             Hidden = shape.Purpose == RigShapePurpose.Collision,
-            Width = 1,
-            Height = 1,
-            Geometry = ShapeBuilder2D.FromShape(ShapeTransforms2D.Scaled((IConvexShape2D)shape.CreateGeometry(), UnitsPerPixel))
+            ScaleX = 1,
+            ScaleY = 1,
+            Geometry = ShapeTransforms2D.Scaled((IConvexShape2D)shape.CreateGeometry(), UnitsPerPixel)
         };
-        if (part.Geometry is RoundedRectangle2D.Builder rounded)
+        if (part.Geometry is RoundedRectangle2D rounded)
         {
-            part.Width = rounded.Max.X - rounded.Min.X;
-            part.Height = rounded.Max.Y - rounded.Min.Y;
+            part.ScaleX = rounded.Max.X - rounded.Min.X;
+            part.ScaleY = rounded.Max.Y - rounded.Min.Y;
         }
         return part;
     }

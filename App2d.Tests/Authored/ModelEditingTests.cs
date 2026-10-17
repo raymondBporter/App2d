@@ -14,10 +14,10 @@ public sealed class ModelEditingTests
         var part = ResolvedModel.From(model, variant).Parts.First(p => p.Id == "torso");
         var before = model.ToJson();
 
-        ModelAuthoring.EditPartOverride(variant, part, edited => edited.Width = .6f);
+        ModelAuthoring.EditPartOverride(variant, part, edited => edited.ScaleX = .6f);
 
         Assert.Equal(before, model.ToJson());
-        Assert.Null(variant.Parts[part.Id].Height);
+        Assert.Null(variant.Parts[part.Id].ScaleY);
         Assert.Null(variant.Parts[part.Id].Material);
         model.Parts.First(p => p.Id == part.Id).Material = new()
         {
@@ -28,7 +28,7 @@ public sealed class ModelEditingTests
             }
         };
         var updated = ResolvedModel.From(model, variant).Parts.First(p => p.Id == part.Id);
-        Assert.Equal(.6f, updated.Width);
+        Assert.Equal(.6f, updated.ScaleX);
         Assert.Equal("#123456", updated.RenderMaterial.Fill);
         Assert.Equal(.08f, updated.RenderMaterial.Outline!.Width);
     }
@@ -61,8 +61,8 @@ public sealed class ModelEditingTests
         Assert.Equal("#654321", stored.Material!.Fill);
         Assert.Equal(.09f, stored.Material.Outline!.Width);
         Assert.Null(stored.Material.Outline.Color);
-        Assert.Null(stored.Width);
-        Assert.Null(stored.Height);
+        Assert.Null(stored.ScaleX);
+        Assert.Null(stored.ScaleY);
         Assert.Null(stored.OffsetY);
         Assert.Equal(.2f, Part().OffsetX);
         Assert.Equal("#fff8e7", model.Parts.First(p => p.Id == "torso").RenderMaterial.Fill);

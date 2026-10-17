@@ -1,5 +1,6 @@
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Builders;
+using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Operations.Area;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Polygons;
@@ -379,7 +380,7 @@ public sealed class ShapeArea2DTests
         var composite = CompositeShape2D.Builder.Create(parts, includeOverlap: false, areaOutlineSegments: 3);
         Assert.Equal(12 + 2 * MathF.PI, composite.Area, 5);
         Assert.Equal(16 + 2 * MathF.PI, CompositeShape2D.Builder.Create(parts).Area, 5);
-        var restored = Assert.IsType<CompositeShape2D>(ShapeBuilder2D.FromJson(ShapeBuilder2D.FromShape(composite).ToJson()).Build());
+        var restored = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(composite.ToJson()).Validated());
         Assert.Equal(2, restored.Parts.Length);
         foreach (var part in restored.Parts)
         {
@@ -409,15 +410,15 @@ public sealed class ShapeArea2DTests
         Assert.Equal(MathF.PI + 4, CompositeShape2D.Builder.Create(parts).Area);
         var composite = CompositeShape2D.Builder.Create(parts, includeOverlap: false, areaOutlineSegments: 96);
         Assert.Equal(MathF.PI / 2 + 4, composite.Area, 5);
-        var json = ShapeBuilder2D.FromShape(composite).ToJson();
-        var restored = Assert.IsType<CompositeShape2D>(ShapeBuilder2D.FromJson(json).Build());
+        var json = composite.ToJson();
+        var restored = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(json).Validated());
         Assert.False(restored.IncludeOverlap);
         Assert.Equal(96, restored.AreaOutlineSegments);
         Assert.Equal(composite.Area, restored.Area);
         var legacy = JsonNode.Parse(json)!.AsObject();
         legacy.Remove("includeOverlap");
         legacy.Remove("areaOutlineSegments");
-        var legacyShape = Assert.IsType<CompositeShape2D>(ShapeBuilder2D.FromJson(legacy.ToJsonString()).Build());
+        var legacyShape = Assert.IsType<CompositeShape2D>(GeometryJson2D.ShapeFromJson(legacy.ToJsonString()).Validated());
         Assert.True(legacyShape.IncludeOverlap);
         Assert.Equal(MathF.PI + 4, legacyShape.Area);
     }
@@ -427,7 +428,7 @@ public sealed class ShapeArea2DTests
     {
         var shape = new CountingCircle();
         var composite = CompositeShape2D.Builder.Create([shape, Circle2D.Builder.Create(.1f)], includeOverlap: false);
-        Assert.Equal(64, shape.SupportReads);
+        Assert.Equal(0, shape.SupportReads);
         for (var i = 0; i < 100; i++)
         {
             Assert.True(composite.Area > 3);

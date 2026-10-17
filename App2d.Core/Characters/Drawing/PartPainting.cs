@@ -2,6 +2,9 @@ using App2d.Core.Characters;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
@@ -26,7 +29,8 @@ internal static class PartPainting
             var bias = .00001f * (layer + 1);
             if (triangles is null)
             {
-                var points = patch.Points.ConvertAll(p => frame.Coordinates.TransformPoint(p * new Vector2(part.Width, part.Height)));
+                var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
+                var points = patch.Points.ConvertAll(p => frame.Coordinates.TransformPoint(bounds.Center + p * new Vector2(bounds.Width, bounds.Height)));
                 var outline = contour.Select(p => p.XY).ToArray();
                 var clipped = PolygonClipping2D.ClipConvex(points, outline);
                 var z = frame.OriginZ + frame.Depth - bias;

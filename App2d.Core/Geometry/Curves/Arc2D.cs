@@ -1,18 +1,15 @@
 using App2d.Core.Mathematics;
-using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Curves;
 
 /// <summary>A circular arc with a signed sweep; positive angles turn counter-clockwise in Y-up coordinates.</summary>
-public readonly record struct Arc2D : ICurve2D
+public readonly partial record struct Arc2D : ICurve2D
 {
+    public string Kind => CurveKinds2D.Arc;
+
     public Arc2D(Vector2 center, float radius, float startAngleRadians, float sweepAngleRadians)
     {
-        ArgGuard.Finite(center);
-        ArgGuard.NonNegative(radius);
-        ArgGuard.Finite(startAngleRadians);
-        ArgGuard.Finite(sweepAngleRadians);
         Center = center;
         Radius = radius;
         StartAngleRadians = startAngleRadians;
@@ -21,19 +18,19 @@ public readonly record struct Arc2D : ICurve2D
 
     public Vector2 Center
     {
-        get;
+        get; init;
     }
     public float Radius
     {
-        get;
+        get; init;
     }
     public float StartAngleRadians
     {
-        get;
+        get; init;
     }
     public float SweepAngleRadians
     {
-        get;
+        get; init;
     }
     public double Length => (double)Radius * Math.Abs(SweepAngleRadians);
     public Vector2 Start => Evaluate(0f);

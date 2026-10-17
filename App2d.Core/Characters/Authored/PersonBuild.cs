@@ -152,14 +152,14 @@ public sealed record PersonBuild
             var head = parts.FindIndex(p => p.Id == Humanoid.Head);
             parts[body] = parts[body] with
             {
-                Width = parts[body].Width * b.Width,
-                Height = parts[body].Height * b.Torso,
+                ScaleX = parts[body].ScaleX * b.Width,
+                ScaleY = parts[body].ScaleY * b.Torso,
                 OffsetY = parts[body].OffsetY * b.Torso
             };
             parts[head] = parts[head] with
             {
-                Width = parts[head].Width * b.Head,
-                Height = parts[head].Height * b.Head
+                ScaleX = parts[head].ScaleX * b.Head,
+                ScaleY = parts[head].ScaleY * b.Head
             };
         }
     }
