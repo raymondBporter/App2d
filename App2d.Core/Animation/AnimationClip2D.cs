@@ -16,10 +16,11 @@ public sealed class AnimationClip2D<TFrame>
     {
         ArgGuard.ThrowIfNull(frames);
         ArgGuard.Positive(framesPerSecond);
+
+        _frames = [.. frames];
         ArgGuard.ThrowIfTooShort(_frames.AsSpan(), 1, nameof(frames));
         ArgGuard.ThrowIfContainsNull(_frames.AsSpan(), nameof(frames));
 
-        _frames = [.. frames];
         _frameDurations = new float[_frames.Length];
         Array.Fill(_frameDurations, 1f / framesPerSecond);
         _frameEndTimes = CreateFrameEndTimes(_frameDurations, out var duration);

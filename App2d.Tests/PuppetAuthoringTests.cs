@@ -51,17 +51,17 @@ public sealed class PuppetAuthoringTests
         var part = Core.Characters.Authored.ModelAuthoring.AddPart(model, GeometryJson2D.CreateDefault(ShapeKinds2D.Ellipse), "root");
         var id = part.Id;
 
-        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, id, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY });
+        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, id, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated());
         Assert.Equal(id, part.Id);
         Assert.IsType<LineSegmentCurve2D>(part.Geometry);
         Assert.Equal("tip", part.B);
 
-        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, id, new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] });
+        Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, id, new SimplePolygon2D { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] }.Validated());
         var restored = Core.Characters.Authored.CharacterModel.FromJson(model.ToJson());
         Assert.IsType<SimplePolygon2D>(restored.Parts.Single().Geometry);
         Assert.Equal(id, restored.Parts.Single().Id);
 
-        var stroke = Core.Characters.Authored.ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }, "root", "tip");
+        var stroke = Core.Characters.Authored.ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), "root", "tip");
         Core.Characters.Authored.ModelAuthoring.SetPartGeometry(model, stroke.Id, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f));
         Assert.NotNull(stroke.RenderMaterial.Fill);
         Assert.NotNull(stroke.RenderMaterial.Outline);

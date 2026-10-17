@@ -88,8 +88,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         }
     }
 
-    public IEnumerable<SpatialObject2D> GetActiveSwordHitboxes() =>
-        _sword.ActiveHitboxes;
+    public IEnumerable<SpatialObject2D> GetActiveSwordHitboxes() => _sword.ActiveHitboxes;
 
     public void BeginFrame(float deltaSeconds)
     {
@@ -115,11 +114,9 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
         _energyRecharge = 0;
     }
 
-    public float UsePrimary(float facing) =>
-        SpellBusy ? facing : _sword.Use(facing);
+    public float UsePrimary(float facing) => SpellBusy ? facing : _sword.Use(facing);
 
-    public float UseDownwardPrimary(float facing) =>
-        SpellBusy ? facing : _sword.UseDownward(facing);
+    public float UseDownwardPrimary(float facing) => SpellBusy ? facing : _sword.UseDownward(facing);
 
     public float UseSecondary(float facing) => facing;
 }
