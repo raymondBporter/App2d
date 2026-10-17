@@ -1,7 +1,5 @@
 using App2d.Core;
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Intersection;
-using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
@@ -72,6 +70,7 @@ public sealed partial class Renderer2D : IDisposable
         {
             ReleaseTexture(oldest.Value);
         }
+        _meshes.Trim(MeshCacheBudgetBytes);
 
         _frameActive = false;
     }
@@ -205,22 +204,32 @@ public sealed partial class Renderer2D : IDisposable
             return;
         }
 
+        SetMaterialState();
+        foreach (var pass in _effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            ApplyBatchSampler();
+
+            _device.DrawUserPrimitives(PrimitiveType.TriangleList, _vertices, 0, _vertexCount / 3);
+        }
+        _vertexCount = 0;
+    }
+
+    private void SetMaterialState()
+    {
         _device.BlendState = BlendState.AlphaBlend;
         _device.DepthStencilState = DepthStencilState.None;
         _device.RasterizerState = RasterizerState.CullNone;
         _effect.TextureEnabled = _batchTexture is not null;
         _effect.Texture = _batchTexture;
-        foreach (var pass in _effect.CurrentTechnique.Passes)
-        {
-            pass.Apply();
-            if (_batchSampler is not null)
-            {
-                _device.SamplerStates[0] = _batchSampler;
-            }
+    }
 
-            _device.DrawUserPrimitives(PrimitiveType.TriangleList, _vertices, 0, _vertexCount / 3);
+    private void ApplyBatchSampler()
+    {
+        if (_batchSampler is not null)
+        {
+            _device.SamplerStates[0] = _batchSampler;
         }
-        _vertexCount = 0;
     }
 
     private void Triangle(VertexPositionColorTexture a, VertexPositionColorTexture b, VertexPositionColorTexture c)
@@ -267,15 +276,6 @@ public sealed partial class Renderer2D : IDisposable
         return Vertex(Vector2.Transform(local, matrix), shader.GetVertexColor(local, bounds), uv);
     }
 
-    private void FillPolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
-    {
-        var first = MaterialVertex(points[0], matrix, bounds, shader);
-        foreach (var (_, b, c) in MeshTopology.TriangleFan(points.Length))
-        {
-            Triangle(first, MaterialVertex(points[b], matrix, bounds, shader), MaterialVertex(points[c], matrix, bounds, shader));
-        }
-    }
-
     private void FillShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
     {
         if (shape is CompositeShape2D composite)
@@ -287,65 +287,27 @@ public sealed partial class Renderer2D : IDisposable
 
             return;
         }
-        if (shape is SimplePolygon2D simplePolygon)
+        if (shape is SimplePolygon2D polygon && polygon.Mesh.TriangleCount >= RetainedShapeTriangleThreshold
+            && TryGetMeshStyle(shader, out _))
         {
-            foreach (var (a, b, c) in simplePolygon.Mesh.Triangles)
-            {
-                Triangle(MaterialVertex(a, matrix, bounds, shader),
-                    MaterialVertex(b, matrix, bounds, shader),
-                    MaterialVertex(c, matrix, bounds, shader));
-            }
-
-            return;
-        }
-        if (shape is ConvexPolygon2D polygon)
-        {
-            FillPolygon(polygon.Vertices, matrix, bounds, shader);
-            return;
-        }
-        if (shape is Triangle2D triangle)
-        {
-            Triangle(MaterialVertex(triangle.A, matrix, bounds, shader),
-                MaterialVertex(triangle.B, matrix, bounds, shader),
-                MaterialVertex(triangle.C, matrix, bounds, shader));
+            DrawMeshCore(polygon.Mesh, matrix, bounds, shader);
             return;
         }
         Span<Vector2> points = stackalloc Vector2[260];
-        var count = GetShapePoints(shape, matrix, points);
-        if (count >= 3)
+        var hasFirst = false;
+        var firstPoint = Vector2.Zero;
+        var firstVertex = default(VertexPositionColorTexture);
+        foreach (var triangle in shape.Triangles(points, shape.RoundSegmentsFor(matrix), clipBounds: bounds))
         {
-            FillPolygon(points[..count], matrix, bounds, shader);
+            if (!hasFirst || firstPoint != triangle.A)
+            {
+                firstPoint = triangle.A;
+                firstVertex = MaterialVertex(firstPoint, matrix, bounds, shader);
+                hasFirst = true;
+            }
+            Triangle(firstVertex,
+                MaterialVertex(triangle.B, matrix, bounds, shader), MaterialVertex(triangle.C, matrix, bounds, shader));
         }
-    }
-
-    private int GetShapePoints(IShape2D shape, Matrix3x2 matrix, Span<Vector2> points)
-    {
-        switch (shape)
-        {
-            case IRect2D rectangle:
-                return VertexGenerator2D.WriteRectangle(points, rectangle.Min, rectangle.Max);
-            case RoundedRectangle2D rounded:
-                return VertexGenerator2D.WriteRoundedRectangle(points, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius);
-            case Circle2D circle:
-                var segments = CurveSegments(circle.Radius, matrix);
-                return VertexGenerator2D.WriteCircle(points[..segments], circle.Center, circle.Radius);
-            case Ellipse2D ellipse:
-                var ellipseSegments = CurveSegments(MathF.Max(ellipse.Radii.X, ellipse.Radii.Y), matrix);
-                return ellipse.WriteVertices(points[..ellipseSegments]);
-            case Capsule2D capsule:
-                var halfSegments = CurveSegments(capsule.Radius, matrix) / 2;
-                return VertexGenerator2D.WriteCapsule(points, capsule.Start, capsule.End, capsule.Radius, halfSegments);
-            case HalfSpace2D halfSpace:
-                return PolygonClipping2D.ClipRectangleToHalfSpace(GetVisibleLocalBounds(matrix), halfSpace.Normal, halfSpace.Offset, points);
-            default:
-                throw new NotSupportedException($"No renderer is registered for {shape.GetType().Name}.");
-        }
-    }
-
-    private static int CurveSegments(float radius, Matrix3x2 matrix)
-    {
-        var scale = Math.Max(new Vector2(matrix.M11, matrix.M12).Length(), new Vector2(matrix.M21, matrix.M22).Length());
-        return Math.Clamp((int)MathF.Ceiling(MathF.PI * MathF.Sqrt(Math.Max(1f, radius * scale) * 2f)), 16, 128);
     }
 
     public void DrawScreenRoundedRectangle(ScreenRectangle2D bounds, float radius, XnaColor color, float strokeWidth = 0f)
@@ -425,13 +387,12 @@ public sealed partial class Renderer2D : IDisposable
 
         SelectBatch(null, null);
         var matrix = _camera.WorldToDeviceMatrix;
-        var first = Vertex(Vector2.Transform(points[0], matrix), color);
-        for (var index = 1; index < points.Length - 1; index++)
+        foreach (var triangle in MeshTopology.TriangleFan<Vector2>(points))
         {
             Triangle(
-                first,
-                Vertex(Vector2.Transform(points[index], matrix), color),
-                Vertex(Vector2.Transform(points[index + 1], matrix), color));
+                Vertex(Vector2.Transform(triangle.A, matrix), color),
+                Vertex(Vector2.Transform(triangle.B, matrix), color),
+                Vertex(Vector2.Transform(triangle.C, matrix), color));
         }
     }
 
@@ -452,7 +413,7 @@ public sealed partial class Renderer2D : IDisposable
         ArgGuard.Positive(strokeWidth);
         SelectBatch(null, null);
         Span<Vector2> points = stackalloc Vector2[128];
-        var segments = CurveSegments(radius, _camera.WorldToDeviceMatrix);
+        var segments = ShapeTessellation2D.CurveSegments(radius, _camera.WorldToDeviceMatrix);
         VertexGenerator2D.WriteCircle(points[..segments], center, radius);
         StrokePolygon(points[..segments], _camera.WorldToDeviceMatrix, color, strokeWidth);
     }
@@ -503,106 +464,41 @@ public sealed partial class Renderer2D : IDisposable
     public void DrawShapeOverlay(SpatialObject2D item, XnaColor fillColor, XnaColor outlineColor, float screenStrokeWidth = 2f) =>
         DrawShape(item, fillColor, outlineColor, screenStrokeWidth);
 
-    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, XnaColor color, float width)
+    private void OutlineShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, XnaColor color, float width)
     {
         if (shape is CompositeShape2D composite)
         {
             foreach (var part in composite.Parts)
             {
-                OutlineShape(part, matrix, color, width);
-            }
-
-            return;
-        }
-        if (shape is ConvexPolygon2D polygon)
-        {
-            StrokePolygon(polygon.Vertices, matrix, color, width);
-            return;
-        }
-        if (shape is SimplePolygon2D simplePolygon)
-        {
-            StrokePolygon(simplePolygon.Vertices, matrix, color, width);
-            return;
-        }
-        if (shape is Triangle2D triangle)
-        {
-            Span<Vector2> vertices = stackalloc Vector2[3];
-            triangle.WriteVertices(vertices);
-            StrokePolygon(vertices, matrix, color, width);
-            return;
-        }
-        if (shape is HalfSpace2D halfSpace)
-        {
-            var tangent = new Vector2(-halfSpace.Normal.Y, halfSpace.Normal.X);
-            var boundary = new Line2D(halfSpace.Normal * halfSpace.Offset, tangent);
-            if (boundary.TryClipToRectangle(GetVisibleLocalBounds(matrix), out var start, out var end))
-            {
-                Line(Vector2.Transform(start, matrix), Vector2.Transform(end, matrix), color, width);
+                OutlineShape(part, matrix, bounds, color, width);
             }
 
             return;
         }
         Span<Vector2> points = stackalloc Vector2[260];
-        var count = GetShapePoints(shape, matrix, points);
-        StrokePolygon(points[..count], matrix, color, width);
+        foreach (var segment in shape.OutlineSegments(points, shape.RoundSegmentsFor(matrix),
+            clipBounds: bounds.IsFinite ? bounds : GetVisibleLocalBounds(matrix)))
+        {
+            Line(Vector2.Transform(segment.Start, matrix), Vector2.Transform(segment.End, matrix), color, width);
+        }
     }
 
     private void StrokePolygon(ReadOnlySpan<Vector2> points, Matrix3x2 matrix, XnaColor color, float width)
     {
-        foreach (var (a, b) in MeshTopology.Edges(points.Length))
+        foreach (var segment in MeshTopology.Segments<Vector2>(points))
         {
-            Line(Vector2.Transform(points[a], matrix), Vector2.Transform(points[b], matrix), color, width);
+            Line(Vector2.Transform(segment.Start, matrix), Vector2.Transform(segment.End, matrix), color, width);
         }
     }
 
     private void Line(Vector2 start, Vector2 end, XnaColor color, float width,
         LineCap2D startCap = LineCap2D.Butt, LineCap2D endCap = LineCap2D.Butt)
     {
-        var axis = end - start;
-        if (axis.LengthSquared() <= float.Epsilon)
+        Span<Vector2> vertices = stackalloc Vector2[StrokeTessellation2D.MaximumSegmentVertices];
+        var count = StrokeTessellation2D.WriteSegment(vertices, start, end, width, startCap, endCap);
+        foreach (var triangle in MeshTopology.TriangleList<Vector2>(vertices[..count]))
         {
-            if (startCap == LineCap2D.Round || endCap == LineCap2D.Round)
-            {
-                FillDisk(start, width * 0.5f, color);
-            }
-            else if (startCap == LineCap2D.Square || endCap == LineCap2D.Square)
-            {
-                var half = new Vector2(width * 0.5f);
-                var topLeft = Vertex(start + new Vector2(-half.X, -half.Y), color);
-                var topRight = Vertex(start + new Vector2(half.X, -half.Y), color);
-                var bottomRight = Vertex(start + half, color);
-                var bottomLeft = Vertex(start + new Vector2(-half.X, half.Y), color);
-                Triangle(topLeft, topRight, bottomRight);
-                Triangle(topLeft, bottomRight, bottomLeft);
-            }
-            return;
-        }
-        var unit = Vector2.Normalize(axis);
-        var normal = new Vector2(-unit.Y, unit.X) * width * 0.5f;
-        if (startCap == LineCap2D.Square)
-        {
-            start -= unit * width * 0.5f;
-        }
-
-        if (endCap == LineCap2D.Square)
-        {
-            end += unit * width * 0.5f;
-        }
-
-        var a = Vertex(start + normal, color);
-        var b = Vertex(end + normal, color);
-        var c = Vertex(end - normal, color);
-        var d = Vertex(start - normal, color);
-        Triangle(a, b, c);
-        Triangle(a, c, d);
-        if (startCap == LineCap2D.Round)
-        {
-            FillRoundCap(start, -unit, width * 0.5f, color);
-        }
-
-        if (endCap == LineCap2D.Round)
-        {
-            FillRoundCap(end, unit, width * 0.5f, color);
+            Triangle(Vertex(triangle.A, color), Vertex(triangle.B, color), Vertex(triangle.C, color));
         }
     }
 
@@ -648,6 +544,7 @@ public sealed partial class Renderer2D : IDisposable
         }
 
         DisposeCharacters();
+        _meshes.Dispose();
         _vertexCount = 0;
         _batchTexture = null;
         while (_recentTextures.First is { } node)

@@ -12,6 +12,44 @@ namespace App2d.Tests.Rendering;
 public sealed class TextureRenderingAllocationTests(ITestOutputHelper output)
 {
     [Fact]
+    public void WarmRetainedMeshDrawsDoNotAllocateManagedMemory()
+    {
+        using var graphics = new GraphicsTestContext();
+        using var renderer = new Renderer2D(new Camera2D(), graphics.Device);
+        using var characters = new Core.Rendering.Characters.PointCharacterRenderer(graphics.Device);
+        var mesh = new Core.Geometry.Meshes.TriangleMesh2D(
+            [new(-8, -8), new(8, -8), new(0, 8)], [0, 1, 2]);
+        var character = new Core.Rendering.Characters.CharacterMesh(3);
+        character.Triangle(new(-8, -8, 0), new(8, -8, 0), new(0, 8, 0), Microsoft.Xna.Framework.Color.White);
+        var material = new SolidColorShader(Microsoft.Xna.Framework.Color.White);
+        var projection = Core.Rendering.Characters.PointCharacterRenderer.Projection(128, 128, new(64), 1);
+        void Draw()
+        {
+            for (var iteration = 0; iteration < 300; iteration++)
+            {
+                renderer.DrawMesh(mesh, material);
+                characters.Draw(character, projection, Microsoft.Xna.Framework.Matrix.Identity, writeDepth: false);
+            }
+        }
+        renderer.BeginFrame(128, 128, default);
+        Draw();
+        renderer.EndFrame();
+        var measurements = new long[3];
+        for (var attempt = 0; attempt < measurements.Length; attempt++)
+        {
+            renderer.BeginFrame(128, 128, default);
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            Draw();
+            renderer.EndFrame();
+            measurements[attempt] = GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+        output.WriteLine($"Retained mesh draw allocations: {string.Join(", ", measurements)} bytes.");
+        Assert.Equal(0, measurements.Min());
+        Assert.Equal(1, renderer.MeshUploadCount);
+        Assert.Equal(1, characters.MeshUploadCount);
+    }
+
+    [Fact]
     public void WarmTextureDrawDoesNotAllocateManagedMemory()
     {
         using var texture = Texture2D.Load(TestAssets.GetPath("Runtime", "ui", "hud", "weapons", "sword.png"));

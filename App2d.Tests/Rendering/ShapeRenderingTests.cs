@@ -15,22 +15,28 @@ public sealed class ShapeRenderingTests
     public static TheoryData<string> FiniteShapes =>
     [
         nameof(Rectangle2D),
+        nameof(AxisAlignedRectangle2D),
+        nameof(RoundedRectangle2D),
         nameof(Circle2D),
         nameof(Ellipse2D),
         nameof(Capsule2D),
         nameof(Triangle2D),
         nameof(ConvexPolygon2D),
+        nameof(SimplePolygon2D),
         nameof(CompositeShape2D),
     ];
 
     private static IShape2D CreateShape(string shapeName) => shapeName switch
     {
         nameof(Rectangle2D) => Rectangle2D.Builder.Create(new(-16, -12), new(16, 12)),
+        nameof(AxisAlignedRectangle2D) => AxisAlignedRectangle2D.Builder.Create(new(-16, -12), new(16, 12)),
+        nameof(RoundedRectangle2D) => RoundedRectangle2D.Builder.Create(new(-16, -12), new(16, 12), 4),
         nameof(Circle2D) => Circle2D.Builder.Create(16),
         nameof(Ellipse2D) => Ellipse2D.Builder.Create(new(20, 12)),
         nameof(Capsule2D) => Capsule2D.Builder.Create(new(-10, 0), new(10, 0), 8),
         nameof(Triangle2D) => Triangle2D.Builder.Create(new(-16, -14), new(16, -14), new(0, 18)),
         nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(-15, -12), new(15, -12), new(18, 10), new(-18, 10)]),
+        nameof(SimplePolygon2D) => SimplePolygon2D.Builder.Create([new(-16, -12), new(16, -12), new(16, 0), new(8, 0), new(8, 12), new(-16, 12)]),
         nameof(CompositeShape2D) => CompositeShape2D.Builder.Create([
             Rectangle2D.Builder.Create(new(-16, -12), new(5, 12)),
             Rectangle2D.Builder.Create(new(-5, -12), new(16, 12)),

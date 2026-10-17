@@ -24,7 +24,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
     }
 
     public ReadOnlySpan<TVertex> Vertices => _vertices.AsSpan(0, Count);
-    /// <summary>Returns the backing array for APIs that submit a contiguous vertex range.</summary>
+    /// <summary>Changes whenever vertices are written or cleared, including rebuilds with the same count.</summary>
+    public long Version { get; private set; }
+    /// <summary>Returns the backing array for submission. Callers must not modify it.</summary>
     public TVertex[] GetBuffer() => _vertices;
     public int Count
     {
@@ -42,6 +44,7 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
 
     public void Clear()
     {
+        Version++;
         Count = 0;
         Min = new(float.PositiveInfinity);
         Max = new(float.NegativeInfinity);
@@ -52,7 +55,9 @@ public sealed class TriangleMeshBuilder3D<TVertex, TMaterial>
         ArgGuard.Finite(point);
         ArgGuard.Finite(uv);
         EnsureCapacity(Count + 1);
-        _vertices[Count++] = _vertexFactory(point, material, uv);
+        var vertex = _vertexFactory(point, material, uv);
+        _vertices[Count++] = vertex;
+        Version++;
         Min = Vector3.Min(Min, point);
         Max = Vector3.Max(Max, point);
     }

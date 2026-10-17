@@ -30,7 +30,7 @@ public sealed partial class Renderer2D
         }
 
         var m = visual.Transform.Matrix * _camera.WorldToDeviceMatrix;
-        var world = Matrix.CreateScale(shader.Facing, 1, 1) * new Matrix(m.M11, m.M12, 0, 0, m.M21, m.M22, 0, 0, 0, 0, 1, 0, m.M31, m.M32, 0, 1);
+        var world = Matrix.CreateScale(shader.Facing, 1, 1) * ToXnaMatrix(m);
         var projection = Matrix.CreateOrthographicOffCenter(0, _device.Viewport.Width, _device.Viewport.Height, 0, -64, 64);
         projection.M33 = 1f / 128;
         projection.M43 = .5f;

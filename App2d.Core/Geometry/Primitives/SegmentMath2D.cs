@@ -17,4 +17,8 @@ public static class SegmentMath2D
     /// <summary>Swaps endpoints through the concrete type's static factory.</summary>
     public static TSegment Reversed<TSegment>(this TSegment segment)
         where TSegment : ISegment<TSegment, Vector2> => TSegment.Create(segment.End, segment.Start);
+
+    public static TSegment TransformedBy<TSegment>(this TSegment segment, Matrix3x2 transform)
+        where TSegment : ISegment<TSegment, Vector2> => TSegment.Create(
+        Vector2.Transform(segment.Start, transform), Vector2.Transform(segment.End, transform));
 }

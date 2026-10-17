@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Meshes;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -84,7 +85,7 @@ public sealed class MeshTopologyTests
         var enumerator = triangles.GetEnumerator();
         Assert.Equal(1, triangles.Count);
         Assert.True(enumerator.MoveNext());
-        Assert.Equal((new Vector2(7, 8), Vector2.UnitX, Vector2.UnitY), enumerator.Current);
+        Assert.Equal(new Triangle<Vector2>(new(7, 8), Vector2.UnitX, Vector2.UnitY), enumerator.Current);
         Assert.False(enumerator.MoveNext());
     }
 

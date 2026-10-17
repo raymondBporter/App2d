@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Operations.Diameter;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
 using System.Numerics;
@@ -7,10 +8,12 @@ using System.Numerics;
 namespace App2d.Core.Shapes;
 
 /// <summary>A filled triangle in local space. Either perimeter winding is accepted; collinear vertices are rejected.</summary>
-public readonly partial record struct Triangle2D : IConvexShape2D
+public readonly partial record struct Triangle2D : IConvexShape2D, ITriangle<Triangle2D, Vector2>
 {
     /// <inheritdoc/>
     public string Kind => ShapeKinds2D.Triangle;
+
+    static Triangle2D ITriangle<Triangle2D, Vector2>.Create(Vector2 a, Vector2 b, Vector2 c) => Builder.Create(a, b, c);
 
     private const double EdgeTolerance = 0.0001;
     private readonly bool _counterClockwise;
@@ -59,20 +62,8 @@ public readonly partial record struct Triangle2D : IConvexShape2D
     public float Diameter => Diameter2D.Triangle(A, B, C);
 
     /// <inheritdoc/>
-    public bool ContainsPoint(Vector2 localPoint)
-    {
-        ArgGuard.Finite(localPoint);
-        var point = new Vector2d(localPoint);
-        var a = new Vector2d(A);
-        var b = new Vector2d(B);
-        var c = new Vector2d(C);
-        var first = a.Orientation(b, point);
-        var second = b.Orientation(c, point);
-        var third = c.Orientation(a, point);
-        return _counterClockwise
-            ? first >= -EdgeTolerance && second >= -EdgeTolerance && third >= -EdgeTolerance
-            : first <= EdgeTolerance && second <= EdgeTolerance && third <= EdgeTolerance;
-    }
+    public bool ContainsPoint(Vector2 localPoint) =>
+        TriangleMath2D.Contains(this, localPoint, EdgeTolerance, _counterClockwise ? 1 : -1);
 
     /// <inheritdoc/>
     public Vector2 GetSupportPoint(Vector2 localDirection)
@@ -97,11 +88,5 @@ public readonly partial record struct Triangle2D : IConvexShape2D
 
     /// <summary>Writes A, B and C in perimeter order without allocating.</summary>
     /// <param name="vertices">A buffer of at least three entries; extra entries are untouched.</param>
-    public void WriteVertices(Span<Vector2> vertices)
-    {
-        ArgGuard.ThrowIfTooShort(vertices, 3);
-        vertices[0] = A;
-        vertices[1] = B;
-        vertices[2] = C;
-    }
+    public void WriteVertices(Span<Vector2> vertices) => TriangleMath2D.WriteVertices(this, vertices);
 }

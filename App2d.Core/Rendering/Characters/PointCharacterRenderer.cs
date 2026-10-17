@@ -9,6 +9,23 @@ public sealed class PointCharacterRenderer : IDisposable
     private readonly GraphicsDevice _device;
     private readonly BasicEffect _effect;
     private readonly Dictionary<string, Texture2D> _images = new(StringComparer.OrdinalIgnoreCase);
+    private readonly MeshBufferCache<CharacterMesh> _meshes = new();
+    private bool _disposed;
+
+    /// <summary>Maximum resident vertex-buffer bytes; least recently drawn meshes are released after submission.</summary>
+    public long MeshCacheBudgetBytes
+    {
+        get;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            field = value;
+        }
+    } = 32 * 1024 * 1024;
+    public long CachedMeshBytes => _meshes.Bytes;
+    /// <summary>Total uploads since construction. Changing only a draw matrix does not upload vertices.</summary>
+    public long MeshUploadCount { get; private set; }
+    public long MeshDrawCount { get; private set; }
     public PointCharacterRenderer(GraphicsDevice device)
     {
         _device = device;
@@ -30,6 +47,8 @@ public sealed class PointCharacterRenderer : IDisposable
     }
     public void Draw(PuppetDrawing drawing, Matrix projection, Matrix world)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(drawing);
         foreach (var batch in drawing.Batches)
         {
             Texture2D? texture = null;
@@ -57,11 +76,20 @@ public sealed class PointCharacterRenderer : IDisposable
     }
     public void Draw(CharacterMesh mesh, Matrix projection, Matrix world, Texture2D? texture = null, bool writeDepth = true, int start = 0, int? count = null, bool additive = false)
     {
-        if (mesh.Count == 0)
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(mesh);
+        var vertexCount = count ?? (mesh.Count - start);
+        if (start < 0 || start > mesh.Count || vertexCount < 0 || vertexCount > mesh.Count - start
+            || start % 3 != 0 || vertexCount % 3 != 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count), "The draw range must contain complete triangles within the mesh.");
+        }
+        if (vertexCount == 0)
         {
             return;
         }
 
+        var buffers = GetMeshBuffers(mesh);
         var blend = _device.BlendState;
         var depth = _device.DepthStencilState;
         var raster = _device.RasterizerState;
@@ -77,32 +105,71 @@ public sealed class PointCharacterRenderer : IDisposable
             _effect.Projection = projection;
             _effect.TextureEnabled = texture is not null;
             _effect.Texture = texture;
+            _device.SetVertexBuffer(buffers.Vertices);
             foreach (var pass in _effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
                 // Bounded submissions work with every supported MonoGame primitive count limit.
-                var end = start + (count ?? mesh.Count);
+                var end = start + vertexCount;
                 for (var offset = start; offset < end; offset += 24576)
                 {
-                    _device.DrawUserPrimitives(PrimitiveType.TriangleList, mesh.Buffer, offset, Math.Min(24576, end - offset) / 3);
+                    _device.DrawPrimitives(PrimitiveType.TriangleList, offset, Math.Min(24576, end - offset) / 3);
+                    MeshDrawCount++;
                 }
             }
         }
         finally
         {
+            _device.SetVertexBuffer(null);
+            _meshes.Trim(MeshCacheBudgetBytes);
             _device.BlendState = blend;
             _device.DepthStencilState = depth;
             _device.RasterizerState = raster;
             _device.SamplerStates[0] = sampler;
         }
     }
+
+    private MeshBuffers GetMeshBuffers(CharacterMesh mesh)
+    {
+        if (!_meshes.TryGet(mesh, out var buffers) || buffers.Vertices.VertexCount < mesh.Count)
+        {
+            // Geometric growth avoids reallocating the GPU buffer as a pose grows slightly.
+            var capacity = (int)System.Numerics.BitOperations.RoundUpToPowerOf2((uint)mesh.Count);
+            buffers = new MeshBuffers(new DynamicVertexBuffer(_device,
+                VertexPositionColorTexture.VertexDeclaration, capacity, BufferUsage.WriteOnly));
+            buffers.Version = mesh.Version - 1;
+            _meshes.Add(mesh, buffers);
+        }
+        if (buffers.Version != mesh.Version)
+        {
+            // Discard preserves data still used by earlier draws when this mesh is rebuilt for another actor.
+            ((DynamicVertexBuffer)buffers.Vertices).SetData(mesh.Buffer, 0, mesh.Count, SetDataOptions.Discard);
+            buffers.Version = mesh.Version;
+            MeshUploadCount++;
+        }
+        return buffers;
+    }
+
+    /// <summary>Releases retained meshes, for example when replacing a studio document.</summary>
+    public void ClearMeshCache()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _meshes.Dispose();
+    }
+
     public void Dispose()
     {
+        if (_disposed)
+        {
+            return;
+        }
+        _meshes.Dispose();
         foreach (var texture in _images.Values)
         {
             texture.Dispose();
         }
 
         _effect.Dispose();
+        _disposed = true;
     }
 }

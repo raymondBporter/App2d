@@ -10,6 +10,7 @@ public sealed class TriangleMesh2D
 {
     private readonly Vector2[] _vertices;
     private readonly int[] _indices;
+    private Segment<int>[]? _boundaryEdges;
 
     public TriangleMesh2D(IEnumerable<Vector2> vertices, IEnumerable<int> indices)
     {
@@ -46,6 +47,9 @@ public sealed class TriangleMesh2D
     public ReadOnlySpan<int> Indices => _indices;
     /// <summary>A borrowed, allocation-free view of the mesh's vertex triples in index-buffer order.</summary>
     public IndexedTriangleEnumerable<Vector2> Triangles => MeshTopology.IndexedTriangles<Vector2>(_vertices, _indices);
+    /// <summary>Cached index topology, independent of vertex positions and rendering.</summary>
+    public ReadOnlySpan<Segment<int>> BoundaryEdges => _boundaryEdges ??= MeshTopology.BoundaryEdges(_indices);
+    public SegmentVertexEnumerable<Segment<Vector2>, Vector2> BoundarySegments => MeshTopology.IndexedSegments<Vector2>(_vertices, BoundaryEdges);
     public int TriangleCount => _indices.Length / 3;
     /// <summary>The sum of triangle areas; overlaps are counted once per triangle.</summary>
     public float Area
@@ -57,12 +61,12 @@ public sealed class TriangleMesh2D
         get;
     }
 
-    public (Vector2 A, Vector2 B, Vector2 C) TriangleAt(int index)
+    public Triangle<Vector2> TriangleAt(int index)
     {
         ArgGuard.Index(index, TriangleCount);
 
         var i = index * 3;
-        return (_vertices[_indices[i]], _vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
+        return new(_vertices[_indices[i]], _vertices[_indices[i + 1]], _vertices[_indices[i + 2]]);
     }
 
     /// <summary>Contains a point when it lies in any triangle, including an edge.</summary>
@@ -75,16 +79,9 @@ public sealed class TriangleMesh2D
             return false;
         }
 
-        var query = new Vector2d(point);
         foreach (var triangle in Triangles)
         {
-            var a = new Vector2d(triangle.A);
-            var b = new Vector2d(triangle.B);
-            var c = new Vector2d(triangle.C);
-            var sign = Math.Sign(a.Orientation(b, c));
-            if (sign * a.Orientation(b, query) >= -edgeTolerance &&
-                sign * b.Orientation(c, query) >= -edgeTolerance &&
-                sign * c.Orientation(a, query) >= -edgeTolerance)
+            if (triangle.Contains(point, edgeTolerance))
             {
                 return true;
             }

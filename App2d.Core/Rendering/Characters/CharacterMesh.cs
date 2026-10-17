@@ -16,6 +16,7 @@ public sealed class CharacterMesh(int initialCapacity = 32768)
     public ReadOnlySpan<VertexPositionColorTexture> Vertices => _geometry.Vertices;
     internal VertexPositionColorTexture[] Buffer => _geometry.GetBuffer();
     public int Count => _geometry.Count;
+    public long Version => _geometry.Version;
     public int TriangleCount => _geometry.TriangleCount;
     public Vector3 Min => _geometry.Min;
     public Vector3 Max => _geometry.Max;

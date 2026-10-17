@@ -11,9 +11,9 @@ namespace App2d.Core.Geometry.Operations.Vertices;
 public static class ShapeVertices2D
 {
     /// <summary>Samples a placed outline into the caller's buffer without allocating or registering a spatial object.</summary>
-    public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Similarity2D pose, Span<Vector2> vertices, int roundSegments = 32)
+    public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Similarity2D pose, Span<Vector2> vertices, int roundSegments = 32, int cornerSegments = 8)
     {
-        var outline = shape.GetOutlineVerts(vertices, roundSegments);
+        var outline = shape.GetOutlineVerts(vertices, roundSegments, cornerSegments);
         for (var i = 0; i < outline.Length; i++)
         {
             vertices[i] = pose.TransformPoint(outline[i]);
@@ -22,10 +22,10 @@ public static class ShapeVertices2D
     }
 
     /// <summary>Allocates a drawable outline of a placed shape. Use the span overload when supplying reusable storage.</summary>
-    public static Vector2[] Outline(this IShape2D shape, Similarity2D pose, int roundSegments = 32)
+    public static Vector2[] Outline(this IShape2D shape, Similarity2D pose, int roundSegments = 32, int cornerSegments = 8)
     {
-        var vertices = new Vector2[shape.GetOutlineVertCount(roundSegments)];
-        shape.GetOutlineVerts(pose, vertices, roundSegments);
+        var vertices = new Vector2[shape.GetOutlineVertCount(roundSegments, cornerSegments)];
+        shape.GetOutlineVerts(pose, vertices, roundSegments, cornerSegments);
         return vertices;
     }
 
@@ -44,7 +44,7 @@ public static class ShapeVertices2D
             RoundedRectangle2D rounded when rounded.InnerRect.Min == rounded.InnerRect.Max => 1,
             RoundedRectangle2D rounded when rounded.InnerRect.Min.X == rounded.InnerRect.Max.X || rounded.InnerRect.Min.Y == rounded.InnerRect.Max.Y => 2,
             RoundedRectangle2D => 4,
-            Rectangle2D or AxisAlignedRectangle2D => 4,
+            IRect2D => 4,
             Triangle2D => 3,
             ConvexPolygon2D polygon => polygon.Vertices.Length,
             _ => 0
@@ -112,21 +112,22 @@ public static class ShapeVertices2D
     }
 
     /// <summary>
-    /// The drawing outline vertex count. Round shapes are sampled; rounded rectangles use 36 samples.
+    /// The drawing outline vertex count. Rounded rectangles use four arcs with cornerSegments + 1 samples each.
     /// Half-spaces, composites and custom shapes return zero.
     /// </summary>
     /// <param name="shape">The shape.</param>
     /// <param name="roundSegments">At least three samples around a circle or ellipse; capsules use half per cap.</param>
-    public static int GetOutlineVertCount(this IShape2D shape, int roundSegments = 32)
+    public static int GetOutlineVertCount(this IShape2D shape, int roundSegments = 32, int cornerSegments = 8)
     {
         ArgGuard.ThrowIfNull(shape);
         ArgGuard.ThrowIf(roundSegments < 3, "Round shapes need at least three segments.", nameof(roundSegments));
+        ArgGuard.Positive(cornerSegments);
         return shape switch
         {
             Circle2D or Ellipse2D => roundSegments,
             Capsule2D => 2 * (roundSegments / 2 + 1),
-            RoundedRectangle2D => 36,
-            Rectangle2D or AxisAlignedRectangle2D => 4,
+            RoundedRectangle2D => checked(4 * (cornerSegments + 1)),
+            IRect2D => 4,
             Triangle2D => 3,
             ConvexPolygon2D polygon => polygon.Vertices.Length,
             SimplePolygon2D polygon => polygon.Vertices.Length,
@@ -140,9 +141,9 @@ public static class ShapeVertices2D
     /// <param name="roundSegments">At least three samples around a circle or ellipse; capsules use half per cap.</param>
     /// <returns>A read-only view into the caller's buffer, valid for the lifetime of that buffer.</returns>
     /// <exception cref="NotSupportedException">The shape has no single finite outline.</exception>
-    public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Span<Vector2> vertices, int roundSegments = 32)
+    public static ReadOnlySpan<Vector2> GetOutlineVerts(this IShape2D shape, Span<Vector2> vertices, int roundSegments = 32, int cornerSegments = 8)
     {
-        var count = shape.GetOutlineVertCount(roundSegments);
+        var count = shape.GetOutlineVertCount(roundSegments, cornerSegments);
         if (count == 0)
         {
             throw new NotSupportedException($"A {shape.Kind} has no single finite outline.");
@@ -161,7 +162,7 @@ public static class ShapeVertices2D
                 VertexGenerator2D.WriteCapsule(vertices, capsule.Start, capsule.End, capsule.Radius, roundSegments / 2);
                 break;
             case RoundedRectangle2D rounded:
-                VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius);
+                VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius, cornerSegments);
                 break;
             case IRect2D rectangle:
                 VertexGenerator2D.WriteRectangle(vertices, rectangle.Min, rectangle.Max);

@@ -7,6 +7,19 @@ namespace App2d.Tests.Geometry;
 public sealed class TriangleMeshBuilder3DTests
 {
     [Fact]
+    public void FailedVertexFactoryPreservesThePreviousMeshAndVersion()
+    {
+        var builder = new TriangleMeshBuilder3D<Vector3, bool>((point, fail, _) =>
+            fail ? throw new InvalidOperationException() : point, 3);
+        builder.Vertex(Vector3.One, false);
+        var version = builder.Version;
+        Assert.Throws<InvalidOperationException>(() => builder.Vertex(Vector3.Zero, true));
+        Assert.Equal(1, builder.Count);
+        Assert.Equal(version, builder.Version);
+        Assert.Equal(Vector3.One, builder.Vertices[0]);
+    }
+
+    [Fact]
     public void IndexedTwoDimensionalMeshCanBePlacedAndColoredInThreeDimensions()
     {
         var source = PolygonTriangulation2D.Triangulate(

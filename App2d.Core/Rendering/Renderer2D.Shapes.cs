@@ -19,8 +19,7 @@ public sealed partial class Renderer2D
         DrawShape(shape, Matrix3x2.Identity, fillColor, outlineColor, screenStrokeWidth);
 
     /// <summary>Draws a local shape through a local-to-world transform.</summary>
-    public void DrawShape(IShape2D shape, Matrix3x2 localToWorld, XnaColor? fillColor = null,
-        XnaColor? outlineColor = null, float screenStrokeWidth = 2f)
+    public void DrawShape(IShape2D shape, Matrix3x2 localToWorld, XnaColor? fillColor = null, XnaColor? outlineColor = null, float screenStrokeWidth = 2f)
     {
         RequireFrame();
         ArgGuard.ThrowIfNull(shape);
@@ -58,7 +57,7 @@ public sealed partial class Renderer2D
 
         if (outlineColor is { } outline)
         {
-            OutlineShape(shape, matrix, outline, width);
+            OutlineShape(shape, matrix, bounds, outline, width);
         }
     }
 
@@ -77,44 +76,19 @@ public sealed partial class Renderer2D
         ArgGuard.Finite(localToWorld);
         SelectBatch(null, null);
         var matrix = localToWorld * _camera.WorldToDeviceMatrix;
-        var vertices = mesh.Vertices;
         if (fillColor is { } fill)
         {
-            foreach (var (a, b, c) in mesh.Triangles)
-            {
-                Triangle(Vertex(Vector2.Transform(a, matrix), fill),
-                    Vertex(Vector2.Transform(b, matrix), fill),
-                    Vertex(Vector2.Transform(c, matrix), fill));
-            }
+            DrawMeshCore(mesh, matrix, mesh.Bounds, new SolidColorShader(fill));
         }
         if (outlineColor is not { } outline)
         {
             return;
         }
 
-        var edgeCounts = new Dictionary<(int, int), int>();
-        foreach (var (a, b, c) in MeshTopology.Triangles(mesh.Indices))
+        foreach (var edge in mesh.BoundarySegments)
         {
-            CountEdge(a, b);
-            CountEdge(b, c);
-            CountEdge(c, a);
-        }
-        foreach (var (edge, count) in edgeCounts)
-        {
-            if (count != 1)
-            {
-                continue;
-            }
-
-            Line(Vector2.Transform(vertices[edge.Item1], matrix), Vector2.Transform(vertices[edge.Item2], matrix),
+            Line(Vector2.Transform(edge.Start, matrix), Vector2.Transform(edge.End, matrix),
                 outline, screenStrokeWidth);
-        }
-
-        void CountEdge(int first, int second)
-        {
-            var edge = first < second ? (first, second) : (second, first);
-            edgeCounts.TryGetValue(edge, out var count);
-            edgeCounts[edge] = count + 1;
         }
     }
 
@@ -181,35 +155,6 @@ public sealed partial class Renderer2D
     {
         var padding = width * 0.5f + 1f;
         return new Rect2D(new(-padding), _camera.ViewportSize + new Vector2(padding));
-    }
-
-    private void FillDisk(Vector2 center, float radius, XnaColor color)
-    {
-        const int segments = 20;
-        var middle = Vertex(center, color);
-        var previous = Vertex(center + new Vector2(radius, 0), color);
-        for (var i = 1; i <= segments; i++)
-        {
-            var angle = i * MathF.Tau / segments;
-            var next = Vertex(center + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * radius, color);
-            Triangle(middle, previous, next);
-            previous = next;
-        }
-    }
-
-    private void FillRoundCap(Vector2 center, Vector2 outward, float radius, XnaColor color)
-    {
-        const int segments = 10;
-        var tangent = new Vector2(-outward.Y, outward.X);
-        var middle = Vertex(center, color);
-        var previous = Vertex(center + tangent * radius, color);
-        for (var i = 1; i <= segments; i++)
-        {
-            var angle = i * MathF.PI / segments;
-            var next = Vertex(center + (tangent * MathF.Cos(angle) + outward * MathF.Sin(angle)) * radius, color);
-            Triangle(middle, previous, next);
-            previous = next;
-        }
     }
 
     private static void ValidateShapeStyle(XnaColor? fillColor, XnaColor? outlineColor, float width)

@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
@@ -34,10 +35,7 @@ public sealed class VegetationBladeTip2D
         foreach (var polygon in _polygons)
         {
             var world = points[..polygon.Points.Length];
-            for (var index = 0; index < world.Length; index++)
-            {
-                world[index] = Vector2.Transform(polygon.Points[index], transform);
-            }
+            VertexTransforms2D.Transform(polygon.Points, world, transform);
 
             renderer.DrawWorldConvexPolygon(world, polygon.Fill.ScaleAlpha(opacity));
             if (polygon.Outline is not { } outline)

@@ -4,6 +4,7 @@ using App2d.Core.Geometry.Builders;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
@@ -60,7 +61,7 @@ public static class PartPicking2D
             // Folded outlines may overlap. Pick the same rest-topology triangles that are filled, not an even/odd hole.
             if (part.Bindings is { Count: > 0 })
             {
-                var mesh = PolygonTriangulation2D.Triangulate(PartContours2D.CutoutPoints(part), 1e-8);
+                var mesh = PolygonTriangulationCache2D.Get(PartContours2D.CutoutPoints(part), 1e-8);
                 foreach (var (ia, ib, ic) in MeshTopology.Triangles(mesh.Indices))
                 {
                     var a = points[ia].XY;
@@ -71,10 +72,7 @@ public static class PartPicking2D
                         continue;
                     }
 
-                    var ab = a.Orientation(b, p);
-                    var bc = b.Orientation(c, p);
-                    var ca = c.Orientation(a, p);
-                    if (ab >= -1e-7f && bc >= -1e-7f && ca >= -1e-7f || ab <= 1e-7f && bc <= 1e-7f && ca <= 1e-7f)
+                    if (new Triangle<Vector2>(a, b, c).Contains(p, 1e-7))
                     {
                         return .5f;
                     }

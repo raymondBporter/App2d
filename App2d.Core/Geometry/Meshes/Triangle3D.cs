@@ -1,11 +1,12 @@
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
+using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Meshes;
 
 /// <summary>Three finite 3D points with winding-defined area and normal.</summary>
-public readonly record struct Triangle3D
+public readonly record struct Triangle3D : ITriangle<Triangle3D, Vector3>
 {
     public Triangle3D(Vector3 a, Vector3 b, Vector3 c)
     {
@@ -20,6 +21,10 @@ public readonly record struct Triangle3D
     public Vector3 A { get; }
     public Vector3 B { get; }
     public Vector3 C { get; }
+
+    public static Triangle3D Create(Vector3 a, Vector3 b, Vector3 c) => new(a, b, c);
+
+    public void Deconstruct(out Vector3 a, out Vector3 b, out Vector3 c) => (a, b, c) = (A, B, C);
 
     /// <summary>Magnitude of (B - A) cross (C - A), computed with double intermediates.</summary>
     public double DoubleArea => CrossEdges().Length();

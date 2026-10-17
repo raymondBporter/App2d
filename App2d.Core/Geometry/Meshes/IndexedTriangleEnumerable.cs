@@ -1,7 +1,9 @@
+using App2d.Core.Geometry.Primitives;
+
 namespace App2d.Core.Geometry.Meshes;
 
 /// <summary>A borrowed vertex/index view with allocation-free foreach iteration over vertex triples.</summary>
-/// <remarks>Each triple contains vertex values; indexed vertices need not be contiguous in memory.</remarks>
+/// <remarks>Each triangle contains vertex values; indexed vertices need not be contiguous in memory.</remarks>
 public readonly ref struct IndexedTriangleEnumerable<T>
 {
     private readonly ReadOnlySpan<T> _vertices;
@@ -14,28 +16,8 @@ public readonly ref struct IndexedTriangleEnumerable<T>
     }
 
     public int Count => _triangles.Count;
-    public Enumerator GetEnumerator() => new(_vertices, _triangles.GetEnumerator());
+    public TriangleVertexEnumerable<Triangle<T>, T>.Enumerator GetEnumerator() => As<Triangle<T>>().GetEnumerator();
 
-    public ref struct Enumerator
-    {
-        private readonly ReadOnlySpan<T> _vertices;
-        private MeshTopology.TriangleEnumerable.Enumerator _triangles;
-
-        internal Enumerator(ReadOnlySpan<T> vertices, MeshTopology.TriangleEnumerable.Enumerator triangles)
-        {
-            _vertices = vertices;
-            _triangles = triangles;
-        }
-
-        public readonly (T A, T B, T C) Current
-        {
-            get
-            {
-                var (a, b, c) = _triangles.Current;
-                return (_vertices[a], _vertices[b], _vertices[c]);
-            }
-        }
-
-        public bool MoveNext() => _triangles.MoveNext();
-    }
+    /// <summary>Uses a caller-selected triangle type and its construction/validation policy.</summary>
+    public TriangleVertexEnumerable<TTriangle, T> As<TTriangle>() where TTriangle : ITriangle<TTriangle, T> => new(_vertices, _triangles);
 }

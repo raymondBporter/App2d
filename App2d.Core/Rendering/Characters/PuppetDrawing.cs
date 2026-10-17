@@ -78,7 +78,7 @@ public sealed class PuppetDrawing
                 if (material.Fill is { } fill)
                 {
                     var fillColor = ColorExtensions.FromHexRgb(fill);
-                    var triangles = PolygonTriangulation2D.Triangulate(shape.Points.Select(point => point.XY), 1e-8);
+                    var triangles = PolygonTriangulationCache2D.Get(shape.Points, static point => point.XY, 1e-8);
                     foreach (var (a, b, c) in MeshTopology.Triangles(triangles.Indices))
                     {
                         Mesh.Triangle(points[a], points[b], points[c], fillColor);
@@ -153,7 +153,7 @@ public sealed class PuppetDrawing
                 continue;
             }
             var contour = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
-            var triangles = part.Geometry is SimplePolygon2D.Builder ? PolygonTriangulation2D.Triangulate(PartContours2D.CutoutPoints(part), 1e-8) : null;
+            var triangles = part.Geometry is SimplePolygon2D.Builder ? PolygonTriangulationCache2D.Get(PartContours2D.CutoutPoints(part), 1e-8) : null;
             var frame = PartAttachment2D.FrameOf(part, world, angle, transform);
             if (material.Fill is { } shapeFill)
             {
