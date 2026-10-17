@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 
@@ -65,7 +66,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
         Assert.Equal(before, doc.Asset.ToJson());
         s.Redo();
         Assert.Equal(.02f, doc.Asset.Solids[1].Thickness);
-        Assert.True(s.EquipAppearance("hero", doc.Id, PersonLoadout.HeadSocket), s.Message);
+        Assert.True(s.EquipAppearance("hero", doc.Id, Humanoid.HeadSocket), s.Message);
         s.Undo();
         Assert.DoesNotContain(s.EntityDocument!.Asset.Equipment, e => e.Prop == doc.Id);
         s.Redo();
@@ -78,7 +79,7 @@ public sealed class AppearanceAuthoringTests : IDisposable
         Assert.Empty(catalog.Errors);
         var clip = catalog.Animations["player-idle"];
         var equipped = PersonLoadout.Dressed(clip, 0, PersonGear.None, catalog.Entities["hero"]).ToArray();
-        Assert.Equal(("custom-hair", PersonLoadout.HeadSocket), Assert.Single(equipped));
+        Assert.Equal(("custom-hair", Humanoid.HeadSocket), Assert.Single(equipped));
         Assert.NotNull(catalog.Props[doc.Id].Solids[1].Outline);
         Assert.Equal(.02f, catalog.Props[doc.Id].Solids[1].Thickness);
     }

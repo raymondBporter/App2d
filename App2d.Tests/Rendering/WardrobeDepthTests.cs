@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering.Characters;
 using App2d.Tests.Authored;
@@ -22,7 +23,7 @@ public sealed class WardrobeDepthTests
         var entity = catalog.Entities[id];
         var pose = PoseEvaluator.Sample(entity.Model, catalog.Animations["person-idle"], .6f);
         var placed = new ActorPose(pose, Vector2.Zero, 1);
-        var frame = placed.Socket(entity.Sockets[PersonLoadout.BodySocket]);
+        var frame = placed.Socket(entity.Sockets[Humanoid.BodySocket]);
         using var graphics = new GraphicsTestContext();
         using var target = new RenderTarget2D(graphics.Device, 128, 128, false, SurfaceFormat.Color, DepthFormat.Depth24);
         using var renderer = new PointCharacterRenderer(graphics.Device);

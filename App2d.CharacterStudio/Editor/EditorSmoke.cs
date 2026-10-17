@@ -53,7 +53,7 @@ internal sealed class EditorSmoke(string output)
                 var s = shell.Session;
                 Check(s.NewVariant("tall-guard", "Tall guard", "person", "tall-thin"), s);
                 s.SetClip("person-walk");
-                s.Selection.Part = "body";
+                s.Selection.Part = Humanoid.Body;
                 s.TogglePlay();
             }),
             ("03-build-change-while-walking", shell =>
@@ -75,12 +75,12 @@ internal sealed class EditorSmoke(string output)
                 s.Pin("tall-guard");
                 s.Pin("short-broad");
                 s.Seek(.2f);
-                var chest = s.Evaluate(s.SubjectId!)!.Pose.World("chest");
-                s.Selection.Control = "chest";
+                var chest = s.Evaluate(s.SubjectId!)!.Pose.World(Humanoid.Chest);
+                s.Selection.Control = Humanoid.Chest;
                 s.BeginDrag();
                 for (var i = 1; i <= 8; i++)
                 {
-                    s.DragControl("chest", chest + new Vector3(.02f * i, .015f * i, 0));
+                    s.DragControl(Humanoid.Chest, chest + new Vector3(.02f * i, .015f * i, 0));
                 }
                 s.EndDrag();
                 Record(s.ClipDocument!.CanUndo, "the drag is one undo step");
@@ -194,12 +194,12 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.SetSubject("person");
                 s.Compare.Clear();
                 s.PreviewProp = "sword";
-                s.PreviewSocket = PersonLoadout.SwordSocket;
+                s.PreviewSocket = Humanoid.SwordSocket;
                 s.PreviewWeapon = s.EditWeapon = true;
                 s.Seek(.16f);
                 s.PoseWeapon(new(.8f, -.3f, 0));
                 s.CommitAll();
-                Record(s.Scene()[0].Pose.SocketAngles[PersonLoadout.SwordSocket].X == .8f, "weapon rotation reaches the preview");
+                Record(s.Scene()[0].Pose.SocketAngles[Humanoid.SwordSocket].X == .8f, "weapon rotation reaches the preview");
                 Check(s.Save(s.ClipDocument), s);
             }),
             ("23-weapon-edge-on", shell =>
@@ -207,7 +207,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 var s = shell.Session;
                 s.PoseWeapon(new(MathF.PI / 2, 0, 0));
                 s.CommitAll();
-                Record(MathF.Abs(new ActorPose(s.Scene()[0].Pose, Vector2.Zero, 1).Socket(s.Scene()[0].Model.Base.Sockets.First(x => x.Id == PersonLoadout.SwordSocket)).YAxis.Z) > .99f, "edge-on blade has real depth");
+                Record(MathF.Abs(new ActorPose(s.Scene()[0].Pose, Vector2.Zero, 1).Socket(s.Scene()[0].Model.Base.Sockets.First(x => x.Id == Humanoid.SwordSocket)).YAxis.Z) > .99f, "edge-on blade has real depth");
             }),
             ("24-appearance-editor", shell =>
             {
@@ -219,7 +219,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 Check(s.DuplicateAppearance("brute-hide-wrap", "test-wrap", "Custom hide wrap"), s);
                 var doc = s.AppearanceDocument!;
                 Check(s.Edit(doc, () => doc.Asset.Solids[0].Material = doc.Asset.Solids[0].RenderMaterial with { Fill = "#ac7243" }), s);
-                Check(s.EquipAppearance("maul-brute", doc.Id, PersonLoadout.BodySocket), s);
+                Check(s.EquipAppearance("maul-brute", doc.Id, Humanoid.BodySocket), s);
                 Check(s.Edit(s.EntityDocument, () => s.EntityDocument!.Asset.Equipment.RemoveAll(e => e.Prop == "brute-hide-wrap")), s);
                 s.SaveAll();
                 var reopened = AuthoredCatalog.Load(s.Assets.Root);
@@ -554,7 +554,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         s.Pin("sage");
         s.Seek(.3f);
         var people = new[] { "bruiser", "ranger", "sage" }.Select(id => s.Assets.Resolve(id)!).ToArray();
-        Record(people.Select(p => p.Parts.Single(x => x.Id == "body").RenderMaterial.Fill).Distinct().Count() == 3 && people.Select(p => p.Rest["head"].Y).Distinct().Count() == 3,
+        Record(people.Select(p => p.Parts.Single(x => x.Id == Humanoid.Body).RenderMaterial.Fill).Distinct().Count() == 3 && people.Select(p => p.Rest[Humanoid.Head].Y).Distinct().Count() == 3,
             "three visibly different people: distinct colors and heights");
         Record(!s.Assets.Model("person")!.Dirty, "building people never edited the base");
     }
@@ -583,12 +583,12 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
             entity.Asset.Equipment.Add(new()
             {
                 Prop = "spear",
-                Socket = "right-grip"
+                Socket = Humanoid.RightGripSocket
             });
             var attack = entity.Asset.Actions.Single(a => a.Id == "attack");
             attack.Role = null;
             attack.Clip = "person-thrust";
-            attack.Mask = StarterContent.Upper;
+            attack.Mask = Humanoid.UpperGroup;
             attack.BlendIn = .08f;
             attack.BlendOut = .12f;
             attack.Hits.Add(new()
@@ -684,7 +684,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         var reopened = AuthoringWorkspace.Open(s.Assets.Root);
         var walk = reopened.Clip("imported-walk")?.Asset;
         var scribble = reopened.Clips.FirstOrDefault(c => c.Asset.Model == "scribble")?.Asset;
-        Record(walk?.Source?.Points?.ContainsKey("hips") == true && scribble?.Source?.Kind == AssetSource.Puppet && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
+        Record(walk?.Source?.Points?.ContainsKey(Humanoid.Hips) == true && scribble?.Source?.Kind == AssetSource.Puppet && reopened.Documents.All(d => reopened.Problems(d).Count == 0),
             "the imported walk and puppet reopen with their sources and need no repair");
         var manifest = Path.Combine(s.Sources.Root, s.Sources.Entries.First(e => e.Id == "person").Path);
         Record(_libraryHash == HashLibrary(manifest) && _puppetHash == Hash(_puppetPath!), "the library and the puppet file are unchanged");

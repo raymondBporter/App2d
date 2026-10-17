@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.Tests.Gameplay.Entities;
@@ -69,7 +70,7 @@ public sealed class AuthoredArenaTests
     {
         var skirmisher = StarterContent.SpearGuardEntity();
         skirmisher.Id = "skirmisher";
-        skirmisher.Actions[0].Mask = StarterContent.Upper;
+        skirmisher.Actions[0].Mask = Humanoid.UpperGroup;
         skirmisher.Actions[0].BlendIn = .08f;
         skirmisher.Actions[0].BlendOut = .12f;
         var masked = ResolvedEntity.Compile(skirmisher, Catalog.Resolve, Catalog.Animations.GetValueOrDefault, Catalog.Props.GetValueOrDefault);

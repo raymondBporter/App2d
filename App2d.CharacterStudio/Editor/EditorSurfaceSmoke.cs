@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Rendering.Characters;
@@ -82,14 +83,14 @@ internal static class EditorSurfaceSmoke
             session.Seek(.3f);
             Capture("character-editor-surface");
             session.Open("person");
-            session.Selection.Select(part: "body");
+            session.Selection.Select(part: Humanoid.Body);
             Capture("model-base-part");
             session.EditRig = true;
-            session.Selection.Select(control: "chest");
+            session.Selection.Select(control: Humanoid.Chest);
             Capture("model-base-rig");
             session.Open("tall-thin");
             session.EditRig = false;
-            session.Selection.Select(part: "body");
+            session.Selection.Select(part: Humanoid.Body);
             Capture("model-variant-part");
 
             var cutoutModel = assets.Models.FirstOrDefault(m => m.Asset.Parts.Any(p => p.Geometry is SimplePolygon2D.Builder));
@@ -101,7 +102,7 @@ internal static class EditorSurfaceSmoke
             }
 
             session.Open("person-walk");
-            session.Selection.Select(control: "chest");
+            session.Selection.Select(control: Humanoid.Chest);
             session.Seek(0);
             Capture("animation-control");
             if (assets.Props.FirstOrDefault(p => p.Asset.Usage == "prop") is { } prop &&

@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
@@ -170,9 +171,9 @@ public sealed class CombatHitstopTests
         view.PresentContact(Hit(), new(1), 120);
         view.ApplyState(state, 120, 0, false, true);
         var initial = view.Pose!;
-        var (Guard, Tip) = PersonLoadout.Blade(initial.Local, Moves.Props[PersonLoadout.Sword], Moves.Model.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket));
+        var (Guard, Tip) = PersonLoadout.Blade(initial.Local, Moves.Props[PersonLoadout.Sword], Moves.Model.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
         view.Advance(.025f);
-        var held = PersonLoadout.Blade(view.Pose!.Local, Moves.Props[PersonLoadout.Sword], Moves.Model.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket));
+        var held = PersonLoadout.Blade(view.Pose!.Local, Moves.Props[PersonLoadout.Sword], Moves.Model.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
         Assert.InRange(Vector3.Distance(Tip, held.Tip), 0, .0001f);
         view.ApplyState(state with
         {

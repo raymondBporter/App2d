@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
@@ -121,7 +122,7 @@ public sealed class PersonMoves
             }
         }
 
-        foreach (var socket in new[] { PersonLoadout.BackSocket, PersonLoadout.BackViewSocket, PersonLoadout.SwordSocket, PersonLoadout.GunSocket, PersonLoadout.HeadSocket })
+        foreach (var socket in new[] { Humanoid.BackSocket, Humanoid.BackViewSocket, Humanoid.SwordSocket, Humanoid.GunSocket, Humanoid.HeadSocket })
         {
             if (resolved.Base.Sockets.All(s => s.Id != socket))
             {

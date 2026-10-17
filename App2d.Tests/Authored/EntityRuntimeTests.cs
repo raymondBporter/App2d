@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Primitives;
 using System.Numerics;
@@ -48,7 +49,7 @@ public sealed class EntityRuntimeTests
     public void TheSwordCombosSwingsAlternateForehandAndBackhand()
     {
         var model = Catalog.Resolve("person");
-        var socket = model.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket);
+        var socket = model.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket);
         var sword = Catalog.Props[PersonLoadout.Sword];
         bool Backhand(string clip) => PersonLoadout.Backhand(model, Catalog.Animations[clip], sword, socket);
         Assert.False(Backhand("player-sword-side-cut"));

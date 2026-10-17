@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.CharacterStudio.PlayerMoves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
@@ -62,7 +63,7 @@ internal sealed partial class ProofRenders
                 // A combo alternates: forehands take the opening swoosh, backhands the follow-up one and turn the other way. A
                 // clip holding one swing reads its turn from the clip, as the game does.
                 var index = PersonLoadout.SwooshIndex(clip, seconds);
-                var backhand = index % 2 == 1 || index == 0 && PersonLoadout.Backhand(model, clip, worn[PersonLoadout.Sword], sockets[PersonLoadout.SwordSocket]);
+                var backhand = index % 2 == 1 || index == 0 && PersonLoadout.Backhand(model, clip, worn[PersonLoadout.Sword], sockets[Humanoid.SwordSocket]);
                 swoosh.Style = backhand ? SwooshStyle.FollowUp : SwooshStyle.Primary;
                 swoosh.Sweep = backhand ? 1 : -1;
                 swoosh.Record(clock, guard + SwooshDepth, tip + SwooshDepth, PersonLoadout.Swooshing(clip, seconds));
@@ -167,7 +168,7 @@ internal sealed partial class ProofRenders
     }
 
     private static (Vector3 Guard, Vector3 Tip)? LabBlade(ResolvedModel model, MotionClip clip, float seconds, Dictionary<string, PropAsset> props, Dictionary<string, ModelSocket> sockets) =>
-        SwingLab.Blade(model, clip, seconds, props[PersonLoadout.Sword], sockets[PersonLoadout.SwordSocket]);
+        SwingLab.Blade(model, clip, seconds, props[PersonLoadout.Sword], sockets[Humanoid.SwordSocket]);
 
     /// <summary>
     /// The study's mechanical checks: when the tip is fastest against the strike, how fast it brakes after, whether the tip
@@ -228,7 +229,7 @@ internal sealed partial class ProofRenders
         {
             var p = PoseEvaluator.Sample(model, clip, t);
             var (Guard, Tip) = LabBlade(model, clip, t, props, sockets)!.Value;
-            var forearm = p.Points["right-hand"] - p.Points["right-elbow"];
+            var forearm = p.Points[Humanoid.RightHand] - p.Points[Humanoid.RightElbow];
             var along = Tip - Guard;
             return float.RadiansToDegrees(MathF.Abs(MathF.IEEERemainder(MathF.Atan2(along.Y, along.X) - MathF.Atan2(forearm.Y, forearm.X), MathF.Tau)));
         }).ToArray();
@@ -236,16 +237,16 @@ internal sealed partial class ProofRenders
         float Bend(float t)
         {
             var p = PoseEvaluator.Sample(model, clip, MathF.Min(clip.Duration, t));
-            var upper = p.Points["right-elbow"] - p.Points["right-shoulder"];
-            var fore = p.Points["right-hand"] - p.Points["right-elbow"];
+            var upper = p.Points[Humanoid.RightElbow] - p.Points[Humanoid.RightShoulder];
+            var fore = p.Points[Humanoid.RightHand] - p.Points[Humanoid.RightElbow];
             return float.RadiansToDegrees(MathF.Acos(Math.Clamp(Vector3.Dot(Vector3.Normalize(upper), Vector3.Normalize(fore)), -1, 1)));
         }
         // Reach: the first hit shape's extent from the feet (x forward, y up).
         var shape = shapes.FirstOrDefault().Hull;
-        var overreach = times.Count(t => PoseEvaluator.Sample(model, clip, t).Chains.Any(c => c.Chain == "right-arm" && !c.Reached && c.Residual > .005f));
+        var overreach = times.Count(t => PoseEvaluator.Sample(model, clip, t).Chains.Any(c => c.Chain == Humanoid.RightArm && !c.Reached && c.Residual > .005f));
         var hold = PoseEvaluator.Sample(model, clip, MathF.Min(clip.Duration, strike + 6 * frame));
         var crossesTorso = LabBlade(model, clip, MathF.Min(clip.Duration, strike + 6 * frame), props, sockets) is var (g, t) &&
-            Crosses(new(g.X, g.Y), new(t.X, t.Y), new(hold.Points["hips"].X, hold.Points["hips"].Y), new(hold.Points["chest"].X, hold.Points["chest"].Y));
+            Crosses(new(g.X, g.Y), new(t.X, t.Y), new(hold.Points[Humanoid.Hips].X, hold.Points[Humanoid.Hips].Y), new(hold.Points[Humanoid.Chest].X, hold.Points[Humanoid.Chest].Y));
         return $"{variant.Id}: swoosh {swoosh * 1000:F0}-{swooshEnd * 1000:F0} ms, strike {strike * 1000:F0} ms, tip fastest at {times[peak] * 1000:F0} ms ({(times[peak] - strike) / frame:+0.0;-0.0;0.0} frames from strike), " +
             $"brakes {brake * 100:F0}% within 2 frames, tip path turn reversals {reversals}, sword arm short of target {overreach}/{times.Length} samples, held pose blade over torso {(crossesTorso ? "yes" : "no")}, " +
             $"grip {grips.Min():F0}-{grips.Max():F0} deg across the forearm with {grips.Count(g => g is < 40 or > 140)}/{grips.Length} frames outside 40-140" +

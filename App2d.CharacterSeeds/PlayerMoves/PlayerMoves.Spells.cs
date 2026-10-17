@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 
 namespace App2d.CharacterStudio.PlayerMoves;
@@ -15,7 +16,7 @@ internal static partial class PlayerMoves
         .Key(0, k => k.Hips(0, StanceY).Chest(0).Head(0).RightHand(.12f, -.35f).LeftHand(.18f, -.35f))
         .Key(.25f, k => k.Hips(0, StanceY - .04f).Chest(-.1f).Head(-.16f).RightHand(.2f, -.2f).LeftHand(.24f, -.16f))
         .Key(1, k => k.Hips(0, StanceY - .07f).Chest(-.14f).Head(-.2f).RightHand(.19f, -.18f).LeftHand(.23f, -.14f))
-        .Plant("left-leg", 0, 1, Back).Plant("right-leg", 0, 1, Front)
+        .Plant(Humanoid.LeftLeg, 0, 1, Back).Plant(Humanoid.RightLeg, 0, 1, Front)
         .Face(0, "focused").Build();
 
     public static void WriteSpells(string root)

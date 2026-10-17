@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
 using System.Numerics;
@@ -72,12 +73,12 @@ internal static class SwingLab
         b.Key(time, k => k.Hips(p.HipsX, p.HipsY).Chest(p.Chest).Head(p.Head).Shoulders(b.Model, p.Yaw).RightHand(p.Hand.X, p.Hand.Y).LeftHand(p.OffX, p.OffY).Grip(p.Wrist), ease);
 
     /// <summary>The right arm's full length, shoulder to elbow to hand.</summary>
-    private static float ArmLength(ResolvedModel m) => Vector3.Distance(m.Rest["right-shoulder"], m.Rest["right-elbow"]) + Vector3.Distance(m.Rest["right-elbow"], m.Rest["right-hand"]);
+    private static float ArmLength(ResolvedModel m) => Vector3.Distance(m.Rest[Humanoid.RightShoulder], m.Rest[Humanoid.RightElbow]) + Vector3.Distance(m.Rest[Humanoid.RightElbow], m.Rest[Humanoid.RightHand]);
 
     /// <summary>A clip under construction with the blade's depth tilt kept beside it; the tilt becomes orientation keys after the build.</summary>
     private sealed class Swing(ResolvedModel m, string id, string name, float duration)
     {
-        public MoveBuilder Builder { get; } = new MoveBuilder(m, id, name, duration, false).Plant("left-leg", 0, duration, -.16f).Plant("right-leg", 0, duration, .16f);
+        public MoveBuilder Builder { get; } = new MoveBuilder(m, id, name, duration, false).Plant(Humanoid.LeftLeg, 0, duration, -.16f).Plant(Humanoid.RightLeg, 0, duration, .16f);
         private readonly List<(float Time, float Twist, float Tilt)> _orient = [];
         public bool Depth { get; init; } = true;
         private readonly float _arm = ArmLength(m);
@@ -136,7 +137,7 @@ internal static class SwingLab
             var clip = Builder.Build();
             foreach (var (time, twist, tilt) in _orient)
             {
-                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, PersonLoadout.SwordSocket), time, new Vector3(twist, tilt, 0).DegreesToRadians());
+                ClipAuthoring.SetKey(clip, new(MotionClip.OrientKind, Humanoid.SwordSocket), time, new Vector3(twist, tilt, 0).DegreesToRadians());
             }
 
             clip.Validate(Builder.Model);
@@ -412,7 +413,7 @@ internal static class SwingLab
             return null;
         }
 
-        var shoulders = PoseEvaluator.Sample(model, clip, strike).Points["right-shoulder"].Y;
+        var shoulders = PoseEvaluator.Sample(model, clip, strike).Points[Humanoid.RightShoulder].Y;
         return (new(points.Min(p => p.X), points.Min(p => p.Y)), new(points.Max(p => p.X), MathF.Min(shoulders, points.Max(p => p.Y))));
     }
 

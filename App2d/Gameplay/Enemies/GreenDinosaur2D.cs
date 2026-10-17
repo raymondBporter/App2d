@@ -10,9 +10,7 @@ public sealed partial class GreenDinosaur2D(PatrolEnemy2D enemy) : IEnemyActor2D
     private bool _simulationEnabled = true;
     public PatrolEnemy2D Enemy { get; } = ArgGuard.RequireNotNull(enemy);
     public ICombatant2D Combatant => Enemy;
-    public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.GreenDinosaur,
-        Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, Enemy.Facing,
-        _simulationEnabled, Enemy.IsAlive)
+    public EnemyState2D CaptureState() => new(Enemy.Id, EnemyKind2D.GreenDinosaur, Enemy.WorldObject.Transform.Position, Enemy.Body.LinearVelocity, 0f, Enemy.Facing, _simulationEnabled, Enemy.IsAlive)
     {
         MoveSpeed = Enemy.Speed
     };

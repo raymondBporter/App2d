@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
@@ -224,7 +225,7 @@ public sealed class EditorSession
                 {
                     Mode = Workspace.Appearance;
                     PreviewProp = prop.Id;
-                    PreviewSocket = prop.Asset.Attachment ?? PersonLoadout.HeadSocket;
+                    PreviewSocket = prop.Asset.Attachment ?? Humanoid.HeadSocket;
                     PreviewWeapon = true;
                     Selection.Clear();
                     break;
@@ -254,7 +255,7 @@ public sealed class EditorSession
             if (art is not null)
             {
                 PreviewProp = art.Id;
-                PreviewSocket = art.Asset.Attachment ?? PersonLoadout.HeadSocket;
+                PreviewSocket = art.Asset.Attachment ?? Humanoid.HeadSocket;
             }
         }
         if (mode == Workspace.Animate && ClipId is null)

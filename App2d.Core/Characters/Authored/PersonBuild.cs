@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
@@ -58,7 +59,7 @@ public sealed record PersonBuild
 
         if (bodyFill is not null)
         {
-            variant.Parts["body"] = new()
+            variant.Parts[Humanoid.Body] = new()
             {
                 Material = new()
                 {
@@ -74,7 +75,9 @@ public sealed record PersonBuild
     private sealed class PersonBuildRule : IBuildRule
     {
         private static readonly string[] Controls =
-            ["hips", "chest", "head", .. new[] { "left", "right" }.SelectMany(s => new[] { "foot", "hip", "knee", "shoulder", "elbow", "hand" }.Select(c => s + "-" + c))];
+            [Humanoid.Hips, Humanoid.Chest, Humanoid.Head,
+             Humanoid.LeftFoot, Humanoid.LeftHip, Humanoid.LeftKnee, Humanoid.LeftShoulder, Humanoid.LeftElbow, Humanoid.LeftHand,
+             Humanoid.RightFoot, Humanoid.RightHip, Humanoid.RightKnee, Humanoid.RightShoulder, Humanoid.RightElbow, Humanoid.RightHand];
         public string Id => RuleId;
         public IReadOnlyList<BuildValue> Values
         {
@@ -94,7 +97,7 @@ public sealed record PersonBuild
             new("short-broad", "Short / broad", ShortBroad.Values()),
         ];
 
-        private static readonly string[] sourceArray = ["body", "head"];
+        private static readonly string[] sourceArray = [Humanoid.Body, Humanoid.Head];
 
         public void Check(CharacterModel model)
         {
@@ -115,36 +118,39 @@ public sealed record PersonBuild
 
             var built = new Dictionary<string, Vector3>(StringComparer.Ordinal);
             // Feet stay on the ground; everything above them scales from it. Width spreads the hips and shoulders, and their depth.
-            var ground = rest["left-foot"].Y;
+            var ground = rest[Humanoid.LeftFoot].Y;
             float Lift(float y) => ground + (y - ground) * b.Legs;
             Vector3 Across(Vector3 v) => new(v.X * b.Width, v.Y, v.Z * b.Width);
-            built["hips"] = rest["hips"] with
+            built[Humanoid.Hips] = rest[Humanoid.Hips] with
             {
-                Y = Lift(rest["hips"].Y)
+                Y = Lift(rest[Humanoid.Hips].Y)
             };
-            built["chest"] = built["hips"] + (rest["chest"] - rest["hips"]) * b.Torso;
-            built["head"] = built["chest"] + (rest["head"] - rest["chest"]) * b.Torso;
-            foreach (var side in new[] { "left", "right" })
+            built[Humanoid.Chest] = built[Humanoid.Hips] + (rest[Humanoid.Chest] - rest[Humanoid.Hips]) * b.Torso;
+            built[Humanoid.Head] = built[Humanoid.Chest] + (rest[Humanoid.Head] - rest[Humanoid.Chest]) * b.Torso;
+            foreach (var (hip, knee, foot, shoulderId, elbow, hand) in new[]
             {
-                string Side(string control) => side + "-" + control;
-                built[Side("foot")] = Across(rest[Side("foot")]);
-                built[Side("hip")] = Across(rest[Side("hip")]) with
+                (Humanoid.LeftHip, Humanoid.LeftKnee, Humanoid.LeftFoot, Humanoid.LeftShoulder, Humanoid.LeftElbow, Humanoid.LeftHand),
+                (Humanoid.RightHip, Humanoid.RightKnee, Humanoid.RightFoot, Humanoid.RightShoulder, Humanoid.RightElbow, Humanoid.RightHand)
+            })
+            {
+                built[foot] = Across(rest[foot]);
+                built[hip] = Across(rest[hip]) with
                 {
-                    Y = Lift(rest[Side("hip")].Y)
+                    Y = Lift(rest[hip].Y)
                 };
-                built[Side("knee")] = built[Side("foot")] + (rest[Side("knee")] - rest[Side("foot")]) * b.Legs;
-                var shoulder = rest[Side("shoulder")] - rest["chest"];
-                built[Side("shoulder")] = built["chest"] + new Vector3(shoulder.X * b.Width, shoulder.Y * b.Torso, shoulder.Z * b.Width);
-                built[Side("elbow")] = built[Side("shoulder")] + (rest[Side("elbow")] - rest[Side("shoulder")]) * b.Arms;
-                built[Side("hand")] = built[Side("elbow")] + (rest[Side("hand")] - rest[Side("elbow")]) * b.Arms;
+                built[knee] = built[foot] + (rest[knee] - rest[foot]) * b.Legs;
+                var shoulder = rest[shoulderId] - rest[Humanoid.Chest];
+                built[shoulderId] = built[Humanoid.Chest] + new Vector3(shoulder.X * b.Width, shoulder.Y * b.Torso, shoulder.Z * b.Width);
+                built[elbow] = built[shoulderId] + (rest[elbow] - rest[shoulderId]) * b.Arms;
+                built[hand] = built[elbow] + (rest[hand] - rest[elbow]) * b.Arms;
             }
             foreach (var (control, point) in built)
             {
                 rest[control] = point;
             }
 
-            var body = parts.FindIndex(p => p.Id == "body");
-            var head = parts.FindIndex(p => p.Id == "head");
+            var body = parts.FindIndex(p => p.Id == Humanoid.Body);
+            var head = parts.FindIndex(p => p.Id == Humanoid.Head);
             parts[body] = parts[body] with
             {
                 Width = parts[body].Width * b.Width,

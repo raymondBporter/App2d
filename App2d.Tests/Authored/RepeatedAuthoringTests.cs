@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Mathematics;
@@ -32,7 +33,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
     {
         var guard = StarterContent.SpearGuardEntity();
         guard.Id = "skirmisher";
-        guard.Actions[0].Mask = StarterContent.Upper;
+        guard.Actions[0].Mask = Humanoid.UpperGroup;
         guard.Actions[0].BlendIn = .08f;
         guard.Actions[0].BlendOut = .12f;
         return guard;
@@ -47,7 +48,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         var person = catalog.Resolve("person");
         var walk = catalog.Animations["person-walk"];
         var thrust = catalog.Animations["person-thrust"];
-        var upper = person.Base.Groups.Single(g => g.Id == StarterContent.Upper).Targets.ToHashSet();
+        var upper = person.Base.Groups.Single(g => g.Id == Humanoid.UpperGroup).Targets.ToHashSet();
         Assert.Equal(PersonLoadout.UpperBody.Order(), upper.Order());
         EvaluatedPose At(float weight) => PoseEvaluator.Sample(person, walk, .45, input: new()
         {
@@ -89,7 +90,7 @@ public sealed class RepeatedAuthoringTests : IDisposable
         tooLong.Actions[0].BlendIn = 2;
         Assert.Contains("exceed the clip", Assert.Throws<InvalidDataException>(() => Compile(catalog, tooLong)).Message);
         var jump = StarterContent.PlayerEntity();
-        jump.Actions.Single(a => a.Id == "jump").Mask = StarterContent.Upper;
+        jump.Actions.Single(a => a.Id == "jump").Mask = Humanoid.UpperGroup;
         Assert.Contains("cannot be masked", Assert.Throws<InvalidDataException>(() => Compile(catalog, jump)).Message);
 
         var model = PersonTemplate.Model();

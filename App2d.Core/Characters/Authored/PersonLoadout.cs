@@ -1,4 +1,6 @@
+using App2d.Core.Characters;
 using System.Numerics;
+using static App2d.Core.Characters.Humanoid;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -16,9 +18,7 @@ public enum PersonGear
 /// </summary>
 public static class PersonLoadout
 {
-    public const string HeadSocket = "head-art", BodySocket = "body-art";
     public const string ShortHair = "hair-short", ShortHairBack = "hair-short-back";
-    public const string BackSocket = "back", BackViewSocket = "back-view", SwordSocket = "sword-hand", GunSocket = "gun-hand";
     public const string BackViewMarker = "view-back", ProfileViewMarker = "view-profile", DrawMarker = "sword-draw", SheatheMarker = "sword-sheathe";
     /// <summary>
     /// The blade leaves a swoosh from a "swoosh" marker to the next "swoosh-end" (or the clip's end). A clip holding several
@@ -28,7 +28,7 @@ public static class PersonLoadout
 
     public const string Sword = "sword", Sheath = "sheath", Pistol = "pistol";
     /// <summary>The upper-body group: channels an arms-only overlay (a gun shot) owns over any legs. The Person model carries it as its "upper" control group.</summary>
-    public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { "chest", "head", "left-shoulder", "right-shoulder", "left-arm", "right-arm" };
+    public static readonly IReadOnlySet<string> UpperBody = new HashSet<string>(StringComparer.Ordinal) { Humanoid.Chest, Humanoid.Head, Humanoid.LeftShoulder, Humanoid.RightShoulder, Humanoid.LeftArm, Humanoid.RightArm };
     public static readonly IReadOnlySet<string> SwordUpperBody = new HashSet<string>(UpperBody, StringComparer.Ordinal) { SwordSocket };
 
     public static bool SeenFromBehind(MotionClip clip, float seconds) =>
@@ -113,7 +113,7 @@ public static class PersonLoadout
     {
         if (wearer is null)
         {
-            yield return (SeenFromBehind(clip, seconds) ? PersonLoadout.ShortHairBack : PersonLoadout.ShortHair, PersonLoadout.HeadSocket);
+            yield return (SeenFromBehind(clip, seconds) ? PersonLoadout.ShortHairBack : PersonLoadout.ShortHair, Humanoid.HeadSocket);
         }
         else
         {

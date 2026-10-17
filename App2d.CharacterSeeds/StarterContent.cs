@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
@@ -13,7 +14,7 @@ namespace App2d.Core.Characters.Authored;
 public static class StarterContent
 {
     public const string SpearGuard = "spear-guard", Player = "player", Stalker = "stalker", StalkerPest = "stalker-pest", Spear = "spear";
-    public const string Upper = "upper", Lower = "lower", HeavyWalk = "person-heavy-walk";
+    public const string HeavyWalk = "person-heavy-walk";
 
     /// <summary>Sockets, motion sets, hurt layout, control groups and looks the Person template carries. None of them change structure.</summary>
     public static void AddPersonExtras(CharacterModel model)
@@ -21,10 +22,10 @@ public static class StarterContent
         // back, back-view, sword-hand and gun-hand belong to the player move set (App2d.CharacterSeeds/PlayerMoves); keep them in step.
         model.Sockets =
         [
-            new() { Id = "right-grip", Control = "right-hand", Frame = "chest", Angle = .12f }, new() { Id = "left-grip", Control = "left-hand", Frame = "chest", Angle = .12f },
-            new() { Id = "back", Control = "chest", Frame = "chest", OffsetX = -.1f, OffsetY = -.08f, Angle = -MathF.PI / 2 - .12f },
-            new() { Id = "back-view", Control = "chest", Frame = "chest", OffsetX = -.13f, OffsetY = .12f, Angle = -MathF.PI / 2 + .55f },
-            new() { Id = "sword-hand", Control = "right-hand", Frame = "right-shoulder" }, new() { Id = "gun-hand", Control = "right-hand", Frame = "right-shoulder" },
+            new() { Id = Humanoid.RightGripSocket, Control = Humanoid.RightHand, Frame = Humanoid.Chest, Angle = .12f }, new() { Id = Humanoid.LeftGripSocket, Control = Humanoid.LeftHand, Frame = Humanoid.Chest, Angle = .12f },
+            new() { Id = Humanoid.BackSocket, Control = Humanoid.Chest, Frame = Humanoid.Chest, OffsetX = -.1f, OffsetY = -.08f, Angle = -MathF.PI / 2 - .12f },
+            new() { Id = Humanoid.BackViewSocket, Control = Humanoid.Chest, Frame = Humanoid.Chest, OffsetX = -.13f, OffsetY = .12f, Angle = -MathF.PI / 2 + .55f },
+            new() { Id = Humanoid.SwordSocket, Control = Humanoid.RightHand, Frame = Humanoid.RightShoulder }, new() { Id = Humanoid.GunSocket, Control = Humanoid.RightHand, Frame = Humanoid.RightShoulder },
             .. PersonWardrobe.Sockets(),
         ];
         model.MotionSets =
@@ -36,15 +37,15 @@ public static class StarterContent
         // The upper group is what an upper-body action owns over locomotion; the legs and pelvis stay with the gait.
         model.Groups =
         [
-            new() { Id = Upper, Targets = [.. PersonLoadout.UpperBody.Order(StringComparer.Ordinal)] },
-            new() { Id = Lower, Targets = ["hips", "left-hip", "left-leg", "right-hip", "right-leg"] },
+            new() { Id = Humanoid.UpperGroup, Targets = [.. PersonLoadout.UpperBody.Order(StringComparer.Ordinal)] },
+            new() { Id = Humanoid.LowerGroup, Targets = [Humanoid.Hips, Humanoid.LeftHip, Humanoid.LeftLeg, Humanoid.RightHip, Humanoid.RightLeg] },
         ];
         model.Looks =
         [
-            new() { Id = "sage", Name = "Sage", Parts = new() { ["body"] = new() { Material = new() { Fill = "#d8e9db" } } } },
-            new() { Id = "slate", Name = "Slate", Parts = new() { ["body"] = new() { Material = new() { Fill = "#b8c4d6" } }, ["head"] = new() { Material = new() { Fill = "#efe6da" }, Face = "focused" } } },
-            new() { Id = "ember", Name = "Ember", Parts = new() { ["body"] = new() { Material = new() { Fill = "#eab596" } }, ["head"] = new() { Face = "determined" } } },
-            new() { Id = "night", Name = "Night", Parts = new() { ["body"] = new() { Material = new() { Fill = "#7d879a" } }, ["head"] = new() { Material = new() { Fill = "#e2d6c6" }, Face = "smug" } } },
+            new() { Id = "sage", Name = "Sage", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#d8e9db" } } } },
+            new() { Id = "slate", Name = "Slate", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#b8c4d6" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#efe6da" }, Face = "focused" } } },
+            new() { Id = "ember", Name = "Ember", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#eab596" } }, [Humanoid.Head] = new() { Face = "determined" } } },
+            new() { Id = "night", Name = "Night", Parts = new() { [Humanoid.Body] = new() { Material = new() { Fill = "#7d879a" } }, [Humanoid.Head] = new() { Material = new() { Fill = "#e2d6c6" }, Face = "smug" } } },
         ];
         model.HurtLayouts =
         [
@@ -52,9 +53,9 @@ public static class StarterContent
             {
                 Id = "standard", Regions =
                 [
-                    new() { Id = "body", Controls = ["hips", "chest", "left-shoulder", "right-shoulder"], Pad = .14f },
-                    new() { Id = "head", Controls = ["head"], Pad = .3f },
-                    new() { Id = "legs", Controls = ["left-hip", "right-hip", "left-knee", "right-knee", "left-foot", "right-foot"], Pad = .07f },
+                    new() { Id = Humanoid.Body, Controls = [Humanoid.Hips, Humanoid.Chest, Humanoid.LeftShoulder, Humanoid.RightShoulder], Pad = .14f },
+                    new() { Id = Humanoid.Head, Controls = [Humanoid.Head], Pad = .3f },
+                    new() { Id = "legs", Controls = [Humanoid.LeftHip, Humanoid.RightHip, Humanoid.LeftKnee, Humanoid.RightKnee, Humanoid.LeftFoot, Humanoid.RightFoot], Pad = .07f },
                 ],
             },
         ];
@@ -150,19 +151,19 @@ public static class StarterContent
             }
             return track;
         }
-        var hips = Channel(MotionClip.TranslateKind, "hips");
+        var hips = Channel(MotionClip.TranslateKind, Humanoid.Hips);
         var mean = hips.Keys.Average(k => k.Value.Y);
         foreach (var key in hips.Keys)
         {
             key.Value = key.Value with { Y = mean + (key.Value.Y - mean) * Bob + Sink };
         }
 
-        foreach (var key in Channel(MotionClip.TranslateKind, "chest").Keys)
+        foreach (var key in Channel(MotionClip.TranslateKind, Humanoid.Chest).Keys)
         {
             key.Value = key.Value with { X = key.Value.X + (Lean) };
         }
 
-        foreach (var arm in new[] { "left-arm", "right-arm" })
+        foreach (var arm in new[] { Humanoid.LeftArm, Humanoid.RightArm })
         {
             if (clip.Tracks.FirstOrDefault(t => t.Kind == MotionClip.TargetKind && t.Target == arm) is { } track)
             {
@@ -193,7 +194,7 @@ public static class StarterContent
         Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
         Travel = new()
         {
-            Scale = "leg"
+            Scale = Humanoid.LegMeasure
         },
     };
 
@@ -203,12 +204,12 @@ public static class StarterContent
         var clip = Clip(model, "person-idle", "Idle", 2, true);
         clip.Tracks =
         [
-            Track(MotionClip.TranslateKind, "hips", K(0), K(1, 0, -.012f), K(2)),
-            Track(MotionClip.RotateKind, "chest", R(0, 0), R(1, .018f), R(2, 0)),
-            Track(MotionClip.TargetKind, "left-arm", K(0), K(1, -.01f, .02f), K(2)),
-            Track(MotionClip.TargetKind, "right-arm", K(0), K(1, .01f, .02f), K(2)),
+            Track(MotionClip.TranslateKind, Humanoid.Hips, K(0), K(1, 0, -.012f), K(2)),
+            Track(MotionClip.RotateKind, Humanoid.Chest, R(0, 0), R(1, .018f), R(2, 0)),
+            Track(MotionClip.TargetKind, Humanoid.LeftArm, K(0), K(1, -.01f, .02f), K(2)),
+            Track(MotionClip.TargetKind, Humanoid.RightArm, K(0), K(1, .01f, .02f), K(2)),
         ];
-        clip.Contacts = [Plant("left-leg", 0, 2), Plant("right-leg", 0, 2)];
+        clip.Contacts = [Plant(Humanoid.LeftLeg, 0, 2), Plant(Humanoid.RightLeg, 0, 2)];
         return clip;
     }
 
@@ -218,19 +219,19 @@ public static class StarterContent
         var clip = Clip(model, PersonHitClip, "Hit recoil", .3f, false);
         clip.Tracks =
         [
-            Track(MotionClip.TranslateKind, "hips",
+            Track(MotionClip.TranslateKind, Humanoid.Hips,
                 K(0, -0.045f, -0.025f, ClipEase.Linear), K(1 / 60f, -0.1f, -0.055f, ClipEase.Linear), K(0.05f, -0.1f, -0.055f, ClipEase.Smooth), K(0.17f, -0.03f, -0.015f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
-            Track(MotionClip.RotateKind, "hips",
+            Track(MotionClip.RotateKind, Humanoid.Hips,
                 R(0, 0.16f, ClipEase.Linear), R(1 / 60f, 0.32f, ClipEase.Linear), R(0.05f, 0.32f, ClipEase.Smooth), R(0.17f, 0.08f, ClipEase.Smooth), R(0.3f, 0, ClipEase.Linear)),
-            Track(MotionClip.RotateKind, "chest",
+            Track(MotionClip.RotateKind, Humanoid.Chest,
                 R(0, 0.08f, ClipEase.Linear), R(1 / 60f, 0.16f, ClipEase.Linear), R(0.05f, 0.16f, ClipEase.Smooth), R(0.17f, 0.04f, ClipEase.Smooth), R(0.3f, 0, ClipEase.Linear)),
-            Track(MotionClip.TargetKind, "left-arm",
+            Track(MotionClip.TargetKind, Humanoid.LeftArm,
                 K(0, 0.1f, 0.1f, ClipEase.Linear), K(1 / 60f, 0.22f, 0.16f, ClipEase.Linear), K(0.05f, 0.22f, 0.16f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
-            Track(MotionClip.TargetKind, "right-arm",
+            Track(MotionClip.TargetKind, Humanoid.RightArm,
                 K(0, -0.05f, 0.06f, ClipEase.Linear), K(1 / 60f, -0.12f, 0.16f, ClipEase.Linear), K(0.05f, -0.12f, 0.16f, ClipEase.Smooth), K(0.3f, 0, 0, ClipEase.Linear)),
         ];
-        clip.Contacts = [Plant("left-leg", 0, .3f), Plant("right-leg", 0, .3f)];
-        clip.Faces = [new() { Part = "head", Keys = [new() { Time = 0, Expression = "hurt" }] }];
+        clip.Contacts = [Plant(Humanoid.LeftLeg, 0, .3f), Plant(Humanoid.RightLeg, 0, .3f)];
+        clip.Faces = [new() { Part = Humanoid.Head, Keys = [new() { Time = 0, Expression = "hurt" }] }];
         return clip;
     }
 
@@ -240,22 +241,22 @@ public static class StarterContent
         var clip = Clip(model, PersonDeathClip, "Recoil and collapse", 1.1f, false);
         clip.Tracks =
         [
-            Track(MotionClip.TranslateKind, "hips",
+            Track(MotionClip.TranslateKind, Humanoid.Hips,
                 K(0, -0.045f, -0.025f, ClipEase.Linear), K(1 / 60f, -0.13f, -0.06f, ClipEase.Linear), K(0.075f, -0.16f, -0.08f, ClipEase.Smooth), K(0.25f, -0.2f, -0.2f, ClipEase.Smooth), K(0.75f, -0.28f, -0.81f, ClipEase.Smooth), K(1.1f, -0.3f, -0.79f, ClipEase.Smooth)),
-            Track(MotionClip.RotateKind, "hips",
+            Track(MotionClip.RotateKind, Humanoid.Hips,
                 R(0, 0.16f, ClipEase.Linear), R(1 / 60f, 0.34f, ClipEase.Linear), R(0.075f, 0.37f, ClipEase.Smooth), R(0.25f, 0.53f, ClipEase.Smooth), R(0.75f, 1.42f, ClipEase.Smooth), R(1.1f, 1.45f, ClipEase.Smooth)),
-            Track(MotionClip.RotateKind, "chest",
+            Track(MotionClip.RotateKind, Humanoid.Chest,
                 R(0, 0.08f, ClipEase.Linear), R(1 / 60f, 0.18f, ClipEase.Linear), R(0.075f, 0.18f, ClipEase.Smooth), R(0.25f, 0.12f, ClipEase.Smooth), R(0.75f, 0.05f, ClipEase.Smooth), R(1.1f, 0.05f, ClipEase.Smooth)),
-            Track(MotionClip.TargetKind, "left-arm",
+            Track(MotionClip.TargetKind, Humanoid.LeftArm,
                 K(0, 0.1f, 0.1f, ClipEase.Linear), K(1 / 60f, 0.24f, 0.18f, ClipEase.Linear), K(0.075f, 0.24f, 0.18f, ClipEase.Smooth), K(0.4f, 0.15f, 0.25f, ClipEase.Smooth), K(1.1f, -0.1f, 0.05f, ClipEase.Smooth)),
-            Track(MotionClip.TargetKind, "right-arm",
+            Track(MotionClip.TargetKind, Humanoid.RightArm,
                 K(0, -0.05f, 0.06f, ClipEase.Linear), K(1 / 60f, -0.14f, 0.18f, ClipEase.Linear), K(0.075f, -0.14f, 0.18f, ClipEase.Smooth), K(0.4f, 0.15f, 0.25f, ClipEase.Smooth), K(1.1f, -0.05f, 0, ClipEase.Smooth)),
-            Track(MotionClip.OrientKind, "right-grip",
+            Track(MotionClip.OrientKind, Humanoid.RightGripSocket,
                 new ClipKey { Time = 0, Value = new(0, 0, 0), Ease = ClipEase.Linear }, new ClipKey { Time = 0.075f, Value = new(0, 0, 0), Ease = ClipEase.Smooth }, new ClipKey { Time = 0.75f, Value = new(0, 0, -1.47f), Ease = ClipEase.Smooth }, new ClipKey { Time = 1.1f, Value = new(0, 0, -1.5f), Ease = ClipEase.Linear }),
         ];
-        clip.Contacts = [Plant("left-leg", 0, 1.1f), Plant("right-leg", 0, 1.1f)];
+        clip.Contacts = [Plant(Humanoid.LeftLeg, 0, 1.1f), Plant(Humanoid.RightLeg, 0, 1.1f)];
         clip.Markers = [new() { Id = "impact", Time = .75f }];
-        clip.Faces = [new() { Part = "head", Keys = [new() { Time = 0, Expression = "hurt" }, new() { Time = .75f, Expression = "knocked-out" }] }];
+        clip.Faces = [new() { Part = Humanoid.Head, Keys = [new() { Time = 0, Expression = "hurt" }, new() { Time = .75f, Expression = "knocked-out" }] }];
         return clip;
     }
 
@@ -268,14 +269,14 @@ public static class StarterContent
         var clip = Clip(model, "person-thrust", "Spear thrust", .9f, false);
         clip.Tracks =
         [
-            Track(MotionClip.TranslateKind, "hips", K(0), K(.32f, -.04f, -.03f), K(.42f, .09f, -.05f, ClipEase.Linear), K(.58f, .09f, -.05f), K(.9f)),
-            Track(MotionClip.RotateKind, "chest", R(0, 0), R(.32f, .14f), R(.42f, -.16f, ClipEase.Linear), R(.58f, -.16f), R(.9f, 0)),
-            Track(MotionClip.TargetKind, "right-arm", K(0), K(.32f, -.33f, .35f), K(.42f, .57f, .5f, ClipEase.Linear), K(.58f, .57f, .5f), K(.9f)),
-            Track(MotionClip.TargetKind, "left-arm", K(0), K(.32f, .12f, .1f), K(.42f, -.18f, .12f, ClipEase.Linear), K(.58f, -.18f, .12f), K(.9f)),
+            Track(MotionClip.TranslateKind, Humanoid.Hips, K(0), K(.32f, -.04f, -.03f), K(.42f, .09f, -.05f, ClipEase.Linear), K(.58f, .09f, -.05f), K(.9f)),
+            Track(MotionClip.RotateKind, Humanoid.Chest, R(0, 0), R(.32f, .14f), R(.42f, -.16f, ClipEase.Linear), R(.58f, -.16f), R(.9f, 0)),
+            Track(MotionClip.TargetKind, Humanoid.RightArm, K(0), K(.32f, -.33f, .35f), K(.42f, .57f, .5f, ClipEase.Linear), K(.58f, .57f, .5f), K(.9f)),
+            Track(MotionClip.TargetKind, Humanoid.LeftArm, K(0), K(.32f, .12f, .1f), K(.42f, -.18f, .12f, ClipEase.Linear), K(.58f, -.18f, .12f), K(.9f)),
         ];
-        clip.Contacts = [Plant("left-leg", 0, .9f), Plant("right-leg", 0, .9f)];
+        clip.Contacts = [Plant(Humanoid.LeftLeg, 0, .9f), Plant(Humanoid.RightLeg, 0, .9f)];
         clip.Markers = [new() { Id = "windup", Time = .05f }, new() { Id = "strike", Time = .4f }, new() { Id = "recover", Time = .58f }];
-        clip.Faces = [new() { Part = "head", Keys = [new() { Time = 0, Expression = "focused" }, new() { Time = .36f, Expression = "determined" }, new() { Time = .7f, Expression = "focused" }] }];
+        clip.Faces = [new() { Part = Humanoid.Head, Keys = [new() { Time = 0, Expression = "focused" }, new() { Time = .36f, Expression = "determined" }, new() { Time = .7f, Expression = "focused" }] }];
         return clip;
     }
 
@@ -285,13 +286,13 @@ public static class StarterContent
         var clip = Clip(model, "person-jump", "Jump", .9f, false);
         clip.Tracks =
         [
-            Track(MotionClip.TranslateKind, "hips", K(0), K(.14f, 0, -.14f), K(.24f, 0, .04f), K(.5f), K(.9f)),
-            Track(MotionClip.TargetKind, "left-leg", K(0), K(.2f), K(.36f, .12f, .32f), K(.9f, .06f, .08f)),
-            Track(MotionClip.TargetKind, "right-leg", K(0), K(.2f), K(.36f, -.04f, .24f), K(.9f, .02f, .06f)),
-            Track(MotionClip.TargetKind, "left-arm", K(0), K(.14f, -.12f, .08f), K(.26f, .2f, .45f), K(.9f, .06f, .12f)),
-            Track(MotionClip.TargetKind, "right-arm", K(0), K(.14f, -.12f, .08f), K(.26f, .22f, .42f), K(.9f, .08f, .12f)),
+            Track(MotionClip.TranslateKind, Humanoid.Hips, K(0), K(.14f, 0, -.14f), K(.24f, 0, .04f), K(.5f), K(.9f)),
+            Track(MotionClip.TargetKind, Humanoid.LeftLeg, K(0), K(.2f), K(.36f, .12f, .32f), K(.9f, .06f, .08f)),
+            Track(MotionClip.TargetKind, Humanoid.RightLeg, K(0), K(.2f), K(.36f, -.04f, .24f), K(.9f, .02f, .06f)),
+            Track(MotionClip.TargetKind, Humanoid.LeftArm, K(0), K(.14f, -.12f, .08f), K(.26f, .2f, .45f), K(.9f, .06f, .12f)),
+            Track(MotionClip.TargetKind, Humanoid.RightArm, K(0), K(.14f, -.12f, .08f), K(.26f, .22f, .42f), K(.9f, .08f, .12f)),
         ];
-        clip.Contacts = [Plant("left-leg", 0, .2f), Plant("right-leg", 0, .2f)];
+        clip.Contacts = [Plant(Humanoid.LeftLeg, 0, .2f), Plant(Humanoid.RightLeg, 0, .2f)];
         clip.Markers = [new() { Id = "launch", Time = .2f }, new() { Id = "apex", Time = .5f }];
         return clip;
     }

@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.CharacterStudio.PlayerMoves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics.Transforms;
@@ -21,13 +22,13 @@ internal sealed partial class ProofRenders
     private const float ReviewPpu = 150;
     private static readonly string[] UpperTargets =
     [
-        "chest",
-        "head",
-        "left-shoulder",
-        "right-shoulder",
-        "left-arm",
-        "right-arm",
-        PersonLoadout.SwordSocket, PersonLoadout.GunSocket
+        Humanoid.Chest,
+        Humanoid.Head,
+        Humanoid.LeftShoulder,
+        Humanoid.RightShoulder,
+        Humanoid.LeftArm,
+        Humanoid.RightArm,
+        Humanoid.SwordSocket, Humanoid.GunSocket
     ];
 
     /// <summary>
@@ -279,8 +280,8 @@ internal sealed partial class ProofRenders
             return MathF.Atan2(d.Z, d.X);
         }
         var rest = PoseEvaluator.Rest(model);
-        var restShoulders = Yaw(rest, "left-shoulder", "right-shoulder", "chest");
-        var restHips = Yaw(rest, "left-hip", "right-hip", "hips");
+        var restShoulders = Yaw(rest, Humanoid.LeftShoulder, Humanoid.RightShoulder, Humanoid.Chest);
+        var restHips = Yaw(rest, Humanoid.LeftHip, Humanoid.RightHip, Humanoid.Hips);
         for (var i = 0; i <= samples; i++)
         {
             var pose = PoseEvaluator.Sample(model, clip, i * clip.Duration / samples);
@@ -290,8 +291,8 @@ internal sealed partial class ProofRenders
                 overreach++;
             }
 
-            var shoulders = Yaw(pose, "left-shoulder", "right-shoulder", "chest") - restShoulders;
-            var hips = Yaw(pose, "left-hip", "right-hip", "hips") - restHips;
+            var shoulders = Yaw(pose, Humanoid.LeftShoulder, Humanoid.RightShoulder, Humanoid.Chest) - restShoulders;
+            var hips = Yaw(pose, Humanoid.LeftHip, Humanoid.RightHip, Humanoid.Hips) - restHips;
             var offset = MathF.IEEERemainder(shoulders - hips, MathF.Tau); // back views sit on the +-180 degree seam
             turnSum += offset;
             swing = MathF.Max(swing, MathF.Abs(offset));

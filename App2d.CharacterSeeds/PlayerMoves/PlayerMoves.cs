@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
 using App2d.Core.Shapes;
@@ -39,9 +40,9 @@ internal static partial class PlayerMoves
     [
         new ModelSocket()
         {
-            Id = MoveBuilder.BackSocket,
-            Control = "chest",
-            Frame = "chest",
+            Id = Humanoid.BackSocket,
+            Control = Humanoid.Chest,
+            Frame = Humanoid.Chest,
             OffsetX = SheathGrip.X,
             OffsetY = SheathGrip.Y,
             OffsetZ = .2f,
@@ -49,9 +50,9 @@ internal static partial class PlayerMoves
         },
         new ModelSocket()
         {
-            Id = MoveBuilder.BackViewSocket,
-            Control = "chest",
-            Frame = "chest",
+            Id = Humanoid.BackViewSocket,
+            Control = Humanoid.Chest,
+            Frame = Humanoid.Chest,
             OffsetX = BackViewGrip.X,
             OffsetY = BackViewGrip.Y,
             OffsetZ = -.2f,
@@ -59,15 +60,15 @@ internal static partial class PlayerMoves
         },
         new ModelSocket()
         {
-            Id = MoveBuilder.SwordSocket,
-            Control = "right-hand",
-            Frame = "right-shoulder"
+            Id = Humanoid.SwordSocket,
+            Control = Humanoid.RightHand,
+            Frame = Humanoid.RightShoulder
         },
         new ModelSocket()
         {
-            Id = MoveBuilder.GunSocket,
-            Control = "right-hand",
-            Frame = "right-shoulder"
+            Id = Humanoid.GunSocket,
+            Control = Humanoid.RightHand,
+            Frame = Humanoid.RightShoulder
         },
     ];
 
@@ -162,7 +163,7 @@ internal static partial class PlayerMoves
         .Key(.78f, k => k.Hips(.08f, -.22f).Chest(-.4f).Head(.12f).RightHandAt(.62f, .95f).LeftHand(-.2f, -.4f).Blade(-.9f))
         .Key(.95f, k => k.Hips(.08f, -.24f).Chest(-.42f).Head(.14f).RightHandAt(.62f, .9f).LeftHand(-.22f, -.4f).Blade(-1.05f))
         .Key(1.5f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHandAt(.3f, .95f).LeftHand(.05f, -.6f).Blade(.3f))
-        .Plant("left-leg", 0, 1.5f, -.2f).Plant("right-leg", 0, 1.5f, .2f)
+        .Plant(Humanoid.LeftLeg, 0, 1.5f, -.2f).Plant(Humanoid.RightLeg, 0, 1.5f, .2f)
         .Marker("windup", .1f).Marker("strike", .78f).Marker("recover", .95f)
         .Face(0, "focused").Face(.5f, "determined").Face(.78f, "angry")
         .Build();
@@ -193,7 +194,7 @@ internal static partial class PlayerMoves
             new EquipmentBinding()
             {
                 Prop = "hammer",
-                Socket = PersonLoadout.SwordSocket
+                Socket = Humanoid.SwordSocket
             }
         ],
         Actions =
@@ -249,7 +250,7 @@ internal static partial class PlayerMoves
         .Key(.63f, k => k.Chest(.06f).Head(.05f).RightHand(.54f, 0).LeftHand(.01f, -.6f).Blade(.38f))
         .Key(.85f, k => k.Hips(-.02f, -.03f).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
         .Key(1.1f, k => k.Hips(-.01f, -.04f).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(0))
-        .Plant("left-leg", 0, 1.1f, Back).Plant("right-leg", 0, 1.1f, Front)
+        .Plant(Humanoid.LeftLeg, 0, 1.1f, Back).Plant(Humanoid.RightLeg, 0, 1.1f, Front)
         .Marker("fire", .6f)
         .Face(0, "focused").Face(.6f, "determined").Face(.85f, "focused")
         .Build();
@@ -279,7 +280,7 @@ internal static partial class PlayerMoves
             new()
             {
                 Prop = PersonLoadout.Pistol,
-                Socket = PersonLoadout.GunSocket
+                Socket = Humanoid.GunSocket
             }
         ],
         Actions =
@@ -359,12 +360,12 @@ internal static partial class PlayerMoves
             new()
             {
                 Prop = PersonLoadout.Sword,
-                Socket = MoveBuilder.SwordSocket
+                Socket = Humanoid.SwordSocket
             },
             new()
             {
                 Prop = PersonLoadout.Pistol,
-                Socket = MoveBuilder.GunSocket
+                Socket = Humanoid.GunSocket
             }
         ],
         Actions =
@@ -388,7 +389,7 @@ internal static partial class PlayerMoves
     {
         var swing = clips[clip];
         float At(string marker) => swing.Markers.Single(m => m.Id == marker).Time;
-        var socket = model.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket);
+        var socket = model.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket);
         var sword = SwordProp();
         var (min, max) = SwingLab.HitRectangle(model, swing, At(PersonLoadout.SwooshMarker), At("strike"), At("recover"), t => SwingLab.Blade(model, swing, t, sword, socket))
             ?? throw new InvalidOperationException($"'{clip}': the blade never gets in front of the player.");
@@ -425,7 +426,7 @@ internal static partial class PlayerMoves
         .Key(.35f, k => k.LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
         .Key(1.55f, k => k.LeftHand(.035f, -.615f).RightHand(.065f, -.6f))
         .Key(2.4f, k => k.LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
-        .Plant("left-leg", 0, 2.4f, Back).Plant("right-leg", 0, 2.4f, Front)
+        .Plant(Humanoid.LeftLeg, 0, 2.4f, Back).Plant(Humanoid.RightLeg, 0, 2.4f, Front)
         .Build();
 
     /// <summary>
@@ -454,7 +455,7 @@ internal static partial class PlayerMoves
         .Key(0, k => k.Hips(-.02f, -.18f).Chest(-.28f).Head(.16f).LeftHand(.24f, -.44f).RightHand(.3f, -.4f))
         .Key(.09f, k => k.Hips(-.02f, -.24f).Chest(-.34f).Head(.2f).LeftHand(.26f, -.4f).RightHand(.32f, -.36f))
         .Key(.36f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
-        .Plant("left-leg", 0, .36f, Back).Plant("right-leg", 0, .36f, Front)
+        .Plant(Humanoid.LeftLeg, 0, .36f, Back).Plant(Humanoid.RightLeg, 0, .36f, Front)
         .Marker("impact", 0)
         .Face(0, "strained").Face(.2f, "relaxed")
         .Build();
@@ -491,8 +492,8 @@ internal static partial class PlayerMoves
             var rest = m.Rest[id];
             return new(at.X - rest.X, at.Y - rest.Z);
         }
-        return (Delta("left-shoulder", mid - axis * shoulderHalf), Delta("right-shoulder", mid + axis * shoulderHalf),
-            Delta("left-hip", -axis * hipHalf), Delta("right-hip", axis * hipHalf));
+        return (Delta(Humanoid.LeftShoulder, mid - axis * shoulderHalf), Delta(Humanoid.RightShoulder, mid + axis * shoulderHalf),
+            Delta(Humanoid.LeftHip, -axis * hipHalf), Delta(Humanoid.RightHip, axis * hipHalf));
     }
 
     /// <summary>
@@ -504,8 +505,8 @@ internal static partial class PlayerMoves
         var (ls, rs, lh, rh) = Girdles(m, degrees);
         var hipDepth = -.05f * facingAway;
         return k.Chest(-.02f * facingAway, 0, 0, -.35f * facingAway)
-            .Move("left-shoulder", ls.X, 0, ls.Y).Move("right-shoulder", rs.X, 0, rs.Y)
-            .Move("left-hip", lh.X, 0, lh.Y + hipDepth).Move("right-hip", rh.X, 0, rh.Y + hipDepth);
+            .Move(Humanoid.LeftShoulder, ls.X, 0, ls.Y).Move(Humanoid.RightShoulder, rs.X, 0, rs.Y)
+            .Move(Humanoid.LeftHip, lh.X, 0, lh.Y + hipDepth).Move(Humanoid.RightHip, rh.X, 0, rh.Y + hipDepth);
     }
 
     /// <summary>
@@ -515,7 +516,7 @@ internal static partial class PlayerMoves
     internal static PoseKey Shoulders(this PoseKey k, ResolvedModel m, float degrees)
     {
         var (ls, rs, _, _) = Girdles(m, degrees);
-        return k.Move("left-shoulder", ls.X, 0, ls.Y).Move("right-shoulder", rs.X, 0, rs.Y);
+        return k.Move(Humanoid.LeftShoulder, ls.X, 0, ls.Y).Move(Humanoid.RightShoulder, rs.X, 0, rs.Y);
     }
 
     private const float Rail = .36f, RungHigh = 1.95f, RungLow = 1.45f, StepHigh = .6f, StepLow = .05f;
@@ -554,8 +555,8 @@ internal static partial class PlayerMoves
             .Key(T(.22f), k => k.Hips(0, -.07f).LeftHand(.46f, .43f).RightHand(-.46f, .38f).LeftFoot(.1f, .03f).RightFoot(-.1f, .3f), ClipEase.Linear)
             .Key(T(.3f), k => k.Turned(m, 180, 1).Hips(0, -.1f).Head(0).LeftHandAt(Rail, RungHigh).RightHandAt(-Rail, RungLow).LeftFoot(.1f, StepLow).RightFoot(-.1f, StepHigh), ClipEase.Linear)
             // Profile side (the chains' own bends) before the straight moment, mirrored after; reversed when stepping off.
-            .Bend("right-arm", 0, onto ? -1 : 1).Bend("right-leg", 0, onto ? 1 : -1)
-            .Bend("right-arm", T(.09f), onto ? 1 : -1).Bend("right-leg", T(.09f), onto ? -1 : 1)
+            .Bend(Humanoid.RightArm, 0, onto ? -1 : 1).Bend(Humanoid.RightLeg, 0, onto ? 1 : -1)
+            .Bend(Humanoid.RightArm, T(.09f), onto ? 1 : -1).Bend(Humanoid.RightLeg, T(.09f), onto ? -1 : 1)
             .Marker(onto ? MoveBuilder.ProfileViewMarker : MoveBuilder.BackViewMarker, 0)
             .Marker(onto ? MoveBuilder.BackViewMarker : MoveBuilder.ProfileViewMarker, onto ? .09f : duration - .09f)
             .Face(0, onto ? "relaxed" : "none").Face(onto ? .06f : duration - .06f, onto ? "none" : "relaxed")
@@ -581,7 +582,7 @@ internal static partial class PlayerMoves
             .Key(.4f, k => k.Hips(0, -.1f).LeftHandAt(Rail, RungLow).RightHandAt(-Rail, RungHigh).LeftFoot(.1f, StepHigh).RightFoot(-.1f, StepLow), ClipEase.Linear)
             .Key(.6f, k => k.Hips(0, -.08f).LeftHandAt(Rail + .08f, 1.8f).RightHandAt(-Rail, (RungHigh + RungLow) / 2).LeftFoot(.1f, (StepHigh + StepLow) / 2).RightFoot(-.16f, .38f), ClipEase.Linear)
             // From behind, the right side is on screen left: its elbow and knee must bend outward, so mirror them.
-            .Bend("right-arm", 0, 1).Bend("right-leg", 0, -1)
+            .Bend(Humanoid.RightArm, 0, 1).Bend(Humanoid.RightLeg, 0, -1)
             .Marker(MoveBuilder.BackViewMarker, 0).Marker("rung-left", .4f).Marker("rung-right", 0)
             .Face(0, "none")
             .Build();
@@ -627,14 +628,14 @@ internal static partial class PlayerMoves
     /// <summary>Edge in front of the toes: weight thrown back, arms windmilling backward, eyes on the drop.</summary>
     private static MotionClip BalanceForward(ResolvedModel m) => Windmill(New(m, "player-balance-forward", "Balance, edge ahead", 1, true), 1, .12f, .08f)
         .Key(0, k => k.Hips(-.06f, -.03f)).Key(.5f, k => k.Hips(-.08f, -.04f)).Key(1, k => k.Hips(-.06f, -.03f))
-        .Plant("left-leg", 0, 1, -.08f).Plant("right-leg", 0, 1, .06f)
+        .Plant(Humanoid.LeftLeg, 0, 1, -.08f).Plant(Humanoid.RightLeg, 0, 1, .06f)
         .Face(0, "panic")
         .Build();
 
     /// <summary>Edge behind the heels: leaning forward over the toes, arms windmilling forward.</summary>
     private static MotionClip BalanceBackward(ResolvedModel m) => Windmill(New(m, "player-balance-backward", "Balance, edge behind", 1, true), -1, -.24f, .08f)
         .Key(0, k => k.Hips(.05f, -.04f)).Key(.5f, k => k.Hips(.07f, -.05f)).Key(1, k => k.Hips(.05f, -.04f))
-        .Plant("left-leg", 0, 1, -.04f).Plant("right-leg", 0, 1, .1f)
+        .Plant(Humanoid.LeftLeg, 0, 1, -.04f).Plant(Humanoid.RightLeg, 0, 1, .1f)
         .Face(0, "worried")
         .Build();
 
@@ -646,7 +647,7 @@ internal static partial class PlayerMoves
         .Key(.05f, k => k.Hips(-.07f, -.06f).Chest(.36f).Head(.3f).LeftHand(.3f, -.22f).RightHand(.36f, -.16f), ClipEase.Linear)
         .Key(.18f, k => k.Hips(-.05f, -.06f).Chest(.14f).Head(.1f).LeftHand(.18f, -.42f).RightHand(.22f, -.38f))
         .Key(.35f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).LeftHand(.05f, -.6f).RightHand(.08f, -.585f))
-        .Plant("left-leg", 0, .35f, Back).Plant("right-leg", 0, .35f, Front)
+        .Plant(Humanoid.LeftLeg, 0, .35f, Back).Plant(Humanoid.RightLeg, 0, .35f, Front)
         .Face(0, "hurt").Face(.24f, "strained")
         .Build();
 
@@ -677,8 +678,8 @@ internal static partial class PlayerMoves
         .Key(1.02f, k => k.LeftHand(-.28f, .32f).RightHand(.26f, .32f))
         .Key(1.18f, k => k.LeftHand(-.32f, .5f).RightHand(.3f, .5f))
         .Key(1.4f, k => k.Hips(StanceX, StanceY).Chest(.03f).Head(.08f).LeftHand(-.32f, .49f).RightHand(.3f, .49f))
-        .Plant("left-leg", 0, .3f, Back).Plant("right-leg", 0, .3f, Front)
-        .Plant("left-leg", .62f, 1.4f, Back).Plant("right-leg", .62f, 1.4f, Front)
+        .Plant(Humanoid.LeftLeg, 0, .3f, Back).Plant(Humanoid.RightLeg, 0, .3f, Front)
+        .Plant(Humanoid.LeftLeg, .62f, 1.4f, Back).Plant(Humanoid.RightLeg, .62f, 1.4f, Front)
         .Face(0, "happy").Face(.3f, "delighted")
         .Build();
 
@@ -697,7 +698,7 @@ internal static partial class PlayerMoves
             .Key(.22f, k => k.Hips(StanceX, StanceY).Chest(.04f).Head(.04f).RightHandAt(-.12f, 2.1f).LeftHand(.04f, -.6f).Blade(3.5f), ClipEase.Linear)
             .Key(.3f, k => k.Hips(StanceX, StanceY).Chest(.02f).Head(.02f).RightHandAt(hilt.X, hilt.Y).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
             .Key(.42f, k => k.Hips(StanceX, StanceY).Chest(-.03f).Head(.02f).RightHand(.08f, -.585f).LeftHand(.05f, -.6f).Blade(sheathed + MathF.Tau))
-            .Plant("left-leg", 0, .42f, Back).Plant("right-leg", 0, .42f, Front)
+            .Plant(Humanoid.LeftLeg, 0, .42f, Back).Plant(Humanoid.RightLeg, 0, .42f, Front)
             .Marker("sword-sheathe", .3f)
             .Face(0, "focused").Face(.3f, "relaxed")
             .Build();
@@ -727,7 +728,7 @@ internal static partial class PlayerMoves
         .Key(0, k => k.Hips(-.02f, StanceY).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
         .Key(1, k => k.Hips(-.02f, StanceY - .008f).Chest(.015f).Head(.01f).RightHand(.645f, -.03f).LeftHand(.01f, -.61f).Blade(.01f))
         .Key(2, k => k.Hips(-.02f, StanceY).Chest(0).Head(.02f).RightHand(.645f, -.02f).LeftHand(.02f, -.6f).Blade(0))
-        .Plant("left-leg", 0, 2, Back).Plant("right-leg", 0, 2, Front)
+        .Plant(Humanoid.LeftLeg, 0, 2, Back).Plant(Humanoid.RightLeg, 0, 2, Front)
         .Face(0, "focused")
         .Build();
 

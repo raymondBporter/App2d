@@ -37,46 +37,50 @@ public static class PuppetTemplates
                 });
             }
         }
-        Control("hips", 0, 1);
-        Control("chest", 0, 1.65f);
-        Control("head", 0, 2.03f);
-        Bone("hips", "chest", false);
-        Bone("chest", "head");
-        foreach (var (side, x, z) in new[] { ("left", -.13f, .08f), ("right", .13f, -.08f) })
+        Control(Humanoid.Hips, 0, 1);
+        Control(Humanoid.Chest, 0, 1.65f);
+        Control(Humanoid.Head, 0, 2.03f);
+        Bone(Humanoid.Hips, Humanoid.Chest, false);
+        Bone(Humanoid.Chest, Humanoid.Head);
+        foreach (var (shoulderId, elbowId, handId, hipId, kneeId, footId, x, z) in new[]
         {
-            Control(side + "-shoulder", x, 1.57f, z);
-            Control(side + "-elbow", x * 2, 1.25f, z);
-            Control(side + "-hand", x * 2.5f, .92f, z);
-            Control(side + "-hip", x, 1, z);
-            Control(side + "-knee", x + .09f, .51f, z);
-            Control(side + "-foot", x, .025f, z);
-            Bone("chest", side + "-shoulder", false);
-            Bone(side + "-shoulder", side + "-elbow");
-            Bone(side + "-elbow", side + "-hand");
-            Bone("hips", side + "-hip", false);
-            Bone(side + "-hip", side + "-knee");
-            Bone(side + "-knee", side + "-foot");
+            (Humanoid.LeftShoulder, Humanoid.LeftElbow, Humanoid.LeftHand, Humanoid.LeftHip, Humanoid.LeftKnee, Humanoid.LeftFoot, -.13f, .08f),
+            (Humanoid.RightShoulder, Humanoid.RightElbow, Humanoid.RightHand, Humanoid.RightHip, Humanoid.RightKnee, Humanoid.RightFoot, .13f, -.08f)
+        })
+        {
+            Control(shoulderId, x, 1.57f, z);
+            Control(elbowId, x * 2, 1.25f, z);
+            Control(handId, x * 2.5f, .92f, z);
+            Control(hipId, x, 1, z);
+            Control(kneeId, x + .09f, .51f, z);
+            Control(footId, x, .025f, z);
+            Bone(Humanoid.Chest, shoulderId, false);
+            Bone(shoulderId, elbowId);
+            Bone(elbowId, handId);
+            Bone(Humanoid.Hips, hipId, false);
+            Bone(hipId, kneeId);
+            Bone(kneeId, footId);
             puppet.Chains.Add(new()
             {
-                Root = side + "-shoulder",
-                Joint = side + "-elbow",
-                End = side + "-hand",
+                Root = shoulderId,
+                Joint = elbowId,
+                End = handId,
                 Bend = -1
             });
             puppet.Chains.Add(new()
             {
-                Root = side + "-hip",
-                Joint = side + "-knee",
-                End = side + "-foot",
+                Root = hipId,
+                Joint = kneeId,
+                End = footId,
                 Bend = 1
             });
         }
         puppet.Parts.Add(new()
         {
-            Id = "body",
+            Id = Humanoid.Body,
             Geometry = new SimplePolygon2D.Builder { Vertices = [new(-.5f, -.5f), new(.5f, -.5f), new(.35f, .5f), new(-.35f, .5f)] },
-            A = "hips",
-            B = "chest",
+            A = Humanoid.Hips,
+            B = Humanoid.Chest,
             Width = .45f,
             Height = .68f,
             OffsetY = .32f,
@@ -88,9 +92,9 @@ public static class PuppetTemplates
         });
         puppet.Parts.Add(new()
         {
-            Id = "head",
+            Id = Humanoid.Head,
             Geometry = GeometryDefinition2D.CreateDefault(ShapeKinds2D.Ellipse),
-            A = "head",
+            A = Humanoid.Head,
             Width = .58f,
             Height = .58f,
             Face = "relaxed",
@@ -117,23 +121,27 @@ public static class PuppetTemplates
         // +Z is away. The near (left) socket projects leftward; the far (right)
         // socket projects rightward and stays behind the torso's drawing plane.
         const float yaw = MathF.PI / 6, shoulderHalfSpan = .18f, hipHalfSpan = .12f, shoulderSetback = -.025f;
-        foreach (var (side, sign) in new[] { ("left", -1f), ("right", 1f) })
+        foreach (var (shoulderId, elbowId, handId, hipId, kneeId, footId, sign) in new[]
+        {
+            (Humanoid.LeftShoulder, Humanoid.LeftElbow, Humanoid.LeftHand, Humanoid.LeftHip, Humanoid.LeftKnee, Humanoid.LeftFoot, -1f),
+            (Humanoid.RightShoulder, Humanoid.RightElbow, Humanoid.RightHand, Humanoid.RightHip, Humanoid.RightKnee, Humanoid.RightFoot, 1f)
+        })
         {
             var lateral = sign * shoulderHalfSpan;
             var shoulderX = shoulderSetback * MathF.Cos(yaw) + lateral * MathF.Sin(yaw);
             var shoulderDepth = -shoulderSetback * MathF.Sin(yaw) + lateral * MathF.Cos(yaw);
             var hipX = sign * hipHalfSpan * MathF.Sin(yaw);
             var hipDepth = sign * hipHalfSpan * MathF.Cos(yaw);
-            void Rest(string suffix, float px, float py, float depth) => puppet.Controls.Single(c => c.Id == side + suffix).Rest = new(px, py, depth);
-            Rest("-shoulder", shoulderX, 1.57f, shoulderDepth);
-            Rest("-elbow", shoulderX + .05f, 1.25f, shoulderDepth);
-            Rest("-hand", shoulderX + .03f, .92f, shoulderDepth);
-            Rest("-hip", hipX, 1, hipDepth);
-            Rest("-knee", hipX + .09f, .51f, hipDepth);
-            Rest("-foot", hipX, .025f, hipDepth);
+            void Rest(string control, float px, float py, float depth) => puppet.Controls.Single(c => c.Id == control).Rest = new(px, py, depth);
+            Rest(shoulderId, shoulderX, 1.57f, shoulderDepth);
+            Rest(elbowId, shoulderX + .05f, 1.25f, shoulderDepth);
+            Rest(handId, shoulderX + .03f, .92f, shoulderDepth);
+            Rest(hipId, hipX, 1, hipDepth);
+            Rest(kneeId, hipX + .09f, .51f, hipDepth);
+            Rest(footId, hipX, .025f, hipDepth);
         }
-        puppet.Parts.Single(p => p.Id == "body").Width = .36f;
-        var head = puppet.Parts.Single(p => p.Id == "head");
+        puppet.Parts.Single(p => p.Id == Humanoid.Body).Width = .36f;
+        var head = puppet.Parts.Single(p => p.Id == Humanoid.Head);
         head.Width = .56f;
         head.FaceX = .065f;
         var motion = puppet.Motions[0];
@@ -141,8 +149,8 @@ public static class PuppetTemplates
         motion.Duration = 1.2f;
         motion.Loop = true;
         const float stride = .5f, ground = .025f;
-        var leftTrack = puppet.Controls.Single(c => c.Id == "left-foot").Rest;
-        var rightTrack = puppet.Controls.Single(c => c.Id == "right-foot").Rest;
+        var leftTrack = puppet.Controls.Single(c => c.Id == Humanoid.LeftFoot).Rest;
+        var rightTrack = puppet.Controls.Single(c => c.Id == Humanoid.RightFoot).Rest;
         for (var i = 0; i <= 16; i++)
         {
             var phase = i / 16f;
@@ -159,13 +167,13 @@ public static class PuppetTemplates
             var rightWorldX = .125f + stride * Progress.SmoothStepUnclamped(rightSwing);
             var leftLift = .12f * MathF.Pow(MathF.Sin(leftSwing * MathF.PI), 2);
             var rightLift = .12f * MathF.Pow(MathF.Sin(rightSwing * MathF.PI), 2);
-            pose.Points["left-foot"] = new(leftWorldX - travel + leftTrack.X, ground + leftLift - pose.Position.Y, leftTrack.Z);
-            pose.Points["right-foot"] = new(rightWorldX - travel + rightTrack.X, ground + rightLift - pose.Position.Y, rightTrack.Z);
+            pose.Points[Humanoid.LeftFoot] = new(leftWorldX - travel + leftTrack.X, ground + leftLift - pose.Position.Y, leftTrack.Z);
+            pose.Points[Humanoid.RightFoot] = new(rightWorldX - travel + rightTrack.X, ground + rightLift - pose.Position.Y, rightTrack.Z);
             var swing = MathF.Cos(phase * MathF.Tau);
-            foreach (var (side, sign) in new[] { ("left", 1f), ("right", -1f) })
+            foreach (var (shoulderId, handId, sign) in new[] { (Humanoid.LeftShoulder, Humanoid.LeftHand, 1f), (Humanoid.RightShoulder, Humanoid.RightHand, -1f) })
             {
-                var shoulder = pose.Points[side + "-shoulder"];
-                pose.Points[side + "-hand"] = shoulder + new Vector3(sign * .18f * swing, -.61f, 0);
+                var shoulder = pose.Points[shoulderId];
+                pose.Points[handId] = shoulder + new Vector3(sign * .18f * swing, -.61f, 0);
             }
             motion.Keys.Add(pose.Key(time));
         }
@@ -174,14 +182,14 @@ public static class PuppetTemplates
         motion.Keys[^1].Position = new(stride, motion.Keys[0].Position.Y, 0);
         motion.Contacts.Add(new()
         {
-            End = "right-foot",
+            End = Humanoid.RightFoot,
             Start = 0,
             Finish = .6f,
             Target = new(.125f + rightTrack.X, ground, rightTrack.Z)
         });
         motion.Contacts.Add(new()
         {
-            End = "left-foot",
+            End = Humanoid.LeftFoot,
             Start = .6f,
             Finish = 1.2f,
             Target = new(.375f + leftTrack.X, ground, leftTrack.Z)
@@ -198,7 +206,7 @@ public static class PuppetTemplates
     {
         var puppet = StepStudy();
         puppet.Name = "Run loop study";
-        puppet.Parts.Single(p => p.Id == "head").Face = "determined";
+        puppet.Parts.Single(p => p.Id == Humanoid.Head).Face = "determined";
         var motion = puppet.Motions[0];
         motion.Name = "Run right";
         motion.Duration = .72f;
@@ -253,25 +261,29 @@ public static class PuppetTemplates
             var lean = .21f + .03f * MathF.Cos(MathF.Tau * (step - .6f));
             var chestLag = .25f * (Hips(step - .06f) - hipHeight);
             var headLag = .5f * (Hips(step - .08f) - hipHeight);
-            pose.Points["chest"] = Lean(rest.Points["chest"], lean) + new Vector3(0, chestLag, 0);
-            pose.Points["head"] = Lean(rest.Points["head"], lean * 1.1f) + new Vector3(0, headLag, 0);
-            foreach (var (side, legPhase, armAngle) in new[] { ("right", phase, MathF.Tau * (phase - .03f) + MathF.PI), ("left", Wrap(phase + .5f), MathF.Tau * (phase - .03f)) })
+            pose.Points[Humanoid.Chest] = Lean(rest.Points[Humanoid.Chest], lean) + new Vector3(0, chestLag, 0);
+            pose.Points[Humanoid.Head] = Lean(rest.Points[Humanoid.Head], lean * 1.1f) + new Vector3(0, headLag, 0);
+            foreach (var (shoulderId, handId, hipId, footId, legPhase, armAngle) in new[]
+            {
+                (Humanoid.RightShoulder, Humanoid.RightHand, Humanoid.RightHip, Humanoid.RightFoot, phase, MathF.Tau * (phase - .03f) + MathF.PI),
+                (Humanoid.LeftShoulder, Humanoid.LeftHand, Humanoid.LeftHip, Humanoid.LeftFoot, Wrap(phase + .5f), MathF.Tau * (phase - .03f))
+            })
             {
                 var foot = Foot(legPhase);
                 // The pelvis turns with the forward leg while the shoulders counter-rotate with the arms.
-                var hip = rest.Points[side + "-hip"];
-                pose.Points[side + "-hip"] = hip with
+                var hip = rest.Points[hipId];
+                pose.Points[hipId] = hip with
                 {
                     X = hip.X + .08f * foot.X
                 };
-                var track = rest.Points[side + "-foot"];
-                pose.Points[side + "-foot"] = new(foot.X + track.X, ground + foot.Y - pose.Position.Y, track.Z);
+                var track = rest.Points[footId];
+                pose.Points[footId] = new(foot.X + track.X, ground + foot.Y - pose.Position.Y, track.Z);
                 var swing = MathF.Cos(armAngle);
-                var shoulder = Lean(rest.Points[side + "-shoulder"], lean) + new Vector3(.03f * swing, chestLag, 0);
-                pose.Points[side + "-shoulder"] = shoulder;
+                var shoulder = Lean(rest.Points[shoulderId], lean) + new Vector3(.03f * swing, chestLag, 0);
+                pose.Points[shoulderId] = shoulder;
                 // Elbows stay bent near 90 degrees: high and forward, then low and back.
                 var hand = new Vector2(.03f + .26f * swing, -.33f + .09f * swing - .05f * MathF.Sin(armAngle));
-                pose.Points[side + "-hand"] = shoulder + new Vector3(Rotation2D.Apply(hand, -lean * .6f), 0);
+                pose.Points[handId] = shoulder + new Vector3(Rotation2D.Apply(hand, -lean * .6f), 0);
             }
             motion.Keys.Add(pose.Key(phase * motion.Duration));
         }
@@ -279,17 +291,17 @@ public static class PuppetTemplates
         motion.Keys[^1].Position = new(travel, motion.Keys[0].Position.Y, 0);
         motion.Contacts.Add(new()
         {
-            End = "right-foot",
+            End = Humanoid.RightFoot,
             Start = 0,
             Finish = stance * motion.Duration,
-            Target = new(strike + rest.Points["right-foot"].X, ground, rest.Points["right-foot"].Z)
+            Target = new(strike + rest.Points[Humanoid.RightFoot].X, ground, rest.Points[Humanoid.RightFoot].Z)
         });
         motion.Contacts.Add(new()
         {
-            End = "left-foot",
+            End = Humanoid.LeftFoot,
             Start = .5f * motion.Duration,
             Finish = (.5f + stance) * motion.Duration,
-            Target = new(strike + travel / 2 + rest.Points["left-foot"].X, ground, rest.Points["left-foot"].Z)
+            Target = new(strike + travel / 2 + rest.Points[Humanoid.LeftFoot].X, ground, rest.Points[Humanoid.LeftFoot].Z)
         });
         puppet.Validate();
         return puppet;

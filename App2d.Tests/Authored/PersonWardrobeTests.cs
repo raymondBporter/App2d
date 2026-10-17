@@ -47,8 +47,8 @@ public sealed class PersonWardrobeTests
     public void HairStaysWhenUnarmedAndChangesForTheBackView()
     {
         var clip = new MotionClip { Markers = [new() { Id = PersonLoadout.BackViewMarker, Time = .2f }] };
-        Assert.Equal((PersonLoadout.ShortHair, PersonLoadout.HeadSocket), Assert.Single(PersonLoadout.Dressed(clip, 0, PersonGear.None)));
-        Assert.Equal((PersonLoadout.ShortHairBack, PersonLoadout.HeadSocket), Assert.Single(PersonLoadout.Dressed(clip, .3f, PersonGear.None)));
+        Assert.Equal((PersonLoadout.ShortHair, Humanoid.HeadSocket), Assert.Single(PersonLoadout.Dressed(clip, 0, PersonGear.None)));
+        Assert.Equal((PersonLoadout.ShortHairBack, Humanoid.HeadSocket), Assert.Single(PersonLoadout.Dressed(clip, .3f, PersonGear.None)));
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public sealed class PersonWardrobeTests
         var catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
         var entity = catalog.Entities["maul-brute"];
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, catalog.Animations["person-death"], .6f), Vector2.Zero, 1);
-        var socket = pose.Socket(entity.Sockets[PersonLoadout.HeadSocket]);
+        var socket = pose.Socket(entity.Sockets[Humanoid.HeadSocket]);
         TestModels.Near(Vector3.UnitX, socket.XAxis);
         TestModels.Near(Vector3.UnitY, socket.YAxis);
         TestModels.Near(pose.World("head"), socket.Origin);
@@ -70,7 +70,7 @@ public sealed class PersonWardrobeTests
         Assert.Empty(catalog.Errors);
         var entity = catalog.Entities["maul-brute"];
         var clip = catalog.Animations["person-hammer-slam"];
-        var socket = entity.Sockets[PersonLoadout.BodySocket];
+        var socket = entity.Sockets[Humanoid.BodySocket];
         foreach (var facing in new[] { -1, 1 })
         {
             foreach (var at in new[] { 0, .55, .78, 1.1 })
@@ -93,7 +93,7 @@ public sealed class PersonWardrobeTests
         foreach (var id in new[] { "maul-brute", "cinder-gunner" })
         {
             var entity = catalog.Entities[id];
-            Assert.Equal(3, entity.Equipment.Count(e => e.Socket.Id is PersonLoadout.HeadSocket or PersonLoadout.BodySocket));
+            Assert.Equal(3, entity.Equipment.Count(e => e.Socket.Id is Humanoid.HeadSocket or Humanoid.BodySocket));
             foreach (var clip in entity.Roles.Values.Select(r => r.Clip).Concat(entity.Actions.Values.Select(a => a.Clip)))
             {
                 for (var frame = 0; frame <= 12; frame++)

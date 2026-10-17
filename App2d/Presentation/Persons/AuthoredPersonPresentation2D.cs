@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
@@ -188,7 +189,7 @@ public sealed class AuthoredPersonPresentation2D : IDisposable
             return;
         }
         var sword = moves.Props[PersonLoadout.Sword];
-        var socket = moves.Model.Base.Sockets.First(k => k.Id == PersonLoadout.SwordSocket);
+        var socket = moves.Model.Base.Sockets.First(k => k.Id == Humanoid.SwordSocket);
         if (!_backhands.TryGetValue(clip, out var backhand))
         {
             _backhands[clip] = backhand = PersonLoadout.Backhand(moves.Model, clip, sword, socket);

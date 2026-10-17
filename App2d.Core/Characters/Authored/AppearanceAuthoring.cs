@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>Editable appearance assets use the existing prop file format, attachments, undo, and runtime meshes.</summary>
@@ -19,7 +20,7 @@ public static class AppearanceAuthoring
             ? new PropAsset
             {
                 Usage = "clothing",
-                Attachment = PersonLoadout.BodySocket,
+                Attachment = Humanoid.BodySocket,
                 Tip = default
             }
             : PropAsset.FromJson((findTemplate?.Invoke(source) ?? throw new InvalidDataException($"Appearance template '{source}' was not found.")).ToJson());

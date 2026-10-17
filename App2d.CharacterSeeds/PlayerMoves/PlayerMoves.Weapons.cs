@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
 using System.Numerics;
@@ -20,23 +21,23 @@ internal static partial class PlayerMoves
         switch (clip.Id)
         {
             case "player-sword-sheathe":
-                Keys(PersonLoadout.SwordSocket, (0, 20, 0), (.12f, 65, -18), (.22f, 25, -10), (.3f, 0, 0), (.42f, 0, 0));
+                Keys(Humanoid.SwordSocket, (0, 20, 0), (.12f, 65, -18), (.22f, 25, -10), (.3f, 0, 0), (.42f, 0, 0));
                 break;
             case "player-sword-down-attack":
-                Keys(PersonLoadout.SwordSocket, (0, 65, 15), (.04f, 15, 0), (.18f, 15, 0), (.25f, 30, 0));
+                Keys(Humanoid.SwordSocket, (0, 65, 15), (.04f, 15, 0), (.18f, 15, 0), (.25f, 30, 0));
                 break;
             case "person-hammer-slam":
-                Keys(PersonLoadout.SwordSocket, (0, 24, 0), (.55f, 42, -14), (.7f, 42, -14), (.78f, 18, 0), (.95f, 18, 0), (1.5f, 24, 0));
+                Keys(Humanoid.SwordSocket, (0, 24, 0), (.55f, 42, -14), (.7f, 42, -14), (.78f, 18, 0), (.95f, 18, 0), (1.5f, 24, 0));
                 break;
             case "player-gun-aim":
-                Keys(PersonLoadout.GunSocket, (0, -12, 10), (clip.Duration, -12, 10));
+                Keys(Humanoid.GunSocket, (0, -12, 10), (clip.Duration, -12, 10));
                 break;
             case "player-gun-shot":
             case "player-gun-wall-shot":
-                Keys(PersonLoadout.GunSocket, (0, -12, 10), (.03f, -26, 14), (clip.Duration, -12, 10));
+                Keys(Humanoid.GunSocket, (0, -12, 10), (.03f, -26, 14), (clip.Duration, -12, 10));
                 break;
             case "person-pistol-shot":
-                Keys(PersonLoadout.GunSocket, (0, -12, 10), (.58f, -12, 10), (.65f, -26, 14), (clip.Duration, -12, 10));
+                Keys(Humanoid.GunSocket, (0, -12, 10), (.58f, -12, 10), (.65f, -26, 14), (clip.Duration, -12, 10));
                 break;
         }
         return clip;
@@ -50,9 +51,9 @@ internal static partial class PlayerMoves
 
         foreach (var socket in model.Sockets)
         {
-            if (socket.Id is PersonLoadout.BackSocket or PersonLoadout.BackViewSocket)
+            if (socket.Id is Humanoid.BackSocket or Humanoid.BackViewSocket)
             {
-                socket.OffsetZ = socket.Id == PersonLoadout.BackSocket ? .2f : -.2f;
+                socket.OffsetZ = socket.Id == Humanoid.BackSocket ? .2f : -.2f;
             }
         }
 

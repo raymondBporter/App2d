@@ -64,13 +64,13 @@ public sealed class PersonMoveSetTests
             Assert.Equal(gear == PersonGear.Gun ? 2 : 1, worn.Length);
             return worn.Single(w => w.Prop == PersonLoadout.Sword).Socket;
         }
-        Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, 0));
-        Assert.Equal(PersonLoadout.SwordSocket, SwordAt(draw, .03f));
-        Assert.Equal(PersonLoadout.SwordSocket, SwordAt(sheathe, 0));
-        Assert.Equal(PersonLoadout.BackSocket, SwordAt(sheathe, .31f));
-        Assert.Equal(PersonLoadout.BackSocket, SwordAt(idle, 1));
-        Assert.Equal(PersonLoadout.BackSocket, SwordAt(draw, .03f, PersonGear.Gun)); // the gun hand holds the pistol, not the sword
-        Assert.Contains((PersonLoadout.Pistol, PersonLoadout.GunSocket), PersonLoadout.Worn(idle, 0, PersonGear.Gun));
+        Assert.Equal(Humanoid.BackSocket, SwordAt(draw, 0));
+        Assert.Equal(Humanoid.SwordSocket, SwordAt(draw, .03f));
+        Assert.Equal(Humanoid.SwordSocket, SwordAt(sheathe, 0));
+        Assert.Equal(Humanoid.BackSocket, SwordAt(sheathe, .31f));
+        Assert.Equal(Humanoid.BackSocket, SwordAt(idle, 1));
+        Assert.Equal(Humanoid.BackSocket, SwordAt(draw, .03f, PersonGear.Gun)); // the gun hand holds the pistol, not the sword
+        Assert.Contains((PersonLoadout.Pistol, Humanoid.GunSocket), PersonLoadout.Worn(idle, 0, PersonGear.Gun));
         Assert.Empty(PersonLoadout.Worn(idle, 0, PersonGear.None));
     }
 
@@ -88,8 +88,8 @@ public sealed class PersonMoveSetTests
 
             var time = clip.Markers.Single(m => m.Id == PersonLoadout.SheatheMarker).Time;
             var pose = new ActorPose(PoseEvaluator.Sample(Person, clip, time), Vector2.Zero, 1);
-            var hand = pose.Socket(Person.Base.Sockets.Single(s => s.Id == PersonLoadout.SwordSocket));
-            var back = pose.Socket(Person.Base.Sockets.Single(s => s.Id == PersonLoadout.BackSocket));
+            var hand = pose.Socket(Person.Base.Sockets.Single(s => s.Id == Humanoid.SwordSocket));
+            var back = pose.Socket(Person.Base.Sockets.Single(s => s.Id == Humanoid.BackSocket));
             var sword = Catalog.Props[PersonLoadout.Sword];
             foreach (var point in new PuppetPoint[] { new(0, 0, 0), new(sword.Tip.X, 0, 0) })
             {
@@ -111,7 +111,7 @@ public sealed class PersonMoveSetTests
         Assert.True(PersonLoadout.SeenFromBehind(climb, .5f));
         Assert.True(PersonLoadout.SeenFromBehind(off, .1f));
         Assert.False(PersonLoadout.SeenFromBehind(off, .25f));
-        Assert.Equal((PersonLoadout.Sword, PersonLoadout.BackViewSocket), Assert.Single(PersonLoadout.Worn(climb, .5f, PersonGear.Sword)));
+        Assert.Equal((PersonLoadout.Sword, Humanoid.BackViewSocket), Assert.Single(PersonLoadout.Worn(climb, .5f, PersonGear.Sword)));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using App2d.Core.Characters;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
@@ -179,7 +180,7 @@ public sealed class PersonAnimationDirectorTests
         Assert.Equal(cut.Clip.Id, d.Step(Swinging(cut)).Key);
         var mid = d.Step(Swinging(cut, cut.Clip.Duration / 2));
         Assert.Equal(cut.Clip.Duration / 2, mid.Seconds, 3); // the controller's timing maps onto the clip
-        Assert.Contains((PersonLoadout.Sword, PersonLoadout.SwordSocket), PersonLoadout.Worn(mid.Clip, (float)mid.Seconds, mid.Gear));
+        Assert.Contains((PersonLoadout.Sword, Humanoid.SwordSocket), PersonLoadout.Worn(mid.Clip, (float)mid.Seconds, mid.Gear));
         // A chained swing starts on the same tick the last one ends: the action changes while melee stays active.
         Assert.Equal(backhand.Clip.Id, d.Step(Swinging(backhand)).Key);
         Assert.Equal(forehand.Clip.Id, d.Step(Swinging(forehand)).Key);
@@ -248,7 +249,7 @@ public sealed class PersonAnimationDirectorTests
             if (i < 30)
             {
                 Assert.NotEqual(recovery.Id, frame.Key);
-                Assert.Contains(PersonLoadout.SwordSocket, frame.Overlay!.Targets);
+                Assert.Contains(Humanoid.SwordSocket, frame.Overlay!.Targets);
                 Assert.DoesNotContain("hips", frame.Overlay.Targets);
             }
         }

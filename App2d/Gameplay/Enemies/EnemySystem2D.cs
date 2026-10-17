@@ -33,11 +33,7 @@ public sealed partial class EnemySystem2D
             "The enemy combatant is already registered.");
 
         actor.SetSimulationEnabled(false);
-        _registeredEnemies.Add(
-            new RegisteredEnemy(
-                actor,
-                actor as IEnemyAttackSource2D,
-                homeChunk));
+        _registeredEnemies.Add(new RegisteredEnemy(actor, actor as IEnemyAttackSource2D, homeChunk));
         _combatants.Add(actor.Combatant);
     }
 

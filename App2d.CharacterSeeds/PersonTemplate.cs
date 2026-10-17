@@ -1,3 +1,5 @@
+using App2d.Core.Characters;
+
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>The Person starting template, with the shared short-legged proportions. A template, not an engine category.</summary>
@@ -30,8 +32,8 @@ public static class PersonTemplate
         // Pelvis bob, stride and hip swing follow leg reach; the upper body follows torso length.
         static string ScaleOf(string id) => id switch
         {
-            "hips" or "left-hip" or "right-hip" => "leg",
-            "chest" or "head" or "left-shoulder" or "right-shoulder" => "torso",
+            Humanoid.Hips or Humanoid.LeftHip or Humanoid.RightHip => Humanoid.LegMeasure,
+            Humanoid.Chest or Humanoid.Head or Humanoid.LeftShoulder or Humanoid.RightShoulder => Humanoid.TorsoMeasure,
             _ => CharacterModel.Unit,
         };
         var model = new CharacterModel
@@ -44,18 +46,26 @@ public static class PersonTemplate
             Controls = [.. study.Controls.Select(c => new ModelControl { Id = c.Id, Parent = parents.GetValueOrDefault(c.Id), Rest = c.Rest, Scale = ScaleOf(c.Id) })],
             Chains = [.. study.Chains.Select(c =>
             {
-                var arm = c.End.EndsWith("-hand", StringComparison.Ordinal);
+                var arm = c.End is Humanoid.LeftHand or Humanoid.RightHand;
                 return new ModelChain
                 {
-                    Id = c.End.Replace(arm ? "-hand" : "-foot", arm ? "-arm" : "-leg"), Root = c.Root, Joint = c.Joint, End = c.End, Bend = c.Bend,
-                    Frame = arm ? c.Root : CharacterModel.Locomotion, Scale = arm ? "arm" : "leg",
+                    Id = c.End switch
+                    {
+                        Humanoid.LeftHand => Humanoid.LeftArm,
+                        Humanoid.RightHand => Humanoid.RightArm,
+                        Humanoid.LeftFoot => Humanoid.LeftLeg,
+                        Humanoid.RightFoot => Humanoid.RightLeg,
+                        _ => throw new InvalidDataException($"Unknown humanoid chain end '{c.End}'.")
+                    },
+                    Root = c.Root, Joint = c.Joint, End = c.End, Bend = c.Bend,
+                    Frame = arm ? c.Root : CharacterModel.Locomotion, Scale = arm ? Humanoid.ArmMeasure : Humanoid.LegMeasure,
                 };
             })],
             Measures =
             [
-                new() { Id = "leg", Path = ["right-hip", "right-knee", "right-foot"] },
-                new() { Id = "arm", Path = ["right-shoulder", "right-elbow", "right-hand"] },
-                new() { Id = "torso", Path = ["hips", "chest"] },
+                new() { Id = Humanoid.LegMeasure, Path = [Humanoid.RightHip, Humanoid.RightKnee, Humanoid.RightFoot] },
+                new() { Id = Humanoid.ArmMeasure, Path = [Humanoid.RightShoulder, Humanoid.RightElbow, Humanoid.RightHand] },
+                new() { Id = Humanoid.TorsoMeasure, Path = [Humanoid.Hips, Humanoid.Chest] },
             ],
             Parts = [.. study.Parts.Select(p => p with { })],
         };
@@ -80,10 +90,10 @@ public static class PersonTemplate
             AuthoredAsset.Write(Path.Combine(directory, id + ".json"), json);
         }
         Write("models", model.Id, model.ToJson());
-        var walkClip = PuppetMotionConverter.Convert(walk, walk.Motions[0], reference, "person-walk", "Walk", "leg");
+        var walkClip = PuppetMotionConverter.Convert(walk, walk.Motions[0], reference, "person-walk", "Walk", Humanoid.LegMeasure);
         Write("animations", "person-walk", walkClip.ToJson());
         Write("animations", StarterContent.HeavyWalk, StarterContent.PersonHeavyWalk(walkClip).ToJson());
-        Write("animations", "person-run", PuppetMotionConverter.Convert(run, run.Motions[0], reference, "person-run", "Run", "leg").ToJson());
+        Write("animations", "person-run", PuppetMotionConverter.Convert(run, run.Motions[0], reference, "person-run", "Run", Humanoid.LegMeasure).ToJson());
         Write("variants", "tall-thin", PersonBuild.TallThin.Apply(model, "tall-thin", "Tall and thin", "#d9e2ef").ToJson());
         Write("variants", "short-broad", PersonBuild.ShortBroad.Apply(model, "short-broad", "Short and broad", "#efdcc9").ToJson());
         StarterContent.Write(authoredRoot, model);

@@ -244,7 +244,7 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             Cut(doc, points.Select(p => p with { Z = p.Z + delta }), thickness);
         }
         Ui.Help("Drag the gold points in the viewport, or edit coordinates below. Clothing can span both legs in layer order; keep the near arm in front of the belt.");
-        if (session.PreviewSocket == PersonLoadout.BodySocket && session.Assets.Resolve(session.SubjectId) is { } model && model.Rest.ContainsKey("left-hip") && model.Rest.ContainsKey("right-hip"))
+        if (session.PreviewSocket == Humanoid.BodySocket && session.Assets.Resolve(session.SubjectId) is { } model && model.Rest.ContainsKey(Humanoid.LeftHip) && model.Rest.ContainsKey(Humanoid.RightHip))
         {
             try
             {

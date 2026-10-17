@@ -1,3 +1,5 @@
+using App2d.Core.Characters;
+
 namespace App2d.Core.Characters.Authored;
 
 /// <summary>
@@ -13,16 +15,16 @@ public readonly record struct PersonWardrobeDepths(float NearArm, float FrontDet
 
     public static PersonWardrobeDepths From(ResolvedModel model)
     {
-        var origin = model.Rest["hips"].Z;
+        var origin = model.Rest[Humanoid.Hips].Z;
         float Z(string id) => model.Rest[id].Z - origin;
-        var leftArm = new[] { Z("left-shoulder"), Z("left-elbow"), Z("left-hand") };
-        var rightArm = new[] { Z("right-shoulder"), Z("right-elbow"), Z("right-hand") };
+        var leftArm = new[] { Z(Humanoid.LeftShoulder), Z(Humanoid.LeftElbow), Z(Humanoid.LeftHand) };
+        var rightArm = new[] { Z(Humanoid.RightShoulder), Z(Humanoid.RightElbow), Z(Humanoid.RightHand) };
         var near = leftArm.Average() < rightArm.Average() ? leftArm : rightArm;
         var far = ReferenceEquals(near, leftArm) ? rightArm : leftArm;
         var nearArm = near.Max();
         var farArm = far.Min();
-        var nearLeg = MathF.Min(Z("left-hip"), Z("right-hip"));
-        var farLeg = MathF.Max(Z("left-hip"), Z("right-hip"));
+        var nearLeg = MathF.Min(Z(Humanoid.LeftHip), Z(Humanoid.RightHip));
+        var farLeg = MathF.Max(Z(Humanoid.LeftHip), Z(Humanoid.RightHip));
         var gap = nearLeg - nearArm;
         if (gap < .01f || farArm - farLeg < .01f)
         {

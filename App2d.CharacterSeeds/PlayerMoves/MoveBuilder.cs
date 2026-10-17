@@ -1,8 +1,10 @@
+using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
 using System.Numerics;
+using static App2d.Core.Characters.Humanoid;
 
 namespace App2d.CharacterStudio.PlayerMoves;
 
@@ -14,10 +16,6 @@ namespace App2d.CharacterStudio.PlayerMoves;
 /// </summary>
 internal sealed class MoveBuilder(ResolvedModel model, string id, string name, float duration, bool loop)
 {
-    public const string BackSocket = PersonLoadout.BackSocket;
-    public const string BackViewSocket = PersonLoadout.BackViewSocket;
-    public const string SwordSocket = PersonLoadout.SwordSocket;
-    public const string GunSocket = PersonLoadout.GunSocket;
     /// <summary>View markers; <see cref="PersonLoadout"/> owns how they pick the sheath socket.</summary>
     public const string BackViewMarker = PersonLoadout.BackViewMarker;
     public const string ProfileViewMarker = PersonLoadout.ProfileViewMarker;
@@ -126,7 +124,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             Duration = duration,
             Loop = loop,
             Reference = model.Measures.ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal),
-            Travel = new() { Scale = "leg" },
+            Travel = new() { Scale = Humanoid.LegMeasure },
             Contacts = [.. _contacts],
             Markers = [.. _markers.OrderBy(m => m.Time)],
         };
@@ -137,7 +135,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
 
         if (_faces.Count > 0)
         {
-            clip.Faces = [new() { Part = "head", Keys = [.. _faces.OrderBy(f => f.Time)] }];
+            clip.Faces = [new() { Part = Humanoid.Head, Keys = [.. _faces.OrderBy(f => f.Time)] }];
         }
 
         void Emit() => clip.Tracks = [.. _tracks.Select(t => new ClipTrack { Kind = t.Key.Kind, Target = t.Key.Target, Keys = [.. t.Value.Values] })];
@@ -149,8 +147,8 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
             foreach (var (time, angle, ease) in blades)
             {
                 var body = PoseEvaluator.Sample(model, clip, time);
-                var inherited = body.Angles["right-shoulder"] - Angle(clip, "right-shoulder", time);
-                Set(MotionClip.RotateKind, "right-shoulder", time, new()
+                var inherited = body.Angles[Humanoid.RightShoulder] - Angle(clip, Humanoid.RightShoulder, time);
+                Set(MotionClip.RotateKind, Humanoid.RightShoulder, time, new()
                 {
                     Angle = angle - inherited,
                     Ease = ease
@@ -184,7 +182,7 @@ internal sealed class MoveBuilder(ResolvedModel model, string id, string name, f
         if (_grips.Count > 0)
         {
             Emit();
-            var arm = model.Chains["right-arm"];
+            var arm = model.Chains[Humanoid.RightArm];
             Blades([.. _grips.Select(g =>
             {
                 var pose = PoseEvaluator.Sample(model, clip, g.Time);
@@ -227,8 +225,8 @@ internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
     /// <summary>Pelvis offset from rest (hips rest at y = 1) and its turn, which the whole body inherits.</summary>
     public PoseKey Hips(float dx, float dy, float turn = 0)
     {
-        owner.Set(MotionClip.TranslateKind, "hips", time, K(dx, dy));
-        owner.Set(MotionClip.RotateKind, "hips", time, R(turn));
+        owner.Set(MotionClip.TranslateKind, Humanoid.Hips, time, K(dx, dy));
+        owner.Set(MotionClip.RotateKind, Humanoid.Hips, time, R(turn));
         return this;
     }
     /// <summary>
@@ -237,9 +235,9 @@ internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
     /// </summary>
     public PoseKey Chest(float turn, float dx = 0, float dy = 0, float dz = 0)
     {
-        var swing = Swing("hips", "chest", turn);
-        owner.Set(MotionClip.RotateKind, "chest", time, R(turn));
-        owner.Set(MotionClip.TranslateKind, "chest", time, K(swing.X + dx, swing.Y + dy, dz));
+        var swing = Swing(Humanoid.Hips, Humanoid.Chest, turn);
+        owner.Set(MotionClip.RotateKind, Humanoid.Chest, time, R(turn));
+        owner.Set(MotionClip.TranslateKind, Humanoid.Chest, time, K(swing.X + dx, swing.Y + dy, dz));
         return this;
     }
     /// <summary>A plain translate of one control from its rest offset (parent-local; Z is depth, + away from the viewer).</summary>
@@ -251,8 +249,8 @@ internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
     /// <summary>Neck tilt: the head swings round the chest point (the head is drawn upright, so only its position shows).</summary>
     public PoseKey Head(float turn, float dx = 0, float dy = 0)
     {
-        var swing = Swing("chest", "head", turn);
-        owner.Set(MotionClip.TranslateKind, "head", time, K(swing.X + dx, swing.Y + dy));
+        var swing = Swing(Humanoid.Chest, Humanoid.Head, turn);
+        owner.Set(MotionClip.TranslateKind, Humanoid.Head, time, K(swing.X + dx, swing.Y + dy));
         return this;
     }
     private Vector2 Swing(string parent, string child, float turn)
@@ -262,8 +260,8 @@ internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
         return new(turned.X - offset.X, turned.Y - offset.Y);
     }
     /// <summary>A foot at an actor-space position in the locomotion frame (ground is y = 0.025 for a flat sole).</summary>
-    public PoseKey LeftFoot(float x, float y) => Foot("left-leg", x, y);
-    public PoseKey RightFoot(float x, float y) => Foot("right-leg", x, y);
+    public PoseKey LeftFoot(float x, float y) => Foot(Humanoid.LeftLeg, x, y);
+    public PoseKey RightFoot(float x, float y) => Foot(Humanoid.RightLeg, x, y);
     private PoseKey Foot(string chain, float x, float y)
     {
         var rest = owner.Model.Rest[owner.Model.Chains[chain].End];
@@ -273,23 +271,23 @@ internal sealed class PoseKey(MoveBuilder owner, float time, string ease)
     /// <summary>A hand relative to its shoulder, in actor axes (unrotated). A relaxed hanging hand is about (0.02, -0.64).</summary>
     public PoseKey LeftHand(float dx, float dy)
     {
-        owner.Hand("left-arm", time, new(dx, dy), false, ease);
+        owner.Hand(Humanoid.LeftArm, time, new(dx, dy), false, ease);
         return this;
     }
     public PoseKey RightHand(float dx, float dy)
     {
-        owner.Hand("right-arm", time, new(dx, dy), false, ease);
+        owner.Hand(Humanoid.RightArm, time, new(dx, dy), false, ease);
         return this;
     }
     /// <summary>A hand at an absolute actor-space position.</summary>
     public PoseKey LeftHandAt(float x, float y)
     {
-        owner.Hand("left-arm", time, new(x, y), true, ease);
+        owner.Hand(Humanoid.LeftArm, time, new(x, y), true, ease);
         return this;
     }
     public PoseKey RightHandAt(float x, float y)
     {
-        owner.Hand("right-arm", time, new(x, y), true, ease);
+        owner.Hand(Humanoid.RightArm, time, new(x, y), true, ease);
         return this;
     }
     /// <summary>The direction the right hand's held prop points, in world radians (0 = forward, pi/2 = up).</summary>
