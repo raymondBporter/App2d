@@ -151,7 +151,7 @@ forgotten when those chunks unload, so returning grass is full height. Snapshot
 attachment preserves this bounded state; cuts are not written to the
 level or player save. Seeded branching trees occupy
 open stretches behind the terrain and actors; they are decorative and cannot be chopped.
-The shared rendering code lives in `App2d.Core/Rendering/Vegetation`.
+The shared vegetation code lives in `App2d.Core/Vegetation`.
 Wind deformation currently runs on the CPU and uses the existing GPU triangle batch.
 The camera's terrain coverage includes extra foliage margin for overhanging canopies.
 

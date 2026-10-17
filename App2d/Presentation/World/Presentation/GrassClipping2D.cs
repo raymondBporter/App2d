@@ -1,4 +1,4 @@
-using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Vegetation;
 using App2d.Core.Validation;
 using System.Numerics;
 

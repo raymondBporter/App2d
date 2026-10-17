@@ -8,7 +8,7 @@ using App2d.Core.Input;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Vegetation;
 using App2d.Core.Validation;
 using App2d.Diagnostics;
 using App2d.Presentation.Audio;

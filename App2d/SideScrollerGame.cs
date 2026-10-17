@@ -9,7 +9,7 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Hosting;
 using App2d.Core.Input;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Vegetation;
 using App2d.Core.Validation;
 using App2d.Editor;
 using App2d.Gameplay.Player;

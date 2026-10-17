@@ -6,7 +6,7 @@ using App2d.Core.Collision;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Rendering.Vegetation;
+using App2d.Core.Vegetation;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;

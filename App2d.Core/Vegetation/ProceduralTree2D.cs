@@ -6,7 +6,7 @@ using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Core.Rendering.Vegetation;
+namespace App2d.Core.Vegetation;
 
 /// <summary>Seeded, bounded branching geometry with small wind-driven leaf motion.</summary>
 public sealed class ProceduralTree2D

@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Drawing;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 

@@ -5,7 +5,7 @@ using App2d.Rendering;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Core.Rendering.Vegetation;
+namespace App2d.Core.Vegetation;
 
 /// <summary>Which side of the characters a piece of foliage draws on.</summary>
 public enum VegetationLayer2D

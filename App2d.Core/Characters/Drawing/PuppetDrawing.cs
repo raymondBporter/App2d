@@ -5,10 +5,12 @@ using App2d.Core.Geometry.Authoring;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Rendering.Characters;
+namespace App2d.Core.Characters.Drawing;
 
 /// <summary>Plain primitives over an evaluated pose; independent of source clips and anatomy names.</summary>
 public sealed class PuppetDrawing

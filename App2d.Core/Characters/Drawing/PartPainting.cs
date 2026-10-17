@@ -3,9 +3,11 @@ using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Mathematics;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
 using System.Numerics;
 
-namespace App2d.Core.Rendering.Characters;
+namespace App2d.Core.Characters.Drawing;
 
 /// <summary>Paint lives in rest artwork coordinates and follows the same triangles as fill, including folding membranes.</summary>
 internal static class PartPainting

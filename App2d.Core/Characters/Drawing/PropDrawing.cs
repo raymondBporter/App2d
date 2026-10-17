@@ -1,10 +1,12 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics.Transforms;
+using App2d.Core.Rendering;
+using App2d.Core.Rendering.Characters;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-namespace App2d.Core.Rendering.Characters;
+namespace App2d.Core.Characters.Drawing;
 
 /// <summary>Solid props with flat facet shading and visible silhouette/crease ink. Coplanar triangulation never becomes ink.</summary>
 internal static class PropDrawing

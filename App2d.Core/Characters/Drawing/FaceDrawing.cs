@@ -1,10 +1,11 @@
 using App2d.Core.Characters;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Curves;
+using App2d.Core.Rendering.Characters;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Core.Rendering.Characters;
+namespace App2d.Core.Characters.Drawing;
 
 /// <summary>Bold vector features that work on both the original dome and edited heads.</summary>
 public static class FaceDrawing
