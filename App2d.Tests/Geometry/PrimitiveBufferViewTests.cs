@@ -109,7 +109,7 @@ public sealed class PrimitiveBufferViewTests
         var overlap = original.Append(new Vector2(99)).ToArray();
         VertexTransforms2D.Transform(overlap.AsSpan(0, 4), overlap.AsSpan(1, 4), transform);
         Assert.Equal(expected, overlap[1..]);
-        overlap = new[] { new Vector2(99) }.Concat(original).ToArray();
+        overlap = [new Vector2(99), .. original];
         VertexTransforms2D.Transform(overlap.AsSpan(1, 4), overlap.AsSpan(0, 4), transform);
         Assert.Equal(expected, overlap[..4]);
         Assert.Throws<ArgumentOutOfRangeException>(() => VertexTransforms2D.Transform(original, new Vector2[1], transform));

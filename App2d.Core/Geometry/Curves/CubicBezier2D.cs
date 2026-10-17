@@ -126,7 +126,7 @@ public readonly partial record struct CubicBezier2D : ICurve2D
                 if (target is 0 or 1)
                 {
                     return (float)target;
-    }
+                }
                 var a = 1 + 3 * (first - second);
                 var b = 3 * (second - 2 * first);
                 var c = 3 * first;

@@ -10,7 +10,7 @@ namespace App2d.Core.Shapes;
 public readonly partial record struct CompositeShape2D : IShape2D
 {
     private readonly IShape2D[]? _parts;
-    private static readonly ConditionalWeakTable<IShape2D[], Dictionary<int, float>> UnionAreas = new();
+    private static readonly ConditionalWeakTable<IShape2D[], Dictionary<int, float>> UnionAreas = [];
     public string Kind => ShapeKinds2D.Composite;
 
     public CompositeShape2D(IShape2D[] parts, bool includeOverlap = true, int areaOutlineSegments = ShapeArea2D.DefaultOutlineSegments)
@@ -35,7 +35,7 @@ public readonly partial record struct CompositeShape2D : IShape2D
                 foreach (var part in Parts) area += part.Area;
                 return area;
             }
-            var areas = UnionAreas.GetValue(_parts!, static _ => new());
+            var areas = UnionAreas.GetValue(_parts!, static _ => []);
             lock (areas)
             {
                 if (!areas.TryGetValue(AreaOutlineSegments, out var area))

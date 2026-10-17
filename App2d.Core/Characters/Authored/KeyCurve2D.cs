@@ -1,6 +1,3 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Serialization;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics;
 using App2d.Core.Validation;
@@ -20,7 +17,9 @@ public sealed record KeyCurve2D
     {
         if (!NumericValidation.IsFinite(Control1) || !NumericValidation.IsFinite(Control2) ||
             !NumericValidation.IsInRange(Control1.X, 0f, 1f) || !NumericValidation.IsInRange(Control2.X, 0f, 1f))
+        {
             throw new InvalidDataException("Invalid keyframe Bezier curve.");
+        }
     }
 
     /// <summary>Creates the continuous cubic for a named ease; held steps have no continuous equivalent.</summary>

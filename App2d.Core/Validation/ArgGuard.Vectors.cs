@@ -80,7 +80,10 @@ public static partial class ArgGuard
         if (!(bounds == RangeBounds.Closed
             ? NumericValidation.IsComponentWiseLessThanOrEqual(minimum, maximum)
             : NumericValidation.IsComponentWiseLessThan(minimum, maximum)))
+        {
             ThrowOutOfRange(maximum, "Bounds must be ordered and describe a nonempty range on every axis.", maximumParamName);
+        }
+
         return NumericValidation.IsInRange(value, minimum, maximum, bounds)
             ? value : throw CreateRangeException(value, minimum, maximum, bounds, paramName);
     }
@@ -160,7 +163,10 @@ public static partial class ArgGuard
         if (!(bounds == RangeBounds.Closed
             ? NumericValidation.IsComponentWiseLessThanOrEqual(minimum, maximum)
             : NumericValidation.IsComponentWiseLessThan(minimum, maximum)))
+        {
             ThrowOutOfRange(maximum, "Bounds must be ordered and describe a nonempty range on every axis.", maximumParamName);
+        }
+
         return NumericValidation.IsInRange(value, minimum, maximum, bounds)
             ? value : throw CreateRangeException(value, minimum, maximum, bounds, paramName);
     }
@@ -240,7 +246,10 @@ public static partial class ArgGuard
         if (!(bounds == RangeBounds.Closed
             ? NumericValidation.IsComponentWiseLessThanOrEqual(minimum, maximum)
             : NumericValidation.IsComponentWiseLessThan(minimum, maximum)))
+        {
             ThrowOutOfRange(maximum, "Bounds must be ordered and describe a nonempty range on every axis.", maximumParamName);
+        }
+
         return NumericValidation.IsInRange(value, minimum, maximum, bounds)
             ? value : throw CreateRangeException(value, minimum, maximum, bounds, paramName);
     }

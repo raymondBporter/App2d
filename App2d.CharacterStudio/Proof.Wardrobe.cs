@@ -1,6 +1,6 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
-using App2d.Rendering;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
@@ -58,13 +58,19 @@ internal sealed partial class ProofRenders
             }
             target.SavePng(Path.Combine(_smokePath, "wardrobe-" + poseName + ".png"));
         }
-        File.WriteAllText(Path.Combine(_smokePath, "wardrobe.txt"), "Columns: hero, maul brute, cinder gunner. Each shows both facings, then both at 48 pixels/unit. Sheets: idle, run, attack, and climbing/back view (hero) or death recoil (enemies). Uses packaged assets and the shared depth-tested renderer.\n");
+        File.WriteAllText(Path.Combine(_smokePath, "wardrobe.txt"),
+            "Columns: hero, maul brute, cinder gunner. Each shows both facings, then both at 48 pixels/unit. Sheets: idle, run, attack, and climbing/back view (hero) or death recoil (enemies). Uses packaged assets and the shared depth-tested renderer.\n");
         var caveman = catalog.Entities["club-caveman"];
         var samples = new (string Clip, float At)[]
         {
-            ("person-idle", .2f), ("person-run", .15f), ("club-caveman-slam", .55f),
-            ("club-caveman-slam", .7f), ("club-caveman-slam", .78f), ("club-caveman-slam", 1.2f),
-            ("person-hit", .12f), ("person-death", .5f)
+            ("person-idle", .2f),
+            ("person-run", .15f),
+            ("club-caveman-slam", .55f),
+            ("club-caveman-slam", .7f),
+            ("club-caveman-slam", .78f),
+            ("club-caveman-slam", 1.2f),
+            ("person-hit", .12f),
+            ("person-death", .5f)
         };
         using (GraphicsDevice.UseRenderTarget(target, new Color(241, 236, 223)))
         {

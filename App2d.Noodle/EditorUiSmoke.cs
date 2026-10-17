@@ -1,4 +1,4 @@
-using App2d.Rendering;
+using App2d.Core.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace App2d.Noodle;

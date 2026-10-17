@@ -1,7 +1,3 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Serialization;
-using App2d.Core.Geometry.Shapes;
-using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Collision.Contacts;
@@ -9,6 +5,7 @@ using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using System.Numerics;

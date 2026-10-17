@@ -40,10 +40,15 @@ public static class StrokeTessellation2D
         {
             var maxRadius = MathF.Max(startRadius, endRadius);
             if (startCap == LineCap2D.Round || endCap == LineCap2D.Round)
+            {
                 WriteDisk(vertices, start, maxRadius, checked(capSegments * 2));
+            }
             else if (count != 0)
+            {
                 WriteQuad(vertices, start + new Vector2(-maxRadius, -maxRadius), start + new Vector2(maxRadius, -maxRadius),
                     start + new Vector2(maxRadius, maxRadius), start + new Vector2(-maxRadius, maxRadius));
+            }
+
             return count;
         }
 

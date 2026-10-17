@@ -1,14 +1,12 @@
-using App2d.Core.Geometry.Shapes;
-using App2d.Core.Geometry.Curves;
+using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Geometry;
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Serialization;
-using App2d.Core.Shapes;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
-using App2d.Core.Characters.Drawing;
-using App2d.CharacterSeeds;
+using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 using System.Numerics;
 
 namespace App2d.Tests.Geometry;
@@ -31,8 +29,8 @@ public sealed class CharacterGeometryTests
         }
     }
 
-    public static TheoryData<IShape2D> Shapes => new()
-    {
+    public static TheoryData<IShape2D> Shapes =>
+    [
         Circle2D.Builder.Create(.7f, new(.2f, -.3f)),
         Ellipse2D.Builder.Create(new(.4f, .8f)),
         Rectangle2D.Builder.FromSize(new(4, 2)),
@@ -42,7 +40,7 @@ public sealed class CharacterGeometryTests
         Triangle2D.Builder.Create(new(0, 0), new(2, 0), new(0, 1)),
         ConvexPolygon2D.Builder.Create([new(0, 0), new(2, 0), new(0, 1)]),
         SimplePolygon2D.Builder.Create([new(0, 0), new(2, 0), new(0, 1)]),
-    };
+    ];
 
     [Theory, MemberData(nameof(Shapes))]
     public void UnscaledPartsUseTheirGeometryDimensions(IShape2D shape)
@@ -58,8 +56,14 @@ public sealed class CharacterGeometryTests
     {
         var part = new PuppetPart
         {
-            A = "a", B = "b", Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
-            ScaleX = 2, ScaleY = .5f, Angle = MathF.PI / 2, OffsetX = 1, OffsetY = .25f,
+            A = "a",
+            B = "b",
+            Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
+            ScaleX = 2,
+            ScaleY = .5f,
+            Angle = MathF.PI / 2,
+            OffsetX = 1,
+            OffsetY = .25f,
             Material = new() { StrokeWidth = .1f },
         };
         static Vector3 World(string id) => id == "a" ? new(3, 4, 0) : new(3, 6, 0);

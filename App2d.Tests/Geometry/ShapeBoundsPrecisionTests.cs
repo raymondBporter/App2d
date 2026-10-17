@@ -1,10 +1,8 @@
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Serialization;
-using App2d.Core.Geometry.Shapes;
-using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 

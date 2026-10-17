@@ -1,5 +1,5 @@
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
-using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;

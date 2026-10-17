@@ -1,7 +1,7 @@
 using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Mathematics;
-using System.Runtime.CompilerServices;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Geometry.Curves;
 
@@ -14,7 +14,7 @@ public readonly partial record struct BSpline2D : ICurve2D
     public string Kind => CurveKinds2D.BSpline;
 
     private readonly Vector2[]? _controlPoints;
-    private static readonly ConditionalWeakTable<Vector2[], Dictionary<int, Prepared>> PreparedCurves = new();
+    private static readonly ConditionalWeakTable<Vector2[], Dictionary<int, Prepared>> PreparedCurves = [];
 
     public BSpline2D(IEnumerable<Vector2> controlPoints, int degree = 3)
     {
@@ -30,7 +30,7 @@ public readonly partial record struct BSpline2D : ICurve2D
     {
         get
         {
-            var entries = PreparedCurves.GetValue(_controlPoints!, static _ => new());
+            var entries = PreparedCurves.GetValue(_controlPoints!, static _ => []);
             lock (entries)
             {
                 if (!entries.TryGetValue(Degree, out var data))

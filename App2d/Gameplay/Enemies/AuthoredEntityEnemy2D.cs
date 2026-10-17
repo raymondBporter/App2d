@@ -1,13 +1,10 @@
-using App2d.Core.Geometry;
-using App2d.Core.Geometry.Serialization;
-using App2d.Core.Geometry.Shapes;
-using App2d.Core.Geometry.Curves;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;

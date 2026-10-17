@@ -1,7 +1,7 @@
-using App2d.Core.Geometry.Curves;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
@@ -47,7 +47,10 @@ public static class PterosaurTemplate
         }
         void Stroke(string key, string a, string b, float width, float depth) => model.Parts.Add(new()
         {
-            Id = key, A = a, B = b, Depth = depth,
+            Id = key,
+            A = a,
+            B = b,
+            Depth = depth,
             Geometry = LineSegmentCurve2D.Builder.Create(Vector2.Zero, Vector2.UnitY),
             Material = new() { Fill = model.Ink, StrokeWidth = width, Outline = new() },
         });

@@ -4,7 +4,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Operations.Polygons;
-using App2d.Core.Rendering.Characters;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;

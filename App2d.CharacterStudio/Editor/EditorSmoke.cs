@@ -1,13 +1,13 @@
-using App2d.Core.Geometry.Curves;
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
 using App2d.Core.Geometry;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
+using App2d.Core.Rendering;
 using App2d.Core.Shapes;
-using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 
@@ -245,8 +245,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 {
                     var part = doc.Asset.Parts.Single(p => p.Id == "frill");
                     var polygon = (SimplePolygon2D)part.Geometry!;
-                    var vertices = new List<Vector2>(polygon.Vertices.ToArray());
-                    vertices[0] = new(-.32f, -.46f);
+                    var vertices = new List<Vector2>(polygon.Vertices.ToArray()) { [0] = new(-.32f, -.46f) };
                     ModelAuthoring.SetCutout(part, vertices);
                 }), s);
                 s.Undo();

@@ -1,11 +1,11 @@
 using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Gameplay.Enemies;
-using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;

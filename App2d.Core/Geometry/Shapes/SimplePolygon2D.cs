@@ -1,10 +1,9 @@
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Conversion;
 using App2d.Core.Geometry.Operations.Diameter;
 using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Shapes;
-using System.Numerics;
 using System.Collections.ObjectModel;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace App2d.Core.Shapes;
@@ -16,7 +15,7 @@ public readonly partial record struct SimplePolygon2D : IShape2D
     public string Kind => ShapeKinds2D.SimplePolygon;
 
     private readonly Vector2[]? _vertices;
-    private static readonly ConditionalWeakTable<Vector2[], ReadOnlyCollection<Vector2>> Views = new();
+    private static readonly ConditionalWeakTable<Vector2[], ReadOnlyCollection<Vector2>> Views = [];
     internal IReadOnlyList<Vector2> VertexList => Views.GetValue(_vertices!, static vertices => Array.AsReadOnly(vertices));
 
     /// <summary>Creates a polygon snapshot. Prefer Builder.Create for construction.</summary>

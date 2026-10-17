@@ -1,7 +1,6 @@
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Geometry.Serialization;
 using System.Numerics;
 
 namespace App2d.Core.Shapes;

@@ -1,6 +1,5 @@
 using App2d.Core.Rendering.Characters;
 using System.Numerics;
-using XnaMatrix = Microsoft.Xna.Framework.Matrix;
 using XnaVector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace App2d.Tests.Rendering;

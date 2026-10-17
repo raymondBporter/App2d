@@ -41,13 +41,7 @@ public sealed class AudioClip2D
         Samples = samples;
     }
 
-    internal WaveFormat WaveFormat
-    {
-        get;
-    }
-    internal float[] Samples
-    {
-        get;
-    }
+    internal WaveFormat WaveFormat { get; }
+    internal float[] Samples { get; }
     internal int FrameCount => Samples.Length / WaveFormat.Channels;
 }

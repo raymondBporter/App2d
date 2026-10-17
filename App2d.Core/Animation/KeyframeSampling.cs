@@ -11,8 +11,8 @@ public interface ITimedKey
 /// <summary>Finds a segment in an ordered timeline, holding the first and last keys outside its range.</summary>
 public static class KeyframeSampling
 {
-    public static bool TrySegment<T>(IReadOnlyList<T> keys, float time,
-        [NotNullWhen(true)] out T? start, [NotNullWhen(true)] out T? end, out float phase) where T : class, ITimedKey
+    public static bool TrySegment<T>(IReadOnlyList<T> keys, float time, [NotNullWhen(true)] out T? start, [NotNullWhen(true)] out T? end, out float phase)
+        where T : class, ITimedKey
     {
         phase = 0;
         start = end = null;

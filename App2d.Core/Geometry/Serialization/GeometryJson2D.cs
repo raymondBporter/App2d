@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Curves;
+using App2d.Core.Geometry.Operations.Conversion;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.IO;
 using App2d.Core.Shapes;

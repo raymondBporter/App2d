@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 using Microsoft.Xna.Framework.Graphics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Rendering;
+namespace App2d.Core.Rendering;
 
 /// <summary>
 /// Offscreen captures for proofs, smokes and studies: the standard review target, a scoped binding that restores the

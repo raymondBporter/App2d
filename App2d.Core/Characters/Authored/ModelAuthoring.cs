@@ -1,9 +1,8 @@
-using App2d.Core.Geometry.Curves;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
-using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Polygons;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
 using System.Numerics;

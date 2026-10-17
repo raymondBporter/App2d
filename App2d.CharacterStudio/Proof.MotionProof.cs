@@ -1,7 +1,7 @@
 using App2d.CharacterSeeds;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
-using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;

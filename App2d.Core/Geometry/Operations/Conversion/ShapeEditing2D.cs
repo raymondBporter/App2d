@@ -4,7 +4,7 @@ using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using System.Numerics;
 
-namespace App2d.Core.Geometry;
+namespace App2d.Core.Geometry.Operations.Conversion;
 
 /// <summary>Editor conversions between authored shape kinds.</summary>
 public static class ShapeEditing2D

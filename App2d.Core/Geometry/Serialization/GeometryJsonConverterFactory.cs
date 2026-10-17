@@ -69,9 +69,13 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
             };
 #pragma warning restore APP2D001
             if (options.UnmappedMemberHandling == JsonUnmappedMemberHandling.Disallow)
+            {
                 foreach (var name in properties.Keys)
                     if (!read.Contains(name)) throw new JsonException($"Unknown geometry member '{name}'.");
-            if (geometry is not T typed) throw new JsonException($"Geometry kind '{kind}' is not a {typeof(T).Name}.");
+            }
+
+            if (geometry is not T typed)
+                throw new JsonException($"Geometry kind '{kind}' is not a {typeof(T).Name}.");
             return typed;
         }
 

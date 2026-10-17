@@ -1,8 +1,7 @@
-using App2d.Core.Characters;
 using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Meshes;
-using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Operations.Bounds;
+using App2d.Core.Geometry.Operations.Polygons;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;

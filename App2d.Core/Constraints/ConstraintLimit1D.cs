@@ -47,14 +47,8 @@ public readonly record struct ConstraintLimit1D : IInterval<float>
         Maximum = maximum;
     }
 
-    public float Minimum
-    {
-        get;
-    }
-    public float Maximum
-    {
-        get;
-    }
+    public float Minimum { get; }
+    public float Maximum { get; }
     float IInterval<float>.Min => Minimum;
     float IInterval<float>.Max => Maximum;
     public bool HasMinimum => !float.IsNegativeInfinity(Minimum);
