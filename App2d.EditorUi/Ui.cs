@@ -150,10 +150,10 @@ public static class Ui
         ImGui.SetNextItemWidth(-1);
     }
 
-    public static bool Slider(string label, ref float value, float min, float max, string format = "%.3f")
+    public static bool Slider(string label, ref float value, float min, float max, string format = "%.3f", bool logarithmic = false)
     {
         Label(label);
-        return ImGui.SliderFloat("##" + label, ref value, min, max, format, ImGuiSliderFlags.AlwaysClamp);
+        return ImGui.SliderFloat("##" + label, ref value, min, max, format, ImGuiSliderFlags.AlwaysClamp | (logarithmic ? ImGuiSliderFlags.Logarithmic : ImGuiSliderFlags.None));
     }
 
     public static bool Drag(string label, ref float value, float speed = .005f, float min = -100, float max = 100, string format = "%.3f")

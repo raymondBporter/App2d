@@ -1,14 +1,15 @@
 using App2d.Core;
 using App2d.Core.Hosting;
 using App2d.Core.Rendering.Textures;
+using App2d.Diagnostics;
 using App2d.EditorUi;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace App2d.Editor;
 
-/// <summary>Shared ImGui host for the map palette and thing inspector. The editor owns all editing commands.</summary>
-internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures) : IGameToolUi2D
+/// <summary>Shared ImGui host for the map palette, thing inspector and debug panel. The editor owns all editing commands.</summary>
+internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures, DebugPanel debug) : IGameToolUi2D
 {
     private Control? _surface;
     private WinFormsImGuiPlatform? _platform;
@@ -17,9 +18,9 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
     private readonly Dictionary<string, nint> _textureIds = [];
     private readonly List<Microsoft.Xna.Framework.Graphics.Texture2D> _previews = [];
     private GraphicsDevice? _device;
-    public bool CaptureMouse => editor.IsActive && (editor.IsPointerOverUi || _gui?.WantCaptureMouse == true);
-    public bool CaptureKeyboard => editor.IsActive && (_shortcutCaptured || _gui?.WantCaptureKeyboard == true);
-    public bool IsEditingText => editor.IsActive && _gui?.WantTextInput == true;
+    public DebugPanelUi2D DebugPanel { get; } = new(debug);
+    public bool CaptureMouse => _gui?.WantCaptureMouse == true || (editor.IsActive && editor.IsPointerOverUi);
+    public bool CaptureKeyboard => _shortcutCaptured || _gui?.WantCaptureKeyboard == true;
     public ImGuiHost Gui => _gui ?? throw new InvalidOperationException("The map UI has not begun a frame.");
     public void Attach(Control surface)
     {
@@ -34,6 +35,13 @@ internal sealed class MapEditorUi2D(TileEditor2D editor, TextureCache2D textures
         _gui.Begin(time.DeltaSeconds);
         _shortcutCaptured = false;
         editor.IsPointerOverUi = false;
+        if (ImGui.IsKeyPressed(DebugPanelUi2D.ToggleKey, false))
+        {
+            DebugPanel.IsOpen = !DebugPanel.IsOpen;
+            _shortcutCaptured = true;
+        }
+
+        DebugPanel.Draw();
         if (!editor.IsActive)
         {
             return;

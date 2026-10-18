@@ -8,9 +8,9 @@
 2. `RenderWorldDebug`: grid, collision geometry, traversal/ballistics curves,
    zone boundaries, and editor world guides. These use the game camera and
    overlay the finished game image.
-3. `RenderUI`: HUD, feedback text, diagnostic labels, editor palette, and FPS.
-   Screen UI draws above all world graphics and diagnostics. Native editor and
-   console controls sit above the rendering surface.
+3. `RenderUI`: HUD, feedback text, diagnostic labels, and FPS. Screen UI draws
+   above all world graphics and diagnostics. The ImGui tool UI (editor sidebar and
+   debug panel) renders after the frame, above everything.
 
 Override the passes needed by a game. Call the base debug/UI methods to retain
 the shared grid, collision, and FPS options. Put clears in the frame entry point,
@@ -18,17 +18,14 @@ not inside a pass; override `BackgroundColor` to choose the game background.
 Render captures should also call `RenderFrame` so they include the same passes
 as the host.
 
-Console options:
+Debug panel toggles (F5), in its Draw section:
 
-```text
-draw_grid true             # World debug grid; off by default
-toggle draw_grid
-draw_collision_shapes true
-draw_traversal_metrics true # Side scroller jump diagnostics
-draw_zones true             # Side scroller zone boundaries
-draw_fps true               # Screen-space diagnostic UI
-draw_graphics false        # Hide game graphics; keep debug and UI
-```
+- Grid: world debug grid; off by default
+- Collision shapes
+- Traversal metrics: side scroller jump diagnostics
+- Zones: side scroller zone boundaries
+- FPS: screen-space diagnostic UI
+- Graphics: off hides game graphics and keeps debug and UI
 
 Parallax affects background motion, not these pass boundaries. The debug grid
 is an overlay, not a scene object or a tilemap layer. Sparse tile storage and

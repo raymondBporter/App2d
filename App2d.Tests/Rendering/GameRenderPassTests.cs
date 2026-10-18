@@ -34,13 +34,13 @@ public sealed class GameRenderPassTests
         using var graphics = new GraphicsTestContext();
         using var game = new TestGame();
         using var renderer = new Renderer2D(game.Camera, graphics.Device);
-        game.DeveloperConsole.Execute($"draw_graphics {drawGraphics}");
+        game.DrawGraphics = drawGraphics;
         var background = drawGraphics ? XnaColor.Red : new XnaColor(24, 27, 36);
 
         // The grid starts disabled, and its toggle is independent of the graphics toggle.
         var withoutGrid = Render();
         Assert.Equal(background, At(withoutGrid, 64, 80));
-        game.DeveloperConsole.Execute("draw_grid true");
+        game.DrawGrid = true;
         var withGrid = Render();
         Assert.True(At(withGrid, 64, 80).G > background.G);
         Assert.Equal(background, At(withGrid, 80, 80));
@@ -54,7 +54,7 @@ public sealed class GameRenderPassTests
         Assert.Equal(background, At(moved, 64, 80));
         Assert.Equal(XnaColor.Blue, At(moved, 64, 16));
 
-        game.DeveloperConsole.Execute("toggle draw_grid");
+        game.DrawGrid = false;
         Assert.Equal(background, At(Render(), 51, 80));
 
         XnaColor[] Render()

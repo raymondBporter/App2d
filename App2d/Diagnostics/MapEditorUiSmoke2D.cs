@@ -19,7 +19,7 @@ internal static class MapEditorUiSmoke2D
         var map = database.Load(LevelBootstrap2D.TerrainTilesetIds);
         using var editor = new TileEditor2D(map, () => LevelDatabase2D.Open(scratchPath), game.Camera);
         using var surface = new Control();
-        using var ui = new MapEditorUi2D(editor, game.Textures);
+        using var ui = new MapEditorUi2D(editor, game.Textures, game.DebugPanel);
         ui.Attach(surface);
         var input = new InputState();
         editor.RequestToggle();
@@ -39,7 +39,9 @@ internal static class MapEditorUiSmoke2D
         Draw("map-things");
         editor.InspectorView.BeginNewDefinition();
         Draw("map-new-platform");
-        Console.WriteLine("Map palette and thing inspector rendered using a scratch level database.");
+        ui.DebugPanel.IsOpen = true;
+        Draw("debug-panel");
+        Console.WriteLine("Map palette, thing inspector and debug panel rendered using a scratch level database.");
 
         void Draw(string name)
         {

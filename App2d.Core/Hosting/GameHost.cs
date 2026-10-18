@@ -16,7 +16,6 @@ public sealed class GameHost : IDisposable
 
     private readonly InputState _input = new();
     private Renderer2D? _renderer;
-    private readonly DeveloperConsoleView _consoleView;
     private readonly IGameToolUi2D? _toolUi;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 16 };
     private readonly Stopwatch _clock = new();
@@ -49,17 +48,8 @@ public sealed class GameHost : IDisposable
 
         _window.Controls.Add(_surface);
         _input.Attach(_window, _surface);
-        _consoleView = new DeveloperConsoleView(game.DeveloperConsole)
-        {
-            Visible = false
-        };
-        _window.Controls.Add(_consoleView);
         _toolUi = game.ToolUi;
         _toolUi?.Attach(_surface);
-        PositionConsole();
-        _window.Resize += OnWindowResize;
-        _window.KeyDown += OnWindowKeyDown;
-        _window.KeyPress += OnWindowKeyPress;
         _timer.Tick += OnTick;
         _window.FormClosed += (_, _) => _timer.Stop();
         _window.Shown += (_, _) => _surface.Focus();
@@ -75,11 +65,6 @@ public sealed class GameHost : IDisposable
 
     private void OnTick(object? sender, EventArgs e)
     {
-        if (_consoleView.IsOpen && _surface.Focused)
-        {
-            _consoleView.FocusInput();
-        }
-
         var totalTime = _clock.Elapsed.TotalSeconds;
         var elapsedSeconds = Math.Clamp(totalTime - _previousTime, 0d, MaximumFrameSeconds);
         _previousTime = totalTime;
@@ -108,7 +93,7 @@ public sealed class GameHost : IDisposable
     private void AdvanceGame()
     {
         _advancedFrameNumber = _renderFrameTime.FrameNumber;
-        if (!_consoleView.IsOpen && _input.Keyboard.WasPressed(Keys.Escape))
+        if (_input.Keyboard.WasPressed(Keys.Escape))
         {
             _input.EndFrame();
             _closeRequested = true;
@@ -171,68 +156,6 @@ public sealed class GameHost : IDisposable
         _renderer = null;
     }
 
-    private void OnWindowKeyDown(object? sender, KeyEventArgs e)
-    {
-        if (e.KeyCode == Keys.Oemtilde && _toolUi?.IsEditingText != true)
-        {
-            SetConsoleOpen(!_consoleView.IsOpen);
-            e.Handled = true;
-            e.SuppressKeyPress = true;
-        }
-        else if (e.KeyCode == Keys.Escape && _consoleView.IsOpen)
-        {
-            SetConsoleOpen(false);
-            e.Handled = true;
-            e.SuppressKeyPress = true;
-        }
-        else if (_consoleView.IsOpen)
-        {
-            _consoleView.FocusInput();
-            if (_consoleView.HandleCommandKey(e.KeyCode))
-            {
-                e.Handled = true;
-                e.SuppressKeyPress = true;
-            }
-        }
-    }
-
-    private void OnWindowKeyPress(object? sender, KeyPressEventArgs e)
-    {
-        if (_consoleView.IsOpen && _consoleView.InsertCharacter(e.KeyChar))
-        {
-            e.Handled = true;
-        }
-    }
-
-    private void SetConsoleOpen(bool isOpen)
-    {
-        _input.SetSuppressed(isOpen);
-        if (isOpen)
-        {
-            _consoleView.Open();
-            // The toggle originates from the game surface. Move focus after that
-            // key event has fully unwound so the surface cannot reclaim it.
-            _window.BeginInvoke(_consoleView.FocusInput);
-        }
-        else
-        {
-            _consoleView.CloseAndClearFocus();
-            _surface.Focus();
-        }
-    }
-
-    private void PositionConsole()
-    {
-        var height = Math.Clamp((int)(_window.ClientSize.Height * 0.42f), 240, 520);
-        _consoleView.Bounds = new Rectangle(
-            0,
-            Math.Max(0, _window.ClientSize.Height - height),
-            _window.ClientSize.Width,
-            Math.Min(height, _window.ClientSize.Height));
-    }
-
-    private void OnWindowResize(object? sender, EventArgs e) => PositionConsole();
-
     public void Dispose()
     {
         if (_disposed)
@@ -242,12 +165,8 @@ public sealed class GameHost : IDisposable
 
         _disposed = true;
         _timer.Dispose();
-        _window.KeyDown -= OnWindowKeyDown;
-        _window.KeyPress -= OnWindowKeyPress;
-        _window.Resize -= OnWindowResize;
         ReleaseRenderer();
         _toolUi?.Dispose();
-        _consoleView.Dispose();
         _surface.Dispose();
         _window.Dispose();
         _game.Dispose();

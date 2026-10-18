@@ -19,23 +19,15 @@ wall tilesets. They are independent of checkpoints and enemy placement.
 
 ## Audition in the game
 
-Open the developer console with backtick. Examples:
+Press F5 for the debug panel. Its Audio section has a music volume slider, mood and
+piece dropdowns and a now-playing readout; the Zones checkbox in the Draw section
+outlines the zones.
 
-```text
-music_volume 0.45
-music_mood combat
-music_piece copper-circuit
-music_status
-draw_zones true
-music_piece auto
-music_mood auto
-```
-
-`music_volume 0` mutes music without resetting it or muting SFX. Values range
+Music volume 0 mutes music without resetting it or muting SFX. Values range
 from 0 to 1; the default is 0.45. Mood names are `explore`, `drive`, `combat` or
 `auto`; piece names are the two IDs above or `auto`. Overrides are temporary
-developer controls, not saved preferences. `music_status` shows the selected
-zone, requested piece/mood and volume. Audio changes may still be fading.
+developer controls, not saved preferences. The now-playing readout shows the selected
+zone and requested piece/mood. Audio changes may still be fading.
 The outline of the player's current zone is gold; other visible zones are cyan.
 Music continues during editor mode, following the player's position, not the
 editor camera. Death/respawn does not explicitly restart the music; a respawn in

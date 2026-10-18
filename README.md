@@ -472,13 +472,13 @@ their requested volume by smooth distance falloff. `SoundFalloff2D` sets the tun
 ordinary effects stay at full volume within 96 world units (3 tiles) and fade to silence
 at 800 (25 tiles); hammer impacts use 128 and 1200 units. Out-of-range one-shots are
 skipped. Player movement/feedback and global cues use `Play`/`Begin` at their normal levels.
-Set `sfx_volume` in the developer
-console to a value from 0 through 1 to adjust the master sound-effect level.
+The debug panel (F5) has an SFX volume slider from 0 through 1 for the master
+sound-effect level.
 
 Music plays automatically from four synchronized Ogg stems on a separate streaming
 bus. Rectangular world zones choose the piece and mood, with a default outside zones
-and smooth transitions. `music_volume`, `music_piece`, `music_mood`, `music_status`
-and `draw_zones` are available in the developer console. Geometry is authored in
+and smooth transitions. Music volume, piece and mood overrides, a now-playing readout
+and a zone outline toggle are in the debug panel (F5). Geometry is authored in
 `Assets/Static/levels/cavern/zones.json`; music assignments live in
 `Assets/Static/audio/music/soundtrack.json`. See [music and zones](docs/music-and-zones.md).
 
@@ -560,57 +560,56 @@ Developer / editor controls:
   motor, with no drag, speed cap, inherited velocity, or terrain collisions. Each
   marker stops at launch height and leaves its trail for comparison. Editor mode
   freezes them. Labels interpret 1 tile as 1 meter for this experiment only; gameplay
-  units and movement are unchanged. In the console, set `ballistics_speed`,
-  `ballistics_angle`, or `ballistics_gravity`, then press F4 to repeat the experiment.
+  units and movement are unchanged. Adjust speed, angle, or reference gravity in the
+  debug panel's Ballistics section (F5), then press F4 to repeat the experiment.
 - F1: toggle the tile editor; freezes gameplay, detaches the camera, and switches the
   mouse to painting (left button paints or selects from the right sidebar, right erases,
   middle-drag pans, wheel zooms, and `Ctrl+Z` undoes an edit)
-- Backtick (`): open or close the developer console
+- F5: open or close the debug panel
 - Escape: close
 
 Input ownership stays small: `InputState` reads keyboard/mouse events, and
 `App2d/Input/XboxControllerInput2D` reads controller state. Default gameplay bindings
 live together in `PlayerInputMapper2D`, which produces `PersonCommand2D` without
 camera or pointer coordinates. Attacks use facing direction. `PlayerDebugInput2D`
-owns temporary player inspection keys; the editor and console own their shortcuts.
-Opening the editor/console or losing window focus cancels held gameplay input.
+owns temporary player inspection keys; the editor and debug panel own their shortcuts.
+Opening the editor or losing window focus cancels held gameplay input.
 Held buttons must be released before they can trigger again after cancellation.
 
 Interaction behavior and a pause menu are future gameplay work. E remains available for interaction; Escape currently retains its host close
 behavior. There is no remapping UI or configurable binding file yet.
 
-## Developer console
+## Debug panel
 
-Press backtick (`) to open the in-game developer console. Gameplay keeps running, but
-gameplay input is suppressed while the console has focus. Variables can be read by name
-and changed with either whitespace or an equals sign:
+Press F5 to open or close the in-game debug panel: a floating ImGui window of
+checkboxes, sliders, dropdowns and buttons. It is non-modal, so gameplay keeps running
+and keeps its keys except while a slider or value field is being edited. Hover a control
+for its description. The engine registers the Draw toggles; the side scroller adds the
+rest:
 
-```text
-draw_fps
-draw_fps true
-draw_grid = true
-draw_collision_shapes = true
-draw_graphics = false
-camera_zoom = 2
-```
+- Draw: graphics, grid, FPS, collision shapes, zones, traversal metrics
+- Audio: SFX and music volume, music mood and piece overrides, now playing
+- Camera: zoom
+- World: reload giant trees
+- Ballistics: speed, angle, reference gravity
+- Resources: registered resource keys, consumers and sources
 
-`camera_zoom` controls gameplay framing (default `1.35`, range `0.05`–`20`);
+Camera zoom controls gameplay framing (default `1.35`, range `0.05`–`20`);
 larger values zoom in. Visible terrain follows the camera automatically.
 Gameplay scales uniformly from a 1080-pixel-high reference view: resizing the
 window preserves the visible world height at the current zoom, while wider
 aspect ratios reveal more world horizontally. Editor picking and panning use
 the same camera transform.
 
-`list` shows registered variables, `help` shows syntax, `toggle <name>` flips a boolean,
-and `clear` clears the output. Tab completes names and Up/Down navigate command history.
-Games can expose additional runtime values with
-`DeveloperConsole.RegisterVariable(name, getter, setter, description)` and can register
-their `PhysicsWorld2D` for collider visualization with `RegisterDebugPhysicsWorld`.
+Games expose runtime values with `DebugPanel.Section(title)` followed by `Toggle`,
+`Slider`, `Choice`, `Button` or `Readout`; a section is created on first use, so a game
+can extend the engine's Draw section. `Game2D` also exposes `DrawGraphics`, `DrawGrid`,
+`DrawFps` and `DrawCollisionShapes` directly for tests and captures, and games register
+their `PhysicsWorld2D` for collider visualization with `AttachPhysicsWorld`.
 Physics collision shapes are drawn as translucent green overlays above the game
-graphics, while active combat hitboxes use a red-orange overlay. Set
-`draw_graphics = false` (or `toggle draw_graphics`) to keep the simulation running and
-inspect collision geometry; all world debug and UI remain available.
-`draw_grid = true` enables the world-space debug grid (off by default).
+graphics, while active combat hitboxes use a red-orange overlay. Turn off Graphics to
+keep the simulation running and inspect collision geometry; all world debug and UI
+remain available. Grid enables the world-space debug grid (off by default).
 The grid and other world diagnostics draw over game graphics, while HUD, menus,
 and diagnostic labels draw last.
 
@@ -644,8 +643,7 @@ capsules are tessellated according to their on-screen size. The host requests 4x
 
 `GraphicsSurface2D` owns a WindowsDX graphics device bound to a WinForms child control.
 It resizes the backbuffer with the control, while the existing 120 Hz simulation,
-keyboard/mouse input, native property inspector, and developer console keep their
-existing host. The former Skia raster/OpenGL backend and `APP2D_RENDER_BACKEND`
+keyboard/mouse input and native property inspector keep their existing host. The former Skia raster/OpenGL backend and `APP2D_RENDER_BACKEND`
 switch have been removed.
 
 Scene objects also expose a general-purpose `ZIndex`. Lower values render first, and

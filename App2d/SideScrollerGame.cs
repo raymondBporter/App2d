@@ -9,7 +9,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Hosting;
 using App2d.Core.Input;
 using App2d.Core.Rendering.Textures;
-using App2d.Core.Validation;
 using App2d.Core.Vegetation;
 using App2d.Editor;
 using App2d.Gameplay.Player;
@@ -64,8 +63,8 @@ public sealed class SideScrollerGame : Game2D
         var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(movement.Height) / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f, new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height), GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
         _sounds = _resources.GetLoad<SoundEffectBank2D>("audio/sfx", "presentation");
-        DeveloperConsole.RegisterVariable("sfx_volume", () => _sounds.Volume, value => _sounds.Volume = value,
-            "Set sound-effect volume from 0 (muted) to 1 (full volume).");
+        DebugPanel.Section("Audio").Slider("SFX volume", () => _sounds.Volume, value => _sounds.Volume = value, 0f, 1f,
+            "Master sound-effect level from 0 (muted) to 1 (full volume).");
 
         _resources.Register("level/cavern", () => worldManifest is null ? LevelBootstrap2D.Load() : LevelBootstrap2D.LoadWorld(worldManifest),
             worldManifest ?? LevelBootstrap2D.CavernLevelPath);
@@ -110,16 +109,13 @@ public sealed class SideScrollerGame : Game2D
         Camera.ReferenceViewportHeight = 1080f;
         var cameraController = new SideScrollerCamera2D(Scene, Camera,
             tileMap.WorldBounds, startPosition);
-        DeveloperConsole.RegisterVariable("camera_zoom", () => Camera.Zoom, value =>
-        {
-            ArgGuard.Positive(value);
-            Camera.Zoom = value;
-        }, "Camera zoom (0.05 to 20; default 1.35). Larger values zoom in.");
+        DebugPanel.Section("Camera").Slider("Zoom", () => Camera.Zoom, value => Camera.Zoom = value, 0.05f, 20f,
+            "Camera zoom; default 1.35. Larger values zoom in.", logarithmic: true);
 
         // Only editor mode opens a writable database handle.
         _editor = new TileEditor2D(loadedLevel.Maps[0].TileMap, () => Levels.LevelDatabase2D.Open(loadedLevel.Maps[0].DatabasePath), Camera);
         _resources.Get<App2d.Levels.WorldAsset2D>("level/cavern", "editor");
-        _editorUi = new(_editor, Textures);
+        _editorUi = new(_editor, Textures, DebugPanel);
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ConfigureMaps(loadedLevel.Maps);
         _editor.ThingsChanged += things =>
@@ -128,12 +124,12 @@ public sealed class SideScrollerGame : Game2D
             _simulation.Level.ReloadMovingPlatforms([.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)]);
         };
 
-        DeveloperConsole.RegisterCommand("reload_trees", "Reload giant-trees.json: positions and dimensions are in tiles; ranges are [min, max].", _ =>
+        DebugPanel.Section("World").Button("Reload giant trees", () =>
         {
             var trees = loadedLevel.LoadGiantTrees();
             _simulation.Level.ReloadGiantTrees(trees);
-            return ConsoleCommandResult.From($"Loaded {trees.Length} giant trees with {trees.Sum(tree => tree.Branches.Length)} branch platforms.");
-        });
+            return $"Loaded {trees.Length} giant trees with {trees.Sum(tree => tree.Branches.Length)} branch platforms.";
+        }, "Reload giant-trees.json: positions and dimensions are in tiles; ranges are [min, max].");
 
         _client = new SideScrollerClient2D(snapshot, playerId, Scene, Camera,
             cameraController, textures, _sounds, Traversal, Presentation.Persons.PersonMoves.From(_authored));
@@ -143,35 +139,32 @@ public sealed class SideScrollerGame : Game2D
         _music = new MusicPlayer2D(soundtrack.Cues);
         _musicDirector = new(soundtrack, _music.Select);
         _musicDirector.Update(snapshot.Content, startPosition, 0f);
-        DeveloperConsole.RegisterVariable("music_volume", () => _music.Volume, value => _music.Volume = value,
-            "Music volume from 0 to 1; default 0.45. Independent of sound effects.");
-        DeveloperConsole.RegisterVariable("music_mood", () => _musicDirector.MoodOverride, value => _musicDirector.MoodOverride = value,
-            "auto follows the zone; explore, drive or combat auditions a mood.");
-        DeveloperConsole.RegisterVariable("music_piece", () => _musicDirector.PieceOverride, value => _musicDirector.PieceOverride = value,
-            "auto follows zones; crown-of-embers or copper-circuit auditions a piece.");
-        DeveloperConsole.RegisterVariable("draw_zones", () => _showZones, value => _showZones = value,
-            "Draw authored zone boundaries. Use music_status to see the zone at the player.");
-        DeveloperConsole.RegisterCommand("music_status", "Show the current zone, music selection and available cues.", _ =>
-            ConsoleCommandResult.From($"Zone: {_musicDirector.CurrentZone?.Name ?? "outside zones"} ({_musicDirector.CurrentZone?.Id ?? "default"})",
-                $"Music: {_musicDirector.CurrentSelection?.Piece} / {_musicDirector.CurrentSelection?.Mood}; volume {_music.Volume:0.00}",
-                $"Cues: {string.Join(", ", soundtrack.Cues.Keys)}"));
-        DeveloperConsole.RegisterCommand("resources", "List resource keys, sources and consumers; optionally filter by key.", args =>
-            ConsoleCommandResult.From([.. _resources.Snapshot()
-                .Where(resource => args.Count == 0 || resource.Key.Contains(args[0], StringComparison.OrdinalIgnoreCase))
-                .Select(resource => $"{resource.Key} [{resource.Type.Name}] {(resource.IsLoaded ? "loaded" : "unloaded")} | used by: {string.Join(", ", resource.Owners)} | source: {resource.Source ?? "in memory"}")]));
+        var moods = soundtrack.Cues.Values.SelectMany(cue => cue.Moods.Keys).Distinct()
+            .Where(mood => soundtrack.Cues.Values.All(cue => cue.Moods.ContainsKey(mood))).Order();
+        DebugPanel.Section("Audio")
+            .Slider("Music volume", () => _music.Volume, value => _music.Volume = value, 0f, 1f,
+                "Music level from 0 to 1; default 0.45. Independent of sound effects.")
+            .Choice("Music mood", () => _musicDirector.MoodOverride, value => _musicDirector.MoodOverride = value, ["auto", .. moods],
+                "auto follows the zone; any other mood auditions it.")
+            .Choice("Music piece", () => _musicDirector.PieceOverride, value => _musicDirector.PieceOverride = value, ["auto", .. soundtrack.Cues.Keys.Order()],
+                "auto follows zones; a cue ID auditions that piece.")
+            .Readout("Now playing", () =>
+                $"Zone: {_musicDirector.CurrentZone?.Name ?? "outside zones"} ({_musicDirector.CurrentZone?.Id ?? "default"})\nMusic: {_musicDirector.CurrentSelection?.Piece} / {_musicDirector.CurrentSelection?.Mood}");
+        DebugPanel.Section("Draw").Toggle("Zones", () => _showZones, value => _showZones = value,
+            "Draw authored zone boundaries; the player's zone is gold.");
+        DebugPanel.Section("Resources").Readout("Registered", () => string.Join('\n', _resources.Snapshot()
+            .Select(resource => $"{resource.Key} [{resource.Type.Name}] {(resource.IsLoaded ? "loaded" : "unloaded")} | used by: {string.Join(", ", resource.Owners)} | source: {resource.Source ?? "in memory"}")));
         _client.CheckpointActivated += checkpoint =>
             _client.ShowSaveResult(_saveStore.TrySave(new PlayerSave2D(checkpoint.CheckpointId, checkpoint.HitPoints)), checkpoint.Position);
-        DeveloperConsole.RegisterVariable("draw_traversal_metrics", () => _client.ShowTraversalDebug,
-            value => _client.ShowTraversalDebug = value, "Draw jump arcs and tile-relative movement metrics.");
-        DeveloperConsole.RegisterVariable("ballistics_speed", () => _client.Ballistics.SpeedTilesPerSecond,
-            value => _client.Ballistics.SpeedTilesPerSecond = value,
-            "Reference launch speed in tiles/s (0.1 to 100, default 10). Press F4 to fire with new settings.");
-        DeveloperConsole.RegisterVariable("ballistics_angle", () => _client.Ballistics.AngleDegrees,
-            value => _client.Ballistics.AngleDegrees = value,
-            "Reference launch angle above horizontal in degrees (1 to 90, default 45).");
-        DeveloperConsole.RegisterVariable("ballistics_gravity", () => _client.Ballistics.ReferenceGravityTilesPerSecondSquared,
-            value => _client.Ballistics.ReferenceGravityTilesPerSecondSquared = value,
-            "Yellow reference gravity in tiles/s^2 (0.1 to 200, default 10). Pink uses current world gravity.");
+        DebugPanel.Section("Draw").Toggle("Traversal metrics", () => _client.ShowTraversalDebug, value => _client.ShowTraversalDebug = value,
+            "Draw jump arcs and tile-relative movement metrics (also F3).");
+        DebugPanel.Section("Ballistics")
+            .Slider("Speed (tiles/s)", () => _client.Ballistics.SpeedTilesPerSecond, value => _client.Ballistics.SpeedTilesPerSecond = value, 0.1f, 100f,
+                "Reference launch speed; default 10. Press F4 to fire with new settings.")
+            .Slider("Angle (degrees)", () => _client.Ballistics.AngleDegrees, value => _client.Ballistics.AngleDegrees = value, 1f, 90f,
+                "Launch angle above horizontal; default 45.")
+            .Slider("Reference gravity (tiles/s^2)", () => _client.Ballistics.ReferenceGravityTilesPerSecondSquared, value => _client.Ballistics.ReferenceGravityTilesPerSecondSquared = value, 0.1f, 200f,
+                "Yellow marker gravity; default 10. Pink uses current world gravity.");
     }
 
     public override string WindowTitle =>
