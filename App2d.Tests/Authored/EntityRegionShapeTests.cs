@@ -58,7 +58,9 @@ public sealed class EntityRegionShapeTests
         var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, entity.Actions.Values.First(action => action.Hits.Contains(hit)).Clip, hit.Start), new(3, 0), 1);
         Assert.IsType<Circle2D>(EntityCollision.Attack(entity, pose, hit).Shape);
 
-        window.Shape = new Circle2D { Center = new(0, 0), Radius = 0 }.Validated();
+#pragma warning disable APP2D001 // A deliberately invalid shape; asset validation must reject it.
+        window.Shape = new Circle2D { Center = new(0, 0), Radius = 0 };
+#pragma warning restore APP2D001
         Assert.Contains("shape", Assert.Throws<InvalidDataException>(asset.Validate).Message);
         window.Shape = new HalfSpace2D { Normal = new(0, 1), Offset = 0 }.Validated();
         Assert.Contains("convex", Assert.Throws<InvalidDataException>(asset.Validate).Message);

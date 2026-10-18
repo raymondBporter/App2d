@@ -40,8 +40,11 @@ public sealed class AnimationClip2D<TFrame>
         ArgGuard.ThrowIfTooShort(_frames.AsSpan(), 1, nameof(frames));
         ArgGuard.ThrowIfContainsNull(_frames.AsSpan(), nameof(frames));
         ArgGuard.ThrowIf(_frameDurations.Length != _frames.Length, "Frame durations must contain exactly one value for every frame.", nameof(frameDurations));
-        foreach (var frameDuration in _frameDurations)
-            ArgGuard.Positive(frameDuration);
+        for (var index = 0; index < _frameDurations.Length; index++)
+        {
+            if (!NumericValidation.IsPositive(_frameDurations[index]))
+                ArgGuard.ThrowOutOfRange(_frameDurations[index], $"Frame duration at index {index} must be positive and finite.", nameof(frameDurations));
+        }
 
         _frameEndTimes = CreateFrameEndTimes(_frameDurations, out var totalDuration);
         var firstDuration = _frameDurations[0];
