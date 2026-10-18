@@ -17,6 +17,7 @@ public sealed class TrialsGame2DTests
         game.Initialize();
         var input = new InputState();
         var radius = Assert.IsType<Circle2D>(game.Player.WorldObject.Shape).Radius;
+        Assert.Equal(0.5f * game.Player.Mass * radius * radius, game.Player.MomentOfInertia);
         var spawnHeight = game.Player.WorldObject.Transform.Position.Y;
         Advance(game, input, 30);
         Assert.InRange(game.Player.WorldObject.Transform.Position.Y, radius, spawnHeight - 1f);

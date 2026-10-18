@@ -1,13 +1,14 @@
 using App2d.Core.Collision;
+using App2d.Core.Geometry.Operations.MassProperties;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Physics;
 
-public sealed class PhysicsBody2D
+public sealed class RigidBody2D
 {
-    private HashSet<PhysicsBody2D>? _ignoredOneWayPlatforms;
+    private HashSet<RigidBody2D>? _ignoredOneWayPlatforms;
     private float _mass = 1f;
     private float _momentOfInertia = 1f;
     private float _oneWaySlop = 2f;
@@ -16,10 +17,7 @@ public sealed class PhysicsBody2D
 
     private BodyMotionType2D _motionType;
 
-    internal PhysicsBody2D(
-        SpatialObject2D worldObject,
-        BodyMotionType2D motionType,
-        Collider2D collider)
+    internal RigidBody2D(SpatialObject2D worldObject, BodyMotionType2D motionType, Collider2D collider)
     {
         WorldObject = ArgGuard.RequireNotNull(worldObject);
         Collider = ArgGuard.RequireNotNull(collider);
@@ -40,8 +38,15 @@ public sealed class PhysicsBody2D
             Collider.Mobility = ToColliderMobility(value);
         }
     }
+    /// <summary>Velocity of the center of mass in world units per second.</summary>
     public Vector2 LinearVelocity { get; set; }
     public float AngularVelocity { get; set; }
+
+    /// <summary>Defaults to the transform origin; shape-derived mass methods set the actual local centroid.</summary>
+    public Vector2 LocalCenterOfMass { get; private set; }
+    public Vector2 WorldCenterOfMass => LocalCenterOfMass == Vector2.Zero
+        ? WorldObject.Transform.Position
+        : Vector2.Transform(LocalCenterOfMass, WorldObject.Transform.Matrix);
 
     /// <summary>
     /// When true (the default) contacts never impart spin; the body only
@@ -107,16 +112,19 @@ public sealed class PhysicsBody2D
     /// </summary>
     public bool TransfersContactMotion { get; set; }
     public bool IsWallGrippable { get; set; }
+
     public uint CollisionLayer
     {
         get => Collider.CollisionLayer;
         set => Collider.CollisionLayer = value;
     }
+
     public uint CollisionMask
     {
         get => Collider.CollisionMask;
         set => Collider.CollisionMask = value;
     }
+
     /// <summary>Owning gameplay entity; collision queries expose the same ID.</summary>
     public EntityId2D EntityId
     {
@@ -144,6 +152,7 @@ public sealed class PhysicsBody2D
         }
     }
 
+    /// <summary>Inertia about the center of mass, perpendicular to the plane, in mass * world units squared.</summary>
     public float MomentOfInertia
     {
         get => _momentOfInertia;
@@ -157,6 +166,47 @@ public sealed class PhysicsBody2D
     public float InverseMass => MotionType == BodyMotionType2D.Dynamic ? 1f / Mass : 0f;
     public float InverseInertia => MotionType == BodyMotionType2D.Dynamic ? 1f / MomentOfInertia : 0f;
     public float EffectiveInverseInertia => FreezeRotation ? 0f : InverseInertia;
+
+    /// <summary>
+    /// Sets uniform-solid mass, centroid and inertia from density per square world unit.
+    /// Includes the current uniform scale. Recalculate after changing scale; explicit legacy values remain supported.
+    /// </summary>
+    public void SetMassFromDensity(float density = 1f)
+    {
+        ArgGuard.Positive(density);
+        var properties = ShapeMassProperties2D.Calculate(WorldObject.Shape, density);
+        var scale = (double)WorldObject.CollisionPose.Scale;
+        ApplyMassProperties(properties, properties.Mass * scale * scale,
+            properties.MomentOfInertia * scale * scale * scale * scale);
+    }
+
+    /// <summary>Sets a chosen total mass and derives the uniform-solid centroid and inertia at the current uniform scale.</summary>
+    public void SetMassFromShape(float mass)
+    {
+        ArgGuard.Positive(mass);
+        var properties = ShapeMassProperties2D.Calculate(WorldObject.Shape).WithMass(mass);
+        var scale = (double)WorldObject.CollisionPose.Scale;
+        ApplyMassProperties(properties, mass, properties.MomentOfInertia * scale * scale);
+    }
+
+    private void ApplyMassProperties(MassProperties2D properties, double mass, double inertia)
+    {
+        // Validate every conversion before changing the body, so unsupported or oversized shapes leave it intact.
+        var nextMass = ArgGuard.Positive((float)mass);
+        var nextInertia = ArgGuard.Positive((float)inertia);
+        var nextCenter = properties.CenterOfMass.ToVector2();
+        ArgGuard.Finite(nextCenter);
+        var nextWorldCenter = Vector2.Transform(nextCenter, WorldObject.Transform.Matrix);
+        ArgGuard.Finite(nextWorldCenter);
+        // Preserve the velocity field when the reference point changes on an already spinning body.
+        var offset = nextWorldCenter - WorldCenterOfMass;
+        var nextVelocity = LinearVelocity + AngularVelocity * new Vector2(-offset.Y, offset.X);
+        ArgGuard.Finite(nextVelocity);
+        Mass = nextMass;
+        MomentOfInertia = nextInertia;
+        LocalCenterOfMass = nextCenter;
+        LinearVelocity = nextVelocity;
+    }
 
     public void AddForce(Vector2 force) => AccumulatedForce += force;
     public void AddTorque(float torque) => AccumulatedTorque += torque;
@@ -183,33 +233,29 @@ public sealed class PhysicsBody2D
         AccumulatedTorque = 0f;
     }
 
-    public void IgnoreOneWayPlatform(PhysicsBody2D platform)
+    public void IgnoreOneWayPlatform(RigidBody2D platform)
     {
         ArgGuard.ThrowIfNull(platform);
         (_ignoredOneWayPlatforms ??= []).Add(platform);
     }
 
-    public bool IsIgnoringOneWayPlatform(PhysicsBody2D platform)
+    public bool IsIgnoringOneWayPlatform(RigidBody2D platform)
     {
         ArgGuard.ThrowIfNull(platform);
         return _ignoredOneWayPlatforms?.Contains(platform) == true;
     }
 
-    public void ClearIgnoredOneWayPlatforms() =>
-        _ignoredOneWayPlatforms?.Clear();
+    public void ClearIgnoredOneWayPlatforms() => _ignoredOneWayPlatforms?.Clear();
 
-    public int IgnoredOneWayPlatformCount =>
-        _ignoredOneWayPlatforms?.Count ?? 0;
+    public int IgnoredOneWayPlatformCount => _ignoredOneWayPlatforms?.Count ?? 0;
 
-    public void RemoveIgnoredOneWayPlatformsWhere(
-        Predicate<PhysicsBody2D> match)
+    public void RemoveIgnoredOneWayPlatformsWhere(Predicate<RigidBody2D> match)
     {
         ArgGuard.ThrowIfNull(match);
         _ignoredOneWayPlatforms?.RemoveWhere(match);
     }
 
-    public bool CanCollideWith(PhysicsBody2D other) =>
-        Collider.CanCollideWith(other.Collider);
+    public bool CanCollideWith(RigidBody2D other) => Collider.CanCollideWith(other.Collider);
 
     private static ColliderMobility2D ToColliderMobility(BodyMotionType2D motionType) =>
         motionType == BodyMotionType2D.Static

@@ -13,7 +13,7 @@ namespace App2d.Gameplay.Persons.Actions;
 
 internal sealed class SwordPersonWeapon2D(
     EntityIdAllocator2D ids,
-    PhysicsBody2D ownerBody,
+    RigidBody2D ownerBody,
     CombatFaction2D ownerFaction,
     uint targetLayer,
     CombatSystem2D combat,
@@ -75,7 +75,7 @@ internal sealed class SwordPersonWeapon2D(
 
     private sealed class DownwardSwing(
         EntityId2D sourceId,
-        PhysicsBody2D body,
+        RigidBody2D body,
         CombatFaction2D faction,
         uint layer,
         CombatSystem2D combatSystem,

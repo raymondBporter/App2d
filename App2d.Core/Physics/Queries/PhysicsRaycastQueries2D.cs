@@ -9,8 +9,8 @@ public static class PhysicsRaycastQueries2D
 {
     extension(PhysicsWorld2D world)
     {
-        public bool Raycast(Ray2D ray, float maxDistance, out RaycastHit2D<PhysicsBody2D> hit, uint layerMask = uint.MaxValue, bool includeSensors = true,
-            RayQueryFilter2D<PhysicsBody2D>? filter = null)
+        public bool Raycast(Ray2D ray, float maxDistance, out RaycastHit2D<RigidBody2D> hit, uint layerMask = uint.MaxValue, bool includeSensors = true,
+            RayQueryFilter2D<RigidBody2D>? filter = null)
         {
             ArgGuard.ThrowIfNull(world);
             ray.Validate();
@@ -39,8 +39,8 @@ public static class PhysicsRaycastQueries2D
             return found;
         }
 
-        public int RaycastAll(Ray2D ray, float maxDistance, Span<RaycastHit2D<PhysicsBody2D>> hits, uint layerMask = uint.MaxValue, bool includeSensors = true,
-            RayQueryFilter2D<PhysicsBody2D>? filter = null)
+        public int RaycastAll(Ray2D ray, float maxDistance, Span<RaycastHit2D<RigidBody2D>> hits, uint layerMask = uint.MaxValue, bool includeSensors = true,
+            RayQueryFilter2D<RigidBody2D>? filter = null)
         {
             ArgGuard.ThrowIfNull(world);
             ray.Validate();
@@ -66,7 +66,7 @@ public static class PhysicsRaycastQueries2D
         }
     }
 
-    private static bool ShouldQuery(PhysicsBody2D body, uint layerMask, bool includeSensors, RayQueryFilter2D<PhysicsBody2D>? filter)
+    private static bool ShouldQuery(RigidBody2D body, uint layerMask, bool includeSensors, RayQueryFilter2D<RigidBody2D>? filter)
     {
         return body.IsCollider && (body.CollisionLayer & layerMask) != 0u && (includeSensors || !body.IsSensor) && (filter is null || filter(body));
     }

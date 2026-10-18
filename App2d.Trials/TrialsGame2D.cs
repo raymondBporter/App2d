@@ -37,11 +37,12 @@ public sealed partial class TrialsGame2D : Game2D
         var player = new WorldObject2D(Circle2D.Builder.Create(PlayerRadius), new SolidColorShader(new XnaColor(255, 197, 102)));
         Scene.Add(player);
         Player = _world.AddBody(player, BodyMotionType2D.Dynamic);
+        Player.SetMassFromShape(1f);
         Player.Restitution = 0f;
         ResetPlayer();
     }
 
-    public PhysicsBody2D Player { get; }
+    public RigidBody2D Player { get; }
     public override string WindowTitle => "App2d Trials";
 
     public override void Initialize() => ResetPlayer();

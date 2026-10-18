@@ -16,7 +16,7 @@ namespace App2d.Gameplay.Persons.Actions;
 public sealed class UnarmedPersonActions2D : IPersonActionSet2D
 {
     private readonly CombatSystem2D _combat;
-    private readonly PhysicsBody2D _ownerBody;
+    private readonly RigidBody2D _ownerBody;
     private readonly CombatFaction2D _ownerFaction;
     private readonly uint _targetLayer;
     private readonly Attack _punch;
@@ -24,7 +24,7 @@ public sealed class UnarmedPersonActions2D : IPersonActionSet2D
 
     public UnarmedPersonActions2D(
         EntityIdAllocator2D ids,
-        PhysicsBody2D ownerBody,
+        RigidBody2D ownerBody,
         CombatFaction2D ownerFaction,
         uint targetLayer,
         CombatSystem2D combat)

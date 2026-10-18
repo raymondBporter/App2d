@@ -260,7 +260,7 @@ public sealed class PlayerSpellTests
         public Person2D Player { get; }
         public PersonArsenal2D Arsenal { get; }
         public SideScrollerSession2D Session { get; }
-        public PhysicsBody2D Floor { get; }
+        public RigidBody2D Floor { get; }
         public List<WeaponEvent2D> Events { get; } = [];
         public SpellState2D Spells => Player.CaptureState().Spells;
 

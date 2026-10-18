@@ -13,7 +13,7 @@ public sealed partial class PersonLocomotion2D
 {
     private readonly PhysicsWorld2D _physics;
     private readonly CollisionSystem2D _collision;
-    private readonly PhysicsBody2D _body;
+    private readonly RigidBody2D _body;
     private readonly List<Collider2D> _queryResults = [];
     private PersonMovementIntent2D _intent;
     private Vector2 _positionBeforePhysics;
@@ -35,7 +35,7 @@ public sealed partial class PersonLocomotion2D
     public PersonLocomotion2D(
         CollisionSystem2D collision,
         PhysicsWorld2D physics,
-        PhysicsBody2D body,
+        RigidBody2D body,
         TraversalMetrics2D metrics,
         IChunkedTileMap2D? tileMap = null)
     {
@@ -471,7 +471,7 @@ public sealed partial class PersonLocomotion2D
         QueryBodyBounds(ExpandedSide(bodyBounds, direction, maximumGap));
         foreach (var collider in _queryResults)
         {
-            if (collider.UserData is not PhysicsBody2D other ||
+            if (collider.UserData is not RigidBody2D other ||
                 ReferenceEquals(other, _body) ||
                 other.MotionType == BodyMotionType2D.Dynamic ||
                 other.OneWaySurfaceNormal == Vector2.UnitY ||
@@ -523,7 +523,7 @@ public sealed partial class PersonLocomotion2D
         QueryBodyBounds(ExpandedDown(bodyBounds, maximumGap));
         foreach (var collider in _queryResults)
         {
-            if (collider.UserData is not PhysicsBody2D other)
+            if (collider.UserData is not RigidBody2D other)
             {
                 continue;
             }
@@ -563,7 +563,7 @@ public sealed partial class PersonLocomotion2D
         QueryBodyBounds(ExpandedDown(bounds, Metrics.GroundProbeDistance));
         foreach (var collider in _queryResults)
         {
-            if (collider.UserData is not PhysicsBody2D other || !CanSupport(other))
+            if (collider.UserData is not RigidBody2D other || !CanSupport(other))
             {
                 continue;
             }
@@ -595,12 +595,12 @@ public sealed partial class PersonLocomotion2D
 
     private bool TryBeginDropThrough()
     {
-        List<PhysicsBody2D>? oneWaySupports = null;
+        List<RigidBody2D>? oneWaySupports = null;
         var bodyBounds = _body.WorldObject.WorldBounds;
         QueryBodyBounds(ExpandedDown(bodyBounds, Metrics.GroundProbeDistance));
         foreach (var collider in _queryResults)
         {
-            if (collider.UserData is not PhysicsBody2D other)
+            if (collider.UserData is not RigidBody2D other)
             {
                 continue;
             }
@@ -641,9 +641,7 @@ public sealed partial class PersonLocomotion2D
             _body.IgnoreOneWayPlatform(support);
         }
 
-        _body.LinearVelocity = new Vector2(
-            _body.LinearVelocity.X,
-            Math.Min(_body.LinearVelocity.Y, -Metrics.OneWayDropSpeed));
+        _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, Math.Min(_body.LinearVelocity.Y, -Metrics.OneWayDropSpeed));
         return true;
     }
 
@@ -699,7 +697,7 @@ public sealed partial class PersonLocomotion2D
         QueryBodyBounds(ExpandedDown(bodyBounds, Metrics.LandingSnapDistance));
         foreach (var collider in _queryResults)
         {
-            if (collider.UserData is not PhysicsBody2D other || !CanSupport(other))
+            if (collider.UserData is not RigidBody2D other || !CanSupport(other))
             {
                 continue;
             }
@@ -732,7 +730,7 @@ public sealed partial class PersonLocomotion2D
         QueryBodyBounds(ExpandedDown(bodyBounds, Metrics.LandingSnapDistance));
         foreach (var collider in _queryResults)
         {
-            if (collider.UserData is not PhysicsBody2D other)
+            if (collider.UserData is not RigidBody2D other)
             {
                 continue;
             }
@@ -832,7 +830,7 @@ public sealed partial class PersonLocomotion2D
             QueryBodyBounds(_body.WorldObject.WorldBounds);
             foreach (var collider in _queryResults)
             {
-                if (collider.UserData is not PhysicsBody2D other)
+                if (collider.UserData is not RigidBody2D other)
                 {
                     continue;
                 }
@@ -865,7 +863,7 @@ public sealed partial class PersonLocomotion2D
         _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, verticalSpeed);
     }
 
-    private bool CanSupport(PhysicsBody2D other) =>
+    private bool CanSupport(RigidBody2D other) =>
         !ReferenceEquals(other, _body) &&
         !_body.IsIgnoringOneWayPlatform(other) &&
         other.MotionType != BodyMotionType2D.Dynamic &&

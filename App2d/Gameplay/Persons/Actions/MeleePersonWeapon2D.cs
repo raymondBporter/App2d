@@ -14,7 +14,7 @@ namespace App2d.Gameplay.Persons.Actions;
 internal abstract class MeleePersonWeapon2D(
     EquipmentKind2D kind,
     EntityId2D attackSourceId,
-    PhysicsBody2D ownerBody,
+    RigidBody2D ownerBody,
     IShape2D hitboxShape,
     MeleeAttackProfile2D attackProfile,
     int damage,
@@ -25,7 +25,7 @@ internal abstract class MeleePersonWeapon2D(
     Action<float> attackStarted,
     Action<WeaponEvent2D> publish, AuthoredHero2D? authored = null) : PersonWeapon2DBase(kind)
 {
-    private readonly PhysicsBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
+    private readonly RigidBody2D _ownerBody = ArgGuard.RequireNotNull(ownerBody);
     private readonly CombatSystem2D _combat = ArgGuard.RequireNotNull(combat);
     private readonly Action<float> _attackStarted = ArgGuard.RequireNotNull(attackStarted);
     private readonly Action<WeaponEvent2D> _publish = ArgGuard.RequireNotNull(publish);

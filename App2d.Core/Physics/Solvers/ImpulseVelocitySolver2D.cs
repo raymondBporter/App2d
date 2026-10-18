@@ -19,9 +19,8 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
         }
 
         var normal = contact.Geometry.Normal;
-        // Centers of mass are approximated by the transform positions.
-        var firstArm = contact.Geometry.Point - first.WorldObject.Transform.Position;
-        var secondArm = contact.Geometry.Point - second.WorldObject.Transform.Position;
+        var firstArm = contact.Geometry.Point - first.WorldCenterOfMass;
+        var secondArm = contact.Geometry.Point - second.WorldCenterOfMass;
 
         var relativeVelocity = PointVelocity(first, firstArm) - PointVelocity(second, secondArm);
         var normalSpeed = Vector2.Dot(relativeVelocity, normal);
@@ -68,10 +67,10 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
     }
 
     // ω × r in 2D is ω * PerpCcw(r).
-    private static Vector2 PointVelocity(PhysicsBody2D body, Vector2 arm) =>
+    private static Vector2 PointVelocity(RigidBody2D body, Vector2 arm) =>
         body.LinearVelocity + body.AngularVelocity * arm.PerpCcw;
 
-    private static void Apply(PhysicsBody2D first, PhysicsBody2D second, Vector2 firstArm, Vector2 secondArm, Vector2 impulse)
+    private static void Apply(RigidBody2D first, RigidBody2D second, Vector2 firstArm, Vector2 secondArm, Vector2 impulse)
     {
         first.LinearVelocity += impulse * first.InverseMass;
         first.AngularVelocity += first.EffectiveInverseInertia * firstArm.Cross(impulse);

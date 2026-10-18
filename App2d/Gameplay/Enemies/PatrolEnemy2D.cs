@@ -15,7 +15,7 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
     private float _stunSeconds;
 
     public PatrolEnemy2D(EntityId2D id,
-        SpatialObject2D worldObject, PhysicsBody2D body, float patrolMinX, float patrolMaxX, float speed, int health)
+        SpatialObject2D worldObject, RigidBody2D body, float patrolMinX, float patrolMaxX, float speed, int health)
     {
         ArgGuard.ThrowIf(!id.IsValid, "An enemy requires a valid entity ID.", nameof(id));
         Id = id;
@@ -33,7 +33,7 @@ public sealed class PatrolEnemy2D : ICombatant2D, IContactDamageSource2D
 
     public EntityId2D Id { get; }
     public SpatialObject2D WorldObject { get; }
-    public PhysicsBody2D Body { get; }
+    public RigidBody2D Body { get; }
     public Health2D Health { get; }
     public CombatFaction2D Faction => CombatFaction2D.Enemy;
     public int ContactDamage => 1;

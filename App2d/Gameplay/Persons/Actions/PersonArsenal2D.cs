@@ -21,7 +21,7 @@ public sealed partial class PersonArsenal2D : ISessionPlayerActions2D
 
     public PersonArsenal2D(
         EntityIdAllocator2D ids,
-        PhysicsBody2D ownerBody,
+        RigidBody2D ownerBody,
         Vector2 muzzleOffset,
         CollisionSystem2D collision,
         uint worldLayer,

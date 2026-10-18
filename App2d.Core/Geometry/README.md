@@ -1,5 +1,59 @@
 # Geometry
 
+## Solid mass properties
+
+`ShapeMassProperties2D.Calculate(shape, density: 1d)` in
+`App2d.Core.Geometry.Operations.MassProperties` returns `MassProperties2D` with
+double-precision `Area`, `Mass`, `CenterOfMass` (`Vector2d`), and `MomentOfInertia`.
+The input is a solid 2D lamina with uniform mass per unit area; constant thickness
+is absorbed into density. Geometry stays in the shape's local coordinates.
+
+The defining integrals are:
+
+- `mass = density * integral(dA)`
+- `center = integral(position * dA) / area`
+- `I = density * integral(|position - center|² * dA)`
+
+`I` describes rotation about the axis perpendicular to the plane through the center
+of mass. Mass farther from that center contributes in proportion to distance squared.
+The [OpenStax derivation](https://openstax.org/books/university-physics-volume-1/pages/10-5-calculating-moments-of-inertia)
+explains the integral and parallel-axis theorem;
+[Box2D's geometry implementation](https://github.com/erincatto/box2d/blob/main/src/geometry.c)
+provides an independent reference for disk, capsule and polygon mass properties.
+
+| Solid shape | Center | Centroidal polar inertia, total mass `m` |
+| --- | --- | --- |
+| Circle / disk, radius `r` | Circle center | `m * r² / 2` |
+| Ellipse, semi-axes `a`, `b` | Ellipse center | `m * (a² + b²) / 4` |
+| Rectangle / axis-aligned rectangle, width `w`, height `h` | Rectangle center | `m * (w² + h²) / 12` |
+| Triangle, side lengths `a`, `b`, `c` | Mean of its three vertices | `m * (a² + b² + c²) / 36` |
+| Convex or concave simple polygon | Area-weighted centroid | Exact signed edge integrals, either winding |
+| Capsule | Spine midpoint | Exact rectangle plus two semicircles |
+| Rounded rectangle | Outer rectangle center | Exact inner rectangle, edge strips and quarter disks |
+| Additive composite (`IncludeOverlap = true`) | Mass-weighted part centroids | Sum of part inertias, shifted to the combined center |
+
+Polygon integration shifts coordinates near the shape before summing, then integrates
+inertia directly about its centroid. Translation therefore does not introduce the
+large-origin cancellation of subtracting `mass * |center|²` from an origin inertia.
+Curved primitives use formulas, with no outline sampling. Compound pieces combine via
+`I = sum(I_part + mass_part * |center_part - center|²)`. Additive overlap counts as
+multiple layers of material, matching the composite's additive area semantics.
+
+`properties.WithMass(mass)` chooses a new uniform density without moving the center.
+`properties.MomentOfInertiaAbout(point)` uses `I_point = I_center + mass * distance²`.
+Infinite half-spaces, unknown custom shapes, and composites requesting overlap-counted-once
+union mass (`IncludeOverlap = false`, more than one part) throw `NotSupportedException`.
+Use a simple polygon outline or a decomposition into non-overlapping additive parts for
+those unions in this first implementation. No bounding-box or sampled inertia is substituted.
+
+`RigidBody2D.SetMassFromDensity` and `SetMassFromShape` apply these results to live
+physics and include the current uniform scale. At fixed density, scaling lengths by
+`s` scales mass by `s²` and inertia by `s⁴`; at fixed total mass, inertia scales by `s²`.
+Rotation and mirroring preserve scalar inertia. Nonuniform scale and shear retain the
+existing collision restriction; recalculate mass properties after changing size.
+
+## Geometry organization
+
 `App2d.Core` geometry is layered so that each kind of question has one home:
 
 | Namespace | Holds | Depends on |

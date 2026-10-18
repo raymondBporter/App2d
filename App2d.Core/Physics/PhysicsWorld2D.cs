@@ -14,7 +14,7 @@ namespace App2d.Core.Physics;
 
 public sealed class PhysicsWorld2D
 {
-    private readonly List<PhysicsBody2D> _bodies = [];
+    private readonly List<RigidBody2D> _bodies = [];
     private readonly List<PhysicsContact2D> _lastContacts = [];
     private readonly List<IPhysicsConstraint2D> _constraints = [];
     // Contacts keep first-seen order explicitly so solver order never depends on
@@ -40,29 +40,29 @@ public sealed class PhysicsWorld2D
     public int VelocityIterations { get; set; } = 1;
     public float MaxSubstepSeconds { get; set; } = 1f / 60f;
     public IPhysicsIntegrator2D Integrator { get; set; } = new SemiImplicitEulerIntegrator2D();
-    public IPairFilter2D<PhysicsBody2D> PairFilter { get; set; } = new DefaultPhysicsPairFilter2D();
+    public IPairFilter2D<RigidBody2D> PairFilter { get; set; } = new DefaultPhysicsPairFilter2D();
     public IPhysicsPositionSolver2D PositionSolver { get; set; } = new MassWeightedPositionSolver2D();
     public IPhysicsVelocitySolver2D VelocitySolver { get; set; } = new ImpulseVelocitySolver2D();
     public CollisionSystem2D CollisionSystem { get; }
-    public IReadOnlyList<PhysicsBody2D> Bodies => _bodies;
+    public IReadOnlyList<RigidBody2D> Bodies => _bodies;
     public IReadOnlyList<PhysicsContact2D> LastContacts => _lastContacts;
     public int LastCandidatePairCount => CollisionSystem.LastCandidatePairCount;
     public IList<IPhysicsConstraint2D> Constraints => _constraints;
 
-    public PhysicsBody2D AddBody(SpatialObject2D worldObject, BodyMotionType2D motionType, int? restoredColliderId = null)
+    public RigidBody2D AddBody(SpatialObject2D worldObject, BodyMotionType2D motionType, int? restoredColliderId = null)
     {
         var collider = CollisionSystem.AddCollider(
             worldObject,
             motionType == BodyMotionType2D.Static
                 ? ColliderMobility2D.Static
                 : ColliderMobility2D.Dynamic, restoredColliderId);
-        var body = new PhysicsBody2D(worldObject, motionType, collider);
+        var body = new RigidBody2D(worldObject, motionType, collider);
         collider.UserData = body;
         _bodies.Add(body);
         return body;
     }
 
-    public bool RemoveBody(PhysicsBody2D body)
+    public bool RemoveBody(RigidBody2D body)
     {
         ArgGuard.ThrowIfNull(body);
         if (!_bodies.Remove(body))
@@ -121,18 +121,16 @@ public sealed class PhysicsWorld2D
     {
         foreach (var contact in _lastContacts)
         {
-            PhysicsBody2D surface;
-            PhysicsBody2D rider;
+            RigidBody2D surface;
+            RigidBody2D rider;
             Vector2 normal;
-            if (contact.First.MotionType == BodyMotionType2D.Kinematic &&
-                contact.First.TransfersContactMotion)
+            if (contact.First.MotionType == BodyMotionType2D.Kinematic && contact.First.TransfersContactMotion)
             {
                 surface = contact.First;
                 rider = contact.Second;
                 normal = -contact.Geometry.Normal;
             }
-            else if (contact.Second.MotionType == BodyMotionType2D.Kinematic &&
-                contact.Second.TransfersContactMotion)
+            else if (contact.Second.MotionType == BodyMotionType2D.Kinematic && contact.Second.TransfersContactMotion)
             {
                 surface = contact.Second;
                 rider = contact.First;
@@ -143,8 +141,7 @@ public sealed class PhysicsWorld2D
                 continue;
             }
 
-            if (rider.MotionType != BodyMotionType2D.Dynamic || rider.IsSensor ||
-                rider.IsIgnoringOneWayPlatform(surface))
+            if (rider.MotionType != BodyMotionType2D.Dynamic || rider.IsSensor || rider.IsIgnoringOneWayPlatform(surface))
             {
                 continue;
             }
@@ -167,7 +164,7 @@ public sealed class PhysicsWorld2D
         }
     }
 
-    public bool IsTouching(PhysicsBody2D body)
+    public bool IsTouching(RigidBody2D body)
     {
         foreach (var contact in _lastContacts)
         {
@@ -180,7 +177,7 @@ public sealed class PhysicsWorld2D
         return false;
     }
 
-    public bool IsTouching(PhysicsBody2D body, Vector2 direction, float minimumDot = 0.5f)
+    public bool IsTouching(RigidBody2D body, Vector2 direction, float minimumDot = 0.5f)
     {
         if (direction.LengthSquared() <= float.Epsilon)
         {
@@ -215,13 +212,11 @@ public sealed class PhysicsWorld2D
         for (var iteration = 0; iteration < PositionIterations; iteration++)
         {
             var foundContact = false;
-            CollisionSystem.CollectContacts(
-                _collisionContacts,
-                _physicsColliderPairFilter);
+            CollisionSystem.CollectContacts(_collisionContacts, _physicsColliderPairFilter);
             foreach (var pair in _collisionContacts)
             {
-                if (pair.First.UserData is not PhysicsBody2D firstBody ||
-                    pair.Second.UserData is not PhysicsBody2D secondBody)
+                if (pair.First.UserData is not RigidBody2D firstBody ||
+                    pair.Second.UserData is not RigidBody2D secondBody)
                 {
                     continue;
                 }
@@ -309,8 +304,8 @@ public sealed class PhysicsWorld2D
     }
 
     private static bool AllowsOneWaySurface(
-        PhysicsBody2D surface,
-        PhysicsBody2D other,
+        RigidBody2D surface,
+        RigidBody2D other,
         Vector2 surfaceNormal,
         Vector2 otherSeparationNormal,
         CollisionContact2D geometry)
@@ -381,7 +376,7 @@ public sealed class PhysicsWorld2D
     private sealed class ContactSet
     {
         private readonly List<PhysicsContact2D> _contacts = [];
-        private readonly Dictionary<(PhysicsBody2D First, PhysicsBody2D Second), int> _index = [];
+        private readonly Dictionary<(RigidBody2D First, RigidBody2D Second), int> _index = [];
 
         public IReadOnlyList<PhysicsContact2D> Contacts => _contacts;
 
@@ -410,8 +405,8 @@ public sealed class PhysicsWorld2D
         IPairFilter2D<Collider2D>
     {
         public bool ShouldTest(Collider2D first, Collider2D second) =>
-            first.UserData is PhysicsBody2D firstBody &&
-            second.UserData is PhysicsBody2D secondBody &&
+            first.UserData is RigidBody2D firstBody &&
+            second.UserData is RigidBody2D secondBody &&
             world.PairFilter.ShouldTest(firstBody, secondBody);
     }
 

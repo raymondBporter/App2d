@@ -154,5 +154,5 @@ internal sealed class SideScrollerChunkStreamer2D(PhysicsWorld2D physics, IChunk
 
     private readonly record struct ChunkCollider(
         SpatialObject2D Platform,
-        PhysicsBody2D Body);
+        RigidBody2D Body);
 }

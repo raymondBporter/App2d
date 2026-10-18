@@ -24,7 +24,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
     private readonly Shot _shot;
     private float BoltWidth => _shot.Size.X;
     private const int ProjectileIdCapacity = 1 << 20;
-    private readonly PhysicsBody2D _ownerBody;
+    private readonly RigidBody2D _ownerBody;
     private readonly CollisionSystem2D _collision;
     private readonly uint _worldLayer;
     private readonly uint _targetLayer;
@@ -47,7 +47,7 @@ internal sealed class GunPersonWeapon2D : PersonWeapon2DBase
 
     public GunPersonWeapon2D(
         EntityIdAllocator2D ids,
-        PhysicsBody2D ownerBody, Vector2 muzzleOffset, CollisionSystem2D collision,
+        RigidBody2D ownerBody, Vector2 muzzleOffset, CollisionSystem2D collision,
         uint worldLayer, uint targetLayer, CombatFaction2D ownerFaction,
         CombatSystem2D combat, Action shotStarted, Action<WeaponEvent2D> publish, Func<float, Vector2>? muzzle = null, Shot? shot = null,
         float chargeSeconds = .6f, float recoverySeconds = .06f, Func<bool>? spendEnergy = null)

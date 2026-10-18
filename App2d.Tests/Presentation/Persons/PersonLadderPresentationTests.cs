@@ -103,7 +103,7 @@ public sealed class PersonLadderPresentationTests
         }
     }
 
-    private PhysicsBody2D AddSolid(Vector2 center, Vector2 size)
+    private RigidBody2D AddSolid(Vector2 center, Vector2 size)
     {
         var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(size));
         spatial.Transform.Position = center;

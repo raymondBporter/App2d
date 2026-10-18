@@ -52,7 +52,7 @@ public sealed class MovingPlatform2D : IDisposable
     public MovingPlatformDefinition2D CaptureDefinition() => new(Id, ThingId, Size, ColorArgb);
     public MovingPlatformState2D CaptureState() => new(Id, WorldObject.Transform.Position);
     public SpatialObject2D WorldObject { get; }
-    public PhysicsBody2D Body { get; }
+    public RigidBody2D Body { get; }
     public Vector2 Start => _motion.Start;
     public Vector2 End => _motion.End;
 

@@ -27,7 +27,7 @@ public sealed record PhysicsBodySettings2D
     }
 
     /// <summary>Validates before registering anything. Identity and collision layers belong to the spawning world.</summary>
-    public PhysicsBody2D CreateBody(PhysicsWorld2D world, SpatialObject2D worldObject)
+    public RigidBody2D CreateBody(PhysicsWorld2D world, SpatialObject2D worldObject)
     {
         ArgGuard.ThrowIfNull(world);
         ArgGuard.ThrowIfNull(worldObject);

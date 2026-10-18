@@ -2,7 +2,7 @@ using App2d.Core.Collision.Filtering;
 
 namespace App2d.Core.Physics.Filtering;
 
-public sealed class DefaultPhysicsPairFilter2D : IPairFilter2D<PhysicsBody2D>
+public sealed class DefaultPhysicsPairFilter2D : IPairFilter2D<RigidBody2D>
 {
     public bool TestStaticStatic { get; set; }
     public bool TestStaticKinematic { get; set; }
@@ -11,7 +11,7 @@ public sealed class DefaultPhysicsPairFilter2D : IPairFilter2D<PhysicsBody2D>
     public bool TestKinematicDynamic { get; set; } = true;
     public bool TestDynamicDynamic { get; set; } = true;
 
-    public bool ShouldTest(PhysicsBody2D first, PhysicsBody2D second)
+    public bool ShouldTest(RigidBody2D first, RigidBody2D second)
     {
         if (!first.CanCollideWith(second))
         {

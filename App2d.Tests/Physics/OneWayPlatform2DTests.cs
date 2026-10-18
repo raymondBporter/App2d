@@ -181,7 +181,7 @@ public sealed class OneWayPlatform2DTests
             VelocityIterations = 1
         };
 
-    private static PhysicsBody2D AddOneWayPlatform(
+    private static RigidBody2D AddOneWayPlatform(
         PhysicsWorld2D world,
         Vector2 position,
         Vector2 size)
@@ -197,7 +197,7 @@ public sealed class OneWayPlatform2DTests
         return platform;
     }
 
-    private static PhysicsBody2D AddDynamicBox(
+    private static RigidBody2D AddDynamicBox(
         PhysicsWorld2D world,
         Vector2 position,
         Vector2 size)

@@ -125,7 +125,7 @@ public sealed class PersonBalancePresentationTests
         _person.UpdateAfterPhysics(Dt);
     }
 
-    private PhysicsBody2D AddLedge(int edge, float overhang = 0.4f, BodyMotionType2D motion = BodyMotionType2D.Static)
+    private RigidBody2D AddLedge(int edge, float overhang = 0.4f, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
         var bounds = _person.WorldObject.WorldBounds;
         return edge > 0
@@ -133,7 +133,7 @@ public sealed class PersonBalancePresentationTests
             : AddSupport(bounds.Left + bounds.Size.X * overhang, 200f, motion);
     }
 
-    private PhysicsBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
+    private RigidBody2D AddSupport(float left, float right, BodyMotionType2D motion = BodyMotionType2D.Static)
     {
         var spatial = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(right - left, 32f));
         spatial.Transform.Position = new Vector2((left + right) / 2f, -16f);

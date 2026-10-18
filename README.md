@@ -312,7 +312,7 @@ var ray = Ray2D.FromPoints(origin, mouseWorld);
 
 if (physics.Raycast(ray, 800f, out var hit, layerMask: WorldLayer))
 {
-    PhysicsBody2D body = hit.Item;
+    RigidBody2D body = hit.Item;
     Vector2 point = hit.Point;
     Vector2 normal = hit.Normal;
     float distance = hit.Distance;
@@ -324,7 +324,7 @@ small, it retains the nearest hits. Because each generic hit contains a managed 
 reference, back that span with an array or pooled array rather than `stackalloc`.
 Physics queries skip disabled colliders and accept a layer mask, sensor toggle, and an
 optional predicate. Scene queries return `WorldObject2D` references; physics queries
-return `PhysicsBody2D` references.
+return `RigidBody2D` references.
 
 Bodies support static, kinematic, and dynamic motion; linear/angular velocity; force,
 torque, and impulses; mass and inertia; gravity scaling; restitution; sensors; and
@@ -333,6 +333,27 @@ of its blocking face (`+Y` for a floor, `+X` for a wall). Contacts from other fa
 or from bodies passing through are ignored. Use `Vector2.UnitY` for a one-way floor.
 Accumulated forces clear after a public step. The latest contacts remain available
 through `LastContacts`, `IsTouching(body)`, and directional `IsTouching(body, direction)`.
+
+Uniform solid mass properties are available through
+`ShapeMassProperties2D.Calculate(shape, density)` in
+`App2d.Core.Geometry.Operations.MassProperties`. It returns area, mass, center of
+mass, and moment of inertia about that center. See the
+[formulas and supported shapes](App2d.Core/Geometry/README.md#solid-mass-properties).
+On a live rigid body, choose either:
+
+```csharp
+body.SetMassFromDensity(0.01f); // mass per square world unit
+// Or choose total mass and derive inertia from the uniform solid shape:
+body.SetMassFromShape(2f);
+```
+
+Both include the body's current uniform scale and set `LocalCenterOfMass`;
+`WorldCenterOfMass` follows its transform. Recalculate after resizing. Contacts
+and center-to-center distance constraints use this center, and integration rotates
+around it. Linear velocity describes the center's motion. Existing explicit
+`Mass`, `MomentOfInertia`, and `PhysicsBodySettings2D` values remain supported;
+shape-derived values are opt-in. Trials opts its circle into a mass of 1, giving
+`I = 0.5 * mass * radius² = 288` at radius 24.
 
 A simple platform controller can therefore remain gameplay code:
 

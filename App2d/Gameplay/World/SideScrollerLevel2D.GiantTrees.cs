@@ -11,9 +11,9 @@ namespace App2d.Gameplay.World;
 
 public sealed partial class SideScrollerLevel2D
 {
-    private readonly List<PhysicsBody2D> _giantTreeBranches = [];
+    private readonly List<RigidBody2D> _giantTreeBranches = [];
     public ImmutableArray<GiantTree2D> GiantTrees { get; private set; } = [];
-    public IReadOnlyList<PhysicsBody2D> GiantTreeBranches => _giantTreeBranches;
+    public IReadOnlyList<RigidBody2D> GiantTreeBranches => _giantTreeBranches;
 
     /// <summary>Replaces the authored trees and their one-way platforms, publishing new level content.</summary>
     public void ReloadGiantTrees(IEnumerable<GiantTree2D> trees)

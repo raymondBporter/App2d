@@ -42,7 +42,7 @@ internal sealed class PhysicsProp2D : IEnemyActor2D, ICombatant2D
     public EntityId2D Id { get; }
     public PhysicsPropAsset Asset { get; }
     public SpatialObject2D WorldObject { get; }
-    public PhysicsBody2D Body { get; }
+    public RigidBody2D Body { get; }
     public Health2D Health { get; }
     public CombatFaction2D Faction => CombatFaction2D.Neutral;
     public bool IsAlive => true;

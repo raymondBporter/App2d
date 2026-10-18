@@ -4,6 +4,7 @@ using System.Numerics;
 
 namespace App2d.Core.Physics.Constraints;
 
+/// <summary>A distance limit between the bodies' centers of mass, without offset anchors.</summary>
 public sealed class DistanceConstraint2D : IPhysicsConstraint2D
 {
     private ConstraintLimit1D _limits;
@@ -11,14 +12,14 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
     private float _velocityStrength = 1f;
     private float _positionTolerance = 0.01f;
 
-    public DistanceConstraint2D(PhysicsBody2D first, PhysicsBody2D second, float restLength)
+    public DistanceConstraint2D(RigidBody2D first, RigidBody2D second, float restLength)
         : this(first, second, ConstraintLimit1D.Locked(restLength))
     {
     }
 
     public DistanceConstraint2D(
-        PhysicsBody2D first,
-        PhysicsBody2D second,
+        RigidBody2D first,
+        RigidBody2D second,
         ConstraintLimit1D limits)
     {
         ArgGuard.ThrowIfNull(first);
@@ -30,8 +31,8 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         Limits = limits;
     }
 
-    public PhysicsBody2D First { get; }
-    public PhysicsBody2D Second { get; }
+    public RigidBody2D First { get; }
+    public RigidBody2D Second { get; }
     public bool IsEnabled { get; set; } = true;
     public ConstraintLimit1D Limits
     {
@@ -93,8 +94,8 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         }
 
         var evaluation = ConstraintMath2D.EvaluateDistance(
-            First.WorldObject.Transform.Position,
-            Second.WorldObject.Transform.Position,
+            First.WorldCenterOfMass,
+            Second.WorldCenterOfMass,
             Limits,
             PositionTolerance);
         var relativeSpeed = Vector2.Dot(
@@ -131,8 +132,8 @@ public sealed class DistanceConstraint2D : IPhysicsConstraint2D
         }
 
         var evaluation = ConstraintMath2D.EvaluateDistance(
-            First.WorldObject.Transform.Position,
-            Second.WorldObject.Transform.Position,
+            First.WorldCenterOfMass,
+            Second.WorldCenterOfMass,
             Limits,
             PositionTolerance);
         if (MathF.Abs(evaluation.Limit.Error) <= PositionTolerance)

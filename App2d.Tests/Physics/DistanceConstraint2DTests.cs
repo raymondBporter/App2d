@@ -68,7 +68,7 @@ public sealed class DistanceConstraint2DTests
         Assert.Equal(new Vector2(10f, 0f), second.LinearVelocity);
     }
 
-    private static (PhysicsBody2D First, PhysicsBody2D Second) CreateBodies(float firstX, float secondX)
+    private static (RigidBody2D First, RigidBody2D Second) CreateBodies(float firstX, float secondX)
     {
         var world = new PhysicsWorld2D { Gravity = Vector2.Zero };
         var firstObject = new SpatialObject2D(Circle2D.Builder.Create(0.5f));
