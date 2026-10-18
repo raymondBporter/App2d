@@ -91,6 +91,7 @@ public sealed class Affine2DTests
         var matrix = new Matrix3x2(m11, m12, m21, m22, m31, m32);
         var affine = Affine2D.FromMatrix(matrix);
         Assert.Equal(matrix, affine.Matrix);
+        Assert.Equal(matrix, affine.EvaluateMatrix(affine.Position, affine.Rotation, affine.Scale, new(affine.ShearX, affine.ShearY)));
         Assert.Equal(matrix, (affine with
         {
         }).Matrix);
@@ -108,6 +109,60 @@ public sealed class Affine2DTests
             ShearY = affine.ShearY
         };
         Near(affine.TransformPoint(new(2, -3)), fromChannels.TransformPoint(new(2, -3)));
+    }
+
+    [Fact]
+    public void DirectChannelEvaluationAppliesScaleRotationThenTranslationAndAllowsCollapse()
+    {
+        var matrix = Affine2D.CreateMatrix(new(10, 20), MathF.PI / 2, new(2, 3));
+        Near(new(4, 22), Vector2.Transform(new(1, 2), matrix));
+        Near(new(-6, 2), Vector2.TransformNormal(new(1, 2), matrix));
+        var collapsed = Affine2D.CreateMatrix(new(10, 20), 0, new(0, 3));
+        Near(new(10, 26), Vector2.Transform(new(100, 2), collapsed));
+        Assert.Equal(0, collapsed.GetDeterminant());
+    }
+
+    [Fact]
+    public void ProposedChannelsMatchAnEditedCopyWithoutEditingOrNotifyingTheOwner()
+    {
+        var transform = Affine2D.FromMatrix(new(-2, .3f, 1.1f, 3, 7, 2));
+        var before = JsonSerializer.Serialize(transform, JsonOptions);
+        var version = transform.Version;
+        var notifications = 0;
+        transform.Changed += () => notifications++;
+        var expected = transform with { X = -3, Rotation = 2 * MathF.Tau, ScaleY = 0, ShearX = -.2f };
+        var actual = transform.EvaluateMatrix(new(-3, transform.Y), 2 * MathF.Tau, new(transform.ScaleX, 0), new(-.2f, transform.ShearY));
+        Assert.Equal(expected.Matrix, actual);
+        Assert.Equal(before, JsonSerializer.Serialize(transform, JsonOptions));
+        Assert.Equal(version, transform.Version);
+        Assert.Equal(0, notifications);
+    }
+
+    [Fact]
+    public void EqualChannelProposalsKeepSignedZeroWhenAnotherChannelChanges()
+    {
+        var negativeZero = BitConverter.Int32BitsToSingle(int.MinValue);
+        var transform = new Affine2D { X = 1, ShearY = .1f };
+        transform.X = negativeZero;
+        var expected = transform with { X = 0, Y = 2, ShearY = .2f };
+        var actual = transform.EvaluateMatrix(new(0, 2), 0, Vector2.One, new(0, .2f));
+        Assert.Equal(expected.Matrix, actual);
+        Assert.Equal(int.MinValue, BitConverter.SingleToInt32Bits(actual.M31));
+    }
+
+    [Fact]
+    public void DirectAndProposedMatrixEvaluationAllocateNoManagedMemory()
+    {
+        var transform = new Affine2D { X = 2, Rotation = .4f, Scale = new(-2, 3), ShearY = .2f };
+        float Sample() => transform.EvaluateMatrix(new(3, 4), .7f, new(-3, 2), new(.1f, -.2f)).M11
+            + Affine2D.CreateMatrix(new(3, 4), .7f, new(-3, 2), new(.1f, -.2f)).M22;
+        for (var i = 0; i < 100; i++) Sample();
+        var total = 0f;
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1000; i++) total += Sample();
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.True(float.IsFinite(total));
+        Assert.Equal(0, allocated);
     }
 
     [Fact]

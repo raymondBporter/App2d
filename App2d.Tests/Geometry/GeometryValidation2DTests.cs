@@ -1,3 +1,4 @@
+using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Geometry.Shapes;
@@ -64,6 +65,29 @@ public sealed class GeometryValidation2DTests
         Assert.Equal(Vector2.UnitX, halfSpace.Normal);
         Assert.Equal(2, halfSpace.Offset);
         halfSpace.Validate();
+    }
+
+    [Fact]
+    public void ValueGeometryFactoriesDoNotAllocateForValidation()
+    {
+        for (var i = 0; i < 100; i++) Create();
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1000; i++) Create();
+        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+
+        static void Create()
+        {
+            CubicBezier2D.Builder.Create(Vector2.Zero, new(.1f, 2), new(.8f, -1), Vector2.One);
+            Circle2D.Builder.Create(1);
+        }
+    }
+
+    [Fact]
+    public void ValidationStillRejectsNullReferenceGeometry()
+    {
+        IGeometryValue2D geometry = null!;
+        var error = Assert.Throws<ArgumentNullException>(() => geometry.Validated());
+        Assert.Equal("geometry", error.ParamName);
     }
 
     [Fact]

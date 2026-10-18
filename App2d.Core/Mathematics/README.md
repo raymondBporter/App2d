@@ -97,6 +97,14 @@ as `X`/`Y` and `ScaleX`/`ScaleY`; the scalar channels retain the existing author
 the vector conveniences are not serialized. Setters increment `Version` and raise `Changed` only when values change,
 so scene bounds and collision caches stay current. `CopyFrom(other)` updates an existing owner once.
 
+`Affine2D.CreateMatrix(position, rotation, scale, shear)` evaluates absolute channels directly into a `Matrix3x2`,
+without allocating an editable transform. Shear is the pair of additional axis angles, matching `ShearX`/`ShearY`.
+The cached `Matrix` property uses this same function. For sampled changes relative to an existing transform, use
+`transform.EvaluateMatrix(position, rotation, scale, shear)`: it does not edit channels, increment the version or notify
+subscribers. An unchanged proposal retains the exact cached matrix, including an imported singular map; equal individual
+channels retain their original float values as an ordinary property edit would. Bone sampling uses this path instead
+of making temporary editor-transform copies. Matrix evaluation itself performs no range validation or clamping.
+
 For a snapshot, use `var saved = transform with { };` and restore with `transform.CopyFrom(saved)`. A copy owns its
 cache and does not copy event subscribers. Record equality compares the seven channels, never cache/version state.
 `Affine2D` replaces the former `BoneTransform2D`, `Transform2D`, and `TransformState2D`; there is no additional snapshot

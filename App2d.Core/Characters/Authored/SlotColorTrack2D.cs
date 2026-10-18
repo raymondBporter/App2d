@@ -60,9 +60,9 @@ public sealed record SlotColorTrack2D
 
         public Vector4 Interpolate(SlotColorKey2D a, SlotColorKey2D b, float phase)
         {
-            float At(float start, float end, KeyCurve2D? curve) => ClipEase.Interpolate(start, end, phase, a.Ease, curve);
-            return new(At(a.Value.X, b.Value.X, a.CurveR), At(a.Value.Y, b.Value.Y, a.CurveG),
-                At(a.Value.Z, b.Value.Z, a.CurveB), At(a.Value.W, b.Value.W, a.CurveA));
+            var sample = new ClipEase.Sampler(phase, a.Ease);
+            return new(sample.Interpolate(a.Value.X, b.Value.X, a.CurveR), sample.Interpolate(a.Value.Y, b.Value.Y, a.CurveG),
+                sample.Interpolate(a.Value.Z, b.Value.Z, a.CurveB), sample.Interpolate(a.Value.W, b.Value.W, a.CurveA));
         }
     }
 }

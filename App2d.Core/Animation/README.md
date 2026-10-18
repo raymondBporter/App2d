@@ -20,6 +20,12 @@ rules; the sampler does not clamp or ease values. Motion and color use the same 
 component curves, absolute handles, authored full rotation turns, and their different empty-track defaults.
 Setup-before-first behavior remains with the owning track, and color clamping remains with color evaluation.
 
+Authored cubic channels share a `ClipEase.Sampler` for each segment sample. Matching X handles reuse the same
+Bezier timing solve, even across different curve objects with different Y handles or absolute/relative value modes.
+Each channel still evaluates its own value curve, including overshoot between equal endpoints. Different X handles
+are solved independently. The four-entry cache lives only for that sample, allocates no managed memory, and cannot
+retain stale handles after editor changes. Named easing is also evaluated once per sample.
+
 Sampling belongs to Animation. Numeric interpolation and progress maps remain in Mathematics; geometric curves remain
 in Geometry. Interpolation computes a value between endpoints; easing maps its progress. Integrating a velocity over
 time is a separate operation. The sampler adds neither clock advancement nor animation events, loops, or serialized

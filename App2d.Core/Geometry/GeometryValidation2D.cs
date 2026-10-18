@@ -5,7 +5,8 @@ public static class GeometryValidation2D
 {
     public static T Validated<T>(this T geometry) where T : IGeometryValue2D
     {
-        if (geometry is null) throw new ArgumentNullException(nameof(geometry));
+        // Skip the null test for structs: boxing them just to test for null allocates in debug builds.
+        if (!typeof(T).IsValueType && geometry is null) throw new ArgumentNullException(nameof(geometry));
         geometry.Validate();
         return geometry;
     }

@@ -131,18 +131,13 @@ public static class PoseEvaluator
                 var translate = Delta(MotionClip.TranslateKind, control.Id, control.Scale);
                 var scale = Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit);
                 var shear = Delta(MotionClip.ShearKind, control.Id, CharacterModel.Unit);
-                var local = setup with
-                {
-                    X = setup.X + translate.X,
-                    Y = setup.Y + translate.Y,
-                    Rotation = setup.Rotation + Angle(control.Id),
-                    ScaleX = setup.ScaleX * (1 + scale.X),
-                    ScaleY = setup.ScaleY * (1 + scale.Y),
-                    ShearX = setup.ShearX + shear.X,
-                    ShearY = setup.ShearY + shear.Y
-                };
+                var local = setup.EvaluateMatrix(
+                    new(setup.X + translate.X, setup.Y + translate.Y),
+                    setup.Rotation + Angle(control.Id),
+                    new(setup.ScaleX * (1 + scale.X), setup.ScaleY * (1 + scale.Y)),
+                    new(setup.ShearX + shear.X, setup.ShearY + shear.Y));
                 var parent = control.Parent is null ? Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y) : pose.Bones[control.Parent];
-                var matrix = local.Matrix * parent;
+                var matrix = local * parent;
                 pose.Bones[control.Id] = matrix;
                 pose.Points[control.Id] = new(matrix.M31, matrix.M32, model.Rest[control.Id].Z + translate.Z);
                 angles[control.Id] = MathF.Atan2(matrix.M12, matrix.M11);
@@ -261,11 +256,11 @@ public static class PoseEvaluator
 
         public (Vector3 Value, float Angle) Interpolate(ClipKey a, ClipKey b, float phase)
         {
-            float At(float start, float end, KeyCurve2D? curve) => ClipEase.Interpolate(start, end, phase, a.Ease, curve);
-            return (new(At(a.Value.X, b.Value.X, rotate ? null : a.Curve),
-                At(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
-                At(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
-                At(a.Angle, b.Angle, rotate ? a.Curve : null));
+            var sample = new ClipEase.Sampler(phase, a.Ease);
+            return (new(sample.Interpolate(a.Value.X, b.Value.X, rotate ? null : a.Curve),
+                sample.Interpolate(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
+                sample.Interpolate(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
+                sample.Interpolate(a.Angle, b.Angle, rotate ? a.Curve : null));
         }
     }
 

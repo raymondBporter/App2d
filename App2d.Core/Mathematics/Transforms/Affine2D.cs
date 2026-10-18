@@ -126,12 +126,41 @@ public sealed record Affine2D
                 return _matrix;
             }
 
-            _matrix = ShearX == 0 && ShearY == 0
-                ? Matrix3x2.CreateScale(Scale) * Matrix3x2.CreateRotation(Rotation) * Matrix3x2.CreateTranslation(Position)
-                : new(MathF.Cos(Rotation + ShearX) * ScaleX, MathF.Sin(Rotation + ShearX) * ScaleX,
-                    -MathF.Sin(Rotation + ShearY) * ScaleY, MathF.Cos(Rotation + ShearY) * ScaleY, X, Y);
+            _matrix = CreateMatrix(Position, Rotation, Scale, new(ShearX, ShearY));
             _matrixVersion = Version;
             return _matrix;
+        }
+    }
+
+    /// <summary>
+    /// Evaluates absolute channels directly, without allocating an editable transform. Scale precedes rotation and
+    /// translation; shear values are the additional angles of the two local axes. Singular maps are allowed.
+    /// </summary>
+    public static Matrix3x2 CreateMatrix(Vector2 position, float rotation, Vector2 scale, Vector2 shear = default) =>
+        shear.X == 0 && shear.Y == 0
+            ? Matrix3x2.CreateScale(scale) * Matrix3x2.CreateRotation(rotation) * Matrix3x2.CreateTranslation(position)
+            : new(MathF.Cos(rotation + shear.X) * scale.X, MathF.Sin(rotation + shear.X) * scale.X,
+                -MathF.Sin(rotation + shear.Y) * scale.Y, MathF.Cos(rotation + shear.Y) * scale.Y, position.X, position.Y);
+
+    /// <summary>
+    /// Evaluates proposed absolute channels without editing this transform or notifying its owner. Unchanged channels
+    /// retain their stored values, and a wholly unchanged proposal retains the exact cached matrix from FromMatrix.
+    /// </summary>
+    public Matrix3x2 EvaluateMatrix(Vector2 position, float rotation, Vector2 scale, Vector2 shear)
+    {
+        var changed = false;
+        position = new(Channel(X, position.X), Channel(Y, position.Y));
+        rotation = Channel(Rotation, rotation);
+        scale = new(Channel(ScaleX, scale.X), Channel(ScaleY, scale.Y));
+        shear = new(Channel(ShearX, shear.X), Channel(ShearY, shear.Y));
+        return changed ? CreateMatrix(position, rotation, scale, shear) : Matrix;
+
+        float Channel(float current, float proposed)
+        {
+            // Match an ordinary channel edit, including signed-zero and NaN equality.
+            if (current.Equals(proposed)) return current;
+            changed = true;
+            return proposed;
         }
     }
 

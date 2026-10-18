@@ -28,6 +28,11 @@ lookup, interval progress and held/exact endpoints; small struct policies keep e
 The existing authored key formats, independent component curves, absolute handles, full rotation turns and color
 clamping retain their behavior. The primitive also supports unrelated value tracks without a character dependency.
 
+Explicit bone channels use `Affine2D.EvaluateMatrix`, sharing channel-to-matrix math with the editable transform.
+Sampling no longer clones an editor transform per bone. Setup channels, versions and notifications are untouched;
+unchanged channels preserve exact cached matrices, including imported singular maps. Planar depth and local 3D prop
+orientation continue through their existing frames.
+
 Important code entry points:
 
 - [Model and IK validation](../App2d.Core/Characters/Authored/CharacterModel.cs), [pose evaluation](../App2d.Core/Characters/Authored/PoseEvaluator.cs), [contact anchors](../App2d.Core/Characters/Authored/EntityAnimator.cs).

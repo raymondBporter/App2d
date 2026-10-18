@@ -3,6 +3,7 @@ using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Progress;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace App2d.Core.Characters.Authored;
@@ -33,7 +34,44 @@ public static class ClipEase
     public static readonly IReadOnlyList<string> All = [Linear, Smooth, Step];
     public static float Apply(string ease, float u) => ease switch { Smooth => Progress.SmoothStepUnclamped(u), Step => 0, _ => u };
     public static float Interpolate(float start, float end, float phase, string ease, KeyCurve2D? curve) =>
-        ease == Step ? start : curve?.Evaluate(phase, start, end) ?? Interpolation.Lerp(start, end, Apply(ease, phase));
+        new Sampler(phase, ease).Interpolate(start, end, curve);
+
+    /// <summary>One segment sample shared by up to four scalar channels. No state survives the sample.</summary>
+    internal struct Sampler(float phase, string ease)
+    {
+        private readonly float _progress = Apply(ease, phase);
+        private Timings _timings;
+        private int _count;
+
+        public float Interpolate(float start, float end, KeyCurve2D? curve)
+        {
+            if (ease == Step) return start;
+            if (curve is null) return Interpolation.Lerp(start, end, _progress);
+            if (phase <= 0) return start;
+            if (phase >= 1) return end;
+
+            var geometry = curve.ToCurve(start, end);
+            var handles = new Vector2(geometry.Control1.X, geometry.Control2.X);
+            for (var i = 0; i < _count; i++)
+            {
+                if (_timings[i].Handles == handles)
+                {
+                    return geometry.Evaluate(_timings[i].Parameter).Y;
+                }
+            }
+
+            // Only X determines the parameter; Y handles and Absolute stay specific to this channel.
+            var parameter = geometry.ParameterAtX(phase);
+            if (_count < 4) _timings[_count++] = (handles, parameter);
+            return geometry.Evaluate(parameter).Y;
+        }
+
+        [InlineArray(4)]
+        private struct Timings
+        {
+            private (Vector2 Handles, float Parameter) _element0;
+        }
+    }
 }
 
 /// <summary>A named visual moment, such as a footstep or a strike. Gameplay binds events to markers; the clip owns only the time.</summary>

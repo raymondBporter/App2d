@@ -65,6 +65,23 @@ public sealed class NativeRigTests
     }
 
     [Fact]
+    public void SamplingExplicitBonesLeavesSetupChannelsVersionsAndSubscribersUntouched()
+    {
+        var (source, clips) = Scene();
+        var model = ResolvedModel.From(source);
+        var before = source.ToJson();
+        var setups = model.SetupTransforms.Values.ToArray();
+        var versions = setups.Select(s => s.Version).ToArray();
+        var notifications = 0;
+        foreach (var setup in setups) setup.Changed += () => notifications++;
+        foreach (var time in new[] { 0f, .2f, .5f, .9f, 1f })
+            PoseEvaluator.Sample(model, clips[0], time);
+        Assert.Equal(before, source.ToJson());
+        Assert.Equal(versions, setups.Select(s => s.Version));
+        Assert.Equal(0, notifications);
+    }
+
+    [Fact]
     public void NativeRoundTripPreservesNamesFramesCurvesAndAppearanceTimelines()
     {
         var (source, clips) = Scene();
