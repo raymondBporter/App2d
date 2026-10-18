@@ -12,6 +12,16 @@ experiments; both build on `App2d.Core`. `App2d.EditorUi` supplies shared editor
 Studio and the game can call. `tools/ClothLab` is a small cape study.
 Everything targets `net10.0-windows10.0.19041.0`.
 
+`App2d.Trials` is a separate, minimal trials-game prototype. Run it with
+`dotnet run --project App2d.Trials`. It uses the shared `GameHost`, `Game2D` camera,
+and physics world to draw a circle player above an infinite ground line at `y = 0`.
+Use **A/D** or **Left/Right** to move, **Space** to jump, **R** to reset, and **Esc**
+to close. The camera follows horizontally; the floor marks show movement.
+Three repeating depth layers provide clouds, distant mountains, and nearby hills;
+both games use the shared [parallax layer API](docs/rendering-passes.md#parallax-layers).
+No external assets are needed. The circle is a placeholder for a future bike;
+the existing physics-body API is unchanged.
+
 Within the game project, `Contracts` owns commands, immutable observations/events, and
 shared configuration; `Gameplay` owns the simulation; `Presentation` owns views, camera,
 HUD, and sound selection; `Levels` owns SQLite level storage. Those are folders and

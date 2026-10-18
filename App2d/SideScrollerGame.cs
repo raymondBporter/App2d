@@ -107,7 +107,8 @@ public sealed class SideScrollerGame : Game2D
         var playerId = _session.PlayerIds[0];
         var startPosition = snapshot.FindPlayer(playerId)!.Value.Person.Position;
         Camera.ReferenceViewportHeight = 1080f;
-        var cameraController = new SideScrollerCamera2D(Scene, Camera,
+        SideScrollerBackground2D.AddTo(Background);
+        var cameraController = new SideScrollerCamera2D(Camera,
             tileMap.WorldBounds, startPosition);
         DebugPanel.Section("Camera").Slider("Zoom", () => Camera.Zoom, value => Camera.Zoom = value, 0.05f, 20f,
             "Camera zoom; default 1.35. Larger values zoom in.", logarithmic: true);

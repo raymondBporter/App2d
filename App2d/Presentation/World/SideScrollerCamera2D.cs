@@ -1,10 +1,7 @@
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
-using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace App2d.Presentation.World;
 
@@ -27,7 +24,6 @@ public sealed class SideScrollerCamera2D
     private const float MinimumVerticalFollowRateScale = 0.25f;
 
     private readonly Camera2D _camera;
-    private readonly List<ParallaxItem> _parallaxItems = [];
     private float _lookAhead;
     private float _fallDuration;
     private float _fallBlend;
@@ -37,9 +33,8 @@ public sealed class SideScrollerCamera2D
     private float _verticalFollowSuppression;
     private float _lastGroundedPlayerY;
 
-    public SideScrollerCamera2D(Scene2D scene, Camera2D camera, Rect2D levelBounds, Vector2 initialPlayerPosition)
+    public SideScrollerCamera2D(Camera2D camera, Rect2D levelBounds, Vector2 initialPlayerPosition)
     {
-        ArgGuard.ThrowIfNull(scene);
         _camera = ArgGuard.RequireNotNull(camera);
         if (!levelBounds.IsFinite)
         {
@@ -49,8 +44,6 @@ public sealed class SideScrollerCamera2D
         _camera.WorldBounds = levelBounds;
         _camera.Zoom = 1.35f;
         Reset(initialPlayerPosition);
-        CreateParallaxBackground(scene);
-        UpdateParallax();
     }
 
     public void Update(Vector2 playerPosition, Vector2 playerVelocity, bool isGrounded, float deltaSeconds)
@@ -86,7 +79,6 @@ public sealed class SideScrollerCamera2D
         _followPosition = ClampToLevel(_followPosition);
         _verticalFollowSuppression = Damp(_verticalFollowSuppression, 0f, VerticalFollowSuppressionRate, deltaSeconds);
         _camera.Position = _followPosition;
-        UpdateParallax();
         _camera.Position = _followPosition + UpdateShake(deltaSeconds);
     }
 
@@ -112,7 +104,6 @@ public sealed class SideScrollerCamera2D
         _lastGroundedPlayerY = playerPosition.Y;
         _followPosition = ClampToLevel(new Vector2(playerPosition.X, GetVerticalFocus(playerPosition)));
         _camera.Position = _followPosition;
-        UpdateParallax();
     }
 
     private Vector2 UpdateShake(float deltaSeconds)
@@ -215,55 +206,4 @@ public sealed class SideScrollerCamera2D
         return float.Lerp(current, target, blend);
     }
 
-    private void CreateParallaxBackground(Scene2D scene)
-    {
-        var cloudShader = new SolidColorShader(new XnaColor(240, 250, 255, 205));
-        var farMountainShader = new SolidColorShader(new XnaColor(90, 145, 177));
-        var nearHillShader = new SolidColorShader(new XnaColor(70, 128, 125));
-
-        for (var i = 0; i < 8; i++)
-        {
-            var width = 150f + i % 3 * 45f;
-            AddParallax(scene, Capsule2D.Builder.Create(new Vector2(-width / 2f, 0f), new Vector2(width / 2f, 0f), 38f), cloudShader, new Vector2(-850f + i * 470f, 210f + i % 3 * 95f), 0.08f, repeatWidth: 3_760f);
-        }
-
-        for (var i = 0; i < 12; i++)
-        {
-            var width = 520f + i % 3 * 90f;
-            var height = 360f + i % 4 * 55f;
-            var mountain = ConvexPolygon2D.Builder.Create(
-            [
-                new Vector2(-width / 2f, 0f),
-                new Vector2(0f, height),
-                new Vector2(width / 2f, 0f)
-            ]);
-            AddParallax(scene, mountain, farMountainShader, new Vector2(-1_100f + i * 500f, -520f), 0.18f, repeatWidth: 6_000f);
-        }
-
-        for (var i = 0; i < 13; i++)
-        {
-            AddParallax(scene, Circle2D.Builder.Create(185f + i % 3 * 24f), nearHillShader, new Vector2(-1_000f + i * 510f, -525f), 0.42f, new Vector2(1.9f, 1f), repeatWidth: 6_630f);
-        }
-    }
-
-    private void AddParallax(Scene2D scene, IShape2D shape, IShader2D shader, Vector2 anchor, float scrollFactor, Vector2? scale = null, float repeatWidth = 4_000f)
-    {
-        var worldObject = new WorldObject2D(shape, shader);
-        worldObject.Transform.Scale = scale ?? Vector2.One;
-        _parallaxItems.Add(new ParallaxItem(worldObject, anchor, scrollFactor, repeatWidth));
-        scene.Add(worldObject);
-    }
-
-    private void UpdateParallax()
-    {
-        foreach (var item in _parallaxItems)
-        {
-            var relativeX = WrapCentered(item.Anchor.X - _camera.Position.X * item.ScrollFactor, item.RepeatWidth);
-            item.Object.Transform.Position = new Vector2(_camera.Position.X + relativeX, item.Anchor.Y + _camera.Position.Y * (1f - item.ScrollFactor * 0.3f));
-        }
-    }
-
-    private static float WrapCentered(float value, float period) => value - MathF.Floor((value + period / 2f) / period) * period;
-
-    private readonly record struct ParallaxItem(WorldObject2D Object, Vector2 Anchor, float ScrollFactor, float RepeatWidth);
 }

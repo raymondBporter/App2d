@@ -26,5 +26,6 @@
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
     <ProjectReference Include="..\App2d.CharacterSeeds\App2d.CharacterSeeds.csproj" />
     <ProjectReference Include="..\App2d.EditorUi\App2d.EditorUi.csproj" />
+    <ProjectReference Include="..\App2d.Trials\App2d.Trials.csproj" />
   </ItemGroup>
 </Project>

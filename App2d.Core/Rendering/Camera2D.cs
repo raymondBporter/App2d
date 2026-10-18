@@ -120,8 +120,7 @@ public sealed class Camera2D
             ClampCenter(desiredPosition.Y, bounds.Min.Y, bounds.Max.Y, halfView.Y));
     }
 
-    private static float ClampCenter(float value, float min, float max, float halfView) =>
-        max - min <= halfView * 2f ? min + (max - min) / 2f : Math.Clamp(value, min + halfView, max - halfView);
+    private static float ClampCenter(float value, float min, float max, float halfView) => max - min <= halfView * 2f ? min + (max - min) / 2f : Math.Clamp(value, min + halfView, max - halfView);
 
     public void SetViewport(int width, int height)
     {

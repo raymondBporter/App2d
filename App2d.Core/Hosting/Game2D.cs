@@ -23,6 +23,7 @@ public abstract class Game2D : IDisposable
         .Toggle("Collision shapes", () => DrawCollisionShapes, value => DrawCollisionShapes = value, "Overlay registered physics colliders and active attack hitboxes.");
 
     public Camera2D Camera { get; } = new();
+    public ParallaxBackground2D Background { get; } = [];
     public PhysicsWorld2D? PhysicsWorld { get; private set; }
     public Scene2D Scene { get; } = [];
     public TextureCache2D Textures { get; } = new(AssetPaths.Current.Runtime);
@@ -51,6 +52,7 @@ public abstract class Game2D : IDisposable
         renderer.Clear(DrawGraphics ? BackgroundColor : new XnaColor(24, 27, 36));
         if (DrawGraphics)
         {
+            renderer.Draw(Background);
             Render(renderer);
         }
 

@@ -3,12 +3,16 @@
 `GameHost` calls `Game2D.RenderFrame` between the renderer's `BeginFrame` and
 `EndFrame`. The frame is cleared once, then draws in this order:
 
-1. `Render`: game graphics, including backgrounds, terrain, vegetation,
-   characters, and world effects. Scene Z indices control order within the game.
-2. `RenderWorldDebug`: grid, collision geometry, traversal/ballistics curves,
+1. `Background`: parallax layers, farthest first. These draw before `Render`,
+   so even a high object Z index in a background cannot cover world trees or actors.
+2. `Render`: game graphics, including terrain, vegetation, characters, and world
+   effects. Scene Z indices control order within this pass. The side scroller
+   draws trees, terrain at Z <= 0, back grass, actors at Z >= 1, then front grass
+   and effects.
+3. `RenderWorldDebug`: grid, collision geometry, traversal/ballistics curves,
    zone boundaries, and editor world guides. These use the game camera and
    overlay the finished game image.
-3. `RenderUI`: HUD, feedback text, diagnostic labels, and FPS. Screen UI draws
+4. `RenderUI`: HUD, feedback text, diagnostic labels, and FPS. Screen UI draws
    above all world graphics and diagnostics. The ImGui tool UI (editor sidebar and
    debug panel) renders after the frame, above everything.
 
@@ -27,9 +31,34 @@ Debug panel toggles (F5), in its Draw section:
 - FPS: screen-space diagnostic UI
 - Graphics: off hides game graphics and keeps debug and UI
 
-Parallax affects background motion, not these pass boundaries. The debug grid
+Both backgrounds and game graphics follow the Graphics toggle. The debug grid
 is an overlay, not a scene object or a tilemap layer. Sparse tile storage and
 tilemap scene composition are separate future work.
+
+## Parallax layers
+
+Every `Game2D` has a `Background` collection. Add as many `ParallaxLayer2D` instances
+as needed; depth controls both their camera translation and their order:
+
+```csharp
+var mountains = new ParallaxLayer2D(depth: 4f) { RepeatWidth = 1800f };
+mountains.Scene.Add(mountainVisual); // ordinary WorldObject2D, sprites or shapes
+Background.Add(mountains);
+```
+
+Depth is finite and nonnegative. `ScrollFactor = 1 / (1 + Depth)`: depth 0 follows
+normal world motion, depth 1 scrolls at half speed, and depth 4 at one fifth.
+Larger depths draw first; equal depths retain insertion order. Z indices still
+order objects within a layer. Depth affects X and Y camera translation equally;
+zoom, rotation, and viewport scaling follow the game camera normally. It does
+not shrink the artwork or introduce perspective.
+
+Object transforms stay in layer coordinates. A separate, unbounded layer view
+uses the final camera position, including editor panning and shake, at render
+time. No per-update repositioning or extra layer update call is needed. Gameplay
+camera bounds and physics are unchanged. Optional `RepeatWidth` tiles horizontally
+and draws every visible copy, including across seams or while zoomed out; repeated
+objects must have finite bounds. Null disables repetition.
 
 Reusable geometry can now be drawn as a mesh, material, and transform:
 

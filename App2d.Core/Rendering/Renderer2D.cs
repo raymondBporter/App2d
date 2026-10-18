@@ -23,7 +23,7 @@ namespace App2d.Rendering;
 /// <summary>Ordered GPU triangle batches using MonoGame's XNA graphics API.</summary>
 public sealed partial class Renderer2D : IDisposable
 {
-    private readonly Camera2D _camera;
+    private Camera2D _camera;
     private readonly GraphicsDevice _device;
     private readonly BasicEffect _effect;
     private readonly FontAtlas2D _font = new();

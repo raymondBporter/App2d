@@ -10,6 +10,7 @@ using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
 using App2d.Presentation.Persons;
+using App2d.Presentation.World;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
@@ -43,6 +44,8 @@ internal static class GiantTreeStudy2D
             GiantTrees = loaded.GiantTrees
         });
         var scene = new Scene2D();
+        var background = new ParallaxBackground2D();
+        SideScrollerBackground2D.AddTo(background);
         using var world = new WorldPresentation2D(scene, textures);
         using var player = new AuthoredPersonPresentation2D(scene, PersonMoves.From(catalog), traversal);
         using var terrain = new ViewportTerrainSource2D(loaded.TileMap);
@@ -80,6 +83,7 @@ internal static class GiantTreeStudy2D
             {
                 renderer.BeginFrame(1280, 720, default);
                 world.SetVisibleTerrain(terrain.Capture(camera.VisibleWorldBounds));
+                renderer.Draw(background);
                 world.DrawTrees(renderer, camera.VisibleWorldBounds);
                 renderer.Draw(scene, int.MinValue, 0);
                 world.DrawGrass(renderer, camera.VisibleWorldBounds, VegetationLayer2D.Back);
