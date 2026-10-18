@@ -51,12 +51,18 @@ public sealed record SlotColorTrack2D
         return Vector4.Clamp(value, Vector4.Zero, Vector4.One);
     }
 
-    public static Vector4 Sample(List<SlotColorKey2D> keys, float time)
+    public static Vector4 Sample(List<SlotColorKey2D> keys, float time) =>
+        KeyframeSampling.Sample(keys, time, Vector4.One, new ColorInterpolation());
+
+    private readonly struct ColorInterpolation : IKeyframeInterpolation<SlotColorKey2D, Vector4>
     {
-        if (!KeyframeSampling.TrySegment(keys, time, out var a, out var b, out var phase)) return Vector4.One;
-        if (ReferenceEquals(a, b)) return a.Value;
-        float At(float start, float end, KeyCurve2D? curve) => ClipEase.Interpolate(start, end, phase, a.Ease, curve);
-        return new(At(a.Value.X, b.Value.X, a.CurveR), At(a.Value.Y, b.Value.Y, a.CurveG),
-            At(a.Value.Z, b.Value.Z, a.CurveB), At(a.Value.W, b.Value.W, a.CurveA));
+        public Vector4 GetValue(SlotColorKey2D key) => key.Value;
+
+        public Vector4 Interpolate(SlotColorKey2D a, SlotColorKey2D b, float phase)
+        {
+            float At(float start, float end, KeyCurve2D? curve) => ClipEase.Interpolate(start, end, phase, a.Ease, curve);
+            return new(At(a.Value.X, b.Value.X, a.CurveR), At(a.Value.Y, b.Value.Y, a.CurveG),
+                At(a.Value.Z, b.Value.Z, a.CurveB), At(a.Value.W, b.Value.W, a.CurveA));
+        }
     }
 }

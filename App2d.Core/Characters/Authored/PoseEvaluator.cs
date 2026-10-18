@@ -252,15 +252,21 @@ public static class PoseEvaluator
     }
 
     /// <summary>Eased interpolation, holding the first and last keys outside their range. No keys means a zero delta.</summary>
-    public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false)
+    public static (Vector3 Value, float Angle) Interpolate(List<ClipKey> keys, float time, bool rotate = false) =>
+        KeyframeSampling.Sample(keys, time, (Value: Vector3.Zero, Angle: 0f), new MotionInterpolation(rotate));
+
+    private readonly struct MotionInterpolation(bool rotate) : IKeyframeInterpolation<ClipKey, (Vector3 Value, float Angle)>
     {
-        if (!KeyframeSampling.TrySegment(keys, time, out var a, out var b, out var phase)) return default;
-        if (ReferenceEquals(a, b)) return (a.Value, a.Angle);
-        float At(float start, float end, KeyCurve2D? curve) => ClipEase.Interpolate(start, end, phase, a.Ease, curve);
-        return (new(At(a.Value.X, b.Value.X, rotate ? null : a.Curve),
-            At(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
-            At(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
-            At(a.Angle, b.Angle, rotate ? a.Curve : null));
+        public (Vector3 Value, float Angle) GetValue(ClipKey key) => (key.Value, key.Angle);
+
+        public (Vector3 Value, float Angle) Interpolate(ClipKey a, ClipKey b, float phase)
+        {
+            float At(float start, float end, KeyCurve2D? curve) => ClipEase.Interpolate(start, end, phase, a.Ease, curve);
+            return (new(At(a.Value.X, b.Value.X, rotate ? null : a.Curve),
+                At(a.Value.Y, b.Value.Y, rotate ? null : a.CurveY ?? (a.Curve?.Absolute == true ? null : a.Curve)),
+                At(a.Value.Z, b.Value.Z, rotate ? null : a.CurveZ ?? (a.Curve?.Absolute == true ? null : a.Curve))),
+                At(a.Angle, b.Angle, rotate ? a.Curve : null));
+        }
     }
 
     public static (Vector3 Value, float Angle) Interpolate(ClipTrack track, float time) =>

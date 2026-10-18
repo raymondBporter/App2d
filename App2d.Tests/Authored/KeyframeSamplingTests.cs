@@ -30,6 +30,43 @@ public sealed class KeyframeSamplingTests
     }
 
     [Fact]
+    public void RotationPreservesFullTurnsAndUsesItsOwnCurveChannel()
+    {
+        List<ClipKey> keys =
+        [
+            new() { Value = new(2, 4, 6), Angle = 0, Curve = new() { Control1 = new(1f / 3, 0), Control2 = new(2f / 3, 0) } },
+            new() { Time = 1, Value = new(4, 6, 8), Angle = 2 * MathF.Tau }
+        ];
+        var sample = PoseEvaluator.Interpolate(keys, .5f, rotate: true);
+        Assert.Equal(new Vector3(3, 5, 7), sample.Value);
+        Assert.Equal(MathF.Tau / 4, sample.Angle, 5);
+        Assert.Equal(2 * MathF.Tau, PoseEvaluator.Interpolate(keys, 1, rotate: true).Angle);
+    }
+
+    [Fact]
+    public void AbsoluteMotionCurveDoesNotLeakIntoOtherComponentsOrRotation()
+    {
+        List<ClipKey> keys =
+        [
+            new() { Value = new(0, 2, 4), Angle = 0, Curve = new() { Absolute = true, Control1 = new(1f / 3, 4), Control2 = new(2f / 3, 4) } },
+            new() { Time = 1, Value = new(0, 4, 6), Angle = MathF.Tau }
+        ];
+        var sample = PoseEvaluator.Interpolate(keys, .5f);
+        Assert.Equal(new Vector3(3, 3, 5), sample.Value);
+        Assert.Equal(MathF.PI, sample.Angle);
+    }
+
+    [Fact]
+    public void RawColorSamplingKeepsOvershootAndRenderingClampsTheResult()
+    {
+        var curve = new KeyCurve2D { Absolute = true, Control1 = new(1f / 3, 2), Control2 = new(2f / 3, 2) };
+        var track = new SlotColorTrack2D { Slot = "paint", Keys =
+            [new() { Value = Vector4.Zero, CurveR = curve }, new() { Time = 1, Value = Vector4.Zero }] };
+        Assert.Equal(new Vector4(1.5f, 0, 0, 0), SlotColorTrack2D.Sample(track.Keys, .5f));
+        Assert.Equal(new Vector4(1, 0, 0, 0), SlotColorTrack2D.Evaluate(new() { Colors = [track] }, new() { Id = "paint", Color = "ffffffff" }, .5f));
+    }
+
+    [Fact]
     public void VectorStorageReadsAndWritesTheExistingSparseKeyFormat()
     {
         const string motionJson = """{"time":0.5,"x":2,"z":-3,"curve":{"x1":0.2,"y1":2,"x2":0.8,"y2":-1}}""";

@@ -23,6 +23,11 @@ Surface paint belongs to `RenderMaterialDefinition2D`, alongside fill, outline, 
 | Rendering | Orthographic XY projection with depth testing and local 3D prop orientation. `CharacterLayer2D` exposes depth as character order. | Slot order, continuous part depth and solid depth must retain their respective behavior when attachments are unified. |
 | Gameplay | `EntityAsset` already owns equipment, actions, health, hit windows, damage, projectiles and movement/hurt shapes. | `PersonLoadout`, `PersonMoves`, controller vocabularies and the arena contain game/profile assumptions. Keep these above the reusable rig. |
 
+Motion and slot-color tracks use the shared [keyframe sampler](../App2d.Core/Animation/README.md). It owns ordered key
+lookup, interval progress and held/exact endpoints; small struct policies keep each track's value and curve rules.
+The existing authored key formats, independent component curves, absolute handles, full rotation turns and color
+clamping retain their behavior. The primitive also supports unrelated value tracks without a character dependency.
+
 Important code entry points:
 
 - [Model and IK validation](../App2d.Core/Characters/Authored/CharacterModel.cs), [pose evaluation](../App2d.Core/Characters/Authored/PoseEvaluator.cs), [contact anchors](../App2d.Core/Characters/Authored/EntityAnimator.cs).
