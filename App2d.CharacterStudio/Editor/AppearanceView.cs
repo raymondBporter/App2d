@@ -11,7 +11,8 @@ namespace App2d.CharacterStudio.Editor;
 /// <summary>Reusable cutout art, edited on its wearer with the same sockets and character layers as the game.</summary>
 internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
 {
-    private int _piece, _drag = -1;
+    private int _piece;
+    private int _drag = -1;
     private string? _asset;
     public Workspace Mode => Workspace.Appearance;
     public float TimelineHeight => 80 * Ui.Scale;

@@ -15,7 +15,9 @@ namespace App2d.CharacterStudio.Editor;
 /// </summary>
 internal sealed class EntityView(EditorSession session) : IWorkspaceView
 {
-    private string _newProp = "", _newSocket = "", _newEvent = "hit";
+    private string _newProp = "";
+    private string _newSocket = "";
+    private string _newEvent = "hit";
 
     public Workspace Mode => Workspace.Entity;
     public float TimelineHeight => 150;
