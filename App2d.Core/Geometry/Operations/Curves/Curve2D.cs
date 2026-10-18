@@ -56,6 +56,56 @@ public static class Curve2D
         return points;
     }
 
+    /// <summary>
+    /// Adaptively samples a curve into a polyline. Limits chord length and sampled deviation at
+    /// quarter/mid/three-quarter points. B-spline knot spans and polyline corners are sampled separately.
+    /// The deviation check is an approximation, not a certified bound for arbitrary user-defined curves.
+    /// </summary>
+    public static PolylineCurve2D ToPolyline(ICurve2D curve, float maximumSegmentLength = 12f, float maximumDeviation = 0.05f)
+    {
+        ArgGuard.ThrowIfNull(curve);
+        ArgGuard.Positive(maximumSegmentLength);
+        ArgGuard.Positive(maximumDeviation);
+        var segments = curve switch
+        {
+            BSpline2D spline => spline.ControlPoints.Length - spline.Degree,
+            PolylineCurve2D polyline => polyline.Points.Length - 1,
+            _ => 16
+        };
+        ArgGuard.Positive(segments);
+        var points = new List<Vector2> { curve.Evaluate(0f) };
+        for (var segment = 0; segment < segments; segment++)
+        {
+            var from = segment / (float)segments;
+            var to = (segment + 1) / (float)segments;
+            Append(from, to, points[^1], curve.Evaluate(to), 0);
+        }
+        return PolylineCurve2D.Builder.Create(points);
+
+        void Append(float from, float to, Vector2 start, Vector2 end, int depth)
+        {
+            ArgGuard.Finite(start);
+            ArgGuard.Finite(end);
+            var middle = (from + to) * 0.5f;
+            var midpoint = curve.Evaluate(middle);
+            var needsSplit = Vector2.Distance(start, end) > maximumSegmentLength;
+            for (var sample = 1; sample <= 3; sample++)
+            {
+                var point = sample == 2 ? midpoint : curve.Evaluate(float.Lerp(from, to, sample / 4f));
+                ArgGuard.Finite(point);
+                needsSplit |= Distance2D.DistanceSquaredToSegment(point, start, end) > maximumDeviation * maximumDeviation;
+            }
+            if (needsSplit)
+            {
+                if (depth >= 20 || middle == from || middle == to)
+                    throw new InvalidOperationException("Curve sampling could not meet the requested segment length and deviation.");
+                Append(from, middle, start, midpoint, depth + 1);
+                Append(middle, to, midpoint, end, depth + 1);
+            }
+            else points.Add(end);
+        }
+    }
+
     /// <summary>Samples both endpoints into caller-owned storage without allocating.</summary>
     public static void Sample<TCurve>(TCurve curve, Span<Vector2> points) where TCurve : ICurve2D
     {

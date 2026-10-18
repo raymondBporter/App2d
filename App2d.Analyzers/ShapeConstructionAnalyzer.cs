@@ -78,7 +78,7 @@ internal static class GeometrySymbols
         {
             "App2d.Core.Shapes" => type.Name is "Circle2D" or "Ellipse2D" or "Capsule2D" or "Rectangle2D" or
                 "AxisAlignedRectangle2D" or "RoundedRectangle2D" or "Triangle2D" or "ConvexPolygon2D" or
-                "SimplePolygon2D" or "HalfSpace2D" or "CompositeShape2D",
+                "SimplePolygon2D" or "HalfSpace2D" or "CompositeShape2D" or "HeightFieldShape2D",
             "App2d.Core.Geometry.Curves" => type.Name is "LineSegmentCurve2D" or "PolylineCurve2D" or
                 "Arc2D" or "QuadraticBezier2D" or "CubicBezier2D" or "BSpline2D",
             _ => false

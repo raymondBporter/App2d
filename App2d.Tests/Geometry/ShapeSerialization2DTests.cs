@@ -123,7 +123,7 @@ public sealed class ShapeSerialization2DTests
         var circle = Assert.IsType<Circle2D>(GeometryJson2D.ShapeFromJson("{\"center\":{\"x\":1,\"y\":2},\"radius\":3,\"kind\":\"circle\"}").Validated());
         Assert.Equal(new Vector2(1, 2), circle.Center);
         Assert.Equal(3f, circle.Radius);
-        Assert.Equal(11, ShapeKinds2D.All.Count);
+        Assert.Equal(12, ShapeKinds2D.All.Count);
     }
 
     [Fact]

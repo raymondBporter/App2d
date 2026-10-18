@@ -26,6 +26,7 @@ public static class ShapeMassProperties2D
             Triangle2D triangle => Polygon([triangle.A, triangle.B, triangle.C], density),
             ConvexPolygon2D polygon => Polygon(polygon.Vertices, density),
             SimplePolygon2D polygon => Polygon(polygon.Vertices, density),
+            HeightFieldShape2D field => Polygon(field.Polygon.Vertices, density),
             Capsule2D capsule => Capsule(capsule, density),
             RoundedRectangle2D rounded => RoundedRectangle(rounded, density),
             CompositeShape2D composite => Composite(composite, density),

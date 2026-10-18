@@ -67,8 +67,7 @@ public sealed class ImpulseVelocitySolver2D : IPhysicsVelocitySolver2D
     }
 
     // ω × r in 2D is ω * PerpCcw(r).
-    private static Vector2 PointVelocity(RigidBody2D body, Vector2 arm) =>
-        body.LinearVelocity + body.AngularVelocity * arm.PerpCcw;
+    private static Vector2 PointVelocity(RigidBody2D body, Vector2 arm) => body.LinearVelocity + body.AngularVelocity * arm.PerpCcw;
 
     private static void Apply(RigidBody2D first, RigidBody2D second, Vector2 firstArm, Vector2 secondArm, Vector2 impulse)
     {

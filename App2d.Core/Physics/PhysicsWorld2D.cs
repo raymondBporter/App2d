@@ -294,8 +294,26 @@ public sealed class PhysicsWorld2D
             }
         }
 
+        foreach (var constraint in _constraints)
+        {
+            constraint.PrepareVelocity(deltaSeconds);
+        }
+
         for (var iteration = 0; iteration < VelocityIterations; iteration++)
         {
+            // A joint can push a supported body back into its contact. Alternate response
+            // with joint impulses so support forces propagate through connected bodies.
+            if (iteration > 0)
+            {
+                foreach (var contact in _substepContacts.Contacts)
+                {
+                    if (!contact.First.IsSensor && !contact.Second.IsSensor)
+                    {
+                        VelocitySolver.Solve(contact);
+                    }
+                }
+            }
+
             if (iteration % 2 == 0)
             {
                 foreach (var constraint in _constraints)

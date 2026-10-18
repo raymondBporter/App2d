@@ -14,7 +14,8 @@ public static class ShapeKinds2D
     public const string SimplePolygon = "simple-polygon";
     public const string HalfSpace = "half-space";
     public const string Composite = "composite";
+    public const string HeightField = "height-field";
 
     /// <summary>Every kind in a stable order for editors and validation.</summary>
-    public static IReadOnlyList<string> All { get; } = [Circle, Ellipse, Capsule, Rectangle, AxisAlignedRectangle, RoundedRectangle, Triangle, ConvexPolygon, SimplePolygon, HalfSpace, Composite];
+    public static IReadOnlyList<string> All { get; } = [Circle, Ellipse, Capsule, Rectangle, AxisAlignedRectangle, RoundedRectangle, Triangle, ConvexPolygon, SimplePolygon, HalfSpace, Composite, HeightField];
 }

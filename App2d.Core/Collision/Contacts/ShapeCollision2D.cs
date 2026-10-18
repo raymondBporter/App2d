@@ -45,6 +45,17 @@ public static partial class ShapeCollision2D
 
     private static CollisionResult Dispatch(IShape2D first, Similarity2D firstPose, IShape2D second, Similarity2D secondPose)
     {
+        if (first is HeightFieldShape2D heightField)
+            return HeightFieldAgainst(heightField, firstPose, second, secondPose);
+        if (second is HeightFieldShape2D otherHeightField)
+            return HeightFieldAgainst(otherHeightField, secondPose, first, firstPose).Flipped();
+
+        // Query the actual perimeter for circles, rather than the internal decomposition seams.
+        if (first is Circle2D circle && second is SimplePolygon2D circlePolygon)
+            return CircleVsSimplePolygon(circle, firstPose, circlePolygon, secondPose);
+        if (second is Circle2D otherCircle && first is SimplePolygon2D otherCirclePolygon)
+            return CircleVsSimplePolygon(otherCircle, secondPose, otherCirclePolygon, firstPose).Flipped();
+
         if (first is SimplePolygon2D polygon)
         {
             return CompositeAgainst(polygon.ConvexPieces, firstPose, second, secondPose);
@@ -85,4 +96,9 @@ public static partial class ShapeCollision2D
             ? CollisionResult.From(new CollisionContact2D(query.PointOnSecond, query.Normal, -query.SignedDistance))
             : CollisionResult.None;
     }
+
+    private static CollisionResult HeightFieldAgainst(HeightFieldShape2D field, Similarity2D fieldPose, IShape2D other, Similarity2D otherPose) =>
+        other is Circle2D circle
+            ? CircleVsSimplePolygon(circle, otherPose, field.Polygon, fieldPose).Flipped()
+            : CompositeAgainst(field.ConvexPieces, fieldPose, other, otherPose);
 }

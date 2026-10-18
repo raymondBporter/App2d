@@ -53,6 +53,19 @@ public static class PolygonTriangulationCache2D
         }
     }
 
+    /// <summary>Installs a triangulation constructed with a known topology, such as monotone terrain strips.</summary>
+    internal static void StorePrepared(IReadOnlyList<Vector2> perimeter, TriangleMesh2D mesh, double tolerance)
+    {
+        StateGuard.ThrowIfNot(Matches(perimeter, mesh.Vertices, static point => point));
+        var entry = Entries.GetValue(perimeter, static _ => new());
+        lock (entry)
+        {
+            entry.Mesh = mesh;
+            entry.Tolerance = tolerance;
+            entry.PiecesMesh = null;
+        }
+    }
+
     private static bool Matches<TPoint>(IReadOnlyList<TPoint> perimeter, ReadOnlySpan<Vector2> snapshot, Func<TPoint, Vector2> xy)
     {
         if (perimeter.Count != snapshot.Length) return false;

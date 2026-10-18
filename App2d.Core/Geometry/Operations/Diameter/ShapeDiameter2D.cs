@@ -26,6 +26,7 @@ public static class ShapeDiameter2D
             Triangle2D triangle => triangle.Diameter,
             ConvexPolygon2D polygon => polygon.Diameter,
             SimplePolygon2D polygon => polygon.Diameter,
+            HeightFieldShape2D field => field.Diameter,
             HalfSpace2D => float.PositiveInfinity,
             CompositeShape2D composite => Composite(composite.Parts),
             IConvexShape2D convex => FarthestDistance2D.BetweenConvex(convex, convex),

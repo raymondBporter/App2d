@@ -19,6 +19,7 @@ public static class ShapeTessellation2D
     {
         ArgGuard.ThrowIfNull(shape);
         if (shape is SimplePolygon2D polygon) return polygon.Mesh.Triangles;
+        if (shape is HeightFieldShape2D field) return field.Polygon.Mesh.Triangles;
         if (shape is HalfSpace2D halfSpace)
         {
             var count = PolygonClipping2D.ClipRectangleToHalfSpace(RequireClipBounds(clipBounds), halfSpace.Normal, halfSpace.Offset, scratch);
@@ -52,6 +53,7 @@ public static class ShapeTessellation2D
     {
         ConvexPolygon2D polygon => polygon.Vertices,
         SimplePolygon2D polygon => polygon.Vertices,
+        HeightFieldShape2D field => field.Polygon.Vertices,
         _ => shape.GetOutlineVerts(scratch, roundSegments, cornerSegments)
     };
 

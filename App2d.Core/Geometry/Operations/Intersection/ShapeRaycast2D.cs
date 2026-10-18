@@ -32,6 +32,8 @@ public static class ShapeRaycast2D
                 return Raycast2D.TryHalfSpace(origin, direction, halfSpace.Normal, halfSpace.Offset, maxDistance, out hit);
             case SimplePolygon2D polygon:
                 return Raycast2D.TrySimplePolygon(origin, direction, polygon.Vertices, maxDistance, out hit);
+            case HeightFieldShape2D field:
+                return Raycast2D.TrySimplePolygon(origin, direction, field.Polygon.Vertices, maxDistance, out hit);
             case CompositeShape2D composite:
                 hit = default;
                 var found = false;

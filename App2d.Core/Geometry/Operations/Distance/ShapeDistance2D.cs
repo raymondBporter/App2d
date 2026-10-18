@@ -38,6 +38,7 @@ public static class ShapeDistance2D
             HalfSpace2D halfSpace => Distance2D.SignedDistanceToHalfSpace(point, halfSpace.Normal, halfSpace.Offset),
             Triangle2D or ConvexPolygon2D => SignedDistanceToPerimeter(point, shape),
             SimplePolygon2D polygon => SignedDistanceToSimplePolygon(point, polygon),
+            HeightFieldShape2D field => SignedDistanceToSimplePolygon(point, field.Polygon),
             _ => throw Unsupported(shape)
         };
     }
@@ -144,6 +145,10 @@ public static class ShapeDistance2D
     {
         ArgGuard.ThrowIfNull(first);
         ArgGuard.ThrowIfNull(second);
+        if (first is HeightFieldShape2D firstField)
+            return Distance(firstField.ConvexPieces, firstPose, second, secondPose);
+        if (second is HeightFieldShape2D secondField)
+            return Distance(first, firstPose, secondField.ConvexPieces, secondPose);
         if (first is SimplePolygon2D firstPolygon)
         {
             return Distance(firstPolygon.ConvexPieces, firstPose, second, secondPose);

@@ -14,13 +14,112 @@ Everything targets `net10.0-windows10.0.19041.0`.
 
 `App2d.Trials` is a separate, minimal trials-game prototype. Run it with
 `dotnet run --project App2d.Trials`. It uses the shared `GameHost`, `Game2D` camera,
-and physics world to draw a circle player above an infinite ground line at `y = 0`.
-Use **A/D** or **Left/Right** to move, **Space** to jump, **R** to reset, and **Esc**
-to close. The camera follows horizontally; the floor marks show movement.
+and physics world to simulate a double-triangle bike on a cubic B-spline terrain course.
+Use **A/D** or **Left/Right** to drive, **W/S** to lean, **Space** to brake,
+**R** to reset, and **Esc** to close. The camera follows the terrain height; surface marks show movement.
 Three repeating depth layers provide clouds, distant mountains, and nearby hills;
 both games use the shared [parallax layer API](docs/rendering-passes.md#parallax-layers).
-No external assets are needed. The circle is a placeholder for a future bike;
-the existing physics-body API is unchanged.
+No external assets are needed. `TrialsBike2D` holds the editable tube geometry, fork,
+wheel radius, motor and suspension tuning. The front triangle and rear swingarm are
+separate rigid bodies. A front wheel joint allows 28 units of travel along the fork;
+a rear pivot and wheel bearing keep the rear triangle connected while its shock
+compresses up to 14 units. Wheels rotate freely and rear-wheel torque drives through
+ground friction. The fork telescopes and the rear shock graphic follows its mounts.
+
+`TrialsCourse2D` holds the course `Width`, `FrequencyAmplitudes` and additive `Ramps`.
+Change `Width` in that file to grow the default map, or pass a different configuration to
+`TrialsGame2D(course)` / `TrialsTerrain2D(world, course)`. Width is measured from `XMin`
+to `XMax = XMin + Width`, including the area left of the spawn. Frequencies are cycles
+per world unit (`1 / wavelength`), amplitudes are heights in world units, and ramps use
+world-space X/Y points. Increasing width adds more waves without stretching their scale
+or moving authored ramps. The final wave fade follows the new right endpoint.
+
+```csharp
+var course = TrialsCourse2D.Default with
+{
+    Width = 40_000f,
+    FrequencyAmplitudes = [(1f / 2400f, 48f), (1f / 700f, 20f)],
+    Ramps = [PolylineCurve2D.Builder.Create([new(2000, 0), new(2200, 120), new(2400, 0)])]
+};
+using var game = new TrialsGame2D(course);
+```
+
+`ControlPointSpacing`, `YMin`, `WaveStartX` and wave fade lengths are also configurable.
+The control-point grid remains anchored when width changes, with an exact final endpoint
+even when the width is not a multiple of the spacing. Empty wave/ramp collections are valid.
+The default map keeps the three waves and two hand-shaped ramp profiles.
+The clamped cubic `BSpline2D` has continuous position, first and second
+derivatives at its simple interior knots; its control points influence the curve rather
+than being interpolation targets. `Curve2D.ToPolyline` samples each knot span adaptively,
+with a 12-unit chord limit and 0.05-unit sampled-deviation target. Visible and collidable
+terrain use the same sampled boundary. `SimplePolygon2D.Builder.BelowPolyline` closes
+the region down to a bottom plane and builds narrow strip triangles directly. This is a
+finite default course of width 12800 from x = -1600 to 11200, with a flat starting area.
+
+`IHeightField2D` in Core describes the solid `XMin <= x <= XMax` and
+`YMin <= y <= HeightAt(x)`: a function on top, vertical end caps, and a supplied flat bottom.
+`PolylineHeightField2D`, `BSplineHeightField2D`, and `FunctionHeightField2D` share this API.
+The function source needs no vertices; height, slope, outward top normal and containment
+queries evaluate the source directly. B-splines invert their X coordinate before evaluating
+Y, and require strictly increasing control-point X coordinates. Polyline slopes use the
+segment to the right at corners. Supplied bottoms must lie below the top; evaluating an
+invalid height throws instead of moving the bottom or changing the function.
+
+```csharp
+using App2d.Core.Geometry.HeightFields;
+using App2d.Core.Geometry.Operations.HeightFields;
+
+IHeightField2D hills = new FunctionHeightField2D(
+    xMin: -1000f, xMax: 1000f, yMin: -200f,
+    height: x => 30f * MathF.Sin(x / 100f),
+    slope: x => 0.3f * MathF.Cos(x / 100f),
+    yMax: 30f);
+var normal = hills.NormalAt(50f); // normalize((-slope, 1))
+var collider = hills.ToShape(); // HeightFieldShape2D implements IShape2D.
+var terrain = new TrialsTerrain2D(world, hills);
+```
+
+No minimum/maximum search is performed. `YMax` is a conservative upper bound: polylines
+use their highest vertex, B-splines use their highest control point, and functions may supply
+a bound or leave it at positive infinity. `Bounds()` permits infinite rectangles.
+`YMin = float.NegativeInfinity` supports unbounded-downward source queries; polygon baking
+then requires `ToClippedShape(finiteBottom)` (or `ToClippedPolygon`) explicitly. Sampling is an approximation;
+choose a segment length that resolves a function's shortest features. Trials samples once
+and shares that boundary between drawing, camera heights and existing shape collision.
+The side-scroller's tile terrain remains unchanged.
+
+`HeightFieldShape2D` attaches directly to a `SpatialObject2D`/`WorldObject2D`, with bounds,
+area, mass/inertia, point distances, raycasts, drawing and JSON support. Its serialized data
+is the frozen polyline top and finite `YMin`; analytic delegates remain in the source API.
+Polyline sources retain their authored edges exactly; B-splines and functions are sampled
+once, and every shape operation uses the same approximation.
+
+Collision splits heightfields with a linear slope scan: nonincreasing top-edge slopes keep
+one convex run; an increasing slope starts the next run at the shared vertex. Each run
+closes vertically down to `YMin`. Cross products compare slopes without division, and
+exactly collinear samples collapse inside the collision pieces. Their interiors are disjoint
+and their union is the heightfield. This needs no general polygon decomposition or root
+search. All built-in finite shapes and half-spaces use the existing convex collision path
+against these pieces; circles use the complete outer perimeter to avoid internal seams.
+Concave pair contacts retain the solver's per-piece behavior rather than claiming a single
+global minimum escape translation. Other shapes can still encounter shared piece edges
+at concave joins; this is a smaller set of edges than a triangle decomposition.
+
+Circle-versus-simple-polygon contacts query the actual outer perimeter, including its
+vertices, rather than internal triangle seams. Containment determines the outward normal;
+other shapes use the existing convex-part contacts, with bounds rejection before narrow phase.
+Large composites cache a local-space bounds tree so only nearby parts reach the narrow phase;
+moving or rotating the body reuses the tree, and equal-depth contacts retain source-part ordering.
+The spline is the authoring curve; collision uses its polyline approximation, not an analytic
+spline contact. Adaptive deviation checks sample quarter/midpoints and are not certified
+error bounds for arbitrary user-defined curves.
+
+A support function on an entire nonconvex spline would make GJK see its convex hull,
+bridging valleys. Minkowski support addition is valid for convex shapes:
+`support(A + B, d) = support(A,d) + support(B,d)`. A disk adds `r * normalize(d)`.
+`NormalOffsetCurve2D` instead evaluates `C(t) + offset(t)*normal(t)`; it can describe a
+local wheel-center path for a constant radius, but endpoints and overlapping offsets
+still require geometric handling. It is not a general nonconvex GJK collision shape.
 
 Within the game project, `Contracts` owns commands, immutable observations/events, and
 shared configuration; `Gameplay` owns the simulation; `Presentation` owns views, camera,
@@ -272,7 +371,50 @@ linear impulse solver. Physics policies remain replaceable through `Integrator`,
 `PairFilter`, `CollisionCallbacks`, `PositionSolver`, and `VelocitySolver`. Collision shape/contact policy is
 configured independently through `CollisionSystem2D.ContactProvider`. `Constraints` run their
 position projection during each `PositionIterations` pass, followed by their velocity
-projection for `VelocityIterations` passes.
+projection for `VelocityIterations` passes. Contact response is revisited between
+velocity passes so joints and supporting contacts can settle together.
+
+`IPhysicsConstraint2D.PrepareVelocity(dt)` runs once per substep after contact response,
+before velocity iterations. Existing constraints inherit a no-op. Stateful impulse
+constraints use it to prepare anchor masses and reset their per-substep impulse.
+
+`SoftPointJoint2D` brings two body-local anchors together with a damped spring in both
+axes, without restricting relative rotation or projecting positions. Offset anchors use
+the bodies' centers of mass, angular velocity and inertia. Its implicit impulse solver
+uses [Solver2D's soft constraint coefficients](https://box2d.org/posts/2024/02/solver2d/#soft-constraints)
+with accumulated impulses so extra solver iterations do not multiply spring strength.
+Tune `FrequencyHertz` for stiffness and `DampingRatio` for settling: below 1 overshoots,
+1 is critical damping, and above 1 is overdamped. The underlying equation is
+`x'' + 2*zeta*omega*x' + omega²*x = 0`, with `omega = 2*pi*frequency`.
+Keep frequency below half the physics substep rate; integration adds some numerical damping.
+
+Suspension uses three additional constraints:
+
+- `RevoluteJoint2D`: firm coincident anchors, free relative rotation (swingarm pivot or wheel bearing).
+- `WheelJoint2D`: firm motion perpendicular to a body-local guide axis, a spring/damper
+  along that axis, optional travel limits, and free wheel rotation. The axis rotates with
+  the first body; differentiating that moving direction is included in the angular lever arm.
+- `SpringDamperJoint2D`: a shock between two offset mounts. It applies spring/damping
+  only along their connecting line, including the mounts' angular velocities and reaction
+  torques. Optional length limits prevent bottoming or extending beyond the stops.
+
+Trials uses a 6 Hz fork, 7 Hz rear shock and damping ratios of 0.7, with twelve
+position/velocity passes at 120 Hz. The shock has no separate rigid body: its two
+mount points determine its length and direction. The swingarm determines the axle's arc.
+
+For the math, let `n` be the unit suspension direction and `v` relative attachment velocity.
+`n^T v = dot(n,v)` is a scalar speed. Multiplying back by `n` gives the projected vector,
+so damping is `Fd = -c * n * dot(n,v) = -c * (n n^T) * v`. No division is needed for a unit vector;
+for a non-unit direction `a`, the projection matrix is `(a a^T)/(a^T a)`.
+Complete `n` with a perpendicular unit vector `t` to form the orthogonal basis `R = [n t]`.
+Then `R * diag(c,0) * R^T = c * n n^T`: ordinary change of basis for damping along one axis.
+In a single linearized suspension coordinate `q`, the oscillator is
+`m_eff*q'' + c*q' + k*(q-q0) = external_force`. A whole bike also has rotating axes,
+changing lever arms, gravity and contacts; we solve their coupled impulses rather than
+treating world X and Y as independent oscillators. Spring frequency defines
+`k = m_eff*omega²`, damping defines `c = 2*zeta*m_eff*omega`.
+See [Catto's soft constraint derivation](https://box2d.org/files/ErinCatto_SoftConstraints_GDC2011.pdf)
+and the [wheel joint constraint equations](https://github.com/erincatto/box2d/blob/main/src/wheel_joint.c).
 
 `DistanceConstraint2D` holds direct references to two bodies and locally projects them
 back to a configurable `RestLength`, weighted by inverse mass. Its velocity projection
@@ -379,8 +521,8 @@ Both include the body's current uniform scale and set `LocalCenterOfMass`;
 and center-to-center distance constraints use this center, and integration rotates
 around it. Linear velocity describes the center's motion. Existing explicit
 `Mass`, `MomentOfInertia`, and `PhysicsBodySettings2D` values remain supported;
-shape-derived values are opt-in. Trials opts its circle into a mass of 1, giving
-`I = 0.5 * mass * radius² = 288` at radius 24.
+shape-derived values are opt-in. Trials derives the frame's mass distribution from its
+solid tubes and each wheel's inertia from `I = 0.5 * mass * radius²` (mass 1.2, radius 26).
 
 A simple platform controller can therefore remain gameplay code:
 

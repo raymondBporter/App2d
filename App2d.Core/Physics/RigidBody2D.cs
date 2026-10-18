@@ -46,7 +46,7 @@ public sealed class RigidBody2D
         : Vector2.Transform(LocalCenterOfMass, WorldObject.Transform.Matrix);
 
     /// <summary>
-    /// When true (the default) contacts never impart spin; the body only
+    /// When true (the default) contacts and constraints never impart spin; the body only
     /// rotates when gameplay sets AngularVelocity or applies torque directly.
     /// </summary>
     public bool FreezeRotation { get; set; } = true;

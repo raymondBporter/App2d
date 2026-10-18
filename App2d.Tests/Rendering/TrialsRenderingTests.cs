@@ -10,7 +10,7 @@ namespace App2d.Tests.Rendering;
 public sealed class TrialsRenderingTests
 {
     [Fact]
-    public void StartupFrameDrawsTheCircleAndGroundThroughTheGameCamera()
+    public void StartupFrameDrawsBothWheelHubsAndGroundThroughTheGameCamera()
     {
         using var game = new TrialsGame2D();
         game.Initialize();
@@ -20,10 +20,13 @@ public sealed class TrialsRenderingTests
         game.RenderFrame(renderer, default);
         renderer.EndFrame();
         var pixels = graphics.ReadPixels();
-        var player = game.Camera.WorldToDevice(game.Player.WorldObject.Transform.Position);
         var floor = game.Camera.WorldToDevice(Vector2.Zero);
 
-        Assert.Equal(new XnaColor(255, 197, 102), pixels[(int)player.Y * 128 + (int)player.X]);
+        foreach (var wheel in new[] { game.Bike.RearWheel, game.Bike.FrontWheel })
+        {
+            var hub = game.Camera.WorldToDevice(wheel.WorldCenterOfMass);
+            Assert.Equal(new XnaColor(255, 197, 102), pixels[(int)MathF.Round(hub.Y) * 128 + (int)MathF.Round(hub.X)]);
+        }
         Assert.Equal(new XnaColor(117, 193, 150), pixels[(int)MathF.Round(floor.Y) * 128 + 10]);
         Assert.Equal(new XnaColor(18, 23, 28), pixels[110 * 128 + 10]);
     }

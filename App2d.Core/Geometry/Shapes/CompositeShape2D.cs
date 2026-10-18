@@ -10,6 +10,7 @@ namespace App2d.Core.Shapes;
 public readonly partial record struct CompositeShape2D : IShape2D
 {
     private readonly IShape2D[]? _parts;
+    internal object PartsIdentity => _parts!;
     private static readonly ConditionalWeakTable<IShape2D[], Dictionary<int, float>> UnionAreas = [];
     public string Kind => ShapeKinds2D.Composite;
 

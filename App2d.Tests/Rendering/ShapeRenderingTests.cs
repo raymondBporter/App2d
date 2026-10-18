@@ -23,6 +23,7 @@ public sealed class ShapeRenderingTests
         nameof(Triangle2D),
         nameof(ConvexPolygon2D),
         nameof(SimplePolygon2D),
+        nameof(HeightFieldShape2D),
         nameof(CompositeShape2D),
     ];
 
@@ -37,6 +38,7 @@ public sealed class ShapeRenderingTests
         nameof(Triangle2D) => Triangle2D.Builder.Create(new(-16, -14), new(16, -14), new(0, 18)),
         nameof(ConvexPolygon2D) => ConvexPolygon2D.Builder.Create([new(-15, -12), new(15, -12), new(18, 10), new(-18, 10)]),
         nameof(SimplePolygon2D) => SimplePolygon2D.Builder.Create([new(-16, -12), new(16, -12), new(16, 0), new(8, 0), new(8, 12), new(-16, 12)]),
+        nameof(HeightFieldShape2D) => HeightFieldShape2D.Builder.Create([new(-16, 12), new(0, 6), new(16, 12)], -12f),
         nameof(CompositeShape2D) => CompositeShape2D.Builder.Create([
             Rectangle2D.Builder.Create(new(-16, -12), new(5, 12)),
             Rectangle2D.Builder.Create(new(-5, -12), new(16, 12)),

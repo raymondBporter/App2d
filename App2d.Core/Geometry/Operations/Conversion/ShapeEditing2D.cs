@@ -46,6 +46,7 @@ public static class ShapeEditing2D
             ShapeKinds2D.Triangle => new Triangle2D { A = bounds.BottomLeft, B = bounds.BottomRight, C = bounds.TopCenter }.Validated(),
             ShapeKinds2D.ConvexPolygon => new ConvexPolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),
             ShapeKinds2D.SimplePolygon => new SimplePolygon2D { Vertices = [bounds.BottomLeft, bounds.BottomRight, bounds.TopRight, bounds.TopLeft] }.Validated(),
+            ShapeKinds2D.HeightField => HeightFieldShape2D.Builder.Create([bounds.TopLeft, bounds.TopRight], bounds.Bottom),
             ShapeKinds2D.HalfSpace => new HalfSpace2D { Normal = new(0f, 1f), Offset = bounds.Top }.Validated(),
             ShapeKinds2D.Composite => new CompositeShape2D { Parts = [definition] }.Validated(),
             _ => throw new ArgumentException($"Unknown shape kind '{kind}'.", nameof(kind))

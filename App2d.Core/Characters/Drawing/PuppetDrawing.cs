@@ -164,7 +164,12 @@ public sealed class PuppetDrawing
                 continue;
             }
             var contour = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
-            var triangles = part.Geometry is SimplePolygon2D ? PolygonTriangulationCache2D.Get(PartContours2D.CutoutPoints(part), 1e-8) : null;
+            var triangles = part.Geometry switch
+            {
+                SimplePolygon2D => PolygonTriangulationCache2D.Get(PartContours2D.CutoutPoints(part), 1e-8),
+                HeightFieldShape2D field => field.Polygon.Mesh,
+                _ => null
+            };
             var frame = PartAttachment2D.FrameOf(part, world, angle, transform);
             if (material.Fill is { } shapeFill)
             {

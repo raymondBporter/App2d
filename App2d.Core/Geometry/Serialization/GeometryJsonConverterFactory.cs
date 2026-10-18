@@ -57,6 +57,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                 ShapeKinds2D.Triangle => new Triangle2D(R<Vector2>("A"), R<Vector2>("B"), R<Vector2>("C")),
                 ShapeKinds2D.ConvexPolygon => new ConvexPolygon2D(R<Vector2[]>("Vertices")),
                 ShapeKinds2D.SimplePolygon => new SimplePolygon2D(R<Vector2[]>("Vertices")),
+                ShapeKinds2D.HeightField => new HeightFieldShape2D(R<Vector2[]>("Surface"), R<float>("YMin")),
                 ShapeKinds2D.HalfSpace => new HalfSpace2D(R<Vector2>("Normal"), R<float>("Offset")),
                 ShapeKinds2D.Composite => new CompositeShape2D(R<IShape2D[]>("Parts"), Optional("IncludeOverlap", true), Optional("AreaOutlineSegments", ShapeArea2D.DefaultOutlineSegments)),
                 CurveKinds2D.Line => new LineSegmentCurve2D(R<Vector2>("Start"), R<Vector2>("End")),
@@ -129,6 +130,10 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                 case SimplePolygon2D geometry:
                     W("Vertices", geometry.Vertices.ToArray());
                     break;
+                case HeightFieldShape2D geometry:
+                    W("Surface", geometry.Surface.ToArray());
+                    W("YMin", geometry.YMin);
+                    break;
                 case HalfSpace2D geometry:
                     W("Normal", geometry.Normal);
                     W("Offset", geometry.Offset);
@@ -182,6 +187,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
         nameof(Triangle2D) when type == typeof(Triangle2D) => ShapeKinds2D.Triangle,
         nameof(ConvexPolygon2D) when type == typeof(ConvexPolygon2D) => ShapeKinds2D.ConvexPolygon,
         nameof(SimplePolygon2D) when type == typeof(SimplePolygon2D) => ShapeKinds2D.SimplePolygon,
+        nameof(HeightFieldShape2D) when type == typeof(HeightFieldShape2D) => ShapeKinds2D.HeightField,
         nameof(HalfSpace2D) when type == typeof(HalfSpace2D) => ShapeKinds2D.HalfSpace,
         nameof(CompositeShape2D) when type == typeof(CompositeShape2D) => ShapeKinds2D.Composite,
         nameof(LineSegmentCurve2D) when type == typeof(LineSegmentCurve2D) => CurveKinds2D.Line,

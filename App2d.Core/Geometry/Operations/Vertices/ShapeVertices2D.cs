@@ -131,6 +131,7 @@ public static class ShapeVertices2D
             Triangle2D => 3,
             ConvexPolygon2D polygon => polygon.Vertices.Length,
             SimplePolygon2D polygon => polygon.Vertices.Length,
+            HeightFieldShape2D field => field.Polygon.Vertices.Length,
             _ => 0
         };
     }
@@ -175,6 +176,9 @@ public static class ShapeVertices2D
                 break;
             case SimplePolygon2D polygon:
                 polygon.Vertices.CopyTo(vertices);
+                break;
+            case HeightFieldShape2D field:
+                field.Polygon.Vertices.CopyTo(vertices);
                 break;
         }
         return vertices[..count];

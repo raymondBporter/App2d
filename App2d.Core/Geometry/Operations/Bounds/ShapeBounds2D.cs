@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Operations.HeightFields;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
@@ -33,6 +34,7 @@ public static class ShapeBounds2D
             Triangle2D triangle => new(Vector2.Min(Vector2.Min(triangle.A, triangle.B), triangle.C), Vector2.Max(Vector2.Max(triangle.A, triangle.B), triangle.C)),
             ConvexPolygon2D polygon => Rect2D.FromPoints(polygon.Vertices),
             SimplePolygon2D polygon => Rect2D.FromPoints(polygon.Vertices),
+            HeightFieldShape2D field => field.Profile.Bounds(),
             CompositeShape2D composite => Composite(composite.Parts),
             HalfSpace2D halfSpace => TransformedHalfSpace(halfSpace, Matrix3x2.Identity),
             IConvexShape2D convex => Convex(convex),

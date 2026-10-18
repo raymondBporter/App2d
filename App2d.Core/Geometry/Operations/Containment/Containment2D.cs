@@ -1,6 +1,7 @@
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Geometry.Operations.ClosestPoint;
 using App2d.Core.Mathematics;
+using App2d.Core.Validation;
 using System.Numerics;
 
 namespace App2d.Core.Geometry.Operations.Containment;
@@ -83,6 +84,28 @@ public static class Containment2D
             }
         }
         return true;
+    }
+
+    /// <summary>Point containment for a validated simple polygon in either winding, including its boundary.</summary>
+    public static bool SimplePolygon(Vector2 point, ReadOnlySpan<Vector2> vertices)
+    {
+        ArgGuard.Finite(point);
+        ArgGuard.ThrowIfTooShort(vertices, 3);
+        var winding = 0;
+        for (var index = 0; index < vertices.Length; index++)
+        {
+            var a = vertices[index];
+            var b = vertices[(index + 1) % vertices.Length];
+            var cross = ((double)b.X - a.X) * ((double)point.Y - a.Y) - ((double)b.Y - a.Y) * ((double)point.X - a.X);
+            if (cross == 0d && point.X >= Math.Min(a.X, b.X) && point.X <= Math.Max(a.X, b.X)
+                && point.Y >= Math.Min(a.Y, b.Y) && point.Y <= Math.Max(a.Y, b.Y)) return true;
+            if (a.Y <= point.Y)
+            {
+                if (b.Y > point.Y && cross > 0d) winding++;
+            }
+            else if (b.Y <= point.Y && cross < 0d) winding--;
+        }
+        return winding != 0;
     }
 
     /// <summary>A dimensionless radial score for an ellipse: 0 at the center, 1 on the boundary. Not a Euclidean distance.</summary>

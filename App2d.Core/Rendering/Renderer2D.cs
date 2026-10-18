@@ -278,6 +278,11 @@ public sealed partial class Renderer2D : IDisposable
 
     private void FillShape(IShape2D shape, Matrix3x2 matrix, Rect2D bounds, IShader2D shader)
     {
+        if (shape is HeightFieldShape2D field)
+        {
+            FillShape(field.Polygon, matrix, bounds, shader);
+            return;
+        }
         if (shape is CompositeShape2D composite)
         {
             foreach (var part in composite.Parts)
