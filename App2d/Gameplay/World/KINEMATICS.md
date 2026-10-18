@@ -47,13 +47,17 @@ velocity change at the loop seam. B-spline parameter progress is not generally
 constant distance, so a constant-speed spline would need an arc-length map.
 
 `MovingPlatform2D` composes a line segment with ping-pong and smoothstep easing.
-It sets `OneWaySurfaceNormal` and `TransfersContactMotion` on its body. Its `Speed`
+It sets `OneWaySurfaceNormal` through App2d's `PlatformCollisionRules2D` surface data
+and enables the generic `TransfersContactMotion` behavior on its body. Its `Speed`
 keeps the original round-trip duration: smoothstep slows near endpoints and
 reaches 1.5 times that speed at mid-leg. Existing level and editor records still
 describe a straight travel vector and speed; other curves can be used in code.
 
-Physics bodies can set `OneWaySurfaceNormal` to the outward normal of their only
-blocking face. Use `Vector2.UnitY` for a one-way floor. Kinematic entities
+`PlatformCollisionRules2D.Attach(physics).Surface(body).OneWaySurfaceNormal` specifies
+the outward normal of the only blocking face. Use `Vector2.UnitY` for a one-way floor.
+The game's pair filter owns temporary drop-through exclusions, and its
+`OnBeforeCollision` callback checks contact direction and approach. Core bodies
+carry no one-way or wall-grip metadata. Kinematic entities
 start with zero restitution, so a resting body is not bounced by their motion.
 Friction still defaults to zero. `TransfersContactMotion` uses the previous step's
 contact to carry a dynamic body along a kinematic surface and match its supporting

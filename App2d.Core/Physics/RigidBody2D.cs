@@ -8,12 +8,9 @@ namespace App2d.Core.Physics;
 
 public sealed class RigidBody2D
 {
-    private HashSet<RigidBody2D>? _ignoredOneWayPlatforms;
     private float _mass = 1f;
     private float _momentOfInertia = 1f;
-    private float _oneWaySlop = 2f;
     private float _friction;
-    private Vector2? _oneWaySurfaceNormal;
 
     private BodyMotionType2D _motionType;
 
@@ -82,36 +79,10 @@ public sealed class RigidBody2D
         set => Collider.IsSensor = value;
     }
     /// <summary>
-    /// Outward normal of the only face that blocks other bodies. Null makes every
-    /// face solid. For a floor this is +Y; for a wall blocking from the right, +X.
-    /// </summary>
-    public Vector2? OneWaySurfaceNormal
-    {
-        get => _oneWaySurfaceNormal;
-        set
-        {
-            if (value is { } normal)
-            {
-                ArgGuard.Finite(normal);
-                var length = normal.Length();
-                ArgGuard.Positive(length, nameof(OneWaySurfaceNormal));
-                normal /= length;
-                ArgGuard.Finite(normal);
-                _oneWaySurfaceNormal = normal;
-            }
-            else
-            {
-                _oneWaySurfaceNormal = null;
-            }
-        }
-    }
-
-    /// <summary>
     /// When kinematic, transfer this body's tangential step displacement and
     /// supporting normal velocity to dynamic bodies from the previous contact step.
     /// </summary>
     public bool TransfersContactMotion { get; set; }
-    public bool IsWallGrippable { get; set; }
 
     public uint CollisionLayer
     {
@@ -130,16 +101,6 @@ public sealed class RigidBody2D
     {
         get => Collider.EntityId;
         set => Collider.EntityId = value;
-    }
-
-    public float OneWaySlop
-    {
-        get => _oneWaySlop;
-        set
-        {
-            ArgGuard.NonNegative(value, nameof(OneWaySlop));
-            _oneWaySlop = value;
-        }
     }
 
     public float Mass
@@ -233,28 +194,7 @@ public sealed class RigidBody2D
         AccumulatedTorque = 0f;
     }
 
-    public void IgnoreOneWayPlatform(RigidBody2D platform)
-    {
-        ArgGuard.ThrowIfNull(platform);
-        (_ignoredOneWayPlatforms ??= []).Add(platform);
-    }
-
-    public bool IsIgnoringOneWayPlatform(RigidBody2D platform)
-    {
-        ArgGuard.ThrowIfNull(platform);
-        return _ignoredOneWayPlatforms?.Contains(platform) == true;
-    }
-
-    public void ClearIgnoredOneWayPlatforms() => _ignoredOneWayPlatforms?.Clear();
-
-    public int IgnoredOneWayPlatformCount => _ignoredOneWayPlatforms?.Count ?? 0;
-
-    public void RemoveIgnoredOneWayPlatformsWhere(Predicate<RigidBody2D> match)
-    {
-        ArgGuard.ThrowIfNull(match);
-        _ignoredOneWayPlatforms?.RemoveWhere(match);
-    }
-
+    /// <summary>Enabled/layer-mask compatibility only. Use PhysicsWorld2D.CanCollide to include world pair policies.</summary>
     public bool CanCollideWith(RigidBody2D other) => Collider.CanCollideWith(other.Collider);
 
     private static ColliderMobility2D ToColliderMobility(BodyMotionType2D motionType) =>

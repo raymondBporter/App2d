@@ -41,7 +41,7 @@ public sealed class MovingPlatform2D : IDisposable
         Body = _kinematic.Body;
         WorldObject = _kinematic.WorldObject;
         Body.Restitution = 0f;
-        Body.OneWaySurfaceNormal = Vector2.UnitY;
+        PlatformCollisionRules2D.Attach(physics).Surface(Body).OneWaySurfaceNormal = Vector2.UnitY;
         Body.TransfersContactMotion = true;
     }
 

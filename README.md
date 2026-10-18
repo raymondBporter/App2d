@@ -255,8 +255,10 @@ from its injected `CollisionSystem2D`:
 ```text
 substep integration
     -> collision-system candidate + contact query
+    -> OnBeforeCollision: accept or reject the detected contact
     -> iterative contact + constraint position projections
     -> contact response + constraint velocity projections
+after all substeps: OnAfterCollision once per accepted body pair
 ```
 
 `GameHost` feeds gameplay exact 1/120-second updates through an accumulator. The
@@ -267,7 +269,7 @@ button press or mouse-wheel action.
 
 The defaults are semi-implicit Euler integration, mass-weighted MTV correction, and a
 linear impulse solver. Physics policies remain replaceable through `Integrator`,
-`PairFilter`, `PositionSolver`, and `VelocitySolver`. Collision shape/contact policy is
+`PairFilter`, `CollisionCallbacks`, `PositionSolver`, and `VelocitySolver`. Collision shape/contact policy is
 configured independently through `CollisionSystem2D.ContactProvider`. `Constraints` run their
 position projection during each `PositionIterations` pass, followed by their velocity
 projection for `VelocityIterations` passes.
@@ -290,6 +292,21 @@ phases remain available as reusable references for other workloads.
 Physics adds `DefaultPhysicsPairFilter2D` for motion-type policy. Its defaults reject static-static, static-kinematic, and
 kinematic-kinematic pairs, so at least one body must currently be dynamic. The six
 pairing switches can opt specific combinations back in without changing the broad phase.
+
+`IPairFilter2D` decides eligibility before geometry exists, with the same answer in
+either argument order. `RigidBody2D.CanCollideWith` checks enabled/layer-mask flags;
+`PhysicsWorld2D.CanCollide` also consults both the collision-system and physics-world
+pair filters. Gameplay support queries use the latter so a filtered pair cannot
+still count as ground.
+
+Set `PhysicsWorld2D.CollisionCallbacks` to an `IPhysicsCollisionCallbacks2D` policy:
+`OnBeforeCollision(contact)` runs after detection and before recording or response;
+return false to discard the contact. It can run repeatedly as position iterations
+refresh geometry. `OnAfterCollision(contact)` runs once per accepted pair after
+the complete step's response and constraints. Sensors receive notifications without
+physical response. Removing bodies in the after callback is supported; recursive
+stepping is rejected. Raw collision/raycast queries remain geometric queries and
+do not invoke physics callbacks.
 
 ## Ray queries
 
@@ -328,9 +345,19 @@ return `RigidBody2D` references.
 
 Bodies support static, kinematic, and dynamic motion; linear/angular velocity; force,
 torque, and impulses; mass and inertia; gravity scaling; restitution; sensors; and
-collision layers/masks. A body can set `OneWaySurfaceNormal` to the outward normal
-of its blocking face (`+Y` for a floor, `+X` for a wall). Contacts from other faces
-or from bodies passing through are ignored. Use `Vector2.UnitY` for a one-way floor.
+collision layers/masks. Side-scroller platform behavior lives in App2d's
+`PlatformCollisionRules2D`, rather than on `RigidBody2D`:
+
+```csharp
+var platforms = PlatformCollisionRules2D.Attach(physics);
+platforms.Surface(platformBody).OneWaySurfaceNormal = Vector2.UnitY;
+platforms.IgnorePlatform(playerBody, platformBody); // only this pair drops through
+```
+
+Attaching preserves existing pair filters and callbacks. Drop-through exclusions
+run in the pair filter before narrow phase; the normal, previous-side and approach
+checks run in `OnBeforeCollision`. Surface slop and wall-grip metadata also live in
+the game policy. Body removal cleans its state. Trials attaches no platform policy.
 Accumulated forces clear after a public step. The latest contacts remain available
 through `LastContacts`, `IsTouching(body)`, and directional `IsTouching(body, direction)`.
 

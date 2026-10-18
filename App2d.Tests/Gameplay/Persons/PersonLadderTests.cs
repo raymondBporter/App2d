@@ -9,6 +9,7 @@ using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Persons;
+using App2d.Gameplay.World;
 using App2d.Levels;
 using System.Numerics;
 
@@ -251,7 +252,7 @@ public sealed class PersonLadderTests
     public void DescendingOntoOneWayFloorStopsAndStands(int firstLadderRow)
     {
         var platform = AddSolid(new Vector2(144f, 208f), new Vector2(96f, 32f));
-        platform.OneWaySurfaceNormal = Vector2.UnitY;
+        PlatformCollisionRules2D.Attach(_physics).Surface(platform).OneWaySurfaceNormal = Vector2.UnitY;
         Step(climb: 1f, frames: 200);
         Assert.True(_person.IsClimbingLadder);
         Assert.True(_person.WorldObject.WorldBounds.Bottom > 224f);
@@ -265,7 +266,7 @@ public sealed class PersonLadderTests
         Assert.True(_person.IsGrounded);
         Assert.False(_person.IsClimbingLadder);
         Assert.InRange(_person.WorldObject.WorldBounds.Bottom, 223.9f, 224.1f);
-        Assert.Equal(0, _person.Body.IgnoredOneWayPlatformCount);
+        Assert.Equal(0, PlatformCollisionRules2D.Attach(_physics).IgnoredPlatformCount(_person.Body));
         Assert.Equal(1f, _person.Body.GravityScale);
 
         Step(frames: 60);
@@ -286,7 +287,7 @@ public sealed class PersonLadderTests
         Assert.False(_person.IsGrounded);
         Assert.False(_person.IsClimbingLadder);
         Assert.True(_person.Body.LinearVelocity.Y < 0f);
-        Assert.Equal(1, _person.Body.IgnoredOneWayPlatformCount);
+        Assert.Equal(1, PlatformCollisionRules2D.Attach(_physics).IgnoredPlatformCount(_person.Body));
         Step(climb: -1f, frames: 120, down: true);
         Assert.True(_person.WorldObject.WorldBounds.Top < 192f);
     }

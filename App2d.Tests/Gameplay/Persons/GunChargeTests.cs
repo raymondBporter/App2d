@@ -11,6 +11,7 @@ using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
+using App2d.Gameplay.World;
 using App2d.Levels;
 using System.Numerics;
 
@@ -172,7 +173,8 @@ public sealed class GunChargeTests
     {
         using var game = new Fixture(ladder: kind == "climb");
         using var baseline = new Fixture(ladder: kind == "climb");
-        game.Ground.OneWaySurfaceNormal = baseline.Ground.OneWaySurfaceNormal = kind == "drop" ? Vector2.UnitY : null;
+        PlatformCollisionRules2D.Attach(game.Physics).Surface(game.Ground).OneWaySurfaceNormal =
+            PlatformCollisionRules2D.Attach(baseline.Physics).Surface(baseline.Ground).OneWaySurfaceNormal = kind == "drop" ? Vector2.UnitY : null;
         if (chargeFirst)
         {
             game.Step(Press);

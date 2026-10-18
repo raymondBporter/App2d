@@ -324,7 +324,7 @@ public sealed class AuthoredEntityEnemy2D : IEnemyActor2D, IEnemyAttackSource2D,
         }
     }
 
-    private bool CanStandOn(RigidBody2D other) => other.MotionType != BodyMotionType2D.Dynamic && !other.IsSensor && !Body.IsIgnoringOneWayPlatform(other) && Body.CanCollideWith(other);
+    private bool CanStandOn(RigidBody2D other) => other.MotionType != BodyMotionType2D.Dynamic && !other.IsSensor && _physics.CanCollide(Body, other);
 
     private void Fire(ProjectileDef shot)
     {

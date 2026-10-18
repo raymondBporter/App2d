@@ -1,9 +1,10 @@
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
+using App2d.Gameplay.World;
 using System.Numerics;
 
-namespace App2d.Tests.Physics;
+namespace App2d.Tests.Gameplay.World;
 
 public sealed class OneWayPlatform2DTests
 {
@@ -84,7 +85,7 @@ public sealed class OneWayPlatform2DTests
     {
         var blockedWorld = CreateWorld();
         var blockedWall = AddOneWayPlatform(blockedWorld, Vector2.Zero, new Vector2(8f, 32f));
-        blockedWall.OneWaySurfaceNormal = Vector2.UnitX;
+        PlatformCollisionRules2D.Attach(blockedWorld).Surface(blockedWall).OneWaySurfaceNormal = Vector2.UnitX;
         var blocked = AddDynamicBox(blockedWorld, new Vector2(7f, 0f), new Vector2(4f));
         blocked.LinearVelocity = new Vector2(-120f, 0f);
 
@@ -96,7 +97,7 @@ public sealed class OneWayPlatform2DTests
 
         var passWorld = CreateWorld();
         var passWall = AddOneWayPlatform(passWorld, Vector2.Zero, new Vector2(8f, 32f));
-        passWall.OneWaySurfaceNormal = Vector2.UnitX;
+        PlatformCollisionRules2D.Attach(passWorld).Surface(passWall).OneWaySurfaceNormal = Vector2.UnitX;
         var passing = AddDynamicBox(passWorld, new Vector2(-7f, 0f), new Vector2(4f));
         passing.LinearVelocity = new Vector2(120f, 0f);
 
@@ -132,7 +133,7 @@ public sealed class OneWayPlatform2DTests
         world.Gravity = new Vector2(0f, -100f);
         var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(32f, 8f));
         var surface = world.AddBody(surfaceObject, BodyMotionType2D.Kinematic);
-        surface.OneWaySurfaceNormal = Vector2.UnitY;
+        PlatformCollisionRules2D.Attach(world).Surface(surface).OneWaySurfaceNormal = Vector2.UnitY;
         surface.TransfersContactMotion = true;
         surface.Restitution = 0f;
         var actor = AddDynamicBox(world, new Vector2(0f, 6f), new Vector2(4f));
@@ -158,7 +159,7 @@ public sealed class OneWayPlatform2DTests
         var surfaceObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(8f, 32f));
         surfaceObject.Transform.Rotation = MathF.PI / 4f;
         var surface = world.AddBody(surfaceObject, BodyMotionType2D.Static);
-        surface.OneWaySurfaceNormal = normal;
+        PlatformCollisionRules2D.Attach(world).Surface(surface).OneWaySurfaceNormal = normal;
         surface.Restitution = 0f;
         var actorObject = new SpatialObject2D(Circle2D.Builder.Create(2f));
         actorObject.Transform.Position = normal * 20f;
@@ -192,7 +193,7 @@ public sealed class OneWayPlatform2DTests
         var platform = world.AddBody(
             platformObject,
             BodyMotionType2D.Static);
-        platform.OneWaySurfaceNormal = Vector2.UnitY;
+        PlatformCollisionRules2D.Attach(world).Surface(platform).OneWaySurfaceNormal = Vector2.UnitY;
         platform.Restitution = 0f;
         return platform;
     }

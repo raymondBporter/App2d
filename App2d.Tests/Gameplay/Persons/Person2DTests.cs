@@ -282,21 +282,13 @@ public sealed class Person2DTests
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
         var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        var person = CreatePerson(
-            collision,
-            physics,
-            traversal,
-            Vector2.Zero,
-            PlayerLayer,
-            CombatFaction2D.Player);
+        var person = CreatePerson(collision, physics, traversal, Vector2.Zero, PlayerLayer, CombatFaction2D.Player);
         AddRightGrippableWall(physics, person);
         var arsenal = CreateArsenal(person, collision);
         person.AttachActions(arsenal);
 
         person.BeginFrame(0.04f);
-        person.ApplyCommand(
-            WallGripCommand(useWeapon: true, castSpell: true),
-            0.04f);
+        person.ApplyCommand(WallGripCommand(useWeapon: true, castSpell: true), 0.04f);
         Assert.True(person.IsWallGripping);
 
         physics.Step(0.04f);
@@ -321,13 +313,7 @@ public sealed class Person2DTests
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
         var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        var person = CreatePerson(
-            collision,
-            physics,
-            traversal,
-            Vector2.Zero,
-            PlayerLayer,
-            CombatFaction2D.Player);
+        var person = CreatePerson(collision, physics, traversal, Vector2.Zero, PlayerLayer, CombatFaction2D.Player);
         AddGroundSupport(physics, person);
 
         person.BeginFrame(0.01f);
@@ -338,17 +324,13 @@ public sealed class Person2DTests
         AddRightGrippableWall(physics, person, gap: 10f);
 
         person.BeginFrame(0.01f);
-        person.ApplyCommand(
-            MovementCommand(moveX: 1f, jumpPressed: true, jumpHeld: true),
-            0.01f);
+        person.ApplyCommand(MovementCommand(moveX: 1f, jumpPressed: true, jumpHeld: true), 0.01f);
         Assert.False(person.IsWallGripping);
         Assert.True(person.Body.LinearVelocity.Y > 0f);
 
         person.WorldObject.Transform.Position += new Vector2(9f, 0f);
         person.BeginFrame(0.01f);
-        person.ApplyCommand(
-            MovementCommand(moveX: 1f, jumpPressed: false, jumpHeld: true),
-            0.01f);
+        person.ApplyCommand(MovementCommand(moveX: 1f, jumpPressed: false, jumpHeld: true), 0.01f);
 
         Assert.False(person.IsWallGripping);
         Assert.Equal(-traversal.WallJumpHorizontalSpeed, person.Body.LinearVelocity.X);
@@ -368,13 +350,7 @@ public sealed class Person2DTests
         var ground = physics.AddBody(groundObject, BodyMotionType2D.Static);
         ground.CollisionLayer = WorldLayer;
         ground.CollisionMask = PlayerLayer;
-        var person = CreatePerson(
-            collision,
-            physics,
-            traversal,
-            new Vector2(0f, 100f),
-            PlayerLayer,
-            CombatFaction2D.Player);
+        var person = CreatePerson(collision, physics, traversal, new Vector2(0f, 100f), PlayerLayer, CombatFaction2D.Player);
 
         Assert.True(person.TakeDamage(person.Health.Maximum, Vector2.Zero));
         Assert.False(person.IsAlive);
@@ -392,31 +368,15 @@ public sealed class Person2DTests
         Assert.InRange(person.Body.LinearVelocity.Y, -0.01f, 0.01f);
     }
 
-    private Person2D CreatePerson(
-        CollisionSystem2D collision,
-        PhysicsWorld2D physics,
-        TraversalMetrics2D traversal,
-        Vector2 position,
-        uint layer,
-        CombatFaction2D faction)
+    private Person2D CreatePerson(CollisionSystem2D collision, PhysicsWorld2D physics, TraversalMetrics2D traversal, Vector2 position, uint layer, CombatFaction2D faction)
     {
-        var person = new Person2D(EntityId2D.Create(),
-            collision,
-            physics,
-            traversal,
-            position,
-            layer,
-            WorldLayer,
-            faction);
+        var person = new Person2D(EntityId2D.Create(), collision, physics, traversal, position, layer, WorldLayer, faction);
         _combatants.Register(person);
         return person;
     }
 
-    private PersonArsenal2D CreateArsenal(
-        Person2D person,
-        CollisionSystem2D collision) =>
-        new(
-            new EntityIdAllocator2D(),
+    private PersonArsenal2D CreateArsenal(Person2D person, CollisionSystem2D collision) =>
+        new(new EntityIdAllocator2D(),
             person.Body,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root).GunMuzzleOffset,
             collision,
@@ -425,49 +385,33 @@ public sealed class Person2DTests
             CombatFaction2D.Player,
             new CombatSystem2D(collision, _combatants));
 
-    private static void AddRightGrippableWall(
-        PhysicsWorld2D physics,
-        Person2D person,
-        float gap = 1f)
+    private static void AddRightGrippableWall(PhysicsWorld2D physics, Person2D person, float gap = 1f)
     {
-        var wallObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(20f, 200f));
-        wallObject.Transform.Position = new Vector2(
-            person.WorldObject.WorldBounds.Right + 10f + gap,
-            0f);
+        var wallObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(20f, 200f));
+        wallObject.Transform.Position = new Vector2(person.WorldObject.WorldBounds.Right + 10f + gap, 0f);
         var wall = physics.AddBody(wallObject, BodyMotionType2D.Static);
         wall.CollisionLayer = WorldLayer;
         wall.CollisionMask = PlayerLayer;
-        wall.IsWallGrippable = true;
+        App2d.Gameplay.World.PlatformCollisionRules2D.Attach(physics).Surface(wall).IsWallGrippable = true;
     }
 
-    private static void AddGroundSupport(
-        PhysicsWorld2D physics,
-        Person2D person)
+    private static void AddGroundSupport(PhysicsWorld2D physics, Person2D person)
     {
-        var groundObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(200f, 20f));
-        groundObject.Transform.Position = new Vector2(
-            person.Position.X,
-            person.WorldObject.WorldBounds.Bottom - 10f);
+        var groundObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(200f, 20f));
+        groundObject.Transform.Position = new Vector2(person.Position.X, person.WorldObject.WorldBounds.Bottom - 10f);
         var ground = physics.AddBody(groundObject, BodyMotionType2D.Static);
         ground.CollisionLayer = WorldLayer;
         ground.CollisionMask = PlayerLayer;
     }
 
-    private static PersonCommand2D MovementCommand(
-        float moveX,
-        bool jumpPressed,
-        bool jumpHeld) =>
+    private static PersonCommand2D MovementCommand(float moveX, bool jumpPressed, bool jumpHeld) =>
         new()
         {
             MoveX = moveX,
             JumpHeld = jumpPressed || jumpHeld
         };
 
-    private static PersonCommand2D WallGripCommand(
-        bool useWeapon,
-        bool castSpell) =>
+    private static PersonCommand2D WallGripCommand(bool useWeapon, bool castSpell) =>
         new()
         {
             MoveX = 1f,
@@ -483,5 +427,4 @@ public sealed class Person2DTests
             PositionIterations = 3,
             VelocityIterations = 2
         };
-
 }

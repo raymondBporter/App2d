@@ -260,7 +260,7 @@ public sealed class MovingPlatform2DTests
         var platform = CreatePlatform(physics, Vector2.UnitY, speed: 1f);
 
         Assert.Equal(BodyMotionType2D.Kinematic, platform.Body.MotionType);
-        Assert.Equal(Vector2.UnitY, platform.Body.OneWaySurfaceNormal);
+        Assert.Equal(Vector2.UnitY, PlatformCollisionRules2D.Attach(physics).Surface(platform.Body).OneWaySurfaceNormal);
         Assert.Equal(Vector2.Zero, platform.Start);
         Assert.Equal(Vector2.UnitY, platform.End);
     }

@@ -3,11 +3,13 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
+using App2d.Core.Collision.Filtering;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using App2d.Gameplay.Persons;
+using App2d.Gameplay.World;
 using App2d.Levels;
 using System.Numerics;
 
@@ -69,7 +71,7 @@ public sealed class PersonBalanceTests
     [InlineData(BodyMotionType2D.Kinematic, true)]
     public void SupportsSolidAndOneWayPlatformEdges(BodyMotionType2D motion, bool oneWay)
     {
-        AddLedge(-1, motion: motion).OneWaySurfaceNormal = oneWay ? Vector2.UnitY : null;
+        PlatformCollisionRules2D.Attach(_physics).Surface(AddLedge(-1, motion: motion)).OneWaySurfaceNormal = oneWay ? Vector2.UnitY : null;
         Step();
         Assert.Equal(-1, _person.BalanceDirection);
     }
@@ -78,7 +80,7 @@ public sealed class PersonBalanceTests
     public void IgnoredOneWayPlatformDoesNotSupportBalance()
     {
         var platform = AddLedge(1);
-        platform.OneWaySurfaceNormal = Vector2.UnitY;
+        PlatformCollisionRules2D.Attach(_physics).Surface(platform).OneWaySurfaceNormal = Vector2.UnitY;
         Step();
         Assert.Equal(1, _person.BalanceDirection);
         Step(drop: true);
@@ -123,6 +125,28 @@ public sealed class PersonBalanceTests
         }, Dt);
         _physics.Step(Dt);
         _person.UpdateAfterPhysics(Dt);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GroundAndBalanceQueriesHonorBothWorldPairFilterStages(bool colliderFilter)
+    {
+        AddLedge(1);
+        Step();
+        Assert.True(_person.IsGrounded);
+        if (colliderFilter)
+            _physics.CollisionSystem.PairFilter = new RejectAll<Collider2D>();
+        else
+            _physics.PairFilter = new RejectAll<RigidBody2D>();
+        Step();
+        Assert.False(_person.IsGrounded);
+        Assert.Equal(0, _person.BalanceDirection);
+    }
+
+    private sealed class RejectAll<T> : IPairFilter2D<T> where T : class
+    {
+        public bool ShouldTest(T first, T second) => false;
     }
 
     private RigidBody2D AddLedge(int edge, float overhang = 0.4f, BodyMotionType2D motion = BodyMotionType2D.Static)

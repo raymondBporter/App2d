@@ -14,6 +14,7 @@ public sealed partial class PersonLocomotion2D
     private readonly PhysicsWorld2D _physics;
     private readonly CollisionSystem2D _collision;
     private readonly RigidBody2D _body;
+    private readonly PlatformCollisionRules2D _platformRules;
     private readonly List<Collider2D> _queryResults = [];
     private PersonMovementIntent2D _intent;
     private Vector2 _positionBeforePhysics;
@@ -47,6 +48,7 @@ public sealed partial class PersonLocomotion2D
         _collision = collision;
         _physics = physics;
         _body = body;
+        _platformRules = PlatformCollisionRules2D.Attach(physics);
         Metrics = metrics;
         _tileMap = tileMap;
     }
@@ -245,7 +247,7 @@ public sealed partial class PersonLocomotion2D
         IsWallGripping = false;
         IsDashing = false;
         _body.GravityScale = 1f;
-        _body.ClearIgnoredOneWayPlatforms();
+        _platformRules.ClearIgnoredPlatforms(_body);
     }
 
     public void UpdatePassiveAfterPhysics()
@@ -279,7 +281,7 @@ public sealed partial class PersonLocomotion2D
         IsDashing = false;
         _body.WorldObject.Transform.Scale = Vector2.One;
         _body.GravityScale = 1f;
-        _body.ClearIgnoredOneWayPlatforms();
+        _platformRules.ClearIgnoredPlatforms(_body);
     }
 
     private void ApplyHorizontalControl(float deltaSeconds)
@@ -474,10 +476,10 @@ public sealed partial class PersonLocomotion2D
             if (collider.UserData is not RigidBody2D other ||
                 ReferenceEquals(other, _body) ||
                 other.MotionType == BodyMotionType2D.Dynamic ||
-                other.OneWaySurfaceNormal == Vector2.UnitY ||
-                !other.IsWallGrippable ||
+                _platformRules.Surface(other).OneWaySurfaceNormal == Vector2.UnitY ||
+                !_platformRules.Surface(other).IsWallGrippable ||
                 other.IsSensor ||
-                !_body.CanCollideWith(other))
+                !_physics.CanCollide(_body, other))
             {
                 continue;
             }
@@ -617,12 +619,12 @@ public sealed partial class PersonLocomotion2D
             }
 
             var gap = bodyBounds.Bottom - otherBounds.Top;
-            if (gap < -other.OneWaySlop || gap > Metrics.GroundProbeDistance)
+            if (gap < -_platformRules.Surface(other).OneWaySlop || gap > Metrics.GroundProbeDistance)
             {
                 continue;
             }
 
-            if (other.OneWaySurfaceNormal != Vector2.UnitY)
+            if (_platformRules.Surface(other).OneWaySurfaceNormal != Vector2.UnitY)
             {
                 return false;
             }
@@ -638,7 +640,7 @@ public sealed partial class PersonLocomotion2D
 
         foreach (var support in oneWaySupports)
         {
-            _body.IgnoreOneWayPlatform(support);
+            _platformRules.IgnorePlatform(_body, support);
         }
 
         _body.LinearVelocity = new Vector2(_body.LinearVelocity.X, Math.Min(_body.LinearVelocity.Y, -Metrics.OneWayDropSpeed));
@@ -647,13 +649,13 @@ public sealed partial class PersonLocomotion2D
 
     private void UpdateIgnoredOneWayPlatforms()
     {
-        if (_body.IgnoredOneWayPlatformCount == 0)
+        if (_platformRules.IgnoredPlatformCount(_body) == 0)
         {
             return;
         }
 
         var bodyTop = _body.WorldObject.WorldBounds.Top;
-        _body.RemoveIgnoredOneWayPlatformsWhere(platform =>
+        _platformRules.RemoveIgnoredPlatformsWhere(_body, platform =>
             !_physics.Bodies.Contains(platform) ||
             bodyTop < platform.WorldObject.WorldBounds.Bottom);
     }
@@ -836,9 +838,9 @@ public sealed partial class PersonLocomotion2D
                 }
 
                 if (ReferenceEquals(other, _body) ||
-                    other.OneWaySurfaceNormal == Vector2.UnitY ||
+                    _platformRules.Surface(other).OneWaySurfaceNormal == Vector2.UnitY ||
                     other.IsSensor ||
-                    !_body.CanCollideWith(other))
+                    !_physics.CanCollide(_body, other))
                 {
                     continue;
                 }
@@ -865,10 +867,9 @@ public sealed partial class PersonLocomotion2D
 
     private bool CanSupport(RigidBody2D other) =>
         !ReferenceEquals(other, _body) &&
-        !_body.IsIgnoringOneWayPlatform(other) &&
         other.MotionType != BodyMotionType2D.Dynamic &&
         !other.IsSensor &&
-        _body.CanCollideWith(other);
+        _physics.CanCollide(_body, other);
 
     private void QueryBodyBounds(Rect2D bounds) =>
         _collision.QueryBounds(

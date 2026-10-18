@@ -1,8 +1,5 @@
 using App2d.Core.Collision;
-using App2d.Core.Collision.Contacts;
 using App2d.Core.Collision.Filtering;
-using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics.Filtering;
 using App2d.Core.Physics.Integration;
 using App2d.Core.Physics.Solvers;
@@ -23,6 +20,7 @@ public sealed class PhysicsWorld2D
     private readonly ContactSet _substepContacts = new();
     private readonly List<CollisionPair2D> _collisionContacts = [];
     private readonly PhysicsColliderPairFilter _physicsColliderPairFilter;
+    private bool _isStepping;
 
     public PhysicsWorld2D()
         : this(new CollisionSystem2D())
@@ -41,6 +39,8 @@ public sealed class PhysicsWorld2D
     public float MaxSubstepSeconds { get; set; } = 1f / 60f;
     public IPhysicsIntegrator2D Integrator { get; set; } = new SemiImplicitEulerIntegrator2D();
     public IPairFilter2D<RigidBody2D> PairFilter { get; set; } = new DefaultPhysicsPairFilter2D();
+    public IPhysicsCollisionCallbacks2D? CollisionCallbacks { get; set; }
+    public event Action<RigidBody2D>? BodyRemoved;
     public IPhysicsPositionSolver2D PositionSolver { get; set; } = new MassWeightedPositionSolver2D();
     public IPhysicsVelocitySolver2D VelocitySolver { get; set; } = new ImpulseVelocitySolver2D();
     public CollisionSystem2D CollisionSystem { get; }
@@ -72,12 +72,18 @@ public sealed class PhysicsWorld2D
 
         CollisionSystem.RemoveCollider(body.Collider);
         _lastContacts.RemoveAll(c => ReferenceEquals(c.First, body) || ReferenceEquals(c.Second, body));
-        foreach (var remaining in _bodies)
-        {
-            remaining.RemoveIgnoredOneWayPlatformsWhere(platform => ReferenceEquals(platform, body));
-        }
-
+        BodyRemoved?.Invoke(body);
         return true;
+    }
+
+    /// <summary>Pair eligibility using the same collider and physics filters as detection; contact callbacks run later.</summary>
+    public bool CanCollide(RigidBody2D first, RigidBody2D second)
+    {
+        ArgGuard.ThrowIfNull(first);
+        ArgGuard.ThrowIfNull(second);
+        return !ReferenceEquals(first, second) && first.IsCollider && second.IsCollider &&
+            CollisionSystem.PairFilter.ShouldTest(first.Collider, second.Collider) &&
+            PairFilter.ShouldTest(first, second);
     }
 
     public void Step(float deltaSeconds)
@@ -88,6 +94,20 @@ public sealed class PhysicsWorld2D
             return;
         }
 
+        StateGuard.ThrowIf(_isStepping, "A physics world cannot be stepped recursively from a collision callback.");
+        _isStepping = true;
+        try
+        {
+            StepCore(deltaSeconds);
+        }
+        finally
+        {
+            _isStepping = false;
+        }
+    }
+
+    private void StepCore(float deltaSeconds)
+    {
         StateGuard.ThrowIfNot(NumericValidation.IsPositive(MaxSubstepSeconds));
         StateGuard.ThrowIfNot(PositionIterations >= 1);
         StateGuard.ThrowIfNot(VelocityIterations >= 1);
@@ -115,6 +135,15 @@ public sealed class PhysicsWorld2D
             body.LastStepLinearVelocity = body.LinearVelocity;
             body.ClearAccumulators();
         }
+
+        if (CollisionCallbacks is { } callbacks)
+        {
+            // This list stays stable when an after-callback removes a body from LastContacts.
+            foreach (var contact in _frameContacts.Contacts)
+            {
+                callbacks.OnAfterCollision(contact);
+            }
+        }
     }
 
     private void TransferContactMotion(float deltaSeconds)
@@ -141,7 +170,7 @@ public sealed class PhysicsWorld2D
                 continue;
             }
 
-            if (rider.MotionType != BodyMotionType2D.Dynamic || rider.IsSensor || rider.IsIgnoringOneWayPlatform(surface))
+            if (rider.MotionType != BodyMotionType2D.Dynamic || rider.IsSensor || surface.IsSensor || !CanCollide(rider, surface))
             {
                 continue;
             }
@@ -222,7 +251,7 @@ public sealed class PhysicsWorld2D
                 }
 
                 var contact = new PhysicsContact2D(firstBody, secondBody, pair.Contact);
-                if (!AllowsDirectionalContact(contact))
+                if (CollisionCallbacks?.OnBeforeCollision(contact) == false)
                 {
                     continue;
                 }
@@ -283,95 +312,6 @@ public sealed class PhysicsWorld2D
             }
         }
     }
-
-    private static bool AllowsDirectionalContact(PhysicsContact2D contact)
-    {
-        if (contact.First.OneWaySurfaceNormal is { } firstNormal &&
-            !AllowsOneWaySurface(contact.First, contact.Second, firstNormal,
-                -contact.Geometry.Normal, contact.Geometry))
-        {
-            return false;
-        }
-
-        if (contact.Second.OneWaySurfaceNormal is { } secondNormal &&
-            !AllowsOneWaySurface(contact.Second, contact.First, secondNormal,
-                contact.Geometry.Normal, contact.Geometry))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private static bool AllowsOneWaySurface(
-        RigidBody2D surface,
-        RigidBody2D other,
-        Vector2 surfaceNormal,
-        Vector2 otherSeparationNormal,
-        CollisionContact2D geometry)
-    {
-        if (other.IsIgnoringOneWayPlatform(surface))
-        {
-            return false;
-        }
-
-        // A one-way surface has no collidable corner or side. Rounded shapes
-        // report diagonal normals at corners, which should pass through.
-        const float minimumNormalAlignment = 0.999999f;
-        if (Vector2.Dot(otherSeparationNormal, surfaceNormal) < minimumNormalAlignment)
-        {
-            return false;
-        }
-
-        var surfaceBounds = surface.WorldObject.WorldBounds;
-        var otherBounds = other.WorldObject.WorldBounds;
-        if (!surfaceBounds.IsFinite || !otherBounds.IsFinite)
-        {
-            return false;
-        }
-
-        var face = MaximumProjection(surface.WorldObject, surfaceNormal);
-        if (MathF.Abs(Vector2.Dot(geometry.Point, surfaceNormal) - face) >
-            surface.OneWaySlop + geometry.PenetrationDepth)
-        {
-            return false;
-        }
-
-        var previousNearSide = MinimumProjection(other.WorldObject, surfaceNormal) +
-            Vector2.Dot(other.PreviousPosition - other.WorldObject.Transform.Position, surfaceNormal);
-        if (previousNearSide < face - surface.OneWaySlop)
-        {
-            return false;
-        }
-
-        var relativeMotion = Vector2.Dot(
-            other.WorldObject.Transform.Position - other.PreviousPosition -
-            (surface.WorldObject.Transform.Position - surface.PreviousPosition), surfaceNormal);
-        if (relativeMotion > 0f)
-        {
-            return false;
-        }
-
-        var relativeSpeed = Vector2.Dot(other.LinearVelocity - surface.LinearVelocity, surfaceNormal);
-        return relativeSpeed <= 0f;
-    }
-
-    private static float MaximumProjection(SpatialObject2D worldObject, Vector2 normal)
-    {
-        if (worldObject.Shape is IConvexShape2D shape)
-        {
-            var pose = worldObject.CollisionPose;
-            var point = pose.TransformPoint(shape.GetSupportPoint(pose.TransposeTransformDirection(normal)));
-            return Vector2.Dot(point, normal);
-        }
-
-        var bounds = worldObject.WorldBounds;
-        return Vector2.Dot(bounds.Center, normal) +
-            (MathF.Abs(normal.X) * bounds.Size.X + MathF.Abs(normal.Y) * bounds.Size.Y) * 0.5f;
-    }
-
-    private static float MinimumProjection(SpatialObject2D worldObject, Vector2 normal) =>
-        -MaximumProjection(worldObject, -normal);
 
     private sealed class ContactSet
     {
