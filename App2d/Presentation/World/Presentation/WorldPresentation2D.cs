@@ -22,6 +22,8 @@ namespace App2d.Presentation.World.Presentation;
 public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) : IDisposable
 {
     private readonly Dictionary<EntityId2D, PlatformView> _platforms = [];
+    private readonly Dictionary<EntityId2D, (ObjectDefinition2D Definition, WorldObject2D Visual)> _objects = [];
+    private readonly Dictionary<string, TextureCache2D> _objectTextures = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<long, CheckpointView> _checkpoints = [];
     private readonly Dictionary<TileChunk2D, ChunkView> _chunks = [];
     private readonly Dictionary<(string Id, float Size), SideScrollerTerrainTileset2D> _tilesets = [];
@@ -75,6 +77,12 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             ApplyContent(content);
         }
         _vegetation.ApplyCuts(state.CutGrass);
+        foreach (var item in state.Objects)
+        {
+            if (!_objects.TryGetValue(item.Id, out var view)) continue;
+            view.Visual.Transform.Position = item.Position;
+            view.Visual.Transform.Rotation = item.Rotation;
+        }
 
         foreach (var platform in state.MovingPlatforms)
         {
@@ -102,6 +110,32 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     private void ApplyContent(LevelContent2D content)
     {
+        var objectIds = content.Objects.Select(o => o.Id).ToHashSet();
+        foreach (var id in _objects.Keys.Where(id => !objectIds.Contains(id)).ToArray())
+        {
+            scene.Remove(_objects[id].Visual);
+            _objects.Remove(id);
+        }
+        foreach (var item in content.Objects)
+        {
+            if (_objects.TryGetValue(item.Id, out var existing))
+            {
+                if (existing.Definition == item) continue;
+                scene.Remove(existing.Visual);
+                _objects.Remove(item.Id);
+            }
+            if (item.Material is not { } material) continue;
+            Texture2D? texture = null;
+            if (material.Texture is { } path)
+            {
+                if (!_objectTextures.TryGetValue(item.TextureRoot, out var cache))
+                    _objectTextures.Add(item.TextureRoot, cache = new(item.TextureRoot));
+                texture = cache.Load(path);
+            }
+            var visual = new WorldObject2D(item.Geometry, new ShapeMaterialShader2D(material, texture));
+            scene.Add(visual);
+            _objects.Add(item.Id, (item, visual));
+        }
         _vegetation.SetGiantTrees(content.GiantTrees);
         var platforms = content.MovingPlatforms.Select(p => p.Id).ToHashSet();
         foreach (var id in _platforms.Keys.Where(id => !platforms.Contains(id)).ToArray())
@@ -239,6 +273,10 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     public void Dispose()
     {
+        foreach (var item in _objects.Values) scene.Remove(item.Visual);
+        _objects.Clear();
+        foreach (var cache in _objectTextures.Values) cache.Dispose();
+        _objectTextures.Clear();
         foreach (var platform in _platforms.Values)
         {
             scene.Remove(platform.Visual);

@@ -1,5 +1,7 @@
 using App2d.Contracts.World;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.IO;
+using App2d.Core.Objects;
 using App2d.Core.Tiles;
 using App2d.Gameplay.World.Vegetation;
 using System.Collections.Immutable;
@@ -47,6 +49,7 @@ public sealed class WorldAsset2D : IDisposable
     public ImmutableArray<WorldZone2D> Zones { get; }
 
     public bool StartAtArrival { get; init; }
+    public IReadOnlyList<ObjectPlacement2D> Objects { get; init; } = [];
 
     public ImmutableArray<GiantTree2D> GiantTrees => LoadGiantTrees();
 
@@ -70,6 +73,7 @@ public static class WorldFile2D
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+        Converters = { new Vector2JsonConverter() },
         WriteIndented = true
     };
 
@@ -85,6 +89,7 @@ public static class WorldFile2D
             }
 
             var root = Path.GetDirectoryName(Path.GetFullPath(path))!;
+            var objects = LoadObjects(root, file.Objects);
             var zoneIds = new HashSet<string>(StringComparer.Ordinal);
             var mapIds = new HashSet<string>(StringComparer.Ordinal);
             var identities = new HashSet<int>();
@@ -137,6 +142,7 @@ public static class WorldFile2D
             }
             return new(maps.AsReadOnly(), zones.ToImmutable())
             {
+                Objects = objects,
                 StartAtArrival = file.StartAtArrival
             };
         }
@@ -169,11 +175,34 @@ public static class WorldFile2D
         return result;
     }
 
+    private static System.Collections.ObjectModel.ReadOnlyCollection<ObjectPlacement2D> LoadObjects(string root, IReadOnlyList<ObjectPlacementDocument> placements)
+    {
+        if (placements is null) throw new InvalidDataException("Object placements cannot be null.");
+        var result = new List<ObjectPlacement2D>();
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        var assets = new Dictionary<string, ObjectAsset2D>(StringComparer.OrdinalIgnoreCase);
+        foreach (var placement in placements)
+        {
+            if (placement is null || string.IsNullOrWhiteSpace(placement.Id) || !ids.Add(placement.Id))
+                throw new InvalidDataException("Object placements need unique IDs.");
+            var assetPath = FilePaths.ResolveUnderRoot(root, placement.Asset);
+            if (!assets.TryGetValue(assetPath, out var asset))
+                assets.Add(assetPath, asset = ObjectAsset2D.Load(assetPath));
+            var instance = new ObjectPlacement2D(placement.Id, asset, placement.Position);
+            instance.Validate();
+            result.Add(instance);
+        }
+        return result.AsReadOnly();
+    }
+
     public sealed record WorldDocument(int Version, IReadOnlyList<ZoneDocument> Zones)
     {
+        public IReadOnlyList<ObjectPlacementDocument> Objects { get; init; } = [];
         public string? StartMapId { get; init; }
         public bool StartAtArrival { get; init; }
     }
+    public sealed record ObjectPlacementDocument(string Id, string Asset,
+        [property: JsonConverter(typeof(Vector2JsonConverter))] Vector2 Position);
     public sealed record ZoneDocument(string Id, string Name, int Priority, IReadOnlyList<MapDocument> Maps);
 
     public sealed record MapDocument(string Id, string Name, [property: JsonRequired] int Identity, string File)

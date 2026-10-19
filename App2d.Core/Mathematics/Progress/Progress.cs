@@ -19,7 +19,7 @@ public static class Progress
     /// <summary>Unclamped cubic smoothstep packaged with its derivative.</summary>
     public static ProgressMap SmoothStepMap { get; } = new(
         SmoothStepUnclamped,
-        x => 6d * x * (1d - x));
+        x => 6d * x * (1d - x), ProgressMapKind.Smooth);
 
     /// <summary>The cubic polynomial in the caller's floating-point precision, without clamping.</summary>
     public static T SmoothStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
@@ -28,7 +28,7 @@ public static class Progress
     /// <summary>Unclamped quintic smoothstep packaged with its derivative.</summary>
     public static ProgressMap SmootherStepMap { get; } = new(
         SmootherStepUnclamped,
-        x => 30d * x * x * (1d - x) * (1d - x));
+        x => 30d * x * x * (1d - x) * (1d - x), ProgressMapKind.Smoother);
 
     public static T SmootherStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
         value * value * value * (value * (value * T.CreateChecked(6) - T.CreateChecked(15)) + T.CreateChecked(10));
@@ -36,7 +36,7 @@ public static class Progress
     /// <summary>Unclamped septic smoothstep packaged with its derivative.</summary>
     public static ProgressMap SmoothestStepMap { get; } = new(
         SmoothestStepUnclamped,
-        x => 140d * x * x * x * (1d - x) * (1d - x) * (1d - x));
+        x => 140d * x * x * x * (1d - x) * (1d - x) * (1d - x), ProgressMapKind.Smoothest);
 
     public static T SmoothestStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
         value * value * value * value *

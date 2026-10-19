@@ -194,7 +194,7 @@ public sealed class SideScrollerSession2D : IDisposable
     {
         const float dt = FixedDeltaSeconds;
         _world.UpdateStreaming(StreamingFocus);
-        _world.UpdateMovingPlatforms(dt);
+        _world.UpdateWorldMotion(dt);
         foreach (var player in _players)
         {
             player.Person.BeginFrame(dt);

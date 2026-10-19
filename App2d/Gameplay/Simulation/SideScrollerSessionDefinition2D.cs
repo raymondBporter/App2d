@@ -1,6 +1,7 @@
 using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Objects;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Gameplay.World;
@@ -32,6 +33,7 @@ public sealed record SideScrollerSessionDefinition2D(
 {
     /// <summary>Authored entities; placements they cover spawn from these, otherwise the built-in sprite enemies.</summary>
     public AuthoredCatalog? AuthoredCharacters { get; init; }
+    public IReadOnlyList<ObjectPlacement2D> Objects { get; init; } = [];
     /// <summary>Rectangular regions shared by simulation and presentation consumers.</summary>
     public System.Collections.Immutable.ImmutableArray<WorldZone2D> Zones { get; init; } = [];
     public System.Collections.Immutable.ImmutableArray<GiantTree2D> GiantTrees { get; init; } = [];
@@ -48,6 +50,10 @@ public sealed record SideScrollerSessionDefinition2D(
         ArgGuard.ThrowIfNull(TileMap);
         ArgGuard.ThrowIfNull(MovingPlatforms);
         ArgGuard.ThrowIfNull(WorldThings);
+        ArgGuard.ThrowIfNull(Objects);
+        foreach (var placement in Objects) placement.Validate();
+        ArgGuard.ThrowIf(Objects.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != Objects.Count,
+            "Object placements need unique IDs.", nameof(Objects));
         ArgGuard.ThrowIf(GiantTrees.IsDefault || GiantTrees.Any(tree => tree is null), "Trees must be initialized and non-null.", nameof(GiantTrees));
         if (Zones.IsDefault || Zones.Any(z => z is null) || Zones.Select(z => z.Id).Distinct(StringComparer.Ordinal).Count() != Zones.Length)
         {

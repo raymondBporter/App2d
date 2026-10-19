@@ -1,5 +1,12 @@
 {
   "version": 1,
+  "objects": [
+    {
+      "id": "arrival-lift",
+      "asset": "objects/lift.json",
+      "position": { "x": 80, "y": -240 }
+    }
+  ],
   "zones": [
     {
       "id": "hub",

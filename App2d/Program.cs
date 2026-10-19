@@ -45,6 +45,12 @@ if (args is ["--create-map", var mapPath, var width, var height, var originX, va
 
 ApplicationConfiguration.Initialize();
 
+if (args is ["--object-study", var objectDirectory])
+{
+    App2d.Diagnostics.RenderingSmoke2D.Run(objectDirectory, objectsOnly: true);
+    return;
+}
+
 if (args is ["--smoke-editor-ui", var editorDirectory])
 {
     App2d.Diagnostics.RenderingSmoke2D.Run(editorDirectory, editorOnly: true);

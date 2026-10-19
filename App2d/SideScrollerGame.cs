@@ -94,6 +94,7 @@ public sealed class SideScrollerGame : Game2D
                 SpellJsonOptions)
                 ?? throw new InvalidDataException("Player spell tuning is missing."),
             AuthoredCharacters = _authored,
+            Objects = loadedLevel.Objects,
             Zones = loadedLevel.Zones,
             GiantTrees = loadedLevel.GiantTrees,
             SavedProgress = loadedSave is null ? null : new SavedProgress2D(loadedSave.SavePointId, loadedSave.HitPoints),

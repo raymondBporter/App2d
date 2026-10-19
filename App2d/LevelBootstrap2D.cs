@@ -51,6 +51,7 @@ internal static class LevelBootstrap2D
             var regions = WorldZoneFile2D.Load(Path.Combine(directory, "zones.json"));
             return new(world.Maps, [.. world.Zones, .. regions.Where(z => !regionIds.Contains(z.Id))])
             {
+                Objects = world.Objects,
                 StartAtArrival = world.StartAtArrival
             };
         }

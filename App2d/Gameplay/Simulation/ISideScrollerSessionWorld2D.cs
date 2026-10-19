@@ -21,7 +21,7 @@ public interface ISideScrollerSessionWorld2D
     Rect2D Bounds { get; }
     float GoalX { get; }
     void UpdateStreaming(Vector2 focus);
-    void UpdateMovingPlatforms(float deltaSeconds);
+    void UpdateWorldMotion(float deltaSeconds);
     void UpdateEnemies(float deltaSeconds, Vector2 targetPosition);
     void SyncEnemiesAfterPhysics();
     void ResolveDamage(Person2D player);

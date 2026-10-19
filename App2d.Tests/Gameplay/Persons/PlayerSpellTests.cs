@@ -319,7 +319,7 @@ public sealed class PlayerSpellTests
         public void UpdateStreaming(Vector2 position)
         {
         }
-        public void UpdateMovingPlatforms(float dt)
+        public void UpdateWorldMotion(float dt)
         {
         }
         public void UpdateEnemies(float dt, Vector2 position)

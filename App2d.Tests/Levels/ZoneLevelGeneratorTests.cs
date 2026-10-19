@@ -1,4 +1,5 @@
 using App2d.Core.Tiles;
+using App2d.Core.Objects;
 using App2d.Levels;
 using System.Text.Json;
 
@@ -34,8 +35,11 @@ public sealed class ZoneLevelGeneratorTests
                  new("combat-zone", "Combat", 0, [generatedMap])])
             {
                 StartMapId = "combat",
-                StartAtArrival = true
+                StartAtArrival = true,
+                Objects = [new("lift", "lift.json", new(1500, -200))]
             };
+            ObjectAsset2D.Load(Path.Combine(TestAssetPath.StaticRoot, "levels", "cavern", "objects", "lift.json"))
+                .Save(Path.Combine(root, "lift.json"));
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             void Write(WorldFile2D.WorldDocument value) => File.WriteAllText(path, JsonSerializer.Serialize(value, options));
             Write(document);
@@ -47,6 +51,7 @@ public sealed class ZoneLevelGeneratorTests
                 Assert.Equal(2, world.Maps[0].Identity);
                 Assert.Equal(new System.Numerics.Vector2(1024, -384), world.Maps[0].TileMap.Origin);
                 Assert.Equal(1200, world.PositionThings.First(t => t.TypeKey == "player-spawn").X);
+                Assert.Equal(new System.Numerics.Vector2(1500, -200), Assert.Single(world.Objects).Position);
             }
             using (var db = LevelDatabase2D.Open(first))
             {
@@ -55,6 +60,8 @@ public sealed class ZoneLevelGeneratorTests
                 db.Save(map, 12345);
             }
             var second = ZoneLevelGenerator2D.Regenerate(path, "combat-zone", tilesets);
+            using (var world = WorldFile2D.Load(path))
+                Assert.Equal(new System.Numerics.Vector2(1500, -200), Assert.Single(world.Objects).Position);
             Assert.NotEqual(first, second);
             using (var previous = LevelDatabase2D.OpenRead(first))
             {

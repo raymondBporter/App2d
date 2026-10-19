@@ -14,9 +14,10 @@ Use these primitives without creating a shape, scene object, or cached bounds.
 | `Interpolation` | Value blending, optional progress-map application, and inverse lerp |
 | `Clamping` | Generic `Clamp(value, minimum, maximum)` and `Clamp01(value)` scalar helpers |
 | `Progress` | Clamped smoothstep families, their inverses, and unclamped maps with analytic derivatives |
-| `Easing` | Analytic easing maps and power families, including intentional back/elastic overshoot |
+| `Easing` | Smoothstep, power and sine easing families with analytic derivatives |
 | `ProgressMap` / `IProgressMap` | A sampled progress function and derivative for velocity |
-| `ProgressMaps` | Loop, ping-pong, easing transformations, and map composition using the chain rule |
+| `ProgressMaps` | Forward, reverse, ping-pong, easing transformations, and map composition using the chain rule |
+| `ProgressMapKind` | Stable JSON names for built-in maps; ordered lists describe composition |
 | `PolynomialRoots` | Sorted distinct real roots of linear through quartic polynomials on an inclusive finite interval |
 | `Similarity2D` | Immutable translation, rotation, positive uniform scale, and mirroring used by collision |
 | `Affine2D` | Editable translation, rotation, independent axis scales and shear; shared by scene objects and authored rigs |
@@ -33,7 +34,8 @@ For scalar angles, use .NET's `float.DegreesToRadians(value)` / `float.RadiansTo
 (or the `double` equivalents). `Vector3` extensions convert every component with the same operations.
 
 Progress mapping files live in `Progress/`; affine, similarity, frame, rotation, and matrix helpers live in
-`Transforms/`. Their namespace remains `App2d.Core.Mathematics`.
+`Transforms/`. Progress mapping uses `App2d.Core.Mathematics.Progress`; transforms use
+`App2d.Core.Mathematics.Transforms`.
 
 Normalize time, shape the progress, then interpolate the value:
 
@@ -46,7 +48,7 @@ var value = Interpolation.Lerp(start, end, phase, Easing.Smooth);
 standard clamping behavior.
 
 `Progress.SmoothStep`, `SmootherStep`, and `SmoothestStep` clamp inputs to [0,1]. Easing maps do not clamp inputs
-or outputs; back/elastic maps can overshoot. The `*StepUnclamped<T>` polynomials share float/double arithmetic
+or outputs. The `*StepUnclamped<T>` polynomials share float/double arithmetic
 without forcing float callers to change precision. `ClipEase` retains its saved names and held-step behavior.
 `Progress.SmoothStepMap`, `SmootherStepMap`, and `SmoothestStepMap` package each unclamped polynomial with
 its analytic derivative; `Easing.Smooth`, `Smoother`, and `Smoothest` are aliases for those same maps.
@@ -64,11 +66,16 @@ double progress = curve.Sample(phase);
 double velocityScale = curve.Derivative(phase);
 ```
 
-Circular easings return positive infinity at their vertical tangents. Expo and elastic easings preserve
-their exact endpoint snaps and return NaN derivatives where those snaps introduce discontinuities
-(ease-in at 0, ease-out at 1, in/out at both endpoints). Bounce uses the selected polynomial branch's
-slope at a corner, as ping-pong uses its returning slope at the turnaround. Consumers that require
-finite velocities, such as `CurveMotion2D`, reject nonfinite slopes; smoothstep maps avoid these singularities.
+Every retained built-in map has a stable `Kind`. `ProgressMaps.FromKind(kind)` resolves it;
+JSON writes kebab-case names such as `"smooth"`, `"smoother"`, `"reverse"`, `"ping-pong"`,
+and `"ease-in-out-sine"`. `ProgressMaps.Compose(kinds)` applies an ordered list left to right.
+For example, `["ping-pong", "smoother"]` means `smoother(pingPong(phase))`, with the
+analytic chain-rule derivative. Custom delegate maps have no built-in kind; author their
+parameters separately. Arbitrary power degrees remain available in code.
+
+The unused back, circular, exponential, elastic and bounce families were removed. The retained
+maps have finite normalized slopes. Ping-pong uses its returning slope at the turnaround;
+composing smoothstep after it gives zero turnaround velocity.
 
 ## Transforms
 

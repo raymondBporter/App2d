@@ -4,6 +4,7 @@ using App2d.Core;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Objects;
 using App2d.Core.Physics;
 using App2d.Core.Spatial;
 using App2d.Core.Tiles;
@@ -27,6 +28,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private IReadOnlyList<MovingPlatformSpec2D> _movingPlatformSpecs;
     private readonly IReadOnlyList<WorldThingSpec2D> _worldThingSpecs;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
+    private readonly IReadOnlyList<ObjectPlacement2D> _objectPlacements;
+    private readonly List<AuthoredObject2D> _objects = [];
     private readonly List<SavePoint2D> _savePoints = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
     private LevelEnvironment? _environment;
@@ -43,7 +46,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null,
         IReadOnlyList<WorldThingSpec2D>? worldThings = null,
         IEnumerable<WorldZone2D>? zones = null,
-        IEnumerable<GiantTree2D>? giantTrees = null)
+        IEnumerable<GiantTree2D>? giantTrees = null,
+        IReadOnlyList<ObjectPlacement2D>? objects = null)
     {
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
@@ -52,6 +56,10 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         ArgGuard.Positive(_tileSize);
         _movingPlatformSpecs = movingPlatforms ?? [];
         _worldThingSpecs = worldThings ?? [];
+        _objectPlacements = objects ?? [];
+        foreach (var placement in _objectPlacements) placement.Validate();
+        ArgGuard.ThrowIf(_objectPlacements.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != _objectPlacements.Count,
+            "Object placements need unique IDs.", nameof(objects));
         TileMap = tileMap;
         Zones = zones is null ? [] : [.. zones];
         GiantTrees = giantTrees is null ? [] : ValidateTrees(giantTrees);
@@ -98,6 +106,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public IReadOnlyList<WorldThingSpec2D> SavePointThings => [.. _worldThingSpecs.Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)];
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
     public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;
+    public IReadOnlyList<AuthoredObject2D> Objects => _objects;
     public EnemySystem2D EnemySystem { get; } = new();
     public int ActiveChunkCount => _environment?.Streamer.ActiveChunkCount ?? 0;
     public int LoadedColliderCount => _environment?.Streamer.LoadedColliderCount ?? 0;
@@ -158,6 +167,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
         CreateMovingPlatformsFromSpecs();
+        foreach (var placement in _objectPlacements)
+            _objects.Add(new(ids.Allocate(), placement, physics, worldLayer, worldLayer | playerLayer | enemyLayer));
         CreateGiantTreeBranches();
         CreateSavePoints();
     }
@@ -167,7 +178,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         [.. _movingPlatforms.Select(p => p.CaptureState())],
         [.. _savePoints.Select(p => p.CaptureState())])
     {
-        CutGrass = _cutGrass
+        CutGrass = _cutGrass,
+        Objects = [.. _objects.Select(o => o.CaptureState())]
     };
 
     /// <summary>Shared until streaming or authoring changes; successive ticks return the same instance.</summary>
@@ -183,6 +195,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
                 [.. _savePoints.Select(p => p.CapturePlacement())],
                 GoalThing?.Position)
             {
+                Objects = [.. _objects.Select(o => o.CaptureDefinition())],
                 Zones = Zones,
                 GiantTrees = GiantTrees
             };
@@ -212,13 +225,14 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         }
     }
 
-    public void UpdateMovingPlatforms(float deltaSeconds)
+    public void UpdateWorldMotion(float deltaSeconds)
     {
         ArgGuard.NonNegative(deltaSeconds);
         foreach (var platform in _movingPlatforms)
         {
             platform.Update(deltaSeconds);
         }
+        foreach (var item in _objects) item.Update(deltaSeconds);
     }
 
     public void ReloadMovingPlatforms(IReadOnlyList<MovingPlatformSpec2D> specs)
@@ -356,6 +370,8 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
         _movingPlatforms.Clear();
         RemoveGiantTreeBranches();
+        foreach (var item in _objects) item.Dispose();
+        _objects.Clear();
         _environment?.Streamer.Dispose();
         foreach (var enemy in EnemySystem.Combatants)
         {

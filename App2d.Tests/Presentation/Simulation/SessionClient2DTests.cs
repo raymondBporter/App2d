@@ -156,7 +156,7 @@ public sealed class SessionClient2DTests
         public void UpdateStreaming(Vector2 focus)
         {
         }
-        public void UpdateMovingPlatforms(float dt)
+        public void UpdateWorldMotion(float dt)
         {
             PlatformUpdates++;
             LastDelta = dt;

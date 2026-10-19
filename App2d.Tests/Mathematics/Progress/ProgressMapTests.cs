@@ -34,7 +34,7 @@ public sealed class ProgressMapTests
     {
         var fields = typeof(Easing).GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(field => field.FieldType == typeof(ProgressMap)).ToArray();
-        Assert.True(fields.Length > 20);
+        Assert.True(fields.Length >= 4);
         foreach (var field in fields)
         {
             var map = (ProgressMap)field.GetValue(null)!;
@@ -94,9 +94,9 @@ public sealed class ProgressMapTests
     public void InterpolationAcceptsMapsDirectlyWithoutClippingOvershoot()
     {
         Assert.Equal(11.5625f, Interpolation.Lerp(10, 20, .25, Easing.Smooth));
-        Assert.True(Easing.EaseInBack.Sample(.3) < 0);
-        Assert.True(Interpolation.Lerp(0, 10, .7, Easing.EaseOutBack) > 10);
-        var vector = Interpolation.Lerp(Vector2.Zero, new(10, -4), .7, Easing.EaseOutBack);
+        var overshoot = new ProgressMap(_ => 1.2d, _ => 0d);
+        Assert.True(Interpolation.Lerp(0, 10, .7, overshoot) > 10);
+        var vector = Interpolation.Lerp(Vector2.Zero, new(10, -4), .7, overshoot);
         Assert.True(vector.X > 10);
         Assert.True(vector.Y < -4);
     }

@@ -6,13 +6,18 @@ public sealed class ProgressMap : IProgressMap
     private readonly Func<double, double> _sample;
     private readonly Func<double, double> _derivative;
 
-    public ProgressMap(Func<double, double> sample, Func<double, double> derivative)
+    public ProgressMap(Func<double, double> sample, Func<double, double> derivative, ProgressMapKind? kind = null)
     {
         ArgumentNullException.ThrowIfNull(sample);
         ArgumentNullException.ThrowIfNull(derivative);
         _sample = sample;
         _derivative = derivative;
+        Kind = kind;
     }
+
+    /// <summary>Present for built-in maps; custom functions need their own authored description.</summary>
+    public ProgressMapKind? Kind { get; }
+    internal ProgressMap Named(ProgressMapKind kind) => new(_sample, _derivative, kind);
 
     public double Sample(double phase) => _sample(phase);
     public double Derivative(double phase) => _derivative(phase);

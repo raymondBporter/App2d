@@ -59,7 +59,7 @@ public sealed class WorldPresentationTests
         var platformVisual = Assert.Single(scene, v => v.Transform.Position == Platform().Position);
         var platform = Assert.Single(level.MovingPlatforms);
         Assert.NotSame(platform.WorldObject, platformVisual);
-        level.UpdateMovingPlatforms(0.1f);
+        level.UpdateWorldMotion(0.1f);
         physics.Step(0.1f);
         Assert.Equal(Platform().Position, platformVisual.Transform.Position);
         view.Update(level.CaptureContent(), level.CaptureWorld(), 0f);

@@ -5,7 +5,7 @@ using App2d.Core.Spatial;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Gameplay.World;
+namespace App2d.Core.Physics.Motion;
 
 /// <summary>
 /// A shaped kinematic body driven by a reusable world-space motion. Call Update before

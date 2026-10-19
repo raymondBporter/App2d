@@ -15,6 +15,7 @@ public sealed record PhysicsBodySettings2D
     public float GravityScale { get; set; } = 1f;
     public float Friction { get; set; }
     public float Restitution { get; set; } = .5f;
+    public bool TransfersContactMotion { get; set; }
 
     public void Validate()
     {
@@ -33,12 +34,22 @@ public sealed record PhysicsBodySettings2D
         ArgGuard.ThrowIfNull(worldObject);
         Validate();
         var body = world.AddBody(worldObject, MotionType);
+        ApplyTo(body);
+        return body;
+    }
+
+    /// <summary>Applies settings to an existing body, including a path-driven kinematic body.</summary>
+    public void ApplyTo(RigidBody2D body)
+    {
+        ArgGuard.ThrowIfNull(body);
+        Validate();
+        body.MotionType = MotionType;
         body.Mass = Mass;
         body.MomentOfInertia = MomentOfInertia;
         body.FreezeRotation = FreezeRotation;
         body.GravityScale = GravityScale;
         body.Friction = Friction;
         body.Restitution = Restitution;
-        return body;
+        body.TransfersContactMotion = TransfersContactMotion;
     }
 }

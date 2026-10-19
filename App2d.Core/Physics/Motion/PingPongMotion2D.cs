@@ -3,7 +3,7 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Gameplay.World;
+namespace App2d.Core.Physics.Motion;
 
 /// <summary>A line segment played forward and backward, with optional easing on each leg.</summary>
 public sealed class PingPongMotion2D : IKinematicMotion2D
