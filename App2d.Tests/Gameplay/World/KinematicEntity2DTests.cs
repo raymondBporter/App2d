@@ -95,6 +95,39 @@ public sealed class KinematicEntity2DTests
         Assert.Throws<ArgumentException>(() => new CurveMotion2D(line, 4d, ProgressMaps.Loop));
     }
 
+    [Theory]
+    [InlineData(ProgressMapKind.Smooth)]
+    [InlineData(ProgressMapKind.Smoother)]
+    [InlineData(ProgressMapKind.Smoothest)]
+    public void BoundedEasingKeepsNearEndpointKinematicUpdatesValid(ProgressMapKind kind)
+    {
+        var physics = new PhysicsWorld2D();
+        var progress = ProgressMaps.FromKind(kind);
+        var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(10, 0)), 1, progress, repeat: false);
+        using var entity = new KinematicEntity2D(EntityId2D.Create(), physics, Circle2D.Builder.Create(1), motion, 1, uint.MaxValue);
+
+        Assert.Equal(new Vector2(10, 0), motion.Position(.9999999d));
+        Assert.Equal(new Vector2(10, 0), entity.Update(.9999999f));
+        physics.Step(.9999999f);
+        Assert.Equal(new Vector2(10, 0), entity.WorldObject.Transform.Position, new Vector2Tolerance(.0001f));
+    }
+
+    [Theory]
+    [InlineData(1.0000000000000004d)]
+    [InlineData(-4.440892098500626e-16d)]
+    [InlineData(1.00000001d)]
+    [InlineData(-.00000001d)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void OutOfRangeAndNonfiniteProgressFromCustomMapsRemainInvalid(double sampledProgress)
+    {
+        var progress = new ProgressMap(phase => phase is 0d or 1d ? phase : sampledProgress, _ => 1d);
+        var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2.Zero, new(10, 0)), 1, progress, repeat: false);
+        Assert.Throws<ArgumentOutOfRangeException>(() => motion.Position(.25));
+        Assert.Throws<ArgumentOutOfRangeException>(() => motion.Velocity(.25));
+    }
+
     private sealed class OrbitMotion : IKinematicMotion2D
     {
         public Vector2 Position(double seconds)

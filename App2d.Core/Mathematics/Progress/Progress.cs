@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace App2d.Core.Mathematics.Progress;
 
-/// <summary>Clamped progress shaping, its inverses, and unclamped maps with analytic derivatives.</summary>
+/// <summary>Clamped progress shaping, its inverses, and smoothstep maps with analytic derivatives.</summary>
 public static class Progress
 {
     private const int InverseIterations = 48;
@@ -16,31 +16,35 @@ public static class Progress
     /// <summary>Septic smoothstep, clamped to [0,1], with zero first through third derivatives at both ends.</summary>
     public static float SmoothestStep(float value) => (float)SmoothestStepMap.Sample(Clamping.Clamp01(value));
 
-    /// <summary>Unclamped cubic smoothstep packaged with its derivative.</summary>
+    /// <summary>Cubic smoothstep with its derivative. Normalized samples are bounded; other phases extrapolate.</summary>
     public static ProgressMap SmoothStepMap { get; } = new(
-        SmoothStepUnclamped,
+        x => BoundNormalizedSample(x, SmoothStepUnclamped(x)),
         x => 6d * x * (1d - x), ProgressMapKind.Smooth);
 
     /// <summary>The cubic polynomial in the caller's floating-point precision, without clamping.</summary>
     public static T SmoothStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
         value * value * (T.CreateChecked(3) - T.CreateChecked(2) * value);
 
-    /// <summary>Unclamped quintic smoothstep packaged with its derivative.</summary>
+    /// <summary>Quintic smoothstep with its derivative. Normalized samples are bounded; other phases extrapolate.</summary>
     public static ProgressMap SmootherStepMap { get; } = new(
-        SmootherStepUnclamped,
+        x => BoundNormalizedSample(x, SmootherStepUnclamped(x)),
         x => 30d * x * x * (1d - x) * (1d - x), ProgressMapKind.Smoother);
 
     public static T SmootherStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
         value * value * value * (value * (value * T.CreateChecked(6) - T.CreateChecked(15)) + T.CreateChecked(10));
 
-    /// <summary>Unclamped septic smoothstep packaged with its derivative.</summary>
+    /// <summary>Septic smoothstep with its derivative. Normalized samples are bounded; other phases extrapolate.</summary>
     public static ProgressMap SmoothestStepMap { get; } = new(
-        SmoothestStepUnclamped,
+        x => BoundNormalizedSample(x, SmoothestStepUnclamped(x)),
         x => 140d * x * x * x * (1d - x) * (1d - x) * (1d - x), ProgressMapKind.Smoothest);
 
     public static T SmoothestStepUnclamped<T>(T value) where T : IFloatingPointIeee754<T> =>
         value * value * value * value *
         (T.CreateChecked(35) + value * (-T.CreateChecked(84) + value * (T.CreateChecked(70) - T.CreateChecked(20) * value)));
+
+    // The mathematical maps stay in [0, 1] on this domain; polynomial roundoff must not break that contract.
+    private static double BoundNormalizedSample(double phase, double sample) =>
+        phase is >= 0d and <= 1d ? Clamping.Clamp01(sample) : sample;
 
     /// <summary>Analytic inverse of the cubic smoothstep on [0,1].</summary>
     public static float InverseSmoothStep(float value)

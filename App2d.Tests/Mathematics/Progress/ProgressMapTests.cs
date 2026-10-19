@@ -62,6 +62,30 @@ public sealed class ProgressMapTests
     }
 
     [Fact]
+    public void BuiltInMapsAndTheirCompositionGuaranteeNormalizedOutputWithoutTolerance()
+    {
+        List<double> phases = [0d, 1d, Math.BitIncrement(0d), Math.BitDecrement(1d)];
+        for (var exponent = 1; exponent <= 16; exponent++)
+        {
+            var nearEndpoint = Math.Pow(10d, -exponent);
+            phases.Add(nearEndpoint);
+            phases.Add(1d - nearEndpoint);
+        }
+        for (var index = 1; index < 1024; index++) phases.Add(index / 1024d);
+
+        foreach (var kind in Enum.GetValues<ProgressMapKind>())
+        {
+            var map = ProgressMaps.FromKind(kind);
+            var composed = ProgressMaps.Compose(ProgressMaps.PingPong, map);
+            foreach (var phase in phases)
+            {
+                Assert.InRange(map.Sample(phase), 0d, 1d);
+                Assert.InRange(composed.Sample(phase), 0d, 1d);
+            }
+        }
+    }
+
+    [Fact]
     public void CompositionAppliesTheChainRuleAndKeepsPingPongTurnaroundConvention()
     {
         var square = new ProgressMap(x => x * x, x => 2 * x);

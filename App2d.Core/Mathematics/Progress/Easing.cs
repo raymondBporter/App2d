@@ -2,7 +2,7 @@ using App2d.Core.Validation;
 
 namespace App2d.Core.Mathematics.Progress;
 
-/// <summary>Unclamped polynomial and sine easing maps with analytic derivatives.</summary>
+/// <summary>Polynomial and sine easing maps with analytic derivatives. Normalized phases produce progress in [0,1]; other phases extrapolate.</summary>
 public static class Easing
 {
     public static readonly ProgressMap Linear = new(x => x, _ => 1d, ProgressMapKind.Linear);
