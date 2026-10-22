@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
@@ -5,7 +6,6 @@ using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;

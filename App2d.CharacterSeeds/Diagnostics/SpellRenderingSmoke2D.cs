@@ -15,7 +15,6 @@ using App2d.Core.Spatial;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
-using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using App2d.Presentation.Persons.Presentation;
@@ -25,7 +24,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Diagnostics;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 /// <summary>Reproducible spell samples driven by real simulation, authored poses, HUD and effect rendering.</summary>
 internal static class SpellRenderingSmoke2D

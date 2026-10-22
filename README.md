@@ -5,11 +5,13 @@ A small MonoGame/XNA 2D engine and the side-scroller built on it.
 The solution has seven projects. `App2d.Core` is the engine: mathematics, geometry,
 collision, physics, tiles, rendering, audio, authored characters, and the WinForms game
 host. `App2d` is the game executable: contracts, gameplay simulation, presentation,
-level storage, the editor, and diagnostics. `App2d.Tests` holds every test.
+level storage, the editor, and the in-game debug tools. `App2d.Tests` holds every test.
 `App2d.CharacterStudio` is the character editor and `App2d.Noodle` holds the rig
 experiments; both build on `App2d.Core`. `App2d.EditorUi` supplies shared editor UI.
-`App2d.CharacterSeeds` holds the retained character generators in one library that
-Studio and the game can call. `tools/ClothLab` is a small cape study.
+`App2d.CharacterSeeds` is the home for everything that is not the game or Studio: the
+retained character generators and the rendering smokes and studies, run with
+`dotnet run --project App2d.CharacterSeeds -- <flag>`. It references the game; the game
+does not reference it. `tools/ClothLab` is a small cape study.
 Everything targets `net10.0-windows10.0.19041.0`.
 
 `App2d.Trials` is a separate, minimal trials-game prototype. Run it with
@@ -955,7 +957,7 @@ Build and test on Windows with a Direct3D-capable adapter:
 ```powershell
 dotnet build App2d.slnx
 dotnet test App2d.slnx
-dotnet run --project App2d -- --render-smoke artifacts/monogame-smoke
+dotnet run --project App2d.CharacterSeeds -- --render-smoke artifacts/monogame-smoke
 ```
 
 Rendering tests draw into real GPU render targets and read pixels back to check sprite

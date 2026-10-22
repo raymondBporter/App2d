@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
@@ -10,7 +11,6 @@ using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Rendering.Textures;
-using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;

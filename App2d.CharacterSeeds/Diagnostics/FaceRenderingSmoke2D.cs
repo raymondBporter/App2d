@@ -1,4 +1,3 @@
-using App2d.CharacterSeeds;
 using App2d.Core.Assets;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
@@ -10,7 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
 using Matrix = Microsoft.Xna.Framework.Matrix;
 
-namespace App2d.Diagnostics;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 /// <summary>Every face expression on the authored Person's head, through the game's drawing path, labelled.</summary>
 internal static class FaceRenderingSmoke2D

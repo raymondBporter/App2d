@@ -15,7 +15,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Diagnostics;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 /// <summary>Exercises JSON loading, generic shapes, actual physics, observations and material rendering.</summary>
 internal static class ObjectRenderingSmoke2D

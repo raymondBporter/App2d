@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Player;
@@ -10,7 +11,6 @@ using App2d.Core.Spatial;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Persons;

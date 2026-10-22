@@ -54,7 +54,7 @@ Regenerate only the two new body clips with Character Studio's
 
 ## Verification and preview
 
-`App2d --spell-study Assets/Work/spell-study` runs actual simulation and produces charge,
+`App2d.CharacterSeeds --spell-study Assets/Work/spell-study` runs actual simulation and produces charge,
 release, heal and completion screenshots in both facings, including the HUD. It checks
 health/energy changes and sound dispatch. It is silent and does not open or save a level.
 

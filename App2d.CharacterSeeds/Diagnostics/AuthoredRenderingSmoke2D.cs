@@ -8,7 +8,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
 using App2d.Core.Validation;
-using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
@@ -18,7 +17,7 @@ using System.Collections.Immutable;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Diagnostics;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 internal static class AuthoredRenderingSmoke2D
 {

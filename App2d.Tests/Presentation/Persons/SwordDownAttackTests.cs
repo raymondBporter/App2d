@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Player;
@@ -16,7 +17,6 @@ using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using System.Numerics;

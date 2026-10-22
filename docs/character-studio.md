@@ -227,7 +227,7 @@ studies; `--write-player-moves <authored-dir>` regenerates the player move set.
 `--write-weapons <authored-dir>` replaces the five starter weapon assets and their sample orientation tracks, keeping
 body keys and entity settings. It is a regeneration command and overwrites edits to those weapon assets/tracks.
 
-The game has two more: `dotnet run --project App2d -- --render-smoke <dir>` draws authored entities through the game
+The game has two more: `dotnet run --project App2d.CharacterSeeds -- --render-smoke <dir>` draws authored entities through the game
 presentation, and `-- --face-smoke <dir>` draws every expression on the Person.
 
 ## Code

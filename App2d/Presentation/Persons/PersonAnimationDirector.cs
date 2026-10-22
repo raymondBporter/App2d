@@ -1,4 +1,3 @@
-using App2d.CharacterSeeds;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
@@ -79,7 +78,10 @@ public sealed class PersonMoves
     public IReadOnlyDictionary<string, PropAsset> Props { get; }
     public MotionClip this[string id] => Clips[id];
 
-    public static PersonMoves From(AuthoredCatalog catalog, string model = PersonTemplate.Id)
+    /// <summary>The authored Person model id, as written by the seed template.</summary>
+    public const string ModelId = "person";
+
+    public static PersonMoves From(AuthoredCatalog catalog, string model = ModelId)
     {
         var resolved = catalog.Resolve(model);
         var missing = All

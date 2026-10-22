@@ -10,7 +10,6 @@ using App2d.Core.Shapes;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
@@ -18,7 +17,7 @@ using App2d.Rendering;
 using Microsoft.Xna.Framework.Graphics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Diagnostics;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 /// <summary>Real simulation and renderer, exported at 60 fps for an effects-on/off contact comparison.</summary>
 internal static class CombatContactStudy2D

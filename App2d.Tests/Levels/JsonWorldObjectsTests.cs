@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Core.Geometry.Serialization;
 using App2d.Core.Objects;
 using App2d.Core.Tiles;

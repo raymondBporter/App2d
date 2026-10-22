@@ -8,7 +8,6 @@ using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
-using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
@@ -17,7 +16,7 @@ using System.Collections.Immutable;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Diagnostics;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 /// <summary>Exercises all enemy views using only client observations.</summary>
 internal static class EnemyRenderingSmoke2D

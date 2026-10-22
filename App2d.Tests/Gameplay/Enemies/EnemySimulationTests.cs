@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.Persons;
 using App2d.Core;
@@ -6,7 +7,6 @@ using App2d.Core.Physics;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
 using App2d.Gameplay.Enemies;
-using App2d.Levels;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Enemies;

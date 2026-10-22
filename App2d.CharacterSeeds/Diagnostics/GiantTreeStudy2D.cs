@@ -8,7 +8,6 @@ using App2d.Core.Rendering.Textures;
 using App2d.Core.Vegetation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Presentation.Persons;
 using App2d.Presentation.World;
 using App2d.Presentation.World.Presentation;
@@ -17,7 +16,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Diagnostics;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 /// <summary>Exports the real grove and a real player standing halfway up a generated branch.</summary>
 internal static class GiantTreeStudy2D

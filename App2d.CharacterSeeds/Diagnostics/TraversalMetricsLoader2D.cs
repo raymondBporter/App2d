@@ -1,11 +1,10 @@
-using App2d.CharacterSeeds;
 using App2d.Contracts.Player;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Validation;
 using System.Numerics;
 using System.Text.Json;
 
-namespace App2d.Levels;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 public static class TraversalMetricsLoader2D
 {

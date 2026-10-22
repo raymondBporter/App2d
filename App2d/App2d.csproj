@@ -11,7 +11,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\App2d.Core\App2d.Core.csproj" />
-    <ProjectReference Include="..\App2d.CharacterSeeds\App2d.CharacterSeeds.csproj" />
     <ProjectReference Include="..\App2d.EditorUi\App2d.EditorUi.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
     <PackageReference Include="Philips.CodeAnalysis.DuplicateCodeAnalyzer" Version="2.0.0">

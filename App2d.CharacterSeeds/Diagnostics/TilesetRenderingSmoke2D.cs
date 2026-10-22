@@ -10,7 +10,6 @@ using App2d.Core.Tiles;
 using App2d.Core.Vegetation;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Presentation.Persons;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
@@ -18,7 +17,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
 using Color = Microsoft.Xna.Framework.Color;
 
-namespace App2d.Diagnostics;
+namespace App2d.CharacterSeeds.Diagnostics;
 
 /// <summary>
 /// Renders a ground + wall tileset pair through the real terrain renderer on a fixed sample

@@ -1,3 +1,4 @@
+using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
 using App2d.Core;
@@ -8,7 +9,6 @@ using App2d.Core.Rendering;
 using App2d.Core.Rendering.Characters;
 using App2d.Core.Rendering.Textures;
 using App2d.Gameplay.World;
-using App2d.Levels;
 using App2d.Presentation.Audio;
 using App2d.Presentation.World.Presentation;
 using System.Numerics;
