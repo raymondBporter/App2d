@@ -558,6 +558,8 @@ public sealed class ShapeArea2DTests
         var ellipse = new Ellipse2D { Radii = new(2, 1), Axis = new(1.0005f, 0) };
 #pragma warning restore APP2D001
         Assert.Equal(Area2D.Ellipse(new(2, 1)) + MathF.PI, ShapeArea2D.Union([ellipse, Circle2D.Builder.Create(1, new(10, 0))]), 5);
+        // The unit circle touches the minor vertices from inside; a 1.0005 projection would push its arcs outside.
+        Assert.Equal(Area2D.Ellipse(new(2, 1)), ShapeArea2D.Union([ellipse, Circle2D.Builder.Create(1)]), 5);
     }
 
     private static ConvexPolygon2D RandomPolygon(Random random)

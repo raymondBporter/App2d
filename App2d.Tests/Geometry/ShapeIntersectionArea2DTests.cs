@@ -94,12 +94,14 @@ public sealed class ShapeIntersectionArea2DTests
     }
 
     [Fact]
-    public void ASlightlyLongAxisIntersectsItselfInTheEllipseArea()
+    public void ASlightlyLongAxisIsNormalizedBeforeProjection()
     {
 #pragma warning disable APP2D001 // Raw construction is the point: a validated axis may be 0.001 off unit length.
         var ellipse = new Ellipse2D { Radii = new(2, 1), Axis = new(1.0005f, 0) };
 #pragma warning restore APP2D001
         Assert.Equal(Area2D.Ellipse(new(2, 1)), ShapeArea2D.Intersection(ellipse, ellipse), 5);
+        // The unit circle lies inside, touching the minor vertices; only a unit frame keeps its arcs covered.
+        Assert.Equal(MathF.PI, ShapeArea2D.Intersection(ellipse, Circle2D.Builder.Create(1)), 5);
     }
 
     [Fact]
