@@ -4,6 +4,7 @@ using App2d.Core.IO;
 using App2d.Core.Objects;
 using App2d.Core.Tiles;
 using App2d.Gameplay.World.Vegetation;
+using App2d.Things;
 using System.Collections.Immutable;
 using System.Numerics;
 using System.Text.Json;
@@ -22,6 +23,8 @@ public sealed class WorldMapAsset2D
     public required EditableTileMap2D TileMap { get; init; }
     public required IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms { get; set; }
     public required IReadOnlyList<PositionThingRecord2D> PositionThings { get; init; }
+    /// <summary>The map's object things as placements, ids already world-wide.</summary>
+    public required IReadOnlyList<ObjectPlacement2D> Objects { get; set; }
 
     // Stable across manifest reordering; namespace zero preserves existing save-point IDs.
     public long WorldThingId(long localId)
@@ -49,7 +52,11 @@ public sealed class WorldAsset2D : IDisposable
     public ImmutableArray<WorldZone2D> Zones { get; }
 
     public bool StartAtArrival { get; init; }
-    public IReadOnlyList<ObjectPlacement2D> Objects { get; init; } = [];
+    /// <summary>The folder holding <c>world.json</c>; object asset paths resolve under it.</summary>
+    public required string Root { get; init; }
+    /// <summary>Placements the manifest itself lists; superseded by map databases.</summary>
+    public IReadOnlyList<ObjectPlacement2D> ManifestObjects { get; init; } = [];
+    public IReadOnlyList<ObjectPlacement2D> Objects => [.. ManifestObjects, .. Maps.SelectMany(m => m.Objects)];
 
     public ImmutableArray<GiantTree2D> GiantTrees => LoadGiantTrees();
 
@@ -121,7 +128,7 @@ public static class WorldFile2D
                         throw new InvalidDataException("Map files must be unique relative paths within the world directory.");
                     }
 
-                    var loaded = LoadMap(databasePath, map.Id, map.Name, zone.Id, map.Identity, legacyTilesets);
+                    var loaded = LoadMap(databasePath, map.Id, map.Name, zone.Id, map.Identity, legacyTilesets, root);
                     maps.Add(loaded);
                     min = Vector2.Min(min, loaded.TileMap.WorldBounds.Min);
                     max = Vector2.Max(max, loaded.TileMap.WorldBounds.Max);
@@ -142,7 +149,8 @@ public static class WorldFile2D
             }
             return new(maps.AsReadOnly(), zones.ToImmutable())
             {
-                Objects = objects,
+                Root = root,
+                ManifestObjects = objects,
                 StartAtArrival = file.StartAtArrival
             };
         }
@@ -152,9 +160,10 @@ public static class WorldFile2D
         }
     }
 
-    public static WorldMapAsset2D LoadMap(string path, string id, string name, string zoneId, int identity,
-        IReadOnlyList<string>? legacyTilesets = null)
+    /// <summary><paramref name="worldRoot"/> is where object asset paths resolve; the map's own directory when it has no world file.</summary>
+    public static WorldMapAsset2D LoadMap(string path, string id, string name, string zoneId, int identity, IReadOnlyList<string>? legacyTilesets = null, string? worldRoot = null)
     {
+        var root = worldRoot ?? Path.GetDirectoryName(Path.GetFullPath(path))!;
         using var database = LevelDatabase2D.OpenRead(path);
         var result = new WorldMapAsset2D
         {
@@ -165,14 +174,38 @@ public static class WorldFile2D
             DatabasePath = path,
             TileMap = database.Load(legacyTilesets),
             MovingPlatforms = database.LoadMovingPlatforms(),
-            PositionThings = database.LoadPositionThings()
+            PositionThings = database.LoadPositionThings(),
+            Objects = []
         };
         foreach (var thing in result.PositionThings)
         {
             _ = result.WorldThingId(thing.ThingId);
         }
 
+        result.Objects = LoadMapObjects(root, result);
         return result;
+    }
+
+    private static System.Collections.ObjectModel.ReadOnlyCollection<ObjectPlacement2D> LoadMapObjects(string root, WorldMapAsset2D map)
+    {
+        var result = new List<ObjectPlacement2D>();
+        var assets = new Dictionary<string, ObjectAsset2D>(StringComparer.OrdinalIgnoreCase);
+        foreach (var thing in map.PositionThings)
+        {
+            if (!string.Equals(thing.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal)) continue;
+            ObjectAsset2D? asset;
+            try
+            {
+                var assetPath = FilePaths.ResolveUnderRoot(root, thing.Asset ?? "");
+                if (!assets.TryGetValue(assetPath, out asset)) assets.Add(assetPath, asset = ObjectAsset2D.Load(assetPath));
+            }
+            catch (Exception e) when (e is ArgumentException or IOException or UnauthorizedAccessException or JsonException)
+            {
+                throw new InvalidDataException($"Object definition '{thing.DefinitionName}' in map '{map.Id}' names asset '{thing.Asset}', which cannot be loaded: {e.Message}", e);
+            }
+            result.Add(ThingTypeRegistry2D.ToPlacement(thing, asset, map.WorldThingId(thing.ThingId)));
+        }
+        return result.AsReadOnly();
     }
 
     private static System.Collections.ObjectModel.ReadOnlyCollection<ObjectPlacement2D> LoadObjects(string root, IReadOnlyList<ObjectPlacementDocument> placements)

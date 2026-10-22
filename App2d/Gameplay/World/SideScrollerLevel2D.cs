@@ -28,7 +28,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private IReadOnlyList<MovingPlatformSpec2D> _movingPlatformSpecs;
     private readonly IReadOnlyList<WorldThingSpec2D> _worldThingSpecs;
     private readonly List<MovingPlatform2D> _movingPlatforms = [];
-    private readonly IReadOnlyList<ObjectPlacement2D> _objectPlacements;
+    private IReadOnlyList<ObjectPlacement2D> _objectPlacements;
     private readonly List<AuthoredObject2D> _objects = [];
     private readonly List<SavePoint2D> _savePoints = [];
     private readonly DirtyChunkTracker2D _dirtyChunks = new();
@@ -56,10 +56,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         ArgGuard.Positive(_tileSize);
         _movingPlatformSpecs = movingPlatforms ?? [];
         _worldThingSpecs = worldThings ?? [];
-        _objectPlacements = objects ?? [];
-        foreach (var placement in _objectPlacements) placement.Validate();
-        ArgGuard.ThrowIf(_objectPlacements.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != _objectPlacements.Count,
-            "Object placements need unique IDs.", nameof(objects));
+        _objectPlacements = ValidatePlacements(objects ?? []);
         TileMap = tileMap;
         Zones = zones is null ? [] : [.. zones];
         GiantTrees = giantTrees is null ? [] : ValidateTrees(giantTrees);
@@ -167,8 +164,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
         CreateMovingPlatformsFromSpecs();
-        foreach (var placement in _objectPlacements)
-            _objects.Add(new(ids.Allocate(), placement, physics, worldLayer, worldLayer | playerLayer | enemyLayer));
+        CreateObjects();
         CreateGiantTreeBranches();
         CreateSavePoints();
     }
@@ -233,6 +229,32 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             platform.Update(deltaSeconds);
         }
         foreach (var item in _objects) item.Update(deltaSeconds);
+    }
+
+    /// <summary>Replaces every placed object; existing objects are disposed and content gets a new revision.</summary>
+    public void ReloadObjects(IReadOnlyList<ObjectPlacement2D> placements)
+    {
+        ArgGuard.ThrowIfNull(placements);
+        ValidatePlacements(placements);
+        _definitionRevision++;
+        foreach (var item in _objects) item.Dispose();
+        _objects.Clear();
+        _objectPlacements = placements;
+        CreateObjects();
+    }
+
+    private static IReadOnlyList<ObjectPlacement2D> ValidatePlacements(IReadOnlyList<ObjectPlacement2D> placements)
+    {
+        foreach (var placement in placements) placement.Validate();
+        ArgGuard.ThrowIf(placements.Select(p => p.Id).Distinct(StringComparer.Ordinal).Count() != placements.Count, "Object placements need unique IDs.", nameof(placements));
+        return placements;
+    }
+
+    private void CreateObjects()
+    {
+        var environment = RequireEnvironment();
+        foreach (var placement in _objectPlacements)
+            _objects.Add(new(environment.Ids.Allocate(), placement, environment.Physics, environment.WorldLayer, environment.WorldLayer | environment.PlayerLayer | environment.EnemyLayer));
     }
 
     public void ReloadMovingPlatforms(IReadOnlyList<MovingPlatformSpec2D> specs)

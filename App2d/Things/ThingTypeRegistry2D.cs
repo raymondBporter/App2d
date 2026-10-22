@@ -1,6 +1,9 @@
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Objects;
+using App2d.Core.Validation;
 using App2d.Gameplay.World;
 using App2d.Levels;
+using System.Globalization;
 using System.Numerics;
 using XnaColor = Microsoft.Xna.Framework.Color;
 
@@ -12,11 +15,15 @@ internal sealed record ThingTypeDescriptor2D(
     WorldThingKind2D? WorldKind,
     XnaColor EditorColor)
 {
-    public bool IsMovingPlatform => WorldKind is null;
+    /// <summary>A placed authored object: the definition names an asset file and the thing is a position.</summary>
+    public bool IsObject => string.Equals(TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal);
+    public bool IsMovingPlatform => string.Equals(TypeKey, ThingTypeRegistry2D.MovingPlatform.TypeKey, StringComparison.Ordinal);
 }
 
 internal static class ThingTypeRegistry2D
 {
+    public static ThingTypeDescriptor2D Object { get; } = new(LevelDatabase2D.ObjectTypeKey, "Object", null, new XnaColor(37, 210, 190));
+
     public static ThingTypeDescriptor2D MovingPlatform { get; } = new("moving-platform", "Moving platform", null, new XnaColor(37, 210, 190));
 
     public static ThingTypeDescriptor2D PlayerSpawn { get; } = new("player-spawn", "Player spawn", WorldThingKind2D.PlayerSpawn, new XnaColor(90, 220, 130));
@@ -47,6 +54,7 @@ internal static class ThingTypeRegistry2D
 
     public static IReadOnlyList<ThingTypeDescriptor2D> All { get; } =
         [
+            Object,
             MovingPlatform,
             PlayerSpawn,
             SavePoint,
@@ -79,6 +87,15 @@ internal static class ThingTypeRegistry2D
             new Size2D(record.Width, record.Height),
             record.Speed,
             unchecked((uint)record.ColorArgb));
+    }
+
+    /// <summary>An object thing becomes a placement whose id is the world-wide thing id, so placements stay unique across maps.</summary>
+    public static ObjectPlacement2D ToPlacement(PositionThingRecord2D record, ObjectAsset2D asset, long worldThingId)
+    {
+        ArgGuard.ThrowIfNull(record);
+        ArgGuard.ThrowIfNull(asset);
+        StateGuard.ThrowIf(!Require(record.TypeKey).IsObject, $"Thing type '{record.TypeKey}' is not an object.");
+        return new ObjectPlacement2D(worldThingId.ToString(CultureInfo.InvariantCulture), asset, new Vector2(record.X, record.Y));
     }
 
     public static WorldThingSpec2D ToRuntime(PositionThingRecord2D record)

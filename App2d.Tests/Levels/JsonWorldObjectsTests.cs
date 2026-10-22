@@ -62,6 +62,41 @@ public sealed class JsonWorldObjectsTests : IDisposable
     }
 
     [Fact]
+    public void MapDatabaseObjectDefinitionsBecomePlacementsWithWorldThingIds()
+    {
+        using (var database = LevelDatabase2D.Open(Path.Combine(_root, "map.db")))
+        {
+            var definition = database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, "Lift", "lift.json");
+            database.CreatePositionThing(new(definition.DefinitionId, "first", true, 200f, 300f));
+            database.CreatePositionThing(new(definition.DefinitionId, "second", true, 500f, 600f));
+        }
+        using var world = Load(_document with { Objects = [] });
+        Assert.Equal(2, world.Objects.Count);
+        Assert.Same(world.Objects[0].Asset, world.Objects[1].Asset);
+        Assert.Equal(world.Maps[0].WorldThingId(1).ToString(), world.Objects[0].Id);
+        Assert.Equal(new Vector2(500f, 600f), world.Objects[1].Position);
+        Assert.Equal(_root, world.Root);
+    }
+
+    [Fact]
+    public void ObjectDefinitionWithMissingOrEscapingAssetFailsToLoad()
+    {
+        var assets = new[] { "missing.json", "../lift.json" };
+        for (var i = 0; i < assets.Length; i++)
+        {
+            var path = Path.Combine(_root, $"bad-{i}.db");
+            using (var database = LevelDatabase2D.Open(path))
+            {
+                database.Save(new EditableTileMap2D(32, 32, 32, 32, Vector2.Zero, ["dark-cave"]), 0);
+                var definition = database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, "Bad", assets[i]);
+                database.CreatePositionThing(new(definition.DefinitionId, null, true, 0f, 0f));
+            }
+            var error = Assert.Throws<InvalidDataException>(() => WorldFile2D.LoadMap(path, "bad", "Bad", "test", 7, worldRoot: _root));
+            Assert.Contains(assets[i], error.Message);
+        }
+    }
+
+    [Fact]
     public void GameBootstrapPreservesTheManifestObjectsWhenAddingRegions()
     {
         using var manifest = Load(_document);
@@ -78,7 +113,8 @@ public sealed class JsonWorldObjectsTests : IDisposable
 
     public void Dispose()
     {
-        // The directory is created by this fixture; close its SQLite pool before removing it.
+        // The directory is created by this fixture; close its SQLite pools before removing it.
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         foreach (var mode in new[] { Microsoft.Data.Sqlite.SqliteOpenMode.ReadOnly, Microsoft.Data.Sqlite.SqliteOpenMode.ReadWriteCreate })
         {
             using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder

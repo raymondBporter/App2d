@@ -51,13 +51,14 @@ internal static class LevelBootstrap2D
             var regions = WorldZoneFile2D.Load(Path.Combine(directory, "zones.json"));
             return new(world.Maps, [.. world.Zones, .. regions.Where(z => !regionIds.Contains(z.Id))])
             {
-                Objects = world.Objects,
+                Root = world.Root,
+                ManifestObjects = world.ManifestObjects,
                 StartAtArrival = world.StartAtArrival
             };
         }
         return new WorldAsset2D(
             [WorldFile2D.LoadMap(RequireLevelPath(), "cavern", "Cavern", "cavern", 0, TerrainTilesetIds)],
-            WorldZoneFile2D.Load(Path.Combine(directory, "zones.json")));
+            WorldZoneFile2D.Load(Path.Combine(directory, "zones.json"))) { Root = directory };
     }
     /// <summary>
     /// Opens the cavern level read-write for an editing session. The caller owns the
