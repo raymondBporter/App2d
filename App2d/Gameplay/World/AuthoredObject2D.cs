@@ -27,10 +27,12 @@ public sealed class AuthoredObject2D : IDisposable
         Id = id;
         Placement = placement;
         var asset = placement.Asset;
+        // Validation guarantees a shape: a collision override, or the drawn geometry doubling as the collider.
+        var collider = asset.Collision ?? asset.Geometry!;
         var motion = asset.Motion?.CreateMotion(placement.Position);
         if (asset.Physics is not null && motion is not null)
         {
-            _kinematic = new(id, physics, asset.Geometry, motion, layer, mask);
+            _kinematic = new(id, physics, collider, motion, layer, mask);
             WorldObject = _kinematic.WorldObject;
             Body = _kinematic.Body;
             asset.Physics.ApplyTo(Body);
@@ -38,7 +40,7 @@ public sealed class AuthoredObject2D : IDisposable
         else
         {
             _visualMotion = motion;
-            WorldObject = new(asset.Geometry);
+            WorldObject = new(collider);
             WorldObject.Transform.Position = motion?.Position(0) ?? placement.Position;
             Body = asset.Physics?.CreateBody(physics, WorldObject);
         }

@@ -1,4 +1,5 @@
 using App2d.CharacterSeeds.Diagnostics;
+using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Objects;
@@ -50,6 +51,9 @@ public sealed class AuthoredObject2DTests
     [InlineData("dynamic-path", typeof(InvalidDataException))]
     [InlineData("normal", typeof(ArgumentOutOfRangeException))]
     [InlineData("unknown-field", typeof(JsonException))]
+    [InlineData("no-shape", typeof(InvalidDataException))]
+    [InlineData("material-without-geometry", typeof(InvalidDataException))]
+    [InlineData("collision-without-physics", typeof(InvalidDataException))]
     public void InvalidAssetDefinitionsAreRejected(string problem, Type exceptionType)
     {
         var json = JsonNode.Parse(File.ReadAllText(SamplePath))!;
@@ -62,6 +66,9 @@ public sealed class AuthoredObject2DTests
             case "dynamic-path": json["physics"]!["motionType"] = "Dynamic"; break;
             case "normal": json["surface"]!["oneWayNormal"]!["y"] = 0; break;
             case "unknown-field": json["motion"]!["speeed"] = 3; break;
+            case "no-shape": json.AsObject().Remove("geometry"); json.AsObject().Remove("material"); break;
+            case "material-without-geometry": json["collision"] = json["geometry"]!.DeepClone(); json.AsObject().Remove("geometry"); break;
+            case "collision-without-physics": json["collision"] = json["geometry"]!.DeepClone(); json.AsObject().Remove("physics"); json.AsObject().Remove("surface"); json.AsObject().Remove("motion"); break;
         }
         var error = Record.Exception(() => ObjectAsset2D.FromJson(json.ToJsonString()));
         Assert.NotNull(error);
@@ -119,6 +126,39 @@ public sealed class AuthoredObject2DTests
         Assert.Equal(Assert.Single(level.Objects).WorldObject.Transform.Position, visual.Transform.Position);
         view.ApplyState(App2d.Contracts.World.LevelContent2D.Empty, App2d.Contracts.World.WorldState2D.Empty);
         Assert.Empty(scene);
+    }
+
+    [Fact]
+    public void CollisionShapeOverridesTheColliderAndGeometryStillDraws()
+    {
+        var asset = ObjectAsset2D.Load(SamplePath) with { Collision = Circle2D.Builder.Create(4) };
+        var physics = new PhysicsWorld2D();
+        using var instance = new AuthoredObject2D(EntityId2D.Create(), new("lift", asset, Vector2.Zero), physics, 1, uint.MaxValue);
+        Assert.IsType<Circle2D>(instance.WorldObject.Shape);
+        Assert.IsType<Rectangle2D>(instance.CaptureDefinition().Geometry);
+    }
+
+    [Fact]
+    public void CollisionOnlyObjectHasABodyAndNoVisual()
+    {
+        var asset = ObjectAsset2D.Load(SamplePath) with { Geometry = null, Material = null, Collision = Circle2D.Builder.Create(4) };
+        var physics = new PhysicsWorld2D();
+        using var instance = new AuthoredObject2D(EntityId2D.Create(), new("sensor", asset, Vector2.Zero), physics, 1, uint.MaxValue);
+        Assert.NotNull(instance.Body);
+        using var textures = new TextureCache2D(TestAssetPath.Root);
+        var scene = new Scene2D();
+        using var view = new WorldPresentation2D(scene, textures);
+        view.ApplyState(new LevelContent2D(1, [], [], [], null) { Objects = [instance.CaptureDefinition()] }, WorldState2D.Empty with { Objects = [instance.CaptureState()] });
+        Assert.Empty(scene);
+    }
+
+    [Fact]
+    public void CollisionShapeRoundTripsThroughJson()
+    {
+        var asset = ObjectAsset2D.Load(SamplePath) with { Collision = Circle2D.Builder.Create(4) };
+        var restored = ObjectAsset2D.FromJson(asset.ToJson());
+        Assert.IsType<Circle2D>(restored.Collision);
+        Assert.IsType<Rectangle2D>(restored.Geometry);
     }
 
     [Fact]

@@ -21,7 +21,12 @@ public sealed record ObjectAsset2D
     public int Version { get; init; } = 1;
     public string Id { get; init; } = "";
     public string Name { get; init; } = "";
-    public IShape2D Geometry { get; init; } = null!;
+    /// <summary>The drawn shape, and the collider unless <see cref="Collision"/> overrides it. Absent for a collision-only object.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IShape2D? Geometry { get; init; }
+    /// <summary>A collider that differs from the drawn shape; requires physics.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IShape2D? Collision { get; init; }
     public RenderMaterialDefinition2D? Material { get; init; }
     public PhysicsBodySettings2D? Physics { get; init; }
     public ObjectSurface2D? Surface { get; init; }
@@ -34,10 +39,14 @@ public sealed record ObjectAsset2D
             throw new InvalidDataException("Unsupported object format/version.");
         if (string.IsNullOrWhiteSpace(Id) || string.IsNullOrWhiteSpace(Name))
             throw new InvalidDataException("An object needs an id and name.");
-        ArgGuard.ThrowIfNull(Geometry);
-        Geometry.Validate();
-        if (!ShapeBounds2D.Calculate(Geometry).IsFinite)
-            throw new InvalidDataException("An object needs finite geometry.");
+        if (Geometry is null && Collision is null)
+            throw new InvalidDataException("An object needs geometry or a collision shape.");
+        if (Material is not null && Geometry is null)
+            throw new InvalidDataException("A material needs geometry to draw on.");
+        if (Collision is not null && Physics is null)
+            throw new InvalidDataException("A collision shape needs physics.");
+        ValidateShape(Geometry, "geometry");
+        ValidateShape(Collision, "collision");
         Material?.Validate("material");
         // Shared model references and part paint require a model; object surfaces are inline for now.
         if (Material?.Asset is not null || Material?.Paint is { Count: > 0 })
@@ -51,6 +60,14 @@ public sealed record ObjectAsset2D
             if (Physics is null) throw new InvalidDataException("Surface behavior requires physics.");
             Surface.Validate();
         }
+    }
+
+    private static void ValidateShape(IShape2D? shape, string name)
+    {
+        if (shape is null) return;
+        shape.Validate();
+        if (!ShapeBounds2D.Calculate(shape).IsFinite)
+            throw new InvalidDataException($"An object needs finite {name}.");
     }
 
     public string ToJson() => JsonSerializer.Serialize(this, GeometryJson2D.JsonOptions);

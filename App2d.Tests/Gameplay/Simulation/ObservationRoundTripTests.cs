@@ -73,7 +73,7 @@ public sealed class ObservationRoundTripTests
         Assert.Equal(enemies.ToArray(), restored.Enemies.ToArray());
         Assert.Equal([.. world.MovingPlatforms], [.. restored.World.MovingPlatforms]);
         Assert.Equal(world.Objects.ToArray(), restored.World.Objects.ToArray());
-        Assert.Equal(content.Objects[0].Geometry.ToJson(), restored.Content.Objects[0].Geometry.ToJson());
+        Assert.Equal(content.Objects[0].Geometry!.ToJson(), restored.Content.Objects[0].Geometry!.ToJson());
         Assert.Equal(content.Objects[0].Material, restored.Content.Objects[0].Material);
         Assert.True(world.CutGrass.SetEquals(restored.World.CutGrass));
         Assert.Equal([.. content.MovingPlatforms], [.. restored.Content.MovingPlatforms]);

@@ -124,7 +124,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
                 scene.Remove(existing.Visual);
                 _objects.Remove(item.Id);
             }
-            if (item.Material is not { } material) continue;
+            if (item.Material is not { } material || item.Geometry is not { } geometry) continue;
             Texture2D? texture = null;
             if (material.Texture is { } path)
             {
@@ -132,7 +132,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
                     _objectTextures.Add(item.TextureRoot, cache = new(item.TextureRoot));
                 texture = cache.Load(path);
             }
-            var visual = new WorldObject2D(item.Geometry, new ShapeMaterialShader2D(material, texture));
+            var visual = new WorldObject2D(geometry, new ShapeMaterialShader2D(material, texture));
             scene.Add(visual);
             _objects.Add(item.Id, (item, visual));
         }
