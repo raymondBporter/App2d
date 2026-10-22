@@ -35,7 +35,7 @@ public static class ShapeArea2D
             return Area2D.RectangleUnion(first.Min, first.Max, second.Min, second.Max);
         }
 
-        var boundaries = new List<Area2D.UnionPart>(parts.Length);
+        var boundaries = new List<Area2D.BoundaryPart>(parts.Length);
         foreach (var shape in parts)
         {
             if (shape is Circle2D circle)
@@ -89,7 +89,7 @@ public static class ShapeArea2D
         return Area2D.Union(CollectionsMarshal.AsSpan(boundaries));
     }
 
-    private static void AddCapsule(List<Area2D.UnionPart> boundaries, Capsule2D capsule)
+    private static void AddCapsule(List<Area2D.BoundaryPart> boundaries, Capsule2D capsule)
     {
         var start = capsule.Start;
         var end = capsule.End;

@@ -10,7 +10,7 @@ public static partial class Area2D
 
     // Each convex part has its interior on the left of its boundary. Integrating only the
     // uncovered pieces counts every point once, including when several parts overlap or enclose a hole.
-    internal static float Union(ReadOnlySpan<UnionPart> parts)
+    internal static float Union(ReadOnlySpan<BoundaryPart> parts)
     {
         var origin = parts[0].Origin;
         foreach (var part in parts)
@@ -49,7 +49,7 @@ public static partial class Area2D
                         CoverCurveWithPolygon(part, other, covered, angles);
                     }
                 }
-                AddArea(IntegrateExposed(covered, Math.Tau, (from, to) => ArcArea(part, from, to)));
+                AddArea(IntegrateExposed(covered, Math.Tau, (from, to) => SignedArcArea(part, from, to)));
             }
             else
             {
@@ -95,7 +95,7 @@ public static partial class Area2D
         }
     }
 
-    private static void CoverCircle(UnionPart circle, UnionPart other, bool preferOther, List<Interval<double>> covered)
+    private static void CoverCircle(BoundaryPart circle, BoundaryPart other, bool preferOther, List<Interval<double>> covered)
     {
         var delta = other.Center - circle.Center;
         var distance = delta.Length();
@@ -129,7 +129,7 @@ public static partial class Area2D
         }
     }
 
-    private static void CoverCurveWithCurve(UnionPart curve, UnionPart other, bool preferOther, List<Interval<double>> covered, List<double> angles)
+    private static void CoverCurveWithCurve(BoundaryPart curve, BoundaryPart other, bool preferOther, List<Interval<double>> covered, List<double> angles)
     {
         var offset = other.NormalizeRelative(curve.Center - other.Center);
         // Treat a displacement below conic evaluation precision as a coincident boundary.
@@ -171,7 +171,7 @@ public static partial class Area2D
         CoverArcsInside(curve, other, covered, angles);
     }
 
-    private static void CoverCurveWithPolygon(UnionPart curve, UnionPart polygon, List<Interval<double>> covered, List<double> angles)
+    private static void CoverCurveWithPolygon(BoundaryPart curve, BoundaryPart polygon, List<Interval<double>> covered, List<double> angles)
     {
         angles.Clear();
         angles.Add(0d);
@@ -214,7 +214,7 @@ public static partial class Area2D
         CoverArcsInside(curve, polygon, covered, angles);
     }
 
-    private static void CoverArcsInside(UnionPart curve, UnionPart other, List<Interval<double>> covered, List<double> angles)
+    private static void CoverArcsInside(BoundaryPart curve, BoundaryPart other, List<Interval<double>> covered, List<double> angles)
     {
         angles.Sort();
         for (var i = 1; i < angles.Count; i++)
@@ -234,7 +234,7 @@ public static partial class Area2D
         }
     }
 
-    private static void CoverSegmentWithCurve(Vector2d start, Vector2d direction, UnionPart curve, List<Interval<double>> covered)
+    private static void CoverSegmentWithCurve(Vector2d start, Vector2d direction, BoundaryPart curve, List<Interval<double>> covered)
     {
         if (CurveRoots(start, direction, curve, out var low, out var high))
         {
@@ -242,7 +242,7 @@ public static partial class Area2D
         }
     }
 
-    private static bool CurveRoots(Vector2d start, Vector2d direction, UnionPart curve, out double low, out double high)
+    private static bool CurveRoots(Vector2d start, Vector2d direction, BoundaryPart curve, out double low, out double high)
     {
         low = high = 0d;
         var relative = curve.NormalizeRelative(start);
@@ -267,7 +267,7 @@ public static partial class Area2D
         return true;
     }
 
-    private static void CoverSegmentWithPolygon(Vector2d start, Vector2d direction, UnionPart polygon, bool preferOther, List<Interval<double>> covered)
+    private static void CoverSegmentWithPolygon(Vector2d start, Vector2d direction, BoundaryPart polygon, bool preferOther, List<Interval<double>> covered)
     {
         var low = 0d;
         var high = 1d;
@@ -345,7 +345,7 @@ public static partial class Area2D
         return result;
     }
 
-    private static double ArcArea(UnionPart curve, double from, double to)
+    private static double SignedArcArea(BoundaryPart curve, double from, double to)
     {
         var (sinFrom, cosFrom) = EndpointSinCos(from);
         var (sinTo, cosTo) = EndpointSinCos(to);
@@ -363,7 +363,7 @@ public static partial class Area2D
         return angle < 0d ? angle + Math.Tau : angle;
     }
 
-    internal sealed class UnionPart
+    internal sealed class BoundaryPart
     {
         internal Vector2d Center { get; private set; }
         internal Vector2d Radii { get; }
@@ -377,9 +377,9 @@ public static partial class Area2D
         private readonly bool _hasArea;
         private Vector2d _vertexOrigin;
 
-        internal UnionPart(Vector2 center, float radius) : this(center, new Vector2(radius)) { }
+        internal BoundaryPart(Vector2 center, float radius) : this(center, new Vector2(radius)) { }
 
-        internal UnionPart(Vector2 center, Vector2 radii)
+        internal BoundaryPart(Vector2 center, Vector2 radii)
         {
             Center = new(center);
             Radii = new(radii);
@@ -389,9 +389,9 @@ public static partial class Area2D
             _max = Radii;
         }
 
-        internal UnionPart(ReadOnlySpan<Vector2> vertices) : this(ToPoints(vertices), new Vector2d(vertices[0])) { }
+        internal BoundaryPart(ReadOnlySpan<Vector2> vertices) : this(ToPoints(vertices), new Vector2d(vertices[0])) { }
 
-        internal UnionPart(Vector2d[] vertices, Vector2d origin = default)
+        internal BoundaryPart(Vector2d[] vertices, Vector2d origin = default)
         {
             Vertices = vertices;
             _vertexOrigin = origin;
@@ -425,7 +425,7 @@ public static partial class Area2D
             }
         }
 
-        internal bool Overlaps(UnionPart other)
+        internal bool Overlaps(BoundaryPart other)
         {
             var offset = other.Origin - Origin;
             return _hasArea && other._hasArea &&
