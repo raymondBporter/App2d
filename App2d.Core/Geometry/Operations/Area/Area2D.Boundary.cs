@@ -133,7 +133,7 @@ public static partial class Area2D
     {
         var offset = other.NormalizeRelative(curve.Center - other.Center);
         // Treat a displacement below conic evaluation precision as a coincident boundary.
-        if (curve.Radii == other.Radii && Math.Abs(offset.X) <= ConicCoincidenceTolerance && Math.Abs(offset.Y) <= ConicCoincidenceTolerance)
+        if (curve.Radii == other.Radii && curve.Axis == other.Axis && Math.Abs(offset.X) <= ConicCoincidenceTolerance && Math.Abs(offset.Y) <= ConicCoincidenceTolerance)
         {
             if (preferOther)
             {
@@ -145,23 +145,27 @@ public static partial class Area2D
         angles.Clear();
         angles.Add(0d);
         angles.Add(Math.Tau);
-        var sx = curve.Radii.X / other.Radii.X;
-        var sy = curve.Radii.Y / other.Radii.Y;
+        // In the other ellipse's unit-disk coordinates the curve is o + u cos(theta) + v sin(theta).
+        var u = other.NormalizeRelative(curve.Axis * curve.Radii.X);
+        var v = other.NormalizeRelative(curve.Perp * curve.Radii.Y);
+        var k = offset.Dot(offset) - 1d;
+        var uu = u.Dot(u);
+        var vv = v.Dot(v);
+        var ou = offset.Dot(u);
+        var ov = offset.Dot(v);
+        var uv = u.Dot(v);
         Span<double> coefficients = stackalloc double[5];
         Span<double> roots = stackalloc double[4];
         for (var chart = 0; chart < 2; chart++)
         {
-            // x = cx + rx*cos(theta), y = cy + ry*sin(theta). Substituting
-            // t = tan(theta/2) in the other ellipse's implicit equation gives a quartic.
-            // Two charts, each with t in [-1,1], cover the perimeter without an infinite root at PI.
+            // Substituting t = tan(theta/2) in |o + u cos + v sin|^2 = 1 gives a quartic. Two charts, each with
+            // t in [-1,1], cover the perimeter without an infinite root at PI; the second one negates u and v.
             var sign = chart == 0 ? 1d : -1d;
-            var x0 = offset.X + sign * sx;
-            var x2 = offset.X - sign * sx;
-            coefficients[0] = x0 * x0 + offset.Y * offset.Y - 1d;
-            coefficients[1] = 4d * offset.Y * sign * sy;
-            coefficients[2] = 2d * x0 * x2 + 2d * offset.Y * offset.Y + 4d * sy * sy - 2d;
-            coefficients[3] = coefficients[1];
-            coefficients[4] = x2 * x2 + offset.Y * offset.Y - 1d;
+            coefficients[0] = k + uu + 2d * sign * ou;
+            coefficients[1] = 4d * sign * ov + 4d * uv;
+            coefficients[2] = 2d * k - 2d * uu + 4d * vv;
+            coefficients[3] = 4d * sign * ov - 4d * uv;
+            coefficients[4] = k + uu - 2d * sign * ou;
             var count = PolynomialRoots.FindRealRoots(coefficients, -1d, 1d, roots);
             for (var i = 0; i < count; i++)
             {
@@ -183,8 +187,7 @@ public static partial class Area2D
             var start = offset + vertex;
             var direction = polygon.Vertices[(i + 1) % polygon.Vertices.Length] - vertex;
             var normalized = curve.NormalizeRelative(start);
-            var magnitude = 1d + (Math.Abs(offset.X) + Math.Abs(vertex.X)) / curve.Radii.X
-                + (Math.Abs(offset.Y) + Math.Abs(vertex.Y)) / curve.Radii.Y;
+            var magnitude = 1d + (Math.Abs(offset.X) + Math.Abs(offset.Y) + Math.Abs(vertex.X) + Math.Abs(vertex.Y)) / curve.Radii.Y;
             // Preserve corner contacts when a tangent's discriminant or endpoint parameter rounds
             // just outside the edge. This is especially important at a capsule's arc/edge seams.
             if (Math.Abs(normalized.Dot(normalized) - 1d) <= 8d * ConicCoincidenceTolerance * magnitude)
@@ -246,7 +249,7 @@ public static partial class Area2D
     {
         low = high = 0d;
         var relative = curve.NormalizeRelative(start);
-        direction = new(direction.X / curve.Radii.X, direction.Y / curve.Radii.Y);
+        direction = curve.NormalizeRelative(direction);
         var lengthSquared = direction.LengthSquared();
         if (lengthSquared == 0d)
         {
@@ -345,14 +348,9 @@ public static partial class Area2D
         return result;
     }
 
-    private static double SignedArcArea(BoundaryPart curve, double from, double to)
-    {
-        var (sinFrom, cosFrom) = EndpointSinCos(from);
-        var (sinTo, cosTo) = EndpointSinCos(to);
-        return .5d * (curve.Radii.X * curve.Radii.Y * (to - from)
-            + curve.Radii.Y * curve.Center.X * (sinTo - sinFrom)
-            + curve.Radii.X * curve.Center.Y * (cosFrom - cosTo));
-    }
+    // Green's theorem along the arc: the orientation term is independent of the frame, and the center term is a
+    // cross product with the chord, so it holds in any orientation.
+    private static double SignedArcArea(BoundaryPart curve, double from, double to) => .5d * (curve.Radii.X * curve.Radii.Y * (to - from) + curve.Center.Cross(curve.PointAt(to) - curve.PointAt(from)));
 
     private static (double Sin, double Cos) EndpointSinCos(double angle) =>
         angle == 0d || angle == Math.Tau ? (0d, 1d) : Math.SinCos(angle);
@@ -367,6 +365,8 @@ public static partial class Area2D
     {
         internal Vector2d Center { get; private set; }
         internal Vector2d Radii { get; }
+        internal Vector2d Axis { get; }
+        internal Vector2d Perp => Axis.PerpCcw;
         internal double Radius => Radii.X;
         internal Vector2d[] Vertices { get; }
         internal Vector2d Origin => IsCurve ? Center : _vertexOrigin;
@@ -377,16 +377,46 @@ public static partial class Area2D
         private readonly bool _hasArea;
         private Vector2d _vertexOrigin;
 
-        internal BoundaryPart(Vector2 center, float radius) : this(center, new Vector2(radius)) { }
+        internal BoundaryPart(Vector2 center, float radius) : this(center, new Vector2(radius), Vector2.UnitX) { }
 
-        internal BoundaryPart(Vector2 center, Vector2 radii)
+        internal BoundaryPart(Vector2 center, Vector2 radii, Vector2 axis)
         {
             Center = new(center);
-            Radii = new(radii);
             Vertices = [];
             _hasArea = true;
-            _min = Radii * -1d;
-            _max = Radii;
+            // Canonical form: a unit axis, the larger radius first, circles on +X, and the axis in the half-plane of
+            // positive X (positive Y on its edge). Every step is exact, so two spellings of one ellipse compare equal
+            // and coincidence needs no tolerance on the axis.
+            var frame = new Vector2d(axis);
+            frame /= frame.Length();
+            var extents = new Vector2d(radii);
+            if (extents.X == extents.Y)
+            {
+                frame = new(1d, 0d);
+            }
+            else if (extents.X < extents.Y)
+            {
+                extents = new(extents.Y, extents.X);
+                frame = frame.PerpCcw;
+            }
+            if (frame.X < 0d || frame.X == 0d && frame.Y < 0d)
+            {
+                frame = -frame;
+            }
+
+            Radii = extents;
+            Axis = frame;
+            if (frame == new Vector2d(1d, 0d))
+            {
+                _max = Radii;
+            }
+            else
+            {
+                var perp = Perp;
+                _max = new(new Vector2d(Radii.X * frame.X, Radii.Y * perp.X).Length(), new Vector2d(Radii.X * frame.Y, Radii.Y * perp.Y).Length());
+            }
+
+            _min = _max * -1d;
         }
 
         internal BoundaryPart(ReadOnlySpan<Vector2> vertices) : this(ToPoints(vertices), new Vector2d(vertices[0])) { }
@@ -456,12 +486,21 @@ public static partial class Area2D
             return true;
         }
 
-        internal Vector2d NormalizeRelative(Vector2d point) => new(point.X / Radii.X, point.Y / Radii.Y);
+        internal Vector2d ToFrame(Vector2d point) => new(Axis.Dot(point), Perp.Dot(point));
+
+        internal Vector2d FromFrame(Vector2d point) => Axis * point.X + Perp * point.Y;
+
+        /// <summary>Projects a center-relative point or direction into the unit-disk coordinates of this part's ellipse.</summary>
+        internal Vector2d NormalizeRelative(Vector2d point)
+        {
+            var framed = ToFrame(point);
+            return new(framed.X / Radii.X, framed.Y / Radii.Y);
+        }
 
         internal Vector2d PointAt(double angle)
         {
             var (sin, cos) = EndpointSinCos(angle);
-            return new Vector2d(Radii.X * cos, Radii.Y * sin);
+            return FromFrame(new(Radii.X * cos, Radii.Y * sin));
         }
 
         private static Vector2d[] ToPoints(ReadOnlySpan<Vector2> vertices)
