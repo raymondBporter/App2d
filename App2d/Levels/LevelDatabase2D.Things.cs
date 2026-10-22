@@ -7,6 +7,16 @@ public sealed partial class LevelDatabase2D
 {
     private const string MovingPlatformTypeKey = "moving-platform";
 
+    /// <summary>The thing type whose definition places an authored object file.</summary>
+    public const string ObjectTypeKey = "object";
+
+    private const string ObjectReferencesSql = """
+        CREATE TABLE IF NOT EXISTS object_references(
+            definition_id INTEGER PRIMARY KEY
+                REFERENCES thing_definitions(definition_id) ON DELETE CASCADE,
+            asset TEXT NOT NULL);
+        """;
+
     private const string ThingSchemaSql = """
         CREATE TABLE thing_definitions(
             definition_id INTEGER PRIMARY KEY,
@@ -48,9 +58,10 @@ public sealed partial class LevelDatabase2D
         var records = new List<ThingDefinitionRecord2D>();
         using var command = _connection.CreateCommand();
         command.CommandText = """
-            SELECT definition_id, type_key, name
-            FROM thing_definitions
-            ORDER BY name, definition_id;
+            SELECT d.definition_id, d.type_key, d.name, o.asset
+            FROM thing_definitions d
+            LEFT JOIN object_references o USING(definition_id)
+            ORDER BY d.name, d.definition_id;
             """;
         using var reader = command.ExecuteReader();
         while (reader.Read())
@@ -58,7 +69,8 @@ public sealed partial class LevelDatabase2D
             records.Add(new ThingDefinitionRecord2D(
                 reader.GetInt64(0),
                 reader.GetString(1),
-                reader.GetString(2)));
+                reader.GetString(2),
+                reader.IsDBNull(3) ? null : reader.GetString(3)));
         }
         return records;
     }
@@ -70,10 +82,11 @@ public sealed partial class LevelDatabase2D
         command.CommandText = """
             SELECT
                 t.thing_id, t.definition_id, d.type_key, d.name, t.name, t.enabled,
-                x.x, x.y, x.rotation
+                x.x, x.y, x.rotation, o.asset
             FROM things t
             JOIN thing_definitions d USING(definition_id)
             LEFT JOIN transforms x USING(thing_id)
+            LEFT JOIN object_references o USING(definition_id)
             ORDER BY t.thing_id;
             """;
         using var reader = command.ExecuteReader();
@@ -91,25 +104,34 @@ public sealed partial class LevelDatabase2D
                 reader.GetInt64(5) != 0,
                 reader.GetFloat(6),
                 reader.GetFloat(7),
-                reader.GetFloat(8)));
+                reader.GetFloat(8),
+                reader.IsDBNull(9) ? null : reader.GetString(9)));
         }
         return records;
     }
 
-    public ThingDefinitionRecord2D CreateThingDefinition(string typeKey, string name)
+    /// <summary>An <c>object</c> definition names the asset file it places; every other type takes none.</summary>
+    public ThingDefinitionRecord2D CreateThingDefinition(string typeKey, string name, string? asset = null)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(typeKey);
         ArgGuard.ThrowIfNullOrWhiteSpace(name);
-        using var command = _connection.CreateCommand();
-        command.CommandText = """
-            INSERT INTO thing_definitions(type_key, name)
-            VALUES($type_key, $name)
-            RETURNING definition_id;
-            """;
-        command.Parameters.AddWithValue("$type_key", typeKey.Trim());
-        command.Parameters.AddWithValue("$name", name.Trim());
-        var definitionId = Convert.ToInt64(command.ExecuteScalar());
-        return new ThingDefinitionRecord2D(definitionId, typeKey.Trim(), name.Trim());
+        var normalizedAsset = NormalizeAsset(typeKey.Trim(), asset);
+        using var transaction = _connection.BeginTransaction();
+        long definitionId;
+        using (var command = _connection.CreateCommand())
+        {
+            command.CommandText = """
+                INSERT INTO thing_definitions(type_key, name)
+                VALUES($type_key, $name)
+                RETURNING definition_id;
+                """;
+            command.Parameters.AddWithValue("$type_key", typeKey.Trim());
+            command.Parameters.AddWithValue("$name", name.Trim());
+            definitionId = Convert.ToInt64(command.ExecuteScalar());
+        }
+        WriteObjectReference(definitionId, normalizedAsset);
+        transaction.Commit();
+        return new ThingDefinitionRecord2D(definitionId, typeKey.Trim(), name.Trim(), normalizedAsset);
     }
 
     public ThingDefinitionRecord2D UpdateThingDefinition(ThingDefinitionRecord2D record)
@@ -117,19 +139,59 @@ public sealed partial class LevelDatabase2D
         ArgGuard.ThrowIfNull(record);
         ArgGuard.ThrowIfNullOrWhiteSpace(record.TypeKey);
         ArgGuard.ThrowIfNullOrWhiteSpace(record.Name);
-        using var command = _connection.CreateCommand();
-        command.CommandText = """
-            UPDATE thing_definitions SET name = $name
-            WHERE definition_id = $definition_id AND type_key = $type_key;
-            """;
-        command.Parameters.AddWithValue("$name", record.Name.Trim());
-        command.Parameters.AddWithValue("$definition_id", record.DefinitionId);
-        command.Parameters.AddWithValue("$type_key", record.TypeKey);
-        StateGuard.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing definition {record.DefinitionId} of type '{record.TypeKey}' does not exist.");
+        var normalizedAsset = NormalizeAsset(record.TypeKey, record.Asset);
+        using var transaction = _connection.BeginTransaction();
+        using (var command = _connection.CreateCommand())
+        {
+            command.CommandText = """
+                UPDATE thing_definitions SET name = $name
+                WHERE definition_id = $definition_id AND type_key = $type_key;
+                """;
+            command.Parameters.AddWithValue("$name", record.Name.Trim());
+            command.Parameters.AddWithValue("$definition_id", record.DefinitionId);
+            command.Parameters.AddWithValue("$type_key", record.TypeKey);
+            StateGuard.ThrowIf(command.ExecuteNonQuery() != 1, $"Thing definition {record.DefinitionId} of type '{record.TypeKey}' does not exist.");
+        }
+        WriteObjectReference(record.DefinitionId, normalizedAsset);
+        transaction.Commit();
         return record with
         {
-            Name = record.Name.Trim()
+            Name = record.Name.Trim(),
+            Asset = normalizedAsset
         };
+    }
+
+    private static string? NormalizeAsset(string typeKey, string? asset)
+    {
+        var isObject = string.Equals(typeKey, ObjectTypeKey, StringComparison.Ordinal);
+        if (isObject && string.IsNullOrWhiteSpace(asset))
+        {
+            throw ArgGuard.CreateInvalid("An object definition needs an asset file.", nameof(asset));
+        }
+        if (!isObject && !string.IsNullOrWhiteSpace(asset))
+        {
+            throw ArgGuard.CreateInvalid($"Thing type '{typeKey}' does not take an asset file.", nameof(asset));
+        }
+        return isObject ? asset!.Trim() : null;
+    }
+
+    private void WriteObjectReference(long definitionId, string? asset)
+    {
+        using var command = _connection.CreateCommand();
+        if (asset is null)
+        {
+            command.CommandText = "DELETE FROM object_references WHERE definition_id = $definition_id;";
+        }
+        else
+        {
+            command.CommandText = """
+                INSERT INTO object_references(definition_id, asset) VALUES($definition_id, $asset)
+                ON CONFLICT(definition_id) DO UPDATE SET asset = excluded.asset;
+                """;
+            command.Parameters.AddWithValue("$asset", asset);
+        }
+        command.Parameters.AddWithValue("$definition_id", definitionId);
+        command.ExecuteNonQuery();
     }
 
     public void DeleteThingDefinition(long definitionId)

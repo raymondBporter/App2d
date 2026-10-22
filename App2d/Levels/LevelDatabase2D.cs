@@ -12,7 +12,7 @@ namespace App2d.Levels;
 /// </summary>
 public sealed partial class LevelDatabase2D : IDisposable
 {
-    public const int CurrentFormatVersion = 2;
+    public const int CurrentFormatVersion = 3;
 
     private readonly SqliteConnection _connection;
 
@@ -22,7 +22,8 @@ public sealed partial class LevelDatabase2D : IDisposable
 
     public int ChunkRowCount => (int)ReadScalarLong("SELECT COUNT(*) FROM chunks;");
 
-    public static LevelDatabase2D Open(string path)
+    /// <summary>Opens or creates a level for editing and upgrades its format. Migrated object assets are written under <paramref name="worldRoot"/>, the file's own directory by default.</summary>
+    public static LevelDatabase2D Open(string path, string? worldRoot = null)
     {
         ArgGuard.ThrowIfNullOrWhiteSpace(path);
         var directory = Path.GetDirectoryName(Path.GetFullPath(path));
@@ -41,7 +42,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         try
         {
             EnableForeignKeys(connection);
-            Migrate(connection);
+            Migrate(connection, worldRoot ?? (string.IsNullOrEmpty(directory) ? Environment.CurrentDirectory : directory));
         }
         catch
         {
@@ -184,8 +185,9 @@ public sealed partial class LevelDatabase2D : IDisposable
         command.ExecuteNonQuery();
     }
 
-    private static void Migrate(SqliteConnection connection)
+    private static void Migrate(SqliteConnection connection, string worldRoot)
     {
+        ArgGuard.ThrowIfNullOrWhiteSpace(worldRoot);
         long version;
         using (var versionCommand = connection.CreateCommand())
         {
@@ -224,6 +226,14 @@ public sealed partial class LevelDatabase2D : IDisposable
             createThings.CommandText = ThingSchemaSql;
             createThings.ExecuteNonQuery();
             version = 2;
+        }
+
+        if (version == 2)
+        {
+            using var createObjects = connection.CreateCommand();
+            createObjects.CommandText = ObjectReferencesSql;
+            createObjects.ExecuteNonQuery();
+            version = 3;
         }
 
         using (var stamp = connection.CreateCommand())
