@@ -9,57 +9,17 @@ using System.Numerics;
 
 namespace App2d.Contracts.Simulation;
 
-public readonly record struct PlayerInput2D(EntityId2D EntityId, long Tick, long Sequence, PersonCommand2D Command);
+public readonly record struct PlayerInput2D(EntityId2D EntityId, PersonCommand2D Command);
 
-/// <summary>Why a session refused an input. The session state is unchanged after a rejection.</summary>
-public enum InputRejection2D
-{
-    None,
-    UnknownPlayer,
-    WrongTick,
-    StaleSequence,
-    InvalidMovement,
-    DuplicatePlayer,
-}
-
-/// <summary>Why a client endpoint refused a frame. The endpoint state is unchanged after a rejection.</summary>
-public enum FrameRejection2D
-{
-    None,
-    /// <summary>The frame is not newer than the current observation. Not an error.</summary>
-    Stale,
-    Gap,
-    MissingPlayer,
-    Incomplete,
-    AcknowledgementMovedBackwards,
-}
-
-/// <summary>One player's observation, including the newest input sequence the session has applied.</summary>
-public readonly record struct PlayerState2D(
-    PersonState2D Person, long LastInputSequence, float MoveX, EquipmentKind2D Equipment,
-    bool IsMeleeAttackActive,
-    float RespawnSeconds, long? CheckpointId, bool ReachedGoal, WeaponState2D Weapons = default)
+/// <summary>One player's observation.</summary>
+public readonly record struct PlayerState2D(PersonState2D Person, float MoveX, EquipmentKind2D Equipment, bool IsMeleeAttackActive, float RespawnSeconds, long? CheckpointId, bool ReachedGoal, WeaponState2D Weapons = default)
 {
     public EntityId2D Id => Person.Id;
 }
 
-/// <summary>A complete starting observation. Historical events are intentionally absent.</summary>
-public sealed record SessionSnapshot2D(
-    long Tick, ImmutableArray<PlayerState2D> Players,
-    LevelContent2D Content, WorldState2D World, ImmutableArray<EnemyState2D> Enemies)
+/// <summary>Owned value data; advancing the session cannot change an earlier frame. A frame with no events is a complete starting observation.</summary>
+public sealed record SessionFrame2D(long Tick, ImmutableArray<PlayerState2D> Players, LevelContent2D Content, WorldState2D World, ImmutableArray<EnemyState2D> Enemies, ImmutableArray<SessionEvent2D> Events)
 {
-    public PlayerState2D? FindPlayer(EntityId2D id) => Players.FindPlayer(id);
-}
-
-/// <summary>Owned value data; advancing the session cannot change an earlier frame.</summary>
-public sealed record SessionFrame2D(
-    long Tick, ImmutableArray<PlayerState2D> Players,
-    ImmutableArray<SessionEvent2D> Events)
-{
-    /// <summary>Content the receiver may already hold; compare <see cref="LevelContent2D.Revision"/>.</summary>
-    public required LevelContent2D Content { get; init; } = LevelContent2D.Empty;
-    public required WorldState2D World { get; init; } = WorldState2D.Empty;
-    public ImmutableArray<EnemyState2D> Enemies { get; init; } = [];
     public PlayerState2D? FindPlayer(EntityId2D id) => Players.FindPlayer(id);
 }
 

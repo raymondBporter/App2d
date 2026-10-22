@@ -103,7 +103,7 @@ public sealed class WorldStateTests
         Assert.All(enemyIds, id => Assert.Null(registry.Find(id)));
         Assert.NotEmpty(initialContent.Terrain); // Disposal cannot invalidate an earlier observation.
 
-        SessionFrame2D Step() => session.Advance(new PlayerInput2D(player.Id, session.Tick + 1, session.Tick + 1, default));
+        SessionFrame2D Step() => session.Advance(new PlayerInput2D(player.Id, default));
     }
 
     private static EditableTileMap2D CreateMap() => new(SideScrollerLevel2D.WorldWidthTiles,

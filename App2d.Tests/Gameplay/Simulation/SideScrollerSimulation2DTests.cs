@@ -32,7 +32,7 @@ public sealed class SideScrollerSimulation2DTests
                 JumpHeld = tick is >= 10 and < 30,
                 PrimaryHeld = tick is >= 40 and < 130,
             };
-            var input = new PlayerInput2D(playerId, tick, tick, command);
+            var input = new PlayerInput2D(playerId, command);
             var a = server.Session.Advance(input);
             var b = client.Session.Advance(input);
             Assert.Equal(a.Players.ToArray(), b.Players.ToArray());

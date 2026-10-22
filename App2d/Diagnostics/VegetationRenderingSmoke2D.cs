@@ -76,7 +76,7 @@ internal static class VegetationRenderingSmoke2D
         void Step(PersonCommand2D command)
         {
             var tick = game.Session.Tick + 1;
-            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, command));
+            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, command));
             var state = frame.Players[0];
             world.Update(frame.Content, frame.World, 1f / 120f);
             player.Equip(state.Equipment);

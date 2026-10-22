@@ -169,7 +169,7 @@ public sealed class WeaponSessionTests
             return Step(Hold);
         }
         public SessionFrame2D Step(PersonCommand2D command = default) => Session.Advance(
-            new PlayerInput2D(Player.Id, Session.Tick + 1, Session.Tick + 1, command));
+            new PlayerInput2D(Player.Id, command));
         public void Dispose() => Session.Dispose();
     }
 

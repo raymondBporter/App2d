@@ -13,13 +13,12 @@ using App2d.Gameplay.Persons.Actions;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
 using App2d.Levels;
-using App2d.Presentation.Simulation;
 using System.Collections.Immutable;
 using System.Numerics;
 
 namespace App2d.Tests.Presentation.Enemies;
 
-public sealed class EnemySessionClientTests
+public sealed class EnemySessionTests
 {
     [Fact]
     public void SessionDeliversImmutableEnemyStatesAndStampedAttackEvents()
@@ -36,15 +35,12 @@ public sealed class EnemySessionClientTests
         var world = new EnemyWorld();
         world.Enemies.Register(brute, new TileChunk2D(0, 0));
         using var session = new SideScrollerSession2D(physics, player, arsenal, world, new RespawnState2D(Vector2.Zero, 5), combat);
-        var endpoint = new SessionClient2D(session.CaptureSnapshot(), player.Id);
         var events = new List<EnemyOccurred2D>();
         SessionFrame2D? first = null;
         for (var i = 0; i < 120; i++)
         {
-            var frame = session.Advance(endpoint.CreateInput(default));
+            var frame = session.Advance(new PlayerInput2D(player.Id, default));
             first ??= frame;
-            Assert.True(endpoint.Apply(frame));
-            Assert.False(endpoint.Apply(frame));
             Assert.All(frame.Events.OfType<EnemyOccurred2D>(), e =>
             {
                 Assert.Equal(frame.Tick, e.Stamp.Tick);

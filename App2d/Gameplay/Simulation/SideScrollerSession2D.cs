@@ -81,11 +81,12 @@ public sealed class SideScrollerSession2D : IDisposable
     public ImmutableArray<EnemyState2D> CaptureEnemies() => _world.CaptureEnemies();
     public ImmutableArray<PlayerState2D> CapturePlayers() => [.. _players.Select(p => p.CaptureState())];
 
-    public SessionSnapshot2D CaptureSnapshot()
+    /// <summary>A complete observation at a tick boundary, with no events.</summary>
+    public SessionFrame2D CaptureSnapshot()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         StateGuard.ThrowIf(_advancing, "Snapshots require a completed simulation tick.");
-        return new(Tick, CapturePlayers(), CaptureContent(), CaptureWorld(), CaptureEnemies());
+        return new(Tick, CapturePlayers(), CaptureContent(), CaptureWorld(), CaptureEnemies(), []);
     }
 
     public void SetPaused(bool paused)
@@ -109,21 +110,6 @@ public sealed class SideScrollerSession2D : IDisposable
     }
 
     /// <summary>
-    /// Checks one input against the current tick without changing state.
-    /// <see cref="Advance"/> throws when an input fails validation.
-    /// </summary>
-    public bool TryValidateInput(PlayerInput2D input, out InputRejection2D rejection)
-    {
-        var participant = FindParticipant(input.EntityId);
-        rejection = participant is null ? InputRejection2D.UnknownPlayer
-            : input.Tick != Tick + 1 ? InputRejection2D.WrongTick
-            : input.Sequence <= participant.LastInputSequence ? InputRejection2D.StaleSequence
-            : !IsValidMovement(input.Command) ? InputRejection2D.InvalidMovement
-            : InputRejection2D.None;
-        return rejection == InputRejection2D.None;
-    }
-
-    /// <summary>
     /// Advances exactly one fixed tick. Each input applies to its player for this tick;
     /// a player without a new input this tick continues its previous command.
     /// </summary>
@@ -135,16 +121,22 @@ public sealed class SideScrollerSession2D : IDisposable
         // Reject the entire batch before changing simulation state.
         for (var i = 0; i < inputs.Length; i++)
         {
-            if (!TryValidateInput(inputs[i], out var rejection))
+            var input = inputs[i];
+            if (FindParticipant(input.EntityId) is null)
             {
-                throw ArgGuard.CreateInvalid($"Input for player {inputs[i].EntityId.Value} was rejected: {rejection}.", nameof(inputs));
+                throw ArgGuard.CreateInvalid($"Player {input.EntityId.Value} is not in this session.", nameof(inputs));
+            }
+
+            if (!IsValidMovement(input.Command))
+            {
+                throw ArgGuard.CreateInvalid($"Input for player {input.EntityId.Value} has an invalid movement.", nameof(inputs));
             }
 
             for (var j = 0; j < i; j++)
             {
-                if (inputs[j].EntityId == inputs[i].EntityId)
+                if (inputs[j].EntityId == input.EntityId)
                 {
-                    throw ArgGuard.CreateInvalid($"Input for player {inputs[i].EntityId.Value} was rejected: {InputRejection2D.DuplicatePlayer}.", nameof(inputs));
+                    throw ArgGuard.CreateInvalid($"Player {input.EntityId.Value} has more than one input this tick.", nameof(inputs));
                 }
             }
         }
@@ -155,9 +147,7 @@ public sealed class SideScrollerSession2D : IDisposable
             Tick++;
             foreach (var input in inputs)
             {
-                var participant = FindParticipant(input.EntityId)!;
-                participant.LastInputSequence = input.Sequence;
-                participant.LastCommand = input.Command;
+                FindParticipant(input.EntityId)!.LastCommand = input.Command;
             }
             _events.Clear();
             if (_pendingPlaygroundTravel is { } destination)
@@ -177,12 +167,7 @@ public sealed class SideScrollerSession2D : IDisposable
                 _events.Add(new EnemyOccurred2D(new SessionEventStamp2D(Tick, ++_eventSequence, occurrence.EntityId), occurrence));
             }
 
-            return new SessionFrame2D(Tick, CapturePlayers(), [.. _events])
-            {
-                Content = CaptureContent(),
-                Enemies = CaptureEnemies(),
-                World = CaptureWorld()
-            };
+            return new SessionFrame2D(Tick, CapturePlayers(), CaptureContent(), CaptureWorld(), CaptureEnemies(), [.. _events]);
         }
         finally
         {
@@ -353,13 +338,11 @@ public sealed class SideScrollerSession2D : IDisposable
         public float MoveX { get; set; }
         public bool ReachedGoal { get; set; }
         public bool GoalEligible { get; set; } = true;
-        public long LastInputSequence { get; set; }
         public PersonCommand2D LastCommand { get; set; }
         /// <summary>Within-tick scratch: whether this tick began inside the death restart delay.</summary>
         public bool WasRestarting { get; set; }
 
-        public PlayerState2D CaptureState() =>
-            new(Person.CaptureState(), LastInputSequence, MoveX, Actions.Equipment, Actions.IsMeleeAttackActive, RestartSeconds, Respawn.CheckpointId, ReachedGoal, Actions.CaptureWeaponState());
+        public PlayerState2D CaptureState() => new(Person.CaptureState(), MoveX, Actions.Equipment, Actions.IsMeleeAttackActive, RestartSeconds, Respawn.CheckpointId, ReachedGoal, Actions.CaptureWeaponState());
 
         public void Subscribe(SideScrollerSession2D session)
         {

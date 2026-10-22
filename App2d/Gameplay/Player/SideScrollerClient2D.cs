@@ -15,7 +15,6 @@ using App2d.Presentation.Audio;
 using App2d.Presentation.Persons;
 using App2d.Presentation.Persons.Presentation;
 using App2d.Presentation.Player;
-using App2d.Presentation.Simulation;
 using App2d.Presentation.World;
 using App2d.Presentation.World.Presentation;
 using App2d.Rendering;
@@ -29,7 +28,8 @@ namespace App2d.Gameplay.Player;
 internal sealed class SideScrollerClient2D : IDisposable
 {
     private const float SaveFeedbackDurationSeconds = 1.1f;
-    private readonly SessionClient2D _endpoint;
+    private readonly EntityId2D _playerId;
+    private SessionFrame2D _frame;
     private readonly PlayerInputMapper2D _input = new();
     private readonly AuthoredPersonPresentation2D _presentation;
     private readonly SideScrollerCamera2D _cameraController;
@@ -48,12 +48,14 @@ internal sealed class SideScrollerClient2D : IDisposable
     private bool _lastSaveSucceeded;
     private bool _shieldPose;
 
-    public SideScrollerClient2D(SessionSnapshot2D initial, EntityId2D playerId, Scene2D scene,
-        Camera2D camera, SideScrollerCamera2D cameraController,
-        TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal, PersonMoves moves)
+    public SideScrollerClient2D(SessionFrame2D initial, EntityId2D playerId, Scene2D scene, Camera2D camera, SideScrollerCamera2D cameraController, TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal, PersonMoves moves)
     {
-        _endpoint = new SessionClient2D(initial, playerId);
-        var initialState = _endpoint.State;
+        ArgGuard.ThrowIfNull(initial);
+        ArgGuard.ThrowIf(!playerId.IsValid, "A player identity is required.", nameof(playerId));
+        _playerId = playerId;
+        _frame = initial;
+        State = Observe(initial);
+        var initialState = State;
         _camera = camera;
         _cameraController = cameraController;
         _sounds = sounds;
@@ -75,8 +77,8 @@ internal sealed class SideScrollerClient2D : IDisposable
         ApplyPlayerState();
     }
 
-    public PlayerState2D State => _endpoint.State;
-    public LevelContent2D Content => _endpoint.Snapshot.Content;
+    public PlayerState2D State { get; private set; }
+    public LevelContent2D Content => _frame.Content;
     public void SetVisibleTerrain(ImmutableArray<TerrainChunkState2D> terrain) => _world.SetVisibleTerrain(terrain);
     public void DrawTrees(Renderer2D renderer) => _world.DrawTrees(renderer, _camera.VisibleWorldBounds);
     public void DrawGrass(Renderer2D renderer, VegetationLayer2D layer) =>
@@ -105,31 +107,28 @@ internal sealed class SideScrollerClient2D : IDisposable
         }
 
         _shieldPose = debug.ShieldPose;
-        var command = _input.Capture(input);
-        return _endpoint.CreateInput(command);
+        return new PlayerInput2D(_playerId, _input.Capture(input));
     }
 
+    /// <summary>Presents the frame the session's Advance returned. The host applies each frame once, so events are presented once.</summary>
     public void Apply(SessionFrame2D frame)
     {
-        if (!_endpoint.Apply(frame))
-        {
-            return;
-        }
-
+        ArgGuard.ThrowIfNull(frame);
+        State = Observe(frame);
+        _frame = frame;
         _world.ApplyState(frame.Content, frame.World);
-        _weapons.ApplyState(State.Weapons, State.Equipment,
-            frame.Events.OfType<WeaponOccurred2D>().Where(e => e.Stamp.EntityId == _endpoint.PlayerId).Select(e => e.Occurrence));
-        _spells.Apply(State.Person,
-            frame.Events.OfType<WeaponOccurred2D>().Where(e => e.Stamp.EntityId == _endpoint.PlayerId).Select(e => e.Occurrence));
+        var weaponEvents = frame.Events.OfType<WeaponOccurred2D>().Where(e => e.Stamp.EntityId == _playerId).Select(e => e.Occurrence);
+        _weapons.ApplyState(State.Weapons, State.Equipment, weaponEvents);
+        _spells.Apply(State.Person, weaponEvents);
 
         foreach (var occurrence in frame.Events)
         {
             // Player-scoped facts belong to this client's player; other players' facts are not presented here yet.
-            var isMine = occurrence.Stamp.EntityId == _endpoint.PlayerId;
+            var isMine = occurrence.Stamp.EntityId == _playerId;
             if (occurrence is CombatDamageOccurred2D confirmed)
             {
                 _contacts.Present(confirmed.Damage);
-                _presentation.PresentContact(confirmed.Damage, _endpoint.PlayerId, frame.Tick);
+                _presentation.PresentContact(confirmed.Damage, _playerId, frame.Tick);
                 _enemies.PresentContact(confirmed.Damage);
                 if (confirmed.Damage.Contact is { Kind: CombatImpactKind2D.Sword } contact)
                 {
@@ -210,9 +209,10 @@ internal sealed class SideScrollerClient2D : IDisposable
     private void ApplyPlayerState()
     {
         _presentation.Equip(State.Equipment);
-        _presentation.ApplyState(State.Person, _endpoint.Tick, State.MoveX,
-            _shieldPose && State.Person.IsAlive, State.IsMeleeAttackActive);
+        _presentation.ApplyState(State.Person, _frame.Tick, State.MoveX, _shieldPose && State.Person.IsAlive, State.IsMeleeAttackActive);
     }
+
+    private PlayerState2D Observe(SessionFrame2D frame) => frame.FindPlayer(_playerId) ?? throw ArgGuard.CreateInvalid("The frame does not observe this player.", nameof(frame));
 
     public void AdvancePresentation(float deltaSeconds)
     {
@@ -232,7 +232,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _enemies.ResetContact();
         _presentation.ResetContact();
         _world.ApplyState(content, world);
-        _enemies.ApplyState(enemies, [], _endpoint.Tick);
+        _enemies.ApplyState(enemies, [], _frame.Tick);
     }
 
     public void UpdateFeedback(float dt) =>

@@ -54,8 +54,7 @@ internal static class GiantTreeStudy2D
         using var target = RenderCapture2D.CreateTarget(device, 1280, 720, DepthFormat.None, 0);
         for (var i = 0; i < 120; i++)
         {
-            var tick = game.Session.Tick + 1;
-            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D()));
+            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, new PersonCommand2D()));
             var state = frame.Players[0];
             world.Update(frame.Content, frame.World, 1f / 120f);
             player.Equip(state.Equipment);

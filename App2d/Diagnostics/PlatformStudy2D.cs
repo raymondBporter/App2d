@@ -68,8 +68,7 @@ internal static class PlatformStudy2D
             camera.Position = focus;
             for (var step = 0; step < 240; step++)
             {
-                var tick = game.Session.Tick + 1;
-                var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D()));
+                var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, new PersonCommand2D()));
                 var state = frame.Players[0];
                 player.Equip(state.Equipment);
                 player.ApplyState(state.Person, frame.Tick, state.MoveX, false, state.IsMeleeAttackActive);

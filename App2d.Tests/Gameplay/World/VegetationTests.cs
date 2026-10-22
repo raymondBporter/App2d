@@ -120,8 +120,7 @@ public sealed class VegetationTests
         }
         void Step(PersonCommand2D command)
         {
-            var tick = game.Session.Tick + 1;
-            game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, command));
+            game.Session.Advance(new PlayerInput2D(game.Player.Id, command));
         }
     }
 
@@ -129,8 +128,7 @@ public sealed class VegetationTests
     public void AirborneDownwardSwordCutsWithoutBouncingOffGrass()
     {
         using var game = Create();
-        var tick = game.Session.Tick + 1;
-        game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick,
+        game.Session.Advance(new PlayerInput2D(game.Player.Id,
             new()
             {
                 PrimaryHeld = true,

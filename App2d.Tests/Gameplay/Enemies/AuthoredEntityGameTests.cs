@@ -36,8 +36,7 @@ public sealed class AuthoredEntityGameTests
         {
             for (var i = 0; i < ticks; i++)
             {
-                var tick = game.Session.Tick + 1;
-                game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D()));
+                game.Session.Advance(new PlayerInput2D(game.Player.Id, new PersonCommand2D()));
             }
         }
         string? Swing() => game.Arsenal.CaptureActionState().Swing;

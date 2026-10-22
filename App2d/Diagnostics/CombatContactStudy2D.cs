@@ -72,7 +72,7 @@ internal static class CombatContactStudy2D
             {
                 var tick = game.Session.Tick + 1;
                 var movement = name == "run" ? 1 : name == "reverse" && firstHit >= 0 ? -1 : 0;
-                var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick,
+                var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id,
                     new PersonCommand2D { PrimaryHeld = step == 12, MoveX = movement }));
                 if (timingStudy)
                 {

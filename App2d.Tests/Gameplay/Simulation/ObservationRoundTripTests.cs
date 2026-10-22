@@ -40,7 +40,7 @@ public sealed class ObservationRoundTripTests
             Action = new(PlayerAttackKind2D.Melee, 0.12f, 0.4f),
             Spells = new(60, 90, 30, 30, true, .42f, 0, 1, .25f)
         };
-        var player = new PlayerState2D(person, 620, -1f, EquipmentKind2D.Sword, true, 0f, 42, false,
+        var player = new PlayerState2D(person, -1f, EquipmentKind2D.Sword, true, 0f, 42, false,
             new(false, 0f, position, [new(new EntityId2D(102), position, new(1250f, 0f), new(2f, 4f))]));
         var content = new LevelContent2D(3, [terrain], [new(new EntityId2D(103), 40, new(90f, 12f), 0xffaabbcc)],
             [new(42, position)], new(300f, 0f))
@@ -58,7 +58,7 @@ public sealed class ObservationRoundTripTests
                 { Person = person with { Id = enemyId }, IsAttacking = true, AttackElapsedSeconds = 0.12f, MoveX = -1f },
             new(new EntityId2D(104), EnemyKind2D.PhysicsProp, position, Vector2.Zero, 0.4f, 1f, true, true)
         ];
-        var snapshot = new SessionSnapshot2D(500, [player], content, world, enemies);
+        var snapshot = new SessionFrame2D(500, [player], content, world, enemies, []);
         var options = CreateOptions();
         var restored = RoundTrip(snapshot, options);
         Assert.Equal(player.Person, restored.Players[0].Person);
@@ -111,7 +111,7 @@ public sealed class ObservationRoundTripTests
             new HealStarted2D(position), new HealCancelled2D(position), new HealCompleted2D(position, 6)];
         events.AddRange(enemyEvents.Select(e => new EnemyOccurred2D(stamp, e)));
         events.AddRange(weaponEvents.Select(e => new WeaponOccurred2D(stamp, e)));
-        var frame = new SessionFrame2D(501, [player], [.. events]) { Content = content, World = world, Enemies = enemies };
+        var frame = new SessionFrame2D(501, [player], content, world, enemies, [.. events]);
         Assert.Equal(events.ToArray(), RoundTrip(frame, options).Events.ToArray());
     }
 

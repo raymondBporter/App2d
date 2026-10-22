@@ -171,8 +171,7 @@ public sealed class AuthoredEntityEnemyTests
 
         string[] Run() => [.. Enumerable.Range(0, 480).Select(i =>
         {
-            var tick = game.Session.Tick + 1;
-            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, new PersonCommand2D { MoveX = i < 60 ? .3f : 0 }));
+            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, new PersonCommand2D { MoveX = i < 60 ? .3f : 0 }));
             var guard = frame.Enemies[0];
             return JsonSerializer.Serialize(new { frame.Tick, Health = game.Player.Health.Current, guard.Position, guard.ActionId, guard.ActionSeconds, Points = guard.AuthoredPose!.Local.Points.Values.ToArray() },
                 JsonOptions);

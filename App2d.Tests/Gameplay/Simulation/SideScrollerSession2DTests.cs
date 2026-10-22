@@ -43,30 +43,14 @@ public sealed class SideScrollerSession2DTests
     public void InvalidCommandsDoNotPartiallyAdvanceTheWorld()
     {
         using var game = new Fixture();
-        var valid = new PlayerInput2D(game.Person.Id, 1, 1, default);
+        var valid = new PlayerInput2D(game.Person.Id, default);
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { EntityId = EntityId2D.Create() }));
-        Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Tick = 2 }));
-        Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Sequence = 0 }));
         Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Command = Command(float.NaN) }));
-        Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with
-        {
-            Command = Command() with
-            {
-                ClimbY = float.PositiveInfinity
-            }
-        }));
-        Assert.False(game.Session.TryValidateInput(valid with
-        {
-            Tick = 2
-        }, out var rejection));
-        Assert.Equal(InputRejection2D.WrongTick, rejection);
-        Assert.True(game.Session.TryValidateInput(valid, out rejection));
-        Assert.Equal(InputRejection2D.None, rejection);
+        Assert.Throws<ArgumentException>(() => game.Session.Advance(valid with { Command = Command() with { ClimbY = float.PositiveInfinity } }));
         Assert.Equal(0, game.Session.Tick);
         Assert.Equal(0, game.World.PlatformUpdates);
         Assert.Equal(Vector2.Zero, game.Person.Position);
         game.Session.Advance(valid);
-        Assert.Throws<ArgumentException>(() => game.Session.Advance(valid));
         Assert.Equal(1, game.Session.Tick);
     }
 
@@ -96,7 +80,7 @@ public sealed class SideScrollerSession2DTests
     }
 
     [Fact]
-    public void MissingInputRepeatsTheLastCommandAndDoesNotAcknowledgeANewSequence()
+    public void MissingInputRepeatsTheLastCommandAndDuplicatePlayersAreRejected()
     {
         using var game = new Fixture();
         var moving = game.Step(Command(move: 1f));
@@ -104,11 +88,23 @@ public sealed class SideScrollerSession2DTests
         var repeated = game.Session.Advance();
         Assert.Equal(2, repeated.Tick);
         Assert.Equal(1f, repeated.Players[0].MoveX);
-        Assert.Equal(moving.Players[0].LastInputSequence, repeated.Players[0].LastInputSequence);
         Assert.True(repeated.Players[0].Person.Position.X > moving.Players[0].Person.Position.X);
-        var duplicate = new PlayerInput2D(game.Person.Id, 3, 3, default);
-        Assert.Throws<ArgumentException>(() => game.Session.Advance(duplicate, duplicate with { Sequence = 4 }));
+        var duplicate = new PlayerInput2D(game.Person.Id, default);
+        Assert.Throws<ArgumentException>(() => game.Session.Advance(duplicate, duplicate));
         Assert.Equal(2, game.Session.Tick);
+    }
+
+    [Fact]
+    public void EventsAreStampedWithTheirTickAndEntityAndAreNotRepeated()
+    {
+        using var game = new Fixture();
+        var first = game.Step(Command(attack: true));
+        var attack = Assert.Single(first.Events.OfType<AttackStarted2D>());
+        Assert.Equal(1, attack.Stamp.Tick);
+        Assert.Equal(game.Person.Id, attack.Stamp.EntityId);
+        _ = game.Session.CapturePlayers();
+        Assert.Empty(game.Step().Events.OfType<AttackStarted2D>());
+        Assert.Single(first.Events.OfType<AttackStarted2D>());
     }
 
     [Fact]
@@ -213,8 +209,7 @@ public sealed class SideScrollerSession2DTests
             Session = new SideScrollerSession2D(physics, Person, Actions, World,
                 new RespawnState2D(Vector2.Zero, Person.Health.Maximum));
         }
-        public SessionFrame2D Step(PersonCommand2D command = default) => Session.Advance(
-            new PlayerInput2D(Person.Id, Session.Tick + 1, Session.Tick + 1, command));
+        public SessionFrame2D Step(PersonCommand2D command = default) => Session.Advance(new PlayerInput2D(Person.Id, command));
         public void Dispose() => Session.Dispose();
     }
 

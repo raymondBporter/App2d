@@ -137,7 +137,7 @@ internal static class TilesetRenderingSmoke2D
         void Step()
         {
             var tick = game.Session.Tick + 1;
-            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, tick, tick, default));
+            var frame = game.Session.Advance(new PlayerInput2D(game.Player.Id, default));
             var state = frame.Players[0];
             world.Update(frame.Content, frame.World, 1f / 120f);
             player.Equip(state.Equipment);

@@ -8,8 +8,9 @@
 The session advances the simulation at a fixed rate and hands immutable frames to the
 presentation. This document describes that flow.
 
-There is no gameplay state-restore or rollback API. `SessionSnapshot2D` is the current
-observation used to initialize presentation, not a restorable simulation checkpoint.
+There is no gameplay state-restore or rollback API. `CaptureSnapshot()` returns the
+current observation, a `SessionFrame2D` with no events, used to initialize
+presentation; it is not a restorable simulation checkpoint.
 `PersonFrameHistory2D` holds recent animation samples for hitstop; it does not rewind
 physics or gameplay. Projectile identity sequences advance only forward.
 
@@ -29,16 +30,15 @@ These decisions shape how the session is built and advanced:
   for tests and diagnostics only.
 - **Held-state commands.** `PersonCommand2D` carries axes and held buttons only.
   `Person2D` derives presses and releases from the previous command it saw, so a
-  lost packet cannot drop a jump and a repeated command cannot re-trigger one. A tap that begins and ends inside one tick reaches the
+  missed tick cannot drop a jump and a repeated command cannot re-trigger one. A tap that begins and ends inside one tick reaches the
   simulation as a one-tick hold.
 - **Missing input policy.** `Advance` takes any number of inputs for one tick. A
-  player without an input repeats its last command and its acknowledged sequence
-  does not move.
-- **Rejections, not exceptions, on the transport path.** `TryValidateInput` and
-  `SessionClient2D.TryApply` report `InputRejection2D` / `FrameRejection2D` without
-  changing state. `Advance` and `Apply` still throw for local programming errors.
-- **Per-player shape.** Frames and snapshots carry `Players` with each player's own
-  acknowledged input sequence; events are already stamped with their entity.
+  player without an input repeats its last command.
+- **Invalid input throws.** `Advance` checks the whole batch before changing state:
+  an unknown player, an invalid movement value, or a duplicate player in one batch
+  is a programming error, not a transport condition.
+- **Per-player shape.** Frames carry `Players`; events are already stamped with
+  their entity.
   Enemy targeting and terrain streaming follow the first (living) participant as an
   explicit policy until multiple participants are actually added.
 - **Static content split from dynamic state.** `LevelContent2D` (active terrain,
@@ -54,11 +54,10 @@ Gameplay timers are accumulated floats rather than tick counts.
 
 ```text
 SideScrollerClient2D captures device input
-    -> PlayerInput2D(entity ID, tick, sequence, held-state PersonCommand2D)
+    -> PlayerInput2D(entity ID, held-state PersonCommand2D)
 SideScrollerSession2D advances one 1/120-second tick
-    -> SessionFrame2D(per-player states with acknowledged input, enemy states,
-                      level content, world state, events)
-SideScrollerClient2D accepts the frame and consumes its events once
+    -> SessionFrame2D(per-player states, enemy states, level content, world state, events)
+SideScrollerClient2D applies the frame and presents its events once
 GameHost advances presentation once per display update, independently of received frames
 ```
 
@@ -68,25 +67,18 @@ a checkpoint, or reaches the goal. It remains responsible for the offline editor
 diagnostics, and persistence I/O.
 
 The session owns update order and its own tick counter. Inputs are validated
-before any state changes: unknown players, wrong ticks, stale sequences, invalid
-movement values, and duplicate players in one batch are rejected. Pausing does not
-advance the clock or consume an input sequence. Each frame takes exactly one fixed
-simulation step; the host continues to own the render cadence and fixed-step
-accumulator.
+before any state changes: unknown players, invalid movement values, and duplicate
+players in one batch are rejected. Pausing does not advance the clock. Each frame
+takes exactly one fixed simulation step; the host continues to own the render
+cadence and fixed-step accumulator.
 
 ## Attaching and advancing a client
 
 `SideScrollerSession2D.CaptureSnapshot()` captures a complete observation at a tick
-boundary: tick, acknowledged input sequence, player, enemies, and world. It contains
-no historical events. Construct `SessionClient2D` from this `SessionSnapshot2D` to
-attach at an arbitrary tick.
-
-The endpoint tracks sent input ticks/sequences separately from its received tick.
-It can create several inputs before any responses arrive. Acknowledgements update
-received state without moving the input clock backwards. Frame delivery still must
-be contiguous and ordered; gaps and backwards acknowledgements are rejected before
-mutation, and repeated/older frames return false. A future transport must supply this
-delivery guarantee or introduce an explicit snapshot/event recovery policy.
+boundary: a `SessionFrame2D` with no events. `SideScrollerClient2D` is constructed
+from it and then applies each frame `Advance` returns, once and in order. There is
+no separate endpoint, input clock, or acknowledgement: the host calls `Advance` and
+`Apply` back to back on one thread.
 
 Views expose `ApplyState` and `Advance`: acceptance copies observations and consumes
 occurrences with zero elapsed time; the host advances visual time once per display
@@ -116,12 +108,8 @@ through the host only after the simulation step; reading state does not write a
 save file. Damage has already changed authoritative health before its event is
 presented.
 
-`SessionClient2D` is the value-only local endpoint. It rejects another player's
-frames, ignores repeated/older frames, and rejects gaps in this synchronous
-transport. Consequently the presentation consumes each delivered frame's events
-once. This is not a UDP delivery protocol and does not yet match predicted events
-to authoritative confirmations. Event sequence numbers identify occurrences in
-this session.
+The host applies each frame once, so the presentation consumes each frame's events
+once. Event sequence numbers identify occurrences in this session.
 
 The B-key shield pose remains presentation-only, matching current behavior. It
 does not imply a server-side blocking mechanic.
@@ -153,7 +141,6 @@ sprites, charge animation/audio, HUD assets, muzzle flash, and a separate trail
 pool. It can attach to an ongoing charge from state, and suspension stops the
 voice. Old trails can fade while a different projectile uses a simulation slot;
 render cadence and visibility never decide whether the simulation can fire.
-The local endpoint filters duplicate frames before effects receive their events.
 
 `CombatSystem2D` reports accepted damage through `CombatDamage2D` (target ID,
 faction, position, killed flag). The session forwards it as a stamped occurrence;
@@ -271,9 +258,8 @@ platform replacement identity, view isolation, and level/view cleanup. The norma
 rendering smoke exercises the real terrain, checkpoints, goal, and platform views.
 
 
-Interface tests attach at nonzero ticks, issue inputs ahead of responses, reconstruct
-alive/dead and attack poses without events, and advance effects between messages.
-A test-only JSON codec round-trips complete snapshots/frames, terrain halos and
-collisions, projectiles, and every current event variant. Its entity-ID converter
-and polymorphism registry are test infrastructure; no production serializer,
-transport, loss recovery, interpolation, or prediction loop is selected here.
+Presentation tests reconstruct alive/dead and attack poses without events and
+advance effects between frames. A test-only JSON codec round-trips complete frames,
+terrain halos and collisions, projectiles, and every current event variant. Its
+entity-ID converter and polymorphism registry are test infrastructure; no
+production serializer is selected here.

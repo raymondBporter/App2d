@@ -213,8 +213,8 @@ The production level, weapons, enemy actors, moving platforms, checkpoints, and
 terrain colliders run without constructing graphics or playing audio. Client presentation owns
 sprites, terrain, effects, HUD, and sound; the host handles persistence and editing.
 Terrain observations use cached immutable chunk revisions, including neighboring
-tiles for correct edge rendering. Simulation and presentation are separate folders of the game project. A complete `SessionSnapshot2D` supports attaching at any tick; input
-production and display-time advancement run independently of received frames.
+tiles for correct edge rendering. Simulation and presentation are separate folders of the game project. `CaptureSnapshot()` returns a complete frame with no events to
+initialize presentation; display-time advancement runs independently of simulation ticks.
 Persistent character poses and attack phases reconstruct from state, and terrain
 observations can be rebuilt from values without a live map. See
 [the session architecture](docs/session-architecture.md) for the frame and observation flow.

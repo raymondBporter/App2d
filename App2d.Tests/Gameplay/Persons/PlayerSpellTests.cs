@@ -300,7 +300,7 @@ public sealed class PlayerSpellTests
                 target.BeginFrame(SideScrollerSession2D.FixedDeltaSeconds);
             }
 
-            return Session.Advance(new PlayerInput2D(Player.Id, Session.Tick + 1, Session.Tick + 1, command));
+            return Session.Advance(new PlayerInput2D(Player.Id, command));
         }
         public void Steps(int count, PersonCommand2D command = default)
         {
