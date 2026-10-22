@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Operations.Vertices;
+using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Shapes;
@@ -118,5 +119,93 @@ public static class ShapeTransforms2D
         }
 
         return ConvexPolygon2D.Builder.Create(vertices);
+    }
+
+    /// <summary>
+    /// A copy of a built-in shape carried through a similarity: translated, rotated, uniformly scaled and optionally
+    /// mirrored. Every kind returns its own kind. An <see cref="AxisAlignedRectangle2D"/> accepts only poses whose axes
+    /// stay parallel to the world axes, because its contract is to never rotate.
+    /// </summary>
+    /// <param name="shape">A built-in shape.</param>
+    /// <param name="pose">A finite pose with a positive scale.</param>
+    /// <returns>A validated shape of the same kind in the pose's target space.</returns>
+    /// <exception cref="NotSupportedException">The shape is a height field, an unknown type, or an axis-aligned rectangle under a rotating pose.</exception>
+    public static IShape2D Posed(IShape2D shape, Similarity2D pose)
+    {
+        ArgGuard.ThrowIfNull(shape);
+        ArgGuard.ThrowIf(!pose.IsFinite || pose.Scale <= 0f, "The pose must be finite with a positive scale.", nameof(pose));
+        switch (shape)
+        {
+            case Circle2D circle:
+                {
+                    var (center, radius) = Circle(circle, pose);
+                    return Circle2D.Builder.Create(radius, center);
+                }
+            case Capsule2D capsule:
+                {
+                    var (start, end, radius) = Capsule(capsule, pose);
+                    return Capsule2D.Builder.Create(start, end, radius);
+                }
+            case HalfSpace2D halfSpace:
+                {
+                    var (normal, offset) = HalfSpace(halfSpace, pose);
+                    return HalfSpace2D.Builder.Create(normal, offset);
+                }
+            case Triangle2D triangle:
+                return Triangle2D.Builder.Create(pose.TransformPoint(triangle.A), pose.TransformPoint(triangle.B), pose.TransformPoint(triangle.C));
+            case ConvexPolygon2D polygon:
+                return ConvexPolygon2D.Builder.Create(PosedVertices(polygon.Vertices, pose));
+            case SimplePolygon2D polygon:
+                return SimplePolygon2D.Builder.Create(PosedVertices(polygon.Vertices, pose));
+            // The oriented builders normalize the transformed axis, so a mirrored or scaled pose needs no extra care.
+            case Rectangle2D rectangle:
+                return Rectangle2D.Builder.Create(pose.TransformPoint(rectangle.Center), rectangle.HalfSize * pose.Scale, pose.TransformDirection(rectangle.Axis));
+            case RoundedRectangle2D rounded:
+                return RoundedRectangle2D.Builder.Create(pose.TransformPoint(rounded.Center), rounded.HalfSize * pose.Scale, rounded.Radius * pose.Scale, pose.TransformDirection(rounded.Axis));
+            case Ellipse2D ellipse:
+                return Ellipse2D.Builder.Create(ellipse.Radii * pose.Scale, pose.TransformPoint(ellipse.Center), pose.TransformDirection(ellipse.Axis));
+            case AxisAlignedRectangle2D rectangle:
+                return PosedAxisAligned(rectangle, pose);
+            case CompositeShape2D composite:
+                {
+                    var parts = new IConvexShape2D[composite.Parts.Length];
+                    for (var i = 0; i < parts.Length; i++)
+                    {
+                        parts[i] = (IConvexShape2D)Posed(composite.Parts[i], pose);
+                    }
+
+                    return CompositeShape2D.Builder.Create(parts, composite.IncludeOverlap, composite.AreaOutlineSegments);
+                }
+            default:
+                throw new NotSupportedException($"Cannot pose {shape.GetType().Name}.");
+        }
+    }
+
+    private static Vector2[] PosedVertices(ReadOnlySpan<Vector2> vertices, Similarity2D pose)
+    {
+        var posed = new Vector2[vertices.Length];
+        for (var i = 0; i < posed.Length; i++)
+        {
+            posed[i] = pose.TransformPoint(vertices[i]);
+        }
+
+        return posed;
+    }
+
+    // Opposite corners stay opposite corners under any pose whose axes are parallel to the world axes: quarter turns and mirrors included.
+    private static AxisAlignedRectangle2D PosedAxisAligned(AxisAlignedRectangle2D rectangle, Similarity2D pose)
+    {
+        var tolerance = OrientedFrame2D.AxisTolerance * pose.Scale;
+        var x = pose.XAxis;
+        var y = pose.YAxis;
+        var parallel = (MathF.Abs(x.Y) <= tolerance && MathF.Abs(y.X) <= tolerance) || (MathF.Abs(x.X) <= tolerance && MathF.Abs(y.Y) <= tolerance);
+        if (!parallel)
+        {
+            throw new NotSupportedException("AxisAlignedRectangle2D cannot be rotated; use Rectangle2D.");
+        }
+
+        var first = pose.TransformPoint(rectangle.Min);
+        var second = pose.TransformPoint(rectangle.Max);
+        return AxisAlignedRectangle2D.Builder.Create(Vector2.Min(first, second), Vector2.Max(first, second));
     }
 }
