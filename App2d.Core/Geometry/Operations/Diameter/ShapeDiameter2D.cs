@@ -52,7 +52,10 @@ public static class ShapeDiameter2D
     {
         if (first is Ellipse2D a && second is Ellipse2D b)
         {
-            return FarthestDistance2D.BetweenEllipses(a.Center, a.Radii, b.Center, b.Radii);
+            // The closed-form solver is axis-aligned by construction; two frames cannot share it, so rotated pairs go numerical.
+            return a.IsAxisAligned && b.IsAxisAligned
+                ? FarthestDistance2D.BetweenEllipses(a.Center, a.Radii, b.Center, b.Radii)
+                : FarthestDistance2D.BetweenConvex(first, second);
         }
 
         if (first is Ellipse2D ellipse)
@@ -101,7 +104,7 @@ public static class ShapeDiameter2D
         var distance = 0f;
         foreach (var point in vertices)
         {
-            distance = MathF.Max(distance, FarthestDistance2D.BetweenEllipses(ellipse.Center, ellipse.Radii, point, Vector2.Zero));
+            distance = MathF.Max(distance, FarthestDistance2D.BetweenEllipses(Vector2.Zero, ellipse.Radii, ellipse.Frame.ToFrame(point), Vector2.Zero));
         }
 
         return distance + radius;

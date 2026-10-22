@@ -43,7 +43,8 @@ public static class ShapeArea2D
                 boundaries.Add(new(circle.Center, circle.Radius));
                 continue;
             }
-            if (shape is Ellipse2D ellipse)
+            // The analytic ellipse part is axis-aligned by construction; a rotated ellipse takes the sampled outline below.
+            if (shape is Ellipse2D ellipse && ellipse.IsAxisAligned)
             {
                 boundaries.Add(new(ellipse.Center, ellipse.Radii));
                 continue;

@@ -27,7 +27,7 @@ public static class ShapeBounds2D
         return shape switch
         {
             Circle2D circle => Rect2D.FromCircle(circle.Center, circle.Radius),
-            Ellipse2D ellipse => new(ellipse.Center - ellipse.Radii, ellipse.Center + ellipse.Radii),
+            Ellipse2D ellipse => ellipse.Frame.EllipseBounds(ellipse.Radii),
             Capsule2D capsule => Rect2D.FromCapsule(capsule.Start, capsule.End, capsule.Radius),
             RoundedRectangle2D rounded => rounded.Frame.BoxBounds(rounded.InnerHalfSize, rounded.Radius),
             Rectangle2D rectangle => rectangle.Frame.BoxBounds(rectangle.HalfSize),
@@ -61,7 +61,8 @@ public static class ShapeBounds2D
                 bounds = TransformedEllipse(circle.Center, new(circle.Radius), transform);
                 return true;
             case Ellipse2D ellipse:
-                bounds = TransformedEllipse(ellipse.Center, ellipse.Radii, transform);
+                // The ellipse's own frame composes with the transform, so the analytic extents stay exact when it is rotated.
+                bounds = TransformedEllipse(Vector2.Zero, ellipse.Radii, ellipse.Frame.Matrix * transform);
                 return true;
             case HalfSpace2D halfSpace:
                 bounds = TransformedHalfSpace(halfSpace, transform);

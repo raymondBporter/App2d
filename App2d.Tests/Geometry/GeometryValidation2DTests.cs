@@ -15,7 +15,7 @@ public sealed class GeometryValidation2DTests
     public static TheoryData<IShape2D> InvalidGeometry =>
     [
         new Circle2D(0),
-        new Ellipse2D(new(0, 1)),
+        new Ellipse2D(new(0, 1), Vector2.Zero, Vector2.UnitX),
         new Capsule2D(Vector2.Zero, Vector2.One, -1),
         new Rectangle2D(Vector2.Zero, new(-1, 1), Vector2.UnitX),
         new AxisAlignedRectangle2D(Vector2.One, Vector2.Zero),

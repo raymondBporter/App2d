@@ -149,7 +149,8 @@ public static class ShapeVertices2D
                 VertexGenerator2D.WriteCircle(vertices[..count], circle.Center, circle.Radius);
                 break;
             case Ellipse2D ellipse:
-                VertexGenerator2D.WriteEllipse(vertices[..count], ellipse.Center, ellipse.Radii);
+                VertexGenerator2D.WriteEllipse(vertices[..count], Vector2.Zero, ellipse.Radii);
+                ellipse.Frame.MapFromFrame(vertices[..count]);
                 break;
             case Capsule2D capsule:
                 VertexGenerator2D.WriteCapsule(vertices, capsule.Start, capsule.End, capsule.Radius, roundSegments / 2);

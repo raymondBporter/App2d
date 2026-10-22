@@ -1,4 +1,5 @@
 using App2d.Core.Geometry.Operations.ClosestPoint;
+using App2d.Core.Geometry.Operations.Containment;
 using App2d.Core.Geometry.Operations.Transforms;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
@@ -73,15 +74,20 @@ public static class ShapeConvexQuery2D
     private static ConvexQueryResult2D CircleEllipse(Circle2D circle, Similarity2D circlePose, Ellipse2D ellipse, Similarity2D ellipsePose)
     {
         var (worldCenter, radius) = ShapeTransforms2D.Circle(circle, circlePose);
-        var center = ellipsePose.InverseTransformPoint(worldCenter);
-        var closest = ClosestPoint2D.OnEllipsePerimeter(center, ellipse.Center, ellipse.Radii);
-        var inside = ellipse.ContainsPoint(center);
+        // Work in the ellipse's own frame composed with its pose, so the ellipse sits at the origin, axis-aligned.
+        if (!Similarity2D.TryFromMatrix(ellipse.Frame.Matrix * ellipsePose.ToMatrix(), out var pose))
+        {
+            throw new InvalidOperationException("The ellipse frame and pose do not compose to a similarity.");
+        }
+        var center = pose.InverseTransformPoint(worldCenter);
+        var closest = ClosestPoint2D.OnEllipsePerimeter(center, Vector2.Zero, ellipse.Radii);
+        var inside = Containment2D.Ellipse(center, Vector2.Zero, ellipse.Radii);
         var distance = Vector2.Distance(center, closest);
         var localNormal = distance > float.Epsilon
             ? (inside ? closest - center : center - closest) / distance
-            : Vector2.Normalize((closest - ellipse.Center) / (ellipse.Radii * ellipse.Radii));
-        var normal = Vector2.Normalize(ellipsePose.TransformDirection(localNormal));
-        return new((inside ? -distance : distance) * ellipsePose.Scale - radius, normal,
-            worldCenter - normal * radius, ellipsePose.TransformPoint(closest), 0f);
+            : Vector2.Normalize(closest / (ellipse.Radii * ellipse.Radii));
+        var normal = Vector2.Normalize(pose.TransformDirection(localNormal));
+        return new((inside ? -distance : distance) * pose.Scale - radius, normal,
+            worldCenter - normal * radius, pose.TransformPoint(closest), 0f);
     }
 }

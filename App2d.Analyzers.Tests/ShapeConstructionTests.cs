@@ -23,7 +23,7 @@ public sealed class ShapeConstructionTests
     public static TheoryData<string> Constructors =>
     [
         "new Circle2D(2)",
-        "new Ellipse2D(new Vector2(2, 1))",
+        "new Ellipse2D(new Vector2(2, 1), Vector2.Zero, Vector2.UnitX)",
         "new Capsule2D(Vector2.Zero, Vector2.One, 2)",
         "new Rectangle2D(Vector2.Zero, Vector2.One, Vector2.UnitX)",
         "new AxisAlignedRectangle2D(Vector2.Zero, Vector2.One)",

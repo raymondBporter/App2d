@@ -25,7 +25,15 @@ public static class ShapeRaycast2D
             case Circle2D circle:
                 return Raycast2D.TryCircle(origin, direction, circle.Center, circle.Radius, maxDistance, out hit);
             case Ellipse2D ellipse:
-                return Raycast2D.TryEllipse(origin, direction, ellipse.Center, ellipse.Radii, maxDistance, out hit);
+                // Cast in the ellipse's own frame; it is rigid, so the ray parameter maps back unchanged.
+                var frame = ellipse.Frame;
+                if (!Raycast2D.TryEllipse(frame.ToFrame(origin), frame.ToFrameDirection(direction), Vector2.Zero, ellipse.Radii, maxDistance, out var frameHit))
+                {
+                    hit = default;
+                    return false;
+                }
+                hit = new(frame.FromFrame(frameHit.Point), frame.FromFrameDirection(frameHit.Normal), frameHit.Distance);
+                return true;
             case Capsule2D capsule:
                 return Raycast2D.TryCapsule(origin, direction, capsule.Start, capsule.End, capsule.Radius, maxDistance, out hit);
             case HalfSpace2D halfSpace:
