@@ -38,7 +38,7 @@ internal static class MapEditorUiSmoke2D
         editor.InspectorView.RefreshFromEditor();
         Draw("map-things");
         editor.InspectorView.BeginNewDefinition();
-        Draw("map-new-platform");
+        Draw("map-new-definition");
         ui.DebugPanel.IsOpen = true;
         Draw("debug-panel");
         Console.WriteLine("Map palette, thing inspector and debug panel rendered using a scratch level database.");

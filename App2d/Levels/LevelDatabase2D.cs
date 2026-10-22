@@ -202,6 +202,13 @@ public sealed partial class LevelDatabase2D : IDisposable
                 $"this build supports ({CurrentFormatVersion}).");
         }
 
+        // A current file is left untouched: even re-stamping the same version bumps SQLite's change counter,
+        // which would dirty a committed level in git every time the editor opens it.
+        if (version == CurrentFormatVersion)
+        {
+            return;
+        }
+
         using var transaction = connection.BeginTransaction();
         if (version == 0)
         {

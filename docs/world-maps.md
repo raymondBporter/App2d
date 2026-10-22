@@ -20,6 +20,8 @@ The starter files can be created in another directory containing `level.db` with
 
 The game reads `Assets/Static/levels/cavern/world.json` when present. Without it, the existing `level.db` and `zones.json` still load as before. No existing terrain is migrated automatically.
 
+Files written before level format 3 are upgraded once by `dotnet run --project App2d -- --migrate-level` (or `--migrate-level <world.json>` for another world). It brings every map database under the world folder up to date, turns old moving-platform rows into `objects/*.json` assets and object things, and moves any `objects` still listed in the manifest into the map that contains them; a manifest that still lists `objects` is refused until then.
+
 Create a blank map database with the game stopped (width/height are tiles; origins are world units):
 
 ```powershell
@@ -51,4 +53,4 @@ Each zone's rectangle encloses its maps. Existing `zones.json` regions remain av
 
 Map IDs and numeric identities must be unique across the world. Keep `identity` stable once saves exist: it namespaces thing/checkpoint IDs independently of manifest order. Identity zero preserves the original database's IDs. Map files must be unique relative paths inside the manifest directory. All maps must use the same tile and chunk sizes, align to one tile grid, and have non-overlapping rectangles; gaps are empty space. Maps can use different tileset catalogs, up to sixteen distinct tilesets across the world.
 
-Map database origins and object positions are world-space coordinates. Existing position-object edits retain their current restart requirement. Terrain changes and moving-platform edits update immediately. Terrain data currently loads at startup; simulation and presentation continue streaming chunks around the player and camera. This does not yet unload map databases' in-memory tile data on distant travel.
+Map database origins and thing positions are world-space coordinates. An object thing names an asset file relative to the world folder (for example `objects/lift.json`) and places it at its position. Position-only thing edits retain their current restart requirement. Terrain changes and object edits update immediately. Terrain data currently loads at startup; simulation and presentation continue streaming chunks around the player and camera. This does not yet unload map databases' in-memory tile data on distant travel.

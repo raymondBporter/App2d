@@ -211,7 +211,7 @@ session (a player with no input this tick repeats its last command), and immutab
 per-player, enemy, level-content, and world observations plus gameplay events return
 to `SideScrollerClient2D`. Presses and releases are derived inside the simulation from
 consecutive commands, so a lost or repeated command cannot drop or double an action.
-The production level, weapons, enemy actors, moving platforms, checkpoints, and
+The production level, weapons, enemy actors, authored objects, checkpoints, and
 terrain colliders run without constructing graphics or playing audio. Client presentation owns
 sprites, terrain, effects, HUD, and sound; the host handles persistence and editing.
 Terrain observations use cached immutable chunk revisions, including neighboring
@@ -290,15 +290,16 @@ Ladders are non-solid grippable cells (`Grippable` without
 `Solid`), so the existing four-bit tile kind and level format remain compatible.
 
 The sidebar's **Things** button switches to authored map objects. A small code-owned type list
-currently offers the player spawn, goal, three enemy types, tumble props, and moving platforms.
-The position-only types deliberately expose just reusable definition names plus instance name,
-enablement, and position; their health, AI, art, physics, and other tuning remain in gameplay
-code. Moving platforms keep their richer rectangle, art, path, and speed properties. A native
-WinForms `PropertyGrid` writes only when **Apply** is pressed, while MonoGame draws map markers,
-placement ghosts, selection outlines, paths, and draggable endpoints. This avoids turning the
-renderer into a general UI library. All definitions, instances, transforms, and typed pieces
-remain relational rows in the level database. Moving-platform changes reload live; the other
-map objects are picked up on the next run.
+currently offers objects, the player spawn, goal, three enemy types, and tumble props. An object
+definition picks one of the world's `objects/*.json` files, which carries the shape, material,
+physics and path; the moving lifts are such objects. The position-only types deliberately expose
+just reusable definition names plus instance name, enablement, and position; their health, AI,
+art, physics, and other tuning remain in gameplay code. A native WinForms `PropertyGrid` writes
+only when **Apply** is pressed, while MonoGame draws map markers, placement ghosts, selection
+outlines, object outlines and their paths. This avoids turning the renderer into a general UI
+library. All definitions, instances, and transforms remain relational rows in the level
+database. Object placements reload live as they are placed, dragged, edited or deleted; the
+other map objects are picked up on the next run.
 
 Non-convex geometry can become another `IShape2D` implementation later, with its own
 triangulation/rendering path, without weakening the convex polygon guarantees.
@@ -562,6 +563,10 @@ See [the authoring pipeline](tools/ArtPipeline/README.md).
 dotnet run --project App2d
 ```
 
+Level files written before the current format are upgraded once with
+`dotnet run --project App2d -- --migrate-level` (old moving-platform rows become `objects/*.json`
+assets and object things); see [world maps](docs/world-maps.md).
+
 Run the C# / Dear ImGui character editor with:
 
 ```powershell
@@ -625,9 +630,9 @@ mapping, and traversal diagnostics have similarly narrow owners.
 
 The 640x96-tile level provides merged tilemap collision, explicit one-way strips, fall
 respawning, an authorable goal flag, smooth bounded camera follow, and procedural parallax
-depths. Authored moving platforms use kinematic one-way slabs that follow horizontal or
-vertical ping-pong paths with smooth turnarounds. Physics carries supported dynamic bodies
-along those surfaces. The same kinematic motion driver also accepts other `ICurve2D` paths;
+depths. Authored objects provide the moving lifts: kinematic one-way rectangles defined in
+`objects/*.json` that ping-pong along a line with smooth turnarounds. Physics carries supported
+dynamic bodies along those surfaces. The same kinematic motion driver accepts any `ICurve2D` path;
 see [Kinematics](App2d/Gameplay/World/KINEMATICS.md).
 Its terrain, bounded pits, vertical-region skylines, overlapping climb spines, and side
 ledges are authored in `Assets/Static/levels/cavern/level.db`, the committed level file

@@ -1,5 +1,11 @@
 using App2d.Core.Assets;
+using App2d.Core.Geometry.Primitives;
+using App2d.Core.IO;
+using App2d.Core.Validation;
 using App2d.Levels;
+using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace App2d;
 
@@ -40,6 +46,112 @@ internal static class LevelBootstrap2D
         return LoadManifest(manifest);
     }
 
+    /// <summary>
+    /// Brings a world written before level format 3 up to date. Every map file under the manifest's folder is opened
+    /// once so its database migrates (moving-platform rows become object assets under <c>objects/</c> and object
+    /// things), and a manifest <c>objects</c> array moves into the map whose bounds contain each placement and is then
+    /// dropped from the manifest. Running it again changes nothing. Returns every map file it opened, in ordinal order.
+    /// </summary>
+    public static IReadOnlyList<string> MigrateWorld(string manifestPath)
+    {
+        ArgGuard.ThrowIfNullOrWhiteSpace(manifestPath);
+        if (!File.Exists(manifestPath))
+        {
+            throw new FileNotFoundException("World manifest is missing.", manifestPath);
+        }
+
+        var manifest = Path.GetFullPath(manifestPath);
+        var root = Path.GetDirectoryName(manifest)!;
+        var databases = Directory.EnumerateFiles(root, "*.db", SearchOption.AllDirectories).Order(StringComparer.Ordinal).ToList();
+        foreach (var path in databases)
+        {
+            using var database = LevelDatabase2D.Open(path, root);
+        }
+
+        ImportManifestObjects(manifest, root);
+        return databases;
+    }
+
+    private static void ImportManifestObjects(string manifest, string root)
+    {
+        var document = JsonNode.Parse(File.ReadAllText(manifest)) as JsonObject
+            ?? throw new InvalidDataException($"Invalid world '{manifest}': the manifest is not a JSON object.");
+        if (document["objects"] is not JsonArray entries)
+        {
+            return;
+        }
+
+        var maps = LoadManifestMaps(document, manifest, root);
+        foreach (var entry in entries)
+        {
+            var id = entry?["id"]?.GetValue<string>();
+            var asset = entry?["asset"]?.GetValue<string>();
+            var position = entry?["position"];
+            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(asset) || position?["x"] is null || position["y"] is null)
+            {
+                throw new InvalidDataException($"Invalid world '{manifest}': every manifest object needs an id, an asset and a position.");
+            }
+
+            var point = new Vector2(position["x"]!.GetValue<float>(), position["y"]!.GetValue<float>());
+            var map = maps.FirstOrDefault(m => Contains(m.TileMap.WorldBounds, point))
+                ?? throw new InvalidDataException($"Invalid world '{manifest}': no map contains object '{id}' at ({point.X}, {point.Y}).");
+            using var database = LevelDatabase2D.Open(map.DatabasePath, root);
+            var definition = database.LoadThingDefinitions().FirstOrDefault(d =>
+                    string.Equals(d.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal) &&
+                    string.Equals(d.Asset, asset, StringComparison.Ordinal))
+                ?? database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, Path.GetFileNameWithoutExtension(asset), asset);
+            database.CreatePositionThing(new NewPositionThing2D(definition.DefinitionId, id, true, point.X, point.Y));
+        }
+
+        document.Remove("objects");
+        AtomicFile.WriteAllText(manifest, document.ToJsonString(new JsonSerializerOptions { WriteIndented = true }) + Environment.NewLine);
+    }
+
+    private static List<WorldMapAsset2D> LoadManifestMaps(JsonObject document, string manifest, string root)
+    {
+        if (document["zones"] is not JsonArray zones)
+        {
+            throw new InvalidDataException($"Invalid world '{manifest}': expected a zones array.");
+        }
+
+        var maps = new List<WorldMapAsset2D>();
+        foreach (var zone in zones)
+        {
+            if (zone?["maps"] is not JsonArray zoneMaps)
+            {
+                continue;
+            }
+
+            foreach (var map in zoneMaps)
+            {
+                var file = map?["file"]?.GetValue<string>();
+                if (map is null || string.IsNullOrWhiteSpace(file) || Path.IsPathRooted(file))
+                {
+                    throw new InvalidDataException($"Invalid world '{manifest}': maps need relative file paths.");
+                }
+
+                var path = Path.GetFullPath(Path.Combine(root, file));
+                if (!path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidDataException($"Invalid world '{manifest}': map file '{file}' is outside the world directory.");
+                }
+
+                maps.Add(WorldFile2D.LoadMap(path,
+                    map["id"]?.GetValue<string>() ?? file,
+                    map["name"]?.GetValue<string>() ?? file,
+                    zone["id"]?.GetValue<string>() ?? "",
+                    map["identity"]?.GetValue<int>() ?? 0,
+                    TerrainTilesetIds,
+                    root));
+            }
+        }
+
+        return maps;
+    }
+
+    private static bool Contains(Rect2D bounds, Vector2 point) =>
+        point.X >= bounds.Min.X && point.X <= bounds.Max.X && point.Y >= bounds.Min.Y && point.Y <= bounds.Max.Y;
+
     private static WorldAsset2D LoadManifest(string manifest)
     {
         var directory = Path.GetDirectoryName(Path.GetFullPath(manifest))!;
@@ -52,7 +164,6 @@ internal static class LevelBootstrap2D
             return new(world.Maps, [.. world.Zones, .. regions.Where(z => !regionIds.Contains(z.Id))])
             {
                 Root = world.Root,
-                ManifestObjects = world.ManifestObjects,
                 StartAtArrival = world.StartAtArrival
             };
         }

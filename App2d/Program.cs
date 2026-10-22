@@ -22,9 +22,15 @@ if (args is ["--create-playground", var playgroundDirectory])
     return;
 }
 
-if (args.SequenceEqual(["--migrate-level"]))
+// Brings every map of a world to the current level format and moves a manifest's objects into its maps.
+if (args is ["--migrate-level"] or ["--migrate-level", _])
 {
-    using var database = LevelBootstrap2D.OpenForEditing();
+    var worldManifest = args is ["--migrate-level", var worldFile] ? Path.GetFullPath(worldFile) : LevelBootstrap2D.WorldManifestPath;
+    foreach (var migrated in LevelBootstrap2D.MigrateWorld(worldManifest))
+    {
+        Console.WriteLine($"Migrated map: {migrated}");
+    }
+
     return;
 }
 

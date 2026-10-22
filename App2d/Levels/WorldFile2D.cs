@@ -53,9 +53,8 @@ public sealed class WorldAsset2D : IDisposable
     public bool StartAtArrival { get; init; }
     /// <summary>The folder holding <c>world.json</c>; object asset paths resolve under it.</summary>
     public required string Root { get; init; }
-    /// <summary>Placements the manifest itself lists; superseded by map databases.</summary>
-    public IReadOnlyList<ObjectPlacement2D> ManifestObjects { get; init; } = [];
-    public IReadOnlyList<ObjectPlacement2D> Objects => [.. ManifestObjects, .. Maps.SelectMany(m => m.Objects)];
+    /// <summary>Every map's object things as placements, in map order.</summary>
+    public IReadOnlyList<ObjectPlacement2D> Objects => [.. Maps.SelectMany(m => m.Objects)];
 
     public ImmutableArray<GiantTree2D> GiantTrees => LoadGiantTrees();
 
@@ -86,7 +85,17 @@ public static class WorldFile2D
     {
         try
         {
-            var file = JsonSerializer.Deserialize<WorldDocument>(File.ReadAllText(path), Options)
+            var text = File.ReadAllText(path);
+            using (var raw = JsonDocument.Parse(text))
+            {
+                // Checked before the typed read: unmapped members are disallowed there, which would hide the real cause.
+                if (raw.RootElement.ValueKind == JsonValueKind.Object && raw.RootElement.TryGetProperty("objects", out _))
+                {
+                    throw new InvalidDataException("World manifests no longer carry objects; run 'dotnet run --project App2d -- --migrate-level <world.json>' once.");
+                }
+            }
+
+            var file = JsonSerializer.Deserialize<WorldDocument>(text, Options)
                 ?? throw new InvalidDataException("World document is null.");
             if (file.Version != 1 || file.Zones is null || file.Zones.Count == 0)
             {
@@ -94,7 +103,6 @@ public static class WorldFile2D
             }
 
             var root = Path.GetDirectoryName(Path.GetFullPath(path))!;
-            var objects = LoadObjects(root, file.Objects);
             var zoneIds = new HashSet<string>(StringComparer.Ordinal);
             var mapIds = new HashSet<string>(StringComparer.Ordinal);
             var identities = new HashSet<int>();
@@ -148,7 +156,6 @@ public static class WorldFile2D
             return new(maps.AsReadOnly(), zones.ToImmutable())
             {
                 Root = root,
-                ManifestObjects = objects,
                 StartAtArrival = file.StartAtArrival
             };
         }
@@ -205,34 +212,11 @@ public static class WorldFile2D
         return result.AsReadOnly();
     }
 
-    private static System.Collections.ObjectModel.ReadOnlyCollection<ObjectPlacement2D> LoadObjects(string root, IReadOnlyList<ObjectPlacementDocument> placements)
-    {
-        if (placements is null) throw new InvalidDataException("Object placements cannot be null.");
-        var result = new List<ObjectPlacement2D>();
-        var ids = new HashSet<string>(StringComparer.Ordinal);
-        var assets = new Dictionary<string, ObjectAsset2D>(StringComparer.OrdinalIgnoreCase);
-        foreach (var placement in placements)
-        {
-            if (placement is null || string.IsNullOrWhiteSpace(placement.Id) || !ids.Add(placement.Id))
-                throw new InvalidDataException("Object placements need unique IDs.");
-            var assetPath = FilePaths.ResolveUnderRoot(root, placement.Asset);
-            if (!assets.TryGetValue(assetPath, out var asset))
-                assets.Add(assetPath, asset = ObjectAsset2D.Load(assetPath));
-            var instance = new ObjectPlacement2D(placement.Id, asset, placement.Position);
-            instance.Validate();
-            result.Add(instance);
-        }
-        return result.AsReadOnly();
-    }
-
     public sealed record WorldDocument(int Version, IReadOnlyList<ZoneDocument> Zones)
     {
-        public IReadOnlyList<ObjectPlacementDocument> Objects { get; init; } = [];
         public string? StartMapId { get; init; }
         public bool StartAtArrival { get; init; }
     }
-    public sealed record ObjectPlacementDocument(string Id, string Asset,
-        [property: JsonConverter(typeof(Vector2JsonConverter))] Vector2 Position);
     public sealed record ZoneDocument(string Id, string Name, int Priority, IReadOnlyList<MapDocument> Maps);
 
     public sealed record MapDocument(string Id, string Name, [property: JsonRequired] int Identity, string File)

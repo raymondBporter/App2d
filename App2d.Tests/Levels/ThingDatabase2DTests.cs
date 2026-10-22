@@ -214,9 +214,21 @@ public sealed class ThingDatabase2DTests : IDisposable
         }
 
         Assert.DoesNotContain("rectangle_shapes", TableNames(path));
-        using var again = LevelDatabase2D.Open(path);
-        Assert.Equal(3, again.FormatVersion);
-        Assert.Empty(again.LoadThingDefinitions());
+        var bytes = ReadBytes(path);
+        using (var again = LevelDatabase2D.Open(path))
+        {
+            Assert.Equal(3, again.FormatVersion);
+            Assert.Empty(again.LoadThingDefinitions());
+        }
+
+        Assert.Equal(bytes, ReadBytes(path)); // Opening a current file for editing rewrites nothing.
+    }
+
+    /// <summary>Closes pooled connections first: SQLite keeps the file open, and the bytes must be read after every write has landed.</summary>
+    private static byte[] ReadBytes(string path)
+    {
+        SqliteConnection.ClearAllPools();
+        return File.ReadAllBytes(path);
     }
 
     /// <summary>A format-2 file with one "Lift" definition (96 by 16, teal) and the given platform things, as the August editor wrote them.</summary>
