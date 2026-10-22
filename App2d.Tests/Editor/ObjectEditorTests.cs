@@ -86,6 +86,62 @@ public sealed class ObjectEditorTests : IDisposable
         Assert.Empty(notified[^1]);
     }
 
+    [Fact]
+    public void ADisabledObjectThingStaysInTheEditorButLeavesTheRuntime()
+    {
+        using var editor = CreateEditor(out _, out var input, out var notified);
+        editor.ApplyPositionDefinition(null, ThingTypeRegistry2D.Object.TypeKey, new() { Name = "Lift" }, "objects/lift.json");
+        editor.BeginThingPlacement();
+        input.SetMouseButton(MouseButtons.Left, true);
+        editor.Update(input);
+        input.SetMouseButton(MouseButtons.Left, false);
+        input.EndFrame();
+        var placed = Assert.Single(editor.PositionThings);
+        Assert.Single(editor.ObjectPlacements);
+
+        editor.ApplyPositionThing(placed.ThingId, new() { Name = "parked", Enabled = false, PositionX = placed.X, PositionY = placed.Y });
+        Assert.False(Assert.Single(editor.PositionThings).Enabled);
+        Assert.Empty(editor.ObjectPlacements);
+        Assert.Empty(notified[^1]);
+
+        editor.ApplyPositionThing(placed.ThingId, new() { Name = "parked", Enabled = true, PositionX = placed.X, PositionY = placed.Y });
+        Assert.Single(editor.ObjectPlacements);
+        Assert.Single(notified[^1]);
+    }
+
+    [Fact]
+    public void ADefinitionWhoseAssetDoesNotLoadIsRefusedBeforeAnythingIsWritten()
+    {
+        File.WriteAllText(Path.Combine(_root, "objects", "broken.json"), "{ \"format\": \"app2d-object\", \"id\": \"broken\" }");
+        using var editor = CreateEditor(out var map, out _, out _);
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            editor.ApplyPositionDefinition(null, ThingTypeRegistry2D.Object.TypeKey, new() { Name = "Broken" }, "objects/broken.json"));
+        Assert.Contains("objects/broken.json", error.Message);
+        Assert.Empty(editor.ThingDefinitions);
+        using var database = LevelDatabase2D.OpenRead(map.DatabasePath);
+        Assert.Empty(database.LoadThingDefinitions());
+    }
+
+    /// <summary>An editor on the fixture map, already in Things mode with its database open, and the runtime notifications it raises.</summary>
+    private TileEditor2D CreateEditor(out WorldMapAsset2D map, out InputState input, out List<IReadOnlyList<ObjectPlacement2D>> notified)
+    {
+        map = WorldFile2D.LoadMap(Path.Combine(_root, "map.db"), "map", "Map", "zone", 3, worldRoot: _root);
+        var loaded = map;
+        var editor = new TileEditor2D(map.TileMap, () => LevelDatabase2D.Open(loaded.DatabasePath), new Camera2D { Position = new(128, 128) });
+        editor.ConfigureMaps([map], _root);
+        var changes = new List<IReadOnlyList<ObjectPlacement2D>>();
+        editor.ObjectsChanged += objects => changes.Add(objects);
+        notified = changes;
+        input = new InputState();
+        input.Mouse.SetClientPosition(new(400, 300));
+        input.SetKey(Keys.F1, true);
+        editor.Update(input);
+        input.EndFrame();
+        input.SetKey(Keys.F1, false);
+        editor.SelectMode(LevelEditorMode2D.Things);
+        return editor;
+    }
+
     public void Dispose()
     {
         SqliteConnection.ClearAllPools();

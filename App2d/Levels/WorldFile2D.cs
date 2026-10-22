@@ -196,7 +196,8 @@ public static class WorldFile2D
         var assets = new Dictionary<string, ObjectAsset2D>(StringComparer.OrdinalIgnoreCase);
         foreach (var thing in map.PositionThings)
         {
-            if (!string.Equals(thing.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal)) continue;
+            // A disabled thing stays an editor row but places nothing, as a disabled platform once did.
+            if (!thing.Enabled || !string.Equals(thing.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal)) continue;
             ObjectAsset2D? asset;
             try
             {

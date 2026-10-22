@@ -22,17 +22,21 @@ public sealed class WorldMigrationTests : IDisposable
 
         Execute(mapPath, "DROP TABLE object_references; PRAGMA user_version = 2;");
         ObjectPlatforms.Asset("lift", new(0f, 96f), 48f).Save(Path.Combine(_root, "objects", "lift.json"));
-        File.WriteAllText(ManifestPath, """
+        WriteManifest("""{ "id": "arrival", "asset": "objects/lift.json", "position": { "x": 10, "y": 20 } }""");
+    }
+
+    private string ManifestPath => Path.Combine(_root, "world.json");
+
+    /// <summary>One zone with the 32-by-32-tile map at the origin, plus the given manifest object entries.</summary>
+    private void WriteManifest(string objectEntries) =>
+        File.WriteAllText(ManifestPath, $$"""
             {
               "version": 1,
-              "objects": [ { "id": "arrival", "asset": "objects/lift.json", "position": { "x": 10, "y": 20 } } ],
+              "objects": [ {{objectEntries}} ],
               "zones": [ { "id": "test", "name": "Test", "priority": 0, "maps": [ { "id": "test", "name": "Test", "identity": 0, "file": "map.db" } ] } ],
               "startMapId": "test"
             }
             """);
-    }
-
-    private string ManifestPath => Path.Combine(_root, "world.json");
 
     [Fact]
     public void MigrateWorldOpensEveryMapImportsManifestObjectsAndStripsThem()
@@ -47,6 +51,20 @@ public sealed class WorldMigrationTests : IDisposable
         Assert.Equal(migrated, LevelBootstrap2D.MigrateWorld(ManifestPath));
         using var world = WorldFile2D.Load(ManifestPath);
         Assert.Equal(new Vector2(10f, 20f), Assert.Single(world.Objects).Position);
+    }
+
+    [Fact]
+    public void AManifestObjectOutsideEveryMapStopsTheImportBeforeAnyRowIsWritten()
+    {
+        WriteManifest("""
+            { "id": "arrival", "asset": "objects/lift.json", "position": { "x": 10, "y": 20 } },
+            { "id": "lost", "asset": "objects/lift.json", "position": { "x": 5000, "y": 5000 } }
+            """);
+        var error = Assert.Throws<InvalidDataException>(() => LevelBootstrap2D.MigrateWorld(ManifestPath));
+        Assert.Contains("lost", error.Message);
+        using var database = LevelDatabase2D.OpenRead(Path.Combine(_root, "map.db"));
+        Assert.Empty(database.LoadPositionThings());
+        Assert.Contains("\"objects\"", File.ReadAllText(ManifestPath));
     }
 
     [Fact]

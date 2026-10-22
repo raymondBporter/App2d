@@ -145,7 +145,7 @@ internal sealed class TileEditor2D : IDisposable
     /// <summary>The configured world's object asset files; configure maps with a world root first.</summary>
     public ObjectAssetCatalog2D ObjectAssets => StateGuard.RequireNotNull(_objectAssets, "Configure maps with a world root before using object assets.");
     public IReadOnlyList<string> ObjectAssetPaths => _objectAssets?.Paths ?? [];
-    /// <summary>The current map's object things as placements with world-wide ids, rebuilt whenever things reload.</summary>
+    /// <summary>The current map's enabled object things as placements with world-wide ids, rebuilt whenever things reload.</summary>
     public IReadOnlyList<ObjectPlacement2D> ObjectPlacements => _objectPlacements;
     public long? SelectedDefinitionId { get; private set; }
     public long? SelectedThingId { get; private set; }
@@ -317,6 +317,11 @@ internal sealed class TileEditor2D : IDisposable
         ArgGuard.ThrowIfNull(properties);
         var descriptor = ThingTypeRegistry2D.Require(typeKey);
         StateGuard.ThrowIf(descriptor.WorldKind is null && !descriptor.IsObject, $"Thing type '{typeKey}' is not position-only.");
+        if (descriptor.IsObject && !string.IsNullOrWhiteSpace(asset))
+        {
+            RequireLoadableAsset(asset);
+        }
+
         var database = RequireDatabase();
         var saved = definitionId is { } existingId
             ? database.UpdateThingDefinition(new ThingDefinitionRecord2D(existingId, typeKey, properties.Name, asset))
@@ -324,6 +329,19 @@ internal sealed class TileEditor2D : IDisposable
         SelectedDefinitionId = saved.DefinitionId;
         SelectedThingId = null;
         ReloadThings(notifyRuntime: descriptor.IsObject);
+    }
+
+    /// <summary>An object definition is written only once its asset loads, so a bad file never leaves the map unloadable.</summary>
+    private void RequireLoadableAsset(string asset)
+    {
+        try
+        {
+            _ = ObjectAssets.Load(asset);
+        }
+        catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or System.Text.Json.JsonException)
+        {
+            throw new InvalidOperationException($"Asset '{asset}' cannot be used: {e.Message}", e);
+        }
     }
 
     internal void DeleteDefinition(long definitionId)
@@ -659,7 +677,7 @@ internal sealed class TileEditor2D : IDisposable
 
         foreach (var thing in _positionThings)
         {
-            if (!ThingTypeRegistry2D.Require(thing.TypeKey).IsObject)
+            if (!thing.Enabled || !ThingTypeRegistry2D.Require(thing.TypeKey).IsObject)
             {
                 continue;
             }

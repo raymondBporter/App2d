@@ -40,6 +40,20 @@ public sealed class WorldObjectsTests : IDisposable
     }
 
     [Fact]
+    public void DisabledObjectThingsAreNotPlaced()
+    {
+        using (var database = LevelDatabase2D.Open(Path.Combine(_root, "map.db")))
+        {
+            var definition = database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, "Lift", "lift.json");
+            database.CreatePositionThing(new(definition.DefinitionId, "running", true, 200f, 300f));
+            database.CreatePositionThing(new(definition.DefinitionId, "parked", false, 500f, 600f));
+        }
+        using var world = Load(_document);
+        Assert.Equal(2, world.PositionThings.Count);
+        Assert.Equal(new Vector2(200f, 300f), Assert.Single(world.Objects).Position);
+    }
+
+    [Fact]
     public void ObjectDefinitionWithMissingOrEscapingAssetFailsToLoad()
     {
         var assets = new[] { "missing.json", "../lift.json" };

@@ -1,6 +1,7 @@
 using App2d.Core.Assets;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.IO;
+using App2d.Core.Objects;
 using App2d.Core.Validation;
 using App2d.Levels;
 using System.Numerics;
@@ -82,6 +83,8 @@ internal static class LevelBootstrap2D
         }
 
         var maps = LoadManifestMaps(document, manifest, root);
+        // Every entry is resolved before any row is written, so a bad entry leaves the maps and the manifest as they were.
+        var imports = new List<(string MapPath, string Id, string Asset, Vector2 Point)>();
         foreach (var entry in entries)
         {
             var id = entry?["id"]?.GetValue<string>();
@@ -95,12 +98,29 @@ internal static class LevelBootstrap2D
             var point = new Vector2(position["x"]!.GetValue<float>(), position["y"]!.GetValue<float>());
             var map = maps.FirstOrDefault(m => Contains(m.TileMap.WorldBounds, point))
                 ?? throw new InvalidDataException($"Invalid world '{manifest}': no map contains object '{id}' at ({point.X}, {point.Y}).");
-            using var database = LevelDatabase2D.Open(map.DatabasePath, root);
-            var definition = database.LoadThingDefinitions().FirstOrDefault(d =>
-                    string.Equals(d.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal) &&
-                    string.Equals(d.Asset, asset, StringComparison.Ordinal))
-                ?? database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, Path.GetFileNameWithoutExtension(asset), asset);
-            database.CreatePositionThing(new NewPositionThing2D(definition.DefinitionId, id, true, point.X, point.Y));
+            try
+            {
+                _ = ObjectAsset2D.Load(FilePaths.ResolveUnderRoot(root, asset));
+            }
+            catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or JsonException)
+            {
+                throw new InvalidDataException($"Invalid world '{manifest}': object '{id}' names asset '{asset}', which cannot be loaded: {e.Message}", e);
+            }
+
+            imports.Add((map.DatabasePath, id, asset, point));
+        }
+
+        foreach (var group in imports.GroupBy(import => import.MapPath, StringComparer.OrdinalIgnoreCase))
+        {
+            using var database = LevelDatabase2D.Open(group.Key, root);
+            foreach (var (_, id, asset, point) in group)
+            {
+                var definition = database.LoadThingDefinitions().FirstOrDefault(d =>
+                        string.Equals(d.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal) &&
+                        string.Equals(d.Asset, asset, StringComparison.Ordinal))
+                    ?? database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, Path.GetFileNameWithoutExtension(asset), asset);
+                database.CreatePositionThing(new NewPositionThing2D(definition.DefinitionId, id, true, point.X, point.Y));
+            }
         }
 
         document.Remove("objects");
