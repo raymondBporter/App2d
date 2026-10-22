@@ -4,7 +4,6 @@ using App2d.Core.Geometry.Operations.Distance;
 using App2d.Core.Geometry.Operations.MassProperties;
 using App2d.Core.Geometry.Operations.Transforms;
 using App2d.Core.Geometry.Primitives;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using System.Numerics;

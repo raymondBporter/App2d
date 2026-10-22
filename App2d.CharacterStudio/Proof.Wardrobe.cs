@@ -125,13 +125,13 @@ internal sealed partial class ProofRenders
         var baby = catalog.Entities["baby-triceratops"];
         var babySamples = new (string Clip, float At)[]
         {
-            ("baby-triceratops-idle", .2f), 
-            ("baby-triceratops-charge", .4f), 
+            ("baby-triceratops-idle", .2f),
+            ("baby-triceratops-charge", .4f),
             ("baby-triceratops-charge", .9f),
             ("baby-triceratops-charge", 1.2f),
             ("baby-triceratops-charge", 1.95f),
             ("baby-triceratops-charge", 2.4f),
-            ("baby-triceratops-hit", .12f), 
+            ("baby-triceratops-hit", .12f),
             ("baby-triceratops-death", .8f)
         };
         using (GraphicsDevice.UseRenderTarget(target, new Color(241, 236, 223)))
