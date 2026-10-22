@@ -5,6 +5,7 @@ using App2d.Contracts.Player;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Animation;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Rendering;
@@ -23,7 +24,7 @@ namespace App2d.Presentation.World.Presentation;
 
 /// <summary>Client-owned enemy views indexed by entity ID. Never reads live actors.</summary>
 public sealed class EnemyPresentation2D(
-    Scene2D scene, TextureCache2D textures, TraversalMetrics2D traversal, ISoundEffectSink2D sounds) : IDisposable
+    Scene2D scene, TextureCache2D textures, TraversalMetrics2D traversal, ISoundEffectSink2D<SoundEffect2D> sounds) : IDisposable
 {
     private readonly Dictionary<EntityId2D, View> _views = [];
     private readonly HashSet<EntityId2D> _presentIds = [];

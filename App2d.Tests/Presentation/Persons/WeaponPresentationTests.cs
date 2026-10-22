@@ -1,5 +1,6 @@
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
+using App2d.Core.Audio;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Presentation.Audio;
@@ -94,7 +95,7 @@ public sealed class WeaponPresentationTests
         Assert.Empty(scene);
     }
 
-    private sealed class RecordingSink : ISoundEffectSink2D
+    private sealed class RecordingSink : ISoundEffectSink2D<SoundEffect2D>
     {
         public List<Voice> Voices { get; } = [];
         public List<(SoundEffect2D Effect, Vector2 Position)> Played { get; } = [];

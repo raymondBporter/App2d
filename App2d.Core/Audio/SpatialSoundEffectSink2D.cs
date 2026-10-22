@@ -1,20 +1,21 @@
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Presentation.Audio;
+namespace App2d.Core.Audio;
 
-/// <summary>Adds listener-relative falloff to a sound bank. Update once per game frame.</summary>
-public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vector2> listenerPosition) : ISoundEffectSink2D
+/// <summary>Adds listener-relative falloff to a sink; the falloff function says how each cue carries. Update once per game frame.</summary>
+public sealed class SpatialSoundEffectSink2D<TEffect>(ISoundEffectSink2D<TEffect> sounds, Func<Vector2> listenerPosition, Func<TEffect, SoundFalloff2D> falloff) : ISoundEffectSink2D<TEffect> where TEffect : struct, Enum
 {
-    private readonly ISoundEffectSink2D _sounds = ArgGuard.RequireNotNull(sounds);
+    private readonly ISoundEffectSink2D<TEffect> _sounds = ArgGuard.RequireNotNull(sounds);
     private readonly Func<Vector2> _listenerPosition = ArgGuard.RequireNotNull(listenerPosition);
+    private readonly Func<TEffect, SoundFalloff2D> _falloff = ArgGuard.RequireNotNull(falloff);
     private readonly List<SpatialVoice> _voices = [];
 
     // Global/UI cues intentionally bypass spatial attenuation.
-    public void Play(SoundEffect2D effect) => _sounds.Play(effect);
-    public SoundEffectVoice2D Begin(SoundEffect2D effect, float initialVolumeScale = 1f) => _sounds.Begin(effect, initialVolumeScale);
+    public void Play(TEffect effect) => _sounds.Play(effect);
+    public SoundEffectVoice2D Begin(TEffect effect, float initialVolumeScale = 1f) => _sounds.Begin(effect, initialVolumeScale);
 
-    public void PlayAt(SoundEffect2D effect, Vector2 position)
+    public void PlayAt(TEffect effect, Vector2 position)
     {
         var falloff = GetFalloff(effect);
         var attenuation = falloff.Evaluate(position, _listenerPosition());
@@ -25,14 +26,12 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         }
     }
 
-    public SoundEffectVoice2D BeginAt(
-        SoundEffect2D effect, Vector2 position, float initialVolumeScale = 1f)
+    public SoundEffectVoice2D BeginAt(TEffect effect, Vector2 position, float initialVolumeScale = 1f)
     {
         ArgGuard.InRange(initialVolumeScale, 0f, 1f);
         var falloff = GetFalloff(effect);
         // Controllable voices keep their timeline even when initially out of range.
-        return BeginSpatial(effect, position, initialVolumeScale, falloff,
-            falloff.Evaluate(position, _listenerPosition()));
+        return BeginSpatial(effect, position, initialVolumeScale, falloff, falloff.Evaluate(position, _listenerPosition()));
     }
 
     public void Update()
@@ -53,7 +52,7 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         }
     }
 
-    private SoundEffectVoice2D BeginSpatial(SoundEffect2D effect, Vector2 position, float volumeScale, SoundFalloff2D falloff, float attenuation)
+    private SoundEffectVoice2D BeginSpatial(TEffect effect, Vector2 position, float volumeScale, SoundFalloff2D falloff, float attenuation)
     {
         var playback = _sounds.Begin(effect, volumeScale * attenuation);
         if (!playback.IsPlaying)
@@ -66,13 +65,9 @@ public sealed class SpatialSoundEffectSink2D(ISoundEffectSink2D sounds, Func<Vec
         return new SoundEffectVoice2D(voice);
     }
 
-    private static SoundFalloff2D GetFalloff(SoundEffect2D effect) => effect == SoundEffect2D.HammerImpact
-        ? SoundFalloff2D.HammerImpact
-        : SoundFalloff2D.Default;
+    private SoundFalloff2D GetFalloff(TEffect effect) => _falloff(effect) ?? throw new InvalidOperationException($"No falloff was supplied for {effect}.");
 
-    private sealed class SpatialVoice(
-        SoundEffectVoice2D playback, Vector2 position, float volumeScale,
-        SoundFalloff2D falloff, float attenuation) : ISoundEffectVoice2D
+    private sealed class SpatialVoice(SoundEffectVoice2D playback, Vector2 position, float volumeScale, SoundFalloff2D falloff, float attenuation) : ISoundEffectVoice2D
     {
         private const float VolumeRampSeconds = 0.02f;
         private Vector2 _position = position;

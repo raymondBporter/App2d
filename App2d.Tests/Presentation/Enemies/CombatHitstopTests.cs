@@ -4,6 +4,7 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
+using App2d.Core.Audio;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
@@ -148,7 +149,7 @@ public sealed class CombatHitstopTests
         Assert.Empty(scene);
     }
 
-    private sealed class SilentSounds : ISoundEffectSink2D
+    private sealed class SilentSounds : ISoundEffectSink2D<SoundEffect2D>
     {
         public void Play(SoundEffect2D effect)
         {

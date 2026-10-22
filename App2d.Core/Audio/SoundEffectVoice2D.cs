@@ -1,10 +1,9 @@
-using App2d.Core.Audio;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Presentation.Audio;
+namespace App2d.Core.Audio;
 
-/// <summary>A gameplay cue instance whose relative level can change while playing.</summary>
+/// <summary>A cue instance whose relative level can change while playing.</summary>
 public readonly record struct SoundEffectVoice2D
 {
     private readonly ISoundEffectVoice2D? _voice;

@@ -4,6 +4,7 @@ using App2d.Contracts.Persons.Actions;
 using App2d.Contracts.World;
 using App2d.Core;
 using App2d.Core.Assets;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
@@ -82,7 +83,7 @@ internal static class EnemyRenderingSmoke2D
         }
     }
 
-    private sealed class SilentSounds : ISoundEffectSink2D
+    private sealed class SilentSounds : ISoundEffectSink2D<SoundEffect2D>
     {
         public void Play(SoundEffect2D effect)
         {

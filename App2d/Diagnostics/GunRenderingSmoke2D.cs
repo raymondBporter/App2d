@@ -2,6 +2,7 @@ using App2d.Contracts.Combat;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
+using App2d.Core.Audio;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
@@ -162,7 +163,7 @@ internal static class GunRenderingSmoke2D
         }
     }
 
-    private sealed class SilentSounds : ISoundEffectSink2D
+    private sealed class SilentSounds : ISoundEffectSink2D<SoundEffect2D>
     {
         public void Play(SoundEffect2D effect)
         {

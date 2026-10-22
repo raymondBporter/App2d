@@ -1,5 +1,6 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
+using App2d.Core.Audio;
 using App2d.Presentation.Audio;
 using App2d.Rendering;
 using System.Numerics;
@@ -8,7 +9,7 @@ using Color = Microsoft.Xna.Framework.Color;
 namespace App2d.Presentation.Persons.Presentation;
 
 /// <summary>Deliberately simple cast art. All completion cues come from confirmed simulation events.</summary>
-public sealed class SpellPresentation2D(ISoundEffectSink2D sounds) : IDisposable
+public sealed class SpellPresentation2D(ISoundEffectSink2D<SoundEffect2D> sounds) : IDisposable
 {
     private PersonState2D _state;
     private SoundEffectVoice2D _healVoice;

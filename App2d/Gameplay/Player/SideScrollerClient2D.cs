@@ -4,6 +4,7 @@ using App2d.Contracts.Player;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core;
+using App2d.Core.Audio;
 using App2d.Core.Input;
 using App2d.Core.Mathematics.Progress;
 using App2d.Core.Rendering;
@@ -34,7 +35,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private readonly AuthoredPersonPresentation2D _presentation;
     private readonly SideScrollerCamera2D _cameraController;
     private readonly Camera2D _camera;
-    private readonly SoundEffectBank2D _sounds;
+    private readonly SoundEffectBank2D<SoundEffect2D> _sounds;
     private readonly TraversalMetrics2D _traversal;
     private readonly TraversalDebugRenderer2D _traversalDebug;
     private readonly WeaponPresentation2D _weapons;
@@ -48,7 +49,7 @@ internal sealed class SideScrollerClient2D : IDisposable
     private bool _lastSaveSucceeded;
     private bool _shieldPose;
 
-    public SideScrollerClient2D(SessionFrame2D initial, EntityId2D playerId, Scene2D scene, Camera2D camera, SideScrollerCamera2D cameraController, TextureCache2D textures, SoundEffectBank2D sounds, TraversalMetrics2D traversal, PersonMoves moves)
+    public SideScrollerClient2D(SessionFrame2D initial, EntityId2D playerId, Scene2D scene, Camera2D camera, SideScrollerCamera2D cameraController, TextureCache2D textures, SoundEffectBank2D<SoundEffect2D> sounds, TraversalMetrics2D traversal, PersonMoves moves)
     {
         ArgGuard.ThrowIfNull(initial);
         ArgGuard.ThrowIf(!playerId.IsValid, "A player identity is required.", nameof(playerId));
@@ -66,7 +67,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _world.ApplyState(initial.Content, initial.World);
         _presentation = new AuthoredPersonPresentation2D(scene, moves, traversal);
         _presentation.Equip(initialState.Equipment);
-        WorldSounds = new SpatialSoundEffectSink2D(sounds, () => State.Person.Position);
+        WorldSounds = new SpatialSoundEffectSink2D<SoundEffect2D>(sounds, () => State.Person.Position, SoundEffectCues2D.Falloff);
         _weapons = new WeaponPresentation2D(scene, textures, WorldSounds);
         _weapons.ApplyState(initialState.Weapons, initialState.Equipment, []);
         _spells = new SpellPresentation2D(WorldSounds);
@@ -85,7 +86,7 @@ internal sealed class SideScrollerClient2D : IDisposable
         _world.DrawGrass(renderer, _camera.VisibleWorldBounds, layer);
     public bool ShowTraversalDebug { get; set; }
     public BallisticsDebug2D Ballistics { get; }
-    public SpatialSoundEffectSink2D WorldSounds { get; }
+    public SpatialSoundEffectSink2D<SoundEffect2D> WorldSounds { get; }
     public event Action<CheckpointActivated2D>? CheckpointActivated;
 
     public PlayerInput2D CaptureInput(InputState input)

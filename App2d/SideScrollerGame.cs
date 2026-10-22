@@ -35,7 +35,7 @@ public sealed class SideScrollerGame : Game2D
     private readonly SideScrollerSimulation2D _simulation;
     private readonly SideScrollerSession2D _session;
     private readonly SideScrollerClient2D _client;
-    private readonly SoundEffectBank2D _sounds;
+    private readonly SoundEffectBank2D<SoundEffect2D> _sounds;
     private readonly MusicPlayer2D _music;
     private readonly WorldMusicDirector2D _musicDirector;
     private bool _showZones;
@@ -54,7 +54,7 @@ public sealed class SideScrollerGame : Game2D
         _resources.Get<AuthoredCatalog>("characters/authored", "presentation");
         _resources.Register("textures/runtime", () => Textures, Textures.ContentRoot, ownsResource: false);
         var textures = _resources.GetLoad<TextureCache2D>("textures/runtime", "presentation");
-        _resources.Register("audio/sfx", () => new SoundEffectBank2D(AssetPaths.Current.SoundEffects), AssetPaths.Current.SoundEffects);
+        _resources.Register("audio/sfx", () => new SoundEffectBank2D<SoundEffect2D>(AssetPaths.Current.SoundEffects, SoundEffectCues2D.Cues), AssetPaths.Current.SoundEffects);
         var hero = _authored.Entities.GetValueOrDefault(Gameplay.Persons.Actions.AuthoredHero2D.EntityId)
             ?? throw new InvalidDataException("The authored 'hero' entity, the game's player, is missing.");
         // Fit the movement body to the level's four-unit clearance grid, preserving traversal tuning.
@@ -62,7 +62,7 @@ public sealed class SideScrollerGame : Game2D
         var movement = ShapeBounds2D.Calculate(hero.MovementShape);
         var height = MathF.Round(GameWorldUnits2D.AuthoredToWorld(movement.Height) / 4) * 4;
         Traversal = TraversalMetrics2D.FromGeometry(new(128), .9f, new(GameWorldUnits2D.AuthoredToWorld(movement.Width), height), GameWorldUnits2D.AuthoredToWorld(movement.Center.X));
-        _sounds = _resources.GetLoad<SoundEffectBank2D>("audio/sfx", "presentation");
+        _sounds = _resources.GetLoad<SoundEffectBank2D<SoundEffect2D>>("audio/sfx", "presentation");
         DebugPanel.Section("Audio").Slider("SFX volume", () => _sounds.Volume, value => _sounds.Volume = value, 0f, 1f,
             "Master sound-effect level from 0 (muted) to 1 (full volume).");
 

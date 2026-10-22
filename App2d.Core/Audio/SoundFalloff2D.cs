@@ -2,14 +2,11 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Validation;
 using System.Numerics;
 
-namespace App2d.Presentation.Audio;
+namespace App2d.Core.Audio;
 
-/// <summary>Smooth distance attenuation, measured in world units.</summary>
+/// <summary>Smooth distance attenuation in world units: full volume inside the inner radius, silent beyond the outer.</summary>
 public sealed class SoundFalloff2D
 {
-    public static SoundFalloff2D Default { get; } = new(96f, 800f);
-    public static SoundFalloff2D HammerImpact { get; } = new(128f, 1200f);
-
     public SoundFalloff2D(float innerRadius, float outerRadius)
     {
         ArgGuard.NonNegative(innerRadius);

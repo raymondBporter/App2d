@@ -1,6 +1,7 @@
 using App2d.Contracts.Enemies;
 using App2d.Contracts.World;
 using App2d.Core;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
@@ -219,7 +220,7 @@ public sealed class EnemyPresentationTests
         };
     }
 
-    private sealed class RecordingSounds : ISoundEffectSink2D
+    private sealed class RecordingSounds : ISoundEffectSink2D<SoundEffect2D>
     {
         public List<(SoundEffect2D, Vector2)> Played { get; } = [];
         public void Play(SoundEffect2D effect) => Assert.Fail("Enemy sounds require an occurrence position.");

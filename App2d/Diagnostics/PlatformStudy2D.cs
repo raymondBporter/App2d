@@ -1,6 +1,7 @@
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Assets;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
@@ -89,7 +90,7 @@ internal static class PlatformStudy2D
         }
     }
 
-    private sealed class Silent : ISoundEffectSink2D
+    private sealed class Silent : ISoundEffectSink2D<SoundEffect2D>
     {
         public void Play(SoundEffect2D effect)
         {

@@ -1,6 +1,7 @@
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Animation;
+using App2d.Core.Audio;
 using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Shapes;
@@ -14,7 +15,7 @@ namespace App2d.Presentation.Persons.Presentation;
 public sealed class WeaponPresentation2D : IDisposable
 {
     private readonly Scene2D _scene;
-    private readonly ISoundEffectSink2D _sounds;
+    private readonly ISoundEffectSink2D<SoundEffect2D> _sounds;
     private readonly WorldObject2D _glow;
     private readonly WorldObject2D _flash;
     private readonly AnimationPlayer2D<Texture2D> _chargeAnimation = new();
@@ -33,7 +34,7 @@ public sealed class WeaponPresentation2D : IDisposable
     private WeaponState2D _state = WeaponState2D.Empty;
     private EquipmentKind2D _equipment = EquipmentKind2D.Sword;
 
-    public WeaponPresentation2D(Scene2D scene, TextureCache2D textures, ISoundEffectSink2D sounds)
+    public WeaponPresentation2D(Scene2D scene, TextureCache2D textures, ISoundEffectSink2D<SoundEffect2D> sounds)
     {
         _scene = scene;
         _sounds = sounds;

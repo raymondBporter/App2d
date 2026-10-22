@@ -1,4 +1,5 @@
 using App2d.Core;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
@@ -45,7 +46,7 @@ public sealed class StalkerPresentationTests
         presentation.Update([], [], 0f, 3);
         Assert.Empty(scene);
     }
-    private sealed class SilentSounds : ISoundEffectSink2D
+    private sealed class SilentSounds : ISoundEffectSink2D<SoundEffect2D>
     {
         public void Play(SoundEffect2D effect)
         {

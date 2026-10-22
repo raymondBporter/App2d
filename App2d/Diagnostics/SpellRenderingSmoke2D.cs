@@ -3,6 +3,7 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Assets;
+using App2d.Core.Audio;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Collision;
 using App2d.Core.Geometry.Primitives;
@@ -171,7 +172,7 @@ internal static class SpellRenderingSmoke2D
         }
     }
 
-    private sealed class SilentSounds : ISoundEffectSink2D
+    private sealed class SilentSounds : ISoundEffectSink2D<SoundEffect2D>
     {
         public List<SoundEffect2D> Played { get; } = [];
         public void Play(SoundEffect2D effect) => Played.Add(effect);

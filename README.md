@@ -662,16 +662,20 @@ nearby static solid wall suspends the player; jumping launches away. One-way pla
 do not allow wall grip.
 
 Short sound effects are decoded once at startup and played through one polyphonic mixer.
-Gameplay emits semantic cues through `ISoundEffectSink2D`, so movement, combat, and weapon
-code never knows asset paths or audio-device details. `SoundEffectBank2D` owns the cue-to-file
-mapping, per-cue levels, non-repeating variants, and subtle per-play volume and pitch variation.
-`SpatialSoundEffectSink2D` wraps the bank with the player's live position as its listener.
+The sound-effect machinery lives in `App2d.Core/Audio` and is generic over the game's cue
+enum: gameplay emits semantic cues through `ISoundEffectSink2D<SoundEffect2D>`, so movement,
+combat, and weapon code never knows asset paths or audio-device details. `SoundEffectBank2D`
+loads a cue table of `SoundCue2D` values (stems, level, pitch jitter, falloff) and plays
+non-repeating variants with subtle per-play volume and pitch variation. The game's table is
+`SoundEffectCues2D` next to the `SoundEffect2D` enum. `SpatialSoundEffectSink2D` wraps the
+bank with the player's live position as its listener and a per-cue falloff lookup.
 World effects use `PlayAt(effect, position)`; controllable effects use `BeginAt` and can
 move their source with `SetPosition`. The game updates active voices each frame, multiplying
 their requested volume by smooth distance falloff. `SoundFalloff2D` sets the tuning:
 ordinary effects stay at full volume within 96 world units (3 tiles) and fade to silence
-at 800 (25 tiles); hammer impacts use 128 and 1200 units. Out-of-range one-shots are
-skipped. Player movement/feedback and global cues use `Play`/`Begin` at their normal levels.
+at 800 (25 tiles); the hammer impact cue carries 128 to 1200 units, and the gun charge cue
+holds its pitch. Out-of-range one-shots are skipped. Player movement/feedback and global
+cues use `Play`/`Begin` at their normal levels.
 The debug panel (F5) has an SFX volume slider from 0 through 1 for the master
 sound-effect level.
 
