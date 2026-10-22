@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 
 namespace App2d.Core.Geometry.Operations.Area;
 
-/// <summary>Union area of finite convex parts in one coordinate space.</summary>
+/// <summary>Union and intersection areas of finite convex parts in one coordinate space.</summary>
 public static class ShapeArea2D
 {
     public const int DefaultOutlineSegments = 64;
@@ -38,54 +38,79 @@ public static class ShapeArea2D
         var boundaries = new List<Area2D.BoundaryPart>(parts.Length);
         foreach (var shape in parts)
         {
-            if (shape is Circle2D circle)
+            AddParts(boundaries, shape, outlineSegments);
+        }
+        return Area2D.Union(CollectionsMarshal.AsSpan(boundaries));
+    }
+
+    /// <summary>
+    /// The area two convex shapes share, from the same boundary integral as <see cref="Union"/>: it sums the arcs and
+    /// edges of each shape that lie inside the other, so it is exact for every kind the union is exact for and keeps
+    /// its precision for thin overlaps. Shapes that only touch give zero.
+    /// </summary>
+    /// <param name="first">A finite convex shape.</param>
+    /// <param name="second">A finite convex shape in the same coordinate space.</param>
+    /// <param name="outlineSegments">At least three samples for polygonized curves or custom support mappings.</param>
+    public static float Intersection(IConvexShape2D first, IConvexShape2D second, int outlineSegments = DefaultOutlineSegments)
+    {
+        ArgumentNullException.ThrowIfNull(first);
+        ArgumentNullException.ThrowIfNull(second);
+        ArgGuard.ThrowIf(outlineSegments < 3, "Curved outlines need at least three samples.", nameof(outlineSegments));
+        var a = new List<Area2D.BoundaryPart>(3);
+        var b = new List<Area2D.BoundaryPart>(3);
+        AddParts(a, first, outlineSegments);
+        AddParts(b, second, outlineSegments);
+        return Area2D.Intersection(CollectionsMarshal.AsSpan(a), CollectionsMarshal.AsSpan(b));
+    }
+
+    private static void AddParts(List<Area2D.BoundaryPart> parts, IConvexShape2D shape, int outlineSegments)
+    {
+        if (shape is Circle2D circle)
+        {
+            parts.Add(new(circle.Center, circle.Radius));
+            return;
+        }
+        if (shape is Ellipse2D ellipse)
+        {
+            parts.Add(new(ellipse.Center, ellipse.Radii, ellipse.Axis));
+            return;
+        }
+        if (shape is Capsule2D capsule)
+        {
+            AddCapsule(parts, capsule);
+            return;
+        }
+        if (shape is ConvexPolygon2D polygon)
+        {
+            parts.Add(new(polygon.Vertices));
+            return;
+        }
+        Vector2[] vertices;
+        if (shape is RoundedRectangle2D rounded)
+        {
+            var perCorner = checked(outlineSegments + 3) / 4;
+            vertices = new Vector2[checked(4 * (perCorner + 1))];
+            VertexGenerator2D.WriteRoundedRectangle(vertices, -rounded.HalfSize, rounded.HalfSize, rounded.Radius, perCorner);
+            rounded.Frame.MapFromFrame(vertices);
+        }
+        else
+        {
+            var count = shape.GetOutlineVertCount(outlineSegments);
+            vertices = new Vector2[count > 0 ? count : outlineSegments];
+            if (count > 0)
             {
-                boundaries.Add(new(circle.Center, circle.Radius));
-                continue;
-            }
-            if (shape is Ellipse2D ellipse)
-            {
-                boundaries.Add(new(ellipse.Center, ellipse.Radii, ellipse.Axis));
-                continue;
-            }
-            if (shape is Capsule2D capsule)
-            {
-                AddCapsule(boundaries, capsule);
-                continue;
-            }
-            if (shape is ConvexPolygon2D polygon)
-            {
-                boundaries.Add(new(polygon.Vertices));
-                continue;
-            }
-            Vector2[] vertices;
-            if (shape is RoundedRectangle2D rounded)
-            {
-                var perCorner = checked(outlineSegments + 3) / 4;
-                vertices = new Vector2[checked(4 * (perCorner + 1))];
-                VertexGenerator2D.WriteRoundedRectangle(vertices, -rounded.HalfSize, rounded.HalfSize, rounded.Radius, perCorner);
-                rounded.Frame.MapFromFrame(vertices);
+                shape.GetOutlineVerts(vertices, outlineSegments);
             }
             else
             {
-                var count = shape.GetOutlineVertCount(outlineSegments);
-                vertices = new Vector2[count > 0 ? count : outlineSegments];
-                if (count > 0)
+                for (var j = 0; j < vertices.Length; j++)
                 {
-                    shape.GetOutlineVerts(vertices, outlineSegments);
-                }
-                else
-                {
-                    for (var j = 0; j < vertices.Length; j++)
-                    {
-                        vertices[j] = shape.GetSupportPoint(Polar2D.Direction(MathF.Tau * j / vertices.Length));
-                        ArgGuard.Finite(vertices[j], nameof(parts));
-                    }
+                    vertices[j] = shape.GetSupportPoint(Polar2D.Direction(MathF.Tau * j / vertices.Length));
+                    ArgGuard.Finite(vertices[j], nameof(shape));
                 }
             }
-            boundaries.Add(new(vertices));
         }
-        return Area2D.Union(CollectionsMarshal.AsSpan(boundaries));
+        parts.Add(new(vertices));
     }
 
     private static void AddCapsule(List<Area2D.BoundaryPart> boundaries, Capsule2D capsule)

@@ -8,9 +8,21 @@ public static partial class Area2D
 {
     private const double ConicCoincidenceTolerance = 8d * 2.2204460492503131e-16;
 
-    // Each convex part has its interior on the left of its boundary. Integrating only the
-    // uncovered pieces counts every point once, including when several parts overlap or enclose a hole.
-    internal static float Union(ReadOnlySpan<BoundaryPart> parts)
+    // Each convex part has its interior on the left of its boundary. Integrating only the pieces no other part of the
+    // same group covers counts every point of that group's union once, including when several parts overlap or
+    // enclose a hole. Integrating the pieces the other group covers as well gives the intersection of the two unions:
+    // the boundary of A ∩ B is the part of ∂A inside B plus the part of ∂B inside A.
+    internal static float Union(ReadOnlySpan<BoundaryPart> parts) => Integrate(parts, parts.Length, false);
+
+    internal static float Intersection(ReadOnlySpan<BoundaryPart> first, ReadOnlySpan<BoundaryPart> second)
+    {
+        var all = new BoundaryPart[first.Length + second.Length];
+        first.CopyTo(all);
+        second.CopyTo(all.AsSpan(first.Length));
+        return Integrate(all, first.Length, true);
+    }
+
+    private static float Integrate(ReadOnlySpan<BoundaryPart> parts, int firstCount, bool intersect)
     {
         var origin = parts[0].Origin;
         foreach (var part in parts)
@@ -18,7 +30,8 @@ public static partial class Area2D
             part.Shift(origin);
         }
 
-        var covered = new List<Interval<double>>();
+        var own = new List<Interval<double>>();
+        var other = new List<Interval<double>>();
         var angles = new List<double>();
         var area = 0d;
         var compensation = 0d;
@@ -27,7 +40,8 @@ public static partial class Area2D
             var part = parts[i];
             if (part.IsCurve)
             {
-                covered.Clear();
+                own.Clear();
+                other.Clear();
                 for (var j = 0; j < parts.Length; j++)
                 {
                     if (j == i || !part.Overlaps(parts[j]))
@@ -35,21 +49,22 @@ public static partial class Area2D
                         continue;
                     }
 
-                    var other = parts[j];
-                    if (part.IsCircle && other.IsCircle)
+                    var covered = (j < firstCount) == (i < firstCount) ? own : other;
+                    var neighbor = parts[j];
+                    if (part.IsCircle && neighbor.IsCircle)
                     {
-                        CoverCircle(part, other, j < i, covered);
+                        CoverCircle(part, neighbor, j < i, covered);
                     }
-                    else if (other.IsCurve)
+                    else if (neighbor.IsCurve)
                     {
-                        CoverCurveWithCurve(part, other, j < i, covered, angles);
+                        CoverCurveWithCurve(part, neighbor, j < i, covered, angles);
                     }
                     else
                     {
-                        CoverCurveWithPolygon(part, other, covered, angles);
+                        CoverCurveWithPolygon(part, neighbor, covered, angles);
                     }
                 }
-                AddArea(IntegrateExposed(covered, Math.Tau, (from, to) => SignedArcArea(part, from, to)));
+                AddArea(IntegrateSelected(own, other, Math.Tau, intersect, (from, to) => SignedArcArea(part, from, to)));
             }
             else
             {
@@ -62,7 +77,8 @@ public static partial class Area2D
                         continue;
                     }
 
-                    covered.Clear();
+                    own.Clear();
+                    other.Clear();
                     for (var j = 0; j < parts.Length; j++)
                     {
                         if (j == i || !part.Overlaps(parts[j]))
@@ -70,6 +86,7 @@ public static partial class Area2D
                             continue;
                         }
 
+                        var covered = (j < firstCount) == (i < firstCount) ? own : other;
                         var relativeStart = part.Origin - parts[j].Origin + start;
                         if (parts[j].IsCurve)
                         {
@@ -80,7 +97,7 @@ public static partial class Area2D
                             CoverSegmentWithPolygon(relativeStart, direction, parts[j], j < i, covered);
                         }
                     }
-                    AddArea(.5d * (start.Cross(direction) + part.Origin.Cross(direction)) * ExposedLength(covered, 1d));
+                    AddArea(.5d * (start.Cross(direction) + part.Origin.Cross(direction)) * IntegrateSelected(own, other, 1d, intersect, static (low, high) => high - low));
                 }
             }
         }
@@ -323,8 +340,7 @@ public static partial class Area2D
         }
     }
 
-    private static double ExposedLength(List<Interval<double>> covered, double end) =>
-        IntegrateExposed(covered, end, static (low, high) => high - low);
+    private static double IntegrateSelected(List<Interval<double>> own, List<Interval<double>> other, double end, bool intersect, Func<double, double, double> integrate) => intersect ? IntegrateCoveredGaps(own, other, end, integrate) : IntegrateExposed(own, end, integrate);
 
     private static double IntegrateExposed(List<Interval<double>> covered, double end, Func<double, double, double> integrate)
     {
@@ -345,6 +361,48 @@ public static partial class Area2D
             result += integrate(position, end);
         }
 
+        return result;
+    }
+
+    // The gaps of `own` are what this part's group exposes; of those, only what `other` covers lies on the intersection boundary.
+    private static double IntegrateCoveredGaps(List<Interval<double>> own, List<Interval<double>> other, double end, Func<double, double, double> integrate)
+    {
+        own.Sort(static (a, b) => a.Min.CompareTo(b.Min));
+        other.Sort(static (a, b) => a.Min.CompareTo(b.Min));
+        var position = 0d;
+        var result = 0d;
+        foreach (var interval in own)
+        {
+            if (interval.Min > position)
+            {
+                result += IntegrateWithin(other, position, interval.Min, integrate);
+            }
+
+            position = Math.Max(position, interval.Max);
+        }
+        if (position < end)
+        {
+            result += IntegrateWithin(other, position, end, integrate);
+        }
+
+        return result;
+    }
+
+    // Integrates the part of [low, high] the sorted intervals cover, each covered point once.
+    private static double IntegrateWithin(List<Interval<double>> sorted, double low, double high, Func<double, double, double> integrate)
+    {
+        var position = low;
+        var result = 0d;
+        foreach (var interval in sorted)
+        {
+            var from = Math.Max(position, interval.Min);
+            var to = Math.Min(high, interval.Max);
+            if (from < to)
+            {
+                result += integrate(from, to);
+                position = to;
+            }
+        }
         return result;
     }
 
