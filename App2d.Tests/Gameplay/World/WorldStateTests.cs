@@ -3,7 +3,7 @@ using App2d.Contracts.Combat;
 using App2d.Contracts.Simulation;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Primitives;
+using App2d.Core.Objects;
 using App2d.Core.Physics;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Combat;
@@ -70,7 +70,7 @@ public sealed class WorldStateTests
             new(7, WorldThingKind2D.Rival, null, true, new Vector2(1200f, 50f)),
             new(8, WorldThingKind2D.TumbleProp, null, true, new Vector2(1400f, 50f))
         ];
-        using var level = new SideScrollerLevel2D(metrics, map, [Platform()], things);
+        using var level = new SideScrollerLevel2D(metrics, map, things, objects: [Platform()]);
         level.CreateSimulation(physics.CollisionSystem, physics, new EntityIdAllocator2D(), 1, 2, 4);
         level.CreateAuthoredWorldThings(combat, AuthoredCatalog.Load(TestAssetPath.AuthoredRoot));
         var player = new Person2D(EntityId2D.Create(), physics.CollisionSystem, physics, metrics, spawn, 2, 1, CombatFaction2D.Player, tileMap: map);
@@ -91,7 +91,7 @@ public sealed class WorldStateTests
         Assert.Single(entered.Events.OfType<CheckpointActivated2D>());
         Assert.True(Assert.Single(entered.World.Checkpoints).IsActive);
         Assert.False(Assert.Single(initial.Checkpoints).IsActive);
-        Assert.NotEqual(initial.MovingPlatforms[0].Position, entered.World.MovingPlatforms[0].Position);
+        Assert.NotEqual(initial.Objects[0].Position, entered.World.Objects[0].Position);
         Assert.Equal(5, entered.Enemies.Length);
         Assert.Equal(things[2].Position, entered.Content.GoalPosition);
         Assert.Same(initialContent, entered.Content); // Nothing streamed or changed, so content is shared.
@@ -109,8 +109,7 @@ public sealed class WorldStateTests
     private static EditableTileMap2D CreateMap() => new(SideScrollerLevel2D.WorldWidthTiles,
         SideScrollerLevel2D.WorldHeightTiles, 32f, SideScrollerLevel2D.ChunkSizeTiles,
         SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-    private static SideScrollerLevel2D CreateLevel(EditableTileMap2D map, MovingPlatformSpec2D[]? platforms = null) =>
-            new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms);
-    private static MovingPlatformSpec2D Platform() => new(41, "Lift", true,
-        new Vector2(-200f, 100f), new Vector2(96f, 0f), new Size2D(80f, 14f), 48f, 0xFF25D2BEu);
+    private static SideScrollerLevel2D CreateLevel(EditableTileMap2D map, ObjectPlacement2D[]? objects = null) =>
+            new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, objects: objects);
+    private static ObjectPlacement2D Platform() => ObjectPlatforms.Place("lift", new(-200f, 100f), new(96f, 0f), 48f, 80f, 14f);
 }

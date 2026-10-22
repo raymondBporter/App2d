@@ -66,7 +66,7 @@ public sealed class PhysicsProp2DTests
     public void ExistingTumblePropPlacementsSpawnTheCatalogDumbbell()
     {
         var map = new EditableTileMap2D(64, 32, 32, 32, Vector2.Zero, ["dark-cave"]);
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(100, 100)),
              new(2, WorldThingKind2D.TumbleProp, null, true, new(200, 100))])
         {

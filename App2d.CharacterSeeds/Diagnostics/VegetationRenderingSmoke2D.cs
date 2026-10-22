@@ -31,7 +31,7 @@ internal static class VegetationRenderingSmoke2D
 
         var catalog = AuthoredCatalog.Load(AssetPaths.Current.AuthoredCharacters);
         var traversal = TraversalMetricsLoader2D.Load(textures.ContentRoot);
-        using var game = SideScrollerSimulation2D.Create(new(traversal, map, [],
+        using var game = SideScrollerSimulation2D.Create(new(traversal, map,
             [new(1, WorldThingKind2D.PlayerSpawn, "Start", true, new(-368f, 40f))])
         {
             AuthoredCharacters = catalog

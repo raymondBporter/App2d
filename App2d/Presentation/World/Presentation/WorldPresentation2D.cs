@@ -21,7 +21,6 @@ namespace App2d.Presentation.World.Presentation;
 /// </summary>
 public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) : IDisposable
 {
-    private readonly Dictionary<EntityId2D, PlatformView> _platforms = [];
     private readonly Dictionary<EntityId2D, (ObjectDefinition2D Definition, WorldObject2D Visual)> _objects = [];
     private readonly Dictionary<string, TextureCache2D> _objectTextures = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<long, CheckpointView> _checkpoints = [];
@@ -84,14 +83,6 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             view.Visual.Transform.Rotation = item.Rotation;
         }
 
-        foreach (var platform in state.MovingPlatforms)
-        {
-            if (_platforms.TryGetValue(platform.Id, out var view))
-            {
-                view.Visual.Transform.Position = platform.Position;
-            }
-        }
-
         foreach (var checkpoint in _checkpoints)
         {
             var isActive = false;
@@ -137,32 +128,6 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             _objects.Add(item.Id, (item, visual));
         }
         _vegetation.SetGiantTrees(content.GiantTrees);
-        var platforms = content.MovingPlatforms.Select(p => p.Id).ToHashSet();
-        foreach (var id in _platforms.Keys.Where(id => !platforms.Contains(id)).ToArray())
-        {
-            scene.Remove(_platforms[id].Visual);
-            _platforms.Remove(id);
-        }
-        foreach (var platform in content.MovingPlatforms)
-        {
-            if (_platforms.TryGetValue(platform.Id, out var view) &&
-                view.Size == platform.Size && view.ColorArgb == platform.ColorArgb)
-            {
-                continue;
-            }
-
-            if (view is not null)
-            {
-                scene.Remove(view.Visual);
-            }
-
-            var color = platform.ColorArgb;
-            var visual = new WorldObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(platform.Size),
-                new SolidColorShader(new XnaColor((byte)(color >> 16), (byte)(color >> 8), (byte)color, (byte)(color >> 24))));
-            scene.Add(visual);
-            _platforms[platform.Id] = new PlatformView(visual, platform.Size, color);
-        }
-
         var checkpoints = content.Checkpoints.Select(c => c.ThingId).ToHashSet();
         foreach (var id in _checkpoints.Keys.Where(id => !checkpoints.Contains(id)).ToArray())
         {
@@ -277,11 +242,6 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         _objects.Clear();
         foreach (var cache in _objectTextures.Values) cache.Dispose();
         _objectTextures.Clear();
-        foreach (var platform in _platforms.Values)
-        {
-            scene.Remove(platform.Visual);
-        }
-
         foreach (var checkpoint in _checkpoints.Values)
         {
             checkpoint.Visual.Dispose();
@@ -297,7 +257,6 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
             scene.Remove(visual);
         }
 
-        _platforms.Clear();
         _checkpoints.Clear();
         _goal.Clear();
         _goalPosition = null;
@@ -305,7 +264,6 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
         _visibleTerrain = null;
     }
 
-    private sealed record PlatformView(WorldObject2D Visual, Size2D Size, uint ColorArgb);
     private sealed record CheckpointView(SavePointPresentation2D Visual, Vector2 BasePosition);
     private sealed record ChunkView(long Revision, List<WorldObject2D> Visuals);
 }

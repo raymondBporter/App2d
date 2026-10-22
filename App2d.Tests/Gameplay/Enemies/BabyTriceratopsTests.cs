@@ -120,7 +120,7 @@ public sealed class BabyTriceratopsTests
             map.SetTileKind(x, 19, TileKind2D.Solid);
         }
 
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
              new(2, WorldThingKind2D.BabyTriceratops, null, true, new(-218, 19))])
         {

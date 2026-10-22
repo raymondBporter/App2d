@@ -148,7 +148,7 @@ public sealed class AuthoredObject2DTests
         using var textures = new TextureCache2D(TestAssetPath.Root);
         var scene = new Scene2D();
         using var view = new WorldPresentation2D(scene, textures);
-        view.ApplyState(new LevelContent2D(1, [], [], [], null) { Objects = [instance.CaptureDefinition()] }, WorldState2D.Empty with { Objects = [instance.CaptureState()] });
+        view.ApplyState(new LevelContent2D(1, [], [], null) { Objects = [instance.CaptureDefinition()] }, WorldState2D.Empty with { Objects = [instance.CaptureState()] });
         Assert.Empty(scene);
     }
 

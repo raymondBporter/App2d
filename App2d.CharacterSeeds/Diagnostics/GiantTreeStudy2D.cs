@@ -36,7 +36,7 @@ internal static class GiantTreeStudy2D
         var edge = tree.Root.X + branch.Side * tree.Settings.TrunkWidth * 0.5f;
         var tip = branch.Side < 0 ? branch.Bounds.Left : branch.Bounds.Right;
         var spawn = new Vector2((edge + tip) * 0.5f, branch.Bounds.Top + traversal.PlayerColliderSize.Y * 0.5f + 12f);
-        using var game = SideScrollerSimulation2D.Create(new(traversal, loaded.TileMap, [],
+        using var game = SideScrollerSimulation2D.Create(new(traversal, loaded.TileMap,
             [new(1, WorldThingKind2D.PlayerSpawn, "Tree study", true, spawn)])
         {
             AuthoredCharacters = catalog,

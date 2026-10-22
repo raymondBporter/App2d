@@ -3,6 +3,7 @@ using App2d.Contracts.Combat;
 using App2d.Contracts.Player;
 using App2d.Core;
 using App2d.Core.Collision;
+using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
@@ -13,7 +14,8 @@ using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;
 
-public sealed class MovingPlatform2DTests
+/// <summary>An authored lift behaves as the August moving platform did: same path, same pace, same rider carrying.</summary>
+public sealed class ObjectPlatformTests
 {
     private const uint WorldLayer = 1u << 0;
     private const uint PlayerLayer = 1u << 1;
@@ -22,7 +24,7 @@ public sealed class MovingPlatform2DTests
     public void PlatformReflectsAtPathEndsWithoutOvershooting()
     {
         var physics = CreatePhysics();
-        var platform = CreatePlatform(physics, new Vector2(10f, 0f), speed: 4f);
+        using var platform = CreatePlatform(physics, new Vector2(10f, 0f), speed: 4f);
 
         platform.Update(2f);
         physics.Step(2f);
@@ -42,7 +44,7 @@ public sealed class MovingPlatform2DTests
     {
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
-        var platform = CreatePlatform(physics, new Vector2(20f, 0f), speed: 10f);
+        using var platform = CreatePlatform(physics, new Vector2(20f, 0f), speed: 10f);
         var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
@@ -68,7 +70,7 @@ public sealed class MovingPlatform2DTests
     {
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
-        var platform = CreatePlatform(physics, new Vector2(20f, 0f), speed: 10f);
+        using var platform = CreatePlatform(physics, new Vector2(20f, 0f), speed: 10f);
         var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
@@ -93,7 +95,7 @@ public sealed class MovingPlatform2DTests
     {
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
-        var platform = CreatePlatform(physics, new Vector2(0f, 20f), speed: 10f);
+        using var platform = CreatePlatform(physics, new Vector2(0f, 20f), speed: 10f);
         var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
@@ -114,29 +116,23 @@ public sealed class MovingPlatform2DTests
     {
         var physics = CreatePhysics();
         physics.Gravity = new Vector2(0f, -100f);
-        var platform = CreatePlatform(
-            physics,
-            new Vector2(0f, 20f),
-            speed: 10f);
-        var riderObject = new SpatialObject2D(
-            AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
+        using var platform = CreatePlatform(physics, new Vector2(0f, 20f), speed: 10f);
+        var riderObject = new SpatialObject2D(AxisAlignedRectangle2D.Builder.CreateFromSize(10f, 10f));
         riderObject.Transform.Position = new Vector2(0f, 10f);
         var rider = physics.AddBody(riderObject, BodyMotionType2D.Dynamic);
         rider.Restitution = 0f;
 
         platform.Update(0.1f);
         physics.Step(0.1f);
-        var firstGap = riderObject.WorldBounds.Bottom -
-            platform.WorldObject.WorldBounds.Top;
+        var firstGap = riderObject.WorldBounds.Bottom - platform.WorldObject.WorldBounds.Top;
 
         platform.Update(0.1f);
         physics.Step(0.1f);
-        var secondGap = riderObject.WorldBounds.Bottom -
-            platform.WorldObject.WorldBounds.Top;
+        var secondGap = riderObject.WorldBounds.Bottom - platform.WorldObject.WorldBounds.Top;
 
         Assert.InRange(MathF.Abs(firstGap), 0f, 0.001f);
         Assert.InRange(MathF.Abs(secondGap), 0f, 0.001f);
-        Assert.Equal(platform.Body.LinearVelocity.Y, rider.LinearVelocity.Y, 3);
+        Assert.Equal(platform.Body!.LinearVelocity.Y, rider.LinearVelocity.Y, 3);
         Assert.Contains(physics.LastContacts, contact =>
             ReferenceEquals(contact.First, platform.Body) ||
             ReferenceEquals(contact.Second, platform.Body));
@@ -149,10 +145,7 @@ public sealed class MovingPlatform2DTests
         var physics = CreatePhysics(collision);
         physics.Gravity = new Vector2(0f, -1_900f);
         physics.MaxSubstepSeconds = 1f / 120f;
-        var platform = CreatePlatform(
-            physics,
-            new Vector2(0f, -100f),
-            speed: 90f);
+        using var platform = CreatePlatform(physics, new Vector2(0f, -100f), speed: 90f);
         var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var rider = CreateRider(collision, physics, platform, traversal);
         const float deltaSeconds = 1f / 120f;
@@ -181,7 +174,7 @@ public sealed class MovingPlatform2DTests
         var physics = CreatePhysics(collision);
         physics.Gravity = new Vector2(0f, -1_900f);
         physics.MaxSubstepSeconds = 1f / 120f;
-        var platform = CreatePlatform(physics, new Vector2(0f, travelY), speed: 90f);
+        using var platform = CreatePlatform(physics, new Vector2(0f, travelY), speed: 90f);
         var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var rider = CreateRider(collision, physics, platform, traversal);
         const float dt = 1f / 120f;
@@ -203,17 +196,9 @@ public sealed class MovingPlatform2DTests
     {
         var collision = new CollisionSystem2D();
         var physics = CreatePhysics(collision);
-        var platform = CreatePlatform(
-            physics,
-            new Vector2(0f, -100f),
-            speed: 90f);
+        using var platform = CreatePlatform(physics, new Vector2(0f, -100f), speed: 90f);
         var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
-        var rider = CreateRider(
-            collision,
-            physics,
-            platform,
-            traversal,
-            gap: 2.5f);
+        var rider = CreateRider(collision, physics, platform, traversal, gap: 2.5f);
         rider.Body.LinearVelocity = new Vector2(0f, -300f);
         var landingSpeeds = new List<float>();
         rider.Landed += landingSpeeds.Add;
@@ -223,7 +208,7 @@ public sealed class MovingPlatform2DTests
         StepPerson(rider, physics, deltaSeconds);
 
         var landingSpeed = Assert.Single(landingSpeeds);
-        Assert.Equal(300f + platform.Body.LinearVelocity.Y, landingSpeed, 3);
+        Assert.Equal(300f + platform.Body!.LinearVelocity.Y, landingSpeed, 3);
     }
 
     [Theory]
@@ -236,7 +221,7 @@ public sealed class MovingPlatform2DTests
         physics.Gravity = new Vector2(0f, -1_900f);
         physics.MaxSubstepSeconds = 1f / 120f;
         var velocity = new Vector2(x, y);
-        var platform = CreatePlatform(physics, Vector2.Normalize(velocity) * 100f, speed: velocity.Length());
+        using var platform = CreatePlatform(physics, Vector2.Normalize(velocity) * 100f, speed: velocity.Length());
         var traversal = TraversalMetricsLoader2D.Load(TestAssetPath.Root);
         var rider = CreateRider(collision, physics, platform, traversal);
         const float deltaSeconds = 1f / 120f;
@@ -248,21 +233,23 @@ public sealed class MovingPlatform2DTests
 
         var state = rider.CaptureState();
         Assert.True(state.IsGrounded);
-        Assert.Equal(platform.Body.LinearVelocity.X, state.GroundVelocity.X, 2);
+        Assert.Equal(platform.Body!.LinearVelocity.X, state.GroundVelocity.X, 2);
         Assert.Equal(platform.Body.LinearVelocity.Y, state.GroundVelocity.Y, 2);
     }
 
     [Fact]
-    public void PlatformUsesKinematicOneWayCollision()
+    public void PlatformUsesKinematicOneWayCollisionAlongItsAuthoredLine()
     {
         var physics = CreatePhysics();
 
-        var platform = CreatePlatform(physics, Vector2.UnitY, speed: 1f);
+        using var platform = CreatePlatform(physics, Vector2.UnitY, speed: 1f);
 
-        Assert.Equal(BodyMotionType2D.Kinematic, platform.Body.MotionType);
+        Assert.Equal(BodyMotionType2D.Kinematic, platform.Body!.MotionType);
         Assert.Equal(Vector2.UnitY, PlatformCollisionRules2D.Attach(physics).Surface(platform.Body).OneWaySurfaceNormal);
-        Assert.Equal(Vector2.Zero, platform.Start);
-        Assert.Equal(Vector2.UnitY, platform.End);
+        Assert.Equal(Vector2.Zero, platform.WorldObject.Transform.Position);
+        var line = Assert.IsType<LineSegmentCurve2D>(platform.Placement.Asset.Motion!.Curve);
+        Assert.Equal(Vector2.Zero, line.Start);
+        Assert.Equal(Vector2.UnitY, line.End);
     }
 
     private static PhysicsWorld2D CreatePhysics() =>
@@ -277,32 +264,15 @@ public sealed class MovingPlatform2DTests
             VelocityIterations = 1
         };
 
-    private static Person2D CreateRider(
-        CollisionSystem2D collision,
-        PhysicsWorld2D physics,
-        MovingPlatform2D platform,
-        TraversalMetrics2D traversal,
-        float gap = 0f)
+    private static Person2D CreateRider(CollisionSystem2D collision, PhysicsWorld2D physics, AuthoredObject2D platform, TraversalMetrics2D traversal, float gap = 0f)
     {
         var position = new Vector2(
             platform.WorldObject.Transform.Position.X,
-            platform.WorldObject.WorldBounds.Top +
-            traversal.PlayerColliderSize.Y * 0.5f +
-            gap);
-        return new Person2D(EntityId2D.Create(),
-            collision,
-            physics,
-            traversal,
-            position,
-            PlayerLayer,
-            WorldLayer,
-            CombatFaction2D.Player);
+            platform.WorldObject.WorldBounds.Top + traversal.PlayerColliderSize.Y * 0.5f + gap);
+        return new Person2D(EntityId2D.Create(), collision, physics, traversal, position, PlayerLayer, WorldLayer, CombatFaction2D.Player);
     }
 
-    private static void StepPerson(
-        Person2D person,
-        PhysicsWorld2D physics,
-        float deltaSeconds)
+    private static void StepPerson(Person2D person, PhysicsWorld2D physics, float deltaSeconds)
     {
         person.BeginFrame(deltaSeconds);
         person.ApplyCommand(default, deltaSeconds);
@@ -310,17 +280,6 @@ public sealed class MovingPlatform2DTests
         person.UpdateAfterPhysics(deltaSeconds);
     }
 
-    private static MovingPlatform2D CreatePlatform(
-        PhysicsWorld2D physics,
-        Vector2 travel,
-        float speed) =>
-        new(
-            EntityId2D.Create(),
-            physics,
-            Vector2.Zero,
-            travel,
-            new Size2D(40f, 10f),
-            speed,
-            collisionLayer: WorldLayer,
-            collisionMask: uint.MaxValue);
+    private static AuthoredObject2D CreatePlatform(PhysicsWorld2D physics, Vector2 travel, float speed) =>
+        new(EntityId2D.Create(), ObjectPlatforms.Place("lift", Vector2.Zero, travel, speed, 40f, 10f), physics, WorldLayer, uint.MaxValue);
 }

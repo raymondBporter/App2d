@@ -2,10 +2,10 @@ using App2d.CharacterSeeds.Diagnostics;
 using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Core.Characters.Authored;
-using App2d.Core.Geometry.Primitives;
 using App2d.Core.Tiles;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
+using App2d.Tests.Gameplay.World;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.Simulation;
@@ -20,7 +20,7 @@ public sealed class SideScrollerSimulation2DTests
         Assert.Equal([.. server.Session.PlayerIds], [.. client.Session.PlayerIds]);
         Assert.Equal(server.Level.EnemySystem.Combatants.Select(c => c.Id),
             client.Level.EnemySystem.Combatants.Select(c => c.Id));
-        Assert.Equal(server.Level.MovingPlatforms.Select(p => p.Id), client.Level.MovingPlatforms.Select(p => p.Id));
+        Assert.Equal(server.Level.Objects.Select(p => p.Id), client.Level.Objects.Select(p => p.Id));
         Assert.Equal(server.Ids.Next, client.Ids.Next);
 
         var playerId = server.Session.PlayerIds[0];
@@ -47,7 +47,7 @@ public sealed class SideScrollerSimulation2DTests
                 Assert.Equal(left.AuthoredPose?.Local.Points.OrderBy(p => p.Key), right.AuthoredPose?.Local.Points.OrderBy(p => p.Key));
                 Assert.Equal(left.AuthoredPose?.Local.Angles.OrderBy(p => p.Key), right.AuthoredPose?.Local.Angles.OrderBy(p => p.Key));
             }
-            Assert.Equal([.. a.World.MovingPlatforms], [.. b.World.MovingPlatforms]);
+            Assert.Equal([.. a.World.Objects], [.. b.World.Objects]);
             Assert.Equal([.. a.World.Checkpoints], [.. b.World.Checkpoints]);
         }
         Assert.NotEmpty(server.Session.CaptureContent().Terrain);
@@ -97,11 +97,10 @@ public sealed class SideScrollerSimulation2DTests
             new(6, WorldThingKind2D.Rival, null, true, new Vector2(300f, 50f)),
             new(7, WorldThingKind2D.TumbleProp, null, true, new Vector2(500f, 50f)),
         ];
-        MovingPlatformSpec2D[] platforms =
-            [new(41, "Lift", true, new Vector2(-200f, 100f), new Vector2(96f, 0f), new Size2D(80f, 14f), 48f, 0xFF25D2BEu)];
-        return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, platforms, things)
+        return new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, things)
         {
-            AuthoredCharacters = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot)
+            AuthoredCharacters = AuthoredCatalog.Load(TestAssetPath.AuthoredRoot),
+            Objects = [ObjectPlatforms.Place("lift", new(-200f, 100f), new(96f, 0f), 48f, 80f, 14f)]
         };
     }
 }

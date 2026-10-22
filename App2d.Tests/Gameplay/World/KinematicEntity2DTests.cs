@@ -39,7 +39,7 @@ public sealed class KinematicEntity2DTests
     [Fact]
     public void PingPongMotionReflectsAtEndpointsForArbitrarySampleTimes()
     {
-        var motion = new PingPongMotion2D(Vector2.Zero, new Vector2(10f, 0f), 4f);
+        var motion = new CurveMotion2D(LineSegmentCurve2D.Builder.Create(Vector2.Zero, new Vector2(10f, 0f)), 5d, ProgressMaps.PingPong);
         Assert.Equal(new Vector2(8f, 0f), motion.Position(2d));
         Assert.Equal(new Vector2(10f, 0f), motion.Position(2.5d));
         Assert.Equal(new Vector2(-4f, 0f), motion.Velocity(2.5d));

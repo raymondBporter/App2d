@@ -15,6 +15,7 @@ using App2d.Gameplay.Enemies;
 using App2d.Gameplay.Persons;
 using App2d.Gameplay.Simulation;
 using App2d.Gameplay.World;
+using App2d.Tests.Gameplay.World;
 using System.Numerics;
 using System.Text.Json;
 
@@ -71,7 +72,7 @@ public sealed class AuthoredEntityEnemyTests
     [InlineData(0f, -90f)]
     [InlineData(0f, 90f)]
     [InlineData(60f, 0f)]
-    public void PlantedFeetRideAMovingPlatform(float x, float y)
+    public void PlantedFeetRideAnAuthoredLift(float x, float y)
     {
         // The guard drops onto the platform, then rides it: its feet should sit exactly as they do on a still one.
         var (still, _) = Ride(new(0, -1e-4f));
@@ -91,7 +92,7 @@ public sealed class AuthoredEntityEnemyTests
     private static (Dictionary<string, float> Heights, Dictionary<string, float> Trail) Ride(Vector2 velocity)
     {
         var physics = new PhysicsWorld2D { Gravity = new(0, -1_900f), MaxSubstepSeconds = 1f / 120 };
-        var platform = new MovingPlatform2D(Core.EntityId2D.Create(), physics, Vector2.Zero, Vector2.Normalize(velocity) * 200, new(200, 10), velocity.Length(), 1, uint.MaxValue);
+        using var platform = new AuthoredObject2D(Core.EntityId2D.Create(), ObjectPlatforms.Place("ride", Vector2.Zero, Vector2.Normalize(velocity) * 200, velocity.Length(), 200f, 10f), physics, 1, uint.MaxValue);
         var box = ShapeBounds2D.Calculate(Authored.Entities["spear-guard"].MovementShape);
         var enemy = new AuthoredEntityEnemy2D(Core.EntityId2D.Create(), Authored.Entities["spear-guard"], physics,
             new(0, platform.WorldObject.WorldBounds.Top + (box.Height / 2 + .5f) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit), 1, 4);
@@ -123,7 +124,7 @@ public sealed class AuthoredEntityEnemyTests
             map.SetTileKind(x, 19, TileKind2D.Solid);
         }
 
-        return SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+        return SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
         [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)),
          new(2, WorldThingKind2D.Shieldback, null, true, new(-290, 42)),
          new(3, WorldThingKind2D.BoilerBrute, null, true, new(-80, 42)),
@@ -154,7 +155,7 @@ public sealed class AuthoredEntityEnemyTests
     public void MigratedPlacementsRequireTheirAuthoredEntity(WorldThingKind2D kind, string entityId)
     {
         var map = new EditableTileMap2D(640, 96, 32, 32, SideScrollerLevel2D.WorldOrigin, ["dark-cave"]);
-        var definition = new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+        var definition = new SideScrollerSessionDefinition2D(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)), new(2, kind, null, true, new(0, 42))]);
         var error = Assert.Throws<InvalidDataException>(() => { using var game = SideScrollerSimulation2D.Create(definition); });
         Assert.Contains(entityId, error.Message);
@@ -250,7 +251,7 @@ public sealed class AuthoredEntityEnemyTests
             map.SetTileKind(x, 19, TileKind2D.Solid);
         }
 
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
         [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)), new(4, WorldThingKind2D.Rival, null, true, new(-200, 42))])
         {
             AuthoredCharacters = Authored,
@@ -404,7 +405,7 @@ public sealed class AuthoredEntityEnemyTests
             map.SetTileKind(x, 19, TileKind2D.Solid);
         }
 
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
              new(2, WorldThingKind2D.ClubCaveman, null, true, new(-200, 40))])
         {

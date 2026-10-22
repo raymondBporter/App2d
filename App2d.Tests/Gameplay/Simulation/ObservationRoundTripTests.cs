@@ -42,12 +42,11 @@ public sealed class ObservationRoundTripTests
         };
         var player = new PlayerState2D(person, -1f, EquipmentKind2D.Sword, true, 0f, 42, false,
             new(false, 0f, position, [new(new EntityId2D(102), position, new(1250f, 0f), new(2f, 4f))]));
-        var content = new LevelContent2D(3, [terrain], [new(new EntityId2D(103), 40, new(90f, 12f), 0xffaabbcc)],
-            [new(42, position)], new(300f, 0f))
+        var content = new LevelContent2D(3, [terrain], [new(42, position)], new(300f, 0f))
         {
             Objects = [new(new(105), "orbit", Circle2D.Builder.Create(12), new RenderMaterialDefinition2D { Fill = "#25d2be" }, "assets")]
         };
-        var world = new WorldState2D([new(new EntityId2D(103), position)], [new(42, true)])
+        var world = new WorldState2D([new(42, true)])
         {
             CutGrass = [new(3, 1), new(5, 2)],
             Objects = [new(new(105), position, .3f)]
@@ -71,12 +70,10 @@ public sealed class ObservationRoundTripTests
         });
         Assert.Equal([.. player.Weapons.Projectiles], [.. restored.Players[0].Weapons.Projectiles]);
         Assert.Equal(enemies.ToArray(), restored.Enemies.ToArray());
-        Assert.Equal([.. world.MovingPlatforms], [.. restored.World.MovingPlatforms]);
         Assert.Equal(world.Objects.ToArray(), restored.World.Objects.ToArray());
         Assert.Equal(content.Objects[0].Geometry!.ToJson(), restored.Content.Objects[0].Geometry!.ToJson());
         Assert.Equal(content.Objects[0].Material, restored.Content.Objects[0].Material);
         Assert.True(world.CutGrass.SetEquals(restored.World.CutGrass));
-        Assert.Equal([.. content.MovingPlatforms], [.. restored.Content.MovingPlatforms]);
         Assert.Equal([.. content.Checkpoints], [.. restored.Content.Checkpoints]);
         var restoredTerrain = Assert.Single(restored.Content.Terrain);
         Assert.NotSame(terrain, restoredTerrain);

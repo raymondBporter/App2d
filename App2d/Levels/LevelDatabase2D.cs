@@ -230,9 +230,13 @@ public sealed partial class LevelDatabase2D : IDisposable
 
         if (version == 2)
         {
-            using var createObjects = connection.CreateCommand();
-            createObjects.CommandText = ObjectReferencesSql;
-            createObjects.ExecuteNonQuery();
+            using (var createObjects = connection.CreateCommand())
+            {
+                createObjects.CommandText = ObjectReferencesSql;
+                createObjects.ExecuteNonQuery();
+            }
+
+            MovingPlatformMigration2D.Convert(connection, worldRoot);
             version = 3;
         }
 

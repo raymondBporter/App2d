@@ -44,7 +44,6 @@ internal static class TileEditorView2D
 
     private static void DrawThings(Renderer2D renderer, TileEditor2D editor)
     {
-        var pathColor = new XnaColor(130, 180, 210, 170);
         var selectedColor = new XnaColor(255, 214, 64);
         var disabledColor = new XnaColor(130, 130, 140, 180);
 
@@ -62,31 +61,6 @@ internal static class TileEditorView2D
 
             var radius = editor.PixelsToWorldUnits(isSelected ? 11f : 8f);
             renderer.DrawWorldCircle(markerPosition, radius, color, isSelected ? 4f : 3f);
-        }
-
-        foreach (var thing in editor.MovingPlatformThings)
-        {
-            var start = new Vector2(thing.X, thing.Y);
-            var end = start + new Vector2(thing.TravelX, thing.TravelY);
-            var isSelected = editor.SelectedThingId == thing.ThingId;
-            var color = isSelected ? selectedColor : thing.Enabled ? pathColor : disabledColor;
-            renderer.DrawWorldSegment(start, end, color, isSelected ? 3f : 2f);
-            renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(thing.Width, thing.Height, start),
-                outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
-            if (isSelected)
-            {
-                var radius = editor.PixelsToWorldUnits(9f);
-                renderer.DrawWorldCircle(start, radius, selectedColor, 3f);
-                renderer.DrawWorldCircle(end, radius, selectedColor, 3f);
-            }
-        }
-
-        if (editor.TryGetPlacementPreview(out var definition, out var position))
-        {
-            renderer.DrawShape(Rectangle2D.Builder.CreateFromSize(definition.Width, definition.Height, position),
-                outlineColor: new XnaColor(105, 245, 180, 220), screenStrokeWidth: 3f);
-            renderer.DrawWorldSegment(position, position + new Vector2(editor.TileSize * 3f, 0f),
-                new XnaColor(105, 245, 180, 180), 2f);
         }
 
         if (editor.TryGetPositionPlacementPreview(out var positionDefinition, out var positionPreview))

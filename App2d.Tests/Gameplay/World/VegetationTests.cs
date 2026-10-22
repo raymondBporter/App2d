@@ -174,6 +174,6 @@ public sealed class VegetationTests
     }
 
     private static SideScrollerSimulation2D Create() => SideScrollerSimulation2D.Create(
-        new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), Map(), [],
+        new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), Map(),
             [new(1, WorldThingKind2D.PlayerSpawn, "Start", true, new(-368f, 40f))]));
 }

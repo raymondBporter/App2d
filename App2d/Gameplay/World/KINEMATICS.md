@@ -47,12 +47,11 @@ Other easings live in `App2d.Core.Mathematics.Progress.Easing`; custom maps can 
 velocity change at the loop seam. B-spline parameter progress is not generally
 constant distance, so a constant-speed spline would need an arc-length map.
 
-`MovingPlatform2D` composes a line segment with ping-pong and smoothstep easing.
-It sets `OneWaySurfaceNormal` through App2d's `PlatformCollisionRules2D` surface data
-and enables the generic `TransfersContactMotion` behavior on its body. Its `Speed`
-keeps the original round-trip duration: smoothstep slows near endpoints and
-reaches 1.5 times that speed at mid-leg. Existing level and editor records still
-describe a straight travel vector and speed. New JSON objects use generic curve definitions.
+A moving platform is an authored object: a `line` curve with `ping-pong` and `smooth`
+progress, a kinematic body with `transfersContactMotion`, and a one-way `surface`. The
+cavern's lifts were converted from the August platform rows by the level database's
+format-3 migration; `App2d.Levels.MovingPlatformMigration2D` keeps the period
+`2 × |travel| / speed` so each lift's round trip takes exactly what it did before.
 
 ## JSON objects
 

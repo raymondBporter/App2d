@@ -79,7 +79,7 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
 
         if (ImGui.BeginPopupModal("delete-thing", ImGuiWindowFlags.AlwaysAutoResize))
         {
-            Ui.Help($"Delete {_editor.SelectedThing?.Name ?? _editor.SelectedPositionThing?.Name ?? "this thing"}?");
+            Ui.Help($"Delete {_editor.SelectedPositionThing?.Name ?? "this thing"}?");
             Ui.Row(
                 () => Ui.Button("Delete", () =>
                 {
@@ -93,11 +93,7 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
 
     public void RefreshFromEditor()
     {
-        if (_editor.SelectedThing is { } moving)
-        {
-            ShowThingCore(moving);
-        }
-        else if (_editor.SelectedPositionThing is { } position)
+        if (_editor.SelectedPositionThing is { } position)
         {
             ShowPositionThingCore(position);
         }
@@ -110,7 +106,6 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
             ClearProperties();
         }
     }
-    public void ShowThing(MovingPlatformThingRecord2D thing) => ShowThingCore(thing);
     public void ShowPositionThing(PositionThingRecord2D thing) => ShowPositionThingCore(thing);
 
     internal void BeginNewDefinition()
@@ -122,7 +117,7 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
         _editingTypeKey = _typeKey;
         _assetPath = null;
         _selection = $"New {descriptor.DisplayName} definition";
-        _properties = descriptor.IsMovingPlatform ? new MovingPlatformDefinitionProperties2D() : new PositionThingDefinitionProperties2D { Name = descriptor.DisplayName };
+        _properties = new PositionThingDefinitionProperties2D { Name = descriptor.DisplayName };
     }
 
     private void ShowDefinitionCore(ThingDefinitionRecord2D definition)
@@ -131,29 +126,10 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
         _editingDefinitionId = definition.DefinitionId;
         _editingThingId = null;
         _editingTypeKey = definition.TypeKey;
-        var descriptor = ThingTypeRegistry2D.Require(definition.TypeKey);
+        _ = ThingTypeRegistry2D.Require(definition.TypeKey);
         _selection = $"Definition: {definition.Name}";
-        if (descriptor.IsMovingPlatform)
-        {
-            var moving = _editor.MovingPlatformDefinitions.Single(
-                item => item.DefinitionId == definition.DefinitionId);
-            _properties = MovingPlatformDefinitionProperties2D.From(moving);
-        }
-        else
-        {
-            _assetPath = definition.Asset;
-            _properties = PositionThingDefinitionProperties2D.From(definition);
-        }
-    }
-
-    private void ShowThingCore(MovingPlatformThingRecord2D thing)
-    {
-        _isNewDefinition = false;
-        _editingDefinitionId = null;
-        _editingThingId = thing.ThingId;
-        _editingTypeKey = ThingTypeRegistry2D.MovingPlatform.TypeKey;
-        _selection = $"Thing {thing.ThingId}: {thing.Name ?? thing.DefinitionName}";
-        _properties = MovingPlatformInstanceProperties2D.From(thing);
+        _assetPath = definition.Asset;
+        _properties = PositionThingDefinitionProperties2D.From(definition);
     }
 
     private void ShowPositionThingCore(PositionThingRecord2D thing)
@@ -177,9 +153,6 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
         {
             switch (_properties)
             {
-                case MovingPlatformDefinitionProperties2D definition:
-                    _editor.ApplyDefinition(_isNewDefinition ? null : _editingDefinitionId, definition);
-                    break;
                 case PositionThingDefinitionProperties2D definition when _editingTypeKey is { } type:
                     if (type == ThingTypeRegistry2D.Object.TypeKey && _assetPath is null)
                     {
@@ -187,9 +160,6 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
                         return;
                     }
                     _editor.ApplyPositionDefinition(_isNewDefinition ? null : _editingDefinitionId, type, definition, _assetPath);
-                    break;
-                case MovingPlatformInstanceProperties2D thing when _editingThingId is { } id:
-                    _editor.ApplyThing(id, thing);
                     break;
                 case PositionThingInstanceProperties2D thing when _editingThingId is { } id:
                     _editor.ApplyPositionThing(id, thing);

@@ -17,14 +17,11 @@ internal sealed record ThingTypeDescriptor2D(
 {
     /// <summary>A placed authored object: the definition names an asset file and the thing is a position.</summary>
     public bool IsObject => string.Equals(TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal);
-    public bool IsMovingPlatform => string.Equals(TypeKey, ThingTypeRegistry2D.MovingPlatform.TypeKey, StringComparison.Ordinal);
 }
 
 internal static class ThingTypeRegistry2D
 {
     public static ThingTypeDescriptor2D Object { get; } = new(LevelDatabase2D.ObjectTypeKey, "Object", null, new XnaColor(37, 210, 190));
-
-    public static ThingTypeDescriptor2D MovingPlatform { get; } = new("moving-platform", "Moving platform", null, new XnaColor(37, 210, 190));
 
     public static ThingTypeDescriptor2D PlayerSpawn { get; } = new("player-spawn", "Player spawn", WorldThingKind2D.PlayerSpawn, new XnaColor(90, 220, 130));
 
@@ -55,7 +52,6 @@ internal static class ThingTypeRegistry2D
     public static IReadOnlyList<ThingTypeDescriptor2D> All { get; } =
         [
             Object,
-            MovingPlatform,
             PlayerSpawn,
             SavePoint,
             Goal,
@@ -74,20 +70,6 @@ internal static class ThingTypeRegistry2D
     public static ThingTypeDescriptor2D Require(string typeKey) =>
         All.SingleOrDefault(type => string.Equals(type.TypeKey, typeKey, StringComparison.Ordinal)) ??
         throw new InvalidOperationException($"Thing type '{typeKey}' is not registered.");
-
-    public static MovingPlatformSpec2D ToRuntime(MovingPlatformThingRecord2D record)
-    {
-        _ = Require(MovingPlatform.TypeKey);
-        return new MovingPlatformSpec2D(
-            record.ThingId,
-            record.Name,
-            record.Enabled,
-            new Vector2(record.X, record.Y),
-            new Vector2(record.TravelX, record.TravelY),
-            new Size2D(record.Width, record.Height),
-            record.Speed,
-            unchecked((uint)record.ColorArgb));
-    }
 
     /// <summary>An object thing becomes a placement whose id is the world-wide thing id, so placements stay unique across maps.</summary>
     public static ObjectPlacement2D ToPlacement(PositionThingRecord2D record, ObjectAsset2D asset, long worldThingId)

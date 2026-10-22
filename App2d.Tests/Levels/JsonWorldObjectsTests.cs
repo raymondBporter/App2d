@@ -35,7 +35,7 @@ public sealed class JsonWorldObjectsTests : IDisposable
         Assert.Equal(2, world.Objects.Count);
         Assert.Same(world.Objects[0].Asset, world.Objects[1].Asset);
         using var simulation = SideScrollerSimulation2D.Create(new(
-            TraversalMetricsLoader2D.Load(TestAssetPath.Root), world.TileMap, [], []) { Objects = world.Objects });
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root), world.TileMap, []) { Objects = world.Objects });
         var first = simulation.Level.Objects[0];
         var second = simulation.Level.Objects[1];
         Assert.NotEqual(first.Id, second.Id);

@@ -83,7 +83,6 @@ public sealed class SideScrollerGame : Game2D
         // The one construction recipe for the simulation; the host only adds I/O and presentation.
         _simulation = SideScrollerSimulation2D.Create(new SideScrollerSessionDefinition2D(
             Traversal, tileMap,
-            [.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)],
             [.. loadedLevel.PositionThings
                 .Where(thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null)
                 .Select(ThingTypeRegistry2D.ToRuntime)])
@@ -120,11 +119,6 @@ public sealed class SideScrollerGame : Game2D
         _editorUi = new(_editor, Textures, DebugPanel);
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
         _editor.ConfigureMaps(loadedLevel.Maps, loadedLevel.Root);
-        _editor.ThingsChanged += things =>
-        {
-            loadedLevel.Maps[_editor.SelectedMapIndex].MovingPlatforms = [.. things];
-            _simulation.Level.ReloadMovingPlatforms([.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)]);
-        };
         _editor.ObjectsChanged += objects =>
         {
             loadedLevel.Maps[_editor.SelectedMapIndex].Objects = objects;

@@ -21,7 +21,6 @@ public sealed class WorldMapAsset2D
     public required string DatabasePath { get; init; }
     public required int Identity { get; init; }
     public required EditableTileMap2D TileMap { get; init; }
-    public required IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms { get; set; }
     public required IReadOnlyList<PositionThingRecord2D> PositionThings { get; init; }
     /// <summary>The map's object things as placements, ids already world-wide.</summary>
     public required IReadOnlyList<ObjectPlacement2D> Objects { get; set; }
@@ -68,7 +67,6 @@ public sealed class WorldAsset2D : IDisposable
     ];
 
     public WorldTileMap2D TileMap { get; }
-    public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatforms => [.. Maps.SelectMany(m => m.MovingPlatforms.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
     public IReadOnlyList<PositionThingRecord2D> PositionThings => [.. Maps.SelectMany(m => m.PositionThings.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
     public void Dispose() => TileMap.Dispose();
 }
@@ -173,7 +171,6 @@ public static class WorldFile2D
             Identity = identity,
             DatabasePath = path,
             TileMap = database.Load(legacyTilesets),
-            MovingPlatforms = database.LoadMovingPlatforms(),
             PositionThings = database.LoadPositionThings(),
             Objects = []
         };

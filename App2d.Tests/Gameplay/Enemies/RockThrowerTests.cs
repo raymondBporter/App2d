@@ -152,7 +152,7 @@ public sealed class RockThrowerTests
             things.Add(new(3, WorldThingKind2D.ClubCaveman, null, true, new(-280, 40)));
         }
 
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], things)
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, things)
         {
             AuthoredCharacters = Catalog,
             PlayerMaximumHealth = 100

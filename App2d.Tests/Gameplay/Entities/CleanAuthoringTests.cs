@@ -154,7 +154,7 @@ public sealed class CleanAuthoringTests : IDisposable
             map.SetTileKind(x, 19, TileKind2D.Solid);
         }
 
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
             [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40)), new(2, WorldThingKind2D.GreenDinosaur, null, true, new(-120, 42))])
         {
             AuthoredCharacters = catalog,

@@ -67,8 +67,7 @@ public sealed class SideScrollerSimulation2D : IDisposable
             VelocityIterations = definition.VelocityIterations,
         };
 
-        var level = new SideScrollerLevel2D(traversal, definition.TileMap,
-            definition.MovingPlatforms, definition.WorldThings, definition.Zones, definition.GiantTrees, definition.Objects);
+        var level = new SideScrollerLevel2D(traversal, definition.TileMap, definition.WorldThings, definition.Zones, definition.GiantTrees, definition.Objects);
         var respawn = ResolveRespawn(level, definition);
         level.CreateSimulation(collision, physics, ids,
             SideScrollerLayers2D.World, SideScrollerLayers2D.Player, SideScrollerLayers2D.Enemy);

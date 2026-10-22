@@ -25,9 +25,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
 
     private readonly float _tileSize;
     private readonly TraversalMetrics2D _traversal;
-    private IReadOnlyList<MovingPlatformSpec2D> _movingPlatformSpecs;
     private readonly IReadOnlyList<WorldThingSpec2D> _worldThingSpecs;
-    private readonly List<MovingPlatform2D> _movingPlatforms = [];
     private IReadOnlyList<ObjectPlacement2D> _objectPlacements;
     private readonly List<AuthoredObject2D> _objects = [];
     private readonly List<SavePoint2D> _savePoints = [];
@@ -40,21 +38,13 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     private CombatantRegistry2D? _combatants;
     private bool _disposed;
 
-    public SideScrollerLevel2D(
-        TraversalMetrics2D traversal,
-        IChunkedTileMap2D tileMap,
-        IReadOnlyList<MovingPlatformSpec2D>? movingPlatforms = null,
-        IReadOnlyList<WorldThingSpec2D>? worldThings = null,
-        IEnumerable<WorldZone2D>? zones = null,
-        IEnumerable<GiantTree2D>? giantTrees = null,
-        IReadOnlyList<ObjectPlacement2D>? objects = null)
+    public SideScrollerLevel2D(TraversalMetrics2D traversal, IChunkedTileMap2D tileMap, IReadOnlyList<WorldThingSpec2D>? worldThings = null, IEnumerable<WorldZone2D>? zones = null, IEnumerable<GiantTree2D>? giantTrees = null, IReadOnlyList<ObjectPlacement2D>? objects = null)
     {
         ArgGuard.ThrowIfNull(traversal);
         ArgGuard.ThrowIfNull(tileMap);
         _traversal = traversal;
         _tileSize = traversal.TileSize;
         ArgGuard.Positive(_tileSize);
-        _movingPlatformSpecs = movingPlatforms ?? [];
         _worldThingSpecs = worldThings ?? [];
         _objectPlacements = ValidatePlacements(objects ?? []);
         TileMap = tileMap;
@@ -102,7 +92,6 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public WorldThingSpec2D? GoalThing { get; }
     public IReadOnlyList<WorldThingSpec2D> SavePointThings => [.. _worldThingSpecs.Where(thing => thing.Enabled && thing.Kind == WorldThingKind2D.SavePoint)];
     public IReadOnlyList<SpatialObject2D> Platforms => RequireEnvironment().Streamer.Platforms;
-    public IReadOnlyList<MovingPlatform2D> MovingPlatforms => _movingPlatforms;
     public IReadOnlyList<AuthoredObject2D> Objects => _objects;
     public EnemySystem2D EnemySystem { get; } = new();
     public int ActiveChunkCount => _environment?.Streamer.ActiveChunkCount ?? 0;
@@ -163,16 +152,13 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         var streamer = new SideScrollerChunkStreamer2D(physics, TileMap, worldLayer, playerLayer | enemyLayer);
         _environment = new LevelEnvironment(collision, physics, ids, streamer, worldLayer, playerLayer, enemyLayer);
         UpdateStreaming(SpawnPoint);
-        CreateMovingPlatformsFromSpecs();
         CreateObjects();
         CreateGiantTreeBranches();
         CreateSavePoints();
     }
 
     /// <summary>Per-tick dynamic observation.</summary>
-    public WorldState2D CaptureWorld() => new(
-        [.. _movingPlatforms.Select(p => p.CaptureState())],
-        [.. _savePoints.Select(p => p.CaptureState())])
+    public WorldState2D CaptureWorld() => new([.. _savePoints.Select(p => p.CaptureState())])
     {
         CutGrass = _cutGrass,
         Objects = [.. _objects.Select(o => o.CaptureState())]
@@ -186,10 +172,7 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         if (_content is null || _contentKey != key)
         {
             _contentKey = key;
-            _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(),
-                [.. _movingPlatforms.Select(p => p.CaptureDefinition())],
-                [.. _savePoints.Select(p => p.CapturePlacement())],
-                GoalThing?.Position)
+            _content = new LevelContent2D(++_contentRevision, streamer.CaptureState(), [.. _savePoints.Select(p => p.CapturePlacement())], GoalThing?.Position)
             {
                 Objects = [.. _objects.Select(o => o.CaptureDefinition())],
                 Zones = Zones,
@@ -224,10 +207,6 @@ public sealed partial class SideScrollerLevel2D : IDisposable
     public void UpdateWorldMotion(float deltaSeconds)
     {
         ArgGuard.NonNegative(deltaSeconds);
-        foreach (var platform in _movingPlatforms)
-        {
-            platform.Update(deltaSeconds);
-        }
         foreach (var item in _objects) item.Update(deltaSeconds);
     }
 
@@ -255,20 +234,6 @@ public sealed partial class SideScrollerLevel2D : IDisposable
         var environment = RequireEnvironment();
         foreach (var placement in _objectPlacements)
             _objects.Add(new(environment.Ids.Allocate(), placement, environment.Physics, environment.WorldLayer, environment.WorldLayer | environment.PlayerLayer | environment.EnemyLayer));
-    }
-
-    public void ReloadMovingPlatforms(IReadOnlyList<MovingPlatformSpec2D> specs)
-    {
-        ArgGuard.ThrowIfNull(specs);
-        _definitionRevision++;
-        foreach (var platform in _movingPlatforms)
-        {
-            platform.Dispose();
-        }
-
-        _movingPlatforms.Clear();
-        _movingPlatformSpecs = specs;
-        CreateMovingPlatformsFromSpecs();
     }
 
     public void UpdateStreaming(Vector2 focus)
@@ -328,29 +293,6 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             _environment,
             "Create the level simulation before using it.");
 
-    private void CreateMovingPlatformsFromSpecs()
-    {
-        var environment = RequireEnvironment();
-        foreach (var spec in _movingPlatformSpecs)
-        {
-            if (!spec.Enabled)
-            {
-                continue;
-            }
-
-            _movingPlatforms.Add(new MovingPlatform2D(
-                environment.Ids.Allocate(),
-                environment.Physics,
-                spec.Position,
-                spec.Travel,
-                spec.Size,
-                spec.Speed,
-                environment.WorldLayer,
-                environment.PlayerLayer | environment.EnemyLayer,
-                spec.ThingId, spec.ColorArgb));
-        }
-    }
-
     private void CreateSavePoints()
     {
         foreach (var spec in _worldThingSpecs)
@@ -385,12 +327,6 @@ public sealed partial class SideScrollerLevel2D : IDisposable
             editable.ChunkChanged -= OnMapChanged;
         }
 
-        foreach (var platform in _movingPlatforms)
-        {
-            platform.Dispose();
-        }
-
-        _movingPlatforms.Clear();
         RemoveGiantTreeBranches();
         foreach (var item in _objects) item.Dispose();
         _objects.Clear();

@@ -25,11 +25,7 @@ public readonly record struct SavedProgress2D(long SavePointId, int HitPoints);
 /// in the same order get identical actors, identities, and physics; nothing here is a live
 /// simulation object.
 /// </summary>
-public sealed record SideScrollerSessionDefinition2D(
-    TraversalMetrics2D Traversal,
-    IChunkedTileMap2D TileMap,
-    IReadOnlyList<MovingPlatformSpec2D> MovingPlatforms,
-    IReadOnlyList<WorldThingSpec2D> WorldThings)
+public sealed record SideScrollerSessionDefinition2D(TraversalMetrics2D Traversal, IChunkedTileMap2D TileMap, IReadOnlyList<WorldThingSpec2D> WorldThings)
 {
     /// <summary>Authored entities; placements they cover spawn from these, otherwise the built-in sprite enemies.</summary>
     public AuthoredCatalog? AuthoredCharacters { get; init; }
@@ -48,7 +44,6 @@ public sealed record SideScrollerSessionDefinition2D(
     {
         ArgGuard.ThrowIfNull(Traversal);
         ArgGuard.ThrowIfNull(TileMap);
-        ArgGuard.ThrowIfNull(MovingPlatforms);
         ArgGuard.ThrowIfNull(WorldThings);
         ArgGuard.ThrowIfNull(Objects);
         foreach (var placement in Objects) placement.Validate();

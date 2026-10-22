@@ -175,7 +175,7 @@ public sealed class PterosaurTests
                 map.SetTileKind(x, 19, TileKind2D.Solid);
             }
 
-            using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [],
+            using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map,
                 [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 26)),
                  new(2, WorldThingKind2D.Pterosaur, null, true, new(-464, 154))])
             {

@@ -25,7 +25,7 @@ public sealed class AuthoredEntityGameTests
             map.SetTileKind(x, 19, TileKind2D.Solid);
         }
 
-        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [], [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
+        using var game = SideScrollerSimulation2D.Create(new(TraversalMetricsLoader2D.Load(TestAssetPath.Root), map, [new(1, WorldThingKind2D.PlayerSpawn, null, true, new(-368, 40))])
         {
             AuthoredCharacters = authored,
             PlayerMaximumHealth = 30

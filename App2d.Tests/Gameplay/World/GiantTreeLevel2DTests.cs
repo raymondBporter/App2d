@@ -26,7 +26,7 @@ public sealed class GiantTreeLevel2DTests
         var tree = new GiantTree2D(Vector2.Zero, new(), 3107);
         var branch = tree.Branches[0];
         var spawn = new Vector2(branch.Bounds.Center.X, branch.Bounds.Top + 48);
-        using var game = SideScrollerSimulation2D.Create(new(Traversal(), Map(), [],
+        using var game = SideScrollerSimulation2D.Create(new(Traversal(), Map(),
             [new(1, WorldThingKind2D.PlayerSpawn, "Branch", true, spawn)])
         {
             GiantTrees = [tree]

@@ -22,7 +22,7 @@ public sealed class CombatLevelGeneratorTests
             Enum.Parse<App2d.Gameplay.World.WorldThingKind2D>(p.TypeKey.Replace("-", ""), true),
             p.Name, true, new(p.X, p.Y))).ToArray();
         using var simulation = App2d.Gameplay.Simulation.SideScrollerSimulation2D.Create(new(
-            TraversalMetricsLoader2D.Load(TestAssetPath.Root), draft.Map, [], things)
+            TraversalMetricsLoader2D.Load(TestAssetPath.Root), draft.Map, things)
         {
             AuthoredCharacters = catalog
         });
