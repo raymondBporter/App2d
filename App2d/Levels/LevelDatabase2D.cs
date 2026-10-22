@@ -84,7 +84,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         {
             connection.Dispose();
             StateGuard.Throw(
-                $"The level file is format version {version}; open it for editing once to upgrade it to {CurrentFormatVersion}.");
+                $"The level file is format version {version}; run 'dotnet run --project App2d -- --migrate-level <world.json>' to upgrade it to {CurrentFormatVersion}.");
         }
 
         return database;

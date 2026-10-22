@@ -31,6 +31,7 @@ internal static class MovingPlatformMigration2D
             return;
         }
 
+        RequireCompletePlatforms(connection);
         var plan = new List<Group>();
         var unusedDefinitions = new List<long>();
         var usedSlugs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -84,6 +85,47 @@ internal static class MovingPlatformMigration2D
         foreach (var table in PieceTables)
         {
             Execute(connection, $"DROP TABLE IF EXISTS {table};");
+        }
+    }
+
+    /// <summary>The old editor always wrote every piece; a platform missing one is a damaged file, refused as it is rather than half-converted.</summary>
+    private static void RequireCompletePlatforms(SqliteConnection connection)
+    {
+        using (var definitions = connection.CreateCommand())
+        {
+            definitions.CommandText = """
+                SELECT d.definition_id, d.name
+                FROM thing_definitions d
+                LEFT JOIN rectangle_shapes r USING(definition_id)
+                LEFT JOIN solid_color_art a USING(definition_id)
+                WHERE d.type_key = $type AND (r.definition_id IS NULL OR a.definition_id IS NULL)
+                ORDER BY d.definition_id;
+                """;
+            definitions.Parameters.AddWithValue("$type", LegacyTypeKey);
+            using var reader = definitions.ExecuteReader();
+            if (reader.Read())
+            {
+                throw new InvalidDataException($"Moving-platform definition {reader.GetInt64(0)} '{reader.GetString(1)}' is missing its rectangle or art row, so the level cannot be converted as it is.");
+            }
+        }
+
+        using (var things = connection.CreateCommand())
+        {
+            things.CommandText = """
+                SELECT t.thing_id, t.name, d.name
+                FROM things t
+                JOIN thing_definitions d USING(definition_id)
+                LEFT JOIN ping_pong_motors m USING(thing_id)
+                WHERE d.type_key = $type AND m.thing_id IS NULL
+                ORDER BY t.thing_id;
+                """;
+            things.Parameters.AddWithValue("$type", LegacyTypeKey);
+            using var reader = things.ExecuteReader();
+            if (reader.Read())
+            {
+                var name = reader.IsDBNull(1) ? reader.GetString(2) : reader.GetString(1);
+                throw new InvalidDataException($"Moving-platform thing {reader.GetInt64(0)} '{name}' is missing its motor row, so the level cannot be converted as it is.");
+            }
         }
     }
 

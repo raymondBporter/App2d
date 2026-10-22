@@ -28,6 +28,26 @@ public sealed class ObjectAssetCatalog2DTests : IDisposable
     }
 
     [Fact]
+    public void AFailedLoadIsRememberedUntilTheCatalogRefreshes()
+    {
+        var broken = Path.Combine(_root, "objects", "broken.json");
+        File.WriteAllText(broken, "{ \"format\": \"app2d-object\", \"id\": \"broken\" }");
+        var catalog = new ObjectAssetCatalog2D(_root);
+        Assert.False(catalog.TryLoad("objects/broken.json", out _));
+        var first = Record.Exception(() => catalog.Load("objects/broken.json"));
+        Assert.NotNull(first);
+
+        // The file is fixed on disk, but the catalog answers from memory until it is refreshed: no re-read per frame.
+        File.Copy(Path.Combine(_root, "objects", "a.json"), broken, overwrite: true);
+        Assert.False(catalog.TryLoad("objects/broken.json", out _));
+        Assert.IsType(first.GetType(), Record.Exception(() => catalog.Load("objects/broken.json")));
+
+        catalog.Refresh();
+        Assert.True(catalog.TryLoad("objects/broken.json", out var repaired));
+        Assert.NotNull(repaired);
+    }
+
+    [Fact]
     public void MissingObjectsFolderIsAnEmptyCatalog()
     {
         var catalog = new ObjectAssetCatalog2D(Path.Combine(_root, "elsewhere"));

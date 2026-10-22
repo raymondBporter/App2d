@@ -204,6 +204,27 @@ public sealed class ThingDatabase2DTests : IDisposable
         Assert.Equal(2, UserVersion(path));
     }
 
+    [Theory]
+    [InlineData("DELETE FROM solid_color_art;", "Lift")]
+    [InlineData("DELETE FROM ping_pong_motors WHERE thing_id = 1;", "A")]
+    public void MigrationRefusesAPlatformMissingOneOfItsPieces(string damage, string named)
+    {
+        var path = WriteVersionTwoPlatforms(("A", 0f, 0f, 100f, 0f, 50f));
+        Execute(path, damage);
+        var error = Assert.Throws<InvalidDataException>(() => LevelDatabase2D.Open(path, worldRoot: _directory));
+        Assert.Contains(named, error.Message);
+        Assert.Contains("rectangle_shapes", TableNames(path));
+        Assert.Equal(2, UserVersion(path));
+    }
+
+    [Fact]
+    public void ReadOnlyOpenOfAnOldFileNamesTheMigrationCommand()
+    {
+        var path = WriteVersionTwoPlatforms();
+        var error = Assert.ThrowsAny<Exception>(() => LevelDatabase2D.OpenRead(path));
+        Assert.Contains("--migrate-level", error.Message);
+    }
+
     [Fact]
     public void FreshDatabaseHasNoPlatformTablesAndMigrationIsIdempotent()
     {

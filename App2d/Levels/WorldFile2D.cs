@@ -204,7 +204,7 @@ public static class WorldFile2D
                 var assetPath = FilePaths.ResolveUnderRoot(root, thing.Asset ?? "");
                 if (!assets.TryGetValue(assetPath, out asset)) assets.Add(assetPath, asset = ObjectAsset2D.Load(assetPath));
             }
-            catch (Exception e) when (e is ArgumentException or IOException or UnauthorizedAccessException or JsonException)
+            catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or UnauthorizedAccessException or JsonException)
             {
                 throw new InvalidDataException($"Object definition '{thing.DefinitionName}' in map '{map.Id}' names asset '{thing.Asset}', which cannot be loaded: {e.Message}", e);
             }

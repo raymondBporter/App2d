@@ -122,6 +122,24 @@ public sealed class ObjectEditorTests : IDisposable
         Assert.Empty(database.LoadThingDefinitions());
     }
 
+    [Fact]
+    public void UndoingANonObjectEditLeavesTheRuntimeAlone()
+    {
+        using var editor = CreateEditor(out _, out var input, out var notified);
+        editor.ApplyPositionDefinition(null, ThingTypeRegistry2D.SavePoint.TypeKey, new() { Name = "Checkpoint" });
+        editor.BeginThingPlacement();
+        input.SetMouseButton(MouseButtons.Left, true);
+        editor.Update(input);
+        input.SetMouseButton(MouseButtons.Left, false);
+        input.EndFrame();
+        Assert.Single(editor.PositionThings);
+        var baseline = notified.Count;
+
+        editor.UndoThingEdit();
+        Assert.Empty(editor.PositionThings);
+        Assert.Equal(baseline, notified.Count);
+    }
+
     /// <summary>An editor on the fixture map, already in Things mode with its database open, and the runtime notifications it raises.</summary>
     private TileEditor2D CreateEditor(out WorldMapAsset2D map, out InputState input, out List<IReadOnlyList<ObjectPlacement2D>> notified)
     {

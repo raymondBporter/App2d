@@ -84,7 +84,7 @@ internal static class LevelBootstrap2D
 
         var maps = LoadManifestMaps(document, manifest, root);
         // Every entry is resolved before any row is written, so a bad entry leaves the maps and the manifest as they were.
-        var imports = new List<(string MapPath, string Id, string Asset, Vector2 Point)>();
+        var imports = new List<(string MapPath, string Id, string Asset, string Name, Vector2 Point)>();
         foreach (var entry in entries)
         {
             var id = entry?["id"]?.GetValue<string>();
@@ -98,27 +98,30 @@ internal static class LevelBootstrap2D
             var point = new Vector2(position["x"]!.GetValue<float>(), position["y"]!.GetValue<float>());
             var map = maps.FirstOrDefault(m => Contains(m.TileMap.WorldBounds, point))
                 ?? throw new InvalidDataException($"Invalid world '{manifest}': no map contains object '{id}' at ({point.X}, {point.Y}).");
+            ObjectAsset2D loaded;
             try
             {
-                _ = ObjectAsset2D.Load(FilePaths.ResolveUnderRoot(root, asset));
+                loaded = ObjectAsset2D.Load(FilePaths.ResolveUnderRoot(root, asset));
             }
             catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or JsonException)
             {
                 throw new InvalidDataException($"Invalid world '{manifest}': object '{id}' names asset '{asset}', which cannot be loaded: {e.Message}", e);
             }
 
-            imports.Add((map.DatabasePath, id, asset, point));
+            // The definition is named like the inspector names a new one: after the asset, falling back to its file.
+            var name = string.IsNullOrWhiteSpace(loaded.Name) ? Path.GetFileNameWithoutExtension(asset) : loaded.Name.Trim();
+            imports.Add((map.DatabasePath, id, asset, name, point));
         }
 
         foreach (var group in imports.GroupBy(import => import.MapPath, StringComparer.OrdinalIgnoreCase))
         {
             using var database = LevelDatabase2D.Open(group.Key, root);
-            foreach (var (_, id, asset, point) in group)
+            foreach (var (_, id, asset, name, point) in group)
             {
                 var definition = database.LoadThingDefinitions().FirstOrDefault(d =>
                         string.Equals(d.TypeKey, LevelDatabase2D.ObjectTypeKey, StringComparison.Ordinal) &&
                         string.Equals(d.Asset, asset, StringComparison.Ordinal))
-                    ?? database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, Path.GetFileNameWithoutExtension(asset), asset);
+                    ?? database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, name, asset);
                 database.CreatePositionThing(new NewPositionThing2D(definition.DefinitionId, id, true, point.X, point.Y));
             }
         }

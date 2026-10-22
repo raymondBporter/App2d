@@ -41,7 +41,7 @@ internal sealed class TileEditor2D : IDisposable
     private bool _hasLastPainted;
     private readonly List<ThingDefinitionRecord2D> _thingDefinitions = [];
     private readonly List<PositionThingRecord2D> _positionThings = [];
-    private Stack<Action<LevelDatabase2D>> _thingUndo = [];
+    private Stack<(Action<LevelDatabase2D> Apply, bool TouchesObjects)> _thingUndo = [];
     private bool _isPlacingThing;
     private PositionThingRecord2D? _positionDragOriginal;
     private ObjectAssetCatalog2D? _objectAssets;
@@ -68,7 +68,7 @@ internal sealed class TileEditor2D : IDisposable
 
     private IReadOnlyList<WorldMapAsset2D> _maps = [];
     private readonly Dictionary<int, TileEditSession2D> _mapSessions = [];
-    private readonly Dictionary<int, Stack<Action<LevelDatabase2D>>> _mapThingUndo = [];
+    private readonly Dictionary<int, Stack<(Action<LevelDatabase2D> Apply, bool TouchesObjects)>> _mapThingUndo = [];
     public int SelectedMapIndex { get; private set; }
     public string MapLabel => _maps.Count == 0 ? "Tile editor" : $"{_maps[SelectedMapIndex].ZoneId} / {_maps[SelectedMapIndex].Name}";
     public int MapCount => _maps.Count;
@@ -168,20 +168,7 @@ internal sealed class TileEditor2D : IDisposable
     public bool TryGetObjectAsset(string? assetPath, [NotNullWhen(true)] out ObjectAsset2D? asset)
     {
         asset = null;
-        if (_objectAssets is null || string.IsNullOrWhiteSpace(assetPath))
-        {
-            return false;
-        }
-
-        try
-        {
-            asset = _objectAssets.Load(assetPath);
-            return true;
-        }
-        catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or System.Text.Json.JsonException)
-        {
-            return false;
-        }
+        return _objectAssets is not null && !string.IsNullOrWhiteSpace(assetPath) && _objectAssets.TryLoad(assetPath, out asset);
     }
 
     public bool TryGetHoveredTile(out int x, out int y)
@@ -367,10 +354,11 @@ internal sealed class TileEditor2D : IDisposable
             X = properties.PositionX,
             Y = properties.PositionY
         };
+        var touchesObjects = ThingTypeRegistry2D.Require(old.TypeKey).IsObject;
         RequireDatabase().UpdatePositionThing(updated);
-        _thingUndo.Push(database => database.UpdatePositionThing(old));
+        _thingUndo.Push((database => database.UpdatePositionThing(old), touchesObjects));
         SelectedThingId = thingId;
-        ReloadThings(notifyRuntime: ThingTypeRegistry2D.Require(old.TypeKey).IsObject);
+        ReloadThings(notifyRuntime: touchesObjects);
     }
 
     internal void DeleteSelectedThing()
@@ -380,10 +368,11 @@ internal sealed class TileEditor2D : IDisposable
             return;
         }
 
+        var touchesObjects = ThingTypeRegistry2D.Require(positionThing.TypeKey).IsObject;
         var deleted = RequireDatabase().DeletePositionThing(positionThing.ThingId);
-        _thingUndo.Push(database => database.RestorePositionThing(deleted));
+        _thingUndo.Push((database => database.RestorePositionThing(deleted), touchesObjects));
         SelectedThingId = null;
-        ReloadThings(notifyRuntime: ThingTypeRegistry2D.Require(positionThing.TypeKey).IsObject);
+        ReloadThings(notifyRuntime: touchesObjects);
     }
 
     internal bool TryGetPositionPlacementPreview(out ThingDefinitionRecord2D definition, out Vector2 position)
@@ -539,10 +528,11 @@ internal sealed class TileEditor2D : IDisposable
             Enabled: true,
             position.X,
             position.Y));
-        _thingUndo.Push(database => database.DeletePositionThing(created.ThingId));
+        var touchesObjects = ThingTypeRegistry2D.Require(definition.TypeKey).IsObject;
+        _thingUndo.Push((database => database.DeletePositionThing(created.ThingId), touchesObjects));
         SelectedThingId = created.ThingId;
         _isPlacingThing = false;
-        ReloadThings(notifyRuntime: ThingTypeRegistry2D.Require(definition.TypeKey).IsObject);
+        ReloadThings(notifyRuntime: touchesObjects);
     }
 
     private void BeginThingSelectionOrDrag()
@@ -613,9 +603,10 @@ internal sealed class TileEditor2D : IDisposable
             return;
         }
 
+        var touchesObjects = ThingTypeRegistry2D.Require(moved.TypeKey).IsObject;
         RequireDatabase().UpdatePositionThing(moved);
-        _thingUndo.Push(database => database.UpdatePositionThing(original));
-        ReloadThings(notifyRuntime: ThingTypeRegistry2D.Require(moved.TypeKey).IsObject);
+        _thingUndo.Push((database => database.UpdatePositionThing(original), touchesObjects));
+        ReloadThings(notifyRuntime: touchesObjects);
     }
 
     internal void UndoThingEdit()
@@ -626,9 +617,10 @@ internal sealed class TileEditor2D : IDisposable
             return;
         }
 
-        _thingUndo.Pop()(RequireDatabase());
+        var (apply, touchesObjects) = _thingUndo.Pop();
+        apply(RequireDatabase());
         SelectedThingId = null;
-        ReloadThings(notifyRuntime: true);
+        ReloadThings(notifyRuntime: touchesObjects);
     }
 
     private Vector2 SnapToGrid(Vector2 world) => GridGeometry.SnapToNearestCorner(world);

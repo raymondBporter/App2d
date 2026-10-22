@@ -21,7 +21,7 @@ public sealed class WorldMigrationTests : IDisposable
         }
 
         Execute(mapPath, "DROP TABLE object_references; PRAGMA user_version = 2;");
-        ObjectPlatforms.Asset("lift", new(0f, 96f), 48f).Save(Path.Combine(_root, "objects", "lift.json"));
+        (ObjectPlatforms.Asset("lift", new(0f, 96f), 48f) with { Name = "Path lift" }).Save(Path.Combine(_root, "objects", "lift.json"));
         WriteManifest("""{ "id": "arrival", "asset": "objects/lift.json", "position": { "x": 10, "y": 20 } }""");
     }
 
@@ -47,6 +47,7 @@ public sealed class WorldMigrationTests : IDisposable
         Assert.Equal(3, database.FormatVersion);
         var thing = Assert.Single(database.LoadPositionThings());
         Assert.Equal(("arrival", 10f, 20f, "objects/lift.json"), (thing.Name, thing.X, thing.Y, thing.Asset));
+        Assert.Equal("Path lift", Assert.Single(database.LoadThingDefinitions()).Name); // Named after the asset, not its file.
         Assert.DoesNotContain("\"objects\"", File.ReadAllText(ManifestPath));
         Assert.Equal(migrated, LevelBootstrap2D.MigrateWorld(ManifestPath));
         using var world = WorldFile2D.Load(ManifestPath);

@@ -296,7 +296,8 @@ physics and path; the moving lifts are such objects. The position-only types del
 just reusable definition names plus instance name, enablement, and position; their health, AI,
 art, physics, and other tuning remain in gameplay code. A native WinForms `PropertyGrid` writes
 only when **Apply** is pressed, while MonoGame draws map markers, placement ghosts, selection
-outlines, object outlines and their paths. This avoids turning the renderer into a general UI
+outlines, object outlines and their paths. Any placed thing drags to a new grid corner, and
+**Undo** reverts the last thing edit. This avoids turning the renderer into a general UI
 library. All definitions, instances, and transforms remain relational rows in the level
 database. Object placements reload live as they are placed, dragged, edited or deleted; the
 other map objects are picked up on the next run.

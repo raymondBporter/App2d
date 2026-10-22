@@ -54,6 +54,21 @@ public sealed class WorldObjectsTests : IDisposable
     }
 
     [Fact]
+    public void ObjectDefinitionWithAnInvalidAssetNamesTheDefinitionAndMap()
+    {
+        File.WriteAllText(Path.Combine(_root, "invalid.json"), "{ \"format\": \"app2d-object\", \"id\": \"invalid\" }");
+        using (var database = LevelDatabase2D.Open(Path.Combine(_root, "map.db")))
+        {
+            var definition = database.CreateThingDefinition(LevelDatabase2D.ObjectTypeKey, "Ghost", "invalid.json");
+            database.CreatePositionThing(new(definition.DefinitionId, null, true, 0f, 0f));
+        }
+        var error = Assert.Throws<InvalidDataException>(() => WorldFile2D.LoadMap(Path.Combine(_root, "map.db"), "test", "Test", "zone", 0, worldRoot: _root));
+        Assert.Contains("'Ghost'", error.Message);
+        Assert.Contains("map 'test'", error.Message);
+        Assert.Contains("invalid.json", error.Message);
+    }
+
+    [Fact]
     public void ObjectDefinitionWithMissingOrEscapingAssetFailsToLoad()
     {
         var assets = new[] { "missing.json", "../lift.json" };
