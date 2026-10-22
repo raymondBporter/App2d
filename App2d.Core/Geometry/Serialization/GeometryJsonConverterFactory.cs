@@ -46,12 +46,28 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
             var kind = properties.TryGetValue("kind", out var tag) ? tag.GetString() : KindOf(typeof(T));
             // Raw construction is intentional here: callers validate after reading the whole document.
 #pragma warning disable APP2D001
+            // A rectangle is spelled with min and max (the axis-aligned form) or with center and size, never both.
+            (Vector2 Center, Vector2 HalfSize) RectangleExtents()
+            {
+                var cornered = properties.ContainsKey(Name("Min")) || properties.ContainsKey(Name("Max"));
+                var centered = properties.ContainsKey(Name("Center")) || properties.ContainsKey(Name("Size"));
+                if (cornered && centered) throw new JsonException("A rectangle is spelled with min and max or with center and size, not both.");
+                if (!cornered) return (R<Vector2>("Center"), R<Vector2>("Size") / 2f);
+                var min = R<Vector2>("Min");
+                var max = R<Vector2>("Max");
+                return ((min + max) / 2f, (max - min) / 2f);
+            }
+            Rectangle2D ReadRectangle()
+            {
+                var (center, halfSize) = RectangleExtents();
+                return new(center, halfSize, Primitives.OrientedFrame2D.AxisFromAngle(Optional("AngleRadians", 0f)));
+            }
             IGeometryValue2D geometry = kind switch
             {
                 ShapeKinds2D.Circle => new Circle2D(R<float>("Radius"), R<Vector2>("Center")),
                 ShapeKinds2D.Ellipse => new Ellipse2D(R<Vector2>("Radii"), R<Vector2>("Center")),
                 ShapeKinds2D.Capsule => new Capsule2D(R<Vector2>("Start"), R<Vector2>("End"), R<float>("Radius")),
-                ShapeKinds2D.Rectangle => new Rectangle2D(R<Vector2>("Center"), R<Vector2>("Size") / 2f, Primitives.OrientedFrame2D.AxisFromAngle(Optional("AngleRadians", 0f))),
+                ShapeKinds2D.Rectangle => ReadRectangle(),
                 ShapeKinds2D.AxisAlignedRectangle => new AxisAlignedRectangle2D(R<Vector2>("Min"), R<Vector2>("Max")),
                 ShapeKinds2D.RoundedRectangle => new RoundedRectangle2D(R<Vector2>("Min"), R<Vector2>("Max"), R<float>("Radius")),
                 ShapeKinds2D.Triangle => new Triangle2D(R<Vector2>("A"), R<Vector2>("B"), R<Vector2>("C")),
