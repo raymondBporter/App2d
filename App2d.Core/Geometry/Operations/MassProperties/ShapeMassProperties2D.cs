@@ -60,10 +60,9 @@ public static class ShapeMassProperties2D
 
     private static MassProperties2D RoundedRectangle(RoundedRectangle2D rounded, double density)
     {
-        var min = new Vector2d(rounded.Min);
-        var half = (new Vector2d(rounded.Max) - min) / 2d;
-        return RoundedBox(half.X - rounded.Radius, half.Y - rounded.Radius,
-            rounded.Radius, min + half, density);
+        // Scalar inertia is rotation-invariant, so only the center and the frame-space extents matter.
+        var inner = new Vector2d(rounded.InnerHalfSize);
+        return RoundedBox(inner.X, inner.Y, rounded.Radius, new Vector2d(rounded.Center), density);
     }
 
     private static MassProperties2D RoundedBox(double a, double b, double r, Vector2d center, double density)

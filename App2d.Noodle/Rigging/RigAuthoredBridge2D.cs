@@ -69,8 +69,8 @@ internal static class RigAuthoredBridge2D
         };
         if (part.Geometry is RoundedRectangle2D rounded)
         {
-            part.ScaleX = rounded.Max.X - rounded.Min.X;
-            part.ScaleY = rounded.Max.Y - rounded.Min.Y;
+            part.ScaleX = rounded.Size.X;
+            part.ScaleY = rounded.Size.Y;
         }
         return part;
     }

@@ -105,7 +105,7 @@ public sealed class ShapeBoundsPrecisionTests
         Assert.Equal(new Rect2D(new(8, -6), new(12, -4)), ShapeBounds2D.Calculate(rectangle));
         Assert.IsType<AxisAlignedRectangle2D>(AxisAlignedRectangle2D.Builder.Create(4, 2, center).Validated());
         Assert.Equal(rectangle.Center - rectangle.HalfSize, AxisAlignedRectangle2D.Builder.Create(4, 2, center).Min);
-        Assert.Equal(rectangle.Center + rectangle.HalfSize, RoundedRectangle2D.Builder.Create(4, 2, .5f, center).OuterRect.Max);
+        Assert.Equal(rectangle.Center + rectangle.HalfSize, ShapeBounds2D.Calculate(RoundedRectangle2D.Builder.Create(4, 2, .5f, center)).Max);
         Assert.Throws<ArgumentOutOfRangeException>(() => Rectangle2D.Builder.Create(0, 2));
         Assert.Throws<ArgumentOutOfRangeException>(() => AxisAlignedRectangle2D.Builder.Create(2, float.NaN));
         Assert.Throws<ArgumentOutOfRangeException>(() => RoundedRectangle2D.Builder.Create(4, 2, 2));

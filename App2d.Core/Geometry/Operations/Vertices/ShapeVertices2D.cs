@@ -41,8 +41,8 @@ public static class ShapeVertices2D
         {
             Circle2D => 1,
             Capsule2D => 2,
-            RoundedRectangle2D rounded when rounded.InnerRect.Min == rounded.InnerRect.Max => 1,
-            RoundedRectangle2D rounded when rounded.InnerRect.Min.X == rounded.InnerRect.Max.X || rounded.InnerRect.Min.Y == rounded.InnerRect.Max.Y => 2,
+            RoundedRectangle2D rounded when rounded.InnerHalfSize == Vector2.Zero => 1,
+            RoundedRectangle2D rounded when rounded.InnerHalfSize.X == 0f || rounded.InnerHalfSize.Y == 0f => 2,
             RoundedRectangle2D => 4,
             Rectangle2D => 4,
             IRect2D => 4,
@@ -84,20 +84,7 @@ public static class ShapeVertices2D
                 break;
             case RoundedRectangle2D rounded:
                 radius = rounded.Radius;
-                if (count == 1)
-                {
-                    vertices[0] = rounded.InnerRect.Min;
-                }
-                else if (count == 2)
-                {
-                    vertices[0] = rounded.InnerRect.Min;
-                    vertices[1] = rounded.InnerRect.Max;
-                }
-                else
-                {
-                    VertexGenerator2D.WriteRectangle(vertices, rounded.InnerRect.Min, rounded.InnerRect.Max);
-                }
-
+                rounded.WriteInnerCorners(vertices);
                 break;
             case Rectangle2D rectangle:
                 rectangle.WriteCorners(vertices);
@@ -168,7 +155,8 @@ public static class ShapeVertices2D
                 VertexGenerator2D.WriteCapsule(vertices, capsule.Start, capsule.End, capsule.Radius, roundSegments / 2);
                 break;
             case RoundedRectangle2D rounded:
-                VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius, cornerSegments);
+                VertexGenerator2D.WriteRoundedRectangle(vertices, -rounded.HalfSize, rounded.HalfSize, rounded.Radius, cornerSegments);
+                rounded.Frame.MapFromFrame(vertices[..count]);
                 break;
             case Rectangle2D rectangle:
                 rectangle.WriteCorners(vertices);

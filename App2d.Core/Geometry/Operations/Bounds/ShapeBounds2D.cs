@@ -29,7 +29,7 @@ public static class ShapeBounds2D
             Circle2D circle => Rect2D.FromCircle(circle.Center, circle.Radius),
             Ellipse2D ellipse => new(ellipse.Center - ellipse.Radii, ellipse.Center + ellipse.Radii),
             Capsule2D capsule => Rect2D.FromCapsule(capsule.Start, capsule.End, capsule.Radius),
-            RoundedRectangle2D rectangle => rectangle.OuterRect,
+            RoundedRectangle2D rounded => rounded.Frame.BoxBounds(rounded.InnerHalfSize, rounded.Radius),
             Rectangle2D rectangle => rectangle.Frame.BoxBounds(rectangle.HalfSize),
             IRect2D rectangle => rectangle.ToRect(),
             Triangle2D triangle => new(Vector2.Min(Vector2.Min(triangle.A, triangle.B), triangle.C), Vector2.Max(Vector2.Max(triangle.A, triangle.B), triangle.C)),
@@ -91,9 +91,8 @@ public static class ShapeBounds2D
             case Capsule2D capsule:
                 return (capsule.Center, float.IsFinite(capsule.Diameter) ? capsule.Diameter / 2
                     : (float)(Vector2d.Distance(capsule.Start.ToVector2d(), capsule.End.ToVector2d()) / 2 + capsule.Radius));
-            case RoundedRectangle2D rectangle:
-                return (rectangle.OuterRect.Center, float.IsFinite(rectangle.Diameter) ? rectangle.Diameter / 2
-                    : (float)(Vector2d.Distance(rectangle.InnerRect.Min.ToVector2d(), rectangle.InnerRect.Max.ToVector2d()) / 2 + rectangle.Radius));
+            case RoundedRectangle2D rounded:
+                return (rounded.Center, (float)(new Vector2d(rounded.InnerHalfSize).Length() + rounded.Radius));
             case Rectangle2D rectangle:
                 return (rectangle.Center, (float)new Vector2d(rectangle.HalfSize).Length());
             case HalfSpace2D:

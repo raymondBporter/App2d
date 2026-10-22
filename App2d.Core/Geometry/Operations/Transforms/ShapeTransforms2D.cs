@@ -100,7 +100,7 @@ public static class ShapeTransforms2D
             Circle2D circle => Circle2D.Builder.Create(circle.Radius * scale, circle.Center * scale),
             Ellipse2D ellipse => Ellipse2D.Builder.Create(ellipse.Radii * scale, ellipse.Center * scale),
             Capsule2D capsule => Capsule2D.Builder.Create(capsule.Start * scale, capsule.End * scale, capsule.Radius * scale),
-            RoundedRectangle2D rounded => RoundedRectangle2D.Builder.Create(rounded.OuterRect.Min * scale, rounded.OuterRect.Max * scale, rounded.Radius * scale),
+            RoundedRectangle2D rounded => RoundedRectangle2D.Builder.Create(rounded.Center * scale, rounded.HalfSize * scale, rounded.Radius * scale, rounded.Axis),
             AxisAlignedRectangle2D rectangle => AxisAlignedRectangle2D.Builder.Create(rectangle.Min * scale, rectangle.Max * scale),
             Rectangle2D rectangle => Rectangle2D.Builder.Create(rectangle.Center * scale, rectangle.HalfSize * scale, rectangle.Axis),
             Triangle2D triangle => Triangle2D.Builder.Create(triangle.A * scale, triangle.B * scale, triangle.C * scale),

@@ -26,8 +26,8 @@ public sealed class ShapeDiameterTests
     public void RoundedRectangleUsesTheInnerDiagonalAndTwoRadii()
     {
         var shape = RoundedRectangle2D.Builder.Create(6, 4, 1, new(3, 2));
-        Assert.Equal(new Rect2D(new(0, 0), new(6, 4)), shape.OuterRect);
-        Assert.Equal(new Rect2D(new(1, 1), new(5, 3)), shape.InnerRect);
+        Assert.Equal(new Rect2D(new(0, 0), new(6, 4)), ShapeBounds2D.Calculate(shape));
+        Assert.Equal(new Vector2(2, 1), shape.InnerHalfSize);
         Assert.Equal(MathF.Sqrt(20) + 2, shape.Diameter, 5);
         Assert.Equal(shape.Diameter / 2, ShapeBounds2D.CalculateBoundingCircle(shape).Radius);
         Assert.Equal(5f, RoundedRectangle2D.Builder.Create(3, 4, 0).Diameter);

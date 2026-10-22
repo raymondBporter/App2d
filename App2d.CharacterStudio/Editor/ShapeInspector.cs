@@ -36,8 +36,8 @@ internal static class ShapeInspector
                 break;
             case RoundedRectangle2D rounded:
                 {
-                    var centre = (rounded.Min + rounded.Max) / 2;
-                    var size = rounded.Max - rounded.Min;
+                    var centre = rounded.Center;
+                    var size = rounded.Size;
                     if (Ui.Drag2("Centre", ref centre))
                     {
                         Drag(RoundedRectangle2D.Builder.FromSize(size, rounded.Radius, centre));

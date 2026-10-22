@@ -19,7 +19,7 @@ public sealed class GeometryValidation2DTests
         new Capsule2D(Vector2.Zero, Vector2.One, -1),
         new Rectangle2D(Vector2.Zero, new(-1, 1), Vector2.UnitX),
         new AxisAlignedRectangle2D(Vector2.One, Vector2.Zero),
-        new RoundedRectangle2D(Vector2.Zero, Vector2.One, 1),
+        new RoundedRectangle2D(Vector2.Zero, new(.5f, .5f), 1, Vector2.UnitX),
         new Triangle2D(Vector2.Zero, Vector2.One, new(2, 2)),
         new ConvexPolygon2D([Vector2.Zero, Vector2.One]),
         new SimplePolygon2D([Vector2.Zero, Vector2.One, new(2, 2)]),

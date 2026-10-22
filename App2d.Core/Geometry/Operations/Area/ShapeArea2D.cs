@@ -63,7 +63,8 @@ public static class ShapeArea2D
             {
                 var perCorner = checked(outlineSegments + 3) / 4;
                 vertices = new Vector2[checked(4 * (perCorner + 1))];
-                VertexGenerator2D.WriteRoundedRectangle(vertices, rounded.OuterRect.Min, rounded.OuterRect.Max, rounded.Radius, perCorner);
+                VertexGenerator2D.WriteRoundedRectangle(vertices, -rounded.HalfSize, rounded.HalfSize, rounded.Radius, perCorner);
+                rounded.Frame.MapFromFrame(vertices);
             }
             else
             {
