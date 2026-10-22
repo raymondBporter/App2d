@@ -194,9 +194,13 @@ non-convex shape and always resolves per part.
 
 Composite area queries sum part areas by default, including overlap; use
 `CompositeShape2D.Builder.Create(parts, includeOverlap: false)` to count the covered region once. `ShapeArea2D.Union(parts)`
-also calculates that area directly. Circles, ellipses and capsules stay analytic, and rectangles, triangles and convex polygons use
-their exact edges. The shared boundary integral keeps only exposed edges and conic arcs, handling multiple
+also calculates that area directly. Circles, ellipses in any orientation and capsules stay analytic, and rectangles, triangles and
+convex polygons use their exact edges. The shared boundary integral keeps only exposed edges and conic arcs, handling multiple
 overlaps, disconnected regions and holes. Two axis-aligned rectangles use a direct formula.
+`ShapeArea2D.Intersection(first, second)` returns the overlap of two convex shapes from the same walk by selecting the arcs
+and edges of each shape that lie inside the other, exact for every kind the union is exact for and precise for thin slivers,
+with a direct formula for two axis-aligned rectangles. Each conic part carries its own frame, so a rotated ellipse projects
+into the other part's coordinates before the crossings are solved.
 Ellipse/segment intersections are quadratic in normalized ellipse coordinates; ellipse/ellipse and circle/ellipse
 intersections are quartic and can have four boundary crossings. Two bounded half-angle charts avoid an infinite
 parameter at PI. `PolynomialRoots` isolates real roots using derivatives and bisection; the exposed arcs have an

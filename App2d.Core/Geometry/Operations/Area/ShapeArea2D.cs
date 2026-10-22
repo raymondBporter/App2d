@@ -56,6 +56,11 @@ public static class ShapeArea2D
         ArgumentNullException.ThrowIfNull(first);
         ArgumentNullException.ThrowIfNull(second);
         ArgGuard.ThrowIf(outlineSegments < 3, "Curved outlines need at least three samples.", nameof(outlineSegments));
+        if (first is IRect2D firstRect && second is IRect2D secondRect)
+        {
+            return Area2D.RectangleIntersection(firstRect.Min, firstRect.Max, secondRect.Min, secondRect.Max);
+        }
+
         var a = new List<Area2D.BoundaryPart>(3);
         var b = new List<Area2D.BoundaryPart>(3);
         AddParts(a, first, outlineSegments);

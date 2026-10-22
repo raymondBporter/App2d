@@ -32,10 +32,18 @@ public static partial class Area2D
     /// <summary>The area covered by two ordered axis-aligned rectangles, counting overlap once.</summary>
     public static float RectangleUnion(Vector2 firstMin, Vector2 firstMax, Vector2 secondMin, Vector2 secondMax)
     {
+        return (float)(((double)firstMax.X - firstMin.X) * ((double)firstMax.Y - firstMin.Y)
+            + ((double)secondMax.X - secondMin.X) * ((double)secondMax.Y - secondMin.Y) - RectangleOverlap(firstMin, firstMax, secondMin, secondMax));
+    }
+
+    /// <summary>The area two ordered axis-aligned rectangles share; zero when they only touch or lie apart.</summary>
+    public static float RectangleIntersection(Vector2 firstMin, Vector2 firstMax, Vector2 secondMin, Vector2 secondMax) => (float)RectangleOverlap(firstMin, firstMax, secondMin, secondMax);
+
+    private static double RectangleOverlap(Vector2 firstMin, Vector2 firstMax, Vector2 secondMin, Vector2 secondMax)
+    {
         var width = Math.Max(0d, (double)Math.Min(firstMax.X, secondMax.X) - Math.Max(firstMin.X, secondMin.X));
         var height = Math.Max(0d, (double)Math.Min(firstMax.Y, secondMax.Y) - Math.Max(firstMin.Y, secondMin.Y));
-        return (float)(((double)firstMax.X - firstMin.X) * ((double)firstMax.Y - firstMin.Y)
-            + ((double)secondMax.X - secondMin.X) * ((double)secondMax.Y - secondMin.Y) - width * height);
+        return width * height;
     }
 
     /// <summary>The rectangle area minus the four square corners outside its circular arcs.</summary>

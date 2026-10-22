@@ -102,6 +102,37 @@ public sealed class ShapeIntersectionArea2DTests
         Assert.Equal(Area2D.Ellipse(new(2, 1)), ShapeArea2D.Intersection(ellipse, ellipse), 5);
     }
 
+    [Fact]
+    public void AxisAlignedRectanglePairsTakeTheDirectFormula()
+    {
+        Assert.Equal(2f, Area2D.RectangleIntersection(new(0, 0), new(2, 2), new(1, 0), new(3, 2)));
+        Assert.Equal(0f, Area2D.RectangleIntersection(new(0, 0), new(2, 2), new(3, 0), new(5, 2)));
+        var first = AxisAlignedRectangle2D.Builder.Create(new(0, 0), new(2, 2));
+        var second = AxisAlignedRectangle2D.Builder.Create(new(1, .5f), new(3, 2.5f));
+        Assert.Equal(1.5f, ShapeArea2D.Intersection(first, second));
+        Assert.Equal(ShapeArea2D.Intersection(first, second), ShapeArea2D.Intersection(Rectangle2D.Builder.Create(new(0, 0), new(2, 2)), Rectangle2D.Builder.Create(new(1, .5f), new(3, 2.5f))), 5);
+    }
+
+    [Fact]
+    public void IntersectionValidatesItsArgumentsAndHandlesDegenerateParts()
+    {
+        var circle = Circle2D.Builder.Create(1);
+        Assert.ThrowsAny<ArgumentException>(() => ShapeArea2D.Intersection(null!, circle));
+        Assert.ThrowsAny<ArgumentException>(() => ShapeArea2D.Intersection(circle, null!));
+        Assert.ThrowsAny<ArgumentException>(() => ShapeArea2D.Intersection(circle, circle, 2));
+        Assert.Equal(0f, ShapeArea2D.Intersection(new ShapeArea2DTests.PointShape(), circle));
+    }
+
+    [Fact]
+    public void CompositeUnionOfRotatedEllipsesNoLongerDependsOnSampling()
+    {
+        IConvexShape2D[] parts = [Ellipse2D.Builder.Create(new(2, 1), default, .3f), Ellipse2D.Builder.Create(new(2, 1), new(1, .5f), -.9f)];
+        var coarse = CompositeShape2D.Builder.Create(parts, includeOverlap: false, areaOutlineSegments: 3);
+        var fine = CompositeShape2D.Builder.Create(parts, includeOverlap: false, areaOutlineSegments: 128);
+        Assert.Equal(ShapeArea2D.Union(parts), coarse.Area);
+        Assert.Equal(coarse.Area, fine.Area);
+    }
+
     private static IConvexShape2D Rotated(IConvexShape2D shape, float angle)
     {
         Assert.True(Similarity2D.TryFromMatrix(Matrix3x2.CreateRotation(angle), out var pose));
