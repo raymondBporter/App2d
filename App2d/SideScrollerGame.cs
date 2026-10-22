@@ -119,11 +119,16 @@ public sealed class SideScrollerGame : Game2D
         _resources.Get<App2d.Levels.WorldAsset2D>("level/cavern", "editor");
         _editorUi = new(_editor, Textures, DebugPanel);
         _resources.Get<TextureCache2D>("textures/runtime", "editor");
-        _editor.ConfigureMaps(loadedLevel.Maps);
+        _editor.ConfigureMaps(loadedLevel.Maps, loadedLevel.Root);
         _editor.ThingsChanged += things =>
         {
             loadedLevel.Maps[_editor.SelectedMapIndex].MovingPlatforms = [.. things];
             _simulation.Level.ReloadMovingPlatforms([.. loadedLevel.MovingPlatforms.Select(ThingTypeRegistry2D.ToRuntime)]);
+        };
+        _editor.ObjectsChanged += objects =>
+        {
+            loadedLevel.Maps[_editor.SelectedMapIndex].Objects = objects;
+            _simulation.Level.ReloadObjects(loadedLevel.Objects);
         };
 
         DebugPanel.Section("World").Button("Reload giant trees", () =>

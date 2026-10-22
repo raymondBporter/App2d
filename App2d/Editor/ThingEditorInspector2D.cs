@@ -14,7 +14,7 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
     private string _selection = "Select or create a definition";
     private string _typeKey = ThingTypeRegistry2D.All[0].TypeKey;
     private long? _editingDefinitionId, _editingThingId;
-    private string? _editingTypeKey, _error;
+    private string? _editingTypeKey, _error, _assetPath;
     private bool _isNewDefinition;
 
     public void Draw()
@@ -43,6 +43,15 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
             {
                 _typeKey = type;
                 BeginNewDefinition();
+            }
+            if (_editingThingId is null && _editingTypeKey == ThingTypeRegistry2D.Object.TypeKey &&
+                Ui.Combo("Asset", _assetPath ?? "Choose an asset", _editor.ObjectAssetPaths) is { } chosen)
+            {
+                _assetPath = chosen;
+                if (_properties is PositionThingDefinitionProperties2D draft && (string.IsNullOrWhiteSpace(draft.Name) || draft.Name == ThingTypeRegistry2D.Object.DisplayName))
+                {
+                    draft.Name = Path.GetFileNameWithoutExtension(chosen);
+                }
             }
             Ui.Row(
                 () => Ui.Button("New definition", BeginNewDefinition),
@@ -111,6 +120,7 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
         _editingDefinitionId = null;
         _editingThingId = null;
         _editingTypeKey = _typeKey;
+        _assetPath = null;
         _selection = $"New {descriptor.DisplayName} definition";
         _properties = descriptor.IsMovingPlatform ? new MovingPlatformDefinitionProperties2D() : new PositionThingDefinitionProperties2D { Name = descriptor.DisplayName };
     }
@@ -131,6 +141,7 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
         }
         else
         {
+            _assetPath = definition.Asset;
             _properties = PositionThingDefinitionProperties2D.From(definition);
         }
     }
@@ -170,7 +181,12 @@ internal sealed class ThingEditorInspector2D(TileEditor2D editor)
                     _editor.ApplyDefinition(_isNewDefinition ? null : _editingDefinitionId, definition);
                     break;
                 case PositionThingDefinitionProperties2D definition when _editingTypeKey is { } type:
-                    _editor.ApplyPositionDefinition(_isNewDefinition ? null : _editingDefinitionId, type, definition);
+                    if (type == ThingTypeRegistry2D.Object.TypeKey && _assetPath is null)
+                    {
+                        _error = "Choose an asset file.";
+                        return;
+                    }
+                    _editor.ApplyPositionDefinition(_isNewDefinition ? null : _editingDefinitionId, type, definition, _assetPath);
                     break;
                 case MovingPlatformInstanceProperties2D thing when _editingThingId is { } id:
                     _editor.ApplyThing(id, thing);

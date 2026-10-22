@@ -1,5 +1,6 @@
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
+using App2d.Core.Objects;
 using App2d.Core.Shapes;
 using App2d.Rendering;
 using App2d.Things;
@@ -53,6 +54,12 @@ internal static class TileEditorView2D
             var markerPosition = new Vector2(thing.X, thing.Y);
             var isSelected = editor.SelectedThingId == thing.ThingId;
             var color = isSelected ? selectedColor : thing.Enabled ? descriptor.EditorColor : disabledColor;
+            if (descriptor.IsObject && editor.TryGetObjectAsset(thing.Asset, out var asset))
+            {
+                DrawObject(renderer, editor, asset, markerPosition, color, isSelected);
+                continue;
+            }
+
             var radius = editor.PixelsToWorldUnits(isSelected ? 11f : 8f);
             renderer.DrawWorldCircle(markerPosition, radius, color, isSelected ? 4f : 3f);
         }
@@ -85,11 +92,33 @@ internal static class TileEditorView2D
         if (editor.TryGetPositionPlacementPreview(out var positionDefinition, out var positionPreview))
         {
             var descriptor = ThingTypeRegistry2D.Require(positionDefinition.TypeKey);
-            renderer.DrawWorldCircle(
-                positionPreview,
-                editor.PixelsToWorldUnits(11f),
-                descriptor.EditorColor,
-                3f);
+            if (descriptor.IsObject && editor.TryGetObjectAsset(positionDefinition.Asset, out var previewAsset))
+            {
+                DrawObject(renderer, editor, previewAsset, positionPreview, new XnaColor(105, 245, 180, 220), isSelected: false);
+            }
+            else
+            {
+                renderer.DrawWorldCircle(positionPreview, editor.PixelsToWorldUnits(11f), descriptor.EditorColor, 3f);
+            }
+        }
+    }
+
+    /// <summary>An object's collider (or drawn shape) outline at its placement, and its path when it moves.</summary>
+    private static void DrawObject(Renderer2D renderer, TileEditor2D editor, ObjectAsset2D asset, Vector2 position, XnaColor color, bool isSelected)
+    {
+        renderer.DrawShape(asset.Collision ?? asset.Geometry!, Matrix3x2.CreateTranslation(position), outlineColor: color, screenStrokeWidth: isSelected ? 3f : 2f);
+        var path = ObjectPathPreview2D.Sample(asset, position);
+        if (path.Length == 0)
+        {
+            return;
+        }
+
+        renderer.DrawWorldPolyline(path, color, isSelected ? 3f : 2f);
+        if (isSelected)
+        {
+            var radius = editor.PixelsToWorldUnits(9f);
+            renderer.DrawWorldCircle(path[0], radius, color, 3f);
+            renderer.DrawWorldCircle(path[^1], radius, color, 3f);
         }
     }
 

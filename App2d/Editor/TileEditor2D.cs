@@ -1,11 +1,14 @@
+using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Grids;
 using App2d.Core.Input;
+using App2d.Core.Objects;
 using App2d.Core.Rendering;
 using App2d.Core.Tiles;
 using App2d.Core.Validation;
 using App2d.Levels;
 using App2d.Things;
+using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
 namespace App2d.Editor;
@@ -44,6 +47,9 @@ internal sealed class TileEditor2D : IDisposable
     private bool _isPlacingThing;
     private ThingDragHandle2D _thingDragHandle;
     private MovingPlatformThingRecord2D? _thingDragOriginal;
+    private PositionThingRecord2D? _positionDragOriginal;
+    private ObjectAssetCatalog2D? _objectAssets;
+    private readonly List<ObjectPlacement2D> _objectPlacements = [];
 
     /// <summary>
     /// <paramref name="openDatabase"/> opens a fresh read-write handle to the level file.
@@ -71,7 +77,8 @@ internal sealed class TileEditor2D : IDisposable
     public string MapLabel => _maps.Count == 0 ? "Tile editor" : $"{_maps[SelectedMapIndex].ZoneId} / {_maps[SelectedMapIndex].Name}";
     public int MapCount => _maps.Count;
 
-    internal void ConfigureMaps(IReadOnlyList<WorldMapAsset2D> maps)
+    /// <summary><paramref name="worldRoot"/> is the folder holding the world's <c>objects</c> assets; without it, object things cannot be shown or placed.</summary>
+    internal void ConfigureMaps(IReadOnlyList<WorldMapAsset2D> maps, string? worldRoot = null)
     {
         if (IsActive || maps.Count == 0 || !ReferenceEquals(maps[0].TileMap, _map))
         {
@@ -79,6 +86,7 @@ internal sealed class TileEditor2D : IDisposable
         }
 
         _maps = maps;
+        _objectAssets = worldRoot is null ? null : new ObjectAssetCatalog2D(worldRoot);
         _mapSessions[0] = _session;
         _mapThingUndo[0] = _thingUndo;
     }
@@ -140,6 +148,11 @@ internal sealed class TileEditor2D : IDisposable
     public IReadOnlyList<MovingPlatformThingRecord2D> MovingPlatformThings => _movingPlatformThings;
     public IReadOnlyList<ThingDefinitionRecord2D> ThingDefinitions => _thingDefinitions;
     public IReadOnlyList<PositionThingRecord2D> PositionThings => _positionThings;
+    /// <summary>The configured world's object asset files; configure maps with a world root first.</summary>
+    public ObjectAssetCatalog2D ObjectAssets => StateGuard.RequireNotNull(_objectAssets, "Configure maps with a world root before using object assets.");
+    public IReadOnlyList<string> ObjectAssetPaths => _objectAssets?.Paths ?? [];
+    /// <summary>The current map's object things as placements with world-wide ids, rebuilt whenever things reload.</summary>
+    public IReadOnlyList<ObjectPlacement2D> ObjectPlacements => _objectPlacements;
     public long? SelectedDefinitionId { get; private set; }
     public long? SelectedThingId { get; private set; }
     public MovingPlatformThingRecord2D? SelectedThing =>
@@ -159,6 +172,28 @@ internal sealed class TileEditor2D : IDisposable
     public bool CanUndoThingEdit => _thingUndo.Count > 0;
 
     public event Action<IReadOnlyList<MovingPlatformThingRecord2D>>? ThingsChanged;
+    /// <summary>Raised after an object definition or placement changes, with the current map's placements.</summary>
+    public event Action<IReadOnlyList<ObjectPlacement2D>>? ObjectsChanged;
+
+    /// <summary>The asset an object definition names, when a world is configured and the file loads.</summary>
+    public bool TryGetObjectAsset(string? assetPath, [NotNullWhen(true)] out ObjectAsset2D? asset)
+    {
+        asset = null;
+        if (_objectAssets is null || string.IsNullOrWhiteSpace(assetPath))
+        {
+            return false;
+        }
+
+        try
+        {
+            asset = _objectAssets.Load(assetPath);
+            return true;
+        }
+        catch (Exception e) when (e is ArgumentException or IOException or InvalidDataException or System.Text.Json.JsonException)
+        {
+            return false;
+        }
+    }
 
     public bool TryGetHoveredTile(out int x, out int y)
     {
@@ -310,21 +345,18 @@ internal sealed class TileEditor2D : IDisposable
         ReloadThings(notifyRuntime: true);
     }
 
-    internal void ApplyPositionDefinition(
-        long? definitionId,
-        string typeKey,
-        PositionThingDefinitionProperties2D properties)
+    internal void ApplyPositionDefinition(long? definitionId, string typeKey, PositionThingDefinitionProperties2D properties, string? asset = null)
     {
         ArgGuard.ThrowIfNull(properties);
         var descriptor = ThingTypeRegistry2D.Require(typeKey);
-        StateGuard.ThrowIf(descriptor.WorldKind is null, $"Thing type '{typeKey}' is not position-only.");
+        StateGuard.ThrowIf(descriptor.WorldKind is null && !descriptor.IsObject, $"Thing type '{typeKey}' is not position-only.");
         var database = RequireDatabase();
         var saved = definitionId is { } existingId
-            ? database.UpdateThingDefinition(new ThingDefinitionRecord2D(existingId, typeKey, properties.Name))
-            : database.CreateThingDefinition(typeKey, properties.Name);
+            ? database.UpdateThingDefinition(new ThingDefinitionRecord2D(existingId, typeKey, properties.Name, asset))
+            : database.CreateThingDefinition(typeKey, properties.Name, asset);
         SelectedDefinitionId = saved.DefinitionId;
         SelectedThingId = null;
-        ReloadThings(notifyRuntime: false);
+        ReloadThings(notifyRuntime: descriptor.IsObject);
     }
 
     internal void DeleteDefinition(long definitionId)
@@ -374,7 +406,7 @@ internal sealed class TileEditor2D : IDisposable
         RequireDatabase().UpdatePositionThing(updated);
         _thingUndo.Push(database => database.UpdatePositionThing(old));
         SelectedThingId = thingId;
-        ReloadThings(notifyRuntime: false);
+        ReloadThings(notifyRuntime: ThingTypeRegistry2D.Require(old.TypeKey).IsObject);
     }
 
     internal void DeleteSelectedThing()
@@ -426,7 +458,8 @@ internal sealed class TileEditor2D : IDisposable
             return false;
         }
 
-        if (ThingTypeRegistry2D.Require(selected.TypeKey).WorldKind is null)
+        var descriptor = ThingTypeRegistry2D.Require(selected.TypeKey);
+        if (descriptor.WorldKind is null && !descriptor.IsObject)
         {
             return false;
         }
@@ -618,11 +651,22 @@ internal sealed class TileEditor2D : IDisposable
 
         foreach (var thing in _positionThings.AsEnumerable().Reverse())
         {
-            if (Vector2.DistanceSquared(world, new Vector2(thing.X, thing.Y)) <= handleRadiusSquared * 2.25f)
+            var position = new Vector2(thing.X, thing.Y);
+            bool hit;
+            if (TryGetObjectAsset(thing.Asset, out var asset))
             {
-                SelectedThingId = thing.ThingId;
-                SelectedDefinitionId = thing.DefinitionId;
-                InspectorView.ShowPositionThing(thing);
+                var bounds = ShapeBounds2D.Calculate(asset.Collision ?? asset.Geometry!);
+                var local = world - position;
+                hit = local.X >= bounds.Min.X && local.X <= bounds.Max.X && local.Y >= bounds.Min.Y && local.Y <= bounds.Max.Y;
+            }
+            else
+            {
+                hit = Vector2.DistanceSquared(world, position) <= handleRadiusSquared * 2.25f;
+            }
+
+            if (hit)
+            {
+                BeginPositionThingDrag(thing);
                 return;
             }
         }
@@ -652,10 +696,31 @@ internal sealed class TileEditor2D : IDisposable
         InspectorView.ShowThing(thing);
     }
 
+    private void BeginPositionThingDrag(PositionThingRecord2D thing)
+    {
+        SelectedThingId = thing.ThingId;
+        SelectedDefinitionId = thing.DefinitionId;
+        _positionDragOriginal = thing;
+        _thingDragHandle = ThingDragHandle2D.Start;
+        InspectorView.ShowPositionThing(thing);
+    }
+
     private void UpdateThingDrag()
     {
         if (SelectedThingId is not { } thingId)
         {
+            return;
+        }
+
+        if (_positionDragOriginal is not null)
+        {
+            var positionIndex = _positionThings.FindIndex(item => item.ThingId == thingId);
+            if (positionIndex >= 0)
+            {
+                var target = SnapToGrid(_camera.DeviceToWorld(_lastMouseDevice));
+                _positionThings[positionIndex] = _positionThings[positionIndex] with { X = target.X, Y = target.Y };
+            }
+
             return;
         }
 
@@ -693,6 +758,22 @@ internal sealed class TileEditor2D : IDisposable
 
     private void CommitThingDrag()
     {
+        if (_thingDragHandle != ThingDragHandle2D.None && _positionDragOriginal is { } originalPosition)
+        {
+            _thingDragHandle = ThingDragHandle2D.None;
+            _positionDragOriginal = null;
+            var moved = SelectedPositionThing;
+            if (moved is null || moved == originalPosition)
+            {
+                return;
+            }
+
+            RequireDatabase().UpdatePositionThing(moved);
+            _thingUndo.Push(database => database.UpdatePositionThing(originalPosition));
+            ReloadThings(notifyRuntime: ThingTypeRegistry2D.Require(moved.TypeKey).IsObject);
+            return;
+        }
+
         if (_thingDragHandle == ThingDragHandle2D.None || _thingDragOriginal is not { } original)
         {
             return;
@@ -741,8 +822,12 @@ internal sealed class TileEditor2D : IDisposable
         _movingPlatformThings.Clear();
         _movingPlatformThings.AddRange(database.LoadMovingPlatforms());
         _positionThings.Clear();
-        _positionThings.AddRange(database.LoadPositionThings().Where(
-            thing => ThingTypeRegistry2D.Require(thing.TypeKey).WorldKind is not null));
+        _positionThings.AddRange(database.LoadPositionThings().Where(thing =>
+        {
+            var descriptor = ThingTypeRegistry2D.Require(thing.TypeKey);
+            return descriptor.WorldKind is not null || descriptor.IsObject;
+        }));
+        RebuildObjectPlacements();
         if (SelectedDefinitionId is { } definitionId && _thingDefinitions.All(item => item.DefinitionId != definitionId))
         {
             SelectedDefinitionId = null;
@@ -759,6 +844,27 @@ internal sealed class TileEditor2D : IDisposable
         if (notifyRuntime)
         {
             ThingsChanged?.Invoke(_movingPlatformThings);
+            ObjectsChanged?.Invoke([.. _objectPlacements]);
+        }
+    }
+
+    private void RebuildObjectPlacements()
+    {
+        _objectPlacements.Clear();
+        if (_objectAssets is null)
+        {
+            return;
+        }
+
+        foreach (var thing in _positionThings)
+        {
+            if (!ThingTypeRegistry2D.Require(thing.TypeKey).IsObject)
+            {
+                continue;
+            }
+
+            var worldThingId = _maps.Count == 0 ? thing.ThingId : _maps[SelectedMapIndex].WorldThingId(thing.ThingId);
+            _objectPlacements.Add(ThingTypeRegistry2D.ToPlacement(thing, _objectAssets.Load(thing.Asset!), worldThingId));
         }
     }
 
