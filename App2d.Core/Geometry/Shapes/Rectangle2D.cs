@@ -45,6 +45,12 @@ public readonly partial record struct Rectangle2D : IConvexShape2D
         init => _axis = value;
     }
 
+    /// <summary>Value equality on the effective axis, so an unset axis equals an explicit +X.</summary>
+    public bool Equals(Rectangle2D other) => Center.Equals(other.Center) && HalfSize.Equals(other.HalfSize) && Axis.Equals(other.Axis);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(Center, HalfSize, Axis);
+
     /// <summary>The full width and height along the rectangle's own axes.</summary>
     public Vector2 Size => HalfSize * 2f;
 

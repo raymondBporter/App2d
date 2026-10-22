@@ -47,6 +47,12 @@ public readonly partial record struct Ellipse2D : IConvexShape2D
         init => _axis = value;
     }
 
+    /// <summary>Value equality on the effective axis, so an unset axis equals an explicit +X.</summary>
+    public bool Equals(Ellipse2D other) => Radii.Equals(other.Radii) && Center.Equals(other.Center) && Axis.Equals(other.Axis);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(Radii, Center, Axis);
+
     /// <summary>The heading of <see cref="Axis"/> in radians, counter-clockwise from local +X.</summary>
     public float AngleRadians => Frame.AngleRadians;
 

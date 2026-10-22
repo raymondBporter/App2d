@@ -48,6 +48,12 @@ public readonly partial record struct RoundedRectangle2D : IConvexShape2D
         init => _axis = value;
     }
 
+    /// <summary>Value equality on the effective axis, so an unset axis equals an explicit +X.</summary>
+    public bool Equals(RoundedRectangle2D other) => Center.Equals(other.Center) && HalfSize.Equals(other.HalfSize) && Radius.Equals(other.Radius) && Axis.Equals(other.Axis);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(Center, HalfSize, Radius, Axis);
+
     /// <summary>Half extents of the inset rectangle whose expansion by <see cref="Radius"/> forms the shape. It may collapse to a segment or point.</summary>
     public Vector2 InnerHalfSize => HalfSize - new Vector2(Radius);
 
