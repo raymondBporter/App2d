@@ -136,7 +136,8 @@ public sealed class EnemyPresentationTests
         using var view = new EnemyPresentation2D(scene, textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
         var state = new EnemyState2D(EntityId2D.Create(), EnemyKind2D.Shieldback,
-            new Vector2(100f, 0f), new Vector2(118f, 0f), 0f, -1f, true, true) { MoveSpeed = 118f };
+            new Vector2(100f, 0f), new Vector2(118f, 0f), 0f, -1f, true, true)
+        { MoveSpeed = 118f };
 
         view.ApplyState([state], [], 1);
         var visual = Assert.Single(scene);
@@ -187,7 +188,8 @@ public sealed class EnemyPresentationTests
         using var view = new EnemyPresentation2D(new Scene2D(), textures,
             TraversalMetricsLoader2D.Load(TestAssetPath.Root), new RecordingSounds());
         var state = new EnemyState2D(new(42), EnemyKind2D.PhysicsProp,
-            Vector2.Zero, Vector2.Zero, 0f, 1f, true, true) { TypeId = "dumbbell", PhysicsProp = Catalog.PhysicsProps["dumbbell"] };
+            Vector2.Zero, Vector2.Zero, 0f, 1f, true, true)
+        { TypeId = "dumbbell", PhysicsProp = Catalog.PhysicsProps["dumbbell"] };
         System.Collections.Immutable.ImmutableArray<EnemyState2D> states = [state];
         for (var i = 0; i < 1000; i++)
         {

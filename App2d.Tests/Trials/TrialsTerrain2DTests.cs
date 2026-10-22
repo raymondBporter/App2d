@@ -6,7 +6,6 @@ using App2d.Core.Input;
 using App2d.Core.Physics;
 using App2d.Core.Shapes;
 using App2d.Trials;
-using System.Numerics;
 
 namespace App2d.Tests.Trials;
 

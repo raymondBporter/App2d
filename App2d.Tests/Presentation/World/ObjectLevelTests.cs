@@ -8,7 +8,6 @@ using App2d.Core.Rendering.Textures;
 using App2d.Core.Tiles;
 using App2d.Gameplay.World;
 using App2d.Presentation.World.Presentation;
-using System.Numerics;
 
 namespace App2d.Tests.Presentation.World;
 

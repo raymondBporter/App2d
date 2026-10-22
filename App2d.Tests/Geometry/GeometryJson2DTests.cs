@@ -50,7 +50,7 @@ public sealed class GeometryJson2DTests
         [
             new Circle2D { Center = new(1, 2), Radius = 3 }.Validated(),
             Rectangle2D.Builder.FromSize(2, 3),
-            AxisAlignedRectangle2D.Builder.FromSize(2, 3),
+            AxisAlignedRectangle2D.Builder.Create(2, 3),
             new SimplePolygon2D { Vertices = [new(0, 0), new(3, 0), new(3, 1), new(1, 1), new(1, 3), new(0, 3)] }.Validated(),
             new LineSegmentCurve2D { Start = new(1, 2), End = new(3, 4) }.Validated(),
             new PolylineCurve2D { Points = [new(0, 0), new(1, 2), new(2, 0)] }.Validated()

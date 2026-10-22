@@ -12,28 +12,47 @@ namespace App2d.Core.Geometry.Primitives;
 public static class IntervalMath<T> where T : INumber<T>
 {
     /// <summary>The endpoint difference; zero for a single value.</summary>
-    public static T Length<TInterval>(TInterval interval) where TInterval : IInterval<T> =>
-        interval.Max - interval.Min;
+    public static T Length<TInterval>(TInterval interval)
+        where TInterval : IInterval<T>
+    {
+        // are we working in the reals or the extended real?
+        // for [-∞, -∞]	and [+∞, +∞] the difference is NaN
+        // these also are not legit real number intervals but are in the extended reals
+        if (interval.Min == interval.Max)
+            return T.Zero;
+
+        return interval.Max - interval.Min;
+    }
 
     /// <summary>Tests containment of a value, including both endpoints.</summary>
-    public static bool Contains<TInterval>(TInterval interval, T value) where TInterval : IInterval<T> =>
-        value >= interval.Min && value <= interval.Max;
+    public static bool Contains<TInterval>(TInterval interval, T value)
+        where TInterval : IInterval<T>
+    {
+        return value >= interval.Min && value <= interval.Max;
+    }
 
     /// <summary>Tests whether the entire inner interval lies in the outer interval.</summary>
     public static bool ContainsInterval<TOuter, TInner>(TOuter outer, TInner inner)
         where TOuter : IInterval<T>
-        where TInner : IInterval<T> =>
-        inner.Min >= outer.Min && inner.Max <= outer.Max;
+        where TInner : IInterval<T>
+    {
+        return inner.Min >= outer.Min && inner.Max <= outer.Max;
+    }
 
     /// <summary>Tests overlap, including a single shared endpoint.</summary>
     public static bool Overlaps<TFirst, TSecond>(TFirst first, TSecond second)
         where TFirst : IInterval<T>
-        where TSecond : IInterval<T> =>
-        first.Min <= second.Max && second.Min <= first.Max;
+        where TSecond : IInterval<T>
+    {
+        return first.Min <= second.Max && second.Min <= first.Max;
+    }
 
     /// <summary>Clamps a value to the closed interval.</summary>
-    public static T Clamp<TInterval>(TInterval interval, T value) where TInterval : IInterval<T> =>
-        Clamping.Clamp(value, interval.Min, interval.Max);
+    public static T Clamp<TInterval>(TInterval interval, T value)
+        where TInterval : IInterval<T>
+    {
+        return Clamping.Clamp(value, interval.Min, interval.Max);
+    }
 
     /// <summary>
     /// Finds the shared interval. Touching endpoints produce a zero-length intersection.
@@ -57,6 +76,8 @@ public static class IntervalMath<T> where T : INumber<T>
     /// <summary>The smallest interval containing both inputs, including any gap between them.</summary>
     public static Interval<T> Hull<TFirst, TSecond>(TFirst first, TSecond second)
         where TFirst : IInterval<T>
-        where TSecond : IInterval<T> =>
-        new(T.Min(first.Min, second.Min), T.Max(first.Max, second.Max));
+        where TSecond : IInterval<T>
+    {
+        return new(T.Min(first.Min, second.Min), T.Max(first.Max, second.Max));
+    }
 }

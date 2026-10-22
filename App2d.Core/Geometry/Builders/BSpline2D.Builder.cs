@@ -15,6 +15,9 @@ public readonly partial record struct BSpline2D
     }
     public static class Builder
     {
-        public static BSpline2D Create(IEnumerable<Vector2> controlPoints, int degree = 3) => new BSpline2D(controlPoints, degree).Validated();
+        public static BSpline2D Create(IEnumerable<Vector2> controlPoints, int degree = 3)
+        {
+            return new BSpline2D(controlPoints, degree).Validated();
+        }
     }
 }

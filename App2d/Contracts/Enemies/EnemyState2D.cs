@@ -2,6 +2,7 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Persons.Actions;
 using App2d.Core;
 using App2d.Core.Characters.Authored;
+using System.Collections.Immutable;
 using System.Numerics;
 
 namespace App2d.Contracts.Enemies;
@@ -22,7 +23,7 @@ public readonly record struct EnemyState2D(EntityId2D Id, EnemyKind2D Kind, Vect
     public string? TypeId { get; init; }
     public string? ActionId { get; init; }
     public float ActionSeconds { get; init; }
-    public System.Collections.Immutable.ImmutableArray<EntityBoltState2D> Bolts { get; init; } = [];
+    public ImmutableArray<EntityBoltState2D> Bolts { get; init; } = [];
     public float MoveSpeed { get; init; }
     public bool IsAttacking { get; init; }
     public float AttackElapsedSeconds { get; init; }

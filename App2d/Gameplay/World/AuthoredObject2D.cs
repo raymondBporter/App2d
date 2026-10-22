@@ -5,7 +5,6 @@ using App2d.Core.Physics;
 using App2d.Core.Physics.Motion;
 using App2d.Core.Spatial;
 using App2d.Core.Validation;
-using System.Numerics;
 
 namespace App2d.Gameplay.World;
 

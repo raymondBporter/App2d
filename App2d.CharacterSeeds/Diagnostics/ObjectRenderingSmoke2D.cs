@@ -1,5 +1,4 @@
 using App2d.Contracts.World;
-using App2d.Core;
 using App2d.Core.Assets;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics.Progress;

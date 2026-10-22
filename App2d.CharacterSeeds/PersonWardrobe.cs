@@ -42,7 +42,10 @@ public static class PersonWardrobe
             if (model.Parts.Any(p => p.Id == control)) continue;
             model.Parts.Add(new()
             {
-                Id = control, A = control, B = toward, Depth = -.004f,
+                Id = control,
+                A = control,
+                B = toward,
+                Depth = -.004f,
                 Geometry = new Ellipse2D
                 {
                     Center = hand ? new(0, -.014f) : new(.044f, 0),
@@ -136,8 +139,11 @@ public static class PersonWardrobe
             var socket = side == "left" ? LeftFootSocket : RightFootSocket;
             PropAsset Shoe(string style, string name) => new()
             {
-                Id = style + "-" + side, Name = name + " / " + side,
-                Usage = "clothing", Attachment = socket, Tip = default,
+                Id = style + "-" + side,
+                Name = name + " / " + side,
+                Usage = "clothing",
+                Attachment = socket,
+                Tip = default,
                 LineWidth = .045f
             };
             var sandal = Shoe("sandal", "Leather sandal");

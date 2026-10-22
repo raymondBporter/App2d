@@ -9,7 +9,6 @@ using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Operations.MassProperties;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Serialization;
-using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using System.Numerics;

@@ -1,4 +1,3 @@
-using App2d.Core.Geometry.Primitives;
 using App2d.Rendering;
 using App2d.Trials;
 using System.Numerics;

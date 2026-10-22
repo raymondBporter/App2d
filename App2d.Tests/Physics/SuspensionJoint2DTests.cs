@@ -89,7 +89,9 @@ public sealed class SuspensionJoint2DTests
         wheel.AngularVelocity = 6f;
         var joint = new WheelJoint2D(frame, wheel, Vector2.Zero, Vector2.Zero, Vector2.UnitY)
         {
-            RestTranslation = 2f, FrequencyHertz = 2f, DampingRatio = damping
+            RestTranslation = 2f,
+            FrequencyHertz = 2f,
+            DampingRatio = damping
         };
         world.Constraints.Add(joint);
         var minimum = 10f;
@@ -188,7 +190,8 @@ public sealed class SuspensionJoint2DTests
         arm.WorldObject.Transform.Position = new(2f, 0f);
         var shock = new SpringDamperJoint2D(frame, arm, Vector2.Zero, Vector2.Zero, 5f)
         {
-            IsEnabled = false, LengthLimits = ConstraintLimit1D.Between(4f, 6f)
+            IsEnabled = false,
+            LengthLimits = ConstraintLimit1D.Between(4f, 6f)
         };
         world.Constraints.Add(shock);
         world.Step(Dt);

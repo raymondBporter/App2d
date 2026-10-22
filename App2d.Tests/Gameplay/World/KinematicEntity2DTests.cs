@@ -4,7 +4,6 @@ using App2d.Core.Mathematics.Progress;
 using App2d.Core.Physics;
 using App2d.Core.Physics.Motion;
 using App2d.Core.Shapes;
-using App2d.Gameplay.World;
 using System.Numerics;
 
 namespace App2d.Tests.Gameplay.World;

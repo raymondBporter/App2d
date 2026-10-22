@@ -1,4 +1,3 @@
-using App2d.Core;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.HeightFields;
 using App2d.Core.Geometry.Operations.Curves;

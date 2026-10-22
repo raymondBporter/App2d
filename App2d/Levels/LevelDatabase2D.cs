@@ -77,8 +77,7 @@ public sealed partial class LevelDatabase2D : IDisposable
         if (version > CurrentFormatVersion)
         {
             connection.Dispose();
-            StateGuard.Throw(
-                $"The level file is format version {version}, newer than this build understands ({CurrentFormatVersion}).");
+            StateGuard.Throw($"The level file is format version {version}, newer than this build understands ({CurrentFormatVersion}).");
         }
         if (version < CurrentFormatVersion)
         {
@@ -197,9 +196,7 @@ public sealed partial class LevelDatabase2D : IDisposable
 
         if (version > CurrentFormatVersion)
         {
-            StateGuard.Throw(
-                $"The level file's format version ({version}) is newer than " +
-                $"this build supports ({CurrentFormatVersion}).");
+            StateGuard.Throw($"The level file's format version ({version}) is newer than this build supports ({CurrentFormatVersion}).");
         }
 
         // A current file is left untouched: even re-stamping the same version bumps SQLite's change counter,
@@ -347,16 +344,12 @@ public sealed partial class LevelDatabase2D : IDisposable
         using var command = _connection.CreateCommand();
         command.CommandText = "SELECT value FROM meta WHERE key = $key;";
         command.Parameters.AddWithValue("$key", key);
-        return StateGuard.RequireNotNull(
-            command.ExecuteScalar() as string,
-            $"The level file is missing required metadata '{key}'.");
+        return StateGuard.RequireNotNull(command.ExecuteScalar() as string, $"The level file is missing required metadata '{key}'.");
     }
 
-    private long RequireMetaLong(string key) =>
-        long.Parse(RequireMeta(key), CultureInfo.InvariantCulture);
+    private long RequireMetaLong(string key) => long.Parse(RequireMeta(key), CultureInfo.InvariantCulture);
 
-    private float RequireMetaFloat(string key) =>
-        float.Parse(RequireMeta(key), CultureInfo.InvariantCulture);
+    private float RequireMetaFloat(string key) => float.Parse(RequireMeta(key), CultureInfo.InvariantCulture);
 
     private long ReadScalarLong(string sql)
     {

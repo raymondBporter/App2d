@@ -49,7 +49,7 @@ public sealed class ShapeAuthoring2DTests
     public void RectangleKindsDistinguishTheirTypesWithoutASecondFlag()
     {
         Rectangle2D plain = Rectangle2D.Builder.FromSize(1, 1).Validated();
-        AxisAlignedRectangle2D aligned = AxisAlignedRectangle2D.Builder.FromSize(1, 1).Validated();
+        AxisAlignedRectangle2D aligned = AxisAlignedRectangle2D.Builder.Create(1, 1).Validated();
         foreach (var rectangle in new IConvexShape2D[] { plain, aligned })
         {
             var builder = rectangle;

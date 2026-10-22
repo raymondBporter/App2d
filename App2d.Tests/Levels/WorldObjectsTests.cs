@@ -101,7 +101,8 @@ public sealed class WorldObjectsTests : IDisposable
         {
             using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
             {
-                DataSource = Path.Combine(_root, "map.db"), Mode = mode
+                DataSource = Path.Combine(_root, "map.db"),
+                Mode = mode
             }.ToString());
             Microsoft.Data.Sqlite.SqliteConnection.ClearPool(connection);
         }

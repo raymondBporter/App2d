@@ -56,7 +56,7 @@ public sealed class ZoneLevelGeneratorTests
             }
             var second = ZoneLevelGenerator2D.Regenerate(path, "combat-zone", tilesets);
             using (var world = WorldFile2D.Load(path))
-            Assert.NotEqual(first, second);
+                Assert.NotEqual(first, second);
             using (var previous = LevelDatabase2D.OpenRead(first))
             {
                 Assert.True(previous.Load().IsSolid(4, 40));

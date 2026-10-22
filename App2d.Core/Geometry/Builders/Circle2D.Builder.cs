@@ -19,11 +19,11 @@ public readonly partial record struct Circle2D
     public static class Builder
     {
         public static Circle2D Create(float radius, Vector2 center = default) => new Circle2D(radius, center).Validated();
+        
         public static Circle2D FromPoints(Vector2 a, Vector2 b, Vector2 c)
         {
             var (center, radius) = CircleConstruction2D.ThroughPoints(a, b, c);
             return Create(radius, center);
         }
-        public static Circle2D CreateFromPoints(Vector2 a, Vector2 b, Vector2 c) => FromPoints(a, b, c);
     }
 }

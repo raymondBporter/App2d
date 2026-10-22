@@ -116,8 +116,7 @@ internal sealed partial class ProofRenders
 
                 foreach (var (ppu, y, facing) in new[] { (125, 380, 1), (48, 440, -1) })
                 {
-                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(width, height,
-                        new(160 + i % 4 * 360, y + i / 4 * 460), ppu), Matrix.CreateScale(facing, 1, 1));
+                    _renderer.DrawActor(drawing, PointCharacterRenderer.Projection(width, height, new(160 + i % 4 * 360, y + i / 4 * 460), ppu), Matrix.CreateScale(facing, 1, 1));
                 }
             }
         }
@@ -126,9 +125,14 @@ internal sealed partial class ProofRenders
         var baby = catalog.Entities["baby-triceratops"];
         var babySamples = new (string Clip, float At)[]
         {
-            ("baby-triceratops-idle", .2f), ("baby-triceratops-charge", .4f), ("baby-triceratops-charge", .9f),
-            ("baby-triceratops-charge", 1.2f), ("baby-triceratops-charge", 1.95f), ("baby-triceratops-charge", 2.4f),
-            ("baby-triceratops-hit", .12f), ("baby-triceratops-death", .8f)
+            ("baby-triceratops-idle", .2f), 
+            ("baby-triceratops-charge", .4f), 
+            ("baby-triceratops-charge", .9f),
+            ("baby-triceratops-charge", 1.2f),
+            ("baby-triceratops-charge", 1.95f),
+            ("baby-triceratops-charge", 2.4f),
+            ("baby-triceratops-hit", .12f), 
+            ("baby-triceratops-death", .8f)
         };
         using (GraphicsDevice.UseRenderTarget(target, new Color(241, 236, 223)))
         {

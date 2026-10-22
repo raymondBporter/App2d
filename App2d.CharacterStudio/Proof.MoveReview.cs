@@ -28,7 +28,8 @@ internal sealed partial class ProofRenders
         Humanoid.RightShoulder,
         Humanoid.LeftArm,
         Humanoid.RightArm,
-        Humanoid.SwordSocket, Humanoid.GunSocket
+        Humanoid.SwordSocket,
+        Humanoid.GunSocket
     ];
 
     /// <summary>

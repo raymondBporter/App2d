@@ -61,8 +61,12 @@ public sealed class KeyframeSamplingTests
     public void RawColorSamplingKeepsOvershootAndRenderingClampsTheResult()
     {
         var curve = new KeyCurve2D { Absolute = true, Control1 = new(1f / 3, 2), Control2 = new(2f / 3, 2) };
-        var track = new SlotColorTrack2D { Slot = "paint", Keys =
-            [new() { Value = Vector4.Zero, CurveR = curve }, new() { Time = 1, Value = Vector4.Zero }] };
+        var track = new SlotColorTrack2D
+        {
+            Slot = "paint",
+            Keys =
+            [new() { Value = Vector4.Zero, CurveR = curve }, new() { Time = 1, Value = Vector4.Zero }]
+        };
         Assert.Equal(new Vector4(1.5f, 0, 0, 0), SlotColorTrack2D.Sample(track.Keys, .5f));
         Assert.Equal(new Vector4(1, 0, 0, 0), SlotColorTrack2D.Evaluate(new() { Colors = [track] }, new() { Id = "paint", Color = "ffffffff" }, .5f));
     }
