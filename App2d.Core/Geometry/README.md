@@ -67,8 +67,14 @@ existing collision restriction; recalculate mass properties after changing size.
 ## Geometry
 
 Value types: `Rect2D` (the only axis-aligned box; `Unbounded` covers the plane), `IRect2D` + `Rect2DExtensions`
-(anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `Interval<T>`, `Line2D`, `Ray2D`,
-`RayHit2D`, `IGeometry2D`.
+(anchors, containment, distance, `TransformedBy`, for any type with `Min`/`Max`), `OrientedFrame2D` (a center and a
+unit axis that oriented shapes project every query through), `Interval<T>`, `Line2D`, `Ray2D`, `RayHit2D`, `IGeometry2D`.
+
+`Rectangle2D`, `RoundedRectangle2D` and `Ellipse2D` carry a unit `Axis` for their local +X and so rotate in local space;
+an unset axis reads as +X. Their JSON writes `center`, `size` (or `radii`) and `angleRadians`, and the two rectangle kinds
+also read the axis-aligned `min`/`max` spelling, never mixed with `center`/`size`. `AxisAlignedRectangle2D` keeps `Min`/`Max`
+and is the one shape that never rotates. `ShapeTransforms2D.Posed(shape, Similarity2D)` carries any built-in shape through
+a translation, rotation, uniform scale and optional mirror and returns a shape of the same kind.
 
 `IInterval<T>` supplies ordered scalar `Min`/`Max` endpoints. `Interval<T>`, authored `Limit` values
 and physics `ConstraintLimit1D` share `IntervalMath<T>` operations without converting structs to interfaces.
