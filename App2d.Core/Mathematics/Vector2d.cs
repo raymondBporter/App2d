@@ -2,6 +2,24 @@ using System.Numerics;
 
 namespace App2d.Core.Mathematics;
 
+public interface IVecvtor<TSelf, Real> :
+    IAdditionOperators<TSelf, TSelf, TSelf>,
+    ISubtractionOperators<TSelf, TSelf, TSelf>,
+    IDivisionOperators<TSelf, Real, TSelf>,
+    IMultiplyOperators<TSelf, Real, TSelf>,
+    IUnaryNegationOperators<TSelf, TSelf>,
+    IAdditiveIdentity<TSelf, TSelf>,
+    IMultiplicativeIdentity<TSelf, Real>
+    where TSelf : IVecvtor<TSelf, Real>
+    where Real : IBinaryFloatingPointIeee754<Real>
+{
+    static abstract int Dimension { get; }
+    static abstract Real Length { get; }
+    static abstract Real LengthSquared { get; }
+    static abstract TSelf Zero { get; }
+    static abstract TSelf One { get; }
+}
+
 /// <summary>
 /// A pair of double-precision coordinates for intermediate geometric calculations.
 /// Arithmetic follows IEEE 754 without validation. Equality compares stored coordinates without a tolerance.
