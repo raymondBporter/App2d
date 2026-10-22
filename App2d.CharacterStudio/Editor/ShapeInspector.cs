@@ -12,27 +12,40 @@ internal static class ShapeInspector
     {
         var commit = edit ?? change;
         void Drag(IShape2D changed) => change(changed);
-        void RectangleFields(Vector2 min, Vector2 max, Func<Vector2, Vector2, IShape2D> fromSize)
+        // The widget shows degrees; shapes store radians.
+        void AngleField(float angleRadians, Func<float, IShape2D> withAngle)
         {
-            var centre = (min + max) / 2;
-            var size = max - min;
+            var degrees = float.RadiansToDegrees(angleRadians);
+            if (Ui.Drag("Angle (deg)", ref degrees, .5f, -180, 180))
+            {
+                Drag(withAngle(float.DegreesToRadians(degrees)));
+            }
+        }
+        void RectangleFields(Vector2 centre, Vector2 size, float? angleRadians, Func<Vector2, Vector2, float, IShape2D> fromSize)
+        {
+            var angle = angleRadians ?? 0f;
             if (Ui.Drag2("Centre", ref centre))
             {
-                Drag(fromSize(size, centre));
+                Drag(fromSize(size, centre, angle));
             }
 
             if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
             {
-                Drag(fromSize(Vector2.Max(size, new(.01f)), centre));
+                Drag(fromSize(Vector2.Max(size, new(.01f)), centre, angle));
+            }
+
+            if (angleRadians is { } radians)
+            {
+                AngleField(radians, turned => fromSize(size, centre, turned));
             }
         }
         switch (shape)
         {
             case Rectangle2D rectangle:
-                RectangleFields(rectangle.Center - rectangle.HalfSize, rectangle.Center + rectangle.HalfSize, static (size, centre) => Rectangle2D.Builder.FromSize(size, centre));
+                RectangleFields(rectangle.Center, rectangle.Size, rectangle.AngleRadians, static (size, centre, angle) => Rectangle2D.Builder.FromSize(size, centre, angle));
                 break;
             case AxisAlignedRectangle2D rectangle:
-                RectangleFields(rectangle.Min, rectangle.Max, static (size, centre) => AxisAlignedRectangle2D.Builder.FromSize(size, centre));
+                RectangleFields((rectangle.Min + rectangle.Max) / 2, rectangle.Max - rectangle.Min, null, static (size, centre, _) => AxisAlignedRectangle2D.Builder.FromSize(size, centre));
                 break;
             case RoundedRectangle2D rounded:
                 {
@@ -40,13 +53,13 @@ internal static class ShapeInspector
                     var size = rounded.Size;
                     if (Ui.Drag2("Centre", ref centre))
                     {
-                        Drag(RoundedRectangle2D.Builder.FromSize(size, rounded.Radius, centre));
+                        Drag(RoundedRectangle2D.Builder.FromSize(size, rounded.Radius, centre, rounded.AngleRadians));
                     }
 
                     if (Ui.Drag2("Width / height", ref size, .005f, .01f, 100))
                     {
                         size = Vector2.Max(size, new(.01f));
-                        Drag(RoundedRectangle2D.Builder.FromSize(size, MathF.Min(rounded.Radius, MathF.Min(size.X, size.Y) / 2f), centre));
+                        Drag(RoundedRectangle2D.Builder.FromSize(size, MathF.Min(rounded.Radius, MathF.Min(size.X, size.Y) / 2f), centre, rounded.AngleRadians));
                     }
                     var radius = rounded.Radius;
                     if (Ui.Drag("Corner radius", ref radius, .005f, 0, MathF.Min(size.X, size.Y) / 2f))
@@ -56,6 +69,7 @@ internal static class ShapeInspector
                             Radius = Math.Clamp(radius, 0, MathF.Min(size.X, size.Y) / 2f)
                         });
                     }
+                    AngleField(rounded.AngleRadians, angle => RoundedRectangle2D.Builder.FromSize(size, rounded.Radius, centre, angle));
 
                     break;
                 }
@@ -131,6 +145,7 @@ internal static class ShapeInspector
                             Radii = Vector2.Max(radii, new(.005f))
                         });
                     }
+                    AngleField(ellipse.AngleRadians, angle => Ellipse2D.Builder.Create(radii, centre, angle));
 
                     break;
                 }
