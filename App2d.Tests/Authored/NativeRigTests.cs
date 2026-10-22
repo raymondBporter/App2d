@@ -40,7 +40,7 @@ public sealed class NativeRigTests
                 Frame = bone,
                 ScaleX = .16f,
                 ScaleY = .2f,
-                Geometry = new Rectangle2D { Min = new(-.5f, -.5f), Max = new(.5f, .5f) }.Validated(),
+                Geometry = Rectangle2D.Builder.Create(new(-.5f, -.5f), new(.5f, .5f)),
                 Material = new()
                 {
                     Texture = "images/" + id + ".png"

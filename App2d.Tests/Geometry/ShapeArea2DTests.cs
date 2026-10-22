@@ -72,8 +72,8 @@ public sealed class ShapeArea2DTests
         var partial = ConvexPolygon2D.Builder.Create([new(1, 0), new(3, 0), new(3, 2), new(1, 2)]);
         Assert.Equal(6, ShapeArea2D.Union([rectangle, reversed, partial]));
         Assert.Equal(6, ShapeArea2D.Union([partial, reversed, rectangle]));
-        Assert.Equal(6, Area2D.RectangleUnion(rectangle.Min, rectangle.Max, new(1, 0), new(3, 2)));
-        Assert.Equal(4, Area2D.RectangleUnion(rectangle.Min, rectangle.Max, rectangle.Min, rectangle.Max));
+        Assert.Equal(6, Area2D.RectangleUnion(new(0, 0), new(2, 2), new(1, 0), new(3, 2)));
+        Assert.Equal(4, Area2D.RectangleUnion(new(0, 0), new(2, 2), new(0, 0), new(2, 2)));
         Assert.Equal(8, ShapeArea2D.Union([rectangle, Rectangle2D.Builder.Create(new(2, 0), new(4, 2))]));
     }
 
@@ -512,9 +512,9 @@ public sealed class ShapeArea2DTests
                     var half = ellipse.Radii.Y * Math.Sqrt(squared);
                     intervals.Add((ellipse.Center.Y - half, ellipse.Center.Y + half));
                 }
-                else if (part is Rectangle2D rectangle && x > rectangle.Min.X && x < rectangle.Max.X)
+                else if (part is Rectangle2D rectangle && x > rectangle.Center.X - rectangle.HalfSize.X && x < rectangle.Center.X + rectangle.HalfSize.X)
                 {
-                    intervals.Add((rectangle.Min.Y, rectangle.Max.Y));
+                    intervals.Add((rectangle.Center.Y - rectangle.HalfSize.Y, rectangle.Center.Y + rectangle.HalfSize.Y));
                 }
                 else if (part is Capsule2D capsule)
                 {

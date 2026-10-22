@@ -1,5 +1,5 @@
-using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Operations.HeightFields;
+using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Mathematics;
@@ -30,6 +30,7 @@ public static class ShapeBounds2D
             Ellipse2D ellipse => new(ellipse.Center - ellipse.Radii, ellipse.Center + ellipse.Radii),
             Capsule2D capsule => Rect2D.FromCapsule(capsule.Start, capsule.End, capsule.Radius),
             RoundedRectangle2D rectangle => rectangle.OuterRect,
+            Rectangle2D rectangle => rectangle.Frame.BoxBounds(rectangle.HalfSize),
             IRect2D rectangle => rectangle.ToRect(),
             Triangle2D triangle => new(Vector2.Min(Vector2.Min(triangle.A, triangle.B), triangle.C), Vector2.Max(Vector2.Max(triangle.A, triangle.B), triangle.C)),
             ConvexPolygon2D polygon => Rect2D.FromPoints(polygon.Vertices),
@@ -94,8 +95,7 @@ public static class ShapeBounds2D
                 return (rectangle.OuterRect.Center, float.IsFinite(rectangle.Diameter) ? rectangle.Diameter / 2
                     : (float)(Vector2d.Distance(rectangle.InnerRect.Min.ToVector2d(), rectangle.InnerRect.Max.ToVector2d()) / 2 + rectangle.Radius));
             case Rectangle2D rectangle:
-                return (rectangle.Center, float.IsFinite(rectangle.Diameter) ? rectangle.Diameter / 2
-                    : (float)(Vector2d.Distance(rectangle.Min.ToVector2d(), rectangle.Max.ToVector2d()) / 2));
+                return (rectangle.Center, (float)new Vector2d(rectangle.HalfSize).Length());
             case HalfSpace2D:
                 return (Vector2.Zero, float.PositiveInfinity);
             case CompositeShape2D composite:

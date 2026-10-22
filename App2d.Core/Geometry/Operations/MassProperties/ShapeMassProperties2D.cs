@@ -21,7 +21,7 @@ public static class ShapeMassProperties2D
         {
             Circle2D circle => Ellipse(circle.Center, new Vector2(circle.Radius), density),
             Ellipse2D ellipse => Ellipse(ellipse.Center, ellipse.Radii, density),
-            Rectangle2D rectangle => Rectangle(rectangle.Min, rectangle.Max, density),
+            Rectangle2D rectangle => Rectangle(rectangle.Center - rectangle.HalfSize, rectangle.Center + rectangle.HalfSize, density),
             AxisAlignedRectangle2D rectangle => Rectangle(rectangle.Min, rectangle.Max, density),
             Triangle2D triangle => Polygon([triangle.A, triangle.B, triangle.C], density),
             ConvexPolygon2D polygon => Polygon(polygon.Vertices, density),

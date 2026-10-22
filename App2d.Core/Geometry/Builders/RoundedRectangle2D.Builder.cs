@@ -10,7 +10,7 @@ public readonly partial record struct RoundedRectangle2D
 {
     public void Validate()
     {
-        Rectangle2D.ValidateBounds(Min, Max);
+        ArgGuard.LessThan(Min, Max);
         ArgGuard.InRange((double)Radius, 0, Math.Min((double)Max.X - Min.X, (double)Max.Y - Min.Y) / 2, "radius");
     }
 

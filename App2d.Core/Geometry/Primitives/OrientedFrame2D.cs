@@ -70,8 +70,8 @@ public readonly record struct OrientedFrame2D(Vector2 Center, Vector2 Axis)
     /// <summary>An unset axis reads as local +X, so default values and object initializers stay axis-aligned.</summary>
     public static Vector2 AxisOrUnitX(Vector2 axis) => axis == default ? Vector2.UnitX : axis;
 
-    /// <summary>The unit axis at a heading in radians.</summary>
-    public static Vector2 AxisFromAngle(float angleRadians) => Polar2D.Direction(angleRadians);
+    /// <summary>The unit axis at a heading in radians; a zero heading is exactly local +X.</summary>
+    public static Vector2 AxisFromAngle(float angleRadians) => angleRadians == 0f ? Vector2.UnitX : Polar2D.Direction(angleRadians);
 
     /// <summary>Rejects an axis that is not finite or not within <see cref="AxisTolerance"/> of unit length.</summary>
     public static void ValidateAxis(Vector2 axis, string name) => ArgGuard.ThrowIf(!axis.IsFinite() || MathF.Abs(axis.Length() - 1f) > AxisTolerance, "The axis must be a finite unit vector.", name);

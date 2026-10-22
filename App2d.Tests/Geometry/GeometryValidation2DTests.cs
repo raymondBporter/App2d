@@ -17,7 +17,7 @@ public sealed class GeometryValidation2DTests
         new Circle2D(0),
         new Ellipse2D(new(0, 1)),
         new Capsule2D(Vector2.Zero, Vector2.One, -1),
-        new Rectangle2D(Vector2.One, Vector2.Zero),
+        new Rectangle2D(Vector2.Zero, new(-1, 1), Vector2.UnitX),
         new AxisAlignedRectangle2D(Vector2.One, Vector2.Zero),
         new RoundedRectangle2D(Vector2.Zero, Vector2.One, 1),
         new Triangle2D(Vector2.Zero, Vector2.One, new(2, 2)),
@@ -140,12 +140,12 @@ public sealed class GeometryValidation2DTests
         var a = new Vector2(0, 0);
         var b = new Vector2(2, 0);
         var c = new Vector2(0, 2);
-        var circle = Circle2D.Builder.CreateFromPoints(a, b, c);
+        var circle = Circle2D.Builder.FromPoints(a, b, c);
         var reversed = Circle2D.Builder.FromPoints(a, c, b);
         Assert.Equal(Vector2.One, circle.Center);
         Assert.Equal(circle.Center, reversed.Center);
         foreach (var point in new[] { a, b, c })
             Assert.InRange(MathF.Abs(Vector2.Distance(point, circle.Center) - circle.Radius), 0, .000001f);
-        Assert.Throws<ArgumentException>(() => Circle2D.Builder.CreateFromPoints(Vector2.Zero, Vector2.One, new(2, 2)));
+        Assert.Throws<ArgumentException>(() => Circle2D.Builder.FromPoints(Vector2.Zero, Vector2.One, new(2, 2)));
     }
 }

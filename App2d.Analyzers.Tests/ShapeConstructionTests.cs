@@ -25,7 +25,7 @@ public sealed class ShapeConstructionTests
         "new Circle2D(2)",
         "new Ellipse2D(new Vector2(2, 1))",
         "new Capsule2D(Vector2.Zero, Vector2.One, 2)",
-        "new Rectangle2D(Vector2.Zero, Vector2.One)",
+        "new Rectangle2D(Vector2.Zero, Vector2.One, Vector2.UnitX)",
         "new AxisAlignedRectangle2D(Vector2.Zero, Vector2.One)",
         "new RoundedRectangle2D(Vector2.Zero, new Vector2(2), 0.5f)",
         "new Triangle2D(Vector2.Zero, Vector2.UnitX, Vector2.UnitY)",

@@ -1,3 +1,4 @@
+using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
@@ -16,10 +17,10 @@ public sealed class Rect2DTests
         var size = new Size2D(6f, 10f);
         Assert.Equal(Sample, Rect2D.FromSize(size, new(-1f, 3f)));
         Assert.Equal(Sample, Rect2D.FromMinAndSize(Sample.Min, size));
-        Assert.Equal(Sample, Rectangle2D.Builder.CreateFromSize(size, new(-1f, 3f)).ToRect());
-        Assert.Equal(Sample, Rectangle2D.Builder.CreateFromMinAndSize(Sample.Min, size).ToRect());
+        Assert.Equal(Sample, ShapeBounds2D.Calculate(Rectangle2D.Builder.CreateFromSize(size, new(-1f, 3f))));
+        Assert.Equal(Sample, ShapeBounds2D.Calculate(Rectangle2D.Builder.CreateFromMinAndSize(Sample.Min, size)));
         Assert.Equal(Sample, AxisAlignedRectangle2D.Builder.CreateFromSize(size, new(-1f, 3f)).ToRect());
-        Assert.Equal(Sample, AxisAlignedRectangle2D.Builder.CreateFromMinAndSize(Sample.Min, size).ToRect());
+        Assert.Equal(Sample, AxisAlignedRectangle2D.Builder.FromMinAndSize(Sample.Min, size).ToRect());
         Assert.True(Sample.TryGetPositiveSize(out var measured));
         Assert.Equal(size, measured);
         Assert.False(default(Rect2D).TryGetPositiveSize(out _));
@@ -68,7 +69,7 @@ public sealed class Rect2DTests
     }
 
     [Fact]
-    public void BoundsAndBothRectangleShapesAdoptTheContractInTheirOwnCoordinateSpace()
+    public void BoundsAndTheAxisAlignedShapeAdoptTheContractWhileTheOrientedShapeDoesNot()
     {
         var bounds = new Rect2D(Sample.Min, Sample.Max);
         var shape = Rectangle2D.Builder.Create(Sample.Min, Sample.Max);
@@ -76,14 +77,15 @@ public sealed class Rect2DTests
         Assert.Equal(6, bounds.Width);
         Assert.Equal(10, shape.Height);
         Assert.Equal(new Vector2(2, 8), axisAligned.TopRight);
-        Assert.True(bounds.Intersects(shape));
-        Assert.True(shape.Contains(bounds));
+        Assert.True(bounds.Intersects(axisAligned));
+        Assert.True(axisAligned.Contains(bounds));
         Assert.True(axisAligned.Contains(Sample));
         Assert.Equal(bounds, new SpatialObject2D(shape).LocalBounds);
-        Assert.Equal(shape.Area, ((IRect2D)shape).Area);
-        Assert.Equal(shape.ContainsPoint(Sample.Max), shape.Contains(Sample.Max));
+        Assert.Equal(axisAligned.Area, ((IRect2D)axisAligned).Area);
+        Assert.Equal(shape.ContainsPoint(Sample.Max), axisAligned.Contains(Sample.Max));
         Assert.False(typeof(IShape2D).IsAssignableFrom(typeof(Rect2D)));
         Assert.False(typeof(IShape2D).IsAssignableFrom(typeof(IRect2D)));
+        Assert.False(typeof(IRect2D).IsAssignableFrom(typeof(Rectangle2D)));
     }
 
     [Theory]

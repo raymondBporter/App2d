@@ -102,7 +102,7 @@ public static class ShapeTransforms2D
             Capsule2D capsule => Capsule2D.Builder.Create(capsule.Start * scale, capsule.End * scale, capsule.Radius * scale),
             RoundedRectangle2D rounded => RoundedRectangle2D.Builder.Create(rounded.OuterRect.Min * scale, rounded.OuterRect.Max * scale, rounded.Radius * scale),
             AxisAlignedRectangle2D rectangle => AxisAlignedRectangle2D.Builder.Create(rectangle.Min * scale, rectangle.Max * scale),
-            Rectangle2D rectangle => Rectangle2D.Builder.Create(rectangle.Min * scale, rectangle.Max * scale),
+            Rectangle2D rectangle => Rectangle2D.Builder.Create(rectangle.Center * scale, rectangle.HalfSize * scale, rectangle.Axis),
             Triangle2D triangle => Triangle2D.Builder.Create(triangle.A * scale, triangle.B * scale, triangle.C * scale),
             ConvexPolygon2D polygon => ScaledPolygon(polygon, scale),
             _ => throw new NotSupportedException($"Cannot scale {shape.GetType().Name}.")

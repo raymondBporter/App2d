@@ -51,7 +51,7 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                 ShapeKinds2D.Circle => new Circle2D(R<float>("Radius"), R<Vector2>("Center")),
                 ShapeKinds2D.Ellipse => new Ellipse2D(R<Vector2>("Radii"), R<Vector2>("Center")),
                 ShapeKinds2D.Capsule => new Capsule2D(R<Vector2>("Start"), R<Vector2>("End"), R<float>("Radius")),
-                ShapeKinds2D.Rectangle => new Rectangle2D(R<Vector2>("Min"), R<Vector2>("Max")),
+                ShapeKinds2D.Rectangle => new Rectangle2D(R<Vector2>("Center"), R<Vector2>("Size") / 2f, Primitives.OrientedFrame2D.AxisFromAngle(Optional("AngleRadians", 0f))),
                 ShapeKinds2D.AxisAlignedRectangle => new AxisAlignedRectangle2D(R<Vector2>("Min"), R<Vector2>("Max")),
                 ShapeKinds2D.RoundedRectangle => new RoundedRectangle2D(R<Vector2>("Min"), R<Vector2>("Max"), R<float>("Radius")),
                 ShapeKinds2D.Triangle => new Triangle2D(R<Vector2>("A"), R<Vector2>("B"), R<Vector2>("C")),
@@ -107,8 +107,9 @@ public sealed class GeometryJsonConverterFactory : JsonConverterFactory
                     W("Radius", geometry.Radius);
                     break;
                 case Rectangle2D geometry:
-                    W("Min", geometry.Min);
-                    W("Max", geometry.Max);
+                    W("Center", geometry.Center);
+                    W("Size", geometry.Size);
+                    W("AngleRadians", geometry.AngleRadians);
                     break;
                 case AxisAlignedRectangle2D geometry:
                     W("Min", geometry.Min);

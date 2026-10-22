@@ -29,7 +29,7 @@ internal static class ShapeInspector
         switch (shape)
         {
             case Rectangle2D rectangle:
-                RectangleFields(rectangle.Min, rectangle.Max, static (size, centre) => Rectangle2D.Builder.FromSize(size, centre));
+                RectangleFields(rectangle.Center - rectangle.HalfSize, rectangle.Center + rectangle.HalfSize, static (size, centre) => Rectangle2D.Builder.FromSize(size, centre));
                 break;
             case AxisAlignedRectangle2D rectangle:
                 RectangleFields(rectangle.Min, rectangle.Max, static (size, centre) => AxisAlignedRectangle2D.Builder.FromSize(size, centre));
