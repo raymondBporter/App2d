@@ -13,7 +13,6 @@ public sealed class GameHost : IDisposable
     private readonly Game2D _game;
     private readonly Form _window;
     private readonly GraphicsSurface2D _surface;
-
     private readonly InputState _input = new();
     private Renderer2D? _renderer;
     private readonly IGameToolUi2D? _toolUi;

@@ -145,8 +145,6 @@ public abstract class Game2D : IDisposable
         }
 
         var text = $"{1f / _smoothedFrameSeconds:0.0} FPS   {_smoothedFrameSeconds * 1000f:0.0} ms";
-        renderer.DrawScreenLabel(
-            text,
-            new Vector2(Math.Max(24f, Camera.ViewportSize.X - 265f), 24f));
+        renderer.DrawScreenLabel(text, new Vector2(Math.Max(24f, Camera.ViewportSize.X - 265f), 24f));
     }
 }

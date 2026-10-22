@@ -136,6 +136,9 @@ The engine is grouped by responsibility:
   cell geometry and ranges, and dense `Grid2D<T>` storage. Tile maps, viewport terrain,
   and the collision spatial index share it. See [the grid API](App2d.Core/Grids/README.md)
   for wind-field and sparse-bucket examples and boundary rules.
+- `App2d.Core/Imaging` contains plain `Image2D<T>` pixel arrays, pixel mapping and
+  arithmetic, and binary skeletonization. See [the image pipeline](App2d.Core/Imaging/README.md)
+  for converting decoded textures into float channels, masks, and skeletons.
 - `App2d.Core/Mathematics` contains transforms and reusable numeric helpers, including
   `Similarity2D` — the validated rotation + uniform scale + mirror + translation pose
   that collision consumes. The namespace uses `Mathematics` rather than `Math` so it

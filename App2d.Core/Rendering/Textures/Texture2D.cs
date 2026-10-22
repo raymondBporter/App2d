@@ -1,3 +1,4 @@
+using App2d.Core.Imaging;
 using App2d.Core.Validation;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -41,6 +42,9 @@ public sealed class Texture2D : IDisposable
     internal XnaColor[] Pixels => _pixels ?? throw new ObjectDisposedException(nameof(Texture2D));
     internal event Action<Texture2D>? Disposed;
     public XnaColor[] CopyPixels() => [.. Pixels];
+
+    /// <summary>Copies the decoded pixels into an independently editable CPU image.</summary>
+    public Image2D<XnaColor> CopyImage() => new(Width, Height, Pixels);
 
     public static Texture2D Load(string path)
     {

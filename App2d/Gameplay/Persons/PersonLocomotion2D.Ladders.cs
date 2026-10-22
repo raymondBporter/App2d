@@ -63,8 +63,7 @@ public sealed partial class PersonLocomotion2D
         // ladder, only if this step is clear. Climbing retains solid collision.
         var bounds = _body.WorldObject.WorldBounds;
         var position = _body.WorldObject.Transform.Position;
-        position.X += MoveTowards(bounds.Center.X, ladder.Center.X,
-            Metrics.LadderAlignSpeed * deltaSeconds) - bounds.Center.X;
+        position.X += MoveTowards(bounds.Center.X, ladder.Center.X, Metrics.LadderAlignSpeed * deltaSeconds) - bounds.Center.X;
         if (!CanOccupy(position))
         {
             DetachFromLadder();
@@ -136,9 +135,7 @@ public sealed partial class PersonLocomotion2D
                     top++;
                 }
 
-                ladder = new Rect2D(
-                    origin + new Vector2(x, bottom) * size,
-                    origin + new Vector2(x + 1, top + 1) * size);
+                ladder = new Rect2D(origin + new Vector2(x, bottom) * size, origin + new Vector2(x + 1, top + 1) * size);
                 nearestDistance = distance;
                 break;
             }
