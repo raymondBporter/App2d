@@ -3,9 +3,9 @@ using App2d.Core.Geometry.HeightFields;
 using App2d.Core.Geometry.Operations.Curves;
 using App2d.Core.Geometry.Operations.HeightFields;
 using App2d.Core.Geometry.Primitives;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Physics;
 using App2d.Core.Rendering;
-using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using App2d.Rendering;
 

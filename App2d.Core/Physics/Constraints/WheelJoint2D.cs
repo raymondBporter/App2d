@@ -86,7 +86,7 @@ public sealed class WheelJoint2D : IPhysicsConstraint2D
         if (!IsEnabled) return false;
         var moved = CreateAxis(JointMath2D.Perpendicular(WorldAxis)).CorrectPosition(LateralError);
         var error = TranslationLimits.Evaluate(Translation).Error;
-        return CreateAxis(WorldAxis).CorrectPosition(error) | moved;
+        return CreateAxis(WorldAxis).CorrectPosition(error) || moved;
     }
 
     private JointAxis2D CreateAxis(Vector2 direction)

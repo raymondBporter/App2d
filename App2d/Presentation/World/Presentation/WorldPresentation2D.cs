@@ -237,7 +237,7 @@ public sealed class WorldPresentation2D(Scene2D scene, TextureCache2D textures) 
 
     public void Dispose()
     {
-        foreach (var item in _objects.Values) scene.Remove(item.Visual);
+        foreach (var (Definition, Visual) in _objects.Values) scene.Remove(Visual);
         _objects.Clear();
         foreach (var cache in _objectTextures.Values) cache.Dispose();
         _objectTextures.Clear();

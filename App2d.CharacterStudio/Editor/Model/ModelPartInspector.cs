@@ -81,7 +81,7 @@ internal sealed class ModelPartInspector(EditorSession session, ModelCutoutEdito
                 (p, v) => p.Material = p.RenderMaterial with { StrokeWidth = v },
                 o => o.Material = o.Material is null ? null : o.Material with { StrokeWidth = null });
             if (overrides is null && structure is not null)
-                ModelCurveInspector.Draw(part, structure.Controls.Select(c => c.Id).ToArray(), change);
+                ModelCurveInspector.Draw(part, [.. structure.Controls.Select(c => c.Id)], change);
         }
         else if (overrides is null)
         {

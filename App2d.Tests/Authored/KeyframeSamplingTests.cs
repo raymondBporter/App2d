@@ -38,9 +38,9 @@ public sealed class KeyframeSamplingTests
             new() { Value = new(2, 4, 6), Angle = 0, Curve = new() { Control1 = new(1f / 3, 0), Control2 = new(2f / 3, 0) } },
             new() { Time = 1, Value = new(4, 6, 8), Angle = 2 * MathF.Tau }
         ];
-        var sample = PoseEvaluator.Interpolate(keys, .5f, rotate: true);
-        Assert.Equal(new Vector3(3, 5, 7), sample.Value);
-        Assert.Equal(MathF.Tau / 4, sample.Angle, 5);
+        var (Value, Angle) = PoseEvaluator.Interpolate(keys, .5f, rotate: true);
+        Assert.Equal(new Vector3(3, 5, 7), Value);
+        Assert.Equal(MathF.Tau / 4, Angle, 5);
         Assert.Equal(2 * MathF.Tau, PoseEvaluator.Interpolate(keys, 1, rotate: true).Angle);
     }
 
@@ -52,9 +52,9 @@ public sealed class KeyframeSamplingTests
             new() { Value = new(0, 2, 4), Angle = 0, Curve = new() { Absolute = true, Control1 = new(1f / 3, 4), Control2 = new(2f / 3, 4) } },
             new() { Time = 1, Value = new(0, 4, 6), Angle = MathF.Tau }
         ];
-        var sample = PoseEvaluator.Interpolate(keys, .5f);
-        Assert.Equal(new Vector3(3, 3, 5), sample.Value);
-        Assert.Equal(MathF.PI, sample.Angle);
+        var (Value, Angle) = PoseEvaluator.Interpolate(keys, .5f);
+        Assert.Equal(new Vector3(3, 3, 5), Value);
+        Assert.Equal(MathF.PI, Angle);
     }
 
     [Fact]
@@ -96,9 +96,9 @@ public sealed class KeyframeSamplingTests
                 float Expected(float start, float end, KeyCurve2D curve) => ease == ClipEase.Step ? start : curve.Evaluate(time, start, end);
                 var expected = new Vector4(Expected(2, -2, r), Expected(3, 3, g), Expected(4, 6, b), Expected(1, 0, a));
                 Assert.Equal(expected, SlotColorTrack2D.Sample(color, time));
-                var sample = PoseEvaluator.Interpolate(motion, time);
-                Assert.Equal(new Vector3(expected.X, expected.Y, expected.Z), sample.Value);
-                Assert.Equal(ease == ClipEase.Step ? 0 : Interpolation.Lerp(0, 2 * MathF.Tau, ClipEase.Apply(ease, time)), sample.Angle);
+                var (Value, Angle) = PoseEvaluator.Interpolate(motion, time);
+                Assert.Equal(new Vector3(expected.X, expected.Y, expected.Z), Value);
+                Assert.Equal(ease == ClipEase.Step ? 0 : Interpolation.Lerp(0, 2 * MathF.Tau, ClipEase.Apply(ease, time)), Angle);
             }
         }
     }

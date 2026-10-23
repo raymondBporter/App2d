@@ -102,7 +102,10 @@ public static class Curve2D
                 Append(from, middle, start, midpoint, depth + 1);
                 Append(middle, to, midpoint, end, depth + 1);
             }
-            else points.Add(end);
+            else
+            {
+                points.Add(end);
+            }
         }
     }
 

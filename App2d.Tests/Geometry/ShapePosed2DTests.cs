@@ -27,7 +27,7 @@ public sealed class ShapePosed2DTests
     [MemberData(nameof(Shapes))]
     public void PosedShapeSupportsWhereThePosedOriginalSupports(IShape2D shape)
     {
-        var posed = Assert.IsAssignableFrom<IConvexShape2D>(ShapeTransforms2D.Posed(shape, Pose));
+        var posed = Assert.IsType<IConvexShape2D>(ShapeTransforms2D.Posed(shape, Pose), exactMatch: false);
         Assert.Equal(shape.GetType(), posed.GetType());
         foreach (var angle in new[] { 0f, .9f, 2.2f, 4f })
         {

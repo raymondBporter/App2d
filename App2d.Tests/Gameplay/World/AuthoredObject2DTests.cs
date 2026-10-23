@@ -72,7 +72,7 @@ public sealed class AuthoredObject2DTests
         }
         var error = Record.Exception(() => ObjectAsset2D.FromJson(json.ToJsonString()));
         Assert.NotNull(error);
-        Assert.IsAssignableFrom(exceptionType, error);
+        Assert.IsType(exceptionType, error, exactMatch: false);
     }
 
     [Fact]

@@ -409,7 +409,7 @@ public static class EntityCollision
 
     /// <summary>
     /// The hit window's shape placed in its anchor frame: origin pushed along the anchor's axis, +X along that axis (the
-    /// facing when the axis is foreshortened away), and +Y toward the frame's across direction so mirroring keeps up up.
+    /// facing when the axis is foreshortened away), and +Y toward the frame's across direction so mirroring keeps up in the up direction.
     /// </summary>
     public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit)
     {

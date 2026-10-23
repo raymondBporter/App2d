@@ -253,9 +253,15 @@ public static class ModelAuthoring
 
     public static PuppetPart AddPart(CharacterModel model, IGeometryValue2D geometry, string a, string? b = null)
     {
-        var part = new PuppetPart { Id = UniqueId(geometry.Kind, model.Parts.Select(p => p.Id)), Geometry = geometry, A = a, B = b };
-        part.Material = geometry is ICurve2D ? new RenderMaterialDefinition2D()
-            : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() };
+        var part = new PuppetPart
+        {
+            Id = UniqueId(geometry.Kind, model.Parts.Select(p => p.Id)),
+            Geometry = geometry,
+            A = a,
+            B = b,
+            Material = geometry is ICurve2D ? new RenderMaterialDefinition2D()
+                : new RenderMaterialDefinition2D { Fill = "#fff8e7", Outline = new() }
+        };
         model.Parts.Add(part);
         model.Validate();
         return part;

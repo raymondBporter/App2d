@@ -1,13 +1,12 @@
-using App2d.Core.Geometry;
 using App2d.Core.Geometry.HeightFields;
 using App2d.Core.Geometry.Operations.HeightFields;
 using App2d.Core.Geometry.Serialization;
-using App2d.Core.Geometry.Shapes;
+using App2d.Core.Shapes;
 using App2d.Core.Validation;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace App2d.Core.Shapes;
+namespace App2d.Core.Geometry.Shapes;
 
 /// <summary>
 /// A finite heightfield solid with a polyline top, vertical end caps and a flat bottom.

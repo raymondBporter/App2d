@@ -37,7 +37,6 @@ public static class GeometryJson2D
         Converters = { new Vector2JsonConverter() }
     };
 
-
     public static string ToJson(this IGeometryValue2D geometry)
     {
         ArgumentNullException.ThrowIfNull(geometry);

@@ -66,7 +66,10 @@ public sealed class AuthoredObject2D : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgGuard.NonNegative(dt);
-        if (_kinematic is not null) _kinematic.Update(dt);
+        if (_kinematic is not null)
+        {
+            _kinematic.Update(dt);
+        }
         else if (_visualMotion is not null)
         {
             _time += dt;

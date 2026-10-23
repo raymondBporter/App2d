@@ -37,18 +37,11 @@ public sealed class WorldMapAsset2D
     }
 }
 
-public sealed class WorldAsset2D : IDisposable
+public sealed class WorldAsset2D(IReadOnlyList<WorldMapAsset2D> maps, ImmutableArray<WorldZone2D> zones) : IDisposable
 {
-    public WorldAsset2D(IReadOnlyList<WorldMapAsset2D> maps, ImmutableArray<WorldZone2D> zones)
-    {
-        Maps = maps;
-        Zones = zones;
-        TileMap = new WorldTileMap2D(maps.Select(m => m.TileMap));
-    }
+    public IReadOnlyList<WorldMapAsset2D> Maps { get; } = maps;
 
-    public IReadOnlyList<WorldMapAsset2D> Maps { get; }
-
-    public ImmutableArray<WorldZone2D> Zones { get; }
+    public ImmutableArray<WorldZone2D> Zones { get; } = zones;
 
     public bool StartAtArrival { get; init; }
     /// <summary>The folder holding <c>world.json</c>; object asset paths resolve under it.</summary>
@@ -65,7 +58,7 @@ public sealed class WorldAsset2D : IDisposable
         .SelectMany(m => GiantTreeFile2D.Load(Path.Combine(Path.GetDirectoryName(m.DatabasePath)!, "giant-trees.json"), m.TileMap))
     ];
 
-    public WorldTileMap2D TileMap { get; }
+    public WorldTileMap2D TileMap { get; } = new WorldTileMap2D(maps.Select(m => m.TileMap));
     public IReadOnlyList<PositionThingRecord2D> PositionThings => [.. Maps.SelectMany(m => m.PositionThings.Select(t => t with { ThingId = m.WorldThingId(t.ThingId) }))];
     public void Dispose() => TileMap.Dispose();
 }

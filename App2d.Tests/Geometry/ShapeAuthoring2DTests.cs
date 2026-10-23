@@ -59,7 +59,7 @@ public sealed class ShapeAuthoring2DTests
             Assert.Equal(rectangle.Kind, document.RootElement.GetProperty("kind").GetString());
             Assert.False(document.RootElement.TryGetProperty("axisAligned", out _));
             Assert.Equal(rectangle.GetType(), GeometryJson2D.ShapeFromJson(json).Validated().GetType());
-            Assert.Equal(rectangle.GetType(), Assert.IsAssignableFrom<IShape2D>(GeometryJson2D.FromJson(json)).Validated().GetType());
+            Assert.Equal(rectangle.GetType(), Assert.IsType<IShape2D>(GeometryJson2D.FromJson(json), exactMatch: false).Validated().GetType());
         }
     }
 

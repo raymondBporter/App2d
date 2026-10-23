@@ -47,7 +47,7 @@ public sealed class TrialsBike2D
         ]), 2f);
         RearWheel = AddBody(Circle2D.Builder.Create(WheelRadius), 1.2f);
         FrontWheel = AddBody(Circle2D.Builder.Create(WheelRadius), 1.2f);
-        Bodies = Array.AsReadOnly(new[] { Frame, Swingarm, RearWheel, FrontWheel });
+        Bodies = Array.AsReadOnly([Frame, Swingarm, RearWheel, FrontWheel]);
         SwingarmJoint = new RevoluteJoint2D(Frame, Swingarm, SwingPivot, SwingPivot);
         RearJoint = new RevoluteJoint2D(Swingarm, RearWheel, RearAxle, Vector2.Zero);
         FrontJoint = new WheelJoint2D(Frame, FrontWheel, FrontAxle, Vector2.Zero, ForkAxis)
@@ -103,7 +103,7 @@ public sealed class TrialsBike2D
         // Prototype rider input; a separate rider body can supply this weight shift later.
         Frame.AddTorque(lean * 24_000f);
 
-        void Motor(RigidBody2D wheel, RigidBody2D carrier, float targetSpeed, float maximumTorque)
+        static void Motor(RigidBody2D wheel, RigidBody2D carrier, float targetSpeed, float maximumTorque)
         {
             var relativeSpeed = wheel.AngularVelocity - carrier.AngularVelocity;
             var torque = Math.Clamp((targetSpeed - relativeSpeed) * 2_500f, -maximumTorque, maximumTorque);

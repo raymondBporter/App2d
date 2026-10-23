@@ -155,7 +155,7 @@ public sealed class ParallaxRenderingTests
 
         public override void Render(Renderer2D renderer)
         {
-            _tree.Render(renderer, Camera.VisibleWorldBounds, default(VegetationWind2D));
+            _tree.Render(renderer, Camera.VisibleWorldBounds, default);
             renderer.Draw(Scene, int.MinValue, 0);
         }
     }

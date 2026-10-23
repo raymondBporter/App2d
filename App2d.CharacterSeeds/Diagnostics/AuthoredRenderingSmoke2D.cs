@@ -210,8 +210,9 @@ internal static class AuthoredRenderingSmoke2D
                         AuthoredPose = animator.Pose,
                         ActionId = animator.Action ?? animator.Role,
                         ActionSeconds = (float)(animator.Action is null ? animator.RoleTime : animator.ActionTime),
-                        Bolts = id == "rock-thrower" && phase == "recovery" ?
-                            [new(GameWorldUnits2D.AuthoredToWorld(feet) + new Vector2(facing * 50, 80), new(facing * 160, 80), new(14.4f), 3) { Gravity = 600 }] : []
+                        Bolts = id == "rock-thrower" && phase == "recovery"
+                        ? [new(GameWorldUnits2D.AuthoredToWorld(feet) + new Vector2(facing * 50, 80), new(facing * 160, 80), new(14.4f), 3) { Gravity = 600 }]
+                        : []
                     };
                 }).ToImmutableArray();
                 view.ApplyState(states, [], 70);

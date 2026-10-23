@@ -9,6 +9,7 @@ using App2d.Core.Geometry.Operations.Intersection;
 using App2d.Core.Geometry.Operations.MassProperties;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Serialization;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Shapes;
 using App2d.Core.Spatial;
 using System.Numerics;
@@ -86,9 +87,12 @@ public sealed class HeightFieldShape2DTests
         Assert.Equal(polygon.Vertices.ToArray(), shape.GetOutlineVerts(buffer).ToArray());
         Assert.Equal(0, shape.GetVertCount()); // A concave field has no single convex support map.
         var area = 0f;
-        foreach (var triangle in shape.Triangles(Span<Vector2>.Empty))
+        foreach (var triangle in shape.Triangles([]))
+        {
             area += MathF.Abs((triangle.B.X - triangle.A.X) * (triangle.C.Y - triangle.A.Y)
                 - (triangle.B.Y - triangle.A.Y) * (triangle.C.X - triangle.A.X)) * 0.5f;
+        }
+
         Assert.Equal(shape.Area, area);
     }
 

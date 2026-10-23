@@ -98,12 +98,19 @@ public static class Containment2D
             var b = vertices[(index + 1) % vertices.Length];
             var cross = ((double)b.X - a.X) * ((double)point.Y - a.Y) - ((double)b.Y - a.Y) * ((double)point.X - a.X);
             if (cross == 0d && point.X >= Math.Min(a.X, b.X) && point.X <= Math.Max(a.X, b.X)
-                && point.Y >= Math.Min(a.Y, b.Y) && point.Y <= Math.Max(a.Y, b.Y)) return true;
+                && point.Y >= Math.Min(a.Y, b.Y) && point.Y <= Math.Max(a.Y, b.Y))
+            {
+                return true;
+            }
+
             if (a.Y <= point.Y)
             {
                 if (b.Y > point.Y && cross > 0d) winding++;
             }
-            else if (b.Y <= point.Y && cross < 0d) winding--;
+            else if (b.Y <= point.Y && cross < 0d)
+            {
+                winding--;
+            }
         }
         return winding != 0;
     }

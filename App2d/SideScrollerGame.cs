@@ -8,6 +8,7 @@ using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Hosting;
 using App2d.Core.Input;
+using App2d.Core.Rendering;
 using App2d.Core.Rendering.Textures;
 using App2d.Core.Vegetation;
 using App2d.Editor;
@@ -19,7 +20,6 @@ using App2d.Presentation.Audio;
 using App2d.Presentation.World;
 using App2d.Rendering;
 using App2d.Things;
-using App2d.Core.Rendering;
 using System.Numerics;
 
 namespace App2d;

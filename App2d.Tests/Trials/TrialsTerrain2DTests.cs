@@ -2,9 +2,9 @@ using App2d.Core;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.HeightFields;
 using App2d.Core.Geometry.Operations.Distance;
+using App2d.Core.Geometry.Shapes;
 using App2d.Core.Input;
 using App2d.Core.Physics;
-using App2d.Core.Shapes;
 using App2d.Trials;
 
 namespace App2d.Tests.Trials;

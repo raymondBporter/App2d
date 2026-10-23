@@ -33,11 +33,13 @@ public sealed class PhysicsCollisionCallbacks2DTests
         var (world, actor, _) = CreateWorld();
         world.Gravity = new(0f, -100f);
         world.MaxSubstepSeconds = 1f / 120f;
-        var callbacks = new Callbacks();
-        callbacks.AfterAction = contact =>
+        var callbacks = new Callbacks
         {
-            Assert.Equal(0f, actor.LinearVelocity.Y, 4);
-            Assert.Single(world.LastContacts);
+            AfterAction = contact =>
+            {
+                Assert.Equal(0f, actor.LinearVelocity.Y, 4);
+                Assert.Single(world.LastContacts);
+            }
         };
         world.CollisionCallbacks = callbacks;
         world.Step(1f / 30f);
@@ -67,12 +69,14 @@ public sealed class PhysicsCollisionCallbacks2DTests
         var (world, actor, _) = CreateWorld();
         actor.WorldObject.Transform.Position = new(-4f, 0.8f);
         var second = AddActor(world, new(4f, 0.8f));
-        var callbacks = new Callbacks();
-        callbacks.AfterAction = contact =>
+        var callbacks = new Callbacks
         {
-            Assert.Throws<InvalidOperationException>(() => world.Step(1f / 60f));
-            var dynamicBody = contact.First.MotionType == BodyMotionType2D.Dynamic ? contact.First : contact.Second;
-            Assert.True(world.RemoveBody(dynamicBody));
+            AfterAction = contact =>
+            {
+                Assert.Throws<InvalidOperationException>(() => world.Step(1f / 60f));
+                var dynamicBody = contact.First.MotionType == BodyMotionType2D.Dynamic ? contact.First : contact.Second;
+                Assert.True(world.RemoveBody(dynamicBody));
+            }
         };
         world.CollisionCallbacks = callbacks;
         world.Step(1f / 60f);

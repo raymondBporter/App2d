@@ -101,8 +101,8 @@ public static class ShapeMassProperties2D
         var inertia = 0d;
         for (var i = 0; i < vertices.Length; i++)
         {
-            var a = (new Vector2d(vertices[i]) - origin) - offset;
-            var b = (new Vector2d(vertices[(i + 1) % vertices.Length]) - origin) - offset;
+            var a = new Vector2d(vertices[i]) - origin - offset;
+            var b = new Vector2d(vertices[(i + 1) % vertices.Length]) - origin - offset;
             inertia += a.Cross(b) * (a.Dot(a) + a.Dot(b) + b.Dot(b));
         }
         return Create(Math.Abs(areaTwice) / 2d, origin + offset, Math.Abs(inertia) / 12d, density);

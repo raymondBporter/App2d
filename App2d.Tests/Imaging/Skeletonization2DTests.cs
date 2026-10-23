@@ -115,8 +115,11 @@ public sealed class Skeletonization2DTests
     {
         var image = new Image2D<bool>(rows[0].Length, rows.Length);
         for (var y = 0; y < image.Height; y++)
+        {
             for (var x = 0; x < image.Width; x++)
                 image[x, y] = rows[y][x] == '#';
+        }
+
         return image;
     }
 
@@ -164,7 +167,10 @@ public sealed class Skeletonization2DTests
                             var ny = pixel.Y + dy;
                             if ((uint)nx >= (uint)width || (uint)ny >= (uint)height
                                 || visited[ny * width + nx] || image.GetValueOrDefault(nx - 1, ny - 1) != foreground)
+                            {
                                 continue;
+                            }
+
                             visited[ny * width + nx] = true;
                             pending.Enqueue((nx, ny));
                         }
