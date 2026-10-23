@@ -1,8 +1,8 @@
-# Character migration baseline (P0a)
+# Character migration baseline (P0a, P0b)
 
-Date: 2026-10-23. Pass P0a of the [Character system and Studio migration plan](character-system-migration-plan.md), section 5, "P0. Establish a trustworthy baseline and conversion cases".
+Date: 2026-10-23. Passes P0a and P0b of the [Character system and Studio migration plan](character-system-migration-plan.md), section 5, "P0. Establish a trustworthy baseline and conversion cases".
 
-This file is the evidence record for P0a: the exact source snapshot, a schema-aware inventory of the authored character library with its reference graph, and a fresh run of the existing character, editor, rendering and combat checks with pre-existing failures listed separately. Nothing was converted and no later pass was started. Numbers here come from the run on this date; rerun the commands in "How to reproduce" before comparing anything against them.
+This file is the evidence record for P0a and P0b: the exact source snapshot, a schema-aware inventory of the authored character library with its reference graph, a fresh run of the existing character, editor, rendering and combat checks with pre-existing failures listed separately, and (section 6) the reference set the conversion passes compare against. Nothing was converted. Numbers here come from the run on this date; rerun the commands in "How to reproduce" before comparing anything against them.
 
 ## 1. Source snapshot
 
@@ -155,9 +155,77 @@ dotnet run --project App2d.CharacterStudio -- --smoke-pterosaur <scratch>/p0a/sm
 dotnet run --project App2d.CharacterSeeds -- --contact-study <scratch>/p0a/smoke/contact-study
 ~~~
 
-Use a new empty directory for `<scratch>`; the editor smoke deletes and recreates its `workspace` subfolder under its output directory. The inventory program is not checked in; it is a ~250-line console project that references `App2d.Core`, calls `AuthoredCatalog.Load(root)` and `ModelTemplateCatalog.Load(root)`, and prints the properties listed in section 6. Regenerate it the same way when the schemas change rather than editing section 6 by hand.
+Use a new empty directory for `<scratch>`; the editor smoke deletes and recreates its `workspace` subfolder under its output directory. The inventory program is not checked in; it is a ~250-line console project that references `App2d.Core`, calls `AuthoredCatalog.Load(root)` and `ModelTemplateCatalog.Load(root)`, and prints the properties listed in section 7. Regenerate it the same way when the schemas change rather than editing section 7 by hand.
 
-## 6. Full inventory
+## 6. P0b reference set
+
+The reference set lives in shared tests, as plan section 5 asks: [MigrationReferenceTests](../App2d.Tests/Authored/MigrationReferenceTests.cs) samples each case through the current `PoseEvaluator`, `ActorPose`, `EntityCollision`, `PersonLoadout` and `PartContours2D` paths, and `AuthoredArena` for combat, and compares the result with [character-migration-references.json](../App2d.Tests/Authored/References/character-migration-references.json). The file was generated once from this checkout (commit 12315aaa plus the P0b test files) and is now fixed; the test fails on any drift outside the tolerances below. The mechanical linkage fixture is `TestModels.Linkage()` with its two clips, so it does not depend on an experimental app.
+
+~~~powershell
+dotnet test App2d.Tests/App2d.Tests.csproj --filter "FullyQualifiedName~MigrationReferenceTests"      # compare
+$env:APP2D_WRITE_REFERENCES = "1"; dotnet test App2d.Tests/App2d.Tests.csproj --filter "FullyQualifiedName~MigrationReferenceTests"   # regenerate (approved differences only)
+~~~
+
+### 6.1 Tolerances
+
+Set per observable quantity before any comparison was made, as section 7 of the plan requires. They are stored in the reference file and applied by JSON path, so a representation change that keeps these quantities passes and one that moves them fails.
+
+| Quantity | Tolerance | Basis |
+| --- | --- | --- |
+| Control, socket, prop-point, contact-target and region positions | 1e-4 authored units | Float evaluation reproduces itself to ~1e-7; room for a different but equivalent operation order |
+| Accumulated frame angles, socket orientations, clip seconds, part depth | 1e-4 | Radians / seconds / layer units |
+| Socket frame unit axes | 1e-4 | Dimensionless components |
+| IK and contact residuals | 1e-5 | Today's residuals are ~3e-8 for every authored chain and contact; anything larger is a real change |
+| Silhouette bounds, centroid and first point | 1e-3 | 48-segment outlines from `PartContours2D`, line widths excluded |
+| Silhouette shoelace area | 1e-3 square units | Part areas range roughly 0.01..1 |
+| Combat positions | 1e-3 | End-of-scenario actor positions |
+| Ticks, damage, health, counts, ids, reached flags, facings, mirrored flags | exact | Integers and discrete facts |
+
+### 6.2 Cases
+
+75 pose cases, each one bundle at one instant and facing, in actor-local units placed through `ActorPose` so facing -1 is a real mirrored capture. Every case records control positions and angles, chain residual/reached, active contact targets and residuals, every socket's 3D frame, expressions, and per visible part its depth, outline point count, bounds, centroid, area and first point (the silhouette record; order is carried by the depth values). Entity cases add prop points (grip/tip/second-grip/muzzle) for each equipped or dressed prop, the muzzle point and axis, the movement box, every hurt region and every hit window of the clip's action with its interval, active flag, bounds, translation, axis and mirroring.
+
+| Bundle | Cases | Named P0 inputs covered |
+| --- | --- | --- |
+| Person, tall-thin, short-broad | rest; person-walk at 0, 0.3, 0.9 and 0.3 facing left; person-run 0.2; person-jump at the apex marker | Shared clips on varied lengths, foot contacts, both facings |
+| Hero | sword side-cut at strike (both facings) and swoosh; forehand and backhand at strike; sheathe at 0, 0.31 and the end; gun shot at fire (both facings); climb 0.4; idle with the hurt expression | Tilted/twisted weapon (orient tracks), sheathing (sword moves from `sword-hand` to `back` by 0.31 s), actor-anchored blade windows, muzzle, back-view hair |
+| Cinder gunner, Maul brute, spear-guard | pistol shot at fire; idle 0.5; hammer slam at strike (both facings); heavy walk 0.5; thrust at strike | Variant builds with wardrobe, prop-anchored hit windows |
+| Quadruped, triceratops, baby triceratops | quadruped walk 0, 0.4, 0.8; run 0.3 (both facings); triceratops walk 0.4, rush 0.2; baby charge at rush and brake | Gaits with four point chains and contacts, socket-anchored horn window |
+| Pterosaur | hover 0.5; fold at end; dive 0.3 (both facings); swoop at rush | Point-bound wing polygons, no chains, beak window |
+| Curve face | rest; blink 1.0; crossed-eyes 1.0; expressions 2.0 and 6.5; hair-wave 0.5; smile 1.5 facing left | Affine eye controls, scale tracks, wave, bound curves |
+| Stalker | lunge at strike (entity); walk 0.5 | Three-leg point rig, socket off the body |
+| Linkage | rest; crank at 0, 1/8 .. 7/8 turn and 1/4 turn facing left; reach at 0, 0.5, 1 | Full-turn rotation, reached and unreachable IK, zero-length target |
+
+Observed facts worth carrying into P0c and P4b:
+
+- Every authored chain and contact in the set is reached with residual <= 2.8e-8. The only residuals above the tolerance are in the linkage: the pin beyond full reach at 1/4, 3/8, 1/2, 5/8 and 3/4 turn (residual 0.31 .. 0.66, reported `reached: false`), and at 1/8 and 7/8 turn, where the target is about 6e-3 past full reach but the solver still reports `reached: true` with residual 5.6e-3. `ChainResult.Reached` therefore comes from the two-bone solver's own reach decision, not from the residual; that is the "clamping must not keep reporting reached" case of plan section 3.5, now pinned by a fixture.
+- A zero-length target (rod target on its own root) leaves the end 1.0e-3 from the root with `reached: true`: the point solver keeps a minimum root-to-end distance for a degenerate target.
+- Sheathing is a placement change, not a pose change: at 0.31 s of `player-sword-sheathe` the dressed sword's grip/tip move from the `sword-hand` frame to the `back` frame while the control positions continue smoothly.
+- Mirroring a case to facing -1 mirrors every point, socket origin and region translation in X and flips socket X axes; hurt and attack regions report `mirrored: true` on the left-facing hero and brute cases.
+
+### 6.3 Combat scenarios
+
+Eight graphics-free `AuthoredArena` fights at 120 Hz, actor 0 driven by scripted input and the others by the arena AI. Recorded exactly: every hit (tick, attacker, target, window, damage), every marker/event dispatch with its sound and action sequence, each actor's final health, position, facing, role, action and sequence, and the bolt count.
+
+| Scenario | Set-up | Outcome recorded |
+| --- | --- | --- |
+| guard-thrust/right | player at 0, spear-guard at +2.05, 360 steps, no input | guard hits spear-tip at ticks 48 and 289 for 1 each; player 3 hp; two swing sounds |
+| guard-thrust/left | same with the guard at -2.05 | identical ticks and damage; the guard faces +1 |
+| hero-combo | hero at 0, stalker-pest at 1.2, attack at steps 1/25/50/75 | blade hits at tick 8 for 2, stalker killed (0 hp); four swings dispatched |
+| brute-slam | maul-brute at 0 attacking at step 1, player at 1.7 | the player's AI thrusts hit the brute at ticks 55 and 188 (brute 22 -> 20); the slam itself does not land |
+| club-slam | club-caveman at 0 attacking at step 1, player at 1.5 | player thrusts land at ticks 48 and 181 (caveman 9 -> 7); the club does not land; club-windup and swing sounds |
+| gunner-bolt | cinder-gunner at 0 attacking at step 1, player at 4 | bolt hits at tick 93 for 2 (player 5 -> 3); one shot sound; player closes to 1.6 |
+| baby-charge | baby-triceratops at 0 attacking at step 1, player at 3.5 | no hits; charge-rush, charge-scrape and charge-stop events fire once each |
+| player-walk-thrust | player at -3 walking right, attacking at step 150, guard at +2.05 | guard hits spear-tip at tick 179 (player 5 -> 4); player ends at 0.54, guard retreats to 1.07 |
+
+These outcomes are what the current combat path does, including the attacks that miss; they are references, not approvals. The slam and club misses in particular are inputs for P8/P9, where hit windows become attached colliders.
+
+### 6.4 Test results after P0b
+
+The Authored, Gameplay, Collision and Rendering suites with the new tests: 995 passed, 1 failed (the pre-existing `AuthoredObject2DTests` tileset failure). Full App2d.Tests after P0b: 2339 passed, 7 failed of 2346, the same seven pre-existing failures as section 2.1. The two new tests are `MigrationReferenceTests.ReferencesMatchTheCurrentEvaluatorCollisionAndCombat` and `TheLinkageExercisesReachedUnreachableAndZeroLengthTargets`.
+
+Not captured in P0b and left for P0c or the owning phase: pixel-level rendered frames (the Studio smokes in section 3 remain the visual record and were not reviewed against a reference), slot/skin image attachments (no authored model uses them), physics props and projectiles beyond the one bolt hit.
+## 7. Full inventory
 
 ### Catalog load
 

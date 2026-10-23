@@ -37,6 +37,73 @@ internal static class TestModels
         ],
     };
 
+    /// <summary>
+    /// The nonhumanoid mechanical linkage the migration plan keeps in shared tests (P0): a crank on a hub drives a two-bar
+    /// rod through the point IK chain "rod", whose root is a fixed piston. Rotating the hub a full turn carries the pin
+    /// round, and the rod can only follow for part of the circle, so one clip exercises reached and unreachable (full-reach)
+    /// targets, and <see cref="LinkageReach"/> adds a zero-length one, without any humanoid assumption.
+    /// </summary>
+    public static CharacterModel Linkage() => new()
+    {
+        Id = "linkage",
+        Name = "Crank linkage",
+        Controls =
+        [
+            new() { Id = "frame", Rest = new(0, 0) },
+            new() { Id = "hub", Parent = "frame", Rest = new(0, 1) },
+            new() { Id = "crank-pin", Parent = "hub", Rest = new(.4f, 1) },
+            new() { Id = "piston", Parent = "frame", Rest = new(1.6f, 1) },
+            new() { Id = "rod-elbow", Parent = "piston", Rest = new(1, 1.3f) },
+            new() { Id = "rod-end", Parent = "rod-elbow", Rest = new(.4f, 1) },
+        ],
+        Chains = [new() { Id = "rod", Root = "piston", Joint = "rod-elbow", End = "rod-end", Bend = 1 }],
+        Parts =
+        [
+            new() { Id = "bed", A = "frame", Geometry = Rectangle2D.Builder.FromSize(2.6f, .12f, new(.8f, 0)), Material = new() { Fill = "#8a8f94", Outline = new() }, Depth = .05f },
+            new() { Id = "hub-disc", A = "hub", Geometry = Ellipse2D.Builder.Create(new(.5f, .5f)), Material = new() { Fill = "#c9d3d8", Outline = new() }, Depth = .02f },
+            new() { Id = "crank", A = "hub", B = "crank-pin", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Depth = -.01f },
+            new() { Id = "rod-upper", A = "piston", B = "rod-elbow", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Depth = -.02f },
+            new() { Id = "rod-lower", A = "rod-elbow", B = "rod-end", Geometry = new LineSegmentCurve2D { Start = new(0, 0), End = new(0, 1) }.Validated(), Material = new() { Fill = "#3b4a52" }, Depth = -.02f },
+            new() { Id = "piston-head", A = "piston", Geometry = RoundedRectangle2D.Builder.FromSize(.3f, .3f, .05f), Material = new() { Fill = "#d6c9a5", Outline = new() }, Depth = -.03f },
+        ],
+    };
+
+    /// <summary>One-second looping full turn of the hub; the rod's target follows the pin through eight linear keys.</summary>
+    public static MotionClip LinkageCrank(ResolvedModel linkage)
+    {
+        var clip = new MotionClip { Id = "linkage-crank", Name = "Linkage / crank", Model = linkage.Base.Id, Loop = true };
+        clip.Tracks.Add(new()
+        {
+            Kind = MotionClip.RotateKind,
+            Target = "hub",
+            Keys = [new() { Time = 0 }, new() { Time = .5f, Angle = MathF.PI }, new() { Time = 1, Angle = MathF.Tau }],
+        });
+        var target = new ClipTrack { Kind = MotionClip.TargetKind, Target = "rod" };
+        for (var i = 0; i <= 8; i++)
+        {
+            var theta = MathF.Tau * i / 8;
+            target.Keys.Add(new() { Time = i / 8f, Value = new(.4f * MathF.Cos(theta) - .4f, .4f * MathF.Sin(theta), 0) });
+        }
+
+        clip.Tracks.Add(target);
+        clip.Validate(linkage);
+        return clip;
+    }
+
+    /// <summary>The rod target at its own root (zero length), then far past full reach, then back at rest.</summary>
+    public static MotionClip LinkageReach(ResolvedModel linkage)
+    {
+        var clip = new MotionClip { Id = "linkage-reach", Name = "Linkage / reach", Model = linkage.Base.Id };
+        clip.Tracks.Add(new()
+        {
+            Kind = MotionClip.TargetKind,
+            Target = "rod",
+            Keys = [new() { Time = 0, Value = new(1.2f, 0, 0) }, new() { Time = .5f, Value = new(-1.5f, 0, 0) }, new() { Time = 1 }],
+        });
+        clip.Validate(linkage);
+        return clip;
+    }
+
     /// <summary>An empty one-second looping clip authored against this model's own measures, so every ratio is 1.</summary>
     public static MotionClip Clip(ResolvedModel model) => new()
     {
