@@ -2,7 +2,7 @@
 
 Date: 2026-10-23.
 
-Status: proposed implementation plan; no implementation phase has started.
+Status: implementation in progress. P0a (baseline and inventory) is complete; see the progress record in section 11 and [Character migration baseline](character-migration-baseline.md).
 
 This is the full migration proposal from the character-system design discussion. It supersedes the proposed future sequence in [Character resources and migration](character-resources.md), while that document remains a record of implemented behavior. [Character Studio](character-studio.md) describes the current editor.
 
@@ -319,7 +319,7 @@ flowchart TD
 
 Passes:
 
-- [ ] P0a. Record checkout revision/diff and schema-aware asset/reference inventory. Run the applicable existing character, editor, rendering and combat checks; record existing failures separately.
+- [x] P0a. Record checkout revision/diff and schema-aware asset/reference inventory. Run the applicable existing character, editor, rendering and combat checks; record existing failures separately.
 - [ ] P0b. Capture reference poses, sockets, rendered silhouettes/order and combat outcomes for the representative bundles below.
 - [ ] P0c. Write the local-frame/layer/affine-conversion decisions against those fixtures. Identify every intentional conversion difference and the evidence required to accept it.
 
@@ -614,4 +614,5 @@ Progress record:
 | Date | Pass | Status | Evidence / next action |
 | --- | --- | --- | --- |
 | 2026-10-23 | Planning | Complete | Source inspection and schema-aware inventory informed this proposal. No implementation phase, runtime baseline run or asset conversion was performed in this planning pass. Next: P0a. |
+| 2026-10-23 | P0a | Complete | Baseline recorded in [Character migration baseline](character-migration-baseline.md): checkout main at 769d60b5, clean tree. Schema-aware inventory via the real readers: 7 models, 7 variants, 91 clips, 30 props, 11 entities (all compile), 5 templates, 1 physics prop, all at current schema versions, zero catalog errors; reference graph, code-only bindings (14 player clips, hair-short-back, sheath, short-broad) and conversion-relevant facts (all 23 chains point IK, no declared lengths, scale tracks only in 4 curve-face clips, orient tracks in 15 weapon clips, face tracks in 28 clips, absolute part depths) listed there. Full App2d.Tests: 2337 passed / 7 failed of 2344; the 7 are pre-existing (6 missing dark-cave tileset manifest, 1 TriangleMeshBuilder3D count) and outside the character suites. Every section 7 class passes (Authored 434/434, Rendering 163/163, Collision 53/53, Gameplay.Combat 11/11, Editor 8/8). Seven Studio smokes and the Seeds contact study all exit 0 with frames and reports in a disposable directory; frames were not reviewed against a reference. No conversion, no new abstraction. Next: P0b, capture reference poses, sockets, silhouettes/order and combat outcomes for the representative bundles (asset IDs mapped in the baseline), add the mechanical linkage fixture to shared tests, and record tolerances per quantity before comparing. |
 
