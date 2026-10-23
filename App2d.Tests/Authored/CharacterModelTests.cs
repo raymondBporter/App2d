@@ -37,7 +37,7 @@ public sealed class CharacterModelTests
         Assert.Equal(json, CharacterModel.FromJson(json).ToJson());
         Assert.Contains("\"frame\": \"shoulder\"", json);
         Assert.DoesNotContain("\"scale\": \"unit\"", json);
-        Assert.Throws<JsonException>(() => CharacterModel.FromJson(json.Replace("\"chains\":", "\"chanes\":")));
+        Assert.Throws<JsonException>(() => CharacterModel.FromJson(json.Replace("\"constraints\":", "\"constrains\":")));
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public sealed class CharacterModelTests
                 Control("knee").Parent = "body";
                 break;
             case "shared-solve":
-                model.Chains.Add(new()
+                model.Constraints.Add(new ModelChain()
                 {
                     Id = "leg2",
                     Root = "hip",
@@ -80,7 +80,7 @@ public sealed class CharacterModelTests
                 });
                 break;
             case "frame-solved":
-                model.Chains[1].Frame = "hand";
+                model.IkChains.ElementAt(1).Frame = "hand";
                 break;
             case "unknown-scale":
                 Control("body").Scale = "tail";

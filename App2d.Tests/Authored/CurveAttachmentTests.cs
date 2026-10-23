@@ -298,7 +298,7 @@ public sealed class CurveAttachmentTests
         Assert.Equal(new CurveWave { Amplitude = .045f, Cycles = 5, PhaseControl = "wave" }, read.Parts[0].Wave);
         Assert.Null(read.Parts[1].Wave);
         var written = read.ToJson();
-        Assert.Contains("\"version\": 6", written);
+        Assert.Contains($"\"version\": {CharacterModel.CurrentVersion}", written);
         Assert.DoesNotContain("waveAmplitude", written);
         Assert.DoesNotContain("waveCycles", written);
         Assert.Equal(written, CharacterModel.FromJson(written).ToJson());

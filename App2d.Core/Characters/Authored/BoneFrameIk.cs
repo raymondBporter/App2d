@@ -5,38 +5,13 @@ using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
-/// <summary>Two rigid bone segments with similarity frames: uniform scale and reflection, but no shear or collapse.</summary>
+/// <summary>
+/// The canonical two-bone IK constraint (<see cref="ModelChain.BoneSolver"/>): two rigid segments whose similarity frames
+/// turn with the solve, carrying their descendants and attachments. Uniform scale and reflection are supported; shear and
+/// collapse are rejected by name.
+/// </summary>
 internal static class BoneFrameIk
 {
-    internal static void ValidateSetup(CharacterModel model)
-    {
-        if (!model.IkChains.Any(c => c.Solver == ModelChain.BoneSolver))
-        {
-            return;
-        }
-
-        var controls = model.Controls.ToDictionary(c => c.Id, StringComparer.Ordinal);
-        var frames = new Dictionary<string, Matrix3x2>(StringComparer.Ordinal);
-        Matrix3x2 Frame(string id)
-        {
-            if (frames.TryGetValue(id, out var frame))
-            {
-                return frame;
-            }
-
-            var c = controls[id];
-            return frames[id] = c.Transform is null
-                ? Matrix3x2.CreateRotation(c.RestAngle) * Matrix3x2.CreateTranslation(c.Rest.X, c.Rest.Y)
-                : c.Transform.Matrix * (c.Parent is null ? Matrix3x2.Identity : Frame(c.Parent));
-        }
-        foreach (var c in controls.Values)
-        {
-            Frame(c.Id);
-        }
-
-        ValidateFrames(controls, model.IkChains, frames);
-    }
-
     internal static void ValidateFrames(IReadOnlyDictionary<string, ModelControl> controls, IEnumerable<ModelChain> chains, IReadOnlyDictionary<string, Matrix3x2> frames)
     {
         foreach (var c in chains.Where(c => c.Solver == ModelChain.BoneSolver))
@@ -97,9 +72,7 @@ internal static class BoneFrameIk
             void Apply(string bone)
             {
                 var frame = pose.Bones[bone] * delta;
-                pose.Bones[bone] = frame;
-                pose.Points[bone] = new(frame.M31, frame.M32, pose.Points[bone].Z + depth);
-                pose.Angles[bone] = MathF.Atan2(frame.M12, frame.M11);
+                pose.Place(bone, frame, pose.Points[bone].Z + depth, MathF.Atan2(frame.M12, frame.M11));
                 foreach (var child in model.Children[bone])
                 {
                     Apply(child);

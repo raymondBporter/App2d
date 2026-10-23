@@ -35,8 +35,8 @@ public sealed class PersonStudyConversionTests
     public void PersonModelDeclaresFramesAndMeasures()
     {
         var model = PersonTemplate.Model();
-        Assert.Equal("left-shoulder", model.Chains.Single(c => c.Id == "left-arm").Frame);
-        Assert.Equal(CharacterModel.Locomotion, model.Chains.Single(c => c.Id == "right-leg").Frame);
+        Assert.Equal("left-shoulder", model.IkChains.Single(c => c.Id == "left-arm").Frame);
+        Assert.Equal(CharacterModel.Locomotion, model.IkChains.Single(c => c.Id == "right-leg").Frame);
         Assert.Equal(["arm", "leg", "torso"], model.Measures.Select(m => m.Id).Order());
         Assert.Equal("leg", model.Controls.Single(c => c.Id == "hips").Scale);
     }

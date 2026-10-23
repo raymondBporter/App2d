@@ -51,7 +51,7 @@ public sealed class CleanAuthoringTests : IDisposable
                 ModelAuthoring.AddPart(m, Core.Geometry.GeometryValidation2D.Validated(new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }), $"{leg}-knee", $"{leg}-foot");
             }
             ModelAuthoring.AddMeasure(m, "leg", ["front-hip", "front-knee", "front-foot"]);
-            foreach (var chain in m.Chains)
+            foreach (var chain in m.IkChains)
             {
                 chain.Scale = "leg";
             }

@@ -17,7 +17,7 @@ public sealed class QuadrupedTests
     {
         var model = QuadrupedTemplate.Model(triceratops: dinosaur);
         var resolved = ResolvedModel.From(model);
-        Assert.Equal(4, model.Chains.Count);
+        Assert.Equal(4, model.IkChains.Count());
         Assert.Equal(model.ToJson(), CharacterModel.FromJson(model.ToJson()).ToJson());
         foreach (var clip in QuadrupedTemplate.Clips(model))
         {

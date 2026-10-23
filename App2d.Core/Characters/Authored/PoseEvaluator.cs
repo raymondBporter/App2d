@@ -36,13 +36,23 @@ public readonly record struct PoseInput(string? Expression = null)
 /// </summary>
 public sealed record PoseLayer(MotionClip Clip, double Seconds, IReadOnlySet<string> Targets, float Weight = 1);
 
-/// <summary>The final pose: world positions for every control and the residuals that produced them. Drawing, sockets and collision all read this.</summary>
+/// <summary>
+/// The final pose: one evaluated frame per control in the character frame, with the residuals that produced it. Drawing,
+/// sockets and collision all read this. <see cref="Points"/>, <see cref="Angles"/> and <see cref="Bones"/> are views of the
+/// same placement, written together by <see cref="Place"/> so no consumer sees a position that disagrees with its frame.
+/// </summary>
 public sealed class EvaluatedPose
 {
-    public Dictionary<string, Vector3> Points { get; } = new(StringComparer.Ordinal);
-    /// <summary>Accumulated XY rotation of each control's frame, inherited by its children.</summary>
-    public Dictionary<string, float> Angles { get; } = new(StringComparer.Ordinal);
-    public Dictionary<string, Matrix3x2> Bones { get; } = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Vector3> _points = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, float> _angles = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Matrix3x2> _bones = new(StringComparer.Ordinal);
+
+    /// <summary>Each control's origin in the character frame; Z is its drawing layer.</summary>
+    public IReadOnlyDictionary<string, Vector3> Points => _points;
+    /// <summary>Accumulated XY rotation of each control's frame, unwrapped so full turns stay meaningful; inherited by its children.</summary>
+    public IReadOnlyDictionary<string, float> Angles => _angles;
+    /// <summary>Each control's frame in the character frame (row-vector convention: <c>nodeInCharacter = nodeLocal * parentInCharacter</c>).</summary>
+    public IReadOnlyDictionary<string, Matrix3x2> Bones => _bones;
     public List<EvaluatedSlot2D> Slots { get; } = [];
     public Dictionary<string, Vector3> SocketAngles { get; } = new(StringComparer.Ordinal);
     /// <summary>The expression each visible face-bearing part shows: gameplay input, then the clip's face channel, then the model default.</summary>
@@ -51,10 +61,30 @@ public sealed class EvaluatedPose
     public Vector3 Locomotion { get; set; }
     public List<ChainResult> Chains { get; } = [];
     public List<ContactResult> Contacts { get; } = [];
-    public Vector3 World(string id) => Points[id];
+    public Vector3 World(string id) => _points[id];
 
     /// <summary>A control's evaluated placement: its bone frame at its drawing layer. Artwork, sockets and handles attach to this.</summary>
-    public LayeredFrame2D Placement(string id) => new(new Frame2D(Bones[id]), Points[id].Z);
+    public LayeredFrame2D Placement(string id) => new(new Frame2D(_bones[id]), _points[id].Z);
+
+    /// <summary>Writes a control's frame, layer and accumulated angle together; the origin is read from the frame.</summary>
+    internal void Place(string id, Matrix3x2 frame, float layer, float angle)
+    {
+        _bones[id] = frame;
+        _points[id] = new(frame.M31, frame.M32, layer);
+        _angles[id] = angle;
+    }
+
+    internal void Place(string id, LayeredFrame2D placement, float angle) => Place(id, placement.Frame.Matrix, placement.Layer, angle);
+
+    /// <summary>Moves a control's origin without turning its frame: the legacy point-constraint adapter's write.</summary>
+    internal void Translate(string id, Vector3 origin)
+    {
+        var frame = _bones[id];
+        frame.M31 = origin.X;
+        frame.M32 = origin.Y;
+        _bones[id] = frame;
+        _points[id] = origin;
+    }
 }
 
 /// <summary>Samples channels, builds the hierarchy, then solves IK and contacts. No graphics.</summary>
@@ -128,43 +158,40 @@ public static class PoseEvaluator
             ? Interpolate(track, at).Angle * (input.ReverseHorizontalMotion ? -1 : 1) : 0;
         float Angle(string target) => !Masked(target) ? LayerAngle(false, target) : LayerAngle(false, target) + (LayerAngle(true, target) - LayerAngle(false, target)) * weight;
 
-        var angles = pose.Angles;
+        var locomotion = LayeredFrame2D.FromMatrix(Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y));
         foreach (var control in model.Order)
         {
-            // Every control is one local placement composed onto a carrier: frames multiply, layers add. The authored
-            // rest Z is already split into per-control layer offsets, and a translate-Z key is a further local offset,
-            // so an animated parent layer carries its children without double counting.
+            // One frame graph: every node is a local similarity composed onto its carrier, frames multiply and layers
+            // add. The authored rest Z is already split into per-node layer offsets and a translate-Z key is a further
+            // local offset, so an animated parent layer carries its children without double counting.
+            var node = model.Nodes[control.Id];
             var translate = Delta(MotionClip.TranslateKind, control.Id, control.Scale);
-            var localLayer = model.LayerOffsets[control.Id] + translate.Z;
-            if (model.SetupTransforms.TryGetValue(control.Id, out var setup))
+            var rotate = Angle(control.Id);
+            var localLayer = node.Layer + translate.Z;
+            var parent = node.Parent is null ? null : model.Nodes[node.Parent];
+            var parentAngle = parent is null ? 0 : pose.Angles[parent.Id];
+            // The legacy affine adapter carries its point children by rotation only; its scale and shear stay on its own frame.
+            var carrier = parent is null ? locomotion
+                : parent.Kind == RigNodeKinds.Affine ? LayeredFrame2D.FromRotation(parentAngle, pose.Points[parent.Id])
+                : pose.Placement(parent.Id);
+            if (node.Kind == RigNodeKinds.Affine)
             {
-                var scale = Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit);
-                var shear = Delta(MotionClip.ShearKind, control.Id, CharacterModel.Unit);
-                var local = new LayeredFrame2D(new(setup.EvaluateMatrix(
-                    new(setup.X + translate.X, setup.Y + translate.Y),
-                    setup.Rotation + Angle(control.Id),
-                    new(setup.ScaleX * (1 + scale.X), setup.ScaleY * (1 + scale.Y)),
-                    new(setup.ShearX + shear.X, setup.ShearY + shear.Y))), localLayer);
-                var carrier = control.Parent is null ? LayeredFrame2D.FromMatrix(Matrix3x2.CreateTranslation(pose.Locomotion.X, pose.Locomotion.Y)) : pose.Placement(control.Parent);
-                var placed = local.Then(carrier);
-                pose.Bones[control.Id] = placed.Frame.Matrix;
-                pose.Points[control.Id] = placed.Origin;
-                angles[control.Id] = MathF.Atan2(placed.XAxis.Y, placed.XAxis.X);
+                LegacyAffineRig.Evaluate(pose, node, translate, rotate, Delta(MotionClip.ScaleKind, control.Id, CharacterModel.Unit), Delta(MotionClip.ShearKind, control.Id, CharacterModel.Unit), localLayer,
+                    parent is null ? locomotion : pose.Placement(parent.Id));
                 continue;
             }
-            // A point control keeps the model-space convention: its rest offset from the parent turns by the parent's
-            // rotation since rest, and its own angle accumulates rather than being read back from the matrix, so
-            // full turns stay unwrapped.
-            var parentPoint = control.Parent is null ? pose.Locomotion : pose.Points[control.Parent];
-            var parentAngle = control.Parent is null ? 0 : angles[control.Parent];
-            var parentRestAngle = control.Parent is null ? 0 : model.Controls[control.Parent].RestAngle;
-            var parentRest = control.Parent is null ? Vector3.Zero : model.Rest[control.Parent];
-            var offset = (model.Rest[control.Id] - parentRest + translate).XY;
-            var turned = LayeredFrame2D.FromRotation(parentAngle - parentRestAngle, parentPoint);
-            angles[control.Id] = parentAngle + control.RestAngle - parentRestAngle + Angle(control.Id);
-            var point = turned.At(new Vector3(offset, localLayer));
-            pose.Points[control.Id] = point;
-            pose.Bones[control.Id] = Matrix3x2.CreateRotation(angles[control.Id]) * Matrix3x2.CreateTranslation(point.X, point.Y);
+            var origin = node.Origin(parent?.Length ?? 0) + translate.XY;
+            var rotation = node.Rotation + rotate;
+            if (node.CharacterOriented)
+            {
+                // The origin follows the parent; the axes stay the character's, so the parent's turn and scale are not inherited.
+                var at = carrier.At(new Vector3(origin, localLayer));
+                pose.Place(control.Id, LayeredFrame2D.Local(node.ScaleVector, rotation, at.XY, at.Z), rotation);
+                continue;
+            }
+            // The angle accumulates rather than being read back from the matrix, so full turns stay unwrapped; a reflected
+            // parent reverses the sense of its children's turns.
+            pose.Place(control.Id, LayeredFrame2D.Local(node.ScaleVector, rotation, origin, localLayer).Then(carrier), parentAngle + (parent?.Handedness ?? 1) * rotation);
         }
         var constraints = new RigConstraintEvaluator(model, pose);
         foreach (var chain in model.IkConstraints)
@@ -210,14 +237,6 @@ public static class PoseEvaluator
             var owned = Masked(socket.Id) || Masked(socket.Frame ?? socket.Control) || Masked(socket.Control)
                 || model.Chains.Values.Any(c => c.End == socket.Control && Masked(c.Id));
             pose.SocketAngles[socket.Id] = owned ? Vector3.Lerp(ReadOrientation(false), ReadOrientation(true), weight) : ReadOrientation(false);
-        }
-        foreach (var control in model.Order)
-        {
-            var frame = pose.Bones[control.Id];
-            var point = pose.Points[control.Id];
-            frame.M31 = point.X;
-            frame.M32 = point.Y;
-            pose.Bones[control.Id] = frame;
         }
         SkeletonAppearance2D.Evaluate(model, clip, time, input.Skin, pose);
         var overlayFace = overlay is not null && weight >= .5f;

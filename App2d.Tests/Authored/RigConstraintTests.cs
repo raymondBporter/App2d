@@ -14,12 +14,23 @@ public sealed class RigConstraintTests
     [Fact]
     public void TypedPointConstraintsPreserveLegacyContactsFramesAndMasks()
     {
+        // A version-6 file keeps its point chains in a separate list; the reader folds them into the one constraint list.
         var original = TestModels.Creature();
-        var converted = CharacterModel.FromJson(original.ToJson());
-        converted.Constraints.AddRange(converted.Chains);
-        converted.Chains.Clear();
+        var node = System.Text.Json.Nodes.JsonNode.Parse(original.ToJson())!.AsObject();
+        node["version"] = 6;
+        var chains = new System.Text.Json.Nodes.JsonArray();
+        foreach (var chain in node["constraints"]!.AsArray().ToArray())
+        {
+            node["constraints"]!.AsArray().Remove(chain);
+            chain!.AsObject().Remove("kind");
+            chains.Add(chain);
+        }
+        node.Remove("constraints");
+        node["chains"] = chains;
         var before = ResolvedModel.From(original);
-        var after = ResolvedModel.From(CharacterModel.FromJson(converted.ToJson()));
+        var reread = CharacterModel.FromJson(node.ToJsonString());
+        Assert.Equal(original.ToJson(), reread.ToJson());
+        var after = ResolvedModel.From(reread);
         var clip = TestModels.Clip(before);
         clip.Travel = new()
         {
@@ -313,7 +324,7 @@ public sealed class RigConstraintTests
         Assert.Throws<JsonException>(() => CharacterModel.FromJson(json.Replace("two-bone-ik", "unknown-solver")));
         Assert.Throws<InvalidDataException>(() => CharacterModel.FromJson(json.Replace("\"solver\": \"bone\"", "\"solver\": \"mystery\"")));
         var duplicate = TestModels.Creature();
-        duplicate.Constraints.Add(duplicate.Chains[0] with
+        duplicate.Constraints.Add(duplicate.IkChains.First() with
         {
         });
         Assert.Contains("duplicate", Assert.Throws<InvalidDataException>(duplicate.Validate).Message);
@@ -330,7 +341,6 @@ public sealed class RigConstraintTests
         TestModels.Near(new(1, 1, .2f), pose.World("tool"));
         copy.Model.IkChains.Single().Bend = -1;
         Assert.Equal(1, source.IkChains.Single().Bend);
-        Assert.Empty(copy.Model.Chains);
         Assert.Single(copy.Model.Constraints);
     }
 
@@ -357,7 +367,6 @@ public sealed class RigConstraintTests
                 ModelAuthoring.AddPartToBone(document.Asset, RoundedRectangle2D.Builder.FromSize(.4f, .4f, .05f), "beam");
             }), session.Message);
             Assert.Equal(new[] { "tool-chain" }, document.Asset.Groups.Single().Targets);
-            Assert.Empty(document.Asset.Chains);
             Assert.Single(document.Asset.Constraints);
             Assert.True(session.Save(document), session.Message);
             Assert.True(session.NewClip("linkage-move", "Move", 1), session.Message);
@@ -390,18 +399,19 @@ public sealed class RigConstraintTests
 
     private static CharacterModel Machine(bool affine = true)
     {
+        var kind = affine ? RigNodeKinds.Affine : RigNodeKinds.Point;
         var model = new CharacterModel
         {
             Id = "machine",
             Name = "Machine",
             Controls =
             [
-                new() { Id = "carrier", Transform = affine ? new() : null },
-                new() { Id = "beam", Parent = "carrier", Length = 1, Transform = affine ? new() : null },
-                new() { Id = "hinge", Parent = "beam", Length = 1, Rest = new(1, 0, .1f), Transform = affine ? new() { X = 1 } : null },
-                new() { Id = "tool", Parent = "hinge", Rest = new(2, 0, .2f), RestAngle = .3f, Transform = affine ? new() { X = 1, Rotation = .3f } : null },
-                new() { Id = "flag", Parent = "beam", Rest = new(0, .25f), Transform = affine ? new() { Y = .25f } : null },
-                new() { Id = "payload", Parent = "tool", Rest = PuppetPoint.From(new Vector3(new Vector2(2, 0) + Rotation2D.Apply(new(.2f, .3f), .3f), .3f)), RestAngle = .3f, Transform = affine ? new() { X = .2f, Y = .3f } : null }
+                new() { Id = "carrier", Node = kind, Transform = affine ? new() : null },
+                new() { Id = "beam", Parent = "carrier", Length = 1, Node = kind, Transform = affine ? new() : null },
+                new() { Id = "hinge", Parent = "beam", Length = 1, Rest = new(1, 0, .1f), Node = kind, Transform = affine ? new() { X = 1 } : null },
+                new() { Id = "tool", Parent = "hinge", Rest = new(2, 0, .2f), RestAngle = .3f, Node = kind, Transform = affine ? new() { X = 1, Rotation = .3f } : null },
+                new() { Id = "flag", Parent = "beam", Rest = new(0, .25f), Node = kind, Transform = affine ? new() { Y = .25f } : null },
+                new() { Id = "payload", Parent = "tool", Rest = PuppetPoint.From(new Vector3(new Vector2(2, 0) + Rotation2D.Apply(new(.2f, .3f), .3f), .3f)), RestAngle = .3f, Node = kind, Transform = affine ? new() { X = .2f, Y = .3f } : null }
             ],
             Constraints = [new ModelChain { Id = "reach", Root = "beam", Joint = "hinge", End = "tool", Solver = ModelChain.BoneSolver }],
             Sockets = [new() { Id = "socket", Control = "tool", OffsetX = .2f }]

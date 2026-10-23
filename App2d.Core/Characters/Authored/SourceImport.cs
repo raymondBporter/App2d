@@ -105,7 +105,7 @@ public static partial class PuppetImport
             Ink = puppet.Ink,
             LineWidth = puppet.LineWidth,
             Controls = [.. puppet.Controls.Select(c => new ModelControl { Id = ids[c.Id], Parent = parents.GetValueOrDefault(ids[c.Id]), Rest = c.Rest })],
-            Chains = chains,
+            Constraints = [.. chains],
             Measures = measures,
             Parts = [.. puppet.Parts.Select(p => p with { Id = Unique(Slug(p.Id, "part"), partIds), A = ids[p.A], B = p.B is null ? null : ids[p.B] })],
             Source = new() { Kind = AssetSource.Puppet, File = sourcePath },

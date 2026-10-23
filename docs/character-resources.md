@@ -116,6 +116,8 @@ This change does not replace the old content-generation commands. `PersonTemplat
 
 Model format **4** includes `constraints`. Loading requires the current format, and saving writes it. The `chains` collection supplies point IK; animation `target` tracks and `contacts` keep their IDs and meanings. Recipes copy constraints along with their clips.
 
+Format **7** (character-system migration, P3a) keeps one `constraints` list only: a point chain is a `two-bone-ik` entry with `"solver": "point"`, and `LegacyModelReader` folds an older file's `chains` into the front of `constraints`. Each control declares its `node` kind: `point` (the default; `rest`/`restAngle` are character-frame values the resolver turns into a parent-local similarity), `bone` (canonical: `local` = `{ x, y, rotation, scale, reflect, layer }`, `length`, optional `link` = `{ t, offsetX, offsetY, orientation }` binding the origin to the parent bone; `rest` is derived and not written) or `affine` (the legacy `transform`, kept for the native wheel fixture and curve-face's scaled eyes). The resolved model exposes the compiled graph as `ResolvedModel.Nodes`; `PoseEvaluator` composes every node as `nodeInCharacter = nodeLocal * parentInCharacter` and writes positions, frames and angles together.
+
 For example, this complete minimal model is a machine linkage with two rigid segments and an endpoint:
 
 ```json

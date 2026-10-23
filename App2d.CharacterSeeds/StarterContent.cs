@@ -335,7 +335,7 @@ public static class StarterContent
             ModelAuthoring.AddPart(model, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
         }
         ModelAuthoring.AddMeasure(model, "leg", ["hip-1", "knee-1", "foot-1"]);
-        foreach (var chain in model.Chains)
+        foreach (var chain in model.IkChains)
         {
             chain.Scale = "leg";
         }

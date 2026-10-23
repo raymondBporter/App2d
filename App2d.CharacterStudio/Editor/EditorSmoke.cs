@@ -388,7 +388,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 s.EditRig = true;
                 s.Selection.Chain = "tool-chain";
                 shell.Viewport.Fit(s.Evaluate("linkage"));
-                Record(document.Asset.Chains.Count == 0 && document.Asset.Constraints.Count == 1, "a machine rig declares bone IK as a typed constraint");
+                Record(document.Asset.Constraints.Count == 1 && document.Asset.IkChains.Single().Solver == ModelChain.BoneSolver, "a machine rig declares bone IK as a typed constraint");
             }),
             ("35-bone-ik-target", shell =>
             {
@@ -526,7 +526,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
                 ModelAuthoring.AddPart(model.Asset, new LineSegmentCurve2D { Start = Vector2.Zero, End = Vector2.UnitY }.Validated(), $"knee-{i}", $"foot-{i}");
             }
             ModelAuthoring.AddMeasure(model.Asset, "leg", ["hip-1", "knee-1", "foot-1"]);
-            foreach (var chain in model.Asset.Chains)
+            foreach (var chain in model.Asset.IkChains)
             {
                 chain.Scale = "leg";
             }
@@ -542,7 +542,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         Check(s.Save(model), s);
         s.EditRig = true;
         s.Selection.Control = "knee-1";
-        Record(!model.Asset.Parts.Any(p => p.Face != "none") && model.Asset.Chains.Count == 3, "tripod has three IK legs and no head or face");
+        Record(!model.Asset.Parts.Any(p => p.Face != "none") && model.Asset.IkChains.Count() == 3, "tripod has three IK legs and no head or face");
     }
 
     private static void AnimateTripod(EditorSession s)
@@ -707,7 +707,7 @@ shell.Test.Advance(1 / 120f, new(Move: 1));
         var model = s.Assets.Model("scribble")!.Asset;
         var clip = s.ClipDocument!.Asset;
         Record(model.Source?.Kind == AssetSource.Puppet && clip.Model == "scribble" && clip.Contacts.Count == puppet.Motions[0].Contacts.Count,
-            $"the puppet converts into model '{model.Id}' ({model.Controls.Count} controls, {model.Chains.Count} chains) and animation '{clip.Id}' with its contacts");
+            $"the puppet converts into model '{model.Id}' ({model.Controls.Count} controls, {model.IkChains.Count()} chains) and animation '{clip.Id}' with its contacts");
         s.TogglePlay();
         s.Tick(.35f);
         s.TogglePlay();

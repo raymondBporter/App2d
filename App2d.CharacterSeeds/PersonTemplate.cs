@@ -47,7 +47,7 @@ public static class PersonTemplate
             LineWidth = study.LineWidth,
             Build = PersonBuild.RuleId,
             Controls = [.. study.Controls.Select(c => new ModelControl { Id = c.Id, Parent = parents.GetValueOrDefault(c.Id), Rest = c.Rest, Scale = ScaleOf(c.Id) })],
-            Chains = [.. study.Chains.Select(c =>
+            Constraints = [.. study.Chains.Select(RigConstraint (c) =>
             {
                 var arm = c.End is Humanoid.LeftHand or Humanoid.RightHand;
                 return new ModelChain

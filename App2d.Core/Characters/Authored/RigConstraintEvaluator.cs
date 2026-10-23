@@ -1,4 +1,3 @@
-using App2d.Core.Kinematics;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Validation;
@@ -57,7 +56,10 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         }
     }
 
-    /// <summary>Converts a sampled offset into a goal. Point constraints retain the original rotation-only frame convention.</summary>
+    /// <summary>
+    /// Converts a sampled offset into a goal. A point constraint keys its target as a character-frame offset from the end's rest,
+    /// turned by the frame control's rotation since rest; a bone constraint keys it in the frame's own local axes.
+    /// </summary>
     public static Vector3 TargetPosition(ResolvedModel model, EvaluatedPose pose, ModelChain chain, Vector3 delta)
     {
         var locomotion = chain.Frame == CharacterModel.Locomotion;
@@ -65,7 +67,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         var rest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
         if (chain.Solver == ModelChain.PointSolver || locomotion)
         {
-            return point + Rotation2D.ApplyXY(model.Rest[chain.End] - rest + delta, locomotion ? 0 : pose.Angles[chain.Frame]);
+            return point + Rotation2D.ApplyXY(model.Rest[chain.End] - rest + delta, locomotion ? 0 : pose.Angles[chain.Frame] - model.Nodes[chain.Frame].RestAngle);
         }
 
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
@@ -81,7 +83,7 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
         var rest = locomotion ? Vector3.Zero : model.Rest[chain.Frame];
         if (chain.Solver == ModelChain.PointSolver || locomotion)
         {
-            return Rotation2D.ApplyXY(world - point, locomotion ? 0 : -pose.Angles[chain.Frame]) - (model.Rest[chain.End] - rest);
+            return Rotation2D.ApplyXY(world - point, locomotion ? 0 : model.Nodes[chain.Frame].RestAngle - pose.Angles[chain.Frame]) - (model.Rest[chain.End] - rest);
         }
 
         var (setupInverse, frame) = TargetFrames(model, pose, chain);
@@ -113,43 +115,8 @@ public sealed class RigConstraintEvaluator(ResolvedModel model, EvaluatedPose po
             throw new InvalidDataException($"Unknown IK constraint '{id}'.");
         }
 
-        return chain.Solver == ModelChain.BoneSolver ? BoneFrameIk.Solve(model, pose, chain, target, bend, _foldDirections[id]) : SolvePoints(chain, target, bend);
-    }
-
-    private ChainResult SolvePoints(ModelChain chain, Vector3 target, int bend)
-    {
-        // Preserve the old point solver exactly: rest segment lengths, translated descendants, unchanged angles.
-        var root = pose.Points[chain.Root];
-        var solved = TwoBoneIk2D.Solve(XY(root), XY(target), model.Length(chain.Root, chain.Joint), model.Length(chain.Joint, chain.End), bend);
-        var joint = new Vector3(solved.Joint, pose.Points[chain.Joint].Z);
-        var end = new Vector3(solved.End, target.Z);
-        MoveDescendants(chain.Joint, joint - pose.Points[chain.Joint], chain.End);
-        MoveDescendants(chain.End, end - pose.Points[chain.End], null);
-        Place(chain.Joint, joint);
-        Place(chain.End, end);
-        return new(chain.Id, Vector2.Distance(solved.End, XY(target)), solved.ReachesTarget);
-
-        void Place(string id, Vector3 point)
-        {
-            pose.Points[id] = point;
-            var frame = pose.Bones[id];
-            frame.M31 = point.X;
-            frame.M32 = point.Y;
-            pose.Bones[id] = frame;
-        }
-        void MoveDescendants(string id, Vector3 delta, string? except)
-        {
-            foreach (var child in model.Children[id])
-            {
-                if (child == except)
-                {
-                    continue;
-                }
-
-                Place(child, pose.Points[child] + delta);
-                MoveDescendants(child, delta, null);
-            }
-        }
+        // The solver is the constraint's declared semantics: rigid similarity frames, or the legacy position-only adapter.
+        return chain.Solver == ModelChain.BoneSolver ? BoneFrameIk.Solve(model, pose, chain, target, bend, _foldDirections[id]) : LegacyPointConstraint.Solve(model, pose, chain, target, bend);
     }
 
     private static Vector2 XY(Vector3 v) => new(v.X, v.Y);

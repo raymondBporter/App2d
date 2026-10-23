@@ -225,7 +225,7 @@ public sealed class EditorSessionTests : IDisposable
             shell.ScaleX = .9f;
             shell.ScaleY = .35f;
         }));
-        Assert.Equal(3, model.Asset.Chains.Count);
+        Assert.Equal(3, model.Asset.IkChains.Count());
         Assert.DoesNotContain(model.Asset.Parts, p => p.Face != "none");
         Ok(session, session.Save(model));
 

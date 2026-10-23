@@ -32,7 +32,7 @@ public static class QuadrupedTemplate
             Control(leg + "-root", "body", x, .84f, z);
             Control(leg + "-joint", leg + "-root", x + (front ? -.12f : .16f), .46f, z);
             Control(leg + "-foot", leg + "-joint", x + .02f, .10f, z);
-            m.Chains.Add(new()
+            m.Constraints.Add(new ModelChain()
             {
                 Id = leg,
                 Root = leg + "-root",
@@ -59,7 +59,7 @@ public static class QuadrupedTemplate
         const string skin = "#79bdb0", shade = "#527f78", horn = "#f6e4bb";
         Cutout("tail", "tail", .85f, .52f, -.35f, .03f, .02f, skin,
             new(.5f, -.25f), new(-.2f, -.17f), new(-.5f, .32f), new(-.12f, .12f), new(.5f, .45f));
-        foreach (var chain in m.Chains)
+        foreach (var chain in m.IkChains)
         {
             var far = chain.Id.StartsWith("far", StringComparison.Ordinal);
             var color = far ? shade : skin;
@@ -97,7 +97,7 @@ public static class QuadrupedTemplate
         SetOutlineWidth(Cutout("brow", "head", .16f, .09f, .33f, .11f, -.31f, m.Ink, new(-.5f, .5f), new(.5f, -.08f), new(.35f, -.5f), new(-.5f, .1f)), 0);
         SetOutlineWidth(Cutout("mouth", "head", .23f, .08f, .35f, -.17f, -.31f, m.Ink, new(-.5f, -.3f), new(-.1f, .5f), new(.5f, -.35f), new(.44f, -.5f), new(-.1f, .10f), new(-.42f, -.5f)), 0);
         m.Sockets = [new() { Id = "head-art", Control = "head", Toward = "head-up" }, new() { Id = "body-art", Control = "body", Toward = "body-up" }];
-        m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.Chains.Select(c => c.Id)] }];
+        m.Groups = [new() { Id = "head", Targets = ["head", "head-up"] }, new() { Id = "legs", Targets = [.. m.IkChains.Select(c => c.Id)] }];
         m.HurtLayouts = [new() { Id = "body", Regions = [new() { Id = "body", Controls = ["body", "head"], Pad = .35f }] }];
         m.MotionSets = [new()
         {
@@ -146,7 +146,7 @@ public static class QuadrupedTemplate
         }
         void Plant(MotionClip c)
         {
-            foreach (var chain in model.Chains)
+            foreach (var chain in model.IkChains)
             {
                 c.Contacts.Add(new()
                 {
@@ -169,7 +169,7 @@ public static class QuadrupedTemplate
             const float stance = .6f;
             var distance = stride / stance;
             c.Travel.Keys = [new(), new() { Time = duration, Value = new(distance, 0, 0) }];
-            foreach (var chain in model.Chains)
+            foreach (var chain in model.IkChains)
             {
                 var phase = chain.Id is "near-front" or "far-hind" ? 0f : .5f;
                 var times = Enumerable.Range(0, 25).Select(i => i / 24f).Concat([(1 - phase) % 1, (stance - phase + 1) % 1]).Append(1f).Distinct().Order().ToArray();
@@ -207,7 +207,7 @@ public static class QuadrupedTemplate
         Key(down, "translate", "head", 0);
         Key(down, "translate", "head", down.Duration, y: -.18f);
         var scrape = Clip("scrape", 1.1f, true);
-        foreach (var chain in model.Chains.Where(c => c.Id != "near-front"))
+        foreach (var chain in model.IkChains.Where(c => c.Id != "near-front"))
         {
             scrape.Contacts.Add(new()
             {
@@ -229,7 +229,7 @@ public static class QuadrupedTemplate
         Key(brake, "translate", "body", 0, y: -.055f);
         Key(brake, "translate", "body", .25f, x: .08f, y: -.1f);
         Key(brake, "translate", "body", .65f);
-        foreach (var chain in model.Chains)
+        foreach (var chain in model.IkChains)
         {
             Key(brake, "target", chain.Id, 0, .15f);
             Key(brake, "target", chain.Id, .3f, .22f);

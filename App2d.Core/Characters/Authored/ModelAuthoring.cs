@@ -47,7 +47,7 @@ public static class ModelAuthoring
 
     /// <summary>What decides clip compatibility: controls and parents, chains, frames and default scales. Proportions and appearance never change it.</summary>
     public static string StructureSignature(CharacterModel model) => string.Join("|",
-        model.Controls.Select(c => $"c:{c.Id}<{c.Parent}~{c.Scale}~affine:{c.Transform is not null}").Order(StringComparer.Ordinal)
+        model.Controls.Select(c => $"c:{c.Id}<{c.Parent}~{c.Scale}~node:{c.Node}").Order(StringComparer.Ordinal)
             .Concat(model.IkChains.Select(c => $"k:{c.Id}={c.Root}>{c.Joint}>{c.End}@{c.Frame}~{c.Scale}~{c.Solver}").Order(StringComparer.Ordinal))
             .Concat(model.Measures.Select(m => $"m:{m.Id}").Order(StringComparer.Ordinal))
             .Concat(model.Slots.Select(s => $"s:{s.Id}={s.Bone}").Order(StringComparer.Ordinal)));
@@ -79,6 +79,7 @@ public static class ModelAuthoring
             }
 
             var local = Vector2.Transform(new(rest.X, rest.Y), inverse);
+            control.Node = RigNodeKinds.Affine;
             control.Transform = new()
             {
                 X = local.X,
@@ -100,6 +101,7 @@ public static class ModelAuthoring
         bone.Length = .5f;
         if (basis is null || basis.Transform is not null)
         {
+            bone.Node = RigNodeKinds.Affine;
             bone.Transform = new()
             {
                 X = basis is null ? origin.X : MathF.Max(basis.Length, .3f)
@@ -197,14 +199,7 @@ public static class ModelAuthoring
         var joint = Control(model, end).Parent ?? throw new InvalidOperationException($"'{end}' needs a parent and grandparent to end a chain.");
         var root = Control(model, joint).Parent ?? throw new InvalidOperationException($"'{joint}' needs a parent to root a chain.");
         var chain = new ModelChain { Id = UniqueId(end + "-chain", model.IkChains.Select(c => c.Id)), Root = root, Joint = joint, End = end, Solver = bone ? ModelChain.BoneSolver : ModelChain.PointSolver };
-        if (bone)
-        {
-            model.Constraints.Add(chain);
-        }
-        else
-        {
-            model.Chains.Add(chain);
-        }
+        model.Constraints.Add(chain);
         // A group that owned the newly solved controls now owns the chain, whole.
         foreach (var group in model.Groups.Where(g => g.Targets.RemoveAll(t => t == joint || t == end) > 0))
         {
@@ -217,7 +212,7 @@ public static class ModelAuthoring
 
     public static void RemoveChain(CharacterModel model, string id)
     {
-        if (model.Chains.RemoveAll(c => c.Id == id) + model.Constraints.RemoveAll(c => c.Id == id) == 0)
+        if (model.Constraints.RemoveAll(c => c.Id == id) == 0)
         {
             throw new InvalidOperationException($"No chain '{id}'.");
         }

@@ -124,9 +124,9 @@ public sealed class LayeredFrame2DTests
                 Name = "Layers",
                 Controls =
                 [
-                    new() { Id = "root", Rest = new(0, 1, .1f), Transform = affine ? new() { Y = 1 } : null },
-                    new() { Id = "child", Parent = "root", Rest = new(.5f, 1, -.2f), Transform = affine ? new() { X = .5f } : null },
-                    new() { Id = "leaf", Parent = "child", Rest = new(1, 1, -.25f), Transform = affine ? new() { X = .5f } : null },
+                    new() { Id = "root", Rest = new(0, 1, .1f), Node = affine ? RigNodeKinds.Affine : RigNodeKinds.Point, Transform = affine ? new() { Y = 1 } : null },
+                    new() { Id = "child", Parent = "root", Rest = new(.5f, 1, -.2f), Node = affine ? RigNodeKinds.Affine : RigNodeKinds.Point, Transform = affine ? new() { X = .5f } : null },
+                    new() { Id = "leaf", Parent = "child", Rest = new(1, 1, -.25f), Node = affine ? RigNodeKinds.Affine : RigNodeKinds.Point, Transform = affine ? new() { X = .5f } : null },
                 ],
             };
             model.Validate();

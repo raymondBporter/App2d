@@ -6,18 +6,30 @@ using System.Text.Json.Serialization;
 
 namespace App2d.Core.Characters.Authored;
 
-/// <summary>Rest is in model space; the parent-local rest offset is derived. Scale names the measure this control's animated translation scales with.</summary>
+/// <summary>
+/// One rig node. <see cref="Node"/> declares how its setup is authored (<see cref="RigNodeKinds"/>): a point control's
+/// <see cref="Rest"/>/<see cref="RestAngle"/> are character-frame values the resolver turns into a parent-local similarity;
+/// a bone node authors <see cref="Local"/>, <see cref="Length"/> and an optional <see cref="Link"/> and derives its rest; an
+/// affine node keeps the legacy <see cref="Transform"/>. Scale names the measure this control's animated translation scales with.
+/// </summary>
 public sealed record ModelControl
 {
     public string Id { get; set; } = "";
     public string? Parent { get; set; }
     public string? Name { get; set; }
-    /// <summary>Explicit parent-local affine setup pose. Null keeps the existing model-space point-control convention.</summary>
+    /// <summary>The declared setup kind, one of <see cref="RigNodeKinds"/>. Never inferred from the other members.</summary>
+    public string Node { get; set; } = RigNodeKinds.Point;
+    /// <summary>Legacy affine adapter setup; required by and only allowed on <see cref="RigNodeKinds.Affine"/> nodes.</summary>
     public Affine2D? Transform { get; set; }
+    /// <summary>Canonical parent-local similarity setup of a <see cref="RigNodeKinds.Bone"/> node (null is the identity).</summary>
+    public RigSetup? Local { get; set; }
+    /// <summary>Binds a bone node's origin to a position along its parent bone instead of <see cref="Local"/>'s translation.</summary>
+    public RigLink? Link { get; set; }
+    /// <summary>Character-frame rest of a point or affine node. Derived, and so omitted, for a bone node.</summary>
     public PuppetPoint Rest { get; set; }
-    /// <summary>World XY direction of this bone in rest, in radians. Zero preserves the point-control convention.</summary>
+    /// <summary>Character-frame XY direction of a point node's frame in rest, in radians. Derived for a bone node.</summary>
     public float RestAngle { get; set; }
-    /// <summary>Bone length along local +X. Zero is an ordinary point control.</summary>
+    /// <summary>Bone length along local +X. Zero is an ordinary control, still useful as a handle, socket or target.</summary>
     public float Length { get; set; }
     public string Scale { get; set; } = CharacterModel.Unit;
 }
@@ -113,8 +125,12 @@ public sealed record LookPreset
 public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
-    /// <summary>Version 6 moved a curve's wave into the typed <c>wave</c> modifier; version-5 files read through <see cref="ModelFormat5Reader"/>.</summary>
-    public const int CurrentVersion = 6;
+    /// <summary>
+    /// Version 7 declares each control's node kind, authors bone nodes as parent-local setups and keeps one constraint list
+    /// (P3a); version 6 moved a curve's wave into the typed <c>wave</c> modifier (P2a). Older files read through
+    /// <see cref="LegacyModelReader"/>.
+    /// </summary>
+    public const int CurrentVersion = 7;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -126,11 +142,10 @@ public sealed class CharacterModel
     /// <summary>The explicit build rule behind this model's exposed build values, such as "person". Null exposes none.</summary>
     public string? Build { get; set; }
     public List<ModelControl> Controls { get; set; } = [];
-    /// <summary>Point IK definitions, evaluated before the typed constraints.</summary>
-    public List<ModelChain> Chains { get; set; } = [];
+    /// <summary>The one ordered constraint list, evaluated in document order. A chain's solver declares its semantics.</summary>
     public List<RigConstraint> Constraints { get; set; } = [];
-    /// <summary>All IK definitions used by authoring, animation and runtime. IDs are unique across both collections.</summary>
-    [JsonIgnore] public IEnumerable<ModelChain> IkChains => Chains.Concat(Constraints.OfType<ModelChain>());
+    /// <summary>The two-bone IK constraints, in evaluation order.</summary>
+    [JsonIgnore] public IEnumerable<ModelChain> IkChains => Constraints.OfType<ModelChain>();
     public List<ModelMeasure> Measures { get; set; } = [];
     public List<PuppetPart> Parts { get; set; } = [];
     /// <summary>Shared surfaces selected by parts and variants through material.asset.</summary>
@@ -146,7 +161,7 @@ public sealed class CharacterModel
     public AssetSource? Source { get; set; }
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
-    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(ModelFormat5Reader.Read(json), "model");
+    internal static CharacterModel FromDraftJson(string json) => AuthoredAsset.Parse<CharacterModel>(LegacyModelReader.Read(json), "model");
     public static CharacterModel FromJson(string json)
     {
         var model = FromDraftJson(json);
@@ -182,10 +197,9 @@ public sealed class CharacterModel
             Require(material is not null, $"{owner}: null material '{id}'.");
             material.Resolve(Materials);
         }
-        Require(Controls is not null && Chains is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
-        Require(Controls.Count <= 256 && Chains.Count + Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
+        Require(Controls is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
+        Require(Controls.Count <= 256 && Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
-        Require(Chains.All(c => c?.Solver == ModelChain.PointSolver), $"{owner}: point chains require the point solver; declare bone IK in constraints.");
         Limit.Color(Ink, "ink");
         new Limit(.001f, 1).Check(LineWidth, "lineWidth");
         Source?.Validate(owner);
@@ -197,10 +211,32 @@ public sealed class CharacterModel
             Require(control.Id != Locomotion && control.Id != Unit, $"{owner}: '{control.Id}' is a reserved name.");
             AuthoredAsset.RequireId(control.Id, $"{owner} control id");
             Require(controls.TryAdd(control.Id, control), $"{owner}: duplicate control '{control.Id}'.");
-            control.Rest.Check($"{owner} control '{control.Id}' rest");
-            control.Transform?.Validate($"{owner} bone '{control.Id}'");
-            new Limit(-1000, 1000).Check(control.RestAngle, $"{owner} control '{control.Id}' restAngle");
-            new Limit(0, 100).Check(control.Length, $"{owner} control '{control.Id}' length");
+            var field = $"{owner} control '{control.Id}'";
+            Require(RigNodeKinds.All.Contains(control.Node), $"{field}: unknown node kind '{control.Node}'.");
+            new Limit(0, 100).Check(control.Length, field + " length");
+            switch (control.Node)
+            {
+                case RigNodeKinds.Bone:
+                    Require(control.Transform is null, $"{field}: a bone node has no affine transform.");
+                    Require(control.Rest == default && control.RestAngle == 0, $"{field}: a bone node derives its rest from its local setup; author local, length and link instead.");
+                    control.Local?.Validate(field + " local");
+                    control.Link?.Validate(field + " link");
+                    Require(control.Link is null || control.Parent is not null, $"{field}: a link needs a parent bone.");
+                    Require(control.Link is null || control.Local is null || control.Local.X == 0 && control.Local.Y == 0, $"{field}: a linked origin cannot also author a local translation.");
+                    break;
+                case RigNodeKinds.Affine:
+                    Require(control.Transform is not null, $"{field}: an affine node needs its transform.");
+                    Require(control.Local is null && control.Link is null, $"{field}: an affine node authors only its transform.");
+                    control.Rest.Check(field + " rest");
+                    control.Transform.Validate($"{owner} bone '{control.Id}'");
+                    new Limit(-1000, 1000).Check(control.RestAngle, field + " restAngle");
+                    break;
+                default:
+                    Require(control.Transform is null && control.Local is null && control.Link is null, $"{field}: a point control authors only rest and restAngle; declare node 'bone' or 'affine' for a local setup.");
+                    control.Rest.Check(field + " rest");
+                    new Limit(-1000, 1000).Check(control.RestAngle, field + " restAngle");
+                    break;
+            }
         }
         foreach (var control in Controls)
         {
@@ -244,8 +280,12 @@ public sealed class CharacterModel
             Require(chain.Solver is ModelChain.PointSolver or ModelChain.BoneSolver, $"{owner}: chain '{chain.Id}' has unknown solver '{chain.Solver}'.");
             if (chain.Solver == ModelChain.PointSolver)
             {
-                Require(controls[chain.Root].Length == 0 && controls[chain.Joint].Length == 0 && controls[chain.End].Length == 0 && controls[chain.Root].Transform is null && controls[chain.Joint].Transform is null && controls[chain.End].Transform is null,
-                    $"{owner}: chain '{chain.Id}' uses explicit bone frames; choose a bone constraint instead of point IK.");
+                // The legacy point-constraint adapter moves positions only. It never reads a declared length, so a
+                // length is allowed only where the next control is bound to that tip and the two agree by construction.
+                Require(controls[chain.Root].Node != RigNodeKinds.Affine && controls[chain.Joint].Node != RigNodeKinds.Affine && controls[chain.End].Node != RigNodeKinds.Affine,
+                    $"{owner}: chain '{chain.Id}' uses affine bone frames; choose a bone constraint instead of point IK.");
+                Require(TipBound(controls[chain.Root], controls[chain.Joint]) && TipBound(controls[chain.Joint], controls[chain.End]) && controls[chain.End].Length == 0,
+                    $"{owner}: chain '{chain.Id}' declares bone lengths its point solver would ignore; bind each joint to its parent's tip or choose a bone constraint.");
             }
             else
             {
@@ -269,7 +309,8 @@ public sealed class CharacterModel
             Require(!SelfAndAncestors(chain.Root).Any(id => writes.Any(w => w.Chain != chain && w.Id == id)), $"{owner}: chain '{chain.Id}' overlaps or is nested inside another chain; nested IK is not supported.");
             Require(chain.Frame == Locomotion || !SelfAndAncestors(chain.Frame).Any(id => writes.Any(w => w.Id == id)), $"{owner}: chain '{chain.Id}' frame '{chain.Frame}' must not be moved by IK.");
         }
-        BoneFrameIk.ValidateSetup(this);
+        var nodes = RigGraph.Compile(this);
+        BoneFrameIk.ValidateFrames(controls, IkChains, nodes.ToDictionary(n => n.Key, n => n.Value.RestFrame, StringComparer.Ordinal));
 
         var parts = new HashSet<string>(StringComparer.Ordinal);
         foreach (var part in Parts)
@@ -350,13 +391,17 @@ public sealed class CharacterModel
                 change.Material?.Resolve(Materials);
             }
         }
-        CheckGeometry(this, Controls.ToDictionary(c => c.Id, c => c.Rest.XYZ, StringComparer.Ordinal), owner);
+        CheckGeometry(this, nodes.ToDictionary(n => n.Key, n => n.Value.Rest, StringComparer.Ordinal), owner);
         SkeletonAppearance2D.Validate(this);
         if (Build is not null)
         {
             BuildRules.Get(Build).Check(this);
         }
     }
+
+    /// <summary>A point-solved segment: the bone has no declared length, or its child is a bone node bound to its tip.</summary>
+    private static bool TipBound(ModelControl bone, ModelControl child) =>
+        bone.Length == 0 || child.Node == RigNodeKinds.Bone && child.Link is { IsTip: true };
 
     /// <summary>Checks lengths that depend on rest geometry, so a variant's overrides are held to the same rules as its base.</summary>
     public static void CheckGeometry(CharacterModel model, IReadOnlyDictionary<string, Vector3> rest, string owner)

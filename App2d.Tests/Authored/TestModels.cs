@@ -24,10 +24,10 @@ internal static class TestModels
             new() { Id = "knee", Parent = "hip", Rest = new(.1f, .5f) },
             new() { Id = "foot", Parent = "knee", Rest = new(0, 0) },
         ],
-        Chains =
+        Constraints =
         [
-            new() { Id = "arm", Root = "shoulder", Joint = "elbow", End = "hand", Bend = -1, Frame = "shoulder", Scale = "arm" },
-            new() { Id = "leg", Root = "hip", Joint = "knee", End = "foot", Bend = 1, Scale = "leg" },
+            new ModelChain { Id = "arm", Root = "shoulder", Joint = "elbow", End = "hand", Bend = -1, Frame = "shoulder", Scale = "arm" },
+            new ModelChain { Id = "leg", Root = "hip", Joint = "knee", End = "foot", Bend = 1, Scale = "leg" },
         ],
         Measures = [new() { Id = "leg", Path = ["hip", "knee", "foot"] }, new() { Id = "arm", Path = ["shoulder", "elbow", "hand"] }],
         Parts =
@@ -56,7 +56,7 @@ internal static class TestModels
             new() { Id = "rod-elbow", Parent = "piston", Rest = new(1, 1.3f) },
             new() { Id = "rod-end", Parent = "rod-elbow", Rest = new(.4f, 1) },
         ],
-        Chains = [new() { Id = "rod", Root = "piston", Joint = "rod-elbow", End = "rod-end", Bend = 1 }],
+        Constraints = [new ModelChain { Id = "rod", Root = "piston", Joint = "rod-elbow", End = "rod-end", Bend = 1 }],
         Parts =
         [
             new() { Id = "bed", A = "frame", Geometry = Rectangle2D.Builder.FromSize(2.6f, .12f, new(.8f, 0)), Material = new() { Fill = "#8a8f94", Outline = new() }, Depth = .05f },
@@ -117,9 +117,9 @@ internal static class TestModels
             Name = "Wheel",
             Controls =
             [
-                new() { Id = "wheel-root", Name = "Wheel Root", Transform = new()
+                new() { Id = "wheel-root", Name = "Wheel Root", Node = RigNodeKinds.Affine, Transform = new()
                     { X = .5f, Y = .7f, Rotation = MathF.PI / 6, ScaleX = -1.5f, ScaleY = 2, ShearY = MathF.PI / 12 } },
-                new() { Id = "spoke-tip", Name = "spoke.tip", Parent = "wheel-root", Transform = new() { X = .4f, Y = .05f, Rotation = MathF.PI / 9 } }
+                new() { Id = "spoke-tip", Name = "spoke.tip", Parent = "wheel-root", Node = RigNodeKinds.Affine, Transform = new() { X = .4f, Y = .05f, Rotation = MathF.PI / 9 } }
             ],
             Slots =
             [

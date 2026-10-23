@@ -31,12 +31,12 @@ public sealed class SourceImportTests
     public void PuppetImportGroundsContactChainsAndKeysTheOthersFromTheirRoot()
     {
         var result = PuppetImport.Convert(PuppetTemplates.StepStudy(), "study", "Study", "walk.puppet.json", []);
-        var legs = result.Model.Chains.Where(c => c.Id.EndsWith("-leg", StringComparison.Ordinal)).ToArray();
+        var legs = result.Model.IkChains.Where(c => c.Id.EndsWith("-leg", StringComparison.Ordinal)).ToArray();
         Assert.Equal(2, legs.Length);
         Assert.All(legs, l => Assert.Equal(CharacterModel.Locomotion, l.Frame));
         Assert.Single(legs.Select(l => l.Scale).Distinct());
         Assert.Equal(legs[0].Scale, result.Clips[0].Travel.Scale);
-        var arm = result.Model.Chains.Single(c => c.Id == "left-arm");
+        var arm = result.Model.IkChains.Single(c => c.Id == "left-arm");
         Assert.Equal(arm.Root, arm.Frame);
         Assert.Equal("left-arm", arm.Scale);
     }
