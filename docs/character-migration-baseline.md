@@ -1,8 +1,8 @@
-# Character migration baseline (P0a, P0b)
+# Character migration baseline (P0a, P0b, P0c)
 
-Date: 2026-10-23. Passes P0a and P0b of the [Character system and Studio migration plan](character-system-migration-plan.md), section 5, "P0. Establish a trustworthy baseline and conversion cases".
+Date: 2026-10-23. Passes P0a, P0b and P0c of the [Character system and Studio migration plan](character-system-migration-plan.md), section 5, "P0. Establish a trustworthy baseline and conversion cases".
 
-This file is the evidence record for P0a and P0b: the exact source snapshot, a schema-aware inventory of the authored character library with its reference graph, a fresh run of the existing character, editor, rendering and combat checks with pre-existing failures listed separately, and (section 6) the reference set the conversion passes compare against. Nothing was converted. Numbers here come from the run on this date; rerun the commands in "How to reproduce" before comparing anything against them.
+This file is the evidence record for P0a and P0b: the exact source snapshot, a schema-aware inventory of the authored character library with its reference graph, a fresh run of the existing character, editor, rendering and combat checks with pre-existing failures listed separately, (section 6) the reference set the conversion passes compare against, and (section 7) the conversion disposition of every general-affine and point-specific case in that set. Nothing was converted. Numbers here come from the run on this date; rerun the commands in "How to reproduce" before comparing anything against them.
 
 ## 1. Source snapshot
 
@@ -155,7 +155,7 @@ dotnet run --project App2d.CharacterStudio -- --smoke-pterosaur <scratch>/p0a/sm
 dotnet run --project App2d.CharacterSeeds -- --contact-study <scratch>/p0a/smoke/contact-study
 ~~~
 
-Use a new empty directory for `<scratch>`; the editor smoke deletes and recreates its `workspace` subfolder under its output directory. The inventory program is not checked in; it is a ~250-line console project that references `App2d.Core`, calls `AuthoredCatalog.Load(root)` and `ModelTemplateCatalog.Load(root)`, and prints the properties listed in section 7. Regenerate it the same way when the schemas change rather than editing section 7 by hand.
+Use a new empty directory for `<scratch>`; the editor smoke deletes and recreates its `workspace` subfolder under its output directory. The inventory program is not checked in; it is a ~250-line console project that references `App2d.Core`, calls `AuthoredCatalog.Load(root)` and `ModelTemplateCatalog.Load(root)`, and prints the properties listed in section 8. Regenerate it the same way when the schemas change rather than editing section 8 by hand.
 
 ## 6. P0b reference set
 
@@ -183,7 +183,7 @@ Set per observable quantity before any comparison was made, as section 7 of the 
 
 ### 6.2 Cases
 
-75 pose cases, each one bundle at one instant and facing, in actor-local units placed through `ActorPose` so facing -1 is a real mirrored capture. Every case records control positions and angles, chain residual/reached, active contact targets and residuals, every socket's 3D frame, expressions, and per visible part its depth, outline point count, bounds, centroid, area and first point (the silhouette record; order is carried by the depth values). Entity cases add prop points (grip/tip/second-grip/muzzle) for each equipped or dressed prop, the muzzle point and axis, the movement box, every hurt region and every hit window of the clip's action with its interval, active flag, bounds, translation, axis and mirroring.
+81 pose cases (75 from P0b, 6 added in P0c: the native wheel scene and a mid-transition climb-on), each one bundle at one instant and facing, in actor-local units placed through `ActorPose` so facing -1 is a real mirrored capture. Every case records control positions and angles, chain residual/reached, active contact targets and residuals, every socket's 3D frame, expressions, and per visible part its depth, outline point count, bounds, centroid, area and first point (the silhouette record; order is carried by the depth values). Entity cases add prop points (grip/tip/second-grip/muzzle) for each equipped or dressed prop, the muzzle point and axis, the movement box, every hurt region and every hit window of the clip's action with its interval, active flag, bounds, translation, axis and mirroring.
 
 | Bundle | Cases | Named P0 inputs covered |
 | --- | --- | --- |
@@ -195,6 +195,7 @@ Set per observable quantity before any comparison was made, as section 7 of the 
 | Curve face | rest; blink 1.0; crossed-eyes 1.0; expressions 2.0 and 6.5; hair-wave 0.5; smile 1.5 facing left | Affine eye controls, scale tracks, wave, bound curves |
 | Stalker | lunge at strike (entity); walk 0.5 | Three-leg point rig, socket off the body |
 | Linkage | rest; crank at 0, 1/8 .. 7/8 turn and 1/4 turn facing left; reach at 0, 0.5, 1 | Full-turn rotation, reached and unreachable IK, zero-length target |
+| Wheel (native explicit bones, P0c) | rest; turn at 0.25, 0.5, 1 and 0.5 facing left | Inherited reflection, nonuniform scale and shear, animated scale/shear, slot and draw-order timelines; records full bone matrices |
 
 Observed facts worth carrying into P0c and P4b:
 
@@ -220,12 +221,102 @@ Eight graphics-free `AuthoredArena` fights at 120 Hz, actor 0 driven by scripted
 
 These outcomes are what the current combat path does, including the attacks that miss; they are references, not approvals. The slam and club misses in particular are inputs for P8/P9, where hit windows become attached colliders.
 
-### 6.4 Test results after P0b
+### 6.4 Test results after P0b and P0c
 
 The Authored, Gameplay, Collision and Rendering suites with the new tests: 995 passed, 1 failed (the pre-existing `AuthoredObject2DTests` tileset failure). Full App2d.Tests after P0b: 2339 passed, 7 failed of 2346, the same seven pre-existing failures as section 2.1. The two new tests are `MigrationReferenceTests.ReferencesMatchTheCurrentEvaluatorCollisionAndCombat` and `TheLinkageExercisesReachedUnreachableAndZeroLengthTargets`.
 
 Not captured in P0b and left for P0c or the owning phase: pixel-level rendered frames (the Studio smokes in section 3 remain the visual record and were not reviewed against a reference), slot/skin image attachments (no authored model uses them), physics props and projectiles beyond the one bolt hit.
-## 7. Full inventory
+## 7. P0c conversion decisions
+
+Each general-affine or point-specific behavior in the reference set gets one disposition, the evidence a later pass must show to accept its conversion, the tolerance that applies (section 6.1 unless stated) and the pass that owns it. Dispositions use four words:
+
+- **Preserve exactly**: the converted representation must reproduce the reference within tolerance; any difference is a defect.
+- **Scoped deformation / bake**: the behavior survives, but moves into an explicitly scoped feature (artwork fit, typed modifier, discrete channel) whose output must match the reference.
+- **Intentional difference**: the behavior is allowed to change at a named pass, only with the evidence listed; until that pass it is preserved exactly.
+- **Unsupported, report**: the canonical representation will not express it; conversion must detect and report it, and the legacy path that evaluates it keeps a named adapter with a retirement condition.
+
+Before the P0c additions, the extended capture was compared against the committed P0b file: 13 differences, all `new` properties or cases, no value moved. The reference set is therefore reproducible across two builds of the test project on this checkout.
+
+### 7.1 Summary
+
+| Case | Disposition | Owner | Accepts when |
+| --- | --- | --- | --- |
+| Point IK chains (all 23 authored) | Preserve exactly via the named legacy point-constraint adapter; per-bundle conversion to orientation-propagating bones is an intentional difference | P3b, retire in P11 | All chain-bearing cases: points 1e-4, residuals 1e-5, `reached` exact, socket frames 1e-4 |
+| `reached` with a nonzero residual (linkage 1/8 and 7/8 turn) | Intentional difference: `reached` becomes residual-based | P4b | Those two cases flip to `reached: false` with the same residual; every authored chain unchanged |
+| Zero-length IK target (1e-3 fold) | Preserve exactly until P4b; intentional difference there only with a stated residual | P4b | linkage-reach@0 residual 1.0e-3 preserved, or the new value recorded here first |
+| Leaf affine scale on curve-face eyes | Scoped deformation: artwork fit on the pupil parts, no rig scale | P2a/P7b | Pupil silhouettes 1e-3 and eye control points 1e-4 across blink, crossed-eyes, wink, expressions |
+| Inherited reflection/shear (wheel) | Unsupported in the canonical similarity rig, report; keep the explicit-bone evaluator as the legacy affine adapter | P3b classify, P11 retire | Wheel bone matrices 1e-4 and determinant sign while the adapter exists; NativeRigTests pass |
+| Shear channel | Unsupported, report (no authored user) | P11 | Inventory shows zero shear tracks; wheel is the only fixture |
+| Absolute control Z | Preserve exactly by converting to local layer offsets `restZ - parentRestZ` | P1a/P1b | Every point Z 1e-4, part Z range 1e-3, socket origin Z 1e-4, ordering by Z identical |
+| Animated translate Z (25 tracks) | Preserve exactly as local layer deltas | P1a | climb and sword cases: chest/shoulder/head Z 1e-4 |
+| Part depth, curve Z interpolation, bound-point depth | Preserve exactly as leaf offsets | P1b | Silhouette min/max Z and depth 1e-3 / 1e-4 |
+| Weapon tilt/twist/turn, grip/tip/muzzle, XY projection | Preserve exactly through one planar-to-3D bridge | P1c, P8 | Socket frames, prop points, muzzle, attack regions 1e-4; mirrored exact; both facings |
+| Foot contacts and measure-scaled targets | Preserve exactly | P3/P4a | Contacts: chain exact, target 1e-4, residual 1e-5 on person, variants, quadrupeds, stalker |
+| Sheathing and back-view dressing | Scoped: becomes a discrete attachment-selection channel / profile binding with identical placement | P5b/P7/P9c | Prop keys exact and points 1e-4 at sheathe 0 / 0.31 / 0.42 and climb cases |
+| Hit windows (actor, socket, prop anchored) and hurt boxes | Preserve exactly through attached colliders; rotating hurt shapes are an intentional difference needing their own row | P8a-c | Region bounds/translation/axis 1e-4, mirrored and active exact; combat hits and events exact |
+| Arena outcomes incl. misses | Preserve exactly; an attack that starts landing is an intentional difference | P8c/P9b | Hits, events, end states exact |
+| Person build proportions | Preserve exactly through data bindings/presets | P4a/P6b | tall-thin, short-broad, brute, cinder cases 1e-4; resolved measures (section 8) exact to 1e-4 |
+| Fixed facial vocabulary | Scoped: expressions become profile bindings; procedural style retained until P7c | P2b/P7c | `expressions` exact; head silhouette 1e-3 |
+| Wave and point bindings | Scoped: typed curve modifier and unchanged bindings | P2a | hair / wing / limb silhouettes 1e-3 |
+| Facing mirror (X only, Z kept) | Preserve exactly | P1a | All `/left` cases |
+
+### 7.2 Point IK chains versus rigid bones
+
+What the code does now: every authored chain uses the point solver (section 4). The solve moves the joint and end positions; it does not write orientation into those controls' frames, so `angles` for solved controls stay at their rest-plus-rotate-track values. Orientation reaches artwork and sockets by other routes: a part with `a` and `b` takes its up axis from the a→b direction (`PartAttachment2D.FrameOf`), a socket with `toward` likewise (person hand and foot art sockets, quadruped head/body art), and a socket with `frame` takes that control's accumulated angle (person grips use `chest`, `sword-hand` and `gun-hand` use `right-shoulder`). Nothing but parts hangs below a solved joint in any authored model.
+
+Disposition. Position-only constraint behavior is preserved exactly through a named legacy point-constraint adapter (plan rule 7, P3 removal obligation). Converting a bundle to orientation-propagating bones is a deliberate per-bundle act in P3b and later; it must keep every derived orientation route producing the same frames: a→b parts and `toward` sockets keep deriving from positions, and a `frame` socket keeps reading the same control's angle, unless the bundle's conversion report re-declares the socket with its own evidence. Evidence: every chain-bearing case (person family, quadrupeds, baby, stalker, spear-guard, linkage) at position 1e-4, residual 1e-5, `reached` exact and socket frames 1e-4; `RigConstraintTests`, `PoseEvaluatorTests`, `PersonVariantMotionTests` and `EntityRuntimeTests.SpearGripAndTipAgreeWithCollisionInBothFacings` unchanged.
+
+Reach reporting. `ChainResult.Reached` comes from the two-bone solver's own decision, not from the residual: linkage-crank at 1/8 and 7/8 turn report `reached: true` with residual 5.6e-3, where the target is about 6e-3 past full reach. This is the plan's section 3.5 case. Intentional difference, owned by P4b: `reached` becomes residual-based (or the solver stops clamping silently), accepted when exactly those two cases flip to `false` with the same residual and no authored case changes. The zero-length target (linkage-reach@0) folds to a 1e-3 root-to-end gap along the retained FK axis; preserve that until P4b, where a limit-aware solve may replace it only after recording the new residual here.
+
+### 7.3 Inherited affine scale and shear versus leaf fitting
+
+Two different things carry the word affine today, and they get different dispositions.
+
+Leaf affine controls (curve-face `left-eye`, `right-eye`). They have no children; their scale tracks squash the pupil parts (blink@1.0 collapses both pupils to a line: area 0, min Y = max Y; crossed-eyes and wink scale them too). Disposition: scoped deformation. The squash becomes an artwork fit on the pupil parts (plan section 3.4), evaluated per part, never an inherited rig scale. Accepted when the pupil silhouettes (bounds, centroid, area) match within 1e-3 and the eye control points within 1e-4 across the blink, crossed-eyes, wink and expressions cases. Owner: P2a for the feature, P7b when curve-face becomes a face part.
+
+Inherited affine (wheel). `wheel-root` is set up with reflection, nonuniform scale and shear (determinant -2.90 at rest, -2.81 at 0.5 s, -2.17 at 1 s), and `spoke-tip` inherits the whole matrix (its bone determinant equals its parent's in every case). No authored asset does this; the wheel is the only fixture, reached through the explicit-bone branch of `PoseEvaluator` (the `SetupTransforms` path) and protected by `NativeRigTests` (18 tests). Disposition: unsupported in the canonical similarity rig, report. Conversion must classify an inherited nonuniform or sheared setup as "not representable" and say so with the control's reference path, never decompose it into an approximate similarity pose and never drop the shear. The explicit-bone evaluator is retained as the named legacy affine adapter for imported/native rigs; retirement in P11 requires either a scoped deformation feature that reproduces the wheel's child frames or an explicit decision to drop native inherited affine, recorded in the plan. Accepted (for the adapter) when the wheel cases' bone matrices match to 1e-4 with the same determinant sign, slot assignments and part silhouettes unchanged; NativeRigTests green.
+
+Scale and shear channels. The inventory shows scale tracks only on the two curve-face eyes and no shear track anywhere. Scale maps to artwork fit as above; the shear channel has no authored user and is slated for retirement with the adapter.
+
+### 7.4 Absolute control Z versus relative layer offsets
+
+What the code does now. For a point control, the evaluator computes `Z = parentZ + (restZ - parentRestZ) + translate.Z`, so the authored absolute rest Z already behaves as a sum of local offsets, and an animated chest Z carries the head and shoulders with it (climb-on@0.15: chest, head at -0.35, left-shoulder at -0.375; sword clips key shoulder Z up to 0.15 across 25 tracks). For an explicit-bone control the evaluator uses `restZ + translate.Z` with no parent term; every shipped explicit-bone control (curve-face, wheel) has Z = 0, so no authored case distinguishes the two. Parts draw at `controlZ + depth`; curves interpolate Z between `a` and `b` and add depth; bound points keep their rest depth relative to the bound control; sockets add their offset Z after XY rotation (person `back` +0.2, `back-view` -0.2); props add real mesh Z on top of the socket frame (hammer tip at 0.244, sword tip at 0.454 in the strike cases). Facing never mirrors Z.
+
+Disposition: preserve exactly. P1a converts authored absolute rest Z to local layer offsets `restZ - parentRestZ` (root offsets equal their rest Z), translate-Z keys stay as local deltas, and part depth, socket offset Z and bound-point depth stay leaf offsets; composed layer = local + parent reproduces today's values by construction, with no double counting. Explicit-bone controls adopt the same local meaning; with every shipped value at 0 this is a representation decision with no behavioral difference, and the wheel/curve-face cases pin it. Accepted when every point Z matches to 1e-4, every part's silhouette Z range to 1e-3 and depth to 1e-4, socket origins to 1e-4 and the order of parts sorted by Z is identical in every case. No intentional difference is allowed in P1; a renderer that changes the depth convention must do it at its one mapping boundary with these values unchanged.
+
+### 7.5 Weapon tilt, twist and turn
+
+What the code does now. `ActorPose.Socket` builds a `Frame3D` from the orient channel (`X`, `Y`) plus the planar angle (`base + socket.Angle + orient.Z`) at the socket origin, then composes with the actor frame whose X axis is `(facing, 0, 0)`. Prop points, hit anchors and the muzzle all transform through that frame. The hero side-cut `sword-hand` frame has a genuinely 3D Z axis (0.13, -0.96, 0.24); the hammer slam window's XY axis is the projection (0.62, -0.78) of its tilted frame; the gun muzzle at fire mirrors exactly in X between facings; the muzzle axis is the normalized XY projection, or the facing when the barrel is head-on.
+
+Disposition: preserve exactly. P1c defines one bridge from the planar similarity (XY pose + layer) to this `Frame3D` using the orient channel, and one XY projection for gameplay; both must reproduce the references, including foreshortening. Accepted when socket origins and axes, prop grip/tip/second-grip/muzzle points, the muzzle point and axis, and attack-region bounds, translation and X axis match to 1e-4 with `mirrored` exact, in both facings, for the hero, brute, cinder, spear-guard and club cases. Collider placement in P8 inherits the same acceptance.
+
+### 7.6 Foot contacts
+
+What the code does now. A clip contact pins a chain end over the half-open interval `[start, finish)` (closed at the clip's end) to `cycleOrigin + restEnd + authoredTarget * measureRatio`, so a variant's longer leg plants farther (tall-thin: 0.048 versus 0.06 on person for the same key); `ContactHold` keeps the world anchor across steps per chain and clears it on a facing change; a masked overlay releases a contact gradually. Residuals are 2.4e-8 in every authored case.
+
+Disposition: preserve exactly. P3 keeps the pin operation on canonical nodes; P4a's dimension bindings must keep the reference-measure ratio semantics so the same walk keys plant at the same scaled targets. Accepted when the `contacts` list matches (chain exact, target 1e-4, residual 1e-5) on every walk, run, idle and gait case, and `EntityRuntimeTests.PlantedFeetHoldTheirWorldPositionWhileTheControllerMoves` and `ContactsResetOnStartsStopsFacingAndInterruptions` stay green. Normalized or limit-aware channels (P4b) may not change these cases.
+
+### 7.7 Sheathing and dressing
+
+What the code does now. `PersonLoadout` decides from clip markers which socket holds the sword (`sword-draw` / `sword-sheathe`) and whether the back-view hair and `back-view` socket are used (`view-back` / `view-profile`); the references show the sword on `sword-hand` at 0 s and on `back` by 0.31 s of `player-sword-sheathe`, and `hair-short-back` plus `sword@back-view` during the climb. This is code, keyed by marker names.
+
+Disposition: scoped change of representation with identical placement. In P5b/P7 the selection becomes a discrete attachment channel (held values, switching at the marker instants) or a profile binding (P9c); the sword's grip and tip must land on the same socket at the same instants. Accepted when each case's `props` keys (prop@socket) are exactly the reference's and the points match to 1e-4 at sheathe 0 / 0.31 / 0.42 and in the climb cases, and `PersonMoveSetTests` stays green. The switch instant itself is pinned only to the sampled times; a conversion that moves it by less than the gap between samples must add a case at the marker time.
+
+### 7.8 Collision and combat
+
+What the code does now. Hit windows anchor three ways: to the actor frame by an offset from the feet (hero blade windows, region translation (1.143, 0.874) mirrored exactly on the left), to a socket (horns, beak, sting) or to an equipped prop's named point pushed `along` its axis (hammer, club, spear, shell). Hurt regions are the control bounding box of each layout region inflated by its pad, or a hairline capsule when degenerate; they do not rotate with bones. The arena deduplicates per action sequence, window and target and records the outcomes in section 6.3, including the brute slam and club slam that do not land at their test distances.
+
+Disposition: preserve exactly through P8's attached colliders: the same shapes, the same similarity placement, the same activation intervals (half-open, crossing-aware). Hurt regions becoming bone-attached shapes, or a slam starting to land, are intentional differences that need their own evidence rows (the new region bounds and the new hit ticks recorded here before the reference is regenerated). Accepted when hurt and attack bounds, translation and X axis match to 1e-4 with `mirrored` and `active` exact, and every scenario's hits, events and end states match exactly. Owner: P8a-c for placement, P9b for contact resolution.
+
+### 7.9 Decided elsewhere or not decided
+
+- Person build proportions: preserve exactly through P4a bindings and P6b migration; the variant cases and the resolved measures in section 8 are the acceptance set (1e-4).
+- Fixed facial vocabulary: scoped to profile bindings in P7c, procedural style retained through P2b; `expressions` exact and the head silhouette 1e-3.
+- Wave and point bindings: scoped to the typed curve modifier (P2a) and unchanged bindings; hair, wing and rounded-limb silhouettes 1e-3.
+- Not decided: whether hurt regions should rotate with bones once they are colliders (left to P8c with evidence); whether explicit-bone controls' absolute Z semantics matter for any future import (no shipped case, so local was chosen and the fixtures pin Z = 0); whether the wheel's inherited affine is retired or replaced by a scoped deformation (P11, with the adapter named until then); and a tolerance for rendered pixels, since no pixel reference exists yet (the Studio smokes remain unreviewed renders).
+
+P0 gate: the reference set is reproducible (section 6 and the P0c comparison above), existing failures are identified (section 2.1), and every general-affine and point-specific case has a stated disposition. No new abstraction was added; the only new code is test fixtures and the capture.
+## 8. Full inventory
 
 ### Catalog load
 

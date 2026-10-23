@@ -24,10 +24,13 @@ public sealed class MigrationReferenceTests
     private const string FileName = "character-migration-references.json";
     private static readonly AuthoredCatalog Catalog = AuthoredCatalog.Load(TestModels.AuthoredRoot);
     private static readonly ResolvedModel Linkage = ResolvedModel.From(TestModels.Linkage());
-    private static readonly Dictionary<string, MotionClip> LinkageClips = new(StringComparer.Ordinal)
+    private static readonly (CharacterModel Model, IReadOnlyList<MotionClip> Animations) WheelScene = TestModels.Wheel();
+    private static readonly ResolvedModel Wheel = ResolvedModel.From(WheelScene.Model);
+    private static readonly Dictionary<string, MotionClip> FixtureClips = new(StringComparer.Ordinal)
     {
         ["linkage-crank"] = TestModels.LinkageCrank(Linkage),
         ["linkage-reach"] = TestModels.LinkageReach(Linkage),
+        ["wheel-turn"] = WheelScene.Animations[0],
     };
 
     private static readonly JsonSerializerOptions Json = new()
@@ -63,9 +66,9 @@ public sealed class MigrationReferenceTests
 
     private static float Marker(MotionClip clip, string id) => clip.Markers.First(m => m.Id == id).Time;
 
-    private static MotionClip ClipOf(string id) => LinkageClips.TryGetValue(id, out var linkage) ? linkage : Catalog.Animations[id];
+    private static MotionClip ClipOf(string id) => FixtureClips.TryGetValue(id, out var fixture) ? fixture : Catalog.Animations[id];
 
-    private static ResolvedModel Resolve(string id) => id == "linkage" ? Linkage : Catalog.Resolve(id);
+    private static ResolvedModel Resolve(string id) => id switch { "linkage" => Linkage, "wheel" => Wheel, _ => Catalog.Resolve(id) };
 
     /// <summary>The representative bundles from plan section 5, P0, each at the instants that exercise its named cases.</summary>
     private static IEnumerable<ReferenceCase> Cases()
@@ -103,6 +106,7 @@ public sealed class MigrationReferenceTests
         yield return new("hero/player-gun-shot@fire", "person", "hero", "player-gun-shot", Marker(Catalog.Animations["player-gun-shot"], "fire"), 1, Gear: "gun");
         yield return new("hero/player-gun-shot@fire/left", "person", "hero", "player-gun-shot", Marker(Catalog.Animations["player-gun-shot"], "fire"), -1, Gear: "gun");
         yield return new("hero/player-climb@0.4", "person", "hero", "player-climb", .4f, 1, Gear: "sword");
+        yield return new("hero/player-climb-on@0.15", "person", "hero", "player-climb-on", .15f, 1, Gear: "sword");
         yield return new("hero/player-idle@1.0/hurt", "person", "hero", "player-idle", 1, 1, Expression: "hurt");
 
         // Cinder gunner and Maul brute: variant builds with their wardrobe, weapons and hit windows.
@@ -159,6 +163,15 @@ public sealed class MigrationReferenceTests
         yield return new("linkage/linkage-reach@0", "linkage", null, "linkage-reach", 0, 1);
         yield return new("linkage/linkage-reach@0.5", "linkage", null, "linkage-reach", .5f, 1);
         yield return new("linkage/linkage-reach@1", "linkage", null, "linkage-reach", 1, 1);
+
+        // Native explicit-bone wheel: inherited reflection, nonuniform scale and shear, animated scale/shear, slot timelines.
+        yield return new("wheel/rest", "wheel", null, null, 0, 1);
+        foreach (var seconds in new[] { .25f, .5f, 1f })
+        {
+            yield return new($"wheel/wheel-turn@{seconds}", "wheel", null, "wheel-turn", seconds, 1);
+        }
+
+        yield return new("wheel/wheel-turn@0.5/left", "wheel", null, "wheel-turn", .5f, -1);
     }
 
     /// <summary>Graphics-free arena fights: who hits whom, on which tick, for how much, and where everyone ends up.</summary>
@@ -207,7 +220,7 @@ public sealed class MigrationReferenceTests
     [Fact]
     public void TheLinkageExercisesReachedUnreachableAndZeroLengthTargets()
     {
-        var crank = LinkageClips["linkage-crank"];
+        var crank = FixtureClips["linkage-crank"];
         var reached = Enumerable.Range(0, 8).Select(i => PoseEvaluator.Sample(Linkage, crank, i / 8.0, true).Chains.Single().Reached).ToList();
         Assert.Contains(true, reached);
         Assert.Contains(false, reached);
@@ -216,7 +229,7 @@ public sealed class MigrationReferenceTests
         var pin = PoseEvaluator.Sample(Linkage, crank, .5, true);
         TestModels.Near(new(-.4f, 1, 0), pin.World("crank-pin"), 1e-4f, "half a turn carries the pin to the far side");
         // The point solver keeps a 1e-3 minimum root-to-end distance for a degenerate target; that is current behavior, not a goal.
-        var zero = PoseEvaluator.Sample(Linkage, LinkageClips["linkage-reach"], 0);
+        var zero = PoseEvaluator.Sample(Linkage, FixtureClips["linkage-reach"], 0);
         TestModels.Near(zero.World("piston"), zero.World("rod-end"), 2e-3f, "a zero-length target folds the rod onto its root");
     }
 
@@ -258,6 +271,10 @@ public sealed class MigrationReferenceTests
             Chains = pose.Chains.Select(ch => new ChainRecord(ch.Chain, ch.Residual, ch.Reached)).ToList(),
             Contacts = pose.Contacts.Select(ct => new ContactRecord(ct.Chain, V(actor.Place(ct.Target)), ct.Residual)).ToList(),
             Expressions = pose.Expressions.Count == 0 ? null : new(pose.Expressions),
+            // Full bone matrices only where a control carries an explicit affine setup: that is where shear and reflection live.
+            Bones = model.Base.Controls.Any(k => k.Transform is not null)
+                ? model.Order.ToDictionary(k => k.Id, k => M(pose.Bones[k.Id]), StringComparer.Ordinal) : null,
+            Slots = pose.Slots.Count == 0 ? null : pose.Slots.Select(s => new SlotRecord(s.Slot.Id, s.Part?.Id, [s.Color.X, s.Color.Y, s.Color.Z, s.Color.W])).ToList(),
             Sockets = model.Base.Sockets.ToDictionary(s => s.Id, s => Frame(actor.Socket(s)), StringComparer.Ordinal),
             Parts = model.Parts.Where(p => !p.Hidden).Select(p => Silhouette(p, pose, model, actor)).ToList(),
         };
@@ -422,6 +439,8 @@ public sealed class MigrationReferenceTests
 
     private static float[] V2(Vector2 v) => [v.X, v.Y];
 
+    private static float[] M(Matrix3x2 m) => [m.M11, m.M12, m.M21, m.M22, m.M31, m.M32];
+
     private static float[][] Bounds(Rect2D r) => [V2(r.Min), V2(r.Max)];
 
     private static FrameRecord Frame(Frame3D f) => new(V(f.Origin), V(f.XAxis), V(f.YAxis), V(f.ZAxis));
@@ -460,6 +479,8 @@ public sealed class MigrationReferenceTests
         public List<ChainRecord> Chains { get; set; } = [];
         public List<ContactRecord> Contacts { get; set; } = [];
         public Dictionary<string, string>? Expressions { get; set; }
+        public Dictionary<string, float[]>? Bones { get; set; }
+        public List<SlotRecord>? Slots { get; set; }
         public Dictionary<string, FrameRecord> Sockets { get; set; } = [];
         public Dictionary<string, Dictionary<string, float[]>>? Props { get; set; }
         public MuzzleRecord? Muzzle { get; set; }
@@ -470,6 +491,8 @@ public sealed class MigrationReferenceTests
     }
 
     private sealed record ChainRecord(string Chain, float Residual, bool Reached);
+
+    private sealed record SlotRecord(string Slot, string? Part, float[] Color);
 
     private sealed record ContactRecord(string Chain, float[] Target, float Residual);
 

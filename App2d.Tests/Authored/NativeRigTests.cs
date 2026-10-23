@@ -7,61 +7,7 @@ namespace App2d.Tests.Authored;
 
 public sealed class NativeRigTests
 {
-    private static (CharacterModel Model, IReadOnlyList<MotionClip> Animations) Scene()
-    {
-        var model = new CharacterModel
-        {
-            Id = "wheel",
-            Name = "Wheel",
-            Controls =
-            [
-                new() { Id = "wheel-root", Name = "Wheel Root", Transform = new()
-                    { X = .5f, Y = .7f, Rotation = MathF.PI / 6, ScaleX = -1.5f, ScaleY = 2, ShearY = MathF.PI / 12 } },
-                new() { Id = "spoke-tip", Name = "spoke.tip", Parent = "wheel-root", Transform = new() { X = .4f, Y = .05f, Rotation = MathF.PI / 9 } }
-            ],
-            Slots =
-            [
-                new() { Id = "rear-paint", Bone = "wheel-root", Attachment = "red" },
-                new() { Id = "front-paint", Bone = "spoke-tip", Attachment = "blue" }
-            ],
-            Skins =
-            [
-                new() { Attachments = { ["rear-paint"] = new() { ["red"] = "default-red" }, ["front-paint"] = new() { ["blue"] = "default-blue" } } },
-                new() { Id = "gold-finish", Attachments = { ["rear-paint"] = new() { ["red"] = "gold-finish-red" } } }
-            ]
-        };
-        foreach (var (id, bone) in new[] { ("default-red", "wheel-root"), ("default-blue", "spoke-tip"), ("gold-finish-red", "wheel-root") })
-        {
-            model.Parts.Add(new()
-            {
-                Id = id,
-                A = bone,
-                Frame = bone,
-                ScaleX = .16f,
-                ScaleY = .2f,
-                Geometry = Rectangle2D.Builder.Create(new(-.5f, -.5f), new(.5f, .5f)),
-                Material = new()
-                {
-                    Texture = "images/" + id + ".png"
-                }
-            });
-        }
-
-        var clip = ClipAuthoring.New(ResolvedModel.From(model), "wheel-turn", "Turn", loop: false);
-        clip.Tracks =
-        [
-            new() { Kind = MotionClip.RotateKind, Target = "wheel-root", Keys =
-                [new() { Curve = new() { Control1 = new(.2f, float.DegreesToRadians(40)), Control2 = new(.8f, float.DegreesToRadians(140)), Absolute = true } }, new() { Time = 1, Angle = MathF.PI }] },
-            new() { Kind = MotionClip.ScaleKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, Value = new(-.5f, .5f, 0)}] },
-            new() { Kind = MotionClip.ShearKind, Target = "wheel-root", Keys = [new(), new() { Time = 1, Value = new(MathF.PI / 18, -MathF.PI / 9, 0)}] },
-            new() { Kind = MotionClip.TranslateKind, Target = "spoke-tip", SetupBeforeFirst = true, Keys = [new() { Time = .25f, Value = new(.2f, .1f, 0)}, new() { Time = 1, Value = new(.3f, .2f, 0)}] }
-        ];
-        clip.Attachments = [new() { Slot = "front-paint", Keys = [new() { Time = .5f }, new() { Time = .8f, Attachment = "blue" }] }];
-        clip.DrawOrder = [new() { Time = .4f, Slots = ["front-paint", "rear-paint"] }];
-        clip.Events = [new() { Time = .2f, Name = "tick", Int = 3 }, new() { Time = .8f, Name = "tick", Int = 5 }];
-        clip.Validate(ResolvedModel.From(model));
-        return (model, [clip]);
-    }
+    private static (CharacterModel Model, IReadOnlyList<MotionClip> Animations) Scene() => TestModels.Wheel();
 
     [Fact]
     public void SamplingExplicitBonesLeavesSetupChannelsVersionsAndSubscribersUntouched()
