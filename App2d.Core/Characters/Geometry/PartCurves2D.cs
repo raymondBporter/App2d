@@ -30,7 +30,7 @@ public static class PartCurves2D
         var curve = (ICurve2D)part.Geometry!;
         var a = world(part.A);
         var b = world(part.B!);
-        var coordinates = PartAttachment2D.FrameOf(part, world).Coordinates;
+        var coordinates = PartAttachment2D.FrameOf(part, world).Frame;
         var source = curve;
         ICurve2D? layers = null;
         // A rounded path pins each bound point to its control, so its depth comes from the same fillet weights as XY.
@@ -66,7 +66,7 @@ public static class PartCurves2D
 
                 var restA = rest(part.A);
                 var restB = rest(part.B!);
-                var restCoordinates = PartAttachment2D.FrameOf(part, rest).Coordinates;
+                var restCoordinates = PartAttachment2D.FrameOf(part, rest).Frame;
                 foreach (var binding in part.Bindings)
                 {
                     var p = points[binding.Point];

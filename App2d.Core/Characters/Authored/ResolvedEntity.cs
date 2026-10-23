@@ -333,8 +333,11 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
     /// <summary>A control's placement in the world: its evaluated frame and layer carried by the actor's placement.</summary>
     public LayeredFrame2D ControlPlacement(string control) => Local.Placement(control).Then(Placement);
 
-    /// <summary>The socket's XY base angle before authored socket orientation, shared with editor handles.</summary>
-    public float SocketBaseAngle(ModelSocket socket)
+    /// <summary>
+    /// The carrier a socket attaches to, in actor-local units: its control's point turned by the frame control's angle
+    /// (screen axes for the locomotion frame), or by the direction toward another control when one is named.
+    /// </summary>
+    private LayeredFrame2D SocketCarrier(ModelSocket socket)
     {
         var angle = socket.Frame == CharacterModel.Locomotion ? 0 : Local.Angles[socket.Frame ?? socket.Control];
         if (socket.Toward is { } toward)
@@ -345,18 +348,26 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
                 angle = MathF.Atan2(-direction.X, direction.Y);
             }
         }
-        return angle;
+        return LayeredFrame2D.FromRotation(angle, Local.Points[socket.Control]);
     }
 
-    public Frame3D Socket(ModelSocket socket)
+    /// <summary>
+    /// An ordinary socket's planar placement in the world: its authored offset, angle and layer offset on its carrier,
+    /// carried by the actor's placement. Clothing, picking and editor handles read this; props lift it to 3D.
+    /// </summary>
+    public LayeredFrame2D SocketPlacement(ModelSocket socket) =>
+        LayeredFrame2D.Local(Vector2.One, socket.Angle, new(socket.OffsetX, socket.OffsetY), socket.OffsetZ).Then(SocketCarrier(socket)).Then(Placement);
+
+    /// <summary>The socket's screen-plane turn with its animated orientation applied, shared with editor handles.</summary>
+    public float SocketTurn(ModelSocket socket)
     {
-        var angle = SocketBaseAngle(socket);
-        var origin = Local.Points[socket.Control] + Rotation2D.ApplyXY(new(socket.OffsetX, socket.OffsetY, socket.OffsetZ), angle);
-        var orientation = Local.SocketAngles.GetValueOrDefault(socket.Id);
-        var local = Frame3D.FromRotation(new(orientation.X, orientation.Y, angle + socket.Angle + orientation.Z), origin);
-        var actor = new Frame3D(new(Position, 0), new(Facing, 0, 0), Vector3.UnitY, Vector3.UnitZ);
-        return local.Then(actor);
+        var planar = LayeredFrame2D.Local(Vector2.One, socket.Angle, Vector2.Zero, 0).Then(SocketCarrier(socket));
+        return MathF.Atan2(planar.XAxis.Y, planar.XAxis.X) + Local.SocketAngles.GetValueOrDefault(socket.Id).Z;
     }
+
+    /// <summary>The socket's 3D frame for props: its planar placement lifted by the clip's tilt/twist/turn orientation.</summary>
+    public Frame3D Socket(ModelSocket socket) =>
+        PropPlacement3D.Lift(SocketPlacement(socket), Local.SocketAngles.GetValueOrDefault(socket.Id));
 
     /// <summary>A prop's local point in the world, with its grip on the socket. The one transform art, hits and muzzles share.</summary>
     public static Vector3 PropPoint(Frame3D frame, PropAsset prop, PuppetPoint local) =>

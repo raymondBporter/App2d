@@ -128,9 +128,9 @@ internal static class RigAuthoredBridgeChecks2D
                 Matrix3x2.CreateRotation(float.DegreesToRadians(shape.AngleDegrees)) * frame);
             var id = $"part-{shape.Id}";
             var part = model.Parts.Single(p => p.Id == id);
-            var authored = PartAttachment2D.FrameOf(part, pose.World, control => pose.Angles[control]);
+            var authored = PartAttachment2D.FrameOf(part, pose.World, pose.Placement);
             Near(center, authored.Origin, id);
-            if (Vector2.Distance(authored.Up, up) > 1e-4f)
+            if (Vector2.Distance(authored.YAxis, up) > 1e-4f)
             {
                 throw new InvalidOperationException($"{id} orientation differs from the Noodle attachment.");
             }

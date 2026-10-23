@@ -310,7 +310,7 @@ public sealed class MigrationReferenceTests
 
     private static SilhouetteRecord Silhouette(PuppetPart part, EvaluatedPose pose, ResolvedModel model, ActorPose actor)
     {
-        var contour = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id])
+        var contour = PartContours2D.Contour(part, model, pose)
             .ConvertAll(actor.Place);
         var min = new Vector3(float.PositiveInfinity);
         var max = new Vector3(float.NegativeInfinity);

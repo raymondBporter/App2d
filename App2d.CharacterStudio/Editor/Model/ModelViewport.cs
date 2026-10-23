@@ -39,7 +39,7 @@ internal sealed class ModelViewport(EditorSession session, Viewport viewport, Mo
             var visibleParts = model.Base.Slots.Count == 0 ? model.Parts : [.. pose.Slots.Where(s => s.Part is not null).Select(s => s.Part!)];
             var (Part, Score) = visibleParts
                 .Where(p => !p.Hidden)
-                .Select(p => (Part: p, Score: PartPicking2D.Distance(p, pose.World, frame.World(ViewportFrame.Mouse), id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id], model.Base.LineWidth)))
+                .Select(p => (Part: p, Score: PartPicking2D.Distance(p, model, pose, frame.World(ViewportFrame.Mouse))))
                 .Where(h => h.Score <= 1)
                 .OrderBy(h => h.Score)
                 .FirstOrDefault();

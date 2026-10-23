@@ -41,7 +41,7 @@ internal static class ModelOverlay
 
     public static void DrawPart(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
-        var outline = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]).Select(p => frame.Screen(p)).ToArray();
+        var outline = PartContours2D.Contour(part, model, pose).Select(p => frame.Screen(p)).ToArray();
         for (var i = 1; i < outline.Length; i++)
         {
             frame.Draw.AddLine(outline[i - 1], outline[i], StudioTheme.Selection.PackedValue, 2);
@@ -55,7 +55,6 @@ internal static class ModelOverlay
 
     public static Vector3 BoneTip(ModelControl control, EvaluatedPose pose)
     {
-        var origin = pose.World(control.Id);
-        return new(Vector2.Transform(new(control.Length, 0), pose.Bones[control.Id]), origin.Z);
+        return pose.Placement(control.Id).At(new Vector2(control.Length, 0));
     }
 }

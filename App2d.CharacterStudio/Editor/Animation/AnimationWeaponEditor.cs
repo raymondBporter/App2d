@@ -268,7 +268,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
         draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, .24f, 0))), StudioTheme.WeaponAxisY.PackedValue, 2);
         draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, 0, .24f))), StudioTheme.WeaponAxisZ.PackedValue, 2);
         draw.AddCircle(center, 38 * scale, StudioTheme.RotationGuide.PackedValue, 48, 1);
-        var screenAngle = new ActorPose(subject.Pose, Vector2.Zero, 1).SocketBaseAngle(weapon.Socket) + weapon.Socket.Angle + angles.Z;
+        var screenAngle = new ActorPose(subject.Pose, Vector2.Zero, 1).SocketTurn(weapon.Socket);
         var turn = center + new Vector2(MathF.Cos(screenAngle), -MathF.Sin(screenAngle)) * 38 * scale;
         var tilt = center + new Vector2(-65, -30) * scale;
         var twist = center + new Vector2(-65, 25) * scale;

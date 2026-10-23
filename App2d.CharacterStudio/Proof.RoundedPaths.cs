@@ -62,7 +62,7 @@ internal sealed partial class ProofRenders
                             }
                         }
                         drawing.Build(model.Base.Ink, model.Base.LineWidth, parts, pose.World,
-                            p => pose.Expressions.GetValueOrDefault(p.Id, "none"), angle: id => pose.Angles[id], transform: id => pose.Bones[id], rest: id => model.Rest[id]);
+                            p => pose.Expressions.GetValueOrDefault(p.Id, "none"), bone: pose.Placement, rest: id => model.Rest[id]);
                     }
                     if (tile == 3)
                     {

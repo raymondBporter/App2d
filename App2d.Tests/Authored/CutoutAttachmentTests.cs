@@ -132,10 +132,10 @@ public sealed class CutoutAttachmentTests
             "direction" => new(1, 1, 0),
             _ => Vector3.Zero
         };
-        var contour = PartContours2D.Contour(part, World, transform: _ => current, rest: Rest, restTransform: _ => rest);
+        var contour = PartContours2D.Contour(part, World, bone: _ => LayeredFrame2D.FromMatrix(current), rest: Rest, restBone: _ => LayeredFrame2D.FromMatrix(rest));
         for (var i = 0; i < contour.Count; i++)
         {
-            var point = PartAttachment2D.ArtworkPoint(part, i, contour[i].XY, World, Rest, transform: _ => current, restTransform: _ => rest);
+            var point = PartAttachment2D.ArtworkPoint(part, i, contour[i].XY, World, Rest, bone: _ => LayeredFrame2D.FromMatrix(current), restBone: _ => LayeredFrame2D.FromMatrix(rest));
             Assert.True(Vector2.Distance(PartContours2D.CutoutPoints(part)[i], point) < 1e-5f);
         }
     }

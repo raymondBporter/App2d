@@ -68,7 +68,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
 
     public void Drag(ViewportFrame frame, PuppetPart part, EvaluatedPose pose, ResolvedModel model)
     {
-        var contour = PartContours2D.Contour(part, pose.World, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
+        var contour = PartContours2D.Contour(part, model, pose);
         var points = PartContours2D.CutoutPoints(part);
         for (var i = 0; i < points.Count; i++)
         {
@@ -99,7 +99,7 @@ internal sealed class ModelCutoutEditor(EditorSession session)
         var edited = new List<Vector2>(points);
         try
         {
-            edited[_cutoutDrag] = PartAttachment2D.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse).XY, pose.World, id => model.Rest[id], id => pose.Angles[id], id => pose.Bones[id], id => model.RestTransforms[id]);
+            edited[_cutoutDrag] = PartAttachment2D.ArtworkPoint(part, _cutoutDrag, frame.World(ViewportFrame.Mouse).XY, model, pose);
         }
         catch (InvalidOperationException)
         {

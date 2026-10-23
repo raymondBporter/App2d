@@ -1,76 +1,84 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Mathematics;
-using App2d.Core.Mathematics.Transforms;
 using System.Numerics;
 
 namespace App2d.Core.Characters.Geometry;
 
-/// <summary>Local geometry placement shared by character drawing, picking and editing.</summary>
+/// <summary>
+/// Local geometry placement shared by character drawing, picking and editing. A part is one <see cref="LayeredFrame2D"/>
+/// attachment (scale, rotation, offset, depth) composed onto the carrier its controls define; nothing here composes
+/// offsets or rotations by hand.
+/// </summary>
 public static class PartAttachment2D
 {
-    public static PartFrame2D FrameOf(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null)
+    /// <summary>The part's own placement on its carrier: scale, then rotation, then offset in the carrier's XY, then depth as a layer offset.</summary>
+    public static LayeredFrame2D Attachment(PuppetPart part) =>
+        LayeredFrame2D.Local(new(part.ScaleX, part.ScaleY), part.Angle, new(part.OffsetX, part.OffsetY), part.Depth);
+
+    /// <summary>
+    /// The carrier a part attaches to: its bone's frame placed at control A, or the frame whose +Y runs from A toward B
+    /// (unit length for shapes, the full A to B span for curves, screen up without B or when A and B coincide).
+    /// </summary>
+    public static LayeredFrame2D Carrier(PuppetPart part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null)
     {
-        if (part.Frame is { } bone)
+        var origin = world(part.A);
+        if (part.Frame is { } frame)
         {
-            if (transform is not null)
-            {
-                var matrix = Matrix3x2.CreateScale(part.ScaleX, part.ScaleY) * Matrix3x2.CreateRotation(part.Angle) * transform(bone);
-                var offset = Vector2.TransformNormal(new(part.OffsetX, part.OffsetY), transform(bone));
-                var transformedOrigin = world(part.A) + new Vector3(offset, 0);
-                return new(new Frame2D(matrix).WithOrigin(transformedOrigin.XY), transformedOrigin.Z, part.Depth);
-            }
-            var baseAngle = angle is null ? throw new InvalidOperationException("A bone-attached part needs bone angles.") : angle(bone);
-            var origin = world(part.A);
-            var parent = Frame2D.FromRotation(baseAngle, origin.XY);
-            var attachment = new Frame2D(Matrix3x2.CreateScale(part.ScaleX, part.ScaleY)
-                * Matrix3x2.CreateRotation(baseAngle + part.Angle))
-                .WithOrigin(parent.TransformPoint(new(part.OffsetX, part.OffsetY)));
-            return new(attachment, origin.Z, part.Depth);
+            return bone is null
+                ? throw new InvalidOperationException("A bone-attached part needs bone placements.")
+                : bone(frame).WithOrigin(origin);
         }
-        var a = world(part.A);
-        var b = part.B is { } end ? world(end) : a + Vector3.UnitY;
-        var direction = new Vector2(b.X - a.X, b.Y - a.Y);
+
+        var b = part.B is { } end ? world(end) : origin + Vector3.UnitY;
+        var direction = (b - origin).XY;
         var up = part.Geometry is ICurve2D ? direction
             : direction.LengthSquared() > 1e-10f ? Vector2.Normalize(direction) : Vector2.UnitY;
-        var frame = Frame2D.FromYAxis(a.XY, up);
-        var local = new Frame2D(Matrix3x2.CreateScale(part.ScaleX, part.ScaleY) * Matrix3x2.CreateRotation(part.Angle));
-        var placed = local.Then(frame).WithOrigin(frame.TransformPoint(new(part.OffsetX, part.OffsetY)));
-        return new(placed, a.Z, part.Depth);
+        return LayeredFrame2D.FromYAxis(origin, up);
     }
 
-    internal static PartFrame2D BindingFrame(PartPointBinding binding, Func<string, Vector3> world)
+    /// <summary>Where a part's geometry lands: its attachment on its carrier.</summary>
+    public static LayeredFrame2D FrameOf(PuppetPart part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null) =>
+        Attachment(part).Then(Carrier(part, world, bone));
+
+    public static LayeredFrame2D FrameOf(PuppetPart part, ResolvedModel model, EvaluatedPose pose) => FrameOf(part, pose.World, pose.Placement);
+
+    internal static LayeredFrame2D BindingFrame(PartPointBinding binding, Func<string, Vector3> world)
     {
         var origin = world(binding.Control);
         var direction = binding.Toward is { } toward ? world(toward) - origin : Vector3.UnitY;
         var up = new Vector2(direction.X, direction.Y);
         up = up.LengthSquared() > 1e-10f ? Vector2.Normalize(up) : Vector2.UnitY;
-        return new(Frame2D.FromYAxis(origin.XY, up), origin.Z, 0);
+        return LayeredFrame2D.FromYAxis(origin, up);
     }
 
+    /// <summary>A drawn rest point carried by its bound control, keeping its layer offset from that control.</summary>
     internal static Vector3 BoundPoint(PartPointBinding binding, Vector3 drawnRest, Func<string, Vector3> world, Func<string, Vector3> rest)
     {
         var before = BindingFrame(binding, rest);
         var now = BindingFrame(binding, world);
-        var local = before.Coordinates.ToLocal(drawnRest.XY);
-        return now.At(local) + new Vector3(0, 0, drawnRest.Z - before.OriginZ);
+        return now.At(before.ToLocal(drawnRest));
     }
 
     /// <summary>Inverse of the same attachment used by rendering, for dragging a point while previewing a pose.</summary>
-    public static Vector2 ArtworkPoint(PuppetPart part, int index, Vector2 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Matrix3x2>? restTransform = null)
+    public static Vector2 ArtworkPoint(PuppetPart part, int index, Vector2 target, Func<string, Vector3> world, Func<string, Vector3> rest, Func<string, LayeredFrame2D>? bone = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         var binding = part.Bindings?.FirstOrDefault(b => b.Point == index);
-        var art = binding is null ? FrameOf(part, world, angle, transform) : FrameOf(part, rest, transform: restTransform);
+        var art = binding is null ? FrameOf(part, world, bone) : FrameOf(part, rest, restBone);
         if (binding is not null)
         {
             var now = BindingFrame(binding, world);
             var before = BindingFrame(binding, rest);
-            target = before.Coordinates.TransformPoint(now.Coordinates.ToLocal(target));
+            target = before.At(now.Frame.ToLocal(target)).XY;
         }
-        if (!art.Coordinates.TryToLocal(target, out var local))
+        if (!art.TryToLocal(target, out var local))
         {
             throw new InvalidOperationException("Cannot edit a cutout through a collapsed frame.");
         }
 
         return local;
     }
+
+    public static Vector2 ArtworkPoint(PuppetPart part, int index, Vector2 target, ResolvedModel model, EvaluatedPose pose) =>
+        ArtworkPoint(part, index, target, pose.World, id => model.Rest[id], pose.Placement, model.RestPlacement);
 }

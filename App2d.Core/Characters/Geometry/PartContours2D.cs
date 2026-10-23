@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Operations.Vertices;
 using App2d.Core.Geometry.Shapes;
@@ -12,17 +13,21 @@ public static class PartContours2D
     public static IReadOnlyList<Vector2> CutoutPoints(PuppetPart part) =>
         ((SimplePolygon2D)part.Geometry!).VertexList;
 
-    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, angle: null, rest: rest);
+    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, Vector3> rest) => Contour(part, world, bone: null, rest: rest);
+
+    /// <summary>A part's outline in an evaluated pose of a resolved model.</summary>
+    public static List<Vector3> Contour(PuppetPart part, ResolvedModel model, EvaluatedPose pose) =>
+        Contour(part, pose.World, pose.Placement, id => model.Rest[id], model.RestPlacement);
 
     /// <summary>A shape's closed outline or a curve's sampled open stroke.</summary>
-    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
+    public static List<Vector3> Contour(PuppetPart part, Func<string, Vector3> world, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         if (part.Geometry is ICurve2D)
         {
             return PartCurves2D.Contour(part, world, rest);
         }
 
-        var frame = PartAttachment2D.FrameOf(part, world, angle, transform);
+        var frame = PartAttachment2D.FrameOf(part, world, bone);
         if (part.Geometry is SimplePolygon2D && part.Bindings is { Count: > 0 })
         {
             var cutout = CutoutPoints(part).Select(frame.At).ToList();
@@ -31,7 +36,7 @@ public static class PartContours2D
                 throw new InvalidOperationException("A bound cutout needs the model's rest pose.");
             }
 
-            var artRest = PartAttachment2D.FrameOf(part, rest, transform: restTransform);
+            var artRest = PartAttachment2D.FrameOf(part, rest, restBone);
             foreach (var binding in part.Bindings)
             {
                 var point = CutoutPoints(part)[binding.Point];

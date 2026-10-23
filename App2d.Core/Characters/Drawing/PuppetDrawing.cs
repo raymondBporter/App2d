@@ -39,7 +39,7 @@ public sealed class PuppetDrawing
         TextureRoot = model.TextureRoot;
         var managed = model.Base.Skins.SelectMany(s => s.Attachments.Values).SelectMany(a => a.Values).ToHashSet(StringComparer.Ordinal);
         Build(model.Base.Ink, model.Base.LineWidth, model.Parts.Where(p => !managed.Contains(p.Id)), pose.World,
-            part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
+            part => pose.Expressions.GetValueOrDefault(part.Id, "none"), face, pose.Placement, id => model.Rest[id], model.RestPlacement);
         for (var i = 0; i < pose.Slots.Count; i++)
         {
             var slot = pose.Slots[i];
@@ -53,7 +53,7 @@ public sealed class PuppetDrawing
                 throw new InvalidDataException("Slot attachments currently require image materials.");
             }
 
-            var frame = PartAttachment2D.FrameOf(part, pose.World, id => pose.Angles[id], id => pose.Bones[id]);
+            var frame = PartAttachment2D.FrameOf(part, model, pose);
             AddImage(part, frame, ColorExtensions.FromVector4(slot.Color), slot.Slot.Blend, -i * .001f);
         }
     }
@@ -121,7 +121,7 @@ public sealed class PuppetDrawing
     }
 
     /// <summary>Plain primitives from parts and a world-position lookup. The only drawing path for both prototype and authored models.</summary>
-    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null)
+    public void Build(string inkColor, float lineWidth, IEnumerable<PuppetPart> parts, Func<string, Vector3> world, Func<PuppetPart, string>? expression = null, FacePose? facePose = null, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null)
     {
         Clear();
         var ink = ColorExtensions.FromHexRgb(inkColor);
@@ -134,7 +134,7 @@ public sealed class PuppetDrawing
 
             if (part.Material?.Texture is not null)
             {
-                AddImage(part, PartAttachment2D.FrameOf(part, world, angle, transform), Color4b.White, "normal", null);
+                AddImage(part, PartAttachment2D.FrameOf(part, world, bone), Color4b.White, "normal", null);
                 continue;
             }
             var start = Mesh.Count;
@@ -145,7 +145,7 @@ public sealed class PuppetDrawing
             var face = expression?.Invoke(part) ?? part.Face;
             if (part.Geometry is ICurve2D)
             {
-                var path = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
+                var path = PartContours2D.Contour(part, world, bone, rest, restBone);
                 var strokeColor = material.Fill is { } fill ? ColorExtensions.FromHexRgb(fill) : ink;
                 if (part.Geometry is RoundedPolylineCurve2D)
                 {
@@ -180,14 +180,14 @@ public sealed class PuppetDrawing
 
                 continue;
             }
-            var contour = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
+            var contour = PartContours2D.Contour(part, world, bone, rest, restBone);
             var triangles = part.Geometry switch
             {
                 SimplePolygon2D => PolygonTriangulationCache2D.Get(PartContours2D.CutoutPoints(part), 1e-8),
                 HeightFieldShape2D field => field.Polygon.Mesh,
                 _ => null
             };
-            var frame = PartAttachment2D.FrameOf(part, world, angle, transform);
+            var frame = PartAttachment2D.FrameOf(part, world, bone);
             if (material.Fill is { } shapeFill)
             {
                 var fillColor = ColorExtensions.FromHexRgb(shapeFill);
@@ -214,7 +214,7 @@ public sealed class PuppetDrawing
                 var bounds = ShapeBounds2D.Calculate((IShape2D)part.Geometry!);
                 FaceDrawing.Build(Mesh, facePose ?? FaceExpressions.Get(face),
                 p => frame.At(bounds.Center + new Vector2(p.X * bounds.Width, -p.Y * bounds.Height))
-                    + new Vector3(frame.Coordinates.XAxis * (part.FaceX / MathF.Max(frame.Coordinates.XAxis.Length(), 1e-10f)), -.002f), lineWidth * .6f, ink);
+                    + new Vector3(frame.XAxis * (part.FaceX / MathF.Max(frame.XAxis.Length(), 1e-10f)), -.002f), lineWidth * .6f, ink);
             }
             if (Mesh.Count > start)
             {
@@ -223,7 +223,7 @@ public sealed class PuppetDrawing
         }
     }
 
-    private void AddImage(PuppetPart part, PartFrame2D frame, Color4b color, string blend, float? depth)
+    private void AddImage(PuppetPart part, LayeredFrame2D frame, Color4b color, string blend, float? depth)
     {
         var material = part.RenderMaterial;
         var own = ColorExtensions.FromHexRgba(material.Tint ?? "ffffffff");

@@ -247,7 +247,7 @@ Before the P0c additions, the extended capture was compared against the committe
 | Leaf affine scale on curve-face eyes | Scoped deformation: artwork fit on the pupil parts, no rig scale | P2a/P7b | Pupil silhouettes 1e-3 and eye control points 1e-4 across blink, crossed-eyes, wink, expressions |
 | Inherited reflection/shear (wheel) | Unsupported in the canonical similarity rig, report; keep the explicit-bone evaluator as the legacy affine adapter | P3b classify, P11 retire | Wheel bone matrices 1e-4 and determinant sign while the adapter exists; NativeRigTests pass |
 | Shear channel | Unsupported, report (no authored user) | P11 | Inventory shows zero shear tracks; wheel is the only fixture |
-| Absolute control Z | Preserve exactly by converting to local layer offsets `restZ - parentRestZ` | P1a/P1b | Every point Z 1e-4, part Z range 1e-3, socket origin Z 1e-4, ordering by Z identical |
+| Absolute control Z | Preserve exactly by converting to local layer offsets `restZ - parentRestZ`; exercised in P1a/P1b (see 7.4), no reference moved | P1a/P1b | Every point Z 1e-4, part Z range 1e-3, socket origin Z 1e-4, ordering by Z identical |
 | Animated translate Z (25 tracks) | Preserve exactly as local layer deltas | P1a | climb and sword cases: chest/shoulder/head Z 1e-4 |
 | Part depth, curve Z interpolation, bound-point depth | Preserve exactly as leaf offsets | P1b | Silhouette min/max Z and depth 1e-3 / 1e-4 |
 | Weapon tilt/twist/turn, grip/tip/muzzle, XY projection | Preserve exactly through one planar-to-3D bridge | P1c, P8 | Socket frames, prop points, muzzle, attack regions 1e-4; mirrored exact; both facings |
@@ -258,7 +258,7 @@ Before the P0c additions, the extended capture was compared against the committe
 | Person build proportions | Preserve exactly through data bindings/presets | P4a/P6b | tall-thin, short-broad, brute, cinder cases 1e-4; resolved measures (section 8) exact to 1e-4 |
 | Fixed facial vocabulary | Scoped: expressions become profile bindings; procedural style retained until P7c | P2b/P7c | `expressions` exact; head silhouette 1e-3 |
 | Wave and point bindings | Scoped: typed curve modifier and unchanged bindings | P2a | hair / wing / limb silhouettes 1e-3 |
-| Facing mirror (X only, Z kept) | Preserve exactly | P1a | All `/left` cases |
+| Facing mirror (X only, Z kept) | Preserve exactly; exercised in P1a (`ActorPose.Placement` is the mirrored entity-to-world frame with layer 0; every `/left` case unchanged) | P1a | All `/left` cases |
 
 ### 7.2 Point IK chains versus rigid bones
 
@@ -283,6 +283,8 @@ Scale and shear channels. The inventory shows scale tracks only on the two curve
 What the code does now. For a point control, the evaluator computes `Z = parentZ + (restZ - parentRestZ) + translate.Z`, so the authored absolute rest Z already behaves as a sum of local offsets, and an animated chest Z carries the head and shoulders with it (climb-on@0.15: chest, head at -0.35, left-shoulder at -0.375; sword clips key shoulder Z up to 0.15 across 25 tracks). For an explicit-bone control the evaluator uses `restZ + translate.Z` with no parent term; every shipped explicit-bone control (curve-face, wheel) has Z = 0, so no authored case distinguishes the two. Parts draw at `controlZ + depth`; curves interpolate Z between `a` and `b` and add depth; bound points keep their rest depth relative to the bound control; sockets add their offset Z after XY rotation (person `back` +0.2, `back-view` -0.2); props add real mesh Z on top of the socket frame (hammer tip at 0.244, sword tip at 0.454 in the strike cases). Facing never mirrors Z.
 
 Disposition: preserve exactly. P1a converts authored absolute rest Z to local layer offsets `restZ - parentRestZ` (root offsets equal their rest Z), translate-Z keys stay as local deltas, and part depth, socket offset Z and bound-point depth stay leaf offsets; composed layer = local + parent reproduces today's values by construction, with no double counting. Explicit-bone controls adopt the same local meaning; with every shipped value at 0 this is a representation decision with no behavioral difference, and the wheel/curve-face cases pin it. Accepted when every point Z matches to 1e-4, every part's silhouette Z range to 1e-3 and depth to 1e-4, socket origins to 1e-4 and the order of parts sorted by Z is identical in every case. No intentional difference is allowed in P1; a renderer that changes the depth convention must do it at its one mapping boundary with these values unchanged.
+
+Exercised (P1a, P1b, 2026-10-23): `ResolvedModel.LayerOffsets` holds the per-control offsets, `PoseEvaluator` composes them through `LayeredFrame2D.Then` (frames multiply, layers add) with translate-Z as a further local offset, and part depth, socket `offsetZ` and bound-point depth are leaf layer offsets of the same value (`PartAttachment2D.Attachment`, `ActorPose.SocketPlacement`, `PartAttachment2D.BoundPoint`). Explicit-bone controls now take the local meaning (`parentLayer + offset + translateZ` instead of `restZ + translateZ`). All 81 reference cases, including wheel and curve-face, passed unchanged at the recorded tolerances; `LayeredFrame2DTests` adds the animated-parent case for both control kinds. The reference file was not regenerated.
 
 ### 7.5 Weapon tilt, twist and turn
 

@@ -107,7 +107,7 @@ public sealed class ResolvedModel
     public float DrawnHeight()
     {
         var rest = PoseEvaluator.Rest(this);
-        return Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, rest.World, id => rest.Angles[id], id => rest.Bones[id], id => Rest[id], id => RestTransforms[id])).Select(p => p.Y).DefaultIfEmpty(1).Max();
+        return Parts.Where(p => !p.Hidden).SelectMany(p => PartContours2D.Contour(p, this, rest)).Select(p => p.Y).DefaultIfEmpty(1).Max();
     }
 
     public float Measure(string scale) => scale == CharacterModel.Unit ? 1 : Measures[scale];

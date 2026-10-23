@@ -272,8 +272,7 @@ public sealed class CurveAttachmentTests
         var posed = PoseEvaluator.Sample(model, clip, at);
         var end = PoseEvaluator.Sample(model, clip, clip.Duration);
         var changed = false;
-        List<Vector3> Path(string id, EvaluatedPose pose) => PartContours2D.Contour(model.Parts.Single(p => p.Id == id), pose.World,
-            id => pose.Angles[id], id => pose.Bones[id], id => model.Rest[id], id => model.RestTransforms[id]);
+        List<Vector3> Path(string id, EvaluatedPose pose) => PartContours2D.Contour(model.Parts.Single(p => p.Id == id), model, pose);
         foreach (var part in model.Parts)
         {
             var original = Path(part.Id, rest);

@@ -1,3 +1,4 @@
+using App2d.Core.Characters.Authored;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Curves;
 using App2d.Core.Geometry.Meshes;
@@ -14,13 +15,17 @@ namespace App2d.Core.Characters.Geometry;
 /// <summary>Normalized character-part picking scores using the same attachment and cutout outlines as drawing.</summary>
 public static class PartPicking2D
 {
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, angle: null, rest: rest);
+    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, Vector3> rest) => Distance(part, world, point, bone: null, rest: rest);
+
+    /// <summary>The picking score of a part in an evaluated pose of a resolved model.</summary>
+    public static float Distance(PuppetPart part, ResolvedModel model, EvaluatedPose pose, Vector3 point) =>
+        Distance(part, pose.World, point, pose.Placement, id => model.Rest[id], model.RestPlacement, model.Base.LineWidth);
 
     /// <summary>
     /// Normalized XY picking score, not a distance in world units. Curves use their local-space distance
     /// scaled into the attachment frame and retain a minimum picking width.
     /// </summary>
-    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, float>? angle = null, Func<string, Matrix3x2>? transform = null, Func<string, Vector3>? rest = null, Func<string, Matrix3x2>? restTransform = null, float lineWidth = .045f)
+    public static float Distance(PuppetPart part, Func<string, Vector3> world, Vector3 point, Func<string, LayeredFrame2D>? bone = null, Func<string, Vector3>? rest = null, Func<string, LayeredFrame2D>? restBone = null, float lineWidth = .045f)
     {
         var p = new Vector2(point.X, point.Y);
         if (part.Geometry is ICurve2D curve)
@@ -28,7 +33,7 @@ public static class PartPicking2D
             var pickWidth = MathF.Max(part.Material?.StrokeWidth ?? lineWidth, .06f);
             if (part.Bindings is { Count: > 0 } || part.WaveAmplitude != 0 || part.ScaleX != part.ScaleY)
             {
-                var path = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
+                var path = PartContours2D.Contour(part, world, bone, rest, restBone);
                 var nearest = float.PositiveInfinity;
                 foreach (var (start, end) in MeshTopology.Edges(path.Count, closed: false))
                 {
@@ -46,7 +51,7 @@ public static class PartPicking2D
                 return Vector2.Distance(p, a.XY) / pickWidth;
             }
 
-            var coordinates = PartAttachment2D.FrameOf(part, world).Coordinates;
+            var coordinates = PartAttachment2D.FrameOf(part, world).Frame;
             if (!coordinates.TryToLocal(p, out var local))
             {
                 return float.PositiveInfinity;
@@ -57,7 +62,7 @@ public static class PartPicking2D
         }
         if (part.Geometry is SimplePolygon2D && part.Bindings is { Count: > 0 })
         {
-            var points = PartContours2D.Contour(part, world, angle, transform, rest, restTransform);
+            var points = PartContours2D.Contour(part, world, bone, rest, restBone);
             // Folded outlines may overlap. Pick the same rest-topology triangles that are filled, not an even/odd hole.
             if (part.Bindings is { Count: > 0 })
             {
@@ -89,9 +94,9 @@ public static class PartPicking2D
         }
         if (part.Geometry is IShape2D typed)
         {
-            var typedFrame = PartAttachment2D.FrameOf(part, world, angle, transform);
+            var typedFrame = PartAttachment2D.FrameOf(part, world, bone);
             var shape = typed;
-            if (!typedFrame.Coordinates.TryToLocal(p, out var local))
+            if (!typedFrame.TryToLocal(p, out var local))
             {
                 return float.PositiveInfinity;
             }
