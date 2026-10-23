@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 4,
+  "version": 6,
   "id": "brute",
   "name": "Brute",
   "base": "person",
@@ -11,39 +11,68 @@
     "width": 1.45,
     "head": 0.95
   },
-  "rest": {},
-  "parts": {
-    "body": {
-      "material": {
-        "fill": "#ead6c1",
-        "paint": []
-      }
-    },
-    "head": {
-      "material": {
-        "fill": "#ead6c1"
+  "overrides": [
+    {
+      "target": {
+        "part": "body",
+        "property": "material"
       },
-      "face": "angry"
+      "material": {
+        "paint": [],
+        "fill": "#ead6c1"
+      }
     },
-    "left-hand": {
+    {
+      "target": {
+        "part": "head",
+        "property": "material"
+      },
       "material": {
         "fill": "#ead6c1"
       }
     },
-    "right-hand": {
+    {
+      "target": {
+        "part": "head",
+        "property": "face"
+      },
+      "selection": "angry"
+    },
+    {
+      "target": {
+        "part": "left-hand",
+        "property": "material"
+      },
       "material": {
         "fill": "#ead6c1"
       }
     },
-    "left-foot": {
+    {
+      "target": {
+        "part": "right-hand",
+        "property": "material"
+      },
       "material": {
         "fill": "#ead6c1"
       }
     },
-    "right-foot": {
+    {
+      "target": {
+        "part": "left-foot",
+        "property": "material"
+      },
+      "material": {
+        "fill": "#ead6c1"
+      }
+    },
+    {
+      "target": {
+        "part": "right-foot",
+        "property": "material"
+      },
       "material": {
         "fill": "#ead6c1"
       }
     }
-  }
+  ]
 }

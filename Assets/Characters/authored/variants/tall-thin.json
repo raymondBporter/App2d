@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 4,
+  "version": 6,
   "id": "tall-thin",
   "name": "Tall and thin",
   "base": "person",
@@ -11,12 +11,15 @@
     "width": 0.8,
     "head": 0.92
   },
-  "rest": {},
-  "parts": {
-    "body": {
+  "overrides": [
+    {
+      "target": {
+        "part": "body",
+        "property": "material"
+      },
       "material": {
         "fill": "#d9e2ef"
       }
     }
-  }
+  ]
 }

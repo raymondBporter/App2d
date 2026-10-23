@@ -1,6 +1,6 @@
 {
   "format": "app2d-variant",
-  "version": 4,
+  "version": 6,
   "id": "cinder",
   "name": "Cinder",
   "base": "person",
@@ -11,39 +11,68 @@
     "width": 1.05,
     "head": 1.05
   },
-  "rest": {},
-  "parts": {
-    "body": {
+  "overrides": [
+    {
+      "target": {
+        "part": "body",
+        "property": "material"
+      },
       "material": {
         "asset": "spotted-hide",
         "fill": "#b97549"
       }
     },
-    "head": {
-      "material": {
-        "fill": "#f3dcc6"
+    {
+      "target": {
+        "part": "head",
+        "property": "material"
       },
-      "face": "smug"
-    },
-    "left-hand": {
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "right-hand": {
+    {
+      "target": {
+        "part": "head",
+        "property": "face"
+      },
+      "selection": "smug"
+    },
+    {
+      "target": {
+        "part": "left-hand",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "left-foot": {
+    {
+      "target": {
+        "part": "right-hand",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     },
-    "right-foot": {
+    {
+      "target": {
+        "part": "left-foot",
+        "property": "material"
+      },
+      "material": {
+        "fill": "#f3dcc6"
+      }
+    },
+    {
+      "target": {
+        "part": "right-foot",
+        "property": "material"
+      },
       "material": {
         "fill": "#f3dcc6"
       }
     }
-  }
+  ]
 }
