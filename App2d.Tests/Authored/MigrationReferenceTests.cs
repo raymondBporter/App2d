@@ -452,7 +452,7 @@ public sealed class MigrationReferenceTests
         {
             if (prop.Point(name) is { } local)
             {
-                points[name] = V(ActorPose.PropPoint(frame, prop, local));
+                points[name] = V(PropPlacement3D.PropPoint(frame, prop, local));
             }
         }
 

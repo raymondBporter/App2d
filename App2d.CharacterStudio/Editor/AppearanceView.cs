@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
 using App2d.Core.Mathematics.Transforms;
 using ImGuiNET;
@@ -306,8 +307,8 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
         var gold = StudioTheme.AppearanceSelection.PackedValue;
         for (var i = 0; i < points.Count; i++)
         {
-            var p = frame.Screen(ActorPose.PropPoint(socket, doc.Asset, points[i]));
-            var next = frame.Screen(ActorPose.PropPoint(socket, doc.Asset, points[(i + 1) % points.Count]));
+            var p = frame.Screen(PropPlacement3D.PropPoint(socket, doc.Asset, points[i]));
+            var next = frame.Screen(PropPlacement3D.PropPoint(socket, doc.Asset, points[(i + 1) % points.Count]));
             frame.Draw.AddLine(p, next, gold, 1);
             frame.Draw.AddCircleFilled(p, 4 * Ui.Scale, gold);
             if (frame.Hovered && ImGui.IsMouseClicked(ImGuiMouseButton.Left) && Vector2.Distance(p, ViewportFrame.Mouse) < 8 * Ui.Scale)
@@ -333,18 +334,9 @@ internal sealed class AppearanceView(EditorSession session) : IWorkspaceView
             return;
         }
 
-        var origin = ActorPose.PropPoint(socket, doc.Asset, points[_drag]);
-        var x = ActorPose.PropPoint(socket, doc.Asset, points[_drag] with
-        {
-            X = points[_drag].X + 1
-        }) - origin;
-        var y = ActorPose.PropPoint(socket, doc.Asset, points[_drag] with
-        {
-            Y = points[_drag].Y + 1
-        }) - origin;
-        var coordinates = new Frame2D(origin.XY, x.XY, y.XY);
+        var coordinates = PropPlacement3D.PropPlane(socket, doc.Asset, points[_drag]);
         if (MathF.Abs(coordinates.Matrix.GetDeterminant()) < 1e-6f ||
-            !coordinates.TryToLocal(frame.World(ViewportFrame.Mouse, origin.Z).XY, out var delta))
+            !coordinates.TryToLocal(frame.World(ViewportFrame.Mouse).XY, out var delta))
         {
             return;
         }

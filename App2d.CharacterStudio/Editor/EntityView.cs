@@ -1,5 +1,6 @@
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Operations.Conversion;
 using App2d.Core.Geometry.Shapes;
 using ImGuiNET;
@@ -788,7 +789,7 @@ internal sealed class EntityView(EditorSession session) : IWorkspaceView
         }
         foreach (var equipment in preview.Entity.Equipment)
         {
-            var tip = ActorPose.PropPoint(preview.Pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip);
+            var tip = PropPlacement3D.PropPoint(preview.Pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip);
             draw.AddCircleFilled(frame.Screen(tip), 4 * Ui.Scale, StudioTheme.WeaponTip.PackedValue);
         }
         if (preview.Action is { Mask: not null } masked)

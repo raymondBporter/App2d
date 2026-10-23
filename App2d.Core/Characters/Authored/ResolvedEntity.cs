@@ -368,10 +368,6 @@ public sealed record ActorPose(EvaluatedPose Local, Vector2 Position, int Facing
     /// <summary>The socket's 3D frame for props: its planar placement lifted by the clip's tilt/twist/turn orientation.</summary>
     public Frame3D Socket(ModelSocket socket) =>
         PropPlacement3D.Lift(SocketPlacement(socket), Local.SocketAngles.GetValueOrDefault(socket.Id));
-
-    /// <summary>A prop's local point in the world, with its grip on the socket. The one transform art, hits and muzzles share.</summary>
-    public static Vector3 PropPoint(Frame3D frame, PropAsset prop, PuppetPoint local) =>
-        frame.TransformPoint((local.XYZ - prop.Grip.XYZ) * prop.Scale);
 }
 
 /// <summary>Movement, hurt and attack regions from one placed final pose. Graphics-free.</summary>
@@ -406,7 +402,7 @@ public static class EntityCollision
     {
         if (hit.Socket is null && hit.Prop is null)
         {
-            return new(pose.Place(new(hit.OffsetX, hit.OffsetY, 0)), new(pose.Facing, 0, 0), Vector3.UnitY, Vector3.UnitZ);
+            return pose.Placement3D.WithOrigin(pose.Place(new(hit.OffsetX, hit.OffsetY, 0)));
         }
 
         if (hit.Socket is not null)
@@ -416,7 +412,7 @@ public static class EntityCollision
 
         var equipment = entity.Equipment.First(e => e.Prop.Id == hit.Prop);
         var frame = pose.Socket(equipment.Socket);
-        return frame.WithOrigin(ActorPose.PropPoint(frame, equipment.Prop, equipment.Prop.Point(hit.Point)!.Value));
+        return frame.WithOrigin(PropPlacement3D.PropPoint(frame, equipment.Prop, equipment.Prop.Point(hit.Point)!.Value));
     }
 
     /// <summary>Where a shot leaves: the first equipped prop with a muzzle, and its unit axis in world XY (facing included).</summary>
@@ -425,9 +421,7 @@ public static class EntityCollision
         var gun = entity.Equipment.FirstOrDefault(e => e.Prop.Muzzle is not null) ?? throw new InvalidOperationException($"Entity '{entity.Id}' equips no prop with a muzzle.");
         var frame = pose.Socket(gun.Socket);
         // Gameplay stays in XY; foreshortening must not change projectile speed. A head-on barrel has no XY aim.
-        var projected = frame.XAxis.XY;
-        var axis = projected.LengthSquared() > 1e-8f ? Vector2.Normalize(projected) : new Vector2(pose.Facing, 0);
-        return (ActorPose.PropPoint(frame, gun.Prop, gun.Prop.Muzzle!.Value), axis);
+        return (PropPlacement3D.PropPoint(frame, gun.Prop, gun.Prop.Muzzle!.Value), PropPlacement3D.ProjectAxis(frame, pose.Facing));
     }
 
     /// <summary>
@@ -437,8 +431,7 @@ public static class EntityCollision
     public static EntityRegion Attack(ResolvedEntity entity, ActorPose pose, ResolvedHit hit)
     {
         var frame = Anchor(entity, pose, hit.Window);
-        var projected = frame.XAxis.XY;
-        var axis = projected.LengthSquared() > 1e-8f ? Vector2.Normalize(projected) : new Vector2(pose.Facing, 0);
+        var axis = PropPlacement3D.ProjectAxis(frame, pose.Facing);
         var mirror = new Vector2d(axis).Cross(new(frame.YAxis.XY)) < 0d;
         return new(hit.Window.Id, hit.Shape, Similarity2D.FromAxis(frame.TransformPoint(new(hit.Window.Along, 0, 0)).XY, axis, mirror));
     }

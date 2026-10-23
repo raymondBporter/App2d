@@ -2,6 +2,7 @@ using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
 using System.Numerics;
 
@@ -69,8 +70,8 @@ public sealed class WeaponOrientationTests
         var prop = new PropAsset { Grip = new(.2f, -.1f, .03f), Scale = 2 };
         foreach (var p in new[] { prop.Grip, new PuppetPoint(1, .2f, -.04f), new PuppetPoint(.3f, -.3f, .2f) })
         {
-            var r = ActorPose.PropPoint(right, prop, p);
-            var l = ActorPose.PropPoint(left, prop, p);
+            var r = PropPlacement3D.PropPoint(right, prop, p);
+            var l = PropPlacement3D.PropPoint(left, prop, p);
             TestModels.Near(new(8 - r.X, r.Y, r.Z), l, 1e-5f);
             Assert.InRange(Vector3.Distance(r, right.Origin) - Vector3.Distance(p.XYZ, prop.Grip.XYZ) * 2, -1e-5f, 1e-5f);
         }

@@ -1,6 +1,7 @@
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
 using System.Numerics;
 
@@ -177,7 +178,7 @@ public sealed class PersonWardrobeTests
                 for (var i = 0; i <= 12; i++)
                 {
                     var pose = new ActorPose(PoseEvaluator.Sample(entity.Model, clip, clip.Duration * i / 12), Vector2.Zero, 1);
-                    var vertices = shell.Vertices.Select(p => ActorPose.PropPoint(pose.Socket(wrap.Socket), wrap.Prop, p)).ToArray();
+                    var vertices = shell.Vertices.Select(p => PropPlacement3D.PropPoint(pose.Socket(wrap.Socket), wrap.Prop, p)).ToArray();
                     foreach (var side in new[] { "left", "right" })
                     {
                         var z = pose.World(side + "-hip").Z;

@@ -89,7 +89,7 @@ public sealed class HumanoidFootwearTests
                         var item = Assert.Single(entity.Equipment, e => e.Socket.Id == socketId);
                         Assert.Equal(style + "-" + side, item.Prop.Id);
                         var frame = pose.Socket(item.Socket);
-                        TestModels.Near(pose.World(foot), ActorPose.PropPoint(frame, item.Prop, item.Prop.Grip));
+                        TestModels.Near(pose.World(foot), PropPlacement3D.PropPoint(frame, item.Prop, item.Prop.Grip));
                         var up = pose.World(knee) - pose.World(foot);
                         up.Z = 0;
                         TestModels.Near(Vector3.Normalize(up), frame.YAxis);
@@ -97,7 +97,7 @@ public sealed class HumanoidFootwearTests
                         var point = new Vector2(.04f, 0);
                         // Both the bare foot and its shoe use the same local XY axes and mirroring.
                         var onFoot = pose.Place(bare.At(point));
-                        var onShoe = ActorPose.PropPoint(frame, item.Prop, new(point.X, point.Y));
+                        var onShoe = PropPlacement3D.PropPoint(frame, item.Prop, new(point.X, point.Y));
                         TestModels.Near(onFoot with { Z = onShoe.Z }, onShoe);
                     }
                 }

@@ -1,6 +1,7 @@
 using App2d.CharacterSeeds;
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Primitives;
 using System.Numerics;
 
@@ -200,8 +201,8 @@ public sealed class EntityRuntimeTests
             var spear = guard.Equipment[0];
             var frame = pose.Socket(spear.Socket);
             // The grip lands on the hand socket, and the tip is out along the facing direction.
-            TestModels.Near(pose.World("right-hand"), ActorPose.PropPoint(frame, spear.Prop, spear.Prop.Grip), 1e-5f);
-            var tip = ActorPose.PropPoint(frame, spear.Prop, spear.Prop.Tip);
+            TestModels.Near(pose.World("right-hand"), PropPlacement3D.PropPoint(frame, spear.Prop, spear.Prop.Grip), 1e-5f);
+            var tip = PropPlacement3D.PropPoint(frame, spear.Prop, spear.Prop.Tip);
             Assert.True((tip.X - pose.World("right-hand").X) * facing > 1, "the spear points the way the guard faces");
             var active = animator.ActiveHits().ToList();
             if (animator.ActionTime < hit.Start)

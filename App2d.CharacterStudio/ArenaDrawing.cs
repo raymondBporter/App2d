@@ -1,8 +1,9 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering.Characters;
-using System.Numerics;
 using Matrix = Microsoft.Xna.Framework.Matrix;
+using System.Numerics;
 
 namespace App2d.CharacterStudio;
 
@@ -83,7 +84,7 @@ internal sealed class ArenaDrawing(PointCharacterRenderer renderer)
 
             foreach (var equipment in actor.Entity.Equipment)
             {
-                mesh.Disk(ActorPose.PropPoint(actor.Pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip) with
+                mesh.Disk(PropPlacement3D.PropPoint(actor.Pose.Socket(equipment.Socket), equipment.Prop, equipment.Prop.Tip) with
                 {
                     Z = -6.2f
                 }, 5 * pixel, new Color4b(240, 200, 40));

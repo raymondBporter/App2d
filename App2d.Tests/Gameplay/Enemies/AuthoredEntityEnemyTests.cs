@@ -5,6 +5,7 @@ using App2d.Contracts.Persons;
 using App2d.Contracts.Simulation;
 using App2d.Contracts.World;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Primitives;
 using App2d.Core.Physics;
@@ -226,7 +227,7 @@ public sealed class AuthoredEntityEnemyTests
             {
                 sawBolt = true;
                 var gun = gunner.Entity.Equipment.Single(e => e.Prop.Muzzle is not null); // Hair and clothing are equipment too.
-                var muzzle = ActorPose.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
+                var muzzle = PropPlacement3D.PropPoint(gunner.Pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
                 Assert.True(Vector2.Distance(new(muzzle.X, muzzle.Y), bolts[0].Position) < 12, "the bolt leaves the drawn muzzle");
                 Assert.True(bolts[0].Velocity.X > 0, "toward the player");
             }
@@ -331,7 +332,7 @@ public sealed class AuthoredEntityEnemyTests
                 {
                     sawHitbox = true;
                     var spear = guard.Entity.Equipment[0];
-                    var tip = ActorPose.PropPoint(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Tip) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
+                    var tip = PropPlacement3D.PropPoint(guard.Pose.Socket(spear.Socket), spear.Prop, spear.Prop.Tip) * GameWorldUnits2D.WorldUnitsPerAuthoredUnit;
                     var bounds = box.WorldBounds;
                     Assert.InRange(tip.X, bounds.Min.X, bounds.Max.X);
                     Assert.InRange(tip.Y, bounds.Min.Y, bounds.Max.Y);

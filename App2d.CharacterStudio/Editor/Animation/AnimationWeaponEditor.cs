@@ -1,6 +1,7 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
 using App2d.Core.Characters.Editing;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Mathematics;
 using ImGuiNET;
 using System.Numerics;
@@ -262,7 +263,7 @@ internal sealed class AnimationWeaponEditor(EditorSession session)
         var draw = frame.Draw;
         var scale = Ui.Scale;
         var angles = subject.Pose.SocketAngles.GetValueOrDefault(weapon.Socket.Id);
-        var tip = frame.Screen(ActorPose.PropPoint(socket, weapon.Prop, weapon.Prop.Tip));
+        var tip = frame.Screen(PropPlacement3D.PropPoint(socket, weapon.Prop, weapon.Prop.Tip));
         draw.AddLine(center, tip, StudioTheme.Selection.PackedValue, 1);
         draw.AddCircle(tip, 6 * scale, StudioTheme.Selection.PackedValue, 20, 2);
         draw.AddLine(center, frame.Screen(socket.TransformPoint(new(0, .24f, 0))), StudioTheme.WeaponAxisY.PackedValue, 2);

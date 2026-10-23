@@ -1,5 +1,6 @@
 using App2d.Core.Characters;
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using System.Numerics;
 
 namespace App2d.Tests.Authored;
@@ -93,8 +94,8 @@ public sealed class PersonMoveSetTests
             var sword = Catalog.Props[PersonLoadout.Sword];
             foreach (var point in new PuppetPoint[] { new(0, 0, 0), new(sword.Tip.X, 0, 0) })
             {
-                var a = ActorPose.PropPoint(hand, sword, point);
-                var b = ActorPose.PropPoint(back, sword, point);
+                var a = PropPlacement3D.PropPoint(hand, sword, point);
+                var b = PropPlacement3D.PropPoint(back, sword, point);
                 Assert.InRange(Vector2.Distance(new(a.X, a.Y), new(b.X, b.Y)), 0, .01f);
             }
         }

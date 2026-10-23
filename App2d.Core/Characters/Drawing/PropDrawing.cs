@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry.Meshes;
 using App2d.Core.Mathematics.Transforms;
 using App2d.Core.Rendering;
@@ -22,7 +23,7 @@ internal static class PropDrawing
 
         foreach (var solid in prop.Solids)
         {
-            var vertices = solid.Vertices.Select(p => ActorPose.PropPoint(frame, prop, p)).ToArray();
+            var vertices = solid.Vertices.Select(p => PropPlacement3D.PropPoint(frame, prop, p)).ToArray();
             var analysis = new TriangleMeshAnalysis3D(vertices, solid.Triangles, handedness);
             var material = solid.RenderMaterial;
             var fill = material.Fill is { } fillHex ? ColorExtensions.FromHexRgb(fillHex) : (Color4b?)null;

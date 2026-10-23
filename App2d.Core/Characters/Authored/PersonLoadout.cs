@@ -1,5 +1,6 @@
-using System.Numerics;
+using App2d.Core.Characters.Geometry;
 using static App2d.Core.Characters.Humanoid;
+using System.Numerics;
 
 namespace App2d.Core.Characters.Authored;
 
@@ -59,7 +60,7 @@ public static class PersonLoadout
     public static (Vector3 Guard, Vector3 Tip) Blade(EvaluatedPose pose, PropAsset sword, ModelSocket socket)
     {
         var frame = new ActorPose(pose, Vector2.Zero, 1).Socket(socket);
-        return (ActorPose.PropPoint(frame, sword, new(.07f, 0, 0)), ActorPose.PropPoint(frame, sword, new(sword.Tip.X, 0, 0)));
+        return (PropPlacement3D.PropPoint(frame, sword, new(.07f, 0, 0)), PropPlacement3D.PropPoint(frame, sword, new(sword.Tip.X, 0, 0)));
     }
 
     /// <summary>

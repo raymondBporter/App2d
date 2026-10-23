@@ -1,4 +1,5 @@
 using App2d.Core.Characters.Authored;
+using App2d.Core.Characters.Geometry;
 using App2d.Core.Geometry;
 using App2d.Core.Geometry.Operations.Bounds;
 using App2d.Core.Geometry.Operations.Transforms;
@@ -95,7 +96,7 @@ public sealed class AuthoredHero2D
         var fire = action.Events.First(e => e.Event.Id == EntityControllers.Fire).Seconds;
         var pose = Pose(action.Clip, fire, facing);
         var gun = Entity.Equipment.First(e => e.Prop.Muzzle is not null);
-        var muzzle = ActorPose.PropPoint(pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value);
+        var muzzle = PropPlacement3D.PropPoint(pose.Socket(gun.Socket), gun.Prop, gun.Prop.Muzzle!.Value);
         return ToWorld(new(muzzle.X, muzzle.Y));
     }
 
