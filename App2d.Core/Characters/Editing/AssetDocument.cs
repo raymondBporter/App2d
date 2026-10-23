@@ -5,13 +5,14 @@ namespace App2d.Core.Characters.Editing;
 /// <summary>Ordered so saving everything writes what others depend on first.</summary>
 public enum AssetKind
 {
-    Model, Variant, Animation, Prop, Entity
+    Part, Model, Variant, Animation, Prop, Entity
 }
 
 public static class AssetKinds
 {
     public static string Folder(AssetKind kind) => kind switch
     {
+        AssetKind.Part => "parts",
         AssetKind.Model => "models",
         AssetKind.Variant => "variants",
         AssetKind.Animation => "animations",
@@ -20,6 +21,7 @@ public static class AssetKinds
     };
     public static string Label(AssetKind kind) => kind switch
     {
+        AssetKind.Part => "Part",
         AssetKind.Model => "Model",
         AssetKind.Variant => "Variant",
         AssetKind.Animation => "Animation",
@@ -182,4 +184,5 @@ internal static class AssetDocuments
     public static AssetDocument<PropAsset> Of(PropAsset prop, string? path) =>
         new(AssetKind.Prop, prop, prop.Id, path, p => p.ToSnapshotJson(), p => p.Name, PropAsset.FromDraftJson);
     public static AssetDocument<EntityAsset> Of(EntityAsset entity, string? path) => new(AssetKind.Entity, entity, entity.Id, path, e => e.ToJson(), e => e.Name);
+    public static AssetDocument<PartAsset> Of(PartAsset part, string? path) => new(AssetKind.Part, part, part.Id, path, p => p.ToJson(), p => p.Name, PartAsset.FromDraftJson);
 }

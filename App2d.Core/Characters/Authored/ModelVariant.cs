@@ -79,7 +79,9 @@ public sealed record PartOverride
 public sealed class ModelVariant
 {
     public const string FormatId = "app2d-variant";
-    public const int CurrentVersion = 4;
+    /// <summary>Version 5 adds <see cref="Attachments"/> overrides (P5a); a version-4 file has none and reads unchanged.</summary>
+    public const int CurrentVersion = 5;
+    public const int LegacyVersion = 4;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -95,13 +97,38 @@ public sealed class ModelVariant
     /// <summary>Model-space rest positions replacing the built base's, by control ID.</summary>
     public Dictionary<string, PuppetPoint> Rest { get; set; } = [];
     public Dictionary<string, PartOverride> Parts { get; set; } = [];
+    /// <summary>Overrides of the base's attachment instances by instance ID: swap the asset, hide, re-place or refit it on this wearer alone.</summary>
+    public Dictionary<string, AttachmentOverride> Attachments { get; set; } = [];
 
     public string ToJson() => JsonSerializer.Serialize(this, AuthoredJson.Options);
     public static ModelVariant FromJson(string json)
     {
-        var variant = AuthoredAsset.Parse<ModelVariant>(json, "variant");
+        var variant = AuthoredAsset.Parse<ModelVariant>(ReadLegacy(json), "variant");
         variant.Validate();
         return variant;
+    }
+
+    /// <summary>A version-4 file carries no attachment overrides; it is read at the current version without any other change. The file on disk is not rewritten.</summary>
+    internal static string ReadLegacy(string json)
+    {
+        System.Text.Json.Nodes.JsonObject? root;
+        try
+        {
+            root = System.Text.Json.Nodes.JsonNode.Parse(json) as System.Text.Json.Nodes.JsonObject;
+        }
+        catch (JsonException)
+        {
+            return json;
+        }
+
+        var key = root?.FirstOrDefault(p => string.Equals(p.Key, "version", StringComparison.OrdinalIgnoreCase)).Key;
+        if (root is null || key is null || root[key] is not System.Text.Json.Nodes.JsonValue value || !value.TryGetValue(out int version) || version != LegacyVersion)
+        {
+            return json;
+        }
+
+        root[key] = CurrentVersion;
+        return root.ToJsonString();
     }
     public void Save(string path)
     {
@@ -124,9 +151,20 @@ public sealed class ModelVariant
             throw new InvalidDataException($"{owner}: a name is required.");
         }
 
-        if (Parameters is null || Rest is null || Parts is null)
+        if (Parameters is null || Rest is null || Parts is null || Attachments is null)
         {
             throw new InvalidDataException($"{owner}: collections cannot be null.");
+        }
+
+        foreach (var (id, change) in Attachments)
+        {
+            AuthoredAsset.RequireId(id, $"{owner} attachments key");
+            if (change is null)
+            {
+                throw new InvalidDataException($"{owner} attachments.{id}: null override.");
+            }
+
+            change.Validate($"{owner} attachments.{id}");
         }
 
         foreach (var (id, value) in Parameters)

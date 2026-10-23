@@ -68,13 +68,13 @@ public sealed class ModelTemplate
     }
 
     /// <summary>Prepares and validates the whole bundle before the workspace adds any documents. Source objects stay untouched.</summary>
-    public ModelTemplateInstance Instantiate(string id, string name, Func<string, CharacterModel?> modelOf, Func<string, MotionClip?> clipOf)
+    public ModelTemplateInstance Instantiate(string id, string name, Func<string, CharacterModel?> modelOf, Func<string, MotionClip?> clipOf, Func<string, PartAsset?>? partOf = null)
     {
         Validate();
         AuthoredAsset.RequireId(id, "new model id");
         var owner = $"Model template '{Id}'";
         var source = modelOf(Model) ?? throw new InvalidDataException($"{owner}: missing source model '{Model}'.");
-        var resolved = ResolvedModel.From(source);
+        var resolved = ResolvedModel.From(source, null, partOf);
         var model = CharacterModel.FromJson(source.ToJson());
         model.Id = id;
         model.Name = name;
@@ -103,7 +103,8 @@ public sealed class ModelTemplate
             }
         }
         model.Validate();
-        var instance = ResolvedModel.From(model);
+        // The new model keeps its attachment instances as references to the same shared library parts.
+        var instance = ResolvedModel.From(model, null, partOf);
         foreach (var clip in clips)
         {
             clip.Validate(instance);

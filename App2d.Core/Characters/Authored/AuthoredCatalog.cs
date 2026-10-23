@@ -14,7 +14,10 @@ public sealed class AuthoredCatalog
     private readonly Dictionary<string, EntityAsset> _entityAssets = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ResolvedEntity> _entities = new(StringComparer.Ordinal);
     private readonly Dictionary<string, PhysicsPropAsset> _physicsProps = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, PartAsset> _parts = new(StringComparer.Ordinal);
     private string _textureRoot = Environment.CurrentDirectory;
+    /// <summary>Library parts (P5a), loaded before the models that instance them.</summary>
+    public IReadOnlyDictionary<string, PartAsset> Parts => _parts;
     public IReadOnlyDictionary<string, CharacterModel> Models => _models;
     public IReadOnlyDictionary<string, ModelVariant> Variants => _variants;
     public IReadOnlyDictionary<string, MotionClip> Animations => _animations;
@@ -30,7 +33,12 @@ public sealed class AuthoredCatalog
     public static AuthoredCatalog Load(string root)
     {
         var catalog = new AuthoredCatalog { _textureRoot = Path.GetFullPath(root) };
+        catalog.Scan(root, "parts", PartAsset.FromJson, catalog._parts, p => p.Id);
         catalog.Scan(root, "models", CharacterModel.FromJson, catalog._models, m => m.Id);
+        foreach (var id in catalog._models.Keys)
+        {
+            catalog.Check(id, () => catalog.Resolve(id));
+        }
         catalog.Scan(root, "variants", ModelVariant.FromJson, catalog._variants, v => v.Id);
         catalog.Scan(root, "animations", MotionClip.FromJson, catalog._animations, a => a.Id);
         foreach (var id in catalog._variants.Keys)
@@ -73,7 +81,7 @@ public sealed class AuthoredCatalog
         ResolvedModel resolved;
         if (_models.TryGetValue(id, out var model))
         {
-            resolved = ResolvedModel.From(model);
+            resolved = ResolvedModel.From(model, null, _parts.GetValueOrDefault);
         }
         else if (!_variants.TryGetValue(id, out var variant))
         {
@@ -85,7 +93,7 @@ public sealed class AuthoredCatalog
         }
         else
         {
-            resolved = ResolvedModel.From(model, variant);
+            resolved = ResolvedModel.From(model, variant, _parts.GetValueOrDefault);
         }
 
         resolved.TextureRoot = _textureRoot;

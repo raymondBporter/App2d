@@ -126,12 +126,13 @@ public sealed class CharacterModel
 {
     public const string FormatId = "app2d-model", Locomotion = "locomotion", Unit = "unit";
     /// <summary>
-    /// Version 8 declares exposed <see cref="Parameters"/> with their bindings and <see cref="Presets"/> in place of the
-    /// retired code build rule (P4a); version 7 declared each control's node kind, authored bone nodes as parent-local setups
-    /// and kept one constraint list (P3a); version 6 moved a curve's wave into the typed <c>wave</c> modifier (P2a). Older
-    /// files read through <see cref="LegacyModelReader"/>.
+    /// Version 9 adds <see cref="Attachments"/>, instances of library part assets (P5a); version 8 declared exposed
+    /// <see cref="Parameters"/> with their bindings and <see cref="Presets"/> in place of the retired code build rule (P4a);
+    /// version 7 declared each control's node kind, authored bone nodes as parent-local setups and kept one constraint list
+    /// (P3a); version 6 moved a curve's wave into the typed <c>wave</c> modifier (P2a). Older files read through
+    /// <see cref="LegacyModelReader"/>.
     /// </summary>
-    public const int CurrentVersion = 8;
+    public const int CurrentVersion = 9;
     public string Format { get; set; } = FormatId;
     public int Version { get; set; } = CurrentVersion;
     public string Id { get; set; } = "";
@@ -159,6 +160,8 @@ public sealed class CharacterModel
     public List<SkeletonSlot2D> Slots { get; set; } = [];
     public List<SkeletonSkin2D> Skins { get; set; } = [];
     public List<ModelSocket> Sockets { get; set; } = [];
+    /// <summary>Instances of library parts on this character's sockets (P5a), each with a stable instance ID that variants address.</summary>
+    public List<PartInstance> Attachments { get; set; } = [];
     public List<MotionSet> MotionSets { get; set; } = [];
     public List<HurtLayout> HurtLayouts { get; set; } = [];
     public List<ControlGroup> Groups { get; set; } = [];
@@ -203,7 +206,7 @@ public sealed class CharacterModel
             Require(material is not null, $"{owner}: null material '{id}'.");
             material.Resolve(Materials);
         }
-        Require(Controls is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
+        Require(Controls is not null && Constraints is not null && Measures is not null && Parts is not null && Sockets is not null && Attachments is not null && MotionSets is not null && HurtLayouts is not null && Groups is not null && Looks is not null, $"{owner}: collections cannot be null.");
         Require(Controls.Count <= 256 && Constraints.Count <= 64 && Measures.Count <= 64 && Parts.Count <= 512, $"{owner}: capacity exceeded.");
         Require(Constraints.All(c => c is ModelChain), $"{owner}: null or unsupported constraint.");
         Limit.Color(Ink, "ink");
@@ -339,6 +342,16 @@ public sealed class CharacterModel
             new Limit(-100, 100).Check(socket.OffsetY, $"{owner} socket '{socket.Id}' offsetY");
             new Limit(-100, 100).Check(socket.OffsetZ, $"{owner} socket '{socket.Id}' offsetZ");
             new Limit(-10, 10).Check(socket.Angle, $"{owner} socket '{socket.Id}' angle");
+        }
+        var attachments = new HashSet<string>(StringComparer.Ordinal);
+        Require(Attachments.Count <= 256, $"{owner}: capacity exceeded.");
+        foreach (var instance in Attachments)
+        {
+            Require(instance is not null, $"{owner}: null attachment.");
+            instance.Validate($"{owner} attachment");
+            Require(attachments.Add(instance.Id), $"{owner}: duplicate attachment '{instance.Id}'.");
+            Require(!parts.Contains(instance.Id), $"{owner}: attachment '{instance.Id}' shares its id with a drawing part.");
+            Require(sockets.Contains(instance.Socket), $"{owner} attachment '{instance.Id}': no socket '{instance.Socket}'.");
         }
         var sets = new HashSet<string>(StringComparer.Ordinal);
         foreach (var set in MotionSets)

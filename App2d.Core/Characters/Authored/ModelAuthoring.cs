@@ -135,6 +135,103 @@ public static class ModelAuthoring
         }
     }
 
+    // ---- Attachment instances (P5a) ------------------------------------------------------------------------------------
+
+    /// <summary>Instances a library part on a socket with a new stable instance ID. The asset must exist in <paramref name="partOf"/>; the socket on the model.</summary>
+    public static PartInstance AddAttachment(CharacterModel model, string asset, string socket, Func<string, PartAsset?> partOf, string? id = null, bool mirror = false)
+    {
+        if (partOf(asset) is null)
+        {
+            throw new InvalidDataException($"No part asset '{asset}'.");
+        }
+
+        var instance = new PartInstance { Id = id ?? UniqueId(asset, model.Attachments.Select(a => a.Id).Concat(model.Parts.Select(p => p.Id))), Asset = asset, Socket = socket, Mirror = mirror };
+        model.Attachments.Add(instance);
+        try
+        {
+            model.Validate();
+        }
+        catch
+        {
+            model.Attachments.Remove(instance);
+            throw;
+        }
+
+        return instance;
+    }
+
+    /// <summary>Removes an instance from the base. A variant override of it becomes an error on that variant, reported by name, never silently dropped.</summary>
+    public static void RemoveAttachment(CharacterModel model, string id)
+    {
+        if (model.Attachments.RemoveAll(a => a.Id == id) == 0)
+        {
+            throw new InvalidDataException($"Model '{model.Id}' has no attachment '{id}'.");
+        }
+
+        model.Validate();
+    }
+
+    /// <summary>Replaces the library asset of one base instance; every wearer that does not override it follows.</summary>
+    public static void SetAttachmentAsset(CharacterModel model, string id, string asset, Func<string, PartAsset?> partOf)
+    {
+        var instance = model.Attachments.FirstOrDefault(a => a.Id == id) ?? throw new InvalidDataException($"Model '{model.Id}' has no attachment '{id}'.");
+        if (partOf(asset) is null)
+        {
+            throw new InvalidDataException($"No part asset '{asset}'.");
+        }
+
+        var previous = instance.Asset;
+        instance.Asset = asset;
+        try
+        {
+            model.Validate();
+        }
+        catch
+        {
+            instance.Asset = previous;
+            throw;
+        }
+    }
+
+    /// <summary>Writes one wearer's override of an instance (asset swap, placement, fit, material, hidden); an empty override is removed so the base value shows through.</summary>
+    public static void EditAttachmentOverride(ModelVariant variant, CharacterModel basis, string id, Action<AttachmentOverride> change)
+    {
+        if (basis.Attachments.All(a => a.Id != id))
+        {
+            throw new InvalidDataException($"Base '{basis.Id}' has no attachment '{id}'.");
+        }
+
+        var previous = variant.Attachments.GetValueOrDefault(id);
+        var current = previous is null ? new AttachmentOverride() : previous with { };
+        change(current);
+        if (current.IsEmpty)
+        {
+            variant.Attachments.Remove(id);
+        }
+        else
+        {
+            variant.Attachments[id] = current;
+        }
+
+        try
+        {
+            variant.Validate();
+        }
+        catch
+        {
+            if (previous is null)
+            {
+                variant.Attachments.Remove(id);
+            }
+            else
+            {
+                variant.Attachments[id] = previous;
+            }
+
+            throw;
+        }
+    }
+
     public static string UniqueId(string basis, IEnumerable<string> taken)
     {
         var used = taken.ToHashSet(StringComparer.Ordinal);

@@ -633,6 +633,15 @@ public sealed class EditorSession
         {
             yield return basis;
         }
+
+        // The shared library parts the subject wears: an edit to one of them undoes in the same order as the wearer's own edits.
+        if (Mode is Workspace.Model or Workspace.Appearance && Assets.Resolve(SubjectId) is { } resolved)
+        {
+            foreach (var part in resolved.Attachments.Select(a => a.Asset.Id).Distinct(StringComparer.Ordinal).Select(Assets.Part).OfType<AssetDocument<PartAsset>>())
+            {
+                yield return part;
+            }
+        }
     }
 
     public bool CanUndo => UndoScope().Any(d => d.CanUndo);
@@ -769,7 +778,7 @@ public sealed class EditorSession
     {
         var bundle = template == "empty" ? new ModelTemplateInstance(ModelAuthoring.Empty(id, name), [], null)
             : Assets.ModelTemplates.TryGetValue(template, out var recipe)
-                ? recipe.Instantiate(id, name, source => Assets.Model(source)?.Asset, source => Assets.Clip(source)?.Asset)
+                ? recipe.Instantiate(id, name, source => Assets.Model(source)?.Asset, source => Assets.Clip(source)?.Asset, source => Assets.Part(source)?.Asset)
                 : SeedModel?.Invoke(template, id, name) ?? throw new InvalidDataException($"Unknown model template '{template}'.");
         foreach (var destination in bundle.Animations.Select(c => c.Id).Prepend(bundle.Model.Id))
         {

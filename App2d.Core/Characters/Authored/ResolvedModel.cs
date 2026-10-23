@@ -8,11 +8,12 @@ namespace App2d.Core.Characters.Authored;
 public sealed class ResolvedModel
 {
     private ResolvedModel(CharacterModel model, ModelVariant? variant, IReadOnlyList<ModelControl> order, Dictionary<string, RigNode> nodes, List<PuppetPart> parts,
-        ParameterCatalog parameters, Dictionary<string, float> parameterValues)
+        ParameterCatalog parameters, Dictionary<string, float> parameterValues, List<ResolvedAttachment> attachments)
     {
         Base = model;
         Variant = variant;
         Parts = parts;
+        Attachments = attachments;
         Order = order;
         Nodes = nodes;
         Parameters = parameters;
@@ -53,6 +54,9 @@ public sealed class ResolvedModel
     public LayeredFrame2D RestPlacement(string control) => new(new Frame2D(RestTransforms[control]), Rest[control].Z);
     public string TextureRoot { get; set; } = Environment.CurrentDirectory;
     public IReadOnlyList<PuppetPart> Parts { get; }
+    /// <summary>Library part instances resolved for this wearer, in the base's order, with the variant's overrides applied.</summary>
+    public IReadOnlyList<ResolvedAttachment> Attachments { get; }
+    public ResolvedAttachment? Attachment(string? id) => Attachments.FirstOrDefault(a => a.Id == id);
     public IReadOnlyDictionary<string, float> Measures { get; }
 
     /// <summary>Controls ordered so every parent precedes its children.</summary>
@@ -78,7 +82,7 @@ public sealed class ResolvedModel
     /// declared defaults; the parameter bindings onto the exposed properties; explicit overrides (a variant's rest positions
     /// and part overrides) over bound values; then the derived positions, frames, fitting and measures.
     /// </summary>
-    public static ResolvedModel From(CharacterModel model, ModelVariant? variant = null)
+    public static ResolvedModel From(CharacterModel model, ModelVariant? variant = null, Func<string, PartAsset?>? partOf = null)
     {
         model.Validate();
         variant?.Validate();
@@ -118,6 +122,29 @@ public sealed class ResolvedModel
 
                 layout.Parts[index] = Override(layout.Parts[index], change);
             }
+            foreach (var id in variant.Attachments.Keys)
+            {
+                if (model.Attachments.All(a => a.Id != id))
+                {
+                    throw new InvalidDataException($"{owner} attachments.{id}: the base has no such attachment.");
+                }
+            }
+        }
+        // Attachment instances resolve against the library: the asset by ID, the socket on this wearer, the variant's
+        // override on this instance alone. Nothing copies the asset into the wearer.
+        var attachments = new List<ResolvedAttachment>();
+        if (model.Attachments.Count > 0)
+        {
+            if (partOf is null)
+            {
+                throw new InvalidDataException($"{owner}: resolving its {model.Attachments.Count} attachment(s) needs the part library (pass partOf).");
+            }
+
+            var sockets = model.Sockets.ToDictionary(s => s.Id, StringComparer.Ordinal);
+            foreach (var instance in model.Attachments)
+            {
+                attachments.Add(ResolvedAttachment.Resolve(instance.With(variant?.Attachments.GetValueOrDefault(instance.Id)), partOf, sockets, owner));
+            }
         }
         Dictionary<string, RigNode> nodes;
         try
@@ -138,7 +165,7 @@ public sealed class ResolvedModel
         {
             parts[i] = parts[i] with { Material = parts[i].RenderMaterial.Resolve(model.Materials) };
         }
-        return new(model, variant, order, nodes, parts, parameters, values);
+        return new(model, variant, order, nodes, parts, parameters, values, attachments);
     }
 
     public static PuppetPart Override(PuppetPart part, PartOverride change)

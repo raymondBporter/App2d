@@ -19,7 +19,8 @@ public sealed class AuthoringWorkspace
 {
     private readonly Dictionary<string, AssetDocument> _documents = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _savedStructure = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, (int ModelVersion, int VariantVersion, ResolvedModel? Resolved, string? Error)> _resolved = new(StringComparer.Ordinal);
+    // A resolution also depends on the library parts its attachments instance; any part edit rebuilds it (PartsRevision).
+    private readonly Dictionary<string, (int ModelVersion, int VariantVersion, int PartsRevision, ResolvedModel? Resolved, string? Error)> _resolved = new(StringComparer.Ordinal);
     private readonly Dictionary<(string Clip, string Subject), (int ClipVersion, int ModelVersion, int VariantVersion, string? Error)> _playable = [];
     private readonly Dictionary<string, (int Revision, ResolvedEntity? Entity, string? Error)> _entities = new(StringComparer.Ordinal);
     private (int Revision, ILookup<string, AssetReference> UsedBy)? _usedBy;
@@ -40,6 +41,12 @@ public sealed class AuthoringWorkspace
     public IEnumerable<AssetDocument<MotionClip>> Clips => _documents.Values.OfType<AssetDocument<MotionClip>>();
     public IEnumerable<AssetDocument<PropAsset>> Props => _documents.Values.OfType<AssetDocument<PropAsset>>();
     public IEnumerable<AssetDocument<EntityAsset>> Entities => _documents.Values.OfType<AssetDocument<EntityAsset>>();
+    /// <summary>Library part assets (P5a): shared by every wearer that instances them.</summary>
+    public IEnumerable<AssetDocument<PartAsset>> Parts => _documents.Values.OfType<AssetDocument<PartAsset>>();
+    /// <summary>Changes whenever any part document changes, is added or discarded: the transitive dependency every wearer's resolution carries.</summary>
+    public int PartsRevision => _discarded + Parts.Sum(p => p.Version + 1);
+    /// <summary>The library lookup resolution reads: current part drafts, so a shared edit reaches every dependent preview.</summary>
+    public PartAsset? PartOf(string id) => Part(id)?.Asset;
     /// <summary>JSON recipes for creating independent models and animation bundles from this workspace's resources.</summary>
     public IReadOnlyDictionary<string, ModelTemplate> ModelTemplates { get; private set; } = new Dictionary<string, ModelTemplate>();
 
@@ -50,8 +57,13 @@ public sealed class AuthoringWorkspace
         var templates = ModelTemplateCatalog.Load(root);
         workspace.ModelTemplates = templates.Entries;
         // Only unreadable files are load errors; reference problems stay visible on their documents.
-        var loaded = catalog.Models.Keys.Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Concat(catalog.Props.Keys).Concat(catalog.EntityAssets.Keys).Select(catalog.PathOf).ToList();
+        var loaded = catalog.Parts.Keys.Concat(catalog.Models.Keys).Concat(catalog.Variants.Keys).Concat(catalog.Animations.Keys).Concat(catalog.Props.Keys).Concat(catalog.EntityAssets.Keys).Select(catalog.PathOf).ToList();
         workspace.LoadErrors = [.. catalog.Errors.Where(e => !loaded.Any(path => e.StartsWith(path + ":", StringComparison.Ordinal))), .. templates.Errors];
+        foreach (var part in catalog.Parts.Values)
+        {
+            workspace.Add(AssetDocuments.Of(part, catalog.PathOf(part.Id)));
+        }
+
         foreach (var model in catalog.Models.Values)
         {
             workspace.Add(AssetDocuments.Of(model, catalog.PathOf(model.Id)));
@@ -86,6 +98,7 @@ public sealed class AuthoringWorkspace
     public AssetDocument<MotionClip>? Clip(string? id) => Find(id) as AssetDocument<MotionClip>;
     public AssetDocument<PropAsset>? Prop(string? id) => Find(id) as AssetDocument<PropAsset>;
     public AssetDocument<EntityAsset>? Entity(string? id) => Find(id) as AssetDocument<EntityAsset>;
+    public AssetDocument<PartAsset>? Part(string? id) => Find(id) as AssetDocument<PartAsset>;
     /// <summary>Whether an ID is taken: by a document, or by a file of that name that did not load and must not be overwritten.</summary>
     public bool Exists(string id) => _documents.ContainsKey(id) || FileIds().Contains(id);
 
@@ -122,6 +135,7 @@ public sealed class AuthoringWorkspace
             MotionClip clip => AssetDocuments.Of(clip, null),
             PropAsset prop => AssetDocuments.Of(prop, null),
             EntityAsset entity => AssetDocuments.Of(entity, null),
+            PartAsset part => AssetDocuments.Of(part, null),
             _ => throw ArgGuard.CreateInvalid($"Not an authored asset: {typeof(T).Name}."),
         };
         AuthoredAsset.RequireId(document.Id, AssetKinds.Label(document.Kind) + " id");
@@ -170,7 +184,8 @@ public sealed class AuthoringWorkspace
             return null;
         }
         var key = variant?.Id ?? model.Id;
-        if (_resolved.TryGetValue(key, out var cached) && cached.ModelVersion == model.Version && cached.VariantVersion == (variant?.Version ?? -1))
+        var parts = PartsRevision;
+        if (_resolved.TryGetValue(key, out var cached) && cached.ModelVersion == model.Version && cached.VariantVersion == (variant?.Version ?? -1) && cached.PartsRevision == parts)
         {
             error = cached.Error;
             return cached.Resolved;
@@ -178,14 +193,14 @@ public sealed class AuthoringWorkspace
         ResolvedModel? resolved = null;
         try
         {
-            resolved = ResolvedModel.From(model.Asset, variant?.Asset);
+            resolved = ResolvedModel.From(model.Asset, variant?.Asset, PartOf);
             resolved.TextureRoot = Root;
         }
         catch (Exception ex) when (IsAssetError(ex))
         {
             error = ex.Message;
         }
-        _resolved[key] = (model.Version, variant?.Version ?? -1, resolved, error);
+        _resolved[key] = (model.Version, variant?.Version ?? -1, parts, resolved, error);
         return resolved;
     }
     public ResolvedModel? Resolve(string? id) => Resolve(id, out _);
@@ -287,6 +302,7 @@ public sealed class AuthoringWorkspace
         }
         var clips = Clips.Select(c => Copy(c, MotionClip.FromJson)).OfType<MotionClip>().ToDictionary(c => c.Id, StringComparer.Ordinal);
         var props = Props.Select(p => Copy(p, PropAsset.FromJson)).OfType<PropAsset>().ToDictionary(p => p.Id, StringComparer.Ordinal);
+        var parts = Parts.Select(p => Copy(p, PartAsset.FromJson)).OfType<PartAsset>().ToDictionary(p => p.Id, StringComparer.Ordinal);
         var resolved = new Dictionary<string, ResolvedModel>(StringComparer.Ordinal);
         ResolvedModel ResolveCopy(string id)
         {
@@ -297,7 +313,7 @@ public sealed class AuthoringWorkspace
 
             var variant = Copy(Variant(id), ModelVariant.FromJson);
             var model = Copy(Model(variant?.Base ?? id), CharacterModel.FromJson) ?? throw new KeyNotFoundException($"No model or variant '{id}'.");
-            var copy = ResolvedModel.From(model, variant);
+            var copy = ResolvedModel.From(model, variant, parts.GetValueOrDefault);
             copy.TextureRoot = Root;
             return resolved[id] = copy;
         }
@@ -330,8 +346,10 @@ public sealed class AuthoringWorkspace
     }
 
     /// <summary>
-    /// What an asset references directly: a variant its base, a clip its model, a model the clips its motion sets assign, and
-    /// an entity its model or variant, the clips it plays and its props.
+    /// What an asset references directly: a variant its base and the parts its attachment overrides select, a clip its model,
+    /// a model the clips its motion sets assign and the library parts its attachments instance, and an entity its model or
+    /// variant, the clips it plays and its props. Transitive dependents (an entity on a variant on a model on a part) follow
+    /// by walking <see cref="UsedBy"/>; <see cref="Dependents"/> lists a part's wearers directly.
     /// </summary>
     public IReadOnlyList<AssetReference> Uses(string id)
     {
@@ -343,11 +361,21 @@ public sealed class AuthoringWorkspace
                 break;
             case AssetDocument<ModelVariant> variant:
                 uses.Add(new(variant.Asset.Base, "base"));
+                foreach (var (instance, change) in variant.Asset.Attachments.Where(a => a.Value.Asset is not null).OrderBy(a => a.Key, StringComparer.Ordinal))
+                {
+                    uses.Add(new(change.Asset!, $"attachment {instance} (override)"));
+                }
+
                 break;
             case AssetDocument<MotionClip> clip:
                 uses.Add(new(clip.Asset.Model, "model"));
                 break;
             case AssetDocument<CharacterModel> model:
+                foreach (var instance in model.Asset.Attachments)
+                {
+                    uses.Add(new(instance.Asset, $"attachment {instance.Id} on {instance.Socket}"));
+                }
+
                 foreach (var set in model.Asset.MotionSets)
                 {
                     foreach (var (role, clip) in set.Roles.OrderBy(r => r.Key, StringComparer.Ordinal))
@@ -402,6 +430,34 @@ public sealed class AuthoringWorkspace
     /// <summary>Variants and clips that depend on a base model.</summary>
     public (IReadOnlyList<AssetDocument<ModelVariant>> Variants, IReadOnlyList<AssetDocument<MotionClip>> Clips) Dependents(string modelId) =>
         ([.. Variants.Where(v => v.Asset.Base == modelId)], [.. Clips.Where(c => c.Asset.Model == modelId)]);
+
+    /// <summary>
+    /// Every model or variant whose resolution instances a library part, directly or through its base: the previews a shared
+    /// part edit refreshes. An entity standing on one of them follows through <see cref="EntitiesOn"/>.
+    /// </summary>
+    public IReadOnlyList<string> Wearers(string partId)
+    {
+        var wearers = new List<string>();
+        foreach (var model in Models)
+        {
+            var direct = model.Asset.Attachments.Any(a => a.Asset == partId);
+            if (direct)
+            {
+                wearers.Add(model.Id);
+            }
+
+            foreach (var variant in Variants.Where(v => v.Asset.Base == model.Id))
+            {
+                var overrides = variant.Asset.Attachments;
+                // The variant wears the part when its base does and it does not swap that instance away, or when it swaps one in.
+                if (overrides.Values.Any(o => o.Asset == partId) || model.Asset.Attachments.Any(a => a.Asset == partId && overrides.GetValueOrDefault(a.Id)?.Asset is null))
+                {
+                    wearers.Add(variant.Id);
+                }
+            }
+        }
+        return wearers;
+    }
 
     /// <summary>Whether a model's draft changed structure since it was last saved, which will raise its structure revision on save.</summary>
     public bool StructureChanged(AssetDocument<CharacterModel> model) =>
@@ -463,6 +519,9 @@ public sealed class AuthoringWorkspace
                 }
 
                 break;
+            case AssetDocument<PartAsset> part:
+                Try(part.Asset.Validate);
+                break;
         }
         return problems;
     }
@@ -511,6 +570,9 @@ public sealed class AuthoringWorkspace
                 break;
             case AssetDocument<EntityAsset> entity:
                 entity.Asset.Validate();
+                break;
+            case AssetDocument<PartAsset> part:
+                part.Asset.Validate();
                 break;
         }
         var path = document.Path ?? DefaultPath(document);

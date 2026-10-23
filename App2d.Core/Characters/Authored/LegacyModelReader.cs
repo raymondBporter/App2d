@@ -19,13 +19,14 @@ namespace App2d.Core.Characters.Authored;
 /// parameter bindings in the model itself (<see cref="ModelParameter"/>). A file without <c>build</c> reads unchanged at
 /// version 8; one naming a rule is refused, since nothing in Core knows a humanoid's proportions any more. The only shipped
 /// user, <c>models/person.json</c>, was converted explicitly.</item>
+/// <item>Version 8 (P5a) had no <c>attachments</c>; a file without them reads unchanged at version 9.</item>
 /// </list>
-/// Deletion condition: no model file below version 8 remains in the authored tree, the seeds or the tests (the P11
+/// Deletion condition: no model file below version 9 remains in the authored tree, the seeds or the tests (the P11
 /// conversion reports list the converted bundles; six of the seven shipped models are still at version 5).
 /// </summary>
 internal static class LegacyModelReader
 {
-    public const int WaveFieldsVersion = 5, ChainsVersion = 6, BuildRuleVersion = 7;
+    public const int WaveFieldsVersion = 5, ChainsVersion = 6, BuildRuleVersion = 7, ParametersVersion = 8;
     private const string Amplitude = "waveAmplitude", Cycles = "waveCycles", PhaseControl = "wavePhaseControl", Wave = "wave";
 
     /// <summary>Returns the model JSON at the current version, or the input unchanged when it is not an older model.</summary>
@@ -41,7 +42,7 @@ internal static class LegacyModelReader
             return json;
         }
 
-        if (root is null || Find(root, "version") is not (var versionName, JsonValue version) || !version.TryGetValue(out int number) || number is < WaveFieldsVersion or > BuildRuleVersion)
+        if (root is null || Find(root, "version") is not (var versionName, JsonValue version) || !version.TryGetValue(out int number) || number is < WaveFieldsVersion or > ParametersVersion)
         {
             return json;
         }
@@ -52,7 +53,7 @@ internal static class LegacyModelReader
             throw new InvalidDataException($"Model file at version {number} names the code build rule '{rule}', retired in P4a: declare the proportions as parameters with bindings (the Person seeds write them; models/person.json carries the converted declarations).");
         }
 
-        if (number == BuildRuleVersion)
+        if (number is BuildRuleVersion or ParametersVersion)
         {
             return root.ToJsonString();
         }

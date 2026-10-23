@@ -291,7 +291,7 @@ public sealed class ParameterBindingTests
     }
 
     [Fact]
-    public void ModelsRoundTripAtVersionEightAndAVersionSevenBuildRuleIsRefused()
+    public void ModelsRoundTripAtTheCurrentVersionAndAVersionSevenBuildRuleIsRefused()
     {
         var person = Catalog.Models["person"];
         var json = person.ToJson();
@@ -299,7 +299,10 @@ public sealed class ParameterBindingTests
         Assert.Contains("\"about\": 0.025", json);
         Assert.DoesNotContain("\"build\"", json);
         Assert.Equal(json, CharacterModel.FromJson(json).ToJson());
-        Assert.Equal(json, File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "models", "person.json")).ReplaceLineEndings(json.Contains('\r') ? "\r\n" : "\n").TrimEnd());
+        // The file on disk stays at the version it was converted at (8, P4a) and reads unchanged at the current one.
+        var file = File.ReadAllText(Path.Combine(TestModels.AuthoredRoot, "models", "person.json"));
+        Assert.Contains("\"version\": 8", file);
+        Assert.Equal(json, CharacterModel.FromJson(file).ToJson());
 
         var crank = JsonNode.Parse(Crank().ToJson())!.AsObject();
         crank.Remove("parameters");
